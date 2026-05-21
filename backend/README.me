@@ -1,107 +1,80 @@
-# Meet Attendance Backend
+# Attendance Tracker Backend
 
-Node.js + Express backend for the Meet Attendance Tracker add-on.
-Deployed on Google Cloud Run.
+Node.js + Express backend for the Attendance Tracker Meet add-on. Deployed on Google Cloud Run.
+
+For the full architecture overview see the [top-level README](../README.md).
+
+---
 
 ## Endpoints
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/attendance?conferenceId=xxx` | Returns real participants from Meet API |
-| POST | `/api/save-to-sheets` | Saves attendance to Google Sheets |
-| GET | `/` | Health check |
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/attendance?conferenceId=xxx` | Bearer JWT (optional) | Fetches participants from the Meet REST API. Uses service account delegation if configured for the tenant, otherwise the user's OAuth token. |
+| POST | `/api/save-to-sheets` | Bearer JWT | Creates (or appends to) the user's per-Drive spreadsheet and writes the attendance report. |
+| GET | `/api/calendar-attendees?meetingCode=xxx` | Bearer JWT | Looks up the calendar event matching the active meeting and returns the invited attendees. Returns empty list if the user didn't grant calendar scope. |
+| POST | `/api/oauth/exchange` | _none_ | Swaps an auth code for a session JWT + persists the refresh token in Firestore. |
+| POST | `/api/oauth/revoke` | Bearer JWT | Signs the user out and revokes the refresh token. |
+| GET | `/api/admin/stats` | Bearer JWT | Tenant-scoped install + usage stats. |
+| GET | `/api/admin/all-users` | Bearer JWT (super admin only) | Aggregates users across every tenant via a Firestore collection group query. |
+| POST | `/api/admin/install` | _none (Marketplace webhook)_ | Marketplace install hook. |
+| POST | `/api/admin/uninstall` | _none (Marketplace webhook)_ | Marketplace uninstall hook. |
+| POST | `/api/admin/verify-delegation` | Bearer JWT | Tests whether domain-wide delegation works for the given admin email and stores the config. |
+| GET | `/health` | _none_ | Health check. |
+
+All `/api/*` routes (except `/api/oauth/*` and the Marketplace webhooks) run through:
+1. `requestId` -- correlation IDs in logs
+2. `apiLimiter` -- 60 req/min per IP
+3. `auth` -- validates the session JWT, refreshes the Google access token if needed, attaches `req.user`
+
+The OAuth routes use a stricter limiter (10 req/min).
 
 ---
 
-## Deployment to Cloud Run
-
-### Prerequisites
-- Google Cloud CLI installed: https://cloud.google.com/sdk/docs/install
-- Logged in: `gcloud auth login`
-- Project set: `gcloud config set project the-yacht-group`
-
----
-
-### Step 1 — Create a Service Account
+## Local development
 
 ```bash
-gcloud iam service-accounts create meet-attendance-sa \
-  --display-name="Meet Attendance Service Account"
-```
-
-### Step 2 — Grant required roles
-
-```bash
-# Meet API read access
-gcloud projects add-iam-policy-binding the-yacht-group \
-  --member="serviceAccount:meet-attendance-sa@the-yacht-group.iam.gserviceaccount.com" \
-  --role="roles/meet.spaceViewer"
-
-# Sheets write access (if using Sheets feature)
-gcloud projects add-iam-policy-binding the-yacht-group \
-  --member="serviceAccount:meet-attendance-sa@the-yacht-group.iam.gserviceaccount.com" \
-  --role="roles/sheets.editor"
-```
-
-### Step 3 — Create your Google Sheet (for Sheets feature)
-
-1. Go to sheets.google.com and create a new blank sheet
-2. Copy the Sheet ID from the URL:
-   `https://docs.google.com/spreadsheets/d/SHEET_ID_HERE/edit`
-3. Share the sheet with the service account email:
-   `meet-attendance-sa@the-yacht-group.iam.gserviceaccount.com`
-   (give it Editor access)
-
-### Step 4 — Deploy to Cloud Run
-
-```bash
-gcloud run deploy meet-attendance-backend \
-  --source . \
-  --region us-central1 \
-  --service-account meet-attendance-sa@the-yacht-group.iam.gserviceaccount.com \
-  --set-env-vars SHEET_ID=YOUR_SHEET_ID_HERE \
-  --allow-unauthenticated \
-  --project the-yacht-group
-```
-
-This builds the Docker image, pushes to Artifact Registry, and deploys.
-Takes about 2-3 minutes. You'll get a URL like:
-```
-https://meet-attendance-backend-xxxxxxxx-uc.a.run.app
-```
-
-### Step 5 — Update index.html with backend URL
-
-In your `meet-attendance-addon` repo, open `index.html` and find:
-```js
-state.backendUrl = '/api';
-```
-Change it to:
-```js
-state.backendUrl = 'https://meet-attendance-backend-xxxxxxxx-uc.a.run.app/api';
-```
-Then commit and push.
-
----
-
-## Local Development
-
-```bash
+cd backend
 npm install
 
-# Set up credentials locally
-export GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account-key.json
-export SHEET_ID=your_sheet_id
+# Point at your local service account key + GCP project
+$env:GOOGLE_APPLICATION_CREDENTIALS = "C:\path\to\sa-key.json"
+$env:GCP_PROJECT_ID = "attendance-tracker-490319"
+$env:GOOGLE_CLIENT_ID = "..."
+$env:OAUTH_CLIENT_SECRET_NAME = "projects/829771833968/secrets/oauth-client-secret"
+$env:SECRET_NAME = "projects/829771833968/secrets/service-account-key"
+$env:SESSION_SECRET = "32-byte-base64-secret"
 
-npm run dev
+npm start
 # Server runs on http://localhost:8080
 ```
 
+For env var details and the full list see the [top-level README](../README.md#backend-env-vars-cloud-run).
+
 ---
 
-## Notes on Conference ID
+## Deploying to Cloud Run
 
-The Meet SDK returns a `conferenceId` which is the meeting code (e.g. `abc-defg-hij`).
-The Meet REST API uses this to look up `conferenceRecords`.
-Note: `conferenceRecords` are only available AFTER a meeting starts and may have a
-short delay. If participants show empty, wait 30-60 seconds after joining and refresh.
+```powershell
+gcloud run deploy attendance-tracker-backend `
+  --source=. `
+  --project=attendance-tracker-490319 `
+  --region=us-central1
+```
+
+Existing env vars persist across deploys. To update them safely (commas inside URL lists need a custom delimiter):
+
+```powershell
+gcloud run services update attendance-tracker-backend `
+  --update-env-vars "^##^ALLOWED_DOMAINS=*##ALLOWED_ORIGINS=https://attendancetracker.dev,https://derekgallardo01.github.io" `
+  --region=us-central1 `
+  --project=attendance-tracker-490319
+```
+
+---
+
+## Notes
+
+- **Conference ID:** The Meet add-on SDK returns `meetingCode` (e.g. `abc-defg-hij`). The Meet REST API uses this to look up `conferenceRecords`, which are only created once a meeting is live and may have a short delay. The frontend handles the "no record yet" case gracefully.
+- **Tokens:** Refresh tokens are encrypted at rest in Firestore with AES-256-GCM keyed off `SESSION_SECRET`. Don't rotate `SESSION_SECRET` without re-OAuthing every user.
+- **Domain mismatch fallback:** If the service account's impersonation email is on a different domain than the signed-in user, the backend skips the service account and uses the user's own OAuth token. This is how the add-on works for any Workspace domain without admin setup.
