@@ -1,6 +1,8 @@
 const { Router } = require('express');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb } = require('../services/firestore');
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants } = require('../services/firestore');
+
+const SUPER_ADMIN_EMAIL = 'derekgallardo01@gmail.com';
 
 const router = Router();
 
@@ -95,6 +97,25 @@ router.get('/admin/stats', async (req, res) => {
   } catch (err) {
     log.error('admin: stats failed', { error: err.message });
     res.status(500).json({ error: 'Failed to fetch stats' });
+  }
+});
+
+// GET /api/admin/all-users — List every user across every tenant (super admin only)
+router.get('/admin/all-users', async (req, res) => {
+  try {
+    if (req.user?.email !== SUPER_ADMIN_EMAIL) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    const users = await getAllUsersAcrossTenants();
+    users.sort((a, b) => {
+      const aTime = a.lastLoginAt ? new Date(a.lastLoginAt).getTime() : 0;
+      const bTime = b.lastLoginAt ? new Date(b.lastLoginAt).getTime() : 0;
+      return bTime - aTime;
+    });
+    res.json({ users, totalCount: users.length });
+  } catch (err) {
+    log.error('admin: all-users failed', { error: err.message });
+    res.status(500).json({ error: 'Failed to fetch all users' });
   }
 });
 

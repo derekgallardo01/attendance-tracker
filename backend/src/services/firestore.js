@@ -244,6 +244,27 @@ async function updateUserTokens(domain, email, { accessToken, tokenExpiresAt }) 
   }
 }
 
+// ── Cross-tenant queries (super admin) ──
+
+async function getAllUsersAcrossTenants() {
+  try {
+    const snap = await getDb().collectionGroup('users').get();
+    return snap.docs.map(d => {
+      const data = d.data();
+      return {
+        email: d.id,
+        domain: d.ref.parent.parent.id,
+        displayName: data.displayName || '',
+        lastLoginAt: data.lastLoginAt?.toDate?.()?.toISOString() || null,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
+      };
+    });
+  } catch (err) {
+    log.error('firestore: getAllUsersAcrossTenants failed', { error: err.message });
+    return [];
+  }
+}
+
 // ── Delete user data (Marketplace compliance) ──
 
 async function deleteUser(domain, email) {
@@ -259,5 +280,6 @@ module.exports = {
   getTenantConfig, upsertTenantConfig,
   persistAttendance, persistCalendarData, persistExport,
   getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens,
+  getAllUsersAcrossTenants,
   deleteUser,
 };

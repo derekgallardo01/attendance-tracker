@@ -125,6 +125,19 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Super admin only: all users across all tenants -->
+      <div class="section" id="all-users-section" style="display:none">
+        <h2>All Users <span id="all-users-count" style="color:var(--muted);font-weight:400;font-size:.8rem"></span></h2>
+        <table>
+          <thead>
+            <tr><th>Email</th><th>Domain</th><th>Name</th><th>Created</th><th>Last Login</th></tr>
+          </thead>
+          <tbody id="all-users-rows">
+            <tr><td colspan="5" style="color:var(--muted)">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -132,7 +145,9 @@
     const BACKEND_URL = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
     const CLIENT_ID = '829771833968-92hq9toga2ga92mg7nfuf6dqclj7er2n.apps.googleusercontent.com';
     const SCOPES = 'openid email profile';
+    const SUPER_ADMIN_EMAIL = 'derekgallardo01@gmail.com';
     let sessionToken = null;
+    let userEmail = null;
 
     function signIn() {
       const client = google.accounts.oauth2.initCodeClient({
@@ -151,6 +166,7 @@
             if (!res.ok) throw new Error('Auth failed');
             const data = await res.json();
             sessionToken = data.sessionToken;
+            userEmail = data.email;
             document.getElementById('user-email').textContent = data.email;
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
@@ -218,8 +234,48 @@
           <tr><td>Meetings Tracked</td><td>${d.meetings || 0}</td></tr>
           <tr><td>Exports</td><td>${d.exports || 0}</td></tr>
         `;
+
+        // Super admin: load all users across tenants
+        if (userEmail === SUPER_ADMIN_EMAIL) {
+          loadAllUsers();
+        }
       } catch (err) {
         console.error('Dashboard load failed:', err);
+      }
+    }
+
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    async function loadAllUsers() {
+      try {
+        const res = await fetch(`${BACKEND_URL}/admin/all-users`, {
+          headers: { 'Authorization': `Bearer ${sessionToken}` },
+        });
+        if (!res.ok) {
+          console.warn('all-users fetch failed:', res.status);
+          return;
+        }
+        const data = await res.json();
+        document.getElementById('all-users-section').style.display = 'block';
+        document.getElementById('all-users-count').textContent = `(${data.totalCount})`;
+        const body = document.getElementById('all-users-rows');
+        if (!data.users?.length) {
+          body.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">No users found</td></tr>';
+          return;
+        }
+        body.innerHTML = data.users.map(u => `
+          <tr>
+            <td>${esc(u.email)}</td>
+            <td style="color:var(--muted)">${esc(u.domain)}</td>
+            <td>${esc(u.displayName) || '—'}</td>
+            <td style="color:var(--muted)">${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}</td>
+            <td style="color:var(--muted)">${u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : '—'}</td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error('All users load failed:', err);
       }
     }
   </script>
