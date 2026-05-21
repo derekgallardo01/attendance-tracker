@@ -55,12 +55,24 @@ router.get('/admin/stats', async (req, res) => {
     const { Firestore } = require('@google-cloud/firestore');
     const db = new Firestore();
 
-    // Count tenants
-    const tenantsSnap = await db.collection('tenants').get();
-    const tenants = tenantsSnap.docs.map(d => ({
-      domain: d.id,
-      ...d.data(),
-    }));
+    // Tenant list: explicit docs + any domain we have users in.
+    // Firestore doesn't auto-create the parent doc for subcollection writes,
+    // so users can exist under tenants/{domain}/users/* without a tenant doc.
+    const [tenantsSnap, allUsersSnap] = await Promise.all([
+      db.collection('tenants').get(),
+      db.collectionGroup('users').get(),
+    ]);
+    const tenantMap = new Map();
+    for (const d of tenantsSnap.docs) {
+      tenantMap.set(d.id, { domain: d.id, ...d.data() });
+    }
+    for (const d of allUsersSnap.docs) {
+      const dom = d.ref.parent.parent.id;
+      if (!tenantMap.has(dom)) {
+        tenantMap.set(dom, { domain: dom, active: true, installedAt: null });
+      }
+    }
+    const tenants = [...tenantMap.values()];
 
     // Count users for the requesting user's domain
     const domain = req.user.domain;
@@ -85,7 +97,11 @@ router.get('/admin/stats', async (req, res) => {
 
     res.json({
       totalTenants: tenants.length,
-      tenants: tenants.map(t => ({ domain: t.domain, active: t.active, installedAt: t.installedAt })),
+      tenants: tenants.map(t => ({
+        domain: t.domain,
+        active: t.active !== false,
+        installedAt: t.installedAt?.toDate?.()?.toISOString?.() || t.installedAt || null,
+      })),
       yourDomain: {
         domain,
         users: usersSnap.size,

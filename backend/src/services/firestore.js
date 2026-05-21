@@ -210,6 +210,20 @@ async function upsertUser(domain, { email, displayName, refreshToken, sheetId })
     if (refreshToken !== undefined) data.refreshToken = encryptToken(refreshToken);
     if (sheetId !== undefined) data.sheetId = sheetId;
 
+    // Ensure the parent tenant doc exists. Firestore doesn't auto-create it
+    // for subcollection writes, so without this the tenants collection stays
+    // empty even though users are being added under it.
+    const tenantDoc = await tenantRef(domain).get();
+    if (!tenantDoc.exists) {
+      await tenantRef(domain).set({
+        domain,
+        active: true,
+        installedAt: FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    }
+
     await tenantRef(domain).collection('users').doc(email.toLowerCase()).set(data, { merge: true });
     log.info('firestore: upserted user', { domain, email });
   } catch (err) {
@@ -279,7 +293,7 @@ async function getAggregatedInsights() {
       db.collectionGroup('exports').get(),
     ]);
 
-    const tenants = tenantsSnap.docs.map(d => ({ domain: d.id, ...d.data() }));
+    const explicitTenants = tenantsSnap.docs.map(d => ({ domain: d.id, ...d.data() }));
     const users = usersSnap.docs.map(d => ({
       email: d.id,
       domain: d.ref.parent.parent.id,
@@ -287,6 +301,18 @@ async function getAggregatedInsights() {
       createdAt: d.data().createdAt?.toDate?.()?.getTime() || null,
       lastLoginAt: d.data().lastLoginAt?.toDate?.()?.getTime() || null,
     }));
+
+    // Derive the complete tenant set: explicit docs + any domain found in users.
+    // Firestore doesn't auto-create parent docs for subcollections, so a user can
+    // exist under tenants/{domain}/users/* without a tenants/{domain} doc.
+    const tenantMap = new Map();
+    for (const t of explicitTenants) tenantMap.set(t.domain, t);
+    for (const u of users) {
+      if (!tenantMap.has(u.domain)) {
+        tenantMap.set(u.domain, { domain: u.domain, active: true, installedAt: null });
+      }
+    }
+    const tenants = [...tenantMap.values()];
     const meetings = meetingsSnap.docs.map(d => ({
       id: d.id,
       domain: d.ref.parent.parent.id,
@@ -320,25 +346,29 @@ async function getAggregatedInsights() {
     }
 
     // ── Funnel ──
-    // We don't have explicit per-user "tracked" events, so we proxy:
+    // We don't have explicit per-user "tracked"/"exported" events, so we proxy
+    // at the domain level: a user counts as tracked/exported if their domain
+    // has at least one meeting/export.
     //  - Installed  = tenants count
     //  - Signed in  = users count
-    //  - Tracked    = users whose domain has at least one meeting (proxy)
-    //  - Exported   = unique users who appear in exports.email (or domain-level for legacy)
+    //  - Tracked    = users whose domain has at least one meeting
+    //  - Exported   = users whose domain has at least one export
     const domainsWithMeetings = new Set(Object.keys(meetingsByDomain));
+    const domainsWithExports = new Set(Object.keys(exportsByDomain));
     const usersWhoTracked = users.filter(u => domainsWithMeetings.has(u.domain)).length;
-    const usersWhoExported = new Set(Object.keys(exportsByEmail)).size;
+    const usersWhoExported = users.filter(u => domainsWithExports.has(u.domain)).length;
 
     // ── Activation + first-export rates ──
     const activationRate = users.length > 0 ? usersWhoTracked / users.length : 0;
     const firstExportRate = users.length > 0 ? usersWhoExported / users.length : 0;
 
     // ── Time to first track (per-user proxy: user.createdAt → earliest meeting in their domain) ──
+    // Skip users whose domain had meetings before they joined — that meeting wasn't theirs.
     const ttftValues = users
       .map(u => {
         const firstMeeting = earliestMeetingByDomain[u.domain];
         if (!u.createdAt || !firstMeeting) return null;
-        if (firstMeeting < u.createdAt) return 0;
+        if (firstMeeting < u.createdAt) return null;
         return firstMeeting - u.createdAt;
       })
       .filter(v => v !== null && v >= 0)
