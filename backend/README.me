@@ -15,8 +15,9 @@ For the full architecture overview see the [top-level README](../README.md).
 | GET | `/api/calendar-attendees?meetingCode=xxx` | Bearer JWT | Looks up the calendar event matching the active meeting and returns the invited attendees. Returns empty list if the user didn't grant calendar scope. |
 | POST | `/api/oauth/exchange` | _none_ | Swaps an auth code for a session JWT + persists the refresh token in Firestore. |
 | POST | `/api/oauth/revoke` | Bearer JWT | Signs the user out and revokes the refresh token. |
-| GET | `/api/admin/stats` | Bearer JWT | Tenant-scoped install + usage stats. |
+| GET | `/api/admin/stats` | Bearer JWT | Tenant-scoped install + usage stats. Derives the tenant set from the union of explicit tenant docs and unique user domains. |
 | GET | `/api/admin/all-users` | Bearer JWT (super admin only) | Aggregates users across every tenant via a Firestore collection group query. |
+| GET | `/api/admin/insights` | Bearer JWT (super admin only) | Activation funnel, retention cohorts, top orgs, churned users, daily meeting volume. |
 | POST | `/api/admin/install` | _none (Marketplace webhook)_ | Marketplace install hook. |
 | POST | `/api/admin/uninstall` | _none (Marketplace webhook)_ | Marketplace uninstall hook. |
 | POST | `/api/admin/verify-delegation` | Bearer JWT | Tests whether domain-wide delegation works for the given admin email and stores the config. |
@@ -78,3 +79,4 @@ gcloud run services update attendance-tracker-backend `
 - **Conference ID:** The Meet add-on SDK returns `meetingCode` (e.g. `abc-defg-hij`). The Meet REST API uses this to look up `conferenceRecords`, which are only created once a meeting is live and may have a short delay. The frontend handles the "no record yet" case gracefully.
 - **Tokens:** Refresh tokens are encrypted at rest in Firestore with AES-256-GCM keyed off `SESSION_SECRET`. Don't rotate `SESSION_SECRET` without re-OAuthing every user.
 - **Domain mismatch fallback:** If the service account's impersonation email is on a different domain than the signed-in user, the backend skips the service account and uses the user's own OAuth token. This is how the add-on works for any Workspace domain without admin setup.
+- **Implicit tenant docs:** Firestore doesn't auto-create the parent doc when you write to a subcollection. Historically, users existed under `tenants/{domain}/users/*` with no `tenants/{domain}` doc. `upsertUser` now creates the parent on first signup; admin endpoints union the tenants collection with unique user domains as a safety net for legacy data.

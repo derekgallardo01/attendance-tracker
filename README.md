@@ -132,7 +132,29 @@ Available at https://attendancetracker.dev/admin.html. Sign in with any Google a
 - Your domain's users, meetings, exports
 - List of all installed tenant domains
 
-When signed in as the super admin (`derekgallardo01@gmail.com`), an additional **All Users** section appears listing every user across every tenant -- backed by a Firestore `collectionGroup('users')` query.
+### Super admin view
+
+When signed in as the super admin (`derekgallardo01@gmail.com`), three additional sections appear:
+
+**Insights** (`GET /api/admin/insights`):
+- **Activation funnel**: Installed → Signed in → Tracked → Exported (visual bars)
+- **Activation rate / First-export rate** vs total user count
+- **WAU / MAU** -- users in domains with meeting activity in last 7 / 30 days
+- **D7 / D30 retention** -- % of N-day install cohort still active
+- **Median time to first track** -- install → first meeting (excludes pre-existing meetings)
+- **Avg participants per meeting** and median meeting duration
+- **Meetings per day** bar chart (last 30 days)
+- **Repeat usage histogram** -- orgs grouped by 0 / 1 / 2-4 / 5-9 / 10+ meetings
+- **Top organizations** sorted by activity (DWD badge if delegation is configured)
+- **Top exporters** -- power users
+- **Churned users** -- signed in ≥7d ago, never tracked
+
+**All Users** (`GET /api/admin/all-users`):
+Lists every user across every tenant via a Firestore `collectionGroup('users')` query.
+
+### Tenant docs
+
+Firestore doesn't auto-create the parent doc when you write to a subcollection, so historically a user could exist under `tenants/{domain}/users/*` without a `tenants/{domain}` doc. The admin endpoints handle this by **deriving the tenant set from the union of explicit tenant docs + every unique domain found in `users`**. New signups now also auto-create the parent tenant doc with an `installedAt` timestamp.
 
 ---
 
