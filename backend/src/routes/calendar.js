@@ -91,6 +91,12 @@ router.get('/calendar-attendees', async (req, res) => {
     persistCalendarData(domain, meetingCode, matchedEvent.summary || 'Scheduled Meeting', attendees);
 
   } catch (err) {
+    // Insufficient Permission (403) means user didn't grant calendar scope during OAuth.
+    // Degrade gracefully — let the rest of the add-on work without calendar features.
+    if (err.code === 403 || /insufficient permission/i.test(err.message)) {
+      log.info('calendar permission not granted, skipping calendar lookup', { email: req.user?.email });
+      return res.json({ attendees: [], isScheduled: false, calendarPermissionMissing: true });
+    }
     log.error('calendar lookup failed', { error: err.message });
     res.status(500).json({ error: 'Failed to look up calendar data.' });
   }
