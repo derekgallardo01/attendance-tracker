@@ -1,6 +1,6 @@
 const { Router } = require('express');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants } = require('../services/firestore');
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights } = require('../services/firestore');
 
 const SUPER_ADMIN_EMAIL = 'derekgallardo01@gmail.com';
 
@@ -116,6 +116,20 @@ router.get('/admin/all-users', async (req, res) => {
   } catch (err) {
     log.error('admin: all-users failed', { error: err.message });
     res.status(500).json({ error: 'Failed to fetch all users' });
+  }
+});
+
+// GET /api/admin/insights — Activation funnel, retention, top orgs (super admin only)
+router.get('/admin/insights', async (req, res) => {
+  try {
+    if (req.user?.email !== SUPER_ADMIN_EMAIL) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    const insights = await getAggregatedInsights();
+    res.json(insights);
+  } catch (err) {
+    log.error('admin: insights failed', { error: err.message });
+    res.status(500).json({ error: 'Failed to compute insights' });
   }
 });
 

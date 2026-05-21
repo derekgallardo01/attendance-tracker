@@ -149,7 +149,7 @@ async function persistCalendarData(domain, meetingCode, eventTitle, attendees) {
   }
 }
 
-async function persistExport(domain, { meetingTitle, tabName, exportedAt, participantCount, sheetUrl }) {
+async function persistExport(domain, { meetingTitle, tabName, exportedAt, participantCount, sheetUrl, email }) {
   try {
     const now = FieldValue.serverTimestamp();
 
@@ -159,6 +159,7 @@ async function persistExport(domain, { meetingTitle, tabName, exportedAt, partic
       exportedAt,
       participantCount,
       sheetUrl,
+      email: email ? email.toLowerCase() : null,
       createdAt: now,
     });
 
@@ -265,6 +266,222 @@ async function getAllUsersAcrossTenants() {
   }
 }
 
+async function getAggregatedInsights() {
+  try {
+    const db = getDb();
+    const now = Date.now();
+    const DAY = 24 * 60 * 60 * 1000;
+
+    const [tenantsSnap, usersSnap, meetingsSnap, exportsSnap] = await Promise.all([
+      db.collection('tenants').get(),
+      db.collectionGroup('users').get(),
+      db.collectionGroup('meetings').get(),
+      db.collectionGroup('exports').get(),
+    ]);
+
+    const tenants = tenantsSnap.docs.map(d => ({ domain: d.id, ...d.data() }));
+    const users = usersSnap.docs.map(d => ({
+      email: d.id,
+      domain: d.ref.parent.parent.id,
+      ...d.data(),
+      createdAt: d.data().createdAt?.toDate?.()?.getTime() || null,
+      lastLoginAt: d.data().lastLoginAt?.toDate?.()?.getTime() || null,
+    }));
+    const meetings = meetingsSnap.docs.map(d => ({
+      id: d.id,
+      domain: d.ref.parent.parent.id,
+      ...d.data(),
+      startTime: d.data().startTime?.toDate?.()?.getTime() || null,
+      endTime: d.data().endTime?.toDate?.()?.getTime() || null,
+      createdAt: d.data().createdAt?.toDate?.()?.getTime() || null,
+    }));
+    const exports_ = exportsSnap.docs.map(d => ({
+      id: d.id,
+      domain: d.ref.parent.parent.id,
+      ...d.data(),
+      createdAt: d.data().createdAt?.toDate?.()?.getTime() || null,
+    }));
+
+    // ── Per-domain meeting/export indices for fast lookup ──
+    const meetingsByDomain = {};
+    const earliestMeetingByDomain = {};
+    for (const m of meetings) {
+      (meetingsByDomain[m.domain] ||= []).push(m);
+      const t = m.createdAt || m.startTime;
+      if (t && (!earliestMeetingByDomain[m.domain] || t < earliestMeetingByDomain[m.domain])) {
+        earliestMeetingByDomain[m.domain] = t;
+      }
+    }
+    const exportsByEmail = {};
+    const exportsByDomain = {};
+    for (const e of exports_) {
+      if (e.email) (exportsByEmail[e.email] ||= []).push(e);
+      (exportsByDomain[e.domain] ||= []).push(e);
+    }
+
+    // ── Funnel ──
+    // We don't have explicit per-user "tracked" events, so we proxy:
+    //  - Installed  = tenants count
+    //  - Signed in  = users count
+    //  - Tracked    = users whose domain has at least one meeting (proxy)
+    //  - Exported   = unique users who appear in exports.email (or domain-level for legacy)
+    const domainsWithMeetings = new Set(Object.keys(meetingsByDomain));
+    const usersWhoTracked = users.filter(u => domainsWithMeetings.has(u.domain)).length;
+    const usersWhoExported = new Set(Object.keys(exportsByEmail)).size;
+
+    // ── Activation + first-export rates ──
+    const activationRate = users.length > 0 ? usersWhoTracked / users.length : 0;
+    const firstExportRate = users.length > 0 ? usersWhoExported / users.length : 0;
+
+    // ── Time to first track (per-user proxy: user.createdAt → earliest meeting in their domain) ──
+    const ttftValues = users
+      .map(u => {
+        const firstMeeting = earliestMeetingByDomain[u.domain];
+        if (!u.createdAt || !firstMeeting) return null;
+        if (firstMeeting < u.createdAt) return 0;
+        return firstMeeting - u.createdAt;
+      })
+      .filter(v => v !== null && v >= 0)
+      .sort((a, b) => a - b);
+    const medianTimeToFirstTrack = ttftValues.length > 0
+      ? ttftValues[Math.floor(ttftValues.length / 2)]
+      : null;
+
+    // ── WAU / MAU (users whose domain had a meeting in the window) ──
+    const activeDomainsInWindow = (windowMs) => {
+      const cutoff = now - windowMs;
+      return new Set(meetings
+        .filter(m => (m.createdAt || m.startTime) >= cutoff)
+        .map(m => m.domain));
+    };
+    const wauDomains = activeDomainsInWindow(7 * DAY);
+    const mauDomains = activeDomainsInWindow(30 * DAY);
+    const wau = users.filter(u => wauDomains.has(u.domain)).length;
+    const mau = users.filter(u => mauDomains.has(u.domain)).length;
+
+    // ── D7 / D30 retention ──
+    // Of users who installed ≥7d ago, how many are in WAU.
+    const cohort7 = users.filter(u => u.createdAt && (now - u.createdAt) >= 7 * DAY);
+    const cohort30 = users.filter(u => u.createdAt && (now - u.createdAt) >= 30 * DAY);
+    const d7Retained = cohort7.filter(u => wauDomains.has(u.domain)).length;
+    const d30Retained = cohort30.filter(u => mauDomains.has(u.domain)).length;
+    const d7Retention = cohort7.length > 0 ? d7Retained / cohort7.length : null;
+    const d30Retention = cohort30.length > 0 ? d30Retained / cohort30.length : null;
+
+    // ── Repeat usage histogram (meetings per domain since users are domain-bucketed) ──
+    const meetingCountBuckets = { '0': 0, '1': 0, '2-4': 0, '5-9': 0, '10+': 0 };
+    for (const t of tenants) {
+      const count = (meetingsByDomain[t.domain] || []).length;
+      if (count === 0) meetingCountBuckets['0']++;
+      else if (count === 1) meetingCountBuckets['1']++;
+      else if (count < 5) meetingCountBuckets['2-4']++;
+      else if (count < 10) meetingCountBuckets['5-9']++;
+      else meetingCountBuckets['10+']++;
+    }
+
+    // ── Churned users: signed in ≥7d ago, never tracked ──
+    const churnedUsers = users
+      .filter(u => u.createdAt && (now - u.createdAt) >= 7 * DAY && !domainsWithMeetings.has(u.domain))
+      .map(u => ({
+        email: u.email,
+        domain: u.domain,
+        displayName: u.displayName || '',
+        createdAt: u.createdAt ? new Date(u.createdAt).toISOString() : null,
+        lastLoginAt: u.lastLoginAt ? new Date(u.lastLoginAt).toISOString() : null,
+      }));
+
+    // ── Meetings per day (last 30 days) ──
+    const meetingsPerDay = {};
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(now - i * DAY);
+      meetingsPerDay[d.toISOString().slice(0, 10)] = 0;
+    }
+    for (const m of meetings) {
+      const t = m.createdAt || m.startTime;
+      if (!t || now - t > 30 * DAY) continue;
+      const key = new Date(t).toISOString().slice(0, 10);
+      if (key in meetingsPerDay) meetingsPerDay[key]++;
+    }
+    const meetingsByDay = Object.entries(meetingsPerDay)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, count]) => ({ date, count }));
+
+    // ── Avg participants per meeting + median duration ──
+    const participantCounts = meetings.map(m => m.participantCount || 0).filter(v => v > 0);
+    const avgParticipants = participantCounts.length > 0
+      ? participantCounts.reduce((a, b) => a + b, 0) / participantCounts.length
+      : 0;
+    const durations = meetings
+      .filter(m => m.startTime && m.endTime && m.endTime > m.startTime)
+      .map(m => m.endTime - m.startTime)
+      .sort((a, b) => a - b);
+    const medianDurationMs = durations.length > 0
+      ? durations[Math.floor(durations.length / 2)]
+      : null;
+
+    // ── Exports per user (top 10) ──
+    const exportsPerUser = Object.entries(exportsByEmail)
+      .map(([email, list]) => ({ email, count: list.length, domain: list[0].domain }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    // ── Top orgs by activity ──
+    const orgActivity = tenants.map(t => {
+      const m = meetingsByDomain[t.domain] || [];
+      const e = exportsByDomain[t.domain] || [];
+      const usersInOrg = users.filter(u => u.domain === t.domain);
+      const lastActivity = Math.max(
+        ...m.map(x => x.createdAt || 0),
+        ...e.map(x => x.createdAt || 0),
+        ...usersInOrg.map(x => x.lastLoginAt || 0),
+        0,
+      );
+      return {
+        domain: t.domain,
+        users: usersInOrg.length,
+        meetings: m.length,
+        exports: e.length,
+        active: t.active !== false,
+        installedAt: t.installedAt || null,
+        delegationConfigured: !!t.impersonateEmail,
+        lastActivityAt: lastActivity ? new Date(lastActivity).toISOString() : null,
+      };
+    }).sort((a, b) => (b.meetings + b.exports) - (a.meetings + a.exports));
+
+    return {
+      counts: {
+        installs: tenants.length,
+        users: users.length,
+        meetings: meetings.length,
+        exports: exports_.length,
+      },
+      funnel: {
+        installed: tenants.length,
+        signedIn: users.length,
+        tracked: usersWhoTracked,
+        exported: usersWhoExported,
+      },
+      activationRate,
+      firstExportRate,
+      medianTimeToFirstTrackMs: medianTimeToFirstTrack,
+      wau,
+      mau,
+      d7Retention,
+      d30Retention,
+      meetingCountBuckets,
+      churnedUsers,
+      meetingsByDay,
+      avgParticipants,
+      medianDurationMs,
+      topExporters: exportsPerUser,
+      orgActivity,
+    };
+  } catch (err) {
+    log.error('firestore: getAggregatedInsights failed', { error: err.message });
+    throw err;
+  }
+}
+
 // ── Delete user data (Marketplace compliance) ──
 
 async function deleteUser(domain, email) {
@@ -281,5 +498,6 @@ module.exports = {
   persistAttendance, persistCalendarData, persistExport,
   getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens,
   getAllUsersAcrossTenants,
+  getAggregatedInsights,
   deleteUser,
 };

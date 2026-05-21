@@ -275,6 +275,7 @@ router.post('/save-to-sheets', async (req, res) => {
       exportedAt,
       participantCount: allRows.length,
       sheetUrl,
+      email: req.user?.email || null,
     });
 
   } catch (err) {

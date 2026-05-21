@@ -126,6 +126,63 @@
         </table>
       </div>
 
+      <!-- Super admin only: insights -->
+      <div id="insights-section" style="display:none">
+
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-label">Activation Rate</div><div class="stat-value green" id="ins-activation">—</div><div class="stat-label" id="ins-activation-sub" style="margin-top:4px">—</div></div>
+          <div class="stat-card"><div class="stat-label">First-Export Rate</div><div class="stat-value blue" id="ins-firstexport">—</div><div class="stat-label" id="ins-firstexport-sub" style="margin-top:4px">—</div></div>
+          <div class="stat-card"><div class="stat-label">WAU</div><div class="stat-value green" id="ins-wau">—</div><div class="stat-label">Weekly active users</div></div>
+          <div class="stat-card"><div class="stat-label">MAU</div><div class="stat-value blue" id="ins-mau">—</div><div class="stat-label">Monthly active users</div></div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-label">D7 Retention</div><div class="stat-value" id="ins-d7">—</div><div class="stat-label" id="ins-d7-sub">—</div></div>
+          <div class="stat-card"><div class="stat-label">D30 Retention</div><div class="stat-value" id="ins-d30">—</div><div class="stat-label" id="ins-d30-sub">—</div></div>
+          <div class="stat-card"><div class="stat-label">Median Time to Track</div><div class="stat-value" id="ins-ttft" style="font-size:1.5rem">—</div><div class="stat-label">install → first meeting</div></div>
+          <div class="stat-card"><div class="stat-label">Avg Participants</div><div class="stat-value" id="ins-avgp" style="font-size:1.5rem">—</div><div class="stat-label">per meeting</div></div>
+        </div>
+
+        <div class="section">
+          <h2>Activation Funnel</h2>
+          <div id="funnel-rows"></div>
+        </div>
+
+        <div class="section">
+          <h2>Meetings per Day (last 30d)</h2>
+          <div id="daily-chart" style="display:flex;align-items:flex-end;height:120px;gap:2px;padding:8px 0"></div>
+        </div>
+
+        <div class="section">
+          <h2>Repeat Usage <span style="color:var(--muted);font-weight:400;font-size:.8rem">(meetings tracked per org)</span></h2>
+          <div id="repeat-rows"></div>
+        </div>
+
+        <div class="section">
+          <h2>Top Organizations</h2>
+          <table>
+            <thead><tr><th>Domain</th><th>Users</th><th>Meetings</th><th>Exports</th><th>Last Activity</th></tr></thead>
+            <tbody id="top-orgs-rows"><tr><td colspan="5" style="color:var(--muted)">Loading…</td></tr></tbody>
+          </table>
+        </div>
+
+        <div class="section">
+          <h2>Top Exporters</h2>
+          <table>
+            <thead><tr><th>Email</th><th>Domain</th><th>Exports</th></tr></thead>
+            <tbody id="top-exporters-rows"><tr><td colspan="3" style="color:var(--muted)">No exports yet</td></tr></tbody>
+          </table>
+        </div>
+
+        <div class="section">
+          <h2>Churned Users <span style="color:var(--muted);font-weight:400;font-size:.8rem">(signed in &ge;7d ago, never tracked)</span></h2>
+          <table>
+            <thead><tr><th>Email</th><th>Domain</th><th>Name</th><th>Signed Up</th><th>Last Login</th></tr></thead>
+            <tbody id="churned-rows"><tr><td colspan="5" style="color:var(--muted)">None — nice</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- Super admin only: all users across all tenants -->
       <div class="section" id="all-users-section" style="display:none">
         <h2>All Users <span id="all-users-count" style="color:var(--muted);font-weight:400;font-size:.8rem"></span></h2>
@@ -235,9 +292,10 @@
           <tr><td>Exports</td><td>${d.exports || 0}</td></tr>
         `;
 
-        // Super admin: load all users across tenants
+        // Super admin: load all users across tenants + insights
         if (userEmail === SUPER_ADMIN_EMAIL) {
           loadAllUsers();
+          loadInsights();
         }
       } catch (err) {
         console.error('Dashboard load failed:', err);
@@ -246,6 +304,123 @@
 
     function esc(s) {
       return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function pct(v) { return v == null ? '—' : (v * 100).toFixed(1) + '%'; }
+    function fmtMs(ms) {
+      if (ms == null) return '—';
+      const s = ms / 1000;
+      if (s < 60) return Math.round(s) + 's';
+      if (s < 3600) return Math.round(s / 60) + 'm';
+      if (s < 86400) return (s / 3600).toFixed(1) + 'h';
+      return (s / 86400).toFixed(1) + 'd';
+    }
+    function fmtDate(iso) { return iso ? new Date(iso).toLocaleDateString() : '—'; }
+    function fmtDateTime(iso) { return iso ? new Date(iso).toLocaleString() : '—'; }
+
+    async function loadInsights() {
+      try {
+        const res = await fetch(`${BACKEND_URL}/admin/insights`, {
+          headers: { 'Authorization': `Bearer ${sessionToken}` },
+        });
+        if (!res.ok) { console.warn('insights failed:', res.status); return; }
+        const d = await res.json();
+        document.getElementById('insights-section').style.display = 'block';
+
+        // Stat cards
+        document.getElementById('ins-activation').textContent = pct(d.activationRate);
+        document.getElementById('ins-activation-sub').textContent = `${d.funnel.tracked} of ${d.funnel.signedIn} users`;
+        document.getElementById('ins-firstexport').textContent = pct(d.firstExportRate);
+        document.getElementById('ins-firstexport-sub').textContent = `${d.funnel.exported} of ${d.funnel.signedIn} users`;
+        document.getElementById('ins-wau').textContent = d.wau;
+        document.getElementById('ins-mau').textContent = d.mau;
+        document.getElementById('ins-d7').textContent = pct(d.d7Retention);
+        document.getElementById('ins-d7-sub').textContent = d.d7Retention == null ? 'No 7d+ cohort yet' : 'of 7-day cohort';
+        document.getElementById('ins-d30').textContent = pct(d.d30Retention);
+        document.getElementById('ins-d30-sub').textContent = d.d30Retention == null ? 'No 30d+ cohort yet' : 'of 30-day cohort';
+        document.getElementById('ins-ttft').textContent = fmtMs(d.medianTimeToFirstTrackMs);
+        document.getElementById('ins-avgp').textContent = d.avgParticipants ? d.avgParticipants.toFixed(1) : '—';
+
+        // Funnel
+        const totalForBar = d.funnel.installed || 1;
+        document.getElementById('funnel-rows').innerHTML = [
+          ['Installed', d.funnel.installed],
+          ['Signed in', d.funnel.signedIn],
+          ['Tracked a meeting', d.funnel.tracked],
+          ['Exported to Sheets', d.funnel.exported],
+        ].map(([label, v]) => {
+          const w = Math.max(2, Math.round((v / totalForBar) * 100));
+          return `<div style="margin:8px 0">
+            <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:2px">
+              <span>${label}</span><span style="color:var(--muted)">${v}</span>
+            </div>
+            <div style="background:var(--border);border-radius:4px;height:18px;overflow:hidden">
+              <div style="width:${w}%;background:var(--accent);height:100%"></div>
+            </div>
+          </div>`;
+        }).join('');
+
+        // Daily chart
+        const maxCount = Math.max(1, ...d.meetingsByDay.map(x => x.count));
+        document.getElementById('daily-chart').innerHTML = d.meetingsByDay.map(x => {
+          const h = Math.max(2, Math.round((x.count / maxCount) * 100));
+          return `<div title="${x.date}: ${x.count}" style="flex:1;background:var(--blue);height:${h}%;min-width:6px;border-radius:2px 2px 0 0;opacity:${x.count > 0 ? 1 : 0.2}"></div>`;
+        }).join('');
+
+        // Repeat usage histogram
+        const totalOrgs = Object.values(d.meetingCountBuckets).reduce((a, b) => a + b, 0) || 1;
+        document.getElementById('repeat-rows').innerHTML = Object.entries(d.meetingCountBuckets).map(([bucket, count]) => {
+          const w = Math.max(2, Math.round((count / totalOrgs) * 100));
+          return `<div style="margin:8px 0">
+            <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:2px">
+              <span>${bucket} meetings</span><span style="color:var(--muted)">${count} org${count === 1 ? '' : 's'}</span>
+            </div>
+            <div style="background:var(--border);border-radius:4px;height:14px;overflow:hidden">
+              <div style="width:${w}%;background:var(--blue);height:100%"></div>
+            </div>
+          </div>`;
+        }).join('');
+
+        // Top orgs
+        const topOrgsBody = document.getElementById('top-orgs-rows');
+        if (!d.orgActivity?.length) {
+          topOrgsBody.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">No orgs yet</td></tr>';
+        } else {
+          topOrgsBody.innerHTML = d.orgActivity.slice(0, 10).map(o => `
+            <tr>
+              <td>${esc(o.domain)}${o.delegationConfigured ? ' <span class="badge badge-active" style="margin-left:4px">DWD</span>' : ''}</td>
+              <td>${o.users}</td>
+              <td>${o.meetings}</td>
+              <td>${o.exports}</td>
+              <td style="color:var(--muted)">${fmtDateTime(o.lastActivityAt)}</td>
+            </tr>
+          `).join('');
+        }
+
+        // Top exporters
+        const expBody = document.getElementById('top-exporters-rows');
+        if (d.topExporters?.length) {
+          expBody.innerHTML = d.topExporters.map(u => `
+            <tr><td>${esc(u.email)}</td><td style="color:var(--muted)">${esc(u.domain)}</td><td>${u.count}</td></tr>
+          `).join('');
+        }
+
+        // Churned users
+        const churnedBody = document.getElementById('churned-rows');
+        if (d.churnedUsers?.length) {
+          churnedBody.innerHTML = d.churnedUsers.map(u => `
+            <tr>
+              <td>${esc(u.email)}</td>
+              <td style="color:var(--muted)">${esc(u.domain)}</td>
+              <td>${esc(u.displayName) || '—'}</td>
+              <td style="color:var(--muted)">${fmtDate(u.createdAt)}</td>
+              <td style="color:var(--muted)">${fmtDateTime(u.lastLoginAt)}</td>
+            </tr>
+          `).join('');
+        }
+      } catch (err) {
+        console.error('Insights load failed:', err);
+      }
     }
 
     async function loadAllUsers() {
