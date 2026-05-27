@@ -279,6 +279,15 @@ router.post('/save-to-sheets', async (req, res) => {
     });
 
   } catch (err) {
+    // 403 means the user didn't grant the drive.file scope during OAuth consent.
+    // Google's consent screen lets users selectively uncheck non-sensitive scopes.
+    if (err.code === 403 || /insufficient permission/i.test(err.message || '')) {
+      log.warn('sheets export blocked by missing drive permission', { email: req.user?.email });
+      return res.status(403).json({
+        error: 'Google Drive permission is required to export attendance to Sheets. Please sign out and sign in again, keeping the Drive permission checked.',
+        code: 'DRIVE_PERMISSION_MISSING',
+      });
+    }
     log.error('sheets export failed', { error: err.message });
     res.status(500).json({ error: 'Failed to export to Google Sheets.' });
   }

@@ -1836,7 +1836,15 @@ async function doExportToSheets(emailMap, calendarAttendees = []) {
       method: 'POST',
       body: JSON.stringify(payload),
     });
-    if (!res.ok) throw new Error(`${res.status}`);
+    if (!res.ok) {
+      let body = {};
+      try { body = await res.json(); } catch {}
+      if (body.code === 'DRIVE_PERMISSION_MISSING') {
+        toast('⚠ Drive permission missing — sign out and sign in again with all permissions checked', 8000);
+        return;
+      }
+      throw new Error(body.error || `${res.status}`);
+    }
     const { sheetUrl } = await res.json();
     toast('✓ Saved to Sheets');
     const btn = document.getElementById('btn-sheets');
@@ -2089,12 +2097,12 @@ function updateLastRefresh() {
    TOAST
 ═══════════════════════════════════════════════════════════════ */
 let toastTimer;
-function toast(msg) {
+function toast(msg, durationMs) {
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+  toastTimer = setTimeout(() => el.classList.remove('show'), durationMs || 3000);
 }
 
 /* ═══════════════════════════════════════════════════════════════
