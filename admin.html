@@ -126,6 +126,9 @@
         </table>
       </div>
 
+      <!-- Super admin: due reminders banner -->
+      <div id="reminders-bar" style="display:none;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.35);border-radius:8px;padding:12px 14px;margin-bottom:16px"></div>
+
       <!-- Super admin: live founder loop sections -->
       <div id="founder-section" style="display:none">
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;margin-bottom:24px">
@@ -264,6 +267,76 @@
     </div>
   </div>
 
+  <!-- User Detail Modal -->
+  <div id="user-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;max-width:760px;width:100%;margin:20px 0">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div id="um-title" style="font-size:1.1rem;font-weight:700">—</div>
+        <button onclick="closeUserModal()" style="background:transparent;color:var(--muted);border:none;font-size:1.4rem;cursor:pointer">×</button>
+      </div>
+      <div id="um-body" style="display:none">
+        <!-- Filled by loadUserDetail() -->
+      </div>
+      <div id="um-loading" style="text-align:center;color:var(--muted);padding:40px">Loading…</div>
+    </div>
+  </div>
+
+  <!-- Email Composer Modal -->
+  <div id="email-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1100;align-items:center;justify-content:center;padding:20px">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;max-width:560px;width:100%">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-weight:700">Send email</div>
+        <button onclick="closeEmailModal()" style="background:transparent;color:var(--muted);border:none;font-size:1.4rem;cursor:pointer">×</button>
+      </div>
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:6px">To: <span id="em-to"></span></div>
+      <div style="display:flex;gap:6px;margin-bottom:8px">
+        <select id="em-template" onchange="applyTemplate(this.value)" style="flex:1;background:#0d1117;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 8px;font-size:.8rem"><option value="">— Choose template —</option></select>
+        <button onclick="openTemplatesModal()" style="background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:6px 10px;font-size:.75rem;cursor:pointer">Edit templates</button>
+      </div>
+      <input id="em-subject" placeholder="Subject" style="width:100%;background:#0d1117;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px;font-size:.85rem;margin-bottom:8px;box-sizing:border-box" />
+      <textarea id="em-body" placeholder="Body" rows="10" style="width:100%;background:#0d1117;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px;font-size:.85rem;font-family:inherit;resize:vertical;box-sizing:border-box;margin-bottom:10px"></textarea>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span id="em-status" style="font-size:.75rem;color:var(--muted)"></span>
+        <div style="display:flex;gap:6px">
+          <button onclick="closeEmailModal()" class="btn btn-secondary">Cancel</button>
+          <button onclick="sendComposedEmail()" class="btn btn-primary" id="em-send-btn">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Templates Manager Modal -->
+  <div id="templates-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1200;align-items:center;justify-content:center;padding:20px">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;max-width:600px;width:100%;max-height:80vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-weight:700">Email templates <span style="color:var(--muted);font-weight:400;font-size:.8rem">— {{firstName}}, {{tracked}}, {{exported}}, {{daysAgo}}, {{domain}} are substituted</span></div>
+        <button onclick="closeTemplatesModal()" style="background:transparent;color:var(--muted);border:none;font-size:1.4rem;cursor:pointer">×</button>
+      </div>
+      <div id="tm-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px"></div>
+      <div style="display:flex;justify-content:space-between;gap:8px">
+        <button onclick="addTemplate()" class="btn btn-secondary">+ Add template</button>
+        <button onclick="saveTemplates()" class="btn btn-primary">Save all</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reminder Modal -->
+  <div id="reminder-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1100;align-items:center;justify-content:center;padding:20px">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;max-width:420px;width:100%">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-weight:700">Set a reminder</div>
+        <button onclick="closeReminderModal()" style="background:transparent;color:var(--muted);border:none;font-size:1.4rem;cursor:pointer">×</button>
+      </div>
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:6px">For: <span id="rm-target"></span></div>
+      <input id="rm-date" type="date" style="width:100%;background:#0d1117;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px;font-size:.85rem;margin-bottom:8px;box-sizing:border-box" />
+      <input id="rm-note" placeholder="What's the reminder?" style="width:100%;background:#0d1117;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px;font-size:.85rem;box-sizing:border-box;margin-bottom:14px" />
+      <div style="display:flex;justify-content:flex-end;gap:8px">
+        <button onclick="closeReminderModal()" class="btn btn-secondary">Cancel</button>
+        <button onclick="saveReminder()" class="btn btn-primary">Create reminder</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const BACKEND_URL = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
     const CLIENT_ID = '829771833968-92hq9toga2ga92mg7nfuf6dqclj7er2n.apps.googleusercontent.com';
@@ -366,6 +439,7 @@
           loadPowerUsers();
           loadAllUsers();
           loadInsights();
+          loadDueReminders();
           startLiveRefresh();
         }
       } catch (err) {
@@ -674,19 +748,338 @@
           return;
         }
         body.innerHTML = users.map(u => `
-          <tr>
+          <tr onclick="openUserModal('${esc(u.email)}','${esc(u.domain)}')" style="cursor:pointer">
             <td>${esc(u.displayName || u.email)}<div class="muted" style="font-size:.7rem">${esc(u.email)}</div></td>
             <td style="color:var(--muted);font-size:.8rem">${esc(u.domain)}</td>
             <td>${u.tracked}</td>
             <td>${u.exported}</td>
             <td style="color:var(--muted);font-size:.8rem">${esc(u.acquisitionSource || '—')}</td>
             <td style="color:var(--muted);font-size:.8rem">${timeAgo(u.lastActivityAt)}</td>
-            <td><div style="display:flex;gap:4px;justify-content:flex-end"><a href="mailto:${esc(u.email)}" style="background:var(--accent);color:var(--bg);text-decoration:none;padding:4px 8px;border-radius:6px;font-size:.72rem;font-weight:600">📧</a><button onclick="markContacted('${esc(u.email)}','${esc(u.domain)}')" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:.72rem;cursor:pointer">✓</button></div></td>
+            <td onclick="event.stopPropagation()"><div style="display:flex;gap:4px;justify-content:flex-end"><button onclick="openEmailModal('${esc(u.email)}','${esc(u.domain)}','${esc(u.displayName)}','${u.tracked}','${u.exported}','?')" style="background:var(--accent);color:var(--bg);border:none;padding:4px 8px;border-radius:6px;font-size:.72rem;font-weight:600;cursor:pointer">📧</button><button onclick="markContacted('${esc(u.email)}','${esc(u.domain)}')" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:.72rem;cursor:pointer">✓</button></div></td>
           </tr>
         `).join('');
       } catch (err) {
         console.error('power users load failed:', err);
       }
+    }
+
+    // ── User detail modal (drill-down) ──
+    let _currentUser = null; // { email, domain }
+    async function openUserModal(email, domain) {
+      _currentUser = { email, domain };
+      document.getElementById('um-title').textContent = email;
+      document.getElementById('um-loading').style.display = 'block';
+      document.getElementById('um-body').style.display = 'none';
+      document.getElementById('um-body').innerHTML = '';
+      document.getElementById('user-modal').style.display = 'flex';
+      try {
+        const res = await fetch(`${BACKEND_URL}/admin/user?email=${encodeURIComponent(email)}&domain=${encodeURIComponent(domain)}`, { headers: { Authorization: `Bearer ${sessionToken}` } });
+        if (!res.ok) throw new Error(`${res.status}`);
+        const u = await res.json();
+        renderUserDetail(u);
+      } catch (err) {
+        document.getElementById('um-loading').textContent = 'Failed to load.';
+      }
+    }
+
+    function closeUserModal() {
+      document.getElementById('user-modal').style.display = 'none';
+      _currentUser = null;
+    }
+
+    function healthBadge(score) {
+      const color = score >= 70 ? 'var(--accent)' : score >= 40 ? '#fbbf24' : 'var(--error)';
+      return `<span style="background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;padding:2px 10px;font-size:.75rem;font-weight:600;color:${color}">Health ${score}</span>`;
+    }
+
+    function renderUserDetail(u) {
+      document.getElementById('um-title').innerHTML = `${esc(u.displayName || u.email)} ${healthBadge(u.healthScore)}`;
+      const eventIcons = { signin: '👋', tracked: '📋', exported: '📊' };
+      const c = u.conversation || [];
+      const convoHtml = c.length === 0
+        ? '<div style="color:var(--muted);font-size:.8rem">No conversation yet. Click Send email to start one.</div>'
+        : c.map(e => `<div style="background:#0d1117;border-left:3px solid ${e.direction === 'sent' ? 'var(--accent)' : 'var(--blue)'};padding:6px 10px;border-radius:0 4px 4px 0;font-size:.78rem"><div style="color:var(--muted);font-size:.68rem">${e.direction === 'sent' ? '→ Sent' : '← Received'} · ${esc(timeAgo(e.at))}${e.subject ? ' · ' + esc(e.subject) : ''}</div><div style="white-space:pre-wrap;margin-top:3px;color:#c9d1d9">${esc(e.body)}</div></div>`).join('');
+
+      const remindersHtml = (u.reminders && u.reminders.length)
+        ? u.reminders.map(r => {
+            const due = new Date(r.remindAt).getTime() < Date.now();
+            return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:#0d1117;border:1px solid var(--border);border-radius:6px;font-size:.78rem"><div><span style="color:${due ? 'var(--error)' : 'var(--muted)'};font-size:.7rem">${fmtDate(r.remindAt)}${due ? ' · DUE' : ''}</span><div>${esc(r.body || 'No note')}</div></div>${r.done ? '<span style="color:var(--muted);font-size:.7rem">✓ done</span>' : `<button onclick="completeReminder('${r.id}','${esc(u.domain)}')" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:.7rem;cursor:pointer">Done</button>`}</div>`;
+          }).join('')
+        : '<div style="color:var(--muted);font-size:.8rem">No reminders set.</div>';
+
+      const meetingsHtml = (u.meetings && u.meetings.length)
+        ? u.meetings.slice(0, 10).map(m => `<div style="display:flex;justify-content:space-between;padding:5px 8px;background:#0d1117;border:1px solid var(--border);border-radius:6px;font-size:.78rem"><span>${esc(m.title)}</span><span style="color:var(--muted)">${m.participantCount} ppl · ${fmtDate(m.startTime)}</span></div>`).join('')
+        : '<div style="color:var(--muted);font-size:.8rem">No meetings tracked yet.</div>';
+
+      const timelineHtml = u.events.slice(0, 30).map(e => `<div style="display:flex;gap:8px;padding:4px 0;font-size:.78rem"><div>${eventIcons[e.type] || '•'}</div><div style="flex:1"><span style="color:#c9d1d9">${esc(e.type)}</span> <span style="color:var(--muted);font-size:.7rem">${timeAgo(e.createdAt)}</span></div></div>`).join('');
+
+      const replyStatus = u.outreach?.replyStatus || null;
+      const statusBadge = replyStatus
+        ? `<span style="background:${replyStatus === 'replied' ? 'rgba(74,222,128,.15)' : replyStatus === 'awaiting' ? 'rgba(251,191,36,.15)' : 'rgba(248,81,73,.15)'};color:${replyStatus === 'replied' ? 'var(--accent)' : replyStatus === 'awaiting' ? '#fbbf24' : 'var(--error)'};border-radius:10px;padding:2px 8px;font-size:.7rem;font-weight:600">${replyStatus.toUpperCase()}</span>`
+        : '';
+
+      document.getElementById('um-body').innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px;font-size:.85rem">
+          <div style="background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center"><div style="font-weight:700">${u.counts.tracked}</div><div style="color:var(--muted);font-size:.65rem;text-transform:uppercase">Tracked</div></div>
+          <div style="background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center"><div style="font-weight:700">${u.counts.exported}</div><div style="color:var(--muted);font-size:.65rem;text-transform:uppercase">Exported</div></div>
+          <div style="background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center"><div style="font-weight:700">${u.counts.signins}</div><div style="color:var(--muted);font-size:.65rem;text-transform:uppercase">Sign-ins</div></div>
+          <div style="background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center"><div style="font-weight:700">${fmtDate(u.createdAt)}</div><div style="color:var(--muted);font-size:.65rem;text-transform:uppercase">Joined</div></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div>
+            <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Profile</div>
+            <div style="font-size:.8rem;line-height:1.6"><span style="color:var(--muted)">Email:</span> ${esc(u.email)}<br><span style="color:var(--muted)">Domain:</span> ${esc(u.domain)}<br><span style="color:var(--muted)">Source:</span> ${esc(u.acquisitionSource || u.utmSource || '—')}<br><span style="color:var(--muted)">Last login:</span> ${esc(fmtDateTime(u.lastLoginAt))}</div>
+          </div>
+          <div>
+            <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Outreach ${statusBadge}</div>
+            <div style="font-size:.8rem;line-height:1.6"><span style="color:var(--muted)">Last contacted:</span> ${esc(fmtDateTime(u.outreach?.lastEmailedAt || u.outreach?.contactedAt))}</div>
+            <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+              <button onclick="openEmailModal('${esc(u.email)}','${esc(u.domain)}','${esc(u.displayName)}','${u.counts.tracked}','${u.counts.exported}','${ageDaysCalc(u.createdAt)}')" class="btn btn-primary" style="font-size:.72rem;padding:5px 10px">📧 Send email</button>
+              <button onclick="openReminderModal('${esc(u.email)}','${esc(u.domain)}','${esc(u.displayName)}')" class="btn btn-secondary" style="font-size:.72rem;padding:5px 10px">⏰ Remind me</button>
+              <button onclick="markReply('${esc(u.email)}','${esc(u.domain)}','replied')" class="btn btn-secondary" style="font-size:.72rem;padding:5px 10px">↩ Replied</button>
+              <button onclick="markReply('${esc(u.email)}','${esc(u.domain)}','ghosted')" class="btn btn-secondary" style="font-size:.72rem;padding:5px 10px">👻 Ghosted</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px">
+          <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Your private note</div>
+          <textarea id="um-note" rows="3" placeholder="Anything you want to remember about this user…" style="width:100%;background:#0d1117;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px;font-size:.85rem;font-family:inherit;resize:vertical;box-sizing:border-box">${esc(u.note || '')}</textarea>
+          <button onclick="saveAdminNote()" class="btn btn-primary" style="margin-top:6px;font-size:.75rem;padding:5px 12px">Save note</button>
+          <span id="um-note-status" style="font-size:.7rem;color:var(--muted);margin-left:8px"></span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div>
+            <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Reminders</div>
+            <div style="display:flex;flex-direction:column;gap:6px">${remindersHtml}</div>
+          </div>
+          <div>
+            <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Recent meetings tracked</div>
+            <div style="display:flex;flex-direction:column;gap:6px">${meetingsHtml}</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px">
+          <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Conversation</div>
+          <div style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto">${convoHtml}</div>
+        </div>
+
+        <div>
+          <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Activity timeline (last 30)</div>
+          <div style="max-height:200px;overflow-y:auto;padding-left:6px">${timelineHtml || '<div style="color:var(--muted);font-size:.8rem">No events.</div>'}</div>
+        </div>
+      `;
+      document.getElementById('um-loading').style.display = 'none';
+      document.getElementById('um-body').style.display = 'block';
+    }
+
+    function ageDaysCalc(iso) {
+      if (!iso) return '?';
+      return String(Math.floor((Date.now() - new Date(iso).getTime()) / 86400000));
+    }
+
+    async function saveAdminNote() {
+      if (!_currentUser) return;
+      const body = document.getElementById('um-note').value;
+      const status = document.getElementById('um-note-status');
+      status.textContent = 'Saving…';
+      try {
+        const res = await fetch(`${BACKEND_URL}/admin/note`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sessionToken}` },
+          body: JSON.stringify({ ..._currentUser, body }),
+        });
+        if (!res.ok) throw new Error(`${res.status}`);
+        status.textContent = '✓ Saved';
+        setTimeout(() => status.textContent = '', 2000);
+      } catch (err) {
+        status.textContent = '⚠ Failed';
+      }
+    }
+
+    async function markReply(email, domain, status) {
+      try {
+        await fetch(`${BACKEND_URL}/admin/outreach/status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sessionToken}` },
+          body: JSON.stringify({ email, domain, status }),
+        });
+        if (_currentUser && _currentUser.email === email) openUserModal(email, domain);
+        loadSuggestions();
+      } catch (err) {}
+    }
+
+    // ── Email composer ──
+    let _emailCtx = null; // { email, domain, displayName, tracked, exported, daysAgo }
+    let _templatesCache = [];
+    async function openEmailModal(email, domain, displayName, tracked, exported, daysAgo) {
+      _emailCtx = { email, domain, displayName, tracked, exported, daysAgo };
+      document.getElementById('em-to').textContent = email;
+      document.getElementById('em-subject').value = '';
+      document.getElementById('em-body').value = '';
+      document.getElementById('em-status').textContent = '';
+      document.getElementById('em-send-btn').disabled = false;
+      document.getElementById('em-modal') || document.getElementById('email-modal').style.display = 'flex';
+      document.getElementById('email-modal').style.display = 'flex';
+      await refreshTemplatesSelect();
+    }
+
+    function closeEmailModal() {
+      document.getElementById('email-modal').style.display = 'none';
+      _emailCtx = null;
+    }
+
+    async function refreshTemplatesSelect() {
+      try {
+        const res = await fetch(`${BACKEND_URL}/admin/templates`, { headers: { Authorization: `Bearer ${sessionToken}` } });
+        if (!res.ok) return;
+        const { items } = await res.json();
+        _templatesCache = items || [];
+        const sel = document.getElementById('em-template');
+        sel.innerHTML = '<option value="">— Choose template —</option>' + _templatesCache.map((t, i) => `<option value="${i}">${esc(t.name)}</option>`).join('');
+      } catch (err) {}
+    }
+
+    function applyTemplate(idx) {
+      if (idx === '') return;
+      const t = _templatesCache[+idx];
+      if (!t || !_emailCtx) return;
+      const subs = {
+        firstName: (_emailCtx.displayName || _emailCtx.email).split(' ')[0].split('@')[0],
+        tracked: _emailCtx.tracked,
+        exported: _emailCtx.exported,
+        daysAgo: _emailCtx.daysAgo,
+        domain: _emailCtx.domain,
+      };
+      const fill = (s) => s.replace(/\{\{(\w+)\}\}/g, (_, k) => subs[k] != null ? subs[k] : '');
+      document.getElementById('em-subject').value = fill(t.subject || '');
+      document.getElementById('em-body').value = fill(t.body || '');
+    }
+
+    async function sendComposedEmail() {
+      if (!_emailCtx) return;
+      const subject = document.getElementById('em-subject').value.trim();
+      const body = document.getElementById('em-body').value.trim();
+      if (!subject || !body) { alert('Subject and body required'); return; }
+      const btn = document.getElementById('em-send-btn');
+      btn.disabled = true;
+      document.getElementById('em-status').textContent = 'Sending…';
+      try {
+        const res = await fetch(`${BACKEND_URL}/admin/send-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sessionToken}` },
+          body: JSON.stringify({ to: _emailCtx.email, domain: _emailCtx.domain, subject, body }),
+        });
+        if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || `${res.status}`); }
+        document.getElementById('em-status').textContent = '✓ Sent';
+        loadSuggestions();
+        if (_currentUser && _currentUser.email === _emailCtx.email) {
+          openUserModal(_emailCtx.email, _emailCtx.domain);
+        }
+        setTimeout(closeEmailModal, 800);
+      } catch (err) {
+        document.getElementById('em-status').textContent = '⚠ ' + err.message;
+        btn.disabled = false;
+      }
+    }
+
+    // ── Templates manager ──
+    let _editingTemplates = [];
+    async function openTemplatesModal() {
+      const res = await fetch(`${BACKEND_URL}/admin/templates`, { headers: { Authorization: `Bearer ${sessionToken}` } });
+      const { items } = res.ok ? await res.json() : { items: [] };
+      _editingTemplates = items || [];
+      renderTemplatesEditor();
+      document.getElementById('templates-modal').style.display = 'flex';
+    }
+
+    function closeTemplatesModal() { document.getElementById('templates-modal').style.display = 'none'; }
+
+    function renderTemplatesEditor() {
+      document.getElementById('tm-list').innerHTML = _editingTemplates.map((t, i) => `
+        <div style="background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;gap:6px">
+            <input value="${esc(t.name)}" oninput="_editingTemplates[${i}].name=this.value" placeholder="Name" style="flex:1;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:4px;padding:4px 6px;font-size:.78rem;font-weight:600" />
+            <button onclick="_editingTemplates.splice(${i},1);renderTemplatesEditor()" style="background:transparent;color:var(--error);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:.7rem;cursor:pointer">Delete</button>
+          </div>
+          <input value="${esc(t.subject)}" oninput="_editingTemplates[${i}].subject=this.value" placeholder="Subject" style="background:transparent;border:1px solid var(--border);color:var(--text);border-radius:4px;padding:4px 6px;font-size:.78rem" />
+          <textarea rows="4" oninput="_editingTemplates[${i}].body=this.value" placeholder="Body" style="background:transparent;border:1px solid var(--border);color:var(--text);border-radius:4px;padding:4px 6px;font-size:.78rem;font-family:inherit;resize:vertical">${esc(t.body)}</textarea>
+        </div>
+      `).join('') || '<div style="color:var(--muted);font-size:.85rem;padding:20px;text-align:center">No templates yet.</div>';
+    }
+
+    function addTemplate() {
+      _editingTemplates.push({ name: 'New template', subject: '', body: '' });
+      renderTemplatesEditor();
+    }
+
+    async function saveTemplates() {
+      try {
+        await fetch(`${BACKEND_URL}/admin/templates`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sessionToken}` },
+          body: JSON.stringify({ items: _editingTemplates }),
+        });
+        closeTemplatesModal();
+        refreshTemplatesSelect();
+      } catch (err) { alert('Failed to save'); }
+    }
+
+    // ── Reminders ──
+    let _reminderCtx = null;
+    function openReminderModal(email, domain, displayName) {
+      _reminderCtx = { email, domain };
+      document.getElementById('rm-target').textContent = `${displayName || email}`;
+      const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+      document.getElementById('rm-date').value = tomorrow;
+      document.getElementById('rm-note').value = '';
+      document.getElementById('reminder-modal').style.display = 'flex';
+    }
+
+    function closeReminderModal() { document.getElementById('reminder-modal').style.display = 'none'; }
+
+    async function saveReminder() {
+      if (!_reminderCtx) return;
+      const date = document.getElementById('rm-date').value;
+      const body = document.getElementById('rm-note').value;
+      if (!date) { alert('Pick a date'); return; }
+      try {
+        await fetch(`${BACKEND_URL}/admin/reminders`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sessionToken}` },
+          body: JSON.stringify({ ..._reminderCtx, remindAt: new Date(date).toISOString(), body }),
+        });
+        closeReminderModal();
+        loadDueReminders();
+        if (_currentUser && _currentUser.email === _reminderCtx.email) openUserModal(_reminderCtx.email, _reminderCtx.domain);
+      } catch (err) { alert('Failed'); }
+    }
+
+    async function completeReminder(id, domain) {
+      try {
+        await fetch(`${BACKEND_URL}/admin/reminders/${id}/done`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sessionToken}` },
+          body: JSON.stringify({ domain }),
+        });
+        if (_currentUser) openUserModal(_currentUser.email, _currentUser.domain);
+        loadDueReminders();
+      } catch (err) {}
+    }
+
+    async function loadDueReminders() {
+      try {
+        const res = await fetch(`${BACKEND_URL}/admin/reminders/due`, { headers: { Authorization: `Bearer ${sessionToken}` } });
+        if (!res.ok) return;
+        const { reminders } = await res.json();
+        const bar = document.getElementById('reminders-bar');
+        if (!reminders.length) { bar.style.display = 'none'; return; }
+        bar.style.display = 'block';
+        bar.innerHTML = `<div style="font-weight:700;color:#fbbf24;margin-bottom:8px">⏰ ${reminders.length} reminder${reminders.length === 1 ? '' : 's'} due</div>` +
+          reminders.slice(0, 5).map(r => `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:.82rem;border-top:1px solid rgba(251,191,36,.15)"><div><strong>${esc(r.email)}</strong> · <span style="color:var(--muted)">${esc(r.body || 'No note')}</span></div><div><button onclick="openUserModal('${esc(r.email)}','${esc(r.domain)}')" class="btn btn-secondary" style="font-size:.7rem;padding:3px 8px">Open</button> <button onclick="completeReminder('${r.id}','${esc(r.domain)}')" class="btn btn-secondary" style="font-size:.7rem;padding:3px 8px">Done</button></div></div>`).join('');
+      } catch (err) {}
     }
 
     async function markContacted(email, domain) {
@@ -736,7 +1129,7 @@
           return;
         }
         body.innerHTML = data.users.map(u => `
-          <tr>
+          <tr onclick="openUserModal('${esc(u.email)}','${esc(u.domain)}')" style="cursor:pointer">
             <td>${esc(u.email)}</td>
             <td style="color:var(--muted)">${esc(u.domain)}</td>
             <td>${esc(u.displayName) || '—'}</td>

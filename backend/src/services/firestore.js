@@ -1016,6 +1016,283 @@ function encodeNoteKey(key) {
   return key.replace(/[\/#?]/g, '_').slice(0, 1500);
 }
 
+// ── Admin: full user detail (drill-down modal) ──
+// Pulls everything we know about one user into one payload: profile, every
+// event in their timeline, meetings they've tracked, admin notes, outreach
+// conversation log.
+async function getUserDetail(domain, email) {
+  try {
+    const tenant = tenantRef(domain);
+    const emailLower = email.toLowerCase();
+    const [userDoc, eventsSnap, notesDoc, outreachDoc, remindersSnap] = await Promise.all([
+      tenant.collection('users').doc(emailLower).get(),
+      tenant.collection('events').where('email', '==', emailLower).get(),
+      tenant.collection('adminNotes').doc(emailLower).get(),
+      tenant.collection('outreach').doc(emailLower).get(),
+      tenant.collection('reminders').where('email', '==', emailLower).get(),
+    ]);
+    if (!userDoc.exists) return null;
+    const user = userDoc.data();
+
+    const events = eventsSnap.docs
+      .map(d => ({ id: d.id, ...d.data(), createdAt: d.data().createdAt?.toDate?.()?.toISOString() || null }))
+      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+    // Resolve meeting titles for tracked events that include a conferenceId.
+    const trackedIds = [...new Set(events.filter(e => e.type === 'tracked' && e.meta?.conferenceId).map(e => e.meta.conferenceId))];
+    const meetingsMap = {};
+    if (trackedIds.length > 0) {
+      const meetingDocs = await Promise.all(trackedIds.map(id => tenant.collection('meetings').doc(id).get()));
+      for (const d of meetingDocs) {
+        if (d.exists) {
+          const m = d.data();
+          meetingsMap[d.id] = {
+            id: d.id,
+            title: m.title || 'Untitled meeting',
+            participantCount: m.participantCount || 0,
+            startTime: m.startTime?.toDate?.()?.toISOString() || null,
+          };
+        }
+      }
+    }
+
+    const note = notesDoc.exists ? (notesDoc.data().body || '') : '';
+    const outreach = outreachDoc.exists ? outreachDoc.data() : null;
+    const reminders = remindersSnap.docs
+      .map(d => ({
+        id: d.id,
+        ...d.data(),
+        remindAt: d.data().remindAt?.toDate?.()?.toISOString() || null,
+        createdAt: d.data().createdAt?.toDate?.()?.toISOString() || null,
+      }))
+      .sort((a, b) => new Date(a.remindAt || 0) - new Date(b.remindAt || 0));
+
+    // Conversation log lives inside the outreach doc as an appended array so
+    // we can show "you sent X, no reply" / "they replied on date" style.
+    const conversation = outreach?.conversation || [];
+
+    return {
+      email: emailLower,
+      domain,
+      displayName: user.displayName || '',
+      acquisitionSource: user.acquisitionSource || null,
+      utmSource: user.utmSource || null,
+      createdAt: user.createdAt?.toDate?.()?.toISOString() || null,
+      lastLoginAt: user.lastLoginAt?.toDate?.()?.toISOString() || null,
+      counts: {
+        tracked: events.filter(e => e.type === 'tracked').length,
+        exported: events.filter(e => e.type === 'exported').length,
+        signins: events.filter(e => e.type === 'signin').length,
+      },
+      events,
+      meetings: Object.values(meetingsMap).sort((a, b) => new Date(b.startTime || 0) - new Date(a.startTime || 0)),
+      note,
+      outreach: outreach ? {
+        contactedAt: outreach.contactedAt?.toDate?.()?.toISOString() || null,
+        replyStatus: outreach.replyStatus || null,
+        lastEmailedAt: outreach.lastEmailedAt?.toDate?.()?.toISOString() || null,
+      } : null,
+      conversation,
+      reminders,
+      healthScore: computeHealthScore(user, events),
+    };
+  } catch (err) {
+    log.error('firestore: getUserDetail failed', { domain, email, error: err.message });
+    return null;
+  }
+}
+
+// 0-100. Composite of recency, frequency, depth, account age.
+function computeHealthScore(user, events) {
+  const now = Date.now();
+  const created = user.createdAt?.toDate?.()?.getTime() || now;
+  const ageDays = Math.max(1, (now - created) / 86400000);
+
+  const tracked = events.filter(e => e.type === 'tracked').length;
+  const exported = events.filter(e => e.type === 'exported').length;
+  const last = events.reduce((m, e) => Math.max(m, e.createdAt?.toDate?.()?.getTime() || 0), 0);
+  const daysSinceLast = last ? (now - last) / 86400000 : 999;
+
+  let score = 0;
+  // Recency (40 pts): -1 per day since last activity
+  score += Math.max(0, 40 - daysSinceLast * 1.5);
+  // Frequency (30 pts): tracks per week, capped at 30
+  score += Math.min(30, (tracked / Math.max(1, ageDays / 7)) * 6);
+  // Depth (20 pts): exported vs only-tracked
+  score += exported > 0 ? 20 : (tracked > 0 ? 8 : 0);
+  // Stickiness bonus for surviving past day 30
+  if (ageDays > 30 && daysSinceLast < 14) score += 10;
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+// ── Admin notes on any user (CRM-style) ──
+async function setAdminNote(domain, email, body, authorEmail) {
+  try {
+    const ref = tenantRef(domain).collection('adminNotes').doc(email.toLowerCase());
+    if (!body || !body.trim()) {
+      await ref.delete();
+      return { deleted: true };
+    }
+    await ref.set({
+      body: body.slice(0, 5000),
+      authorEmail,
+      updatedAt: FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+    return { saved: true };
+  } catch (err) {
+    log.error('firestore: setAdminNote failed', { domain, email, error: err.message });
+    throw err;
+  }
+}
+
+// Cross-tenant search of admin notes (super admin searches their CRM).
+async function searchAdminNotes(query) {
+  try {
+    const q = (query || '').toLowerCase();
+    if (!q) return [];
+    const snap = await getDb().collectionGroup('adminNotes').get();
+    return snap.docs
+      .map(d => ({
+        email: d.id,
+        domain: d.ref.parent.parent.id,
+        body: d.data().body || '',
+        updatedAt: d.data().updatedAt?.toDate?.()?.toISOString() || null,
+      }))
+      .filter(n => n.body.toLowerCase().includes(q) || n.email.includes(q))
+      .sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+  } catch (err) {
+    log.error('firestore: searchAdminNotes failed', { error: err.message });
+    return [];
+  }
+}
+
+// ── Outreach: append a conversation entry + update reply status ──
+async function appendConversation(domain, email, entry) {
+  try {
+    const ref = tenantRef(domain).collection('outreach').doc(email.toLowerCase());
+    const doc = await ref.get();
+    const existing = doc.exists ? (doc.data().conversation || []) : [];
+    const newEntry = {
+      direction: entry.direction || 'sent',
+      subject: entry.subject || '',
+      body: (entry.body || '').slice(0, 5000),
+      at: new Date().toISOString(),
+    };
+    const update = {
+      email: email.toLowerCase(),
+      conversation: [...existing, newEntry],
+      lastEmailedAt: entry.direction === 'sent' ? FieldValue.serverTimestamp() : undefined,
+      contactedAt: entry.direction === 'sent' ? FieldValue.serverTimestamp() : undefined,
+    };
+    if (entry.replyStatus) update.replyStatus = entry.replyStatus;
+    await ref.set(update, { merge: true });
+    return newEntry;
+  } catch (err) {
+    log.error('firestore: appendConversation failed', { domain, email, error: err.message });
+    throw err;
+  }
+}
+
+async function setOutreachStatus(domain, email, status) {
+  try {
+    await tenantRef(domain).collection('outreach').doc(email.toLowerCase()).set({
+      email: email.toLowerCase(),
+      replyStatus: status,
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+  } catch (err) {
+    log.error('firestore: setOutreachStatus failed', { domain, email, error: err.message });
+  }
+}
+
+// ── Reminders / follow-up scheduling ──
+async function createReminder(domain, email, { remindAt, body, createdBy }) {
+  try {
+    const ref = await tenantRef(domain).collection('reminders').add({
+      email: email.toLowerCase(),
+      remindAt: new Date(remindAt),
+      body: (body || '').slice(0, 500),
+      createdBy: createdBy || null,
+      done: false,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+    return { id: ref.id };
+  } catch (err) {
+    log.error('firestore: createReminder failed', { domain, email, error: err.message });
+    throw err;
+  }
+}
+
+async function markReminderDone(domain, reminderId) {
+  try {
+    await tenantRef(domain).collection('reminders').doc(reminderId).set({
+      done: true,
+      doneAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+  } catch (err) {
+    log.error('firestore: markReminderDone failed', { domain, reminderId, error: err.message });
+  }
+}
+
+async function getDueReminders() {
+  try {
+    const snap = await getDb().collectionGroup('reminders').where('done', '==', false).get();
+    const now = Date.now();
+    return snap.docs
+      .map(d => ({
+        id: d.id,
+        domain: d.ref.parent.parent.id,
+        ...d.data(),
+        remindAt: d.data().remindAt?.toDate?.()?.getTime() || 0,
+      }))
+      .filter(r => r.remindAt <= now)
+      .sort((a, b) => a.remindAt - b.remindAt)
+      .map(r => ({ ...r, remindAt: new Date(r.remindAt).toISOString() }));
+  } catch (err) {
+    log.error('firestore: getDueReminders failed', { error: err.message });
+    return [];
+  }
+}
+
+// ── Email templates (stored under a single super-admin doc) ──
+const TEMPLATES_DOC = () => getDb().collection('admin').doc('templates');
+
+async function getEmailTemplates() {
+  try {
+    const doc = await TEMPLATES_DOC().get();
+    const data = doc.exists ? (doc.data().items || []) : [];
+    // Seed defaults the first time so the UI isn't empty.
+    if (data.length === 0) {
+      return [
+        { name: 'Welcome', subject: 'Welcome to Attendance Tracker', body: "Hi {{firstName}},\n\nI'm Derek, the developer of Attendance Tracker -- thanks for signing up.\n\nQuick question: what brought you to the app, and what's the one thing you're hoping to do with it?\n\nDerek" },
+        { name: 'Check-in (no track)', subject: 'Quick check-in on Attendance Tracker', body: "Hi {{firstName}},\n\nNoticed you signed up for Attendance Tracker {{daysAgo}} days ago but haven't tracked a meeting yet. Anything getting in the way?\n\nHappy to hop on a quick call or troubleshoot over email.\n\nDerek" },
+        { name: 'Power user / testimonial ask', subject: 'You\'re one of our most active users', body: "Hi {{firstName}},\n\nYou've tracked {{tracked}} meetings and exported {{exported}} reports this week -- you're one of our most active users.\n\nWould you be willing to share a quick line about your experience? Anything you'd write back goes a long way.\n\nDerek" },
+      ];
+    }
+    return data;
+  } catch (err) {
+    log.error('firestore: getEmailTemplates failed', { error: err.message });
+    return [];
+  }
+}
+
+async function setEmailTemplates(items) {
+  try {
+    await TEMPLATES_DOC().set({
+      items: items.slice(0, 30).map(t => ({
+        name: (t.name || '').slice(0, 100),
+        subject: (t.subject || '').slice(0, 300),
+        body: (t.body || '').slice(0, 5000),
+      })),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  } catch (err) {
+    log.error('firestore: setEmailTemplates failed', { error: err.message });
+    throw err;
+  }
+}
+
 // ── Admin: recent activity feed (super admin only) ──
 // Returns the most recent events across every tenant for the live feed.
 async function getRecentActivity({ limit = 50 } = {}) {
@@ -1310,6 +1587,10 @@ module.exports = {
   getUserMeetingHistory,
   getParticipantHistory, setParticipantNote, getParticipantNote,
   getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted,
+  getUserDetail, setAdminNote, searchAdminNotes,
+  appendConversation, setOutreachStatus,
+  createReminder, markReminderDone, getDueReminders,
+  getEmailTemplates, setEmailTemplates,
   getAllUsersAcrossTenants,
   getAggregatedInsights,
   getOutreachList,

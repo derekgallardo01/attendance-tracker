@@ -73,4 +73,24 @@ function escape(s) {
   }[c]));
 }
 
-module.exports = { sendSignupWebhook };
+// Generic email send used by the admin "email from dashboard" feature.
+// Returns { sent: true, messageId } or throws if SMTP isn't configured.
+async function sendAdminEmail({ to, subject, body }) {
+  const transporter = getTransporter();
+  if (!transporter) throw new Error('SMTP not configured — set GMAIL_USER and GMAIL_APP_PASSWORD');
+  if (!to || !subject) throw new Error('to and subject are required');
+  const sender = process.env.GMAIL_USER;
+  const text = body || '';
+  const html = text.split('\n').map(l => `<p style="margin:0 0 12px;font-family:sans-serif;font-size:14px;line-height:1.5">${escape(l) || '&nbsp;'}</p>`).join('');
+  const info = await transporter.sendMail({
+    from: `"Derek Gallardo" <${sender}>`,
+    to,
+    subject,
+    text,
+    html,
+    replyTo: sender,
+  });
+  return { sent: true, messageId: info.messageId };
+}
+
+module.exports = { sendSignupWebhook, sendAdminEmail };

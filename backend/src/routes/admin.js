@@ -1,6 +1,7 @@
 const { Router } = require('express');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted } = require('../services/firestore');
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates } = require('../services/firestore');
+const { sendAdminEmail } = require('../lib/notifications');
 
 const SUPER_ADMIN_EMAIL = 'derekgallardo01@gmail.com';
 const MARKETPLACE_REVIEW_URL = 'https://workspace.google.com/marketplace/app/attendance_tracker/829771833968';
@@ -200,6 +201,138 @@ router.post('/admin/contacted', async (req, res) => {
   } catch (err) {
     log.error('admin: contacted failed', { error: err.message });
     res.status(500).json({ error: 'Failed to mark contacted' });
+  }
+});
+
+// ── User detail (drill-down modal) ──
+router.get('/admin/user', async (req, res) => {
+  try {
+    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
+    const { email, domain } = req.query;
+    if (!email || !domain) return res.status(400).json({ error: 'email and domain required' });
+    const detail = await getUserDetail(domain, email);
+    if (!detail) return res.status(404).json({ error: 'Not found' });
+    res.json(detail);
+  } catch (err) {
+    log.error('admin: user detail failed', { error: err.message });
+    res.status(500).json({ error: 'Failed to fetch user' });
+  }
+});
+
+router.put('/admin/note', async (req, res) => {
+  try {
+    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
+    const { email, domain, body } = req.body || {};
+    if (!email || !domain) return res.status(400).json({ error: 'email and domain required' });
+    const result = await setAdminNote(domain, email, body || '', req.user.email);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to save note' });
+  }
+});
+
+router.get('/admin/notes/search', async (req, res) => {
+  try {
+    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
+    const results = await searchAdminNotes(req.query.q || '');
+    res.json({ results });
+  } catch (err) {
+    res.status(500).json({ error: 'Search failed' });
+  }
+});
+
+// ── Email-from-dashboard + templates + outreach log ──
+router.post('/admin/send-email', async (req, res) => {
+  try {
+    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
+    const { to, domain, subject, body } = req.body || {};
+    if (!to || !domain || !subject || !body) return res.status(400).json({ error: 'to, domain, subject, body required' });
+    const result = await sendAdminEmail({ to, subject, body });
+    // Log the conversation entry + mark contacted in one shot.
+    await appendConversation(domain, to, { direction: 'sent', subject, body, replyStatus: 'awaiting' });
+    res.json(result);
+  } catch (err) {
+    log.error('admin: send-email failed', { error: err.message });
+    res.status(500).json({ error: err.message || 'Failed to send' });
+  }
+});
+
+router.put('/admin/outreach/status', async (req, res) => {
+  try {
+    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
+    const { email, domain, status } = req.body || {};
+    if (!email || !domain || !status) return res.status(400).json({ error: 'email, domain, status required' });
+    await setOutreachStatus(domain, email, status);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed' });
+  }
+});
+
+router.post('/admin/outreach/log-reply', async (req, res) => {
+  try {
+    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
+    const { email, domain, body, status } = req.body || {};
+    if (!email || !domain) return res.status(400).json({ error: 'email, domain required' });
+    await appendConversation(domain, email, { direction: 'received', subject: '', body: body || '', replyStatus: status || 'replied' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed' });
+  }
+});
+
+router.get('/admin/templates', async (req, res) => {
+  try {
+    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
+    const items = await getEmailTemplates();
+    res.json({ items });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed' });
+  }
+});
+
+router.put('/admin/templates', async (req, res) => {
+  try {
+    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
+    await setEmailTemplates(req.body?.items || []);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed' });
+  }
+});
+
+// ── Reminders ──
+router.post('/admin/reminders', async (req, res) => {
+  try {
+    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
+    const { email, domain, remindAt, body } = req.body || {};
+    if (!email || !domain || !remindAt) return res.status(400).json({ error: 'email, domain, remindAt required' });
+    const r = await createReminder(domain, email, { remindAt, body, createdBy: req.user.email });
+    res.json(r);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed' });
+  }
+});
+
+router.put('/admin/reminders/:id/done', async (req, res) => {
+  try {
+    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
+    const { domain } = req.body || {};
+    if (!domain) return res.status(400).json({ error: 'domain required' });
+    await markReminderDone(domain, req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed' });
+  }
+});
+
+router.get('/admin/reminders/due', async (req, res) => {
+  try {
+    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
+    const reminders = await getDueReminders();
+    res.json({ reminders });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed' });
   }
 });
 
