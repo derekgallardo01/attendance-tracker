@@ -14,6 +14,7 @@ const calendarRoutes = require('./routes/calendar');
 const oauthRoutes = require('./routes/oauth');
 const adminRoutes = require('./routes/admin');
 const publicRoutes = require('./routes/public');
+const historyRoutes = require('./routes/history');
 
 const app = express();
 app.set('trust proxy', 1); // Cloud Run runs behind a load balancer
@@ -62,6 +63,7 @@ app.use('/api', attendanceRoutes);
 app.use('/api', sheetsRoutes);
 app.use('/api', calendarRoutes);
 app.use('/api', adminRoutes);
+app.use('/api', historyRoutes);
 
 // Serve frontend from public/
 app.use(express.static(path.join(__dirname, '..', 'public')));

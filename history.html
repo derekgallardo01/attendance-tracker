@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
+  <link rel="icon" type="image/png" sizes="128x128" href="icons/icon-128.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meeting History — Attendance Tracker</title>
+  <style>
+    :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #4ade80; --error: #f85149; --blue: #58a6ff; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 40px 20px; }
+    .container { max-width: 980px; margin: 0 auto; }
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+    .header h1 { font-size: 1.5rem; }
+    .header .user { color: var(--muted); font-size: .85rem; }
+    .btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: .85rem; font-weight: 600; text-decoration: none; display: inline-block; }
+    .btn-primary { background: var(--accent); color: var(--bg); }
+    .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    .btn:hover { opacity: .9; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 28px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+    .stat-label { font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+    .stat-value { font-size: 1.6rem; font-weight: 700; }
+    .stat-value.green { color: var(--accent); }
+    .stat-value.blue { color: var(--blue); }
+
+    .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; flex-wrap: wrap; }
+    .tab { padding: 10px 16px; background: transparent; color: var(--muted); border: none; border-bottom: 2px solid transparent; cursor: pointer; font-size: .9rem; font-weight: 600; margin-bottom: -1px; }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab:hover { color: var(--text); }
+
+    .search-box { width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: .9rem; margin-bottom: 16px; }
+    .search-box:focus { outline: none; border-color: var(--blue); }
+
+    .section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 20px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    th { text-align: left; color: var(--muted); font-weight: 600; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: .7rem; text-transform: uppercase; cursor: pointer; user-select: none; }
+    th:hover { color: var(--text); }
+    td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,.02); }
+    .muted { color: var(--muted); }
+    .nowrap { white-space: nowrap; }
+    .right { text-align: right; }
+
+    .login-screen { text-align: center; padding: 80px 20px; }
+    .login-screen h2 { margin-bottom: 12px; }
+    .login-screen p { color: var(--muted); margin-bottom: 24px; }
+
+    #dashboard { display: none; }
+    #loading { text-align: center; padding: 60px; color: var(--muted); }
+
+    /* Calendar heat-map */
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(15, 1fr);
+      grid-auto-flow: row;
+      gap: 4px;
+      max-width: 600px;
+    }
+    .calendar-cell {
+      aspect-ratio: 1;
+      border-radius: 3px;
+      background: #21262d;
+      cursor: default;
+    }
+    .calendar-cell.l1 { background: rgba(74, 222, 128, .25); }
+    .calendar-cell.l2 { background: rgba(74, 222, 128, .5); }
+    .calendar-cell.l3 { background: rgba(74, 222, 128, .75); }
+    .calendar-cell.l4 { background: rgba(74, 222, 128, 1); }
+    .calendar-legend { display: flex; align-items: center; gap: 6px; margin-top: 14px; font-size: .75rem; color: var(--muted); }
+    .calendar-legend .calendar-cell { width: 11px; height: 11px; aspect-ratio: auto; }
+
+    .progress-bar { background: var(--border); border-radius: 4px; height: 6px; overflow: hidden; }
+    .progress-bar div { background: var(--accent); height: 100%; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .empty { text-align: center; color: var(--muted); padding: 40px 20px; font-size: .85rem; }
+  </style>
+  <script src="https://accounts.google.com/gsi/client" async></script>
+</head>
+<body>
+  <div class="container">
+    <!-- Login -->
+    <div id="login-screen" class="login-screen">
+      <h2>Meeting History</h2>
+      <p>Sign in to browse every meeting you've tracked.</p>
+      <button class="btn btn-primary" onclick="signIn()">Sign in with Google</button>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading" style="display:none">Loading history…</div>
+
+    <!-- Dashboard -->
+    <div id="dashboard">
+      <div class="header">
+        <h1>📋 Meeting History</h1>
+        <div>
+          <span class="user" id="user-email"></span>
+          <a class="btn btn-secondary" href="/" style="margin-left:8px">← Back to add-on</a>
+          <button class="btn btn-secondary" onclick="signOut()" style="margin-left:4px">Sign out</button>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Meetings tracked</div>
+          <div class="stat-value green" id="stat-meetings">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Unique people seen</div>
+          <div class="stat-value blue" id="stat-people">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Days with a meeting (last 90)</div>
+          <div class="stat-value" id="stat-active-days">—</div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="meetings" onclick="switchTab('meetings')">Meetings</button>
+        <button class="tab" data-tab="people" onclick="switchTab('people')">People</button>
+        <button class="tab" data-tab="calendar" onclick="switchTab('calendar')">Calendar</button>
+      </div>
+
+      <!-- Meetings tab -->
+      <div id="tab-meetings" class="tab-content active">
+        <input id="search-meetings" class="search-box" type="text" placeholder="Search meetings by title…" oninput="renderMeetings()" />
+        <div class="section">
+          <table>
+            <thead>
+              <tr>
+                <th data-sort="createdAt">Date ↓</th>
+                <th>Title</th>
+                <th class="right">Present</th>
+                <th class="right">Duration</th>
+              </tr>
+            </thead>
+            <tbody id="meetings-rows"><tr><td colspan="4" class="muted">No meetings tracked yet.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- People tab -->
+      <div id="tab-people" class="tab-content">
+        <input id="search-people" class="search-box" type="text" placeholder="Search people by name or email…" oninput="renderPeople()" />
+        <div class="section">
+          <table>
+            <thead>
+              <tr>
+                <th>Person</th>
+                <th class="right">Meetings</th>
+                <th class="right">Total time</th>
+                <th>Attendance %</th>
+                <th class="nowrap">Last seen</th>
+              </tr>
+            </thead>
+            <tbody id="people-rows"><tr><td colspan="5" class="muted">No people tracked yet.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Calendar tab -->
+      <div id="tab-calendar" class="tab-content">
+        <div class="section">
+          <div style="margin-bottom:16px;color:var(--muted);font-size:.85rem">Each cell is a day in the last 90 days. Brighter = more meetings tracked.</div>
+          <div id="calendar-grid" class="calendar-grid"></div>
+          <div class="calendar-legend">
+            <span>Less</span>
+            <div class="calendar-cell"></div>
+            <div class="calendar-cell l1"></div>
+            <div class="calendar-cell l2"></div>
+            <div class="calendar-cell l3"></div>
+            <div class="calendar-cell l4"></div>
+            <span>More</span>
+          </div>
+          <div id="calendar-detail" style="margin-top:16px;color:var(--muted);font-size:.85rem;min-height:20px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const BACKEND_URL = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
+    const CLIENT_ID = '829771833968-92hq9toga2ga92mg7nfuf6dqclj7er2n.apps.googleusercontent.com';
+    const SCOPES = 'openid email profile';
+    let sessionToken = null;
+    let userEmail = null;
+    let data = { meetings: [], people: [], calendar: [], totalMeetings: 0 };
+
+    function signIn() {
+      const client = google.accounts.oauth2.initCodeClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        ux_mode: 'popup',
+        access_type: 'offline',
+        callback: async (response) => {
+          if (response.error) return;
+          try {
+            const res = await fetch(`${BACKEND_URL}/oauth/exchange`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ code: response.code }),
+            });
+            if (!res.ok) throw new Error('Auth failed');
+            const body = await res.json();
+            sessionToken = body.sessionToken;
+            userEmail = body.email;
+            document.getElementById('user-email').textContent = body.email;
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            loadHistory();
+          } catch (err) {
+            alert('Sign-in failed: ' + err.message);
+          }
+        },
+      });
+      client.requestCode();
+    }
+
+    function signOut() {
+      sessionToken = null;
+      userEmail = null;
+      document.getElementById('login-screen').style.display = '';
+      document.getElementById('dashboard').style.display = 'none';
+    }
+
+    async function loadHistory() {
+      document.getElementById('loading').style.display = 'block';
+      try {
+        const res = await fetch(`${BACKEND_URL}/history`, {
+          headers: { 'Authorization': `Bearer ${sessionToken}` },
+        });
+        if (!res.ok) throw new Error(`${res.status}`);
+        data = await res.json();
+        document.getElementById('stat-meetings').textContent = data.totalMeetings || 0;
+        document.getElementById('stat-people').textContent = (data.people || []).length;
+        const activeDays = (data.calendar || []).filter(c => c.count > 0).length;
+        document.getElementById('stat-active-days').textContent = activeDays;
+        renderMeetings();
+        renderPeople();
+        renderCalendar();
+      } catch (err) {
+        console.error('history load failed:', err);
+      } finally {
+        document.getElementById('loading').style.display = 'none';
+      }
+    }
+
+    function switchTab(name) {
+      document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${name}`));
+    }
+
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+    function fmtTime(iso) {
+      if (!iso) return '';
+      return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+    }
+    function fmtDuration(ms) {
+      if (!ms || ms <= 0) return '—';
+      const min = Math.round(ms / 60000);
+      if (min < 60) return `${min}m`;
+      const h = Math.floor(min / 60);
+      const m = min % 60;
+      return m ? `${h}h ${m}m` : `${h}h`;
+    }
+    function fmtMinutes(min) {
+      if (!min) return '—';
+      if (min < 60) return `${min}m`;
+      const h = Math.floor(min / 60);
+      const m = min % 60;
+      return m ? `${h}h ${m}m` : `${h}h`;
+    }
+    function pct(v) { return Math.round(v * 100) + '%'; }
+
+    function renderMeetings() {
+      const q = (document.getElementById('search-meetings').value || '').toLowerCase().trim();
+      const rows = (data.meetings || []).filter(m =>
+        !q || (m.title || '').toLowerCase().includes(q) || (m.presentNames || []).some(n => n.toLowerCase().includes(q))
+      );
+      const body = document.getElementById('meetings-rows');
+      if (!rows.length) {
+        body.innerHTML = '<tr><td colspan="4" class="muted">No meetings match.</td></tr>';
+        return;
+      }
+      body.innerHTML = rows.map(m => `
+        <tr>
+          <td class="nowrap">${esc(fmtDate(m.startTime || m.createdAt))}<div class="muted" style="font-size:.7rem">${esc(fmtTime(m.startTime || m.createdAt))}</div></td>
+          <td>${esc(m.title)}<div class="muted" style="font-size:.72rem;margin-top:2px">${esc((m.presentNames || []).slice(0, 4).join(', '))}${m.presentNames && m.presentNames.length > 4 ? ` +${m.presentNames.length - 4} more` : ''}</div></td>
+          <td class="right">${m.participantCount || 0}</td>
+          <td class="right nowrap">${fmtDuration(m.durationMs)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderPeople() {
+      const q = (document.getElementById('search-people').value || '').toLowerCase().trim();
+      const rows = (data.people || []).filter(p =>
+        !q || (p.displayName || '').toLowerCase().includes(q) || (p.email || '').toLowerCase().includes(q)
+      );
+      const body = document.getElementById('people-rows');
+      if (!rows.length) {
+        body.innerHTML = '<tr><td colspan="5" class="muted">No people match.</td></tr>';
+        return;
+      }
+      body.innerHTML = rows.map(p => `
+        <tr>
+          <td>${esc(p.displayName || p.email || '—')}<div class="muted" style="font-size:.72rem">${esc(p.email || '')}</div></td>
+          <td class="right">${p.meetingCount}</td>
+          <td class="right nowrap">${fmtMinutes(p.totalMinutes)}</td>
+          <td><div style="display:flex;align-items:center;gap:8px;min-width:140px"><div class="progress-bar" style="flex:1"><div style="width:${Math.round(p.attendanceRate * 100)}%"></div></div><span style="font-size:.78rem;color:var(--muted);min-width:32px">${pct(p.attendanceRate)}</span></div></td>
+          <td class="nowrap muted">${esc(fmtDate(p.lastSeenAt))}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderCalendar() {
+      const cells = data.calendar || [];
+      const maxCount = Math.max(1, ...cells.map(c => c.count));
+      const grid = document.getElementById('calendar-grid');
+      const detail = document.getElementById('calendar-detail');
+      const level = (c) => {
+        if (c === 0) return '';
+        const ratio = c / maxCount;
+        if (ratio < .25) return 'l1';
+        if (ratio < .5)  return 'l2';
+        if (ratio < .75) return 'l3';
+        return 'l4';
+      };
+      grid.innerHTML = cells.map(d =>
+        `<div class="calendar-cell ${level(d.count)}" data-date="${d.date}" data-count="${d.count}" title="${d.date}: ${d.count} meeting${d.count === 1 ? '' : 's'}${d.titles?.length ? '\n' + d.titles.join('\n') : ''}"></div>`
+      ).join('');
+      // Click handler — show the day detail below the grid
+      grid.querySelectorAll('.calendar-cell').forEach(el => {
+        el.addEventListener('click', () => {
+          const date = el.dataset.date;
+          const count = +el.dataset.count;
+          const day = cells.find(c => c.date === date);
+          if (!day || !count) { detail.textContent = `${date}: no meetings tracked`; return; }
+          detail.innerHTML = `<strong style="color:var(--text)">${date}</strong> — ${count} meeting${count === 1 ? '' : 's'}: ${day.titles.map(esc).join(', ')}`;
+        });
+      });
+    }
+  </script>
+</body>
+</html>

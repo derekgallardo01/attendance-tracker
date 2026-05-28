@@ -738,6 +738,158 @@ async function getAggregatedInsights() {
   }
 }
 
+// ── Per-user meeting history (Meetings / People / Calendar tabs) ──
+
+// Returns everything the /history.html page needs in one shot:
+//  - meetings:  meetings the user tracked, sorted newest first
+//  - people:    aggregated participants across all those meetings
+//  - calendar:  per-day meeting counts for the last 90 days
+//
+// We scope to the user's tenant for data isolation, then filter to meetings
+// they have a 'tracked' event for (so two users in the same domain don't see
+// each other's untracked meetings). For early users with no events yet we
+// fall back to "all meetings in your domain" so the page isn't empty.
+async function getUserMeetingHistory(domain, email) {
+  try {
+    const tenant = tenantRef(domain);
+    const emailLower = email.toLowerCase();
+
+    const [eventsSnap, meetingsSnap] = await Promise.all([
+      tenant.collection('events').where('email', '==', emailLower).where('type', '==', 'tracked').get(),
+      tenant.collection('meetings').get(),
+    ]);
+
+    // Conference IDs the user has actually tracked. If empty (e.g. tracked
+    // before we shipped events), fall back to the domain's meetings.
+    const trackedConferenceIds = new Set();
+    for (const d of eventsSnap.docs) {
+      const cid = d.data().meta?.conferenceId;
+      if (cid) trackedConferenceIds.add(cid);
+    }
+    const useEventFilter = trackedConferenceIds.size > 0;
+
+    const filteredMeetings = meetingsSnap.docs
+      .filter(d => !useEventFilter || trackedConferenceIds.has(d.id))
+      .map(d => {
+        const data = d.data();
+        return {
+          id: d.id,
+          ref: d.ref,
+          conferenceId: data.conferenceId || d.id,
+          title: data.title || 'Untitled meeting',
+          participantCount: data.participantCount || 0,
+          startTime: data.startTime?.toDate?.()?.getTime() || null,
+          endTime: data.endTime?.toDate?.()?.getTime() || null,
+          createdAt: data.createdAt?.toDate?.()?.getTime() || null,
+        };
+      });
+
+    // Pull all participants for the filtered meetings in parallel. At ~7-15
+    // users with <100 meetings each this is fine; if it gets heavy we paginate.
+    const participantSnaps = await Promise.all(
+      filteredMeetings.map(m => m.ref.collection('participants').get())
+    );
+
+    // ── Build the meetings array (drop the Firestore ref) ──
+    const meetings = filteredMeetings
+      .map((m, i) => {
+        const parts = participantSnaps[i].docs.map(p => p.data());
+        const presentNames = parts.filter(p => p.present).map(p => p.displayName).filter(Boolean);
+        const durationMs = (m.startTime && m.endTime) ? (m.endTime - m.startTime) : null;
+        return {
+          conferenceId: m.conferenceId,
+          title: m.title,
+          participantCount: m.participantCount || parts.length,
+          presentNames: presentNames.slice(0, 8),
+          startTime: m.startTime ? new Date(m.startTime).toISOString() : null,
+          endTime: m.endTime ? new Date(m.endTime).toISOString() : null,
+          createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : null,
+          durationMs,
+        };
+      })
+      .sort((a, b) => (new Date(b.createdAt || b.startTime || 0)) - (new Date(a.createdAt || a.startTime || 0)));
+
+    // ── People aggregation across all meetings ──
+    // Key by email when available, else displayName. Track meetings attended,
+    // total minutes (summed across appearances), last seen.
+    const totalMeetings = meetings.length;
+    const peopleMap = new Map();
+    for (let i = 0; i < filteredMeetings.length; i++) {
+      const m = filteredMeetings[i];
+      const meetingDate = m.startTime || m.createdAt || 0;
+      for (const p of participantSnaps[i].docs) {
+        const data = p.data();
+        const email = (data.email || '').toLowerCase();
+        const name = data.displayName || '';
+        const key = email || `name:${name.toLowerCase()}`;
+        if (!key || key === 'name:') continue;
+
+        let entry = peopleMap.get(key);
+        if (!entry) {
+          entry = {
+            key, email: email || null, displayName: name,
+            meetingCount: 0, totalMinutes: 0, lastSeenAt: 0,
+          };
+          peopleMap.set(key, entry);
+        }
+        entry.meetingCount++;
+        const join = data.joinTime?.toDate?.()?.getTime();
+        const leave = data.leaveTime?.toDate?.()?.getTime();
+        if (join && leave && leave > join) {
+          entry.totalMinutes += Math.round((leave - join) / 60000);
+        }
+        if (meetingDate > entry.lastSeenAt) entry.lastSeenAt = meetingDate;
+        // Prefer a longer displayName if we get one
+        if (!entry.displayName || (name && name.length > entry.displayName.length)) {
+          entry.displayName = name;
+        }
+      }
+    }
+
+    const people = [...peopleMap.values()]
+      .map(p => ({
+        email: p.email,
+        displayName: p.displayName,
+        meetingCount: p.meetingCount,
+        totalMinutes: p.totalMinutes,
+        attendanceRate: totalMeetings > 0 ? (p.meetingCount / totalMeetings) : 0,
+        lastSeenAt: p.lastSeenAt ? new Date(p.lastSeenAt).toISOString() : null,
+      }))
+      .sort((a, b) => b.meetingCount - a.meetingCount);
+
+    // ── Calendar grid: per-day counts for the last 90 days ──
+    const DAY = 24 * 60 * 60 * 1000;
+    const today = new Date();
+    const calendar = [];
+    const byDate = new Map();
+    for (const m of filteredMeetings) {
+      const ts = m.createdAt || m.startTime;
+      if (!ts) continue;
+      const key = new Date(ts).toISOString().slice(0, 10);
+      const bucket = byDate.get(key) || { count: 0, titles: [] };
+      bucket.count++;
+      if (bucket.titles.length < 5) bucket.titles.push(m.title || 'Meeting');
+      byDate.set(key, bucket);
+    }
+    for (let i = 89; i >= 0; i--) {
+      const d = new Date(today.getTime() - i * DAY);
+      const key = d.toISOString().slice(0, 10);
+      const b = byDate.get(key);
+      calendar.push({ date: key, count: b?.count || 0, titles: b?.titles || [] });
+    }
+
+    return {
+      meetings,
+      people,
+      calendar,
+      totalMeetings,
+    };
+  } catch (err) {
+    log.error('firestore: getUserMeetingHistory failed', { domain, email, error: err.message });
+    return { meetings: [], people: [], calendar: [], totalMeetings: 0 };
+  }
+}
+
 // ── Outreach list (super admin) ──
 // Active users in the last N days, sorted by activity desc, joined with their
 // user doc so we have first name + acquisition source for personalized email.
@@ -817,6 +969,7 @@ module.exports = {
   setUserAcquisitionSource,
   logEvent,
   getUserActivationStatus, countUserExports, isExistingUserAnywhere, countAllUsers,
+  getUserMeetingHistory,
   getAllUsersAcrossTenants,
   getAggregatedInsights,
   getOutreachList,
