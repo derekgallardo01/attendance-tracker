@@ -45,6 +45,103 @@
     #dashboard { display: none; }
     #loading { text-align: center; padding: 60px; color: var(--muted); }
     .error { color: var(--error); text-align: center; padding: 20px; }
+
+    /* ── Animations ─────────────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(.95); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    @keyframes slideInTop {
+      from { opacity: 0; transform: translateY(-12px); max-height: 0; }
+      to   { opacity: 1; transform: translateY(0); max-height: 200px; }
+    }
+    @keyframes pulseDot {
+      0%   { box-shadow: 0 0 0 0 rgba(74,222,128,.6); }
+      70%  { box-shadow: 0 0 0 8px rgba(74,222,128,0); }
+      100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
+    }
+    @keyframes shimmer {
+      0%   { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    /* Dashboard sections fade-in on initial mount */
+    #dashboard > .header,
+    #dashboard > .stats-grid,
+    #dashboard > .section,
+    #dashboard > #founder-tools,
+    #dashboard > #reminders-bar,
+    #dashboard > #founder-section > *,
+    #dashboard > #analytics-section > * {
+      animation: fadeUp .35s ease-out both;
+    }
+    #dashboard > #founder-section > *:nth-child(2) { animation-delay: .05s; }
+    #dashboard > #analytics-section > *:nth-child(1) { animation-delay: .08s; }
+    #dashboard > #analytics-section > *:nth-child(2) { animation-delay: .14s; }
+
+    /* Stat cards: subtle lift on hover */
+    .stat-card {
+      transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+    }
+    .stat-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+      box-shadow: 0 4px 14px rgba(0,0,0,.3);
+    }
+
+    /* Table rows: highlight on hover when clickable */
+    tbody tr {
+      transition: background-color .12s ease;
+    }
+    tbody tr[onclick]:hover {
+      background: rgba(255,255,255,.04);
+    }
+
+    /* Modals: scale + fade in */
+    #user-modal[style*="flex"] > div,
+    #email-modal[style*="flex"] > div,
+    #templates-modal[style*="flex"] > div,
+    #reminder-modal[style*="flex"] > div {
+      animation: scaleIn .2s ease-out both;
+    }
+
+    /* Live activity feed: each item slides in from top */
+    #activity-feed > div {
+      animation: slideInTop .25s ease-out both;
+    }
+
+    /* Live pulsing dot next to "Live activity" */
+    .live-dot {
+      display: inline-block;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulseDot 2s infinite;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    /* Button press feedback */
+    .btn {
+      transition: transform .08s ease, opacity .15s ease;
+    }
+    .btn:active {
+      transform: scale(.97);
+    }
+
+    /* Reminder bar: warm slide-down on first load */
+    #reminders-bar { animation: slideInTop .35s ease-out both; }
+
+    /* Skeleton/shimmer for loading rows */
+    .shimmer {
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.04), transparent);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite linear;
+    }
   </style>
   <script src="https://accounts.google.com/gsi/client" async></script>
 </head>
@@ -151,7 +248,7 @@
           <!-- Activity feed -->
           <div class="section" style="margin-bottom:0">
             <h2 style="display:flex;justify-content:space-between;align-items:center">
-              <span>📡 Live activity</span>
+              <span><span class="live-dot"></span>Live activity</span>
               <span style="font-size:.7rem;color:var(--muted);font-weight:400" id="activity-stamp">—</span>
             </h2>
             <div id="activity-feed" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;font-size:.85rem">
@@ -1151,7 +1248,6 @@
       document.getElementById('em-body').value = '';
       document.getElementById('em-status').textContent = '';
       document.getElementById('em-send-btn').disabled = false;
-      document.getElementById('em-modal') || document.getElementById('email-modal').style.display = 'flex';
       document.getElementById('email-modal').style.display = 'flex';
       await refreshTemplatesSelect();
     }
