@@ -1484,7 +1484,10 @@ async function markReminderDone(domain, reminderId) {
 
 async function getDueReminders() {
   try {
-    const snap = await getDb().collectionGroup('reminders').where('done', '==', false).get();
+    // Plain collectionGroup query — adding a where clause would require a
+    // composite index. We filter `done` and `remindAt` in JS, which is fine
+    // at our scale and avoids the index dependency.
+    const snap = await getDb().collectionGroup('reminders').get();
     const now = Date.now();
     return snap.docs
       .map(d => ({
@@ -1493,10 +1496,16 @@ async function getDueReminders() {
         ...d.data(),
         remindAt: d.data().remindAt?.toDate?.()?.getTime() || 0,
       }))
-      .filter(r => r.remindAt <= now)
+      .filter(r => !r.done && r.remindAt > 0 && r.remindAt <= now)
       .sort((a, b) => a.remindAt - b.remindAt)
       .map(r => ({ ...r, remindAt: new Date(r.remindAt).toISOString() }));
   } catch (err) {
+    // Most common cause: the `reminders` collection group simply doesn't
+    // exist yet because nobody has created one. Don't blow up the dashboard.
+    if (/NOT_FOUND|does not exist|requires an index/i.test(err.message)) {
+      log.info('reminders: no reminders yet', { detail: err.message });
+      return [];
+    }
     log.error('firestore: getDueReminders failed', { error: err.message });
     return [];
   }

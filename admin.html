@@ -68,6 +68,25 @@
       0%   { background-position: -200% 0; }
       100% { background-position: 200% 0; }
     }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes textFade {
+      0%, 100% { opacity: .55; }
+      50%      { opacity: 1; }
+    }
+
+    /* Sign-in / loading spinner ring */
+    .spinner-ring {
+      width: 48px; height: 48px;
+      border: 3px solid rgba(74, 222, 128, .15);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .9s linear infinite;
+    }
+    #loading-text { animation: textFade 1.8s ease-in-out infinite; }
+    .login-screen .btn-primary { transition: transform .15s ease, box-shadow .15s ease; }
+    .login-screen .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(74,222,128,.25); }
 
     /* Dashboard sections fade-in on initial mount */
     #dashboard > .header,
@@ -155,7 +174,11 @@
     </div>
 
     <!-- Loading -->
-    <div id="loading" style="display:none">Loading dashboard...</div>
+    <div id="loading" style="display:none;text-align:center;padding:80px 20px">
+      <div class="spinner-ring" style="margin:0 auto 16px"></div>
+      <div id="loading-text" style="color:var(--text);font-weight:600;font-size:.95rem;margin-bottom:4px">Signing you in…</div>
+      <div id="loading-sub" style="color:var(--muted);font-size:.78rem">Authenticating with Google</div>
+    </div>
 
     <!-- Dashboard -->
     <div id="dashboard">
@@ -535,6 +558,11 @@
     let sessionToken = null;
     let userEmail = null;
 
+    function setLoadingStep(text, sub) {
+      document.getElementById('loading-text').textContent = text;
+      document.getElementById('loading-sub').textContent = sub;
+    }
+
     function signIn() {
       const client = google.accounts.oauth2.initCodeClient({
         client_id: CLIENT_ID,
@@ -542,7 +570,16 @@
         ux_mode: 'popup',
         access_type: 'offline',
         callback: async (response) => {
-          if (response.error) return;
+          if (response.error) {
+            // User closed the popup or denied — stay on login screen
+            return;
+          }
+          // Show spinner the moment Google returns control. This is the
+          // window that previously felt frozen.
+          document.getElementById('login-screen').style.display = 'none';
+          const loading = document.getElementById('loading');
+          loading.style.display = 'block';
+          setLoadingStep('Signing you in…', 'Exchanging credentials with the backend');
           try {
             const res = await fetch(`${BACKEND_URL}/oauth/exchange`, {
               method: 'POST',
@@ -554,10 +591,16 @@
             sessionToken = data.sessionToken;
             userEmail = data.email;
             document.getElementById('user-email').textContent = data.email;
-            document.getElementById('login-screen').style.display = 'none';
+            setLoadingStep('Loading your dashboard…', 'Pulling stats, users, and live activity');
+            // Tiny delay so the message change is perceptible — the actual
+            // data load takes a few seconds anyway.
+            await new Promise(r => setTimeout(r, 350));
+            loading.style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
             loadDashboard();
           } catch (err) {
+            loading.style.display = 'none';
+            document.getElementById('login-screen').style.display = '';
             alert('Sign-in failed: ' + err.message);
           }
         },
