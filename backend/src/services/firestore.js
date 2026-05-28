@@ -644,6 +644,67 @@ async function getAggregatedInsights() {
   }
 }
 
+// ── Outreach list (super admin) ──
+// Active users in the last N days, sorted by activity desc, joined with their
+// user doc so we have first name + acquisition source for personalized email.
+async function getOutreachList({ days = 30, limit = 50 } = {}) {
+  try {
+    const db = getDb();
+    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+    const [eventsSnap, usersSnap] = await Promise.all([
+      db.collectionGroup('events').get(),
+      db.collectionGroup('users').get(),
+    ]);
+
+    const usersByEmail = {};
+    for (const d of usersSnap.docs) {
+      const data = d.data();
+      usersByEmail[d.id] = {
+        email: d.id,
+        domain: d.ref.parent.parent.id,
+        displayName: data.displayName || '',
+        acquisitionSource: data.acquisitionSource || null,
+        createdAt: data.createdAt?.toDate?.()?.getTime() || null,
+      };
+    }
+
+    const agg = {};
+    for (const d of eventsSnap.docs) {
+      const e = d.data();
+      const ts = e.createdAt?.toDate?.()?.getTime() || 0;
+      if (!e.email || ts < cutoff) continue;
+      if (e.type !== 'tracked' && e.type !== 'exported') continue;
+      const row = (agg[e.email] ||= { email: e.email, tracked: 0, exported: 0, lastActivityAt: 0 });
+      if (e.type === 'tracked') row.tracked++;
+      else row.exported++;
+      if (ts > row.lastActivityAt) row.lastActivityAt = ts;
+    }
+
+    return Object.values(agg)
+      .map(row => {
+        const u = usersByEmail[row.email] || {};
+        const firstName = (u.displayName || '').trim().split(/\s+/)[0]
+          || row.email.split('@')[0].split(/[._]/)[0];
+        return {
+          email: row.email,
+          firstName: firstName.charAt(0).toUpperCase() + firstName.slice(1),
+          displayName: u.displayName || '',
+          domain: u.domain || row.email.split('@')[1],
+          tracked: row.tracked,
+          exported: row.exported,
+          totalActions: row.tracked + row.exported,
+          lastActivityAt: new Date(row.lastActivityAt).toISOString(),
+          acquisitionSource: u.acquisitionSource || null,
+        };
+      })
+      .sort((a, b) => b.totalActions - a.totalActions)
+      .slice(0, limit);
+  } catch (err) {
+    log.error('firestore: getOutreachList failed', { error: err.message });
+    return [];
+  }
+}
+
 // ── Delete user data (Marketplace compliance) ──
 
 async function deleteUser(domain, email) {
@@ -663,5 +724,6 @@ module.exports = {
   logEvent,
   getAllUsersAcrossTenants,
   getAggregatedInsights,
+  getOutreachList,
   deleteUser,
 };

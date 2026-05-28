@@ -167,8 +167,13 @@
         </div>
 
         <div class="section">
-          <h2>Most Active Users <span style="color:var(--muted);font-weight:400;font-size:.8rem">(last 30 days)</span></h2>
-          <table>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+            <h2 style="margin:0">Most Active Users <span style="color:var(--muted);font-weight:400;font-size:.8rem">(last 30 days)</span></h2>
+            <button id="btn-outreach-csv" onclick="downloadOutreachList()" style="background:var(--accent);color:#fff;border:none;border-radius:6px;padding:8px 14px;font-weight:600;font-size:.85rem;cursor:pointer">
+              Download outreach CSV
+            </button>
+          </div>
+          <table style="margin-top:12px">
             <thead><tr><th>Email</th><th>Domain</th><th>Tracked</th><th>Exported</th><th>Source</th></tr></thead>
             <tbody id="top-active-rows"><tr><td colspan="5" style="color:var(--muted)">No activity yet</td></tr></tbody>
           </table>
@@ -480,6 +485,31 @@
         }
       } catch (err) {
         console.error('Insights load failed:', err);
+      }
+    }
+
+    async function downloadOutreachList() {
+      const btn = document.getElementById('btn-outreach-csv');
+      const original = btn.textContent;
+      btn.disabled = true; btn.textContent = 'Generating…';
+      try {
+        const res = await fetch(`${BACKEND_URL}/admin/outreach-list?format=csv&days=30&limit=50`, {
+          headers: { 'Authorization': `Bearer ${sessionToken}` },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        const filename = (res.headers.get('Content-Disposition') || '').match(/filename="([^"]+)"/)?.[1]
+          || `outreach-list-${new Date().toISOString().slice(0, 10)}.csv`;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error('outreach download failed:', err);
+        alert('Could not download outreach list — ' + err.message);
+      } finally {
+        btn.disabled = false; btn.textContent = original;
       }
     }
 

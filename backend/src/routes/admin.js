@@ -1,12 +1,22 @@
 const { Router } = require('express');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource } = require('../services/firestore');
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList } = require('../services/firestore');
 
 const SUPER_ADMIN_EMAIL = 'derekgallardo01@gmail.com';
+const MARKETPLACE_REVIEW_URL = 'https://workspace.google.com/marketplace/app/attendance_tracker/829771833968';
 
 const ACQUISITION_SOURCES = new Set([
   'google_search', 'marketplace', 'reddit', 'youtube', 'friend', 'other',
 ]);
+
+// Quote a CSV field per RFC 4180: wrap in double quotes and double any
+// embedded double quotes. Only quote when needed (contains , " or newline).
+function csvField(v) {
+  if (v === null || v === undefined) return '';
+  const s = String(v);
+  if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
 
 const router = Router();
 
@@ -150,6 +160,42 @@ router.get('/admin/insights', async (req, res) => {
   } catch (err) {
     log.error('admin: insights failed', { error: err.message });
     res.status(500).json({ error: 'Failed to compute insights' });
+  }
+});
+
+// GET /api/admin/outreach-list — Mail-merge-ready CSV of active users (super admin only)
+// Query params: ?days=30 (window), ?limit=50 (max rows), ?format=csv|json (default csv)
+router.get('/admin/outreach-list', async (req, res) => {
+  try {
+    if (req.user?.email !== SUPER_ADMIN_EMAIL) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    const days = Math.min(365, Math.max(1, parseInt(req.query.days, 10) || 30));
+    const limit = Math.min(500, Math.max(1, parseInt(req.query.limit, 10) || 50));
+    const format = req.query.format === 'json' ? 'json' : 'csv';
+
+    const rows = await getOutreachList({ days, limit });
+
+    if (format === 'json') {
+      return res.json({ rows, marketplaceReviewUrl: MARKETPLACE_REVIEW_URL });
+    }
+
+    const header = ['email', 'firstName', 'displayName', 'domain', 'tracked', 'exported', 'totalActions', 'lastActivityAt', 'acquisitionSource', 'marketplaceReviewUrl'];
+    const lines = [header.join(',')];
+    for (const r of rows) {
+      lines.push([
+        r.email, r.firstName, r.displayName, r.domain,
+        r.tracked, r.exported, r.totalActions,
+        r.lastActivityAt, r.acquisitionSource || '',
+        MARKETPLACE_REVIEW_URL,
+      ].map(csvField).join(','));
+    }
+    res.set('Content-Type', 'text/csv; charset=utf-8');
+    res.set('Content-Disposition', `attachment; filename="outreach-list-${new Date().toISOString().slice(0, 10)}.csv"`);
+    res.send(lines.join('\n'));
+  } catch (err) {
+    log.error('admin: outreach-list failed', { error: err.message });
+    res.status(500).json({ error: 'Failed to build outreach list' });
   }
 });
 
