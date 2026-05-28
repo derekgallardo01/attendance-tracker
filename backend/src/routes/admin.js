@@ -1,6 +1,6 @@
 const { Router } = require('express');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList } = require('../services/firestore');
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted } = require('../services/firestore');
 
 const SUPER_ADMIN_EMAIL = 'derekgallardo01@gmail.com';
 const MARKETPLACE_REVIEW_URL = 'https://workspace.google.com/marketplace/app/attendance_tracker/829771833968';
@@ -150,6 +150,59 @@ router.get('/admin/all-users', async (req, res) => {
 });
 
 // GET /api/admin/insights — Activation funnel, retention, top orgs (super admin only)
+// GET /api/admin/activity — recent events across all tenants for the live feed
+router.get('/admin/activity', async (req, res) => {
+  try {
+    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
+    const limit = Math.max(1, Math.min(200, Number(req.query.limit) || 50));
+    const events = await getRecentActivity({ limit });
+    res.json({ events });
+  } catch (err) {
+    log.error('admin: activity failed', { error: err.message });
+    res.status(500).json({ error: 'Failed to fetch activity' });
+  }
+});
+
+// GET /api/admin/suggestions — "reach out NOW" cards
+router.get('/admin/suggestions', async (req, res) => {
+  try {
+    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
+    const suggestions = await getReachOutSuggestions();
+    res.json({ suggestions });
+  } catch (err) {
+    log.error('admin: suggestions failed', { error: err.message });
+    res.status(500).json({ error: 'Failed to fetch suggestions' });
+  }
+});
+
+// GET /api/admin/power-users — power users who haven't been contacted yet
+router.get('/admin/power-users', async (req, res) => {
+  try {
+    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
+    const days = Math.max(1, Math.min(90, Number(req.query.days) || 7));
+    const minTracked = Math.max(1, Math.min(50, Number(req.query.minTracked) || 5));
+    const users = await getPowerUserPipeline({ days, minTracked });
+    res.json({ users, days, minTracked });
+  } catch (err) {
+    log.error('admin: power-users failed', { error: err.message });
+    res.status(500).json({ error: 'Failed to fetch power users' });
+  }
+});
+
+// POST /api/admin/contacted — mark a user as reached out to
+router.post('/admin/contacted', async (req, res) => {
+  try {
+    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
+    const { email, domain, note } = req.body || {};
+    if (!email || !domain) return res.status(400).json({ error: 'email and domain required' });
+    await markUserContacted(domain, email, { note, contactedBy: req.user.email });
+    res.json({ success: true });
+  } catch (err) {
+    log.error('admin: contacted failed', { error: err.message });
+    res.status(500).json({ error: 'Failed to mark contacted' });
+  }
+});
+
 router.get('/admin/insights', async (req, res) => {
   try {
     if (req.user?.email !== SUPER_ADMIN_EMAIL) {

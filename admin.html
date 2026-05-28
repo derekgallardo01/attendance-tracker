@@ -126,6 +126,46 @@
         </table>
       </div>
 
+      <!-- Super admin: live founder loop sections -->
+      <div id="founder-section" style="display:none">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;margin-bottom:24px">
+          <!-- Reach out NOW -->
+          <div class="section" style="margin-bottom:0">
+            <h2 style="display:flex;justify-content:space-between;align-items:center">
+              <span>🔥 Reach out now</span>
+              <button class="btn btn-secondary" style="font-size:.7rem;padding:4px 8px" onclick="loadSuggestions()">↻</button>
+            </h2>
+            <div id="suggestions-list" style="display:flex;flex-direction:column;gap:10px">
+              <div style="color:var(--muted);font-size:.85rem">Loading…</div>
+            </div>
+          </div>
+          <!-- Activity feed -->
+          <div class="section" style="margin-bottom:0">
+            <h2 style="display:flex;justify-content:space-between;align-items:center">
+              <span>📡 Live activity</span>
+              <span style="font-size:.7rem;color:var(--muted);font-weight:400" id="activity-stamp">—</span>
+            </h2>
+            <div id="activity-feed" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;font-size:.85rem">
+              <div style="color:var(--muted)">Loading…</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Power user pipeline -->
+        <div class="section">
+          <h2 style="display:flex;justify-content:space-between;align-items:center">
+            <span>⭐ Power users — not yet contacted</span>
+            <span style="font-size:.7rem;color:var(--muted);font-weight:400" id="power-users-stamp">last 7 days, 5+ tracked</span>
+          </h2>
+          <table>
+            <thead>
+              <tr><th>User</th><th>Domain</th><th>Tracked</th><th>Exported</th><th>Source</th><th>Last active</th><th></th></tr>
+            </thead>
+            <tbody id="power-users-rows"><tr><td colspan="7" style="color:var(--muted)">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- Super admin only: insights -->
       <div id="insights-section" style="display:none">
 
@@ -320,8 +360,13 @@
 
         // Super admin: load all users across tenants + insights
         if (userEmail === SUPER_ADMIN_EMAIL) {
+          document.getElementById('founder-section').style.display = 'block';
+          loadSuggestions();
+          loadActivity();
+          loadPowerUsers();
           loadAllUsers();
           loadInsights();
+          startLiveRefresh();
         }
       } catch (err) {
         console.error('Dashboard load failed:', err);
@@ -542,6 +587,135 @@
       } finally {
         btn.disabled = false; btn.textContent = original;
       }
+    }
+
+    function timeAgo(iso) {
+      if (!iso) return '—';
+      const sec = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+      if (sec < 60)   return sec + 's ago';
+      if (sec < 3600) return Math.floor(sec / 60) + 'm ago';
+      if (sec < 86400) return Math.floor(sec / 3600) + 'h ago';
+      return Math.floor(sec / 86400) + 'd ago';
+    }
+
+    function priorityBadge(p) {
+      if (p === 1) return '<span class="badge" style="background:rgba(248,81,73,.18);color:#ff7b72">🔥 HOT</span>';
+      if (p === 2) return '<span class="badge" style="background:rgba(251,191,36,.18);color:#fbbf24">⚡ TODAY</span>';
+      return '<span class="badge" style="background:rgba(88,166,255,.18);color:#58a6ff">📅 THIS WEEK</span>';
+    }
+
+    async function loadSuggestions() {
+      try {
+        const res = await fetch(`${BACKEND_URL}/admin/suggestions`, { headers: { Authorization: `Bearer ${sessionToken}` } });
+        if (!res.ok) return;
+        const { suggestions } = await res.json();
+        const list = document.getElementById('suggestions-list');
+        if (!suggestions.length) {
+          list.innerHTML = '<div style="color:var(--muted);font-size:.85rem;padding:8px 0">No suggestions right now. Quiet day.</div>';
+          return;
+        }
+        list.innerHTML = suggestions.map(s => `
+          <div style="padding:10px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:8px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px">
+              <div>
+                <div style="font-weight:600;font-size:.88rem">${esc(s.displayName || s.email)}</div>
+                <div style="color:var(--muted);font-size:.72rem">${esc(s.email)} · ${esc(s.domain)}</div>
+              </div>
+              ${priorityBadge(s.priority)}
+            </div>
+            <div style="font-size:.78rem;color:#c9d1d9;margin:6px 0">${esc(s.reason)}</div>
+            <div style="font-size:.72rem;color:var(--muted);margin-bottom:8px">${esc(s.ctaTime)} · ${timeAgo(s.lastEventAt)}</div>
+            <div style="display:flex;gap:6px">
+              <a href="mailto:${esc(s.email)}?subject=${encodeURIComponent('Quick question about Attendance Tracker')}" style="background:var(--accent);color:var(--bg);text-decoration:none;padding:4px 10px;border-radius:6px;font-size:.72rem;font-weight:600">📧 Email</a>
+              <button onclick="markContacted('${esc(s.email)}','${esc(s.domain)}')" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:.72rem;cursor:pointer">✓ Mark contacted</button>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error('suggestions load failed:', err);
+      }
+    }
+
+    async function loadActivity() {
+      try {
+        const res = await fetch(`${BACKEND_URL}/admin/activity?limit=30`, { headers: { Authorization: `Bearer ${sessionToken}` } });
+        if (!res.ok) return;
+        const { events } = await res.json();
+        const feed = document.getElementById('activity-feed');
+        document.getElementById('activity-stamp').textContent = `Updated ${new Date().toLocaleTimeString()}`;
+        if (!events.length) {
+          feed.innerHTML = '<div style="color:var(--muted)">No activity yet</div>';
+          return;
+        }
+        const icon = { signin: '👋', tracked: '📋', exported: '📊' };
+        const label = { signin: 'signed in', tracked: 'tracked a meeting', exported: 'exported to Sheets' };
+        feed.innerHTML = events.map(e => `
+          <div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
+            <div style="font-size:.95rem;flex-shrink:0">${icon[e.type] || '•'}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:.82rem"><strong style="color:#c9d1d9">${esc(e.email || 'unknown')}</strong> ${esc(label[e.type] || e.type)}</div>
+              <div style="font-size:.7rem;color:var(--muted)">${timeAgo(e.createdAt)} · ${esc(e.domain)}</div>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error('activity load failed:', err);
+      }
+    }
+
+    async function loadPowerUsers() {
+      try {
+        const res = await fetch(`${BACKEND_URL}/admin/power-users?days=7&minTracked=5`, { headers: { Authorization: `Bearer ${sessionToken}` } });
+        if (!res.ok) return;
+        const { users } = await res.json();
+        const body = document.getElementById('power-users-rows');
+        if (!users.length) {
+          body.innerHTML = '<tr><td colspan="7" style="color:var(--muted)">No uncontacted power users right now.</td></tr>';
+          return;
+        }
+        body.innerHTML = users.map(u => `
+          <tr>
+            <td>${esc(u.displayName || u.email)}<div class="muted" style="font-size:.7rem">${esc(u.email)}</div></td>
+            <td style="color:var(--muted);font-size:.8rem">${esc(u.domain)}</td>
+            <td>${u.tracked}</td>
+            <td>${u.exported}</td>
+            <td style="color:var(--muted);font-size:.8rem">${esc(u.acquisitionSource || '—')}</td>
+            <td style="color:var(--muted);font-size:.8rem">${timeAgo(u.lastActivityAt)}</td>
+            <td><div style="display:flex;gap:4px;justify-content:flex-end"><a href="mailto:${esc(u.email)}" style="background:var(--accent);color:var(--bg);text-decoration:none;padding:4px 8px;border-radius:6px;font-size:.72rem;font-weight:600">📧</a><button onclick="markContacted('${esc(u.email)}','${esc(u.domain)}')" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:.72rem;cursor:pointer">✓</button></div></td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error('power users load failed:', err);
+      }
+    }
+
+    async function markContacted(email, domain) {
+      if (!confirm(`Mark ${email} as contacted? They'll be hidden from suggestions for 7 days.`)) return;
+      try {
+        const res = await fetch(`${BACKEND_URL}/admin/contacted`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sessionToken}` },
+          body: JSON.stringify({ email, domain }),
+        });
+        if (!res.ok) throw new Error('failed');
+        loadSuggestions();
+        loadPowerUsers();
+      } catch (err) {
+        alert('Failed to mark contacted');
+      }
+    }
+
+    let liveRefreshTimer = null;
+    function startLiveRefresh() {
+      clearInterval(liveRefreshTimer);
+      // Poll the activity feed every 30s so the dashboard stays live without
+      // hammering Firestore. Suggestions + power users refresh every 2min.
+      let tick = 0;
+      liveRefreshTimer = setInterval(() => {
+        tick++;
+        loadActivity();
+        if (tick % 4 === 0) { loadSuggestions(); loadPowerUsers(); }
+      }, 30000);
     }
 
     async function loadAllUsers() {

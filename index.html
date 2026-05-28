@@ -1013,6 +1013,24 @@
     <div class="search-stats" id="search-stats"></div>
   </div>
 
+  <!-- ── Sort / Filter / Group toolbar (visible only with participants) ── -->
+  <div id="list-toolbar" style="display:none;padding:0 16px 8px;gap:6px;font-size:.7rem">
+    <select id="sort-select" onchange="renderList()" style="flex:1;background:#0d1117;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-size:.7rem">
+      <option value="join">Sort: Join time</option>
+      <option value="name">Sort: Name</option>
+      <option value="duration">Sort: Duration</option>
+    </select>
+    <select id="filter-select" onchange="renderList()" style="flex:1;background:#0d1117;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-size:.7rem">
+      <option value="all">Show: All</option>
+      <option value="present">Present only</option>
+      <option value="left">Left only</option>
+    </select>
+    <select id="group-select" onchange="renderList()" style="flex:1;background:#0d1117;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-size:.7rem">
+      <option value="none">Group: None</option>
+      <option value="domain">By domain</option>
+    </select>
+  </div>
+
   <!-- ── Tabs (visible only for scheduled events) ── -->
   <div class="tab-bar" id="tab-bar">
     <button class="tab-btn active" id="tab-participants" onclick="switchTab('participants')">
@@ -1051,6 +1069,7 @@
   <!-- ── Footer ── -->
   <div style="padding:12px 16px;text-align:center;font-size:.65rem;color:#6e7681;margin-top:auto">
     <a href="https://attendancetracker.dev/history.html" target="_blank" style="color:#9ec8ff">📋 All meetings</a>
+    · <a href="#" onclick="openSettingsModal();return false" style="color:#9ec8ff">⚙ Settings</a>
     · <a href="https://attendancetracker.dev/privacy.html" target="_blank" style="color:#6e7681">Privacy</a>
     · <a href="https://attendancetracker.dev/terms.html" target="_blank" style="color:#6e7681">Terms</a>
   </div>
@@ -1769,6 +1788,13 @@ function stopTracking() {
   clearInterval(state.countdownTimer);
   clearInterval(state.durationTimer);
   setStatus('idle', 'Tracking stopped');
+  // Auto-export when the user opted in. Only fires once per meeting and only
+  // if there's something to export, so a misclicked Stop isn't punished.
+  if (localStorage.getItem('autoExportOnEnd') === '1' && state.participants.size > 0 && !state._autoExportFired) {
+    state._autoExportFired = true;
+    toast('Auto-exporting to Sheets…');
+    setTimeout(() => saveToSheets(), 800);
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1954,10 +1980,29 @@ function mergeParticipants(incoming = []) {
 /* ═══════════════════════════════════════════════════════════════
    RENDER
 ═══════════════════════════════════════════════════════════════ */
+// Deterministic colored avatar background based on the display name —
+// gives each person a stable identity color across the list and profile.
+function avatarColor(name) {
+  if (!name) return '#3d444d';
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = ((h << 5) - h + name.charCodeAt(i)) | 0;
+  const palette = ['#1f6feb', '#238636', '#9e6a03', '#b62324', '#5e35d6', '#0e7c66', '#bf3989', '#a04600'];
+  return palette[Math.abs(h) % palette.length];
+}
+
+// Build the key used by the participant history endpoint — prefers email
+// when we have one, else marks the bucket as a displayName-only entry.
+function participantKey(p) {
+  if (p.email) return p.email.toLowerCase();
+  return 'name:' + (p.displayName || 'Unknown');
+}
+
 function renderList() {
   const container = document.getElementById('participant-list');
+  const toolbar = document.getElementById('list-toolbar');
 
   if (state.participants.size === 0) {
+    if (toolbar) toolbar.style.display = 'none';
     container.innerHTML = `
       <div class="empty-state">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
@@ -1968,8 +2013,9 @@ function renderList() {
       </div>`;
     return;
   }
+  if (toolbar) toolbar.style.display = 'flex';
 
-  // Filter by search query, then sort: present first, then by join time
+  // Filter by search query first
   let filtered = [...state.participants.values()];
   if (_searchQuery) {
     filtered = filtered.filter(p =>
@@ -1978,49 +2024,177 @@ function renderList() {
     );
   }
 
-  if (_searchQuery && filtered.length === 0) {
+  // Apply user-selected filter
+  const filterMode = document.getElementById('filter-select')?.value || 'all';
+  if (filterMode === 'present') filtered = filtered.filter(p => p.present);
+  else if (filterMode === 'left') filtered = filtered.filter(p => !p.present);
+
+  if (filtered.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <span>No matches for "${escHtml(_searchQuery)}"</span>
+        <span>${_searchQuery ? 'No matches for "' + escHtml(_searchQuery) + '"' : 'No participants match'}</span>
       </div>`;
     return;
   }
 
+  // Sort by user-selected field, keeping present-first as the tiebreaker
+  const sortMode = document.getElementById('sort-select')?.value || 'join';
+  const cmp = {
+    join:     (a, b) => (a.joinTime?.getTime() || 0) - (b.joinTime?.getTime() || 0),
+    name:     (a, b) => (a.displayName || '').localeCompare(b.displayName || ''),
+    duration: (a, b) => {
+      const aD = (a._accumulatedMs || 0) + (a.present && a.joinTime ? Date.now() - a.joinTime.getTime() : 0);
+      const bD = (b._accumulatedMs || 0) + (b.present && b.joinTime ? Date.now() - b.joinTime.getTime() : 0);
+      return bD - aD;
+    },
+  }[sortMode] || cmp.join;
   const sorted = filtered.sort((a, b) => {
     if (a.present !== b.present) return b.present - a.present;
-    return (a.joinTime || 0) - (b.joinTime || 0);
+    return cmp(a, b);
   });
 
-  // Performance: limit visible participants, show "Show all" button for large lists
-  const MAX_VISIBLE = 100;
-  const visible = state._showAll ? sorted : sorted.slice(0, MAX_VISIBLE);
-  const hiddenCount = sorted.length - visible.length;
+  // Group by domain (internal vs external) when selected
+  const groupMode = document.getElementById('group-select')?.value || 'none';
+  const myDomain = (state.userEmail || '').split('@')[1] || '';
+  const groups = new Map();
+  if (groupMode === 'domain') {
+    for (const p of sorted) {
+      const dom = (p.email || '').split('@')[1] || '(no email)';
+      const label = dom === myDomain ? 'Internal · ' + myDomain : (dom === '(no email)' ? 'Anonymous' : 'External · ' + dom);
+      (groups.get(label) || groups.set(label, []).get(label)).push(p);
+    }
+  } else {
+    groups.set('', sorted);
+  }
 
-  container.innerHTML = visible.map(p => {
-    const initials = p.displayName.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
-    const joinStr  = p.joinTime ? fmtTime(p.joinTime) : '—';
-    // Total duration: accumulated past sessions + current active session
-    const pastDur = p._accumulatedMs || 0;
-    const activeDur = p.present && p.joinTime ? (Date.now() - p.joinTime.getTime()) : 0;
-    const totalMs = pastDur + activeDur;
-    const durStr = totalMs > 0 ? fmtDurMs(totalMs) : (p.joinTime ? '< 1m' : '');
-    const leaveStr = (!p.present && p.leaveTime) ? ' · Left ' + fmtTime(p.leaveTime) : '';
-    const emailStr = p.email ? `<div class="participant-meta">${escHtml(p.email)}</div>` : '';
-    return `
-      <div class="participant-card ${p.present ? '' : 'left'}">
-        <div class="avatar">${initials}</div>
-        <div>
-          <div class="participant-name">${escHtml(p.displayName)}</div>
-          ${emailStr}
-          <div class="participant-meta">Joined ${joinStr}${durStr ? ' · ' + durStr : ''}${leaveStr}</div>
-        </div>
-        <span class="badge ${p.present ? 'present' : 'left'}">${p.present ? 'Present' : 'Left'}</span>
-      </div>`;
-  }).join('') + (hiddenCount > 0 ? `
-    <button onclick="state._showAll=true;renderList()" style="width:100%;padding:8px;margin-top:8px;background:var(--surface);border:1px solid var(--border);color:var(--accent);border-radius:6px;cursor:pointer;font-size:.8rem">
-      Show ${hiddenCount} more participants
-    </button>` : '');
+  const MAX_VISIBLE = 100;
+  let totalShown = 0;
+  let html = '';
+
+  for (const [groupLabel, items] of groups) {
+    if (groupLabel) {
+      html += `<div style="font-size:.65rem;color:#6e7681;text-transform:uppercase;letter-spacing:.05em;padding:8px 16px 4px">${escHtml(groupLabel)} <span style="color:#484f58">· ${items.length}</span></div>`;
+    }
+    const room = MAX_VISIBLE - totalShown;
+    const slice = state._showAll ? items : items.slice(0, Math.max(0, room));
+    totalShown += slice.length;
+    html += slice.map(p => {
+      const initials = (p.displayName || '?').split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
+      const joinStr  = p.joinTime ? fmtTime(p.joinTime) : '—';
+      const pastDur = p._accumulatedMs || 0;
+      const activeDur = p.present && p.joinTime ? (Date.now() - p.joinTime.getTime()) : 0;
+      const totalMs = pastDur + activeDur;
+      const durStr = totalMs > 0 ? fmtDurMs(totalMs) : (p.joinTime ? '< 1m' : '');
+      const leaveStr = (!p.present && p.leaveTime) ? ' · Left ' + fmtTime(p.leaveTime) : '';
+      const emailStr = p.email ? `<div class="participant-meta">${escHtml(p.email)}</div>` : '';
+      const key = participantKey(p).replace(/'/g, "\\'");
+      const color = avatarColor(p.displayName);
+      return `
+        <div class="participant-card ${p.present ? '' : 'left'}" onclick="openProfileModal('${key}')" style="cursor:pointer">
+          <div class="avatar" style="background:${color};color:#fff">${initials}</div>
+          <div>
+            <div class="participant-name">${escHtml(p.displayName)}</div>
+            ${emailStr}
+            <div class="participant-meta">Joined ${joinStr}${durStr ? ' · ' + durStr : ''}${leaveStr}</div>
+          </div>
+          <span class="badge ${p.present ? 'present' : 'left'}">${p.present ? 'Present' : 'Left'}</span>
+        </div>`;
+    }).join('');
+  }
+
+  const totalAvailable = [...groups.values()].reduce((s, l) => s + l.length, 0);
+  const hiddenCount = totalAvailable - totalShown;
+  if (hiddenCount > 0 && !state._showAll) {
+    html += `<button onclick="state._showAll=true;renderList()" style="width:100%;padding:8px;margin-top:8px;background:var(--surface);border:1px solid var(--border);color:var(--accent);border-radius:6px;cursor:pointer;font-size:.8rem">Show ${hiddenCount} more participants</button>`;
+  }
+  container.innerHTML = html;
+}
+
+// ── Participant profile modal ──
+async function openProfileModal(key) {
+  const modal = document.getElementById('profile-modal');
+  if (!modal || !state.sessionToken) {
+    if (!state.sessionToken) toast('Sign in to view participant history');
+    return;
+  }
+  state._currentProfileKey = key;
+  document.getElementById('profile-body').style.display = 'none';
+  document.getElementById('profile-loading').style.display = 'block';
+  document.getElementById('profile-note-status').textContent = '';
+  modal.style.display = 'flex';
+
+  try {
+    const res = await authFetch(`${state.backendUrl}/participant?key=${encodeURIComponent(key)}`);
+    if (!res.ok) throw new Error(`${res.status}`);
+    const data = await res.json();
+    document.getElementById('profile-name').textContent = data.displayName || key;
+    document.getElementById('profile-email').textContent = data.email || '';
+    const avatar = document.getElementById('profile-avatar');
+    avatar.textContent = (data.displayName || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+    avatar.style.background = avatarColor(data.displayName);
+    document.getElementById('profile-meetings').textContent = data.meetingCount;
+    document.getElementById('profile-rate').textContent = data.totalMeetings > 0 ? Math.round(data.attendanceRate * 100) + '%' : '—';
+    document.getElementById('profile-avgdur').textContent = data.avgDurationMinutes ? data.avgDurationMinutes + 'm' : '—';
+
+    const recentEl = document.getElementById('profile-recent');
+    if (!data.recent?.length) {
+      recentEl.innerHTML = '<div style="color:#6e7681;font-size:.8rem">No prior meetings recorded.</div>';
+    } else {
+      recentEl.innerHTML = data.recent.map(m => {
+        const date = m.meetingStart ? new Date(m.meetingStart).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '—';
+        const dur = m.durationMs ? Math.round(m.durationMs / 60000) + 'm' : '—';
+        return `<div style="display:flex;justify-content:space-between;padding:6px 10px;background:#0d1117;border:1px solid #30363d;border-radius:6px;font-size:.78rem"><span>${escHtml(m.meetingTitle)}</span><span style="color:#9ca3af">${date} · ${dur}</span></div>`;
+      }).join('');
+    }
+    document.getElementById('profile-note').value = data.note || '';
+    document.getElementById('profile-loading').style.display = 'none';
+    document.getElementById('profile-body').style.display = 'block';
+  } catch (err) {
+    document.getElementById('profile-loading').textContent = 'Could not load profile.';
+  }
+}
+
+function closeProfileModal() {
+  const modal = document.getElementById('profile-modal');
+  if (modal) modal.style.display = 'none';
+  state._currentProfileKey = null;
+}
+
+async function saveProfileNote() {
+  if (!state._currentProfileKey) return;
+  const body = document.getElementById('profile-note').value;
+  const status = document.getElementById('profile-note-status');
+  status.textContent = 'Saving…';
+  try {
+    const res = await authFetch(`${state.backendUrl}/participant/note`, {
+      method: 'PUT',
+      body: JSON.stringify({ key: state._currentProfileKey, body }),
+    });
+    if (!res.ok) throw new Error(`${res.status}`);
+    status.textContent = '✓ Saved';
+    setTimeout(() => status.textContent = '', 2000);
+  } catch (err) {
+    status.textContent = '⚠ Failed';
+  }
+}
+
+// ── Settings modal ──
+function openSettingsModal() {
+  const modal = document.getElementById('settings-modal');
+  if (!modal) return;
+  const auto = localStorage.getItem('autoExportOnEnd') === '1';
+  document.getElementById('setting-auto-export').checked = auto;
+  modal.style.display = 'flex';
+}
+
+function closeSettingsModal() {
+  document.getElementById('settings-modal').style.display = 'none';
+}
+
+function toggleAutoExport(on) {
+  localStorage.setItem('autoExportOnEnd', on ? '1' : '0');
+  toast(on ? 'Auto-export on' : 'Auto-export off');
 }
 
 function updateSummary() {
@@ -2989,6 +3163,53 @@ window.addEventListener('DOMContentLoaded', () => {
         <button class="btn-secondary" onclick="skipMatchAndExport()">Skip matching</button>
         <button class="btn-primary" onclick="confirmMatchAndExport()">✓ Confirm & Export to Sheets</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ── Participant Profile Modal ── -->
+  <div id="profile-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:14px;padding:20px;max-width:420px;width:100%;margin-top:40px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <div id="profile-avatar" style="width:48px;height:48px;border-radius:50%;background:#21262d;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:1rem"></div>
+        <div style="flex:1;min-width:0">
+          <div id="profile-name" style="font-weight:600;font-size:1rem;color:#e6edf3"></div>
+          <div id="profile-email" style="color:#9ca3af;font-size:.75rem"></div>
+        </div>
+        <button onclick="closeProfileModal()" style="background:transparent;color:#9ca3af;border:none;font-size:1.4rem;cursor:pointer;padding:0 4px">×</button>
+      </div>
+      <div id="profile-loading" style="text-align:center;color:#9ca3af;font-size:.85rem;padding:20px">Loading…</div>
+      <div id="profile-body" style="display:none">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:14px">
+          <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:8px;text-align:center"><div style="font-size:1.1rem;font-weight:700;color:#4ade80" id="profile-meetings">—</div><div style="font-size:.65rem;color:#6e7681;text-transform:uppercase">Meetings</div></div>
+          <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:8px;text-align:center"><div style="font-size:1.1rem;font-weight:700;color:#58a6ff" id="profile-rate">—</div><div style="font-size:.65rem;color:#6e7681;text-transform:uppercase">Attendance</div></div>
+          <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:8px;text-align:center"><div style="font-size:1.1rem;font-weight:700;color:#e6edf3" id="profile-avgdur">—</div><div style="font-size:.65rem;color:#6e7681;text-transform:uppercase">Avg duration</div></div>
+        </div>
+        <div style="font-size:.7rem;color:#6e7681;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Last 5 meetings</div>
+        <div id="profile-recent" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px"></div>
+        <div style="font-size:.7rem;color:#6e7681;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Your private note</div>
+        <textarea id="profile-note" rows="3" placeholder="Notes only you can see…" style="width:100%;background:#0d1117;border:1px solid #30363d;color:#e6edf3;border-radius:6px;padding:8px;font-size:.85rem;font-family:inherit;resize:vertical;box-sizing:border-box;margin-bottom:8px"></textarea>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span id="profile-note-status" style="font-size:.7rem;color:#6e7681"></span>
+          <button onclick="saveProfileNote()" style="background:#4ade80;color:#0d1117;border:none;border-radius:6px;padding:6px 14px;font-size:.75rem;font-weight:600;cursor:pointer">Save note</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Settings Modal ── -->
+  <div id="settings-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center;padding:20px">
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:14px;padding:20px;max-width:360px;width:100%">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-weight:700;color:#e6edf3">Settings</div>
+        <button onclick="closeSettingsModal()" style="background:transparent;color:#9ca3af;border:none;font-size:1.4rem;cursor:pointer;padding:0 4px">×</button>
+      </div>
+      <label style="display:flex;align-items:flex-start;gap:10px;padding:10px;background:#0d1117;border:1px solid #30363d;border-radius:8px;cursor:pointer">
+        <input type="checkbox" id="setting-auto-export" onchange="toggleAutoExport(this.checked)" style="margin-top:3px" />
+        <div>
+          <div style="font-weight:600;font-size:.85rem;color:#e6edf3">Auto-export when meeting ends</div>
+          <div style="color:#9ca3af;font-size:.72rem;margin-top:2px;line-height:1.4">Automatically saves attendance to a Google Sheet when you stop tracking or when everyone has left. You'll still see the confirmation.</div>
+        </div>
+      </label>
     </div>
   </div>
 

@@ -890,6 +890,344 @@ async function getUserMeetingHistory(domain, email) {
   }
 }
 
+// ── Participant history (for the click-to-profile modal) ──
+// `key` is either an email (preferred) or `name:<displayName>` when the
+// participant never had an email captured. Returns every meeting in the
+// user's tenant where this participant appeared, with per-appearance
+// durations and aggregated stats.
+async function getParticipantHistory(domain, userEmail, key) {
+  try {
+    const tenant = tenantRef(domain);
+    const isEmail = key.includes('@');
+    const normalizedKey = isEmail ? key.toLowerCase() : key;
+
+    // Scope to meetings the requester has tracked (same filter as /history).
+    const [eventsSnap, meetingsSnap] = await Promise.all([
+      tenant.collection('events').where('email', '==', userEmail.toLowerCase()).where('type', '==', 'tracked').get(),
+      tenant.collection('meetings').get(),
+    ]);
+    const trackedIds = new Set();
+    for (const d of eventsSnap.docs) {
+      const cid = d.data().meta?.conferenceId;
+      if (cid) trackedIds.add(cid);
+    }
+    const useFilter = trackedIds.size > 0;
+
+    const meetings = meetingsSnap.docs
+      .filter(d => !useFilter || trackedIds.has(d.id))
+      .map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
+
+    const participantSnaps = await Promise.all(meetings.map(m => m.ref.collection('participants').get()));
+
+    const appearances = [];
+    for (let i = 0; i < meetings.length; i++) {
+      for (const p of participantSnaps[i].docs) {
+        const data = p.data();
+        const pEmail = (data.email || '').toLowerCase();
+        const matches = isEmail
+          ? (pEmail === normalizedKey)
+          : (!pEmail && data.displayName === key.replace(/^name:/, ''));
+        if (!matches) continue;
+        const join = data.joinTime?.toDate?.()?.getTime() || null;
+        const leave = data.leaveTime?.toDate?.()?.getTime() || null;
+        const start = meetings[i].data.startTime?.toDate?.()?.getTime() || null;
+        appearances.push({
+          conferenceId: meetings[i].id,
+          meetingTitle: meetings[i].data.title || 'Untitled meeting',
+          meetingStart: start ? new Date(start).toISOString() : null,
+          joinTime: join ? new Date(join).toISOString() : null,
+          leaveTime: leave ? new Date(leave).toISOString() : null,
+          durationMs: (join && leave && leave > join) ? (leave - join) : null,
+          present: !!data.present,
+          displayName: data.displayName || '',
+          email: pEmail || null,
+        });
+      }
+    }
+
+    appearances.sort((a, b) => new Date(b.meetingStart || 0) - new Date(a.meetingStart || 0));
+
+    const totalMeetings = meetings.length;
+    const meetingCount = appearances.length;
+    const totalMinutes = appearances.reduce((sum, a) => sum + (a.durationMs ? Math.round(a.durationMs / 60000) : 0), 0);
+    const avgDurationMs = appearances.filter(a => a.durationMs).reduce((sum, a, _, arr) => sum + a.durationMs / arr.length, 0) || null;
+    const displayName = appearances[0]?.displayName || (isEmail ? key.split('@')[0] : key.replace(/^name:/, ''));
+    const email = isEmail ? normalizedKey : appearances.find(a => a.email)?.email || null;
+
+    return {
+      key: normalizedKey,
+      email,
+      displayName,
+      meetingCount,
+      totalMeetings,
+      attendanceRate: totalMeetings > 0 ? (meetingCount / totalMeetings) : 0,
+      totalMinutes,
+      avgDurationMinutes: avgDurationMs ? Math.round(avgDurationMs / 60000) : null,
+      recent: appearances.slice(0, 5),
+      firstSeen: appearances.length > 0 ? appearances[appearances.length - 1].meetingStart : null,
+      lastSeen: appearances.length > 0 ? appearances[0].meetingStart : null,
+    };
+  } catch (err) {
+    log.error('firestore: getParticipantHistory failed', { domain, key, error: err.message });
+    return null;
+  }
+}
+
+// ── Per-participant notes (private to the requesting user) ──
+// Stored under users/{requesterEmail}/notes/{participantKey} so the same
+// requester can have notes on the same person across many meetings.
+async function setParticipantNote(domain, requesterEmail, participantKey, body) {
+  try {
+    const ref = tenantRef(domain)
+      .collection('users').doc(requesterEmail.toLowerCase())
+      .collection('notes').doc(encodeNoteKey(participantKey));
+    if (!body || !body.trim()) {
+      await ref.delete();
+      return { deleted: true };
+    }
+    await ref.set({
+      participantKey,
+      body: body.slice(0, 2000),
+      updatedAt: FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+    return { saved: true };
+  } catch (err) {
+    log.error('firestore: setParticipantNote failed', { domain, requesterEmail, error: err.message });
+    throw err;
+  }
+}
+
+async function getParticipantNote(domain, requesterEmail, participantKey) {
+  try {
+    const doc = await tenantRef(domain)
+      .collection('users').doc(requesterEmail.toLowerCase())
+      .collection('notes').doc(encodeNoteKey(participantKey))
+      .get();
+    return doc.exists ? (doc.data().body || '') : '';
+  } catch (err) {
+    return '';
+  }
+}
+
+// Firestore doc IDs can't contain '/' — and email-like keys are fine, but
+// `name:Joe Smith` has spaces which work. Just sanitize aggressively.
+function encodeNoteKey(key) {
+  return key.replace(/[\/#?]/g, '_').slice(0, 1500);
+}
+
+// ── Admin: recent activity feed (super admin only) ──
+// Returns the most recent events across every tenant for the live feed.
+async function getRecentActivity({ limit = 50 } = {}) {
+  try {
+    const snap = await getDb().collectionGroup('events').get();
+    return snap.docs
+      .map(d => {
+        const data = d.data();
+        return {
+          email: data.email || null,
+          type: data.type,
+          domain: d.ref.parent.parent.id,
+          createdAt: data.createdAt?.toDate?.()?.getTime() || 0,
+          meta: data.meta || null,
+        };
+      })
+      .filter(e => e.createdAt > 0)
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, limit)
+      .map(e => ({ ...e, createdAt: new Date(e.createdAt).toISOString() }));
+  } catch (err) {
+    log.error('firestore: getRecentActivity failed', { error: err.message });
+    return [];
+  }
+}
+
+// ── Admin: suggestions panel ──
+// Surfaces users worth reaching out to RIGHT NOW based on event patterns.
+async function getReachOutSuggestions() {
+  try {
+    const now = Date.now();
+    const HOUR = 60 * 60 * 1000;
+    const DAY = 24 * HOUR;
+
+    const [eventsSnap, usersSnap, outreachSnap] = await Promise.all([
+      getDb().collectionGroup('events').get(),
+      getDb().collectionGroup('users').get(),
+      getDb().collectionGroup('outreach').get(),
+    ]);
+
+    const outreachByEmail = {};
+    for (const d of outreachSnap.docs) {
+      const data = d.data();
+      const email = data.email || d.id;
+      outreachByEmail[email] = data.contactedAt?.toDate?.()?.getTime() || 0;
+    }
+
+    const eventsByEmail = {};
+    for (const d of eventsSnap.docs) {
+      const data = d.data();
+      if (!data.email) continue;
+      const ts = data.createdAt?.toDate?.()?.getTime() || 0;
+      (eventsByEmail[data.email] ||= []).push({ type: data.type, ts });
+    }
+
+    const usersByEmail = {};
+    for (const d of usersSnap.docs) {
+      const data = d.data();
+      usersByEmail[d.id] = {
+        email: d.id,
+        domain: d.ref.parent.parent.id,
+        displayName: data.displayName || '',
+        createdAt: data.createdAt?.toDate?.()?.getTime() || 0,
+        acquisitionSource: data.acquisitionSource || null,
+      };
+    }
+
+    const suggestions = [];
+    for (const [email, events] of Object.entries(eventsByEmail)) {
+      const user = usersByEmail[email];
+      if (!user) continue;
+      const lastEvent = events.reduce((a, b) => b.ts > a.ts ? b : a, { ts: 0, type: null });
+      const lastContacted = outreachByEmail[email] || 0;
+      const wasContactedRecently = lastContacted && (now - lastContacted) < 7 * DAY;
+      if (wasContactedRecently) continue;
+
+      // a) Just signed in within the last hour and never tracked
+      const justSignedIn = lastEvent.type === 'signin' && (now - lastEvent.ts) < HOUR;
+      const hasTracked = events.some(e => e.type === 'tracked');
+      if (justSignedIn && !hasTracked) {
+        suggestions.push({
+          priority: 1,
+          email, ...user,
+          reason: 'Signed in within the last hour, never tracked',
+          ctaTime: 'Reach out NOW — they may still be in the app',
+          lastEventAt: new Date(lastEvent.ts).toISOString(),
+        });
+        continue;
+      }
+
+      // b) First export happened in the last 24 hours
+      const exports_ = events.filter(e => e.type === 'exported').sort((a, b) => a.ts - b.ts);
+      if (exports_.length === 1 && (now - exports_[0].ts) < DAY) {
+        suggestions.push({
+          priority: 2,
+          email, ...user,
+          reason: 'Just had their first export — peak excitement',
+          ctaTime: 'Ask them how it went today or tomorrow',
+          lastEventAt: new Date(exports_[0].ts).toISOString(),
+        });
+        continue;
+      }
+
+      // c) Signed up 2-5 days ago, never tracked
+      const ageMs = now - user.createdAt;
+      if (ageMs >= 2 * DAY && ageMs <= 5 * DAY && !hasTracked) {
+        suggestions.push({
+          priority: 3,
+          email, ...user,
+          reason: `Signed up ${Math.round(ageMs / DAY)} days ago, never tracked`,
+          ctaTime: 'Send a friendly check-in this week',
+          lastEventAt: new Date(user.createdAt).toISOString(),
+        });
+        continue;
+      }
+    }
+
+    suggestions.sort((a, b) => a.priority - b.priority || new Date(b.lastEventAt) - new Date(a.lastEventAt));
+    return suggestions.slice(0, 20);
+  } catch (err) {
+    log.error('firestore: getReachOutSuggestions failed', { error: err.message });
+    return [];
+  }
+}
+
+// ── Admin: power user pipeline ──
+// Active users who've crossed a threshold of recent activity but haven't been
+// reached out to. Targets for personalized outreach + testimonial requests.
+async function getPowerUserPipeline({ days = 7, minTracked = 5 } = {}) {
+  try {
+    const now = Date.now();
+    const cutoff = now - days * 24 * 60 * 60 * 1000;
+
+    const [eventsSnap, usersSnap, outreachSnap] = await Promise.all([
+      getDb().collectionGroup('events').get(),
+      getDb().collectionGroup('users').get(),
+      getDb().collectionGroup('outreach').get(),
+    ]);
+
+    const outreachByEmail = {};
+    for (const d of outreachSnap.docs) {
+      const data = d.data();
+      outreachByEmail[data.email || d.id] = data.contactedAt?.toDate?.()?.getTime() || 0;
+    }
+
+    const usersByEmail = {};
+    for (const d of usersSnap.docs) {
+      const data = d.data();
+      usersByEmail[d.id] = {
+        email: d.id,
+        domain: d.ref.parent.parent.id,
+        displayName: data.displayName || '',
+        acquisitionSource: data.acquisitionSource || null,
+        createdAt: data.createdAt?.toDate?.()?.getTime() || 0,
+      };
+    }
+
+    const agg = {};
+    for (const d of eventsSnap.docs) {
+      const data = d.data();
+      const ts = data.createdAt?.toDate?.()?.getTime() || 0;
+      if (!data.email || ts < cutoff) continue;
+      if (data.type !== 'tracked' && data.type !== 'exported') continue;
+      const row = (agg[data.email] ||= { email: data.email, tracked: 0, exported: 0, lastActivity: 0 });
+      if (data.type === 'tracked') row.tracked++;
+      else row.exported++;
+      if (ts > row.lastActivity) row.lastActivity = ts;
+    }
+
+    return Object.values(agg)
+      .filter(row => row.tracked >= minTracked)
+      .map(row => {
+        const u = usersByEmail[row.email] || {};
+        const lastContacted = outreachByEmail[row.email] || 0;
+        return {
+          email: row.email,
+          domain: u.domain || row.email.split('@')[1],
+          displayName: u.displayName || '',
+          acquisitionSource: u.acquisitionSource || null,
+          tracked: row.tracked,
+          exported: row.exported,
+          totalActions: row.tracked + row.exported,
+          lastActivityAt: new Date(row.lastActivity).toISOString(),
+          lastContactedAt: lastContacted ? new Date(lastContacted).toISOString() : null,
+        };
+      })
+      .filter(row => !row.lastContactedAt)
+      .sort((a, b) => b.totalActions - a.totalActions);
+  } catch (err) {
+    log.error('firestore: getPowerUserPipeline failed', { error: err.message });
+    return [];
+  }
+}
+
+// ── Outreach log (mark a user as contacted) ──
+async function markUserContacted(domain, email, { note, contactedBy } = {}) {
+  try {
+    await tenantRef(domain)
+      .collection('outreach').doc(email.toLowerCase())
+      .set({
+        email: email.toLowerCase(),
+        contactedAt: FieldValue.serverTimestamp(),
+        contactedBy: contactedBy || null,
+        note: note || null,
+      });
+    log.info('firestore: marked user contacted', { domain, email });
+  } catch (err) {
+    log.error('firestore: markUserContacted failed', { domain, email, error: err.message });
+    throw err;
+  }
+}
+
 // ── Outreach list (super admin) ──
 // Active users in the last N days, sorted by activity desc, joined with their
 // user doc so we have first name + acquisition source for personalized email.
@@ -970,6 +1308,8 @@ module.exports = {
   logEvent,
   getUserActivationStatus, countUserExports, isExistingUserAnywhere, countAllUsers,
   getUserMeetingHistory,
+  getParticipantHistory, setParticipantNote, getParticipantNote,
+  getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted,
   getAllUsersAcrossTenants,
   getAggregatedInsights,
   getOutreachList,
