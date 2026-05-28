@@ -169,6 +169,93 @@
         </div>
       </div>
 
+      <!-- Super admin: advanced analytics (segments / funnel / time / org) -->
+      <div id="analytics-section" style="display:none">
+        <!-- Segment cards -->
+        <div class="stats-grid">
+          <div class="stat-card" onclick="filterUsersBy('new')" style="cursor:pointer">
+            <div class="stat-label">🌱 New</div>
+            <div class="stat-value" id="seg-new" style="color:#9ec8ff">—</div>
+            <div class="stat-label">&lt;3d, never tracked</div>
+          </div>
+          <div class="stat-card" onclick="filterUsersBy('activating')" style="cursor:pointer">
+            <div class="stat-label">⚡ Activating</div>
+            <div class="stat-value" id="seg-activating" style="color:#fbbf24">—</div>
+            <div class="stat-label">&lt;14d, never tracked</div>
+          </div>
+          <div class="stat-card" onclick="filterUsersBy('active')" style="cursor:pointer">
+            <div class="stat-label">✅ Active</div>
+            <div class="stat-value green" id="seg-active">—</div>
+            <div class="stat-label">Tracked in last 14d</div>
+          </div>
+          <div class="stat-card" onclick="filterUsersBy('atRisk')" style="cursor:pointer">
+            <div class="stat-label">⚠ At-risk</div>
+            <div class="stat-value" id="seg-atRisk" style="color:#fbbf24">—</div>
+            <div class="stat-label">14-30d since last activity</div>
+          </div>
+          <div class="stat-card" onclick="filterUsersBy('churned')" style="cursor:pointer">
+            <div class="stat-label">💀 Churned</div>
+            <div class="stat-value red" id="seg-churned">—</div>
+            <div class="stat-label">30d+ inactive</div>
+          </div>
+        </div>
+
+        <!-- Segment list (filtered) -->
+        <div class="section" id="segment-list-section" style="display:none">
+          <h2 style="display:flex;justify-content:space-between;align-items:center">
+            <span id="segment-list-title">Users</span>
+            <button class="btn btn-secondary" onclick="closeSegmentFilter()" style="font-size:.7rem;padding:4px 10px">× Clear</button>
+          </h2>
+          <table>
+            <thead><tr><th>User</th><th>Health</th><th>Tracked</th><th>Source</th><th>Days inactive</th></tr></thead>
+            <tbody id="segment-list-rows"></tbody>
+          </table>
+        </div>
+
+        <!-- Drop-off funnel -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;margin-bottom:24px">
+          <div class="section" style="margin-bottom:0">
+            <h2>Time to first track</h2>
+            <div id="dropoff-bars"></div>
+          </div>
+          <!-- Org adoption -->
+          <div class="section" style="margin-bottom:0">
+            <h2>Org adoption — users per domain</h2>
+            <div id="org-buckets"></div>
+          </div>
+        </div>
+
+        <!-- Multi-user orgs (network effect leads) -->
+        <div class="section">
+          <h2>🌐 Multi-user organizations <span style="color:var(--muted);font-weight:400;font-size:.8rem">— network effect leads</span></h2>
+          <table>
+            <thead><tr><th>Domain</th><th>Users</th><th>1st user joined</th><th>Most recent</th><th>1st user active?</th></tr></thead>
+            <tbody id="multi-org-rows"><tr><td colspan="5" style="color:var(--muted)">No multi-user orgs yet.</td></tr></tbody>
+          </table>
+        </div>
+
+        <!-- Source attribution funnel -->
+        <div class="section">
+          <h2>Source attribution funnel <span style="color:var(--muted);font-weight:400;font-size:.8rem">— conversion at each step</span></h2>
+          <table>
+            <thead><tr><th>Source</th><th>Signed in</th><th>Tracked</th><th>Exported</th><th>% activated</th></tr></thead>
+            <tbody id="source-funnel-rows"><tr><td colspan="5" style="color:var(--muted)">No source data yet.</td></tr></tbody>
+          </table>
+        </div>
+
+        <!-- Time-of-day patterns -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+          <div class="section" style="margin-bottom:0">
+            <h2 style="font-size:.9rem">Signups by hour (UTC)</h2>
+            <div id="hour-bars" style="display:flex;align-items:flex-end;height:120px;gap:2px;padding:8px 0"></div>
+          </div>
+          <div class="section" style="margin-bottom:0">
+            <h2 style="font-size:.9rem">Signups by day of week (UTC)</h2>
+            <div id="dow-bars" style="display:flex;align-items:flex-end;height:120px;gap:6px;padding:8px 0"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- Super admin only: insights -->
       <div id="insights-section" style="display:none">
 
@@ -434,11 +521,13 @@
         // Super admin: load all users across tenants + insights
         if (userEmail === SUPER_ADMIN_EMAIL) {
           document.getElementById('founder-section').style.display = 'block';
+          document.getElementById('analytics-section').style.display = 'block';
           loadSuggestions();
           loadActivity();
           loadPowerUsers();
           loadAllUsers();
           loadInsights();
+          loadAnalytics();
           loadDueReminders();
           startLiveRefresh();
         }
@@ -761,6 +850,121 @@
       } catch (err) {
         console.error('power users load failed:', err);
       }
+    }
+
+    // ── Advanced analytics (segments, funnels, time patterns, org adoption) ──
+    let _analytics = null;
+    async function loadAnalytics() {
+      try {
+        const res = await fetch(`${BACKEND_URL}/admin/analytics`, { headers: { Authorization: `Bearer ${sessionToken}` } });
+        if (!res.ok) return;
+        const a = await res.json();
+        _analytics = a;
+
+        // Segment counts
+        for (const seg of ['new','activating','active','atRisk','churned']) {
+          document.getElementById('seg-' + seg).textContent = a.segments[seg] || 0;
+        }
+
+        // Drop-off funnel (time to first track)
+        const d = a.dropoff;
+        const total = d.signedIn || 1;
+        document.getElementById('dropoff-bars').innerHTML = [
+          ['Within 1 hour',  d.trackedWithin1h,  'var(--accent)'],
+          ['Within 24 hours', d.trackedWithin24h, '#fbbf24'],
+          ['Within 7 days',   d.trackedWithin7d,  '#fb923c'],
+          ['Never tracked',   d.never,            'var(--error)'],
+        ].map(([label, v, color]) => {
+          const w = Math.round((v / total) * 100);
+          return `<div style="margin:6px 0">
+            <div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:2px"><span>${label}</span><span style="color:var(--muted)">${v} (${w}%)</span></div>
+            <div style="background:var(--border);border-radius:4px;height:14px;overflow:hidden"><div style="width:${Math.max(2, w)}%;background:${color};height:100%"></div></div>
+          </div>`;
+        }).join('');
+
+        // Org buckets
+        const orgTotal = Object.values(a.orgBuckets).reduce((s, v) => s + v, 0) || 1;
+        document.getElementById('org-buckets').innerHTML = Object.entries(a.orgBuckets).map(([label, v]) => {
+          const w = Math.round((v / orgTotal) * 100);
+          const isMulti = label !== '1';
+          return `<div style="margin:6px 0">
+            <div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:2px"><span>${label} user${label === '1' ? '' : 's'} per org</span><span style="color:var(--muted)">${v} org${v === 1 ? '' : 's'}</span></div>
+            <div style="background:var(--border);border-radius:4px;height:14px;overflow:hidden"><div style="width:${Math.max(2, w)}%;background:${isMulti ? 'var(--accent)' : 'var(--blue)'};height:100%"></div></div>
+          </div>`;
+        }).join('');
+
+        // Multi-user orgs
+        const moBody = document.getElementById('multi-org-rows');
+        if (!a.multiUserOrgs.length) {
+          moBody.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">No multi-user orgs yet. Every additional user per domain doubles the network value.</td></tr>';
+        } else {
+          moBody.innerHTML = a.multiUserOrgs.map(o => `
+            <tr>
+              <td>${esc(o.domain)}</td>
+              <td><strong style="color:var(--accent)">${o.userCount}</strong></td>
+              <td style="color:var(--muted);font-size:.8rem">${esc(fmtDate(o.firstUserAt))}</td>
+              <td style="color:var(--muted);font-size:.8rem">${esc(fmtDate(o.mostRecentUserAt))}</td>
+              <td>${o.firstUserStillActive ? '<span style="color:var(--accent)">✓ Yes</span>' : '<span style="color:var(--error)">✗ No</span>'}</td>
+            </tr>
+          `).join('');
+        }
+
+        // Source funnel
+        const sfBody = document.getElementById('source-funnel-rows');
+        const sourceLabels2 = { google_search: 'Google search', marketplace: 'Workspace Marketplace', reddit: 'Reddit', youtube: 'YouTube', friend: 'Friend / colleague', other: 'Other', unknown: 'Unknown' };
+        const entries = Object.entries(a.sourceFunnel || {}).sort(([,a],[,b]) => b.signedIn - a.signedIn);
+        if (!entries.length) {
+          sfBody.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">No source data yet.</td></tr>';
+        } else {
+          sfBody.innerHTML = entries.map(([src, v]) => {
+            const rate = v.signedIn > 0 ? v.tracked / v.signedIn : 0;
+            const rateColor = rate >= .5 ? 'var(--accent)' : rate >= .25 ? '#fbbf24' : 'var(--error)';
+            return `<tr><td>${esc(sourceLabels2[src] || (src.startsWith('utm:') ? 'UTM: ' + src.slice(4) : src))}</td><td>${v.signedIn}</td><td>${v.tracked}</td><td>${v.exported}</td><td style="color:${rateColor};font-weight:600">${Math.round(rate * 100)}%</td></tr>`;
+          }).join('');
+        }
+
+        // Hour bars
+        const maxHour = Math.max(1, ...a.signupHoursUTC);
+        document.getElementById('hour-bars').innerHTML = a.signupHoursUTC.map((c, h) => {
+          const ht = Math.max(2, Math.round((c / maxHour) * 100));
+          return `<div title="${h}:00 UTC — ${c} signup${c === 1 ? '' : 's'}" style="flex:1;background:var(--blue);height:${ht}%;min-width:6px;border-radius:2px 2px 0 0;opacity:${c > 0 ? 1 : .2}"></div>`;
+        }).join('');
+
+        // Day-of-week bars
+        const dowLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const maxDow = Math.max(1, ...a.signupDayOfWeekUTC);
+        document.getElementById('dow-bars').innerHTML = a.signupDayOfWeekUTC.map((c, i) => {
+          const ht = Math.max(2, Math.round((c / maxDow) * 100));
+          return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div title="${dowLabels[i]} — ${c}" style="width:100%;background:var(--accent);height:${ht}%;min-height:4px;border-radius:3px 3px 0 0;opacity:${c > 0 ? 1 : .25}"></div><div style="font-size:.65rem;color:var(--muted)">${dowLabels[i]}</div></div>`;
+        }).join('');
+      } catch (err) {
+        console.error('analytics load failed:', err);
+      }
+    }
+
+    function filterUsersBy(segment) {
+      if (!_analytics) return;
+      const users = _analytics.userHealth.filter(u => u.segment === segment);
+      const segLabels = { new: '🌱 New users', activating: '⚡ Activating', active: '✅ Active', atRisk: '⚠ At-risk', churned: '💀 Churned' };
+      document.getElementById('segment-list-title').textContent = `${segLabels[segment]} (${users.length})`;
+      document.getElementById('segment-list-section').style.display = 'block';
+      document.getElementById('segment-list-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.getElementById('segment-list-rows').innerHTML = users.length === 0
+        ? '<tr><td colspan="5" style="color:var(--muted)">Nobody here.</td></tr>'
+        : users.map(u => {
+            const hc = u.healthScore >= 70 ? 'var(--accent)' : u.healthScore >= 40 ? '#fbbf24' : 'var(--error)';
+            return `<tr onclick="openUserModal('${esc(u.email)}','${esc(u.domain)}')" style="cursor:pointer">
+              <td>${esc(u.displayName || u.email)}<div class="muted" style="font-size:.7rem">${esc(u.email)}</div></td>
+              <td><span style="color:${hc};font-weight:600">${u.healthScore}</span></td>
+              <td>${u.tracked}</td>
+              <td style="color:var(--muted);font-size:.8rem">${esc(u.acquisitionSource || '—')}</td>
+              <td style="color:var(--muted);font-size:.8rem">${u.daysSinceLast}d</td>
+            </tr>`;
+          }).join('');
+    }
+
+    function closeSegmentFilter() {
+      document.getElementById('segment-list-section').style.display = 'none';
     }
 
     // ── User detail modal (drill-down) ──

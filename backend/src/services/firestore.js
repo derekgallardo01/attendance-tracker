@@ -1016,6 +1016,156 @@ function encodeNoteKey(key) {
   return key.replace(/[\/#?]/g, '_').slice(0, 1500);
 }
 
+// ── Admin: cohort + funnel + segment + time analytics in one pass ──
+// One call so we can compute everything off the same Firestore snapshot.
+async function getAdvancedAnalytics() {
+  try {
+    const now = Date.now();
+    const DAY = 24 * 60 * 60 * 1000;
+    const HOUR = 60 * 60 * 1000;
+
+    const [usersSnap, eventsSnap, meetingsSnap] = await Promise.all([
+      getDb().collectionGroup('users').get(),
+      getDb().collectionGroup('events').get(),
+      getDb().collectionGroup('meetings').get(),
+    ]);
+
+    const users = usersSnap.docs.map(d => {
+      const data = d.data();
+      return {
+        email: d.id,
+        domain: d.ref.parent.parent.id,
+        displayName: data.displayName || '',
+        createdAt: data.createdAt?.toDate?.()?.getTime() || 0,
+        lastLoginAt: data.lastLoginAt?.toDate?.()?.getTime() || 0,
+        acquisitionSource: data.acquisitionSource || (data.utmSource ? `utm:${data.utmSource}` : null),
+      };
+    });
+
+    const eventsByEmail = {};
+    const eventsByType = { signin: [], tracked: [], exported: [] };
+    for (const d of eventsSnap.docs) {
+      const data = d.data();
+      if (!data.email) continue;
+      const ts = data.createdAt?.toDate?.()?.getTime() || 0;
+      const ev = { type: data.type, ts };
+      (eventsByEmail[data.email] ||= []).push(ev);
+      if (eventsByType[data.type]) eventsByType[data.type].push({ email: data.email, ts });
+    }
+
+    // ── Health score + segment per user ──
+    const segmentCounts = { new: 0, activating: 0, active: 0, atRisk: 0, churned: 0 };
+    const userHealth = users.map(u => {
+      const events = eventsByEmail[u.email] || [];
+      const score = computeHealthScore({ createdAt: { toDate: () => new Date(u.createdAt) } }, events.map(e => ({ ...e, createdAt: { toDate: () => new Date(e.ts) } })));
+      const last = events.reduce((m, e) => Math.max(m, e.ts), 0);
+      const daysSinceLast = last ? (now - last) / DAY : 999;
+      const ageDays = Math.max(0, (now - u.createdAt) / DAY);
+      const tracked = events.filter(e => e.type === 'tracked').length;
+
+      let segment;
+      if (ageDays < 3 && tracked === 0) segment = 'new';
+      else if (tracked === 0) segment = ageDays < 14 ? 'activating' : 'churned';
+      else if (daysSinceLast > 30) segment = 'churned';
+      else if (daysSinceLast > 14) segment = 'atRisk';
+      else segment = 'active';
+
+      segmentCounts[segment]++;
+      return { ...u, healthScore: score, segment, daysSinceLast, tracked };
+    });
+
+    // ── Source attribution funnel ──
+    // For each source, what % of users at each stage.
+    const sourceFunnel = {};
+    for (const u of userHealth) {
+      const src = u.acquisitionSource || 'unknown';
+      const bucket = sourceFunnel[src] ||= { signedIn: 0, tracked: 0, exported: 0 };
+      bucket.signedIn++;
+      const ev = eventsByEmail[u.email] || [];
+      if (ev.some(e => e.type === 'tracked')) bucket.tracked++;
+      if (ev.some(e => e.type === 'exported')) bucket.exported++;
+    }
+
+    // ── Org adoption funnel ──
+    // 1-user orgs, 2-user orgs, 3+ orgs. Bigger = network effect kicking in.
+    const usersByDomain = {};
+    for (const u of users) (usersByDomain[u.domain] ||= []).push(u);
+    const orgBuckets = { '1': 0, '2': 0, '3-4': 0, '5+': 0 };
+    const multiUserOrgs = [];
+    for (const [domain, list] of Object.entries(usersByDomain)) {
+      const n = list.length;
+      if (n === 1) orgBuckets['1']++;
+      else if (n === 2) orgBuckets['2']++;
+      else if (n < 5) orgBuckets['3-4']++;
+      else orgBuckets['5+']++;
+      if (n > 1) {
+        // For each multi-user org, sort by createdAt to see the spread
+        const sorted = list.sort((a, b) => a.createdAt - b.createdAt);
+        const firstUserActive = (now - sorted[0].lastLoginAt) < 14 * DAY;
+        multiUserOrgs.push({
+          domain,
+          userCount: n,
+          firstUserAt: new Date(sorted[0].createdAt).toISOString(),
+          mostRecentUserAt: new Date(sorted[n - 1].createdAt).toISOString(),
+          firstUserStillActive: firstUserActive,
+          users: sorted.map(u => ({ email: u.email, displayName: u.displayName, joinedAt: new Date(u.createdAt).toISOString() })),
+        });
+      }
+    }
+    multiUserOrgs.sort((a, b) => b.userCount - a.userCount);
+
+    // ── Time-of-day signup pattern (UTC hour bucket, 0-23) ──
+    const signupHours = Array(24).fill(0);
+    for (const u of users) {
+      if (u.createdAt) signupHours[new Date(u.createdAt).getUTCHours()]++;
+    }
+    const dayOfWeek = Array(7).fill(0);
+    for (const u of users) {
+      if (u.createdAt) dayOfWeek[new Date(u.createdAt).getUTCDay()]++;
+    }
+
+    // ── Drop-off in flows: signin -> tracked within N hours ──
+    // For each user, time-to-first-track from first signin.
+    const dropoff = { signedIn: 0, trackedWithin1h: 0, trackedWithin24h: 0, trackedWithin7d: 0, never: 0 };
+    for (const [email, events] of Object.entries(eventsByEmail)) {
+      const firstSignin = events.filter(e => e.type === 'signin').reduce((m, e) => Math.min(m, e.ts), Infinity);
+      if (!isFinite(firstSignin)) continue;
+      dropoff.signedIn++;
+      const firstTrack = events.filter(e => e.type === 'tracked').reduce((m, e) => Math.min(m, e.ts), Infinity);
+      if (!isFinite(firstTrack)) { dropoff.never++; continue; }
+      const gapH = (firstTrack - firstSignin) / HOUR;
+      if (gapH <= 1) dropoff.trackedWithin1h++;
+      else if (gapH <= 24) dropoff.trackedWithin24h++;
+      else if (gapH <= 168) dropoff.trackedWithin7d++;
+      else dropoff.never++;
+    }
+
+    return {
+      segments: segmentCounts,
+      userHealth: userHealth.map(u => ({
+        email: u.email,
+        domain: u.domain,
+        displayName: u.displayName,
+        healthScore: u.healthScore,
+        segment: u.segment,
+        tracked: u.tracked,
+        daysSinceLast: Math.round(u.daysSinceLast),
+        acquisitionSource: u.acquisitionSource,
+        createdAt: new Date(u.createdAt).toISOString(),
+      })),
+      sourceFunnel,
+      orgBuckets,
+      multiUserOrgs: multiUserOrgs.slice(0, 20),
+      signupHoursUTC: signupHours,
+      signupDayOfWeekUTC: dayOfWeek,
+      dropoff,
+    };
+  } catch (err) {
+    log.error('firestore: getAdvancedAnalytics failed', { error: err.message });
+    return null;
+  }
+}
+
 // ── Admin: full user detail (drill-down modal) ──
 // Pulls everything we know about one user into one payload: profile, every
 // event in their timeline, meetings they've tracked, admin notes, outreach
@@ -1588,6 +1738,7 @@ module.exports = {
   getParticipantHistory, setParticipantNote, getParticipantNote,
   getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted,
   getUserDetail, setAdminNote, searchAdminNotes,
+  getAdvancedAnalytics,
   appendConversation, setOutreachStatus,
   createReminder, markReminderDone, getDueReminders,
   getEmailTemplates, setEmailTemplates,

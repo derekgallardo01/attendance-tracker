@@ -1,6 +1,6 @@
 const { Router } = require('express');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates } = require('../services/firestore');
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics } = require('../services/firestore');
 const { sendAdminEmail } = require('../lib/notifications');
 
 const SUPER_ADMIN_EMAIL = 'derekgallardo01@gmail.com';
@@ -201,6 +201,19 @@ router.post('/admin/contacted', async (req, res) => {
   } catch (err) {
     log.error('admin: contacted failed', { error: err.message });
     res.status(500).json({ error: 'Failed to mark contacted' });
+  }
+});
+
+// GET /api/admin/analytics — segments, funnels, time patterns, drop-off
+router.get('/admin/analytics', async (req, res) => {
+  try {
+    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
+    const data = await getAdvancedAnalytics();
+    if (!data) return res.status(500).json({ error: 'Failed' });
+    res.json(data);
+  } catch (err) {
+    log.error('admin: analytics failed', { error: err.message });
+    res.status(500).json({ error: 'Failed' });
   }
 });
 
