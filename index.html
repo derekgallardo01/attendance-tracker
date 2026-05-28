@@ -414,6 +414,53 @@
     }
     .empty-state svg { opacity: .25; }
 
+    /* ── first-use tooltip tour ─────────────────────────────── */
+    .tour-pulse {
+      position: relative;
+      box-shadow: 0 0 0 0 rgba(74, 222, 128, .7);
+      animation: tourPulse 1.4s ease-out infinite;
+    }
+    @keyframes tourPulse {
+      0%   { box-shadow: 0 0 0 0 rgba(74, 222, 128, .6); }
+      70%  { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+    }
+    .tour-tooltip {
+      position: absolute;
+      background: #161b22;
+      border: 1px solid #4ade80;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: .78rem;
+      color: #e6edf3;
+      max-width: 230px;
+      line-height: 1.4;
+      z-index: 100;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, .4);
+    }
+    .tour-tooltip strong { color: #4ade80; }
+    .tour-tooltip .tour-actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      align-items: center;
+    }
+    .tour-tooltip button {
+      background: #4ade80;
+      color: #0d1117;
+      border: none;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: .7rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .tour-tooltip .tour-skip {
+      background: transparent;
+      color: #6e7681;
+      font-weight: 400;
+    }
+
     /* ── participant card ────────────────────────────────────── */
     .participant-card {
       background: var(--surface);
@@ -752,34 +799,111 @@
   <!-- ── Landing page (shown when NOT inside Google Meet) ── -->
   <div id="landing-page" style="display:none">
     <div style="min-height:100vh;background:#0d1117;color:#e6edf3;font-family:'Sora',sans-serif;display:flex;flex-direction:column;align-items:center;padding:40px 20px">
-      <div style="max-width:640px;width:100%;text-align:center">
-        <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:32px">
+      <div style="max-width:760px;width:100%">
+
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:24px">
           <img src="icons/icon-96.png" alt="Attendance Tracker" width="48" height="48" style="border-radius:12px" />
           <h1 style="font-size:1.5rem;font-weight:700;margin:0;color:#4ade80">Attendance Tracker</h1>
         </div>
-        <p style="font-size:1.1rem;color:#9ca3af;line-height:1.6;margin-bottom:40px">
-          A Google Meet add-on that tracks who joins, who leaves, and how long each participant stays in your meetings. Export attendance reports to Google Sheets with one click.
-        </p>
 
-        <div style="text-align:left;display:flex;flex-direction:column;gap:24px;margin-bottom:40px">
-          <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px">
-            <h3 style="margin:0 0 8px;color:#58a6ff;font-size:.95rem">Real-time Tracking</h3>
-            <p style="margin:0;color:#8b949e;font-size:.85rem;line-height:1.5">Automatically detects participants as they join and leave your Google Meet calls. See who is present, who has left, and session durations in real time.</p>
-          </div>
-          <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px">
-            <h3 style="margin:0 0 8px;color:#58a6ff;font-size:.95rem">One-click Export to Google Sheets</h3>
-            <p style="margin:0;color:#8b949e;font-size:.85rem;line-height:1.5">Export your attendance data to a Google Sheet instantly. Each report includes participant names, emails, join/leave times, and total duration.</p>
-          </div>
-          <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px">
-            <h3 style="margin:0 0 8px;color:#58a6ff;font-size:.95rem">Built for Meeting Organizers</h3>
-            <p style="margin:0;color:#8b949e;font-size:.85rem;line-height:1.5">Designed for teachers, trainers, and team leads who need reliable attendance records. Works with Google Workspace accounts and runs directly inside Google Meet.</p>
+        <!-- Hero -->
+        <div style="text-align:center;margin-bottom:36px">
+          <h2 style="font-size:2rem;font-weight:700;margin:0 0 16px;color:#e6edf3;line-height:1.2">Track Google Meet attendance in one click.</h2>
+          <p style="font-size:1.05rem;color:#9ca3af;line-height:1.6;margin:0 auto 24px;max-width:560px">
+            See who joined, who left, and how long they stayed — then export the whole report to Google Sheets without copy-paste or spreadsheets surgery.
+          </p>
+          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+            <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" style="display:inline-block;background:#34A853;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;font-size:.95rem">Install from Marketplace</a>
+            <a href="#how-it-works" style="display:inline-block;background:transparent;border:1px solid #30363d;color:#e6edf3;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;font-size:.95rem">How it works</a>
           </div>
         </div>
 
-        <div style="margin-bottom:40px">
-          <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" style="display:inline-block;background:#34A853;color:#fff;text-decoration:none;padding:12px 32px;border-radius:8px;font-weight:600;font-size:.95rem">Install from Google Workspace Marketplace</a>
+        <!-- Social proof bar -->
+        <div id="social-proof-bar" style="display:flex;justify-content:center;gap:32px;flex-wrap:wrap;padding:18px;background:#161b22;border:1px solid #30363d;border-radius:12px;margin-bottom:40px;text-align:center">
+          <div>
+            <div style="font-size:1.4rem;font-weight:700;color:#4ade80" id="stat-orgs-public">—</div>
+            <div style="font-size:.7rem;color:#6e7681;text-transform:uppercase;letter-spacing:.05em">Organizations</div>
+          </div>
+          <div>
+            <div style="font-size:1.4rem;font-weight:700;color:#58a6ff" id="stat-meetings-public">—</div>
+            <div style="font-size:.7rem;color:#6e7681;text-transform:uppercase;letter-spacing:.05em">Meetings tracked</div>
+          </div>
+          <div>
+            <div style="font-size:1.4rem;font-weight:700;color:#e6edf3">Workspace</div>
+            <div style="font-size:.7rem;color:#6e7681;text-transform:uppercase;letter-spacing:.05em">Marketplace verified</div>
+          </div>
         </div>
 
+        <!-- How it works -->
+        <h3 id="how-it-works" style="font-size:1.1rem;font-weight:700;margin:0 0 16px;color:#e6edf3;text-align:center">How it works</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:40px">
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;text-align:center">
+            <div style="width:36px;height:36px;background:rgba(74,222,128,.12);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;color:#4ade80;font-weight:700">1</div>
+            <h4 style="margin:0 0 6px;font-size:.9rem;color:#e6edf3">Open in Meet</h4>
+            <p style="margin:0;color:#8b949e;font-size:.8rem;line-height:1.5">Open the side panel during any Google Meet call. Sign in once with your Google account.</p>
+          </div>
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;text-align:center">
+            <div style="width:36px;height:36px;background:rgba(88,166,255,.12);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;color:#58a6ff;font-weight:700">2</div>
+            <h4 style="margin:0 0 6px;font-size:.9rem;color:#e6edf3">Click Start</h4>
+            <p style="margin:0;color:#8b949e;font-size:.8rem;line-height:1.5">We pull participants every ~10 seconds. Join times, leave times, and durations update live.</p>
+          </div>
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;text-align:center">
+            <div style="width:36px;height:36px;background:rgba(251,191,36,.12);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;color:#fbbf24;font-weight:700">3</div>
+            <h4 style="margin:0 0 6px;font-size:.9rem;color:#e6edf3">Export</h4>
+            <p style="margin:0;color:#8b949e;font-size:.8rem;line-height:1.5">One click sends the full report to a Google Sheet in your Drive. Share, sort, or archive from there.</p>
+          </div>
+        </div>
+
+        <!-- Features -->
+        <h3 style="font-size:1.1rem;font-weight:700;margin:0 0 16px;color:#e6edf3;text-align:center">Built for the people who actually take attendance</h3>
+        <div style="text-align:left;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-bottom:40px">
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px">
+            <h4 style="margin:0 0 6px;color:#58a6ff;font-size:.9rem">🧑‍🏫 Teachers &amp; trainers</h4>
+            <p style="margin:0;color:#8b949e;font-size:.8rem;line-height:1.5">Stop manually checking the participant list. Automatic roll-call with timestamps for every class.</p>
+          </div>
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px">
+            <h4 style="margin:0 0 6px;color:#58a6ff;font-size:.9rem">📊 Webinar hosts</h4>
+            <p style="margin:0;color:#8b949e;font-size:.8rem;line-height:1.5">Know exactly who watched live and how long they stayed. Export to Sheets for follow-up.</p>
+          </div>
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px">
+            <h4 style="margin:0 0 6px;color:#58a6ff;font-size:.9rem">👥 Team leads</h4>
+            <p style="margin:0;color:#8b949e;font-size:.8rem;line-height:1.5">Track standup and meeting participation across recurring calls. See trends over time.</p>
+          </div>
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px">
+            <h4 style="margin:0 0 6px;color:#58a6ff;font-size:.9rem">🔒 Privacy-first</h4>
+            <p style="margin:0;color:#8b949e;font-size:.8rem;line-height:1.5">Data only flows through your own Google account. We don't sell, share, or train on your meetings.</p>
+          </div>
+        </div>
+
+        <!-- FAQ -->
+        <h3 style="font-size:1.1rem;font-weight:700;margin:0 0 16px;color:#e6edf3;text-align:center">Common questions</h3>
+        <div style="text-align:left;display:flex;flex-direction:column;gap:10px;margin-bottom:40px">
+          <details style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:14px 16px">
+            <summary style="cursor:pointer;color:#e6edf3;font-weight:600;font-size:.9rem">Does this work with personal Gmail accounts?</summary>
+            <p style="margin:10px 0 0;color:#8b949e;font-size:.85rem;line-height:1.5">Yes. Sign in with any Google account that organized or joined the Meet call.</p>
+          </details>
+          <details style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:14px 16px">
+            <summary style="cursor:pointer;color:#e6edf3;font-weight:600;font-size:.9rem">Does it work with Google Workspace?</summary>
+            <p style="margin:10px 0 0;color:#8b949e;font-size:.85rem;line-height:1.5">Yes. For full visibility into external participants, a Workspace admin can complete a one-time delegation setup — but it's not required.</p>
+          </details>
+          <details style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:14px 16px">
+            <summary style="cursor:pointer;color:#e6edf3;font-weight:600;font-size:.9rem">What permissions do you need?</summary>
+            <p style="margin:10px 0 0;color:#8b949e;font-size:.85rem;line-height:1.5">Read-only access to the active Meet call's participants, read-only access to your calendar for matching invited guests, and write access to Google Sheets files we create (we never touch other files).</p>
+          </details>
+          <details style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:14px 16px">
+            <summary style="cursor:pointer;color:#e6edf3;font-weight:600;font-size:.9rem">Is it free?</summary>
+            <p style="margin:10px 0 0;color:#8b949e;font-size:.85rem;line-height:1.5">Yes — Attendance Tracker is free while it's growing. If we add paid tiers later, current features will stay free for individuals.</p>
+          </details>
+        </div>
+
+        <!-- Final CTA -->
+        <div style="text-align:center;margin-bottom:36px">
+          <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" style="display:inline-block;background:#34A853;color:#fff;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:600;font-size:1rem">Install from Google Workspace Marketplace</a>
+          <p style="margin:12px 0 0;color:#6e7681;font-size:.75rem">Free · Installs in 30 seconds · No credit card</p>
+        </div>
+
+        <!-- Footer -->
         <div style="display:flex;justify-content:center;gap:24px;font-size:.8rem">
           <a href="privacy.html" style="color:#6e7681;text-decoration:none">Privacy Policy</a>
           <a href="terms.html" style="color:#6e7681;text-decoration:none">Terms of Service</a>
@@ -903,13 +1027,17 @@
   <div class="list-header" id="list-header-participants" style="display:none">Participants</div>
   <div id="participant-list">
     <div class="empty-state">
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
         <circle cx="9" cy="7" r="4"/>
         <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
         <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
       </svg>
-      <span>Press <strong>Start</strong> to begin tracking</span>
+      <div style="font-weight:600;color:#e6edf3;font-size:.85rem;margin-top:4px">Ready when you are</div>
+      <span>Press <strong style="color:#4ade80">▶ Start</strong> above to begin tracking</span>
+      <div style="margin-top:10px;padding:8px 12px;background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.18);border-radius:6px;font-size:.7rem;color:#9ec8ff;max-width:260px;line-height:1.45">
+        <strong>Tip:</strong> Works best when you start tracking right as the meeting begins, so join times are captured.
+      </div>
     </div>
   </div>
 
@@ -1148,6 +1276,9 @@ async function handleAuthCode(response) {
     // Pull activation status so the nudge banner knows whether to render.
     refreshActivationStatus();
 
+    // First-time signed-in users get a 3-step tour of the buttons.
+    maybeStartTour();
+
     // Auto-start tracking if sign-in was triggered by Start button
     if (state._startAfterSignIn) {
       state._startAfterSignIn = false;
@@ -1156,6 +1287,25 @@ async function handleAuthCode(response) {
   } catch (err) {
     console.error('Auth exchange failed:', err);
     toast('Sign-in failed: ' + err.message);
+  }
+}
+
+// Public stats — drives the landing page "X organizations" counter.
+// Tolerates failure silently so the page still renders without numbers.
+async function loadPublicStats() {
+  try {
+    const res = await fetch(`${state.backendUrl}/public/stats`);
+    if (!res.ok) return;
+    const s = await res.json();
+    const fmt = (n) => Number(n || 0).toLocaleString();
+    if (s.organizations != null) {
+      document.getElementById('stat-orgs-public').textContent = fmt(s.organizations);
+    }
+    if (s.meetings != null) {
+      document.getElementById('stat-meetings-public').textContent = fmt(s.meetings);
+    }
+  } catch (e) {
+    // Leave placeholders in place
   }
 }
 
@@ -1193,6 +1343,68 @@ function renderNudgeBanner() {
   } else {
     banner.style.display = 'none';
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FIRST-USE TOUR — 3-step tooltip walkthrough
+═══════════════════════════════════════════════════════════════ */
+const TOUR_STORAGE_KEY = 'meetAttendanceTourDone';
+const TOUR_STEPS = [
+  { btn: 'btn-start',   title: 'Start',  body: 'Click <strong>Start</strong> when your meeting is live. We\'ll pull participants from the Google Meet API every ~10 seconds.' },
+  { btn: 'btn-refresh', title: 'Sync',   body: 'Force an immediate refresh. Useful if someone just joined and you don\'t want to wait for the next poll.' },
+  { btn: 'btn-sheets',  title: 'Sheet',  body: 'Export the report to a Google Sheet. First export creates a "Meet Attendance Tracker" folder in your Drive — everything goes there.' },
+];
+
+function maybeStartTour() {
+  // Only after sign-in, only in real Meet (not landing/demo), only once.
+  if (!state.signedIn || !state.conferenceId) return;
+  try { if (localStorage.getItem(TOUR_STORAGE_KEY)) return; } catch { return; }
+  // Stagger so it doesn't fight with the sign-in toast.
+  setTimeout(() => runTour(0), 800);
+}
+
+function runTour(stepIdx) {
+  if (stepIdx >= TOUR_STEPS.length) {
+    try { localStorage.setItem(TOUR_STORAGE_KEY, '1'); } catch {}
+    return;
+  }
+  const step = TOUR_STEPS[stepIdx];
+  const target = document.getElementById(step.btn);
+  if (!target) { runTour(stepIdx + 1); return; }
+
+  // Remove any leftover tour state.
+  document.querySelectorAll('.tour-pulse').forEach(el => el.classList.remove('tour-pulse'));
+  document.querySelectorAll('.tour-tooltip').forEach(el => el.remove());
+
+  target.classList.add('tour-pulse');
+
+  const tip = document.createElement('div');
+  tip.className = 'tour-tooltip';
+  tip.innerHTML = `
+    <strong>${step.title}</strong>
+    <div style="margin-top:4px">${step.body}</div>
+    <div class="tour-actions">
+      <button class="tour-skip" data-action="skip">Skip tour</button>
+      <button data-action="next">${stepIdx === TOUR_STEPS.length - 1 ? 'Got it ✓' : 'Next →'}</button>
+    </div>
+  `;
+  document.body.appendChild(tip);
+
+  // Position below the target button, clamped to viewport.
+  const rect = target.getBoundingClientRect();
+  tip.style.top  = `${Math.min(window.innerHeight - 140, rect.bottom + 8 + window.scrollY)}px`;
+  tip.style.left = `${Math.max(8, Math.min(window.innerWidth - 250, rect.left + window.scrollX))}px`;
+
+  tip.querySelector('[data-action="next"]').addEventListener('click', () => {
+    target.classList.remove('tour-pulse');
+    tip.remove();
+    runTour(stepIdx + 1);
+  });
+  tip.querySelector('[data-action="skip"]').addEventListener('click', () => {
+    target.classList.remove('tour-pulse');
+    tip.remove();
+    try { localStorage.setItem(TOUR_STORAGE_KEY, '1'); } catch {}
+  });
 }
 
 function applyScopeRestrictions() {
@@ -1374,6 +1586,7 @@ async function initSDK() {
         // Show landing page, hide add-on UI
         document.getElementById('addon-ui').style.display = 'none';
         document.getElementById('landing-page').style.display = 'block';
+        loadPublicStats();
       }
       return;
     }
@@ -1419,6 +1632,7 @@ async function initSDK() {
         `<span style="color:#4ade80">${state.userEmail}</span><br><a href="#" onclick="signOut();return false" style="color:#9ca3af;font-size:.75rem">Sign out</a>`;
       applyScopeRestrictions();
       refreshActivationStatus();
+      maybeStartTour();
     }
 
     // ── Self-presence detection ──

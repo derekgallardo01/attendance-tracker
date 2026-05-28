@@ -13,6 +13,7 @@ const sheetsRoutes = require('./routes/sheets');
 const calendarRoutes = require('./routes/calendar');
 const oauthRoutes = require('./routes/oauth');
 const adminRoutes = require('./routes/admin');
+const publicRoutes = require('./routes/public');
 
 const app = express();
 app.set('trust proxy', 1); // Cloud Run runs behind a load balancer
@@ -47,6 +48,10 @@ const oauthLimiter = rateLimit({
   message: { error: 'Too many auth requests, please try again later.' },
 });
 app.use('/api/oauth', oauthLimiter, oauthRoutes);
+
+// Public routes — no auth, but share the general rate limit so they can't be
+// abused. Mounted before the auth middleware so anonymous traffic works.
+app.use('/api', apiLimiter, publicRoutes);
 
 // Rate limiting and auth on all other /api routes
 app.use('/api', apiLimiter);
