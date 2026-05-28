@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics } = require('../services/firestore');
-const { sendAdminEmail } = require('../lib/notifications');
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport } = require('../services/firestore');
+const { sendAdminEmail, sendWeeklySelfReport } = require('../lib/notifications');
 
 const SUPER_ADMIN_EMAIL = 'derekgallardo01@gmail.com';
 const MARKETPLACE_REVIEW_URL = 'https://workspace.google.com/marketplace/app/attendance_tracker/829771833968';
@@ -201,6 +201,33 @@ router.post('/admin/contacted', async (req, res) => {
   } catch (err) {
     log.error('admin: contacted failed', { error: err.message });
     res.status(500).json({ error: 'Failed to mark contacted' });
+  }
+});
+
+// GET /api/admin/weekly-report?preview=1 — returns the JSON for inspection
+// POST /api/admin/weekly-report — actually sends the email to NOTIFY_EMAIL
+// Two endpoints so you can preview before triggering. Cloud Scheduler can
+// hit the POST endpoint every Monday morning.
+router.get('/admin/weekly-report', async (req, res) => {
+  try {
+    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
+    const report = await getWeeklySelfReport();
+    res.json(report || { error: 'failed' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed' });
+  }
+});
+
+router.post('/admin/weekly-report', async (req, res) => {
+  try {
+    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
+    const report = await getWeeklySelfReport();
+    if (!report) return res.status(500).json({ error: 'Could not generate report' });
+    const result = await sendWeeklySelfReport(report);
+    res.json(result);
+  } catch (err) {
+    log.error('admin: weekly-report send failed', { error: err.message });
+    res.status(500).json({ error: err.message || 'Failed' });
   }
 });
 

@@ -1016,6 +1016,103 @@ function encodeNoteKey(key) {
   return key.replace(/[\/#?]/g, '_').slice(0, 1500);
 }
 
+// ── Weekly self-report: what happened in the last 7 days ──
+// One snapshot you can email to yourself every Monday so you stop
+// relying on opening the dashboard. Reuses event/user/meeting queries.
+async function getWeeklySelfReport() {
+  try {
+    const now = Date.now();
+    const WEEK = 7 * 24 * 60 * 60 * 1000;
+    const weekAgo = now - WEEK;
+    const twoWeeksAgo = now - 2 * WEEK;
+
+    const [usersSnap, eventsSnap, meetingsSnap] = await Promise.all([
+      getDb().collectionGroup('users').get(),
+      getDb().collectionGroup('events').get(),
+      getDb().collectionGroup('meetings').get(),
+    ]);
+
+    const users = usersSnap.docs.map(d => ({
+      email: d.id,
+      domain: d.ref.parent.parent.id,
+      displayName: d.data().displayName || '',
+      createdAt: d.data().createdAt?.toDate?.()?.getTime() || 0,
+      acquisitionSource: d.data().acquisitionSource || null,
+    }));
+
+    const events = eventsSnap.docs.map(d => ({
+      email: d.data().email,
+      type: d.data().type,
+      ts: d.data().createdAt?.toDate?.()?.getTime() || 0,
+    })).filter(e => e.email);
+
+    // Window slicing
+    const thisWeek = events.filter(e => e.ts >= weekAgo);
+    const lastWeek = events.filter(e => e.ts >= twoWeeksAgo && e.ts < weekAgo);
+    const signupsThisWeek = users.filter(u => u.createdAt >= weekAgo);
+    const signupsLastWeek = users.filter(u => u.createdAt >= twoWeeksAgo && u.createdAt < weekAgo);
+
+    const tracksThis = thisWeek.filter(e => e.type === 'tracked').length;
+    const tracksLast = lastWeek.filter(e => e.type === 'tracked').length;
+    const exportsThis = thisWeek.filter(e => e.type === 'exported').length;
+    const exportsLast = lastWeek.filter(e => e.type === 'exported').length;
+
+    // Top user this week
+    const userActions = {};
+    for (const e of thisWeek) {
+      if (e.type === 'tracked' || e.type === 'exported') {
+        userActions[e.email] = (userActions[e.email] || 0) + 1;
+      }
+    }
+    const topUser = Object.entries(userActions).sort((a, b) => b[1] - a[1])[0];
+    const topUserName = topUser ? (users.find(u => u.email === topUser[0])?.displayName || topUser[0]) : null;
+
+    // Concerns: users who signed up 3-7 days ago and never tracked
+    const concerns = users
+      .filter(u => {
+        const age = now - u.createdAt;
+        if (age < 3 * 86400000 || age > 7 * 86400000) return false;
+        const userEvents = events.filter(e => e.email === u.email);
+        return !userEvents.some(e => e.type === 'tracked');
+      })
+      .map(u => ({ email: u.email, displayName: u.displayName, domain: u.domain }));
+
+    // Sources of new signups
+    const sourcesThisWeek = {};
+    for (const u of signupsThisWeek) {
+      const src = u.acquisitionSource || 'unknown';
+      sourcesThisWeek[src] = (sourcesThisWeek[src] || 0) + 1;
+    }
+
+    const pctChange = (curr, prev) => {
+      if (prev === 0) return curr > 0 ? '+∞' : '0';
+      const p = Math.round(((curr - prev) / prev) * 100);
+      return (p >= 0 ? '+' : '') + p + '%';
+    };
+
+    return {
+      windowStart: new Date(weekAgo).toISOString(),
+      windowEnd: new Date(now).toISOString(),
+      signups: {
+        thisWeek: signupsThisWeek.length,
+        lastWeek: signupsLastWeek.length,
+        delta: pctChange(signupsThisWeek.length, signupsLastWeek.length),
+        new: signupsThisWeek.map(u => ({ email: u.email, displayName: u.displayName, domain: u.domain, source: u.acquisitionSource })),
+      },
+      tracks: { thisWeek: tracksThis, lastWeek: tracksLast, delta: pctChange(tracksThis, tracksLast) },
+      exports: { thisWeek: exportsThis, lastWeek: exportsLast, delta: pctChange(exportsThis, exportsLast) },
+      topUser: topUser ? { email: topUser[0], displayName: topUserName, actions: topUser[1] } : null,
+      concerns: concerns.slice(0, 10),
+      sources: sourcesThisWeek,
+      totalUsers: users.length,
+      totalMeetings: meetingsSnap.size,
+    };
+  } catch (err) {
+    log.error('firestore: getWeeklySelfReport failed', { error: err.message });
+    return null;
+  }
+}
+
 // ── Admin: cohort + funnel + segment + time analytics in one pass ──
 // One call so we can compute everything off the same Firestore snapshot.
 async function getAdvancedAnalytics() {
@@ -1739,6 +1836,7 @@ module.exports = {
   getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted,
   getUserDetail, setAdminNote, searchAdminNotes,
   getAdvancedAnalytics,
+  getWeeklySelfReport,
   appendConversation, setOutreachStatus,
   createReminder, markReminderDone, getDueReminders,
   getEmailTemplates, setEmailTemplates,
