@@ -178,7 +178,7 @@ router.get('/attendance', async (req, res) => {
 
     // Fire-and-forget: persist to Firestore for analytics
     const domain = req.user?.domain || 'default';
-    persistAttendance(domain, conferenceId, conferenceRecord.name, participants);
+    persistAttendance(domain, conferenceId, conferenceRecord.name, participants, req.user?.email);
 
   } catch (err) {
     log.error('attendance fetch failed', { error: err.message });

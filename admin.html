@@ -167,6 +167,19 @@
         </div>
 
         <div class="section">
+          <h2>Most Active Users <span style="color:var(--muted);font-weight:400;font-size:.8rem">(last 30 days)</span></h2>
+          <table>
+            <thead><tr><th>Email</th><th>Domain</th><th>Tracked</th><th>Exported</th><th>Source</th></tr></thead>
+            <tbody id="top-active-rows"><tr><td colspan="5" style="color:var(--muted)">No activity yet</td></tr></tbody>
+          </table>
+        </div>
+
+        <div class="section">
+          <h2>How They Found You</h2>
+          <div id="acquisition-rows"></div>
+        </div>
+
+        <div class="section">
           <h2>Top Exporters</h2>
           <table>
             <thead><tr><th>Email</th><th>Domain</th><th>Exports</th></tr></thead>
@@ -403,6 +416,53 @@
           expBody.innerHTML = d.topExporters.map(u => `
             <tr><td>${esc(u.email)}</td><td style="color:var(--muted)">${esc(u.domain)}</td><td>${u.count}</td></tr>
           `).join('');
+        }
+
+        // Most active users this month (real per-user, from events)
+        const sourceLabels = {
+          google_search: 'Google search',
+          marketplace:   'Marketplace',
+          reddit:        'Reddit',
+          youtube:       'YouTube',
+          friend:        'Friend / colleague',
+          other:         'Other',
+        };
+        const activeBody = document.getElementById('top-active-rows');
+        if (d.topActiveUsersThisMonth?.length) {
+          activeBody.innerHTML = d.topActiveUsersThisMonth.map(u => `
+            <tr>
+              <td>${esc(u.email)}</td>
+              <td style="color:var(--muted)">${esc(u.domain)}</td>
+              <td>${u.tracked}</td>
+              <td>${u.exported}</td>
+              <td style="color:var(--muted)">${u.acquisitionSource ? esc(sourceLabels[u.acquisitionSource] || u.acquisitionSource) : '—'}</td>
+            </tr>
+          `).join('');
+        }
+
+        // Acquisition sources breakdown
+        const acqBody = document.getElementById('acquisition-rows');
+        const acq = d.acquisitionSources || {};
+        const totalKnown = Object.values(acq).reduce((a, b) => a + b, 0);
+        const totalUsers = totalKnown + (d.acquisitionSourcesUnknown || 0);
+        const rows = Object.entries(acq).sort(([, a], [, b]) => b - a);
+        if (totalKnown === 0) {
+          acqBody.innerHTML = '<div style="color:var(--muted);font-size:.85rem">No source data yet — first signal arrives after a user answers the modal.</div>';
+        } else {
+          acqBody.innerHTML = rows.map(([source, count]) => {
+            const w = Math.max(2, Math.round((count / Math.max(1, totalUsers)) * 100));
+            const label = sourceLabels[source] || (source.startsWith('utm:') ? `UTM: ${source.slice(4)}` : source);
+            return `<div style="margin:8px 0">
+              <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:2px">
+                <span>${esc(label)}</span><span style="color:var(--muted)">${count}</span>
+              </div>
+              <div style="background:var(--border);border-radius:4px;height:14px;overflow:hidden">
+                <div style="width:${w}%;background:var(--accent);height:100%"></div>
+              </div>
+            </div>`;
+          }).join('') + (d.acquisitionSourcesUnknown
+            ? `<div style="margin-top:8px;color:var(--muted);font-size:.8rem">${d.acquisitionSourcesUnknown} user${d.acquisitionSourcesUnknown === 1 ? '' : 's'} haven't answered yet</div>`
+            : '');
         }
 
         // Churned users

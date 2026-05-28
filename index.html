@@ -652,7 +652,8 @@
     #toast.show { transform: translateX(-50%) translateY(0); }
 
     /* ── Matching Modal ─────────────────────────────────────── */
-    #match-modal {
+    #match-modal,
+    #source-modal {
       display: none;
       position: fixed;
       inset: 0;
@@ -661,7 +662,8 @@
       overflow-y: auto;
       padding: 16px;
     }
-    #match-modal.open { display: flex; flex-direction: column; }
+    #match-modal.open,
+    #source-modal.open { display: flex; flex-direction: column; }
     .modal-box {
       background: #161b22;
       border: 1px solid #30363d;
@@ -1051,6 +1053,40 @@ function triggerSignIn() {
   signInWithGoogle();
 }
 
+/* ── Acquisition tracking ─────────────────────────────────────
+   We want to know HOW each user found the add-on. Two signals:
+     1) Passive: UTM params + referrer on the landing page
+     2) Active:  one-question modal shown on first sign-in
+   The passive signals are captured on first load and stashed in
+   localStorage so they survive the OAuth popup roundtrip; on
+   sign-in we ship them up with the code exchange. */
+const ACQUISITION_STORAGE_KEY = 'attendanceTrackerAcq';
+
+function captureAcquisitionFromUrl() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const utmSource   = params.get('utm_source');
+    const utmMedium   = params.get('utm_medium');
+    const utmCampaign = params.get('utm_campaign');
+    const referrer    = document.referrer || null;
+    // Don't overwrite an earlier capture (first-touch wins).
+    if (localStorage.getItem(ACQUISITION_STORAGE_KEY)) return;
+    if (!utmSource && !utmMedium && !utmCampaign && !referrer) return;
+    localStorage.setItem(ACQUISITION_STORAGE_KEY, JSON.stringify({
+      utmSource, utmMedium, utmCampaign, referrer,
+      capturedAt: Date.now(),
+    }));
+  } catch (e) { /* localStorage may be unavailable in some iframes */ }
+}
+captureAcquisitionFromUrl();
+
+function readStoredAcquisition() {
+  try {
+    const raw = localStorage.getItem(ACQUISITION_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+
 function signInWithGoogle() {
   if (!window.google?.accounts?.oauth2) {
     toast('Google Sign-In not loaded yet');
@@ -1075,10 +1111,11 @@ async function handleAuthCode(response) {
 
   try {
     toast('Signing in…');
+    const acquisition = readStoredAcquisition();
     const res = await fetch(`${state.backendUrl}/oauth/exchange`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: response.code }),
+      body: JSON.stringify({ code: response.code, acquisition: acquisition || undefined }),
     });
     if (!res.ok) throw new Error(`Auth failed: ${res.status}`);
     const data = await res.json();
@@ -1096,6 +1133,12 @@ async function handleAuthCode(response) {
     toast('Signed in as ' + data.email);
     // Attach user context to Sentry
     if (window.Sentry) Sentry.setUser({ email: data.email });
+
+    // First sign-in & no source captured → ask. Backend made this decision
+    // based on existing acquisitionSource + any UTMs we sent.
+    if (data.needsAcquisitionSource) {
+      showSourceModal();
+    }
 
     // Auto-start tracking if sign-in was triggered by Start button
     if (state._startAfterSignIn) {
@@ -1135,6 +1178,48 @@ function applyScopeRestrictions() {
   if (sheetsBtn) {
     sheetsBtn.title = sheetsMissing ? 'Grant Drive permission to enable export' : '';
     sheetsBtn.dataset.scopeBlocked = sheetsMissing ? '1' : '';
+  }
+}
+
+function showSourceModal() {
+  const modal = document.getElementById('source-modal');
+  if (!modal) return;
+  modal.classList.add('open');
+  document.getElementById('source-modal-other-wrap').style.display = 'none';
+  document.getElementById('source-modal-other').value = '';
+  const sel = document.getElementById('source-modal-select');
+  if (sel) sel.value = '';
+}
+
+function closeSourceModal() {
+  document.getElementById('source-modal')?.classList.remove('open');
+}
+
+function onSourceSelectChange() {
+  const sel = document.getElementById('source-modal-select');
+  const otherWrap = document.getElementById('source-modal-other-wrap');
+  otherWrap.style.display = sel.value === 'other' ? 'block' : 'none';
+}
+
+async function submitSource() {
+  const sel = document.getElementById('source-modal-select');
+  const source = sel?.value;
+  if (!source) { toast('Pick an option first'); return; }
+  const detail = source === 'other'
+    ? (document.getElementById('source-modal-other').value || '').trim().slice(0, 200)
+    : null;
+  try {
+    const res = await fetch(`${state.backendUrl}/admin/source`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ source, detail }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    closeSourceModal();
+    toast('Thanks!');
+  } catch (err) {
+    console.error('source save failed:', err);
+    toast('Could not save — try again later');
   }
 }
 
@@ -2589,6 +2674,30 @@ window.addEventListener('DOMContentLoaded', () => {
         <button class="btn-secondary" onclick="closeMatchModal()">Cancel</button>
         <button class="btn-secondary" onclick="skipMatchAndExport()">Skip matching</button>
         <button class="btn-primary" onclick="confirmMatchAndExport()">✓ Confirm & Export to Sheets</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Acquisition Source Modal (first sign-in) ── -->
+  <div id="source-modal">
+    <div class="modal-box" style="max-width:380px">
+      <div class="modal-title">Quick question 👋</div>
+      <div class="modal-subtitle">How did you find Attendance Tracker? Helps me figure out where to focus.</div>
+      <select id="source-modal-select" class="match-select" onchange="onSourceSelectChange()" style="margin-bottom:10px">
+        <option value="" disabled selected>Pick one…</option>
+        <option value="google_search">Google search</option>
+        <option value="marketplace">Workspace Marketplace</option>
+        <option value="reddit">Reddit</option>
+        <option value="youtube">YouTube</option>
+        <option value="friend">Friend / colleague</option>
+        <option value="other">Other</option>
+      </select>
+      <div id="source-modal-other-wrap" style="display:none;margin-bottom:10px">
+        <input id="source-modal-other" type="text" class="match-override" placeholder="Where did you hear about it?" maxlength="200" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeSourceModal()">Skip</button>
+        <button class="btn-primary" onclick="submitSource()">Submit</button>
       </div>
     </div>
   </div>

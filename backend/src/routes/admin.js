@@ -1,8 +1,12 @@
 const { Router } = require('express');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights } = require('../services/firestore');
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource } = require('../services/firestore');
 
 const SUPER_ADMIN_EMAIL = 'derekgallardo01@gmail.com';
+
+const ACQUISITION_SOURCES = new Set([
+  'google_search', 'marketplace', 'reddit', 'youtube', 'friend', 'other',
+]);
 
 const router = Router();
 
@@ -146,6 +150,23 @@ router.get('/admin/insights', async (req, res) => {
   } catch (err) {
     log.error('admin: insights failed', { error: err.message });
     res.status(500).json({ error: 'Failed to compute insights' });
+  }
+});
+
+// POST /api/admin/source — User self-reports how they found us (from the modal)
+router.post('/admin/source', async (req, res) => {
+  try {
+    if (!req.user?.email) return res.status(401).json({ error: 'Authentication required' });
+    const { source, detail } = req.body || {};
+    if (!ACQUISITION_SOURCES.has(source)) {
+      return res.status(400).json({ error: 'Invalid source' });
+    }
+    const cleanDetail = typeof detail === 'string' ? detail.slice(0, 200) : null;
+    await setUserAcquisitionSource(req.user.domain, req.user.email, { source, detail: cleanDetail });
+    res.json({ success: true });
+  } catch (err) {
+    log.error('admin: source failed', { error: err.message });
+    res.status(500).json({ error: 'Failed to save source' });
   }
 });
 

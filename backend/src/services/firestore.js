@@ -86,7 +86,24 @@ async function upsertTenantConfig(domain, config) {
 
 // ── Meeting persistence (tenant-scoped) ──
 
-async function persistAttendance(domain, conferenceId, recordName, participants) {
+// Per-user event log — lets us compute true individual activity (most active
+// this month, real per-user tracked/exported counts) instead of bucketing by
+// domain. Fire-and-forget; never block the caller.
+async function logEvent(domain, { email, type, meta }) {
+  if (!domain || !email || !type) return;
+  try {
+    await tenantRef(domain).collection('events').add({
+      email: email.toLowerCase(),
+      type,
+      meta: meta || null,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+  } catch (err) {
+    log.warn('firestore: logEvent failed', { domain, email, type, error: err.message });
+  }
+}
+
+async function persistAttendance(domain, conferenceId, recordName, participants, actorEmail) {
   try {
     const now = FieldValue.serverTimestamp();
     const meetingRef = tenantRef(domain).collection('meetings').doc(conferenceId);
@@ -123,6 +140,14 @@ async function persistAttendance(domain, conferenceId, recordName, participants)
       }, { merge: true });
     }
     await batch.commit();
+
+    if (actorEmail) {
+      logEvent(domain, {
+        email: actorEmail,
+        type: 'tracked',
+        meta: { conferenceId, participantCount: participants.length },
+      });
+    }
 
     log.info('firestore: persisted attendance', { domain, conferenceId, participants: participants.length });
   } catch (err) {
@@ -163,6 +188,14 @@ async function persistExport(domain, { meetingTitle, tabName, exportedAt, partic
       createdAt: now,
     });
 
+    if (email) {
+      logEvent(domain, {
+        email,
+        type: 'exported',
+        meta: { tabName, participantCount },
+      });
+    }
+
     log.info('firestore: persisted export record', { domain, tabName, participantCount });
   } catch (err) {
     log.error('firestore: persistExport failed', { domain, tabName, error: err.message });
@@ -196,7 +229,7 @@ async function getUser(domain, email) {
   }
 }
 
-async function upsertUser(domain, { email, displayName, refreshToken, sheetId }) {
+async function upsertUser(domain, { email, displayName, refreshToken, sheetId, acquisition }) {
   try {
     const now = FieldValue.serverTimestamp();
     const data = {
@@ -224,10 +257,46 @@ async function upsertUser(domain, { email, displayName, refreshToken, sheetId })
       });
     }
 
-    await tenantRef(domain).collection('users').doc(email.toLowerCase()).set(data, { merge: true });
+    const userRef = tenantRef(domain).collection('users').doc(email.toLowerCase());
+
+    // First-touch acquisition: only stamp on the first sign-in. Read the doc
+    // first so we don't overwrite an existing source on every login.
+    if (acquisition) {
+      const existing = await userRef.get();
+      const hasSource = existing.exists && existing.data().acquisitionSource;
+      if (!hasSource) {
+        if (acquisition.source) data.acquisitionSource = acquisition.source;
+        if (acquisition.utmSource) data.utmSource = acquisition.utmSource;
+        if (acquisition.utmMedium) data.utmMedium = acquisition.utmMedium;
+        if (acquisition.utmCampaign) data.utmCampaign = acquisition.utmCampaign;
+        if (acquisition.referrer) data.referrer = acquisition.referrer;
+        data.acquisitionCapturedAt = now;
+      }
+    }
+
+    await userRef.set(data, { merge: true });
     log.info('firestore: upserted user', { domain, email });
   } catch (err) {
     log.error('firestore: upsertUser failed', { domain, email, error: err.message });
+  }
+}
+
+// Set acquisition source from the in-app modal. Overwrites any passive UTM
+// guess because user self-report is the strongest signal.
+async function setUserAcquisitionSource(domain, email, { source, detail }) {
+  try {
+    await tenantRef(domain).collection('users').doc(email.toLowerCase()).set(
+      {
+        acquisitionSource: source,
+        acquisitionSourceDetail: detail || null,
+        acquisitionCapturedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+    log.info('firestore: set user acquisition source', { domain, email, source });
+  } catch (err) {
+    log.error('firestore: setUserAcquisitionSource failed', { domain, email, error: err.message });
   }
 }
 
@@ -286,11 +355,12 @@ async function getAggregatedInsights() {
     const now = Date.now();
     const DAY = 24 * 60 * 60 * 1000;
 
-    const [tenantsSnap, usersSnap, meetingsSnap, exportsSnap] = await Promise.all([
+    const [tenantsSnap, usersSnap, meetingsSnap, exportsSnap, eventsSnap] = await Promise.all([
       db.collection('tenants').get(),
       db.collectionGroup('users').get(),
       db.collectionGroup('meetings').get(),
       db.collectionGroup('exports').get(),
+      db.collectionGroup('events').get(),
     ]);
 
     const explicitTenants = tenantsSnap.docs.map(d => ({ domain: d.id, ...d.data() }));
@@ -327,6 +397,12 @@ async function getAggregatedInsights() {
       ...d.data(),
       createdAt: d.data().createdAt?.toDate?.()?.getTime() || null,
     }));
+    const events = eventsSnap.docs.map(d => ({
+      id: d.id,
+      domain: d.ref.parent.parent.id,
+      ...d.data(),
+      createdAt: d.data().createdAt?.toDate?.()?.getTime() || null,
+    }));
 
     // ── Per-domain meeting/export indices for fast lookup ──
     const meetingsByDomain = {};
@@ -345,18 +421,34 @@ async function getAggregatedInsights() {
       (exportsByDomain[e.domain] ||= []).push(e);
     }
 
+    // ── Per-user event index ──
+    // Events were added in the user-engagement work — older meetings/exports
+    // pre-date them, so we fall back to the domain-level proxy whenever the
+    // events collection is empty (e.g. before the feature shipped).
+    const eventsByEmail = {};
+    for (const e of events) {
+      if (e.email) (eventsByEmail[e.email] ||= []).push(e);
+    }
+    const emailsWhoTracked = new Set(events.filter(e => e.type === 'tracked').map(e => e.email));
+    const emailsWhoExported = new Set(events.filter(e => e.type === 'exported').map(e => e.email));
+
     // ── Funnel ──
-    // We don't have explicit per-user "tracked"/"exported" events, so we proxy
-    // at the domain level: a user counts as tracked/exported if their domain
-    // has at least one meeting/export.
+    // Prefer the real per-user events; fall back to the domain proxy when no
+    // events exist yet so old data still shows something sensible.
     //  - Installed  = tenants count
     //  - Signed in  = users count
-    //  - Tracked    = users whose domain has at least one meeting
-    //  - Exported   = users whose domain has at least one export
+    //  - Tracked    = users with a 'tracked' event (or, if no events,
+    //                 users whose domain has at least one meeting)
+    //  - Exported   = users with an 'exported' event (or domain proxy)
     const domainsWithMeetings = new Set(Object.keys(meetingsByDomain));
     const domainsWithExports = new Set(Object.keys(exportsByDomain));
-    const usersWhoTracked = users.filter(u => domainsWithMeetings.has(u.domain)).length;
-    const usersWhoExported = users.filter(u => domainsWithExports.has(u.domain)).length;
+    const haveEvents = events.length > 0;
+    const usersWhoTracked = haveEvents
+      ? users.filter(u => emailsWhoTracked.has(u.email)).length
+      : users.filter(u => domainsWithMeetings.has(u.domain)).length;
+    const usersWhoExported = haveEvents
+      ? users.filter(u => emailsWhoExported.has(u.email)).length
+      : users.filter(u => domainsWithExports.has(u.domain)).length;
 
     // ── Activation + first-export rates ──
     const activationRate = users.length > 0 ? usersWhoTracked / users.length : 0;
@@ -478,12 +570,49 @@ async function getAggregatedInsights() {
       };
     }).sort((a, b) => (b.meetings + b.exports) - (a.meetings + a.exports));
 
+    // ── Top active users this month (real per-user, from events) ──
+    const monthCutoff = now - 30 * DAY;
+    const eventCountByEmail = {};
+    for (const e of events) {
+      if (!e.email || !e.createdAt || e.createdAt < monthCutoff) continue;
+      if (e.type !== 'tracked' && e.type !== 'exported') continue; // signins are noisy
+      eventCountByEmail[e.email] = (eventCountByEmail[e.email] || 0) + 1;
+    }
+    const userByEmail = Object.fromEntries(users.map(u => [u.email, u]));
+    const topActiveUsersThisMonth = Object.entries(eventCountByEmail)
+      .map(([email, count]) => {
+        const u = userByEmail[email];
+        return {
+          email,
+          domain: u?.domain || email.split('@')[1],
+          displayName: u?.displayName || '',
+          eventCount: count,
+          tracked: events.filter(e => e.email === email && e.type === 'tracked' && e.createdAt >= monthCutoff).length,
+          exported: events.filter(e => e.email === email && e.type === 'exported' && e.createdAt >= monthCutoff).length,
+          acquisitionSource: u?.acquisitionSource || null,
+        };
+      })
+      .sort((a, b) => b.eventCount - a.eventCount)
+      .slice(0, 10);
+
+    // ── Acquisition source breakdown ──
+    const acquisitionSources = {};
+    let usersWithSource = 0;
+    for (const u of users) {
+      const src = u.acquisitionSource || (u.utmSource ? `utm:${u.utmSource}` : null);
+      if (!src) continue;
+      acquisitionSources[src] = (acquisitionSources[src] || 0) + 1;
+      usersWithSource++;
+    }
+    const acquisitionSourcesUnknown = users.length - usersWithSource;
+
     return {
       counts: {
         installs: tenants.length,
         users: users.length,
         meetings: meetings.length,
         exports: exports_.length,
+        events: events.length,
       },
       funnel: {
         installed: tenants.length,
@@ -504,6 +633,9 @@ async function getAggregatedInsights() {
       avgParticipants,
       medianDurationMs,
       topExporters: exportsPerUser,
+      topActiveUsersThisMonth,
+      acquisitionSources,
+      acquisitionSourcesUnknown,
       orgActivity,
     };
   } catch (err) {
@@ -527,6 +659,8 @@ module.exports = {
   getTenantConfig, upsertTenantConfig,
   persistAttendance, persistCalendarData, persistExport,
   getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens,
+  setUserAcquisitionSource,
+  logEvent,
   getAllUsersAcrossTenants,
   getAggregatedInsights,
   deleteUser,

@@ -4,7 +4,13 @@ const { google } = require('googleapis');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { exchangeCode, revokeToken } = require('../services/googleAuth');
-const { upsertUser, getUser, updateUserTokens } = require('../services/firestore');
+const { upsertUser, getUser, updateUserTokens, logEvent } = require('../services/firestore');
+
+// Allow-list for self-reported acquisition source. Anything not on this list
+// is dropped so we don't end up storing arbitrary strings from the wire.
+const ACQUISITION_SOURCES = new Set([
+  'google_search', 'marketplace', 'reddit', 'youtube', 'friend', 'other',
+]);
 
 const router = Router();
 
@@ -29,7 +35,7 @@ function computeMissingScopes(granted) {
 // POST /api/oauth/exchange — swap authorization code for session token
 router.post('/exchange', async (req, res) => {
   try {
-    const { code } = req.body;
+    const { code, acquisition } = req.body;
     if (!code) return res.status(400).json({ error: 'Authorization code required' });
 
     // Exchange code for Google tokens
@@ -53,12 +59,36 @@ router.post('/exchange', async (req, res) => {
       log.warn('oauth: user granted partial scopes', { email, missing: missingScopes.map(m => m.feature) });
     }
 
+    // Sanitize acquisition payload from the client. Only known sources pass;
+    // UTM fields are length-capped to keep arbitrary blobs out of Firestore.
+    const trim = (v) => (typeof v === 'string' ? v.slice(0, 200) : undefined);
+    const sanitizedAcq = acquisition ? {
+      source: ACQUISITION_SOURCES.has(acquisition.source) ? acquisition.source : undefined,
+      utmSource:   trim(acquisition.utmSource),
+      utmMedium:   trim(acquisition.utmMedium),
+      utmCampaign: trim(acquisition.utmCampaign),
+      referrer:    trim(acquisition.referrer),
+    } : undefined;
+
+    // Decide whether the client needs to show the "how did you find us?" modal.
+    // It does if (a) the user is brand new, or (b) an existing user still has
+    // no acquisitionSource on their doc (we can't auto-derive one from UTMs).
+    const existingUser = await getUser(domain, email);
+    const alreadyHasSource = !!(existingUser?.acquisitionSource);
+    const willCaptureFromUTM = !alreadyHasSource && !!sanitizedAcq?.utmSource;
+    const needsAcquisitionSource = !alreadyHasSource && !willCaptureFromUTM;
+
     // Store user + tokens in tenant-scoped Firestore
     await upsertUser(domain, {
       email,
       displayName,
       refreshToken: tokens.refresh_token || undefined,
+      acquisition: sanitizedAcq,
     });
+
+    // Per-user signin event — feeds the activity log and "most active this
+    // month" view. Fire-and-forget; failure here must not break sign-in.
+    logEvent(domain, { email, type: 'signin' });
 
     // Always store the fresh access token from the exchange
     if (tokens.access_token) {
@@ -76,7 +106,7 @@ router.post('/exchange', async (req, res) => {
     );
 
     log.info('oauth: user authenticated', { email, domain });
-    res.json({ sessionToken, email, displayName, grantedScopes, missingScopes });
+    res.json({ sessionToken, email, displayName, grantedScopes, missingScopes, needsAcquisitionSource });
   } catch (err) {
     log.error('oauth: exchange failed', { error: err.message });
     res.status(401).json({ error: 'Authentication failed' });
