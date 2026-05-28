@@ -2,11 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
+  <link rel="icon" type="image/png" sizes="128x128" href="icons/icon-128.png" />
+  <meta name="google-site-verification" content="A4dDuj7bYeeAQ2vstaR8Y0J_jYbxmXty9ikiZOtdDCY" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>Attendance Tracker</title>
+  <title>Attendance Tracker — Real-time attendance tracking for Google Meet</title>
+  <meta name="description" content="Track who joins, leaves, and how long they stay in your Google Meet calls. Export attendance reports to Google Sheets with one click." />
 
   <!-- Sentry Error Tracking -->
   <script src="https://browser.sentry-cdn.com/9.28.1/bundle.min.js" crossorigin="anonymous"></script>
@@ -647,7 +652,8 @@
     #toast.show { transform: translateX(-50%) translateY(0); }
 
     /* ── Matching Modal ─────────────────────────────────────── */
-    #match-modal {
+    #match-modal,
+    #source-modal {
       display: none;
       position: fixed;
       inset: 0;
@@ -656,7 +662,8 @@
       overflow-y: auto;
       padding: 16px;
     }
-    #match-modal.open { display: flex; flex-direction: column; }
+    #match-modal.open,
+    #source-modal.open { display: flex; flex-direction: column; }
     .modal-box {
       background: #161b22;
       border: 1px solid #30363d;
@@ -742,6 +749,49 @@
 </head>
 <body>
 
+  <!-- ── Landing page (shown when NOT inside Google Meet) ── -->
+  <div id="landing-page" style="display:none">
+    <div style="min-height:100vh;background:#0d1117;color:#e6edf3;font-family:'Sora',sans-serif;display:flex;flex-direction:column;align-items:center;padding:40px 20px">
+      <div style="max-width:640px;width:100%;text-align:center">
+        <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:32px">
+          <img src="icons/icon-96.png" alt="Attendance Tracker" width="48" height="48" style="border-radius:12px" />
+          <h1 style="font-size:1.5rem;font-weight:700;margin:0;color:#4ade80">Attendance Tracker</h1>
+        </div>
+        <p style="font-size:1.1rem;color:#9ca3af;line-height:1.6;margin-bottom:40px">
+          A Google Meet add-on that tracks who joins, who leaves, and how long each participant stays in your meetings. Export attendance reports to Google Sheets with one click.
+        </p>
+
+        <div style="text-align:left;display:flex;flex-direction:column;gap:24px;margin-bottom:40px">
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px">
+            <h3 style="margin:0 0 8px;color:#58a6ff;font-size:.95rem">Real-time Tracking</h3>
+            <p style="margin:0;color:#8b949e;font-size:.85rem;line-height:1.5">Automatically detects participants as they join and leave your Google Meet calls. See who is present, who has left, and session durations in real time.</p>
+          </div>
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px">
+            <h3 style="margin:0 0 8px;color:#58a6ff;font-size:.95rem">One-click Export to Google Sheets</h3>
+            <p style="margin:0;color:#8b949e;font-size:.85rem;line-height:1.5">Export your attendance data to a Google Sheet instantly. Each report includes participant names, emails, join/leave times, and total duration.</p>
+          </div>
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px">
+            <h3 style="margin:0 0 8px;color:#58a6ff;font-size:.95rem">Built for Meeting Organizers</h3>
+            <p style="margin:0;color:#8b949e;font-size:.85rem;line-height:1.5">Designed for teachers, trainers, and team leads who need reliable attendance records. Works with Google Workspace accounts and runs directly inside Google Meet.</p>
+          </div>
+        </div>
+
+        <div style="margin-bottom:40px">
+          <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" style="display:inline-block;background:#34A853;color:#fff;text-decoration:none;padding:12px 32px;border-radius:8px;font-weight:600;font-size:.95rem">Install from Google Workspace Marketplace</a>
+        </div>
+
+        <div style="display:flex;justify-content:center;gap:24px;font-size:.8rem">
+          <a href="privacy.html" style="color:#6e7681;text-decoration:none">Privacy Policy</a>
+          <a href="terms.html" style="color:#6e7681;text-decoration:none">Terms of Service</a>
+          <a href="support.html" style="color:#6e7681;text-decoration:none">Support</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Add-on UI (shown when inside Google Meet) ── -->
+  <div id="addon-ui">
+
   <!-- ── Header ── -->
   <header>
     <div class="logo">
@@ -770,6 +820,11 @@
   <div id="scope-banner" style="display:none;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.4);border-radius:8px;padding:10px 12px;margin:8px 16px;font-size:.8rem;color:#fde68a">
     <div style="margin-bottom:8px"><strong>Some features need additional permission.</strong> <span id="scope-banner-detail"></span></div>
     <button onclick="signInWithGoogle()" style="background:#fbbf24;color:#000;border:none;border-radius:6px;padding:6px 12px;font-weight:600;font-size:.75rem;cursor:pointer">Grant access</button>
+  </div>
+
+  <!-- ── Activation nudge banner (signed in but haven't tracked/exported yet) ── -->
+  <div id="nudge-banner" style="display:none;background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.35);border-radius:8px;padding:10px 12px;margin:8px 16px;font-size:.8rem;color:#9ec8ff">
+    <div id="nudge-banner-text" style="line-height:1.45"></div>
   </div>
 
   <!-- ── Setup banner (shown when delegation not configured) ── -->
@@ -1003,6 +1058,40 @@ function triggerSignIn() {
   signInWithGoogle();
 }
 
+/* ── Acquisition tracking ─────────────────────────────────────
+   We want to know HOW each user found the add-on. Two signals:
+     1) Passive: UTM params + referrer on the landing page
+     2) Active:  one-question modal shown on first sign-in
+   The passive signals are captured on first load and stashed in
+   localStorage so they survive the OAuth popup roundtrip; on
+   sign-in we ship them up with the code exchange. */
+const ACQUISITION_STORAGE_KEY = 'attendanceTrackerAcq';
+
+function captureAcquisitionFromUrl() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const utmSource   = params.get('utm_source');
+    const utmMedium   = params.get('utm_medium');
+    const utmCampaign = params.get('utm_campaign');
+    const referrer    = document.referrer || null;
+    // Don't overwrite an earlier capture (first-touch wins).
+    if (localStorage.getItem(ACQUISITION_STORAGE_KEY)) return;
+    if (!utmSource && !utmMedium && !utmCampaign && !referrer) return;
+    localStorage.setItem(ACQUISITION_STORAGE_KEY, JSON.stringify({
+      utmSource, utmMedium, utmCampaign, referrer,
+      capturedAt: Date.now(),
+    }));
+  } catch (e) { /* localStorage may be unavailable in some iframes */ }
+}
+captureAcquisitionFromUrl();
+
+function readStoredAcquisition() {
+  try {
+    const raw = localStorage.getItem(ACQUISITION_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+
 function signInWithGoogle() {
   if (!window.google?.accounts?.oauth2) {
     toast('Google Sign-In not loaded yet');
@@ -1027,10 +1116,11 @@ async function handleAuthCode(response) {
 
   try {
     toast('Signing in…');
+    const acquisition = readStoredAcquisition();
     const res = await fetch(`${state.backendUrl}/oauth/exchange`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: response.code }),
+      body: JSON.stringify({ code: response.code, acquisition: acquisition || undefined }),
     });
     if (!res.ok) throw new Error(`Auth failed: ${res.status}`);
     const data = await res.json();
@@ -1049,6 +1139,15 @@ async function handleAuthCode(response) {
     // Attach user context to Sentry
     if (window.Sentry) Sentry.setUser({ email: data.email });
 
+    // First sign-in & no source captured → ask. Pass detected source so the
+    // modal can greet "Hey 👋 saw you came from Reddit" instead of generic.
+    if (data.needsAcquisitionSource) {
+      showSourceModal(data.detectedSource);
+    }
+
+    // Pull activation status so the nudge banner knows whether to render.
+    refreshActivationStatus();
+
     // Auto-start tracking if sign-in was triggered by Start button
     if (state._startAfterSignIn) {
       state._startAfterSignIn = false;
@@ -1060,6 +1159,42 @@ async function handleAuthCode(response) {
   }
 }
 
+// Pull /api/oauth/me and update the activation nudge banner. Called after
+// sign-in and again whenever we suspect status changed (post-track, post-export).
+async function refreshActivationStatus() {
+  if (!state.sessionToken) return;
+  try {
+    const res = await fetch(`${state.backendUrl}/oauth/me`, { headers: authHeaders() });
+    if (!res.ok) return;
+    const status = await res.json();
+    state.activation = status;
+    renderNudgeBanner();
+  } catch (e) {
+    // Best-effort; nudges are a nice-to-have
+  }
+}
+
+function renderNudgeBanner() {
+  const banner = document.getElementById('nudge-banner');
+  const text = document.getElementById('nudge-banner-text');
+  if (!banner || !state.signedIn) {
+    banner && (banner.style.display = 'none');
+    return;
+  }
+  const a = state.activation;
+  if (!a) { banner.style.display = 'none'; return; }
+
+  if (!a.hasTracked) {
+    text.innerHTML = '<strong>Getting started:</strong> open a Google Meet call and we\'ll start tracking participants automatically. Click <strong>Start</strong> above when you\'re in.';
+    banner.style.display = 'block';
+  } else if (!a.hasExported) {
+    text.innerHTML = '<strong>Almost there:</strong> click <strong>Sheet</strong> above to save this attendance to Google Sheets in one click — you can share, sort, or archive it from there.';
+    banner.style.display = 'block';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
 function applyScopeRestrictions() {
   const missing = state.missingScopes || [];
   const banner = document.getElementById('scope-banner');
@@ -1068,8 +1203,7 @@ function applyScopeRestrictions() {
 
   if (missing.length === 0) {
     banner.style.display = 'none';
-    const sb = document.getElementById('btn-sheets');
-    if (sb) sb.title = '';
+    document.getElementById('btn-sheets').title = '';
     return;
   }
 
@@ -1082,11 +1216,79 @@ function applyScopeRestrictions() {
   detail.textContent = `Currently unavailable: ${unavailable}.`;
   banner.style.display = 'block';
 
+  // Lock the Sheets button when drive.file wasn't granted
   const sheetsMissing = missing.some(m => m.feature === 'sheets');
   const sheetsBtn = document.getElementById('btn-sheets');
   if (sheetsBtn) {
     sheetsBtn.title = sheetsMissing ? 'Grant Drive permission to enable export' : '';
     sheetsBtn.dataset.scopeBlocked = sheetsMissing ? '1' : '';
+  }
+}
+
+function showSourceModal(detectedSource) {
+  const modal = document.getElementById('source-modal');
+  if (!modal) return;
+
+  // Source-aware greeting — if we already have a hint, lead with it.
+  // Friendly, not interrogating.
+  const title = document.getElementById('source-modal-title');
+  const subtitle = document.getElementById('source-modal-subtitle');
+  const greetings = {
+    reddit:        ['Hey 👋 saw you came from Reddit', 'Mind sharing which sub? Helps me know where to hang out.'],
+    youtube:       ['Hey 👋 saw you came from YouTube', 'Which video? Trying to figure out what content actually works.'],
+    google_search: ['Hey 👋 found us via Google', 'Quick favor — what were you searching for? Helps me reach more folks like you.'],
+    marketplace:   ['Hey 👋 thanks for installing!', 'Anything in particular you\'re hoping to do? Helps me prioritize.'],
+    friend:        ['Hey 👋 a teammate sent you?', 'I\'d love to know who — drop their name and I\'ll thank them.'],
+  };
+  const g = greetings[detectedSource];
+  if (g && title && subtitle) {
+    title.textContent = g[0];
+    subtitle.textContent = g[1];
+  } else if (title && subtitle) {
+    title.textContent = 'Quick question 👋';
+    subtitle.textContent = 'How did you find Attendance Tracker? Helps me figure out where to focus.';
+  }
+
+  modal.classList.add('open');
+  document.getElementById('source-modal-other-wrap').style.display = 'none';
+  document.getElementById('source-modal-other').value = '';
+  const sel = document.getElementById('source-modal-select');
+  if (sel) {
+    // Pre-select the detected option when we have one — saves them a click.
+    sel.value = ['reddit', 'youtube', 'google_search', 'marketplace', 'friend'].includes(detectedSource)
+      ? detectedSource : '';
+  }
+}
+
+function closeSourceModal() {
+  document.getElementById('source-modal')?.classList.remove('open');
+}
+
+function onSourceSelectChange() {
+  const sel = document.getElementById('source-modal-select');
+  const otherWrap = document.getElementById('source-modal-other-wrap');
+  otherWrap.style.display = sel.value === 'other' ? 'block' : 'none';
+}
+
+async function submitSource() {
+  const sel = document.getElementById('source-modal-select');
+  const source = sel?.value;
+  if (!source) { toast('Pick an option first'); return; }
+  const detail = source === 'other'
+    ? (document.getElementById('source-modal-other').value || '').trim().slice(0, 200)
+    : null;
+  try {
+    const res = await fetch(`${state.backendUrl}/admin/source`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ source, detail }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    closeSourceModal();
+    toast('Thanks!');
+  } catch (err) {
+    console.error('source save failed:', err);
+    toast('Could not save — try again later');
   }
 }
 
@@ -1162,15 +1364,16 @@ async function initSDK() {
     console.log('[Attendance] waitForMeet result:', ready, 'window.meet =', typeof window.meet);
 
     if (!ready) {
-      // Not inside Meet — show simulation controls only if ?demo=1
+      // Not inside Meet — show landing page or demo mode
       const params = new URLSearchParams(window.location.search);
       if (params.get('demo') === '1') {
         document.getElementById('meeting-title').textContent = 'Dev Preview Mode';
         setStatus('loading', 'Demo mode — configure simulation below');
         showSimControls();
       } else {
-        document.getElementById('meeting-title').textContent = 'Attendance Tracker';
-        setStatus('loading', 'Open this add-on inside a Google Meet call to start tracking.');
+        // Show landing page, hide add-on UI
+        document.getElementById('addon-ui').style.display = 'none';
+        document.getElementById('landing-page').style.display = 'block';
       }
       return;
     }
@@ -1215,6 +1418,7 @@ async function initSDK() {
       document.getElementById('auth-bar').innerHTML =
         `<span style="color:#4ade80">${state.userEmail}</span><br><a href="#" onclick="signOut();return false" style="color:#9ca3af;font-size:.75rem">Sign out</a>`;
       applyScopeRestrictions();
+      refreshActivationStatus();
     }
 
     // ── Self-presence detection ──
@@ -1268,9 +1472,16 @@ async function initSDK() {
 
   } catch (err) {
     console.error('[Attendance] SDK error:', err.message);
-    document.getElementById('meeting-title').textContent = 'Dev Preview Mode';
-    setStatus('loading', 'Demo mode — configure simulation below');
-    showSimControls();
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('demo') === '1') {
+      document.getElementById('meeting-title').textContent = 'Dev Preview Mode';
+      setStatus('loading', 'Demo mode — configure simulation below');
+      showSimControls();
+    } else {
+      // Show landing page, hide add-on UI
+      document.getElementById('addon-ui').style.display = 'none';
+      document.getElementById('landing-page').style.display = 'block';
+    }
   }
 }
 
@@ -1408,6 +1619,13 @@ async function refreshAttendance() {
     updateLastRefresh();
     setStatus('active', `Tracking · ${state.participants.size} seen`);
     saveState();
+
+    // First successful track for this user — flip the nudge banner from
+    // "Getting started" to "Almost there" without waiting for next signin.
+    if (!hadParticipantsBefore && state.participants.size > 0 && state.activation && !state.activation.hasTracked) {
+      state.activation.hasTracked = true;
+      renderNudgeBanner();
+    }
 
 
   } catch (err) {
@@ -1842,7 +2060,7 @@ async function doExportToSheets(emailMap, calendarAttendees = []) {
       }
       throw new Error(body.error || `${res.status}`);
     }
-    const { sheetUrl } = await res.json();
+    const { sheetUrl, isFirstExport } = await res.json();
     toast('✓ Saved to Sheets');
     const btn = document.getElementById('btn-sheets');
     btn.textContent = '✓ Exported';
@@ -1853,9 +2071,31 @@ async function doExportToSheets(emailMap, calendarAttendees = []) {
       document.getElementById('sheet-link').href = sheetUrl;
       document.getElementById('sheet-link-bar').style.display = 'block';
     }
+    if (isFirstExport) {
+      showCelebrateModal(sheetUrl);
+    }
+    // Update activation state so the nudge banner hides itself
+    refreshActivationStatus();
   } catch (err) {
     toast(`⚠ Sheets error: ${err.message}`);
   }
+}
+
+function showCelebrateModal(sheetUrl) {
+  const modal = document.getElementById('celebrate-modal');
+  const link = document.getElementById('celebrate-share-link');
+  if (!modal || !link) return;
+  const subject = encodeURIComponent('You should check out Attendance Tracker for Google Meet');
+  const body = encodeURIComponent(
+    `I started using this Google Meet add-on for tracking attendance and exporting to Sheets in one click. Thought you might find it useful too.\n\nMarketplace: https://workspace.google.com/marketplace/app/attendance_tracker/829771833968\nLanding page: https://attendancetracker.dev\n`
+  );
+  link.href = `mailto:?subject=${subject}&body=${body}`;
+  modal.style.display = 'flex';
+}
+
+function closeCelebrateModal() {
+  const modal = document.getElementById('celebrate-modal');
+  if (modal) modal.style.display = 'none';
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -2536,5 +2776,44 @@ window.addEventListener('DOMContentLoaded', () => {
       </div>
     </div>
   </div>
+
+  <!-- ── First-Export Celebration Modal ── -->
+  <div id="celebrate-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center;padding:20px">
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:14px;padding:24px;max-width:380px;width:100%;text-align:center">
+      <div style="font-size:2.5rem;margin-bottom:8px">🎉</div>
+      <div style="font-size:1.1rem;font-weight:700;color:#4ade80;margin-bottom:6px">First export complete!</div>
+      <div style="color:#9ca3af;font-size:.85rem;line-height:1.5;margin-bottom:18px">Your attendance report is in Google Sheets. Know a teammate who tracks attendance? Send them this in 10 seconds.</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <a id="celebrate-share-link" href="#" style="background:#34A853;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:600;font-size:.85rem;display:inline-block">Share with a teammate</a>
+        <button onclick="closeCelebrateModal()" style="background:transparent;color:#9ca3af;border:none;font-size:.8rem;cursor:pointer;padding:6px">No thanks</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Acquisition Source Modal (first sign-in) ── -->
+  <div id="source-modal">
+    <div class="modal-box" style="max-width:380px">
+      <div class="modal-title" id="source-modal-title">Quick question 👋</div>
+      <div class="modal-subtitle" id="source-modal-subtitle">How did you find Attendance Tracker? Helps me figure out where to focus.</div>
+      <select id="source-modal-select" class="match-select" onchange="onSourceSelectChange()" style="margin-bottom:10px">
+        <option value="" disabled selected>Pick one…</option>
+        <option value="google_search">Google search</option>
+        <option value="marketplace">Workspace Marketplace</option>
+        <option value="reddit">Reddit</option>
+        <option value="youtube">YouTube</option>
+        <option value="friend">Friend / colleague</option>
+        <option value="other">Other</option>
+      </select>
+      <div id="source-modal-other-wrap" style="display:none;margin-bottom:10px">
+        <input id="source-modal-other" type="text" class="match-override" placeholder="Where did you hear about it?" maxlength="200" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeSourceModal()">Skip</button>
+        <button class="btn-primary" onclick="submitSource()">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /addon-ui -->
 </body>
 </html>

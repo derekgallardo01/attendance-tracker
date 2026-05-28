@@ -328,6 +328,72 @@ async function updateUserTokens(domain, email, { accessToken, tokenExpiresAt }) 
   }
 }
 
+// ── Per-user activation status (for in-product nudges + celebration moment) ──
+
+async function getUserActivationStatus(domain, email) {
+  try {
+    const userRef = tenantRef(domain).collection('users').doc(email.toLowerCase());
+    const eventsRef = tenantRef(domain).collection('events');
+    const [userDoc, trackedSnap, exportedSnap] = await Promise.all([
+      userRef.get(),
+      eventsRef.where('email', '==', email.toLowerCase()).where('type', '==', 'tracked').limit(1).get(),
+      eventsRef.where('email', '==', email.toLowerCase()).where('type', '==', 'exported').limit(1).get(),
+    ]);
+    const data = userDoc.exists ? userDoc.data() : {};
+    return {
+      firstSeenAt: data.createdAt?.toDate?.()?.toISOString() || null,
+      lastLoginAt: data.lastLoginAt?.toDate?.()?.toISOString() || null,
+      hasTracked: !trackedSnap.empty,
+      hasExported: !exportedSnap.empty,
+      acquisitionSource: data.acquisitionSource || null,
+      utmSource: data.utmSource || null,
+    };
+  } catch (err) {
+    log.error('firestore: getUserActivationStatus failed', { domain, email, error: err.message });
+    return { hasTracked: false, hasExported: false };
+  }
+}
+
+// Count this user's prior export events. Used to detect the first-export
+// "aha moment" so the frontend can fire the celebration modal.
+async function countUserExports(domain, email) {
+  try {
+    const snap = await tenantRef(domain).collection('events')
+      .where('email', '==', email.toLowerCase())
+      .where('type', '==', 'exported')
+      .get();
+    return snap.size;
+  } catch (err) {
+    log.warn('firestore: countUserExports failed', { domain, email, error: err.message });
+    return 0;
+  }
+}
+
+// Has this email ever appeared in any users subcollection? Used by the OAuth
+// route to decide whether to fire the signup notification webhook.
+async function isExistingUserAnywhere(email) {
+  try {
+    const snap = await getDb().collectionGroup('users')
+      .where('email', '==', email.toLowerCase())
+      .limit(1)
+      .get();
+    return !snap.empty;
+  } catch (err) {
+    log.warn('firestore: isExistingUserAnywhere failed', { email, error: err.message });
+    return false;
+  }
+}
+
+async function countAllUsers() {
+  try {
+    const snap = await getDb().collectionGroup('users').get();
+    return snap.size;
+  } catch (err) {
+    log.warn('firestore: countAllUsers failed', { error: err.message });
+    return null;
+  }
+}
+
 // ── Cross-tenant queries (super admin) ──
 
 async function getAllUsersAcrossTenants() {
@@ -606,6 +672,33 @@ async function getAggregatedInsights() {
     }
     const acquisitionSourcesUnknown = users.length - usersWithSource;
 
+    // ── Cohort retention by source ──
+    // For each source, of users who signed up >=7d ago, how many tracked at
+    // least one meeting? Tells us which channels deliver users that stick.
+    // We require a minimum cohort size of 2 to avoid noisy 100% / 0% rows.
+    const sourceCohortRetention = {};
+    const bucketBySource = {};
+    for (const u of users) {
+      const src = u.acquisitionSource || (u.utmSource ? `utm:${u.utmSource}` : 'unknown');
+      (bucketBySource[src] ||= []).push(u);
+    }
+    for (const [src, list] of Object.entries(bucketBySource)) {
+      const cohort = list.filter(u => u.createdAt && (now - u.createdAt) >= 7 * DAY);
+      if (cohort.length < 2) {
+        sourceCohortRetention[src] = { cohortSize: cohort.length, activated: null, retention: null };
+        continue;
+      }
+      const activated = cohort.filter(u => {
+        if (haveEvents) return emailsWhoTracked.has(u.email);
+        return domainsWithMeetings.has(u.domain);
+      }).length;
+      sourceCohortRetention[src] = {
+        cohortSize: cohort.length,
+        activated,
+        retention: activated / cohort.length,
+      };
+    }
+
     return {
       counts: {
         installs: tenants.length,
@@ -636,6 +729,7 @@ async function getAggregatedInsights() {
       topActiveUsersThisMonth,
       acquisitionSources,
       acquisitionSourcesUnknown,
+      sourceCohortRetention,
       orgActivity,
     };
   } catch (err) {
@@ -722,6 +816,7 @@ module.exports = {
   getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens,
   setUserAcquisitionSource,
   logEvent,
+  getUserActivationStatus, countUserExports, isExistingUserAnywhere, countAllUsers,
   getAllUsersAcrossTenants,
   getAggregatedInsights,
   getOutreachList,

@@ -4,7 +4,8 @@ const { google } = require('googleapis');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { exchangeCode, revokeToken } = require('../services/googleAuth');
-const { upsertUser, getUser, updateUserTokens, logEvent } = require('../services/firestore');
+const { upsertUser, getUser, updateUserTokens, logEvent, getUserActivationStatus, countAllUsers } = require('../services/firestore');
+const { sendSignupWebhook } = require('../lib/notifications');
 
 // Allow-list for self-reported acquisition source. Anything not on this list
 // is dropped so we don't end up storing arbitrary strings from the wire.
@@ -74,6 +75,7 @@ router.post('/exchange', async (req, res) => {
     // It does if (a) the user is brand new, or (b) an existing user still has
     // no acquisitionSource on their doc (we can't auto-derive one from UTMs).
     const existingUser = await getUser(domain, email);
+    const isBrandNewUser = !existingUser;
     const alreadyHasSource = !!(existingUser?.acquisitionSource);
     const willCaptureFromUTM = !alreadyHasSource && !!sanitizedAcq?.utmSource;
     const needsAcquisitionSource = !alreadyHasSource && !willCaptureFromUTM;
@@ -106,10 +108,52 @@ router.post('/exchange', async (req, res) => {
     );
 
     log.info('oauth: user authenticated', { email, domain });
-    res.json({ sessionToken, email, displayName, grantedScopes, missingScopes, needsAcquisitionSource });
+
+    // Source-aware welcome on the frontend: pass detected source so the
+    // modal can greet "Hey 👋 saw you came from Reddit" instead of generic.
+    const detectedSource = sanitizedAcq?.source
+      || (sanitizedAcq?.utmSource ? `utm:${sanitizedAcq.utmSource}` : null);
+
+    res.json({
+      sessionToken, email, displayName, grantedScopes, missingScopes,
+      needsAcquisitionSource,
+      detectedSource,
+      isNewUser: isBrandNewUser,
+    });
+
+    // Fire signup webhook for brand-new users only (no prior doc in their
+    // tenant). Fire-and-forget so it can't break the auth flow.
+    if (isBrandNewUser) {
+      (async () => {
+        const total = await countAllUsers();
+        sendSignupWebhook({
+          email, displayName, domain,
+          acquisitionSource: detectedSource,
+          totalUsers: total,
+        });
+      })();
+    }
   } catch (err) {
     log.error('oauth: exchange failed', { error: err.message });
     res.status(401).json({ error: 'Authentication failed' });
+  }
+});
+
+// GET /api/oauth/me — current user's activation status for in-product nudges
+router.get('/me', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+    const decoded = jwt.verify(authHeader.slice(7), CONFIG.sessionSecret);
+    const domain = decoded.domain || decoded.email.split('@')[1];
+    const status = await getUserActivationStatus(domain, decoded.email);
+    res.json({ email: decoded.email, domain, ...status });
+  } catch (err) {
+    if (err.name === 'TokenExpiredError') return res.status(401).json({ error: 'Session expired' });
+    log.error('oauth: me failed', { error: err.message });
+    res.status(500).json({ error: 'Failed to fetch user status' });
   }
 });
 

@@ -185,6 +185,14 @@
         </div>
 
         <div class="section">
+          <h2>Cohort Retention by Source <span style="color:var(--muted);font-weight:400;font-size:.8rem">(% of 7-day cohort that tracked a meeting)</span></h2>
+          <table>
+            <thead><tr><th>Source</th><th>Cohort</th><th>Activated</th><th>Retention</th></tr></thead>
+            <tbody id="cohort-source-rows"><tr><td colspan="4" style="color:var(--muted)">Need at least 2 users per source aged 7+ days</td></tr></tbody>
+          </table>
+        </div>
+
+        <div class="section">
           <h2>Top Exporters</h2>
           <table>
             <thead><tr><th>Email</th><th>Domain</th><th>Exports</th></tr></thead>
@@ -468,6 +476,29 @@
           }).join('') + (d.acquisitionSourcesUnknown
             ? `<div style="margin-top:8px;color:var(--muted);font-size:.8rem">${d.acquisitionSourcesUnknown} user${d.acquisitionSourcesUnknown === 1 ? '' : 's'} haven't answered yet</div>`
             : '');
+        }
+
+        // Cohort retention by source — show only sources with cohort >= 2.
+        // Highlights which channels deliver users that stick vs bounce.
+        const cohortBody = document.getElementById('cohort-source-rows');
+        const cohort = d.sourceCohortRetention || {};
+        const cohortEntries = Object.entries(cohort)
+          .filter(([, v]) => v.cohortSize >= 2)
+          .sort(([, a], [, b]) => (b.retention || 0) - (a.retention || 0));
+        if (!cohortEntries.length) {
+          cohortBody.innerHTML = '<tr><td colspan="4" style="color:var(--muted)">Need at least 2 users per source aged 7+ days</td></tr>';
+        } else {
+          cohortBody.innerHTML = cohortEntries.map(([source, v]) => {
+            const label = sourceLabels[source] || (source.startsWith('utm:') ? `UTM: ${source.slice(4)}` : source);
+            const retentionStr = v.retention == null ? '—' : pct(v.retention);
+            const retentionColor = v.retention >= 0.5 ? 'var(--accent)' : (v.retention >= 0.25 ? '#fbbf24' : 'var(--error)');
+            return `<tr>
+              <td>${esc(label)}</td>
+              <td>${v.cohortSize}</td>
+              <td>${v.activated ?? '—'}</td>
+              <td style="color:${retentionColor};font-weight:600">${retentionStr}</td>
+            </tr>`;
+          }).join('');
         }
 
         // Churned users

@@ -3,7 +3,7 @@ const { google } = require('googleapis');
 const { makeJWT, makeUserClient } = require('../services/googleAuth');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { persistExport, getUserSheetId, setUserSheetId } = require('../services/firestore');
+const { persistExport, getUserSheetId, setUserSheetId, countUserExports } = require('../services/firestore');
 
 const router = Router();
 
@@ -265,10 +265,17 @@ router.post('/save-to-sheets', async (req, res) => {
 
     log.info('exported to sheets', { tabName, rows: allRows.length, noShows: noShows.length });
     const sheetUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit#gid=${sheetId}`;
-    res.json({ success: true, sheetUrl });
+
+    // First-export detection — drives the in-app celebration moment.
+    // Check the event log before persisting this one.
+    const domain = req.user?.domain || 'default';
+    const isFirstExport = req.user?.email
+      ? (await countUserExports(domain, req.user.email)) === 0
+      : false;
+
+    res.json({ success: true, sheetUrl, isFirstExport });
 
     // Fire-and-forget: audit trail for exports
-    const domain = req.user?.domain || 'default';
     persistExport(domain, {
       meetingTitle: meetingTitle || 'Unknown',
       tabName,
