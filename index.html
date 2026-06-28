@@ -3573,5 +3573,85 @@ window.addEventListener('DOMContentLoaded', () => {
   </div>
 
   </div><!-- /addon-ui -->
+
+  <!-- ── Feedback widget (visible on both landing page and inside the addon) ── -->
+  <button id="fb-toggle" type="button" aria-label="Send feedback"
+    style="position:fixed;bottom:18px;right:18px;width:44px;height:44px;border-radius:50%;border:none;background:#1f6feb;color:#fff;font-size:20px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.35);z-index:9998;display:flex;align-items:center;justify-content:center"
+    onclick="toggleFeedback(true)" title="Send feedback">💬</button>
+
+  <div id="fb-panel" style="display:none;position:fixed;bottom:74px;right:18px;width:300px;max-width:calc(100vw - 36px);background:#0d1117;border:1px solid #30363d;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.45);padding:14px;z-index:9999;font-family:'Sora',-apple-system,BlinkMacSystemFont,sans-serif;color:#e6edf3">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="font-weight:600;font-size:.9rem">Quick feedback</div>
+      <button type="button" onclick="toggleFeedback(false)" style="background:none;border:none;color:#8b949e;cursor:pointer;font-size:18px;line-height:1;padding:0 4px" aria-label="Close">×</button>
+    </div>
+    <div style="font-size:.72rem;color:#8b949e;margin-bottom:10px">What's broken, what's missing, what works? Goes straight to the team.</div>
+    <textarea id="fb-body" rows="4" placeholder="Type here…"
+      style="width:100%;background:#161b22;border:1px solid #30363d;border-radius:6px;color:#e6edf3;padding:8px 10px;font-size:.85rem;font-family:inherit;resize:vertical;box-sizing:border-box"></textarea>
+    <input id="fb-email" type="email" placeholder="Your email (optional, for follow-up)"
+      style="width:100%;background:#161b22;border:1px solid #30363d;border-radius:6px;color:#e6edf3;padding:7px 10px;font-size:.78rem;font-family:inherit;margin-top:6px;box-sizing:border-box" />
+    <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:10px">
+      <button type="button" onclick="toggleFeedback(false)" style="background:transparent;border:1px solid #30363d;color:#8b949e;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.78rem">Cancel</button>
+      <button type="button" id="fb-send" onclick="sendFeedback()" style="background:#4ade80;color:#0d1117;border:none;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:.78rem;font-weight:600">Send</button>
+    </div>
+    <div id="fb-status" style="margin-top:8px;font-size:.72rem;color:#8b949e;display:none"></div>
+  </div>
+
+  <script>
+  function toggleFeedback(open) {
+    const panel = document.getElementById('fb-panel');
+    if (!panel) return;
+    panel.style.display = open ? 'block' : 'none';
+    if (open) {
+      // Pre-fill email if the addon is signed in. window.state may not exist
+      // on the landing page — that's fine, we just leave the field empty.
+      const known = (typeof state !== 'undefined' && state.userEmail) || '';
+      const emailInput = document.getElementById('fb-email');
+      if (emailInput && !emailInput.value && known) emailInput.value = known;
+      setTimeout(() => document.getElementById('fb-body')?.focus(), 50);
+    }
+  }
+  async function sendFeedback() {
+    const bodyEl = document.getElementById('fb-body');
+    const emailEl = document.getElementById('fb-email');
+    const sendBtn = document.getElementById('fb-send');
+    const statusEl = document.getElementById('fb-status');
+    const body = (bodyEl?.value || '').trim();
+    if (body.length < 2) { bodyEl.focus(); return; }
+    sendBtn.disabled = true;
+    sendBtn.textContent = 'Sending…';
+    statusEl.style.display = 'none';
+    // Source tells us where they wrote from — useful for triaging "panel UX"
+    // feedback vs "landing page" feedback.
+    const onLanding = document.getElementById('landing-page')?.style.display !== 'none';
+    const source = onLanding ? 'landing_page' : 'side_panel';
+    const conferenceId = (typeof state !== 'undefined' && state.conferenceId) || null;
+    // Same-origin fetch when inside the addon (state.backendUrl='/api');
+    // direct Cloud Run URL when on the landing page (it's same-origin too —
+    // attendancetracker.dev is served by Cloud Run via /api routes).
+    const url = (typeof state !== 'undefined' && state.backendUrl)
+      ? `${state.backendUrl}/public/feedback`
+      : '/api/public/feedback';
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body, fromEmail: emailEl.value.trim() || null, source, conferenceId }),
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      statusEl.style.display = 'block';
+      statusEl.style.color = '#4ade80';
+      statusEl.textContent = '✓ Thanks — we read every reply.';
+      bodyEl.value = '';
+      setTimeout(() => toggleFeedback(false), 1500);
+    } catch (e) {
+      statusEl.style.display = 'block';
+      statusEl.style.color = '#f85149';
+      statusEl.textContent = '⚠ Could not send — try again later.';
+    } finally {
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'Send';
+    }
+  }
+  </script>
 </body>
 </html>

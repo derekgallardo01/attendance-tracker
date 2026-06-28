@@ -1,9 +1,65 @@
 const { Router } = require('express');
+const rateLimit = require('express-rate-limit');
 const { FieldValue } = require('@google-cloud/firestore');
 const log = require('../lib/logger');
 const { getDb } = require('../services/firestore');
+const { sendFeedbackEmail } = require('../lib/notifications');
 
 const router = Router();
+
+// Tighter limit on the feedback endpoint than the general /api limiter
+// because the failure mode is "spammer fills your inbox" not "API saturated".
+const feedbackLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5,                    // 5 submissions per hour per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many feedback submissions. Try again later.' },
+});
+
+// POST /api/public/feedback — In-product feedback widget submissions.
+// Unauth (so people can submit from the landing page without signing in).
+// Rate-limited per IP. Persists to Firestore + emails Derek.
+router.post('/public/feedback', feedbackLimiter, async (req, res) => {
+  try {
+    const { body, fromEmail, fromName, source, conferenceId } = req.body || {};
+    if (!body || typeof body !== 'string' || body.trim().length < 2) {
+      return res.status(400).json({ error: 'Feedback body is required' });
+    }
+    const cap = (v, n) => (typeof v === 'string' ? v.slice(0, n) : null);
+    const safeBody = body.trim().slice(0, 5000);
+    const userAgent = cap(req.headers['user-agent'], 500);
+
+    // Persist before sending so we have a record even if SMTP is down.
+    try {
+      await getDb().collection('feedback').add({
+        body: safeBody,
+        fromEmail: cap(fromEmail, 200),
+        fromName: cap(fromName, 200),
+        source: cap(source, 100),
+        conferenceId: cap(conferenceId, 100),
+        userAgent,
+        ip: cap(req.ip, 100),
+        createdAt: FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      log.warn('feedback: firestore persist failed', { error: e.message });
+    }
+
+    await sendFeedbackEmail({
+      body: safeBody,
+      fromEmail: cap(fromEmail, 200),
+      fromName: cap(fromName, 200),
+      source: cap(source, 100),
+      conferenceId: cap(conferenceId, 100),
+      userAgent,
+    });
+    res.json({ success: true });
+  } catch (err) {
+    log.error('feedback: send failed', { error: err.message });
+    res.status(500).json({ error: 'Failed to submit feedback' });
+  }
+});
 
 // POST /api/public/pageview — Unauth'd, fire-and-forget beacon from the
 // landing page. Lets us track inbound traffic + sources without a third-party

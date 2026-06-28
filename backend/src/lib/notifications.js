@@ -354,4 +354,46 @@ async function sendSeriesAlertEmail({ to, displayName, alerts }) {
   }
 }
 
-module.exports = { sendSignupWebhook, sendAdminEmail, sendWeeklySelfReport, sendExportNotification, sendSeriesAlertEmail };
+// In-product feedback widget submissions. Lands in your inbox with full
+// context (user email, where they were in the app, what they wrote) so you
+// can reply quickly. Throws on failure — caller decides whether to retry.
+async function sendFeedbackEmail({ body, fromEmail, fromName, source, conferenceId, userAgent }) {
+  const transporter = getTransporter();
+  if (!transporter) throw new Error('SMTP not configured');
+  if (!body) throw new Error('body is required');
+  const sender = process.env.GMAIL_USER;
+  const to = process.env.NOTIFY_EMAIL || sender;
+  const subjectName = fromName || fromEmail || 'Anonymous';
+  const subject = `💬 Feedback from ${subjectName}: ${String(body).slice(0, 60).replace(/\s+/g, ' ')}${body.length > 60 ? '…' : ''}`;
+  const html = `
+    <div style="font-family:sans-serif;max-width:560px;color:#111;font-size:14px;line-height:1.5">
+      <p style="white-space:pre-wrap;border-left:3px solid #4ade80;padding:0 0 0 14px;margin:0">${escape(body)}</p>
+      <table style="border-collapse:collapse;margin-top:18px;font-size:13px;color:#666">
+        <tr><td style="padding:3px 12px 3px 0">From</td><td>${escape(fromName || '')} ${fromEmail ? `&lt;<a href="mailto:${escape(fromEmail)}">${escape(fromEmail)}</a>&gt;` : '(no email)'}</td></tr>
+        ${source ? `<tr><td style="padding:3px 12px 3px 0">Source</td><td>${escape(source)}</td></tr>` : ''}
+        ${conferenceId ? `<tr><td style="padding:3px 12px 3px 0">Meeting</td><td><code>${escape(conferenceId)}</code></td></tr>` : ''}
+        ${userAgent ? `<tr><td style="padding:3px 12px 3px 0">User agent</td><td style="font-size:11px">${escape(userAgent)}</td></tr>` : ''}
+      </table>
+    </div>
+  `;
+  const text = [
+    body,
+    '',
+    '---',
+    `From: ${fromName || ''} ${fromEmail ? '<' + fromEmail + '>' : ''}`.trim(),
+    source ? `Source: ${source}` : '',
+    conferenceId ? `Meeting: ${conferenceId}` : '',
+  ].filter(Boolean).join('\n');
+
+  const info = await transporter.sendMail({
+    from: `"Attendance Tracker feedback" <${sender}>`,
+    to,
+    subject,
+    text,
+    html,
+    replyTo: fromEmail || sender,
+  });
+  return { sent: true, messageId: info.messageId };
+}
+
+module.exports = { sendSignupWebhook, sendAdminEmail, sendWeeklySelfReport, sendExportNotification, sendSeriesAlertEmail, sendFeedbackEmail };
