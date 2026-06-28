@@ -889,14 +889,51 @@
         </div>
 
         <!-- Hero -->
-        <div style="text-align:center;margin-bottom:36px">
+        <div style="text-align:center;margin-bottom:28px">
           <h2 style="font-size:2rem;font-weight:700;margin:0 0 16px;color:#e6edf3;line-height:1.2">Track Google Meet attendance in one click.</h2>
           <p style="font-size:1.05rem;color:#9ca3af;line-height:1.6;margin:0 auto 24px;max-width:560px">
-            See who joined, who left, and how long they stayed — then export the whole report to Google Sheets without copy-paste or spreadsheets surgery.
+            See who joined, who left, and how long they stayed — then auto-export to Google Sheets when the meeting ends. No spreadsheet surgery, no manual roll-call.
           </p>
           <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
             <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" style="display:inline-block;background:#34A853;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;font-size:.95rem">Install from Marketplace</a>
             <a href="#how-it-works" style="display:inline-block;background:transparent;border:1px solid #30363d;color:#e6edf3;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;font-size:.95rem">How it works</a>
+          </div>
+        </div>
+
+        <!-- Visual mockup of the side panel — shows what you actually get
+             without needing a screenshot asset. Pure CSS, no images. -->
+        <div style="display:flex;justify-content:center;margin-bottom:36px">
+          <div style="background:#0d1117;border:1px solid #30363d;border-radius:14px;padding:14px;max-width:340px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.4)">
+            <div style="display:flex;align-items:center;gap:8px;padding-bottom:10px;border-bottom:1px solid #21262d;margin-bottom:12px">
+              <div style="width:24px;height:24px;background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.35);border-radius:6px;display:flex;align-items:center;justify-content:center"><span style="color:#4ade80;font-size:.7rem;font-weight:700">A</span></div>
+              <div style="font-weight:600;font-size:.85rem;color:#e6edf3">Attendance</div>
+              <div style="margin-left:auto;font-size:.62rem;color:#4ade80;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.25);padding:2px 7px;border-radius:10px">● Tracking · 5 seen</div>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:12px">
+              <div style="flex:1;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:6px;text-align:center"><div style="font-size:.9rem;font-weight:700;color:#4ade80">4</div><div style="font-size:.55rem;color:#6e7681;text-transform:uppercase">Present</div></div>
+              <div style="flex:1;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:6px;text-align:center"><div style="font-size:.9rem;font-weight:700;color:#9ca3af">1</div><div style="font-size:.55rem;color:#6e7681;text-transform:uppercase">Left</div></div>
+              <div style="flex:1;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:6px;text-align:center"><div style="font-size:.9rem;font-weight:700;color:#e6edf3">5</div><div style="font-size:.55rem;color:#6e7681;text-transform:uppercase">Total</div></div>
+            </div>
+            <!-- Fake participant rows -->
+            <div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;background:#161b22;margin-bottom:6px">
+              <div style="width:28px;height:28px;border-radius:50%;background:#1f6feb;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.7rem;font-weight:600">AS</div>
+              <div style="flex:1;min-width:0"><div style="font-size:.78rem;color:#e6edf3;font-weight:500">Alex Smith</div><div style="font-size:.62rem;color:#6e7681">Joined 10:00 · 42m</div></div>
+              <span style="font-size:.55rem;color:#4ade80;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.25);padding:1px 6px;border-radius:8px">Present</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;background:#161b22;margin-bottom:6px">
+              <div style="width:28px;height:28px;border-radius:50%;background:#238636;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.7rem;font-weight:600">JD</div>
+              <div style="flex:1;min-width:0"><div style="font-size:.78rem;color:#e6edf3;font-weight:500">Jordan Diaz<span style="display:inline-block;margin-left:6px;padding:1px 6px;border-radius:8px;font-size:.55rem;font-weight:600;background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3);vertical-align:middle">+8m late</span></div><div style="font-size:.62rem;color:#6e7681">Joined 10:08 · 34m</div></div>
+              <span style="font-size:.55rem;color:#4ade80;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.25);padding:1px 6px;border-radius:8px">Present</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;background:#161b22;margin-bottom:6px;opacity:.7">
+              <div style="width:28px;height:28px;border-radius:50%;background:#9e6a03;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.7rem;font-weight:600">SK</div>
+              <div style="flex:1;min-width:0"><div style="font-size:.78rem;color:#e6edf3;font-weight:500">Sam Kim</div><div style="font-size:.62rem;color:#6e7681">Joined 10:02 · Left 10:20</div></div>
+              <span style="font-size:.55rem;color:#6e7681;background:rgba(125,133,144,.08);border:1px solid #30363d;padding:1px 6px;border-radius:8px">Left</span>
+            </div>
+            <div style="display:flex;gap:6px;margin-top:10px">
+              <button style="flex:1;background:#161b22;border:1px solid #30363d;color:#e6edf3;border-radius:6px;padding:7px;font-size:.72rem;font-weight:600;cursor:default">⬜ Sheet</button>
+              <button style="flex:1;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.35);color:#4ade80;border-radius:6px;padding:7px;font-size:.72rem;font-weight:600;cursor:default">▶ Tracking</button>
+            </div>
           </div>
         </div>
 
