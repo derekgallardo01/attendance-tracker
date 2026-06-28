@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shared attendance dashboard — Attendance Tracker</title>
+  <meta name="description" content="A read-only attendance dashboard for a recurring Google Meet series, shared with you." />
+  <meta name="robots" content="noindex" />
+  <meta property="og:title" content="Shared attendance dashboard" />
+  <meta property="og:description" content="A read-only attendance dashboard for a recurring Google Meet series." />
+  <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
+  <style>
+    :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #4ade80; --blue: #58a6ff; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 40px 20px; }
+    .container { max-width: 760px; margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; color: var(--muted); font-size: .82rem; }
+    .brand img { width: 24px; height: 24px; border-radius: 5px; }
+    .brand a { color: var(--accent); text-decoration: none; }
+    h1 { font-size: 1.6rem; margin-bottom: 6px; }
+    .meta { color: var(--muted); font-size: .85rem; margin-bottom: 24px; }
+    .stat-row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 24px; }
+    .stat-card { flex: 1; min-width: 150px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; }
+    .stat-label { font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+    .stat-value { font-size: 1.6rem; font-weight: 700; }
+    .stat-value.green { color: var(--accent); }
+    .stat-value.blue { color: var(--blue); }
+    .section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 24px; }
+    table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+    th { text-align: left; color: var(--muted); font-weight: 600; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: .7rem; text-transform: uppercase; }
+    td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; }
+    .right { text-align: right; }
+    .progress-bar { background: var(--border); border-radius: 4px; height: 6px; overflow: hidden; min-width: 90px; }
+    .progress-bar div { background: var(--accent); height: 100%; }
+    .muted { color: var(--muted); }
+    #loading { text-align: center; padding: 60px; color: var(--muted); }
+    .error { background: rgba(248, 81, 73, .08); border: 1px solid rgba(248, 81, 73, .25); color: #f85149; padding: 18px; border-radius: 12px; text-align: center; }
+    .cta { background: linear-gradient(135deg, rgba(74,222,128,.08), rgba(88,166,255,.08)); border: 1px solid rgba(74,222,128,.25); border-radius: 14px; padding: 26px; text-align: center; margin-top: 32px; }
+    .cta h3 { font-size: 1.05rem; margin-bottom: 6px; }
+    .cta p { color: var(--muted); font-size: .88rem; margin-bottom: 16px; }
+    .btn { display: inline-block; background: #34A853; color: #fff; text-decoration: none; padding: 11px 24px; border-radius: 8px; font-weight: 600; font-size: .9rem; }
+    .footer { text-align: center; color: var(--muted); font-size: .75rem; margin-top: 36px; }
+    .footer a { color: var(--muted); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <img src="icons/icon-96.png" alt="" />
+      <span>Shared via <a href="https://attendancetracker.dev/">Attendance Tracker</a></span>
+    </div>
+    <div id="loading">Loading shared dashboard…</div>
+    <div id="content" style="display:none">
+      <h1 id="title"></h1>
+      <div class="meta" id="meta"></div>
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-label">Instances</div>
+          <div class="stat-value green" id="stat-instances">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">People tracked</div>
+          <div class="stat-value blue" id="stat-people">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Date range</div>
+          <div class="stat-value" id="stat-range" style="font-size:.95rem;font-weight:600">—</div>
+        </div>
+      </div>
+      <div class="section">
+        <table>
+          <thead>
+            <tr><th>Person</th><th class="right">Attended</th><th>Attendance</th></tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div class="cta">
+        <h3>Want this for your own meetings?</h3>
+        <p>Track attendance in any Google Meet call and get a dashboard like this — free.</p>
+        <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=share_link" target="_blank">Install from Marketplace</a>
+      </div>
+    </div>
+    <div id="errorBox" class="error" style="display:none">
+      <strong>This link is no longer available.</strong>
+      <div style="margin-top:6px;font-size:.85rem">It may have expired, been revoked, or never existed.</div>
+    </div>
+    <div class="footer">
+      <a href="https://attendancetracker.dev/">attendancetracker.dev</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a>
+    </div>
+  </div>
+
+  <script>
+    const BACKEND_URL = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
+    function fmtDate(iso) {
+      if (!iso) return '—';
+      return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+    function pct(v) { return Math.round(v * 100) + '%'; }
+    async function load() {
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('t');
+      const loadingEl = document.getElementById('loading');
+      const contentEl = document.getElementById('content');
+      const errEl = document.getElementById('errorBox');
+      if (!token) {
+        loadingEl.style.display = 'none';
+        errEl.style.display = 'block';
+        return;
+      }
+      try {
+        const res = await fetch(`${BACKEND_URL}/public/share/${encodeURIComponent(token)}`);
+        if (!res.ok) throw new Error(res.status);
+        const data = await res.json();
+        document.getElementById('title').textContent = data.title;
+        const range = data.firstAt && data.lastAt && data.firstAt !== data.lastAt
+          ? `${fmtDate(data.firstAt)} – ${fmtDate(data.lastAt)}`
+          : fmtDate(data.lastAt || data.firstAt);
+        document.getElementById('meta').textContent = `Recurring meeting · ${range}`;
+        document.getElementById('stat-instances').textContent = data.instanceCount;
+        document.getElementById('stat-people').textContent = data.uniquePeople;
+        document.getElementById('stat-range').textContent = range;
+        document.getElementById('rows').innerHTML = (data.people || []).map(p => `
+          <tr>
+            <td>${esc(p.displayName)}</td>
+            <td class="right">${p.attended}/${data.instanceCount}</td>
+            <td><div style="display:flex;align-items:center;gap:10px"><div class="progress-bar" style="flex:1"><div style="width:${Math.round(p.attendanceRate * 100)}%"></div></div><span style="font-size:.78rem;color:var(--muted);min-width:36px">${pct(p.attendanceRate)}</span></div></td>
+          </tr>
+        `).join('') || '<tr><td colspan="3" class="muted">No participants tracked.</td></tr>';
+        loadingEl.style.display = 'none';
+        contentEl.style.display = 'block';
+      } catch (e) {
+        loadingEl.style.display = 'none';
+        errEl.style.display = 'block';
+      }
+    }
+    load();
+  </script>
+</body>
+</html>

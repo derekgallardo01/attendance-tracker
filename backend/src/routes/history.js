@@ -1,6 +1,6 @@
 const { Router } = require('express');
 const log = require('../lib/logger');
-const { getUserMeetingHistory, getUserMeetingSeries, getParticipantHistory, setParticipantNote, getParticipantNote, logEvent } = require('../services/firestore');
+const { getUserMeetingHistory, getUserMeetingSeries, getParticipantHistory, setParticipantNote, getParticipantNote, logEvent, createShareLink } = require('../services/firestore');
 
 const router = Router();
 
@@ -35,6 +35,26 @@ router.post('/event', async (req, res) => {
   } catch (err) {
     log.warn('event log failed', { error: err.message, type });
     res.status(500).json({ error: 'Failed to log event' });
+  }
+});
+
+// POST /api/share — mint a public share link for a series. The owner picks
+// a recurringEventId from their Series tab; we return an opaque token they
+// can paste into Slack/email/etc. Recipients hit /share.html?t=<token>.
+router.post('/share', async (req, res) => {
+  if (!req.user?.email) return res.status(401).json({ error: 'Authentication required' });
+  const { recurringEventId, type } = req.body || {};
+  if (!recurringEventId) return res.status(400).json({ error: 'recurringEventId is required' });
+  try {
+    const result = await createShareLink(req.user.domain, req.user.email, { type: type || 'series', recurringEventId });
+    res.json({
+      token: result.token,
+      url: `https://attendancetracker.dev/share.html?t=${result.token}`,
+      expiresAt: result.expiresAt,
+    });
+  } catch (err) {
+    log.warn('share: create failed', { error: err.message, email: req.user.email });
+    res.status(500).json({ error: 'Failed to create share link' });
   }
 });
 

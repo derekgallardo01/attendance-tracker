@@ -2,7 +2,7 @@ const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
 const { FieldValue } = require('@google-cloud/firestore');
 const log = require('../lib/logger');
-const { getDb } = require('../services/firestore');
+const { getDb, resolveShareLink, getSharedSeriesView } = require('../services/firestore');
 const { sendFeedbackEmail } = require('../lib/notifications');
 
 const router = Router();
@@ -139,6 +139,25 @@ router.get('/public/stats', async (_req, res) => {
     log.warn('public stats failed', { error: err.message });
     // Fall back to last cache or a sane zero state.
     res.json(cached || { organizations: 0, meetings: 0, generatedAt: new Date().toISOString() });
+  }
+});
+
+// GET /api/public/share/:token — Resolve a share link and return the public
+// read-only view of the linked series. Unauth so recipients can hit the URL
+// without a Google account. Emails are stripped from the response — name +
+// attendance count only.
+router.get('/public/share/:token', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  try {
+    const link = await resolveShareLink(req.params.token);
+    if (!link) return res.status(404).json({ error: 'Link not found, expired, or revoked' });
+    if (link.type !== 'series') return res.status(400).json({ error: 'Unsupported share type' });
+    const view = await getSharedSeriesView(link.domain, link.recurringEventId);
+    if (!view) return res.status(404).json({ error: 'Series no longer available' });
+    res.json({ type: link.type, ...view });
+  } catch (err) {
+    log.warn('share: resolve failed', { error: err.message });
+    res.status(500).json({ error: 'Failed to load shared view' });
   }
 });
 

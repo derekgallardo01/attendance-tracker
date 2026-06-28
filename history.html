@@ -435,6 +435,7 @@
         const dateRange = s.firstAt && s.lastAt && s.firstAt !== s.lastAt
           ? `${fmtDate(s.firstAt)} – ${fmtDate(s.lastAt)}`
           : fmtDate(s.lastAt || s.firstAt);
+        const safeRid = esc(s.recurringEventId);
         const peopleRows = (s.people || []).map(p => `
           <tr>
             <td>${esc(p.displayName || p.email || '—')}<div class="muted" style="font-size:.7rem">${esc(p.email || '')}</div></td>
@@ -445,13 +446,14 @@
         `).join('') || '<tr><td colspan="4" class="muted">No participants tracked.</td></tr>';
 
         return `
-          <div class="series-card" data-id="${esc(s.recurringEventId)}">
+          <div class="series-card" data-id="${safeRid}">
             <div class="series-summary" onclick="toggleSeries(this)">
               <div class="series-title">
                 <div class="series-title-text">${esc(s.title)}</div>
                 <div class="series-meta">${s.instanceCount} meeting${s.instanceCount === 1 ? '' : 's'} · ${esc(dateRange)} · top attendee ${esc(topLine)}</div>
               </div>
               <div class="series-chip">${s.uniquePeople} ${s.uniquePeople === 1 ? 'person' : 'people'}</div>
+              <button type="button" class="series-share" onclick="event.stopPropagation();shareSeries('${safeRid}', this)" title="Get a public link to share this series" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:5px 10px;border-radius:6px;cursor:pointer;font-size:.7rem;font-weight:600;margin-right:8px">Share</button>
               <div class="series-toggle">▶</div>
             </div>
             <div class="series-body">
@@ -470,6 +472,36 @@
           </div>
         `;
       }).join('');
+    }
+
+    // Mint a public share link for the given series and copy it to the
+    // clipboard. The button is rendered inside the series-summary row so we
+    // stop event propagation in the caller to prevent expand-toggle.
+    async function shareSeries(recurringEventId, btn) {
+      const original = btn.textContent;
+      btn.textContent = 'Creating…';
+      btn.disabled = true;
+      try {
+        const res = await fetch(`${BACKEND_URL}/share`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}` },
+          body: JSON.stringify({ recurringEventId, type: 'series' }),
+        });
+        if (!res.ok) throw new Error(res.status);
+        const { url } = await res.json();
+        // Prefer clipboard API; fall back to a prompt() so the link is never lost.
+        try {
+          await navigator.clipboard.writeText(url);
+          btn.textContent = '✓ Copied';
+        } catch {
+          window.prompt('Share this link:', url);
+          btn.textContent = '✓ Link';
+        }
+        setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 2500);
+      } catch (e) {
+        btn.textContent = '⚠ Error';
+        setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 2500);
+      }
     }
 
     function toggleSeries(el) {
