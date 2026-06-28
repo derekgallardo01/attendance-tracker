@@ -2197,6 +2197,9 @@ async function getUserDetail(domain, email) {
 }
 
 // 0-100. Composite of recency, frequency, depth, account age.
+// Note: getUserDetail transforms event.createdAt to ISO strings before
+// passing here, so we read it as a string. user.createdAt stays a raw
+// Firestore Timestamp (passed straight through), so we use .toDate() there.
 function computeHealthScore(user, events) {
   const now = Date.now();
   const created = user.createdAt?.toDate?.()?.getTime() || now;
@@ -2204,7 +2207,15 @@ function computeHealthScore(user, events) {
 
   const tracked = events.filter(e => e.type === 'tracked').length;
   const exported = events.filter(e => e.type === 'exported').length;
-  const last = events.reduce((m, e) => Math.max(m, e.createdAt?.toDate?.()?.getTime() || 0), 0);
+  const last = events.reduce((m, e) => {
+    // events here have ISO string createdAt (transformed in getUserDetail).
+    // Tolerate either string or Timestamp shape to keep this function
+    // composable if called from somewhere else later.
+    const ts = typeof e.createdAt === 'string'
+      ? new Date(e.createdAt).getTime()
+      : (e.createdAt?.toDate?.()?.getTime() || 0);
+    return Math.max(m, ts);
+  }, 0);
   const daysSinceLast = last ? (now - last) / 86400000 : 999;
 
   let score = 0;

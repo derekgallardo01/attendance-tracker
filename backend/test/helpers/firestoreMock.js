@@ -98,13 +98,21 @@ class MockDocRef {
 }
 
 class MockQuery {
-  constructor(store, segments, filters) {
+  constructor(store, segments, filters, limit) {
     this._store = store;
     this._segments = segments;
     this._filters = filters || [];
+    this._limit = limit || null;
   }
   where(field, op, value) {
-    return new MockQuery(this._store, this._segments, [...this._filters, { field, op, value }]);
+    return new MockQuery(this._store, this._segments, [...this._filters, { field, op, value }], this._limit);
+  }
+  limit(n) {
+    return new MockQuery(this._store, this._segments, this._filters, n);
+  }
+  orderBy(/* field, direction */) {
+    // Pass through — our tests don't assert ordering at the Firestore layer.
+    return this;
   }
   async get() {
     // Match all docs under this collection path
@@ -120,6 +128,41 @@ class MockQuery {
       const id = remainder;
       const ref = new MockDocRef(this._store, [...this._segments, id]);
       docs.push(new MockSnapshot(id, ref, { ...data }));
+      if (this._limit && docs.length >= this._limit) break;
+    }
+    return { empty: docs.length === 0, size: docs.length, docs };
+  }
+}
+
+// collectionGroup queries walk every doc whose parent collection segment
+// matches the given name, regardless of where they live in the path tree.
+// Supports the same where/limit chaining as MockQuery.
+class MockCollectionGroupQuery {
+  constructor(store, name, filters, limit) {
+    this._store = store;
+    this._name = name;
+    this._filters = filters || [];
+    this._limit = limit || null;
+  }
+  where(field, op, value) {
+    return new MockCollectionGroupQuery(this._store, this._name, [...this._filters, { field, op, value }], this._limit);
+  }
+  limit(n) {
+    return new MockCollectionGroupQuery(this._store, this._name, this._filters, n);
+  }
+  orderBy() { return this; }
+  async get() {
+    const docs = [];
+    for (const [docPath, data] of this._store.docs) {
+      const segs = docPath.split('/');
+      if (segs.length < 2) continue;
+      // The parent-collection segment is the second-to-last (e.g.
+      // tenants/x/users/y → "users"). Match against the requested name.
+      if (segs[segs.length - 2] !== this._name) continue;
+      if (!this._filters.every(f => applyFilter(data, f))) continue;
+      const ref = new MockDocRef(this._store, segs);
+      docs.push(new MockSnapshot(segs[segs.length - 1], ref, { ...data }));
+      if (this._limit && docs.length >= this._limit) break;
     }
     return { empty: docs.length === 0, size: docs.length, docs };
   }
@@ -203,23 +246,7 @@ class MockBatch {
 class MockFirestore {
   constructor(store) { this._store = store; }
   collection(name) { return new MockCollectionRef(this._store, [name]); }
-  collectionGroup(name) {
-    // Walks every doc whose path's parent collection equals `name`.
-    const store = this._store;
-    return {
-      async get() {
-        const docs = [];
-        for (const [docPath, data] of store.docs) {
-          const segs = docPath.split('/');
-          if (segs.length < 2) continue;
-          if (segs[segs.length - 2] !== name) continue;
-          const ref = new MockDocRef(store, segs);
-          docs.push(new MockSnapshot(segs[segs.length - 1], ref, { ...data }));
-        }
-        return { empty: docs.length === 0, size: docs.length, docs };
-      },
-    };
-  }
+  collectionGroup(name) { return new MockCollectionGroupQuery(this._store, name); }
   batch() { return new MockBatch(this._store); }
 }
 
