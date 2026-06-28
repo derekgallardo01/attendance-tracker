@@ -196,13 +196,18 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
     return '#dc2626';
   };
   const fmtDur = (m) => !m ? '—' : (m < 60 ? `${m}m` : `${Math.floor(m / 60)}h ${m % 60}m`);
-  const tableRows = (participants || []).map(p => `
+  const tableRows = (participants || []).map(p => {
+    const lateBadge = p.lateMin > 0
+      ? ` <span style="background:rgba(245,158,11,.15);color:#b45309;border:1px solid rgba(245,158,11,.35);font-size:10px;font-weight:600;padding:1px 6px;border-radius:8px;margin-left:6px">+${p.lateMin}m late</span>`
+      : '';
+    return `
     <tr>
-      <td style="padding:6px 10px;border-top:1px solid #eee">${escape(p.displayName || p.email || '—')}${p.email && p.displayName ? `<div style="color:#888;font-size:11px">${escape(p.email)}</div>` : ''}</td>
+      <td style="padding:6px 10px;border-top:1px solid #eee">${escape(p.displayName || p.email || '—')}${lateBadge}${p.email && p.displayName ? `<div style="color:#888;font-size:11px">${escape(p.email)}</div>` : ''}</td>
       <td style="padding:6px 10px;border-top:1px solid #eee;color:${statusColor(p.status)};font-weight:600">${escape(p.status)}</td>
       <td style="padding:6px 10px;border-top:1px solid #eee;color:#666;text-align:right">${escape(fmtDur(p.durationMin))}</td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
   const overflowRow = overflow > 0
     ? `<tr><td colspan="3" style="padding:8px 10px;border-top:1px solid #eee;color:#888;font-size:12px;font-style:italic">…and ${overflow} more in the sheet</td></tr>`
     : '';

@@ -182,8 +182,21 @@ router.post('/save-to-sheets', async (req, res) => {
       [],
     ];
 
-    // Build participant rows
-    const header = ['Name', 'Email', 'RSVP Status', `Join Time (${tzAbbr})`, `Leave Time (${tzAbbr})`, 'Duration (min)', 'Attendance %', 'Sessions', 'Status'];
+    // Build participant rows.
+    // Late? column flags anyone who joined more than LATE_THRESHOLD_MIN past
+    // the meeting's true start. Baseline is calendar start when scheduled,
+    // else the actual Meet conference start — matches the in-panel chip.
+    const LATE_THRESHOLD_MIN = 5;
+    const lateBaselineMs = eventStart
+      ? new Date(eventStart).getTime()
+      : (meetingStartTime ? new Date(meetingStartTime).getTime() : 0);
+    const lateMinFor = (joinIso) => {
+      if (!lateBaselineMs || !joinIso) return 0;
+      const diff = Math.round((new Date(joinIso).getTime() - lateBaselineMs) / 60000);
+      return diff > LATE_THRESHOLD_MIN ? diff : 0;
+    };
+
+    const header = ['Name', 'Email', 'RSVP Status', 'Late?', `Join Time (${tzAbbr})`, `Leave Time (${tzAbbr})`, 'Duration (min)', 'Attendance %', 'Sessions', 'Status'];
 
     const attendedEmails = new Set();
     const attendedNames = new Set();
@@ -199,7 +212,9 @@ router.post('/save-to-sheets', async (req, res) => {
       const pct = (durRaw !== '' && meetDurationMin > 0)
         ? Math.min(100, Math.round((durRaw / meetDurationMin) * 100)) + '%'
         : (p.present ? '100%' : '');
-      return [sanitizeCell(p.displayName), sanitizeCell(p.email || ''), fmtRsvp(rsvpMap[email]), fmtTime(p.joinTimeISO), fmtTime(p.leaveTimeISO), dur, pct, p.sessions, p.present ? 'Present' : 'Left'];
+      const lateMin = lateMinFor(p.joinTimeISO);
+      const lateCell = lateMin > 0 ? `+${lateMin}m` : '';
+      return [sanitizeCell(p.displayName), sanitizeCell(p.email || ''), fmtRsvp(rsvpMap[email]), lateCell, fmtTime(p.joinTimeISO), fmtTime(p.leaveTimeISO), dur, pct, p.sessions, p.present ? 'Present' : 'Left'];
     });
 
     // Fix 2: Also capture emails from rows (includes manual overrides from frontend)
@@ -218,7 +233,7 @@ router.post('/save-to-sheets', async (req, res) => {
         if (attendedNames.has(aName)) return false;
         return true;
       })
-      .map(a => [sanitizeCell(a.displayName), sanitizeCell(a.email), fmtRsvp(a.status), '', '', '', '0%', 0, 'Absent']);
+      .map(a => [sanitizeCell(a.displayName), sanitizeCell(a.email), fmtRsvp(a.status), '', '', '', '', '0%', 0, 'Absent']);
 
     const allRows = [...rows, ...noShows];
 
@@ -304,6 +319,7 @@ router.post('/save-to-sheets', async (req, res) => {
           email: p.email || '',
           status: p.present ? 'Present' : (p.leaveTimeISO ? 'Left' : 'Present'),
           durationMin: durMin,
+          lateMin: lateMinFor(p.joinTimeISO),
         };
       });
       const digestAbsent = calendarAttendees

@@ -521,6 +521,21 @@
     }
     .badge.present { background: rgba(63,185,80,.12); color: var(--accent); border: 1px solid rgba(63,185,80,.25); }
     .badge.left    { background: rgba(125,133,144,.08); color: var(--muted); border: 1px solid var(--border); }
+    /* Late-arrival pill — sits inline with the participant name. Warm amber
+       so the eye catches it scanning down the list. */
+    .late-chip {
+      display: inline-block;
+      margin-left: 8px;
+      padding: 1px 7px;
+      border-radius: 10px;
+      font-size: .65rem;
+      font-weight: 600;
+      letter-spacing: .02em;
+      background: rgba(245, 158, 11, .15);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, .3);
+      vertical-align: middle;
+    }
 
     /* ── simulation controls ─────────────────────────────────── */
     .sim-panel {
@@ -2169,11 +2184,13 @@ function renderList() {
       const emailStr = p.email ? `<div class="participant-meta">${escHtml(p.email)}</div>` : '';
       const key = participantKey(p).replace(/'/g, "\\'");
       const color = avatarColor(p.displayName);
+      const lateMin = latenessMin(p);
+      const lateChip = lateMin > 0 ? `<span class="late-chip" title="Joined ${lateMin} min after meeting start">+${lateMin}m late</span>` : '';
       return `
         <div class="participant-card ${p.present ? '' : 'left'}" onclick="openProfileModal('${key}')" style="cursor:pointer">
           <div class="avatar" style="background:${color};color:#fff">${initials}</div>
           <div>
-            <div class="participant-name">${escHtml(p.displayName)}</div>
+            <div class="participant-name">${escHtml(p.displayName)}${lateChip}</div>
             ${emailStr}
             <div class="participant-meta">Joined ${joinStr}${durStr ? ' · ' + durStr : ''}${leaveStr}</div>
           </div>
@@ -3284,6 +3301,23 @@ function fmtDurMs(ms) {
   if (m < 1) return '< 1m';
   if (m < 60) return `${m}m`;
   return `${Math.floor(m/60)}h ${m%60}m`;
+}
+
+// "How late did this person join?" returns minutes past the meeting's true
+// start, or 0 if not late (threshold: 5 min). Used for the in-panel chip and
+// to keep that judgement consistent with what the export sheet shows.
+const LATE_THRESHOLD_MIN = 5;
+function latenessMin(p) {
+  if (!p?.joinTime) return 0;
+  // For scheduled events the calendar start is the truth (someone joining
+  // 2 min after a 10:00 meeting is on time even if the room opened at 9:58).
+  // For instant meetings fall back to when the Meet conference actually started.
+  const evStart = state._eventStart ? new Date(state._eventStart).getTime() : 0;
+  const confStart = state.conferenceStartTime ? new Date(state.conferenceStartTime).getTime() : 0;
+  const baseline = evStart || confStart;
+  if (!baseline) return 0;
+  const diffMin = Math.round((p.joinTime.getTime() - baseline) / 60000);
+  return diffMin > LATE_THRESHOLD_MIN ? diffMin : 0;
 }
 
 function isoFmt(d) { return d.toISOString(); }
