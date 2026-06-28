@@ -1,0 +1,92 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-unit-and-integration:
+    name: backend tests (jest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test -- --ci --reporters=default --maxWorkers=2
+
+      # Coverage is captured but not enforced — the goal is signal not a
+      # gate. Upload artifact so PR reviewers can browse it.
+      - name: Coverage report
+        if: github.event_name == 'pull_request'
+        run: npm run test:coverage -- --ci --maxWorkers=2
+
+      - name: Upload coverage artifact
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ github.sha }}
+          path: backend/coverage/
+          retention-days: 14
+
+  e2e-smoke:
+    name: production smoke (playwright)
+    runs-on: ubuntu-latest
+    # Only run on main pushes — these tests hit the live deployment, no point
+    # running them on every PR commit. Skip if the e2e/ directory doesn't exist
+    # yet (lets this workflow stay valid before Playwright is wired in).
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    defaults:
+      run:
+        working-directory: e2e
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check if e2e exists
+        id: check_e2e
+        run: |
+          if [ -f package.json ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up Node
+        if: steps.check_e2e.outputs.exists == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: e2e/package-lock.json
+
+      - name: Install dependencies + browsers
+        if: steps.check_e2e.outputs.exists == 'true'
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run smoke tests against live production
+        if: steps.check_e2e.outputs.exists == 'true'
+        run: npm test
+
+      - name: Upload Playwright report on failure
+        if: failure() && steps.check_e2e.outputs.exists == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.sha }}
+          path: e2e/playwright-report/
+          retention-days: 14

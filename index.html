@@ -1917,9 +1917,15 @@ async function initSDK() {
       setStatus('loading', 'Demo mode — configure simulation below');
       showSimControls();
     } else {
-      // Show landing page, hide add-on UI
+      // Show landing page, hide add-on UI. Mirror the ready=false branch
+      // above so loadPublicStats + the pageview beacon ALSO fire on this
+      // path — otherwise visitors whose browser loads the SDK script but
+      // can't init the addon (e.g. desktop browser at attendancetracker.dev)
+      // see "—" instead of social proof and we lose their pageview signal.
       document.getElementById('addon-ui').style.display = 'none';
       document.getElementById('landing-page').style.display = 'block';
+      loadPublicStats();
+      sendPageviewBeacon();
     }
   }
 }
