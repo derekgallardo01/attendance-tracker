@@ -20,7 +20,7 @@
     "googleapis": "^140.0.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
-    "nodemailer": "^6.9.16"
+    "resend": "^4.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.0"

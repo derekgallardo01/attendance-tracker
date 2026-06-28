@@ -1,30 +1,73 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const log = require('./logger');
 
-// Lazily create the SMTP transport so we don't fail boot when env vars aren't
-// set yet. Reuse a single transporter — nodemailer pools connections under the
-// hood.
-let cachedTransporter = null;
-function getTransporter() {
-  if (cachedTransporter) return cachedTransporter;
-  const user = process.env.GMAIL_USER;
-  const pass = process.env.GMAIL_APP_PASSWORD;
-  if (!user || !pass) return null;
-  cachedTransporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user, pass },
-  });
-  return cachedTransporter;
+// Resend transactional email — better deliverability + open/click tracking
+// than Gmail SMTP, and the API doesn't have Gmail's 500/day cap.
+// Lazy init so boot doesn't fail when RESEND_API_KEY isn't set yet.
+let cachedResend = null;
+function getResend() {
+  if (cachedResend) return cachedResend;
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return null;
+  cachedResend = new Resend(apiKey);
+  return cachedResend;
 }
 
-// Fire-and-forget signup notification email. Sends to NOTIFY_EMAIL (or
-// GMAIL_USER if NOTIFY_EMAIL isn't set). Silent no-op if SMTP isn't configured.
-async function sendSignupWebhook({ email, displayName, domain, acquisitionSource, totalUsers }) {
-  const transporter = getTransporter();
-  if (!transporter) return;
+// Build the From address. Until RESEND_FROM_DOMAIN is set (user has verified
+// their domain in Resend), fall back to onboarding@resend.dev which Resend
+// allows for any account without DNS. The display name still appears
+// correctly in the recipient's inbox either way.
+function makeFrom(displayName) {
+  const domain = process.env.RESEND_FROM_DOMAIN;
+  if (!domain) return `${displayName} <onboarding@resend.dev>`;
+  const localpart = process.env.RESEND_FROM_LOCAL || 'hello';
+  return `${displayName} <${localpart}@${domain}>`;
+}
 
-  const sender = process.env.GMAIL_USER;
-  const to = process.env.NOTIFY_EMAIL || sender;
+// Where replies go. GMAIL_USER stays around as the "owner inbox" — anyone who
+// replies to a re-engagement or feedback email lands here, regardless of
+// what the actual sending domain is.
+function ownerEmail() {
+  return process.env.GMAIL_USER || process.env.NOTIFY_EMAIL || null;
+}
+
+// Single send wrapper. Mirrors nodemailer's sendMail signature so every call
+// site is one-line changed. Throws on hard failure; callers decide whether
+// to swallow (fire-and-forget) or surface (admin email, feedback). Tags get
+// passed through to Resend for per-type delivery analytics.
+async function send({ from, to, subject, text, html, replyTo, tags }) {
+  const resend = getResend();
+  if (!resend) throw new Error('Resend not configured — set RESEND_API_KEY');
+  const params = {
+    from,
+    to: Array.isArray(to) ? to : [to],
+    subject,
+    text,
+    html,
+  };
+  if (replyTo) params.replyTo = replyTo;
+  if (tags) params.tags = tags;
+  const result = await resend.emails.send(params);
+  if (result.error) {
+    throw new Error(`Resend send failed: ${result.error.message || JSON.stringify(result.error)}`);
+  }
+  return { sent: true, id: result.data?.id };
+}
+
+function escape(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[c]));
+}
+
+// Fire-and-forget signup notification email. Sends to NOTIFY_EMAIL (or the
+// owner's inbox if NOTIFY_EMAIL isn't set). Silent no-op if Resend isn't
+// configured.
+async function sendSignupWebhook({ email, displayName, domain, acquisitionSource, totalUsers }) {
+  if (!getResend()) return;
+  const to = process.env.NOTIFY_EMAIL || ownerEmail();
+  if (!to) return;
   const sourceLine = acquisitionSource ? ` (via ${acquisitionSource})` : '';
   const subject = `🎉 New user: ${displayName || email}${sourceLine}`;
 
@@ -53,12 +96,13 @@ async function sendSignupWebhook({ email, displayName, domain, acquisitionSource
   ].join('\n');
 
   try {
-    await transporter.sendMail({
-      from: `"Attendance Tracker" <${sender}>`,
+    await send({
+      from: makeFrom('Attendance Tracker'),
       to,
       subject,
       text,
       html,
+      tags: [{ name: 'type', value: 'signup' }],
     });
     log.info('signup notification sent', { email, domain, to });
   } catch (err) {
@@ -66,40 +110,29 @@ async function sendSignupWebhook({ email, displayName, domain, acquisitionSource
   }
 }
 
-function escape(s) {
-  if (s == null) return '';
-  return String(s).replace(/[&<>"']/g, (c) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-  }[c]));
-}
-
 // Generic email send used by the admin "email from dashboard" feature.
-// Returns { sent: true, messageId } or throws if SMTP isn't configured.
+// Returns { sent: true, id } or throws if Resend isn't configured.
 async function sendAdminEmail({ to, subject, body }) {
-  const transporter = getTransporter();
-  if (!transporter) throw new Error('SMTP not configured — set GMAIL_USER and GMAIL_APP_PASSWORD');
   if (!to || !subject) throw new Error('to and subject are required');
-  const sender = process.env.GMAIL_USER;
   const text = body || '';
   const html = text.split('\n').map(l => `<p style="margin:0 0 12px;font-family:sans-serif;font-size:14px;line-height:1.5">${escape(l) || '&nbsp;'}</p>`).join('');
-  const info = await transporter.sendMail({
-    from: `"Derek Gallardo" <${sender}>`,
+  return send({
+    from: makeFrom('Derek Gallardo'),
     to,
     subject,
     text,
     html,
-    replyTo: sender,
+    replyTo: ownerEmail(),
+    tags: [{ name: 'type', value: 'admin' }],
   });
-  return { sent: true, messageId: info.messageId };
 }
 
 // Weekly self-report email. Formats the report from firestore into something
 // you can scan in 30 seconds Monday morning.
 async function sendWeeklySelfReport(report) {
-  const transporter = getTransporter();
-  if (!transporter) return { skipped: 'SMTP not configured' };
-  const sender = process.env.GMAIL_USER;
-  const to = process.env.NOTIFY_EMAIL || sender;
+  if (!getResend()) return { skipped: 'Resend not configured' };
+  const to = process.env.NOTIFY_EMAIL || ownerEmail();
+  if (!to) return { skipped: 'no NOTIFY_EMAIL/owner' };
 
   const arrow = (s) => s.startsWith('+') ? `<span style="color:#16a34a">▲ ${s}</span>` : s.startsWith('-') ? `<span style="color:#dc2626">▼ ${s}</span>` : `<span style="color:#666">${s}</span>`;
   const escH = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
@@ -161,14 +194,14 @@ async function sendWeeklySelfReport(report) {
     `Admin: https://attendancetracker.dev/admin.html`,
   ].join('\n');
 
-  const info = await transporter.sendMail({
-    from: `"Attendance Tracker" <${sender}>`,
+  return send({
+    from: makeFrom('Attendance Tracker'),
     to,
     subject,
     text,
     html,
+    tags: [{ name: 'type', value: 'weekly_report' }],
   });
-  return { sent: true, messageId: info.messageId };
 }
 
 // Fire-and-forget "your attendance is ready" email sent when an auto-export
@@ -177,9 +210,7 @@ async function sendWeeklySelfReport(report) {
 // includes an inline attendance table so the email is actionable on its own
 // — the user doesn't have to open the sheet to see what happened.
 async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle, totalAttended, totalInvited, exportedAt, participants, overflow, conferenceId, recurringEventId }) {
-  const transporter = getTransporter();
-  if (!transporter) return;
-  const sender = process.env.GMAIL_USER;
+  if (!getResend()) return;
   const title = meetingTitle || 'Google Meet';
   const summary = totalInvited
     ? `${totalAttended} of ${totalInvited} attended`
@@ -275,12 +306,13 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
   ].filter(Boolean).join('\n');
 
   try {
-    await transporter.sendMail({
-      from: `"Attendance Tracker" <${sender}>`,
+    await send({
+      from: makeFrom('Attendance Tracker'),
       to,
       subject,
       text,
       html,
+      tags: [{ name: 'type', value: 'export_notification' }],
     });
     log.info('export notification sent', { to, sheetUrl });
   } catch (err) {
@@ -293,10 +325,8 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
 // give the user a reason to come back to the product — so the CTA is a
 // "View series →" link, not a static report.
 async function sendSeriesAlertEmail({ to, displayName, alerts }) {
-  const transporter = getTransporter();
-  if (!transporter) return { skipped: 'SMTP not configured' };
+  if (!getResend()) return { skipped: 'Resend not configured' };
   if (!alerts?.length) return { skipped: 'no alerts' };
-  const sender = process.env.GMAIL_USER;
 
   const subject = alerts.length === 1
     ? `Attendance alert: ${alerts[0].personName || alerts[0].personEmail || 'Someone'} ${alerts[0].detail}`
@@ -339,15 +369,16 @@ async function sendSeriesAlertEmail({ to, displayName, alerts }) {
   ].join('\n');
 
   try {
-    const info = await transporter.sendMail({
-      from: `"Attendance Tracker" <${sender}>`,
+    const info = await send({
+      from: makeFrom('Attendance Tracker'),
       to,
       subject,
       text,
       html,
+      tags: [{ name: 'type', value: 'series_alert' }],
     });
     log.info('series alert email sent', { to, alertCount: alerts.length });
-    return { sent: true, messageId: info.messageId };
+    return info;
   } catch (err) {
     log.warn('series alert email failed', { to, error: err.message });
     return { sent: false, error: err.message };
@@ -358,11 +389,9 @@ async function sendSeriesAlertEmail({ to, displayName, alerts }) {
 // context (user email, where they were in the app, what they wrote) so you
 // can reply quickly. Throws on failure — caller decides whether to retry.
 async function sendFeedbackEmail({ body, fromEmail, fromName, source, conferenceId, userAgent }) {
-  const transporter = getTransporter();
-  if (!transporter) throw new Error('SMTP not configured');
   if (!body) throw new Error('body is required');
-  const sender = process.env.GMAIL_USER;
-  const to = process.env.NOTIFY_EMAIL || sender;
+  const to = process.env.NOTIFY_EMAIL || ownerEmail();
+  if (!to) throw new Error('NOTIFY_EMAIL or GMAIL_USER must be set as the destination inbox');
   const subjectName = fromName || fromEmail || 'Anonymous';
   const subject = `💬 Feedback from ${subjectName}: ${String(body).slice(0, 60).replace(/\s+/g, ' ')}${body.length > 60 ? '…' : ''}`;
   const html = `
@@ -385,30 +414,23 @@ async function sendFeedbackEmail({ body, fromEmail, fromName, source, conference
     conferenceId ? `Meeting: ${conferenceId}` : '',
   ].filter(Boolean).join('\n');
 
-  const info = await transporter.sendMail({
-    from: `"Attendance Tracker feedback" <${sender}>`,
+  return send({
+    from: makeFrom('Attendance Tracker feedback'),
     to,
     subject,
     text,
     html,
-    replyTo: fromEmail || sender,
+    replyTo: fromEmail || ownerEmail(),
+    tags: [{ name: 'type', value: 'feedback' }],
   });
-  return { sent: true, messageId: info.messageId };
 }
 
 // Re-engagement emails feel like a personal check-in, not a product
 // notification. Different From-name ("Derek Gallardo" not "Attendance
-// Tracker"), plain prose, no logos/buttons. The reply-to is the GMAIL_USER
+// Tracker"), plain prose, no logos/buttons. The reply-to is the owner
 // inbox so the user can just hit Reply and answer.
-function personalFrom() {
-  const sender = process.env.GMAIL_USER;
-  return `"Derek Gallardo" <${sender}>`;
-}
-
 async function sendReactivationEmail({ to, displayName, daysSinceLogin, variant }) {
-  const transporter = getTransporter();
-  if (!transporter) return { skipped: 'SMTP not configured' };
-  const sender = process.env.GMAIL_USER;
+  if (!getResend()) return { skipped: 'Resend not configured' };
   const firstName = displayName ? displayName.split(' ')[0] : null;
   const hi = firstName ? `Hey ${firstName},` : 'Hey,';
 
@@ -447,16 +469,17 @@ async function sendReactivationEmail({ to, displayName, daysSinceLogin, variant 
   ).join('');
 
   try {
-    const info = await transporter.sendMail({
-      from: personalFrom(),
+    const info = await send({
+      from: makeFrom('Derek Gallardo'),
       to,
       subject,
       text: body,
       html,
-      replyTo: sender,
+      replyTo: ownerEmail(),
+      tags: [{ name: 'type', value: 'reactivation' }, { name: 'variant', value: variant }],
     });
     log.info('reactivation email sent', { to, variant, daysSinceLogin });
-    return { sent: true, messageId: info.messageId };
+    return info;
   } catch (err) {
     log.warn('reactivation email failed', { to, variant, error: err.message });
     return { sent: false, error: err.message };
@@ -464,9 +487,7 @@ async function sendReactivationEmail({ to, displayName, daysSinceLogin, variant 
 }
 
 async function sendForgottenMeetingEmail({ to, displayName, seriesTitle, recurringEventId, trackedInWindow, daysSinceLast }) {
-  const transporter = getTransporter();
-  if (!transporter) return { skipped: 'SMTP not configured' };
-  const sender = process.env.GMAIL_USER;
+  if (!getResend()) return { skipped: 'Resend not configured' };
   const firstName = displayName ? displayName.split(' ')[0] : null;
   const hi = firstName ? `Hey ${firstName},` : 'Hey,';
   const seriesLink = recurringEventId
@@ -492,16 +513,17 @@ async function sendForgottenMeetingEmail({ to, displayName, seriesTitle, recurri
   }).join('');
 
   try {
-    const info = await transporter.sendMail({
-      from: personalFrom(),
+    const info = await send({
+      from: makeFrom('Derek Gallardo'),
       to,
       subject,
       text: body,
       html,
-      replyTo: sender,
+      replyTo: ownerEmail(),
+      tags: [{ name: 'type', value: 'forgotten_meeting' }],
     });
     log.info('forgotten-meeting email sent', { to, recurringEventId, daysSinceLast });
-    return { sent: true, messageId: info.messageId };
+    return info;
   } catch (err) {
     log.warn('forgotten-meeting email failed', { to, error: err.message });
     return { sent: false, error: err.message };
