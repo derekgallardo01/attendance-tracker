@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /setup.html
+Disallow: /share.html
+Disallow: /api/
+
+Sitemap: https://attendancetracker.dev/sitemap.xml

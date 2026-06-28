@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Google Meet attendance tracker for teachers — Attendance Tracker</title>
+  <meta name="description" content="Track class attendance in Google Meet without the Education Plus tier. Auto-roll-call, late-arrival flags, recurring class attendance roll-ups, and one-click Google Sheets export. Free." />
+  <link rel="canonical" href="https://attendancetracker.dev/attendance-tracker-for-teachers.html" />
+  <meta property="og:title" content="Google Meet attendance tracker for teachers" />
+  <meta property="og:description" content="Auto roll-call, late-arrival flags, per-class attendance trends, Sheets export. Free, no Education Plus needed." />
+  <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
+  <meta property="og:url" content="https://attendancetracker.dev/attendance-tracker-for-teachers.html" />
+  <meta property="og:type" content="article" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #4ade80; --blue: #58a6ff; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 40px 20px; }
+    .container { max-width: 720px; margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+    .brand img { width: 28px; height: 28px; border-radius: 6px; }
+    .brand a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    h1 { font-size: 2rem; line-height: 1.2; margin-bottom: 14px; }
+    .lead { color: var(--muted); font-size: 1.05rem; margin-bottom: 32px; }
+    h2 { font-size: 1.35rem; margin-top: 36px; margin-bottom: 14px; color: var(--text); }
+    h3 { font-size: 1.05rem; margin-top: 22px; margin-bottom: 8px; color: var(--text); }
+    p { margin-bottom: 14px; color: #c9d1d9; }
+    ul, ol { padding-left: 22px; margin-bottom: 14px; color: #c9d1d9; }
+    li { margin-bottom: 6px; }
+    a { color: var(--blue); }
+    .callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 16px 18px; margin: 22px 0; }
+    .callout strong { color: var(--accent); }
+    .cta { background: linear-gradient(135deg, rgba(74,222,128,.08), rgba(88,166,255,.08)); border: 1px solid rgba(74,222,128,.25); border-radius: 14px; padding: 26px; text-align: center; margin: 36px 0; }
+    .cta h3 { font-size: 1.1rem; margin-top: 0; margin-bottom: 6px; }
+    .cta p { color: var(--muted); font-size: .9rem; margin-bottom: 16px; }
+    .btn { display: inline-block; background: #34A853; color: #fff; text-decoration: none; padding: 11px 24px; border-radius: 8px; font-weight: 600; font-size: .92rem; }
+    .footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border); }
+    .footer a { color: var(--muted); text-decoration: none; margin: 0 6px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <img src="icons/icon-96.png" alt="" />
+      <a href="/">Attendance Tracker</a>
+    </div>
+
+    <h1>Google Meet attendance tracker for teachers</h1>
+    <p class="lead">Most teachers don't have Google Workspace for Education Plus — which means the built-in attendance report isn't available. Here's how to get auto roll-call, late-arrival flags, and class attendance trends without the upgrade.</p>
+
+    <div class="callout">
+      <strong>What you get:</strong> the Attendance Tracker add-on installs in 30 seconds, works on every Google Workspace edition (and personal Gmail), and stays free.
+    </div>
+
+    <h2>Why the built-in feature doesn't work for most teachers</h2>
+    <p>Google restricts in-Meet attendance reports to the Education <strong>Plus</strong> SKU. Schools on Education Fundamentals, Education Standard, the Teaching and Learning Upgrade, or no Workspace at all are stuck doing it by hand — or paying per-seat for an upgrade most districts can't justify just for an attendance feature.</p>
+    <p>The Marketplace add-on uses the Meet REST API, which Google exposes to any Workspace tier. That's the loophole — it's not blocked behind a license check.</p>
+
+    <h2>What it does during a class</h2>
+    <ul>
+      <li><strong>Auto roll-call.</strong> Open the side panel at the start of class. Every student who joins shows up in real time with their join timestamp.</li>
+      <li><strong>Late arrival flags.</strong> Anyone who joins more than 5 minutes after class starts gets a <code style="background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3);padding:1px 6px;border-radius:8px;font-size:.7rem;font-weight:600">+Nm late</code> chip next to their name.</li>
+      <li><strong>Departure tracking.</strong> Students who leave before the end of class show as "Left" with the exact time they dropped.</li>
+      <li><strong>Excused absences.</strong> Mark a no-show student as Excused before exporting; the sheet shows "Absent (excused)" instead of "Absent". Persists across re-exports.</li>
+    </ul>
+
+    <h2>What you get after class</h2>
+    <ul>
+      <li><strong>Auto-export to Google Sheets.</strong> When the meeting ends, the attendance sheet is created in your Drive and emailed to you. One tab per class session.</li>
+      <li><strong>Per-class attendance trends.</strong> If you put your class on a recurring Calendar event (which most teachers do), the add-on rolls up attendance over time — "Alex 12/15 classes (80%), Sarah 14/15 (93%)."</li>
+      <li><strong>Daily alert emails.</strong> When a student misses 3 classes in a row after a streak of regular attendance, or drops from ≥80% to &lt;50% over the last 8 sessions, you get an email. Lets you reach out before they fully disengage.</li>
+      <li><strong>Shareable dashboard.</strong> Generate a public link to the class attendance roll-up to share with parents or administrators. Read-only, expires in 30 days.</li>
+    </ul>
+
+    <h2>Setup, start to finish</h2>
+    <ol>
+      <li>Open the <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968">Marketplace listing</a>.</li>
+      <li>Click <strong>Install</strong>. Grant the requested permissions (read-only Meet participants, read-only calendar, write to Sheets files we create).</li>
+      <li>Open your next class meeting in Google Meet.</li>
+      <li>Open the Attendance Tracker side panel (sidebar icon, same place as chat).</li>
+      <li>Tracking starts automatically. Auto-export happens when the meeting ends.</li>
+    </ol>
+
+    <h2>FAQ</h2>
+    <h3>Will my students see they're being tracked?</h3>
+    <p>The add-on only appears in your side panel, not your students'. They don't see anything different about the meeting. The data you collect is the same data they could see in the participants panel — names, join times, durations — but compiled for you.</p>
+
+    <h3>Does it work with under-13 student accounts?</h3>
+    <p>Yes. Student accounts appear in the participant list like any Google account. The add-on doesn't process anything beyond what Google already exposes in the Meet participant view.</p>
+
+    <h3>What if my students join from personal Gmail accounts (not school accounts)?</h3>
+    <p>They'll appear in the attendance list with their personal Gmail name. If you want to map them to your roster, the calendar-matching step in the export flow lets you reassign names to email addresses you control.</p>
+
+    <h3>Is there a paid tier?</h3>
+    <p>Not currently. Attendance Tracker is free while it's growing. If paid tiers launch later, current features will stay free for individual teachers.</p>
+
+    <div class="cta">
+      <h3>Track every class in 30 seconds</h3>
+      <p>Free Marketplace add-on. No Education Plus required.</p>
+      <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_teachers" target="_blank">Install from Marketplace</a>
+    </div>
+
+    <div class="footer">
+      <a href="/">Home</a> · <a href="how-to-track-attendance-in-google-meet.html">How to track attendance</a> · <a href="export-google-meet-attendance-to-sheets.html">Export to Sheets</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How to track attendance in Google Meet (2026 guide) — Attendance Tracker</title>
+  <meta name="description" content="Three ways to track attendance in Google Meet — built-in attendance reports, manual roll call, and the Attendance Tracker add-on. With trade-offs and step-by-step instructions." />
+  <link rel="canonical" href="https://attendancetracker.dev/how-to-track-attendance-in-google-meet.html" />
+  <meta property="og:title" content="How to track attendance in Google Meet (2026 guide)" />
+  <meta property="og:description" content="Compare the three ways to track attendance in Google Meet and pick the one that fits your situation." />
+  <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
+  <meta property="og:url" content="https://attendancetracker.dev/how-to-track-attendance-in-google-meet.html" />
+  <meta property="og:type" content="article" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to track attendance in Google Meet",
+    "description": "Three ways to track attendance in Google Meet, with trade-offs and step-by-step instructions.",
+    "step": [
+      {"@type": "HowToStep", "name": "Use built-in attendance reports (Education Plus only)", "text": "Available only on Google Workspace Education Plus. Reports email to the organizer after the meeting."},
+      {"@type": "HowToStep", "name": "Manual roll call", "text": "Open the participants panel during the meeting and copy down names. Free but error-prone."},
+      {"@type": "HowToStep", "name": "Install Attendance Tracker add-on", "text": "Free Marketplace add-on. Auto-tracks join/leave times, exports to Sheets, works on every Workspace tier including personal Gmail."}
+    ]
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #4ade80; --blue: #58a6ff; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 40px 20px; }
+    .container { max-width: 720px; margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+    .brand img { width: 28px; height: 28px; border-radius: 6px; }
+    .brand a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    h1 { font-size: 2rem; line-height: 1.2; margin-bottom: 14px; }
+    .lead { color: var(--muted); font-size: 1.05rem; margin-bottom: 32px; }
+    h2 { font-size: 1.35rem; margin-top: 36px; margin-bottom: 14px; color: var(--text); }
+    h3 { font-size: 1.05rem; margin-top: 22px; margin-bottom: 8px; color: var(--text); }
+    p { margin-bottom: 14px; color: #c9d1d9; }
+    ul, ol { padding-left: 22px; margin-bottom: 14px; color: #c9d1d9; }
+    li { margin-bottom: 6px; }
+    a { color: var(--blue); }
+    code { background: var(--surface); padding: 2px 6px; border-radius: 4px; font-size: .9em; font-family: 'DM Mono', ui-monospace, monospace; }
+    .callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 16px 18px; margin: 22px 0; }
+    .callout strong { color: var(--accent); }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: .92rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    th { text-align: left; padding: 10px 14px; background: rgba(255,255,255,.03); color: var(--muted); font-weight: 600; font-size: .8rem; text-transform: uppercase; letter-spacing: .03em; }
+    td { padding: 10px 14px; border-top: 1px solid var(--border); }
+    .cta { background: linear-gradient(135deg, rgba(74,222,128,.08), rgba(88,166,255,.08)); border: 1px solid rgba(74,222,128,.25); border-radius: 14px; padding: 26px; text-align: center; margin: 36px 0; }
+    .cta h3 { font-size: 1.1rem; margin-top: 0; margin-bottom: 6px; }
+    .cta p { color: var(--muted); font-size: .9rem; margin-bottom: 16px; }
+    .btn { display: inline-block; background: #34A853; color: #fff; text-decoration: none; padding: 11px 24px; border-radius: 8px; font-weight: 600; font-size: .92rem; }
+    .footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border); }
+    .footer a { color: var(--muted); text-decoration: none; margin: 0 6px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <img src="icons/icon-96.png" alt="" />
+      <a href="/">Attendance Tracker</a>
+    </div>
+
+    <h1>How to track attendance in Google Meet</h1>
+    <p class="lead">Three options, ranked by what most people actually need. Built-in attendance reports are restricted to one Workspace tier; manual tracking doesn't scale; the Marketplace add-on works for everyone.</p>
+
+    <div class="callout">
+      <strong>TL;DR:</strong> if you're on Google Workspace Education Plus, the built-in attendance report covers most cases. If you're on anything else — Business Starter, Standard, Plus, Enterprise, or personal Gmail — install a Marketplace add-on like <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968">Attendance Tracker</a> (free).
+    </div>
+
+    <h2>Option 1: Google's built-in attendance reports</h2>
+    <p>Google ships an attendance feature inside Meet itself, but with a hard restriction: it's only available on the Google Workspace <strong>Education Plus</strong> edition. Not Business, not Enterprise, not Education Fundamentals or Standard — only Education Plus.</p>
+    <p>If you're eligible, an organizer can enable it per-meeting:</p>
+    <ol>
+      <li>Start a meeting in Google Meet from a Calendar event.</li>
+      <li>Click the host controls icon in the bottom-right.</li>
+      <li>Toggle <strong>Attendance tracking</strong> on.</li>
+      <li>After the meeting ends, the organizer receives an email with a CSV attached: name, email, duration in the meeting.</li>
+    </ol>
+    <p>Pros: nothing to install, native to Meet. Cons: only Education Plus, no live view during the meeting, no Google Sheets export, no late-arrival highlighting, no recurring-meeting roll-up.</p>
+
+    <h2>Option 2: Manual roll call from the participants panel</h2>
+    <p>If your Workspace doesn't qualify and you only have one meeting to track, you can do it by hand:</p>
+    <ol>
+      <li>During the meeting, click the people icon (top-right) to open the participants panel.</li>
+      <li>Copy each name into a Google Sheet manually.</li>
+      <li>Note who left early by watching the panel update.</li>
+    </ol>
+    <p>This works for a 5-person meeting once. For a recurring standup with 20 people, it falls apart fast — you miss late arrivals, you can't see exact join times, and you can't tell who only stayed five minutes.</p>
+
+    <h2>Option 3: Install a Marketplace add-on</h2>
+    <p>This is the path for everyone outside Education Plus, and arguably the best path even for Education Plus users who want a live view or a Sheet export. The <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968">Attendance Tracker</a> add-on takes about 30 seconds to install:</p>
+    <ol>
+      <li>Open the <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968">Marketplace listing</a>.</li>
+      <li>Click <strong>Install</strong> and grant the permissions (read-only Meet participants, calendar event matching, Sheets write).</li>
+      <li>Join your next Google Meet call. The Attendance Tracker side panel appears alongside chat and the participant list.</li>
+      <li>Tracking starts automatically. When the meeting ends, the attendance sheet is auto-exported to your Drive and emailed to you.</li>
+    </ol>
+
+    <div class="callout">
+      <strong>Why this works on personal Gmail too:</strong> the add-on uses the Meet REST API and your own Google account's permissions — no Workspace admin setup required unless you want full visibility into participants from other domains.
+    </div>
+
+    <h2>Comparison at a glance</h2>
+    <table>
+      <thead><tr><th>Feature</th><th>Built-in</th><th>Manual</th><th>Add-on</th></tr></thead>
+      <tbody>
+        <tr><td>Free</td><td>Education Plus only</td><td>Yes</td><td>Yes</td></tr>
+        <tr><td>Live view during meeting</td><td>No</td><td>Yes (manual)</td><td>Yes</td></tr>
+        <tr><td>Export to Sheets</td><td>CSV only</td><td>Manual</td><td>One click</td></tr>
+        <tr><td>Late-arrival highlighting</td><td>No</td><td>No</td><td>Yes</td></tr>
+        <tr><td>Recurring meeting roll-ups</td><td>No</td><td>No</td><td>Yes</td></tr>
+        <tr><td>Personal Gmail accounts</td><td>No</td><td>Yes</td><td>Yes</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Common questions</h2>
+    <h3>Does it work without my Workspace admin doing anything?</h3>
+    <p>Yes. The add-on installs at the individual level. If your Workspace admin completes a one-time domain-wide delegation setup, you'll also see participants from outside your organization in the attendance report — but it's not required.</p>
+
+    <h3>Can I track attendance in a meeting I didn't organize?</h3>
+    <p>Yes, as long as you're in the meeting. The Meet REST API exposes the participant list to any authenticated participant who has the meeting code.</p>
+
+    <h3>What if the meeting has already ended?</h3>
+    <p>If you forget to open the side panel during the call, you'll get an empty state when you open it after — the Meet API doesn't expose attendance for meetings that ended before the add-on was loaded. Open the panel at the start, even if you're not actively looking at it.</p>
+
+    <div class="cta">
+      <h3>Set up attendance tracking in 30 seconds</h3>
+      <p>Free, no credit card, works on every Workspace tier including personal Gmail.</p>
+      <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_howto" target="_blank">Install from Marketplace</a>
+    </div>
+
+    <div class="footer">
+      <a href="/">Home</a> · <a href="attendance-tracker-for-teachers.html">For teachers</a> · <a href="export-google-meet-attendance-to-sheets.html">Export to Sheets</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Export Google Meet attendance to Google Sheets (one click) — Attendance Tracker</title>
+  <meta name="description" content="Skip the copy-paste. Auto-export Google Meet attendance to a Google Sheet when the meeting ends — with join times, durations, late flags, no-shows, and per-tab session history." />
+  <link rel="canonical" href="https://attendancetracker.dev/export-google-meet-attendance-to-sheets.html" />
+  <meta property="og:title" content="Export Google Meet attendance to Google Sheets" />
+  <meta property="og:description" content="Auto-export attendance when the meeting ends. Join times, durations, no-shows, late flags." />
+  <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
+  <meta property="og:url" content="https://attendancetracker.dev/export-google-meet-attendance-to-sheets.html" />
+  <meta property="og:type" content="article" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #4ade80; --blue: #58a6ff; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 40px 20px; }
+    .container { max-width: 720px; margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+    .brand img { width: 28px; height: 28px; border-radius: 6px; }
+    .brand a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    h1 { font-size: 2rem; line-height: 1.2; margin-bottom: 14px; }
+    .lead { color: var(--muted); font-size: 1.05rem; margin-bottom: 32px; }
+    h2 { font-size: 1.35rem; margin-top: 36px; margin-bottom: 14px; color: var(--text); }
+    h3 { font-size: 1.05rem; margin-top: 22px; margin-bottom: 8px; color: var(--text); }
+    p { margin-bottom: 14px; color: #c9d1d9; }
+    ul, ol { padding-left: 22px; margin-bottom: 14px; color: #c9d1d9; }
+    li { margin-bottom: 6px; }
+    a { color: var(--blue); }
+    code { background: var(--surface); padding: 2px 6px; border-radius: 4px; font-size: .9em; font-family: 'DM Mono', ui-monospace, monospace; }
+    .callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 16px 18px; margin: 22px 0; }
+    .callout strong { color: var(--accent); }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: .88rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    th { text-align: left; padding: 10px 14px; background: rgba(255,255,255,.03); color: var(--muted); font-weight: 600; font-size: .75rem; text-transform: uppercase; letter-spacing: .03em; }
+    td { padding: 10px 14px; border-top: 1px solid var(--border); }
+    .cta { background: linear-gradient(135deg, rgba(74,222,128,.08), rgba(88,166,255,.08)); border: 1px solid rgba(74,222,128,.25); border-radius: 14px; padding: 26px; text-align: center; margin: 36px 0; }
+    .cta h3 { font-size: 1.1rem; margin-top: 0; margin-bottom: 6px; }
+    .cta p { color: var(--muted); font-size: .9rem; margin-bottom: 16px; }
+    .btn { display: inline-block; background: #34A853; color: #fff; text-decoration: none; padding: 11px 24px; border-radius: 8px; font-weight: 600; font-size: .92rem; }
+    .footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border); }
+    .footer a { color: var(--muted); text-decoration: none; margin: 0 6px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <img src="icons/icon-96.png" alt="" />
+      <a href="/">Attendance Tracker</a>
+    </div>
+
+    <h1>Export Google Meet attendance to Google Sheets</h1>
+    <p class="lead">No copy-paste, no manual roll-call, no waiting for Google's email report (which only the Education Plus tier gets anyway). Auto-export the full attendance sheet when the meeting ends.</p>
+
+    <div class="callout">
+      <strong>The short version:</strong> install the <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968">Attendance Tracker</a> Marketplace add-on. Open the side panel during your meeting. When the meeting ends, the sheet lands in your Drive automatically — no clicks required.
+    </div>
+
+    <h2>Why this isn't built into Google Meet</h2>
+    <p>Google's built-in attendance feature only exists on the Workspace Education Plus tier. Even on that tier, the output is a CSV emailed to the organizer — not a live Google Sheet you can sort, filter, share, or aggregate over time. For everyone else (Business Starter, Standard, Plus, Enterprise, personal Gmail), there's no built-in path.</p>
+    <p>The Meet REST API exposes participant data to any authenticated participant. A Marketplace add-on can read that data, turn it into a Sheet, and skip the upgrade-to-Education-Plus dance.</p>
+
+    <h2>What ends up in the Sheet</h2>
+    <table>
+      <thead><tr><th>Column</th><th>What it means</th></tr></thead>
+      <tbody>
+        <tr><td>Name</td><td>Display name from the Meet participant record</td></tr>
+        <tr><td>Email</td><td>Email if the participant is in your Workspace directory or on the calendar invite</td></tr>
+        <tr><td>RSVP Status</td><td>Accepted / Declined / Tentative / No Response — pulled from the matching calendar event</td></tr>
+        <tr><td>Late?</td><td><code>+5m</code> if joined more than 5 minutes after the scheduled start; empty if on time</td></tr>
+        <tr><td>Join / Leave Time</td><td>Exact timestamps from the Meet API</td></tr>
+        <tr><td>Duration (min)</td><td>Total time in the meeting; sums across multiple sessions if they rejoined</td></tr>
+        <tr><td>Attendance %</td><td>Duration / meeting length, capped at 100%</td></tr>
+        <tr><td>Status</td><td>Present, Left, Absent, or Absent (excused)</td></tr>
+      </tbody>
+    </table>
+
+    <h2>How the auto-export works</h2>
+    <ol>
+      <li>The add-on polls the Meet API every 30 seconds while you're in the meeting.</li>
+      <li>When the Meet API reports the conference has ended, the export fires automatically — no click required.</li>
+      <li>If the meeting is part of a recurring Calendar series, the participants are auto-matched against the invite list. No-shows get tagged Absent.</li>
+      <li>The sheet is created in a "Meet Attendance Tracker" folder in your Drive (created if it doesn't exist). Each meeting gets its own tab in a single spreadsheet — so you can sort/filter across sessions later.</li>
+      <li>You get an email with the sheet link and an inline summary of who attended.</li>
+    </ol>
+
+    <h2>Manual export still works</h2>
+    <p>If you want to export mid-meeting, the side panel has a <strong>Sheet</strong> button that triggers the same flow on demand. Useful for running a quick roll-call without waiting for the meeting to end.</p>
+
+    <h2>Sharing the resulting sheet</h2>
+    <p>The sheet is in your Drive, owned by you, with normal Google Sheets sharing controls. Right-click → Share, or copy the URL from the email. The add-on never touches sheets you didn't create with it — the requested permission scope is <code>drive.file</code>, which restricts the add-on to files it created.</p>
+
+    <h2>Privacy</h2>
+    <ul>
+      <li>The attendance data flows through your own Google account's OAuth token, not a shared service.</li>
+      <li>The add-on stores the join/leave timestamps in its own backend for the recurring-series roll-up feature, but the source-of-truth Sheet is yours.</li>
+      <li>The add-on never reads transcripts, video, audio, or chat. Just the participant list and timestamps that you can already see in the Meet participants panel.</li>
+    </ul>
+
+    <div class="cta">
+      <h3>Stop copying names into spreadsheets</h3>
+      <p>Install in 30 seconds. Auto-export fires when the meeting ends. Free.</p>
+      <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_sheets" target="_blank">Install from Marketplace</a>
+    </div>
+
+    <div class="footer">
+      <a href="/">Home</a> · <a href="how-to-track-attendance-in-google-meet.html">How to track attendance</a> · <a href="attendance-tracker-for-teachers.html">For teachers</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a>
+    </div>
+  </div>
+</body>
+</html>
