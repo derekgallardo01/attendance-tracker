@@ -4,6 +4,7 @@ const { makeJWT, makeUserClient } = require('../services/googleAuth');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { persistExport, getUserSheetId, setUserSheetId, countUserExports } = require('../services/firestore');
+const { sendExportNotification } = require('../lib/notifications');
 
 const router = Router();
 
@@ -34,7 +35,7 @@ function fmtRsvp(status) {
 }
 
 router.post('/save-to-sheets', async (req, res) => {
-  const { meetingTitle, tabName: clientTabName, exportedAt, participants, calendarAttendees = [], meetingStartTime, meetingType, eventStart, eventEnd, conferenceId, timezone } = req.body;
+  const { meetingTitle, tabName: clientTabName, exportedAt, participants, calendarAttendees = [], meetingStartTime, meetingType, eventStart, eventEnd, conferenceId, timezone, sendEmail, autoExport } = req.body;
   if (!participants?.length) return res.status(400).json({ error: 'participants array is required' });
 
   try {
@@ -283,7 +284,23 @@ router.post('/save-to-sheets', async (req, res) => {
       participantCount: allRows.length,
       sheetUrl,
       email: req.user?.email || null,
+      autoExport: !!autoExport,
     });
+
+    // Fire-and-forget: email the organizer the sheet link. Only when explicitly
+    // requested by the client (auto-export flow) — manual exports get the
+    // in-product toast and don't need inbox noise.
+    if (sendEmail && req.user?.email) {
+      sendExportNotification({
+        to: req.user.email,
+        displayName: req.user.displayName || null,
+        sheetUrl,
+        meetingTitle: meetingTitle || 'Google Meet',
+        totalAttended,
+        totalInvited,
+        exportedAt,
+      });
+    }
 
   } catch (err) {
     // 403 means the user didn't grant the drive.file scope during OAuth consent.

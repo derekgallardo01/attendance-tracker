@@ -171,4 +171,64 @@ async function sendWeeklySelfReport(report) {
   return { sent: true, messageId: info.messageId };
 }
 
-module.exports = { sendSignupWebhook, sendAdminEmail, sendWeeklySelfReport };
+// Fire-and-forget "your attendance is ready" email sent when an auto-export
+// completes. Lands in the organizer's inbox so they always have the sheet
+// link, even if they close the side panel and never look at it again.
+async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle, totalAttended, totalInvited, exportedAt }) {
+  const transporter = getTransporter();
+  if (!transporter) return;
+  const sender = process.env.GMAIL_USER;
+  const title = meetingTitle || 'Google Meet';
+  const summary = totalInvited
+    ? `${totalAttended} of ${totalInvited} attended`
+    : `${totalAttended} attended`;
+  const subject = `Attendance: ${title} — ${summary}`;
+  const dateStr = exportedAt ? new Date(exportedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+  const greeting = displayName ? `Hi ${escape(displayName.split(' ')[0])},` : 'Hi,';
+
+  const html = `
+    <div style="font-family:sans-serif;max-width:560px;color:#111;font-size:14px;line-height:1.5">
+      <p>${greeting}</p>
+      <p>Your meeting just ended — attendance has been auto-exported to Google Sheets.</p>
+      <table style="border-collapse:collapse;margin:16px 0;font-size:14px">
+        <tr><td style="padding:4px 12px 4px 0;color:#666">Meeting</td><td>${escape(title)}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666">Attendance</td><td>${escape(summary)}</td></tr>
+        ${dateStr ? `<tr><td style="padding:4px 12px 4px 0;color:#666">When</td><td>${escape(dateStr)}</td></tr>` : ''}
+      </table>
+      <p>
+        <a href="${escape(sheetUrl)}" style="display:inline-block;background:#1f6feb;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600">Open sheet</a>
+      </p>
+      <p style="color:#666;font-size:12px;margin-top:24px">
+        You're getting this because you tracked this meeting with Attendance Tracker.
+        The sheet lives in your Drive folder "Meet Attendance Tracker" — reuse the same
+        spreadsheet next time, each meeting gets its own tab.
+      </p>
+    </div>
+  `;
+  const text = [
+    `${displayName ? 'Hi ' + displayName.split(' ')[0] + ',' : 'Hi,'}`,
+    ``,
+    `Your meeting just ended — attendance has been auto-exported to Google Sheets.`,
+    ``,
+    `Meeting: ${title}`,
+    `Attendance: ${summary}`,
+    dateStr ? `When: ${dateStr}` : '',
+    ``,
+    `Open sheet: ${sheetUrl}`,
+  ].filter(Boolean).join('\n');
+
+  try {
+    await transporter.sendMail({
+      from: `"Attendance Tracker" <${sender}>`,
+      to,
+      subject,
+      text,
+      html,
+    });
+    log.info('export notification sent', { to, sheetUrl });
+  } catch (err) {
+    log.warn('export notification failed', { error: err.message, to });
+  }
+}
+
+module.exports = { sendSignupWebhook, sendAdminEmail, sendWeeklySelfReport, sendExportNotification };

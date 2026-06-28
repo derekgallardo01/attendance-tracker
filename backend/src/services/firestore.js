@@ -174,7 +174,7 @@ async function persistCalendarData(domain, meetingCode, eventTitle, attendees) {
   }
 }
 
-async function persistExport(domain, { meetingTitle, tabName, exportedAt, participantCount, sheetUrl, email }) {
+async function persistExport(domain, { meetingTitle, tabName, exportedAt, participantCount, sheetUrl, email, autoExport }) {
   try {
     const now = FieldValue.serverTimestamp();
 
@@ -185,6 +185,7 @@ async function persistExport(domain, { meetingTitle, tabName, exportedAt, partic
       participantCount,
       sheetUrl,
       email: email ? email.toLowerCase() : null,
+      autoExport: !!autoExport,
       createdAt: now,
     });
 
@@ -192,7 +193,7 @@ async function persistExport(domain, { meetingTitle, tabName, exportedAt, partic
       logEvent(domain, {
         email,
         type: 'exported',
-        meta: { tabName, participantCount },
+        meta: { tabName, participantCount, autoExport: !!autoExport },
       });
     }
 

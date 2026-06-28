@@ -1151,6 +1151,9 @@ const state = {
   signedIn:      false,
   grantedScopes: [],
   missingScopes: [],
+  // Auto-export bookkeeping: remember which conference we've already auto-exported
+  // for so the polling loop doesn't fire repeat exports, and survives panel reloads.
+  autoExportedConferenceId: null,
 };
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1181,6 +1184,7 @@ function saveState() {
         _accumulatedMs: v._accumulatedMs || 0,
       }]),
       _lastSheetUrl: state._lastSheetUrl || null,
+      autoExportedConferenceId: state.autoExportedConferenceId || null,
       savedAt: Date.now(),
     };
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
@@ -1204,6 +1208,7 @@ function restoreState() {
     state.grantedScopes = snap.grantedScopes || [];
     state.missingScopes = snap.missingScopes || [];
     state._lastSheetUrl = snap._lastSheetUrl;
+    state.autoExportedConferenceId = snap.autoExportedConferenceId || null;
     state._selfDisplayName = snap.userDisplayName || null;
     if (snap.userEmail) state._selfEmail = snap.userEmail.toLowerCase();
 
@@ -1930,6 +1935,10 @@ async function refreshAttendance() {
       renderNudgeBanner();
     }
 
+    // Auto-export when the Meet API reports the meeting has ended. This is
+    // the cure for "tracked 84 events but never clicked Export" — drops the
+    // export step entirely for users who leave the panel open through end.
+    maybeAutoExportOnMeetingEnd();
 
   } catch (err) {
     console.error(err);
@@ -2347,6 +2356,63 @@ async function saveToSheets() {
   }
 }
 
+// Fires once per conference when the Meet API reports endTime. Auto-matches
+// calendar attendees (best-effort), exports silently, and emails the organizer
+// the sheet link. Bookkept by conferenceId so it survives panel reloads.
+async function maybeAutoExportOnMeetingEnd() {
+  if (!state.tracking) return;
+  if (!state.signedIn) return;
+  if (_exporting) return;
+  if (!state.conferenceEndTime) return;
+  if (new Date(state.conferenceEndTime) > new Date()) return;
+  if (state.participants.size === 0) return;
+  if (state.autoExportedConferenceId === state.conferenceId) return;
+  if (document.getElementById('btn-sheets')?.dataset.scopeBlocked === '1') return;
+
+  // Reserve immediately — both the in-memory flag and the persisted one — so a
+  // concurrent poll tick or a panel reload can't fire the export a second time.
+  state.autoExportedConferenceId = state.conferenceId;
+  saveState();
+  _exporting = true;
+  const btn = document.getElementById('btn-sheets');
+  if (btn) btn.disabled = true;
+
+  logUserEvent('export_clicked', { participantCount: state.participants.size, auto: true });
+  toast('Meeting ended — auto-exporting to Sheets…', 4000);
+
+  try {
+    // Pull calendar attendees if it's a scheduled event so we can fill in RSVP
+    // status and detect no-shows. Best-effort: a calendar failure shouldn't
+    // block the export.
+    let calData = { isScheduled: false, attendees: [] };
+    try {
+      const calRes = await authFetch(`${state.backendUrl}/calendar-attendees?meetingCode=${encodeURIComponent(state.conferenceId)}`);
+      if (calRes.ok) calData = await calRes.json();
+    } catch (e) { /* keep going with empty calendar data */ }
+
+    let emailMap = {};
+    let calendarAttendees = [];
+    if (calData.isScheduled && calData.attendees?.length > 0) {
+      const matched = autoMatchAttendees(calData.attendees);
+      emailMap = matched.emailMap;
+      calendarAttendees = calData.attendees;
+      // Note: unmatched participants still get exported with their raw display
+      // name — better than blocking the auto-export on a manual match prompt.
+    }
+
+    await doExportToSheets(emailMap, calendarAttendees, { sendEmail: true, autoExport: true });
+  } catch (err) {
+    // doExportToSheets handles its own user-facing errors; this catch is
+    // defensive only. Release the reservation so a manual click can retry.
+    state.autoExportedConferenceId = null;
+    saveState();
+    logUserEvent('export_failed', { reason: 'auto_export_error', message: String(err.message || err).slice(0, 200) });
+  } finally {
+    _exporting = false;
+    if (btn) btn.disabled = false;
+  }
+}
+
 function autoMatchAttendees(attendees) {
   const emailMap = {}; // displayName -> email
   const usedEmails = new Set();
@@ -2471,7 +2537,7 @@ async function confirmMatchAndExport() {
   await doExportToSheets(emailMap, state.calendarAttendees || []);
 }
 
-async function doExportToSheets(emailMap, calendarAttendees = []) {
+async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
   const now = new Date();
   const tabName = `${state.meetingTitle || 'Google Meet'} ${now.toLocaleDateString('en-US')} ${now.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', second:'2-digit'})}`;
 
@@ -2485,6 +2551,8 @@ async function doExportToSheets(emailMap, calendarAttendees = []) {
     eventStart: state._eventStart || null,
     eventEnd: state._eventEnd || null,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    sendEmail: !!opts.sendEmail,
+    autoExport: !!opts.autoExport,
     calendarAttendees,
     participants: [...state.participants.values()].map(p => {
       // Use earliest known join time (API or frontend-tracked)
@@ -2523,17 +2591,26 @@ async function doExportToSheets(emailMap, calendarAttendees = []) {
       throw new Error(body.error || `${res.status}`);
     }
     const { sheetUrl, isFirstExport } = await res.json();
-    toast('✓ Saved to Sheets');
+    // Mark this conference as exported so the auto-export poll loop doesn't
+    // re-fire after a manual export (and so a reload after auto-export stays quiet).
+    state.autoExportedConferenceId = state.conferenceId;
+    saveState();
+    toast(opts.autoExport ? '✓ Auto-exported — sheet link sent to your email' : '✓ Saved to Sheets', opts.autoExport ? 6000 : 3000);
     const btn = document.getElementById('btn-sheets');
-    btn.textContent = '✓ Exported';
-    btn.disabled = true;
-    setTimeout(() => { btn.textContent = '⬜ Sheet'; btn.disabled = false; }, 4000);
+    if (btn) {
+      btn.textContent = '✓ Exported';
+      btn.disabled = true;
+      setTimeout(() => { btn.textContent = '⬜ Sheet'; btn.disabled = false; }, 4000);
+    }
     if (sheetUrl) {
-      window.open(sheetUrl, '_blank');
+      // Manual export pops the sheet in a new tab; auto-export does not — the
+      // user didn't click anything, so stealing focus would be surprising.
+      // Either way, surface the link in the side panel bar for one-click access.
+      if (!opts.autoExport) window.open(sheetUrl, '_blank');
       document.getElementById('sheet-link').href = sheetUrl;
       document.getElementById('sheet-link-bar').style.display = 'block';
     }
-    if (isFirstExport) {
+    if (isFirstExport && !opts.autoExport) {
       showCelebrateModal(sheetUrl);
     }
     // Update activation state so the nudge banner hides itself
