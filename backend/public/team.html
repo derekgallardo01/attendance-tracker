@@ -61,6 +61,25 @@
     .progress-bar div { background: var(--accent); height: 100%; }
 
     .footer-note { color: var(--muted); font-size: .75rem; margin-top: 36px; padding-top: 18px; border-top: 1px solid var(--border); }
+
+    /* ── Mobile (≤640px wide) ── */
+    @media (max-width: 640px) {
+      body { padding: 20px 12px; }
+      .header { flex-direction: column; align-items: stretch; gap: 10px; }
+      .header h1 { font-size: 1.25rem; }
+      .header > div { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+      .header .user { font-size: .75rem; margin-right: auto; }
+      .domain-chip { display: block; margin: 4px 0 0; }
+      .btn { padding: 7px 12px; font-size: .8rem; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .stat-card { padding: 12px; }
+      .stat-value { font-size: 1.3rem; }
+      .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
+      .tab { white-space: nowrap; padding: 9px 12px; font-size: .82rem; }
+      .section { padding: 12px; overflow-x: auto; }
+      table { font-size: .78rem; min-width: 480px; }
+      th, td { padding: 8px 10px; }
+    }
   </style>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
