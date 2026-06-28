@@ -1314,6 +1314,118 @@ async function evaluateSeriesAlerts(domain, email) {
   }
 }
 
+// Evaluate user-state re-engagement reminders. Different from series alerts
+// (which fire on attendee behavior) — these fire on the *user's own* lapse
+// patterns: "you signed up but stopped using it" / "you tracked this every
+// week and missed one". Each reminder type has its own dedup key so a 7-day
+// reactivation can fire alongside a forgotten-meeting nudge without conflict.
+async function evaluateReengagementForUser(domain, email) {
+  try {
+    const tenant = tenantRef(domain);
+    const emailLower = email.toLowerCase();
+
+    const [userDoc, eventsSnap] = await Promise.all([
+      tenant.collection('users').doc(emailLower).get(),
+      tenant.collection('events').where('email', '==', emailLower).get(),
+    ]);
+    if (!userDoc.exists) return [];
+
+    const user = userDoc.data();
+    const lastLogin = user.lastLoginAt?.toDate?.()?.getTime() || 0;
+    const now = Date.now();
+    const reminders = [];
+
+    if (lastLogin) {
+      const daysSinceLogin = Math.floor((now - lastLogin) / 86400000);
+      // Narrow firing windows so the daily cron doesn't double-fire if a user
+      // sat at "lapsed for X days" for a stretch — we want one shot per lapse.
+      if (daysSinceLogin >= 7 && daysSinceLogin < 14) {
+        reminders.push({ type: 'reactivation_7d', daysSinceLogin });
+      } else if (daysSinceLogin >= 30 && daysSinceLogin < 45) {
+        reminders.push({ type: 'reactivation_30d', daysSinceLogin });
+      }
+    }
+
+    // Forgotten recurring meeting: user tracked a series 3+ times in past 30d,
+    // but hasn't tracked it in 7+ days. Catches lapsed habits before they die.
+    const trackedEvents = eventsSnap.docs
+      .filter(d => d.data().type === 'tracked')
+      .map(d => ({
+        conferenceId: d.data().meta?.conferenceId || null,
+        at: d.data().createdAt?.toDate?.()?.getTime() || 0,
+      }))
+      .filter(e => e.conferenceId);
+
+    if (trackedEvents.length >= 3) {
+      const meetingsSnap = await tenant.collection('meetings').get();
+      const cidToRid = new Map();
+      const ridToTitle = new Map();
+      for (const m of meetingsSnap.docs) {
+        const d = m.data();
+        if (d.recurringEventId) {
+          cidToRid.set(m.id, d.recurringEventId);
+          const existing = ridToTitle.get(d.recurringEventId) || '';
+          if (d.title && d.title.length > existing.length) ridToTitle.set(d.recurringEventId, d.title);
+        }
+      }
+
+      const bySeries = new Map();
+      for (const ev of trackedEvents) {
+        const rid = cidToRid.get(ev.conferenceId);
+        if (!rid) continue;
+        if (!bySeries.has(rid)) bySeries.set(rid, []);
+        bySeries.get(rid).push(ev.at);
+      }
+
+      const THIRTY_DAYS = 30 * 86400000;
+      const SEVEN_DAYS = 7 * 86400000;
+      const TEN_DAYS = 10 * 86400000;
+      for (const [rid, times] of bySeries) {
+        const past30 = times.filter(t => t > now - THIRTY_DAYS);
+        if (past30.length < 3) continue;
+        const lastTrack = Math.max(...times);
+        const sinceLast = now - lastTrack;
+        // 3-day catch window so we fire exactly once per lapse (daily cron
+        // gives 3 chances within 7-10 days; once we claim, we skip the rest).
+        if (sinceLast < SEVEN_DAYS || sinceLast >= TEN_DAYS) continue;
+        reminders.push({
+          type: 'forgotten_meeting',
+          recurringEventId: rid,
+          seriesTitle: ridToTitle.get(rid) || 'a recurring meeting',
+          trackedInWindow: past30.length,
+          daysSinceLast: Math.floor(sinceLast / 86400000),
+        });
+      }
+    }
+
+    return reminders;
+  } catch (err) {
+    log.error('firestore: evaluateReengagementForUser failed', { domain, email, error: err.message });
+    return [];
+  }
+}
+
+// Atomic per-(user, key) dedup for re-engagement reminders. Different from
+// claimDailyAlertSlot — that one is per-day, this one is permanent (fire
+// each kind of reminder once per user per dedup key, never again).
+async function claimReengagementSlot(domain, email, dedupKey) {
+  const id = `${email.toLowerCase()}__${dedupKey}`;
+  const ref = tenantRef(domain).collection('reengagementSent').doc(id);
+  try {
+    await ref.create({
+      email: email.toLowerCase(),
+      domain,
+      dedupKey,
+      claimedAt: FieldValue.serverTimestamp(),
+    });
+    return { claimed: true, ref };
+  } catch (err) {
+    if (err.code === 6) return { claimed: false }; // ALREADY_EXISTS
+    log.warn('firestore: claimReengagementSlot failed', { domain, email, dedupKey, error: err.message });
+    return { claimed: false };
+  }
+}
+
 // Atomically claim today's alert slot for a user. Returns true if claimed
 // (caller should evaluate + send), false if already claimed today (skip).
 // Uses Firestore create() which throws on existing doc — that throw IS the lock.
@@ -2304,6 +2416,7 @@ module.exports = {
   getUserMeetingHistory,
   getUserMeetingSeries,
   evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent,
+  evaluateReengagementForUser, claimReengagementSlot,
   createShareLink, resolveShareLink, getSharedSeriesView,
   getParticipantHistory, setParticipantNote, getParticipantNote,
   getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted,

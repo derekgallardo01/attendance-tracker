@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, logEvent } = require('../services/firestore');
-const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail } = require('../lib/notifications');
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, evaluateReengagementForUser, claimReengagementSlot, logEvent } = require('../services/firestore');
+const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendForgottenMeetingEmail } = require('../lib/notifications');
 
 const SUPER_ADMIN_EMAIL = 'derekgallardo01@gmail.com';
 const MARKETPLACE_REVIEW_URL = 'https://workspace.google.com/marketplace/app/attendance_tracker/829771833968';
@@ -228,6 +228,84 @@ router.post('/admin/weekly-report', async (req, res) => {
   } catch (err) {
     log.error('admin: weekly-report send failed', { error: err.message });
     res.status(500).json({ error: err.message || 'Failed' });
+  }
+});
+
+// POST /api/admin/check-reengagement — Daily lapsed-user sweep.
+// Different from check-alerts: fires on the *user's* lapse patterns, not
+// on attendee behavior. Three reminder types:
+//   - reactivation_7d: signed up, hasn't logged in for 7-13 days
+//   - reactivation_30d: 30-44 days inactive — last-chance + "delete me?"
+//   - forgotten_meeting: tracked a recurring series 3+ times then skipped
+// Each fires at most once per user per dedup key forever (permanent claim).
+// Same auth model as check-alerts: super-admin OR x-scheduler-secret header.
+router.post('/admin/check-reengagement', async (req, res) => {
+  const schedulerSecret = process.env.SCHEDULER_SECRET;
+  const hasSchedulerToken = !!schedulerSecret && req.headers['x-scheduler-secret'] === schedulerSecret;
+  if (req.user?.email !== SUPER_ADMIN_EMAIL && !hasSchedulerToken) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  try {
+    const users = await getAllUsersAcrossTenants();
+    let usersChecked = 0;
+    let usersWithReminders = 0;
+    let totalSent = 0;
+    let totalSkipped = 0;
+    const errors = [];
+
+    for (const user of users) {
+      if (!user?.email || !user?.domain) continue;
+      usersChecked++;
+      try {
+        const reminders = await evaluateReengagementForUser(user.domain, user.email);
+        if (reminders.length === 0) continue;
+        let fired = 0;
+
+        for (const r of reminders) {
+          // Dedup key shape: type or type:recurringEventId. Persistent (no day
+          // suffix) so each kind of reminder fires once per user forever.
+          const dedupKey = r.type === 'forgotten_meeting'
+            ? `forgotten_meeting:${r.recurringEventId}`
+            : r.type;
+          const claim = await claimReengagementSlot(user.domain, user.email, dedupKey);
+          if (!claim.claimed) { totalSkipped++; continue; }
+
+          if (r.type === 'reactivation_7d' || r.type === 'reactivation_30d') {
+            await sendReactivationEmail({
+              to: user.email,
+              displayName: user.displayName || null,
+              daysSinceLogin: r.daysSinceLogin,
+              variant: r.type === 'reactivation_7d' ? '7d' : '30d',
+            });
+          } else if (r.type === 'forgotten_meeting') {
+            await sendForgottenMeetingEmail({
+              to: user.email,
+              displayName: user.displayName || null,
+              seriesTitle: r.seriesTitle,
+              recurringEventId: r.recurringEventId,
+              trackedInWindow: r.trackedInWindow,
+              daysSinceLast: r.daysSinceLast,
+            });
+          }
+          logEvent(user.domain, {
+            email: user.email,
+            type: 'reengagement_fired',
+            meta: { reminderType: r.type, dedupKey },
+          });
+          fired++;
+          totalSent++;
+        }
+        if (fired > 0) usersWithReminders++;
+      } catch (e) {
+        log.warn('admin: check-reengagement per-user failed', { email: user.email, error: e.message });
+        errors.push({ email: user.email, error: e.message });
+      }
+    }
+
+    res.json({ usersChecked, usersWithReminders, totalSent, totalSkipped, errors });
+  } catch (err) {
+    log.error('admin: check-reengagement failed', { error: err.message });
+    res.status(500).json({ error: 'Failed to run re-engagement sweep' });
   }
 });
 

@@ -396,4 +396,116 @@ async function sendFeedbackEmail({ body, fromEmail, fromName, source, conference
   return { sent: true, messageId: info.messageId };
 }
 
-module.exports = { sendSignupWebhook, sendAdminEmail, sendWeeklySelfReport, sendExportNotification, sendSeriesAlertEmail, sendFeedbackEmail };
+// Re-engagement emails feel like a personal check-in, not a product
+// notification. Different From-name ("Derek Gallardo" not "Attendance
+// Tracker"), plain prose, no logos/buttons. The reply-to is the GMAIL_USER
+// inbox so the user can just hit Reply and answer.
+function personalFrom() {
+  const sender = process.env.GMAIL_USER;
+  return `"Derek Gallardo" <${sender}>`;
+}
+
+async function sendReactivationEmail({ to, displayName, daysSinceLogin, variant }) {
+  const transporter = getTransporter();
+  if (!transporter) return { skipped: 'SMTP not configured' };
+  const sender = process.env.GMAIL_USER;
+  const firstName = displayName ? displayName.split(' ')[0] : null;
+  const hi = firstName ? `Hey ${firstName},` : 'Hey,';
+
+  let subject, body;
+  if (variant === '7d') {
+    subject = 'Quick check-in on Attendance Tracker';
+    body = [
+      hi,
+      '',
+      `It's been about a week since you last opened Attendance Tracker. Quick question — was there something missing or confusing that kept you from using it for your meetings?`,
+      '',
+      `If you've got two minutes, hit reply and tell me what you'd want to see. I'm building this for actual users, not in a vacuum.`,
+      '',
+      '— Derek',
+      'attendancetracker.dev',
+    ].join('\n');
+  } else {
+    subject = 'Should I delete your Attendance Tracker account?';
+    body = [
+      hi,
+      '',
+      `You signed up for Attendance Tracker about a month ago and haven't been back. Two questions:`,
+      '',
+      `1) Was the product missing something? If you'd reply with what would've made it useful for your workflow, I'd genuinely appreciate the signal.`,
+      '',
+      `2) If you'd rather I delete your account and any stored data, just say the word — no hard feelings.`,
+      '',
+      'Either way is fine. I just want to know.',
+      '',
+      '— Derek',
+    ].join('\n');
+  }
+
+  const html = body.split('\n').map(l =>
+    `<p style="margin:0 0 12px;font-family:sans-serif;font-size:14px;line-height:1.55;color:#111">${escape(l) || '&nbsp;'}</p>`
+  ).join('');
+
+  try {
+    const info = await transporter.sendMail({
+      from: personalFrom(),
+      to,
+      subject,
+      text: body,
+      html,
+      replyTo: sender,
+    });
+    log.info('reactivation email sent', { to, variant, daysSinceLogin });
+    return { sent: true, messageId: info.messageId };
+  } catch (err) {
+    log.warn('reactivation email failed', { to, variant, error: err.message });
+    return { sent: false, error: err.message };
+  }
+}
+
+async function sendForgottenMeetingEmail({ to, displayName, seriesTitle, recurringEventId, trackedInWindow, daysSinceLast }) {
+  const transporter = getTransporter();
+  if (!transporter) return { skipped: 'SMTP not configured' };
+  const sender = process.env.GMAIL_USER;
+  const firstName = displayName ? displayName.split(' ')[0] : null;
+  const hi = firstName ? `Hey ${firstName},` : 'Hey,';
+  const seriesLink = recurringEventId
+    ? `https://attendancetracker.dev/history.html#series=${encodeURIComponent(recurringEventId)}`
+    : 'https://attendancetracker.dev/history.html';
+
+  const subject = `Forgot to track "${seriesTitle}"?`;
+  const body = [
+    hi,
+    '',
+    `You tracked "${seriesTitle}" ${trackedInWindow} times in the past month, but it's been ${daysSinceLast} days since the last one. If you want to keep the streak going, just open the Attendance Tracker side panel next time you're in that meeting — it picks up from where you left off.`,
+    '',
+    `Your series so far: ${seriesLink}`,
+    '',
+    '— Derek',
+  ].join('\n');
+
+  const html = body.split('\n').map(l => {
+    if (l.startsWith('Your series so far:')) {
+      return `<p style="margin:0 0 12px;font-family:sans-serif;font-size:14px;line-height:1.55;color:#111">Your series so far: <a href="${escape(seriesLink)}" style="color:#1f6feb">view the trend →</a></p>`;
+    }
+    return `<p style="margin:0 0 12px;font-family:sans-serif;font-size:14px;line-height:1.55;color:#111">${escape(l) || '&nbsp;'}</p>`;
+  }).join('');
+
+  try {
+    const info = await transporter.sendMail({
+      from: personalFrom(),
+      to,
+      subject,
+      text: body,
+      html,
+      replyTo: sender,
+    });
+    log.info('forgotten-meeting email sent', { to, recurringEventId, daysSinceLast });
+    return { sent: true, messageId: info.messageId };
+  } catch (err) {
+    log.warn('forgotten-meeting email failed', { to, error: err.message });
+    return { sent: false, error: err.message };
+  }
+}
+
+module.exports = { sendSignupWebhook, sendAdminEmail, sendWeeklySelfReport, sendExportNotification, sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendForgottenMeetingEmail };
