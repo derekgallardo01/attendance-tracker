@@ -259,11 +259,14 @@ async function upsertUser(domain, { email, displayName, refreshToken, sheetId, a
 
     const userRef = tenantRef(domain).collection('users').doc(email.toLowerCase());
 
-    // First-touch acquisition: only stamp on the first sign-in. Read the doc
-    // first so we don't overwrite an existing source on every login.
+    // First-touch acquisition: only stamp source/utm/referrer on the first
+    // sign-in (read the doc first so we don't overwrite an existing source on
+    // every login). landingUrl + userAgent are also first-touch because they
+    // describe the browser/entry point at signup, not now.
     if (acquisition) {
       const existing = await userRef.get();
       const hasSource = existing.exists && existing.data().acquisitionSource;
+      const hasUserAgent = existing.exists && existing.data().userAgent;
       if (!hasSource) {
         if (acquisition.source) data.acquisitionSource = acquisition.source;
         if (acquisition.utmSource) data.utmSource = acquisition.utmSource;
@@ -271,6 +274,10 @@ async function upsertUser(domain, { email, displayName, refreshToken, sheetId, a
         if (acquisition.utmCampaign) data.utmCampaign = acquisition.utmCampaign;
         if (acquisition.referrer) data.referrer = acquisition.referrer;
         data.acquisitionCapturedAt = now;
+      }
+      if (!hasUserAgent) {
+        if (acquisition.userAgent) data.userAgent = acquisition.userAgent;
+        if (acquisition.landingUrl) data.landingUrl = acquisition.landingUrl;
       }
     }
 

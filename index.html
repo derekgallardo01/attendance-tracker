@@ -1258,9 +1258,11 @@ function captureAcquisitionFromUrl() {
     const referrer    = document.referrer || null;
     // Don't overwrite an earlier capture (first-touch wins).
     if (localStorage.getItem(ACQUISITION_STORAGE_KEY)) return;
-    if (!utmSource && !utmMedium && !utmCampaign && !referrer) return;
+    // Always capture — even with no UTM/referrer, the landing URL +
+    // user agent are useful breadcrumbs ("Source: Unknown" is the worst answer).
     localStorage.setItem(ACQUISITION_STORAGE_KEY, JSON.stringify({
       utmSource, utmMedium, utmCampaign, referrer,
+      landingUrl: window.location.href || null,
       capturedAt: Date.now(),
     }));
   } catch (e) { /* localStorage may be unavailable in some iframes */ }
@@ -1268,10 +1270,18 @@ function captureAcquisitionFromUrl() {
 captureAcquisitionFromUrl();
 
 function readStoredAcquisition() {
+  let stored = null;
   try {
     const raw = localStorage.getItem(ACQUISITION_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch (e) { return null; }
+    stored = raw ? JSON.parse(raw) : null;
+  } catch (e) { /* localStorage may be blocked */ }
+  // userAgent isn't worth stashing in localStorage (it's always available
+  // at sign-in via navigator), but it IS the most reliable channel signal
+  // when UTMs/referrer are empty — so attach it at read time.
+  return {
+    ...(stored || {}),
+    userAgent: (typeof navigator !== 'undefined' && navigator.userAgent) || null,
+  };
 }
 
 function signInWithGoogle() {
@@ -1609,6 +1619,20 @@ async function authFetch(url, opts = {}) {
   return res;
 }
 
+// Fire-and-forget funnel telemetry. Lets us tell apart "clicked Export but it
+// failed" from "never clicked Export" — without this we only see successful
+// exports server-side and can't measure the activation gap.
+function logUserEvent(type, meta) {
+  if (!state.signedIn) return;
+  try {
+    authFetch(`${state.backendUrl}/event`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, meta: meta || null }),
+    }).catch(() => { /* never break the UX path for telemetry */ });
+  } catch { /* ignore */ }
+}
+
 /* ═══════════════════════════════════════════════════════════════
    MEET ADD-ONS SDK INIT
 ═══════════════════════════════════════════════════════════════ */
@@ -1887,6 +1911,10 @@ async function refreshAttendance() {
     }
 
     const hadParticipantsBefore = state.participants.size > 0;
+    // Remember conference timing so renderList() can explain "this meeting
+    // ended already" instead of just showing a generic empty state.
+    state.conferenceStartTime = data.conferenceStartTime || null;
+    state.conferenceEndTime = data.conferenceEndTime || null;
     mergeParticipants(data.participants);
     renderList();
     updateSummary();
@@ -2037,13 +2065,21 @@ function renderList() {
 
   if (state.participants.size === 0) {
     if (toolbar) toolbar.style.display = 'none';
+    // If the Meet API tells us the conference already ended, say so explicitly.
+    // The silent "no participants" state was reading as "this product is broken"
+    // to users who opened the panel after the meeting was over.
+    const endedAt = state.conferenceEndTime ? new Date(state.conferenceEndTime) : null;
+    const ended = endedAt && endedAt < new Date();
+    const message = ended
+      ? `This meeting ended ${formatRelative(endedAt)}. Attendance tracking only works during a live meeting — try again next time, in the panel, while everyone is still in the call.`
+      : 'No participants found yet';
     container.innerHTML = `
       <div class="empty-state">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
           <circle cx="9" cy="7" r="4"/>
         </svg>
-        <span>No participants found yet</span>
+        <span>${escHtml(message)}</span>
       </div>`;
     return;
   }
@@ -2249,9 +2285,11 @@ async function saveToSheets() {
   if (_exporting) return toast('Export already in progress…');
   if (!state.participants.size) { toast('No data yet'); return; }
   if (document.getElementById('btn-sheets')?.dataset.scopeBlocked === '1') {
+    logUserEvent('export_failed', { reason: 'scope_blocked' });
     toast('⚠ Grant Drive permission to enable export — click "Grant access" above', 8000);
     return;
   }
+  logUserEvent('export_clicked', { participantCount: state.participants.size });
   _exporting = true;
   const btn = document.getElementById('btn-sheets');
   btn.disabled = true;
@@ -2478,6 +2516,7 @@ async function doExportToSheets(emailMap, calendarAttendees = []) {
       let body = {};
       try { body = await res.json(); } catch {}
       if (body.code === 'DRIVE_PERMISSION_MISSING') {
+        logUserEvent('export_failed', { reason: 'drive_permission_missing' });
         toast('⚠ Drive permission missing — sign out and sign in again with all permissions checked', 8000);
         return;
       }
@@ -2500,6 +2539,7 @@ async function doExportToSheets(emailMap, calendarAttendees = []) {
     // Update activation state so the nudge banner hides itself
     refreshActivationStatus();
   } catch (err) {
+    logUserEvent('export_failed', { reason: 'error', message: String(err.message || err).slice(0, 200) });
     toast(`⚠ Sheets error: ${err.message}`);
   }
 }
@@ -3170,6 +3210,19 @@ function datestamp() {
 
 function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Human-readable elapsed time for past Date objects ("3 minutes ago", "2 hours ago").
+function formatRelative(d) {
+  if (!d) return '';
+  const diffSec = Math.max(0, Math.floor((Date.now() - d.getTime()) / 1000));
+  if (diffSec < 60) return 'just now';
+  const min = Math.floor(diffSec / 60);
+  if (min < 60) return `${min} minute${min === 1 ? '' : 's'} ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr} hour${hr === 1 ? '' : 's'} ago`;
+  const day = Math.floor(hr / 24);
+  return `${day} day${day === 1 ? '' : 's'} ago`;
 }
 
 /* ═══════════════════════════════════════════════════════════════

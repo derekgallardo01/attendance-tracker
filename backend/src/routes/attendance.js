@@ -133,6 +133,8 @@ router.get('/attendance', async (req, res) => {
 
     const conferenceRecord = records[records.length - 1];
     log.info('using conference record', { name: conferenceRecord.name });
+    const conferenceStartTime = conferenceRecord.startTime || null;
+    const conferenceEndTime = conferenceRecord.endTime || null;
 
     const rawParticipants = await meetGetAll(`${conferenceRecord.name}/participants`, token, 'participants');
     log.info('participants found', { count: rawParticipants.length });
@@ -174,7 +176,12 @@ router.get('/attendance', async (req, res) => {
     // Enrich missing emails via Workspace Directory API
     await enrichEmails(participants, tenantConfig?.adminEmail);
 
-    res.json({ participants, delegationConfigured: usingServiceAccount });
+    res.json({
+      participants,
+      delegationConfigured: usingServiceAccount,
+      conferenceStartTime,
+      conferenceEndTime,
+    });
 
     // Fire-and-forget: persist to Firestore for analytics
     const domain = req.user?.domain || 'default';

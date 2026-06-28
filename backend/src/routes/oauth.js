@@ -63,12 +63,15 @@ router.post('/exchange', async (req, res) => {
     // Sanitize acquisition payload from the client. Only known sources pass;
     // UTM fields are length-capped to keep arbitrary blobs out of Firestore.
     const trim = (v) => (typeof v === 'string' ? v.slice(0, 200) : undefined);
+    const trimLong = (v) => (typeof v === 'string' ? v.slice(0, 500) : undefined);
     const sanitizedAcq = acquisition ? {
       source: ACQUISITION_SOURCES.has(acquisition.source) ? acquisition.source : undefined,
       utmSource:   trim(acquisition.utmSource),
       utmMedium:   trim(acquisition.utmMedium),
       utmCampaign: trim(acquisition.utmCampaign),
       referrer:    trim(acquisition.referrer),
+      landingUrl:  trimLong(acquisition.landingUrl),
+      userAgent:   trimLong(acquisition.userAgent),
     } : undefined;
 
     // Decide whether the client needs to show the "how did you find us?" modal.
@@ -111,8 +114,16 @@ router.post('/exchange', async (req, res) => {
 
     // Source-aware welcome on the frontend: pass detected source so the
     // modal can greet "Hey 👋 saw you came from Reddit" instead of generic.
+    // Fall back to referrer hostname so the admin signup email shows something
+    // useful (e.g. "ref:meet.google.com") instead of "Unknown" for every user.
+    let refHost = null;
+    if (sanitizedAcq?.referrer) {
+      try { refHost = new URL(sanitizedAcq.referrer).hostname || null; } catch { /* ignore */ }
+    }
     const detectedSource = sanitizedAcq?.source
-      || (sanitizedAcq?.utmSource ? `utm:${sanitizedAcq.utmSource}` : null);
+      || (sanitizedAcq?.utmSource ? `utm:${sanitizedAcq.utmSource}` : null)
+      || (refHost ? `ref:${refHost}` : null)
+      || (sanitizedAcq?.userAgent ? 'direct' : null);
 
     res.json({
       sessionToken, email, displayName, grantedScopes, missingScopes,
