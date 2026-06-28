@@ -14,6 +14,11 @@
   <meta name="description" content="Track who joins, leaves, and how long they stay in your Google Meet calls. Export attendance reports to Google Sheets with one click." />
   <link rel="canonical" href="https://attendancetracker.dev/" />
 
+  <!-- Shared pure-helper module — loaded synchronously before any inline
+       script so the inline code can rely on window.AttUtils. Kept as a
+       separate file so it can be Jest/jsdom unit-tested in isolation. -->
+  <script src="js/utils.js"></script>
+
   <!-- Open Graph + Twitter card — controls the preview when this URL is
        shared on Slack, Twitter, LinkedIn, iMessage, etc. Without these the
        social preview shows nothing and conversion from shared links tanks. -->
@@ -2199,22 +2204,10 @@ function mergeParticipants(incoming = []) {
 /* ═══════════════════════════════════════════════════════════════
    RENDER
 ═══════════════════════════════════════════════════════════════ */
-// Deterministic colored avatar background based on the display name —
-// gives each person a stable identity color across the list and profile.
-function avatarColor(name) {
-  if (!name) return '#3d444d';
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = ((h << 5) - h + name.charCodeAt(i)) | 0;
-  const palette = ['#1f6feb', '#238636', '#9e6a03', '#b62324', '#5e35d6', '#0e7c66', '#bf3989', '#a04600'];
-  return palette[Math.abs(h) % palette.length];
-}
-
-// Build the key used by the participant history endpoint — prefers email
-// when we have one, else marks the bucket as a displayName-only entry.
-function participantKey(p) {
-  if (p.email) return p.email.toLowerCase();
-  return 'name:' + (p.displayName || 'Unknown');
-}
+// Both delegate to the shared js/utils.js module (loaded in <head>).
+// Kept as wrappers so the dozens of existing call sites don't have to change.
+function avatarColor(name) { return AttUtils.avatarColor(name); }
+function participantKey(p) { return AttUtils.participantKey(p); }
 
 function renderList() {
   const container = document.getElementById('participant-list');
@@ -3439,61 +3432,20 @@ function demoParticipants() {
 /* ═══════════════════════════════════════════════════════════════
    UTIL
 ═══════════════════════════════════════════════════════════════ */
-function fmtTime(d) {
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
-
-function fmtDur(start, end) {
-  const m = Math.floor((end - start) / 60000);
-  if (m < 60) return `${m}m`;
-  return `${Math.floor(m/60)}h ${m%60}m`;
-}
-
-function fmtDurMs(ms) {
-  const m = Math.floor(ms / 60000);
-  if (m < 1) return '< 1m';
-  if (m < 60) return `${m}m`;
-  return `${Math.floor(m/60)}h ${m%60}m`;
-}
-
-// "How late did this person join?" returns minutes past the meeting's true
-// start, or 0 if not late (threshold: 5 min). Used for the in-panel chip and
-// to keep that judgement consistent with what the export sheet shows.
-const LATE_THRESHOLD_MIN = 5;
+// All pure helpers delegate to the shared js/utils.js module (loaded in
+// <head>). Wrappers preserve every existing call site signature. latenessMin
+// is the only one that reads state — utils.js exposes a pure version that
+// takes baseline times as args, so the wrapper does the state read here.
+function fmtTime(d) { return AttUtils.fmtTime(d); }
+function fmtDur(start, end) { return AttUtils.fmtDur(start, end); }
+function fmtDurMs(ms) { return AttUtils.fmtDurMs(ms); }
+function isoFmt(d) { return AttUtils.isoFmt(d); }
+function datestamp() { return AttUtils.datestamp(); }
+function escHtml(s) { return AttUtils.escHtml(s); }
+function formatRelative(d) { return AttUtils.formatRelative(d); }
+const LATE_THRESHOLD_MIN = AttUtils.LATE_THRESHOLD_MIN;
 function latenessMin(p) {
-  if (!p?.joinTime) return 0;
-  // For scheduled events the calendar start is the truth (someone joining
-  // 2 min after a 10:00 meeting is on time even if the room opened at 9:58).
-  // For instant meetings fall back to when the Meet conference actually started.
-  const evStart = state._eventStart ? new Date(state._eventStart).getTime() : 0;
-  const confStart = state.conferenceStartTime ? new Date(state.conferenceStartTime).getTime() : 0;
-  const baseline = evStart || confStart;
-  if (!baseline) return 0;
-  const diffMin = Math.round((p.joinTime.getTime() - baseline) / 60000);
-  return diffMin > LATE_THRESHOLD_MIN ? diffMin : 0;
-}
-
-function isoFmt(d) { return d.toISOString(); }
-
-function datestamp() {
-  return new Date().toISOString().slice(0,19).replace(/[T:]/g,'-');
-}
-
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-// Human-readable elapsed time for past Date objects ("3 minutes ago", "2 hours ago").
-function formatRelative(d) {
-  if (!d) return '';
-  const diffSec = Math.max(0, Math.floor((Date.now() - d.getTime()) / 1000));
-  if (diffSec < 60) return 'just now';
-  const min = Math.floor(diffSec / 60);
-  if (min < 60) return `${min} minute${min === 1 ? '' : 's'} ago`;
-  const hr = Math.floor(min / 60);
-  if (hr < 24) return `${hr} hour${hr === 1 ? '' : 's'} ago`;
-  const day = Math.floor(hr / 24);
-  return `${day} day${day === 1 ? '' : 's'} ago`;
+  return AttUtils.latenessMin(p?.joinTime, state._eventStart, state.conferenceStartTime);
 }
 
 /* ═══════════════════════════════════════════════════════════════

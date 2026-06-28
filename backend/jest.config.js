@@ -17,4 +17,20 @@ module.exports = {
   clearMocks: true,
   restoreMocks: true,
   testTimeout: 10000,
+  // Per-file environment override: frontend tests live in test/frontend/ and
+  // need jsdom (window, document, Date timezone behavior). Everything else
+  // runs in plain node for speed.
+  projects: [
+    {
+      displayName: 'backend',
+      testEnvironment: 'node',
+      testMatch: ['<rootDir>/test/services/**/*.test.js', '<rootDir>/test/lib/**/*.test.js', '<rootDir>/test/routes/**/*.test.js'],
+      setupFiles: ['<rootDir>/test/setup-env.js'],
+    },
+    {
+      displayName: 'frontend',
+      testEnvironment: 'jsdom',
+      testMatch: ['<rootDir>/test/frontend/**/*.test.js'],
+    },
+  ],
 };
