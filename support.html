@@ -46,10 +46,28 @@
   <p>The Google Meet API has a 2-5 minute delay in registering new sessions. If someone leaves and rejoins, it may take a few minutes for their status to update. The add-on uses multiple strategies to minimize this delay.</p>
 
   <h3>Can I use this with a personal Gmail account?</h3>
-  <p>The Google Meet REST API requires a Google Workspace account. Personal Gmail accounts (@gmail.com) are not supported by Google's API.</p>
+  <p>Yes. Sign in with any Google account that organized or joined the Meet call. The add-on works for personal Gmail accounts as well as Google Workspace.</p>
+  <p>The one limitation: without domain-wide delegation (which is Workspace-only), you'll only see participants from the same account/organization in the live participant list. For most personal-Gmail meetings (1:1s and small calls where you know everyone), this isn't a problem.</p>
+
+  <h3>What happens when the meeting ends?</h3>
+  <p>If you have the side panel open when the meeting ends, attendance is auto-exported to a Google Sheet and a digest email lands in your inbox with the attendance summary. No clicks required.</p>
+
+  <h3>How do I get post-meeting summaries in Slack?</h3>
+  <p>Click the gear icon in the side panel (visible after sign-in), then paste an Incoming Webhook URL from your Slack workspace. After every export, a Block Kit summary card posts to that channel with present / left / absent rows and a link to the sheet.</p>
+  <p>Create a webhook: <a href="https://api.slack.com/messaging/webhooks" target="_blank">api.slack.com/messaging/webhooks</a></p>
+
+  <h3>I track the same meeting every week. Can I see attendance trends?</h3>
+  <p>Yes — if the meeting is on your Google Calendar as a recurring event, the add-on rolls up attendance across the series. Visit <a href="/history.html">history.html</a>, click the "Series" tab to see per-person attendance ("Alex attended 12 of 15 standups") with progress bars.</p>
+  <p>You'll also get a daily email alert if someone in a series you track misses 3 in a row after a regular streak, or if their attendance drops sharply.</p>
+
+  <h3>Can I share an attendance dashboard with someone outside the app?</h3>
+  <p>Yes. On the Series tab in <a href="/history.html">history.html</a>, click the "Share" button next to any series. You'll get a public link (30-day expiry) you can paste into Slack, email, or anywhere. The recipient sees a read-only attendance view — no sign-in required.</p>
 
   <h3>Where are my exported sheets?</h3>
-  <p>Exports are saved in a "Meet Attendance Tracker" folder in your Google Drive. After exporting, click "Open exported sheet" in the add-on to go directly to it.</p>
+  <p>Exports are saved in a "Meet Attendance Tracker" folder in your Google Drive. Each meeting becomes its own tab in a single spreadsheet. After exporting, click "Open exported sheet" in the add-on to go directly to it, or check the "Open sheet" link in the digest email.</p>
+
+  <h3>Can I mark a no-show as excused?</h3>
+  <p>Yes. When the calendar-match modal opens during export, each unmatched calendar invitee has an "Excused" checkbox. Check it before exporting and that person shows as "Absent (excused)" in the sheet instead of just "Absent". The tag persists, so re-exporting the same meeting keeps the excused status.</p>
 
   <h3>How do I request data deletion?</h3>
   <p>Email <a href="mailto:derekgallardo01@gmail.com">derekgallardo01@gmail.com</a> with the subject "Data Deletion Request" and we will remove all your data within 30 days.</p>
