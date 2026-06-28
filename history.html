@@ -285,11 +285,52 @@
         renderPeople();
         renderCalendar();
         renderSeries();
+        // Honor any deep link hash that brought the user here (from an
+        // emailed meeting/series link). Run after render so the targets exist.
+        applyDeepLinkHash();
       } catch (err) {
         console.error('history load failed:', err);
       } finally {
         document.getElementById('loading').style.display = 'none';
       }
+    }
+
+    // Hash deep links: #meeting=<conferenceId> jumps to and filters the
+    // Meetings tab; #series=<recurringEventId> jumps to and expands a series.
+    // Used by the export notification email's "View on web" links.
+    function applyDeepLinkHash() {
+      const hash = window.location.hash.replace(/^#/, '');
+      if (!hash) return;
+      const params = new URLSearchParams(hash);
+      const meetingId = params.get('meeting');
+      const seriesId = params.get('series');
+      if (seriesId) {
+        switchTab('series');
+        const card = document.querySelector(`.series-card[data-id="${cssEscape(seriesId)}"]`);
+        if (card) {
+          card.classList.add('open');
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          card.style.outline = '2px solid var(--accent)';
+          setTimeout(() => { card.style.outline = ''; }, 2500);
+        }
+        return;
+      }
+      if (meetingId) {
+        switchTab('meetings');
+        // Best-effort highlight: filter the search box to the title of the
+        // matching meeting. If we have its title in data, use it.
+        const m = (data.meetings || []).find(x => x.conferenceId === meetingId);
+        if (m) {
+          const box = document.getElementById('search-meetings');
+          if (box) { box.value = m.title || ''; renderMeetings(); }
+        }
+      }
+    }
+
+    // Tiny CSS-selector escape — recurringEventId values are usually safe but
+    // can contain underscores/digits we want to pass literally.
+    function cssEscape(s) {
+      return String(s).replace(/[^\w-]/g, c => '\\' + c);
     }
 
     function switchTab(name) {

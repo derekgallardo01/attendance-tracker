@@ -293,6 +293,30 @@ router.post('/save-to-sheets', async (req, res) => {
     // requested by the client (auto-export flow) — manual exports get the
     // in-product toast and don't need inbox noise.
     if (sendEmail && req.user?.email) {
+      // Build a digest-friendly participant list (top 25, present first) so the
+      // email can render an inline table without exposing the raw row arrays.
+      const digestPresent = participants.map(p => {
+        const durMin = p.joinTimeISO
+          ? Math.round((new Date(p.leaveTimeISO || exportedAt) - new Date(p.joinTimeISO)) / 60000)
+          : 0;
+        return {
+          displayName: p.displayName,
+          email: p.email || '',
+          status: p.present ? 'Present' : (p.leaveTimeISO ? 'Left' : 'Present'),
+          durationMin: durMin,
+        };
+      });
+      const digestAbsent = calendarAttendees
+        .filter(a => {
+          if (attendedEmails.has(a.email.toLowerCase())) return false;
+          const aName = (a.displayName || '').toLowerCase().trim();
+          if (attendedNames.has(aName)) return false;
+          return true;
+        })
+        .map(a => ({ displayName: a.displayName, email: a.email, status: 'Absent', durationMin: 0 }));
+      const digestParticipants = [...digestPresent, ...digestAbsent].slice(0, 25);
+      const digestOverflow = (digestPresent.length + digestAbsent.length) - digestParticipants.length;
+
       sendExportNotification({
         to: req.user.email,
         displayName: req.user.displayName || null,
@@ -301,6 +325,10 @@ router.post('/save-to-sheets', async (req, res) => {
         totalAttended,
         totalInvited,
         exportedAt,
+        participants: digestParticipants,
+        overflow: digestOverflow > 0 ? digestOverflow : 0,
+        conferenceId: conferenceId || null,
+        recurringEventId: recurringEventId || null,
       });
     }
 

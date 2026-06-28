@@ -173,8 +173,10 @@ async function sendWeeklySelfReport(report) {
 
 // Fire-and-forget "your attendance is ready" email sent when an auto-export
 // completes. Lands in the organizer's inbox so they always have the sheet
-// link, even if they close the side panel and never look at it again.
-async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle, totalAttended, totalInvited, exportedAt }) {
+// link, even if they close the side panel and never look at it again. Now
+// includes an inline attendance table so the email is actionable on its own
+// — the user doesn't have to open the sheet to see what happened.
+async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle, totalAttended, totalInvited, exportedAt, participants, overflow, conferenceId, recurringEventId }) {
   const transporter = getTransporter();
   if (!transporter) return;
   const sender = process.env.GMAIL_USER;
@@ -186,18 +188,61 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
   const dateStr = exportedAt ? new Date(exportedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '';
   const greeting = displayName ? `Hi ${escape(displayName.split(' ')[0])},` : 'Hi,';
 
+  // Inline attendance table. Color-codes status: green=present, amber=left
+  // early, red=absent. Keeps the email scannable in 2 seconds.
+  const statusColor = (s) => {
+    if (s === 'Present') return '#16a34a';
+    if (s === 'Left') return '#d97706';
+    return '#dc2626';
+  };
+  const fmtDur = (m) => !m ? '—' : (m < 60 ? `${m}m` : `${Math.floor(m / 60)}h ${m % 60}m`);
+  const tableRows = (participants || []).map(p => `
+    <tr>
+      <td style="padding:6px 10px;border-top:1px solid #eee">${escape(p.displayName || p.email || '—')}${p.email && p.displayName ? `<div style="color:#888;font-size:11px">${escape(p.email)}</div>` : ''}</td>
+      <td style="padding:6px 10px;border-top:1px solid #eee;color:${statusColor(p.status)};font-weight:600">${escape(p.status)}</td>
+      <td style="padding:6px 10px;border-top:1px solid #eee;color:#666;text-align:right">${escape(fmtDur(p.durationMin))}</td>
+    </tr>
+  `).join('');
+  const overflowRow = overflow > 0
+    ? `<tr><td colspan="3" style="padding:8px 10px;border-top:1px solid #eee;color:#888;font-size:12px;font-style:italic">…and ${overflow} more in the sheet</td></tr>`
+    : '';
+  const tableHtml = participants?.length ? `
+    <table style="border-collapse:collapse;width:100%;margin:14px 0;font-size:13px">
+      <thead>
+        <tr style="background:#f5f5f5">
+          <th style="text-align:left;padding:8px 10px;font-size:11px;color:#666;text-transform:uppercase">Person</th>
+          <th style="text-align:left;padding:8px 10px;font-size:11px;color:#666;text-transform:uppercase">Status</th>
+          <th style="text-align:right;padding:8px 10px;font-size:11px;color:#666;text-transform:uppercase">Time</th>
+        </tr>
+      </thead>
+      <tbody>${tableRows}${overflowRow}</tbody>
+    </table>
+  ` : '';
+
+  // Web deep links: jump straight to this meeting (or its series) in
+  // history.html. Hash-based so they survive any URL shape.
+  const meetingLink = conferenceId
+    ? `https://attendancetracker.dev/history.html#meeting=${encodeURIComponent(conferenceId)}`
+    : 'https://attendancetracker.dev/history.html';
+  const seriesLink = recurringEventId
+    ? `https://attendancetracker.dev/history.html#series=${encodeURIComponent(recurringEventId)}`
+    : null;
+
   const html = `
-    <div style="font-family:sans-serif;max-width:560px;color:#111;font-size:14px;line-height:1.5">
+    <div style="font-family:sans-serif;max-width:600px;color:#111;font-size:14px;line-height:1.5">
       <p>${greeting}</p>
-      <p>Your meeting just ended — attendance has been auto-exported to Google Sheets.</p>
-      <table style="border-collapse:collapse;margin:16px 0;font-size:14px">
+      <p>Your meeting just ended — attendance has been auto-exported.</p>
+      <table style="border-collapse:collapse;margin:8px 0;font-size:14px">
         <tr><td style="padding:4px 12px 4px 0;color:#666">Meeting</td><td>${escape(title)}</td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666">Attendance</td><td>${escape(summary)}</td></tr>
         ${dateStr ? `<tr><td style="padding:4px 12px 4px 0;color:#666">When</td><td>${escape(dateStr)}</td></tr>` : ''}
       </table>
-      <p>
-        <a href="${escape(sheetUrl)}" style="display:inline-block;background:#1f6feb;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600">Open sheet</a>
+      ${tableHtml}
+      <p style="margin-top:18px">
+        <a href="${escape(sheetUrl)}" style="display:inline-block;background:#1f6feb;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;margin-right:8px">Open sheet</a>
+        <a href="${escape(meetingLink)}" style="display:inline-block;color:#1f6feb;padding:10px 4px;text-decoration:none;font-weight:600">View on web →</a>
       </p>
+      ${seriesLink ? `<p style="margin-top:8px;font-size:13px;color:#666">This is part of a recurring series — <a href="${escape(seriesLink)}" style="color:#1f6feb">see the full trend →</a></p>` : ''}
       <p style="color:#666;font-size:12px;margin-top:24px">
         You're getting this because you tracked this meeting with Attendance Tracker.
         The sheet lives in your Drive folder "Meet Attendance Tracker" — reuse the same
@@ -205,16 +250,22 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
       </p>
     </div>
   `;
+
+  const textRows = (participants || []).map(p => `  ${(p.displayName || p.email || '—').padEnd(28)} ${p.status.padEnd(8)} ${fmtDur(p.durationMin)}`).join('\n');
   const text = [
     `${displayName ? 'Hi ' + displayName.split(' ')[0] + ',' : 'Hi,'}`,
     ``,
-    `Your meeting just ended — attendance has been auto-exported to Google Sheets.`,
+    `Your meeting just ended — attendance has been auto-exported.`,
     ``,
     `Meeting: ${title}`,
     `Attendance: ${summary}`,
     dateStr ? `When: ${dateStr}` : '',
     ``,
+    participants?.length ? `${textRows}${overflow > 0 ? `\n  ...and ${overflow} more in the sheet` : ''}` : '',
+    ``,
     `Open sheet: ${sheetUrl}`,
+    `View on web: ${meetingLink}`,
+    seriesLink ? `Series trend: ${seriesLink}` : '',
   ].filter(Boolean).join('\n');
 
   try {
