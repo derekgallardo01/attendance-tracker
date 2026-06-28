@@ -6,6 +6,9 @@ const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests, please try again later.' },
+  // Disable rate limits in the test environment so suites can blast through
+  // dozens of requests without hitting the production-tuned cap.
+  skip: () => process.env.NODE_ENV === 'test',
 });
 
 module.exports = apiLimiter;

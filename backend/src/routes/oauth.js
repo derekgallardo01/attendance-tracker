@@ -182,6 +182,7 @@ router.get('/me', async (req, res) => {
     });
   } catch (err) {
     if (err.name === 'TokenExpiredError') return res.status(401).json({ error: 'Session expired' });
+    if (err.name === 'JsonWebTokenError') return res.status(401).json({ error: 'Invalid token' });
     log.error('oauth: me failed', { error: err.message });
     res.status(500).json({ error: 'Failed to fetch user status' });
   }

@@ -48,6 +48,7 @@ const oauthLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many auth requests, please try again later.' },
+  skip: () => process.env.NODE_ENV === 'test',
 });
 app.use('/api/oauth', oauthLimiter, oauthRoutes);
 
