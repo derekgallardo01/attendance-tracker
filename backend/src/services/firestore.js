@@ -155,26 +155,31 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
   }
 }
 
-async function persistCalendarData(domain, meetingCode, eventTitle, attendees) {
+async function persistCalendarData(domain, meetingCode, eventTitle, attendees, extras = {}) {
   try {
     const now = FieldValue.serverTimestamp();
     const meetingRef = tenantRef(domain).collection('meetings').doc(meetingCode);
-
-    await meetingRef.set({
+    const patch = {
       conferenceId: meetingCode,
       title: eventTitle,
       calendarAttendees: attendees,
       updatedAt: now,
       createdAt: now,
-    }, { merge: true });
+    };
+    // recurringEventId is the join key for the Series roll-up. Stored on the
+    // meeting doc so getUserMeetingSeries() can aggregate without re-hitting
+    // the Calendar API.
+    if (extras.recurringEventId) patch.recurringEventId = extras.recurringEventId;
+    if (extras.eventId) patch.eventId = extras.eventId;
+    await meetingRef.set(patch, { merge: true });
 
-    log.info('firestore: persisted calendar data', { domain, meetingCode, eventTitle });
+    log.info('firestore: persisted calendar data', { domain, meetingCode, eventTitle, recurringEventId: extras.recurringEventId || null });
   } catch (err) {
     log.error('firestore: persistCalendarData failed', { domain, meetingCode, error: err.message });
   }
 }
 
-async function persistExport(domain, { meetingTitle, tabName, exportedAt, participantCount, sheetUrl, email, autoExport }) {
+async function persistExport(domain, { meetingTitle, tabName, exportedAt, participantCount, sheetUrl, email, autoExport, recurringEventId, conferenceId }) {
   try {
     const now = FieldValue.serverTimestamp();
 
@@ -186,6 +191,10 @@ async function persistExport(domain, { meetingTitle, tabName, exportedAt, partic
       sheetUrl,
       email: email ? email.toLowerCase() : null,
       autoExport: !!autoExport,
+      // Series + conference identifiers — let getUserMeetingSeries() roll up
+      // exports per recurring series without a join through meetings.
+      recurringEventId: recurringEventId || null,
+      conferenceId: conferenceId || null,
       createdAt: now,
     });
 
@@ -895,6 +904,144 @@ async function getUserMeetingHistory(domain, email) {
   } catch (err) {
     log.error('firestore: getUserMeetingHistory failed', { domain, email, error: err.message });
     return { meetings: [], people: [], calendar: [], totalMeetings: 0 };
+  }
+}
+
+// ── Recurring-meeting series roll-up ──
+// Groups the user's tracked meetings by Calendar's recurringEventId so they can
+// see "Daily Standup: Alex attended 12/15, avg arrival +4 min late". Only
+// meetings with a recurringEventId roll up — instant meetings stay out of this
+// view (grouping by title alone produces too many false matches).
+async function getUserMeetingSeries(domain, email) {
+  try {
+    const tenant = tenantRef(domain);
+    const emailLower = email.toLowerCase();
+
+    const [eventsSnap, meetingsSnap] = await Promise.all([
+      tenant.collection('events').where('email', '==', emailLower).where('type', '==', 'tracked').get(),
+      tenant.collection('meetings').get(),
+    ]);
+
+    // Same tracked-by-this-user filter as getUserMeetingHistory: if the user
+    // has tracked events, only count meetings they've actually tracked.
+    const trackedIds = new Set();
+    for (const d of eventsSnap.docs) {
+      const cid = d.data().meta?.conferenceId;
+      if (cid) trackedIds.add(cid);
+    }
+    const useFilter = trackedIds.size > 0;
+
+    const seriesMeetings = meetingsSnap.docs
+      .filter(d => {
+        const data = d.data();
+        if (!data.recurringEventId) return false; // skip non-recurring meetings
+        if (useFilter && !trackedIds.has(d.id)) return false;
+        return true;
+      })
+      .map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
+
+    if (seriesMeetings.length === 0) {
+      return { series: [], totalSeries: 0 };
+    }
+
+    // Pull participants in parallel for every series meeting. Each meeting is
+    // a Firestore subcollection read; the count stays small because we already
+    // filtered to recurring-only.
+    const participantSnaps = await Promise.all(
+      seriesMeetings.map(m => m.ref.collection('participants').get())
+    );
+
+    // Group meetings into series — keyed by recurringEventId.
+    const seriesMap = new Map();
+    for (let i = 0; i < seriesMeetings.length; i++) {
+      const m = seriesMeetings[i];
+      const data = m.data;
+      const recurringEventId = data.recurringEventId;
+      let series = seriesMap.get(recurringEventId);
+      if (!series) {
+        series = {
+          recurringEventId,
+          title: data.title || 'Recurring meeting',
+          instanceCount: 0,
+          firstAt: null,
+          lastAt: null,
+          totalParticipants: 0,
+          peopleMap: new Map(),
+        };
+        seriesMap.set(recurringEventId, series);
+      }
+      series.instanceCount++;
+      // Prefer the most descriptive title across instances
+      if (data.title && data.title.length > (series.title || '').length) series.title = data.title;
+
+      const meetingStart = data.startTime?.toDate?.()?.getTime() || data.createdAt?.toDate?.()?.getTime() || null;
+      if (meetingStart) {
+        if (!series.firstAt || meetingStart < series.firstAt) series.firstAt = meetingStart;
+        if (!series.lastAt || meetingStart > series.lastAt) series.lastAt = meetingStart;
+      }
+
+      const meetingDurationMs = (data.startTime?.toDate && data.endTime?.toDate)
+        ? (data.endTime.toDate().getTime() - data.startTime.toDate().getTime())
+        : null;
+
+      // Per-person aggregation: count meetings attended + sum minutes.
+      const seenInThisMeeting = new Set();
+      for (const p of participantSnaps[i].docs) {
+        const pdata = p.data();
+        const pEmail = (pdata.email || '').toLowerCase();
+        const pName = pdata.displayName || '';
+        const key = pEmail || `name:${pName.toLowerCase()}`;
+        if (!key || key === 'name:') continue;
+        if (seenInThisMeeting.has(key)) continue; // one count per meeting
+        seenInThisMeeting.add(key);
+
+        let person = series.peopleMap.get(key);
+        if (!person) {
+          person = { key, email: pEmail || null, displayName: pName, attended: 0, totalMinutes: 0 };
+          series.peopleMap.set(key, person);
+        }
+        person.attended++;
+        if (pName && pName.length > (person.displayName || '').length) person.displayName = pName;
+        const join = pdata.joinTime?.toDate?.()?.getTime();
+        const leave = pdata.leaveTime?.toDate?.()?.getTime();
+        if (join && leave && leave > join) {
+          person.totalMinutes += Math.round((leave - join) / 60000);
+        } else if (meetingDurationMs && pdata.present) {
+          person.totalMinutes += Math.round(meetingDurationMs / 60000);
+        }
+      }
+      series.totalParticipants += seenInThisMeeting.size;
+    }
+
+    const series = [...seriesMap.values()]
+      .map(s => {
+        const people = [...s.peopleMap.values()]
+          .map(p => ({
+            email: p.email,
+            displayName: p.displayName || (p.email ? p.email.split('@')[0] : 'Unknown'),
+            attended: p.attended,
+            missed: s.instanceCount - p.attended,
+            attendanceRate: s.instanceCount > 0 ? (p.attended / s.instanceCount) : 0,
+            totalMinutes: p.totalMinutes,
+          }))
+          .sort((a, b) => b.attended - a.attended || (a.displayName || '').localeCompare(b.displayName || ''));
+        return {
+          recurringEventId: s.recurringEventId,
+          title: s.title,
+          instanceCount: s.instanceCount,
+          firstAt: s.firstAt ? new Date(s.firstAt).toISOString() : null,
+          lastAt: s.lastAt ? new Date(s.lastAt).toISOString() : null,
+          uniquePeople: people.length,
+          avgAttendance: s.instanceCount > 0 ? Math.round(s.totalParticipants / s.instanceCount * 10) / 10 : 0,
+          people,
+        };
+      })
+      .sort((a, b) => (new Date(b.lastAt || 0)) - (new Date(a.lastAt || 0)));
+
+    return { series, totalSeries: series.length };
+  } catch (err) {
+    log.error('firestore: getUserMeetingSeries failed', { domain, email, error: err.message });
+    return { series: [], totalSeries: 0 };
   }
 }
 
@@ -1849,6 +1996,7 @@ module.exports = {
   logEvent,
   getUserActivationStatus, countUserExports, isExistingUserAnywhere, countAllUsers,
   getUserMeetingHistory,
+  getUserMeetingSeries,
   getParticipantHistory, setParticipantNote, getParticipantNote,
   getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted,
   getUserDetail, setAdminNote, searchAdminNotes,

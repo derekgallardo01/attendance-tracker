@@ -78,17 +78,27 @@ router.get('/calendar-attendees', async (req, res) => {
         status:      a.responseStatus,
       }));
 
+    // recurringEventId is set by Google Calendar when this event is part of a
+    // series (weekly standup, monthly review, etc.). It's the same value for
+    // every instance — the join key for our Series roll-up view.
+    const recurringEventId = matchedEvent.recurringEventId || null;
+    const eventId = matchedEvent.id || null;
+    const htmlLink = matchedEvent.htmlLink || null;
+
     res.json({
       isScheduled: true,
       eventTitle: matchedEvent.summary || 'Scheduled Meeting',
       eventStart: matchedEvent.start?.dateTime || matchedEvent.start?.date || null,
       eventEnd: matchedEvent.end?.dateTime || matchedEvent.end?.date || null,
+      eventId,
+      recurringEventId,
+      htmlLink,
       attendees,
     });
 
-    // Fire-and-forget: store title + invited attendees for analytics
+    // Fire-and-forget: store title + invited attendees + series id for analytics
     const domain = req.user?.domain || 'default';
-    persistCalendarData(domain, meetingCode, matchedEvent.summary || 'Scheduled Meeting', attendees);
+    persistCalendarData(domain, meetingCode, matchedEvent.summary || 'Scheduled Meeting', attendees, { recurringEventId, eventId });
 
   } catch (err) {
     // Insufficient Permission (403) means user didn't grant calendar scope during OAuth.

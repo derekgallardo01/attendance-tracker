@@ -78,6 +78,22 @@
     .progress-bar { background: var(--border); border-radius: 4px; height: 6px; overflow: hidden; }
     .progress-bar div { background: var(--accent); height: 100%; }
 
+    /* Series cards — collapsible per-series breakdown */
+    .series-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
+    .series-summary { display: flex; align-items: center; gap: 16px; padding: 14px 18px; cursor: pointer; user-select: none; }
+    .series-summary:hover { background: rgba(255,255,255,.02); }
+    .series-title { flex: 1; min-width: 0; }
+    .series-title-text { font-weight: 600; font-size: .95rem; }
+    .series-meta { color: var(--muted); font-size: .75rem; margin-top: 3px; }
+    .series-chip { background: rgba(74, 222, 128, .12); color: var(--accent); border-radius: 12px; padding: 3px 10px; font-size: .72rem; font-weight: 600; white-space: nowrap; }
+    .series-toggle { color: var(--muted); font-size: .85rem; transition: transform .15s ease; }
+    .series-card.open .series-toggle { transform: rotate(90deg); }
+    .series-body { display: none; padding: 0 18px 16px; border-top: 1px solid var(--border); }
+    .series-card.open .series-body { display: block; }
+    .series-body table { margin-top: 12px; }
+    .series-body th { font-size: .65rem; }
+    .series-body td { padding: 8px 12px; font-size: .82rem; }
+
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
@@ -121,10 +137,15 @@
           <div class="stat-label">Days with a meeting (last 90)</div>
           <div class="stat-value" id="stat-active-days">—</div>
         </div>
+        <div class="stat-card">
+          <div class="stat-label">Recurring series</div>
+          <div class="stat-value" id="stat-series">—</div>
+        </div>
       </div>
 
       <div class="tabs">
         <button class="tab active" data-tab="meetings" onclick="switchTab('meetings')">Meetings</button>
+        <button class="tab" data-tab="series" onclick="switchTab('series')">Series</button>
         <button class="tab" data-tab="people" onclick="switchTab('people')">People</button>
         <button class="tab" data-tab="calendar" onclick="switchTab('calendar')">Calendar</button>
       </div>
@@ -166,6 +187,15 @@
         </div>
       </div>
 
+      <!-- Series tab -->
+      <div id="tab-series" class="tab-content">
+        <input id="search-series" class="search-box" type="text" placeholder="Search recurring meetings by title…" oninput="renderSeries()" />
+        <div id="series-empty" class="section muted" style="display:none;text-align:center;padding:32px 18px">
+          No recurring meetings rolled up yet. Track a meeting from a Google Calendar series (weekly standup, monthly review, etc.) 2+ times — the per-person attendance breakdown will appear here.
+        </div>
+        <div id="series-list"></div>
+      </div>
+
       <!-- Calendar tab -->
       <div id="tab-calendar" class="tab-content">
         <div class="section">
@@ -193,6 +223,7 @@
     let sessionToken = null;
     let userEmail = null;
     let data = { meetings: [], people: [], calendar: [], totalMeetings: 0 };
+    let seriesData = { series: [], totalSeries: 0 };
 
     function signIn() {
       const client = google.accounts.oauth2.initCodeClient({
@@ -234,18 +265,26 @@
     async function loadHistory() {
       document.getElementById('loading').style.display = 'block';
       try {
-        const res = await fetch(`${BACKEND_URL}/history`, {
-          headers: { 'Authorization': `Bearer ${sessionToken}` },
-        });
-        if (!res.ok) throw new Error(`${res.status}`);
-        data = await res.json();
+        // /history and /series are independent reads — fire in parallel so the
+        // page paints in one round-trip instead of two.
+        const authH = { 'Authorization': `Bearer ${sessionToken}` };
+        const [hRes, sRes] = await Promise.all([
+          fetch(`${BACKEND_URL}/history`, { headers: authH }),
+          fetch(`${BACKEND_URL}/series`, { headers: authH }),
+        ]);
+        if (!hRes.ok) throw new Error(`history ${hRes.status}`);
+        data = await hRes.json();
+        seriesData = sRes.ok ? await sRes.json() : { series: [], totalSeries: 0 };
+
         document.getElementById('stat-meetings').textContent = data.totalMeetings || 0;
         document.getElementById('stat-people').textContent = (data.people || []).length;
         const activeDays = (data.calendar || []).filter(c => c.count > 0).length;
         document.getElementById('stat-active-days').textContent = activeDays;
+        document.getElementById('stat-series').textContent = seriesData.totalSeries || 0;
         renderMeetings();
         renderPeople();
         renderCalendar();
+        renderSeries();
       } catch (err) {
         console.error('history load failed:', err);
       } finally {
@@ -327,6 +366,73 @@
           <td class="nowrap muted">${esc(fmtDate(p.lastSeenAt))}</td>
         </tr>
       `).join('');
+    }
+
+    function renderSeries() {
+      const q = (document.getElementById('search-series').value || '').toLowerCase().trim();
+      const all = seriesData.series || [];
+      const rows = q ? all.filter(s => (s.title || '').toLowerCase().includes(q)) : all;
+      const list = document.getElementById('series-list');
+      const empty = document.getElementById('series-empty');
+
+      if (all.length === 0) {
+        empty.style.display = '';
+        list.innerHTML = '';
+        return;
+      }
+      empty.style.display = 'none';
+      if (rows.length === 0) {
+        list.innerHTML = '<div class="section muted" style="text-align:center">No series match that search.</div>';
+        return;
+      }
+
+      list.innerHTML = rows.map(s => {
+        const topPerson = (s.people || [])[0];
+        const topLine = topPerson
+          ? `${esc(topPerson.displayName)} (${topPerson.attended}/${s.instanceCount})`
+          : 'No attendance yet';
+        const dateRange = s.firstAt && s.lastAt && s.firstAt !== s.lastAt
+          ? `${fmtDate(s.firstAt)} – ${fmtDate(s.lastAt)}`
+          : fmtDate(s.lastAt || s.firstAt);
+        const peopleRows = (s.people || []).map(p => `
+          <tr>
+            <td>${esc(p.displayName || p.email || '—')}<div class="muted" style="font-size:.7rem">${esc(p.email || '')}</div></td>
+            <td class="right nowrap">${p.attended}/${s.instanceCount}</td>
+            <td><div style="display:flex;align-items:center;gap:8px;min-width:120px"><div class="progress-bar" style="flex:1"><div style="width:${Math.round(p.attendanceRate * 100)}%"></div></div><span style="font-size:.75rem;color:var(--muted);min-width:36px">${pct(p.attendanceRate)}</span></div></td>
+            <td class="right nowrap muted">${fmtMinutes(p.totalMinutes)}</td>
+          </tr>
+        `).join('') || '<tr><td colspan="4" class="muted">No participants tracked.</td></tr>';
+
+        return `
+          <div class="series-card" data-id="${esc(s.recurringEventId)}">
+            <div class="series-summary" onclick="toggleSeries(this)">
+              <div class="series-title">
+                <div class="series-title-text">${esc(s.title)}</div>
+                <div class="series-meta">${s.instanceCount} meeting${s.instanceCount === 1 ? '' : 's'} · ${esc(dateRange)} · top attendee ${esc(topLine)}</div>
+              </div>
+              <div class="series-chip">${s.uniquePeople} ${s.uniquePeople === 1 ? 'person' : 'people'}</div>
+              <div class="series-toggle">▶</div>
+            </div>
+            <div class="series-body">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Person</th>
+                    <th class="right">Attended</th>
+                    <th>Attendance</th>
+                    <th class="right">Total time</th>
+                  </tr>
+                </thead>
+                <tbody>${peopleRows}</tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleSeries(el) {
+      el.parentElement.classList.toggle('open');
     }
 
     function renderCalendar() {

@@ -35,7 +35,7 @@ function fmtRsvp(status) {
 }
 
 router.post('/save-to-sheets', async (req, res) => {
-  const { meetingTitle, tabName: clientTabName, exportedAt, participants, calendarAttendees = [], meetingStartTime, meetingType, eventStart, eventEnd, conferenceId, timezone, sendEmail, autoExport } = req.body;
+  const { meetingTitle, tabName: clientTabName, exportedAt, participants, calendarAttendees = [], meetingStartTime, meetingType, eventStart, eventEnd, conferenceId, timezone, sendEmail, autoExport, recurringEventId } = req.body;
   if (!participants?.length) return res.status(400).json({ error: 'participants array is required' });
 
   try {
@@ -285,6 +285,8 @@ router.post('/save-to-sheets', async (req, res) => {
       sheetUrl,
       email: req.user?.email || null,
       autoExport: !!autoExport,
+      recurringEventId: recurringEventId || null,
+      conferenceId: conferenceId || null,
     });
 
     // Fire-and-forget: email the organizer the sheet link. Only when explicitly

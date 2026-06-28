@@ -1,6 +1,6 @@
 const { Router } = require('express');
 const log = require('../lib/logger');
-const { getUserMeetingHistory, getParticipantHistory, setParticipantNote, getParticipantNote, logEvent } = require('../services/firestore');
+const { getUserMeetingHistory, getUserMeetingSeries, getParticipantHistory, setParticipantNote, getParticipantNote, logEvent } = require('../services/firestore');
 
 const router = Router();
 
@@ -35,6 +35,22 @@ router.post('/event', async (req, res) => {
   } catch (err) {
     log.warn('event log failed', { error: err.message, type });
     res.status(500).json({ error: 'Failed to log event' });
+  }
+});
+
+// GET /api/series — recurring-meeting roll-ups for the signed-in user.
+// Groups tracked meetings by Calendar's recurringEventId and aggregates per-person
+// attendance ("Alex 12/15 standups, 80%"). Empty for users who've only tracked
+// instant meetings or single-occurrence events.
+router.get('/series', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  if (!req.user?.email) return res.status(401).json({ error: 'Authentication required' });
+  try {
+    const data = await getUserMeetingSeries(req.user.domain, req.user.email);
+    res.json(data);
+  } catch (err) {
+    log.error('series: fetch failed', { error: err.message, email: req.user.email });
+    res.status(500).json({ error: 'Failed to fetch series' });
   }
 });
 

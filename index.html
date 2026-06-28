@@ -2325,9 +2325,13 @@ async function saveToSheets() {
       typeEl.style.display = '';
       state._eventStart = calData.eventStart;
       state._eventEnd = calData.eventEnd;
+      // recurringEventId is the join key for the Series roll-up. Stash it on
+      // state so doExportToSheets can ship it to the backend.
+      state._recurringEventId = calData.recurringEventId || null;
     } else {
       typeEl.textContent = 'Instant Meeting';
       typeEl.style.display = '';
+      state._recurringEventId = null;
     }
 
     if (calData.isScheduled && calData.attendees.length > 0) {
@@ -2399,6 +2403,8 @@ async function maybeAutoExportOnMeetingEnd() {
       // Note: unmatched participants still get exported with their raw display
       // name — better than blocking the auto-export on a manual match prompt.
     }
+    // Stash series id so this auto-export rolls up under the right Series.
+    state._recurringEventId = calData.recurringEventId || null;
 
     await doExportToSheets(emailMap, calendarAttendees, { sendEmail: true, autoExport: true });
   } catch (err) {
@@ -2553,6 +2559,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     sendEmail: !!opts.sendEmail,
     autoExport: !!opts.autoExport,
+    recurringEventId: state._recurringEventId || null,
     calendarAttendees,
     participants: [...state.participants.values()].map(p => {
       // Use earliest known join time (API or frontend-tracked)
