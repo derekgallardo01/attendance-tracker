@@ -64,11 +64,19 @@ router.post('/exchange', async (req, res) => {
     // UTM fields are length-capped to keep arbitrary blobs out of Firestore.
     const trim = (v) => (typeof v === 'string' ? v.slice(0, 200) : undefined);
     const trimLong = (v) => (typeof v === 'string' ? v.slice(0, 500) : undefined);
+    // Only accept ref values that look like an email — that's all the
+    // celebrate-modal mints. Drops arbitrary strings on the floor.
+    const trimRef = (v) => {
+      if (typeof v !== 'string') return undefined;
+      const s = v.slice(0, 200);
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) ? s.toLowerCase() : undefined;
+    };
     const sanitizedAcq = acquisition ? {
       source: ACQUISITION_SOURCES.has(acquisition.source) ? acquisition.source : undefined,
       utmSource:   trim(acquisition.utmSource),
       utmMedium:   trim(acquisition.utmMedium),
       utmCampaign: trim(acquisition.utmCampaign),
+      ref:         trimRef(acquisition.ref),
       referrer:    trim(acquisition.referrer),
       landingUrl:  trimLong(acquisition.landingUrl),
       userAgent:   trimLong(acquisition.userAgent),
@@ -114,13 +122,14 @@ router.post('/exchange', async (req, res) => {
 
     // Source-aware welcome on the frontend: pass detected source so the
     // modal can greet "Hey 👋 saw you came from Reddit" instead of generic.
-    // Fall back to referrer hostname so the admin signup email shows something
-    // useful (e.g. "ref:meet.google.com") instead of "Unknown" for every user.
+    // Priority: explicit user-reported source > ?ref= invite > UTM > referrer
+    // hostname > "direct" (fallback when only userAgent is known).
     let refHost = null;
     if (sanitizedAcq?.referrer) {
       try { refHost = new URL(sanitizedAcq.referrer).hostname || null; } catch { /* ignore */ }
     }
     const detectedSource = sanitizedAcq?.source
+      || (sanitizedAcq?.ref ? `invite:${sanitizedAcq.ref}` : null)
       || (sanitizedAcq?.utmSource ? `utm:${sanitizedAcq.utmSource}` : null)
       || (refHost ? `ref:${refHost}` : null)
       || (sanitizedAcq?.userAgent ? 'direct' : null);

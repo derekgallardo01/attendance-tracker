@@ -311,6 +311,7 @@ async function upsertUser(domain, { email, displayName, refreshToken, sheetId, a
         if (acquisition.utmSource) data.utmSource = acquisition.utmSource;
         if (acquisition.utmMedium) data.utmMedium = acquisition.utmMedium;
         if (acquisition.utmCampaign) data.utmCampaign = acquisition.utmCampaign;
+        if (acquisition.ref) data.referredBy = acquisition.ref; // who shared the ?ref= link
         if (acquisition.referrer) data.referrer = acquisition.referrer;
         data.acquisitionCapturedAt = now;
       }

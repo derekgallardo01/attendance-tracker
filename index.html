@@ -1344,13 +1344,14 @@ function captureAcquisitionFromUrl() {
     const utmSource   = params.get('utm_source');
     const utmMedium   = params.get('utm_medium');
     const utmCampaign = params.get('utm_campaign');
+    const ref         = params.get('ref'); // referral attribution from celebrate-modal share links
     const referrer    = document.referrer || null;
     // Don't overwrite an earlier capture (first-touch wins).
     if (localStorage.getItem(ACQUISITION_STORAGE_KEY)) return;
     // Always capture — even with no UTM/referrer, the landing URL +
     // user agent are useful breadcrumbs ("Source: Unknown" is the worst answer).
     localStorage.setItem(ACQUISITION_STORAGE_KEY, JSON.stringify({
-      utmSource, utmMedium, utmCampaign, referrer,
+      utmSource, utmMedium, utmCampaign, ref, referrer,
       landingUrl: window.location.href || null,
       capturedAt: Date.now(),
     }));
@@ -2766,9 +2767,14 @@ function showCelebrateModal(sheetUrl) {
   const modal = document.getElementById('celebrate-modal');
   const link = document.getElementById('celebrate-share-link');
   if (!modal || !link) return;
+  // Tag the landing-page link with ?ref=<inviter-email> so we can attribute
+  // signups back to whoever shared. Inviter sees no UI change; backend
+  // records ref:<email> as the acquisition source on the new user's doc.
+  const refParam = state.userEmail ? `?ref=${encodeURIComponent(state.userEmail)}` : '';
+  const landingUrl = `https://attendancetracker.dev/${refParam}`;
   const subject = encodeURIComponent('You should check out Attendance Tracker for Google Meet');
   const body = encodeURIComponent(
-    `I started using this Google Meet add-on for tracking attendance and exporting to Sheets in one click. Thought you might find it useful too.\n\nMarketplace: https://workspace.google.com/marketplace/app/attendance_tracker/829771833968\nLanding page: https://attendancetracker.dev\n`
+    `I started using this Google Meet add-on for tracking attendance and exporting to Sheets in one click. Thought you might find it useful too.\n\nMarketplace: https://workspace.google.com/marketplace/app/attendance_tracker/829771833968\nLanding page: ${landingUrl}\n`
   );
   link.href = `mailto:?subject=${subject}&body=${body}`;
   modal.style.display = 'flex';
