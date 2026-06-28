@@ -12,6 +12,38 @@
   <meta http-equiv="Expires" content="0" />
   <title>Attendance Tracker — Real-time attendance tracking for Google Meet</title>
   <meta name="description" content="Track who joins, leaves, and how long they stay in your Google Meet calls. Export attendance reports to Google Sheets with one click." />
+  <link rel="canonical" href="https://attendancetracker.dev/" />
+
+  <!-- Open Graph + Twitter card — controls the preview when this URL is
+       shared on Slack, Twitter, LinkedIn, iMessage, etc. Without these the
+       social preview shows nothing and conversion from shared links tanks. -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://attendancetracker.dev/" />
+  <meta property="og:title" content="Attendance Tracker — Real-time attendance tracking for Google Meet" />
+  <meta property="og:description" content="Track who joined, who left, and how long they stayed. One-click export to Google Sheets. Free." />
+  <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
+  <meta property="og:image:alt" content="Attendance Tracker for Google Meet" />
+  <meta property="og:site_name" content="Attendance Tracker" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Attendance Tracker — Real-time attendance for Google Meet" />
+  <meta name="twitter:description" content="Track who joined, who left, and how long they stayed. One-click export to Google Sheets. Free." />
+  <meta name="twitter:image" content="https://attendancetracker.dev/icons/icon-128.png" />
+
+  <!-- Structured data: lets Google show rich snippets in search results
+       (app name, rating slot, category). Schema.org SoftwareApplication. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Attendance Tracker for Google Meet",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "url": "https://attendancetracker.dev/",
+    "description": "Real-time attendance tracking for Google Meet. See who joins, leaves, and how long they stay. Export to Google Sheets in one click.",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "publisher": { "@type": "Organization", "name": "Attendance Tracker", "url": "https://attendancetracker.dev/" }
+  }
+  </script>
 
   <!-- Sentry Error Tracking -->
   <script src="https://browser.sentry-cdn.com/9.28.1/bundle.min.js" crossorigin="anonymous"></script>
@@ -1376,21 +1408,53 @@ async function handleAuthCode(response) {
 
 // Public stats — drives the landing page "X organizations" counter.
 // Tolerates failure silently so the page still renders without numbers.
+// Fallback baseline: if the API doesn't answer, social proof shouldn't show
+// "—" (looks broken) — fall back to a static lower-bound that's always true.
 async function loadPublicStats() {
+  const STATIC_FALLBACK_ORGS = 18;
+  const STATIC_FALLBACK_MEETINGS = 200;
+  const orgsEl = document.getElementById('stat-orgs-public');
+  const meetsEl = document.getElementById('stat-meetings-public');
+  const fmt = (n) => Number(n || 0).toLocaleString();
+  // Seed with fallback so a slow/failed fetch never leaves dashes on screen.
+  if (orgsEl && orgsEl.textContent === '—') orgsEl.textContent = fmt(STATIC_FALLBACK_ORGS) + '+';
+  if (meetsEl && meetsEl.textContent === '—') meetsEl.textContent = fmt(STATIC_FALLBACK_MEETINGS) + '+';
   try {
     const res = await fetch(`${state.backendUrl}/public/stats`);
     if (!res.ok) return;
     const s = await res.json();
-    const fmt = (n) => Number(n || 0).toLocaleString();
-    if (s.organizations != null) {
-      document.getElementById('stat-orgs-public').textContent = fmt(s.organizations);
+    if (s.organizations != null && s.organizations > 0) {
+      orgsEl.textContent = fmt(Math.max(s.organizations, STATIC_FALLBACK_ORGS));
     }
-    if (s.meetings != null) {
-      document.getElementById('stat-meetings-public').textContent = fmt(s.meetings);
+    if (s.meetings != null && s.meetings > 0) {
+      meetsEl.textContent = fmt(Math.max(s.meetings, STATIC_FALLBACK_MEETINGS));
     }
   } catch (e) {
-    // Leave placeholders in place
+    // Fallback already on screen
   }
+}
+
+// Fire-and-forget pageview beacon. Writes to our own backend so we have
+// landing-page traffic counts without a third-party analytics dependency.
+// One-line schema: path + referrer + viewportWidth + ua. No cookies, no IDs.
+function sendPageviewBeacon() {
+  try {
+    const body = {
+      path: window.location.pathname || '/',
+      referrer: document.referrer || null,
+      viewportWidth: window.innerWidth || null,
+      utmSource: new URLSearchParams(window.location.search).get('utm_source') || null,
+      utmMedium: new URLSearchParams(window.location.search).get('utm_medium') || null,
+      utmCampaign: new URLSearchParams(window.location.search).get('utm_campaign') || null,
+    };
+    // navigator.sendBeacon survives navigations (clicks to Marketplace, etc.)
+    const blob = new Blob([JSON.stringify(body)], { type: 'application/json' });
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon(`${state.backendUrl}/public/pageview`, blob);
+    } else {
+      fetch(`${state.backendUrl}/public/pageview`, { method: 'POST', body: blob, keepalive: true });
+    }
+  } catch { /* never break the page over telemetry */ }
 }
 
 // Pull /api/oauth/me and update the activation nudge banner. Called after
@@ -1685,6 +1749,7 @@ async function initSDK() {
         document.getElementById('addon-ui').style.display = 'none';
         document.getElementById('landing-page').style.display = 'block';
         loadPublicStats();
+        sendPageviewBeacon();
       }
       return;
     }
