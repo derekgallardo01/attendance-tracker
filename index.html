@@ -1110,6 +1110,11 @@
     <a id="sheet-link" href="#" target="_blank" style="color:var(--green); text-decoration:none;">📄 Open exported sheet</a>
   </div>
 
+  <!-- Team admin link — only shown to users where /oauth/me reports
+       teamAdmin:true (renderTeamAdminLink() toggles display). Stays hidden
+       for personal-gmail users and non-admins. -->
+  <a id="team-admin-link" href="https://attendancetracker.dev/team.html" target="_blank" style="display:none;padding:6px 16px;font-size:11px;color:#f59e0b;text-decoration:none">👥 Open team admin dashboard →</a>
+
   <!-- ── Summary ── -->
   <div class="summary-row">
     <div class="chip">
@@ -1514,9 +1519,19 @@ async function refreshActivationStatus() {
     const status = await res.json();
     state.activation = status;
     renderNudgeBanner();
+    renderTeamAdminLink();
   } catch (e) {
     // Best-effort; nudges are a nice-to-have
   }
+}
+
+// Show the Team admin link in the side panel header only for users whose
+// /oauth/me response said they're the team admin. Cheap conditional render —
+// no work unless the link element exists in the DOM.
+function renderTeamAdminLink() {
+  const link = document.getElementById('team-admin-link');
+  if (!link) return;
+  link.style.display = state.activation?.teamAdmin ? 'inline-block' : 'none';
 }
 
 function renderNudgeBanner() {

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team admin — Attendance Tracker</title>
+  <meta name="robots" content="noindex" />
+  <style>
+    :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #4ade80; --error: #f85149; --blue: #58a6ff; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 40px 20px; }
+    .container { max-width: 1040px; margin: 0 auto; }
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+    .header h1 { font-size: 1.5rem; }
+    .header .user { color: var(--muted); font-size: .85rem; }
+    .domain-chip { display: inline-block; background: rgba(74,222,128,.12); color: var(--accent); padding: 2px 10px; border-radius: 10px; font-weight: 600; font-size: .75rem; margin-left: 6px; vertical-align: middle; }
+    .btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: .85rem; font-weight: 600; text-decoration: none; display: inline-block; }
+    .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    .btn:hover { opacity: .9; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 28px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+    .stat-label { font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+    .stat-value { font-size: 1.6rem; font-weight: 700; }
+    .stat-value.green { color: var(--accent); }
+    .stat-value.blue { color: var(--blue); }
+
+    .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; flex-wrap: wrap; }
+    .tab { padding: 10px 16px; background: transparent; color: var(--muted); border: none; border-bottom: 2px solid transparent; cursor: pointer; font-size: .9rem; font-weight: 600; margin-bottom: -1px; }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab:hover { color: var(--text); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .search-box { width: 100%; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: .9rem; margin-bottom: 16px; }
+    .search-box:focus { outline: none; border-color: var(--blue); }
+
+    .section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 20px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    th { text-align: left; color: var(--muted); font-weight: 600; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: .7rem; text-transform: uppercase; }
+    td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,.02); }
+    .muted { color: var(--muted); }
+    .nowrap { white-space: nowrap; }
+    .right { text-align: right; }
+    .admin-chip { background: rgba(245, 158, 11, .15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, .3); border-radius: 10px; padding: 1px 7px; font-size: .62rem; font-weight: 600; margin-left: 6px; }
+
+    .login-screen { text-align: center; padding: 80px 20px; }
+    .login-screen h2 { margin-bottom: 12px; }
+    .login-screen p { color: var(--muted); margin-bottom: 24px; }
+
+    #dashboard { display: none; }
+    #loading { text-align: center; padding: 60px; color: var(--muted); }
+    .error-banner { background: rgba(248, 81, 73, .08); border: 1px solid rgba(248, 81, 73, .25); color: #f85149; padding: 18px; border-radius: 12px; text-align: center; }
+
+    .progress-bar { background: var(--border); border-radius: 4px; height: 6px; overflow: hidden; min-width: 90px; }
+    .progress-bar div { background: var(--accent); height: 100%; }
+
+    .footer-note { color: var(--muted); font-size: .75rem; margin-top: 36px; padding-top: 18px; border-top: 1px solid var(--border); }
+  </style>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+  <div class="container">
+    <!-- Login -->
+    <div id="login-screen" class="login-screen">
+      <h2>Team admin</h2>
+      <p>Sign in with your Google Workspace account to view org-wide attendance.</p>
+      <button class="btn btn-secondary" onclick="signIn()">Sign in with Google</button>
+    </div>
+
+    <div id="loading" style="display:none">Loading team data…</div>
+    <div id="error-not-admin" class="error-banner" style="display:none">
+      <strong>You're signed in, but you're not the team admin for your domain.</strong>
+      <div style="margin-top:6px;font-size:.85rem">Email derekgallardo01@gmail.com if you should be — happy to transfer the role.</div>
+    </div>
+
+    <div id="dashboard">
+      <div class="header">
+        <h1>👥 Team admin<span class="domain-chip" id="domain-chip"></span></h1>
+        <div>
+          <span class="user" id="user-email"></span>
+          <a class="btn btn-secondary" href="/history.html" style="margin-left:8px">My history</a>
+          <a class="btn btn-secondary" href="/" style="margin-left:4px">Back to add-on</a>
+          <button class="btn btn-secondary" onclick="signOut()" style="margin-left:4px">Sign out</button>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Users in org</div><div class="stat-value green" id="stat-users">—</div></div>
+        <div class="stat-card"><div class="stat-label">Meetings tracked</div><div class="stat-value blue" id="stat-meetings">—</div></div>
+        <div class="stat-card"><div class="stat-label">Recurring series</div><div class="stat-value" id="stat-series">—</div></div>
+        <div class="stat-card"><div class="stat-label">People seen</div><div class="stat-value" id="stat-people">—</div></div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="users" onclick="switchTab('users')">Users</button>
+        <button class="tab" data-tab="meetings" onclick="switchTab('meetings')">Meetings</button>
+        <button class="tab" data-tab="series" onclick="switchTab('series')">Series</button>
+        <button class="tab" data-tab="people" onclick="switchTab('people')">People</button>
+      </div>
+
+      <div id="tab-users" class="tab-content active">
+        <input id="search-users" class="search-box" type="text" placeholder="Search users…" oninput="renderUsers()" />
+        <div class="section">
+          <table>
+            <thead><tr><th>User</th><th class="right">Tracked</th><th class="right">Exported</th><th class="nowrap">Last login</th></tr></thead>
+            <tbody id="users-rows"><tr><td colspan="4" class="muted">No users yet.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="tab-meetings" class="tab-content">
+        <input id="search-meetings" class="search-box" type="text" placeholder="Search meetings by title…" oninput="renderMeetings()" />
+        <div class="section">
+          <table>
+            <thead><tr><th class="nowrap">Date</th><th>Title</th><th class="right">Present</th><th class="right">Duration</th></tr></thead>
+            <tbody id="meetings-rows"><tr><td colspan="4" class="muted">No meetings tracked yet.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="tab-series" class="tab-content">
+        <input id="search-series" class="search-box" type="text" placeholder="Search series…" oninput="renderSeries()" />
+        <div id="series-empty" class="section muted" style="display:none;text-align:center;padding:32px 18px">
+          No recurring series rolled up across the org yet. Track a meeting from a Google Calendar series 2+ times to see the cross-user breakdown here.
+        </div>
+        <div id="series-list"></div>
+      </div>
+
+      <div id="tab-people" class="tab-content">
+        <input id="search-people" class="search-box" type="text" placeholder="Search people by name or email…" oninput="renderPeople()" />
+        <div class="section">
+          <table>
+            <thead><tr><th>Person</th><th class="right">Meetings</th><th class="right">Total time</th><th>Attendance %</th><th class="nowrap">Last seen</th></tr></thead>
+            <tbody id="people-rows"><tr><td colspan="5" class="muted">No people tracked yet.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="footer-note">
+        You're seeing org-wide data because you're the team admin for <span id="domain-footer"></span>.
+        Need to transfer this role? Email <a href="mailto:derekgallardo01@gmail.com" style="color:var(--blue)">derekgallardo01@gmail.com</a>.
+        Workspace admins already have similar visibility into meeting attendance via the Google Admin Console.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const BACKEND_URL = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
+    const CLIENT_ID = '829771833968-92hq9toga2ga92mg7nfuf6dqclj7er2n.apps.googleusercontent.com';
+    const SCOPES = 'openid email profile';
+    let sessionToken = null;
+    let data = { users: [], meetings: [], series: [], people: [], totals: {} };
+
+    function signIn() {
+      const client = google.accounts.oauth2.initCodeClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        ux_mode: 'popup',
+        access_type: 'offline',
+        callback: async (response) => {
+          if (response.error) return;
+          try {
+            const res = await fetch(`${BACKEND_URL}/oauth/exchange`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ code: response.code }),
+            });
+            if (!res.ok) throw new Error('Auth failed');
+            const body = await res.json();
+            sessionToken = body.sessionToken;
+            document.getElementById('user-email').textContent = body.email;
+            document.getElementById('login-screen').style.display = 'none';
+            loadOverview();
+          } catch (err) {
+            alert('Sign-in failed: ' + err.message);
+          }
+        },
+      });
+      client.requestCode();
+    }
+
+    function signOut() {
+      sessionToken = null;
+      document.getElementById('login-screen').style.display = '';
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('error-not-admin').style.display = 'none';
+    }
+
+    async function loadOverview() {
+      document.getElementById('loading').style.display = 'block';
+      try {
+        const res = await fetch(`${BACKEND_URL}/team/overview`, {
+          headers: { 'Authorization': `Bearer ${sessionToken}` },
+        });
+        if (res.status === 403) {
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('error-not-admin').style.display = 'block';
+          return;
+        }
+        if (!res.ok) throw new Error(`${res.status}`);
+        data = await res.json();
+
+        document.getElementById('domain-chip').textContent = data.domain || '';
+        document.getElementById('domain-footer').textContent = data.domain || 'your org';
+        document.getElementById('stat-users').textContent = data.totals?.users ?? 0;
+        document.getElementById('stat-meetings').textContent = data.totals?.meetings ?? 0;
+        document.getElementById('stat-series').textContent = data.totals?.series ?? 0;
+        document.getElementById('stat-people').textContent = data.totals?.people ?? 0;
+        renderUsers();
+        renderMeetings();
+        renderSeries();
+        renderPeople();
+        document.getElementById('dashboard').style.display = 'block';
+      } catch (err) {
+        console.error('team load failed:', err);
+      } finally {
+        document.getElementById('loading').style.display = 'none';
+      }
+    }
+
+    function switchTab(name) {
+      document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${name}`));
+    }
+
+    function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+    function fmtDate(iso) { if (!iso) return '—'; return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }); }
+    function fmtTime(iso) { if (!iso) return ''; return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); }
+    function fmtDuration(ms) { if (!ms || ms <= 0) return '—'; const m = Math.round(ms / 60000); if (m < 60) return `${m}m`; const h = Math.floor(m/60); const mm = m%60; return mm ? `${h}h ${mm}m` : `${h}h`; }
+    function fmtMinutes(min) { if (!min) return '—'; if (min < 60) return `${min}m`; const h = Math.floor(min/60); const m = min%60; return m ? `${h}h ${m}m` : `${h}h`; }
+    function pct(v) { return Math.round(v * 100) + '%'; }
+
+    function renderUsers() {
+      const q = (document.getElementById('search-users').value || '').toLowerCase().trim();
+      const rows = (data.users || []).filter(u =>
+        !q || (u.displayName || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q)
+      );
+      const body = document.getElementById('users-rows');
+      if (!rows.length) { body.innerHTML = '<tr><td colspan="4" class="muted">No users match.</td></tr>'; return; }
+      body.innerHTML = rows.map(u => `
+        <tr>
+          <td>
+            ${esc(u.displayName || u.email)}${u.teamAdmin ? '<span class="admin-chip">ADMIN</span>' : ''}
+            <div class="muted" style="font-size:.72rem">${esc(u.email)}</div>
+          </td>
+          <td class="right">${u.tracked || 0}</td>
+          <td class="right">${u.exported || 0}</td>
+          <td class="nowrap muted">${esc(fmtDate(u.lastLoginAt))}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderMeetings() {
+      const q = (document.getElementById('search-meetings').value || '').toLowerCase().trim();
+      const rows = (data.meetings || []).filter(m =>
+        !q || (m.title || '').toLowerCase().includes(q) || (m.presentNames || []).some(n => n.toLowerCase().includes(q))
+      );
+      const body = document.getElementById('meetings-rows');
+      if (!rows.length) { body.innerHTML = '<tr><td colspan="4" class="muted">No meetings match.</td></tr>'; return; }
+      body.innerHTML = rows.map(m => `
+        <tr>
+          <td class="nowrap">${esc(fmtDate(m.startTime || m.createdAt))}<div class="muted" style="font-size:.7rem">${esc(fmtTime(m.startTime || m.createdAt))}</div></td>
+          <td>${esc(m.title)}<div class="muted" style="font-size:.72rem;margin-top:2px">${esc((m.presentNames || []).slice(0,4).join(', '))}${m.presentNames && m.presentNames.length > 4 ? ` +${m.presentNames.length - 4}` : ''}</div></td>
+          <td class="right">${m.participantCount || 0}</td>
+          <td class="right nowrap">${fmtDuration(m.durationMs)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderSeries() {
+      const q = (document.getElementById('search-series').value || '').toLowerCase().trim();
+      const all = data.series || [];
+      const rows = q ? all.filter(s => (s.title || '').toLowerCase().includes(q)) : all;
+      const list = document.getElementById('series-list');
+      const empty = document.getElementById('series-empty');
+      if (all.length === 0) { empty.style.display = ''; list.innerHTML = ''; return; }
+      empty.style.display = 'none';
+      if (rows.length === 0) { list.innerHTML = '<div class="section muted" style="text-align:center">No series match that search.</div>'; return; }
+      list.innerHTML = rows.map(s => {
+        const dateRange = s.firstAt && s.lastAt && s.firstAt !== s.lastAt
+          ? `${fmtDate(s.firstAt)} – ${fmtDate(s.lastAt)}`
+          : fmtDate(s.lastAt || s.firstAt);
+        const peopleRows = (s.people || []).map(p => `
+          <tr>
+            <td>${esc(p.displayName || p.email || '—')}<div class="muted" style="font-size:.7rem">${esc(p.email || '')}</div></td>
+            <td class="right nowrap">${p.attended}/${s.instanceCount}</td>
+            <td><div style="display:flex;align-items:center;gap:8px;min-width:120px"><div class="progress-bar" style="flex:1"><div style="width:${Math.round(p.attendanceRate * 100)}%"></div></div><span style="font-size:.75rem;color:var(--muted);min-width:36px">${pct(p.attendanceRate)}</span></div></td>
+          </tr>
+        `).join('') || '<tr><td colspan="3" class="muted">No participants tracked.</td></tr>';
+        return `
+          <div class="section" style="padding:0;margin-bottom:14px">
+            <div style="padding:14px 18px;border-bottom:1px solid var(--border)">
+              <div style="font-weight:600;font-size:.95rem">${esc(s.title)}</div>
+              <div class="muted" style="font-size:.75rem;margin-top:3px">${s.instanceCount} meeting${s.instanceCount===1?'':'s'} · ${esc(dateRange)} · ${s.uniquePeople} ${s.uniquePeople===1?'person':'people'}</div>
+            </div>
+            <div style="padding:6px 18px 14px">
+              <table style="margin-top:6px"><thead><tr><th>Person</th><th class="right">Attended</th><th>Attendance</th></tr></thead><tbody>${peopleRows}</tbody></table>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderPeople() {
+      const q = (document.getElementById('search-people').value || '').toLowerCase().trim();
+      const rows = (data.people || []).filter(p =>
+        !q || (p.displayName || '').toLowerCase().includes(q) || (p.email || '').toLowerCase().includes(q)
+      );
+      const body = document.getElementById('people-rows');
+      if (!rows.length) { body.innerHTML = '<tr><td colspan="5" class="muted">No people match.</td></tr>'; return; }
+      body.innerHTML = rows.map(p => `
+        <tr>
+          <td>${esc(p.displayName || p.email || '—')}<div class="muted" style="font-size:.72rem">${esc(p.email || '')}</div></td>
+          <td class="right">${p.meetingCount}</td>
+          <td class="right nowrap">${fmtMinutes(p.totalMinutes)}</td>
+          <td><div style="display:flex;align-items:center;gap:8px;min-width:140px"><div class="progress-bar" style="flex:1"><div style="width:${Math.round(p.attendanceRate * 100)}%"></div></div><span style="font-size:.78rem;color:var(--muted);min-width:32px">${pct(p.attendanceRate)}</span></div></td>
+          <td class="nowrap muted">${esc(fmtDate(p.lastSeenAt))}</td>
+        </tr>
+      `).join('');
+    }
+  </script>
+</body>
+</html>

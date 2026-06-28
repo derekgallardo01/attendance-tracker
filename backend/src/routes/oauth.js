@@ -4,7 +4,7 @@ const { google } = require('googleapis');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { exchangeCode, revokeToken } = require('../services/googleAuth');
-const { upsertUser, getUser, updateUserTokens, logEvent, getUserActivationStatus, countAllUsers } = require('../services/firestore');
+const { upsertUser, getUser, updateUserTokens, logEvent, getUserActivationStatus, countAllUsers, getTenantConfig } = require('../services/firestore');
 const { sendSignupWebhook } = require('../lib/notifications');
 
 // Allow-list for self-reported acquisition source. Anything not on this list
@@ -159,7 +159,9 @@ router.post('/exchange', async (req, res) => {
   }
 });
 
-// GET /api/oauth/me — current user's activation status for in-product nudges
+// GET /api/oauth/me — current user's activation status for in-product nudges.
+// Also returns the teamAdmin flag so the frontend can conditionally show
+// the Team admin link in the nav (only visible to org admins).
 router.get('/me', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
@@ -168,8 +170,16 @@ router.get('/me', async (req, res) => {
     }
     const decoded = jwt.verify(authHeader.slice(7), CONFIG.sessionSecret);
     const domain = decoded.domain || decoded.email.split('@')[1];
-    const status = await getUserActivationStatus(domain, decoded.email);
-    res.json({ email: decoded.email, domain, ...status });
+    const [status, user] = await Promise.all([
+      getUserActivationStatus(domain, decoded.email),
+      getUser(domain, decoded.email),
+    ]);
+    res.json({
+      email: decoded.email,
+      domain,
+      teamAdmin: !!user?.teamAdmin,
+      ...status,
+    });
   } catch (err) {
     if (err.name === 'TokenExpiredError') return res.status(401).json({ error: 'Session expired' });
     log.error('oauth: me failed', { error: err.message });

@@ -3,6 +3,20 @@ const crypto = require('crypto');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
 
+// Personal email providers — these "tenants" are shared across many unrelated
+// users so the "team admin" concept doesn't apply (you wouldn't want one
+// random gmail.com user seeing everyone else's meetings). Used by the
+// team-admin auto-claim in upsertUser.
+const PERSONAL_EMAIL_DOMAINS = new Set([
+  'gmail.com', 'googlemail.com',
+  'outlook.com', 'hotmail.com', 'live.com', 'msn.com',
+  'yahoo.com', 'yahoo.co.uk', 'ymail.com',
+  'icloud.com', 'me.com', 'mac.com',
+  'aol.com', 'protonmail.com', 'proton.me', 'pm.me',
+  'gmx.com', 'gmx.net', 'mail.com',
+  'fastmail.com', 'duck.com', 'zoho.com',
+]);
+
 // ── Token encryption (AES-256-GCM using SESSION_SECRET as key) ──
 const ALGO = 'aes-256-gcm';
 function deriveKey() {
@@ -271,8 +285,10 @@ async function getUser(domain, email) {
 async function upsertUser(domain, { email, displayName, refreshToken, sheetId, acquisition }) {
   try {
     const now = FieldValue.serverTimestamp();
+    const emailLower = email.toLowerCase();
+    const domainLower = (domain || '').toLowerCase();
     const data = {
-      email: email.toLowerCase(),
+      email: emailLower,
       domain,
       displayName,
       lastLoginAt: now,
@@ -296,14 +312,14 @@ async function upsertUser(domain, { email, displayName, refreshToken, sheetId, a
       });
     }
 
-    const userRef = tenantRef(domain).collection('users').doc(email.toLowerCase());
+    const userRef = tenantRef(domain).collection('users').doc(emailLower);
+    const existing = await userRef.get();
+    const isFirstSignin = !existing.exists;
 
     // First-touch acquisition: only stamp source/utm/referrer on the first
-    // sign-in (read the doc first so we don't overwrite an existing source on
-    // every login). landingUrl + userAgent are also first-touch because they
+    // sign-in. landingUrl + userAgent are also first-touch because they
     // describe the browser/entry point at signup, not now.
     if (acquisition) {
-      const existing = await userRef.get();
       const hasSource = existing.exists && existing.data().acquisitionSource;
       const hasUserAgent = existing.exists && existing.data().userAgent;
       if (!hasSource) {
@@ -321,8 +337,28 @@ async function upsertUser(domain, { email, displayName, refreshToken, sheetId, a
       }
     }
 
+    // Team-admin auto-claim: the first user from a real Workspace domain
+    // (not a personal-email provider where many strangers share a tenant)
+    // becomes the team admin for that tenant. If the tenant doc already
+    // designates an adminEmail (e.g. via the Marketplace install webhook),
+    // only that exact email gets the flag — protects against random first-
+    // signin if the Workspace admin signs up second.
+    if (isFirstSignin && !PERSONAL_EMAIL_DOMAINS.has(domainLower)) {
+      const tenantData = tenantDoc.exists ? tenantDoc.data() : null;
+      const tenantAdminEmail = tenantData?.adminEmail?.toLowerCase?.() || null;
+      if (!tenantAdminEmail) {
+        // No admin yet — claim it and stamp the tenant doc so future
+        // signins know who the admin is.
+        data.teamAdmin = true;
+        await tenantRef(domain).set({ adminEmail: emailLower, updatedAt: now }, { merge: true });
+      } else if (tenantAdminEmail === emailLower) {
+        // Tenant already designated this email as admin
+        data.teamAdmin = true;
+      }
+    }
+
     await userRef.set(data, { merge: true });
-    log.info('firestore: upserted user', { domain, email });
+    log.info('firestore: upserted user', { domain, email, isFirstSignin, teamAdmin: !!data.teamAdmin });
   } catch (err) {
     log.error('firestore: upsertUser failed', { domain, email, error: err.message });
   }
@@ -934,6 +970,245 @@ async function getUserMeetingHistory(domain, email) {
   } catch (err) {
     log.error('firestore: getUserMeetingHistory failed', { domain, email, error: err.message });
     return { meetings: [], people: [], calendar: [], totalMeetings: 0 };
+  }
+}
+
+// ── Team admin: tenant-wide aggregations ──
+// All four functions below back the org-admin view on team.html. They return
+// the same shape as the per-user equivalents (getUserMeetingHistory,
+// getUserMeetingSeries) but scoped to one domain across every user — so a
+// Workspace admin sees the whole org's attendance picture in one place.
+
+async function getTenantUsers(domain) {
+  try {
+    const tenant = tenantRef(domain);
+    const [usersSnap, eventsSnap] = await Promise.all([
+      tenant.collection('users').get(),
+      tenant.collection('events').get(),
+    ]);
+    // Pre-compute event counts per user so we can show tracked/exported in
+    // the user table without a second query per user.
+    const eventCounts = new Map();
+    for (const d of eventsSnap.docs) {
+      const data = d.data();
+      const email = (data.email || '').toLowerCase();
+      if (!email) continue;
+      let counts = eventCounts.get(email);
+      if (!counts) { counts = { tracked: 0, exported: 0, signins: 0 }; eventCounts.set(email, counts); }
+      if (data.type === 'tracked') counts.tracked++;
+      else if (data.type === 'exported') counts.exported++;
+      else if (data.type === 'signin') counts.signins++;
+    }
+    return usersSnap.docs
+      .map(d => {
+        const data = d.data();
+        const c = eventCounts.get(d.id) || { tracked: 0, exported: 0, signins: 0 };
+        return {
+          email: d.id,
+          domain,
+          displayName: data.displayName || null,
+          teamAdmin: !!data.teamAdmin,
+          lastLoginAt: data.lastLoginAt?.toDate?.()?.toISOString() || null,
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
+          acquisitionSource: data.acquisitionSource || null,
+          tracked: c.tracked,
+          exported: c.exported,
+          signins: c.signins,
+        };
+      })
+      .sort((a, b) => (new Date(b.lastLoginAt || 0)) - (new Date(a.lastLoginAt || 0)));
+  } catch (err) {
+    log.error('firestore: getTenantUsers failed', { domain, error: err.message });
+    return [];
+  }
+}
+
+async function getTenantMeetings(domain) {
+  try {
+    const tenant = tenantRef(domain);
+    const meetingsSnap = await tenant.collection('meetings').get();
+    const meetings = meetingsSnap.docs.map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
+    if (meetings.length === 0) return [];
+    const partSnaps = await Promise.all(meetings.map(m => m.ref.collection('participants').get()));
+    return meetings.map((m, i) => {
+      const parts = partSnaps[i].docs.map(p => p.data());
+      const presentNames = parts.filter(p => p.present).map(p => p.displayName).filter(Boolean);
+      const startMs = m.data.startTime?.toDate?.()?.getTime() || null;
+      const endMs = m.data.endTime?.toDate?.()?.getTime() || null;
+      return {
+        conferenceId: m.id,
+        title: m.data.title || 'Untitled meeting',
+        participantCount: parts.length || m.data.participantCount || 0,
+        presentNames: presentNames.slice(0, 8),
+        startTime: startMs ? new Date(startMs).toISOString() : null,
+        endTime: endMs ? new Date(endMs).toISOString() : null,
+        createdAt: m.data.createdAt?.toDate?.()?.toISOString() || null,
+        durationMs: (startMs && endMs) ? (endMs - startMs) : null,
+        recurringEventId: m.data.recurringEventId || null,
+      };
+    }).sort((a, b) => (new Date(b.startTime || b.createdAt || 0)) - (new Date(a.startTime || a.createdAt || 0)));
+  } catch (err) {
+    log.error('firestore: getTenantMeetings failed', { domain, error: err.message });
+    return [];
+  }
+}
+
+// Cross-user series view. Adapts getUserMeetingSeries by dropping the
+// per-user trackedConferenceIds filter — every recurring meeting tracked by
+// any user in the tenant rolls up here.
+async function getTenantSeriesOverview(domain) {
+  try {
+    const tenant = tenantRef(domain);
+    const meetingsSnap = await tenant.collection('meetings').get();
+    const seriesMeetings = meetingsSnap.docs
+      .filter(d => !!d.data().recurringEventId)
+      .map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
+    if (seriesMeetings.length === 0) return [];
+    const participantSnaps = await Promise.all(seriesMeetings.map(m => m.ref.collection('participants').get()));
+    const seriesMap = new Map();
+    for (let i = 0; i < seriesMeetings.length; i++) {
+      const m = seriesMeetings[i];
+      const sid = m.data.recurringEventId;
+      let series = seriesMap.get(sid);
+      if (!series) {
+        series = {
+          recurringEventId: sid,
+          title: m.data.title || 'Recurring meeting',
+          instanceCount: 0,
+          firstAt: null, lastAt: null,
+          peopleMap: new Map(),
+        };
+        seriesMap.set(sid, series);
+      }
+      series.instanceCount++;
+      if (m.data.title && m.data.title.length > (series.title || '').length) series.title = m.data.title;
+      const meetingStart = m.data.startTime?.toDate?.()?.getTime() || m.data.createdAt?.toDate?.()?.getTime() || null;
+      if (meetingStart) {
+        if (!series.firstAt || meetingStart < series.firstAt) series.firstAt = meetingStart;
+        if (!series.lastAt || meetingStart > series.lastAt) series.lastAt = meetingStart;
+      }
+      const seen = new Set();
+      for (const p of participantSnaps[i].docs) {
+        const pdata = p.data();
+        const e = (pdata.email || '').toLowerCase();
+        const n = pdata.displayName || '';
+        const key = e || `name:${n.toLowerCase()}`;
+        if (!key || key === 'name:' || seen.has(key)) continue;
+        seen.add(key);
+        let person = series.peopleMap.get(key);
+        if (!person) { person = { email: e || null, displayName: n, attended: 0 }; series.peopleMap.set(key, person); }
+        person.attended++;
+        if (n && n.length > person.displayName.length) person.displayName = n;
+      }
+    }
+    return [...seriesMap.values()]
+      .map(s => {
+        const people = [...s.peopleMap.values()]
+          .map(p => ({
+            email: p.email,
+            displayName: p.displayName || (p.email ? p.email.split('@')[0] : 'Unknown'),
+            attended: p.attended,
+            attendanceRate: s.instanceCount > 0 ? (p.attended / s.instanceCount) : 0,
+          }))
+          .sort((a, b) => b.attended - a.attended);
+        return {
+          recurringEventId: s.recurringEventId,
+          title: s.title,
+          instanceCount: s.instanceCount,
+          uniquePeople: people.length,
+          firstAt: s.firstAt ? new Date(s.firstAt).toISOString() : null,
+          lastAt: s.lastAt ? new Date(s.lastAt).toISOString() : null,
+          people,
+        };
+      })
+      .sort((a, b) => (new Date(b.lastAt || 0)) - (new Date(a.lastAt || 0)));
+  } catch (err) {
+    log.error('firestore: getTenantSeriesOverview failed', { domain, error: err.message });
+    return [];
+  }
+}
+
+// Every participant (not just users) seen across the tenant's meetings, with
+// cross-meeting attendance counts. Different from getTenantUsers — this
+// includes external participants who joined org meetings but never signed up
+// for the addon themselves.
+async function getTenantPeopleOverview(domain) {
+  try {
+    const tenant = tenantRef(domain);
+    const meetingsSnap = await tenant.collection('meetings').get();
+    if (meetingsSnap.empty) return [];
+    const meetings = meetingsSnap.docs.map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
+    const partSnaps = await Promise.all(meetings.map(m => m.ref.collection('participants').get()));
+    const totalMeetings = meetings.length;
+    const peopleMap = new Map();
+    for (let i = 0; i < meetings.length; i++) {
+      const m = meetings[i];
+      const meetingDate = m.data.startTime?.toDate?.()?.getTime() || m.data.createdAt?.toDate?.()?.getTime() || 0;
+      for (const p of partSnaps[i].docs) {
+        const data = p.data();
+        const email = (data.email || '').toLowerCase();
+        const name = data.displayName || '';
+        const key = email || `name:${name.toLowerCase()}`;
+        if (!key || key === 'name:') continue;
+        let entry = peopleMap.get(key);
+        if (!entry) {
+          entry = { key, email: email || null, displayName: name, meetingCount: 0, totalMinutes: 0, lastSeenAt: 0 };
+          peopleMap.set(key, entry);
+        }
+        entry.meetingCount++;
+        const join = data.joinTime?.toDate?.()?.getTime();
+        const leave = data.leaveTime?.toDate?.()?.getTime();
+        if (join && leave && leave > join) entry.totalMinutes += Math.round((leave - join) / 60000);
+        if (meetingDate > entry.lastSeenAt) entry.lastSeenAt = meetingDate;
+        if (!entry.displayName || (name && name.length > entry.displayName.length)) entry.displayName = name;
+      }
+    }
+    return [...peopleMap.values()]
+      .map(p => ({
+        email: p.email,
+        displayName: p.displayName,
+        meetingCount: p.meetingCount,
+        totalMinutes: p.totalMinutes,
+        attendanceRate: totalMeetings > 0 ? (p.meetingCount / totalMeetings) : 0,
+        lastSeenAt: p.lastSeenAt ? new Date(p.lastSeenAt).toISOString() : null,
+      }))
+      .sort((a, b) => b.meetingCount - a.meetingCount);
+  } catch (err) {
+    log.error('firestore: getTenantPeopleOverview failed', { domain, error: err.message });
+    return [];
+  }
+}
+
+// One-shot fetch for team.html — returns everything the page needs so it
+// renders in a single round-trip. Counts come from the same source as the
+// detail lists so they're guaranteed consistent.
+async function getTeamOverview(domain) {
+  try {
+    const tenant = tenantRef(domain);
+    const tenantDoc = await tenant.get();
+    const [users, meetings, series, people] = await Promise.all([
+      getTenantUsers(domain),
+      getTenantMeetings(domain),
+      getTenantSeriesOverview(domain),
+      getTenantPeopleOverview(domain),
+    ]);
+    return {
+      domain,
+      adminEmail: tenantDoc.data()?.adminEmail || null,
+      totals: {
+        users: users.length,
+        meetings: meetings.length,
+        series: series.length,
+        people: people.length,
+      },
+      users,
+      meetings,
+      series,
+      people,
+    };
+  } catch (err) {
+    log.error('firestore: getTeamOverview failed', { domain, error: err.message });
+    return null;
   }
 }
 
@@ -2415,6 +2690,7 @@ module.exports = {
   getUserActivationStatus, countUserExports, isExistingUserAnywhere, countAllUsers,
   getUserMeetingHistory,
   getUserMeetingSeries,
+  getTenantUsers, getTenantMeetings, getTenantSeriesOverview, getTenantPeopleOverview, getTeamOverview,
   evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent,
   evaluateReengagementForUser, claimReengagementSlot,
   createShareLink, resolveShareLink, getSharedSeriesView,

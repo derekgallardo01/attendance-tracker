@@ -119,6 +119,7 @@
         <h1>📋 Meeting History</h1>
         <div>
           <span class="user" id="user-email"></span>
+          <a id="team-link" class="btn btn-secondary" href="/team.html" style="margin-left:8px;display:none;color:#f59e0b;border-color:rgba(245,158,11,.3)">👥 Team admin</a>
           <a class="btn btn-secondary" href="/" style="margin-left:8px">← Back to add-on</a>
           <button class="btn btn-secondary" onclick="signOut()" style="margin-left:4px">Sign out</button>
         </div>
@@ -265,13 +266,19 @@
     async function loadHistory() {
       document.getElementById('loading').style.display = 'block';
       try {
-        // /history and /series are independent reads — fire in parallel so the
-        // page paints in one round-trip instead of two.
+        // /history, /series, and /oauth/me are independent reads — fire in
+        // parallel so the page paints in one round-trip. /oauth/me tells us
+        // whether to surface the Team admin link.
         const authH = { 'Authorization': `Bearer ${sessionToken}` };
-        const [hRes, sRes] = await Promise.all([
+        const [hRes, sRes, meRes] = await Promise.all([
           fetch(`${BACKEND_URL}/history`, { headers: authH }),
           fetch(`${BACKEND_URL}/series`, { headers: authH }),
+          fetch(`${BACKEND_URL}/oauth/me`, { headers: authH }),
         ]);
+        if (meRes.ok) {
+          const me = await meRes.json();
+          if (me.teamAdmin) document.getElementById('team-link').style.display = 'inline-block';
+        }
         if (!hRes.ok) throw new Error(`history ${hRes.status}`);
         data = await hRes.json();
         seriesData = sRes.ok ? await sRes.json() : { series: [], totalSeries: 0 };
