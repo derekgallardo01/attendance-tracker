@@ -1045,6 +1045,182 @@ async function getUserMeetingSeries(domain, email) {
   }
 }
 
+// Evaluate per-series attendance rules for one user and return the alerts that
+// should fire today. Pure read — caller is responsible for idempotency and the
+// actual email send. Two hardcoded rules:
+//   - streak: someone missed the last 3 instances after attending 5+ of the
+//     preceding 8 (reliable attendee suddenly went dark)
+//   - threshold: avg of last 8 dropped to <50% from ≥80% in the prior 8 (slow
+//     fade we want to catch before they fully disengage)
+async function evaluateSeriesAlerts(domain, email) {
+  try {
+    const tenant = tenantRef(domain);
+    const emailLower = email.toLowerCase();
+
+    const [eventsSnap, meetingsSnap] = await Promise.all([
+      tenant.collection('events').where('email', '==', emailLower).where('type', '==', 'tracked').get(),
+      tenant.collection('meetings').get(),
+    ]);
+
+    const trackedIds = new Set();
+    for (const d of eventsSnap.docs) {
+      const cid = d.data().meta?.conferenceId;
+      if (cid) trackedIds.add(cid);
+    }
+    const useFilter = trackedIds.size > 0;
+
+    const seriesMeetings = meetingsSnap.docs
+      .filter(d => {
+        const data = d.data();
+        if (!data.recurringEventId) return false;
+        if (useFilter && !trackedIds.has(d.id)) return false;
+        return true;
+      })
+      .map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
+
+    if (seriesMeetings.length < 6) return []; // streak rule needs 6+, threshold needs 16+
+
+    // Pull participants for every series meeting in parallel.
+    const participantSnaps = await Promise.all(seriesMeetings.map(m => m.ref.collection('participants').get()));
+    const partsByMeetingId = new Map();
+    for (let i = 0; i < seriesMeetings.length; i++) {
+      partsByMeetingId.set(seriesMeetings[i].id, participantSnaps[i].docs.map(p => p.data()));
+    }
+
+    // Group by recurringEventId.
+    const bySeries = new Map();
+    for (const m of seriesMeetings) {
+      const sid = m.data.recurringEventId;
+      let arr = bySeries.get(sid);
+      if (!arr) { arr = []; bySeries.set(sid, arr); }
+      arr.push(m);
+    }
+
+    const alerts = [];
+
+    for (const [sid, meetings] of bySeries) {
+      if (meetings.length < 6) continue;
+
+      // Sort oldest-first so timeline indices map to chronological order.
+      meetings.sort((a, b) => {
+        const aT = a.data.startTime?.toDate?.()?.getTime() || a.data.createdAt?.toDate?.()?.getTime() || 0;
+        const bT = b.data.startTime?.toDate?.()?.getTime() || b.data.createdAt?.toDate?.()?.getTime() || 0;
+        return aT - bT;
+      });
+
+      // Build per-person attendance timeline keyed by email-or-name.
+      const peopleTimeline = new Map();
+      for (let i = 0; i < meetings.length; i++) {
+        const parts = partsByMeetingId.get(meetings[i].id) || [];
+        for (const p of parts) {
+          const e = (p.email || '').toLowerCase();
+          const n = p.displayName || '';
+          const key = e || `name:${n.toLowerCase()}`;
+          if (!key || key === 'name:') continue;
+          let entry = peopleTimeline.get(key);
+          if (!entry) {
+            entry = { email: e || null, displayName: n, attendance: new Array(meetings.length).fill(false) };
+            peopleTimeline.set(key, entry);
+          }
+          entry.attendance[i] = true;
+          if (n && n.length > (entry.displayName || '').length) entry.displayName = n;
+        }
+      }
+
+      const seriesTitle = meetings[meetings.length - 1].data.title || 'Recurring meeting';
+
+      for (const [, p] of peopleTimeline) {
+        const t = p.attendance;
+        const n = t.length;
+        const totalAttended = t.filter(Boolean).length;
+
+        // Streak: last 3 false AND 5+ of the prior 8 true.
+        if (n >= 6) {
+          const last3 = t.slice(n - 3);
+          if (last3.every(x => !x)) {
+            const preceding = t.slice(Math.max(0, n - 11), n - 3);
+            const trueCount = preceding.filter(Boolean).length;
+            if (trueCount >= 5) {
+              alerts.push({
+                type: 'streak',
+                seriesTitle,
+                recurringEventId: sid,
+                personName: p.displayName,
+                personEmail: p.email,
+                detail: `missed the last 3 of "${seriesTitle}"`,
+                attended: totalAttended,
+                instanceCount: n,
+              });
+              continue; // don't double-alert on threshold rule for the same person/series
+            }
+          }
+        }
+
+        // Threshold: rate of last 8 <50% AND prior 8 was ≥80%.
+        if (n >= 16) {
+          const last8 = t.slice(n - 8);
+          const prev8 = t.slice(n - 16, n - 8);
+          const lastRate = last8.filter(Boolean).length / 8;
+          const prevRate = prev8.filter(Boolean).length / 8;
+          if (lastRate < 0.5 && prevRate >= 0.8) {
+            alerts.push({
+              type: 'threshold',
+              seriesTitle,
+              recurringEventId: sid,
+              personName: p.displayName,
+              personEmail: p.email,
+              detail: `attendance dropped from ${Math.round(prevRate * 100)}% to ${Math.round(lastRate * 100)}% in "${seriesTitle}"`,
+              attended: totalAttended,
+              instanceCount: n,
+            });
+          }
+        }
+      }
+    }
+
+    return alerts;
+  } catch (err) {
+    log.error('firestore: evaluateSeriesAlerts failed', { domain, email, error: err.message });
+    return [];
+  }
+}
+
+// Atomically claim today's alert slot for a user. Returns true if claimed
+// (caller should evaluate + send), false if already claimed today (skip).
+// Uses Firestore create() which throws on existing doc — that throw IS the lock.
+async function claimDailyAlertSlot(domain, email) {
+  const today = new Date().toISOString().slice(0, 10);
+  const id = `${today}-${email.toLowerCase()}`;
+  const ref = tenantRef(domain).collection('alertsSent').doc(id);
+  try {
+    await ref.create({
+      email: email.toLowerCase(),
+      domain,
+      claimedAt: FieldValue.serverTimestamp(),
+    });
+    return { claimed: true, ref };
+  } catch (err) {
+    // gRPC code 6 = ALREADY_EXISTS — expected race / replay
+    if (err.code === 6) return { claimed: false };
+    log.warn('firestore: claimDailyAlertSlot failed', { domain, email, error: err.message });
+    return { claimed: false };
+  }
+}
+
+// Update the alertsSent doc with the email payload after a successful send.
+// Best-effort; never throws into the caller.
+async function recordAlertsSent(ref, alerts) {
+  try {
+    await ref.set({
+      alertCount: alerts.length,
+      alerts,
+      emailSentAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+  } catch (err) {
+    log.warn('firestore: recordAlertsSent failed', { error: err.message });
+  }
+}
+
 // ── Participant history (for the click-to-profile modal) ──
 // `key` is either an email (preferred) or `name:<displayName>` when the
 // participant never had an email captured. Returns every meeting in the
@@ -1997,6 +2173,7 @@ module.exports = {
   getUserActivationStatus, countUserExports, isExistingUserAnywhere, countAllUsers,
   getUserMeetingHistory,
   getUserMeetingSeries,
+  evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent,
   getParticipantHistory, setParticipantNote, getParticipantNote,
   getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted,
   getUserDetail, setAdminNote, searchAdminNotes,

@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport } = require('../services/firestore');
-const { sendAdminEmail, sendWeeklySelfReport } = require('../lib/notifications');
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, logEvent } = require('../services/firestore');
+const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail } = require('../lib/notifications');
 
 const SUPER_ADMIN_EMAIL = 'derekgallardo01@gmail.com';
 const MARKETPLACE_REVIEW_URL = 'https://workspace.google.com/marketplace/app/attendance_tracker/829771833968';
@@ -228,6 +228,63 @@ router.post('/admin/weekly-report', async (req, res) => {
   } catch (err) {
     log.error('admin: weekly-report send failed', { error: err.message });
     res.status(500).json({ error: err.message || 'Failed' });
+  }
+});
+
+// POST /api/admin/check-alerts — Daily series-attendance alert sweep
+// Auth: super-admin OR x-scheduler-secret header matching SCHEDULER_SECRET env
+// var. Designed to be called once/day by Cloud Scheduler. Idempotent via
+// per-user daily slot — safe to retry on transient failures.
+router.post('/admin/check-alerts', async (req, res) => {
+  const schedulerSecret = process.env.SCHEDULER_SECRET;
+  const hasSchedulerToken = !!schedulerSecret && req.headers['x-scheduler-secret'] === schedulerSecret;
+  if (req.user?.email !== SUPER_ADMIN_EMAIL && !hasSchedulerToken) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  try {
+    const users = await getAllUsersAcrossTenants();
+    let usersChecked = 0;
+    let usersAlerted = 0;
+    let usersSkipped = 0;
+    let totalAlerts = 0;
+    const errors = [];
+
+    // Sequential to keep memory/quota predictable. Per-user work is small.
+    for (const user of users) {
+      if (!user?.email || !user?.domain) continue;
+      usersChecked++;
+      try {
+        const claim = await claimDailyAlertSlot(user.domain, user.email);
+        if (!claim.claimed) { usersSkipped++; continue; }
+
+        const alerts = await evaluateSeriesAlerts(user.domain, user.email);
+        if (alerts.length === 0) continue; // claim spent, but nothing to send
+
+        await sendSeriesAlertEmail({
+          to: user.email,
+          displayName: user.displayName || null,
+          alerts,
+        });
+        await recordAlertsSent(claim.ref, alerts);
+
+        logEvent(user.domain, {
+          email: user.email,
+          type: 'series_alert_fired',
+          meta: { alertCount: alerts.length, types: alerts.map(a => a.type) },
+        });
+
+        usersAlerted++;
+        totalAlerts += alerts.length;
+      } catch (e) {
+        log.warn('admin: check-alerts per-user failed', { email: user.email, error: e.message });
+        errors.push({ email: user.email, error: e.message });
+      }
+    }
+
+    res.json({ usersChecked, usersAlerted, usersSkipped, totalAlerts, errors });
+  } catch (err) {
+    log.error('admin: check-alerts failed', { error: err.message });
+    res.status(500).json({ error: 'Failed to check alerts' });
   }
 });
 

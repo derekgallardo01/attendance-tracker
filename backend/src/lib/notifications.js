@@ -231,4 +231,70 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
   }
 }
 
-module.exports = { sendSignupWebhook, sendAdminEmail, sendWeeklySelfReport, sendExportNotification };
+// Daily series attendance alert. Batched: one email per user per day,
+// listing every triggered rule across all their series. The point is to
+// give the user a reason to come back to the product — so the CTA is a
+// "View series →" link, not a static report.
+async function sendSeriesAlertEmail({ to, displayName, alerts }) {
+  const transporter = getTransporter();
+  if (!transporter) return { skipped: 'SMTP not configured' };
+  if (!alerts?.length) return { skipped: 'no alerts' };
+  const sender = process.env.GMAIL_USER;
+
+  const subject = alerts.length === 1
+    ? `Attendance alert: ${alerts[0].personName || alerts[0].personEmail || 'Someone'} ${alerts[0].detail}`
+    : `${alerts.length} attendance alerts from your recurring meetings`;
+
+  const greeting = displayName ? `Hi ${escape(displayName.split(' ')[0])},` : 'Hi,';
+  const leadHtml = alerts.length === 1
+    ? `There's an attendance change in one of your recurring meetings:`
+    : `There are ${alerts.length} attendance changes across your recurring meetings:`;
+
+  const itemHtml = alerts.map(a => `
+    <li style="margin-bottom:12px">
+      <strong>${escape(a.personName || a.personEmail || 'Someone')}</strong> ${escape(a.detail)}.
+      <div style="color:#666;font-size:12px;margin-top:2px">${a.attended} of ${a.instanceCount} instances attended overall</div>
+    </li>
+  `).join('');
+
+  const html = `
+    <div style="font-family:sans-serif;max-width:560px;color:#111;font-size:14px;line-height:1.5">
+      <p>${greeting}</p>
+      <p>${leadHtml}</p>
+      <ul style="padding-left:18px;margin:14px 0">${itemHtml}</ul>
+      <p style="margin-top:20px"><a href="https://attendancetracker.dev/history.html" style="display:inline-block;background:#1f6feb;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600">View series →</a></p>
+      <p style="color:#666;font-size:12px;margin-top:24px">
+        You're getting this because you tracked recurring meetings with Attendance Tracker.
+        Alerts run once per day if there's something worth flagging — no email if there's nothing new.
+      </p>
+    </div>
+  `;
+  const text = [
+    displayName ? `Hi ${displayName.split(' ')[0]},` : 'Hi,',
+    '',
+    alerts.length === 1
+      ? "There's an attendance change in one of your recurring meetings:"
+      : `There are ${alerts.length} attendance changes across your recurring meetings:`,
+    '',
+    ...alerts.map(a => `  - ${a.personName || a.personEmail || 'Someone'} ${a.detail}. (${a.attended}/${a.instanceCount})`),
+    '',
+    'View series: https://attendancetracker.dev/history.html',
+  ].join('\n');
+
+  try {
+    const info = await transporter.sendMail({
+      from: `"Attendance Tracker" <${sender}>`,
+      to,
+      subject,
+      text,
+      html,
+    });
+    log.info('series alert email sent', { to, alertCount: alerts.length });
+    return { sent: true, messageId: info.messageId };
+  } catch (err) {
+    log.warn('series alert email failed', { to, error: err.message });
+    return { sent: false, error: err.message };
+  }
+}
+
+module.exports = { sendSignupWebhook, sendAdminEmail, sendWeeklySelfReport, sendExportNotification, sendSeriesAlertEmail };
