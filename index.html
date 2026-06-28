@@ -2495,14 +2495,23 @@ function openMatchModal(attendees, emailMap) {
     rowsEl.appendChild(row);
   }
 
-  // Show unmatched attendees
+  // Show unmatched calendar attendees with an Excused checkbox per row.
+  // Backend marks them "Absent (excused)" only if they actually end up as
+  // no-shows after the matching, so a stale check is harmless.
   const matchedEmails = new Set(Object.values(emailMap));
   const unmatched = attendees.filter(a => !matchedEmails.has(a.email));
   const unmatchedSection = document.getElementById('unmatched-section');
   if (unmatched.length > 0) {
     unmatchedSection.style.display = 'block';
     document.getElementById('unmatched-list').innerHTML = unmatched.map(a =>
-      `<div class="unmatched-attendee">${escHtml(a.displayName)} — ${escHtml(a.email)}</div>`
+      `<label class="unmatched-attendee" style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:6px 8px;border-radius:6px">
+         <input type="checkbox" class="excused-checkbox" data-email="${escHtml(a.email)}" style="width:15px;height:15px;cursor:pointer;flex-shrink:0" />
+         <div style="flex:1;min-width:0;overflow:hidden">
+           <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(a.displayName)}</div>
+           <div style="font-size:.7rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(a.email)}</div>
+         </div>
+         <span style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;flex-shrink:0">Excused</span>
+       </label>`
     ).join('');
   } else {
     unmatchedSection.style.display = 'none';
@@ -2556,8 +2565,13 @@ async function confirmMatchAndExport() {
       emailMap[participant] = sel.value;
     }
   }
+  // Collect the "Excused" checkboxes — these emails get tagged as
+  // "Absent (excused)" in the sheet if they're no-shows after matching.
+  const excusedEmails = [...document.querySelectorAll('.excused-checkbox:checked')]
+    .map(c => c.dataset.email)
+    .filter(Boolean);
   closeMatchModal();
-  await doExportToSheets(emailMap, state.calendarAttendees || []);
+  await doExportToSheets(emailMap, state.calendarAttendees || [], { excusedEmails });
 }
 
 async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
@@ -2577,6 +2591,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     sendEmail: !!opts.sendEmail,
     autoExport: !!opts.autoExport,
     recurringEventId: state._recurringEventId || null,
+    excusedEmails: Array.isArray(opts.excusedEmails) ? opts.excusedEmails : [],
     calendarAttendees,
     participants: [...state.participants.values()].map(p => {
       // Use earliest known join time (API or frontend-tracked)

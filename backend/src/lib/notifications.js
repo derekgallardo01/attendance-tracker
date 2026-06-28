@@ -193,6 +193,7 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
   const statusColor = (s) => {
     if (s === 'Present') return '#16a34a';
     if (s === 'Left') return '#d97706';
+    if (s === 'Excused') return '#6b7280'; // muted gray — excused isn't a problem
     return '#dc2626';
   };
   const fmtDur = (m) => !m ? '—' : (m < 60 ? `${m}m` : `${Math.floor(m / 60)}h ${m % 60}m`);

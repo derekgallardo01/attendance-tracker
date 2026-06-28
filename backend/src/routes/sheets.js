@@ -3,7 +3,7 @@ const { google } = require('googleapis');
 const { makeJWT, makeUserClient } = require('../services/googleAuth');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { persistExport, getUserSheetId, setUserSheetId, countUserExports } = require('../services/firestore');
+const { persistExport, getUserSheetId, setUserSheetId, countUserExports, getMeetingExcusedEmails, addMeetingExcusedEmails } = require('../services/firestore');
 const { sendExportNotification } = require('../lib/notifications');
 
 const router = Router();
@@ -35,7 +35,7 @@ function fmtRsvp(status) {
 }
 
 router.post('/save-to-sheets', async (req, res) => {
-  const { meetingTitle, tabName: clientTabName, exportedAt, participants, calendarAttendees = [], meetingStartTime, meetingType, eventStart, eventEnd, conferenceId, timezone, sendEmail, autoExport, recurringEventId } = req.body;
+  const { meetingTitle, tabName: clientTabName, exportedAt, participants, calendarAttendees = [], meetingStartTime, meetingType, eventStart, eventEnd, conferenceId, timezone, sendEmail, autoExport, recurringEventId, excusedEmails: excusedFromClient = [] } = req.body;
   if (!participants?.length) return res.status(400).json({ error: 'participants array is required' });
 
   try {
@@ -113,6 +113,16 @@ router.post('/save-to-sheets', async (req, res) => {
         return res.status(400).json({ error: 'Sign in required to export (no shared sheet configured)' });
       }
     }
+
+    // Load the union of previously-tagged and just-checked excused emails so
+    // the sheet shows "Absent (excused)" consistently across re-exports.
+    // Cheap single-doc read; on no auth (legacy shared-sheet path) we skip.
+    const domain = req.user?.domain || 'default';
+    const persistedExcused = req.user ? await getMeetingExcusedEmails(domain, conferenceId) : [];
+    const excusedSet = new Set([
+      ...persistedExcused,
+      ...(excusedFromClient || []).map(e => (e || '').toLowerCase()),
+    ]);
 
     let tabName = sanitizeTabName(clientTabName || `${meetingTitle || 'Meeting'} ${new Date(exportedAt).toISOString()}`);
 
@@ -233,7 +243,10 @@ router.post('/save-to-sheets', async (req, res) => {
         if (attendedNames.has(aName)) return false;
         return true;
       })
-      .map(a => [sanitizeCell(a.displayName), sanitizeCell(a.email), fmtRsvp(a.status), '', '', '', '', '0%', 0, 'Absent']);
+      .map(a => {
+        const status = excusedSet.has(a.email.toLowerCase()) ? 'Absent (excused)' : 'Absent';
+        return [sanitizeCell(a.displayName), sanitizeCell(a.email), fmtRsvp(a.status), '', '', '', '', '0%', 0, status];
+      });
 
     const allRows = [...rows, ...noShows];
 
@@ -284,7 +297,6 @@ router.post('/save-to-sheets', async (req, res) => {
 
     // First-export detection — drives the in-app celebration moment.
     // Check the event log before persisting this one.
-    const domain = req.user?.domain || 'default';
     const isFirstExport = req.user?.email
       ? (await countUserExports(domain, req.user.email)) === 0
       : false;
@@ -303,6 +315,13 @@ router.post('/save-to-sheets', async (req, res) => {
       recurringEventId: recurringEventId || null,
       conferenceId: conferenceId || null,
     });
+
+    // Fire-and-forget: persist newly-checked excused emails to the meeting doc
+    // so future re-exports remember the tagging without the user re-checking.
+    // arrayUnion handles concurrent writes from parallel exports.
+    if (req.user && excusedFromClient.length > 0 && conferenceId) {
+      addMeetingExcusedEmails(domain, conferenceId, excusedFromClient);
+    }
 
     // Fire-and-forget: email the organizer the sheet link. Only when explicitly
     // requested by the client (auto-export flow) — manual exports get the
@@ -329,7 +348,12 @@ router.post('/save-to-sheets', async (req, res) => {
           if (attendedNames.has(aName)) return false;
           return true;
         })
-        .map(a => ({ displayName: a.displayName, email: a.email, status: 'Absent', durationMin: 0 }));
+        .map(a => ({
+          displayName: a.displayName,
+          email: a.email,
+          status: excusedSet.has(a.email.toLowerCase()) ? 'Excused' : 'Absent',
+          durationMin: 0,
+        }));
       const digestParticipants = [...digestPresent, ...digestAbsent].slice(0, 25);
       const digestOverflow = (digestPresent.length + digestAbsent.length) - digestParticipants.length;
 

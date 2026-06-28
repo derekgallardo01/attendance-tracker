@@ -155,6 +155,35 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
   }
 }
 
+// Read the persisted "excused absentees" list for a meeting. Returns lowercased
+// emails. Empty when the meeting doesn't exist yet or hasn't been tagged.
+async function getMeetingExcusedEmails(domain, conferenceId) {
+  if (!conferenceId) return [];
+  try {
+    const doc = await tenantRef(domain).collection('meetings').doc(conferenceId).get();
+    if (!doc.exists) return [];
+    return (doc.data().excusedEmails || []).map(e => (e || '').toLowerCase());
+  } catch (err) {
+    log.warn('firestore: getMeetingExcusedEmails failed', { domain, conferenceId, error: err.message });
+    return [];
+  }
+}
+
+// Append emails to a meeting's excusedEmails set. Uses arrayUnion so concurrent
+// writes don't clobber each other, and lowercases on input so the set is a
+// proper case-insensitive union.
+async function addMeetingExcusedEmails(domain, conferenceId, emails) {
+  if (!conferenceId || !emails?.length) return;
+  try {
+    await tenantRef(domain).collection('meetings').doc(conferenceId).set({
+      excusedEmails: FieldValue.arrayUnion(...emails.map(e => (e || '').toLowerCase()).filter(Boolean)),
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+  } catch (err) {
+    log.warn('firestore: addMeetingExcusedEmails failed', { domain, conferenceId, error: err.message });
+  }
+}
+
 async function persistCalendarData(domain, meetingCode, eventTitle, attendees, extras = {}) {
   try {
     const now = FieldValue.serverTimestamp();
@@ -2167,6 +2196,7 @@ async function deleteUser(domain, email) {
 module.exports = {
   getTenantConfig, upsertTenantConfig,
   persistAttendance, persistCalendarData, persistExport,
+  getMeetingExcusedEmails, addMeetingExcusedEmails,
   getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens,
   setUserAcquisitionSource,
   logEvent,
