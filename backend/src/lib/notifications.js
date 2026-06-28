@@ -530,4 +530,120 @@ async function sendForgottenMeetingEmail({ to, displayName, seriesTitle, recurri
   }
 }
 
-module.exports = { sendSignupWebhook, sendAdminEmail, sendWeeklySelfReport, sendExportNotification, sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendForgottenMeetingEmail };
+// ── Slack post-meeting digest ──
+// Posts a Block Kit message to a user-configured Slack incoming webhook
+// after every export. Fire-and-forget: failures are logged but don't break
+// the export flow. The webhook URL is a bearer-token secret in the URL
+// path, so we never log the full URL — only the masked form.
+
+// Returns just the host+last4 of the secret so log lines are debuggable
+// without leaking the webhook. Mirrors the frontend maskWebhookUrl helper.
+function maskSlackWebhook(url) {
+  if (!url) return '(none)';
+  const m = url.match(/^https:\/\/hooks\.slack\.com\/services\/[^/]+\/[^/]+\/(.+)$/);
+  if (!m) return '(invalid)';
+  const tail = m[1].length > 4 ? m[1].slice(-4) : m[1];
+  return `hooks.slack.com/...${tail}`;
+}
+
+// Build the Block Kit payload. Pulled out for testability.
+function buildSlackDigestBlocks({ meetingTitle, totalAttended, totalInvited, participants, sheetUrl, durationMin, startTime }) {
+  const title = meetingTitle || 'Google Meet';
+  const attendanceSummary = totalInvited
+    ? `*${totalAttended} of ${totalInvited} attended*`
+    : `*${totalAttended} attended*`;
+  const durStr = durationMin ? (durationMin < 60 ? `${durationMin}m` : `${Math.floor(durationMin / 60)}h ${durationMin % 60}m`) : '';
+  const timeStr = startTime ? new Date(startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
+  const metaLine = [attendanceSummary, durStr, timeStr ? `started ${timeStr}` : ''].filter(Boolean).join(' · ');
+
+  // Bucket participants by status. Cap each bucket at 8 names + overflow.
+  const cap = 8;
+  const present = (participants || []).filter(p => p.status === 'Present').map(p => p.displayName || p.email || '?');
+  const left = (participants || []).filter(p => p.status === 'Left').map(p => p.displayName || p.email || '?');
+  const absent = (participants || []).filter(p => p.status === 'Absent' || p.status === 'Excused').map(p => `${p.displayName || p.email || '?'}${p.status === 'Excused' ? ' (excused)' : ''}`);
+
+  const formatBucket = (names, total) => {
+    if (names.length === 0) return '_none_';
+    const shown = names.slice(0, cap).join(', ');
+    return total > cap ? `${shown}, +${total - cap} more` : shown;
+  };
+
+  const fields = [];
+  if (present.length) fields.push({ type: 'mrkdwn', text: `*✅ Present (${present.length})*\n${formatBucket(present, present.length)}` });
+  if (left.length) fields.push({ type: 'mrkdwn', text: `*🟡 Left early (${left.length})*\n${formatBucket(left, left.length)}` });
+  if (absent.length) fields.push({ type: 'mrkdwn', text: `*❌ Absent (${absent.length})*\n${formatBucket(absent, absent.length)}` });
+
+  const blocks = [
+    { type: 'header', text: { type: 'plain_text', text: `📊 ${title}`.slice(0, 150) } },
+    { type: 'section', text: { type: 'mrkdwn', text: metaLine } },
+  ];
+  if (fields.length) blocks.push({ type: 'section', fields });
+  if (sheetUrl) {
+    blocks.push({
+      type: 'actions',
+      elements: [{ type: 'button', text: { type: 'plain_text', text: 'Open sheet' }, url: sheetUrl }],
+    });
+  }
+  return blocks;
+}
+
+// Fallback plain-text body for Slack clients that don't render blocks.
+function buildSlackFallbackText({ meetingTitle, totalAttended, totalInvited, sheetUrl }) {
+  const title = meetingTitle || 'Google Meet';
+  const summary = totalInvited ? `${totalAttended} of ${totalInvited} attended` : `${totalAttended} attended`;
+  return `📊 ${title} — ${summary}${sheetUrl ? '\nOpen sheet: ' + sheetUrl : ''}`;
+}
+
+async function sendSlackDigest({ webhookUrl, meetingTitle, totalAttended, totalInvited, participants, sheetUrl, durationMin, startTime }) {
+  if (!webhookUrl) return { sent: false, reason: 'no_webhook' };
+  const blocks = buildSlackDigestBlocks({ meetingTitle, totalAttended, totalInvited, participants, sheetUrl, durationMin, startTime });
+  const text = buildSlackFallbackText({ meetingTitle, totalAttended, totalInvited, sheetUrl });
+  const body = JSON.stringify({ text, blocks });
+
+  try {
+    const res = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+    });
+    if (!res.ok) {
+      const respText = await res.text().catch(() => '');
+      log.warn('slack digest send failed', { webhook: maskSlackWebhook(webhookUrl), status: res.status, response: respText.slice(0, 200) });
+      return { sent: false, status: res.status };
+    }
+    log.info('slack digest sent', { webhook: maskSlackWebhook(webhookUrl), meetingTitle });
+    return { sent: true };
+  } catch (err) {
+    log.warn('slack digest exception', { webhook: maskSlackWebhook(webhookUrl), error: err.message });
+    return { sent: false, error: err.message };
+  }
+}
+
+// Test-only ping used by the settings modal's "Test" button to verify a
+// webhook is reachable + posts correctly. Same Block Kit machinery but
+// minimal payload.
+async function sendSlackTestPing({ webhookUrl }) {
+  if (!webhookUrl) return { sent: false, reason: 'no_webhook' };
+  try {
+    const res = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: '✅ Attendance Tracker is connected. Future meeting digests will land in this channel.',
+      }),
+    });
+    if (!res.ok) {
+      const respText = await res.text().catch(() => '');
+      return { sent: false, status: res.status, response: respText.slice(0, 200) };
+    }
+    return { sent: true };
+  } catch (err) {
+    return { sent: false, error: err.message };
+  }
+}
+
+module.exports = {
+  sendSignupWebhook, sendAdminEmail, sendWeeklySelfReport, sendExportNotification,
+  sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendForgottenMeetingEmail,
+  sendSlackDigest, sendSlackTestPing, buildSlackDigestBlocks, buildSlackFallbackText, maskSlackWebhook,
+};

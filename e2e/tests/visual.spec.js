@@ -101,4 +101,28 @@ test.describe('Visual regression — public pages', () => {
       animations: 'disabled',
     });
   });
+
+  test('settings modal — opened state', async ({ page }) => {
+    // The modal lives inside #addon-ui (the signed-in side panel). On a
+    // fresh visit the landing page shows and addon-ui is display:none, so
+    // we have to unhide both. Tests modal MARKUP, not the open-flow.
+    await page.goto('/');
+    await page.locator('h2', { hasText: /Track Google Meet attendance/i }).waitFor({ timeout: 15_000 });
+    await page.waitForLoadState('networkidle');
+    await page.evaluate(() => {
+      const landing = document.getElementById('landing-page');
+      const addon = document.getElementById('addon-ui');
+      const modal = document.getElementById('settings-modal');
+      if (landing) landing.style.display = 'none';
+      if (addon) addon.style.display = 'block';
+      if (modal) modal.style.display = 'flex';
+    });
+    await page.locator('#settings-modal').waitFor({ state: 'visible' });
+    // Screenshot just the modal-box so we don't have to baseline the
+    // entire addon-ui underneath (which has dynamic empty-state content).
+    await expect(page.locator('#settings-modal .modal-box').first()).toHaveScreenshot('settings-modal-open.png', {
+      maxDiffPixelRatio: 0.02,
+      animations: 'disabled',
+    });
+  });
 });

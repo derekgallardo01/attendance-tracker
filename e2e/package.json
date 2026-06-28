@@ -5,10 +5,11 @@
   "private": true,
   "scripts": {
     "test": "playwright test",
+    "test:ci": "playwright test --grep-invert \"Visual regression\"",
     "test:headed": "playwright test --headed",
     "test:debug": "PWDEBUG=1 playwright test",
-    "test:visual": "playwright test tests/visual.spec.js",
-    "update-snapshots": "playwright test tests/visual.spec.js --update-snapshots",
+    "test:visual": "playwright test --grep \"Visual regression\"",
+    "update-snapshots": "playwright test --grep \"Visual regression\" --update-snapshots",
     "report": "playwright show-report"
   },
   "devDependencies": {

@@ -3,8 +3,8 @@ const { google } = require('googleapis');
 const { makeJWT, makeUserClient } = require('../services/googleAuth');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { persistExport, getUserSheetId, setUserSheetId, countUserExports, getMeetingExcusedEmails, addMeetingExcusedEmails } = require('../services/firestore');
-const { sendExportNotification } = require('../lib/notifications');
+const { persistExport, getUserSheetId, setUserSheetId, countUserExports, getMeetingExcusedEmails, addMeetingExcusedEmails, getUserSettings } = require('../services/firestore');
+const { sendExportNotification, sendSlackDigest } = require('../lib/notifications');
 
 const router = Router();
 
@@ -321,6 +321,50 @@ router.post('/save-to-sheets', async (req, res) => {
     // arrayUnion handles concurrent writes from parallel exports.
     if (req.user && excusedFromClient.length > 0 && conferenceId) {
       addMeetingExcusedEmails(domain, conferenceId, excusedFromClient);
+    }
+
+    // Fire-and-forget: Slack post-meeting digest if the user has a webhook
+    // configured. Independent of the email send (sendEmail flag) — Slack
+    // fires on EVERY export, manual or auto, because the user already opted
+    // in by saving the webhook. Failure is logged, doesn't affect the export.
+    if (req.user?.email) {
+      (async () => {
+        try {
+          const settings = await getUserSettings(domain, req.user.email);
+          if (!settings.slackWebhookUrl) return;
+          await sendSlackDigest({
+            webhookUrl: settings.slackWebhookUrl,
+            meetingTitle: meetingTitle || 'Google Meet',
+            totalAttended,
+            totalInvited,
+            participants: (req.body.participants || []).map(p => {
+              const durMin = p.joinTimeISO
+                ? Math.round((new Date(p.leaveTimeISO || exportedAt) - new Date(p.joinTimeISO)) / 60000)
+                : 0;
+              return {
+                displayName: p.displayName,
+                email: p.email || '',
+                status: p.present ? 'Present' : (p.leaveTimeISO ? 'Left' : 'Present'),
+                durationMin: durMin,
+              };
+            }).concat(
+              calendarAttendees
+                .filter(a => !attendedEmails.has(a.email.toLowerCase()) && !attendedNames.has((a.displayName || '').toLowerCase().trim()))
+                .map(a => ({
+                  displayName: a.displayName,
+                  email: a.email,
+                  status: excusedSet.has(a.email.toLowerCase()) ? 'Excused' : 'Absent',
+                  durationMin: 0,
+                }))
+            ),
+            sheetUrl,
+            durationMin: meetDurationMin,
+            startTime: meetingStartTime || exportedAt,
+          });
+        } catch (err) {
+          log.warn('slack digest post-export failed', { error: err.message, email: req.user.email });
+        }
+      })();
     }
 
     // Fire-and-forget: email the organizer the sheet link. Only when explicitly

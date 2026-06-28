@@ -179,11 +179,39 @@
     return emailMatch || nameMatch || soloMatch;
   }
 
+  // ─── Slack webhook helpers ───
+  // Slack incoming-webhook URLs have a fixed prefix + 3 path segments
+  // separated by /. The team/bot/token segments are bearer-secret-ish, so
+  // we mask them in any UI surface. Pure: tested in utils.test.js.
+  const SLACK_WEBHOOK_PREFIX = 'https://hooks.slack.com/services/';
+
+  function isValidSlackWebhook(url) {
+    if (typeof url !== 'string') return false;
+    if (!url.startsWith(SLACK_WEBHOOK_PREFIX)) return false;
+    const rest = url.slice(SLACK_WEBHOOK_PREFIX.length);
+    const parts = rest.split('/');
+    // Expect 3 non-empty path segments (T*/B*/secret)
+    return parts.length === 3 && parts.every(p => p.length > 0);
+  }
+
+  function maskWebhookUrl(url) {
+    if (!isValidSlackWebhook(url)) return '';
+    const rest = url.slice(SLACK_WEBHOOK_PREFIX.length);
+    const [t, b, secret] = rest.split('/');
+    // Show first 2-3 chars of each segment + last 4 of the secret.
+    // Enough that the user recognizes their own URL without exposing it.
+    const maskedT = t.slice(0, 2) + '***';
+    const maskedB = b.slice(0, 2) + '***';
+    const maskedSecret = '***' + (secret.length > 4 ? secret.slice(-4) : secret);
+    return `${SLACK_WEBHOOK_PREFIX}${maskedT}/${maskedB}/${maskedSecret}`;
+  }
+
   const api = {
     escHtml, formatRelative, fmtTime, fmtDur, fmtDurMs, isoFmt, datestamp,
     latenessMin, avatarColor, participantKey,
     autoMatchAttendees, participantTotalMs, isSelfParticipant,
-    LATE_THRESHOLD_MIN, AVATAR_PALETTE,
+    isValidSlackWebhook, maskWebhookUrl,
+    LATE_THRESHOLD_MIN, AVATAR_PALETTE, SLACK_WEBHOOK_PREFIX,
   };
 
   root.AttUtils = api;

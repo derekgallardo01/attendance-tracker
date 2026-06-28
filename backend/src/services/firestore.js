@@ -383,6 +383,36 @@ async function setUserAcquisitionSource(domain, email, { source, detail }) {
   }
 }
 
+// ── Per-user settings (Slack webhook, future notification prefs, etc.) ──
+// Lives under tenants/{domain}/userSettings/{email} so it's tenant-scoped
+// like the rest of user data. Separate doc from the main user record
+// because settings change shape over time and we don't want to bloat
+// the user doc (which is read on every auth middleware pass).
+async function getUserSettings(domain, email) {
+  try {
+    const doc = await tenantRef(domain).collection('userSettings').doc(email.toLowerCase()).get();
+    return doc.exists ? doc.data() : {};
+  } catch (err) {
+    log.warn('firestore: getUserSettings failed', { domain, email, error: err.message });
+    return {};
+  }
+}
+
+// Merge a settings patch onto the user's settings doc. Caller is responsible
+// for validating the patch (e.g. URL prefix check) — this just persists.
+async function updateUserSettings(domain, email, patch) {
+  try {
+    await tenantRef(domain).collection('userSettings').doc(email.toLowerCase()).set({
+      ...patch,
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+    return { saved: true };
+  } catch (err) {
+    log.error('firestore: updateUserSettings failed', { domain, email, error: err.message });
+    throw err;
+  }
+}
+
 async function getUserSheetId(domain, email) {
   const user = await getUser(domain, email);
   return user?.sheetId || null;
@@ -2696,6 +2726,7 @@ module.exports = {
   persistAttendance, persistCalendarData, persistExport,
   getMeetingExcusedEmails, addMeetingExcusedEmails,
   getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens,
+  getUserSettings, updateUserSettings,
   setUserAcquisitionSource,
   logEvent,
   getUserActivationStatus, countUserExports, isExistingUserAnywhere, countAllUsers,

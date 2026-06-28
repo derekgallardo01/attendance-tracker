@@ -81,7 +81,13 @@ jobs:
 
       - name: Run smoke tests against live production
         if: steps.check_e2e.outputs.exists == 'true'
-        run: npm test
+        # Skip visual-regression specs in CI: Playwright snapshots are
+        # platform-specific (rendered pixels differ between Windows / Linux /
+        # macOS), so baselines committed from a Windows dev machine fail on
+        # the Linux runner. Visual regression runs locally only. The non-
+        # visual smokes (landing.spec, backend-api.spec) catch what matters
+        # for "did production deploy break."
+        run: npm test -- --grep-invert "Visual regression"
 
       - name: Upload Playwright report on failure
         if: failure() && steps.check_e2e.outputs.exists == 'true'

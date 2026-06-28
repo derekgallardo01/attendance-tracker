@@ -259,6 +259,63 @@ describe('isoFmt + datestamp', () => {
   });
 });
 
+describe('isValidSlackWebhook', () => {
+  test('accepts a well-formed webhook URL', () => {
+    expect(utils.isValidSlackWebhook('https://hooks.slack.com/services/T01ABC/B02DEF/secretToken123')).toBe(true);
+  });
+
+  test('rejects non-Slack URLs', () => {
+    expect(utils.isValidSlackWebhook('https://evil.example.com/webhook')).toBe(false);
+    expect(utils.isValidSlackWebhook('https://hooks.slack.com.evil.com/services/A/B/C')).toBe(false);
+  });
+
+  test('rejects http (not https)', () => {
+    expect(utils.isValidSlackWebhook('http://hooks.slack.com/services/T/B/x')).toBe(false);
+  });
+
+  test('rejects URLs with missing path segments', () => {
+    expect(utils.isValidSlackWebhook('https://hooks.slack.com/services/T01/B02')).toBe(false);
+    expect(utils.isValidSlackWebhook('https://hooks.slack.com/services/T01/B02/')).toBe(false);
+    expect(utils.isValidSlackWebhook('https://hooks.slack.com/services/')).toBe(false);
+  });
+
+  test('rejects null / undefined / non-string', () => {
+    expect(utils.isValidSlackWebhook(null)).toBe(false);
+    expect(utils.isValidSlackWebhook(undefined)).toBe(false);
+    expect(utils.isValidSlackWebhook(123)).toBe(false);
+    expect(utils.isValidSlackWebhook({})).toBe(false);
+  });
+
+  test('rejects extra path segments', () => {
+    expect(utils.isValidSlackWebhook('https://hooks.slack.com/services/T/B/x/extra')).toBe(false);
+  });
+});
+
+describe('maskWebhookUrl', () => {
+  test('returns empty string for invalid input', () => {
+    expect(utils.maskWebhookUrl('not a url')).toBe('');
+    expect(utils.maskWebhookUrl(null)).toBe('');
+    expect(utils.maskWebhookUrl('')).toBe('');
+  });
+
+  test('masks the team/bot/secret segments', () => {
+    const masked = utils.maskWebhookUrl('https://hooks.slack.com/services/T01ABC/B02DEF/superSecretToken1234');
+    expect(masked).toBe('https://hooks.slack.com/services/T0***/B0***/***1234');
+  });
+
+  test('shows enough to be recognizable but hides the secret', () => {
+    const masked = utils.maskWebhookUrl('https://hooks.slack.com/services/T01ABC/B02DEF/abcdefghij');
+    expect(masked).not.toContain('abcdefghij'); // full secret never appears
+    expect(masked).toContain('T0***'); // first 2 chars of team prefix shown
+    expect(masked).toContain('***ghij'); // last 4 of secret shown for recognizability
+  });
+
+  test('handles a short secret defensively', () => {
+    const masked = utils.maskWebhookUrl('https://hooks.slack.com/services/T1/B1/abc');
+    expect(masked).toContain('***abc');
+  });
+});
+
 describe('module exposure', () => {
   test('exposes window.AttUtils when loaded in browser env', () => {
     // Re-import in jsdom env — utils.js IIFE sets window.AttUtils
