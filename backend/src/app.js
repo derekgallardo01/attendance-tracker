@@ -36,7 +36,12 @@ app.use(helmet({
 }));
 
 app.use(express.json({ limit: '100kb' }));
-app.use(cors({ origin: CONFIG.allowedOrigins }));
+// credentials:true is required because navigator.sendBeacon (used by the
+// landing-page pageview beacon) auto-includes cookies for cross-origin
+// requests. Without this header on the preflight response the browser
+// drops the beacon silently and we lose visit telemetry. Origin is still
+// restricted to the allowedOrigins whitelist so nothing's been opened up.
+app.use(cors({ origin: CONFIG.allowedOrigins, credentials: true }));
 
 // Request correlation IDs
 app.use(requestId);
