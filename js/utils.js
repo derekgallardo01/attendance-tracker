@@ -104,9 +104,85 @@
     return 'name:' + (p?.displayName || 'Unknown');
   }
 
+  // ─── auto-match participants to calendar invitees ───
+  // Used by the calendar-match modal to pre-fill which Meet participant
+  // corresponds to which invited attendee. Strategy:
+  //   1. Exact full-name match (case-insensitive, trimmed)
+  //   2. Fall back to first-name match against an unused attendee email
+  // Returns: { emailMap: { participantDisplayName -> attendeeEmail },
+  //           unmatchedCount: number of participants with no match }
+  //
+  // Pure: takes both arrays as args instead of reading from state.
+  function autoMatchAttendees(participants, calendarAttendees) {
+    const emailMap = {};
+    const usedEmails = new Set();
+    const parts = Array.from(participants || []);
+    const attendees = calendarAttendees || [];
+    for (const p of parts) {
+      const pName = (p.displayName || '').toLowerCase().trim();
+      if (!pName) continue;
+      let match = attendees.find(a => (a.displayName || '').toLowerCase().trim() === pName);
+      if (!match) {
+        const pFirst = pName.split(' ')[0];
+        match = attendees.find(a =>
+          (a.displayName || '').toLowerCase().split(' ')[0] === pFirst && !usedEmails.has(a.email)
+        );
+      }
+      if (match) {
+        emailMap[p.displayName] = match.email;
+        usedEmails.add(match.email);
+      }
+    }
+    const unmatchedCount = parts.length - Object.keys(emailMap).length;
+    return { emailMap, unmatchedCount };
+  }
+
+  // ─── cumulative session time ───
+  // Past sessions sit in _accumulatedMs (added when they leave). If they're
+  // currently present, add the live elapsed since their current join.
+  // Pure: now is injectable for tests.
+  function participantTotalMs(p, now) {
+    if (!p) return 0;
+    const t = typeof now === 'number' ? now : Date.now();
+    const past = p._accumulatedMs || 0;
+    const join = p.joinTime instanceof Date ? p.joinTime.getTime()
+      : (p.joinTime ? new Date(p.joinTime).getTime() : null);
+    const active = p.present && join ? Math.max(0, t - join) : 0;
+    return past + active;
+  }
+
+  // ─── self-presence detection ───
+  // The Meet REST API has 2-5 min lag for new sessions, which means YOU as
+  // the organizer often show up as "Left" right after rejoining. This
+  // function decides whether a given participant record actually represents
+  // the signed-in user — if so, the merge logic forces them present.
+  //
+  // Three strategies tried in order:
+  //   1. emailMatch: incoming/stored email equals signed-in user's email
+  //   2. nameMatch: incoming displayName equals signed-in user's name
+  //   3. soloMatch: signed in + this is the only participant in the meeting
+  //
+  // Pure: takes the participant + the signed-in identity + crowd context
+  // as args, no state coupling.
+  function isSelfParticipant(p, ctx) {
+    if (!p || !ctx) return false;
+    const c = ctx;
+    const pEmail = ((p.email || p.existingEmail || '') + '').toLowerCase();
+    const selfEmail = (c.selfEmail || '').toLowerCase();
+    const emailMatch = !!(pEmail && selfEmail && pEmail === selfEmail);
+    const pName = ((p.displayName || '') + '').toLowerCase();
+    const selfName = (c.selfDisplayName || '').toLowerCase();
+    const nameMatch = !!(selfName && pName && pName === selfName);
+    const soloMatch = !!(c.signedIn
+      && (c.participantCount || 0) <= 1
+      && (c.incomingCount || 0) <= 1);
+    return emailMatch || nameMatch || soloMatch;
+  }
+
   const api = {
     escHtml, formatRelative, fmtTime, fmtDur, fmtDurMs, isoFmt, datestamp,
     latenessMin, avatarColor, participantKey,
+    autoMatchAttendees, participantTotalMs, isSelfParticipant,
     LATE_THRESHOLD_MIN, AVATAR_PALETTE,
   };
 

@@ -2134,18 +2134,22 @@ function mergeParticipants(incoming = []) {
       const existing = state.participants.get(key);
       const newSessions = p.sessions || existing.sessions;
 
-      // Self-user is ALWAYS present while viewing the side panel — skip all left-streak logic
-      // Strategy 1: Match by email (incoming or already stored on participant)
-      const pEmail = (p.email || existing.email || '').toLowerCase();
-      const emailMatch = pEmail && state._selfEmail && pEmail === state._selfEmail;
-      // Strategy 2: Match by display name from OAuth
-      const nameMatch = state._selfDisplayName && p.displayName?.toLowerCase() === state._selfDisplayName;
-      // Strategy 3: If signed in and only 1 participant, it must be the organizer
-      const soloMatch = state.signedIn && state.participants.size <= 1 && incoming.length <= 1;
-      const isSelf = !!(emailMatch || nameMatch || soloMatch);
+      // Self-user is ALWAYS present while viewing the side panel — skip all
+      // left-streak logic. The three-strategy detection (email / name / solo)
+      // lives in AttUtils.isSelfParticipant for testability.
+      const isSelf = AttUtils.isSelfParticipant(
+        { email: p.email, existingEmail: existing.email, displayName: p.displayName },
+        {
+          selfEmail: state._selfEmail,
+          selfDisplayName: state._selfDisplayName,
+          signedIn: state.signedIn,
+          participantCount: state.participants.size,
+          incomingCount: incoming.length,
+        }
+      );
 
       if (isSelf) {
-        console.log('[Attendance] Self-presence: keeping self as Present', { emailMatch, nameMatch, soloMatch });
+        console.log('[Attendance] Self-presence: keeping self as Present');
         if (!existing.present) changed = true;
         existing.present = true;
         existing._leftStreak = 0;
@@ -2302,9 +2306,7 @@ function renderList() {
     html += slice.map(p => {
       const initials = (p.displayName || '?').split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
       const joinStr  = p.joinTime ? fmtTime(p.joinTime) : '—';
-      const pastDur = p._accumulatedMs || 0;
-      const activeDur = p.present && p.joinTime ? (Date.now() - p.joinTime.getTime()) : 0;
-      const totalMs = pastDur + activeDur;
+      const totalMs = AttUtils.participantTotalMs(p);
       const durStr = totalMs > 0 ? fmtDurMs(totalMs) : (p.joinTime ? '< 1m' : '');
       const leaveStr = (!p.present && p.leaveTime) ? ' · Left ' + fmtTime(p.leaveTime) : '';
       const emailStr = p.email ? `<div class="participant-meta">${escHtml(p.email)}</div>` : '';
@@ -2562,25 +2564,10 @@ async function maybeAutoExportOnMeetingEnd() {
   }
 }
 
+// Thin wrapper — pure logic lives in AttUtils.autoMatchAttendees so it can
+// be unit-tested with synthetic participant lists.
 function autoMatchAttendees(attendees) {
-  const emailMap = {}; // displayName -> email
-  const usedEmails = new Set();
-
-  for (const p of state.participants.values()) {
-    const pName = p.displayName.toLowerCase().trim();
-    let match = attendees.find(a => a.displayName.toLowerCase().trim() === pName);
-    if (!match) {
-      const pFirst = pName.split(' ')[0];
-      match = attendees.find(a => a.displayName.toLowerCase().split(' ')[0] === pFirst && !usedEmails.has(a.email));
-    }
-    if (match) {
-      emailMap[p.displayName] = match.email;
-      usedEmails.add(match.email);
-    }
-  }
-
-  const unmatchedCount = state.participants.size - Object.keys(emailMap).length;
-  return { emailMap, unmatchedCount };
+  return AttUtils.autoMatchAttendees([...state.participants.values()], attendees);
 }
 
 function openMatchModal(attendees, emailMap) {
