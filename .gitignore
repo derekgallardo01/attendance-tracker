@@ -1,3 +1,5 @@
 meet-sa-key.json
 node_modules/
 .claude/
+backend/coverage/
+backend/.nyc_output/
