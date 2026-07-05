@@ -2738,7 +2738,7 @@ module.exports = {
   createShareLink, resolveShareLink, getSharedSeriesView,
   getParticipantHistory, setParticipantNote, getParticipantNote,
   getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted,
-  getUserDetail, setAdminNote, searchAdminNotes,
+  getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes,
   getAdvancedAnalytics,
   getWeeklySelfReport,
   appendConversation, setOutreachStatus,
