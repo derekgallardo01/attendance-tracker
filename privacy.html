@@ -16,37 +16,58 @@
 </head>
 <body>
   <h1>Privacy Policy</h1>
-  <p class="updated">Last updated: March 15, 2026</p>
+  <p class="updated">Last updated: July 5, 2026</p>
 
   <h2>Overview</h2>
-  <p>Attendance Tracker ("the App") is a Google Meet add-on that helps meeting organizers track participant attendance and export reports to Google Sheets. This policy describes how we collect, use, and protect your data.</p>
+  <p>Attendance Tracker ("the App") is a Google Meet add-on that helps meeting organizers track participant attendance, export reports to Google Sheets, and optionally receive post-meeting summaries via email and Slack. This policy describes how we collect, use, and protect your data.</p>
 
   <h2>Data We Collect</h2>
   <ul>
-    <li><strong>Google account information:</strong> Your name, email address, and Google Workspace domain (obtained via Google Sign-In).</li>
+    <li><strong>Google account information:</strong> Your name, email address, and Google account/Workspace domain (obtained via Google Sign-In).</li>
     <li><strong>Meeting data:</strong> Conference IDs, participant names, join/leave times, and session counts (obtained via the Google Meet REST API).</li>
-    <li><strong>Calendar data:</strong> Event titles and attendee lists for meetings you organize (obtained via the Google Calendar API).</li>
-    <li><strong>Authentication tokens:</strong> OAuth refresh tokens (encrypted at rest) to maintain your session.</li>
+    <li><strong>Calendar data:</strong> Event titles, start/end times, and attendee lists for meetings you match to Meet calls (obtained via the Google Calendar API).</li>
+    <li><strong>Authentication tokens:</strong> OAuth refresh tokens (encrypted at rest with AES-256-GCM) to maintain your session.</li>
+    <li><strong>User settings:</strong> If you configure a Slack incoming webhook URL for post-meeting digests, that URL is stored on your user settings document.</li>
+    <li><strong>Product analytics:</strong> Anonymous pageview beacons on the marketing site (page path, referrer, UTM parameters, viewport width, user agent, IP). Not used for cross-site tracking.</li>
+    <li><strong>Feedback submissions:</strong> If you use the in-product feedback widget, we store the message body, any email you provided, and context about where you were in the app.</li>
+    <li><strong>Acquisition attribution:</strong> First-touch UTM parameters and referrer URL captured when you first visit the site or install the add-on, so we can understand how users find us.</li>
+    <li><strong>Public share links:</strong> If you generate a share link for a recurring meeting series, the token, associated series identifier, and view count are stored. Share links expire after 30 days.</li>
   </ul>
 
   <h2>How We Use Your Data</h2>
   <ul>
     <li>Display real-time attendance in the Meet side panel.</li>
-    <li>Export attendance reports to Google Sheets in your Google Drive.</li>
+    <li>Auto-export attendance reports to Google Sheets in your Google Drive when a meeting ends.</li>
+    <li>Send you a post-meeting digest email with the sheet link and attendance summary.</li>
+    <li>Post a post-meeting summary to your Slack channel (only if you've configured a Slack webhook).</li>
     <li>Match meeting participants to calendar invitees for RSVP status and no-show tracking.</li>
+    <li>Roll up attendance across recurring meeting series and email you daily alerts when someone's attendance pattern changes significantly.</li>
+    <li>Send occasional re-engagement emails if you signed up and stopped using the product.</li>
   </ul>
-  <p>We do <strong>not</strong> sell, share, or transfer your data to third parties. We do <strong>not</strong> use your data for advertising or profiling.</p>
+  <p>We do <strong>not</strong> sell, share, or transfer your data to third parties beyond the sub-processors listed below. We do <strong>not</strong> use your data for advertising or profiling.</p>
+
+  <h2>Sub-processors</h2>
+  <p>We use the following third-party services to operate the App:</p>
+  <ul>
+    <li><strong>Google Cloud Platform</strong> (Firestore, Cloud Run, Cloud Scheduler, Secret Manager) — primary data storage and application hosting, US <code>us-central1</code> region.</li>
+    <li><strong>Resend</strong> (<a href="https://resend.com/legal/privacy-policy">privacy policy</a>) — transactional email delivery. Recipient email addresses and message content pass through Resend to be delivered. Delivery metadata (opens, bounces) is retained per Resend's policy.</li>
+    <li><strong>Cloudflare</strong> (<a href="https://www.cloudflare.com/privacypolicy/">privacy policy</a>) — CDN and DNS proxy for the marketing site. HTTP request metadata (IP address, user agent, requested URL) passes through Cloudflare's edge network.</li>
+    <li><strong>Slack Technologies</strong> — only if you configure a Slack webhook. Post-meeting summaries are POSTed to the webhook URL you provide, which is under your control.</li>
+    <li><strong>Sentry</strong> — application error tracking. Stack traces and error metadata may include limited request context; personal data is not intentionally captured.</li>
+  </ul>
 
   <h2>Data Storage</h2>
   <ul>
-    <li>Meeting and user data is stored in Google Cloud Firestore, isolated by your organization's domain.</li>
+    <li>Meeting and user data is stored in Google Cloud Firestore, isolated by your account's domain (personal Gmail users share the <code>gmail.com</code> tenant scope).</li>
     <li>Refresh tokens are encrypted using AES-256-GCM before storage.</li>
-    <li>All data is hosted on Google Cloud Platform in the US (us-central1 region).</li>
+    <li>All primary data is hosted on Google Cloud Platform in the US (us-central1 region).</li>
   </ul>
 
   <h2>Data Retention</h2>
   <ul>
     <li>Meeting attendance data is retained for as long as your account is active.</li>
+    <li>Pageview beacon data is retained for up to 90 days for product analytics.</li>
+    <li>Public share links auto-expire after 30 days.</li>
     <li>When you uninstall the App, your data is deleted within 30 days.</li>
     <li>You can request immediate data deletion by contacting us.</li>
   </ul>
@@ -54,20 +75,24 @@
   <h2>Google API Scopes</h2>
   <p>The App requests the following Google API scopes:</p>
   <ul>
+    <li><code>openid email profile</code> — Sign you in and identify your account.</li>
     <li><code>meetings.space.readonly</code> — View participant information for meetings you have access to.</li>
     <li><code>calendar.events.readonly</code> — View calendar events to match attendees and RSVP status.</li>
-    <li><code>spreadsheets</code> — Create and update attendance report spreadsheets.</li>
-    <li><code>drive.file</code> — Create a folder in your Drive to organize exported reports.</li>
+    <li><code>drive.file</code> — Create a "Meet Attendance Tracker" folder and spreadsheet in your Drive. This scope only grants access to files the App creates; it does not access other files in your Drive.</li>
   </ul>
 
   <h2>Your Rights</h2>
   <ul>
     <li>You can revoke the App's access at any time via <a href="https://myaccount.google.com/permissions">Google Account Permissions</a>.</li>
+    <li>You can clear your Slack webhook at any time from the in-app Settings modal.</li>
     <li>You can request export or deletion of your data by contacting us.</li>
   </ul>
 
   <h2>Security</h2>
   <p>We use industry-standard security practices including HTTPS encryption in transit, encrypted tokens at rest, and Google Cloud's built-in security infrastructure.</p>
+
+  <h2>Changes to this Policy</h2>
+  <p>We may update this policy from time to time. When we do, we'll bump the "Last updated" date at the top. Material changes will be highlighted on the site.</p>
 
   <h2>Contact</h2>
   <p>For questions about this privacy policy or to request data deletion, contact: <a href="mailto:derekgallardo01@gmail.com">derekgallardo01@gmail.com</a></p>
