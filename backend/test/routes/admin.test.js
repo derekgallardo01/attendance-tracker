@@ -346,3 +346,154 @@ describe('POST /api/admin/install — marketplace webhook (unauthenticated)', ()
     }));
   });
 });
+
+// ── Happy-path coverage for the 4 highest-risk super-admin endpoints ──
+// Auth gates are exhaustively tested in admin-auth-gates.test.js. These
+// tests verify that when the super-admin DOES hit them, the right data
+// flows through and (where applicable) side effects fire correctly.
+
+describe('POST /api/admin/send-email — super admin can send from the dashboard', () => {
+  test('400 when required fields are missing', async () => {
+    const res = await request(app)
+      .post('/api/admin/send-email')
+      .set(authedHeader(SUPER_ADMIN, 'gmail.com'))
+      .set('Content-Type', 'application/json')
+      .send({ to: 'user@x.com', subject: 's' }); // missing domain + body
+    expect(res.status).toBe(400);
+    expect(notifications.sendAdminEmail).not.toHaveBeenCalled();
+  });
+
+  test('sends email AND logs a conversation entry (single transaction)', async () => {
+    notifications.sendAdminEmail.mockResolvedValue({ sent: true, id: 're_abc' });
+    firestore.appendConversation.mockResolvedValue(undefined);
+    const res = await request(app)
+      .post('/api/admin/send-email')
+      .set(authedHeader(SUPER_ADMIN, 'gmail.com'))
+      .set('Content-Type', 'application/json')
+      .send({
+        to: 'ken@yacht.com', domain: 'yacht.com',
+        subject: 'Quick check-in', body: 'Hey Ken, how\'s the tracker working?',
+      });
+    expect(res.status).toBe(200);
+    expect(notifications.sendAdminEmail).toHaveBeenCalledWith(expect.objectContaining({
+      to: 'ken@yacht.com',
+      subject: 'Quick check-in',
+    }));
+    // Conversation log is the audit trail — must fire on every send
+    expect(firestore.appendConversation).toHaveBeenCalledWith('yacht.com', 'ken@yacht.com', expect.objectContaining({
+      direction: 'sent',
+      subject: 'Quick check-in',
+      replyStatus: 'awaiting',
+    }));
+  });
+
+  test('500 when Resend rejects (dashboard shouldn\'t swallow send failures)', async () => {
+    notifications.sendAdminEmail.mockRejectedValue(new Error('Resend rejected'));
+    const res = await request(app)
+      .post('/api/admin/send-email')
+      .set(authedHeader(SUPER_ADMIN, 'gmail.com'))
+      .set('Content-Type', 'application/json')
+      .send({ to: 'x@y.com', domain: 'y.com', subject: 's', body: 'b' });
+    expect(res.status).toBe(500);
+    // Failed send must NOT create a misleading "sent" conversation row
+    expect(firestore.appendConversation).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /api/admin/weekly-report — super admin can trigger the Monday email', () => {
+  test('sends the weekly-self-report email when a report is available', async () => {
+    firestore.getWeeklySelfReport.mockResolvedValue({
+      week: '2026-06-29', totalTracked: 47, newUsers: 3,
+    });
+    notifications.sendWeeklySelfReport.mockResolvedValue({ sent: true });
+    const res = await request(app)
+      .post('/api/admin/weekly-report')
+      .set(authedHeader(SUPER_ADMIN, 'gmail.com'))
+      .set('Content-Type', 'application/json')
+      .send({});
+    expect(res.status).toBe(200);
+    expect(res.body.sent).toBe(true);
+    expect(notifications.sendWeeklySelfReport).toHaveBeenCalledWith(expect.objectContaining({
+      totalTracked: 47, newUsers: 3,
+    }));
+  });
+
+  test('500 when the report generator returns null (no data to send)', async () => {
+    firestore.getWeeklySelfReport.mockResolvedValue(null);
+    const res = await request(app)
+      .post('/api/admin/weekly-report')
+      .set(authedHeader(SUPER_ADMIN, 'gmail.com'))
+      .set('Content-Type', 'application/json')
+      .send({});
+    expect(res.status).toBe(500);
+    expect(notifications.sendWeeklySelfReport).not.toHaveBeenCalled();
+  });
+});
+
+describe('GET /api/admin/user — user drill-down detail', () => {
+  test('400 when email or domain query params are missing', async () => {
+    const res = await request(app)
+      .get('/api/admin/user?email=x@y.com') // no domain
+      .set(authedHeader(SUPER_ADMIN, 'gmail.com'));
+    expect(res.status).toBe(400);
+    expect(firestore.getUserDetail).not.toHaveBeenCalled();
+  });
+
+  test('404 when the user does not exist', async () => {
+    firestore.getUserDetail.mockResolvedValue(null);
+    const res = await request(app)
+      .get('/api/admin/user?email=ghost@x.com&domain=x.com')
+      .set(authedHeader(SUPER_ADMIN, 'gmail.com'));
+    expect(res.status).toBe(404);
+  });
+
+  test('200 returns the user detail object', async () => {
+    firestore.getUserDetail.mockResolvedValue({
+      email: 'ken@yacht.com', displayName: 'Ken', tracked: 12, exported: 5,
+    });
+    const res = await request(app)
+      .get('/api/admin/user?email=ken@yacht.com&domain=yacht.com')
+      .set(authedHeader(SUPER_ADMIN, 'gmail.com'));
+    expect(res.status).toBe(200);
+    expect(res.body.email).toBe('ken@yacht.com');
+    expect(res.body.tracked).toBe(12);
+    expect(firestore.getUserDetail).toHaveBeenCalledWith('yacht.com', 'ken@yacht.com');
+  });
+});
+
+describe('PUT /api/admin/note — save private admin note about a user', () => {
+  test('400 when email or domain is missing', async () => {
+    const res = await request(app)
+      .put('/api/admin/note')
+      .set(authedHeader(SUPER_ADMIN, 'gmail.com'))
+      .set('Content-Type', 'application/json')
+      .send({ body: 'note' });
+    expect(res.status).toBe(400);
+    expect(firestore.setAdminNote).not.toHaveBeenCalled();
+  });
+
+  test('200 persists the note with author attribution', async () => {
+    firestore.setAdminNote.mockResolvedValue({ saved: true, updatedAt: '2026-07-05T00:00:00Z' });
+    const res = await request(app)
+      .put('/api/admin/note')
+      .set(authedHeader(SUPER_ADMIN, 'gmail.com'))
+      .set('Content-Type', 'application/json')
+      .send({ email: 'ken@yacht.com', domain: 'yacht.com', body: 'follow up next week' });
+    expect(res.status).toBe(200);
+    expect(res.body.saved).toBe(true);
+    expect(firestore.setAdminNote).toHaveBeenCalledWith(
+      'yacht.com', 'ken@yacht.com', 'follow up next week', SUPER_ADMIN
+    );
+  });
+
+  test('200 with empty body — allows clearing an existing note', async () => {
+    firestore.setAdminNote.mockResolvedValue({ saved: true });
+    const res = await request(app)
+      .put('/api/admin/note')
+      .set(authedHeader(SUPER_ADMIN, 'gmail.com'))
+      .set('Content-Type', 'application/json')
+      .send({ email: 'x@y.com', domain: 'y.com' }); // no body → clear
+    expect(res.status).toBe(200);
+    expect(firestore.setAdminNote).toHaveBeenCalledWith('y.com', 'x@y.com', '', SUPER_ADMIN);
+  });
+});

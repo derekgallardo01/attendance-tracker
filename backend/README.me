@@ -20,7 +20,7 @@ For the full architecture overview see the [top-level README](../README.md).
 | GET | `/api/admin/insights` | Bearer JWT (super admin only) | Activation funnel, retention cohorts, top orgs, churned users, daily meeting volume. |
 | POST | `/api/admin/install` | _none (Marketplace webhook)_ | Marketplace install hook. |
 | POST | `/api/admin/uninstall` | _none (Marketplace webhook)_ | Marketplace uninstall hook. |
-| POST | `/api/admin/verify-delegation` | Bearer JWT | Tests whether domain-wide delegation works for the given admin email and stores the config. |
+| POST | `/api/admin/verify-delegation` | _none (setup wizard)_ | Tests whether domain-wide delegation works for the given admin email and stores the config. Public because it's called from `setup.html` BEFORE the admin has signed in. Rate-limited (10 / 10 min / IP) to prevent Meet-token-burn abuse. |
 | GET | `/health` | _none_ | Health check. |
 
 All `/api/*` routes (except `/api/oauth/*` and the Marketplace webhooks) run through:

@@ -1,4 +1,5 @@
 const { Router } = require('express');
+const rateLimit = require('express-rate-limit');
 const log = require('../lib/logger');
 const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, evaluateReengagementForUser, claimReengagementSlot, logEvent } = require('../services/firestore');
 const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendForgottenMeetingEmail } = require('../lib/notifications');
@@ -578,7 +579,19 @@ router.post('/admin/source', async (req, res) => {
 });
 
 // POST /api/admin/verify-delegation — Test if domain-wide delegation works
-router.post('/admin/verify-delegation', async (req, res) => {
+// Intentionally UNAUTHENTICATED — called from setup.html BEFORE the admin
+// has signed in to the add-on. Tightly rate-limited to prevent using it
+// as a Meet-API-token-burn vector: each call impersonates the given admin
+// email via getMeetToken() which hits Google.
+const verifyDelegationLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 min
+  max: 10,                  // 10 attempts per 10 min per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many delegation verification attempts. Try again in a few minutes.' },
+  skip: () => process.env.NODE_ENV === 'test',
+});
+router.post('/admin/verify-delegation', verifyDelegationLimiter, async (req, res) => {
   try {
     const { domain, adminEmail } = req.body;
     if (!domain || !adminEmail) {
