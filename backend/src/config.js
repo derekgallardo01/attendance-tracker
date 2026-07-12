@@ -30,6 +30,10 @@ const CONFIG = {
   // marketing site on attendancetracker.dev is static GitHub Pages and does
   // not proxy /api. Overridable via env for staging.
   publicApiUrl:     process.env.PUBLIC_API_URL || 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api',
+
+  // Public marketing/app site (GitHub Pages). Used for Stripe success/cancel
+  // redirect URLs.
+  publicSiteUrl:    process.env.PUBLIC_SITE_URL || 'https://attendancetracker.dev',
 };
 
 module.exports = CONFIG;

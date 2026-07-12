@@ -17,6 +17,7 @@ const publicRoutes = require('./routes/public');
 const historyRoutes = require('./routes/history');
 const teamRoutes = require('./routes/team');
 const settingsRoutes = require('./routes/settings');
+const { router: billingRoutes, webhookHandler: billingWebhookHandler } = require('./routes/billing');
 
 const app = express();
 app.set('trust proxy', 1); // Cloud Run runs behind a load balancer
@@ -35,6 +36,11 @@ app.use(helmet({
   },
   crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' }, // needed for GIS popup
 }));
+
+// Stripe webhook MUST see the raw request body to verify the signature, so it
+// is mounted BEFORE express.json() with its own raw parser. Everything else
+// uses JSON parsing below.
+app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), billingWebhookHandler);
 
 app.use(express.json({ limit: '100kb' }));
 // credentials:true is required because navigator.sendBeacon (used by the
@@ -74,6 +80,7 @@ app.use('/api', adminRoutes);
 app.use('/api', historyRoutes);
 app.use('/api', teamRoutes);
 app.use('/api', settingsRoutes);
+app.use('/api', billingRoutes); // checkout / portal / status (webhook mounted above)
 
 // Serve frontend from public/
 app.use(express.static(path.join(__dirname, '..', 'public')));

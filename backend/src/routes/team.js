@@ -1,6 +1,7 @@
 const { Router } = require('express');
 const log = require('../lib/logger');
 const { getUser, getTeamOverview } = require('../services/firestore');
+const { requireProPlan } = require('./billing');
 
 const router = Router();
 
@@ -26,7 +27,10 @@ async function requireTeamAdmin(req, res, next) {
 // GET /api/team/overview — one-shot fetch with all four tabs' data.
 // team.html does a single round-trip and renders Users / Meetings / Series /
 // People from the same payload, so tab switches are instant.
-router.get('/team/overview', requireTeamAdmin, async (req, res) => {
+// The org-wide team dashboard is a Pro feature (per-domain billing). While
+// billing is unconfigured requireProPlan is a pass-through, so this stays free
+// until monetization is switched on.
+router.get('/team/overview', requireTeamAdmin, requireProPlan, async (req, res) => {
   res.set('Cache-Control', 'no-store');
   try {
     const data = await getTeamOverview(req.user.domain);

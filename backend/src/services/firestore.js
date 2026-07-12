@@ -98,6 +98,31 @@ async function upsertTenantConfig(domain, config) {
   }
 }
 
+// ── Billing / plan (per-domain) ──
+// The Pro subscription is billed per Workspace domain; the plan state is written
+// by the Stripe webhook and read to gate team features.
+async function setTenantPlan(domain, patch) {
+  try {
+    await tenantRef(domain).set({
+      domain,
+      ...patch, // e.g. { plan:'pro', billingStatus:'active', stripeCustomerId, stripeSubscriptionId }
+      planUpdatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+    log.info('firestore: set tenant plan', { domain, plan: patch.plan, status: patch.billingStatus });
+  } catch (err) {
+    log.error('firestore: setTenantPlan failed', { domain, error: err.message });
+  }
+}
+
+async function getTenantPlan(domain) {
+  const cfg = await getTenantConfig(domain);
+  return {
+    plan: cfg?.plan === 'pro' ? 'pro' : 'free',
+    billingStatus: cfg?.billingStatus || null,
+    stripeCustomerId: cfg?.stripeCustomerId || null,
+  };
+}
+
 // ── Meeting persistence (tenant-scoped) ──
 
 // Per-user event log — lets us compute true individual activity (most active
@@ -2837,6 +2862,7 @@ async function deleteUser(domain, email) {
 
 module.exports = {
   getTenantConfig, upsertTenantConfig,
+  setTenantPlan, getTenantPlan,
   persistAttendance, persistCalendarData, persistExport,
   getMeetingExcusedEmails, addMeetingExcusedEmails,
   getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens,

@@ -98,6 +98,12 @@
       <div style="margin-top:6px;font-size:.85rem">Email derekgallardo01@gmail.com if you should be — happy to transfer the role.</div>
     </div>
 
+    <div id="error-upgrade" class="error-banner" style="display:none">
+      <strong>The team dashboard is a Pro feature.</strong>
+      <div style="margin-top:6px;font-size:.85rem">Upgrade to unlock the org-wide view of attendance for your whole domain.</div>
+      <button id="upgrade-btn" onclick="startUpgrade()" style="margin-top:10px;background:#4ade80;color:#0d1117;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:600">Upgrade to Pro</button>
+    </div>
+
     <div id="dashboard">
       <div class="header">
         <h1>👥 Team admin<span class="domain-chip" id="domain-chip"></span></h1>
@@ -211,6 +217,25 @@
       document.getElementById('error-not-admin').style.display = 'none';
     }
 
+    async function startUpgrade() {
+      const btn = document.getElementById('upgrade-btn');
+      if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
+      try {
+        const res = await fetch(`${BACKEND_URL}/billing/checkout`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${sessionToken}`, 'Content-Type': 'application/json' },
+          body: '{}',
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.url) { window.location.href = data.url; return; }
+        alert(data.error || 'Billing is unavailable right now.');
+      } catch {
+        alert('Could not reach billing.');
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Upgrade to Pro'; }
+      }
+    }
+
     async function loadOverview() {
       document.getElementById('loading').style.display = 'block';
       try {
@@ -220,6 +245,11 @@
         if (res.status === 403) {
           document.getElementById('loading').style.display = 'none';
           document.getElementById('error-not-admin').style.display = 'block';
+          return;
+        }
+        if (res.status === 402) {
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('error-upgrade').style.display = 'block';
           return;
         }
         if (!res.ok) throw new Error(`${res.status}`);

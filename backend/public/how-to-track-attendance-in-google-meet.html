@@ -141,5 +141,31 @@
       <a href="/">Home</a> · <a href="attendance-tracker-for-teachers.html">For teachers</a> · <a href="export-google-meet-attendance-to-sheets.html">Export to Sheets</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a>
     </div>
   </div>
+  <script>
+  // Lightweight analytics beacon (no third-party dependency, no cookies).
+  // Fires a pageview on load and a cta_click when a Marketplace install link is
+  // clicked, so landing→install conversion is measurable on SEO pages too.
+  (function () {
+    var API = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
+    function beacon(payload) {
+      try {
+        var blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        if (navigator.sendBeacon) navigator.sendBeacon(API + '/public/pageview', blob);
+        else fetch(API + '/public/pageview', { method: 'POST', body: blob, keepalive: true });
+      } catch (e) { /* never break the page over telemetry */ }
+    }
+    var p = new URLSearchParams(location.search);
+    beacon({
+      path: location.pathname, referrer: document.referrer || null,
+      viewportWidth: window.innerWidth || null,
+      utmSource: p.get('utm_source'), utmMedium: p.get('utm_medium'), utmCampaign: p.get('utm_campaign'),
+    });
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a[href*="marketplace/app/attendance_tracker"]');
+      if (a) beacon({ path: location.pathname, event: 'cta_click', eventLabel: 'marketplace_install_seo', referrer: document.referrer || null });
+    });
+  })();
+  </script>
 </body>
+
 </html>

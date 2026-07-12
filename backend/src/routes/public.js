@@ -75,6 +75,24 @@ router.post('/public/pageview', async (req, res) => {
     const today = new Date().toISOString().slice(0, 10);
     const db = getDb();
 
+    // Event type — 'pageview' by default, or an interaction like 'cta_click'
+    // (e.g. the Marketplace install button) so we can measure landing→install
+    // conversion, which was previously a blind spot. Allow-list to keep the
+    // field bounded.
+    const ALLOWED_EVENTS = new Set(['pageview', 'cta_click']);
+    const event = ALLOWED_EVENTS.has(body.event) ? body.event : 'pageview';
+    const isCta = event === 'cta_click';
+
+    // Daily aggregate: always bump total count; bump a cta counter too when
+    // this is a conversion click, so the funnel is trendable without scanning
+    // the raw rows.
+    const dailyPatch = {
+      date: today,
+      count: FieldValue.increment(1),
+      updatedAt: FieldValue.serverTimestamp(),
+    };
+    if (isCta) dailyPatch.ctaClicks = FieldValue.increment(1);
+
     // Two writes: one per-visit row for analysis, one daily aggregate counter
     // for cheap dashboard reads. Both fire-and-forget.
     await Promise.allSettled([
@@ -85,15 +103,13 @@ router.post('/public/pageview', async (req, res) => {
         utmSource: cap(body.utmSource, 100),
         utmMedium: cap(body.utmMedium, 100),
         utmCampaign: cap(body.utmCampaign, 100),
+        event,
+        eventLabel: cap(body.eventLabel, 100),
         userAgent: cap(req.headers['user-agent'], 500),
         ip: cap(req.ip, 100), // already truncated by trust proxy; useful for spam triage
         createdAt: FieldValue.serverTimestamp(),
       }),
-      db.collection('pageviewsDaily').doc(today).set({
-        date: today,
-        count: FieldValue.increment(1),
-        updatedAt: FieldValue.serverTimestamp(),
-      }, { merge: true }),
+      db.collection('pageviewsDaily').doc(today).set(dailyPatch, { merge: true }),
     ]);
   } catch (err) {
     log.warn('pageview beacon failed', { error: err.message });

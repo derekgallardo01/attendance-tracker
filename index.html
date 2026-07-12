@@ -900,7 +900,7 @@
             See who joined, who left, and how long they stayed — then auto-export to Google Sheets when the meeting ends. No spreadsheet surgery, no manual roll-call.
           </p>
           <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-            <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" style="display:inline-block;background:#34A853;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;font-size:.95rem">Install from Marketplace</a>
+            <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" onclick="trackCtaClick('marketplace_install_hero')" style="display:inline-block;background:#34A853;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;font-size:.95rem">Install from Marketplace</a>
             <a href="#how-it-works" style="display:inline-block;background:transparent;border:1px solid #30363d;color:#e6edf3;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;font-size:.95rem">How it works</a>
           </div>
         </div>
@@ -1022,7 +1022,7 @@
 
         <!-- Final CTA -->
         <div style="text-align:center;margin-bottom:36px">
-          <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" style="display:inline-block;background:#34A853;color:#fff;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:600;font-size:1rem">Install from Google Workspace Marketplace</a>
+          <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" onclick="trackCtaClick('marketplace_install_footer')" style="display:inline-block;background:#34A853;color:#fff;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:600;font-size:1rem">Install from Google Workspace Marketplace</a>
           <p style="margin:12px 0 0;color:#6e7681;font-size:.75rem">Free · Installs in 30 seconds · No credit card</p>
         </div>
 
@@ -1525,6 +1525,26 @@ function sendPageviewBeacon() {
       fetch(`${state.backendUrl}/public/pageview`, { method: 'POST', body: blob, keepalive: true });
     }
   } catch { /* never break the page over telemetry */ }
+}
+
+// Fire a conversion-intent beacon (e.g. the Marketplace install button). This
+// closes the landing→install measurement gap: without it we saw pageviews but
+// not clicks. Uses sendBeacon so it survives the tab/navigation change.
+function trackCtaClick(label) {
+  try {
+    const body = JSON.stringify({
+      path: window.location.pathname || '/',
+      event: 'cta_click',
+      eventLabel: label || null,
+      referrer: document.referrer || null,
+    });
+    const blob = new Blob([body], { type: 'application/json' });
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon(`${state.backendUrl}/public/pageview`, blob);
+    } else {
+      fetch(`${state.backendUrl}/public/pageview`, { method: 'POST', body: blob, keepalive: true });
+    }
+  } catch { /* telemetry must never block the click */ }
 }
 
 // Pull /api/oauth/me and update the activation nudge banner. Called after
@@ -2454,6 +2474,46 @@ function emailAdminForSetup() {
   window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
+// Load the caller's plan into the settings modal. The billing section stays
+// hidden until Stripe is actually configured server-side (billingConfigured),
+// so there's no dead "Upgrade" button before monetization launches.
+let _isPro = false;
+async function loadBillingStatus() {
+  const box = document.getElementById('settings-billing');
+  if (!box) return;
+  try {
+    const res = await authFetch(`${state.backendUrl}/billing/status`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.billingConfigured) { box.style.display = 'none'; return; }
+    _isPro = data.plan === 'pro';
+    const nameEl = document.getElementById('settings-plan-name');
+    const btn = document.getElementById('settings-billing-btn');
+    if (nameEl) nameEl.textContent = _isPro ? 'Pro' : 'Free';
+    if (btn) btn.textContent = _isPro ? 'Manage billing' : 'Upgrade to Pro';
+    box.style.display = 'block';
+  } catch { /* leave hidden on error */ }
+}
+
+// Upgrade (free) → Checkout; manage (pro) → Customer Portal. Both return a URL
+// to redirect the current tab to.
+async function handleBillingClick() {
+  const btn = document.getElementById('settings-billing-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
+  try {
+    const res = _isPro
+      ? await authFetch(`${state.backendUrl}/billing/portal`)
+      : await authFetch(`${state.backendUrl}/billing/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.url) { window.location.href = data.url; return; }
+    toast(data.error || 'Billing is unavailable right now.');
+  } catch {
+    toast('Could not reach billing.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = _isPro ? 'Manage billing' : 'Upgrade to Pro'; }
+  }
+}
+
 // Fire-and-forget PUT of a settings patch. Best-effort — a failure leaves the
 // local UI as the user set it; they can retry by toggling again.
 async function persistSetting(patch) {
@@ -2874,6 +2934,7 @@ async function openSettingsModal() {
       }
     }
   } catch { /* fail silently — modal still functional */ }
+  loadBillingStatus();
   setTimeout(() => input?.focus(), 50);
 }
 
@@ -3707,6 +3768,17 @@ window.addEventListener('DOMContentLoaded', () => {
           <div style="color:#9ca3af;font-size:.72rem;margin-top:2px;line-height:1.4">Stops attendance alerts and re-engagement emails. You can re-enable them here anytime.</div>
         </div>
       </label>
+
+      <!-- Plan / billing (hidden until billing is enabled) -->
+      <div id="settings-billing" style="display:none;margin-top:14px;padding:12px;background:#0d1117;border:1px solid #30363d;border-radius:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+          <div>
+            <div style="font-weight:600;font-size:.85rem;color:#e6edf3">Plan: <span id="settings-plan-name">Free</span></div>
+            <div style="color:#9ca3af;font-size:.72rem;margin-top:2px;line-height:1.4">Pro unlocks the org-wide team dashboard for your whole domain.</div>
+          </div>
+          <button type="button" id="settings-billing-btn" onclick="handleBillingClick()" style="background:#4ade80;color:#0d1117;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.75rem;font-weight:600;white-space:nowrap">Upgrade</button>
+        </div>
+      </div>
     </div>
   </div>
 

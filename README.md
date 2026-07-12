@@ -211,6 +211,10 @@ Optional / feature-specific:
 | `RESEND_TIMEOUT_MS` | `8000` | Timeout for Resend email sends |
 | `REQUEST_TIMEOUT_MS` | `30000` | Express server request timeout (socket destroyed past this) |
 | `SWEEP_BUDGET_MS` | `240000` | Time budget per daily cron sweep; unprocessed users roll to the next run |
+| `STRIPE_SECRET_KEY` | _(none, billing off)_ | Stripe secret key. Until set, billing endpoints return 503 and Pro gating is a no-op (all features free) |
+| `STRIPE_PRICE_ID` | _(none)_ | Stripe Price ID for the Pro subscription (per-domain) |
+| `STRIPE_WEBHOOK_SECRET` | _(none)_ | Signing secret for the `/api/billing/webhook` endpoint |
+| `PUBLIC_SITE_URL` | `https://attendancetracker.dev` | Site base URL for Stripe checkout success/cancel redirects |
 
 ---
 

@@ -82,6 +82,49 @@ describe('POST /api/public/pageview', () => {
       .send({});
     expect(res.status).toBe(204);
   });
+
+  test('records a cta_click event and bumps the daily ctaClicks counter', async () => {
+    const addSpy = jest.fn().mockResolvedValue(undefined);
+    const setSpy = jest.fn().mockResolvedValue(undefined);
+    firestore.getDb.mockReturnValue({
+      collection: (name) => name === 'pageviews'
+        ? { add: addSpy }
+        : { doc: () => ({ set: setSpy }) },
+    });
+
+    const res = await request(app)
+      .post('/api/public/pageview')
+      .set('Content-Type', 'application/json')
+      .send({ path: '/', event: 'cta_click', eventLabel: 'marketplace_install_hero' });
+    expect(res.status).toBe(204);
+    // Give the fire-and-forget writes a tick to run.
+    await new Promise((r) => setImmediate(r));
+
+    expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({
+      event: 'cta_click', eventLabel: 'marketplace_install_hero',
+    }));
+    const dailyPatch = setSpy.mock.calls[0][0];
+    expect(dailyPatch).toHaveProperty('ctaClicks'); // conversion counter incremented
+  });
+
+  test('an unknown event type falls back to pageview (allow-list) and has no ctaClicks', async () => {
+    const addSpy = jest.fn().mockResolvedValue(undefined);
+    const setSpy = jest.fn().mockResolvedValue(undefined);
+    firestore.getDb.mockReturnValue({
+      collection: (name) => name === 'pageviews'
+        ? { add: addSpy }
+        : { doc: () => ({ set: setSpy }) },
+    });
+
+    await request(app)
+      .post('/api/public/pageview')
+      .set('Content-Type', 'application/json')
+      .send({ path: '/', event: 'hack_attempt' });
+    await new Promise((r) => setImmediate(r));
+
+    expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({ event: 'pageview' }));
+    expect(setSpy.mock.calls[0][0]).not.toHaveProperty('ctaClicks');
+  });
 });
 
 describe('POST /api/public/feedback', () => {
