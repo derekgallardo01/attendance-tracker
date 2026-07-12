@@ -1095,7 +1095,10 @@
 
   <!-- ── Setup banner (shown when delegation not configured) ── -->
   <div id="setup-banner" style="display:none; padding:8px 16px; background:rgba(255,193,7,.1); border-bottom:1px solid rgba(255,193,7,.3); font-size:.75rem; color:#ffc107;">
-    Some participants may not appear. <a href="https://attendancetracker.dev/setup.html" target="_blank" style="color:#ffc107;text-decoration:underline">Ask your admin to complete setup</a>
+    Some participants may not appear until your Workspace admin finishes a one-time setup.
+    <a href="#" onclick="emailAdminForSetup(); return false;" style="color:#ffc107;text-decoration:underline">Email my admin</a>
+    &nbsp;·&nbsp;
+    <a href="https://attendancetracker.dev/setup.html" target="_blank" style="color:#ffc107;text-decoration:underline">View setup steps</a>
   </div>
 
   <!-- ── Status bar ── -->
@@ -1155,7 +1158,7 @@
     <div class="search-input-wrap">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       <input class="search-input" id="search-input" type="text" placeholder="Search by name or email…" oninput="handleSearch()" />
-      <button class="search-clear" id="search-clear" onclick="clearSearch()">×</button>
+      <button class="search-clear" id="search-clear" onclick="clearSearch()" aria-label="Clear search">×</button>
     </div>
     <div class="search-stats" id="search-stats"></div>
   </div>
@@ -2416,12 +2419,51 @@ async function saveProfileNote() {
   }
 }
 
-// Auto-export toggle stays as-is. The modal open/close + Slack handlers
-// live in the SETTINGS MODAL section further down (kept together with the
-// rest of the Slack config logic).
+// Auto-export toggle. Writes localStorage for the auto-export poll loop's
+// fast path AND persists to the server so the preference follows the user
+// across devices. The modal open/close + Slack handlers live in the SETTINGS
+// MODAL section further down.
 function toggleAutoExport(on) {
   localStorage.setItem('autoExportOnEnd', on ? '1' : '0');
+  persistSetting({ autoExportOnEnd: !!on });
   toast(on ? 'Auto-export on' : 'Auto-export off');
+}
+
+// Email lifecycle notifications toggle (opt-out). Persists to the server's
+// suppression record so alerts/re-engagement emails stop or resume.
+function toggleEmailOptOut(optedOut) {
+  persistSetting({ emailOptOut: !!optedOut });
+  toast(optedOut ? 'Email notifications off' : 'Email notifications on');
+}
+
+// Non-admins can't configure domain-wide delegation themselves, so give them a
+// one-click way to hand it off: a prefilled email to their Workspace admin with
+// the setup link. They fill in the admin's address in their mail client.
+function emailAdminForSetup() {
+  const subject = 'Please finish setting up Attendance Tracker for our Google Meet';
+  const body = [
+    'Hi,',
+    '',
+    "I'm using Attendance Tracker to take attendance in Google Meet, but some participants don't show up until a Workspace admin completes a one-time setup (domain-wide delegation).",
+    '',
+    'The steps take about 2 minutes and are here:',
+    'https://attendancetracker.dev/setup.html',
+    '',
+    'Thanks!',
+  ].join('\n');
+  window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+// Fire-and-forget PUT of a settings patch. Best-effort — a failure leaves the
+// local UI as the user set it; they can retry by toggling again.
+async function persistSetting(patch) {
+  try {
+    await authFetch(`${state.backendUrl}/settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch),
+    });
+  } catch { /* best-effort sync */ }
 }
 
 function updateSummary() {
@@ -2806,20 +2848,26 @@ async function openSettingsModal() {
   if (!modal) return;
   modal.style.display = 'flex';
 
-  // Pre-existing auto-export checkbox state from localStorage
-  const auto = localStorage.getItem('autoExportOnEnd') === '1';
+  // Optimistic paint from localStorage so the checkbox isn't blank while the
+  // fetch is in flight; the server value below is authoritative.
   const autoCheckbox = document.getElementById('setting-auto-export');
-  if (autoCheckbox) autoCheckbox.checked = auto;
+  if (autoCheckbox) autoCheckbox.checked = localStorage.getItem('autoExportOnEnd') === '1';
 
   // Slack section — clear input, fetch saved settings, show masked form
   const input = document.getElementById('settings-slack-url');
   const status = document.getElementById('settings-slack-status');
+  const emailCheckbox = document.getElementById('setting-email-optout');
   if (input) input.value = '';
   if (status) status.style.display = 'none';
   try {
     const res = await authFetch(`${state.backendUrl}/settings`);
     if (res.ok) {
       const data = await res.json();
+      // Server is the source of truth — sync all controls + the localStorage
+      // fast-path used by the auto-export poll loop.
+      if (autoCheckbox) autoCheckbox.checked = data.autoExportOnEnd === true;
+      localStorage.setItem('autoExportOnEnd', data.autoExportOnEnd ? '1' : '0');
+      if (emailCheckbox) emailCheckbox.checked = data.emailOptOut === true;
       if (data.slackWebhookConfigured && input) {
         input.placeholder = data.slackWebhookMasked || 'Webhook saved (paste to replace)';
         showSettingsStatus('Webhook is saved. Paste a new one to replace it.', '#9ca3af');
@@ -2833,6 +2881,23 @@ function closeSettingsModal() {
   const modal = document.getElementById('settings-modal');
   if (modal) modal.style.display = 'none';
 }
+
+// Keyboard accessibility: Escape closes whichever overlay is currently open.
+// Checks computed display so it only acts on a visible modal.
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  const overlays = [
+    ['settings-modal', closeSettingsModal],
+    ['celebrate-modal', typeof closeCelebrateModal === 'function' ? closeCelebrateModal : null],
+    ['source-modal', typeof closeSourceModal === 'function' ? closeSourceModal : null],
+    ['profile-modal', typeof closeProfileModal === 'function' ? closeProfileModal : null],
+    ['match-modal', typeof closeMatchModal === 'function' ? closeMatchModal : null],
+  ];
+  for (const [id, close] of overlays) {
+    const el = document.getElementById(id);
+    if (el && el.style.display && el.style.display !== 'none' && close) { close(); return; }
+  }
+});
 
 function showSettingsStatus(text, color) {
   const status = document.getElementById('settings-slack-status');
@@ -3580,7 +3645,7 @@ window.addEventListener('DOMContentLoaded', () => {
           <div id="profile-name" style="font-weight:600;font-size:1rem;color:#e6edf3"></div>
           <div id="profile-email" style="color:#9ca3af;font-size:.75rem"></div>
         </div>
-        <button onclick="closeProfileModal()" style="background:transparent;color:#9ca3af;border:none;font-size:1.4rem;cursor:pointer;padding:0 4px">×</button>
+        <button onclick="closeProfileModal()" aria-label="Close" style="background:transparent;color:#9ca3af;border:none;font-size:1.4rem;cursor:pointer;padding:0 4px">×</button>
       </div>
       <div id="profile-loading" style="text-align:center;color:#9ca3af;font-size:.85rem;padding:20px">Loading…</div>
       <div id="profile-body" style="display:none">
@@ -3602,11 +3667,11 @@ window.addEventListener('DOMContentLoaded', () => {
   </div>
 
   <!-- ── Settings Modal ── -->
-  <div id="settings-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center;padding:20px">
+  <div id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center;padding:20px">
     <div class="modal-box" style="background:#161b22;border:1px solid #30363d;border-radius:14px;padding:20px;max-width:460px;width:100%;max-height:90vh;overflow-y:auto">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <div style="font-weight:700;color:#e6edf3">⚙ Settings</div>
-        <button onclick="closeSettingsModal()" style="background:transparent;color:#9ca3af;border:none;font-size:1.4rem;cursor:pointer;padding:0 4px">×</button>
+        <div id="settings-modal-title" style="font-weight:700;color:#e6edf3">⚙ Settings</div>
+        <button onclick="closeSettingsModal()" aria-label="Close settings" style="background:transparent;color:#9ca3af;border:none;font-size:1.4rem;cursor:pointer;padding:0 4px">×</button>
       </div>
 
       <!-- Auto-export toggle (pre-existing) -->
@@ -3633,6 +3698,15 @@ window.addEventListener('DOMContentLoaded', () => {
           <button type="button" id="settings-save-btn" onclick="saveSettings()" style="background:#4ade80;color:#0d1117;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.75rem;font-weight:600">Save</button>
         </div>
       </div>
+
+      <!-- Email notification preferences -->
+      <label style="display:flex;align-items:flex-start;gap:10px;padding:10px;background:#0d1117;border:1px solid #30363d;border-radius:8px;cursor:pointer;margin-top:14px">
+        <input type="checkbox" id="setting-email-optout" onchange="toggleEmailOptOut(this.checked)" style="margin-top:3px" />
+        <div>
+          <div style="font-weight:600;font-size:.85rem;color:#e6edf3">Turn off email notifications</div>
+          <div style="color:#9ca3af;font-size:.72rem;margin-top:2px;line-height:1.4">Stops attendance alerts and re-engagement emails. You can re-enable them here anytime.</div>
+        </div>
+      </label>
     </div>
   </div>
 

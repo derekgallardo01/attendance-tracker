@@ -9,6 +9,9 @@ const { authedHeader, buildApp } = require('../helpers/testApp');
 jest.mock('../../src/services/firestore', () => ({
   getUserSettings: jest.fn(),
   updateUserSettings: jest.fn(),
+  isEmailSuppressed: jest.fn(),
+  suppressEmail: jest.fn(),
+  unsuppressEmail: jest.fn(),
   getUser: jest.fn(),
   updateUserTokens: jest.fn(),
 }));
@@ -25,6 +28,10 @@ let app;
 beforeEach(() => {
   jest.clearAllMocks();
   firestore.getUser.mockImplementation(async (domain, email) => ({ email, domain }));
+  firestore.isEmailSuppressed.mockResolvedValue(false);
+  firestore.suppressEmail.mockResolvedValue(true);
+  firestore.unsuppressEmail.mockResolvedValue(true);
+  firestore.updateUserSettings.mockResolvedValue({ saved: true });
   app = buildApp();
 });
 
@@ -65,6 +72,25 @@ describe('GET /api/settings', () => {
       .get('/api/settings')
       .set(authedHeader('u@a.com', 'a.com'));
     expect(res.headers['cache-control']).toContain('no-store');
+  });
+
+  test('returns autoExportOnEnd and emailOptOut state', async () => {
+    firestore.getUserSettings.mockResolvedValue({ autoExportOnEnd: true });
+    firestore.isEmailSuppressed.mockResolvedValue(true);
+    const res = await request(app)
+      .get('/api/settings')
+      .set(authedHeader('u@a.com', 'a.com'));
+    expect(res.body.autoExportOnEnd).toBe(true);
+    expect(res.body.emailOptOut).toBe(true);
+  });
+
+  test('defaults autoExportOnEnd:false and emailOptOut:false when unset', async () => {
+    firestore.getUserSettings.mockResolvedValue({});
+    const res = await request(app)
+      .get('/api/settings')
+      .set(authedHeader('u@a.com', 'a.com'));
+    expect(res.body.autoExportOnEnd).toBe(false);
+    expect(res.body.emailOptOut).toBe(false);
   });
 });
 
@@ -136,6 +162,58 @@ describe('PUT /api/settings', () => {
       .set('Content-Type', 'application/json')
       .send({ irrelevantField: 'x' });
     expect(res.status).toBe(400);
+  });
+
+  test('200 persists autoExportOnEnd boolean to userSettings', async () => {
+    const res = await request(app)
+      .put('/api/settings')
+      .set(authedHeader('u@a.com', 'a.com'))
+      .set('Content-Type', 'application/json')
+      .send({ autoExportOnEnd: true });
+    expect(res.status).toBe(200);
+    expect(firestore.updateUserSettings).toHaveBeenCalledWith('a.com', 'u@a.com', { autoExportOnEnd: true });
+  });
+
+  test('400 when autoExportOnEnd is not a boolean', async () => {
+    const res = await request(app)
+      .put('/api/settings')
+      .set(authedHeader('u@a.com', 'a.com'))
+      .set('Content-Type', 'application/json')
+      .send({ autoExportOnEnd: 'yes' });
+    expect(res.status).toBe(400);
+    expect(firestore.updateUserSettings).not.toHaveBeenCalled();
+  });
+
+  test('emailOptOut:true suppresses the address (no userSettings write)', async () => {
+    const res = await request(app)
+      .put('/api/settings')
+      .set(authedHeader('u@a.com', 'a.com'))
+      .set('Content-Type', 'application/json')
+      .send({ emailOptOut: true });
+    expect(res.status).toBe(200);
+    expect(firestore.suppressEmail).toHaveBeenCalledWith('u@a.com', expect.objectContaining({ source: 'settings_toggle' }));
+    expect(firestore.updateUserSettings).not.toHaveBeenCalled();
+  });
+
+  test('emailOptOut:false removes the suppression', async () => {
+    const res = await request(app)
+      .put('/api/settings')
+      .set(authedHeader('u@a.com', 'a.com'))
+      .set('Content-Type', 'application/json')
+      .send({ emailOptOut: false });
+    expect(res.status).toBe(200);
+    expect(firestore.unsuppressEmail).toHaveBeenCalledWith('u@a.com');
+  });
+
+  test('can set a preference and email opt-out together in one request', async () => {
+    const res = await request(app)
+      .put('/api/settings')
+      .set(authedHeader('u@a.com', 'a.com'))
+      .set('Content-Type', 'application/json')
+      .send({ autoExportOnEnd: false, emailOptOut: true });
+    expect(res.status).toBe(200);
+    expect(firestore.updateUserSettings).toHaveBeenCalledWith('a.com', 'u@a.com', { autoExportOnEnd: false });
+    expect(firestore.suppressEmail).toHaveBeenCalled();
   });
 });
 

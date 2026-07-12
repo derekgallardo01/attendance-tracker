@@ -2747,6 +2747,18 @@ async function isEmailSuppressed(email) {
   }
 }
 
+// Remove a suppression record — the user re-opted into lifecycle emails from
+// the in-product notification preferences.
+async function unsuppressEmail(email) {
+  try {
+    await getDb().collection('suppression').doc(email.toLowerCase()).delete();
+    return true;
+  } catch (err) {
+    log.warn('firestore: unsuppressEmail failed', { email, error: err.message });
+    return false;
+  }
+}
+
 // ── Delete user data (Marketplace compliance) ──
 
 // Delete an array of DocumentReferences in batches under Firestore's 500-op
@@ -2844,7 +2856,7 @@ module.exports = {
   getAdvancedAnalytics,
   getWeeklySelfReport,
   appendConversation, setOutreachStatus,
-  suppressEmail, isEmailSuppressed,
+  suppressEmail, isEmailSuppressed, unsuppressEmail,
   createReminder, markReminderDone, getDueReminders,
   getEmailTemplates, setEmailTemplates,
   getAllUsersAcrossTenants,
