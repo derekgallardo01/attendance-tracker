@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, evaluateReengagementForUser, claimReengagementSlot, logEvent } = require('../services/firestore');
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed } = require('../services/firestore');
 const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendForgottenMeetingEmail } = require('../lib/notifications');
 
 const SUPER_ADMIN_EMAIL = 'derekgallardo01@gmail.com';
@@ -22,9 +22,36 @@ function csvField(v) {
 
 const router = Router();
 
+// Marketplace webhooks mutate tenant config (activate/deactivate a whole
+// domain) so they must not be openly writable. We require a shared secret
+// header (MARKETPLACE_WEBHOOK_SECRET) — same pattern as the scheduler crons —
+// or a super-admin session for manual triggering. Rate-limited as defense in
+// depth. Nothing in the app calls these except the external install pipeline,
+// and tenants are auto-created on first sign-in, so requiring the secret does
+// not affect normal usage.
+const marketplaceLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 min
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests.' },
+  skip: () => process.env.NODE_ENV === 'test',
+});
+
+function requireMarketplaceAuth(req, res, next) {
+  const secret = process.env.MARKETPLACE_WEBHOOK_SECRET;
+  const hasSecret = !!secret && req.headers['x-marketplace-secret'] === secret;
+  const isSuperAdmin = req.user?.email === SUPER_ADMIN_EMAIL;
+  if (!hasSecret && !isSuperAdmin) {
+    log.warn('marketplace: unauthorized webhook call', { path: req.path, ip: req.ip });
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  next();
+}
+
 // POST /api/admin/install — Marketplace install webhook
-// Called by Google when a Workspace admin installs the app
-router.post('/admin/install', async (req, res) => {
+// Called by the install pipeline; authenticated via shared secret (see above).
+router.post('/admin/install', marketplaceLimiter, requireMarketplaceAuth, async (req, res) => {
   try {
     const { domain, adminEmail } = req.body;
     if (!domain) return res.status(400).json({ error: 'domain required' });
@@ -44,7 +71,7 @@ router.post('/admin/install', async (req, res) => {
 });
 
 // POST /api/admin/uninstall — Marketplace uninstall webhook
-router.post('/admin/uninstall', async (req, res) => {
+router.post('/admin/uninstall', marketplaceLimiter, requireMarketplaceAuth, async (req, res) => {
   try {
     const { domain } = req.body;
     if (!domain) return res.status(400).json({ error: 'domain required' });
@@ -258,6 +285,9 @@ router.post('/admin/check-reengagement', async (req, res) => {
       if (!user?.email || !user?.domain) continue;
       usersChecked++;
       try {
+        // CAN-SPAM: never send lifecycle mail to a suppressed address.
+        if (await isEmailSuppressed(user.email)) { totalSkipped++; continue; }
+
         const reminders = await evaluateReengagementForUser(user.domain, user.email);
         if (reminders.length === 0) continue;
         let fired = 0;
@@ -271,15 +301,20 @@ router.post('/admin/check-reengagement', async (req, res) => {
           const claim = await claimReengagementSlot(user.domain, user.email, dedupKey);
           if (!claim.claimed) { totalSkipped++; continue; }
 
+          // Send AFTER claiming (the claim is the concurrency lock), but if the
+          // send doesn't succeed, release the slot so a later run retries —
+          // otherwise a transient Resend failure would suppress this reminder
+          // forever (the slot is permanent).
+          let result;
           if (r.type === 'reactivation_7d' || r.type === 'reactivation_30d') {
-            await sendReactivationEmail({
+            result = await sendReactivationEmail({
               to: user.email,
               displayName: user.displayName || null,
               daysSinceLogin: r.daysSinceLogin,
               variant: r.type === 'reactivation_7d' ? '7d' : '30d',
             });
           } else if (r.type === 'forgotten_meeting') {
-            await sendForgottenMeetingEmail({
+            result = await sendForgottenMeetingEmail({
               to: user.email,
               displayName: user.displayName || null,
               seriesTitle: r.seriesTitle,
@@ -288,6 +323,14 @@ router.post('/admin/check-reengagement', async (req, res) => {
               daysSinceLast: r.daysSinceLast,
             });
           }
+          if (!result || result.sent !== true) {
+            // Release the claim; leave it open for the next run.
+            try { await claim.ref.delete(); } catch (_) { /* best-effort */ }
+            totalSkipped++;
+            if (result?.error) errors.push({ email: user.email, error: result.error });
+            continue;
+          }
+
           logEvent(user.domain, {
             email: user.email,
             type: 'reengagement_fired',
@@ -333,17 +376,28 @@ router.post('/admin/check-alerts', async (req, res) => {
       if (!user?.email || !user?.domain) continue;
       usersChecked++;
       try {
+        // CAN-SPAM: skip suppressed addresses before doing any work.
+        if (await isEmailSuppressed(user.email)) { usersSkipped++; continue; }
+
         const claim = await claimDailyAlertSlot(user.domain, user.email);
         if (!claim.claimed) { usersSkipped++; continue; }
 
         const alerts = await evaluateSeriesAlerts(user.domain, user.email);
         if (alerts.length === 0) continue; // claim spent, but nothing to send
 
-        await sendSeriesAlertEmail({
+        // Send, then release the day's slot if it didn't go out so the sweep can
+        // retry rather than silently dropping the alert.
+        const result = await sendSeriesAlertEmail({
           to: user.email,
           displayName: user.displayName || null,
           alerts,
         });
+        if (!result || result.sent !== true) {
+          try { await claim.ref.delete(); } catch (_) { /* best-effort */ }
+          usersSkipped++;
+          if (result?.error) errors.push({ email: user.email, error: result.error });
+          continue;
+        }
         await recordAlertsSent(claim.ref, alerts);
 
         logEvent(user.domain, {

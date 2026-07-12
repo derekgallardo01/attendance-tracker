@@ -36,6 +36,7 @@ jest.mock('../../src/services/firestore', () => ({
   evaluateReengagementForUser: jest.fn(),
   claimReengagementSlot: jest.fn(),
   logEvent: jest.fn(),
+  isEmailSuppressed: jest.fn(),
   // For auth middleware
   getUser: jest.fn(),
   updateUserTokens: jest.fn(),
@@ -53,21 +54,31 @@ const notifications = require('../../src/lib/notifications');
 
 const SUPER_ADMIN = 'derekgallardo01@gmail.com';
 const SCHEDULER_SECRET = 'test-scheduler-secret-xyz';
+const MARKETPLACE_SECRET = 'test-marketplace-secret-abc';
 
 let app;
 
 beforeEach(() => {
   jest.clearAllMocks();
   process.env.SCHEDULER_SECRET = SCHEDULER_SECRET;
+  process.env.MARKETPLACE_WEBHOOK_SECRET = MARKETPLACE_SECRET;
   // Auth middleware needs a user doc to attach
   firestore.getUser.mockImplementation(async (domain, email) => ({
     email, domain,
   }));
+  // Default: nobody is suppressed (individual tests can override).
+  firestore.isEmailSuppressed.mockResolvedValue(false);
+  // Sends succeed by default — mirror the real send helpers which return
+  // { sent: true } on success. Failure tests override with { sent: false }.
+  notifications.sendSeriesAlertEmail.mockResolvedValue({ sent: true });
+  notifications.sendReactivationEmail.mockResolvedValue({ sent: true });
+  notifications.sendForgottenMeetingEmail.mockResolvedValue({ sent: true });
   app = buildApp();
 });
 
 afterEach(() => {
   delete process.env.SCHEDULER_SECRET;
+  delete process.env.MARKETPLACE_WEBHOOK_SECRET;
 });
 
 describe('Super-admin gated endpoints', () => {
@@ -244,6 +255,44 @@ describe('POST /api/admin/check-alerts — dual auth (super-admin OR scheduler s
     expect(res.body.usersChecked).toBe(2);
     expect(res.body.errors).toHaveLength(1);
   });
+
+  test('skips suppressed recipients without claiming or sending (CAN-SPAM)', async () => {
+    firestore.getAllUsersAcrossTenants.mockResolvedValue([
+      { email: 'optout@acme.com', domain: 'acme.com' },
+    ]);
+    firestore.isEmailSuppressed.mockResolvedValue(true);
+
+    const res = await request(app)
+      .post('/api/admin/check-alerts')
+      .set('x-scheduler-secret', SCHEDULER_SECRET)
+      .set('Content-Type', 'application/json')
+      .send({});
+    expect(res.body.usersSkipped).toBe(1);
+    expect(firestore.claimDailyAlertSlot).not.toHaveBeenCalled();
+    expect(notifications.sendSeriesAlertEmail).not.toHaveBeenCalled();
+  });
+
+  test('releases the day slot and skips recordAlertsSent when the send fails', async () => {
+    const del = jest.fn().mockResolvedValue(undefined);
+    firestore.getAllUsersAcrossTenants.mockResolvedValue([
+      { email: 'a@x.com', domain: 'x.com' },
+    ]);
+    firestore.claimDailyAlertSlot.mockResolvedValue({ claimed: true, ref: { delete: del } });
+    firestore.evaluateSeriesAlerts.mockResolvedValue([
+      { type: 'streak', personName: 'Bob', detail: 'missed the last 3', attended: 5, instanceCount: 13 },
+    ]);
+    notifications.sendSeriesAlertEmail.mockResolvedValue({ sent: false, error: 'Resend 500' });
+
+    const res = await request(app)
+      .post('/api/admin/check-alerts')
+      .set('x-scheduler-secret', SCHEDULER_SECRET)
+      .set('Content-Type', 'application/json')
+      .send({});
+    expect(del).toHaveBeenCalledTimes(1);
+    expect(firestore.recordAlertsSent).not.toHaveBeenCalled();
+    expect(res.body.totalAlerts).toBe(0);
+    expect(res.body.usersSkipped).toBe(1);
+  });
 });
 
 describe('POST /api/admin/check-reengagement', () => {
@@ -322,27 +371,121 @@ describe('POST /api/admin/check-reengagement', () => {
       'acme.com', 'user@acme.com', 'forgotten_meeting:series-x'
     );
   });
+
+  test('skips suppressed recipients without claiming or sending (CAN-SPAM)', async () => {
+    firestore.getAllUsersAcrossTenants.mockResolvedValue([
+      { email: 'optout@acme.com', domain: 'acme.com' },
+    ]);
+    firestore.isEmailSuppressed.mockResolvedValue(true);
+
+    const res = await request(app)
+      .post('/api/admin/check-reengagement')
+      .set('x-scheduler-secret', SCHEDULER_SECRET)
+      .set('Content-Type', 'application/json')
+      .send({});
+    expect(res.body.totalSkipped).toBe(1);
+    expect(firestore.evaluateReengagementForUser).not.toHaveBeenCalled();
+    expect(firestore.claimReengagementSlot).not.toHaveBeenCalled();
+    expect(notifications.sendReactivationEmail).not.toHaveBeenCalled();
+  });
+
+  test('releases the claim when the send fails so it is not lost forever', async () => {
+    const del = jest.fn().mockResolvedValue(undefined);
+    firestore.getAllUsersAcrossTenants.mockResolvedValue([
+      { email: 'lapsed@acme.com', domain: 'acme.com' },
+    ]);
+    firestore.evaluateReengagementForUser.mockResolvedValue([
+      { type: 'reactivation_7d', daysSinceLogin: 10 },
+    ]);
+    firestore.claimReengagementSlot.mockResolvedValue({ claimed: true, ref: { delete: del } });
+    notifications.sendReactivationEmail.mockResolvedValue({ sent: false, error: 'Resend 500' });
+
+    const res = await request(app)
+      .post('/api/admin/check-reengagement')
+      .set('x-scheduler-secret', SCHEDULER_SECRET)
+      .set('Content-Type', 'application/json')
+      .send({});
+    expect(del).toHaveBeenCalledTimes(1);      // slot released for retry
+    expect(res.body.totalSent).toBe(0);
+    expect(res.body.totalSkipped).toBe(1);
+    expect(firestore.logEvent).not.toHaveBeenCalled();
+  });
 });
 
-describe('POST /api/admin/install — marketplace webhook (unauthenticated)', () => {
-  test('400 when domain is missing', async () => {
+describe('POST /api/admin/install — marketplace webhook (authenticated)', () => {
+  test('403 when no secret and not super-admin (cannot pollute tenant config)', async () => {
     const res = await request(app)
       .post('/api/admin/install')
+      .set('Content-Type', 'application/json')
+      .send({ domain: 'evil.com', adminEmail: 'attacker@evil.com' });
+    expect(res.status).toBe(403);
+    expect(firestore.upsertTenantConfig).not.toHaveBeenCalled();
+  });
+
+  test('403 with a wrong secret', async () => {
+    const res = await request(app)
+      .post('/api/admin/install')
+      .set('x-marketplace-secret', 'nope')
+      .set('Content-Type', 'application/json')
+      .send({ domain: 'evil.com' });
+    expect(res.status).toBe(403);
+    expect(firestore.upsertTenantConfig).not.toHaveBeenCalled();
+  });
+
+  test('400 when domain is missing (with valid secret)', async () => {
+    const res = await request(app)
+      .post('/api/admin/install')
+      .set('x-marketplace-secret', MARKETPLACE_SECRET)
       .set('Content-Type', 'application/json')
       .send({ adminEmail: 'admin@acme.com' });
     expect(res.status).toBe(400);
   });
 
-  test('200 and persists tenant config', async () => {
+  test('200 and persists tenant config with a valid shared secret', async () => {
     firestore.upsertTenantConfig.mockResolvedValue(undefined);
     const res = await request(app)
       .post('/api/admin/install')
+      .set('x-marketplace-secret', MARKETPLACE_SECRET)
       .set('Content-Type', 'application/json')
       .send({ domain: 'newco.com', adminEmail: 'admin@newco.com' });
     expect(res.status).toBe(200);
     expect(firestore.upsertTenantConfig).toHaveBeenCalledWith('newco.com', expect.objectContaining({
       adminEmail: 'admin@newco.com',
       active: true,
+    }));
+  });
+
+  test('super-admin session can also trigger it (manual/testing)', async () => {
+    firestore.upsertTenantConfig.mockResolvedValue(undefined);
+    const res = await request(app)
+      .post('/api/admin/install')
+      .set(authedHeader(SUPER_ADMIN, 'gmail.com'))
+      .set('Content-Type', 'application/json')
+      .send({ domain: 'newco.com' });
+    expect(res.status).toBe(200);
+  });
+});
+
+describe('POST /api/admin/uninstall — marketplace webhook (authenticated)', () => {
+  test('403 without a secret (cannot deactivate an arbitrary tenant)', async () => {
+    const res = await request(app)
+      .post('/api/admin/uninstall')
+      .set('Content-Type', 'application/json')
+      .send({ domain: 'victim.com' });
+    expect(res.status).toBe(403);
+    expect(firestore.upsertTenantConfig).not.toHaveBeenCalled();
+  });
+
+  test('200 deactivates the tenant with a valid secret', async () => {
+    firestore.upsertTenantConfig.mockResolvedValue(undefined);
+    const res = await request(app)
+      .post('/api/admin/uninstall')
+      .set('x-marketplace-secret', MARKETPLACE_SECRET)
+      .set('Content-Type', 'application/json')
+      .send({ domain: 'leaving.com' });
+    expect(res.status).toBe(200);
+    expect(firestore.upsertTenantConfig).toHaveBeenCalledWith('leaving.com', expect.objectContaining({
+      active: false,
     }));
   });
 });

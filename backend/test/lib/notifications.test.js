@@ -15,6 +15,41 @@ describe('notifications — module structure', () => {
   });
 });
 
+describe('notifications — unsubscribe token (CAN-SPAM one-click)', () => {
+  test('token verifies for the same email and is case-insensitive', () => {
+    const n = require('../../src/lib/notifications');
+    const token = n.unsubscribeToken('User@Acme.com');
+    expect(n.verifyUnsubscribeToken('User@Acme.com', token)).toBe(true);
+    expect(n.verifyUnsubscribeToken('user@acme.com', token)).toBe(true);
+  });
+
+  test('token does not verify for a different email or a tampered token', () => {
+    const n = require('../../src/lib/notifications');
+    const token = n.unsubscribeToken('user@acme.com');
+    expect(n.verifyUnsubscribeToken('other@acme.com', token)).toBe(false);
+    expect(n.verifyUnsubscribeToken('user@acme.com', token + 'x')).toBe(false);
+    expect(n.verifyUnsubscribeToken('user@acme.com', '')).toBe(false);
+    expect(n.verifyUnsubscribeToken('', token)).toBe(false);
+  });
+
+  test('unsubscribeUrl embeds the api base, escaped email, and a valid token', () => {
+    const n = require('../../src/lib/notifications');
+    const url = n.unsubscribeUrl('user+tag@acme.com');
+    expect(url).toContain('/public/unsubscribe');
+    expect(url).toContain('e=user%2Btag%40acme.com'); // encodeURIComponent
+    const t = new URL(url).searchParams.get('t');
+    expect(n.verifyUnsubscribeToken('user+tag@acme.com', t)).toBe(true);
+  });
+
+  test('unsubscribeFooter returns matching text + html fragments', () => {
+    const n = require('../../src/lib/notifications');
+    const foot = n.unsubscribeFooter('user@acme.com');
+    expect(foot.text).toContain('Unsubscribe:');
+    expect(foot.html).toContain('Unsubscribe');
+    expect(foot.html).toContain('/public/unsubscribe');
+  });
+});
+
 describe('notifications — no-op when Resend not configured', () => {
   // setup-env.js deliberately leaves RESEND_API_KEY unset. Verify our code
   // degrades to silent no-ops (fire-and-forget paths) or skipped responses

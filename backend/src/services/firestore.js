@@ -860,8 +860,9 @@ async function getAggregatedInsights() {
 //
 // We scope to the user's tenant for data isolation, then filter to meetings
 // they have a 'tracked' event for (so two users in the same domain don't see
-// each other's untracked meetings). For early users with no events yet we
-// fall back to "all meetings in your domain" so the page isn't empty.
+// each other's meetings). A user with no tracked events sees an empty list —
+// we never fall back to "all meetings in the domain", because on shared tenants
+// (every gmail.com user lands in one tenant) that would leak strangers' data.
 async function getUserMeetingHistory(domain, email) {
   try {
     const tenant = tenantRef(domain);
@@ -872,17 +873,16 @@ async function getUserMeetingHistory(domain, email) {
       tenant.collection('meetings').get(),
     ]);
 
-    // Conference IDs the user has actually tracked. If empty (e.g. tracked
-    // before we shipped events), fall back to the domain's meetings.
+    // Conference IDs the user has actually tracked. Always filter by this set —
+    // if it's empty the user simply gets no meetings (see comment above).
     const trackedConferenceIds = new Set();
     for (const d of eventsSnap.docs) {
       const cid = d.data().meta?.conferenceId;
       if (cid) trackedConferenceIds.add(cid);
     }
-    const useEventFilter = trackedConferenceIds.size > 0;
 
     const filteredMeetings = meetingsSnap.docs
-      .filter(d => !useEventFilter || trackedConferenceIds.has(d.id))
+      .filter(d => trackedConferenceIds.has(d.id))
       .map(d => {
         const data = d.data();
         return {
@@ -1257,20 +1257,20 @@ async function getUserMeetingSeries(domain, email) {
       tenant.collection('meetings').get(),
     ]);
 
-    // Same tracked-by-this-user filter as getUserMeetingHistory: if the user
-    // has tracked events, only count meetings they've actually tracked.
+    // Same tracked-by-this-user filter as getUserMeetingHistory: only count
+    // meetings the user has actually tracked. No eventless fallback — an
+    // untracked user gets an empty series list rather than the domain's data.
     const trackedIds = new Set();
     for (const d of eventsSnap.docs) {
       const cid = d.data().meta?.conferenceId;
       if (cid) trackedIds.add(cid);
     }
-    const useFilter = trackedIds.size > 0;
 
     const seriesMeetings = meetingsSnap.docs
       .filter(d => {
         const data = d.data();
         if (!data.recurringEventId) return false; // skip non-recurring meetings
-        if (useFilter && !trackedIds.has(d.id)) return false;
+        if (!trackedIds.has(d.id)) return false;
         return true;
       })
       .map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
@@ -1788,10 +1788,9 @@ async function getParticipantHistory(domain, userEmail, key) {
       const cid = d.data().meta?.conferenceId;
       if (cid) trackedIds.add(cid);
     }
-    const useFilter = trackedIds.size > 0;
-
+    // Always filter — no eventless fallback (shared tenants would leak data).
     const meetings = meetingsSnap.docs
-      .filter(d => !useFilter || trackedIds.has(d.id))
+      .filter(d => trackedIds.has(d.id))
       .map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
 
     const participantSnaps = await Promise.all(meetings.map(m => m.ref.collection('participants').get()));
@@ -2710,14 +2709,110 @@ async function getOutreachList({ days = 30, limit = 50 } = {}) {
   }
 }
 
+// ── Email suppression (CAN-SPAM one-click unsubscribe) ──
+// Root collection keyed by lowercased email so a single unsubscribe covers a
+// person across every tenant they belong to. Checked before any promotional /
+// lifecycle send.
+async function suppressEmail(email, meta = {}) {
+  try {
+    await getDb().collection('suppression').doc(email.toLowerCase()).set({
+      email: email.toLowerCase(),
+      suppressedAt: FieldValue.serverTimestamp(),
+      ...meta,
+    }, { merge: true });
+    log.info('firestore: email suppressed', { email: email.toLowerCase(), source: meta.source || null });
+    return true;
+  } catch (err) {
+    log.error('firestore: suppressEmail failed', { email, error: err.message });
+    return false;
+  }
+}
+
+async function isEmailSuppressed(email) {
+  try {
+    const doc = await getDb().collection('suppression').doc(email.toLowerCase()).get();
+    return doc.exists;
+  } catch (err) {
+    // Fail open on read error — better to risk one extra email than to silently
+    // drop legitimate alerts because Firestore hiccuped.
+    log.warn('firestore: isEmailSuppressed failed', { email, error: err.message });
+    return false;
+  }
+}
+
 // ── Delete user data (Marketplace compliance) ──
 
+// Delete an array of DocumentReferences in batches under Firestore's 500-op
+// limit. Best-effort per chunk; logs and continues on a chunk failure so a
+// single bad ref can't abort the whole cascade.
+async function deleteRefsInBatches(refs, ctx = {}) {
+  let deleted = 0;
+  for (let i = 0; i < refs.length; i += 450) {
+    const chunk = refs.slice(i, i + 450);
+    const batch = getDb().batch();
+    for (const ref of chunk) batch.delete(ref);
+    try {
+      await batch.commit();
+      deleted += chunk.length;
+    } catch (err) {
+      log.warn('firestore: batch delete failed', { ...ctx, error: err.message });
+    }
+  }
+  return deleted;
+}
+
+// Delete a user and cascade every record that carries their PII, for
+// Marketplace / GDPR data-deletion compliance. We purge:
+//   users/{email}, userSettings/{email}, adminNotes/{email}, outreach/{email}
+//   events, reminders, reengagementSent, alertsSent  (where email == user)
+//   participant docs across meetings where the participant IS this user
+// We deliberately do NOT delete meetings/{conferenceId} — those are
+// tenant-owned org records keyed by conference, not by one user; deleting them
+// would erase other attendees' data. Meetings are scrubbed of this user's
+// participant sub-doc instead.
 async function deleteUser(domain, email) {
+  const emailLower = email.toLowerCase();
+  const tenant = tenantRef(domain);
   try {
-    await tenantRef(domain).collection('users').doc(email.toLowerCase()).delete();
-    log.info('firestore: deleted user', { domain, email });
+    // 1) Docs keyed directly by the user's email.
+    const keyedRefs = [
+      tenant.collection('users').doc(emailLower),
+      tenant.collection('userSettings').doc(emailLower),
+      tenant.collection('adminNotes').doc(emailLower),
+      tenant.collection('outreach').doc(emailLower),
+    ];
+
+    // 2) Collections that store the email as a field — query then delete.
+    const [eventsSnap, remindersSnap, reengSnap, alertsSnap] = await Promise.all([
+      tenant.collection('events').where('email', '==', emailLower).get(),
+      tenant.collection('reminders').where('email', '==', emailLower).get(),
+      tenant.collection('reengagementSent').where('email', '==', emailLower).get(),
+      tenant.collection('alertsSent').where('email', '==', emailLower).get(),
+    ]);
+    const fieldRefs = [
+      ...eventsSnap.docs, ...remindersSnap.docs, ...reengSnap.docs, ...alertsSnap.docs,
+    ].map(d => d.ref);
+
+    // 3) Participant sub-docs where this user is the attendee. Scan the tenant's
+    //    meetings, then their participants, matching on the participant email.
+    const meetingsSnap = await tenant.collection('meetings').get();
+    const participantSnaps = await Promise.all(
+      meetingsSnap.docs.map(m => m.ref.collection('participants').where('email', '==', emailLower).get())
+    );
+    const participantRefs = participantSnaps.flatMap(s => s.docs.map(d => d.ref));
+
+    const deleted = await deleteRefsInBatches(
+      [...keyedRefs, ...fieldRefs, ...participantRefs],
+      { domain, email: emailLower }
+    );
+    log.info('firestore: deleted user + PII cascade', {
+      domain, email: emailLower,
+      events: eventsSnap.size, reminders: remindersSnap.size,
+      reengagementSent: reengSnap.size, alertsSent: alertsSnap.size,
+      participants: participantRefs.length, docsDeleted: deleted,
+    });
   } catch (err) {
-    log.error('firestore: deleteUser failed', { domain, email, error: err.message });
+    log.error('firestore: deleteUser failed', { domain, email: emailLower, error: err.message });
   }
 }
 
@@ -2742,6 +2837,7 @@ module.exports = {
   getAdvancedAnalytics,
   getWeeklySelfReport,
   appendConversation, setOutreachStatus,
+  suppressEmail, isEmailSuppressed,
   createReminder, markReminderDone, getDueReminders,
   getEmailTemplates, setEmailTemplates,
   getAllUsersAcrossTenants,

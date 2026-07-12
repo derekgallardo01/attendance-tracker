@@ -2,8 +2,8 @@ const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
 const { FieldValue } = require('@google-cloud/firestore');
 const log = require('../lib/logger');
-const { getDb, resolveShareLink, getSharedSeriesView } = require('../services/firestore');
-const { sendFeedbackEmail } = require('../lib/notifications');
+const { getDb, resolveShareLink, getSharedSeriesView, suppressEmail } = require('../services/firestore');
+const { sendFeedbackEmail, verifyUnsubscribeToken } = require('../lib/notifications');
 
 const router = Router();
 
@@ -160,5 +160,43 @@ router.get('/public/share/:token', async (req, res) => {
     res.status(500).json({ error: 'Failed to load shared view' });
   }
 });
+
+// GET /api/public/unsubscribe — One-click CAN-SPAM unsubscribe. Unauth by
+// design (recipients aren't signed in when they click an email link); the
+// signed HMAC token in the URL proves the request came from a link we sent.
+// Records suppression so no further lifecycle emails go to this address, and
+// returns a tiny confirmation page.
+function unsubscribePage(title, message) {
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8">`
+    + `<meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title>`
+    + `<style>body{font-family:sans-serif;background:#0d1117;color:#e6edf3;display:flex;`
+    + `min-height:100vh;margin:0;align-items:center;justify-content:center;text-align:center;padding:24px}`
+    + `.card{max-width:420px}h1{font-size:20px;margin:0 0 12px}p{color:#8a8f98;line-height:1.5}`
+    + `a{color:#1f6feb}</style></head><body><div class="card"><h1>${title}</h1>`
+    + `<p>${message}</p><p><a href="https://attendancetracker.dev/">Back to Attendance Tracker</a></p>`
+    + `</div></body></html>`;
+}
+
+router.get('/public/unsubscribe', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const email = typeof req.query.e === 'string' ? req.query.e : '';
+  const token = typeof req.query.t === 'string' ? req.query.t : '';
+  if (!email || !verifyUnsubscribeToken(email, token)) {
+    return res.status(400).type('html').send(
+      unsubscribePage('Invalid link', 'This unsubscribe link is invalid or has expired. If you keep getting emails, reply to any of them and I\'ll remove you.')
+    );
+  }
+  await suppressEmail(email, { source: 'one_click_unsubscribe' });
+  log.info('public: unsubscribe', { email: email.toLowerCase() });
+  res.type('html').send(
+    unsubscribePage('You\'re unsubscribed', `${escapeHtml(email)} won't receive any more re-engagement or alert emails. You can still use Attendance Tracker normally.`)
+  );
+});
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[c]));
+}
 
 module.exports = router;

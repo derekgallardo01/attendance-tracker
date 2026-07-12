@@ -243,8 +243,10 @@ describe('getParticipantHistory — cross-meeting rollup', () => {
     expect(res.recent).toEqual([]);
   });
 
-  test('falls back to all meetings when the requester has no tracked events yet', async () => {
-    // No events seeded → useFilter=false → all meetings included
+  test('returns no meetings when the requester has no tracked events (no domain-wide fallback)', async () => {
+    // No events seeded for the requester → they must see nothing, not the
+    // whole domain's meetings. Guards against the same-domain data leak on
+    // shared tenants (every gmail.com user lands in one tenant).
     ctx.seed('tenants/acme.com/meetings/m1', {
       title: 'X', startTime: wrapTimestamp(new Date('2026-06-01T10:00:00Z')),
     });
@@ -257,7 +259,7 @@ describe('getParticipantHistory — cross-meeting rollup', () => {
     const res = await firestore.getParticipantHistory(
       'acme.com', 'brandnew@acme.com', 'ken@yacht.com'
     );
-    expect(res.meetingCount).toBe(1);
-    expect(res.totalMeetings).toBe(1);
+    expect(res.meetingCount).toBe(0);
+    expect(res.totalMeetings).toBe(0);
   });
 });

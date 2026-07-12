@@ -24,6 +24,12 @@ const CONFIG = {
   allowedDomains:  (process.env.ALLOWED_DOMAINS || '*').split(','),
   port:             process.env.PORT || 8080,
   gcpProjectId:     process.env.GCP_PROJECT_ID || null,
+
+  // Public, absolute URL of this backend's /api mount. Used to build links in
+  // emails (e.g. one-click unsubscribe) that must hit the API directly — the
+  // marketing site on attendancetracker.dev is static GitHub Pages and does
+  // not proxy /api. Overridable via env for staging.
+  publicApiUrl:     process.env.PUBLIC_API_URL || 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api',
 };
 
 module.exports = CONFIG;

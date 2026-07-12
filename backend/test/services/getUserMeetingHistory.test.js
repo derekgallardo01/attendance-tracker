@@ -78,15 +78,15 @@ describe('getUserMeetingHistory — meeting filter by tracked events', () => {
     expect(res.meetings[0].conferenceId).toBe('meet-A');
   });
 
-  test('falls back to ALL tenant meetings when user has no tracked events', async () => {
-    // Legacy safety net: users who tracked before the events collection existed
+  test('returns NO meetings when user has no tracked events (no domain-wide fallback)', async () => {
+    // A user with no tracked events must not see the domain's meetings — on
+    // shared tenants (all gmail.com users share one) that would leak data.
     seedMeeting('meet-old', {
       title: 'Old',
       startTime: new Date('2026-05-01T10:00:00Z'),
     });
     const res = await firestore.getUserMeetingHistory('acme.com', 'brandnew@acme.com');
-    expect(res.meetings).toHaveLength(1);
-    expect(res.meetings[0].title).toBe('Old');
+    expect(res.meetings).toHaveLength(0);
   });
 
   test('sorts meetings by createdAt/startTime DESCENDING (newest first)', async () => {

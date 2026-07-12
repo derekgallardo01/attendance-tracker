@@ -9,12 +9,14 @@ jest.mock('../../src/services/firestore', () => ({
   getDb: jest.fn(),
   resolveShareLink: jest.fn(),
   getSharedSeriesView: jest.fn(),
+  suppressEmail: jest.fn(),
   // Auth middleware deps (unused on public routes but module is loaded)
   getUser: jest.fn(),
   updateUserTokens: jest.fn(),
 }));
 jest.mock('../../src/lib/notifications', () => ({
   sendFeedbackEmail: jest.fn(),
+  verifyUnsubscribeToken: jest.fn(),
 }));
 
 const firestore = require('../../src/services/firestore');
@@ -191,5 +193,47 @@ describe('GET /api/public/share/:token', () => {
     });
     const res = await request(app).get('/api/public/share/valid-token');
     expect(res.headers['cache-control']).toContain('no-store');
+  });
+});
+
+describe('GET /api/public/unsubscribe', () => {
+  test('valid token suppresses the email and returns a confirmation page', async () => {
+    notifications.verifyUnsubscribeToken.mockReturnValue(true);
+    firestore.suppressEmail.mockResolvedValue(true);
+    const res = await request(app)
+      .get('/api/public/unsubscribe')
+      .query({ e: 'user@acme.com', t: 'goodtoken' });
+    expect(res.status).toBe(200);
+    expect(firestore.suppressEmail).toHaveBeenCalledWith(
+      'user@acme.com', expect.objectContaining({ source: 'one_click_unsubscribe' })
+    );
+    expect(res.text).toContain('unsubscribed');
+    expect(res.headers['cache-control']).toContain('no-store');
+  });
+
+  test('invalid token returns 400 and does not suppress', async () => {
+    notifications.verifyUnsubscribeToken.mockReturnValue(false);
+    const res = await request(app)
+      .get('/api/public/unsubscribe')
+      .query({ e: 'user@acme.com', t: 'badtoken' });
+    expect(res.status).toBe(400);
+    expect(firestore.suppressEmail).not.toHaveBeenCalled();
+  });
+
+  test('missing email returns 400', async () => {
+    notifications.verifyUnsubscribeToken.mockReturnValue(false);
+    const res = await request(app).get('/api/public/unsubscribe').query({ t: 'x' });
+    expect(res.status).toBe(400);
+    expect(firestore.suppressEmail).not.toHaveBeenCalled();
+  });
+
+  test('reflected email is HTML-escaped in the confirmation page (no XSS)', async () => {
+    notifications.verifyUnsubscribeToken.mockReturnValue(true);
+    firestore.suppressEmail.mockResolvedValue(true);
+    const res = await request(app)
+      .get('/api/public/unsubscribe')
+      .query({ e: '<script>alert(1)</script>@x.com', t: 'goodtoken' });
+    expect(res.text).not.toContain('<script>alert(1)</script>');
+    expect(res.text).toContain('&lt;script&gt;');
   });
 });

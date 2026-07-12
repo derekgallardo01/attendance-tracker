@@ -1,5 +1,7 @@
+const crypto = require('crypto');
 const { Resend } = require('resend');
 const log = require('./logger');
+const CONFIG = require('../config');
 
 // Resend transactional email — better deliverability + open/click tracking
 // than Gmail SMTP, and the API doesn't have Gmail's 500/day cap.
@@ -59,6 +61,43 @@ function escape(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
   }[c]));
+}
+
+// ── One-click unsubscribe (CAN-SPAM) ──────────────────────────────────────
+// Every promotional / lifecycle email carries an unsubscribe link. The token
+// is an HMAC of the recipient's email under SESSION_SECRET, so the unsubscribe
+// endpoint can verify the request came from us without storing per-email
+// tokens. Same secret used for session JWTs — rotating it invalidates old
+// unsubscribe links (acceptable; users can unsubscribe again).
+function unsubscribeToken(email) {
+  return crypto
+    .createHmac('sha256', CONFIG.sessionSecret)
+    .update(String(email).toLowerCase())
+    .digest('hex')
+    .slice(0, 32);
+}
+
+function verifyUnsubscribeToken(email, token) {
+  if (!email || !token) return false;
+  const expected = unsubscribeToken(email);
+  const a = Buffer.from(expected);
+  const b = Buffer.from(String(token));
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+function unsubscribeUrl(email) {
+  const t = unsubscribeToken(email);
+  return `${CONFIG.publicApiUrl}/public/unsubscribe?e=${encodeURIComponent(email)}&t=${t}`;
+}
+
+// Footer appended to lifecycle emails. Returns matching text + HTML fragments.
+function unsubscribeFooter(email) {
+  const url = unsubscribeUrl(email);
+  return {
+    text: `\n\n—\nDon't want these emails? Unsubscribe: ${url}`,
+    html: `<p style="margin:24px 0 0;color:#8a8f98;font-size:12px;font-family:sans-serif">`
+      + `Don't want these emails? <a href="${escape(url)}" style="color:#8a8f98">Unsubscribe</a>.</p>`,
+  };
 }
 
 // Fire-and-forget signup notification email. Sends to NOTIFY_EMAIL (or the
@@ -354,6 +393,7 @@ async function sendSeriesAlertEmail({ to, displayName, alerts }) {
         You're getting this because you tracked recurring meetings with Attendance Tracker.
         Alerts run once per day if there's something worth flagging — no email if there's nothing new.
       </p>
+      ${unsubscribeFooter(to).html}
     </div>
   `;
   const text = [
@@ -366,6 +406,7 @@ async function sendSeriesAlertEmail({ to, displayName, alerts }) {
     ...alerts.map(a => `  - ${a.personName || a.personEmail || 'Someone'} ${a.detail}. (${a.attended}/${a.instanceCount})`),
     '',
     'View series: https://attendancetracker.dev/history.html',
+    unsubscribeFooter(to).text,
   ].join('\n');
 
   try {
@@ -464,16 +505,17 @@ async function sendReactivationEmail({ to, displayName, daysSinceLogin, variant 
     ].join('\n');
   }
 
+  const foot = unsubscribeFooter(to);
   const html = body.split('\n').map(l =>
     `<p style="margin:0 0 12px;font-family:sans-serif;font-size:14px;line-height:1.55;color:#111">${escape(l) || '&nbsp;'}</p>`
-  ).join('');
+  ).join('') + foot.html;
 
   try {
     const info = await send({
       from: makeFrom('Derek Gallardo'),
       to,
       subject,
-      text: body,
+      text: body + foot.text,
       html,
       replyTo: ownerEmail(),
       tags: [{ name: 'type', value: 'reactivation' }, { name: 'variant', value: variant }],
@@ -512,13 +554,14 @@ async function sendForgottenMeetingEmail({ to, displayName, seriesTitle, recurri
     return `<p style="margin:0 0 12px;font-family:sans-serif;font-size:14px;line-height:1.55;color:#111">${escape(l) || '&nbsp;'}</p>`;
   }).join('');
 
+  const foot = unsubscribeFooter(to);
   try {
     const info = await send({
       from: makeFrom('Derek Gallardo'),
       to,
       subject,
-      text: body,
-      html,
+      text: body + foot.text,
+      html: html + foot.html,
       replyTo: ownerEmail(),
       tags: [{ name: 'type', value: 'forgotten_meeting' }],
     });
@@ -646,4 +689,5 @@ module.exports = {
   sendSignupWebhook, sendAdminEmail, sendWeeklySelfReport, sendExportNotification,
   sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendForgottenMeetingEmail,
   sendSlackDigest, sendSlackTestPing, buildSlackDigestBlocks, buildSlackFallbackText, maskSlackWebhook,
+  unsubscribeUrl, unsubscribeToken, verifyUnsubscribeToken, unsubscribeFooter,
 };

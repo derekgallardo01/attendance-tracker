@@ -198,6 +198,8 @@ Optional / feature-specific:
 | `RESEND_API_KEY` | _(none, emails skipped)_ | Resend transactional email key |
 | `RESEND_FROM_DOMAIN` | `resend.dev` | Verified send-from domain (set to `attendancetracker.dev` once verified in Resend) |
 | `SCHEDULER_SECRET` | _(none, cron blocked)_ | Shared secret for Cloud Scheduler → POST /api/admin/check-* endpoints |
+| `MARKETPLACE_WEBHOOK_SECRET` | _(none, webhooks blocked)_ | Shared secret for POST /api/admin/install and /uninstall. Sent as the `x-marketplace-secret` header. Without it, only a super-admin session can call these (they write tenant config). |
+| `PUBLIC_API_URL` | Cloud Run `…/api` | Absolute URL of this backend's `/api` mount; used to build email links (e.g. one-click unsubscribe) that must hit the API directly. |
 | `IMPERSONATE_EMAIL` | _(none)_ | Legacy single-tenant fallback for the service account |
 | `ADMIN_EMAIL` | _(none)_ | Workspace admin for Directory API enrichment |
 | `ALLOWED_ORIGINS` | `https://attendancetracker.dev,https://derekgallardo01.github.io` | CORS allowlist (in addition to `https://meet.google.com`) |

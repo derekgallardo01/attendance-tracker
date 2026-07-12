@@ -539,6 +539,63 @@ describe('deleteUser', () => {
     // No seed → user doesn't exist
     await expect(firestore.deleteUser('a.com', 'ghost@a.com')).resolves.not.toThrow();
   });
+
+  test('cascades all PII: settings, notes, outreach, events, reminders, slots, participant docs', async () => {
+    const D = 'a.com', E = 'goodbye@a.com';
+    seedUser(D, E);
+    ctx.seed(`tenants/${D}/userSettings/${E}`, { slackWebhookUrl: 'x' });
+    ctx.seed(`tenants/${D}/adminNotes/${E}`, { body: 'note' });
+    ctx.seed(`tenants/${D}/outreach/${E}`, { email: E, status: 'contacted' });
+    seedEvent(D, E, 'tracked', Date.now(), { conferenceId: 'c1' });
+    seedEvent(D, E, 'signin', Date.now());
+    ctx.seed(`tenants/${D}/reminders/r1`, { email: E, dueAt: wrapTimestamp(new Date()) });
+    ctx.seed(`tenants/${D}/reengagementSent/${E}__reactivation_7d`, { email: E, dedupKey: 'reactivation_7d' });
+    ctx.seed(`tenants/${D}/alertsSent/2026-07-12-${E}`, { email: E });
+    // Participant docs: one where the user IS the attendee (must go), one for
+    // another attendee in the same meeting (must survive).
+    ctx.seed(`tenants/${D}/meetings/m1`, { title: 'Standup' });
+    ctx.seed(`tenants/${D}/meetings/m1/participants/p1`, { email: E, displayName: 'Me' });
+    ctx.seed(`tenants/${D}/meetings/m1/participants/p2`, { email: 'other@a.com', displayName: 'Other' });
+
+    await firestore.deleteUser(D, E);
+
+    // Everything keyed to the user is gone.
+    expect(ctx.read(`tenants/${D}/users/${E}`)).toBeUndefined();
+    expect(ctx.read(`tenants/${D}/userSettings/${E}`)).toBeUndefined();
+    expect(ctx.read(`tenants/${D}/adminNotes/${E}`)).toBeUndefined();
+    expect(ctx.read(`tenants/${D}/outreach/${E}`)).toBeUndefined();
+    expect(ctx.read(`tenants/${D}/reminders/r1`)).toBeUndefined();
+    expect(ctx.read(`tenants/${D}/reengagementSent/${E}__reactivation_7d`)).toBeUndefined();
+    expect(ctx.read(`tenants/${D}/alertsSent/2026-07-12-${E}`)).toBeUndefined();
+    expect(ctx.read(`tenants/${D}/meetings/m1/participants/p1`)).toBeUndefined();
+
+    // Shared org data survives: the meeting itself and the other attendee.
+    expect(ctx.read(`tenants/${D}/meetings/m1`)).toBeDefined();
+    expect(ctx.read(`tenants/${D}/meetings/m1/participants/p2`)).toBeDefined();
+  });
+
+  test('does not touch another user in the same tenant', async () => {
+    seedUser('a.com', 'goodbye@a.com');
+    seedUser('a.com', 'stays@a.com');
+    ctx.seed('tenants/a.com/userSettings/stays@a.com', { slackWebhookUrl: 'keep' });
+    await firestore.deleteUser('a.com', 'goodbye@a.com');
+    expect(ctx.read('tenants/a.com/users/stays@a.com')).toBeDefined();
+    expect(ctx.read('tenants/a.com/userSettings/stays@a.com')).toBeDefined();
+  });
+});
+
+describe('email suppression (CAN-SPAM)', () => {
+  test('suppressEmail then isEmailSuppressed reports true (case-insensitive)', async () => {
+    expect(await firestore.isEmailSuppressed('Nope@Acme.com')).toBe(false);
+    await firestore.suppressEmail('Nope@Acme.com', { source: 'one_click_unsubscribe' });
+    expect(await firestore.isEmailSuppressed('nope@acme.com')).toBe(true);
+    expect(ctx.read('suppression/nope@acme.com')).toBeDefined();
+  });
+
+  test('unrelated address is not suppressed', async () => {
+    await firestore.suppressEmail('a@x.com');
+    expect(await firestore.isEmailSuppressed('b@x.com')).toBe(false);
+  });
 });
 
 // ═══════════════════════════ token persistence ═══════════════════════════
