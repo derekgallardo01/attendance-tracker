@@ -136,24 +136,29 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
       createdAt: now,
     }, { merge: true });
 
-    const batch = getDb().batch();
-    for (const p of participants) {
-      const docId = lastSegment(p.participantId);
-      const pRef = meetingRef.collection('participants').doc(docId);
-      batch.set(pRef, {
-        participantId: p.participantId,
-        displayName: p.displayName,
-        email: p.email,
-        joinTime: p.joinTime ? new Date(p.joinTime) : null,
-        leaveTime: p.leaveTime ? new Date(p.leaveTime) : null,
-        present: p.present,
-        sessions: p.sessions,
-        lastSeenAt: now,
-        updatedAt: now,
-        createdAt: now,
-      }, { merge: true });
+    // Chunk into batches under Firestore's 500-op limit — a very large meeting
+    // (200+ participants) would otherwise exceed a single batch.
+    const CHUNK = 450;
+    for (let i = 0; i < participants.length; i += CHUNK) {
+      const batch = getDb().batch();
+      for (const p of participants.slice(i, i + CHUNK)) {
+        const docId = lastSegment(p.participantId);
+        const pRef = meetingRef.collection('participants').doc(docId);
+        batch.set(pRef, {
+          participantId: p.participantId,
+          displayName: p.displayName,
+          email: p.email,
+          joinTime: p.joinTime ? new Date(p.joinTime) : null,
+          leaveTime: p.leaveTime ? new Date(p.leaveTime) : null,
+          present: p.present,
+          sessions: p.sessions,
+          lastSeenAt: now,
+          updatedAt: now,
+          createdAt: now,
+        }, { merge: true });
+      }
+      await batch.commit();
     }
-    await batch.commit();
 
     if (actorEmail) {
       logEvent(domain, {
@@ -471,11 +476,12 @@ async function getUserActivationStatus(domain, email) {
 // "aha moment" so the frontend can fire the celebration modal.
 async function countUserExports(domain, email) {
   try {
-    const snap = await tenantRef(domain).collection('events')
+    // count() aggregation — server-side tally, doesn't stream every doc back.
+    const agg = await tenantRef(domain).collection('events')
       .where('email', '==', email.toLowerCase())
       .where('type', '==', 'exported')
-      .get();
-    return snap.size;
+      .count().get();
+    return agg.data().count;
   } catch (err) {
     log.warn('firestore: countUserExports failed', { domain, email, error: err.message });
     return 0;
@@ -499,8 +505,9 @@ async function isExistingUserAnywhere(email) {
 
 async function countAllUsers() {
   try {
-    const snap = await getDb().collectionGroup('users').get();
-    return snap.size;
+    // count() aggregation instead of loading every user doc into memory.
+    const agg = await getDb().collectionGroup('users').count().get();
+    return agg.data().count;
   } catch (err) {
     log.warn('firestore: countAllUsers failed', { error: err.message });
     return null;

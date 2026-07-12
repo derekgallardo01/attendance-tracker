@@ -15,6 +15,30 @@ afterEach(() => {
   ctx.uninstall();
 });
 
+describe('persistAttendance — batch chunking', () => {
+  test('writes every participant when the count exceeds one Firestore batch (>450)', async () => {
+    const participants = Array.from({ length: 500 }, (_, i) => ({
+      participantId: `p${i}`,
+      displayName: `User ${i}`,
+      email: `user${i}@acme.com`,
+      joinTime: '2026-06-01T10:00:00Z',
+      leaveTime: '2026-06-01T10:30:00Z',
+      present: true,
+      sessions: 1,
+    }));
+
+    await firestore.persistAttendance('acme.com', 'conf-big', 'records/conf-big', participants, 'me@acme.com');
+
+    // Meeting doc reflects the full count...
+    expect(ctx.read('tenants/acme.com/meetings/conf-big').participantCount).toBe(500);
+    // ...and participants across the chunk boundary are all persisted.
+    expect(ctx.read('tenants/acme.com/meetings/conf-big/participants/p0')).toBeDefined();
+    expect(ctx.read('tenants/acme.com/meetings/conf-big/participants/p449')).toBeDefined();
+    expect(ctx.read('tenants/acme.com/meetings/conf-big/participants/p450')).toBeDefined();
+    expect(ctx.read('tenants/acme.com/meetings/conf-big/participants/p499')).toBeDefined();
+  });
+});
+
 describe('persistCalendarData', () => {
   test('writes meeting doc with the resolved title + attendees', async () => {
     await firestore.persistCalendarData(

@@ -114,6 +114,11 @@ class MockQuery {
     // Pass through — our tests don't assert ordering at the Firestore layer.
     return this;
   }
+  count() {
+    // Mirror the SDK aggregate query: query.count().get() → snap.data().count
+    const self = this;
+    return { async get() { const s = await self.get(); return { data: () => ({ count: s.size }) }; } };
+  }
   async get() {
     // Match all docs under this collection path
     const colPath = this._segments.join('/');
@@ -151,6 +156,10 @@ class MockCollectionGroupQuery {
     return new MockCollectionGroupQuery(this._store, this._name, this._filters, n);
   }
   orderBy() { return this; }
+  count() {
+    const self = this;
+    return { async get() { const s = await self.get(); return { data: () => ({ count: s.size }) }; } };
+  }
   async get() {
     const docs = [];
     for (const [docPath, data] of this._store.docs) {

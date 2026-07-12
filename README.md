@@ -206,6 +206,11 @@ Optional / feature-specific:
 | `ALLOWED_DOMAINS` | `*` | Tenant domain allowlist; `*` = public SaaS mode |
 | `PORT` | `8080` | Cloud Run port |
 | `GCP_PROJECT_ID` | auto | Firestore project ID |
+| `MEET_TIMEOUT_MS` | `10000` | Per-request timeout for Meet API calls (retried on timeout) |
+| `SLACK_TIMEOUT_MS` | `5000` | Timeout for Slack webhook POSTs |
+| `RESEND_TIMEOUT_MS` | `8000` | Timeout for Resend email sends |
+| `REQUEST_TIMEOUT_MS` | `30000` | Express server request timeout (socket destroyed past this) |
+| `SWEEP_BUDGET_MS` | `240000` | Time budget per daily cron sweep; unprocessed users roll to the next run |
 
 ---
 

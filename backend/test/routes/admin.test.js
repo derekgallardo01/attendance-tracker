@@ -79,6 +79,7 @@ beforeEach(() => {
 afterEach(() => {
   delete process.env.SCHEDULER_SECRET;
   delete process.env.MARKETPLACE_WEBHOOK_SECRET;
+  delete process.env.SWEEP_BUDGET_MS;
 });
 
 describe('Super-admin gated endpoints', () => {
@@ -272,6 +273,23 @@ describe('POST /api/admin/check-alerts — dual auth (super-admin OR scheduler s
     expect(notifications.sendSeriesAlertEmail).not.toHaveBeenCalled();
   });
 
+  test('stops at the time budget and reports remaining work', async () => {
+    process.env.SWEEP_BUDGET_MS = '-1'; // force immediate timeout
+    firestore.getAllUsersAcrossTenants.mockResolvedValue([
+      { email: 'a@x.com', domain: 'x.com' },
+      { email: 'b@y.com', domain: 'y.com' },
+    ]);
+    const res = await request(app)
+      .post('/api/admin/check-alerts')
+      .set('x-scheduler-secret', SCHEDULER_SECRET)
+      .set('Content-Type', 'application/json')
+      .send({});
+    delete process.env.SWEEP_BUDGET_MS;
+    expect(res.body.timedOut).toBe(true);
+    expect(res.body.remaining).toBe(2);
+    expect(firestore.claimDailyAlertSlot).not.toHaveBeenCalled();
+  });
+
   test('releases the day slot and skips recordAlertsSent when the send fails', async () => {
     const del = jest.fn().mockResolvedValue(undefined);
     firestore.getAllUsersAcrossTenants.mockResolvedValue([
@@ -387,6 +405,24 @@ describe('POST /api/admin/check-reengagement', () => {
     expect(firestore.evaluateReengagementForUser).not.toHaveBeenCalled();
     expect(firestore.claimReengagementSlot).not.toHaveBeenCalled();
     expect(notifications.sendReactivationEmail).not.toHaveBeenCalled();
+  });
+
+  test('stops at the time budget and reports remaining work', async () => {
+    process.env.SWEEP_BUDGET_MS = '-1'; // force immediate timeout
+    firestore.getAllUsersAcrossTenants.mockResolvedValue([
+      { email: 'a@x.com', domain: 'x.com' },
+      { email: 'b@y.com', domain: 'y.com' },
+      { email: 'c@z.com', domain: 'z.com' },
+    ]);
+    const res = await request(app)
+      .post('/api/admin/check-reengagement')
+      .set('x-scheduler-secret', SCHEDULER_SECRET)
+      .set('Content-Type', 'application/json')
+      .send({});
+    delete process.env.SWEEP_BUDGET_MS;
+    expect(res.body.timedOut).toBe(true);
+    expect(res.body.remaining).toBe(3);
+    expect(firestore.evaluateReengagementForUser).not.toHaveBeenCalled();
   });
 
   test('releases the claim when the send fails so it is not lost forever', async () => {

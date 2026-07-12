@@ -281,7 +281,17 @@ router.post('/admin/check-reengagement', async (req, res) => {
     let totalSkipped = 0;
     const errors = [];
 
+    // Stop before Cloud Run's request timeout (default 300s). Work is idempotent
+    // (permanent per-user claims) and firing windows span days, so any users we
+    // don't reach this run are picked up by the next daily sweep.
+    const startedAt = Date.now();
+    const BUDGET_MS = Number(process.env.SWEEP_BUDGET_MS) || 240000;
+    let timedOut = false;
+    let index = 0;
+
     for (const user of users) {
+      if (Date.now() - startedAt > BUDGET_MS) { timedOut = true; break; }
+      index++;
       if (!user?.email || !user?.domain) continue;
       usersChecked++;
       try {
@@ -346,7 +356,9 @@ router.post('/admin/check-reengagement', async (req, res) => {
       }
     }
 
-    res.json({ usersChecked, usersWithReminders, totalSent, totalSkipped, errors });
+    const remaining = timedOut ? users.length - index : 0;
+    if (timedOut) log.warn('admin: check-reengagement hit time budget', { processed: index, remaining });
+    res.json({ usersChecked, usersWithReminders, totalSent, totalSkipped, errors, timedOut, remaining });
   } catch (err) {
     log.error('admin: check-reengagement failed', { error: err.message });
     res.status(500).json({ error: 'Failed to run re-engagement sweep' });
@@ -371,8 +383,17 @@ router.post('/admin/check-alerts', async (req, res) => {
     let totalAlerts = 0;
     const errors = [];
 
+    // Stop before Cloud Run's request timeout; per-day claims make the sweep
+    // safe to resume on the next run (see check-reengagement for rationale).
+    const startedAt = Date.now();
+    const BUDGET_MS = Number(process.env.SWEEP_BUDGET_MS) || 240000;
+    let timedOut = false;
+    let index = 0;
+
     // Sequential to keep memory/quota predictable. Per-user work is small.
     for (const user of users) {
+      if (Date.now() - startedAt > BUDGET_MS) { timedOut = true; break; }
+      index++;
       if (!user?.email || !user?.domain) continue;
       usersChecked++;
       try {
@@ -414,7 +435,9 @@ router.post('/admin/check-alerts', async (req, res) => {
       }
     }
 
-    res.json({ usersChecked, usersAlerted, usersSkipped, totalAlerts, errors });
+    const remaining = timedOut ? users.length - index : 0;
+    if (timedOut) log.warn('admin: check-alerts hit time budget', { processed: index, remaining });
+    res.json({ usersChecked, usersAlerted, usersSkipped, totalAlerts, errors, timedOut, remaining });
   } catch (err) {
     log.error('admin: check-alerts failed', { error: err.message });
     res.status(500).json({ error: 'Failed to check alerts' });

@@ -55,11 +55,28 @@ describe('meetGet', () => {
     expect(global.fetch).toHaveBeenCalledTimes(1);
   });
 
-  test('propagates network error without retrying', async () => {
+  test('retries on network error, then throws when exhausted', async () => {
     global.fetch.mockRejectedValue(new Error('ENOTFOUND'));
-    await expect(meetGet('x', 'tok')).rejects.toThrow('ENOTFOUND');
-    expect(global.fetch).toHaveBeenCalledTimes(1);
-  });
+    await expect(meetGet('x', 'tok', 2)).rejects.toThrow(/Meet API request failed: ENOTFOUND/);
+    expect(global.fetch).toHaveBeenCalledTimes(3); // initial + 2 retries
+  }, 15000);
+
+  test('recovers if a network error is followed by success', async () => {
+    global.fetch
+      .mockRejectedValueOnce(new Error('ECONNRESET'))
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ ok: true }) });
+    const result = await meetGet('x', 'tok', 2);
+    expect(result).toEqual({ ok: true });
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  }, 15000);
+
+  test('treats a timeout (AbortError) as a retryable failure', async () => {
+    const abortErr = new Error('The operation was aborted');
+    abortErr.name = 'AbortError';
+    global.fetch.mockRejectedValue(abortErr);
+    await expect(meetGet('x', 'tok', 1)).rejects.toThrow(/Meet API timeout after \d+ms/);
+    expect(global.fetch).toHaveBeenCalledTimes(2); // initial + 1 retry
+  }, 15000);
 
   test('respects a custom retries count', async () => {
     global.fetch.mockResolvedValue({ ok: false, status: 500, text: async () => 'err' });

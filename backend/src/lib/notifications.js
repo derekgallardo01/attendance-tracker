@@ -33,6 +33,8 @@ function ownerEmail() {
   return process.env.GMAIL_USER || process.env.NOTIFY_EMAIL || null;
 }
 
+const RESEND_TIMEOUT_MS = Number(process.env.RESEND_TIMEOUT_MS) || 8000;
+
 // Single send wrapper. Mirrors nodemailer's sendMail signature so every call
 // site is one-line changed. Throws on hard failure; callers decide whether
 // to swallow (fire-and-forget) or surface (admin email, feedback). Tags get
@@ -49,7 +51,17 @@ async function send({ from, to, subject, text, html, replyTo, tags }) {
   };
   if (replyTo) params.replyTo = replyTo;
   if (tags) params.tags = tags;
-  const result = await resend.emails.send(params);
+  // The Resend SDK does its own HTTP without an exposed timeout; race it so a
+  // hung call can't block the request (or a fire-and-forget email path). Clear
+  // the timer once the race settles so it doesn't dangle (and keep the process
+  // alive) when the send wins.
+  let timer;
+  const result = await Promise.race([
+    resend.emails.send(params),
+    new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`Resend send timeout after ${RESEND_TIMEOUT_MS}ms`)), RESEND_TIMEOUT_MS);
+    }),
+  ]).finally(() => clearTimeout(timer));
   if (result.error) {
     throw new Error(`Resend send failed: ${result.error.message || JSON.stringify(result.error)}`);
   }
@@ -61,6 +73,24 @@ function escape(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
   }[c]));
+}
+
+// POST JSON with a hard timeout so a hung Slack webhook can't block the request
+// (or the export flow that fire-and-forgets it). Aborts after SLACK_TIMEOUT_MS.
+const SLACK_TIMEOUT_MS = Number(process.env.SLACK_TIMEOUT_MS) || 5000;
+async function postJsonWithTimeout(url, body, timeoutMs = SLACK_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // ── One-click unsubscribe (CAN-SPAM) ──────────────────────────────────────
@@ -644,11 +674,7 @@ async function sendSlackDigest({ webhookUrl, meetingTitle, totalAttended, totalI
   const body = JSON.stringify({ text, blocks });
 
   try {
-    const res = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body,
-    });
+    const res = await postJsonWithTimeout(webhookUrl, body);
     if (!res.ok) {
       const respText = await res.text().catch(() => '');
       log.warn('slack digest send failed', { webhook: maskSlackWebhook(webhookUrl), status: res.status, response: respText.slice(0, 200) });
@@ -668,13 +694,9 @@ async function sendSlackDigest({ webhookUrl, meetingTitle, totalAttended, totalI
 async function sendSlackTestPing({ webhookUrl }) {
   if (!webhookUrl) return { sent: false, reason: 'no_webhook' };
   try {
-    const res = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text: '✅ Attendance Tracker is connected. Future meeting digests will land in this channel.',
-      }),
-    });
+    const res = await postJsonWithTimeout(webhookUrl, JSON.stringify({
+      text: '✅ Attendance Tracker is connected. Future meeting digests will land in this channel.',
+    }));
     if (!res.ok) {
       const respText = await res.text().catch(() => '');
       return { sent: false, status: res.status, response: respText.slice(0, 200) };
