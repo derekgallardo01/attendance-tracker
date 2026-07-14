@@ -606,6 +606,53 @@ async function sendActivationNudgeEmail({ to, displayName, daysSinceLogin }) {
   }
 }
 
+// For users who tried the tool but only on a solo test (tracked a meeting that
+// was just them, never a real multi-person call). They already know how it
+// works — the job is to move them from "tested it on myself" to "used it in a
+// real meeting". Different from the activation nudge (which assumes they never
+// tracked at all).
+async function sendSoloNudgeEmail({ to, displayName, daysSinceLogin }) {
+  if (!getResend()) return { skipped: 'Resend not configured' };
+  const firstName = displayName ? displayName.split(' ')[0] : null;
+  const hi = firstName ? `Hey ${firstName},` : 'Hey,';
+
+  const subject = 'You tried Attendance Tracker solo — try it with a real meeting';
+  const body = [
+    hi,
+    '',
+    "I noticed you gave Attendance Tracker a spin, but it looks like the meeting was just you. That's the perfect way to kick the tires — but it really earns its keep when other people are in the call.",
+    '',
+    "Next time you're in a real one — a class, a standup, a client call — open the panel and hit Start. It'll show you exactly who joined, who left, who was late, and drop the whole roll-call into a Google Sheet when the meeting ends.",
+    '',
+    "If something's getting in the way of using it for real, hit reply and tell me — that feedback is gold.",
+    '',
+    '— Derek',
+    'attendancetracker.dev',
+  ].join('\n');
+
+  const foot = unsubscribeFooter(to);
+  const html = body.split('\n').map(l =>
+    `<p style="margin:0 0 12px;font-family:sans-serif;font-size:14px;line-height:1.55;color:#111">${escape(l) || '&nbsp;'}</p>`
+  ).join('') + foot.html;
+
+  try {
+    const info = await send({
+      from: makeFrom('Derek Gallardo'),
+      to,
+      subject,
+      text: body + foot.text,
+      html,
+      replyTo: ownerEmail(),
+      tags: [{ name: 'type', value: 'solo_nudge' }],
+    });
+    log.info('solo nudge email sent', { to, daysSinceLogin });
+    return info;
+  } catch (err) {
+    log.warn('solo nudge email failed', { to, error: err.message });
+    return { sent: false, error: err.message };
+  }
+}
+
 async function sendForgottenMeetingEmail({ to, displayName, seriesTitle, recurringEventId, trackedInWindow, daysSinceLast }) {
   if (!getResend()) return { skipped: 'Resend not configured' };
   const firstName = displayName ? displayName.split(' ')[0] : null;
@@ -757,7 +804,7 @@ async function sendSlackTestPing({ webhookUrl }) {
 
 module.exports = {
   sendSignupWebhook, sendAdminEmail, sendWeeklySelfReport, sendExportNotification,
-  sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendActivationNudgeEmail, sendForgottenMeetingEmail,
+  sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail,
   sendSlackDigest, sendSlackTestPing, buildSlackDigestBlocks, buildSlackFallbackText, maskSlackWebhook,
   unsubscribeUrl, unsubscribeToken, verifyUnsubscribeToken, unsubscribeFooter,
 };

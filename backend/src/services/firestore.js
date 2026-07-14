@@ -1719,13 +1719,17 @@ async function evaluateReengagementForUser(domain, email) {
       const window7 = daysSinceLogin >= 7 && daysSinceLogin < 14;
       const window30 = daysSinceLogin >= 30 && daysSinceLogin < 45;
       if (activated) {
+        // Got real value → warm win-back (with a 30-day follow-up).
         if (window7) reminders.push({ type: 'reactivation_7d', daysSinceLogin });
         else if (window30) reminders.push({ type: 'reactivation_30d', daysSinceLogin });
-      } else if (!everTracked && window7) {
-        // Signed up but never tracked a meeting — one activation-focused nudge.
-        reminders.push({ type: 'activation_7d', daysSinceLogin });
+      } else if (window7) {
+        // Not activated. Two sub-segments, each with tailored copy:
+        //  - tried it but only on a solo test → coach them to use it for real.
+        //  - never tracked at all → basic activation how-to.
+        // Solo testers are high-intent (they learned the tool), just in a fake
+        // context, so they get their own nudge rather than nothing.
+        reminders.push({ type: everTracked ? 'solo_nudge_7d' : 'activation_7d', daysSinceLogin });
       }
-      // Solo-only testers (tracked but not activated) intentionally get nothing.
     }
 
     // Forgotten recurring meeting: user tracked a series 3+ times in past 30d,

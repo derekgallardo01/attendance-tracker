@@ -12,6 +12,7 @@ describe('notifications — module structure', () => {
     expect(typeof n.sendFeedbackEmail).toBe('function');
     expect(typeof n.sendReactivationEmail).toBe('function');
     expect(typeof n.sendActivationNudgeEmail).toBe('function');
+    expect(typeof n.sendSoloNudgeEmail).toBe('function');
     expect(typeof n.sendForgottenMeetingEmail).toBe('function');
   });
 });

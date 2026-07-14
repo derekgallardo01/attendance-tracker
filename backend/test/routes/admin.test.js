@@ -47,6 +47,7 @@ jest.mock('../../src/lib/notifications', () => ({
   sendSeriesAlertEmail: jest.fn(),
   sendReactivationEmail: jest.fn(),
   sendActivationNudgeEmail: jest.fn(),
+  sendSoloNudgeEmail: jest.fn(),
   sendForgottenMeetingEmail: jest.fn(),
 }));
 
@@ -74,6 +75,7 @@ beforeEach(() => {
   notifications.sendSeriesAlertEmail.mockResolvedValue({ sent: true });
   notifications.sendReactivationEmail.mockResolvedValue({ sent: true });
   notifications.sendActivationNudgeEmail.mockResolvedValue({ sent: true });
+  notifications.sendSoloNudgeEmail.mockResolvedValue({ sent: true });
   notifications.sendForgottenMeetingEmail.mockResolvedValue({ sent: true });
   app = buildApp();
 });
@@ -427,6 +429,27 @@ describe('POST /api/admin/check-reengagement', () => {
       to: 'signup@acme.com',
     }));
     expect(notifications.sendReactivationEmail).not.toHaveBeenCalled();
+  });
+
+  test('routes a solo_nudge_7d reminder to the solo-nudge email', async () => {
+    firestore.getAllUsersAcrossTenants.mockResolvedValue([
+      { email: 'solo@acme.com', domain: 'acme.com', displayName: 'Solo' },
+    ]);
+    firestore.evaluateReengagementForUser.mockResolvedValue([
+      { type: 'solo_nudge_7d', daysSinceLogin: 9 },
+    ]);
+    firestore.claimReengagementSlot.mockResolvedValue({ claimed: true, ref: {} });
+
+    await request(app)
+      .post('/api/admin/check-reengagement')
+      .set('x-scheduler-secret', SCHEDULER_SECRET)
+      .set('Content-Type', 'application/json')
+      .send({});
+    expect(notifications.sendSoloNudgeEmail).toHaveBeenCalledWith(expect.objectContaining({
+      to: 'solo@acme.com',
+    }));
+    expect(notifications.sendReactivationEmail).not.toHaveBeenCalled();
+    expect(notifications.sendActivationNudgeEmail).not.toHaveBeenCalled();
   });
 
   test('never emails the owner/super-admin account', async () => {

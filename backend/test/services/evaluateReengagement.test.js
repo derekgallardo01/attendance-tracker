@@ -114,13 +114,14 @@ describe('evaluateReengagementForUser — engagement gate (targeting)', () => {
     expect(r.some(x => x.type === 'reactivation_7d')).toBe(true);
   });
 
-  test('PHANTOM meeting (participantCount=2 but distinctAttendees=1) is NOT activated', async () => {
+  test('PHANTOM meeting (participantCount=2 but distinctAttendees=1) is NOT activated → solo nudge', async () => {
     // The Darlene-Diaz-twice case: raw count says 2, deduped says 1 human.
     seedUser(D, 'phantom@acme.com', 10);
     seedTracked(D, 'phantom@acme.com', 'meet-dup', Date.now() - 10 * DAY, 2, 1);
     const r = await firestore.evaluateReengagementForUser(D, 'phantom@acme.com');
     expect(r.some(x => x.type === 'reactivation_7d')).toBe(false);
-    // Tracked (not a never-tracked signup), so no activation nudge either.
+    // Tracked but not activated → treated as a solo tester, not a signup.
+    expect(r.some(x => x.type === 'solo_nudge_7d')).toBe(true);
     expect(r.some(x => x.type === 'activation_7d')).toBe(false);
   });
 
@@ -138,22 +139,24 @@ describe('evaluateReengagementForUser — engagement gate (targeting)', () => {
     expect(r.some(x => x.type === 'reactivation_7d')).toBe(false);
   });
 
-  test('SOLO-ONLY tester (tracked self, participantCount=1, no export): no reminder at all', async () => {
+  test('SOLO-ONLY tester (tracked self, no export): gets solo_nudge_7d, not reactivation/activation', async () => {
     seedUser(D, 'solo@acme.com', 10);
     // Many tracked events but all solo (participantCount 1) and never exported.
     seedTracked(D, 'solo@acme.com', 'meet-solo', Date.now() - 10 * DAY, 1);
     seedTracked(D, 'solo@acme.com', 'meet-solo', Date.now() - 10 * DAY, 1);
     seedTracked(D, 'solo@acme.com', 'meet-solo', Date.now() - 10 * DAY, 1);
     const r = await firestore.evaluateReengagementForUser(D, 'solo@acme.com');
+    expect(r.some(x => x.type === 'solo_nudge_7d')).toBe(true);
     expect(r.some(x => x.type === 'reactivation_7d')).toBe(false);
     expect(r.some(x => x.type === 'activation_7d')).toBe(false);
   });
 
-  test('SOLO-ONLY tester lapsed 35d: no reactivation_30d either', async () => {
+  test('SOLO-ONLY tester lapsed 35d: no reminder (solo nudge is 7d-only, no 30d)', async () => {
     seedUser(D, 'solo30@acme.com', 35);
     seedTracked(D, 'solo30@acme.com', 'meet-solo', Date.now() - 35 * DAY, 1);
     const r = await firestore.evaluateReengagementForUser(D, 'solo30@acme.com');
     expect(r.some(x => x.type === 'reactivation_30d')).toBe(false);
+    expect(r.some(x => x.type === 'solo_nudge_7d')).toBe(false);
     expect(r.some(x => x.type === 'activation_7d')).toBe(false);
   });
 });
