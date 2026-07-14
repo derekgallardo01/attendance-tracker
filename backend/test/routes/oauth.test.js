@@ -14,6 +14,7 @@ jest.mock('../../src/services/firestore', () => ({
   getUserActivationStatus: jest.fn(),
   countAllUsers: jest.fn(),
   getTenantConfig: jest.fn(),
+  deleteUser: jest.fn(),
 }));
 jest.mock('../../src/services/googleAuth', () => ({
   exchangeCode: jest.fn(),
@@ -196,5 +197,49 @@ describe('POST /api/oauth/revoke', () => {
       .set(authedHeader('user@acme.com', 'acme.com'));
     expect(res.status).toBe(200);
     expect(googleAuth.revokeToken).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /api/oauth/delete-account', () => {
+  test('401 without Bearer header', async () => {
+    const res = await request(app).post('/api/oauth/delete-account');
+    expect(res.status).toBe(401);
+    expect(firestore.deleteUser).not.toHaveBeenCalled();
+  });
+
+  test('revokes the token and cascades the delete for the authenticated user', async () => {
+    firestore.getUser.mockResolvedValue({ email: 'gone@acme.com', domain: 'acme.com', refreshToken: 'rt-1' });
+    googleAuth.revokeToken.mockResolvedValue(undefined);
+    firestore.deleteUser.mockResolvedValue(undefined);
+    const res = await request(app)
+      .post('/api/oauth/delete-account')
+      .set(authedHeader('gone@acme.com', 'acme.com'));
+    expect(res.status).toBe(200);
+    expect(googleAuth.revokeToken).toHaveBeenCalledWith('rt-1');
+    expect(firestore.deleteUser).toHaveBeenCalledWith('acme.com', 'gone@acme.com');
+  });
+
+  test('acts on the JWT identity, never an email in the body', async () => {
+    firestore.getUser.mockResolvedValue({ email: 'me@acme.com', domain: 'acme.com' });
+    firestore.deleteUser.mockResolvedValue(undefined);
+    const res = await request(app)
+      .post('/api/oauth/delete-account')
+      .set(authedHeader('me@acme.com', 'acme.com'))
+      .set('Content-Type', 'application/json')
+      .send({ email: 'victim@acme.com' }); // attempt to delete someone else
+    expect(res.status).toBe(200);
+    expect(firestore.deleteUser).toHaveBeenCalledWith('acme.com', 'me@acme.com');
+    expect(firestore.deleteUser).not.toHaveBeenCalledWith('acme.com', 'victim@acme.com');
+  });
+
+  test('still deletes even if token revoke fails (best-effort revoke)', async () => {
+    firestore.getUser.mockResolvedValue({ email: 'gone@acme.com', domain: 'acme.com', refreshToken: 'rt-1' });
+    googleAuth.revokeToken.mockRejectedValue(new Error('google down'));
+    firestore.deleteUser.mockResolvedValue(undefined);
+    const res = await request(app)
+      .post('/api/oauth/delete-account')
+      .set(authedHeader('gone@acme.com', 'acme.com'));
+    expect(res.status).toBe(200);
+    expect(firestore.deleteUser).toHaveBeenCalledWith('acme.com', 'gone@acme.com');
   });
 });

@@ -66,6 +66,24 @@ function getDb() {
   return db;
 }
 
+// Wrap an async read in a short TTL cache keyed by its args. The admin
+// analytics functions each scan the whole users+events+meetings tree; the
+// dashboard fires several on load and the owner reloads often, so caching the
+// result for a couple of minutes turns N full-DB re-scans into one. Admin-only
+// data, so mild staleness is fine. (This does NOT bound a single cold call's
+// memory — full precompute-on-write is still future work.)
+function memoizeTTL(fn, ttlMs) {
+  const cache = new Map(); // argsKey -> { at, value }
+  return async function (...args) {
+    const key = JSON.stringify(args);
+    const hit = cache.get(key);
+    if (hit && (Date.now() - hit.at) < ttlMs) return hit.value;
+    const value = await fn.apply(this, args);
+    cache.set(key, { at: Date.now(), value });
+    return value;
+  };
+}
+
 // ── Tenant helper: all collections scoped under tenants/{domain} ──
 function tenantRef(domain) {
   return getDb().collection('tenants').doc(domain);
@@ -3032,16 +3050,21 @@ module.exports = {
   evaluateReengagementForUser, claimReengagementSlot,
   createShareLink, resolveShareLink, getSharedSeriesView,
   getParticipantHistory, setParticipantNote, getParticipantNote,
-  getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted,
+  markUserContacted,
   getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes,
-  getAdvancedAnalytics,
-  getWeeklySelfReport,
   appendConversation, setOutreachStatus,
   suppressEmail, isEmailSuppressed, unsuppressEmail,
   createReminder, markReminderDone, getDueReminders,
   getEmailTemplates, setEmailTemplates,
   getAllUsersAcrossTenants,
-  getAggregatedInsights,
-  getOutreachList,
   deleteUser,
+  // ── Heavy full-DB admin reads: TTL-cached so a dashboard reload doesn't
+  //    re-scan the whole users+events+meetings tree for each one. ──
+  getAggregatedInsights: memoizeTTL(getAggregatedInsights, 120000),
+  getAdvancedAnalytics: memoizeTTL(getAdvancedAnalytics, 120000),
+  getWeeklySelfReport: memoizeTTL(getWeeklySelfReport, 120000),
+  getReachOutSuggestions: memoizeTTL(getReachOutSuggestions, 120000),
+  getPowerUserPipeline: memoizeTTL(getPowerUserPipeline, 120000),
+  getOutreachList: memoizeTTL(getOutreachList, 120000),
+  getRecentActivity: memoizeTTL(getRecentActivity, 60000),
 };

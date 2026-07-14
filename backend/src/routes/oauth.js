@@ -4,7 +4,7 @@ const { google } = require('googleapis');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { exchangeCode, revokeToken } = require('../services/googleAuth');
-const { upsertUser, getUser, updateUserTokens, logEvent, getUserActivationStatus, countAllUsers, getTenantConfig } = require('../services/firestore');
+const { upsertUser, getUser, updateUserTokens, logEvent, getUserActivationStatus, countAllUsers, getTenantConfig, deleteUser } = require('../services/firestore');
 const { sendSignupWebhook } = require('../lib/notifications');
 
 // Allow-list for self-reported acquisition source. Anything not on this list
@@ -209,6 +209,42 @@ router.post('/revoke', async (req, res) => {
   } catch (err) {
     log.error('oauth: revoke failed', { error: err.message });
     res.status(500).json({ error: 'Sign out failed' });
+  }
+});
+
+// POST /api/oauth/delete-account — self-serve account + data deletion.
+// Revokes the Google refresh token, then cascades a full PII delete (user doc,
+// settings, events, notes, outreach, reminders, idempotency slots, and the
+// user's participant records across meetings). Marketplace / GDPR compliance:
+// the user controls their own data without emailing us. The caller must present
+// a valid session; the request always acts on the authenticated identity, never
+// an arbitrary email in the body.
+router.post('/delete-account', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+    const decoded = jwt.verify(authHeader.slice(7), CONFIG.sessionSecret);
+    const email = decoded.email;
+    const domain = decoded.domain || email.split('@')[1];
+
+    // Best-effort token revoke first so we stop being able to act as them.
+    try {
+      const user = await getUser(domain, email);
+      if (user?.refreshToken) await revokeToken(user.refreshToken);
+    } catch (e) {
+      log.warn('oauth: delete-account revoke failed (continuing)', { email, error: e.message });
+    }
+
+    await deleteUser(domain, email); // cascades all PII; swallows its own errors
+    log.info('oauth: account deleted by user', { email });
+    res.json({ success: true });
+  } catch (err) {
+    if (err.name === 'TokenExpiredError') return res.status(401).json({ error: 'Session expired' });
+    if (err.name === 'JsonWebTokenError') return res.status(401).json({ error: 'Invalid token' });
+    log.error('oauth: delete-account failed', { error: err.message });
+    res.status(500).json({ error: 'Account deletion failed' });
   }
 });
 

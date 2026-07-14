@@ -18,6 +18,8 @@
        script so the inline code can rely on window.AttUtils. Kept as a
        separate file so it can be Jest/jsdom unit-tested in isolation. -->
   <script src="js/utils.js"></script>
+  <!-- i18n foundation — provides window.t() for user-facing strings. -->
+  <script src="js/strings.js"></script>
 
   <!-- Open Graph + Twitter card — controls the preview when this URL is
        shared on Slack, Twitter, LinkedIn, iMessage, etc. Without these the
@@ -1771,7 +1773,36 @@ async function signOut() {
   state.missingScopes = [];
   updateAuthUI();
   applyScopeRestrictions();
-  toast('Signed out');
+  toast(t('toast.signedOut'));
+}
+
+// Self-serve account + data deletion. Double-confirms, calls the backend
+// cascade, then clears the local session like a sign-out.
+async function deleteMyAccount() {
+  if (!confirm('Delete your account and all your data? This permanently removes your settings, activity, and attendance records and cannot be undone.')) return;
+  const btn = document.getElementById('settings-delete-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Deleting…'; }
+  try {
+    const res = await fetch(`${state.backendUrl}/oauth/delete-account`, {
+      method: 'POST',
+      headers: authHeaders(),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    // Clear all local traces of the session.
+    try { sessionStorage.removeItem(STORAGE_KEY); } catch {}
+    state.sessionToken = null;
+    state.userEmail = null;
+    state.signedIn = false;
+    state.grantedScopes = [];
+    state.missingScopes = [];
+    closeSettingsModal();
+    updateAuthUI();
+    applyScopeRestrictions();
+    toast(t('toast.accountDeleted'));
+  } catch (err) {
+    toast('Could not delete your account — try again or contact support.');
+    if (btn) { btn.disabled = false; btn.textContent = 'Delete my account'; }
+  }
 }
 
 function updateAuthUI() {
@@ -2007,7 +2038,7 @@ function schedulePoll() {
 function startTracking() {
   // Require sign-in for Meet API access (user OAuth token needed)
   if (!state.sessionToken && !state.simulating) {
-    toast('Please sign in to start tracking');
+    toast(t('toast.signInFirst'));
     triggerSignIn();
     return;
   }
@@ -2450,14 +2481,14 @@ async function saveProfileNote() {
 function toggleAutoExport(on) {
   localStorage.setItem('autoExportOnEnd', on ? '1' : '0');
   persistSetting({ autoExportOnEnd: !!on });
-  toast(on ? 'Auto-export on' : 'Auto-export off');
+  toast(on ? t('toast.autoExportOn') : t('toast.autoExportOff'));
 }
 
 // Email lifecycle notifications toggle (opt-out). Persists to the server's
 // suppression record so alerts/re-engagement emails stop or resume.
 function toggleEmailOptOut(optedOut) {
   persistSetting({ emailOptOut: !!optedOut });
-  toast(optedOut ? 'Email notifications off' : 'Email notifications on');
+  toast(optedOut ? t('toast.emailOff') : t('toast.emailOn'));
 }
 
 // Non-admins can't configure domain-wide delegation themselves, so give them a
@@ -3812,6 +3843,13 @@ window.addEventListener('DOMContentLoaded', () => {
           </div>
           <button type="button" id="settings-billing-btn" onclick="handleBillingClick()" style="background:#4ade80;color:#0d1117;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.75rem;font-weight:600;white-space:nowrap">Upgrade</button>
         </div>
+      </div>
+
+      <!-- Danger zone: self-serve account + data deletion -->
+      <div style="margin-top:14px;padding:12px;background:#0d1117;border:1px solid rgba(248,81,73,.35);border-radius:8px">
+        <div style="font-weight:600;font-size:.85rem;color:#f85149">Delete account &amp; data</div>
+        <div style="color:#9ca3af;font-size:.72rem;margin-top:2px;line-height:1.4">Permanently removes your account, settings, activity, and your attendance records. This can't be undone.</div>
+        <button type="button" id="settings-delete-btn" onclick="deleteMyAccount()" style="margin-top:10px;background:transparent;border:1px solid #f85149;color:#f85149;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.75rem;font-weight:600">Delete my account</button>
       </div>
     </div>
   </div>
