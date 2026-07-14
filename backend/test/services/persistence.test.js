@@ -15,6 +15,38 @@ afterEach(() => {
   ctx.uninstall();
 });
 
+describe('countDistinctAttendees', () => {
+  test('collapses multiple sessions of the same person (by email)', () => {
+    const n = firestore.countDistinctAttendees([
+      { email: 'a@x.com', displayName: 'A' },
+      { email: 'A@x.com', displayName: 'A (phone)' }, // same email, diff case + name
+      { email: 'b@x.com', displayName: 'B' },
+    ]);
+    expect(n).toBe(2);
+  });
+
+  test('collapses same display name when email is absent (the phantom-rejoin case)', () => {
+    // Two participant records, same name, no email = one human on two sessions.
+    const n = firestore.countDistinctAttendees([
+      { email: '', displayName: 'Darlene Diaz' },
+      { email: '', displayName: 'Darlene Diaz' },
+    ]);
+    expect(n).toBe(1);
+  });
+
+  test('a real two-person meeting counts as 2', () => {
+    expect(firestore.countDistinctAttendees([
+      { email: '', displayName: 'Alex' },
+      { email: '', displayName: 'Sam' },
+    ])).toBe(2);
+  });
+
+  test('ignores records with neither email nor name; empty list = 0', () => {
+    expect(firestore.countDistinctAttendees([{ email: '', displayName: '' }])).toBe(0);
+    expect(firestore.countDistinctAttendees([])).toBe(0);
+  });
+});
+
 describe('persistAttendance — batch chunking', () => {
   test('writes every participant when the count exceeds one Firestore batch (>450)', async () => {
     const participants = Array.from({ length: 500 }, (_, i) => ({
@@ -36,6 +68,27 @@ describe('persistAttendance — batch chunking', () => {
     expect(ctx.read('tenants/acme.com/meetings/conf-big/participants/p449')).toBeDefined();
     expect(ctx.read('tenants/acme.com/meetings/conf-big/participants/p450')).toBeDefined();
     expect(ctx.read('tenants/acme.com/meetings/conf-big/participants/p499')).toBeDefined();
+  });
+
+  test('stamps distinctAttendeeCount (deduped) alongside raw participantCount', async () => {
+    // Two participant records, same person (same name, no email) + one other.
+    const participants = [
+      { participantId: 'p1', displayName: 'Darlene Diaz', email: '', present: true, sessions: 5 },
+      { participantId: 'p2', displayName: 'Darlene Diaz', email: '', present: false, sessions: 2 },
+      { participantId: 'p3', displayName: 'Sam Real', email: 'sam@acme.com', present: true, sessions: 1 },
+    ];
+    await firestore.persistAttendance('acme.com', 'conf-dup', 'records/conf-dup', participants, 'host@acme.com');
+
+    const meeting = ctx.read('tenants/acme.com/meetings/conf-dup');
+    expect(meeting.participantCount).toBe(3);       // raw records preserved for attendance
+    expect(meeting.distinctAttendeeCount).toBe(2);  // Darlene x2 collapses → 2 humans
+
+    // The 'tracked' event carries the deduped signal for the activation gate.
+    await new Promise((r) => setImmediate(r)); // logEvent is fire-and-forget
+    const events = ctx.list('tenants/acme.com/events').map(e => e.data);
+    const trackedEv = events.find(e => e.type === 'tracked');
+    expect(trackedEv.meta.distinctAttendees).toBe(2);
+    expect(trackedEv.meta.participantCount).toBe(3);
   });
 });
 

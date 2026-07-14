@@ -1270,6 +1270,8 @@ const state = {
   // Auto-export bookkeeping: remember which conference we've already auto-exported
   // for so the polling loop doesn't fire repeat exports, and survives panel reloads.
   autoExportedConferenceId: null,
+  // Conference we've already shown the solo-test nudge for (once per meeting).
+  soloNudgeConferenceId: null,
 };
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1301,6 +1303,7 @@ function saveState() {
       }]),
       _lastSheetUrl: state._lastSheetUrl || null,
       autoExportedConferenceId: state.autoExportedConferenceId || null,
+      soloNudgeConferenceId: state.soloNudgeConferenceId || null,
       savedAt: Date.now(),
     };
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
@@ -1325,6 +1328,7 @@ function restoreState() {
     state.missingScopes = snap.missingScopes || [];
     state._lastSheetUrl = snap._lastSheetUrl;
     state.autoExportedConferenceId = snap.autoExportedConferenceId || null;
+    state.soloNudgeConferenceId = snap.soloNudgeConferenceId || null;
     state._selfDisplayName = snap.userDisplayName || null;
     if (snap.userEmail) state._selfEmail = snap.userEmail.toLowerCase();
 
@@ -2610,6 +2614,30 @@ async function saveToSheets() {
   }
 }
 
+// Count distinct human attendees currently in state (deduped by email, else
+// display name) — mirrors the backend countDistinctAttendees. Two sessions of
+// the same person collapse to one, so a solo test reads as 1.
+function distinctAttendeeCount() {
+  const ids = new Set();
+  for (const p of state.participants.values()) {
+    const email = (p.email || '').trim().toLowerCase();
+    const name = (p.displayName || '').trim().toLowerCase();
+    const key = email || (name ? `name:${name}` : null);
+    if (key) ids.add(key);
+  }
+  return ids.size;
+}
+
+// If a tracked meeting ended with only the user present, nudge them to bring it
+// to a real meeting next time. Once per conference (persisted).
+function maybeShowSoloNudge() {
+  if (state.soloNudgeConferenceId === state.conferenceId) return;
+  if (distinctAttendeeCount() > 1) return; // real meeting — no nudge
+  state.soloNudgeConferenceId = state.conferenceId;
+  saveState();
+  toast('👋 Looks like you were the only one here. Attendance Tracker shines when others join — open it in your next real meeting to see the full roll-call.', 9000);
+}
+
 // Fires once per conference when the Meet API reports endTime. Auto-matches
 // calendar attendees (best-effort), exports silently, and emails the organizer
 // the sheet link. Bookkept by conferenceId so it survives panel reloads.
@@ -2620,6 +2648,12 @@ async function maybeAutoExportOnMeetingEnd() {
   if (!state.conferenceEndTime) return;
   if (new Date(state.conferenceEndTime) > new Date()) return;
   if (state.participants.size === 0) return;
+
+  // Solo-test nudge: the #1 activation gap is people who test on themselves and
+  // never bring the tool to a real meeting. If this meeting ended with only the
+  // user present, set the expectation for next time. Fires once per conference.
+  maybeShowSoloNudge();
+
   if (state.autoExportedConferenceId === state.conferenceId) return;
   if (document.getElementById('btn-sheets')?.dataset.scopeBlocked === '1') return;
 

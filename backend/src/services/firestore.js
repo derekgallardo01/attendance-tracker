@@ -72,6 +72,24 @@ function lastSegment(resourceName) {
   return parts[parts.length - 1];
 }
 
+// Count DISTINCT human attendees, not raw participant records. Meet assigns a
+// fresh participant id per account/session, so one person joining from two
+// devices (or rejoining) shows up as multiple records. We collapse by identity:
+// email when present, else the lowercased display name. This is the signal for
+// "was this a real multi-person meeting" — it must NOT replace participantCount
+// on the meeting doc (two genuinely different people who share a name should
+// still both count for attendance); it's a separate, conservative metric.
+function countDistinctAttendees(participants) {
+  const ids = new Set();
+  for (const p of participants || []) {
+    const email = (p.email || '').trim().toLowerCase();
+    const name = (p.displayName || '').trim().toLowerCase();
+    const key = email || (name ? `name:${name}` : null);
+    if (key) ids.add(key);
+  }
+  return ids.size;
+}
+
 // ── Tenant config ──
 
 async function getTenantConfig(domain) {
@@ -149,11 +167,13 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
 
     const joinTimes = participants.map(p => p.joinTime).filter(Boolean).map(t => new Date(t));
     const leaveTimes = participants.map(p => p.leaveTime).filter(Boolean).map(t => new Date(t));
+    const distinctAttendeeCount = countDistinctAttendees(participants);
 
     await meetingRef.set({
       conferenceId,
       recordName,
       participantCount: participants.length,
+      distinctAttendeeCount, // unique humans (deduped by email/name) — activation signal
       startTime: joinTimes.length > 0 ? new Date(Math.min(...joinTimes)) : null,
       endTime: leaveTimes.length > 0 ? new Date(Math.max(...leaveTimes)) : null,
       lastFetchedAt: now,
@@ -189,7 +209,7 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
       logEvent(domain, {
         email: actorEmail,
         type: 'tracked',
-        meta: { conferenceId, participantCount: participants.length },
+        meta: { conferenceId, participantCount: participants.length, distinctAttendees: distinctAttendeeCount },
       });
     }
 
@@ -1682,9 +1702,15 @@ async function evaluateReengagementForUser(domain, email) {
     // get a different, activation-focused nudge instead.
     const exportedCount = eventsSnap.docs.filter(d => d.data().type === 'exported').length;
     const trackedDocs = eventsSnap.docs.filter(d => d.data().type === 'tracked');
-    const maxParticipants = Math.max(0, ...trackedDocs.map(d => d.data().meta?.participantCount || 0));
+    // Real-meeting signal = distinct human attendees. Prefer the deduped
+    // distinctAttendees stamped on newer events; fall back to raw
+    // participantCount for events logged before we tracked it.
+    const maxDistinctAttendees = Math.max(0, ...trackedDocs.map(d => {
+      const m = d.data().meta || {};
+      return m.distinctAttendees != null ? m.distinctAttendees : (m.participantCount || 0);
+    }));
     const everTracked = trackedDocs.length > 0;
-    const activated = exportedCount >= 1 || maxParticipants >= 2;
+    const activated = exportedCount >= 1 || maxDistinctAttendees >= 2;
 
     if (lastLogin) {
       const daysSinceLogin = Math.floor((now - lastLogin) / 86400000);
@@ -2882,6 +2908,7 @@ async function deleteUser(domain, email) {
 module.exports = {
   getTenantConfig, upsertTenantConfig,
   setTenantPlan, getTenantPlan,
+  countDistinctAttendees,
   persistAttendance, persistCalendarData, persistExport,
   getMeetingExcusedEmails, addMeetingExcusedEmails,
   getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens,

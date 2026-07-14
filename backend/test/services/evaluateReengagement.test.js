@@ -28,12 +28,14 @@ function seedUser(domain, email, lastLoginAgoDays) {
   });
 }
 
-function seedTracked(domain, email, conferenceId, atMs, participantCount) {
+function seedTracked(domain, email, conferenceId, atMs, participantCount, distinctAttendees) {
   const id = `ev_${atMs}_${conferenceId}_${Math.random().toString(36).slice(2, 8)}`;
+  const meta = { conferenceId, participantCount: participantCount != null ? participantCount : 1 };
+  if (distinctAttendees != null) meta.distinctAttendees = distinctAttendees;
   ctx.seed(`tenants/${domain}/events/${id}`, {
     email: email.toLowerCase(),
     type: 'tracked',
-    meta: { conferenceId, participantCount: participantCount != null ? participantCount : 1 },
+    meta,
     createdAt: wrapTimestamp(new Date(atMs)),
   });
 }
@@ -105,10 +107,27 @@ describe('evaluateReengagementForUser — engagement gate (targeting)', () => {
     expect(r.some(x => x.type === 'activation_7d')).toBe(false);
   });
 
-  test('ACTIVATED via a real multi-person meeting (participantCount>=2) → reactivation_7d', async () => {
+  test('ACTIVATED via a real multi-person meeting (distinctAttendees>=2) → reactivation_7d', async () => {
     seedUser(D, 'host@acme.com', 10);
-    seedTracked(D, 'host@acme.com', 'meet-x', Date.now() - 10 * DAY, 5); // 5 attendees
+    seedTracked(D, 'host@acme.com', 'meet-x', Date.now() - 10 * DAY, 5, 5); // 5 distinct
     const r = await firestore.evaluateReengagementForUser(D, 'host@acme.com');
+    expect(r.some(x => x.type === 'reactivation_7d')).toBe(true);
+  });
+
+  test('PHANTOM meeting (participantCount=2 but distinctAttendees=1) is NOT activated', async () => {
+    // The Darlene-Diaz-twice case: raw count says 2, deduped says 1 human.
+    seedUser(D, 'phantom@acme.com', 10);
+    seedTracked(D, 'phantom@acme.com', 'meet-dup', Date.now() - 10 * DAY, 2, 1);
+    const r = await firestore.evaluateReengagementForUser(D, 'phantom@acme.com');
+    expect(r.some(x => x.type === 'reactivation_7d')).toBe(false);
+    // Tracked (not a never-tracked signup), so no activation nudge either.
+    expect(r.some(x => x.type === 'activation_7d')).toBe(false);
+  });
+
+  test('legacy event without distinctAttendees falls back to participantCount', async () => {
+    seedUser(D, 'legacy@acme.com', 10);
+    seedTracked(D, 'legacy@acme.com', 'meet-old', Date.now() - 10 * DAY, 4); // no distinctAttendees
+    const r = await firestore.evaluateReengagementForUser(D, 'legacy@acme.com');
     expect(r.some(x => x.type === 'reactivation_7d')).toBe(true);
   });
 
