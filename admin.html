@@ -327,7 +327,7 @@
         <div class="section">
           <h2 style="display:flex;justify-content:space-between;align-items:center">
             <span>Activation funnel</span>
-            <span style="font-size:.7rem;color:var(--muted);font-weight:400">deduped — solo self-tests don't count as real meetings</span>
+            <span id="funnel-note" style="font-size:.7rem;color:var(--muted);font-weight:400">deduped — solo self-tests don't count as real meetings</span>
           </h2>
           <div id="funnel-bars" style="margin-top:8px">
             <div style="color:var(--muted);font-size:.85rem">Loading…</div>
@@ -1069,6 +1069,10 @@
         if (!res.ok) return;
         const f = await res.json();
         const t = f.totals || {};
+        if (f.excluded) {
+          const note = document.getElementById('funnel-note');
+          if (note) note.textContent = `deduped · ${f.excluded} pre-instrumentation/test accounts excluded`;
+        }
         const base = t.signedUp || 1;
         const pct = n => Math.round((n / base) * 100);
         const stages = [

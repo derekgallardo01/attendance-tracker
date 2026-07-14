@@ -611,6 +611,24 @@ describe('getActivationFunnel', () => {
     expect(reddit.signedUp).toBe(2);
     expect(reddit.realMeeting).toBe(0);
   });
+
+  test('excludes pre-instrumentation signups and test/internal domains from the funnel', async () => {
+    // Measurable, real signup (created "now").
+    seedUser('acme.com', 'new@acme.com', { acquisitionSource: 'marketplace' });
+    seedEvent('acme.com', 'new@acme.com', 'tracked', Date.now(), { conferenceId: 'c1', distinctAttendees: 4 });
+    // Pre-instrumentation signup (before 2026-05-28) with no events — must be excluded.
+    seedUser('acme.com', 'legacy@acme.com', { createdAt: new Date('2026-04-10T00:00:00Z') });
+    // Google Marketplace review bot — excluded by domain.
+    seedUser('marketplacetest.net', 'gsmtestuser@marketplacetest.net', { createdAt: new Date() });
+    // Old internal tenant — excluded by domain.
+    seedUser('theyachtgroup.com', 'advertising@theyachtgroup.com', { createdAt: new Date() });
+
+    const f = await firestore.getActivationFunnel();
+    expect(f.totals.signedUp).toBe(1);   // only new@acme.com counts
+    expect(f.totals.tracked).toBe(1);
+    expect(f.totals.realMeeting).toBe(1);
+    expect(f.excluded).toBe(3);          // legacy + 2 test/internal
+  });
 });
 
 describe('email suppression (CAN-SPAM)', () => {

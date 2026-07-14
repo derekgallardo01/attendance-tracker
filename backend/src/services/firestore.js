@@ -589,6 +589,16 @@ async function getAllUsersAcrossTenants() {
 // tracked a REAL multi-person meeting → exported → came back. Uses the deduped
 // distinctAttendees signal so solo self-tests don't masquerade as real usage.
 // Cached briefly since it scans every user + event (admin-only, low frequency).
+//
+// Two exclusions keep the funnel honest:
+//   1. Users who signed up BEFORE event logging existed (ANALYTICS_START) — they
+//      literally can't be measured, and counting them as "signed up but never
+//      tracked" fabricates a top-of-funnel cliff. (Verified: every post-start
+//      signup has events; every zero-event user predates instrumentation.)
+//   2. Non-customer accounts: Google's Marketplace review bots + the legacy
+//      internal Yacht Group tenant.
+const ANALYTICS_START_MS = Date.parse('2026-05-28T00:00:00Z');
+const FUNNEL_EXCLUDED_DOMAINS = new Set(['marketplacetest.net', 'theyachtgroup.com']);
 let _funnelCache = null;
 let _funnelCachedAt = 0;
 const FUNNEL_CACHE_MS = 2 * 60 * 1000;
@@ -617,7 +627,7 @@ async function getActivationFunnel() {
       return d >= 2;
     };
 
-    let signedUp = 0, tracked = 0, realMeeting = 0, exported = 0, retained = 0;
+    let signedUp = 0, tracked = 0, realMeeting = 0, exported = 0, retained = 0, excluded = 0;
     const bySource = {};
     for (const u of usersSnap.docs) {
       // Only count real tenant users (tenants/{domain}/users/*), not the legacy
@@ -628,6 +638,15 @@ async function getActivationFunnel() {
       const data = u.data();
       const email = (data.email || u.id).toLowerCase();
       if (email === SUPER_ADMIN_EMAIL) continue; // exclude the owner's own account
+
+      const domain = tenantDoc.id;
+      const createdMs = data.createdAt?.toDate?.()?.getTime() || 0;
+      // Exclude unmeasurable pre-instrumentation signups + non-customer accounts
+      // so the funnel reflects real, measurable users.
+      if (FUNNEL_EXCLUDED_DOMAINS.has(domain) || (createdMs && createdMs < ANALYTICS_START_MS)) {
+        excluded++;
+        continue;
+      }
 
       signedUp++;
       const evs = byEmail.get(email) || [];
@@ -653,6 +672,7 @@ async function getActivationFunnel() {
 
     _funnelCache = {
       totals: { signedUp, tracked, realMeeting, exported, retained },
+      excluded, // pre-instrumentation + test/internal accounts left out of the funnel
       bySource: Object.values(bySource).sort((a, b) => b.signedUp - a.signedUp),
       generatedAt: new Date().toISOString(),
     };
