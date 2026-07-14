@@ -584,6 +584,35 @@ describe('deleteUser', () => {
   });
 });
 
+describe('getActivationFunnel', () => {
+  test('counts real-meeting activation with dedup, excludes owner + legacy root users', async () => {
+    // Activated: tracked a real 3-person meeting AND exported.
+    seedUser('acme.com', 'real@acme.com', { acquisitionSource: 'marketplace' });
+    seedEvent('acme.com', 'real@acme.com', 'tracked', Date.now(), { conferenceId: 'c1', distinctAttendees: 3 });
+    seedEvent('acme.com', 'real@acme.com', 'exported', Date.now(), { conferenceId: 'c1' });
+    // Solo tester: tracked but only 1 distinct attendee (phantom-proof).
+    seedUser('acme.com', 'solo@acme.com', { acquisitionSource: 'reddit' });
+    seedEvent('acme.com', 'solo@acme.com', 'tracked', Date.now(), { conferenceId: 'c2', participantCount: 2, distinctAttendees: 1 });
+    // Never tracked.
+    seedUser('acme.com', 'signup@acme.com', { acquisitionSource: 'reddit' });
+    // Owner — must be excluded.
+    seedUser('gmail.com', 'derekgallardo01@gmail.com');
+    seedEvent('gmail.com', 'derekgallardo01@gmail.com', 'tracked', Date.now(), { conferenceId: 'c3', distinctAttendees: 5 });
+    // Legacy root user — must be excluded (not under a tenant).
+    ctx.seed('users/oldtimer@legacy.com', { email: 'oldtimer@legacy.com', displayName: 'Old' });
+
+    const f = await firestore.getActivationFunnel();
+    expect(f.totals.signedUp).toBe(3);     // real, solo, signup (owner + legacy excluded)
+    expect(f.totals.tracked).toBe(2);      // real + solo
+    expect(f.totals.realMeeting).toBe(1);  // only 'real' (solo deduped to 1)
+    expect(f.totals.exported).toBe(1);
+    // Source breakdown present.
+    const reddit = f.bySource.find(s => s.source === 'reddit');
+    expect(reddit.signedUp).toBe(2);
+    expect(reddit.realMeeting).toBe(0);
+  });
+});
+
 describe('email suppression (CAN-SPAM)', () => {
   test('suppressEmail then isEmailSuppressed reports true (case-insensitive)', async () => {
     expect(await firestore.isEmailSuppressed('Nope@Acme.com')).toBe(false);

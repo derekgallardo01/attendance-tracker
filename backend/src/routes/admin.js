@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed } = require('../services/firestore');
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed } = require('../services/firestore');
 const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail } = require('../lib/notifications');
 
 const SUPER_ADMIN_EMAIL = 'derekgallardo01@gmail.com';
@@ -456,6 +456,21 @@ router.post('/admin/check-alerts', async (req, res) => {
   } catch (err) {
     log.error('admin: check-alerts failed', { error: err.message });
     res.status(500).json({ error: 'Failed to check alerts' });
+  }
+});
+
+// GET /api/admin/activation-funnel — the real activation funnel (signup →
+// tracked → real multi-person meeting → exported → retained), deduped so solo
+// self-tests don't count as real usage.
+router.get('/admin/activation-funnel', async (req, res) => {
+  try {
+    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
+    const data = await getActivationFunnel();
+    if (!data) return res.status(500).json({ error: 'Failed' });
+    res.json(data);
+  } catch (err) {
+    log.error('admin: activation-funnel failed', { error: err.message });
+    res.status(500).json({ error: 'Failed' });
   }
 });
 

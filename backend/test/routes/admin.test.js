@@ -30,6 +30,7 @@ jest.mock('../../src/services/firestore', () => ({
   setEmailTemplates: jest.fn(),
   getAdvancedAnalytics: jest.fn(),
   getWeeklySelfReport: jest.fn(),
+  getActivationFunnel: jest.fn(),
   evaluateSeriesAlerts: jest.fn(),
   claimDailyAlertSlot: jest.fn(),
   recordAlertsSent: jest.fn(),
@@ -503,6 +504,30 @@ describe('POST /api/admin/check-reengagement', () => {
     expect(res.body.totalSent).toBe(0);
     expect(res.body.totalSkipped).toBe(1);
     expect(firestore.logEvent).not.toHaveBeenCalled();
+  });
+});
+
+describe('GET /api/admin/activation-funnel', () => {
+  test('403 for a non-super-admin', async () => {
+    const res = await request(app)
+      .get('/api/admin/activation-funnel')
+      .set(authedHeader('random@acme.com', 'acme.com'));
+    expect(res.status).toBe(403);
+    expect(firestore.getActivationFunnel).not.toHaveBeenCalled();
+  });
+
+  test('200 returns the funnel for the super-admin', async () => {
+    firestore.getActivationFunnel.mockResolvedValue({
+      totals: { signedUp: 3, tracked: 2, realMeeting: 1, exported: 1, retained: 2 },
+      bySource: [{ source: 'reddit', signedUp: 2, tracked: 1, realMeeting: 0, exported: 0 }],
+      generatedAt: '2026-07-14T00:00:00Z',
+    });
+    const res = await request(app)
+      .get('/api/admin/activation-funnel')
+      .set(authedHeader(SUPER_ADMIN, 'gmail.com'));
+    expect(res.status).toBe(200);
+    expect(res.body.totals.realMeeting).toBe(1);
+    expect(res.body.bySource[0].source).toBe('reddit');
   });
 });
 

@@ -17,6 +17,11 @@ const PERSONAL_EMAIL_DOMAINS = new Set([
   'fastmail.com', 'duck.com', 'zoho.com',
 ]);
 
+// Owner / super-admin account — excluded from user-facing analytics + lifecycle
+// email so the founder's own testing doesn't skew metrics. Kept in sync with
+// SUPER_ADMIN_EMAIL in routes/admin.js.
+const SUPER_ADMIN_EMAIL = 'derekgallardo01@gmail.com';
+
 // ── Token encryption (AES-256-GCM using SESSION_SECRET as key) ──
 const ALGO = 'aes-256-gcm';
 function deriveKey() {
@@ -577,6 +582,85 @@ async function getAllUsersAcrossTenants() {
   } catch (err) {
     log.error('firestore: getAllUsersAcrossTenants failed', { error: err.message });
     return [];
+  }
+}
+
+// The activation funnel that actually matters: signup → tracked anything →
+// tracked a REAL multi-person meeting → exported → came back. Uses the deduped
+// distinctAttendees signal so solo self-tests don't masquerade as real usage.
+// Cached briefly since it scans every user + event (admin-only, low frequency).
+let _funnelCache = null;
+let _funnelCachedAt = 0;
+const FUNNEL_CACHE_MS = 2 * 60 * 1000;
+async function getActivationFunnel() {
+  if (_funnelCache && (Date.now() - _funnelCachedAt) < FUNNEL_CACHE_MS) return _funnelCache;
+  try {
+    const db = getDb();
+    const [usersSnap, eventsSnap] = await Promise.all([
+      db.collectionGroup('users').get(),
+      db.collectionGroup('events').get(),
+    ]);
+
+    // Group events by lowercased email.
+    const byEmail = new Map();
+    for (const d of eventsSnap.docs) {
+      const e = d.data();
+      const email = (e.email || '').toLowerCase();
+      if (!email) continue;
+      if (!byEmail.has(email)) byEmail.set(email, []);
+      byEmail.get(email).push(e);
+    }
+
+    const isRealMeetingEvent = (e) => {
+      const m = e.meta || {};
+      const d = m.distinctAttendees != null ? m.distinctAttendees : (m.participantCount || 0);
+      return d >= 2;
+    };
+
+    let signedUp = 0, tracked = 0, realMeeting = 0, exported = 0, retained = 0;
+    const bySource = {};
+    for (const u of usersSnap.docs) {
+      // Only count real tenant users (tenants/{domain}/users/*), not the legacy
+      // root `users` collection from the single-tenant era. Root-collection docs
+      // have no grandparent document, so this check excludes them.
+      const tenantDoc = u.ref.parent.parent;
+      if (!tenantDoc) continue;
+      const data = u.data();
+      const email = (data.email || u.id).toLowerCase();
+      if (email === SUPER_ADMIN_EMAIL) continue; // exclude the owner's own account
+
+      signedUp++;
+      const evs = byEmail.get(email) || [];
+      const trackedEvs = evs.filter(e => e.type === 'tracked');
+      const hasTracked = trackedEvs.length > 0;
+      const hasReal = trackedEvs.some(isRealMeetingEvent);
+      const hasExport = evs.some(e => e.type === 'exported');
+      const days = new Set(evs.map(e => e.createdAt?.toDate?.()?.toISOString().slice(0, 10)).filter(Boolean));
+      const hasRetained = days.size >= 2;
+
+      if (hasTracked) tracked++;
+      if (hasReal) realMeeting++;
+      if (hasExport) exported++;
+      if (hasRetained) retained++;
+
+      const src = data.acquisitionSource || 'unknown';
+      const s = bySource[src] || (bySource[src] = { source: src, signedUp: 0, tracked: 0, realMeeting: 0, exported: 0 });
+      s.signedUp++;
+      if (hasTracked) s.tracked++;
+      if (hasReal) s.realMeeting++;
+      if (hasExport) s.exported++;
+    }
+
+    _funnelCache = {
+      totals: { signedUp, tracked, realMeeting, exported, retained },
+      bySource: Object.values(bySource).sort((a, b) => b.signedUp - a.signedUp),
+      generatedAt: new Date().toISOString(),
+    };
+    _funnelCachedAt = Date.now();
+    return _funnelCache;
+  } catch (err) {
+    log.error('firestore: getActivationFunnel failed', { error: err.message });
+    return null;
   }
 }
 
@@ -2912,7 +2996,7 @@ async function deleteUser(domain, email) {
 module.exports = {
   getTenantConfig, upsertTenantConfig,
   setTenantPlan, getTenantPlan,
-  countDistinctAttendees,
+  countDistinctAttendees, getActivationFunnel,
   persistAttendance, persistCalendarData, persistExport,
   getMeetingExcusedEmails, addMeetingExcusedEmails,
   getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens,
