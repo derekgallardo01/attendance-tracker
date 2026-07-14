@@ -46,6 +46,7 @@ jest.mock('../../src/lib/notifications', () => ({
   sendWeeklySelfReport: jest.fn(),
   sendSeriesAlertEmail: jest.fn(),
   sendReactivationEmail: jest.fn(),
+  sendActivationNudgeEmail: jest.fn(),
   sendForgottenMeetingEmail: jest.fn(),
 }));
 
@@ -72,6 +73,7 @@ beforeEach(() => {
   // { sent: true } on success. Failure tests override with { sent: false }.
   notifications.sendSeriesAlertEmail.mockResolvedValue({ sent: true });
   notifications.sendReactivationEmail.mockResolvedValue({ sent: true });
+  notifications.sendActivationNudgeEmail.mockResolvedValue({ sent: true });
   notifications.sendForgottenMeetingEmail.mockResolvedValue({ sent: true });
   app = buildApp();
 });
@@ -405,6 +407,39 @@ describe('POST /api/admin/check-reengagement', () => {
     expect(firestore.evaluateReengagementForUser).not.toHaveBeenCalled();
     expect(firestore.claimReengagementSlot).not.toHaveBeenCalled();
     expect(notifications.sendReactivationEmail).not.toHaveBeenCalled();
+  });
+
+  test('routes an activation_7d reminder to the activation-nudge email', async () => {
+    firestore.getAllUsersAcrossTenants.mockResolvedValue([
+      { email: 'signup@acme.com', domain: 'acme.com', displayName: 'New' },
+    ]);
+    firestore.evaluateReengagementForUser.mockResolvedValue([
+      { type: 'activation_7d', daysSinceLogin: 10 },
+    ]);
+    firestore.claimReengagementSlot.mockResolvedValue({ claimed: true, ref: {} });
+
+    await request(app)
+      .post('/api/admin/check-reengagement')
+      .set('x-scheduler-secret', SCHEDULER_SECRET)
+      .set('Content-Type', 'application/json')
+      .send({});
+    expect(notifications.sendActivationNudgeEmail).toHaveBeenCalledWith(expect.objectContaining({
+      to: 'signup@acme.com',
+    }));
+    expect(notifications.sendReactivationEmail).not.toHaveBeenCalled();
+  });
+
+  test('never emails the owner/super-admin account', async () => {
+    firestore.getAllUsersAcrossTenants.mockResolvedValue([
+      { email: SUPER_ADMIN, domain: 'gmail.com' },
+    ]);
+    const res = await request(app)
+      .post('/api/admin/check-reengagement')
+      .set('x-scheduler-secret', SCHEDULER_SECRET)
+      .set('Content-Type', 'application/json')
+      .send({});
+    expect(res.body.usersChecked).toBe(0);
+    expect(firestore.evaluateReengagementForUser).not.toHaveBeenCalled();
   });
 
   test('stops at the time budget and reports remaining work', async () => {

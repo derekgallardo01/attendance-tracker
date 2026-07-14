@@ -28,13 +28,26 @@ function seedUser(domain, email, lastLoginAgoDays) {
   });
 }
 
-function seedTracked(domain, email, conferenceId, atMs) {
+function seedTracked(domain, email, conferenceId, atMs, participantCount) {
   const id = `ev_${atMs}_${conferenceId}_${Math.random().toString(36).slice(2, 8)}`;
   ctx.seed(`tenants/${domain}/events/${id}`, {
     email: email.toLowerCase(),
     type: 'tracked',
-    meta: { conferenceId },
+    meta: { conferenceId, participantCount: participantCount != null ? participantCount : 1 },
     createdAt: wrapTimestamp(new Date(atMs)),
+  });
+}
+
+// Mark a user as "activated" (exported at least once) so the engagement gate
+// lets reactivation fire. Without this a user has no value signal and only
+// qualifies for the activation nudge.
+function seedExport(domain, email, atMs) {
+  const id = `ex_${atMs}_${Math.random().toString(36).slice(2, 8)}`;
+  ctx.seed(`tenants/${domain}/events/${id}`, {
+    email: email.toLowerCase(),
+    type: 'exported',
+    meta: {},
+    createdAt: wrapTimestamp(new Date(atMs || Date.now())),
   });
 }
 
@@ -57,6 +70,7 @@ describe('evaluateReengagementForUser — reactivation_7d window', () => {
     [20, false, '20 days = past 7d window, no fire'],
   ])('lastLogin %i days ago → 7d reminder fires=%s (%s)', async (days, shouldFire) => {
     seedUser('acme.com', 'user@acme.com', days);
+    seedExport('acme.com', 'user@acme.com'); // activated → reactivation eligible
     const r = await firestore.evaluateReengagementForUser('acme.com', 'user@acme.com');
     const has7d = r.some(x => x.type === 'reactivation_7d');
     expect(has7d).toBe(shouldFire);
@@ -73,9 +87,55 @@ describe('evaluateReengagementForUser — reactivation_30d window', () => {
     [90, false, 'past window, no fire'],
   ])('lastLogin %i days ago → 30d reminder fires=%s (%s)', async (days, shouldFire) => {
     seedUser('acme.com', 'user@acme.com', days);
+    seedExport('acme.com', 'user@acme.com'); // activated → reactivation eligible
     const r = await firestore.evaluateReengagementForUser('acme.com', 'user@acme.com');
     const has30d = r.some(x => x.type === 'reactivation_30d');
     expect(has30d).toBe(shouldFire);
+  });
+});
+
+describe('evaluateReengagementForUser — engagement gate (targeting)', () => {
+  const D = 'acme.com';
+
+  test('ACTIVATED via export: lapsed 10d → reactivation_7d (not activation)', async () => {
+    seedUser(D, 'real@acme.com', 10);
+    seedExport(D, 'real@acme.com');
+    const r = await firestore.evaluateReengagementForUser(D, 'real@acme.com');
+    expect(r.some(x => x.type === 'reactivation_7d')).toBe(true);
+    expect(r.some(x => x.type === 'activation_7d')).toBe(false);
+  });
+
+  test('ACTIVATED via a real multi-person meeting (participantCount>=2) → reactivation_7d', async () => {
+    seedUser(D, 'host@acme.com', 10);
+    seedTracked(D, 'host@acme.com', 'meet-x', Date.now() - 10 * DAY, 5); // 5 attendees
+    const r = await firestore.evaluateReengagementForUser(D, 'host@acme.com');
+    expect(r.some(x => x.type === 'reactivation_7d')).toBe(true);
+  });
+
+  test('NEVER TRACKED: lapsed 10d → activation_7d nudge (not reactivation)', async () => {
+    seedUser(D, 'signup@acme.com', 10); // no events at all
+    const r = await firestore.evaluateReengagementForUser(D, 'signup@acme.com');
+    expect(r.some(x => x.type === 'activation_7d')).toBe(true);
+    expect(r.some(x => x.type === 'reactivation_7d')).toBe(false);
+  });
+
+  test('SOLO-ONLY tester (tracked self, participantCount=1, no export): no reminder at all', async () => {
+    seedUser(D, 'solo@acme.com', 10);
+    // Many tracked events but all solo (participantCount 1) and never exported.
+    seedTracked(D, 'solo@acme.com', 'meet-solo', Date.now() - 10 * DAY, 1);
+    seedTracked(D, 'solo@acme.com', 'meet-solo', Date.now() - 10 * DAY, 1);
+    seedTracked(D, 'solo@acme.com', 'meet-solo', Date.now() - 10 * DAY, 1);
+    const r = await firestore.evaluateReengagementForUser(D, 'solo@acme.com');
+    expect(r.some(x => x.type === 'reactivation_7d')).toBe(false);
+    expect(r.some(x => x.type === 'activation_7d')).toBe(false);
+  });
+
+  test('SOLO-ONLY tester lapsed 35d: no reactivation_30d either', async () => {
+    seedUser(D, 'solo30@acme.com', 35);
+    seedTracked(D, 'solo30@acme.com', 'meet-solo', Date.now() - 35 * DAY, 1);
+    const r = await firestore.evaluateReengagementForUser(D, 'solo30@acme.com');
+    expect(r.some(x => x.type === 'reactivation_30d')).toBe(false);
+    expect(r.some(x => x.type === 'activation_7d')).toBe(false);
   });
 });
 

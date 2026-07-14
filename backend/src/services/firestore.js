@@ -1672,15 +1672,34 @@ async function evaluateReengagementForUser(domain, email) {
     const now = Date.now();
     const reminders = [];
 
+    // ── Engagement quality gate ──
+    // Only spend a warm "we miss you" reactivation on users who actually got
+    // value: they exported at least once, OR tracked a meeting with other
+    // people (participantCount >= 2). Raw tracked-event count is NOT a signal —
+    // the poll loop emits a 'tracked' event every ~15s, so a single solo test
+    // inflates it to dozens. Solo-only self-tests (participantCount<=1, no
+    // export) are low intent; we don't reactivate them. Never-tracked signups
+    // get a different, activation-focused nudge instead.
+    const exportedCount = eventsSnap.docs.filter(d => d.data().type === 'exported').length;
+    const trackedDocs = eventsSnap.docs.filter(d => d.data().type === 'tracked');
+    const maxParticipants = Math.max(0, ...trackedDocs.map(d => d.data().meta?.participantCount || 0));
+    const everTracked = trackedDocs.length > 0;
+    const activated = exportedCount >= 1 || maxParticipants >= 2;
+
     if (lastLogin) {
       const daysSinceLogin = Math.floor((now - lastLogin) / 86400000);
       // Narrow firing windows so the daily cron doesn't double-fire if a user
       // sat at "lapsed for X days" for a stretch — we want one shot per lapse.
-      if (daysSinceLogin >= 7 && daysSinceLogin < 14) {
-        reminders.push({ type: 'reactivation_7d', daysSinceLogin });
-      } else if (daysSinceLogin >= 30 && daysSinceLogin < 45) {
-        reminders.push({ type: 'reactivation_30d', daysSinceLogin });
+      const window7 = daysSinceLogin >= 7 && daysSinceLogin < 14;
+      const window30 = daysSinceLogin >= 30 && daysSinceLogin < 45;
+      if (activated) {
+        if (window7) reminders.push({ type: 'reactivation_7d', daysSinceLogin });
+        else if (window30) reminders.push({ type: 'reactivation_30d', daysSinceLogin });
+      } else if (!everTracked && window7) {
+        // Signed up but never tracked a meeting — one activation-focused nudge.
+        reminders.push({ type: 'activation_7d', daysSinceLogin });
       }
+      // Solo-only testers (tracked but not activated) intentionally get nothing.
     }
 
     // Forgotten recurring meeting: user tracked a series 3+ times in past 30d,

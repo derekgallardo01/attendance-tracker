@@ -558,6 +558,54 @@ async function sendReactivationEmail({ to, displayName, daysSinceLogin, variant 
   }
 }
 
+// Activation nudge for people who signed up but never tracked a meeting. Unlike
+// the reactivation email ("what was missing?"), this assumes they never got to
+// the value — so it's a short how-to-start, not a win-back. Same personal
+// From-name and reply-to-owner so replies are easy.
+async function sendActivationNudgeEmail({ to, displayName, daysSinceLogin }) {
+  if (!getResend()) return { skipped: 'Resend not configured' };
+  const firstName = displayName ? displayName.split(' ')[0] : null;
+  const hi = firstName ? `Hey ${firstName},` : 'Hey,';
+
+  const subject = 'Getting started with Attendance Tracker';
+  const body = [
+    hi,
+    '',
+    "You signed up for Attendance Tracker but haven't taken attendance in a meeting yet. It takes about 30 seconds:",
+    '',
+    '1. Start or join a Google Meet.',
+    '2. Open Attendance Tracker from the Activities panel (bottom-right in Meet).',
+    '3. Press Start — it tracks who joins, who leaves, and how long they stayed, then exports to a Google Sheet when the meeting ends.',
+    '',
+    "If something got in the way — setup, permissions, or it just didn't fit — hit reply and tell me. I read every one.",
+    '',
+    '— Derek',
+    'attendancetracker.dev',
+  ].join('\n');
+
+  const foot = unsubscribeFooter(to);
+  const html = body.split('\n').map(l =>
+    `<p style="margin:0 0 12px;font-family:sans-serif;font-size:14px;line-height:1.55;color:#111">${escape(l) || '&nbsp;'}</p>`
+  ).join('') + foot.html;
+
+  try {
+    const info = await send({
+      from: makeFrom('Derek Gallardo'),
+      to,
+      subject,
+      text: body + foot.text,
+      html,
+      replyTo: ownerEmail(),
+      tags: [{ name: 'type', value: 'activation_nudge' }],
+    });
+    log.info('activation nudge email sent', { to, daysSinceLogin });
+    return info;
+  } catch (err) {
+    log.warn('activation nudge email failed', { to, error: err.message });
+    return { sent: false, error: err.message };
+  }
+}
+
 async function sendForgottenMeetingEmail({ to, displayName, seriesTitle, recurringEventId, trackedInWindow, daysSinceLast }) {
   if (!getResend()) return { skipped: 'Resend not configured' };
   const firstName = displayName ? displayName.split(' ')[0] : null;
@@ -709,7 +757,7 @@ async function sendSlackTestPing({ webhookUrl }) {
 
 module.exports = {
   sendSignupWebhook, sendAdminEmail, sendWeeklySelfReport, sendExportNotification,
-  sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendForgottenMeetingEmail,
+  sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendActivationNudgeEmail, sendForgottenMeetingEmail,
   sendSlackDigest, sendSlackTestPing, buildSlackDigestBlocks, buildSlackFallbackText, maskSlackWebhook,
   unsubscribeUrl, unsubscribeToken, verifyUnsubscribeToken, unsubscribeFooter,
 };

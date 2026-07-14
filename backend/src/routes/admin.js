@@ -2,7 +2,7 @@ const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
 const log = require('../lib/logger');
 const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed } = require('../services/firestore');
-const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendForgottenMeetingEmail } = require('../lib/notifications');
+const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendForgottenMeetingEmail } = require('../lib/notifications');
 
 const SUPER_ADMIN_EMAIL = 'derekgallardo01@gmail.com';
 const MARKETPLACE_REVIEW_URL = 'https://workspace.google.com/marketplace/app/attendance_tracker/829771833968';
@@ -293,6 +293,8 @@ router.post('/admin/check-reengagement', async (req, res) => {
       if (Date.now() - startedAt > BUDGET_MS) { timedOut = true; break; }
       index++;
       if (!user?.email || !user?.domain) continue;
+      // Don't send lifecycle mail to the owner's own account (self/test).
+      if (user.email.toLowerCase() === SUPER_ADMIN_EMAIL) continue;
       usersChecked++;
       try {
         // CAN-SPAM: never send lifecycle mail to a suppressed address.
@@ -322,6 +324,12 @@ router.post('/admin/check-reengagement', async (req, res) => {
               displayName: user.displayName || null,
               daysSinceLogin: r.daysSinceLogin,
               variant: r.type === 'reactivation_7d' ? '7d' : '30d',
+            });
+          } else if (r.type === 'activation_7d') {
+            result = await sendActivationNudgeEmail({
+              to: user.email,
+              displayName: user.displayName || null,
+              daysSinceLogin: r.daysSinceLogin,
             });
           } else if (r.type === 'forgotten_meeting') {
             result = await sendForgottenMeetingEmail({
@@ -395,6 +403,7 @@ router.post('/admin/check-alerts', async (req, res) => {
       if (Date.now() - startedAt > BUDGET_MS) { timedOut = true; break; }
       index++;
       if (!user?.email || !user?.domain) continue;
+      if (user.email.toLowerCase() === SUPER_ADMIN_EMAIL) continue; // no self-mail
       usersChecked++;
       try {
         // CAN-SPAM: skip suppressed addresses before doing any work.
