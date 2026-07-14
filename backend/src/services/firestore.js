@@ -2994,6 +2994,7 @@ async function deleteUser(domain, email) {
 }
 
 module.exports = {
+  getDb,
   getTenantConfig, upsertTenantConfig,
   setTenantPlan, getTenantPlan,
   countDistinctAttendees, getActivationFunnel,
