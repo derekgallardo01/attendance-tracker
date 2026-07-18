@@ -115,6 +115,26 @@ describe('upsertUser — basic upsert behavior', () => {
     expect(ctx.read('tenants/newco.com/users/a@newco.com')).toBeDefined();
   });
 
+  test('persists granted scopes + exportScopeGranted flag', async () => {
+    const drive = 'https://www.googleapis.com/auth/drive.file';
+    const meet = 'https://www.googleapis.com/auth/meetings.space.readonly';
+    // User who granted only the Meet scope (can track, cannot export).
+    await firestore.upsertUser('acme.com', {
+      email: 'noexport@acme.com', displayName: 'No Export',
+      scopes: { granted: [meet], exportScopeGranted: false },
+    });
+    const u1 = ctx.read('tenants/acme.com/users/noexport@acme.com');
+    expect(u1.grantedScopes).toEqual([meet]);
+    expect(u1.exportScopeGranted).toBe(false);
+
+    // User who granted both.
+    await firestore.upsertUser('acme.com', {
+      email: 'full@acme.com', displayName: 'Full',
+      scopes: { granted: [meet, drive], exportScopeGranted: true },
+    });
+    expect(ctx.read('tenants/acme.com/users/full@acme.com').exportScopeGranted).toBe(true);
+  });
+
   test('preserves existing user fields (merge semantics)', async () => {
     ctx.seed('tenants/acme.com/users/a@acme.com', {
       email: 'a@acme.com',

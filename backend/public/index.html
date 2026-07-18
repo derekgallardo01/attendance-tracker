@@ -2669,6 +2669,43 @@ function maybeShowSoloNudge() {
   toast('👋 Looks like you were the only one here. Attendance Tracker shines when others join — open it in your next real meeting to see the full roll-call.', 9000);
 }
 
+// When the user leaves the panel (tab hidden / navigating away) mid- or
+// post-meeting with tracked data that never became a Sheet, either fire a
+// last-chance export (only if the meeting has genuinely ended — no premature
+// partial export from a tab switch) or log WHY no Sheet was produced. This
+// turns the silent tracked→export drop-off into a measurable, diagnosable
+// signal (a highly-engaged user tracked 83 min and exported nothing).
+function handlePanelLeave() {
+  if (document.visibilityState !== 'hidden') return;
+  if (!state.tracking || !state.signedIn) return;
+  if (state.participants.size === 0) return;
+  if (state.autoExportedConferenceId === state.conferenceId) return; // already have a Sheet
+
+  const scopeBlocked = document.getElementById('btn-sheets')?.dataset.scopeBlocked === '1';
+  const meetingEnded = !!state.conferenceEndTime && new Date(state.conferenceEndTime) <= new Date();
+
+  // Last-chance export: page is still alive on visibilitychange, so the async
+  // flow can run. Guarded by meetingEnded so a mid-meeting tab switch never
+  // triggers a partial export.
+  if (meetingEnded && !scopeBlocked && !_exporting) {
+    maybeAutoExportOnMeetingEnd();
+    return;
+  }
+
+  // Otherwise record why they're leaving without a Sheet (once per conference).
+  if (state._exportSkipLoggedFor === state.conferenceId) return;
+  state._exportSkipLoggedFor = state.conferenceId;
+  const reason = scopeBlocked ? 'scope_blocked'
+    : (!state.conferenceEndTime ? 'meeting_not_ended' : 'other');
+  logUserEvent('export_skipped', {
+    reason,
+    conferenceId: state.conferenceId || null,
+    distinctAttendees: distinctAttendeeCount(),
+    trackedMinutes: state.startTime ? Math.round((Date.now() - new Date(state.startTime).getTime()) / 60000) : 0,
+  });
+}
+document.addEventListener('visibilitychange', handlePanelLeave);
+
 // Fires once per conference when the Meet API reports endTime. Auto-matches
 // calendar attendees (best-effort), exports silently, and emails the organizer
 // the sheet link. Bookkept by conferenceId so it survives panel reloads.

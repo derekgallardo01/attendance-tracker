@@ -355,7 +355,7 @@ async function getUser(domain, email) {
   }
 }
 
-async function upsertUser(domain, { email, displayName, refreshToken, sheetId, acquisition }) {
+async function upsertUser(domain, { email, displayName, refreshToken, sheetId, acquisition, scopes }) {
   try {
     const now = FieldValue.serverTimestamp();
     const emailLower = email.toLowerCase();
@@ -370,6 +370,14 @@ async function upsertUser(domain, { email, displayName, refreshToken, sheetId, a
     };
     if (refreshToken !== undefined) data.refreshToken = encryptToken(refreshToken);
     if (sheetId !== undefined) data.sheetId = sheetId;
+    // Persist granted OAuth scopes so we can diagnose why a user can track but
+    // not export (the Drive scope is optional at consent and silently disables
+    // Sheet export if unchecked). Refreshed on every sign-in.
+    if (scopes) {
+      if (Array.isArray(scopes.granted)) data.grantedScopes = scopes.granted;
+      if (typeof scopes.exportScopeGranted === 'boolean') data.exportScopeGranted = scopes.exportScopeGranted;
+      data.scopesUpdatedAt = now;
+    }
 
     // Ensure the parent tenant doc exists. Firestore doesn't auto-create it
     // for subcollection writes, so without this the tenants collection stays

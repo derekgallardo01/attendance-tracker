@@ -11,6 +11,10 @@ const FRONTEND_EVENT_TYPES = new Set([
   'export_clicked',
   'export_failed',
   'export_cancelled',
+  // Fired when a user leaves with tracked-but-unexported data, tagged with a
+  // reason (scope_blocked / meeting_not_ended / …) so we can measure and
+  // diagnose the tracked→exported drop-off.
+  'export_skipped',
 ]);
 
 // POST /api/event — let the frontend record activation/funnel events that only

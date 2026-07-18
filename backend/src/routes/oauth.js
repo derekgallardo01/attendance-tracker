@@ -97,6 +97,11 @@ router.post('/exchange', async (req, res) => {
       displayName,
       refreshToken: tokens.refresh_token || undefined,
       acquisition: sanitizedAcq,
+      // Persist scopes so we can see who lacks the Drive (export) scope.
+      scopes: {
+        granted: grantedScopes,
+        exportScopeGranted: grantedScopes.includes(REQUIRED_SCOPES_BY_FEATURE.sheets),
+      },
     });
 
     // Per-user signin event — feeds the activity log and "most active this
