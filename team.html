@@ -82,6 +82,7 @@
     }
   </style>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="js/utils.js"></script>
 </head>
 <body>
   <div class="container">
@@ -278,7 +279,7 @@
       document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${name}`));
     }
 
-    function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+    const esc = (s) => AttUtils.escHtml(s); // shared js/utils.js (loaded in <head>)
     function fmtDate(iso) { if (!iso) return '—'; return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }); }
     function fmtTime(iso) { if (!iso) return ''; return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); }
     function fmtDuration(ms) { if (!ms || ms <= 0) return '—'; const m = Math.round(ms / 60000); if (m < 60) return `${m}m`; const h = Math.floor(m/60); const mm = m%60; return mm ? `${h}h ${mm}m` : `${h}h`; }

@@ -45,6 +45,7 @@
     .footer { text-align: center; color: var(--muted); font-size: .75rem; margin-top: 36px; }
     .footer a { color: var(--muted); text-decoration: none; }
   </style>
+  <script src="js/utils.js"></script>
 </head>
 <body>
   <div class="container">
@@ -95,9 +96,8 @@
 
   <script>
     const BACKEND_URL = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
-    function esc(s) {
-      return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
-    }
+    // Delegates to the shared js/utils.js module (loaded in <head>).
+    const esc = (s) => AttUtils.escHtml(s);
     function fmtDate(iso) {
       if (!iso) return '—';
       return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
