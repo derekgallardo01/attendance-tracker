@@ -37,7 +37,7 @@ router.post('/event', requireAuth, async (req, res) => {
     await logEvent(req.user.domain, { email: req.user.email, type, meta: safeMeta });
     res.json({ ok: true });
   } catch (err) {
-    log.warn('event log failed', { error: err.message, type });
+    log.error('event log failed', { error: err.message, type });
     res.status(500).json({ error: 'Failed to log event' });
   }
 });
@@ -56,7 +56,7 @@ router.post('/share', requireAuth, async (req, res) => {
       expiresAt: result.expiresAt,
     });
   } catch (err) {
-    log.warn('share: create failed', { error: err.message, email: req.user.email });
+    log.error('share: create failed', { error: err.message, email: req.user.email });
     res.status(500).json({ error: 'Failed to create share link' });
   }
 });

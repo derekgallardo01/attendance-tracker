@@ -32,7 +32,7 @@ router.get('/settings', requireAuth, async (req, res) => {
       emailOptOut: suppressed,
     });
   } catch (err) {
-    log.warn('settings: get failed', { email: req.user.email, error: err.message });
+    log.error('settings: get failed', { email: req.user.email, error: err.message });
     res.status(500).json({ error: 'Failed to fetch settings' });
   }
 });

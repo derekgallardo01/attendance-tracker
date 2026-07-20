@@ -82,7 +82,7 @@ router.get('/billing/status', requireAuth, async (req, res) => {
     const plan = await getTenantPlan(req.user.domain);
     res.json({ ...plan, billingConfigured: billingConfigured() });
   } catch (err) {
-    log.warn('billing: status failed', { domain: req.user.domain, error: err.message });
+    log.error('billing: status failed', { domain: req.user.domain, error: err.message });
     res.status(500).json({ error: 'Failed to fetch plan.' });
   }
 });

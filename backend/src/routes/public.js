@@ -152,7 +152,7 @@ router.get('/public/stats', async (_req, res) => {
     res.set('Cache-Control', 'public, max-age=300');
     res.json(cached);
   } catch (err) {
-    log.warn('public stats failed', { error: err.message });
+    log.error('public stats failed', { error: err.message });
     // Fall back to last cache or a sane zero state.
     res.json(cached || { organizations: 0, meetings: 0, generatedAt: new Date().toISOString() });
   }
@@ -172,7 +172,7 @@ router.get('/public/share/:token', async (req, res) => {
     if (!view) return res.status(404).json({ error: 'Series no longer available' });
     res.json({ type: link.type, ...view });
   } catch (err) {
-    log.warn('share: resolve failed', { error: err.message });
+    log.error('share: resolve failed', { error: err.message });
     res.status(500).json({ error: 'Failed to load shared view' });
   }
 });
