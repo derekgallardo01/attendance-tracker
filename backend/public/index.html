@@ -2695,15 +2695,10 @@ async function saveToSheets() {
 // Count distinct human attendees currently in state (deduped by email, else
 // display name) — mirrors the backend countDistinctAttendees. Two sessions of
 // the same person collapse to one, so a solo test reads as 1.
+// Delegates to the shared AttUtils.distinctAttendees (identical to the backend
+// countDistinctAttendees). Kept as a thin wrapper over state.participants.
 function distinctAttendeeCount() {
-  const ids = new Set();
-  for (const p of state.participants.values()) {
-    const email = (p.email || '').trim().toLowerCase();
-    const name = (p.displayName || '').trim().toLowerCase();
-    const key = email || (name ? `name:${name}` : null);
-    if (key) ids.add(key);
-  }
-  return ids.size;
+  return AttUtils.distinctAttendees(state.participants.values());
 }
 
 // If a tracked meeting ended with only the user present, nudge them to bring it

@@ -36,6 +36,26 @@ describe('escHtml', () => {
     const xss = '<img src=x onerror=alert(1)>';
     expect(utils.escHtml(xss)).toBe('&lt;img src=x onerror=alert(1)&gt;');
   });
+
+  test('escapes quotes too (attribute-safe, matches backend)', () => {
+    expect(utils.escHtml(`"x" 'y'`)).toBe('&quot;x&quot; &#39;y&#39;');
+  });
+});
+
+describe('distinctAttendees', () => {
+  test('dedupes by email (case-insensitive) then by trimmed name', () => {
+    expect(utils.distinctAttendees([
+      { email: 'a@x.com', displayName: 'A' },
+      { email: 'A@x.com', displayName: 'A (phone)' }, // same person, same email
+      { email: '', displayName: 'Darlene Diaz' },
+      { email: '', displayName: 'darlene diaz' },     // same person, name only
+      { email: '', displayName: 'Sam' },
+    ])).toBe(3);
+  });
+  test('ignores identity-less records; empty iterable = 0', () => {
+    expect(utils.distinctAttendees([{ email: '', displayName: '' }])).toBe(0);
+    expect(utils.distinctAttendees([])).toBe(0);
+  });
 });
 
 describe('formatRelative', () => {
@@ -277,6 +297,11 @@ describe('isValidSlackWebhook', () => {
     expect(utils.isValidSlackWebhook('https://hooks.slack.com/services/T01/B02')).toBe(false);
     expect(utils.isValidSlackWebhook('https://hooks.slack.com/services/T01/B02/')).toBe(false);
     expect(utils.isValidSlackWebhook('https://hooks.slack.com/services/')).toBe(false);
+  });
+
+  test('rejects an over-long segment (>=200 chars) — matches backend cap', () => {
+    const huge = 'x'.repeat(200);
+    expect(utils.isValidSlackWebhook(`https://hooks.slack.com/services/T01/B02/${huge}`)).toBe(false);
   });
 
   test('rejects null / undefined / non-string', () => {

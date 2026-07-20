@@ -22,8 +22,12 @@
   // Used in many template strings to prevent XSS from displayName / email
   // fields that originate in Google's directory (mostly trustworthy but not
   // guaranteed).
+  // Escape the full 5-char set (incl. quotes) so the result is safe in both
+  // text and attribute contexts — matches the backend escapers in
+  // notifications.js / routes/public.js.
+  const HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
   function escHtml(s) {
-    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => HTML_ESCAPES[c]);
   }
 
   // ─── relative time formatter ───
@@ -102,6 +106,22 @@
   function participantKey(p) {
     if (p?.email) return p.email.toLowerCase();
     return 'name:' + (p?.displayName || 'Unknown');
+  }
+
+  // Count DISTINCT human attendees among an iterable of participant objects,
+  // deduped by identity (email, else lowercased display name) so one person on
+  // two devices/sessions counts once. This is the "real meeting" signal and
+  // MUST stay identical to the backend countDistinctAttendees() in
+  // services/firestore.js (guarded by the shared-contract test).
+  function distinctAttendees(participants) {
+    const ids = new Set();
+    for (const p of participants || []) {
+      const email = (p.email || '').trim().toLowerCase();
+      const name = (p.displayName || '').trim().toLowerCase();
+      const key = email || (name ? `name:${name}` : null);
+      if (key) ids.add(key);
+    }
+    return ids.size;
   }
 
   // ─── auto-match participants to calendar invitees ───
@@ -190,8 +210,9 @@
     if (!url.startsWith(SLACK_WEBHOOK_PREFIX)) return false;
     const rest = url.slice(SLACK_WEBHOOK_PREFIX.length);
     const parts = rest.split('/');
-    // Expect 3 non-empty path segments (T*/B*/secret)
-    return parts.length === 3 && parts.every(p => p.length > 0);
+    // Expect 3 path segments (T*/B*/secret), each non-empty and bounded — must
+    // match the backend validator in routes/settings.js exactly.
+    return parts.length === 3 && parts.every(p => p.length > 0 && p.length < 200);
   }
 
   function maskWebhookUrl(url) {
@@ -208,7 +229,7 @@
 
   const api = {
     escHtml, formatRelative, fmtTime, fmtDur, fmtDurMs, isoFmt, datestamp,
-    latenessMin, avatarColor, participantKey,
+    latenessMin, avatarColor, participantKey, distinctAttendees,
     autoMatchAttendees, participantTotalMs, isSelfParticipant,
     isValidSlackWebhook, maskWebhookUrl,
     LATE_THRESHOLD_MIN, AVATAR_PALETTE, SLACK_WEBHOOK_PREFIX,
