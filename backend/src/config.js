@@ -14,7 +14,12 @@ const CONFIG = {
   secretName:       required('SECRET_NAME'),
   impersonateEmail: process.env.IMPERSONATE_EMAIL || null,
   sheetId:          process.env.SHEET_ID || null,
-  adminEmail:       process.env.ADMIN_EMAIL || null,
+  adminEmail:       process.env.ADMIN_EMAIL || null, // Directory API enrichment (NOT the app owner)
+
+  // The app owner / super-admin — gates the admin dashboard + CRM routes and is
+  // excluded from lifecycle email + analytics. Single source of truth (was
+  // hardcoded separately in routes/admin.js and services/firestore.js).
+  superAdminEmail:  process.env.SUPER_ADMIN_EMAIL || 'derekgallardo01@gmail.com',
 
   // General — meet.google.com always allowed (side panel iframe)
   allowedOrigins:  [...new Set([

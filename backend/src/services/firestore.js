@@ -18,9 +18,8 @@ const PERSONAL_EMAIL_DOMAINS = new Set([
 ]);
 
 // Owner / super-admin account — excluded from user-facing analytics + lifecycle
-// email so the founder's own testing doesn't skew metrics. Kept in sync with
-// SUPER_ADMIN_EMAIL in routes/admin.js.
-const SUPER_ADMIN_EMAIL = 'derekgallardo01@gmail.com';
+// email so the founder's own testing doesn't skew metrics.
+const SUPER_ADMIN_EMAIL = CONFIG.superAdminEmail;
 
 // ── Token encryption (AES-256-GCM using SESSION_SECRET as key) ──
 const ALGO = 'aes-256-gcm';

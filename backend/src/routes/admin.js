@@ -1,10 +1,12 @@
 const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
+const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed } = require('../services/firestore');
 const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail } = require('../lib/notifications');
+const { requireSuperAdmin, requireSuperAdminOrScheduler } = require('../middleware/adminAuth');
 
-const SUPER_ADMIN_EMAIL = 'derekgallardo01@gmail.com';
+const SUPER_ADMIN_EMAIL = CONFIG.superAdminEmail;
 const MARKETPLACE_REVIEW_URL = 'https://workspace.google.com/marketplace/app/attendance_tracker/829771833968';
 
 const ACQUISITION_SOURCES = new Set([
@@ -160,11 +162,8 @@ router.get('/admin/stats', async (req, res) => {
 });
 
 // GET /api/admin/all-users — List every user across every tenant (super admin only)
-router.get('/admin/all-users', async (req, res) => {
+router.get('/admin/all-users', requireSuperAdmin, async (req, res) => {
   try {
-    if (req.user?.email !== SUPER_ADMIN_EMAIL) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
     const users = await getAllUsersAcrossTenants();
     users.sort((a, b) => {
       const aTime = a.lastLoginAt ? new Date(a.lastLoginAt).getTime() : 0;
@@ -180,9 +179,8 @@ router.get('/admin/all-users', async (req, res) => {
 
 // GET /api/admin/insights — Activation funnel, retention, top orgs (super admin only)
 // GET /api/admin/activity — recent events across all tenants for the live feed
-router.get('/admin/activity', async (req, res) => {
+router.get('/admin/activity', requireSuperAdmin, async (req, res) => {
   try {
-    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
     const limit = Math.max(1, Math.min(200, Number(req.query.limit) || 50));
     const events = await getRecentActivity({ limit });
     res.json({ events });
@@ -193,9 +191,8 @@ router.get('/admin/activity', async (req, res) => {
 });
 
 // GET /api/admin/suggestions — "reach out NOW" cards
-router.get('/admin/suggestions', async (req, res) => {
+router.get('/admin/suggestions', requireSuperAdmin, async (req, res) => {
   try {
-    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
     const suggestions = await getReachOutSuggestions();
     res.json({ suggestions });
   } catch (err) {
@@ -205,9 +202,8 @@ router.get('/admin/suggestions', async (req, res) => {
 });
 
 // GET /api/admin/power-users — power users who haven't been contacted yet
-router.get('/admin/power-users', async (req, res) => {
+router.get('/admin/power-users', requireSuperAdmin, async (req, res) => {
   try {
-    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
     const days = Math.max(1, Math.min(90, Number(req.query.days) || 7));
     const minTracked = Math.max(1, Math.min(50, Number(req.query.minTracked) || 5));
     const users = await getPowerUserPipeline({ days, minTracked });
@@ -219,9 +215,8 @@ router.get('/admin/power-users', async (req, res) => {
 });
 
 // POST /api/admin/contacted — mark a user as reached out to
-router.post('/admin/contacted', async (req, res) => {
+router.post('/admin/contacted', requireSuperAdmin, async (req, res) => {
   try {
-    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
     const { email, domain, note } = req.body || {};
     if (!email || !domain) return res.status(400).json({ error: 'email and domain required' });
     await markUserContacted(domain, email, { note, contactedBy: req.user.email });
@@ -236,9 +231,8 @@ router.post('/admin/contacted', async (req, res) => {
 // POST /api/admin/weekly-report — actually sends the email to NOTIFY_EMAIL
 // Two endpoints so you can preview before triggering. Cloud Scheduler can
 // hit the POST endpoint every Monday morning.
-router.get('/admin/weekly-report', async (req, res) => {
+router.get('/admin/weekly-report', requireSuperAdmin, async (req, res) => {
   try {
-    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
     const report = await getWeeklySelfReport();
     res.json(report || { error: 'failed' });
   } catch (err) {
@@ -246,9 +240,8 @@ router.get('/admin/weekly-report', async (req, res) => {
   }
 });
 
-router.post('/admin/weekly-report', async (req, res) => {
+router.post('/admin/weekly-report', requireSuperAdmin, async (req, res) => {
   try {
-    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
     const report = await getWeeklySelfReport();
     if (!report) return res.status(500).json({ error: 'Could not generate report' });
     const result = await sendWeeklySelfReport(report);
@@ -267,12 +260,7 @@ router.post('/admin/weekly-report', async (req, res) => {
 //   - forgotten_meeting: tracked a recurring series 3+ times then skipped
 // Each fires at most once per user per dedup key forever (permanent claim).
 // Same auth model as check-alerts: super-admin OR x-scheduler-secret header.
-router.post('/admin/check-reengagement', async (req, res) => {
-  const schedulerSecret = process.env.SCHEDULER_SECRET;
-  const hasSchedulerToken = !!schedulerSecret && req.headers['x-scheduler-secret'] === schedulerSecret;
-  if (req.user?.email !== SUPER_ADMIN_EMAIL && !hasSchedulerToken) {
-    return res.status(403).json({ error: 'Forbidden' });
-  }
+router.post('/admin/check-reengagement', requireSuperAdminOrScheduler, async (req, res) => {
   try {
     const users = await getAllUsersAcrossTenants();
     let usersChecked = 0;
@@ -383,12 +371,7 @@ router.post('/admin/check-reengagement', async (req, res) => {
 // Auth: super-admin OR x-scheduler-secret header matching SCHEDULER_SECRET env
 // var. Designed to be called once/day by Cloud Scheduler. Idempotent via
 // per-user daily slot — safe to retry on transient failures.
-router.post('/admin/check-alerts', async (req, res) => {
-  const schedulerSecret = process.env.SCHEDULER_SECRET;
-  const hasSchedulerToken = !!schedulerSecret && req.headers['x-scheduler-secret'] === schedulerSecret;
-  if (req.user?.email !== SUPER_ADMIN_EMAIL && !hasSchedulerToken) {
-    return res.status(403).json({ error: 'Forbidden' });
-  }
+router.post('/admin/check-alerts', requireSuperAdminOrScheduler, async (req, res) => {
   try {
     const users = await getAllUsersAcrossTenants();
     let usersChecked = 0;
@@ -462,9 +445,8 @@ router.post('/admin/check-alerts', async (req, res) => {
 // GET /api/admin/activation-funnel — the real activation funnel (signup →
 // tracked → real multi-person meeting → exported → retained), deduped so solo
 // self-tests don't count as real usage.
-router.get('/admin/activation-funnel', async (req, res) => {
+router.get('/admin/activation-funnel', requireSuperAdmin, async (req, res) => {
   try {
-    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
     const data = await getActivationFunnel();
     if (!data) return res.status(500).json({ error: 'Failed' });
     res.json(data);
@@ -475,9 +457,8 @@ router.get('/admin/activation-funnel', async (req, res) => {
 });
 
 // GET /api/admin/analytics — segments, funnels, time patterns, drop-off
-router.get('/admin/analytics', async (req, res) => {
+router.get('/admin/analytics', requireSuperAdmin, async (req, res) => {
   try {
-    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
     const data = await getAdvancedAnalytics();
     if (!data) return res.status(500).json({ error: 'Failed' });
     res.json(data);
@@ -488,9 +469,8 @@ router.get('/admin/analytics', async (req, res) => {
 });
 
 // ── User detail (drill-down modal) ──
-router.get('/admin/user', async (req, res) => {
+router.get('/admin/user', requireSuperAdmin, async (req, res) => {
   try {
-    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
     const { email, domain } = req.query;
     if (!email || !domain) return res.status(400).json({ error: 'email and domain required' });
     const detail = await getUserDetail(domain, email);
@@ -502,9 +482,8 @@ router.get('/admin/user', async (req, res) => {
   }
 });
 
-router.put('/admin/note', async (req, res) => {
+router.put('/admin/note', requireSuperAdmin, async (req, res) => {
   try {
-    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
     const { email, domain, body } = req.body || {};
     if (!email || !domain) return res.status(400).json({ error: 'email and domain required' });
     const result = await setAdminNote(domain, email, body || '', req.user.email);
@@ -514,9 +493,8 @@ router.put('/admin/note', async (req, res) => {
   }
 });
 
-router.get('/admin/notes/search', async (req, res) => {
+router.get('/admin/notes/search', requireSuperAdmin, async (req, res) => {
   try {
-    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
     const results = await searchAdminNotes(req.query.q || '');
     res.json({ results });
   } catch (err) {
@@ -525,9 +503,8 @@ router.get('/admin/notes/search', async (req, res) => {
 });
 
 // ── Email-from-dashboard + templates + outreach log ──
-router.post('/admin/send-email', async (req, res) => {
+router.post('/admin/send-email', requireSuperAdmin, async (req, res) => {
   try {
-    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
     const { to, domain, subject, body } = req.body || {};
     if (!to || !domain || !subject || !body) return res.status(400).json({ error: 'to, domain, subject, body required' });
     const result = await sendAdminEmail({ to, subject, body });
@@ -540,9 +517,8 @@ router.post('/admin/send-email', async (req, res) => {
   }
 });
 
-router.put('/admin/outreach/status', async (req, res) => {
+router.put('/admin/outreach/status', requireSuperAdmin, async (req, res) => {
   try {
-    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
     const { email, domain, status } = req.body || {};
     if (!email || !domain || !status) return res.status(400).json({ error: 'email, domain, status required' });
     await setOutreachStatus(domain, email, status);
@@ -552,9 +528,8 @@ router.put('/admin/outreach/status', async (req, res) => {
   }
 });
 
-router.post('/admin/outreach/log-reply', async (req, res) => {
+router.post('/admin/outreach/log-reply', requireSuperAdmin, async (req, res) => {
   try {
-    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
     const { email, domain, body, status } = req.body || {};
     if (!email || !domain) return res.status(400).json({ error: 'email, domain required' });
     await appendConversation(domain, email, { direction: 'received', subject: '', body: body || '', replyStatus: status || 'replied' });
@@ -564,9 +539,8 @@ router.post('/admin/outreach/log-reply', async (req, res) => {
   }
 });
 
-router.get('/admin/templates', async (req, res) => {
+router.get('/admin/templates', requireSuperAdmin, async (req, res) => {
   try {
-    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
     const items = await getEmailTemplates();
     res.json({ items });
   } catch (err) {
@@ -574,9 +548,8 @@ router.get('/admin/templates', async (req, res) => {
   }
 });
 
-router.put('/admin/templates', async (req, res) => {
+router.put('/admin/templates', requireSuperAdmin, async (req, res) => {
   try {
-    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
     await setEmailTemplates(req.body?.items || []);
     res.json({ success: true });
   } catch (err) {
@@ -585,9 +558,8 @@ router.put('/admin/templates', async (req, res) => {
 });
 
 // ── Reminders ──
-router.post('/admin/reminders', async (req, res) => {
+router.post('/admin/reminders', requireSuperAdmin, async (req, res) => {
   try {
-    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
     const { email, domain, remindAt, body } = req.body || {};
     if (!email || !domain || !remindAt) return res.status(400).json({ error: 'email, domain, remindAt required' });
     const r = await createReminder(domain, email, { remindAt, body, createdBy: req.user.email });
@@ -597,9 +569,8 @@ router.post('/admin/reminders', async (req, res) => {
   }
 });
 
-router.put('/admin/reminders/:id/done', async (req, res) => {
+router.put('/admin/reminders/:id/done', requireSuperAdmin, async (req, res) => {
   try {
-    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
     const { domain } = req.body || {};
     if (!domain) return res.status(400).json({ error: 'domain required' });
     await markReminderDone(domain, req.params.id);
@@ -609,9 +580,8 @@ router.put('/admin/reminders/:id/done', async (req, res) => {
   }
 });
 
-router.get('/admin/reminders/due', async (req, res) => {
+router.get('/admin/reminders/due', requireSuperAdmin, async (req, res) => {
   try {
-    if (req.user?.email !== SUPER_ADMIN_EMAIL) return res.status(403).json({ error: 'Forbidden' });
     const reminders = await getDueReminders();
     res.json({ reminders });
   } catch (err) {
@@ -619,11 +589,8 @@ router.get('/admin/reminders/due', async (req, res) => {
   }
 });
 
-router.get('/admin/insights', async (req, res) => {
+router.get('/admin/insights', requireSuperAdmin, async (req, res) => {
   try {
-    if (req.user?.email !== SUPER_ADMIN_EMAIL) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
     const insights = await getAggregatedInsights();
     res.json(insights);
   } catch (err) {
@@ -634,11 +601,8 @@ router.get('/admin/insights', async (req, res) => {
 
 // GET /api/admin/outreach-list — Mail-merge-ready CSV of active users (super admin only)
 // Query params: ?days=30 (window), ?limit=50 (max rows), ?format=csv|json (default csv)
-router.get('/admin/outreach-list', async (req, res) => {
+router.get('/admin/outreach-list', requireSuperAdmin, async (req, res) => {
   try {
-    if (req.user?.email !== SUPER_ADMIN_EMAIL) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
     const days = Math.min(365, Math.max(1, parseInt(req.query.days, 10) || 30));
     const limit = Math.min(500, Math.max(1, parseInt(req.query.limit, 10) || 50));
     const format = req.query.format === 'json' ? 'json' : 'csv';
