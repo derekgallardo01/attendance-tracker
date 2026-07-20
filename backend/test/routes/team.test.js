@@ -144,3 +144,15 @@ describe('GET /api/team/overview — auth gating', () => {
     expect(res.headers['cache-control']).toContain('no-store');
   });
 });
+
+describe('requireTeamAdmin — error path', () => {
+  test('500 when the admin-role check throws', async () => {
+    // auth middleware calls getUser first (must succeed); the requireTeamAdmin
+    // role check is the second call — make that one throw.
+    firestore.getUser
+      .mockResolvedValueOnce({ email: 'admin@acme.com', domain: 'acme.com' })
+      .mockRejectedValue(new Error('lookup boom'));
+    const res = await request(app).get('/api/team/overview').set(authedHeader('admin@acme.com', 'acme.com'));
+    expect(res.status).toBe(500);
+  });
+});

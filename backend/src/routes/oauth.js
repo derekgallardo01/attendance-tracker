@@ -142,6 +142,9 @@ router.post('/exchange', async (req, res) => {
     // hostname > "direct" (fallback when only userAgent is known).
     let refHost = null;
     if (sanitizedAcq?.referrer) {
+      // A successfully-parsed http(s) referrer always has a non-empty hostname,
+      // so the `|| null` fallback is defensive-only.
+      /* istanbul ignore next */
       try { refHost = new URL(sanitizedAcq.referrer).hostname || null; } catch { /* ignore */ }
     }
     const detectedSource = sanitizedAcq?.source

@@ -23,18 +23,14 @@ jest.mock('../../src/services/googleAuth', () => ({
 jest.mock('../../src/lib/notifications', () => ({
   sendSignupWebhook: jest.fn(),
 }));
-// google.auth.OAuth2 verifyIdToken is invoked inside exchange — mock it
+// google.auth.OAuth2 verifyIdToken is invoked inside exchange — mock it. The
+// payload is mutable so a test can simulate a personal (no-hd) Google account.
+let mockPayload = { email: 'newuser@acme.com', hd: 'acme.com', name: 'New User' };
 jest.mock('googleapis', () => ({
   google: {
     auth: {
       OAuth2: jest.fn().mockImplementation(() => ({
-        verifyIdToken: jest.fn().mockResolvedValue({
-          getPayload: () => ({
-            email: 'newuser@acme.com',
-            hd: 'acme.com',
-            name: 'New User',
-          }),
-        }),
+        verifyIdToken: jest.fn().mockResolvedValue({ getPayload: () => mockPayload }),
       })),
     },
   },
@@ -47,6 +43,7 @@ let app;
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockPayload = { email: 'newuser@acme.com', hd: 'acme.com', name: 'New User' };
   app = buildApp();
 });
 
@@ -241,5 +238,197 @@ describe('POST /api/oauth/delete-account', () => {
       .set(authedHeader('gone@acme.com', 'acme.com'));
     expect(res.status).toBe(200);
     expect(firestore.deleteUser).toHaveBeenCalledWith('acme.com', 'gone@acme.com');
+  });
+});
+
+describe('POST /api/oauth/exchange — acquisition + scopes + webhook', () => {
+  const jwt = require('jsonwebtoken');
+  const CONFIG = require('../../src/config');
+
+  function exchangeTokens(scope) {
+    googleAuth.exchangeCode.mockResolvedValue({ id_token: 'x', access_token: 'a', refresh_token: 'r', expiry_date: Date.now() + 3600000, scope });
+  }
+  const FULL = 'openid email profile https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/meetings.space.readonly https://www.googleapis.com/auth/calendar.events.readonly';
+
+  test('warns + reports missingScopes when the user unchecks a scope', async () => {
+    exchangeTokens('openid email profile'); // no drive/meet/calendar
+    firestore.getUser.mockResolvedValue(null);
+    firestore.countAllUsers.mockResolvedValue(1);
+    const res = await request(app).post('/api/oauth/exchange').send({ code: 'c' });
+    expect(res.status).toBe(200);
+    expect(res.body.missingScopes.length).toBeGreaterThan(0);
+  });
+
+  test('sanitizes a full acquisition payload and derives detectedSource from an explicit source', async () => {
+    exchangeTokens(FULL);
+    firestore.getUser.mockResolvedValue(null);
+    firestore.countAllUsers.mockResolvedValue(5);
+    const res = await request(app).post('/api/oauth/exchange').send({
+      code: 'c',
+      acquisition: { source: 'reddit', utmSource: 'r', utmMedium: 'm', utmCampaign: 'c', referrer: 'https://news.ycombinator.com/x', landingUrl: 'https://attendancetracker.dev/?utm_source=r', userAgent: 'Mozilla/5.0' },
+    });
+    expect(res.body.detectedSource).toBe('reddit');
+    expect(firestore.upsertUser).toHaveBeenCalledWith('acme.com', expect.objectContaining({ acquisition: expect.objectContaining({ source: 'reddit' }) }));
+  });
+
+  test('derives detectedSource from referrer hostname when no source/ref/utm', async () => {
+    exchangeTokens(FULL);
+    firestore.getUser.mockResolvedValue(null);
+    firestore.countAllUsers.mockResolvedValue(5);
+    const res = await request(app).post('/api/oauth/exchange').send({ code: 'c', acquisition: { referrer: 'https://www.google.com/search' } });
+    expect(res.body.detectedSource).toBe('ref:www.google.com');
+  });
+
+  test('falls back to "direct" when only a userAgent is known', async () => {
+    exchangeTokens(FULL);
+    firestore.getUser.mockResolvedValue(null);
+    firestore.countAllUsers.mockResolvedValue(5);
+    const res = await request(app).post('/api/oauth/exchange').send({ code: 'c', acquisition: { userAgent: 'Mozilla/5.0' } });
+    expect(res.body.detectedSource).toBe('direct');
+  });
+
+  test('ignores a malformed referrer URL', async () => {
+    exchangeTokens(FULL);
+    firestore.getUser.mockResolvedValue(null);
+    firestore.countAllUsers.mockResolvedValue(5);
+    const res = await request(app).post('/api/oauth/exchange').send({ code: 'c', acquisition: { referrer: 'not a url', userAgent: 'UA' } });
+    expect(res.body.detectedSource).toBe('direct');
+  });
+
+  test('an existing user with an acquisitionSource skips the modal + webhook', async () => {
+    exchangeTokens(FULL);
+    firestore.getUser.mockResolvedValue({ email: 'newuser@acme.com', acquisitionSource: 'reddit' });
+    const res = await request(app).post('/api/oauth/exchange').send({ code: 'c' });
+    expect(res.body.isNewUser).toBe(false);
+    expect(res.body.needsAcquisitionSource).toBe(false);
+    await new Promise((r) => setImmediate(r));
+    expect(notifications.sendSignupWebhook).not.toHaveBeenCalled();
+  });
+
+  test('fires the signup webhook for a brand-new user', async () => {
+    exchangeTokens(FULL);
+    firestore.getUser.mockResolvedValue(null);
+    firestore.countAllUsers.mockResolvedValue(42);
+    await request(app).post('/api/oauth/exchange').send({ code: 'c' });
+    await new Promise((r) => setImmediate(r));
+    expect(notifications.sendSignupWebhook).toHaveBeenCalled();
+  });
+});
+
+const notifications = require('../../src/lib/notifications');
+
+describe('oauth account routes — error mapping', () => {
+  const jwt = require('jsonwebtoken');
+  const CONFIG = require('../../src/config');
+  const valid = () => 'Bearer ' + jwt.sign({ email: 'u@acme.com', domain: 'acme.com' }, CONFIG.sessionSecret);
+
+  test('GET /me 500 when the activation read throws', async () => {
+    firestore.getUserActivationStatus.mockRejectedValue(new Error('boom'));
+    firestore.getUser.mockResolvedValue({});
+    const res = await request(app).get('/api/oauth/me').set('Authorization', valid());
+    expect(res.status).toBe(500);
+  });
+
+  test('POST /revoke 500 when the user lookup throws', async () => {
+    firestore.getUser.mockRejectedValue(new Error('boom'));
+    const res = await request(app).post('/api/oauth/revoke').set('Authorization', valid());
+    expect(res.status).toBe(500);
+  });
+
+  test('POST /delete-account 401 Session expired on an expired token', async () => {
+    const expired = 'Bearer ' + jwt.sign({ email: 'u@acme.com', domain: 'acme.com' }, CONFIG.sessionSecret, { expiresIn: -10 });
+    const res = await request(app).post('/api/oauth/delete-account').set('Authorization', expired);
+    expect(res.status).toBe(401);
+    expect(res.body.error).toMatch(/expired/i);
+  });
+
+  test('POST /delete-account 401 Invalid token on a malformed token', async () => {
+    const res = await request(app).post('/api/oauth/delete-account').set('Authorization', 'Bearer garbage');
+    expect(res.status).toBe(401);
+    expect(res.body.error).toMatch(/invalid/i);
+  });
+});
+
+describe('oauth exchange — residual acquisition/scope/error branches', () => {
+  const FULL = 'openid email profile https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/meetings.space.readonly https://www.googleapis.com/auth/calendar.events.readonly';
+  function tok(scope) { googleAuth.exchangeCode.mockResolvedValue({ id_token: 'x', access_token: 'a', refresh_token: 'r', expiry_date: Date.now() + 3600000, scope }); }
+
+  test('personal (no-hd) account derives domain from the email', async () => {
+    mockPayload = { email: 'me@gmail.com', name: 'Me' }; // no hd
+    tok(FULL);
+    firestore.getUser.mockResolvedValue(null); firestore.countAllUsers.mockResolvedValue(1);
+    await request(app).post('/api/oauth/exchange').send({ code: 'c' });
+    expect(firestore.upsertUser).toHaveBeenCalledWith('gmail.com', expect.anything());
+  });
+
+  test('detectedSource = invite:<ref> when only a ref is present', async () => {
+    tok(FULL);
+    firestore.getUser.mockResolvedValue(null); firestore.countAllUsers.mockResolvedValue(1);
+    const res = await request(app).post('/api/oauth/exchange').send({ code: 'c', acquisition: { ref: 'friend@x.com' } });
+    expect(res.body.detectedSource).toBe('invite:friend@x.com');
+  });
+
+  test('detectedSource = utm:<source> when only a utmSource is present', async () => {
+    tok(FULL);
+    firestore.getUser.mockResolvedValue(null); firestore.countAllUsers.mockResolvedValue(1);
+    const res = await request(app).post('/api/oauth/exchange').send({ code: 'c', acquisition: { utmSource: 'reddit' } });
+    expect(res.body.detectedSource).toBe('utm:reddit');
+  });
+
+  test('drops a non-email ref value', async () => {
+    tok(FULL);
+    firestore.getUser.mockResolvedValue(null); firestore.countAllUsers.mockResolvedValue(1);
+    const res = await request(app).post('/api/oauth/exchange').send({ code: 'c', acquisition: { ref: 'not-an-email', userAgent: 'UA' } });
+    expect(res.body.detectedSource).toBe('direct'); // ref rejected → falls through
+  });
+
+  test('existing user WITHOUT a source but with a UTM captures from UTM (no modal)', async () => {
+    tok(FULL);
+    firestore.getUser.mockResolvedValue({ email: 'newuser@acme.com' }); // exists, no acquisitionSource
+    const res = await request(app).post('/api/oauth/exchange').send({ code: 'c', acquisition: { utmSource: 'reddit' } });
+    expect(res.body.needsAcquisitionSource).toBe(false);
+  });
+
+  test('delete-account 500 on an unexpected (non-token) failure', async () => {
+    const jwt = require('jsonwebtoken');
+    const CONFIG = require('../../src/config');
+    firestore.deleteUser.mockRejectedValue(new Error('cascade boom'));
+    firestore.getUser.mockResolvedValue({ refreshToken: null });
+    const token = 'Bearer ' + jwt.sign({ email: 'u@acme.com', domain: 'acme.com' }, CONFIG.sessionSecret);
+    const res = await request(app).post('/api/oauth/delete-account').set('Authorization', token);
+    expect(res.status).toBe(500);
+  });
+});
+
+describe('oauth exchange — optional-field fallbacks', () => {
+  test('minimal tokens (no scope/refresh/access) + payload without a name', async () => {
+    mockPayload = { email: 'min@acme.com' }; // no hd, no name
+    googleAuth.exchangeCode.mockResolvedValue({ id_token: 'x' }); // no scope/access/refresh/expiry
+    firestore.getUser.mockResolvedValue(null); firestore.countAllUsers.mockResolvedValue(1);
+    const res = await request(app).post('/api/oauth/exchange').send({ code: 'c' });
+    expect(res.status).toBe(200);
+    expect(res.body.displayName).toBe('min@acme.com'); // name fell back to email
+    expect(firestore.updateUserTokens).not.toHaveBeenCalled(); // no access_token
+  });
+
+  test('access token without an expiry_date uses a 1h default', async () => {
+    googleAuth.exchangeCode.mockResolvedValue({ id_token: 'x', access_token: 'a' }); // no expiry_date
+    firestore.getUser.mockResolvedValue(null); firestore.countAllUsers.mockResolvedValue(1);
+    const res = await request(app).post('/api/oauth/exchange').send({ code: 'c' });
+    expect(res.status).toBe(200);
+    expect(firestore.updateUserTokens).toHaveBeenCalled();
+  });
+});
+
+describe('oauth decodeSession — domain from email', () => {
+  test('GET /me derives domain from email when the token omits it', async () => {
+    const jwt = require('jsonwebtoken');
+    const CONFIG = require('../../src/config');
+    const token = 'Bearer ' + jwt.sign({ email: 'nodomain@acme.com' }, CONFIG.sessionSecret);
+    firestore.getUser.mockResolvedValue({});
+    firestore.getUserActivationStatus.mockResolvedValue({});
+    const res = await request(app).get('/api/oauth/me').set('Authorization', token);
+    expect(res.status).toBe(200);
+    expect(res.body.domain).toBe('acme.com');
   });
 });
