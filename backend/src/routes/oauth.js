@@ -24,6 +24,21 @@ const REQUIRED_SCOPES_BY_FEATURE = {
   calendar: 'https://www.googleapis.com/auth/calendar.events.readonly',
 };
 
+// The account routes below (/me, /revoke, /delete-account) live on this
+// pre-auth router so /exchange can stay open — they can't use the global auth
+// middleware. They share this verifier for the happy path: pull the Bearer
+// session JWT and return its decoded payload (with domain filled in), or null
+// when there's no Bearer header. A malformed/expired token throws out of
+// jwt.verify and is handled by each route's own catch (which intentionally
+// differ — /revoke maps token errors to 500, the others to 401).
+function decodeSession(req) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) return null;
+  const decoded = jwt.verify(authHeader.slice(7), CONFIG.sessionSecret);
+  decoded.domain = decoded.domain || decoded.email.split('@')[1];
+  return decoded;
+}
+
 function computeMissingScopes(granted) {
   const grantedSet = new Set((granted || '').split(/\s+/).filter(Boolean));
   const missing = [];
@@ -169,12 +184,9 @@ router.post('/exchange', async (req, res) => {
 // the Team admin link in the nav (only visible to org admins).
 router.get('/me', async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-    const decoded = jwt.verify(authHeader.slice(7), CONFIG.sessionSecret);
-    const domain = decoded.domain || decoded.email.split('@')[1];
+    const decoded = decodeSession(req);
+    if (!decoded) return res.status(401).json({ error: 'Not authenticated' });
+    const domain = decoded.domain;
     const [status, user] = await Promise.all([
       getUserActivationStatus(domain, decoded.email),
       getUser(domain, decoded.email),
@@ -196,13 +208,9 @@ router.get('/me', async (req, res) => {
 // POST /api/oauth/revoke — sign out and revoke refresh token
 router.post('/revoke', async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-
-    const decoded = jwt.verify(authHeader.slice(7), CONFIG.sessionSecret);
-    const domain = decoded.domain || decoded.email.split('@')[1];
+    const decoded = decodeSession(req);
+    if (!decoded) return res.status(401).json({ error: 'Not authenticated' });
+    const domain = decoded.domain;
     const user = await getUser(domain, decoded.email);
 
     if (user?.refreshToken) {
@@ -226,13 +234,10 @@ router.post('/revoke', async (req, res) => {
 // an arbitrary email in the body.
 router.post('/delete-account', async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-    const decoded = jwt.verify(authHeader.slice(7), CONFIG.sessionSecret);
+    const decoded = decodeSession(req);
+    if (!decoded) return res.status(401).json({ error: 'Not authenticated' });
     const email = decoded.email;
-    const domain = decoded.domain || email.split('@')[1];
+    const domain = decoded.domain;
 
     // Best-effort token revoke first so we stop being able to act as them.
     try {
