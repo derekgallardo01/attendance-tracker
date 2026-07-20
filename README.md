@@ -255,7 +255,7 @@ git push origin main
 
 GitHub Pages auto-deploys from `main`. Custom domain (`attendancetracker.dev`) is set via `CNAME`. Allow 30-90 seconds to propagate.
 
-**Important**: every frontend change touching `index.html` (or `team.html` / `history.html` / etc.) must be synced to `backend/public/`. Then re-fix the backend copy's `backendUrl` from the full Cloud Run URL to `/api`. The two `index.html` files must stay identical except for that one line.
+**Important**: after any frontend change (`index.html`, `team.html`, `history.html`, `js/*`, etc.), run **`npm run sync:public`** from the repo root. It regenerates `backend/public/` from the root files and rewrites the backend copy's `backendUrl` to `/api` automatically. CI runs `npm run check:public` and fails if the mirror is stale, so a forgotten sync can't reach production. (Script: `scripts/sync-public.mjs`.)
 
 ### Cloud Scheduler (one-time setup for daily crons)
 

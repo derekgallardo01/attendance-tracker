@@ -7,6 +7,20 @@ on:
     branches: [main]
 
 jobs:
+  mirror-sync:
+    name: backend/public mirror in sync
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      # Zero-dep script — no install needed. Fails if a frontend change wasn't
+      # mirrored into backend/public/ (run `npm run sync:public` to fix).
+      - name: Check mirror
+        run: node scripts/sync-public.mjs --check
+
   backend-unit-and-integration:
     name: backend tests (jest)
     runs-on: ubuntu-latest
