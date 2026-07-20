@@ -158,7 +158,9 @@ router.post('/save-to-sheets', async (req, res) => {
     const persistedExcused = req.user ? await getMeetingExcusedEmails(domain, conferenceId) : [];
     const excusedSet = new Set([
       ...persistedExcused,
-      ...(excusedFromClient || []).map(e => (e || '').toLowerCase()),
+      // excusedFromClient is destructured with a [] default, so it's always an
+      // array here — the `|| []` is defensive-only.
+      ...(/* istanbul ignore next */ (excusedFromClient || [])).map(e => (e || '').toLowerCase()),
     ]);
 
     let tabName = sanitizeTabName(clientTabName || `${meetingTitle || 'Meeting'} ${new Date(exportedAt).toISOString()}`);
@@ -202,6 +204,7 @@ router.post('/save-to-sheets', async (req, res) => {
       if (!iso) return '';
       return new Date(iso).toLocaleString('en-US', { timeZone: tz, dateStyle: 'medium', timeStyle: 'short' }) + ' ' + tzAbbr;
     };
+    /* istanbul ignore next: only ever called with meetingStartTime||exportedAt (always truthy) */
     const fmtDate = iso => iso ? fmtTime(iso) : '';
     const totalInvited = calendarAttendees.length || participants.length;
     const totalAttended = participants.length;
@@ -212,6 +215,7 @@ router.post('/save-to-sheets', async (req, res) => {
 
     // Format scheduled time range
     const fmtTimeOnly = (iso) => {
+      /* istanbul ignore next: only called when eventStart && eventEnd are truthy */
       if (!iso) return '';
       return new Date(iso).toLocaleString('en-US', { timeZone: tz, timeStyle: 'short' }) + ' ' + tzAbbr;
     };

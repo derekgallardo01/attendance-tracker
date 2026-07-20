@@ -503,3 +503,61 @@ describe('POST /api/save-to-sheets — meetStart null + digest args', () => {
     expect(res.status).toBe(403);
   });
 });
+
+describe('POST /api/save-to-sheets — digest row + defensive branches', () => {
+  const auth = () => authedHeader('user@acme.com', 'acme.com');
+  const post = (body) => request(app).post('/api/save-to-sheets').set(auth()).set('Content-Type', 'application/json').send(body);
+
+  test('slack digest rows: no-join, no-email, present-false-no-leave; title-less; no meetingStartTime', async () => {
+    firestore.getUserSettings.mockResolvedValue({ slackWebhookUrl: 'https://hooks.slack.com/services/T/B/C' });
+    notifications.sendSlackDigest.mockResolvedValue({ sent: true });
+    const res = await post({
+      exportedAt: new Date().toISOString(), meetingType: 'instant', // no meetingTitle, no meetingStartTime, no eventStart
+      participants: [
+        { present: true, sessions: 1 }, // no join, no email
+        { displayName: 'StillHere', email: 's@acme.com', joinTimeISO: null, leaveTimeISO: null, present: false, sessions: 0 }, // present false, no leave → Present
+      ],
+      calendarAttendees: [{ email: 'noname@acme.com', status: 'accepted' }], // absent, no displayName
+      excusedEmails: [null, 'noname@acme.com'], // includes a falsy element
+    });
+    expect(res.status).toBe(200);
+    await new Promise((r) => setImmediate(r));
+  });
+
+  test('email digest with no displayName / meetingTitle / conferenceId', async () => {
+    // authedHeader with no displayName → req.user.displayName falls back to email; force null via a token without displayName
+    const jwt = require('jsonwebtoken');
+    const CONFIG = require('../../src/config');
+    const token = 'Bearer ' + jwt.sign({ email: 'nd@acme.com', domain: 'acme.com' }, CONFIG.sessionSecret); // no displayName claim
+    const res = await request(app).post('/api/save-to-sheets').set('Authorization', token).set('Content-Type', 'application/json')
+      .send({ exportedAt: new Date().toISOString(), meetingType: 'instant', sendEmail: true,
+        participants: [{ displayName: 'A', email: 'a@acme.com', joinTimeISO: new Date(Date.now() - 5 * 60000).toISOString(), leaveTimeISO: null, present: true, sessions: 1 }],
+        calendarAttendees: [] });
+    expect(res.status).toBe(200);
+    expect(notifications.sendExportNotification).toHaveBeenCalledWith(expect.objectContaining({ displayName: null, conferenceId: null }));
+  });
+
+  test('late baseline uses meetingStartTime when eventStart is absent', async () => {
+    const start = new Date(Date.now() - 60 * 60000).toISOString();
+    const res = await post({ exportedAt: new Date().toISOString(), meetingType: 'instant', meetingStartTime: start,
+      participants: [{ displayName: 'Late', email: 'l@acme.com', joinTimeISO: new Date(Date.now() - 30 * 60000).toISOString(), leaveTimeISO: null, present: true, sessions: 1 }],
+      calendarAttendees: [] });
+    expect(res.status).toBe(200);
+  });
+
+  test('a non-403 error with no message surfaces as 500', async () => {
+    mockSheetsBatchUpdate.mockRejectedValueOnce(Object.assign(new Error(), { message: '' })); // no code, no message
+    const res = await post(validPayload);
+    expect(res.status).toBe(500);
+  });
+});
+
+describe('POST /api/save-to-sheets — destructure defaults', () => {
+  test('body without calendarAttendees/excusedEmails uses the [] defaults', async () => {
+    const res = await request(app).post('/api/save-to-sheets')
+      .set(authedHeader('user@acme.com', 'acme.com')).set('Content-Type', 'application/json')
+      .send({ exportedAt: new Date().toISOString(), meetingType: 'instant',
+        participants: [{ displayName: 'A', email: 'a@acme.com', joinTimeISO: new Date(Date.now() - 5 * 60000).toISOString(), leaveTimeISO: null, present: true, sessions: 1 }] });
+    expect(res.status).toBe(200);
+  });
+});
