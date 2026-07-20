@@ -145,3 +145,21 @@ describe('meetGetAll', () => {
     expect(items).toEqual([]);
   });
 });
+
+describe('meetGet — request timeout (abort)', () => {
+  afterEach(() => { delete global.fetch; jest.resetModules(); });
+
+  test('fires the abort timer and throws a timeout error when the request hangs', async () => {
+    jest.resetModules();
+    process.env.MEET_TIMEOUT_MS = '30';
+    const { meetGet } = require('../../src/services/meetApi');
+    // fetch never resolves on its own; it rejects only when the abort signal
+    // fires — i.e. when meetGet's timeout callback calls controller.abort().
+    global.fetch = jest.fn((url, { signal }) => new Promise((_, reject) => {
+      signal.addEventListener('abort', () =>
+        reject(Object.assign(new Error('The operation was aborted'), { name: 'AbortError' })));
+    }));
+    await expect(meetGet('conferenceRecords', 'tok', 0)).rejects.toThrow(/timeout/i);
+    delete process.env.MEET_TIMEOUT_MS;
+  });
+});

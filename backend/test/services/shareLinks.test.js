@@ -264,3 +264,94 @@ describe('getSharedSeriesView', () => {
     expect(res.people[0].displayName).toBe('Anonymous Guest');
   });
 });
+
+describe('getSharedSeriesView — branch coverage', () => {
+  test('adopts the longest seen displayName for a person', async () => {
+    ctx.seed('tenants/acme.com/meetings/m1', { recurringEventId: 's', title: 'T', startTime: wrapTimestamp(new Date('2026-06-01T10:00:00Z')) });
+    ctx.seed('tenants/acme.com/meetings/m2', { recurringEventId: 's', title: 'T', startTime: wrapTimestamp(new Date('2026-06-02T10:00:00Z')) });
+    ctx.seed('tenants/acme.com/meetings/m1/participants/p1', { email: 'a@acme.com', displayName: 'Al' });
+    ctx.seed('tenants/acme.com/meetings/m2/participants/p2', { email: 'a@acme.com', displayName: 'Alexander' });
+    const res = await firestore.getSharedSeriesView('acme.com', 's');
+    expect(res.people[0].displayName).toBe('Alexander');
+  });
+
+  test('falls back to createdAt when startTime is absent, and defaults a missing title', async () => {
+    ctx.seed('tenants/acme.com/meetings/mc', { recurringEventId: 'sc', createdAt: wrapTimestamp(new Date('2026-06-03T10:00:00Z')) });
+    ctx.seed('tenants/acme.com/meetings/mc/participants/p1', { email: 'z@acme.com', displayName: 'Zoe' });
+    const res = await firestore.getSharedSeriesView('acme.com', 'sc');
+    expect(res.title).toBe('Recurring meeting');
+    expect(res.firstAt).toBe('2026-06-03T10:00:00.000Z');
+  });
+
+  test('leaves first/last null when no meeting has a timestamp', async () => {
+    ctx.seed('tenants/acme.com/meetings/mn', { recurringEventId: 'sn', title: 'No times' });
+    ctx.seed('tenants/acme.com/meetings/mn/participants/p1', { email: 'q@acme.com', displayName: 'Q' });
+    const res = await firestore.getSharedSeriesView('acme.com', 'sn');
+    expect(res.firstAt).toBeNull();
+    expect(res.lastAt).toBeNull();
+  });
+});
+
+describe('resolveShareLink — expiresAt as ISO string', () => {
+  test('treats a string expiresAt in the future as valid', async () => {
+    ctx.seed('shareLinks/tok-str', {
+      token: 'tok-str', type: 'series', domain: 'acme.com', ownerEmail: 'o@acme.com',
+      recurringEventId: 'r', revoked: false,
+      expiresAt: new Date(Date.now() + 86400000).toISOString(),
+    });
+    const res = await firestore.resolveShareLink('tok-str');
+    expect(res).toMatchObject({ token: 'tok-str', recurringEventId: 'r' });
+  });
+});
+
+describe('getSharedSeriesView / resolveShareLink — residual branches', () => {
+  test('resolveShareLink treats a doc with no expiresAt as non-expiring', async () => {
+    ctx.seed('shareLinks/tok-noexp', {
+      token: 'tok-noexp', type: 'series', domain: 'acme.com', ownerEmail: 'o@acme.com',
+      recurringEventId: 'r', revoked: false, // no expiresAt field
+    });
+    const res = await firestore.resolveShareLink('tok-noexp');
+    expect(res).toMatchObject({ token: 'tok-noexp' });
+  });
+
+  test('sort comparator handles createdAt-only and timestamp-less meetings', async () => {
+    ctx.seed('tenants/acme.com/meetings/ca', { recurringEventId: 'sca', title: 'A', createdAt: wrapTimestamp(new Date('2026-06-05T10:00:00Z')) });
+    ctx.seed('tenants/acme.com/meetings/cb', { recurringEventId: 'sca', title: 'B', createdAt: wrapTimestamp(new Date('2026-06-06T10:00:00Z')) });
+    ctx.seed('tenants/acme.com/meetings/ca/participants/p1', { email: 'a@acme.com', displayName: 'A' });
+    ctx.seed('tenants/acme.com/meetings/cb/participants/p2', { email: 'b@acme.com', displayName: 'B' });
+    const res = await firestore.getSharedSeriesView('acme.com', 'sca');
+    expect(res.instanceCount).toBe(2);
+  });
+
+  test('names an emailed participant "Unknown" when displayName is blank', async () => {
+    ctx.seed('tenants/acme.com/meetings/mu', { recurringEventId: 'su', title: 'U', startTime: wrapTimestamp(new Date('2026-06-01T10:00:00Z')) });
+    ctx.seed('tenants/acme.com/meetings/mu/participants/p1', { email: 'noname@acme.com', displayName: '' });
+    const res = await firestore.getSharedSeriesView('acme.com', 'su');
+    expect(res.people[0].displayName).toBe('Unknown');
+  });
+});
+
+describe('getSharedSeriesView — sort with zero timestamps', () => {
+  test('two meetings with no timestamps sort via the ||0 fallback', async () => {
+    ctx.seed('tenants/acme.com/meetings/z1', { recurringEventId: 'sz', title: 'Z' });
+    ctx.seed('tenants/acme.com/meetings/z2', { recurringEventId: 'sz', title: 'Z' });
+    ctx.seed('tenants/acme.com/meetings/z1/participants/p1', { email: 'a@acme.com', displayName: 'A' });
+    ctx.seed('tenants/acme.com/meetings/z2/participants/p2', { email: 'b@acme.com', displayName: 'B' });
+    const res = await firestore.getSharedSeriesView('acme.com', 'sz');
+    expect(res.instanceCount).toBe(2);
+    expect(res.firstAt).toBeNull();
+  });
+});
+
+describe('getSharedSeriesView — equal timestamps', () => {
+  test('two meetings at the same instant do not double-advance lastAt', async () => {
+    const t = wrapTimestamp(new Date('2026-06-01T10:00:00Z'));
+    ctx.seed('tenants/acme.com/meetings/eq1', { recurringEventId: 'seq', title: 'E', startTime: t });
+    ctx.seed('tenants/acme.com/meetings/eq2', { recurringEventId: 'seq', title: 'E', startTime: t });
+    ctx.seed('tenants/acme.com/meetings/eq1/participants/p1', { email: 'a@acme.com', displayName: 'A' });
+    ctx.seed('tenants/acme.com/meetings/eq2/participants/p2', { email: 'b@acme.com', displayName: 'B' });
+    const res = await firestore.getSharedSeriesView('acme.com', 'seq');
+    expect(res.firstAt).toBe('2026-06-01T10:00:00.000Z');
+    expect(res.lastAt).toBe('2026-06-01T10:00:00.000Z');
+  });
+});
