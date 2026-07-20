@@ -75,6 +75,27 @@ function escape(s) {
   }[c]));
 }
 
+// Format a whole-minute duration as "Nm" / "Nh Nm". Callers supply the empty
+// value (email uses '—', Slack uses '').
+function hm(min) {
+  return min < 60 ? `${min}m` : `${Math.floor(min / 60)}h ${min % 60}m`;
+}
+
+// Send an already-built email + log the outcome. Collapses the identical
+// try{ send } / log.info(sent) / catch{ log.warn(failed) } block repeated across
+// every sender. `label` reproduces the prior per-sender log wording (e.g.
+// 'signup notification' → "signup notification sent" / "… failed").
+async function dispatchEmail(params, label, logMeta = {}) {
+  try {
+    const info = await send(params);
+    log.info(`${label} sent`, { to: params.to, ...logMeta });
+    return info;
+  } catch (err) {
+    log.warn(`${label} failed`, { to: params.to, error: err.message });
+    return { sent: false, error: err.message };
+  }
+}
+
 // POST JSON with a hard timeout so a hung Slack webhook can't block the request
 // (or the export flow that fire-and-forgets it). Aborts after SLACK_TIMEOUT_MS.
 const SLACK_TIMEOUT_MS = Number(process.env.SLACK_TIMEOUT_MS) || 5000;
@@ -164,19 +185,11 @@ async function sendSignupWebhook({ email, displayName, domain, acquisitionSource
     'Open admin dashboard: https://attendancetracker.dev/admin.html',
   ].join('\n');
 
-  try {
-    await send({
-      from: makeFrom('Attendance Tracker'),
-      to,
-      subject,
-      text,
-      html,
-      tags: [{ name: 'type', value: 'signup' }],
-    });
-    log.info('signup notification sent', { email, domain, to });
-  } catch (err) {
-    log.warn('signup notification failed', { error: err.message });
-  }
+  return dispatchEmail({
+    from: makeFrom('Attendance Tracker'),
+    to, subject, text, html,
+    tags: [{ name: 'type', value: 'signup' }],
+  }, 'signup notification', { email, domain });
 }
 
 // Generic email send used by the admin "email from dashboard" feature.
@@ -204,21 +217,20 @@ async function sendWeeklySelfReport(report) {
   if (!to) return { skipped: 'no NOTIFY_EMAIL/owner' };
 
   const arrow = (s) => s.startsWith('+') ? `<span style="color:#16a34a">▲ ${s}</span>` : s.startsWith('-') ? `<span style="color:#dc2626">▼ ${s}</span>` : `<span style="color:#666">${s}</span>`;
-  const escH = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
   const newSignupsList = (report.signups.new || []).map(u =>
-    `<li>${escH(u.displayName || u.email)} &lt;${escH(u.email)}&gt; — ${escH(u.domain)}${u.source ? ` (${escH(u.source)})` : ''}</li>`
+    `<li>${escape(u.displayName || u.email)} &lt;${escape(u.email)}&gt; — ${escape(u.domain)}${u.source ? ` (${escape(u.source)})` : ''}</li>`
   ).join('') || '<li style="color:#666">No new signups this week.</li>';
 
   const concernsList = (report.concerns || []).map(u =>
-    `<li>${escH(u.displayName || u.email)} &lt;${escH(u.email)}&gt; — ${escH(u.domain)}, signed up 3-7d ago, never tracked</li>`
+    `<li>${escape(u.displayName || u.email)} &lt;${escape(u.email)}&gt; — ${escape(u.domain)}, signed up 3-7d ago, never tracked</li>`
   ).join('') || '<li style="color:#16a34a">No churn-risk users this week 🎉</li>';
 
   const sourcesList = Object.entries(report.sources || {}).sort((a, b) => b[1] - a[1])
-    .map(([s, n]) => `<li>${escH(s)} — ${n}</li>`).join('') || '<li style="color:#666">No source data yet.</li>';
+    .map(([s, n]) => `<li>${escape(s)} — ${n}</li>`).join('') || '<li style="color:#666">No source data yet.</li>';
 
   const topUserLine = report.topUser
-    ? `${escH(report.topUser.displayName || report.topUser.email)} (${report.topUser.actions} actions)`
+    ? `${escape(report.topUser.displayName || report.topUser.email)} (${report.topUser.actions} actions)`
     : 'Nobody yet — quiet week.';
 
   const subject = `📊 Weekly Attendance Tracker report — ${report.signups.thisWeek} new signup${report.signups.thisWeek === 1 ? '' : 's'}, ${report.tracks.thisWeek} track${report.tracks.thisWeek === 1 ? '' : 's'}`;
@@ -296,7 +308,7 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
     if (s === 'Excused') return '#6b7280'; // muted gray — excused isn't a problem
     return '#dc2626';
   };
-  const fmtDur = (m) => !m ? '—' : (m < 60 ? `${m}m` : `${Math.floor(m / 60)}h ${m % 60}m`);
+  const fmtDur = (m) => !m ? '—' : hm(m);
   const tableRows = (participants || []).map(p => {
     const lateBadge = p.lateMin > 0
       ? ` <span style="background:rgba(245,158,11,.15);color:#b45309;border:1px solid rgba(245,158,11,.35);font-size:10px;font-weight:600;padding:1px 6px;border-radius:8px;margin-left:6px">+${p.lateMin}m late</span>`
@@ -374,19 +386,11 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
     seriesLink ? `Series trend: ${seriesLink}` : '',
   ].filter(Boolean).join('\n');
 
-  try {
-    await send({
-      from: makeFrom('Attendance Tracker'),
-      to,
-      subject,
-      text,
-      html,
-      tags: [{ name: 'type', value: 'export_notification' }],
-    });
-    log.info('export notification sent', { to, sheetUrl });
-  } catch (err) {
-    log.warn('export notification failed', { error: err.message, to });
-  }
+  return dispatchEmail({
+    from: makeFrom('Attendance Tracker'),
+    to, subject, text, html,
+    tags: [{ name: 'type', value: 'export_notification' }],
+  }, 'export notification', { sheetUrl });
 }
 
 // Daily series attendance alert. Batched: one email per user per day,
@@ -439,21 +443,11 @@ async function sendSeriesAlertEmail({ to, displayName, alerts }) {
     unsubscribeFooter(to).text,
   ].join('\n');
 
-  try {
-    const info = await send({
-      from: makeFrom('Attendance Tracker'),
-      to,
-      subject,
-      text,
-      html,
-      tags: [{ name: 'type', value: 'series_alert' }],
-    });
-    log.info('series alert email sent', { to, alertCount: alerts.length });
-    return info;
-  } catch (err) {
-    log.warn('series alert email failed', { to, error: err.message });
-    return { sent: false, error: err.message };
-  }
+  return dispatchEmail({
+    from: makeFrom('Attendance Tracker'),
+    to, subject, text, html,
+    tags: [{ name: 'type', value: 'series_alert' }],
+  }, 'series alert email', { alertCount: alerts.length });
 }
 
 // In-product feedback widget submissions. Lands in your inbox with full
@@ -521,22 +515,14 @@ async function sendPersonalEmail({ to, displayName, subject, lines, tags, htmlLi
     .map(l => (htmlLineTransform && htmlLineTransform(l)) || emailParagraph(l))
     .join('') + foot.html;
 
-  try {
-    const info = await send({
-      from: makeFrom('Derek Gallardo'),
-      to,
-      subject,
-      text: body + foot.text,
-      html,
-      replyTo: ownerEmail(),
-      tags,
-    });
-    log.info(`${logLabel} email sent`, { to, ...logMeta });
-    return info;
-  } catch (err) {
-    log.warn(`${logLabel} email failed`, { to, error: err.message });
-    return { sent: false, error: err.message };
-  }
+  return dispatchEmail({
+    from: makeFrom('Derek Gallardo'),
+    to, subject,
+    text: body + foot.text,
+    html,
+    replyTo: ownerEmail(),
+    tags,
+  }, `${logLabel} email`, logMeta);
 }
 
 async function sendReactivationEmail({ to, displayName, daysSinceLogin, variant }) {
@@ -656,7 +642,7 @@ function buildSlackDigestBlocks({ meetingTitle, totalAttended, totalInvited, par
   const attendanceSummary = totalInvited
     ? `*${totalAttended} of ${totalInvited} attended*`
     : `*${totalAttended} attended*`;
-  const durStr = durationMin ? (durationMin < 60 ? `${durationMin}m` : `${Math.floor(durationMin / 60)}h ${durationMin % 60}m`) : '';
+  const durStr = durationMin ? hm(durationMin) : '';
   const timeStr = startTime ? new Date(startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
   const metaLine = [attendanceSummary, durStr, timeStr ? `started ${timeStr}` : ''].filter(Boolean).join(' · ');
 
