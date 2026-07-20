@@ -193,3 +193,38 @@ describe('revokeToken', () => {
     await expect(googleAuth.revokeToken('rt-xyz')).resolves.toBeUndefined();
   });
 });
+
+describe('loadOAuthClientSecret (cache)', () => {
+  test('caches the client secret — second OAuth op does NOT re-hit Secret Manager', async () => {
+    // exchangeCode → getOAuthClient → loadOAuthClientSecret (cold load).
+    mockOAuthInstance.getToken.mockResolvedValue({ tokens: { id_token: 'x' } });
+    await googleAuth.exchangeCode('code-1');
+    await googleAuth.exchangeCode('code-2');
+    // Only the first call hits Secret Manager for the oauth secret; the TTL
+    // cache serves the second.
+    const oauthHits = mockAccessSecret.mock.calls.filter(
+      ([{ name }]) => name.includes('oauth'),
+    ).length;
+    expect(oauthHits).toBe(1);
+  });
+});
+
+describe('getGoogleClient', () => {
+  test('uses the user OAuth client when req.user is present', async () => {
+    const client = await googleAuth.getGoogleClient(
+      { user: { accessToken: 'user-tok' } },
+      'https://www.googleapis.com/auth/spreadsheets',
+    );
+    expect(mockOAuthInstance.setCredentials).toHaveBeenCalledWith({ access_token: 'user-tok' });
+    expect(client).toBe(mockOAuthInstance);
+    expect(google.auth.JWT).not.toHaveBeenCalled();
+  });
+
+  test('falls back to a service-account JWT when there is no user', async () => {
+    const client = await googleAuth.getGoogleClient({ user: null }, 'https://www.googleapis.com/auth/calendar.readonly');
+    expect(google.auth.JWT).toHaveBeenCalledWith(expect.objectContaining({
+      scopes: ['https://www.googleapis.com/auth/calendar.readonly'],
+    }));
+    expect(client).toBe(mockJwtInstance);
+  });
+});

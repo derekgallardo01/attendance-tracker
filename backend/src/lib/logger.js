@@ -1,4 +1,7 @@
 let Sentry;
+// @sentry/node is a hard dependency in this service, so the catch is a
+// belt-and-suspenders guard that never fires in practice (unreachable in tests).
+/* istanbul ignore next */
 try { Sentry = require('@sentry/node'); } catch { Sentry = null; }
 
 function emit(severity, consoleFn, msg, data) {
@@ -8,6 +11,9 @@ function emit(severity, consoleFn, msg, data) {
   if (severity === 'ERROR' && Sentry) {
     Sentry.withScope(scope => {
       scope.setLevel('error');
+      // data is always an object here (the log.* wrappers default it to {}),
+      // so the falsy branch is unreachable via the public API.
+      /* istanbul ignore else */
       if (data) scope.setExtras(data);
       Sentry.captureMessage(msg);
     });
