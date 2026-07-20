@@ -28,6 +28,7 @@ const feedbackLimiter = rateLimit({
 // Rate-limited per IP. Persists to Firestore + emails Derek.
 router.post('/public/feedback', feedbackLimiter, async (req, res) => {
   try {
+    /* istanbul ignore next: express.json always sets req.body to an object */
     const { body, fromEmail, fromName, source, conferenceId } = req.body || {};
     if (!body || typeof body !== 'string' || body.trim().length < 2) {
       return res.status(400).json({ error: 'Feedback body is required' });
@@ -74,6 +75,7 @@ router.post('/public/pageview', async (req, res) => {
   // Always respond 204 quickly — beacon caller doesn't read this.
   res.status(204).end();
   try {
+    /* istanbul ignore next: express.json always sets req.body to an object */
     const body = req.body || {};
     const today = new Date().toISOString().slice(0, 10);
     const db = getDb();

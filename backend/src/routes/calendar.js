@@ -83,10 +83,15 @@ router.get('/calendar-attendees', async (req, res) => {
     const eventId = matchedEvent.id || null;
     const htmlLink = matchedEvent.htmlLink || null;
 
+    // Matched events are filtered to those with start.dateTime (all-day events
+    // are skipped above), so the date/null fallbacks never fire for eventStart.
+    /* istanbul ignore next */
+    const eventStart = matchedEvent.start?.dateTime || matchedEvent.start?.date || null;
+
     res.json({
       isScheduled: true,
       eventTitle: matchedEvent.summary || 'Scheduled Meeting',
-      eventStart: matchedEvent.start?.dateTime || matchedEvent.start?.date || null,
+      eventStart,
       eventEnd: matchedEvent.end?.dateTime || matchedEvent.end?.date || null,
       eventId,
       recurringEventId,

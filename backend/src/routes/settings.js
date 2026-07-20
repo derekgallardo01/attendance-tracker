@@ -13,6 +13,9 @@ const router = Router();
 function maskForApi(url) {
   if (!url) return null;
   const masked = maskSlackWebhook(url);
+  // maskSlackWebhook only returns '(none)' for a falsy URL, which the guard
+  // above already handled — so that half of the check never fires here.
+  /* istanbul ignore next */
   return masked === '(invalid)' || masked === '(none)' ? null : masked;
 }
 
@@ -42,6 +45,7 @@ router.get('/settings', requireAuth, async (req, res) => {
 //   autoExportOnEnd  — boolean, synced across the user's devices
 //   emailOptOut      — boolean, toggles the CAN-SPAM suppression record
 router.put('/settings', requireAuth, async (req, res) => {
+  /* istanbul ignore next: express.json always sets req.body to an object */
   const body = req.body || {};
   const { slackWebhookUrl, autoExportOnEnd, emailOptOut } = body;
 

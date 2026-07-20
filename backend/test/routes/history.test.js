@@ -229,3 +229,99 @@ describe('POST /api/share — mint share link', () => {
     expect(res.status).toBe(500);
   });
 });
+
+describe('history — error + validation branches', () => {
+  test('POST /event 500 when logEvent throws; accepts rich meta', async () => {
+    firestore.logEvent.mockRejectedValue(new Error('boom'));
+    const res = await request(app).post('/api/event').set(authedHeader('u@acme.com', 'acme.com'))
+      .send({ type: 'export_clicked', meta: { a: 'x'.repeat(600), n: 5, b: true, arr: [1, 2] } });
+    expect(res.status).toBe(500);
+  });
+
+  test('GET /series 500 when the read throws', async () => {
+    firestore.getUserMeetingSeries.mockRejectedValue(new Error('boom'));
+    const res = await request(app).get('/api/series').set(authedHeader('u@acme.com', 'acme.com'));
+    expect(res.status).toBe(500);
+  });
+
+  test('GET /participant requires a key and 500s on read failure', async () => {
+    const noKey = await request(app).get('/api/participant').set(authedHeader('u@acme.com', 'acme.com'));
+    expect(noKey.status).toBe(400);
+    firestore.getParticipantHistory.mockRejectedValue(new Error('boom'));
+    firestore.getParticipantNote.mockResolvedValue(null);
+    const res = await request(app).get('/api/participant?key=a@acme.com').set(authedHeader('u@acme.com', 'acme.com'));
+    expect(res.status).toBe(500);
+  });
+
+  test('PUT /participant/note requires a key and 500s on write failure', async () => {
+    const noKey = await request(app).put('/api/participant/note').set(authedHeader('u@acme.com', 'acme.com')).send({ body: 'x' });
+    expect(noKey.status).toBe(400);
+    firestore.setParticipantNote.mockRejectedValue(new Error('boom'));
+    const res = await request(app).put('/api/participant/note').set(authedHeader('u@acme.com', 'acme.com')).send({ key: 'a@acme.com', body: 'note' });
+    expect(res.status).toBe(500);
+  });
+});
+
+describe('history — meta + share + note residual branches', () => {
+  test('POST /event ignores array meta, non-scalar values, and missing meta', async () => {
+    firestore.logEvent.mockResolvedValue();
+    // array meta → the object guard is false
+    let res = await request(app).post('/api/event').set(authedHeader('u@acme.com', 'acme.com')).send({ type: 'export_clicked', meta: [1, 2] });
+    expect(res.status).toBe(200);
+    // object meta with a non-scalar value → that key is skipped
+    res = await request(app).post('/api/event').set(authedHeader('u@acme.com', 'acme.com')).send({ type: 'export_clicked', meta: { good: 'x', bad: { nested: 1 } } });
+    expect(res.status).toBe(200);
+    // no meta at all
+    res = await request(app).post('/api/event').set(authedHeader('u@acme.com', 'acme.com')).send({ type: 'export_clicked' });
+    expect(res.status).toBe(200);
+  });
+
+  test('POST /share accepts an explicit type', async () => {
+    firestore.createShareLink.mockResolvedValue({ token: 'tok', expiresAt: new Date().toISOString() });
+    const res = await request(app).post('/api/share').set(authedHeader('u@acme.com', 'acme.com')).send({ recurringEventId: 'r', type: 'series' });
+    expect(res.status).toBe(200);
+  });
+
+  test('PUT /participant/note clears with an empty body', async () => {
+    firestore.setParticipantNote.mockResolvedValue({ saved: true });
+    const res = await request(app).put('/api/participant/note').set(authedHeader('u@acme.com', 'acme.com')).send({ key: 'a@acme.com' });
+    expect(res.status).toBe(200);
+    expect(firestore.setParticipantNote).toHaveBeenCalledWith('acme.com', 'u@acme.com', 'a@acme.com', '');
+  });
+});
+
+describe('history — final residual branches', () => {
+  test('POST /event ignores a non-object meta (string)', async () => {
+    firestore.logEvent.mockResolvedValue();
+    const res = await request(app).post('/api/event').set(authedHeader('u@acme.com', 'acme.com')).send({ type: 'export_clicked', meta: 'nope' });
+    expect(res.status).toBe(200);
+  });
+
+  test('POST /share defaults type to series when omitted', async () => {
+    firestore.createShareLink.mockResolvedValue({ token: 'tok', expiresAt: new Date().toISOString() });
+    const res = await request(app).post('/api/share').set(authedHeader('u@acme.com', 'acme.com')).send({ recurringEventId: 'r' });
+    expect(res.status).toBe(200);
+    expect(firestore.createShareLink).toHaveBeenCalledWith('acme.com', 'u@acme.com', expect.objectContaining({ type: 'series' }));
+  });
+
+  test('PUT /participant/note with no body → 400 key required', async () => {
+    const res = await request(app).put('/api/participant/note').set(authedHeader('u@acme.com', 'acme.com'));
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('history — non-JSON body (req.body || {})', () => {
+  const auth = () => authedHeader('u@acme.com', 'acme.com');
+  test('POST /event non-JSON → 400', async () => {
+    const res = await request(app).post('/api/event').set(auth()).set('Content-Type', 'text/plain').send('x');
+    expect(res.status).toBe(400);
+  });
+  test('POST /share non-JSON → 400', async () => {
+    const res = await request(app).post('/api/share').set(auth()).set('Content-Type', 'text/plain').send('x');
+    expect(res.status).toBe(400);
+  });
+  test('PUT /participant/note non-JSON → 400', async () => {
+    const res = await request(app).put('/api/participant/note').set(auth()).set('Content-Type', 'text/plain').send('x');
+    expect(res.status).toBe(400);
+  });
+});

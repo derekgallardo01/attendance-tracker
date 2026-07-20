@@ -280,3 +280,76 @@ describe('GET /api/public/unsubscribe', () => {
     expect(res.text).toContain('&lt;script&gt;');
   });
 });
+
+describe('public — error paths + validation branches', () => {
+  test('feedback tolerates a Firestore persist failure and still 200s', async () => {
+    firestore.getDb.mockReturnValue({ collection: () => ({ add: jest.fn().mockRejectedValue(new Error('persist boom')) }) });
+    notifications.sendFeedbackEmail.mockResolvedValue({ sent: true });
+    const res = await request(app).post('/api/public/feedback').set('X-Forwarded-For', '10.9.0.1').send({ body: 'This is real feedback', fromEmail: 'a@x.com' });
+    expect(res.status).toBe(200);
+  });
+
+  test('feedback 400 on too-short body', async () => {
+    const res = await request(app).post('/api/public/feedback').set('X-Forwarded-For', '10.9.0.2').send({ body: 'x' });
+    expect(res.status).toBe(400);
+  });
+
+  test('pageview swallows a write failure (still 204)', async () => {
+    firestore.getDb.mockImplementation(() => { throw new Error('db boom'); });
+    const res = await request(app).post('/api/public/pageview').set('Content-Type', 'application/json').send({ event: 'unknown_event', path: '/x' });
+    expect(res.status).toBe(204);
+    await new Promise((r) => setImmediate(r)); // let the fire-and-forget write reject into the catch
+  });
+
+  test('feedback 400 when body is not a string', async () => {
+    const res = await request(app).post('/api/public/feedback').set('X-Forwarded-For', '10.9.0.3').send({ body: 12345 });
+    expect(res.status).toBe(400);
+  });
+
+  test('stats falls back when the query throws', async () => {
+    firestore.getDb.mockReturnValue({
+      collection: () => ({ get: jest.fn().mockRejectedValue(new Error('boom')) }),
+      collectionGroup: () => ({ get: jest.fn().mockRejectedValue(new Error('boom')) }),
+    });
+    const res = await request(app).get('/api/public/stats');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('organizations');
+  });
+
+  test('share resolve 500 when the lookup throws', async () => {
+    firestore.resolveShareLink.mockRejectedValue(new Error('boom'));
+    const res = await request(app).get('/api/public/share/tok');
+    expect(res.status).toBe(500);
+  });
+
+  test('unsubscribe 400 on an invalid token', async () => {
+    notifications.verifyUnsubscribeToken.mockReturnValue(false);
+    const res = await request(app).get('/api/public/unsubscribe?e=a@x.com&t=bad');
+    expect(res.status).toBe(400);
+  });
+
+  test('unsubscribe suppresses on a valid token', async () => {
+    notifications.verifyUnsubscribeToken.mockReturnValue(true);
+    firestore.suppressEmail.mockResolvedValue(true);
+    const res = await request(app).get('/api/public/unsubscribe?e=a@x.com&t=good');
+    expect(res.status).toBe(200);
+    expect(firestore.suppressEmail).toHaveBeenCalled();
+  });
+});
+
+describe('public — final residual branches', () => {
+  test('pageview stores a numeric viewportWidth', async () => {
+    const setSpy = jest.fn().mockResolvedValue(undefined);
+    const addSpy = jest.fn().mockResolvedValue(undefined);
+    firestore.getDb.mockReturnValue({ collection: (n) => n === 'pageviews' ? { add: addSpy } : { doc: () => ({ set: setSpy }) } });
+    await request(app).post('/api/public/pageview').set('Content-Type', 'application/json').send({ path: '/', viewportWidth: 1280 });
+    await new Promise((r) => setImmediate(r));
+    expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({ viewportWidth: 1280 }));
+  });
+
+  test('unsubscribe with a missing token → 400', async () => {
+    notifications.verifyUnsubscribeToken.mockReturnValue(false);
+    const res = await request(app).get('/api/public/unsubscribe?e=a@x.com');
+    expect(res.status).toBe(400);
+  });
+});

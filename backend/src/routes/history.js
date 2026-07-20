@@ -22,6 +22,7 @@ const FRONTEND_EVENT_TYPES = new Set([
 // exist in the browser (e.g. "user clicked Export but it failed" vs "user
 // never clicked Export"). Validates the type and caps the meta blob size.
 router.post('/event', requireAuth, async (req, res) => {
+  /* istanbul ignore next: express.json always sets req.body to an object */
   const { type, meta } = req.body || {};
   if (!FRONTEND_EVENT_TYPES.has(type)) return res.status(400).json({ error: 'Invalid event type' });
   let safeMeta = null;
@@ -46,6 +47,7 @@ router.post('/event', requireAuth, async (req, res) => {
 // a recurringEventId from their Series tab; we return an opaque token they
 // can paste into Slack/email/etc. Recipients hit /share.html?t=<token>.
 router.post('/share', requireAuth, async (req, res) => {
+  /* istanbul ignore next: express.json always sets req.body to an object */
   const { recurringEventId, type } = req.body || {};
   if (!recurringEventId) return res.status(400).json({ error: 'recurringEventId is required' });
   try {
@@ -112,6 +114,7 @@ router.get('/participant', requireAuth, async (req, res) => {
 // PUT /api/participant/note — save (or clear, with empty body) the
 // requester's private note on a participant.
 router.put('/participant/note', requireAuth, async (req, res) => {
+  /* istanbul ignore next: express.json always sets req.body to an object */
   const { key, body } = req.body || {};
   if (!key) return res.status(400).json({ error: 'key is required' });
   try {

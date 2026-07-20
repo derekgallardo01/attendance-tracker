@@ -280,3 +280,57 @@ describe('POST /api/settings/test-slack', () => {
     });
   });
 });
+
+describe('settings — error + validation branches', () => {
+  test('GET /settings 500 when the read throws', async () => {
+    firestore.getUserSettings.mockRejectedValue(new Error('boom'));
+    const res = await request(app).get('/api/settings').set(authedHeader('u@acme.com', 'acme.com'));
+    expect(res.status).toBe(500);
+  });
+
+  test('PUT rejects a non-string, non-null slackWebhookUrl', async () => {
+    const res = await request(app).put('/api/settings').set(authedHeader('u@acme.com', 'acme.com')).send({ slackWebhookUrl: 123 });
+    expect(res.status).toBe(400);
+  });
+
+  test('PUT rejects a non-boolean autoExportOnEnd', async () => {
+    const res = await request(app).put('/api/settings').set(authedHeader('u@acme.com', 'acme.com')).send({ autoExportOnEnd: 'yes' });
+    expect(res.status).toBe(400);
+  });
+
+  test('PUT rejects a non-boolean emailOptOut', async () => {
+    const res = await request(app).put('/api/settings').set(authedHeader('u@acme.com', 'acme.com')).send({ emailOptOut: 'yes' });
+    expect(res.status).toBe(400);
+  });
+
+  test('PUT 500 when the write throws', async () => {
+    firestore.updateUserSettings.mockRejectedValue(new Error('boom'));
+    const res = await request(app).put('/api/settings').set(authedHeader('u@acme.com', 'acme.com')).send({ autoExportOnEnd: true });
+    expect(res.status).toBe(500);
+  });
+
+  test('GET masks a configured webhook and nulls an invalid one', async () => {
+    firestore.getUserSettings.mockResolvedValue({ slackWebhookUrl: 'https://hooks.slack.com/services/T0/B0/SECRETTAIL' });
+    let res = await request(app).get('/api/settings').set(authedHeader('u@acme.com', 'acme.com'));
+    expect(res.body.slackWebhookConfigured).toBe(true);
+    expect(res.body.slackWebhookMasked).toContain('hooks.slack.com');
+
+    firestore.getUserSettings.mockResolvedValue({ slackWebhookUrl: 'not-a-valid-webhook' });
+    res = await request(app).get('/api/settings').set(authedHeader('u@acme.com', 'acme.com'));
+    expect(res.body.slackWebhookMasked).toBeNull();
+  });
+});
+
+describe('settings — empty body', () => {
+  test('PUT with no body → 400 (no supported settings)', async () => {
+    const res = await request(app).put('/api/settings').set(authedHeader('u@acme.com', 'acme.com'));
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('settings — non-JSON body (req.body || {})', () => {
+  test('PUT with a non-JSON content-type falls back to {} → 400', async () => {
+    const res = await request(app).put('/api/settings').set(authedHeader('u@acme.com', 'acme.com')).set('Content-Type', 'text/plain').send('hello');
+    expect(res.status).toBe(400);
+  });
+});
