@@ -6,13 +6,10 @@ const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, ge
 const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail } = require('../lib/notifications');
 const { requireSuperAdmin, requireSuperAdminOrScheduler } = require('../middleware/adminAuth');
 const { requireAuth } = require('../middleware/auth');
+const { ACQUISITION_SOURCES } = require('../lib/constants');
 
 const SUPER_ADMIN_EMAIL = CONFIG.superAdminEmail;
 const MARKETPLACE_REVIEW_URL = 'https://workspace.google.com/marketplace/app/attendance_tracker/829771833968';
-
-const ACQUISITION_SOURCES = new Set([
-  'google_search', 'marketplace', 'reddit', 'youtube', 'friend', 'other',
-]);
 
 // Quote a CSV field per RFC 4180: wrap in double quotes and double any
 // embedded double quotes. Only quote when needed (contains , " or newline).

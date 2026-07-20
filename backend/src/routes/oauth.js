@@ -7,11 +7,7 @@ const { exchangeCode, revokeToken } = require('../services/googleAuth');
 const { upsertUser, getUser, updateUserTokens, logEvent, getUserActivationStatus, countAllUsers, getTenantConfig, deleteUser } = require('../services/firestore');
 const { sendSignupWebhook } = require('../lib/notifications');
 
-// Allow-list for self-reported acquisition source. Anything not on this list
-// is dropped so we don't end up storing arbitrary strings from the wire.
-const ACQUISITION_SOURCES = new Set([
-  'google_search', 'marketplace', 'reddit', 'youtube', 'friend', 'other',
-]);
+const { ACQUISITION_SOURCES } = require('../lib/constants');
 
 const router = Router();
 
