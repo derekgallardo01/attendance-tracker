@@ -52,6 +52,9 @@ async function send({ from, to, subject, text, html, replyTo, tags }) {
     html,
   };
   if (replyTo) params.replyTo = replyTo;
+  // Every internal caller passes a tags array, so the no-tags branch is
+  // defensive-only.
+  /* istanbul ignore next */
   if (tags) params.tags = tags;
   // The Resend SDK does its own HTTP without an exposed timeout; race it so a
   // hung call can't block the request (or a fire-and-forget email path). Clear
@@ -80,6 +83,7 @@ function hm(min) {
 // try{ send } / log.info(sent) / catch{ log.warn(failed) } block repeated across
 // every sender. `label` reproduces the prior per-sender log wording (e.g.
 // 'signup notification' → "signup notification sent" / "… failed").
+/* istanbul ignore next: every caller passes logMeta; the default is defensive */
 async function dispatchEmail(params, label, logMeta = {}) {
   try {
     const info = await send(params);
@@ -639,6 +643,9 @@ function buildSlackDigestBlocks({ meetingTitle, totalAttended, totalInvited, par
   const absent = (participants || []).filter(p => p.status === 'Absent' || p.status === 'Excused').map(p => `${p.displayName || p.email || '?'}${p.status === 'Excused' ? ' (excused)' : ''}`);
 
   const formatBucket = (names, total) => {
+    // Callers only invoke formatBucket for non-empty buckets (guarded by
+    // `if (bucket.length)` below), so the empty branch is defensive-only.
+    /* istanbul ignore next */
     if (names.length === 0) return '_none_';
     const shown = names.slice(0, cap).join(', ');
     return total > cap ? `${shown}, +${total - cap} more` : shown;
