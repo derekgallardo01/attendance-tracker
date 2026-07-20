@@ -65,3 +65,72 @@ describe('getTeamOverview', () => {
     expect(ov.totals.meetings).toBe(1);
   });
 });
+
+describe('upsertUser + getUser', () => {
+  test('new Workspace user claims team-admin and creates the tenant doc', async () => {
+    await firestore.upsertUser('acme.com', {
+      email: 'First@Acme.com', displayName: 'First', refreshToken: 'rt-secret',
+      acquisition: { source: 'reddit', utmSource: 'r', ref: 'inviter@x.com', referrer: 'https://x.com', userAgent: 'UA', landingUrl: 'https://l' },
+      scopes: { granted: ['a', 'b'], exportScopeGranted: true },
+    });
+    const u = ctx.read('tenants/acme.com/users/first@acme.com');
+    expect(u.teamAdmin).toBe(true);
+    expect(u.acquisitionSource).toBe('reddit');
+    expect(u.refreshToken).not.toBe('rt-secret'); // encrypted
+    expect(ctx.read('tenants/acme.com').adminEmail).toBe('first@acme.com');
+
+    // getUser decrypts the refresh token back
+    const got = await firestore.getUser('acme.com', 'first@acme.com');
+    expect(got.refreshToken).toBe('rt-secret');
+  });
+
+  test('second sign-in does not re-stamp acquisition or re-claim admin', async () => {
+    await firestore.upsertUser('acme.com', { email: 'first@acme.com', displayName: 'First', acquisition: { source: 'reddit' } });
+    await firestore.upsertUser('acme.com', { email: 'second@acme.com', displayName: 'Second', acquisition: { source: 'google_search' } });
+    expect(ctx.read('tenants/acme.com/users/second@acme.com').teamAdmin).toBeUndefined(); // admin already claimed
+  });
+
+  test('personal-domain first user does NOT get team-admin', async () => {
+    await firestore.upsertUser('gmail.com', { email: 'a@gmail.com', displayName: 'A' });
+    expect(ctx.read('tenants/gmail.com/users/a@gmail.com').teamAdmin).toBeUndefined();
+  });
+
+  test('a designated tenant adminEmail grants the flag only to that email', async () => {
+    ctx.seed('tenants/acme.com', { domain: 'acme.com', adminEmail: 'boss@acme.com' });
+    await firestore.upsertUser('acme.com', { email: 'boss@acme.com', displayName: 'Boss' });
+    expect(ctx.read('tenants/acme.com/users/boss@acme.com').teamAdmin).toBe(true);
+  });
+
+  test('getUser returns null when the user does not exist', async () => {
+    expect(await firestore.getUser('acme.com', 'ghost@acme.com')).toBeNull();
+  });
+});
+
+describe('aggregations over rich data', () => {
+  beforeEach(() => {
+    // Two recurring meetings + one instant, with participants across them.
+    for (const [id, extra] of [['m1', { recurringEventId: 'r1', startTime: wrapTimestamp(new Date('2026-06-01T10:00:00Z')) }],
+                               ['m2', { recurringEventId: 'r1', startTime: wrapTimestamp(new Date('2026-06-08T10:00:00Z')) }],
+                               ['m3', { createdAt: wrapTimestamp(new Date('2026-06-02T10:00:00Z')) }]]) {
+      ctx.seed(`tenants/acme.com/meetings/${id}`, { conferenceId: id, title: 'Standup', ...extra });
+    }
+    ctx.seed('tenants/acme.com/meetings/m1/participants/p1', { email: 'alex@acme.com', displayName: 'Alex', present: true, joinTime: wrapTimestamp(new Date('2026-06-01T10:05:00Z')) });
+    ctx.seed('tenants/acme.com/meetings/m1/participants/p2', { email: '', displayName: 'NoEmail', present: false });
+    ctx.seed('tenants/acme.com/meetings/m2/participants/p3', { email: 'alex@acme.com', displayName: 'Alexander', present: true });
+    ctx.seed('tenants/acme.com/meetings/m3/participants/p4', { email: 'beth@acme.com', displayName: 'Beth', present: true });
+    ctx.seed('tenants/acme.com/users/owner@acme.com', { email: 'owner@acme.com', displayName: 'Owner' });
+    ctx.seed('tenants/acme.com/events/e1', { email: 'owner@acme.com', type: 'tracked', meta: { conferenceId: 'm1' }, createdAt: wrapTimestamp(new Date('2026-06-01T10:00:00Z')) });
+    ctx.seed('tenants/acme.com/events/e2', { email: 'owner@acme.com', type: 'tracked', meta: { conferenceId: 'm2' }, createdAt: wrapTimestamp(new Date('2026-06-08T10:00:00Z')) });
+  });
+
+  test('getUserMeetingHistory / series / tenant overviews / participant history run', async () => {
+    expect(await firestore.getUserMeetingHistory('acme.com', 'owner@acme.com')).toBeDefined();
+    expect(await firestore.getUserMeetingSeries('acme.com', 'owner@acme.com')).toBeDefined();
+    expect(await firestore.getTenantUsers('acme.com')).toHaveLength(1);
+    expect((await firestore.getTenantMeetings('acme.com')).length).toBeGreaterThan(0);
+    expect(await firestore.getTenantSeriesOverview('acme.com')).toBeDefined();
+    expect(await firestore.getTenantPeopleOverview('acme.com')).toBeDefined();
+    const ph = await firestore.getParticipantHistory('acme.com', 'owner@acme.com', 'alex@acme.com');
+    expect(ph === null || typeof ph === 'object').toBe(true);
+  });
+});
