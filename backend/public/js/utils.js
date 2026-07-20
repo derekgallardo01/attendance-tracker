@@ -227,11 +227,78 @@
     return `${SLACK_WEBHOOK_PREFIX}${maskedT}/${maskedB}/${maskedSecret}`;
   }
 
+  // ── Session persistence (sessionStorage snapshot) ──
+  // Pure serialize/parse for the side-panel's restore-across-reloads snapshot.
+  // The Date<->ISO conversions and the freshness cutoff are the error-prone
+  // parts; keeping them here makes them unit-testable. saveState/restoreState in
+  // index.html stay thin wrappers over sessionStorage + applying to `state`.
+  function serializeSession(state, savedAtMs) {
+    const iso = (d) => (d ? d.toISOString() : null);
+    return {
+      conferenceId: state.conferenceId,
+      meetingTitle: state.meetingTitle,
+      startTime: iso(state.startTime),
+      tracking: state.tracking,
+      sessionToken: state.sessionToken,
+      userEmail: state.userEmail,
+      userDisplayName: state._selfDisplayName || null,
+      signedIn: state.signedIn,
+      grantedScopes: state.grantedScopes || [],
+      missingScopes: state.missingScopes || [],
+      participants: [...state.participants.entries()].map(([k, v]) => [k, {
+        ...v,
+        joinTime: iso(v.joinTime),
+        trackedJoinTime: iso(v.trackedJoinTime),
+        leaveTime: iso(v.leaveTime),
+        // Only the completed-session duration is persisted; the active session's
+        // time is recomputed live from joinTime in renderList.
+        _accumulatedMs: v._accumulatedMs || 0,
+      }]),
+      _lastSheetUrl: state._lastSheetUrl || null,
+      autoExportedConferenceId: state.autoExportedConferenceId || null,
+      soloNudgeConferenceId: state.soloNudgeConferenceId || null,
+      savedAt: savedAtMs,
+    };
+  }
+
+  // Parse a snapshot back into applyable fields. Returns null if the snapshot is
+  // missing, unparseable, or older than maxAgeMs. Dates are revived; participant
+  // streak counters reset so the API decides presence fresh on the next poll.
+  function parseSession(snap, nowMs, maxAgeMs) {
+    if (!snap || typeof snap !== 'object') return null;
+    if (nowMs - snap.savedAt > maxAgeMs) return null;
+    const date = (s) => (s ? new Date(s) : null);
+    return {
+      tracking: snap.tracking,
+      conferenceId: snap.conferenceId,
+      meetingTitle: snap.meetingTitle,
+      startTime: date(snap.startTime),
+      sessionToken: snap.sessionToken,
+      userEmail: snap.userEmail,
+      userDisplayName: snap.userDisplayName || null,
+      signedIn: snap.signedIn,
+      grantedScopes: snap.grantedScopes || [],
+      missingScopes: snap.missingScopes || [],
+      _lastSheetUrl: snap._lastSheetUrl,
+      autoExportedConferenceId: snap.autoExportedConferenceId || null,
+      soloNudgeConferenceId: snap.soloNudgeConferenceId || null,
+      participants: (snap.participants || []).map(([k, v]) => [k, {
+        ...v,
+        joinTime: date(v.joinTime),
+        trackedJoinTime: date(v.trackedJoinTime),
+        leaveTime: date(v.leaveTime),
+        _accumulatedMs: v._accumulatedMs || 0,
+        _notPresentStreak: 0,
+      }]),
+    };
+  }
+
   const api = {
     escHtml, formatRelative, fmtTime, fmtDur, fmtDurMs, isoFmt, datestamp,
     latenessMin, avatarColor, participantKey, distinctAttendees,
     autoMatchAttendees, participantTotalMs, isSelfParticipant,
     isValidSlackWebhook, maskWebhookUrl,
+    serializeSession, parseSession,
     LATE_THRESHOLD_MIN, AVATAR_PALETTE, SLACK_WEBHOOK_PREFIX,
   };
 

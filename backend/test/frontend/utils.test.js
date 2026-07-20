@@ -357,3 +357,56 @@ describe('module exposure', () => {
     expect(utils.latenessMin).toBe(window.AttUtils.latenessMin);
   });
 });
+
+describe('serializeSession / parseSession', () => {
+  function makeState() {
+    return {
+      conferenceId: 'abc-def-ghi', meetingTitle: 'Standup',
+      startTime: new Date('2026-07-20T10:00:00Z'),
+      tracking: true, sessionToken: 'tok', userEmail: 'Me@Acme.com',
+      _selfDisplayName: 'me', signedIn: true,
+      grantedScopes: ['s1'], missingScopes: [],
+      _lastSheetUrl: 'https://sheet', autoExportedConferenceId: null,
+      soloNudgeConferenceId: 'abc-def-ghi',
+      participants: new Map([
+        ['p1', { displayName: 'Alex', email: 'a@x.com', present: true,
+                 joinTime: new Date('2026-07-20T10:01:00Z'),
+                 trackedJoinTime: new Date('2026-07-20T10:01:05Z'),
+                 leaveTime: null, sessions: 2, _accumulatedMs: 5000, _leftStreak: 1 }],
+      ]),
+    };
+  }
+
+  test('round-trips through JSON with dates revived + streak reset', () => {
+    const snap = utils.serializeSession(makeState(), 1000);
+    const wire = JSON.parse(JSON.stringify(snap)); // survives sessionStorage
+    const s = utils.parseSession(wire, 2000, 8 * 3600 * 1000);
+    expect(s.tracking).toBe(true);
+    expect(s.conferenceId).toBe('abc-def-ghi');
+    expect(s.startTime).toBeInstanceOf(Date);
+    expect(s.startTime.toISOString()).toBe('2026-07-20T10:00:00.000Z');
+    const [[key, p]] = s.participants;
+    expect(key).toBe('p1');
+    expect(p.joinTime).toBeInstanceOf(Date);
+    expect(p.leaveTime).toBeNull();
+    expect(p._accumulatedMs).toBe(5000);
+    expect(p._notPresentStreak).toBe(0); // reset on restore
+  });
+
+  test('returns null when the snapshot is stale (> maxAge)', () => {
+    const snap = utils.serializeSession(makeState(), 0);
+    expect(utils.parseSession(snap, 9 * 3600 * 1000, 8 * 3600 * 1000)).toBeNull();
+  });
+
+  test('returns null for missing / non-object input', () => {
+    expect(utils.parseSession(null, 0, 1000)).toBeNull();
+    expect(utils.parseSession(undefined, 0, 1000)).toBeNull();
+  });
+
+  test('null startTime + empty participants survive the round trip', () => {
+    const st = makeState(); st.startTime = null; st.participants = new Map();
+    const s = utils.parseSession(JSON.parse(JSON.stringify(utils.serializeSession(st, 0))), 1, 1000);
+    expect(s.startTime).toBeNull();
+    expect(s.participants).toEqual([]);
+  });
+});
