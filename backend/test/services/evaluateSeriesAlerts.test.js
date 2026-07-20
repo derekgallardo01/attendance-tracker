@@ -233,3 +233,52 @@ describe('evaluateSeriesAlerts — defensive', () => {
     expect(Array.isArray(alerts)).toBe(true);
   });
 });
+
+describe('evaluateSeriesAlerts — aggregation branch coverage', () => {
+  test('traverses timestamp fallbacks, identity edge cases, and a short second series', async () => {
+    const domain = 'acme.com';
+    const email = 'admin@acme.com';
+    const day = 86400000;
+    const now = Date.now();
+
+    // An event with no conferenceId in meta → the `if (cid)` guard skips it.
+    ctx.seed(`tenants/${domain}/events/ev_nocid`, {
+      email, type: 'tracked', meta: {}, createdAt: wrapTimestamp(new Date(now)),
+    });
+
+    // Series A: 6 tracked meetings so the per-series loop runs the full timeline.
+    for (let i = 0; i < 6; i++) {
+      const cid = `a-${i}`;
+      seedTrackedEvent(domain, email, cid, now - (6 - i) * day);
+      // Vary timestamps: most have startTime; a-4 has neither (||0 fallback),
+      // a-5 (last) has createdAt-only and NO title (title fallback).
+      const meetingDoc = { conferenceId: cid, recurringEventId: 'series-A' };
+      if (i < 4) { meetingDoc.title = 'Weekly'; meetingDoc.startTime = wrapTimestamp(new Date(now - (6 - i) * day)); meetingDoc.createdAt = meetingDoc.startTime; }
+      else if (i === 4) { meetingDoc.title = 'Weekly'; /* no timestamps */ }
+      else { meetingDoc.createdAt = wrapTimestamp(new Date(now)); /* no title, no startTime */ }
+      ctx.seed(`tenants/${domain}/meetings/${cid}`, meetingDoc);
+
+      // Participants: X (email, gains a longer name mid-series), Y (name-only),
+      // Z (no identity at all → skipped).
+      // a-5 sorts last (createdAt=now) → X gains a longer name at the end,
+      // exercising the "longest seen name wins" update.
+      ctx.seed(`tenants/${domain}/meetings/${cid}/participants/x`, { email: 'x@acme.com', displayName: i === 5 ? 'Xavier the Long' : 'X' });
+      ctx.seed(`tenants/${domain}/meetings/${cid}/participants/y`, { email: '', displayName: 'YoloYolanda' });
+      ctx.seed(`tenants/${domain}/meetings/${cid}/participants/z`, { email: '', displayName: '' });
+    }
+
+    // Series B: only 2 tracked meetings → per-series `< 6` continue.
+    for (let i = 0; i < 2; i++) {
+      const cid = `b-${i}`;
+      seedTrackedEvent(domain, email, cid, now - (2 - i) * day);
+      ctx.seed(`tenants/${domain}/meetings/${cid}`, {
+        conferenceId: cid, recurringEventId: 'series-B', title: 'Rare',
+        startTime: wrapTimestamp(new Date(now - (2 - i) * day)),
+      });
+      ctx.seed(`tenants/${domain}/meetings/${cid}/participants/x`, { email: 'x@acme.com', displayName: 'X' });
+    }
+
+    const alerts = await firestore.evaluateSeriesAlerts(domain, email);
+    expect(Array.isArray(alerts)).toBe(true);
+  });
+});

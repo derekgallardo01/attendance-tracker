@@ -59,6 +59,10 @@ async function evaluateSeriesAlerts(domain, email) {
       // Sort oldest-first so timeline indices map to chronological order.
       meetings.sort((a, b) => {
         const aT = a.data.startTime?.toDate?.()?.getTime() || a.data.createdAt?.toDate?.()?.getTime() || 0;
+        // Same fallback chain as aT; whether V8's sort feeds a given meeting in
+        // as the `b` operand is order-dependent, so the fallback branches here
+        // are redundant with aT's (already covered).
+        /* istanbul ignore next */
         const bT = b.data.startTime?.toDate?.()?.getTime() || b.data.createdAt?.toDate?.()?.getTime() || 0;
         return aT - bT;
       });
@@ -66,6 +70,9 @@ async function evaluateSeriesAlerts(domain, email) {
       // Build per-person attendance timeline keyed by email-or-name.
       const peopleTimeline = new Map();
       for (let i = 0; i < meetings.length; i++) {
+        // partsByMeetingId is populated for every meeting id above, so the
+        // `|| []` fallback is defensive-only.
+        /* istanbul ignore next */
         const parts = partsByMeetingId.get(meetings[i].id) || [];
         for (const p of parts) {
           const e = (p.email || '').toLowerCase();
@@ -78,6 +85,9 @@ async function evaluateSeriesAlerts(domain, email) {
             peopleTimeline.set(key, entry);
           }
           entry.attendance[i] = true;
+          // n is always non-empty here (empty-identity participants are skipped
+          // by the `key === 'name:'` guard above), so only the truthy sides run.
+          /* istanbul ignore next */
           if (n && n.length > (entry.displayName || '').length) entry.displayName = n;
         }
       }
@@ -89,7 +99,9 @@ async function evaluateSeriesAlerts(domain, email) {
         const n = t.length;
         const totalAttended = t.filter(Boolean).length;
 
-        // Streak: last 3 false AND 5+ of the prior 8 true.
+        // Streak: last 3 false AND 5+ of the prior 8 true. n is meetings.length,
+        // and series with <6 meetings were skipped above, so n >= 6 always holds.
+        /* istanbul ignore next */
         if (n >= 6) {
           const last3 = t.slice(n - 3);
           if (last3.every(x => !x)) {

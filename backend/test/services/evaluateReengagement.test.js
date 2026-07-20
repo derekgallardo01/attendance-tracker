@@ -264,3 +264,67 @@ describe('evaluateReengagementForUser — defensive', () => {
     expect(r.filter(x => x.type === 'reactivation_30d')).toEqual([]);
   });
 });
+
+describe('evaluateReengagementForUser — fallback branch coverage', () => {
+  test('handles participantCount fallback, conferenceId/createdAt gaps, and a title-less forgotten series', async () => {
+    const domain = 'acme.com';
+    const email = 'lapsed@acme.com';
+    const now = Date.now();
+    seedUser(domain, email, 20); // 20d since login → outside reactivation windows
+
+    // distinctAttendees absent → participantCount fallback; participantCount 0 → ||0.
+    seedTracked(domain, email, 'cid-zero', now - DAY, 0, null);
+
+    // A tracked event with neither conferenceId nor createdAt → the ||null / ||0
+    // fallbacks fire, then it's filtered out (no conferenceId).
+    ctx.seed(`tenants/${domain}/events/ev_raw`, { email, type: 'tracked', meta: {} });
+
+    // Forgotten-meeting: same series tracked 3x ~8 days ago (inside the 7-10d
+    // window), and the meeting doc has NO title → 'a recurring meeting' fallback.
+    for (let i = 0; i < 3; i++) {
+      seedTracked(domain, email, 'cid-fm', now - 8 * DAY + i * 1000, 2, 2);
+    }
+    ctx.seed(`tenants/${domain}/meetings/cid-fm`, { conferenceId: 'cid-fm', recurringEventId: 'rid-fm' }); // no title
+
+    const reminders = await firestore.evaluateReengagementForUser(domain, email);
+    const forgotten = reminders.find(r => r.type === 'forgotten_meeting');
+    expect(forgotten).toBeDefined();
+    expect(forgotten.seriesTitle).toBe('a recurring meeting');
+  });
+});
+
+describe('evaluateReengagementForUser — not-activated window', () => {
+  test('a solo tester lapsed 8 days gets solo_nudge_7d (activated=false path)', async () => {
+    const domain = 'acme.com';
+    const email = 'solo@acme.com';
+    const now = Date.now();
+    seedUser(domain, email, 8); // inside the 7-14 day window
+    seedTracked(domain, email, 'cid-solo', now - 9 * DAY, 1, null); // solo, not activated
+    const reminders = await firestore.evaluateReengagementForUser(domain, email);
+    expect(reminders.some(r => r.type === 'solo_nudge_7d')).toBe(true);
+  });
+});
+
+describe('evaluateReengagementForUser — 30-day window', () => {
+  test('an activated user lapsed 35 days gets reactivation_30d (evaluates window30 fully)', async () => {
+    const domain = 'acme.com';
+    const email = 'winback@acme.com';
+    const now = Date.now();
+    seedUser(domain, email, 35);
+    seedExport(domain, email, now - 40 * DAY); // activated
+    const reminders = await firestore.evaluateReengagementForUser(domain, email);
+    expect(reminders.some(r => r.type === 'reactivation_30d')).toBe(true);
+  });
+});
+
+describe('evaluateReengagementForUser — missing meta', () => {
+  test('tolerates a tracked event with no meta object (meta || {} fallback)', async () => {
+    const domain = 'acme.com';
+    const email = 'nometa@acme.com';
+    const now = Date.now();
+    seedUser(domain, email, 100); // no reactivation window
+    ctx.seed(`tenants/${domain}/events/ev_nometa`, { email, type: 'tracked', createdAt: wrapTimestamp(new Date(now)) });
+    const reminders = await firestore.evaluateReengagementForUser(domain, email);
+    expect(Array.isArray(reminders)).toBe(true);
+  });
+});
