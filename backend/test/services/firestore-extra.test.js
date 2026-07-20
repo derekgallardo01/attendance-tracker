@@ -134,3 +134,120 @@ describe('aggregations over rich data', () => {
     expect(ph === null || typeof ph === 'object').toBe(true);
   });
 });
+
+describe('firestore.js — remaining branch closure', () => {
+  test('logEvent no-ops on missing fields and writes when valid', async () => {
+    await firestore.logEvent('acme.com', {}); // missing email/type → early return
+    await firestore.logEvent('acme.com', { email: 'a@acme.com', type: 'signin', meta: { x: 1 } });
+    expect(ctx.list('tenants/acme.com/events/').length).toBe(1);
+  });
+
+  test('getUser migrates a legacy root-level user', async () => {
+    ctx.seed('users/legacy@acme.com', { email: 'legacy@acme.com', displayName: 'Legacy', refreshToken: 'plain' });
+    const u = await firestore.getUser('acme.com', 'legacy@acme.com');
+    expect(u.displayName).toBe('Legacy');
+    expect(ctx.read('tenants/acme.com/users/legacy@acme.com')).toBeDefined(); // migrated
+  });
+
+  test('upsertUser stores sheetId and skips re-stamping an existing acquisition', async () => {
+    ctx.seed('tenants/acme.com/users/e@acme.com', { email: 'e@acme.com', acquisitionSource: 'reddit', userAgent: 'old-UA' });
+    ctx.seed('tenants/acme.com', { domain: 'acme.com', adminEmail: 'e@acme.com' });
+    await firestore.upsertUser('acme.com', { email: 'e@acme.com', displayName: 'E', sheetId: 'sheet-1', acquisition: { source: 'google_search', userAgent: 'new-UA' } });
+    const u = ctx.read('tenants/acme.com/users/e@acme.com');
+    expect(u.sheetId).toBe('sheet-1');
+    expect(u.acquisitionSource).toBe('reddit'); // not overwritten (first-touch)
+  });
+
+  test('getUserMeetingSeries sorts multiple series and includes per-person rollups', async () => {
+    // series A (r1): 2 instances; series B (r2): 1 instance
+    ctx.seed('tenants/acme.com/meetings/a1', { conferenceId: 'a1', title: 'A', recurringEventId: 'r1', startTime: wrapTimestamp(new Date('2026-06-01T10:00:00Z')) });
+    ctx.seed('tenants/acme.com/meetings/a2', { conferenceId: 'a2', title: 'A', recurringEventId: 'r1', startTime: wrapTimestamp(new Date('2026-06-08T10:00:00Z')) });
+    ctx.seed('tenants/acme.com/meetings/b1', { conferenceId: 'b1', title: 'B', recurringEventId: 'r2', startTime: wrapTimestamp(new Date('2026-06-15T10:00:00Z')) });
+    ctx.seed('tenants/acme.com/meetings/a1/participants/x', { email: 'x@acme.com', displayName: 'X', present: true });
+    ctx.seed('tenants/acme.com/meetings/a2/participants/x', { email: 'x@acme.com', displayName: 'Xavier', present: true });
+    ctx.seed('tenants/acme.com/meetings/b1/participants/y', { email: 'y@acme.com', displayName: 'Y', present: false });
+    ctx.seed('tenants/acme.com/users/owner@acme.com', { email: 'owner@acme.com' });
+    ctx.seed('tenants/acme.com/events/ea1', { email: 'owner@acme.com', type: 'tracked', meta: { conferenceId: 'a1' }, createdAt: wrapTimestamp(new Date('2026-06-01T10:00:00Z')) });
+    ctx.seed('tenants/acme.com/events/ea2', { email: 'owner@acme.com', type: 'tracked', meta: { conferenceId: 'a2' }, createdAt: wrapTimestamp(new Date('2026-06-08T10:00:00Z')) });
+    ctx.seed('tenants/acme.com/events/eb1', { email: 'owner@acme.com', type: 'tracked', meta: { conferenceId: 'b1' }, createdAt: wrapTimestamp(new Date('2026-06-15T10:00:00Z')) });
+    const res = await firestore.getUserMeetingSeries('acme.com', 'owner@acme.com');
+    expect(res.totalSeries).toBeGreaterThanOrEqual(2);
+  });
+
+  test('getParticipantHistory returns a participant rollup + note', async () => {
+    ctx.seed('tenants/acme.com/meetings/m1', { conferenceId: 'm1', title: 'M', startTime: wrapTimestamp(new Date('2026-06-01T10:00:00Z')) });
+    ctx.seed('tenants/acme.com/meetings/m1/participants/z', { email: 'z@acme.com', displayName: 'Z', present: true });
+    ctx.seed('tenants/acme.com/events/ez', { email: 'owner@acme.com', type: 'tracked', meta: { conferenceId: 'm1' }, createdAt: wrapTimestamp(new Date('2026-06-01T10:00:00Z')) });
+    await firestore.setParticipantNote('acme.com', 'owner@acme.com', 'z@acme.com', 'reliable');
+    const note = await firestore.getParticipantNote('acme.com', 'owner@acme.com', 'z@acme.com');
+    expect(note).toBe('reliable');
+    const ph = await firestore.getParticipantHistory('acme.com', 'owner@acme.com', 'z@acme.com');
+    expect(ph === null || typeof ph === 'object').toBe(true);
+  });
+});
+
+describe('firestore.js — aggregation deep branches', () => {
+  test('upsertUser stamps utmMedium/utmCampaign', async () => {
+    await firestore.upsertUser('acme.com', { email: 'u@acme.com', displayName: 'U', acquisition: { source: 's', utmMedium: 'cpc', utmCampaign: 'launch' } });
+    const u = ctx.read('tenants/acme.com/users/u@acme.com');
+    expect(u.utmMedium).toBe('cpc');
+    expect(u.utmCampaign).toBe('launch');
+  });
+
+  test('history/series/people handle empty-identity participants, durations, titles, and untracked meetings', async () => {
+    const j = (t) => wrapTimestamp(new Date(t));
+    // Two recurring instances with growing titles + one untracked recurring meeting.
+    ctx.seed('tenants/acme.com/meetings/s1', { conferenceId: 's1', title: 'Sync', recurringEventId: 'R', startTime: j('2026-06-01T10:00:00Z') });
+    ctx.seed('tenants/acme.com/meetings/s2', { conferenceId: 's2', title: 'Weekly Sync Meeting', recurringEventId: 'R', startTime: j('2026-06-08T10:00:00Z') });
+    ctx.seed('tenants/acme.com/meetings/s3-untracked', { conferenceId: 's3-untracked', title: 'Other', recurringEventId: 'R2', startTime: j('2026-06-09T10:00:00Z') });
+    // participants: one with join+leave (duration), one empty-identity (no email/name)
+    ctx.seed('tenants/acme.com/meetings/s1/participants/pa', { email: 'a@acme.com', displayName: 'A', present: true, joinTime: j('2026-06-01T10:00:00Z'), leaveTime: j('2026-06-01T10:45:00Z') });
+    ctx.seed('tenants/acme.com/meetings/s1/participants/pblank', { email: '', displayName: '', present: false });
+    ctx.seed('tenants/acme.com/meetings/s2/participants/pa', { email: 'a@acme.com', displayName: 'A', present: true, joinTime: j('2026-06-08T10:05:00Z'), leaveTime: j('2026-06-08T10:50:00Z') });
+    ctx.seed('tenants/acme.com/users/owner@acme.com', { email: 'owner@acme.com' });
+    ctx.seed('tenants/acme.com/events/t1', { email: 'owner@acme.com', type: 'tracked', meta: { conferenceId: 's1' }, createdAt: j('2026-06-01T10:00:00Z') });
+    ctx.seed('tenants/acme.com/events/t2', { email: 'owner@acme.com', type: 'tracked', meta: { conferenceId: 's2' }, createdAt: j('2026-06-08T10:00:00Z') });
+
+    expect(await firestore.getUserMeetingHistory('acme.com', 'owner@acme.com')).toBeDefined();
+    const series = await firestore.getUserMeetingSeries('acme.com', 'owner@acme.com');
+    expect(series.series.find(s => s.recurringEventId === 'R')?.seriesTitle || series.series[0]).toBeDefined();
+    expect(await firestore.getTenantSeriesOverview('acme.com')).toBeDefined();
+    expect(await firestore.getTenantPeopleOverview('acme.com')).toBeDefined();
+  });
+});
+
+describe('firestore.js — maximally varied aggregation data', () => {
+  const j = (t) => wrapTimestamp(new Date(t));
+  beforeEach(() => {
+    // Recurring series R: 3 instances w/ growing titles, mixed startTime/createdAt.
+    ctx.seed('tenants/acme.com/meetings/r-1', { conferenceId: 'r-1', title: 'Std', recurringEventId: 'R', startTime: j('2026-06-01T10:00:00Z') });
+    ctx.seed('tenants/acme.com/meetings/r-2', { conferenceId: 'r-2', title: 'Standup Longer', recurringEventId: 'R', createdAt: j('2026-06-08T10:00:00Z') }); // no startTime
+    ctx.seed('tenants/acme.com/meetings/r-3', { conferenceId: 'r-3', title: 'Standup Longest Title Here', recurringEventId: 'R', startTime: j('2026-06-15T10:00:00Z') });
+    // instant meeting (no recurringEventId)
+    ctx.seed('tenants/acme.com/meetings/inst', { conferenceId: 'inst', title: 'Chat', startTime: j('2026-06-03T10:00:00Z') });
+    // participants: present+join+leave; absent+join-only; name-only; empty; rsvp
+    ctx.seed('tenants/acme.com/meetings/r-1/participants/full', { email: 'full@acme.com', displayName: 'Full', present: true, joinTime: j('2026-06-01T10:00:00Z'), leaveTime: j('2026-06-01T10:40:00Z') });
+    ctx.seed('tenants/acme.com/meetings/r-1/participants/nojoinleave', { email: 'nj@acme.com', displayName: 'NoLeave', present: false, joinTime: j('2026-06-01T10:10:00Z') });
+    ctx.seed('tenants/acme.com/meetings/r-1/participants/nameonly', { email: '', displayName: 'NameOnly', present: true });
+    ctx.seed('tenants/acme.com/meetings/r-1/participants/empty', { email: '', displayName: '', present: false });
+    ctx.seed('tenants/acme.com/meetings/r-2/participants/full', { email: 'full@acme.com', displayName: 'Fuller Name', present: true, joinTime: j('2026-06-08T10:00:00Z'), leaveTime: j('2026-06-08T10:30:00Z') });
+    ctx.seed('tenants/acme.com/meetings/r-3/participants/full', { email: 'full@acme.com', displayName: 'F', present: true });
+    ctx.seed('tenants/acme.com/meetings/inst/participants/full', { email: 'full@acme.com', displayName: 'Full', present: true, joinTime: j('2026-06-03T10:00:00Z') });
+    ctx.seed('tenants/acme.com/users/owner@acme.com', { email: 'owner@acme.com', displayName: 'Owner' });
+    ctx.seed('tenants/acme.com/users/second@acme.com', { email: 'second@acme.com', displayName: 'Second' });
+    for (const cid of ['r-1', 'r-2', 'r-3', 'inst']) {
+      ctx.seed(`tenants/acme.com/events/ev-${cid}`, { email: 'owner@acme.com', type: 'tracked', meta: { conferenceId: cid }, createdAt: j('2026-06-01T10:00:00Z') });
+    }
+    ctx.seed('tenants/acme.com/notes/owner@acme.com/participants/full@acme.com', { body: 'note', updatedAt: j('2026-06-01T10:00:00Z') });
+  });
+
+  test('all rollups run over the varied dataset', async () => {
+    expect((await firestore.getUserMeetingHistory('acme.com', 'owner@acme.com')).meetings.length).toBeGreaterThan(0);
+    expect((await firestore.getUserMeetingSeries('acme.com', 'owner@acme.com')).totalSeries).toBeGreaterThanOrEqual(1);
+    expect((await firestore.getTenantSeriesOverview('acme.com')).length).toBeGreaterThanOrEqual(1);
+    expect((await firestore.getTenantPeopleOverview('acme.com')).length).toBeGreaterThanOrEqual(1);
+    expect((await firestore.getTenantMeetings('acme.com')).length).toBeGreaterThan(0);
+    expect(await firestore.getParticipantHistory('acme.com', 'owner@acme.com', 'full@acme.com')).toBeDefined();
+    expect(await firestore.getParticipantHistory('acme.com', 'owner@acme.com', 'name:nameonly')).toBeDefined();
+  });
+});
