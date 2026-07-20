@@ -34,6 +34,45 @@ function fmtRsvp(status) {
   }
 }
 
+// ── Digest row shaping ──
+// The Slack post-export digest and the email digest both turn the raw
+// participant + calendar-invitee lists into the same {displayName, email,
+// status, durationMin} shape. Extracted so the two callers can't drift.
+
+// Minutes a participant was actually in the meeting (0 if they never joined).
+function digestDurationMin(p, fallbackEnd) {
+  return p.joinTimeISO
+    ? Math.round((new Date(p.leaveTimeISO || fallbackEnd) - new Date(p.joinTimeISO)) / 60000)
+    : 0;
+}
+
+// The people who showed up. The email digest also wants a lateMin column;
+// Slack omits it, so it's opt-in via lateMinFor.
+function digestPresentRows(participants, fallbackEnd, lateMinFor) {
+  return participants.map(p => {
+    const row = {
+      displayName: p.displayName,
+      email: p.email || '',
+      status: p.present ? 'Present' : (p.leaveTimeISO ? 'Left' : 'Present'),
+      durationMin: digestDurationMin(p, fallbackEnd),
+    };
+    if (lateMinFor) row.lateMin = lateMinFor(p.joinTimeISO);
+    return row;
+  });
+}
+
+// The calendar invitees who never attended → Absent (or Excused) rows.
+function digestAbsentRows(calendarAttendees, { attendedEmails, attendedNames, excusedSet }) {
+  return calendarAttendees
+    .filter(a => !attendedEmails.has(a.email.toLowerCase()) && !attendedNames.has((a.displayName || '').toLowerCase().trim()))
+    .map(a => ({
+      displayName: a.displayName,
+      email: a.email,
+      status: excusedSet.has(a.email.toLowerCase()) ? 'Excused' : 'Absent',
+      durationMin: 0,
+    }));
+}
+
 router.post('/save-to-sheets', async (req, res) => {
   const { meetingTitle, tabName: clientTabName, exportedAt, participants, calendarAttendees = [], meetingStartTime, meetingType, eventStart, eventEnd, conferenceId, timezone, sendEmail, autoExport, recurringEventId, excusedEmails: excusedFromClient = [] } = req.body;
   if (!participants?.length) return res.status(400).json({ error: 'participants array is required' });
@@ -335,25 +374,8 @@ router.post('/save-to-sheets', async (req, res) => {
             meetingTitle: meetingTitle || 'Google Meet',
             totalAttended,
             totalInvited,
-            participants: (req.body.participants || []).map(p => {
-              const durMin = p.joinTimeISO
-                ? Math.round((new Date(p.leaveTimeISO || exportedAt) - new Date(p.joinTimeISO)) / 60000)
-                : 0;
-              return {
-                displayName: p.displayName,
-                email: p.email || '',
-                status: p.present ? 'Present' : (p.leaveTimeISO ? 'Left' : 'Present'),
-                durationMin: durMin,
-              };
-            }).concat(
-              calendarAttendees
-                .filter(a => !attendedEmails.has(a.email.toLowerCase()) && !attendedNames.has((a.displayName || '').toLowerCase().trim()))
-                .map(a => ({
-                  displayName: a.displayName,
-                  email: a.email,
-                  status: excusedSet.has(a.email.toLowerCase()) ? 'Excused' : 'Absent',
-                  durationMin: 0,
-                }))
+            participants: digestPresentRows(participants, exportedAt).concat(
+              digestAbsentRows(calendarAttendees, { attendedEmails, attendedNames, excusedSet })
             ),
             sheetUrl,
             durationMin: meetDurationMin,
@@ -371,31 +393,8 @@ router.post('/save-to-sheets', async (req, res) => {
     if (sendEmail && req.user?.email) {
       // Build a digest-friendly participant list (top 25, present first) so the
       // email can render an inline table without exposing the raw row arrays.
-      const digestPresent = participants.map(p => {
-        const durMin = p.joinTimeISO
-          ? Math.round((new Date(p.leaveTimeISO || exportedAt) - new Date(p.joinTimeISO)) / 60000)
-          : 0;
-        return {
-          displayName: p.displayName,
-          email: p.email || '',
-          status: p.present ? 'Present' : (p.leaveTimeISO ? 'Left' : 'Present'),
-          durationMin: durMin,
-          lateMin: lateMinFor(p.joinTimeISO),
-        };
-      });
-      const digestAbsent = calendarAttendees
-        .filter(a => {
-          if (attendedEmails.has(a.email.toLowerCase())) return false;
-          const aName = (a.displayName || '').toLowerCase().trim();
-          if (attendedNames.has(aName)) return false;
-          return true;
-        })
-        .map(a => ({
-          displayName: a.displayName,
-          email: a.email,
-          status: excusedSet.has(a.email.toLowerCase()) ? 'Excused' : 'Absent',
-          durationMin: 0,
-        }));
+      const digestPresent = digestPresentRows(participants, exportedAt, lateMinFor);
+      const digestAbsent = digestAbsentRows(calendarAttendees, { attendedEmails, attendedNames, excusedSet });
       const digestParticipants = [...digestPresent, ...digestAbsent].slice(0, 25);
       const digestOverflow = (digestPresent.length + digestAbsent.length) - digestParticipants.length;
 
