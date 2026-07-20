@@ -1,5 +1,7 @@
 meet-sa-key.json
 node_modules/
-.claude/
+# Ignore local Claude config, but version shared skills (.claude/skills/).
+.claude/*
+!.claude/skills/
 backend/coverage/
 backend/.nyc_output/
