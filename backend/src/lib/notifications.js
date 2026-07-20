@@ -3,6 +3,7 @@ const { Resend } = require('resend');
 const log = require('./logger');
 const CONFIG = require('../config');
 const { maskSlackWebhook } = require('./slack');
+const { escapeHtml: escape } = require('./html');
 
 // Resend transactional email — better deliverability + open/click tracking
 // than Gmail SMTP, and the API doesn't have Gmail's 500/day cap.
@@ -67,13 +68,6 @@ async function send({ from, to, subject, text, html, replyTo, tags }) {
     throw new Error(`Resend send failed: ${result.error.message || JSON.stringify(result.error)}`);
   }
   return { sent: true, id: result.data?.id };
-}
-
-function escape(s) {
-  if (s == null) return '';
-  return String(s).replace(/[&<>"']/g, (c) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-  }[c]));
 }
 
 // Format a whole-minute duration as "Nm" / "Nh Nm". Callers supply the empty

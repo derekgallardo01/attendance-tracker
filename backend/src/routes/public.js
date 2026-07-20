@@ -4,6 +4,7 @@ const { FieldValue } = require('@google-cloud/firestore');
 const log = require('../lib/logger');
 const { getDb, resolveShareLink, getSharedSeriesView, suppressEmail } = require('../services/firestore');
 const { sendFeedbackEmail, verifyUnsubscribeToken } = require('../lib/notifications');
+const { escapeHtml } = require('../lib/html');
 
 const router = Router();
 
@@ -208,11 +209,5 @@ router.get('/public/unsubscribe', async (req, res) => {
     unsubscribePage('You\'re unsubscribed', `${escapeHtml(email)} won't receive any more re-engagement or alert emails. You can still use Attendance Tracker normally.`)
   );
 });
-
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, (c) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-  }[c]));
-}
 
 module.exports = router;
