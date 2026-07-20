@@ -1,4 +1,5 @@
 const { Router } = require('express');
+const { requireAuth } = require('../middleware/auth');
 const express = require('express');
 const log = require('../lib/logger');
 const CONFIG = require('../config');
@@ -28,8 +29,7 @@ const router = Router();
 // POST /api/billing/checkout — start a Checkout Session for the caller's
 // Workspace domain. Per-domain billing: whoever completes checkout pays for the
 // whole org, keyed by domain via client_reference_id + subscription metadata.
-router.post('/billing/checkout', async (req, res) => {
-  if (!req.user?.email) return res.status(401).json({ error: 'Authentication required' });
+router.post('/billing/checkout', requireAuth, async (req, res) => {
   const stripe = getStripe();
   if (!stripe || !process.env.STRIPE_PRICE_ID) {
     return res.status(503).json({ error: 'Billing is not configured yet.' });
@@ -57,8 +57,7 @@ router.post('/billing/checkout', async (req, res) => {
 // GET /api/billing/portal — Stripe Customer Portal link so the org admin can
 // update payment method or cancel. Requires a stored customer id (set by the
 // webhook on first successful checkout).
-router.get('/billing/portal', async (req, res) => {
-  if (!req.user?.email) return res.status(401).json({ error: 'Authentication required' });
+router.get('/billing/portal', requireAuth, async (req, res) => {
   const stripe = getStripe();
   if (!stripe) return res.status(503).json({ error: 'Billing is not configured yet.' });
   try {
@@ -77,9 +76,8 @@ router.get('/billing/portal', async (req, res) => {
 
 // GET /api/billing/status — current plan for the caller's domain (drives the
 // upgrade CTA in the UI).
-router.get('/billing/status', async (req, res) => {
+router.get('/billing/status', requireAuth, async (req, res) => {
   res.set('Cache-Control', 'no-store');
-  if (!req.user?.email) return res.status(401).json({ error: 'Authentication required' });
   try {
     const plan = await getTenantPlan(req.user.domain);
     res.json({ ...plan, billingConfigured: billingConfigured() });

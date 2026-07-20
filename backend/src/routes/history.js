@@ -1,4 +1,5 @@
 const { Router } = require('express');
+const { requireAuth } = require('../middleware/auth');
 const log = require('../lib/logger');
 const { getUserMeetingHistory, getUserMeetingSeries, getParticipantHistory, setParticipantNote, getParticipantNote, logEvent, createShareLink } = require('../services/firestore');
 
@@ -20,8 +21,7 @@ const FRONTEND_EVENT_TYPES = new Set([
 // POST /api/event — let the frontend record activation/funnel events that only
 // exist in the browser (e.g. "user clicked Export but it failed" vs "user
 // never clicked Export"). Validates the type and caps the meta blob size.
-router.post('/event', async (req, res) => {
-  if (!req.user?.email) return res.status(401).json({ error: 'Authentication required' });
+router.post('/event', requireAuth, async (req, res) => {
   const { type, meta } = req.body || {};
   if (!FRONTEND_EVENT_TYPES.has(type)) return res.status(400).json({ error: 'Invalid event type' });
   let safeMeta = null;
@@ -45,8 +45,7 @@ router.post('/event', async (req, res) => {
 // POST /api/share — mint a public share link for a series. The owner picks
 // a recurringEventId from their Series tab; we return an opaque token they
 // can paste into Slack/email/etc. Recipients hit /share.html?t=<token>.
-router.post('/share', async (req, res) => {
-  if (!req.user?.email) return res.status(401).json({ error: 'Authentication required' });
+router.post('/share', requireAuth, async (req, res) => {
   const { recurringEventId, type } = req.body || {};
   if (!recurringEventId) return res.status(400).json({ error: 'recurringEventId is required' });
   try {
@@ -66,9 +65,8 @@ router.post('/share', async (req, res) => {
 // Groups tracked meetings by Calendar's recurringEventId and aggregates per-person
 // attendance ("Alex 12/15 standups, 80%"). Empty for users who've only tracked
 // instant meetings or single-occurrence events.
-router.get('/series', async (req, res) => {
+router.get('/series', requireAuth, async (req, res) => {
   res.set('Cache-Control', 'no-store');
-  if (!req.user?.email) return res.status(401).json({ error: 'Authentication required' });
   try {
     const data = await getUserMeetingSeries(req.user.domain, req.user.email);
     res.json(data);
@@ -81,9 +79,8 @@ router.get('/series', async (req, res) => {
 // GET /api/history — returns meetings + people + calendar for the signed-in
 // user, scoped to their tenant. Requires the auth middleware (mounted before
 // this route in app.js) to set req.user.
-router.get('/history', async (req, res) => {
+router.get('/history', requireAuth, async (req, res) => {
   res.set('Cache-Control', 'no-store');
-  if (!req.user?.email) return res.status(401).json({ error: 'Authentication required' });
   try {
     const data = await getUserMeetingHistory(req.user.domain, req.user.email);
     res.json(data);
@@ -95,9 +92,8 @@ router.get('/history', async (req, res) => {
 
 // GET /api/participant?key=email_or_name_key — history for one participant
 // + the requester's private note attached to them.
-router.get('/participant', async (req, res) => {
+router.get('/participant', requireAuth, async (req, res) => {
   res.set('Cache-Control', 'no-store');
-  if (!req.user?.email) return res.status(401).json({ error: 'Authentication required' });
   const key = (req.query.key || '').toString().trim();
   if (!key) return res.status(400).json({ error: 'key is required' });
   try {
@@ -115,8 +111,7 @@ router.get('/participant', async (req, res) => {
 
 // PUT /api/participant/note — save (or clear, with empty body) the
 // requester's private note on a participant.
-router.put('/participant/note', async (req, res) => {
-  if (!req.user?.email) return res.status(401).json({ error: 'Authentication required' });
+router.put('/participant/note', requireAuth, async (req, res) => {
   const { key, body } = req.body || {};
   if (!key) return res.status(400).json({ error: 'key is required' });
   try {

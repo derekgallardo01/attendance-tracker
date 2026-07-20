@@ -62,4 +62,14 @@ async function auth(req, res, next) {
   }
 }
 
+// Route guard: reject when the global `auth` middleware didn't attach a user
+// (it's optional-auth — sets req.user=null and continues). Collapses the
+// per-handler `if (!req.user?.email) return 401` checks. Mirrors the
+// requireTeamAdmin / requireSuperAdmin guard pattern.
+function requireAuth(req, res, next) {
+  if (!req.user?.email) return res.status(401).json({ error: 'Authentication required' });
+  next();
+}
+
 module.exports = auth;
+module.exports.requireAuth = requireAuth;

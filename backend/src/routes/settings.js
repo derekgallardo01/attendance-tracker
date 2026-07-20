@@ -1,4 +1,5 @@
 const { Router } = require('express');
+const { requireAuth } = require('../middleware/auth');
 const log = require('../lib/logger');
 const { getUserSettings, updateUserSettings, isEmailSuppressed, suppressEmail, unsuppressEmail } = require('../services/firestore');
 const { sendSlackTestPing, maskSlackWebhook } = require('../lib/notifications');
@@ -28,9 +29,8 @@ function maskForApi(url) {
 
 // GET /api/settings — current user's settings (masked for readback). Includes
 // device-synced preferences (autoExportOnEnd) and the email opt-out state.
-router.get('/settings', async (req, res) => {
+router.get('/settings', requireAuth, async (req, res) => {
   res.set('Cache-Control', 'no-store');
-  if (!req.user?.email) return res.status(401).json({ error: 'Authentication required' });
   try {
     const [settings, suppressed] = await Promise.all([
       getUserSettings(req.user.domain, req.user.email),
@@ -52,8 +52,7 @@ router.get('/settings', async (req, res) => {
 //   slackWebhookUrl  — validated Slack incoming-webhook URL (null/'' clears)
 //   autoExportOnEnd  — boolean, synced across the user's devices
 //   emailOptOut      — boolean, toggles the CAN-SPAM suppression record
-router.put('/settings', async (req, res) => {
-  if (!req.user?.email) return res.status(401).json({ error: 'Authentication required' });
+router.put('/settings', requireAuth, async (req, res) => {
   const body = req.body || {};
   const { slackWebhookUrl, autoExportOnEnd, emailOptOut } = body;
 
@@ -106,8 +105,7 @@ router.put('/settings', async (req, res) => {
 
 // POST /api/settings/test-slack — send the test ping to the user's
 // configured webhook (or one supplied in the body for pre-save testing).
-router.post('/settings/test-slack', async (req, res) => {
-  if (!req.user?.email) return res.status(401).json({ error: 'Authentication required' });
+router.post('/settings/test-slack', requireAuth, async (req, res) => {
   let webhookUrl = req.body?.slackWebhookUrl;
   // If not supplied, use what's saved
   if (!webhookUrl) {

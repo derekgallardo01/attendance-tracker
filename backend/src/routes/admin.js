@@ -5,6 +5,7 @@ const log = require('../lib/logger');
 const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed } = require('../services/firestore');
 const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail } = require('../lib/notifications');
 const { requireSuperAdmin, requireSuperAdminOrScheduler } = require('../middleware/adminAuth');
+const { requireAuth } = require('../middleware/auth');
 
 const SUPER_ADMIN_EMAIL = CONFIG.superAdminEmail;
 const MARKETPLACE_REVIEW_URL = 'https://workspace.google.com/marketplace/app/attendance_tracker/829771833968';
@@ -92,10 +93,8 @@ router.post('/admin/uninstall', marketplaceLimiter, requireMarketplaceAuth, asyn
 });
 
 // GET /api/admin/stats — Basic usage stats (protected by admin check)
-router.get('/admin/stats', async (req, res) => {
+router.get('/admin/stats', requireAuth, async (req, res) => {
   try {
-    // Only allow authenticated users with a known domain
-    if (!req.user?.email) return res.status(401).json({ error: 'Authentication required' });
 
     const { Firestore } = require('@google-cloud/firestore');
     const db = new Firestore();
@@ -633,9 +632,8 @@ router.get('/admin/outreach-list', requireSuperAdmin, async (req, res) => {
 });
 
 // POST /api/admin/source — User self-reports how they found us (from the modal)
-router.post('/admin/source', async (req, res) => {
+router.post('/admin/source', requireAuth, async (req, res) => {
   try {
-    if (!req.user?.email) return res.status(401).json({ error: 'Authentication required' });
     const { source, detail } = req.body || {};
     if (!ACQUISITION_SOURCES.has(source)) {
       return res.status(400).json({ error: 'Invalid source' });
