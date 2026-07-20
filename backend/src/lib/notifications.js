@@ -496,206 +496,142 @@ async function sendFeedbackEmail({ body, fromEmail, fromName, source, conference
   });
 }
 
-// Re-engagement emails feel like a personal check-in, not a product
-// notification. Different From-name ("Derek Gallardo" not "Attendance
-// Tracker"), plain prose, no logos/buttons. The reply-to is the owner
-// inbox so the user can just hit Reply and answer.
-async function sendReactivationEmail({ to, displayName, daysSinceLogin, variant }) {
+// Re-engagement / lifecycle emails feel like a personal check-in, not a product
+// notification: From-name "Derek Gallardo" (not "Attendance Tracker"), plain
+// prose paragraphs, reply-to the owner inbox, and a one-click unsubscribe
+// footer. This helper captures that shared scaffold; each caller only supplies
+// the subject, the body lines, and a Resend tag.
+//
+// - `lines` are the body paragraphs; the "Hey {firstName}," greeting + blank
+//   line are prepended automatically.
+// - `htmlLineTransform(line)` optionally returns custom HTML for a given line
+//   (e.g. turning a "Your series so far:" line into a link); return falsy to
+//   use the default paragraph rendering.
+const emailParagraph = (l) =>
+  `<p style="margin:0 0 12px;font-family:sans-serif;font-size:14px;line-height:1.55;color:#111">${escape(l) || '&nbsp;'}</p>`;
+
+async function sendPersonalEmail({ to, displayName, subject, lines, tags, htmlLineTransform, logLabel, logMeta }) {
   if (!getResend()) return { skipped: 'Resend not configured' };
   const firstName = displayName ? displayName.split(' ')[0] : null;
   const hi = firstName ? `Hey ${firstName},` : 'Hey,';
+  const body = [hi, '', ...lines].join('\n');
 
-  let subject, body;
-  if (variant === '7d') {
-    subject = 'Quick check-in on Attendance Tracker';
-    body = [
-      hi,
+  const foot = unsubscribeFooter(to);
+  const html = body.split('\n')
+    .map(l => (htmlLineTransform && htmlLineTransform(l)) || emailParagraph(l))
+    .join('') + foot.html;
+
+  try {
+    const info = await send({
+      from: makeFrom('Derek Gallardo'),
+      to,
+      subject,
+      text: body + foot.text,
+      html,
+      replyTo: ownerEmail(),
+      tags,
+    });
+    log.info(`${logLabel} email sent`, { to, ...logMeta });
+    return info;
+  } catch (err) {
+    log.warn(`${logLabel} email failed`, { to, error: err.message });
+    return { sent: false, error: err.message };
+  }
+}
+
+async function sendReactivationEmail({ to, displayName, daysSinceLogin, variant }) {
+  const lines = variant === '7d' ? [
+    `It's been about a week since you last opened Attendance Tracker. Quick question — was there something missing or confusing that kept you from using it for your meetings?`,
+    '',
+    `If you've got two minutes, hit reply and tell me what you'd want to see. I'm building this for actual users, not in a vacuum.`,
+    '',
+    '— Derek',
+    'attendancetracker.dev',
+  ] : [
+    `You signed up for Attendance Tracker about a month ago and haven't been back. Two questions:`,
+    '',
+    `1) Was the product missing something? If you'd reply with what would've made it useful for your workflow, I'd genuinely appreciate the signal.`,
+    '',
+    `2) If you'd rather I delete your account and any stored data, just say the word — no hard feelings.`,
+    '',
+    'Either way is fine. I just want to know.',
+    '',
+    '— Derek',
+  ];
+  return sendPersonalEmail({
+    to, displayName,
+    subject: variant === '7d' ? 'Quick check-in on Attendance Tracker' : 'Should I delete your Attendance Tracker account?',
+    lines,
+    tags: [{ name: 'type', value: 'reactivation' }, { name: 'variant', value: variant }],
+    logLabel: 'reactivation', logMeta: { variant, daysSinceLogin },
+  });
+}
+
+// Activation nudge for people who signed up but never tracked a meeting — a
+// short how-to-start, not a win-back.
+async function sendActivationNudgeEmail({ to, displayName, daysSinceLogin }) {
+  return sendPersonalEmail({
+    to, displayName,
+    subject: 'Getting started with Attendance Tracker',
+    lines: [
+      "You signed up for Attendance Tracker but haven't taken attendance in a meeting yet. It takes about 30 seconds:",
       '',
-      `It's been about a week since you last opened Attendance Tracker. Quick question — was there something missing or confusing that kept you from using it for your meetings?`,
+      '1. Start or join a Google Meet.',
+      '2. Open Attendance Tracker from the Activities panel (bottom-right in Meet).',
+      '3. Press Start — it tracks who joins, who leaves, and how long they stayed, then exports to a Google Sheet when the meeting ends.',
       '',
-      `If you've got two minutes, hit reply and tell me what you'd want to see. I'm building this for actual users, not in a vacuum.`,
+      "If something got in the way — setup, permissions, or it just didn't fit — hit reply and tell me. I read every one.",
       '',
       '— Derek',
       'attendancetracker.dev',
-    ].join('\n');
-  } else {
-    subject = 'Should I delete your Attendance Tracker account?';
-    body = [
-      hi,
+    ],
+    tags: [{ name: 'type', value: 'activation_nudge' }],
+    logLabel: 'activation nudge', logMeta: { daysSinceLogin },
+  });
+}
+
+// For users who tried the tool but only on a solo test — move them from "tested
+// it on myself" to "used it in a real meeting".
+async function sendSoloNudgeEmail({ to, displayName, daysSinceLogin }) {
+  return sendPersonalEmail({
+    to, displayName,
+    subject: 'You tried Attendance Tracker solo — try it with a real meeting',
+    lines: [
+      "I noticed you gave Attendance Tracker a spin, but it looks like the meeting was just you. That's the perfect way to kick the tires — but it really earns its keep when other people are in the call.",
       '',
-      `You signed up for Attendance Tracker about a month ago and haven't been back. Two questions:`,
+      "Next time you're in a real one — a class, a standup, a client call — open the panel and hit Start. It'll show you exactly who joined, who left, who was late, and drop the whole roll-call into a Google Sheet when the meeting ends.",
       '',
-      `1) Was the product missing something? If you'd reply with what would've made it useful for your workflow, I'd genuinely appreciate the signal.`,
-      '',
-      `2) If you'd rather I delete your account and any stored data, just say the word — no hard feelings.`,
-      '',
-      'Either way is fine. I just want to know.',
+      "If something's getting in the way of using it for real, hit reply and tell me — that feedback is gold.",
       '',
       '— Derek',
-    ].join('\n');
-  }
-
-  const foot = unsubscribeFooter(to);
-  const html = body.split('\n').map(l =>
-    `<p style="margin:0 0 12px;font-family:sans-serif;font-size:14px;line-height:1.55;color:#111">${escape(l) || '&nbsp;'}</p>`
-  ).join('') + foot.html;
-
-  try {
-    const info = await send({
-      from: makeFrom('Derek Gallardo'),
-      to,
-      subject,
-      text: body + foot.text,
-      html,
-      replyTo: ownerEmail(),
-      tags: [{ name: 'type', value: 'reactivation' }, { name: 'variant', value: variant }],
-    });
-    log.info('reactivation email sent', { to, variant, daysSinceLogin });
-    return info;
-  } catch (err) {
-    log.warn('reactivation email failed', { to, variant, error: err.message });
-    return { sent: false, error: err.message };
-  }
-}
-
-// Activation nudge for people who signed up but never tracked a meeting. Unlike
-// the reactivation email ("what was missing?"), this assumes they never got to
-// the value — so it's a short how-to-start, not a win-back. Same personal
-// From-name and reply-to-owner so replies are easy.
-async function sendActivationNudgeEmail({ to, displayName, daysSinceLogin }) {
-  if (!getResend()) return { skipped: 'Resend not configured' };
-  const firstName = displayName ? displayName.split(' ')[0] : null;
-  const hi = firstName ? `Hey ${firstName},` : 'Hey,';
-
-  const subject = 'Getting started with Attendance Tracker';
-  const body = [
-    hi,
-    '',
-    "You signed up for Attendance Tracker but haven't taken attendance in a meeting yet. It takes about 30 seconds:",
-    '',
-    '1. Start or join a Google Meet.',
-    '2. Open Attendance Tracker from the Activities panel (bottom-right in Meet).',
-    '3. Press Start — it tracks who joins, who leaves, and how long they stayed, then exports to a Google Sheet when the meeting ends.',
-    '',
-    "If something got in the way — setup, permissions, or it just didn't fit — hit reply and tell me. I read every one.",
-    '',
-    '— Derek',
-    'attendancetracker.dev',
-  ].join('\n');
-
-  const foot = unsubscribeFooter(to);
-  const html = body.split('\n').map(l =>
-    `<p style="margin:0 0 12px;font-family:sans-serif;font-size:14px;line-height:1.55;color:#111">${escape(l) || '&nbsp;'}</p>`
-  ).join('') + foot.html;
-
-  try {
-    const info = await send({
-      from: makeFrom('Derek Gallardo'),
-      to,
-      subject,
-      text: body + foot.text,
-      html,
-      replyTo: ownerEmail(),
-      tags: [{ name: 'type', value: 'activation_nudge' }],
-    });
-    log.info('activation nudge email sent', { to, daysSinceLogin });
-    return info;
-  } catch (err) {
-    log.warn('activation nudge email failed', { to, error: err.message });
-    return { sent: false, error: err.message };
-  }
-}
-
-// For users who tried the tool but only on a solo test (tracked a meeting that
-// was just them, never a real multi-person call). They already know how it
-// works — the job is to move them from "tested it on myself" to "used it in a
-// real meeting". Different from the activation nudge (which assumes they never
-// tracked at all).
-async function sendSoloNudgeEmail({ to, displayName, daysSinceLogin }) {
-  if (!getResend()) return { skipped: 'Resend not configured' };
-  const firstName = displayName ? displayName.split(' ')[0] : null;
-  const hi = firstName ? `Hey ${firstName},` : 'Hey,';
-
-  const subject = 'You tried Attendance Tracker solo — try it with a real meeting';
-  const body = [
-    hi,
-    '',
-    "I noticed you gave Attendance Tracker a spin, but it looks like the meeting was just you. That's the perfect way to kick the tires — but it really earns its keep when other people are in the call.",
-    '',
-    "Next time you're in a real one — a class, a standup, a client call — open the panel and hit Start. It'll show you exactly who joined, who left, who was late, and drop the whole roll-call into a Google Sheet when the meeting ends.",
-    '',
-    "If something's getting in the way of using it for real, hit reply and tell me — that feedback is gold.",
-    '',
-    '— Derek',
-    'attendancetracker.dev',
-  ].join('\n');
-
-  const foot = unsubscribeFooter(to);
-  const html = body.split('\n').map(l =>
-    `<p style="margin:0 0 12px;font-family:sans-serif;font-size:14px;line-height:1.55;color:#111">${escape(l) || '&nbsp;'}</p>`
-  ).join('') + foot.html;
-
-  try {
-    const info = await send({
-      from: makeFrom('Derek Gallardo'),
-      to,
-      subject,
-      text: body + foot.text,
-      html,
-      replyTo: ownerEmail(),
-      tags: [{ name: 'type', value: 'solo_nudge' }],
-    });
-    log.info('solo nudge email sent', { to, daysSinceLogin });
-    return info;
-  } catch (err) {
-    log.warn('solo nudge email failed', { to, error: err.message });
-    return { sent: false, error: err.message };
-  }
+      'attendancetracker.dev',
+    ],
+    tags: [{ name: 'type', value: 'solo_nudge' }],
+    logLabel: 'solo nudge', logMeta: { daysSinceLogin },
+  });
 }
 
 async function sendForgottenMeetingEmail({ to, displayName, seriesTitle, recurringEventId, trackedInWindow, daysSinceLast }) {
-  if (!getResend()) return { skipped: 'Resend not configured' };
-  const firstName = displayName ? displayName.split(' ')[0] : null;
-  const hi = firstName ? `Hey ${firstName},` : 'Hey,';
   const seriesLink = recurringEventId
     ? `https://attendancetracker.dev/history.html#series=${encodeURIComponent(recurringEventId)}`
     : 'https://attendancetracker.dev/history.html';
-
-  const subject = `Forgot to track "${seriesTitle}"?`;
-  const body = [
-    hi,
-    '',
-    `You tracked "${seriesTitle}" ${trackedInWindow} times in the past month, but it's been ${daysSinceLast} days since the last one. If you want to keep the streak going, just open the Attendance Tracker side panel next time you're in that meeting — it picks up from where you left off.`,
-    '',
-    `Your series so far: ${seriesLink}`,
-    '',
-    '— Derek',
-  ].join('\n');
-
-  const html = body.split('\n').map(l => {
-    if (l.startsWith('Your series so far:')) {
-      return `<p style="margin:0 0 12px;font-family:sans-serif;font-size:14px;line-height:1.55;color:#111">Your series so far: <a href="${escape(seriesLink)}" style="color:#1f6feb">view the trend →</a></p>`;
-    }
-    return `<p style="margin:0 0 12px;font-family:sans-serif;font-size:14px;line-height:1.55;color:#111">${escape(l) || '&nbsp;'}</p>`;
-  }).join('');
-
-  const foot = unsubscribeFooter(to);
-  try {
-    const info = await send({
-      from: makeFrom('Derek Gallardo'),
-      to,
-      subject,
-      text: body + foot.text,
-      html: html + foot.html,
-      replyTo: ownerEmail(),
-      tags: [{ name: 'type', value: 'forgotten_meeting' }],
-    });
-    log.info('forgotten-meeting email sent', { to, recurringEventId, daysSinceLast });
-    return info;
-  } catch (err) {
-    log.warn('forgotten-meeting email failed', { to, error: err.message });
-    return { sent: false, error: err.message };
-  }
+  return sendPersonalEmail({
+    to, displayName,
+    subject: `Forgot to track "${seriesTitle}"?`,
+    lines: [
+      `You tracked "${seriesTitle}" ${trackedInWindow} times in the past month, but it's been ${daysSinceLast} days since the last one. If you want to keep the streak going, just open the Attendance Tracker side panel next time you're in that meeting — it picks up from where you left off.`,
+      '',
+      `Your series so far: ${seriesLink}`,
+      '',
+      '— Derek',
+    ],
+    // Render the series line as a link instead of a bare URL.
+    htmlLineTransform: (l) => l.startsWith('Your series so far:')
+      ? `<p style="margin:0 0 12px;font-family:sans-serif;font-size:14px;line-height:1.55;color:#111">Your series so far: <a href="${escape(seriesLink)}" style="color:#1f6feb">view the trend →</a></p>`
+      : null,
+    tags: [{ name: 'type', value: 'forgotten_meeting' }],
+    logLabel: 'forgotten-meeting', logMeta: { recurringEventId, daysSinceLast },
+  });
 }
 
 // ── Slack post-meeting digest ──
