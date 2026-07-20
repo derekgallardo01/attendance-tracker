@@ -74,4 +74,6 @@ async function deleteUser(domain, email) {
   }
 }
 
-module.exports = { deleteUser };
+// deleteRefsInBatches is exported for direct unit testing of its batch-chunk
+// failure handling; firestore.js only re-exports deleteUser.
+module.exports = { deleteUser, deleteRefsInBatches };
