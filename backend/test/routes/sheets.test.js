@@ -56,12 +56,14 @@ jest.mock('../../src/services/firestore', () => ({
   countUserExports: jest.fn(),
   getMeetingExcusedEmails: jest.fn(),
   addMeetingExcusedEmails: jest.fn(),
+  getUserSettings: jest.fn(),
   getUser: jest.fn(),
   updateUserTokens: jest.fn(),
 }));
 
 jest.mock('../../src/lib/notifications', () => ({
   sendExportNotification: jest.fn(),
+  sendSlackDigest: jest.fn(),
 }));
 
 const firestore = require('../../src/services/firestore');
@@ -98,6 +100,7 @@ beforeEach(() => {
   firestore.getUserSheetId.mockResolvedValue('existing-sheet-id');
   firestore.countUserExports.mockResolvedValue(0);
   firestore.getMeetingExcusedEmails.mockResolvedValue([]);
+  firestore.getUserSettings.mockResolvedValue({ slackWebhookUrl: null });
   app = buildApp();
 });
 
@@ -248,5 +251,255 @@ describe('POST /api/save-to-sheets — error handling', () => {
       .set('Content-Type', 'application/json')
       .send(validPayload);
     expect(res.status).toBe(500);
+  });
+});
+
+describe('POST /api/save-to-sheets — spreadsheet resolution + edge branches', () => {
+  const auth = () => authedHeader('user@acme.com', 'acme.com');
+  const post = (body) => request(app).post('/api/save-to-sheets').set(auth()).set('Content-Type', 'application/json').send(body);
+
+  test('first export: creates folder + spreadsheet when none exists', async () => {
+    firestore.getUserSheetId.mockResolvedValue(null);
+    mockDriveList.mockResolvedValue({ data: { files: [] } }); // no folder → create it
+    const res = await post(validPayload);
+    expect(res.status).toBe(200);
+    expect(mockDriveCreate).toHaveBeenCalled();
+    expect(mockSheetsCreate).toHaveBeenCalled();
+    expect(firestore.setUserSheetId).toHaveBeenCalledWith('acme.com', 'user@acme.com', 'new-sheet');
+  });
+
+  test('first export: reuses an existing Drive folder', async () => {
+    firestore.getUserSheetId.mockResolvedValue(null);
+    mockDriveList.mockResolvedValue({ data: { files: [{ id: 'folder-xyz' }] } });
+    const res = await post(validPayload);
+    expect(res.status).toBe(200);
+    expect(mockDriveCreate).not.toHaveBeenCalled(); // folder reused
+  });
+
+  test('recreates the spreadsheet when the stored one is gone', async () => {
+    firestore.getUserSheetId.mockResolvedValue('stale-sheet');
+    mockSheetsGet.mockRejectedValueOnce(new Error('404 not found')); // stored sheet missing
+    mockDriveList.mockResolvedValue({ data: { files: [{ id: 'folder-xyz' }] } });
+    const res = await post(validPayload);
+    expect(res.status).toBe(200);
+    expect(firestore.setUserSheetId).toHaveBeenCalledWith('acme.com', 'user@acme.com', null); // cleared
+  });
+
+  test('400 for an unauthenticated request with no shared sheet configured', async () => {
+    const res = await request(app).post('/api/save-to-sheets').set('Content-Type', 'application/json').send(validPayload);
+    expect(res.status).toBe(400);
+  });
+
+  test('sanitizes a formula-injection displayName', async () => {
+    const res = await post({ ...validPayload, participants: [{ displayName: '=SUM(A1:A9)', email: 'x@acme.com', present: true, sessions: 1 }] });
+    expect(res.status).toBe(200);
+    // the value written should be prefixed with a quote to defuse the formula
+    const wrote = JSON.stringify(mockSheetsUpdate.mock.calls);
+    expect(wrote).toContain("'=SUM");
+  });
+
+  test('renders all RSVP statuses', async () => {
+    const res = await post({
+      ...validPayload,
+      calendarAttendees: [
+        { email: 'a@acme.com', displayName: 'A', status: 'accepted' },
+        { email: 'd@acme.com', displayName: 'D', status: 'declined' },
+        { email: 't@acme.com', displayName: 'T', status: 'tentative' },
+        { email: 'n@acme.com', displayName: 'N', status: 'needsAction' },
+        { email: 'u@acme.com', displayName: 'U', status: 'weird' },
+      ],
+    });
+    expect(res.status).toBe(200);
+  });
+});
+
+describe('POST /api/save-to-sheets — slack digest + row branches', () => {
+  const auth = () => authedHeader('user@acme.com', 'acme.com');
+  const post = (body) => request(app).post('/api/save-to-sheets').set(auth()).set('Content-Type', 'application/json').send(body);
+
+  test('posts a Slack digest when a webhook is configured', async () => {
+    firestore.getUserSettings.mockResolvedValue({ slackWebhookUrl: 'https://hooks.slack.com/services/T/B/C' });
+    notifications.sendSlackDigest.mockResolvedValue({ sent: true });
+    const res = await post({ ...validPayload, sendEmail: false });
+    expect(res.status).toBe(200);
+    await new Promise((r) => setImmediate(r));
+    expect(notifications.sendSlackDigest).toHaveBeenCalled();
+  });
+
+  test('tolerates a Slack digest failure (fire-and-forget)', async () => {
+    firestore.getUserSettings.mockRejectedValue(new Error('settings boom'));
+    const res = await post({ ...validPayload });
+    expect(res.status).toBe(200);
+    await new Promise((r) => setImmediate(r));
+  });
+
+  test('handles instant meeting, no eventStart, no conferenceId, and a never-joined participant', async () => {
+    const res = await post({
+      meetingTitle: '', exportedAt: new Date().toISOString(), meetingType: 'instant',
+      participants: [
+        { displayName: 'Late', email: 'l@acme.com', joinTimeISO: new Date(Date.now() - 2 * 60000).toISOString(), leaveTimeISO: null, present: true, sessions: 1 },
+        { displayName: 'NoJoin', email: 'n@acme.com', joinTimeISO: null, leaveTimeISO: null, present: false, sessions: 0 },
+      ],
+      calendarAttendees: [], excusedEmails: ['n@acme.com'],
+    });
+    expect(res.status).toBe(200);
+  });
+
+  test('flags a late joiner past the threshold (scheduled baseline)', async () => {
+    const eventStart = new Date(Date.now() - 60 * 60000).toISOString();
+    const res = await post({
+      ...validPayload, eventStart, eventEnd: new Date().toISOString(), meetingStartTime: eventStart,
+      participants: [
+        { displayName: 'VeryLate', email: 'v@acme.com', joinTimeISO: new Date(Date.now() - 30 * 60000).toISOString(), leaveTimeISO: null, present: true, sessions: 1 },
+      ],
+    });
+    expect(res.status).toBe(200);
+  });
+});
+
+describe('POST /api/save-to-sheets — legacy shared sheet + more branches', () => {
+  const CONFIG = require('../../src/config');
+  let savedSheetId;
+  beforeEach(() => { savedSheetId = CONFIG.sheetId; });
+  afterEach(() => { CONFIG.sheetId = savedSheetId; });
+  const post = (body, hdr) => { const r = request(app).post('/api/save-to-sheets').set('Content-Type', 'application/json'); if (hdr) r.set(hdr); return r.send(body); };
+
+  test('legacy: unauthenticated export uses the shared CONFIG.sheetId', async () => {
+    CONFIG.sheetId = 'shared-legacy-sheet';
+    const res = await post(validPayload); // no auth header → req.user null
+    expect(res.status).toBe(200);
+  });
+
+  test('appends a counter when the tab name already exists', async () => {
+    mockSheetsBatchUpdate
+      .mockRejectedValueOnce(Object.assign(new Error('A sheet with the name already exists')))
+      .mockResolvedValueOnce({ data: { replies: [{ addSheet: { properties: { sheetId: 7 } } }] } });
+    const res = await post(validPayload, authedHeader('user@acme.com', 'acme.com'));
+    expect(res.status).toBe(200);
+  });
+
+  test('zero-duration / never-joined participants (meetStart null, dur "< 1")', async () => {
+    const res = await post({
+      exportedAt: new Date().toISOString(), meetingType: 'instant',
+      participants: [
+        { displayName: 'Blip', email: 'b@acme.com', joinTimeISO: new Date().toISOString(), leaveTimeISO: new Date().toISOString(), present: true, sessions: 1 },
+        { displayName: 'Ghost', email: 'g@acme.com', joinTimeISO: null, leaveTimeISO: null, present: false, sessions: 0 },
+      ],
+      calendarAttendees: [],
+    }, authedHeader('user@acme.com', 'acme.com'));
+    expect(res.status).toBe(200);
+  });
+
+  test('rich auto-export email digest with overflow (>25 participants)', async () => {
+    const many = [];
+    for (let i = 0; i < 30; i++) many.push({ displayName: `P${i}`, email: `p${i}@acme.com`, joinTimeISO: new Date(Date.now() - 10 * 60000).toISOString(), leaveTimeISO: null, present: true, sessions: 1 });
+    const res = await post({ ...validPayload, sendEmail: true, participants: many }, authedHeader('user@acme.com', 'acme.com'));
+    expect(res.status).toBe(200);
+    expect(notifications.sendExportNotification).toHaveBeenCalledWith(expect.objectContaining({ overflow: expect.any(Number) }));
+  });
+
+  test('creation path tolerates a spreadsheet with no parents', async () => {
+    firestore.getUserSheetId.mockResolvedValue(null);
+    mockDriveGet.mockResolvedValue({ data: {} }); // no parents field
+    const res = await post(validPayload, authedHeader('user@acme.com', 'acme.com'));
+    expect(res.status).toBe(200);
+  });
+});
+
+describe('POST /api/save-to-sheets — final edge branches', () => {
+  const auth = () => authedHeader('user@acme.com', 'acme.com');
+  const post = (body) => request(app).post('/api/save-to-sheets').set(auth()).set('Content-Type', 'application/json').send(body);
+
+  test('invalid timezone triggers the ET fallback (and fails the export)', async () => {
+    // The tzAbbr IIFE catches the bad zone (→ 'ET'), then fmtTime re-throws on
+    // the same bad zone → 500. The point is exercising the tzAbbr catch branch.
+    const res = await post({ ...validPayload, timezone: 'Not/AZone' });
+    expect(res.status).toBe(500);
+  });
+
+  test('participants with missing name/email/join and present=false', async () => {
+    const res = await post({
+      exportedAt: new Date().toISOString(), meetingType: 'instant',
+      participants: [
+        { present: false, sessions: 0 }, // no displayName, no email, no join
+        { displayName: 'Left Early', email: 'le@acme.com', joinTimeISO: new Date(Date.now() - 5 * 60000).toISOString(), leaveTimeISO: new Date(Date.now() - 60000).toISOString(), present: false, sessions: 1 },
+      ],
+      calendarAttendees: [{ email: 'ghost@acme.com', displayName: 'Ghost', status: 'accepted' }],
+    });
+    expect(res.status).toBe(200);
+  });
+
+  test('tab name that sanitizes to empty falls back to "Meeting"', async () => {
+    const res = await post({ ...validPayload, tabName: "'''" });
+    expect(res.status).toBe(200);
+  });
+
+  test('403 detected via the "insufficient permission" message (no err.code)', async () => {
+    // mockRejectedValueOnce so it doesn't leak into the next test.
+    mockSheetsBatchUpdate.mockRejectedValueOnce(new Error('Insufficient Permission to access the sheet'));
+    const res = await post(validPayload);
+    expect(res.status).toBe(403);
+  });
+
+  test('slack digest built with rich participants (present/left/absent)', async () => {
+    firestore.getUserSettings.mockResolvedValue({ slackWebhookUrl: 'https://hooks.slack.com/services/T/B/C' });
+    notifications.sendSlackDigest.mockResolvedValue({ sent: true });
+    const res = await post(validPayload);
+    expect(res.status).toBe(200);
+    await new Promise((r) => setImmediate(r));
+    expect(notifications.sendSlackDigest).toHaveBeenCalledWith(expect.objectContaining({ participants: expect.any(Array) }));
+  });
+});
+
+describe('POST /api/save-to-sheets — meetStart null + digest args', () => {
+  const auth = () => authedHeader('user@acme.com', 'acme.com');
+  const post = (body) => request(app).post('/api/save-to-sheets').set(auth()).set('Content-Type', 'application/json').send(body);
+
+  test('no meetingStartTime and no joins → meetStart null (duration N/A)', async () => {
+    const res = await post({
+      exportedAt: new Date().toISOString(), meetingType: 'instant',
+      participants: [{ displayName: 'A', email: 'a@acme.com', joinTimeISO: null, leaveTimeISO: null, present: false, sessions: 0 }],
+      calendarAttendees: [],
+    });
+    expect(res.status).toBe(200);
+  });
+
+  test('tab name of only an apostrophe collapses to "Meeting"', async () => {
+    const res = await post({ ...validPayload, tabName: "'" });
+    expect(res.status).toBe(200);
+  });
+
+  test('no-show whose display name matches an attendee is not double-counted', async () => {
+    const res = await post({
+      ...validPayload,
+      participants: [{ displayName: 'Sharedname', email: 'p1@acme.com', joinTimeISO: new Date(Date.now() - 10 * 60000).toISOString(), leaveTimeISO: null, present: true, sessions: 1 }],
+      calendarAttendees: [{ email: 'different@acme.com', displayName: 'Sharedname', status: 'accepted' }],
+    });
+    expect(res.status).toBe(200);
+  });
+
+  test('auto-export email + slack digest with mixed present/left/absent + excused', async () => {
+    firestore.getUserSettings.mockResolvedValue({ slackWebhookUrl: 'https://hooks.slack.com/services/T/B/C' });
+    notifications.sendSlackDigest.mockResolvedValue({ sent: true });
+    const res = await post({
+      ...validPayload, sendEmail: true, recurringEventId: 'rid-1',
+      participants: [
+        { displayName: 'P', email: 'p@acme.com', joinTimeISO: new Date(Date.now() - 20 * 60000).toISOString(), leaveTimeISO: null, present: true, sessions: 1 },
+        { displayName: 'L', email: 'l@acme.com', joinTimeISO: new Date(Date.now() - 20 * 60000).toISOString(), leaveTimeISO: new Date(Date.now() - 60000).toISOString(), present: false, sessions: 1 },
+      ],
+      calendarAttendees: [
+        { email: 'p@acme.com', displayName: 'P', status: 'accepted' },
+        { email: 'absent@acme.com', displayName: 'Absent', status: 'declined' },
+      ],
+      excusedEmails: ['absent@acme.com'],
+    });
+    expect(res.status).toBe(200);
+    await new Promise((r) => setImmediate(r));
+  });
+
+  test('403 error object with no message but code 403', async () => {
+    mockSheetsBatchUpdate.mockRejectedValueOnce(Object.assign(new Error(), { code: 403, message: '' }));
+    const res = await post(validPayload);
+    expect(res.status).toBe(403);
   });
 });

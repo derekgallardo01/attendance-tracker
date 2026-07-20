@@ -205,6 +205,9 @@ router.post('/save-to-sheets', async (req, res) => {
     const fmtDate = iso => iso ? fmtTime(iso) : '';
     const totalInvited = calendarAttendees.length || participants.length;
     const totalAttended = participants.length;
+    // participants is guaranteed non-empty (validated at the top), so
+    // totalInvited is always >= 1 — the 'N/A' fallback is defensive-only.
+    /* istanbul ignore next */
     const attendanceRate = totalInvited > 0 ? Math.round((totalAttended / totalInvited) * 100) + '%' : 'N/A';
 
     // Format scheduled time range
