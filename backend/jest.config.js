@@ -9,6 +9,14 @@ module.exports = {
     '!src/instrument.js', // Sentry init, no logic to test
   ],
   coverageReporters: ['text', 'text-summary', 'html'],
+  // Regression gate. Floors are set just below the achieved level so a PR that
+  // adds untested code fails CI (npm run test:coverage). RATCHET: raise these
+  // as coverage climbs — do not lower them. Remaining gaps to close toward 100%:
+  // routes/admin.js (CRM handlers), services/firestore/analytics.js (admin
+  // analytics engine), and services/firestore.js aggregation branch combos.
+  coverageThreshold: {
+    global: { statements: 86, lines: 87, branches: 80, functions: 80 },
+  },
   setupFiles: ['<rootDir>/test/setup-env.js'],
   // Each test file gets a fresh module registry — important because some of
   // our modules cache singletons (Firestore client, Resend client) and we
