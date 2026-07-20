@@ -1095,6 +1095,14 @@
     <div id="nudge-banner-text" style="line-height:1.45"></div>
   </div>
 
+  <!-- ── Export CTA (real meeting tracked but not yet saved to Sheets) ── -->
+  <!-- The tracked→export drop-off: engaged users tracked real meetings and left
+       with no Sheet. This makes the export action unmissable + scope-aware. -->
+  <div id="export-cta" style="display:none;background:rgba(52,168,83,.14);border:1px solid rgba(52,168,83,.5);border-radius:8px;padding:11px 13px;margin:8px 16px">
+    <div id="export-cta-text" style="font-size:.82rem;color:#7ee2a8;line-height:1.4;margin-bottom:9px;font-weight:600"></div>
+    <button id="export-cta-btn" onclick="onExportCtaClick()" style="background:#34A853;color:#fff;border:none;border-radius:6px;padding:8px 16px;font-weight:700;font-size:.78rem;cursor:pointer;width:100%"></button>
+  </div>
+
   <!-- ── Setup banner (shown when delegation not configured) ── -->
   <div id="setup-banner" style="display:none; padding:8px 16px; background:rgba(255,193,7,.1); border-bottom:1px solid rgba(255,193,7,.3); font-size:.75rem; color:#ffc107;">
     Some participants may not appear until your Workspace admin finishes a one-time setup.
@@ -1689,6 +1697,7 @@ function applyScopeRestrictions() {
     sheetsBtn.title = sheetsMissing ? 'Grant Drive permission to enable export' : '';
     sheetsBtn.dataset.scopeBlocked = sheetsMissing ? '1' : '';
   }
+  updateExportCta(); // reflect scope state in the export prompt
 }
 
 function showSourceModal(detectedSource) {
@@ -2567,6 +2576,7 @@ function updateSummary() {
   document.getElementById('count-present').textContent = present;
   document.getElementById('count-left').textContent = left;
   document.getElementById('count-total').textContent   = state.participants.size;
+  updateExportCta();
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -2575,6 +2585,43 @@ function updateSummary() {
 
 
 let _exporting = false;
+// The tracked→export drop-off: engaged users tracked real meetings and walked
+// away with no Sheet (auto-export only fires on Meet's formal meeting-end, which
+// lags; the "Sheet" button is easy to miss). This surfaces a prominent, always-
+// visible export prompt for REAL meetings (2+ distinct attendees — solo tests
+// get the solo nudge instead), scope-aware, and hides once a Sheet exists.
+function updateExportCta() {
+  const cta = document.getElementById('export-cta');
+  if (!cta) return;
+  const alreadyExported = state.autoExportedConferenceId === state.conferenceId;
+  const realMeeting = distinctAttendeeCount() >= 2;
+  if (!state.signedIn || !state.tracking || !realMeeting || alreadyExported || _exporting) {
+    cta.style.display = 'none';
+    return;
+  }
+  const scopeBlocked = document.getElementById('btn-sheets')?.dataset.scopeBlocked === '1';
+  const textEl = document.getElementById('export-cta-text');
+  const btnEl = document.getElementById('export-cta-btn');
+  const n = distinctAttendeeCount();
+  if (scopeBlocked) {
+    textEl.textContent = `🔒 You've tracked ${n} people — grant Google Drive access to save this to a Sheet.`;
+    btnEl.textContent = 'Grant Drive access to export';
+  } else {
+    textEl.textContent = `📊 Attendance ready for ${n} people. Save it to Google Sheets before you leave.`;
+    btnEl.textContent = '💾 Save to Google Sheets';
+  }
+  cta.style.display = 'block';
+}
+
+// Export CTA button: recover the Drive scope if it's missing, else export.
+function onExportCtaClick() {
+  if (document.getElementById('btn-sheets')?.dataset.scopeBlocked === '1') {
+    signInWithGoogle(); // incremental re-consent to add drive.file
+    return;
+  }
+  saveToSheets();
+}
+
 async function saveToSheets() {
   if (_exporting) return toast('Export already in progress…');
   if (!state.participants.size) { toast('No data yet'); return; }
@@ -2954,6 +3001,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     // re-fire after a manual export (and so a reload after auto-export stays quiet).
     state.autoExportedConferenceId = state.conferenceId;
     saveState();
+    updateExportCta(); // hide the export prompt now that a Sheet exists
     toast(opts.autoExport ? '✓ Auto-exported — sheet link sent to your email' : '✓ Saved to Sheets', opts.autoExport ? 6000 : 3000);
     const btn = document.getElementById('btn-sheets');
     if (btn) {
