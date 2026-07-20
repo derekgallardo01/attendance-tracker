@@ -277,3 +277,76 @@ describe('notifications — content sanity checks', () => {
     expect(arg.html).toContain('&lt;img');
   });
 });
+
+describe('notifications — additional senders (Resend mocked)', () => {
+  let mockSend;
+  beforeEach(() => {
+    mockSend = jest.fn().mockResolvedValue({ data: { id: 'msg_x' } });
+    jest.doMock('resend', () => ({ Resend: jest.fn().mockImplementation(() => ({ emails: { send: mockSend } })) }));
+    process.env.RESEND_API_KEY = 're_test_key';
+    process.env.NOTIFY_EMAIL = 'owner@acme.com';
+    jest.resetModules();
+  });
+  afterEach(() => { jest.dontMock('resend'); delete process.env.RESEND_API_KEY; delete process.env.NOTIFY_EMAIL; });
+
+  const fullReport = {
+    windowStart: Date.now() - 7 * 86400000, windowEnd: Date.now(),
+    totalUsers: 42, totalMeetings: 100,
+    signups: { thisWeek: 3, lastWeek: 1, delta: '+2', new: [{ displayName: 'A', email: 'a@x.com', domain: 'x.com', source: 'reddit' }] },
+    tracks: { thisWeek: 5, lastWeek: 8, delta: '-3' },
+    exports: { thisWeek: 2, lastWeek: 2, delta: '0' },
+    concerns: [{ displayName: 'B', email: 'b@x.com', domain: 'x.com' }],
+    sources: { reddit: 5, google_search: 2 },
+    topUser: { displayName: 'Power User', actions: 12 },
+  };
+
+  test('sendWeeklySelfReport sends with arrow up/down/neutral + populated lists', async () => {
+    const n = require('../../src/lib/notifications');
+    await n.sendWeeklySelfReport(fullReport);
+    expect(mockSend).toHaveBeenCalledWith(expect.objectContaining({ tags: [{ name: 'type', value: 'weekly_report' }] }));
+    const html = mockSend.mock.calls[0][0].html;
+    expect(html).toContain('▲'); expect(html).toContain('▼'); // +2 and -3 arrows
+  });
+
+  test('sendWeeklySelfReport uses fallback copy when everything is empty', async () => {
+    const n = require('../../src/lib/notifications');
+    await n.sendWeeklySelfReport({
+      ...fullReport,
+      signups: { thisWeek: 1, lastWeek: 0, delta: '+1', new: [] },
+      concerns: [], sources: {}, topUser: null,
+    });
+    const html = mockSend.mock.calls[0][0].html;
+    expect(html).toContain('No new signups this week');
+    expect(html).toContain('Nobody yet');
+  });
+
+  test('sendActivationNudgeEmail sends an activation nudge', async () => {
+    const n = require('../../src/lib/notifications');
+    await n.sendActivationNudgeEmail({ to: 'u@x.com', displayName: 'U', daysSinceLogin: 8 });
+    expect(mockSend).toHaveBeenCalled();
+  });
+
+  test('sendSoloNudgeEmail sends a solo-tester nudge', async () => {
+    const n = require('../../src/lib/notifications');
+    await n.sendSoloNudgeEmail({ to: 'u@x.com', displayName: 'U', daysSinceLogin: 8 });
+    expect(mockSend).toHaveBeenCalled();
+  });
+});
+
+describe('notifications — Slack test ping', () => {
+  afterEach(() => { delete global.fetch; });
+  test('sendSlackTestPing posts to the webhook and reports sent', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200, text: async () => 'ok' });
+    const n = require('../../src/lib/notifications');
+    const res = await n.sendSlackTestPing({ webhookUrl: 'https://hooks.slack.com/services/T/B/C' });
+    expect(res.sent).toBe(true);
+    expect(global.fetch).toHaveBeenCalled();
+  });
+
+  test('sendSlackTestPing reports not-sent on a non-ok response', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 404, text: async () => 'invalid' });
+    const n = require('../../src/lib/notifications');
+    const res = await n.sendSlackTestPing({ webhookUrl: 'https://hooks.slack.com/services/T/B/C' });
+    expect(res.sent).toBe(false);
+  });
+});
