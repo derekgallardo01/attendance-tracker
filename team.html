@@ -83,6 +83,7 @@
   </style>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
 </head>
 <body>
   <div class="container">
@@ -177,38 +178,20 @@
   </div>
 
   <script>
-    const BACKEND_URL = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
-    const CLIENT_ID = '829771833968-92hq9toga2ga92mg7nfuf6dqclj7er2n.apps.googleusercontent.com';
-    const SCOPES = 'openid email profile';
+    const BACKEND_URL = AttApi.BACKEND_URL; // shared js/api.js (loaded in <head>)
     let sessionToken = null;
     let data = { users: [], meetings: [], series: [], people: [], totals: {} };
 
     function signIn() {
-      const client = google.accounts.oauth2.initCodeClient({
-        client_id: CLIENT_ID,
-        scope: SCOPES,
-        ux_mode: 'popup',
-        access_type: 'offline',
-        callback: async (response) => {
-          if (response.error) return;
-          try {
-            const res = await fetch(`${BACKEND_URL}/oauth/exchange`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ code: response.code }),
-            });
-            if (!res.ok) throw new Error('Auth failed');
-            const body = await res.json();
-            sessionToken = body.sessionToken;
-            document.getElementById('user-email').textContent = body.email;
-            document.getElementById('login-screen').style.display = 'none';
-            loadOverview();
-          } catch (err) {
-            alert('Sign-in failed: ' + err.message);
-          }
+      AttApi.signIn({
+        onSuccess: (body) => {
+          sessionToken = body.sessionToken;
+          document.getElementById('user-email').textContent = body.email;
+          document.getElementById('login-screen').style.display = 'none';
+          loadOverview();
         },
+        onError: (err) => { alert('Sign-in failed: ' + err.message); },
       });
-      client.requestCode();
     }
 
     function signOut() {

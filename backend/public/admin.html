@@ -190,6 +190,7 @@
   </style>
   <script src="https://accounts.google.com/gsi/client" async></script>
   <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
 </head>
 <body>
   <div class="container">
@@ -595,9 +596,7 @@
   </div>
 
   <script>
-    const BACKEND_URL = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
-    const CLIENT_ID = '829771833968-92hq9toga2ga92mg7nfuf6dqclj7er2n.apps.googleusercontent.com';
-    const SCOPES = 'openid email profile';
+    const BACKEND_URL = AttApi.BACKEND_URL; // shared js/api.js (loaded in <head>)
     const SUPER_ADMIN_EMAIL = 'derekgallardo01@gmail.com';
     let sessionToken = null;
     let userEmail = null;
@@ -608,48 +607,33 @@
     }
 
     function signIn() {
-      const client = google.accounts.oauth2.initCodeClient({
-        client_id: CLIENT_ID,
-        scope: SCOPES,
-        ux_mode: 'popup',
-        access_type: 'offline',
-        callback: async (response) => {
-          if (response.error) {
-            // User closed the popup or denied — stay on login screen
-            return;
-          }
+      const loading = document.getElementById('loading');
+      AttApi.signIn({
+        onStart: () => {
           // Show spinner the moment Google returns control. This is the
           // window that previously felt frozen.
           document.getElementById('login-screen').style.display = 'none';
-          const loading = document.getElementById('loading');
           loading.style.display = 'block';
           setLoadingStep('Signing you in…', 'Exchanging credentials with the backend');
-          try {
-            const res = await fetch(`${BACKEND_URL}/oauth/exchange`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ code: response.code }),
-            });
-            if (!res.ok) throw new Error('Auth failed');
-            const data = await res.json();
-            sessionToken = data.sessionToken;
-            userEmail = data.email;
-            document.getElementById('user-email').textContent = data.email;
-            setLoadingStep('Loading your dashboard…', 'Pulling stats, users, and live activity');
-            // Tiny delay so the message change is perceptible — the actual
-            // data load takes a few seconds anyway.
-            await new Promise(r => setTimeout(r, 350));
-            loading.style.display = 'none';
-            document.getElementById('dashboard').style.display = 'block';
-            loadDashboard();
-          } catch (err) {
-            loading.style.display = 'none';
-            document.getElementById('login-screen').style.display = '';
-            alert('Sign-in failed: ' + err.message);
-          }
+        },
+        onSuccess: async (data) => {
+          sessionToken = data.sessionToken;
+          userEmail = data.email;
+          document.getElementById('user-email').textContent = data.email;
+          setLoadingStep('Loading your dashboard…', 'Pulling stats, users, and live activity');
+          // Tiny delay so the message change is perceptible — the actual
+          // data load takes a few seconds anyway.
+          await new Promise(r => setTimeout(r, 350));
+          loading.style.display = 'none';
+          document.getElementById('dashboard').style.display = 'block';
+          loadDashboard();
+        },
+        onError: (err) => {
+          loading.style.display = 'none';
+          document.getElementById('login-screen').style.display = '';
+          alert('Sign-in failed: ' + err.message);
         },
       });
-      client.requestCode();
     }
 
     function signOut() {
