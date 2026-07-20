@@ -28,10 +28,20 @@ oauth, public, settings, sheets, team, attendance).
 - Route error paths: `mockRejectedValue`/`mockRejectedValueOnce` on the firestore/google mocks; watch for mock-implementation leakage between tests.
 - Genuinely-unreachable defensive code (framework-guaranteed `req.body`, always-truthy guards, redundant `||` fallbacks): `/* istanbul ignore next */` with a one-line reason.
 
-## Frontend (not started — separate multi-session effort)
-The `js/` modules (`utils`, `api`, `strings`) are jsdom-tested, but the **HTML
-pages have no coverage**. Reaching 100% there requires **extracting `index.html`'s
-~3,800 lines of inline JS into exported `js/` modules** (plus admin/history/team/
-setup), then unit-testing them — a large refactor, verified page-by-page in a
-browser since these pages have no automated guard. Playwright e2e (`e2e/`) covers
-landing + backend-API smoke only.
+## Frontend
+
+### Shared `js/` modules — 100%, gated ✅
+`js/utils.js`, `js/api.js`, `js/strings.js` are at **100% statements / branches /
+functions / lines** (113 jsdom tests). Because these files live in the repo-root
+`js/` dir (outside the backend `rootDir`), coverage is measured by a dedicated
+config, **`jest.frontend.config.js`** (rootDir = repo root, `coverageProvider: 'v8'`
+— the babel provider can't instrument files required by absolute path). Run/gate
+with `npm run test:coverage:frontend` (100% threshold, enforced in CI).
+
+### HTML pages — NOT started (separate multi-session effort)
+The **inline `<script>` logic in the pages has no coverage**. Reaching 100% there
+requires **extracting `index.html`'s ~3,800 lines of inline JS into exported `js/`
+modules** (plus admin/history/team/setup/share), then unit-testing them — a large
+refactor, verified page-by-page in a browser since these pages have no automated
+guard. Recommended order (smallest first): share → setup → team → history → admin
+→ index. Playwright e2e (`e2e/`) covers landing + backend-API smoke only.

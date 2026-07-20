@@ -410,3 +410,72 @@ describe('serializeSession / parseSession', () => {
     expect(s.participants).toEqual([]);
   });
 });
+
+describe('utils — fallback branches', () => {
+  const path = require('path');
+  const U = require(path.join(__dirname, '..', '..', '..', 'js', 'utils.js'));
+
+  test('formatRelative accepts a Date and a string', () => {
+    expect(typeof U.formatRelative(new Date())).toBe('string');
+    expect(typeof U.formatRelative('2026-06-01T10:00:00Z')).toBe('string');
+    expect(U.formatRelative(null)).toBe('');
+  });
+
+  test('distinctAttendees / autoMatchAttendees tolerate undefined inputs', () => {
+    expect(U.distinctAttendees(undefined)).toBe(0);
+    expect(typeof U.autoMatchAttendees(undefined, undefined)).toBe('object'); // { emailMap, unmatchedCount }
+  });
+
+  test('fmtTime accepts a Date, a string, and an invalid value', () => {
+    expect(U.fmtTime(new Date())).not.toBe('');
+    expect(typeof U.fmtTime('2026-06-01T10:00:00Z')).toBe('string');
+    expect(U.fmtTime('not-a-date')).toBe('');
+    expect(U.fmtTime(null)).toBe('');
+  });
+
+  test('parseSession with no participants array uses the [] fallback', () => {
+    const parsed = U.parseSession({ savedAt: 1000, tracking: false }, 1500, 5000); // no participants
+    expect(parsed.participants).toEqual([]);
+  });
+
+  test('isSelfParticipant: solo match, email match, name match, and guards', () => {
+    expect(U.isSelfParticipant(null, {})).toBe(false);
+    expect(U.isSelfParticipant({}, null)).toBe(false);
+    // solo: signed in, no counts (|| 0 fallbacks) → treated as self
+    expect(U.isSelfParticipant({ displayName: 'X' }, { signedIn: true })).toBe(true);
+    expect(U.isSelfParticipant({ email: 'me@x.com' }, { selfEmail: 'ME@x.com' })).toBe(true);
+    expect(U.isSelfParticipant({ displayName: 'Me' }, { selfDisplayName: 'me' })).toBe(true);
+    // signed in but a crowd → not solo, no email/name match → false
+    expect(U.isSelfParticipant({ displayName: 'Other' }, { signedIn: true, participantCount: 5, incomingCount: 5, selfDisplayName: 'Me' })).toBe(false);
+  });
+
+  test('serializeSession fills defaults for a minimal state', () => {
+    const state = {
+      conferenceId: 'c', meetingTitle: 'M', startTime: new Date(), tracking: true,
+      sessionToken: 't', userEmail: 'u@x.com', signedIn: true,
+      participants: new Map([['k', { joinTime: null, trackedJoinTime: null, leaveTime: null }]]),
+      // _selfDisplayName, grantedScopes, missingScopes, _lastSheetUrl, autoExportedConferenceId, soloNudgeConferenceId all absent
+    };
+    const snap = U.serializeSession(state, 1000);
+    expect(snap.userDisplayName).toBeNull();
+    expect(snap.grantedScopes).toEqual([]);
+    expect(snap.participants[0][1]._accumulatedMs).toBe(0);
+    expect(snap._lastSheetUrl).toBeNull();
+    expect(snap.soloNudgeConferenceId).toBeNull();
+  });
+
+  test('parseSession: fresh minimal snapshot fills defaults; stale/invalid → null', () => {
+    expect(U.parseSession(null, 1000, 5000)).toBeNull();
+    expect(U.parseSession('nope', 1000, 5000)).toBeNull();
+    expect(U.parseSession({ savedAt: 0 }, 10000, 5000)).toBeNull(); // too old
+    const parsed = U.parseSession({
+      savedAt: 1000, tracking: false, conferenceId: 'c', meetingTitle: 'M', startTime: null,
+      participants: [['k', { joinTime: null, trackedJoinTime: null, leaveTime: null }]],
+      // userDisplayName, autoExported, soloNudge, grantedScopes, missingScopes, _accumulatedMs absent
+    }, 1500, 5000);
+    expect(parsed.userDisplayName).toBeNull();
+    expect(parsed.grantedScopes).toEqual([]);
+    expect(parsed.autoExportedConferenceId).toBeNull();
+    expect(parsed.participants[0][1]._accumulatedMs).toBe(0);
+  });
+});

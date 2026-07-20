@@ -43,11 +43,15 @@ jobs:
       - name: Run tests
         run: npm test -- --ci --reporters=default --maxWorkers=2
 
-      # Coverage is captured but not enforced — the goal is signal not a
-      # gate. Upload artifact so PR reviewers can browse it.
-      - name: Coverage report
+      # Coverage is now a GATE: jest.config.js / jest.frontend.config.js carry
+      # coverageThreshold floors, so these steps fail if coverage regresses.
+      - name: Coverage report (backend src)
         if: github.event_name == 'pull_request'
         run: npm run test:coverage -- --ci --maxWorkers=2
+
+      - name: Coverage gate (frontend js/ modules — 100%)
+        if: github.event_name == 'pull_request'
+        run: npm run test:coverage:frontend -- --ci
 
       - name: Upload coverage artifact
         if: github.event_name == 'pull_request'

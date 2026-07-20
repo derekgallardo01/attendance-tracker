@@ -5,3 +5,4 @@ node_modules/
 !.claude/skills/
 backend/coverage/
 backend/.nyc_output/
+backend/coverage-frontend/

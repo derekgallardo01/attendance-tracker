@@ -53,3 +53,62 @@ describe('authedFetch', () => {
     expect(opts.headers.Authorization).toBe('Bearer tok');
   });
 });
+
+describe('signIn (Google popup + code exchange)', () => {
+  let lastOpts;
+  function stubGoogle(response) {
+    lastOpts = null;
+    global.google = { accounts: { oauth2: { initCodeClient: (opts) => { lastOpts = opts; return { requestCode: () => opts.callback(response) }; } } } };
+  }
+  afterEach(() => { delete global.google; delete global.fetch; });
+
+  test('initializes the code client with the client id + scopes and requests a code', () => {
+    stubGoogle({ error: 'popup_closed' }); // benign — user closed popup
+    const onStart = jest.fn(), onSuccess = jest.fn(), onError = jest.fn();
+    api.signIn({ onStart, onSuccess, onError });
+    expect(lastOpts.client_id).toBe(api.CLIENT_ID);
+    expect(lastOpts.scope).toBe(api.SCOPES);
+    expect(lastOpts.ux_mode).toBe('popup');
+    // popup closed/denied → no callbacks fire
+    expect(onStart).not.toHaveBeenCalled();
+    expect(onSuccess).not.toHaveBeenCalled();
+  });
+
+  test('on success: onStart fires, code is exchanged, onSuccess gets the data', async () => {
+    const data = { sessionToken: 'jwt', email: 'u@acme.com' };
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => data });
+    stubGoogle({ code: 'auth-code' });
+    const onStart = jest.fn(), onSuccess = jest.fn(), onError = jest.fn();
+    api.signIn({ onStart, onSuccess, onError });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(onStart).toHaveBeenCalled();
+    expect(global.fetch).toHaveBeenCalledWith(`${api.BACKEND_URL}/oauth/exchange`, expect.objectContaining({ method: 'POST' }));
+    expect(onSuccess).toHaveBeenCalledWith(data);
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  test('on a non-ok exchange: onError fires', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: false });
+    stubGoogle({ code: 'auth-code' });
+    const onError = jest.fn();
+    api.signIn({ onSuccess: jest.fn(), onError });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(onError).toHaveBeenCalled();
+  });
+
+  test('on a fetch rejection: onError fires', async () => {
+    global.fetch = jest.fn().mockRejectedValue(new Error('network'));
+    stubGoogle({ code: 'auth-code' });
+    const onError = jest.fn();
+    api.signIn({ onError });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(onError).toHaveBeenCalled();
+  });
+
+  test('tolerates being called with no callbacks (all optional)', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
+    stubGoogle({ code: 'auth-code' });
+    expect(() => api.signIn()).not.toThrow(); // default {} args
+    await new Promise((r) => setTimeout(r, 0));
+  });
+});

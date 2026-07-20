@@ -35,8 +35,10 @@
   // provided fallback, then to the key itself (so a missing key is visible, not
   // blank).
   function t(key, fallback) {
-    const table = STRINGS[locale] || STRINGS.en;
-    if (table && Object.prototype.hasOwnProperty.call(table, key)) return table[key];
+    // `locale` is always a valid STRINGS key (setLocale guards it, default 'en'),
+    // so this lookup never misses.
+    const table = STRINGS[locale];
+    if (Object.prototype.hasOwnProperty.call(table, key)) return table[key];
     if (Object.prototype.hasOwnProperty.call(STRINGS.en, key)) return STRINGS.en[key];
     return fallback != null ? fallback : key;
   }
