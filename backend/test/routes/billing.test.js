@@ -146,3 +146,124 @@ describe('billing — configured (Stripe env set)', () => {
     expect(res.body.upgrade).toBe(true);
   });
 });
+
+describe('billing — additional configured paths', () => {
+  beforeEach(() => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_PRICE_ID = 'price_x';
+    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_x';
+    app = buildApp();
+  });
+
+  test('POST /billing/checkout 502 when Stripe throws', async () => {
+    mockStripeInstance.checkout.sessions.create.mockRejectedValue(new Error('stripe down'));
+    const res = await request(app).post('/api/billing/checkout').set(authedHeader('a@acme.com', 'acme.com')).send({});
+    expect(res.status).toBe(502);
+  });
+
+  test('GET /billing/portal 404 when the domain has no Stripe customer', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free', stripeCustomerId: null });
+    const res = await request(app).get('/api/billing/portal').set(authedHeader('a@acme.com', 'acme.com'));
+    expect(res.status).toBe(404);
+  });
+
+  test('GET /billing/portal returns the portal URL when a customer exists', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'pro', stripeCustomerId: 'cus_1' });
+    mockStripeInstance.billingPortal.sessions.create.mockResolvedValue({ url: 'https://billing.stripe.com/p/x' });
+    const res = await request(app).get('/api/billing/portal').set(authedHeader('a@acme.com', 'acme.com'));
+    expect(res.status).toBe(200);
+    expect(res.body.url).toContain('billing.stripe.com');
+  });
+
+  test('GET /billing/portal 502 when Stripe throws', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'pro', stripeCustomerId: 'cus_1' });
+    mockStripeInstance.billingPortal.sessions.create.mockRejectedValue(new Error('stripe down'));
+    const res = await request(app).get('/api/billing/portal').set(authedHeader('a@acme.com', 'acme.com'));
+    expect(res.status).toBe(502);
+  });
+
+  test('webhook subscription.updated (active) upgrades to Pro', async () => {
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      type: 'customer.subscription.updated',
+      data: { object: { id: 'sub_1', status: 'active', metadata: { domain: 'acme.com' } } },
+    });
+    const res = await request(app).post('/api/billing/webhook').set('Content-Type', 'application/json').send(Buffer.from('{}'));
+    expect(res.status).toBe(200);
+    expect(firestore.setTenantPlan).toHaveBeenCalledWith('acme.com', expect.objectContaining({ plan: 'pro' }));
+  });
+
+  test('webhook checkout.session.completed with no domain is ignored', async () => {
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      type: 'checkout.session.completed', data: { object: { client_reference_id: null, metadata: {} } },
+    });
+    const res = await request(app).post('/api/billing/webhook').set('Content-Type', 'application/json').send(Buffer.from('{}'));
+    expect(res.status).toBe(200);
+    expect(firestore.setTenantPlan).not.toHaveBeenCalled();
+  });
+
+  test('webhook subscription.updated with no domain is ignored', async () => {
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      type: 'customer.subscription.updated', data: { object: { id: 'sub_1', status: 'active', metadata: {} } },
+    });
+    const res = await request(app).post('/api/billing/webhook').set('Content-Type', 'application/json').send(Buffer.from('{}'));
+    expect(res.status).toBe(200);
+    expect(firestore.setTenantPlan).not.toHaveBeenCalled();
+  });
+
+  test('webhook ignores unknown event types', async () => {
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({ type: 'invoice.paid', data: { object: {} } });
+    const res = await request(app).post('/api/billing/webhook').set('Content-Type', 'application/json').send(Buffer.from('{}'));
+    expect(res.status).toBe(200);
+    expect(res.body.received).toBe(true);
+  });
+
+  test('webhook 500 when the handler throws while updating', async () => {
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      type: 'checkout.session.completed', data: { object: { client_reference_id: 'acme.com' } },
+    });
+    firestore.setTenantPlan.mockRejectedValue(new Error('firestore down'));
+    const res = await request(app).post('/api/billing/webhook').set('Content-Type', 'application/json').send(Buffer.from('{}'));
+    expect(res.status).toBe(500);
+  });
+});
+
+describe('requireProPlan (direct)', () => {
+  const { requireProPlan } = require('../../src/routes/billing');
+  function ctx() {
+    const req = { user: { domain: 'acme.com' } };
+    const res = { status: jest.fn().mockReturnThis(), json: jest.fn().mockReturnThis() };
+    const next = jest.fn();
+    return { req, res, next };
+  }
+  afterEach(() => { delete process.env.STRIPE_SECRET_KEY; delete process.env.STRIPE_PRICE_ID; });
+
+  test('passes through when billing is not configured', async () => {
+    const { req, res, next } = ctx();
+    await requireProPlan(req, res, next);
+    expect(next).toHaveBeenCalled();
+  });
+
+  test('allows a Pro domain when configured', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x'; process.env.STRIPE_PRICE_ID = 'price_x';
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'pro' });
+    const { req, res, next } = ctx();
+    await requireProPlan(req, res, next);
+    expect(next).toHaveBeenCalled();
+  });
+
+  test('fails OPEN (next) when the plan read throws', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x'; process.env.STRIPE_PRICE_ID = 'price_x';
+    firestore.getTenantPlan.mockRejectedValue(new Error('read boom'));
+    const { req, res, next } = ctx();
+    await requireProPlan(req, res, next);
+    expect(next).toHaveBeenCalled();
+  });
+});
+
+describe('billing status error', () => {
+  test('GET /billing/status 500 when the plan read throws', async () => {
+    firestore.getTenantPlan.mockRejectedValue(new Error('read boom'));
+    const res = await request(app).get('/api/billing/status').set(authedHeader('a@acme.com', 'acme.com'));
+    expect(res.status).toBe(500);
+  });
+});
