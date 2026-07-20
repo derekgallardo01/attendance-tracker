@@ -2,21 +2,10 @@ const { Router } = require('express');
 const { requireAuth } = require('../middleware/auth');
 const log = require('../lib/logger');
 const { getUserSettings, updateUserSettings, isEmailSuppressed, suppressEmail, unsuppressEmail } = require('../services/firestore');
-const { sendSlackTestPing, maskSlackWebhook } = require('../lib/notifications');
+const { sendSlackTestPing } = require('../lib/notifications');
+const { isValidSlackWebhook, maskSlackWebhook } = require('../lib/slack');
 
 const router = Router();
-
-// Webhook URLs are bearer-token secrets. Only let us POST to the actual
-// Slack webhook hostname — refusing arbitrary outbound URLs prevents an
-// attacker from pasting an internal URL to scan our outbound network.
-const SLACK_WEBHOOK_PREFIX = 'https://hooks.slack.com/services/';
-function isValidSlackWebhook(url) {
-  if (typeof url !== 'string') return false;
-  if (!url.startsWith(SLACK_WEBHOOK_PREFIX)) return false;
-  const rest = url.slice(SLACK_WEBHOOK_PREFIX.length);
-  const parts = rest.split('/');
-  return parts.length === 3 && parts.every(p => p.length > 0 && p.length < 200);
-}
 
 // Mask the webhook on read so it's not echoed back to the page in plain
 // text. The frontend stores the user input locally during the modal

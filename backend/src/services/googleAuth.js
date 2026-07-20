@@ -81,6 +81,16 @@ function makeUserClient(accessToken) {
   return client;
 }
 
+// Pick the right auth client for a per-request Google API call: the signed-in
+// user's OAuth token when we have one, else the service account impersonating
+// the workspace (legacy/no-user path). Collapses the identical ternary in the
+// sheets + calendar routes.
+async function getGoogleClient(req, scope) {
+  return req.user
+    ? makeUserClient(req.user.accessToken)
+    : await makeJWT([scope]);
+}
+
 async function revokeToken(token) {
   const client = await getOAuthClient();
   try {
@@ -93,5 +103,5 @@ async function revokeToken(token) {
 
 module.exports = {
   loadServiceAccountKey, makeJWT, getMeetToken,
-  getOAuthClient, exchangeCode, refreshAccessToken, makeUserClient, revokeToken,
+  getOAuthClient, exchangeCode, refreshAccessToken, makeUserClient, getGoogleClient, revokeToken,
 };

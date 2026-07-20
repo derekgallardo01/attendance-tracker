@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const { Resend } = require('resend');
 const log = require('./logger');
 const CONFIG = require('../config');
+const { maskSlackWebhook } = require('./slack');
 
 // Resend transactional email — better deliverability + open/click tracking
 // than Gmail SMTP, and the API doesn't have Gmail's 500/day cap.
@@ -626,15 +627,6 @@ async function sendForgottenMeetingEmail({ to, displayName, seriesTitle, recurri
 // the export flow. The webhook URL is a bearer-token secret in the URL
 // path, so we never log the full URL — only the masked form.
 
-// Returns just the host+last4 of the secret so log lines are debuggable
-// without leaking the webhook. Mirrors the frontend maskWebhookUrl helper.
-function maskSlackWebhook(url) {
-  if (!url) return '(none)';
-  const m = url.match(/^https:\/\/hooks\.slack\.com\/services\/[^/]+\/[^/]+\/(.+)$/);
-  if (!m) return '(invalid)';
-  const tail = m[1].length > 4 ? m[1].slice(-4) : m[1];
-  return `hooks.slack.com/...${tail}`;
-}
 
 // Build the Block Kit payload. Pulled out for testability.
 function buildSlackDigestBlocks({ meetingTitle, totalAttended, totalInvited, participants, sheetUrl, durationMin, startTime }) {

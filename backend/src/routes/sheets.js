@@ -1,6 +1,6 @@
 const { Router } = require('express');
 const { google } = require('googleapis');
-const { makeJWT, makeUserClient } = require('../services/googleAuth');
+const { getGoogleClient } = require('../services/googleAuth');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { persistExport, getUserSheetId, setUserSheetId, countUserExports, getMeetingExcusedEmails, addMeetingExcusedEmails, getUserSettings } = require('../services/firestore');
@@ -40,9 +40,7 @@ router.post('/save-to-sheets', async (req, res) => {
 
   try {
     // Use user's OAuth token if available, otherwise fall back to service account
-    const sheetsAuth = req.user
-      ? makeUserClient(req.user.accessToken)
-      : await makeJWT(['https://www.googleapis.com/auth/spreadsheets']);
+    const sheetsAuth = await getGoogleClient(req, 'https://www.googleapis.com/auth/spreadsheets');
     const sheets = google.sheets({ version: 'v4', auth: sheetsAuth });
 
     // Resolve spreadsheet ID: per-user sheet (OAuth) or shared sheet (legacy)

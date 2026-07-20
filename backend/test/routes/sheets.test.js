@@ -46,6 +46,7 @@ jest.mock('googleapis', () => ({
 jest.mock('../../src/services/googleAuth', () => ({
   makeJWT: jest.fn().mockResolvedValue({}),
   makeUserClient: jest.fn().mockReturnValue({}),
+  getGoogleClient: jest.fn().mockResolvedValue({}),
 }));
 
 jest.mock('../../src/services/firestore', () => ({

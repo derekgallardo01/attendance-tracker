@@ -1,6 +1,6 @@
 const { Router } = require('express');
 const { google } = require('googleapis');
-const { makeJWT, makeUserClient } = require('../services/googleAuth');
+const { getGoogleClient } = require('../services/googleAuth');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { persistCalendarData } = require('../services/firestore');
@@ -20,9 +20,7 @@ router.get('/calendar-attendees', async (req, res) => {
 
   try {
     // Use user's OAuth token if available, otherwise fall back to service account
-    const calAuth = req.user
-      ? makeUserClient(req.user.accessToken)
-      : await makeJWT(['https://www.googleapis.com/auth/calendar.readonly']);
+    const calAuth = await getGoogleClient(req, 'https://www.googleapis.com/auth/calendar.readonly');
     const calendar = google.calendar({ version: 'v3', auth: calAuth });
 
     const timeMin = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
