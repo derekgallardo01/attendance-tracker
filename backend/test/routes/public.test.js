@@ -39,6 +39,19 @@ beforeEach(() => {
 });
 
 describe('GET /api/public/stats', () => {
+  // MUST run before any successful stats call populates the module-level cache,
+  // so the fallback returns the zero state (cached is still null) rather than a
+  // stale cached value.
+  test('returns a zero state when uncached and the read fails', async () => {
+    firestore.getDb.mockReturnValue({
+      collection: () => ({ get: jest.fn().mockRejectedValue(new Error('boom')) }),
+      collectionGroup: () => ({ get: jest.fn().mockRejectedValue(new Error('boom')) }),
+    });
+    const res = await request(app).get('/api/public/stats');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(expect.objectContaining({ organizations: 0, meetings: 0 }));
+  });
+
   test('returns org + meeting counts (or fallback on failure)', async () => {
     firestore.getDb.mockReturnValue({
       collection: () => ({ get: jest.fn().mockResolvedValue({ docs: [{ id: 'acme.com' }, { id: 'beta.com' }] }) }),
