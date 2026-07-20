@@ -160,4 +160,4 @@ async function requireProPlan(req, res, next) {
   }
 }
 
-module.exports = { router, webhookHandler, requireProPlan, billingConfigured };
+module.exports = { router, webhookHandler, requireProPlan };

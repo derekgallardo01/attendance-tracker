@@ -8,6 +8,11 @@ const { escapeHtml } = require('../lib/html');
 
 const router = Router();
 
+// Cap a wire-supplied string to N chars (null if it isn't a string), so a
+// malicious caller can't bloat Firestore docs. Shared by the feedback +
+// pageview handlers.
+const cap = (v, n) => (typeof v === 'string' ? v.slice(0, n) : null);
+
 // Tighter limit on the feedback endpoint than the general /api limiter
 // because the failure mode is "spammer fills your inbox" not "API saturated".
 const feedbackLimiter = rateLimit({
@@ -27,7 +32,6 @@ router.post('/public/feedback', feedbackLimiter, async (req, res) => {
     if (!body || typeof body !== 'string' || body.trim().length < 2) {
       return res.status(400).json({ error: 'Feedback body is required' });
     }
-    const cap = (v, n) => (typeof v === 'string' ? v.slice(0, n) : null);
     const safeBody = body.trim().slice(0, 5000);
     const userAgent = cap(req.headers['user-agent'], 500);
 
@@ -71,8 +75,6 @@ router.post('/public/pageview', async (req, res) => {
   res.status(204).end();
   try {
     const body = req.body || {};
-    // Cap every string so a malicious caller can't bloat docs.
-    const cap = (v, n) => (typeof v === 'string' ? v.slice(0, n) : null);
     const today = new Date().toISOString().slice(0, 10);
     const db = getDb();
 
