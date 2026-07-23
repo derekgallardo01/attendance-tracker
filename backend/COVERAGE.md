@@ -1,6 +1,6 @@
 # Test coverage status
 
-**Backend: 86% statements / 87% lines / 80% branches / 80% functions — 1,002 tests.**
+**Backend: 86% statements / 88% lines / 80% branches / 81% functions — 1,098 tests.**
 
 A regression gate is enforced in `jest.config.js` (`coverageThreshold.global`) and
 runs in CI via `npm run test:coverage`. The floors are set just below the current
@@ -9,9 +9,15 @@ coverage climbs; never lower them.**
 
 ## Fully covered (100%)
 All of `src/lib/`, `src/middleware/`, `src/services/{googleAuth,meetApi}`, every
-`src/services/firestore/*` submodule **except analytics**, `src/app.js`,
-`src/config.js`, and every route **except admin.js** (billing, calendar, history,
-oauth, public, settings, sheets, team, attendance).
+`src/services/firestore/*` submodule **except analytics** (and the two lightly-dipped
+below), `src/app.js`, `src/config.js`, and every route **except admin.js** (billing,
+calendar, history, oauth, public, settings, sheets, team, attendance).
+
+The 2026-07-23 adversarial-review fixes added a couple of best-effort error-catch
+branches that aren't exercised: `firestore/shareLinks.js` (~97%, the
+`revokeShareLink` catch) and `firestore/reengagement.js` (~94%, the
+`claimSeriesAlertCondition` non-ALREADY_EXISTS catch). Cover them with the
+`_core`-mocked throwing-DB pattern when convenient.
 
 `src/services/firestore.js` is at **100% statements/functions, 87% branches**.
 
