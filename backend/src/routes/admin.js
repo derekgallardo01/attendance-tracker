@@ -6,6 +6,7 @@ const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, ge
 const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, flushDeferredNotifications } = require('../lib/notifications');
 const { requireSuperAdmin, requireSuperAdminOrScheduler } = require('../middleware/adminAuth');
 const { requireAuth } = require('../middleware/auth');
+const { domainOf } = require('../services/firestore/_core'); // pure util; imported directly (test firestore-mocks needn't stub it)
 const { ACQUISITION_SOURCES } = require('../lib/constants');
 
 const SUPER_ADMIN_EMAIL = CONFIG.superAdminEmail;
@@ -691,6 +692,13 @@ router.post('/admin/verify-delegation', verifyDelegationLimiter, async (req, res
     const { domain, adminEmail } = req.body;
     if (!domain || !adminEmail) {
       return res.status(400).json({ error: 'domain and adminEmail required' });
+    }
+    // This endpoint is unauthenticated (called from setup.html pre-signin) and
+    // writes tenant config. Bind adminEmail to domain so a caller can't point
+    // one tenant's impersonation at another domain's admin (config poisoning /
+    // re-activation of an arbitrary tenant).
+    if (domainOf(adminEmail)?.toLowerCase() !== String(domain).toLowerCase()) {
+      return res.status(400).json({ error: 'adminEmail must belong to the given domain' });
     }
 
     // Try to get a Meet API token by impersonating the admin

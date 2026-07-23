@@ -65,11 +65,11 @@ function digestPresentRows(participants, fallbackEnd, lateMinFor) {
 // The calendar invitees who never attended → Absent (or Excused) rows.
 function digestAbsentRows(calendarAttendees, { attendedEmails, attendedNames, excusedSet }) {
   return calendarAttendees
-    .filter(a => !attendedEmails.has(a.email.toLowerCase()) && !attendedNames.has((a.displayName || '').toLowerCase().trim()))
+    .filter(a => !attendedEmails.has((a.email || '').toLowerCase()) && !attendedNames.has((a.displayName || '').toLowerCase().trim()))
     .map(a => ({
       displayName: a.displayName,
       email: a.email,
-      status: excusedSet.has(a.email.toLowerCase()) ? 'Excused' : 'Absent',
+      status: excusedSet.has((a.email || '').toLowerCase()) ? 'Excused' : 'Absent',
       durationMin: 0,
     }));
 }
@@ -202,7 +202,7 @@ router.post('/save-to-sheets', async (req, res) => {
     // RSVP lookup from calendar attendees
     const rsvpMap = {};
     for (const a of calendarAttendees) {
-      rsvpMap[a.email.toLowerCase()] = a.status;
+      rsvpMap[(a.email || '').toLowerCase()] = a.status;
     }
 
     // Format helpers — display in user's timezone (falls back to US Eastern)
@@ -221,7 +221,9 @@ router.post('/save-to-sheets', async (req, res) => {
     // participants is guaranteed non-empty (validated at the top), so
     // totalInvited is always >= 1 — the 'N/A' fallback is defensive-only.
     /* istanbul ignore next */
-    const attendanceRate = totalInvited > 0 ? Math.round((totalAttended / totalInvited) * 100) + '%' : 'N/A';
+    // Cap at 100%: with forwarded invites there can be more attendees than
+    // invitees, which otherwise prints a nonsensical ">100%" summary rate.
+    const attendanceRate = totalInvited > 0 ? Math.min(100, Math.round((totalAttended / totalInvited) * 100)) + '%' : 'N/A';
 
     // Format scheduled time range
     const fmtTimeOnly = (iso) => {
@@ -292,13 +294,13 @@ router.post('/save-to-sheets', async (req, res) => {
     // Directory API email enrichment handles the different-email-same-person case now.
     const noShows = calendarAttendees
       .filter(a => {
-        if (attendedEmails.has(a.email.toLowerCase())) return false;
+        if (attendedEmails.has((a.email || '').toLowerCase())) return false;
         const aName = (a.displayName || '').toLowerCase().trim();
         if (attendedNames.has(aName)) return false;
         return true;
       })
       .map(a => {
-        const status = excusedSet.has(a.email.toLowerCase()) ? 'Absent (excused)' : 'Absent';
+        const status = excusedSet.has((a.email || '').toLowerCase()) ? 'Absent (excused)' : 'Absent';
         return [sanitizeCell(a.displayName), sanitizeCell(a.email), fmtRsvp(a.status), '', '', '', '', '0%', 0, status];
       });
 

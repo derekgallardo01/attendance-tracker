@@ -18,18 +18,18 @@ afterEach(() => jest.clearAllMocks());
 describe('deleteRefsInBatches', () => {
   test('returns 0 for an empty list and defaults ctx (no ctx arg)', async () => {
     _core.getDb.mockReturnValue({ batch: () => ({ delete() {}, commit: jest.fn() }) });
-    await expect(deleteRefsInBatches([])).resolves.toBe(0);
+    await expect(deleteRefsInBatches([])).resolves.toEqual({ deleted: 0, failedChunks: 0 });
   });
 
   test('counts deleted refs across chunks on success', async () => {
     const commit = jest.fn().mockResolvedValue({});
     _core.getDb.mockReturnValue({ batch: () => ({ delete() {}, commit }) });
-    await expect(deleteRefsInBatches([{}, {}, {}], { domain: 'acme.com' })).resolves.toBe(3);
+    await expect(deleteRefsInBatches([{}, {}, {}], { domain: 'acme.com' })).resolves.toEqual({ deleted: 3, failedChunks: 0 });
   });
 
-  test('logs a warning and keeps going when a chunk commit fails', async () => {
+  test('logs a warning and reports the failed chunk when a commit fails', async () => {
     _core.getDb.mockReturnValue({ batch: () => ({ delete() {}, commit: jest.fn().mockRejectedValue(new Error('batch boom')) }) });
-    await expect(deleteRefsInBatches([{}, {}], { domain: 'acme.com' })).resolves.toBe(0);
+    await expect(deleteRefsInBatches([{}, {}], { domain: 'acme.com' })).resolves.toEqual({ deleted: 0, failedChunks: 1 });
     expect(_core.log.warn).toHaveBeenCalledWith('firestore: batch delete failed', expect.objectContaining({ domain: 'acme.com' }));
   });
 });
@@ -37,14 +37,10 @@ describe('deleteRefsInBatches', () => {
 describe('deleteUser', () => {
   test('logs an error (does not throw) when a cascade query rejects', async () => {
     // keyed doc refs are fine, but the field-query Promise.all rejects → catch.
-    _core.tenantRef.mockReturnValue({
-      collection: () => ({
-        doc: () => ({}),
-        where: () => ({ get: () => Promise.reject(new Error('query boom')) }),
-        get: () => Promise.reject(new Error('query boom')),
-      }),
-    });
-    await expect(deleteUser('acme.com', 'User@Acme.com')).resolves.toBeUndefined();
+    const rejecting = { collection: () => rejecting, doc: () => ({}), where: () => rejecting, get: () => Promise.reject(new Error('query boom')) };
+    _core.tenantRef.mockReturnValue(rejecting);
+    _core.getDb.mockReturnValue(rejecting); // shareLinks/feedback top-level queries also go through getDb()
+    await expect(deleteUser('acme.com', 'User@Acme.com')).resolves.toMatchObject({ ok: false });
     expect(_core.log.error).toHaveBeenCalledWith(
       'firestore: deleteUser failed',
       expect.objectContaining({ domain: 'acme.com', email: 'user@acme.com' }),

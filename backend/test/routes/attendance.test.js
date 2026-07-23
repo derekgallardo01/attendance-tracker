@@ -312,13 +312,15 @@ describe('GET /api/attendance — participant + filter edge branches', () => {
     CONFIG.adminEmail = savedAdmin;
   });
 
-  test('unauthenticated-but-service-account export persists with a null email', async () => {
-    firestore.getTenantConfig.mockResolvedValue({ impersonateEmail: 'admin@acme.com' }); // SA token, no req.user
+  test('SECURITY: an unauthenticated request no longer falls through to the service account', async () => {
+    // Previously `!userDomain` let an anonymous request impersonate the legacy
+    // admin via the SA and read that org's attendance. Now anonymous → no SA
+    // token → 401, and nothing is persisted.
+    firestore.getTenantConfig.mockResolvedValue({ impersonateEmail: 'admin@acme.com' });
     mockMeetGet.mockResolvedValue({ conferenceRecords: [{ name: 'conferenceRecords/rec-4' }] });
-    mockMeetGetAll.mockImplementation(async (p) => p.endsWith('/participants') ? [] : []);
     const res = await request(app).get('/api/attendance?conferenceId=abc'); // no bearer
-    expect(res.status).toBe(200);
-    expect(firestore.persistAttendance).toHaveBeenCalledWith('default', 'abc', 'conferenceRecords/rec-4', [], undefined);
+    expect(res.status).toBe(401);
+    expect(firestore.persistAttendance).not.toHaveBeenCalled();
   });
 });
 

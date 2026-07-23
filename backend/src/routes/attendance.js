@@ -87,7 +87,13 @@ router.get('/attendance', async (req, res) => {
     // Only use service account if the impersonation email's domain matches the user's domain.
     // A service account impersonating user@domainA cannot see meetings from domainB.
     const impersonateDomain = impersonateEmail ? domainOf(impersonateEmail) : null;
-    const shouldTryServiceAccount = impersonateEmail && (!userDomain || userDomain === impersonateDomain);
+    // Require an AUTHENTICATED user whose domain matches the impersonation target.
+    // The old `!userDomain` disjunct let an UNAUTHENTICATED request fall through to
+    // the service account impersonating the legacy admin (CONFIG.impersonateEmail)
+    // — i.e. anyone could read that org's meeting attendance with no auth. Now an
+    // anonymous request gets no SA token and 401s below (authenticated behavior is
+    // unchanged: it was already `userDomain === impersonateDomain`).
+    const shouldTryServiceAccount = impersonateEmail && userDomain && userDomain === impersonateDomain;
     if (shouldTryServiceAccount) {
       try {
         token = await getMeetToken(impersonateEmail);

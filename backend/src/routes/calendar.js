@@ -1,6 +1,7 @@
 const { Router } = require('express');
 const { google } = require('googleapis');
 const { getGoogleClient } = require('../services/googleAuth');
+const { requireAuth } = require('../middleware/auth');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { persistCalendarData } = require('../services/firestore');
@@ -13,7 +14,11 @@ function extractMeetCode(url) {
   return match ? match[1] : null;
 }
 
-router.get('/calendar-attendees', async (req, res) => {
+// requireAuth: without it, an anonymous request fell through getGoogleClient to
+// the service account impersonating the legacy admin (CONFIG.impersonateEmail) —
+// leaking that org's calendar events + attendee emails to anyone. The add-on
+// always calls this authenticated (calendar read happens while tracking).
+router.get('/calendar-attendees', requireAuth, async (req, res) => {
   res.set('Cache-Control', 'no-store');
   const { meetingCode, calendarId } = req.query;
   if (!meetingCode) return res.status(400).json({ error: 'meetingCode is required' });

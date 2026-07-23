@@ -203,7 +203,10 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
         batch.set(pRef, {
           participantId: p.participantId,
           displayName: p.displayName,
-          email: p.email,
+          // Normalize to lowercase so account-deletion (which queries
+          // email == emailLower) reliably matches, and so per-person rollups
+          // key consistently. Reads already lowercase before comparing.
+          email: p.email ? p.email.toLowerCase() : null,
           joinTime: p.joinTime ? new Date(p.joinTime) : null,
           leaveTime: p.leaveTime ? new Date(p.leaveTime) : null,
           present: p.present,

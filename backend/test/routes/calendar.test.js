@@ -40,6 +40,12 @@ beforeEach(() => {
 });
 
 describe('GET /api/calendar-attendees', () => {
+  test('SECURITY: 401 without auth (no anonymous fall-through to the service account)', async () => {
+    const res = await request(app).get('/api/calendar-attendees?meetingCode=abc-defg-hij');
+    expect(res.status).toBe(401);
+    expect(mockEventsList).not.toHaveBeenCalled();
+  });
+
   test('400 when meetingCode is missing', async () => {
     const res = await request(app)
       .get('/api/calendar-attendees')

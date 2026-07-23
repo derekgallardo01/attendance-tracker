@@ -46,6 +46,7 @@ let app;
 beforeEach(() => {
   jest.clearAllMocks();
   mockPayload = { email: 'newuser@acme.com', hd: 'acme.com', name: 'New User' };
+  firestore.deleteUser.mockResolvedValue({ ok: true }); // delete-account checks result.ok
   app = buildApp();
 });
 
@@ -211,7 +212,7 @@ describe('POST /api/oauth/delete-account', () => {
   test('revokes the token and cascades the delete for the authenticated user', async () => {
     firestore.getUser.mockResolvedValue({ email: 'gone@acme.com', domain: 'acme.com', refreshToken: 'rt-1' });
     googleAuth.revokeToken.mockResolvedValue(undefined);
-    firestore.deleteUser.mockResolvedValue(undefined);
+    firestore.deleteUser.mockResolvedValue({ ok: true });
     const res = await request(app)
       .post('/api/oauth/delete-account')
       .set(authedHeader('gone@acme.com', 'acme.com'));
@@ -222,7 +223,7 @@ describe('POST /api/oauth/delete-account', () => {
 
   test('acts on the JWT identity, never an email in the body', async () => {
     firestore.getUser.mockResolvedValue({ email: 'me@acme.com', domain: 'acme.com' });
-    firestore.deleteUser.mockResolvedValue(undefined);
+    firestore.deleteUser.mockResolvedValue({ ok: true });
     const res = await request(app)
       .post('/api/oauth/delete-account')
       .set(authedHeader('me@acme.com', 'acme.com'))
@@ -236,7 +237,7 @@ describe('POST /api/oauth/delete-account', () => {
   test('still deletes even if token revoke fails (best-effort revoke)', async () => {
     firestore.getUser.mockResolvedValue({ email: 'gone@acme.com', domain: 'acme.com', refreshToken: 'rt-1' });
     googleAuth.revokeToken.mockRejectedValue(new Error('google down'));
-    firestore.deleteUser.mockResolvedValue(undefined);
+    firestore.deleteUser.mockResolvedValue({ ok: true });
     const res = await request(app)
       .post('/api/oauth/delete-account')
       .set(authedHeader('gone@acme.com', 'acme.com'));

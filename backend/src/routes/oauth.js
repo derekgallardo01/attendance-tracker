@@ -256,7 +256,13 @@ router.post('/delete-account', async (req, res) => {
       log.warn('oauth: delete-account revoke failed (continuing)', { email, error: e.message });
     }
 
-    await deleteUser(domain, email); // cascades all PII; swallows its own errors
+    const result = await deleteUser(domain, email); // cascades all PII
+    if (!result?.ok) {
+      // Partial failure: some PII may remain. Don't falsely report a complete
+      // deletion — surface an error so the client (and the user) can retry.
+      log.error('oauth: account deletion incomplete', { email });
+      return res.status(500).json({ error: 'Account deletion did not fully complete. Please try again.' });
+    }
     log.info('oauth: account deleted by user', { email });
     res.json({ success: true });
   } catch (err) {

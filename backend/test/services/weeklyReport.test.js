@@ -229,8 +229,19 @@ describe('deleteUser', () => {
     expect(ctx.read('tenants/acme.com/users/uppercase@acme.com')).toBeUndefined();
   });
 
-  test('swallows errors (does not throw — sign-out shouldn\'t fail)', async () => {
+  test('does not throw and reports ok for a non-existent user (no-op delete)', async () => {
     // Deleting a non-existent doc is a no-op in Firestore, not an error.
-    await expect(firestore.deleteUser('acme.com', 'ghost@nowhere.com')).resolves.toBeUndefined();
+    await expect(firestore.deleteUser('acme.com', 'ghost@nowhere.com')).resolves.toMatchObject({ ok: true });
+  });
+
+  test('cascades the user\'s top-level share links + feedback (PII, GDPR)', async () => {
+    ctx.seed('tenants/acme.com/users/owner@acme.com', { email: 'owner@acme.com' });
+    ctx.seed('shareLinks/tok1', { token: 'tok1', ownerEmail: 'owner@acme.com' });   // theirs
+    ctx.seed('shareLinks/tok2', { token: 'tok2', ownerEmail: 'other@acme.com' });    // someone else's
+    ctx.seed('feedback/f1', { fromEmail: 'owner@acme.com', body: 'hi' });            // theirs
+    await firestore.deleteUser('acme.com', 'owner@acme.com');
+    expect(ctx.read('shareLinks/tok1')).toBeUndefined();   // deleted
+    expect(ctx.read('shareLinks/tok2')).toBeDefined();     // NOT deleted (different owner)
+    expect(ctx.read('feedback/f1')).toBeUndefined();       // deleted
   });
 });

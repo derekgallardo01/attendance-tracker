@@ -110,6 +110,26 @@ describe('POST /api/admin/source — self-reported source + deferred signup flus
   });
 });
 
+describe('POST /api/admin/verify-delegation — domain binding (unauthenticated endpoint)', () => {
+  test('400 when adminEmail does not belong to the given domain (config-poisoning guard)', async () => {
+    const res = await request(app)
+      .post('/api/admin/verify-delegation')
+      .set('Content-Type', 'application/json')
+      .send({ domain: 'acme.com', adminEmail: 'admin@evil.com' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/belong to the given domain/i);
+    expect(firestore.upsertTenantConfig).not.toHaveBeenCalled();
+  });
+
+  test('400 when domain or adminEmail is missing', async () => {
+    const res = await request(app)
+      .post('/api/admin/verify-delegation')
+      .set('Content-Type', 'application/json')
+      .send({ domain: 'acme.com' });
+    expect(res.status).toBe(400);
+  });
+});
+
 describe('Super-admin gated endpoints', () => {
   test('403 when caller is not the super-admin (regular user)', async () => {
     const res = await request(app)
