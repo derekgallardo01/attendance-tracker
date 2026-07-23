@@ -4,6 +4,7 @@ const express = require('express');
 const log = require('../lib/logger');
 const CONFIG = require('../config');
 const { getTenantPlan, setTenantPlan } = require('../services/firestore');
+const { PERSONAL_EMAIL_DOMAINS } = require('../services/firestore/_core');
 
 // Per-domain Pro subscription via Stripe Checkout. Lazy-init the SDK (like the
 // Resend wrapper) so the service boots and runs fine before billing is
@@ -182,6 +183,11 @@ async function requireProPlan(req, res, next) {
 // behavior: a transient read error rides the last-known plan, else denies.
 async function planIsPro(domain) {
   if (!billingConfigured()) return true; // pre-launch: nothing is gated
+  // Individual Pro fences don't apply to personal-email (shared-tenant) users:
+  // per-domain billing can't sell to a tenant shared by strangers, so gating a
+  // feature they can't buy would just break the product for them. Leave those
+  // features free — the fences target real Workspace domains.
+  if (PERSONAL_EMAIL_DOMAINS.has((domain || '').toLowerCase())) return true;
   try {
     const { plan } = await getTenantPlan(domain);
     planCache.set(domain, { plan, at: Date.now() });

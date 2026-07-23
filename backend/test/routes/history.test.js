@@ -66,6 +66,14 @@ describe('GET /api/history', () => {
       expect(res.body).toMatchObject({ historyCapped: true, totalMeetings: 30, freeLimit: 25 });
     });
 
+    test('personal-email domain: exempt from the cap (shared tenant, not billable per-domain)', async () => {
+      firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+      firestore.getUserMeetingHistory.mockResolvedValue({ meetings: many(30), people: [], calendar: [] });
+      const res = await request(app).get('/api/history').set(authedHeader('u@gmail.com', 'gmail.com'));
+      expect(res.body.meetings).toHaveLength(30);
+      expect(res.body.historyCapped).toBeUndefined();
+    });
+
     test('pro domain: full history, no cap', async () => {
       firestore.getTenantPlan.mockResolvedValue({ plan: 'pro' });
       firestore.getUserMeetingHistory.mockResolvedValue({ meetings: many(30), people: [], calendar: [] });

@@ -604,6 +604,14 @@ describe('POST /api/save-to-sheets — Pro gating', () => {
     expect(notifications.sendSlackDigest).not.toHaveBeenCalled();
   });
 
+  test('personal-email domains are exempt — auto-export works even on a free plan', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    const res = await request(app).post('/api/save-to-sheets')
+      .set(authedHeader('u@gmail.com', 'gmail.com')).set('Content-Type', 'application/json')
+      .send({ ...validPayload, autoExport: true });
+    expect(res.status).toBe(200); // not gated — shared tenant can't be billed per-domain
+  });
+
   test('Pro domain gets auto-export + email + Slack digest', async () => {
     firestore.getTenantPlan.mockResolvedValue({ plan: 'pro' });
     firestore.getUserSettings.mockResolvedValue({ slackWebhookUrl: 'https://hooks.slack.com/x' });
