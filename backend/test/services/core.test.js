@@ -69,6 +69,32 @@ describe('memoizeTTL', () => {
   });
 });
 
+describe('weeklyStreak', () => {
+  const WEEK = 7 * 24 * 3600 * 1000;
+  const now = 1_700_000_000_000; // subtracting whole weeks decrements the bucket exactly, regardless of alignment
+
+  test('0 when there are no tracked events', () => {
+    expect(core.weeklyStreak([], now)).toBe(0);
+    expect(core.weeklyStreak(null, now)).toBe(0);
+  });
+
+  test('counts consecutive weeks back from the current week', () => {
+    expect(core.weeklyStreak([now, now - WEEK, now - 2 * WEEK], now)).toBe(3);
+  });
+
+  test('a missing week breaks the streak', () => {
+    expect(core.weeklyStreak([now, now - WEEK, now - 3 * WEEK], now)).toBe(2);
+  });
+
+  test('grace: nothing tracked yet this week but last week keeps the streak alive', () => {
+    expect(core.weeklyStreak([now - WEEK, now - 2 * WEEK], now)).toBe(2);
+  });
+
+  test('stale activity (>1 week ago) resets to 0', () => {
+    expect(core.weeklyStreak([now - 3 * WEEK, now - 4 * WEEK], now)).toBe(0);
+  });
+});
+
 describe('countDistinctAttendees', () => {
   test('dedupes by email, else lowercased displayName', () => {
     const people = [

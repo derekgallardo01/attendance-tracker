@@ -12,6 +12,7 @@ jest.mock('../../src/services/firestore', () => ({
   updateUserTokens: jest.fn(),
   logEvent: jest.fn(),
   getUserActivationStatus: jest.fn(),
+  getUserTrackingStreak: jest.fn().mockResolvedValue(0),
   countAllUsers: jest.fn(),
   getTenantConfig: jest.fn(),
   deleteUser: jest.fn(),
@@ -120,19 +121,21 @@ describe('GET /api/oauth/me', () => {
     expect(res.status).toBe(401);
   });
 
-  test('returns teamAdmin:true for team admin user', async () => {
+  test('returns teamAdmin:true for team admin user + the weekly streak', async () => {
     firestore.getUser.mockResolvedValue({
       email: 'admin@acme.com', domain: 'acme.com', teamAdmin: true,
     });
     firestore.getUserActivationStatus.mockResolvedValue({
       hasSignedIn: true, hasTracked: true, hasExported: false,
     });
+    firestore.getUserTrackingStreak.mockResolvedValue(4);
     const res = await request(app)
       .get('/api/oauth/me')
       .set(authedHeader('admin@acme.com', 'acme.com'));
     expect(res.status).toBe(200);
     expect(res.body.teamAdmin).toBe(true);
     expect(res.body.email).toBe('admin@acme.com');
+    expect(res.body.weeklyStreak).toBe(4);
   });
 
   test('returns teamAdmin:false for regular user', async () => {

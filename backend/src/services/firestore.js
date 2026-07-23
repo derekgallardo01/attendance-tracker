@@ -2,7 +2,7 @@ const {
   FieldValue, log,
   PERSONAL_EMAIL_DOMAINS, SUPER_ADMIN_EMAIL,
   encryptToken, decryptToken,
-  getDb, memoizeTTL, tenantRef, lastSegment, countDistinctAttendees,
+  getDb, memoizeTTL, tenantRef, lastSegment, countDistinctAttendees, weeklyStreak,
 } = require('./firestore/_core');
 const { createShareLink, resolveShareLink, getSharedSeriesView } = require('./firestore/shareLinks');
 const { evaluateSeriesAlerts, evaluateReengagementForUser, claimReengagementSlot, claimDailyAlertSlot, recordAlertsSent } = require('./firestore/reengagement');
@@ -446,6 +446,20 @@ async function upsertUser(domain, { email, displayName, refreshToken, sheetId, a
     log.info('firestore: upserted user', { domain, email, isFirstSignin, teamAdmin: !!data.teamAdmin });
   } catch (err) {
     log.error('firestore: upsertUser failed', { domain, email, error: err.message });
+  }
+}
+
+// Current consecutive-week tracking streak for a user, from their 'tracked'
+// events. Cheap single-collection read; drives the in-app retention chip.
+async function getUserTrackingStreak(domain, email) {
+  try {
+    const snap = await tenantRef(domain).collection('events')
+      .where('email', '==', email.toLowerCase()).where('type', '==', 'tracked').get();
+    const ts = snap.docs.map(d => d.data().createdAt?.toDate?.()?.getTime()).filter(Boolean);
+    return weeklyStreak(ts, Date.now());
+  } catch (err) {
+    log.warn('firestore: getUserTrackingStreak failed', { domain, email, error: err.message });
+    return 0;
   }
 }
 
@@ -1378,7 +1392,7 @@ module.exports = {
   getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens,
   getUserSettings, updateUserSettings,
   setUserAcquisitionSource, claimSignupNotification,
-  claimReferral, recordReferralForInviter,
+  claimReferral, recordReferralForInviter, getUserTrackingStreak,
   logEvent,
   getUserActivationStatus, countUserExports, isExistingUserAnywhere, countAllUsers,
   getUserMeetingHistory,

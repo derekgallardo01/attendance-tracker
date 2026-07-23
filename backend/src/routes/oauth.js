@@ -4,7 +4,7 @@ const { google } = require('googleapis');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { exchangeCode, revokeToken } = require('../services/googleAuth');
-const { upsertUser, getUser, updateUserTokens, logEvent, getUserActivationStatus, getTenantConfig, deleteUser } = require('../services/firestore');
+const { upsertUser, getUser, updateUserTokens, logEvent, getUserActivationStatus, getUserTrackingStreak, getTenantConfig, deleteUser } = require('../services/firestore');
 const { maybeSendSignupNotification, maybeSendReferralNotification } = require('../lib/notifications');
 
 const { ACQUISITION_SOURCES } = require('../lib/constants');
@@ -194,14 +194,16 @@ router.get('/me', async (req, res) => {
     const decoded = decodeSession(req);
     if (!decoded) return res.status(401).json({ error: 'Not authenticated' });
     const domain = decoded.domain;
-    const [status, user] = await Promise.all([
+    const [status, user, weeklyStreak] = await Promise.all([
       getUserActivationStatus(domain, decoded.email),
       getUser(domain, decoded.email),
+      getUserTrackingStreak(domain, decoded.email),
     ]);
     res.json({
       email: decoded.email,
       domain,
       teamAdmin: !!user?.teamAdmin,
+      weeklyStreak,
       ...status,
     });
   } catch (err) {

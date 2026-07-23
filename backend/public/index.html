@@ -1569,6 +1569,10 @@ function renderNudgeBanner() {
   } else if (!a.hasExported) {
     text.innerHTML = '<strong>Almost there:</strong> click <strong>Sheet</strong> above to save this attendance to Google Sheets in one click — you can share, sort, or archive it from there.';
     banner.style.display = 'block';
+  } else if (a.weeklyStreak >= 2) {
+    // Retention nudge: positive reinforcement for consistent trackers.
+    text.innerHTML = `🔥 <strong>${a.weeklyStreak}-week streak!</strong> You've tracked attendance ${a.weeklyStreak} weeks running — nice.`;
+    banner.style.display = 'block';
   } else {
     banner.style.display = 'none';
   }

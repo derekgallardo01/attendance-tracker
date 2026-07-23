@@ -116,9 +116,28 @@ function countDistinctAttendees(participants) {
   return ids.size;
 }
 
+// Consecutive-week tracking streak from a list of tracked-event timestamps
+// (ms). Weeks are epoch-aligned buckets (7-day); the exact alignment doesn't
+// matter, only consistency. The streak counts back from the current week — or
+// last week if nothing's tracked yet this week, so an in-progress week doesn't
+// look like a broken streak. Pure + injectable `nowMs` so it's deterministic
+// to test. Powers the in-app "N weeks running" retention chip.
+const WEEK_MS = 7 * 24 * 3600 * 1000;
+function weeklyStreak(timestamps, nowMs) {
+  if (!timestamps || !timestamps.length) return 0;
+  const weekOf = (ms) => Math.floor(ms / WEEK_MS);
+  const weeks = new Set(timestamps.map(weekOf));
+  const current = weekOf(nowMs);
+  const start = weeks.has(current) ? current : (weeks.has(current - 1) ? current - 1 : null);
+  if (start === null) return 0; // last activity is >1 week stale — streak broken
+  let streak = 0;
+  for (let w = start; weeks.has(w); w--) streak++;
+  return streak;
+}
+
 module.exports = {
   FieldValue, log, CONFIG,
   PERSONAL_EMAIL_DOMAINS, SUPER_ADMIN_EMAIL,
   encryptToken, decryptToken,
-  getDb, memoizeTTL, tenantRef, lastSegment, countDistinctAttendees,
+  getDb, memoizeTTL, tenantRef, lastSegment, countDistinctAttendees, weeklyStreak,
 };
