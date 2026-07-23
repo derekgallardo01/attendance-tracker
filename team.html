@@ -96,8 +96,7 @@
 
     <div id="loading" style="display:none">Loading team data…</div>
     <div id="error-not-admin" class="error-banner" style="display:none">
-      <strong>You're signed in, but you're not the team admin for your domain.</strong>
-      <div style="margin-top:6px;font-size:.85rem">Email derekgallardo01@gmail.com if you should be — happy to transfer the role.</div>
+      <div id="admin-gate"><strong>Checking your team-admin status…</strong></div>
     </div>
 
     <div id="error-upgrade" class="error-banner" style="display:none">
@@ -171,8 +170,14 @@
 
       <div class="footer-note">
         You're seeing org-wide data because you're the team admin for <span id="domain-footer"></span>.
-        Need to transfer this role? Email <a href="mailto:derekgallardo01@gmail.com" style="color:var(--blue)">derekgallardo01@gmail.com</a>.
-        Workspace admins already have similar visibility into meeting attendance via the Google Admin Console.
+        <div style="margin-top:10px">
+          <label style="font-size:.75rem">Transfer the team-admin role to a teammate (they must have signed in at least once):</label>
+          <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+            <input id="transfer-email" class="search-box" style="margin:0;max-width:280px" type="email" placeholder="teammate@yourdomain.com" />
+            <button class="btn btn-secondary" onclick="transferAdmin()">Transfer role</button>
+          </div>
+        </div>
+        <div style="margin-top:10px">Workspace admins already have similar visibility into meeting attendance via the Google Admin Console.</div>
       </div>
     </div>
   </div>
@@ -229,6 +234,7 @@
         if (res.status === 403) {
           document.getElementById('loading').style.display = 'none';
           document.getElementById('error-not-admin').style.display = 'block';
+          showAdminGate(); // self-serve claim / "ask your admin" / personal-domain notice
           return;
         }
         if (res.status === 402) {
@@ -255,6 +261,65 @@
       } finally {
         document.getElementById('loading').style.display = 'none';
       }
+    }
+
+    // Team-admin gate: when the overview 403s, ask the backend what the caller
+    // can do — claim the vacant role, wait for the current admin, or (personal
+    // domain) nothing. Replaces the old "email the owner" dead-end.
+    async function showAdminGate() {
+      const el = document.getElementById('admin-gate');
+      try {
+        const res = await fetch(`${BACKEND_URL}/team/admin-status`, { headers: { 'Authorization': `Bearer ${sessionToken}` } });
+        const s = await res.json().catch(() => ({}));
+        if (s.isPersonalDomain) {
+          el.innerHTML = `<strong>Team features need a Google Workspace domain.</strong>
+            <div style="margin-top:6px;font-size:.85rem">Personal accounts (gmail.com, outlook.com, …) share one space, so there's no org dashboard.</div>`;
+        } else if (s.canClaim) {
+          el.innerHTML = `<strong>No team admin yet for your domain.</strong>
+            <div style="margin-top:6px;font-size:.85rem">Claim the role to manage org-wide attendance for your whole team.</div>
+            <button class="btn" style="margin-top:10px;background:#4ade80;color:#0d1117" onclick="claimAdmin(this)">Make me the team admin</button>`;
+        } else {
+          el.innerHTML = `<strong>Your team admin is ${esc(s.adminEmail || 'someone else on your domain')}.</strong>
+            <div style="margin-top:6px;font-size:.85rem">Ask them to open Team admin and transfer the role to you.</div>`;
+        }
+      } catch {
+        el.innerHTML = `<strong>Couldn't check your team-admin status. Try refreshing.</strong>`;
+      }
+    }
+
+    async function claimAdmin(btn) {
+      if (btn) { btn.disabled = true; btn.textContent = 'Claiming…'; }
+      try {
+        const res = await fetch(`${BACKEND_URL}/team/claim-admin`, {
+          method: 'POST', headers: { 'Authorization': `Bearer ${sessionToken}`, 'Content-Type': 'application/json' }, body: '{}',
+        });
+        const body = await res.json().catch(() => ({}));
+        if (res.ok) {
+          document.getElementById('error-not-admin').style.display = 'none';
+          loadOverview();
+          return;
+        }
+        alert(body.error || 'Could not claim the team-admin role.');
+      } catch {
+        alert('Could not reach the server.');
+      }
+      if (btn) { btn.disabled = false; btn.textContent = 'Make me the team admin'; }
+    }
+
+    async function transferAdmin() {
+      const input = document.getElementById('transfer-email');
+      const toEmail = (input.value || '').trim();
+      if (!toEmail) { alert('Enter a teammate\'s email.'); return; }
+      if (!confirm(`Transfer the team-admin role to ${toEmail}? You'll lose admin access.`)) return;
+      try {
+        const res = await fetch(`${BACKEND_URL}/team/transfer-admin`, {
+          method: 'POST', headers: { 'Authorization': `Bearer ${sessionToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ toEmail }),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (res.ok) { alert(`Transferred to ${toEmail}. Signing you out.`); signOut(); return; }
+        alert(body.error || 'Could not transfer the role.');
+      } catch { alert('Could not reach the server.'); }
     }
 
     function switchTab(name) {

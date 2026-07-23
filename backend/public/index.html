@@ -2951,6 +2951,13 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     if (!res.ok) {
       let body = {};
       try { body = await res.json(); } catch {}
+      // Auto-export is a Pro feature. Free users get a 402 here (manual export
+      // is never gated). Show an upgrade nudge instead of a scary error toast.
+      if (res.status === 402) {
+        logUserEvent('export_skipped', { reason: 'pro_required' });
+        toast('Auto-export on meeting end is a Pro feature. You can still export manually anytime.', 7000);
+        return;
+      }
       if (body.code === 'DRIVE_PERMISSION_MISSING') {
         logUserEvent('export_failed', { reason: 'drive_permission_missing' });
         toast('⚠ Drive permission missing — sign out and sign in again with all permissions checked', 8000);
