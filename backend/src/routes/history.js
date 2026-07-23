@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const { requireAuth } = require('../middleware/auth');
 const log = require('../lib/logger');
-const { getUserMeetingHistory, getUserMeetingSeries, getParticipantHistory, setParticipantNote, getParticipantNote, logEvent, createShareLink } = require('../services/firestore');
+const { getUserMeetingHistory, getUserMeetingSeries, getParticipantHistory, setParticipantNote, getParticipantNote, logEvent, createShareLink, revokeShareLink } = require('../services/firestore');
 const { planIsPro } = require('./billing');
 
 const router = Router();
@@ -66,6 +66,25 @@ router.post('/share', requireAuth, async (req, res) => {
   } catch (err) {
     log.error('share: create failed', { error: err.message, email: req.user.email });
     res.status(500).json({ error: 'Failed to create share link' });
+  }
+});
+
+// POST /api/share/revoke — kill a share link the caller owns before its 30-day
+// TTL (a leaked/forwarded link had no revoke path before). Owner-verified.
+router.post('/share/revoke', requireAuth, async (req, res) => {
+  /* istanbul ignore next: express.json always sets req.body to an object */
+  const { token } = req.body || {};
+  if (!token) return res.status(400).json({ error: 'token is required' });
+  try {
+    const result = await revokeShareLink(token, req.user.email);
+    if (result.revoked) return res.json({ success: true });
+    const status = { not_found: 404, not_owner: 403 };
+    return res.status(status[result.reason] || 500).json({
+      error: result.reason === 'not_owner' ? 'That share link belongs to someone else.' : 'Could not revoke the share link.',
+    });
+  } catch (err) {
+    log.error('share: revoke failed', { error: err.message, email: req.user.email });
+    res.status(500).json({ error: 'Failed to revoke share link' });
   }
 });
 

@@ -107,4 +107,23 @@ async function getSharedSeriesView(domain, recurringEventId) {
   }
 }
 
-module.exports = { createShareLink, resolveShareLink, getSharedSeriesView };
+// Revoke a share link (owner-only). resolveShareLink already returns null for a
+// revoked doc, so this is the missing write side — a kill switch for a leaked
+// link before its 30-day TTL. Verifies the caller owns the token.
+async function revokeShareLink(token, ownerEmail) {
+  try {
+    const ref = getDb().collection('shareLinks').doc(token);
+    const doc = await ref.get();
+    if (!doc.exists) return { revoked: false, reason: 'not_found' };
+    if ((doc.data().ownerEmail || '').toLowerCase() !== (ownerEmail || '').toLowerCase()) {
+      return { revoked: false, reason: 'not_owner' };
+    }
+    await ref.set({ revoked: true, revokedAt: FieldValue.serverTimestamp() }, { merge: true });
+    return { revoked: true };
+  } catch (err) {
+    log.warn('firestore: revokeShareLink failed', { error: err.message });
+    return { revoked: false, reason: 'error' };
+  }
+}
+
+module.exports = { createShareLink, resolveShareLink, getSharedSeriesView, revokeShareLink };

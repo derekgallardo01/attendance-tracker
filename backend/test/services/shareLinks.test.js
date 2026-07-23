@@ -355,3 +355,26 @@ describe('getSharedSeriesView — equal timestamps', () => {
     expect(res.lastAt).toBe('2026-06-01T10:00:00.000Z');
   });
 });
+
+describe('revokeShareLink (Sweep-2 — kill switch for a leaked link)', () => {
+  test('owner can revoke; a revoked link then resolves to null', async () => {
+    const { token } = await firestore.createShareLink('acme.com', 'Owner@Acme.com', { type: 'series', recurringEventId: 'r1' });
+    expect(await firestore.resolveShareLink(token)).not.toBeNull(); // live before revoke
+    const r = await firestore.revokeShareLink(token, 'owner@acme.com'); // case-insensitive owner match
+    expect(r).toEqual({ revoked: true });
+    await flush();
+    expect(await firestore.resolveShareLink(token)).toBeNull(); // dead after revoke
+  });
+
+  test('a non-owner cannot revoke someone else\'s link', async () => {
+    const { token } = await firestore.createShareLink('acme.com', 'owner@acme.com', { type: 'series', recurringEventId: 'r1' });
+    const r = await firestore.revokeShareLink(token, 'attacker@evil.com');
+    expect(r).toMatchObject({ revoked: false, reason: 'not_owner' });
+    await flush();
+    expect(await firestore.resolveShareLink(token)).not.toBeNull(); // still live
+  });
+
+  test('revoking an unknown token reports not_found', async () => {
+    expect(await firestore.revokeShareLink('nope', 'owner@acme.com')).toMatchObject({ revoked: false, reason: 'not_found' });
+  });
+});

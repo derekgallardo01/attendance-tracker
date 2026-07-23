@@ -102,3 +102,48 @@ describe('claimReengagementSlot', () => {
     expect(upper.claimed).toBe(false);
   });
 });
+
+describe('seriesAlertKey (Sweep-1 per-condition identity)', () => {
+  test('keys on type + series + person email + instanceCount', () => {
+    const key = firestore.seriesAlertKey({ type: 'streak', recurringEventId: 'r1', personEmail: 'Alex@Acme.com', instanceCount: 9 });
+    expect(key).toBe('streak:r1:alex@acme.com:9');
+  });
+
+  test('falls back to a name: identity when the person has no email', () => {
+    const key = firestore.seriesAlertKey({ type: 'threshold', recurringEventId: 'r2', personName: 'Bob', instanceCount: 12 });
+    expect(key).toBe('threshold:r2:name:bob:12');
+  });
+
+  test('a new instance (higher instanceCount) yields a fresh key so the condition can re-alert', () => {
+    const a = firestore.seriesAlertKey({ type: 'streak', recurringEventId: 'r1', personEmail: 'a@x.com', instanceCount: 9 });
+    const b = firestore.seriesAlertKey({ type: 'streak', recurringEventId: 'r1', personEmail: 'a@x.com', instanceCount: 10 });
+    expect(a).not.toBe(b);
+  });
+});
+
+describe('claimSeriesAlertCondition (Sweep-1 — ongoing condition fires once, not daily)', () => {
+  test('first claim of a condition returns claimed:true with a releasable ref', async () => {
+    const r = await firestore.claimSeriesAlertCondition('acme.com', 'admin@acme.com', 'streak:r1:alex@acme.com:9');
+    expect(r.claimed).toBe(true);
+    expect(r.ref).toBeDefined();
+  });
+
+  test('re-claiming the SAME condition returns claimed:false (permanent — no daily re-send)', async () => {
+    await firestore.claimSeriesAlertCondition('acme.com', 'admin@acme.com', 'streak:r1:alex@acme.com:9');
+    const second = await firestore.claimSeriesAlertCondition('acme.com', 'admin@acme.com', 'streak:r1:alex@acme.com:9');
+    expect(second.claimed).toBe(false);
+  });
+
+  test('a released claim (delete) can be re-claimed — send-failure retry path', async () => {
+    const first = await firestore.claimSeriesAlertCondition('acme.com', 'admin@acme.com', 'streak:r1:alex@acme.com:9');
+    await first.ref.delete(); // simulate release after a failed send
+    const retry = await firestore.claimSeriesAlertCondition('acme.com', 'admin@acme.com', 'streak:r1:alex@acme.com:9');
+    expect(retry.claimed).toBe(true);
+  });
+
+  test('case-insensitive on the email portion of the doc id', async () => {
+    await firestore.claimSeriesAlertCondition('acme.com', 'Admin@Acme.com', 'streak:r1:x:9');
+    const upper = await firestore.claimSeriesAlertCondition('acme.com', 'ADMIN@ACME.COM', 'streak:r1:x:9');
+    expect(upper.claimed).toBe(false);
+  });
+});

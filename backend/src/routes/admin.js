@@ -2,7 +2,7 @@ const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed } = require('../services/firestore');
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed } = require('../services/firestore');
 const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, flushDeferredNotifications } = require('../lib/notifications');
 const { requireSuperAdmin, requireSuperAdminOrScheduler } = require('../middleware/adminAuth');
 const { requireAuth } = require('../middleware/auth');
@@ -425,29 +425,43 @@ router.post('/admin/check-alerts', requireSuperAdminOrScheduler, async (req, res
         const alerts = await evaluateSeriesAlerts(user.domain, user.email);
         if (alerts.length === 0) continue; // claim spent, but nothing to send
 
-        // Send, then release the day's slot if it didn't go out so the sweep can
-        // retry rather than silently dropping the alert.
+        // Per-condition dedup: only send alerts we haven't already sent for THIS
+        // exact condition (series + person + rule + instanceCount). Without this,
+        // an ongoing "missed the last 3" condition stays true for a week and the
+        // daily sweep would re-email it every day. Each fresh condition claims a
+        // permanent slot; on send failure we release them so they retry.
+        const conditionClaims = [];
+        for (const a of alerts) {
+          const c = await claimSeriesAlertCondition(user.domain, user.email, seriesAlertKey(a));
+          if (c.claimed) conditionClaims.push({ alert: a, ref: c.ref });
+        }
+        const fresh = conditionClaims.map(c => c.alert);
+        if (fresh.length === 0) continue; // all conditions already alerted
+
+        // Send, then release the day's slot + the per-condition claims if it
+        // didn't go out so the sweep can retry rather than silently dropping them.
         const result = await sendSeriesAlertEmail({
           to: user.email,
           displayName: user.displayName || null,
-          alerts,
+          alerts: fresh,
         });
         if (!result || result.sent !== true) {
           try { await claim.ref.delete(); } catch (_) { /* best-effort */ }
+          for (const c of conditionClaims) { try { await c.ref.delete(); } catch (_) { /* best-effort */ } }
           usersSkipped++;
           if (result?.error) errors.push({ email: user.email, error: result.error });
           continue;
         }
-        await recordAlertsSent(claim.ref, alerts);
+        await recordAlertsSent(claim.ref, fresh);
 
         logEvent(user.domain, {
           email: user.email,
           type: 'series_alert_fired',
-          meta: { alertCount: alerts.length, types: alerts.map(a => a.type) },
+          meta: { alertCount: fresh.length, types: fresh.map(a => a.type) },
         });
 
         usersAlerted++;
-        totalAlerts += alerts.length;
+        totalAlerts += fresh.length;
       } catch (e) {
         log.warn('admin: check-alerts per-user failed', { email: user.email, error: e.message });
         errors.push({ email: user.email, error: e.message });

@@ -62,10 +62,30 @@ function digestPresentRows(participants, fallbackEnd, lateMinFor) {
   });
 }
 
+// Count how many invitees share each (lowercased) display name — used to decide
+// when a name-match is trustworthy (unique name) vs ambiguous (Sweep-4).
+function countInviteeNames(calendarAttendees) {
+  const counts = {};
+  for (const a of calendarAttendees || []) {
+    const n = (a.displayName || '').toLowerCase().trim();
+    if (n) counts[n] = (counts[n] || 0) + 1;
+  }
+  return counts;
+}
+
 // The calendar invitees who never attended → Absent (or Excused) rows.
-function digestAbsentRows(calendarAttendees, { attendedEmails, attendedNames, excusedSet }) {
+// A name-match only counts when the name is UNIQUE among invitees (see the
+// main no-show filter / Sweep-4) — otherwise a different same-named person's
+// attendance would hide a real absence.
+function digestAbsentRows(calendarAttendees, { attendedEmails, attendedNames, excusedSet, inviteeNameCounts }) {
+  const nameCounts = inviteeNameCounts || countInviteeNames(calendarAttendees);
   return calendarAttendees
-    .filter(a => !attendedEmails.has((a.email || '').toLowerCase()) && !attendedNames.has((a.displayName || '').toLowerCase().trim()))
+    .filter(a => {
+      if (attendedEmails.has((a.email || '').toLowerCase())) return false;
+      const n = (a.displayName || '').toLowerCase().trim();
+      if (n && nameCounts[n] === 1 && attendedNames.has(n)) return false;
+      return true;
+    })
     .map(a => ({
       displayName: a.displayName,
       email: a.email,
@@ -292,11 +312,14 @@ router.post('/save-to-sheets', async (req, res) => {
     // No-shows: calendar invitees who never joined (check email AND exact full name)
     // First-name fallback removed — too many false matches with common names.
     // Directory API email enrichment handles the different-email-same-person case now.
+    // Name-match only when the name is UNIQUE among invitees — otherwise a
+    // different same-named attendee would wrongly hide a real absence (Sweep-4).
+    const inviteeNameCounts = countInviteeNames(calendarAttendees);
     const noShows = calendarAttendees
       .filter(a => {
         if (attendedEmails.has((a.email || '').toLowerCase())) return false;
         const aName = (a.displayName || '').toLowerCase().trim();
-        if (attendedNames.has(aName)) return false;
+        if (aName && inviteeNameCounts[aName] === 1 && attendedNames.has(aName)) return false;
         return true;
       })
       .map(a => {
@@ -395,7 +418,7 @@ router.post('/save-to-sheets', async (req, res) => {
             totalAttended,
             totalInvited,
             participants: digestPresentRows(participants, exportedAt).concat(
-              digestAbsentRows(calendarAttendees, { attendedEmails, attendedNames, excusedSet })
+              digestAbsentRows(calendarAttendees, { attendedEmails, attendedNames, excusedSet, inviteeNameCounts })
             ),
             sheetUrl,
             durationMin: meetDurationMin,
@@ -414,7 +437,7 @@ router.post('/save-to-sheets', async (req, res) => {
       // Build a digest-friendly participant list (top 25, present first) so the
       // email can render an inline table without exposing the raw row arrays.
       const digestPresent = digestPresentRows(participants, exportedAt, lateMinFor);
-      const digestAbsent = digestAbsentRows(calendarAttendees, { attendedEmails, attendedNames, excusedSet });
+      const digestAbsent = digestAbsentRows(calendarAttendees, { attendedEmails, attendedNames, excusedSet, inviteeNameCounts });
       const digestParticipants = [...digestPresent, ...digestAbsent].slice(0, 25);
       const digestOverflow = (digestPresent.length + digestAbsent.length) - digestParticipants.length;
 

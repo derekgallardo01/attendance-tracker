@@ -34,6 +34,8 @@ jest.mock('../../src/services/firestore', () => ({
   evaluateSeriesAlerts: jest.fn(),
   claimDailyAlertSlot: jest.fn(),
   recordAlertsSent: jest.fn(),
+  seriesAlertKey: jest.fn((a) => `${a.type}:${a.recurringEventId}:${a.instanceCount}`),
+  claimSeriesAlertCondition: jest.fn().mockResolvedValue({ claimed: true, ref: { delete: jest.fn() } }),
   evaluateReengagementForUser: jest.fn(),
   claimReengagementSlot: jest.fn(),
   logEvent: jest.fn(),
@@ -248,6 +250,31 @@ describe('POST /api/admin/check-alerts — dual auth (super-admin OR scheduler s
     expect(notifications.sendSeriesAlertEmail).toHaveBeenCalledWith(expect.objectContaining({
       to: 'admin@acme.com', alerts: expect.any(Array),
     }));
+  });
+
+  test('Sweep-1: does not re-fire an alert whose per-condition slot is already claimed', async () => {
+    // Daily slot is fresh (new day), but the specific "missed last 3" condition
+    // was already alerted on a prior day — so it must be filtered out and NOT
+    // re-emailed. Without per-condition dedup this ongoing condition would spam
+    // the organizer every day for the life of the streak.
+    firestore.getAllUsersAcrossTenants.mockResolvedValue([
+      { email: 'admin@acme.com', domain: 'acme.com', displayName: 'Admin' },
+    ]);
+    firestore.claimDailyAlertSlot.mockResolvedValue({ claimed: true, ref: {} });
+    firestore.evaluateSeriesAlerts.mockResolvedValue([
+      { type: 'streak', personName: 'Alex', detail: 'missed the last 3', attended: 5, instanceCount: 10 },
+    ]);
+    firestore.claimSeriesAlertCondition.mockResolvedValueOnce({ claimed: false }); // already sent earlier (Once: don't pollute the shared default)
+
+    const res = await request(app)
+      .post('/api/admin/check-alerts')
+      .set('x-scheduler-secret', SCHEDULER_SECRET)
+      .set('Content-Type', 'application/json')
+      .send({});
+    expect(res.status).toBe(200);
+    expect(res.body.usersAlerted).toBe(0);
+    expect(res.body.totalAlerts).toBe(0);
+    expect(notifications.sendSeriesAlertEmail).not.toHaveBeenCalled();
   });
 
   test('skips users whose slot was already claimed today (dedup)', async () => {

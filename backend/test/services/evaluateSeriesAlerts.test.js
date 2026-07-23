@@ -126,6 +126,31 @@ describe('evaluateSeriesAlerts — streak rule', () => {
     const alexAlerts = alerts.filter(a => a.personEmail === 'alex@acme.com');
     expect(alexAlerts).toEqual([]);
   });
+
+  test('Sweep-10: merges an attendee reported name-only in some instances with their email identity', async () => {
+    const domain = 'acme.com';
+    const email = 'admin@acme.com';
+    const day = 86400000;
+    const now = Date.now();
+    // Alex attends instances 0-7 then misses 8,9,10 — a clean streak. BUT Alex is
+    // reported WITH an email in 0-3 and NAME-ONLY (no email) in 4-7. Without the
+    // name→email canonicalization, those split into two half-identities and
+    // NEITHER has the 5-of-8 streak, so no alert fires. Canonicalization stitches
+    // the name-only records onto alex@acme.com so the streak surfaces correctly.
+    for (let i = 0; i < 11; i++) {
+      const cid = `meet-${i}`;
+      seedTrackedEvent(domain, email, cid, now - (11 - i) * day);
+      const participants = [{ email: 'beth@acme.com', displayName: 'Beth' }];
+      if (i < 4) participants.push({ email: 'alex@acme.com', displayName: 'Alex' });
+      else if (i < 8) participants.push({ id: `alex-nameonly-${i}`, email: '', displayName: 'Alex' });
+      // 8,9,10: Alex absent
+      seedRecurringMeeting(domain, cid, 'series-canon', 'Standup', now - (11 - i) * day, participants);
+    }
+    const alerts = await firestore.evaluateSeriesAlerts(domain, email);
+    const alexAlerts = alerts.filter(a => a.personEmail === 'alex@acme.com');
+    expect(alexAlerts.length).toBe(1);
+    expect(alexAlerts[0].type).toBe('streak');
+  });
 });
 
 describe('evaluateSeriesAlerts — threshold rule', () => {

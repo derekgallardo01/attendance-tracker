@@ -479,6 +479,24 @@ describe('POST /api/save-to-sheets — meetStart null + digest args', () => {
     expect(res.status).toBe(200);
   });
 
+  test('Sweep-4: a genuinely-absent invitee is NOT hidden by a DIFFERENT same-named attendee', async () => {
+    await post({
+      ...validPayload, sendEmail: true, autoExport: true,
+      participants: [
+        { displayName: 'David Kim', email: 'david.kim@a.com', joinTimeISO: new Date(Date.now() - 10 * 60000).toISOString(), leaveTimeISO: null, present: true, sessions: 1 },
+      ],
+      calendarAttendees: [
+        { email: 'david.kim@a.com', displayName: 'David Kim', status: 'accepted' }, // this David attended
+        { email: 'dkim@b.com', displayName: 'David Kim', status: 'accepted' },       // a DIFFERENT David, absent
+      ],
+    });
+    await new Promise((r) => setImmediate(r));
+    const emailArg = notifications.sendExportNotification.mock.calls[0][0];
+    const absent = emailArg.participants.find(p => p.email === 'dkim@b.com');
+    expect(absent).toBeDefined();          // previously omitted (name-collision hid the real absence)
+    expect(absent.status).toBe('Absent');
+  });
+
   test('auto-export email + slack digest with mixed present/left/absent + excused', async () => {
     firestore.getUserSettings.mockResolvedValue({ slackWebhookUrl: 'https://hooks.slack.com/services/T/B/C' });
     notifications.sendSlackDigest.mockResolvedValue({ sent: true });

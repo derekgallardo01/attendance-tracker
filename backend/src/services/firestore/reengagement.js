@@ -67,6 +67,22 @@ async function evaluateSeriesAlerts(domain, email) {
         return aT - bT;
       });
 
+      // Identity canonicalization (Sweep-10): Meet sometimes reports a person
+      // with an email and sometimes name-only. Build name→email from instances
+      // where BOTH are present, so a name-only appearance merges into the email
+      // identity instead of splitting into a phantom person (which would
+      // fabricate a false "missed the last 3" streak).
+      const nameToEmail = new Map();
+      for (let i = 0; i < meetings.length; i++) {
+        /* istanbul ignore next */
+        const parts = partsByMeetingId.get(meetings[i].id) || [];
+        for (const p of parts) {
+          const e = (p.email || '').toLowerCase();
+          const n = (p.displayName || '').toLowerCase();
+          if (e && n && !nameToEmail.has(n)) nameToEmail.set(n, e);
+        }
+      }
+
       // Build per-person attendance timeline keyed by email-or-name.
       const peopleTimeline = new Map();
       for (let i = 0; i < meetings.length; i++) {
@@ -75,9 +91,10 @@ async function evaluateSeriesAlerts(domain, email) {
         /* istanbul ignore next */
         const parts = partsByMeetingId.get(meetings[i].id) || [];
         for (const p of parts) {
-          const e = (p.email || '').toLowerCase();
+          const nLower = (p.displayName || '').toLowerCase();
+          const e = (p.email || '').toLowerCase() || nameToEmail.get(nLower) || '';
           const n = p.displayName || '';
-          const key = e || `name:${n.toLowerCase()}`;
+          const key = e || `name:${nLower}`;
           if (!key || key === 'name:') continue;
           let entry = peopleTimeline.get(key);
           if (!entry) {
@@ -329,4 +346,29 @@ async function recordAlertsSent(ref, alerts) {
   }
 }
 
-module.exports = { evaluateSeriesAlerts, evaluateReengagementForUser, claimReengagementSlot, claimDailyAlertSlot, recordAlertsSent };
+// Stable dedup key for one alert CONDITION. Keyed by series + person + rule +
+// instanceCount so the SAME ongoing condition ("missed the last 3 of X" at N
+// instances) fires once — not every day until the next instance. When a new
+// instance is recorded, instanceCount increments → a fresh key → the condition
+// can alert again if it still holds.
+function seriesAlertKey(a) {
+  return `${a.type}:${a.recurringEventId}:${(a.personEmail || 'name:' + a.personName || '').toLowerCase()}:${a.instanceCount}`;
+}
+
+// Permanent per-condition claim (mirrors claimReengagementSlot). create() throws
+// on an existing doc — that throw IS the lock. Returns { claimed, ref } so the
+// caller can release (delete) on send failure and retry next run.
+async function claimSeriesAlertCondition(domain, email, alertKey) {
+  const id = `${email.toLowerCase()}__${alertKey}`;
+  const ref = tenantRef(domain).collection('seriesAlertsSent').doc(id);
+  try {
+    await ref.create({ email: email.toLowerCase(), domain, alertKey, claimedAt: FieldValue.serverTimestamp() });
+    return { claimed: true, ref };
+  } catch (err) {
+    if (err.code === 6) return { claimed: false }; // ALREADY_EXISTS — already alerted for this condition
+    log.warn('firestore: claimSeriesAlertCondition failed', { domain, email, alertKey, error: err.message });
+    return { claimed: false };
+  }
+}
+
+module.exports = { evaluateSeriesAlerts, evaluateReengagementForUser, claimReengagementSlot, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition };
