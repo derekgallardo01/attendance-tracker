@@ -54,6 +54,35 @@ describe('authedFetch', () => {
   });
 });
 
+describe('startCheckout', () => {
+  afterEach(() => { delete global.fetch; });
+
+  test('POSTs to /billing/checkout with the bearer and returns the redirect URL', async () => {
+    const calls = [];
+    global.fetch = (url, opts) => { calls.push([url, opts]); return Promise.resolve({ ok: true, json: async () => ({ url: 'https://checkout.stripe.com/x' }) }); };
+    const url = await api.startCheckout('tok');
+    expect(url).toBe('https://checkout.stripe.com/x');
+    expect(calls[0][0]).toBe(`${api.BACKEND_URL}/billing/checkout`);
+    expect(calls[0][1].method).toBe('POST');
+    expect(calls[0][1].headers.Authorization).toBe('Bearer tok');
+  });
+
+  test('throws the server error message on a non-2xx', async () => {
+    global.fetch = () => Promise.resolve({ ok: false, json: async () => ({ error: 'Billing not configured.' }) });
+    await expect(api.startCheckout('tok')).rejects.toThrow('Billing not configured.');
+  });
+
+  test('throws a generic message on a non-2xx with no body.error', async () => {
+    global.fetch = () => Promise.resolve({ ok: false, json: async () => ({}) });
+    await expect(api.startCheckout('tok')).rejects.toThrow('Billing is unavailable right now.');
+  });
+
+  test('throws "Could not reach billing." on a network failure', async () => {
+    global.fetch = () => Promise.reject(new Error('network'));
+    await expect(api.startCheckout('tok')).rejects.toThrow('Could not reach billing.');
+  });
+});
+
 describe('signIn (Google popup + code exchange)', () => {
   let lastOpts;
   function stubGoogle(response) {

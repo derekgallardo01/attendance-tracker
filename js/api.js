@@ -65,7 +65,27 @@
     });
   }
 
-  const api = { BACKEND_URL, CLIENT_ID, SCOPES, signIn, authedFetch };
+  // Start a Stripe Checkout session for the caller's domain and return the
+  // redirect URL, or throw with a user-facing message. Pages keep their own
+  // button/loading UI. Mirrors the (previously duplicated) inline flows in
+  // team.html + history.html exactly: a network failure surfaces as
+  // "Could not reach billing."; a non-2xx as the server error, else a generic
+  // fallback.
+  async function startCheckout(token) {
+    let res;
+    try {
+      res = await authedFetch(token, '/billing/checkout', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}',
+      });
+    } catch {
+      throw new Error('Could not reach billing.');
+    }
+    const body = await res.json().catch(() => ({}));
+    if (res.ok && body.url) return body.url;
+    throw new Error(body.error || 'Billing is unavailable right now.');
+  }
+
+  const api = { BACKEND_URL, CLIENT_ID, SCOPES, signIn, authedFetch, startCheckout };
   root.AttApi = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

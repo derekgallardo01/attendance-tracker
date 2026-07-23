@@ -210,16 +210,10 @@
       const btn = document.getElementById('upgrade-btn');
       if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
       try {
-        const res = await fetch(`${BACKEND_URL}/billing/checkout`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${sessionToken}`, 'Content-Type': 'application/json' },
-          body: '{}',
-        });
-        const data = await res.json().catch(() => ({}));
-        if (res.ok && data.url) { window.location.href = data.url; return; }
-        alert(data.error || 'Billing is unavailable right now.');
-      } catch {
-        alert('Could not reach billing.');
+        window.location.href = await AttApi.startCheckout(sessionToken); // shared js/api.js
+        return;
+      } catch (e) {
+        alert(e.message);
       } finally {
         if (btn) { btn.disabled = false; btn.textContent = 'Upgrade to Pro'; }
       }

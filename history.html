@@ -333,14 +333,10 @@
     async function upgradeFromHistory(btn) {
       if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
       try {
-        const res = await fetch(`${BACKEND_URL}/billing/checkout`, {
-          method: 'POST', headers: { 'Authorization': `Bearer ${sessionToken}`, 'Content-Type': 'application/json' }, body: '{}',
-        });
-        const body = await res.json().catch(() => ({}));
-        if (res.ok && body.url) { window.location.href = body.url; return; }
-        alert(body.error || 'Billing is unavailable right now.');
-      } catch {
-        alert('Could not reach billing.');
+        window.location.href = await AttApi.startCheckout(sessionToken); // shared js/api.js
+        return;
+      } catch (e) {
+        alert(e.message);
       }
       if (btn) { btn.disabled = false; btn.textContent = 'Upgrade to Pro'; }
     }
