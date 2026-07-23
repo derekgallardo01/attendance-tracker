@@ -42,32 +42,29 @@ describe('GET /api/public/stats', () => {
   // MUST run before any successful stats call populates the module-level cache,
   // so the fallback returns the zero state (cached is still null) rather than a
   // stale cached value.
+  // Now backed by count() aggregations: db.collection('tenants').count().get()
+  // and db.collectionGroup('meetings').count().get().
+  const countMock = (n) => ({ count: () => ({ get: jest.fn().mockResolvedValue({ data: () => ({ count: n }) }) }) });
+
   test('returns a zero state when uncached and the read fails', async () => {
     firestore.getDb.mockReturnValue({
-      collection: () => ({ get: jest.fn().mockRejectedValue(new Error('boom')) }),
-      collectionGroup: () => ({ get: jest.fn().mockRejectedValue(new Error('boom')) }),
+      collection: () => ({ count: () => ({ get: jest.fn().mockRejectedValue(new Error('boom')) }) }),
+      collectionGroup: () => ({ count: () => ({ get: jest.fn().mockRejectedValue(new Error('boom')) }) }),
     });
     const res = await request(app).get('/api/public/stats');
     expect(res.status).toBe(200);
     expect(res.body).toEqual(expect.objectContaining({ organizations: 0, meetings: 0 }));
   });
 
-  test('returns org + meeting counts (or fallback on failure)', async () => {
+  test('returns org + meeting counts from aggregations', async () => {
     firestore.getDb.mockReturnValue({
-      collection: () => ({ get: jest.fn().mockResolvedValue({ docs: [{ id: 'acme.com' }, { id: 'beta.com' }] }) }),
-      collectionGroup: (name) => ({
-        get: jest.fn().mockResolvedValue({
-          docs: name === 'users'
-            ? [{ ref: { parent: { parent: { id: 'acme.com' } } } }]
-            : [{}, {}, {}], // 3 meetings
-          size: name === 'users' ? 1 : 3,
-        }),
-      }),
+      collection: () => countMock(2),       // tenants
+      collectionGroup: () => countMock(3),  // meetings
     });
     const res = await request(app).get('/api/public/stats');
     expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty('organizations');
-    expect(res.body).toHaveProperty('meetings');
+    expect(res.body.organizations).toBe(2);
+    expect(res.body.meetings).toBe(3);
   });
 
   test('falls back gracefully when getDb throws', async () => {

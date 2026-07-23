@@ -137,20 +137,19 @@ router.get('/public/stats', async (_req, res) => {
       return res.json(cached);
     }
 
+    // count() aggregations instead of loading every user + meeting doc into
+    // memory (the old approach was O(entire DB) on each cache miss). Every
+    // domain gets a tenant doc on first sign-in (upsertUser creates it), so the
+    // tenants count is a faithful proxy for distinct organizations.
     const db = getDb();
-    const [tenantsSnap, usersSnap, meetingsSnap] = await Promise.all([
-      db.collection('tenants').get(),
-      db.collectionGroup('users').get(),
-      db.collectionGroup('meetings').get(),
+    const [tenantsCount, meetingsCount] = await Promise.all([
+      db.collection('tenants').count().get(),
+      db.collectionGroup('meetings').count().get(),
     ]);
 
-    const domains = new Set();
-    for (const d of tenantsSnap.docs) domains.add(d.id);
-    for (const d of usersSnap.docs) domains.add(d.ref.parent.parent.id);
-
     cached = {
-      organizations: domains.size,
-      meetings: meetingsSnap.size,
+      organizations: tenantsCount.data().count,
+      meetings: meetingsCount.data().count,
       generatedAt: new Date().toISOString(),
     };
     cachedAt = Date.now();

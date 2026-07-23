@@ -40,15 +40,24 @@ async function meetGet(path, token, retries = 2) {
 }
 
 // Fetch all pages for a list endpoint. Returns the combined array from the given response key.
+// Cap total pages so a pathologically large (or looping) result set can't run
+// unbounded sequential fetches inside the request's 30s window. 50 pages ×
+// Meet's page size is far beyond any real meeting; hitting it is logged.
+const MAX_PAGES = 50;
 async function meetGetAll(path, token, responseKey) {
   const items = [];
   let pageToken = null;
+  let pages = 0;
   do {
     const separator = path.includes('?') ? '&' : '?';
     const url = pageToken ? `${path}${separator}pageToken=${pageToken}` : path;
     const data = await meetGet(url, token);
     if (data[responseKey]) items.push(...data[responseKey]);
     pageToken = data.nextPageToken || null;
+    if (++pages >= MAX_PAGES && pageToken) {
+      require('../lib/logger').warn('meetGetAll hit page cap', { path, pages, items: items.length });
+      break;
+    }
   } while (pageToken);
   return items;
 }

@@ -71,7 +71,7 @@ function getDb() {
 // several on load and the owner reloads often, so caching the result for a
 // couple of minutes turns N full-DB re-scans into one. Admin-only data, so mild
 // staleness is fine. (Does NOT bound a single cold call's memory.)
-function memoizeTTL(fn, ttlMs) {
+function memoizeTTL(fn, ttlMs, maxEntries = 200) {
   const cache = new Map(); // argsKey -> { at, value }
   return async function (...args) {
     const key = JSON.stringify(args);
@@ -79,6 +79,10 @@ function memoizeTTL(fn, ttlMs) {
     if (hit && (Date.now() - hit.at) < ttlMs) return hit.value;
     const value = await fn.apply(this, args);
     cache.set(key, { at: Date.now(), value });
+    // Bound the cache so a large spread of distinct arg keys can't grow it
+    // without limit (it was only ever TTL-checked on read, never size-evicted).
+    // Map preserves insertion order, so the first key is the oldest.
+    if (cache.size > maxEntries) cache.delete(cache.keys().next().value);
     return value;
   };
 }

@@ -53,6 +53,20 @@ describe('memoizeTTL', () => {
     expect(calls).toBe(3);
     spy.mockRestore();
   });
+
+  test('evicts the oldest entry once maxEntries is exceeded (bounded cache)', async () => {
+    let calls = 0;
+    const wrapped = core.memoizeTTL(async (x) => { calls++; return x; }, 100000, 2); // cap = 2
+    await wrapped('a'); // cache: a
+    await wrapped('b'); // cache: a, b
+    await wrapped('c'); // size 3 > 2 → evict oldest (a) → cache: b, c
+    expect(calls).toBe(3);
+    await wrapped('b'); // still cached
+    await wrapped('c'); // still cached
+    expect(calls).toBe(3);
+    await wrapped('a'); // was evicted → re-invokes
+    expect(calls).toBe(4);
+  });
 });
 
 describe('countDistinctAttendees', () => {
