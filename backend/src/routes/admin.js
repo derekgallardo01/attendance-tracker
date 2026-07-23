@@ -3,7 +3,7 @@ const rateLimit = require('express-rate-limit');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed } = require('../services/firestore');
-const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail } = require('../lib/notifications');
+const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, maybeSendSignupNotification } = require('../lib/notifications');
 const { requireSuperAdmin, requireSuperAdminOrScheduler } = require('../middleware/adminAuth');
 const { requireAuth } = require('../middleware/auth');
 const { ACQUISITION_SOURCES } = require('../lib/constants');
@@ -296,6 +296,11 @@ router.post('/admin/check-reengagement', requireSuperAdminOrScheduler, async (re
       if (Date.now() - startedAt > BUDGET_MS) { timedOut = true; break; }
       index++;
       if (!user?.email || !user?.domain) continue;
+      // Backstop: flush any signup notification that never fired — the user
+      // dismissed the "how did you find us?" modal AND the post-signup grace
+      // timer was lost to a Cloud Run instance restart. No-op unless this user
+      // has one pending; claimed transactionally so it sends at most once.
+      maybeSendSignupNotification(user.domain, user.email).catch(() => { /* best-effort */ });
       // Don't send lifecycle mail to the owner's own account (self/test).
       if (user.email.toLowerCase() === SUPER_ADMIN_EMAIL) continue;
       usersChecked++;
@@ -656,6 +661,11 @@ router.post('/admin/source', requireAuth, async (req, res) => {
     }
     const cleanDetail = typeof detail === 'string' ? detail.slice(0, 200) : null;
     await setUserAcquisitionSource(req.user.domain, req.user.email, { source, detail: cleanDetail });
+    // Flush the deferred signup notification now that we have the self-reported
+    // source. Usually this is the trigger that actually sends the email (the
+    // modal is answered seconds after signup). Fire-and-forget — a pending
+    // signup, if any, is claimed transactionally so this can't double-send.
+    maybeSendSignupNotification(req.user.domain, req.user.email).catch(() => { /* best-effort */ });
     res.json({ success: true });
   } catch (err) {
     log.error('admin: source failed', { error: err.message });

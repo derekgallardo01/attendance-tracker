@@ -243,6 +243,68 @@ describe('notifications — content sanity checks', () => {
     expect(arg.subject).toContain('reddit');
   });
 
+  test('signup email shows self-reported and detected source side by side when they differ', async () => {
+    const n = require('../../src/lib/notifications');
+    await n.sendSignupWebhook({
+      email: 'new@acme.com', displayName: 'Heléon', domain: 'gmail.com',
+      reportedSource: 'google_search', reportedDetail: 'searched "meet attendance"',
+      detectedSource: 'direct', totalUsers: 22,
+    });
+    const arg = mockSend.mock.calls[0][0];
+    // Subject prefers the self-reported source (strongest attribution).
+    expect(arg.subject).toContain('google_search');
+    // Both signals rendered + labeled, so a "direct" auto-detect no longer
+    // masks the real channel.
+    expect(arg.html).toContain('self-reported');
+    expect(arg.html).toContain('google_search');
+    expect(arg.html).toContain('searched');
+    expect(arg.html).toContain('detected');
+    expect(arg.html).toContain('direct');
+    expect(arg.text).toContain('Source (self-reported): google_search');
+    expect(arg.text).toContain('Source (detected): direct');
+  });
+
+  test('signup email marks self-reported as "Not reported" until the modal is answered', async () => {
+    const n = require('../../src/lib/notifications');
+    await n.sendSignupWebhook({
+      email: 'new@acme.com', displayName: 'Bob', domain: 'acme.com',
+      detectedSource: 'ref:news.ycombinator.com', totalUsers: 3,
+    });
+    const arg = mockSend.mock.calls[0][0];
+    expect(arg.html).toContain('Not reported');
+    expect(arg.subject).toContain('ref:news.ycombinator.com'); // falls back to detected
+  });
+
+  test('maybeSendSignupNotification sends on a claimed pending signup and no-ops otherwise', async () => {
+    const claimSignupNotification = jest.fn()
+      .mockResolvedValueOnce({
+        email: 'a@x.com', displayName: 'A', domain: 'x.com',
+        reportedSource: 'google_search', reportedDetail: null, detectedSource: 'direct',
+      })
+      .mockResolvedValueOnce(null);
+    jest.doMock('../../src/services/firestore', () => ({
+      claimSignupNotification,
+      countAllUsers: jest.fn().mockResolvedValue(22),
+    }));
+    jest.resetModules();
+    const n = require('../../src/lib/notifications');
+
+    // First call: a pending signup is claimed → the email goes out with the
+    // self-reported source, and the total-users count is looked up at send time.
+    await n.maybeSendSignupNotification('x.com', 'a@x.com');
+    expect(claimSignupNotification).toHaveBeenCalledWith('x.com', 'a@x.com');
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    expect(mockSend.mock.calls[0][0].subject).toContain('google_search');
+    expect(mockSend.mock.calls[0][0].text).toContain('Total users now: 22');
+
+    // Second call: nothing pending (claim returns null) → no email.
+    const res = await n.maybeSendSignupNotification('x.com', 'a@x.com');
+    expect(res).toEqual({ sent: false });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+
+    jest.dontMock('../../src/services/firestore');
+  });
+
   test('export notification subject includes attendance summary', async () => {
     const n = require('../../src/lib/notifications');
     await n.sendExportNotification({

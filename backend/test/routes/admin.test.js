@@ -50,6 +50,8 @@ jest.mock('../../src/lib/notifications', () => ({
   sendActivationNudgeEmail: jest.fn(),
   sendSoloNudgeEmail: jest.fn(),
   sendForgottenMeetingEmail: jest.fn(),
+  // Deferred-signup flush; returns a promise so callers' `.catch()` is safe.
+  maybeSendSignupNotification: jest.fn().mockResolvedValue({ sent: false }),
 }));
 
 const firestore = require('../../src/services/firestore');
@@ -85,6 +87,28 @@ afterEach(() => {
   delete process.env.SCHEDULER_SECRET;
   delete process.env.MARKETPLACE_WEBHOOK_SECRET;
   delete process.env.SWEEP_BUDGET_MS;
+});
+
+describe('POST /api/admin/source — self-reported source + deferred signup flush', () => {
+  test('saves the source and flushes the deferred signup notification', async () => {
+    const res = await request(app)
+      .post('/api/admin/source')
+      .set(authedHeader('u@acme.com', 'acme.com'))
+      .send({ source: 'google_search', detail: 'found via search' });
+    expect(res.status).toBe(200);
+    expect(firestore.setUserAcquisitionSource).toHaveBeenCalledWith(
+      'acme.com', 'u@acme.com', { source: 'google_search', detail: 'found via search' });
+    expect(notifications.maybeSendSignupNotification).toHaveBeenCalledWith('acme.com', 'u@acme.com');
+  });
+
+  test('rejects an invalid source and does not flush', async () => {
+    const res = await request(app)
+      .post('/api/admin/source')
+      .set(authedHeader('u@acme.com', 'acme.com'))
+      .send({ source: 'totally-made-up' });
+    expect(res.status).toBe(400);
+    expect(notifications.maybeSendSignupNotification).not.toHaveBeenCalled();
+  });
 });
 
 describe('Super-admin gated endpoints', () => {
@@ -335,6 +359,23 @@ describe('POST /api/admin/check-reengagement', () => {
       .send({});
     expect(res.status).toBe(200);
     expect(res.body.totalSent).toBe(0);
+  });
+
+  test('flushes deferred signup notifications for every user as a backstop', async () => {
+    firestore.getAllUsersAcrossTenants.mockResolvedValue([
+      { email: 'a@acme.com', domain: 'acme.com' },
+      { email: 'b@acme.com', domain: 'acme.com' },
+    ]);
+    firestore.evaluateReengagementForUser.mockResolvedValue([]);
+
+    const res = await request(app)
+      .post('/api/admin/check-reengagement')
+      .set('x-scheduler-secret', SCHEDULER_SECRET)
+      .set('Content-Type', 'application/json')
+      .send({});
+    expect(res.status).toBe(200);
+    expect(notifications.maybeSendSignupNotification).toHaveBeenCalledWith('acme.com', 'a@acme.com');
+    expect(notifications.maybeSendSignupNotification).toHaveBeenCalledWith('acme.com', 'b@acme.com');
   });
 
   test('fires reactivation_7d email when window matches', async () => {

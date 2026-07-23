@@ -22,6 +22,7 @@ jest.mock('../../src/services/googleAuth', () => ({
 }));
 jest.mock('../../src/lib/notifications', () => ({
   sendSignupWebhook: jest.fn(),
+  maybeSendSignupNotification: jest.fn().mockResolvedValue({ sent: false }),
 }));
 // google.auth.OAuth2 verifyIdToken is invoked inside exchange — mock it. The
 // payload is mutable so a test can simulate a personal (no-hd) Google account.
@@ -295,23 +296,28 @@ describe('POST /api/oauth/exchange — acquisition + scopes + webhook', () => {
     expect(res.body.detectedSource).toBe('direct');
   });
 
-  test('an existing user with an acquisitionSource skips the modal + webhook', async () => {
+  test('an existing user with an acquisitionSource skips the modal + deferred signup notification', async () => {
     exchangeTokens(FULL);
     firestore.getUser.mockResolvedValue({ email: 'newuser@acme.com', acquisitionSource: 'reddit' });
     const res = await request(app).post('/api/oauth/exchange').send({ code: 'c' });
     expect(res.body.isNewUser).toBe(false);
     expect(res.body.needsAcquisitionSource).toBe(false);
-    await new Promise((r) => setImmediate(r));
-    expect(notifications.sendSignupWebhook).not.toHaveBeenCalled();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(notifications.maybeSendSignupNotification).not.toHaveBeenCalled();
   });
 
-  test('fires the signup webhook for a brand-new user', async () => {
+  test('brand-new user: seeds the deferred signup notification (detected source) + grace-timer flush', async () => {
+    process.env.SIGNUP_NOTIFY_GRACE_MS = '5'; // short fallback window so the timer fires in-test
     exchangeTokens(FULL);
     firestore.getUser.mockResolvedValue(null);
-    firestore.countAllUsers.mockResolvedValue(42);
-    await request(app).post('/api/oauth/exchange').send({ code: 'c' });
-    await new Promise((r) => setImmediate(r));
-    expect(notifications.sendSignupWebhook).toHaveBeenCalled();
+    await request(app).post('/api/oauth/exchange').send({ code: 'c', acquisition: { userAgent: 'UA' } });
+    // The detected source is stamped on the new user doc for the deferred ping.
+    expect(firestore.upsertUser).toHaveBeenCalledWith('acme.com', expect.objectContaining({ signupDetectedSource: 'direct' }));
+    // The fallback grace timer flushes the notification (no webhook fired inline).
+    await new Promise((r) => setTimeout(r, 40));
+    expect(notifications.maybeSendSignupNotification).toHaveBeenCalledWith('acme.com', 'newuser@acme.com');
+    expect(notifications.sendSignupWebhook).not.toHaveBeenCalled();
+    delete process.env.SIGNUP_NOTIFY_GRACE_MS;
   });
 });
 

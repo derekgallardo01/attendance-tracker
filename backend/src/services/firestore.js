@@ -333,7 +333,7 @@ async function getUser(domain, email) {
   }
 }
 
-async function upsertUser(domain, { email, displayName, refreshToken, sheetId, acquisition, scopes }) {
+async function upsertUser(domain, { email, displayName, refreshToken, sheetId, acquisition, scopes, signupDetectedSource }) {
   try {
     const now = FieldValue.serverTimestamp();
     const emailLower = email.toLowerCase();
@@ -422,6 +422,18 @@ async function upsertUser(domain, { email, displayName, refreshToken, sheetId, a
       }
     }
 
+    // Signup notification is deferred, not fired here: we want it to carry the
+    // user's self-reported source (from the "how did you find us?" modal, which
+    // is answered a few seconds after signup) rather than the auto-detected
+    // fallback. Stamp a pending marker + the detected source on the brand-new
+    // user doc; a later trigger (modal answer / grace timer / sweep) flushes it
+    // via claimSignupNotification. Only oauth passes signupDetectedSource, so
+    // other callers never leave a user stuck pending.
+    if (isFirstSignin && signupDetectedSource !== undefined) {
+      data.signupNotifyPending = true;
+      data.signupDetectedSource = signupDetectedSource || null;
+    }
+
     await userRef.set(data, { merge: true });
     log.info('firestore: upserted user', { domain, email, isFirstSignin, teamAdmin: !!data.teamAdmin });
   } catch (err) {
@@ -445,6 +457,38 @@ async function setUserAcquisitionSource(domain, email, { source, detail }) {
     log.info('firestore: set user acquisition source', { domain, email, source });
   } catch (err) {
     log.error('firestore: setUserAcquisitionSource failed', { domain, email, error: err.message });
+  }
+}
+
+// Atomically claim a brand-new user's deferred signup notification. Returns the
+// email payload (self-reported + auto-detected source) exactly once, then flips
+// signupNotifyPending off so concurrent triggers (modal answer, grace timer,
+// daily sweep) can't double-send. Returns null when there's nothing to send
+// (no such user, or already notified). See notifications.maybeSendSignupNotification.
+async function claimSignupNotification(domain, email) {
+  try {
+    const ref = tenantRef(domain).collection('users').doc(email.toLowerCase());
+    return await getDb().runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      if (!doc.exists) return null;
+      const d = doc.data();
+      if (d.signupNotifyPending !== true) return null;
+      tx.set(ref, {
+        signupNotifyPending: false,
+        signupNotifiedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+      return {
+        email: d.email || email.toLowerCase(),
+        displayName: d.displayName || '',
+        domain,
+        reportedSource: d.acquisitionSource || null,
+        reportedDetail: d.acquisitionSourceDetail || null,
+        detectedSource: d.signupDetectedSource || null,
+      };
+    });
+  } catch (err) {
+    log.error('firestore: claimSignupNotification failed', { domain, email, error: err.message });
+    return null;
   }
 }
 
@@ -1261,7 +1305,7 @@ module.exports = {
   getMeetingExcusedEmails, addMeetingExcusedEmails,
   getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens,
   getUserSettings, updateUserSettings,
-  setUserAcquisitionSource,
+  setUserAcquisitionSource, claimSignupNotification,
   logEvent,
   getUserActivationStatus, countUserExports, isExistingUserAnywhere, countAllUsers,
   getUserMeetingHistory,
