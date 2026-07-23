@@ -153,12 +153,29 @@ function unsubscribeFooter(email) {
 // Fire-and-forget signup notification email. Sends to NOTIFY_EMAIL (or the
 // owner's inbox if NOTIFY_EMAIL isn't set). Silent no-op if Resend isn't
 // configured.
-async function sendSignupWebhook({ email, displayName, domain, acquisitionSource, totalUsers }) {
+//
+// Two source signals, shown side by side because they legitimately differ:
+//   - reportedSource: what the user told us via the "how did you find us?"
+//     modal (strongest attribution signal). May be absent if dismissed.
+//   - detectedSource: what we auto-derived at signup from UTM / referrer /
+//     entry point. Users who enter through the in-Meet add-on have no web
+//     referrer, so this is usually "direct" even when they found us via search.
+// Legacy callers pass a single `acquisitionSource` — treat it as detected.
+async function sendSignupWebhook({ email, displayName, domain, reportedSource, reportedDetail, detectedSource, acquisitionSource, totalUsers }) {
   if (!getResend()) return;
   const to = process.env.NOTIFY_EMAIL || ownerEmail();
   if (!to) return;
-  const sourceLine = acquisitionSource ? ` (via ${acquisitionSource})` : '';
+
+  const reported = reportedSource || null;
+  const detected = detectedSource || acquisitionSource || null;
+  const primary = reported || detected; // best single label for the subject
+  const sourceLine = primary ? ` (via ${primary})` : '';
   const subject = `🎉 New user: ${displayName || email}${sourceLine}`;
+
+  const reportedText = reported
+    ? `${reported}${reportedDetail ? ` — ${reportedDetail}` : ''}`
+    : 'Not reported';
+  const detectedText = detected || 'Unknown';
 
   const html = `
     <p>A new user just signed up for Attendance Tracker.</p>
@@ -166,7 +183,8 @@ async function sendSignupWebhook({ email, displayName, domain, acquisitionSource
       <tr><td style="padding:4px 12px 4px 0;color:#666">Name</td><td>${escape(displayName) || '—'}</td></tr>
       <tr><td style="padding:4px 12px 4px 0;color:#666">Email</td><td><a href="mailto:${escape(email)}">${escape(email)}</a></td></tr>
       <tr><td style="padding:4px 12px 4px 0;color:#666">Domain</td><td>${escape(domain)}</td></tr>
-      <tr><td style="padding:4px 12px 4px 0;color:#666">Source</td><td>${escape(acquisitionSource) || 'Unknown'}</td></tr>
+      <tr><td style="padding:4px 12px 4px 0;color:#666">Source (self-reported)</td><td>${escape(reportedText)}</td></tr>
+      <tr><td style="padding:4px 12px 4px 0;color:#666">Source (detected)</td><td>${escape(detectedText)}</td></tr>
       <tr><td style="padding:4px 12px 4px 0;color:#666">Total users now</td><td>${totalUsers ?? '?'}</td></tr>
     </table>
     <p style="margin-top:16px">
@@ -178,7 +196,8 @@ async function sendSignupWebhook({ email, displayName, domain, acquisitionSource
     `New Attendance Tracker user: ${displayName || email}`,
     `Email: ${email}`,
     `Domain: ${domain}`,
-    `Source: ${acquisitionSource || 'Unknown'}`,
+    `Source (self-reported): ${reportedText}`,
+    `Source (detected): ${detectedText}`,
     `Total users now: ${totalUsers ?? '?'}`,
     '',
     'Open admin dashboard: https://attendancetracker.dev/admin.html',
@@ -189,6 +208,22 @@ async function sendSignupWebhook({ email, displayName, domain, acquisitionSource
     to, subject, text, html,
     tags: [{ name: 'type', value: 'signup' }],
   }, 'signup notification', { email, domain });
+}
+
+// Deferred-signup flush. Sends the signup notification for a user exactly once,
+// carrying whatever acquisition source is known at flush time (self-reported if
+// the user answered the modal, else the auto-detected fallback). Safe to call
+// from multiple triggers — the source-modal answer, the post-signup grace
+// timer, and the daily sweep backstop all call this. The underlying claim
+// (claimSignupNotification) is transactional, so only the first caller emails;
+// the rest are no-ops. Returns { sent: false } when there's nothing pending.
+async function maybeSendSignupNotification(domain, email) {
+  // Lazy require to avoid a load-time cycle (firestore ⇄ notifications).
+  const { claimSignupNotification, countAllUsers } = require('../services/firestore');
+  const payload = await claimSignupNotification(domain, email);
+  if (!payload) return { sent: false };
+  const totalUsers = await countAllUsers();
+  return sendSignupWebhook({ ...payload, totalUsers });
 }
 
 // Generic email send used by the admin "email from dashboard" feature.
@@ -718,7 +753,7 @@ async function sendSlackTestPing({ webhookUrl }) {
 }
 
 module.exports = {
-  sendSignupWebhook, sendAdminEmail, sendWeeklySelfReport, sendExportNotification,
+  sendSignupWebhook, maybeSendSignupNotification, sendAdminEmail, sendWeeklySelfReport, sendExportNotification,
   sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail,
   sendSlackDigest, sendSlackTestPing, buildSlackDigestBlocks, buildSlackFallbackText, maskSlackWebhook,
   unsubscribeUrl, unsubscribeToken, verifyUnsubscribeToken, unsubscribeFooter,

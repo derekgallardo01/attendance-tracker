@@ -4,8 +4,8 @@ const { google } = require('googleapis');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { exchangeCode, revokeToken } = require('../services/googleAuth');
-const { upsertUser, getUser, updateUserTokens, logEvent, getUserActivationStatus, countAllUsers, getTenantConfig, deleteUser } = require('../services/firestore');
-const { sendSignupWebhook } = require('../lib/notifications');
+const { upsertUser, getUser, updateUserTokens, logEvent, getUserActivationStatus, getTenantConfig, deleteUser } = require('../services/firestore');
+const { maybeSendSignupNotification } = require('../lib/notifications');
 
 const { ACQUISITION_SOURCES } = require('../lib/constants');
 
@@ -102,6 +102,26 @@ router.post('/exchange', async (req, res) => {
     const willCaptureFromUTM = !alreadyHasSource && !!sanitizedAcq?.utmSource;
     const needsAcquisitionSource = !alreadyHasSource && !willCaptureFromUTM;
 
+    // Auto-detect an acquisition source from the entry point. Priority: explicit
+    // user-reported source > ?ref= invite > UTM > referrer hostname > "direct"
+    // (fallback when only userAgent is known — e.g. entering via the in-Meet
+    // add-on, which carries no web referrer). Computed here (before the upsert)
+    // so it can be both stamped on a brand-new user's doc for the deferred
+    // signup notification AND returned to the frontend for a source-aware
+    // welcome ("saw you came from Reddit").
+    let refHost = null;
+    if (sanitizedAcq?.referrer) {
+      // A successfully-parsed http(s) referrer always has a non-empty hostname,
+      // so the `|| null` fallback is defensive-only.
+      /* istanbul ignore next */
+      try { refHost = new URL(sanitizedAcq.referrer).hostname || null; } catch { /* ignore */ }
+    }
+    const detectedSource = sanitizedAcq?.source
+      || (sanitizedAcq?.ref ? `invite:${sanitizedAcq.ref}` : null)
+      || (sanitizedAcq?.utmSource ? `utm:${sanitizedAcq.utmSource}` : null)
+      || (refHost ? `ref:${refHost}` : null)
+      || (sanitizedAcq?.userAgent ? 'direct' : null);
+
     // Store user + tokens in tenant-scoped Firestore
     await upsertUser(domain, {
       email,
@@ -113,6 +133,8 @@ router.post('/exchange', async (req, res) => {
         granted: grantedScopes,
         exportScopeGranted: grantedScopes.includes(REQUIRED_SCOPES_BY_FEATURE.sheets),
       },
+      // Only meaningful for a brand-new user: seeds the deferred signup ping.
+      signupDetectedSource: isBrandNewUser ? detectedSource : undefined,
     });
 
     // Per-user signin event — feeds the activity log and "most active this
@@ -136,23 +158,6 @@ router.post('/exchange', async (req, res) => {
 
     log.info('oauth: user authenticated', { email, domain });
 
-    // Source-aware welcome on the frontend: pass detected source so the
-    // modal can greet "Hey 👋 saw you came from Reddit" instead of generic.
-    // Priority: explicit user-reported source > ?ref= invite > UTM > referrer
-    // hostname > "direct" (fallback when only userAgent is known).
-    let refHost = null;
-    if (sanitizedAcq?.referrer) {
-      // A successfully-parsed http(s) referrer always has a non-empty hostname,
-      // so the `|| null` fallback is defensive-only.
-      /* istanbul ignore next */
-      try { refHost = new URL(sanitizedAcq.referrer).hostname || null; } catch { /* ignore */ }
-    }
-    const detectedSource = sanitizedAcq?.source
-      || (sanitizedAcq?.ref ? `invite:${sanitizedAcq.ref}` : null)
-      || (sanitizedAcq?.utmSource ? `utm:${sanitizedAcq.utmSource}` : null)
-      || (refHost ? `ref:${refHost}` : null)
-      || (sanitizedAcq?.userAgent ? 'direct' : null);
-
     res.json({
       sessionToken, email, displayName, grantedScopes, missingScopes,
       needsAcquisitionSource,
@@ -160,17 +165,19 @@ router.post('/exchange', async (req, res) => {
       isNewUser: isBrandNewUser,
     });
 
-    // Fire signup webhook for brand-new users only (no prior doc in their
-    // tenant). Fire-and-forget so it can't break the auth flow.
+    // Signup notification is deferred (see upsertUser): we'd rather the email
+    // carry the user's self-reported source than the auto-detected fallback.
+    // The "how did you find us?" modal POSTs to /api/admin/source within seconds
+    // and flushes it. This grace timer is the fallback for users who dismiss the
+    // modal — after a short window we send with the detected source only. The
+    // flush is claimed transactionally, so whichever trigger fires first wins
+    // and the rest no-op. Unref'd so it never holds the process open.
     if (isBrandNewUser) {
-      (async () => {
-        const total = await countAllUsers();
-        sendSignupWebhook({
-          email, displayName, domain,
-          acquisitionSource: detectedSource,
-          totalUsers: total,
-        });
-      })();
+      const graceMs = Number(process.env.SIGNUP_NOTIFY_GRACE_MS) || 120000;
+      const timer = setTimeout(() => {
+        maybeSendSignupNotification(domain, email).catch(() => { /* best-effort */ });
+      }, graceMs);
+      timer.unref?.();
     }
   } catch (err) {
     log.error('oauth: exchange failed', { error: err.message });

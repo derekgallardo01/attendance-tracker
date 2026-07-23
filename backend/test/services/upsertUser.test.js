@@ -199,3 +199,65 @@ describe('upsertUser — basic upsert behavior', () => {
     expect(ctx.read('tenants/acme.com/users/newuser@acme.com').referredBy).toBe('inviter@acme.com');
   });
 });
+
+describe('deferred signup notification — pending flag + claim', () => {
+  test('first signin stamps signupNotifyPending + detected source; repeat signin does not', async () => {
+    await firestore.upsertUser('gmail.com', {
+      email: 'heleon@gmail.com', displayName: 'Heléon',
+      signupDetectedSource: 'direct',
+    });
+    const u = ctx.read('tenants/gmail.com/users/heleon@gmail.com');
+    expect(u.signupNotifyPending).toBe(true);
+    expect(u.signupDetectedSource).toBe('direct');
+
+    // A later signin must NOT re-arm the notification (it isn't a new signup).
+    await firestore.upsertUser('gmail.com', {
+      email: 'heleon@gmail.com', displayName: 'Heléon', signupDetectedSource: 'direct',
+    });
+    // Simulate the first claim having already flipped it off:
+    ctx.seed('tenants/gmail.com/users/heleon@gmail.com', {
+      ...ctx.read('tenants/gmail.com/users/heleon@gmail.com'), signupNotifyPending: false,
+    });
+    await firestore.upsertUser('gmail.com', {
+      email: 'heleon@gmail.com', displayName: 'Heléon', signupDetectedSource: 'direct',
+    });
+    expect(ctx.read('tenants/gmail.com/users/heleon@gmail.com').signupNotifyPending).toBe(false);
+  });
+
+  test('callers that omit signupDetectedSource never arm a pending notification', async () => {
+    await firestore.upsertUser('acme.com', { email: 'x@acme.com', displayName: 'X' });
+    expect(ctx.read('tenants/acme.com/users/x@acme.com').signupNotifyPending).toBeUndefined();
+  });
+
+  test('claimSignupNotification returns the self-reported + detected payload exactly once', async () => {
+    // Signup stamps the detected fallback...
+    await firestore.upsertUser('gmail.com', {
+      email: 'heleon@gmail.com', displayName: 'Heléon', signupDetectedSource: 'direct',
+    });
+    // ...then the "how did you find us?" modal self-reports the real source.
+    await firestore.setUserAcquisitionSource('gmail.com', 'heleon@gmail.com', {
+      source: 'google_search', detail: 'searched attendance',
+    });
+
+    const first = await firestore.claimSignupNotification('gmail.com', 'heleon@gmail.com');
+    expect(first).toMatchObject({
+      email: 'heleon@gmail.com',
+      displayName: 'Heléon',
+      domain: 'gmail.com',
+      reportedSource: 'google_search',
+      reportedDetail: 'searched attendance',
+      detectedSource: 'direct',
+    });
+    // The claim is spent — pending flipped off, second call is a no-op.
+    expect(ctx.read('tenants/gmail.com/users/heleon@gmail.com').signupNotifyPending).toBe(false);
+    const second = await firestore.claimSignupNotification('gmail.com', 'heleon@gmail.com');
+    expect(second).toBeNull();
+  });
+
+  test('claimSignupNotification returns null for a non-pending / missing user', async () => {
+    expect(await firestore.claimSignupNotification('acme.com', 'nobody@acme.com')).toBeNull();
+    // Existing user with no pending flag
+    ctx.seed('tenants/acme.com/users/u@acme.com', { email: 'u@acme.com', displayName: 'U' });
+    expect(await firestore.claimSignupNotification('acme.com', 'u@acme.com')).toBeNull();
+  });
+});
