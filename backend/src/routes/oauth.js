@@ -5,7 +5,7 @@ const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { exchangeCode, revokeToken } = require('../services/googleAuth');
 const { upsertUser, getUser, updateUserTokens, logEvent, getUserActivationStatus, getTenantConfig, deleteUser } = require('../services/firestore');
-const { maybeSendSignupNotification } = require('../lib/notifications');
+const { maybeSendSignupNotification, maybeSendReferralNotification } = require('../lib/notifications');
 
 const { ACQUISITION_SOURCES } = require('../lib/constants');
 
@@ -176,6 +176,7 @@ router.post('/exchange', async (req, res) => {
       const graceMs = Number(process.env.SIGNUP_NOTIFY_GRACE_MS) || 120000;
       const timer = setTimeout(() => {
         maybeSendSignupNotification(domain, email).catch(() => { /* best-effort */ });
+        maybeSendReferralNotification(domain, email).catch(() => { /* best-effort */ });
       }, graceMs);
       timer.unref?.();
     }

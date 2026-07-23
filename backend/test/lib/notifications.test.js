@@ -305,6 +305,51 @@ describe('notifications — content sanity checks', () => {
     jest.dontMock('../../src/services/firestore');
   });
 
+  test('maybeSendReferralNotification credits + emails the inviter once, no-ops otherwise', async () => {
+    const claimReferral = jest.fn()
+      .mockResolvedValueOnce({ referredBy: 'inviter@acme.com', newUserEmail: 'new@acme.com', newUserName: 'New User' })
+      .mockResolvedValueOnce(null);
+    const recordReferralForInviter = jest.fn().mockResolvedValue({
+      inviterExists: true, inviterDisplayName: 'Inviter', totalReferrals: 2, already: false,
+    });
+    const isEmailSuppressed = jest.fn().mockResolvedValue(false);
+    jest.doMock('../../src/services/firestore', () => ({ claimReferral, recordReferralForInviter, isEmailSuppressed }));
+    jest.resetModules();
+    const n = require('../../src/lib/notifications');
+
+    // First call: claims the referral → credits the inviter → emails them.
+    await n.maybeSendReferralNotification('acme.com', 'new@acme.com');
+    expect(claimReferral).toHaveBeenCalledWith('acme.com', 'new@acme.com');
+    expect(recordReferralForInviter).toHaveBeenCalledWith('inviter@acme.com', expect.objectContaining({ newUserEmail: 'new@acme.com' }));
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    expect([].concat(mockSend.mock.calls[0][0].to)).toContain('inviter@acme.com');
+    expect(mockSend.mock.calls[0][0].subject).toContain('New User');
+    expect(mockSend.mock.calls[0][0].text).toMatch(/free month/i);
+
+    // Second call: nothing pending → no email, no credit.
+    const res = await n.maybeSendReferralNotification('acme.com', 'new@acme.com');
+    expect(res).toEqual({ sent: false });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+
+    jest.dontMock('../../src/services/firestore');
+  });
+
+  test('maybeSendReferralNotification credits but does not email a suppressed inviter', async () => {
+    const claimReferral = jest.fn().mockResolvedValue({ referredBy: 'inviter@acme.com', newUserEmail: 'new@acme.com', newUserName: 'New' });
+    const recordReferralForInviter = jest.fn().mockResolvedValue({ inviterExists: true, inviterDisplayName: 'Inviter', totalReferrals: 1, already: false });
+    const isEmailSuppressed = jest.fn().mockResolvedValue(true); // inviter opted out
+    jest.doMock('../../src/services/firestore', () => ({ claimReferral, recordReferralForInviter, isEmailSuppressed }));
+    jest.resetModules();
+    const n = require('../../src/lib/notifications');
+
+    const res = await n.maybeSendReferralNotification('acme.com', 'new@acme.com');
+    expect(recordReferralForInviter).toHaveBeenCalled(); // still credited
+    expect(res).toEqual({ sent: false, recorded: true });
+    expect(mockSend).not.toHaveBeenCalled(); // but not emailed
+
+    jest.dontMock('../../src/services/firestore');
+  });
+
   test('export notification subject includes attendance summary', async () => {
     const n = require('../../src/lib/notifications');
     await n.sendExportNotification({

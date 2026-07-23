@@ -434,6 +434,14 @@ async function upsertUser(domain, { email, displayName, refreshToken, sheetId, a
       data.signupDetectedSource = signupDetectedSource || null;
     }
 
+    // Referral loop: a brand-new user who arrived via a ?ref= invite gets a
+    // pending marker so we credit + notify the inviter exactly once (claimed
+    // from the same flush points as the signup notification). referredBy is
+    // stamped first-touch in the acquisition block above.
+    if (isFirstSignin && acquisition?.ref) {
+      data.referralNotifyPending = true;
+    }
+
     await userRef.set(data, { merge: true });
     log.info('firestore: upserted user', { domain, email, isFirstSignin, teamAdmin: !!data.teamAdmin });
   } catch (err) {
@@ -489,6 +497,70 @@ async function claimSignupNotification(domain, email) {
   } catch (err) {
     log.error('firestore: claimSignupNotification failed', { domain, email, error: err.message });
     return null;
+  }
+}
+
+// Atomically claim a referred user's pending referral notification (set when
+// they arrived via a ?ref= invite). Returns { referredBy, newUserEmail,
+// newUserName } once, then clears the flag; null if nothing pending. Mirrors
+// claimSignupNotification. See notifications.maybeSendReferralNotification.
+async function claimReferral(domain, email) {
+  try {
+    const ref = tenantRef(domain).collection('users').doc(email.toLowerCase());
+    return await getDb().runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      if (!doc.exists) return null;
+      const d = doc.data();
+      if (d.referralNotifyPending !== true) return null;
+      // Clear the flag either way; only return a payload if there's an inviter.
+      tx.set(ref, { referralNotifyPending: false, referralNotifiedAt: FieldValue.serverTimestamp() }, { merge: true });
+      if (!d.referredBy) return null;
+      return {
+        referredBy: String(d.referredBy).toLowerCase(),
+        newUserEmail: d.email || email.toLowerCase(),
+        newUserName: d.displayName || '',
+      };
+    });
+  } catch (err) {
+    log.error('firestore: claimReferral failed', { domain, email, error: err.message });
+    return null;
+  }
+}
+
+// Credit the inviter for a successful referral: bump their referral count +
+// reward accrual and log the referred user. Idempotent per referred-user so a
+// retried flush can't double-credit. rewardMonths accrues a free-month Pro
+// credit (redeemed at checkout once billing is live). No-op-safe when the
+// inviter never signed in (cross-domain invite to a stranger).
+async function recordReferralForInviter(inviterEmail, { newUserEmail, rewardMonths = 1 }) {
+  try {
+    const inviterLower = (inviterEmail || '').toLowerCase();
+    const inviterDomain = inviterLower.split('@')[1];
+    if (!inviterDomain) return { inviterExists: false };
+    const ref = tenantRef(inviterDomain).collection('users').doc(inviterLower);
+    return await getDb().runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      if (!doc.exists) return { inviterExists: false };
+      const d = doc.data();
+      const already = Array.isArray(d.referrals) && d.referrals.some(r => r.email === newUserEmail);
+      if (!already) {
+        tx.set(ref, {
+          referralCount: FieldValue.increment(1),
+          referralRewardsEarned: FieldValue.increment(rewardMonths),
+          referrals: FieldValue.arrayUnion({ email: newUserEmail }),
+          updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true });
+      }
+      return {
+        inviterExists: true,
+        inviterDisplayName: d.displayName || '',
+        totalReferrals: (d.referralCount || 0) + (already ? 0 : 1),
+        already,
+      };
+    });
+  } catch (err) {
+    log.error('firestore: recordReferralForInviter failed', { inviterEmail, error: err.message });
+    return { inviterExists: false };
   }
 }
 
@@ -1306,6 +1378,7 @@ module.exports = {
   getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens,
   getUserSettings, updateUserSettings,
   setUserAcquisitionSource, claimSignupNotification,
+  claimReferral, recordReferralForInviter,
   logEvent,
   getUserActivationStatus, countUserExports, isExistingUserAnywhere, countAllUsers,
   getUserMeetingHistory,

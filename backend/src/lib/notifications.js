@@ -226,6 +226,52 @@ async function maybeSendSignupNotification(domain, email) {
   return sendSignupWebhook({ ...payload, totalUsers });
 }
 
+// Referral win: tell the inviter that someone they invited just joined and
+// that they've earned a free month of Pro. Uses sendPersonalEmail so it carries
+// the reply-to + CAN-SPAM unsubscribe footer like other lifecycle mail.
+async function sendReferralNotification({ to, inviterName, newUserName, rewardMonths = 1, totalReferrals = 1 }) {
+  const monthWord = rewardMonths === 1 ? 'a free month' : `${rewardMonths} free months`;
+  return sendPersonalEmail({
+    to, displayName: inviterName,
+    subject: `🎉 ${newUserName} joined Attendance Tracker — you earned a free month`,
+    lines: [
+      `Good news — ${newUserName} just signed up for Attendance Tracker using your invite.`,
+      '',
+      `As a thank-you, you've earned ${monthWord} of Pro — it'll be applied to your account (or your next upgrade).`,
+      totalReferrals > 1 ? `That's ${totalReferrals} people you've brought in so far. Seriously, thank you.` : `Thanks for spreading the word.`,
+      '',
+      '— Derek',
+      'attendancetracker.dev',
+    ],
+    tags: [{ name: 'type', value: 'referral' }],
+    logLabel: 'referral notification', logMeta: { totalReferrals },
+  });
+}
+
+// Deferred referral flush. Claims a referred user's pending referral once,
+// credits + notifies the inviter, and is a no-op otherwise. Fired from the same
+// triggers as the signup notification (grace timer, source modal, daily sweep).
+// Idempotent via claimReferral + recordReferralForInviter's per-user guard.
+async function maybeSendReferralNotification(domain, email) {
+  const { claimReferral, recordReferralForInviter, isEmailSuppressed } = require('../services/firestore');
+  const claim = await claimReferral(domain, email);
+  if (!claim) return { sent: false };
+  const rewardMonths = 1;
+  const rec = await recordReferralForInviter(claim.referredBy, { newUserEmail: claim.newUserEmail, rewardMonths });
+  // Nothing to email if the inviter never signed in, or we already credited
+  // this referral on a prior flush.
+  if (!rec.inviterExists || rec.already) return { sent: false, recorded: !!rec.inviterExists && !rec.already };
+  // CAN-SPAM: never email a suppressed inviter (still credited above).
+  if (await isEmailSuppressed(claim.referredBy)) return { sent: false, recorded: true };
+  return sendReferralNotification({
+    to: claim.referredBy,
+    inviterName: rec.inviterDisplayName,
+    newUserName: claim.newUserName || claim.newUserEmail,
+    rewardMonths,
+    totalReferrals: rec.totalReferrals,
+  });
+}
+
 // Generic email send used by the admin "email from dashboard" feature.
 // Returns { sent: true, id } or throws if Resend isn't configured.
 async function sendAdminEmail({ to, subject, body }) {
@@ -753,7 +799,7 @@ async function sendSlackTestPing({ webhookUrl }) {
 }
 
 module.exports = {
-  sendSignupWebhook, maybeSendSignupNotification, sendAdminEmail, sendWeeklySelfReport, sendExportNotification,
+  sendSignupWebhook, maybeSendSignupNotification, sendReferralNotification, maybeSendReferralNotification, sendAdminEmail, sendWeeklySelfReport, sendExportNotification,
   sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail,
   sendSlackDigest, sendSlackTestPing, buildSlackDigestBlocks, buildSlackFallbackText, maskSlackWebhook,
   unsubscribeUrl, unsubscribeToken, verifyUnsubscribeToken, unsubscribeFooter,

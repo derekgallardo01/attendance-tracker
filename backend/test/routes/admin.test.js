@@ -52,6 +52,7 @@ jest.mock('../../src/lib/notifications', () => ({
   sendForgottenMeetingEmail: jest.fn(),
   // Deferred-signup flush; returns a promise so callers' `.catch()` is safe.
   maybeSendSignupNotification: jest.fn().mockResolvedValue({ sent: false }),
+  maybeSendReferralNotification: jest.fn().mockResolvedValue({ sent: false }),
 }));
 
 const firestore = require('../../src/services/firestore');

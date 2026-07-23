@@ -279,3 +279,44 @@ describe('deferred signup notification — pending flag + claim', () => {
     expect(await firestore.claimSignupNotification('acme.com', 'u@acme.com')).toBeNull();
   });
 });
+
+describe('referral loop — pending flag + claim + inviter credit', () => {
+  test('first signin via a ?ref= invite flags referralNotifyPending + referredBy', async () => {
+    await firestore.upsertUser('acme.com', { email: 'new@acme.com', displayName: 'New', acquisition: { ref: 'inviter@acme.com' } });
+    const u = ctx.read('tenants/acme.com/users/new@acme.com');
+    expect(u.referredBy).toBe('inviter@acme.com');
+    expect(u.referralNotifyPending).toBe(true);
+  });
+
+  test('no ?ref= → no referral pending flag', async () => {
+    await firestore.upsertUser('acme.com', { email: 'x@acme.com', displayName: 'X' });
+    expect(ctx.read('tenants/acme.com/users/x@acme.com').referralNotifyPending).toBeUndefined();
+  });
+
+  test('claimReferral returns the inviter payload once, then clears the flag', async () => {
+    await firestore.upsertUser('acme.com', { email: 'new@acme.com', displayName: 'New User', acquisition: { ref: 'Inviter@Acme.com' } });
+    const first = await firestore.claimReferral('acme.com', 'new@acme.com');
+    expect(first).toMatchObject({ referredBy: 'inviter@acme.com', newUserEmail: 'new@acme.com', newUserName: 'New User' });
+    expect(ctx.read('tenants/acme.com/users/new@acme.com').referralNotifyPending).toBe(false);
+    expect(await firestore.claimReferral('acme.com', 'new@acme.com')).toBeNull();
+  });
+
+  test('recordReferralForInviter credits the inviter and is idempotent per referred user', async () => {
+    ctx.seed('tenants/acme.com/users/inviter@acme.com', { email: 'inviter@acme.com', displayName: 'Inviter' });
+    const r1 = await firestore.recordReferralForInviter('inviter@acme.com', { newUserEmail: 'new@acme.com', rewardMonths: 1 });
+    expect(r1).toMatchObject({ inviterExists: true, inviterDisplayName: 'Inviter', totalReferrals: 1, already: false });
+    const inv = ctx.read('tenants/acme.com/users/inviter@acme.com');
+    expect(inv.referralCount).toBe(1);
+    expect(inv.referralRewardsEarned).toBe(1);
+
+    // Re-crediting the same referred user is a no-op.
+    const r2 = await firestore.recordReferralForInviter('inviter@acme.com', { newUserEmail: 'new@acme.com' });
+    expect(r2.already).toBe(true);
+    expect(ctx.read('tenants/acme.com/users/inviter@acme.com').referralCount).toBe(1);
+  });
+
+  test('recordReferralForInviter is a no-op when the inviter never signed in', async () => {
+    const r = await firestore.recordReferralForInviter('ghost@nowhere.com', { newUserEmail: 'new@acme.com' });
+    expect(r.inviterExists).toBe(false);
+  });
+});

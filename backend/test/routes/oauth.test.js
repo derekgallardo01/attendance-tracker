@@ -23,6 +23,7 @@ jest.mock('../../src/services/googleAuth', () => ({
 jest.mock('../../src/lib/notifications', () => ({
   sendSignupWebhook: jest.fn(),
   maybeSendSignupNotification: jest.fn().mockResolvedValue({ sent: false }),
+  maybeSendReferralNotification: jest.fn().mockResolvedValue({ sent: false }),
 }));
 // google.auth.OAuth2 verifyIdToken is invoked inside exchange — mock it. The
 // payload is mutable so a test can simulate a personal (no-hd) Google account.
