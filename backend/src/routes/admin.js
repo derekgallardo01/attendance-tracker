@@ -22,6 +22,25 @@ function csvField(v) {
 
 const router = Router();
 
+// Time budget for the cron sweeps. The loops stop once elapsed exceeds this so
+// idempotent per-user work resumes on the next run. It MUST stay under the
+// server's request timeout (CONFIG.requestTimeoutMs) — otherwise the socket is
+// destroyed mid-loop and the budget/telemetry never engage (the sweep silently
+// processes only a fraction of users). Clamp to a safe ceiling and warn loudly
+// if SWEEP_BUDGET_MS is configured higher than the request timeout allows.
+const SWEEP_MARGIN_MS = 5000;
+function sweepBudgetMs() {
+  const configured = Number(process.env.SWEEP_BUDGET_MS) || 240000;
+  const ceiling = CONFIG.requestTimeoutMs - SWEEP_MARGIN_MS;
+  if (configured > ceiling) {
+    log.warn('admin: SWEEP_BUDGET_MS exceeds request timeout — clamping so the socket cannot die mid-sweep', {
+      configured, requestTimeoutMs: CONFIG.requestTimeoutMs, clampedTo: ceiling,
+    });
+    return ceiling;
+  }
+  return configured;
+}
+
 // Marketplace webhooks mutate tenant config (activate/deactivate a whole
 // domain) so they must not be openly writable. We require a shared secret
 // header (MARKETPLACE_WEBHOOK_SECRET) — same pattern as the scheduler crons —
@@ -269,7 +288,7 @@ router.post('/admin/check-reengagement', requireSuperAdminOrScheduler, async (re
     // (permanent per-user claims) and firing windows span days, so any users we
     // don't reach this run are picked up by the next daily sweep.
     const startedAt = Date.now();
-    const BUDGET_MS = Number(process.env.SWEEP_BUDGET_MS) || 240000;
+    const BUDGET_MS = sweepBudgetMs();
     let timedOut = false;
     let index = 0;
 
@@ -379,7 +398,7 @@ router.post('/admin/check-alerts', requireSuperAdminOrScheduler, async (req, res
     // Stop before Cloud Run's request timeout; per-day claims make the sweep
     // safe to resume on the next run (see check-reengagement for rationale).
     const startedAt = Date.now();
-    const BUDGET_MS = Number(process.env.SWEEP_BUDGET_MS) || 240000;
+    const BUDGET_MS = sweepBudgetMs();
     let timedOut = false;
     let index = 0;
 

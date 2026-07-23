@@ -30,6 +30,13 @@ const CONFIG = {
   port:             process.env.PORT || 8080,
   gcpProjectId:     process.env.GCP_PROJECT_ID || null,
 
+  // How long any single request may run before the socket is destroyed. Shared
+  // (was inline in server.js) so long-running handlers — notably the cron sweeps
+  // — can keep their work budget safely under it instead of being silently
+  // killed mid-loop. Raise REQUEST_TIMEOUT_MS on the service that runs the crons
+  // if you want longer sweeps.
+  requestTimeoutMs: Number(process.env.REQUEST_TIMEOUT_MS) || 30000,
+
   // Public, absolute URL of this backend's /api mount. Used to build links in
   // emails (e.g. one-click unsubscribe) that must hit the API directly — the
   // marketing site on attendancetracker.dev is static GitHub Pages and does
@@ -40,5 +47,18 @@ const CONFIG = {
   // redirect URLs.
   publicSiteUrl:    process.env.PUBLIC_SITE_URL || 'https://attendancetracker.dev',
 };
+
+// The superAdminEmail fallback is a convenience for local dev, but in a deployed
+// environment an unset SUPER_ADMIN_EMAIL silently binds ALL admin/CRM/analytics
+// routes to a hardcoded personal Gmail — a security landmine. Warn loudly at
+// boot so a missing env var can't pass unnoticed. K_SERVICE is Cloud-Run-set, so
+// this fires in prod even when NODE_ENV isn't explicitly 'production'.
+if (!process.env.SUPER_ADMIN_EMAIL && (process.env.NODE_ENV === 'production' || process.env.K_SERVICE)) {
+  console.warn(JSON.stringify({
+    severity: 'WARNING',
+    msg: 'SUPER_ADMIN_EMAIL not set — admin routes fall back to a hardcoded email. Set it in the environment.',
+    ts: new Date().toISOString(),
+  }));
+}
 
 module.exports = CONFIG;
