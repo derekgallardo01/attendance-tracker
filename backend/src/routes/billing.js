@@ -125,11 +125,16 @@ async function webhookHandler(req, res) {
         const sub = event.data.object;
         const domain = sub.metadata?.domain;
         if (domain) {
-          const active = sub.status === 'active' || sub.status === 'trialing';
+          // Keep Pro through Stripe's dunning window: `past_due` means the latest
+          // invoice failed but Stripe is still auto-retrying, so a temporary card
+          // decline shouldn't yank access mid-retry. `unpaid`/`canceled`/etc.
+          // (retries exhausted or ended) downgrade to Free.
+          const active = ['active', 'trialing', 'past_due'].includes(sub.status);
           await setTenantPlan(domain, {
             plan: active ? 'pro' : 'free',
             billingStatus: sub.status,
             stripeSubscriptionId: sub.id,
+            ...(sub.customer ? { stripeCustomerId: sub.customer } : {}), // also persist on subscription events (B6/portal)
           });
         }
         break;

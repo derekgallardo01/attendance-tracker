@@ -551,6 +551,18 @@ async function claimReferral(domain, email) {
   }
 }
 
+// Re-arm a referral claim (referralNotifyPending → true) so a later flush retries.
+// Used when crediting fails transiently after the claim committed, so the reward
+// isn't silently lost. Mirrors the re-engagement sweep's release-on-failure.
+async function releaseReferral(domain, email) {
+  try {
+    await tenantRef(domain).collection('users').doc(email.toLowerCase())
+      .set({ referralNotifyPending: true }, { merge: true });
+  } catch (err) {
+    log.warn('firestore: releaseReferral failed', { domain, email, error: err.message });
+  }
+}
+
 // Max free-month reward coupons any single inviter can earn. Bounds the blast
 // radius of referral farming (throwaway-account signups via a controlled
 // ?ref=): attribution (referralCount) still accrues past the cap, but no
@@ -593,8 +605,12 @@ async function recordReferralForInviter(inviterEmail, { newUserEmail, rewardMont
       };
     });
   } catch (err) {
+    // Rethrow (don't return {inviterExists:false}, which the caller reads as
+    // "genuinely no inviter" and drops the referral): a transient error here
+    // should let maybeSendReferralNotification RELEASE the claim so a later flush
+    // retries and re-credits, rather than silently losing the reward.
     log.error('firestore: recordReferralForInviter failed', { inviterEmail, error: err.message });
-    return { inviterExists: false };
+    throw err;
   }
 }
 
@@ -1427,7 +1443,7 @@ module.exports = {
   getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens,
   getUserSettings, updateUserSettings,
   setUserAcquisitionSource, claimSignupNotification,
-  claimReferral, recordReferralForInviter, recordReferralPromoCode, getUserTrackingStreak,
+  claimReferral, releaseReferral, recordReferralForInviter, recordReferralPromoCode, getUserTrackingStreak,
   logEvent,
   getUserActivationStatus, countUserExports, countAllUsers,
   getUserMeetingHistory,

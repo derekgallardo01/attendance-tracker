@@ -383,6 +383,21 @@ describe('notifications — content sanity checks', () => {
     jest.dontMock('../../src/services/firestore');
   });
 
+  test('maybeSendReferralNotification releases the claim when crediting fails transiently (so it retries)', async () => {
+    const claimReferral = jest.fn().mockResolvedValue({ referredBy: 'inviter@acme.com', newUserEmail: 'new@acme.com', newUserName: 'New' });
+    const releaseReferral = jest.fn();
+    const recordReferralForInviter = jest.fn().mockRejectedValue(new Error('firestore blip'));
+    const isEmailSuppressed = jest.fn();
+    jest.doMock('../../src/services/firestore', () => ({ claimReferral, releaseReferral, recordReferralForInviter, isEmailSuppressed }));
+    jest.resetModules();
+    const n = require('../../src/lib/notifications');
+    const res = await n.maybeSendReferralNotification('acme.com', 'new@acme.com');
+    expect(res).toEqual({ sent: false, released: true });
+    expect(releaseReferral).toHaveBeenCalledWith('acme.com', 'new@acme.com'); // re-armed for a later flush
+    expect(mockSend).not.toHaveBeenCalled();
+    jest.dontMock('../../src/services/firestore');
+  });
+
   test('flushDeferredNotifications fires both flushes fire-and-forget and swallows errors', async () => {
     jest.doMock('../../src/services/firestore', () => ({
       claimSignupNotification: jest.fn().mockRejectedValue(new Error('boom')), // exercise the .catch

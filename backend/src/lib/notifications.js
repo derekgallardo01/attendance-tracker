@@ -264,14 +264,24 @@ async function sendReferralNotification({ to, inviterName, newUserName, rewardMo
 // triggers as the signup notification (grace timer, source modal, daily sweep).
 // Idempotent via claimReferral + recordReferralForInviter's per-user guard.
 async function maybeSendReferralNotification(domain, email) {
-  const { claimReferral, recordReferralForInviter, recordReferralPromoCode, isEmailSuppressed } = require('../services/firestore');
+  const { claimReferral, releaseReferral, recordReferralForInviter, recordReferralPromoCode, isEmailSuppressed } = require('../services/firestore');
   const { createReferralPromoCode } = require('../routes/billing');
   const claim = await claimReferral(domain, email);
   if (!claim) return { sent: false };
   // Anti-abuse: a self-referral (signed up with your own ?ref=) earns nothing.
   if (claim.referredBy === (claim.newUserEmail || '').toLowerCase()) return { sent: false, selfReferral: true };
   const rewardMonths = 1;
-  const rec = await recordReferralForInviter(claim.referredBy, { newUserEmail: claim.newUserEmail, rewardMonths });
+  // Credit the inviter. If this fails transiently (recordReferralForInviter now
+  // rethrows), RELEASE the claim so a later flush retries rather than silently
+  // losing the reward. A genuinely-missing inviter returns {inviterExists:false}
+  // (no throw) and is dropped below without a release.
+  let rec;
+  try {
+    rec = await recordReferralForInviter(claim.referredBy, { newUserEmail: claim.newUserEmail, rewardMonths });
+  } catch (err) {
+    await releaseReferral(domain, email);
+    return { sent: false, released: true };
+  }
   // Nothing to email if the inviter never signed in, or we already credited
   // this referral on a prior flush.
   if (!rec.inviterExists || rec.already) return { sent: false, recorded: !!rec.inviterExists && !rec.already };

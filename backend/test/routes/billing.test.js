@@ -138,6 +138,36 @@ describe('billing — configured (Stripe env set)', () => {
     }));
   });
 
+  test('webhook subscription.updated → past_due KEEPS Pro (dunning grace)', async () => {
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      type: 'customer.subscription.updated',
+      data: { object: { id: 'sub_1', status: 'past_due', metadata: { domain: 'acme.com' } } },
+    });
+    await request(app)
+      .post('/api/billing/webhook')
+      .set('Content-Type', 'application/json')
+      .set('stripe-signature', 'good')
+      .send({});
+    expect(firestore.setTenantPlan).toHaveBeenCalledWith('acme.com', expect.objectContaining({
+      plan: 'pro', billingStatus: 'past_due',
+    }));
+  });
+
+  test('webhook subscription.updated → unpaid downgrades to free (retries exhausted)', async () => {
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      type: 'customer.subscription.updated',
+      data: { object: { id: 'sub_1', status: 'unpaid', metadata: { domain: 'acme.com' } } },
+    });
+    await request(app)
+      .post('/api/billing/webhook')
+      .set('Content-Type', 'application/json')
+      .set('stripe-signature', 'good')
+      .send({});
+    expect(firestore.setTenantPlan).toHaveBeenCalledWith('acme.com', expect.objectContaining({
+      plan: 'free', billingStatus: 'unpaid',
+    }));
+  });
+
   test('team overview is gated: 402 for a free domain once billing is live', async () => {
     firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
     firestore.getTeamAdminStatus.mockResolvedValue({ isTeamAdmin: true }); // pass requireTeamAdmin, then hit requireProPlan
