@@ -344,9 +344,28 @@ describe('notifications — content sanity checks', () => {
 
     const res = await n.maybeSendReferralNotification('acme.com', 'new@acme.com');
     expect(recordReferralForInviter).toHaveBeenCalled(); // still credited
-    expect(res).toEqual({ sent: false, recorded: true });
+    expect(res).toMatchObject({ sent: false, recorded: true });
     expect(mockSend).not.toHaveBeenCalled(); // but not emailed
 
+    jest.dontMock('../../src/services/firestore');
+  });
+
+  test('maybeSendReferralNotification includes a minted promo code in the email', async () => {
+    const claimReferral = jest.fn().mockResolvedValue({ referredBy: 'inviter@acme.com', newUserEmail: 'new@acme.com', newUserName: 'New' });
+    const recordReferralForInviter = jest.fn().mockResolvedValue({ inviterExists: true, inviterDisplayName: 'Inviter', totalReferrals: 1, already: false });
+    const recordReferralPromoCode = jest.fn();
+    const isEmailSuppressed = jest.fn().mockResolvedValue(false);
+    jest.doMock('../../src/services/firestore', () => ({ claimReferral, recordReferralForInviter, recordReferralPromoCode, isEmailSuppressed }));
+    jest.doMock('../../src/routes/billing', () => ({ createReferralPromoCode: jest.fn().mockResolvedValue('FREEMO123') }));
+    jest.resetModules();
+    const n = require('../../src/lib/notifications');
+
+    await n.maybeSendReferralNotification('acme.com', 'new@acme.com');
+    expect(recordReferralPromoCode).toHaveBeenCalledWith('inviter@acme.com', 'FREEMO123');
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    expect(mockSend.mock.calls[0][0].text).toContain('FREEMO123');
+
+    jest.dontMock('../../src/routes/billing');
     jest.dontMock('../../src/services/firestore');
   });
 

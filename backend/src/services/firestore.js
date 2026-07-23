@@ -578,6 +578,23 @@ async function recordReferralForInviter(inviterEmail, { newUserEmail, rewardMont
   }
 }
 
+// Record a minted referral promo code on the inviter's doc (for admin visibility
+// + so we can see which rewards were issued). Best-effort; the code also lives
+// in Stripe with referrer metadata.
+async function recordReferralPromoCode(inviterEmail, code) {
+  try {
+    const inviterLower = (inviterEmail || '').toLowerCase();
+    const inviterDomain = inviterLower.split('@')[1];
+    if (!inviterDomain || !code) return;
+    await tenantRef(inviterDomain).collection('users').doc(inviterLower).set({
+      referralPromoCodes: FieldValue.arrayUnion(code),
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+  } catch (err) {
+    log.warn('firestore: recordReferralPromoCode failed', { inviterEmail, error: err.message });
+  }
+}
+
 // ── Per-user settings (Slack webhook, future notification prefs, etc.) ──
 // Lives under tenants/{domain}/userSettings/{email} so it's tenant-scoped
 // like the rest of user data. Separate doc from the main user record
@@ -1392,7 +1409,7 @@ module.exports = {
   getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens,
   getUserSettings, updateUserSettings,
   setUserAcquisitionSource, claimSignupNotification,
-  claimReferral, recordReferralForInviter, getUserTrackingStreak,
+  claimReferral, recordReferralForInviter, recordReferralPromoCode, getUserTrackingStreak,
   logEvent,
   getUserActivationStatus, countUserExports, isExistingUserAnywhere, countAllUsers,
   getUserMeetingHistory,

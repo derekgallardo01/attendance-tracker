@@ -229,22 +229,25 @@ async function maybeSendSignupNotification(domain, email) {
 // Referral win: tell the inviter that someone they invited just joined and
 // that they've earned a free month of Pro. Uses sendPersonalEmail so it carries
 // the reply-to + CAN-SPAM unsubscribe footer like other lifecycle mail.
-async function sendReferralNotification({ to, inviterName, newUserName, rewardMonths = 1, totalReferrals = 1 }) {
+async function sendReferralNotification({ to, inviterName, newUserName, rewardMonths = 1, totalReferrals = 1, promoCode = null }) {
   const monthWord = rewardMonths === 1 ? 'a free month' : `${rewardMonths} free months`;
+  const rewardLine = promoCode
+    ? `As a thank-you, here's ${monthWord} of Pro on us — apply code ${promoCode} at checkout.`
+    : `As a thank-you, you've earned ${monthWord} of Pro — it'll be applied to your account (or your next upgrade).`;
   return sendPersonalEmail({
     to, displayName: inviterName,
     subject: `🎉 ${newUserName} joined Attendance Tracker — you earned a free month`,
     lines: [
       `Good news — ${newUserName} just signed up for Attendance Tracker using your invite.`,
       '',
-      `As a thank-you, you've earned ${monthWord} of Pro — it'll be applied to your account (or your next upgrade).`,
+      rewardLine,
       totalReferrals > 1 ? `That's ${totalReferrals} people you've brought in so far. Seriously, thank you.` : `Thanks for spreading the word.`,
       '',
       '— Derek',
       'attendancetracker.dev',
     ],
     tags: [{ name: 'type', value: 'referral' }],
-    logLabel: 'referral notification', logMeta: { totalReferrals },
+    logLabel: 'referral notification', logMeta: { totalReferrals, hasPromo: !!promoCode },
   });
 }
 
@@ -253,7 +256,8 @@ async function sendReferralNotification({ to, inviterName, newUserName, rewardMo
 // triggers as the signup notification (grace timer, source modal, daily sweep).
 // Idempotent via claimReferral + recordReferralForInviter's per-user guard.
 async function maybeSendReferralNotification(domain, email) {
-  const { claimReferral, recordReferralForInviter, isEmailSuppressed } = require('../services/firestore');
+  const { claimReferral, recordReferralForInviter, recordReferralPromoCode, isEmailSuppressed } = require('../services/firestore');
+  const { createReferralPromoCode } = require('../routes/billing');
   const claim = await claimReferral(domain, email);
   if (!claim) return { sent: false };
   const rewardMonths = 1;
@@ -261,14 +265,20 @@ async function maybeSendReferralNotification(domain, email) {
   // Nothing to email if the inviter never signed in, or we already credited
   // this referral on a prior flush.
   if (!rec.inviterExists || rec.already) return { sent: false, recorded: !!rec.inviterExists && !rec.already };
+  // Mint the free-month reward as a one-time Stripe promo code (null when the
+  // coupon isn't configured — the reward still accrued above and the email
+  // falls back to "we'll apply it").
+  const promoCode = await createReferralPromoCode(claim.referredBy);
+  if (promoCode) await recordReferralPromoCode(claim.referredBy, promoCode);
   // CAN-SPAM: never email a suppressed inviter (still credited above).
-  if (await isEmailSuppressed(claim.referredBy)) return { sent: false, recorded: true };
+  if (await isEmailSuppressed(claim.referredBy)) return { sent: false, recorded: true, promoCode: promoCode || null };
   return sendReferralNotification({
     to: claim.referredBy,
     inviterName: rec.inviterDisplayName,
     newUserName: claim.newUserName || claim.newUserEmail,
     rewardMonths,
     totalReferrals: rec.totalReferrals,
+    promoCode,
   });
 }
 

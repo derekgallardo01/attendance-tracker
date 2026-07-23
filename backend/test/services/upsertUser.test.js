@@ -319,4 +319,11 @@ describe('referral loop — pending flag + claim + inviter credit', () => {
     const r = await firestore.recordReferralForInviter('ghost@nowhere.com', { newUserEmail: 'new@acme.com' });
     expect(r.inviterExists).toBe(false);
   });
+
+  test('recordReferralPromoCode appends the minted code to the inviter doc', async () => {
+    ctx.seed('tenants/acme.com/users/inviter@acme.com', { email: 'inviter@acme.com' });
+    await firestore.recordReferralPromoCode('inviter@acme.com', 'FREEMO1');
+    await firestore.recordReferralPromoCode('inviter@acme.com', 'FREEMO2');
+    expect(ctx.read('tenants/acme.com/users/inviter@acme.com').referralPromoCodes).toEqual(['FREEMO1', 'FREEMO2']);
+  });
 });

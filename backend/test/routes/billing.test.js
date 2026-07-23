@@ -9,6 +9,7 @@ const mockStripeInstance = {
   checkout: { sessions: { create: jest.fn() } },
   billingPortal: { sessions: { create: jest.fn() } },
   webhooks: { constructEvent: jest.fn() },
+  promotionCodes: { create: jest.fn() },
 };
 jest.mock('stripe', () => jest.fn(() => mockStripeInstance));
 
@@ -288,5 +289,34 @@ describe('billing status error', () => {
     firestore.getTenantPlan.mockRejectedValue(new Error('read boom'));
     const res = await request(app).get('/api/billing/status').set(authedHeader('a@acme.com', 'acme.com'));
     expect(res.status).toBe(500);
+  });
+});
+
+describe('createReferralPromoCode', () => {
+  const { createReferralPromoCode } = require('../../src/routes/billing');
+  afterEach(() => { delete process.env.STRIPE_SECRET_KEY; delete process.env.STRIPE_REFERRAL_COUPON_ID; });
+
+  test('returns null when the coupon is not configured', async () => {
+    delete process.env.STRIPE_REFERRAL_COUPON_ID;
+    expect(await createReferralPromoCode('inviter@x.com')).toBeNull();
+  });
+
+  test('mints a single-use promo code referencing the coupon when configured', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_REFERRAL_COUPON_ID = 'coup_123';
+    mockStripeInstance.promotionCodes.create.mockResolvedValue({ code: 'ABC123' });
+    const code = await createReferralPromoCode('inviter@x.com');
+    expect(code).toBe('ABC123');
+    expect(mockStripeInstance.promotionCodes.create).toHaveBeenCalledWith(expect.objectContaining({
+      coupon: 'coup_123', max_redemptions: 1,
+      metadata: expect.objectContaining({ referrer: 'inviter@x.com', kind: 'referral_reward' }),
+    }));
+  });
+
+  test('returns null (does not throw) when Stripe errors', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_REFERRAL_COUPON_ID = 'coup_123';
+    mockStripeInstance.promotionCodes.create.mockRejectedValue(new Error('stripe down'));
+    expect(await createReferralPromoCode('inviter@x.com')).toBeNull();
   });
 });

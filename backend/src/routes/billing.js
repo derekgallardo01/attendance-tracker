@@ -200,4 +200,26 @@ async function planIsPro(domain) {
   }
 }
 
-module.exports = { router, webhookHandler, requireProPlan, planIsPro };
+// Mint a single-use Stripe promotion code for a referral reward, referencing
+// the configured coupon (STRIPE_REFERRAL_COUPON_ID — e.g. "100% off once" = one
+// free month on a monthly plan). Returns the human-usable code (e.g. "AB12CD"),
+// or null when billing/coupon isn't set up — in which case the reward still
+// accrues on the inviter's doc and the email falls back to "we'll apply it".
+async function createReferralPromoCode(inviterEmail) {
+  const couponId = process.env.STRIPE_REFERRAL_COUPON_ID;
+  const stripe = getStripe();
+  if (!stripe || !couponId) return null;
+  try {
+    const pc = await stripe.promotionCodes.create({
+      coupon: couponId,
+      max_redemptions: 1,
+      metadata: { referrer: inviterEmail, kind: 'referral_reward' },
+    });
+    return pc.code;
+  } catch (err) {
+    log.error('billing: createReferralPromoCode failed', { inviterEmail, error: err.message });
+    return null;
+  }
+}
+
+module.exports = { router, webhookHandler, requireProPlan, planIsPro, createReferralPromoCode };
