@@ -442,10 +442,13 @@ async function getWeeklySelfReport() {
     const weekAgo = now - WEEK;
     const twoWeeksAgo = now - 2 * WEEK;
 
-    const [usersSnap, eventsSnap, meetingsSnap] = await Promise.all([
+    // users + events are needed as rows (per-user windowing, cross-referencing).
+    // meetings is only needed for a total count → count() aggregation instead of
+    // loading every meeting doc.
+    const [usersSnap, eventsSnap, meetingsCount] = await Promise.all([
       getDb().collectionGroup('users').get(),
       getDb().collectionGroup('events').get(),
-      getDb().collectionGroup('meetings').get(),
+      getDb().collectionGroup('meetings').count().get(),
     ]);
 
     const users = usersSnap.docs.map(d => ({
@@ -521,7 +524,7 @@ async function getWeeklySelfReport() {
       concerns: concerns.slice(0, 10),
       sources: sourcesThisWeek,
       totalUsers: users.length,
-      totalMeetings: meetingsSnap.size,
+      totalMeetings: meetingsCount.data().count,
     };
   } catch (err) {
     log.error('firestore: getWeeklySelfReport failed', { error: err.message });
@@ -537,10 +540,11 @@ async function getAdvancedAnalytics() {
     const DAY = 24 * 60 * 60 * 1000;
     const HOUR = 60 * 60 * 1000;
 
-    const [usersSnap, eventsSnap, meetingsSnap] = await Promise.all([
+    // meetings was loaded here but never used — a dead full-collection scan.
+    // Dropped. users + events are needed as rows below.
+    const [usersSnap, eventsSnap] = await Promise.all([
       getDb().collectionGroup('users').get(),
       getDb().collectionGroup('events').get(),
-      getDb().collectionGroup('meetings').get(),
     ]);
 
     const users = usersSnap.docs.map(d => {
