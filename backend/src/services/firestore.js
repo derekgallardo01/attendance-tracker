@@ -57,12 +57,22 @@ async function setTenantPlan(domain, patch) {
     }, { merge: true });
     log.info('firestore: set tenant plan', { domain, plan: patch.plan, status: patch.billingStatus });
   } catch (err) {
+    // Rethrow: the Stripe webhook is the only caller and it MUST see this fail so
+    // it returns 500 and Stripe redelivers the event. Swallowing here would ack
+    // the event 200 with the plan never written — a charged customer stuck on the
+    // wrong plan with no retry.
     log.error('firestore: setTenantPlan failed', { domain, error: err.message });
+    throw err;
   }
 }
 
 async function getTenantPlan(domain) {
-  const cfg = await getTenantConfig(domain);
+  // Read the tenant doc directly rather than via getTenantConfig, which swallows
+  // read errors and returns null. A genuine Firestore read error MUST propagate
+  // so requireProPlan/planIsPro can catch it and ride the last-known-plan cache —
+  // otherwise a transient blip silently downgrades a paying customer to Free.
+  const doc = await tenantRef(domain).get();
+  const cfg = doc.exists ? doc.data() : null;
   return {
     plan: cfg?.plan === 'pro' ? 'pro' : 'free',
     billingStatus: cfg?.billingStatus || null,
@@ -541,11 +551,17 @@ async function claimReferral(domain, email) {
   }
 }
 
+// Max free-month reward coupons any single inviter can earn. Bounds the blast
+// radius of referral farming (throwaway-account signups via a controlled
+// ?ref=): attribution (referralCount) still accrues past the cap, but no
+// further money-bearing coupons are minted. Tune as the referral program matures.
+const REFERRAL_REWARD_CAP = 10;
+
 // Credit the inviter for a successful referral: bump their referral count +
 // reward accrual and log the referred user. Idempotent per referred-user so a
-// retried flush can't double-credit. rewardMonths accrues a free-month Pro
-// credit (redeemed at checkout once billing is live). No-op-safe when the
-// inviter never signed in (cross-domain invite to a stranger).
+// retried flush can't double-credit. `rewardEligible` in the return says whether
+// a coupon should be minted (first-time credit AND under the anti-farming cap).
+// No-op-safe when the inviter never signed in (cross-domain invite to a stranger).
 async function recordReferralForInviter(inviterEmail, { newUserEmail, rewardMonths = 1 }) {
   try {
     const inviterLower = (inviterEmail || '').toLowerCase();
@@ -557,19 +573,23 @@ async function recordReferralForInviter(inviterEmail, { newUserEmail, rewardMont
       if (!doc.exists) return { inviterExists: false };
       const d = doc.data();
       const already = Array.isArray(d.referrals) && d.referrals.some(r => r.email === newUserEmail);
+      const rewardEligible = !already && (d.referralRewardsEarned || 0) < REFERRAL_REWARD_CAP;
       if (!already) {
-        tx.set(ref, {
+        const patch = {
           referralCount: FieldValue.increment(1),
-          referralRewardsEarned: FieldValue.increment(rewardMonths),
           referrals: FieldValue.arrayUnion({ email: newUserEmail }),
           updatedAt: FieldValue.serverTimestamp(),
-        }, { merge: true });
+        };
+        // Only accrue the money-bearing reward while under the cap.
+        if (rewardEligible) patch.referralRewardsEarned = FieldValue.increment(rewardMonths);
+        tx.set(ref, patch, { merge: true });
       }
       return {
         inviterExists: true,
         inviterDisplayName: d.displayName || '',
         totalReferrals: (d.referralCount || 0) + (already ? 0 : 1),
         already,
+        rewardEligible,
       };
     });
   } catch (err) {
@@ -739,7 +759,7 @@ async function getAllUsersAcrossTenants() {
 // each other's meetings). A user with no tracked events sees an empty list —
 // we never fall back to "all meetings in the domain", because on shared tenants
 // (every gmail.com user lands in one tenant) that would leak strangers' data.
-async function getUserMeetingHistory(domain, email) {
+async function getUserMeetingHistory(domain, email, { limit } = {}) {
   try {
     const tenant = tenantRef(domain);
     const emailLower = email.toLowerCase();
@@ -773,14 +793,23 @@ async function getUserMeetingHistory(domain, email) {
         };
       });
 
-    // Pull all participants for the filtered meetings in parallel. At ~7-15
+    // Newest-first, then apply the caller's cap (free tier) BEFORE reading
+    // participants / building people + calendar — so ALL derived data reflects
+    // only the visible meetings. Capping just the meetings array (as the route
+    // used to) would leak the full per-person analytics + calendar density.
+    filteredMeetings.sort((a, b) => (b.createdAt || b.startTime || 0) - (a.createdAt || a.startTime || 0));
+    const totalTracked = filteredMeetings.length;
+    const historyCapped = limit != null && totalTracked > limit;
+    const visibleMeetings = historyCapped ? filteredMeetings.slice(0, limit) : filteredMeetings;
+
+    // Pull all participants for the VISIBLE meetings in parallel. At ~7-15
     // users with <100 meetings each this is fine; if it gets heavy we paginate.
     const participantSnaps = await Promise.all(
-      filteredMeetings.map(m => m.ref.collection('participants').get())
+      visibleMeetings.map(m => m.ref.collection('participants').get())
     );
 
     // ── Build the meetings array (drop the Firestore ref) ──
-    const meetings = filteredMeetings
+    const meetings = visibleMeetings
       .map((m, i) => {
         const parts = participantSnaps[i].docs.map(p => p.data());
         const presentNames = parts.filter(p => p.present).map(p => p.displayName).filter(Boolean);
@@ -801,10 +830,13 @@ async function getUserMeetingHistory(domain, email) {
     // ── People aggregation across all meetings ──
     // Key by email when available, else displayName. Track meetings attended,
     // total minutes (summed across appearances), last seen.
-    const totalMeetings = meetings.length;
+    // Denominator for attendanceRate = the number of meetings we aggregated
+    // over (the visible set), NOT the true total — otherwise a capped free user
+    // gets an understated rate.
+    const visibleCount = visibleMeetings.length;
     const peopleMap = new Map();
-    for (let i = 0; i < filteredMeetings.length; i++) {
-      const m = filteredMeetings[i];
+    for (let i = 0; i < visibleMeetings.length; i++) {
+      const m = visibleMeetings[i];
       const meetingDate = m.startTime || m.createdAt || 0;
       for (const p of participantSnaps[i].docs) {
         const data = p.data();
@@ -841,7 +873,7 @@ async function getUserMeetingHistory(domain, email) {
         displayName: p.displayName,
         meetingCount: p.meetingCount,
         totalMinutes: p.totalMinutes,
-        attendanceRate: totalMeetings > 0 ? (p.meetingCount / totalMeetings) : 0,
+        attendanceRate: visibleCount > 0 ? (p.meetingCount / visibleCount) : 0,
         lastSeenAt: p.lastSeenAt ? new Date(p.lastSeenAt).toISOString() : null,
       }))
       .sort((a, b) => b.meetingCount - a.meetingCount);
@@ -851,7 +883,7 @@ async function getUserMeetingHistory(domain, email) {
     const today = new Date();
     const calendar = [];
     const byDate = new Map();
-    for (const m of filteredMeetings) {
+    for (const m of visibleMeetings) {
       const ts = m.createdAt || m.startTime;
       if (!ts) continue;
       const key = new Date(ts).toISOString().slice(0, 10);
@@ -871,7 +903,8 @@ async function getUserMeetingHistory(domain, email) {
       meetings,
       people,
       calendar,
-      totalMeetings,
+      totalMeetings: totalTracked, // true count (for the stat + "see all N" CTA); the arrays above are capped
+      ...(historyCapped ? { historyCapped: true, freeLimit: limit } : {}),
     };
   } catch (err) {
     log.error('firestore: getUserMeetingHistory failed', { domain, email, error: err.message });

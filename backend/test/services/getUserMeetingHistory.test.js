@@ -264,3 +264,44 @@ describe('getUserMeetingHistory — calendar heatmap', () => {
     expect(bucket.titles.length).toBeLessThanOrEqual(5);
   });
 });
+
+describe('getUserMeetingHistory — free-tier {limit} caps ALL derived data', () => {
+  const DAY = 86400000;
+  test('cap applies to meetings AND people AND calendar (not just the meetings list)', async () => {
+    const N = 5;
+    const cids = [];
+    for (let i = 0; i < N; i++) {
+      const cid = `m${i}`;
+      cids.push(cid);
+      const start = new Date(Date.now() - i * DAY); // m0 newest (today) … m4 oldest
+      seedMeeting(cid, {
+        title: `M${i}`, startTime: start, endTime: new Date(start.getTime() + 3600000),
+        participants: [{ email: `p${i}@x.com`, displayName: `P${i}`, present: true }],
+      });
+    }
+    seedTracked(cids);
+
+    const res = await firestore.getUserMeetingHistory('acme.com', 'me@acme.com', { limit: 2 });
+    // only the 2 newest meetings are visible…
+    expect(res.meetings).toHaveLength(2);
+    expect(res.historyCapped).toBe(true);
+    expect(res.freeLimit).toBe(2);
+    expect(res.totalMeetings).toBe(N); // true total (for the "see all N" CTA)
+    // …and people + calendar reflect ONLY those 2, not all 5 (the leak that was fixed).
+    expect(res.people).toHaveLength(2);
+    expect(res.calendar.reduce((s, d) => s + d.count, 0)).toBe(2);
+  });
+
+  test('no limit → full history + no cap signal (Pro)', async () => {
+    const cids = ['a', 'b', 'c'];
+    cids.forEach((cid, i) => seedMeeting(cid, {
+      startTime: new Date(Date.now() - i * DAY), participants: [{ email: `p${i}@x.com`, present: true }],
+    }));
+    seedTracked(cids);
+    const res = await firestore.getUserMeetingHistory('acme.com', 'me@acme.com'); // no opts
+    expect(res.meetings).toHaveLength(3);
+    expect(res.people).toHaveLength(3);
+    expect(res.historyCapped).toBeUndefined();
+    expect(res.totalMeetings).toBe(3);
+  });
+});

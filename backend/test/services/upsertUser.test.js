@@ -326,4 +326,21 @@ describe('referral loop — pending flag + claim + inviter credit', () => {
     await firestore.recordReferralPromoCode('inviter@acme.com', 'FREEMO2');
     expect(ctx.read('tenants/acme.com/users/inviter@acme.com').referralPromoCodes).toEqual(['FREEMO1', 'FREEMO2']);
   });
+
+  test('anti-farming: past the reward cap, referrals still count but no reward accrues', async () => {
+    // Inviter already at the cap (10 rewards earned).
+    ctx.seed('tenants/acme.com/users/inviter@acme.com', { email: 'inviter@acme.com', referralCount: 10, referralRewardsEarned: 10 });
+    const r = await firestore.recordReferralForInviter('inviter@acme.com', { newUserEmail: 'new11@acme.com', rewardMonths: 1 });
+    expect(r.rewardEligible).toBe(false); // no coupon should be minted
+    const inv = ctx.read('tenants/acme.com/users/inviter@acme.com');
+    expect(inv.referralCount).toBe(11);          // attribution still accrues
+    expect(inv.referralRewardsEarned).toBe(10);  // reward capped — no increment
+  });
+
+  test('under the cap, a new referral is reward-eligible', async () => {
+    ctx.seed('tenants/acme.com/users/inviter@acme.com', { email: 'inviter@acme.com', referralCount: 2, referralRewardsEarned: 2 });
+    const r = await firestore.recordReferralForInviter('inviter@acme.com', { newUserEmail: 'new3@acme.com', rewardMonths: 1 });
+    expect(r.rewardEligible).toBe(true);
+    expect(ctx.read('tenants/acme.com/users/inviter@acme.com').referralRewardsEarned).toBe(3);
+  });
 });

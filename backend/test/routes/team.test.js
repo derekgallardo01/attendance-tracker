@@ -23,6 +23,9 @@ let app;
 
 beforeEach(() => {
   jest.clearAllMocks();
+  // requireTeamAdmin now authorizes via getTeamAdminStatus (source of truth).
+  // Default to admin; deny-path tests override to { isTeamAdmin: false }.
+  firestore.getTeamAdminStatus.mockResolvedValue({ isTeamAdmin: true });
   app = buildApp();
 });
 
@@ -46,13 +49,8 @@ describe('GET /api/team/overview — auth gating', () => {
     expect(res.status).toBe(401);
   });
 
-  test('403 when authenticated user has no teamAdmin flag', async () => {
-    firestore.getUser.mockResolvedValue({
-      email: 'regular@acme.com',
-      domain: 'acme.com',
-      displayName: 'Regular',
-      teamAdmin: false,
-    });
+  test('403 when caller is not the tenant admin (adminEmail mismatch)', async () => {
+    firestore.getTeamAdminStatus.mockResolvedValue({ isTeamAdmin: false, adminEmail: 'boss@acme.com' });
     const res = await request(app)
       .get('/api/team/overview')
       .set(authedHeader('regular@acme.com', 'acme.com'));
@@ -61,8 +59,8 @@ describe('GET /api/team/overview — auth gating', () => {
     expect(firestore.getTeamOverview).not.toHaveBeenCalled();
   });
 
-  test('403 when getUser returns null (user has been deleted)', async () => {
-    firestore.getUser.mockResolvedValue(null);
+  test('403 when there is no tenant admin at all', async () => {
+    firestore.getTeamAdminStatus.mockResolvedValue({ isTeamAdmin: false, adminEmail: null });
     const res = await request(app)
       .get('/api/team/overview')
       .set(authedHeader('ghost@acme.com', 'acme.com'));
@@ -194,7 +192,7 @@ describe('POST /api/team/claim-admin', () => {
 
 describe('POST /api/team/transfer-admin', () => {
   test('403 when caller is not the current team admin', async () => {
-    firestore.getUser.mockResolvedValue({ email: 'u@acme.com', domain: 'acme.com', teamAdmin: false });
+    firestore.getTeamAdminStatus.mockResolvedValue({ isTeamAdmin: false });
     const res = await request(app).post('/api/team/transfer-admin')
       .set(authedHeader('u@acme.com', 'acme.com')).send({ toEmail: 'new@acme.com' });
     expect(res.status).toBe(403);
@@ -229,11 +227,8 @@ describe('POST /api/team/transfer-admin', () => {
 
 describe('requireTeamAdmin — error path', () => {
   test('500 when the admin-role check throws', async () => {
-    // auth middleware calls getUser first (must succeed); the requireTeamAdmin
-    // role check is the second call — make that one throw.
-    firestore.getUser
-      .mockResolvedValueOnce({ email: 'admin@acme.com', domain: 'acme.com' })
-      .mockRejectedValue(new Error('lookup boom'));
+    // requireTeamAdmin authorizes via getTeamAdminStatus — make it reject.
+    firestore.getTeamAdminStatus.mockRejectedValue(new Error('lookup boom'));
     const res = await request(app).get('/api/team/overview').set(authedHeader('admin@acme.com', 'acme.com'));
     expect(res.status).toBe(500);
   });

@@ -229,25 +229,33 @@ async function maybeSendSignupNotification(domain, email) {
 // Referral win: tell the inviter that someone they invited just joined and
 // that they've earned a free month of Pro. Uses sendPersonalEmail so it carries
 // the reply-to + CAN-SPAM unsubscribe footer like other lifecycle mail.
-async function sendReferralNotification({ to, inviterName, newUserName, rewardMonths = 1, totalReferrals = 1, promoCode = null }) {
+async function sendReferralNotification({ to, inviterName, newUserName, rewardMonths = 1, totalReferrals = 1, promoCode = null, rewarded = true }) {
   const monthWord = rewardMonths === 1 ? 'a free month' : `${rewardMonths} free months`;
-  const rewardLine = promoCode
-    ? `As a thank-you, here's ${monthWord} of Pro on us — apply code ${promoCode} at checkout.`
-    : `As a thank-you, you've earned ${monthWord} of Pro — it'll be applied to your account (or your next upgrade).`;
+  // Three states: rewarded + code (apply at checkout), rewarded but no code
+  // (billing not yet configured — we'll apply it), or capped (attribution only,
+  // no money-bearing reward — see REFERRAL_REWARD_CAP).
+  const rewardLine = !rewarded
+    ? `Thanks for spreading the word — that's a big help.`
+    : promoCode
+      ? `As a thank-you, here's ${monthWord} of Pro on us — apply code ${promoCode} at checkout.`
+      : `As a thank-you, you've earned ${monthWord} of Pro — it'll be applied to your account (or your next upgrade).`;
+  const subject = rewarded
+    ? `🎉 ${newUserName} joined Attendance Tracker — you earned a free month`
+    : `🎉 ${newUserName} joined Attendance Tracker via your invite`;
   return sendPersonalEmail({
     to, displayName: inviterName,
-    subject: `🎉 ${newUserName} joined Attendance Tracker — you earned a free month`,
+    subject,
     lines: [
       `Good news — ${newUserName} just signed up for Attendance Tracker using your invite.`,
       '',
       rewardLine,
-      totalReferrals > 1 ? `That's ${totalReferrals} people you've brought in so far. Seriously, thank you.` : `Thanks for spreading the word.`,
+      totalReferrals > 1 ? `That's ${totalReferrals} people you've brought in so far. Seriously, thank you.` : `Thanks again.`,
       '',
       '— Derek',
       'attendancetracker.dev',
     ],
     tags: [{ name: 'type', value: 'referral' }],
-    logLabel: 'referral notification', logMeta: { totalReferrals, hasPromo: !!promoCode },
+    logLabel: 'referral notification', logMeta: { totalReferrals, hasPromo: !!promoCode, rewarded },
   });
 }
 
@@ -260,15 +268,17 @@ async function maybeSendReferralNotification(domain, email) {
   const { createReferralPromoCode } = require('../routes/billing');
   const claim = await claimReferral(domain, email);
   if (!claim) return { sent: false };
+  // Anti-abuse: a self-referral (signed up with your own ?ref=) earns nothing.
+  if (claim.referredBy === (claim.newUserEmail || '').toLowerCase()) return { sent: false, selfReferral: true };
   const rewardMonths = 1;
   const rec = await recordReferralForInviter(claim.referredBy, { newUserEmail: claim.newUserEmail, rewardMonths });
   // Nothing to email if the inviter never signed in, or we already credited
   // this referral on a prior flush.
   if (!rec.inviterExists || rec.already) return { sent: false, recorded: !!rec.inviterExists && !rec.already };
-  // Mint the free-month reward as a one-time Stripe promo code (null when the
-  // coupon isn't configured — the reward still accrued above and the email
-  // falls back to "we'll apply it").
-  const promoCode = await createReferralPromoCode(claim.referredBy);
+  // Mint the free-month coupon ONLY when the inviter is under the reward cap
+  // (rewardEligible) — past the cap, attribution still accrued but no more
+  // money-bearing codes. null when the Stripe coupon isn't configured.
+  const promoCode = rec.rewardEligible ? await createReferralPromoCode(claim.referredBy) : null;
   if (promoCode) await recordReferralPromoCode(claim.referredBy, promoCode);
   // CAN-SPAM: never email a suppressed inviter (still credited above).
   if (await isEmailSuppressed(claim.referredBy)) return { sent: false, recorded: true, promoCode: promoCode || null };
@@ -279,6 +289,7 @@ async function maybeSendReferralNotification(domain, email) {
     rewardMonths,
     totalReferrals: rec.totalReferrals,
     promoCode,
+    rewarded: rec.rewardEligible,
   });
 }
 

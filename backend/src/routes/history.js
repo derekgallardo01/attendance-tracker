@@ -90,16 +90,14 @@ router.get('/series', requireAuth, async (req, res) => {
 router.get('/history', requireAuth, async (req, res) => {
   res.set('Cache-Control', 'no-store');
   try {
-    const data = await getUserMeetingHistory(req.user.domain, req.user.email);
-    // Free tier: return only the most-recent meetings + signal the cap so the
-    // frontend can show an "Upgrade to see all N" prompt. Pro sees everything.
+    // Free tier: cap at the DATA layer (pass the limit) so meetings AND the
+    // derived people/calendar analytics reflect only the visible set — not just
+    // the meetings list. The service returns historyCapped/freeLimit/totalMeetings
+    // so the frontend can show "Upgrade to see all N". Pro passes no limit.
     const pro = await planIsPro(req.user.domain);
-    if (!pro && Array.isArray(data.meetings) && data.meetings.length > FREE_HISTORY_LIMIT) {
-      data.totalMeetings = data.meetings.length;
-      data.meetings = data.meetings.slice(0, FREE_HISTORY_LIMIT);
-      data.historyCapped = true;
-      data.freeLimit = FREE_HISTORY_LIMIT;
-    }
+    const data = await getUserMeetingHistory(req.user.domain, req.user.email, {
+      limit: pro ? null : FREE_HISTORY_LIMIT,
+    });
     res.json(data);
   } catch (err) {
     log.error('history: fetch failed', { error: err.message, email: req.user.email });

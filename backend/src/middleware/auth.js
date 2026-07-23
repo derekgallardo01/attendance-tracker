@@ -45,7 +45,7 @@ async function auth(req, res, next) {
 
     req.user = {
       email: decoded.email,
-      domain: decoded.domain,
+      domain, // computed above (decoded.domain || domainOf(email)) — must match the getUser lookup
       displayName: decoded.displayName,
       accessToken,
     };

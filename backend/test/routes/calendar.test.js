@@ -261,7 +261,7 @@ describe('GET /api/calendar-attendees — residual branches', () => {
     expect(res.body.attendees).toEqual([]);
   });
 
-  test('defaults the persist domain when the token carries no domain', async () => {
+  test('derives the persist domain from the email when the token carries no domain claim', async () => {
     const jwt = require('jsonwebtoken');
     const CONFIG = require('../../src/config');
     const token = 'Bearer ' + jwt.sign({ email: 'nodomain@acme.com' }, CONFIG.sessionSecret);
@@ -270,6 +270,8 @@ describe('GET /api/calendar-attendees — residual branches', () => {
     ] } });
     const res = await request(app).get(`/api/calendar-attendees?meetingCode=${CODE}`).set('Authorization', token);
     expect(res.status).toBe(200);
-    expect(firestore.persistCalendarData).toHaveBeenCalledWith('default', expect.anything(), expect.anything(), expect.anything(), expect.anything());
+    // auth middleware now sets req.user.domain = decoded.domain || domainOf(email),
+    // so a domain-less token resolves to the user's real domain (not "default").
+    expect(firestore.persistCalendarData).toHaveBeenCalledWith('acme.com', expect.anything(), expect.anything(), expect.anything(), expect.anything());
   });
 });

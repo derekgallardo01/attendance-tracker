@@ -41,7 +41,7 @@ describe('GET /api/history', () => {
       .get('/api/history')
       .set(authedHeader('user@acme.com', 'acme.com'));
     expect(res.status).toBe(200);
-    expect(firestore.getUserMeetingHistory).toHaveBeenCalledWith('acme.com', 'user@acme.com');
+    expect(firestore.getUserMeetingHistory).toHaveBeenCalledWith('acme.com', 'user@acme.com', { limit: null });
   });
 
   test('500 when getUserMeetingHistory throws', async () => {
@@ -53,34 +53,34 @@ describe('GET /api/history', () => {
   });
 
   describe('free-tier history cap (billing configured)', () => {
-    const many = (n) => Array.from({ length: n }, (_, i) => ({ id: `m${i}`, title: `Meeting ${i}` }));
+    // Capping now happens at the DATA layer (getUserMeetingHistory honors {limit}
+    // so meetings + people + calendar all reflect the visible set). The route's
+    // job is to pass the right limit; the capping logic itself is unit-tested in
+    // test/services/getUserMeetingHistory.test.js.
     beforeEach(() => { process.env.STRIPE_SECRET_KEY = 'sk_test_x'; process.env.STRIPE_PRICE_ID = 'price_x'; });
     afterEach(() => { delete process.env.STRIPE_SECRET_KEY; delete process.env.STRIPE_PRICE_ID; });
 
-    test('free domain: meetings capped to 25 with a historyCapped signal', async () => {
+    test('free domain: passes the free limit to the data layer', async () => {
       firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
-      firestore.getUserMeetingHistory.mockResolvedValue({ meetings: many(30), people: [], calendar: [] });
+      firestore.getUserMeetingHistory.mockResolvedValue({ meetings: [], people: [], calendar: [], totalMeetings: 30, historyCapped: true, freeLimit: 25 });
       const res = await request(app).get('/api/history').set(authedHeader('u@free-hist.com', 'free-hist.com'));
       expect(res.status).toBe(200);
-      expect(res.body.meetings).toHaveLength(25);
+      expect(firestore.getUserMeetingHistory).toHaveBeenCalledWith('free-hist.com', 'u@free-hist.com', { limit: 25 });
       expect(res.body).toMatchObject({ historyCapped: true, totalMeetings: 30, freeLimit: 25 });
     });
 
-    test('personal-email domain: exempt from the cap (shared tenant, not billable per-domain)', async () => {
+    test('personal-email domain: exempt — no limit passed (shared tenant, not billable)', async () => {
       firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
-      firestore.getUserMeetingHistory.mockResolvedValue({ meetings: many(30), people: [], calendar: [] });
-      const res = await request(app).get('/api/history').set(authedHeader('u@gmail.com', 'gmail.com'));
-      expect(res.body.meetings).toHaveLength(30);
-      expect(res.body.historyCapped).toBeUndefined();
+      firestore.getUserMeetingHistory.mockResolvedValue({ meetings: [], people: [], calendar: [], totalMeetings: 30 });
+      await request(app).get('/api/history').set(authedHeader('u@gmail.com', 'gmail.com'));
+      expect(firestore.getUserMeetingHistory).toHaveBeenCalledWith('gmail.com', 'u@gmail.com', { limit: null });
     });
 
-    test('pro domain: full history, no cap', async () => {
+    test('pro domain: no limit passed (full history)', async () => {
       firestore.getTenantPlan.mockResolvedValue({ plan: 'pro' });
-      firestore.getUserMeetingHistory.mockResolvedValue({ meetings: many(30), people: [], calendar: [] });
-      const res = await request(app).get('/api/history').set(authedHeader('u@pro-hist.com', 'pro-hist.com'));
-      expect(res.status).toBe(200);
-      expect(res.body.meetings).toHaveLength(30);
-      expect(res.body.historyCapped).toBeUndefined();
+      firestore.getUserMeetingHistory.mockResolvedValue({ meetings: [], people: [], calendar: [], totalMeetings: 30 });
+      await request(app).get('/api/history').set(authedHeader('u@pro-hist.com', 'pro-hist.com'));
+      expect(firestore.getUserMeetingHistory).toHaveBeenCalledWith('pro-hist.com', 'u@pro-hist.com', { limit: null });
     });
   });
 });

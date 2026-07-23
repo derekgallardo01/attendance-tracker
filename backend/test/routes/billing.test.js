@@ -18,6 +18,7 @@ jest.mock('../../src/services/firestore', () => ({
   setTenantPlan: jest.fn(),
   getUser: jest.fn(),
   updateUserTokens: jest.fn(),
+  getTeamAdminStatus: jest.fn(), // requireTeamAdmin (runs before requireProPlan on /team/overview)
 }));
 
 const firestore = require('../../src/services/firestore');
@@ -139,7 +140,7 @@ describe('billing — configured (Stripe env set)', () => {
 
   test('team overview is gated: 402 for a free domain once billing is live', async () => {
     firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
-    firestore.getUser.mockResolvedValue({ email: 'admin@acme.com', domain: 'acme.com', teamAdmin: true });
+    firestore.getTeamAdminStatus.mockResolvedValue({ isTeamAdmin: true }); // pass requireTeamAdmin, then hit requireProPlan
     const res = await request(app)
       .get('/api/team/overview')
       .set(authedHeader('admin@acme.com', 'acme.com'));

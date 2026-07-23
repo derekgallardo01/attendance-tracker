@@ -76,3 +76,16 @@ describe('firestore helpers fail safely when Firestore rejects', () => {
     expect(typeof firestore[name]).toBe('function');
   });
 });
+
+// The billing plan path must NOT swallow errors (unlike most helpers): the
+// webhook needs setTenantPlan to fail so it 500s and Stripe retries, and
+// requireProPlan/planIsPro need getTenantPlan to throw so they ride the plan
+// cache instead of silently downgrading a paying customer to Free.
+describe('billing plan read/write PROPAGATE errors (deliberately not swallowed)', () => {
+  test('setTenantPlan rejects on a write failure', async () => {
+    await expect(firestore.setTenantPlan('acme.com', { plan: 'pro' })).rejects.toThrow();
+  });
+  test('getTenantPlan rejects on a read failure (does not fall back to Free)', async () => {
+    await expect(firestore.getTenantPlan('acme.com')).rejects.toThrow();
+  });
+});

@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const log = require('../lib/logger');
 const { requireAuth } = require('../middleware/auth');
-const { getUser, getTeamOverview, getTeamAdminStatus, claimTeamAdmin, transferTeamAdmin } = require('../services/firestore');
+const { getTeamOverview, getTeamAdminStatus, claimTeamAdmin, transferTeamAdmin } = require('../services/firestore');
 const { requireProPlan } = require('./billing');
 
 const router = Router();
@@ -18,16 +18,21 @@ const ADMIN_FAIL = {
   error:           { status: 500, error: 'Something went wrong. Please try again.' },
 };
 
-// Middleware: every endpoint in this router requires the caller to be the
-// team admin for their own tenant. Pattern mirrors the super-admin check in
-// admin.js but reads the flag off the user doc instead of a hardcoded email.
+// Middleware: every endpoint in this router requires the caller to be the team
+// admin for their own tenant. Authorizes against the SINGLE SOURCE OF TRUTH —
+// tenant.adminEmail (via getTeamAdminStatus) — NOT the denormalized
+// user.teamAdmin cache. The cache can drift high (two concurrent first-signins
+// both auto-claim; an admin change via the install webhook doesn't clear the
+// prior admin's flag), and gating on it would grant a stale user org-wide data
+// access. tenant.adminEmail is the one value the claim/transfer transactions
+// keep authoritative.
 async function requireTeamAdmin(req, res, next) {
   if (!req.user?.email || !req.user?.domain) {
     return res.status(401).json({ error: 'Authentication required' });
   }
   try {
-    const user = await getUser(req.user.domain, req.user.email);
-    if (!user?.teamAdmin) {
+    const { isTeamAdmin } = await getTeamAdminStatus(req.user.domain, req.user.email);
+    if (!isTeamAdmin) {
       return res.status(403).json({ error: 'Team admin role required' });
     }
     next();
