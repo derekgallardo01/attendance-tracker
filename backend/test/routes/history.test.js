@@ -14,6 +14,7 @@ jest.mock('../../src/services/firestore', () => ({
   createShareLink: jest.fn(),
   getUser: jest.fn(),
   updateUserTokens: jest.fn(),
+  getTenantPlan: jest.fn(), // used by billing.planIsPro when billing is configured
 }));
 
 const firestore = require('../../src/services/firestore');
@@ -49,6 +50,30 @@ describe('GET /api/history', () => {
       .get('/api/history')
       .set(authedHeader('u@a.com', 'a.com'));
     expect(res.status).toBe(500);
+  });
+
+  describe('free-tier history cap (billing configured)', () => {
+    const many = (n) => Array.from({ length: n }, (_, i) => ({ id: `m${i}`, title: `Meeting ${i}` }));
+    beforeEach(() => { process.env.STRIPE_SECRET_KEY = 'sk_test_x'; process.env.STRIPE_PRICE_ID = 'price_x'; });
+    afterEach(() => { delete process.env.STRIPE_SECRET_KEY; delete process.env.STRIPE_PRICE_ID; });
+
+    test('free domain: meetings capped to 25 with a historyCapped signal', async () => {
+      firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+      firestore.getUserMeetingHistory.mockResolvedValue({ meetings: many(30), people: [], calendar: [] });
+      const res = await request(app).get('/api/history').set(authedHeader('u@free-hist.com', 'free-hist.com'));
+      expect(res.status).toBe(200);
+      expect(res.body.meetings).toHaveLength(25);
+      expect(res.body).toMatchObject({ historyCapped: true, totalMeetings: 30, freeLimit: 25 });
+    });
+
+    test('pro domain: full history, no cap', async () => {
+      firestore.getTenantPlan.mockResolvedValue({ plan: 'pro' });
+      firestore.getUserMeetingHistory.mockResolvedValue({ meetings: many(30), people: [], calendar: [] });
+      const res = await request(app).get('/api/history').set(authedHeader('u@pro-hist.com', 'pro-hist.com'));
+      expect(res.status).toBe(200);
+      expect(res.body.meetings).toHaveLength(30);
+      expect(res.body.historyCapped).toBeUndefined();
+    });
   });
 });
 

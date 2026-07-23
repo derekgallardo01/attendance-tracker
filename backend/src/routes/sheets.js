@@ -5,6 +5,7 @@ const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { persistExport, getUserSheetId, setUserSheetId, countUserExports, getMeetingExcusedEmails, addMeetingExcusedEmails, getUserSettings } = require('../services/firestore');
 const { sendExportNotification, sendSlackDigest } = require('../lib/notifications');
+const { planIsPro } = require('./billing');
 
 const router = Router();
 
@@ -78,6 +79,15 @@ router.post('/save-to-sheets', async (req, res) => {
   if (!participants?.length) return res.status(400).json({ error: 'participants array is required' });
 
   try {
+    // Pro gating (per-domain). Manual export + the Sheet itself stay free; the
+    // convenience layers — auto-export-on-end, the email digest, and the Slack
+    // digest — are Pro. Pre-launch (billing unconfigured) planIsPro is always
+    // true so nothing changes. Signed-out legacy shared-sheet path is unaffected.
+    const proAllowed = req.user ? await planIsPro(req.user.domain) : true;
+    if (autoExport && req.user && !proAllowed) {
+      return res.status(402).json({ error: 'Auto-export on meeting end is a Pro feature.', upgrade: true, feature: 'autoExport' });
+    }
+
     // Use user's OAuth token if available, otherwise fall back to service account
     const sheetsAuth = await getGoogleClient(req, 'https://www.googleapis.com/auth/spreadsheets');
     const sheets = google.sheets({ version: 'v4', auth: sheetsAuth });
@@ -371,7 +381,8 @@ router.post('/save-to-sheets', async (req, res) => {
     // configured. Independent of the email send (sendEmail flag) — Slack
     // fires on EVERY export, manual or auto, because the user already opted
     // in by saving the webhook. Failure is logged, doesn't affect the export.
-    if (req.user?.email) {
+    // Pro-gated: free domains don't get the digest even with a webhook saved.
+    if (req.user?.email && proAllowed) {
       (async () => {
         try {
           const settings = await getUserSettings(domain, req.user.email);
@@ -396,8 +407,8 @@ router.post('/save-to-sheets', async (req, res) => {
 
     // Fire-and-forget: email the organizer the sheet link. Only when explicitly
     // requested by the client (auto-export flow) — manual exports get the
-    // in-product toast and don't need inbox noise.
-    if (sendEmail && req.user?.email) {
+    // in-product toast and don't need inbox noise. Pro-gated.
+    if (sendEmail && req.user?.email && proAllowed) {
       // Build a digest-friendly participant list (top 25, present first) so the
       // email can render an inline table without exposing the raw row arrays.
       const digestPresent = digestPresentRows(participants, exportedAt, lateMinFor);

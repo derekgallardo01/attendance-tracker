@@ -176,4 +176,22 @@ async function requireProPlan(req, res, next) {
   }
 }
 
-module.exports = { router, webhookHandler, requireProPlan };
+// Boolean form of the gate, for features that DEGRADE gracefully rather than
+// hard-block a route (auto-export, digests, full history). Pre-launch (billing
+// unconfigured) every feature is allowed. Shares requireProPlan's cache + fail
+// behavior: a transient read error rides the last-known plan, else denies.
+async function planIsPro(domain) {
+  if (!billingConfigured()) return true; // pre-launch: nothing is gated
+  try {
+    const { plan } = await getTenantPlan(domain);
+    planCache.set(domain, { plan, at: Date.now() });
+    return plan === 'pro';
+  } catch (err) {
+    const cached = planCache.get(domain);
+    const fresh = cached && (Date.now() - cached.at) < PLAN_CACHE_TTL_MS;
+    log.warn('billing: planIsPro read failed', { domain, usedCache: !!fresh, error: err.message });
+    return !!(fresh && cached.plan === 'pro');
+  }
+}
+
+module.exports = { router, webhookHandler, requireProPlan, planIsPro };

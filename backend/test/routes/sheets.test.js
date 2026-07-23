@@ -59,6 +59,7 @@ jest.mock('../../src/services/firestore', () => ({
   getUserSettings: jest.fn(),
   getUser: jest.fn(),
   updateUserTokens: jest.fn(),
+  getTenantPlan: jest.fn(), // used by billing.planIsPro when billing is configured
 }));
 
 jest.mock('../../src/lib/notifications', () => ({
@@ -559,5 +560,60 @@ describe('POST /api/save-to-sheets — destructure defaults', () => {
       .send({ exportedAt: new Date().toISOString(), meetingType: 'instant',
         participants: [{ displayName: 'A', email: 'a@acme.com', joinTimeISO: new Date(Date.now() - 5 * 60000).toISOString(), leaveTimeISO: null, present: true, sessions: 1 }] });
     expect(res.status).toBe(200);
+  });
+});
+
+describe('POST /api/save-to-sheets — Pro gating', () => {
+  // Enable billing so planIsPro actually consults getTenantPlan. Distinct
+  // domains per test avoid the module-level plan cache leaking between cases.
+  beforeEach(() => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_PRICE_ID = 'price_x';
+  });
+  afterEach(() => {
+    delete process.env.STRIPE_SECRET_KEY;
+    delete process.env.STRIPE_PRICE_ID;
+  });
+
+  test('auto-export is blocked with 402 for a free domain', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    const res = await request(app).post('/api/save-to-sheets')
+      .set(authedHeader('u@free1.com', 'free1.com')).set('Content-Type', 'application/json')
+      .send({ ...validPayload, autoExport: true });
+    expect(res.status).toBe(402);
+    expect(res.body).toMatchObject({ upgrade: true, feature: 'autoExport' });
+    expect(firestore.persistExport).not.toHaveBeenCalled(); // failed fast, no export
+  });
+
+  test('manual export still works for a free domain, but the email digest is suppressed', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    const res = await request(app).post('/api/save-to-sheets')
+      .set(authedHeader('u@free2.com', 'free2.com')).set('Content-Type', 'application/json')
+      .send({ ...validPayload, sendEmail: true, autoExport: false });
+    expect(res.status).toBe(200);
+    expect(notifications.sendExportNotification).not.toHaveBeenCalled(); // gated
+  });
+
+  test('Slack digest is suppressed for a free domain even with a webhook saved', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUserSettings.mockResolvedValue({ slackWebhookUrl: 'https://hooks.slack.com/x' });
+    await request(app).post('/api/save-to-sheets')
+      .set(authedHeader('u@free3.com', 'free3.com')).set('Content-Type', 'application/json')
+      .send(validPayload);
+    await new Promise((r) => setImmediate(r)); // let the fire-and-forget digest path run
+    expect(notifications.sendSlackDigest).not.toHaveBeenCalled();
+  });
+
+  test('Pro domain gets auto-export + email + Slack digest', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'pro' });
+    firestore.getUserSettings.mockResolvedValue({ slackWebhookUrl: 'https://hooks.slack.com/x' });
+    notifications.sendSlackDigest.mockResolvedValue({ sent: true });
+    const res = await request(app).post('/api/save-to-sheets')
+      .set(authedHeader('u@pro1.com', 'pro1.com')).set('Content-Type', 'application/json')
+      .send({ ...validPayload, sendEmail: true, autoExport: true });
+    expect(res.status).toBe(200);
+    expect(notifications.sendExportNotification).toHaveBeenCalled();
+    await new Promise((r) => setImmediate(r));
+    expect(notifications.sendSlackDigest).toHaveBeenCalled();
   });
 });

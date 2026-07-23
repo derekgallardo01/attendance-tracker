@@ -2,8 +2,14 @@ const { Router } = require('express');
 const { requireAuth } = require('../middleware/auth');
 const log = require('../lib/logger');
 const { getUserMeetingHistory, getUserMeetingSeries, getParticipantHistory, setParticipantNote, getParticipantNote, logEvent, createShareLink } = require('../services/firestore');
+const { planIsPro } = require('./billing');
 
 const router = Router();
+
+// Free tier sees only their most-recent meetings in history; Pro sees all.
+// This is a READ cap (nothing is deleted), so upgrading instantly restores the
+// full view. The `meetings` array from getUserMeetingHistory is newest-first.
+const FREE_HISTORY_LIMIT = 25;
 
 // Allow-list of frontend-loggable event types. Keep this narrow so the client
 // can't pollute the per-user event log with arbitrary strings. Each entry is
@@ -85,6 +91,15 @@ router.get('/history', requireAuth, async (req, res) => {
   res.set('Cache-Control', 'no-store');
   try {
     const data = await getUserMeetingHistory(req.user.domain, req.user.email);
+    // Free tier: return only the most-recent meetings + signal the cap so the
+    // frontend can show an "Upgrade to see all N" prompt. Pro sees everything.
+    const pro = await planIsPro(req.user.domain);
+    if (!pro && Array.isArray(data.meetings) && data.meetings.length > FREE_HISTORY_LIMIT) {
+      data.totalMeetings = data.meetings.length;
+      data.meetings = data.meetings.slice(0, FREE_HISTORY_LIMIT);
+      data.historyCapped = true;
+      data.freeLimit = FREE_HISTORY_LIMIT;
+    }
     res.json(data);
   } catch (err) {
     log.error('history: fetch failed', { error: err.message, email: req.user.email });
