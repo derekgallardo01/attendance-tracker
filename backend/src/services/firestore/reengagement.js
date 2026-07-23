@@ -1,4 +1,4 @@
-const { getDb, tenantRef, FieldValue, log } = require('./_core');
+const { getDb, tenantRef, FieldValue, log, tsMs } = require('./_core');
 
 // Evaluate per-series attendance rules for one user and return the alerts that
 // should fire today. Pure read — caller is responsible for idempotency and the
@@ -58,12 +58,12 @@ async function evaluateSeriesAlerts(domain, email) {
 
       // Sort oldest-first so timeline indices map to chronological order.
       meetings.sort((a, b) => {
-        const aT = a.data.startTime?.toDate?.()?.getTime() || a.data.createdAt?.toDate?.()?.getTime() || 0;
+        const aT = tsMs(a.data.startTime) || tsMs(a.data.createdAt) || 0;
         // Same fallback chain as aT; whether V8's sort feeds a given meeting in
         // as the `b` operand is order-dependent, so the fallback branches here
         // are redundant with aT's (already covered).
         /* istanbul ignore next */
-        const bT = b.data.startTime?.toDate?.()?.getTime() || b.data.createdAt?.toDate?.()?.getTime() || 0;
+        const bT = tsMs(b.data.startTime) || tsMs(b.data.createdAt) || 0;
         return aT - bT;
       });
 
@@ -169,7 +169,7 @@ async function evaluateReengagementForUser(domain, email) {
     if (!userDoc.exists) return [];
 
     const user = userDoc.data();
-    const lastLogin = user.lastLoginAt?.toDate?.()?.getTime() || 0;
+    const lastLogin = tsMs(user.lastLoginAt) || 0;
     const now = Date.now();
     const reminders = [];
 
@@ -219,7 +219,7 @@ async function evaluateReengagementForUser(domain, email) {
       .filter(d => d.data().type === 'tracked')
       .map(d => ({
         conferenceId: d.data().meta?.conferenceId || null,
-        at: d.data().createdAt?.toDate?.()?.getTime() || 0,
+        at: tsMs(d.data().createdAt) || 0,
       }))
       .filter(e => e.conferenceId);
 

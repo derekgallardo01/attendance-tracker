@@ -2,7 +2,7 @@
 // Self-contained on _core (no calls into operational firestore functions).
 // The heavy read functions are memoize-wrapped at the services/firestore.js
 // export site, not here.
-const { getDb, tenantRef, FieldValue, log, SUPER_ADMIN_EMAIL, countDistinctAttendees } = require('./_core');
+const { getDb, tenantRef, FieldValue, log, SUPER_ADMIN_EMAIL, countDistinctAttendees, tsMs, domainOf } = require('./_core');
 
 // Module-level cache for getActivationFunnel (scans all users + events).
 let _funnelCache = null;
@@ -65,7 +65,7 @@ async function getActivationFunnel() {
       if (email === SUPER_ADMIN_EMAIL) continue; // exclude the owner's own account
 
       const domain = tenantDoc.id;
-      const createdMs = data.createdAt?.toDate?.()?.getTime() || 0;
+      const createdMs = tsMs(data.createdAt) || 0;
       // Exclude unmeasurable pre-instrumentation signups + non-customer accounts
       // so the funnel reflects real, measurable users.
       if (FUNNEL_EXCLUDED_DOMAINS.has(domain) || (createdMs && createdMs < ANALYTICS_START_MS)) {
@@ -128,8 +128,8 @@ async function getAggregatedInsights() {
       email: d.id,
       domain: d.ref.parent.parent.id,
       ...d.data(),
-      createdAt: d.data().createdAt?.toDate?.()?.getTime() || null,
-      lastLoginAt: d.data().lastLoginAt?.toDate?.()?.getTime() || null,
+      createdAt: tsMs(d.data().createdAt) || null,
+      lastLoginAt: tsMs(d.data().lastLoginAt) || null,
     }));
 
     // Derive the complete tenant set: explicit docs + any domain found in users.
@@ -147,21 +147,21 @@ async function getAggregatedInsights() {
       id: d.id,
       domain: d.ref.parent.parent.id,
       ...d.data(),
-      startTime: d.data().startTime?.toDate?.()?.getTime() || null,
-      endTime: d.data().endTime?.toDate?.()?.getTime() || null,
-      createdAt: d.data().createdAt?.toDate?.()?.getTime() || null,
+      startTime: tsMs(d.data().startTime) || null,
+      endTime: tsMs(d.data().endTime) || null,
+      createdAt: tsMs(d.data().createdAt) || null,
     }));
     const exports_ = exportsSnap.docs.map(d => ({
       id: d.id,
       domain: d.ref.parent.parent.id,
       ...d.data(),
-      createdAt: d.data().createdAt?.toDate?.()?.getTime() || null,
+      createdAt: tsMs(d.data().createdAt) || null,
     }));
     const events = eventsSnap.docs.map(d => ({
       id: d.id,
       domain: d.ref.parent.parent.id,
       ...d.data(),
-      createdAt: d.data().createdAt?.toDate?.()?.getTime() || null,
+      createdAt: tsMs(d.data().createdAt) || null,
     }));
 
     // ── Per-domain meeting/export indices for fast lookup ──
@@ -344,7 +344,7 @@ async function getAggregatedInsights() {
         const u = userByEmail[email];
         return {
           email,
-          domain: u?.domain || email.split('@')[1],
+          domain: u?.domain || domainOf(email),
           displayName: u?.displayName || '',
           eventCount: count,
           tracked: events.filter(e => e.email === email && e.type === 'tracked' && e.createdAt >= monthCutoff).length,
@@ -455,14 +455,14 @@ async function getWeeklySelfReport() {
       email: d.id,
       domain: d.ref.parent.parent.id,
       displayName: d.data().displayName || '',
-      createdAt: d.data().createdAt?.toDate?.()?.getTime() || 0,
+      createdAt: tsMs(d.data().createdAt) || 0,
       acquisitionSource: d.data().acquisitionSource || null,
     }));
 
     const events = eventsSnap.docs.map(d => ({
       email: d.data().email,
       type: d.data().type,
-      ts: d.data().createdAt?.toDate?.()?.getTime() || 0,
+      ts: tsMs(d.data().createdAt) || 0,
     })).filter(e => e.email);
 
     // Window slicing
@@ -553,8 +553,8 @@ async function getAdvancedAnalytics() {
         email: d.id,
         domain: d.ref.parent.parent.id,
         displayName: data.displayName || '',
-        createdAt: data.createdAt?.toDate?.()?.getTime() || 0,
-        lastLoginAt: data.lastLoginAt?.toDate?.()?.getTime() || 0,
+        createdAt: tsMs(data.createdAt) || 0,
+        lastLoginAt: tsMs(data.lastLoginAt) || 0,
         acquisitionSource: data.acquisitionSource || (data.utmSource ? `utm:${data.utmSource}` : null),
       };
     });
@@ -564,7 +564,7 @@ async function getAdvancedAnalytics() {
     for (const d of eventsSnap.docs) {
       const data = d.data();
       if (!data.email) continue;
-      const ts = data.createdAt?.toDate?.()?.getTime() || 0;
+      const ts = tsMs(data.createdAt) || 0;
       const ev = { type: data.type, ts };
       (eventsByEmail[data.email] ||= []).push(ev);
       if (eventsByType[data.type]) eventsByType[data.type].push({ email: data.email, ts });
@@ -775,7 +775,7 @@ async function getUserDetail(domain, email) {
 // Firestore Timestamp (passed straight through), so we use .toDate() there.
 function computeHealthScore(user, events) {
   const now = Date.now();
-  const created = user.createdAt?.toDate?.()?.getTime() || now;
+  const created = tsMs(user.createdAt) || now;
   const ageDays = Math.max(1, (now - created) / 86400000);
 
   const tracked = events.filter(e => e.type === 'tracked').length;
@@ -786,7 +786,7 @@ function computeHealthScore(user, events) {
     // composable if called from somewhere else later.
     const ts = typeof e.createdAt === 'string'
       ? new Date(e.createdAt).getTime()
-      : (e.createdAt?.toDate?.()?.getTime() || 0);
+      : (tsMs(e.createdAt) || 0);
     return Math.max(m, ts);
   }, 0);
   const daysSinceLast = last ? (now - last) / 86400000 : 999;
@@ -943,7 +943,7 @@ async function getDueReminders() {
         id: d.id,
         domain: d.ref.parent.parent.id,
         ...d.data(),
-        remindAt: d.data().remindAt?.toDate?.()?.getTime() || 0,
+        remindAt: tsMs(d.data().remindAt) || 0,
       }))
       .filter(r => !r.done && r.remindAt > 0 && r.remindAt <= now)
       .sort((a, b) => a.remindAt - b.remindAt)
@@ -1007,7 +1007,7 @@ async function getRecentActivity({ limit = 50 } = {}) {
           email: data.email || null,
           type: data.type,
           domain: d.ref.parent.parent.id,
-          createdAt: data.createdAt?.toDate?.()?.getTime() || 0,
+          createdAt: tsMs(data.createdAt) || 0,
           meta: data.meta || null,
         };
       })
@@ -1039,14 +1039,14 @@ async function getReachOutSuggestions() {
     for (const d of outreachSnap.docs) {
       const data = d.data();
       const email = data.email || d.id;
-      outreachByEmail[email] = data.contactedAt?.toDate?.()?.getTime() || 0;
+      outreachByEmail[email] = tsMs(data.contactedAt) || 0;
     }
 
     const eventsByEmail = {};
     for (const d of eventsSnap.docs) {
       const data = d.data();
       if (!data.email) continue;
-      const ts = data.createdAt?.toDate?.()?.getTime() || 0;
+      const ts = tsMs(data.createdAt) || 0;
       (eventsByEmail[data.email] ||= []).push({ type: data.type, ts });
     }
 
@@ -1057,7 +1057,7 @@ async function getReachOutSuggestions() {
         email: d.id,
         domain: d.ref.parent.parent.id,
         displayName: data.displayName || '',
-        createdAt: data.createdAt?.toDate?.()?.getTime() || 0,
+        createdAt: tsMs(data.createdAt) || 0,
         acquisitionSource: data.acquisitionSource || null,
       };
     }
@@ -1137,7 +1137,7 @@ async function getPowerUserPipeline({ days = 7, minTracked = 5 } = {}) {
     const outreachByEmail = {};
     for (const d of outreachSnap.docs) {
       const data = d.data();
-      outreachByEmail[data.email || d.id] = data.contactedAt?.toDate?.()?.getTime() || 0;
+      outreachByEmail[data.email || d.id] = tsMs(data.contactedAt) || 0;
     }
 
     const usersByEmail = {};
@@ -1148,14 +1148,14 @@ async function getPowerUserPipeline({ days = 7, minTracked = 5 } = {}) {
         domain: d.ref.parent.parent.id,
         displayName: data.displayName || '',
         acquisitionSource: data.acquisitionSource || null,
-        createdAt: data.createdAt?.toDate?.()?.getTime() || 0,
+        createdAt: tsMs(data.createdAt) || 0,
       };
     }
 
     const agg = {};
     for (const d of eventsSnap.docs) {
       const data = d.data();
-      const ts = data.createdAt?.toDate?.()?.getTime() || 0;
+      const ts = tsMs(data.createdAt) || 0;
       if (!data.email || ts < cutoff) continue;
       if (data.type !== 'tracked' && data.type !== 'exported') continue;
       const row = (agg[data.email] ||= { email: data.email, tracked: 0, exported: 0, lastActivity: 0 });
@@ -1171,7 +1171,7 @@ async function getPowerUserPipeline({ days = 7, minTracked = 5 } = {}) {
         const lastContacted = outreachByEmail[row.email] || 0;
         return {
           email: row.email,
-          domain: u.domain || row.email.split('@')[1],
+          domain: u.domain || domainOf(row.email),
           displayName: u.displayName || '',
           acquisitionSource: u.acquisitionSource || null,
           tracked: row.tracked,
@@ -1209,14 +1209,14 @@ async function getOutreachList({ days = 30, limit = 50 } = {}) {
         domain: d.ref.parent.parent.id,
         displayName: data.displayName || '',
         acquisitionSource: data.acquisitionSource || null,
-        createdAt: data.createdAt?.toDate?.()?.getTime() || null,
+        createdAt: tsMs(data.createdAt) || null,
       };
     }
 
     const agg = {};
     for (const d of eventsSnap.docs) {
       const e = d.data();
-      const ts = e.createdAt?.toDate?.()?.getTime() || 0;
+      const ts = tsMs(e.createdAt) || 0;
       if (!e.email || ts < cutoff) continue;
       if (e.type !== 'tracked' && e.type !== 'exported') continue;
       const row = (agg[e.email] ||= { email: e.email, tracked: 0, exported: 0, lastActivityAt: 0 });
@@ -1234,7 +1234,7 @@ async function getOutreachList({ days = 30, limit = 50 } = {}) {
           email: row.email,
           firstName: firstName.charAt(0).toUpperCase() + firstName.slice(1),
           displayName: u.displayName || '',
-          domain: u.domain || row.email.split('@')[1],
+          domain: u.domain || domainOf(row.email),
           tracked: row.tracked,
           exported: row.exported,
           totalActions: row.tracked + row.exported,

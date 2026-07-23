@@ -5,6 +5,7 @@ const { meetGet, meetGetAll } = require('../services/meetApi');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { persistAttendance, getTenantConfig } = require('../services/firestore');
+const { domainOf } = require('../services/firestore/_core'); // pure util; imported directly so test firestore-mocks needn't stub it
 
 const router = Router();
 
@@ -85,7 +86,7 @@ router.get('/attendance', async (req, res) => {
     let usingServiceAccount = false;
     // Only use service account if the impersonation email's domain matches the user's domain.
     // A service account impersonating user@domainA cannot see meetings from domainB.
-    const impersonateDomain = impersonateEmail ? impersonateEmail.split('@')[1] : null;
+    const impersonateDomain = impersonateEmail ? domainOf(impersonateEmail) : null;
     const shouldTryServiceAccount = impersonateEmail && (!userDomain || userDomain === impersonateDomain);
     if (shouldTryServiceAccount) {
       try {

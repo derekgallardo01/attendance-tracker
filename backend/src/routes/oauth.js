@@ -5,6 +5,7 @@ const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { exchangeCode, revokeToken } = require('../services/googleAuth');
 const { upsertUser, getUser, updateUserTokens, logEvent, getUserActivationStatus, getUserTrackingStreak, getTenantConfig, deleteUser } = require('../services/firestore');
+const { domainOf } = require('../services/firestore/_core'); // pure util; imported directly so test firestore-mocks needn't stub it
 const { flushDeferredNotifications } = require('../lib/notifications');
 
 const { ACQUISITION_SOURCES } = require('../lib/constants');
@@ -31,7 +32,7 @@ function decodeSession(req) {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) return null;
   const decoded = jwt.verify(authHeader.slice(7), CONFIG.sessionSecret);
-  decoded.domain = decoded.domain || decoded.email.split('@')[1];
+  decoded.domain = decoded.domain || domainOf(decoded.email);
   return decoded;
 }
 
@@ -59,7 +60,7 @@ router.post('/exchange', async (req, res) => {
     const payload = ticket.getPayload();
 
     const email = payload.email;
-    const domain = payload.hd || email.split('@')[1];
+    const domain = payload.hd || domainOf(email);
     const displayName = payload.name || email;
 
     // Check which of the scopes we asked for were actually granted.

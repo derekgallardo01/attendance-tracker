@@ -2,7 +2,7 @@ const {
   FieldValue, log,
   PERSONAL_EMAIL_DOMAINS, SUPER_ADMIN_EMAIL,
   encryptToken, decryptToken,
-  getDb, memoizeTTL, tenantRef, lastSegment, countDistinctAttendees, weeklyStreak,
+  getDb, memoizeTTL, tenantRef, lastSegment, countDistinctAttendees, weeklyStreak, tsMs, domainOf,
 } = require('./firestore/_core');
 const { createShareLink, resolveShareLink, getSharedSeriesView } = require('./firestore/shareLinks');
 const { evaluateSeriesAlerts, evaluateReengagementForUser, claimReengagementSlot, claimDailyAlertSlot, recordAlertsSent } = require('./firestore/reengagement');
@@ -455,7 +455,7 @@ async function getUserTrackingStreak(domain, email) {
   try {
     const snap = await tenantRef(domain).collection('events')
       .where('email', '==', email.toLowerCase()).where('type', '==', 'tracked').get();
-    const ts = snap.docs.map(d => d.data().createdAt?.toDate?.()?.getTime()).filter(Boolean);
+    const ts = snap.docs.map(d => tsMs(d.data().createdAt)).filter(Boolean);
     return weeklyStreak(ts, Date.now());
   } catch (err) {
     log.warn('firestore: getUserTrackingStreak failed', { domain, email, error: err.message });
@@ -549,7 +549,7 @@ async function claimReferral(domain, email) {
 async function recordReferralForInviter(inviterEmail, { newUserEmail, rewardMonths = 1 }) {
   try {
     const inviterLower = (inviterEmail || '').toLowerCase();
-    const inviterDomain = inviterLower.split('@')[1];
+    const inviterDomain = domainOf(inviterLower);
     if (!inviterDomain) return { inviterExists: false };
     const ref = tenantRef(inviterDomain).collection('users').doc(inviterLower);
     return await getDb().runTransaction(async (tx) => {
@@ -584,7 +584,7 @@ async function recordReferralForInviter(inviterEmail, { newUserEmail, rewardMont
 async function recordReferralPromoCode(inviterEmail, code) {
   try {
     const inviterLower = (inviterEmail || '').toLowerCase();
-    const inviterDomain = inviterLower.split('@')[1];
+    const inviterDomain = domainOf(inviterLower);
     if (!inviterDomain || !code) return;
     await tenantRef(inviterDomain).collection('users').doc(inviterLower).set({
       referralPromoCodes: FieldValue.arrayUnion(code),
@@ -767,9 +767,9 @@ async function getUserMeetingHistory(domain, email) {
           conferenceId: data.conferenceId || d.id,
           title: data.title || 'Untitled meeting',
           participantCount: data.participantCount || 0,
-          startTime: data.startTime?.toDate?.()?.getTime() || null,
-          endTime: data.endTime?.toDate?.()?.getTime() || null,
-          createdAt: data.createdAt?.toDate?.()?.getTime() || null,
+          startTime: tsMs(data.startTime) || null,
+          endTime: tsMs(data.endTime) || null,
+          createdAt: tsMs(data.createdAt) || null,
         };
       });
 
@@ -822,8 +822,8 @@ async function getUserMeetingHistory(domain, email) {
           peopleMap.set(key, entry);
         }
         entry.meetingCount++;
-        const join = data.joinTime?.toDate?.()?.getTime();
-        const leave = data.leaveTime?.toDate?.()?.getTime();
+        const join = tsMs(data.joinTime);
+        const leave = tsMs(data.leaveTime);
         if (join && leave && leave > join) {
           entry.totalMinutes += Math.round((leave - join) / 60000);
         }
@@ -939,8 +939,8 @@ async function getTenantMeetings(domain) {
     return meetings.map((m, i) => {
       const parts = partSnaps[i].docs.map(p => p.data());
       const presentNames = parts.filter(p => p.present).map(p => p.displayName).filter(Boolean);
-      const startMs = m.data.startTime?.toDate?.()?.getTime() || null;
-      const endMs = m.data.endTime?.toDate?.()?.getTime() || null;
+      const startMs = tsMs(m.data.startTime) || null;
+      const endMs = tsMs(m.data.endTime) || null;
       return {
         conferenceId: m.id,
         title: m.data.title || 'Untitled meeting',
@@ -988,7 +988,7 @@ async function getTenantSeriesOverview(domain) {
       }
       series.instanceCount++;
       if (m.data.title && m.data.title.length > (series.title || '').length) series.title = m.data.title;
-      const meetingStart = m.data.startTime?.toDate?.()?.getTime() || m.data.createdAt?.toDate?.()?.getTime() || null;
+      const meetingStart = tsMs(m.data.startTime) || tsMs(m.data.createdAt) || null;
       if (meetingStart) {
         if (!series.firstAt || meetingStart < series.firstAt) series.firstAt = meetingStart;
         if (!series.lastAt || meetingStart > series.lastAt) series.lastAt = meetingStart;
@@ -1049,7 +1049,7 @@ async function getTenantPeopleOverview(domain) {
     const peopleMap = new Map();
     for (let i = 0; i < meetings.length; i++) {
       const m = meetings[i];
-      const meetingDate = m.data.startTime?.toDate?.()?.getTime() || m.data.createdAt?.toDate?.()?.getTime() || 0;
+      const meetingDate = tsMs(m.data.startTime) || tsMs(m.data.createdAt) || 0;
       for (const p of partSnaps[i].docs) {
         const data = p.data();
         const email = (data.email || '').toLowerCase();
@@ -1062,8 +1062,8 @@ async function getTenantPeopleOverview(domain) {
           peopleMap.set(key, entry);
         }
         entry.meetingCount++;
-        const join = data.joinTime?.toDate?.()?.getTime();
-        const leave = data.leaveTime?.toDate?.()?.getTime();
+        const join = tsMs(data.joinTime);
+        const leave = tsMs(data.leaveTime);
         if (join && leave && leave > join) entry.totalMinutes += Math.round((leave - join) / 60000);
         if (meetingDate > entry.lastSeenAt) entry.lastSeenAt = meetingDate;
         if (!entry.displayName || (name && name.length > entry.displayName.length)) entry.displayName = name;
@@ -1185,7 +1185,7 @@ async function getUserMeetingSeries(domain, email) {
       // Prefer the most descriptive title across instances
       if (data.title && data.title.length > (series.title || '').length) series.title = data.title;
 
-      const meetingStart = data.startTime?.toDate?.()?.getTime() || data.createdAt?.toDate?.()?.getTime() || null;
+      const meetingStart = tsMs(data.startTime) || tsMs(data.createdAt) || null;
       if (meetingStart) {
         if (!series.firstAt || meetingStart < series.firstAt) series.firstAt = meetingStart;
         if (!series.lastAt || meetingStart > series.lastAt) series.lastAt = meetingStart;
@@ -1213,8 +1213,8 @@ async function getUserMeetingSeries(domain, email) {
         }
         person.attended++;
         if (pName && pName.length > (person.displayName || '').length) person.displayName = pName;
-        const join = pdata.joinTime?.toDate?.()?.getTime();
-        const leave = pdata.leaveTime?.toDate?.()?.getTime();
+        const join = tsMs(pdata.joinTime);
+        const leave = tsMs(pdata.leaveTime);
         if (join && leave && leave > join) {
           person.totalMinutes += Math.round((leave - join) / 60000);
         } else if (meetingDurationMs && pdata.present) {
@@ -1293,9 +1293,9 @@ async function getParticipantHistory(domain, userEmail, key) {
           ? (pEmail === normalizedKey)
           : (!pEmail && data.displayName === key.replace(/^name:/, ''));
         if (!matches) continue;
-        const join = data.joinTime?.toDate?.()?.getTime() || null;
-        const leave = data.leaveTime?.toDate?.()?.getTime() || null;
-        const start = meetings[i].data.startTime?.toDate?.()?.getTime() || null;
+        const join = tsMs(data.joinTime) || null;
+        const leave = tsMs(data.leaveTime) || null;
+        const start = tsMs(meetings[i].data.startTime) || null;
         appearances.push({
           conferenceId: meetings[i].id,
           meetingTitle: meetings[i].data.title || 'Untitled meeting',

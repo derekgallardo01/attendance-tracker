@@ -3,6 +3,7 @@ const Sentry = require('@sentry/node');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { getUser, updateUserTokens } = require('../services/firestore');
+const { domainOf } = require('../services/firestore/_core'); // pure util; imported directly so test firestore-mocks needn't stub it
 const { refreshAccessToken } = require('../services/googleAuth');
 
 // Validates session JWT and attaches req.user with fresh Google access token.
@@ -17,7 +18,7 @@ async function auth(req, res, next) {
 
   try {
     const decoded = jwt.verify(authHeader.slice(7), CONFIG.sessionSecret);
-    const domain = decoded.domain || decoded.email.split('@')[1];
+    const domain = decoded.domain || domainOf(decoded.email);
     const user = await getUser(domain, decoded.email);
 
     let accessToken = null;

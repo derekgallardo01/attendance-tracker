@@ -87,6 +87,21 @@ function memoizeTTL(fn, ttlMs, maxEntries = 200) {
   };
 }
 
+// Firestore Timestamp → epoch ms, or undefined when absent/not a Timestamp.
+// Callers keep their own `|| null` / `|| 0` fallback so behavior is unchanged;
+// this just centralizes the repeated `x?.toDate?.()?.getTime()` idiom.
+function tsMs(v) {
+  return v?.toDate?.()?.getTime();
+}
+
+// Domain part of an email ("a@acme.com" → "acme.com"). Thin, but the single
+// source of truth for how we derive a tenant domain from an address. Throws on
+// null exactly like the inline `email.split('@')[1]` it replaces (call sites
+// always pass a real address from a verified JWT / ID-token payload).
+function domainOf(email) {
+  return email.split('@')[1];
+}
+
 // All collections scoped under tenants/{domain}.
 function tenantRef(domain) {
   return getDb().collection('tenants').doc(domain);
@@ -139,5 +154,5 @@ module.exports = {
   FieldValue, log, CONFIG,
   PERSONAL_EMAIL_DOMAINS, SUPER_ADMIN_EMAIL,
   encryptToken, decryptToken,
-  getDb, memoizeTTL, tenantRef, lastSegment, countDistinctAttendees, weeklyStreak,
+  getDb, memoizeTTL, tenantRef, lastSegment, countDistinctAttendees, weeklyStreak, tsMs, domainOf,
 };

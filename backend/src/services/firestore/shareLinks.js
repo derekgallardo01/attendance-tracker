@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { getDb, tenantRef, FieldValue, log } = require('./_core');
+const { getDb, tenantRef, FieldValue, log, tsMs } = require('./_core');
 
 // ── Public share links for series dashboards ──
 // Owner mints a token; recipient hits /api/public/share/:token and sees a
@@ -58,8 +58,8 @@ async function getSharedSeriesView(domain, recurringEventId) {
     const participantSnaps = await Promise.all(seriesMeetings.map(m => m.ref.collection('participants').get()));
 
     seriesMeetings.sort((a, b) => {
-      const aT = a.data.startTime?.toDate?.()?.getTime() || a.data.createdAt?.toDate?.()?.getTime() || 0;
-      const bT = b.data.startTime?.toDate?.()?.getTime() || b.data.createdAt?.toDate?.()?.getTime() || 0;
+      const aT = tsMs(a.data.startTime) || tsMs(a.data.createdAt) || 0;
+      const bT = tsMs(b.data.startTime) || tsMs(b.data.createdAt) || 0;
       return aT - bT;
     });
 
@@ -69,7 +69,7 @@ async function getSharedSeriesView(domain, recurringEventId) {
     const peopleMap = new Map();
     for (let i = 0; i < seriesMeetings.length; i++) {
       const m = seriesMeetings[i];
-      const ts = m.data.startTime?.toDate?.()?.getTime() || m.data.createdAt?.toDate?.()?.getTime() || null;
+      const ts = tsMs(m.data.startTime) || tsMs(m.data.createdAt) || null;
       if (ts) {
         // seriesMeetings is pre-sorted ascending, so firstAt is set on the
         // first timestamped meeting and the `ts < firstAt` guard never fires
