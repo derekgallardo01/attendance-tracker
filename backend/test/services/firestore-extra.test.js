@@ -22,6 +22,61 @@ describe('tenant config', () => {
     expect(doc.updatedAt).toBeDefined();
   });
 
+  test('team-admin: status reflects vacant / held / taken and blocks personal domains', async () => {
+    // Vacant Workspace domain with the caller as an existing user → claimable.
+    ctx.seed('tenants/acme.com/users/a@acme.com', { email: 'a@acme.com' });
+    let s = await firestore.getTeamAdminStatus('acme.com', 'a@acme.com');
+    expect(s).toMatchObject({ isTeamAdmin: false, adminEmail: null, isPersonalDomain: false, canClaim: true });
+
+    // Personal domain → never claimable.
+    s = await firestore.getTeamAdminStatus('gmail.com', 'a@gmail.com');
+    expect(s).toMatchObject({ isPersonalDomain: true, canClaim: false });
+
+    // Held by someone else → caller can't claim.
+    ctx.seed('tenants/acme.com', { domain: 'acme.com', adminEmail: 'boss@acme.com' });
+    s = await firestore.getTeamAdminStatus('acme.com', 'a@acme.com');
+    expect(s).toMatchObject({ isTeamAdmin: false, adminEmail: 'boss@acme.com', canClaim: false });
+
+    // The admin themselves → isTeamAdmin + canClaim (idempotent).
+    s = await firestore.getTeamAdminStatus('acme.com', 'boss@acme.com');
+    expect(s).toMatchObject({ isTeamAdmin: true, canClaim: true });
+  });
+
+  test('claimTeamAdmin: vacant claim stamps both docs; personal + taken + no-user are refused', async () => {
+    expect(await firestore.claimTeamAdmin('gmail.com', 'a@gmail.com')).toMatchObject({ claimed: false, reason: 'personal_domain' });
+    expect(await firestore.claimTeamAdmin('acme.com', 'ghost@acme.com')).toMatchObject({ claimed: false, reason: 'no_user' });
+
+    ctx.seed('tenants/acme.com/users/a@acme.com', { email: 'a@acme.com' });
+    const ok = await firestore.claimTeamAdmin('acme.com', 'a@acme.com');
+    expect(ok).toMatchObject({ claimed: true, adminEmail: 'a@acme.com' });
+    expect(ctx.read('tenants/acme.com').adminEmail).toBe('a@acme.com');
+    expect(ctx.read('tenants/acme.com/users/a@acme.com').teamAdmin).toBe(true);
+
+    // A second user can't silently take over.
+    ctx.seed('tenants/acme.com/users/b@acme.com', { email: 'b@acme.com' });
+    const taken = await firestore.claimTeamAdmin('acme.com', 'b@acme.com');
+    expect(taken).toMatchObject({ claimed: false, reason: 'taken', adminEmail: 'a@acme.com' });
+    expect(ctx.read('tenants/acme.com/users/b@acme.com').teamAdmin).toBeUndefined();
+  });
+
+  test('transferTeamAdmin: only the current admin can hand off, target must exist', async () => {
+    ctx.seed('tenants/acme.com', { domain: 'acme.com', adminEmail: 'a@acme.com' });
+    ctx.seed('tenants/acme.com/users/a@acme.com', { email: 'a@acme.com', teamAdmin: true });
+    ctx.seed('tenants/acme.com/users/b@acme.com', { email: 'b@acme.com' });
+
+    // Non-admin can't transfer.
+    expect(await firestore.transferTeamAdmin('acme.com', 'b@acme.com', 'a@acme.com')).toMatchObject({ transferred: false, reason: 'not_admin' });
+    // Target must have signed in.
+    expect(await firestore.transferTeamAdmin('acme.com', 'a@acme.com', 'ghost@acme.com')).toMatchObject({ transferred: false, reason: 'no_target_user' });
+
+    // Valid handoff flips all three docs.
+    const ok = await firestore.transferTeamAdmin('acme.com', 'a@acme.com', 'b@acme.com');
+    expect(ok).toMatchObject({ transferred: true, adminEmail: 'b@acme.com' });
+    expect(ctx.read('tenants/acme.com').adminEmail).toBe('b@acme.com');
+    expect(ctx.read('tenants/acme.com/users/b@acme.com').teamAdmin).toBe(true);
+    expect(ctx.read('tenants/acme.com/users/a@acme.com').teamAdmin).toBe(false);
+  });
+
   test('upsertTenantConfig sets createdAt once and never overwrites it', async () => {
     await firestore.upsertTenantConfig('acme.com', { adminEmail: 'a@acme.com' });
     const created = ctx.read('tenants/acme.com').createdAt;

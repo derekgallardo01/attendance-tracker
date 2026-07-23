@@ -70,6 +70,78 @@ async function getTenantPlan(domain) {
   };
 }
 
+// ── Team-admin self-serve claim / transfer ──
+// teamAdmin controls the org dashboard AND per-domain billing, so this is
+// deliberately conservative: personal-email tenants (shared gmail.com etc.)
+// never get an admin, an existing admin can't be silently overtaken (only
+// vacant claims + admin-initiated transfers are allowed), and both writes run
+// in a transaction so two racing claims can't split the role.
+
+async function getTeamAdminStatus(domain, email) {
+  const domainLower = (domain || '').toLowerCase();
+  const isPersonalDomain = PERSONAL_EMAIL_DOMAINS.has(domainLower);
+  const cfg = await getTenantConfig(domain);
+  const adminEmail = cfg?.adminEmail?.toLowerCase?.() || null;
+  const emailLower = (email || '').toLowerCase();
+  const isTeamAdmin = !!adminEmail && adminEmail === emailLower;
+  // Claimable when it's a real Workspace domain and the seat is vacant (or the
+  // caller already holds it — idempotent).
+  const canClaim = !isPersonalDomain && (!adminEmail || isTeamAdmin);
+  return { isTeamAdmin, adminEmail, isPersonalDomain, canClaim };
+}
+
+async function claimTeamAdmin(domain, email) {
+  const domainLower = (domain || '').toLowerCase();
+  if (PERSONAL_EMAIL_DOMAINS.has(domainLower)) return { claimed: false, reason: 'personal_domain' };
+  const emailLower = email.toLowerCase();
+  try {
+    const tenant = tenantRef(domain);
+    const userRef = tenant.collection('users').doc(emailLower);
+    return await getDb().runTransaction(async (tx) => {
+      const [tenantDoc, userDoc] = await Promise.all([tx.get(tenant), tx.get(userRef)]);
+      if (!userDoc.exists) return { claimed: false, reason: 'no_user' };
+      const currentAdmin = tenantDoc.exists ? (tenantDoc.data().adminEmail?.toLowerCase?.() || null) : null;
+      if (currentAdmin && currentAdmin !== emailLower) {
+        return { claimed: false, reason: 'taken', adminEmail: currentAdmin };
+      }
+      const now = FieldValue.serverTimestamp();
+      tx.set(tenant, { domain, adminEmail: emailLower, updatedAt: now }, { merge: true });
+      tx.set(userRef, { teamAdmin: true, updatedAt: now }, { merge: true });
+      return { claimed: true, adminEmail: emailLower };
+    });
+  } catch (err) {
+    log.error('firestore: claimTeamAdmin failed', { domain, email, error: err.message });
+    return { claimed: false, reason: 'error' };
+  }
+}
+
+async function transferTeamAdmin(domain, fromEmail, toEmail) {
+  const domainLower = (domain || '').toLowerCase();
+  if (PERSONAL_EMAIL_DOMAINS.has(domainLower)) return { transferred: false, reason: 'personal_domain' };
+  const fromLower = (fromEmail || '').toLowerCase();
+  const toLower = (toEmail || '').toLowerCase();
+  if (!toLower || toLower === fromLower) return { transferred: false, reason: 'invalid_target' };
+  try {
+    const tenant = tenantRef(domain);
+    const fromRef = tenant.collection('users').doc(fromLower);
+    const toRef = tenant.collection('users').doc(toLower);
+    return await getDb().runTransaction(async (tx) => {
+      const [tenantDoc, toDoc] = await Promise.all([tx.get(tenant), tx.get(toRef)]);
+      const currentAdmin = tenantDoc.exists ? (tenantDoc.data().adminEmail?.toLowerCase?.() || null) : null;
+      if (currentAdmin !== fromLower) return { transferred: false, reason: 'not_admin' };
+      if (!toDoc.exists) return { transferred: false, reason: 'no_target_user' };
+      const now = FieldValue.serverTimestamp();
+      tx.set(tenant, { adminEmail: toLower, updatedAt: now }, { merge: true });
+      tx.set(toRef, { teamAdmin: true, updatedAt: now }, { merge: true });
+      tx.set(fromRef, { teamAdmin: false, updatedAt: now }, { merge: true });
+      return { transferred: true, adminEmail: toLower };
+    });
+  } catch (err) {
+    log.error('firestore: transferTeamAdmin failed', { domain, fromEmail, toEmail, error: err.message });
+    return { transferred: false, reason: 'error' };
+  }
+}
+
 // ── Meeting persistence (tenant-scoped) ──
 
 // Per-user event log — lets us compute true individual activity (most active
@@ -1183,6 +1255,7 @@ module.exports = {
   getDb,
   getTenantConfig, upsertTenantConfig,
   setTenantPlan, getTenantPlan,
+  getTeamAdminStatus, claimTeamAdmin, transferTeamAdmin,
   countDistinctAttendees, getActivationFunnel,
   persistAttendance, persistCalendarData, persistExport,
   getMeetingExcusedEmails, addMeetingExcusedEmails,
