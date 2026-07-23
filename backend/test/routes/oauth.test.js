@@ -23,8 +23,7 @@ jest.mock('../../src/services/googleAuth', () => ({
 }));
 jest.mock('../../src/lib/notifications', () => ({
   sendSignupWebhook: jest.fn(),
-  maybeSendSignupNotification: jest.fn().mockResolvedValue({ sent: false }),
-  maybeSendReferralNotification: jest.fn().mockResolvedValue({ sent: false }),
+  flushDeferredNotifications: jest.fn(), // single flush point (signup + referral)
 }));
 // google.auth.OAuth2 verifyIdToken is invoked inside exchange — mock it. The
 // payload is mutable so a test can simulate a personal (no-hd) Google account.
@@ -307,7 +306,7 @@ describe('POST /api/oauth/exchange — acquisition + scopes + webhook', () => {
     expect(res.body.isNewUser).toBe(false);
     expect(res.body.needsAcquisitionSource).toBe(false);
     await new Promise((r) => setTimeout(r, 10));
-    expect(notifications.maybeSendSignupNotification).not.toHaveBeenCalled();
+    expect(notifications.flushDeferredNotifications).not.toHaveBeenCalled();
   });
 
   test('brand-new user: seeds the deferred signup notification (detected source) + grace-timer flush', async () => {
@@ -317,9 +316,9 @@ describe('POST /api/oauth/exchange — acquisition + scopes + webhook', () => {
     await request(app).post('/api/oauth/exchange').send({ code: 'c', acquisition: { userAgent: 'UA' } });
     // The detected source is stamped on the new user doc for the deferred ping.
     expect(firestore.upsertUser).toHaveBeenCalledWith('acme.com', expect.objectContaining({ signupDetectedSource: 'direct' }));
-    // The fallback grace timer flushes the notification (no webhook fired inline).
+    // The fallback grace timer flushes the deferred notifications (no webhook inline).
     await new Promise((r) => setTimeout(r, 40));
-    expect(notifications.maybeSendSignupNotification).toHaveBeenCalledWith('acme.com', 'newuser@acme.com');
+    expect(notifications.flushDeferredNotifications).toHaveBeenCalledWith('acme.com', 'newuser@acme.com');
     expect(notifications.sendSignupWebhook).not.toHaveBeenCalled();
     delete process.env.SIGNUP_NOTIFY_GRACE_MS;
   });

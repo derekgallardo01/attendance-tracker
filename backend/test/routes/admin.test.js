@@ -50,9 +50,7 @@ jest.mock('../../src/lib/notifications', () => ({
   sendActivationNudgeEmail: jest.fn(),
   sendSoloNudgeEmail: jest.fn(),
   sendForgottenMeetingEmail: jest.fn(),
-  // Deferred-signup flush; returns a promise so callers' `.catch()` is safe.
-  maybeSendSignupNotification: jest.fn().mockResolvedValue({ sent: false }),
-  maybeSendReferralNotification: jest.fn().mockResolvedValue({ sent: false }),
+  flushDeferredNotifications: jest.fn(), // single flush point (signup + referral)
 }));
 
 const firestore = require('../../src/services/firestore');
@@ -99,7 +97,7 @@ describe('POST /api/admin/source — self-reported source + deferred signup flus
     expect(res.status).toBe(200);
     expect(firestore.setUserAcquisitionSource).toHaveBeenCalledWith(
       'acme.com', 'u@acme.com', { source: 'google_search', detail: 'found via search' });
-    expect(notifications.maybeSendSignupNotification).toHaveBeenCalledWith('acme.com', 'u@acme.com');
+    expect(notifications.flushDeferredNotifications).toHaveBeenCalledWith('acme.com', 'u@acme.com');
   });
 
   test('rejects an invalid source and does not flush', async () => {
@@ -108,7 +106,7 @@ describe('POST /api/admin/source — self-reported source + deferred signup flus
       .set(authedHeader('u@acme.com', 'acme.com'))
       .send({ source: 'totally-made-up' });
     expect(res.status).toBe(400);
-    expect(notifications.maybeSendSignupNotification).not.toHaveBeenCalled();
+    expect(notifications.flushDeferredNotifications).not.toHaveBeenCalled();
   });
 });
 
@@ -375,8 +373,8 @@ describe('POST /api/admin/check-reengagement', () => {
       .set('Content-Type', 'application/json')
       .send({});
     expect(res.status).toBe(200);
-    expect(notifications.maybeSendSignupNotification).toHaveBeenCalledWith('acme.com', 'a@acme.com');
-    expect(notifications.maybeSendSignupNotification).toHaveBeenCalledWith('acme.com', 'b@acme.com');
+    expect(notifications.flushDeferredNotifications).toHaveBeenCalledWith('acme.com', 'a@acme.com');
+    expect(notifications.flushDeferredNotifications).toHaveBeenCalledWith('acme.com', 'b@acme.com');
   });
 
   test('fires reactivation_7d email when window matches', async () => {

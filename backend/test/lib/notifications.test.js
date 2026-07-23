@@ -369,6 +369,21 @@ describe('notifications — content sanity checks', () => {
     jest.dontMock('../../src/services/firestore');
   });
 
+  test('flushDeferredNotifications fires both flushes fire-and-forget and swallows errors', async () => {
+    jest.doMock('../../src/services/firestore', () => ({
+      claimSignupNotification: jest.fn().mockRejectedValue(new Error('boom')), // exercise the .catch
+      countAllUsers: jest.fn(),
+      claimReferral: jest.fn().mockResolvedValue(null), // referral no-op path
+      recordReferralForInviter: jest.fn(), recordReferralPromoCode: jest.fn(), isEmailSuppressed: jest.fn(),
+    }));
+    jest.resetModules();
+    const n = require('../../src/lib/notifications');
+    // Returns synchronously (void) and never throws despite the rejecting flush.
+    expect(() => n.flushDeferredNotifications('x.com', 'a@x.com')).not.toThrow();
+    await new Promise((r) => setImmediate(r)); // let the fire-and-forget promises settle
+    jest.dontMock('../../src/services/firestore');
+  });
+
   test('export notification subject includes attendance summary', async () => {
     const n = require('../../src/lib/notifications');
     await n.sendExportNotification({

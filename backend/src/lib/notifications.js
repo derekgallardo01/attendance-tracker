@@ -282,6 +282,16 @@ async function maybeSendReferralNotification(domain, email) {
   });
 }
 
+// Single flush point for both deferred per-signup notifications — the owner
+// signup ping and the referrer credit/notify. Every trigger (post-signup grace
+// timer, the source modal, the daily sweep) calls this so a call site can't
+// forget one. Both underlying flushes are independently claimed + idempotent,
+// and fired best-effort so a mail hiccup never blocks the caller.
+function flushDeferredNotifications(domain, email) {
+  maybeSendSignupNotification(domain, email).catch(() => { /* best-effort */ });
+  maybeSendReferralNotification(domain, email).catch(() => { /* best-effort */ });
+}
+
 // Generic email send used by the admin "email from dashboard" feature.
 // Returns { sent: true, id } or throws if Resend isn't configured.
 async function sendAdminEmail({ to, subject, body }) {
@@ -809,7 +819,7 @@ async function sendSlackTestPing({ webhookUrl }) {
 }
 
 module.exports = {
-  sendSignupWebhook, maybeSendSignupNotification, sendReferralNotification, maybeSendReferralNotification, sendAdminEmail, sendWeeklySelfReport, sendExportNotification,
+  sendSignupWebhook, maybeSendSignupNotification, sendReferralNotification, maybeSendReferralNotification, flushDeferredNotifications, sendAdminEmail, sendWeeklySelfReport, sendExportNotification,
   sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail,
   sendSlackDigest, sendSlackTestPing, buildSlackDigestBlocks, buildSlackFallbackText, maskSlackWebhook,
   unsubscribeUrl, unsubscribeToken, verifyUnsubscribeToken, unsubscribeFooter,
