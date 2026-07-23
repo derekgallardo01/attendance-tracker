@@ -251,12 +251,35 @@ describe('requireProPlan (direct)', () => {
     expect(next).toHaveBeenCalled();
   });
 
-  test('fails OPEN (next) when the plan read throws', async () => {
+  test('fails CLOSED (402) when the plan read throws and there is no cached plan', async () => {
     process.env.STRIPE_SECRET_KEY = 'sk_test_x'; process.env.STRIPE_PRICE_ID = 'price_x';
     firestore.getTenantPlan.mockRejectedValue(new Error('read boom'));
-    const { req, res, next } = ctx();
+    // Unique domain so no prior test primed the module-level plan cache.
+    const req = { user: { domain: `nocache-${Date.now()}.com` } };
+    const res = { status: jest.fn().mockReturnThis(), json: jest.fn().mockReturnThis() };
+    const next = jest.fn();
     await requireProPlan(req, res, next);
-    expect(next).toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(402);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ upgrade: true, transient: true }));
+  });
+
+  test('tolerates a transient read error using the last known Pro plan', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x'; process.env.STRIPE_PRICE_ID = 'price_x';
+    const domain = `paying-${Date.now()}.com`;
+    const mk = () => ({
+      req: { user: { domain } },
+      res: { status: jest.fn().mockReturnThis(), json: jest.fn().mockReturnThis() },
+      next: jest.fn(),
+    });
+    // A successful Pro read primes the cache...
+    firestore.getTenantPlan.mockResolvedValueOnce({ plan: 'pro' });
+    let c = mk(); await requireProPlan(c.req, c.res, c.next);
+    expect(c.next).toHaveBeenCalled();
+    // ...so a subsequent read error still lets the paying domain through.
+    firestore.getTenantPlan.mockRejectedValueOnce(new Error('blip'));
+    c = mk(); await requireProPlan(c.req, c.res, c.next);
+    expect(c.next).toHaveBeenCalled();
   });
 });
 

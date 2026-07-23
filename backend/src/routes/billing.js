@@ -144,19 +144,35 @@ async function webhookHandler(req, res) {
   }
 }
 
+// Short-lived cache of the last successfully-read plan per domain. Lets the gate
+// ride out a transient Firestore blip for a paying customer WITHOUT the old
+// fail-open behavior, which silently granted Pro to every domain on any read
+// error — the opposite of what a paywall should do once it's live.
+const planCache = new Map(); // domain -> { plan, at }
+const PLAN_CACHE_TTL_MS = 5 * 60 * 1000;
+
 // Express middleware: gate a route behind the Pro plan (per-domain). While
 // billing is not configured the gate is OPEN, so paywalled features keep
 // working until monetization is switched on. Once configured, non-Pro domains
-// get 402 with an upgrade hint.
+// get 402 with an upgrade hint. On a read error we fall back to a recent known
+// plan; absent that we fail CLOSED (the gated features are non-critical
+// dashboards, so a brief denial beats giving Pro away for free).
 async function requireProPlan(req, res, next) {
   if (!billingConfigured()) return next(); // pre-launch: nothing is gated
+  const domain = req.user?.domain;
   try {
-    const { plan } = await getTenantPlan(req.user?.domain);
+    const { plan } = await getTenantPlan(domain);
+    planCache.set(domain, { plan, at: Date.now() });
     if (plan === 'pro') return next();
     return res.status(402).json({ error: 'This is a Pro feature.', upgrade: true });
   } catch (err) {
-    log.warn('billing: requireProPlan check failed — allowing', { error: err.message });
-    return next(); // fail open: don't lock people out on a read error
+    const cached = planCache.get(domain);
+    const fresh = cached && (Date.now() - cached.at) < PLAN_CACHE_TTL_MS;
+    log.warn('billing: requireProPlan read failed', {
+      domain, usedCache: !!fresh, cachedPlan: cached?.plan || null, error: err.message,
+    });
+    if (fresh && cached.plan === 'pro') return next();
+    return res.status(402).json({ error: 'This is a Pro feature.', upgrade: true, transient: !fresh });
   }
 }
 
