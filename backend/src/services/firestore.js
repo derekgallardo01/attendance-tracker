@@ -26,12 +26,19 @@ async function getTenantConfig(domain) {
 
 async function upsertTenantConfig(domain, config) {
   try {
-    await tenantRef(domain).set({
+    const ref = tenantRef(domain);
+    const existing = await ref.get();
+    const patch = {
       domain,
       ...config,
       updatedAt: FieldValue.serverTimestamp(),
-      createdAt: FieldValue.serverTimestamp(),
-    }, { merge: true });
+    };
+    // Only stamp createdAt on first write (or backfill a legacy doc missing it).
+    // The previous unconditional write reset it on every config merge.
+    if (!existing.exists || !existing.data()?.createdAt) {
+      patch.createdAt = FieldValue.serverTimestamp();
+    }
+    await ref.set(patch, { merge: true });
     log.info('firestore: upserted tenant config', { domain });
   } catch (err) {
     log.error('firestore: upsertTenantConfig failed', { domain, error: err.message });
@@ -265,7 +272,9 @@ async function upsertUser(domain, { email, displayName, refreshToken, sheetId, a
       displayName,
       lastLoginAt: now,
       updatedAt: now,
-      createdAt: now,
+      // createdAt is set below only on first write — see the isFirstSignin block.
+      // Writing it here would reset signup age on every login and corrupt the
+      // activation-funnel + health-score age inputs.
     };
     if (refreshToken !== undefined) data.refreshToken = encryptToken(refreshToken);
     if (sheetId !== undefined) data.sheetId = sheetId;
@@ -295,6 +304,10 @@ async function upsertUser(domain, { email, displayName, refreshToken, sheetId, a
     const userRef = tenantRef(domain).collection('users').doc(emailLower);
     const existing = await userRef.get();
     const isFirstSignin = !existing.exists;
+
+    // Stamp createdAt only on the true first write (or backfill a legacy doc
+    // that predates the field). Never overwrite it on subsequent logins.
+    if (isFirstSignin || !existing.data()?.createdAt) data.createdAt = now;
 
     // First-touch acquisition: only stamp source/utm/referrer on the first
     // sign-in. landingUrl + userAgent are also first-touch because they

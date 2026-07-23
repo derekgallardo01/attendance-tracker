@@ -21,6 +21,24 @@ describe('tenant config', () => {
     expect(doc).toMatchObject({ domain: 'acme.com', adminEmail: 'a@acme.com' });
     expect(doc.updatedAt).toBeDefined();
   });
+
+  test('upsertTenantConfig sets createdAt once and never overwrites it', async () => {
+    await firestore.upsertTenantConfig('acme.com', { adminEmail: 'a@acme.com' });
+    const created = ctx.read('tenants/acme.com').createdAt;
+    expect(created).toBeDefined();
+
+    // A later config merge must NOT reset createdAt.
+    await firestore.upsertTenantConfig('acme.com', { active: false });
+    const after = ctx.read('tenants/acme.com');
+    expect(after.createdAt.toDate().getTime()).toBe(created.toDate().getTime());
+    expect(after.active).toBe(false); // merge still applied
+  });
+
+  test('upsertTenantConfig backfills createdAt on a legacy doc missing it', async () => {
+    ctx.seed('tenants/acme.com', { domain: 'acme.com', adminEmail: 'a@acme.com' }); // no createdAt
+    await firestore.upsertTenantConfig('acme.com', { impersonateEmail: 'admin@acme.com' });
+    expect(ctx.read('tenants/acme.com').createdAt).toBeDefined();
+  });
 });
 
 describe('tenant plan', () => {

@@ -135,6 +135,24 @@ describe('upsertUser — basic upsert behavior', () => {
     expect(ctx.read('tenants/acme.com/users/full@acme.com').exportScopeGranted).toBe(true);
   });
 
+  test('createdAt is set on first signin and never overwritten on later logins', async () => {
+    await firestore.upsertUser('acme.com', { email: 'a@acme.com', displayName: 'A' });
+    const created = ctx.read('tenants/acme.com/users/a@acme.com').createdAt;
+    expect(created).toBeDefined();
+
+    // Second sign-in: lastLoginAt updates, createdAt stays put.
+    await firestore.upsertUser('acme.com', { email: 'a@acme.com', displayName: 'A again' });
+    const after = ctx.read('tenants/acme.com/users/a@acme.com');
+    expect(after.createdAt.toDate().getTime()).toBe(created.toDate().getTime());
+    expect(after.displayName).toBe('A again'); // merge still applied
+  });
+
+  test('backfills createdAt for a legacy user doc that predates the field', async () => {
+    ctx.seed('tenants/acme.com/users/a@acme.com', { email: 'a@acme.com', displayName: 'A' }); // no createdAt
+    await firestore.upsertUser('acme.com', { email: 'a@acme.com', displayName: 'A' });
+    expect(ctx.read('tenants/acme.com/users/a@acme.com').createdAt).toBeDefined();
+  });
+
   test('preserves existing user fields (merge semantics)', async () => {
     ctx.seed('tenants/acme.com/users/a@acme.com', {
       email: 'a@acme.com',
