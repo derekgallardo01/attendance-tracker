@@ -54,7 +54,6 @@ const calls = {
   updateUserTokens: ['acme.com', 'a@acme.com', { accessToken: 'at', tokenExpiresAt: new Date() }],
   getUserActivationStatus: ['acme.com', 'a@acme.com'],
   countUserExports: ['acme.com', 'a@acme.com'],
-  isExistingUserAnywhere: ['a@acme.com'],
   countAllUsers: [],
   getAllUsersAcrossTenants: [],
   getUserMeetingHistory: ['acme.com', 'a@acme.com'],

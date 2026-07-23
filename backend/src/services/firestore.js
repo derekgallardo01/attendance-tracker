@@ -695,21 +695,6 @@ async function countUserExports(domain, email) {
   }
 }
 
-// Has this email ever appeared in any users subcollection? Used by the OAuth
-// route to decide whether to fire the signup notification webhook.
-async function isExistingUserAnywhere(email) {
-  try {
-    const snap = await getDb().collectionGroup('users')
-      .where('email', '==', email.toLowerCase())
-      .limit(1)
-      .get();
-    return !snap.empty;
-  } catch (err) {
-    log.warn('firestore: isExistingUserAnywhere failed', { email, error: err.message });
-    return false;
-  }
-}
-
 async function countAllUsers() {
   try {
     // count() aggregation instead of loading every user doc into memory.
@@ -1411,7 +1396,7 @@ module.exports = {
   setUserAcquisitionSource, claimSignupNotification,
   claimReferral, recordReferralForInviter, recordReferralPromoCode, getUserTrackingStreak,
   logEvent,
-  getUserActivationStatus, countUserExports, isExistingUserAnywhere, countAllUsers,
+  getUserActivationStatus, countUserExports, countAllUsers,
   getUserMeetingHistory,
   getUserMeetingSeries,
   getTenantUsers, getTenantMeetings, getTenantSeriesOverview, getTenantPeopleOverview, getTeamOverview,

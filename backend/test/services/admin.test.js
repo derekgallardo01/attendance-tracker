@@ -70,17 +70,6 @@ describe('countUserExports', () => {
   });
 });
 
-describe('isExistingUserAnywhere', () => {
-  test('false for unknown email', async () => {
-    expect(await firestore.isExistingUserAnywhere('ghost@nowhere.com')).toBe(false);
-  });
-
-  test('true when user exists in any tenant', async () => {
-    seedUser('a.com', 'real@a.com');
-    expect(await firestore.isExistingUserAnywhere('real@a.com')).toBe(true);
-  });
-});
-
 // ═══════════════════════════ activation status ═══════════════════════════
 
 describe('getUserActivationStatus', () => {
