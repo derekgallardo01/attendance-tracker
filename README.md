@@ -217,6 +217,7 @@ Optional / feature-specific:
 | `PUBLIC_SITE_URL` | `https://attendancetracker.dev` | Site base URL for Stripe checkout success/cancel redirects |
 | `KH_METRICS_KEY` | _(none)_ | Kinetic Helix command center reads `GET /api/kh/metrics` with this `X-KH-Key`. Unset → route returns 401 |
 | `KH_MRR_SEAT_CENTS` | `0` | Pro monthly price in cents (`1900` = $19/mo per org). Drives `revenue.mrrCents` = pro tenants × this in `/api/kh/metrics` |
+| `KH_INGEST_KEY` | _(none)_ | Outbound key for the "online now" presence forward (auth middleware → KH `/api/ingest/presence`, throttled + hashed, no PII). Unset → no forward |
 
 ---
 
