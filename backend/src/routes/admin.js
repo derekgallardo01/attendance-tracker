@@ -635,12 +635,21 @@ router.get('/admin/insights', requireSuperAdmin, async (req, res) => {
 });
 
 // GET /api/kh/metrics — durable metrics pull for the Kinetic Helix command
-// center. Same aggregate as /admin/insights, but gated by a static x-kh-key
-// header (KH_METRICS_KEY) so the connection doesn't expire with the session.
+// center. Same aggregate as /admin/insights (plus revenue), gated by a static
+// x-kh-key header (KH_METRICS_KEY) so the connection doesn't expire.
 router.get('/kh/metrics', requireKhMetricsKey, async (req, res) => {
   try {
     const insights = await getAggregatedInsights();
-    res.json(insights);
+    // MRR = pro tenants × seat price (KH_MRR_SEAT_CENTS, set to match Stripe).
+    let revenue = { mrrCents: 0, proTenants: 0 };
+    try {
+      const seatCents = Number(process.env.KH_MRR_SEAT_CENTS || 0) || 0;
+      const proSnap = await getDb().collection('tenants').where('plan', '==', 'pro').get();
+      revenue = { mrrCents: proSnap.size * seatCents, proTenants: proSnap.size };
+    } catch (e) {
+      log.warn('admin: kh revenue failed', { error: e.message });
+    }
+    res.json({ ...insights, revenue });
   } catch (err) {
     log.error('admin: kh metrics failed', { error: err.message });
     res.status(500).json({ error: 'Failed to compute insights' });
