@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const Sentry = require('@sentry/node');
 const CONFIG = require('../config');
@@ -5,6 +6,25 @@ const log = require('../lib/logger');
 const { getUser, updateUserTokens } = require('../services/firestore');
 const { domainOf } = require('../services/firestore/_core'); // pure util; imported directly so test firestore-mocks needn't stub it
 const { refreshAccessToken } = require('../services/googleAuth');
+
+// Kinetic Helix command center: report "online now" from authed requests.
+// Throttled per user (~60s) and hashed so no email/PII leaves the service.
+// Fire-and-forget; a dropped ping just decays the session sooner.
+const khPresenceLast = new Map();
+function reportPresence(email) {
+  const key = process.env.KH_INGEST_KEY;
+  if (!key || !email) return;
+  const now = Date.now();
+  if (now - (khPresenceLast.get(email) || 0) < 60_000) return;
+  khPresenceLast.set(email, now);
+  const sessionId = crypto.createHash('sha256').update(email).digest('hex').slice(0, 24);
+  const url = process.env.KH_INGEST_URL || 'https://kinetichelix.io/api/ingest/presence';
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-KH-Key': key },
+    body: JSON.stringify({ slug: 'attendance-tracker', sessionId }),
+  }).catch(() => {});
+}
 
 // Validates session JWT and attaches req.user with fresh Google access token.
 // If no Authorization header, req.user = null (backward compat with service account).
@@ -53,6 +73,7 @@ async function auth(req, res, next) {
     // Attach user context to Sentry for error tracking
     Sentry.setUser({ email: decoded.email, segment: decoded.domain });
 
+    reportPresence(req.user.email);
     next();
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
