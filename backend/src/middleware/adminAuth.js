@@ -22,4 +22,26 @@ function requireSuperAdminOrScheduler(req, res, next) {
   next();
 }
 
-module.exports = { requireSuperAdmin, requireSuperAdminOrScheduler };
+const crypto = require('crypto');
+
+// Constant-time compare that tolerates unequal lengths without leaking them.
+function safeEqual(a, b) {
+  const x = Buffer.from(String(a));
+  const y = Buffer.from(String(b));
+  if (x.length !== y.length) return false;
+  return crypto.timingSafeEqual(x, y);
+}
+
+// Durable metrics pull for the Kinetic Helix command center. Gated by a static
+// x-kh-key header (vs KH_METRICS_KEY) instead of an expiring super-admin session
+// cookie, so the command-center connection never drops.
+function requireKhMetricsKey(req, res, next) {
+  const key = process.env.KH_METRICS_KEY;
+  const provided = req.headers['x-kh-key'];
+  if (!key || !provided || !safeEqual(provided, key)) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  next();
+}
+
+module.exports = { requireSuperAdmin, requireSuperAdminOrScheduler, requireKhMetricsKey };

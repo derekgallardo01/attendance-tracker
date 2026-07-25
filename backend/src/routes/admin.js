@@ -4,7 +4,7 @@ const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed } = require('../services/firestore');
 const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, flushDeferredNotifications } = require('../lib/notifications');
-const { requireSuperAdmin, requireSuperAdminOrScheduler } = require('../middleware/adminAuth');
+const { requireSuperAdmin, requireSuperAdminOrScheduler, requireKhMetricsKey } = require('../middleware/adminAuth');
 const { requireAuth } = require('../middleware/auth');
 const { domainOf } = require('../services/firestore/_core'); // pure util; imported directly (test firestore-mocks needn't stub it)
 const { ACQUISITION_SOURCES } = require('../lib/constants');
@@ -630,6 +630,19 @@ router.get('/admin/insights', requireSuperAdmin, async (req, res) => {
     res.json(insights);
   } catch (err) {
     log.error('admin: insights failed', { error: err.message });
+    res.status(500).json({ error: 'Failed to compute insights' });
+  }
+});
+
+// GET /api/kh/metrics — durable metrics pull for the Kinetic Helix command
+// center. Same aggregate as /admin/insights, but gated by a static x-kh-key
+// header (KH_METRICS_KEY) so the connection doesn't expire with the session.
+router.get('/kh/metrics', requireKhMetricsKey, async (req, res) => {
+  try {
+    const insights = await getAggregatedInsights();
+    res.json(insights);
+  } catch (err) {
+    log.error('admin: kh metrics failed', { error: err.message });
     res.status(500).json({ error: 'Failed to compute insights' });
   }
 });
