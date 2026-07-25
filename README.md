@@ -212,9 +212,11 @@ Optional / feature-specific:
 | `REQUEST_TIMEOUT_MS` | `30000` | Express server request timeout (socket destroyed past this) |
 | `SWEEP_BUDGET_MS` | `240000` | Time budget per daily cron sweep; unprocessed users roll to the next run |
 | `STRIPE_SECRET_KEY` | _(none, billing off)_ | Stripe secret key. Until set, billing endpoints return 503 and Pro gating is a no-op (all features free) |
-| `STRIPE_PRICE_ID` | _(none)_ | Stripe Price ID for the Pro subscription (per-domain) |
+| `STRIPE_PRICE_ID` | _(none)_ | Stripe Price ID for the Pro subscription (per-domain, $19/mo) |
 | `STRIPE_WEBHOOK_SECRET` | _(none)_ | Signing secret for the `/api/billing/webhook` endpoint |
 | `PUBLIC_SITE_URL` | `https://attendancetracker.dev` | Site base URL for Stripe checkout success/cancel redirects |
+| `KH_METRICS_KEY` | _(none)_ | Kinetic Helix command center reads `GET /api/kh/metrics` with this `X-KH-Key`. Unset → route returns 401 |
+| `KH_MRR_SEAT_CENTS` | `0` | Pro monthly price in cents (`1900` = $19/mo per org). Drives `revenue.mrrCents` = pro tenants × this in `/api/kh/metrics` |
 
 ---
 
