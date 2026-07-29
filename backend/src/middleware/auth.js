@@ -85,8 +85,12 @@ async function auth(req, res, next) {
       accessToken,
     };
 
-    // Attach user context to Sentry for error tracking
-    Sentry.setUser({ email: decoded.email, segment: decoded.domain });
+    // Attach user context to Sentry for error grouping — but hash the email so
+    // no PII leaves the service (setUser ships email regardless of sendDefaultPii).
+    Sentry.setUser({
+      id: crypto.createHash('sha256').update(decoded.email).digest('hex').slice(0, 16),
+      segment: decoded.domain,
+    });
 
     reportPresence(req.user.email);
     next();

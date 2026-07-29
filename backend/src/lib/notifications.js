@@ -114,12 +114,22 @@ async function postJsonWithTimeout(url, body, timeoutMs = SLACK_TIMEOUT_MS) {
 }
 
 // ── One-click unsubscribe (CAN-SPAM) ──────────────────────────────────────
-// Every promotional / lifecycle email carries an unsubscribe link. The token
-// is an HMAC of the recipient's email under SESSION_SECRET, so the unsubscribe
-// endpoint can verify the request came from us without storing per-email
-// tokens. Same secret used for session JWTs — rotating it invalidates old
-// unsubscribe links (acceptable; users can unsubscribe again).
+// Every promotional / lifecycle email carries an unsubscribe link. The token is
+// an HMAC of the recipient's email under a purpose-separated key (not the raw
+// SESSION_SECRET, so it can't be conflated with the JWT/token-at-rest keys), so
+// the endpoint can verify the request came from us without storing per-email
+// tokens. verify accepts the legacy (bare-secret) token too, so unsubscribe
+// links already in users' inboxes keep working after the key separation.
+const UNSUBSCRIBE_KEY_LABEL = 'unsubscribe:v1';
 function unsubscribeToken(email) {
+  return crypto
+    .createHmac('sha256', CONFIG.deriveSecret(UNSUBSCRIBE_KEY_LABEL))
+    .update(String(email).toLowerCase())
+    .digest('hex')
+    .slice(0, 32);
+}
+
+function legacyUnsubscribeToken(email) {
   return crypto
     .createHmac('sha256', CONFIG.sessionSecret)
     .update(String(email).toLowerCase())
@@ -127,12 +137,16 @@ function unsubscribeToken(email) {
     .slice(0, 32);
 }
 
-function verifyUnsubscribeToken(email, token) {
-  if (!email || !token) return false;
-  const expected = unsubscribeToken(email);
+function tokenMatches(expected, token) {
   const a = Buffer.from(expected);
   const b = Buffer.from(String(token));
   return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+function verifyUnsubscribeToken(email, token) {
+  if (!email || !token) return false;
+  return tokenMatches(unsubscribeToken(email), token)
+    || tokenMatches(legacyUnsubscribeToken(email), token);
 }
 
 function unsubscribeUrl(email) {

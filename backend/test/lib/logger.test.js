@@ -50,3 +50,32 @@ test('error() with data attaches it as Sentry extras', () => {
   log.error('with-extras', { domain: 'acme.com' });
   expect(scope.setExtras).toHaveBeenCalledWith({ domain: 'acme.com' });
 });
+
+test('error() scrubs email + ip from Sentry extras but keeps them raw in the console line', () => {
+  const scope = { setLevel: jest.fn(), setExtras: jest.fn() };
+  mockWithScope.mockImplementationOnce((cb) => cb(scope));
+  log.error('leak-check', { email: 'alex@acme.com', ip: '203.0.113.7', domain: 'acme.com', count: 3 });
+
+  // Sentry (third party) gets hashed PII, never raw.
+  const extras = scope.setExtras.mock.calls[0][0];
+  expect(extras.email).toMatch(/^sha256:/);
+  expect(extras.email).not.toContain('alex@acme.com');
+  expect(extras.ip).toMatch(/^sha256:/);
+  expect(extras.ip).not.toContain('203.0.113.7');
+  expect(extras.domain).toBe('acme.com'); // non-PII preserved
+  expect(extras.count).toBe(3);           // numbers untouched
+
+  // First-party Cloud Logging keeps the raw values for debugging.
+  const entry = JSON.parse(errorSpy.mock.calls[0][0]);
+  expect(entry.email).toBe('alex@acme.com');
+  expect(entry.ip).toBe('203.0.113.7');
+});
+
+test('error() redacts an inline email inside a message string (e.g. err.message)', () => {
+  const scope = { setLevel: jest.fn(), setExtras: jest.fn() };
+  mockWithScope.mockImplementationOnce((cb) => cb(scope));
+  log.error('boom', { error: 'failed to email bob@corp.com about it' });
+  const extras = scope.setExtras.mock.calls[0][0];
+  expect(extras.error).not.toContain('bob@corp.com');
+  expect(extras.error).toMatch(/failed to email sha256:[0-9a-f]{12} about it/);
+});

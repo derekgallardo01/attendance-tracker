@@ -23,15 +23,20 @@ const PERSONAL_EMAIL_DOMAINS = new Set([
 // email so the founder's own testing doesn't skew metrics.
 const SUPER_ADMIN_EMAIL = CONFIG.superAdminEmail;
 
-// ── Token encryption (AES-256-GCM using SESSION_SECRET as key) ──
+// ── Token encryption (AES-256-GCM) ──
+// The key is purpose-separated (CONFIG.deriveSecret) so it can't be conflated
+// with the session-JWT secret or the unsubscribe-HMAC key. Tokens written before
+// key separation used a bare sha256(SESSION_SECRET); decryptToken keeps that as a
+// fallback so existing refresh tokens still decrypt (they re-encrypt under the
+// new key on the next write). Remove legacyKey once no legacy ciphertexts remain.
 const ALGO = 'aes-256-gcm';
-function deriveKey() {
-  return crypto.createHash('sha256').update(CONFIG.sessionSecret).digest();
-}
+const TOKEN_KEY_LABEL = 'token-at-rest:v1';
+function tokenKey() { return CONFIG.deriveSecret(TOKEN_KEY_LABEL); }
+function legacyKey() { return crypto.createHash('sha256').update(CONFIG.sessionSecret).digest(); }
 
 function encryptToken(plaintext) {
   if (!plaintext) return null;
-  const key = deriveKey();
+  const key = tokenKey();
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv(ALGO, key, iv);
   let encrypted = cipher.update(plaintext, 'utf8', 'base64');
@@ -42,18 +47,20 @@ function encryptToken(plaintext) {
 
 function decryptToken(ciphertext) {
   if (!ciphertext || !ciphertext.includes(':')) return ciphertext; // not encrypted (legacy)
-  try {
-    const [ivB64, tagB64, data] = ciphertext.split(':');
-    const key = deriveKey();
-    const decipher = crypto.createDecipheriv(ALGO, key, Buffer.from(ivB64, 'base64'));
-    decipher.setAuthTag(Buffer.from(tagB64, 'base64'));
-    let decrypted = decipher.update(data, 'base64', 'utf8');
-    decrypted += decipher.final('utf8');
-    return decrypted;
-  } catch (err) {
-    log.warn('token decryption failed — may be legacy plaintext', { error: err.message });
-    return ciphertext;
+  const [ivB64, tagB64, data] = ciphertext.split(':');
+  // Try the current key, then the legacy key. GCM's auth tag makes a wrong-key
+  // decrypt throw (not silently return garbage), so the fallback is safe.
+  for (const key of [tokenKey(), legacyKey()]) {
+    try {
+      const decipher = crypto.createDecipheriv(ALGO, key, Buffer.from(ivB64, 'base64'));
+      decipher.setAuthTag(Buffer.from(tagB64, 'base64'));
+      let decrypted = decipher.update(data, 'base64', 'utf8');
+      decrypted += decipher.final('utf8');
+      return decrypted;
+    } catch (_) { /* try next key */ }
   }
+  log.warn('token decryption failed — may be legacy plaintext');
+  return ciphertext;
 }
 
 let db = null;

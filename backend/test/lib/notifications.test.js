@@ -34,6 +34,19 @@ describe('notifications — unsubscribe token (CAN-SPAM one-click)', () => {
     expect(n.verifyUnsubscribeToken('', token)).toBe(false);
   });
 
+  test('verify accepts a LEGACY (bare-secret) token so links already in inboxes keep working', () => {
+    const crypto = require('crypto');
+    const CONFIG = require('../../src/config');
+    const n = require('../../src/lib/notifications');
+    // Reconstruct the pre-key-separation token: HMAC under the raw SESSION_SECRET.
+    const legacy = crypto.createHmac('sha256', CONFIG.sessionSecret)
+      .update('user@acme.com').digest('hex').slice(0, 32);
+    // The current mint uses a purpose-separated key, so it must differ...
+    expect(n.unsubscribeToken('user@acme.com')).not.toBe(legacy);
+    // ...yet the old link still verifies (backward compat).
+    expect(n.verifyUnsubscribeToken('user@acme.com', legacy)).toBe(true);
+  });
+
   test('unsubscribeUrl embeds the api base, escaped email, and a valid token', () => {
     const n = require('../../src/lib/notifications');
     const url = n.unsubscribeUrl('user+tag@acme.com');

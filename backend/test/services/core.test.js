@@ -31,6 +31,38 @@ describe('encryptToken / decryptToken', () => {
     const bogus = 'AAAA:BBBB:CCCC';
     expect(core.decryptToken(bogus)).toBe(bogus);
   });
+
+  test('decrypts a token encrypted under the LEGACY key (backward compat after key separation)', () => {
+    // Simulate a token written before purpose-separated keys: encrypted with the
+    // bare sha256(SESSION_SECRET) key. decryptToken must still recover it.
+    const crypto = require('crypto');
+    const CONFIG = require('../../src/config');
+    const legacyKey = crypto.createHash('sha256').update(CONFIG.sessionSecret).digest();
+    const iv = crypto.randomBytes(12);
+    const cipher = crypto.createCipheriv('aes-256-gcm', legacyKey, iv);
+    let enc = cipher.update('legacy-refresh-token', 'utf8', 'base64');
+    enc += cipher.final('base64');
+    const legacyCiphertext = `${iv.toString('base64')}:${cipher.getAuthTag().toString('base64')}:${enc}`;
+
+    expect(core.decryptToken(legacyCiphertext)).toBe('legacy-refresh-token');
+    // And a token freshly encrypted now uses the NEW key but still round-trips.
+    expect(core.decryptToken(core.encryptToken('new-token'))).toBe('new-token');
+  });
+});
+
+describe('CONFIG.deriveSecret (purpose-separated keys)', () => {
+  const CONFIG = require('../../src/config');
+  test('distinct labels yield distinct 32-byte keys; same label is deterministic', () => {
+    const a = CONFIG.deriveSecret('token-at-rest:v1');
+    const b = CONFIG.deriveSecret('unsubscribe:v1');
+    const a2 = CONFIG.deriveSecret('token-at-rest:v1');
+    expect(a).toHaveLength(32);
+    expect(Buffer.compare(a, b)).not.toBe(0);   // independent across purposes
+    expect(Buffer.compare(a, a2)).toBe(0);      // stable for one purpose
+    // Not equal to the bare secret's own hash (the old shared key).
+    const bareHash = require('crypto').createHash('sha256').update(CONFIG.sessionSecret).digest();
+    expect(Buffer.compare(a, bareHash)).not.toBe(0);
+  });
 });
 
 describe('memoizeTTL', () => {

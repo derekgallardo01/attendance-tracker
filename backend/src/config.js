@@ -1,3 +1,5 @@
+const crypto = require('crypto');
+
 const required = (name) => {
   const val = process.env[name];
   if (!val) { console.error(`FATAL: ${name} env var not set`); process.exit(1); }
@@ -60,5 +62,14 @@ if (!process.env.SUPER_ADMIN_EMAIL && (process.env.NODE_ENV === 'production' || 
     ts: new Date().toISOString(),
   }));
 }
+
+// Derive a purpose-separated 32-byte key from SESSION_SECRET. Distinct labels
+// yield cryptographically independent keys (HMAC-as-KDF), so the token-at-rest
+// AES key, the unsubscribe-HMAC key, and the raw session-JWT secret can't be
+// conflated — recovering or analysing one purpose's output doesn't expose
+// another, despite sharing one root secret. Version a label (":v2") to rotate a
+// single purpose without disturbing the others.
+CONFIG.deriveSecret = (label) =>
+  crypto.createHmac('sha256', CONFIG.sessionSecret).update(String(label)).digest();
 
 module.exports = CONFIG;
