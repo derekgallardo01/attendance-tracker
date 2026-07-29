@@ -10,9 +10,17 @@ jest.mock('../../src/services/firestore/_core', () => ({
 }));
 
 const _core = require('../../src/services/firestore/_core');
-const { resolveShareLink, getSharedSeriesView } = require('../../src/services/firestore/shareLinks');
+const { resolveShareLink, getSharedSeriesView, revokeShareLink } = require('../../src/services/firestore/shareLinks');
 
 afterEach(() => jest.clearAllMocks());
+
+test('revokeShareLink returns {revoked:false, reason:"error"} and warns when the read throws', async () => {
+  _core.getDb.mockReturnValue({
+    collection: () => ({ doc: () => ({ get: () => Promise.reject(new Error('read boom')) }) }),
+  });
+  await expect(revokeShareLink('tok', 'owner@acme.com')).resolves.toEqual({ revoked: false, reason: 'error' });
+  expect(_core.log.warn).toHaveBeenCalled();
+});
 
 test('resolveShareLink returns null and warns when the read throws', async () => {
   _core.getDb.mockReturnValue({

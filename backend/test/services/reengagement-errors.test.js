@@ -14,6 +14,7 @@ const _core = require('../../src/services/firestore/_core');
 const {
   evaluateSeriesAlerts, evaluateReengagementForUser,
   claimReengagementSlot, claimDailyAlertSlot, recordAlertsSent,
+  claimSeriesAlertCondition,
 } = require('../../src/services/firestore/reengagement');
 
 afterEach(() => jest.clearAllMocks());
@@ -57,6 +58,18 @@ describe('claim helpers — non-ALREADY_EXISTS errors', () => {
     mockCreate(new Error('firestore down'));
     await expect(claimDailyAlertSlot('acme.com', 'u@acme.com')).resolves.toEqual({ claimed: false });
     expect(_core.log.warn).toHaveBeenCalledWith('firestore: claimDailyAlertSlot failed', expect.any(Object));
+  });
+
+  test('claimSeriesAlertCondition: ALREADY_EXISTS (code 6) → claimed:false, no warn', async () => {
+    mockCreate(Object.assign(new Error('exists'), { code: 6 }));
+    await expect(claimSeriesAlertCondition('acme.com', 'u@acme.com', 'streak:r1:x:9')).resolves.toEqual({ claimed: false });
+    expect(_core.log.warn).not.toHaveBeenCalled();
+  });
+
+  test('claimSeriesAlertCondition: unexpected error → warns and claimed:false', async () => {
+    mockCreate(new Error('firestore down'));
+    await expect(claimSeriesAlertCondition('acme.com', 'u@acme.com', 'streak:r1:x:9')).resolves.toEqual({ claimed: false });
+    expect(_core.log.warn).toHaveBeenCalledWith('firestore: claimSeriesAlertCondition failed', expect.any(Object));
   });
 });
 
