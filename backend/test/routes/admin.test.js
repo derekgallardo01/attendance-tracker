@@ -618,6 +618,41 @@ describe('GET /api/admin/activation-funnel', () => {
   });
 });
 
+describe('GET /api/kh/metrics — durable command-center pull (static x-kh-key)', () => {
+  const KH_KEY = 'kh-metrics-secret';
+  afterEach(() => { delete process.env.KH_METRICS_KEY; delete process.env.KH_MRR_SEAT_CENTS; });
+
+  test('200 returns insights + revenue (MRR = pro tenants × seat cents) for a matching key', async () => {
+    process.env.KH_METRICS_KEY = KH_KEY;
+    process.env.KH_MRR_SEAT_CENTS = '1900';
+    firestore.getAggregatedInsights.mockResolvedValue({ totalUsers: 22, activeOrgs: 3 });
+    firestore.getDb.mockReturnValue({
+      collection: () => ({ where: () => ({ get: async () => ({ size: 3 }) }) }),
+    });
+    const res = await request(app).get('/api/kh/metrics').set('x-kh-key', KH_KEY);
+    expect(res.status).toBe(200);
+    expect(res.body.totalUsers).toBe(22);
+    expect(res.body.revenue).toEqual({ mrrCents: 5700, proTenants: 3 }); // 3 × 1900
+  });
+
+  test('revenue falls back to zero when the tenants query throws (insights still returned)', async () => {
+    process.env.KH_METRICS_KEY = KH_KEY;
+    firestore.getAggregatedInsights.mockResolvedValue({ totalUsers: 5 });
+    firestore.getDb.mockReturnValue({ collection: () => { throw new Error('firestore down'); } });
+    const res = await request(app).get('/api/kh/metrics').set('x-kh-key', KH_KEY);
+    expect(res.status).toBe(200);
+    expect(res.body.totalUsers).toBe(5);
+    expect(res.body.revenue).toEqual({ mrrCents: 0, proTenants: 0 });
+  });
+
+  test('500 when the insights aggregation itself fails', async () => {
+    process.env.KH_METRICS_KEY = KH_KEY;
+    firestore.getAggregatedInsights.mockRejectedValue(new Error('boom'));
+    const res = await request(app).get('/api/kh/metrics').set('x-kh-key', KH_KEY);
+    expect(res.status).toBe(500);
+  });
+});
+
 describe('POST /api/admin/install — marketplace webhook (authenticated)', () => {
   test('403 when no secret and not super-admin (cannot pollute tenant config)', async () => {
     const res = await request(app)

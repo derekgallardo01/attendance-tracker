@@ -147,6 +147,33 @@ describe('AUTHED-ANY endpoints reject when no JWT is present', () => {
   });
 });
 
+describe('GET /api/kh/metrics — static-key gate (Kinetic Helix command center)', () => {
+  afterEach(() => { delete process.env.KH_METRICS_KEY; });
+
+  test('401 when KH_METRICS_KEY is unset (feature off) even with a header', async () => {
+    const res = await request(app).get('/api/kh/metrics').set('x-kh-key', 'anything');
+    expect(res.status).toBe(401);
+  });
+
+  test('401 with no x-kh-key header', async () => {
+    process.env.KH_METRICS_KEY = 'kh-secret';
+    const res = await request(app).get('/api/kh/metrics');
+    expect(res.status).toBe(401);
+  });
+
+  test('401 with a WRONG x-kh-key', async () => {
+    process.env.KH_METRICS_KEY = 'kh-secret';
+    const res = await request(app).get('/api/kh/metrics').set('x-kh-key', 'wrong-key-of-diff-length');
+    expect(res.status).toBe(401);
+  });
+
+  test('rejected request never runs the aggregation handler', async () => {
+    process.env.KH_METRICS_KEY = 'kh-secret';
+    await request(app).get('/api/kh/metrics').set('x-kh-key', 'wrong');
+    expect(firestore.getAggregatedInsights).not.toHaveBeenCalled();
+  });
+});
+
 describe('Handler never runs when auth is rejected (guards against future middleware slips)', () => {
   test('403 on /admin/all-users does NOT call getAllUsersAcrossTenants', async () => {
     await request(app)

@@ -10,12 +10,27 @@ const { refreshAccessToken } = require('../services/googleAuth');
 // Kinetic Helix command center: report "online now" from authed requests.
 // Throttled per user (~60s) and hashed so no email/PII leaves the service.
 // Fire-and-forget; a dropped ping just decays the session sooner.
+const KH_PRESENCE_THROTTLE_MS = 60_000;
+// Bound the throttle map so a long-lived Cloud Run instance can't accumulate one
+// entry per distinct email forever (a slow memory leak). A pruned entry just lets
+// that user ping again immediately — harmless.
+const KH_PRESENCE_MAX = 5000;
 const khPresenceLast = new Map();
 function reportPresence(email) {
   const key = process.env.KH_INGEST_KEY;
   if (!key || !email) return;
   const now = Date.now();
-  if (now - (khPresenceLast.get(email) || 0) < 60_000) return;
+  if (now - (khPresenceLast.get(email) || 0) < KH_PRESENCE_THROTTLE_MS) return;
+  if (khPresenceLast.size >= KH_PRESENCE_MAX) {
+    // Drop entries past the throttle window; if everyone is still fresh, evict
+    // oldest-inserted until under the cap. Guarantees a hard bound.
+    for (const [e, t] of khPresenceLast) {
+      if (now - t >= KH_PRESENCE_THROTTLE_MS) khPresenceLast.delete(e);
+    }
+    while (khPresenceLast.size >= KH_PRESENCE_MAX) {
+      khPresenceLast.delete(khPresenceLast.keys().next().value);
+    }
+  }
   khPresenceLast.set(email, now);
   const sessionId = crypto.createHash('sha256').update(email).digest('hex').slice(0, 24);
   const url = process.env.KH_INGEST_URL || 'https://kinetichelix.io/api/ingest/presence';
@@ -95,3 +110,6 @@ function requireAuth(req, res, next) {
 
 module.exports = auth;
 module.exports.requireAuth = requireAuth;
+// Exposed for unit tests (throttle/cap behavior). Not part of the request API.
+module.exports.reportPresence = reportPresence;
+module.exports._khPresenceLast = khPresenceLast;

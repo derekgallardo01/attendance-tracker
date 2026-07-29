@@ -93,3 +93,74 @@ test('malformed token → 401 Authentication failed', async () => {
   expect(res.status).toHaveBeenCalledWith(401);
   expect(res.json).toHaveBeenCalledWith({ error: 'Authentication failed' });
 });
+
+// Kinetic Helix presence ping — throttled, hashed, memory-bounded.
+describe('reportPresence (KH command center)', () => {
+  const { reportPresence, _khPresenceLast } = auth;
+  let fetchMock;
+
+  beforeEach(() => {
+    _khPresenceLast.clear();
+    fetchMock = jest.fn().mockResolvedValue(undefined);
+    global.fetch = fetchMock;
+    delete process.env.KH_INGEST_KEY;
+    delete process.env.KH_INGEST_URL;
+  });
+  afterEach(() => {
+    delete process.env.KH_INGEST_KEY;
+    delete process.env.KH_INGEST_URL;
+    delete global.fetch;
+  });
+
+  test('no-op when KH_INGEST_KEY is unset (feature off)', () => {
+    reportPresence('a@acme.com');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  test('no-op when email is missing', () => {
+    process.env.KH_INGEST_KEY = 'k';
+    reportPresence('');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  test('posts a hashed sessionId with NO email/PII in the body', () => {
+    process.env.KH_INGEST_KEY = 'kh-secret';
+    reportPresence('alex@acme.com');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, opts] = fetchMock.mock.calls[0];
+    expect(url).toBe('https://kinetichelix.io/api/ingest/presence'); // default endpoint
+    expect(opts.headers['X-KH-Key']).toBe('kh-secret');
+    const body = JSON.parse(opts.body);
+    expect(body).toEqual({ slug: 'attendance-tracker', sessionId: expect.any(String) });
+    expect(body.sessionId).toHaveLength(24);
+    expect(opts.body).not.toContain('alex@acme.com'); // email never leaves the service
+  });
+
+  test('honors KH_INGEST_URL override', () => {
+    process.env.KH_INGEST_KEY = 'k';
+    process.env.KH_INGEST_URL = 'https://example.test/ingest';
+    reportPresence('a@acme.com');
+    expect(fetchMock.mock.calls[0][0]).toBe('https://example.test/ingest');
+  });
+
+  test('throttles repeat pings for the same user within 60s (fires once)', () => {
+    process.env.KH_INGEST_KEY = 'k';
+    reportPresence('a@acme.com');
+    reportPresence('a@acme.com');
+    reportPresence('a@acme.com');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  test('a rejected fetch is swallowed (fire-and-forget)', async () => {
+    process.env.KH_INGEST_KEY = 'k';
+    fetchMock.mockRejectedValue(new Error('network'));
+    expect(() => reportPresence('a@acme.com')).not.toThrow();
+    await Promise.resolve(); // let the .catch settle
+  });
+
+  test('bounds the throttle map — never exceeds the cap under many distinct users', () => {
+    process.env.KH_INGEST_KEY = 'k';
+    for (let i = 0; i < 5200; i++) reportPresence(`user${i}@acme.com`);
+    expect(_khPresenceLast.size).toBeLessThanOrEqual(5000);
+  });
+});
