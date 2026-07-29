@@ -19,10 +19,12 @@ test('modules load and export in a non-browser (no window) environment', () => {
   const share = require(path.join(jsDir, 'share.js'));
   const setup = require(path.join(jsDir, 'setup.js'));
   const teamMod = require(path.join(jsDir, 'team.js'));
+  const history = require(path.join(jsDir, 'history.js'));
   expect(typeof utils.escHtml).toBe('function');
   expect(typeof api.authedFetch).toBe('function');
   expect(typeof strings.t === 'function' || typeof strings.setLocale === 'function').toBe(true);
   expect(typeof share.computeRange).toBe('function');
   expect(typeof setup.parseDomain).toBe('function');
   expect(typeof teamMod.filterUsers).toBe('function');
+  expect(typeof history.calendarLevel).toBe('function');
 });

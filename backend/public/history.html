@@ -129,6 +129,7 @@
   <script src="https://accounts.google.com/gsi/client" async></script>
   <script src="js/utils.js"></script>
   <script src="js/api.js"></script>
+  <script src="js/history.js"></script>
 </head>
 <body>
   <div class="container">
@@ -310,8 +311,7 @@
           capEl.style.display = 'none';
         }
         document.getElementById('stat-people').textContent = (data.people || []).length;
-        const activeDays = (data.calendar || []).filter(c => c.count > 0).length;
-        document.getElementById('stat-active-days').textContent = activeDays;
+        document.getElementById('stat-active-days').textContent = AttHistory.activeDays(data.calendar);
         document.getElementById('stat-series').textContent = seriesData.totalSeries || 0;
         renderMeetings();
         renderPeople();
@@ -375,49 +375,24 @@
 
     // Tiny CSS-selector escape — recurringEventId values are usually safe but
     // can contain underscores/digits we want to pass literally.
-    function cssEscape(s) {
-      return String(s).replace(/[^\w-]/g, c => '\\' + c);
-    }
+    const cssEscape = AttHistory.cssEscape;
 
     function switchTab(name) {
       document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
       document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${name}`));
     }
 
-    // Delegates to the shared js/utils.js module (loaded in <head>).
+    // esc delegates to js/utils.js; the pure formatters/filters/heatmap math to
+    // js/history.js (AttHistory).
     const esc = (s) => AttUtils.escHtml(s);
-
-    function fmtDate(iso) {
-      if (!iso) return '—';
-      const d = new Date(iso);
-      return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-    }
-    function fmtTime(iso) {
-      if (!iso) return '';
-      return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
-    }
-    function fmtDuration(ms) {
-      if (!ms || ms <= 0) return '—';
-      const min = Math.round(ms / 60000);
-      if (min < 60) return `${min}m`;
-      const h = Math.floor(min / 60);
-      const m = min % 60;
-      return m ? `${h}h ${m}m` : `${h}h`;
-    }
-    function fmtMinutes(min) {
-      if (!min) return '—';
-      if (min < 60) return `${min}m`;
-      const h = Math.floor(min / 60);
-      const m = min % 60;
-      return m ? `${h}h ${m}m` : `${h}h`;
-    }
-    function pct(v) { return Math.round(v * 100) + '%'; }
+    const fmtDate = AttHistory.fmtDate;
+    const fmtTime = AttHistory.fmtTime;
+    const fmtDuration = AttHistory.fmtDuration;
+    const fmtMinutes = AttHistory.fmtMinutes;
+    const pct = AttHistory.pct;
 
     function renderMeetings() {
-      const q = (document.getElementById('search-meetings').value || '').toLowerCase().trim();
-      const rows = (data.meetings || []).filter(m =>
-        !q || (m.title || '').toLowerCase().includes(q) || (m.presentNames || []).some(n => n.toLowerCase().includes(q))
-      );
+      const rows = AttHistory.filterMeetings(data.meetings, document.getElementById('search-meetings').value);
       const body = document.getElementById('meetings-rows');
       if (!rows.length) {
         body.innerHTML = '<tr><td colspan="4" class="muted">No meetings match.</td></tr>';
@@ -434,10 +409,7 @@
     }
 
     function renderPeople() {
-      const q = (document.getElementById('search-people').value || '').toLowerCase().trim();
-      const rows = (data.people || []).filter(p =>
-        !q || (p.displayName || '').toLowerCase().includes(q) || (p.email || '').toLowerCase().includes(q)
-      );
+      const rows = AttHistory.filterPeople(data.people, document.getElementById('search-people').value);
       const body = document.getElementById('people-rows');
       if (!rows.length) {
         body.innerHTML = '<tr><td colspan="5" class="muted">No people match.</td></tr>';
@@ -455,9 +427,8 @@
     }
 
     function renderSeries() {
-      const q = (document.getElementById('search-series').value || '').toLowerCase().trim();
       const all = seriesData.series || [];
-      const rows = q ? all.filter(s => (s.title || '').toLowerCase().includes(q)) : all;
+      const rows = AttHistory.filterSeries(all, document.getElementById('search-series').value);
       const list = document.getElementById('series-list');
       const empty = document.getElementById('series-empty');
 
@@ -477,9 +448,7 @@
         const topLine = topPerson
           ? `${esc(topPerson.displayName)} (${topPerson.attended}/${s.instanceCount})`
           : 'No attendance yet';
-        const dateRange = s.firstAt && s.lastAt && s.firstAt !== s.lastAt
-          ? `${fmtDate(s.firstAt)} – ${fmtDate(s.lastAt)}`
-          : fmtDate(s.lastAt || s.firstAt);
+        const dateRange = AttHistory.computeRange(s.firstAt, s.lastAt);
         const safeRid = esc(s.recurringEventId);
         const peopleRows = (s.people || []).map(p => `
           <tr>
@@ -555,17 +524,10 @@
 
     function renderCalendar() {
       const cells = data.calendar || [];
-      const maxCount = Math.max(1, ...cells.map(c => c.count));
+      const maxCount = AttHistory.maxCalendarCount(cells);
       const grid = document.getElementById('calendar-grid');
       const detail = document.getElementById('calendar-detail');
-      const level = (c) => {
-        if (c === 0) return '';
-        const ratio = c / maxCount;
-        if (ratio < .25) return 'l1';
-        if (ratio < .5)  return 'l2';
-        if (ratio < .75) return 'l3';
-        return 'l4';
-      };
+      const level = (c) => AttHistory.calendarLevel(c, maxCount);
       grid.innerHTML = cells.map(d =>
         `<div class="calendar-cell ${level(d.count)}" data-date="${d.date}" data-count="${d.count}" title="${d.date}: ${d.count} meeting${d.count === 1 ? '' : 's'}${d.titles?.length ? '\n' + d.titles.join('\n') : ''}"></div>`
       ).join('');
