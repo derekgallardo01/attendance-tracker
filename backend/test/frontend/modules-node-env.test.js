@@ -16,7 +16,9 @@ test('modules load and export in a non-browser (no window) environment', () => {
   const utils = require(path.join(jsDir, 'utils.js'));
   const api = require(path.join(jsDir, 'api.js'));
   const strings = require(path.join(jsDir, 'strings.js'));
+  const share = require(path.join(jsDir, 'share.js'));
   expect(typeof utils.escHtml).toBe('function');
   expect(typeof api.authedFetch).toBe('function');
   expect(typeof strings.t === 'function' || typeof strings.setLocale === 'function').toBe(true);
+  expect(typeof share.computeRange).toBe('function');
 });

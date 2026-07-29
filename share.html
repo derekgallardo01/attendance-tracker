@@ -46,6 +46,7 @@
     .footer a { color: var(--muted); text-decoration: none; }
   </style>
   <script src="js/utils.js"></script>
+  <script src="js/share.js"></script>
 </head>
 <body>
   <div class="container">
@@ -96,13 +97,9 @@
 
   <script>
     const BACKEND_URL = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
-    // Delegates to the shared js/utils.js module (loaded in <head>).
+    // Delegates to the shared js/ modules (loaded in <head>): escaping to
+    // AttUtils, and the pure date/range/row-render logic to AttShare.
     const esc = (s) => AttUtils.escHtml(s);
-    function fmtDate(iso) {
-      if (!iso) return '—';
-      return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-    }
-    function pct(v) { return Math.round(v * 100) + '%'; }
     async function load() {
       const params = new URLSearchParams(window.location.search);
       const token = params.get('t');
@@ -119,20 +116,12 @@
         if (!res.ok) throw new Error(res.status);
         const data = await res.json();
         document.getElementById('title').textContent = data.title;
-        const range = data.firstAt && data.lastAt && data.firstAt !== data.lastAt
-          ? `${fmtDate(data.firstAt)} – ${fmtDate(data.lastAt)}`
-          : fmtDate(data.lastAt || data.firstAt);
+        const range = AttShare.computeRange(data.firstAt, data.lastAt);
         document.getElementById('meta').textContent = `Recurring meeting · ${range}`;
         document.getElementById('stat-instances').textContent = data.instanceCount;
         document.getElementById('stat-people').textContent = data.uniquePeople;
         document.getElementById('stat-range').textContent = range;
-        document.getElementById('rows').innerHTML = (data.people || []).map(p => `
-          <tr>
-            <td>${esc(p.displayName)}</td>
-            <td class="right">${p.attended}/${data.instanceCount}</td>
-            <td><div style="display:flex;align-items:center;gap:10px"><div class="progress-bar" style="flex:1"><div style="width:${Math.round(p.attendanceRate * 100)}%"></div></div><span style="font-size:.78rem;color:var(--muted);min-width:36px">${pct(p.attendanceRate)}</span></div></td>
-          </tr>
-        `).join('') || '<tr><td colspan="3" class="muted">No participants tracked.</td></tr>';
+        document.getElementById('rows').innerHTML = AttShare.renderPeopleRows(data.people, data.instanceCount, esc);
         loadingEl.style.display = 'none';
         contentEl.style.display = 'block';
       } catch (e) {
