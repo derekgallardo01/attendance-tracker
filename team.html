@@ -84,6 +84,7 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="js/utils.js"></script>
   <script src="js/api.js"></script>
+  <script src="js/team.js"></script>
 </head>
 <body>
   <div class="container">
@@ -322,17 +323,16 @@
     }
 
     const esc = (s) => AttUtils.escHtml(s); // shared js/utils.js (loaded in <head>)
-    function fmtDate(iso) { if (!iso) return '—'; return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }); }
+    // Pure formatters + filters delegate to js/team.js (AttTeam). fmtTime stays
+    // inline (page-specific, not extracted).
+    const fmtDate = AttTeam.fmtDate;
     function fmtTime(iso) { if (!iso) return ''; return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); }
-    function fmtDuration(ms) { if (!ms || ms <= 0) return '—'; const m = Math.round(ms / 60000); if (m < 60) return `${m}m`; const h = Math.floor(m/60); const mm = m%60; return mm ? `${h}h ${mm}m` : `${h}h`; }
-    function fmtMinutes(min) { if (!min) return '—'; if (min < 60) return `${min}m`; const h = Math.floor(min/60); const m = min%60; return m ? `${h}h ${m}m` : `${h}h`; }
-    function pct(v) { return Math.round(v * 100) + '%'; }
+    const fmtDuration = AttTeam.fmtDuration;
+    const fmtMinutes = AttTeam.fmtMinutes;
+    const pct = AttTeam.pct;
 
     function renderUsers() {
-      const q = (document.getElementById('search-users').value || '').toLowerCase().trim();
-      const rows = (data.users || []).filter(u =>
-        !q || (u.displayName || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q)
-      );
+      const rows = AttTeam.filterUsers(data.users, document.getElementById('search-users').value);
       const body = document.getElementById('users-rows');
       if (!rows.length) { body.innerHTML = '<tr><td colspan="4" class="muted">No users match.</td></tr>'; return; }
       body.innerHTML = rows.map(u => `
@@ -349,10 +349,7 @@
     }
 
     function renderMeetings() {
-      const q = (document.getElementById('search-meetings').value || '').toLowerCase().trim();
-      const rows = (data.meetings || []).filter(m =>
-        !q || (m.title || '').toLowerCase().includes(q) || (m.presentNames || []).some(n => n.toLowerCase().includes(q))
-      );
+      const rows = AttTeam.filterMeetings(data.meetings, document.getElementById('search-meetings').value);
       const body = document.getElementById('meetings-rows');
       if (!rows.length) { body.innerHTML = '<tr><td colspan="4" class="muted">No meetings match.</td></tr>'; return; }
       body.innerHTML = rows.map(m => `
@@ -366,18 +363,15 @@
     }
 
     function renderSeries() {
-      const q = (document.getElementById('search-series').value || '').toLowerCase().trim();
       const all = data.series || [];
-      const rows = q ? all.filter(s => (s.title || '').toLowerCase().includes(q)) : all;
+      const rows = AttTeam.filterSeries(all, document.getElementById('search-series').value);
       const list = document.getElementById('series-list');
       const empty = document.getElementById('series-empty');
       if (all.length === 0) { empty.style.display = ''; list.innerHTML = ''; return; }
       empty.style.display = 'none';
       if (rows.length === 0) { list.innerHTML = '<div class="section muted" style="text-align:center">No series match that search.</div>'; return; }
       list.innerHTML = rows.map(s => {
-        const dateRange = s.firstAt && s.lastAt && s.firstAt !== s.lastAt
-          ? `${fmtDate(s.firstAt)} – ${fmtDate(s.lastAt)}`
-          : fmtDate(s.lastAt || s.firstAt);
+        const dateRange = AttTeam.computeRange(s.firstAt, s.lastAt);
         const peopleRows = (s.people || []).map(p => `
           <tr>
             <td>${esc(p.displayName || p.email || '—')}<div class="muted" style="font-size:.7rem">${esc(p.email || '')}</div></td>
@@ -400,10 +394,7 @@
     }
 
     function renderPeople() {
-      const q = (document.getElementById('search-people').value || '').toLowerCase().trim();
-      const rows = (data.people || []).filter(p =>
-        !q || (p.displayName || '').toLowerCase().includes(q) || (p.email || '').toLowerCase().includes(q)
-      );
+      const rows = AttTeam.filterPeople(data.people, document.getElementById('search-people').value);
       const body = document.getElementById('people-rows');
       if (!rows.length) { body.innerHTML = '<tr><td colspan="5" class="muted">No people match.</td></tr>'; return; }
       body.innerHTML = rows.map(p => `

@@ -34,6 +34,7 @@ const MIRRORED = [
   'js/strings.js',
   'js/api.js',
   'js/share.js',
+  'js/team.js',
   'robots.txt',
   'sitemap.xml',
 ];
