@@ -42,6 +42,7 @@
     a { color: var(--accent); text-decoration: none; }
     a:hover { text-decoration: underline; }
   </style>
+  <script src="js/setup.js"></script>
 </head>
 <body>
   <div class="container">
@@ -138,24 +139,20 @@
       result.style.display = 'none';
 
       try {
-        const domain = email.split('@')[1];
+        const domain = AttSetup.parseDomain(email);
         const res = await fetch(`${BACKEND_URL}/admin/verify-delegation`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ domain, adminEmail: email }),
         });
         const data = await res.json();
-
-        if (data.success) {
-          result.className = 'result success';
-          result.textContent = 'Setup complete! Domain-wide delegation is working. You can now open Google Meet and start tracking attendance.';
-        } else {
-          result.className = 'result error';
-          result.textContent = data.error || 'Delegation not configured correctly. Please check the steps above and try again.';
-        }
+        const r = AttSetup.verifyResult(data);
+        result.className = r.className;
+        result.textContent = r.message;
       } catch (err) {
-        result.className = 'result error';
-        result.textContent = 'Could not reach the server. Please try again.';
+        const r = AttSetup.verifyNetworkError();
+        result.className = r.className;
+        result.textContent = r.message;
       }
 
       btn.disabled = false;
