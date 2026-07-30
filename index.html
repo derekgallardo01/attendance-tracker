@@ -2196,44 +2196,22 @@ function mergeParticipants(incoming = []) {
           incomingCount: incoming.length,
         }
       );
+      if (isSelf) console.log('[Attendance] Self-presence: keeping self as Present');
 
-      if (isSelf) {
-        console.log('[Attendance] Self-presence: keeping self as Present');
-        if (!existing.present) changed = true;
-        existing.present = true;
-        existing._leftStreak = 0;
-      } else if (newSessions > existing.sessions) {
-        // Session count went up → they rejoined — mark present immediately
-        if (!existing.present) {
-          showActivityNote(p.displayName, 'rejoined');
-          existing.joinTime = p.joinTime ? new Date(p.joinTime) : new Date(); // new session start
-          changed = true;
-        }
-        existing.present = true;
-        existing._leftStreak = 0;
-      } else if (apiPresent) {
-        if (!existing.present) {
-          showActivityNote(p.displayName, 'rejoined');
-          existing.joinTime = p.joinTime ? new Date(p.joinTime) : new Date(); // new session start
-          changed = true;
-        }
-        existing.present = true;
-        existing._leftStreak = 0;
-      } else if (existing.present) {
-        // Meet API lags on rejoins — require 3 consecutive "not present" polls
-        // before marking as Left to avoid false negatives
-        existing._leftStreak = (existing._leftStreak || 0) + 1;
-        if (existing._leftStreak === 1) showActivityNote(p.displayName, 'may have left');
-        if (existing._leftStreak >= 3) {
-          // Accumulate session duration before marking as Left
-          if (existing.joinTime) {
-            existing._accumulatedMs = (existing._accumulatedMs || 0) +
-              (Date.now() - existing.joinTime.getTime());
-          }
-          existing.present = false;
-          changed = true;
-        }
-      }
+      // The presence/left-streak/rejoin decision is a pure function in
+      // AttPanel.resolvePresence (unit-tested); we apply its result here.
+      const decision = AttPanel.resolvePresence(
+        { present: existing.present, leftStreak: existing._leftStreak, sessions: existing.sessions, joinTimeMs: existing.joinTime ? existing.joinTime.getTime() : null },
+        { apiPresent, sessions: newSessions },
+        { isSelf, now: Date.now() }
+      );
+      if (decision.note) showActivityNote(p.displayName, decision.note);
+      if (decision.resetJoinTime) existing.joinTime = p.joinTime ? new Date(p.joinTime) : new Date(); // new session start
+      if (decision.accumulateMs) existing._accumulatedMs = (existing._accumulatedMs || 0) + decision.accumulateMs;
+      existing.present    = decision.present;
+      existing._leftStreak = decision.leftStreak;
+      if (decision.changed) changed = true;
+
       existing.leaveTime = p.leaveTime ? new Date(p.leaveTime) : null;
       existing.email     = p.email || existing.email;
       existing.sessions  = newSessions;
