@@ -21,6 +21,7 @@ test('modules load and export in a non-browser (no window) environment', () => {
   const teamMod = require(path.join(jsDir, 'team.js'));
   const history = require(path.join(jsDir, 'history.js'));
   const admin = require(path.join(jsDir, 'admin.js'));
+  const panel = require(path.join(jsDir, 'panel.js'));
   expect(typeof utils.escHtml).toBe('function');
   expect(typeof api.authedFetch).toBe('function');
   expect(typeof strings.t === 'function' || typeof strings.setLocale === 'function').toBe(true);
@@ -29,4 +30,5 @@ test('modules load and export in a non-browser (no window) environment', () => {
   expect(typeof teamMod.filterUsers).toBe('function');
   expect(typeof history.calendarLevel).toBe('function');
   expect(typeof admin.fillTemplate).toBe('function');
+  expect(typeof panel.computePollInterval).toBe('function');
 });

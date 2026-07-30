@@ -37,6 +37,7 @@ const MIRRORED = [
   'js/team.js',
   'js/history.js',
   'js/admin.js',
+  'js/panel.js',
   'robots.txt',
   'sitemap.xml',
 ];

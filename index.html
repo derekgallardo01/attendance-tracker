@@ -18,6 +18,8 @@
        script so the inline code can rely on window.AttUtils. Kept as a
        separate file so it can be Jest/jsdom unit-tested in isolation. -->
   <script src="js/utils.js"></script>
+  <!-- Side-panel pure logic (poll cadence) — unit-tested in isolation. -->
+  <script src="js/panel.js"></script>
   <!-- i18n foundation — provides window.t() for user-facing strings. -->
   <script src="js/strings.js"></script>
 
@@ -1994,19 +1996,11 @@ async function initSDK() {
    TRACKING CONTROL
 ═══════════════════════════════════════════════════════════════ */
 // Adaptive polling: 10s when active (first 10 min or changes detected), 30s when steady
-const POLL_FAST = 10_000;  // 10 seconds
-const POLL_SLOW = 30_000;  // 30 seconds
-const FAST_PHASE_DURATION = 10 * 60_000; // first 10 minutes always fast
+// Poll cadence lives in js/panel.js (AttPanel) so the fast/slow decision is
+// unit-tested; getPollInterval below just applies it to the live `state`.
 
 function getPollInterval() {
-  if (!state.startTime) return POLL_FAST;
-  const elapsed = Date.now() - state.startTime.getTime();
-  // Always fast during first 10 minutes
-  if (elapsed < FAST_PHASE_DURATION) return POLL_FAST;
-  // Fast if recent changes detected (within last 2 minutes)
-  if (state._lastChangeTime && (Date.now() - state._lastChangeTime) < 120_000) return POLL_FAST;
-  // Otherwise slow
-  return POLL_SLOW;
+  return AttPanel.computePollInterval(state);
 }
 
 function schedulePoll() {
