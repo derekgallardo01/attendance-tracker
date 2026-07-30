@@ -18,8 +18,10 @@
        script so the inline code can rely on window.AttUtils. Kept as a
        separate file so it can be Jest/jsdom unit-tested in isolation. -->
   <script src="js/utils.js"></script>
-  <!-- Side-panel pure logic (poll cadence) — unit-tested in isolation. -->
+  <!-- Side-panel pure logic (poll cadence, presence resolution) + demo sim
+       engine — unit-tested in isolation. -->
   <script src="js/panel.js"></script>
+  <script src="js/sim.js"></script>
   <!-- i18n foundation — provides window.t() for user-facing strings. -->
   <script src="js/strings.js"></script>
 
@@ -3448,71 +3450,11 @@ const sim = {
   timer: null,
 };
 
-function getJoinDelay(index, total) {
-  const pct = index / total;
-  if (pct < 0.1)  return Math.random() * 60;             // early birds: 0-60s
-  if (pct < 0.5)  return 60 + Math.random() * 120;       // main wave: 1-3 min
-  if (pct < 0.8)  return 180 + Math.random() * 120;      // on-time: 3-5 min
-  return 300 + Math.random() * 300;                       // stragglers: 5-10 min
-}
+// The sim schedule generation + deterministic snapshot live in js/sim.js
+// (AttSim), unit-tested. These thin wrappers apply them to the demo `sim` state.
+function generateSimSchedule(count) { return AttSim.buildSchedule(SIM_NAMES, count); }
 
-function generateSimSchedule(count) {
-  const shuffled = [...SIM_NAMES].sort(() => Math.random() - 0.5).slice(0, count);
-  return shuffled.map((person, i) => {
-    const joinDelay = getJoinDelay(i, count);
-    const willLeave = Math.random() < 0.2;
-    const leaveDelay = willLeave ? joinDelay + 300 + Math.random() * 600 : null;
-    const willRejoin = willLeave && Math.random() < 0.5;
-    const rejoinDelay = willRejoin ? leaveDelay + 120 + Math.random() * 180 : null;
-    return {
-      displayName: person.name,
-      email: person.email,
-      participantId: `sim/participants/${i}`,
-      joinDelay,
-      leaveDelay,
-      rejoinDelay,
-      sessions: willRejoin ? 2 : 1,
-    };
-  });
-}
-
-function getSimulationState() {
-  const now = sim.elapsed;
-  const baseTime = sim.startTime;
-  const participants = [];
-
-  for (const p of sim.pool) {
-    if (now < p.joinDelay) continue; // hasn't joined yet
-
-    const joinTime = new Date(baseTime + p.joinDelay * 1000);
-    let present = true;
-    let leaveTime = null;
-    let sessions = 1;
-
-    if (p.leaveDelay && now >= p.leaveDelay) {
-      leaveTime = new Date(baseTime + p.leaveDelay * 1000);
-      present = false;
-
-      if (p.rejoinDelay && now >= p.rejoinDelay) {
-        present = true;
-        leaveTime = null;
-        sessions = 2;
-      }
-    }
-
-    participants.push({
-      participantId: p.participantId,
-      displayName: p.displayName,
-      email: p.email,
-      joinTime: joinTime.toISOString(),
-      leaveTime: leaveTime ? leaveTime.toISOString() : null,
-      present,
-      sessions,
-    });
-  }
-
-  return { participants };
-}
+function getSimulationState() { return AttSim.participantsAt(sim.pool, sim.startTime, sim.elapsed); }
 
 function startSimulation() {
   sim.active = true;
