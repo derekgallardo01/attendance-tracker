@@ -27,6 +27,18 @@ const TEMPLATES_DOC = () => getDb().collection('admin').doc('templates');
 const ANALYTICS_START_MS = Date.parse('2026-05-28T00:00:00Z');
 const FUNNEL_EXCLUDED_DOMAINS = new Set(['marketplacetest.net', 'theyachtgroup.com']);
 
+// Non-customer accounts that must never count as real users: the owner's own
+// account, Google's Marketplace review bots + the internal Yacht Group tenant,
+// and unmeasurable pre-instrumentation signups. Mirrors the per-user exclusions
+// getActivationFunnel() applies inline, so the aggregate `counts.users` reported
+// to the Kinetic Helix command center matches the funnel's real-user definition.
+function isNonCustomerUser(email, domain, createdMs) {
+  if ((email || '').toLowerCase() === SUPER_ADMIN_EMAIL) return true;
+  if (FUNNEL_EXCLUDED_DOMAINS.has(domain)) return true;
+  if (createdMs && createdMs < ANALYTICS_START_MS) return true;
+  return false;
+}
+
 async function getActivationFunnel() {
   if (_funnelCache && (Date.now() - _funnelCachedAt) < FUNNEL_CACHE_MS) return _funnelCache;
   try {
@@ -396,7 +408,10 @@ async function getAggregatedInsights() {
     return {
       counts: {
         installs: tenants.length,
-        users: users.length,
+        // Real customers only — exclude the owner, Marketplace bots, the internal
+        // test tenant, legacy root-collection users, and pre-instrumentation dead
+        // signups (same definition as the activation funnel's `signedUp`).
+        users: users.filter((u) => u.domain && !isNonCustomerUser(u.email, u.domain, u.createdAt)).length,
         meetings: meetings.length,
         exports: exports_.length,
         events: events.length,
