@@ -125,6 +125,13 @@
       border-left: 1px solid var(--border);
       border-right: 1px solid var(--border);
     }
+    /* Public landing page (shown at attendancetracker.dev outside Meet). The
+       panel's fixed 100vh + overflow:hidden clips the marketing content and
+       kills page scroll — the landing view needs the whole document to scroll. */
+    body.landing-mode {
+      height: auto;
+      overflow: visible;
+    }
 
     /* ── header ──────────────────────────────────────────────── */
     header {
@@ -1874,6 +1881,7 @@ async function initSDK() {
         // Show landing page, hide add-on UI
         document.getElementById('addon-ui').style.display = 'none';
         document.getElementById('landing-page').style.display = 'block';
+        document.body.classList.add('landing-mode'); // let the marketing page scroll
         loadPublicStats();
         sendPageviewBeacon();
       }
@@ -1988,6 +1996,7 @@ async function initSDK() {
       // see "—" instead of social proof and we lose their pageview signal.
       document.getElementById('addon-ui').style.display = 'none';
       document.getElementById('landing-page').style.display = 'block';
+      document.body.classList.add('landing-mode'); // let the marketing page scroll
       loadPublicStats();
       sendPageviewBeacon();
     }
