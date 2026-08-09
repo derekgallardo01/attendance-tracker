@@ -45,8 +45,14 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
   const email = req.user.email;
   const individual = isPersonalDomain(domain);
   // Personal-email users buy the INDIVIDUAL (per-user) plan; Workspace domains
-  // buy the per-domain org plan. Each has its own price id.
-  const priceId = individual ? process.env.STRIPE_INDIVIDUAL_PRICE_ID : process.env.STRIPE_PRICE_ID;
+  // buy the per-domain org plan. Each has monthly + optional annual prices.
+  // Annual falls back to monthly when its price id isn't set, so annual can be
+  // dark-launched (and the frontend only offers it when annualAvailable, below).
+  /* istanbul ignore next: express.json always sets req.body to an object */
+  const annual = (req.body || {}).interval === 'annual';
+  const priceId = individual
+    ? (annual && process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID) || process.env.STRIPE_INDIVIDUAL_PRICE_ID
+    : (annual && process.env.STRIPE_ANNUAL_PRICE_ID) || process.env.STRIPE_PRICE_ID;
   if (!stripe || !priceId) {
     return res.status(503).json({ error: 'Billing is not configured yet.' });
   }
@@ -108,10 +114,17 @@ router.get('/billing/status', requireAuth, async (req, res) => {
     const plan = individual
       ? await getUserPlan(req.user.domain, req.user.email)
       : await getTenantPlan(req.user.domain);
+    // annualAvailable tells the frontend whether to offer the monthly/annual
+    // toggle — only once the matching annual price id is set (so we never show
+    // an annual price the checkout can't actually charge).
+    const annualAvailable = individual
+      ? !!process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID
+      : !!process.env.STRIPE_ANNUAL_PRICE_ID;
     res.json({
       ...plan,
       individual,
       billingConfigured: individual ? individualBillingConfigured() : billingConfigured(),
+      annualAvailable,
     });
   } catch (err) {
     log.error('billing: status failed', { domain: req.user.domain, error: err.message });

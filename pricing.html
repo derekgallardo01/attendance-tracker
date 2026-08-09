@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" sizes="128x128" href="icons/icon-128.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pricing — Attendance Tracker</title>
-  <meta name="description" content="Attendance Tracker pricing: free to start, Individual Pro at $8/month per person, Team Pro at $19/month per organization. Billed monthly, cancel anytime." />
+  <meta name="description" content="Attendance Tracker pricing: free to start, Individual Pro from $8/month ($77/year), Team Pro from $19/month ($182/year). Monthly or annual, cancel anytime." />
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 820px; margin: 40px auto; padding: 0 20px; color: #333; line-height: 1.6; }
     h1 { color: #1a73e8; }
@@ -27,10 +27,11 @@
 </head>
 <body>
   <h1>Pricing</h1>
-  <p class="sub">Free to start. Upgrade when you need per-student trends or org-wide reporting. Billed monthly — cancel anytime.</p>
+  <p class="sub">Free to start. Upgrade when you need per-student trends or org-wide reporting. Pay monthly or save ~20% with annual — cancel anytime.</p>
 
-  <!-- NOTE: the Individual price ($8) must match the Stripe price behind
-       STRIPE_INDIVIDUAL_PRICE_ID. Update both together. -->
+  <!-- NOTE: prices must match the Stripe prices behind STRIPE_INDIVIDUAL_PRICE_ID /
+       STRIPE_PRICE_ID (monthly) and STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID /
+       STRIPE_ANNUAL_PRICE_ID (annual). Update both together. -->
   <div class="plans">
     <div class="plan">
       <h2>Free</h2>
@@ -44,17 +45,20 @@
     </div>
     <div class="plan featured">
       <h2>Individual Pro</h2>
-      <p class="price">$8<span> / month per person</span></p>
+      <p class="price">$77<span> / year per person</span></p>
+      <p class="note" style="margin:2px 0 0">or $8/mo · save ~20% annually</p>
       <ul>
         <li>Everything in Free</li>
         <li>Cumulative <strong>Class Summary</strong> export — per-person attendance&nbsp;% across every session</li>
         <li>Track a recurring class or meeting over time</li>
+        <li>Annual billing covers one full school year</li>
         <li>Best for teachers, tutors, and recruiters</li>
       </ul>
     </div>
     <div class="plan">
       <h2>Team Pro</h2>
-      <p class="price">$19<span> / month per organization</span></p>
+      <p class="price">$182<span> / year per organization</span></p>
+      <p class="note" style="margin:2px 0 0">or $19/mo · save ~20% annually</p>
       <ul>
         <li>Everything in Individual</li>
         <li>Org-wide team dashboard — every user, meeting, series, and person</li>
@@ -65,8 +69,8 @@
   </div>
 
   <p class="note">
-    Prices are in USD and exclusive of any applicable taxes. Pro subscriptions renew automatically each month until
-    cancelled. Payments are securely processed by Stripe and billed by Kinetic Helix LLC, which operates Attendance
+    Prices are in USD and exclusive of any applicable taxes. Pro subscriptions renew automatically each month or year
+    (depending on the plan you choose) until cancelled. Payments are securely processed by Stripe and billed by Kinetic Helix LLC, which operates Attendance
     Tracker. See our <a href="refunds.html">Refund &amp; Cancellation Policy</a> and
     <a href="terms.html">Terms of Service</a>. Questions? <a href="mailto:derekgallardo01@gmail.com">derekgallardo01@gmail.com</a>.
   </p>

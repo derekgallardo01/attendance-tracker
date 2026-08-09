@@ -71,11 +71,12 @@
   // team.html + history.html exactly: a network failure surfaces as
   // "Could not reach billing."; a non-2xx as the server error, else a generic
   // fallback.
-  async function startCheckout(token) {
+  async function startCheckout(token, opts) {
     let res;
     try {
       res = await authedFetch(token, '/billing/checkout', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}',
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ interval: (opts && opts.interval) || 'monthly' }),
       });
     } catch {
       throw new Error('Could not reach billing.');

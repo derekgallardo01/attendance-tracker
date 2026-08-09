@@ -228,6 +228,9 @@
              Shown/hidden by renderProCta() based on /api/billing/status. -->
         <div id="series-pro-cta" style="display:none;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:.85rem">
           <span id="series-pro-text"></span>
+          <span id="series-pro-interval" style="display:none;margin-left:8px;white-space:nowrap">
+            <button type="button" id="pro-int-annual" onclick="setProInterval('annual')" style="border:1px solid var(--border);border-radius:6px 0 0 6px;padding:5px 10px;cursor:pointer;font-size:.8rem">Annual · save 20%</button><button type="button" id="pro-int-monthly" onclick="setProInterval('monthly')" style="border:1px solid var(--border);border-left:none;border-radius:0 6px 6px 0;padding:5px 10px;cursor:pointer;font-size:.8rem">Monthly</button>
+          </span>
           <button id="series-pro-btn" class="btn" style="margin-left:8px;background:#4ade80;color:#0d1117;padding:6px 12px" onclick="onSeriesProCta(this)"></button>
         </div>
         <input id="search-series" class="search-box" type="text" placeholder="Search recurring meetings by title…" oninput="renderSeries()" />
@@ -341,7 +344,7 @@
     async function upgradeFromHistory(btn) {
       if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
       try {
-        window.location.href = await AttApi.startCheckout(sessionToken); // shared js/api.js
+        window.location.href = await AttApi.startCheckout(sessionToken, { interval: proInterval }); // shared js/api.js
         return;
       } catch (e) {
         alert(e.message);
@@ -353,19 +356,36 @@
     // users once the individual tier is live (billing/status → individual +
     // billingConfigured). Promotes the cumulative class-summary export; when
     // already Pro, offers the billing portal. Inert (hidden) otherwise.
+    // Monthly/annual choice for the upgrade. Default annual (better value +
+    // retention). Only shown when the backend says annual is available.
+    let proInterval = 'annual';
+    function setProInterval(iv) {
+      proInterval = iv;
+      const on = 'background:#4ade80;color:#0d1117;font-weight:600', off = 'background:transparent;color:var(--muted)';
+      const a = document.getElementById('pro-int-annual'), m = document.getElementById('pro-int-monthly');
+      if (a) a.style.cssText = 'border:1px solid var(--border);border-radius:6px 0 0 6px;padding:5px 10px;cursor:pointer;font-size:.8rem;' + (iv === 'annual' ? on : off);
+      if (m) m.style.cssText = 'border:1px solid var(--border);border-left:none;border-radius:0 6px 6px 0;padding:5px 10px;cursor:pointer;font-size:.8rem;' + (iv === 'monthly' ? on : off);
+    }
+
     function renderProCta(status) {
       const box = document.getElementById('series-pro-cta');
       const text = document.getElementById('series-pro-text');
       const btn = document.getElementById('series-pro-btn');
+      const toggle = document.getElementById('series-pro-interval');
       if (!box || !status?.individual || !status?.billingConfigured) { if (box) box.style.display = 'none'; return; }
       if (status.plan === 'pro') {
         text.textContent = 'Pro ✓ — cumulative class attendance reports are added to every export.';
         btn.textContent = 'Manage billing';
         btn.dataset.mode = 'portal';
+        if (toggle) toggle.style.display = 'none';
       } else {
         text.textContent = 'Pro adds a cumulative "Class Summary" tab to your export — per-student attendance % across every session of a recurring class.';
         btn.textContent = 'Upgrade to Pro';
         btn.dataset.mode = 'checkout';
+        if (toggle) {
+          toggle.style.display = status.annualAvailable ? '' : 'none';
+          if (status.annualAvailable) setProInterval(proInterval); // paint the active state
+        }
       }
       box.style.display = '';
     }

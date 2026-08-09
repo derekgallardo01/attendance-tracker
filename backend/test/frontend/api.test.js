@@ -65,6 +65,14 @@ describe('startCheckout', () => {
     expect(calls[0][0]).toBe(`${api.BACKEND_URL}/billing/checkout`);
     expect(calls[0][1].method).toBe('POST');
     expect(calls[0][1].headers.Authorization).toBe('Bearer tok');
+    expect(JSON.parse(calls[0][1].body)).toEqual({ interval: 'monthly' }); // defaults to monthly
+  });
+
+  test('forwards the chosen interval (annual) to the checkout body', async () => {
+    const calls = [];
+    global.fetch = (url, opts) => { calls.push([url, opts]); return Promise.resolve({ ok: true, json: async () => ({ url: 'https://checkout.stripe.com/y' }) }); };
+    await api.startCheckout('tok', { interval: 'annual' });
+    expect(JSON.parse(calls[0][1].body)).toEqual({ interval: 'annual' });
   });
 
   test('throws the server error message on a non-2xx', async () => {

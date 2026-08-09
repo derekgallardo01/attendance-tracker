@@ -103,6 +103,9 @@
     <div id="error-upgrade" class="error-banner" style="display:none">
       <strong>The team dashboard is a Pro feature.</strong>
       <div style="margin-top:6px;font-size:.85rem">Upgrade to unlock the org-wide view of attendance for your whole domain.</div>
+      <div id="team-interval" style="display:none;margin-top:10px;white-space:nowrap">
+        <button type="button" id="team-int-annual" onclick="setTeamInterval('annual')" style="border:1px solid #30363d;border-radius:6px 0 0 6px;padding:6px 12px;cursor:pointer;font-size:.8rem">Annual · save 20%</button><button type="button" id="team-int-monthly" onclick="setTeamInterval('monthly')" style="border:1px solid #30363d;border-left:none;border-radius:0 6px 6px 0;padding:6px 12px;cursor:pointer;font-size:.8rem">Monthly</button>
+      </div>
       <button id="upgrade-btn" onclick="startUpgrade()" style="margin-top:10px;background:#4ade80;color:#0d1117;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:600">Upgrade to Pro</button>
     </div>
 
@@ -207,11 +210,21 @@
       document.getElementById('error-not-admin').style.display = 'none';
     }
 
+    // Monthly/annual choice for the team upgrade. Default annual.
+    let teamInterval = 'annual';
+    function setTeamInterval(iv) {
+      teamInterval = iv;
+      const on = 'background:#4ade80;color:#0d1117;font-weight:600', off = 'background:transparent;color:#8b949e';
+      const a = document.getElementById('team-int-annual'), m = document.getElementById('team-int-monthly');
+      if (a) a.style.cssText = 'border:1px solid #30363d;border-radius:6px 0 0 6px;padding:6px 12px;cursor:pointer;font-size:.8rem;' + (iv === 'annual' ? on : off);
+      if (m) m.style.cssText = 'border:1px solid #30363d;border-left:none;border-radius:0 6px 6px 0;padding:6px 12px;cursor:pointer;font-size:.8rem;' + (iv === 'monthly' ? on : off);
+    }
+
     async function startUpgrade() {
       const btn = document.getElementById('upgrade-btn');
       if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
       try {
-        window.location.href = await AttApi.startCheckout(sessionToken); // shared js/api.js
+        window.location.href = await AttApi.startCheckout(sessionToken, { interval: teamInterval }); // shared js/api.js
         return;
       } catch (e) {
         alert(e.message);
@@ -235,6 +248,12 @@
         if (res.status === 402) {
           document.getElementById('loading').style.display = 'none';
           document.getElementById('error-upgrade').style.display = 'block';
+          // Offer the monthly/annual toggle only once annual is live.
+          try {
+            const sRes = await fetch(`${BACKEND_URL}/billing/status`, { headers: { 'Authorization': `Bearer ${sessionToken}` } });
+            const s = await sRes.json().catch(() => ({}));
+            if (s.annualAvailable) { document.getElementById('team-interval').style.display = ''; setTeamInterval('annual'); }
+          } catch (_) { /* toggle stays hidden — monthly only */ }
           return;
         }
         if (!res.ok) throw new Error(`${res.status}`);

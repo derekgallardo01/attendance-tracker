@@ -253,6 +253,57 @@ describe('billing — individual (per-user) tier for personal-email users', () =
   });
 });
 
+describe('billing — annual pricing (monthly + annual per tier)', () => {
+  const GMAIL = 'teacher@gmail.com';
+  beforeEach(() => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_PRICE_ID = 'price_org_monthly';
+    process.env.STRIPE_INDIVIDUAL_PRICE_ID = 'price_ind_monthly';
+    process.env.STRIPE_ANNUAL_PRICE_ID = 'price_org_annual';
+    process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID = 'price_ind_annual';
+    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_x';
+    mockStripeInstance.checkout.sessions.create.mockResolvedValue({ url: 'https://checkout.stripe.com/x' });
+    app = buildApp();
+  });
+  afterEach(() => {
+    delete process.env.STRIPE_INDIVIDUAL_PRICE_ID;
+    delete process.env.STRIPE_ANNUAL_PRICE_ID;
+    delete process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID;
+  });
+  const checkout = (email, domain, body) => request(app).post('/api/billing/checkout')
+    .set(authedHeader(email, domain)).set('Content-Type', 'application/json').send(body || {});
+  const priceOf = () => mockStripeInstance.checkout.sessions.create.mock.calls[0][0].line_items[0].price;
+
+  test('individual + interval:annual → individual ANNUAL price', async () => {
+    await checkout(GMAIL, 'gmail.com', { interval: 'annual' });
+    expect(priceOf()).toBe('price_ind_annual');
+  });
+  test('individual, no interval → individual MONTHLY price', async () => {
+    await checkout(GMAIL, 'gmail.com', {});
+    expect(priceOf()).toBe('price_ind_monthly');
+  });
+  test('team (workspace) + interval:annual → team ANNUAL price', async () => {
+    await checkout('admin@acme.com', 'acme.com', { interval: 'annual' });
+    expect(priceOf()).toBe('price_org_annual');
+  });
+  test('annual requested but annual price unset → falls back to MONTHLY', async () => {
+    delete process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID;
+    await checkout(GMAIL, 'gmail.com', { interval: 'annual' });
+    expect(priceOf()).toBe('price_ind_monthly');
+  });
+  test('status reports annualAvailable:true when the annual price is set', async () => {
+    firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+    const res = await request(app).get('/api/billing/status').set(authedHeader(GMAIL, 'gmail.com'));
+    expect(res.body.annualAvailable).toBe(true);
+  });
+  test('status reports annualAvailable:false when the annual price is unset', async () => {
+    delete process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID;
+    firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+    const res = await request(app).get('/api/billing/status').set(authedHeader(GMAIL, 'gmail.com'));
+    expect(res.body.annualAvailable).toBe(false);
+  });
+});
+
 describe('planIsPro — per-user gating for personal domains', () => {
   const { planIsPro } = require('../../src/routes/billing');
   beforeEach(() => {
