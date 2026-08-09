@@ -57,6 +57,7 @@ jest.mock('../../src/services/firestore', () => ({
   getMeetingExcusedEmails: jest.fn(),
   addMeetingExcusedEmails: jest.fn(),
   getUserSettings: jest.fn(),
+  getUserMeetingSeries: jest.fn(),
   getUser: jest.fn(),
   updateUserTokens: jest.fn(),
   getTenantPlan: jest.fn(), // used by billing.planIsPro when billing is configured
@@ -102,6 +103,7 @@ beforeEach(() => {
   firestore.countUserExports.mockResolvedValue(0);
   firestore.getMeetingExcusedEmails.mockResolvedValue([]);
   firestore.getUserSettings.mockResolvedValue({ slackWebhookUrl: null });
+  firestore.getUserMeetingSeries.mockResolvedValue({ series: [], totalSeries: 0 });
   app = buildApp();
 });
 
@@ -122,6 +124,57 @@ describe('POST /api/save-to-sheets — basic validation', () => {
       .set('Content-Type', 'application/json')
       .send({ ...validPayload, participants: [] });
     expect(res.status).toBe(400);
+  });
+});
+
+describe('POST /api/save-to-sheets — cumulative Class Summary tab', () => {
+  const recurringSeries = {
+    series: [{
+      recurringEventId: 'series-1', title: 'Daily Standup', instanceCount: 3, uniquePeople: 2,
+      firstAt: '2026-06-01T10:00:00.000Z', lastAt: '2026-06-08T10:00:00.000Z',
+      people: [
+        { email: 'alex@acme.com', displayName: 'Alex', attended: 3, attendanceRate: 1, totalMinutes: 90 },
+        { email: 'beth@acme.com', displayName: 'Beth', attended: 2, attendanceRate: 0.6667, totalMinutes: 40 },
+      ],
+    }],
+    totalSeries: 1,
+  };
+
+  test('writes a cumulative Class Summary for a recurring series (2+ instances)', async () => {
+    firestore.getUserMeetingSeries.mockResolvedValue(recurringSeries);
+    const res = await request(app)
+      .post('/api/save-to-sheets')
+      .set(authedHeader('user@acme.com', 'acme.com'))
+      .set('Content-Type', 'application/json')
+      .send({ ...validPayload, recurringEventId: 'series-1' });
+    expect(res.status).toBe(200);
+    const summaryCall = mockSheetsUpdate.mock.calls.find(c => (c[0].range || '').includes('Class Summary'));
+    expect(summaryCall).toBeTruthy();
+    const values = summaryCall[0].requestBody.values;
+    expect(values).toEqual(expect.arrayContaining([
+      ['Name', 'Email', 'Sessions Attended', 'Total Sessions', 'Attendance %', 'Total Time (min)'],
+    ]));
+    // Alex: attended 3 of 3 → 100%, 90 min cumulative.
+    expect(values.find(r => r[0] === 'Alex')).toEqual(['Alex', 'alex@acme.com', 3, 3, '100%', 90]);
+    expect(values.find(r => r[0] === 'Beth')).toEqual(['Beth', 'beth@acme.com', 2, 3, '67%', 40]);
+  });
+
+  test('does NOT write a Class Summary for a single-instance series', async () => {
+    firestore.getUserMeetingSeries.mockResolvedValue({ series: [{ recurringEventId: 'series-1', title: 'X', instanceCount: 1, uniquePeople: 1, people: [] }], totalSeries: 1 });
+    await request(app).post('/api/save-to-sheets').set(authedHeader('user@acme.com', 'acme.com')).set('Content-Type', 'application/json').send({ ...validPayload, recurringEventId: 'series-1' });
+    expect(mockSheetsUpdate.mock.calls.find(c => (c[0].range || '').includes('Class Summary'))).toBeFalsy();
+  });
+
+  test('does not fetch the series at all when the meeting is not recurring', async () => {
+    await request(app).post('/api/save-to-sheets').set(authedHeader('user@acme.com', 'acme.com')).set('Content-Type', 'application/json').send(validPayload);
+    expect(firestore.getUserMeetingSeries).not.toHaveBeenCalled();
+  });
+
+  test('a Class Summary failure never fails the export (best-effort)', async () => {
+    firestore.getUserMeetingSeries.mockRejectedValue(new Error('series boom'));
+    const res = await request(app).post('/api/save-to-sheets').set(authedHeader('user@acme.com', 'acme.com')).set('Content-Type', 'application/json').send({ ...validPayload, recurringEventId: 'series-1' });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
   });
 });
 

@@ -3,7 +3,7 @@ const { google } = require('googleapis');
 const { getGoogleClient } = require('../services/googleAuth');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { persistExport, getUserSheetId, setUserSheetId, countUserExports, getMeetingExcusedEmails, addMeetingExcusedEmails, getUserSettings } = require('../services/firestore');
+const { persistExport, getUserSheetId, setUserSheetId, countUserExports, getMeetingExcusedEmails, addMeetingExcusedEmails, getUserSettings, getUserMeetingSeries } = require('../services/firestore');
 const { sendExportNotification, sendSlackDigest } = require('../lib/notifications');
 const { planIsPro } = require('./billing');
 
@@ -92,6 +92,34 @@ function digestAbsentRows(calendarAttendees, { attendedEmails, attendedNames, ex
       status: excusedSet.has((a.email || '').toLowerCase()) ? 'Excused' : 'Absent',
       durationMin: 0,
     }));
+}
+
+// Cumulative "Class Summary" values for a recurring series — the per-person
+// attendance across ALL sessions (the education/teacher view a single-meeting
+// export can't give). Pure: takes a series object from getUserMeetingSeries plus
+// an ISO "generated" timestamp, returns the 2D values for the summary tab.
+function buildClassSummaryValues(series, generatedAtIso) {
+  const range = (series.firstAt && series.lastAt)
+    ? `${series.firstAt.slice(0, 10)} – ${series.lastAt.slice(0, 10)}`
+    : '';
+  const summary = [
+    ['Class', series.title || 'Recurring meeting'],
+    ['Sessions', series.instanceCount],
+    ['Unique people', series.uniquePeople],
+    ...(range ? [['Date range', range]] : []),
+    ['Generated', generatedAtIso],
+    [],
+  ];
+  const header = ['Name', 'Email', 'Sessions Attended', 'Total Sessions', 'Attendance %', 'Total Time (min)'];
+  const rows = (series.people || []).map(p => [
+    sanitizeCell(p.displayName),
+    sanitizeCell(p.email || ''),
+    p.attended,
+    series.instanceCount,
+    Math.round((p.attendanceRate || 0) * 100) + '%',
+    p.totalMinutes || 0,
+  ]);
+  return [...summary, header, ...rows];
 }
 
 router.post('/save-to-sheets', async (req, res) => {
@@ -336,6 +364,35 @@ router.post('/save-to-sheets', async (req, res) => {
       valueInputOption: 'RAW',
       requestBody: { values: allValues },
     });
+
+    // Cumulative "Class Summary" tab for a recurring series — per-person
+    // attendance across every session (the teacher/education view). Written to a
+    // stable tab that refreshes each export. Best-effort (never fails the export)
+    // and Pro-gated, like the digests. Only when the series has 2+ instances,
+    // otherwise it just restates the single meeting.
+    if (recurringEventId && req.user && proAllowed) {
+      try {
+        const { series } = await getUserMeetingSeries(req.user.domain, req.user.email);
+        const match = (series || []).find(s => s.recurringEventId === recurringEventId);
+        if (match && match.instanceCount >= 2) {
+          const summaryTab = sanitizeTabName(`Class Summary — ${match.title || 'Recurring'}`);
+          try {
+            await sheets.spreadsheets.batchUpdate({
+              spreadsheetId,
+              requestBody: { requests: [{ addSheet: { properties: { title: summaryTab } } }] },
+            });
+          } catch (_) { /* tab already exists — reuse and overwrite it */ }
+          await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: `'${summaryTab}'!A1`,
+            valueInputOption: 'RAW',
+            requestBody: { values: buildClassSummaryValues(match, new Date(exportedAt).toISOString()) },
+          });
+        }
+      } catch (e) {
+        log.warn('class summary tab failed', { error: e.message, conferenceId });
+      }
+    }
 
     // Format the sheet: bold summary labels & header row, auto-resize columns
     const headerRowIndex = summary.length; // 0-based row index of the header

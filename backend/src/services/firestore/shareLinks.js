@@ -57,6 +57,18 @@ async function getSharedSeriesView(domain, recurringEventId) {
     const seriesMeetings = meetingsSnap.docs.map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
     const participantSnaps = await Promise.all(seriesMeetings.map(m => m.ref.collection('participants').get()));
 
+    // Identity canonicalization (Sweep-10 class): merge a name-only appearance
+    // into its email identity so a student reported name-only one week and by
+    // email another isn't double-counted as two people in the shared roll-up.
+    const nameToEmail = new Map();
+    for (const snap of participantSnaps) {
+      for (const p of snap.docs) {
+        const e = (p.data().email || '').toLowerCase();
+        const n = (p.data().displayName || '').toLowerCase();
+        if (e && n && !nameToEmail.has(n)) nameToEmail.set(n, e);
+      }
+    }
+
     seriesMeetings.sort((a, b) => {
       const aT = tsMs(a.data.startTime) || tsMs(a.data.createdAt) || 0;
       const bT = tsMs(b.data.startTime) || tsMs(b.data.createdAt) || 0;
@@ -83,7 +95,8 @@ async function getSharedSeriesView(domain, recurringEventId) {
         const pdata = p.data();
         const e = (pdata.email || '').toLowerCase();
         const n = pdata.displayName || '';
-        const key = e || `name:${n.toLowerCase()}`;
+        const canonEmail = e || nameToEmail.get(n.toLowerCase()) || '';
+        const key = canonEmail || `name:${n.toLowerCase()}`;
         if (!key || key === 'name:' || seen.has(key)) continue;
         seen.add(key);
         let person = peopleMap.get(key);

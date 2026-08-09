@@ -211,6 +211,20 @@ describe('getSharedSeriesView', () => {
     expect(res.people.map(p => p.displayName)).toEqual(['Alex', 'Beth', 'Carlos']);
   });
 
+  test('merges a name-only appearance with the email identity (no double-count)', async () => {
+    // Dana is present in both instances: with an email in meet-1, name-only in
+    // meet-2. Must be ONE person attending 2, not two half-people.
+    ctx.seed('tenants/acme.com/meetings/meet-1', { recurringEventId: 'series-d', title: 'Class', startTime: wrapTimestamp(new Date('2026-06-01T10:00:00Z')) });
+    ctx.seed('tenants/acme.com/meetings/meet-2', { recurringEventId: 'series-d', title: 'Class', startTime: wrapTimestamp(new Date('2026-06-08T10:00:00Z')) });
+    ctx.seed('tenants/acme.com/meetings/meet-1/participants/p1', { email: 'dana@acme.com', displayName: 'Dana' });
+    ctx.seed('tenants/acme.com/meetings/meet-2/participants/p2', { email: '', displayName: 'Dana' });
+    const res = await firestore.getSharedSeriesView('acme.com', 'series-d');
+    expect(res.uniquePeople).toBe(1); // not 2
+    const dana = res.people.find(p => p.displayName === 'Dana');
+    expect(dana.attended).toBe(2);
+    expect(dana.attendanceRate).toBe(1);
+  });
+
   test('output does NOT include email addresses (privacy stripped)', async () => {
     seedSeries();
     const res = await firestore.getSharedSeriesView('acme.com', 'series-42');

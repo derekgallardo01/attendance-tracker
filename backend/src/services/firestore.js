@@ -1214,6 +1214,24 @@ async function getUserMeetingSeries(domain, email) {
       seriesMeetings.map(m => m.ref.collection('participants').get())
     );
 
+    // Identity canonicalization (Sweep-10 class): Meet sometimes reports a person
+    // with an email and sometimes name-only. Build name→email PER SERIES from
+    // instances where BOTH are present, so a name-only appearance merges into the
+    // email identity instead of splitting into a phantom second person (which
+    // would inflate the roster and skew each person's attendance %).
+    const nameToEmailBySeries = new Map(); // recurringEventId -> Map(nameLower -> email)
+    for (let i = 0; i < seriesMeetings.length; i++) {
+      const rid = seriesMeetings[i].data.recurringEventId;
+      let n2e = nameToEmailBySeries.get(rid);
+      if (!n2e) { n2e = new Map(); nameToEmailBySeries.set(rid, n2e); }
+      for (const p of participantSnaps[i].docs) {
+        const pd = p.data();
+        const e = (pd.email || '').toLowerCase();
+        const n = (pd.displayName || '').toLowerCase();
+        if (e && n && !n2e.has(n)) n2e.set(n, e);
+      }
+    }
+
     // Group meetings into series — keyed by recurringEventId.
     const seriesMap = new Map();
     for (let i = 0; i < seriesMeetings.length; i++) {
@@ -1249,18 +1267,23 @@ async function getUserMeetingSeries(domain, email) {
 
       // Per-person aggregation: count meetings attended + sum minutes.
       const seenInThisMeeting = new Set();
+      const seriesNameToEmail = nameToEmailBySeries.get(recurringEventId);
       for (const p of participantSnaps[i].docs) {
         const pdata = p.data();
         const pEmail = (pdata.email || '').toLowerCase();
         const pName = pdata.displayName || '';
-        const key = pEmail || `name:${pName.toLowerCase()}`;
+        const nameLower = pName.toLowerCase();
+        // Resolve a name-only appearance to its email identity when we've seen
+        // that name paired with an email elsewhere in this series.
+        const canonEmail = pEmail || seriesNameToEmail?.get(nameLower) || '';
+        const key = canonEmail || `name:${nameLower}`;
         if (!key || key === 'name:') continue;
         if (seenInThisMeeting.has(key)) continue; // one count per meeting
         seenInThisMeeting.add(key);
 
         let person = series.peopleMap.get(key);
         if (!person) {
-          person = { key, email: pEmail || null, displayName: pName, attended: 0, totalMinutes: 0 };
+          person = { key, email: canonEmail || null, displayName: pName, attended: 0, totalMinutes: 0 };
           series.peopleMap.set(key, person);
         }
         person.attended++;

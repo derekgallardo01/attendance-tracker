@@ -105,6 +105,33 @@ describe('getUserMeetingSeries — per-user', () => {
     expect(alex.attended).toBe(3); // one count per meeting, not per session
   });
 
+  test('merges a person reported name-only in one instance with their email identity (no double-count)', async () => {
+    const now = Date.now();
+    const domain = 'acme.com';
+    const email = 'admin@acme.com';
+    // Alex is present in all 3 instances but reported name-only in instance 1
+    // (Meet dropped the email that week). Must be ONE person attending 3, not
+    // an "alex@acme.com" attending 2 + a phantom "Alex" attending 1.
+    const rosters = [
+      [{ email: 'alex@acme.com', displayName: 'Alex' }],
+      [{ id: 'alex-nameonly', email: '', displayName: 'Alex' }],
+      [{ email: 'alex@acme.com', displayName: 'Alex' }],
+    ];
+    for (let i = 0; i < 3; i++) {
+      const cid = `m-${i}`;
+      ctx.seed(`tenants/${domain}/events/ev-${i}`, {
+        email, type: 'tracked', meta: { conferenceId: cid },
+        createdAt: wrapTimestamp(new Date(now - (3 - i) * DAY)),
+      });
+      seedMeeting(domain, cid, { title: 'Class', recurringEventId: 'series-class', startMs: now - (3 - i) * DAY, participants: rosters[i] });
+    }
+    const result = await firestore.getUserMeetingSeries(domain, email);
+    expect(result.series[0].uniquePeople).toBe(1); // not 2
+    const alex = result.series[0].people.find(p => p.email === 'alex@acme.com');
+    expect(alex.attended).toBe(3);
+    expect(alex.attendanceRate).toBe(1);
+  });
+
   test('handles participants with displayName but no email (uses name: key)', async () => {
     const now = Date.now();
     ctx.seed('tenants/acme.com/events/ev-1', {
