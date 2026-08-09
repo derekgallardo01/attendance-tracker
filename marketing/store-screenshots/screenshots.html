@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg0:#0b0e14; --bg1:#0d1117; --card:#161b22; --card2:#11161d;
+    --bd:#30363d; --bd2:#21262d; --tx:#e6edf3; --mut:#8b949e; --mut2:#6e7681;
+    --green:#4ade80; --greenInstall:#34A853; --amber:#f59e0b; --red:#f85149; --blue:#1f6feb;
+  }
+  body { font-family: -apple-system, "Segoe UI", Roboto, system-ui, sans-serif; background:#000; }
+
+  /* Each store screenshot is exactly 1280x800 (Marketplace spec, 16:10). */
+  .shot {
+    width:1280px; height:800px; overflow:hidden; position:relative;
+    display:flex; align-items:center; gap:56px; padding:72px;
+    color:var(--tx);
+    background:
+      radial-gradient(1100px 560px at 16% -12%, rgba(52,168,83,.20), transparent 55%),
+      radial-gradient(900px 500px at 108% 120%, rgba(31,111,235,.16), transparent 55%),
+      linear-gradient(140deg,#0b0e14,#0d1117 60%);
+  }
+  .left { width:44%; flex-shrink:0; }
+  .right { flex:1; display:flex; justify-content:center; }
+
+  .wordmark { display:flex; align-items:center; gap:10px; margin-bottom:34px; }
+  .logo { width:38px; height:38px; border-radius:10px; background:var(--greenInstall);
+          display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(52,168,83,.4); }
+  .logo svg { width:22px; height:22px; fill:#fff; }
+  .wm-name { font-weight:700; font-size:19px; letter-spacing:-.01em; }
+  .wm-by { font-size:12px; color:var(--mut2); margin-top:1px; }
+
+  h1 { font-size:47px; font-weight:800; line-height:1.08; letter-spacing:-.02em; }
+  .sub { font-size:20px; color:#a9b2be; line-height:1.5; margin-top:18px; max-width:440px; }
+  .ticks { margin-top:26px; display:flex; flex-direction:column; gap:12px; }
+  .tick { display:flex; align-items:center; gap:11px; font-size:16px; color:#c9d1d9; }
+  .tick .dot { width:22px; height:22px; border-radius:50%; background:rgba(74,222,128,.14);
+    border:1px solid rgba(74,222,128,.4); color:var(--green); font-size:12px; font-weight:800;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+
+  /* ---- Meet side panel mock ---- */
+  .panel { background:var(--bg1); border:1px solid var(--bd); border-radius:16px; padding:16px;
+           width:400px; box-shadow:0 24px 70px rgba(0,0,0,.55); }
+  .p-head { display:flex; align-items:center; gap:9px; padding-bottom:12px; border-bottom:1px solid var(--bd2); margin-bottom:13px; }
+  .p-badge { width:26px; height:26px; background:rgba(74,222,128,.15); border:1px solid rgba(74,222,128,.35);
+             border-radius:7px; display:flex; align-items:center; justify-content:center; color:var(--green); font-size:12px; font-weight:800; }
+  .p-title { font-weight:700; font-size:15px; }
+  .p-sub { font-size:11px; color:var(--mut2); margin-top:1px; }
+  .live { margin-left:auto; font-size:11px; color:var(--green); background:rgba(74,222,128,.12);
+          border:1px solid rgba(74,222,128,.25); padding:3px 9px; border-radius:11px; font-weight:600; }
+  .stats { display:flex; gap:8px; margin-bottom:13px; }
+  .stat { flex:1; background:var(--card); border:1px solid var(--bd); border-radius:8px; padding:9px 6px; text-align:center; }
+  .stat b { font-size:19px; font-weight:800; display:block; }
+  .stat span { font-size:10px; color:var(--mut2); text-transform:uppercase; letter-spacing:.04em; }
+  .row { display:flex; align-items:center; gap:11px; padding:10px; border-radius:9px; background:var(--card); margin-bottom:7px; }
+  .av { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; font-weight:700; flex-shrink:0; }
+  .who { flex:1; min-width:0; }
+  .who .nm { font-size:14px; font-weight:600; }
+  .who .mt { font-size:11px; color:var(--mut2); margin-top:1px; }
+  .chip { font-size:11px; padding:2px 9px; border-radius:9px; font-weight:600; white-space:nowrap; }
+  .chip.present { color:var(--green); background:rgba(74,222,128,.12); border:1px solid rgba(74,222,128,.25); }
+  .chip.left { color:var(--mut2); background:rgba(125,133,144,.08); border:1px solid var(--bd); }
+  .chip.absent { color:var(--red); background:rgba(248,81,73,.12); border:1px solid rgba(248,81,73,.3); }
+  .late { display:inline-block; margin-left:7px; padding:1px 7px; border-radius:8px; font-size:11px; font-weight:700;
+          background:rgba(245,158,11,.15); color:var(--amber); border:1px solid rgba(245,158,11,.3); }
+  .p-btns { display:flex; gap:8px; margin-top:12px; }
+  .p-btn { flex:1; border-radius:8px; padding:10px; font-size:13px; font-weight:700; text-align:center; }
+  .p-btn.ghost { background:var(--card); border:1px solid var(--bd); color:var(--tx); }
+  .p-btn.go { background:rgba(74,222,128,.14); border:1px solid rgba(74,222,128,.4); color:var(--green); }
+
+  /* ---- Google Sheet mock ---- */
+  .sheet { width:600px; border-radius:14px; overflow:hidden; box-shadow:0 24px 70px rgba(0,0,0,.55); background:#fff; }
+  .sheet-bar { display:flex; align-items:center; gap:10px; background:#f8f9fa; padding:12px 16px; border-bottom:1px solid #e0e3e7; }
+  .sheet-ic { width:22px; height:22px; border-radius:4px; background:#0f9d58; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; font-weight:800; }
+  .sheet-name { color:#202124; font-weight:600; font-size:15px; }
+  .sheet-tab { margin-left:auto; font-size:12px; color:#5f6368; background:#e8f0fe; border-radius:6px; padding:3px 9px; }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; color:#202124; }
+  thead th { background:#0f9d58; color:#fff; text-align:left; padding:11px 14px; font-weight:600; font-size:12.5px; }
+  thead th.r { text-align:right; }
+  tbody td { padding:11px 14px; border-bottom:1px solid #eceff1; }
+  tbody td.r { text-align:right; font-variant-numeric:tabular-nums; color:#3c4043; }
+  tbody tr:nth-child(even) td { background:#f8fbf9; }
+  .s-tag { font-size:12px; font-weight:600; padding:2px 9px; border-radius:20px; }
+  .s-present { color:#188038; background:#e6f4ea; }
+  .s-left { color:#b06000; background:#feefc3; }
+  .s-absent { color:#c5221f; background:#fce8e6; }
+  .s-late { color:#b06000; font-weight:700; }
+  .subtle { color:#80868b; }
+
+  /* ---- Card (calendar match / series) ---- */
+  .card { width:440px; background:var(--bg1); border:1px solid var(--bd); border-radius:16px; overflow:hidden; box-shadow:0 24px 70px rgba(0,0,0,.55); }
+  .card-h { padding:16px 18px; border-bottom:1px solid var(--bd2); }
+  .card-h .t { font-weight:700; font-size:16px; }
+  .card-h .m { font-size:12px; color:var(--mut2); margin-top:3px; }
+  .card-b { padding:8px 18px 16px; }
+  .mrow { display:flex; align-items:center; gap:11px; padding:11px 0; border-bottom:1px solid #1b2129; }
+  .mrow:last-child { border-bottom:0; }
+  .status-ic { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; flex-shrink:0; }
+  .ok { background:rgba(74,222,128,.14); color:var(--green); border:1px solid rgba(74,222,128,.35); }
+  .no { background:rgba(248,81,73,.14); color:var(--red); border:1px solid rgba(248,81,73,.35); }
+  .lt { background:rgba(245,158,11,.14); color:var(--amber); border:1px solid rgba(245,158,11,.35); }
+  .mname { flex:1; font-size:14.5px; font-weight:500; }
+  .mmeta { font-size:12px; color:var(--mut2); }
+  .attpct { display:flex; align-items:center; gap:12px; }
+  .bar { width:120px; height:8px; border-radius:6px; background:#1b2129; overflow:hidden; }
+  .bar > i { display:block; height:100%; border-radius:6px; background:linear-gradient(90deg,#2ea043,#4ade80); }
+  .pct { font-size:13px; font-weight:700; width:40px; text-align:right; font-variant-numeric:tabular-nums; }
+  .frac { font-size:12px; color:var(--mut2); width:52px; text-align:right; }
+</style>
+</head>
+<body>
+
+<!-- ===== SHOT 1 — live roster ===== -->
+<div class="shot" id="shot1">
+  <div class="left">
+    <div class="wordmark">
+      <span class="logo"><svg viewBox="0 0 24 24"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z"/></svg></span>
+      <div><div class="wm-name">Attendance Tracker</div><div class="wm-by">for Google Meet™ · by Kinetic Helix</div></div>
+    </div>
+    <h1>See who's really<br>in the room.</h1>
+    <p class="sub">Real-time attendance, right in the Google Meet™ side panel — who's present, who left, and exactly how long they stayed.</p>
+    <div class="ticks">
+      <div class="tick"><span class="dot">✓</span> Updates live as people join and leave</div>
+      <div class="tick"><span class="dot">✓</span> Join &amp; leave times, plus total minutes</div>
+      <div class="tick"><span class="dot">✓</span> No screenshots. No manual roll call.</div>
+    </div>
+  </div>
+  <div class="right">
+    <div class="panel">
+      <div class="p-head">
+        <span class="p-badge">A</span>
+        <div><div class="p-title">Attendance</div><div class="p-sub">Weekly Team Standup</div></div>
+        <span class="live">● Tracking · 6 seen</span>
+      </div>
+      <div class="stats">
+        <div class="stat"><b style="color:var(--green)">5</b><span>Present</span></div>
+        <div class="stat"><b style="color:#9ca3af">1</b><span>Left</span></div>
+        <div class="stat"><b>6</b><span>Total</span></div>
+        <div class="stat"><b style="color:var(--green)">1h 02m</b><span>Duration</span></div>
+      </div>
+      <div class="row"><span class="av" style="background:#1f6feb">AS</span><div class="who"><div class="nm">Alex Smith</div><div class="mt">Joined 10:00 · 42m</div></div><span class="chip present">Present</span></div>
+      <div class="row"><span class="av" style="background:#238636">JD</span><div class="who"><div class="nm">Jordan Diaz<span class="late">+8m late</span></div><div class="mt">Joined 10:08 · 34m</div></div><span class="chip present">Present</span></div>
+      <div class="row"><span class="av" style="background:#5e35d6">PR</span><div class="who"><div class="nm">Priya Rao</div><div class="mt">Joined 10:01 · 41m</div></div><span class="chip present">Present</span></div>
+      <div class="row" style="opacity:.72"><span class="av" style="background:#9e6a03">SK</span><div class="who"><div class="nm">Sam Kim</div><div class="mt">Joined 10:02 · Left 10:20</div></div><span class="chip left">Left</span></div>
+      <div class="p-btns"><div class="p-btn ghost">⬜ Save to Sheets</div><div class="p-btn go">▶ Tracking</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SHOT 2 — one-click export ===== -->
+<div class="shot" id="shot2">
+  <div class="left">
+    <div class="wordmark">
+      <span class="logo"><svg viewBox="0 0 24 24"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z"/></svg></span>
+      <div><div class="wm-name">Attendance Tracker</div><div class="wm-by">for Google Meet™ · by Kinetic Helix</div></div>
+    </div>
+    <h1>One click →<br>a clean Google&nbsp;Sheet.</h1>
+    <p class="sub">Export the full attendance report to your Drive the moment the meeting ends. Share, sort, filter, or archive.</p>
+    <div class="ticks">
+      <div class="tick"><span class="dot">✓</span> Names, emails, times, duration &amp; status</div>
+      <div class="tick"><span class="dot">✓</span> Attendance % calculated for you</div>
+      <div class="tick"><span class="dot">✓</span> Or turn on auto-export on meeting end</div>
+    </div>
+  </div>
+  <div class="right">
+    <div class="sheet">
+      <div class="sheet-bar"><span class="sheet-ic">▦</span><span class="sheet-name">Attendance Tracker</span><span class="sheet-tab">Weekly Team Standup</span></div>
+      <table>
+        <thead><tr><th>Name</th><th>Join</th><th>Leave</th><th class="r">Min</th><th class="r">Attend</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Alex Smith</td><td class="r">10:00</td><td class="r">10:42</td><td class="r">42</td><td class="r">100%</td><td><span class="s-tag s-present">Present</span></td></tr>
+          <tr><td>Jordan Diaz <span class="s-late">+8m</span></td><td class="r">10:08</td><td class="r">10:42</td><td class="r">34</td><td class="r">81%</td><td><span class="s-tag s-present">Present</span></td></tr>
+          <tr><td>Priya Rao</td><td class="r">10:01</td><td class="r">10:42</td><td class="r">41</td><td class="r">98%</td><td><span class="s-tag s-present">Present</span></td></tr>
+          <tr><td>Sam Kim</td><td class="r">10:02</td><td class="r">10:20</td><td class="r">18</td><td class="r">43%</td><td><span class="s-tag s-left">Left early</span></td></tr>
+          <tr><td>Nadia Okafor</td><td class="r subtle">—</td><td class="r subtle">—</td><td class="r">0</td><td class="r">0%</td><td><span class="s-tag s-absent">Absent</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SHOT 3 — late & no-shows ===== -->
+<div class="shot" id="shot3">
+  <div class="left">
+    <div class="wordmark">
+      <span class="logo"><svg viewBox="0 0 24 24"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z"/></svg></span>
+      <div><div class="wm-name">Attendance Tracker</div><div class="wm-by">for Google Meet™ · by Kinetic Helix</div></div>
+    </div>
+    <h1>Catch every late<br>arrival &amp; no-show.</h1>
+    <p class="sub">Automatically matched against your Google Calendar invite — so you know who was expected, who came late, and who never showed.</p>
+    <div class="ticks">
+      <div class="tick"><span class="dot">✓</span> No-shows flagged from the invite list</div>
+      <div class="tick"><span class="dot">✓</span> Late arrivals timed to the minute</div>
+      <div class="tick"><span class="dot">✓</span> Mark excused absences in one tap</div>
+    </div>
+  </div>
+  <div class="right">
+    <div class="card">
+      <div class="card-h"><div class="t">Invited · Client Onboarding</div><div class="m">8 invited · 6 attended · 1 late · 1 no-show</div></div>
+      <div class="card-b">
+        <div class="mrow"><span class="status-ic ok">✓</span><span class="mname">Alex Smith</span><span class="mmeta">On time · 42m</span></div>
+        <div class="mrow"><span class="status-ic lt">!</span><span class="mname">Jordan Diaz</span><span class="mmeta" style="color:var(--amber)">+8m late · 34m</span></div>
+        <div class="mrow"><span class="status-ic ok">✓</span><span class="mname">Priya Rao</span><span class="mmeta">On time · 41m</span></div>
+        <div class="mrow"><span class="status-ic lt">!</span><span class="mname">Marcus Bell</span><span class="mmeta" style="color:var(--amber)">+15m late · 26m</span></div>
+        <div class="mrow"><span class="status-ic no">✕</span><span class="mname" style="color:var(--mut)">Nadia Okafor</span><span class="mmeta" style="color:var(--red)">No-show</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SHOT 4 — class attendance over time ===== -->
+<div class="shot" id="shot4">
+  <div class="left">
+    <div class="wordmark">
+      <span class="logo"><svg viewBox="0 0 24 24"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z"/></svg></span>
+      <div><div class="wm-name">Attendance Tracker</div><div class="wm-by">for Google Meet™ · by Kinetic Helix</div></div>
+    </div>
+    <h1>Track a class across<br>every session.</h1>
+    <p class="sub">For recurring classes and meetings, see each person's attendance&nbsp;% over the whole series — perfect for teachers and trainers.</p>
+    <div class="ticks">
+      <div class="tick"><span class="dot">✓</span> Per-student attendance across all sessions</div>
+      <div class="tick"><span class="dot">✓</span> Exports as a "Class Summary" tab</div>
+      <div class="tick"><span class="dot">✓</span> Spot who's falling behind, early</div>
+    </div>
+  </div>
+  <div class="right">
+    <div class="card" style="width:470px">
+      <div class="card-h"><div class="t">Weekly Spanish Class</div><div class="m">12 sessions · 6 students · Avg 88% attendance</div></div>
+      <div class="card-b">
+        <div class="mrow"><span class="mname">Angie Ramírez</span><div class="attpct"><span class="frac">12/12</span><span class="bar"><i style="width:100%"></i></span><span class="pct">100%</span></div></div>
+        <div class="mrow"><span class="mname">Diego Alvarez</span><div class="attpct"><span class="frac">11/12</span><span class="bar"><i style="width:92%"></i></span><span class="pct">92%</span></div></div>
+        <div class="mrow"><span class="mname">Mei Lin</span><div class="attpct"><span class="frac">10/12</span><span class="bar"><i style="width:83%"></i></span><span class="pct">83%</span></div></div>
+        <div class="mrow"><span class="mname">Kofi Mensah</span><div class="attpct"><span class="frac">9/12</span><span class="bar"><i style="width:75%"></i></span><span class="pct">75%</span></div></div>
+        <div class="mrow"><span class="mname" style="color:var(--mut)">Sam Park</span><div class="attpct"><span class="frac">5/12</span><span class="bar"><i style="width:42%;background:linear-gradient(90deg,#b06000,#f59e0b)"></i></span><span class="pct" style="color:var(--amber)">42%</span></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
