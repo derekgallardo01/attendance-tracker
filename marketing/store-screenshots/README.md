@@ -16,6 +16,9 @@ it front-loads the strongest value:
 The `*@2x.png` files are 2560×1600 (retina) — use them on `attendancetracker.dev`
 or anywhere higher resolution helps. Same aspect (16:10).
 
+**Promo tile** (`promo-tile-440x280.png`, + `@2x`): the small card Google shows in
+category/search results, rendered from `promo-tile.html`. 440×280 per spec.
+
 ## Re-rendering after edits
 Edit `screenshots.html`, then render both sizes from the Playwright install in
 `e2e/` (Chromium is already there):
