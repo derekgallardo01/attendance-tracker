@@ -224,6 +224,12 @@
 
       <!-- Series tab -->
       <div id="tab-series" class="tab-content">
+        <!-- Individual Pro CTA — promotes the cumulative class-summary export.
+             Shown/hidden by renderProCta() based on /api/billing/status. -->
+        <div id="series-pro-cta" style="display:none;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:.85rem">
+          <span id="series-pro-text"></span>
+          <button id="series-pro-btn" class="btn" style="margin-left:8px;background:#4ade80;color:#0d1117;padding:6px 12px" onclick="onSeriesProCta(this)"></button>
+        </div>
         <input id="search-series" class="search-box" type="text" placeholder="Search recurring meetings by title…" oninput="renderSeries()" />
         <div id="series-empty" class="section muted" style="display:none;text-align:center;padding:32px 18px">
           No recurring meetings rolled up yet. Track a meeting from a Google Calendar series (weekly standup, monthly review, etc.) 2+ times — the per-person attendance breakdown will appear here.
@@ -286,15 +292,17 @@
         // parallel so the page paints in one round-trip. /oauth/me tells us
         // whether to surface the Team admin link.
         const authH = { 'Authorization': `Bearer ${sessionToken}` };
-        const [hRes, sRes, meRes] = await Promise.all([
+        const [hRes, sRes, meRes, bRes] = await Promise.all([
           fetch(`${BACKEND_URL}/history`, { headers: authH }),
           fetch(`${BACKEND_URL}/series`, { headers: authH }),
           fetch(`${BACKEND_URL}/oauth/me`, { headers: authH }),
+          fetch(`${BACKEND_URL}/billing/status`, { headers: authH }),
         ]);
         if (meRes.ok) {
           const me = await meRes.json();
           if (me.teamAdmin) document.getElementById('team-link').style.display = 'inline-block';
         }
+        if (bRes.ok) renderProCta(await bRes.json());
         if (!hRes.ok) throw new Error(`history ${hRes.status}`);
         data = await hRes.json();
         seriesData = sRes.ok ? await sRes.json() : { series: [], totalSeries: 0 };
@@ -339,6 +347,42 @@
         alert(e.message);
       }
       if (btn) { btn.disabled = false; btn.textContent = 'Upgrade to Pro'; }
+    }
+
+    // Individual (per-user) Pro CTA in the Series tab. Only for personal-email
+    // users once the individual tier is live (billing/status → individual +
+    // billingConfigured). Promotes the cumulative class-summary export; when
+    // already Pro, offers the billing portal. Inert (hidden) otherwise.
+    function renderProCta(status) {
+      const box = document.getElementById('series-pro-cta');
+      const text = document.getElementById('series-pro-text');
+      const btn = document.getElementById('series-pro-btn');
+      if (!box || !status?.individual || !status?.billingConfigured) { if (box) box.style.display = 'none'; return; }
+      if (status.plan === 'pro') {
+        text.textContent = 'Pro ✓ — cumulative class attendance reports are added to every export.';
+        btn.textContent = 'Manage billing';
+        btn.dataset.mode = 'portal';
+      } else {
+        text.textContent = 'Pro adds a cumulative "Class Summary" tab to your export — per-student attendance % across every session of a recurring class.';
+        btn.textContent = 'Upgrade to Pro';
+        btn.dataset.mode = 'checkout';
+      }
+      box.style.display = '';
+    }
+
+    async function onSeriesProCta(btn) {
+      if (btn?.dataset.mode === 'portal') {
+        btn.disabled = true; const orig = btn.textContent; btn.textContent = 'Loading…';
+        try {
+          const res = await fetch(`${BACKEND_URL}/billing/portal`, { headers: { 'Authorization': `Bearer ${sessionToken}` } });
+          const body = await res.json();
+          if (res.ok && body.url) { window.location.href = body.url; return; }
+          alert(body.error || 'Could not open the billing portal.');
+        } catch (e) { alert(e.message); }
+        btn.disabled = false; btn.textContent = orig;
+        return;
+      }
+      return upgradeFromHistory(btn); // checkout (routes personal users to the individual plan)
     }
 
     // Hash deep links: #meeting=<conferenceId> jumps to and filters the

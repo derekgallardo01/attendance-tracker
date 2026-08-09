@@ -16,6 +16,8 @@ jest.mock('stripe', () => jest.fn(() => mockStripeInstance));
 jest.mock('../../src/services/firestore', () => ({
   getTenantPlan: jest.fn(),
   setTenantPlan: jest.fn(),
+  getUserPlan: jest.fn(),
+  setUserPlan: jest.fn(),
   getUser: jest.fn(),
   updateUserTokens: jest.fn(),
   getTeamAdminStatus: jest.fn(), // requireTeamAdmin (runs before requireProPlan on /team/overview)
@@ -29,9 +31,11 @@ beforeEach(() => {
   jest.clearAllMocks();
   firestore.getUser.mockImplementation(async (domain, email) => ({ email, domain }));
   firestore.getTenantPlan.mockResolvedValue({ plan: 'free', billingStatus: null, stripeCustomerId: null });
+  firestore.getUserPlan.mockResolvedValue({ plan: 'free', billingStatus: null, stripeCustomerId: null });
   delete process.env.STRIPE_SECRET_KEY;
   delete process.env.STRIPE_PRICE_ID;
   delete process.env.STRIPE_WEBHOOK_SECRET;
+  delete process.env.STRIPE_INDIVIDUAL_PRICE_ID;
   app = buildApp();
 });
 
@@ -176,6 +180,124 @@ describe('billing — configured (Stripe env set)', () => {
       .set(authedHeader('admin@acme.com', 'acme.com'));
     expect(res.status).toBe(402);
     expect(res.body.upgrade).toBe(true);
+  });
+});
+
+describe('billing — individual (per-user) tier for personal-email users', () => {
+  const GMAIL = 'teacher@gmail.com';
+  beforeEach(() => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_PRICE_ID = 'price_org';
+    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_x';
+    process.env.STRIPE_INDIVIDUAL_PRICE_ID = 'price_individual';
+    app = buildApp();
+  });
+  afterEach(() => { delete process.env.STRIPE_INDIVIDUAL_PRICE_ID; });
+
+  test('checkout uses the INDIVIDUAL price + user:<email> reference for a personal domain', async () => {
+    mockStripeInstance.checkout.sessions.create.mockResolvedValue({ url: 'https://checkout.stripe.com/ind' });
+    const res = await request(app).post('/api/billing/checkout').set(authedHeader(GMAIL, 'gmail.com')).send({});
+    expect(res.status).toBe(200);
+    expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(expect.objectContaining({
+      line_items: [{ price: 'price_individual', quantity: 1 }],
+      client_reference_id: `user:${GMAIL}`,
+      metadata: expect.objectContaining({ individual: '1', domain: 'gmail.com', email: GMAIL }),
+    }));
+  });
+
+  test('checkout 503 for a personal user when the individual price is not set (tier not launched)', async () => {
+    delete process.env.STRIPE_INDIVIDUAL_PRICE_ID;
+    app = buildApp();
+    const res = await request(app).post('/api/billing/checkout').set(authedHeader(GMAIL, 'gmail.com')).send({});
+    expect(res.status).toBe(503);
+  });
+
+  test('webhook checkout.completed with individual metadata writes the USER plan, not the tenant', async () => {
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      type: 'checkout.session.completed',
+      data: { object: { client_reference_id: `user:${GMAIL}`, customer: 'cus_i', subscription: 'sub_i', metadata: { individual: '1', domain: 'gmail.com', email: GMAIL } } },
+    });
+    const res = await request(app).post('/api/billing/webhook').set('Content-Type', 'application/json').set('stripe-signature', 'good').send({});
+    expect(res.status).toBe(200);
+    expect(firestore.setUserPlan).toHaveBeenCalledWith('gmail.com', GMAIL, expect.objectContaining({
+      individualPlan: 'pro', individualBillingStatus: 'active', individualStripeCustomerId: 'cus_i',
+    }));
+    expect(firestore.setTenantPlan).not.toHaveBeenCalled();
+  });
+
+  test('webhook subscription.deleted for an individual downgrades the USER to free', async () => {
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      type: 'customer.subscription.deleted',
+      data: { object: { id: 'sub_i', status: 'canceled', metadata: { individual: '1', domain: 'gmail.com', email: GMAIL } } },
+    });
+    await request(app).post('/api/billing/webhook').set('Content-Type', 'application/json').set('stripe-signature', 'good').send({});
+    expect(firestore.setUserPlan).toHaveBeenCalledWith('gmail.com', GMAIL, expect.objectContaining({ individualPlan: 'free', individualBillingStatus: 'canceled' }));
+    expect(firestore.setTenantPlan).not.toHaveBeenCalled();
+  });
+
+  test('status for a personal user reports individual:true and reads the user plan', async () => {
+    firestore.getUserPlan.mockResolvedValue({ plan: 'pro', billingStatus: 'active', stripeCustomerId: 'cus_i' });
+    const res = await request(app).get('/api/billing/status').set(authedHeader(GMAIL, 'gmail.com'));
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ plan: 'pro', individual: true, billingConfigured: true });
+    expect(firestore.getUserPlan).toHaveBeenCalledWith('gmail.com', GMAIL);
+    expect(firestore.getTenantPlan).not.toHaveBeenCalled();
+  });
+
+  test('portal for a personal user uses the USER stripe customer', async () => {
+    firestore.getUserPlan.mockResolvedValue({ plan: 'pro', stripeCustomerId: 'cus_i' });
+    mockStripeInstance.billingPortal.sessions.create.mockResolvedValue({ url: 'https://billing.stripe.com/i' });
+    const res = await request(app).get('/api/billing/portal').set(authedHeader(GMAIL, 'gmail.com'));
+    expect(res.status).toBe(200);
+    expect(mockStripeInstance.billingPortal.sessions.create).toHaveBeenCalledWith(expect.objectContaining({ customer: 'cus_i' }));
+  });
+});
+
+describe('planIsPro — per-user gating for personal domains', () => {
+  const { planIsPro } = require('../../src/routes/billing');
+  beforeEach(() => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_PRICE_ID = 'price_org';
+  });
+  afterEach(() => { delete process.env.STRIPE_INDIVIDUAL_PRICE_ID; });
+
+  test('personal domain with NO email stays free-tier-allowed (no regression on existing callers)', async () => {
+    process.env.STRIPE_INDIVIDUAL_PRICE_ID = 'price_individual';
+    expect(await planIsPro('gmail.com')).toBe(true); // no email → not gated
+    expect(firestore.getUserPlan).not.toHaveBeenCalled();
+  });
+
+  test('personal domain + email but individual tier NOT launched → allowed (no regression)', async () => {
+    delete process.env.STRIPE_INDIVIDUAL_PRICE_ID;
+    expect(await planIsPro('gmail.com', 'u@gmail.com')).toBe(true);
+    expect(firestore.getUserPlan).not.toHaveBeenCalled();
+  });
+
+  test('personal domain + email + launched → reads the user plan (pro=true / free=false)', async () => {
+    process.env.STRIPE_INDIVIDUAL_PRICE_ID = 'price_individual';
+    firestore.getUserPlan.mockResolvedValueOnce({ plan: 'pro' });
+    expect(await planIsPro('gmail.com', 'u@gmail.com')).toBe(true);
+    firestore.getUserPlan.mockResolvedValueOnce({ plan: 'free' });
+    expect(await planIsPro('gmail.com', 'u@gmail.com')).toBe(false);
+  });
+
+  test('one gmail user paying does NOT make another gmail user Pro (per-user, not per shared tenant)', async () => {
+    process.env.STRIPE_INDIVIDUAL_PRICE_ID = 'price_individual';
+    firestore.getUserPlan.mockImplementation(async (_d, email) => ({ plan: email === 'payer@gmail.com' ? 'pro' : 'free' }));
+    expect(await planIsPro('gmail.com', 'payer@gmail.com')).toBe(true);
+    expect(await planIsPro('gmail.com', 'freeloader@gmail.com')).toBe(false);
+  });
+
+  test('workspace domain still gates on the DOMAIN plan (email ignored)', async () => {
+    firestore.getTenantPlan.mockResolvedValueOnce({ plan: 'pro' });
+    expect(await planIsPro('acme.com', 'anyone@acme.com')).toBe(true);
+    expect(firestore.getUserPlan).not.toHaveBeenCalled();
+  });
+
+  test('per-user gate fails CLOSED on a read error with no cached plan', async () => {
+    process.env.STRIPE_INDIVIDUAL_PRICE_ID = 'price_individual';
+    firestore.getUserPlan.mockRejectedValue(new Error('firestore down'));
+    expect(await planIsPro('gmail.com', 'nocache@gmail.com')).toBe(false);
   });
 });
 

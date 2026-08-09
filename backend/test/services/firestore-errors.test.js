@@ -38,6 +38,8 @@ const calls = {
   upsertTenantConfig: ['acme.com', { adminEmail: 'a@acme.com' }],
   setTenantPlan: ['acme.com', { plan: 'pro' }],
   getTenantPlan: ['acme.com'],
+  setUserPlan: ['gmail.com', 'u@gmail.com', { individualPlan: 'pro' }],
+  getUserPlan: ['gmail.com', 'u@gmail.com'],
   logEvent: ['acme.com', { email: 'a@acme.com', type: 'signin' }],
   persistAttendance: ['acme.com', 'conf', 'rec', [{ email: 'a@acme.com', displayName: 'A' }], 'a@acme.com'],
   getMeetingExcusedEmails: ['acme.com', 'conf'],

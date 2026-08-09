@@ -366,11 +366,12 @@ router.post('/save-to-sheets', async (req, res) => {
     });
 
     // Cumulative "Class Summary" tab for a recurring series — per-person
-    // attendance across every session (the teacher/education view). Written to a
-    // stable tab that refreshes each export. Best-effort (never fails the export)
-    // and Pro-gated, like the digests. Only when the series has 2+ instances,
+    // attendance across every session (the teacher/education view). This is the
+    // individual-Pro hook: gated by planIsPro(domain, EMAIL) so a personal-Gmail
+    // user's own plan is checked (per-user billing), while the org tier uses the
+    // domain plan. Best-effort (never fails the export). Only 2+ instances,
     // otherwise it just restates the single meeting.
-    if (recurringEventId && req.user && proAllowed) {
+    if (recurringEventId && req.user && await planIsPro(req.user.domain, req.user.email)) {
       try {
         const { series } = await getUserMeetingSeries(req.user.domain, req.user.email);
         const match = (series || []).find(s => s.recurringEventId === recurringEventId);

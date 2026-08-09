@@ -109,6 +109,27 @@ describe('tenant plan', () => {
   });
 });
 
+describe('user plan (individual per-user billing)', () => {
+  test('getUserPlan defaults to free; reflects pro after setUserPlan; lowercases the email', async () => {
+    expect(await firestore.getUserPlan('gmail.com', 'Teacher@Gmail.com')).toEqual({ plan: 'free', billingStatus: null, stripeCustomerId: null });
+    await firestore.setUserPlan('gmail.com', 'Teacher@Gmail.com', {
+      individualPlan: 'pro', individualBillingStatus: 'active', individualStripeCustomerId: 'cus_i',
+    });
+    expect(await firestore.getUserPlan('gmail.com', 'teacher@gmail.com')).toEqual({ plan: 'pro', billingStatus: 'active', stripeCustomerId: 'cus_i' });
+  });
+
+  test('individual plan is scoped to the user, not the shared tenant', async () => {
+    await firestore.setUserPlan('gmail.com', 'payer@gmail.com', { individualPlan: 'pro' });
+    expect((await firestore.getUserPlan('gmail.com', 'payer@gmail.com')).plan).toBe('pro');
+    expect((await firestore.getUserPlan('gmail.com', 'other@gmail.com')).plan).toBe('free'); // unaffected
+  });
+
+  test('a non-pro individual plan normalizes to free', async () => {
+    await firestore.setUserPlan('gmail.com', 'u@gmail.com', { individualPlan: 'canceled' });
+    expect((await firestore.getUserPlan('gmail.com', 'u@gmail.com')).plan).toBe('free');
+  });
+});
+
 describe('meeting excused emails', () => {
   test('getMeetingExcusedEmails: no id → [], missing doc → [], present → lowercased', async () => {
     expect(await firestore.getMeetingExcusedEmails('acme.com', null)).toEqual([]);

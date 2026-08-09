@@ -80,6 +80,36 @@ async function getTenantPlan(domain) {
   };
 }
 
+// ── Individual (per-user) billing ──
+// Personal-email tenants (gmail.com etc.) are shared by unrelated users, so an
+// individual Pro subscription can't live on the tenant doc — it's billed per
+// USER and stored on the user doc under namespaced individual* fields (kept
+// separate from the tenant/team plan). Workspace domains keep per-domain billing.
+async function setUserPlan(domain, email, patch) {
+  try {
+    await tenantRef(domain).collection('users').doc(email.toLowerCase()).set({
+      ...patch, // { individualPlan, individualBillingStatus, individualStripeCustomerId, individualStripeSubscriptionId }
+      individualPlanUpdatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+    log.info('firestore: set user plan', { domain, email: email.toLowerCase(), plan: patch.individualPlan, status: patch.individualBillingStatus });
+  } catch (err) {
+    // Rethrow like setTenantPlan — the Stripe webhook must see failures and 500
+    // so Stripe redelivers, rather than acking with the plan left unwritten.
+    log.error('firestore: setUserPlan failed', { domain, email, error: err.message });
+    throw err;
+  }
+}
+
+async function getUserPlan(domain, email) {
+  const doc = await tenantRef(domain).collection('users').doc(email.toLowerCase()).get();
+  const u = doc.exists ? doc.data() : null;
+  return {
+    plan: u?.individualPlan === 'pro' ? 'pro' : 'free',
+    billingStatus: u?.individualBillingStatus || null,
+    stripeCustomerId: u?.individualStripeCustomerId || null,
+  };
+}
+
 // ── Team-admin self-serve claim / transfer ──
 // teamAdmin controls the org dashboard AND per-domain billing, so this is
 // deliberately conservative: personal-email tenants (shared gmail.com etc.)
@@ -1461,7 +1491,7 @@ function encodeNoteKey(key) {
 module.exports = {
   getDb,
   getTenantConfig, upsertTenantConfig,
-  setTenantPlan, getTenantPlan,
+  setTenantPlan, getTenantPlan, setUserPlan, getUserPlan,
   getTeamAdminStatus, claimTeamAdmin, transferTeamAdmin,
   countDistinctAttendees, getActivationFunnel,
   persistAttendance, persistCalendarData, persistExport,

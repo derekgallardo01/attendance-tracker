@@ -3,8 +3,17 @@ const { requireAuth } = require('../middleware/auth');
 const express = require('express');
 const log = require('../lib/logger');
 const CONFIG = require('../config');
-const { getTenantPlan, setTenantPlan } = require('../services/firestore');
+const { getTenantPlan, setTenantPlan, getUserPlan, setUserPlan } = require('../services/firestore');
 const { PERSONAL_EMAIL_DOMAINS } = require('../services/firestore/_core');
+
+// Personal-email tenants (gmail.com etc.) are shared by unrelated users, so they
+// can't buy the per-domain org plan — they buy an INDIVIDUAL (per-user) plan
+// stored on their user doc. Gated on its own price id so it dark-launches
+// independently of the org tier.
+const isPersonalDomain = (domain) => PERSONAL_EMAIL_DOMAINS.has((domain || '').toLowerCase());
+function individualBillingConfigured() {
+  return !!process.env.STRIPE_SECRET_KEY && !!process.env.STRIPE_INDIVIDUAL_PRICE_ID;
+}
 
 // Per-domain Pro subscription via Stripe Checkout. Lazy-init the SDK (like the
 // Resend wrapper) so the service boots and runs fine before billing is
@@ -32,25 +41,37 @@ const router = Router();
 // whole org, keyed by domain via client_reference_id + subscription metadata.
 router.post('/billing/checkout', requireAuth, async (req, res) => {
   const stripe = getStripe();
-  if (!stripe || !process.env.STRIPE_PRICE_ID) {
+  const domain = req.user.domain;
+  const email = req.user.email;
+  const individual = isPersonalDomain(domain);
+  // Personal-email users buy the INDIVIDUAL (per-user) plan; Workspace domains
+  // buy the per-domain org plan. Each has its own price id.
+  const priceId = individual ? process.env.STRIPE_INDIVIDUAL_PRICE_ID : process.env.STRIPE_PRICE_ID;
+  if (!stripe || !priceId) {
     return res.status(503).json({ error: 'Billing is not configured yet.' });
   }
-  const domain = req.user.domain;
   try {
+    // client_reference_id tags who the subscription is for: `user:<email>` for
+    // an individual, or the bare domain for an org. Metadata carries both so the
+    // webhook can route to setUserPlan vs setTenantPlan.
+    const meta = individual
+      ? { individual: '1', domain, email: email.toLowerCase() }
+      : { domain, initiatedBy: email };
+    const backTo = individual ? 'history.html' : 'team.html';
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
-      line_items: [{ price: process.env.STRIPE_PRICE_ID, quantity: 1 }],
-      client_reference_id: domain,
-      customer_email: req.user.email,
-      success_url: `${CONFIG.publicSiteUrl}/team.html?upgraded=1`,
-      cancel_url: `${CONFIG.publicSiteUrl}/team.html`,
-      metadata: { domain, initiatedBy: req.user.email },
-      subscription_data: { metadata: { domain } },
+      line_items: [{ price: priceId, quantity: 1 }],
+      client_reference_id: individual ? `user:${email.toLowerCase()}` : domain,
+      customer_email: email,
+      success_url: `${CONFIG.publicSiteUrl}/${backTo}?upgraded=1`,
+      cancel_url: `${CONFIG.publicSiteUrl}/${backTo}`,
+      metadata: meta,
+      subscription_data: { metadata: meta },
       allow_promotion_codes: true,
     });
     res.json({ url: session.url });
   } catch (err) {
-    log.error('billing: checkout create failed', { domain, error: err.message });
+    log.error('billing: checkout create failed', { domain, individual, error: err.message });
     res.status(502).json({ error: 'Could not start checkout.' });
   }
 });
@@ -61,16 +82,19 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
 router.get('/billing/portal', requireAuth, async (req, res) => {
   const stripe = getStripe();
   if (!stripe) return res.status(503).json({ error: 'Billing is not configured yet.' });
+  const individual = isPersonalDomain(req.user.domain);
   try {
-    const { stripeCustomerId } = await getTenantPlan(req.user.domain);
-    if (!stripeCustomerId) return res.status(404).json({ error: 'No active subscription for this domain.' });
+    const { stripeCustomerId } = individual
+      ? await getUserPlan(req.user.domain, req.user.email)
+      : await getTenantPlan(req.user.domain);
+    if (!stripeCustomerId) return res.status(404).json({ error: 'No active subscription.' });
     const session = await stripe.billingPortal.sessions.create({
       customer: stripeCustomerId,
-      return_url: `${CONFIG.publicSiteUrl}/team.html`,
+      return_url: `${CONFIG.publicSiteUrl}/${individual ? 'history.html' : 'team.html'}`,
     });
     res.json({ url: session.url });
   } catch (err) {
-    log.error('billing: portal create failed', { domain: req.user.domain, error: err.message });
+    log.error('billing: portal create failed', { domain: req.user.domain, individual, error: err.message });
     res.status(502).json({ error: 'Could not open the billing portal.' });
   }
 });
@@ -79,9 +103,16 @@ router.get('/billing/portal', requireAuth, async (req, res) => {
 // upgrade CTA in the UI).
 router.get('/billing/status', requireAuth, async (req, res) => {
   res.set('Cache-Control', 'no-store');
+  const individual = isPersonalDomain(req.user.domain);
   try {
-    const plan = await getTenantPlan(req.user.domain);
-    res.json({ ...plan, billingConfigured: billingConfigured() });
+    const plan = individual
+      ? await getUserPlan(req.user.domain, req.user.email)
+      : await getTenantPlan(req.user.domain);
+    res.json({
+      ...plan,
+      individual,
+      billingConfigured: individual ? individualBillingConfigured() : billingConfigured(),
+    });
   } catch (err) {
     log.error('billing: status failed', { domain: req.user.domain, error: err.message });
     res.status(500).json({ error: 'Failed to fetch plan.' });
@@ -109,33 +140,61 @@ async function webhookHandler(req, res) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const s = event.data.object;
-        const domain = s.client_reference_id || s.metadata?.domain;
-        if (domain) {
-          await setTenantPlan(domain, {
-            plan: 'pro',
-            billingStatus: 'active',
-            stripeCustomerId: s.customer || null,
-            stripeSubscriptionId: s.subscription || null,
-          });
+        const ref = s.client_reference_id || '';
+        if (ref.startsWith('user:') || s.metadata?.individual === '1') {
+          // Individual (per-user) plan → write the user doc.
+          const domain = s.metadata?.domain;
+          const email = s.metadata?.email || ref.slice(5);
+          if (domain && email) {
+            await setUserPlan(domain, email, {
+              individualPlan: 'pro',
+              individualBillingStatus: 'active',
+              individualStripeCustomerId: s.customer || null,
+              individualStripeSubscriptionId: s.subscription || null,
+            });
+          }
+        } else {
+          const domain = ref || s.metadata?.domain;
+          if (domain) {
+            await setTenantPlan(domain, {
+              plan: 'pro',
+              billingStatus: 'active',
+              stripeCustomerId: s.customer || null,
+              stripeSubscriptionId: s.subscription || null,
+            });
+          }
         }
         break;
       }
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted': {
         const sub = event.data.object;
-        const domain = sub.metadata?.domain;
-        if (domain) {
-          // Keep Pro through Stripe's dunning window: `past_due` means the latest
-          // invoice failed but Stripe is still auto-retrying, so a temporary card
-          // decline shouldn't yank access mid-retry. `unpaid`/`canceled`/etc.
-          // (retries exhausted or ended) downgrade to Free.
-          const active = ['active', 'trialing', 'past_due'].includes(sub.status);
-          await setTenantPlan(domain, {
-            plan: active ? 'pro' : 'free',
-            billingStatus: sub.status,
-            stripeSubscriptionId: sub.id,
-            ...(sub.customer ? { stripeCustomerId: sub.customer } : {}), // also persist on subscription events (B6/portal)
-          });
+        // Keep Pro through Stripe's dunning window: `past_due` means the latest
+        // invoice failed but Stripe is still auto-retrying, so a temporary card
+        // decline shouldn't yank access mid-retry. `unpaid`/`canceled`/etc.
+        // (retries exhausted or ended) downgrade to Free.
+        const active = ['active', 'trialing', 'past_due'].includes(sub.status);
+        if (sub.metadata?.individual === '1') {
+          const domain = sub.metadata?.domain;
+          const email = sub.metadata?.email;
+          if (domain && email) {
+            await setUserPlan(domain, email, {
+              individualPlan: active ? 'pro' : 'free',
+              individualBillingStatus: sub.status,
+              individualStripeSubscriptionId: sub.id,
+              ...(sub.customer ? { individualStripeCustomerId: sub.customer } : {}),
+            });
+          }
+        } else {
+          const domain = sub.metadata?.domain;
+          if (domain) {
+            await setTenantPlan(domain, {
+              plan: active ? 'pro' : 'free',
+              billingStatus: sub.status,
+              stripeSubscriptionId: sub.id,
+              ...(sub.customer ? { stripeCustomerId: sub.customer } : {}), // also persist on subscription events (B6/portal)
+            });
+          }
         }
         break;
       }
@@ -155,6 +214,7 @@ async function webhookHandler(req, res) {
 // fail-open behavior, which silently granted Pro to every domain on any read
 // error — the opposite of what a paywall should do once it's live.
 const planCache = new Map(); // domain -> { plan, at }
+const userPlanCache = new Map(); // `${domain}:${email}` -> { plan, at }
 const PLAN_CACHE_TTL_MS = 5 * 60 * 1000;
 
 // Express middleware: gate a route behind the Pro plan (per-domain). While
@@ -186,13 +246,26 @@ async function requireProPlan(req, res, next) {
 // hard-block a route (auto-export, digests, full history). Pre-launch (billing
 // unconfigured) every feature is allowed. Shares requireProPlan's cache + fail
 // behavior: a transient read error rides the last-known plan, else denies.
-async function planIsPro(domain) {
+async function planIsPro(domain, email) {
   if (!billingConfigured()) return true; // pre-launch: nothing is gated
-  // Individual Pro fences don't apply to personal-email (shared-tenant) users:
-  // per-domain billing can't sell to a tenant shared by strangers, so gating a
-  // feature they can't buy would just break the product for them. Leave those
-  // features free — the fences target real Workspace domains.
-  if (PERSONAL_EMAIL_DOMAINS.has((domain || '').toLowerCase())) return true;
+  if (isPersonalDomain(domain)) {
+    // Personal-email tenants bill per USER, not per domain. Gate ONLY when the
+    // caller passes an email AND the individual tier is launched — existing call
+    // sites that pass no email keep personal users on the feature set they
+    // already had for free (no regression); individual-Pro features pass email.
+    if (!email || !individualBillingConfigured()) return true;
+    const key = `${(domain || '').toLowerCase()}:${email.toLowerCase()}`;
+    try {
+      const { plan } = await getUserPlan(domain, email);
+      userPlanCache.set(key, { plan, at: Date.now() });
+      return plan === 'pro';
+    } catch (err) {
+      const cached = userPlanCache.get(key);
+      const fresh = cached && (Date.now() - cached.at) < PLAN_CACHE_TTL_MS;
+      log.warn('billing: planIsPro (per-user) read failed', { usedCache: !!fresh, error: err.message });
+      return !!(fresh && cached.plan === 'pro');
+    }
+  }
   try {
     const { plan } = await getTenantPlan(domain);
     planCache.set(domain, { plan, at: Date.now() });
