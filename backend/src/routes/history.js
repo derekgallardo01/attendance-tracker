@@ -22,6 +22,10 @@ const FRONTEND_EVENT_TYPES = new Set([
   // reason (scope_blocked / meeting_not_ended / …) so we can measure and
   // diagnose the tracked→exported drop-off.
   'export_skipped',
+  // "How did you find us?" prompt funnel — lets us tell apart a blank
+  // acquisitionSource that was never asked from one the user actively dismissed.
+  'source_prompt_shown',
+  'source_prompt_dismissed',
 ]);
 
 // POST /api/event — let the frontend record activation/funnel events that only

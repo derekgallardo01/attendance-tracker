@@ -1055,6 +1055,7 @@
           <a href="terms.html" style="color:#6e7681;text-decoration:none">Terms of Service</a>
           <a href="refunds.html" style="color:#6e7681;text-decoration:none">Refund Policy</a>
           <a href="support.html" style="color:#6e7681;text-decoration:none">Support</a>
+          <a href="https://kinetichelix.io" target="_blank" rel="noopener" style="color:#6e7681;text-decoration:none">Built by Kinetic Helix</a>
         </div>
       </div>
     </div>
@@ -1451,8 +1452,12 @@ async function handleAuthCode(response) {
 
     // First sign-in & no source captured → ask. Pass detected source so the
     // modal can greet "Hey 👋 saw you came from Reddit" instead of generic.
-    if (data.needsAcquisitionSource) {
-      showSourceModal(data.detectedSource);
+    // Remember the state so we can re-ask at a higher-intent moment (after their
+    // first export) if they skip it here.
+    state._needsSource = !!data.needsAcquisitionSource;
+    state._detectedSource = data.detectedSource || null;
+    if (state._needsSource) {
+      showSourceModal(state._detectedSource);
     }
 
     // Pull activation status so the nudge banner knows whether to render.
@@ -1711,6 +1716,7 @@ function showSourceModal(detectedSource) {
   }
 
   modal.classList.add('open');
+  logUserEvent('source_prompt_shown', { detected: detectedSource || null });
   document.getElementById('source-modal-other-wrap').style.display = 'none';
   document.getElementById('source-modal-other').value = '';
   const sel = document.getElementById('source-modal-select');
@@ -1721,8 +1727,13 @@ function showSourceModal(detectedSource) {
   }
 }
 
-function closeSourceModal() {
+function closeSourceModal(answered) {
   document.getElementById('source-modal')?.classList.remove('open');
+  // Distinguish a real answer (Submit) from a skip/dismiss, so we can measure
+  // how much of the "no source" gap is dismissal vs never-shown.
+  if (!answered && state._needsSource) {
+    logUserEvent('source_prompt_dismissed', { detected: state._detectedSource || null });
+  }
 }
 
 function onSourceSelectChange() {
@@ -1745,7 +1756,8 @@ async function submitSource() {
       body: JSON.stringify({ source, detail }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    closeSourceModal();
+    state._needsSource = false;
+    closeSourceModal(true);
     toast('Thanks!');
   } catch (err) {
     console.error('source save failed:', err);
@@ -2979,6 +2991,12 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     }
     if (isFirstExport && !opts.autoExport) {
       showCelebrateModal(sheetUrl);
+    }
+    // Second, higher-intent capture moment for "how did you find us?": ask now
+    // that they've felt the payoff, if they skipped it at sign-in. Skip when the
+    // first-export celebrate modal is up (don't stack modals).
+    if (state._needsSource && !(isFirstExport && !opts.autoExport)) {
+      showSourceModal(state._detectedSource);
     }
     // Update activation state so the nudge banner hides itself
     refreshActivationStatus();

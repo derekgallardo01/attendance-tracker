@@ -172,7 +172,7 @@ describe('POST /api/event — frontend event logging', () => {
     expect(res.status).toBe(400);
   });
 
-  test.each(['export_clicked', 'export_failed', 'export_cancelled', 'export_skipped'])(
+  test.each(['export_clicked', 'export_failed', 'export_cancelled', 'export_skipped', 'source_prompt_shown', 'source_prompt_dismissed'])(
     'accepts allow-listed event type: %s',
     async (type) => {
       firestore.logEvent.mockResolvedValue(undefined);
