@@ -52,6 +52,7 @@ jest.mock('../../src/lib/notifications', () => ({
   sendActivationNudgeEmail: jest.fn(),
   sendSoloNudgeEmail: jest.fn(),
   sendForgottenMeetingEmail: jest.fn(),
+  sendComebackEmail: jest.fn(),
   flushDeferredNotifications: jest.fn(), // single flush point (signup + referral)
 }));
 
@@ -81,6 +82,7 @@ beforeEach(() => {
   notifications.sendActivationNudgeEmail.mockResolvedValue({ sent: true });
   notifications.sendSoloNudgeEmail.mockResolvedValue({ sent: true });
   notifications.sendForgottenMeetingEmail.mockResolvedValue({ sent: true });
+  notifications.sendComebackEmail.mockResolvedValue({ sent: true });
   app = buildApp();
 });
 
@@ -461,6 +463,27 @@ describe('POST /api/admin/check-reengagement', () => {
     expect(notifications.sendForgottenMeetingEmail).toHaveBeenCalledWith(expect.objectContaining({
       seriesTitle: 'Standup', recurringEventId: 'series-x',
     }));
+  });
+
+  test('sends the comeback email for a comeback_7d reminder (one-off win-back)', async () => {
+    firestore.getAllUsersAcrossTenants.mockResolvedValue([
+      { email: 'oneoff@acme.com', domain: 'acme.com', displayName: 'Manuel' },
+    ]);
+    firestore.evaluateReengagementForUser.mockResolvedValue([
+      { type: 'comeback_7d', meetingTitle: 'Spanish Class', daysSinceLogin: 8 },
+    ]);
+    firestore.claimReengagementSlot.mockResolvedValue({ claimed: true, ref: {} });
+
+    await request(app)
+      .post('/api/admin/check-reengagement')
+      .set('x-scheduler-secret', SCHEDULER_SECRET)
+      .set('Content-Type', 'application/json')
+      .send({});
+    expect(notifications.sendComebackEmail).toHaveBeenCalledWith(expect.objectContaining({
+      to: 'oneoff@acme.com', meetingTitle: 'Spanish Class', daysSinceLogin: 8,
+    }));
+    // Dedup key is just the type (one per user, permanent).
+    expect(firestore.claimReengagementSlot).toHaveBeenCalledWith('acme.com', 'oneoff@acme.com', 'comeback_7d');
   });
 
   test('uses dedupKey containing recurringEventId for forgotten-meeting claims', async () => {

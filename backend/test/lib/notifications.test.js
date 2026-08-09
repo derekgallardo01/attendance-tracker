@@ -119,6 +119,14 @@ describe('notifications — no-op when Resend not configured', () => {
     expect(result.skipped).toBeDefined();
   });
 
+  test('sendComebackEmail returns skipped status', async () => {
+    const n = require('../../src/lib/notifications');
+    const result = await n.sendComebackEmail({
+      to: 'user@acme.com', displayName: 'User', meetingTitle: 'Spanish Class', daysSinceLogin: 8,
+    });
+    expect(result.skipped).toBeDefined();
+  });
+
   test('sendAdminEmail throws when SMTP not configured (called by user-facing endpoint)', async () => {
     const n = require('../../src/lib/notifications');
     await expect(n.sendAdminEmail({ to: 'a@b.com', subject: 'Test', body: 'Hi' }))
@@ -203,6 +211,16 @@ describe('notifications — Resend integration (mocked)', () => {
     });
     const callArg = mockSend.mock.calls[0][0];
     expect(callArg.tags.find(t => t.name === 'variant' && t.value === '30d')).toBeDefined();
+  });
+
+  test('comeback email tags comeback_7d and renders the history link as an anchor', async () => {
+    const n = require('../../src/lib/notifications');
+    await n.sendComebackEmail({ to: 'u@a.com', displayName: 'U', meetingTitle: 'Spanish Class', daysSinceLogin: 8 });
+    const callArg = mockSend.mock.calls[0][0];
+    expect(callArg.tags.find(t => t.value === 'comeback_7d')).toBeDefined();
+    expect(callArg.subject).toMatch(/Track your next meeting/i);
+    expect(callArg.html).toContain('open your dashboard'); // htmlLineTransform anchor branch
+    expect(callArg.html).toContain('Spanish Class');       // meeting title in the copy
   });
 
   test('sendAdminEmail throws if to is missing (user-facing validation)', async () => {

@@ -161,6 +161,46 @@ describe('evaluateReengagementForUser — engagement gate (targeting)', () => {
   });
 });
 
+describe('evaluateReengagementForUser — comeback_7d (one-off activated win-back)', () => {
+  const D = 'acme.com';
+
+  test('activated user whose last tracked meeting was a ONE-OFF → comeback_7d replaces the generic reactivation', async () => {
+    seedUser(D, 'oneoff@acme.com', 10);
+    seedTracked(D, 'oneoff@acme.com', 'meet-1', Date.now() - 10 * DAY, 4, 4); // real 4-person meeting → activated
+    ctx.seed(`tenants/${D}/meetings/meet-1`, { conferenceId: 'meet-1', title: 'Spanish Class', startTime: wrapTimestamp(new Date(Date.now() - 10 * DAY)) }); // non-recurring
+    const r = await firestore.evaluateReengagementForUser(D, 'oneoff@acme.com');
+    const cb = r.find(x => x.type === 'comeback_7d');
+    expect(cb).toBeTruthy();
+    expect(cb.meetingTitle).toBe('Spanish Class');
+    expect(r.some(x => x.type === 'reactivation_7d')).toBe(false); // replaced, not doubled
+  });
+
+  test('activated user whose last meeting is RECURRING → generic reactivation_7d, not comeback', async () => {
+    seedUser(D, 'recur@acme.com', 10);
+    seedTracked(D, 'recur@acme.com', 'meet-r', Date.now() - 10 * DAY, 4, 4);
+    seedRecurringMeeting(D, 'meet-r', 'series-r', 'Weekly Sync', Date.now() - 10 * DAY);
+    const r = await firestore.evaluateReengagementForUser(D, 'recur@acme.com');
+    expect(r.some(x => x.type === 'comeback_7d')).toBe(false);
+    expect(r.some(x => x.type === 'reactivation_7d')).toBe(true);
+  });
+
+  test('falls back to generic reactivation when the last meeting doc is missing', async () => {
+    seedUser(D, 'nodoc@acme.com', 10);
+    seedTracked(D, 'nodoc@acme.com', 'meet-x', Date.now() - 10 * DAY, 4, 4); // event only, no meeting doc
+    const r = await firestore.evaluateReengagementForUser(D, 'nodoc@acme.com');
+    expect(r.some(x => x.type === 'comeback_7d')).toBe(false);
+    expect(r.some(x => x.type === 'reactivation_7d')).toBe(true);
+  });
+
+  test('does not fire before the 7-day window even for a one-off', async () => {
+    seedUser(D, 'early@acme.com', 5);
+    seedTracked(D, 'early@acme.com', 'meet-1', Date.now() - 5 * DAY, 4, 4);
+    ctx.seed(`tenants/${D}/meetings/meet-1`, { conferenceId: 'meet-1', title: 'Class', startTime: wrapTimestamp(new Date(Date.now() - 5 * DAY)) });
+    const r = await firestore.evaluateReengagementForUser(D, 'early@acme.com');
+    expect(r.some(x => x.type === 'comeback_7d')).toBe(false);
+  });
+});
+
 describe('evaluateReengagementForUser — forgotten_meeting', () => {
   test('fires when user tracked series 3+ times in 30 days but last was 7-9 days ago', async () => {
     const domain = 'acme.com';

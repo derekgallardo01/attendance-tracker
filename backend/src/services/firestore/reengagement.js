@@ -210,6 +210,13 @@ async function evaluateReengagementForUser(domain, email) {
     const everTracked = trackedDocs.length > 0;
     const activated = exportedCount >= 1 || maxDistinctAttendees >= 2;
 
+    // Most-recent tracked meeting, for the meeting-specific win-back below.
+    let lastTrackedMs = 0, lastTrackedCid = null;
+    for (const d of trackedDocs) {
+      const at = tsMs(d.data().createdAt) || 0;
+      if (at > lastTrackedMs) { lastTrackedMs = at; lastTrackedCid = d.data().meta?.conferenceId || null; }
+    }
+
     if (lastLogin) {
       const daysSinceLogin = Math.floor((now - lastLogin) / 86400000);
       // Narrow firing windows so the daily cron doesn't double-fire if a user
@@ -217,9 +224,27 @@ async function evaluateReengagementForUser(domain, email) {
       const window7 = daysSinceLogin >= 7 && daysSinceLogin < 14;
       const window30 = daysSinceLogin >= 30 && daysSinceLogin < 45;
       if (activated) {
-        // Got real value → warm win-back (with a 30-day follow-up).
-        if (window7) reminders.push({ type: 'reactivation_7d', daysSinceLogin });
-        else if (window30) reminders.push({ type: 'reactivation_30d', daysSinceLogin });
+        // Got real value → warm win-back (with a 30-day follow-up). For the 7d
+        // window, prefer a MEETING-specific "come back and track your next one"
+        // when their most-recent tracked meeting was a one-off — recurring
+        // habits are caught by forgotten_meeting below, and a single class used
+        // to get only the generic reactivation. Falls back to generic when we
+        // can't name a one-off meeting (or the read fails).
+        if (window7) {
+          let comeback = null;
+          if (lastTrackedCid) {
+            try {
+              const lm = await tenant.collection('meetings').doc(lastTrackedCid).get();
+              const lmd = lm.exists ? lm.data() : null;
+              if (lmd && !lmd.recurringEventId) {
+                comeback = { type: 'comeback_7d', daysSinceLogin, meetingTitle: lmd.title || 'your last meeting' };
+              }
+            } catch (_) { /* fall back to generic reactivation */ }
+          }
+          reminders.push(comeback || { type: 'reactivation_7d', daysSinceLogin });
+        } else if (window30) {
+          reminders.push({ type: 'reactivation_30d', daysSinceLogin });
+        }
       } else if (window7) {
         // Not activated. Two sub-segments, each with tailored copy:
         //  - tried it but only on a solo test → coach them to use it for real.
