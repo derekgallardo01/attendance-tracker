@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const { requireAuth } = require('../middleware/auth');
 const log = require('../lib/logger');
-const { getUserSettings, updateUserSettings, isEmailSuppressed, suppressEmail, unsuppressEmail } = require('../services/firestore');
+const { getUserSettings, updateUserSettings, setPostExportSurvey, isEmailSuppressed, suppressEmail, unsuppressEmail } = require('../services/firestore');
 const { sendSlackTestPing } = require('../lib/notifications');
 const { isValidSlackWebhook, maskSlackWebhook } = require('../lib/slack');
 
@@ -116,6 +116,19 @@ router.post('/settings/test-slack', requireAuth, async (req, res) => {
     return res.status(502).json({ error: 'Slack rejected the test ping.', details: result });
   }
   res.json({ sent: true });
+});
+
+// POST /api/user/survey — one-question post-export micro-survey
+router.post('/user/survey', requireAuth, async (req, res) => {
+  try {
+    const { useCase, detail } = req.body || {};
+    if (!useCase) return res.status(400).json({ error: 'useCase is required' });
+    await setPostExportSurvey(req.user.domain, req.user.email, { useCase: String(useCase).slice(0, 50), detail: String(detail || '').slice(0, 200) });
+    res.json({ success: true });
+  } catch (err) {
+    log.error('settings: survey failed', { error: err.message });
+    res.status(500).json({ error: 'Failed to save survey' });
+  }
 });
 
 module.exports = router;

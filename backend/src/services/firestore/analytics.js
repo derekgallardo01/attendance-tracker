@@ -155,7 +155,13 @@ async function getAggregatedInsights() {
       }
     }
     const tenants = [...tenantMap.values()];
-    const meetings = meetingsSnap.docs.map(d => ({
+
+    // Count active Pro subscribers (both org and individual)
+    const proDomains = tenants.filter(t => t.plan === 'pro' && t.billingStatus === 'active').length;
+    const proIndividuals = users.filter(u => u.individualPlan === 'pro' && u.individualBillingStatus === 'active').length;
+    const totalProSubscribers = proDomains + proIndividuals;
+
+    const meetings = meetingsSnap.docs.map(d =>({
       id: d.id,
       domain: d.ref.parent.parent.id,
       ...d.data(),
@@ -201,6 +207,7 @@ async function getAggregatedInsights() {
     for (const e of events) {
       if (e.email) (eventsByEmail[e.email] ||= []).push(e);
     }
+    const paywallHits = events.filter(e => e.type === 'export_skipped' && e.meta?.reason === 'pro_required').length;
     const emailsWhoTracked = new Set(events.filter(e => e.type === 'tracked').map(e => e.email));
     const emailsWhoExported = new Set(events.filter(e => e.type === 'exported').map(e => e.email));
 
@@ -424,6 +431,7 @@ async function getAggregatedInsights() {
       },
       activationRate,
       firstExportRate,
+      paywallHits,
       medianTimeToFirstTrackMs: medianTimeToFirstTrack,
       wau,
       mau,
@@ -440,6 +448,9 @@ async function getAggregatedInsights() {
       acquisitionSourcesUnknown,
       sourceCohortRetention,
       orgActivity,
+      proDomains,
+      proIndividuals,
+      totalProSubscribers,
     };
   } catch (err) {
     log.error('firestore: getAggregatedInsights failed', { error: err.message });
@@ -472,6 +483,7 @@ async function getWeeklySelfReport() {
       displayName: d.data().displayName || '',
       createdAt: tsMs(d.data().createdAt) || 0,
       acquisitionSource: d.data().acquisitionSource || null,
+      postExportSurvey: d.data().postExportSurvey || null,
     }));
 
     const events = eventsSnap.docs.map(d => ({
@@ -518,6 +530,13 @@ async function getWeeklySelfReport() {
       sourcesThisWeek[src] = (sourcesThisWeek[src] || 0) + 1;
     }
 
+    // Use-case breakdown from post-export survey (all users, not just this week's signups)
+    const useCases = {};
+    for (const u of users) {
+      const uc = u.postExportSurvey?.useCase;
+      if (uc) useCases[uc] = (useCases[uc] || 0) + 1;
+    }
+
     const pctChange = (curr, prev) => {
       if (prev === 0) return curr > 0 ? '+∞' : '0';
       const p = Math.round(((curr - prev) / prev) * 100);
@@ -538,6 +557,7 @@ async function getWeeklySelfReport() {
       topUser: topUser ? { email: topUser[0], displayName: topUserName, actions: topUser[1] } : null,
       concerns: concerns.slice(0, 10),
       sources: sourcesThisWeek,
+      useCases,
       totalUsers: users.length,
       totalMeetings: meetingsCount.data().count,
     };
@@ -759,6 +779,13 @@ async function getUserDetail(domain, email) {
       displayName: user.displayName || '',
       acquisitionSource: user.acquisitionSource || null,
       utmSource: user.utmSource || null,
+      signupIp: user.signupIp || null,
+      signupGeo: user.signupGeo || null,
+      signupDetectedSource: user.signupDetectedSource || null,
+      firstTouchSource: user.firstTouchSource || null,
+      firstTouchLandingUrl: user.firstTouchLandingUrl || null,
+      acquisition: user.acquisition || null,
+      postExportSurvey: user.postExportSurvey || null,
       createdAt: user.createdAt?.toDate?.()?.toISOString() || null,
       lastLoginAt: user.lastLoginAt?.toDate?.()?.toISOString() || null,
       counts: {

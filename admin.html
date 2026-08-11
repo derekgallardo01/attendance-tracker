@@ -441,6 +441,7 @@
         <div class="stats-grid">
           <div class="stat-card"><div class="stat-label">Activation Rate</div><div class="stat-value green" id="ins-activation">—</div><div class="stat-label" id="ins-activation-sub" style="margin-top:4px">—</div></div>
           <div class="stat-card"><div class="stat-label">First-Export Rate</div><div class="stat-value blue" id="ins-firstexport">—</div><div class="stat-label" id="ins-firstexport-sub" style="margin-top:4px">—</div></div>
+          <div class="stat-card"><div class="stat-label">Pro Paywall Hits</div><div class="stat-value" id="ins-paywall" style="color:#fbbf24">—</div><div class="stat-label">users who wanted auto-export</div></div>
           <div class="stat-card"><div class="stat-label">WAU</div><div class="stat-value green" id="ins-wau">—</div><div class="stat-label">Weekly active users</div></div>
           <div class="stat-card"><div class="stat-label">MAU</div><div class="stat-value blue" id="ins-mau">—</div><div class="stat-label">Monthly active users</div></div>
         </div>
@@ -448,7 +449,7 @@
         <div class="stats-grid">
           <div class="stat-card"><div class="stat-label">D7 Retention</div><div class="stat-value" id="ins-d7">—</div><div class="stat-label" id="ins-d7-sub">—</div></div>
           <div class="stat-card"><div class="stat-label">D30 Retention</div><div class="stat-value" id="ins-d30">—</div><div class="stat-label" id="ins-d30-sub">—</div></div>
-          <div class="stat-card"><div class="stat-label">Median Time to Track</div><div class="stat-value" id="ins-ttft" style="font-size:1.5rem">—</div><div class="stat-label">install → first meeting</div></div>
+          <div class="stat-card"><div class="stat-label">Pro Subscribers</div><div class="stat-value" id="ins-revenue" style="color:#4ade80">—</div><div class="stat-label" id="ins-revenue-sub">—</div></div>
           <div class="stat-card"><div class="stat-label">Avg Participants</div><div class="stat-value" id="ins-avgp" style="font-size:1.5rem">—</div><div class="stat-label">per meeting</div></div>
         </div>
 
@@ -518,15 +519,33 @@
         </div>
       </div>
 
+      <!-- Source Breakdown -->
+      <div class="section" id="source-breakdown-section" style="display:none">
+        <h2>Where They Came From</h2>
+        <div id="source-bars" style="margin-top:12px"></div>
+        <p style="color:var(--muted);font-size:.8rem;margin-top:12px">
+          Self-reported = user answered the modal. Detected = auto-derived from referrer/UTM.
+        </p>
+      </div>
+
+      <!-- Use Case Breakdown -->
+      <div class="section" id="usecase-breakdown-section" style="display:none">
+        <h2>What They're Using It For</h2>
+        <div id="usecase-bars" style="margin-top:12px"></div>
+        <p style="color:var(--muted);font-size:.8rem;margin-top:12px">
+          From the one-question post-export survey. Only users who answered appear.
+        </p>
+      </div>
+
       <!-- Super admin only: all users across all tenants -->
       <div class="section" id="all-users-section" style="display:none">
         <h2>All Users <span id="all-users-count" style="color:var(--muted);font-weight:400;font-size:.8rem"></span></h2>
         <table>
           <thead>
-            <tr><th>Email</th><th>Domain</th><th>Name</th><th>Created</th><th>Last Login</th></tr>
+            <tr><th>Email</th><th>Domain</th><th>Name</th><th>Created</th><th>Last Login</th><th>Location</th><th>Source</th></tr>
           </thead>
           <tbody id="all-users-rows">
-            <tr><td colspan="5" style="color:var(--muted)">Loading...</td></tr>
+            <tr><td colspan="7" style="color:var(--muted)">Loading...</td></tr>
           </tbody>
         </table>
       </div>
@@ -722,6 +741,13 @@
     // Delegates to the shared js/utils.js module (loaded in <head>).
     const esc = (s) => AttUtils.escHtml(s);
 
+    // Convert 2-letter country code to flag emoji (regional indicator symbols).
+    const flagEmoji = (cc) => {
+      if (!cc || cc.length !== 2) return '';
+      const code = cc.toUpperCase();
+      return String.fromCodePoint(0x1F1E6 + code.charCodeAt(0) - 65, 0x1F1E6 + code.charCodeAt(1) - 65);
+    };
+
     // Pure formatters/badges/template subs delegate to js/admin.js (AttAdmin).
     const pct = AttAdmin.pct;
     const fmtMs = AttAdmin.fmtMs;
@@ -742,12 +768,15 @@
         document.getElementById('ins-activation-sub').textContent = `${d.funnel.tracked} of ${d.funnel.signedIn} users`;
         document.getElementById('ins-firstexport').textContent = pct(d.firstExportRate);
         document.getElementById('ins-firstexport-sub').textContent = `${d.funnel.exported} of ${d.funnel.signedIn} users`;
+        document.getElementById('ins-paywall').textContent = d.paywallHits ?? 0;
         document.getElementById('ins-wau').textContent = d.wau;
         document.getElementById('ins-mau').textContent = d.mau;
         document.getElementById('ins-d7').textContent = pct(d.d7Retention);
         document.getElementById('ins-d7-sub').textContent = d.d7Retention == null ? 'No 7d+ cohort yet' : 'of 7-day cohort';
         document.getElementById('ins-d30').textContent = pct(d.d30Retention);
         document.getElementById('ins-d30-sub').textContent = d.d30Retention == null ? 'No 30d+ cohort yet' : 'of 30-day cohort';
+        document.getElementById('ins-revenue').textContent = d.totalProSubscribers ?? 0;
+        document.getElementById('ins-revenue-sub').textContent = `${d.proDomains ?? 0} orgs + ${d.proIndividuals ?? 0} individuals`;
         document.getElementById('ins-ttft').textContent = fmtMs(d.medianTimeToFirstTrackMs);
         document.getElementById('ins-avgp').textContent = d.avgParticipants ? d.avgParticipants.toFixed(1) : '—';
 
@@ -758,6 +787,7 @@
           ['Signed in', d.funnel.signedIn],
           ['Tracked a meeting', d.funnel.tracked],
           ['Exported to Sheets', d.funnel.exported],
+          ['Hit Pro paywall', d.paywallHits ?? 0],
         ].map(([label, v]) => {
           const w = Math.max(2, Math.round((v / totalForBar) * 100));
           return `<div style="margin:8px 0">
@@ -1246,7 +1276,7 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
           <div>
             <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Profile</div>
-            <div style="font-size:.8rem;line-height:1.6"><span style="color:var(--muted)">Email:</span> ${esc(u.email)}<br><span style="color:var(--muted)">Domain:</span> ${esc(u.domain)}<br><span style="color:var(--muted)">Source:</span> ${esc(u.acquisitionSource || u.utmSource || '—')}<br><span style="color:var(--muted)">Last login:</span> ${esc(fmtDateTime(u.lastLoginAt))}</div>
+            <div style="font-size:.8rem;line-height:1.6"><span style="color:var(--muted)">Email:</span> ${esc(u.email)}<br><span style="color:var(--muted)">Domain:</span> ${esc(u.domain)}<br><span style="color:var(--muted)">Self-reported:</span> ${esc(u.acquisitionSource || '—')}<br><span style="color:var(--muted)">Detected:</span> ${esc(u.signupDetectedSource || '—')}<br><span style="color:var(--muted)">IP:</span> ${u.signupIp ? esc(u.signupIp) + (u.signupGeo?.country ? ' ' + flagEmoji(u.signupGeo.country) + ' (' + u.signupGeo.country + ')' : '') : '—'}<br><span style="color:var(--muted)">Landing:</span> ${u.acquisition?.landingUrl ? `<a href="${esc(u.acquisition.landingUrl)}" target="_blank" style="color:var(--blue)">${esc(u.acquisition.landingUrl.replace(/^https?:\/\//, '').slice(0, 40))}${u.acquisition.landingUrl.length > 40 ? '…' : ''}</a>` : '—'}<br><span style="color:var(--muted)">Referrer:</span> ${esc(u.acquisition?.referrer || '—')}<br><span style="color:var(--muted)">UTM:</span> ${u.acquisition?.utmSource ? esc(u.acquisition.utmSource) + (u.acquisition.utmMedium ? ' / ' + esc(u.acquisition.utmMedium) : '') : '—'}<br><span style="color:var(--muted)">Use case:</span> ${u.postExportSurvey?.useCase ? esc(u.postExportSurvey.useCase) + (u.postExportSurvey.detail ? " — " + esc(u.postExportSurvey.detail) : "") : "—"}<br><span style="color:var(--muted)">Last login:</span> ${esc(fmtDateTime(u.lastLoginAt))}</div>
           </div>
           <div>
             <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Outreach ${statusBadge}</div>
@@ -1531,18 +1561,70 @@
         document.getElementById('all-users-count').textContent = `(${data.totalCount})`;
         const body = document.getElementById('all-users-rows');
         if (!data.users?.length) {
-          body.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">No users found</td></tr>';
+          body.innerHTML = '<tr><td colspan="7" style="color:var(--muted)">No users found</td></tr>';
           return;
         }
-        body.innerHTML = data.users.map(u => `
+        body.innerHTML = data.users.map(u => {
+          const country = u.signupGeo?.country || '';
+          const ip = u.signupIp || '';
+          const flag = country ? flagEmoji(country) + ' ' : '';
+          const loc = ip ? `${flag}${ip}${country ? ' (' + country + ')' : ''}` : '—';
+          const source = u.acquisitionSource || u.signupDetectedSource || '—';
+          return `
           <tr onclick="openUserModal('${esc(u.email)}','${esc(u.domain)}')" style="cursor:pointer">
             <td>${esc(u.email)}</td>
             <td style="color:var(--muted)">${esc(u.domain)}</td>
             <td>${esc(u.displayName) || '—'}</td>
             <td style="color:var(--muted)">${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}</td>
             <td style="color:var(--muted)">${u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : '—'}</td>
+            <td style="color:var(--muted);font-size:.8rem">${loc}</td>
+            <td style="color:var(--muted);font-size:.8rem">${esc(source)}</td>
           </tr>
-        `).join('');
+        `}).join('');
+
+        // Source breakdown
+        const sources = {};
+        data.users.forEach(u => {
+          const s = u.acquisitionSource || u.signupDetectedSource || 'unknown';
+          sources[s] = (sources[s] || 0) + 1;
+        });
+        const total = data.users.length;
+        const bars = Object.entries(sources)
+          .sort((a, b) => b[1] - a[1])
+          .map(([name, count]) => {
+            const pct = ((count / total) * 100).toFixed(1);
+            return `<div style="display:flex;align-items:center;margin:6px 0;font-size:.9rem">
+              <div style="width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(name)}</div>
+              <div style="flex:1;background:var(--surface);border-radius:4px;height:18px;margin:0 8px;overflow:hidden">
+                <div style="width:${pct}%;background:var(--accent);height:100%;border-radius:4px"></div>
+              </div>
+              <div style="width:50px;text-align:right;color:var(--muted)">${count}</div>
+            </div>`;
+          }).join('');
+        document.getElementById('source-breakdown-section').style.display = 'block';
+        document.getElementById('source-bars').innerHTML = bars || '<p style="color:var(--muted)">No source data yet.</p>';
+
+        // Use-case breakdown
+        const useCases = {};
+        data.users.forEach(u => {
+          const uc = u.postExportSurvey?.useCase;
+          if (uc) useCases[uc] = (useCases[uc] || 0) + 1;
+        });
+        const ucTotal = Object.values(useCases).reduce((a, b) => a + b, 0);
+        const ucBars = Object.entries(useCases)
+          .sort((a, b) => b[1] - a[1])
+          .map(([name, count]) => {
+            const pct = ((count / ucTotal) * 100).toFixed(1);
+            return `<div style="display:flex;align-items:center;margin:6px 0;font-size:.9rem">
+              <div style="width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(name)}</div>
+              <div style="flex:1;background:var(--surface);border-radius:4px;height:18px;margin:0 8px;overflow:hidden">
+                <div style="width:${pct}%;background:var(--blue);height:100%;border-radius:4px"></div>
+              </div>
+              <div style="width:50px;text-align:right;color:var(--muted)">${count}</div>
+            </div>`;
+          }).join('');
+        document.getElementById('usecase-breakdown-section').style.display = 'block';
+        document.getElementById('usecase-bars').innerHTML = ucBars || '<p style="color:var(--muted)">No survey responses yet.</p>';
       } catch (err) {
         console.error('All users load failed:', err);
       }

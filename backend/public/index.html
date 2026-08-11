@@ -1362,14 +1362,16 @@ function captureAcquisitionFromUrl() {
     const referrer    = document.referrer || null;
     // Don't overwrite an earlier capture (first-touch wins).
     if (localStorage.getItem(ACQUISITION_STORAGE_KEY)) return;
-    // Always capture — even with no UTM/referrer, the landing URL +
-    // user agent are useful breadcrumbs ("Source: Unknown" is the worst answer).
-    localStorage.setItem(ACQUISITION_STORAGE_KEY, JSON.stringify({
+    const payload = {
       utmSource, utmMedium, utmCampaign, ref, referrer,
       landingUrl: window.location.href || null,
       capturedAt: Date.now(),
-    }));
-  } catch (e) { /* localStorage may be unavailable in some iframes */ }
+    };
+    localStorage.setItem(ACQUISITION_STORAGE_KEY, JSON.stringify(payload));
+    // Cookie fallback: works across subdomains and survives longer than localStorage.
+    const computedSource = utmSource || (ref ? 'referral' : null) || (referrer ? new URL(referrer).hostname : null) || 'direct';
+    document.cookie = `att_first_touch=${encodeURIComponent(JSON.stringify({...payload, computedSource}))};path=/;max-age=7776000;SameSite=Lax`;
+  } catch (e) { /* localStorage/cookie may be unavailable in some iframes */ }
 }
 captureAcquisitionFromUrl();
 
@@ -1413,10 +1415,16 @@ async function handleAuthCode(response) {
   try {
     toast('Signing in…');
     const acquisition = readStoredAcquisition();
+    // Include first-touch cookie as fallback if localStorage was cleared
+    let firstTouch = null;
+    try {
+      const m = document.cookie.match(/att_first_touch=([^;]+)/);
+      if (m) firstTouch = JSON.parse(decodeURIComponent(m[1]));
+    } catch (e) { /* ignore parse errors */ }
     const res = await fetch(`${state.backendUrl}/oauth/exchange`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: response.code, acquisition: acquisition || undefined }),
+      body: JSON.stringify({ code: response.code, acquisition: acquisition || undefined, firstTouch: firstTouch || undefined }),
     });
     if (!res.ok) throw new Error(`Auth failed: ${res.status}`);
     const data = await res.json();
@@ -2891,6 +2899,28 @@ async function confirmMatchAndExport() {
   await doExportToSheets(emailMap, state.calendarAttendees || [], { excusedEmails });
 }
 
+function showSurveyModal() {
+  const modal = document.getElementById('survey-modal');
+  if (modal) modal.style.display = 'flex';
+}
+function closeSurveyModal() {
+  const modal = document.getElementById('survey-modal');
+  if (modal) modal.style.display = 'none';
+}
+async function submitSurvey(useCase) {
+  closeSurveyModal();
+  try {
+    await fetch(`${state.backendUrl}/user/survey`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${state.sessionToken}`,
+      },
+      body: JSON.stringify({ useCase }),
+    });
+  } catch (e) { /* silent — survey is best-effort */ }
+}
+
 async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
   const now = new Date();
   const tabName = `${state.meetingTitle || 'Google Meet'} ${now.toLocaleDateString('en-US')} ${now.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', second:'2-digit'})}`;
@@ -3011,6 +3041,12 @@ function showCelebrateModal(sheetUrl) {
 function closeCelebrateModal() {
   const modal = document.getElementById('celebrate-modal');
   if (modal) modal.style.display = 'none';
+  // Show micro-survey after celebrate modal closes (only once)
+  if (!state._surveyShown) {
+    state._surveyShown = true;
+    saveState();
+    setTimeout(() => showSurveyModal(), 400);
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -3965,5 +4001,21 @@ window.addEventListener('DOMContentLoaded', () => {
       window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
     }
   </script>
+  <!-- Post-export micro-survey — one question, shown once after first export -->
+  <div id="survey-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:900;align-items:center;justify-content:center;padding:20px">
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:14px;padding:24px;max-width:380px;width:100%;text-align:center">
+      <div style="font-size:1.1rem;font-weight:700;margin-bottom:6px">Quick question</div>
+      <div style="color:#8b949e;font-size:.85rem;margin-bottom:16px">What are you using Attendance Tracker for?</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+        <button onclick="submitSurvey('Teaching / classroom')" class="btn btn-secondary" style="text-align:left;justify-content:flex-start">👨‍🏫 Teaching / classroom</button>
+        <button onclick="submitSurvey('HR / employee meetings')" class="btn btn-secondary" style="text-align:left;justify-content:flex-start">👔 HR / employee meetings</button>
+        <button onclick="submitSurvey('Events / church')" class="btn btn-secondary" style="text-align:left;justify-content:flex-start">⛪ Events / church</button>
+        <button onclick="submitSurvey('Client / sales calls')" class="btn btn-secondary" style="text-align:left;justify-content:flex-start">🤝 Client / sales calls</button>
+        <button onclick="submitSurvey('Other')" class="btn btn-secondary" style="text-align:left;justify-content:flex-start">📝 Other</button>
+      </div>
+      <button onclick="closeSurveyModal()" style="background:transparent;border:none;color:#8b949e;font-size:.8rem;cursor:pointer">Skip</button>
+    </div>
+  </div>
+
 </body>
 </html>

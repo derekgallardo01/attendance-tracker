@@ -175,7 +175,7 @@ function unsubscribeFooter(email) {
 //     entry point. Users who enter through the in-Meet add-on have no web
 //     referrer, so this is usually "direct" even when they found us via search.
 // Legacy callers pass a single `acquisitionSource` — treat it as detected.
-async function sendSignupWebhook({ email, displayName, domain, reportedSource, reportedDetail, detectedSource, acquisitionSource, totalUsers }) {
+async function sendSignupWebhook({ email, displayName, domain, reportedSource, reportedDetail, detectedSource, acquisitionSource, totalUsers, signupIp, signupGeo }) {
   if (!getResend()) return;
   const to = process.env.NOTIFY_EMAIL || ownerEmail();
   if (!to) return;
@@ -191,6 +191,13 @@ async function sendSignupWebhook({ email, displayName, domain, reportedSource, r
     : 'Not reported';
   const detectedText = detected || 'Unknown';
 
+  const country = signupGeo?.country || null;
+  const flag = country ? String.fromCodePoint(0x1F1E6 + country.toUpperCase().charCodeAt(0) - 65, 0x1F1E6 + country.toUpperCase().charCodeAt(1) - 65) + ' ' : '';
+  const ipLine = signupIp
+    ? `${flag}${signupIp}${country ? ` (${country})` : ''}`
+    : 'Unknown';
+  const ipLink = signupIp ? `https://ipinfo.io/${encodeURIComponent(signupIp)}` : null;
+
   const html = `
     <p>A new user just signed up for Attendance Tracker.</p>
     <table style="border-collapse:collapse;font-family:sans-serif;font-size:14px">
@@ -199,6 +206,7 @@ async function sendSignupWebhook({ email, displayName, domain, reportedSource, r
       <tr><td style="padding:4px 12px 4px 0;color:#666">Domain</td><td>${escape(domain)}</td></tr>
       <tr><td style="padding:4px 12px 4px 0;color:#666">Source (self-reported)</td><td>${escape(reportedText)}</td></tr>
       <tr><td style="padding:4px 12px 4px 0;color:#666">Source (detected)</td><td>${escape(detectedText)}</td></tr>
+      <tr><td style="padding:4px 12px 4px 0;color:#666">IP / Location</td><td>${ipLink ? `<a href="${escape(ipLink)}">${escape(ipLine)}</a>` : escape(ipLine)}</td></tr>
       <tr><td style="padding:4px 12px 4px 0;color:#666">Total users now</td><td>${totalUsers ?? '?'}</td></tr>
     </table>
     <p style="margin-top:16px">
@@ -212,6 +220,7 @@ async function sendSignupWebhook({ email, displayName, domain, reportedSource, r
     `Domain: ${domain}`,
     `Source (self-reported): ${reportedText}`,
     `Source (detected): ${detectedText}`,
+    `IP / Location: ${ipLine}${ipLink ? ` — ${ipLink}` : ''}`,
     `Total users now: ${totalUsers ?? '?'}`,
     '',
     'Open admin dashboard: https://attendancetracker.dev/admin.html',
@@ -223,6 +232,7 @@ async function sendSignupWebhook({ email, displayName, domain, reportedSource, r
     tags: [{ name: 'type', value: 'signup' }],
   }, 'signup notification', { email, domain });
 }
+
 
 // Deferred-signup flush. Sends the signup notification for a user exactly once,
 // carrying whatever acquisition source is known at flush time (self-reported if
@@ -237,7 +247,17 @@ async function maybeSendSignupNotification(domain, email) {
   const payload = await claimSignupNotification(domain, email);
   if (!payload) return { sent: false };
   const totalUsers = await countAllUsers();
-  return sendSignupWebhook({ ...payload, totalUsers });
+  return sendSignupWebhook({
+    email: payload.email,
+    displayName: payload.displayName,
+    domain: payload.domain,
+    reportedSource: payload.reportedSource,
+    reportedDetail: payload.reportedDetail,
+    detectedSource: payload.detectedSource,
+    totalUsers,
+    signupIp: payload.signupIp,
+    signupGeo: payload.signupGeo,
+  });
 }
 
 // Referral win: tell the inviter that someone they invited just joined and
@@ -364,6 +384,9 @@ async function sendWeeklySelfReport(report) {
   const sourcesList = Object.entries(report.sources || {}).sort((a, b) => b[1] - a[1])
     .map(([s, n]) => `<li>${escape(s)} — ${n}</li>`).join('') || '<li style="color:#666">No source data yet.</li>';
 
+  const useCasesList = Object.entries(report.useCases || {}).sort((a, b) => b[1] - a[1])
+    .map(([s, n]) => `<li>${escape(s)} — ${n}</li>`).join('') || '<li style="color:#666">No survey responses yet.</li>';
+
   const topUserLine = report.topUser
     ? `${escape(report.topUser.displayName || report.topUser.email)} (${report.topUser.actions} actions)`
     : 'Nobody yet — quiet week.';
@@ -393,6 +416,9 @@ async function sendWeeklySelfReport(report) {
       <h3 style="margin:0 0 6px">📡 Where they came from</h3>
       <ul style="margin:0 0 16px;padding-left:20px;font-size:14px">${sourcesList}</ul>
 
+      <h3 style="margin:0 0 6px">🎯 What they're using it for</h3>
+      <ul style="margin:0 0 16px;padding-left:20px;font-size:14px">${useCasesList}</ul>
+
       <p style="margin-top:24px;color:#666;font-size:12px"><a href="https://attendancetracker.dev/admin.html">Open admin dashboard →</a></p>
     </div>
   `;
@@ -406,6 +432,9 @@ async function sendWeeklySelfReport(report) {
     `Exports:  ${report.exports.thisWeek} (was ${report.exports.lastWeek}, ${report.exports.delta})`,
     ``,
     `Top user: ${topUserLine.replace(/<[^>]+>/g, '')}`,
+    ``,
+    `Use cases:`,
+    ...Object.entries(report.useCases || {}).sort((a, b) => b[1] - a[1]).map(([s, n]) => `  ${s}: ${n}`),
     ``,
     `Admin: https://attendancetracker.dev/admin.html`,
   ].join('\n');

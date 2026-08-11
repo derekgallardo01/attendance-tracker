@@ -21,6 +21,11 @@ jest.mock('../../src/services/googleAuth', () => ({
   exchangeCode: jest.fn(),
   revokeToken: jest.fn(),
 }));
+jest.mock('../../src/lib/geoip', () => ({
+  getClientIp: jest.fn((req) => req.headers['x-forwarded-for']?.split(',')[0]?.trim() || null),
+  lookupGeo: jest.fn((ip) => ip ? { country: 'US', region: 'CA', city: 'San Francisco', ll: [37.7749, -122.4194] } : null),
+  ipInfoUrl: jest.fn((ip) => ip ? `https://ipinfo.io/${encodeURIComponent(ip)}` : null),
+}));
 jest.mock('../../src/lib/notifications', () => ({
   sendSignupWebhook: jest.fn(),
   flushDeferredNotifications: jest.fn(), // single flush point (signup + referral)
@@ -323,10 +328,35 @@ describe('POST /api/oauth/exchange — acquisition + scopes + webhook', () => {
     expect(notifications.sendSignupWebhook).not.toHaveBeenCalled();
     delete process.env.SIGNUP_NOTIFY_GRACE_MS;
   });
+
+  test('brand-new user: captures IP and geo from x-forwarded-for header', async () => {
+    exchangeTokens(FULL);
+    firestore.getUser.mockResolvedValue(null);
+    await request(app)
+      .post('/api/oauth/exchange')
+      .set('x-forwarded-for', '203.0.113.42, 10.0.0.1')
+      .send({ code: 'c', acquisition: { userAgent: 'UA' } });
+    expect(firestore.upsertUser).toHaveBeenCalledWith('acme.com', expect.objectContaining({
+      signupIp: '203.0.113.42',
+      signupGeo: { country: 'US', region: 'CA', city: 'San Francisco', ll: [37.7749, -122.4194] },
+    }));
+  });
+
+  test('existing user re-login does NOT overwrite signupIp/signupGeo', async () => {
+    exchangeTokens(FULL);
+    firestore.getUser.mockResolvedValue({ email: 'newuser@acme.com', signupIp: '1.2.3.4', signupGeo: { country: 'FR' } });
+    await request(app)
+      .post('/api/oauth/exchange')
+      .set('x-forwarded-for', '203.0.113.99')
+      .send({ code: 'c' });
+    // signupIp/signupGeo should be undefined in the upsert (not passed) because isBrandNewUser=false
+    const call = firestore.upsertUser.mock.calls.find(c => c[0] === 'acme.com');
+    expect(call[1].signupIp).toBeUndefined();
+    expect(call[1].signupGeo).toBeUndefined();
+  });
 });
 
 const notifications = require('../../src/lib/notifications');
-
 describe('oauth account routes — error mapping', () => {
   const jwt = require('jsonwebtoken');
   const CONFIG = require('../../src/config');

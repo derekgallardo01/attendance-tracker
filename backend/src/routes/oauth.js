@@ -9,6 +9,7 @@ const { domainOf } = require('../services/firestore/_core'); // pure util; impor
 const { flushDeferredNotifications } = require('../lib/notifications');
 
 const { ACQUISITION_SOURCES } = require('../lib/constants');
+const { getClientIp, lookupGeo } = require('../lib/geoip');
 
 const router = Router();
 
@@ -48,7 +49,7 @@ function computeMissingScopes(granted) {
 // POST /api/oauth/exchange — swap authorization code for session token
 router.post('/exchange', async (req, res) => {
   try {
-    const { code, acquisition } = req.body;
+    const { code, acquisition, firstTouch } = req.body;
     if (!code) return res.status(400).json({ error: 'Authorization code required' });
 
     // Exchange code for Google tokens
@@ -123,6 +124,10 @@ router.post('/exchange', async (req, res) => {
       || (refHost ? `ref:${refHost}` : null)
       || (sanitizedAcq?.userAgent ? 'direct' : null);
 
+    // Capture IP + country at signup for the owner notification email.
+    const clientIp = getClientIp(req);
+    const geo = clientIp ? lookupGeo(clientIp) : null;
+
     // Store user + tokens in tenant-scoped Firestore
     await upsertUser(domain, {
       email,
@@ -136,6 +141,10 @@ router.post('/exchange', async (req, res) => {
       },
       // Only meaningful for a brand-new user: seeds the deferred signup ping.
       signupDetectedSource: isBrandNewUser ? detectedSource : undefined,
+      signupIp: isBrandNewUser ? clientIp : undefined,
+      signupGeo: isBrandNewUser && geo ? geo : undefined,
+      firstTouchSource: isBrandNewUser && firstTouch?.computedSource ? firstTouch.computedSource : undefined,
+      firstTouchLandingUrl: isBrandNewUser && firstTouch?.landingUrl ? firstTouch.landingUrl : undefined,
     });
 
     // Per-user signin event — feeds the activity log and "most active this

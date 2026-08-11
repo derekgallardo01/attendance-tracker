@@ -168,6 +168,27 @@ describe('upsertUser — basic upsert behavior', () => {
     expect(user.teamAdmin).toBe(true); // preserved
   });
 
+  test('signupIp and signupGeo are stored on first signin only', async () => {
+    await firestore.upsertUser('acme.com', {
+      email: 'a@acme.com', displayName: 'A',
+      signupIp: '203.0.113.1',
+      signupGeo: { country: 'PH', region: '40', city: 'Calamba', ll: [14.2117, 121.1653] },
+    });
+    const u = ctx.read('tenants/acme.com/users/a@acme.com');
+    expect(u.signupIp).toBe('203.0.113.1');
+    expect(u.signupGeo.country).toBe('PH');
+
+    // Re-login must NOT overwrite the original IP/geo.
+    await firestore.upsertUser('acme.com', {
+      email: 'a@acme.com', displayName: 'A again',
+      signupIp: '8.8.8.8',
+      signupGeo: { country: 'US', region: 'CA', city: 'Mountain View', ll: [37.386, -122.0838] },
+    });
+    const after = ctx.read('tenants/acme.com/users/a@acme.com');
+    expect(after.signupIp).toBe('203.0.113.1');
+    expect(after.signupGeo.country).toBe('PH');
+  });
+
   test('acquisitionSource (self-reported) is strictly first-touch', async () => {
     // Once the user picks a source via the in-app modal, we never overwrite it.
     await firestore.upsertUser('acme.com', {
@@ -251,6 +272,11 @@ describe('deferred signup notification — pending flag + claim', () => {
     // Signup stamps the detected fallback...
     await firestore.upsertUser('gmail.com', {
       email: 'heleon@gmail.com', displayName: 'Heléon', signupDetectedSource: 'direct',
+      signupIp: '203.0.113.1',
+      signupGeo: { country: 'PH', region: '40', city: 'Calamba', ll: [14.2117, 121.1653] },
+    });
+    await firestore.upsertUser('gmail.com', {
+      email: 'heleon@gmail.com', displayName: 'Heléon', signupDetectedSource: 'direct',
     });
     // ...then the "how did you find us?" modal self-reports the real source.
     await firestore.setUserAcquisitionSource('gmail.com', 'heleon@gmail.com', {
@@ -258,6 +284,16 @@ describe('deferred signup notification — pending flag + claim', () => {
     });
 
     const first = await firestore.claimSignupNotification('gmail.com', 'heleon@gmail.com');
+    expect(first).toMatchObject({
+      email: 'heleon@gmail.com',
+      displayName: 'Heléon',
+      domain: 'gmail.com',
+      reportedSource: 'google_search',
+      reportedDetail: 'searched attendance',
+      detectedSource: 'direct',
+      signupIp: '203.0.113.1',
+      signupGeo: { country: 'PH' },
+    });
     expect(first).toMatchObject({
       email: 'heleon@gmail.com',
       displayName: 'Heléon',

@@ -376,7 +376,7 @@ async function getUser(domain, email) {
   }
 }
 
-async function upsertUser(domain, { email, displayName, refreshToken, sheetId, acquisition, scopes, signupDetectedSource }) {
+async function upsertUser(domain, { email, displayName, refreshToken, sheetId, acquisition, scopes, signupDetectedSource, signupIp, signupGeo }) {
   try {
     const now = FieldValue.serverTimestamp();
     const emailLower = email.toLowerCase();
@@ -476,6 +476,13 @@ async function upsertUser(domain, { email, displayName, refreshToken, sheetId, a
       data.signupNotifyPending = true;
       data.signupDetectedSource = signupDetectedSource || null;
     }
+    // Capture IP + geo on first sign-in only. Never overwrite on re-login.
+    if (isFirstSignin && signupIp) {
+      data.signupIp = signupIp;
+    }
+    if (isFirstSignin && signupGeo) {
+      data.signupGeo = signupGeo;
+    }
 
     // Referral loop: a brand-new user who arrived via a ?ref= invite gets a
     // pending marker so we credit + notify the inviter exactly once (claimed
@@ -525,6 +532,25 @@ async function setUserAcquisitionSource(domain, email, { source, detail }) {
   }
 }
 
+async function setPostExportSurvey(domain, email, { useCase, detail }) {
+  try {
+    await tenantRef(domain).collection('users').doc(email.toLowerCase()).set(
+      {
+        postExportSurvey: {
+          useCase: useCase || null,
+          detail: detail || null,
+          answeredAt: FieldValue.serverTimestamp(),
+        },
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+    log.info('firestore: set post-export survey', { domain, email, useCase });
+  } catch (err) {
+    log.error('firestore: setPostExportSurvey failed', { domain, email, error: err.message });
+  }
+}
+
 // Atomically claim a brand-new user's deferred signup notification. Returns the
 // email payload (self-reported + auto-detected source) exactly once, then flips
 // signupNotifyPending off so concurrent triggers (modal answer, grace timer,
@@ -549,6 +575,8 @@ async function claimSignupNotification(domain, email) {
         reportedSource: d.acquisitionSource || null,
         reportedDetail: d.acquisitionSourceDetail || null,
         detectedSource: d.signupDetectedSource || null,
+        signupIp: d.signupIp || null,
+        signupGeo: d.signupGeo || null,
       };
     });
   } catch (err) {
@@ -788,6 +816,11 @@ async function getAllUsersAcrossTenants() {
         displayName: data.displayName || '',
         lastLoginAt: data.lastLoginAt?.toDate?.()?.toISOString() || null,
         createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
+        signupIp: data.signupIp || null,
+        signupGeo: data.signupGeo || null,
+        acquisitionSource: data.acquisitionSource || null,
+        signupDetectedSource: data.signupDetectedSource || null,
+        postExportSurvey: data.postExportSurvey || null,
       };
     });
   } catch (err) {
@@ -1498,7 +1531,7 @@ module.exports = {
   getMeetingExcusedEmails, addMeetingExcusedEmails,
   getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens,
   getUserSettings, updateUserSettings,
-  setUserAcquisitionSource, claimSignupNotification,
+  setUserAcquisitionSource, setPostExportSurvey, claimSignupNotification,
   claimReferral, releaseReferral, recordReferralForInviter, recordReferralPromoCode, getUserTrackingStreak,
   logEvent,
   getUserActivationStatus, countUserExports, countAllUsers,

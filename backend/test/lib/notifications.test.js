@@ -619,6 +619,31 @@ describe('notifications — remaining sender branches (Resend mocked)', () => {
     expect(mockSend).toHaveBeenCalledTimes(2);
   });
 
+  test('sendSignupWebhook includes IP, country, and ipinfo.io link when geo is present', async () => {
+    const n = require('../../src/lib/notifications');
+    await n.sendSignupWebhook({
+      email: 'c@x.com', displayName: 'C', domain: 'x.com',
+      detectedSource: 'direct', totalUsers: 5,
+      signupIp: '203.0.113.1',
+      signupGeo: { country: 'PH', region: '40', city: 'Calamba' },
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const call = mockSend.mock.calls[0][0];
+    expect(call.html).toContain('203.0.113.1');
+    expect(call.html).toContain('(PH)');
+    expect(call.html).toContain('https://ipinfo.io/203.0.113.1');
+    expect(call.text).toContain('203.0.113.1 (PH)');
+    expect(call.text).toContain('https://ipinfo.io/203.0.113.1');
+  });
+
+  test('sendSignupWebhook shows Unknown when IP is missing', async () => {
+    const n = require('../../src/lib/notifications');
+    await n.sendSignupWebhook({ email: 'd@x.com', displayName: 'D', domain: 'x.com', totalUsers: 3 });
+    const call = mockSend.mock.calls[0][0];
+    expect(call.html).toContain('Unknown');
+    expect(call.text).toContain('Unknown');
+  });
+
   test('sendReactivationEmail 7d and 30d variants', async () => {
     const n = require('../../src/lib/notifications');
     await n.sendReactivationEmail({ to: 'u@x.com', displayName: 'U', daysSinceLogin: 8, variant: '7d' });
