@@ -5,6 +5,13 @@
   <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
   <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- PWA — installable dashboard on mobile ("Add to Home Screen") -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#0d1117" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Attendance" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
   <title>Team admin — Attendance Tracker</title>
   <meta name="robots" content="noindex" />
   <style>
@@ -425,6 +432,13 @@
           <td class="nowrap muted">${esc(fmtDate(p.lastSeenAt))}</td>
         </tr>
       `).join('');
+    }
+  </script>
+  <script>
+    // PWA service worker — registered only at the top level, so it is never
+    // active inside the Meet add-on iframe (where it must not touch API calls).
+    if ('serviceWorker' in navigator && window.self === window.top && window.isSecureContext) {
+      window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
     }
   </script>
 </body>

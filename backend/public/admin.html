@@ -6,6 +6,13 @@
   <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
   <link rel="icon" type="image/png" sizes="128x128" href="icons/icon-128.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- PWA — installable dashboard on mobile ("Add to Home Screen") -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#0d1117" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Attendance" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
   <title>Admin Dashboard — Attendance Tracker</title>
   <style>
     :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #4ade80; --error: #f85149; --blue: #58a6ff; }
@@ -1539,6 +1546,13 @@
       } catch (err) {
         console.error('All users load failed:', err);
       }
+    }
+  </script>
+  <script>
+    // PWA service worker — registered only at the top level, so it is never
+    // active inside the Meet add-on iframe (where it must not touch API calls).
+    if ('serviceWorker' in navigator && window.self === window.top && window.isSecureContext) {
+      window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
     }
   </script>
 </body>

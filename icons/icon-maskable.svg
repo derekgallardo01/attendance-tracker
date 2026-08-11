@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Full-bleed green so the OS maskable crop only ever clips background -->
+  <rect x="0" y="0" width="128" height="128" fill="#34A853"/>
+  <!-- Camera kept within the central 80% safe zone -->
+  <rect x="20" y="44" width="62" height="42" rx="8" ry="8" fill="white"/>
+  <polygon points="84,52 108,38 108,92 84,78" fill="white"/>
+  <circle cx="51" cy="65" r="13" fill="#34A853"/>
+  <circle cx="51" cy="65" r="7" fill="white"/>
+</svg>
