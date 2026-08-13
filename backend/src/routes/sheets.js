@@ -145,23 +145,25 @@ function buildClassSummaryTeaserValues(series) {
   ];
 }
 
-router.post('/save-to-sheets', async (req, res) => {
-  const { meetingTitle, tabName: clientTabName, exportedAt, participants, calendarAttendees = [], meetingStartTime, meetingType, eventStart, eventEnd, conferenceId, timezone, sendEmail, autoExport, recurringEventId, excusedEmails: excusedFromClient = [] } = req.body;
-  if (!participants?.length) return res.status(400).json({ error: 'participants array is required' });
+// Build the attendance sheet + all its side effects (audit trail, excused
+// persist, Slack + email digests) for one export. Extracted from the
+// /save-to-sheets route so the auto-capture sweep can reuse the exact same
+// export pipeline.
+//   user:       { domain, email, displayName } | null  (legacy shared-sheet)
+//   sheetsAuth: an authorized Google API client (OAuth or service account)
+//   data:       meeting + participants payload (same shape as the request body)
+//   options:    { sendEmail, autoExport, proAllowed } — proAllowed gates the
+//               Slack/email digests; the caller enforces the auto-export paywall.
+// Returns { sheetUrl, isFirstExport }; throws with err.status=400 (legacy
+// no-sheet) or err.exportCode='DRIVE_PERMISSION_MISSING' for the route to map.
+async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
+  // Shim so the extracted body's existing `req.user` reads work unchanged.
+  const req = { user };
+  const { meetingTitle, tabName: clientTabName, exportedAt, participants, calendarAttendees = [], meetingStartTime, meetingType, eventStart, eventEnd, conferenceId, timezone, recurringEventId, excusedFromClient = [] } = data;
+  const { sendEmail, autoExport, proAllowed } = options;
+  const sheets = google.sheets({ version: 'v4', auth: sheetsAuth });
 
   try {
-    // Pro gating (per-domain). Manual export + the Sheet itself stay free; the
-    // convenience layers — auto-export-on-end, the email digest, and the Slack
-    // digest — are Pro. Pre-launch (billing unconfigured) planIsPro is always
-    // true so nothing changes. Signed-out legacy shared-sheet path is unaffected.
-    const proAllowed = req.user ? await planIsPro(req.user.domain) : true;
-    if (autoExport && req.user && !proAllowed) {
-      return res.status(402).json({ error: 'Auto-export on meeting end is a Pro feature.', upgrade: true, feature: 'autoExport' });
-    }
-
-    // Use user's OAuth token if available, otherwise fall back to service account
-    const sheetsAuth = await getGoogleClient(req, 'https://www.googleapis.com/auth/spreadsheets');
-    const sheets = google.sheets({ version: 'v4', auth: sheetsAuth });
 
     // Resolve spreadsheet ID: per-user sheet (OAuth) or shared sheet (legacy)
     let spreadsheetId;
@@ -228,7 +230,7 @@ router.post('/save-to-sheets', async (req, res) => {
     } else {
       spreadsheetId = CONFIG.sheetId;
       if (!spreadsheetId) {
-        return res.status(400).json({ error: 'Sign in required to export (no shared sheet configured)' });
+        throw Object.assign(new Error('Sign in required to export (no shared sheet configured)'), { status: 400 });
       }
     }
 
@@ -473,8 +475,6 @@ router.post('/save-to-sheets', async (req, res) => {
       ? (await countUserExports(domain, req.user.email)) === 0
       : false;
 
-    res.json({ success: true, sheetUrl, isFirstExport });
-
     // Fire-and-forget: audit trail for exports
     persistExport(domain, {
       meetingTitle: meetingTitle || 'Unknown',
@@ -549,10 +549,46 @@ router.post('/save-to-sheets', async (req, res) => {
       });
     }
 
+    return { sheetUrl, isFirstExport };
   } catch (err) {
-    // 403 means the user didn't grant the drive.file scope during OAuth consent.
-    // Google's consent screen lets users selectively uncheck non-sensitive scopes.
+    // Tag a missing-Drive-scope failure so the route can map it to a 403.
     if (err.code === 403 || /insufficient permission/i.test(err.message || '')) {
+      err.exportCode = 'DRIVE_PERMISSION_MISSING';
+    }
+    throw err;
+  }
+}
+
+// POST /api/save-to-sheets — client-driven export (the in-panel "Export" button
+// + auto-export-on-end). Thin wrapper: enforce the auto-export paywall, resolve
+// the caller's Google client, then delegate to the shared buildAndSaveExport.
+router.post('/save-to-sheets', async (req, res) => {
+  const b = req.body || {};
+  if (!b.participants?.length) return res.status(400).json({ error: 'participants array is required' });
+  try {
+    // Pro gating (per-domain). Manual export + the Sheet itself stay free; the
+    // convenience layers — auto-export, email + Slack digests — are Pro. Pre-launch
+    // (billing unconfigured) planIsPro is always true so nothing changes.
+    const proAllowed = req.user ? await planIsPro(req.user.domain) : true;
+    if (b.autoExport && req.user && !proAllowed) {
+      return res.status(402).json({ error: 'Auto-export on meeting end is a Pro feature.', upgrade: true, feature: 'autoExport' });
+    }
+    const sheetsAuth = await getGoogleClient(req, 'https://www.googleapis.com/auth/spreadsheets');
+    const { sheetUrl, isFirstExport } = await buildAndSaveExport({
+      user: req.user ? { domain: req.user.domain, email: req.user.email, displayName: req.user.displayName } : null,
+      sheetsAuth,
+      data: {
+        meetingTitle: b.meetingTitle, tabName: b.tabName, exportedAt: b.exportedAt, participants: b.participants,
+        calendarAttendees: b.calendarAttendees || [], meetingStartTime: b.meetingStartTime, meetingType: b.meetingType,
+        eventStart: b.eventStart, eventEnd: b.eventEnd, conferenceId: b.conferenceId, timezone: b.timezone,
+        recurringEventId: b.recurringEventId, excusedFromClient: b.excusedEmails || [],
+      },
+      options: { sendEmail: b.sendEmail, autoExport: b.autoExport, proAllowed },
+    });
+    res.json({ success: true, sheetUrl, isFirstExport });
+  } catch (err) {
+    if (err.status === 400) return res.status(400).json({ error: err.message });
+    if (err.exportCode === 'DRIVE_PERMISSION_MISSING') {
       log.warn('sheets export blocked by missing drive permission', { email: req.user?.email });
       return res.status(403).json({
         error: 'Google Drive permission is required to export attendance to Sheets. Please sign out and sign in again, keeping the Drive permission checked.',
@@ -565,3 +601,4 @@ router.post('/save-to-sheets', async (req, res) => {
 });
 
 module.exports = router;
+module.exports.buildAndSaveExport = buildAndSaveExport;
