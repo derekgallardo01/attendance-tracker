@@ -28,7 +28,7 @@ Alternates:
 ```
 Attendance Tracker — automatic attendance for Google Meet™
 
-Stop taking roll call by hand. Attendance Tracker is a free Google Meet™ add-on that records who attended your call — live, right in the Meet side panel — and exports a clean report to Google Sheets in one click.
+Stop tracking attendance by hand. Attendance Tracker is a free Google Meet™ add-on that records who attended your call — a class, a standup, a training, a webinar — live, right in the Meet side panel — and exports a clean report to Google Sheets in one click.
 
 No screenshots. No manual counting. No spreadsheet surgery.
 
@@ -50,6 +50,7 @@ No screenshots. No manual counting. No spreadsheet surgery.
 • Webinar & event hosts — know exactly who watched live, and for how long
 • Recruiters & interviewers — a timestamped record of who actually showed up
 • Team leads — track standup and recurring-meeting participation over time
+• Ops, support & business teams — client calls, training sessions, and compliance/reporting records
 
 🔒 PRIVATE BY DESIGN
 Your data flows only through your own Google account. We never sell, share, or train on your meetings. Access is read-only to the call's participants and your calendar — we only write to the Google Sheets we create for you.

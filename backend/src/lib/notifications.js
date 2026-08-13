@@ -797,6 +797,8 @@ async function sendComebackEmail({ to, displayName, meetingTitle, daysSinceLogin
     lines: [
       `It's been about ${daysSinceLogin} days since you tracked "${title}". Next time you're in a meeting, just open the Attendance Tracker side panel — it captures who joined, who left, and how long they stayed, then exports to Sheets in one click.`,
       '',
+      'One tip: if it\'s a class or meeting that repeats, put it on a recurring Google Calendar invite — then you get per-person attendance trends across every session, not just a single day.',
+      '',
       `Your history: ${historyLink}`,
       '',
       '— Derek',
