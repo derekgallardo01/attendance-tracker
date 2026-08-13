@@ -53,6 +53,7 @@ jest.mock('../../src/lib/notifications', () => ({
   sendSoloNudgeEmail: jest.fn(),
   sendForgottenMeetingEmail: jest.fn(),
   sendComebackEmail: jest.fn(),
+  sendExportGapEmail: jest.fn(),
   flushDeferredNotifications: jest.fn(), // single flush point (signup + referral)
 }));
 
@@ -83,6 +84,7 @@ beforeEach(() => {
   notifications.sendSoloNudgeEmail.mockResolvedValue({ sent: true });
   notifications.sendForgottenMeetingEmail.mockResolvedValue({ sent: true });
   notifications.sendComebackEmail.mockResolvedValue({ sent: true });
+  notifications.sendExportGapEmail.mockResolvedValue({ sent: true });
   app = buildApp();
 });
 
@@ -484,6 +486,27 @@ describe('POST /api/admin/check-reengagement', () => {
     }));
     // Dedup key is just the type (one per user, permanent).
     expect(firestore.claimReengagementSlot).toHaveBeenCalledWith('acme.com', 'oneoff@acme.com', 'comeback_7d');
+  });
+
+  test('sends the export-gap email for an export_gap reminder (tracked, never exported)', async () => {
+    firestore.getAllUsersAcrossTenants.mockResolvedValue([
+      { email: 'gap@acme.com', domain: 'acme.com', displayName: 'Aeida' },
+    ]);
+    firestore.evaluateReengagementForUser.mockResolvedValue([
+      { type: 'export_gap', meetingTitle: 'Bio 101', daysSinceLogin: 8 },
+    ]);
+    firestore.claimReengagementSlot.mockResolvedValue({ claimed: true, ref: {} });
+
+    await request(app)
+      .post('/api/admin/check-reengagement')
+      .set('x-scheduler-secret', SCHEDULER_SECRET)
+      .set('Content-Type', 'application/json')
+      .send({});
+    expect(notifications.sendExportGapEmail).toHaveBeenCalledWith(expect.objectContaining({
+      to: 'gap@acme.com', meetingTitle: 'Bio 101', daysSinceLogin: 8,
+    }));
+    expect(notifications.sendComebackEmail).not.toHaveBeenCalled();
+    expect(firestore.claimReengagementSlot).toHaveBeenCalledWith('acme.com', 'gap@acme.com', 'export_gap');
   });
 
   test('uses dedupKey containing recurringEventId for forgotten-meeting claims', async () => {

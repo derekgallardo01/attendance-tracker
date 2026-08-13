@@ -658,6 +658,15 @@ describe('notifications — remaining sender branches (Resend mocked)', () => {
     expect(mockSend.mock.calls[0][0].html).toContain('view the trend');
   });
 
+  test('sendExportGapEmail renders the dashboard link and names the meeting (fallback "your class")', async () => {
+    const n = require('../../src/lib/notifications');
+    await n.sendExportGapEmail({ to: 'u@x.com', displayName: 'U', meetingTitle: 'Bio 101', daysSinceLogin: 8 });
+    expect(mockSend.mock.calls[0][0].html).toContain('open your dashboard');
+    expect(mockSend.mock.calls[0][0].html).toContain('Bio 101');
+    await n.sendExportGapEmail({ to: 'u@x.com', displayName: 'U', daysSinceLogin: 8 }); // no title → fallback
+    expect(mockSend.mock.calls[1][0].html).toContain('your class');
+  });
+
   test('sendSeriesAlertEmail falls back to "Someone" when no name/email', async () => {
     const n = require('../../src/lib/notifications');
     await n.sendSeriesAlertEmail({ to: 'u@x.com', alerts: [{ type: 'streak', detail: 'missed', attended: 1, instanceCount: 6 }] });

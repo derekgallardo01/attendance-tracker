@@ -224,13 +224,26 @@ async function evaluateReengagementForUser(domain, email) {
       const window7 = daysSinceLogin >= 7 && daysSinceLogin < 14;
       const window30 = daysSinceLogin >= 30 && daysSinceLogin < 45;
       if (activated) {
-        // Got real value → warm win-back (with a 30-day follow-up). For the 7d
-        // window, prefer a MEETING-specific "come back and track your next one"
-        // when their most-recent tracked meeting was a one-off — recurring
-        // habits are caught by forgotten_meeting below, and a single class used
-        // to get only the generic reactivation. Falls back to generic when we
-        // can't name a one-off meeting (or the read fails).
-        if (window7) {
+        // Got real value → warm win-back (with a 30-day follow-up).
+        if (window7 && exportedCount === 0) {
+          // Activated by ATTENDANCE (tracked a multi-person meeting) but never
+          // exported — the Google Sheet is the payoff they missed. A direct
+          // "here's your report" beats a generic come-back, so this takes
+          // precedence in the 7d window. Name the meeting when we can read it.
+          let meetingTitle = 'your class';
+          if (lastTrackedCid) {
+            try {
+              const lm = await tenant.collection('meetings').doc(lastTrackedCid).get();
+              if (lm.exists && lm.data().title) meetingTitle = lm.data().title;
+            } catch (_) { /* keep the generic title */ }
+          }
+          reminders.push({ type: 'export_gap', daysSinceLogin, meetingTitle });
+        } else if (window7) {
+          // Prefer a MEETING-specific "come back and track your next one" when
+          // their most-recent tracked meeting was a one-off — recurring habits
+          // are caught by forgotten_meeting below, and a single class used to
+          // get only the generic reactivation. Falls back to generic when we
+          // can't name a one-off meeting (or the read fails).
           let comeback = null;
           if (lastTrackedCid) {
             try {

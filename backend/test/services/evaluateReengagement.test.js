@@ -107,11 +107,12 @@ describe('evaluateReengagementForUser — engagement gate (targeting)', () => {
     expect(r.some(x => x.type === 'activation_7d')).toBe(false);
   });
 
-  test('ACTIVATED via a real multi-person meeting (distinctAttendees>=2) → reactivation_7d', async () => {
+  test('ACTIVATED via a real multi-person meeting but NEVER exported → export_gap (still activated, not activation_7d)', async () => {
     seedUser(D, 'host@acme.com', 10);
-    seedTracked(D, 'host@acme.com', 'meet-x', Date.now() - 10 * DAY, 5, 5); // 5 distinct
+    seedTracked(D, 'host@acme.com', 'meet-x', Date.now() - 10 * DAY, 5, 5); // 5 distinct, no export
     const r = await firestore.evaluateReengagementForUser(D, 'host@acme.com');
-    expect(r.some(x => x.type === 'reactivation_7d')).toBe(true);
+    expect(r.some(x => x.type === 'export_gap')).toBe(true);
+    expect(r.some(x => x.type === 'activation_7d')).toBe(false);
   });
 
   test('PHANTOM meeting (participantCount=2 but distinctAttendees=1) is NOT activated → solo nudge', async () => {
@@ -125,11 +126,11 @@ describe('evaluateReengagementForUser — engagement gate (targeting)', () => {
     expect(r.some(x => x.type === 'activation_7d')).toBe(false);
   });
 
-  test('legacy event without distinctAttendees falls back to participantCount', async () => {
+  test('legacy event without distinctAttendees falls back to participantCount (activated → export_gap when unexported)', async () => {
     seedUser(D, 'legacy@acme.com', 10);
-    seedTracked(D, 'legacy@acme.com', 'meet-old', Date.now() - 10 * DAY, 4); // no distinctAttendees
+    seedTracked(D, 'legacy@acme.com', 'meet-old', Date.now() - 10 * DAY, 4); // no distinctAttendees, no export
     const r = await firestore.evaluateReengagementForUser(D, 'legacy@acme.com');
-    expect(r.some(x => x.type === 'reactivation_7d')).toBe(true);
+    expect(r.some(x => x.type === 'export_gap')).toBe(true);
   });
 
   test('NEVER TRACKED: lapsed 10d → activation_7d nudge (not reactivation)', async () => {
@@ -167,6 +168,7 @@ describe('evaluateReengagementForUser — comeback_7d (one-off activated win-bac
   test('activated user whose last tracked meeting was a ONE-OFF → comeback_7d replaces the generic reactivation', async () => {
     seedUser(D, 'oneoff@acme.com', 10);
     seedTracked(D, 'oneoff@acme.com', 'meet-1', Date.now() - 10 * DAY, 4, 4); // real 4-person meeting → activated
+    seedExport(D, 'oneoff@acme.com', Date.now() - 10 * DAY); // exported → past the export-gap segment
     ctx.seed(`tenants/${D}/meetings/meet-1`, { conferenceId: 'meet-1', title: 'Spanish Class', startTime: wrapTimestamp(new Date(Date.now() - 10 * DAY)) }); // non-recurring
     const r = await firestore.evaluateReengagementForUser(D, 'oneoff@acme.com');
     const cb = r.find(x => x.type === 'comeback_7d');
@@ -178,6 +180,7 @@ describe('evaluateReengagementForUser — comeback_7d (one-off activated win-bac
   test('activated user whose last meeting is RECURRING → generic reactivation_7d, not comeback', async () => {
     seedUser(D, 'recur@acme.com', 10);
     seedTracked(D, 'recur@acme.com', 'meet-r', Date.now() - 10 * DAY, 4, 4);
+    seedExport(D, 'recur@acme.com', Date.now() - 10 * DAY); // exported → past the export-gap segment
     seedRecurringMeeting(D, 'meet-r', 'series-r', 'Weekly Sync', Date.now() - 10 * DAY);
     const r = await firestore.evaluateReengagementForUser(D, 'recur@acme.com');
     expect(r.some(x => x.type === 'comeback_7d')).toBe(false);
@@ -187,6 +190,7 @@ describe('evaluateReengagementForUser — comeback_7d (one-off activated win-bac
   test('falls back to generic reactivation when the last meeting doc is missing', async () => {
     seedUser(D, 'nodoc@acme.com', 10);
     seedTracked(D, 'nodoc@acme.com', 'meet-x', Date.now() - 10 * DAY, 4, 4); // event only, no meeting doc
+    seedExport(D, 'nodoc@acme.com', Date.now() - 10 * DAY); // exported → past the export-gap segment
     const r = await firestore.evaluateReengagementForUser(D, 'nodoc@acme.com');
     expect(r.some(x => x.type === 'comeback_7d')).toBe(false);
     expect(r.some(x => x.type === 'reactivation_7d')).toBe(true);
@@ -198,6 +202,49 @@ describe('evaluateReengagementForUser — comeback_7d (one-off activated win-bac
     ctx.seed(`tenants/${D}/meetings/meet-1`, { conferenceId: 'meet-1', title: 'Class', startTime: wrapTimestamp(new Date(Date.now() - 5 * DAY)) });
     const r = await firestore.evaluateReengagementForUser(D, 'early@acme.com');
     expect(r.some(x => x.type === 'comeback_7d')).toBe(false);
+  });
+});
+
+describe('evaluateReengagementForUser — export_gap (tracked a real meeting, never exported)', () => {
+  const D = 'acme.com';
+
+  test('activated-by-attendance + never exported + 7d lapse → export_gap (not comeback/reactivation)', async () => {
+    seedUser(D, 'gap@acme.com', 10);
+    seedTracked(D, 'gap@acme.com', 'meet-g', Date.now() - 10 * DAY, 6, 6); // real meeting, no export
+    ctx.seed(`tenants/${D}/meetings/meet-g`, { conferenceId: 'meet-g', title: 'Bio 101', startTime: wrapTimestamp(new Date(Date.now() - 10 * DAY)) });
+    const r = await firestore.evaluateReengagementForUser(D, 'gap@acme.com');
+    const gap = r.find(x => x.type === 'export_gap');
+    expect(gap).toBeTruthy();
+    expect(gap.meetingTitle).toBe('Bio 101');
+    expect(r.some(x => x.type === 'comeback_7d')).toBe(false);
+    expect(r.some(x => x.type === 'reactivation_7d')).toBe(false);
+  });
+
+  test('once they export, export_gap yields to the normal comeback path (one-off + exported)', async () => {
+    seedUser(D, 'exp@acme.com', 10);
+    seedTracked(D, 'exp@acme.com', 'meet-e', Date.now() - 10 * DAY, 6, 6);
+    seedExport(D, 'exp@acme.com', Date.now() - 10 * DAY);
+    ctx.seed(`tenants/${D}/meetings/meet-e`, { conferenceId: 'meet-e', title: 'Bio 101', startTime: wrapTimestamp(new Date(Date.now() - 10 * DAY)) });
+    const r = await firestore.evaluateReengagementForUser(D, 'exp@acme.com');
+    expect(r.some(x => x.type === 'export_gap')).toBe(false);
+    expect(r.some(x => x.type === 'comeback_7d')).toBe(true);
+  });
+
+  test('meeting title unreadable → falls back to "your class"', async () => {
+    seedUser(D, 'notitle@acme.com', 10);
+    seedTracked(D, 'notitle@acme.com', 'meet-nt', Date.now() - 10 * DAY, 3, 3); // no meeting doc seeded
+    const r = await firestore.evaluateReengagementForUser(D, 'notitle@acme.com');
+    const gap = r.find(x => x.type === 'export_gap');
+    expect(gap).toBeTruthy();
+    expect(gap.meetingTitle).toBe('your class');
+  });
+
+  test('does not fire in the 30d window (export_gap is 7d-only; generic reactivation covers 30d)', async () => {
+    seedUser(D, 'gap30@acme.com', 35);
+    seedTracked(D, 'gap30@acme.com', 'meet-g', Date.now() - 35 * DAY, 6, 6);
+    const r = await firestore.evaluateReengagementForUser(D, 'gap30@acme.com');
+    expect(r.some(x => x.type === 'export_gap')).toBe(false);
+    expect(r.some(x => x.type === 'reactivation_30d')).toBe(true);
   });
 });
 
