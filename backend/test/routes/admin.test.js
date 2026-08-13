@@ -641,6 +641,163 @@ describe('GET /api/admin/activation-funnel', () => {
   });
 });
 
+describe('Super-admin endpoint happy paths', () => {
+  const admin = () => authedHeader(SUPER_ADMIN, 'gmail.com');
+
+  test('GET /admin/all-users returns users sorted by last login + count', async () => {
+    firestore.getAllUsersAcrossTenants.mockResolvedValue([
+      { email: 'a@x.com', lastLoginAt: '2026-01-01T00:00:00Z' },
+      { email: 'b@x.com', lastLoginAt: '2026-02-01T00:00:00Z' },
+    ]);
+    const res = await request(app).get('/api/admin/all-users').set(admin());
+    expect(res.status).toBe(200);
+    expect(res.body.totalCount).toBe(2);
+    expect(res.body.users[0].email).toBe('b@x.com'); // most recent first
+  });
+
+  test('GET /admin/activity returns events with the limit clamped to 200', async () => {
+    firestore.getRecentActivity.mockResolvedValue([{ type: 'signin' }]);
+    const res = await request(app).get('/api/admin/activity?limit=999').set(admin());
+    expect(res.status).toBe(200);
+    expect(res.body.events).toHaveLength(1);
+    expect(firestore.getRecentActivity).toHaveBeenCalledWith({ limit: 200 });
+  });
+
+  test('GET /admin/suggestions returns the reach-out cards', async () => {
+    firestore.getReachOutSuggestions.mockResolvedValue([{ email: 'a@x.com' }]);
+    const res = await request(app).get('/api/admin/suggestions').set(admin());
+    expect(res.status).toBe(200);
+    expect(res.body.suggestions).toHaveLength(1);
+  });
+
+  test('GET /admin/power-users applies the default day/minTracked window', async () => {
+    firestore.getPowerUserPipeline.mockResolvedValue([]);
+    const res = await request(app).get('/api/admin/power-users').set(admin());
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ days: 7, minTracked: 5 });
+  });
+
+  test('POST /admin/contacted requires email + domain, then marks contacted', async () => {
+    const miss = await request(app).post('/api/admin/contacted').set(admin()).send({ email: 'a@x.com' });
+    expect(miss.status).toBe(400);
+    const ok = await request(app).post('/api/admin/contacted').set(admin()).send({ email: 'a@x.com', domain: 'x.com', note: 'hi' });
+    expect(ok.status).toBe(200);
+    expect(firestore.markUserContacted).toHaveBeenCalled();
+  });
+
+  test('GET /admin/weekly-report returns the report, or a fallback when null', async () => {
+    firestore.getWeeklySelfReport.mockResolvedValueOnce({ ok: true });
+    const ok = await request(app).get('/api/admin/weekly-report').set(admin());
+    expect(ok.body).toEqual({ ok: true });
+    firestore.getWeeklySelfReport.mockResolvedValueOnce(null);
+    const fb = await request(app).get('/api/admin/weekly-report').set(admin());
+    expect(fb.body).toEqual({ error: 'failed' });
+  });
+
+  test('GET /admin/analytics returns data (500 when null)', async () => {
+    firestore.getAdvancedAnalytics.mockResolvedValueOnce({ segments: [] });
+    const ok = await request(app).get('/api/admin/analytics').set(admin());
+    expect(ok.status).toBe(200);
+    firestore.getAdvancedAnalytics.mockResolvedValueOnce(null);
+    const bad = await request(app).get('/api/admin/analytics').set(admin());
+    expect(bad.status).toBe(500);
+  });
+
+  test('GET /admin/user: 400 missing, 404 not found, 200 detail', async () => {
+    const miss = await request(app).get('/api/admin/user').set(admin());
+    expect(miss.status).toBe(400);
+    firestore.getUserDetail.mockResolvedValueOnce(null);
+    const nf = await request(app).get('/api/admin/user?email=a@x.com&domain=x.com').set(admin());
+    expect(nf.status).toBe(404);
+    firestore.getUserDetail.mockResolvedValueOnce({ email: 'a@x.com' });
+    const ok = await request(app).get('/api/admin/user?email=a@x.com&domain=x.com').set(admin());
+    expect(ok.status).toBe(200);
+  });
+
+  test('PUT /admin/note: 400 missing, 200 save', async () => {
+    const miss = await request(app).put('/api/admin/note').set(admin()).send({ email: 'a@x.com' });
+    expect(miss.status).toBe(400);
+    firestore.setAdminNote.mockResolvedValueOnce({ saved: true });
+    const ok = await request(app).put('/api/admin/note').set(admin()).send({ email: 'a@x.com', domain: 'x.com', body: 'note' });
+    expect(ok.status).toBe(200);
+  });
+
+  test('GET /admin/notes/search returns results', async () => {
+    firestore.searchAdminNotes.mockResolvedValue([{ email: 'a@x.com' }]);
+    const res = await request(app).get('/api/admin/notes/search?q=hi').set(admin());
+    expect(res.status).toBe(200);
+    expect(res.body.results).toHaveLength(1);
+  });
+
+  test('POST /admin/send-email: 400 missing, 200 send + logs the conversation', async () => {
+    const miss = await request(app).post('/api/admin/send-email').set(admin()).send({ to: 'a@x.com' });
+    expect(miss.status).toBe(400);
+    notifications.sendAdminEmail.mockResolvedValueOnce({ sent: true });
+    const ok = await request(app).post('/api/admin/send-email').set(admin()).send({ to: 'a@x.com', domain: 'x.com', subject: 's', body: 'b' });
+    expect(ok.status).toBe(200);
+    expect(firestore.appendConversation).toHaveBeenCalled();
+  });
+
+  test('PUT /admin/outreach/status: 400 missing, 200 set', async () => {
+    const miss = await request(app).put('/api/admin/outreach/status').set(admin()).send({ email: 'a@x.com', domain: 'x.com' });
+    expect(miss.status).toBe(400);
+    const ok = await request(app).put('/api/admin/outreach/status').set(admin()).send({ email: 'a@x.com', domain: 'x.com', status: 'replied' });
+    expect(ok.status).toBe(200);
+  });
+
+  test('POST /admin/outreach/log-reply: 400 missing, 200 append', async () => {
+    const miss = await request(app).post('/api/admin/outreach/log-reply').set(admin()).send({ email: 'a@x.com' });
+    expect(miss.status).toBe(400);
+    const ok = await request(app).post('/api/admin/outreach/log-reply').set(admin()).send({ email: 'a@x.com', domain: 'x.com', body: 'hi' });
+    expect(ok.status).toBe(200);
+  });
+
+  test('templates GET + PUT round-trip', async () => {
+    firestore.getEmailTemplates.mockResolvedValue([{ name: 't' }]);
+    const g = await request(app).get('/api/admin/templates').set(admin());
+    expect(g.body.items).toHaveLength(1);
+    const p = await request(app).put('/api/admin/templates').set(admin()).send({ items: [{ name: 't2' }] });
+    expect(p.status).toBe(200);
+    expect(firestore.setEmailTemplates).toHaveBeenCalledWith([{ name: 't2' }]);
+  });
+
+  test('reminders: POST create (400 missing), PUT done (400 missing), GET due', async () => {
+    const miss = await request(app).post('/api/admin/reminders').set(admin()).send({ email: 'a@x.com', domain: 'x.com' });
+    expect(miss.status).toBe(400);
+    firestore.createReminder.mockResolvedValueOnce({ id: 'r1' });
+    const create = await request(app).post('/api/admin/reminders').set(admin()).send({ email: 'a@x.com', domain: 'x.com', remindAt: '2026-09-01', body: 'ping' });
+    expect(create.status).toBe(200);
+    const doneMiss = await request(app).put('/api/admin/reminders/r1/done').set(admin()).send({});
+    expect(doneMiss.status).toBe(400);
+    const done = await request(app).put('/api/admin/reminders/r1/done').set(admin()).send({ domain: 'x.com' });
+    expect(done.status).toBe(200);
+    firestore.getDueReminders.mockResolvedValue([{ id: 'r1' }]);
+    const due = await request(app).get('/api/admin/reminders/due').set(admin());
+    expect(due.body.reminders).toHaveLength(1);
+  });
+
+  test('GET /admin/insights returns the aggregated insights', async () => {
+    firestore.getAggregatedInsights.mockResolvedValue({ totalUsers: 5 });
+    const res = await request(app).get('/api/admin/insights').set(admin());
+    expect(res.status).toBe(200);
+    expect(res.body.totalUsers).toBe(5);
+  });
+
+  test('GET /admin/outreach-list: CSV by default, JSON on request', async () => {
+    firestore.getOutreachList.mockResolvedValue([
+      { email: 'a@x.com', firstName: 'A', displayName: 'A B', domain: 'x.com', tracked: 3, exported: 1, totalActions: 4, lastActivityAt: '2026-01-01', acquisitionSource: 'reddit' },
+    ]);
+    const csv = await request(app).get('/api/admin/outreach-list').set(admin());
+    expect(csv.status).toBe(200);
+    expect(csv.headers['content-type']).toContain('text/csv');
+    expect(csv.text).toContain('a@x.com');
+    const json = await request(app).get('/api/admin/outreach-list?format=json').set(admin());
+    expect(json.status).toBe(200);
+    expect(json.body.rows).toHaveLength(1);
+    expect(json.body.marketplaceReviewUrl).toBeTruthy();
+  });
+});
+
 describe('GET /api/kh/metrics — durable command-center pull (static x-kh-key)', () => {
   const KH_KEY = 'kh-metrics-secret';
   afterEach(() => { delete process.env.KH_METRICS_KEY; delete process.env.KH_MRR_SEAT_CENTS; });
