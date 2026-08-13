@@ -67,6 +67,9 @@ A: Free to start. Optional Pro plans add cumulative class reports and org-wide t
 Q: What permissions do you need?
 A: Read-only access to the active Meet™ call's participants, read-only calendar access to match invited guests, and write access only to the Google Sheets we create — never your other files.
 
+Q: Does it work on the Google Meet mobile app?
+A: Attendance Tracker runs in Google Meet on the web (desktop). Google Meet's mobile apps don't yet support this type of add-on, so join from a computer to track a meeting. You can view, export, and share your attendance reports from any device — including your phone — at attendancetracker.dev.
+
 Install free — it takes about 30 seconds, and no credit card is required.
 
 By Kinetic Helix · attendancetracker.dev
@@ -92,3 +95,4 @@ By Kinetic Helix · attendancetracker.dev
 - **Screenshots:** the current first image is a dark webinar roster — great. Add 2–3 more with captions: (1) the one-click **Sheets export** result, (2) the **late/no-show** view, (3) a **recurring class attendance %** roll-up. Captioned screenshots lift install rate more than copy.
 - **First review:** you show "No reviews." One or two genuine reviews (ask an activated user — e.g. a teacher) materially boosts conversion; it's the single biggest trust gap on the page.
 - Keep the listing's short description and `pricing.html` in sync as the Pro tiers go live.
+- **Mobile expectation-setting:** the "Does it work on the Google Meet mobile app?" Q&A above tells phone users the add-on is desktop-web-only (Google hasn't shipped the mobile add-on SDK yet). This pre-empts confused 1-star reviews from people who install it, open mobile Meet, and see it greyed out under "Unavailable." The companion dashboard (history/team/share) is now an installable PWA for viewing/sharing attendance on a phone.

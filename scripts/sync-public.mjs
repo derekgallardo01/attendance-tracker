@@ -39,6 +39,7 @@ const MIRRORED = [
   'js/admin.js',
   'js/panel.js',
   'js/sim.js',
+  'pwa-install.js',
   'robots.txt',
   'sitemap.xml',
 ];
