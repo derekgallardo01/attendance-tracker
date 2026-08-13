@@ -2040,6 +2040,7 @@ function startTracking() {
   state.tracking  = true;
   state.startTime = new Date();
   state.participants.clear();
+  _emptyPolls = 0; // fresh session — reset the "nobody showed up" counter
   state._lastChangeTime = Date.now(); // treat start as a change
 
   document.getElementById('btn-start').disabled  = true;
@@ -2092,6 +2093,10 @@ async function manualSync() {
   refreshAttendance();
 }
 
+// Consecutive polls that returned nobody — lets the empty state explain the
+// organizer-only limitation instead of an endless "waiting…". Reset on start
+// and whenever anyone appears.
+let _emptyPolls = 0;
 async function refreshAttendance() {
   if (!state.tracking) return;
   setStatus('loading', 'Refreshing…');
@@ -2138,6 +2143,8 @@ async function refreshAttendance() {
     // ended already" instead of just showing a generic empty state.
     state.conferenceStartTime = data.conferenceStartTime || null;
     state.conferenceEndTime = data.conferenceEndTime || null;
+    // Count consecutive empty polls so renderList can stop saying "waiting…".
+    _emptyPolls = (!data.participants || data.participants.length === 0) ? _emptyPolls + 1 : 0;
     mergeParticipants(data.participants);
     renderList();
     updateSummary();
@@ -2267,9 +2274,16 @@ function renderList() {
     // to users who opened the panel after the meeting was over.
     const endedAt = state.conferenceEndTime ? new Date(state.conferenceEndTime) : null;
     const ended = endedAt && endedAt < new Date();
+    // After several empty polls, the likely cause is that this isn't a meeting
+    // the signed-in user hosts (attendance is only readable by the host). Say so
+    // — instead of an endless "waiting" that reads as "broken". The copy also
+    // covers the legit lagging-host case, so it's never wrong.
+    const stuck = !ended && _emptyPolls >= 5;
     const message = ended
       ? `This meeting ended ${formatRelative(endedAt)}. Attendance tracking only works during a live meeting — try again next time, in the panel, while everyone is still in the call.`
-      : 'No participants found yet';
+      : stuck
+        ? "No attendance data for this meeting. Attendance Tracker can only read attendance for a meeting you host — if you're a participant, the host needs to run it. (If you are the host, give Google Meet a minute or two after everyone joins.)"
+        : 'No participants found yet';
     container.innerHTML = `
       <div class="empty-state">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
