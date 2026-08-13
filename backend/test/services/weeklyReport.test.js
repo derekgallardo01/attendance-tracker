@@ -191,6 +191,46 @@ describe('getWeeklySelfReport — sources aggregation', () => {
   });
 });
 
+describe('getWeeklySelfReport — retention KPIs', () => {
+  test('return rate = share of return-eligible users who logged in on a later day', async () => {
+    ctx.seed('tenants/acme.com/users/returned@acme.com', {
+      createdAt: wrapTimestamp(new Date(NOW - 10 * DAY)),
+      lastLoginAt: wrapTimestamp(new Date(NOW - 3 * DAY)), // came back a week later
+    });
+    ctx.seed('tenants/acme.com/users/oneanddone@acme.com', {
+      createdAt: wrapTimestamp(new Date(NOW - 10 * DAY)),
+      lastLoginAt: wrapTimestamp(new Date(NOW - 10 * DAY)), // never returned
+    });
+    ctx.seed('tenants/acme.com/users/brandnew@acme.com', {
+      createdAt: wrapTimestamp(new Date(NOW - 2 * 3600000)), // < 1 day old → NOT eligible
+      lastLoginAt: wrapTimestamp(new Date(NOW - 2 * 3600000)),
+    });
+    const r = await firestore.getWeeklySelfReport();
+    expect(r.retention.eligible).toBe(2);
+    expect(r.retention.returned).toBe(1);
+    expect(r.retention.returnRate).toBe(50);
+  });
+
+  test('counts retention nudges fired this week, broken down by type', async () => {
+    seedUser('acme.com', 'u@acme.com', { createdDaysAgo: 30 });
+    ctx.seed('tenants/acme.com/events/n1', { email: 'u@acme.com', type: 'reengagement_fired', meta: { reminderType: 'comeback_7d' }, createdAt: wrapTimestamp(new Date(NOW - 1 * DAY)) });
+    ctx.seed('tenants/acme.com/events/n2', { email: 'u@acme.com', type: 'reengagement_fired', meta: { reminderType: 'upcoming_reminder' }, createdAt: wrapTimestamp(new Date(NOW - 2 * DAY)) });
+    ctx.seed('tenants/acme.com/events/n3', { email: 'u@acme.com', type: 'reengagement_fired', meta: { reminderType: 'upcoming_reminder' }, createdAt: wrapTimestamp(new Date(NOW - 3 * DAY)) });
+    const r = await firestore.getWeeklySelfReport();
+    expect(r.retention.remindersThis).toEqual({ comeback_7d: 1, upcoming_reminder: 2 });
+    expect(r.retention.remindersThisTotal).toBe(3);
+  });
+
+  test('flags dead-ends: users who polled 5+ times but never captured a participant', async () => {
+    seedUser('acme.com', 'deadend@acme.com', { createdDaysAgo: 5 });
+    seedUser('acme.com', 'working@acme.com', { createdDaysAgo: 5 });
+    for (let i = 0; i < 6; i++) ctx.seed(`tenants/acme.com/events/de${i}`, { email: 'deadend@acme.com', type: 'tracked', meta: { participantCount: 0, distinctAttendees: 0 }, createdAt: wrapTimestamp(new Date(NOW - 1 * DAY)) });
+    for (let i = 0; i < 6; i++) ctx.seed(`tenants/acme.com/events/w${i}`, { email: 'working@acme.com', type: 'tracked', meta: { participantCount: 5, distinctAttendees: 5 }, createdAt: wrapTimestamp(new Date(NOW - 1 * DAY)) });
+    const r = await firestore.getWeeklySelfReport();
+    expect(r.retention.deadEnds).toBe(1);
+  });
+});
+
 describe('getWeeklySelfReport — totals + window metadata', () => {
   test('reports totalUsers and totalMeetings across ALL tenants', async () => {
     seedUser('acme.com', 'a@acme.com', { createdDaysAgo: 60 });

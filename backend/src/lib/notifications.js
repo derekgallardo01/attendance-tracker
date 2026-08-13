@@ -391,6 +391,16 @@ async function sendWeeklySelfReport(report) {
     ? `${escape(report.topUser.displayName || report.topUser.email)} (${report.topUser.actions} actions)`
     : 'Nobody yet — quiet week.';
 
+  const rt = report.retention;
+  const remindersBreakdown = rt ? (Object.entries(rt.remindersThis || {}).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${escape(k)} ${n}`).join(', ') || 'none') : '';
+  const retentionHtml = rt ? `
+      <h3 style="margin:0 0 6px">🔁 Retention</h3>
+      <ul style="margin:0 0 16px;padding-left:20px;font-size:14px">
+        <li><b>Return rate:</b> ${rt.returnRate}% — ${rt.returned}/${rt.eligible} came back on a later day</li>
+        <li><b>Retention nudges sent:</b> ${rt.remindersThisTotal} this week ${arrow(rt.remindersDelta || '0')} — ${remindersBreakdown}</li>
+        <li><b>Silent dead-ends:</b> ${rt.deadEnds} user${rt.deadEnds === 1 ? '' : 's'} polled 5+ times but captured nobody (not the host)</li>
+      </ul>` : '';
+
   const subject = `📊 Weekly Attendance Tracker report — ${report.signups.thisWeek} new signup${report.signups.thisWeek === 1 ? '' : 's'}, ${report.tracks.thisWeek} track${report.tracks.thisWeek === 1 ? '' : 's'}`;
 
   const html = `
@@ -403,7 +413,7 @@ async function sendWeeklySelfReport(report) {
         <tr><td style="padding:8px;border-top:1px solid #eee">Meetings tracked</td><td style="text-align:right;padding:8px;border-top:1px solid #eee">${report.tracks.thisWeek}</td><td style="text-align:right;padding:8px;border-top:1px solid #eee">${report.tracks.lastWeek}</td><td style="text-align:right;padding:8px;border-top:1px solid #eee">${arrow(report.tracks.delta)}</td></tr>
         <tr><td style="padding:8px;border-top:1px solid #eee">Exports</td><td style="text-align:right;padding:8px;border-top:1px solid #eee">${report.exports.thisWeek}</td><td style="text-align:right;padding:8px;border-top:1px solid #eee">${report.exports.lastWeek}</td><td style="text-align:right;padding:8px;border-top:1px solid #eee">${arrow(report.exports.delta)}</td></tr>
       </table>
-
+      ${retentionHtml}
       <h3 style="margin:0 0 6px">⭐ Top user this week</h3>
       <p style="margin:0 0 16px;font-size:14px">${topUserLine}</p>
 
@@ -430,6 +440,13 @@ async function sendWeeklySelfReport(report) {
     `Signups:  ${report.signups.thisWeek} (was ${report.signups.lastWeek}, ${report.signups.delta})`,
     `Tracks:   ${report.tracks.thisWeek} (was ${report.tracks.lastWeek}, ${report.tracks.delta})`,
     `Exports:  ${report.exports.thisWeek} (was ${report.exports.lastWeek}, ${report.exports.delta})`,
+    ...(rt ? [
+      ``,
+      `Retention:`,
+      `  Return rate: ${rt.returnRate}% (${rt.returned}/${rt.eligible} came back)`,
+      `  Nudges sent: ${rt.remindersThisTotal} (${rt.remindersDelta})`,
+      `  Dead-ends:   ${rt.deadEnds}`,
+    ] : []),
     ``,
     `Top user: ${topUserLine.replace(/<[^>]+>/g, '')}`,
     ``,

@@ -304,6 +304,17 @@ gcloud scheduler jobs create http check-upcoming \
   --headers="x-scheduler-secret=<your-secret>" \
   --location=us-central1 \
   --project=attendance-tracker-490319
+
+# Weekly self-report — the every-Monday measurement email (signups/tracks/exports
+# deltas + retention KPIs: return rate, nudges fired by type, silent dead-ends).
+# Sends to NOTIFY_EMAIL/owner. POST /api/admin/weekly-report generates AND sends.
+gcloud scheduler jobs create http weekly-report \
+  --schedule="0 13 * * 1" \
+  --uri="https://attendance-tracker-backend-829771833968.us-central1.run.app/api/admin/weekly-report" \
+  --http-method=POST \
+  --headers="x-scheduler-secret=<your-secret>" \
+  --location=us-central1 \
+  --project=attendance-tracker-490319
 ```
 
 Manual trigger for testing:

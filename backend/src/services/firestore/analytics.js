@@ -482,15 +482,22 @@ async function getWeeklySelfReport() {
       domain: d.ref.parent.parent.id,
       displayName: d.data().displayName || '',
       createdAt: tsMs(d.data().createdAt) || 0,
+      lastLoginAt: tsMs(d.data().lastLoginAt) || 0,
       acquisitionSource: d.data().acquisitionSource || null,
       postExportSurvey: d.data().postExportSurvey || null,
     }));
 
-    const events = eventsSnap.docs.map(d => ({
-      email: d.data().email,
-      type: d.data().type,
-      ts: tsMs(d.data().createdAt) || 0,
-    })).filter(e => e.email);
+    const events = eventsSnap.docs.map(d => {
+      const data = d.data();
+      const m = data.meta || {};
+      return {
+        email: data.email,
+        type: data.type,
+        ts: tsMs(data.createdAt) || 0,
+        reminderType: m.reminderType || null,
+        part: Math.max(m.participantCount || 0, m.distinctAttendees || 0),
+      };
+    }).filter(e => e.email);
 
     // Window slicing
     const thisWeek = events.filter(e => e.ts >= weekAgo);
@@ -543,6 +550,30 @@ async function getWeeklySelfReport() {
       return (p >= 0 ? '+' : '') + p + '%';
     };
 
+    // ── Retention KPIs (all off the same snapshot — no extra reads) ──
+    const DAY = 86400000;
+    // Return rate: of users old enough to return (age >= 1 day), how many logged
+    // in on a later day than they signed up.
+    const eligible = users.filter(u => u.createdAt && (now - u.createdAt) >= DAY);
+    const returned = eligible.filter(u => u.lastLoginAt && (u.lastLoginAt - u.createdAt) >= DAY);
+    const returnRate = eligible.length ? Math.round((returned.length / eligible.length) * 100) : 0;
+
+    // Retention nudges fired, by type (this week) + total delta vs last week.
+    const remindersThis = {};
+    for (const e of thisWeek) if (e.type === 'reengagement_fired') remindersThis[e.reminderType || 'other'] = (remindersThis[e.reminderType || 'other'] || 0) + 1;
+    const remindersThisTotal = Object.values(remindersThis).reduce((a, b) => a + b, 0);
+    const remindersLastTotal = lastWeek.filter(e => e.type === 'reengagement_fired').length;
+
+    // Dead-ends: users who polled >=5 times but never captured a participant
+    // (the organizer-only silent failure — see the retention analysis).
+    const perUser = {};
+    for (const e of events) {
+      if (e.type !== 'tracked') continue;
+      const b = perUser[e.email] || (perUser[e.email] = { polls: 0, maxPart: 0 });
+      b.polls++; if (e.part > b.maxPart) b.maxPart = e.part;
+    }
+    const deadEnds = Object.values(perUser).filter(b => b.polls >= 5 && b.maxPart === 0).length;
+
     return {
       windowStart: new Date(weekAgo).toISOString(),
       windowEnd: new Date(now).toISOString(),
@@ -560,6 +591,11 @@ async function getWeeklySelfReport() {
       useCases,
       totalUsers: users.length,
       totalMeetings: meetingsCount.data().count,
+      retention: {
+        returnRate, returned: returned.length, eligible: eligible.length,
+        remindersThis, remindersThisTotal, remindersDelta: pctChange(remindersThisTotal, remindersLastTotal),
+        deadEnds,
+      },
     };
   } catch (err) {
     log.error('firestore: getWeeklySelfReport failed', { error: err.message });

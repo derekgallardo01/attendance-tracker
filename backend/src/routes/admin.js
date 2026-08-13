@@ -261,7 +261,10 @@ router.get('/admin/weekly-report', requireSuperAdmin, async (req, res) => {
   }
 });
 
-router.post('/admin/weekly-report', requireSuperAdmin, async (req, res) => {
+// requireSuperAdminOrScheduler (not just super-admin) so Cloud Scheduler can fire
+// the weekly report. It only ever emails NOTIFY_EMAIL/owner, so the scheduler
+// secret carries no data-exposure risk.
+router.post('/admin/weekly-report', requireSuperAdminOrScheduler, async (req, res) => {
   try {
     const report = await getWeeklySelfReport();
     if (!report) return res.status(500).json({ error: 'Could not generate report' });
