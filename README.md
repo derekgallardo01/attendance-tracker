@@ -291,6 +291,19 @@ gcloud scheduler jobs create http auto-capture \
   --headers="x-scheduler-secret=<your-secret>" \
   --location=us-central1 \
   --project=attendance-tracker-490319
+
+# OPTIONAL — pre-meeting reminders (retention / habit loop). Emails a user shortly
+# before the next instance of a recurring meeting they used to track but have
+# SLIPPED on (self-limiting: reliable trackers never get one). Reminds ~30 min out,
+# so run every 15 min. The /api/admin/check-upcoming endpoint is inert until this
+# job is created:
+gcloud scheduler jobs create http check-upcoming \
+  --schedule="*/15 * * * *" \
+  --uri="https://attendance-tracker-backend-829771833968.us-central1.run.app/api/admin/check-upcoming" \
+  --http-method=POST \
+  --headers="x-scheduler-secret=<your-secret>" \
+  --location=us-central1 \
+  --project=attendance-tracker-490319
 ```
 
 Manual trigger for testing:

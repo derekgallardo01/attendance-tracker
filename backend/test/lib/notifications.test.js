@@ -667,6 +667,17 @@ describe('notifications — remaining sender branches (Resend mocked)', () => {
     expect(mockSend.mock.calls[1][0].html).toContain('your class');
   });
 
+  test('sendUpcomingMeetingEmail renders "starts soon" and the "starting now" variant', async () => {
+    const n = require('../../src/lib/notifications');
+    await n.sendUpcomingMeetingEmail({ to: 'u@x.com', displayName: 'U', meetingTitle: 'Weekly Class', minutesUntil: 30 });
+    expect(mockSend.mock.calls[0][0].subject).toContain('starts soon');
+    expect(mockSend.mock.calls[0][0].html).toContain('Weekly Class');
+    expect(mockSend.mock.calls[0][0].html).toContain('about 30 minutes');
+    await n.sendUpcomingMeetingEmail({ to: 'u@x.com', displayName: 'U', meetingTitle: 'Weekly Class', minutesUntil: 0 });
+    expect(mockSend.mock.calls[1][0].subject).toContain('is starting');
+    expect(mockSend.mock.calls[1][0].html).toContain('is starting now');
+  });
+
   test('sendSeriesAlertEmail falls back to "Someone" when no name/email', async () => {
     const n = require('../../src/lib/notifications');
     await n.sendSeriesAlertEmail({ to: 'u@x.com', alerts: [{ type: 'streak', detail: 'missed', attended: 1, instanceCount: 6 }] });

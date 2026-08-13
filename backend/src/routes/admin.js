@@ -2,8 +2,8 @@ const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds } = require('../services/firestore');
-const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, flushDeferredNotifications } = require('../lib/notifications');
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries } = require('../services/firestore');
+const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, flushDeferredNotifications } = require('../lib/notifications');
 const { requireSuperAdmin, requireSuperAdminOrScheduler, requireKhMetricsKey } = require('../middleware/adminAuth');
 const { requireAuth } = require('../middleware/auth');
 const { domainOf } = require('../services/firestore/_core'); // pure util; imported directly (test firestore-mocks needn't stub it)
@@ -11,6 +11,7 @@ const { ACQUISITION_SOURCES } = require('../lib/constants');
 const { planIsPro } = require('./billing');
 const { refreshAccessToken, makeUserClient } = require('../services/googleAuth');
 const { meetGet, meetGetAll } = require('../services/meetApi');
+const { google } = require('googleapis');
 const { buildAndSaveExport } = require('./sheets');
 
 const SUPER_ADMIN_EMAIL = CONFIG.superAdminEmail;
@@ -906,6 +907,100 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
   } catch (err) {
     log.error('auto-capture sweep failed', { error: err.message });
     res.status(500).json({ error: 'Auto-capture sweep failed' });
+  }
+});
+
+// POST /api/admin/check-upcoming — pre-meeting reminder for LAPSING recurring
+// trackers. Builds the habit loop: nudge a user shortly before the next instance
+// of a series they used to track but have slipped on, so they open the panel
+// when they join. Self-limiting on purpose — a series only qualifies if it hasn't
+// been tracked in LAPSE_DAYS, so reliable daily/weekly trackers never get emailed
+// (respects the "don't annoy" line). DORMANT until a ~15-min Cloud Scheduler job
+// hits it. Same dual auth as the other sweeps.
+//   Scale note: this reads getUserMeetingSeries per active user per run. Fine at
+//   current scale; at 1000s of users, gate on a maintained `tracksRecurring` flag.
+router.post('/admin/check-upcoming', requireSuperAdminOrScheduler, async (req, res) => {
+  const startedAt = Date.now();
+  const budgetMs = sweepBudgetMs();
+  const now = Date.now();
+  const LAPSE_MS = 6 * 24 * 60 * 60 * 1000;        // only remind about series untracked 6+ days
+  const DORMANT_MS = 45 * 24 * 60 * 60 * 1000;     // skip long-dormant accounts
+  const WIN_FROM = 25 * 60000, WIN_TO = 40 * 60000; // remind ~30 min out (email-checkable lead)
+  let scanned = 0, reminded = 0, skipped = 0, errored = 0;
+  const errors = [];
+  try {
+    const users = await getAllUsersAcrossTenants();
+    for (const u of users) {
+      if (Date.now() - startedAt > budgetMs) { log.warn('check-upcoming: budget exhausted', { scanned }); break; }
+      try {
+        if (u.lastLoginAt && (now - new Date(u.lastLoginAt).getTime()) > DORMANT_MS) { skipped++; continue; }
+        if (await isEmailSuppressed(u.email)) { skipped++; continue; }
+
+        // Which recurring series does this user track — and which are LAPSING?
+        const { series } = await getUserMeetingSeries(u.domain, u.email);
+        const lapsing = new Map();
+        for (const s of (series || [])) {
+          if (!s.recurringEventId) continue;
+          const lastMs = typeof s.lastAt === 'number' ? s.lastAt : Date.parse(s.lastAt);
+          if (lastMs && (now - lastMs) >= LAPSE_MS) lapsing.set(s.recurringEventId, s.title);
+        }
+        if (!lapsing.size) { skipped++; continue; }
+
+        const userDoc = await getUser(u.domain, u.email);
+        if (!userDoc || !userDoc.refreshToken) { skipped++; continue; }
+        let accessToken;
+        try { accessToken = (await refreshAccessToken(userDoc.refreshToken)).access_token; }
+        catch (e) { log.warn('check-upcoming: token refresh failed', { email: u.email, error: e.message }); skipped++; continue; }
+
+        // Calendar instances starting inside the reminder window.
+        let items = [];
+        try {
+          const cal = google.calendar({ version: 'v3', auth: makeUserClient(accessToken) });
+          const resp = await cal.events.list({
+            calendarId: 'primary',
+            timeMin: new Date(now + WIN_FROM).toISOString(),
+            timeMax: new Date(now + WIN_TO).toISOString(),
+            singleEvents: true, orderBy: 'startTime', maxResults: 20,
+          });
+          items = (resp.data && resp.data.items) || [];
+        } catch (e) { log.warn('check-upcoming: calendar list failed', { email: u.email, error: e.message }); skipped++; continue; }
+        scanned++;
+
+        for (const ev of items) {
+          if (Date.now() - startedAt > budgetMs) break;
+          // Only an instance of a LAPSING series the user tracks, with a Meet link.
+          if (!ev.recurringEventId || !lapsing.has(ev.recurringEventId)) continue;
+          const hasMeet = !!ev.hangoutLink || !!(ev.conferenceData && ev.conferenceData.conferenceId);
+          const startIso = ev.start && (ev.start.dateTime || ev.start.date);
+          if (!hasMeet || !startIso) continue;
+
+          const dedupKey = `upcoming:${ev.id}`; // unique per calendar instance → once ever
+          const claim = await claimReengagementSlot(u.domain, u.email, dedupKey);
+          if (!claim.claimed) continue;
+          const minutesUntil = Math.max(0, Math.round((new Date(startIso).getTime() - now) / 60000));
+          const result = await sendUpcomingMeetingEmail({
+            to: u.email, displayName: u.displayName || null,
+            meetingTitle: ev.summary || lapsing.get(ev.recurringEventId) || 'your meeting',
+            minutesUntil,
+          });
+          if (!result || result.sent !== true) {
+            try { await claim.ref.delete(); } catch (_) { /* let a later run retry */ }
+            errored++; if (result && result.error) errors.push({ email: u.email, error: result.error });
+            continue;
+          }
+          logEvent(u.domain, { email: u.email, type: 'reengagement_fired', meta: { reminderType: 'upcoming_reminder', dedupKey } });
+          reminded++;
+        }
+      } catch (e) {
+        errored++; errors.push({ email: u.email, error: e.message });
+        log.warn('check-upcoming: user failed', { email: u.email, error: e.message });
+      }
+    }
+    log.info('check-upcoming sweep done', { scanned, reminded, skipped, errored });
+    res.json({ scanned, reminded, skipped, errored, errors: errors.slice(0, 20), tookMs: Date.now() - startedAt });
+  } catch (err) {
+    log.error('check-upcoming sweep failed', { error: err.message });
+    res.status(500).json({ error: 'check-upcoming sweep failed' });
   }
 });
 

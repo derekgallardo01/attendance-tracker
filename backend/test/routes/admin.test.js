@@ -46,6 +46,8 @@ jest.mock('../../src/services/firestore', () => ({
   // For the auto-capture sweep
   getUserSettings: jest.fn(),
   getExportedConferenceIds: jest.fn(),
+  // For the pre-meeting reminder sweep
+  getUserMeetingSeries: jest.fn(),
 }));
 jest.mock('../../src/services/googleAuth', () => ({
   refreshAccessToken: jest.fn(),
@@ -64,6 +66,10 @@ jest.mock('../../src/routes/sheets', () => {
   r.buildAndSaveExport = jest.fn();
   return r;
 });
+const mockCalEventsList = jest.fn();
+jest.mock('googleapis', () => ({
+  google: { calendar: jest.fn(() => ({ events: { list: (...a) => mockCalEventsList(...a) } })) },
+}));
 jest.mock('../../src/lib/notifications', () => ({
   sendAdminEmail: jest.fn(),
   sendWeeklySelfReport: jest.fn(),
@@ -74,6 +80,7 @@ jest.mock('../../src/lib/notifications', () => ({
   sendForgottenMeetingEmail: jest.fn(),
   sendComebackEmail: jest.fn(),
   sendExportGapEmail: jest.fn(),
+  sendUpcomingMeetingEmail: jest.fn(),
   flushDeferredNotifications: jest.fn(), // single flush point (signup + referral)
 }));
 
@@ -114,6 +121,9 @@ beforeEach(() => {
   sheetsMod.buildAndSaveExport.mockResolvedValue({ sheetUrl: 'https://sheet', isFirstExport: false });
   firestore.getUserSettings.mockResolvedValue({});
   firestore.getExportedConferenceIds.mockResolvedValue(new Set());
+  firestore.getUserMeetingSeries.mockResolvedValue({ series: [] });
+  notifications.sendUpcomingMeetingEmail.mockResolvedValue({ sent: true });
+  mockCalEventsList.mockResolvedValue({ data: { items: [] } });
   app = buildApp();
 });
 
@@ -789,6 +799,63 @@ describe('POST /api/admin/auto-capture — server-side auto-capture sweep', () =
     expect(res.status).toBe(200);
     expect(res.body.captured).toBe(0);
     expect(res.body.skippedUsers).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('POST /api/admin/check-upcoming — pre-meeting reminders for lapsing recurring trackers', () => {
+  const soon = () => new Date(Date.now() + 30 * 60000).toISOString();
+
+  test('403 without a scheduler secret or super-admin session', async () => {
+    const res = await request(app).post('/api/admin/check-upcoming').send({});
+    expect(res.status).toBe(403);
+  });
+
+  test('reminds about a LAPSING series with an upcoming Meet instance; ignores fresh series + no-Meet events', async () => {
+    firestore.getAllUsersAcrossTenants.mockResolvedValue([
+      { email: 'teacher@acme.com', domain: 'acme.com', displayName: 'Teacher', lastLoginAt: new Date().toISOString() },
+    ]);
+    firestore.getUserMeetingSeries.mockResolvedValue({ series: [
+      { recurringEventId: 'series-lapsed', title: 'Weekly Class', lastAt: Date.now() - 8 * 86400000 }, // lapsing
+      { recurringEventId: 'series-fresh',  title: 'Daily Class',  lastAt: Date.now() - 1 * 86400000 }, // NOT lapsing
+    ] });
+    firestore.getUser.mockResolvedValue({ refreshToken: 'rt' });
+    firestore.claimReengagementSlot.mockResolvedValue({ claimed: true, ref: { delete: jest.fn() } });
+    mockCalEventsList.mockResolvedValue({ data: { items: [
+      { id: 'inst-1', recurringEventId: 'series-lapsed', summary: 'Weekly Class', hangoutLink: 'https://meet.google.com/x', start: { dateTime: soon() } },
+      { id: 'inst-2', recurringEventId: 'series-fresh',  summary: 'Daily Class',  hangoutLink: 'https://meet.google.com/y', start: { dateTime: soon() } }, // fresh series → skip
+      { id: 'inst-3', recurringEventId: 'series-lapsed', summary: 'No Meet link',  start: { dateTime: soon() } },                                       // no Meet → skip
+    ] } });
+
+    const res = await request(app).post('/api/admin/check-upcoming')
+      .set('x-scheduler-secret', SCHEDULER_SECRET).set('Content-Type', 'application/json').send({});
+    expect(res.status).toBe(200);
+    expect(res.body.reminded).toBe(1);
+    expect(notifications.sendUpcomingMeetingEmail).toHaveBeenCalledTimes(1);
+    expect(notifications.sendUpcomingMeetingEmail).toHaveBeenCalledWith(expect.objectContaining({ to: 'teacher@acme.com', meetingTitle: 'Weekly Class' }));
+    expect(firestore.claimReengagementSlot).toHaveBeenCalledWith('acme.com', 'teacher@acme.com', 'upcoming:inst-1');
+  });
+
+  test('reliable trackers (no lapsing series) get nothing', async () => {
+    firestore.getAllUsersAcrossTenants.mockResolvedValue([{ email: 'reliable@acme.com', domain: 'acme.com', lastLoginAt: new Date().toISOString() }]);
+    firestore.getUserMeetingSeries.mockResolvedValue({ series: [{ recurringEventId: 'r1', title: 'Daily', lastAt: Date.now() - 2 * 86400000 }] });
+    const res = await request(app).post('/api/admin/check-upcoming')
+      .set('x-scheduler-secret', SCHEDULER_SECRET).set('Content-Type', 'application/json').send({});
+    expect(res.status).toBe(200);
+    expect(res.body.reminded).toBe(0);
+    expect(notifications.sendUpcomingMeetingEmail).not.toHaveBeenCalled();
+    expect(mockCalEventsList).not.toHaveBeenCalled(); // never even queries the calendar
+  });
+
+  test('a calendar-list failure skips the user without failing the sweep', async () => {
+    firestore.getAllUsersAcrossTenants.mockResolvedValue([{ email: 'x@acme.com', domain: 'acme.com', lastLoginAt: new Date().toISOString() }]);
+    firestore.getUserMeetingSeries.mockResolvedValue({ series: [{ recurringEventId: 'r1', title: 'Weekly', lastAt: Date.now() - 10 * 86400000 }] });
+    firestore.getUser.mockResolvedValue({ refreshToken: 'rt' });
+    mockCalEventsList.mockRejectedValue(new Error('calendar down'));
+    const res = await request(app).post('/api/admin/check-upcoming')
+      .set('x-scheduler-secret', SCHEDULER_SECRET).set('Content-Type', 'application/json').send({});
+    expect(res.status).toBe(200);
+    expect(res.body.reminded).toBe(0);
+    expect(res.body.skipped).toBeGreaterThanOrEqual(1);
   });
 });
 

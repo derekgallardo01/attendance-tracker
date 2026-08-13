@@ -836,6 +836,28 @@ async function sendExportGapEmail({ to, displayName, meetingTitle, daysSinceLogi
   });
 }
 
+// Pre-meeting reminder for a recurring series the user tracks but has been
+// slipping on — fired shortly before the next scheduled instance so it's
+// actionable ("open the panel when you join"). Self-limiting: the sweep only
+// qualifies LAPSING series, so reliable trackers never get these. Once per
+// calendar instance; honors the standard unsubscribe footer.
+async function sendUpcomingMeetingEmail({ to, displayName, meetingTitle, minutesUntil }) {
+  const when = minutesUntil <= 1 ? 'is starting now' : `starts in about ${minutesUntil} minutes`;
+  return sendPersonalEmail({
+    to, displayName,
+    subject: `Reminder: "${meetingTitle}" ${minutesUntil <= 1 ? 'is starting' : 'starts soon'}`,
+    lines: [
+      `Your recurring meeting "${meetingTitle}" ${when}. When you join, open the Attendance Tracker side panel and it'll capture who's there — then export the report in one click (or let it auto-export when the meeting ends).`,
+      '',
+      "You're getting this because you've tracked this meeting before but not in the last few days — just a nudge so it doesn't slip.",
+      '',
+      '— Derek',
+    ],
+    tags: [{ name: 'type', value: 'upcoming_reminder' }],
+    logLabel: 'upcoming-reminder', logMeta: { minutesUntil },
+  });
+}
+
 // ── Slack post-meeting digest ──
 // Posts a Block Kit message to a user-configured Slack incoming webhook
 // after every export. Fire-and-forget: failures are logged but don't break
@@ -936,7 +958,7 @@ async function sendSlackTestPing({ webhookUrl }) {
 
 module.exports = {
   sendSignupWebhook, maybeSendSignupNotification, sendReferralNotification, maybeSendReferralNotification, flushDeferredNotifications, sendAdminEmail, sendWeeklySelfReport, sendExportNotification,
-  sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail,
+  sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail,
   sendSlackDigest, sendSlackTestPing, buildSlackDigestBlocks, buildSlackFallbackText, maskSlackWebhook,
   unsubscribeUrl, unsubscribeToken, verifyUnsubscribeToken, unsubscribeFooter,
 };
