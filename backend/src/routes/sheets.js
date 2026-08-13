@@ -122,6 +122,29 @@ function buildClassSummaryValues(series, generatedAtIso) {
   return [...summary, header, ...rows];
 }
 
+// Free-plan preview of the cumulative class report. Instead of silently dropping
+// the Pro "Class Summary" tab for a free user, we add this compact teaser to the
+// exported sheet so the value — and the upgrade path — is visible right where the
+// teacher already looks, at the moment they feel the need for it.
+function buildClassSummaryTeaserValues(series) {
+  // Caller guarantees instanceCount >= 2; uniquePeople comes straight from the
+  // series aggregation — no defensive fallbacks needed (keeps branches tight).
+  const people = series.uniquePeople;
+  return [
+    [`Class Summary — ${series.title || 'Recurring class'}`],
+    [`This class has met ${series.instanceCount} times with ${people} ${people === 1 ? 'person' : 'people'} so far.`],
+    [],
+    ['⭐ Attendance Tracker Pro adds a cumulative per-student summary right here:'],
+    ['    • Attendance % for each student across every session'],
+    ['    • Sessions attended vs. total held, per person'],
+    ['    • Who is trending down — before they disappear'],
+    [],
+    ['You are on the free plan, so this tab shows just this preview.'],
+    ['Unlock the full class report for all your classes:'],
+    ['https://attendancetracker.dev/pricing'],
+  ];
+}
+
 router.post('/save-to-sheets', async (req, res) => {
   const { meetingTitle, tabName: clientTabName, exportedAt, participants, calendarAttendees = [], meetingStartTime, meetingType, eventStart, eventEnd, conferenceId, timezone, sendEmail, autoExport, recurringEventId, excusedEmails: excusedFromClient = [] } = req.body;
   if (!participants?.length) return res.status(400).json({ error: 'participants array is required' });
@@ -366,17 +389,25 @@ router.post('/save-to-sheets', async (req, res) => {
     });
 
     // Cumulative "Class Summary" tab for a recurring series — per-person
-    // attendance across every session (the teacher/education view). This is the
-    // individual-Pro hook: gated by planIsPro(domain, EMAIL) so a personal-Gmail
-    // user's own plan is checked (per-user billing), while the org tier uses the
-    // domain plan. Best-effort (never fails the export). Only 2+ instances,
-    // otherwise it just restates the single meeting.
-    if (recurringEventId && req.user && await planIsPro(req.user.domain, req.user.email)) {
+    // attendance across every session (the teacher/education view). For Pro users
+    // this is the real cross-session report (the individual-Pro hook: gated by
+    // planIsPro(domain, EMAIL) so a personal-Gmail user's own plan is checked for
+    // per-user billing, while the org tier uses the domain plan). For FREE users
+    // we still add a compact "Class Summary (Pro)" preview tab showing what Pro
+    // unlocks + an upgrade link — so the shared sheet itself surfaces the paywall
+    // at the moment of value, instead of silently dropping the feature.
+    // Best-effort (never fails the export). Only for series with 2+ instances.
+    if (recurringEventId && req.user) {
       try {
         const { series } = await getUserMeetingSeries(req.user.domain, req.user.email);
         const match = (series || []).find(s => s.recurringEventId === recurringEventId);
         if (match && match.instanceCount >= 2) {
-          const summaryTab = sanitizeTabName(`Class Summary — ${match.title || 'Recurring'}`);
+          const isPro = await planIsPro(req.user.domain, req.user.email);
+          const summaryTab = sanitizeTabName(
+            isPro
+              ? `Class Summary — ${match.title || 'Recurring'}`
+              : `Class Summary (Pro) — ${match.title || 'Recurring'}`
+          );
           try {
             await sheets.spreadsheets.batchUpdate({
               spreadsheetId,
@@ -387,7 +418,11 @@ router.post('/save-to-sheets', async (req, res) => {
             spreadsheetId,
             range: `'${summaryTab}'!A1`,
             valueInputOption: 'RAW',
-            requestBody: { values: buildClassSummaryValues(match, new Date(exportedAt).toISOString()) },
+            requestBody: {
+              values: isPro
+                ? buildClassSummaryValues(match, new Date(exportedAt).toISOString())
+                : buildClassSummaryTeaserValues(match),
+            },
           });
         }
       } catch (e) {

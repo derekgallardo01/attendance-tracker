@@ -695,4 +695,62 @@ describe('POST /api/save-to-sheets — Pro gating', () => {
     await new Promise((r) => setImmediate(r));
     expect(notifications.sendSlackDigest).toHaveBeenCalled();
   });
+
+  test('a FREE plan gets a "Class Summary (Pro)" teaser tab instead of the real summary', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUserMeetingSeries.mockResolvedValue({
+      series: [{ recurringEventId: 'series-1', title: 'Daily Standup', instanceCount: 3, uniquePeople: 2,
+        firstAt: '2026-06-01T10:00:00.000Z', lastAt: '2026-06-08T10:00:00.000Z',
+        people: [{ email: 'alex@acme.com', displayName: 'Alex', attended: 3, attendanceRate: 1, totalMinutes: 90 }] }],
+      totalSeries: 1,
+    });
+    const res = await request(app).post('/api/save-to-sheets')
+      .set(authedHeader('u@freeteaser.com', 'freeteaser.com')).set('Content-Type', 'application/json')
+      .send({ ...validPayload, recurringEventId: 'series-1' });
+    expect(res.status).toBe(200);
+    // The tab is created under a "(Pro)" name...
+    const addedTeaser = mockSheetsBatchUpdate.mock.calls.find(c =>
+      JSON.stringify(c[0].requestBody).includes('Class Summary (Pro)'));
+    expect(addedTeaser).toBeTruthy();
+    // ...and carries the upsell copy + upgrade link, NOT the real per-student header.
+    const teaserCall = mockSheetsUpdate.mock.calls.find(c => (c[0].range || '').includes('Class Summary'));
+    expect(teaserCall).toBeTruthy();
+    expect(JSON.stringify(teaserCall[0].requestBody.values)).toContain('attendancetracker.dev/pricing');
+    expect(teaserCall[0].requestBody.values).not.toContainEqual(
+      ['Name', 'Email', 'Sessions Attended', 'Total Sessions', 'Attendance %', 'Total Time (min)']);
+  });
+
+  test('teaser handles a title-less series and singular "person" pluralization', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUserMeetingSeries.mockResolvedValue({
+      series: [{ recurringEventId: 'series-2', instanceCount: 2, uniquePeople: 1, people: [] }],
+      totalSeries: 1,
+    });
+    const res = await request(app).post('/api/save-to-sheets')
+      .set(authedHeader('u@freeteaser2.com', 'freeteaser2.com')).set('Content-Type', 'application/json')
+      .send({ ...validPayload, recurringEventId: 'series-2' });
+    expect(res.status).toBe(200);
+    const teaserCall = mockSheetsUpdate.mock.calls.find(c => (c[0].range || '').includes('Class Summary'));
+    const flat = JSON.stringify(teaserCall[0].requestBody.values);
+    expect(flat).toContain('Recurring class'); // title fallback
+    expect(flat).toContain('1 person ');       // singular pluralization
+  });
+
+  test('a PRO plan still gets the real cumulative Class Summary (not the teaser)', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'pro' });
+    firestore.getUserMeetingSeries.mockResolvedValue({
+      series: [{ recurringEventId: 'series-1', title: 'Daily Standup', instanceCount: 3, uniquePeople: 2,
+        firstAt: '2026-06-01T10:00:00.000Z', lastAt: '2026-06-08T10:00:00.000Z',
+        people: [{ email: 'alex@acme.com', displayName: 'Alex', attended: 3, attendanceRate: 1, totalMinutes: 90 }] }],
+      totalSeries: 1,
+    });
+    const res = await request(app).post('/api/save-to-sheets')
+      .set(authedHeader('u@proteaser.com', 'proteaser.com')).set('Content-Type', 'application/json')
+      .send({ ...validPayload, recurringEventId: 'series-1' });
+    expect(res.status).toBe(200);
+    const summaryCall = mockSheetsUpdate.mock.calls.find(c => (c[0].range || '').includes('Class Summary'));
+    expect(summaryCall[0].requestBody.values).toContainEqual(
+      ['Name', 'Email', 'Sessions Attended', 'Total Sessions', 'Attendance %', 'Total Time (min)']);
+    expect(JSON.stringify(summaryCall[0].requestBody.values)).not.toContain('attendancetracker.dev/pricing');
+  });
 });

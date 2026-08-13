@@ -2485,6 +2485,19 @@ function emailAdminForSetup() {
 // hidden until Stripe is actually configured server-side (billingConfigured),
 // so there's no dead "Upgrade" button before monetization launches.
 let _isPro = false;
+let _billing = null; // cached /billing/status: { plan, billingConfigured, individual, annualAvailable }
+
+// Fetch billing status once and cache it, so the post-export upsell can decide
+// whether to show without requiring the user to open Settings first.
+async function ensureBilling() {
+  if (_billing) return _billing;
+  try {
+    const res = await authFetch(`${state.backendUrl}/billing/status`);
+    if (res.ok) _billing = await res.json();
+  } catch { /* leave null → upsell just won't show */ }
+  return _billing;
+}
+
 async function loadBillingStatus() {
   const box = document.getElementById('settings-billing');
   if (!box) return;
@@ -2492,12 +2505,19 @@ async function loadBillingStatus() {
     const res = await authFetch(`${state.backendUrl}/billing/status`);
     if (!res.ok) return;
     const data = await res.json();
+    _billing = data;
     if (!data.billingConfigured) { box.style.display = 'none'; return; }
     _isPro = data.plan === 'pro';
     const nameEl = document.getElementById('settings-plan-name');
     const btn = document.getElementById('settings-billing-btn');
+    const descEl = document.getElementById('settings-billing-desc');
     if (nameEl) nameEl.textContent = _isPro ? 'Pro' : 'Free';
     if (btn) btn.textContent = _isPro ? 'Manage billing' : 'Upgrade to Pro';
+    // Tier-aware copy: personal-Gmail users buy the individual plan (class report
+    // + auto-export + digests); Workspace domains buy the org/team plan.
+    if (descEl) descEl.textContent = data.individual
+      ? 'Pro unlocks the cumulative per-student class report, auto-export, and email digests.'
+      : 'Pro unlocks the org-wide team dashboard and auto-export for your whole domain.';
     box.style.display = 'block';
   } catch { /* leave hidden on error */ }
 }
@@ -3036,6 +3056,20 @@ function showCelebrateModal(sheetUrl) {
   );
   link.href = `mailto:?subject=${subject}&body=${body}`;
   modal.style.display = 'flex';
+  // Surface a Pro upsell inside the celebration — only for free users on a
+  // configured tier (personal → individual class report; workspace → team).
+  const proBlock = document.getElementById('celebrate-pro');
+  if (proBlock) {
+    proBlock.style.display = 'none';
+    ensureBilling().then((b) => {
+      if (!b || !b.billingConfigured || b.plan === 'pro') return;
+      const d = document.getElementById('celebrate-pro-desc');
+      if (d) d.textContent = b.individual
+        ? 'Pro adds a cumulative per-student attendance report across every session of your class.'
+        : 'Pro adds auto-export and an org-wide team attendance dashboard for your domain.';
+      proBlock.style.display = 'block';
+    });
+  }
 }
 
 function closeCelebrateModal() {
@@ -3861,7 +3895,7 @@ window.addEventListener('DOMContentLoaded', () => {
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
           <div>
             <div style="font-weight:600;font-size:.85rem;color:#e6edf3">Plan: <span id="settings-plan-name">Free</span></div>
-            <div style="color:#9ca3af;font-size:.72rem;margin-top:2px;line-height:1.4">Pro unlocks the org-wide team dashboard for your whole domain.</div>
+            <div id="settings-billing-desc" style="color:#9ca3af;font-size:.72rem;margin-top:2px;line-height:1.4">Pro unlocks the org-wide team dashboard for your whole domain.</div>
           </div>
           <button type="button" id="settings-billing-btn" onclick="handleBillingClick()" style="background:#4ade80;color:#0d1117;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.75rem;font-weight:600;white-space:nowrap">Upgrade</button>
         </div>
@@ -3885,6 +3919,11 @@ window.addEventListener('DOMContentLoaded', () => {
       <div style="display:flex;flex-direction:column;gap:8px">
         <a id="celebrate-share-link" href="#" style="background:#34A853;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:600;font-size:.85rem;display:inline-block">Share with a teammate</a>
         <button onclick="closeCelebrateModal()" style="background:transparent;color:#9ca3af;border:none;font-size:.8rem;cursor:pointer;padding:6px">No thanks</button>
+      </div>
+      <div id="celebrate-pro" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid #30363d;text-align:left">
+        <div style="color:#e6edf3;font-size:.85rem;font-weight:600;margin-bottom:4px">Get more with Pro</div>
+        <div id="celebrate-pro-desc" style="color:#9ca3af;font-size:.78rem;line-height:1.5;margin-bottom:10px">Pro adds a cumulative per-student attendance report across every session.</div>
+        <button type="button" onclick="handleBillingClick()" style="background:transparent;border:1px solid #4ade80;color:#4ade80;padding:9px 14px;border-radius:8px;cursor:pointer;font-size:.82rem;font-weight:600;width:100%">Upgrade to Pro</button>
       </div>
     </div>
   </div>
