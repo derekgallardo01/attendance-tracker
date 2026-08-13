@@ -278,6 +278,19 @@ gcloud scheduler jobs create http reengagement-daily \
   --headers="x-scheduler-secret=<your-secret>" \
   --location=us-central1 \
   --project=attendance-tracker-490319
+
+# OPTIONAL — server-side auto-capture (WS3b). Exports recent completed Meet
+# conferences for Pro users who enabled auto-export, even if the panel was closed
+# at meeting end. The /api/admin/auto-capture endpoint is inert until this job is
+# created. Run more often than daily so meetings are captured while the Meet REST
+# API still has the records (every 6h shown):
+gcloud scheduler jobs create http auto-capture \
+  --schedule="0 */6 * * *" \
+  --uri="https://attendance-tracker-backend-829771833968.us-central1.run.app/api/admin/auto-capture" \
+  --http-method=POST \
+  --headers="x-scheduler-secret=<your-secret>" \
+  --location=us-central1 \
+  --project=attendance-tracker-490319
 ```
 
 Manual trigger for testing:

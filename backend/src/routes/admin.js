@@ -2,12 +2,16 @@ const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed } = require('../services/firestore');
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds } = require('../services/firestore');
 const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, flushDeferredNotifications } = require('../lib/notifications');
 const { requireSuperAdmin, requireSuperAdminOrScheduler, requireKhMetricsKey } = require('../middleware/adminAuth');
 const { requireAuth } = require('../middleware/auth');
 const { domainOf } = require('../services/firestore/_core'); // pure util; imported directly (test firestore-mocks needn't stub it)
 const { ACQUISITION_SOURCES } = require('../lib/constants');
+const { planIsPro } = require('./billing');
+const { refreshAccessToken, makeUserClient } = require('../services/googleAuth');
+const { meetGet, meetGetAll } = require('../services/meetApi');
+const { buildAndSaveExport } = require('./sheets');
 
 const SUPER_ADMIN_EMAIL = CONFIG.superAdminEmail;
 const MARKETPLACE_REVIEW_URL = 'https://workspace.google.com/marketplace/app/attendance_tracker/829771833968';
@@ -768,6 +772,140 @@ router.post('/admin/verify-delegation', verifyDelegationLimiter, async (req, res
   } catch (err) {
     log.warn('admin: delegation verification failed', { error: err.message });
     res.json({ success: false, error: 'Domain-wide delegation is not configured correctly. Please check the setup steps and try again.' });
+  }
+});
+
+// ── Server-side auto-capture (WS3b) ──
+
+// Fetch a completed conference's participants server-side (mirrors the
+// /attendance route's participant + session shaping), shaped for
+// buildAndSaveExport (…ISO field names). Best-effort per participant: a failed
+// session fetch still yields a present-only row rather than dropping the person.
+async function fetchConferenceParticipants(recordName, token) {
+  const raw = await meetGetAll(`${recordName}/participants`, token, 'participants');
+  const out = [];
+  const BATCH = 10;
+  for (let i = 0; i < raw.length; i += BATCH) {
+    const results = await Promise.all(raw.slice(i, i + BATCH).map(async (p) => {
+      let sessions = [];
+      try { sessions = await meetGetAll(`${p.name}/participantSessions`, token, 'participantSessions'); }
+      catch (e) { log.warn('auto-capture: sessions fetch failed', { participant: p.name, error: e.message }); }
+      const joins  = sessions.map(s => s.startTime).filter(Boolean).map(t => new Date(t));
+      const leaves = sessions.map(s => s.endTime).filter(Boolean).map(t => new Date(t));
+      return {
+        displayName:  p.user?.displayName || p.signedinUser?.displayName || 'Unknown',
+        email:        p.user?.email || p.signedinUser?.email || '',
+        joinTimeISO:  joins.length  ? new Date(Math.min(...joins)).toISOString()  : null,
+        leaveTimeISO: leaves.length ? new Date(Math.max(...leaves)).toISOString() : null,
+        present:      sessions.some(s => !s.endTime),
+        sessions:     sessions.length || 1,
+      };
+    }));
+    out.push(...results);
+  }
+  return out;
+}
+
+// POST /api/admin/auto-capture — server-side attendance capture for Pro users who
+// enabled auto-export. The client auto-export only fires when the panel is open at
+// meeting end; this lists each opted-in user's recent COMPLETED Meet conferences
+// server-side and exports any that were never saved — so attendance still lands
+// when the panel was closed (or the host ran the class from a phone). Captures the
+// FINAL post-meeting roster (accurate attendance), not a live one. DORMANT until a
+// Cloud Scheduler job hits it. Same dual auth as the other sweeps.
+router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res) => {
+  const startedAt = Date.now();
+  const budgetMs = sweepBudgetMs();
+  const RECENT_MS = 2 * 24 * 60 * 60 * 1000; // only conferences that ended in the last 2 days
+  let scannedUsers = 0, captured = 0, skippedUsers = 0, errored = 0;
+  const errors = [];
+  try {
+    const users = await getAllUsersAcrossTenants();
+    for (const u of users) {
+      if (Date.now() - startedAt > budgetMs) { log.warn('auto-capture: budget exhausted', { scannedUsers }); break; }
+      try {
+        // Gate: opted into auto-export + Pro + has a stored refresh token.
+        const settings = await getUserSettings(u.domain, u.email);
+        if (!settings.autoExportOnEnd) { skippedUsers++; continue; }
+        if (!(await planIsPro(u.domain, u.email))) { skippedUsers++; continue; }
+        const userDoc = await getUser(u.domain, u.email);
+        if (!userDoc || !userDoc.refreshToken) { skippedUsers++; continue; }
+
+        // Mint a fresh access token from the stored refresh token.
+        let accessToken;
+        try {
+          const creds = await refreshAccessToken(userDoc.refreshToken);
+          accessToken = creds.access_token;
+        } catch (e) {
+          // Revoked/expired grant — skip quietly, not an alert-worthy error.
+          log.warn('auto-capture: token refresh failed', { email: u.email, error: e.message });
+          skippedUsers++; continue;
+        }
+
+        // Recent conference records for this user (most recent first).
+        let records = [];
+        try {
+          const data = await meetGet('conferenceRecords?pageSize=20', accessToken);
+          records = data.conferenceRecords || [];
+        } catch (e) {
+          log.warn('auto-capture: conferenceRecords list failed', { email: u.email, error: e.message });
+          skippedUsers++; continue;
+        }
+        const now = Date.now();
+        const completed = records.filter(r => r.endTime && (now - new Date(r.endTime).getTime()) < RECENT_MS);
+        if (!completed.length) { skippedUsers++; continue; }
+        scannedUsers++;
+
+        const alreadyExported = await getExportedConferenceIds(u.domain, u.email);
+        const sheetsAuth = makeUserClient(accessToken);
+
+        for (const rec of completed) {
+          if (Date.now() - startedAt > budgetMs) break;
+          // Resolve the meeting code (= our conferenceId) from the space so we can
+          // dedup against prior exports, which are keyed by code.
+          let meetingCode = null;
+          try {
+            if (rec.space) { const space = await meetGet(rec.space, accessToken); meetingCode = space.meetingCode || null; }
+          } catch (e) { log.warn('auto-capture: space fetch failed', { record: rec.name, error: e.message }); }
+          if (!meetingCode || alreadyExported.has(meetingCode)) continue;
+
+          try {
+            const participants = await fetchConferenceParticipants(rec.name, accessToken);
+            if (!participants.length) continue;
+            await buildAndSaveExport({
+              user: { domain: u.domain, email: u.email, displayName: u.displayName },
+              sheetsAuth,
+              data: {
+                meetingTitle: `Meeting ${meetingCode}`,
+                exportedAt: rec.endTime,
+                participants,
+                calendarAttendees: [],
+                meetingStartTime: rec.startTime || null,
+                meetingType: 'scheduled',
+                conferenceId: meetingCode,
+                timezone: settings.timezone || 'America/New_York',
+              },
+              options: { sendEmail: true, autoExport: true, proAllowed: true },
+            });
+            alreadyExported.add(meetingCode);
+            captured++;
+          } catch (e) {
+            errored++;
+            errors.push({ email: u.email, conferenceId: meetingCode, error: e.message });
+            log.warn('auto-capture: export failed', { email: u.email, conferenceId: meetingCode, error: e.message });
+          }
+        }
+      } catch (e) {
+        errored++;
+        errors.push({ email: u.email, error: e.message });
+        log.warn('auto-capture: user failed', { email: u.email, error: e.message });
+      }
+    }
+    log.info('auto-capture sweep done', { scannedUsers, captured, skippedUsers, errored });
+    res.json({ scannedUsers, captured, skippedUsers, errored, errors: errors.slice(0, 20), tookMs: Date.now() - startedAt });
+  } catch (err) {
+    log.error('auto-capture sweep failed', { error: err.message });
+    res.status(500).json({ error: 'Auto-capture sweep failed' });
   }
 });
 

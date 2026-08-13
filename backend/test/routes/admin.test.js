@@ -43,7 +43,27 @@ jest.mock('../../src/services/firestore', () => ({
   // For auth middleware
   getUser: jest.fn(),
   updateUserTokens: jest.fn(),
+  // For the auto-capture sweep
+  getUserSettings: jest.fn(),
+  getExportedConferenceIds: jest.fn(),
 }));
+jest.mock('../../src/services/googleAuth', () => ({
+  refreshAccessToken: jest.fn(),
+  makeUserClient: jest.fn(),
+}));
+jest.mock('../../src/services/meetApi', () => ({
+  meetGet: jest.fn(),
+  meetGetAll: jest.fn(),
+}));
+// Mock the sheets router with an empty Router that still carries a mocked
+// buildAndSaveExport (the export the auto-capture sweep imports). Keeps buildApp
+// mounting happy without pulling the real 390-line export pipeline into the test.
+jest.mock('../../src/routes/sheets', () => {
+  const express = require('express');
+  const r = express.Router();
+  r.buildAndSaveExport = jest.fn();
+  return r;
+});
 jest.mock('../../src/lib/notifications', () => ({
   sendAdminEmail: jest.fn(),
   sendWeeklySelfReport: jest.fn(),
@@ -59,6 +79,9 @@ jest.mock('../../src/lib/notifications', () => ({
 
 const firestore = require('../../src/services/firestore');
 const notifications = require('../../src/lib/notifications');
+const googleAuth = require('../../src/services/googleAuth');
+const meetApi = require('../../src/services/meetApi');
+const sheetsMod = require('../../src/routes/sheets');
 
 const SUPER_ADMIN = 'derekgallardo01@gmail.com';
 const SCHEDULER_SECRET = 'test-scheduler-secret-xyz';
@@ -85,6 +108,12 @@ beforeEach(() => {
   notifications.sendForgottenMeetingEmail.mockResolvedValue({ sent: true });
   notifications.sendComebackEmail.mockResolvedValue({ sent: true });
   notifications.sendExportGapEmail.mockResolvedValue({ sent: true });
+  // Auto-capture sweep defaults (individual tests override as needed).
+  googleAuth.refreshAccessToken.mockResolvedValue({ access_token: 'at', expiry_date: Date.now() + 3600000 });
+  googleAuth.makeUserClient.mockReturnValue({});
+  sheetsMod.buildAndSaveExport.mockResolvedValue({ sheetUrl: 'https://sheet', isFirstExport: false });
+  firestore.getUserSettings.mockResolvedValue({});
+  firestore.getExportedConferenceIds.mockResolvedValue(new Set());
   app = buildApp();
 });
 
@@ -661,6 +690,105 @@ describe('GET /api/admin/activation-funnel', () => {
     expect(res.status).toBe(200);
     expect(res.body.totals.realMeeting).toBe(1);
     expect(res.body.bySource[0].source).toBe('reddit');
+  });
+});
+
+describe('POST /api/admin/auto-capture — server-side auto-capture sweep', () => {
+  test('403 without a scheduler secret or super-admin session', async () => {
+    const res = await request(app).post('/api/admin/auto-capture').send({});
+    expect(res.status).toBe(403);
+  });
+
+  test('exports a recent completed conference never exported before; dedups the rest', async () => {
+    firestore.getAllUsersAcrossTenants.mockResolvedValue([
+      { email: 'pro@acme.com', domain: 'acme.com', displayName: 'Pro' },
+    ]);
+    firestore.getUserSettings.mockResolvedValue({ autoExportOnEnd: true });
+    firestore.getUser.mockResolvedValue({ email: 'pro@acme.com', domain: 'acme.com', refreshToken: 'rt' });
+    firestore.getExportedConferenceIds.mockResolvedValue(new Set(['old-code'])); // one already exported
+    const nowIso = new Date().toISOString();
+    meetApi.meetGet.mockImplementation(async (path) => {
+      if (path.startsWith('conferenceRecords?')) return { conferenceRecords: [
+        { name: 'conferenceRecords/r1', space: 'spaces/s1', startTime: nowIso, endTime: nowIso },
+        { name: 'conferenceRecords/r2', space: 'spaces/s2', startTime: nowIso, endTime: nowIso },
+      ] };
+      if (path === 'spaces/s1') return { meetingCode: 'new-code' };
+      if (path === 'spaces/s2') return { meetingCode: 'old-code' }; // deduped
+      return {};
+    });
+    meetApi.meetGetAll.mockImplementation(async (path, token, key) => {
+      if (key === 'participants') return [{ name: 'conferenceRecords/r1/participants/p1', user: { displayName: 'Alex', email: 'alex@acme.com' } }];
+      if (key === 'participantSessions') return [{ startTime: nowIso, endTime: nowIso }];
+      return [];
+    });
+
+    const res = await request(app).post('/api/admin/auto-capture')
+      .set('x-scheduler-secret', SCHEDULER_SECRET).set('Content-Type', 'application/json').send({});
+    expect(res.status).toBe(200);
+    expect(res.body.captured).toBe(1);
+    expect(sheetsMod.buildAndSaveExport).toHaveBeenCalledTimes(1);
+    const arg = sheetsMod.buildAndSaveExport.mock.calls[0][0];
+    expect(arg.data.conferenceId).toBe('new-code');
+    expect(arg.options).toMatchObject({ autoExport: true, sendEmail: true, proAllowed: true });
+    expect(arg.data.participants[0]).toMatchObject({ displayName: 'Alex', email: 'alex@acme.com' });
+    expect(arg.data.participants[0].joinTimeISO).toBeTruthy();
+  });
+
+  test('skips users without auto-export enabled or without a stored refresh token', async () => {
+    firestore.getAllUsersAcrossTenants.mockResolvedValue([
+      { email: 'off@acme.com', domain: 'acme.com' },
+      { email: 'notoken@acme.com', domain: 'acme.com' },
+    ]);
+    firestore.getUserSettings.mockImplementation(async (d, e) => e === 'off@acme.com' ? {} : { autoExportOnEnd: true });
+    firestore.getUser.mockResolvedValue({ refreshToken: null });
+    const res = await request(app).post('/api/admin/auto-capture')
+      .set('x-scheduler-secret', SCHEDULER_SECRET).set('Content-Type', 'application/json').send({});
+    expect(res.status).toBe(200);
+    expect(res.body.captured).toBe(0);
+    expect(sheetsMod.buildAndSaveExport).not.toHaveBeenCalled();
+  });
+
+  test('a revoked grant (token refresh throws) skips the user without failing the sweep', async () => {
+    firestore.getAllUsersAcrossTenants.mockResolvedValue([{ email: 'revoked@acme.com', domain: 'acme.com' }]);
+    firestore.getUserSettings.mockResolvedValue({ autoExportOnEnd: true });
+    firestore.getUser.mockResolvedValue({ refreshToken: 'rt' });
+    googleAuth.refreshAccessToken.mockRejectedValueOnce(new Error('invalid_grant'));
+    const res = await request(app).post('/api/admin/auto-capture')
+      .set('x-scheduler-secret', SCHEDULER_SECRET).set('Content-Type', 'application/json').send({});
+    expect(res.status).toBe(200);
+    expect(res.body.captured).toBe(0);
+    expect(res.body.skippedUsers).toBeGreaterThanOrEqual(1);
+  });
+
+  test('a per-meeting export failure is counted (errored) but does not abort the sweep', async () => {
+    firestore.getAllUsersAcrossTenants.mockResolvedValue([{ email: 'pro@acme.com', domain: 'acme.com' }]);
+    firestore.getUserSettings.mockResolvedValue({ autoExportOnEnd: true });
+    firestore.getUser.mockResolvedValue({ refreshToken: 'rt' });
+    const nowIso = new Date().toISOString();
+    meetApi.meetGet.mockImplementation(async (path) =>
+      path.startsWith('conferenceRecords?')
+        ? { conferenceRecords: [{ name: 'conferenceRecords/r1', space: 'spaces/s1', startTime: nowIso, endTime: nowIso }] }
+        : { meetingCode: 'code-1' });
+    meetApi.meetGetAll.mockImplementation(async (p, t, key) =>
+      key === 'participants' ? [{ name: 'x/p1', user: { displayName: 'A', email: 'a@acme.com' } }] : [{ startTime: nowIso, endTime: nowIso }]);
+    sheetsMod.buildAndSaveExport.mockRejectedValueOnce(new Error('drive quota'));
+    const res = await request(app).post('/api/admin/auto-capture')
+      .set('x-scheduler-secret', SCHEDULER_SECRET).set('Content-Type', 'application/json').send({});
+    expect(res.status).toBe(200);
+    expect(res.body.captured).toBe(0);
+    expect(res.body.errored).toBe(1);
+  });
+
+  test('a conferenceRecords listing failure skips the user gracefully', async () => {
+    firestore.getAllUsersAcrossTenants.mockResolvedValue([{ email: 'pro@acme.com', domain: 'acme.com' }]);
+    firestore.getUserSettings.mockResolvedValue({ autoExportOnEnd: true });
+    firestore.getUser.mockResolvedValue({ refreshToken: 'rt' });
+    meetApi.meetGet.mockRejectedValue(new Error('meet api down'));
+    const res = await request(app).post('/api/admin/auto-capture')
+      .set('x-scheduler-secret', SCHEDULER_SECRET).set('Content-Type', 'application/json').send({});
+    expect(res.status).toBe(200);
+    expect(res.body.captured).toBe(0);
+    expect(res.body.skippedUsers).toBeGreaterThanOrEqual(1);
   });
 });
 
