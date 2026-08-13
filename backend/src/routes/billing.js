@@ -3,7 +3,7 @@ const { requireAuth } = require('../middleware/auth');
 const express = require('express');
 const log = require('../lib/logger');
 const CONFIG = require('../config');
-const { getTenantPlan, setTenantPlan, getUserPlan, setUserPlan } = require('../services/firestore');
+const { getTenantPlan, setTenantPlan, getUserPlan, setUserPlan, countUserExports } = require('../services/firestore');
 const { PERSONAL_EMAIL_DOMAINS } = require('../services/firestore/_core');
 
 // Personal-email tenants (gmail.com etc.) are shared by unrelated users, so they
@@ -120,11 +120,15 @@ router.get('/billing/status', requireAuth, async (req, res) => {
     const annualAvailable = individual
       ? !!process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID
       : !!process.env.STRIPE_ANNUAL_PRICE_ID;
+    // exportCount drives the in-panel "Pro milestone" upsell (fires once a free
+    // user has exported a few meetings) — device-independent, unlike a local tally.
+    const exportCount = await countUserExports(req.user.domain, req.user.email);
     res.json({
       ...plan,
       individual,
       billingConfigured: individual ? individualBillingConfigured() : billingConfigured(),
       annualAvailable,
+      exportCount,
     });
   } catch (err) {
     log.error('billing: status failed', { domain: req.user.domain, error: err.message });
