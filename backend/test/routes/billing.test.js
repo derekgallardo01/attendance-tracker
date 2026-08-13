@@ -20,7 +20,6 @@ jest.mock('../../src/services/firestore', () => ({
   setUserPlan: jest.fn(),
   getUser: jest.fn(),
   updateUserTokens: jest.fn(),
-  countUserExports: jest.fn(),
   getTeamAdminStatus: jest.fn(), // requireTeamAdmin (runs before requireProPlan on /team/overview)
 }));
 
@@ -33,7 +32,6 @@ beforeEach(() => {
   firestore.getUser.mockImplementation(async (domain, email) => ({ email, domain }));
   firestore.getTenantPlan.mockResolvedValue({ plan: 'free', billingStatus: null, stripeCustomerId: null });
   firestore.getUserPlan.mockResolvedValue({ plan: 'free', billingStatus: null, stripeCustomerId: null });
-  firestore.countUserExports.mockResolvedValue(0);
   delete process.env.STRIPE_SECRET_KEY;
   delete process.env.STRIPE_PRICE_ID;
   delete process.env.STRIPE_WEBHOOK_SECRET;
@@ -77,17 +75,6 @@ describe('billing — not configured (pre-launch defaults)', () => {
     expect(res.status).toBe(200);
     expect(res.body.plan).toBe('free');
     expect(res.body.billingConfigured).toBe(false);
-    expect(res.body.exportCount).toBe(0);
-  });
-
-  test('GET /billing/status surfaces the export count (drives the Pro milestone nudge)', async () => {
-    firestore.countUserExports.mockResolvedValue(3);
-    const res = await request(app)
-      .get('/api/billing/status')
-      .set(authedHeader('admin@acme.com', 'acme.com'));
-    expect(res.status).toBe(200);
-    expect(res.body.exportCount).toBe(3);
-    expect(firestore.countUserExports).toHaveBeenCalledWith('acme.com', 'admin@acme.com');
   });
 });
 

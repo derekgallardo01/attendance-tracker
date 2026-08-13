@@ -3035,8 +3035,6 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     }
     // Update activation state so the nudge banner hides itself
     refreshActivationStatus();
-    // Pro milestone upsell — fires once after a free user has exported a few meetings.
-    maybeShowProMilestone(isFirstExport, opts.autoExport);
   } catch (err) {
     logUserEvent('export_failed', { reason: 'error', message: String(err.message || err).slice(0, 200) });
     toast(`⚠ Sheets error: ${err.message}`);
@@ -3083,45 +3081,6 @@ function closeCelebrateModal() {
     saveState();
     setTimeout(() => showSurveyModal(), 400);
   }
-}
-
-// ── Pro milestone upsell ──
-// Fires once ever (localStorage) after a free user has exported >= PRO_MILESTONE_AT
-// meetings — a single, dismissible nudge that leads with the "make it recurring"
-// tip (the one path a one-off user has to real Pro value). Never stacks with the
-// first-export celebrate modal or the source-capture modal.
-const PRO_MILESTONE_AT = 3;
-async function maybeShowProMilestone(isFirstExport, isAuto) {
-  try { if (localStorage.getItem('att_pro_milestone_shown')) return; } catch (e) { return; }
-  if (isFirstExport && !isAuto) return;   // the celebrate modal owns the first export
-  if (state._needsSource) return;         // don't stack with the source-capture modal
-  let b;
-  try {
-    const res = await authFetch(`${state.backendUrl}/billing/status`);
-    if (!res.ok) return;
-    b = await res.json();
-    _billing = b; // refresh the cache WS1's upsells read
-  } catch (e) { return; }
-  if (!b.billingConfigured || b.plan === 'pro' || (b.exportCount || 0) < PRO_MILESTONE_AT) return;
-  showMilestoneModal(b);
-}
-
-function showMilestoneModal(b) {
-  const m = document.getElementById('milestone-modal');
-  if (!m) return;
-  const title = document.getElementById('milestone-title');
-  const desc = document.getElementById('milestone-desc');
-  if (title) title.textContent = `You've tracked ${b.exportCount} meetings 🎉`;
-  if (desc) desc.textContent = b.individual
-    ? 'Do any of them repeat? Put the class on a recurring Google Calendar invite and Pro gives you a cumulative per-student attendance report across every session — who\'s slipping, who\'s perfect, all in one sheet.'
-    : 'Pro adds auto-export and an org-wide team attendance dashboard. Recurring classes also get a cumulative per-student report across every session.';
-  m.style.display = 'flex';
-  try { localStorage.setItem('att_pro_milestone_shown', '1'); } catch (e) { /* private mode — just show once per session */ }
-}
-
-function closeMilestoneModal() {
-  const m = document.getElementById('milestone-modal');
-  if (m) m.style.display = 'none';
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -3174,7 +3133,6 @@ document.addEventListener('keydown', (e) => {
   const overlays = [
     ['settings-modal', closeSettingsModal],
     ['celebrate-modal', typeof closeCelebrateModal === 'function' ? closeCelebrateModal : null],
-    ['milestone-modal', typeof closeMilestoneModal === 'function' ? closeMilestoneModal : null],
     ['source-modal', typeof closeSourceModal === 'function' ? closeSourceModal : null],
     ['profile-modal', typeof closeProfileModal === 'function' ? closeProfileModal : null],
     ['match-modal', typeof closeMatchModal === 'function' ? closeMatchModal : null],
@@ -3966,19 +3924,6 @@ window.addEventListener('DOMContentLoaded', () => {
         <div style="color:#e6edf3;font-size:.85rem;font-weight:600;margin-bottom:4px">Get more with Pro</div>
         <div id="celebrate-pro-desc" style="color:#9ca3af;font-size:.78rem;line-height:1.5;margin-bottom:10px">Pro adds a cumulative per-student attendance report across every session.</div>
         <button type="button" onclick="handleBillingClick()" style="background:transparent;border:1px solid #4ade80;color:#4ade80;padding:9px 14px;border-radius:8px;cursor:pointer;font-size:.82rem;font-weight:600;width:100%">Upgrade to Pro</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── Pro Milestone Modal (free user, ≥3 exports, once) ── -->
-  <div id="milestone-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center;padding:20px">
-    <div style="background:#161b22;border:1px solid #30363d;border-radius:14px;padding:24px;max-width:400px;width:100%;text-align:center">
-      <div style="font-size:2rem;margin-bottom:8px">📊</div>
-      <div id="milestone-title" style="font-size:1.05rem;font-weight:700;color:#e6edf3;margin-bottom:8px">You've tracked 3 meetings 🎉</div>
-      <div id="milestone-desc" style="color:#9ca3af;font-size:.85rem;line-height:1.55;margin-bottom:18px">Do any of them repeat? Put the class on a recurring Google Calendar invite and Pro gives you a cumulative per-student attendance report across every session.</div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <button type="button" onclick="handleBillingClick()" style="background:#34A853;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-weight:600;font-size:.85rem;cursor:pointer">Upgrade to Pro</button>
-        <button type="button" onclick="closeMilestoneModal()" style="background:transparent;color:#9ca3af;border:none;font-size:.8rem;cursor:pointer;padding:6px">Maybe later</button>
       </div>
     </div>
   </div>
