@@ -203,9 +203,10 @@
                 <th>Title</th>
                 <th class="right">Present</th>
                 <th class="right">Duration</th>
+                <th class="right nowrap">Export</th>
               </tr>
             </thead>
-            <tbody id="meetings-rows"><tr><td colspan="4" class="muted">No meetings tracked yet.</td></tr></tbody>
+            <tbody id="meetings-rows"><tr><td colspan="5" class="muted">No meetings tracked yet.</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -466,7 +467,7 @@
       const rows = AttHistory.filterMeetings(data.meetings, document.getElementById('search-meetings').value);
       const body = document.getElementById('meetings-rows');
       if (!rows.length) {
-        body.innerHTML = '<tr><td colspan="4" class="muted">No meetings match.</td></tr>';
+        body.innerHTML = '<tr><td colspan="5" class="muted">No meetings match.</td></tr>';
         return;
       }
       body.innerHTML = rows.map(m => `
@@ -475,8 +476,39 @@
           <td>${esc(m.title)}<div class="muted" style="font-size:.72rem;margin-top:2px">${esc((m.presentNames || []).slice(0, 4).join(', '))}${m.presentNames && m.presentNames.length > 4 ? ` +${m.presentNames.length - 4} more` : ''}</div></td>
           <td class="right">${m.participantCount || 0}</td>
           <td class="right nowrap">${fmtDuration(m.durationMs)}</td>
+          <td class="right nowrap">${m.conferenceId ? `<a href="#" onclick="downloadMeetingArtifact('${esc(m.conferenceId)}','report');return false" title="Attendance report PDF" style="color:var(--accent);text-decoration:none">PDF</a> <a href="#" onclick="downloadMeetingArtifact('${esc(m.conferenceId)}','certificates');return false" title="Per-attendee certificates (Pro)" style="color:var(--accent);text-decoration:none;margin-left:8px">🎓</a>` : '<span class="muted">—</span>'}</td>
         </tr>
       `).join('');
+    }
+
+    // Regenerate a PDF report / certificates for a past meeting from persisted
+    // attendance (backend loads it by conferenceId — no live participant data
+    // needed). Certificates are Pro; a free user gets a single clear message.
+    async function downloadMeetingArtifact(conferenceId, type) {
+      if (!conferenceId) { alert('This meeting has no stored attendance to export.'); return; }
+      const m = (data.meetings || []).find(x => x.conferenceId === conferenceId);
+      const title = (m && m.title) || 'meeting';
+      try {
+        const res = await fetch(`${BACKEND_URL}/export/pdf`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}` },
+          body: JSON.stringify({ type, conferenceId }),
+        });
+        if (res.status === 402) { alert('Certificates are a Pro feature — upgrade on this page to issue them.'); return; }
+        if (!res.ok) { let b = {}; try { b = await res.json(); } catch (e) {} alert(`Couldn't generate the PDF: ${b.error || res.status}`); return; }
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const base = type === 'certificates' ? 'certificates' : 'attendance';
+        a.download = `${base}-${String(title).replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 40) || 'meeting'}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+      } catch (e) {
+        alert('Could not generate the PDF right now. Please try again.');
+      }
     }
 
     function renderPeople() {
