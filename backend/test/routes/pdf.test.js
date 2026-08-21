@@ -8,6 +8,7 @@ jest.mock('../../src/services/firestore', () => ({
   getUser: jest.fn(),
   updateUserTokens: jest.fn(),
   getMeetingWithParticipants: jest.fn(),
+  saveVerifications: jest.fn(),
   getTenantPlan: jest.fn(),
   getUserPlan: jest.fn(),
 }));
@@ -110,6 +111,12 @@ describe('certificates (Pro-gated)', () => {
     expect(res.headers['content-type']).toBe('application/pdf');
     expect(res.headers['content-disposition']).toContain('certificates-cle.pdf');
     expect(res.body.slice(0, 5).toString('latin1')).toBe('%PDF-');
+    // each issued certificate is recorded for the public verify page
+    expect(firestore.saveVerifications).toHaveBeenCalledTimes(1);
+    const records = firestore.saveVerifications.mock.calls[0][0];
+    expect(records).toHaveLength(2);
+    expect(records[0]).toMatchObject({ type: 'certificate', session: 'CLE', domain: 'acme.com' });
+    expect(records[0].code).toMatch(/^AT-[0-9A-F]{8}$/);
   });
 
   test('400 when there are no present attendees to certify', async () => {

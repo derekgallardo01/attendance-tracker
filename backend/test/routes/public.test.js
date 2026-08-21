@@ -10,6 +10,7 @@ jest.mock('../../src/services/firestore', () => ({
   resolveShareLink: jest.fn(),
   getSharedSeriesView: jest.fn(),
   suppressEmail: jest.fn(),
+  getVerification: jest.fn(),
   // Auth middleware deps (unused on public routes but module is loaded)
   getUser: jest.fn(),
   updateUserTokens: jest.fn(),
@@ -245,6 +246,35 @@ describe('GET /api/public/share/:token', () => {
       title: 'X', instanceCount: 1, uniquePeople: 0, people: [],
     });
     const res = await request(app).get('/api/public/share/valid-token');
+    expect(res.headers['cache-control']).toContain('no-store');
+  });
+});
+
+describe('GET /api/public/verify/:code', () => {
+  test('400 for a malformed code (never touches Firestore)', async () => {
+    const res = await request(app).get('/api/public/verify/not-a-code');
+    expect(res.status).toBe(400);
+    expect(res.body.verified).toBe(false);
+    expect(firestore.getVerification).not.toHaveBeenCalled();
+  });
+
+  test('404 when the code is well-formed but unknown', async () => {
+    firestore.getVerification.mockResolvedValue(null);
+    const res = await request(app).get('/api/public/verify/AT-1A2B3C4D');
+    expect(res.status).toBe(404);
+    expect(res.body.verified).toBe(false);
+    expect(firestore.getVerification).toHaveBeenCalledWith('AT-1A2B3C4D');
+  });
+
+  test('200 verified record (lowercased code is normalized)', async () => {
+    firestore.getVerification.mockResolvedValue({
+      code: 'AT-1A2B3C4D', type: 'certificate', attendeeName: 'Ada', session: 'CLE Ethics',
+      dateLabel: 'Thu, Aug 20, 2026', detailLabel: '1.5 credit hours', issuer: 'Dr. Host', issuedAt: '2026-08-21T00:00:00.000Z',
+    });
+    const res = await request(app).get('/api/public/verify/at-1a2b3c4d');
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ verified: true, attendeeName: 'Ada', session: 'CLE Ethics', detailLabel: '1.5 credit hours' });
+    expect(firestore.getVerification).toHaveBeenCalledWith('AT-1A2B3C4D');
     expect(res.headers['cache-control']).toContain('no-store');
   });
 });

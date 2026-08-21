@@ -2,7 +2,7 @@ const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
 const { FieldValue } = require('@google-cloud/firestore');
 const log = require('../lib/logger');
-const { getDb, resolveShareLink, getSharedSeriesView, suppressEmail } = require('../services/firestore');
+const { getDb, resolveShareLink, getSharedSeriesView, suppressEmail, getVerification } = require('../services/firestore');
 const { sendFeedbackEmail, verifyUnsubscribeToken } = require('../lib/notifications');
 const { escapeHtml } = require('../lib/html');
 
@@ -178,6 +178,26 @@ router.get('/public/share/:token', async (req, res) => {
   } catch (err) {
     log.error('share: resolve failed', { error: err.message });
     res.status(500).json({ error: 'Failed to load shared view' });
+  }
+});
+
+// GET /api/public/verify/:code — Independently confirm an issued attendance
+// certificate. Unauth by design: a registrar / bar association holds only the
+// code printed on the certificate. Returns just what the certificate already
+// shows (name, session, date, credit/duration, issuer) — no email, no ids.
+router.get('/public/verify/:code', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const code = String(req.params.code || '').trim().toUpperCase();
+  if (!/^AT-[0-9A-F]{8}$/.test(code)) {
+    return res.status(400).json({ verified: false, error: 'Invalid verification code format.' });
+  }
+  try {
+    const record = await getVerification(code);
+    if (!record) return res.status(404).json({ verified: false });
+    res.json({ verified: true, ...record });
+  } catch (err) {
+    log.error('verify: lookup failed', { error: err.message });
+    res.status(500).json({ verified: false, error: 'Verification lookup failed.' });
   }
 });
 

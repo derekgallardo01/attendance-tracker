@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0d1117" />
+  <title>Verify an attendance certificate — Attendance Tracker</title>
+  <meta name="description" content="Independently confirm a Google Meet attendance certificate issued by Attendance Tracker. Enter the verification code printed on the certificate." />
+  <meta property="og:title" content="Verify an attendance certificate" />
+  <meta property="og:description" content="Confirm a Google Meet attendance certificate issued by Attendance Tracker." />
+  <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
+  <style>
+    :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #4ade80; --blue: #58a6ff; --red: #f85149; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 40px 20px; }
+    .container { max-width: 620px; margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; color: var(--muted); font-size: .82rem; }
+    .brand img { width: 24px; height: 24px; border-radius: 5px; }
+    .brand a { color: var(--accent); text-decoration: none; }
+    h1 { font-size: 1.5rem; margin-bottom: 8px; }
+    .lead { color: var(--muted); font-size: .9rem; margin-bottom: 24px; line-height: 1.5; }
+    .lookup { display: flex; gap: 8px; margin-bottom: 26px; }
+    .lookup input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 11px 14px; font-size: .95rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .03em; }
+    .lookup button { background: #34A853; color: #fff; border: none; border-radius: 8px; padding: 0 20px; font-weight: 600; font-size: .9rem; cursor: pointer; }
+    #status { display: none; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; }
+    .badge { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.05rem; margin-bottom: 18px; }
+    .badge.ok { color: var(--accent); }
+    .badge.bad { color: var(--red); }
+    .row { display: flex; justify-content: space-between; gap: 16px; padding: 11px 0; border-bottom: 1px solid var(--border); font-size: .92rem; }
+    .row:last-child { border-bottom: none; }
+    .row .k { color: var(--muted); }
+    .row .v { text-align: right; font-weight: 600; }
+    .code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--blue); }
+    .error { background: rgba(248, 81, 73, .08); border: 1px solid rgba(248, 81, 73, .25); color: var(--red); padding: 18px; border-radius: 12px; }
+    .hint { color: var(--muted); font-size: .82rem; margin-top: 14px; line-height: 1.5; }
+    .cta { background: linear-gradient(135deg, rgba(74,222,128,.08), rgba(88,166,255,.08)); border: 1px solid rgba(74,222,128,.25); border-radius: 14px; padding: 24px; text-align: center; margin-top: 30px; }
+    .cta h3 { font-size: 1rem; margin-bottom: 6px; }
+    .cta p { color: var(--muted); font-size: .86rem; margin-bottom: 16px; }
+    .btn { display: inline-block; background: #34A853; color: #fff; text-decoration: none; padding: 11px 24px; border-radius: 8px; font-weight: 600; font-size: .9rem; }
+    .footer { text-align: center; color: var(--muted); font-size: .75rem; margin-top: 34px; }
+    .footer a { color: var(--muted); text-decoration: none; }
+    @media (max-width: 640px) { body { padding: 22px 14px; } h1 { font-size: 1.28rem; } .lookup { flex-direction: column; } .lookup button { padding: 11px; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <img src="icons/icon-96.png" alt="" />
+      <span><a href="https://attendancetracker.dev/">Attendance Tracker</a> · Certificate verification</span>
+    </div>
+    <h1>Verify an attendance certificate</h1>
+    <p class="lead">Enter the verification code printed at the bottom of the certificate (it looks like <span class="code">AT-1A2B3C4D</span>) to independently confirm it was issued by Attendance Tracker.</p>
+
+    <form class="lookup" onsubmit="return doVerify();">
+      <input id="code" type="text" placeholder="AT-XXXXXXXX" autocomplete="off" spellcheck="false" aria-label="Verification code" />
+      <button type="submit">Verify</button>
+    </form>
+
+    <div id="loading" style="display:none; color:var(--muted); text-align:center; padding:20px;">Checking…</div>
+    <div id="status"></div>
+
+    <div class="cta">
+      <h3>Issue verifiable certificates for your own meetings</h3>
+      <p>Attendance Tracker records who attended any Google Meet call and generates certificates like this — with join/leave times and a verification code.</p>
+      <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=verify_page" target="_blank" rel="noopener">Install from Marketplace</a>
+    </div>
+
+    <div class="footer">
+      <a href="https://attendancetracker.dev/">attendancetracker.dev</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a>
+    </div>
+  </div>
+
+  <script>
+    const BACKEND_URL = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
+    const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    function row(k, v) { return v ? `<div class="row"><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>` : ''; }
+
+    function renderVerified(d) {
+      const detail = d.detailLabel ? d.detailLabel : null;
+      return `<div class="card">
+        <div class="badge ok">✓ Verified certificate</div>
+        ${row('Attendee', d.attendeeName)}
+        ${row('Session', d.session)}
+        ${row('Date', d.dateLabel)}
+        ${detail ? row('Duration / credit', detail) : ''}
+        ${row('Issued by', d.issuer)}
+        <div class="row"><span class="k">Verification code</span><span class="v code">${esc(d.code)}</span></div>
+        ${d.issuedAt ? `<div class="hint">Recorded ${esc(new Date(d.issuedAt).toLocaleString())}. This confirms Attendance Tracker issued this certificate from recorded Google Meet attendance.</div>` : ''}
+      </div>`;
+    }
+
+    function renderNotFound(code, badFormat) {
+      return `<div class="error"><strong>${badFormat ? 'That doesn’t look like a valid code.' : 'No certificate found for this code.'}</strong>
+        <div style="margin-top:6px;font-size:.85rem">${badFormat ? 'Codes look like AT- followed by 8 characters.' : 'Check the code on the certificate and try again. Very old certificates issued before verification launched may not be on file.'}</div></div>`;
+    }
+
+    async function doVerify() {
+      const input = document.getElementById('code');
+      const statusEl = document.getElementById('status');
+      const loadingEl = document.getElementById('loading');
+      const code = (input.value || '').trim().toUpperCase();
+      statusEl.style.display = 'none';
+      if (!/^AT-[0-9A-F]{8}$/.test(code)) {
+        statusEl.innerHTML = renderNotFound(code, true);
+        statusEl.style.display = 'block';
+        return false;
+      }
+      // Reflect the code in the URL so the result is shareable/bookmarkable.
+      try { history.replaceState(null, '', `verify.html?c=${encodeURIComponent(code)}`); } catch (e) {}
+      loadingEl.style.display = 'block';
+      try {
+        const res = await fetch(`${BACKEND_URL}/public/verify/${encodeURIComponent(code)}`);
+        loadingEl.style.display = 'none';
+        if (res.status === 404) { statusEl.innerHTML = renderNotFound(code, false); }
+        else if (!res.ok) { throw new Error(res.status); }
+        else { statusEl.innerHTML = renderVerified(await res.json()); }
+      } catch (e) {
+        loadingEl.style.display = 'none';
+        statusEl.innerHTML = `<div class="error"><strong>Couldn’t check right now.</strong><div style="margin-top:6px;font-size:.85rem">Please try again in a moment.</div></div>`;
+      }
+      statusEl.style.display = 'block';
+      return false;
+    }
+
+    // Auto-verify when arriving via the URL on a certificate (?c=CODE).
+    (function () {
+      const c = new URLSearchParams(window.location.search).get('c');
+      if (c) { document.getElementById('code').value = c.trim().toUpperCase(); doVerify(); }
+    })();
+  </script>
+</body>
+</html>

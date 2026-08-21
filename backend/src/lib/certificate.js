@@ -283,9 +283,9 @@ function drawCertificate(doc, font, m) {
   doc.lineWidth(0.75).strokeColor('#9ca3af').moveTo(cx - 130, sigY).lineTo(cx + 130, sigY).stroke();
   doc.fillColor('#374151').fontSize(11).text(m.issuer || 'Issued by the meeting host', 0, sigY + 6, { width: w, align: 'center' });
 
-  // Footer band
+  // Footer band — includes the public verification URL so a registrar can confirm.
   doc.fillColor('#9ca3af').fontSize(8)
-    .text(`${m.footer}   ·   Verification: ${m.verificationCode}`, 0, h - 60, { width: w, align: 'center' });
+    .text(`${m.footer}   ·   Verify at attendancetracker.dev/verify.html?c=${m.verificationCode}`, 0, h - 60, { width: w, align: 'center' });
 }
 
 /* istanbul ignore next: thin pdfkit shell, asserted structurally in tests. */

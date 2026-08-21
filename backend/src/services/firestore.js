@@ -313,6 +313,65 @@ async function getMeetingWithParticipants(domain, conferenceId) {
   }
 }
 
+// Persist verification records for issued certificates so the public
+// /verify page can independently confirm one. Keyed by the certificate's
+// deterministic code in a TOP-LEVEL collection (a verifier has only the code,
+// not the tenant). Idempotent — re-issuing the same certificate overwrites the
+// same doc. Best-effort: never throw (a failed record must not fail the PDF).
+async function saveVerifications(records) {
+  if (!Array.isArray(records) || !records.length) return;
+  try {
+    const db = getDb();
+    const now = FieldValue.serverTimestamp();
+    const CHUNK = 450;
+    for (let i = 0; i < records.length; i += CHUNK) {
+      const batch = db.batch();
+      for (const r of records.slice(i, i + CHUNK)) {
+        if (!r || !r.code) continue;
+        batch.set(db.collection('verifications').doc(r.code), {
+          code: r.code,
+          type: r.type || 'certificate',
+          attendeeName: r.attendeeName || null,
+          session: r.session || null,
+          dateLabel: r.dateLabel || null,
+          detailLabel: r.detailLabel || null,
+          issuer: r.issuer || null,
+          domain: r.domain || null,
+          conferenceId: r.conferenceId || null,
+          issuedAt: now,
+        }, { merge: true });
+      }
+      await batch.commit();
+    }
+  } catch (err) {
+    log.warn('firestore: saveVerifications failed', { count: records.length, error: err.message });
+  }
+}
+
+// Public read for the verify page. Returns a sanitized record (no email, no
+// internal ids) or null. issuedAt is converted to ISO for the API.
+async function getVerification(code) {
+  if (!code) return null;
+  try {
+    const doc = await getDb().collection('verifications').doc(String(code)).get();
+    if (!doc.exists) return null;
+    const d = doc.data();
+    return {
+      code: d.code || String(code),
+      type: d.type || 'certificate',
+      attendeeName: d.attendeeName || null,
+      session: d.session || null,
+      dateLabel: d.dateLabel || null,
+      detailLabel: d.detailLabel || null,
+      issuer: d.issuer || null,
+      issuedAt: d.issuedAt && typeof d.issuedAt.toDate === 'function' ? d.issuedAt.toDate().toISOString() : null,
+    };
+  } catch (err) {
+    log.warn('firestore: getVerification failed', { code, error: err.message });
+    return null;
+  }
+}
+
 // Append emails to a meeting's excusedEmails set. Uses arrayUnion so concurrent
 // writes don't clobber each other, and lowercases on input so the set is a
 // proper case-insensitive union.
@@ -1584,6 +1643,7 @@ module.exports = {
   countDistinctAttendees, getActivationFunnel,
   persistAttendance, persistCalendarData, persistExport,
   getMeetingExcusedEmails, addMeetingExcusedEmails, getMeetingWithParticipants,
+  saveVerifications, getVerification,
   getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens,
   getUserSettings, updateUserSettings,
   setUserAcquisitionSource, setPostExportSurvey, claimSignupNotification,

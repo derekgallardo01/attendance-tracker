@@ -345,3 +345,54 @@ describe('firestore.js — maximally varied aggregation data', () => {
     expect(await firestore.getParticipantHistory('acme.com', 'owner@acme.com', 'name:nameonly')).toBeDefined();
   });
 });
+
+describe('verifications', () => {
+  test('saveVerifications writes each record; skips codeless + non-array/empty', async () => {
+    await firestore.saveVerifications(null); // no-op, no throw
+    await firestore.saveVerifications([]);   // no-op
+    await firestore.saveVerifications([
+      { code: 'AT-1A2B3C4D', type: 'certificate', attendeeName: 'Ada', session: 'CLE', domain: 'acme.com', conferenceId: 'c1' },
+      { attendeeName: 'NoCode' }, // no code → skipped
+    ]);
+    const doc = ctx.read('verifications/AT-1A2B3C4D');
+    expect(doc).toMatchObject({ code: 'AT-1A2B3C4D', attendeeName: 'Ada', session: 'CLE', type: 'certificate', domain: 'acme.com' });
+    expect(doc.issuedAt).toBeDefined();
+  });
+
+  test('getVerification: null when absent/blank, sanitized record (ISO issuedAt) when present', async () => {
+    expect(await firestore.getVerification('AT-DEADBEEF')).toBeNull();
+    expect(await firestore.getVerification('')).toBeNull();
+    ctx.seed('verifications/AT-1A2B3C4D', {
+      code: 'AT-1A2B3C4D', type: 'certificate', attendeeName: 'Ada', session: 'CLE',
+      dateLabel: 'Thu, Aug 20, 2026', detailLabel: '1.5 credit hours', issuer: 'Dr. Host',
+      issuedAt: wrapTimestamp(new Date('2026-08-21T00:00:00Z')),
+    });
+    const v = await firestore.getVerification('AT-1A2B3C4D');
+    expect(v).toMatchObject({ attendeeName: 'Ada', session: 'CLE', detailLabel: '1.5 credit hours', issuer: 'Dr. Host' });
+    expect(v.issuedAt).toBe('2026-08-21T00:00:00.000Z');
+  });
+});
+
+describe('getMeetingWithParticipants', () => {
+  test('null when the meeting is missing or the id is blank', async () => {
+    expect(await firestore.getMeetingWithParticipants('acme.com', 'nope')).toBeNull();
+    expect(await firestore.getMeetingWithParticipants('acme.com', '')).toBeNull();
+  });
+
+  test('returns the meeting + participants with ISO timestamps', async () => {
+    ctx.seed('tenants/acme.com/meetings/conf1', {
+      title: 'Bio 101', participantCount: 1,
+      startTime: wrapTimestamp(new Date('2026-08-20T14:00:00Z')),
+      endTime: wrapTimestamp(new Date('2026-08-20T15:00:00Z')),
+    });
+    ctx.seed('tenants/acme.com/meetings/conf1/participants/p1', {
+      displayName: 'Ada', email: 'ada@x.com', present: true,
+      joinTime: wrapTimestamp(new Date('2026-08-20T14:00:00Z')), leaveTime: null,
+    });
+    const m = await firestore.getMeetingWithParticipants('acme.com', 'conf1');
+    expect(m).toMatchObject({ conferenceId: 'conf1', title: 'Bio 101', participantCount: 1 });
+    expect(m.startTime).toBe('2026-08-20T14:00:00.000Z');
+    expect(m.participants).toHaveLength(1);
+    expect(m.participants[0]).toMatchObject({ displayName: 'Ada', email: 'ada@x.com', present: true, joinTime: '2026-08-20T14:00:00.000Z', leaveTime: null });
+  });
+});

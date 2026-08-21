@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const { requireAuth } = require('../middleware/auth');
 const { planIsPro } = require('./billing');
-const { getMeetingWithParticipants } = require('../services/firestore');
+const { getMeetingWithParticipants, saveVerifications } = require('../services/firestore');
 const { buildReportModel, renderReportPdf, buildCertificateModels, renderCertificatesPdf } = require('../lib/certificate');
 const log = require('../lib/logger');
 
@@ -70,6 +70,14 @@ router.post('/export/pdf', requireAuth, async (req, res) => {
       if (!models.length) return res.status(400).json({ error: 'No present attendees to certify.' });
       pdf = await renderCertificatesPdf(models);
       filename = `certificates-${slugify(meeting.title)}.pdf`;
+      // Record each certificate so the public /verify page can confirm it later.
+      // Best-effort (the helper swallows errors) and fire-and-forget so it never
+      // slows the download.
+      saveVerifications(models.map((m) => ({
+        code: m.verificationCode, type: 'certificate', attendeeName: m.name, session: m.session,
+        dateLabel: m.dateLabel, detailLabel: m.creditHoursLabel || m.durationLabel,
+        issuer: m.issuer, domain: req.user.domain, conferenceId: meeting.conferenceId || null,
+      })));
     } else {
       // Base report: free. Branding is the only Pro lever (default footer otherwise).
       const model = buildReportModel({ meeting, attendees, options: { brand } });
