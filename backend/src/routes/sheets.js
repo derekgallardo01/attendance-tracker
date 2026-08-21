@@ -566,10 +566,12 @@ router.post('/save-to-sheets', async (req, res) => {
   const b = req.body || {};
   if (!b.participants?.length) return res.status(400).json({ error: 'participants array is required' });
   try {
-    // Pro gating (per-domain). Manual export + the Sheet itself stay free; the
-    // convenience layers — auto-export, email + Slack digests — are Pro. Pre-launch
-    // (billing unconfigured) planIsPro is always true so nothing changes.
-    const proAllowed = req.user ? await planIsPro(req.user.domain) : true;
+    // Pro gating. Manual export + the Sheet itself stay free; the convenience
+    // layers — auto-export, email + Slack digests — are Pro. Pass the email so a
+    // personal-Gmail user is gated by their own Individual Pro plan (Workspace
+    // domains ignore the email and use the tenant plan). Pre-launch (billing
+    // unconfigured) planIsPro is always true so nothing changes.
+    const proAllowed = req.user ? await planIsPro(req.user.domain, req.user.email) : true;
     if (b.autoExport && req.user && !proAllowed) {
       return res.status(402).json({ error: 'Auto-export on meeting end is a Pro feature.', upgrade: true, feature: 'autoExport' });
     }
