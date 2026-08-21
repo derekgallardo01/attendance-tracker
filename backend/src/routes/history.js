@@ -117,7 +117,7 @@ router.get('/history', requireAuth, async (req, res) => {
     // derived people/calendar analytics reflect only the visible set — not just
     // the meetings list. The service returns historyCapped/freeLimit/totalMeetings
     // so the frontend can show "Upgrade to see all N". Pro passes no limit.
-    const pro = await planIsPro(req.user.domain);
+    const pro = await planIsPro(req.user.domain, req.user.email);
     const data = await getUserMeetingHistory(req.user.domain, req.user.email, {
       limit: pro ? null : FREE_HISTORY_LIMIT,
     });

@@ -5,21 +5,21 @@
   <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
   <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Google Meet attendance tracker for teachers — Attendance Tracker</title>
-  <meta name="description" content="Track class attendance in Google Meet without the Education Plus tier. Auto-roll-call, late-arrival flags, recurring class attendance roll-ups, and one-click Google Sheets export. Free." />
-  <link rel="canonical" href="https://attendancetracker.dev/attendance-tracker-for-teachers.html" />
-  <meta property="og:title" content="Google Meet attendance tracker for teachers" />
-  <meta property="og:description" content="Auto roll-call, late-arrival flags, per-class attendance trends, Sheets export. Free, no Education Plus needed." />
+  <title>Google Meet Attendance for CPE &amp; CLE Credit Webinars (2026) — Attendance Tracker</title>
+  <meta name="description" content="Generate NASBA and State Bar compliant attendance duration reports in Google Meet to verify continuing education credits for CPAs, attorneys, and engineers." />
+  <link rel="canonical" href="https://attendancetracker.dev/google-meet-attendance-for-cpe-and-cle-credits.html" />
+  <meta property="og:title" content="Google Meet Attendance for CPE &amp; CLE Credit Webinars" />
+  <meta property="og:description" content="Compliance-ready attendance duration logs, exact timestamps, and Google Sheets exports for professional continuing education webinars." />
   <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
-  <meta property="og:url" content="https://attendancetracker.dev/attendance-tracker-for-teachers.html" />
+  <meta property="og:url" content="https://attendancetracker.dev/google-meet-attendance-for-cpe-and-cle-credits.html" />
   <meta property="og:type" content="article" />
 
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "Article",
-    "headline": "Google Meet Attendance Tracker for Teachers (No Education Plus Required)",
-    "description": "How teachers track class attendance, late arrivals, and semester trends in Google Meet for free.",
+    "headline": "How to Track Continuing Education (CPE/CLE) Attendance in Google Meet",
+    "description": "A guide for professional associations, CPA training providers, and law institutes on verifying continuing education webinar attendance in Google Meet.",
     "author": {
       "@type": "Organization",
       "name": "Attendance Tracker"
@@ -54,6 +54,9 @@
     a { color: var(--blue); }
     .callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 16px 18px; margin: 22px 0; }
     .callout strong { color: var(--accent); }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: .92rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    th { text-align: left; padding: 10px 14px; background: rgba(255,255,255,.03); color: var(--muted); font-weight: 600; font-size: .8rem; text-transform: uppercase; letter-spacing: .03em; }
+    td { padding: 10px 14px; border-top: 1px solid var(--border); }
     .cta { background: linear-gradient(135deg, rgba(74,222,128,.08), rgba(88,166,255,.08)); border: 1px solid rgba(74,222,128,.25); border-radius: 14px; padding: 26px; text-align: center; margin: 36px 0; }
     .cta h3 { font-size: 1.1rem; margin-top: 0; margin-bottom: 6px; }
     .cta p { color: var(--muted); font-size: .9rem; margin-bottom: 16px; }
@@ -69,66 +72,53 @@
       <a href="/">Attendance Tracker</a>
     </div>
 
-    <h1>Google Meet attendance tracker for teachers</h1>
-    <p class="lead">Most teachers don't have Google Workspace for Education Plus — which means the built-in attendance report isn't available. Here's how to get auto roll-call, late-arrival flags, and class attendance trends without the upgrade.</p>
+    <h1>Google Meet attendance for CPE, CLE &amp; CEU credit webinars</h1>
+    <p class="lead">Organizations delivering live Continuing Professional Education (CPE for CPAs), Continuing Legal Education (CLE for attorneys), and Continuing Education Units (CEUs for engineers and realtors) over Google Meet must prove that attendees met minimum duration requirements before issuing certificates. Here is how to automate compliance logs.</p>
 
     <div style="margin:26px 0">
       <div style="position:relative;width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden;border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.4)">
-        <iframe src="https://www.youtube-nocookie.com/embed/WqX-LxjjY04" title="Attendance Tracker — see it in action" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe>
+        <iframe src="https://www.youtube-nocookie.com/embed/WqX-LxjjY04" title="Continuing Education Attendance Tracking" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe>
       </div>
-      <img src="screenshots/04-class-attendance.jpg" width="1920" height="1200" loading="lazy" alt="Per-student attendance percentage across every session of a recurring class" style="width:100%;height:auto;border-radius:12px;border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.4);display:block;margin-top:16px" />
+      <img src="screenshots/03-sheets-export.jpg" width="1920" height="1200" loading="lazy" alt="Audit-ready continuing education attendance export with exact minutes attended" style="width:100%;height:auto;border-radius:12px;border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,.4);display:block;margin-top:16px" />
     </div>
 
     <div class="callout">
-      <strong>What you get:</strong> the Attendance Tracker add-on installs in 30 seconds, works on every Google Workspace edition (and personal Gmail), and stays free.
+      <strong>Protect Your Provider Accreditation:</strong> Regulatory standards (such as NASBA for CPAs and State Bar associations) require documented verification of attendee connection duration (e.g. 50 minutes of active attendance per 1.0 CPE credit hour). Attendance Tracker delivers audit-ready spreadsheet records.
     </div>
 
-    <h2>Why the built-in feature doesn't work for most teachers</h2>
-    <p>Google restricts in-Meet attendance reports to the Education <strong>Plus</strong> SKU. Schools on Education Fundamentals, Education Standard, the Teaching and Learning Upgrade, or no Workspace at all are stuck doing it by hand — or paying per-seat for an upgrade most districts can't justify just for an attendance feature.</p>
-    <p>The Marketplace add-on uses the Meet REST API, which Google exposes to any Workspace tier. That's the loophole — it's not blocked behind a license check.</p>
-
-    <h2>What it does during a class</h2>
+    <h2>Continuing Education Compliance Requirements</h2>
     <ul>
-      <li><strong>Auto roll-call.</strong> Open the side panel at the start of class. Every student who joins shows up in real time with their join timestamp.</li>
-      <li><strong>Late arrival flags.</strong> Anyone who joins more than 5 minutes after class starts gets a <code style="background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3);padding:1px 6px;border-radius:8px;font-size:.7rem;font-weight:600">+Nm late</code> chip next to their name.</li>
-      <li><strong>Departure tracking.</strong> Students who leave before the end of class show as "Left" with the exact time they dropped.</li>
-      <li><strong>Excused absences.</strong> Mark a no-show student as Excused before exporting; the sheet shows "Absent (excused)" instead of "Absent". Persists across re-exports.</li>
+      <li><strong>50-Minute Hour Standard:</strong> NASBA rules calculate 1 CPE credit per 50 minutes of active learning. Providers need exact minutes logged for every participant.</li>
+      <li><strong>Handling Drop-Offs &amp; Disconnections:</strong> When an attendee's internet blips, their multiple session segments must be summed into a verified total.</li>
+      <li><strong>Certificate Generation Roster:</strong> Program administrators need a clean spreadsheet with participant full names, emails, and verified completion flags.</li>
     </ul>
 
-    <h2>What you get after class</h2>
-    <ul>
-      <li><strong>Auto-export to Google Sheets.</strong> When the meeting ends, the attendance sheet is created in your Drive and emailed to you. One tab per class session.</li>
-      <li><strong>Per-class attendance trends.</strong> If you put your class on a recurring Calendar event (which most teachers do), the add-on rolls up attendance over time — "Alex 12/15 classes (80%), Sarah 14/15 (93%)."</li>
-      <li><strong>Daily alert emails.</strong> When a student misses 3 classes in a row after a streak of regular attendance, or drops from ≥80% to &lt;50% over the last 8 sessions, you get an email. Lets you reach out before they fully disengage.</li>
-      <li><strong>Shareable dashboard.</strong> Generate a public link to the class attendance roll-up to share with parents or administrators. Read-only, expires in 30 days.</li>
-    </ul>
+    <h2>How Attendance Tracker Automates CE Certification</h2>
 
-    <h2>Setup, start to finish</h2>
-    <ol>
-      <li>Open the <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968">Marketplace listing</a>.</li>
-      <li>Click <strong>Install</strong>. Grant the requested permissions (read-only Meet participants, read-only calendar, write to Sheets files we create).</li>
-      <li>Open your next class meeting in Google Meet.</li>
-      <li>Open the Attendance Tracker side panel (sidebar icon, same place as chat).</li>
-      <li>Tracking starts automatically. Auto-export happens when the meeting ends.</li>
-    </ol>
+    <h3>1. Server-Side Duration Calculation</h3>
+    <p>Using the official Google Meet REST API, Attendance Tracker calculates exact server-verified join times, leave times, and total minutes present for each registrant.</p>
 
-    <h2>FAQ</h2>
-    <h3>Will my students see they're being tracked?</h3>
-    <p>The add-on only appears in your side panel, not your students'. They don't see anything different about the meeting. The data you collect is the same data they could see in the participants panel — names, join times, durations — but compiled for you.</p>
+    <h3>2. Formatted Google Sheets Export</h3>
+    <p>When the webinar closes, a tabbed spreadsheet is instantly generated in your Google Drive. Each row contains the registrant's email, arrival timestamp, departure timestamp, and total minutes attended (e.g. <code>52 mins</code>), making certificate issuance straightforward.</p>
 
-    <h3>Does it work with under-13 student accounts?</h3>
-    <p>Yes. Student accounts appear in the participant list like any Google account. The add-on doesn't process anything beyond what Google already exposes in the Meet participant view.</p>
+    <h3>3. Multi-Session Conference Tracking</h3>
+    <p>For multi-day professional conferences or 4-part webinar series, Attendance Tracker groups all sessions by Google Calendar recurring IDs to calculate overall conference credits per attendee.</p>
 
-    <h3>What if my students join from personal Gmail accounts (not school accounts)?</h3>
-    <p>They'll appear in the attendance list with their personal Gmail name. If you want to map them to your roster, the calendar-matching step in the export flow lets you reassign names to email addresses you control.</p>
-
-    <h3>Is there a paid tier?</h3>
-    <p>Not currently. Attendance Tracker is free while it's growing. If paid tiers launch later, current features will stay free for individual teachers.</p>
+    <h2>Common Professional Accreditation Use Cases</h2>
+    <table>
+      <thead><tr><th>Accreditation Type</th><th>Required Standard</th><th>How Attendance Tracker Helps</th></tr></thead>
+      <tbody>
+        <tr><td><strong>CPA / NASBA (CPE)</strong></td><td>50 mins per credit hour</td><td>Calculates exact cumulative minutes per attendee.</td></tr>
+        <tr><td><strong>State Bar (CLE)</strong></td><td>Verifiable attorney presence</td><td>Timestamped join and departure logs.</td></tr>
+        <tr><td><strong>Professional Engineers (PE / PDH)</strong></td><td>Active seminar participation</td><td>Auto-saved Google Drive compliance spreadsheets.</td></tr>
+        <tr><td><strong>Real Estate (CE)</strong></td><td>Mandated state licensing hours</td><td>Instant post-webinar attendance summary emails.</td></tr>
+      </tbody>
+    </table>
 
     <div class="cta">
-      <h3>Track every class in 30 seconds</h3>
-      <p>Free Marketplace add-on. No Education Plus required.</p>
-      <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_teachers" target="_blank">Install from Marketplace</a>
+      <h3>Streamline your continuing education certification</h3>
+      <p>Free, verified on Google Workspace Marketplace, export audit-ready logs to Google Sheets.</p>
+      <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_cpe" target="_blank">Install Attendance Tracker from Marketplace</a>
     </div>
 
     
@@ -180,9 +170,9 @@
     </div>
 
   </div>
+
   <script>
   (function () {
-    // 1. Capture first-touch acquisition into localStorage & cookie (survives OAuth round-trip)
     try {
       var params = new URLSearchParams(location.search);
       var utmSource = params.get('utm_source');
@@ -207,7 +197,6 @@
       }
     } catch (e) {}
 
-    // 2. Telemetry beacon (pageviews + CTA clicks)
     var API = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
     function beacon(payload) {
       try {
@@ -232,5 +221,4 @@
   })();
   </script>
 </body>
-
 </html>
