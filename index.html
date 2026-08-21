@@ -1136,6 +1136,12 @@
   <div id="sheet-link-bar" style="display:none; padding:4px 16px; font-size:11px;">
     <a id="sheet-link" href="#" target="_blank" style="color:var(--green); text-decoration:none;">📄 Open exported sheet</a>
   </div>
+  <!-- One-off → recurring tip: only for a NON-recurring meeting whose title was
+       exported before (a real repeat). Once ever, dismissible. -->
+  <div id="recurring-tip" style="display:none; align-items:flex-start; gap:8px; padding:8px 16px; font-size:11px; color:#9ca3af; background:rgba(74,222,128,.06); border-top:1px solid #30363d">
+    <span style="line-height:1.45">💡 Tracking this one regularly? Put it on a <strong style="color:#c9d1d9">recurring</strong> Google Calendar invite — then you'll see per-person attendance trends across every session.</span>
+    <button type="button" onclick="closeRecurringTip()" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
+  </div>
 
   <!-- Team admin link — only shown to users where /oauth/me reports
        teamAdmin:true (renderTeamAdminLink() toggles display). Stays hidden
@@ -3049,6 +3055,8 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     }
     // Update activation state so the nudge banner hides itself
     refreshActivationStatus();
+    // Gentle, targeted "make it recurring" tip (repeat title + not already recurring).
+    maybeShowRecurringTip(state.meetingTitle);
   } catch (err) {
     logUserEvent('export_failed', { reason: 'error', message: String(err.message || err).slice(0, 200) });
     toast(`⚠ Sheets error: ${err.message}`);
@@ -3095,6 +3103,33 @@ function closeCelebrateModal() {
     saveState();
     setTimeout(() => showSurveyModal(), 400);
   }
+}
+
+// One-off → recurring tip. Fires ONLY when the just-exported meeting is NOT
+// already recurring AND its title was exported before (a genuine repeat — a
+// class/standup the user runs off a one-off invite). Once ever, dismissible.
+// This targets the could-be-recurring subset, so it never nags true one-off
+// (interview/webinar) exporters. Titles are tracked locally in localStorage.
+function maybeShowRecurringTip(title) {
+  if (!title || state._recurringEventId) return; // already recurring → nothing to suggest
+  const key = String(title).trim().toLowerCase();
+  if (!key) return;
+  let seen = [], shown = false;
+  try { seen = JSON.parse(localStorage.getItem('att_exported_titles') || '[]'); shown = !!localStorage.getItem('att_recurring_tip_shown'); } catch (e) { return; }
+  if (!seen.includes(key)) {
+    try { localStorage.setItem('att_exported_titles', JSON.stringify([...new Set([...seen, key])].slice(-50))); } catch (e) { /* private mode */ }
+    return; // first time we've seen this title — just remember it
+  }
+  if (shown) return; // repeat title, but we've already shown the tip once
+  const bar = document.getElementById('recurring-tip');
+  if (!bar) return;
+  bar.style.display = 'flex';
+  try { localStorage.setItem('att_recurring_tip_shown', '1'); } catch (e) { /* best-effort */ }
+}
+
+function closeRecurringTip() {
+  const b = document.getElementById('recurring-tip');
+  if (b) b.style.display = 'none';
 }
 
 /* ═══════════════════════════════════════════════════════════════
