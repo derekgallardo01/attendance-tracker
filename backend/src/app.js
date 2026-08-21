@@ -15,6 +15,7 @@ const oauthRoutes = require('./routes/oauth');
 const adminRoutes = require('./routes/admin');
 const publicRoutes = require('./routes/public');
 const historyRoutes = require('./routes/history');
+const pdfRoutes = require('./routes/pdf');
 const teamRoutes = require('./routes/team');
 const settingsRoutes = require('./routes/settings');
 const { router: billingRoutes, webhookHandler: billingWebhookHandler } = require('./routes/billing');
@@ -78,6 +79,7 @@ app.use('/api', sheetsRoutes);
 app.use('/api', calendarRoutes);
 app.use('/api', adminRoutes);
 app.use('/api', historyRoutes);
+app.use('/api', pdfRoutes);
 app.use('/api', teamRoutes);
 app.use('/api', settingsRoutes);
 app.use('/api', billingRoutes); // checkout / portal / status (webhook mounted above)

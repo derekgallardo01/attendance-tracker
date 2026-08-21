@@ -277,6 +277,42 @@ async function getMeetingExcusedEmails(domain, conferenceId) {
   }
 }
 
+// Read a meeting + its persisted participants for regenerating an artifact (PDF
+// report / certificate) from history — no Google re-fetch needed, since the
+// attendance detail was stored at capture time. Returns null when the meeting
+// doesn't exist or isn't visible to this tenant. Timestamps are converted to ISO
+// strings so the pure certificate builder can consume them directly.
+async function getMeetingWithParticipants(domain, conferenceId) {
+  if (!conferenceId) return null;
+  try {
+    const mRef = tenantRef(domain).collection('meetings').doc(conferenceId);
+    const [mDoc, pSnap] = await Promise.all([mRef.get(), mRef.collection('participants').get()]);
+    if (!mDoc.exists) return null;
+    const m = mDoc.data();
+    const iso = (v) => (v && typeof v.toDate === 'function' ? v.toDate().toISOString() : v || null);
+    return {
+      conferenceId,
+      title: m.title || null,
+      startTime: iso(m.startTime),
+      endTime: iso(m.endTime),
+      participantCount: m.participantCount || 0,
+      participants: pSnap.docs.map((d) => {
+        const p = d.data();
+        return {
+          displayName: p.displayName || null,
+          email: p.email || null,
+          joinTime: iso(p.joinTime),
+          leaveTime: iso(p.leaveTime),
+          present: !!p.present,
+        };
+      }),
+    };
+  } catch (err) {
+    log.warn('firestore: getMeetingWithParticipants failed', { domain, conferenceId, error: err.message });
+    return null;
+  }
+}
+
 // Append emails to a meeting's excusedEmails set. Uses arrayUnion so concurrent
 // writes don't clobber each other, and lowercases on input so the set is a
 // proper case-insensitive union.
@@ -1547,7 +1583,7 @@ module.exports = {
   getTeamAdminStatus, claimTeamAdmin, transferTeamAdmin,
   countDistinctAttendees, getActivationFunnel,
   persistAttendance, persistCalendarData, persistExport,
-  getMeetingExcusedEmails, addMeetingExcusedEmails,
+  getMeetingExcusedEmails, addMeetingExcusedEmails, getMeetingWithParticipants,
   getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens,
   getUserSettings, updateUserSettings,
   setUserAcquisitionSource, setPostExportSurvey, claimSignupNotification,

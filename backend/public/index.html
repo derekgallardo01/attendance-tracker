@@ -1135,6 +1135,7 @@
 
   <div id="sheet-link-bar" style="display:none; padding:4px 16px; font-size:11px;">
     <a id="sheet-link" href="#" target="_blank" style="color:var(--green); text-decoration:none;">📄 Open exported sheet</a>
+    <a href="#" onclick="downloadPdfReport(); return false;" style="color:var(--green); text-decoration:none; margin-left:14px;">⬇ PDF report</a>
   </div>
   <!-- One-off → recurring tip: only for a NON-recurring meeting whose title was
        exported before (a real repeat). Once ever, dismissible. -->
@@ -3008,6 +3009,14 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     }),
   };
 
+  // Stash the exact exported data so the "PDF report" button regenerates the
+  // same roster the user just saved (rather than re-deriving from live state).
+  state._lastExport = {
+    meetingTitle: payload.meetingTitle, conferenceId: payload.conferenceId,
+    meetingStartTime: payload.meetingStartTime, eventStart: payload.eventStart,
+    eventEnd: payload.eventEnd, timezone: payload.timezone, participants: payload.participants,
+  };
+
   try {
     toast('Saving to Sheets…');
     const res = await authFetch(`${state.backendUrl}/save-to-sheets`, {
@@ -3167,6 +3176,52 @@ function maybeShowReviewAsk() {
 function closeReviewAsk() {
   const b = document.getElementById('review-ask');
   if (b) b.style.display = 'none';
+}
+
+// Download a formatted PDF attendance report for the meeting the user just
+// exported. Reuses the stashed export payload so the PDF matches the Sheet.
+// The base report is free; org branding is applied server-side for Pro users.
+async function downloadPdfReport() {
+  const ex = state._lastExport;
+  if (!ex || !ex.participants || !ex.participants.length) {
+    toast('Export first, then download the PDF.');
+    return;
+  }
+  try {
+    toast('Generating PDF…');
+    const res = await fetch(`${state.backendUrl}/export/pdf`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({
+        type: 'report',
+        meetingTitle: ex.meetingTitle,
+        conferenceId: ex.conferenceId,
+        meetingStartTime: ex.meetingStartTime,
+        eventStart: ex.eventStart,
+        eventEnd: ex.eventEnd,
+        timezone: ex.timezone,
+        participants: ex.participants,
+      }),
+    });
+    if (!res.ok) {
+      let m = {};
+      try { m = await res.json(); } catch (e) { /* non-JSON error body */ }
+      toast(`⚠ PDF error: ${m.error || res.status}`);
+      return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `attendance-${String(ex.meetingTitle || 'meeting').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 40) || 'meeting'}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    try { logUserEvent('pdf_report_downloaded', {}); } catch (e) { /* best-effort */ }
+  } catch (e) {
+    toast('⚠ Could not generate the PDF.');
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
