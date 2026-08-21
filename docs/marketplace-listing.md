@@ -60,7 +60,7 @@ Q: Does it require Google Workspace for Education Plus™?
 A: No. Unlike the built-in attendance tool, Attendance Tracker works on all Education tiers including Education Fundamentals and Standard.
 
 Q: Can someone track attendance if they are not the meeting host?
-A: Yes. Any participant or Teaching Assistant can open the add-on panel to track and export their own copy of the attendance sheet.
+A: The meeting host can, out of the box. For a TA, co-host, or attendee to track a meeting they didn't organize, a Google Workspace™ admin turns on a one-time delegation (a 2-minute setup at attendancetracker.dev/setup). On personal @gmail.com meetings, the host is the one who tracks.
 
 Q: How much does it cost?
 A: Free to start. Optional Pro plans ($8/mo Individual Pro, $19/mo Team Pro) add automated Slack digests, unlimited recurring series roll-ups, and organization-wide team dashboards.

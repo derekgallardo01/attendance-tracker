@@ -1142,6 +1142,14 @@
     <span style="line-height:1.45">💡 Tracking this one regularly? Put it on a <strong style="color:#c9d1d9">recurring</strong> Google Calendar invite — then you'll see per-person attendance trends across every session.</span>
     <button type="button" onclick="closeRecurringTip()" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
   </div>
+  <!-- Review ask at the value moment: shown once ever, after the user's 2nd
+       MANUAL export (they've felt the payoff more than once = a genuinely happy
+       user, not a one-off tester). Dismissible; never stacks with the recurring
+       tip. Respects the at-most-one-lifetime-popup, gentle-upsell rule. -->
+  <div id="review-ask" style="display:none; align-items:flex-start; gap:8px; padding:8px 16px; font-size:11px; color:#9ca3af; background:rgba(96,165,250,.06); border-top:1px solid #30363d">
+    <span style="line-height:1.45">⭐ Getting value from this? A quick rating helps other hosts find it — <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=inapp_review" target="_blank" rel="noopener" onclick="logUserEvent('review_ask_clicked', {})" style="color:#60a5fa;text-decoration:none;font-weight:600">leave a review</a> (takes 10 seconds).</span>
+    <button type="button" onclick="closeReviewAsk()" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
+  </div>
 
   <!-- Team admin link — only shown to users where /oauth/me reports
        teamAdmin:true (renderTeamAdminLink() toggles display). Stays hidden
@@ -3057,6 +3065,8 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     refreshActivationStatus();
     // Gentle, targeted "make it recurring" tip (repeat title + not already recurring).
     maybeShowRecurringTip(state.meetingTitle);
+    // Review ask at the value moment — only on a MANUAL export (user is present).
+    if (!opts.autoExport) maybeShowReviewAsk();
   } catch (err) {
     logUserEvent('export_failed', { reason: 'error', message: String(err.message || err).slice(0, 200) });
     toast(`⚠ Sheets error: ${err.message}`);
@@ -3129,6 +3139,33 @@ function maybeShowRecurringTip(title) {
 
 function closeRecurringTip() {
   const b = document.getElementById('recurring-tip');
+  if (b) b.style.display = 'none';
+}
+
+// Review ask, once ever. Fires after the user's 2nd MANUAL export — they've felt
+// the payoff more than once, so they're a genuinely happy user rather than a
+// one-off tester. Never stacks with the recurring tip (skips if that bar just
+// opened this export). Dismissible; honors the at-most-one-lifetime-popup rule.
+function maybeShowReviewAsk() {
+  let count = 0, shown = false;
+  try {
+    count = parseInt(localStorage.getItem('att_export_count') || '0', 10) + 1;
+    localStorage.setItem('att_export_count', String(count));
+    shown = !!localStorage.getItem('att_review_ask_shown');
+  } catch (e) { return; } // private mode → skip silently
+  if (shown || count < 2) return;
+  // Don't show two bars at once — the recurring tip takes priority this export.
+  const rt = document.getElementById('recurring-tip');
+  if (rt && rt.style.display === 'flex') return;
+  const bar = document.getElementById('review-ask');
+  if (!bar) return;
+  bar.style.display = 'flex';
+  try { localStorage.setItem('att_review_ask_shown', '1'); } catch (e) { /* best-effort */ }
+  try { logUserEvent('review_ask_shown', {}); } catch (e) { /* best-effort */ }
+}
+
+function closeReviewAsk() {
+  const b = document.getElementById('review-ask');
   if (b) b.style.display = 'none';
 }
 
