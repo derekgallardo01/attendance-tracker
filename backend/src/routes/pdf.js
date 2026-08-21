@@ -2,7 +2,7 @@ const { Router } = require('express');
 const { requireAuth } = require('../middleware/auth');
 const { planIsPro } = require('./billing');
 const { getMeetingWithParticipants } = require('../services/firestore');
-const { buildReportModel, renderReportPdf } = require('../lib/certificate');
+const { buildReportModel, renderReportPdf, buildCertificateModels, renderCertificatesPdf } = require('../lib/certificate');
 const log = require('../lib/logger');
 
 const router = Router();
@@ -25,8 +25,8 @@ function slugify(s) {
 router.post('/export/pdf', requireAuth, async (req, res) => {
   const b = req.body || {};
   const type = b.type || 'report';
-  if (type !== 'report') {
-    return res.status(400).json({ error: 'Only type "report" is supported yet.', feature: type });
+  if (type !== 'report' && type !== 'certificates') {
+    return res.status(400).json({ error: 'Unsupported type.', feature: type });
   }
 
   try {
@@ -53,14 +53,30 @@ router.post('/export/pdf', requireAuth, async (req, res) => {
       };
     }
 
-    // Branding is the only Pro lever on the report; the report itself is free.
     const pro = await planIsPro(req.user.domain, req.user.email);
     const brand = pro && b.brand && typeof b.brand === 'object' ? b.brand : null;
 
-    const model = buildReportModel({ meeting, attendees, options: { brand } });
-    const pdf = await renderReportPdf(model);
+    let pdf;
+    let filename;
+    if (type === 'certificates') {
+      // Per-attendee certificates are a Pro feature (the credit-granting artifact).
+      if (!pro) {
+        return res.status(402).json({ error: 'Attendance certificates are a Pro feature.', upgrade: true, feature: 'certificates' });
+      }
+      const models = buildCertificateModels({
+        meeting, attendees,
+        options: { brand, creditHours: b.creditHours, courseCode: b.courseCode, issuer: b.issuer },
+      });
+      if (!models.length) return res.status(400).json({ error: 'No present attendees to certify.' });
+      pdf = await renderCertificatesPdf(models);
+      filename = `certificates-${slugify(meeting.title)}.pdf`;
+    } else {
+      // Base report: free. Branding is the only Pro lever (default footer otherwise).
+      const model = buildReportModel({ meeting, attendees, options: { brand } });
+      pdf = await renderReportPdf(model);
+      filename = `attendance-${slugify(meeting.title)}.pdf`;
+    }
 
-    const filename = `attendance-${slugify(meeting.title)}.pdf`;
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('Content-Length', pdf.length);

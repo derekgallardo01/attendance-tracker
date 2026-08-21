@@ -210,9 +210,114 @@ function renderReportPdf(model) {
   });
 }
 
+// ─────────────────── per-attendee certificates (Pro) ───────────────────
+// PURE: one certificate model per attendee who was actually present (absentees
+// and excused are never certified). creditHours, when given, is a fixed value
+// applied to all (typical for a fixed-length course/CLE session); otherwise the
+// certificate states the individual's active duration.
+function buildCertificateModels({ meeting = {}, attendees = [], options = {} } = {}) {
+  const tz = meeting.timezone || null;
+  const fallbackEnd = meeting.endTime || null;
+  const session = (meeting.title || 'Google Meet').toString();
+  const dateLabel = fmtDate(meeting.startTime || meeting.date, tz);
+  const issuer = options.issuer ? String(options.issuer) : (meeting.host ? String(meeting.host) : null);
+  const courseCode = options.courseCode ? String(options.courseCode) : null;
+  const fixedCredit = Number(options.creditHours);
+  const brandName = options.brand && options.brand.name ? String(options.brand.name) : null;
+  const footer = brandName ? `${brandName} · via attendancetracker.dev` : DEFAULT_FOOTER;
+
+  return (attendees || [])
+    .filter((p) => {
+      const s = statusOf(p);
+      return s !== 'Absent' && s !== 'Excused';
+    })
+    .map((p) => {
+      const join = p.joinTime ?? p.joinTimeISO ?? null;
+      const leave = p.leaveTime ?? p.leaveTimeISO ?? null;
+      const mins = durationMin(join, leave, fallbackEnd);
+      return {
+        name: (p.displayName || p.name || 'Attendee').toString(),
+        session,
+        dateLabel,
+        durationLabel: fmtDuration(mins),
+        creditHoursLabel: Number.isFinite(fixedCredit) && fixedCredit > 0
+          ? `${fixedCredit} credit hour${fixedCredit === 1 ? '' : 's'}`
+          : null,
+        courseCode,
+        issuer,
+        footer,
+        verificationCode: verificationCode(
+          options.verifySeed
+            ? `${options.verifySeed}|${p.email || p.displayName || ''}`
+            : `${meeting.conferenceId || ''}|${p.email || p.displayName || ''}|${meeting.title || ''}`,
+        ),
+      };
+    });
+}
+
+/* istanbul ignore next: layout primitives — exercised via the %PDF + page-count
+   assertions in the tests, not worth per-draw-call coverage. */
+function drawCertificate(doc, font, m) {
+  const w = doc.page.width;
+  const h = doc.page.height;
+  // Double border
+  doc.lineWidth(3).strokeColor('#1d4ed8').rect(24, 24, w - 48, h - 48).stroke();
+  doc.lineWidth(0.75).strokeColor('#93c5fd').rect(34, 34, w - 68, h - 68).stroke();
+
+  const cx = w / 2;
+  doc.font(font).fillColor('#1e3a8a').fontSize(30).text('Certificate of Attendance', 0, 90, { width: w, align: 'center' });
+  doc.fillColor('#374151').fontSize(13).text('This certifies that', 0, 150, { width: w, align: 'center' });
+  doc.fillColor('#111827').fontSize(28).text(m.name, 0, 180, { width: w, align: 'center' });
+  doc.fillColor('#374151').fontSize(13).text('attended', 0, 232, { width: w, align: 'center' });
+  doc.fillColor('#111827').fontSize(18).text(m.session, 60, 258, { width: w - 120, align: 'center' });
+
+  const detail = [
+    m.dateLabel && `on ${m.dateLabel}`,
+    m.creditHoursLabel ? `for ${m.creditHoursLabel}` : `for ${m.durationLabel}`,
+  ].filter(Boolean).join('   ·   ');
+  doc.fillColor('#374151').fontSize(13).text(detail, 0, 300, { width: w, align: 'center' });
+  if (m.courseCode) doc.fillColor('#6b7280').fontSize(11).text(`Reference: ${m.courseCode}`, 0, 326, { width: w, align: 'center' });
+
+  // Signature + issuer
+  const sigY = h - 130;
+  doc.lineWidth(0.75).strokeColor('#9ca3af').moveTo(cx - 130, sigY).lineTo(cx + 130, sigY).stroke();
+  doc.fillColor('#374151').fontSize(11).text(m.issuer || 'Issued by the meeting host', 0, sigY + 6, { width: w, align: 'center' });
+
+  // Footer band
+  doc.fillColor('#9ca3af').fontSize(8)
+    .text(`${m.footer}   ·   Verification: ${m.verificationCode}`, 0, h - 60, { width: w, align: 'center' });
+}
+
+/* istanbul ignore next: thin pdfkit shell, asserted structurally in tests. */
+function renderCertificatesPdf(models) {
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({ size: 'A4', layout: 'landscape', margin: 0 });
+      if (UNICODE_FONT) doc.registerFont('body', UNICODE_FONT);
+      const font = UNICODE_FONT ? 'body' : 'Helvetica';
+      const chunks = [];
+      doc.on('data', (c) => chunks.push(c));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+
+      const list = models && models.length ? models : [];
+      if (!list.length) {
+        doc.font(font).fontSize(14).fillColor('#374151').text('No eligible attendees to certify.', 60, 60);
+      } else {
+        list.forEach((m, i) => { if (i > 0) doc.addPage(); drawCertificate(doc, font, m); });
+      }
+      doc.end();
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
 module.exports = {
   buildReportModel,
   renderReportPdf,
+  buildCertificateModels,
+  renderCertificatesPdf,
   // exported for unit tests
   _internals: { durationMin, fmtDuration, fmtTime, fmtDate, statusOf, verificationCode, UNICODE_FONT },
 };

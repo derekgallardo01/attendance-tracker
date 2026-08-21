@@ -1,7 +1,7 @@
 // Unit tests for the attendance PDF builder. The pure model is asserted in
 // detail; the pdfkit render is checked structurally (valid %PDF, non-trivial
 // size, survives many rows + non-Latin names).
-const { buildReportModel, renderReportPdf, _internals } = require('../../src/lib/certificate');
+const { buildReportModel, renderReportPdf, buildCertificateModels, renderCertificatesPdf, _internals } = require('../../src/lib/certificate');
 
 const BASE = {
   meeting: {
@@ -92,6 +92,72 @@ describe('_internals', () => {
     expect(statusOf({ present: false, leaveTimeISO: '2026-08-20T14:00:00Z' })).toBe('Left');
     expect(statusOf({ present: false })).toBe('Present');
     expect(statusOf({ present: false, status: 'Excused' })).toBe('Excused');
+  });
+});
+
+describe('buildCertificateModels (pure)', () => {
+  test('one model per present attendee; absentees/excused excluded', () => {
+    const models = buildCertificateModels({
+      meeting: { title: 'CLE Ethics', conferenceId: 'c1', startTime: '2026-08-20T14:00:00Z', endTime: '2026-08-20T15:00:00Z', timezone: 'UTC' },
+      attendees: [
+        { displayName: 'Ada', email: 'a@x.com', joinTimeISO: '2026-08-20T14:00:00Z', present: true },
+        { displayName: 'Absent Al', email: 'al@x.com', present: false, status: 'Absent' },
+        { displayName: 'Excused Eve', email: 'eve@x.com', present: false, status: 'Excused' },
+      ],
+    });
+    expect(models).toHaveLength(1);
+    expect(models[0]).toMatchObject({ name: 'Ada', session: 'CLE Ethics', dateLabel: expect.stringContaining('2026') });
+    expect(models[0].verificationCode).toMatch(/^AT-[0-9A-F]{8}$/);
+  });
+
+  test('fixed creditHours labels all certificates; else falls back to duration', () => {
+    const common = {
+      meeting: { title: 'T', startTime: '2026-08-20T14:00:00Z', endTime: '2026-08-20T15:00:00Z' },
+      attendees: [{ displayName: 'A', joinTimeISO: '2026-08-20T14:00:00Z', leaveTimeISO: '2026-08-20T14:30:00Z', present: true }],
+    };
+    expect(buildCertificateModels({ ...common, options: { creditHours: 1.5 } })[0].creditHoursLabel).toBe('1.5 credit hours');
+    expect(buildCertificateModels({ ...common, options: { creditHours: 1 } })[0].creditHoursLabel).toBe('1 credit hour');
+    expect(buildCertificateModels(common)[0].creditHoursLabel).toBeNull();
+    expect(buildCertificateModels(common)[0].durationLabel).toBe('30m');
+  });
+
+  test('issuer + courseCode + brand flow through', () => {
+    const [m] = buildCertificateModels({
+      meeting: { title: 'T', host: 'Dr. Host' },
+      attendees: [{ displayName: 'A', present: true }],
+      options: { courseCode: 'LAW-101', brand: { name: 'Acme Bar' } },
+    });
+    expect(m.issuer).toBe('Dr. Host');
+    expect(m.courseCode).toBe('LAW-101');
+    expect(m.footer).toBe('Acme Bar · via attendancetracker.dev');
+  });
+
+  test('per-attendee codes differ', () => {
+    const [a, b] = buildCertificateModels({
+      meeting: { title: 'T', conferenceId: 'c1' },
+      attendees: [{ displayName: 'A', email: 'a@x.com', present: true }, { displayName: 'B', email: 'b@x.com', present: true }],
+    });
+    expect(a.verificationCode).not.toBe(b.verificationCode);
+  });
+});
+
+describe('renderCertificatesPdf', () => {
+  test('multi-page: one page per attendee, valid PDF', async () => {
+    const models = buildCertificateModels({
+      meeting: { title: 'CLE', conferenceId: 'c1' },
+      attendees: [
+        { displayName: 'Ada', email: 'a@x.com', present: true },
+        { displayName: 'Даниил', email: 'd@x.com', present: true },
+      ],
+    });
+    const buf = await renderCertificatesPdf(models);
+    expect(buf.slice(0, 5).toString('latin1')).toBe('%PDF-');
+    expect(buf.length).toBeGreaterThan(1000);
+  });
+
+  test('empty list still yields a valid PDF', async () => {
+    const buf = await renderCertificatesPdf([]);
+    expect(buf.slice(0, 5).toString('latin1')).toBe('%PDF-');
   });
 });
 

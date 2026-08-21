@@ -1136,6 +1136,7 @@
   <div id="sheet-link-bar" style="display:none; padding:4px 16px; font-size:11px;">
     <a id="sheet-link" href="#" target="_blank" style="color:var(--green); text-decoration:none;">📄 Open exported sheet</a>
     <a href="#" onclick="downloadPdfReport(); return false;" style="color:var(--green); text-decoration:none; margin-left:14px;">⬇ PDF report</a>
+    <a href="#" onclick="downloadCertificates(); return false;" style="color:var(--green); text-decoration:none; margin-left:14px;">🎓 Certificates</a>
   </div>
   <!-- One-off → recurring tip: only for a NON-recurring meeting whose title was
        exported before (a real repeat). Once ever, dismissible. -->
@@ -3178,14 +3179,14 @@ function closeReviewAsk() {
   if (b) b.style.display = 'none';
 }
 
-// Download a formatted PDF attendance report for the meeting the user just
-// exported. Reuses the stashed export payload so the PDF matches the Sheet.
-// The base report is free; org branding is applied server-side for Pro users.
-async function downloadPdfReport() {
+// Shared PDF fetch+download. Reuses the stashed export payload so the artifact
+// matches the Sheet the user just saved. Returns true on success. Free users who
+// request a Pro artifact (certificates) get a single gentle 402 toast, no modal.
+async function _downloadPdf({ type, filenameBase, event }) {
   const ex = state._lastExport;
   if (!ex || !ex.participants || !ex.participants.length) {
     toast('Export first, then download the PDF.');
-    return;
+    return false;
   }
   try {
     toast('Generating PDF…');
@@ -3193,7 +3194,7 @@ async function downloadPdfReport() {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify({
-        type: 'report',
+        type,
         meetingTitle: ex.meetingTitle,
         conferenceId: ex.conferenceId,
         meetingStartTime: ex.meetingStartTime,
@@ -3203,25 +3204,41 @@ async function downloadPdfReport() {
         participants: ex.participants,
       }),
     });
+    if (res.status === 402) {
+      toast('🎓 Certificates are a Pro feature — upgrade in Settings.');
+      return false;
+    }
     if (!res.ok) {
       let m = {};
       try { m = await res.json(); } catch (e) { /* non-JSON error body */ }
       toast(`⚠ PDF error: ${m.error || res.status}`);
-      return;
+      return false;
     }
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `attendance-${String(ex.meetingTitle || 'meeting').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 40) || 'meeting'}.pdf`;
+    a.download = `${filenameBase}-${String(ex.meetingTitle || 'meeting').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 40) || 'meeting'}.pdf`;
     document.body.appendChild(a);
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
-    try { logUserEvent('pdf_report_downloaded', {}); } catch (e) { /* best-effort */ }
+    try { logUserEvent(event, {}); } catch (e) { /* best-effort */ }
+    return true;
   } catch (e) {
     toast('⚠ Could not generate the PDF.');
+    return false;
   }
+}
+
+// Free, shareable attendance report (org branding applied server-side for Pro).
+function downloadPdfReport() {
+  return _downloadPdf({ type: 'report', filenameBase: 'attendance', event: 'pdf_report_downloaded' });
+}
+
+// Per-attendee certificates (Pro) — the credit-granting artifact.
+function downloadCertificates() {
+  return _downloadPdf({ type: 'certificates', filenameBase: 'certificates', event: 'certificates_downloaded' });
 }
 
 /* ═══════════════════════════════════════════════════════════════

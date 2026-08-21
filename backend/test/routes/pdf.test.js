@@ -42,9 +42,9 @@ test('401 without auth', async () => {
 });
 
 test('400 for an unsupported type', async () => {
-  const res = await request(app).post('/api/export/pdf').set(H()).send({ type: 'certificates', participants: PARTS });
+  const res = await request(app).post('/api/export/pdf').set(H()).send({ type: 'transcript', participants: PARTS });
   expect(res.status).toBe(400);
-  expect(res.body.feature).toBe('certificates');
+  expect(res.body.feature).toBe('transcript');
 });
 
 test('400 when neither participants nor conferenceId provided', async () => {
@@ -84,4 +84,38 @@ test('404 when the conferenceId meeting is not found', async () => {
   firestore.getMeetingWithParticipants.mockResolvedValue(null);
   const res = await request(app).post('/api/export/pdf').set(H()).send({ conferenceId: 'missing' });
   expect(res.status).toBe(404);
+});
+
+describe('certificates (Pro-gated)', () => {
+  // Turn billing ON so the Pro gate is actually enforced (planIsPro reads the
+  // tenant plan). Cleaned up so other suites keep the default free-for-all.
+  beforeEach(() => { process.env.STRIPE_SECRET_KEY = 'sk_test_x'; process.env.STRIPE_PRICE_ID = 'price_x'; });
+  afterEach(() => { delete process.env.STRIPE_SECRET_KEY; delete process.env.STRIPE_PRICE_ID; });
+
+  test('402 for a free user', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    const res = await request(app).post('/api/export/pdf').set(H())
+      .send({ type: 'certificates', meetingTitle: 'CLE', participants: PARTS });
+    expect(res.status).toBe(402);
+    expect(res.body.upgrade).toBe(true);
+    expect(res.body.feature).toBe('certificates');
+  });
+
+  test('200 multi-page PDF for a Pro user', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'pro' });
+    const res = await request(app).post('/api/export/pdf').set(H())
+      .send({ type: 'certificates', meetingTitle: 'CLE', participants: PARTS })
+      .buffer(true).parse(binaryParser);
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toBe('application/pdf');
+    expect(res.headers['content-disposition']).toContain('certificates-cle.pdf');
+    expect(res.body.slice(0, 5).toString('latin1')).toBe('%PDF-');
+  });
+
+  test('400 when there are no present attendees to certify', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'pro' });
+    const res = await request(app).post('/api/export/pdf').set(H())
+      .send({ type: 'certificates', meetingTitle: 'CLE', participants: [{ displayName: 'Al', present: false, status: 'Absent' }] });
+    expect(res.status).toBe(400);
+  });
 });
