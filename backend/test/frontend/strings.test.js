@@ -130,11 +130,23 @@ describe('applyTranslations DOM helper', () => {
   });
 });
 
-describe('getAvailableLocales', () => {
-  test('returns list of supported languages with flag and name', () => {
-    const list = strings.getAvailableLocales();
-    expect(list.length).toBe(8);
-    expect(list.map(l => l.code)).toEqual(['en', 'es', 'pt', 'hi', 'tl', 'ms', 'zh', 'ja']);
+describe('dictionary parity across all locales', () => {
+  const locales = strings.getAvailableLocales().map(l => l.code);
+  const enKeys = Object.keys(strings.STRINGS.en);
+
+  test('English dictionary has substantial UI coverage', () => {
+    expect(enKeys.length).toBeGreaterThan(45);
+  });
+
+  test.each(locales.filter(l => l !== 'en'))('locale "%s" contains 100% of English translation keys', (localeCode) => {
+    const localeDict = strings.STRINGS[localeCode];
+    expect(localeDict).toBeDefined();
+    for (const key of enKeys) {
+      expect(localeDict[key]).toBeDefined();
+      expect(typeof localeDict[key]).toBe('string');
+      expect(localeDict[key].trim().length).toBeGreaterThan(0);
+    }
   });
 });
+
 

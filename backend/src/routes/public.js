@@ -52,14 +52,17 @@ router.post('/public/feedback', feedbackLimiter, async (req, res) => {
       log.warn('feedback: firestore persist failed', { error: e.message });
     }
 
-    await sendFeedbackEmail({
-      body: safeBody,
-      fromEmail: cap(fromEmail, 200),
-      fromName: cap(fromName, 200),
-      source: cap(source, 100),
-      conferenceId: cap(conferenceId, 100),
-      userAgent,
-    });
+    const isSmokeTest = source === 'github_actions' || fromEmail === 'ci-smoke@attendancetracker.dev';
+    if (!isSmokeTest) {
+      await sendFeedbackEmail({
+        body: safeBody,
+        fromEmail: cap(fromEmail, 200),
+        fromName: cap(fromName, 200),
+        source: cap(source, 100),
+        conferenceId: cap(conferenceId, 100),
+        userAgent,
+      });
+    }
     res.json({ success: true });
   } catch (err) {
     log.error('feedback: send failed', { error: err.message });
