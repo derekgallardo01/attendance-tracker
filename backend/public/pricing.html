@@ -7,10 +7,10 @@
   <link rel="icon" type="image/png" sizes="128x128" href="icons/icon-128.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pricing — Attendance Tracker</title>
-  <meta name="description" content="Attendance Tracker pricing: free to start, Individual Pro from $8/month ($77/year), Team Pro from $19/month ($182/year). Monthly or annual, cancel anytime." />
+  <meta name="description" content="Attendance Tracker pricing: free to start (3 exports/month), Individual Pro at $9.99/year, Team Pro at $19.99/year for entire Google Workspace domains. Cancel anytime." />
   <link rel="canonical" href="https://attendancetracker.dev/pricing.html" />
   <meta property="og:title" content="Pricing — Attendance Tracker" />
-  <meta property="og:description" content="Attendance Tracker pricing: Free tier available, Individual Pro ($8/mo), and Team Pro ($19/mo) for entire Google Workspace domains." />
+  <meta property="og:description" content="Attendance Tracker pricing: Free tier (3 exports/mo), Individual Pro ($9.99/yr), and Team Pro ($19.99/yr) for entire Google Workspace domains." />
   <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
   <meta property="og:url" content="https://attendancetracker.dev/pricing.html" />
   <meta property="og:type" content="website" />
@@ -32,16 +32,16 @@
       {
         "@type": "Offer",
         "name": "Individual Pro",
-        "price": "8.00",
+        "price": "9.99",
         "priceCurrency": "USD",
-        "billingDuration": "P1M"
+        "billingDuration": "P1Y"
       },
       {
         "@type": "Offer",
         "name": "Team Pro",
-        "price": "19.00",
+        "price": "19.99",
         "priceCurrency": "USD",
-        "billingDuration": "P1M"
+        "billingDuration": "P1Y"
       }
     ]
   }
@@ -65,50 +65,50 @@
 </head>
 <body>
   <h1>Pricing</h1>
-  <p class="sub">Free to start. Upgrade when you need per-student trends or org-wide reporting. Pay monthly or save ~20% with annual — cancel anytime.</p>
+  <p class="sub">Free to start. Upgrade when you need per-student trends or org-wide reporting. Billed annually — cancel anytime.</p>
 
   <!-- NOTE: prices must match the Stripe prices behind STRIPE_INDIVIDUAL_PRICE_ID /
-       STRIPE_PRICE_ID (monthly) and STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID /
-       STRIPE_ANNUAL_PRICE_ID (annual). Update both together. -->
+       STRIPE_PRICE_ID and STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID /
+       STRIPE_ANNUAL_PRICE_ID. Update both together. -->
   <div class="plans">
     <div class="plan">
       <h2>Free</h2>
       <p class="price">$0<span> / forever</span></p>
       <ul>
         <li>Real-time attendance for Google Meet</li>
-        <li>Export any meeting to Google Sheets</li>
+        <li>Up to <strong>3 meeting exports</strong> per month</li>
         <li>Late arrivals, no-shows, and durations</li>
         <li>Works on personal and Workspace accounts</li>
       </ul>
     </div>
     <div class="plan featured">
       <h2>Individual Pro</h2>
-      <p class="price">$77<span> / year per person</span></p>
-      <p class="note" style="margin:2px 0 0">or $8/mo · save ~20% annually</p>
+      <p class="price">$9.99<span> / year per person</span></p>
+      <p class="note" style="margin:2px 0 0">only $0.83 / month · full school year pass</p>
       <ul>
-        <li>Everything in Free</li>
-        <li>Cumulative <strong>Class Summary</strong> export — per-person attendance&nbsp;% across every session</li>
-        <li>Track a recurring class or meeting over time</li>
-        <li>Annual billing covers one full school year</li>
+        <li><strong>Unlimited</strong> Google Sheets exports</li>
+        <li>Auto-export when meeting ends</li>
+        <li>Cumulative <strong>Class Summary</strong> export — per-person attendance % across all sessions</li>
+        <li>Track recurring classes over time</li>
         <li>Best for teachers, tutors, and recruiters</li>
       </ul>
     </div>
     <div class="plan">
       <h2>Team Pro</h2>
-      <p class="price">$182<span> / year per organization</span></p>
-      <p class="note" style="margin:2px 0 0">or $19/mo · save ~20% annually</p>
+      <p class="price">$19.99<span> / year per organization</span></p>
+      <p class="note" style="margin:2px 0 0">only $1.66 / month · entire Workspace domain</p>
       <ul>
         <li>Everything in Individual</li>
         <li>Org-wide team dashboard — every user, meeting, series, and person</li>
         <li>Attendance alerts and post-meeting summaries</li>
-        <li>One subscription covers your whole Workspace domain</li>
+        <li>One subscription covers your <strong>whole school or Workspace domain</strong></li>
       </ul>
     </div>
   </div>
 
   <p class="note">
-    Prices are in USD and exclusive of any applicable taxes. Pro subscriptions renew automatically each month or year
-    (depending on the plan you choose) until cancelled. Payments are securely processed by Stripe and billed by Kinetic Helix LLC, which operates Attendance
+    Prices are in USD and exclusive of any applicable taxes. Pro subscriptions renew automatically each year
+    until cancelled. Payments are securely processed by Stripe and billed by Kinetic Helix LLC, which operates Attendance
     Tracker. See our <a href="refunds.html">Refund &amp; Cancellation Policy</a> and
     <a href="terms.html">Terms of Service</a>. Questions? <a href="mailto:derekgallardo01@gmail.com">derekgallardo01@gmail.com</a>.
   </p>

@@ -3,7 +3,7 @@ const { google } = require('googleapis');
 const { getGoogleClient } = require('../services/googleAuth');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { persistExport, getUserSheetId, setUserSheetId, countUserExports, getMeetingExcusedEmails, addMeetingExcusedEmails, getUserSettings, getUserMeetingSeries } = require('../services/firestore');
+const { persistExport, getUserSheetId, setUserSheetId, countUserExports, countUserMonthlyExports, getMeetingExcusedEmails, addMeetingExcusedEmails, getUserSettings, getUserMeetingSeries } = require('../services/firestore');
 const { sendExportNotification, sendSlackDigest } = require('../lib/notifications');
 const { planIsPro } = require('./billing');
 
@@ -574,6 +574,21 @@ router.post('/save-to-sheets', async (req, res) => {
     const proAllowed = req.user ? await planIsPro(req.user.domain, req.user.email) : true;
     if (b.autoExport && req.user && !proAllowed) {
       return res.status(402).json({ error: 'Auto-export on meeting end is a Pro feature.', upgrade: true, feature: 'autoExport' });
+    }
+
+    // Monthly export quota check for Free users (3 exports per calendar month)
+    const FREE_MONTHLY_EXPORT_LIMIT = 3;
+    if (req.user && !proAllowed) {
+      const monthlyExports = await countUserMonthlyExports(req.user.domain, req.user.email);
+      if (monthlyExports >= FREE_MONTHLY_EXPORT_LIMIT) {
+        log.info('sheets: free tier export quota reached', { domain: req.user.domain, email: req.user.email, count: monthlyExports });
+        return res.status(402).json({
+          error: `You have reached your limit of ${FREE_MONTHLY_EXPORT_LIMIT} free exports this month. Upgrade to Pro for unlimited exports.`,
+          upgrade: true,
+          feature: 'exportQuota',
+          quota: { used: monthlyExports, limit: FREE_MONTHLY_EXPORT_LIMIT },
+        });
+      }
     }
     const sheetsAuth = await getGoogleClient(req, 'https://www.googleapis.com/auth/spreadsheets');
     const { sheetUrl, isFirstExport } = await buildAndSaveExport({

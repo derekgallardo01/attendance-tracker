@@ -54,6 +54,7 @@ jest.mock('../../src/services/firestore', () => ({
   getUserSheetId: jest.fn(),
   setUserSheetId: jest.fn(),
   countUserExports: jest.fn(),
+  countUserMonthlyExports: jest.fn(),
   getMeetingExcusedEmails: jest.fn(),
   addMeetingExcusedEmails: jest.fn(),
   getUserSettings: jest.fn(),
@@ -101,6 +102,7 @@ beforeEach(() => {
   }));
   firestore.getUserSheetId.mockResolvedValue('existing-sheet-id');
   firestore.countUserExports.mockResolvedValue(0);
+  firestore.countUserMonthlyExports.mockResolvedValue(0);
   firestore.getMeetingExcusedEmails.mockResolvedValue([]);
   firestore.getUserSettings.mockResolvedValue({ slackWebhookUrl: null });
   firestore.getUserMeetingSeries.mockResolvedValue({ series: [], totalSeries: 0 });
@@ -656,8 +658,30 @@ describe('POST /api/save-to-sheets — Pro gating', () => {
     expect(firestore.persistExport).not.toHaveBeenCalled(); // failed fast, no export
   });
 
+  test('free tier export is blocked with 402 when monthly quota is reached (3 exports/month)', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.countUserMonthlyExports.mockResolvedValue(3);
+    const res = await request(app).post('/api/save-to-sheets')
+      .set(authedHeader('u@free-quota.com', 'free-quota.com')).set('Content-Type', 'application/json')
+      .send({ ...validPayload, autoExport: false });
+    expect(res.status).toBe(402);
+    expect(res.body).toMatchObject({ upgrade: true, feature: 'exportQuota', quota: { used: 3, limit: 3 } });
+    expect(firestore.persistExport).not.toHaveBeenCalled();
+  });
+
+  test('pro user can export beyond 3 exports without quota block', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'pro' });
+    firestore.countUserMonthlyExports.mockResolvedValue(10);
+    const res = await request(app).post('/api/save-to-sheets')
+      .set(authedHeader('u@pro-unlimited.com', 'pro-unlimited.com')).set('Content-Type', 'application/json')
+      .send({ ...validPayload, autoExport: false });
+    expect(res.status).toBe(200);
+    expect(firestore.persistExport).toHaveBeenCalled();
+  });
+
   test('manual export still works for a free domain, but the email digest is suppressed', async () => {
     firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.countUserMonthlyExports.mockResolvedValue(1);
     const res = await request(app).post('/api/save-to-sheets')
       .set(authedHeader('u@free2.com', 'free2.com')).set('Content-Type', 'application/json')
       .send({ ...validPayload, sendEmail: true, autoExport: false });

@@ -3027,11 +3027,15 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     if (!res.ok) {
       let body = {};
       try { body = await res.json(); } catch {}
-      // Auto-export is a Pro feature. Free users get a 402 here (manual export
-      // is never gated). Show an upgrade nudge instead of a scary error toast.
+      // Free tier has 3 exports/month; auto-export is also Pro.
       if (res.status === 402) {
-        logUserEvent('export_skipped', { reason: 'pro_required' });
-        toast('Auto-export on meeting end is a Pro feature. You can still export manually anytime.', 7000);
+        const feature = body.feature || 'pro_required';
+        logUserEvent('export_skipped', { reason: feature });
+        if (feature === 'exportQuota') {
+          toast('📊 Monthly limit reached (3 free exports). Upgrade to Pro ($9.99/yr) for unlimited exports.', 9000);
+        } else {
+          toast('Auto-export on meeting end is a Pro feature. You can still export manually anytime.', 7000);
+        }
         return;
       }
       if (body.code === 'DRIVE_PERMISSION_MISSING') {
