@@ -96,11 +96,17 @@ describe('detectLocale', () => {
     expect(strings.detectLocale('tl-PH')).toBe('tl');
     expect(strings.detectLocale('fil-PH')).toBe('tl');
     expect(strings.detectLocale('ms-MY')).toBe('ms');
+    expect(strings.detectLocale('id-ID')).toBe('id');
+    expect(strings.detectLocale('in-ID')).toBe('id');
+    expect(strings.detectLocale('vi-VN')).toBe('vi');
+    expect(strings.detectLocale('fr-FR')).toBe('fr');
+    expect(strings.detectLocale('de-DE')).toBe('de');
+    expect(strings.detectLocale('ar-AE')).toBe('ar');
     expect(strings.detectLocale('zh-TW')).toBe('zh');
     expect(strings.detectLocale('zh-HK')).toBe('zh');
     expect(strings.detectLocale('ja-JP')).toBe('ja');
     expect(strings.detectLocale('en-US')).toBe('en');
-    expect(strings.detectLocale('fr-FR')).toBe('en'); // fallback
+    expect(strings.detectLocale('xx-YY')).toBe('en'); // unknown fallback
   });
 
   test('prefers stored locale in localStorage over browser language', () => {
