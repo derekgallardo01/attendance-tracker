@@ -101,7 +101,13 @@ describe('detectLocale', () => {
     expect(strings.detectLocale('vi-VN')).toBe('vi');
     expect(strings.detectLocale('fr-FR')).toBe('fr');
     expect(strings.detectLocale('de-DE')).toBe('de');
+    expect(strings.detectLocale('it-IT')).toBe('it');
+    expect(strings.detectLocale('nl-NL')).toBe('nl');
+    expect(strings.detectLocale('pl-PL')).toBe('pl');
+    expect(strings.detectLocale('tr-TR')).toBe('tr');
+    expect(strings.detectLocale('th-TH')).toBe('th');
     expect(strings.detectLocale('ar-AE')).toBe('ar');
+    expect(strings.detectLocale('ko-KR')).toBe('ko');
     expect(strings.detectLocale('zh-TW')).toBe('zh');
     expect(strings.detectLocale('zh-HK')).toBe('zh');
     expect(strings.detectLocale('ja-JP')).toBe('ja');
