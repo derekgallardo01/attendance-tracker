@@ -64,17 +64,35 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
       ? { individual: '1', domain, email: email.toLowerCase() }
       : { domain, initiatedBy: email };
     const backTo = individual ? 'history.html' : 'team.html';
-    const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
+    // Retrieve price details to dynamically use 'subscription' for recurring plans
+    // or 'payment' for one-time / lifetime purchases.
+    let isRecurring = true;
+    if (stripe.prices && typeof stripe.prices.retrieve === 'function') {
+      try {
+        const priceObj = await stripe.prices.retrieve(priceId);
+        isRecurring = priceObj ? (priceObj.type === 'recurring' || !!priceObj.recurring) : true;
+      } catch (e) {
+        log.warn('billing: could not retrieve price object, defaulting to subscription', { priceId, error: e.message });
+      }
+    }
+
+    const sessionParams = {
+      mode: isRecurring ? 'subscription' : 'payment',
       line_items: [{ price: priceId, quantity: 1 }],
       client_reference_id: individual ? `user:${email.toLowerCase()}` : domain,
       customer_email: email,
       success_url: `${CONFIG.publicSiteUrl}/${backTo}?upgraded=1`,
       cancel_url: `${CONFIG.publicSiteUrl}/${backTo}`,
       metadata: meta,
-      subscription_data: { metadata: meta },
       allow_promotion_codes: true,
-    });
+    };
+    if (isRecurring) {
+      sessionParams.subscription_data = { metadata: meta };
+    } else {
+      sessionParams.payment_intent_data = { metadata: meta };
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
     res.json({ url: session.url });
   } catch (err) {
     log.error('billing: checkout create failed', { domain, individual, error: err.message });

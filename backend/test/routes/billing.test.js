@@ -8,6 +8,7 @@ const { authedHeader, buildApp } = require('../helpers/testApp');
 const mockStripeInstance = {
   checkout: { sessions: { create: jest.fn() } },
   billingPortal: { sessions: { create: jest.fn() } },
+  prices: { retrieve: jest.fn().mockResolvedValue({ id: 'p1', type: 'recurring', recurring: { interval: 'year' } }) },
   webhooks: { constructEvent: jest.fn() },
   promotionCodes: { create: jest.fn() },
 };
@@ -29,6 +30,8 @@ let app;
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockStripeInstance.prices.retrieve.mockResolvedValue({ id: 'p1', type: 'recurring', recurring: { interval: 'year' } });
+  mockStripeInstance.checkout.sessions.create.mockResolvedValue({ url: 'https://checkout.stripe.com/test' });
   firestore.getUser.mockImplementation(async (domain, email) => ({ email, domain }));
   firestore.getTenantPlan.mockResolvedValue({ plan: 'free', billingStatus: null, stripeCustomerId: null });
   firestore.getUserPlan.mockResolvedValue({ plan: 'free', billingStatus: null, stripeCustomerId: null });
@@ -524,3 +527,25 @@ describe('createReferralPromoCode', () => {
     expect(await createReferralPromoCode('inviter@x.com')).toBeNull();
   });
 });
+
+describe('billing — one-time lifetime payment mode', () => {
+  test('uses mode: payment and payment_intent_data when price is one-time', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_PRICE_ID = 'price_lifetime_1999';
+    mockStripeInstance.prices.retrieve.mockResolvedValueOnce({ id: 'price_lifetime_1999', type: 'one_time', recurring: null });
+    mockStripeInstance.checkout.sessions.create.mockResolvedValueOnce({ url: 'https://checkout.stripe.com/pay' });
+
+    const res = await request(app)
+      .post('/api/billing/checkout')
+      .set(authedHeader('admin@acme.com', 'acme.com'))
+      .send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.url).toBe('https://checkout.stripe.com/pay');
+    expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(expect.objectContaining({
+      mode: 'payment',
+      payment_intent_data: expect.objectContaining({ metadata: expect.objectContaining({ domain: 'acme.com' }) }),
+    }));
+  });
+});
+
