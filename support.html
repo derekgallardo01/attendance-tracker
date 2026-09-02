@@ -1,88 +1,242 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
   <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
   <link rel="icon" type="image/png" sizes="128x128" href="icons/icon-128.png" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Support — Attendance Tracker</title>
-  <meta name="description" content="Get help with Attendance Tracker for Google Meet. FAQs, troubleshooting guide, installation help, and email support." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Customer Support &amp; Help — Attendance Tracker</title>
+  <meta name="description" content="Get fast support for Attendance Tracker for Google Meet. Visit our comprehensive Help Center, browse FAQs, open a GitHub ticket, or email our support team." />
   <link rel="canonical" href="https://attendancetracker.dev/support.html" />
-  <meta property="og:title" content="Support &amp; Help — Attendance Tracker" />
-  <meta property="og:description" content="FAQs and customer support for Attendance Tracker for Google Meet." />
+  <meta property="og:title" content="Customer Support &amp; Help — Attendance Tracker" />
+  <meta property="og:description" content="FAQs, troubleshooting, and customer support for Attendance Tracker for Google Meet." />
   <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
   <meta property="og:url" content="https://attendancetracker.dev/support.html" />
   <meta property="og:type" content="website" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 20px; color: #333; line-height: 1.6; }
-    h1 { color: #1a73e8; }
-    h2 { margin-top: 2em; color: #202124; }
-    a { color: #1a73e8; }
-    .card { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin: 16px 0; }
-    .card h3 { margin-top: 0; }
-    .footer { margin-top: 3em; padding-top: 1em; border-top: 1px solid #e0e0e0; color: #666; font-size: 0.85rem; }
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface-elevated: #21262d;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #4ade80;
+      --accent-dim: rgba(74, 222, 128, 0.15);
+      --blue: #58a6ff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 0;
+      margin: 0;
+    }
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13, 17, 23, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+    }
+    .nav-container {
+      max-width: 860px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+    .brand img { width: 28px; height: 28px; border-radius: 6px; }
+    .nav-links { display: flex; align-items: center; gap: 20px; }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover, .nav-links a.active { color: var(--text); }
+    .nav-cta {
+      background: #34A853;
+      color: #fff !important;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 44px 20px 80px;
+    }
+    h1 { font-size: 2.2rem; color: var(--text); margin-bottom: 12px; }
+    .lead { color: var(--muted); font-size: 1.05rem; margin-bottom: 32px; }
+    .help-banner {
+      background: linear-gradient(135deg, rgba(74, 222, 128, 0.12), rgba(88, 166, 255, 0.12));
+      border: 1px solid rgba(74, 222, 128, 0.3);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .help-banner h2 { font-size: 1.25rem; color: var(--text); margin: 0; }
+    .help-banner p { color: #c9d1d9; font-size: 0.92rem; margin: 0; }
+    .btn-help {
+      display: inline-block;
+      align-self: flex-start;
+      background: var(--accent);
+      color: #0d1117;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.88rem;
+      padding: 8px 18px;
+      border-radius: 6px;
+      margin-top: 4px;
+    }
+    .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 40px; }
+    @media (max-width: 600px) { .cards { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 22px;
+    }
+    .card h3 { font-size: 1.1rem; color: var(--text); margin-bottom: 8px; }
+    .card p { color: var(--muted); font-size: 0.88rem; margin-bottom: 12px; }
+    .card a { color: var(--blue); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+    .card a:hover { text-decoration: underline; }
+    .faq-section h2 { font-size: 1.4rem; color: var(--text); margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    .faq-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 12px;
+    }
+    .faq-item h3 { font-size: 1rem; color: var(--text); margin-bottom: 8px; }
+    .faq-item p { color: #c9d1d9; font-size: 0.88rem; line-height: 1.5; margin-bottom: 8px; }
+    .faq-item p:last-child { margin-bottom: 0; }
+    .faq-item a { color: var(--blue); }
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 36px 20px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-top: 50px;
+    }
+    footer a { color: var(--muted); text-decoration: none; margin: 0 8px; }
+    footer a:hover { color: var(--text); }
   </style>
 </head>
 <body>
-  <h1>Support</h1>
-  <p>Need help with Attendance Tracker? We're here to help.</p>
+  <!-- Top Navigation -->
+  <header class="top-nav">
+    <div class="nav-container">
+      <a href="/" class="brand">
+        <img src="icons/icon-96.png" alt="" />
+        <span>Attendance Tracker</span>
+      </a>
+      <nav class="nav-links">
+        <a href="/">Home</a>
+        <a href="/pricing.html">Pricing</a>
+        <a href="/faq.html">Help Center &amp; FAQ</a>
+        <a href="/support.html" class="active">Support</a>
+        <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" class="nav-cta">Install Free</a>
+      </nav>
+    </div>
+  </header>
 
-  <div class="card">
-    <h3>Email Support</h3>
-    <p>For questions, bug reports, or feature requests, email us at:</p>
-    <p><strong><a href="mailto:derekgallardo01@gmail.com">derekgallardo01@gmail.com</a></strong></p>
-    <p>We typically respond within 24 hours.</p>
-  </div>
+  <main class="container">
+    <h1>Support</h1>
+    <p class="lead">Need help with Attendance Tracker? Browse our resources or reach out directly.</p>
 
-  <div class="card">
-    <h3>GitHub Issues</h3>
-    <p>Found a bug or want to request a feature? Open an issue on our GitHub repository:</p>
-    <p><strong><a href="https://github.com/derekgallardo01/attendance-tracker/issues" target="_blank">github.com/derekgallardo01/attendance-tracker/issues</a></strong></p>
-  </div>
+    <div class="help-banner">
+      <h2>📚 Dedicated Help Center &amp; FAQ</h2>
+      <p>Have questions about tracking attendance as a TA, auto-exporting to Google Sheets, configuring Slack webhooks, or setting up Google Workspace domain delegation?</p>
+      <a href="/faq.html" class="btn-help">Explore Help Center &amp; FAQs &rarr;</a>
+    </div>
 
-  <h2>Frequently Asked Questions</h2>
+    <div class="cards">
+      <div class="card">
+        <h3>✉️ Email Support</h3>
+        <p>For questions, bug reports, custom rollout help, or billing assistance:</p>
+        <p><a href="mailto:derekgallardo01@gmail.com">derekgallardo01@gmail.com</a></p>
+        <p style="font-size:0.78rem;color:var(--muted)">Typical response time: within 24 hours.</p>
+      </div>
 
-  <h3>How do I install the add-on?</h3>
-  <p>Open Google Meet, click the puzzle piece icon (Activities), go to Add-ons, and search for "Attendance Tracker". Click Install to add it to your Meet.</p>
+      <div class="card">
+        <h3>🐙 GitHub Issues</h3>
+        <p>Found a bug or want to request an enhancement? Open an issue on our public repo:</p>
+        <p><a href="https://github.com/derekgallardo01/attendance-tracker/issues" target="_blank" rel="noopener">Open GitHub Issue &rarr;</a></p>
+        <p style="font-size:0.78rem;color:var(--muted)">Track bugs and platform feature updates.</p>
+      </div>
+    </div>
 
-  <h3>Why don't I see all participants?</h3>
-  <p>If you see a message "Some participants may not appear", your Workspace admin needs to configure domain-wide delegation for the service account. Click "Ask your admin to complete setup" in the add-on for instructions.</p>
+    <section class="faq-section">
+      <h2>Common Quick Answers</h2>
 
-  <h3>Why does a participant show as "Left" when they're still in the meeting?</h3>
-  <p>The Google Meet API has a 2-5 minute delay in registering new sessions. If someone leaves and rejoins, it may take a few minutes for their status to update. The add-on uses multiple strategies to minimize this delay.</p>
+      <div class="faq-item">
+        <h3>How do I install the add-on?</h3>
+        <p>Open Google Meet, click the Activities icon (shapes/puzzle piece in the bottom right corner), select Add-ons, search for "Attendance Tracker", and click Install.</p>
+      </div>
 
-  <h3>Can I use this with a personal Gmail account?</h3>
-  <p>Yes. Sign in with any Google account that organized or joined the Meet call. The add-on works for personal Gmail accounts as well as Google Workspace.</p>
-  <p>The one limitation: without domain-wide delegation (which is Workspace-only), you'll only see participants from the same account/organization in the live participant list. For most personal-Gmail meetings (1:1s and small calls where you know everyone), this isn't a problem.</p>
+      <div class="faq-item">
+        <h3>How can a TA or Co-Host track attendance?</h3>
+        <p>You don't need to organize the calendar invite! Simply join the Google Meet call, open Attendance Tracker in the Activities panel, and let it log attendance directly to your Google Drive. See our detailed <a href="/faq.html">TA Attendance Guide in the Help Center</a>.</p>
+      </div>
 
-  <h3>What happens when the meeting ends?</h3>
-  <p>If you have the side panel open when the meeting ends, attendance is auto-exported to a Google Sheet and a digest email lands in your inbox with the attendance summary. No clicks required.</p>
+      <div class="faq-item">
+        <h3>Why don't external participants appear in my roster?</h3>
+        <p>If you see a notice saying "Some participants may not appear", your Google Workspace administrator can configure a one-time domain delegation. Follow the 2-minute instructions at <a href="/setup.html">attendancetracker.dev/setup</a>.</p>
+      </div>
 
-  <h3>How do I get post-meeting summaries in Slack?</h3>
-  <p>Click the gear icon in the side panel (visible after sign-in), then paste an Incoming Webhook URL from your Slack workspace. After every export, a Block Kit summary card posts to that channel with present / left / absent rows and a link to the sheet.</p>
-  <p>Create a webhook: <a href="https://api.slack.com/messaging/webhooks" target="_blank">api.slack.com/messaging/webhooks</a></p>
+      <div class="faq-item">
+        <h3>How do I export Google Meet attendance to Google Sheets?</h3>
+        <p>Attendance Tracker auto-exports clean spreadsheets into a "Meet Attendance Tracker" folder in your Google Drive when your call ends. You can also click the "Sheet" button in the side panel for an instant export mid-meeting. Read the <a href="/export-google-meet-attendance-to-sheets.html">Sheets Export Guide</a>.</p>
+      </div>
 
-  <h3>I track the same meeting every week. Can I see attendance trends?</h3>
-  <p>Yes — if the meeting is on your Google Calendar as a recurring event, the add-on rolls up attendance across the series. Visit <a href="/history.html">history.html</a>, click the "Series" tab to see per-person attendance ("Alex attended 12 of 15 standups") with progress bars.</p>
-  <p>You'll also get a daily email alert if someone in a series you track misses 3 in a row after a regular streak, or if their attendance drops sharply.</p>
+      <div class="faq-item">
+        <h3>How do I request account or data deletion?</h3>
+        <p>Send an email to <a href="mailto:derekgallardo01@gmail.com?subject=Data%20Deletion%20Request">derekgallardo01@gmail.com</a> with the subject line "Data Deletion Request" and all records will be deleted within 30 days.</p>
+      </div>
+    </section>
+  </main>
 
-  <h3>Can I share an attendance dashboard with someone outside the app?</h3>
-  <p>Yes. On the Series tab in <a href="/history.html">history.html</a>, click the "Share" button next to any series. You'll get a public link (30-day expiry) you can paste into Slack, email, or anywhere. The recipient sees a read-only attendance view — no sign-in required.</p>
+  <footer>
+    <p>
+      <a href="/">Home</a> ·
+      <a href="/pricing.html">Pricing</a> ·
+      <a href="/faq.html">Help Center &amp; FAQ</a> ·
+      <a href="/privacy.html">Privacy Policy</a> ·
+      <a href="/terms.html">Terms of Service</a> ·
+      <a href="/refunds.html">Refund Policy</a> ·
+      <a href="/setup.html">Admin Setup</a>
+    </p>
+    <p style="margin-top: 10px;">Attendance Tracker is an official Google Meet&#8482; add-on. Google Meet&#8482; is a trademark of Google LLC.</p>
+  </footer>
 
-  <h3>Where are my exported sheets?</h3>
-  <p>Exports are saved in a "Meet Attendance Tracker" folder in your Google Drive. Each meeting becomes its own tab in a single spreadsheet. After exporting, click "Open exported sheet" in the add-on to go directly to it, or check the "Open sheet" link in the digest email.</p>
-
-  <h3>Can I mark a no-show as excused?</h3>
-  <p>Yes. When the calendar-match modal opens during export, each unmatched calendar invitee has an "Excused" checkbox. Check it before exporting and that person shows as "Absent (excused)" in the sheet instead of just "Absent". The tag persists, so re-exporting the same meeting keeps the excused status.</p>
-
-  <h3>How do I request data deletion?</h3>
-  <p>Email <a href="mailto:derekgallardo01@gmail.com">derekgallardo01@gmail.com</a> with the subject "Data Deletion Request" and we will remove all your data within 30 days.</p>
-
-  <div class="footer">
-    <p><a href="/?utm_source=support_nav&utm_medium=internal_nav">Home</a> · <a href="pricing.html">Pricing</a> · <a href="privacy.html">Privacy Policy</a> · <a href="terms.html">Terms of Service</a> · <a href="refunds.html">Refund Policy</a></p>
-    <p style="margin-top: 8px;">Attendance Tracker is a Google Meet&#8482; add-on. Google Meet&#8482; is a trademark of Google LLC.</p>
-  </div>
   <script>
   (function () {
     try {

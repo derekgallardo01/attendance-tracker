@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
+  <link rel="icon" type="image/png" sizes="128x128" href="icons/icon-128.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Help Center &amp; FAQ — Attendance Tracker for Google Meet™</title>
+  <meta name="description" content="Comprehensive Help Center &amp; FAQ for Attendance Tracker. Learn how to track Google Meet attendance as a TA, export logs to Google Sheets, set up Slack summaries, and track without host privileges." />
+  <link rel="canonical" href="https://attendancetracker.dev/faq.html" />
+  <meta property="og:title" content="Help Center &amp; FAQ — Attendance Tracker for Google Meet™" />
+  <meta property="og:description" content="Guides and answers on taking Google Meet attendance as a TA, auto-exporting to Google Sheets, domain delegation, and troubleshooting." />
+  <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
+  <meta property="og:url" content="https://attendancetracker.dev/faq.html" />
+  <meta property="og:type" content="website" />
+
+  <!-- Structured Data: FAQPage Schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How to track attendance in Google Meet as a TA (Teaching Assistant) or Co-Host?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "As a TA or Co-Host, you do not need to organize or own the Google Calendar invite. Simply join the Google Meet call with your Google account, open the Attendance Tracker add-on from the Activities panel (puzzle piece icon), and keep it active during class. Attendance Tracker records real-time join times, leave times, and total duration directly into your own session. When the class ends, attendance exports directly to a Google Sheet in your personal Google Drive."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How to track attendance in Google Meet without being the host or meeting organizer?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Unlike Google's default attendance report (which only emails the meeting creator on Education Plus accounts), Attendance Tracker works for any authenticated attendee in the call. If you are on Google Workspace, a one-time domain-wide delegation setup (attendancetracker.dev/setup) allows participants, co-hosts, and project managers to view full rosters even for meetings organized by external users or absent professors."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Do I need Google Workspace for Education Plus to take attendance?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. Google's native attendance reports require an expensive Google Workspace for Education Plus or Teaching and Learning Upgrade license. Attendance Tracker works seamlessly across Google Workspace Education Fundamentals, Education Standard, Business Starter, Business Standard, Enterprise, and personal @gmail.com accounts."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I track attendance using a personal @gmail.com account?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. You can sign in with any standard personal @gmail.com account. The host can record participant durations, join timestamps, and export clean sheets with zero Workspace administrative prerequisites."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How to export Google Meet logs to Google Sheets?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Attendance Tracker offers two export methods: 1) Auto-Export: When your meeting ends, Attendance Tracker automatically compiles join/leave times, duration percentages, and calendar match data into a formatted Google Sheet in your Google Drive. 2) Manual Export: Click the 'Sheet' button in the add-on side panel at any point during the call to generate or update the attendance sheet immediately."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What data fields and columns are included in the Google Sheets export?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The exported spreadsheet contains: Participant Name, Email Address, RSVP Status (from Google Calendar invite), Late Arrival Indicator (+5m, +12m based on scheduled start), Join Time, Leave Time, Total Duration (in minutes, accurately summed across reconnections), Attendance Percentage (duration divided by meeting length), and Status (Present, Left, Absent, or Absent Excused)."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Where are exported sheets saved, and who can access them?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Exports are automatically saved in a dedicated 'Meet Attendance Tracker' folder in your personal Google Drive. The file is private to your Google account by default, and you retain standard Google Sheets sharing controls to share with colleagues, department heads, or students."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How to mark absent attendees as 'Excused' before exporting?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "When exporting a meeting that syncs with a Google Calendar event, an invitee reconciliation modal displays all no-shows. Simply check the 'Excused' checkbox next to an absent attendee's name. They will be logged as 'Absent (excused)' in the Google Sheet and retained across future session re-exports."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How to track recurring classes and multi-week semester attendance trends?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "For recurring Google Calendar meetings (such as a MWF lecture or daily standup), Attendance Tracker groups records by calendar event series. Through the Series dashboard at attendancetracker.dev/history.html, educators can view cumulative attendance rates (e.g., 'Student attended 28 of 30 lectures - 93%') and streak tracking across the entire semester."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How to send Google Meet attendance summaries directly to Slack?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "In the Attendance Tracker side panel, click the Settings gear icon and paste an Incoming Webhook URL from your Slack workspace. Upon meeting conclusion or manual export, Attendance Tracker sends an automated Block Kit summary card to your chosen Slack channel showing present, late, and absent counts with a direct link to the Google Sheet."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why don't external participants show up? (Google Workspace Domain-Wide Delegation)",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "By default, Google Meet REST API restrictions limit non-delegated queries to users within the same domain. To see external attendees or participants outside your Workspace domain, your Google Workspace administrator can configure domain-wide delegation in under 2 minutes following the guide at attendancetracker.dev/setup."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why does a participant show as 'Left' when they are still in the meeting?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The official Google Meet REST API can experience a 2 to 5 minute propagation delay when attendees leave or re-enter calls. Attendance Tracker combines polling and state reconciliation to resolve temporary disconnects and accurately aggregate total active minutes across multiple reconnections."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What permissions and Google OAuth scopes does Attendance Tracker require?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Attendance Tracker requests minimal, least-privilege OAuth scopes: read-only access to the active Google Meet conference call participants, read-only access to matching Google Calendar events to verify invitees, and restricted write access solely to Google Sheets files created by the application (drive.file scope). It cannot read or modify any other files in your Google Drive."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does Attendance Tracker record meeting audio, video, or private chats?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. Attendance Tracker is strictly an attendance and roster telemetry tool. It does not access, record, process, or store meeting audio, video streams, screen shares, or private chat messages."
+        }
+      }
+    ]
+  }
+  </script>
+
+  <!-- Structured Data: HowTo Schema for TA Attendance -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to Track Attendance in Google Meet as a Teaching Assistant (TA)",
+    "description": "Step-by-step guide for TAs and co-hosts to track student attendance in Google Meet without needing to organize or own the meeting invite.",
+    "step": [
+      {
+        "@type": "HowToStep",
+        "name": "Install the Add-on",
+        "text": "Install Attendance Tracker from the Google Workspace Marketplace into your Google account."
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Join the Google Meet Session",
+        "text": "Join the lecture or recitation via the standard Google Meet link provided by your professor or department."
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Open Attendance Tracker",
+        "text": "Click the Activities icon (shapes/puzzle piece in the bottom right corner) and launch Attendance Tracker."
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Monitor & Auto-Export",
+        "text": "Keep the side panel open to record join times and duration. When the call ends, your attendance sheet auto-exports to your Google Drive."
+      }
+    ]
+  }
+  </script>
+
+  <!-- Structured Data: BreadcrumbList -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://attendancetracker.dev/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Help Center & FAQ",
+        "item": "https://attendancetracker.dev/faq.html"
+      }
+    ]
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface-elevated: #21262d;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #4ade80;
+      --accent-dim: rgba(74, 222, 128, 0.15);
+      --blue: #58a6ff;
+      --blue-dim: rgba(88, 166, 255, 0.12);
+      --purple: #bc8cff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 0;
+      margin: 0;
+    }
+
+    /* Top Nav */
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13, 17, 23, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+    }
+
+    .nav-container {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+
+    .brand img {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+
+    .nav-links a:hover, .nav-links a.active {
+      color: var(--text);
+    }
+
+    .nav-cta {
+      background: #34A853;
+      color: #fff !important;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    .nav-cta:hover {
+      background: #2d9249;
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 20px 80px;
+    }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: var(--blue-dim);
+      border: 1px solid rgba(88, 166, 255, 0.3);
+      color: var(--blue);
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-size: 2.3rem;
+      line-height: 1.2;
+      margin-bottom: 14px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .lead {
+      color: var(--muted);
+      font-size: 1.1rem;
+      max-width: 640px;
+      margin: 0 auto 32px;
+    }
+
+    /* Search Box */
+    .search-wrapper {
+      max-width: 580px;
+      margin: 0 auto 28px;
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 18px 14px 44px;
+      color: var(--text);
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.2);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    /* Filter Pills */
+    .filter-pills {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 40px;
+    }
+
+    .pill-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .pill-btn:hover {
+      border-color: #58a6ff;
+      color: var(--text);
+    }
+
+    .pill-btn.active {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Category Section */
+    .category-section {
+      margin-bottom: 44px;
+    }
+
+    .category-title {
+      font-size: 1.45rem;
+      color: var(--text);
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .category-title span {
+      font-size: 1.25rem;
+    }
+
+    /* FAQ Card */
+    .faq-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 14px;
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+
+    .faq-item:hover {
+      border-color: rgba(88, 166, 255, 0.4);
+    }
+
+    .faq-header {
+      padding: 18px 22px;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      user-select: none;
+    }
+
+    .faq-question {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    .faq-toggle {
+      color: var(--muted);
+      font-size: 1.3rem;
+      line-height: 1;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+
+    .faq-item.open .faq-toggle {
+      transform: rotate(45deg);
+      color: var(--accent);
+    }
+
+    .faq-body {
+      padding: 0 22px 20px;
+      color: #c9d1d9;
+      font-size: 0.93rem;
+      line-height: 1.65;
+      display: none;
+    }
+
+    .faq-item.open .faq-body {
+      display: block;
+    }
+
+    .faq-body p {
+      margin-bottom: 12px;
+    }
+
+    .faq-body p:last-child {
+      margin-bottom: 0;
+    }
+
+    .faq-body ul, .faq-body ol {
+      padding-left: 22px;
+      margin: 10px 0 14px;
+    }
+
+    .faq-body li {
+      margin-bottom: 6px;
+    }
+
+    .faq-body a {
+      color: var(--blue);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .faq-body code {
+      background: var(--surface-elevated);
+      color: var(--accent);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.88em;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .callout-box {
+      background: var(--surface-elevated);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      padding: 12px 16px;
+      margin: 14px 0;
+      font-size: 0.88rem;
+    }
+
+    /* Comparison / Data Table */
+    .faq-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 0.88rem;
+      background: var(--surface-elevated);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .faq-table th {
+      text-align: left;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--muted);
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .faq-table td {
+      padding: 10px 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* CTA Section */
+    .cta-banner {
+      background: linear-gradient(135deg, rgba(74, 222, 128, 0.1), rgba(88, 166, 255, 0.1));
+      border: 1px solid rgba(74, 222, 128, 0.3);
+      border-radius: 14px;
+      padding: 36px 28px;
+      text-align: center;
+      margin: 60px 0 40px;
+    }
+
+    .cta-banner h2 {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+
+    .cta-banner p {
+      color: var(--muted);
+      font-size: 0.95rem;
+      max-width: 520px;
+      margin: 0 auto 20px;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #34A853;
+      color: #fff;
+      text-decoration: none;
+      padding: 12px 28px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.98rem;
+      transition: transform 0.15s, background 0.15s;
+    }
+
+    .btn-primary:hover {
+      background: #2d9249;
+      transform: translateY(-1px);
+    }
+
+    /* Support Channels Box */
+    .support-channels {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      margin: 40px 0;
+    }
+
+    @media (min-width: 600px) {
+      .support-channels { grid-template-columns: 1fr 1fr; }
+    }
+
+    .support-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+    }
+
+    .support-card h4 {
+      font-size: 1.05rem;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .support-card p {
+      font-size: 0.86rem;
+      color: var(--muted);
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .support-card a {
+      color: var(--blue);
+      font-weight: 600;
+      font-size: 0.88rem;
+      text-decoration: none;
+    }
+
+    .support-card a:hover {
+      text-decoration: underline;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 20px 60px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 18px;
+      margin-bottom: 16px;
+    }
+
+    .footer-links a {
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .footer-links a:hover {
+      color: var(--text);
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="top-nav">
+    <div class="nav-container">
+      <a href="/" class="brand">
+        <img src="icons/icon-96.png" alt="Attendance Tracker Logo" />
+        <span>Attendance Tracker</span>
+      </a>
+      <nav class="nav-links">
+        <a href="/">Home</a>
+        <a href="/pricing.html">Pricing</a>
+        <a href="/faq.html" class="active">Help Center &amp; FAQ</a>
+        <a href="/support.html">Contact Support</a>
+        <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" class="nav-cta">Install Free</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Hero Header -->
+    <section class="hero">
+      <div class="badge">Knowledge Base &amp; Support</div>
+      <h1>Help Center &amp; FAQ</h1>
+      <p class="lead">Everything you need to know about tracking Google Meet attendance, exporting to Google Sheets, domain delegation, and automated integrations.</p>
+
+      <!-- Instant Search Filter -->
+      <div class="search-wrapper">
+        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="search" id="faq-search" class="search-input" placeholder="Search guides (e.g. TA, Sheets, delay, excused, Slack)..." autocomplete="off" />
+      </div>
+
+      <!-- Category Filter Pills -->
+      <div class="filter-pills" id="category-pills">
+        <button class="pill-btn active" data-category="all">All Questions</button>
+        <button class="pill-btn" data-category="ta-host">TA &amp; Host Roles</button>
+        <button class="pill-btn" data-category="sheets">Google Sheets Export</button>
+        <button class="pill-btn" data-category="trends">Classroom &amp; Trends</button>
+        <button class="pill-btn" data-category="integrations">Slack &amp; Email</button>
+        <button class="pill-btn" data-category="troubleshooting">Troubleshooting</button>
+        <button class="pill-btn" data-category="security">Security &amp; Privacy</button>
+      </div>
+    </section>
+
+    <!-- No Search Results -->
+    <div id="no-results" class="no-results">
+      <p style="font-size:1.1rem;margin-bottom:8px">No matching questions found.</p>
+      <p style="font-size:0.9rem">Have a specific question? Email our team at <a href="mailto:derekgallardo01@gmail.com" style="color:var(--blue)">derekgallardo01@gmail.com</a>.</p>
+    </div>
+
+    <!-- Category 1: TA & Host Roles -->
+    <section class="category-section" data-section="ta-host">
+      <h2 class="category-title"><span>🎓</span> TA &amp; Host Attendance Tracking</h2>
+
+      <div class="faq-item open">
+        <div class="faq-header">
+          <h3 class="faq-question">How to track attendance in Google Meet as a TA (Teaching Assistant) or Co-Host</h3>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-body">
+          <p>Teaching assistants and recitation leaders rarely own or schedule the primary lecture calendar event. With Attendance Tracker, you do not need host or organizer rights to track attendance:</p>
+          <ol>
+            <li><strong>Install the Add-on:</strong> Install <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968">Attendance Tracker</a> from the Google Workspace Marketplace into your university or school Google account.</li>
+            <li><strong>Join the Call:</strong> Enter the Google Meet meeting room via the link provided by the professor.</li>
+            <li><strong>Open the Side Panel:</strong> Click the <em>Activities</em> button (shapes/puzzle icon in the bottom right corner) and select <strong>Attendance Tracker</strong>.</li>
+            <li><strong>Keep Panel Active:</strong> The add-on records active participants, joins, departures, and cumulative minutes directly under your authenticated session.</li>
+            <li><strong>Auto-Export on End:</strong> When the call finishes, your attendance sheet auto-exports directly into your personal Google Drive in a folder named <code>Meet Attendance Tracker</code>.</li>
+          </ol>
+          <div class="callout-box">
+            <strong>Deep-Dive Guide:</strong> Read our complete walkthrough for educators in <a href="/attendance-tracker-for-teachers.html">Attendance Tracker for Teachers</a> and <a href="/track-google-meet-attendance-without-host.html">Tracking Google Meet Attendance Without Being the Host</a>.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          <h3 class="faq-question">How to track attendance in Google Meet without being the host or meeting organizer</h3>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-body">
+          <p>By default, Google Meet only delivers built-in attendance reports to the meeting creator. Attendance Tracker solves this limitation by connecting directly to the Google Meet REST API through the participant's active browser session.</p>
+          <p>Any attendee, project manager, or co-host can generate an authoritative attendance report for calls they attend. For meetings inside a Google Workspace organization where students or external guests join, having your Workspace administrator enable a one-time domain-wide delegation (<a href="/setup.html">attendancetracker.dev/setup</a>) unlocks full directory and participant visibility across all meetings company-wide or campus-wide.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          <h3 class="faq-question">Do I need Google Workspace for Education Plus to take attendance?</h3>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-body">
+          <p><strong>No!</strong> Google restricts its native attendance tracking feature exclusively to top-tier, expensive licenses: Google Workspace for Education Plus and the Teaching &amp; Learning Upgrade. Even on those plans, Google only generates a static CSV emailed to the organizer hours later.</p>
+          <p>Attendance Tracker works seamlessly on <strong>all tiers</strong> without upgrades:</p>
+          <ul>
+            <li>Google Workspace Education Fundamentals (Free tier for schools)</li>
+            <li>Google Workspace Education Standard</li>
+            <li>Google Workspace Business Starter, Standard, Plus &amp; Enterprise</li>
+            <li>Personal free <code>@gmail.com</code> accounts</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          <h3 class="faq-question">Can I track attendance using a personal @gmail.com account?</h3>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-body">
+          <p>Yes. You can sign in with any standard personal <code>@gmail.com</code> account. You will be able to monitor present and departed participants live, calculate attendance percentages, and export logs to Google Sheets with zero administrative setup needed.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Category 2: Google Sheets Export -->
+    <section class="category-section" data-section="sheets">
+      <h2 class="category-title"><span>📊</span> Google Sheets Exports &amp; Reports</h2>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          <h3 class="faq-question">How to export Google Meet logs to Google Sheets</h3>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-body">
+          <p>Attendance Tracker provides both automatic hands-free export and manual on-demand export:</p>
+          <ul>
+            <li><strong>Automated End-of-Call Export:</strong> Keep the Attendance Tracker side panel open during your call. When the conference concludes, the add-on automatically generates a new sheet (or a new dated tab in your existing series spreadsheet) and emails you the direct link.</li>
+            <li><strong>Instant Manual Export:</strong> At any time during the meeting, click the <strong>Sheet</strong> icon button in the top toolbar of the side panel to trigger an immediate export or update.</li>
+          </ul>
+          <p>Check out our step-by-step breakdown: <a href="/export-google-meet-attendance-to-sheets.html">Export Google Meet Attendance to Google Sheets</a>.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          <h3 class="faq-question">What data fields and columns are included in the Google Sheets export?</h3>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-body">
+          <p>Each exported sheet tab is pre-formatted with clean styling, header row filters, and formula-ready columns:</p>
+          <table class="faq-table">
+            <thead>
+              <tr>
+                <th>Column Header</th>
+                <th>Data Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Name</strong></td>
+                <td>Display name of the participant from the Google Meet session</td>
+              </tr>
+              <tr>
+                <td><strong>Email</strong></td>
+                <td>Account email from the Google Calendar invite or Workspace directory</td>
+              </tr>
+              <tr>
+                <td><strong>RSVP Status</strong></td>
+                <td>Accepted, Declined, Tentative, or Awaiting Response</td>
+              </tr>
+              <tr>
+                <td><strong>Late?</strong></td>
+                <td>Flags tardiness (e.g. <code>+6m</code>, <code>+14m</code>) based on the scheduled start</td>
+              </tr>
+              <tr>
+                <td><strong>Join / Leave Time</strong></td>
+                <td>First join timestamp and final departure timestamp (HH:MM AM/PM)</td>
+              </tr>
+              <tr>
+                <td><strong>Duration (min)</strong></td>
+                <td>Active connected minutes (accurately sums re-connections)</td>
+              </tr>
+              <tr>
+                <td><strong>Attendance %</strong></td>
+                <td>Active duration divided by scheduled call length (capped at 100%)</td>
+              </tr>
+              <tr>
+                <td><strong>Status</strong></td>
+                <td>Present, Left, Absent, or Absent (excused)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          <h3 class="faq-question">Where are exported sheets saved, and who can access them?</h3>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-body">
+          <p>All spreadsheets are saved in your personal Google Drive within a dedicated folder called <code>Meet Attendance Tracker</code>.</p>
+          <p>By default, only your Google account has access to these files. You maintain full ownership and can use standard Google Drive sharing permissions to grant View or Edit access to professors, teaching assistants, or HR managers.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          <h3 class="faq-question">How to mark absent attendees as "Excused" in the report</h3>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-body">
+          <p>When you export a meeting synced with a Google Calendar event, Attendance Tracker compares joined participants against the invited guest list. For any invited guest who did not join:</p>
+          <ol>
+            <li>Before finalizing the export, the calendar matching modal displays all absent invitees.</li>
+            <li>Check the <strong>Excused</strong> checkbox next to any student or colleague who gave prior notice.</li>
+            <li>The export will label their status as <code>Absent (excused)</code> instead of unexcused absent.</li>
+            <li>This excused tag persists in the series database so cumulative percentage calculations remain accurate.</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- Category 3: Classroom & Trends -->
+    <section class="category-section" data-section="trends">
+      <h2 class="category-title"><span>📈</span> Classroom, Recurring Series &amp; Trends</h2>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          <h3 class="faq-question">How to track recurring classes and multi-week semester attendance trends</h3>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-body">
+          <p>If your lecture, seminar, or sprint standup is scheduled as a repeating event on Google Calendar, Attendance Tracker aggregates every session under a single Series ID.</p>
+          <p>Visit your web dashboard at <a href="/history.html">attendancetracker.dev/history.html</a> and click the <strong>Series</strong> tab to see:</p>
+          <ul>
+            <li>Cumulative attendance rates across the whole semester (e.g. <em>"Sarah attended 27 of 30 lectures - 90%"</em>)</li>
+            <li>Visual progress bars and attendance streaks</li>
+            <li>Automated alerts when an individual misses consecutive meetings after a consistent streak</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          <h3 class="faq-question">How to share attendance dashboards with administrators or parents</h3>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-body">
+          <p>On the Series tab in <a href="/history.html">history.html</a>, click the <strong>Share</strong> button next to any series. This creates a secure, read-only dashboard link with a customizable 30-day expiration date.</p>
+          <p>Recipients can view student attendance records, trends, and dates without needing an account or installing the add-on.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Category 4: Integrations -->
+    <section class="category-section" data-section="integrations">
+      <h2 class="category-title"><span>💬</span> Slack &amp; Email Automated Summaries</h2>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          <h3 class="faq-question">How to send Google Meet attendance summaries directly to a Slack channel</h3>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-body">
+          <p>You can post automatic attendance summaries directly into team Slack channels (e.g. <code>#eng-standup</code> or <code>#ta-room</code>):</p>
+          <ol>
+            <li>Create an Incoming Webhook in your Slack workspace (<a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noopener">api.slack.com/messaging/webhooks</a>).</li>
+            <li>In the Attendance Tracker side panel, click the <strong>Settings (gear)</strong> icon.</li>
+            <li>Paste your Slack Incoming Webhook URL and save.</li>
+            <li>Upon meeting conclusion or export, a formatted Block Kit card is sent to your channel highlighting present, late, and absent counts with a direct link to the Google Sheet.</li>
+          </ol>
+          <p>Read the step-by-step setup: <a href="/how-to-send-google-meet-attendance-to-slack.html">How to Send Google Meet Attendance to Slack</a>.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          <h3 class="faq-question">How do automated post-meeting email summaries work?</h3>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-body">
+          <p>Whenever an attendance sheet is generated upon meeting conclusion, an automated digest email is sent to your logged-in Gmail address. The digest provides an instant preview of attendance percentages, tardy participants, no-shows, and a one-click button to open the spreadsheet in Google Sheets.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Category 5: Troubleshooting -->
+    <section class="category-section" data-section="troubleshooting">
+      <h2 class="category-title"><span>🔧</span> Troubleshooting &amp; Setup</h2>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          <h3 class="faq-question">Why don't external participants show up? (Domain-Wide Delegation Setup)</h3>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-body">
+          <p>Google Workspace security policy restricts participant queries to users within the organizer's domain unless domain-wide delegation is enabled.</p>
+          <p>If you see a notice saying <em>"Some participants may not appear"</em>, your Workspace administrator can enable service account delegation in under two minutes:</p>
+          <ol>
+            <li>Go to <a href="/setup.html">attendancetracker.dev/setup</a> for the step-by-step administrator walkthrough.</li>
+            <li>In Google Admin Console (<code>admin.google.com</code>), go to <em>Security &gt; Access and data control &gt; API controls</em>.</li>
+            <li>Add the Attendance Tracker Client ID and required Meet read scope.</li>
+          </ol>
+          <p>Once approved, all external participants, non-domain guests, and cross-organization attendees will appear in your live roster.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          <h3 class="faq-question">Why does a participant show as "Left" when they are still in the meeting?</h3>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-body">
+          <p>The official Google Meet REST API occasionally has a 2 to 5 minute propagation latency when updating participant states. If an attendee drops due to a WiFi blip or refreshes their browser tab, the API may briefly report their session as finished before broadcasting the new session ID.</p>
+          <p>Attendance Tracker intelligently reconciles multiple sessions under the same participant profile, so their total active duration will accurately sum both sessions once the meeting is exported.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          <h3 class="faq-question">Does Attendance Tracker work on iPad or mobile devices?</h3>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-body">
+          <p>Attendance Tracker runs inside desktop and laptop web browsers (Chrome, Edge, Safari, Firefox, Opera) where Google Meet supports side-panel add-ons. Because Google Meet's native iOS and Android apps do not yet support side-panel add-ons, you must launch the meeting on a desktop/laptop browser to record attendance.</p>
+          <p>However, once attendance is exported, all Google Sheets, web dashboards, and Slack summaries are 100% accessible on any phone or tablet. For tips, read <a href="/google-meet-attendance-on-ipad-and-mobile.html">Google Meet Attendance on iPad &amp; Mobile</a>.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Category 6: Security & Privacy -->
+    <section class="category-section" data-section="security">
+      <h2 class="category-title"><span>🔒</span> Security, Privacy &amp; Compliance</h2>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          <h3 class="faq-question">What permissions does Attendance Tracker request, and why?</h3>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-body">
+          <p>Attendance Tracker follows Google's principle of least privilege. We only request the exact scopes needed to track attendance:</p>
+          <ul>
+            <li><code>https://www.googleapis.com/auth/meetings.space.readonly</code> — Read active conference participant lists and join/leave events.</li>
+            <li><code>https://www.googleapis.com/auth/calendar.events.readonly</code> — Match participant names against invited guests to detect absent no-shows.</li>
+            <li><code>https://www.googleapis.com/auth/drive.file</code> — Create and write attendance spreadsheets. This scope restricts our access <em>only</em> to spreadsheets Attendance Tracker creates; we cannot view or edit any other files in your Google Drive.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          <h3 class="faq-question">Does Attendance Tracker record meeting audio, video, or private chats?</h3>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-body">
+          <p><strong>Never.</strong> Attendance Tracker does not have access to your camera, microphone, screen shares, or chat text. It purely collects roster metadata (who joined, when they arrived, and when they left).</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          <h3 class="faq-question">Is student and meeting data secure, private, and FERPA-compliant?</h3>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-body">
+          <p>Yes. Data is encrypted in transit via TLS 1.3 and at rest using AES-256-GCM. We never sell student or customer data, and we do not use your meeting data to train artificial intelligence models. Our architecture adheres to standard FERPA and COPPA guidelines for educational institutions.</p>
+          <p>Review our <a href="/privacy.html">Privacy Policy</a> and <a href="/terms.html">Terms of Service</a> for full details.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          <h3 class="faq-question">How do I request complete account or data deletion?</h3>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-body">
+          <p>You can delete your account and associated session data at any time. Simply send an email to <a href="mailto:derekgallardo01@gmail.com?subject=Data%20Deletion%20Request">derekgallardo01@gmail.com</a> with the subject line <em>"Data Deletion Request"</em> and your records will be permanently purged within 30 days.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Support & Direct Contact Channels -->
+    <section class="support-channels">
+      <div class="support-card">
+        <h4>✉️ Email Support</h4>
+        <p>Have a question not covered here or need help with a custom rollout? Email our team directly.</p>
+        <a href="mailto:derekgallardo01@gmail.com">derekgallardo01@gmail.com &rarr;</a>
+      </div>
+      <div class="support-card">
+        <h4>🐙 Developer Issues &amp; Setup</h4>
+        <p>Found a bug or need domain-wide delegation guidance? Open an issue or review our setup wizard.</p>
+        <a href="https://github.com/derekgallardo01/attendance-tracker/issues" target="_blank" rel="noopener">GitHub Issue Tracker &rarr;</a>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-banner">
+      <h2>Start Tracking Attendance in 30 Seconds</h2>
+      <p>Install the official Google Meet™ add-on. No credit card required. Free to get started.</p>
+      <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" class="btn-primary">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/>
+        </svg>
+        Install from Google Workspace Marketplace
+      </a>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/pricing.html">Pricing</a>
+      <a href="/faq.html">Help Center &amp; FAQ</a>
+      <a href="/support.html">Contact Support</a>
+      <a href="/privacy.html">Privacy Policy</a>
+      <a href="/terms.html">Terms of Service</a>
+      <a href="/refunds.html">Refund Policy</a>
+      <a href="/setup.html">Admin Setup</a>
+      <a href="https://kinetichelix.io" target="_blank" rel="noopener">Built by Kinetic Helix</a>
+    </div>
+    <p style="margin-top: 10px;">Attendance Tracker is an official Google Meet™ add-on. Google Meet™, Google Sheets™, Google Drive™, Google Calendar™, and Google Workspace™ are trademarks of Google LLC.</p>
+  </footer>
+
+  <!-- Interactive Search and Accordion Script -->
+  <script>
+  (function () {
+    // Accordion Toggle
+    var faqHeaders = document.querySelectorAll('.faq-header');
+    faqHeaders.forEach(function (header) {
+      header.addEventListener('click', function () {
+        var item = this.parentElement;
+        item.classList.toggle('open');
+      });
+    });
+
+    // Search and Category Filter
+    var searchInput = document.getElementById('faq-search');
+    var pills = document.querySelectorAll('.pill-btn');
+    var sections = document.querySelectorAll('.category-section');
+    var noResults = document.getElementById('no-results');
+
+    var currentCategory = 'all';
+
+    function filterFAQs() {
+      var query = (searchInput.value || '').trim().toLowerCase();
+      var totalVisible = 0;
+
+      sections.forEach(function (section) {
+        var secCat = section.getAttribute('data-section');
+        var catMatches = (currentCategory === 'all' || currentCategory === secCat);
+        var visibleInSection = 0;
+
+        var items = section.querySelectorAll('.faq-item');
+        items.forEach(function (item) {
+          var qText = item.querySelector('.faq-question').textContent.toLowerCase();
+          var aText = item.querySelector('.faq-body').textContent.toLowerCase();
+          var searchMatches = !query || qText.indexOf(query) !== -1 || aText.indexOf(query) !== -1;
+
+          if (catMatches && searchMatches) {
+            item.style.display = '';
+            visibleInSection++;
+            totalVisible++;
+            if (query) item.classList.add('open');
+          } else {
+            item.style.display = 'none';
+          }
+        });
+
+        if (visibleInSection > 0) {
+          section.style.display = '';
+        } else {
+          section.style.display = 'none';
+        }
+      });
+
+      if (totalVisible === 0) {
+        noResults.style.display = 'block';
+      } else {
+        noResults.style.display = 'none';
+      }
+    }
+
+    searchInput.addEventListener('input', filterFAQs);
+
+    pills.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        pills.forEach(function (p) { p.classList.remove('active'); });
+        this.classList.add('active');
+        currentCategory = this.getAttribute('data-category');
+        filterFAQs();
+      });
+    });
+
+    // First-touch acquisition & telemetry
+    try {
+      var params = new URLSearchParams(location.search);
+      var utmSource = params.get('utm_source');
+      var utmMedium = params.get('utm_medium');
+      var utmCampaign = params.get('utm_campaign');
+      var ref = params.get('ref');
+      var referrer = document.referrer || null;
+      var ACQ_KEY = 'attendanceTrackerAcq';
+      if (!localStorage.getItem(ACQ_KEY)) {
+        var payload = {
+          utmSource: utmSource,
+          utmMedium: utmMedium,
+          utmCampaign: utmCampaign,
+          ref: ref,
+          referrer: referrer,
+          landingUrl: location.href,
+          capturedAt: Date.now(),
+        };
+        localStorage.setItem(ACQ_KEY, JSON.stringify(payload));
+        var computedSource = utmSource || (ref ? 'referral' : null) || (referrer ? new URL(referrer).hostname : null) || 'direct';
+        document.cookie = 'att_first_touch=' + encodeURIComponent(JSON.stringify(Object.assign({}, payload, { computedSource: computedSource }))) + ';path=/;max-age=7776000;SameSite=Lax';
+      }
+    } catch (e) {}
+
+    var API = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
+    function beacon(payload) {
+      try {
+        var blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        if (navigator.sendBeacon) navigator.sendBeacon(API + '/public/pageview', blob);
+        else fetch(API + '/public/pageview', { method: 'POST', body: blob, keepalive: true });
+      } catch (e) {}
+    }
+    var p = new URLSearchParams(location.search);
+    beacon({
+      path: location.pathname,
+      referrer: document.referrer || null,
+      viewportWidth: window.innerWidth || null,
+      utmSource: p.get('utm_source'),
+      utmMedium: p.get('utm_medium'),
+      utmCampaign: p.get('utm_campaign'),
+    });
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a[href*="marketplace/app/attendance_tracker"]');
+      if (a) beacon({ path: location.pathname, event: 'cta_click', eventLabel: 'marketplace_install_faq', referrer: document.referrer || null });
+    });
+  })();
+  </script>
+</body>
+</html>

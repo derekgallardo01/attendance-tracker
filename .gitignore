@@ -6,3 +6,4 @@ node_modules/
 backend/coverage/
 backend/.nyc_output/
 backend/coverage-frontend/
+test-results/
