@@ -26,6 +26,25 @@ const FRONTEND_EVENT_TYPES = new Set([
   // acquisitionSource that was never asked from one the user actively dismissed.
   'source_prompt_shown',
   'source_prompt_dismissed',
+  // Monetization & Upgrade funnel
+  'upgrade_modal_shown',
+  'upgrade_modal_dismissed',
+  'upgrade_checkout_clicked',
+  // Marketplace review funnel
+  'review_ask_shown',
+  'review_ask_clicked',
+  'review_ask_dismissed',
+  // Celebration & Referrals
+  'celebrate_modal_shown',
+  'celebrate_share_clicked',
+  'celebrate_modal_dismissed',
+  // PDF reports & certificates
+  'pdf_report_downloaded',
+  'pdf_certificates_generated',
+  // Addon & settings usage
+  'addon_opened',
+  'settings_opened',
+  'auto_export_toggled',
 ]);
 
 // POST /api/event — let the frontend record activation/funnel events that only

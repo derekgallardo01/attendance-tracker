@@ -2031,6 +2031,7 @@ async function initSDK() {
       applyScopeRestrictions();
       refreshActivationStatus();
       maybeStartTour();
+      try { logUserEvent('addon_opened', { conferenceId: currentMeetingCode }); } catch {}
     }
 
     // ── Self-presence detection ──
@@ -2563,6 +2564,7 @@ async function saveProfileNote() {
 function toggleAutoExport(on) {
   localStorage.setItem('autoExportOnEnd', on ? '1' : '0');
   persistSetting({ autoExportOnEnd: !!on });
+  try { logUserEvent('auto_export_toggled', { on: !!on }); } catch {}
   toast(on ? t('toast.autoExportOn') : t('toast.autoExportOff'));
 }
 
@@ -2654,6 +2656,7 @@ async function handleBillingClick() {
 }
 
 async function startUpgradeCheckout(plan, btnId) {
+  try { logUserEvent('upgrade_checkout_clicked', { plan: plan || 'individual' }); } catch {}
   const btn = btnId ? document.getElementById(btnId) : null;
   const originalText = btn ? btn.textContent : '';
   if (btn) { btn.disabled = true; btn.textContent = 'Connecting to Stripe…'; }
@@ -2701,6 +2704,7 @@ function showUpgradeModal(reason) {
 function closeUpgradeModal() {
   const modal = document.getElementById('upgrade-modal');
   if (modal) modal.style.display = 'none';
+  try { logUserEvent('upgrade_modal_dismissed', {}); } catch {}
 }
 
 // Fire-and-forget PUT of a settings patch. Best-effort — a failure leaves the
@@ -3230,6 +3234,7 @@ function showCelebrateModal(sheetUrl) {
   );
   link.href = `mailto:?subject=${subject}&body=${body}`;
   modal.style.display = 'flex';
+  try { logUserEvent('celebrate_modal_shown', {}); } catch (e) {}
   // Surface a Pro upsell inside the celebration — only for free users on a
   // configured tier (personal → individual class report; workspace → team).
   const proBlock = document.getElementById('celebrate-pro');
@@ -3249,6 +3254,7 @@ function showCelebrateModal(sheetUrl) {
 function closeCelebrateModal() {
   const modal = document.getElementById('celebrate-modal');
   if (modal) modal.style.display = 'none';
+  try { logUserEvent('celebrate_modal_dismissed', {}); } catch (e) {}
   // Show micro-survey after celebrate modal closes (only once)
   if (!state._surveyShown) {
     state._surveyShown = true;
@@ -3309,6 +3315,7 @@ function maybeShowReviewAsk() {
 function closeReviewAsk() {
   const b = document.getElementById('review-ask');
   if (b) b.style.display = 'none';
+  try { logUserEvent('review_ask_dismissed', {}); } catch (e) {}
 }
 
 // Shared PDF fetch+download. Reuses the stashed export payload so the artifact
@@ -3380,6 +3387,7 @@ async function openSettingsModal() {
   const modal = document.getElementById('settings-modal');
   if (!modal) return;
   modal.style.display = 'flex';
+  try { logUserEvent('settings_opened', {}); } catch {}
 
   // Optimistic paint from localStorage so the checkbox isn't blank while the
   // fetch is in flight; the server value below is authoritative.

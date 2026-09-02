@@ -3,7 +3,7 @@ const { requireAuth } = require('../middleware/auth');
 const express = require('express');
 const log = require('../lib/logger');
 const CONFIG = require('../config');
-const { getTenantPlan, setTenantPlan, getUserPlan, setUserPlan } = require('../services/firestore');
+const { getTenantPlan, setTenantPlan, getUserPlan, setUserPlan, logEvent } = require('../services/firestore');
 const { PERSONAL_EMAIL_DOMAINS } = require('../services/firestore/_core');
 
 // Personal-email tenants (gmail.com etc.) are shared by unrelated users, so they
@@ -185,6 +185,7 @@ async function webhookHandler(req, res) {
               individualStripeCustomerId: s.customer || null,
               individualStripeSubscriptionId: s.subscription || null,
             });
+            try { await logEvent(domain, { email, type: 'upgraded', meta: { plan: 'individual', amount: s.amount_total, currency: s.currency } }); } catch {}
           }
         } else {
           const domain = ref || s.metadata?.domain;
@@ -195,6 +196,7 @@ async function webhookHandler(req, res) {
               stripeCustomerId: s.customer || null,
               stripeSubscriptionId: s.subscription || null,
             });
+            try { await logEvent(domain, { email: s.customer_email || s.metadata?.initiatedBy || 'admin', type: 'upgraded', meta: { plan: 'team', amount: s.amount_total, currency: s.currency } }); } catch {}
           }
         }
         break;
