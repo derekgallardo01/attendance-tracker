@@ -17,9 +17,60 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>Attendance Tracker — Real-time attendance tracking for Google Meet</title>
-  <meta name="description" content="Track who joins, leaves, and how long they stay in your Google Meet calls. Export attendance reports to Google Sheets with one click." />
+  <title>Google Meet Attendance Tracker — Free, One-Click Export to Google Sheets</title>
+  <meta name="description" content="Track attendance in Google Meet in real-time. Automatically record participant join and leave times, duration, and export directly to Google Sheets with one click. Free, private, and no bots required." />
+  <meta name="keywords" content="google meet attendance tracker, track attendance google meet, google meet attendance report, attendance tracker, how to take attendance in google meet, meeting attendance tracker, google meet export to sheets" />
   <link rel="canonical" href="https://attendancetracker.dev/" />
+
+  <!-- Schema.org SoftwareApplication + FAQPage structured data for Google Search rich snippets -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "name": "Attendance Tracker for Google Meet",
+        "operatingSystem": "Web, Chrome, Google Workspace",
+        "applicationCategory": "EducationalApplication, BusinessApplication",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "description": "Real-time attendance tracking add-on for Google Meet with one-click export to Google Sheets."
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How do I track attendance in Google Meet?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Open the Attendance Tracker add-on inside your Google Meet meeting. It automatically tracks everyone who joins, leaves, and their total active duration. When your meeting ends, click 'Save to Sheets' to export a complete attendance report."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I export Google Meet attendance to Google Sheets?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes! Attendance Tracker exports clean, formatted attendance rosters directly to Google Sheets with student names, emails, join times, leave times, and total duration."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is Attendance Tracker for Google Meet free?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, Attendance Tracker offers a free tier with direct Google Sheets export and real-time attendance monitoring."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
 
   <!-- Shared pure-helper module — loaded synchronously before any inline
        script so the inline code can rely on window.AttUtils. Kept as a
@@ -1016,6 +1067,9 @@
             <summary style="cursor:pointer;color:#e6edf3;font-weight:600;font-size:.9rem">Is it free?</summary>
             <p style="margin:10px 0 0;color:#8b949e;font-size:.85rem;line-height:1.5">Yes — Attendance Tracker is free while it's growing. If we add paid tiers later, current features will stay free for individuals.</p>
           </details>
+          <div style="text-align:center;margin-top:8px">
+            <a href="faq.html" style="color:#58a6ff;font-size:.88rem;text-decoration:none;font-weight:600">Have more questions? Visit our Help Center &amp; FAQ &rarr;</a>
+          </div>
         </div>
 
         <!-- Final CTA -->
@@ -1028,6 +1082,7 @@
              for search engines to discover the deep content pages. -->
         <div style="text-align:center;margin-bottom:28px;font-size:.85rem;color:#6e7681">
           Read more:
+          <a href="faq.html" style="color:#58a6ff;text-decoration:none;margin:0 8px">Help Center &amp; FAQ</a>·
           <a href="how-to-track-attendance-in-google-meet.html" style="color:#58a6ff;text-decoration:none;margin:0 8px">How to track attendance in Google Meet</a>·
           <a href="attendance-tracker-for-teachers.html" style="color:#58a6ff;text-decoration:none;margin:0 8px">For teachers</a>·
           <a href="export-google-meet-attendance-to-sheets.html" style="color:#58a6ff;text-decoration:none;margin:0 8px">Export to Sheets</a>
@@ -1036,6 +1091,7 @@
         <!-- Footer -->
         <div style="display:flex;justify-content:center;gap:24px;font-size:.8rem">
           <a href="pricing.html" style="color:#6e7681;text-decoration:none">Pricing</a>
+          <a href="faq.html" style="color:#6e7681;text-decoration:none">Help &amp; FAQ</a>
           <a href="privacy.html" style="color:#6e7681;text-decoration:none">Privacy Policy</a>
           <a href="terms.html" style="color:#6e7681;text-decoration:none">Terms of Service</a>
           <a href="refunds.html" style="color:#6e7681;text-decoration:none">Refund Policy</a>
@@ -1149,7 +1205,7 @@
        user, not a one-off tester). Dismissible; never stacks with the recurring
        tip. Respects the at-most-one-lifetime-popup, gentle-upsell rule. -->
   <div id="review-ask" style="display:none; align-items:flex-start; gap:8px; padding:8px 16px; font-size:11px; color:#9ca3af; background:rgba(96,165,250,.06); border-top:1px solid #30363d">
-    <span style="line-height:1.45">⭐ Getting value from this? A quick rating helps other hosts find it — <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=inapp_review" target="_blank" rel="noopener" onclick="logUserEvent('review_ask_clicked', {})" style="color:#60a5fa;text-decoration:none;font-weight:600">leave a review</a> (takes 10 seconds).</span>
+    <span style="line-height:1.45">⭐ Getting value from this? A quick rating helps other hosts find it — <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=inapp_review" target="_blank" rel="noopener" onclick="logUserEvent('review_ask_clicked', {})" style="color:#60a5fa;text-decoration:none;font-weight:600">leave a review</a> (takes 5 seconds).</span>
     <button type="button" onclick="closeReviewAsk()" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
   </div>
 
@@ -2576,23 +2632,75 @@ async function loadBillingStatus() {
   } catch { /* leave hidden on error */ }
 }
 
-// Upgrade (free) → Checkout; manage (pro) → Customer Portal. Both return a URL
+// Upgrade (free) → opens Upgrade Modal; manage (pro) → Customer Portal. Both return a URL
 // to redirect the current tab to.
 async function handleBillingClick() {
-  const btn = document.getElementById('settings-billing-btn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
+  if (_isPro) {
+    const btn = document.getElementById('settings-billing-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
+    try {
+      const res = await authFetch(`${state.backendUrl}/billing/portal`);
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.url) { window.location.href = data.url; return; }
+      toast(data.error || 'Billing is unavailable right now.');
+    } catch {
+      toast('Could not reach billing.');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'Manage billing'; }
+    }
+  } else {
+    showUpgradeModal('settings');
+  }
+}
+
+async function startUpgradeCheckout(plan, btnId) {
+  const btn = btnId ? document.getElementById(btnId) : null;
+  const originalText = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Connecting to Stripe…'; }
   try {
-    const res = _isPro
-      ? await authFetch(`${state.backendUrl}/billing/portal`)
-      : await authFetch(`${state.backendUrl}/billing/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    const res = await authFetch(`${state.backendUrl}/billing/checkout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan: plan || 'individual', interval: 'annual' }),
+    });
     const data = await res.json().catch(() => ({}));
-    if (res.ok && data.url) { window.location.href = data.url; return; }
+    if (res.ok && data.url) {
+      window.location.href = data.url;
+      return;
+    }
     toast(data.error || 'Billing is unavailable right now.');
   } catch {
     toast('Could not reach billing.');
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = _isPro ? 'Manage billing' : 'Upgrade to Pro'; }
+    if (btn) { btn.disabled = false; btn.textContent = originalText; }
   }
+}
+
+function showUpgradeModal(reason) {
+  const modal = document.getElementById('upgrade-modal');
+  if (!modal) return;
+  const note = document.getElementById('upgrade-modal-note');
+  if (note) {
+    if (reason === 'exportQuota') {
+      note.textContent = '📊 You reached your monthly limit of 3 free exports. Upgrade to Pro for unlimited exports!';
+      note.style.display = 'block';
+    } else if (reason === 'autoExport') {
+      note.textContent = '⚡ Auto-exporting to Google Sheets on meeting end is a Pro feature.';
+      note.style.display = 'block';
+    } else if (reason === 'certificates') {
+      note.textContent = '🎓 Generating student attendance certificates is a Pro feature.';
+      note.style.display = 'block';
+    } else {
+      note.style.display = 'none';
+    }
+  }
+  modal.style.display = 'flex';
+  try { logUserEvent('upgrade_modal_shown', { reason: reason || 'manual' }); } catch {}
+}
+
+function closeUpgradeModal() {
+  const modal = document.getElementById('upgrade-modal');
+  if (modal) modal.style.display = 'none';
 }
 
 // Fire-and-forget PUT of a settings patch. Best-effort — a failure leaves the
@@ -3055,11 +3163,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
       if (res.status === 402) {
         const feature = body.feature || 'pro_required';
         logUserEvent('export_skipped', { reason: feature });
-        if (feature === 'exportQuota') {
-          toast('📊 Monthly limit reached (3 free exports). Upgrade to Pro ($9.99/yr) for unlimited exports.', 9000);
-        } else {
-          toast('Auto-export on meeting end is a Pro feature. You can still export manually anytime.', 7000);
-        }
+        showUpgradeModal(feature);
         return;
       }
       if (body.code === 'DRIVE_PERMISSION_MISSING') {
@@ -3233,7 +3337,7 @@ async function _downloadPdf({ type, filenameBase, event }) {
       }),
     });
     if (res.status === 402) {
-      toast('🎓 Certificates are a Pro feature — upgrade in Settings.');
+      showUpgradeModal('certificates');
       return false;
     }
     if (!res.ok) {
@@ -4101,7 +4205,7 @@ window.addEventListener('DOMContentLoaded', () => {
     <div style="background:#161b22;border:1px solid #30363d;border-radius:14px;padding:24px;max-width:380px;width:100%;text-align:center">
       <div style="font-size:2.5rem;margin-bottom:8px">🎉</div>
       <div style="font-size:1.1rem;font-weight:700;color:#4ade80;margin-bottom:6px">First export complete!</div>
-      <div style="color:#9ca3af;font-size:.85rem;line-height:1.5;margin-bottom:18px">Your attendance report is in Google Sheets. Know a teammate who tracks attendance? Send them this in 10 seconds.</div>
+      <div style="color:#9ca3af;font-size:.85rem;line-height:1.5;margin-bottom:18px">Your attendance report is in Google Sheets. Know a teammate who tracks attendance? Send them this in 5 seconds.</div>
       <div style="display:flex;flex-direction:column;gap:8px">
         <a id="celebrate-share-link" href="#" style="background:#34A853;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:600;font-size:.85rem;display:inline-block">Share with a teammate</a>
         <button onclick="closeCelebrateModal()" style="background:transparent;color:#9ca3af;border:none;font-size:.8rem;cursor:pointer;padding:6px">No thanks</button>
@@ -4110,6 +4214,54 @@ window.addEventListener('DOMContentLoaded', () => {
         <div style="color:#e6edf3;font-size:.85rem;font-weight:600;margin-bottom:4px">Get more with Pro</div>
         <div id="celebrate-pro-desc" style="color:#9ca3af;font-size:.78rem;line-height:1.5;margin-bottom:10px">Pro adds a cumulative per-student attendance report across every session.</div>
         <button type="button" onclick="handleBillingClick()" style="background:transparent;border:1px solid #4ade80;color:#4ade80;padding:9px 14px;border-radius:8px;cursor:pointer;font-size:.82rem;font-weight:600;width:100%">Upgrade to Pro</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Pro & School License Upgrade Modal ── -->
+  <div id="upgrade-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1100;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px)">
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:14px;padding:22px;max-width:420px;width:100%;box-shadow:0 16px 40px rgba(0,0,0,.6);position:relative">
+      <button type="button" onclick="closeUpgradeModal()" aria-label="Close" style="position:absolute;top:14px;right:14px;background:none;border:none;color:#8b949e;cursor:pointer;font-size:18px;line-height:1">✕</button>
+      
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="font-size:1.4rem">⭐</span>
+        <h3 style="margin:0;font-size:1.15rem;font-weight:700;color:#f0f6fc">Upgrade to Pro</h3>
+      </div>
+      <p style="margin:0 0 14px;font-size:.82rem;color:#8b949e;line-height:1.4">Unlock unlimited Sheets exports, automated tracking, and certificates for your meetings.</p>
+      
+      <div id="upgrade-modal-note" style="display:none;background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.3);color:#fbbf24;padding:8px 12px;border-radius:8px;font-size:.78rem;margin-bottom:14px;line-height:1.4"></div>
+
+      <!-- Option 1: Individual Teacher -->
+      <div style="background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:14px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+          <span style="font-weight:600;font-size:.88rem;color:#e6edf3">Teacher / Individual</span>
+          <span style="font-weight:700;font-size:.95rem;color:#4ade80">$9.99 <span style="font-size:.75rem;color:#8b949e;font-weight:400">/ yr</span></span>
+        </div>
+        <div style="font-size:.75rem;color:#8b949e;line-height:1.45;margin-bottom:10px">
+          ✓ Unlimited Google Sheets exports<br/>
+          ✓ Auto-export when meetings end<br/>
+          ✓ Student attendance certificates
+        </div>
+        <button type="button" id="btn-upgrade-individual" onclick="startUpgradeCheckout('individual', 'btn-upgrade-individual')" style="width:100%;background:#4ade80;color:#0d1117;border:none;padding:9px 14px;border-radius:6px;font-weight:700;font-size:.82rem;cursor:pointer">Get Individual Pro ($9.99/yr)</button>
+      </div>
+
+      <!-- Option 2: School / Team License -->
+      <div style="background:#0d1117;border:1px solid rgba(96,165,250,.3);border-radius:10px;padding:14px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+          <span style="font-weight:600;font-size:.88rem;color:#93c5fd">School / Department License</span>
+          <span style="font-weight:700;font-size:.95rem;color:#60a5fa">$49 <span style="font-size:.75rem;color:#8b949e;font-weight:400">/ yr</span></span>
+        </div>
+        <div style="font-size:.75rem;color:#8b949e;line-height:1.45;margin-bottom:10px">
+          ✓ Pro unlocked for <strong>all teachers & staff</strong> on your domain<br/>
+          ✓ School-wide team attendance overview & analytics<br/>
+          ✓ Single school invoice / receipt for easy expensing
+        </div>
+        <button type="button" id="btn-upgrade-team" onclick="startUpgradeCheckout('team', 'btn-upgrade-team')" style="width:100%;background:rgba(96,165,250,.15);color:#93c5fd;border:1px solid #3b82f6;padding:9px 14px;border-radius:6px;font-weight:700;font-size:.82rem;cursor:pointer">Upgrade Whole School ($49/yr)</button>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:.75rem;color:#6e7681">
+        <span>🔒 Secure checkout via Stripe</span>
+        <button type="button" onclick="closeUpgradeModal()" style="background:none;border:none;color:#8b949e;cursor:pointer;font-size:.75rem;text-decoration:underline">Maybe later</button>
       </div>
     </div>
   </div>

@@ -208,6 +208,17 @@ describe('billing — individual (per-user) tier for personal-email users', () =
     }));
   });
 
+  test('checkout allows an institutional user to explicitly buy an INDIVIDUAL plan', async () => {
+    mockStripeInstance.checkout.sessions.create.mockResolvedValue({ url: 'https://checkout.stripe.com/ind-school' });
+    const res = await request(app).post('/api/billing/checkout').set(authedHeader('teacher@k12.edu', 'k12.edu')).send({ plan: 'individual' });
+    expect(res.status).toBe(200);
+    expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(expect.objectContaining({
+      line_items: [{ price: 'price_individual', quantity: 1 }],
+      client_reference_id: 'user:teacher@k12.edu',
+      metadata: expect.objectContaining({ individual: '1', domain: 'k12.edu', email: 'teacher@k12.edu' }),
+    }));
+  });
+
   test('checkout 503 for a personal user when the individual price is not set (tier not launched)', async () => {
     delete process.env.STRIPE_INDIVIDUAL_PRICE_ID;
     app = buildApp();

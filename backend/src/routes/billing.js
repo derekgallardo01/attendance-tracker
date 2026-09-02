@@ -43,7 +43,9 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
   const stripe = getStripe();
   const domain = req.user.domain;
   const email = req.user.email;
-  const individual = isPersonalDomain(domain);
+  const individual = req.body && req.body.plan === 'team'
+    ? false
+    : (req.body && req.body.plan === 'individual' ? true : isPersonalDomain(domain));
   // Personal-email users buy the INDIVIDUAL (per-user) plan; Workspace domains
   // buy the per-domain org plan. Each has monthly + optional annual prices.
   // Annual falls back to monthly when its price id isn't set, so annual can be
