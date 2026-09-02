@@ -7,10 +7,10 @@
   <link rel="icon" type="image/png" sizes="128x128" href="icons/icon-128.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Help Center &amp; FAQ — Attendance Tracker for Google Meet™</title>
-  <meta name="description" content="Comprehensive Help Center &amp; FAQ for Attendance Tracker. Learn how to track Google Meet attendance as a TA, export logs to Google Sheets, set up Slack summaries, and track without host privileges." />
+  <meta name="description" content="Help Center &amp; FAQ for Attendance Tracker. Real answers on how to track attendance as a TA, auto-export to Google Sheets, set up Slack summaries, and track calls without host rights." />
   <link rel="canonical" href="https://attendancetracker.dev/faq.html" />
   <meta property="og:title" content="Help Center &amp; FAQ — Attendance Tracker for Google Meet™" />
-  <meta property="og:description" content="Guides and answers on taking Google Meet attendance as a TA, auto-exporting to Google Sheets, domain delegation, and troubleshooting." />
+  <meta property="og:description" content="Straightforward answers on taking Google Meet attendance as a TA, auto-exporting to Google Sheets, domain delegation, and troubleshooting." />
   <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
   <meta property="og:url" content="https://attendancetracker.dev/help.html" />
   <meta property="og:type" content="website" />
@@ -26,7 +26,7 @@
         "name": "How to track attendance in Google Meet as a TA (Teaching Assistant) or Co-Host?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "As a TA or Co-Host, you do not need to organize or own the Google Calendar invite. Simply join the Google Meet call with your Google account, open the Attendance Tracker add-on from the Activities panel (puzzle piece icon), and keep it active during class. Attendance Tracker records real-time join times, leave times, and total duration directly into your own session. When the class ends, attendance exports directly to a Google Sheet in your personal Google Drive."
+          "text": "If you are a TA, the professor usually created the calendar invite, meaning you do not have host rights. With Attendance Tracker, you do not need to be the host. Simply join the call from your laptop, open the Attendance Tracker side panel from the Activities icon (shapes/puzzle piece), and leave it open during class. It records who arrives, who leaves early, and exact minutes. When the meeting wraps up, the spreadsheet saves straight into your own Google Drive in a folder named 'Meet Attendance Tracker'."
         }
       },
       {
@@ -34,7 +34,7 @@
         "name": "How to track attendance in Google Meet without being the host or meeting organizer?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Unlike Google's default attendance report (which only emails the meeting creator on Education Plus accounts), Attendance Tracker works for any authenticated attendee in the call. If you are on Google Workspace, a one-time domain-wide delegation setup (attendancetracker.dev/setup) allows participants, co-hosts, and project managers to view full rosters even for meetings organized by external users or absent professors."
+          "text": "Google's default tool only emails attendance to the person who created the calendar event. Attendance Tracker solves this: anyone present in the call with the add-on open can generate an attendance report for their own records. If your school or company uses Google Workspace, having an admin do a quick 2-minute delegation setup at attendancetracker.dev/setup lets you see external and cross-domain attendees too."
         }
       },
       {
@@ -42,7 +42,7 @@
         "name": "Do I need Google Workspace for Education Plus to take attendance?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "No. Google's native attendance reports require an expensive Google Workspace for Education Plus or Teaching and Learning Upgrade license. Attendance Tracker works seamlessly across Google Workspace Education Fundamentals, Education Standard, Business Starter, Business Standard, Enterprise, and personal @gmail.com accounts."
+          "text": "No, not at all. Google reserves its built-in attendance reports for their most expensive Education Plus or Teaching and Learning Upgrade tiers. Attendance Tracker works on free Education Fundamentals, Education Standard, Business Starter, Standard, Enterprise, and personal @gmail.com accounts with no upgrade required."
         }
       },
       {
@@ -50,7 +50,7 @@
         "name": "Can I track attendance using a personal @gmail.com account?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes. You can sign in with any standard personal @gmail.com account. The host can record participant durations, join timestamps, and export clean sheets with zero Workspace administrative prerequisites."
+          "text": "Yes! Just sign in with your standard personal @gmail.com account. If you are a tutor, coach, freelancer, or running community meetups, you can track attendee join times, duration, and auto-export straight to Google Sheets for free."
         }
       },
       {
@@ -58,7 +58,7 @@
         "name": "How to export Google Meet logs to Google Sheets?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Attendance Tracker offers two export methods: 1) Auto-Export: When your meeting ends, Attendance Tracker automatically compiles join/leave times, duration percentages, and calendar match data into a formatted Google Sheet in your Google Drive. 2) Manual Export: Click the 'Sheet' button in the add-on side panel at any point during the call to generate or update the attendance sheet immediately."
+          "text": "You can export automatically or manually. For auto-export: leave the side panel open during your call; when the meeting ends, the spreadsheet is generated in your Google Drive and emailed to you. For manual export: click the 'Sheet' icon button at the top of the side panel at any point during the call to generate or update the sheet instantly."
         }
       },
       {
@@ -66,7 +66,7 @@
         "name": "What data fields and columns are included in the Google Sheets export?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "The exported spreadsheet contains: Participant Name, Email Address, RSVP Status (from Google Calendar invite), Late Arrival Indicator (+5m, +12m based on scheduled start), Join Time, Leave Time, Total Duration (in minutes, accurately summed across reconnections), Attendance Percentage (duration divided by meeting length), and Status (Present, Left, Absent, or Absent Excused)."
+          "text": "The exported sheet includes: Participant Name, Email Address, RSVP Status (from the calendar invite), Late Arrival Indicator (like +7m late based on scheduled start), Join Time, Leave Time, Total Duration (in active minutes, properly summed across reconnections), Attendance Percentage, and Status (Present, Left early, Absent, or Absent excused)."
         }
       },
       {
@@ -74,7 +74,7 @@
         "name": "Where are exported sheets saved, and who can access them?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Exports are automatically saved in a dedicated 'Meet Attendance Tracker' folder in your personal Google Drive. The file is private to your Google account by default, and you retain standard Google Sheets sharing controls to share with colleagues, department heads, or students."
+          "text": "They are saved directly into your personal Google Drive in a folder named 'Meet Attendance Tracker'. Only you have access by default. You can share them using normal Google Sheets sharing controls whenever you need to send reports to professors, managers, or colleagues."
         }
       },
       {
@@ -82,7 +82,7 @@
         "name": "How to mark absent attendees as 'Excused' before exporting?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "When exporting a meeting that syncs with a Google Calendar event, an invitee reconciliation modal displays all no-shows. Simply check the 'Excused' checkbox next to an absent attendee's name. They will be logged as 'Absent (excused)' in the Google Sheet and retained across future session re-exports."
+          "text": "When exporting a meeting tied to a Google Calendar event, the add-on compares joined attendees against the invite list. Absent invitees appear in an invitee window with an 'Excused' checkbox. Check that box, and the sheet logs them as 'Absent (excused)' rather than absent. That tag persists across future re-exports."
         }
       },
       {
@@ -90,7 +90,7 @@
         "name": "How to track recurring classes and multi-week semester attendance trends?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "For recurring Google Calendar meetings (such as a MWF lecture or daily standup), Attendance Tracker groups records by calendar event series. Through the Series dashboard at attendancetracker.dev/history.html, educators can view cumulative attendance rates (e.g., 'Student attended 28 of 30 lectures - 93%') and streak tracking across the entire semester."
+          "text": "If your class or standup is a repeating Google Calendar event, Attendance Tracker groups all sessions under that series. Visit attendancetracker.dev/history.html and click the 'Series' tab to see running semester-long percentages (e.g., 'Student attended 26 of 28 classes - 93%'), streaks, and alerts if someone regularly misses consecutive sessions."
         }
       },
       {
@@ -98,15 +98,15 @@
         "name": "How to send Google Meet attendance summaries directly to Slack?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "In the Attendance Tracker side panel, click the Settings gear icon and paste an Incoming Webhook URL from your Slack workspace. Upon meeting conclusion or manual export, Attendance Tracker sends an automated Block Kit summary card to your chosen Slack channel showing present, late, and absent counts with a direct link to the Google Sheet."
+          "text": "Create an Incoming Webhook in Slack for your channel (like #team-standup), open the Attendance Tracker side panel settings gear, and paste the webhook URL. When the meeting ends or you export, an automated summary card posts to your channel with present, late, and absent counts, plus a direct button to the Google Sheet."
         }
       },
       {
         "@type": "Question",
-        "name": "Why don't external participants show up? (Google Workspace Domain-Wide Delegation)",
+        "name": "Why don't external participants show up? (Domain-Wide Delegation Setup)",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "By default, Google Meet REST API restrictions limit non-delegated queries to users within the same domain. To see external attendees or participants outside your Workspace domain, your Google Workspace administrator can configure domain-wide delegation in under 2 minutes following the guide at attendancetracker.dev/setup."
+          "text": "Google Workspace security restricts roster queries to people inside your own organization unless an admin enables delegation. If you see a note saying 'Some participants may not appear', your Google Workspace administrator can do a one-time 2-minute setup at attendancetracker.dev/setup to grant read access for external attendees."
         }
       },
       {
@@ -114,15 +114,15 @@
         "name": "Why does a participant show as 'Left' when they are still in the meeting?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "The official Google Meet REST API can experience a 2 to 5 minute propagation delay when attendees leave or re-enter calls. Attendance Tracker combines polling and state reconciliation to resolve temporary disconnects and accurately aggregate total active minutes across multiple reconnections."
+          "text": "Google's official Meet API has a 2 to 5 minute delay when updating attendee states. If someone's connection flickers or they refresh their browser, the API briefly reports them as left before catching up. Attendance Tracker merges reconnections under the same person so their final exported minutes and percentage remain accurate."
         }
       },
       {
         "@type": "Question",
-        "name": "What permissions and Google OAuth scopes does Attendance Tracker require?",
+        "name": "What permissions does Attendance Tracker request, and why?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Attendance Tracker requests minimal, least-privilege OAuth scopes: read-only access to the active Google Meet conference call participants, read-only access to matching Google Calendar events to verify invitees, and restricted write access solely to Google Sheets files created by the application (drive.file scope). It cannot read or modify any other files in your Google Drive."
+          "text": "We only request what is strictly needed: read-only access to the active Meet participant roster, read-only access to calendar events to match invitees, and restricted write access only to Google Sheets files created by Attendance Tracker (drive.file scope). We cannot see or edit any of your other Google Drive files."
         }
       },
       {
@@ -130,7 +130,7 @@
         "name": "Does Attendance Tracker record meeting audio, video, or private chats?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "No. Attendance Tracker is strictly an attendance and roster telemetry tool. It does not access, record, process, or store meeting audio, video streams, screen shares, or private chat messages."
+          "text": "Never. We cannot access your webcam, microphone, screen shares, or chat text. The add-on only reads roster metadata: participant names, join timestamps, and departure timestamps."
         }
       }
     ]
@@ -148,22 +148,22 @@
       {
         "@type": "HowToStep",
         "name": "Install the Add-on",
-        "text": "Install Attendance Tracker from the Google Workspace Marketplace into your Google account."
+        "text": "Install Attendance Tracker from the Google Workspace Marketplace into your school or university Google account."
       },
       {
         "@type": "HowToStep",
         "name": "Join the Google Meet Session",
-        "text": "Join the lecture or recitation via the standard Google Meet link provided by your professor or department."
+        "text": "Join the lecture or recitation via the standard Google Meet link provided by your professor."
       },
       {
         "@type": "HowToStep",
         "name": "Open Attendance Tracker",
-        "text": "Click the Activities icon (shapes/puzzle piece in the bottom right corner) and launch Attendance Tracker."
+        "text": "Click the Activities icon (shapes/puzzle piece in the bottom right corner) and launch Attendance Tracker in the side panel."
       },
       {
         "@type": "HowToStep",
-        "name": "Monitor & Auto-Export",
-        "text": "Keep the side panel open to record join times and duration. When the call ends, your attendance sheet auto-exports to your Google Drive."
+        "name": "Auto-Export on End",
+        "text": "Leave the panel open during class. When the call wraps up, your attendance sheet auto-exports directly into your own Google Drive."
       }
     ]
   }
@@ -684,9 +684,9 @@
   <main class="container">
     <!-- Hero Header -->
     <section class="hero">
-      <div class="badge">Knowledge Base &amp; Support</div>
-      <h1>Help Center &amp; FAQ</h1>
-      <p class="lead">Everything you need to know about tracking Google Meet attendance, exporting to Google Sheets, domain delegation, and automated integrations.</p>
+      <div class="badge">Help Center &amp; Support</div>
+      <h1>Frequently Asked Questions</h1>
+      <p class="lead">Straightforward answers on tracking Google Meet attendance, exporting clean Google Sheets, TA workflows, and getting everything running smoothly.</p>
 
       <!-- Instant Search Filter -->
       <div class="search-wrapper">
@@ -694,7 +694,7 @@
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
-        <input type="search" id="faq-search" class="search-input" placeholder="Search guides (e.g. TA, Sheets, delay, excused, Slack)..." autocomplete="off" />
+        <input type="search" id="faq-search" class="search-input" placeholder="Search questions (e.g. TA, Sheets, delay, excused, Slack)..." autocomplete="off" />
       </div>
 
       <!-- Category Filter Pills -->
@@ -725,28 +725,30 @@
           <span class="faq-toggle">+</span>
         </div>
         <div class="faq-body">
-          <p>Teaching assistants and recitation leaders rarely own or schedule the primary lecture calendar event. With Attendance Tracker, you do not need host or organizer rights to track attendance:</p>
+          <p>If you're a TA or co-host, you know the frustration: the professor or meeting organizer scheduled the Google Calendar invite, so you don't have host rights. Google's default attendance report only goes to the meeting creator, leaving you with zero data.</p>
+          <p>Attendance Tracker solves this completely. You don't need host permissions:</p>
           <ol>
-            <li><strong>Install the Add-on:</strong> Install <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968">Attendance Tracker</a> from the Google Workspace Marketplace into your university or school Google account.</li>
-            <li><strong>Join the Call:</strong> Enter the Google Meet meeting room via the link provided by the professor.</li>
-            <li><strong>Open the Side Panel:</strong> Click the <em>Activities</em> button (shapes/puzzle icon in the bottom right corner) and select <strong>Attendance Tracker</strong>.</li>
-            <li><strong>Keep Panel Active:</strong> The add-on records active participants, joins, departures, and cumulative minutes directly under your authenticated session.</li>
-            <li><strong>Auto-Export on End:</strong> When the call finishes, your attendance sheet auto-exports directly into your personal Google Drive in a folder named <code>Meet Attendance Tracker</code>.</li>
+            <li><strong>Install the Add-on:</strong> Add <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968">Attendance Tracker</a> from the Google Workspace Marketplace to your school or university Google account.</li>
+            <li><strong>Join the Call:</strong> Enter the Google Meet call as you normally do from the link your professor shared.</li>
+            <li><strong>Open the Side Panel:</strong> Click the <em>Activities</em> icon (the shapes/puzzle piece in the bottom right corner) and launch <strong>Attendance Tracker</strong>.</li>
+            <li><strong>Leave it open during class:</strong> The add-on logs who arrives, who drops early, and calculates total active minutes under your own authenticated session.</li>
+            <li><strong>Clean Sheet in Your Drive:</strong> When the class finishes, the attendance spreadsheet automatically saves directly into <em>your own</em> Google Drive in a folder named <code>Meet Attendance Tracker</code>. No need to ask the professor for a CSV.</li>
           </ol>
           <div class="callout-box">
-            <strong>Deep-Dive Guide:</strong> Read our complete walkthrough for educators in <a href="/attendance-tracker-for-teachers.html">Attendance Tracker for Teachers</a> and <a href="/track-google-meet-attendance-without-host.html">Tracking Google Meet Attendance Without Being the Host</a>.
+            <strong>Helpful Guides:</strong> Read our complete walkthrough for educators in <a href="/attendance-tracker-for-teachers.html">Attendance Tracker for Teachers</a> and <a href="/track-google-meet-attendance-without-host.html">Tracking Google Meet Attendance Without Being the Host</a>.
           </div>
         </div>
       </div>
 
       <div class="faq-item">
         <div class="faq-header">
-          <h3 class="faq-question">How to track attendance in Google Meet without being the host or meeting organizer</h3>
+          <h3 class="faq-question">Can I track attendance if I'm not the host or meeting organizer?</h3>
           <span class="faq-toggle">+</span>
         </div>
         <div class="faq-body">
-          <p>By default, Google Meet only delivers built-in attendance reports to the meeting creator. Attendance Tracker solves this limitation by connecting directly to the Google Meet REST API through the participant's active browser session.</p>
-          <p>Any attendee, project manager, or co-host can generate an authoritative attendance report for calls they attend. For meetings inside a Google Workspace organization where students or external guests join, having your Workspace administrator enable a one-time domain-wide delegation (<a href="/setup.html">attendancetracker.dev/setup</a>) unlocks full directory and participant visibility across all meetings company-wide or campus-wide.</p>
+          <p>Yes. That was one of the biggest reasons we built this tool. Google's built-in attendance feature strictly emails the meeting creator—which is useless if a project manager, attendee, or co-host is the one responsible for attendance.</p>
+          <p>With Attendance Tracker, anyone physically present in the call who has the add-on open can generate a clean attendance report for their own records.</p>
+          <p><em>Note for Google Workspace domains:</em> If your school or company enables domain-wide delegation (a quick 2-minute admin setup at <a href="/setup.html">attendancetracker.dev/setup</a>), you will also see external and cross-domain attendees. On personal Gmail, you can track anyone sharing the call.</p>
         </div>
       </div>
 
@@ -756,24 +758,25 @@
           <span class="faq-toggle">+</span>
         </div>
         <div class="faq-body">
-          <p><strong>No!</strong> Google restricts its native attendance tracking feature exclusively to top-tier, expensive licenses: Google Workspace for Education Plus and the Teaching &amp; Learning Upgrade. Even on those plans, Google only generates a static CSV emailed to the organizer hours later.</p>
-          <p>Attendance Tracker works seamlessly on <strong>all tiers</strong> without upgrades:</p>
+          <p><strong>No, absolutely not.</strong> Google locks its native attendance tracking behind their most expensive plans: <strong>Education Plus</strong> and the <strong>Teaching and Learning Upgrade</strong>. Most schools and districts can't justify paying hundreds or thousands of dollars in license fees just to see who showed up to class.</p>
+          <p>Attendance Tracker works across <strong>all</strong> Google tiers without extra upgrades:</p>
           <ul>
-            <li>Google Workspace Education Fundamentals (Free tier for schools)</li>
+            <li>Google Workspace Education Fundamentals (the free tier most schools use)</li>
             <li>Google Workspace Education Standard</li>
             <li>Google Workspace Business Starter, Standard, Plus &amp; Enterprise</li>
             <li>Personal free <code>@gmail.com</code> accounts</li>
           </ul>
+          <p>The Google Meet API itself isn't locked behind an expensive tier, so we pass that direct access on to you without the upgrade tax.</p>
         </div>
       </div>
 
       <div class="faq-item">
         <div class="faq-header">
-          <h3 class="faq-question">Can I track attendance using a personal @gmail.com account?</h3>
+          <h3 class="faq-question">Does it work with a personal free @gmail.com account?</h3>
           <span class="faq-toggle">+</span>
         </div>
         <div class="faq-body">
-          <p>Yes. You can sign in with any standard personal <code>@gmail.com</code> account. You will be able to monitor present and departed participants live, calculate attendance percentages, and export logs to Google Sheets with zero administrative setup needed.</p>
+          <p>Yes! Just sign in with your regular <code>@gmail.com</code> address. If you're an independent tutor, fitness coach, freelancer, or running community meetups, you can track attendee join times, duration, and auto-export straight to Google Sheets for free. No Workspace organization account required.</p>
         </div>
       </div>
     </section>
@@ -788,12 +791,12 @@
           <span class="faq-toggle">+</span>
         </div>
         <div class="faq-body">
-          <p>Attendance Tracker provides both automatic hands-free export and manual on-demand export:</p>
+          <p>You have two ways to export your attendance, both simple and fast:</p>
           <ul>
-            <li><strong>Automated End-of-Call Export:</strong> Keep the Attendance Tracker side panel open during your call. When the conference concludes, the add-on automatically generates a new sheet (or a new dated tab in your existing series spreadsheet) and emails you the direct link.</li>
-            <li><strong>Instant Manual Export:</strong> At any time during the meeting, click the <strong>Sheet</strong> icon button in the top toolbar of the side panel to trigger an immediate export or update.</li>
+            <li><strong>Auto-Export (Hands-free):</strong> Just leave the side panel open while you teach or meet. When the meeting ends, the add-on automatically generates the spreadsheet in your Google Drive and emails you a summary with the direct link. You don't have to remember to click anything.</li>
+            <li><strong>Manual Export (Mid-meeting):</strong> If you want an immediate snapshot right now (say, 15 minutes into a quiz or presentation), click the <strong>Sheet</strong> icon at the top of the side panel. It creates or updates the sheet on the spot.</li>
           </ul>
-          <p>Check out our step-by-step breakdown: <a href="/export-google-meet-attendance-to-sheets.html">Export Google Meet Attendance to Google Sheets</a>.</p>
+          <p>Step-by-step breakdown: <a href="/export-google-meet-attendance-to-sheets.html">Export Google Meet Attendance to Google Sheets</a>.</p>
         </div>
       </div>
 
@@ -803,38 +806,38 @@
           <span class="faq-toggle">+</span>
         </div>
         <div class="faq-body">
-          <p>Each exported sheet tab is pre-formatted with clean styling, header row filters, and formula-ready columns:</p>
+          <p>Each exported sheet tab is pre-formatted with clean fonts, frozen header rows, and formula-ready columns:</p>
           <table class="faq-table">
             <thead>
               <tr>
                 <th>Column Header</th>
-                <th>Data Description</th>
+                <th>What It Tells You</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td><strong>Name</strong></td>
-                <td>Display name of the participant from the Google Meet session</td>
+                <td>Display name from the participant's Google Meet account</td>
               </tr>
               <tr>
                 <td><strong>Email</strong></td>
-                <td>Account email from the Google Calendar invite or Workspace directory</td>
+                <td>Email from the calendar invite or your Workspace directory</td>
               </tr>
               <tr>
                 <td><strong>RSVP Status</strong></td>
-                <td>Accepted, Declined, Tentative, or Awaiting Response</td>
+                <td>Accepted, Declined, Tentative, or No Response from Google Calendar</td>
               </tr>
               <tr>
                 <td><strong>Late?</strong></td>
-                <td>Flags tardiness (e.g. <code>+6m</code>, <code>+14m</code>) based on the scheduled start</td>
+                <td>Flags tardiness (e.g. <code>+7m late</code>) based on the scheduled start time</td>
               </tr>
               <tr>
                 <td><strong>Join / Leave Time</strong></td>
-                <td>First join timestamp and final departure timestamp (HH:MM AM/PM)</td>
+                <td>Exact timestamps of when they joined and when they departed</td>
               </tr>
               <tr>
                 <td><strong>Duration (min)</strong></td>
-                <td>Active connected minutes (accurately sums re-connections)</td>
+                <td>Total active minutes (accurately sums reconnections if WiFi dropped)</td>
               </tr>
               <tr>
                 <td><strong>Attendance %</strong></td>
@@ -842,7 +845,7 @@
               </tr>
               <tr>
                 <td><strong>Status</strong></td>
-                <td>Present, Left, Absent, or Absent (excused)</td>
+                <td>Present, Left early, Absent, or Absent (excused)</td>
               </tr>
             </tbody>
           </table>
@@ -855,23 +858,23 @@
           <span class="faq-toggle">+</span>
         </div>
         <div class="faq-body">
-          <p>All spreadsheets are saved in your personal Google Drive within a dedicated folder called <code>Meet Attendance Tracker</code>.</p>
-          <p>By default, only your Google account has access to these files. You maintain full ownership and can use standard Google Drive sharing permissions to grant View or Edit access to professors, teaching assistants, or HR managers.</p>
+          <p>Your sheets live directly inside <strong>your own Google Drive</strong> in a dedicated folder called <code>Meet Attendance Tracker</code>. Each recurring meeting becomes its own dated tab in a single workbook, keeping your Drive clean.</p>
+          <p><strong>Privacy:</strong> Only <em>you</em> have access by default. We don't host your spreadsheets on our servers. You maintain full ownership and can use standard Google Drive sharing controls whenever you want to share a sheet with a professor, department head, or manager.</p>
         </div>
       </div>
 
       <div class="faq-item">
         <div class="faq-header">
-          <h3 class="faq-question">How to mark absent attendees as "Excused" in the report</h3>
+          <h3 class="faq-question">How to mark absent attendees as "Excused" before exporting</h3>
           <span class="faq-toggle">+</span>
         </div>
         <div class="faq-body">
-          <p>When you export a meeting synced with a Google Calendar event, Attendance Tracker compares joined participants against the invited guest list. For any invited guest who did not join:</p>
+          <p>When you export a meeting synced with a Google Calendar event, Attendance Tracker compares joined participants against your invited guest list. For any invitee who didn't show up:</p>
           <ol>
-            <li>Before finalizing the export, the calendar matching modal displays all absent invitees.</li>
-            <li>Check the <strong>Excused</strong> checkbox next to any student or colleague who gave prior notice.</li>
-            <li>The export will label their status as <code>Absent (excused)</code> instead of unexcused absent.</li>
-            <li>This excused tag persists in the series database so cumulative percentage calculations remain accurate.</li>
+            <li>Before finalizing the export, the calendar matching window shows all absent invitees.</li>
+            <li>Check the <strong>Excused</strong> checkbox next to anyone who gave advance notice or had an excused absence.</li>
+            <li>The spreadsheet logs them as <code>Absent (excused)</code> instead of an unexcused absence.</li>
+            <li>This tag persists in the series database so multi-week calculations reflect the excused status.</li>
           </ol>
         </div>
       </div>
@@ -887,12 +890,12 @@
           <span class="faq-toggle">+</span>
         </div>
         <div class="faq-body">
-          <p>If your lecture, seminar, or sprint standup is scheduled as a repeating event on Google Calendar, Attendance Tracker aggregates every session under a single Series ID.</p>
-          <p>Visit your web dashboard at <a href="/history.html">attendancetracker.dev/history.html</a> and click the <strong>Series</strong> tab to see:</p>
+          <p>If your lecture, seminar, or sprint standup is scheduled as a repeating event on Google Calendar, Attendance Tracker groups all sessions under that series.</p>
+          <p>Visit your dashboard at <a href="/history.html">attendancetracker.dev/history.html</a> and click the <strong>Series</strong> tab to see:</p>
           <ul>
-            <li>Cumulative attendance rates across the whole semester (e.g. <em>"Sarah attended 27 of 30 lectures - 90%"</em>)</li>
-            <li>Visual progress bars and attendance streaks</li>
-            <li>Automated alerts when an individual misses consecutive meetings after a consistent streak</li>
+            <li>Cumulative attendance across the entire semester (e.g. <em>"Alex attended 26 of 28 classes (93%)"</em>)</li>
+            <li>Visual attendance percentages and attendance streaks</li>
+            <li>Automated drop alerts if someone who regularly attends suddenly misses 3 classes in a row</li>
           </ul>
         </div>
       </div>
@@ -903,7 +906,7 @@
           <span class="faq-toggle">+</span>
         </div>
         <div class="faq-body">
-          <p>On the Series tab in <a href="/history.html">history.html</a>, click the <strong>Share</strong> button next to any series. This creates a secure, read-only dashboard link with a customizable 30-day expiration date.</p>
+          <p>On the Series tab in <a href="/history.html">history.html</a>, click the <strong>Share</strong> button next to any series. This creates a secure, read-only link with a customizable 30-day expiration date.</p>
           <p>Recipients can view student attendance records, trends, and dates without needing an account or installing the add-on.</p>
         </div>
       </div>
@@ -919,14 +922,14 @@
           <span class="faq-toggle">+</span>
         </div>
         <div class="faq-body">
-          <p>You can post automatic attendance summaries directly into team Slack channels (e.g. <code>#eng-standup</code> or <code>#ta-room</code>):</p>
+          <p>You can post automatic attendance summaries directly into team Slack channels (like <code>#eng-standup</code> or <code>#ta-room</code>) in under a minute:</p>
           <ol>
             <li>Create an Incoming Webhook in your Slack workspace (<a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noopener">api.slack.com/messaging/webhooks</a>).</li>
             <li>In the Attendance Tracker side panel, click the <strong>Settings (gear)</strong> icon.</li>
             <li>Paste your Slack Incoming Webhook URL and save.</li>
-            <li>Upon meeting conclusion or export, a formatted Block Kit card is sent to your channel highlighting present, late, and absent counts with a direct link to the Google Sheet.</li>
+            <li>Whenever a meeting ends or you export, a clean Block Kit summary card posts to your channel with present, late, and absent counts, plus a direct button to open the Google Sheet.</li>
           </ol>
-          <p>Read the step-by-step setup: <a href="/how-to-send-google-meet-attendance-to-slack.html">How to Send Google Meet Attendance to Slack</a>.</p>
+          <p>Step-by-step setup: <a href="/how-to-send-google-meet-attendance-to-slack.html">How to Send Google Meet Attendance to Slack</a>.</p>
         </div>
       </div>
 
@@ -936,7 +939,7 @@
           <span class="faq-toggle">+</span>
         </div>
         <div class="faq-body">
-          <p>Whenever an attendance sheet is generated upon meeting conclusion, an automated digest email is sent to your logged-in Gmail address. The digest provides an instant preview of attendance percentages, tardy participants, no-shows, and a one-click button to open the spreadsheet in Google Sheets.</p>
+          <p>Whenever an attendance sheet is generated upon meeting conclusion, a clean digest email lands in your inbox. It gives you a quick snapshot of attendance percentages, who was late, who missed class, and a one-click button to open the spreadsheet directly in Google Sheets.</p>
         </div>
       </div>
     </section>
@@ -951,25 +954,25 @@
           <span class="faq-toggle">+</span>
         </div>
         <div class="faq-body">
-          <p>Google Workspace security policy restricts participant queries to users within the organizer's domain unless domain-wide delegation is enabled.</p>
+          <p>Google Workspace security policy restricts participant queries to users within the organizer's domain unless domain delegation is enabled.</p>
           <p>If you see a notice saying <em>"Some participants may not appear"</em>, your Workspace administrator can enable service account delegation in under two minutes:</p>
           <ol>
-            <li>Go to <a href="/setup.html">attendancetracker.dev/setup</a> for the step-by-step administrator walkthrough.</li>
-            <li>In Google Admin Console (<code>admin.google.com</code>), go to <em>Security &gt; Access and data control &gt; API controls</em>.</li>
-            <li>Add the Attendance Tracker Client ID and required Meet read scope.</li>
+            <li>Send your Google Workspace IT admin this link: <a href="/setup.html">attendancetracker.dev/setup</a>.</li>
+            <li>In the Google Admin Console (<code>admin.google.com</code>), they navigate to <em>Security &gt; Access and data control &gt; API controls</em>.</li>
+            <li>They add our Client ID and the read-only Meet scope.</li>
           </ol>
-          <p>Once approved, all external participants, non-domain guests, and cross-organization attendees will appear in your live roster.</p>
+          <p>Once approved, external guests, parents, and cross-domain attendees will appear in your live roster.</p>
         </div>
       </div>
 
       <div class="faq-item">
         <div class="faq-header">
-          <h3 class="faq-question">Why does a participant show as "Left" when they are still in the meeting?</h3>
+          <h3 class="faq-question">Why does someone show as "Left" when they're still sitting in the meeting?</h3>
           <span class="faq-toggle">+</span>
         </div>
         <div class="faq-body">
-          <p>The official Google Meet REST API occasionally has a 2 to 5 minute propagation latency when updating participant states. If an attendee drops due to a WiFi blip or refreshes their browser tab, the API may briefly report their session as finished before broadcasting the new session ID.</p>
-          <p>Attendance Tracker intelligently reconciles multiple sessions under the same participant profile, so their total active duration will accurately sum both sessions once the meeting is exported.</p>
+          <p>This is an honest quirk of Google's official Meet REST API: it has a 2 to 5 minute propagation delay when updating attendee states.</p>
+          <p>If an attendee's WiFi briefly drops or they refresh their browser tab, Google's API might briefly report their previous session as ended before broadcasting the new session ID. Don't worry—Attendance Tracker connects multiple sessions under the same participant and merges them upon export, so their total active duration and final attendance percentage stay accurate.</p>
         </div>
       </div>
 
@@ -979,8 +982,8 @@
           <span class="faq-toggle">+</span>
         </div>
         <div class="faq-body">
-          <p>Attendance Tracker runs inside desktop and laptop web browsers (Chrome, Edge, Safari, Firefox, Opera) where Google Meet supports side-panel add-ons. Because Google Meet's native iOS and Android apps do not yet support side-panel add-ons, you must launch the meeting on a desktop/laptop browser to record attendance.</p>
-          <p>However, once attendance is exported, all Google Sheets, web dashboards, and Slack summaries are 100% accessible on any phone or tablet. For tips, read <a href="/google-meet-attendance-on-ipad-and-mobile.html">Google Meet Attendance on iPad &amp; Mobile</a>.</p>
+          <p><strong>To record attendance:</strong> You need to be on a desktop or laptop browser (Chrome, Edge, Safari, Firefox). Google Meet's native iOS and Android apps do not support side-panel add-ons yet (that is a Google platform limitation, not ours).</p>
+          <p><strong>To view and manage reports:</strong> Everything works great on mobile! You can open your exported Google Sheets, view the <a href="/history.html">history.html</a> dashboard, and receive Slack/email alerts right from your phone or tablet. For tips, read <a href="/google-meet-attendance-on-ipad-and-mobile.html">Google Meet Attendance on iPad &amp; Mobile</a>.</p>
         </div>
       </div>
     </section>
@@ -995,11 +998,11 @@
           <span class="faq-toggle">+</span>
         </div>
         <div class="faq-body">
-          <p>Attendance Tracker follows Google's principle of least privilege. We only request the exact scopes needed to track attendance:</p>
+          <p>We ask for the absolute bare minimum permissions needed to take attendance:</p>
           <ul>
-            <li><code>https://www.googleapis.com/auth/meetings.space.readonly</code> — Read active conference participant lists and join/leave events.</li>
-            <li><code>https://www.googleapis.com/auth/calendar.events.readonly</code> — Match participant names against invited guests to detect absent no-shows.</li>
-            <li><code>https://www.googleapis.com/auth/drive.file</code> — Create and write attendance spreadsheets. This scope restricts our access <em>only</em> to spreadsheets Attendance Tracker creates; we cannot view or edit any other files in your Google Drive.</li>
+            <li><code>meetings.space.readonly</code> — Reads who is currently in your Meet call and when they join or leave.</li>
+            <li><code>calendar.events.readonly</code> — Reads matching calendar invitees to identify no-shows and calculate late arrivals.</li>
+            <li><code>drive.file</code> — Creates and updates attendance spreadsheets in your Drive. Notice this is <code>drive.file</code>, <strong>not</strong> full Google Drive access—we can only view and edit spreadsheets created by Attendance Tracker, never your personal files, docs, or photos.</li>
           </ul>
         </div>
       </div>
@@ -1010,7 +1013,7 @@
           <span class="faq-toggle">+</span>
         </div>
         <div class="faq-body">
-          <p><strong>Never.</strong> Attendance Tracker does not have access to your camera, microphone, screen shares, or chat text. It purely collects roster metadata (who joined, when they arrived, and when they left).</p>
+          <p><strong>Never. We literally cannot.</strong> The add-on does not have access to your camera, microphone, screen shares, or chat text. It purely collects roster metadata: names, arrival times, and departure times.</p>
         </div>
       </div>
 
@@ -1020,7 +1023,7 @@
           <span class="faq-toggle">+</span>
         </div>
         <div class="faq-body">
-          <p>Yes. Data is encrypted in transit via TLS 1.3 and at rest using AES-256-GCM. We never sell student or customer data, and we do not use your meeting data to train artificial intelligence models. Our architecture adheres to standard FERPA and COPPA guidelines for educational institutions.</p>
+          <p>Yes. Data is encrypted in transit using TLS 1.3 and at rest using AES-256-GCM. We do not sell student or user data, and we never use your meeting records to train artificial intelligence models. Our architecture adheres to standard FERPA and COPPA privacy principles for educational institutions.</p>
           <p>Review our <a href="/privacy.html">Privacy Policy</a> and <a href="/terms.html">Terms of Service</a> for full details.</p>
         </div>
       </div>
@@ -1031,7 +1034,7 @@
           <span class="faq-toggle">+</span>
         </div>
         <div class="faq-body">
-          <p>You can delete your account and associated session data at any time. Simply send an email to <a href="mailto:derekgallardo01@gmail.com?subject=Data%20Deletion%20Request">derekgallardo01@gmail.com</a> with the subject line <em>"Data Deletion Request"</em> and your records will be permanently purged within 30 days.</p>
+          <p>Just send an email to <a href="mailto:derekgallardo01@gmail.com?subject=Data%20Deletion%20Request">derekgallardo01@gmail.com</a> with the subject line <em>"Data Deletion Request"</em>. We will permanently wipe your account and stored session data within 30 days. The Google Sheets in your own Google Drive remain entirely yours to keep or delete as you wish.</p>
         </div>
       </div>
     </section>
