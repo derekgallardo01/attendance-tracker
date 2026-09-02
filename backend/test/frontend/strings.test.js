@@ -72,6 +72,46 @@ describe('setLocale + fallback chain', () => {
     expect(strings.t('btn.start')).toBe('開始');
     expect(strings.t('attendee.present')).toBe('出席');
     expect(strings.t('status.tracking')).toBe('出席状況を記録中…');
+
+    // Tamil
+    strings.setLocale('ta');
+    expect(strings.t('btn.start')).toBe('தொடங்கு');
+    expect(strings.t('attendee.present')).toBe('வந்தவர் (Present)');
+
+    // Telugu
+    strings.setLocale('te');
+    expect(strings.t('btn.start')).toBe('ప్రారంభించు');
+    expect(strings.t('attendee.present')).toBe('హాజరయ్యారు (Present)');
+
+    // Bengali
+    strings.setLocale('bn');
+    expect(strings.t('btn.start')).toBe('শুরু');
+    expect(strings.t('attendee.present')).toBe('উপস্থিত (Present)');
+
+    // Urdu
+    strings.setLocale('ur');
+    expect(strings.t('btn.start')).toBe('شروع کریں');
+    expect(strings.t('attendee.present')).toBe('حاضر (Present)');
+
+    // Simplified Chinese
+    strings.setLocale('zh-CN');
+    expect(strings.t('btn.start')).toBe('开始');
+    expect(strings.t('attendee.present')).toBe('出勤 (Present)');
+
+    // Russian
+    strings.setLocale('ru');
+    expect(strings.t('btn.start')).toBe('Начать');
+    expect(strings.t('attendee.present')).toBe('Присутствует (Present)');
+
+    // Ukrainian
+    strings.setLocale('uk');
+    expect(strings.t('btn.start')).toBe('Почати');
+    expect(strings.t('attendee.present')).toBe('Присутній (Present)');
+
+    // Romanian
+    strings.setLocale('ro');
+    expect(strings.t('btn.start')).toBe('Start');
+    expect(strings.t('attendee.present')).toBe('Prezent (Present)');
   });
 
   test('persists locale to localStorage when requested', () => {
@@ -93,6 +133,11 @@ describe('detectLocale', () => {
     expect(strings.detectLocale('pt-BR')).toBe('pt');
     expect(strings.detectLocale('pt-PT')).toBe('pt');
     expect(strings.detectLocale('hi-IN')).toBe('hi');
+    expect(strings.detectLocale('ta-IN')).toBe('ta');
+    expect(strings.detectLocale('te-IN')).toBe('te');
+    expect(strings.detectLocale('bn-BD')).toBe('bn');
+    expect(strings.detectLocale('bn-IN')).toBe('bn');
+    expect(strings.detectLocale('ur-PK')).toBe('ur');
     expect(strings.detectLocale('tl-PH')).toBe('tl');
     expect(strings.detectLocale('fil-PH')).toBe('tl');
     expect(strings.detectLocale('ms-MY')).toBe('ms');
@@ -104,10 +149,17 @@ describe('detectLocale', () => {
     expect(strings.detectLocale('it-IT')).toBe('it');
     expect(strings.detectLocale('nl-NL')).toBe('nl');
     expect(strings.detectLocale('pl-PL')).toBe('pl');
+    expect(strings.detectLocale('ro-RO')).toBe('ro');
+    expect(strings.detectLocale('ro-MD')).toBe('ro');
+    expect(strings.detectLocale('ru-RU')).toBe('ru');
+    expect(strings.detectLocale('uk-UA')).toBe('uk');
     expect(strings.detectLocale('tr-TR')).toBe('tr');
     expect(strings.detectLocale('th-TH')).toBe('th');
     expect(strings.detectLocale('ar-AE')).toBe('ar');
     expect(strings.detectLocale('ko-KR')).toBe('ko');
+    expect(strings.detectLocale('zh-CN')).toBe('zh-CN');
+    expect(strings.detectLocale('zh-SG')).toBe('zh-CN');
+    expect(strings.detectLocale('zh-Hans')).toBe('zh-CN');
     expect(strings.detectLocale('zh-TW')).toBe('zh');
     expect(strings.detectLocale('zh-HK')).toBe('zh');
     expect(strings.detectLocale('ja-JP')).toBe('ja');
