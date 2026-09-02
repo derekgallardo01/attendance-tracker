@@ -16,6 +16,7 @@ jest.mock('../../src/services/firestore', () => ({
   countAllUsers: jest.fn(),
   getTenantConfig: jest.fn(),
   deleteUser: jest.fn(),
+  getExistingDomainPeer: jest.fn().mockResolvedValue(null),
 }));
 jest.mock('../../src/services/googleAuth', () => ({
   exchangeCode: jest.fn(),
@@ -420,6 +421,24 @@ describe('oauth exchange — residual acquisition/scope/error branches', () => {
     firestore.getUser.mockResolvedValue(null); firestore.countAllUsers.mockResolvedValue(1);
     const res = await request(app).post('/api/oauth/exchange').send({ code: 'c', acquisition: { ref: 'not-an-email', userAgent: 'UA' } });
     expect(res.body.detectedSource).toBe('direct'); // ref rejected → falls through
+  });
+
+  test('detectedSource = colleague_referral:<peer> when org domain peer already exists', async () => {
+    tok(FULL);
+    firestore.getUser.mockResolvedValue(null); firestore.countAllUsers.mockResolvedValue(2);
+    firestore.getExistingDomainPeer.mockResolvedValueOnce('teacher1@acme.com');
+    const res = await request(app).post('/api/oauth/exchange').send({ code: 'c', acquisition: { userAgent: 'UA' } });
+    expect(res.body.detectedSource).toBe('colleague_referral:teacher1@acme.com');
+  });
+
+  test('detectedSource = marketplace:in_meet_addon when inMeet or meet_sdk is present', async () => {
+    tok(FULL);
+    firestore.getUser.mockResolvedValue(null); firestore.countAllUsers.mockResolvedValue(1);
+    const res = await request(app).post('/api/oauth/exchange').send({ code: 'c', acquisition: { inMeet: true } });
+    expect(res.body.detectedSource).toBe('marketplace:in_meet_addon');
+
+    const res2 = await request(app).post('/api/oauth/exchange').send({ code: 'c', acquisition: { landingUrl: 'https://app.com/?meet_sdk=xyz' } });
+    expect(res2.body.detectedSource).toBe('marketplace:in_meet_addon');
   });
 
   test('existing user WITHOUT a source but with a UTM captures from UTM (no modal)', async () => {

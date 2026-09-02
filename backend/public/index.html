@@ -1376,16 +1376,17 @@ function captureAcquisitionFromUrl() {
     const utmCampaign = params.get('utm_campaign');
     const ref         = params.get('ref'); // referral attribution from celebrate-modal share links
     const referrer    = document.referrer || null;
+    const inMeet      = params.has('meet_sdk') || params.get('origin') === 'https://meet.google.com' || (typeof window !== 'undefined' && window !== window.top);
     // Don't overwrite an earlier capture (first-touch wins).
     if (localStorage.getItem(ACQUISITION_STORAGE_KEY)) return;
     const payload = {
-      utmSource, utmMedium, utmCampaign, ref, referrer,
+      utmSource, utmMedium, utmCampaign, ref, referrer, inMeet,
       landingUrl: window.location.href || null,
       capturedAt: Date.now(),
     };
     localStorage.setItem(ACQUISITION_STORAGE_KEY, JSON.stringify(payload));
     // Cookie fallback: works across subdomains and survives longer than localStorage.
-    const computedSource = utmSource || (ref ? 'referral' : null) || (referrer ? new URL(referrer).hostname : null) || 'direct';
+    const computedSource = utmSource || (ref ? 'referral' : null) || (inMeet ? 'marketplace' : null) || (referrer ? new URL(referrer).hostname : null) || 'direct';
     document.cookie = `att_first_touch=${encodeURIComponent(JSON.stringify({...payload, computedSource}))};path=/;max-age=7776000;SameSite=Lax`;
   } catch (e) { /* localStorage/cookie may be unavailable in some iframes */ }
 }
@@ -1566,6 +1567,10 @@ async function refreshActivationStatus() {
     if (!res.ok) return;
     const status = await res.json();
     state.activation = status;
+    if (status.needsAcquisitionSource && !state._needsSourceDismissed) {
+      state._needsSource = true;
+      if (status.detectedSource) state._detectedSource = status.detectedSource;
+    }
     renderNudgeBanner();
     renderTeamAdminLink();
   } catch (e) {
@@ -1741,6 +1746,7 @@ function closeSourceModal(answered) {
   // Distinguish a real answer (Submit) from a skip/dismiss, so we can measure
   // how much of the "no source" gap is dismissal vs never-shown.
   if (!answered && state._needsSource) {
+    state._needsSourceDismissed = true;
     logUserEvent('source_prompt_dismissed', { detected: state._detectedSource || null });
   }
 }

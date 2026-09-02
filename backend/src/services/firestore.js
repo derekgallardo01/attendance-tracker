@@ -627,6 +627,24 @@ async function setUserAcquisitionSource(domain, email, { source, detail }) {
   }
 }
 
+// Check if an organization domain already has other users who joined earlier
+async function getExistingDomainPeer(domain, currentEmail) {
+  try {
+    if (PERSONAL_EMAIL_DOMAINS.has((domain || '').toLowerCase())) return null;
+    const snap = await tenantRef(domain).collection('users').limit(3).get();
+    for (const d of snap.docs) {
+      const email = d.id.toLowerCase();
+      if (email !== (currentEmail || '').toLowerCase()) {
+        return email;
+      }
+    }
+    return null;
+  } catch (err) {
+    log.warn('firestore: getExistingDomainPeer failed', { domain, email: currentEmail, error: err.message });
+    return null;
+  }
+}
+
 async function setPostExportSurvey(domain, email, { useCase, detail }) {
   try {
     await tenantRef(domain).collection('users').doc(email.toLowerCase()).set(
@@ -1672,7 +1690,7 @@ module.exports = {
   claimReferral, releaseReferral, recordReferralForInviter, recordReferralPromoCode, getUserTrackingStreak,
   logEvent,
   getUserActivationStatus, countUserExports, countUserMonthlyExports, countAllUsers, getExportedConferenceIds,
-  getUserMeetingHistory,
+  getUserMeetingHistory, getExistingDomainPeer,
   getUserMeetingSeries,
   getTenantUsers, getTenantMeetings, getTenantSeriesOverview, getTenantPeopleOverview, getTeamOverview,
   evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition,

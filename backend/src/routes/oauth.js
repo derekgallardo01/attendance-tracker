@@ -4,7 +4,7 @@ const { google } = require('googleapis');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { exchangeCode, revokeToken } = require('../services/googleAuth');
-const { upsertUser, getUser, updateUserTokens, logEvent, getUserActivationStatus, getUserTrackingStreak, getTenantConfig, deleteUser } = require('../services/firestore');
+const { upsertUser, getUser, updateUserTokens, logEvent, getUserActivationStatus, getUserTrackingStreak, getTenantConfig, deleteUser, getExistingDomainPeer } = require('../services/firestore');
 const { domainOf } = require('../services/firestore/_core'); // pure util; imported directly so test firestore-mocks needn't stub it
 const { flushDeferredNotifications } = require('../lib/notifications');
 
@@ -93,6 +93,7 @@ router.post('/exchange', async (req, res) => {
       referrer:    trim(acquisition.referrer),
       landingUrl:  trimLong(acquisition.landingUrl),
       userAgent:   trimLong(acquisition.userAgent),
+      inMeet:      Boolean(acquisition.inMeet),
     } : undefined;
 
     // Decide whether the client needs to show the "how did you find us?" modal.
@@ -105,12 +106,8 @@ router.post('/exchange', async (req, res) => {
     const needsAcquisitionSource = !alreadyHasSource && !willCaptureFromUTM;
 
     // Auto-detect an acquisition source from the entry point. Priority: explicit
-    // user-reported source > ?ref= invite > UTM > referrer hostname > "direct"
-    // (fallback when only userAgent is known — e.g. entering via the in-Meet
-    // add-on, which carries no web referrer). Computed here (before the upsert)
-    // so it can be both stamped on a brand-new user's doc for the deferred
-    // signup notification AND returned to the frontend for a source-aware
-    // welcome ("saw you came from Reddit").
+    // user-reported source > ?ref= invite > colleague/domain referral > UTM >
+    // referrer hostname > in-Meet add-on (Marketplace) > "direct".
     let refHost = null;
     if (sanitizedAcq?.referrer) {
       // A successfully-parsed http(s) referrer always has a non-empty hostname,
@@ -118,10 +115,18 @@ router.post('/exchange', async (req, res) => {
       /* istanbul ignore next */
       try { refHost = new URL(sanitizedAcq.referrer).hostname || null; } catch { /* ignore */ }
     }
+    const isMeetAddon = !!(sanitizedAcq?.inMeet || sanitizedAcq?.landingUrl?.includes('meet_sdk') || sanitizedAcq?.landingUrl?.includes('origin=meet.google.com'));
+    let existingPeer = null;
+    if (isBrandNewUser && typeof getExistingDomainPeer === 'function') {
+      try { existingPeer = await getExistingDomainPeer(domain, email); } catch { /* ignore */ }
+    }
+
     const detectedSource = sanitizedAcq?.source
       || (sanitizedAcq?.ref ? `invite:${sanitizedAcq.ref}` : null)
+      || (existingPeer ? `colleague_referral:${existingPeer}` : null)
       || (sanitizedAcq?.utmSource ? `utm:${sanitizedAcq.utmSource}` : null)
       || (refHost ? `ref:${refHost}` : null)
+      || (isMeetAddon ? 'marketplace:in_meet_addon' : null)
       || (sanitizedAcq?.userAgent ? 'direct' : null);
 
     // Capture IP + country at signup for the owner notification email.
@@ -213,6 +218,8 @@ router.get('/me', async (req, res) => {
       domain,
       teamAdmin: !!user?.teamAdmin,
       weeklyStreak,
+      needsAcquisitionSource: !user?.acquisitionSource && !user?.acquisitionDismissed,
+      detectedSource: user?.signupDetectedSource || null,
       ...status,
     });
   } catch (err) {
