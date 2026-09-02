@@ -1738,6 +1738,7 @@ function showSourceModal(detectedSource) {
     // Pre-select the detected option when we have one — saves them a click.
     sel.value = ['reddit', 'youtube', 'google_search', 'marketplace', 'friend'].includes(detectedSource)
       ? detectedSource : '';
+    onSourceSelectChange();
   }
 }
 
@@ -1754,16 +1755,33 @@ function closeSourceModal(answered) {
 function onSourceSelectChange() {
   const sel = document.getElementById('source-modal-select');
   const otherWrap = document.getElementById('source-modal-other-wrap');
-  otherWrap.style.display = sel.value === 'other' ? 'block' : 'none';
+  const otherInput = document.getElementById('source-modal-other');
+  if (!sel || !otherWrap || !otherInput) return;
+
+  const placeholders = {
+    google_search: 'What did you search for? (optional)',
+    friend:        'Who recommended Attendance Tracker? (optional)',
+    reddit:        'Which subreddit? (optional)',
+    youtube:       'Which video or creator? (optional)',
+    marketplace:   'Any search keyword? (optional)',
+    other:         'Where did you hear about it? (optional)',
+  };
+
+  const placeholder = placeholders[sel.value];
+  if (placeholder) {
+    otherInput.placeholder = placeholder;
+    otherWrap.style.display = 'block';
+  } else {
+    otherWrap.style.display = 'none';
+  }
 }
 
 async function submitSource() {
   const sel = document.getElementById('source-modal-select');
   const source = sel?.value;
   if (!source) { toast('Pick an option first'); return; }
-  const detail = source === 'other'
-    ? (document.getElementById('source-modal-other').value || '').trim().slice(0, 200)
-    : null;
+  const rawDetail = (document.getElementById('source-modal-other')?.value || '').trim();
+  const detail = rawDetail ? rawDetail.slice(0, 200) : null;
   try {
     const res = await fetch(`${state.backendUrl}/admin/source`, {
       method: 'POST',
