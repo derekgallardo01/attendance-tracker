@@ -890,12 +890,19 @@ async function countUserExports(domain, email) {
 // Count this user's export events in the current calendar month.
 async function countUserMonthlyExports(domain, email) {
   try {
-    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    const startOfMonthMs = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
     const snap = await tenantRef(domain).collection('exports')
       .where('email', '==', email.toLowerCase())
-      .where('createdAt', '>=', startOfMonth)
       .get();
-    return snap.size;
+    let count = 0;
+    for (const d of snap.docs) {
+      const data = d.data();
+      const createdMs = data.createdAt?.toDate ? data.createdAt.toDate().getTime() : (data.createdAt ? new Date(data.createdAt).getTime() : 0);
+      if (createdMs >= startOfMonthMs) {
+        count++;
+      }
+    }
+    return count;
   } catch (err) {
     log.warn('firestore: countUserMonthlyExports failed', { domain, email, error: err.message });
     return 0;
