@@ -43,7 +43,7 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
   const stripe = getStripe();
   const domain = req.user.domain;
   const email = req.user.email;
-  const individual = req.body && req.body.plan === 'team'
+  const individual = req.body && (req.body.plan === 'team' || req.body.plan === 'lifetime')
     ? false
     : (req.body && req.body.plan === 'individual' ? true : isPersonalDomain(domain));
   // Personal-email users buy the INDIVIDUAL (per-user) plan; Workspace domains
