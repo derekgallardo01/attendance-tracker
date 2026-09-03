@@ -2697,6 +2697,11 @@ function showUpgradeModal(reason) {
       note.style.display = 'none';
     }
   }
+  const upgradeReviewLink = document.getElementById('upgrade-review-link');
+  if (upgradeReviewLink) {
+    const email = state.userEmail || '';
+    upgradeReviewLink.href = `${state.backendUrl}/public/review-click?email=${encodeURIComponent(email)}&source=upgrade_modal`;
+  }
   modal.style.display = 'flex';
   try { logUserEvent('upgrade_modal_shown', { reason: reason || 'manual' }); } catch {}
 }
@@ -3249,6 +3254,20 @@ function showCelebrateModal(sheetUrl) {
       proBlock.style.display = 'block';
     });
   }
+  const reviewBtn = document.getElementById('celebrate-review-btn');
+  if (reviewBtn) {
+    const email = state.userEmail || '';
+    reviewBtn.href = `${state.backendUrl}/public/review-click?email=${encodeURIComponent(email)}&source=celebrate_modal`;
+  }
+}
+
+function onCelebrateReviewClick(e) {
+  try { logUserEvent('review_ask_clicked', { source: 'celebrate_modal' }); } catch {}
+  localStorage.setItem('has_reviewed', '1');
+}
+
+function onUpgradeReviewClick(e) {
+  try { logUserEvent('review_ask_clicked', { source: 'upgrade_modal' }); } catch {}
 }
 
 function closeCelebrateModal() {
@@ -4213,10 +4232,11 @@ window.addEventListener('DOMContentLoaded', () => {
     <div style="background:#161b22;border:1px solid #30363d;border-radius:14px;padding:24px;max-width:380px;width:100%;text-align:center">
       <div style="font-size:2.5rem;margin-bottom:8px">🎉</div>
       <div style="font-size:1.1rem;font-weight:700;color:#4ade80;margin-bottom:6px">First export complete!</div>
-      <div style="color:#9ca3af;font-size:.85rem;line-height:1.5;margin-bottom:18px">Your attendance report is in Google Sheets. Know a teammate who tracks attendance? Send them this in 5 seconds.</div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <a id="celebrate-share-link" href="#" style="background:#34A853;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:600;font-size:.85rem;display:inline-block">Share with a teammate</a>
-        <button onclick="closeCelebrateModal()" style="background:transparent;color:#9ca3af;border:none;font-size:.8rem;cursor:pointer;padding:6px">No thanks</button>
+      <div style="color:#9ca3af;font-size:.84rem;line-height:1.5;margin-bottom:16px">Your attendance report is in Google Sheets. If Attendance Tracker saved you time today, could you leave a quick 5-star rating on Google Marketplace?</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <a id="celebrate-review-btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" onclick="onCelebrateReviewClick(event)" style="background:#f59e0b;color:#111;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:700;font-size:.85rem;display:inline-block">⭐ Leave a 5-Star Review (5s)</a>
+        <a id="celebrate-share-link" href="#" style="background:transparent;border:1px solid #30363d;color:#e6edf3;text-decoration:none;padding:8px 16px;border-radius:8px;font-weight:600;font-size:.8rem;display:inline-block">Share with a teammate</a>
+        <button onclick="closeCelebrateModal()" style="background:transparent;color:#9ca3af;border:none;font-size:.8rem;cursor:pointer;padding:4px">Maybe later</button>
       </div>
       <div id="celebrate-pro" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid #30363d;text-align:left">
         <div style="color:#e6edf3;font-size:.85rem;font-weight:600;margin-bottom:4px">Get more with Pro</div>
@@ -4271,6 +4291,11 @@ window.addEventListener('DOMContentLoaded', () => {
           ✓ Cumulative multi-session Class Summary roll-ups
         </div>
         <button type="button" id="btn-upgrade-lifetime" onclick="startUpgradeCheckout('lifetime', 'btn-upgrade-lifetime')" style="width:100%;background:rgba(96,165,250,.15);color:#93c5fd;border:1px solid #3b82f6;padding:9px 14px;border-radius:6px;font-weight:700;font-size:.82rem;cursor:pointer">Get Lifetime Pass — $9.99 (50% Off)</button>
+      </div>
+
+      <!-- Review for Pro exchange -->
+      <div style="background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.2);border-radius:8px;padding:9px 12px;margin-bottom:12px;font-size:.76rem;color:#94a3b8;line-height:1.45;text-align:center">
+        🎓 <strong>School budget tight?</strong> <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" id="upgrade-review-link" target="_blank" onclick="onUpgradeReviewClick(event)" style="color:#38bdf8;font-weight:600;text-decoration:underline">Leave an honest 5-star review</a> on Google Marketplace and reply for 1 month of free Pro.
       </div>
 
       <div style="display:flex;justify-content:space-between;align-items:center;font-size:.75rem;color:#6e7681">

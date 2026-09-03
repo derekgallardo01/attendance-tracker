@@ -2,7 +2,7 @@ const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
 const { FieldValue } = require('@google-cloud/firestore');
 const log = require('../lib/logger');
-const { getDb, resolveShareLink, getSharedSeriesView, suppressEmail, getVerification } = require('../services/firestore');
+const { getDb, resolveShareLink, getSharedSeriesView, suppressEmail, getVerification, logEvent } = require('../services/firestore');
 const { sendFeedbackEmail, verifyUnsubscribeToken } = require('../lib/notifications');
 const { escapeHtml } = require('../lib/html');
 
@@ -234,6 +234,31 @@ router.get('/public/unsubscribe', async (req, res) => {
   res.type('html').send(
     unsubscribePage('You\'re unsubscribed', `${escapeHtml(email)} won't receive any more re-engagement or alert emails. You can still use Attendance Tracker normally.`)
   );
+});
+
+// GET /api/public/review-click — Tracked redirect for Marketplace 5-star reviews.
+// Unauth by design (clicked from email or in-app modal). Records click in telemetry & user doc,
+// then redirects to the Workspace Marketplace review page.
+router.get('/public/review-click', async (req, res) => {
+  const MARKETPLACE_URL = 'https://workspace.google.com/marketplace/app/attendance_tracker/829771833968';
+  const email = typeof req.query.email === 'string' ? req.query.email.trim().toLowerCase() : '';
+  const source = typeof req.query.source === 'string' ? req.query.source.slice(0, 50) : 'unknown';
+
+  if (email && email.includes('@')) {
+    try {
+      const domain = email.split('@')[1];
+      await getDb().collection('domains').doc(domain).collection('users').doc(email).set({
+        reviewLinkClickedAt: new Date().toISOString(),
+        reviewStatus: 'clicked',
+      }, { merge: true });
+      logEvent(domain, { type: 'review_link_clicked', email, source });
+      log.info('public: review link clicked', { email, source });
+    } catch (err) {
+      log.warn('public: review click tracking failed', { email, error: err.message });
+    }
+  }
+
+  res.redirect(302, `${MARKETPLACE_URL}?utm_source=${encodeURIComponent(source)}`);
 });
 
 module.exports = router;

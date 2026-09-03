@@ -526,6 +526,7 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
   const seriesLink = recurringEventId
     ? `https://attendancetracker.dev/history.html#series=${encodeURIComponent(recurringEventId)}`
     : null;
+  const reviewUrl = `${CONFIG.publicApiUrl}/public/review-click?email=${encodeURIComponent(to)}&source=export_email`;
 
   const html = `
     <div style="font-family:sans-serif;max-width:600px;color:#111;font-size:14px;line-height:1.5">
@@ -542,6 +543,11 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
         <a href="${escape(meetingLink)}" style="display:inline-block;color:#1f6feb;padding:10px 4px;text-decoration:none;font-weight:600">View on web →</a>
       </p>
       ${seriesLink ? `<p style="margin-top:8px;font-size:13px;color:#666">This is part of a recurring series — <a href="${escape(seriesLink)}" style="color:#1f6feb">see the full trend →</a></p>` : ''}
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;margin:20px 0;text-align:left">
+        <div style="font-weight:600;color:#1e293b;font-size:13px;margin-bottom:3px">⭐ Did this save you time today?</div>
+        <div style="font-size:12px;color:#64748b;margin-bottom:10px;line-height:1.4">If Attendance Tracker helped your call, could you spare 10 seconds to leave a 5-star review on Google Marketplace? It helps independent creators like me keep building for educators!</div>
+        <a href="${escape(reviewUrl)}" style="display:inline-block;background:#f59e0b;color:#111;font-size:12px;font-weight:700;padding:6px 14px;border-radius:6px;text-decoration:none">Leave a 5-Star Review (takes 10s) →</a>
+      </div>
       <p style="color:#666;font-size:12px;margin-top:24px">
         You're getting this because you tracked this meeting with Attendance Tracker.
         The sheet lives in your Drive folder "Meet Attendance Tracker" — reuse the same
@@ -565,6 +571,9 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
     `Open sheet: ${sheetUrl}`,
     `View on web: ${meetingLink}`,
     seriesLink ? `Series trend: ${seriesLink}` : '',
+    ``,
+    `Did this save you time today? Leave a quick 5-star review (takes 10s):`,
+    reviewUrl,
   ].filter(Boolean).join('\n');
 
   return dispatchEmail({

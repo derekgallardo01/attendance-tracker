@@ -34,6 +34,7 @@ const FRONTEND_EVENT_TYPES = new Set([
   'review_ask_shown',
   'review_ask_clicked',
   'review_ask_dismissed',
+  'review_link_clicked',
   // Celebration & Referrals
   'celebrate_modal_shown',
   'celebrate_share_clicked',
