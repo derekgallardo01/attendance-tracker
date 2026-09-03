@@ -2664,7 +2664,7 @@ async function startUpgradeCheckout(plan, btnId) {
     const res = await authFetch(`${state.backendUrl}/billing/checkout`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan: plan || 'individual', interval: 'annual' }),
+      body: JSON.stringify({ plan: plan || 'individual', interval: 'annual', promo: 'LAUNCH50' }),
     });
     const data = await res.json().catch(() => ({}));
     if (res.ok && data.url) {
@@ -2685,7 +2685,7 @@ function showUpgradeModal(reason) {
   const note = document.getElementById('upgrade-modal-note');
   if (note) {
     if (reason === 'exportQuota') {
-      note.textContent = '📊 You reached your monthly limit of 3 free exports. Upgrade to Pro for unlimited exports!';
+      note.textContent = '📊 You reached your monthly limit of 2 free exports. Upgrade to Pro for unlimited exports!';
       note.style.display = 'block';
     } else if (reason === 'autoExport') {
       note.textContent = '⚡ Auto-exporting to Google Sheets on meeting end is a Pro feature.';
@@ -4237,34 +4237,40 @@ window.addEventListener('DOMContentLoaded', () => {
       </div>
       <p style="margin:0 0 14px;font-size:.82rem;color:#8b949e;line-height:1.4">Unlock unlimited Sheets exports, automated tracking, and certificates for your meetings.</p>
       
-      <div id="upgrade-modal-note" style="display:none;background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.3);color:#fbbf24;padding:8px 12px;border-radius:8px;font-size:.78rem;margin-bottom:14px;line-height:1.4"></div>
+      <div id="upgrade-modal-note" style="display:none;background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.3);color:#fbbf24;padding:8px 12px;border-radius:8px;font-size:.78rem;margin-bottom:12px;line-height:1.4"></div>
+
+      <!-- Launch Deal Banner -->
+      <div style="background:linear-gradient(135deg,rgba(234,179,8,.15),rgba(249,115,22,.15));border:1px dashed #f59e0b;border-radius:10px;padding:10px 12px;margin-bottom:12px;text-align:center">
+        <div style="font-weight:700;font-size:.84rem;color:#fbbf24">🎉 Back-to-School Launch Deal: 50% OFF!</div>
+        <div style="font-size:.75rem;color:#d1d5db;margin-top:2px">Special discount automatically applied at checkout.</div>
+      </div>
 
       <!-- Option 1: Individual Teacher -->
       <div style="background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:14px;margin-bottom:10px">
         <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
           <span style="font-weight:600;font-size:.88rem;color:#e6edf3">Teacher / Individual</span>
-          <span style="font-weight:700;font-size:.95rem;color:#4ade80">$9.99 <span style="font-size:.75rem;color:#8b949e;font-weight:400">/ yr</span></span>
+          <span style="font-weight:700;font-size:.95rem;color:#4ade80"><s style="color:#8b949e;font-size:.8rem;margin-right:4px;font-weight:400">$9.99</s>$4.99 <span style="font-size:.75rem;color:#8b949e;font-weight:400">/ yr</span></span>
         </div>
         <div style="font-size:.75rem;color:#8b949e;line-height:1.45;margin-bottom:10px">
           ✓ Unlimited Google Sheets exports<br/>
           ✓ Auto-export when meetings end<br/>
           ✓ Student attendance certificates
         </div>
-        <button type="button" id="btn-upgrade-individual" onclick="startUpgradeCheckout('individual', 'btn-upgrade-individual')" style="width:100%;background:#4ade80;color:#0d1117;border:none;padding:9px 14px;border-radius:6px;font-weight:700;font-size:.82rem;cursor:pointer">Get Individual Pro ($9.99/yr)</button>
+        <button type="button" id="btn-upgrade-individual" onclick="startUpgradeCheckout('individual', 'btn-upgrade-individual')" style="width:100%;background:#4ade80;color:#0d1117;border:none;padding:9px 14px;border-radius:6px;font-weight:700;font-size:.82rem;cursor:pointer">Get Individual Pro — $4.99/yr (50% Off)</button>
       </div>
 
       <!-- Option 2: Lifetime Pro Pass -->
       <div style="background:#0d1117;border:1px solid rgba(96,165,250,.3);border-radius:10px;padding:14px;margin-bottom:14px">
         <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
           <span style="font-weight:600;font-size:.88rem;color:#93c5fd">Lifetime Pro Pass</span>
-          <span style="font-weight:700;font-size:.95rem;color:#60a5fa">$19.99 <span style="font-size:.75rem;color:#8b949e;font-weight:400">one-time</span></span>
+          <span style="font-weight:700;font-size:.95rem;color:#60a5fa"><s style="color:#8b949e;font-size:.8rem;margin-right:4px;font-weight:400">$19.99</s>$9.99 <span style="font-size:.75rem;color:#8b949e;font-weight:400">one-time</span></span>
         </div>
         <div style="font-size:.75rem;color:#8b949e;line-height:1.45;margin-bottom:10px">
           ✓ <strong>Pay once, own forever</strong> — no annual renewal<br/>
           ✓ Unlimited Google Sheets exports & auto-capture<br/>
           ✓ Cumulative multi-session Class Summary roll-ups
         </div>
-        <button type="button" id="btn-upgrade-lifetime" onclick="startUpgradeCheckout('lifetime', 'btn-upgrade-lifetime')" style="width:100%;background:rgba(96,165,250,.15);color:#93c5fd;border:1px solid #3b82f6;padding:9px 14px;border-radius:6px;font-weight:700;font-size:.82rem;cursor:pointer">Get Lifetime Pass ($19.99)</button>
+        <button type="button" id="btn-upgrade-lifetime" onclick="startUpgradeCheckout('lifetime', 'btn-upgrade-lifetime')" style="width:100%;background:rgba(96,165,250,.15);color:#93c5fd;border:1px solid #3b82f6;padding:9px 14px;border-radius:6px;font-weight:700;font-size:.82rem;cursor:pointer">Get Lifetime Pass — $9.99 (50% Off)</button>
       </div>
 
       <div style="display:flex;justify-content:space-between;align-items:center;font-size:.75rem;color:#6e7681">

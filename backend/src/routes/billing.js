@@ -78,6 +78,9 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
       }
     }
 
+    const promo = (req.body.promo || 'LAUNCH50').toUpperCase();
+    const LAUNCH_PROMO_ID = process.env.STRIPE_LAUNCH_PROMO_CODE || 'promo_1UBiZORPP93YBXrOlZdFv8zM';
+
     const sessionParams = {
       mode: isRecurring ? 'subscription' : 'payment',
       line_items: [{ price: priceId, quantity: 1 }],
@@ -86,8 +89,12 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
       success_url: `${CONFIG.publicSiteUrl}/${backTo}?upgraded=1`,
       cancel_url: `${CONFIG.publicSiteUrl}/${backTo}`,
       metadata: meta,
-      allow_promotion_codes: true,
     };
+    if (promo === 'LAUNCH50' && LAUNCH_PROMO_ID) {
+      sessionParams.discounts = [{ promotion_code: LAUNCH_PROMO_ID }];
+    } else {
+      sessionParams.allow_promotion_codes = true;
+    }
     if (isRecurring) {
       sessionParams.subscription_data = { metadata: meta };
     } else {

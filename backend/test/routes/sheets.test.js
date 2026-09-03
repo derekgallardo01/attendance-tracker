@@ -658,14 +658,14 @@ describe('POST /api/save-to-sheets — Pro gating', () => {
     expect(firestore.persistExport).not.toHaveBeenCalled(); // failed fast, no export
   });
 
-  test('free tier export is blocked with 402 when monthly quota is reached (3 exports/month)', async () => {
+  test('free tier export is blocked with 402 when monthly quota is reached (2 exports/month)', async () => {
     firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
-    firestore.countUserMonthlyExports.mockResolvedValue(3);
+    firestore.countUserMonthlyExports.mockResolvedValue(2);
     const res = await request(app).post('/api/save-to-sheets')
       .set(authedHeader('u@free-quota.com', 'free-quota.com')).set('Content-Type', 'application/json')
       .send({ ...validPayload, autoExport: false });
     expect(res.status).toBe(402);
-    expect(res.body).toMatchObject({ upgrade: true, feature: 'exportQuota', quota: { used: 3, limit: 3 } });
+    expect(res.body).toMatchObject({ upgrade: true, feature: 'exportQuota', quota: { used: 2, limit: 2 } });
     expect(firestore.persistExport).not.toHaveBeenCalled();
   });
 

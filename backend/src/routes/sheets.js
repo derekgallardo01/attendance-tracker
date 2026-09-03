@@ -576,8 +576,8 @@ router.post('/save-to-sheets', async (req, res) => {
       return res.status(402).json({ error: 'Auto-export on meeting end is a Pro feature.', upgrade: true, feature: 'autoExport' });
     }
 
-    // Monthly export quota check for Free users (3 exports per calendar month)
-    const FREE_MONTHLY_EXPORT_LIMIT = 3;
+    // Monthly export quota check for Free users (2 exports per calendar month)
+    const FREE_MONTHLY_EXPORT_LIMIT = 2;
     if (req.user && !proAllowed) {
       const monthlyExports = await countUserMonthlyExports(req.user.domain, req.user.email);
       if (monthlyExports >= FREE_MONTHLY_EXPORT_LIMIT) {
