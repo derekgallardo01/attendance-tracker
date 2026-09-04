@@ -850,7 +850,7 @@
     button:active { transform: scale(.97); }
 
     /* Banners fade-up on appear */
-    #scope-banner, #nudge-banner, #setup-banner { animation: fadeUp .3s ease-out both; }
+    #scope-banner, #setup-banner { animation: fadeUp .3s ease-out both; }
 
     /* When tracking is active, give the status dot a gentle pulse */
     .dot.active { animation: pulseGreen 2s infinite; }
@@ -1143,11 +1143,6 @@
   <div id="scope-banner" style="display:none;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.4);border-radius:8px;padding:10px 12px;margin:8px 16px;font-size:.8rem;color:#fde68a">
     <div style="margin-bottom:8px"><strong>Some features need additional permission.</strong> <span id="scope-banner-detail"></span></div>
     <button onclick="signInWithGoogle()" style="background:#fbbf24;color:#000;border:none;border-radius:6px;padding:6px 12px;font-weight:600;font-size:.75rem;cursor:pointer">Grant access</button>
-  </div>
-
-  <!-- ── Activation nudge banner (signed in but haven't tracked/exported yet) ── -->
-  <div id="nudge-banner" style="display:none;background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.35);border-radius:8px;padding:10px 12px;margin:8px 16px;font-size:.8rem;color:#9ec8ff">
-    <div id="nudge-banner-text" style="line-height:1.45"></div>
   </div>
 
   <!-- ── Export CTA (real meeting tracked but not yet saved to Sheets) ── -->
@@ -1645,27 +1640,7 @@ function renderTeamAdminLink() {
 
 function renderNudgeBanner() {
   const banner = document.getElementById('nudge-banner');
-  const text = document.getElementById('nudge-banner-text');
-  if (!banner || !state.signedIn) {
-    banner && (banner.style.display = 'none');
-    return;
-  }
-  const a = state.activation;
-  if (!a) { banner.style.display = 'none'; return; }
-
-  if (!a.hasTracked) {
-    text.innerHTML = '<strong>Getting started:</strong> open a Google Meet call and we\'ll start tracking participants automatically. Click <strong>Start</strong> above when you\'re in.';
-    banner.style.display = 'block';
-  } else if (!a.hasExported) {
-    text.innerHTML = '<strong>Almost there:</strong> click <strong>Sheet</strong> above to save this attendance to Google Sheets in one click — you can share, sort, or archive it from there.';
-    banner.style.display = 'block';
-  } else if (a.weeklyStreak >= 2) {
-    // Retention nudge: positive reinforcement for consistent trackers.
-    text.innerHTML = `🔥 <strong>${a.weeklyStreak}-week streak!</strong> You've tracked attendance ${a.weeklyStreak} weeks running — nice.`;
-    banner.style.display = 'block';
-  } else {
-    banner.style.display = 'none';
-  }
+  if (banner) banner.style.display = 'none';
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -4330,86 +4305,6 @@ window.addEventListener('DOMContentLoaded', () => {
   </div>
 
   </div><!-- /addon-ui -->
-
-  <!-- ── Feedback widget (visible on both landing page and inside the addon) ── -->
-  <button id="fb-toggle" type="button" aria-label="Send feedback"
-    style="position:fixed;bottom:18px;right:18px;width:44px;height:44px;border-radius:50%;border:none;background:#1f6feb;color:#fff;font-size:20px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.35);z-index:9998;display:flex;align-items:center;justify-content:center"
-    onclick="toggleFeedback(true)" title="Send feedback">💬</button>
-
-  <div id="fb-panel" style="display:none;position:fixed;bottom:74px;right:18px;width:300px;max-width:calc(100vw - 36px);background:#0d1117;border:1px solid #30363d;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.45);padding:14px;z-index:9999;font-family:'Sora',-apple-system,BlinkMacSystemFont,sans-serif;color:#e6edf3">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <div style="font-weight:600;font-size:.9rem">Quick feedback</div>
-      <button type="button" onclick="toggleFeedback(false)" style="background:none;border:none;color:#8b949e;cursor:pointer;font-size:18px;line-height:1;padding:0 4px" aria-label="Close">×</button>
-    </div>
-    <div style="font-size:.72rem;color:#8b949e;margin-bottom:10px">What's broken, what's missing, what works? Goes straight to the team.</div>
-    <textarea id="fb-body" rows="4" placeholder="Type here…"
-      style="width:100%;background:#161b22;border:1px solid #30363d;border-radius:6px;color:#e6edf3;padding:8px 10px;font-size:.85rem;font-family:inherit;resize:vertical;box-sizing:border-box"></textarea>
-    <input id="fb-email" type="email" placeholder="Your email (optional, for follow-up)"
-      style="width:100%;background:#161b22;border:1px solid #30363d;border-radius:6px;color:#e6edf3;padding:7px 10px;font-size:.78rem;font-family:inherit;margin-top:6px;box-sizing:border-box" />
-    <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:10px">
-      <button type="button" onclick="toggleFeedback(false)" style="background:transparent;border:1px solid #30363d;color:#8b949e;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.78rem">Cancel</button>
-      <button type="button" id="fb-send" onclick="sendFeedback()" style="background:#4ade80;color:#0d1117;border:none;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:.78rem;font-weight:600">Send</button>
-    </div>
-    <div id="fb-status" style="margin-top:8px;font-size:.72rem;color:#8b949e;display:none"></div>
-  </div>
-
-  <script>
-  function toggleFeedback(open) {
-    const panel = document.getElementById('fb-panel');
-    if (!panel) return;
-    panel.style.display = open ? 'block' : 'none';
-    if (open) {
-      // Pre-fill email if the addon is signed in. window.state may not exist
-      // on the landing page — that's fine, we just leave the field empty.
-      const known = (typeof state !== 'undefined' && state.userEmail) || '';
-      const emailInput = document.getElementById('fb-email');
-      if (emailInput && !emailInput.value && known) emailInput.value = known;
-      setTimeout(() => document.getElementById('fb-body')?.focus(), 50);
-    }
-  }
-  async function sendFeedback() {
-    const bodyEl = document.getElementById('fb-body');
-    const emailEl = document.getElementById('fb-email');
-    const sendBtn = document.getElementById('fb-send');
-    const statusEl = document.getElementById('fb-status');
-    const body = (bodyEl?.value || '').trim();
-    if (body.length < 2) { bodyEl.focus(); return; }
-    sendBtn.disabled = true;
-    sendBtn.textContent = 'Sending…';
-    statusEl.style.display = 'none';
-    // Source tells us where they wrote from — useful for triaging "panel UX"
-    // feedback vs "landing page" feedback.
-    const onLanding = document.getElementById('landing-page')?.style.display !== 'none';
-    const source = onLanding ? 'landing_page' : 'side_panel';
-    const conferenceId = (typeof state !== 'undefined' && state.conferenceId) || null;
-    // Same-origin fetch when inside the addon (state.backendUrl='/api');
-    // direct Cloud Run URL when on the landing page (it's same-origin too —
-    // attendancetracker.dev is served by Cloud Run via /api routes).
-    const url = (typeof state !== 'undefined' && state.backendUrl)
-      ? `${state.backendUrl}/public/feedback`
-      : '/api/public/feedback';
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ body, fromEmail: emailEl.value.trim() || null, source, conferenceId }),
-      });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      statusEl.style.display = 'block';
-      statusEl.style.color = '#4ade80';
-      statusEl.textContent = '✓ Thanks — we read every reply.';
-      bodyEl.value = '';
-      setTimeout(() => toggleFeedback(false), 1500);
-    } catch (e) {
-      statusEl.style.display = 'block';
-      statusEl.style.color = '#f85149';
-      statusEl.textContent = '⚠ Could not send — try again later.';
-    } finally {
-      sendBtn.disabled = false;
-      sendBtn.textContent = 'Send';
-    }
-  }
-  </script>
   <script>
     // PWA service worker — registered only at the top level, so it is never
     // active inside the Meet add-on iframe (where it must not touch API calls).

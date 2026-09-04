@@ -35,9 +35,6 @@ test.describe('Visual regression — public pages', () => {
     await page.goto('/');
     await page.locator('h2', { hasText: /Track Google Meet attendance/i }).waitFor({ timeout: 15_000 });
     await page.waitForLoadState('networkidle');
-    // Close the feedback widget if it auto-opens for any reason
-    const fb = page.locator('#fb-panel');
-    if (await fb.isVisible()) await page.locator('#fb-toggle').click();
 
     await expect(page).toHaveScreenshot('home-full.png', {
       fullPage: true,
@@ -85,18 +82,6 @@ test.describe('Visual regression — public pages', () => {
     await page.locator('text=link is no longer available').waitFor({ timeout: 15_000 });
     await expect(page).toHaveScreenshot('share-no-token.png', {
       fullPage: true,
-      maxDiffPixelRatio: 0.02,
-      animations: 'disabled',
-    });
-  });
-
-  test('feedback widget — opened state', async ({ page }) => {
-    await page.goto('/');
-    await page.locator('#fb-toggle').waitFor({ timeout: 15_000 });
-    await page.locator('#fb-toggle').click();
-    await page.locator('#fb-panel').waitFor();
-    // Just the widget area, not the whole page
-    await expect(page.locator('#fb-panel')).toHaveScreenshot('feedback-widget-open.png', {
       maxDiffPixelRatio: 0.02,
       animations: 'disabled',
     });
