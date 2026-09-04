@@ -202,6 +202,7 @@
       AttApi.signIn({
         onSuccess: (body) => {
           sessionToken = body.sessionToken;
+          try { localStorage.setItem('att_session_token', sessionToken); } catch (e) {}
           document.getElementById('user-email').textContent = body.email;
           document.getElementById('login-screen').style.display = 'none';
           loadOverview();
@@ -212,10 +213,50 @@
 
     function signOut() {
       sessionToken = null;
+      try { localStorage.removeItem('att_session_token'); } catch (e) {}
       document.getElementById('login-screen').style.display = '';
       document.getElementById('dashboard').style.display = 'none';
       document.getElementById('error-not-admin').style.display = 'none';
     }
+
+    async function initSession() {
+      let token = null;
+      if (window.location.hash) {
+        const match = window.location.hash.match(/[#&]token=([^&]+)/);
+        if (match) token = decodeURIComponent(match[1]);
+      }
+      if (!token && window.location.search) {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('token')) token = params.get('token');
+      }
+      if (!token) {
+        try { token = localStorage.getItem('att_session_token'); } catch (e) {}
+      }
+
+      if (!token) return;
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/oauth/me`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const me = await res.json();
+          sessionToken = token;
+          try { localStorage.setItem('att_session_token', token); } catch (e) {}
+          if (window.location.hash && window.location.hash.includes('token=')) {
+            history.replaceState(null, '', window.location.pathname + window.location.search);
+          }
+          document.getElementById('user-email').textContent = me.email;
+          document.getElementById('login-screen').style.display = 'none';
+          loadOverview();
+        } else {
+          try { localStorage.removeItem('att_session_token'); } catch (e) {}
+        }
+      } catch (err) {
+        console.warn('Auto-login check failed:', err);
+      }
+    }
+    initSession();
 
     // Monthly/annual choice for the team upgrade. Default annual.
     let teamInterval = 'annual';

@@ -915,7 +915,7 @@
     button:active { transform: scale(.97); }
 
     /* Banners fade-up on appear */
-    #scope-banner, #setup-banner { animation: fadeUp .3s ease-out both; }
+    #scope-banner { animation: fadeUp .3s ease-out both; }
 
     /* When tracking is active, give the status dot a gentle pulse */
     .dot.active { animation: pulseGreen 2s infinite; }
@@ -1218,13 +1218,6 @@
     <button id="export-cta-btn" onclick="onExportCtaClick()" style="background:#34A853;color:#fff;border:none;border-radius:6px;padding:8px 16px;font-weight:700;font-size:.78rem;cursor:pointer;width:100%"></button>
   </div>
 
-  <!-- ── Setup banner (shown when delegation not configured) ── -->
-  <div id="setup-banner" style="display:none; padding:8px 16px; background:rgba(255,193,7,.1); border-bottom:1px solid rgba(255,193,7,.3); font-size:.75rem; color:#ffc107;">
-    Some participants may not appear until your Workspace admin finishes a one-time setup.
-    <a href="#" onclick="emailAdminForSetup(); return false;" style="color:#ffc107;text-decoration:underline">Email my admin</a>
-    &nbsp;·&nbsp;
-    <a href="https://attendancetracker.dev/setup.html" target="_blank" style="color:#ffc107;text-decoration:underline">View setup steps</a>
-  </div>
 
   <!-- ── Status bar ── -->
   <div id="status-bar">
@@ -1272,7 +1265,7 @@
   <!-- Team admin link — only shown to users where /oauth/me reports
        teamAdmin:true (renderTeamAdminLink() toggles display). Stays hidden
        for personal-gmail users and non-admins. -->
-  <a id="team-admin-link" href="https://attendancetracker.dev/team.html" target="_blank" style="display:none;padding:6px 16px;font-size:11px;color:#f59e0b;text-decoration:none">👥 Open team admin dashboard →</a>
+  <a id="team-admin-link" href="https://attendancetracker.dev/team.html" onclick="openTeamPage(event)" target="_blank" style="display:none;padding:6px 16px;font-size:11px;color:#f59e0b;text-decoration:none">👥 Open team admin dashboard →</a>
 
   <!-- ── Summary ── -->
   <div class="summary-row">
@@ -1359,7 +1352,7 @@
 
   <!-- ── Footer ── -->
   <div style="padding:12px 16px;text-align:center;font-size:.65rem;color:#6e7681;margin-top:auto">
-    <a href="https://attendancetracker.dev/history.html" target="_blank" style="color:#9ec8ff">📋 All meetings</a>
+    <a id="history-link" href="https://attendancetracker.dev/history.html" onclick="openHistoryPage(event)" target="_blank" style="color:#9ec8ff">📋 All meetings</a>
     · <a href="#" onclick="openSettingsModal();return false" style="color:#9ec8ff">⚙ Settings</a>
     · <a href="https://attendancetracker.dev/pricing.html" target="_blank" style="color:#6e7681">Pricing</a>
     · <a href="https://attendancetracker.dev/privacy.html" target="_blank" style="color:#6e7681">Privacy</a>
@@ -1960,6 +1953,38 @@ function updateAuthUI() {
       </button>
     `;
   }
+  updateNavLinks();
+}
+
+function openHistoryPage(e) {
+  if (state.sessionToken) {
+    if (e) e.preventDefault();
+    const url = `https://attendancetracker.dev/history.html#token=${encodeURIComponent(state.sessionToken)}`;
+    window.open(url, '_blank');
+  }
+}
+
+function openTeamPage(e) {
+  if (state.sessionToken) {
+    if (e) e.preventDefault();
+    const url = `https://attendancetracker.dev/team.html#token=${encodeURIComponent(state.sessionToken)}`;
+    window.open(url, '_blank');
+  }
+}
+
+function updateNavLinks() {
+  const historyLink = document.getElementById('history-link');
+  if (historyLink) {
+    historyLink.href = state.sessionToken
+      ? `https://attendancetracker.dev/history.html#token=${encodeURIComponent(state.sessionToken)}`
+      : 'https://attendancetracker.dev/history.html';
+  }
+  const teamLink = document.getElementById('team-admin-link');
+  if (teamLink) {
+    teamLink.href = state.sessionToken
+      ? `https://attendancetracker.dev/team.html#token=${encodeURIComponent(state.sessionToken)}`
+      : 'https://attendancetracker.dev/team.html';
+  }
 }
 
 async function authFetch(url, opts = {}) {
@@ -2267,13 +2292,6 @@ async function refreshAttendance() {
       data.participants = [...data.participants, ...getInjectedParticipants()];
     }
 
-    // Show setup banner if delegation not configured
-    const setupBanner = document.getElementById('setup-banner');
-    if (setupBanner && data.delegationConfigured === false && state.signedIn) {
-      setupBanner.style.display = '';
-    } else if (setupBanner && data.delegationConfigured === true) {
-      setupBanner.style.display = 'none';
-    }
 
     const hadParticipantsBefore = state.participants.size > 0;
     // Remember conference timing so renderList() can explain "this meeting

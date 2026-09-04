@@ -283,6 +283,7 @@
         onSuccess: (body) => {
           sessionToken = body.sessionToken;
           userEmail = body.email;
+          try { localStorage.setItem('att_session_token', sessionToken); } catch (e) {}
           document.getElementById('user-email').textContent = body.email;
           document.getElementById('login-screen').style.display = 'none';
           document.getElementById('dashboard').style.display = 'block';
@@ -295,9 +296,57 @@
     function signOut() {
       sessionToken = null;
       userEmail = null;
+      try { localStorage.removeItem('att_session_token'); } catch (e) {}
       document.getElementById('login-screen').style.display = '';
       document.getElementById('dashboard').style.display = 'none';
     }
+
+    async function initSession() {
+      let token = null;
+      if (window.location.hash) {
+        const match = window.location.hash.match(/[#&]token=([^&]+)/);
+        if (match) token = decodeURIComponent(match[1]);
+      }
+      if (!token && window.location.search) {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('token')) token = params.get('token');
+      }
+      if (!token) {
+        try { token = localStorage.getItem('att_session_token'); } catch (e) {}
+      }
+
+      if (!token) return;
+
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('loading').style.display = 'block';
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/oauth/me`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const me = await res.json();
+          sessionToken = token;
+          userEmail = me.email;
+          try { localStorage.setItem('att_session_token', token); } catch (e) {}
+          if (window.location.hash && window.location.hash.includes('token=')) {
+            history.replaceState(null, '', window.location.pathname + window.location.search);
+          }
+          document.getElementById('user-email').textContent = me.email;
+          document.getElementById('dashboard').style.display = 'block';
+          loadHistory();
+        } else {
+          try { localStorage.removeItem('att_session_token'); } catch (e) {}
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('login-screen').style.display = '';
+        }
+      } catch (err) {
+        console.warn('Auto-login check failed:', err);
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('login-screen').style.display = '';
+      }
+    }
+    initSession();
 
     async function loadHistory() {
       document.getElementById('loading').style.display = 'block';
