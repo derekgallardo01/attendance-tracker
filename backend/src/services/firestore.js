@@ -1048,7 +1048,8 @@ async function getUserMeetingHistory(domain, email, { limit } = {}) {
     const meetings = visibleMeetings
       .map((m, i) => {
         const parts = participantSnaps[i].docs.map(p => p.data());
-        const presentNames = parts.filter(p => p.present).map(p => p.displayName).filter(Boolean);
+        const presentParts = parts.filter(p => p.present);
+        const presentNames = (presentParts.length > 0 ? presentParts : parts).map(p => p.displayName).filter(Boolean);
         const durationMs = (m.startTime && m.endTime) ? (m.endTime - m.startTime) : null;
         return {
           conferenceId: m.conferenceId,

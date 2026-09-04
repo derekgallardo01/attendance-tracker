@@ -48,6 +48,7 @@ jest.mock('../../src/services/firestore', () => ({
   getExportedConferenceIds: jest.fn(),
   // For the pre-meeting reminder sweep
   getUserMeetingSeries: jest.fn(),
+  persistAttendance: jest.fn(),
 }));
 jest.mock('../../src/services/googleAuth', () => ({
   refreshAccessToken: jest.fn(),
@@ -749,7 +750,7 @@ describe('POST /api/admin/auto-capture — server-side auto-capture sweep', () =
       { email: 'off@acme.com', domain: 'acme.com' },
       { email: 'notoken@acme.com', domain: 'acme.com' },
     ]);
-    firestore.getUserSettings.mockImplementation(async (d, e) => e === 'off@acme.com' ? {} : { autoExportOnEnd: true });
+    firestore.getUserSettings.mockImplementation(async (d, e) => e === 'off@acme.com' ? { autoExportOnEnd: false } : { autoExportOnEnd: true });
     firestore.getUser.mockResolvedValue({ refreshToken: null });
     const res = await request(app).post('/api/admin/auto-capture')
       .set('x-scheduler-secret', SCHEDULER_SECRET).set('Content-Type', 'application/json').send({});

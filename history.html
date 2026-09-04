@@ -190,9 +190,12 @@
 
       <!-- Meetings tab -->
       <div id="tab-meetings" class="tab-content active">
-        <div id="history-cap" style="display:none;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:.85rem">
-          <span id="history-cap-text"></span>
-          <button class="btn" style="margin-left:8px;background:#4ade80;color:#0d1117;padding:6px 12px" onclick="upgradeFromHistory(this)">Upgrade to Pro</button>
+        <!-- Auto-Capture Pro Banner for Free Users -->
+        <div id="auto-capture-banner" style="display:none;background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.25);border-radius:10px;padding:12px 16px;margin-bottom:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div style="font-size:.85rem;color:#e6edf3;line-height:1.45">
+            ⚡ <strong>Hands-Free Auto-Capture</strong>: Pro automatically records and exports every Google Meet to Sheets in the background — even if you close the side-panel.
+          </div>
+          <button class="btn" style="background:#4ade80;color:#0d1117;padding:6px 14px;font-size:.8rem;white-space:nowrap" onclick="upgradeFromHistory(this)">Upgrade to Pro ($9.99)</button>
         </div>
         <input id="search-meetings" class="search-box" type="text" placeholder="Search meetings by title…" oninput="renderMeetings()" />
         <div class="section">
@@ -321,13 +324,9 @@
         document.getElementById('stat-meetings').textContent = data.totalMeetings || 0;
         // Free-tier history cap: the backend returns only the most-recent slice
         // plus historyCapped/totalMeetings/freeLimit. Surface an upgrade nudge.
-        const capEl = document.getElementById('history-cap');
-        if (data.historyCapped) {
-          document.getElementById('history-cap-text').textContent =
-            `Showing your ${data.freeLimit} most-recent meetings of ${data.totalMeetings}. Upgrade to Pro to see your full history.`;
-          capEl.style.display = '';
-        } else {
-          capEl.style.display = 'none';
+        const acBanner = document.getElementById('auto-capture-banner');
+        if (acBanner) {
+          acBanner.style.display = data.isPro ? 'none' : 'flex';
         }
         document.getElementById('stat-people').textContent = (data.people || []).length;
         document.getElementById('stat-active-days').textContent = AttHistory.activeDays(data.calendar);

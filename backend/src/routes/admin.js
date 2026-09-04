@@ -2,7 +2,7 @@ const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries } = require('../services/firestore');
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance } = require('../services/firestore');
 const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, flushDeferredNotifications } = require('../lib/notifications');
 const { requireSuperAdmin, requireSuperAdminOrScheduler, requireKhMetricsKey } = require('../middleware/adminAuth');
 const { requireAuth } = require('../middleware/auth');
@@ -796,11 +796,16 @@ async function fetchConferenceParticipants(recordName, token) {
       catch (e) { log.warn('auto-capture: sessions fetch failed', { participant: p.name, error: e.message }); }
       const joins  = sessions.map(s => s.startTime).filter(Boolean).map(t => new Date(t));
       const leaves = sessions.map(s => s.endTime).filter(Boolean).map(t => new Date(t));
+      const joinIso = joins.length ? new Date(Math.min(...joins)).toISOString() : null;
+      const leaveIso = leaves.length ? new Date(Math.max(...leaves)).toISOString() : null;
       return {
+        participantId: p.name,
         displayName:  p.user?.displayName || p.signedinUser?.displayName || 'Unknown',
         email:        p.user?.email || p.signedinUser?.email || '',
-        joinTimeISO:  joins.length  ? new Date(Math.min(...joins)).toISOString()  : null,
-        leaveTimeISO: leaves.length ? new Date(Math.max(...leaves)).toISOString() : null,
+        joinTimeISO:  joinIso,
+        leaveTimeISO: leaveIso,
+        joinTime:     joinIso,
+        leaveTime:    leaveIso,
         present:      sessions.some(s => !s.endTime),
         sessions:     sessions.length || 1,
       };
@@ -810,30 +815,37 @@ async function fetchConferenceParticipants(recordName, token) {
   return out;
 }
 
-// POST /api/admin/auto-capture — server-side attendance capture for Pro users who
-// enabled auto-export. The client auto-export only fires when the panel is open at
-// meeting end; this lists each opted-in user's recent COMPLETED Meet conferences
-// server-side and exports any that were never saved — so attendance still lands
-// when the panel was closed (or the host ran the class from a phone). Captures the
-// FINAL post-meeting roster (accurate attendance), not a live one. DORMANT until a
-// Cloud Scheduler job hits it. Same dual auth as the other sweeps.
+// POST /api/admin/auto-capture — server-side attendance capture. Lists each
+// active user's recent COMPLETED Meet conferences server-side and persists the
+// final attendance roster to Firestore so meeting history is never lost even if
+// the side panel was closed early. For Pro users, automatically exports to Google
+// Sheets (unless explicitly disabled in settings). Dual auth: Scheduler or SuperAdmin.
 router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res) => {
   const startedAt = Date.now();
   const budgetMs = sweepBudgetMs();
   const RECENT_MS = 2 * 24 * 60 * 60 * 1000; // only conferences that ended in the last 2 days
-  let scannedUsers = 0, captured = 0, skippedUsers = 0, errored = 0;
+  const ACTIVE_USER_CUTOFF_MS = 30 * 24 * 60 * 60 * 1000; // active in the last 30 days
+  let scannedUsers = 0, captured = 0, detectedMeetings = 0, skippedUsers = 0, errored = 0;
   const errors = [];
   try {
     const users = await getAllUsersAcrossTenants();
     for (const u of users) {
       if (Date.now() - startedAt > budgetMs) { log.warn('auto-capture: budget exhausted', { scannedUsers }); break; }
       try {
-        // Gate: opted into auto-export + Pro + has a stored refresh token.
-        const settings = await getUserSettings(u.domain, u.email);
-        if (!settings.autoExportOnEnd) { skippedUsers++; continue; }
-        if (!(await planIsPro(u.domain, u.email))) { skippedUsers++; continue; }
+        // Skip users dormant for over 30 days
+        if (u.lastLoginAt && (Date.now() - new Date(u.lastLoginAt).getTime()) > ACTIVE_USER_CUTOFF_MS) {
+          skippedUsers++;
+          continue;
+        }
+
         const userDoc = await getUser(u.domain, u.email);
         if (!userDoc || !userDoc.refreshToken) { skippedUsers++; continue; }
+
+        const isPro = await planIsPro(u.domain, u.email);
+        const settings = await getUserSettings(u.domain, u.email);
+        // Pro users get automated exports by default unless explicitly disabled (settings.autoExportOnEnd === false).
+        // Free users do not get automated exports (locked behind Pro).
+        const shouldAutoExport = isPro ? settings.autoExportOnEnd !== false : !!settings.autoExportOnEnd;
 
         // Mint a fresh access token from the stored refresh token.
         let accessToken;
@@ -841,7 +853,6 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
           const creds = await refreshAccessToken(userDoc.refreshToken);
           accessToken = creds.access_token;
         } catch (e) {
-          // Revoked/expired grant — skip quietly, not an alert-worthy error.
           log.warn('auto-capture: token refresh failed', { email: u.email, error: e.message });
           skippedUsers++; continue;
         }
@@ -861,42 +872,49 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
         scannedUsers++;
 
         const alreadyExported = await getExportedConferenceIds(u.domain, u.email);
-        const sheetsAuth = makeUserClient(accessToken);
+        const sheetsAuth = shouldAutoExport ? makeUserClient(accessToken) : null;
 
         for (const rec of completed) {
           if (Date.now() - startedAt > budgetMs) break;
-          // Resolve the meeting code (= our conferenceId) from the space so we can
-          // dedup against prior exports, which are keyed by code.
+          // Resolve meeting code from space
           let meetingCode = null;
           try {
             if (rec.space) { const space = await meetGet(rec.space, accessToken); meetingCode = space.meetingCode || null; }
           } catch (e) { log.warn('auto-capture: space fetch failed', { record: rec.name, error: e.message }); }
-          if (!meetingCode || alreadyExported.has(meetingCode)) continue;
+          if (!meetingCode) continue;
 
           try {
             const participants = await fetchConferenceParticipants(rec.name, accessToken);
             if (!participants.length) continue;
-            await buildAndSaveExport({
-              user: { domain: u.domain, email: u.email, displayName: u.displayName },
-              sheetsAuth,
-              data: {
-                meetingTitle: `Meeting ${meetingCode}`,
-                exportedAt: rec.endTime,
-                participants,
-                calendarAttendees: [],
-                meetingStartTime: rec.startTime || null,
-                meetingType: 'scheduled',
-                conferenceId: meetingCode,
-                timezone: settings.timezone || 'America/New_York',
-              },
-              options: { sendEmail: true, autoExport: true, proAllowed: true },
-            });
-            alreadyExported.add(meetingCode);
-            captured++;
+
+            // Persist full attendance to Firestore so History & dashboard reflect actual attendance
+            await persistAttendance(u.domain, meetingCode, rec.name, participants, u.email);
+            detectedMeetings++;
+
+            // For Pro users (or opted-in users): auto-export to Sheets
+            if (shouldAutoExport && !alreadyExported.has(meetingCode)) {
+              await buildAndSaveExport({
+                user: { domain: u.domain, email: u.email, displayName: u.displayName },
+                sheetsAuth,
+                data: {
+                  meetingTitle: `Meeting ${meetingCode}`,
+                  exportedAt: rec.endTime,
+                  participants,
+                  calendarAttendees: [],
+                  meetingStartTime: rec.startTime || null,
+                  meetingType: 'scheduled',
+                  conferenceId: meetingCode,
+                  timezone: settings.timezone || 'America/New_York',
+                },
+                options: { sendEmail: true, autoExport: true, proAllowed: true },
+              });
+              alreadyExported.add(meetingCode);
+              captured++;
+            }
           } catch (e) {
             errored++;
             errors.push({ email: u.email, conferenceId: meetingCode, error: e.message });
-            log.warn('auto-capture: export failed', { email: u.email, conferenceId: meetingCode, error: e.message });
+            log.warn('auto-capture: process failed', { email: u.email, conferenceId: meetingCode, error: e.message });
           }
         }
       } catch (e) {
@@ -905,8 +923,8 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
         log.warn('auto-capture: user failed', { email: u.email, error: e.message });
       }
     }
-    log.info('auto-capture sweep done', { scannedUsers, captured, skippedUsers, errored });
-    res.json({ scannedUsers, captured, skippedUsers, errored, errors: errors.slice(0, 20), tookMs: Date.now() - startedAt });
+    log.info('auto-capture sweep done', { scannedUsers, captured, detectedMeetings, skippedUsers, errored });
+    res.json({ scannedUsers, captured, detectedMeetings, skippedUsers, errored, errors: errors.slice(0, 20), tookMs: Date.now() - startedAt });
   } catch (err) {
     log.error('auto-capture sweep failed', { error: err.message });
     res.status(500).json({ error: 'Auto-capture sweep failed' });

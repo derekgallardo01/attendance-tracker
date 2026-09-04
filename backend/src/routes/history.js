@@ -141,7 +141,7 @@ router.get('/history', requireAuth, async (req, res) => {
     const data = await getUserMeetingHistory(req.user.domain, req.user.email, {
       limit: pro ? null : FREE_HISTORY_LIMIT,
     });
-    res.json(data);
+    res.json({ ...data, isPro: !!pro });
   } catch (err) {
     log.error('history: fetch failed', { error: err.message, email: req.user.email });
     res.status(500).json({ error: 'Failed to fetch history' });
