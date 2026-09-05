@@ -427,7 +427,7 @@ async function persistExport(domain, { meetingTitle, tabName, exportedAt, partic
     const existing = await ref.get();
     if (existing.exists) {
       log.info('firestore: export already persisted, skipping duplicate', { domain, docId });
-      return { duplicate: true };
+      return;
     }
 
     await ref.set({
@@ -452,10 +452,8 @@ async function persistExport(domain, { meetingTitle, tabName, exportedAt, partic
     }
 
     log.info('firestore: persisted export record', { domain, tabName, participantCount });
-    return { duplicate: false };
   } catch (err) {
     log.error('firestore: persistExport failed', { domain, tabName, error: err.message });
-    return { duplicate: false };
   }
 }
 

@@ -492,7 +492,7 @@
 
   <!-- Main Content -->
   <div class="container">
-
+    
     <div class="hero-section">
       <div class="deal-badge">
         <span>✨ Limited Time Launch Deal · 50% Off Lifetime Access</span>
@@ -665,13 +665,15 @@
     <div class="footer-links">
       <a href="/">Home</a>
       <a href="pricing.html">Pricing</a>
-      <a href="faq.html">Help Center</a>
+      <a href="faq.html">Help Center &amp; FAQ</a>
       <a href="privacy.html">Privacy Policy</a>
       <a href="terms.html">Terms of Service</a>
       <a href="refunds.html">Refund Policy</a>
       <a href="support.html">Contact Support</a>
     </div>
-    <div class="copyright">&copy; 2026 Kinetic Helix LLC. Attendance Tracker for Google Meet&trade;. All rights reserved.</div>
+    <div class="copyright">
+      &copy; 2026 Kinetic Helix LLC. Attendance Tracker for Google Meet™. All rights reserved.
+    </div>
   </footer>
 
   <script>
@@ -679,6 +681,7 @@
       ? 'http://localhost:8080/api'
       : 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
 
+    // Retrieve active session token if the user is already signed in
     function getStoredToken() {
       try {
         const hash = (window.location.hash || '').replace(/^#/, '');
@@ -734,18 +737,35 @@
     (function () {
       try {
         var params = new URLSearchParams(location.search);
-        var utmSource = params.get('utm_source'), utmMedium = params.get('utm_medium'), utmCampaign = params.get('utm_campaign');
-        var ref = params.get('ref'), referrer = document.referrer || null;
+        var utmSource = params.get('utm_source');
+        var utmMedium = params.get('utm_medium');
+        var utmCampaign = params.get('utm_campaign');
+        var ref = params.get('ref');
+        var referrer = document.referrer || null;
         var ACQ_KEY = 'attendanceTrackerAcq';
         if (!localStorage.getItem(ACQ_KEY)) {
-          var payload = { utmSource, utmMedium, utmCampaign, ref, referrer, landingUrl: location.href, capturedAt: Date.now() };
+          var payload = {
+            utmSource: utmSource,
+            utmMedium: utmMedium,
+            utmCampaign: utmCampaign,
+            ref: ref,
+            referrer: referrer,
+            landingUrl: location.href,
+            capturedAt: Date.now(),
+          };
           localStorage.setItem(ACQ_KEY, JSON.stringify(payload));
-          var cs = utmSource || (ref ? 'referral' : null) || (referrer ? new URL(referrer).hostname : null) || 'direct';
-          document.cookie = 'att_first_touch=' + encodeURIComponent(JSON.stringify(Object.assign({}, payload, { computedSource: cs }))) + ';path=/;max-age=7776000;SameSite=Lax';
+          var computedSource = utmSource || (ref ? 'referral' : null) || (referrer ? new URL(referrer).hostname : null) || 'direct';
+          document.cookie = 'att_first_touch=' + encodeURIComponent(JSON.stringify(Object.assign({}, payload, { computedSource: computedSource }))) + ';path=/;max-age=7776000;SameSite=Lax';
         }
-      } catch (e) {}
-      try {
-        var blob = new Blob([JSON.stringify({ path: location.pathname, referrer: document.referrer || null, viewportWidth: window.innerWidth || null, utmSource: params.get('utm_source'), utmMedium: params.get('utm_medium'), utmCampaign: params.get('utm_campaign') })], { type: 'application/json' });
+
+        var blob = new Blob([JSON.stringify({
+          path: location.pathname,
+          referrer: document.referrer || null,
+          viewportWidth: window.innerWidth || null,
+          utmSource: params.get('utm_source'),
+          utmMedium: params.get('utm_medium'),
+          utmCampaign: params.get('utm_campaign'),
+        })], { type: 'application/json' });
         if (navigator.sendBeacon) navigator.sendBeacon(BACKEND_URL + '/public/pageview', blob);
         else fetch(BACKEND_URL + '/public/pageview', { method: 'POST', body: blob, keepalive: true });
       } catch (e) {}
