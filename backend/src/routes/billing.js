@@ -109,6 +109,81 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
   }
 });
 
+// POST /api/billing/public-checkout — start a Checkout Session from the public
+// pricing page without requiring a pre-existing session token. Stripe collects
+// the customer's email and payment info, and the webhook provisions Pro.
+router.post('/billing/public-checkout', async (req, res) => {
+  const stripe = getStripe();
+  if (!stripe) {
+    return res.status(503).json({ error: 'Billing is not configured yet.' });
+  }
+  const plan = req.body?.plan || 'lifetime';
+  const interval = req.body?.interval || 'annual';
+  const email = (req.body?.email || '').trim().toLowerCase() || undefined;
+  const isTeam = plan === 'team';
+  const priceId = isTeam
+    ? ((interval === 'annual' && process.env.STRIPE_ANNUAL_PRICE_ID) || process.env.STRIPE_PRICE_ID)
+    : (plan === 'lifetime'
+        ? (process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID || process.env.STRIPE_INDIVIDUAL_PRICE_ID || process.env.STRIPE_PRICE_ID)
+        : ((interval === 'annual' && process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID) || process.env.STRIPE_INDIVIDUAL_PRICE_ID || process.env.STRIPE_PRICE_ID));
+
+  if (!priceId) {
+    return res.status(503).json({ error: 'Selected plan price is not configured.' });
+  }
+
+  try {
+    let isRecurring = true;
+    if (plan === 'lifetime') {
+      isRecurring = false;
+    } else if (stripe.prices && typeof stripe.prices.retrieve === 'function') {
+      try {
+        const priceObj = await stripe.prices.retrieve(priceId);
+        isRecurring = priceObj ? (priceObj.type === 'recurring' || !!priceObj.recurring) : true;
+      } catch (e) {
+        log.warn('billing: could not retrieve price object in public checkout', { priceId, error: e.message });
+      }
+    }
+
+    const meta = {
+      individual: isTeam ? '0' : '1',
+      plan,
+      source: 'public_pricing',
+      ...(email ? { email } : {}),
+    };
+
+    const promo = (req.body?.promo || 'LAUNCH50').toUpperCase();
+    const LAUNCH_PROMO_ID = process.env.STRIPE_LAUNCH_PROMO_CODE || 'promo_1UBiZORPP93YBXrOlZdFv8zM';
+
+    const sessionParams = {
+      mode: isRecurring ? 'subscription' : 'payment',
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${CONFIG.publicSiteUrl}/history.html?upgraded=1`,
+      cancel_url: `${CONFIG.publicSiteUrl}/pricing.html`,
+      metadata: meta,
+    };
+    if (email) {
+      sessionParams.customer_email = email;
+      sessionParams.client_reference_id = isTeam ? email.split('@')[1] : `user:${email}`;
+    }
+    if (promo === 'LAUNCH50' && LAUNCH_PROMO_ID) {
+      sessionParams.discounts = [{ promotion_code: LAUNCH_PROMO_ID }];
+    } else {
+      sessionParams.allow_promotion_codes = true;
+    }
+    if (isRecurring) {
+      sessionParams.subscription_data = { metadata: meta };
+    } else {
+      sessionParams.payment_intent_data = { metadata: meta };
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
+    res.json({ url: session.url });
+  } catch (err) {
+    log.error('billing: public checkout failed', { plan, error: err.message });
+    res.status(502).json({ error: 'Could not start checkout.' });
+  }
+});
+
 // GET /api/billing/portal — Stripe Customer Portal link so the org admin can
 // update payment method or cancel. Requires a stored customer id (set by the
 // webhook on first successful checkout).
@@ -183,10 +258,10 @@ async function webhookHandler(req, res) {
         const ref = s.client_reference_id || '';
         if (ref.startsWith('user:') || s.metadata?.individual === '1') {
           // Individual (per-user) plan → write the user doc.
-          const domain = s.metadata?.domain;
-          const email = s.metadata?.email || ref.slice(5);
+          const email = s.metadata?.email || (ref.startsWith('user:') ? ref.slice(5) : (s.customer_details?.email || s.customer_email));
+          const domain = s.metadata?.domain || (email && email.includes('@') ? email.split('@')[1] : null);
           if (domain && email) {
-            await setUserPlan(domain, email, {
+            await setUserPlan(domain, email.toLowerCase(), {
               individualPlan: 'pro',
               individualBillingStatus: 'active',
               individualStripeCustomerId: s.customer || null,

@@ -14,99 +14,162 @@
   <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
   <meta property="og:url" content="https://attendancetracker.dev/terms.html" />
   <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet" />
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 20px; color: #333; line-height: 1.6; }
-    h1 { color: #1a73e8; }
-    h2 { margin-top: 2em; color: #202124; }
-    .updated { color: #666; font-style: italic; }
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #4ade80;
+      --blue: #58a6ff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,17,23,0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+    }
+    .nav-container { max-width: 860px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); font-weight: 700; font-size: 1.05rem; }
+    .brand img { width: 28px; height: 28px; border-radius: 6px; }
+    .nav-links { display: flex; align-items: center; gap: 20px; }
+    .nav-links a { color: var(--muted); text-decoration: none; font-size: 0.88rem; font-weight: 500; transition: color 0.15s; }
+    .nav-links a:hover, .nav-links a.active { color: var(--text); }
+    .nav-cta { background: #34A853; color: #fff !important; padding: 7px 16px; border-radius: 20px; font-weight: 600; font-size: 0.85rem; }
+    .doc-wrap { max-width: 760px; margin: 0 auto; padding: 52px 24px 80px; flex: 1; width: 100%; }
+    .doc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 40px 44px; }
+    @media (max-width: 640px) { .doc-card { padding: 28px 20px; } }
+    .page-label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+    h1 { font-size: 2rem; font-weight: 700; color: var(--text); letter-spacing: -0.02em; margin-bottom: 8px; }
+    .doc-updated { font-size: 0.82rem; color: var(--muted); font-style: italic; margin-bottom: 36px; padding-bottom: 28px; border-bottom: 1px solid var(--border); }
+    h2 { font-size: 1.15rem; font-weight: 700; color: var(--text); margin: 36px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    p { color: #c9d1d9; font-size: 0.92rem; margin-bottom: 14px; }
+    ul { color: #c9d1d9; font-size: 0.92rem; padding-left: 0; margin: 0 0 14px; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    ul li { display: flex; align-items: flex-start; gap: 10px; line-height: 1.55; padding-left: 14px; position: relative; }
+    ul li::before { content: ''; display: block; position: absolute; left: 0; top: 9px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+    strong { color: #fff; }
+    code { font-size: 0.83rem; background: #21262d; border: 1px solid var(--border); padding: 1px 6px; border-radius: 4px; color: #79c0ff; }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    footer { background: #090d13; border-top: 1px solid var(--border); padding: 32px 20px; text-align: center; font-size: 0.85rem; color: var(--muted); }
+    .footer-links { display: flex; justify-content: center; flex-wrap: wrap; gap: 18px; margin-bottom: 14px; }
+    .footer-links a { color: var(--muted); text-decoration: none; transition: color 0.15s; }
+    .footer-links a:hover { color: var(--text); }
+    .copyright { font-size: 0.78rem; color: #6e7681; }
   </style>
 </head>
 <body>
-  <h1>Terms of Service</h1>
-  <p class="updated">Last updated: July 5, 2026</p>
+  <nav class="top-nav">
+    <div class="nav-container">
+      <a href="/" class="brand">
+        <img src="icons/icon-32.png" alt="Attendance Tracker Logo" />
+        <span>Attendance Tracker</span>
+      </a>
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="faq.html">Help Center</a>
+        <a href="support.html">Support</a>
+        <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" class="nav-cta">Install Free</a>
+      </div>
+    </div>
+  </nav>
 
-  <h2>Acceptance of Terms</h2>
-  <p>By installing or using Attendance Tracker ("the App"), you agree to these Terms of Service. If you do not agree, do not use the App.</p>
+  <div class="doc-wrap">
+    <div class="doc-card">
+      <div class="page-label">Legal</div>
+      <h1>Terms of Service</h1>
+      <p class="doc-updated">Last updated: July 5, 2026</p>
 
-  <h2>Description of Service</h2>
-  <p>The App is a Google Meet add-on that provides real-time attendance tracking during meetings, exports attendance reports to Google Sheets, and can optionally deliver post-meeting summaries via email and Slack. The App is available to any Google account with access to Google Meet, including personal Gmail accounts and Google Workspace accounts.</p>
+      <h2>Acceptance of Terms</h2>
+      <p>By installing or using Attendance Tracker ("the App"), you agree to these Terms of Service. If you do not agree, do not use the App.</p>
 
-  <h2>User Responsibilities</h2>
-  <ul>
-    <li>You must be the meeting organizer or have appropriate permissions to track attendance in your jurisdiction.</li>
-    <li>You are responsible for complying with applicable laws regarding participant monitoring and data collection in your jurisdiction.</li>
-    <li>You must inform meeting participants that attendance is being tracked, where required by law.</li>
-    <li>If you configure a Slack webhook, you're responsible for choosing a channel where posting attendance data is appropriate (e.g., a team channel, not a public one).</li>
-    <li>If you share a public link to a recurring meeting series, the recipient will see participant names and attendance rates. You accept responsibility for what you share.</li>
-  </ul>
+      <h2>Description of Service</h2>
+      <p>The App is a Google Meet add-on that provides real-time attendance tracking during meetings, exports attendance reports to Google Sheets, and can optionally deliver post-meeting summaries via email and Slack. The App is available to any Google account with access to Google Meet, including personal Gmail accounts and Google Workspace accounts.</p>
 
-  <h2>Data and Privacy</h2>
-  <p>Your use of the App is also governed by our <a href="privacy.html">Privacy Policy</a>. By using the App, you consent to the data practices described therein.</p>
+      <h2>User Responsibilities</h2>
+      <ul>
+        <li>You must be the meeting organizer or have appropriate permissions to track attendance in your jurisdiction.</li>
+        <li>You are responsible for complying with applicable laws regarding participant monitoring and data collection in your jurisdiction.</li>
+        <li>You must inform meeting participants that attendance is being tracked, where required by law.</li>
+        <li>If you configure a Slack webhook, you're responsible for choosing a channel where posting attendance data is appropriate (e.g., a team channel, not a public one).</li>
+        <li>If you share a public link to a recurring meeting series, the recipient will see participant names and attendance rates. You accept responsibility for what you share.</li>
+      </ul>
 
-  <h2>Intellectual Property</h2>
-  <p>The App and its original content, features, and functionality are owned by Derek Gallardo and are protected by applicable intellectual property laws.</p>
+      <h2>Data and Privacy</h2>
+      <p>Your use of the App is also governed by our <a href="privacy.html">Privacy Policy</a>. By using the App, you consent to the data practices described therein.</p>
 
-  <h2>Disclaimer of Warranties</h2>
-  <p>The App is provided "as is" without warranties of any kind, either express or implied. We do not guarantee that the App will be uninterrupted, error-free, or that attendance data will be 100% accurate — the Google Meet REST API has a 2-5 minute lag on new sessions, which can affect real-time accuracy.</p>
+      <h2>Intellectual Property</h2>
+      <p>The App and its original content, features, and functionality are owned by Derek Gallardo and are protected by applicable intellectual property laws.</p>
 
-  <h2>Limitation of Liability</h2>
-  <p>In no event shall Derek Gallardo be liable for any indirect, incidental, special, or consequential damages arising out of your use of the App.</p>
+      <h2>Disclaimer of Warranties</h2>
+      <p>The App is provided "as is" without warranties of any kind, either express or implied. We do not guarantee that the App will be uninterrupted, error-free, or that attendance data will be 100% accurate — the Google Meet REST API has a 2-5 minute lag on new sessions, which can affect real-time accuracy.</p>
 
-  <h2>Termination</h2>
-  <p>We may terminate or suspend your access to the App at any time, without prior notice, for conduct that we believe violates these Terms or is harmful to other users or us.</p>
+      <h2>Limitation of Liability</h2>
+      <p>In no event shall Derek Gallardo be liable for any indirect, incidental, special, or consequential damages arising out of your use of the App.</p>
 
-  <h2>Changes to Terms</h2>
-  <p>We reserve the right to modify these Terms at any time. Changes will be posted on this page with an updated revision date.</p>
+      <h2>Termination</h2>
+      <p>We may terminate or suspend your access to the App at any time, without prior notice, for conduct that we believe violates these Terms or is harmful to other users or us.</p>
 
-  <h2>Contact</h2>
-  <p>For questions about these terms, contact: <a href="mailto:derekgallardo01@gmail.com">derekgallardo01@gmail.com</a></p>
+      <h2>Changes to Terms</h2>
+      <p>We reserve the right to modify these Terms at any time. Changes will be posted on this page with an updated revision date.</p>
 
-  <footer style="margin-top: 3em; padding-top: 1em; border-top: 1px solid #eee; color: #666; font-size: 0.9rem;">
-    <a href="/?utm_source=terms_nav&utm_medium=internal_nav">Home</a> · <a href="pricing.html">Pricing</a> · <a href="privacy.html">Privacy</a> · <a href="refunds.html">Refunds</a> · <a href="support.html">Support</a>
+      <h2>Contact</h2>
+      <p>For questions about these terms, contact: <a href="mailto:derekgallardo01@gmail.com">derekgallardo01@gmail.com</a></p>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="faq.html">Help Center</a>
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Terms of Service</a>
+      <a href="refunds.html">Refund Policy</a>
+      <a href="support.html">Contact Support</a>
+    </div>
+    <div class="copyright">&copy; 2026 Kinetic Helix LLC. Attendance Tracker for Google Meet&trade;. All rights reserved.</div>
   </footer>
+
   <script>
   (function () {
     try {
       var params = new URLSearchParams(location.search);
-      var utmSource = params.get('utm_source');
-      var utmMedium = params.get('utm_medium');
-      var utmCampaign = params.get('utm_campaign');
-      var ref = params.get('ref');
-      var referrer = document.referrer || null;
+      var utmSource = params.get('utm_source'), utmMedium = params.get('utm_medium'), utmCampaign = params.get('utm_campaign');
+      var ref = params.get('ref'), referrer = document.referrer || null;
       var ACQ_KEY = 'attendanceTrackerAcq';
       if (!localStorage.getItem(ACQ_KEY)) {
-        var payload = {
-          utmSource: utmSource,
-          utmMedium: utmMedium,
-          utmCampaign: utmCampaign,
-          ref: ref,
-          referrer: referrer,
-          landingUrl: location.href,
-          capturedAt: Date.now(),
-        };
+        var payload = { utmSource, utmMedium, utmCampaign, ref, referrer, landingUrl: location.href, capturedAt: Date.now() };
         localStorage.setItem(ACQ_KEY, JSON.stringify(payload));
-        var computedSource = utmSource || (ref ? 'referral' : null) || (referrer ? new URL(referrer).hostname : null) || 'direct';
-        document.cookie = 'att_first_touch=' + encodeURIComponent(JSON.stringify(Object.assign({}, payload, { computedSource: computedSource }))) + ';path=/;max-age=7776000;SameSite=Lax';
+        var cs = utmSource || (ref ? 'referral' : null) || (referrer ? new URL(referrer).hostname : null) || 'direct';
+        document.cookie = 'att_first_touch=' + encodeURIComponent(JSON.stringify(Object.assign({}, payload, { computedSource: cs }))) + ';path=/;max-age=7776000;SameSite=Lax';
       }
     } catch (e) {}
-
     var API = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
-    function beacon(payload) {
-      try {
-        var blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-        if (navigator.sendBeacon) navigator.sendBeacon(API + '/public/pageview', blob);
-        else fetch(API + '/public/pageview', { method: 'POST', body: blob, keepalive: true });
-      } catch (e) {}
-    }
-    var p = new URLSearchParams(location.search);
-    beacon({
-      path: location.pathname,
-      referrer: document.referrer || null,
-      viewportWidth: window.innerWidth || null,
-      utmSource: p.get('utm_source'),
-      utmMedium: p.get('utm_medium'),
-      utmCampaign: p.get('utm_campaign'),
-    });
+    try {
+      var blob = new Blob([JSON.stringify({ path: location.pathname, referrer: document.referrer || null, viewportWidth: window.innerWidth || null, utmSource: params.get('utm_source'), utmMedium: params.get('utm_medium'), utmCampaign: params.get('utm_campaign') })], { type: 'application/json' });
+      if (navigator.sendBeacon) navigator.sendBeacon(API + '/public/pageview', blob);
+      else fetch(API + '/public/pageview', { method: 'POST', body: blob, keepalive: true });
+    } catch (e) {}
   })();
   </script>
 </body>

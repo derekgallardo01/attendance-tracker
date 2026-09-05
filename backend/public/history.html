@@ -237,12 +237,14 @@
       <div id="tab-series" class="tab-content">
         <!-- Individual Pro CTA — promotes the cumulative class-summary export.
              Shown/hidden by renderProCta() based on /api/billing/status. -->
-        <div id="series-pro-cta" style="display:none;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:.85rem">
-          <span id="series-pro-text"></span>
-          <span id="series-pro-interval" style="display:none;margin-left:8px;white-space:nowrap">
-            <button type="button" id="pro-int-annual" onclick="setProInterval('annual')" style="border:1px solid var(--border);border-radius:6px 0 0 6px;padding:5px 10px;cursor:pointer;font-size:.8rem">Annual · save 20%</button><button type="button" id="pro-int-monthly" onclick="setProInterval('monthly')" style="border:1px solid var(--border);border-left:none;border-radius:0 6px 6px 0;padding:5px 10px;cursor:pointer;font-size:.8rem">Monthly</button>
-          </span>
-          <button id="series-pro-btn" class="btn" style="margin-left:8px;background:#4ade80;color:#0d1117;padding:6px 12px" onclick="onSeriesProCta(this)"></button>
+        <div id="series-pro-cta" style="display:none;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:10px;padding:14px 16px;margin-bottom:14px;font-size:.85rem;display:flex;flex-direction:column;gap:10px">
+          <span id="series-pro-text" style="line-height:1.5;color:#c9d1d9"></span>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span id="series-pro-interval" style="display:none;white-space:nowrap">
+              <button type="button" id="pro-int-annual" onclick="setProInterval('annual')" style="border:1px solid var(--border);border-radius:6px 0 0 6px;padding:5px 10px;cursor:pointer;font-size:.8rem">Annual · save 20%</button><button type="button" id="pro-int-monthly" onclick="setProInterval('monthly')" style="border:1px solid var(--border);border-left:none;border-radius:0 6px 6px 0;padding:5px 10px;cursor:pointer;font-size:.8rem">Monthly</button>
+            </span>
+            <button id="series-pro-btn" class="btn" style="background:#4ade80;color:#0d1117;padding:6px 14px;font-weight:600" onclick="onSeriesProCta(this)"></button>
+          </div>
         </div>
         <input id="search-series" class="search-box" type="text" placeholder="Search recurring meetings by title…" oninput="renderSeries()" />
         <div id="series-empty" class="section muted" style="display:none;text-align:center;padding:32px 18px">

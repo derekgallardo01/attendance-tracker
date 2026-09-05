@@ -6,107 +6,370 @@
   <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
   <link rel="icon" type="image/png" sizes="128x128" href="icons/icon-128.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Privacy Policy — Attendance Tracker</title>
+  <title>Privacy Policy — Attendance Tracker for Google Meet™</title>
   <meta name="description" content="Privacy Policy for Attendance Tracker for Google Meet. Learn how we handle your data, Google Workspace scopes, and token encryption." />
   <link rel="canonical" href="https://attendancetracker.dev/privacy.html" />
-  <meta property="og:title" content="Privacy Policy — Attendance Tracker" />
+  <meta property="og:title" content="Privacy Policy — Attendance Tracker for Google Meet™" />
   <meta property="og:description" content="Privacy Policy for Attendance Tracker for Google Meet. Learn how your data and OAuth tokens are secured." />
   <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
   <meta property="og:url" content="https://attendancetracker.dev/privacy.html" />
   <meta property="og:type" content="website" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 20px; color: #333; line-height: 1.6; }
-    h1 { color: #1a73e8; }
-    h2 { margin-top: 2em; color: #202124; }
-    .updated { color: #666; font-style: italic; }
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface-elevated: #21262d;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #4ade80;
+      --accent-dim: rgba(74, 222, 128, 0.15);
+      --blue: #58a6ff;
+      --blue-dim: rgba(88, 166, 255, 0.12);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      padding: 0;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Sticky Nav */
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13, 17, 23, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+    }
+
+    .nav-container {
+      max-width: 860px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+
+    .brand img {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+    }
+
+    .nav-cta {
+      background: #34A853;
+      color: #fff !important;
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: opacity 0.15s, transform 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-cta:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+    }
+
+    /* Content Container */
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 20px 80px;
+      flex: 1;
+      width: 100%;
+    }
+
+    .doc-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px 36px;
+    }
+
+    @media (max-width: 640px) {
+      .doc-card {
+        padding: 24px 18px;
+      }
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .updated {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-bottom: 28px;
+      display: inline-block;
+      background: var(--surface-elevated);
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      color: var(--text);
+      margin-top: 36px;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    p {
+      color: #c9d1d9;
+      font-size: 0.92rem;
+      margin-bottom: 16px;
+    }
+
+    ul {
+      margin: 0 0 20px 24px;
+      color: #c9d1d9;
+      font-size: 0.92rem;
+    }
+
+    li {
+      margin-bottom: 10px;
+      line-height: 1.6;
+    }
+
+    li strong, p strong {
+      color: #ffffff;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    code {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      color: var(--accent);
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 0.85em;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    /* Footer */
+    footer {
+      background: #090d13;
+      border-top: 1px solid var(--border);
+      padding: 36px 20px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 16px;
+    }
+
+    .footer-links a {
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .footer-links a:hover {
+      color: var(--text);
+    }
+
+    .copyright {
+      font-size: 0.78rem;
+      color: #6e7681;
+    }
   </style>
 </head>
 <body>
-  <h1>Privacy Policy</h1>
-  <p class="updated">Last updated: July 5, 2026</p>
 
-  <h2>Overview</h2>
-  <p>Attendance Tracker ("the App") is a Google Meet add-on that helps meeting organizers track participant attendance, export reports to Google Sheets, and optionally receive post-meeting summaries via email and Slack. This policy describes how we collect, use, and protect your data.</p>
+  <!-- Top Nav -->
+  <nav class="top-nav">
+    <div class="nav-container">
+      <a href="/" class="brand">
+        <img src="icons/icon-32.png" alt="Attendance Tracker Logo" />
+        <span>Attendance Tracker</span>
+      </a>
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="faq.html">Help Center &amp; FAQ</a>
+        <a href="support.html">Support</a>
+        <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" class="nav-cta">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          Install Free
+        </a>
+      </div>
+    </div>
+  </nav>
 
-  <h2>Data We Collect</h2>
-  <ul>
-    <li><strong>Google account information:</strong> Your name, email address, and Google account/Workspace domain (obtained via Google Sign-In).</li>
-    <li><strong>Meeting data:</strong> Conference IDs, participant names, join/leave times, and session counts (obtained via the Google Meet REST API).</li>
-    <li><strong>Calendar data:</strong> Event titles, start/end times, and attendee lists for meetings you match to Meet calls (obtained via the Google Calendar API).</li>
-    <li><strong>Authentication tokens:</strong> OAuth refresh tokens (encrypted at rest with AES-256-GCM) to maintain your session.</li>
-    <li><strong>User settings:</strong> If you configure a Slack incoming webhook URL for post-meeting digests, that URL is stored on your user settings document.</li>
-    <li><strong>Product analytics:</strong> Anonymous pageview beacons on the marketing site (page path, referrer, UTM parameters, viewport width, user agent, IP). Not used for cross-site tracking.</li>
-    <li><strong>Feedback submissions:</strong> If you use the in-product feedback widget, we store the message body, any email you provided, and context about where you were in the app.</li>
-    <li><strong>Acquisition attribution:</strong> First-touch UTM parameters and referrer URL captured when you first visit the site or install the add-on, so we can understand how users find us.</li>
-    <li><strong>Public share links:</strong> If you generate a share link for a recurring meeting series, the token, associated series identifier, and view count are stored. Share links expire after 30 days.</li>
-  </ul>
+  <!-- Main Content -->
+  <div class="container">
+    <div class="doc-card">
+      <h1>Privacy Policy</h1>
+      <div class="updated">Last updated: July 5, 2026</div>
 
-  <h2>How We Use Your Data</h2>
-  <ul>
-    <li>Display real-time attendance in the Meet side panel.</li>
-    <li>Auto-export attendance reports to Google Sheets in your Google Drive when a meeting ends.</li>
-    <li>Send you a post-meeting digest email with the sheet link and attendance summary.</li>
-    <li>Post a post-meeting summary to your Slack channel (only if you've configured a Slack webhook).</li>
-    <li>Match meeting participants to calendar invitees for RSVP status and no-show tracking.</li>
-    <li>Roll up attendance across recurring meeting series and email you daily alerts when someone's attendance pattern changes significantly.</li>
-    <li>Send occasional re-engagement emails if you signed up and stopped using the product. Every alert and re-engagement email includes a one-click unsubscribe link; unsubscribing stops these emails without affecting your ability to use the App.</li>
-  </ul>
-  <p>We do <strong>not</strong> sell, share, or transfer your data to third parties beyond the sub-processors listed below. We do <strong>not</strong> use your data for advertising or profiling.</p>
+      <h2>Overview</h2>
+      <p>Attendance Tracker ("the App") is a Google Meet add-on that helps meeting organizers track participant attendance, export reports to Google Sheets, and optionally receive post-meeting summaries via email and Slack. This policy describes how we collect, use, and protect your data.</p>
 
-  <h2>Sub-processors</h2>
-  <p>We use the following third-party services to operate the App:</p>
-  <ul>
-    <li><strong>Google Cloud Platform</strong> (Firestore, Cloud Run, Cloud Scheduler, Secret Manager) — primary data storage and application hosting, US <code>us-central1</code> region.</li>
-    <li><strong>Resend</strong> (<a href="https://resend.com/legal/privacy-policy">privacy policy</a>) — transactional email delivery. Recipient email addresses and message content pass through Resend to be delivered. Delivery metadata (opens, bounces) is retained per Resend's policy.</li>
-    <li><strong>Cloudflare</strong> (<a href="https://www.cloudflare.com/privacypolicy/">privacy policy</a>) — CDN and DNS proxy for the marketing site. HTTP request metadata (IP address, user agent, requested URL) passes through Cloudflare's edge network.</li>
-    <li><strong>Slack Technologies</strong> — only if you configure a Slack webhook. Post-meeting summaries are POSTed to the webhook URL you provide, which is under your control.</li>
-    <li><strong>Sentry</strong> — application error tracking. Stack traces and error metadata may include limited request context; personal data is not intentionally captured.</li>
-  </ul>
+      <h2>Data We Collect</h2>
+      <ul>
+        <li><strong>Google account information:</strong> Your name, email address, and Google account/Workspace domain (obtained via Google Sign-In).</li>
+        <li><strong>Meeting data:</strong> Conference IDs, participant names, join/leave times, and session counts (obtained via the Google Meet REST API).</li>
+        <li><strong>Calendar data:</strong> Event titles, start/end times, and attendee lists for meetings you match to Meet calls (obtained via the Google Calendar API).</li>
+        <li><strong>Authentication tokens:</strong> OAuth refresh tokens (encrypted at rest with AES-256-GCM) to maintain your session.</li>
+        <li><strong>User settings:</strong> If you configure a Slack incoming webhook URL for post-meeting digests, that URL is stored on your user settings document.</li>
+        <li><strong>Product analytics:</strong> Anonymous pageview beacons on the marketing site (page path, referrer, UTM parameters, viewport width, user agent, IP). Not used for cross-site tracking.</li>
+        <li><strong>Feedback submissions:</strong> If you use the in-product feedback widget, we store the message body, any email you provided, and context about where you were in the app.</li>
+        <li><strong>Acquisition attribution:</strong> First-touch UTM parameters and referrer URL captured when you first visit the site or install the add-on, so we can understand how users find us.</li>
+        <li><strong>Public share links:</strong> If you generate a share link for a recurring meeting series, the token, associated series identifier, and view count are stored. Share links expire after 30 days.</li>
+      </ul>
 
-  <h2>Data Storage</h2>
-  <ul>
-    <li>Meeting and user data is stored in Google Cloud Firestore, isolated by your account's domain (personal Gmail users share the <code>gmail.com</code> tenant scope).</li>
-    <li>Refresh tokens are encrypted using AES-256-GCM before storage.</li>
-    <li>All primary data is hosted on Google Cloud Platform in the US (us-central1 region).</li>
-  </ul>
+      <h2>How We Use Your Data</h2>
+      <ul>
+        <li>Display real-time attendance in the Meet side panel.</li>
+        <li>Auto-export attendance reports to Google Sheets in your Google Drive when a meeting ends.</li>
+        <li>Send you a post-meeting digest email with the sheet link and attendance summary.</li>
+        <li>Post a post-meeting summary to your Slack channel (only if you've configured a Slack webhook).</li>
+        <li>Match meeting participants to calendar invitees for RSVP status and no-show tracking.</li>
+        <li>Roll up attendance across recurring meeting series and email you daily alerts when someone's attendance pattern changes significantly.</li>
+        <li>Send occasional re-engagement emails if you signed up and stopped using the product. Every alert and re-engagement email includes a one-click unsubscribe link; unsubscribing stops these emails without affecting your ability to use the App.</li>
+      </ul>
+      <p>We do <strong>not</strong> sell, share, or transfer your data to third parties beyond the sub-processors listed below. We do <strong>not</strong> use your data for advertising or profiling.</p>
 
-  <h2>Data Retention</h2>
-  <ul>
-    <li>Meeting attendance data is retained for as long as your account is active.</li>
-    <li>Pageview beacon data is retained for up to 90 days for product analytics.</li>
-    <li>Public share links auto-expire after 30 days.</li>
-    <li>When you uninstall the App or request deletion, we remove your account and the data that identifies you: your user profile and settings, your activity events, private notes, reminders, and your participant records in tracked meetings. Aggregate meeting records that also belong to other attendees in your organization are retained, with your personal participant entries removed.</li>
-    <li>You can delete your account and all associated data yourself at any time from the add-on's Settings (⚙ → "Delete account &amp; data"), or by contacting us.</li>
-  </ul>
+      <h2>Sub-processors</h2>
+      <p>We use the following third-party services to operate the App:</p>
+      <ul>
+        <li><strong>Google Cloud Platform</strong> (Firestore, Cloud Run, Cloud Scheduler, Secret Manager) — primary data storage and application hosting, US <code>us-central1</code> region.</li>
+        <li><strong>Resend</strong> (<a href="https://resend.com/legal/privacy-policy" target="_blank" rel="noopener">privacy policy</a>) — transactional email delivery. Recipient email addresses and message content pass through Resend to be delivered. Delivery metadata (opens, bounces) is retained per Resend's policy.</li>
+        <li><strong>Cloudflare</strong> (<a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">privacy policy</a>) — CDN and DNS proxy for the marketing site. HTTP request metadata (IP address, user agent, requested URL) passes through Cloudflare's edge network.</li>
+        <li><strong>Slack Technologies</strong> — only if you configure a Slack webhook. Post-meeting summaries are POSTed to the webhook URL you provide, which is under your control.</li>
+        <li><strong>Sentry</strong> — application error tracking. Stack traces and error metadata may include limited request context; personal data is not intentionally captured.</li>
+      </ul>
 
-  <h2>Google API Scopes</h2>
-  <p>The App requests the following Google API scopes:</p>
-  <ul>
-    <li><code>openid email profile</code> — Sign you in and identify your account.</li>
-    <li><code>meetings.space.readonly</code> — View participant information for meetings you have access to.</li>
-    <li><code>calendar.events.readonly</code> — View calendar events to match attendees and RSVP status.</li>
-    <li><code>drive.file</code> — Create a "Meet Attendance Tracker" folder and spreadsheet in your Drive. This scope only grants access to files the App creates; it does not access other files in your Drive.</li>
-  </ul>
+      <h2>Data Storage</h2>
+      <ul>
+        <li>Meeting and user data is stored in Google Cloud Firestore, isolated by your account's domain (personal Gmail users share the <code>gmail.com</code> tenant scope).</li>
+        <li>Refresh tokens are encrypted using AES-256-GCM before storage.</li>
+        <li>All primary data is hosted on Google Cloud Platform in the US (us-central1 region).</li>
+      </ul>
 
-  <h2>Your Rights</h2>
-  <ul>
-    <li>You can revoke the App's access at any time via <a href="https://myaccount.google.com/permissions">Google Account Permissions</a>.</li>
-    <li>You can clear your Slack webhook at any time from the in-app Settings modal.</li>
-    <li>You can request export or deletion of your data by contacting us.</li>
-  </ul>
+      <h2>Data Retention</h2>
+      <ul>
+        <li>Meeting attendance data is retained for as long as your account is active.</li>
+        <li>Pageview beacon data is retained for up to 90 days for product analytics.</li>
+        <li>Public share links auto-expire after 30 days.</li>
+        <li>When you uninstall the App or request deletion, we remove your account and the data that identifies you: your user profile and settings, your activity events, private notes, reminders, and your participant records in tracked meetings. Aggregate meeting records that also belong to other attendees in your organization are retained, with your personal participant entries removed.</li>
+        <li>You can delete your account and all associated data yourself at any time from the add-on's Settings (⚙ → "Delete account &amp; data"), or by contacting us.</li>
+      </ul>
 
-  <h2>Security</h2>
-  <p>We use industry-standard security practices including HTTPS encryption in transit, encrypted tokens at rest, and Google Cloud's built-in security infrastructure.</p>
+      <h2>Google API Scopes</h2>
+      <p>The App requests the following Google API scopes:</p>
+      <ul>
+        <li><code>openid email profile</code> — Sign you in and identify your account.</li>
+        <li><code>meetings.space.readonly</code> — View participant information for meetings you have access to.</li>
+        <li><code>calendar.events.readonly</code> — View calendar events to match attendees and RSVP status.</li>
+        <li><code>drive.file</code> — Create a "Meet Attendance Tracker" folder and spreadsheet in your Drive. This scope only grants access to files the App creates; it does not access other files in your Drive.</li>
+      </ul>
 
-  <h2>Changes to this Policy</h2>
-  <p>We may update this policy from time to time. When we do, we'll bump the "Last updated" date at the top. Material changes will be highlighted on the site.</p>
+      <h2>Your Rights</h2>
+      <ul>
+        <li>You can revoke the App's access at any time via <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener">Google Account Permissions</a>.</li>
+        <li>You can clear your Slack webhook at any time from the in-app Settings modal.</li>
+        <li>You can request export or deletion of your data by contacting us.</li>
+      </ul>
 
-  <h2>Contact</h2>
-  <p>For questions about this privacy policy or to request data deletion, contact: <a href="mailto:derekgallardo01@gmail.com">derekgallardo01@gmail.com</a></p>
+      <h2>Security</h2>
+      <p>We use industry-standard security practices including HTTPS encryption in transit, encrypted tokens at rest, and Google Cloud's built-in security infrastructure.</p>
 
-  <footer style="margin-top: 3em; padding-top: 1em; border-top: 1px solid #eee; color: #666; font-size: 0.9rem;">
-    <a href="/?utm_source=privacy_nav&utm_medium=internal_nav">Home</a> · <a href="pricing.html">Pricing</a> · <a href="terms.html">Terms</a> · <a href="refunds.html">Refunds</a> · <a href="support.html">Support</a>
+      <h2>Changes to this Policy</h2>
+      <p>We may update this policy from time to time. When we do, we'll bump the "Last updated" date at the top. Material changes will be highlighted on the site.</p>
+
+      <h2>Contact</h2>
+      <p>For questions about this privacy policy or to request data deletion, contact: <a href="mailto:derekgallardo01@gmail.com">derekgallardo01@gmail.com</a></p>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="faq.html">Help Center &amp; FAQ</a>
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Terms of Service</a>
+      <a href="refunds.html">Refund Policy</a>
+      <a href="support.html">Contact Support</a>
+    </div>
+    <div class="copyright">
+      &copy; 2026 Kinetic Helix LLC. Attendance Tracker for Google Meet™. All rights reserved.
+    </div>
   </footer>
+
   <script>
   (function () {
     try {

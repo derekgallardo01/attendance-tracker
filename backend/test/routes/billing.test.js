@@ -560,3 +560,35 @@ describe('billing — one-time lifetime payment mode', () => {
   });
 });
 
+describe('billing — public-checkout for marketing pages', () => {
+  test('creates a public checkout session without authentication', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_PRICE_ID = 'price_domain_1999';
+    process.env.STRIPE_INDIVIDUAL_PRICE_ID = 'price_indiv_999';
+    mockStripeInstance.checkout.sessions.create.mockResolvedValueOnce({ url: 'https://checkout.stripe.com/public_pay' });
+
+    const res = await request(app)
+      .post('/api/billing/public-checkout')
+      .send({ plan: 'lifetime', email: 'teacher@school.edu' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.url).toBe('https://checkout.stripe.com/public_pay');
+    expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(expect.objectContaining({
+      customer_email: 'teacher@school.edu',
+      client_reference_id: 'user:teacher@school.edu',
+    }));
+  });
+
+  test('returns 503 when Stripe is not configured', async () => {
+    const oldKey = process.env.STRIPE_SECRET_KEY;
+    delete process.env.STRIPE_SECRET_KEY;
+
+    const res = await request(app)
+      .post('/api/billing/public-checkout')
+      .send({ plan: 'individual' });
+
+    expect(res.status).toBe(503);
+    process.env.STRIPE_SECRET_KEY = oldKey;
+  });
+});
+
