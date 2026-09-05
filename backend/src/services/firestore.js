@@ -415,7 +415,22 @@ async function persistExport(domain, { meetingTitle, tabName, exportedAt, partic
   try {
     const now = FieldValue.serverTimestamp();
 
-    await tenantRef(domain).collection('exports').add({
+    // Use a deterministic document ID so that concurrent auto-export paths
+    // (client-triggered and server cron) are idempotent for the same meeting.
+    // If two paths race, the second .set() is a no-op because the doc already
+    // exists — preventing duplicate Sheets tabs AND duplicate notification emails.
+    const safeEmail = (email || 'anon').toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const safeConf  = (conferenceId || tabName || 'unknown').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const docId = `${safeEmail}__${safeConf}`;
+
+    const ref = tenantRef(domain).collection('exports').doc(docId);
+    const existing = await ref.get();
+    if (existing.exists) {
+      log.info('firestore: export already persisted, skipping duplicate', { domain, docId });
+      return { duplicate: true };
+    }
+
+    await ref.set({
       meetingTitle,
       tabName,
       exportedAt,
@@ -423,8 +438,6 @@ async function persistExport(domain, { meetingTitle, tabName, exportedAt, partic
       sheetUrl,
       email: email ? email.toLowerCase() : null,
       autoExport: !!autoExport,
-      // Series + conference identifiers — let getUserMeetingSeries() roll up
-      // exports per recurring series without a join through meetings.
       recurringEventId: recurringEventId || null,
       conferenceId: conferenceId || null,
       createdAt: now,
@@ -439,8 +452,10 @@ async function persistExport(domain, { meetingTitle, tabName, exportedAt, partic
     }
 
     log.info('firestore: persisted export record', { domain, tabName, participantCount });
+    return { duplicate: false };
   } catch (err) {
     log.error('firestore: persistExport failed', { domain, tabName, error: err.message });
+    return { duplicate: false };
   }
 }
 
