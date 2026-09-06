@@ -92,6 +92,14 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 // Health check
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
+// 404 fallback for browser navigation
+app.use((req, res, next) => {
+  if (req.method === 'GET' && req.accepts('html')) {
+    return res.status(404).sendFile(path.join(__dirname, '..', 'public', '404.html'));
+  }
+  next();
+});
+
 // Sentry error handler — must be after all routes
 Sentry.setupExpressErrorHandler(app);
 

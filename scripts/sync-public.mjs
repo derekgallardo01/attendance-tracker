@@ -22,10 +22,14 @@ const PUBLIC = join(ROOT, 'backend', 'public');
 
 // Root-relative paths that are mirrored into backend/public/ under the same name.
 const MIRRORED = [
+  '404.html',
   'admin.html',
   'attendance-tracker-for-teachers.html',
   'best-google-meet-attendance-extensions.html',
   'export-google-meet-attendance-to-sheets.html',
+  'faq.html',
+  'google114b85a1b49d499d.html',
+  'help.html',
   'google-meet-attendance-for-churches.html',
   'google-meet-attendance-for-cpe-and-cle-credits.html',
   'google-meet-attendance-for-fitness-and-yoga.html',
