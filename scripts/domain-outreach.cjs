@@ -277,7 +277,7 @@ async function run() {
         html,
         tags: [
           { name: 'campaign', value: 'domain_license' },
-          { name: 'domain', value: user.domain.slice(0, 30) },
+          { name: 'domain', value: user.domain.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 30) },
         ],
       });
 
