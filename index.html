@@ -2849,7 +2849,14 @@ async function handleBillingClick() {
     try {
       const res = await authFetch(`${state.backendUrl}/billing/portal`);
       const data = await res.json().catch(() => ({}));
-      if (res.ok && data.url) { window.location.href = data.url; return; }
+      if (res.ok && data.url) {
+        if (window.self !== window.top) {
+          window.open(data.url, '_blank', 'noopener,noreferrer');
+        } else {
+          window.location.href = data.url;
+        }
+        return;
+      }
       toast(data.error || 'Billing is unavailable right now.');
     } catch {
       toast('Could not reach billing.');
@@ -2874,7 +2881,11 @@ async function startUpgradeCheckout(plan, btnId) {
     });
     const data = await res.json().catch(() => ({}));
     if (res.ok && data.url) {
-      window.location.href = data.url;
+      if (window.self !== window.top) {
+        window.open(data.url, '_blank', 'noopener,noreferrer');
+      } else {
+        window.location.href = data.url;
+      }
       return;
     }
     toast(data.error || 'Billing is unavailable right now.');
