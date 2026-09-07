@@ -452,12 +452,29 @@
     /* ── participant list ────────────────────────────────────── */
     /* ── tabs ───────────────────────────────────────────────── */
     .tab-bar {
-      display: none; /* hidden for instant meetings */
+      display: flex;
       padding: 0 16px;
-      gap: 0;
+      gap: 4px;
       flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
     }
     .tab-bar.visible { display: flex; }
+    .roster-card {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 6px;
+      font-size: .78rem;
+    }
+    .roster-card.present { border-left: 3px solid #4ade80; }
+    .roster-card.late { border-left: 3px solid #facc15; }
+    .roster-card.absent { border-left: 3px solid #f87171; }
+    .roster-card.excused { border-left: 3px solid #818cf8; }
+    .roster-card.guest { border-left: 3px solid #58a6ff; }
     .tab-btn {
       flex: 1;
       padding: 8px 0;
@@ -1343,6 +1360,10 @@
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       <span id="btn-sheets-label" data-i18n="btn.sheet">Sheet</span>
     </button>
+    <button class="btn-secondary" id="btn-csv" onclick="downloadAttendanceCsv()" disabled title="Download CSV report directly">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span id="btn-csv-label">CSV</span>
+    </button>
   </div>
 
   <!-- ── Export Quota Indicator (Free tier) ── -->
@@ -1353,6 +1374,7 @@
 
   <div id="sheet-link-bar" style="display:none; padding:4px 16px; font-size:11px;">
     <a id="sheet-link" href="#" target="_blank" style="color:var(--green); text-decoration:none;">Open exported sheet</a>
+    <a href="#" onclick="downloadAttendanceCsv(); return false;" style="color:var(--green); text-decoration:none; margin-left:14px;">Download CSV</a>
     <a href="#" onclick="downloadPdfReport(); return false;" style="color:var(--green); text-decoration:none; margin-left:14px;">PDF report</a>
     <a href="#" onclick="downloadCertificates(); return false;" style="color:var(--green); text-decoration:none; margin-left:14px;">Certificates</a>
   </div>
@@ -1424,12 +1446,15 @@
     </select>
   </div>
 
-  <!-- ── Tabs (visible only for scheduled events) ── -->
-  <div class="tab-bar" id="tab-bar">
+  <!-- ── Tabs ── -->
+  <div class="tab-bar visible" id="tab-bar">
     <button class="tab-btn active" id="tab-participants" onclick="switchTab('participants')">
       <span data-i18n="nav.people">Participants</span> <span class="tab-badge" id="tab-count-participants">0</span>
     </button>
-    <button class="tab-btn" id="tab-invited" onclick="switchTab('invited')">
+    <button class="tab-btn" id="tab-roster" onclick="switchTab('roster')">
+      <span>Class Roster</span> <span class="tab-badge" id="tab-count-roster">0</span>
+    </button>
+    <button class="tab-btn" id="tab-invited" onclick="switchTab('invited')" style="display:none">
       <span data-i18n="attendee.noShows">Invited</span> <span class="tab-badge" id="tab-count-invited">0</span>
     </button>
   </div>
@@ -1455,6 +1480,65 @@
         </button>
       </div>
     </div>
+  </div>
+
+  <!-- ── Class Roster View ── -->
+  <div id="roster-view" style="display:none;padding:0 16px 24px">
+    <div style="display:flex;align-items:center;gap:6px;margin:10px 0;padding-bottom:10px;border-bottom:1px solid var(--border)">
+      <select id="roster-select" onchange="onRosterSelected(this.value)" style="flex:1;min-width:0;background:#0d1117;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 8px;font-size:.76rem">
+        <option value="">-- Select or create a class --</option>
+      </select>
+      <button type="button" class="btn-secondary" onclick="openRosterModal(false)" style="padding:6px 9px;font-size:.74rem;white-space:nowrap">+ New Class</button>
+      <button type="button" class="btn-secondary" id="btn-edit-roster" onclick="editCurrentRoster()" style="display:none;padding:6px 8px;font-size:.74rem">Edit</button>
+      <button type="button" class="btn-secondary" id="btn-delete-roster" onclick="deleteCurrentRoster()" style="display:none;padding:6px 8px;font-size:.74rem;color:#f87171" title="Delete class">×</button>
+    </div>
+
+    <!-- Threshold Settings -->
+    <div id="roster-thresholds" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;margin-bottom:12px;font-size:.72rem;color:var(--muted)">
+      <div style="display:flex;align-items:center;gap:5px">
+        <span>Min stay:</span>
+        <select id="threshold-stay" onchange="onThresholdChange()" style="background:#161b22;border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 4px;font-size:.72rem">
+          <option value="0">Any time</option>
+          <option value="50">50%</option>
+          <option value="60">60%</option>
+          <option value="75">75%</option>
+          <option value="90">90%</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:5px">
+        <span>Late after:</span>
+        <select id="threshold-late" onchange="onThresholdChange()" style="background:#161b22;border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 4px;font-size:.72rem">
+          <option value="0">None</option>
+          <option value="5">5 min</option>
+          <option value="10" selected>10 min</option>
+          <option value="15">15 min</option>
+          <option value="20">20 min</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Roster Summary Chips -->
+    <div id="roster-chips" style="display:none;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px">
+      <div style="background:#161b22;border:1px solid var(--border);border-radius:6px;padding:6px 4px;text-align:center">
+        <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase">Present</div>
+        <div id="roster-count-present" style="font-size:.95rem;font-weight:700;color:#4ade80">0</div>
+      </div>
+      <div style="background:#161b22;border:1px solid var(--border);border-radius:6px;padding:6px 4px;text-align:center">
+        <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase">Late</div>
+        <div id="roster-count-late" style="font-size:.95rem;font-weight:700;color:#facc15">0</div>
+      </div>
+      <div style="background:#161b22;border:1px solid var(--border);border-radius:6px;padding:6px 4px;text-align:center">
+        <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase">Absent</div>
+        <div id="roster-count-absent" style="font-size:.95rem;font-weight:700;color:#f87171">0</div>
+      </div>
+      <div style="background:#161b22;border:1px solid var(--border);border-radius:6px;padding:6px 4px;text-align:center">
+        <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase">Guests</div>
+        <div id="roster-count-guests" style="font-size:.95rem;font-weight:700;color:#58a6ff">0</div>
+      </div>
+    </div>
+
+    <!-- List Container -->
+    <div id="roster-students-container"></div>
   </div>
 
   <!-- ── Invited list (hidden by default) ── -->
@@ -1522,10 +1606,539 @@ const state = {
   autoExportedConferenceId: null,
   // Conference we've already shown the solo-test nudge for (once per meeting).
   soloNudgeConferenceId: null,
+  // Class Rosters & Thresholds
+  rosters: {},
+  activeRosterName: null,
+  thresholds: { minPercent: 0, lateMinutes: 10 },
+  excusedStudents: {},
 };
 
 let _isPro = false;
 let _billing = null;
+
+/* ═══════════════════════════════════════════════════════════════
+   CLASS ROSTER & ATTENDANCE THRESHOLD HELPERS
+═══════════════════════════════════════════════════════════════ */
+const ROSTER_STORAGE_KEY = 'meetAttendanceRosters';
+const ACTIVE_ROSTER_KEY = 'meetAttendanceActiveRoster';
+const THRESHOLDS_STORAGE_KEY = 'meetAttendanceThresholds';
+const EXCUSED_STORAGE_KEY = 'meetAttendanceExcused';
+
+function loadStoredRosters() {
+  try {
+    const raw = localStorage.getItem(ROSTER_STORAGE_KEY);
+    if (raw) state.rosters = JSON.parse(raw) || {};
+    const active = localStorage.getItem(ACTIVE_ROSTER_KEY);
+    if (active && state.rosters && state.rosters[active]) state.activeRosterName = active;
+    const thresh = localStorage.getItem(THRESHOLDS_STORAGE_KEY);
+    if (thresh) state.thresholds = Object.assign({ minPercent: 0, lateMinutes: 10 }, JSON.parse(thresh));
+    const excused = localStorage.getItem(EXCUSED_STORAGE_KEY);
+    if (excused) state.excusedStudents = JSON.parse(excused) || {};
+  } catch (e) {
+    console.warn('[Attendance] Failed to load stored rosters:', e);
+  }
+}
+
+function saveStoredRosters() {
+  try {
+    localStorage.setItem(ROSTER_STORAGE_KEY, JSON.stringify(state.rosters || {}));
+    localStorage.setItem(ACTIVE_ROSTER_KEY, state.activeRosterName || '');
+    localStorage.setItem(THRESHOLDS_STORAGE_KEY, JSON.stringify(state.thresholds || { minPercent: 0, lateMinutes: 10 }));
+    localStorage.setItem(EXCUSED_STORAGE_KEY, JSON.stringify(state.excusedStudents || {}));
+  } catch (e) {
+    console.warn('[Attendance] Failed to save stored rosters:', e);
+  }
+}
+
+function populateRosterDropdown() {
+  const sel = document.getElementById('roster-select');
+  if (!sel) return;
+  const names = Object.keys(state.rosters || {});
+  const cur = state.activeRosterName || '';
+  sel.innerHTML = '<option value="">-- Select or create a class --</option>' +
+    names.map(n => {
+      const count = (state.rosters[n] || []).length;
+      return `<option value="${escHtml(n)}" ${n === cur ? 'selected' : ''}>${escHtml(n)} (${count} students)</option>`;
+    }).join('');
+}
+
+function onRosterSelected(val) {
+  state.activeRosterName = val || null;
+  saveStoredRosters();
+  updateTabCounts();
+  renderRosterView();
+}
+
+let _editingRosterOriginalName = null;
+
+function openRosterModal(isEdit) {
+  const modal = document.getElementById('roster-modal');
+  const title = document.getElementById('roster-modal-title');
+  const nameInput = document.getElementById('roster-input-name');
+  const studentsInput = document.getElementById('roster-input-students');
+  if (!modal || !title || !nameInput || !studentsInput) return;
+
+  if (isEdit && state.activeRosterName && state.rosters[state.activeRosterName]) {
+    _editingRosterOriginalName = state.activeRosterName;
+    title.textContent = 'Edit Class Roster';
+    nameInput.value = state.activeRosterName;
+    const list = state.rosters[state.activeRosterName] || [];
+    studentsInput.value = list.map(s => s.email ? `${s.name} <${s.email}>` : s.name).join('\n');
+  } else {
+    _editingRosterOriginalName = null;
+    title.textContent = 'Create Class Roster';
+    nameInput.value = '';
+    studentsInput.value = '';
+  }
+  modal.style.display = 'flex';
+  nameInput.focus();
+}
+
+function closeRosterModal() {
+  const modal = document.getElementById('roster-modal');
+  if (modal) modal.style.display = 'none';
+  _editingRosterOriginalName = null;
+}
+
+function parseStudentsInput(text) {
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const students = [];
+  for (const line of lines) {
+    const angleMatch = line.match(/^([^<]+)<([^>]+)>$/);
+    if (angleMatch) {
+      students.push({ name: angleMatch[1].trim(), email: angleMatch[2].trim().toLowerCase() });
+      continue;
+    }
+    const commaParts = line.split(',');
+    if (commaParts.length === 2 && commaParts[1].includes('@')) {
+      students.push({ name: commaParts[0].trim(), email: commaParts[1].trim().toLowerCase() });
+      continue;
+    }
+    if (line.includes('@')) {
+      students.push({ name: line.split('@')[0].trim(), email: line.toLowerCase() });
+    } else {
+      students.push({ name: line, email: '' });
+    }
+  }
+  return students;
+}
+
+function saveRosterModal() {
+  const nameInput = document.getElementById('roster-input-name');
+  const studentsInput = document.getElementById('roster-input-students');
+  if (!nameInput || !studentsInput) return;
+
+  const rosterName = nameInput.value.trim();
+  if (!rosterName) {
+    alert('Please enter a class name.');
+    nameInput.focus();
+    return;
+  }
+
+  const rawText = studentsInput.value.trim();
+  if (!rawText) {
+    alert('Please enter at least one student name or email.');
+    studentsInput.focus();
+    return;
+  }
+
+  const students = parseStudentsInput(rawText);
+  if (!state.rosters) state.rosters = {};
+
+  if (_editingRosterOriginalName && _editingRosterOriginalName !== rosterName) {
+    delete state.rosters[_editingRosterOriginalName];
+  }
+
+  state.rosters[rosterName] = students;
+  state.activeRosterName = rosterName;
+  saveStoredRosters();
+  closeRosterModal();
+  updateTabCounts();
+  renderRosterView();
+  toast(`Class "${rosterName}" saved (${students.length} students)`);
+}
+
+function editCurrentRoster() {
+  if (state.activeRosterName) openRosterModal(true);
+}
+
+function deleteCurrentRoster() {
+  if (!state.activeRosterName) return;
+  if (confirm(`Delete roster "${state.activeRosterName}"?`)) {
+    delete state.rosters[state.activeRosterName];
+    state.activeRosterName = null;
+    saveStoredRosters();
+    updateTabCounts();
+    renderRosterView();
+    toast('Class roster deleted');
+  }
+}
+
+function onThresholdChange() {
+  const stay = document.getElementById('threshold-stay');
+  const late = document.getElementById('threshold-late');
+  if (!state.thresholds) state.thresholds = { minPercent: 0, lateMinutes: 10 };
+  if (stay) state.thresholds.minPercent = Number(stay.value) || 0;
+  if (late) state.thresholds.lateMinutes = Number(late.value) || 0;
+  saveStoredRosters();
+  renderRosterView();
+}
+
+function findParticipantForStudent(student, participants) {
+  if (!student) return null;
+  const sEmail = (student.email || '').trim().toLowerCase();
+  const sName = (student.name || '').trim().toLowerCase();
+
+  if (sEmail) {
+    for (const p of participants) {
+      if (p.email && p.email.trim().toLowerCase() === sEmail) return p;
+    }
+  }
+
+  if (sName) {
+    const sNorm = (typeof AttUtils !== 'undefined' && AttUtils.normalizeName)
+      ? AttUtils.normalizeName(sName)
+      : sName.replace(/[^a-z0-9]/g, '');
+    for (const p of participants) {
+      const pNorm = (typeof AttUtils !== 'undefined' && AttUtils.normalizeName)
+        ? AttUtils.normalizeName(p.displayName || '')
+        : (p.displayName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (sNorm && pNorm && sNorm === pNorm) return p;
+    }
+    for (const p of participants) {
+      const pLower = (p.displayName || '').toLowerCase();
+      if (pLower && (pLower.includes(sName) || sName.includes(pLower))) return p;
+    }
+  }
+  return null;
+}
+
+function toggleStudentExcused(studentKey, checkbox) {
+  if (!state.excusedStudents) state.excusedStudents = {};
+  if (!state.excusedStudents[studentKey]) state.excusedStudents[studentKey] = { excused: false, note: '' };
+  state.excusedStudents[studentKey].excused = checkbox.checked;
+  saveStoredRosters();
+  renderRosterView();
+}
+
+function promptStudentNote(studentKey) {
+  const cur = (state.excusedStudents && state.excusedStudents[studentKey] && state.excusedStudents[studentKey].note) || '';
+  const note = prompt('Enter note for student (e.g. "Doctor appointment", "Excused"):', cur);
+  if (note !== null) {
+    if (!state.excusedStudents) state.excusedStudents = {};
+    if (!state.excusedStudents[studentKey]) state.excusedStudents[studentKey] = { excused: false, note: '' };
+    state.excusedStudents[studentKey].note = note.trim();
+    saveStoredRosters();
+    renderRosterView();
+  }
+}
+
+function renderRosterView() {
+  populateRosterDropdown();
+  const container = document.getElementById('roster-students-container');
+  const chips = document.getElementById('roster-chips');
+  const editBtn = document.getElementById('btn-edit-roster');
+  const delBtn = document.getElementById('btn-delete-roster');
+  if (!container) return;
+
+  const rosterName = state.activeRosterName;
+  const students = (rosterName && state.rosters) ? state.rosters[rosterName] : null;
+
+  if (!rosterName || !students || !Array.isArray(students) || students.length === 0) {
+    if (chips) chips.style.display = 'none';
+    if (editBtn) editBtn.style.display = 'none';
+    if (delBtn) delBtn.style.display = 'none';
+    container.innerHTML = `
+      <div class="empty-state" style="padding:28px 0">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        <div style="font-weight:600;color:#e6edf3;font-size:.85rem;margin-top:6px">No class selected</div>
+        <span style="font-size:.75rem;color:#8b949e">Select a class above or click <strong>+ New Class</strong> to paste student names</span>
+      </div>`;
+    return;
+  }
+
+  if (chips) chips.style.display = 'grid';
+  if (editBtn) editBtn.style.display = 'inline-block';
+  if (delBtn) delBtn.style.display = 'inline-block';
+
+  const staySel = document.getElementById('threshold-stay');
+  const lateSel = document.getElementById('threshold-late');
+  if (staySel && state.thresholds) staySel.value = String(state.thresholds.minPercent || 0);
+  if (lateSel && state.thresholds) lateSel.value = String(state.thresholds.lateMinutes !== undefined ? state.thresholds.lateMinutes : 10);
+
+  const parts = [...state.participants.values()];
+  const now = Date.now();
+  const totalMeetingMs = (state.startTime && state.startTime.getTime()) ? (now - state.startTime.getTime()) : 0;
+  const meetingMinutes = totalMeetingMs > 0 ? Math.max(1, Math.round(totalMeetingMs / 60000)) : 1;
+  const lateMinutes = (state.thresholds && state.thresholds.lateMinutes !== undefined) ? Number(state.thresholds.lateMinutes) : 10;
+  const minPercent = (state.thresholds && state.thresholds.minPercent !== undefined) ? Number(state.thresholds.minPercent) : 0;
+
+  const matchedParts = new Set();
+  const presentStudents = [];
+  const lateStudents = [];
+  const absentStudents = [];
+
+  for (const student of students) {
+    const p = findParticipantForStudent(student, parts);
+    const studentKey = (student.email || student.name || '').toLowerCase();
+    const excuse = (state.excusedStudents && state.excusedStudents[studentKey]) || null;
+    const isExcused = !!(excuse && excuse.excused);
+    const note = excuse ? (excuse.note || '') : '';
+
+    if (p) {
+      matchedParts.add(p);
+      const durMs = (p._accumulatedMs || 0) + (p.present && p.joinTime ? (now - p.joinTime.getTime()) : 0);
+      const durMin = Math.round(durMs / 60000);
+      const pct = meetingMinutes > 0 ? Math.min(100, Math.round((durMin / meetingMinutes) * 100)) : 100;
+
+      let isLate = false;
+      if (state.startTime && p.joinTime && lateMinutes > 0) {
+        const diffMin = (p.joinTime.getTime() - state.startTime.getTime()) / 60000;
+        if (diffMin > lateMinutes) isLate = true;
+      }
+
+      const item = { student, participant: p, durMin, pct, isLate, isExcused, note, studentKey };
+      if (isLate || (minPercent > 0 && pct < minPercent)) {
+        lateStudents.push(item);
+      } else {
+        presentStudents.push(item);
+      }
+    } else {
+      absentStudents.push({ student, participant: null, durMin: 0, pct: 0, isLate: false, isExcused, note, studentKey });
+    }
+  }
+
+  const unregisteredGuests = parts.filter(p => !matchedParts.has(p));
+
+  document.getElementById('roster-count-present').textContent = presentStudents.length;
+  document.getElementById('roster-count-late').textContent = lateStudents.length;
+  document.getElementById('roster-count-absent').textContent = absentStudents.length;
+  document.getElementById('roster-count-guests').textContent = unregisteredGuests.length;
+
+  let html = '';
+
+  if (presentStudents.length > 0) {
+    html += `<div style="font-size:.68rem;font-weight:700;color:#4ade80;text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px">Present (${presentStudents.length})</div>`;
+    for (const item of presentStudents) {
+      const p = item.participant;
+      html += `
+        <div class="roster-card present">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;color:#e6edf3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.displayName || item.student.name)}</div>
+            <div style="font-size:.68rem;color:#8b949e">${escHtml(p.email || item.student.email || 'In call')} · ${item.durMin}m (${item.pct}%)</div>
+          </div>
+          <span style="font-size:.68rem;color:#4ade80;font-weight:600">Present</span>
+        </div>`;
+    }
+  }
+
+  if (lateStudents.length > 0) {
+    html += `<div style="font-size:.68rem;font-weight:700;color:#facc15;text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px">Late / Short Stay (${lateStudents.length})</div>`;
+    for (const item of lateStudents) {
+      const p = item.participant;
+      const tag = item.isLate ? 'Late' : 'Short stay';
+      html += `
+        <div class="roster-card late">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;color:#e6edf3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.displayName || item.student.name)}</div>
+            <div style="font-size:.68rem;color:#8b949e">${escHtml(p.email || item.student.email || '')} · ${item.durMin}m (${item.pct}%)</div>
+          </div>
+          <span style="font-size:.68rem;color:#facc15;font-weight:600">${tag}</span>
+        </div>`;
+    }
+  }
+
+  if (absentStudents.length > 0) {
+    html += `<div style="font-size:.68rem;font-weight:700;color:#f87171;text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px">Absent (${absentStudents.length})</div>`;
+    for (const item of absentStudents) {
+      const s = item.student;
+      const cardClass = item.isExcused ? 'roster-card excused' : 'roster-card absent';
+      const statusLabel = item.isExcused ? 'Excused' : 'Absent';
+      const statusColor = item.isExcused ? '#818cf8' : '#f87171';
+      html += `
+        <div class="${cardClass}">
+          <input type="checkbox" ${item.isExcused ? 'checked' : ''} onchange="toggleStudentExcused('${escHtml(item.studentKey)}', this)" title="Mark excused" style="cursor:pointer;flex-shrink:0" />
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;color:#e6edf3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(s.name)}</div>
+            <div style="font-size:.68rem;color:#8b949e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(s.email || 'No email')} ${item.note ? '· Note: ' + escHtml(item.note) : ''}</div>
+          </div>
+          <button type="button" onclick="promptStudentNote('${escHtml(item.studentKey)}')" style="background:none;border:none;color:#8b949e;cursor:pointer;font-size:.68rem;padding:2px 4px;text-decoration:underline">Note</button>
+          <span style="font-size:.68rem;color:${statusColor};font-weight:600">${statusLabel}</span>
+        </div>`;
+    }
+  }
+
+  if (unregisteredGuests.length > 0) {
+    html += `<div style="font-size:.68rem;font-weight:700;color:#58a6ff;text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px">Unregistered Guests (${unregisteredGuests.length})</div>`;
+    for (const p of unregisteredGuests) {
+      const durMs = (p._accumulatedMs || 0) + (p.present && p.joinTime ? (now - p.joinTime.getTime()) : 0);
+      const durMin = Math.round(durMs / 60000);
+      html += `
+        <div class="roster-card guest">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;color:#e6edf3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.displayName)}</div>
+            <div style="font-size:.68rem;color:#8b949e">${escHtml(p.email || 'Guest')} · ${durMin}m</div>
+          </div>
+          <span style="font-size:.68rem;color:#58a6ff;font-weight:600">Guest</span>
+        </div>`;
+    }
+  }
+
+  container.innerHTML = html;
+}
+
+function downloadAttendanceCsv() {
+  const parts = [...state.participants.values()];
+  if (parts.length === 0 && (!state.calendarAttendees || state.calendarAttendees.length === 0)) {
+    toast('No attendance data to download yet.');
+    return;
+  }
+
+  const meetingTitle = state.meetingTitle || 'Meeting';
+  const safeTitle = meetingTitle.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
+  const now = new Date();
+  const dateStr = now.toISOString().slice(0, 10);
+  const totalMeetingMs = (state.startTime && state.startTime.getTime()) ? (now.getTime() - state.startTime.getTime()) : 0;
+  const meetingMinutes = totalMeetingMs > 0 ? Math.max(1, Math.round(totalMeetingMs / 60000)) : 1;
+
+  const lateMinutes = (state.thresholds && state.thresholds.lateMinutes !== undefined) ? Number(state.thresholds.lateMinutes) : 10;
+  const minPercent = (state.thresholds && state.thresholds.minPercent !== undefined) ? Number(state.thresholds.minPercent) : 0;
+
+  const escapeCsv = (val) => {
+    if (val === null || val === undefined) return '""';
+    const s = String(val).replace(/"/g, '""');
+    return `"${s}"`;
+  };
+
+  const rows = [];
+  rows.push([
+    'Name',
+    'Email',
+    'Status',
+    'Attendance %',
+    'Duration (min)',
+    'Join Time',
+    'Leave Time',
+    'Rejoins',
+    'Notes'
+  ].map(escapeCsv).join(','));
+
+  const activeRoster = (state.activeRosterName && state.rosters) ? state.rosters[state.activeRosterName] : null;
+
+  if (activeRoster && Array.isArray(activeRoster) && activeRoster.length > 0) {
+    const matchedParticipants = new Set();
+
+    for (const student of activeRoster) {
+      const p = findParticipantForStudent(student, parts);
+      const studentKey = (student.email || student.name || '').toLowerCase();
+      const excuse = (state.excusedStudents && state.excusedStudents[studentKey]) || null;
+      const isExcused = !!(excuse && excuse.excused);
+      const note = excuse ? (excuse.note || '') : '';
+
+      if (p) {
+        matchedParticipants.add(p);
+        const durMs = (p._accumulatedMs || 0) + (p.present && p.joinTime ? (now.getTime() - p.joinTime.getTime()) : 0);
+        const durMin = Math.round(durMs / 60000);
+        const pct = meetingMinutes > 0 ? Math.min(100, Math.round((durMin / meetingMinutes) * 100)) : 100;
+
+        let isLate = false;
+        if (state.startTime && p.joinTime && lateMinutes > 0) {
+          const diffMin = (p.joinTime.getTime() - state.startTime.getTime()) / 60000;
+          if (diffMin > lateMinutes) isLate = true;
+        }
+
+        let status = 'Present';
+        if (pct < minPercent) {
+          status = isExcused ? 'Excused (Short Stay)' : 'Left Early / Incomplete';
+        } else if (isLate) {
+          status = 'Late';
+        } else if (!p.present) {
+          status = 'Present (Left)';
+        }
+
+        rows.push([
+          p.displayName || student.name,
+          p.email || student.email || '',
+          status,
+          `${pct}%`,
+          durMin,
+          p.joinTime ? p.joinTime.toLocaleTimeString() : '',
+          (!p.present && p.leaveTime) ? p.leaveTime.toLocaleTimeString() : '',
+          p.rejoins || 0,
+          note
+        ].map(escapeCsv).join(','));
+      } else {
+        const status = isExcused ? 'Absent (Excused)' : 'Absent';
+        rows.push([
+          student.name,
+          student.email || '',
+          status,
+          '0%',
+          0,
+          '',
+          '',
+          0,
+          note
+        ].map(escapeCsv).join(','));
+      }
+    }
+
+    for (const p of parts) {
+      if (!matchedParticipants.has(p)) {
+        const durMs = (p._accumulatedMs || 0) + (p.present && p.joinTime ? (now.getTime() - p.joinTime.getTime()) : 0);
+        const durMin = Math.round(durMs / 60000);
+        const pct = meetingMinutes > 0 ? Math.min(100, Math.round((durMin / meetingMinutes) * 100)) : 100;
+        rows.push([
+          p.displayName,
+          p.email || '',
+          p.present ? 'Guest (Present)' : 'Guest (Left)',
+          `${pct}%`,
+          durMin,
+          p.joinTime ? p.joinTime.toLocaleTimeString() : '',
+          (!p.present && p.leaveTime) ? p.leaveTime.toLocaleTimeString() : '',
+          p.rejoins || 0,
+          'Unregistered guest'
+        ].map(escapeCsv).join(','));
+      }
+    }
+  } else {
+    for (const p of parts) {
+      const durMs = (p._accumulatedMs || 0) + (p.present && p.joinTime ? (now.getTime() - p.joinTime.getTime()) : 0);
+      const durMin = Math.round(durMs / 60000);
+      const pct = meetingMinutes > 0 ? Math.min(100, Math.round((durMin / meetingMinutes) * 100)) : 100;
+      rows.push([
+        p.displayName,
+        p.email || '',
+        p.present ? 'Present' : 'Left',
+        `${pct}%`,
+        durMin,
+        p.joinTime ? p.joinTime.toLocaleTimeString() : '',
+        (!p.present && p.leaveTime) ? p.leaveTime.toLocaleTimeString() : '',
+        p.rejoins || 0,
+        ''
+      ].map(escapeCsv).join(','));
+    }
+  }
+
+  const csvContent = '\uFEFF' + rows.join('\r\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Attendance_${safeTitle}_${dateStr}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  try { logUserEvent('export_csv_downloaded', { participantCount: parts.length, hasRoster: !!activeRoster }); } catch (e) {}
+  toast('Downloaded attendance CSV', 3000);
+}
 
 /* ═══════════════════════════════════════════════════════════════
    STATE PERSISTENCE — survive panel refreshes via sessionStorage
@@ -3367,6 +3980,30 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
   const now = new Date();
   const tabName = `${state.meetingTitle || 'Google Meet'} ${now.toLocaleDateString('en-US')} ${now.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', second:'2-digit'})}`;
 
+  // If no calendar attendees were provided, fallback to active class roster students if present
+  let effectiveAttendees = calendarAttendees;
+  if ((!effectiveAttendees || effectiveAttendees.length === 0) && state.activeRosterName && state.rosters && state.rosters[state.activeRosterName]) {
+    effectiveAttendees = state.rosters[state.activeRosterName].map(s => ({
+      email: s.email || '',
+      displayName: s.name,
+      status: 'needsAction'
+    }));
+  }
+
+  // Merge excused students from active roster
+  const rosterExcusedEmails = [];
+  if (state.excusedStudents) {
+    for (const [key, val] of Object.entries(state.excusedStudents)) {
+      if (val && val.excused && key.includes('@')) {
+        rosterExcusedEmails.push(key);
+      }
+    }
+  }
+  const mergedExcusedEmails = Array.from(new Set([
+    ...(Array.isArray(opts.excusedEmails) ? opts.excusedEmails : []),
+    ...rosterExcusedEmails
+  ]));
+
   const payload = {
     meetingTitle: state.meetingTitle,
     tabName,
@@ -3380,8 +4017,8 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     sendEmail: !!opts.sendEmail,
     autoExport: !!opts.autoExport,
     recurringEventId: state._recurringEventId || null,
-    excusedEmails: Array.isArray(opts.excusedEmails) ? opts.excusedEmails : [],
-    calendarAttendees,
+    excusedEmails: mergedExcusedEmails,
+    calendarAttendees: effectiveAttendees,
     participants: [...state.participants.values()].map(p => {
       // Use earliest known join time (API or frontend-tracked)
       const apiJoin = p.joinTime ? p.joinTime.getTime() : Infinity;
@@ -3905,15 +4542,24 @@ let _activeTab = 'participants';
 
 function switchTab(tab) {
   _activeTab = tab;
-  document.getElementById('tab-participants').classList.toggle('active', tab === 'participants');
-  document.getElementById('tab-invited').classList.toggle('active', tab === 'invited');
+  const pTab = document.getElementById('tab-participants');
+  const rTab = document.getElementById('tab-roster');
+  const iTab = document.getElementById('tab-invited');
+  if (pTab) pTab.classList.toggle('active', tab === 'participants');
+  if (rTab) rTab.classList.toggle('active', tab === 'roster');
+  if (iTab) iTab.classList.toggle('active', tab === 'invited');
 
-  // Participants list header stays hidden when tabs are visible (tab itself is the label)
-  document.getElementById('list-header-participants').style.display = 'none';
-  document.getElementById('participant-list').style.display = tab === 'participants' ? '' : 'none';
-  document.getElementById('list-header-invited').style.display = tab === 'invited' ? '' : 'none';
-  document.getElementById('invited-list').style.display = tab === 'invited' ? '' : 'none';
+  const pList = document.getElementById('participant-list');
+  const rView = document.getElementById('roster-view');
+  const iList = document.getElementById('invited-list');
+  const tb = document.getElementById('list-toolbar');
 
+  if (pList) pList.style.display = tab === 'participants' ? '' : 'none';
+  if (rView) rView.style.display = tab === 'roster' ? 'block' : 'none';
+  if (iList) iList.style.display = tab === 'invited' ? '' : 'none';
+  if (tb) tb.style.display = (tab === 'participants' && state.participants && state.participants.size > 0) ? 'flex' : 'none';
+
+  if (tab === 'roster') renderRosterView();
   if (tab === 'invited') renderInvitedList();
 }
 
@@ -4021,11 +4667,24 @@ function renderInvitedList() {
 
 // Update tab counts whenever participant list changes
 function updateTabCounts() {
-  document.getElementById('tab-count-participants').textContent = state.participants.size;
+  const pCountEl = document.getElementById('tab-count-participants');
+  if (pCountEl) pCountEl.textContent = state.participants.size;
   if (state.calendarAttendees) {
-    document.getElementById('tab-count-invited').textContent = state.calendarAttendees.length;
+    const iCountEl = document.getElementById('tab-count-invited');
+    if (iCountEl) iCountEl.textContent = state.calendarAttendees.length;
   }
-  // Re-render invited tab if active (to update joined status)
+  const rCountEl = document.getElementById('tab-count-roster');
+  if (rCountEl) {
+    const activeRoster = (state.activeRosterName && state.rosters) ? state.rosters[state.activeRosterName] : null;
+    rCountEl.textContent = activeRoster ? activeRoster.length : (Object.keys(state.rosters || {}).length || 0);
+  }
+  const btnCsv = document.getElementById('btn-csv');
+  if (btnCsv) {
+    const hasData = state.participants.size > 0 || (state.activeRosterName && state.rosters && state.rosters[state.activeRosterName]?.length > 0);
+    btnCsv.disabled = !hasData;
+  }
+  // Re-render tabs if active
+  if (_activeTab === 'roster') renderRosterView();
   if (_activeTab === 'invited') renderInvitedList();
 }
 
@@ -4446,6 +5105,7 @@ function latenessMin(p) {
    BOOT
 ═══════════════════════════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
+  loadStoredRosters();
   populateLanguageSelect();
   updateUiLanguage();
   setStatus('loading', t('status.initializing', 'Connecting to Meet…'));
@@ -4730,6 +5390,20 @@ window.addEventListener('DOMContentLoaded', () => {
         </button>
       </div>
 
+      <!-- Architectural Advantage Card -->
+      <div style="background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;margin-bottom:14px;font-size:.73rem;color:#c4c7c5;line-height:1.45">
+        <div style="font-weight:600;color:#e3e3e3;margin-bottom:6px;display:flex;align-items:center;gap:6px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Why Attendance Tracker beats Chrome extensions:</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;color:#9aa0a6">
+          <div>• Official Google Meet Add-on (no DOM scraping breakage)</div>
+          <div>• Direct Google Drive &amp; Sheets API sync</div>
+          <div>• Class rosters, absent matching &amp; instant CSV download</div>
+          <div>• True call-end auto export &amp; series roll-up</div>
+        </div>
+      </div>
+
       <!-- Clean Low-Profile Review Exchange -->
       <div style="text-align:center;font-size:.74rem;color:#9aa0a6;margin-bottom:14px;line-height:1.4">
         School budget tight? <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" id="upgrade-review-link" target="_blank" onclick="onUpgradeReviewClick(event)" style="color:#8ab4f8;text-decoration:underline">Leave an honest review</a> for 1 month free.
@@ -4742,6 +5416,29 @@ window.addEventListener('DOMContentLoaded', () => {
           Encrypted checkout via Stripe
         </span>
         <button type="button" onclick="closeUpgradeModal()" style="background:none;border:none;color:#9aa0a6;cursor:pointer;font-size:.73rem;padding:0;text-decoration:underline">Maybe later</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Class Roster Modal ── -->
+  <div id="roster-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1200;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)">
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:14px;padding:22px;max-width:420px;width:100%;box-shadow:0 20px 40px rgba(0,0,0,.5);font-family:var(--font-sans)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <h3 id="roster-modal-title" style="margin:0;font-size:1.1rem;font-weight:600;color:#e6edf3">Create Class Roster</h3>
+        <button type="button" onclick="closeRosterModal()" style="background:none;border:none;color:#8b949e;cursor:pointer;font-size:18px;line-height:1;padding:4px">&times;</button>
+      </div>
+      <div style="margin-bottom:14px">
+        <label for="roster-input-name" style="display:block;font-size:.76rem;color:#8b949e;margin-bottom:6px;font-weight:600">Class or Group Name</label>
+        <input id="roster-input-name" type="text" placeholder="e.g. Biology 101 - Section A" style="width:100%;background:#0d1117;border:1px solid #30363d;color:#e6edf3;border-radius:6px;padding:8px 10px;font-size:.82rem;box-sizing:border-box" />
+      </div>
+      <div style="margin-bottom:16px">
+        <label for="roster-input-students" style="display:block;font-size:.76rem;color:#8b949e;margin-bottom:6px;font-weight:600">Student List (One per line)</label>
+        <textarea id="roster-input-students" rows="7" placeholder="Paste student names or emails:&#10;Alice Smith &lt;alice@school.edu&gt;&#10;Bob Jones&#10;carol@school.edu" style="width:100%;background:#0d1117;border:1px solid #30363d;color:#e6edf3;border-radius:6px;padding:8px 10px;font-size:.78rem;font-family:monospace;resize:vertical;box-sizing:border-box"></textarea>
+        <div style="font-size:.7rem;color:#8b949e;margin-top:4px">Accepts names, emails, or &quot;Name &lt;email&gt;&quot; format.</div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px">
+        <button type="button" class="btn-secondary" onclick="closeRosterModal()" style="padding:8px 14px;font-size:.8rem">Cancel</button>
+        <button type="button" class="btn-primary" onclick="saveRosterModal()" style="padding:8px 16px;font-size:.8rem">Save Roster</button>
       </div>
     </div>
   </div>
