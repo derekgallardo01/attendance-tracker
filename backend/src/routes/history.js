@@ -46,6 +46,14 @@ const FRONTEND_EVENT_TYPES = new Set([
   'addon_opened',
   'settings_opened',
   'auto_export_toggled',
+  // Export & quota tracking
+  'export_success',
+  'quota_warning_shown',
+  'quota_upgrade_clicked',
+  // In-app navigation & intent
+  'pricing_page_opened',
+  'history_page_opened',
+  'upgrade_plan_hovered',
 ]);
 
 // POST /api/event — let the frontend record activation/funnel events that only

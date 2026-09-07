@@ -1347,8 +1347,8 @@
 
   <!-- ── Export Quota Indicator (Free tier) ── -->
   <div id="export-quota-indicator" style="display:none;align-items:center;justify-content:space-between;padding:5px 16px;font-size:11px;color:#8b949e;background:rgba(255,255,255,.03);border-top:1px solid #30363d">
-    <span id="export-quota-text">2 of 2 free exports remaining this month</span>
-    <a href="#" id="export-quota-upgrade-link" onclick="showUpgradeModal('quota_indicator');return false;" style="color:#fdd663;text-decoration:none;font-weight:600;margin-left:8px;white-space:nowrap">Go Unlimited ($4.99)</a>
+    <span id="export-quota-text">3 of 3 free exports remaining this month</span>
+    <a href="#" id="export-quota-upgrade-link" onclick="try{logUserEvent('quota_upgrade_clicked',{})}catch(e){};showUpgradeModal('quota_indicator');return false;" style="color:#fdd663;text-decoration:none;font-weight:600;margin-left:8px;white-space:nowrap">Go Unlimited ($4.99)</a>
   </div>
 
   <div id="sheet-link-bar" style="display:none; padding:4px 16px; font-size:11px;">
@@ -1466,9 +1466,9 @@
 
   <!-- ── Footer ── -->
   <div style="padding:12px 16px;text-align:center;font-size:.65rem;color:#6e7681;margin-top:auto">
-    <a id="history-link" href="https://attendancetracker.dev/history.html" onclick="openHistoryPage(event)" target="_blank" style="color:#9ec8ff">All meetings</a>
+    <a id="history-link" href="https://attendancetracker.dev/history.html" onclick="try{logUserEvent('history_page_opened',{})}catch(e){};openHistoryPage(event)" target="_blank" style="color:#9ec8ff">All meetings</a>
     · <a href="#" onclick="openSettingsModal();return false" style="color:#9ec8ff">Settings</a>
-    · <a href="https://attendancetracker.dev/pricing.html" target="_blank" style="color:#6e7681">Pricing</a>
+    · <a href="https://attendancetracker.dev/pricing.html" target="_blank" onclick="try{logUserEvent('pricing_page_opened',{})}catch(e){}" style="color:#6e7681">Pricing</a>
     · <a href="https://attendancetracker.dev/privacy.html" target="_blank" style="color:#6e7681">Privacy</a>
     · <a href="https://attendancetracker.dev/terms.html" target="_blank" style="color:#6e7681">Terms</a>
     · <a href="https://attendancetracker.dev/refunds.html" target="_blank" style="color:#6e7681">Refunds</a>
@@ -2869,7 +2869,13 @@ async function handleBillingClick() {
 }
 
 async function startUpgradeCheckout(plan, btnId) {
-  try { logUserEvent('upgrade_checkout_clicked', { plan: plan || 'individual' }); } catch {}
+  try {
+    logUserEvent('upgrade_checkout_clicked', {
+      plan: plan || 'lifetime',
+      btnId: btnId || null,
+      reason: state._lastUpgradeReason || 'modal',
+    });
+  } catch {}
   const btn = btnId ? document.getElementById(btnId) : null;
   const originalText = btn ? btn.textContent : '';
   if (btn) { btn.disabled = true; btn.textContent = 'Connecting to Stripe…'; }
@@ -2877,7 +2883,7 @@ async function startUpgradeCheckout(plan, btnId) {
     const res = await authFetch(`${state.backendUrl}/billing/checkout`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan: plan || 'individual', interval: 'annual', promo: 'LAUNCH50' }),
+      body: JSON.stringify({ plan: plan || 'lifetime', interval: 'annual', promo: 'LAUNCH50' }),
     });
     const data = await res.json().catch(() => ({}));
     if (res.ok && data.url) {
@@ -2897,12 +2903,13 @@ async function startUpgradeCheckout(plan, btnId) {
 }
 
 function showUpgradeModal(reason) {
+  state._lastUpgradeReason = reason || 'manual';
   const modal = document.getElementById('upgrade-modal');
   if (!modal) return;
   const note = document.getElementById('upgrade-modal-note');
   if (note) {
     if (reason === 'exportQuota') {
-      note.textContent = 'You reached your monthly limit of 2 free exports. Upgrade to Pro for unlimited exports.';
+      note.textContent = 'You reached your monthly limit of 3 free exports. Upgrade to Pro for unlimited exports.';
       note.style.display = 'block';
     } else if (reason === 'autoExport') {
       note.textContent = 'Auto-exporting to Google Sheets on meeting end is a Pro feature.';
@@ -2936,7 +2943,15 @@ function showUpgradeModal(reason) {
     upgradeReviewLink.href = `${state.backendUrl}/public/review-click?email=${encodeURIComponent(email)}&source=upgrade_modal`;
   }
   modal.style.display = 'flex';
-  try { logUserEvent('upgrade_modal_shown', { reason: reason || 'manual', isEdu }); } catch {}
+  try {
+    logUserEvent('upgrade_modal_shown', {
+      reason: reason || 'manual',
+      isEdu,
+      language: navigator.language || '',
+      timezone: (typeof Intl !== 'undefined' && Intl.DateTimeFormat) ? Intl.DateTimeFormat().resolvedOptions().timeZone : '',
+      participantCount: (state.participants && state.participants.size) || 0,
+    });
+  } catch {}
 }
 
 function closeUpgradeModal() {
@@ -3419,6 +3434,15 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     const exportResult = await res.json();
     const { sheetUrl, isFirstExport, quota } = exportResult;
     if (quota) updateQuotaIndicator(quota.used, quota.limit);
+    try {
+      logUserEvent('export_success', {
+        attendees: state.participants ? state.participants.size : 0,
+        autoExport: !!opts.autoExport,
+        isFirstExport: !!isFirstExport,
+        quotaUsed: quota ? quota.used : null,
+        quotaLimit: quota ? quota.limit : null,
+      });
+    } catch {}
     // Mark this conference as exported so the auto-export poll loop doesn't
     // re-fire after a manual export (and so a reload after auto-export stays quiet).
     state.autoExportedConferenceId = state.conferenceId;

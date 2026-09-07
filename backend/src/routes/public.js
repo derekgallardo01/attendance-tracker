@@ -86,10 +86,16 @@ router.post('/public/pageview', async (req, res) => {
     // Event type — 'pageview' by default, or an interaction like 'cta_click'
     // (e.g. the Marketplace install button) so we can measure landing→install
     // conversion, which was previously a blind spot. Allow-list to keep the
-    // field bounded.
-    const ALLOWED_EVENTS = new Set(['pageview', 'cta_click']);
+    const ALLOWED_EVENTS = new Set([
+      'pageview',
+      'cta_click',
+      'pricing_checkout_clicked',
+      'pricing_plan_hover',
+      'pricing_lang_change',
+      'pricing_faq_click',
+    ]);
     const event = ALLOWED_EVENTS.has(body.event) ? body.event : 'pageview';
-    const isCta = event === 'cta_click';
+    const isCta = event === 'cta_click' || event === 'pricing_checkout_clicked';
 
     // Daily aggregate: always bump total count; bump a cta counter too when
     // this is a conversion click, so the funnel is trendable without scanning

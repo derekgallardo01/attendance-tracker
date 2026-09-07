@@ -755,13 +755,41 @@
       document.documentElement.dir = (code === 'ar' || code === 'he' || code === 'ur') ? 'rtl' : 'ltr';
       document.documentElement.lang = code;
       AttStrings.applyTranslations();
+      sendPricingEvent('pricing_lang_change', code);
     }
 
-    window.addEventListener('DOMContentLoaded', initPricingI18n);
+    window.addEventListener('DOMContentLoaded', function() {
+      initPricingI18n();
+      // Track clicks on FAQ questions to understand buyer friction
+      document.querySelectorAll('.faq-item details').forEach(function(d) {
+        d.addEventListener('toggle', function() {
+          if (d.open) {
+            var q = (d.querySelector('summary') && d.querySelector('summary').textContent) || 'faq';
+            sendPricingEvent('pricing_faq_click', q.trim().slice(0, 80));
+          }
+        });
+      });
+    });
 
     const BACKEND_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
       ? 'http://localhost:8080/api'
       : 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
+
+    function sendPricingEvent(event, label) {
+      try {
+        var payload = {
+          path: location.pathname,
+          event: event,
+          eventLabel: label || null,
+          referrer: document.referrer || null,
+          viewportWidth: window.innerWidth || null,
+          utmSource: (new URLSearchParams(location.search)).get('utm_source'),
+        };
+        var blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        if (navigator.sendBeacon) navigator.sendBeacon(BACKEND_URL + '/public/pageview', blob);
+        else fetch(BACKEND_URL + '/public/pageview', { method: 'POST', body: blob, keepalive: true });
+      } catch (e) {}
+    }
 
     // Retrieve active session token if the user is already signed in
     function getStoredToken() {
@@ -781,6 +809,7 @@
     }
 
     async function startPricingCheckout(plan, btn) {
+      sendPricingEvent('pricing_checkout_clicked', plan || 'lifetime');
       const origText = btn.innerHTML;
       btn.disabled = true;
       btn.innerHTML = '<span>Connecting to Stripe…</span>';

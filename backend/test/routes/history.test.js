@@ -180,6 +180,8 @@ describe('POST /api/event — frontend event logging', () => {
     'celebrate_modal_shown', 'celebrate_share_clicked', 'celebrate_modal_dismissed',
     'pdf_report_downloaded', 'pdf_certificates_generated',
     'addon_opened', 'settings_opened', 'auto_export_toggled',
+    'export_success', 'quota_warning_shown', 'quota_upgrade_clicked',
+    'pricing_page_opened', 'history_page_opened', 'upgrade_plan_hovered',
   ])(
     'accepts allow-listed event type: %s',
     async (type) => {
