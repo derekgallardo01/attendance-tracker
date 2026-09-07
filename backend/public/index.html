@@ -1348,7 +1348,7 @@
   <!-- ── Export Quota Indicator (Free tier) ── -->
   <div id="export-quota-indicator" style="display:none;align-items:center;justify-content:space-between;padding:5px 16px;font-size:11px;color:#8b949e;background:rgba(255,255,255,.03);border-top:1px solid #30363d">
     <span id="export-quota-text">3 of 3 free exports remaining this month</span>
-    <a href="#" id="export-quota-upgrade-link" onclick="try{logUserEvent('quota_upgrade_clicked',{})}catch(e){};showUpgradeModal('quota_indicator');return false;" style="color:#fdd663;text-decoration:none;font-weight:600;margin-left:8px;white-space:nowrap">Go Unlimited ($4.99)</a>
+    <a href="#" id="export-quota-upgrade-link" onclick="try{logUserEvent('quota_upgrade_clicked',{})}catch(e){};showUpgradeModal('quota_indicator');return false;" style="color:#fdd663;text-decoration:none;font-weight:600;margin-left:8px;white-space:nowrap">Go Unlimited</a>
   </div>
 
   <div id="sheet-link-bar" style="display:none; padding:4px 16px; font-size:11px;">
@@ -2836,7 +2836,7 @@ function updateQuotaIndicator(used, limit) {
     indicator.style.display = 'none';
     return;
   }
-  const maxLimit = typeof limit === 'number' ? limit : 2;
+  const maxLimit = typeof limit === 'number' ? limit : 3;
   const usedCount = typeof used === 'number' ? used : 0;
   const remaining = Math.max(0, maxLimit - usedCount);
   textEl.textContent = `${remaining} of ${maxLimit} free exports remaining this month`;
@@ -3436,7 +3436,18 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     }
     const exportResult = await res.json();
     const { sheetUrl, isFirstExport, quota } = exportResult;
-    if (quota) updateQuotaIndicator(quota.used, quota.limit);
+    if (quota) {
+      updateQuotaIndicator(quota.used, quota.limit);
+      if (!_isPro && typeof quota.used === 'number' && quota.used >= 2) {
+        try { logUserEvent('quota_warning_shown', { used: quota.used, limit: quota.limit }); } catch (e) {}
+        const msg = quota.used >= quota.limit
+          ? `${quota.used} of ${quota.limit} free monthly exports used. This was your last free export this month. Upgrade to Lifetime Pro ($9.99) for unlimited classes.`
+          : `${quota.used} of ${quota.limit} free monthly exports used. Upgrade to Lifetime Pro ($9.99) or Domain License ($19.99) for unlimited classes.`;
+        setTimeout(() => {
+          toast(msg, 7500);
+        }, 3200);
+      }
+    }
     try {
       logUserEvent('export_success', {
         attendees: state.participants ? state.participants.size : 0,

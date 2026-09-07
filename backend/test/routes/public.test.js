@@ -11,6 +11,7 @@ jest.mock('../../src/services/firestore', () => ({
   getSharedSeriesView: jest.fn(),
   suppressEmail: jest.fn(),
   getVerification: jest.fn(),
+  logEvent: jest.fn(),
   // Auth middleware deps (unused on public routes but module is loaded)
   getUser: jest.fn(),
   updateUserTokens: jest.fn(),
@@ -387,9 +388,28 @@ describe('public — final residual branches', () => {
     expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({ viewportWidth: 1280 }));
   });
 
-  test('unsubscribe with a missing token → 400', async () => {
+  test('unsubscribe with a missing token -> 400', async () => {
     notifications.verifyUnsubscribeToken.mockReturnValue(false);
     const res = await request(app).get('/api/public/unsubscribe?e=a@x.com');
     expect(res.status).toBe(400);
   });
 });
+
+describe('GET /api/public/offer-click', () => {
+  test('redirects to pricing with query params', async () => {
+    const setSpy = jest.fn().mockResolvedValue(undefined);
+    firestore.getDb.mockReturnValue({
+      collection: () => ({ doc: () => ({ collection: () => ({ doc: () => ({ set: setSpy }) }) }) }),
+    });
+    const res = await request(app).get('/api/public/offer-click?email=prof@school.edu&campaign=test_camp&plan=team');
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toContain('pricing.html?plan=team&ref=test_camp&email=prof%40school.edu');
+  });
+
+  test('redirects to pricing even without email', async () => {
+    const res = await request(app).get('/api/public/offer-click');
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toContain('pricing.html');
+  });
+});
+

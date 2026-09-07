@@ -54,6 +54,7 @@ const FRONTEND_EVENT_TYPES = new Set([
   'pricing_page_opened',
   'history_page_opened',
   'upgrade_plan_hovered',
+  'offer_link_clicked',
 ]);
 
 // POST /api/event — let the frontend record activation/funnel events that only

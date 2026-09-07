@@ -239,7 +239,7 @@ router.get('/billing/status', requireAuth, async (req, res) => {
     if (plan.plan !== 'pro' && typeof countUserMonthlyExports === 'function') {
       try {
         const used = await countUserMonthlyExports(req.user.domain, req.user.email);
-        exportQuota = { used, limit: 2 };
+        exportQuota = { used, limit: 3 };
       } catch (e) {
         log.warn('billing: countUserMonthlyExports failed in status', { error: e.message });
       }

@@ -267,4 +267,36 @@ router.get('/public/review-click', async (req, res) => {
   res.redirect(302, `${MARKETPLACE_URL}?utm_source=${encodeURIComponent(source)}`);
 });
 
+// GET /api/public/offer-click — Tracked redirect for domain and promotional offers.
+// Unauth by design (clicked from outbound campaign emails). Records click in telemetry & user doc,
+// then redirects to pricing page or designated target.
+router.get('/public/offer-click', async (req, res) => {
+  const email = typeof req.query.email === 'string' ? req.query.email.trim().toLowerCase() : '';
+  const campaign = typeof req.query.campaign === 'string' ? req.query.campaign.slice(0, 50) : 'domain_offer';
+  const plan = typeof req.query.plan === 'string' ? req.query.plan.slice(0, 20) : 'team';
+  const target = `https://attendancetracker.dev/pricing.html?plan=${encodeURIComponent(plan)}&ref=${encodeURIComponent(campaign)}&email=${encodeURIComponent(email)}`;
+
+  if (email && email.includes('@')) {
+    try {
+      const domain = email.split('@')[1];
+      const updateData = {
+        offerLinkClickedAt: new Date().toISOString(),
+        offerStatus: 'clicked',
+        offerCampaign: campaign,
+      };
+      const db = getDb();
+      await db.collection('domains').doc(domain).collection('users').doc(email).set(updateData, { merge: true });
+      try {
+        await db.collection('tenants').doc(domain).collection('users').doc(email).set(updateData, { merge: true });
+      } catch (e) {}
+      logEvent(domain, { type: 'offer_link_clicked', email, campaign, plan });
+      log.info('public: offer link clicked', { email, campaign, plan });
+    } catch (err) {
+      log.warn('public: offer click tracking failed', { email, error: err.message });
+    }
+  }
+
+  res.redirect(302, target);
+});
+
 module.exports = router;
