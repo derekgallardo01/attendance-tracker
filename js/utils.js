@@ -293,12 +293,192 @@
     };
   }
 
+  // ─── class roster parsing & matching ───
+  function parseStudentsInput(text) {
+    if (!text || typeof text !== 'string') return [];
+    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    const students = [];
+    for (const line of lines) {
+      const angleMatch = line.match(/^([^<]+)<([^>]+)>$/);
+      if (angleMatch) {
+        students.push({ name: angleMatch[1].trim(), email: angleMatch[2].trim().toLowerCase() });
+        continue;
+      }
+      const commaParts = line.split(',');
+      if (commaParts.length === 2 && commaParts[1].includes('@')) {
+        students.push({ name: commaParts[0].trim(), email: commaParts[1].trim().toLowerCase() });
+        continue;
+      }
+      if (line.includes('@')) {
+        students.push({ name: line.split('@')[0].trim(), email: line.toLowerCase() });
+      } else {
+        students.push({ name: line, email: '' });
+      }
+    }
+    return students;
+  }
+
+  function findParticipantForStudent(student, participants) {
+    if (!student || !participants) return null;
+    const sEmail = (student.email || '').trim().toLowerCase();
+    const sName = (student.name || '').trim().toLowerCase();
+
+    if (sEmail) {
+      for (const p of participants) {
+        if (p && p.email && p.email.trim().toLowerCase() === sEmail) return p;
+      }
+    }
+
+    if (sName) {
+      const sNorm = sName.replace(/[^a-z0-9]/g, '');
+      for (const p of participants) {
+        if (!p) continue;
+        const pNorm = (p.displayName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (sNorm && pNorm && sNorm === pNorm) return p;
+      }
+      for (const p of participants) {
+        if (!p) continue;
+        const pLower = (p.displayName || '').toLowerCase();
+        if (pLower && (pLower.includes(sName) || sName.includes(pLower))) return p;
+      }
+    }
+    return null;
+  }
+
+  function buildAttendanceCsv(parts, activeRoster, opts = {}) {
+    const meetingTitle = opts.meetingTitle || 'Meeting';
+    const totalMeetingMs = opts.totalMeetingMs || 0;
+    const meetingMinutes = totalMeetingMs > 0 ? Math.max(1, Math.round(totalMeetingMs / 60000)) : (opts.meetingMinutes || 1);
+    const lateMinutes = (opts.lateMinutes !== undefined) ? Number(opts.lateMinutes) : 10;
+    const minPercent = (opts.minPercent !== undefined) ? Number(opts.minPercent) : 0;
+    const excusedStudents = opts.excusedStudents || {};
+    const startTime = opts.startTime ? new Date(opts.startTime) : null;
+    const now = opts.now ? new Date(opts.now) : new Date();
+
+    const escapeCsv = (val) => {
+      if (val === null || val === undefined) return '""';
+      const s = String(val).replace(/"/g, '""');
+      return `"${s}"`;
+    };
+
+    const rows = [];
+    rows.push([
+      'Name',
+      'Email',
+      'Status',
+      'Attendance %',
+      'Duration (min)',
+      'Join Time',
+      'Leave Time',
+      'Rejoins',
+      'Notes'
+    ].map(escapeCsv).join(','));
+
+    if (activeRoster && Array.isArray(activeRoster) && activeRoster.length > 0) {
+      const matchedParticipants = new Set();
+
+      for (const student of activeRoster) {
+        const p = findParticipantForStudent(student, parts);
+        const studentKey = (student.email || student.name || '').toLowerCase();
+        const excuse = excusedStudents[studentKey] || null;
+        const isExcused = !!(excuse && excuse.excused);
+        const note = excuse ? (excuse.note || '') : '';
+
+        if (p) {
+          matchedParticipants.add(p);
+          const durMs = (p._accumulatedMs || 0) + (p.present && p.joinTime ? (now.getTime() - new Date(p.joinTime).getTime()) : 0);
+          const durMin = Math.round(durMs / 60000);
+          const pct = meetingMinutes > 0 ? Math.min(100, Math.round((durMin / meetingMinutes) * 100)) : 100;
+
+          let isLate = false;
+          if (startTime && p.joinTime && lateMinutes > 0) {
+            const diffMin = (new Date(p.joinTime).getTime() - startTime.getTime()) / 60000;
+            if (diffMin > lateMinutes) isLate = true;
+          }
+
+          let status = 'Present';
+          if (pct < minPercent) {
+            status = isExcused ? 'Excused (Short Stay)' : 'Left Early / Incomplete';
+          } else if (isLate) {
+            status = 'Late';
+          } else if (!p.present) {
+            status = 'Present (Left)';
+          }
+
+          rows.push([
+            p.displayName || student.name,
+            p.email || student.email || '',
+            status,
+            `${pct}%`,
+            durMin,
+            p.joinTime ? new Date(p.joinTime).toLocaleTimeString() : '',
+            (!p.present && p.leaveTime) ? new Date(p.leaveTime).toLocaleTimeString() : '',
+            p.rejoins || 0,
+            note
+          ].map(escapeCsv).join(','));
+        } else {
+          const status = isExcused ? 'Absent (Excused)' : 'Absent';
+          rows.push([
+            student.name,
+            student.email || '',
+            status,
+            '0%',
+            0,
+            '',
+            '',
+            0,
+            note
+          ].map(escapeCsv).join(','));
+        }
+      }
+
+      for (const p of parts) {
+        if (!matchedParticipants.has(p)) {
+          const durMs = (p._accumulatedMs || 0) + (p.present && p.joinTime ? (now.getTime() - new Date(p.joinTime).getTime()) : 0);
+          const durMin = Math.round(durMs / 60000);
+          const pct = meetingMinutes > 0 ? Math.min(100, Math.round((durMin / meetingMinutes) * 100)) : 100;
+          rows.push([
+            p.displayName,
+            p.email || '',
+            p.present ? 'Guest (Present)' : 'Guest (Left)',
+            `${pct}%`,
+            durMin,
+            p.joinTime ? new Date(p.joinTime).toLocaleTimeString() : '',
+            (!p.present && p.leaveTime) ? new Date(p.leaveTime).toLocaleTimeString() : '',
+            p.rejoins || 0,
+            'Unregistered guest'
+          ].map(escapeCsv).join(','));
+        }
+      }
+    } else {
+      for (const p of parts) {
+        const durMs = (p._accumulatedMs || 0) + (p.present && p.joinTime ? (now.getTime() - new Date(p.joinTime).getTime()) : 0);
+        const durMin = Math.round(durMs / 60000);
+        const pct = meetingMinutes > 0 ? Math.min(100, Math.round((durMin / meetingMinutes) * 100)) : 100;
+        rows.push([
+          p.displayName,
+          p.email || '',
+          p.present ? 'Present' : 'Left',
+          `${pct}%`,
+          durMin,
+          p.joinTime ? new Date(p.joinTime).toLocaleTimeString() : '',
+          (!p.present && p.leaveTime) ? new Date(p.leaveTime).toLocaleTimeString() : '',
+          p.rejoins || 0,
+          ''
+        ].map(escapeCsv).join(','));
+      }
+    }
+
+    return '\uFEFF' + rows.join('\r\n');
+  }
+
   const api = {
     escHtml, formatRelative, fmtTime, fmtDur, fmtDurMs, isoFmt, datestamp,
     latenessMin, avatarColor, participantKey, distinctAttendees,
     autoMatchAttendees, participantTotalMs, isSelfParticipant,
     isValidSlackWebhook, maskWebhookUrl,
     serializeSession, parseSession,
+    parseStudentsInput, findParticipantForStudent, buildAttendanceCsv,
     LATE_THRESHOLD_MIN, AVATAR_PALETTE, SLACK_WEBHOOK_PREFIX,
   };
 

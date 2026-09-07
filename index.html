@@ -1701,6 +1701,9 @@ function closeRosterModal() {
 }
 
 function parseStudentsInput(text) {
+  if (typeof AttUtils !== 'undefined' && AttUtils.parseStudentsInput) {
+    return AttUtils.parseStudentsInput(text);
+  }
   const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   const students = [];
   for (const line of lines) {
@@ -1785,6 +1788,9 @@ function onThresholdChange() {
 }
 
 function findParticipantForStudent(student, participants) {
+  if (typeof AttUtils !== 'undefined' && AttUtils.findParticipantForStudent) {
+    return AttUtils.findParticipantForStudent(student, participants);
+  }
   if (!student) return null;
   const sEmail = (student.email || '').trim().toLowerCase();
   const sName = (student.name || '').trim().toLowerCase();
@@ -1796,13 +1802,9 @@ function findParticipantForStudent(student, participants) {
   }
 
   if (sName) {
-    const sNorm = (typeof AttUtils !== 'undefined' && AttUtils.normalizeName)
-      ? AttUtils.normalizeName(sName)
-      : sName.replace(/[^a-z0-9]/g, '');
+    const sNorm = sName.replace(/[^a-z0-9]/g, '');
     for (const p of participants) {
-      const pNorm = (typeof AttUtils !== 'undefined' && AttUtils.normalizeName)
-        ? AttUtils.normalizeName(p.displayName || '')
-        : (p.displayName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const pNorm = (p.displayName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
       if (sNorm && pNorm && sNorm === pNorm) return p;
     }
     for (const p of participants) {
@@ -2004,128 +2006,19 @@ function downloadAttendanceCsv() {
   const now = new Date();
   const dateStr = now.toISOString().slice(0, 10);
   const totalMeetingMs = (state.startTime && state.startTime.getTime()) ? (now.getTime() - state.startTime.getTime()) : 0;
-  const meetingMinutes = totalMeetingMs > 0 ? Math.max(1, Math.round(totalMeetingMs / 60000)) : 1;
-
-  const lateMinutes = (state.thresholds && state.thresholds.lateMinutes !== undefined) ? Number(state.thresholds.lateMinutes) : 10;
-  const minPercent = (state.thresholds && state.thresholds.minPercent !== undefined) ? Number(state.thresholds.minPercent) : 0;
-
-  const escapeCsv = (val) => {
-    if (val === null || val === undefined) return '""';
-    const s = String(val).replace(/"/g, '""');
-    return `"${s}"`;
-  };
-
-  const rows = [];
-  rows.push([
-    'Name',
-    'Email',
-    'Status',
-    'Attendance %',
-    'Duration (min)',
-    'Join Time',
-    'Leave Time',
-    'Rejoins',
-    'Notes'
-  ].map(escapeCsv).join(','));
-
   const activeRoster = (state.activeRosterName && state.rosters) ? state.rosters[state.activeRosterName] : null;
 
-  if (activeRoster && Array.isArray(activeRoster) && activeRoster.length > 0) {
-    const matchedParticipants = new Set();
-
-    for (const student of activeRoster) {
-      const p = findParticipantForStudent(student, parts);
-      const studentKey = (student.email || student.name || '').toLowerCase();
-      const excuse = (state.excusedStudents && state.excusedStudents[studentKey]) || null;
-      const isExcused = !!(excuse && excuse.excused);
-      const note = excuse ? (excuse.note || '') : '';
-
-      if (p) {
-        matchedParticipants.add(p);
-        const durMs = (p._accumulatedMs || 0) + (p.present && p.joinTime ? (now.getTime() - p.joinTime.getTime()) : 0);
-        const durMin = Math.round(durMs / 60000);
-        const pct = meetingMinutes > 0 ? Math.min(100, Math.round((durMin / meetingMinutes) * 100)) : 100;
-
-        let isLate = false;
-        if (state.startTime && p.joinTime && lateMinutes > 0) {
-          const diffMin = (p.joinTime.getTime() - state.startTime.getTime()) / 60000;
-          if (diffMin > lateMinutes) isLate = true;
-        }
-
-        let status = 'Present';
-        if (pct < minPercent) {
-          status = isExcused ? 'Excused (Short Stay)' : 'Left Early / Incomplete';
-        } else if (isLate) {
-          status = 'Late';
-        } else if (!p.present) {
-          status = 'Present (Left)';
-        }
-
-        rows.push([
-          p.displayName || student.name,
-          p.email || student.email || '',
-          status,
-          `${pct}%`,
-          durMin,
-          p.joinTime ? p.joinTime.toLocaleTimeString() : '',
-          (!p.present && p.leaveTime) ? p.leaveTime.toLocaleTimeString() : '',
-          p.rejoins || 0,
-          note
-        ].map(escapeCsv).join(','));
-      } else {
-        const status = isExcused ? 'Absent (Excused)' : 'Absent';
-        rows.push([
-          student.name,
-          student.email || '',
-          status,
-          '0%',
-          0,
-          '',
-          '',
-          0,
-          note
-        ].map(escapeCsv).join(','));
-      }
-    }
-
-    for (const p of parts) {
-      if (!matchedParticipants.has(p)) {
-        const durMs = (p._accumulatedMs || 0) + (p.present && p.joinTime ? (now.getTime() - p.joinTime.getTime()) : 0);
-        const durMin = Math.round(durMs / 60000);
-        const pct = meetingMinutes > 0 ? Math.min(100, Math.round((durMin / meetingMinutes) * 100)) : 100;
-        rows.push([
-          p.displayName,
-          p.email || '',
-          p.present ? 'Guest (Present)' : 'Guest (Left)',
-          `${pct}%`,
-          durMin,
-          p.joinTime ? p.joinTime.toLocaleTimeString() : '',
-          (!p.present && p.leaveTime) ? p.leaveTime.toLocaleTimeString() : '',
-          p.rejoins || 0,
-          'Unregistered guest'
-        ].map(escapeCsv).join(','));
-      }
-    }
-  } else {
-    for (const p of parts) {
-      const durMs = (p._accumulatedMs || 0) + (p.present && p.joinTime ? (now.getTime() - p.joinTime.getTime()) : 0);
-      const durMin = Math.round(durMs / 60000);
-      const pct = meetingMinutes > 0 ? Math.min(100, Math.round((durMin / meetingMinutes) * 100)) : 100;
-      rows.push([
-        p.displayName,
-        p.email || '',
-        p.present ? 'Present' : 'Left',
-        `${pct}%`,
-        durMin,
-        p.joinTime ? p.joinTime.toLocaleTimeString() : '',
-        (!p.present && p.leaveTime) ? p.leaveTime.toLocaleTimeString() : '',
-        p.rejoins || 0,
-        ''
-      ].map(escapeCsv).join(','));
-    }
-  }
-
-  const csvContent = '\uFEFF' + rows.join('\r\n');
+  const csvContent = (typeof AttUtils !== 'undefined' && AttUtils.buildAttendanceCsv)
+    ? AttUtils.buildAttendanceCsv(parts, activeRoster, {
+        meetingTitle,
+        totalMeetingMs,
+        lateMinutes: state.thresholds?.lateMinutes,
+        minPercent: state.thresholds?.minPercent,
+        excusedStudents: state.excusedStudents,
+        startTime: state.startTime,
+        now
+      })
+    : '';
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
