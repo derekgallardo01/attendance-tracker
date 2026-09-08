@@ -2,7 +2,7 @@
 // Self-contained on _core (no calls into operational firestore functions).
 // The heavy read functions are memoize-wrapped at the services/firestore.js
 // export site, not here.
-const { getDb, tenantRef, FieldValue, log, SUPER_ADMIN_EMAIL, countDistinctAttendees, tsMs, domainOf } = require('./_core');
+const { getDb, tenantRef, FieldValue, log, SUPER_ADMIN_EMAIL, PERSONAL_EMAIL_DOMAINS, countDistinctAttendees, tsMs, domainOf } = require('./_core');
 
 // Module-level cache for getActivationFunnel (scans all users + events).
 let _funnelCache = null;
@@ -681,6 +681,10 @@ async function getAdvancedAnalytics() {
     const orgBuckets = { '1': 0, '2': 0, '3-4': 0, '5+': 0 };
     const multiUserOrgs = [];
     for (const [domain, list] of Object.entries(usersByDomain)) {
+      // Personal-email "domains" (gmail.com et al) aren't orgs — 90 gmail
+      // users sharing a tenant is not a network effect. Test/legacy domains
+      // are noise for the same reason.
+      if (PERSONAL_EMAIL_DOMAINS.has(domain) || FUNNEL_EXCLUDED_DOMAINS.has(domain) || domain === 'example.com') continue;
       const n = list.length;
       if (n === 1) orgBuckets['1']++;
       else if (n === 2) orgBuckets['2']++;
@@ -693,8 +697,8 @@ async function getAdvancedAnalytics() {
         multiUserOrgs.push({
           domain,
           userCount: n,
-          firstUserAt: new Date(sorted[0].createdAt).toISOString(),
-          mostRecentUserAt: new Date(sorted[n - 1].createdAt).toISOString(),
+          firstUserAt: sorted[0].createdAt ? new Date(sorted[0].createdAt).toISOString() : null,
+          mostRecentUserAt: sorted[n - 1].createdAt ? new Date(sorted[n - 1].createdAt).toISOString() : null,
           firstUserStillActive: firstUserActive,
           users: sorted.map(u => ({ email: u.email, displayName: u.displayName, joinedAt: new Date(u.createdAt).toISOString() })),
         });

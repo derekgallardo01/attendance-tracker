@@ -1695,7 +1695,7 @@ module.exports = {
   getTenantConfig, upsertTenantConfig,
   setTenantPlan, getTenantPlan, setUserPlan, getUserPlan,
   getTeamAdminStatus, claimTeamAdmin, transferTeamAdmin,
-  countDistinctAttendees, getActivationFunnel,
+  countDistinctAttendees,
   persistAttendance, persistCalendarData, persistExport,
   getMeetingExcusedEmails, addMeetingExcusedEmails, getMeetingWithParticipants,
   saveVerifications, getVerification,
@@ -1731,4 +1731,6 @@ module.exports = {
   getOutreachList: memoizeTTL(getOutreachList, 120000),
   getRecentActivity: memoizeTTL(getRecentActivity, 60000),
   getActivityPulse: memoizeTTL(getActivityPulse, 60000),
+  // Full events+users scan, measured 13-18s in prod — cache it like the rest.
+  getActivationFunnel: memoizeTTL(getActivationFunnel, 120000),
 };

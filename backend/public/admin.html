@@ -56,6 +56,14 @@
        the rule only ever hides inactive ones. */
     .tab-pane:not(.active) { display: none !important; }
 
+    /* Analytics insights: two-column card grid instead of a single stack.
+       (The reveal JS sets display:grid inline; these rules do the rest.) */
+    #insights-section { grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 16px; margin-bottom: 24px; align-items: start; }
+    #insights-section > .section { margin-bottom: 0; }
+    #insights-section > .stats-grid { grid-column: 1 / -1; margin-bottom: 0; }
+    #insights-section > .section.span-full { grid-column: 1 / -1; }
+    @media (max-width: 1000px) { #insights-section { grid-template-columns: 1fr; } }
+
     /* Long tables scroll inside their card instead of stretching the page */
     .table-scroll { max-height: 440px; overflow-y: auto; }
     .table-scroll thead th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
@@ -483,10 +491,12 @@
         <!-- Multi-user orgs (network effect leads) -->
         <div class="section">
           <h2>Multi-user organizations <span style="color:var(--muted);font-weight:400;font-size:.8rem">— network effect leads</span></h2>
+          <div class="table-scroll" style="max-height:380px">
           <table>
             <thead><tr><th>Domain</th><th>Users</th><th>1st user joined</th><th>Most recent</th><th>1st user active?</th></tr></thead>
             <tbody id="multi-org-rows"><tr><td colspan="5" style="color:var(--muted)">No multi-user orgs yet.</td></tr></tbody>
           </table>
+          </div>
         </div>
 
         <!-- Source attribution funnel -->
@@ -552,17 +562,19 @@
           </table>
         </div>
 
-        <div class="section">
+        <div class="section span-full">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
             <h2 style="margin:0">Most Active Users <span style="color:var(--muted);font-weight:400;font-size:.8rem">(last 30 days)</span></h2>
             <button id="btn-outreach-csv" onclick="downloadOutreachList()" style="background:var(--accent);color:#fff;border:none;border-radius:6px;padding:8px 14px;font-weight:600;font-size:.85rem;cursor:pointer">
               Download outreach CSV
             </button>
           </div>
-          <table style="margin-top:12px">
+          <div class="table-scroll" style="max-height:380px;margin-top:12px">
+          <table>
             <thead><tr><th>Email</th><th>Domain</th><th>Tracked</th><th>Exported</th><th>Source</th></tr></thead>
             <tbody id="top-active-rows"><tr><td colspan="5" style="color:var(--muted)">No activity yet</td></tr></tbody>
           </table>
+          </div>
         </div>
 
         <div class="section">
@@ -588,10 +600,12 @@
 
         <div class="section">
           <h2>Churned Users <span style="color:var(--muted);font-weight:400;font-size:.8rem">(signed in &ge;7d ago, never tracked)</span></h2>
+          <div class="table-scroll" style="max-height:320px">
           <table>
             <thead><tr><th>Email</th><th>Domain</th><th>Name</th><th>Signed Up</th><th>Last Login</th></tr></thead>
             <tbody id="churned-rows"><tr><td colspan="5" style="color:var(--muted)">None — nice</td></tr></tbody>
           </table>
+          </div>
         </div>
       </div>
 
@@ -841,7 +855,7 @@
         });
         if (!res.ok) { console.warn('insights failed:', res.status); return; }
         const d = await res.json();
-        document.getElementById('insights-section').style.display = 'block';
+        document.getElementById('insights-section').style.display = 'grid'; // the pane lays out as a 2-col card grid
 
         // Stat cards
         document.getElementById('ins-activation').textContent = pct(d.activationRate);
@@ -1184,9 +1198,17 @@
     // ── Advanced analytics (segments, funnels, time patterns, org adoption) ──
     let _analytics = null;
     async function loadActivationFunnel() {
+      const barsEl = document.getElementById('funnel-bars');
+      // First uncached load scans the whole events log server-side (~15s);
+      // say so instead of a bare "Loading…" that reads as broken.
+      if (barsEl && !barsEl.dataset.loaded) barsEl.innerHTML = '<div style="color:var(--muted);font-size:.85rem">Crunching the full event log — first load takes ~15s, then it\'s cached…</div>';
       try {
         const res = await fetch(`${BACKEND_URL}/admin/activation-funnel`, { headers: { Authorization: `Bearer ${sessionToken}` } });
-        if (!res.ok) return;
+        if (!res.ok) {
+          if (barsEl) barsEl.innerHTML = `<div style="color:var(--error);font-size:.85rem">Funnel failed to load (HTTP ${res.status}) — hit Refresh to retry.</div>`;
+          return;
+        }
+        if (barsEl) barsEl.dataset.loaded = '1';
         const f = await res.json();
         const t = f.totals || {};
         if (f.excluded) {
@@ -1264,8 +1286,8 @@
             <tr>
               <td>${esc(o.domain)}</td>
               <td><strong style="color:var(--accent)">${o.userCount}</strong></td>
-              <td style="color:var(--muted);font-size:.8rem">${esc(fmtDate(o.firstUserAt))}</td>
-              <td style="color:var(--muted);font-size:.8rem">${esc(fmtDate(o.mostRecentUserAt))}</td>
+              <td style="color:var(--muted);font-size:.8rem">${o.firstUserAt ? esc(fmtDate(o.firstUserAt)) : '—'}</td>
+              <td style="color:var(--muted);font-size:.8rem">${o.mostRecentUserAt ? esc(fmtDate(o.mostRecentUserAt)) : '—'}</td>
               <td>${o.firstUserStillActive ? '<span style="color:var(--accent)">✓ Yes</span>' : '<span style="color:var(--error)">✗ No</span>'}</td>
             </tr>
           `).join('');
@@ -1295,9 +1317,12 @@
         // Day-of-week bars
         const dowLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         const maxDow = Math.max(1, ...a.signupDayOfWeekUTC);
+        // NB: each bar lives inside a labeled flex-column wrapper, so the
+        // wrapper needs height:100% or the percentage heights collapse and
+        // every bar renders at min-height (the "flat chart" bug).
         document.getElementById('dow-bars').innerHTML = a.signupDayOfWeekUTC.map((c, i) => {
           const ht = Math.max(2, Math.round((c / maxDow) * 100));
-          return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div title="${dowLabels[i]} — ${c}" style="width:100%;background:var(--accent);height:${ht}%;min-height:4px;border-radius:3px 3px 0 0;opacity:${c > 0 ? 1 : .25}"></div><div style="font-size:.65rem;color:var(--muted)">${dowLabels[i]}</div></div>`;
+          return `<div style="flex:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px"><div title="${dowLabels[i]} — ${c}" style="width:100%;background:var(--accent);height:${ht}%;min-height:4px;border-radius:3px 3px 0 0;opacity:${c > 0 ? 1 : .25}"></div><div style="font-size:.65rem;color:var(--muted);flex-shrink:0">${dowLabels[i]}</div></div>`;
         }).join('');
       } catch (err) {
         console.error('analytics load failed:', err);
@@ -1699,10 +1724,21 @@
           </tr>
         `}).join('');
 
-        // Source breakdown
+        // Source breakdown — bucket the machine-y prefixed sources
+        // (colleague_referral:<email>, invite:<email>, ref:<host>, utm:<x>)
+        // so one chart row per FAMILY instead of one per referrer email.
+        const bucketSource = (s) => {
+          if (!s) return 'unknown';
+          if (s.startsWith('colleague_referral:')) return 'colleague referral';
+          if (s.startsWith('invite:')) return 'invite link';
+          if (s.startsWith('ref:')) return 'referrer: ' + s.slice(4);
+          if (s.startsWith('utm:')) return 'utm: ' + s.slice(4);
+          if (s === 'marketplace:in_meet_addon') return 'marketplace (in-Meet)';
+          return s;
+        };
         const sources = {};
         data.users.forEach(u => {
-          const s = u.acquisitionSource || u.signupDetectedSource || 'unknown';
+          const s = bucketSource(u.acquisitionSource || u.signupDetectedSource);
           sources[s] = (sources[s] || 0) + 1;
         });
         const total = data.users.length;
@@ -1711,7 +1747,7 @@
           .map(([name, count]) => {
             const pct = ((count / total) * 100).toFixed(1);
             return `<div style="display:flex;align-items:center;margin:6px 0;font-size:.9rem">
-              <div style="width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(name)}</div>
+              <div style="width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(name)}">${esc(name)}</div>
               <div style="flex:1;background:var(--surface);border-radius:4px;height:18px;margin:0 8px;overflow:hidden">
                 <div style="width:${pct}%;background:var(--accent);height:100%;border-radius:4px"></div>
               </div>
