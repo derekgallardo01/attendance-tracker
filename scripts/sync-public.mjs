@@ -26,6 +26,8 @@ const MIRRORED = [
   'admin.html',
   'attendance-tracker-for-teachers.html',
   'best-google-meet-attendance-extensions.html',
+  'changelog.html',
+  'student-data-privacy.html',
   'export-google-meet-attendance-to-sheets.html',
   'faq.html',
   'google114b85a1b49d499d.html',

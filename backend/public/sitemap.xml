@@ -236,6 +236,16 @@
     <priority>0.3</priority>
   </url>
   <url>
+    <loc>https://attendancetracker.dev/student-data-privacy.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://attendancetracker.dev/changelog.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://attendancetracker.dev/terms.html</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
