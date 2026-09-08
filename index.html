@@ -1380,10 +1380,10 @@
   </div>
 
   <div id="sheet-link-bar" style="display:none; padding:4px 16px; font-size:11px;">
-    <a id="sheet-link" href="#" target="_blank" style="color:var(--green); text-decoration:none;">Open exported sheet</a>
-    <a href="#" onclick="downloadAttendanceCsv(); return false;" style="color:var(--green); text-decoration:none; margin-left:14px;">Download CSV</a>
-    <a href="#" onclick="downloadPdfReport(); return false;" style="color:var(--green); text-decoration:none; margin-left:14px;">PDF report</a>
-    <a href="#" onclick="downloadCertificates(); return false;" style="color:var(--green); text-decoration:none; margin-left:14px;">Certificates</a>
+    <a id="sheet-link" href="#" target="_blank" data-i18n="bar.openSheet" style="color:var(--green); text-decoration:none;">Open exported sheet</a>
+    <a href="#" onclick="downloadAttendanceCsv(); return false;" data-i18n="bar.downloadCsv" style="color:var(--green); text-decoration:none; margin-left:14px;">Download CSV</a>
+    <a href="#" onclick="downloadPdfReport(); return false;" data-i18n="bar.pdfReport" style="color:var(--green); text-decoration:none; margin-left:14px;">PDF report</a>
+    <a href="#" onclick="downloadCertificates(); return false;" data-i18n="bar.certificates" style="color:var(--green); text-decoration:none; margin-left:14px;">Certificates</a>
     <a href="#" onclick="downloadLmsCsv('moodle'); return false;" title="Gradebook CSV for Moodle import" style="color:var(--green); text-decoration:none; margin-left:14px;">Moodle</a>
     <a href="#" onclick="downloadLmsCsv('canvas'); return false;" title="Gradebook CSV for Canvas import" style="color:var(--green); text-decoration:none; margin-left:14px;">Canvas</a>
   </div>
@@ -1562,7 +1562,7 @@
     <!-- Gradebook export links — shown alongside the chips once a roster is
          active and there's attendance data (same visibility as #roster-chips). -->
     <div id="roster-lms-bar" style="display:none;padding:8px 2px 2px;font-size:11px;color:var(--muted)">
-      Export gradebook CSV:
+      <span data-i18n="roster.exportGradebook">Export gradebook CSV:</span>
       <a href="#" onclick="downloadLmsCsv('moodle'); return false;" style="color:var(--green);text-decoration:none;margin-left:6px">Moodle</a>
       <span style="margin:0 4px">·</span>
       <a href="#" onclick="downloadLmsCsv('canvas'); return false;" style="color:var(--green);text-decoration:none">Canvas</a>
@@ -1837,7 +1837,7 @@ async function importClassroomCourse() {
   } catch (err) {
     showClassroomStatus(`Import failed (${err.message}). Try again in a moment.`, '#f85149');
   } finally {
-    if (importBtn) { importBtn.disabled = false; importBtn.textContent = 'Import'; }
+    if (importBtn) { importBtn.disabled = false; importBtn.textContent = t('roster.importBtn', 'Import'); }
   }
 }
 
@@ -1938,7 +1938,7 @@ function deleteCurrentRoster() {
     // Make the confirmation visible AT the button, not just the bottom toast:
     // the × morphs into a red "Confirm delete?" for the arm window.
     if (btn) {
-      btn.textContent = 'Confirm delete?';
+      btn.textContent = t('roster.deleteConfirmArm', 'Confirm delete?');
       btn.style.background = 'rgba(248,113,113,.15)';
       btn.style.color = '#f87171';
       btn.style.fontWeight = '700';
@@ -2825,10 +2825,10 @@ async function signOut() {
 // local session like a sign-out.
 async function deleteMyAccount() {
   const btn = document.getElementById('settings-delete-btn');
-  if (!armedConfirm('delete-account', 'This permanently deletes your account, settings, activity, and attendance records. Click the button again within 8 seconds to confirm.', 8000)) {
+  if (!armedConfirm('delete-account', t('settings.deleteDesc', 'This permanently deletes your account, settings, activity, and attendance records.') + ' ' + t('settings.deleteConfirmArm', 'Click again to permanently delete'), 8000)) {
     if (btn) {
-      btn.textContent = 'Click again to permanently delete';
-      setTimeout(() => { if (btn && !btn.disabled) btn.textContent = 'Delete my account'; }, 8000);
+      btn.textContent = t('settings.deleteConfirmArm', 'Click again to permanently delete');
+      setTimeout(() => { if (btn && !btn.disabled) btn.textContent = t('settings.deleteMyAccount', 'Delete my account'); }, 8000);
     }
     return;
   }
@@ -2852,7 +2852,7 @@ async function deleteMyAccount() {
     toast(t('toast.accountDeleted'));
   } catch (err) {
     toast('Could not delete your account — try again or contact support.');
-    if (btn) { btn.disabled = false; btn.textContent = 'Delete my account'; }
+    if (btn) { btn.disabled = false; btn.textContent = t('settings.deleteMyAccount', 'Delete my account'); }
   }
 }
 
@@ -3661,7 +3661,7 @@ async function loadBillingStatus() {
     const btn = document.getElementById('settings-billing-btn');
     const descEl = document.getElementById('settings-billing-desc');
     if (nameEl) {
-      nameEl.textContent = _isPro ? 'Pro' : 'Free';
+      nameEl.textContent = _isPro ? 'Pro' : t('settings.planFree', 'Free');
       nameEl.style.background = _isPro ? 'rgba(74,222,128,.15)' : 'rgba(255,255,255,.08)';
       nameEl.style.color = _isPro ? '#4ade80' : '#8b949e';
     }
@@ -3670,16 +3670,16 @@ async function loadBillingStatus() {
     // button rather than dead-end a paying user.
     const hasPortal = !_isPro || !!data.stripeCustomerId;
     if (btn) {
-      btn.textContent = _isPro ? 'Manage billing' : 'Upgrade to Pro';
+      btn.textContent = _isPro ? t('settings.manageBilling', 'Manage billing') : t('settings.upgradeToPro', 'Upgrade to Pro');
       btn.style.display = hasPortal ? '' : 'none';
     }
     // Tier-aware copy: personal-Gmail users buy the individual plan (class report
     // + auto-export + digests); Workspace domains buy the org/team plan.
     if (descEl) descEl.textContent = (_isPro && !hasPortal)
-      ? 'Your Pro pass is active on this account. Need a receipt or help with billing? Reply to your purchase email or contact support.'
+      ? t('settings.proActiveDesc', 'Your Pro pass is active on this account. Need a receipt or help with billing? Reply to your purchase email or contact support.')
       : (data.individual
-        ? 'Pro unlocks the cumulative per-student class report, auto-export, and email digests.'
-        : 'Pro unlocks the org-wide team dashboard and auto-export for your whole domain.');
+        ? t('settings.proDesc', 'Pro unlocks the cumulative per-student class report, auto-export, and email digests.')
+        : t('settings.proDescOrg', 'Pro unlocks the org-wide team dashboard and auto-export for your whole domain.'));
     box.style.display = 'block';
   } catch { /* leave hidden on error */ }
 }
@@ -3749,7 +3749,7 @@ async function handleBillingClick() {
       closeBillingTab(tab);
       toast('Could not reach billing.');
     } finally {
-      if (btn) { btn.disabled = false; btn.textContent = 'Manage billing'; }
+      if (btn) { btn.disabled = false; btn.textContent = t('settings.manageBilling', 'Manage billing'); }
     }
   } else {
     showUpgradeModal('settings');
@@ -4821,7 +4821,7 @@ function selectWebhookProvider(provider) {
   const status = document.getElementById('settings-webhook-status');
   if (status) status.style.display = 'none';
   if (server.configured && !(_webhookDrafts[provider] || '')) {
-    showSettingsStatus('Webhook is saved. Paste a new one to replace it.', '#9ca3af', ui.statusId);
+    showSettingsStatus(t('settings.webhookSavedHint', 'Webhook is saved. Paste a new one to replace it.'), '#9ca3af', ui.statusId);
   }
 }
 
@@ -4840,11 +4840,11 @@ async function saveWebhookSetting(provider) {
   const url = (input.value || '').trim();
   // Empty = clear the webhook. Anything else must look like the provider's URL.
   if (url && !p.validate(url)) {
-    showSettingsStatus(p.invalidMsg, '#f85149', p.statusId);
+    showSettingsStatus(t('settings.webhookInvalid', p.invalidMsg), '#f85149', p.statusId);
     return;
   }
   saveBtn.disabled = true;
-  saveBtn.textContent = 'Saving…';
+  saveBtn.textContent = t('settings.saving', 'Saving…');
   try {
     const res = await authFetch(`${state.backendUrl}/settings`, {
       method: 'PUT',
@@ -4855,7 +4855,7 @@ async function saveWebhookSetting(provider) {
       const body = await res.json().catch(() => ({}));
       throw new Error(body.error || `HTTP ${res.status}`);
     }
-    showSettingsStatus(url ? 'Saved' : 'Webhook cleared', '#4ade80', p.statusId);
+    showSettingsStatus(url ? t('settings.webhookSaved', 'Saved') : t('settings.webhookCleared', 'Webhook cleared'), '#4ade80', p.statusId);
     // Reflect the new server state in the tab dots + clear the draft.
     _webhookServer[provider] = { configured: !!url, masked: null };
     _webhookDrafts[provider] = '';
@@ -4867,7 +4867,7 @@ async function saveWebhookSetting(provider) {
     showSettingsStatus(err.message, '#f85149', p.statusId);
   } finally {
     saveBtn.disabled = false;
-    saveBtn.textContent = 'Save';
+    saveBtn.textContent = t('btn.save', 'Save');
   }
 }
 
@@ -4878,11 +4878,11 @@ async function testWebhookSetting(provider) {
   const url = (input.value || '').trim();
   // If user pasted a fresh URL, validate before sending. Empty = use saved.
   if (url && !p.validate(url)) {
-    showSettingsStatus(p.invalidMsg, '#f85149', p.statusId);
+    showSettingsStatus(t('settings.webhookInvalid', p.invalidMsg), '#f85149', p.statusId);
     return;
   }
   testBtn.disabled = true;
-  testBtn.textContent = 'Sending…';
+  testBtn.textContent = t('settings.sending', 'Sending…');
   try {
     const res = await authFetch(`${state.backendUrl}/settings/test-webhook`, {
       method: 'POST',
@@ -4893,13 +4893,13 @@ async function testWebhookSetting(provider) {
       const body = await res.json().catch(() => ({}));
       throw new Error(body.error || `HTTP ${res.status}`);
     }
-    showSettingsStatus(p.testOkMsg, '#4ade80', p.statusId);
+    showSettingsStatus(t('settings.testSent', p.testOkMsg), '#4ade80', p.statusId);
     try { logUserEvent('webhook_test_sent', { provider }); } catch {}
   } catch (err) {
     showSettingsStatus(err.message, '#f85149', p.statusId);
   } finally {
     testBtn.disabled = false;
-    testBtn.textContent = 'Send test';
+    testBtn.textContent = t('settings.sendTest', 'Send test');
   }
 }
 
@@ -5690,7 +5690,7 @@ window.addEventListener('DOMContentLoaded', () => {
           <span data-i18n="settings.deleteAccount">Delete account &amp; data</span>
         </div>
         <div class="settings-row-sub" style="margin-bottom:10px" data-i18n="settings.deleteDesc">Permanently removes your account, settings, activity, and attendance records. This cannot be undone.</div>
-        <button type="button" id="settings-delete-btn" onclick="deleteMyAccount()" style="background:transparent;border:1px solid rgba(248,81,73,.4);color:#f85149;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.75rem;font-weight:600">Delete my account</button>
+        <button type="button" id="settings-delete-btn" onclick="deleteMyAccount()" data-i18n="settings.deleteMyAccount" style="background:transparent;border:1px solid rgba(248,81,73,.4);color:#f85149;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.75rem;font-weight:600">Delete my account</button>
       </div>
     </div>
   </div>
@@ -5845,11 +5845,11 @@ window.addEventListener('DOMContentLoaded', () => {
       <div style="margin-bottom:14px">
         <button type="button" id="roster-classroom-btn" onclick="importFromClassroom()" class="btn-secondary" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;font-size:.76rem">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#34a853" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-          Import from Google Classroom
+          <span data-i18n="roster.importClassroom">Import from Google Classroom</span>
         </button>
         <div id="roster-classroom-picker" style="display:none;gap:8px;margin-top:8px;align-items:center">
           <select id="roster-classroom-course" style="flex:1;background:#0d1117;border:1px solid #30363d;color:#e6edf3;border-radius:6px;padding:7px 10px;font-size:.78rem;min-width:0"></select>
-          <button type="button" id="roster-classroom-import-btn" onclick="importClassroomCourse()" class="btn-primary" style="padding:7px 12px;font-size:.76rem;white-space:nowrap">Import</button>
+          <button type="button" id="roster-classroom-import-btn" onclick="importClassroomCourse()" class="btn-primary" data-i18n="roster.importBtn" style="padding:7px 12px;font-size:.76rem;white-space:nowrap">Import</button>
         </div>
         <div id="roster-classroom-status" style="display:none;font-size:.72rem;color:#8b949e;margin-top:6px"></div>
       </div>
