@@ -4038,6 +4038,16 @@ function showUpgradeModal(reason) {
   const email = (state.userEmail || '').toLowerCase();
   const isEdu = /\.(edu|edu\.[a-z]{2}|ac\.[a-z]{2}|gov\.[a-z]{2}|k12\.[a-z]{2}\.us)$/i.test(email) ||
                 /@(.*\.)?(school|academy|college|university|deped|alokitohridoy)/i.test(email);
+  // Revenue-funnel finding: the one organic sale came through a deliberate,
+  // self-directed path — and edu-domain users (most of the paywall audience)
+  // balk at $9.99 but the $4.99/yr pass is half the ask. Lead with the
+  // educator card for edu users; everyone else keeps Lifetime first.
+  const lifetimeCard = document.getElementById('plan-card-lifetime');
+  const eduCard = document.getElementById('plan-card-educator');
+  if (lifetimeCard && eduCard && lifetimeCard.parentNode === eduCard.parentNode) {
+    if (isEdu) lifetimeCard.parentNode.insertBefore(eduCard, lifetimeCard);
+    else eduCard.parentNode.insertBefore(lifetimeCard, eduCard);
+  }
   const dealPill = document.getElementById('upgrade-deal-pill');
   if (dealPill) {
     if (isEdu) {
@@ -6043,7 +6053,7 @@ window.addEventListener('DOMContentLoaded', () => {
       <div id="upgrade-modal-note" style="display:none;background:rgba(253,214,99,.1);border:1px solid rgba(253,214,99,.25);color:#fdd663;padding:8px 12px;border-radius:10px;font-size:.78rem;margin-bottom:14px;line-height:1.4"></div>
 
       <!-- Plan 1: Featured Lifetime Pro Pass (Crown Jewel / Best Value) -->
-      <div style="background:linear-gradient(180deg, rgba(52,168,83,.08), rgba(255,255,255,.02));border:1.5px solid rgba(129,201,149,.4);border-radius:14px;padding:16px;margin-bottom:12px;position:relative">
+      <div id="plan-card-lifetime" style="background:linear-gradient(180deg, rgba(52,168,83,.08), rgba(255,255,255,.02));border:1.5px solid rgba(129,201,149,.4);border-radius:14px;padding:16px;margin-bottom:12px;position:relative">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <div style="display:flex;align-items:center;gap:6px">
             <span style="font-weight:600;font-size:.92rem;color:#e3e3e3" data-i18n="upgrade.lifetimeName">Lifetime Pass</span>
@@ -6077,7 +6087,7 @@ window.addEventListener('DOMContentLoaded', () => {
       </div>
 
       <!-- Plan 2: Annual (Educator / Classroom Pass) -->
-      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(88,166,255,.2);border-radius:14px;padding:14px;margin-bottom:14px">
+      <div id="plan-card-educator" style="background:rgba(255,255,255,.03);border:1px solid rgba(88,166,255,.2);border-radius:14px;padding:14px;margin-bottom:14px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <div style="display:flex;align-items:center;gap:6px">
             <span style="font-weight:600;font-size:.88rem;color:#e3e3e3" data-i18n="pricing.planEduName">Educator Annual Pass</span>

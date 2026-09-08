@@ -1481,10 +1481,13 @@ async function getRevenueFunnel({ days = 30 } = {}) {
         r.gateViews++;
         if (ts > r.lastGateAt) r.lastGateAt = ts;
         // quota warnings carry no reason meta; label gates by their type or
-        // the modal's reason so the table shows WHICH gate was hit.
-        const label = e.type === 'upgrade_modal_shown' ? (e.meta?.reason || 'manual')
+        // the modal's reason so the table shows WHICH gate was hit. The
+        // modal's 'exportQuota' reason and the quota banner are the same
+        // gate — merge them into one row.
+        let label = e.type === 'upgrade_modal_shown' ? (e.meta?.reason || 'manual')
           : e.type === 'quota_warning_shown' ? 'sheets_quota'
           : 'series_csv_gate';
+        if (label === 'exportQuota') label = 'sheets_quota';
         r.gateTypes[label] = (r.gateTypes[label] || 0) + 1;
         trig(label).shown.add(email);
         if (e.type === 'quota_warning_shown') r.lastQuotaAt = ts;
