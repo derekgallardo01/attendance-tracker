@@ -34,13 +34,16 @@ No screenshots. No manual counting. No expensive Google Workspace for Education 
 • Late-Arrival Highlighting: Automatically flags latecomers (+5m, +12m) based on your scheduled Google Calendar™ start time.
 • Recurring Class & Meeting Trends: Multi-session roll-ups track attendance percentages and streaks across a 15-week semester or daily sprint.
 • Host & TA Tracking: The meeting host tracks attendance out of the box. For TAs, co-hosts, or attendees to track meetings they didn't organize, a Workspace admin enables a one-time delegation (attendancetracker.dev/setup).
-• Slack & Email Post-Meeting Digests: Send automated attendance summary cards directly to your #team-standup Slack channel or Gmail™ inbox.
+• Google Classroom™ Roster Import: Pull your class list into the panel in one click — no more pasting student names by hand.
+• Moodle & Canvas Gradebook CSVs: Download attendance as import-ready gradebook files for your LMS, per session or across a whole semester.
+• Slack, Google Chat™ & Discord Digests: Send automated attendance summary cards to your team channel or space after every export, plus Gmail™ digests.
 • Excused Absences Tagging: Mark absent invitees as "Excused" before exporting to keep clean records.
 • No 5-Person Minimum: Accurately records 1-on-1 tutoring sessions just as seamlessly as 200+ student lectures.
+• 30 Languages: The panel speaks Spanish, Portuguese, Hindi, Tagalog, Indonesian, Vietnamese, Arabic, and 23 more.
 • Zero Setup: Works in under 30 seconds on any Google™ account.
 
 👤 WHO IT'S FOR
-• K-12 Teachers & Google Classroom™: Automatic roll call without an expensive Education Plus license.
+• K-12 Teachers & Google Classroom™: Import your Classroom roster, take automatic roll call, and export Moodle/Canvas gradebook files — no expensive Education Plus license.
 • University Professors & TAs: Multi-semester lecture roll-ups and TA delegation.
 • Tutors & Bootcamps: Exact minute-by-minute session logs to protect billable hours.
 • Remote Engineering Teams & Scrum Masters: Automated Slack standup cards and participation streaks.
@@ -63,7 +66,7 @@ Q: Can someone track attendance if they are not the meeting host?
 A: The meeting host can, out of the box. For a TA, co-host, or attendee to track a meeting they didn't organize, a Google Workspace™ admin turns on a one-time delegation (a 2-minute setup at attendancetracker.dev/setup). On personal @gmail.com meetings, the host is the one who tracks.
 
 Q: How much does it cost?
-A: Free to start. Optional Pro plans ($8/mo Individual Pro, $19/mo Team Pro) add automated Slack digests, unlimited recurring series roll-ups, and organization-wide team dashboards.
+A: Free to start (3 exports/month, no credit card). Paid options are one-time or low-cost: an Individual Lifetime Pass ($9.99 one-time), an Educator Annual Pass ($4.99/year), or a Lifetime Domain license ($19.99 one-time) covering every teacher in your school or company. Pro adds unlimited exports, hands-free auto-capture, cumulative Class Summary reports, gradebook exports, certificates, and chat digests.
 
 Q: Does it work on the Google Meet™ mobile app?
 A: Attendance Tracker runs on desktop & laptop web browsers (Chrome™, Edge, Safari, Firefox). While Google Meet™ mobile apps do not currently support side-panel add-ons, you can view, export, and share all your meeting attendance reports from any phone or tablet at attendancetracker.dev.
@@ -82,7 +85,7 @@ Google Meet™, Google Sheets™, Google Drive™, Google Calendar™, Google Cl
 
 * **App Category**: `Education`, `Productivity`, `Business Tools`
 * **Search Keywords**:
-  `google meet attendance`, `attendance tracker`, `google classroom attendance`, `meet to sheets`, `attendance report`, `track student hours`, `slack google meet`, `remote standup attendance`, `zoom attendance alternative`, `tutor attendance`, `ceu webinar attendance`
+  `google meet attendance`, `attendance tracker`, `google classroom attendance`, `classroom roster import`, `meet to sheets`, `moodle attendance`, `canvas gradebook`, `attendance report`, `track student hours`, `slack google meet`, `google chat attendance`, `discord attendance`, `remote standup attendance`, `zoom attendance alternative`, `tutor attendance`, `ceu webinar attendance`
 
 ---
 

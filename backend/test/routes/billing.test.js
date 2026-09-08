@@ -365,6 +365,57 @@ describe('planIsPro — per-user gating for personal domains', () => {
     firestore.getUserPlan.mockRejectedValue(new Error('firestore down'));
     expect(await planIsPro('gmail.com', 'nocache@gmail.com')).toBe(false);
   });
+
+  test('workspace user with an INDIVIDUAL pass gets Pro when the domain plan is free (G7)', async () => {
+    // A teacher whose school never bought the org plan but bought the
+    // individual pass themselves — the purchase must be honored.
+    process.env.STRIPE_INDIVIDUAL_PRICE_ID = 'price_individual';
+    firestore.getTenantPlan.mockResolvedValueOnce({ plan: 'free' });
+    firestore.getUserPlan.mockResolvedValueOnce({ plan: 'pro' });
+    expect(await planIsPro('freeschool-g7.edu', 'teacher@freeschool-g7.edu')).toBe(true);
+    expect(firestore.getUserPlan).toHaveBeenCalledWith('freeschool-g7.edu', 'teacher@freeschool-g7.edu');
+  });
+
+  test('workspace fallback: free individual stays free; no email or tier-off skips the user read', async () => {
+    process.env.STRIPE_INDIVIDUAL_PRICE_ID = 'price_individual';
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUserPlan.mockResolvedValueOnce({ plan: 'free' });
+    expect(await planIsPro('freeschool2-g7.edu', 'teacher@freeschool2-g7.edu')).toBe(false);
+
+    firestore.getUserPlan.mockClear();
+    expect(await planIsPro('freeschool3-g7.edu')).toBe(false); // no email
+    delete process.env.STRIPE_INDIVIDUAL_PRICE_ID;             // tier not launched
+    expect(await planIsPro('freeschool4-g7.edu', 't@freeschool4-g7.edu')).toBe(false);
+    expect(firestore.getUserPlan).not.toHaveBeenCalled();
+  });
+});
+
+describe('billing — workspace user holding an individual pass (G7 surfaces)', () => {
+  beforeEach(() => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_PRICE_ID = 'price_org';
+    process.env.STRIPE_INDIVIDUAL_PRICE_ID = 'price_individual';
+  });
+  afterEach(() => { delete process.env.STRIPE_INDIVIDUAL_PRICE_ID; });
+
+  test('GET /billing/status reports the individual Pro plan for a workspace user', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUserPlan.mockResolvedValue({ plan: 'pro', stripeCustomerId: 'cus_teacher' });
+    const res = await request(app).get('/api/billing/status').set(authedHeader('t@g7status.edu', 'g7status.edu'));
+    expect(res.status).toBe(200);
+    expect(res.body.plan).toBe('pro');
+    expect(res.body.individual).toBe(true); // manage-billing routes to the individual portal
+    expect(res.body.exportQuota).toBeNull();
+  });
+
+  test('GET /billing/portal falls back to the USER stripe customer for a workspace individual', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free', stripeCustomerId: null });
+    firestore.getUserPlan.mockResolvedValue({ plan: 'pro', stripeCustomerId: 'cus_teacher' });
+    mockStripeInstance.billingPortal.sessions.create.mockResolvedValue({ url: 'https://billing.stripe.com/g7' });
+    const res = await request(app).get('/api/billing/portal').set(authedHeader('t@g7portal.edu', 'g7portal.edu'));
+    expect(res.status).toBe(200);
+    expect(mockStripeInstance.billingPortal.sessions.create).toHaveBeenCalledWith(expect.objectContaining({ customer: 'cus_teacher' }));
+  });
 });
 
 describe('billing — additional configured paths', () => {

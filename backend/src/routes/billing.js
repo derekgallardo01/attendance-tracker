@@ -219,11 +219,17 @@ router.post('/billing/public-checkout', async (req, res) => {
 router.get('/billing/portal', requireAuth, async (req, res) => {
   const stripe = getStripe();
   if (!stripe) return res.status(503).json({ error: 'Billing is not configured yet.' });
-  const individual = isPersonalDomain(req.user.domain);
+  let individual = isPersonalDomain(req.user.domain);
   try {
-    const { stripeCustomerId } = individual
+    let { stripeCustomerId } = individual
       ? await getUserPlan(req.user.domain, req.user.email)
       : await getTenantPlan(req.user.domain);
+    // Workspace-domain user managing an INDIVIDUAL pass they bought themselves
+    // (mirrors the planIsPro fallback).
+    if (!stripeCustomerId && !individual) {
+      ({ stripeCustomerId } = await getUserPlan(req.user.domain, req.user.email));
+      if (stripeCustomerId) individual = true;
+    }
     if (!stripeCustomerId) return res.status(404).json({ error: 'No active subscription.' });
     const session = await stripe.billingPortal.sessions.create({
       customer: stripeCustomerId,
@@ -240,11 +246,18 @@ router.get('/billing/portal', requireAuth, async (req, res) => {
 // upgrade CTA in the UI).
 router.get('/billing/status', requireAuth, async (req, res) => {
   res.set('Cache-Control', 'no-store');
-  const individual = isPersonalDomain(req.user.domain);
+  let individual = isPersonalDomain(req.user.domain);
   try {
-    const plan = individual
+    let plan = individual
       ? await getUserPlan(req.user.domain, req.user.email)
       : await getTenantPlan(req.user.domain);
+    // Workspace-domain user without a domain plan may hold an INDIVIDUAL pass
+    // (mirrors planIsPro). Report it as their plan so the UI shows Pro +
+    // Manage billing instead of an upgrade CTA for something already bought.
+    if (!individual && plan.plan !== 'pro' && individualBillingConfigured()) {
+      const userPlan = await getUserPlan(req.user.domain, req.user.email);
+      if (userPlan.plan === 'pro') { plan = userPlan; individual = true; }
+    }
     // annualAvailable tells the frontend whether to offer the monthly/annual
     // toggle — only once the matching annual price id is set (so we never show
     // an annual price the checkout can't actually charge).
@@ -403,6 +416,23 @@ async function requireProPlan(req, res, next) {
 // hard-block a route (auto-export, digests, full history). Pre-launch (billing
 // unconfigured) every feature is allowed. Shares requireProPlan's cache + fail
 // behavior: a transient read error rides the last-known plan, else denies.
+// Per-user individual-plan check with the last-known-plan cache ride. Used
+// for personal-domain users AND as the fallback for workspace-domain users
+// who bought an individual pass themselves.
+async function userPlanIsPro(domain, email) {
+  const key = `${(domain || '').toLowerCase()}:${email.toLowerCase()}`;
+  try {
+    const { plan } = await getUserPlan(domain, email);
+    userPlanCache.set(key, { plan, at: Date.now() });
+    return plan === 'pro';
+  } catch (err) {
+    const cached = userPlanCache.get(key);
+    const fresh = cached && (Date.now() - cached.at) < PLAN_CACHE_TTL_MS;
+    log.warn('billing: planIsPro (per-user) read failed', { usedCache: !!fresh, error: err.message });
+    return !!(fresh && cached.plan === 'pro');
+  }
+}
+
 async function planIsPro(domain, email) {
   if (!billingConfigured()) return true; // pre-launch: nothing is gated
   if (isPersonalDomain(domain)) {
@@ -411,28 +441,23 @@ async function planIsPro(domain, email) {
     // sites that pass no email keep personal users on the feature set they
     // already had for free (no regression); individual-Pro features pass email.
     if (!email || !individualBillingConfigured()) return true;
-    const key = `${(domain || '').toLowerCase()}:${email.toLowerCase()}`;
-    try {
-      const { plan } = await getUserPlan(domain, email);
-      userPlanCache.set(key, { plan, at: Date.now() });
-      return plan === 'pro';
-    } catch (err) {
-      const cached = userPlanCache.get(key);
-      const fresh = cached && (Date.now() - cached.at) < PLAN_CACHE_TTL_MS;
-      log.warn('billing: planIsPro (per-user) read failed', { usedCache: !!fresh, error: err.message });
-      return !!(fresh && cached.plan === 'pro');
-    }
+    return userPlanIsPro(domain, email);
   }
   try {
     const { plan } = await getTenantPlan(domain);
     planCache.set(domain, { plan, at: Date.now() });
-    return plan === 'pro';
+    if (plan === 'pro') return true;
   } catch (err) {
     const cached = planCache.get(domain);
     const fresh = cached && (Date.now() - cached.at) < PLAN_CACHE_TTL_MS;
     log.warn('billing: planIsPro read failed', { domain, usedCache: !!fresh, error: err.message });
-    return !!(fresh && cached.plan === 'pro');
+    if (fresh && cached.plan === 'pro') return true;
   }
+  // Workspace-domain user without a domain plan may still hold an INDIVIDUAL
+  // pass (e.g. a teacher whose school won't buy the org plan) — honor what
+  // they paid for. Previously this purchase was silently ignored.
+  if (!email || !individualBillingConfigured()) return false;
+  return userPlanIsPro(domain, email);
 }
 
 // Mint a single-use Stripe promotion code for a referral reward, referencing
