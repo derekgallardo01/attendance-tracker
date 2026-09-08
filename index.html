@@ -17,7 +17,10 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>Google Meet Attendance Tracker — Free, One-Click Export to Google Sheets</title>
+  <!-- Lead with the exact app name from the OAuth consent screen ("Attendance
+       Tracker") — Google verification flags a mismatch, and leading with a
+       Google product name also violates their branding guidelines. -->
+  <title>Attendance Tracker for Google Meet — Free, One-Click Export to Google Sheets</title>
   <meta name="description" content="Track attendance in Google Meet in real-time. Automatically record participant join and leave times, duration, and export directly to Google Sheets with one click. Free, private, and no bots required." />
   <meta name="keywords" content="google meet attendance tracker, track attendance google meet, google meet attendance report, attendance tracker, how to take attendance in google meet, meeting attendance tracker, google meet export to sheets" />
   <link rel="canonical" href="https://attendancetracker.dev/" />
@@ -1503,8 +1506,8 @@
         <option value="">Choose class…</option>
       </select>
       <div style="display:flex;align-items:center;gap:6px">
-        <button type="button" class="btn-secondary" onclick="openRosterModal(false)" style="flex:1;padding:6px 10px;font-size:.74rem;white-space:nowrap;font-weight:600">+ New Class</button>
-        <button type="button" class="btn-secondary" id="btn-edit-roster" onclick="editCurrentRoster()" style="display:none;padding:6px 14px;font-size:.74rem">Edit</button>
+        <button type="button" class="btn-secondary" onclick="openRosterModal(false)" style="flex:1;padding:6px 10px;font-size:.74rem;white-space:nowrap;font-weight:600" data-i18n="roster.newClass">+ New Class</button>
+        <button type="button" class="btn-secondary" id="btn-edit-roster" onclick="editCurrentRoster()" style="display:none;padding:6px 14px;font-size:.74rem" data-i18n="common.edit">Edit</button>
         <button type="button" class="btn-secondary" id="btn-delete-roster" onclick="deleteCurrentRoster()" style="display:none;padding:6px 12px;font-size:.74rem;color:#f87171" title="Delete class">×</button>
       </div>
     </div>
@@ -1512,9 +1515,9 @@
     <!-- Threshold Settings -->
     <div id="roster-thresholds" style="display:flex;align-items:center;justify-content:space-between;gap:6px;padding:7px 10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;margin-bottom:12px;font-size:.72rem;color:var(--muted)">
       <div style="display:flex;align-items:center;gap:4px">
-        <span style="white-space:nowrap">Min stay:</span>
+        <span style="white-space:nowrap" data-i18n="roster.minStay">Min stay:</span>
         <select id="threshold-stay" onchange="onThresholdChange()" style="background:#161b22;border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 4px;font-size:.72rem">
-          <option value="0">Any time</option>
+          <option value="0" data-i18n="roster.anyTime">Any time</option>
           <option value="50">50%</option>
           <option value="60">60%</option>
           <option value="75">75%</option>
@@ -1522,9 +1525,9 @@
         </select>
       </div>
       <div style="display:flex;align-items:center;gap:4px">
-        <span style="white-space:nowrap">Late after:</span>
+        <span style="white-space:nowrap" data-i18n="roster.lateAfter">Late after:</span>
         <select id="threshold-late" onchange="onThresholdChange()" style="background:#161b22;border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 4px;font-size:.72rem">
-          <option value="0">None</option>
+          <option value="0" data-i18n="roster.none">None</option>
           <option value="5">5 min</option>
           <option value="10" selected>10 min</option>
           <option value="15">15 min</option>
@@ -1536,19 +1539,19 @@
     <!-- Roster Summary Chips -->
     <div id="roster-chips" style="display:none;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px">
       <div style="background:#161b22;border:1px solid var(--border);border-radius:6px;padding:6px 4px;text-align:center">
-        <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase">Present</div>
+        <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase" data-i18n="attendee.present">Present</div>
         <div id="roster-count-present" style="font-size:.95rem;font-weight:700;color:#4ade80">0</div>
       </div>
       <div style="background:#161b22;border:1px solid var(--border);border-radius:6px;padding:6px 4px;text-align:center">
-        <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase">Late</div>
+        <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase" data-i18n="attendee.late">Late</div>
         <div id="roster-count-late" style="font-size:.95rem;font-weight:700;color:#facc15">0</div>
       </div>
       <div style="background:#161b22;border:1px solid var(--border);border-radius:6px;padding:6px 4px;text-align:center">
-        <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase">Absent</div>
+        <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase" data-i18n="attendee.absent">Absent</div>
         <div id="roster-count-absent" style="font-size:.95rem;font-weight:700;color:#f87171">0</div>
       </div>
       <div style="background:#161b22;border:1px solid var(--border);border-radius:6px;padding:6px 4px;text-align:center">
-        <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase">Guests</div>
+        <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase" data-i18n="roster.guests">Guests</div>
         <div id="roster-count-guests" style="font-size:.95rem;font-weight:700;color:#58a6ff">0</div>
       </div>
     </div>
@@ -5731,7 +5734,7 @@ window.addEventListener('DOMContentLoaded', () => {
         <button type="button" onclick="closeRosterModal()" style="background:none;border:none;color:#8b949e;cursor:pointer;font-size:18px;line-height:1;padding:4px">&times;</button>
       </div>
       <div style="margin-bottom:14px">
-        <label for="roster-input-name" style="display:block;font-size:.76rem;color:#8b949e;margin-bottom:6px;font-weight:600">Class or Group Name</label>
+        <label for="roster-input-name" style="display:block;font-size:.76rem;color:#8b949e;margin-bottom:6px;font-weight:600" data-i18n="roster.nameLabel">Class or Group Name</label>
         <input id="roster-input-name" type="text" placeholder="e.g. Biology 101 - Section A" style="width:100%;background:#0d1117;border:1px solid #30363d;color:#e6edf3;border-radius:6px;padding:8px 10px;font-size:.82rem;box-sizing:border-box" />
       </div>
       <!-- Import from Google Classroom: fills the textarea below, so the
@@ -5748,13 +5751,13 @@ window.addEventListener('DOMContentLoaded', () => {
         <div id="roster-classroom-status" style="display:none;font-size:.72rem;color:#8b949e;margin-top:6px"></div>
       </div>
       <div style="margin-bottom:16px">
-        <label for="roster-input-students" style="display:block;font-size:.76rem;color:#8b949e;margin-bottom:6px;font-weight:600">Students</label>
+        <label for="roster-input-students" style="display:block;font-size:.76rem;color:#8b949e;margin-bottom:6px;font-weight:600" data-i18n="roster.studentsLabel">Students</label>
         <textarea id="roster-input-students" rows="7" placeholder="Alice Smith &lt;alice@school.edu&gt;&#10;Bob Jones&#10;carol@school.edu" style="width:100%;background:#0d1117;border:1px solid #30363d;color:#e6edf3;border-radius:6px;padding:8px 10px;font-size:.78rem;font-family:monospace;resize:vertical;box-sizing:border-box"></textarea>
-        <div style="font-size:.7rem;color:#8b949e;margin-top:4px">One student per line — a name, an email, or Name &lt;email&gt;. You can paste straight from a spreadsheet.</div>
+        <div style="font-size:.7rem;color:#8b949e;margin-top:4px" data-i18n="roster.studentsHelp">One student per line — a name, an email, or Name &lt;email&gt;. You can paste straight from a spreadsheet.</div>
       </div>
       <div style="display:flex;justify-content:flex-end;gap:8px">
-        <button type="button" class="btn-secondary" onclick="closeRosterModal()" style="padding:8px 14px;font-size:.8rem">Cancel</button>
-        <button type="button" class="btn-primary" onclick="saveRosterModal()" style="padding:8px 16px;font-size:.8rem">Save Roster</button>
+        <button type="button" class="btn-secondary" onclick="closeRosterModal()" style="padding:8px 14px;font-size:.8rem" data-i18n="btn.cancel">Cancel</button>
+        <button type="button" class="btn-primary" onclick="saveRosterModal()" style="padding:8px 16px;font-size:.8rem" data-i18n="roster.save">Save Roster</button>
       </div>
     </div>
   </div>
