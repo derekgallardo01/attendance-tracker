@@ -316,6 +316,73 @@ describe('isValidSlackWebhook', () => {
   });
 });
 
+describe('isValidGoogleChatWebhook', () => {
+  const VALID = `${utils.CHAT_WEBHOOK_PREFIX}AAAA1234/messages?key=abc&token=def456`;
+
+  test('accepts a well-formed webhook URL', () => {
+    expect(utils.isValidGoogleChatWebhook(VALID)).toBe(true);
+  });
+
+  test('rejects non-strings and over-long URLs', () => {
+    expect(utils.isValidGoogleChatWebhook(null)).toBe(false);
+    expect(utils.isValidGoogleChatWebhook(123)).toBe(false);
+    expect(utils.isValidGoogleChatWebhook(`${utils.CHAT_WEBHOOK_PREFIX}A/messages?key=k&token=` + 't'.repeat(1000))).toBe(false);
+  });
+
+  test('rejects wrong hosts, including lookalikes', () => {
+    expect(utils.isValidGoogleChatWebhook('https://evil.example.com/v1/spaces/A/messages?key=k&token=t')).toBe(false);
+    expect(utils.isValidGoogleChatWebhook('https://chat.googleapis.com.evil.com/v1/spaces/A/messages?key=k&token=t')).toBe(false);
+  });
+
+  test('rejects malformed paths', () => {
+    expect(utils.isValidGoogleChatWebhook(`${utils.CHAT_WEBHOOK_PREFIX}A/B/messages?key=k&token=t`)).toBe(false);
+    expect(utils.isValidGoogleChatWebhook(`${utils.CHAT_WEBHOOK_PREFIX}A/notmessages?key=k&token=t`)).toBe(false);
+  });
+
+  test('rejects missing, empty, or over-long key/token params — matches backend cap', () => {
+    expect(utils.isValidGoogleChatWebhook(`${utils.CHAT_WEBHOOK_PREFIX}A/messages?key=k`)).toBe(false);
+    expect(utils.isValidGoogleChatWebhook(`${utils.CHAT_WEBHOOK_PREFIX}A/messages?token=t`)).toBe(false);
+    expect(utils.isValidGoogleChatWebhook(`${utils.CHAT_WEBHOOK_PREFIX}A/messages?key=&token=t`)).toBe(false);
+    expect(utils.isValidGoogleChatWebhook(`${utils.CHAT_WEBHOOK_PREFIX}A/messages?key=${'k'.repeat(200)}&token=t`)).toBe(false);
+    expect(utils.isValidGoogleChatWebhook(`${utils.CHAT_WEBHOOK_PREFIX}A/messages?key=k&token=${'t'.repeat(200)}`)).toBe(false);
+  });
+});
+
+describe('isValidDiscordWebhook', () => {
+  const [PREFIX, LEGACY] = utils.DISCORD_WEBHOOK_PREFIXES;
+
+  test('accepts well-formed webhook URLs on both domains', () => {
+    expect(utils.isValidDiscordWebhook(`${PREFIX}123456789012345678/tokenABC`)).toBe(true);
+    expect(utils.isValidDiscordWebhook(`${LEGACY}123456789012345678/tokenABC`)).toBe(true);
+  });
+
+  test('rejects non-strings', () => {
+    expect(utils.isValidDiscordWebhook(null)).toBe(false);
+    expect(utils.isValidDiscordWebhook(123)).toBe(false);
+  });
+
+  test('rejects wrong hosts, including lookalikes', () => {
+    expect(utils.isValidDiscordWebhook('https://evil.example.com/api/webhooks/1/t')).toBe(false);
+    expect(utils.isValidDiscordWebhook('https://discord.com.evil.com/api/webhooks/1/t')).toBe(false);
+  });
+
+  test('rejects the wrong number of path segments', () => {
+    expect(utils.isValidDiscordWebhook(`${PREFIX}12345`)).toBe(false);
+    expect(utils.isValidDiscordWebhook(`${PREFIX}12345/tok/extra`)).toBe(false);
+  });
+
+  test('rejects non-numeric or over-long ids', () => {
+    expect(utils.isValidDiscordWebhook(`${PREFIX}notanid/tok`)).toBe(false);
+    expect(utils.isValidDiscordWebhook(`${PREFIX}${'1'.repeat(31)}/tok`)).toBe(false);
+  });
+
+  test('rejects empty, over-long, or query-carrying tokens — matches backend cap', () => {
+    expect(utils.isValidDiscordWebhook(`${PREFIX}12345/`)).toBe(false);
+    expect(utils.isValidDiscordWebhook(`${PREFIX}12345/${'x'.repeat(200)}`)).toBe(false);
+    expect(utils.isValidDiscordWebhook(`${PREFIX}12345/tok?wait=true`)).toBe(false);
+  });
+});
+
 describe('maskWebhookUrl', () => {
   test('returns empty string for invalid input', () => {
     expect(utils.maskWebhookUrl('not a url')).toBe('');

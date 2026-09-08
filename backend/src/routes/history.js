@@ -55,6 +55,19 @@ const FRONTEND_EVENT_TYPES = new Set([
   'history_page_opened',
   'upgrade_plan_hovered',
   'offer_link_clicked',
+  // CSV / LMS exports (export_csv_downloaded predates this list but was
+  // missing from it, so those beacons were 400ing silently)
+  'export_csv_downloaded',
+  'export_lms_csv_downloaded',
+  'series_csv_downloaded',
+  'series_csv_gate_shown',
+  // Chat-webhook integrations (Slack / Google Chat / Discord)
+  'webhook_saved',
+  'webhook_cleared',
+  'webhook_test_sent',
+  // Google Classroom roster import
+  'classroom_courses_listed',
+  'classroom_roster_imported',
 ]);
 
 // POST /api/event — let the frontend record activation/funnel events that only

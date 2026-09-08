@@ -130,6 +130,34 @@ describe('buildAttendanceCsv', () => {
     expect(csv).toContain('"Name","Email","Status","Attendance %","Duration (min)","Join Time","Leave Time","Rejoins","Notes"');
   });
 
+  test('covers the short-stay statuses: Left Early, Excused (Short Stay), Present (Left)', () => {
+    // 60-min meeting, 50% floor. Fran stayed 10 min (short, not excused),
+    // Dave stayed 5 min (short, excused), Gina attended fully but left
+    // before the CSV was generated (present:false).
+    const shortRoster = [
+      { name: 'Fran Short', email: 'fran@school.edu' },
+      { name: 'Dave Excused', email: 'dave@school.edu' },
+      { name: 'Gina Gone', email: 'gina@school.edu' }
+    ];
+    const shortParts = [
+      { displayName: 'Fran Short', email: 'fran@school.edu', present: false, joinTime: new Date('2026-09-07T14:00:00Z'), _accumulatedMs: 10 * 60000, rejoins: 0 },
+      { displayName: 'Dave Excused', email: 'dave@school.edu', present: false, joinTime: new Date('2026-09-07T14:00:00Z'), _accumulatedMs: 5 * 60000, rejoins: 0 },
+      { displayName: 'Gina Gone', email: 'gina@school.edu', present: false, joinTime: new Date('2026-09-07T14:00:00Z'), _accumulatedMs: 55 * 60000, rejoins: 0 }
+    ];
+    const csv = buildAttendanceCsv(shortParts, shortRoster, {
+      meetingTitle: 'Biology 101',
+      startTime,
+      now,
+      totalMeetingMs: 3600000,
+      lateMinutes: 10,
+      minPercent: 50,
+      excusedStudents
+    });
+    expect(csv).toContain('"Left Early / Incomplete"');
+    expect(csv).toContain('"Excused (Short Stay)"');
+    expect(csv).toContain('"Present (Left)"');
+  });
+
   test('marks on-time attendee as Present and late attendee as Late', () => {
     const csv = buildAttendanceCsv(participants, roster, {
       meetingTitle: 'Biology 101',

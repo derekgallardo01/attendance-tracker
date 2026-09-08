@@ -2,18 +2,42 @@ const { Router } = require('express');
 const { requireAuth } = require('../middleware/auth');
 const log = require('../lib/logger');
 const { getUserSettings, updateUserSettings, setPostExportSurvey, isEmailSuppressed, suppressEmail, unsuppressEmail } = require('../services/firestore');
-const { sendSlackTestPing } = require('../lib/notifications');
+const { sendSlackTestPing, sendChatTestPing, sendDiscordTestPing } = require('../lib/notifications');
 const { isValidSlackWebhook, maskSlackWebhook } = require('../lib/slack');
+const { isValidGoogleChatWebhook, maskGoogleChatWebhook } = require('../lib/googleChat');
+const { isValidDiscordWebhook, maskDiscordWebhook } = require('../lib/discord');
 
 const router = Router();
+
+// One entry per webhook integration. `field` is both the userSettings doc key
+// and the PUT body key; `provider` is the id the frontend passes to
+// POST /settings/test-webhook. Adding an integration = adding a row here
+// (plus its lib validator + notifications sender).
+const WEBHOOK_PROVIDERS = [
+  {
+    field: 'slackWebhookUrl', provider: 'slack', label: 'Slack',
+    isValid: isValidSlackWebhook, mask: maskSlackWebhook, testPing: sendSlackTestPing,
+    invalidMsg: 'Slack webhook URL must start with https://hooks.slack.com/services/ and have 3 path segments.',
+  },
+  {
+    field: 'googleChatWebhookUrl', provider: 'googleChat', label: 'Google Chat',
+    isValid: isValidGoogleChatWebhook, mask: maskGoogleChatWebhook, testPing: sendChatTestPing,
+    invalidMsg: 'Google Chat webhook URL must look like https://chat.googleapis.com/v1/spaces/…/messages?key=…&token=…',
+  },
+  {
+    field: 'discordWebhookUrl', provider: 'discord', label: 'Discord',
+    isValid: isValidDiscordWebhook, mask: maskDiscordWebhook, testPing: sendDiscordTestPing,
+    invalidMsg: 'Discord webhook URL must look like https://discord.com/api/webhooks/{id}/{token}',
+  },
+];
 
 // Mask the webhook on read so it's not echoed back to the page in plain
 // text. The frontend stores the user input locally during the modal
 // session; once saved, the user only sees the masked form.
-function maskForApi(url) {
+function maskForApi(url, mask) {
   if (!url) return null;
-  const masked = maskSlackWebhook(url);
-  // maskSlackWebhook only returns '(none)' for a falsy URL, which the guard
+  const masked = mask(url);
+  // The mask fns only return '(none)' for a falsy URL, which the guard
   // above already handled — so that half of the check never fires here.
   /* istanbul ignore next */
   return masked === '(invalid)' || masked === '(none)' ? null : masked;
@@ -28,12 +52,17 @@ router.get('/settings', requireAuth, async (req, res) => {
       getUserSettings(req.user.domain, req.user.email),
       isEmailSuppressed(req.user.email),
     ]);
-    res.json({
-      slackWebhookConfigured: !!settings.slackWebhookUrl,
-      slackWebhookMasked: maskForApi(settings.slackWebhookUrl),
+    const out = {
       autoExportOnEnd: settings.autoExportOnEnd === true,
       emailOptOut: suppressed,
-    });
+    };
+    for (const p of WEBHOOK_PROVIDERS) {
+      // e.g. slackWebhookConfigured / slackWebhookMasked
+      const base = p.field.replace(/Url$/, '');
+      out[`${base}Configured`] = !!settings[p.field];
+      out[`${base}Masked`] = maskForApi(settings[p.field], p.mask);
+    }
+    res.json(out);
   } catch (err) {
     log.error('settings: get failed', { email: req.user.email, error: err.message });
     res.status(500).json({ error: 'Failed to fetch settings' });
@@ -41,25 +70,28 @@ router.get('/settings', requireAuth, async (req, res) => {
 });
 
 // PUT /api/settings — accept a patch of any supported settings:
-//   slackWebhookUrl  — validated Slack incoming-webhook URL (null/'' clears)
+//   slackWebhookUrl / googleChatWebhookUrl / discordWebhookUrl
+//                    — validated incoming-webhook URLs (null/'' clears)
 //   autoExportOnEnd  — boolean, synced across the user's devices
 //   emailOptOut      — boolean, toggles the CAN-SPAM suppression record
 router.put('/settings', requireAuth, async (req, res) => {
   /* istanbul ignore next: express.json always sets req.body to an object */
   const body = req.body || {};
-  const { slackWebhookUrl, autoExportOnEnd, emailOptOut } = body;
+  const { autoExportOnEnd, emailOptOut } = body;
 
   const patch = {};
-  if ('slackWebhookUrl' in body) {
-    if (slackWebhookUrl === null || slackWebhookUrl === '') {
-      patch.slackWebhookUrl = null;
-    } else if (typeof slackWebhookUrl === 'string') {
-      if (!isValidSlackWebhook(slackWebhookUrl)) {
-        return res.status(400).json({ error: 'Slack webhook URL must start with https://hooks.slack.com/services/ and have 3 path segments.' });
+  for (const p of WEBHOOK_PROVIDERS) {
+    if (!(p.field in body)) continue;
+    const value = body[p.field];
+    if (value === null || value === '') {
+      patch[p.field] = null;
+    } else if (typeof value === 'string') {
+      if (!p.isValid(value)) {
+        return res.status(400).json({ error: p.invalidMsg });
       }
-      patch.slackWebhookUrl = slackWebhookUrl;
+      patch[p.field] = value;
     } else {
-      return res.status(400).json({ error: 'slackWebhookUrl must be a string or null.' });
+      return res.status(400).json({ error: `${p.field} must be a string or null.` });
     }
   }
   if ('autoExportOnEnd' in body) {
@@ -96,26 +128,42 @@ router.put('/settings', requireAuth, async (req, res) => {
   }
 });
 
-// POST /api/settings/test-slack — send the test ping to the user's
-// configured webhook (or one supplied in the body for pre-save testing).
-router.post('/settings/test-slack', requireAuth, async (req, res) => {
-  let webhookUrl = req.body?.slackWebhookUrl;
+// Shared test-ping handler: use the supplied URL, else the saved one; send
+// the provider's test ping and surface the result.
+async function handleTestPing(req, res, p) {
+  let webhookUrl = req.body?.[p.field];
   // If not supplied, use what's saved
   if (!webhookUrl) {
     const settings = await getUserSettings(req.user.domain, req.user.email);
-    webhookUrl = settings.slackWebhookUrl;
+    webhookUrl = settings[p.field];
   }
   if (!webhookUrl) {
-    return res.status(400).json({ error: 'No Slack webhook URL provided or saved.' });
+    return res.status(400).json({ error: `No ${p.label} webhook URL provided or saved.` });
   }
-  if (!isValidSlackWebhook(webhookUrl)) {
-    return res.status(400).json({ error: 'Invalid Slack webhook URL.' });
+  if (!p.isValid(webhookUrl)) {
+    return res.status(400).json({ error: `Invalid ${p.label} webhook URL.` });
   }
-  const result = await sendSlackTestPing({ webhookUrl });
+  const result = await p.testPing({ webhookUrl });
   if (!result.sent) {
-    return res.status(502).json({ error: 'Slack rejected the test ping.', details: result });
+    return res.status(502).json({ error: `${p.label} rejected the test ping.`, details: result });
   }
   res.json({ sent: true });
+}
+
+// POST /api/settings/test-webhook — send a test ping for any provider:
+// body { provider: 'slack' | 'googleChat' | 'discord', <field>?: url }.
+router.post('/settings/test-webhook', requireAuth, async (req, res) => {
+  const p = WEBHOOK_PROVIDERS.find(w => w.provider === req.body?.provider);
+  if (!p) {
+    return res.status(400).json({ error: 'provider must be one of: ' + WEBHOOK_PROVIDERS.map(w => w.provider).join(', ') });
+  }
+  await handleTestPing(req, res, p);
+});
+
+// POST /api/settings/test-slack — legacy alias kept so panels served before
+// the multi-provider rollout keep working.
+router.post('/settings/test-slack', requireAuth, async (req, res) => {
+  await handleTestPing(req, res, WEBHOOK_PROVIDERS[0]);
 });
 
 // POST /api/user/survey — one-question post-export micro-survey

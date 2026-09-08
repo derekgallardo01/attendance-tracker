@@ -62,11 +62,14 @@ jest.mock('../../src/services/firestore', () => ({
   getUser: jest.fn(),
   updateUserTokens: jest.fn(),
   getTenantPlan: jest.fn(), // used by billing.planIsPro when billing is configured
+  logEvent: jest.fn(), // webhook_digest_sent telemetry from the digest loop
 }));
 
 jest.mock('../../src/lib/notifications', () => ({
   sendExportNotification: jest.fn(),
   sendSlackDigest: jest.fn(),
+  sendChatDigest: jest.fn(),
+  sendDiscordDigest: jest.fn(),
 }));
 
 const firestore = require('../../src/services/firestore');
@@ -380,6 +383,61 @@ describe('POST /api/save-to-sheets — slack digest + row branches', () => {
     expect(res.status).toBe(200);
     await new Promise((r) => setImmediate(r));
     expect(notifications.sendSlackDigest).toHaveBeenCalled();
+  });
+
+  test('posts Google Chat + Discord digests when those webhooks are configured', async () => {
+    firestore.getUserSettings.mockResolvedValue({
+      slackWebhookUrl: null,
+      googleChatWebhookUrl: 'https://chat.googleapis.com/v1/spaces/A/messages?key=k&token=t',
+      discordWebhookUrl: 'https://discord.com/api/webhooks/123/tok',
+    });
+    notifications.sendChatDigest.mockResolvedValue({ sent: true });
+    notifications.sendDiscordDigest.mockResolvedValue({ sent: true });
+    const res = await post({ ...validPayload, sendEmail: false });
+    expect(res.status).toBe(200);
+    await new Promise((r) => setImmediate(r));
+    expect(notifications.sendSlackDigest).not.toHaveBeenCalled();
+    expect(notifications.sendChatDigest).toHaveBeenCalledWith(expect.objectContaining({
+      webhookUrl: 'https://chat.googleapis.com/v1/spaces/A/messages?key=k&token=t',
+      meetingTitle: 'Sprint Planning',
+    }));
+    expect(notifications.sendDiscordDigest).toHaveBeenCalledWith(expect.objectContaining({
+      webhookUrl: 'https://discord.com/api/webhooks/123/tok',
+    }));
+    // Each attempt is recorded as a webhook_digest_sent event.
+    expect(firestore.logEvent).toHaveBeenCalledWith('acme.com', expect.objectContaining({
+      email: 'user@acme.com',
+      type: 'webhook_digest_sent',
+      meta: expect.objectContaining({ provider: 'googleChat', sent: true }),
+    }));
+    expect(firestore.logEvent).toHaveBeenCalledWith('acme.com', expect.objectContaining({
+      type: 'webhook_digest_sent',
+      meta: expect.objectContaining({ provider: 'discord', sent: true }),
+    }));
+  });
+
+  test('records a failed digest attempt with its status', async () => {
+    firestore.getUserSettings.mockResolvedValue({
+      slackWebhookUrl: 'https://hooks.slack.com/services/T/B/C',
+    });
+    notifications.sendSlackDigest.mockResolvedValue({ sent: false, status: 404 });
+    const res = await post({ ...validPayload, sendEmail: false });
+    expect(res.status).toBe(200);
+    await new Promise((r) => setImmediate(r));
+    expect(firestore.logEvent).toHaveBeenCalledWith('acme.com', expect.objectContaining({
+      type: 'webhook_digest_sent',
+      meta: { provider: 'slack', sent: false, status: 404 },
+    }));
+  });
+
+  test('sends nothing when no webhook of any provider is configured', async () => {
+    firestore.getUserSettings.mockResolvedValue({});
+    const res = await post({ ...validPayload, sendEmail: false });
+    expect(res.status).toBe(200);
+    await new Promise((r) => setImmediate(r));
+    expect(notifications.sendSlackDigest).not.toHaveBeenCalled();
+    expect(notifications.sendChatDigest).not.toHaveBeenCalled();
+    expect(notifications.sendDiscordDigest).not.toHaveBeenCalled();
   });
 
   test('tolerates a Slack digest failure (fire-and-forget)', async () => {

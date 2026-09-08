@@ -3,8 +3,8 @@ const { google } = require('googleapis');
 const { getGoogleClient } = require('../services/googleAuth');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { persistExport, getUserSheetId, setUserSheetId, countUserExports, countUserMonthlyExports, getMeetingExcusedEmails, addMeetingExcusedEmails, getUserSettings, getUserMeetingSeries } = require('../services/firestore');
-const { sendExportNotification, sendSlackDigest } = require('../lib/notifications');
+const { persistExport, getUserSheetId, setUserSheetId, countUserExports, countUserMonthlyExports, getMeetingExcusedEmails, addMeetingExcusedEmails, getUserSettings, getUserMeetingSeries, logEvent } = require('../services/firestore');
+const { sendExportNotification, sendSlackDigest, sendChatDigest, sendDiscordDigest } = require('../lib/notifications');
 const { planIsPro } = require('./billing');
 
 const router = Router();
@@ -500,18 +500,18 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
       addMeetingExcusedEmails(domain, conferenceId, excusedFromClient);
     }
 
-    // Fire-and-forget: Slack post-meeting digest if the user has a webhook
-    // configured. Independent of the email send (sendEmail flag) — Slack
-    // fires on EVERY export, manual or auto, because the user already opted
-    // in by saving the webhook. Failure is logged, doesn't affect the export.
+    // Fire-and-forget: post-meeting digests to whichever chat webhooks the
+    // user has configured (Slack / Google Chat / Discord). Independent of the
+    // email send (sendEmail flag) — digests fire on EVERY export, manual or
+    // auto, because the user already opted in by saving the webhook. Failures
+    // are logged, don't affect the export.
     // Pro-gated: free domains don't get the digest even with a webhook saved.
     if (req.user?.email && proAllowed) {
       (async () => {
         try {
           const settings = await getUserSettings(domain, req.user.email);
-          if (!settings.slackWebhookUrl) return;
-          await sendSlackDigest({
-            webhookUrl: settings.slackWebhookUrl,
+          if (!settings.slackWebhookUrl && !settings.googleChatWebhookUrl && !settings.discordWebhookUrl) return;
+          const digestArgs = {
             meetingTitle: meetingTitle || 'Google Meet',
             totalAttended,
             totalInvited,
@@ -521,9 +521,26 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
             sheetUrl,
             durationMin: meetDurationMin,
             startTime: meetingStartTime || exportedAt,
-          });
+          };
+          // Senders never throw; sequential awaits keep this simple. Each
+          // attempt is recorded as a webhook_digest_sent event so delivery
+          // counts are queryable from the events collection, not just logs.
+          const providers = [
+            ['slack', settings.slackWebhookUrl, sendSlackDigest],
+            ['googleChat', settings.googleChatWebhookUrl, sendChatDigest],
+            ['discord', settings.discordWebhookUrl, sendDiscordDigest],
+          ];
+          for (const [provider, webhookUrl, send] of providers) {
+            if (!webhookUrl) continue;
+            const result = await send({ ...digestArgs, webhookUrl });
+            await logEvent(domain, {
+              email: req.user.email,
+              type: 'webhook_digest_sent',
+              meta: { provider, sent: !!result?.sent, ...(result?.status ? { status: result.status } : {}) },
+            });
+          }
         } catch (err) {
-          log.warn('slack digest post-export failed', { error: err.message, email: req.user.email });
+          log.warn('webhook digest post-export failed', { error: err.message, email: req.user.email });
         }
       })();
     }

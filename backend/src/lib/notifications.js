@@ -3,6 +3,8 @@ const { Resend } = require('resend');
 const log = require('./logger');
 const CONFIG = require('../config');
 const { maskSlackWebhook } = require('./slack');
+const { maskGoogleChatWebhook } = require('./googleChat');
+const { maskDiscordWebhook } = require('./discord');
 const { escapeHtml: escape } = require('./html');
 
 // Resend transactional email — better deliverability + open/click tracking
@@ -921,42 +923,52 @@ async function sendUpcomingMeetingEmail({ to, displayName, meetingTitle, minutes
   });
 }
 
-// ── Slack post-meeting digest ──
-// Posts a Block Kit message to a user-configured Slack incoming webhook
+// ── Chat-webhook post-meeting digests (Slack / Google Chat / Discord) ──
+// Posts a provider-native summary card to a user-configured incoming webhook
 // after every export. Fire-and-forget: failures are logged but don't break
-// the export flow. The webhook URL is a bearer-token secret in the URL
-// path, so we never log the full URL — only the masked form.
+// the export flow. Every webhook URL embeds a bearer-token secret, so we
+// never log the full URL — only the provider's masked form.
 
+// Shared pieces: the meta line ("8 of 10 attended · 45m · started 9:00 AM")
+// and the Present / Left early / Absent name buckets, capped at 8 names +
+// overflow. Each provider builder renders these in its own markup.
+const DIGEST_BUCKET_CAP = 8;
 
-// Build the Block Kit payload. Pulled out for testability.
+function digestMetaParts({ totalAttended, totalInvited, durationMin, startTime }) {
+  return {
+    summary: totalInvited ? `${totalAttended} of ${totalInvited} attended` : `${totalAttended} attended`,
+    durStr: durationMin ? hm(durationMin) : '',
+    timeStr: startTime ? new Date(startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '',
+  };
+}
+
+function digestBuckets(participants) {
+  const nameOf = p => p.displayName || p.email || '?';
+  const all = participants || [];
+  return {
+    present: all.filter(p => p.status === 'Present').map(nameOf),
+    left: all.filter(p => p.status === 'Left').map(nameOf),
+    absent: all.filter(p => p.status === 'Absent' || p.status === 'Excused')
+      .map(p => `${nameOf(p)}${p.status === 'Excused' ? ' (excused)' : ''}`),
+  };
+}
+
+function capBucket(names) {
+  const shown = names.slice(0, DIGEST_BUCKET_CAP).join(', ');
+  return names.length > DIGEST_BUCKET_CAP ? `${shown}, +${names.length - DIGEST_BUCKET_CAP} more` : shown;
+}
+
+// Build the Slack Block Kit payload. Pulled out for testability.
 function buildSlackDigestBlocks({ meetingTitle, totalAttended, totalInvited, participants, sheetUrl, durationMin, startTime }) {
   const title = meetingTitle || 'Google Meet';
-  const attendanceSummary = totalInvited
-    ? `*${totalAttended} of ${totalInvited} attended*`
-    : `*${totalAttended} attended*`;
-  const durStr = durationMin ? hm(durationMin) : '';
-  const timeStr = startTime ? new Date(startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
-  const metaLine = [attendanceSummary, durStr, timeStr ? `started ${timeStr}` : ''].filter(Boolean).join(' · ');
-
-  // Bucket participants by status. Cap each bucket at 8 names + overflow.
-  const cap = 8;
-  const present = (participants || []).filter(p => p.status === 'Present').map(p => p.displayName || p.email || '?');
-  const left = (participants || []).filter(p => p.status === 'Left').map(p => p.displayName || p.email || '?');
-  const absent = (participants || []).filter(p => p.status === 'Absent' || p.status === 'Excused').map(p => `${p.displayName || p.email || '?'}${p.status === 'Excused' ? ' (excused)' : ''}`);
-
-  const formatBucket = (names, total) => {
-    // Callers only invoke formatBucket for non-empty buckets (guarded by
-    // `if (bucket.length)` below), so the empty branch is defensive-only.
-    /* istanbul ignore next */
-    if (names.length === 0) return '_none_';
-    const shown = names.slice(0, cap).join(', ');
-    return total > cap ? `${shown}, +${total - cap} more` : shown;
-  };
+  const { summary, durStr, timeStr } = digestMetaParts({ totalAttended, totalInvited, durationMin, startTime });
+  const metaLine = [`*${summary}*`, durStr, timeStr ? `started ${timeStr}` : ''].filter(Boolean).join(' · ');
+  const { present, left, absent } = digestBuckets(participants);
 
   const fields = [];
-  if (present.length) fields.push({ type: 'mrkdwn', text: `*✅ Present (${present.length})*\n${formatBucket(present, present.length)}` });
-  if (left.length) fields.push({ type: 'mrkdwn', text: `*🟡 Left early (${left.length})*\n${formatBucket(left, left.length)}` });
-  if (absent.length) fields.push({ type: 'mrkdwn', text: `*❌ Absent (${absent.length})*\n${formatBucket(absent, absent.length)}` });
+  if (present.length) fields.push({ type: 'mrkdwn', text: `*✅ Present (${present.length})*\n${capBucket(present)}` });
+  if (left.length) fields.push({ type: 'mrkdwn', text: `*🟡 Left early (${left.length})*\n${capBucket(left)}` });
+  if (absent.length) fields.push({ type: 'mrkdwn', text: `*❌ Absent (${absent.length})*\n${capBucket(absent)}` });
 
   const blocks = [
     { type: 'header', text: { type: 'plain_text', text: `📊 ${title}`.slice(0, 150) } },
@@ -972,43 +984,103 @@ function buildSlackDigestBlocks({ meetingTitle, totalAttended, totalInvited, par
   return blocks;
 }
 
-// Fallback plain-text body for Slack clients that don't render blocks.
+// Fallback plain-text body, used by Slack clients that don't render blocks
+// and as the Google Chat notification-preview text.
 function buildSlackFallbackText({ meetingTitle, totalAttended, totalInvited, sheetUrl }) {
   const title = meetingTitle || 'Google Meet';
   const summary = totalInvited ? `${totalAttended} of ${totalInvited} attended` : `${totalAttended} attended`;
   return `📊 ${title} — ${summary}${sheetUrl ? '\nOpen sheet: ' + sheetUrl : ''}`;
 }
 
-async function sendSlackDigest({ webhookUrl, meetingTitle, totalAttended, totalInvited, participants, sheetUrl, durationMin, startTime }) {
-  if (!webhookUrl) return { sent: false, reason: 'no_webhook' };
-  const blocks = buildSlackDigestBlocks({ meetingTitle, totalAttended, totalInvited, participants, sheetUrl, durationMin, startTime });
-  const text = buildSlackFallbackText({ meetingTitle, totalAttended, totalInvited, sheetUrl });
-  const body = JSON.stringify({ text, blocks });
+// Build the Google Chat cardsV2 payload. Chat cards use HTML-ish markup in
+// textParagraph widgets, so names are escaped.
+function buildChatDigestCard({ meetingTitle, totalAttended, totalInvited, participants, sheetUrl, durationMin, startTime }) {
+  const title = meetingTitle || 'Google Meet';
+  const { summary, durStr, timeStr } = digestMetaParts({ totalAttended, totalInvited, durationMin, startTime });
+  const subtitle = [summary, durStr, timeStr ? `started ${timeStr}` : ''].filter(Boolean).join(' · ');
+  const { present, left, absent } = digestBuckets(participants);
 
+  const widgets = [];
+  if (present.length) widgets.push({ textParagraph: { text: `<b>✅ Present (${present.length})</b><br>${escape(capBucket(present))}` } });
+  if (left.length) widgets.push({ textParagraph: { text: `<b>🟡 Left early (${left.length})</b><br>${escape(capBucket(left))}` } });
+  if (absent.length) widgets.push({ textParagraph: { text: `<b>❌ Absent (${absent.length})</b><br>${escape(capBucket(absent))}` } });
+  if (sheetUrl) {
+    widgets.push({ buttonList: { buttons: [{ text: 'Open sheet', onClick: { openLink: { url: sheetUrl } } }] } });
+  }
+
+  return {
+    text: buildSlackFallbackText({ meetingTitle, totalAttended, totalInvited, sheetUrl }),
+    cardsV2: [{
+      cardId: 'attendance-digest',
+      card: {
+        header: { title: `📊 ${title}`.slice(0, 150), subtitle },
+        sections: [{ widgets }],
+      },
+    }],
+  };
+}
+
+// Build the Discord embed payload. Embed limits: title 256, field value 1024.
+function buildDiscordDigestEmbed({ meetingTitle, totalAttended, totalInvited, participants, sheetUrl, durationMin, startTime }) {
+  const title = meetingTitle || 'Google Meet';
+  const { summary, durStr, timeStr } = digestMetaParts({ totalAttended, totalInvited, durationMin, startTime });
+  const description = [`**${summary}**`, durStr, timeStr ? `started ${timeStr}` : ''].filter(Boolean).join(' · ');
+  const { present, left, absent } = digestBuckets(participants);
+
+  const fields = [];
+  if (present.length) fields.push({ name: `✅ Present (${present.length})`, value: capBucket(present).slice(0, 1024), inline: false });
+  if (left.length) fields.push({ name: `🟡 Left early (${left.length})`, value: capBucket(left).slice(0, 1024), inline: false });
+  if (absent.length) fields.push({ name: `❌ Absent (${absent.length})`, value: capBucket(absent).slice(0, 1024), inline: false });
+
+  const embed = { title: `📊 ${title}`.slice(0, 256), description, color: 0x4ade80 };
+  if (sheetUrl) embed.url = sheetUrl; // makes the title an "Open sheet" link
+  if (fields.length) embed.fields = fields;
+  return { embeds: [embed] };
+}
+
+// Shared send path: POST the payload, log with the provider's masked URL,
+// never throw (fire-and-forget contract).
+async function postDigestPayload({ webhookUrl, payload, mask, label, meetingTitle }) {
   try {
-    const res = await postJsonWithTimeout(webhookUrl, body);
+    const res = await postJsonWithTimeout(webhookUrl, JSON.stringify(payload));
     if (!res.ok) {
       const respText = await res.text().catch(() => '');
-      log.warn('slack digest send failed', { webhook: maskSlackWebhook(webhookUrl), status: res.status, response: respText.slice(0, 200) });
+      log.warn(`${label} digest send failed`, { webhook: mask(webhookUrl), status: res.status, response: respText.slice(0, 200) });
       return { sent: false, status: res.status };
     }
-    log.info('slack digest sent', { webhook: maskSlackWebhook(webhookUrl), meetingTitle });
+    log.info(`${label} digest sent`, { webhook: mask(webhookUrl), meetingTitle });
     return { sent: true };
   } catch (err) {
-    log.warn('slack digest exception', { webhook: maskSlackWebhook(webhookUrl), error: err.message });
+    log.warn(`${label} digest exception`, { webhook: mask(webhookUrl), error: err.message });
     return { sent: false, error: err.message };
   }
 }
 
-// Test-only ping used by the settings modal's "Test" button to verify a
-// webhook is reachable + posts correctly. Same Block Kit machinery but
-// minimal payload.
-async function sendSlackTestPing({ webhookUrl }) {
+async function sendSlackDigest(args) {
+  if (!args.webhookUrl) return { sent: false, reason: 'no_webhook' };
+  const payload = { text: buildSlackFallbackText(args), blocks: buildSlackDigestBlocks(args) };
+  return postDigestPayload({ webhookUrl: args.webhookUrl, payload, mask: maskSlackWebhook, label: 'slack', meetingTitle: args.meetingTitle });
+}
+
+async function sendChatDigest(args) {
+  if (!args.webhookUrl) return { sent: false, reason: 'no_webhook' };
+  return postDigestPayload({ webhookUrl: args.webhookUrl, payload: buildChatDigestCard(args), mask: maskGoogleChatWebhook, label: 'google chat', meetingTitle: args.meetingTitle });
+}
+
+async function sendDiscordDigest(args) {
+  if (!args.webhookUrl) return { sent: false, reason: 'no_webhook' };
+  return postDigestPayload({ webhookUrl: args.webhookUrl, payload: buildDiscordDigestEmbed(args), mask: maskDiscordWebhook, label: 'discord', meetingTitle: args.meetingTitle });
+}
+
+// Test-only pings used by the settings modal's "Send test" buttons to verify
+// a webhook is reachable + posts correctly. Minimal payloads; the route
+// surfaces the result, so no logging here.
+const TEST_PING_TEXT = '✅ Attendance Tracker is connected. Future meeting digests will land in this channel.';
+
+async function postTestPing(webhookUrl, payload) {
   if (!webhookUrl) return { sent: false, reason: 'no_webhook' };
   try {
-    const res = await postJsonWithTimeout(webhookUrl, JSON.stringify({
-      text: '✅ Attendance Tracker is connected. Future meeting digests will land in this channel.',
-    }));
+    const res = await postJsonWithTimeout(webhookUrl, JSON.stringify(payload));
     if (!res.ok) {
       const respText = await res.text().catch(() => '');
       return { sent: false, status: res.status, response: respText.slice(0, 200) };
@@ -1019,9 +1091,23 @@ async function sendSlackTestPing({ webhookUrl }) {
   }
 }
 
+async function sendSlackTestPing({ webhookUrl }) {
+  return postTestPing(webhookUrl, { text: TEST_PING_TEXT });
+}
+
+async function sendChatTestPing({ webhookUrl }) {
+  return postTestPing(webhookUrl, { text: TEST_PING_TEXT });
+}
+
+async function sendDiscordTestPing({ webhookUrl }) {
+  return postTestPing(webhookUrl, { content: TEST_PING_TEXT });
+}
+
 module.exports = {
   sendSignupWebhook, maybeSendSignupNotification, sendWelcomeEmail, sendReferralNotification, maybeSendReferralNotification, flushDeferredNotifications, sendAdminEmail, sendWeeklySelfReport, sendExportNotification,
   sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail,
   sendSlackDigest, sendSlackTestPing, buildSlackDigestBlocks, buildSlackFallbackText, maskSlackWebhook,
+  sendChatDigest, sendChatTestPing, buildChatDigestCard, maskGoogleChatWebhook,
+  sendDiscordDigest, sendDiscordTestPing, buildDiscordDigestEmbed, maskDiscordWebhook,
   unsubscribeUrl, unsubscribeToken, verifyUnsubscribeToken, unsubscribeFooter,
 };

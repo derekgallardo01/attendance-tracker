@@ -676,10 +676,76 @@
                 </thead>
                 <tbody>${peopleRows}</tbody>
               </table>
+              <div class="muted" style="padding:10px 0 2px;font-size:.75rem">
+                ${t('history.downloadGradebook', 'Download gradebook CSV:')}${seriesCsvGated() ? ' <span style="background:rgba(74,222,128,.15);color:var(--accent);padding:1px 7px;border-radius:10px;font-size:.62rem;font-weight:700;letter-spacing:.03em;vertical-align:1px">PRO</span>' : ''}
+                <a href="#" onclick="event.preventDefault();downloadSeriesCsv('${safeRid}','generic')" style="color:var(--accent);text-decoration:none;margin-left:4px">CSV</a>
+                <span style="margin:0 3px">·</span>
+                <a href="#" onclick="event.preventDefault();downloadSeriesCsv('${safeRid}','moodle')" title="Formatted for Moodle gradebook import" style="color:var(--accent);text-decoration:none">Moodle</a>
+                <span style="margin:0 3px">·</span>
+                <a href="#" onclick="event.preventDefault();downloadSeriesCsv('${safeRid}','canvas')" title="Formatted for Canvas gradebook import" style="color:var(--accent);text-decoration:none">Canvas</a>
+              </div>
             </div>
           </div>
         `;
       }).join('');
+    }
+
+    // Fire-and-forget funnel beacon (mirrors index.html's logUserEvent).
+    // Never blocks or breaks the UX path; requires a signed-in session.
+    function logHistoryEvent(type, meta) {
+      if (!sessionToken) return;
+      try {
+        fetch(`${BACKEND_URL}/event`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}` },
+          body: JSON.stringify({ type, meta: meta || null }),
+        }).catch(() => {});
+      } catch (e) { /* ignore */ }
+    }
+
+    // The cumulative gradebook CSV is the same per-student data as the Pro
+    // "Class Summary" sheet tab, so it shares that gate: individual-plan
+    // accounts on Free are asked to upgrade. Fails OPEN when billing isn't
+    // configured or no individual plan exists (org domains keep their own
+    // team-feature gate), matching renderProCta's visibility condition.
+    function seriesCsvGated() {
+      const b = window._lastBillingStatus;
+      return !!(b && b.billingConfigured && b.individual && b.plan !== 'pro');
+    }
+
+    // Gentle upsell: no popup — scroll to the existing Series-tab Pro CTA and
+    // flash it so the upgrade path is obvious.
+    function flashProCta() {
+      const box = document.getElementById('series-pro-cta');
+      if (!box || box.style.display === 'none') { window.location.href = 'pricing.html'; return; }
+      box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      box.style.transition = 'box-shadow .25s ease';
+      box.style.boxShadow = '0 0 0 2px var(--accent)';
+      setTimeout(() => { box.style.boxShadow = ''; }, 1600);
+    }
+
+    // Build + download a per-series gradebook CSV (generic / Moodle / Canvas)
+    // from the already-loaded series data — no extra backend round-trip.
+    function downloadSeriesCsv(recurringEventId, format) {
+      const s = (seriesData.series || []).find(x => x.recurringEventId === recurringEventId);
+      if (!s) return;
+      if (seriesCsvGated()) {
+        logHistoryEvent('series_csv_gate_shown', { format });
+        flashProCta();
+        return;
+      }
+      logHistoryEvent('series_csv_downloaded', { format, people: (s.people || []).length });
+      const csv = AttHistory.buildSeriesGradebookCsv(s, format);
+      const safeTitle = String(s.title || 'series').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ClassSummary_${format}_${safeTitle}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
 
     // Mint a public share link for the given series and copy it to the

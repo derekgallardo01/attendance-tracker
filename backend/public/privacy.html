@@ -282,7 +282,7 @@
         <li><strong>Meeting data:</strong> Conference IDs, participant names, join/leave times, and session counts (obtained via the Google Meet REST API).</li>
         <li><strong>Calendar data:</strong> Event titles, start/end times, and attendee lists for meetings you match to Meet calls (obtained via the Google Calendar API).</li>
         <li><strong>Authentication tokens:</strong> OAuth refresh tokens (encrypted at rest with AES-256-GCM) to maintain your session.</li>
-        <li><strong>User settings:</strong> If you configure a Slack incoming webhook URL for post-meeting digests, that URL is stored on your user settings document.</li>
+        <li><strong>User settings:</strong> If you configure a Slack, Google Chat, or Discord incoming webhook URL for post-meeting digests, that URL is stored on your user settings document.</li>
         <li><strong>Product analytics:</strong> Anonymous pageview beacons on the marketing site (page path, referrer, UTM parameters, viewport width, user agent, IP). Not used for cross-site tracking.</li>
         <li><strong>Feedback submissions:</strong> If you use the in-product feedback widget, we store the message body, any email you provided, and context about where you were in the app.</li>
         <li><strong>Acquisition attribution:</strong> First-touch UTM parameters and referrer URL captured when you first visit the site or install the add-on, so we can understand how users find us.</li>
@@ -296,7 +296,8 @@
         <li>Display real-time attendance in the Meet side panel.</li>
         <li>Auto-export attendance reports to Google Sheets in your Google Drive when a meeting ends.</li>
         <li>Send you a post-meeting digest email with the sheet link and attendance summary.</li>
-        <li>Post a post-meeting summary to your Slack channel (only if you've configured a Slack webhook).</li>
+        <li>Post a post-meeting summary to your Slack channel, Google Chat space, or Discord channel (only if you've configured the matching webhook).</li>
+        <li>Copy student names and email addresses from a Google Classroom course you teach into a Class Roster, only when you click "Import from Google Classroom". The imported roster is stored in your browser, not on our servers.</li>
         <li>Match meeting participants to calendar invitees for RSVP status and no-show tracking.</li>
         <li>Roll up attendance across recurring meeting series and email you daily alerts when someone's attendance pattern changes significantly.</li>
         <li>Send occasional re-engagement emails if you signed up and stopped using the product. Every alert and re-engagement email includes a one-click unsubscribe link; unsubscribing stops these emails without affecting your ability to use the App.</li>
@@ -315,6 +316,7 @@
         <li><strong>Resend</strong> (<a href="https://resend.com/legal/privacy-policy" target="_blank" rel="noopener">privacy policy</a>) — transactional email delivery. Recipient email addresses and message content pass through Resend to be delivered. Delivery metadata (opens, bounces) is retained per Resend's policy.</li>
         <li><strong>Cloudflare</strong> (<a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">privacy policy</a>) — CDN and DNS proxy for the marketing site. HTTP request metadata (IP address, user agent, requested URL) passes through Cloudflare's edge network.</li>
         <li><strong>Slack Technologies</strong> — only if you configure a Slack webhook. Post-meeting summaries are POSTed to the webhook URL you provide, which is under your control.</li>
+        <li><strong>Discord Inc.</strong> — only if you configure a Discord webhook. Post-meeting summaries are POSTed to the webhook URL you provide, which is under your control. (Google Chat webhooks go to Google, already listed above.)</li>
         <li><strong>Sentry</strong> — application error tracking. Stack traces and error metadata may include limited request context; personal data is not intentionally captured.</li>
       </ul>
 
@@ -350,12 +352,13 @@
         <li><code>meetings.space.readonly</code> — View participant information for meetings you have access to.</li>
         <li><code>calendar.events.readonly</code> — View calendar events to match attendees and RSVP status.</li>
         <li><code>drive.file</code> — Create a "Meet Attendance Tracker" folder and spreadsheet in your Drive. This scope only grants access to files the App creates; it does not access other files in your Drive.</li>
+        <li><code>classroom.courses.readonly</code>, <code>classroom.rosters.readonly</code>, <code>classroom.profile.emails</code> — <em>Optional.</em> Requested only if you click "Import from Google Classroom", to list the courses you teach and copy a course's student names and email addresses into a Class Roster. Imported rosters are stored only in your browser; we do not store your Classroom data on our servers.</li>
       </ul>
 
       <h2>Your Rights</h2>
       <ul>
         <li>You can revoke the App's access at any time via <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener">Google Account Permissions</a>.</li>
-        <li>You can clear your Slack webhook at any time from the in-app Settings modal.</li>
+        <li>You can clear your Slack, Google Chat, or Discord webhook at any time from the in-app Settings modal.</li>
         <li>You can request export or deletion of your data by contacting us.</li>
       </ul>
 

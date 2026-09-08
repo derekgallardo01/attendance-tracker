@@ -20,7 +20,9 @@ A Google Meet add-on that tracks who joins, who leaves, and how long they stay �
 - One-click export to a per-user Google Sheet (tabbed by meeting)
 - Auto-export when the Meet API reports `endTime` and the panel is still open
 - Inline attendance digest email via Resend, with deep links to `history.html`
-- Slack post-meeting digest via incoming webhook (per-user config, Block Kit message)
+- Post-meeting digests via incoming webhooks — Slack (Block Kit), Google Chat (cardsV2), and Discord (embed); per-user config in the settings modal
+- LMS gradebook CSV exports — per-meeting (side panel, roster-based) and per-series (history page) downloads formatted for Moodle and Canvas gradebook import, plus a generic CSV
+- Import a Class Roster from Google Classroom (optional Classroom scopes via incremental consent; roster stays client-side)
 
 **Recurring meeting roll-up**
 - `recurringEventId` join key captured from Calendar API
@@ -66,7 +68,7 @@ Firestore is tenant-scoped under `tenants/{domain}`:
 ```
 tenants/{domain}                      - install config, adminEmail, delegationVerified
 tenants/{domain}/users/{email}        - profile + encrypted refresh token + teamAdmin flag
-tenants/{domain}/userSettings/{email} - Slack webhook URL + future notification prefs
+tenants/{domain}/userSettings/{email} - Slack/Google Chat/Discord webhook URLs + future notification prefs
 tenants/{domain}/meetings/{id}        - meeting metadata + recurringEventId + excusedEmails
 tenants/{domain}/meetings/{id}/participants/{userId}
 tenants/{domain}/events/{auto-id}     - per-user event log (signin, tracked, exported, etc.)
@@ -207,7 +209,7 @@ Optional / feature-specific:
 | `PORT` | `8080` | Cloud Run port |
 | `GCP_PROJECT_ID` | auto | Firestore project ID |
 | `MEET_TIMEOUT_MS` | `10000` | Per-request timeout for Meet API calls (retried on timeout) |
-| `SLACK_TIMEOUT_MS` | `5000` | Timeout for Slack webhook POSTs |
+| `SLACK_TIMEOUT_MS` | `5000` | Timeout for chat-webhook POSTs (Slack, Google Chat, Discord share the transport) |
 | `RESEND_TIMEOUT_MS` | `8000` | Timeout for Resend email sends |
 | `REQUEST_TIMEOUT_MS` | `30000` | Express server request timeout (socket destroyed past this) |
 | `SWEEP_BUDGET_MS` | `240000` | Time budget per daily cron sweep; unprocessed users roll to the next run |

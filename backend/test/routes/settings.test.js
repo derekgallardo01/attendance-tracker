@@ -17,6 +17,8 @@ jest.mock('../../src/services/firestore', () => ({
 }));
 jest.mock('../../src/lib/notifications', () => ({
   sendSlackTestPing: jest.fn(),
+  sendChatTestPing: jest.fn(),
+  sendDiscordTestPing: jest.fn(),
   maskSlackWebhook: jest.requireActual('../../src/lib/notifications').maskSlackWebhook,
 }));
 
@@ -277,6 +279,142 @@ describe('POST /api/settings/test-slack', () => {
     expect(res.status).toBe(200);
     expect(notifications.sendSlackTestPing).toHaveBeenCalledWith({
       webhookUrl: 'https://hooks.slack.com/services/Tsaved/Bsaved/secret',
+    });
+  });
+});
+
+describe('multi-provider webhooks (Google Chat + Discord)', () => {
+  const CHAT_URL = 'https://chat.googleapis.com/v1/spaces/AAAA/messages?key=k123&token=chatSecretToken99';
+  const DISCORD_URL = 'https://discord.com/api/webhooks/123456789/discordSecretToken42';
+
+  test('GET reports configured + masked state for all three providers', async () => {
+    firestore.getUserSettings.mockResolvedValue({
+      slackWebhookUrl: 'https://hooks.slack.com/services/T0/B0/slackSecret1234',
+      googleChatWebhookUrl: CHAT_URL,
+      discordWebhookUrl: DISCORD_URL,
+    });
+    const res = await request(app).get('/api/settings').set(authedHeader('u@a.com', 'a.com'));
+    expect(res.status).toBe(200);
+    expect(res.body.googleChatWebhookConfigured).toBe(true);
+    expect(res.body.googleChatWebhookMasked).toContain('chat.googleapis.com');
+    expect(res.body.discordWebhookConfigured).toBe(true);
+    expect(res.body.discordWebhookMasked).toContain('discord.com');
+    // No plaintext secret may appear anywhere in the response
+    const json = JSON.stringify(res.body);
+    expect(json).not.toContain('chatSecretToken99');
+    expect(json).not.toContain('discordSecretToken42');
+    expect(json).not.toContain('slackSecret1234');
+  });
+
+  test('GET defaults both new providers to unconfigured', async () => {
+    firestore.getUserSettings.mockResolvedValue({});
+    const res = await request(app).get('/api/settings').set(authedHeader('u@a.com', 'a.com'));
+    expect(res.body.googleChatWebhookConfigured).toBe(false);
+    expect(res.body.googleChatWebhookMasked).toBeNull();
+    expect(res.body.discordWebhookConfigured).toBe(false);
+    expect(res.body.discordWebhookMasked).toBeNull();
+  });
+
+  test('PUT saves a valid Google Chat webhook', async () => {
+    const res = await request(app).put('/api/settings').set(authedHeader('u@a.com', 'a.com'))
+      .send({ googleChatWebhookUrl: CHAT_URL });
+    expect(res.status).toBe(200);
+    expect(firestore.updateUserSettings).toHaveBeenCalledWith('a.com', 'u@a.com', { googleChatWebhookUrl: CHAT_URL });
+  });
+
+  test('PUT saves a valid Discord webhook', async () => {
+    const res = await request(app).put('/api/settings').set(authedHeader('u@a.com', 'a.com'))
+      .send({ discordWebhookUrl: DISCORD_URL });
+    expect(res.status).toBe(200);
+    expect(firestore.updateUserSettings).toHaveBeenCalledWith('a.com', 'u@a.com', { discordWebhookUrl: DISCORD_URL });
+  });
+
+  test('PUT can save all three webhooks in one request', async () => {
+    const slack = 'https://hooks.slack.com/services/T0/B0/secret';
+    const res = await request(app).put('/api/settings').set(authedHeader('u@a.com', 'a.com'))
+      .send({ slackWebhookUrl: slack, googleChatWebhookUrl: CHAT_URL, discordWebhookUrl: DISCORD_URL });
+    expect(res.status).toBe(200);
+    expect(firestore.updateUserSettings).toHaveBeenCalledWith('a.com', 'u@a.com', {
+      slackWebhookUrl: slack, googleChatWebhookUrl: CHAT_URL, discordWebhookUrl: DISCORD_URL,
+    });
+  });
+
+  test('PUT 400 for arbitrary/lookalike URLs in the new fields (SSRF protection)', async () => {
+    for (const body of [
+      { googleChatWebhookUrl: 'https://evil.example.com/v1/spaces/A/messages?key=k&token=t' },
+      { googleChatWebhookUrl: 'https://chat.googleapis.com.evil.com/v1/spaces/A/messages?key=k&token=t' },
+      { discordWebhookUrl: 'https://evil.example.com/api/webhooks/1/t' },
+      { discordWebhookUrl: 'https://discord.com.evil.com/api/webhooks/1/t' },
+    ]) {
+      const res = await request(app).put('/api/settings').set(authedHeader('u@a.com', 'a.com')).send(body);
+      expect(res.status).toBe(400);
+    }
+    expect(firestore.updateUserSettings).not.toHaveBeenCalled();
+  });
+
+  test('PUT null clears each new field; non-string non-null is rejected', async () => {
+    let res = await request(app).put('/api/settings').set(authedHeader('u@a.com', 'a.com'))
+      .send({ googleChatWebhookUrl: null, discordWebhookUrl: '' });
+    expect(res.status).toBe(200);
+    expect(firestore.updateUserSettings).toHaveBeenCalledWith('a.com', 'u@a.com', {
+      googleChatWebhookUrl: null, discordWebhookUrl: null,
+    });
+
+    res = await request(app).put('/api/settings').set(authedHeader('u@a.com', 'a.com'))
+      .send({ discordWebhookUrl: 42 });
+    expect(res.status).toBe(400);
+  });
+
+  describe('POST /api/settings/test-webhook', () => {
+    test('401 without auth', async () => {
+      const res = await request(app).post('/api/settings/test-webhook').send({ provider: 'discord' });
+      expect(res.status).toBe(401);
+    });
+
+    test('400 for an unknown provider', async () => {
+      const res = await request(app).post('/api/settings/test-webhook')
+        .set(authedHeader('u@a.com', 'a.com')).send({ provider: 'msteams' });
+      expect(res.status).toBe(400);
+    });
+
+    test('sends a Google Chat ping with the supplied URL', async () => {
+      notifications.sendChatTestPing.mockResolvedValue({ sent: true });
+      const res = await request(app).post('/api/settings/test-webhook')
+        .set(authedHeader('u@a.com', 'a.com'))
+        .send({ provider: 'googleChat', googleChatWebhookUrl: CHAT_URL });
+      expect(res.status).toBe(200);
+      expect(notifications.sendChatTestPing).toHaveBeenCalledWith({ webhookUrl: CHAT_URL });
+    });
+
+    test('falls back to the saved Discord webhook and surfaces a rejection as 502', async () => {
+      firestore.getUserSettings.mockResolvedValue({ discordWebhookUrl: DISCORD_URL });
+      notifications.sendDiscordTestPing.mockResolvedValue({ sent: false, status: 401 });
+      const res = await request(app).post('/api/settings/test-webhook')
+        .set(authedHeader('u@a.com', 'a.com')).send({ provider: 'discord' });
+      expect(res.status).toBe(502);
+      expect(notifications.sendDiscordTestPing).toHaveBeenCalledWith({ webhookUrl: DISCORD_URL });
+    });
+
+    test('400 when nothing supplied or saved / invalid URL supplied', async () => {
+      firestore.getUserSettings.mockResolvedValue({});
+      let res = await request(app).post('/api/settings/test-webhook')
+        .set(authedHeader('u@a.com', 'a.com')).send({ provider: 'googleChat' });
+      expect(res.status).toBe(400);
+
+      res = await request(app).post('/api/settings/test-webhook')
+        .set(authedHeader('u@a.com', 'a.com'))
+        .send({ provider: 'discord', discordWebhookUrl: 'https://evil.example.com/x' });
+      expect(res.status).toBe(400);
+      expect(notifications.sendDiscordTestPing).not.toHaveBeenCalled();
+    });
+
+    test('routes provider "slack" through the shared handler', async () => {
+      notifications.sendSlackTestPing.mockResolvedValue({ sent: true });
+      const res = await request(app).post('/api/settings/test-webhook')
+        .set(authedHeader('u@a.com', 'a.com'))
+        .send({ provider: 'slack', slackWebhookUrl: 'https://hooks.slack.com/services/T/B/x' });
+      expect(res.status).toBe(200);
+      expect(notifications.sendSlackTestPing).toHaveBeenCalled();
     });
   });
 });

@@ -199,11 +199,49 @@
     return emailMatch || nameMatch || soloMatch;
   }
 
-  // ─── Slack webhook helpers ───
-  // Slack incoming-webhook URLs have a fixed prefix + 3 path segments
-  // separated by /. The team/bot/token segments are bearer-secret-ish, so
-  // we mask them in any UI surface. Pure: tested in utils.test.js.
+  // ─── Chat webhook helpers (Slack / Google Chat / Discord) ───
+  // Incoming-webhook URLs embed bearer-token secrets, so we validate the
+  // canonical shape before submit and mask in any UI surface. Each validator
+  // must match its backend twin (lib/slack.js, lib/googleChat.js,
+  // lib/discord.js) exactly. Pure: tested in utils.test.js.
   const SLACK_WEBHOOK_PREFIX = 'https://hooks.slack.com/services/';
+  const CHAT_WEBHOOK_PREFIX = 'https://chat.googleapis.com/v1/spaces/';
+  const DISCORD_WEBHOOK_PREFIXES = [
+    'https://discord.com/api/webhooks/',
+    'https://discordapp.com/api/webhooks/',
+  ];
+
+  // Google Chat: fixed host + /v1/spaces/{space}/messages + non-empty bounded
+  // key and token query params.
+  function isValidGoogleChatWebhook(url) {
+    if (typeof url !== 'string' || url.length > 1000) return false;
+    if (!url.startsWith(CHAT_WEBHOOK_PREFIX)) return false;
+    // The prefix check guarantees a parseable scheme+host, so URL() can't throw.
+    const parsed = new URL(url);
+    if (!/^\/v1\/spaces\/[^/]{1,200}\/messages$/.test(parsed.pathname)) return false;
+    const key = parsed.searchParams.get('key');
+    const token = parsed.searchParams.get('token');
+    return !!(key && token && key.length < 200 && token.length < 200);
+  }
+
+  // Discord: pinned prefix + {numeric id}/{token}.
+  function isValidDiscordWebhook(url) {
+    if (typeof url !== 'string') return false;
+    const prefix = DISCORD_WEBHOOK_PREFIXES.find(p => url.startsWith(p));
+    if (!prefix) return false;
+    const parts = url.slice(prefix.length).split('/');
+    if (parts.length !== 2) return false;
+    const id = parts[0], token = parts[1];
+    return /^\d{1,30}$/.test(id) && token.length > 0 && token.length < 200 && !token.includes('?');
+  }
+
+  // CSV field escaping shared by the attendance + LMS builders. Always quotes,
+  // doubles inner quotes.
+  function escapeCsv(val) {
+    if (val === null || val === undefined) return '""';
+    const s = String(val).replace(/"/g, '""');
+    return `"${s}"`;
+  }
 
   function isValidSlackWebhook(url) {
     if (typeof url !== 'string') return false;
@@ -355,12 +393,6 @@
     const startTime = opts.startTime ? new Date(opts.startTime) : null;
     const now = opts.now ? new Date(opts.now) : new Date();
 
-    const escapeCsv = (val) => {
-      if (val === null || val === undefined) return '""';
-      const s = String(val).replace(/"/g, '""');
-      return `"${s}"`;
-    };
-
     const rows = [];
     rows.push([
       'Name',
@@ -472,14 +504,90 @@
     return '\uFEFF' + rows.join('\r\n');
   }
 
+  // \u2500\u2500 LMS gradebook exports (Moodle / Canvas) \u2500\u2500
+  // One row per ROSTER student \u2014 gradebooks only carry enrolled students, so
+  // unregistered guests are omitted. Grade = attendance % for anyone who
+  // joined, 0 for an unexcused absence, blank for an excused one (blank lets
+  // the teacher decide instead of importing a zero).
+
+  // "Alice B Walker" -> { first: "Alice B", last: "Walker" } (last token is the
+  // surname; single-token names go in `first`).
+  function splitName(full) {
+    const s = String(full || '').trim();
+    const i = s.lastIndexOf(' ');
+    return i === -1 ? { first: s, last: '' } : { first: s.slice(0, i), last: s.slice(i + 1) };
+  }
+
+  // Shared per-student grade computation. Same duration/threshold inputs as
+  // buildAttendanceCsv (opts: totalMeetingMs/meetingMinutes, startTime, now,
+  // excusedStudents).
+  function buildLmsGradebookRows(parts, activeRoster, opts) {
+    opts = opts || {};
+    const totalMeetingMs = opts.totalMeetingMs || 0;
+    const meetingMinutes = totalMeetingMs > 0 ? Math.max(1, Math.round(totalMeetingMs / 60000)) : (opts.meetingMinutes || 1);
+    const excusedStudents = opts.excusedStudents || {};
+    const now = opts.now ? new Date(opts.now) : new Date();
+
+    const rows = [];
+    for (const student of (activeRoster || [])) {
+      const p = findParticipantForStudent(student, parts);
+      const studentKey = (student.email || student.name || '').toLowerCase();
+      const isExcused = !!(excusedStudents[studentKey] && excusedStudents[studentKey].excused);
+      let grade;
+      if (p) {
+        const durMs = (p._accumulatedMs || 0) + (p.present && p.joinTime ? (now.getTime() - new Date(p.joinTime).getTime()) : 0);
+        const durMin = Math.round(durMs / 60000);
+        grade = Math.min(100, Math.round((durMin / meetingMinutes) * 100));
+      } else {
+        grade = isExcused ? '' : 0;
+      }
+      rows.push({
+        name: (p && p.displayName) || student.name,
+        email: (p && p.email) || student.email || '',
+        grade,
+      });
+    }
+    return rows;
+  }
+
+  // Moodle gradebook import CSV: matches students by "Email address"; the
+  // last column becomes the grade item.
+  function buildMoodleGradebookCsv(parts, activeRoster, opts) {
+    opts = opts || {};
+    const itemName = `${opts.meetingTitle || 'Google Meet'} attendance (%)`;
+    const rows = [['First name', 'Last name', 'Email address', itemName].map(escapeCsv).join(',')];
+    for (const r of buildLmsGradebookRows(parts, activeRoster, opts)) {
+      const { first, last } = splitName(r.name);
+      rows.push([first, last, r.email, r.grade].map(escapeCsv).join(','));
+    }
+    return '\uFEFF' + rows.join('\r\n');
+  }
+
+  // Canvas gradebook import CSV: Canvas matches rows on the ID columns \u2014
+  // SIS Login ID is usually the school email. The "Points Possible" row is
+  // part of Canvas's expected format.
+  function buildCanvasGradebookCsv(parts, activeRoster, opts) {
+    opts = opts || {};
+    const assignmentName = `${opts.meetingTitle || 'Google Meet'} attendance`;
+    const rows = [
+      ['Student', 'ID', 'SIS User ID', 'SIS Login ID', 'Section', assignmentName].map(escapeCsv).join(','),
+      ['Points Possible', '', '', '', '', 100].map(escapeCsv).join(','),
+    ];
+    for (const r of buildLmsGradebookRows(parts, activeRoster, opts)) {
+      rows.push([r.name, '', '', r.email, '', r.grade].map(escapeCsv).join(','));
+    }
+    return '\uFEFF' + rows.join('\r\n');
+  }
+
   const api = {
     escHtml, formatRelative, fmtTime, fmtDur, fmtDurMs, isoFmt, datestamp,
     latenessMin, avatarColor, participantKey, distinctAttendees,
     autoMatchAttendees, participantTotalMs, isSelfParticipant,
-    isValidSlackWebhook, maskWebhookUrl,
+    isValidSlackWebhook, isValidGoogleChatWebhook, isValidDiscordWebhook, maskWebhookUrl,
     serializeSession, parseSession,
     parseStudentsInput, findParticipantForStudent, buildAttendanceCsv,
-    LATE_THRESHOLD_MIN, AVATAR_PALETTE, SLACK_WEBHOOK_PREFIX,
+    splitName, buildLmsGradebookRows, buildMoodleGradebookCsv, buildCanvasGradebookCsv, escapeCsv,
+    LATE_THRESHOLD_MIN, AVATAR_PALETTE, SLACK_WEBHOOK_PREFIX, CHAT_WEBHOOK_PREFIX, DISCORD_WEBHOOK_PREFIXES,
   };
 
   root.AttUtils = api;

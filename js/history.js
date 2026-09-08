@@ -76,10 +76,57 @@
     return 'l4';
   }
 
+  // ── Series gradebook CSVs (generic / Moodle / Canvas) ──
+  // Built from a /api/series entry: people[] carries attended/missed/
+  // attendanceRate/totalMinutes with per-series canonicalized emails — the
+  // exact shape an LMS gradebook import wants.
+
+  function csvField(val) {
+    if (val === null || val === undefined) return '""';
+    return `"${String(val).replace(/"/g, '""')}"`;
+  }
+
+  // "Alice B Walker" -> first "Alice B", last "Walker" (mirrors js/utils.js).
+  function splitPersonName(full) {
+    const s = String(full || '').trim();
+    const i = s.lastIndexOf(' ');
+    return i === -1 ? { first: s, last: '' } : { first: s.slice(0, i), last: s.slice(i + 1) };
+  }
+
+  // format: 'generic' | 'moodle' | 'canvas'. Grade = attendance % across the
+  // series' tracked sessions.
+  function buildSeriesGradebookCsv(series, format) {
+    const title = (series && series.title) || 'Recurring meeting';
+    const people = (series && series.people) || [];
+    const gradeOf = (p) => Math.round((p.attendanceRate || 0) * 100);
+    const rows = [];
+
+    if (format === 'moodle') {
+      rows.push(['First name', 'Last name', 'Email address', `${title} attendance (%)`].map(csvField).join(','));
+      for (const p of people) {
+        const { first, last } = splitPersonName(p.displayName);
+        rows.push([first, last, p.email || '', gradeOf(p)].map(csvField).join(','));
+      }
+    } else if (format === 'canvas') {
+      rows.push(['Student', 'ID', 'SIS User ID', 'SIS Login ID', 'Section', `${title} attendance`].map(csvField).join(','));
+      rows.push(['Points Possible', '', '', '', '', 100].map(csvField).join(','));
+      for (const p of people) {
+        rows.push([p.displayName, '', '', p.email || '', '', gradeOf(p)].map(csvField).join(','));
+      }
+    } else {
+      rows.push(['Name', 'Email', 'Attended', 'Missed', 'Attendance %', 'Total minutes'].map(csvField).join(','));
+      for (const p of people) {
+        rows.push([p.displayName, p.email || '', p.attended || 0, p.missed || 0, gradeOf(p), p.totalMinutes || 0].map(csvField).join(','));
+      }
+    }
+    return '﻿' + rows.join('\r\n');
+  }
+
   const api = {
     fmtDate, fmtTime, fmtDuration, fmtMinutes, pct, computeRange, cssEscape,
     filterMeetings, filterPeople, filterSeries,
     activeDays, maxCalendarCount, calendarLevel,
+    splitPersonName, buildSeriesGradebookCsv, csvField,
   };
   root.AttHistory = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
