@@ -1201,7 +1201,7 @@ async function getReachOutSuggestions() {
 // ── Admin: power user pipeline ──
 // Active users who've crossed a threshold of recent activity but haven't been
 // reached out to. Targets for personalized outreach + testimonial requests.
-async function getPowerUserPipeline({ days = 7, minTracked = 5 } = {}) {
+async function getPowerUserPipeline({ days = 7, minMeetings = 3 } = {}) {
   try {
     const now = Date.now();
     const cutoff = now - days * 24 * 60 * 60 * 1000;
@@ -1236,14 +1236,22 @@ async function getPowerUserPipeline({ days = 7, minTracked = 5 } = {}) {
       const ts = tsMs(data.createdAt) || 0;
       if (!data.email || ts < cutoff) continue;
       if (data.type !== 'tracked' && data.type !== 'exported') continue;
-      const row = (agg[data.email] ||= { email: data.email, tracked: 0, exported: 0, lastActivity: 0 });
-      if (data.type === 'tracked') row.tracked++;
-      else row.exported++;
+      // The owner and the legacy/test domains aren't outreach targets.
+      if (data.email === SUPER_ADMIN_EMAIL || FUNNEL_EXCLUDED_DOMAINS.has(domainOf(data.email))) continue;
+      const row = (agg[data.email] ||= { email: data.email, meetings: new Set(), exported: 0, lastActivity: 0 });
+      if (data.type === 'tracked') {
+        // 'tracked' fires once per POLL, so raw counts are meaningless
+        // (thousands per user). Count distinct MEETINGS via the
+        // conferenceId meta; day-bucket as a fallback for legacy events.
+        row.meetings.add(data.meta?.conferenceId || 'day:' + new Date(ts).toISOString().slice(0, 10));
+      } else {
+        row.exported++;
+      }
       if (ts > row.lastActivity) row.lastActivity = ts;
     }
 
     return Object.values(agg)
-      .filter(row => row.tracked >= minTracked)
+      .filter(row => row.meetings.size >= minMeetings)
       .map(row => {
         const u = usersByEmail[row.email] || {};
         const lastContacted = outreachByEmail[row.email] || 0;
@@ -1252,9 +1260,9 @@ async function getPowerUserPipeline({ days = 7, minTracked = 5 } = {}) {
           domain: u.domain || domainOf(row.email),
           displayName: u.displayName || '',
           acquisitionSource: u.acquisitionSource || null,
-          tracked: row.tracked,
+          tracked: row.meetings.size, // distinct meetings, not poll events
           exported: row.exported,
-          totalActions: row.tracked + row.exported,
+          totalActions: row.meetings.size + row.exported,
           lastActivityAt: new Date(row.lastActivity).toISOString(),
           lastContactedAt: lastContacted ? new Date(lastContacted).toISOString() : null,
         };

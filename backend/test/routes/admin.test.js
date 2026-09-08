@@ -952,11 +952,18 @@ describe('Super-admin endpoint happy paths', () => {
     expect(res.body.suggestions).toHaveLength(1);
   });
 
-  test('GET /admin/power-users applies the default day/minTracked window', async () => {
+  test('GET /admin/power-users applies the default day/minMeetings window', async () => {
     firestore.getPowerUserPipeline.mockResolvedValue([]);
     const res = await request(app).get('/api/admin/power-users').set(admin());
     expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({ days: 7, minTracked: 5 });
+    expect(res.body).toMatchObject({ days: 7, minMeetings: 3 });
+  });
+
+  test('GET /admin/power-users honors the legacy minTracked param as an alias', async () => {
+    firestore.getPowerUserPipeline.mockResolvedValue([]);
+    const res = await request(app).get('/api/admin/power-users?minTracked=5').set(admin());
+    expect(res.status).toBe(200);
+    expect(firestore.getPowerUserPipeline).toHaveBeenCalledWith({ days: 7, minMeetings: 5 });
   });
 
   test('POST /admin/contacted requires email + domain, then marks contacted', async () => {

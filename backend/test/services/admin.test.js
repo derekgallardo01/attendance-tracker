@@ -404,35 +404,49 @@ describe('getReachOutSuggestions', () => {
 // ═══════════════════════════ power user pipeline ═══════════════════════════
 
 describe('getPowerUserPipeline', () => {
-  test('returns users above the tracking threshold who have not been contacted', async () => {
+  test('counts DISTINCT meetings (not poll events) and returns uncontacted users above the floor', async () => {
     const now = Date.now();
     seedUser('a.com', 'power@a.com');
-    // 10 tracked events in last 5 days
-    for (let i = 0; i < 10; i++) seedEvent('a.com', 'power@a.com', 'tracked', now - i * 12 * 3600 * 1000);
-    // No outreach doc → not contacted
-
-    const users = await firestore.getPowerUserPipeline({ days: 7, minTracked: 5 });
-    expect(users.length).toBeGreaterThan(0);
+    // 12 poll-tick 'tracked' events across only 3 distinct meetings
+    for (let i = 0; i < 12; i++) {
+      seedEvent('a.com', 'power@a.com', 'tracked', now - i * 3600 * 1000, { conferenceId: 'mtg-' + (i % 3) });
+    }
+    const users = await firestore.getPowerUserPipeline({ days: 7, minMeetings: 3 });
+    expect(users.length).toBe(1);
     expect(users[0].email).toBe('power@a.com');
+    expect(users[0].tracked).toBe(3); // meetings, not the 12 raw events
   });
 
-  test('respects minTracked threshold', async () => {
+  test('respects the minMeetings floor', async () => {
     const now = Date.now();
     seedUser('a.com', 'casual@a.com');
-    seedEvent('a.com', 'casual@a.com', 'tracked', now);
-    seedEvent('a.com', 'casual@a.com', 'tracked', now);
-    // 2 events, threshold 5 → excluded
-    const users = await firestore.getPowerUserPipeline({ days: 7, minTracked: 5 });
+    // Many polls, but all in the same two meetings → below a floor of 3
+    for (let i = 0; i < 20; i++) {
+      seedEvent('a.com', 'casual@a.com', 'tracked', now - i * 60000, { conferenceId: 'mtg-' + (i % 2) });
+    }
+    const users = await firestore.getPowerUserPipeline({ days: 7, minMeetings: 3 });
     expect(users.find(u => u.email === 'casual@a.com')).toBeUndefined();
   });
 
-  test('excludes already-contacted users', async () => {
+  test('legacy events without conferenceId fall back to day-buckets', async () => {
+    const now = Date.now();
+    seedUser('a.com', 'legacy@a.com');
+    for (let i = 0; i < 4; i++) seedEvent('a.com', 'legacy@a.com', 'tracked', now - i * 25 * 3600 * 1000);
+    const users = await firestore.getPowerUserPipeline({ days: 7, minMeetings: 3 });
+    expect(users.find(u => u.email === 'legacy@a.com')).toBeDefined();
+  });
+
+  test('excludes already-contacted users, the owner, and test domains', async () => {
     const now = Date.now();
     seedUser('a.com', 'contacted@a.com');
-    for (let i = 0; i < 10; i++) seedEvent('a.com', 'contacted@a.com', 'tracked', now);
+    for (let i = 0; i < 5; i++) {
+      seedEvent('a.com', 'contacted@a.com', 'tracked', now - i * 60000, { conferenceId: 'mtg-' + i });
+      seedEvent('theyachtgroup.com', 'legacy@theyachtgroup.com', 'tracked', now - i * 60000, { conferenceId: 'mtg-' + i });
+    }
     ctx.seed('tenants/a.com/outreach/contacted@a.com', { contactedAt: wrapTimestamp(new Date()) });
-    const users = await firestore.getPowerUserPipeline({ days: 7, minTracked: 5 });
+    const users = await firestore.getPowerUserPipeline({ days: 7, minMeetings: 3 });
     expect(users.find(u => u.email === 'contacted@a.com')).toBeUndefined();
+    expect(users.find(u => u.email === 'legacy@theyachtgroup.com')).toBeUndefined();
   });
 });
 

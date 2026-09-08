@@ -241,9 +241,11 @@ router.get('/admin/suggestions', requireSuperAdmin, async (req, res) => {
 router.get('/admin/power-users', requireSuperAdmin, async (req, res) => {
   try {
     const days = Math.max(1, Math.min(90, Number(req.query.days) || 7));
-    const minTracked = Math.max(1, Math.min(50, Number(req.query.minTracked) || 5));
-    const users = await getPowerUserPipeline({ days, minTracked });
-    res.json({ users, days, minTracked });
+    // minMeetings replaced minTracked when the pipeline switched from raw
+    // poll events to distinct meetings; accept the legacy name as an alias.
+    const minMeetings = Math.max(1, Math.min(50, Number(req.query.minMeetings) || Number(req.query.minTracked) || 3));
+    const users = await getPowerUserPipeline({ days, minMeetings });
+    res.json({ users, days, minMeetings });
   } catch (err) {
     log.error('admin: power-users failed', { error: err.message });
     res.status(500).json({ error: 'Failed to fetch power users' });

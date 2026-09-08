@@ -394,12 +394,12 @@
         <div class="section">
           <h2 style="display:flex;justify-content:space-between;align-items:center">
             <span>⭐ Power users — not yet contacted</span>
-            <span style="font-size:.7rem;color:var(--muted);font-weight:400" id="power-users-stamp">last 7 days, 5+ tracked</span>
+            <span style="font-size:.7rem;color:var(--muted);font-weight:400" id="power-users-stamp">last 7 days, 3+ meetings</span>
           </h2>
           <div class="table-scroll">
           <table>
             <thead>
-              <tr><th>User</th><th>Domain</th><th>Tracked</th><th>Exported</th><th>Source</th><th>Last active</th><th></th></tr>
+              <tr><th>User</th><th>Domain</th><th>Meetings</th><th>Exported</th><th>Source</th><th>Last active</th><th></th></tr>
             </thead>
             <tbody id="power-users-rows"><tr><td colspan="7" style="color:var(--muted)">Loading…</td></tr></tbody>
           </table>
@@ -1113,11 +1113,20 @@
         }
         const icon = { signin: '', tracked: '', exported: '' };
         const label = { signin: 'signed in', tracked: 'tracked a meeting', exported: 'exported to Sheets' };
-        feed.innerHTML = events.map(e => `
+        // 'tracked' fires once per poll, so a live meeting floods the feed
+        // with identical rows — collapse consecutive same-user same-type
+        // events into one row with a ×N chip.
+        const collapsed = [];
+        for (const e of events) {
+          const last = collapsed[collapsed.length - 1];
+          if (last && last.email === e.email && last.type === e.type) last.count++;
+          else collapsed.push({ ...e, count: 1 });
+        }
+        feed.innerHTML = collapsed.map(e => `
           <div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
             <div style="font-size:.95rem;flex-shrink:0">${icon[e.type] || '•'}</div>
             <div style="flex:1;min-width:0">
-              <div style="font-size:.82rem"><strong style="color:#c9d1d9">${esc(e.email || 'unknown')}</strong> ${esc(label[e.type] || e.type)}</div>
+              <div style="font-size:.82rem"><strong style="color:#c9d1d9">${esc(e.email || 'unknown')}</strong> ${esc(label[e.type] || e.type)}${e.count > 1 ? ` <span style="background:var(--surface-elevated,#21262d);border:1px solid var(--border);border-radius:10px;padding:0 7px;font-size:.68rem;color:var(--muted)">×${e.count}</span>` : ''}</div>
               <div style="font-size:.7rem;color:var(--muted)">${timeAgo(e.createdAt)} · ${esc(e.domain)}</div>
             </div>
           </div>
@@ -1129,7 +1138,7 @@
 
     async function loadPowerUsers() {
       try {
-        const res = await fetch(`${BACKEND_URL}/admin/power-users?days=7&minTracked=5`, { headers: { Authorization: `Bearer ${sessionToken}` } });
+        const res = await fetch(`${BACKEND_URL}/admin/power-users?days=7&minMeetings=3`, { headers: { Authorization: `Bearer ${sessionToken}` } });
         if (!res.ok) return;
         const { users } = await res.json();
         const body = document.getElementById('power-users-rows');
