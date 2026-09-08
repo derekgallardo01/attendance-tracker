@@ -132,6 +132,54 @@
           "@type": "Answer",
           "text": "Never. We cannot access your webcam, microphone, screen shares, or chat text. The add-on only reads roster metadata: participant names, join timestamps, and departure timestamps."
         }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I import my class list from Google Classroom?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. In the Class Roster tab, click + New Class and then Import from Google Classroom. Approve the one-time read-only permission, pick your course, and every enrolled student's name and school email fills in automatically. The roster is stored only in your browser."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I export attendance to Moodle or Canvas?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. With a Class Roster active, click Moodle or Canvas under Export gradebook CSV to download an import-ready gradebook file matched to students by email. Recurring classes also get a cumulative whole-semester gradebook export from the Meeting History Series tab."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can attendance summaries go to Google Chat or Discord instead of Slack?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. The Settings modal has one webhook card with Slack, Google Chat, and Discord tabs — paste the matching incoming-webhook URL, send a test, and save. Each configured provider gets its own formatted attendance card after every export."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I generate attendance certificates for participants?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes (Pro). After exporting, click Certificates in the side panel to generate a per-attendee PDF certificate with name, session, date, duration or credit hours, and a unique verification code anyone can confirm at attendancetracker.dev/verify."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How much does Attendance Tracker cost?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Free to start: real-time tracking, rosters, CSV downloads, and 3 Google Sheets exports per month. Pro is one-time or low-cost: Individual Lifetime Pass $9.99 one-time, Educator Annual Pass $4.99/year, or a $19.99 one-time Lifetime Domain license covering your whole Workspace domain."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is the add-on available in my language?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The side panel is localized in 30 languages, including Spanish, Portuguese, Hindi, Tagalog, Indonesian, Vietnamese, Arabic, Chinese, and more. It follows your browser language automatically and can be switched any time from Settings."
+        }
       }
     ]
   }
@@ -878,6 +926,34 @@
           </ol>
         </div>
       </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          <h3 class="faq-question">How many exports are free, and what does Pro cost?</h3>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-body">
+          <p>The free tier includes real-time tracking, Class Rosters, unlimited CSV downloads, and <strong>3 Google Sheets exports per calendar month</strong> — no credit card required.</p>
+          <p>Pro is one-time or low-cost, never a monthly treadmill:</p>
+          <ul>
+            <li><strong>Individual Lifetime Pass — $9.99 one-time:</strong> unlimited Sheets exports, hands-free Auto-Capture, cumulative Class Summary reports, certificates, and chat digests.</li>
+            <li><strong>Educator Annual Pass — $4.99/year:</strong> the same power, priced for teachers.</li>
+            <li><strong>Lifetime Domain license — $19.99 one-time:</strong> covers every teacher and staff member on your Google Workspace domain, plus the org-wide team dashboard.</li>
+          </ul>
+          <p>Full details on the <a href="/pricing.html">pricing page</a>.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          <h3 class="faq-question">Can I generate attendance certificates for participants?</h3>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-body">
+          <p>Yes (Pro). After exporting a meeting, click <strong>Certificates</strong> in the side panel's link bar to generate a per-attendee PDF certificate carrying the attendee's name, session title, date, duration or credit hours, and a unique verification code.</p>
+          <p>Anyone — a registrar, employer, or licensing board — can confirm a certificate is genuine by entering its code at <a href="/verify.html">attendancetracker.dev/verify</a>, no account needed. Popular for CPE/CLE credits, webinars, and corporate training. Full guide: <a href="/google-meet-attendance-certificates.html">attendance certificates</a>.</p>
+        </div>
+      </div>
     </section>
 
     <!-- Category 3: Classroom & Trends -->
@@ -910,11 +986,39 @@
           <p>Recipients can view student attendance records, trends, and dates without needing an account or installing the add-on.</p>
         </div>
       </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          <h3 class="faq-question">How to import your class list from Google Classroom</h3>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-body">
+          <p>No more pasting student names by hand:</p>
+          <ol>
+            <li>Open the <strong>Class Roster</strong> tab in the side panel and click <strong>+ New Class</strong>.</li>
+            <li>Click <strong>Import from Google Classroom</strong>. The first time, Google asks for a one-time read-only permission covering courses you teach — approving it resumes the import automatically.</li>
+            <li>Pick your course, click <strong>Import</strong>, review the list, and <strong>Save Roster</strong>.</li>
+          </ol>
+          <p>Every enrolled student's name and school email fills in, and the imported roster is stored only in your browser. Full guide: <a href="/import-google-classroom-roster-to-google-meet.html">Import a Google Classroom roster</a>.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          <h3 class="faq-question">How to export attendance to Moodle or Canvas gradebooks</h3>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-body">
+          <p>With a Class Roster active, the roster tab shows <strong>Export gradebook CSV: Moodle · Canvas</strong>. One click downloads an import-ready gradebook file — Moodle's <code>First name / Last name / Email address</code> layout or Canvas's <code>Student / SIS Login ID</code> layout — with each student's attendance percentage as the grade (unexcused absences import as 0; excused absences stay blank).</p>
+          <p>For recurring classes, the <strong>Series</strong> tab in <a href="/history.html">Meeting History</a> exports one cumulative gradebook row per student across the whole semester (Pro).</p>
+          <p>Guides: <a href="/export-google-meet-attendance-to-moodle.html">Moodle</a> · <a href="/export-google-meet-attendance-to-canvas.html">Canvas</a>.</p>
+        </div>
+      </div>
     </section>
 
     <!-- Category 4: Integrations -->
     <section class="category-section" data-section="integrations">
-      <h2 class="category-title">Slack &amp; Email Automated Summaries</h2>
+      <h2 class="category-title">Slack, Google Chat &amp; Discord Summaries</h2>
 
       <div class="faq-item">
         <div class="faq-header">
@@ -925,11 +1029,22 @@
           <p>You can post automatic attendance summaries directly into team Slack channels (like <code>#eng-standup</code> or <code>#ta-room</code>) in under a minute:</p>
           <ol>
             <li>Create an Incoming Webhook in your Slack workspace (<a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noopener">api.slack.com/messaging/webhooks</a>).</li>
-            <li>In the Attendance Tracker side panel, click the <strong>Settings (gear)</strong> icon.</li>
-            <li>Paste your Slack Incoming Webhook URL and save.</li>
+            <li>In the Attendance Tracker side panel, click the <strong>Settings (gear)</strong> icon and pick the <strong>Slack</strong> tab in the webhooks card.</li>
+            <li>Paste your Slack Incoming Webhook URL, click <strong>Send test</strong>, and save.</li>
             <li>Whenever a meeting ends or you export, a clean Block Kit summary card posts to your channel with present, late, and absent counts, plus a direct button to open the Google Sheet.</li>
           </ol>
           <p>Step-by-step setup: <a href="/how-to-send-google-meet-attendance-to-slack.html">How to Send Google Meet Attendance to Slack</a>.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          <h3 class="faq-question">Can summaries go to Google Chat or Discord instead?</h3>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-body">
+          <p>Yes. The same webhooks card in Settings has <strong>Slack</strong>, <strong>Google Chat</strong>, and <strong>Discord</strong> tabs — each takes that provider's incoming-webhook URL, and each configured provider gets its own native attendance card after every export (a cardsV2 card in Chat spaces, an embed in Discord channels). You can connect all three at once.</p>
+          <p>Full guide: <a href="/send-google-meet-attendance-to-google-chat.html">Send attendance to Google Chat or Discord</a>.</p>
         </div>
       </div>
 
@@ -986,6 +1101,27 @@
           <p><strong>To view and manage reports:</strong> Everything works great on mobile! You can open your exported Google Sheets, view the <a href="/history.html">history.html</a> dashboard, and receive Slack/email alerts right from your phone or tablet. For tips, read <a href="/google-meet-attendance-on-ipad-and-mobile.html">Google Meet Attendance on iPad &amp; Mobile</a>.</p>
         </div>
       </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          <h3 class="faq-question">Why does a small tab open when I download a CSV or PDF in Meet?</h3>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-body">
+          <p>That's expected. Google Meet runs add-ons in a locked-down frame that silently blocks direct file downloads, so Attendance Tracker hands your file to a small helper tab on attendancetracker.dev that performs the download and tells you when it's done — then you can close it.</p>
+          <p>If nothing opens at all, your browser's pop-up blocker caught the tab: allow pop-ups for <code>meet.google.com</code> and click download again.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-header">
+          <h3 class="faq-question">Is the add-on available in my language?</h3>
+          <span class="faq-toggle">+</span>
+        </div>
+        <div class="faq-body">
+          <p>The side panel is localized in <strong>30 languages</strong> — including Spanish, Portuguese, Hindi, Tagalog, Indonesian, Vietnamese, Arabic, Chinese, Japanese, Korean, Russian, and more. It detects your browser language automatically, and you can switch any time from the <strong>Settings</strong> modal's language selector.</p>
+        </div>
+      </div>
     </section>
 
     <!-- Category 6: Security & Privacy -->
@@ -1003,6 +1139,7 @@
             <li><code>meetings.space.readonly</code> — Reads who is currently in your Meet call and when they join or leave.</li>
             <li><code>calendar.events.readonly</code> — Reads matching calendar invitees to identify no-shows and calculate late arrivals.</li>
             <li><code>drive.file</code> — Creates and updates attendance spreadsheets in your Drive. Notice this is <code>drive.file</code>, <strong>not</strong> full Google Drive access—we can only view and edit spreadsheets created by Attendance Tracker, never your personal files, docs, or photos.</li>
+            <li><em>Optional:</em> <code>classroom.courses.readonly</code>, <code>classroom.rosters.readonly</code>, and <code>classroom.profile.emails</code> — requested <strong>only if</strong> you click "Import from Google Classroom", to list the courses you teach and copy a course's student names and emails into a Class Roster. Read-only, and the imported roster stays in your browser — never on our servers.</li>
           </ul>
         </div>
       </div>
