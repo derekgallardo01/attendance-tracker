@@ -66,6 +66,13 @@ render inside the modal (see `#roster-modal-error`).
   else is quota'd. Upsells stay GENTLE (no popup spam — flash existing CTAs).
 - Classroom routes use the user's token ONLY (`makeUserClient`) — the
   `getGoogleClient` service-account fallback must never be reachable there.
+- Attendee check-in: `/oauth/exchange` with `mode:'attendee'` mints a session
+  JWT with ZERO organizer side effects (no user doc, no tenant creation, no
+  welcome email, no re-engagement audience; tokens dropped). Never route a
+  participant-facing flow through the normal exchange — a student signing in
+  before their teacher would become the org's team admin. Check-ins live in
+  the root `checkins/{meetingCode}` doc (cross-tenant, like `verifications`),
+  first tap wins, 24h expiry filtered on read.
 - Jest gotcha: `clearMocks` clears calls, NOT implementations — use
   `mockResolvedValueOnce` for one-off overrides of shared factory defaults.
 
