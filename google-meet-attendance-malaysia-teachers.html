@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Google Meet Attendance Tracker for Teachers in Malaysia (MOE &amp; DELIMa) — Attendance Tracker</title>
+  <meta name="description" content="Free Google Meet attendance tracker for Malaysian teachers on MOE DELIMa accounts (moe-dl.edu.my), private schools, and universities. Automatic roll call, late flags, and Google Sheets export — no Education Plus needed. Bahasa Melayu supported." />
+  <link rel="canonical" href="https://attendancetracker.dev/google-meet-attendance-malaysia-teachers.html" />
+  <meta property="og:title" content="Google Meet Attendance Tracker for Teachers in Malaysia (MOE &amp; DELIMa)" />
+  <meta property="og:description" content="Automatic roll call, late student flags, and one-click Google Sheets export for Malaysian MOE and university teachers. Works on DELIMa accounts." />
+  <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
+  <meta property="og:url" content="https://attendancetracker.dev/google-meet-attendance-malaysia-teachers.html" />
+  <meta property="og:type" content="article" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Google Meet Attendance Tracker for Malaysian Teachers (MOE DELIMa & Universities)",
+    "description": "How Malaysian teachers on DELIMa (moe-dl.edu.my) accounts track attendance, late arrivals, and generate Google Sheets reports without an Education Plus license.",
+    "author": {
+      "@type": "Organization",
+      "name": "Attendance Tracker"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Attendance Tracker",
+      "url": "https://attendancetracker.dev/"
+    }
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #4ade80; --blue: #58a6ff; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 40px 20px; }
+    .container { max-width: 760px; margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+    .brand img { width: 28px; height: 28px; border-radius: 6px; }
+    .brand a { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 1.05rem; }
+    .page-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(74,222,128,.12); border: 1px solid rgba(74,222,128,.3); color: #4ade80; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; }
+    h1 { font-size: 2.1rem; line-height: 1.25; margin-bottom: 16px; letter-spacing: -0.02em; }
+    .lead { color: var(--muted); font-size: 1.08rem; margin-bottom: 28px; line-height: 1.6; }
+    h2 { font-size: 1.4rem; margin-top: 40px; margin-bottom: 16px; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    h3 { font-size: 1.1rem; margin-top: 24px; margin-bottom: 10px; color: var(--text); }
+    p { margin-bottom: 16px; color: #c9d1d9; font-size: 0.95rem; }
+    ul, ol { padding-left: 22px; margin-bottom: 20px; color: #c9d1d9; font-size: 0.95rem; }
+    li { margin-bottom: 8px; line-height: 1.5; }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 10px; padding: 18px 20px; margin: 26px 0; font-size: 0.92rem; }
+    .callout strong { color: var(--accent); }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 24px 0; }
+    .feature-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+    .feature-box strong { display: block; color: var(--text); font-size: 0.95rem; margin-bottom: 6px; }
+    .feature-box p { color: var(--muted); font-size: 0.85rem; margin: 0; line-height: 1.45; }
+    .cta { background: linear-gradient(135deg, rgba(74,222,128,.1), rgba(88,166,255,.1)); border: 1px solid rgba(74,222,128,.3); border-radius: 16px; padding: 32px 24px; text-align: center; margin: 44px 0; }
+    .cta h3 { font-size: 1.3rem; margin-top: 0; margin-bottom: 8px; color: #fff; }
+    .cta p { color: var(--muted); font-size: 0.95rem; margin-bottom: 20px; }
+    .btn { display: inline-block; background: #34A853; color: #fff; text-decoration: none; padding: 12px 28px; border-radius: 24px; font-weight: 700; font-size: 0.95rem; box-shadow: 0 4px 14px rgba(52,168,83,.4); transition: transform 0.15s ease; }
+    .btn:hover { transform: translateY(-1px); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <img src="icons/icon-96.png" alt="Attendance Tracker" />
+      <a href="/">Attendance Tracker</a>
+    </div>
+
+    <div class="page-badge">🇲🇾 Malaysian Teachers &amp; MOE Schools</div>
+    <h1>Google Meet Attendance Tracker for Teachers in Malaysia</h1>
+    <p class="lead">Calling the class register one name at a time in Google Meet wastes precious PdP time. Here is how Malaysian teachers on MOE DELIMa accounts, private school educators, and university lecturers take automated attendance and export it straight to Google Sheets — without paying for Google Workspace for Education Plus.</p>
+
+    <div class="callout">
+      <strong>Works with DELIMa accounts:</strong> Compatible with official Ministry of Education accounts under <code>moe-dl.edu.my</code> (Digital Educational Learning Initiative Malaysia), teacher-training institute accounts, university domains (<code>.edu.my</code>), and personal <code>@gmail.com</code> accounts. The side panel is also available in <strong>Bahasa Melayu</strong>.
+    </div>
+
+    <h2>Why Google Meet Doesn't Send You an Attendance Report</h2>
+    <p>DELIMa gives every Malaysian government school teacher a Google Workspace for Education account — but on the free <strong>Education Fundamentals</strong> tier. Google reserves its built-in Meet attendance reports for the paid <strong>Education Plus</strong> licence, so after your online class ends, no attendance email or spreadsheet ever arrives.</p>
+    <p><strong>Attendance Tracker</strong> fixes this from inside the meeting itself. It is a certified Google Workspace Marketplace add-on that runs in the Google Meet side panel, so it works on <em>every</em> Workspace edition — DELIMa Fundamentals accounts and personal Gmail included.</p>
+
+    <h2>Built for Malaysian Online Classrooms</h2>
+
+    <div class="feature-grid">
+      <div class="feature-box">
+        <strong>📋 Automatic Class Register</strong>
+        <p>No more "sila taip 'hadir' dalam chat". Every student is logged the moment they join, with their name and email captured automatically.</p>
+      </div>
+      <div class="feature-box">
+        <strong>⏰ Late Arrival Flags</strong>
+        <p>Students who join after the first 5 minutes are flagged with a late chip (e.g. <code>+12m late</code>) so your record shows who was punctual.</p>
+      </div>
+      <div class="feature-box">
+        <strong>⏱️ Real Attendance Minutes</strong>
+        <p>Unstable connection? If a student drops and rejoins, their active minutes are merged into one clean record — no duplicate rows.</p>
+      </div>
+      <div class="feature-box">
+        <strong>📊 1-Click Google Sheets Export</strong>
+        <p>Attendance lands in a tidy spreadsheet in your Google Drive, ready to attach to your weekly reporting or share with your Guru Besar.</p>
+      </div>
+      <div class="feature-box">
+        <strong>⚡ Hands-Free Auto-Export</strong>
+        <p>Enable auto-export once and every class is saved and emailed to you automatically when the meeting ends.</p>
+      </div>
+      <div class="feature-box">
+        <strong>🌏 Bahasa Melayu Interface</strong>
+        <p>The side panel follows your Google language setting — Bahasa Melayu, English, Mandarin, and Tamil are all supported.</p>
+      </div>
+    </div>
+
+    <h2>How to Take Attendance in Your Next Online Class</h2>
+    <ol>
+      <li><strong>Install the add-on:</strong> Open the <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_my_teachers" target="_blank" rel="noopener">Attendance Tracker Marketplace page</a> with your DELIMa or Gmail account and click <strong>Install</strong>.</li>
+      <li><strong>Start your Google Meet class</strong> as usual from Google Classroom or your calendar link.</li>
+      <li><strong>Open the side panel:</strong> Click the <em>Activities / Add-ons</em> icon next to the chat icon and choose <strong>Attendance Tracker</strong>.</li>
+      <li><strong>Teach:</strong> The register fills itself in as students join and leave.</li>
+      <li><strong>Save:</strong> Click <strong>Save to Sheets</strong>, or switch on auto-export so it saves itself when class ends.</li>
+    </ol>
+
+    <h2>Frequently Asked Questions from Malaysian Teachers</h2>
+
+    <h3>Does it work on MOE DELIMa (moe-dl.edu.my) accounts?</h3>
+    <p>Yes. DELIMa accounts run on Google Workspace for Education Fundamentals, and Attendance Tracker works on every Workspace edition. If your school administrator has restricted Marketplace installs, you can also sign in with a personal Gmail account as the meeting host.</p>
+
+    <h3>Can I use it for tuition classes and university lectures too?</h3>
+    <p>Yes. It handles small tuition groups and large university lectures with 100+ students equally well, and works with any mix of institutional and personal student accounts.</p>
+
+    <h3>Is student data kept private?</h3>
+    <p>Yes. Attendance Tracker never reads your camera, microphone, or meeting content, shows no ads, and sells no data. Spreadsheets are stored only in your own Google Drive.</p>
+
+    <h3>Is there a discount for teachers?</h3>
+    <p>Yes! The <strong>Educator Pass</strong> is $4.99/year, or a one-time <strong>Lifetime Pass</strong> is $9.99 — both include unlimited exports, hands-free auto-capture, and student attendance certificates. Basic tracking and 3 exports per month are free forever.</p>
+
+    <div class="cta">
+      <h3>Ready to stop calling the register manually?</h3>
+      <p>Save 10–15 minutes every class. Free install on Google Workspace Marketplace.</p>
+      <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_my_teachers" target="_blank" rel="noopener">Install Free from Google Marketplace →</a>
+    </div>
+
+    <div class="footer-hub" style="margin-top: 50px; padding-top: 30px; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--muted); line-height: 1.8;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; text-align: left; margin-bottom: 24px;">
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Education</strong>
+          <a href="attendance-tracker-for-teachers.html" style="color: var(--muted); text-decoration: none; display: block;">For K-12 Teachers</a>
+          <a href="google-meet-attendance-for-online-classes.html" style="color: var(--muted); text-decoration: none; display: block;">Online Classes</a>
+          <a href="automatic-attendance-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">Automatic Attendance</a>
+          <a href="google-meet-attendance-for-universities.html" style="color: var(--muted); text-decoration: none; display: block;">Universities &amp; Colleges</a>
+          <a href="google-meet-attendance-google-classroom.html" style="color: var(--muted); text-decoration: none; display: block;">Google Classroom</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">By Country</strong>
+          <a href="google-meet-attendance-malaysia-teachers.html" style="color: var(--accent); text-decoration: none; display: block; font-weight:600;">Malaysia (MOE &amp; DELIMa)</a>
+          <a href="google-meet-attendance-philippines-teachers.html" style="color: var(--muted); text-decoration: none; display: block;">Philippines (DepEd)</a>
+          <a href="google-meet-attendance-indonesia-teachers.html" style="color: var(--muted); text-decoration: none; display: block;">Indonesia (belajar.id)</a>
+          <a href="google-meet-attendance-india-teachers.html" style="color: var(--muted); text-decoration: none; display: block;">India (Schools &amp; Colleges)</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">More Guides</strong>
+          <a href="how-to-track-attendance-in-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">How to Track Attendance</a>
+          <a href="export-google-meet-attendance-to-sheets.html" style="color: var(--muted); text-decoration: none; display: block;">Export to Google Sheets</a>
+          <a href="track-attendance-for-webinars-and-training-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">Webinars &amp; Training</a>
+          <a href="google-meet-attendance-for-tutors.html" style="color: var(--muted); text-decoration: none; display: block;">Tutors &amp; Bootcamps</a>
+        </div>
+      </div>
+      <div style="text-align: center; font-size: 0.78rem; color: #6e7681; margin-top: 16px;">
+        &copy; 2026 Kinetic Helix LLC. Attendance Tracker for Google Meet&trade;. All rights reserved.
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    var params = new URLSearchParams(location.search);
+    try {
+      var utmSource = params.get('utm_source'), utmMedium = params.get('utm_medium'), utmCampaign = params.get('utm_campaign');
+      var ref = params.get('ref'), referrer = document.referrer || null;
+      var ACQ_KEY = 'attendanceTrackerAcq';
+      if (!localStorage.getItem(ACQ_KEY)) {
+        var payload = { utmSource: utmSource, utmMedium: utmMedium, utmCampaign: utmCampaign, ref: ref, referrer: referrer, landingUrl: location.href, capturedAt: Date.now() };
+        localStorage.setItem(ACQ_KEY, JSON.stringify(payload));
+        var cs = utmSource || (ref ? 'referral' : null) || (referrer ? new URL(referrer).hostname : null) || 'direct';
+        document.cookie = 'att_first_touch=' + encodeURIComponent(JSON.stringify(Object.assign({}, payload, { computedSource: cs }))) + ';path=/;max-age=7776000;SameSite=Lax';
+      }
+    } catch (e) {}
+    var API = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
+    try {
+      var blob = new Blob([JSON.stringify({ path: location.pathname, referrer: document.referrer || null, viewportWidth: window.innerWidth || null, utmSource: params.get('utm_source'), utmMedium: params.get('utm_medium'), utmCampaign: params.get('utm_campaign') })], { type: 'application/json' });
+      if (navigator.sendBeacon) navigator.sendBeacon(API + '/public/pageview', blob);
+      else fetch(API + '/public/pageview', { method: 'POST', body: blob, keepalive: true });
+    } catch (e) {}
+  })();
+  </script>
+</body>
+</html>

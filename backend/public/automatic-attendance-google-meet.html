@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Automatic Attendance in Google Meet — No Manual Roll Call — Attendance Tracker</title>
+  <meta name="description" content="Take attendance in Google Meet automatically: every participant logged as they join, late arrivals flagged, and the report auto-exported to Google Sheets when the meeting ends. No Chrome extension, no manual roll call." />
+  <link rel="canonical" href="https://attendancetracker.dev/automatic-attendance-google-meet.html" />
+  <meta property="og:title" content="Automatic Attendance in Google Meet — No Manual Roll Call" />
+  <meta property="og:description" content="Every participant logged automatically, late arrivals flagged, and the report auto-exported to Google Sheets when the meeting ends." />
+  <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
+  <meta property="og:url" content="https://attendancetracker.dev/automatic-attendance-google-meet.html" />
+  <meta property="og:type" content="article" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Automatic Attendance in Google Meet — No Manual Roll Call",
+    "description": "How to make Google Meet take attendance automatically: real-time participant logging, late flags, and hands-free auto-export to Google Sheets when the meeting ends.",
+    "author": {
+      "@type": "Organization",
+      "name": "Attendance Tracker"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Attendance Tracker",
+      "url": "https://attendancetracker.dev/"
+    }
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #4ade80; --blue: #58a6ff; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 40px 20px; }
+    .container { max-width: 760px; margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+    .brand img { width: 28px; height: 28px; border-radius: 6px; }
+    .brand a { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 1.05rem; }
+    .page-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(74,222,128,.12); border: 1px solid rgba(74,222,128,.3); color: #4ade80; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; }
+    h1 { font-size: 2.1rem; line-height: 1.25; margin-bottom: 16px; letter-spacing: -0.02em; }
+    .lead { color: var(--muted); font-size: 1.08rem; margin-bottom: 28px; line-height: 1.6; }
+    h2 { font-size: 1.4rem; margin-top: 40px; margin-bottom: 16px; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    h3 { font-size: 1.1rem; margin-top: 24px; margin-bottom: 10px; color: var(--text); }
+    p { margin-bottom: 16px; color: #c9d1d9; font-size: 0.95rem; }
+    ul, ol { padding-left: 22px; margin-bottom: 20px; color: #c9d1d9; font-size: 0.95rem; }
+    li { margin-bottom: 8px; line-height: 1.5; }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 10px; padding: 18px 20px; margin: 26px 0; font-size: 0.92rem; }
+    .callout strong { color: var(--accent); }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 24px 0; }
+    .feature-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+    .feature-box strong { display: block; color: var(--text); font-size: 0.95rem; margin-bottom: 6px; }
+    .feature-box p { color: var(--muted); font-size: 0.85rem; margin: 0; line-height: 1.45; }
+    .cta { background: linear-gradient(135deg, rgba(74,222,128,.1), rgba(88,166,255,.1)); border: 1px solid rgba(74,222,128,.3); border-radius: 16px; padding: 32px 24px; text-align: center; margin: 44px 0; }
+    .cta h3 { font-size: 1.3rem; margin-top: 0; margin-bottom: 8px; color: #fff; }
+    .cta p { color: var(--muted); font-size: 0.95rem; margin-bottom: 20px; }
+    .btn { display: inline-block; background: #34A853; color: #fff; text-decoration: none; padding: 12px 28px; border-radius: 24px; font-weight: 700; font-size: 0.95rem; box-shadow: 0 4px 14px rgba(52,168,83,.4); transition: transform 0.15s ease; }
+    .btn:hover { transform: translateY(-1px); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <img src="icons/icon-96.png" alt="Attendance Tracker" />
+      <a href="/">Attendance Tracker</a>
+    </div>
+
+    <div class="page-badge">⚡ Hands-Free Tracking</div>
+    <h1>Automatic Attendance in Google Meet</h1>
+    <p class="lead">"Automatic" should mean you do nothing: no roll call, no chat check-ins, no copying names after the meeting — and no forgetting to save the report. Here is how to make Google Meet take attendance entirely by itself, from the first join to the finished spreadsheet in your Drive.</p>
+
+    <h2>Why Google Meet Doesn't Do This Out of the Box</h2>
+    <p>Google Meet only produces attendance reports on premium Workspace tiers (Education Plus and certain Enterprise plans), and even then the report is a bare CSV emailed to the host — with no late flags, no roster matching, and no cumulative view across sessions.</p>
+    <p><strong>Attendance Tracker</strong> is a certified Google Workspace Marketplace add-on that runs in the Meet side panel and works on every account type, including free school domains and personal Gmail. It's an official Meet Add-ons SDK app — not a Chrome extension scraping participant names off the screen, which breaks whenever Google updates Meet's layout and only works on the one computer it's installed on.</p>
+
+    <h2>The Fully Automatic Setup</h2>
+
+    <div class="feature-grid">
+      <div class="feature-box">
+        <strong>📋 Auto Roll Call</strong>
+        <p>Every participant is logged the moment they join — name, email, join time — with zero action from you.</p>
+      </div>
+      <div class="feature-box">
+        <strong>⚡ Auto-Export on Meeting End</strong>
+        <p>Turn it on once in Settings. When your meeting ends, the attendance sheet saves itself to Google Drive and lands in your inbox.</p>
+      </div>
+      <div class="feature-box">
+        <strong>⏰ Automatic Late Flags</strong>
+        <p>Joins 5+ minutes after the start are flagged automatically (e.g. <code>+12m late</code>) — no clock-watching required.</p>
+      </div>
+      <div class="feature-box">
+        <strong>🙋 Automatic Absent Detection</strong>
+        <p>Save your roster once, and every report lists who missed the session — not just who attended.</p>
+      </div>
+      <div class="feature-box">
+        <strong>🔁 Automatic Series Roll-Up</strong>
+        <p>Recurring meetings accumulate into a per-person attendance percentage across the whole series, updated on every session.</p>
+      </div>
+      <div class="feature-box">
+        <strong>📱 Works From Any Device Afterwards</strong>
+        <p>Your meeting history and reports are available on the web dashboard and installable mobile app — not locked to one browser.</p>
+      </div>
+    </div>
+
+    <h2>Turn On Automatic Attendance (One-Time Setup)</h2>
+    <ol>
+      <li><strong>Install:</strong> Open the <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_auto_attendance" target="_blank" rel="noopener">Attendance Tracker Marketplace page</a> and click <strong>Install</strong>.</li>
+      <li><strong>In your next meeting</strong>, open the side panel via the <em>Activities / Add-ons</em> icon and choose <strong>Attendance Tracker</strong>.</li>
+      <li><strong>Open Settings</strong> in the panel and switch on <strong>Auto-export</strong>.</li>
+      <li>That's it. From now on, joining your meeting and opening the panel is all it takes — the report generates and saves itself when the call ends.</li>
+    </ol>
+
+    <div class="callout">
+      <strong>Why not a Chrome extension?</strong> Extensions guess attendance by reading the on-screen participant list, so they miss people in large meetings, break on Meet UI updates, and can't run if you join from another device. A native add-on logs attendance through Google's own APIs — reliable at any meeting size.
+    </div>
+
+    <h2>Frequently Asked Questions</h2>
+
+    <h3>Do I need to keep the side panel open the whole meeting?</h3>
+    <p>Open the panel once near the start so tracking begins, then use Meet normally. With auto-export enabled, the report is captured and saved even if you forget about it entirely.</p>
+
+    <h3>Does automatic tracking work for participants on phones?</h3>
+    <p>Yes. Participants joining from the Meet mobile app or dialing in are logged the same way — the tracking happens through Meet's APIs, not their device.</p>
+
+    <h3>Can attendance really be exported without clicking anything?</h3>
+    <p>Yes — that's the auto-export feature: when the meeting ends, the spreadsheet is created in your Google Drive and emailed to you automatically. Manual one-click export is always available too.</p>
+
+    <h3>What does it cost?</h3>
+    <p>Real-time tracking is free with 3 exports per month. Hands-free auto-export is part of Pro: a one-time <strong>Lifetime Pass</strong> for $9.99, or the <strong>Educator Pass</strong> at $4.99/year for teachers.</p>
+
+    <div class="cta">
+      <h3>Set it up once, never take attendance again</h3>
+      <p>Free install on Google Workspace Marketplace — automatic from your very next meeting.</p>
+      <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_auto_attendance" target="_blank" rel="noopener">Install Free from Google Marketplace →</a>
+    </div>
+
+    <div class="footer-hub" style="margin-top: 50px; padding-top: 30px; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--muted); line-height: 1.8;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; text-align: left; margin-bottom: 24px;">
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Education</strong>
+          <a href="attendance-tracker-for-teachers.html" style="color: var(--muted); text-decoration: none; display: block;">For K-12 Teachers</a>
+          <a href="google-meet-attendance-for-online-classes.html" style="color: var(--muted); text-decoration: none; display: block;">Online Classes</a>
+          <a href="automatic-attendance-google-meet.html" style="color: var(--accent); text-decoration: none; display: block; font-weight:600;">Automatic Attendance</a>
+          <a href="google-meet-attendance-for-universities.html" style="color: var(--muted); text-decoration: none; display: block;">Universities &amp; Colleges</a>
+          <a href="google-meet-attendance-google-classroom.html" style="color: var(--muted); text-decoration: none; display: block;">Google Classroom</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">By Country</strong>
+          <a href="google-meet-attendance-philippines-teachers.html" style="color: var(--muted); text-decoration: none; display: block;">Philippines (DepEd)</a>
+          <a href="google-meet-attendance-malaysia-teachers.html" style="color: var(--muted); text-decoration: none; display: block;">Malaysia (MOE &amp; DELIMa)</a>
+          <a href="google-meet-attendance-indonesia-teachers.html" style="color: var(--muted); text-decoration: none; display: block;">Indonesia (belajar.id)</a>
+          <a href="google-meet-attendance-india-teachers.html" style="color: var(--muted); text-decoration: none; display: block;">India (Schools &amp; Colleges)</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">More Guides</strong>
+          <a href="how-to-track-attendance-in-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">How to Track Attendance</a>
+          <a href="export-google-meet-attendance-to-sheets.html" style="color: var(--muted); text-decoration: none; display: block;">Export to Google Sheets</a>
+          <a href="best-google-meet-attendance-extensions.html" style="color: var(--muted); text-decoration: none; display: block;">Best Attendance Extensions</a>
+          <a href="track-attendance-for-webinars-and-training-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">Webinars &amp; Training</a>
+        </div>
+      </div>
+      <div style="text-align: center; font-size: 0.78rem; color: #6e7681; margin-top: 16px;">
+        &copy; 2026 Kinetic Helix LLC. Attendance Tracker for Google Meet&trade;. All rights reserved.
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    var params = new URLSearchParams(location.search);
+    try {
+      var utmSource = params.get('utm_source'), utmMedium = params.get('utm_medium'), utmCampaign = params.get('utm_campaign');
+      var ref = params.get('ref'), referrer = document.referrer || null;
+      var ACQ_KEY = 'attendanceTrackerAcq';
+      if (!localStorage.getItem(ACQ_KEY)) {
+        var payload = { utmSource: utmSource, utmMedium: utmMedium, utmCampaign: utmCampaign, ref: ref, referrer: referrer, landingUrl: location.href, capturedAt: Date.now() };
+        localStorage.setItem(ACQ_KEY, JSON.stringify(payload));
+        var cs = utmSource || (ref ? 'referral' : null) || (referrer ? new URL(referrer).hostname : null) || 'direct';
+        document.cookie = 'att_first_touch=' + encodeURIComponent(JSON.stringify(Object.assign({}, payload, { computedSource: cs }))) + ';path=/;max-age=7776000;SameSite=Lax';
+      }
+    } catch (e) {}
+    var API = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
+    try {
+      var blob = new Blob([JSON.stringify({ path: location.pathname, referrer: document.referrer || null, viewportWidth: window.innerWidth || null, utmSource: params.get('utm_source'), utmMedium: params.get('utm_medium'), utmCampaign: params.get('utm_campaign') })], { type: 'application/json' });
+      if (navigator.sendBeacon) navigator.sendBeacon(API + '/public/pageview', blob);
+      else fetch(API + '/public/pageview', { method: 'POST', body: blob, keepalive: true });
+    } catch (e) {}
+  })();
+  </script>
+</body>
+</html>
