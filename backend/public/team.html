@@ -287,7 +287,10 @@
       const btn = document.getElementById('upgrade-btn');
       if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
       try {
-        window.location.href = await AttApi.startCheckout(sessionToken, { plan: 'team', interval: teamInterval }); // shared js/api.js — explicit: this page sells the domain plan
+        // Explicit plan AND explicit 'once': team+annual is the $149
+        // Institution price server-side — this page sells the one-time
+        // domain license only (Institution lives on pricing.html).
+        window.location.href = await AttApi.startCheckout(sessionToken, { plan: 'team', interval: 'once' }); // shared js/api.js
         return;
       } catch (e) {
         alert(e.message);
@@ -330,12 +333,9 @@
               }
             }
           } catch (_) { /* teaser is best-effort */ }
-          // Offer the monthly/annual toggle only once annual is live.
-          try {
-            const sRes = await fetch(`${BACKEND_URL}/billing/status`, { headers: { 'Authorization': `Bearer ${sessionToken}` } });
-            const s = await sRes.json().catch(() => ({}));
-            if (s.annualAvailable) { document.getElementById('team-interval').style.display = ''; setTeamInterval('annual'); }
-          } catch (_) { /* toggle stays hidden — monthly only */ }
+          // No interval toggle: STRIPE_ANNUAL_PRICE_ID is the $149
+          // Institution price now, so "Annual - save 20%" would have been a
+          // mislabeled $149 charge. This page sells the one-time license.
           return;
         }
         if (!res.ok) throw new Error(`${res.status}`);

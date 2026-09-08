@@ -886,6 +886,9 @@
         var qp = new URLSearchParams(location.search);
         var emailParam = qp.get('email');
         if (emailParam && emailParam.indexOf('@') !== -1) _checkoutEmail = emailParam.trim().toLowerCase();
+        // ?promo=<anything> → the visitor holds a code (e.g. a referral
+        // reward): checkout opens Stripe's code box instead of auto-LAUNCH50.
+        if (qp.get('promo')) _promoOverride = 'code';
         var planParam = qp.get('plan');
         if (planParam) {
           sendPricingEvent('pricing_deeplink', planParam);
@@ -965,6 +968,7 @@
     // (it's how the webhook knows which domain to activate). Prefilled by the
     // ?email= deep link; otherwise we prompt right before checkout.
     let _checkoutEmail = null;
+    let _promoOverride = null; // 'code' = user arrived with a promo code to enter
     function ensureTeamEmail(plan) {
       if (plan !== 'team' && plan !== 'institution') return true;
       if (getStoredToken()) return true; // authed checkout derives the domain server-side
@@ -991,6 +995,11 @@
       // auto-apply — the empty promo tells the backend to skip it), billed on
       // the domain plan's annual Stripe price.
       const isInstitution = plan === 'institution';
+      // Referral redemption: LAUNCH50 auto-applies by default, which DISABLES
+      // Stripe's promo-code box — so a referred user could never enter their
+      // reward code. Landing with ?promo=code (from the reward email) skips
+      // the auto-apply and opens the box instead.
+      const skipLaunch = isInstitution || _promoOverride === 'code';
       try {
         const res = await fetch(endpoint, {
           method: 'POST',
@@ -1000,7 +1009,7 @@
             // 'team' + 'annual' resolves to the Institution price server-side,
             // so the $19.99 one-time domain card must NOT send 'annual'.
             interval: isInstitution ? 'annual' : (plan === 'team' ? 'once' : 'annual'),
-            promo: isInstitution ? '' : 'LAUNCH50',
+            promo: skipLaunch ? '' : 'LAUNCH50',
             ...(_checkoutEmail ? { email: _checkoutEmail } : {})
           })
         });
