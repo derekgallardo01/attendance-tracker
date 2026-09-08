@@ -24,6 +24,7 @@ jest.mock('../../src/services/firestore', () => ({
   setUserAcquisitionSource: jest.fn(),
   getOutreachList: jest.fn(),
   getRecentActivity: jest.fn(),
+  getActivityPulse: jest.fn(),
   getReachOutSuggestions: jest.fn(),
   getPowerUserPipeline: jest.fn(),
   markUserContacted: jest.fn(),
@@ -70,6 +71,7 @@ beforeEach(() => {
 const SUPER_ADMIN_ONLY = [
   { method: 'get', path: '/api/admin/all-users' },
   { method: 'get', path: '/api/admin/activity' },
+  { method: 'get', path: '/api/admin/pulse' },
   { method: 'get', path: '/api/admin/suggestions' },
   { method: 'get', path: '/api/admin/power-users' },
   { method: 'post', path: '/api/admin/contacted', body: { email: 'x@y.com', domain: 'y.com' } },

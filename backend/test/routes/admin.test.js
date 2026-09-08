@@ -15,6 +15,7 @@ jest.mock('../../src/services/firestore', () => ({
   setUserAcquisitionSource: jest.fn(),
   getOutreachList: jest.fn(),
   getRecentActivity: jest.fn(),
+  getActivityPulse: jest.fn(),
   getReachOutSuggestions: jest.fn(),
   getPowerUserPipeline: jest.fn(),
   markUserContacted: jest.fn(),
@@ -928,6 +929,20 @@ describe('Super-admin endpoint happy paths', () => {
     expect(res.status).toBe(200);
     expect(res.body.events).toHaveLength(1);
     expect(firestore.getRecentActivity).toHaveBeenCalledWith({ limit: 200 });
+  });
+
+  test('GET /admin/pulse returns the real-time numbers with no-store', async () => {
+    firestore.getActivityPulse.mockResolvedValue({ activeNow: 3, totalUsers: 214 });
+    const res = await request(app).get('/api/admin/pulse').set(admin());
+    expect(res.status).toBe(200);
+    expect(res.body.activeNow).toBe(3);
+    expect(res.headers['cache-control']).toContain('no-store');
+  });
+
+  test('GET /admin/pulse maps a null pulse (service failure) to 500', async () => {
+    firestore.getActivityPulse.mockResolvedValue(null);
+    const res = await request(app).get('/api/admin/pulse').set(admin());
+    expect(res.status).toBe(500);
   });
 
   test('GET /admin/suggestions returns the reach-out cards', async () => {

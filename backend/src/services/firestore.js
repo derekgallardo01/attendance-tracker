@@ -10,7 +10,7 @@ const { suppressEmail, isEmailSuppressed, unsuppressEmail } = require('./firesto
 const { deleteUser } = require('./firestore/deletion');
 const { saveCheckin, getCheckins } = require('./firestore/checkins');
 const {
-  getActivationFunnel, getAggregatedInsights, getWeeklySelfReport, getAdvancedAnalytics, getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, markUserContacted, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, getOutreachList,
+  getActivationFunnel, getAggregatedInsights, getWeeklySelfReport, getAdvancedAnalytics, getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, markUserContacted, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, getOutreachList, getActivityPulse,
 } = require('./firestore/analytics');
 
 // ── Tenant config ──
@@ -1730,4 +1730,5 @@ module.exports = {
   getPowerUserPipeline: memoizeTTL(getPowerUserPipeline, 120000),
   getOutreachList: memoizeTTL(getOutreachList, 120000),
   getRecentActivity: memoizeTTL(getRecentActivity, 60000),
+  getActivityPulse: memoizeTTL(getActivityPulse, 60000),
 };

@@ -156,6 +156,9 @@ class MockCollectionGroupQuery {
     return new MockCollectionGroupQuery(this._store, this._name, this._filters, n);
   }
   orderBy() { return this; }
+  // Projections only narrow the returned fields — for tests, returning the
+  // full doc is a superset and behaviorally equivalent.
+  select() { return this; }
   count() {
     const self = this;
     return { async get() { const s = await self.get(); return { data: () => ({ count: s.size }) }; } };

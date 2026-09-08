@@ -648,3 +648,49 @@ describe('updateUserTokens', () => {
     expect(user.accessToken).toBe('ya29.test-access-token');
   });
 });
+
+// ═══════════════════════════ real-time pulse ═══════════════════════════
+
+describe('getActivityPulse', () => {
+  test('returns zeroes for an empty store', async () => {
+    const p = await firestore.getActivityPulse();
+    expect(p.totalUsers).toBe(0);
+    expect(p.activeNow).toBe(0);
+    expect(p.checkins24h).toBe(0);
+    expect(p.generatedAt).toBeDefined();
+  });
+
+  test('computes distinct-active windows, signups, exports, upgrades, check-ins', async () => {
+    const now = Date.now();
+    seedUser('a.com', 'new@a.com', { createdAt: new Date(now - 3600e3) });   // signed up 1h ago
+    seedUser('a.com', 'old@a.com', { createdAt: new Date(now - 10 * DAY) }); // total only
+    seedUser('b.com', 'week@b.com', { createdAt: new Date(now - 3 * DAY) }); // 7d window
+    seedEvent('a.com', 'new@a.com', 'tracked', now - 5 * 60e3);              // active NOW, tracking
+    seedEvent('a.com', 'old@a.com', 'exported', now - 2 * 3600e3);
+    seedEvent('a.com', 'old@a.com', 'export_success', now - 3 * 3600e3);
+    seedEvent('b.com', 'week@b.com', 'signin', now - 2 * DAY);               // 7d only, not a 24h signin
+    seedEvent('b.com', 'week@b.com', 'upgraded', now - 3600e3);
+    seedEvent('a.com', 'x@a.com', 'quota_warning_shown', now - 3600e3);
+    seedEvent('a.com', 'stale@a.com', 'signin', now - 10 * DAY);             // outside every window
+    ctx.seed('checkins/abc-defg-hij', {
+      people: {
+        's@x_com': { email: 's@x.com', checkedInAt: new Date(now - 3600e3).toISOString() },
+        'o@x_com': { email: 'o@x.com', checkedInAt: new Date(now - 2 * DAY).toISOString() }, // expired window
+      },
+    });
+
+    const p = await firestore.getActivityPulse();
+    expect(p.totalUsers).toBe(3);
+    expect(p.signups24h).toBe(1);
+    expect(p.signups7d).toBe(2);
+    expect(p.activeNow).toBe(1);      // only new@a.com within 15 min
+    expect(p.trackingNow).toBe(1);
+    expect(p.active24h).toBe(4);      // new@, old@, week@ (upgraded), x@
+    expect(p.active7d).toBe(4);       // stale@ excluded
+    expect(p.signins24h).toBe(0);     // the only signin is 2 days old
+    expect(p.exports24h).toBe(2);     // exported + export_success
+    expect(p.upgrades24h).toBe(1);
+    expect(p.quotaHits24h).toBe(1);
+    expect(p.checkins24h).toBe(1);    // the 2-day-old check-in doesn't count
+  });
+});

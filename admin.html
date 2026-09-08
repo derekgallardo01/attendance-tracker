@@ -293,6 +293,45 @@
 
       <!-- Super admin: live founder loop sections -->
       <div id="founder-section" style="display:none">
+        <!-- Real-time pulse band: the "how is it doing RIGHT NOW" numbers -->
+        <div class="section" style="margin-bottom:16px">
+          <h2 style="display:flex;justify-content:space-between;align-items:center">
+            <span><span class="live-dot"></span>Right now</span>
+            <span style="font-size:.7rem;color:var(--muted);font-weight:400" id="pulse-stamp">—</span>
+          </h2>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px">
+            <div class="stat-card" style="padding:10px 12px">
+              <div class="stat-label">Active now <span style="color:#6e7681">(15m)</span></div>
+              <div class="stat-value green" id="pulse-activeNow" style="font-size:1.5rem">—</div>
+              <div class="stat-label"><span id="pulse-trackingNow">—</span> tracking a meeting</div>
+            </div>
+            <div class="stat-card" style="padding:10px 12px">
+              <div class="stat-label">Active 24h</div>
+              <div class="stat-value blue" id="pulse-active24h" style="font-size:1.5rem">—</div>
+              <div class="stat-label"><span id="pulse-active7d">—</span> in 7d</div>
+            </div>
+            <div class="stat-card" style="padding:10px 12px">
+              <div class="stat-label">Signups 24h</div>
+              <div class="stat-value green" id="pulse-signups24h" style="font-size:1.5rem">—</div>
+              <div class="stat-label"><span id="pulse-signups7d">—</span> in 7d · <span id="pulse-totalUsers">—</span> total</div>
+            </div>
+            <div class="stat-card" style="padding:10px 12px">
+              <div class="stat-label">Exports 24h</div>
+              <div class="stat-value blue" id="pulse-exports24h" style="font-size:1.5rem">—</div>
+              <div class="stat-label"><span id="pulse-quotaHits24h">—</span> quota warnings</div>
+            </div>
+            <div class="stat-card" style="padding:10px 12px">
+              <div class="stat-label">Upgrades 24h</div>
+              <div class="stat-value" id="pulse-upgrades24h" style="font-size:1.5rem;color:#fbbf24">—</div>
+              <div class="stat-label">paid conversions</div>
+            </div>
+            <div class="stat-card" style="padding:10px 12px">
+              <div class="stat-label">Check-ins 24h</div>
+              <div class="stat-value green" id="pulse-checkins24h" style="font-size:1.5rem">—</div>
+              <div class="stat-label">attendee self-check-ins</div>
+            </div>
+          </div>
+        </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;margin-bottom:24px">
           <!-- Reach out NOW -->
           <div class="section" style="margin-bottom:0">
@@ -725,6 +764,7 @@
           document.getElementById('founder-section').style.display = 'block';
           document.getElementById('analytics-section').style.display = 'block';
           loadSuggestions();
+          loadPulse();
           loadActivity();
           loadPowerUsers();
           loadAllUsers();
@@ -990,6 +1030,19 @@
         `).join('');
       } catch (err) {
         console.error('suggestions load failed:', err);
+      }
+    }
+
+    async function loadPulse() {
+      try {
+        const res = await fetch(`${BACKEND_URL}/admin/pulse`, { headers: { Authorization: `Bearer ${sessionToken}` } });
+        if (!res.ok) return;
+        const p = await res.json();
+        const set = (id, v) => { const el = document.getElementById('pulse-' + id); if (el) el.textContent = String(v ?? '—'); };
+        for (const k of ['activeNow', 'trackingNow', 'active24h', 'active7d', 'signups24h', 'signups7d', 'totalUsers', 'exports24h', 'quotaHits24h', 'upgrades24h', 'checkins24h']) set(k, p[k]);
+        document.getElementById('pulse-stamp').textContent = `Updated ${new Date().toLocaleTimeString()}`;
+      } catch (err) {
+        console.error('pulse load failed:', err);
       }
     }
 
@@ -1542,6 +1595,7 @@
       let tick = 0;
       liveRefreshTimer = setInterval(() => {
         tick++;
+        loadPulse();
         loadActivity();
         if (tick % 4 === 0) { loadSuggestions(); loadPowerUsers(); }
       }, 30000);

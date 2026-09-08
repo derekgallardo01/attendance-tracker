@@ -1328,6 +1328,83 @@ async function getOutreachList({ days = 30, limit = 50 } = {}) {
   }
 }
 
+// ── Admin: real-time pulse ──
+// The "how is the product doing RIGHT NOW" numbers for the dashboard header:
+// distinct active users (15min/24h/7d), signups, exports, upgrades, check-ins.
+// Same full events scan getRecentActivity already pays for (no range index on
+// the events collection group exists) — memoized 60s at the export site, so
+// the 30s dashboard poll re-reads Firestore at most once a minute.
+async function getActivityPulse() {
+  try {
+    const now = Date.now();
+    const M15 = 15 * 60e3, H24 = 24 * 3600e3, D7 = 7 * 86400e3;
+    const [eventsSnap, usersSnap, checkinsSnap] = await Promise.all([
+      getDb().collectionGroup('events').get(),
+      getDb().collectionGroup('users').select('createdAt').get(),
+      getDb().collection('checkins').get(),
+    ]);
+
+    const activeNow = new Set(), active24 = new Set(), active7 = new Set();
+    let signins24 = 0, exports24 = 0, upgrades24 = 0, quotaHits24 = 0;
+    const trackingUsersNow = new Set();
+    for (const d of eventsSnap.docs) {
+      const e = d.data();
+      const at = tsMs(e.createdAt) || 0;
+      const age = now - at;
+      if (!at || age > D7) continue;
+      if (e.email) active7.add(e.email);
+      if (age <= H24) {
+        if (e.email) active24.add(e.email);
+        if (e.type === 'signin') signins24++;
+        if (e.type === 'exported' || e.type === 'export_success') exports24++;
+        if (e.type === 'upgraded') upgrades24++;
+        if (e.type === 'quota_warning_shown') quotaHits24++;
+      }
+      if (age <= M15 && e.email) {
+        activeNow.add(e.email);
+        if (e.type === 'tracked') trackingUsersNow.add(e.email);
+      }
+    }
+
+    let totalUsers = 0, signups24 = 0, signups7 = 0;
+    for (const d of usersSnap.docs) {
+      totalUsers++;
+      const at = tsMs(d.data().createdAt) || 0;
+      if (!at) continue;
+      if (now - at <= H24) signups24++;
+      if (now - at <= D7) signups7++;
+    }
+
+    let checkinPeople24 = 0;
+    for (const d of checkinsSnap.docs) {
+      const people = d.data().people || {};
+      for (const p of Object.values(people)) {
+        const at = p.checkedInAt ? new Date(p.checkedInAt).getTime() : 0;
+        if (at && now - at <= H24) checkinPeople24++;
+      }
+    }
+
+    return {
+      generatedAt: new Date(now).toISOString(),
+      activeNow: activeNow.size,
+      trackingNow: trackingUsersNow.size,
+      active24h: active24.size,
+      active7d: active7.size,
+      totalUsers,
+      signups24h: signups24,
+      signups7d: signups7,
+      signins24h: signins24,
+      exports24h: exports24,
+      upgrades24h: upgrades24,
+      quotaHits24h: quotaHits24,
+      checkins24h: checkinPeople24,
+    };
+  } catch (err) {
+    log.error('firestore: getActivityPulse failed', { error: err.message });
+    return null;
+  }
+}
+
 module.exports = {
-  getActivationFunnel, getAggregatedInsights, getWeeklySelfReport, getAdvancedAnalytics, getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, markUserContacted, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, getOutreachList,
+  getActivationFunnel, getAggregatedInsights, getWeeklySelfReport, getAdvancedAnalytics, getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, markUserContacted, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, getOutreachList, getActivityPulse,
 };
