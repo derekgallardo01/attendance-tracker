@@ -1209,7 +1209,16 @@
         const r = await res.json();
         document.getElementById('revenue-stamp').textContent = `Updated ${new Date().toLocaleTimeString()}`;
 
-        const f = r.funnel;
+        // Partial-payload safe: a degraded endpoint (e.g. geo aggregation
+        // timed out) must not throw mid-render and leave half the tab showing
+        // authoritative-looking numbers under a "Failed to load" strip.
+        const f = r.funnel || {};
+        r.triggers = r.triggers || [];
+        r.byCountry = r.byCountry || [];
+        r.warmStuck = r.warmStuck || [];
+        r.objections = r.objections || {};
+        r.planMix = r.planMix || {};
+        r.quotaLeakUsers = r.quotaLeakUsers || 0;
         const base = f.activated || 1;
         bars.innerHTML = [
           ['Activated (tracked in window)', f.activated, 'var(--blue)'],

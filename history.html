@@ -211,7 +211,7 @@
           <div style="font-size:.85rem;color:#e6edf3;line-height:1.45" data-i18n="history.autoCaptureBanner">
             <strong>Hands-Free Auto-Capture</strong>: Pro automatically records and exports every Google Meet to Sheets in the background — even if you close the side-panel.
           </div>
-          <button class="btn" style="background:#4ade80;color:#0d1117;padding:6px 14px;font-size:.8rem;white-space:nowrap" onclick="upgradeFromHistory(this)" data-i18n="history.upgradePro">Upgrade to Pro ($9.99)</button>
+          <button class="btn" style="background:#4ade80;color:#0d1117;padding:6px 14px;font-size:.8rem;white-space:nowrap" onclick="upgradeFromHistory(this)"><span data-i18n="history.upgradeProShort">Upgrade to Pro</span> — <span class="price-lifetime">$9.99</span></button>
         </div>
         <input id="search-meetings" class="search-box" type="text" data-i18n-placeholder="history.searchMeetings" placeholder="Search meetings by title…" oninput="renderMeetings()" />
         <div class="section">
@@ -399,13 +399,10 @@
           const bStatus = await bRes.json();
           window._lastBillingStatus = bStatus;
           AttPricing.fromStatus(bStatus);
-          // The banner's i18n string embeds the launch price literally in
-          // every locale — swap it for the live display price so a price
-          // change never ships a stale button.
-          const upBtn = document.querySelector('[data-i18n="history.upgradePro"]');
-          if (upBtn && AttPricing.price('lifetime') !== '$9.99') {
-            upBtn.textContent = upBtn.textContent.replace('$9.99', AttPricing.price('lifetime'));
-          }
+          // Paint the .price-lifetime span from the single source of truth —
+          // robust across locales and re-runnable after a language switch
+          // (the old string-replace failed on "9,99 $" in fr/de).
+          paintHistoryPrices();
           renderProCta(bStatus);
         }
         if (!hRes.ok) throw new Error(`history ${hRes.status}`);
@@ -442,6 +439,10 @@
     // from the caller's domain, charging something other than what the button
     // said (a subscription for gmail users, the $19.99 domain plan for others).
     async function upgradeFromHistory(btn, plan) {
+      // Preserve innerHTML (the banner button holds a .price-lifetime span);
+      // a failed checkout previously restored a hardcoded English literal,
+      // wiping the price and any translation.
+      const originalHtml = btn ? btn.innerHTML : '';
       if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
       try {
         window.location.href = await AttApi.startCheckout(sessionToken, { plan: plan || 'lifetime', interval: proInterval }); // shared js/api.js
@@ -449,7 +450,7 @@
       } catch (e) {
         alert(e.message);
       }
-      if (btn) { btn.disabled = false; btn.textContent = 'Upgrade to Pro'; }
+      if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; }
     }
 
     // Individual (per-user) Pro CTA in the Series tab. Only for personal-email
@@ -583,10 +584,19 @@
       document.documentElement.dir = (code === 'ar' || code === 'he' || code === 'ur') ? 'rtl' : 'ltr';
       document.documentElement.lang = code;
       AttStrings.applyTranslations();
+      paintHistoryPrices(); // applyTranslations reset the button text — re-apply the price
       renderMeetings();
       renderPeople();
       renderSeries();
       if (window._lastBillingStatus) renderProCta(window._lastBillingStatus);
+    }
+
+    // Paint every .price-lifetime span from the single source of truth. Safe
+    // to call repeatedly (load + after each applyTranslations).
+    function paintHistoryPrices() {
+      const p = (typeof AttPricing !== 'undefined') ? AttPricing.price('lifetime') : '';
+      if (!p) return;
+      document.querySelectorAll('.price-lifetime').forEach(el => { el.textContent = p; });
     }
 
     function renderMeetings() {
