@@ -35,7 +35,7 @@ router.post('/export/pdf', requireAuth, async (req, res) => {
 
     if (b.conferenceId && !Array.isArray(b.participants)) {
       // History path — pull the persisted attendance for this meeting.
-      const m = await getMeetingWithParticipants(req.user.domain, b.conferenceId);
+      const m = await getMeetingWithParticipants(req.user.domain, b.conferenceId, req.user.email);
       if (!m) return res.status(404).json({ error: 'Meeting not found.' });
       meeting = {
         title: m.title, conferenceId: m.conferenceId, startTime: m.startTime,

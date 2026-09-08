@@ -3107,8 +3107,10 @@ async function initSDK() {
     if (state.userEmail) {
       state._selfEmail = state.userEmail.toLowerCase();
     }
-    // Restore display name from saved state for self-detection fallback
-    const savedSnap = JSON.parse(sessionStorage.getItem('meet-attendance-state') || '{}');
+    // Restore display name from saved state for self-detection fallback.
+    // (STORAGE_KEY — the same key saveState writes; a hyphenated literal here
+    // was never written, so this fallback was silently dead.)
+    const savedSnap = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '{}');
     if (savedSnap.userDisplayName) {
       state._selfDisplayName = savedSnap.userDisplayName;
     }
@@ -3192,6 +3194,10 @@ function getPollInterval() {
 
 function schedulePoll() {
   clearTimeout(state.refreshTimer);
+  // Never re-arm once tracking has stopped — a poll's setTimeout that was
+  // already pending when stopTracking ran would otherwise keep rescheduling a
+  // no-op timer indefinitely.
+  if (!state.tracking) return;
   const interval = getPollInterval();
   state.syncCountdown = Math.round(interval / 1000);
   state.refreshTimer = setTimeout(() => {
@@ -3305,8 +3311,15 @@ async function manualSync() {
 // organizer-only limitation instead of an endless "waiting…". Reset on start
 // and whenever anyone appears.
 let _emptyPolls = 0;
+let _refreshing = false;
 async function refreshAttendance() {
   if (!state.tracking) return;
+  // Re-entrancy guard: the poll timer, the Sync button, and the
+  // visibilitychange handler can all fire this concurrently. Without the
+  // guard, an older response resolving last could repaint a stale
+  // empty/ended state over fresher data.
+  if (_refreshing) return;
+  _refreshing = true;
   setStatus('loading', 'Refreshing…');
 
   try {
@@ -3370,6 +3383,8 @@ async function refreshAttendance() {
     console.error(err);
     setStatus('loading', `Error: ${err.message}`);
     toast(t('common.couldNotReach','Could not reach backend'));
+  } finally {
+    _refreshing = false;
   }
 }
 
@@ -3382,7 +3397,13 @@ function _checkinStorageKey() { return 'attCheckin:' + (state.conferenceId || ''
 // A reused/recurring meeting code keeps the SAME conferenceId every week, so a
 // stored check-in must be scoped to TODAY — otherwise last week's record hides
 // the button forever and the student can never check in again.
-function _todayKey() { return new Date().toISOString().slice(0, 10); }
+function _todayKey() {
+  // LOCAL calendar day, not UTC — an evening class in the Americas spans UTC
+  // midnight, and a UTC key would flip mid-session, making the check-in
+  // confirmation vanish (or reappear) while the same meeting is still live.
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 function getStoredCheckin() {
   try {
     const raw = localStorage.getItem(_checkinStorageKey());
@@ -4585,7 +4606,7 @@ function openMatchModal(attendees, emailMap) {
     unmatchedSection.style.display = 'none';
   }
 
-  clearInterval(state.refreshTimer); // Pause polling while modal is open
+  clearTimeout(state.refreshTimer); // Pause polling while modal is open
   document.getElementById('match-modal').classList.add('open');
 }
 
@@ -4594,9 +4615,11 @@ function closeMatchModal() {
   _exporting = false;
   const btn = document.getElementById('btn-sheets');
   if (btn) btn.disabled = false;
-  // Resume polling if still tracking
+  // Resume polling if still tracking. Use schedulePoll (adaptive 10s/30s +
+  // resets the "next in Ns" countdown) — a flat setInterval here stuck the
+  // countdown at 0 and slowed the roster to 30s for the rest of the meeting.
   if (state.tracking) {
-    state.refreshTimer = setInterval(() => { refreshAttendance(); }, 30_000);
+    schedulePoll();
   }
 }
 

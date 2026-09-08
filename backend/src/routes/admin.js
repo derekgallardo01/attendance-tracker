@@ -169,20 +169,26 @@ router.get('/admin/stats', requireAuth, async (req, res) => {
     const meetingsSnap = await db.collection('tenants').doc(domain).collection('meetings').get();
     const exportsSnap = await db.collection('tenants').doc(domain).collection('exports').get();
 
-    // Get recent users with last login
-    const recentUsers = usersSnap.docs
-      .map(d => ({ email: d.id, ...d.data() }))
-      .sort((a, b) => {
-        const aTime = a.lastLoginAt?.toDate?.() || new Date(0);
-        const bTime = b.lastLoginAt?.toDate?.() || new Date(0);
-        return bTime - aTime;
-      })
-      .slice(0, 20)
-      .map(u => ({
-        email: u.email,
-        displayName: u.displayName || '',
-        lastLogin: u.lastLoginAt?.toDate?.()?.toISOString() || null,
-      }));
+    // Recent users are per-user PII (email, name, last login). This endpoint
+    // returns aggregate counts to ANY authenticated caller, but on a shared
+    // tenant (every gmail.com user lands in tenants/gmail.com) that list would
+    // hand any signed-in stranger 20 unrelated users' emails. Gate it to the
+    // founder; a real Workspace admin has /team/overview for their roster.
+    const recentUsers = isSuper
+      ? usersSnap.docs
+        .map(d => ({ email: d.id, ...d.data() }))
+        .sort((a, b) => {
+          const aTime = a.lastLoginAt?.toDate?.() || new Date(0);
+          const bTime = b.lastLoginAt?.toDate?.() || new Date(0);
+          return bTime - aTime;
+        })
+        .slice(0, 20)
+        .map(u => ({
+          email: u.email,
+          displayName: u.displayName || '',
+          lastLogin: u.lastLoginAt?.toDate?.()?.toISOString() || null,
+        }))
+      : [];
 
     res.json({
       totalTenants: isSuper ? tenants.length : null,

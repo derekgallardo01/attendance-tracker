@@ -77,7 +77,9 @@ test('conferenceId path regenerates from persisted attendance', async () => {
     .buffer(true).parse(binaryParser);
   expect(res.status).toBe(200);
   expect(res.headers['content-type']).toBe('application/pdf');
-  expect(firestore.getMeetingWithParticipants).toHaveBeenCalledWith('acme.com', 'abc');
+  // Ownership fence: the caller's email is passed so the helper can verify the
+  // requester actually tracked this meeting (no cross-user roster leak).
+  expect(firestore.getMeetingWithParticipants).toHaveBeenCalledWith('acme.com', 'abc', 'user@acme.com');
   expect(res.body.slice(0, 5).toString('latin1')).toBe('%PDF-');
 });
 
@@ -85,6 +87,15 @@ test('404 when the conferenceId meeting is not found', async () => {
   firestore.getMeetingWithParticipants.mockResolvedValue(null);
   const res = await request(app).post('/api/export/pdf').set(H()).send({ conferenceId: 'missing' });
   expect(res.status).toBe(404);
+});
+
+test('404 when the caller did not track the meeting (helper returns null on ownership fail)', async () => {
+  // getMeetingWithParticipants returns null when the requester has no tracked
+  // event for the conferenceId — the route must not leak that it exists.
+  firestore.getMeetingWithParticipants.mockResolvedValue(null);
+  const res = await request(app).post('/api/export/pdf').set(H()).send({ conferenceId: 'someone-elses' });
+  expect(res.status).toBe(404);
+  expect(firestore.getMeetingWithParticipants).toHaveBeenCalledWith('acme.com', 'someone-elses', 'user@acme.com');
 });
 
 describe('certificates (Pro-gated)', () => {

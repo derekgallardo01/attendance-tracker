@@ -219,8 +219,19 @@ describe('persistExport', () => {
     expect(exp.conferenceId).toBeNull();
   });
 
-  test('swallows errors (does not throw — export flow keeps going)', async () => {
-    // Empty payload — should log the error but return normally
-    await expect(firestore.persistExport('acme.com', {})).resolves.toBeUndefined();
+  test('does not throw — export flow keeps going — and reports whether a record was created', async () => {
+    // The quota meter relies on this return: { created: true } for a new
+    // record, { created: false } for a deduped re-export, { created: null }
+    // when the write failed (caller treats null as "assume it counted").
+    await expect(firestore.persistExport('acme.com', {})).resolves.toEqual({ created: true });
+  });
+
+  test('reports created:false when the same export is persisted twice (dedupe)', async () => {
+    const payload = {
+      meetingTitle: 'X', tabName: 'X', exportedAt: '', participantCount: 1,
+      sheetUrl: '', email: 'me@acme.com', autoExport: false, conferenceId: 'conf-9',
+    };
+    await expect(firestore.persistExport('acme.com', payload)).resolves.toEqual({ created: true });
+    await expect(firestore.persistExport('acme.com', payload)).resolves.toEqual({ created: false });
   });
 });

@@ -296,9 +296,22 @@ async function getMeetingExcusedEmails(domain, conferenceId) {
 // attendance detail was stored at capture time. Returns null when the meeting
 // doesn't exist or isn't visible to this tenant. Timestamps are converted to ISO
 // strings so the pure certificate builder can consume them directly.
-async function getMeetingWithParticipants(domain, conferenceId) {
+async function getMeetingWithParticipants(domain, conferenceId, requesterEmail) {
   if (!conferenceId) return null;
   try {
+    // Ownership fence: a meeting is only visible to a user who actually TRACKED
+    // it. Without this, on a shared tenant (every gmail.com user lands in one
+    // tenant) any caller could regenerate a stranger's roster PDF — or mint
+    // verifiable certificates — just by supplying a meeting code. Mirrors the
+    // trackedConferenceIds filter in getUserMeetingHistory. When requesterEmail
+    // is omitted (internal/legacy callers), the check is skipped.
+    if (requesterEmail) {
+      const evSnap = await tenantRef(domain).collection('events')
+        .where('email', '==', requesterEmail.toLowerCase())
+        .where('type', '==', 'tracked').get();
+      const tracked = evSnap.docs.some((d) => d.data().meta?.conferenceId === conferenceId);
+      if (!tracked) return null;
+    }
     const mRef = tenantRef(domain).collection('meetings').doc(conferenceId);
     const [mDoc, pSnap] = await Promise.all([mRef.get(), mRef.collection('participants').get()]);
     if (!mDoc.exists) return null;
@@ -441,7 +454,7 @@ async function persistExport(domain, { meetingTitle, tabName, exportedAt, partic
     const existing = await ref.get();
     if (existing.exists) {
       log.info('firestore: export already persisted, skipping duplicate', { domain, docId });
-      return;
+      return { created: false };
     }
 
     await ref.set({
@@ -466,8 +479,10 @@ async function persistExport(domain, { meetingTitle, tabName, exportedAt, partic
     }
 
     log.info('firestore: persisted export record', { domain, tabName, participantCount });
+    return { created: true };
   } catch (err) {
     log.error('firestore: persistExport failed', { domain, tabName, error: err.message });
+    return { created: null }; // unknown — caller treats as "assume it counted"
   }
 }
 

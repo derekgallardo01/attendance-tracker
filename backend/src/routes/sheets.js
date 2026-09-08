@@ -483,8 +483,10 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
       ? (await countUserExports(domain, req.user.email)) === 0
       : false;
 
-    // Fire-and-forget: audit trail for exports
-    persistExport(domain, {
+    // Awaited (not fire-and-forget): the quota meter needs to know whether this
+    // export created a NEW monthly record or deduped an existing one, so it can
+    // report used-count deterministically instead of racing an un-awaited write.
+    const persistResult = await persistExport(domain, {
       meetingTitle: meetingTitle || 'Unknown',
       tabName,
       exportedAt,
@@ -495,6 +497,7 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
       recurringEventId: recurringEventId || null,
       conferenceId: conferenceId || null,
     });
+    const exportCreated = persistResult ? persistResult.created : null;
 
     // Fire-and-forget: persist newly-checked excused emails to the meeting doc
     // so future re-exports remember the tagging without the user re-checking.
@@ -592,7 +595,7 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
       })();
     }
 
-    return { sheetUrl, isFirstExport };
+    return { sheetUrl, isFirstExport, exportCreated };
   } catch (err) {
     // Tag a missing-Drive-scope failure so the route can map it to a 403.
     if (err.code === 403 || /insufficient permission/i.test(err.message || '')) {
@@ -648,7 +651,7 @@ router.post('/save-to-sheets', async (req, res) => {
       }
     }
     const sheetsAuth = await getGoogleClient(req, 'https://www.googleapis.com/auth/spreadsheets');
-    const { sheetUrl, isFirstExport } = await buildAndSaveExport({
+    const { sheetUrl, isFirstExport, exportCreated } = await buildAndSaveExport({
       user: req.user ? { domain: req.user.domain, email: req.user.email, displayName: req.user.displayName } : null,
       sheetsAuth,
       data: {
@@ -659,15 +662,17 @@ router.post('/save-to-sheets', async (req, res) => {
       },
       options: { sendEmail: b.sendEmail, autoExport: b.autoExport, proAllowed },
     });
-    // Authoritative post-export count for the quota meter: re-reading matches
-    // enforcement exactly (persistExport dedupes re-exports of the same
-    // meeting), so a re-export shows unchanged and a new meeting +1. The old
-    // `isFirstExport` proxy meant "first export EVER", which lagged the meter
-    // for every returning user.
+    // Deterministic post-export meter. `monthlyExports` is the count BEFORE
+    // this export (from enforcement above). persistExport dedupes re-exports of
+    // the same meeting, so only a newly-created record advances the meter; a
+    // confirmed dedupe (created:false) leaves it unchanged, and an unknown
+    // result (write failed) is treated as "counted" so we never under-warn.
+    // Re-reading the count here used to race the (previously un-awaited) write
+    // and reliably reported one export behind.
     let quota = null;
     if (!proAllowed && req.user) {
-      const usedNow = await countUserMonthlyExports(req.user.domain, req.user.email).catch(() => monthlyExports + 1);
-      quota = { used: usedNow, limit: FREE_MONTHLY_EXPORT_LIMIT };
+      const used = monthlyExports + (exportCreated === false ? 0 : 1);
+      quota = { used, limit: FREE_MONTHLY_EXPORT_LIMIT };
     }
     res.json({ success: true, sheetUrl, isFirstExport, quota });
   } catch (err) {

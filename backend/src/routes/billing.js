@@ -103,7 +103,10 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
     }
 
     // `??` not `||`: an explicit empty promo must skip the LAUNCH50 auto-apply.
-    const promo = (req.body.promo ?? 'LAUNCH50').toUpperCase();
+    // Defense-in-depth: the Institution/annual domain price never carries the
+    // launch discount, whatever the client sends.
+    const resolvesToInstitution = isTeamPlan && annual && priceId === process.env.STRIPE_ANNUAL_PRICE_ID;
+    const promo = resolvesToInstitution ? '' : (req.body.promo ?? 'LAUNCH50').toUpperCase();
     const LAUNCH_PROMO_ID = process.env.STRIPE_LAUNCH_PROMO_CODE || 'promo_1UBiZORPP93YBXrOlZdFv8zM';
 
     const sessionParams = {
@@ -153,7 +156,11 @@ router.post('/billing/public-checkout', async (req, res) => {
     return res.status(503).json({ error: 'Billing is not configured yet.' });
   }
   const plan = req.body?.plan || 'lifetime';
-  const interval = req.body?.interval || 'annual';
+  // Annual is opt-IN only (mirrors the authed checkout at :66). Defaulting to
+  // 'annual' was a trap: a bare {plan:'team'} would resolve to the $149/yr
+  // Institution price AND auto-apply LAUNCH50 — wrong tier + a discount
+  // Institution must never get.
+  const annual = req.body?.interval === 'annual';
   const email = (req.body?.email || '').trim().toLowerCase() || undefined;
   const isTeam = plan === 'team';
   const isEducator = plan === 'educator';
@@ -175,10 +182,10 @@ router.post('/billing/public-checkout', async (req, res) => {
   const priceId = isEducator
     ? (process.env.STRIPE_EDUCATOR_PRICE_ID || process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID)
     : (isTeam
-        ? ((interval === 'annual' && process.env.STRIPE_ANNUAL_PRICE_ID) || process.env.STRIPE_PRICE_ID)
+        ? ((annual && process.env.STRIPE_ANNUAL_PRICE_ID) || process.env.STRIPE_PRICE_ID)
         : (plan === 'lifetime'
             ? process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID
-            : ((interval === 'annual' && process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID) || process.env.STRIPE_INDIVIDUAL_PRICE_ID)));
+            : ((annual && process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID) || process.env.STRIPE_INDIVIDUAL_PRICE_ID)));
 
   if (!priceId) {
     return res.status(503).json({ error: 'Selected plan price is not configured.' });
@@ -209,7 +216,11 @@ router.post('/billing/public-checkout', async (req, res) => {
 
     // `??` not `||`: an explicit empty promo ('' from the Institution card)
     // must SKIP the LAUNCH50 auto-apply and re-enable the promo-code box.
-    const promo = (req.body?.promo ?? 'LAUNCH50').toUpperCase();
+    // Defense-in-depth: whenever the resolved price IS the Institution/annual
+    // domain price, force-skip LAUNCH50 regardless of what the client sent —
+    // the Institution tier never carries the launch discount.
+    const resolvesToInstitution = isTeam && annual && priceId === process.env.STRIPE_ANNUAL_PRICE_ID;
+    const promo = resolvesToInstitution ? '' : (req.body?.promo ?? 'LAUNCH50').toUpperCase();
     const LAUNCH_PROMO_ID = process.env.STRIPE_LAUNCH_PROMO_CODE || 'promo_1UBiZORPP93YBXrOlZdFv8zM';
 
     const sessionParams = {
@@ -482,9 +493,13 @@ async function webhookHandler(req, res) {
           log.warn('billing: metadata lookup for refund/dispute failed', { eventId: event.id, error: e.message });
         }
         // Route on identity, not on a `plan` label (older sessions lack it).
+        // A present buyer email means an individual pass UNLESS explicitly
+        // flagged as an org (individual==='0'). Authed individual metadata
+        // carries `domain` too (billing.js:88), so keying off `!domain` would
+        // misroute such a refund into a whole-domain downgrade.
         const email = (meta?.email || '').toLowerCase();
-        const isIndividual = meta?.individual === '1' || (!!email && !meta?.domain);
-        const orgDomain = meta?.individual === '0' || (!email && meta?.domain) ? meta?.domain : (isIndividual ? null : meta?.domain);
+        const isIndividual = meta?.individual === '1' || (!!email && meta?.individual !== '0');
+        const orgDomain = isIndividual ? null : meta?.domain;
         const planLabel = meta?.plan || (isIndividual ? 'individual' : 'team');
         const status = event.type === 'charge.refunded' ? 'refunded' : 'disputed';
         if (isIndividual && email.includes('@')) {

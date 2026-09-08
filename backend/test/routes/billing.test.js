@@ -757,6 +757,36 @@ describe('public-checkout team provisioning guard', () => {
     expect(params.discounts).toBeUndefined();
     expect(params.allow_promotion_codes).toBe(true);
   });
+
+  test('a team purchase with NO interval resolves to the one-time domain price, never the $149 annual/Institution price', async () => {
+    // Regression: the endpoint used to default interval to 'annual', so a bare
+    // {plan:'team'} silently jumped to the Institution price.
+    process.env.STRIPE_ANNUAL_PRICE_ID = 'price_institution_149';
+    mockStripeInstance.prices.retrieve.mockResolvedValue({ id: 'price_domain', type: 'one_time' });
+    const res = await request(app).post('/api/billing/public-checkout')
+      .set('Content-Type', 'application/json')
+      .send({ plan: 'team', email: 'admin@acme.com' });
+    expect(res.status).toBe(200);
+    const params = mockStripeInstance.checkout.sessions.create.mock.calls[0][0];
+    expect(params.line_items[0].price).toBe('price_domain');
+    delete process.env.STRIPE_ANNUAL_PRICE_ID;
+  });
+
+  test('Institution (team + annual) never auto-applies LAUNCH50, even when no explicit promo is sent', async () => {
+    process.env.STRIPE_ANNUAL_PRICE_ID = 'price_institution_149';
+    process.env.STRIPE_LAUNCH_PROMO_CODE = 'promo_launch';
+    mockStripeInstance.prices.retrieve.mockResolvedValue({ id: 'price_institution_149', type: 'recurring', recurring: { interval: 'year' } });
+    const res = await request(app).post('/api/billing/public-checkout')
+      .set('Content-Type', 'application/json')
+      .send({ plan: 'team', interval: 'annual', email: 'admin@acme.com' }); // NO promo field
+    expect(res.status).toBe(200);
+    const params = mockStripeInstance.checkout.sessions.create.mock.calls[0][0];
+    expect(params.line_items[0].price).toBe('price_institution_149');
+    expect(params.discounts).toBeUndefined();       // LAUNCH50 NOT applied
+    expect(params.allow_promotion_codes).toBe(true); // promo box left open instead
+    delete process.env.STRIPE_ANNUAL_PRICE_ID;
+    delete process.env.STRIPE_LAUNCH_PROMO_CODE;
+  });
 });
 
 describe('webhook hygiene (dedupe + refunds + org-domain fallback)', () => {

@@ -395,4 +395,30 @@ describe('getMeetingWithParticipants', () => {
     expect(m.participants).toHaveLength(1);
     expect(m.participants[0]).toMatchObject({ displayName: 'Ada', email: 'ada@x.com', present: true, joinTime: '2026-08-20T14:00:00.000Z', leaveTime: null });
   });
+
+  describe('ownership fence (requesterEmail)', () => {
+    beforeEach(() => {
+      ctx.seed('tenants/acme.com/meetings/conf1', { title: 'Bio 101', participantCount: 0 });
+    });
+
+    test('returns the meeting when the requester tracked it', async () => {
+      ctx.seed('tenants/acme.com/events/e1', { email: 'host@acme.com', type: 'tracked', meta: { conferenceId: 'conf1' } });
+      const m = await firestore.getMeetingWithParticipants('acme.com', 'conf1', 'host@acme.com');
+      expect(m).toMatchObject({ conferenceId: 'conf1', title: 'Bio 101' });
+    });
+
+    test('returns null when the requester never tracked it (no cross-user leak)', async () => {
+      // A tracked event exists, but for a DIFFERENT meeting — the caller must
+      // not be able to pull conf1's roster.
+      ctx.seed('tenants/acme.com/events/e1', { email: 'stranger@acme.com', type: 'tracked', meta: { conferenceId: 'other-conf' } });
+      const m = await firestore.getMeetingWithParticipants('acme.com', 'conf1', 'stranger@acme.com');
+      expect(m).toBeNull();
+    });
+
+    test('email match is case-insensitive', async () => {
+      ctx.seed('tenants/acme.com/events/e1', { email: 'host@acme.com', type: 'tracked', meta: { conferenceId: 'conf1' } });
+      const m = await firestore.getMeetingWithParticipants('acme.com', 'conf1', 'Host@Acme.com');
+      expect(m).toMatchObject({ conferenceId: 'conf1' });
+    });
+  });
 });
