@@ -1723,8 +1723,21 @@ function openRosterModal(isEdit) {
     studentsInput.value = '';
   }
   resetClassroomPicker();
+  hideRosterModalError();
   modal.style.display = 'flex';
   nameInput.focus();
+}
+
+function showRosterModalError(text) {
+  const el = document.getElementById('roster-modal-error');
+  if (!el) return;
+  el.textContent = text;
+  el.style.display = 'block';
+}
+
+function hideRosterModalError() {
+  const el = document.getElementById('roster-modal-error');
+  if (el) el.style.display = 'none';
 }
 
 function closeRosterModal() {
@@ -1878,17 +1891,18 @@ function saveRosterModal() {
 
   const rosterName = nameInput.value.trim();
   if (!rosterName) {
-    toast(t('roster.enterName','Please enter a class name.'), 4000);
+    showRosterModalError(t('roster.enterName','Please enter a class name.'));
     nameInput.focus();
     return;
   }
 
   const rawText = studentsInput.value.trim();
   if (!rawText) {
-    toast(t('roster.enterStudents','Please enter at least one student name or email.'), 4000);
+    showRosterModalError(t('roster.enterStudents','Please enter at least one student name or email.'));
     studentsInput.focus();
     return;
   }
+  hideRosterModalError();
 
   const students = parseStudentsInput(rawText);
   if (!state.rosters) state.rosters = {};
@@ -5834,6 +5848,9 @@ window.addEventListener('DOMContentLoaded', () => {
         <textarea id="roster-input-students" rows="7" placeholder="Alice Smith &lt;alice@school.edu&gt;&#10;Bob Jones&#10;carol@school.edu" style="width:100%;background:#0d1117;border:1px solid #30363d;color:#e6edf3;border-radius:6px;padding:8px 10px;font-size:.78rem;font-family:monospace;resize:vertical;box-sizing:border-box"></textarea>
         <div style="font-size:.7rem;color:#8b949e;margin-top:4px" data-i18n="roster.studentsHelp">One student per line — a name, an email, or Name &lt;email&gt;. You can paste straight from a spreadsheet.</div>
       </div>
+      <!-- Inline validation — the bottom-of-panel toast renders behind this
+           modal's overlay, so errors must live inside the modal. -->
+      <div id="roster-modal-error" style="display:none;color:#f87171;font-size:.76rem;margin-bottom:10px;padding:6px 10px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);border-radius:6px"></div>
       <div style="display:flex;justify-content:flex-end;gap:8px">
         <button type="button" class="btn-secondary" onclick="closeRosterModal()" style="padding:8px 14px;font-size:.8rem" data-i18n="btn.cancel">Cancel</button>
         <button type="button" class="btn-primary" onclick="saveRosterModal()" style="padding:8px 16px;font-size:.8rem" data-i18n="roster.save">Save Roster</button>
