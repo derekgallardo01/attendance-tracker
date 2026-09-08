@@ -76,6 +76,11 @@ const FRONTEND_EVENT_TYPES = new Set([
   // One-time "what's holding you back?" answer after the 3rd paywall
   // dismissal — the only direct WHY signal in the monetization funnel.
   'paywall_objection',
+  // Inline auto-export Pro nudge (replaced the meeting-end popup)
+  'auto_export_nudge_shown',
+  'auto_export_nudge_clicked',
+  // Referral settings row
+  'referral_link_copied',
 ]);
 
 // POST /api/event — let the frontend record activation/funnel events that only

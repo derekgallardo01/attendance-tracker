@@ -1105,8 +1105,51 @@ async function sendDiscordTestPing({ webhookUrl }) {
   return postTestPing(webhookUrl, { content: TEST_PING_TEXT });
 }
 
+// Weekly org digest for the team admin of a Pro domain — the retention spine
+// of the domain/Institution tier: weekly proof the license is working across
+// the whole org, with a deep link back to the dashboard.
+async function sendOrgWeeklyDigest({ to, domain, totals, weeklyMeetings }) {
+  if (!getResend()) return { skipped: 'Resend not configured' };
+  const t = totals || {};
+  const subject = weeklyMeetings > 0
+    ? `${domain}: ${weeklyMeetings} meetings tracked this week`
+    : `${domain}: your weekly attendance digest`;
+  const html = `
+    <div style="font-family:sans-serif;max-width:560px;color:#111;font-size:14px;line-height:1.5">
+      <p>Hi,</p>
+      <p>Your weekly attendance summary for <strong>${escape(domain)}</strong>:</p>
+      <table style="border-collapse:collapse;margin:10px 0;font-size:14px">
+        <tr><td style="padding:4px 12px 4px 0;color:#666">Meetings this week</td><td><strong>${weeklyMeetings || 0}</strong></td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666">Teachers using it</td><td>${t.users || 0}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666">Meetings all-time</td><td>${t.meetings || 0}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666">People tracked</td><td>${t.people || 0}</td></tr>
+      </table>
+      <p style="margin-top:16px"><a href="https://attendancetracker.dev/team.html" style="display:inline-block;background:#1f6feb;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600">Open the org dashboard →</a></p>
+      <p style="color:#666;font-size:12px;margin-top:24px">You're getting this weekly summary because you're the team admin for ${escape(domain)} on Attendance Tracker Pro.</p>
+      ${unsubscribeFooter(to).html}
+    </div>
+  `;
+  const text = [
+    'Hi,',
+    '',
+    `Weekly attendance summary for ${domain}:`,
+    `  Meetings this week: ${weeklyMeetings || 0}`,
+    `  Teachers using it:  ${t.users || 0}`,
+    `  Meetings all-time:  ${t.meetings || 0}`,
+    `  People tracked:     ${t.people || 0}`,
+    '',
+    'Org dashboard: https://attendancetracker.dev/team.html',
+    unsubscribeFooter(to).text,
+  ].join('\n');
+  return dispatchEmail({
+    from: makeFrom('Attendance Tracker'),
+    to, subject, text, html,
+    tags: [{ name: 'type', value: 'org_weekly_digest' }],
+  }, 'org weekly digest', { domain });
+}
+
 module.exports = {
-  sendSignupWebhook, maybeSendSignupNotification, sendWelcomeEmail, sendReferralNotification, maybeSendReferralNotification, flushDeferredNotifications, sendAdminEmail, sendWeeklySelfReport, sendExportNotification,
+  sendSignupWebhook, maybeSendSignupNotification, sendWelcomeEmail, sendReferralNotification, maybeSendReferralNotification, flushDeferredNotifications, sendAdminEmail, sendWeeklySelfReport, sendExportNotification, sendOrgWeeklyDigest,
   sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail,
   sendSlackDigest, sendSlackTestPing, buildSlackDigestBlocks, buildSlackFallbackText, maskSlackWebhook,
   sendChatDigest, sendChatTestPing, buildChatDigestCard, maskGoogleChatWebhook,

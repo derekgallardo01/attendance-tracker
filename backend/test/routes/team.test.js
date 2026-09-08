@@ -233,3 +233,46 @@ describe('requireTeamAdmin — error path', () => {
     expect(res.status).toBe(500);
   });
 });
+
+describe('GET /team/overview/preview — org roll-up teaser (no Pro required)', () => {
+  const overview = {
+    domain: 'acme.com',
+    adminEmail: 'admin@acme.com',
+    totals: { users: 7, meetings: 40, series: 3, people: 120 },
+    users: [
+      { email: 'teacher.one@acme.com', displayName: 'Teacher One', lastLoginAt: '2026-09-01T00:00:00Z' },
+      { email: 'teacher.two@acme.com', displayName: 'Teacher Two', lastLoginAt: null },
+      { email: 'teacher.three@acme.com', displayName: 'Teacher Three', lastLoginAt: null },
+      { email: 'teacher.four@acme.com', displayName: 'Teacher Four', lastLoginAt: null },
+    ],
+    meetings: [{ secret: 'not-in-preview' }],
+    series: [],
+    people: [],
+  };
+
+  test('team admin gets real totals + THREE masked sample users, nothing else', async () => {
+    firestore.getTeamAdminStatus.mockResolvedValue({ isTeamAdmin: true });
+    firestore.getTeamOverview.mockResolvedValue(overview);
+    const res = await request(app).get('/api/team/overview/preview').set(authedHeader('admin@acme.com', 'acme.com'));
+    expect(res.status).toBe(200);
+    expect(res.body.totals).toEqual({ users: 7, meetings: 40, series: 3, people: 120 });
+    expect(res.body.sampleUsers).toHaveLength(3);
+    expect(res.body.sampleUsers[0].email).toBe('te···@acme.com'); // masked
+    expect(JSON.stringify(res.body)).not.toContain('teacher.one'); // raw locals never leak
+    expect(JSON.stringify(res.body)).not.toContain('not-in-preview'); // full rows never leak
+    expect(res.body.moreUsers).toBe(4);
+  });
+
+  test('non-admin gets 403 (teaser is admin-only)', async () => {
+    firestore.getTeamAdminStatus.mockResolvedValue({ isTeamAdmin: false, adminEmail: 'boss@acme.com' });
+    const res = await request(app).get('/api/team/overview/preview').set(authedHeader('u@acme.com', 'acme.com'));
+    expect(res.status).toBe(403);
+  });
+
+  test('500 when the overview cannot be built', async () => {
+    firestore.getTeamAdminStatus.mockResolvedValue({ isTeamAdmin: true });
+    firestore.getTeamOverview.mockResolvedValue(null);
+    const res = await request(app).get('/api/team/overview/preview').set(authedHeader('admin@acme.com', 'acme.com'));
+    expect(res.status).toBe(500);
+  });
+});

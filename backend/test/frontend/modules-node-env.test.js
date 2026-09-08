@@ -23,7 +23,9 @@ test('modules load and export in a non-browser (no window) environment', () => {
   const admin = require(path.join(jsDir, 'admin.js'));
   const panel = require(path.join(jsDir, 'panel.js'));
   const simMod = require(path.join(jsDir, 'sim.js'));
+  const pricingMod = require(path.join(jsDir, 'pricing.js'));
   expect(typeof utils.escHtml).toBe('function');
+  expect(typeof pricingMod.price).toBe('function');
   expect(typeof api.authedFetch).toBe('function');
   expect(typeof strings.t === 'function' || typeof strings.setLocale === 'function').toBe(true);
   expect(typeof share.computeRange).toBe('function');

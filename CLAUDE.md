@@ -93,8 +93,16 @@ render inside the modal (see `#roster-modal-error`).
 - Pricing appears in: pricing.html, terms, refunds, FAQ/help, the Marketplace
   listing (`docs/marketplace-listing.md` → pasted manually into the console),
   and SEO pages. Current truth: Free (3 Sheets exports/mo) · $9.99 lifetime
-  individual · $4.99/yr educator · $19.99 lifetime domain. If pricing changes,
-  grep all of them.
+  individual · $4.99/yr educator · $19.99 lifetime domain · $149/yr
+  Institution (annual domain price, card hidden until STRIPE_ANNUAL_PRICE_ID
+  is set). If pricing changes, grep all of them — AND update the runtime
+  single source of truth: `backend/src/config/pricing.js` (+ mirror constants
+  in `js/pricing.js`); panel/history surfaces render prices from it.
+- Checkout buttons must pass an explicit `plan` to /billing/checkout — a
+  plan-less request lets the backend infer team-vs-individual from the
+  caller's domain and once mispriced a "$9.99" button. `plan:'team'` +
+  `interval:'annual'` = the $149 Institution price, so the $19.99 domain
+  card must NOT send interval 'annual'.
 - `faq.html` and `help.html` are the same document; edit faq.html, regenerate
   help.html by swapping ONLY the `og:url` line (help's canonical deliberately
   points at faq.html).

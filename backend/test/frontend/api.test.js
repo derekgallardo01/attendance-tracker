@@ -75,6 +75,17 @@ describe('startCheckout', () => {
     expect(JSON.parse(calls[0][1].body)).toEqual({ interval: 'annual' });
   });
 
+  test('forwards an explicit plan (the mispriced-button fix) and omits it when absent', async () => {
+    const calls = [];
+    global.fetch = (url, opts) => { calls.push([url, opts]); return Promise.resolve({ ok: true, json: async () => ({ url: 'https://checkout.stripe.com/z' }) }); };
+    await api.startCheckout('tok', { plan: 'lifetime', interval: 'annual' });
+    expect(JSON.parse(calls[0][1].body)).toEqual({ plan: 'lifetime', interval: 'annual' });
+    // No plan → key absent entirely, so the backend's domain inference still
+    // governs legacy callers rather than receiving plan:undefined.
+    await api.startCheckout('tok', { interval: 'annual' });
+    expect('plan' in JSON.parse(calls[1][1].body)).toBe(false);
+  });
+
   test('throws the server error message on a non-2xx', async () => {
     global.fetch = () => Promise.resolve({ ok: false, json: async () => ({ error: 'Billing not configured.' }) });
     await expect(api.startCheckout('tok')).rejects.toThrow('Billing not configured.');

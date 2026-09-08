@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const { requireAuth } = require('../middleware/auth');
 const log = require('../lib/logger');
-const { getUserSettings, updateUserSettings, setPostExportSurvey, isEmailSuppressed, suppressEmail, unsuppressEmail } = require('../services/firestore');
+const { getUserSettings, updateUserSettings, setPostExportSurvey, isEmailSuppressed, suppressEmail, unsuppressEmail, getUser } = require('../services/firestore');
 const { sendSlackTestPing, sendChatTestPing, sendDiscordTestPing } = require('../lib/notifications');
 const { isValidSlackWebhook, maskSlackWebhook } = require('../lib/slack');
 const { isValidGoogleChatWebhook, maskGoogleChatWebhook } = require('../lib/googleChat');
@@ -48,14 +48,16 @@ function maskForApi(url, mask) {
 router.get('/settings', requireAuth, async (req, res) => {
   res.set('Cache-Control', 'no-store');
   try {
-    const [settings, suppressed] = await Promise.all([
+    const [settings, suppressed, user] = await Promise.all([
       getUserSettings(req.user.domain, req.user.email),
       isEmailSuppressed(req.user.email),
+      getUser(req.user.domain, req.user.email).catch(() => null), // referral count is nice-to-have
     ]);
     const out = {
       autoExportOnEnd: settings.autoExportOnEnd === true,
       emailOptOut: suppressed,
       digestExtraEmails: Array.isArray(settings.digestExtraEmails) ? settings.digestExtraEmails : [],
+      referralCount: user?.referralCount || 0,
     };
     for (const p of WEBHOOK_PROVIDERS) {
       // e.g. slackWebhookConfigured / slackWebhookMasked

@@ -3,8 +3,9 @@ const { requireAuth } = require('../middleware/auth');
 const express = require('express');
 const log = require('../lib/logger');
 const CONFIG = require('../config');
-const { getTenantPlan, setTenantPlan, getUserPlan, setUserPlan, logEvent, countUserMonthlyExports } = require('../services/firestore');
+const { getTenantPlan, setTenantPlan, getUserPlan, setUserPlan, logEvent, countUserMonthlyExports, claimWebhookEvent } = require('../services/firestore');
 const { PERSONAL_EMAIL_DOMAINS } = require('../services/firestore/_core');
+const PRICING = require('../config/pricing');
 
 // Personal-email tenants (gmail.com etc.) are shared by unrelated users, so they
 // can't buy the per-domain org plan — they buy an INDIVIDUAL (per-user) plan
@@ -88,7 +89,8 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
       }
     }
 
-    const promo = (req.body.promo || 'LAUNCH50').toUpperCase();
+    // `??` not `||`: an explicit empty promo must skip the LAUNCH50 auto-apply.
+    const promo = (req.body.promo ?? 'LAUNCH50').toUpperCase();
     const LAUNCH_PROMO_ID = process.env.STRIPE_LAUNCH_PROMO_CODE || 'promo_1UBiZORPP93YBXrOlZdFv8zM';
 
     const sessionParams = {
@@ -142,6 +144,18 @@ router.post('/billing/public-checkout', async (req, res) => {
   const email = (req.body?.email || '').trim().toLowerCase() || undefined;
   const isTeam = plan === 'team';
   const isEducator = plan === 'educator';
+
+  // A domain purchase MUST know which domain it activates. Without this, a
+  // signed-out visitor could pay for the team plan and the webhook's org
+  // branch would have nothing to provision — money taken, nothing granted.
+  if (isTeam) {
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({ error: 'A work email is required for the domain license — it tells us which domain to activate.' });
+    }
+    if (isPersonalDomain(email.split('@')[1])) {
+      return res.status(400).json({ error: 'The domain license covers a Google Workspace domain. Personal Gmail accounts should pick the Lifetime or Educator pass instead.' });
+    }
+  }
   const priceId = isEducator
     ? (process.env.STRIPE_EDUCATOR_PRICE_ID || process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID || process.env.STRIPE_INDIVIDUAL_PRICE_ID || process.env.STRIPE_PRICE_ID)
     : (isTeam
@@ -172,9 +186,14 @@ router.post('/billing/public-checkout', async (req, res) => {
       plan,
       source: 'public_pricing',
       ...(email ? { email } : {}),
+      // Stamp the domain for team purchases so the webhook can provision even
+      // if client_reference_id is ever absent from the completed session.
+      ...(isTeam && email ? { domain: email.split('@')[1] } : {}),
     };
 
-    const promo = (req.body?.promo || 'LAUNCH50').toUpperCase();
+    // `??` not `||`: an explicit empty promo ('' from the Institution card)
+    // must SKIP the LAUNCH50 auto-apply and re-enable the promo-code box.
+    const promo = (req.body?.promo ?? 'LAUNCH50').toUpperCase();
     const LAUNCH_PROMO_ID = process.env.STRIPE_LAUNCH_PROMO_CODE || 'promo_1UBiZORPP93YBXrOlZdFv8zM';
 
     const sessionParams = {
@@ -268,7 +287,7 @@ router.get('/billing/status', requireAuth, async (req, res) => {
     if (plan.plan !== 'pro' && typeof countUserMonthlyExports === 'function') {
       try {
         const used = await countUserMonthlyExports(req.user.domain, req.user.email);
-        exportQuota = { used, limit: 3 };
+        exportQuota = { used, limit: PRICING.FREE_MONTHLY_EXPORT_LIMIT };
       } catch (e) {
         log.warn('billing: countUserMonthlyExports failed in status', { error: e.message });
       }
@@ -280,6 +299,8 @@ router.get('/billing/status', requireAuth, async (req, res) => {
       annualAvailable,
       educatorAvailable: !!process.env.STRIPE_EDUCATOR_PRICE_ID,
       exportQuota,
+      // Display-price truth for every frontend surface (see config/pricing.js).
+      pricing: { ...PRICING.PRICES, quotaLimit: PRICING.FREE_MONTHLY_EXPORT_LIMIT },
     });
   } catch (err) {
     log.error('billing: status failed', { domain: req.user.domain, error: err.message });
@@ -305,6 +326,12 @@ async function webhookHandler(req, res) {
   }
 
   try {
+    // Stripe retries deliveries — claim the event id exactly once so a retry
+    // can't double-log `upgraded` analytics or replay a downgrade.
+    if (!(await claimWebhookEvent(event.id))) {
+      log.info('billing: duplicate webhook delivery skipped', { eventId: event.id, type: event.type });
+      return res.json({ received: true, duplicate: true });
+    }
     switch (event.type) {
       case 'checkout.session.completed': {
         const s = event.data.object;
@@ -323,7 +350,15 @@ async function webhookHandler(req, res) {
             try { await logEvent(domain, { email, type: 'upgraded', meta: { plan: 'individual', amount: s.amount_total, currency: s.currency } }); } catch {}
           }
         } else {
-          const domain = ref || s.metadata?.domain;
+          // Provisioning fallback chain: client_reference_id → metadata.domain
+          // → the buyer's email domain (guarded against personal domains so a
+          // stray gmail purchase can't flip the shared gmail.com tenant Pro).
+          const buyerEmailDomain = ((s.customer_details?.email || s.customer_email || '').split('@')[1] || '').toLowerCase();
+          const domain = ref || s.metadata?.domain
+            || (buyerEmailDomain && !isPersonalDomain(buyerEmailDomain) ? buyerEmailDomain : null);
+          if (!domain) {
+            log.error('billing: team checkout completed with NO resolvable domain — manual provisioning needed', { sessionId: s.id, email: s.customer_details?.email || s.customer_email || null });
+          }
           if (domain) {
             await setTenantPlan(domain, {
               plan: 'pro',
@@ -368,6 +403,45 @@ async function webhookHandler(req, res) {
         }
         break;
       }
+      case 'charge.refunded':
+      case 'charge.dispute.created': {
+        // refunds.html promises refunds — honoring one must also revoke the
+        // plan (before this, a refunded lifetime pass kept Pro forever). The
+        // charge's payment intent carries the checkout metadata we stamped
+        // via payment_intent_data at session creation.
+        const obj = event.data.object;
+        const piId = obj.payment_intent || (event.type === 'charge.dispute.created' ? obj.charge : null);
+        let meta = null;
+        try {
+          if (piId) {
+            const pi = await stripe.paymentIntents.retrieve(typeof piId === 'string' ? piId : piId.id);
+            meta = pi?.metadata || null;
+          }
+        } catch (e) {
+          log.warn('billing: could not retrieve payment intent for refund/dispute', { eventId: event.id, error: e.message });
+        }
+        if (!meta || !meta.plan) {
+          log.error('billing: refund/dispute with no resolvable plan metadata — manual review needed', { eventId: event.id, type: event.type });
+          break;
+        }
+        if (meta.individual === '1') {
+          const email = (meta.email || '').toLowerCase();
+          const domain = meta.domain || (email.includes('@') ? email.split('@')[1] : null);
+          if (domain && email) {
+            await setUserPlan(domain, email, { individualPlan: 'free', individualBillingStatus: event.type === 'charge.refunded' ? 'refunded' : 'disputed' });
+            try { await logEvent(domain, { email, type: 'refunded', meta: { plan: meta.plan, kind: event.type } }); } catch {}
+          }
+        } else if (meta.domain) {
+          await setTenantPlan(meta.domain, { plan: 'free', billingStatus: event.type === 'charge.refunded' ? 'refunded' : 'disputed' });
+          try { await logEvent(meta.domain, { email: meta.email || 'admin', type: 'refunded', meta: { plan: meta.plan, kind: event.type } }); } catch {}
+        }
+        break;
+      }
+      case 'invoice.payment_failed':
+        // Dunning downgrade is handled via customer.subscription.updated →
+        // past_due/unpaid; this is observability only.
+        log.warn('billing: invoice payment failed', { eventId: event.id, customer: event.data.object?.customer || null });
+        break;
       default:
         // Ignore other event types.
         break;

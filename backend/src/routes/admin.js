@@ -2,8 +2,8 @@ const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getRevenueFunnel, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance } = require('../services/firestore');
-const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, flushDeferredNotifications } = require('../lib/notifications');
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getRevenueFunnel, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance, getTeamOverview } = require('../services/firestore');
+const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendOrgWeeklyDigest, flushDeferredNotifications } = require('../lib/notifications');
 const { requireSuperAdmin, requireSuperAdminOrScheduler, requireKhMetricsKey } = require('../middleware/adminAuth');
 const { requireAuth } = require('../middleware/auth');
 const { domainOf } = require('../services/firestore/_core'); // pure util; imported directly (test firestore-mocks needn't stub it)
@@ -979,6 +979,48 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
 // hits it. Same dual auth as the other sweeps.
 //   Scale note: this reads getUserMeetingSeries per active user per run. Fine at
 //   current scale; at 1000s of users, gate on a maintained `tracksRecurring` flag.
+// POST /api/admin/org-digest — weekly attendance summary to each Pro
+// domain's team admin (Cloud Scheduler: Mondays). The retention spine of the
+// domain/Institution tier. Dedupe: claimReengagementSlot keyed by ISO week,
+// so retries and manual triggers never double-send.
+router.post('/admin/org-digest', requireSuperAdminOrScheduler, async (req, res) => {
+  const now = new Date();
+  const jan1 = Date.UTC(now.getUTCFullYear(), 0, 1);
+  const week = `${now.getUTCFullYear()}-w${Math.ceil(((now.getTime() - jan1) / 86400000 + 1) / 7)}`;
+  let scanned = 0, sent = 0, skipped = 0, errored = 0;
+  try {
+    const snap = await getDb().collection('tenants').where('plan', '==', 'pro').get();
+    for (const doc of snap.docs) {
+      scanned++;
+      const domain = doc.id;
+      const adminEmail = (doc.data()?.adminEmail || '').toLowerCase();
+      try {
+        if (!adminEmail) { skipped++; continue; }
+        if (await isEmailSuppressed(adminEmail)) { skipped++; continue; }
+        const slot = await claimReengagementSlot(domain, adminEmail, `orgdigest:${week}`);
+        if (!slot.claimed) { skipped++; continue; }
+        const overview = await getTeamOverview(domain);
+        // Nothing tracked yet → nothing to digest (no empty-brag emails).
+        if (!overview || !(overview.totals?.meetings > 0)) { skipped++; continue; }
+        const weekAgo = Date.now() - 7 * 86400000;
+        const weeklyMeetings = (overview.meetings || []).filter(m => {
+          const ts = new Date(m.startTime || m.createdAt || m.exportedAt || 0).getTime();
+          return ts > weekAgo;
+        }).length;
+        await sendOrgWeeklyDigest({ to: adminEmail, domain, totals: overview.totals, weeklyMeetings });
+        sent++;
+      } catch (e) {
+        errored++;
+        log.warn('org-digest: tenant failed', { domain, error: e.message });
+      }
+    }
+    res.json({ scanned, sent, skipped, errored, week });
+  } catch (err) {
+    log.error('admin: org-digest failed', { error: err.message });
+    res.status(500).json({ error: 'Org digest sweep failed' });
+  }
+});
+
 router.post('/admin/check-upcoming', requireSuperAdminOrScheduler, async (req, res) => {
   const startedAt = Date.now();
   const budgetMs = sweepBudgetMs();

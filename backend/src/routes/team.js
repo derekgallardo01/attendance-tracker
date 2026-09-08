@@ -92,6 +92,38 @@ router.post('/team/transfer-admin', requireTeamAdmin, async (req, res) => {
   }
 });
 
+// GET /team/overview/preview — a REDACTED taste of the paid dashboard for
+// team admins whose domain isn't Pro yet: real aggregate totals plus the
+// first three users with masked emails. A blurred wall of the admin's OWN
+// real data sells the org plan better than a 402 text banner. Deliberately
+// behind requireTeamAdmin only (no requireProPlan) — that's the point.
+router.get('/team/overview/preview', requireTeamAdmin, async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  try {
+    const data = await getTeamOverview(req.user.domain);
+    if (!data) return res.status(500).json({ error: 'Failed to build team preview' });
+    const mask = (email) => {
+      const [local, dom] = String(email || '').split('@');
+      if (!dom) return '···';
+      return `${(local || '').slice(0, 2)}···@${dom}`;
+    };
+    res.json({
+      preview: true,
+      domain: data.domain,
+      totals: data.totals,
+      sampleUsers: (data.users || []).slice(0, 3).map(u => ({
+        displayName: u.displayName || '',
+        email: mask(u.email),
+        lastLoginAt: u.lastLoginAt || null,
+      })),
+      moreUsers: Math.max(0, (data.totals?.users || 0) - 3),
+    });
+  } catch (err) {
+    log.error('team: preview failed', { error: err.message, domain: req.user.domain });
+    res.status(500).json({ error: 'Failed to fetch team preview' });
+  }
+});
+
 router.get('/team/overview', requireTeamAdmin, requireProPlan, async (req, res) => {
   res.set('Cache-Control', 'no-store');
   try {

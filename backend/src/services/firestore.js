@@ -716,6 +716,28 @@ async function claimSignupNotification(domain, email) {
 // they arrived via a ?ref= invite). Returns { referredBy, newUserEmail,
 // newUserName } once, then clears the flag; null if nothing pending. Mirrors
 // claimSignupNotification. See notifications.maybeSendReferralNotification.
+// Stripe webhook idempotency: claim an event id exactly once (root collection,
+// like `suppression` — Stripe retries deliveries, and a double-processed
+// checkout.session.completed would double-log `upgraded` analytics). Returns
+// true when this call won the claim; false when the event was already seen.
+// Fails OPEN (true) on Firestore errors — processing twice beats dropping a
+// provisioning event.
+async function claimWebhookEvent(eventId) {
+  if (!eventId) return true;
+  try {
+    const ref = getDb().collection('webhookEvents').doc(String(eventId));
+    return await getDb().runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      if (doc.exists) return false;
+      tx.set(ref, { createdAt: FieldValue.serverTimestamp() });
+      return true;
+    });
+  } catch (err) {
+    log.warn('firestore: claimWebhookEvent failed — processing anyway', { eventId, error: err.message });
+    return true;
+  }
+}
+
 async function claimReferral(domain, email) {
   try {
     const ref = tenantRef(domain).collection('users').doc(email.toLowerCase());
@@ -1703,6 +1725,7 @@ module.exports = {
   getUserSettings, updateUserSettings,
   setUserAcquisitionSource, setPostExportSurvey, claimSignupNotification,
   claimReferral, releaseReferral, recordReferralForInviter, recordReferralPromoCode, getUserTrackingStreak,
+  claimWebhookEvent,
   logEvent,
   getUserActivationStatus, countUserExports, countUserMonthlyExports, countAllUsers, getExportedConferenceIds,
   getUserMeetingHistory, getExistingDomainPeer,

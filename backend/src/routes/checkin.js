@@ -57,4 +57,35 @@ router.get('/checkins', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/checkin/export?meetingCode= — attestation CSV of a meeting's
+// self-check-ins: who actively confirmed presence, with verified email and
+// timestamp. This is the COMPLIANCE artifact built on the free check-in
+// capture (gate the artifact, never the capture) — Pro only.
+// Returns JSON {csv, count}: the Meet iframe can't download files directly,
+// so the panel routes the text through its download relay like every CSV.
+router.get('/checkin/export', requireAuth, async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  try {
+    const { meetingCode } = req.query;
+    if (!meetingCode) return res.status(400).json({ error: 'meetingCode is required' });
+    const { planIsPro } = require('./billing');
+    const pro = await planIsPro(req.user.domain, req.user.email);
+    if (!pro) {
+      return res.status(402).json({ error: 'Check-in attestation exports are a Pro feature.', upgrade: true, feature: 'attestation' });
+    }
+    const checkins = await getCheckins(meetingCode);
+    const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const rows = [
+      ['Name', 'Email', 'Checked in at (UTC)', 'Meeting code'].map(esc).join(','),
+      ...checkins.map(c => [c.displayName, c.email, c.checkedInAt, String(meetingCode).toLowerCase()].map(esc).join(',')),
+      '',
+      esc(`Self-reported check-ins collected in-meeting via Attendance Tracker (attendancetracker.dev) · generated ${new Date().toISOString()} by ${req.user.email}`),
+    ];
+    res.json({ csv: '\uFEFF' + rows.join('\r\n'), count: checkins.length });
+  } catch (err) {
+    log.error('checkin: export failed', { email: req.user.email, error: err.message });
+    res.status(500).json({ error: 'Failed to export check-ins' });
+  }
+});
+
 module.exports = router;

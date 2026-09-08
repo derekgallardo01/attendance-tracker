@@ -114,6 +114,21 @@
         <button type="button" id="team-int-annual" onclick="setTeamInterval('annual')" style="border:1px solid #30363d;border-radius:6px 0 0 6px;padding:6px 12px;cursor:pointer;font-size:.8rem">Annual · save 20%</button><button type="button" id="team-int-monthly" onclick="setTeamInterval('monthly')" style="border:1px solid #30363d;border-left:none;border-radius:0 6px 6px 0;padding:6px 12px;cursor:pointer;font-size:.8rem">Monthly</button>
       </div>
       <button id="upgrade-btn" onclick="startUpgrade()" style="margin-top:10px;background:#4ade80;color:#0d1117;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:600">Upgrade to Pro</button>
+
+      <!-- Redacted preview of the real dashboard (the admin's own data) -->
+      <div id="preview-teaser" style="display:none;margin-top:18px;text-align:left">
+        <div style="font-size:.78rem;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">A preview of YOUR domain's dashboard</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:12px">
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:12px"><div style="font-size:1.4rem;font-weight:700;color:#4ade80" id="preview-users">—</div><div style="font-size:.72rem;color:#8b949e">Teachers</div></div>
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:12px"><div style="font-size:1.4rem;font-weight:700;color:#58a6ff" id="preview-meetings">—</div><div style="font-size:.72rem;color:#8b949e">Meetings</div></div>
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:12px"><div style="font-size:1.4rem;font-weight:700;color:#58a6ff" id="preview-series">—</div><div style="font-size:.72rem;color:#8b949e">Recurring series</div></div>
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:12px"><div style="font-size:1.4rem;font-weight:700;color:#4ade80" id="preview-people">—</div><div style="font-size:.72rem;color:#8b949e">People tracked</div></div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:.82rem;filter:blur(0.4px);opacity:.85">
+          <thead><tr><th style="text-align:left;padding:6px 10px;color:#8b949e;font-size:.72rem;text-transform:uppercase;border-bottom:1px solid #30363d">Teacher</th><th style="text-align:left;padding:6px 10px;color:#8b949e;font-size:.72rem;text-transform:uppercase;border-bottom:1px solid #30363d">Email</th><th style="text-align:left;padding:6px 10px;color:#8b949e;font-size:.72rem;text-transform:uppercase;border-bottom:1px solid #30363d">Last active</th></tr></thead>
+          <tbody id="preview-rows"></tbody>
+        </table>
+      </div>
     </div>
 
     <div id="dashboard">
@@ -272,7 +287,7 @@
       const btn = document.getElementById('upgrade-btn');
       if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
       try {
-        window.location.href = await AttApi.startCheckout(sessionToken, { interval: teamInterval }); // shared js/api.js
+        window.location.href = await AttApi.startCheckout(sessionToken, { plan: 'team', interval: teamInterval }); // shared js/api.js — explicit: this page sells the domain plan
         return;
       } catch (e) {
         alert(e.message);
@@ -296,6 +311,25 @@
         if (res.status === 402) {
           document.getElementById('loading').style.display = 'none';
           document.getElementById('error-upgrade').style.display = 'block';
+          // Teaser: the admin's OWN real numbers, blurred sample rows — a
+          // taste of the paid dashboard instead of a bare text banner.
+          try {
+            const pRes = await fetch(`${BACKEND_URL}/team/overview/preview`, { headers: { 'Authorization': `Bearer ${sessionToken}` } });
+            if (pRes.ok) {
+              const p = await pRes.json();
+              const box = document.getElementById('preview-teaser');
+              if (box && p.totals) {
+                document.getElementById('preview-users').textContent = p.totals.users ?? 0;
+                document.getElementById('preview-meetings').textContent = p.totals.meetings ?? 0;
+                document.getElementById('preview-series').textContent = p.totals.series ?? 0;
+                document.getElementById('preview-people').textContent = p.totals.people ?? 0;
+                document.getElementById('preview-rows').innerHTML = (p.sampleUsers || []).map(u =>
+                  `<tr><td>${(u.displayName || '—').replace(/</g, '&lt;')}</td><td style="color:#8b949e">${(u.email || '').replace(/</g, '&lt;')}</td><td style="color:#8b949e">${u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString() : '—'}</td></tr>`
+                ).join('') + (p.moreUsers ? `<tr><td colspan="3" style="color:#8b949e;font-style:italic">…and ${p.moreUsers} more teachers, visible on Pro</td></tr>` : '');
+                box.style.display = 'block';
+              }
+            }
+          } catch (_) { /* teaser is best-effort */ }
           // Offer the monthly/annual toggle only once annual is live.
           try {
             const sRes = await fetch(`${BACKEND_URL}/billing/status`, { headers: { 'Authorization': `Bearer ${sessionToken}` } });

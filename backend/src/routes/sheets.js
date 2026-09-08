@@ -385,6 +385,9 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
     const footer = [
       [],
       ['Tracked automatically with Attendance Tracker for Google Meet · https://attendancetracker.dev'],
+      // Free users see their plan in the artifact where the value is felt —
+      // the Class Summary teaser pattern. Pro users keep a clean footer.
+      ...(proAllowed ? [] : [[`Free plan: ${require('../config/pricing').FREE_MONTHLY_EXPORT_LIMIT} Sheets exports/month · Unlimited with Pro → https://attendancetracker.dev/pricing.html?utm_source=sheet_footer`]]),
     ];
 
     const allValues = [...summary, header, ...allRows, ...footer];
@@ -616,8 +619,9 @@ router.post('/save-to-sheets', async (req, res) => {
       return res.status(402).json({ error: 'Auto-export on meeting end is a Pro feature.', upgrade: true, feature: 'autoExport' });
     }
 
-    // Monthly export quota check for Free users (3 exports per calendar month)
-    const FREE_MONTHLY_EXPORT_LIMIT = 3;
+    // Monthly export quota check for Free users (single source of truth:
+    // config/pricing.js — /billing/status and the panel read the same value)
+    const { FREE_MONTHLY_EXPORT_LIMIT } = require('../config/pricing');
     let monthlyExports = 0;
     if (req.user && !proAllowed) {
       monthlyExports = await countUserMonthlyExports(req.user.domain, req.user.email);

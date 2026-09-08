@@ -11,6 +11,7 @@ const mockStripeInstance = {
   prices: { retrieve: jest.fn().mockResolvedValue({ id: 'p1', type: 'recurring', recurring: { interval: 'year' } }) },
   webhooks: { constructEvent: jest.fn() },
   promotionCodes: { create: jest.fn() },
+  paymentIntents: { retrieve: jest.fn() }, // refund/dispute → metadata lookup
 };
 jest.mock('stripe', () => jest.fn(() => mockStripeInstance));
 
@@ -23,6 +24,8 @@ jest.mock('../../src/services/firestore', () => ({
   updateUserTokens: jest.fn(),
   getTeamAdminStatus: jest.fn(), // requireTeamAdmin (runs before requireProPlan on /team/overview)
   countUserMonthlyExports: jest.fn().mockResolvedValue(0),
+  logEvent: jest.fn(),
+  claimWebhookEvent: jest.fn(), // webhook idempotency — default re-armed in beforeEach
 }));
 
 const firestore = require('../../src/services/firestore');
@@ -36,6 +39,7 @@ beforeEach(() => {
   firestore.getUser.mockImplementation(async (domain, email) => ({ email, domain }));
   firestore.getTenantPlan.mockResolvedValue({ plan: 'free', billingStatus: null, stripeCustomerId: null });
   firestore.getUserPlan.mockResolvedValue({ plan: 'free', billingStatus: null, stripeCustomerId: null });
+  firestore.claimWebhookEvent.mockResolvedValue(true); // clearMocks wipes implementations' calls, not defaults set here
   delete process.env.STRIPE_SECRET_KEY;
   delete process.env.STRIPE_PRICE_ID;
   delete process.env.STRIPE_WEBHOOK_SECRET;
@@ -680,6 +684,152 @@ describe('billing — public-checkout for marketing pages', () => {
       line_items: [{ price: 'price_educator_499', quantity: 1 }],
       customer_email: 'teacher@deped.gov.ph',
     }));
+  });
+});
+
+// ═══ Monetization overhaul: team provisioning, promo bypass, webhook hygiene ═══
+
+describe('public-checkout team provisioning guard', () => {
+  beforeEach(() => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_PRICE_ID = 'price_domain';
+    app = buildApp();
+  });
+
+  test('400 when a team purchase has no email (webhook could not provision)', async () => {
+    const res = await request(app).post('/api/billing/public-checkout')
+      .set('Content-Type', 'application/json')
+      .send({ plan: 'team' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/work email/i);
+  });
+
+  test('400 when a team purchase uses a personal-email domain', async () => {
+    const res = await request(app).post('/api/billing/public-checkout')
+      .set('Content-Type', 'application/json')
+      .send({ plan: 'team', email: 'someone@gmail.com' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/Workspace domain/i);
+  });
+
+  test('team purchase with a work email stamps the domain into metadata', async () => {
+    mockStripeInstance.prices.retrieve.mockResolvedValue({ id: 'price_domain', type: 'one_time' });
+    const res = await request(app).post('/api/billing/public-checkout')
+      .set('Content-Type', 'application/json')
+      .send({ plan: 'team', email: 'Admin@Acme.com' });
+    expect(res.status).toBe(200);
+    const params = mockStripeInstance.checkout.sessions.create.mock.calls[0][0];
+    expect(params.metadata.domain).toBe('acme.com');
+    expect(params.client_reference_id).toBe('acme.com');
+  });
+
+  test('an explicit empty promo skips the LAUNCH50 auto-apply and re-enables the code box', async () => {
+    mockStripeInstance.prices.retrieve.mockResolvedValue({ id: 'p', type: 'recurring', recurring: {} });
+    const res = await request(app).post('/api/billing/public-checkout')
+      .set('Content-Type', 'application/json')
+      .send({ plan: 'educator', promo: '' });
+    expect(res.status).toBe(200);
+    const params = mockStripeInstance.checkout.sessions.create.mock.calls[0][0];
+    expect(params.discounts).toBeUndefined();
+    expect(params.allow_promotion_codes).toBe(true);
+  });
+});
+
+describe('webhook hygiene (dedupe + refunds + org-domain fallback)', () => {
+  const post = () => request(app).post('/api/billing/webhook').set('Content-Type', 'application/json').send(Buffer.from('{}'));
+
+  beforeEach(() => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_PRICE_ID = 'price_x';
+    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_x';
+    app = buildApp();
+  });
+
+  test('duplicate delivery is acknowledged but not reprocessed', async () => {
+    firestore.claimWebhookEvent.mockResolvedValue(false);
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_dup', type: 'checkout.session.completed',
+      data: { object: { client_reference_id: 'acme.com', metadata: {} } },
+    });
+    const res = await post();
+    expect(res.status).toBe(200);
+    expect(res.body.duplicate).toBe(true);
+    expect(firestore.setTenantPlan).not.toHaveBeenCalled();
+  });
+
+  test('org checkout with no ref/metadata falls back to the buyer email domain (non-personal only)', async () => {
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_1', type: 'checkout.session.completed',
+      data: { object: { client_reference_id: null, metadata: { individual: '0' }, customer_details: { email: 'principal@school.org' }, customer: 'cus_1' } },
+    });
+    await post();
+    expect(firestore.setTenantPlan).toHaveBeenCalledWith('school.org', expect.objectContaining({ plan: 'pro' }));
+  });
+
+  test('org checkout from a personal email with no domain provisions NOTHING (never flips gmail.com)', async () => {
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_2', type: 'checkout.session.completed',
+      data: { object: { client_reference_id: null, metadata: { individual: '0' }, customer_details: { email: 'buyer@gmail.com' } } },
+    });
+    const res = await post();
+    expect(res.status).toBe(200);
+    expect(firestore.setTenantPlan).not.toHaveBeenCalled();
+  });
+
+  test('charge.refunded downgrades an individual pass via payment-intent metadata', async () => {
+    mockStripeInstance.paymentIntents.retrieve.mockResolvedValue({ metadata: { individual: '1', plan: 'lifetime', email: 'buyer@acme.com', domain: 'acme.com' } });
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_3', type: 'charge.refunded',
+      data: { object: { payment_intent: 'pi_1' } },
+    });
+    await post();
+    expect(firestore.setUserPlan).toHaveBeenCalledWith('acme.com', 'buyer@acme.com', expect.objectContaining({ individualPlan: 'free', individualBillingStatus: 'refunded' }));
+    expect(firestore.logEvent).toHaveBeenCalledWith('acme.com', expect.objectContaining({ type: 'refunded' }));
+  });
+
+  test('charge.dispute.created downgrades a domain plan and marks it disputed', async () => {
+    mockStripeInstance.paymentIntents.retrieve.mockResolvedValue({ metadata: { individual: '0', plan: 'team', domain: 'acme.com' } });
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_4', type: 'charge.dispute.created',
+      data: { object: { payment_intent: 'pi_2' } },
+    });
+    await post();
+    expect(firestore.setTenantPlan).toHaveBeenCalledWith('acme.com', expect.objectContaining({ plan: 'free', billingStatus: 'disputed' }));
+  });
+
+  test('refund with unretrievable payment intent logs for manual review and changes nothing', async () => {
+    mockStripeInstance.paymentIntents.retrieve.mockRejectedValue(new Error('no such pi'));
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_5', type: 'charge.refunded',
+      data: { object: { payment_intent: 'pi_missing' } },
+    });
+    const res = await post();
+    expect(res.status).toBe(200);
+    expect(firestore.setUserPlan).not.toHaveBeenCalled();
+    expect(firestore.setTenantPlan).not.toHaveBeenCalled();
+  });
+
+  test('invoice.payment_failed is acknowledged log-only (dunning handles the downgrade)', async () => {
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_6', type: 'invoice.payment_failed',
+      data: { object: { customer: 'cus_9' } },
+    });
+    const res = await post();
+    expect(res.status).toBe(200);
+    expect(firestore.setTenantPlan).not.toHaveBeenCalled();
+    expect(firestore.setUserPlan).not.toHaveBeenCalled();
+  });
+});
+
+describe('billing/status pricing payload', () => {
+  test('status carries the display-price table + quota limit from config/pricing', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_PRICE_ID = 'price_x';
+    app = buildApp();
+    const res = await request(app).get('/api/billing/status').set(authedHeader('u@acme.com', 'acme.com'));
+    expect(res.status).toBe(200);
+    expect(res.body.pricing.lifetime.label).toBe('$9.99');
+    expect(res.body.pricing.quotaLimit).toBe(3);
   });
 });
 

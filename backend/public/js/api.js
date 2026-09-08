@@ -72,11 +72,16 @@
   // "Could not reach billing."; a non-2xx as the server error, else a generic
   // fallback.
   async function startCheckout(token, opts) {
+    // `plan` MUST be passed by callers whose button names a price: without it
+    // the backend infers team-vs-individual from the caller's domain, which
+    // once let a "$9.99" button sell a $19.99 domain plan (or a subscription).
+    const payload = { interval: (opts && opts.interval) || 'monthly' };
+    if (opts && opts.plan) payload.plan = opts.plan;
     let res;
     try {
       res = await authedFetch(token, '/billing/checkout', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ interval: (opts && opts.interval) || 'monthly' }),
+        body: JSON.stringify(payload),
       });
     } catch {
       throw new Error('Could not reach billing.');

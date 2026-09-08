@@ -473,6 +473,30 @@ describe('settings — non-JSON body (req.body || {})', () => {
   });
 });
 
+describe('referralCount in GET /settings', () => {
+  test('returns the user doc referral count, defaulting to 0', async () => {
+    firestore.getUserSettings.mockResolvedValue({});
+    firestore.getUser.mockImplementation(async (domain, email) => ({ email, domain, referralCount: 4 }));
+    let res = await request(app).get('/api/settings').set(authedHeader('u@a.com', 'a.com'));
+    expect(res.body.referralCount).toBe(4);
+
+    firestore.getUser.mockImplementation(async (domain, email) => ({ email, domain }));
+    res = await request(app).get('/api/settings').set(authedHeader('u@a.com', 'a.com'));
+    expect(res.body.referralCount).toBe(0);
+  });
+
+  test('a failed user-doc read degrades to 0 (settings still load)', async () => {
+    firestore.getUserSettings.mockResolvedValue({});
+    // First call feeds the auth middleware; the route's own read then fails.
+    firestore.getUser
+      .mockImplementationOnce(async (domain, email) => ({ email, domain }))
+      .mockRejectedValueOnce(new Error('firestore down'));
+    const res = await request(app).get('/api/settings').set(authedHeader('u@a.com', 'a.com'));
+    expect(res.status).toBe(200);
+    expect(res.body.referralCount).toBe(0);
+  });
+});
+
 describe('digestExtraEmails (extra report recipients)', () => {
   test('GET returns [] when unset and the saved list when set', async () => {
     firestore.getUserSettings.mockResolvedValue({});

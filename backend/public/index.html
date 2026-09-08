@@ -79,6 +79,7 @@
        script so the inline code can rely on window.AttUtils. Kept as a
        separate file so it can be Jest/jsdom unit-tested in isolation. -->
   <script src="js/utils.js"></script>
+  <script src="js/pricing.js"></script>
   <!-- Side-panel pure logic (poll cadence, presence resolution) + demo sim
        engine — unit-tested in isolation. -->
   <script src="js/panel.js"></script>
@@ -1306,7 +1307,8 @@
       <button id="btn-header-pro" type="button" onclick="showUpgradeModal('header')" title="Upgrade to Pro"
         style="display:none;background:rgba(253,214,99,.12);border:1px solid rgba(253,214,99,.32);color:#fdd663;border-radius:12px;padding:3px 9px;font-size:.72rem;font-weight:600;cursor:pointer;line-height:1.3;white-space:nowrap"
         aria-label="Upgrade to Pro">
-        Pro: $4.99/yr
+        <!-- price painted by paintPrices() from js/pricing.js -->
+        Pro: <span class="price-educator">$4.99</span>/yr
       </button>
       <!-- Settings gear icon — only shown when signed in (updateAuthUI sets
            display). Opens the Slack webhook config modal. -->
@@ -1345,6 +1347,18 @@
     <button id="export-cta-btn" onclick="onExportCtaClick()" style="background:#34A853;color:#fff;border:none;border-radius:6px;padding:8px 16px;font-weight:700;font-size:.78rem;cursor:pointer;width:100%"></button>
   </div>
 
+  <!-- Auto-export Pro nudge: shown INSTEAD of a popup when a background
+       auto-export hits the Pro gate (worst-converting surface as a modal:
+       34 shown → 1 click). Value-first, dismissible, opens the modal only
+       on a deliberate click. -->
+  <div id="auto-export-nudge" style="display:none;background:rgba(253,214,99,.08);border:1px solid rgba(253,214,99,.28);border-radius:8px;padding:10px 13px;margin:8px 16px">
+    <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
+      <div style="font-size:.78rem;color:#fdd663;line-height:1.45" data-i18n="billing.autoNudge">Your attendance was captured ✓ — auto-saving to Drive when the call ends is a Pro feature. You can still export manually for free.</div>
+      <button type="button" onclick="dismissAutoExportNudge()" aria-label="Dismiss" style="flex:0 0 auto;background:none;border:none;color:#9aa0a6;cursor:pointer;font-size:14px;line-height:1;padding:2px">&times;</button>
+    </div>
+    <button type="button" id="auto-export-nudge-btn" onclick="onAutoExportNudgeClick()" style="flex:0 0 auto;margin-top:8px;background:transparent;border:1px solid rgba(253,214,99,.4);color:#fdd663;border-radius:6px;padding:6px 14px;font-weight:600;font-size:.76rem;cursor:pointer" data-i18n="billing.autoNudgeCta">See Pro plans</button>
+  </div>
+
 
   <!-- ── Status bar ── -->
   <div id="status-bar">
@@ -1376,7 +1390,12 @@
   <!-- ── Export Quota Indicator (Free tier) ── -->
   <div id="export-quota-indicator" style="display:none;align-items:center;justify-content:space-between;padding:5px 16px;font-size:11px;color:#8b949e;background:rgba(255,255,255,.03);border-top:1px solid #30363d">
     <span id="export-quota-text">3 of 3 free exports remaining this month</span>
-    <a href="#" id="export-quota-upgrade-link" onclick="try{logUserEvent('quota_upgrade_clicked',{})}catch(e){};showUpgradeModal('quota_indicator');return false;" data-i18n="quota.goUnlimited" style="color:#fdd663;text-decoration:none;font-weight:600;margin-left:8px;white-space:nowrap">Go Unlimited</a>
+    <span style="white-space:nowrap;margin-left:8px">
+      <!-- Permanent, silent, deliberate path — the only surface that has
+           actually converted is self-directed browsing. -->
+      <a href="https://attendancetracker.dev/pricing.html?utm_source=panel_quota" target="_blank" rel="noopener" data-i18n="quota.pricingLink" style="color:#8b949e;text-decoration:none;margin-right:10px">Pricing</a>
+      <a href="#" id="export-quota-upgrade-link" onclick="try{logUserEvent('quota_upgrade_clicked',{})}catch(e){};showUpgradeModal('quota_indicator');return false;" data-i18n="quota.goUnlimited" style="color:#fdd663;text-decoration:none;font-weight:600;white-space:nowrap">Go Unlimited</a>
+    </span>
   </div>
 
   <div id="sheet-link-bar" style="display:none; padding:4px 16px; font-size:11px;">
@@ -1453,6 +1472,10 @@
       <option value="none" data-i18n="group.none">Group: None</option>
       <option value="domain" data-i18n="group.byDomain">By domain</option>
     </select>
+    <!-- Attestation export: appears once anyone has checked in. The
+         COMPLIANCE artifact on top of free check-in capture (Pro). -->
+    <button type="button" id="btn-attestation-csv" onclick="downloadAttestationCsv(this)" title="Download the verified check-in list (Pro)"
+      style="display:none;flex:0 0 auto;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.35);color:#4ade80;border-radius:6px;padding:5px 10px;font-size:.7rem;cursor:pointer;white-space:nowrap">✓ <span data-i18n="checkin.attestCsv">Check-in CSV</span></button>
   </div>
 
   <!-- ── Tabs ── -->
@@ -3413,6 +3436,25 @@ async function handleAttendeeAuthCode(response) {
   }
 }
 
+// Attestation CSV: server-built (Pro-gated there), delivered through the
+// download relay like every panel CSV. 402 opens the upgrade modal — this is
+// a deliberate click, so the modal is the right surface.
+async function downloadAttestationCsv(btn) {
+  if (!state.conferenceId || !state.sessionToken) return;
+  if (btn) btn.disabled = true;
+  try {
+    const res = await authFetch(`${state.backendUrl}/checkin/export?meetingCode=${encodeURIComponent(state.conferenceId)}`);
+    if (res.status === 402) { showUpgradeModal('attestation'); return; }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    triggerCsvDownload(data.csv, `checkins_${state.conferenceId}_${new Date().toISOString().slice(0, 10)}.csv`);
+  } catch (err) {
+    toast(t('checkin.exportError', 'Could not export check-ins.'));
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
 // ── Host side ──
 let _checkinEventLogged = false;
 async function refreshCheckins() {
@@ -3427,6 +3469,8 @@ async function refreshCheckins() {
 
 function mergeCheckins(checkins) {
   if (!checkins.length) return;
+  const attBtn = document.getElementById('btn-attestation-csv');
+  if (attBtn) attBtn.style.display = '';
   if (!_checkinEventLogged) {
     _checkinEventLogged = true;
     logUserEvent('checkin_merged', { count: checkins.length });
@@ -3831,6 +3875,23 @@ async function ensureBilling() {
   return _billing;
 }
 
+// Paint every price-bearing span from the single source of truth
+// (js/pricing.js, optionally refreshed by /billing/status.pricing). Markup
+// keeps human-readable fallbacks; this overwrites them at load + on status.
+function paintPrices() {
+  const map = {
+    'price-lifetime': AttPricing.price('lifetime'),
+    'price-lifetime-full': (AttPricing.fromStatus(null).lifetime || {}).full || '',
+    'price-educator': AttPricing.price('educator'),
+    'price-educator-full': (AttPricing.fromStatus(null).educator || {}).full || '',
+    'price-team': AttPricing.price('team'),
+  };
+  for (const [cls, text] of Object.entries(map)) {
+    if (!text) continue;
+    document.querySelectorAll('.' + cls).forEach(el => { el.textContent = text; });
+  }
+}
+
 async function loadBillingStatus() {
   const box = document.getElementById('settings-billing');
   try {
@@ -3839,6 +3900,14 @@ async function loadBillingStatus() {
     const data = await res.json();
     _billing = data;
     _isPro = data.plan === 'pro';
+    // Server-advertised display prices win over the static js/pricing.js
+    // fallback; repaint every price span in one pass.
+    AttPricing.fromStatus(data);
+    paintPrices();
+    // Domain license card: only sensible for Workspace-domain users — a
+    // personal-Gmail buyer can't own the shared gmail.com tenant.
+    const teamCard = document.getElementById('plan-card-team');
+    if (teamCard) teamCard.style.display = (!data.individual && data.billingConfigured && !_isPro) ? '' : 'none';
     // Digest webhooks send only on Pro — badge the settings cards so free
     // users aren't left wondering why a saved webhook stays quiet.
     document.querySelectorAll('.webhook-pro-badge').forEach(el => {
@@ -4023,13 +4092,16 @@ function showUpgradeModal(reason) {
   const note = document.getElementById('upgrade-modal-note');
   if (note) {
     if (reason === 'exportQuota') {
-      note.textContent = t('quota.limitReached', 'You reached your monthly limit of {limit} free exports. Upgrade to Pro for unlimited exports.').replace('{limit}', 3);
+      note.textContent = t('quota.limitReached', 'You reached your monthly limit of {limit} free exports. Upgrade to Pro for unlimited exports.').replace('{limit}', AttPricing.quotaLimit());
       note.style.display = 'block';
     } else if (reason === 'autoExport') {
       note.textContent = t('billing.autoExportPro','Auto-exporting to Google Sheets on meeting end is a Pro feature.');
       note.style.display = 'block';
     } else if (reason === 'certificates') {
       note.textContent = t('billing.certsPro','Generating student attendance certificates is a Pro feature.');
+      note.style.display = 'block';
+    } else if (reason === 'attestation') {
+      note.textContent = t('billing.attestPro', 'Exporting verified check-in attestations is a Pro feature.');
       note.style.display = 'block';
     } else {
       note.style.display = 'none';
@@ -4076,6 +4148,31 @@ function showUpgradeModal(reason) {
       participantCount: (state.participants && state.participants.size) || 0,
     });
   } catch {}
+}
+
+// ── Auto-export Pro nudge (inline, never a popup) ──
+function showAutoExportNudge() {
+  try { if (sessionStorage.getItem('attAutoNudgeDismissed')) return; } catch { /* storage blocked */ }
+  const el = document.getElementById('auto-export-nudge');
+  if (!el || el.style.display !== 'none') return;
+  el.style.display = 'block';
+  logUserEvent('auto_export_nudge_shown', {});
+  // Flash the header Pro pill so the permanent, deliberate path gets noticed.
+  const pill = document.getElementById('btn-header-pro');
+  if (pill && pill.style.display !== 'none') {
+    pill.style.transition = 'box-shadow .25s ease';
+    pill.style.boxShadow = '0 0 0 2px rgba(253,214,99,.6)';
+    setTimeout(() => { pill.style.boxShadow = ''; }, 1600);
+  }
+}
+function onAutoExportNudgeClick() {
+  logUserEvent('auto_export_nudge_clicked', {});
+  showUpgradeModal('autoExport');
+}
+function dismissAutoExportNudge() {
+  const el = document.getElementById('auto-export-nudge');
+  if (el) el.style.display = 'none';
+  try { sessionStorage.setItem('attAutoNudgeDismissed', '1'); } catch { /* storage blocked */ }
 }
 
 function closeUpgradeModal() {
@@ -4595,6 +4692,14 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
         const feature = body.feature || 'pro_required';
         if (body.quota) updateQuotaIndicator(body.quota.used, body.quota.limit);
         logUserEvent('export_skipped', { reason: feature });
+        // autoExport 402s fire from a BACKGROUND action (meeting-end auto
+        // save) — popping a modal there was the product's worst-converting
+        // surface (3% click) and its one real popup. Show the inline nudge
+        // instead; the modal stays for gates behind deliberate clicks.
+        if (feature === 'autoExport') {
+          showAutoExportNudge();
+          return;
+        }
         showUpgradeModal(feature);
         return;
       }
@@ -4612,8 +4717,8 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
       if (!_isPro && typeof quota.used === 'number' && quota.used >= 2) {
         try { logUserEvent('quota_warning_shown', { used: quota.used, limit: quota.limit }); } catch (e) {}
         const msg = quota.used >= quota.limit
-          ? `${quota.used} of ${quota.limit} free monthly exports used. This was your last free export this month. Upgrade to Lifetime Pro ($9.99) for unlimited classes.`
-          : `${quota.used} of ${quota.limit} free monthly exports used. Upgrade to Lifetime Pro ($9.99) or Domain License ($19.99) for unlimited classes.`;
+          ? `${quota.used} of ${quota.limit} free monthly exports used. This was your last free export this month. Upgrade to Lifetime Pro (${AttPricing.price('lifetime')}) for unlimited classes.`
+          : `${quota.used} of ${quota.limit} free monthly exports used. Upgrade to Lifetime Pro (${AttPricing.price('lifetime')}) or Domain License (${AttPricing.price('team')}) for unlimited classes.`;
         setTimeout(() => {
           toast(msg, 7500);
         }, 3200);
@@ -4672,15 +4777,19 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
   }
 }
 
+// Referral landing link, tagged ?ref=<inviter-email> so the backend can
+// attribute the signup (acquisition source ref:<email> → reward machinery).
+// Shared by the celebrate modal and the Settings referral row.
+function buildReferralLink() {
+  const refParam = state.userEmail ? `?ref=${encodeURIComponent(state.userEmail)}` : '';
+  return `https://attendancetracker.dev/${refParam}`;
+}
+
 function showCelebrateModal(sheetUrl) {
   const modal = document.getElementById('celebrate-modal');
   const link = document.getElementById('celebrate-share-link');
   if (!modal || !link) return;
-  // Tag the landing-page link with ?ref=<inviter-email> so we can attribute
-  // signups back to whoever shared. Inviter sees no UI change; backend
-  // records ref:<email> as the acquisition source on the new user's doc.
-  const refParam = state.userEmail ? `?ref=${encodeURIComponent(state.userEmail)}` : '';
-  const landingUrl = `https://attendancetracker.dev/${refParam}`;
+  const landingUrl = buildReferralLink();
   const subject = encodeURIComponent('You should check out Attendance Tracker for Google Meet');
   const body = encodeURIComponent(
     `I started using this Google Meet add-on for tracking attendance and exporting to Sheets in one click. Thought you might find it useful too.\n\nMarketplace: https://workspace.google.com/marketplace/app/attendance_tracker/829771833968\nLanding page: ${landingUrl}\n`
@@ -4960,6 +5069,11 @@ async function openSettingsModal() {
       if (emailCheckbox) emailCheckbox.checked = data.emailOptOut !== true;
       const extraInput = document.getElementById('settings-extra-emails');
       if (extraInput) extraInput.value = (data.digestExtraEmails || []).join(', ');
+      // Referral row: personal share link + how many colleagues joined via it.
+      const refInput = document.getElementById('settings-referral-link');
+      if (refInput) refInput.value = buildReferralLink();
+      const refCount = document.getElementById('settings-referral-count');
+      if (refCount) refCount.textContent = data.referralCount > 0 ? `· ${data.referralCount} joined 🎉` : '';
       for (const [key, p] of Object.entries(WEBHOOK_UI)) {
         // e.g. slackWebhookConfigured / slackWebhookMasked
         const base = p.field.replace(/Url$/, '');
@@ -5073,6 +5187,25 @@ function selectWebhookProvider(provider) {
   if (status) status.style.display = 'none';
   if (server.configured && !(_webhookDrafts[provider] || '')) {
     showSettingsStatus(t('settings.webhookSavedHint', 'Webhook is saved. Paste a new one to replace it.'), '#9ca3af', ui.statusId);
+  }
+}
+
+// Copy the referral link (Meet iframe: clipboard API works; execCommand as
+// the fallback). Button text flips to a brief confirmation.
+async function copyReferralLink() {
+  const input = document.getElementById('settings-referral-link');
+  const btn = document.getElementById('settings-referral-copy');
+  if (!input || !input.value) return;
+  let ok = false;
+  try { await navigator.clipboard.writeText(input.value); ok = true; } catch { /* fall through */ }
+  if (!ok) {
+    try { input.select(); ok = document.execCommand('copy'); } catch { /* both blocked */ }
+  }
+  logUserEvent('referral_link_copied', {});
+  if (btn) {
+    const orig = btn.textContent;
+    btn.textContent = ok ? t('settings.referralCopied', 'Copied ✓') : input.value;
+    setTimeout(() => { btn.textContent = orig; }, 1800);
   }
 }
 
@@ -5931,6 +6064,24 @@ window.addEventListener('DOMContentLoaded', () => {
             style="width:100%;background:#161b22;border:1px solid #30363d;border-radius:8px;color:#e6edf3;padding:8px 12px;font-size:.76rem;box-sizing:border-box" />
           <div id="settings-extra-emails-status" style="display:none;font-size:.72rem;color:#8b949e"></div>
         </div>
+
+        <!-- Referral: a permanent, deliberate share surface (the celebrate
+             modal was the only one, and it shows once). -->
+        <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:6px">
+          <div>
+            <div class="settings-row-label">
+              <span data-i18n="settings.referralLabel">Invite a colleague</span>
+              <span id="settings-referral-count" style="color:#4ade80;font-size:.72rem;margin-left:6px"></span>
+            </div>
+            <div class="settings-row-sub" data-i18n="settings.referralDesc">Share your link — when a colleague signs up through it, you earn a discount on any pass.</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <input id="settings-referral-link" type="text" readonly
+              style="flex:1;background:#161b22;border:1px solid #30363d;border-radius:8px;color:#8b949e;padding:8px 12px;font-size:.72rem;box-sizing:border-box" />
+            <button type="button" onclick="copyReferralLink()" id="settings-referral-copy"
+              style="flex:0 0 auto;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.4);color:#4ade80;border-radius:8px;padding:8px 14px;font-size:.76rem;font-weight:600;cursor:pointer" data-i18n="settings.referralCopy">Copy</button>
+          </div>
+        </div>
       </div>
 
       <!-- Chat digest webhooks — one card, segmented by provider. The
@@ -6060,8 +6211,8 @@ window.addEventListener('DOMContentLoaded', () => {
             <span style="background:#34a853;color:#ffffff;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:12px;letter-spacing:.04em;text-transform:uppercase" data-i18n="upgrade.bestValue">Best Value</span>
           </div>
           <div style="text-align:right">
-            <s style="color:#5f6368;font-size:.78rem;margin-right:4px;font-weight:400">$19.99</s>
-            <span style="font-weight:700;font-size:1.1rem;color:#81c995">$9.99</span>
+            <s class="price-lifetime-full" style="color:#5f6368;font-size:.78rem;margin-right:4px;font-weight:400">$19.99</s>
+            <span class="price-lifetime" style="font-weight:700;font-size:1.1rem;color:#81c995">$9.99</span>
             <span style="font-size:.7rem;color:#9aa0a6;font-weight:400;display:block" data-i18n="upgrade.oneTime">one-time</span>
           </div>
         </div>
@@ -6082,7 +6233,7 @@ window.addEventListener('DOMContentLoaded', () => {
         </div>
 
         <button type="button" id="btn-upgrade-lifetime" onclick="startUpgradeCheckout('lifetime', 'btn-upgrade-lifetime')" style="width:100%;background:#34a853;color:#ffffff;border:none;padding:10px 16px;border-radius:20px;font-weight:600;font-size:.84rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 2px 8px rgba(52,168,83,.3);transition:all .15s ease">
-          Get Lifetime Access — $9.99
+          Get Lifetime Access — <span class="price-lifetime">$9.99</span>
         </button>
       </div>
 
@@ -6094,8 +6245,8 @@ window.addEventListener('DOMContentLoaded', () => {
             <span style="background:rgba(88,166,255,.15);color:#58a6ff;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:12px;letter-spacing:.04em;text-transform:uppercase" data-i18n="upgrade.perMo">~$0.41/mo</span>
           </div>
           <div style="text-align:right">
-            <s style="color:#5f6368;font-size:.78rem;margin-right:4px;font-weight:400">$9.99</s>
-            <span style="font-weight:700;font-size:1rem;color:#8ab4f8">$4.99</span>
+            <s class="price-educator-full" style="color:#5f6368;font-size:.78rem;margin-right:4px;font-weight:400">$9.99</s>
+            <span class="price-educator" style="font-weight:700;font-size:1rem;color:#8ab4f8">$4.99</span>
             <span style="font-size:.7rem;color:#9aa0a6;font-weight:400" data-i18n="upgrade.eduPeriod">/ yr</span>
           </div>
         </div>
@@ -6110,8 +6261,25 @@ window.addEventListener('DOMContentLoaded', () => {
           </div>
         </div>
         <button type="button" id="btn-upgrade-individual" onclick="startUpgradeCheckout('educator', 'btn-upgrade-individual')" style="width:100%;background:rgba(88,166,255,.14);border:1px solid rgba(88,166,255,.3);color:#79c0ff;padding:13px 18px;border-radius:20px;font-weight:600;font-size:.82rem;cursor:pointer;transition:all .15s ease;margin-top:4px">
-          Get Educator Annual Pass — $4.99/yr
+          Get Educator Annual Pass — <span class="price-educator">$4.99</span>/yr
         </button>
+      </div>
+
+      <!-- Plan 3: Domain license — workspace orgs only (hidden for personal
+           Gmail by loadBillingStatus; individual===true can't buy a domain).
+           Stays LAST regardless of the edu-first reorder above. -->
+      <div id="plan-card-team" style="display:none;background:rgba(255,255,255,.03);border:1px solid rgba(253,214,99,.25);border-radius:14px;padding:14px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+          <div>
+            <div style="font-weight:600;font-size:.88rem;color:#e3e3e3" data-i18n="upgrade.teamName">Whole-School License</div>
+            <div style="font-size:.74rem;color:#9aa0a6;line-height:1.4" data-i18n="upgrade.teamDesc">One purchase covers every teacher on your domain — forever.</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <span class="price-team" style="font-weight:700;font-size:1rem;color:#fdd663">$19.99</span>
+            <span style="font-size:.7rem;color:#9aa0a6;font-weight:400;display:block" data-i18n="upgrade.oneTime">one-time</span>
+          </div>
+        </div>
+        <button type="button" id="btn-upgrade-team" onclick="startUpgradeCheckout('team', 'btn-upgrade-team')" style="flex:0 0 auto;width:100%;background:rgba(253,214,99,.14);border:1px solid rgba(253,214,99,.3);color:#fdd663;padding:10px 16px;border-radius:20px;font-weight:600;font-size:.82rem;cursor:pointer;margin-top:10px;transition:all .15s ease" data-i18n="upgrade.teamCta">Get the Domain License — whole org, one payment</button>
       </div>
 
       <!-- Architectural Advantage Card -->

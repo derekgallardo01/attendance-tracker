@@ -139,6 +139,17 @@ const CACHE_MS = 10 * 60 * 1000;
 // GET /api/public/stats — Unauth'd, safe-to-cache counts for the landing
 // page social proof bar. Returns derived org count (union of explicit tenant
 // docs + unique user domains, same as the admin dashboard) plus meeting count.
+// GET /api/public/billing-config — which optional tiers the pricing page may
+// render. The Institution card sells the annual domain price, so it must stay
+// hidden until STRIPE_ANNUAL_PRICE_ID exists (a visible button that 503s on
+// click would be worse than no button).
+router.get('/public/billing-config', (_req, res) => {
+  res.set('Cache-Control', 'public, max-age=300');
+  res.json({
+    institutionAvailable: !!(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_ANNUAL_PRICE_ID),
+  });
+});
+
 router.get('/public/stats', async (_req, res) => {
   try {
     if (cached && (Date.now() - cachedAt) < CACHE_MS) {

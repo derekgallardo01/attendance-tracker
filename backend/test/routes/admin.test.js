@@ -53,6 +53,7 @@ jest.mock('../../src/services/firestore', () => ({
   // For the pre-meeting reminder sweep
   getUserMeetingSeries: jest.fn(),
   persistAttendance: jest.fn(),
+  getTeamOverview: jest.fn(), // org weekly digest sweep
 }));
 jest.mock('../../src/services/googleAuth', () => ({
   refreshAccessToken: jest.fn(),
@@ -86,6 +87,7 @@ jest.mock('../../src/lib/notifications', () => ({
   sendComebackEmail: jest.fn(),
   sendExportGapEmail: jest.fn(),
   sendUpcomingMeetingEmail: jest.fn(),
+  sendOrgWeeklyDigest: jest.fn(), // org weekly digest sweep
   flushDeferredNotifications: jest.fn(), // single flush point (signup + referral)
 }));
 
@@ -1349,6 +1351,87 @@ describe('PUT /api/admin/note — save private admin note about a user', () => {
       .send({ email: 'x@y.com', domain: 'y.com' }); // no body → clear
     expect(res.status).toBe(200);
     expect(firestore.setAdminNote).toHaveBeenCalledWith('y.com', 'x@y.com', '', SUPER_ADMIN);
+  });
+});
+
+describe('POST /admin/org-digest — weekly Pro-domain summary sweep', () => {
+  const notifications = require('../../src/lib/notifications');
+  const scheduler = () => ({ 'x-scheduler-secret': process.env.SCHEDULER_SECRET });
+  const tenantsSnap = (docs) => ({
+    get: jest.fn().mockResolvedValue({ docs }),
+  });
+  const tenantDoc = (id, data) => ({ id, data: () => data });
+
+  beforeEach(() => {
+    process.env.SCHEDULER_SECRET = 'sched-secret';
+    firestore.isEmailSuppressed.mockResolvedValue(false);
+    firestore.claimReengagementSlot.mockResolvedValue({ claimed: true });
+    firestore.getTeamOverview.mockResolvedValue({
+      domain: 'acme.com',
+      totals: { users: 5, meetings: 12, series: 2, people: 40 },
+      meetings: [{ startTime: new Date().toISOString() }, { startTime: '2020-01-01T00:00:00Z' }],
+      users: [], series: [], people: [],
+    });
+    app = buildApp();
+  });
+
+  test('sends one digest per Pro tenant with a weekly meeting count', async () => {
+    firestore.getDb.mockReturnValue({
+      collection: () => ({ where: () => tenantsSnap([tenantDoc('acme.com', { plan: 'pro', adminEmail: 'Boss@Acme.com' })]) }),
+    });
+    const res = await request(app).post('/api/admin/org-digest').set(scheduler());
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ scanned: 1, sent: 1, skipped: 0, errored: 0 });
+    expect(notifications.sendOrgWeeklyDigest).toHaveBeenCalledWith(expect.objectContaining({
+      to: 'boss@acme.com', domain: 'acme.com', weeklyMeetings: 1,
+    }));
+  });
+
+  test('skips suppressed admins, already-claimed weeks, admin-less and empty tenants', async () => {
+    firestore.getDb.mockReturnValue({
+      collection: () => ({ where: () => tenantsSnap([
+        tenantDoc('no-admin.com', { plan: 'pro' }),
+        tenantDoc('optout.com', { plan: 'pro', adminEmail: 'a@optout.com' }),
+        tenantDoc('claimed.com', { plan: 'pro', adminEmail: 'a@claimed.com' }),
+        tenantDoc('empty.com', { plan: 'pro', adminEmail: 'a@empty.com' }),
+      ]) }),
+    });
+    firestore.isEmailSuppressed.mockImplementation(async (e) => e === 'a@optout.com');
+    firestore.claimReengagementSlot.mockImplementation(async (domain) =>
+      ({ claimed: domain !== 'claimed.com' }));
+    firestore.getTeamOverview.mockImplementation(async (domain) =>
+      domain === 'empty.com'
+        ? { totals: { meetings: 0 }, meetings: [] }
+        : { totals: { users: 1, meetings: 3 }, meetings: [] });
+    const res = await request(app).post('/api/admin/org-digest').set(scheduler());
+    expect(res.body).toMatchObject({ scanned: 4, sent: 0, skipped: 4, errored: 0 });
+    expect(notifications.sendOrgWeeklyDigest).not.toHaveBeenCalled();
+  });
+
+  test('a failing tenant is counted errored without stopping the sweep', async () => {
+    firestore.getDb.mockReturnValue({
+      collection: () => ({ where: () => tenantsSnap([
+        tenantDoc('boom.com', { plan: 'pro', adminEmail: 'a@boom.com' }),
+        tenantDoc('ok.com', { plan: 'pro', adminEmail: 'a@ok.com' }),
+      ]) }),
+    });
+    firestore.getTeamOverview.mockImplementation(async (domain) => {
+      if (domain === 'boom.com') throw new Error('overview boom');
+      return { totals: { users: 1, meetings: 3 }, meetings: [] };
+    });
+    const res = await request(app).post('/api/admin/org-digest').set(scheduler());
+    expect(res.body).toMatchObject({ scanned: 2, sent: 1, errored: 1 });
+  });
+
+  test('500 when the tenants query itself fails', async () => {
+    firestore.getDb.mockReturnValue({ collection: () => ({ where: () => ({ get: jest.fn().mockRejectedValue(new Error('query boom')) }) }) });
+    const res = await request(app).post('/api/admin/org-digest').set(scheduler());
+    expect(res.status).toBe(500);
+  });
+
+  test('rejected without the scheduler secret or super-admin auth', async () => {
+    const res = await request(app).post('/api/admin/org-digest');
+    expect([401, 403]).toContain(res.status);
   });
 });
 

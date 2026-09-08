@@ -35,6 +35,7 @@ No screenshots. No manual counting. No expensive Google Workspace for Education 
 • Recurring Class & Meeting Trends: Multi-session roll-ups track attendance percentages and streaks across a 15-week semester or daily sprint.
 • Host & TA Tracking: The meeting host tracks attendance out of the box. For TAs, co-hosts, or attendees to track meetings they didn't organize, a Workspace admin enables a one-time delegation (attendancetracker.dev/setup).
 • Attendee Self-Check-In (NEW — only here): Students and attendees tap "I'm here" in their own side panel, giving you a verified ✓ check-in (real name, email, time) merged into your list — identifies anonymous display names and even counts dial-in callers. Chrome extensions can't do this: they can't run on your students' screens.
+• Verifiable Credentials: Pro attendance certificates each carry a public verification code — a registrar, HR team, or CEU body can confirm any certificate in seconds at attendancetracker.dev/verify. Pro also exports attested check-in lists (who actively confirmed presence, with verified email + timestamp).
 • Google Classroom™ Roster Import: Pull your class list into the panel in one click — no more pasting student names by hand.
 • Moodle & Canvas Gradebook CSVs: Download attendance as import-ready gradebook files for your LMS, per session or across a whole semester.
 • Slack, Google Chat™ & Discord Digests: Send automated attendance summary cards to your team channel or space after every export, plus Gmail™ digests.

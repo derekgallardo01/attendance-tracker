@@ -139,6 +139,7 @@
   <script src="js/utils.js"></script>
   <script src="js/strings.js"></script>
   <script src="js/api.js"></script>
+  <script src="js/pricing.js"></script>
   <script src="js/history.js"></script>
 </head>
 <body>
@@ -195,6 +196,16 @@
 
       <!-- Meetings tab -->
       <div id="tab-meetings" class="tab-content active">
+        <!-- Post-purchase thank-you (?upgraded=1 landing) → review ask at the
+             warmest possible moment. Review velocity is the biggest listing
+             lever (2 reviews @ 3K installs). -->
+        <div id="upgraded-thanks" style="display:none;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.35);border-radius:10px;padding:12px 16px;margin-bottom:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div style="font-size:.85rem;color:#e6edf3;line-height:1.45">
+            <strong data-i18n="history.thanksTitle">🎉 You're Pro — thank you!</strong>
+            <span data-i18n="history.thanksBody">Everything is unlocked. If the tool saves you time, a quick Marketplace review helps other teachers find it.</span>
+          </div>
+          <a id="upgraded-review-link" class="btn" target="_blank" rel="noopener" style="background:#fdd663;color:#0d1117;padding:6px 14px;font-size:.8rem;white-space:nowrap;text-decoration:none;font-weight:600" data-i18n="history.thanksReview">Leave a review →</a>
+        </div>
         <!-- Auto-Capture Pro Banner for Free Users -->
         <div id="auto-capture-banner" style="display:none;background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.25);border-radius:10px;padding:12px 16px;margin-bottom:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
           <div style="font-size:.85rem;color:#e6edf3;line-height:1.45" data-i18n="history.autoCaptureBanner">
@@ -373,9 +384,28 @@
           const me = await meRes.json();
           if (me.teamAdmin) document.getElementById('team-link').style.display = 'inline-block';
         }
+        // ?upgraded=1 → post-purchase thank-you strip + tracked review link
+        // (the warmest possible moment for the review ask).
+        try {
+          if (new URLSearchParams(location.search).get('upgraded') === '1') {
+            const strip = document.getElementById('upgraded-thanks');
+            const rl = document.getElementById('upgraded-review-link');
+            if (rl) rl.href = `${BACKEND_URL}/public/review-click?source=post_purchase&email=${encodeURIComponent(userEmail || '')}`;
+            if (strip) strip.style.display = 'flex';
+          }
+        } catch (e) { /* strip is best-effort */ }
+
         if (bRes.ok) {
           const bStatus = await bRes.json();
           window._lastBillingStatus = bStatus;
+          AttPricing.fromStatus(bStatus);
+          // The banner's i18n string embeds the launch price literally in
+          // every locale — swap it for the live display price so a price
+          // change never ships a stale button.
+          const upBtn = document.querySelector('[data-i18n="history.upgradePro"]');
+          if (upBtn && AttPricing.price('lifetime') !== '$9.99') {
+            upBtn.textContent = upBtn.textContent.replace('$9.99', AttPricing.price('lifetime'));
+          }
           renderProCta(bStatus);
         }
         if (!hRes.ok) throw new Error(`history ${hRes.status}`);
@@ -406,13 +436,15 @@
       }
     }
 
-    // Start Stripe checkout for the caller's domain (same per-domain flow as
-    // team.html). Any signed-in user can initiate it; the webhook flips the
-    // whole domain to Pro on success.
-    async function upgradeFromHistory(btn) {
+    // Start Stripe checkout. The plan is passed EXPLICITLY: the auto-capture
+    // banner advertises the $9.99 Lifetime Pass, so it must buy exactly that —
+    // before this, the plan-less request let the backend infer team-vs-individual
+    // from the caller's domain, charging something other than what the button
+    // said (a subscription for gmail users, the $19.99 domain plan for others).
+    async function upgradeFromHistory(btn, plan) {
       if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
       try {
-        window.location.href = await AttApi.startCheckout(sessionToken, { interval: proInterval }); // shared js/api.js
+        window.location.href = await AttApi.startCheckout(sessionToken, { plan: plan || 'lifetime', interval: proInterval }); // shared js/api.js
         return;
       } catch (e) {
         alert(e.message);
@@ -474,7 +506,9 @@
         btn.disabled = false; btn.textContent = orig;
         return;
       }
-      return upgradeFromHistory(btn); // checkout (routes personal users to the individual plan)
+      // Series CTA offers the monthly/annual toggle → the individual
+      // SUBSCRIPTION plan (the banner path buys the lifetime pass instead).
+      return upgradeFromHistory(btn, 'individual');
     }
 
     // Hash deep links: #meeting=<conferenceId> jumps to and filters the
@@ -704,13 +738,14 @@
     }
 
     // The cumulative gradebook CSV is the same per-student data as the Pro
-    // "Class Summary" sheet tab, so it shares that gate: individual-plan
-    // accounts on Free are asked to upgrade. Fails OPEN when billing isn't
-    // configured or no individual plan exists (org domains keep their own
-    // team-feature gate), matching renderProCta's visibility condition.
+    // "Class Summary" sheet tab, so it shares that gate: any Free account
+    // (personal OR workspace domain — planIsPro honors individual passes on
+    // both) gets the nudge. Fails OPEN when billing isn't configured. Soft
+    // gate by design: the data is already in the browser via /api/series,
+    // so this is an upsell prompt, not enforcement.
     function seriesCsvGated() {
       const b = window._lastBillingStatus;
-      return !!(b && b.billingConfigured && b.individual && b.plan !== 'pro');
+      return !!(b && b.billingConfigured && b.plan !== 'pro');
     }
 
     // Gentle upsell: no popup — scroll to the existing Series-tab Pro CTA and

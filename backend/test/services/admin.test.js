@@ -709,6 +709,21 @@ describe('getActivityPulse', () => {
   });
 });
 
+// ═══════════════════════════ webhook idempotency ═══════════════════════════
+
+describe('claimWebhookEvent', () => {
+  test('first claim wins, second is refused', async () => {
+    expect(await firestore.claimWebhookEvent('evt_1')).toBe(true);
+    expect(await firestore.claimWebhookEvent('evt_1')).toBe(false);
+    expect(await firestore.claimWebhookEvent('evt_2')).toBe(true);
+  });
+
+  test('a missing event id fails open (processed)', async () => {
+    expect(await firestore.claimWebhookEvent('')).toBe(true);
+    expect(await firestore.claimWebhookEvent(null)).toBe(true);
+  });
+});
+
 // ═══════════════════════════ revenue funnel ═══════════════════════════
 
 describe('getRevenueFunnel', () => {

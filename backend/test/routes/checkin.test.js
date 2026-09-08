@@ -11,6 +11,9 @@ jest.mock('../../src/services/firestore', () => ({
   getCheckins: jest.fn(),
   getUser: jest.fn(),
   updateUserTokens: jest.fn(),
+  // planIsPro (routes/billing) reads these for the attestation-export gate
+  getTenantPlan: jest.fn(),
+  getUserPlan: jest.fn(),
 }));
 
 const firestore = require('../../src/services/firestore');
@@ -90,6 +93,52 @@ describe('POST /api/checkin', () => {
       .set(authedHeader('s@a.com', 'a.com'))
       .send({ meetingCode: 'abc-defg-hij' });
     expect(res.body.already).toBe(true);
+  });
+});
+
+describe('GET /api/checkin/export — attestation CSV (Pro)', () => {
+  afterEach(() => {
+    delete process.env.STRIPE_SECRET_KEY;
+    delete process.env.STRIPE_PRICE_ID;
+  });
+
+  test('401 without auth', async () => {
+    const res = await request(app).get('/api/checkin/export?meetingCode=abc-defg-hij');
+    expect(res.status).toBe(401);
+  });
+
+  test('400 when meetingCode is missing', async () => {
+    const res = await request(app).get('/api/checkin/export').set(authedHeader('host@a.com', 'a.com'));
+    expect(res.status).toBe(400);
+  });
+
+  test('returns a BOM-prefixed CSV with one row per check-in (pre-launch: gate open)', async () => {
+    firestore.getCheckins.mockResolvedValue([
+      { email: 's@x.com', displayName: 'Sam "S" Student', checkedInAt: '2026-09-08T14:03:00.000Z' },
+    ]);
+    const res = await request(app).get('/api/checkin/export?meetingCode=abc-defg-hij').set(authedHeader('host@a.com', 'a.com'));
+    expect(res.status).toBe(200);
+    expect(res.body.count).toBe(1);
+    expect(res.body.csv.startsWith('\uFEFF')).toBe(true);
+    expect(res.body.csv).toContain('"Sam ""S"" Student","s@x.com","2026-09-08T14:03:00.000Z","abc-defg-hij"');
+    expect(res.body.csv).toContain('generated'); // provenance footer
+  });
+
+  test('402 for a free user once billing is configured', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_PRICE_ID = 'price_x';
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+    app = buildApp();
+    const res = await request(app).get('/api/checkin/export?meetingCode=abc-defg-hij').set(authedHeader('host@a.com', 'a.com'));
+    expect(res.status).toBe(402);
+    expect(res.body.feature).toBe('attestation');
+  });
+
+  test('500 on a service failure', async () => {
+    firestore.getCheckins.mockRejectedValue(new Error('boom'));
+    const res = await request(app).get('/api/checkin/export?meetingCode=abc-defg-hij').set(authedHeader('host@a.com', 'a.com'));
+    expect(res.status).toBe(500);
   });
 });
 

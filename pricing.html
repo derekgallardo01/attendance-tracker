@@ -53,6 +53,13 @@
         "price": "19.99",
         "priceCurrency": "USD",
         "category": "OneTime"
+      },
+      {
+        "@type": "Offer",
+        "name": "Institution",
+        "price": "149",
+        "priceCurrency": "USD",
+        "category": "Subscription"
       }
     ]
   }
@@ -224,6 +231,17 @@
     @media (min-width: 1060px) {
       .plans-grid {
         grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    /* Institution renders as a full-width band under the four self-serve
+       cards — visually "the org tier", not a fifth cramped column. */
+    #plan-card-institution { grid-column: 1 / -1; border-color: rgba(253, 214, 99, 0.35); }
+    @media (min-width: 680px) {
+      #plan-card-institution .plan-features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 4px 18px;
       }
     }
 
@@ -587,11 +605,11 @@
           </li>
           <li>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            <span data-i18n="pricing.featureCerts">Attendee certificates & PDF generation</span>
+            <span data-i18n="pricing.featureCerts">Verifiable attendance certificates — each carries a public verification code your registrar can check at attendancetracker.dev/verify</span>
           </li>
           <li>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            <span data-i18n="pricing.featureLmsExports">Moodle &amp; Canvas gradebook exports</span>
+            <span data-i18n="pricing.featureLmsExports">Semester gradebook exports (Moodle &amp; Canvas) across a whole recurring class</span>
           </li>
           <li>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -638,7 +656,7 @@
           </li>
           <li>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            <span>Attendee certificates &amp; PDF generation</span>
+            <span data-i18n="pricing.featureCerts">Verifiable attendance certificates — each carries a public verification code your registrar can check at attendancetracker.dev/verify</span>
           </li>
           <li>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -646,7 +664,7 @@
           </li>
           <li>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            <span data-i18n="pricing.featureLmsExports">Moodle &amp; Canvas gradebook exports</span>
+            <span data-i18n="pricing.featureLmsExports">Semester gradebook exports (Moodle &amp; Canvas) across a whole recurring class</span>
           </li>
           <li>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -665,10 +683,10 @@
       </div>
 
       <!-- Plan 3: Domain Pro (Whole School / Org) -->
-      <div class="plan-card">
+      <div class="plan-card" id="plan-card-domain">
         <div class="card-top">
           <div class="plan-name" data-i18n="pricing.planDomainName">Lifetime Domain Pro</div>
-          <div class="plan-description" data-i18n="pricing.planDomainDesc">Org-wide coverage for entire Google Workspace domains, schools, and companies.</div>
+          <div class="plan-description" data-i18n="pricing.planDomainDesc">Small-team coverage: one purchase unlocks Pro for every teacher on your Google Workspace domain.</div>
           <div class="price-wrap">
             <span class="price-num">$19.99</span>
             <span class="price-period">one-time</span>
@@ -705,7 +723,56 @@
         </button>
       </div>
 
+      <!-- Institution: the org-shaped annual tier (the ONE subscription —
+           orgs budget annually and want renewal; individual tiers stay
+           one-time). Hidden until the backend has an annual domain price
+           (STRIPE_ANNUAL_PRICE_ID) so the button can actually charge it. -->
+      <div class="plan-card" id="plan-card-institution" style="display:none">
+        <div class="card-top">
+          <div class="plan-name" data-i18n="pricing.planInstName">Institution</div>
+          <div class="plan-description" data-i18n="pricing.planInstDesc">For schools and districts that need paperwork with their software.</div>
+          <div class="price-wrap">
+            <span class="price-num">$149</span>
+            <span class="price-period" data-i18n="pricing.perYear">/ year</span>
+          </div>
+          <div class="price-note" data-i18n="pricing.planInstNote">Billed annually · cancel anytime · invoice available</div>
+        </div>
+
+        <ul class="plan-features">
+          <li>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span data-i18n="pricing.featureEverythingDomain">Everything in Lifetime Domain Pro</span>
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span data-i18n="pricing.featureInstDpa">Signed Data Processing Agreement (DPA)</span>
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span data-i18n="pricing.featureInstSupport">Priority support with a named human</span>
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span data-i18n="pricing.featureInstDashboard">Org-wide dashboard &amp; roll-up reporting</span>
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span data-i18n="pricing.featureInstInvoice">Invoice / PO billing on request</span>
+          </li>
+        </ul>
+
+        <button type="button" id="btn-buy-institution" class="btn-plan btn-plan-secondary" onclick="startPricingCheckout('institution', this)">
+          <span data-i18n="pricing.btnInstitution">Get Institution — $149/yr</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </div>
+
     </div>
+
+    <p style="text-align:center;color:var(--muted);font-size:.85rem;margin:-24px 0 40px">
+      <span data-i18n="pricing.dpaLine">Need invoicing, a purchase order, or a signed DPA for your district?</span>
+      <a href="mailto:derek@attendancetracker.dev?subject=Institution%20license" style="color:var(--accent)" data-i18n="pricing.dpaLink">Email us — we answer fast.</a>
+    </p>
 
     <!-- Why Attendance Tracker Beats Chrome Extensions Comparison -->
     <div class="comparison-card" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;margin-bottom:40px">
@@ -812,6 +879,40 @@
 
     window.addEventListener('DOMContentLoaded', function() {
       initPricingI18n();
+
+      // ── Deep link support (?plan=team&email=…) — the offer-click campaign
+      //    redirect has always emitted these; now the page honors them. ──
+      try {
+        var qp = new URLSearchParams(location.search);
+        var emailParam = qp.get('email');
+        if (emailParam && emailParam.indexOf('@') !== -1) _checkoutEmail = emailParam.trim().toLowerCase();
+        var planParam = qp.get('plan');
+        if (planParam) {
+          sendPricingEvent('pricing_deeplink', planParam);
+          var target = { team: 'plan-card-domain', institution: 'plan-card-institution' }[planParam]
+            || (document.getElementById('btn-buy-' + planParam) && document.getElementById('btn-buy-' + planParam).closest('.plan-card') && 'btn:' + planParam);
+          var cardEl = target && target.indexOf('btn:') === 0
+            ? document.getElementById('btn-buy-' + planParam).closest('.plan-card')
+            : (target ? document.getElementById(target) : null);
+          if (cardEl) {
+            cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            cardEl.style.outline = '2px solid var(--accent)';
+            cardEl.style.outlineOffset = '3px';
+            setTimeout(function () { cardEl.style.outline = ''; }, 3000);
+          }
+        }
+      } catch (e) { /* deep link is best-effort */ }
+
+      // ── Institution card: render only when the backend can charge it ──
+      fetch(BACKEND_URL + '/public/billing-config')
+        .then(function (r) { return r.ok ? r.json() : {}; })
+        .then(function (cfg) {
+          if (cfg && cfg.institutionAvailable) {
+            var card = document.getElementById('plan-card-institution');
+            if (card) card.style.display = '';
+          }
+        })
+        .catch(function () { /* card stays hidden */ });
       // Track clicks on FAQ questions to understand buyer friction
       document.querySelectorAll('.faq-item details').forEach(function(d) {
         d.addEventListener('toggle', function() {
@@ -860,8 +961,23 @@
       }
     }
 
+    // Email captured for signed-out DOMAIN purchases: the backend requires it
+    // (it's how the webhook knows which domain to activate). Prefilled by the
+    // ?email= deep link; otherwise we prompt right before checkout.
+    let _checkoutEmail = null;
+    function ensureTeamEmail(plan) {
+      if (plan !== 'team' && plan !== 'institution') return true;
+      if (getStoredToken()) return true; // authed checkout derives the domain server-side
+      if (_checkoutEmail && _checkoutEmail.includes('@')) return true;
+      const entered = window.prompt('Enter your WORK email (it tells us which Google Workspace domain to activate):', _checkoutEmail || '');
+      if (!entered || !entered.includes('@')) return false;
+      _checkoutEmail = entered.trim().toLowerCase();
+      return true;
+    }
+
     async function startPricingCheckout(plan, btn) {
       sendPricingEvent('pricing_checkout_clicked', plan || 'lifetime');
+      if (!ensureTeamEmail(plan)) return;
       const origText = btn.innerHTML;
       btn.disabled = true;
       btn.innerHTML = '<span>Connecting to Stripe…</span>';
@@ -871,14 +987,21 @@
       const headers = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
+      // Institution is the annual org tier: sold at list price (no LAUNCH50
+      // auto-apply — the empty promo tells the backend to skip it), billed on
+      // the domain plan's annual Stripe price.
+      const isInstitution = plan === 'institution';
       try {
         const res = await fetch(endpoint, {
           method: 'POST',
           headers: headers,
           body: JSON.stringify({
-            plan: plan || 'lifetime',
-            interval: 'annual',
-            promo: 'LAUNCH50'
+            plan: isInstitution ? 'team' : (plan || 'lifetime'),
+            // 'team' + 'annual' resolves to the Institution price server-side,
+            // so the $19.99 one-time domain card must NOT send 'annual'.
+            interval: isInstitution ? 'annual' : (plan === 'team' ? 'once' : 'annual'),
+            promo: isInstitution ? '' : 'LAUNCH50',
+            ...(_checkoutEmail ? { email: _checkoutEmail } : {})
           })
         });
 
