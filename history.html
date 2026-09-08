@@ -61,26 +61,28 @@
     #dashboard { display: none; }
     #loading { text-align: center; padding: 60px; color: var(--muted); }
 
-    /* Calendar heat-map */
-    .calendar-grid {
-      display: grid;
-      grid-template-columns: repeat(15, 1fr);
-      grid-auto-flow: row;
-      gap: 4px;
-      max-width: 600px;
-    }
-    .calendar-cell {
-      aspect-ratio: 1;
-      border-radius: 3px;
-      background: #21262d;
-      cursor: default;
-    }
-    .calendar-cell.l1 { background: rgba(74, 222, 128, .25); }
+    /* Month-grid calendar */
+    .calendar-grid { display: flex; flex-wrap: wrap; gap: 30px; }
+    .cal-month-title { font-size: .92rem; font-weight: 600; color: var(--text); margin-bottom: 10px; }
+    .cal-month-grid { display: grid; grid-template-columns: repeat(7, 34px); gap: 5px; }
+    .cal-wd { height: 16px; display: flex; align-items: center; justify-content: center; font-size: .62rem; font-weight: 600; color: var(--muted); text-transform: uppercase; }
+    .cal-day { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: .74rem; color: var(--muted); background: #21262d; border-radius: 7px; }
+    .cal-day.empty { background: transparent; }
+    .cal-day.has { cursor: pointer; }
+    .cal-day.has:hover { outline: 1px solid var(--border); }
+    .cal-day.l1 { background: rgba(74, 222, 128, .28); color: #e6edf3; }
+    .cal-day.l2 { background: rgba(74, 222, 128, .5); color: #0d1117; font-weight: 600; }
+    .cal-day.l3 { background: rgba(74, 222, 128, .75); color: #0d1117; font-weight: 600; }
+    .cal-day.l4 { background: rgba(74, 222, 128, 1); color: #0d1117; font-weight: 700; }
+    .cal-day.today { box-shadow: 0 0 0 2px var(--blue); }
+
+    /* Legend swatches (kept from the old heat-map) */
+    .calendar-cell { width: 11px; height: 11px; border-radius: 3px; background: #21262d; }
+    .calendar-cell.l1 { background: rgba(74, 222, 128, .28); }
     .calendar-cell.l2 { background: rgba(74, 222, 128, .5); }
     .calendar-cell.l3 { background: rgba(74, 222, 128, .75); }
     .calendar-cell.l4 { background: rgba(74, 222, 128, 1); }
-    .calendar-legend { display: flex; align-items: center; gap: 6px; margin-top: 14px; font-size: .75rem; color: var(--muted); }
-    .calendar-legend .calendar-cell { width: 11px; height: 11px; aspect-ratio: auto; }
+    .calendar-legend { display: flex; align-items: center; gap: 6px; margin-top: 18px; font-size: .75rem; color: var(--muted); }
 
     .progress-bar { background: var(--border); border-radius: 4px; height: 6px; overflow: hidden; }
     .progress-bar div { background: var(--accent); height: 100%; }
@@ -130,7 +132,7 @@
       .series-title-text { font-size: .9rem; }
       .series-meta { font-size: .7rem; }
       /* Calendar heat-map: shrink cell size so 90 days still fits */
-      .calendar-grid { grid-template-columns: repeat(10, 1fr); gap: 3px; max-width: 100%; }
+      .calendar-grid { gap: 22px; }
     }
   </style>
   <script src="https://accounts.google.com/gsi/client" async></script>
@@ -716,21 +718,59 @@
 
     function renderCalendar() {
       const cells = data.calendar || [];
-      const maxCount = AttHistory.maxCalendarCount(cells);
       const grid = document.getElementById('calendar-grid');
       const detail = document.getElementById('calendar-detail');
-      const level = (c) => AttHistory.calendarLevel(c, maxCount);
-      grid.innerHTML = cells.map(d =>
-        `<div class="calendar-cell ${level(d.count)}" data-date="${d.date}" data-count="${d.count}" title="${d.date}: ${d.count} meeting${d.count === 1 ? '' : 's'}${d.titles?.length ? '\n' + d.titles.join('\n') : ''}"></div>`
-      ).join('');
-      // Click handler — show the day detail below the grid
-      grid.querySelectorAll('.calendar-cell').forEach(el => {
+      if (!cells.length) { grid.innerHTML = `<div class="muted">${esc(t('history.noMeetings', 'No days tracked yet.'))}</div>`; return; }
+
+      const maxCount = AttHistory.maxCalendarCount(cells);
+      const level = (c) => AttHistory.calendarLevel(c, maxCount); // 'l1'..'l4' or ''
+      const byDate = {};
+      cells.forEach(c => { byDate[c.date] = c; });
+      const dates = cells.map(c => c.date).sort();
+      const first = dates[0], last = dates[dates.length - 1];
+      const pad = n => String(n).padStart(2, '0');
+
+      // Localized month + weekday names, following the chosen display language.
+      const loc = (window.AttStrings ? AttStrings.getLocale() : 'en');
+      let monthFmt, wd;
+      try {
+        monthFmt = new Intl.DateTimeFormat(loc, { month: 'long', year: 'numeric' });
+        const wf = new Intl.DateTimeFormat(loc, { weekday: 'narrow' });
+        wd = []; for (let i = 0; i < 7; i++) wd.push(wf.format(new Date(2023, 0, 1 + i))); // 2023-01-01 = Sunday
+      } catch (e) {
+        monthFmt = new Intl.DateTimeFormat('en', { month: 'long', year: 'numeric' });
+        wd = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+      }
+
+      // Enumerate every month from the first tracked day through today.
+      const [fy, fm] = first.split('-').map(Number);
+      const [ly, lm] = last.split('-').map(Number);
+      const months = []; let y = fy, m = fm;
+      while (y < ly || (y === ly && m <= lm)) { months.push([y, m]); m++; if (m > 12) { m = 1; y++; } }
+
+      grid.innerHTML = months.map(([yy, mm]) => {
+        const firstDow = new Date(yy, mm - 1, 1).getDay();
+        const daysInMonth = new Date(yy, mm, 0).getDate();
+        let inner = wd.map(d => `<div class="cal-wd">${esc(d)}</div>`).join('');
+        for (let i = 0; i < firstDow; i++) inner += '<div class="cal-day empty"></div>';
+        for (let day = 1; day <= daysInMonth; day++) {
+          const ds = `${yy}-${pad(mm)}-${pad(day)}`;
+          const c = byDate[ds];
+          const cnt = c ? c.count : 0;
+          const lvl = cnt ? level(cnt) : '';
+          const titles = c && c.titles && c.titles.length ? '\n' + c.titles.join('\n') : '';
+          const title = cnt ? `${ds}: ${cnt} meeting${cnt === 1 ? '' : 's'}${titles}` : ds;
+          inner += `<div class="cal-day ${lvl}${cnt ? ' has' : ''}${ds === last ? ' today' : ''}" data-date="${ds}" data-count="${cnt}" title="${esc(title)}">${day}</div>`;
+        }
+        return `<div class="cal-month"><div class="cal-month-title">${esc(monthFmt.format(new Date(yy, mm - 1, 1)))}</div><div class="cal-month-grid">${inner}</div></div>`;
+      }).join('');
+
+      grid.querySelectorAll('.cal-day.has').forEach(el => {
         el.addEventListener('click', () => {
           const date = el.dataset.date;
           const count = +el.dataset.count;
-          const day = cells.find(c => c.date === date);
-          if (!day || !count) { detail.textContent = `${date}: no meetings tracked`; return; }
-          detail.innerHTML = `<strong style="color:var(--text)">${date}</strong> — ${count} meeting${count === 1 ? '' : 's'}: ${day.titles.map(esc).join(', ')}`;
+          const day = byDate[date];
+          detail.innerHTML = `<strong style="color:var(--text)">${esc(date)}</strong> — ${count} meeting${count === 1 ? '' : 's'}: ${(day.titles || []).map(esc).join(', ')}`;
         });
       });
     }
