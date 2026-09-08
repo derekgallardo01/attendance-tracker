@@ -1854,6 +1854,23 @@ function parseStudentsInput(text) {
   return students;
 }
 
+// The Meet iframe sandbox lacks allow-modals, so confirm()/alert() are
+// SILENTLY ignored (confirm always returns false — destructive buttons looked
+// dead, validation alerts never showed). Sandbox-safe replacement: first
+// click arms the action and explains via toast; a second click within the
+// window confirms.
+const _armedClicks = {};
+function armedConfirm(key, message, ttlMs = 6000) {
+  const now = Date.now();
+  if (_armedClicks[key] && now < _armedClicks[key]) {
+    delete _armedClicks[key];
+    return true;
+  }
+  _armedClicks[key] = now + ttlMs;
+  toast(message, ttlMs);
+  return false;
+}
+
 function saveRosterModal() {
   const nameInput = document.getElementById('roster-input-name');
   const studentsInput = document.getElementById('roster-input-students');
@@ -1861,14 +1878,14 @@ function saveRosterModal() {
 
   const rosterName = nameInput.value.trim();
   if (!rosterName) {
-    alert(t('roster.enterName','Please enter a class name.'));
+    toast(t('roster.enterName','Please enter a class name.'), 4000);
     nameInput.focus();
     return;
   }
 
   const rawText = studentsInput.value.trim();
   if (!rawText) {
-    alert(t('roster.enterStudents','Please enter at least one student name or email.'));
+    toast(t('roster.enterStudents','Please enter at least one student name or email.'), 4000);
     studentsInput.focus();
     return;
   }
@@ -1895,14 +1912,13 @@ function editCurrentRoster() {
 
 function deleteCurrentRoster() {
   if (!state.activeRosterName) return;
-  if (confirm(`Delete roster "${state.activeRosterName}"?`)) {
-    delete state.rosters[state.activeRosterName];
-    state.activeRosterName = null;
-    saveStoredRosters();
-    updateTabCounts();
-    renderRosterView();
-    toast('Class roster deleted');
-  }
+  if (!armedConfirm('roster-delete', `Delete roster "${state.activeRosterName}"? Click × again to confirm.`)) return;
+  delete state.rosters[state.activeRosterName];
+  state.activeRosterName = null;
+  saveStoredRosters();
+  updateTabCounts();
+  renderRosterView();
+  toast('Class roster deleted');
 }
 
 function onThresholdChange() {
@@ -2770,11 +2786,18 @@ async function signOut() {
   toast(t('toast.signedOut'));
 }
 
-// Self-serve account + data deletion. Double-confirms, calls the backend
-// cascade, then clears the local session like a sign-out.
+// Self-serve account + data deletion. Double-confirms (armed click — the
+// sandbox swallows confirm()), calls the backend cascade, then clears the
+// local session like a sign-out.
 async function deleteMyAccount() {
-  if (!confirm('Delete your account and all your data? This permanently removes your settings, activity, and attendance records and cannot be undone.')) return;
   const btn = document.getElementById('settings-delete-btn');
+  if (!armedConfirm('delete-account', 'This permanently deletes your account, settings, activity, and attendance records. Click the button again within 8 seconds to confirm.', 8000)) {
+    if (btn) {
+      btn.textContent = 'Click again to permanently delete';
+      setTimeout(() => { if (btn && !btn.disabled) btn.textContent = 'Delete my account'; }, 8000);
+    }
+    return;
+  }
   if (btn) { btn.disabled = true; btn.textContent = 'Deleting…'; }
   try {
     const res = await fetch(`${state.backendUrl}/oauth/delete-account`, {
