@@ -30,6 +30,21 @@
     return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => HTML_ESCAPES[c]);
   }
 
+  // Escape a value for use as a JS STRING LITERAL inside an inline handler
+  // attribute — e.g. onclick="fn('${escJsArg(x)}')". escHtml is WRONG there:
+  // the HTML parser decodes &#39; back to ' before the JS compiles, so an
+  // apostrophe in a name breaks (or escapes) the handler. Backslash-escape the
+  // JS metacharacters, then HTML-escape the quote/angle so the attribute stays
+  // well-formed. Result is safe to drop inside a single-quoted JS string in a
+  // double-quoted attribute.
+  function escJsArg(s) {
+    return String(s == null ? '' : s)
+      .replace(/\\/g, '\\\\')
+      .replace(/'/g, "\\'")
+      .replace(/\r?\n/g, '\\n')
+      .replace(/[<>"&]/g, (c) => HTML_ESCAPES[c]);
+  }
+
   // ─── relative time formatter ───
   // "3 minutes ago" / "2 hours ago" — used in the "this meeting ended N min
   // ago" empty state. Caps at days; longer than that just shows day count.
@@ -326,7 +341,11 @@
         trackedJoinTime: date(v.trackedJoinTime),
         leaveTime: date(v.leaveTime),
         _accumulatedMs: v._accumulatedMs || 0,
-        _notPresentStreak: 0,
+        // Reset the ACTUAL streak field (_leftStreak) so the API decides
+        // presence fresh after a reload — the old `_notPresentStreak: 0` set a
+        // field nothing reads, leaving a stale _leftStreak to mark a present
+        // person "Left" one poll early.
+        _leftStreak: 0,
       }]),
     };
   }
@@ -453,7 +472,7 @@
             durMin,
             p.joinTime ? new Date(p.joinTime).toLocaleTimeString() : '',
             (!p.present && p.leaveTime) ? new Date(p.leaveTime).toLocaleTimeString() : '',
-            p.rejoins || 0,
+            Math.max(0, (p.rejoins != null ? p.rejoins : (p.sessions || 1) - 1)),
             withCheckinNote(note, p)
           ].map(escapeCsv).join(','));
         } else {
@@ -485,7 +504,7 @@
             durMin,
             p.joinTime ? new Date(p.joinTime).toLocaleTimeString() : '',
             (!p.present && p.leaveTime) ? new Date(p.leaveTime).toLocaleTimeString() : '',
-            p.rejoins || 0,
+            Math.max(0, (p.rejoins != null ? p.rejoins : (p.sessions || 1) - 1)),
             withCheckinNote('Unregistered guest', p)
           ].map(escapeCsv).join(','));
         }
@@ -503,7 +522,7 @@
           durMin,
           p.joinTime ? new Date(p.joinTime).toLocaleTimeString() : '',
           (!p.present && p.leaveTime) ? new Date(p.leaveTime).toLocaleTimeString() : '',
-          p.rejoins || 0,
+          Math.max(0, (p.rejoins != null ? p.rejoins : (p.sessions || 1) - 1)),
           withCheckinNote('', p)
         ].map(escapeCsv).join(','));
       }
@@ -588,7 +607,7 @@
   }
 
   const api = {
-    escHtml, formatRelative, fmtTime, fmtDur, fmtDurMs, isoFmt, datestamp,
+    escHtml, escJsArg, formatRelative, fmtTime, fmtDur, fmtDurMs, isoFmt, datestamp,
     latenessMin, avatarColor, participantKey, distinctAttendees,
     autoMatchAttendees, participantTotalMs, isSelfParticipant,
     isValidSlackWebhook, isValidGoogleChatWebhook, isValidDiscordWebhook, maskWebhookUrl,

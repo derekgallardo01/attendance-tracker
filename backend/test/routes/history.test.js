@@ -24,6 +24,9 @@ let app;
 beforeEach(() => {
   jest.clearAllMocks();
   firestore.getUser.mockImplementation(async (domain, email) => ({ email, domain }));
+  // Share endpoint verifies the caller tracked the series — default to owning
+  // the ids used across these tests.
+  firestore.getUserMeetingSeries.mockResolvedValue({ series: [{ recurringEventId: 'series-x' }, { recurringEventId: 'r' }] });
   app = buildApp();
 });
 
@@ -270,6 +273,17 @@ describe('POST /api/share — mint share link', () => {
       .set('Content-Type', 'application/json')
       .send({ recurringEventId: 'series-x' });
     expect(res.status).toBe(500);
+  });
+
+  test('403 when the caller never tracked that series (no minting another teacher\'s roster)', async () => {
+    firestore.getUserMeetingSeries.mockResolvedValue({ series: [{ recurringEventId: 'my-own-series' }] });
+    const res = await request(app)
+      .post('/api/share')
+      .set(authedHeader('invitee@acme.com', 'acme.com'))
+      .set('Content-Type', 'application/json')
+      .send({ recurringEventId: 'someone-elses-series' });
+    expect(res.status).toBe(403);
+    expect(firestore.createShareLink).not.toHaveBeenCalled();
   });
 });
 

@@ -1251,7 +1251,7 @@
           </details>
           <details style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:14px 16px">
             <summary style="cursor:pointer;color:#e6edf3;font-weight:600;font-size:.9rem">Is it free?</summary>
-            <p style="margin:10px 0 0;color:#8b949e;font-size:.85rem;line-height:1.5">Yes — Attendance Tracker is free while it's growing. If we add paid tiers later, current features will stay free for individuals.</p>
+            <p style="margin:10px 0 0;color:#8b949e;font-size:.85rem;line-height:1.5">There's a free tier — real-time tracking plus 3 Sheets exports a month. For unlimited exports, auto-capture, and certificates, Pro is a one-time $9.99 Lifetime Pass ($4.99/yr for educators). No subscription to cancel. <a href="pricing.html" style="color:#58a6ff">See pricing →</a></p>
           </details>
           <div style="text-align:center;margin-top:8px">
             <a href="faq.html" style="color:#58a6ff;font-size:.88rem;text-decoration:none;font-weight:600">Have more questions? Visit our Help Center &amp; FAQ &rarr;</a>
@@ -1437,7 +1437,7 @@
       <div class="chip-value red" id="count-left">—</div>
     </div>
     <div class="chip">
-      <div class="chip-label" data-i18n="filter.all">Total</div>
+      <div class="chip-label" data-i18n="summary.total">Total</div>
       <div class="chip-value blue" id="count-total">—</div>
     </div>
     <div class="chip">
@@ -1487,7 +1487,7 @@
       <span data-i18n="nav.roster">Class Roster</span> <span class="tab-badge" id="tab-count-roster">0</span>
     </button>
     <button class="tab-btn" id="tab-invited" onclick="switchTab('invited')" style="display:none">
-      <span data-i18n="attendee.noShows">Invited</span> <span class="tab-badge" id="tab-count-invited">0</span>
+      <span data-i18n="tab.invited">Invited</span> <span class="tab-badge" id="tab-count-invited">0</span>
     </button>
   </div>
 
@@ -2041,16 +2041,33 @@ function toggleStudentExcused(studentKey, checkbox) {
   renderRosterView();
 }
 
+// prompt() is silently ignored in the Meet iframe sandbox (no allow-modals),
+// so the note is captured via an in-panel modal instead.
+let _noteModalKey = null;
 function promptStudentNote(studentKey) {
+  _noteModalKey = studentKey;
   const cur = (state.excusedStudents && state.excusedStudents[studentKey] && state.excusedStudents[studentKey].note) || '';
-  const note = prompt('Enter note for student (e.g. "Doctor appointment", "Excused"):', cur);
-  if (note !== null) {
-    if (!state.excusedStudents) state.excusedStudents = {};
-    if (!state.excusedStudents[studentKey]) state.excusedStudents[studentKey] = { excused: false, note: '' };
-    state.excusedStudents[studentKey].note = note.trim();
-    saveStoredRosters();
-    renderRosterView();
-  }
+  const input = document.getElementById('note-modal-input');
+  if (input) input.value = cur;
+  const modal = document.getElementById('note-modal');
+  if (modal) modal.style.display = 'flex';
+  if (input) setTimeout(() => input.focus(), 50);
+}
+function closeNoteModal() {
+  const modal = document.getElementById('note-modal');
+  if (modal) modal.style.display = 'none';
+  _noteModalKey = null;
+}
+function saveNoteModal() {
+  const studentKey = _noteModalKey;
+  if (!studentKey) return closeNoteModal();
+  const note = (document.getElementById('note-modal-input')?.value || '').trim();
+  if (!state.excusedStudents) state.excusedStudents = {};
+  if (!state.excusedStudents[studentKey]) state.excusedStudents[studentKey] = { excused: false, note: '' };
+  state.excusedStudents[studentKey].note = note;
+  saveStoredRosters();
+  renderRosterView();
+  closeNoteModal();
 }
 
 function renderRosterView() {
@@ -2220,12 +2237,12 @@ function renderRosterView() {
       const statusColor = item.isExcused ? '#818cf8' : '#f87171';
       html += `
         <div class="${cardClass}">
-          <input type="checkbox" ${item.isExcused ? 'checked' : ''} onchange="toggleStudentExcused('${escHtml(item.studentKey)}', this)" title="Mark excused" style="cursor:pointer;flex-shrink:0" />
+          <input type="checkbox" ${item.isExcused ? 'checked' : ''} onchange="toggleStudentExcused('${escJsArg(item.studentKey)}', this)" title="Mark excused" style="cursor:pointer;flex-shrink:0" />
           <div style="flex:1;min-width:0">
             <div style="font-weight:600;color:#e6edf3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(s.name)}</div>
             <div style="font-size:.68rem;color:#8b949e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(s.email || 'No email')} ${item.note ? '· Note: ' + escHtml(item.note) : ''}</div>
           </div>
-          <button type="button" onclick="promptStudentNote('${escHtml(item.studentKey)}')" style="background:none;border:none;color:#8b949e;cursor:pointer;font-size:.68rem;padding:2px 4px;text-decoration:underline">Note</button>
+          <button type="button" onclick="promptStudentNote('${escJsArg(item.studentKey)}')" style="background:none;border:none;color:#8b949e;cursor:pointer;font-size:.68rem;padding:2px 4px;text-decoration:underline">Note</button>
           <span style="font-size:.68rem;color:${statusColor};font-weight:600">${statusLabel}</span>
         </div>`;
     }
@@ -3072,10 +3089,12 @@ async function initSDK() {
 
     document.getElementById('meeting-title').textContent = state.meetingTitle;
 
-    // Restore auth UI if session was restored
+    // Restore auth UI if session was restored. updateAuthUI() is the ONLY
+    // thing that shows the Settings gear + Pro pill and calls loadBillingStatus
+    // (→ paintPrices + quota indicator) — hand-painting the bar here left all
+    // of that dead after any panel reload.
     if (state.signedIn && state.userEmail) {
-      document.getElementById('auth-bar').innerHTML =
-        `<span style="color:#4ade80">${state.userEmail}</span><br><a href="#" onclick="signOut();return false" style="color:#9ca3af;font-size:.75rem">Sign out</a>`;
+      updateAuthUI();
       applyScopeRestrictions();
       refreshActivationStatus();
       maybeStartTour();
@@ -3124,9 +3143,16 @@ async function initSDK() {
       }, 1_000);
       // Fetch fresh data immediately
       refreshAttendance();
-    } else if (state.conferenceId) {
-      // Fresh start
+    } else if (state.conferenceId && state.signedIn) {
+      // Fresh start (organizer). A signed-out visitor is NOT auto-pushed into
+      // the organizer OAuth funnel — that stole the panel from participants
+      // who only want to check in. Show them the "I'm here" offer instead.
       startTracking();
+    } else if (state.conferenceId) {
+      // Signed-out, inside a meeting → offer self-check-in (renderList's empty
+      // state paints the CTA); no forced organizer sign-in, no popup.
+      setStatus('active', 'Ready');
+      renderList();
     } else {
       setStatus('active', `Connected · no conference ID yet`);
     }
@@ -3353,11 +3379,20 @@ async function refreshAttendance() {
    /checkins polled alongside /attendance and merged into the list.
 ═══════════════════════════════════════════════════════════════ */
 function _checkinStorageKey() { return 'attCheckin:' + (state.conferenceId || ''); }
+// A reused/recurring meeting code keeps the SAME conferenceId every week, so a
+// stored check-in must be scoped to TODAY — otherwise last week's record hides
+// the button forever and the student can never check in again.
+function _todayKey() { return new Date().toISOString().slice(0, 10); }
 function getStoredCheckin() {
-  try { const raw = localStorage.getItem(_checkinStorageKey()); return raw ? JSON.parse(raw) : null; } catch { return null; }
+  try {
+    const raw = localStorage.getItem(_checkinStorageKey());
+    if (!raw) return null;
+    const rec = JSON.parse(raw);
+    return rec && rec.day === _todayKey() ? rec : null;
+  } catch { return null; }
 }
 function rememberCheckin(email, checkedInAt) {
-  try { localStorage.setItem(_checkinStorageKey(), JSON.stringify({ email, checkedInAt })); } catch { /* storage may be blocked */ }
+  try { localStorage.setItem(_checkinStorageKey(), JSON.stringify({ email, checkedInAt, day: _todayKey() })); } catch { /* storage may be blocked */ }
 }
 
 async function submitCheckin(token) {
@@ -3373,13 +3408,18 @@ async function submitCheckin(token) {
   return res.json();
 }
 
+let _checkingIn = false;
 async function checkInHere() {
   if (!state.conferenceId) {
     toast(t('checkin.noMeeting', 'Open this panel inside a Google Meet call to check in.'));
     return;
   }
+  // Re-entrancy guard on a module flag, not the button: renderList() destroys
+  // and recreates #checkin-btn, so disabling the node can't stop a second POST.
+  if (_checkingIn) return;
   const token = state.sessionToken || state._attendeeToken;
   if (!token) { attendeeSignIn(); return; }
+  _checkingIn = true;
   const btn = document.getElementById('checkin-btn');
   if (btn) btn.disabled = true;
   try {
@@ -3391,7 +3431,7 @@ async function checkInHere() {
     console.error('Check-in failed:', err);
     toast(t('checkin.error', 'Check-in failed. Please try again.'));
   } finally {
-    if (btn) btn.disabled = false;
+    _checkingIn = false;
   }
 }
 
@@ -3478,17 +3518,19 @@ function mergeCheckins(checkins) {
   for (const c of checkins) {
     const emailLower = (c.email || '').toLowerCase();
     if (!emailLower) continue;
-    // Attach to an existing participant by email, then by exact name for
-    // email-less rows (a check-in carries the verified identity an
-    // anonymous display name lacks).
+    // Attach to an existing REAL participant by email, then by exact name for
+    // email-less rows (a check-in carries the verified identity an anonymous
+    // display name lacks). Skip our own check-in-only placeholder rows here.
     let match = null;
-    for (const p of state.participants.values()) {
+    for (const [k, p] of state.participants) {
+      if (p.checkinOnly) continue;
       if ((p.email || '').toLowerCase() === emailLower) { match = p; break; }
     }
     if (!match) {
       const nameLower = (c.displayName || '').toLowerCase();
       if (nameLower) {
-        for (const p of state.participants.values()) {
+        for (const [k, p] of state.participants) {
+          if (p.checkinOnly) continue;
           if (!p.email && (p.displayName || '').toLowerCase() === nameLower) { match = p; break; }
         }
       }
@@ -3496,6 +3538,12 @@ function mergeCheckins(checkins) {
     if (match) {
       if (!match.checkedInAt) { match.checkedInAt = c.checkedInAt; state._lastChangeTime = Date.now(); }
       if (!match.email) match.email = c.email;
+      // The Meet API has now caught up to someone we only knew via check-in —
+      // drop the phantom placeholder so they aren't double-counted.
+      if (state.participants.has('checkin:' + emailLower)) {
+        state.participants.delete('checkin:' + emailLower);
+        state._lastChangeTime = Date.now();
+      }
     } else if (!state.participants.has('checkin:' + emailLower)) {
       // Nobody the Meet API can see — e.g. a dial-in participant, or the
       // API lagging. Their check-in IS the attendance record.
@@ -3652,7 +3700,9 @@ function renderList() {
       </div>`;
     return;
   }
-  if (toolbar) toolbar.style.display = 'flex';
+  // Only show the participants toolbar on the participants tab — renderList
+  // runs every poll and was popping it back over the Roster/Invited tabs.
+  if (toolbar) toolbar.style.display = (_activeTab === 'participants') ? 'flex' : 'none';
 
   // Filter by search query first
   let filtered = [...state.participants.values()];
@@ -3725,7 +3775,7 @@ function renderList() {
       const durStr = totalMs > 0 ? fmtDurMs(totalMs) : (p.joinTime ? '< 1m' : '');
       const leaveStr = (!p.present && p.leaveTime) ? ' · ' + t('attendee.left', 'Left') + ' ' + fmtTime(p.leaveTime) : '';
       const emailStr = p.email ? `<div class="participant-meta">${escHtml(p.email)}</div>` : '';
-      const key = participantKey(p).replace(/'/g, "\\'");
+      const key = escJsArg(participantKey(p));
       const color = avatarColor(p.displayName);
       const lateMin = latenessMin(p);
       const lateChip = lateMin > 0 ? `<span class="late-chip" title="Joined ${lateMin} min after meeting start">+${lateMin}m ${t('attendee.late', 'late')}</span>` : '';
@@ -4031,14 +4081,18 @@ async function startUpgradeCheckout(plan, btnId) {
     });
   } catch {}
   const btn = btnId ? document.getElementById(btnId) : null;
-  const originalText = btn ? btn.textContent : '';
+  // Preserve innerHTML (not textContent) — the buttons contain .price-* spans
+  // that paintPrices() updates; flattening to a text node would orphan them.
+  const originalHtml = btn ? btn.innerHTML : '';
   if (btn) { btn.disabled = true; btn.textContent = 'Connecting to Stripe…'; }
   const tab = openBillingTab();
   try {
     const res = await authFetch(`${state.backendUrl}/billing/checkout`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan: plan || 'lifetime', interval: 'annual', promo: 'LAUNCH50' }),
+      // The domain card is ONE-TIME ($19.99): team+annual resolves to the $149
+      // Institution price server-side, so team must send interval 'once'.
+      body: JSON.stringify({ plan: plan || 'lifetime', interval: plan === 'team' ? 'once' : 'annual', promo: 'LAUNCH50' }),
     });
     const data = await res.json().catch(() => ({}));
     if (res.ok && data.url) {
@@ -4051,7 +4105,7 @@ async function startUpgradeCheckout(plan, btnId) {
     closeBillingTab(tab);
     toast('Could not reach billing.');
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = originalText; }
+    if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; }
   }
 }
 
@@ -4703,6 +4757,14 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
         showUpgradeModal(feature);
         return;
       }
+      // Expired/hollow session: the backend now 401s with a re-auth code
+      // instead of dying in a doomed service-account path. Prompt sign-in.
+      if (res.status === 401) {
+        logUserEvent('export_failed', { reason: 'auth_expired' });
+        toast(t('toast.sessionExpiredExport', 'Your session expired — sign in again to export'), 6000);
+        triggerSignIn();
+        return;
+      }
       if (body.code === 'DRIVE_PERMISSION_MISSING') {
         logUserEvent('export_failed', { reason: 'drive_permission_missing' });
         toast('Drive permission missing — sign out and sign in again with all permissions checked', 8000);
@@ -5049,6 +5111,12 @@ async function openSettingsModal() {
   const autoCheckbox = document.getElementById('setting-auto-export');
   if (autoCheckbox) autoCheckbox.checked = localStorage.getItem('autoExportOnEnd') === '1';
 
+  // The referral link needs nothing from the server (only state.userEmail), so
+  // paint it up front — otherwise a failed /settings fetch left the Copy
+  // button pointing at an empty field.
+  const refInputEarly = document.getElementById('settings-referral-link');
+  if (refInputEarly) refInputEarly.value = buildReferralLink();
+
   // Webhook card — reset drafts, fetch saved settings, paint the active tab
   const emailCheckbox = document.getElementById('setting-email-optout');
   if (emailCheckbox) emailCheckbox.checked = true;
@@ -5098,6 +5166,7 @@ function closeSettingsModal() {
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
   const overlays = [
+    ['note-modal', typeof closeNoteModal === 'function' ? closeNoteModal : null],
     ['paywall-why-modal', typeof dismissPaywallWhy === 'function' ? dismissPaywallWhy : null],
     ['upgrade-modal', typeof closeUpgradeModal === 'function' ? closeUpgradeModal : null],
     ['roster-modal', typeof closeRosterModal === 'function' ? closeRosterModal : null],
@@ -5202,10 +5271,13 @@ async function copyReferralLink() {
     try { input.select(); ok = document.execCommand('copy'); } catch { /* both blocked */ }
   }
   logUserEvent('referral_link_copied', {});
-  if (btn) {
-    const orig = btn.textContent;
-    btn.textContent = ok ? t('settings.referralCopied', 'Copied ✓') : input.value;
-    setTimeout(() => { btn.textContent = orig; }, 1800);
+  if (btn && !btn.dataset.flashing) {
+    // Capture the ORIGINAL label once — a double-click would otherwise capture
+    // "Copied ✓" and restore that permanently.
+    btn.dataset.flashing = '1';
+    const orig = t('settings.referralCopy', 'Copy');
+    btn.textContent = ok ? t('settings.referralCopied', 'Copied ✓') : orig;
+    setTimeout(() => { btn.textContent = orig; delete btn.dataset.flashing; }, 1800);
   }
 }
 
@@ -5916,6 +5988,7 @@ function fmtTime(d) { return AttUtils.fmtTime(d); }
 function fmtDur(start, end) { return AttUtils.fmtDur(start, end); }
 function fmtDurMs(ms) { return AttUtils.fmtDurMs(ms); }
 function escHtml(s) { return AttUtils.escHtml(s); }
+function escJsArg(s) { return AttUtils.escJsArg(s); }
 function formatRelative(d) { return AttUtils.formatRelative(d); }
 const LATE_THRESHOLD_MIN = AttUtils.LATE_THRESHOLD_MIN;
 function latenessMin(p) {
@@ -6313,6 +6386,22 @@ window.addEventListener('DOMContentLoaded', () => {
   </div>
 
   <!-- ── Class Roster Modal ── -->
+  <!-- Student-note modal (prompt() is a no-op in the Meet iframe sandbox) -->
+  <div id="note-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1250;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)">
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:14px;padding:22px;max-width:400px;width:100%;box-shadow:0 20px 40px rgba(0,0,0,.5)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h3 style="margin:0;font-size:1rem;font-weight:600;color:#e6edf3" data-i18n="note.title">Note for student</h3>
+        <button type="button" onclick="closeNoteModal()" aria-label="Close" style="background:none;border:none;color:#8b949e;font-size:18px;cursor:pointer">&times;</button>
+      </div>
+      <input id="note-modal-input" type="text" placeholder="Doctor appointment, Excused…" data-i18n-placeholder="note.placeholder"
+        style="width:100%;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#e6edf3;padding:9px 12px;font-size:.82rem;box-sizing:border-box" />
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
+        <button type="button" onclick="closeNoteModal()" style="background:#21262d;border:1px solid #30363d;color:#e6edf3;border-radius:8px;padding:8px 14px;font-size:.8rem;cursor:pointer" data-i18n="common.cancel">Cancel</button>
+        <button type="button" onclick="saveNoteModal()" style="background:#4ade80;border:none;color:#0d1117;border-radius:8px;padding:8px 16px;font-size:.8rem;font-weight:600;cursor:pointer" data-i18n="common.save">Save</button>
+      </div>
+    </div>
+  </div>
+
   <div id="roster-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1200;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)">
     <div style="background:#161b22;border:1px solid #30363d;border-radius:14px;padding:22px;max-width:420px;width:100%;box-shadow:0 20px 40px rgba(0,0,0,.5);font-family:var(--font-sans)">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">

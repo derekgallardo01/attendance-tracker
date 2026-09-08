@@ -457,7 +457,7 @@ describe('serializeSession / parseSession', () => {
     expect(p.joinTime).toBeInstanceOf(Date);
     expect(p.leaveTime).toBeNull();
     expect(p._accumulatedMs).toBe(5000);
-    expect(p._notPresentStreak).toBe(0); // reset on restore
+    expect(p._leftStreak).toBe(0); // the ACTUAL streak field, reset on restore
   });
 
   test('returns null when the snapshot is stale (> maxAge)', () => {

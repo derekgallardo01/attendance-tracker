@@ -83,7 +83,17 @@ async function auth(req, res, next) {
       domain, // computed above (decoded.domain || domainOf(email)) — must match the getUser lookup
       displayName: decoded.displayName,
       accessToken,
+      role: decoded.role || 'user',
     };
+
+    // Attendee-mode sessions (minted by /oauth/exchange mode:'attendee') are
+    // identity-only credentials for self-check-in. Without this fence they
+    // passed requireAuth EVERYWHERE — settings, events, share links, even the
+    // attestation export — as a fully-privileged session obtainable by any
+    // Google account after identity-only consent.
+    if (req.user.role === 'attendee' && req.path !== '/checkin' && req.path !== '/checkins') {
+      return res.status(403).json({ error: 'This session only supports meeting check-in.' });
+    }
 
     // Attach user context to Sentry for error grouping — but hash the email so
     // no PII leaves the service (setUser ships email regardless of sendDefaultPii).

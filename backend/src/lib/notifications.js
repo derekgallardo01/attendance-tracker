@@ -261,10 +261,21 @@ async function maybeSendSignupNotification(domain, email) {
     signupGeo: payload.signupGeo,
   });
 
-  // Welcome email to the newly signed up user (fire-and-forget)
-  sendWelcomeEmail({ to: payload.email, displayName: payload.displayName }).catch(err => {
-    log.warn('welcome email failed', { to: payload.email, error: err.message });
-  });
+  // Welcome email to the newly signed up user (fire-and-forget). Honors the
+  // suppression list like every other lifecycle email — a deferred signup can
+  // be flushed AFTER the user has already unsubscribed.
+  (async () => {
+    try {
+      const { isEmailSuppressed } = require('../services/firestore');
+      if (await isEmailSuppressed(payload.email)) {
+        log.info('welcome email skipped — address suppressed', { to: payload.email });
+        return;
+      }
+      await sendWelcomeEmail({ to: payload.email, displayName: payload.displayName });
+    } catch (err) {
+      log.warn('welcome email failed', { to: payload.email, error: err.message });
+    }
+  })();
 
   return ownerResult;
 }

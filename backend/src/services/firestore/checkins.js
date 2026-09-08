@@ -26,10 +26,11 @@ function normalizeMeetingCode(code) {
 }
 
 // Map keys must not contain characters Firestore field paths treat specially.
-// We key people by email with dots swapped out; the real email lives in the
-// entry itself.
+// base64url is collision-free — the previous dot→underscore swap collided
+// john.doe@ with john_doe@ (both real, distinct accounts), silently dropping
+// the second student from the attestation. The real email lives in the entry.
 function emailKey(email) {
-  return email.toLowerCase().replace(/[.~*/[\]]/g, '_');
+  return Buffer.from(email.toLowerCase(), 'utf8').toString('base64url');
 }
 
 // Record a check-in. First check-in wins: re-tapping "I'm here" keeps the
@@ -68,8 +69,10 @@ async function saveCheckin(meetingCode, { email, displayName }) {
 }
 
 // All live check-ins for a meeting, oldest first. Empty array for unknown
-// codes and expired docs.
-async function getCheckins(meetingCode) {
+// codes and expired docs. `strict: true` makes read failures THROW instead of
+// returning [] — required for the attestation export, where a swallowed error
+// would produce a signed-looking CSV certifying "nobody checked in".
+async function getCheckins(meetingCode, { strict = false } = {}) {
   const code = normalizeMeetingCode(meetingCode);
   if (!code) return [];
   try {
@@ -81,6 +84,7 @@ async function getCheckins(meetingCode) {
     return Object.values(d.people || {})
       .sort((a, b) => String(a.checkedInAt).localeCompare(String(b.checkedInAt)));
   } catch (err) {
+    if (strict) throw err;
     log.warn('firestore: getCheckins failed', { error: err.message });
     return [];
   }

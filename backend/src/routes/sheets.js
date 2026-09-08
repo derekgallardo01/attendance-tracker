@@ -608,6 +608,18 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
 router.post('/save-to-sheets', async (req, res) => {
   const b = req.body || {};
   if (!b.participants?.length) return res.status(400).json({ error: 'participants array is required' });
+  // Sheets export runs on the USER's Drive with the user's OAuth — there is no
+  // working service-account path (prod logs: unauthenticated calls fell into a
+  // doomed SA fallback → cryptic `unauthorized_client`; refresh-failed sessions
+  // got `Invalid Credentials`). Fail fast with a re-auth signal the panel can
+  // turn into a "sign in again" prompt instead of a dead "Failed to export".
+  if (!req.user?.email) {
+    return res.status(401).json({ error: 'Your session has expired — please sign in again to export.', code: 'AUTH_REQUIRED' });
+  }
+  if (!req.user.accessToken) {
+    log.warn('sheets: user has no access token (refresh failed/revoked) — prompting re-auth', { email: req.user.email });
+    return res.status(401).json({ error: 'Google access expired — please sign in again to export.', code: 'AUTH_EXPIRED' });
+  }
   try {
     // Pro gating. Manual export + the Sheet itself stay free; the convenience
     // layers — auto-export, email + Slack digests — are Pro. Pass the email so a
@@ -651,7 +663,10 @@ router.post('/save-to-sheets', async (req, res) => {
       success: true,
       sheetUrl,
       isFirstExport,
-      quota: !proAllowed ? { used: monthlyExports + 1, limit: FREE_MONTHLY_EXPORT_LIMIT } : null,
+      // Re-exports of the SAME meeting don't consume quota (persistExport
+      // dedupes on email__conferenceId) — only count a first export, or the
+      // panel shows a phantom "3 of 3 used" and fires false gate telemetry.
+      quota: !proAllowed ? { used: monthlyExports + (isFirstExport ? 1 : 0), limit: FREE_MONTHLY_EXPORT_LIMIT } : null,
     });
   } catch (err) {
     if (err.status === 400) return res.status(400).json({ error: err.message });

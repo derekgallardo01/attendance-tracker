@@ -73,8 +73,17 @@ router.get('/checkin/export', requireAuth, async (req, res) => {
     if (!pro) {
       return res.status(402).json({ error: 'Check-in attestation exports are a Pro feature.', upgrade: true, feature: 'attestation' });
     }
-    const checkins = await getCheckins(meetingCode);
-    const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    // strict: a swallowed read error here would emit a plausible CSV
+    // certifying zero check-ins — for a compliance artifact that must 500.
+    const checkins = await getCheckins(meetingCode, { strict: true });
+    const esc = (v) => {
+      let s = String(v ?? '');
+      // Formula-injection guard (same rule as sheets.js sanitizeCell):
+      // display names are attendee-controlled and spreadsheets execute a
+      // leading =/+/-/@ even in quoted CSV fields.
+      if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+      return `"${s.replace(/"/g, '""')}"`;
+    };
     const rows = [
       ['Name', 'Email', 'Checked in at (UTC)', 'Meeting code'].map(esc).join(','),
       ...checkins.map(c => [c.displayName, c.email, c.checkedInAt, String(meetingCode).toLowerCase()].map(esc).join(',')),

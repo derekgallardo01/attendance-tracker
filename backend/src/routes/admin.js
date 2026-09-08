@@ -114,31 +114,40 @@ router.post('/admin/uninstall', marketplaceLimiter, requireMarketplaceAuth, asyn
   }
 });
 
-// GET /api/admin/stats — Basic usage stats (protected by admin check)
+// GET /api/admin/stats — Basic usage stats. Any signed-in user gets THEIR
+// OWN domain's numbers; the cross-tenant list (every customer domain + when
+// they installed) is founder-only — it was previously returned to any
+// authenticated session, i.e. a full customer-list disclosure.
 router.get('/admin/stats', requireAuth, async (req, res) => {
   try {
 
     const { Firestore } = require('@google-cloud/firestore');
     const db = new Firestore();
 
-    // Tenant list: explicit docs + any domain we have users in.
-    // Firestore doesn't auto-create the parent doc for subcollection writes,
-    // so users can exist under tenants/{domain}/users/* without a tenant doc.
-    const [tenantsSnap, allUsersSnap] = await Promise.all([
-      db.collection('tenants').get(),
-      db.collectionGroup('users').get(),
-    ]);
-    const tenantMap = new Map();
-    for (const d of tenantsSnap.docs) {
-      tenantMap.set(d.id, { domain: d.id, ...d.data() });
-    }
-    for (const d of allUsersSnap.docs) {
-      const dom = d.ref.parent.parent.id;
-      if (!tenantMap.has(dom)) {
-        tenantMap.set(dom, { domain: dom, active: true, installedAt: null });
+    const isSuper = req.user.email === CONFIG.superAdminEmail;
+    let tenants = [];
+    if (isSuper) {
+      // Tenant list: explicit docs + any domain we have users in.
+      // Firestore doesn't auto-create the parent doc for subcollection writes,
+      // so users can exist under tenants/{domain}/users/* without a tenant doc.
+      const [tenantsSnap, allUsersSnap] = await Promise.all([
+        db.collection('tenants').get(),
+        db.collectionGroup('users').get(),
+      ]);
+      const tenantMap = new Map();
+      for (const d of tenantsSnap.docs) {
+        tenantMap.set(d.id, { domain: d.id, ...d.data() });
       }
+      for (const d of allUsersSnap.docs) {
+        const parent = d.ref.parent.parent;
+        if (!parent) continue; // legacy root-level users doc
+        const dom = parent.id;
+        if (!tenantMap.has(dom)) {
+          tenantMap.set(dom, { domain: dom, active: true, installedAt: null });
+        }
+      }
+      tenants = [...tenantMap.values()];
     }
-    const tenants = [...tenantMap.values()];
 
     // Count users for the requesting user's domain
     const domain = req.user.domain;
@@ -162,12 +171,12 @@ router.get('/admin/stats', requireAuth, async (req, res) => {
       }));
 
     res.json({
-      totalTenants: tenants.length,
-      tenants: tenants.map(t => ({
+      totalTenants: isSuper ? tenants.length : null,
+      tenants: isSuper ? tenants.map(t => ({
         domain: t.domain,
         active: t.active !== false,
         installedAt: t.installedAt?.toDate?.()?.toISOString?.() || t.installedAt || null,
-      })),
+      })) : [],
       yourDomain: {
         domain,
         users: usersSnap.size,
@@ -999,16 +1008,31 @@ router.post('/admin/org-digest', requireSuperAdminOrScheduler, async (req, res) 
         if (await isEmailSuppressed(adminEmail)) { skipped++; continue; }
         const slot = await claimReengagementSlot(domain, adminEmail, `orgdigest:${week}`);
         if (!slot.claimed) { skipped++; continue; }
-        const overview = await getTeamOverview(domain);
-        // Nothing tracked yet → nothing to digest (no empty-brag emails).
-        if (!overview || !(overview.totals?.meetings > 0)) { skipped++; continue; }
-        const weekAgo = Date.now() - 7 * 86400000;
-        const weeklyMeetings = (overview.meetings || []).filter(m => {
-          const ts = new Date(m.startTime || m.createdAt || m.exportedAt || 0).getTime();
-          return ts > weekAgo;
-        }).length;
-        await sendOrgWeeklyDigest({ to: adminEmail, domain, totals: overview.totals, weeklyMeetings });
-        sent++;
+        // From here on, a failure must RELEASE the week slot — the claim is
+        // permanent, so leaving it would silently cancel this domain's digest
+        // for the week (dispatchEmail returns {sent:false} rather than throw).
+        const release = async () => { try { await slot.ref?.delete(); } catch { /* best-effort */ } };
+        try {
+          const overview = await getTeamOverview(domain);
+          // Nothing tracked yet → nothing to digest (no empty-brag emails).
+          if (!overview || !(overview.totals?.meetings > 0)) { await release(); skipped++; continue; }
+          const weekAgo = Date.now() - 7 * 86400000;
+          const weeklyMeetings = (overview.meetings || []).filter(m => {
+            const ts = new Date(m.startTime || m.createdAt || m.exportedAt || 0).getTime();
+            return ts > weekAgo;
+          }).length;
+          const result = await sendOrgWeeklyDigest({ to: adminEmail, domain, totals: overview.totals, weeklyMeetings });
+          if (result && result.sent) {
+            sent++;
+          } else {
+            await release();
+            errored++;
+            log.warn('org-digest: send did not complete — slot released for retry', { domain, result });
+          }
+        } catch (inner) {
+          await release();
+          throw inner;
+        }
       } catch (e) {
         errored++;
         log.warn('org-digest: tenant failed', { domain, error: e.message });

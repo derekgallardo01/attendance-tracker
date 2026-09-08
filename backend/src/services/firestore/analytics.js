@@ -138,7 +138,7 @@ async function getAggregatedInsights() {
     const explicitTenants = tenantsSnap.docs.map(d => ({ domain: d.id, ...d.data() }));
     const users = usersSnap.docs.map(d => ({
       email: d.id,
-      domain: d.ref.parent.parent.id,
+      domain: (d.ref.parent.parent?.id ?? null),
       ...d.data(),
       createdAt: tsMs(d.data().createdAt) || null,
       lastLoginAt: tsMs(d.data().lastLoginAt) || null,
@@ -163,7 +163,7 @@ async function getAggregatedInsights() {
 
     const meetings = meetingsSnap.docs.map(d =>({
       id: d.id,
-      domain: d.ref.parent.parent.id,
+      domain: (d.ref.parent.parent?.id ?? null),
       ...d.data(),
       startTime: tsMs(d.data().startTime) || null,
       endTime: tsMs(d.data().endTime) || null,
@@ -171,13 +171,13 @@ async function getAggregatedInsights() {
     }));
     const exports_ = exportsSnap.docs.map(d => ({
       id: d.id,
-      domain: d.ref.parent.parent.id,
+      domain: (d.ref.parent.parent?.id ?? null),
       ...d.data(),
       createdAt: tsMs(d.data().createdAt) || null,
     }));
     const events = eventsSnap.docs.map(d => ({
       id: d.id,
-      domain: d.ref.parent.parent.id,
+      domain: (d.ref.parent.parent?.id ?? null),
       ...d.data(),
       createdAt: tsMs(d.data().createdAt) || null,
     }));
@@ -479,7 +479,7 @@ async function getWeeklySelfReport() {
 
     const users = usersSnap.docs.map(d => ({
       email: d.id,
-      domain: d.ref.parent.parent.id,
+      domain: (d.ref.parent.parent?.id ?? null),
       displayName: d.data().displayName || '',
       createdAt: tsMs(d.data().createdAt) || 0,
       lastLoginAt: tsMs(d.data().lastLoginAt) || 0,
@@ -622,7 +622,7 @@ async function getAdvancedAnalytics() {
       const data = d.data();
       return {
         email: d.id,
-        domain: d.ref.parent.parent.id,
+        domain: (d.ref.parent.parent?.id ?? null),
         displayName: data.displayName || '',
         createdAt: tsMs(data.createdAt) || 0,
         lastLoginAt: tsMs(data.lastLoginAt) || 0,
@@ -915,7 +915,7 @@ async function searchAdminNotes(query) {
     return snap.docs
       .map(d => ({
         email: d.id,
-        domain: d.ref.parent.parent.id,
+        domain: (d.ref.parent.parent?.id ?? null),
         body: d.data().body || '',
         updatedAt: d.data().updatedAt?.toDate?.()?.toISOString() || null,
       }))
@@ -1023,7 +1023,7 @@ async function getDueReminders() {
     return snap.docs
       .map(d => ({
         id: d.id,
-        domain: d.ref.parent.parent.id,
+        domain: (d.ref.parent.parent?.id ?? null),
         ...d.data(),
         remindAt: tsMs(d.data().remindAt) || 0,
       }))
@@ -1088,7 +1088,7 @@ async function getRecentActivity({ limit = 50 } = {}) {
         return {
           email: data.email || null,
           type: data.type,
-          domain: d.ref.parent.parent.id,
+          domain: (d.ref.parent.parent?.id ?? null),
           createdAt: tsMs(data.createdAt) || 0,
           meta: data.meta || null,
         };
@@ -1137,7 +1137,7 @@ async function getReachOutSuggestions() {
       const data = d.data();
       usersByEmail[d.id] = {
         email: d.id,
-        domain: d.ref.parent.parent.id,
+        domain: (d.ref.parent.parent?.id ?? null),
         displayName: data.displayName || '',
         createdAt: tsMs(data.createdAt) || 0,
         acquisitionSource: data.acquisitionSource || null,
@@ -1227,7 +1227,7 @@ async function getPowerUserPipeline({ days = 7, minMeetings = 3 } = {}) {
       const data = d.data();
       usersByEmail[d.id] = {
         email: d.id,
-        domain: d.ref.parent.parent.id,
+        domain: (d.ref.parent.parent?.id ?? null),
         displayName: data.displayName || '',
         acquisitionSource: data.acquisitionSource || null,
         createdAt: tsMs(data.createdAt) || 0,
@@ -1296,7 +1296,7 @@ async function getOutreachList({ days = 30, limit = 50 } = {}) {
       const data = d.data();
       usersByEmail[d.id] = {
         email: d.id,
-        domain: d.ref.parent.parent.id,
+        domain: (d.ref.parent.parent?.id ?? null),
         displayName: data.displayName || '',
         acquisitionSource: data.acquisitionSource || null,
         createdAt: tsMs(data.createdAt) || null,
@@ -1368,7 +1368,9 @@ async function getActivityPulse() {
       if (age <= H24) {
         if (e.email) active24.add(e.email);
         if (e.type === 'signin') signins24++;
-        if (e.type === 'exported' || e.type === 'export_success') exports24++;
+        // 'exported' only: the panel also fires 'export_success' for the SAME
+        // export, so counting both doubled the pulse tile vs every other surface.
+        if (e.type === 'exported') exports24++;
         if (e.type === 'upgraded') upgrades24++;
         if (e.type === 'quota_warning_shown') quotaHits24++;
       }
@@ -1430,10 +1432,17 @@ async function getRevenueFunnel({ days = 30 } = {}) {
   try {
     const now = Date.now();
     const cutoff = now - days * 24 * 60 * 60 * 1000;
-    const [eventsSnap, usersSnap] = await Promise.all([
+    const [eventsSnap, usersSnap, proTenantsSnap] = await Promise.all([
       getDb().collectionGroup('events').get(),
       getDb().collectionGroup('users').get(),
+      getDb().collection('tenants').where('plan', '==', 'pro').get(),
     ]);
+    // Domain/Institution buyers write plan:'pro' on the TENANT doc, never the
+    // user doc — without this, a paying org admin landed on the warm-stuck
+    // outreach list ("why haven't they subscribed") after buying.
+    const proTenantDomains = new Set(
+      proTenantsSnap.docs.map(d => d.id).filter(d => !PERSONAL_EMAIL_DOMAINS.has(d))
+    );
 
     // Users: identity, geo, and the authoritative paid flag (the user doc,
     // stamped by the Stripe webhook — events are the fallback).
@@ -1442,7 +1451,7 @@ async function getRevenueFunnel({ days = 30 } = {}) {
       const u = d.data();
       const email = d.id;
       if (email === SUPER_ADMIN_EMAIL) continue;
-      const domain = d.ref.parent.parent.id;
+      const domain = (d.ref.parent.parent?.id ?? null);
       if (FUNNEL_EXCLUDED_DOMAINS.has(domain)) continue;
       usersByEmail[email] = {
         email, domain,
@@ -1511,7 +1520,7 @@ async function getRevenueFunnel({ days = 30 } = {}) {
 
     for (const [email, r] of Object.entries(per)) {
       const u = usersByEmail[email];
-      const paidEver = u.paid || r.paidEvent;
+      const paidEver = u.paid || r.paidEvent || proTenantDomains.has(u.domain);
       if (paidEver) funnel.paidEver++;
       if (r.activated) funnel.activated++;
       if (r.quotaLeak) quotaLeakUsers++;

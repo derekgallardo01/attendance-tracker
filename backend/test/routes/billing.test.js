@@ -12,6 +12,9 @@ const mockStripeInstance = {
   webhooks: { constructEvent: jest.fn() },
   promotionCodes: { create: jest.fn() },
   paymentIntents: { retrieve: jest.fn() }, // refund/dispute → metadata lookup
+  charges: { retrieve: jest.fn() },
+  invoices: { retrieve: jest.fn() },
+  subscriptions: { retrieve: jest.fn() },
 };
 jest.mock('stripe', () => jest.fn(() => mockStripeInstance));
 
@@ -26,6 +29,7 @@ jest.mock('../../src/services/firestore', () => ({
   countUserMonthlyExports: jest.fn().mockResolvedValue(0),
   logEvent: jest.fn(),
   claimWebhookEvent: jest.fn(), // webhook idempotency — default re-armed in beforeEach
+  releaseWebhookEvent: jest.fn(),
 }));
 
 const firestore = require('../../src/services/firestore');
@@ -106,6 +110,25 @@ describe('billing — configured (Stripe env set)', () => {
     expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
       expect.objectContaining({ client_reference_id: 'acme.com' })
     );
+  });
+
+  test('authed team checkout from a personal domain is refused (400) — never flips the shared tenant', async () => {
+    const res = await request(app)
+      .post('/api/billing/checkout')
+      .set(authedHeader('teacher@gmail.com', 'gmail.com'))
+      .send({ plan: 'team' });
+    expect(res.status).toBe(400);
+    expect(mockStripeInstance.checkout.sessions.create).not.toHaveBeenCalled();
+  });
+
+  test('lifetime checkout fails closed (503) when the lifetime price is unset — no cross-product fallback', async () => {
+    delete process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID;
+    const res = await request(app)
+      .post('/api/billing/checkout')
+      .set(authedHeader('u@gmail.com', 'gmail.com'))
+      .send({ plan: 'lifetime' });
+    expect(res.status).toBe(503);
+    expect(mockStripeInstance.checkout.sessions.create).not.toHaveBeenCalled();
   });
 
   test('webhook 400 on bad signature (does not update the plan)', async () => {
@@ -642,6 +665,7 @@ describe('billing — public-checkout for marketing pages', () => {
     process.env.STRIPE_SECRET_KEY = 'sk_test_x';
     process.env.STRIPE_PRICE_ID = 'price_domain_1999';
     process.env.STRIPE_INDIVIDUAL_PRICE_ID = 'price_indiv_999';
+    process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID = 'price_lifetime_full'; // lifetime no longer falls back cross-product
     mockStripeInstance.checkout.sessions.create.mockResolvedValueOnce({ url: 'https://checkout.stripe.com/public_pay' });
 
     const res = await request(app)
@@ -807,6 +831,79 @@ describe('webhook hygiene (dedupe + refunds + org-domain fallback)', () => {
     expect(res.status).toBe(200);
     expect(firestore.setUserPlan).not.toHaveBeenCalled();
     expect(firestore.setTenantPlan).not.toHaveBeenCalled();
+  });
+
+  test('subscription refund: resolves metadata via charge → invoice → subscription and downgrades the individual', async () => {
+    mockStripeInstance.paymentIntents.retrieve.mockResolvedValue({ metadata: {} }); // PI has none
+    mockStripeInstance.charges.retrieve.mockResolvedValue({ metadata: {}, invoice: 'in_1' });
+    mockStripeInstance.invoices.retrieve.mockResolvedValue({ subscription: 'sub_1' });
+    mockStripeInstance.subscriptions.retrieve.mockResolvedValue({ metadata: { individual: '1', email: 'sub@acme.com', domain: 'acme.com' } });
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_sub_refund', type: 'charge.refunded',
+      data: { object: { metadata: {}, charge: 'ch_1' } }, // no payment_intent, no top-level metadata
+    });
+    await post();
+    expect(firestore.setUserPlan).toHaveBeenCalledWith('acme.com', 'sub@acme.com', expect.objectContaining({ individualPlan: 'free', individualBillingStatus: 'refunded' }));
+  });
+
+  test('refunded charge with a direct invoice (no charge indirection) resolves via subscription metadata', async () => {
+    mockStripeInstance.invoices.retrieve.mockResolvedValue({ subscription: 'sub_2' });
+    mockStripeInstance.subscriptions.retrieve.mockResolvedValue({ metadata: { individual: '0', domain: 'school.edu' } });
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_inv_refund', type: 'charge.refunded',
+      data: { object: { metadata: {}, invoice: 'in_2' } }, // no PI, no charge, has invoice
+    });
+    await post();
+    expect(firestore.setTenantPlan).toHaveBeenCalledWith('school.edu', expect.objectContaining({ plan: 'free', billingStatus: 'refunded' }));
+  });
+
+  test('checkout.session.completed with payment_status unpaid (delayed method) grants NOTHING yet', async () => {
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_unpaid', type: 'checkout.session.completed',
+      data: { object: { payment_status: 'unpaid', client_reference_id: 'acme.com', metadata: { individual: '0' } } },
+    });
+    const res = await post();
+    expect(res.status).toBe(200);
+    expect(firestore.setTenantPlan).not.toHaveBeenCalled();
+  });
+
+  test('async_payment_succeeded provisions the deferred purchase; async_payment_failed provisions nothing', async () => {
+    mockStripeInstance.webhooks.constructEvent.mockReturnValueOnce({
+      id: 'evt_async_ok', type: 'checkout.session.async_payment_succeeded',
+      data: { object: { metadata: { individual: '1', email: 'late@acme.com', domain: 'acme.com' }, customer: 'cus_l' } },
+    });
+    await post();
+    expect(firestore.setUserPlan).toHaveBeenCalledWith('acme.com', 'late@acme.com', expect.objectContaining({ individualPlan: 'pro' }));
+
+    firestore.setUserPlan.mockClear();
+    mockStripeInstance.webhooks.constructEvent.mockReturnValueOnce({
+      id: 'evt_async_fail', type: 'checkout.session.async_payment_failed',
+      data: { object: { id: 'cs_x' } },
+    });
+    const res = await post();
+    expect(res.status).toBe(200);
+    expect(firestore.setUserPlan).not.toHaveBeenCalled();
+  });
+
+  test('a personal-domain team purchase never flips the shared tenant Pro (webhook guard)', async () => {
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_gmail_team', type: 'checkout.session.completed',
+      data: { object: { client_reference_id: 'gmail.com', metadata: { individual: '0' } } },
+    });
+    const res = await post();
+    expect(res.status).toBe(200);
+    expect(firestore.setTenantPlan).not.toHaveBeenCalled();
+  });
+
+  test('a failed handler RELEASES the dedupe claim so Stripe can retry', async () => {
+    firestore.setTenantPlan.mockRejectedValueOnce(new Error('firestore blip'));
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_retry', type: 'checkout.session.completed',
+      data: { object: { client_reference_id: 'acme.com', metadata: { individual: '0' } } },
+    });
+    const res = await post();
+    expect(res.status).toBe(500);
+    expect(firestore.releaseWebhookEvent).toHaveBeenCalledWith('evt_retry');
   });
 
   test('invoice.payment_failed is acknowledged log-only (dunning handles the downgrade)', async () => {

@@ -3,7 +3,7 @@ const { requireAuth } = require('../middleware/auth');
 const express = require('express');
 const log = require('../lib/logger');
 const CONFIG = require('../config');
-const { getTenantPlan, setTenantPlan, getUserPlan, setUserPlan, logEvent, countUserMonthlyExports, claimWebhookEvent } = require('../services/firestore');
+const { getTenantPlan, setTenantPlan, getUserPlan, setUserPlan, logEvent, countUserMonthlyExports, claimWebhookEvent, releaseWebhookEvent } = require('../services/firestore');
 const { PERSONAL_EMAIL_DOMAINS } = require('../services/firestore/_core');
 const PRICING = require('../config/pricing');
 
@@ -46,9 +46,16 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
   const email = req.user.email;
   const isEducator = req.body && req.body.plan === 'educator';
   const isLifetime = req.body && req.body.plan === 'lifetime';
+  const isTeamPlan = req.body && req.body.plan === 'team';
+  // A personal-email buyer can't own the shared gmail.com/etc tenant — a team
+  // purchase from them would flip the SHARED tenant doc Pro (cross-tenant
+  // grant) while granting the buyer nothing (their gates read the user doc).
+  if (isTeamPlan && isPersonalDomain(domain)) {
+    return res.status(400).json({ error: 'The domain license covers a Google Workspace domain. On a personal account, pick the Lifetime or Educator pass instead.' });
+  }
   const individual = (isEducator || isLifetime)
     ? true
-    : (req.body && req.body.plan === 'team'
+    : (isTeamPlan
       ? false
       : (req.body && req.body.plan === 'individual' ? true : isPersonalDomain(domain)));
   // Personal-email users buy the INDIVIDUAL (per-user) plan; Workspace domains
@@ -57,10 +64,13 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
   // dark-launched (and the frontend only offers it when annualAvailable, below).
   /* istanbul ignore next: express.json always sets req.body to an object */
   const annual = (req.body || {}).interval === 'annual';
+  // Fallbacks stay WITHIN a product: a chain that terminates in the domain
+  // price could charge a "$4.99/yr" button the $19.99+ team price. Missing
+  // price id for the named plan = fail closed (503), never cross products.
   const priceId = isEducator
-    ? (process.env.STRIPE_EDUCATOR_PRICE_ID || process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID || process.env.STRIPE_INDIVIDUAL_PRICE_ID)
+    ? (process.env.STRIPE_EDUCATOR_PRICE_ID || process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID)
     : (isLifetime
-      ? (process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID || process.env.STRIPE_INDIVIDUAL_PRICE_ID || process.env.STRIPE_PRICE_ID)
+      ? process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID
       : (individual
         ? (annual && process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID) || process.env.STRIPE_INDIVIDUAL_PRICE_ID
         : (annual && process.env.STRIPE_ANNUAL_PRICE_ID) || process.env.STRIPE_PRICE_ID));
@@ -71,9 +81,12 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
     // client_reference_id tags who the subscription is for: `user:<email>` for
     // an individual, or the bare domain for an org. Metadata carries both so the
     // webhook can route to setUserPlan vs setTenantPlan.
+    // `plan` in metadata: the refund/dispute handler routes on it, and it
+    // rides payment_intent_data so one-time charges carry it end-to-end.
+    const planName = req.body?.plan || (individual ? 'individual' : 'team');
     const meta = individual
-      ? { individual: '1', domain, email: email.toLowerCase() }
-      : { domain, initiatedBy: email };
+      ? { individual: '1', plan: planName, domain, email: email.toLowerCase() }
+      : { individual: '0', plan: planName, domain, initiatedBy: email };
     const backTo = individual ? 'history.html' : 'team.html';
     // Retrieve price details to dynamically use 'subscription' for recurring plans
     // or 'payment' for one-time / lifetime purchases.
@@ -156,13 +169,16 @@ router.post('/billing/public-checkout', async (req, res) => {
       return res.status(400).json({ error: 'The domain license covers a Google Workspace domain. Personal Gmail accounts should pick the Lifetime or Educator pass instead.' });
     }
   }
+  // Same fail-closed rule as the authed checkout: fallbacks never cross
+  // product boundaries (a "$4.99/yr" button must never resolve to the
+  // domain price). Missing price for the named plan → 503.
   const priceId = isEducator
-    ? (process.env.STRIPE_EDUCATOR_PRICE_ID || process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID || process.env.STRIPE_INDIVIDUAL_PRICE_ID || process.env.STRIPE_PRICE_ID)
+    ? (process.env.STRIPE_EDUCATOR_PRICE_ID || process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID)
     : (isTeam
         ? ((interval === 'annual' && process.env.STRIPE_ANNUAL_PRICE_ID) || process.env.STRIPE_PRICE_ID)
         : (plan === 'lifetime'
-            ? (process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID || process.env.STRIPE_INDIVIDUAL_PRICE_ID || process.env.STRIPE_PRICE_ID)
-            : ((interval === 'annual' && process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID) || process.env.STRIPE_INDIVIDUAL_PRICE_ID || process.env.STRIPE_PRICE_ID)));
+            ? process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID
+            : ((interval === 'annual' && process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID) || process.env.STRIPE_INDIVIDUAL_PRICE_ID)));
 
   if (!priceId) {
     return res.status(503).json({ error: 'Selected plan price is not configured.' });
@@ -333,8 +349,22 @@ async function webhookHandler(req, res) {
       return res.json({ received: true, duplicate: true });
     }
     switch (event.type) {
+      case 'checkout.session.async_payment_failed': {
+        // Delayed payment method (e.g. bank debit) ultimately failed AFTER
+        // checkout.session.completed fired with payment_status 'unpaid'.
+        log.warn('billing: async payment failed — nothing was provisioned', { eventId: event.id, sessionId: event.data.object?.id });
+        break;
+      }
+      case 'checkout.session.async_payment_succeeded':
       case 'checkout.session.completed': {
         const s = event.data.object;
+        // Delayed-notification payment methods fire `completed` with
+        // payment_status 'unpaid' — granting Pro then would keep it even if
+        // the payment later fails. Wait for async_payment_succeeded.
+        if (event.type === 'checkout.session.completed' && s.payment_status && s.payment_status === 'unpaid') {
+          log.info('billing: checkout completed but unpaid (delayed method) — waiting for async_payment_succeeded', { sessionId: s.id });
+          break;
+        }
         const ref = s.client_reference_id || '';
         if (ref.startsWith('user:') || s.metadata?.individual === '1') {
           // Individual (per-user) plan → write the user doc.
@@ -354,8 +384,16 @@ async function webhookHandler(req, res) {
           // → the buyer's email domain (guarded against personal domains so a
           // stray gmail purchase can't flip the shared gmail.com tenant Pro).
           const buyerEmailDomain = ((s.customer_details?.email || s.customer_email || '').split('@')[1] || '').toLowerCase();
-          const domain = ref || s.metadata?.domain
+          let domain = ref || s.metadata?.domain
             || (buyerEmailDomain && !isPersonalDomain(buyerEmailDomain) ? buyerEmailDomain : null);
+          // The shared personal tenants (gmail.com …) must NEVER be flipped
+          // Pro — that would grant every personal user org features via one
+          // stray purchase. Applies to EVERY resolution path, not just the
+          // email fallback.
+          if (domain && isPersonalDomain(domain)) {
+            log.error('billing: refusing to provision a domain plan onto a shared personal tenant — manual review + refund needed', { sessionId: s.id, domain });
+            domain = null;
+          }
           if (!domain) {
             log.error('billing: team checkout completed with NO resolvable domain — manual provisioning needed', { sessionId: s.id, email: s.customer_details?.email || s.customer_email || null });
           }
@@ -406,34 +444,58 @@ async function webhookHandler(req, res) {
       case 'charge.refunded':
       case 'charge.dispute.created': {
         // refunds.html promises refunds — honoring one must also revoke the
-        // plan (before this, a refunded lifetime pass kept Pro forever). The
-        // charge's payment intent carries the checkout metadata we stamped
-        // via payment_intent_data at session creation.
-        const obj = event.data.object;
-        const piId = obj.payment_intent || (event.type === 'charge.dispute.created' ? obj.charge : null);
-        let meta = null;
+        // plan (before this, a refunded lifetime pass kept Pro forever).
+        // Metadata resolution, in order of where Stripe actually puts it:
+        //   1. the PaymentIntent (one-time purchases: payment_intent_data)
+        //   2. the Charge itself
+        //   3. subscription invoices: charge → invoice → subscription.metadata
+        //      (invoice charges do NOT inherit subscription metadata)
+        const obj = event.data.object; // Charge for refunds, Dispute for disputes
+        const asId = (v) => (typeof v === 'string' ? v : v?.id) || null;
+        const nonEmpty = (m) => (m && Object.keys(m).length ? m : null);
+        let meta = nonEmpty(event.type === 'charge.refunded' ? obj.metadata : null);
         try {
-          if (piId) {
-            const pi = await stripe.paymentIntents.retrieve(typeof piId === 'string' ? piId : piId.id);
-            meta = pi?.metadata || null;
+          if (!meta && asId(obj.payment_intent)) {
+            meta = nonEmpty((await stripe.paymentIntents.retrieve(asId(obj.payment_intent)))?.metadata);
+          }
+          if (!meta && asId(obj.charge)) {
+            const ch = await stripe.charges.retrieve(asId(obj.charge));
+            meta = nonEmpty(ch?.metadata);
+            if (!meta && asId(ch?.payment_intent)) {
+              meta = nonEmpty((await stripe.paymentIntents.retrieve(asId(ch.payment_intent)))?.metadata);
+            }
+            if (!meta && asId(ch?.invoice)) {
+              const inv = await stripe.invoices.retrieve(asId(ch.invoice));
+              if (asId(inv?.subscription)) {
+                meta = nonEmpty((await stripe.subscriptions.retrieve(asId(inv.subscription)))?.metadata);
+              }
+            }
+          }
+          // Refunded Charge with an invoice but no PI-borne metadata:
+          if (!meta && event.type === 'charge.refunded' && asId(obj.invoice)) {
+            const inv = await stripe.invoices.retrieve(asId(obj.invoice));
+            if (asId(inv?.subscription)) {
+              meta = nonEmpty((await stripe.subscriptions.retrieve(asId(inv.subscription)))?.metadata);
+            }
           }
         } catch (e) {
-          log.warn('billing: could not retrieve payment intent for refund/dispute', { eventId: event.id, error: e.message });
+          log.warn('billing: metadata lookup for refund/dispute failed', { eventId: event.id, error: e.message });
         }
-        if (!meta || !meta.plan) {
-          log.error('billing: refund/dispute with no resolvable plan metadata — manual review needed', { eventId: event.id, type: event.type });
-          break;
-        }
-        if (meta.individual === '1') {
-          const email = (meta.email || '').toLowerCase();
-          const domain = meta.domain || (email.includes('@') ? email.split('@')[1] : null);
-          if (domain && email) {
-            await setUserPlan(domain, email, { individualPlan: 'free', individualBillingStatus: event.type === 'charge.refunded' ? 'refunded' : 'disputed' });
-            try { await logEvent(domain, { email, type: 'refunded', meta: { plan: meta.plan, kind: event.type } }); } catch {}
-          }
-        } else if (meta.domain) {
-          await setTenantPlan(meta.domain, { plan: 'free', billingStatus: event.type === 'charge.refunded' ? 'refunded' : 'disputed' });
-          try { await logEvent(meta.domain, { email: meta.email || 'admin', type: 'refunded', meta: { plan: meta.plan, kind: event.type } }); } catch {}
+        // Route on identity, not on a `plan` label (older sessions lack it).
+        const email = (meta?.email || '').toLowerCase();
+        const isIndividual = meta?.individual === '1' || (!!email && !meta?.domain);
+        const orgDomain = meta?.individual === '0' || (!email && meta?.domain) ? meta?.domain : (isIndividual ? null : meta?.domain);
+        const planLabel = meta?.plan || (isIndividual ? 'individual' : 'team');
+        const status = event.type === 'charge.refunded' ? 'refunded' : 'disputed';
+        if (isIndividual && email.includes('@')) {
+          const domain = meta?.domain || email.split('@')[1];
+          await setUserPlan(domain, email, { individualPlan: 'free', individualBillingStatus: status });
+          try { await logEvent(domain, { email, type: 'refunded', meta: { plan: planLabel, kind: event.type } }); } catch {}
+        } else if (orgDomain && !isPersonalDomain(orgDomain)) {
+          await setTenantPlan(orgDomain, { plan: 'free', billingStatus: status });
+          try { await logEvent(orgDomain, { email: meta?.email || meta?.initiatedBy || 'admin', type: 'refunded', meta: { plan: planLabel, kind: event.type } }); } catch {}
+        } else {
+          log.error('billing: refund/dispute with no resolvable owner — manual review needed', { eventId: event.id, type: event.type });
         }
         break;
       }
@@ -449,6 +511,9 @@ async function webhookHandler(req, res) {
     res.json({ received: true });
   } catch (err) {
     log.error('billing: webhook handling failed', { type: event.type, error: err.message });
+    // Release the dedupe claim so Stripe's retry can actually reprocess —
+    // otherwise a transient failure here permanently drops the provisioning.
+    await releaseWebhookEvent(event.id);
     res.status(500).json({ error: 'Webhook handling failed.' });
   }
 }

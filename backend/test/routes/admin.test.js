@@ -1365,7 +1365,8 @@ describe('POST /admin/org-digest — weekly Pro-domain summary sweep', () => {
   beforeEach(() => {
     process.env.SCHEDULER_SECRET = 'sched-secret';
     firestore.isEmailSuppressed.mockResolvedValue(false);
-    firestore.claimReengagementSlot.mockResolvedValue({ claimed: true });
+    firestore.claimReengagementSlot.mockResolvedValue({ claimed: true, ref: { delete: jest.fn() } });
+    notifications.sendOrgWeeklyDigest.mockResolvedValue({ sent: true });
     firestore.getTeamOverview.mockResolvedValue({
       domain: 'acme.com',
       totals: { users: 5, meetings: 12, series: 2, people: 40 },

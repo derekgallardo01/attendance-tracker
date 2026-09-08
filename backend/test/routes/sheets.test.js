@@ -114,6 +114,28 @@ beforeEach(() => {
   app = buildApp();
 });
 
+describe('POST /api/save-to-sheets — auth guards (no doomed SA fallback)', () => {
+  test('401 AUTH_REQUIRED with no session (previously fell into the service-account path → unauthorized_client)', async () => {
+    const res = await request(app)
+      .post('/api/save-to-sheets')
+      .set('Content-Type', 'application/json')
+      .send(validPayload);
+    expect(res.status).toBe(401);
+    expect(res.body.code).toBe('AUTH_REQUIRED');
+  });
+
+  test('401 AUTH_EXPIRED when the session has no Google access token (refresh failed/revoked)', async () => {
+    firestore.getUser.mockImplementation(async (domain, email) => ({ email, domain })); // no refreshToken → middleware attaches accessToken:null
+    const res = await request(app)
+      .post('/api/save-to-sheets')
+      .set(authedHeader('user@acme.com', 'acme.com'))
+      .set('Content-Type', 'application/json')
+      .send(validPayload);
+    expect(res.status).toBe(401);
+    expect(res.body.code).toBe('AUTH_EXPIRED');
+  });
+});
+
 describe('POST /api/save-to-sheets — basic validation', () => {
   test('400 when participants array is missing', async () => {
     const res = await request(app)
@@ -346,9 +368,10 @@ describe('POST /api/save-to-sheets — spreadsheet resolution + edge branches', 
     expect(firestore.setUserSheetId).toHaveBeenCalledWith('acme.com', 'user@acme.com', null); // cleared
   });
 
-  test('400 for an unauthenticated request with no shared sheet configured', async () => {
+  test('401 for an unauthenticated request (SA fallback retired — it only produced unauthorized_client)', async () => {
     const res = await request(app).post('/api/save-to-sheets').set('Content-Type', 'application/json').send(validPayload);
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(401);
+    expect(res.body.code).toBe('AUTH_REQUIRED');
   });
 
   test('sanitizes a formula-injection displayName', async () => {
@@ -480,10 +503,14 @@ describe('POST /api/save-to-sheets — legacy shared sheet + more branches', () 
   afterEach(() => { CONFIG.sheetId = savedSheetId; });
   const post = (body, hdr) => { const r = request(app).post('/api/save-to-sheets').set('Content-Type', 'application/json'); if (hdr) r.set(hdr); return r.send(body); };
 
-  test('legacy: unauthenticated export uses the shared CONFIG.sheetId', async () => {
+  test('legacy shared-sheet mode is RETIRED: unauthenticated export 401s even with CONFIG.sheetId set', async () => {
+    // The single-tenant shared-sheet path rode the service-account fallback,
+    // which has no Drive delegation in the multi-tenant world — prod logs
+    // showed it dying as `unauthorized_client`. Sessions must re-auth instead.
     CONFIG.sheetId = 'shared-legacy-sheet';
     const res = await post(validPayload); // no auth header → req.user null
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(401);
+    expect(res.body.code).toBe('AUTH_REQUIRED');
   });
 
   test('appends a counter when the tab name already exists', async () => {

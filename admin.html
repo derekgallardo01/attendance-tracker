@@ -857,7 +857,7 @@
         if (data.tenants?.length > 0) {
           tenantBody.innerHTML = data.tenants.map(t => `
             <tr>
-              <td>${t.domain}</td>
+              <td>${esc(t.domain)}</td>
               <td><span class="badge ${t.active !== false ? 'badge-active' : 'badge-inactive'}">${t.active !== false ? 'Active' : 'Inactive'}</span></td>
               <td style="color:var(--muted)">${t.installedAt ? new Date(t.installedAt).toLocaleDateString() : '—'}</td>
             </tr>
@@ -872,8 +872,8 @@
         if (users.length > 0) {
           userBody.innerHTML = users.map(u => `
             <tr>
-              <td>${u.displayName || '—'}</td>
-              <td style="color:var(--muted)">${u.email}</td>
+              <td>${esc(u.displayName) || '—'}</td>
+              <td style="color:var(--muted)">${esc(u.email)}</td>
               <td style="color:var(--muted)">${u.lastLogin ? new Date(u.lastLogin).toLocaleString() : '—'}</td>
             </tr>
           `).join('');
@@ -883,7 +883,7 @@
         const orgBody = document.getElementById('org-rows');
         const d = data.yourDomain || {};
         orgBody.innerHTML = `
-          <tr><td>Domain</td><td>${d.domain || '—'}</td></tr>
+          <tr><td>Domain</td><td>${esc(d.domain) || '—'}</td></tr>
           <tr><td>Users</td><td>${d.users || 0}</td></tr>
           <tr><td>Meetings Tracked</td><td>${d.meetings || 0}</td></tr>
           <tr><td>Exports</td><td>${d.exports || 0}</td></tr>
@@ -913,6 +913,10 @@
 
     // Delegates to the shared js/utils.js module (loaded in <head>).
     const esc = (s) => AttUtils.escHtml(s);
+    // For values dropped into inline onclick="fn('...')" handlers: escHtml
+    // turns ' into &#39;, which the parser decodes back to ' → broken/unsafe
+    // handler. escJsArg backslash-escapes for the JS-string-in-attribute context.
+    const escArg = (s) => AttUtils.escJsArg(s);
 
     // Convert 2-letter country code to flag emoji (regional indicator symbols).
     const flagEmoji = (cc) => {
@@ -1157,7 +1161,7 @@
             <div style="font-size:.72rem;color:var(--muted);margin-bottom:8px">${esc(s.ctaTime)} · ${timeAgo(s.lastEventAt)}</div>
             <div style="display:flex;gap:6px">
               <a href="mailto:${esc(s.email)}?subject=${encodeURIComponent('Quick question about Attendance Tracker')}" style="background:var(--accent);color:var(--bg);text-decoration:none;padding:4px 10px;border-radius:6px;font-size:.72rem;font-weight:600">Email</a>
-              <button onclick="markContacted('${esc(s.email)}','${esc(s.domain)}')" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:.72rem;cursor:pointer">✓ Mark contacted</button>
+              <button onclick="markContacted('${escArg(s.email)}','${escArg(s.domain)}')" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:.72rem;cursor:pointer">✓ Mark contacted</button>
             </div>
           </div>
         `).join('');
@@ -1238,7 +1242,7 @@
 
         document.getElementById('revenue-stuck-count').textContent = `${r.warmStuck.length} users`;
         document.getElementById('revenue-stuck-rows').innerHTML = r.warmStuck.length ? r.warmStuck.map(u =>
-          `<tr onclick="openUserModal('${esc(u.email)}','${esc(u.domain)}')" style="cursor:pointer">
+          `<tr onclick="openUserModal('${escArg(u.email)}','${escArg(u.domain)}')" style="cursor:pointer">
             <td>${esc(u.displayName || u.email)}<div style="font-size:.7rem;color:var(--muted)">${esc(u.email)}</div></td>
             <td>${u.country ? flagEmoji(u.country) + ' ' + esc(u.country) : '—'}</td>
             <td><strong>${u.views}</strong></td>
@@ -1323,14 +1327,14 @@
           return;
         }
         body.innerHTML = users.map(u => `
-          <tr onclick="openUserModal('${esc(u.email)}','${esc(u.domain)}')" style="cursor:pointer">
+          <tr onclick="openUserModal('${escArg(u.email)}','${escArg(u.domain)}')" style="cursor:pointer">
             <td>${esc(u.displayName || u.email)}<div class="muted" style="font-size:.7rem">${esc(u.email)}</div></td>
             <td style="color:var(--muted);font-size:.8rem">${esc(u.domain)}</td>
             <td>${u.tracked}</td>
             <td>${u.exported}</td>
             <td style="color:var(--muted);font-size:.8rem">${esc(u.acquisitionSource || '—')}</td>
             <td style="color:var(--muted);font-size:.8rem">${timeAgo(u.lastActivityAt)}</td>
-            <td onclick="event.stopPropagation()"><div style="display:flex;gap:4px;justify-content:flex-end"><button onclick="openEmailModal('${esc(u.email)}','${esc(u.domain)}','${esc(u.displayName)}','${u.tracked}','${u.exported}','?')" style="background:var(--accent);color:var(--bg);border:none;padding:4px 8px;border-radius:6px;font-size:.72rem;font-weight:600;cursor:pointer"></button><button onclick="markContacted('${esc(u.email)}','${esc(u.domain)}')" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:.72rem;cursor:pointer">✓</button></div></td>
+            <td onclick="event.stopPropagation()"><div style="display:flex;gap:4px;justify-content:flex-end"><button onclick="openEmailModal('${escArg(u.email)}','${escArg(u.domain)}','${escArg(u.displayName)}','${u.tracked}','${u.exported}','?')" style="background:var(--accent);color:var(--bg);border:none;padding:4px 8px;border-radius:6px;font-size:.72rem;font-weight:600;cursor:pointer"></button><button onclick="markContacted('${escArg(u.email)}','${escArg(u.domain)}')" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:.72rem;cursor:pointer">✓</button></div></td>
           </tr>
         `).join('');
       } catch (err) {
@@ -1502,7 +1506,7 @@
         ? '<tr><td colspan="5" style="color:var(--muted)">Nobody here.</td></tr>'
         : users.map(u => {
             const hc = u.healthScore >= 70 ? 'var(--accent)' : u.healthScore >= 40 ? '#fbbf24' : 'var(--error)';
-            return `<tr onclick="openUserModal('${esc(u.email)}','${esc(u.domain)}')" style="cursor:pointer">
+            return `<tr onclick="openUserModal('${escArg(u.email)}','${escArg(u.domain)}')" style="cursor:pointer">
               <td>${esc(u.displayName || u.email)}<div class="muted" style="font-size:.7rem">${esc(u.email)}</div></td>
               <td><span style="color:${hc};font-weight:600">${u.healthScore}</span></td>
               <td>${u.tracked}</td>
@@ -1553,7 +1557,7 @@
       const remindersHtml = (u.reminders && u.reminders.length)
         ? u.reminders.map(r => {
             const due = new Date(r.remindAt).getTime() < Date.now();
-            return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:#0d1117;border:1px solid var(--border);border-radius:6px;font-size:.78rem"><div><span style="color:${due ? 'var(--error)' : 'var(--muted)'};font-size:.7rem">${fmtDate(r.remindAt)}${due ? ' · DUE' : ''}</span><div>${esc(r.body || 'No note')}</div></div>${r.done ? '<span style="color:var(--muted);font-size:.7rem">✓ done</span>' : `<button onclick="completeReminder('${r.id}','${esc(u.domain)}')" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:.7rem;cursor:pointer">Done</button>`}</div>`;
+            return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:#0d1117;border:1px solid var(--border);border-radius:6px;font-size:.78rem"><div><span style="color:${due ? 'var(--error)' : 'var(--muted)'};font-size:.7rem">${fmtDate(r.remindAt)}${due ? ' · DUE' : ''}</span><div>${esc(r.body || 'No note')}</div></div>${r.done ? '<span style="color:var(--muted);font-size:.7rem">✓ done</span>' : `<button onclick="completeReminder('${r.id}','${escArg(u.domain)}')" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:.7rem;cursor:pointer">Done</button>`}</div>`;
           }).join('')
         : '<div style="color:var(--muted);font-size:.8rem">No reminders set.</div>';
 
@@ -1585,7 +1589,7 @@
             <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Outreach ${statusBadge}</div>
             <div style="font-size:.8rem;line-height:1.6"><span style="color:var(--muted)">Last contacted:</span> ${esc(fmtDateTime(u.outreach?.lastEmailedAt || u.outreach?.contactedAt))}</div>
             <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
-              <button onclick="openEmailModal('${esc(u.email)}','${esc(u.domain)}','${esc(u.displayName)}','${u.counts.tracked}','${u.counts.exported}','${ageDaysCalc(u.createdAt)}')" class="btn btn-primary" style="font-size:.72rem;padding:5px 10px">Send email</button>
+              <button onclick="openEmailModal('${escArg(u.email)}','${escArg(u.domain)}','${escArg(u.displayName)}','${u.counts.tracked}','${u.counts.exported}','${ageDaysCalc(u.createdAt)}')" class="btn btn-primary" style="font-size:.72rem;padding:5px 10px">Send email</button>
               <button onclick="openReminderModal('${esc(u.email)}','${esc(u.domain)}','${esc(u.displayName)}')" class="btn btn-secondary" style="font-size:.72rem;padding:5px 10px">⏰ Remind me</button>
               <button onclick="markReply('${esc(u.email)}','${esc(u.domain)}','replied')" class="btn btn-secondary" style="font-size:.72rem;padding:5px 10px">↩ Replied</button>
               <button onclick="markReply('${esc(u.email)}','${esc(u.domain)}','ghosted')" class="btn btn-secondary" style="font-size:.72rem;padding:5px 10px">Ghosted</button>
@@ -1817,7 +1821,7 @@
         if (!reminders.length) { bar.style.display = 'none'; return; }
         bar.style.display = 'block';
         bar.innerHTML = `<div style="font-weight:700;color:#fbbf24;margin-bottom:8px">⏰ ${reminders.length} reminder${reminders.length === 1 ? '' : 's'} due</div>` +
-          reminders.slice(0, 5).map(r => `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:.82rem;border-top:1px solid rgba(251,191,36,.15)"><div><strong>${esc(r.email)}</strong> · <span style="color:var(--muted)">${esc(r.body || 'No note')}</span></div><div><button onclick="openUserModal('${esc(r.email)}','${esc(r.domain)}')" class="btn btn-secondary" style="font-size:.7rem;padding:3px 8px">Open</button> <button onclick="completeReminder('${r.id}','${esc(r.domain)}')" class="btn btn-secondary" style="font-size:.7rem;padding:3px 8px">Done</button></div></div>`).join('');
+          reminders.slice(0, 5).map(r => `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:.82rem;border-top:1px solid rgba(251,191,36,.15)"><div><strong>${esc(r.email)}</strong> · <span style="color:var(--muted)">${esc(r.body || 'No note')}</span></div><div><button onclick="openUserModal('${escArg(r.email)}','${escArg(r.domain)}')" class="btn btn-secondary" style="font-size:.7rem;padding:3px 8px">Open</button> <button onclick="completeReminder('${r.id}','${escArg(r.domain)}')" class="btn btn-secondary" style="font-size:.7rem;padding:3px 8px">Done</button></div></div>`).join('');
       } catch (err) {}
     }
 
@@ -1875,7 +1879,7 @@
           const loc = ip ? `${flag}${ip}${country ? ' (' + country + ')' : ''}` : '—';
           const source = u.acquisitionSource || u.signupDetectedSource || '—';
           return `
-          <tr onclick="openUserModal('${esc(u.email)}','${esc(u.domain)}')" style="cursor:pointer">
+          <tr onclick="openUserModal('${escArg(u.email)}','${escArg(u.domain)}')" style="cursor:pointer">
             <td>${esc(u.email)}</td>
             <td style="color:var(--muted)">${esc(u.domain)}</td>
             <td>${esc(u.displayName) || '—'}</td>
@@ -1899,7 +1903,7 @@
         if (rsBody) {
           rsBody.innerHTML = recent.length ? recent.map(u => {
             const c = u.signupGeo?.country || '';
-            return `<tr onclick="openUserModal('${esc(u.email)}','${esc(u.domain)}')" style="cursor:pointer">
+            return `<tr onclick="openUserModal('${escArg(u.email)}','${escArg(u.domain)}')" style="cursor:pointer">
               <td>${esc(u.displayName || u.email)}<div style="font-size:.7rem;color:var(--muted)">${esc(u.email)}</div></td>
               <td style="color:var(--muted);font-size:.8rem">${esc(u.domain)}</td>
               <td>${c ? flagEmoji(c) + ' ' + esc(c) : '—'}</td>

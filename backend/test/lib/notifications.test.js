@@ -316,14 +316,17 @@ describe('notifications — content sanity checks', () => {
     jest.doMock('../../src/services/firestore', () => ({
       claimSignupNotification,
       countAllUsers: jest.fn().mockResolvedValue(22),
+      isEmailSuppressed: jest.fn().mockResolvedValue(false), // welcome email checks suppression
     }));
     jest.resetModules();
     const n = require('../../src/lib/notifications');
 
     // First call: a pending signup is claimed → the email goes out with the
     // self-reported source, and the total-users count is looked up at send time.
-    // Also fires a welcome email directly to the new user.
+    // Also fires a welcome email directly to the new user (fire-and-forget,
+    // now gated on an async suppression check — let its microtasks settle).
     await n.maybeSendSignupNotification('x.com', 'a@x.com');
+    await new Promise((r) => setImmediate(r));
     expect(claimSignupNotification).toHaveBeenCalledWith('x.com', 'a@x.com');
     expect(mockSend).toHaveBeenCalledTimes(2);
     expect(mockSend.mock.calls[0][0].subject).toContain('google_search');

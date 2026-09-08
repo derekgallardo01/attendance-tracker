@@ -69,12 +69,17 @@ const oauthLimiter = rateLimit({
 });
 app.use('/api/oauth', oauthLimiter, oauthRoutes);
 
-// Public routes — no auth, but share the general rate limit so they can't be
-// abused. Mounted before the auth middleware so anonymous traffic works.
-app.use('/api', apiLimiter, publicRoutes);
-
-// Rate limiting and auth on all other /api routes
+// Rate limit EVERYTHING under /api exactly once — mounting the same limiter
+// instance twice (once with publicRoutes, once bare) double-counted every
+// request, silently halving the real budget to 30/min: live-meeting polling
+// (attendance + checkins) hit 429s at normal load.
 app.use('/api', apiLimiter);
+
+// Public routes — no auth. Mounted before the auth middleware so anonymous
+// traffic works.
+app.use('/api', publicRoutes);
+
+// Auth on all other /api routes
 app.use('/api', auth);
 
 // API routes

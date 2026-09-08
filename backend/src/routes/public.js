@@ -284,14 +284,21 @@ router.get('/public/review-click', async (req, res) => {
   if (email && email.includes('@')) {
     try {
       const domain = email.split('@')[1];
-      await getDb().collection('domains').doc(domain).collection('users').doc(email).set({
+      // Stamp the CANONICAL user doc (tenants/…) — the old write went to a
+      // `domains/…` collection nothing reads, so review clicks were lost.
+      // Update-only (no create): this endpoint is unauthenticated, and a
+      // fabricated ?email= must not mint phantom user docs that pollute
+      // collectionGroup('users') scans and the public user counter.
+      const ref = getDb().collection('tenants').doc(domain).collection('users').doc(email);
+      await ref.update({
         reviewLinkClickedAt: new Date().toISOString(),
         reviewStatus: 'clicked',
-      }, { merge: true });
+      });
       logEvent(domain, { type: 'review_link_clicked', email, source });
       log.info('public: review link clicked', { email, source });
     } catch (err) {
-      log.warn('public: review click tracking failed', { email, error: err.message });
+      // update() throws NOT_FOUND for unknown users — expected for junk input.
+      log.warn('public: review click tracking skipped', { email, error: err.message });
     }
   }
 
@@ -315,11 +322,11 @@ router.get('/public/offer-click', async (req, res) => {
         offerStatus: 'clicked',
         offerCampaign: campaign,
       };
-      const db = getDb();
-      await db.collection('domains').doc(domain).collection('users').doc(email).set(updateData, { merge: true });
-      try {
-        await db.collection('tenants').doc(domain).collection('users').doc(email).set(updateData, { merge: true });
-      } catch (e) {}
+      // Canonical path only, update-only: the old `domains/…` write fed a
+      // collection nothing reads, and set({merge}) let a fabricated ?email=
+      // mint phantom user docs (unauthenticated endpoint) that inflated
+      // every collectionGroup('users') scan and the sweeps' budgets.
+      await getDb().collection('tenants').doc(domain).collection('users').doc(email).update(updateData);
       logEvent(domain, { type: 'offer_link_clicked', email, campaign, plan });
       log.info('public: offer link clicked', { email, campaign, plan });
     } catch (err) {

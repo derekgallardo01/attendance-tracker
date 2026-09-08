@@ -116,6 +116,15 @@ router.post('/share', requireAuth, async (req, res) => {
   const { recurringEventId, type } = req.body || {};
   if (!recurringEventId) return res.status(400).json({ error: 'recurringEventId is required' });
   try {
+    // Ownership check: the caller must have TRACKED this series themselves.
+    // Without it, anyone in the tenant who knew a recurringEventId (e.g. an
+    // invitee reading their own calendar) could mint a public link exposing
+    // another teacher's full student roster.
+    const mine = await getUserMeetingSeries(req.user.domain, req.user.email);
+    const owns = (mine?.series || []).some(s => s.recurringEventId === recurringEventId);
+    if (!owns) {
+      return res.status(403).json({ error: 'You can only share a recurring series you tracked yourself.' });
+    }
     const result = await createShareLink(req.user.domain, req.user.email, { type: type || 'series', recurringEventId });
     res.json({
       token: result.token,

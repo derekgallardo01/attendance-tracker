@@ -738,6 +738,19 @@ async function claimWebhookEvent(eventId) {
   }
 }
 
+// Release a webhook-event claim so Stripe's retry can reprocess it. Called
+// when handling FAILED after the claim — without this, a transient Firestore
+// blip during provisioning would answer every retry "duplicate" and the
+// customer would stay unprovisioned forever.
+async function releaseWebhookEvent(eventId) {
+  if (!eventId) return;
+  try {
+    await getDb().collection('webhookEvents').doc(String(eventId)).delete();
+  } catch (err) {
+    log.warn('firestore: releaseWebhookEvent failed', { eventId, error: err.message });
+  }
+}
+
 async function claimReferral(domain, email) {
   try {
     const ref = tenantRef(domain).collection('users').doc(email.toLowerCase());
@@ -944,7 +957,11 @@ async function countUserExports(domain, email) {
 // Count this user's export events in the current calendar month.
 async function countUserMonthlyExports(domain, email) {
   try {
-    const startOfMonthMs = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
+    // Single clock read (two independent new Date() calls could straddle a
+    // month boundary and compose an impossible date) + UTC so the boundary
+    // is deterministic rather than server-local.
+    const now = new Date();
+    const startOfMonthMs = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1);
     const snap = await tenantRef(domain).collection('exports')
       .where('email', '==', email.toLowerCase())
       .get();
@@ -998,11 +1015,13 @@ async function countAllUsers() {
 async function getAllUsersAcrossTenants() {
   try {
     const snap = await getDb().collectionGroup('users').get();
-    return snap.docs.map(d => {
+    // Filter out legacy root-level `users/{email}` docs (no tenant parent) —
+    // one such doc used to throw here, silently zeroing out EVERY cron sweep.
+    return snap.docs.filter(d => d.ref.parent.parent).map(d => {
       const data = d.data();
       return {
         email: d.id,
-        domain: d.ref.parent.parent.id,
+        domain: (d.ref.parent.parent?.id ?? null),
         displayName: data.displayName || '',
         lastLoginAt: data.lastLoginAt?.toDate?.()?.toISOString() || null,
         createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
@@ -1725,7 +1744,7 @@ module.exports = {
   getUserSettings, updateUserSettings,
   setUserAcquisitionSource, setPostExportSurvey, claimSignupNotification,
   claimReferral, releaseReferral, recordReferralForInviter, recordReferralPromoCode, getUserTrackingStreak,
-  claimWebhookEvent,
+  claimWebhookEvent, releaseWebhookEvent,
   logEvent,
   getUserActivationStatus, countUserExports, countUserMonthlyExports, countAllUsers, getExportedConferenceIds,
   getUserMeetingHistory, getExistingDomainPeer,
