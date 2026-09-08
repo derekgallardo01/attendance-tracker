@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How to send Google Meet attendance to Google Chat or Discord (2026 Guide) — Attendance Tracker</title>
+  <meta name="description" content="Step-by-step guide to posting automated Google Meet attendance summary cards to a Google Chat space or Discord channel after every meeting, using incoming webhooks." />
+  <link rel="canonical" href="https://attendancetracker.dev/send-google-meet-attendance-to-google-chat.html" />
+  <meta property="og:title" content="Send Google Meet attendance to Google Chat or Discord" />
+  <meta property="og:description" content="Automated post-meeting attendance cards — present, left early, absent, and a sheet link — delivered to Google Chat spaces and Discord channels." />
+  <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
+  <meta property="og:url" content="https://attendancetracker.dev/send-google-meet-attendance-to-google-chat.html" />
+  <meta property="og:type" content="article" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to send Google Meet attendance to Google Chat",
+    "description": "Step-by-step instructions for connecting Google Meet attendance summaries to a Google Chat space via incoming webhooks.",
+    "step": [
+      {"@type": "HowToStep", "name": "Create a Google Chat webhook", "text": "In your Google Chat space, open Apps & integrations and add an incoming webhook."},
+      {"@type": "HowToStep", "name": "Paste the webhook into Attendance Tracker", "text": "Open Settings in the Attendance Tracker add-on, choose the Google Chat tab, paste the webhook URL, send a test, and save."},
+      {"@type": "HowToStep", "name": "Receive automatic post-meeting cards", "text": "After every export, a formatted attendance card posts to your Chat space automatically."}
+    ]
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #4ade80; --blue: #58a6ff; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 40px 20px; }
+    .container { max-width: 720px; margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+    .brand img { width: 28px; height: 28px; border-radius: 6px; }
+    .brand a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    h1 { font-size: 2rem; line-height: 1.2; margin-bottom: 14px; }
+    .lead { color: var(--muted); font-size: 1.05rem; margin-bottom: 32px; }
+    h2 { font-size: 1.35rem; margin-top: 36px; margin-bottom: 14px; color: var(--text); }
+    h3 { font-size: 1.05rem; margin-top: 22px; margin-bottom: 8px; color: var(--text); }
+    p { margin-bottom: 14px; color: #c9d1d9; }
+    ul, ol { padding-left: 22px; margin-bottom: 14px; color: #c9d1d9; }
+    li { margin-bottom: 6px; }
+    a { color: var(--blue); }
+    code { background: var(--surface); padding: 2px 6px; border-radius: 4px; font-size: .9em; font-family: 'DM Mono', ui-monospace, monospace; }
+    .callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 16px 18px; margin: 22px 0; }
+    .callout strong { color: var(--accent); }
+    .cta { background: linear-gradient(135deg, rgba(74,222,128,.08), rgba(88,166,255,.08)); border: 1px solid rgba(74,222,128,.25); border-radius: 14px; padding: 26px; text-align: center; margin: 36px 0; }
+    .cta h3 { font-size: 1.1rem; margin-top: 0; margin-bottom: 6px; }
+    .cta p { color: var(--muted); font-size: .9rem; margin-bottom: 16px; }
+    .btn { display: inline-block; background: #34A853; color: #fff; text-decoration: none; padding: 11px 24px; border-radius: 8px; font-weight: 600; font-size: .92rem; }
+    .footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border); }
+    .footer a { color: var(--muted); text-decoration: none; margin: 0 6px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <img src="icons/icon-96.png" alt="" />
+      <a href="/">Attendance Tracker</a>
+    </div>
+
+    <h1>Send Google Meet attendance to Google Chat (or Discord)</h1>
+    <p class="lead">If your team or school lives in Google Chat, attendance shouldn't require opening a spreadsheet. Here is how to automatically deliver a formatted attendance card — who attended, who left early, who was absent — to any Google Chat space the moment your Google Meet ends. Discord works the same way.</p>
+
+    <div class="callout">
+      <strong>Native Chat cards, not text dumps:</strong> Attendance Tracker posts a real Google Chat card with the meeting title, attendance count, duration, bucketed rosters (Present / Left early / Absent), and an <em>Open sheet</em> button linking straight to the exported Google Sheet.
+    </div>
+
+    <h2>Why post attendance to Google Chat?</h2>
+    <ul>
+      <li><strong>It's already in your Workspace:</strong> No third-party chat tool needed — Chat spaces come with every Google Workspace domain, including Education Fundamentals.</li>
+      <li><strong>Department visibility:</strong> A "Period 3 Attendance" or "Daily Standup" space gives coordinators and co-teachers the roster without asking you.</li>
+      <li><strong>Async catch-up:</strong> Anyone who missed the meeting sees who was there and opens the sheet in one click.</li>
+    </ul>
+
+    <h2>Step-by-step: Google Chat (takes 2 minutes)</h2>
+
+    <h3>Step 1: Create a Chat incoming webhook</h3>
+    <ol>
+      <li>Open <a href="https://chat.google.com" target="_blank" rel="noopener">Google Chat</a> and go to the space you want attendance posted in.</li>
+      <li>Click the space name → <strong>Apps &amp; integrations</strong> → <strong>Add webhooks</strong> (Manage webhooks).</li>
+      <li>Name it (e.g. <code>Attendance Tracker</code>), save, and copy the webhook URL — it looks like <code>https://chat.googleapis.com/v1/spaces/…/messages?key=…&amp;token=…</code>.</li>
+    </ol>
+    <p><em>Note: incoming webhooks are a Google Workspace feature — they're available in spaces on Workspace accounts (including Education), not on personal @gmail Chat.</em></p>
+
+    <h3>Step 2: Paste the webhook into Attendance Tracker</h3>
+    <ol>
+      <li>Join any Google Meet call and open <strong>Attendance Tracker</strong> from the Activities panel.</li>
+      <li>Click the <strong>Settings (gear)</strong> icon, find the <strong>Chat digest webhooks</strong> card, and select the <strong>Google Chat</strong> tab.</li>
+      <li>Paste your webhook URL, click <strong>Send test</strong> — a confirmation message lands in your space — then <strong>Save</strong>.</li>
+    </ol>
+
+    <h3>Step 3: Automatic post-meeting cards</h3>
+    <p>Done. Every time attendance is exported — manually or by auto-capture at meeting end — a card posts to your space with:</p>
+    <ul>
+      <li>Meeting title, attendance count ("8 of 10 attended"), duration, and start time</li>
+      <li>Present, Left early, and Absent rosters (excused absences labeled)</li>
+      <li>An <strong>Open sheet</strong> button to the full report in Google Drive</li>
+    </ul>
+
+    <h2>Same setup for Discord</h2>
+    <p>Running a tutoring server, bootcamp, or study group on Discord? The exact same card ships as a native Discord embed:</p>
+    <ol>
+      <li>In Discord, open your channel's settings → <strong>Integrations</strong> → <strong>Webhooks</strong> → <strong>New Webhook</strong>, and copy the URL (<code>https://discord.com/api/webhooks/…</code>).</li>
+      <li>In Attendance Tracker's Settings, pick the <strong>Discord</strong> tab in the same webhooks card, paste, <strong>Send test</strong>, and <strong>Save</strong>.</li>
+    </ol>
+    <p>You can connect Slack, Google Chat, and Discord at the same time — each configured webhook gets its own digest. (Here's the <a href="how-to-send-google-meet-attendance-to-slack.html">Slack guide</a>.)</p>
+
+    <h2>Security &amp; webhook masking</h2>
+    <p>Webhook URLs embed a secret token, so Attendance Tracker validates the exact Google Chat / Discord URL shape before saving (arbitrary URLs are rejected), stores the webhook on your account, and only ever displays it masked (e.g. <code>chat.googleapis.com/...a1b2</code>) — safe for screen shares.</p>
+
+    <h2>Frequently asked questions</h2>
+    <h3>Does this need a Chat app or bot approval from my admin?</h3>
+    <p>No. Incoming webhooks are created by any space member with permission to manage webhooks — no Marketplace app install, no admin console approval.</p>
+    <h3>When exactly does the card post?</h3>
+    <p>On every attendance export: when you click Save to Sheets, when auto-export fires at meeting end, and when hands-free auto-capture (Pro) exports a finished meeting for you.</p>
+    <h3>Is this free?</h3>
+    <p>Configuring and testing webhooks is free; automated digest delivery is part of Pro — a one-time $9.99 Lifetime Pass, $4.99/year Educator Pass, or $19.99 lifetime domain license.</p>
+
+    <div class="cta">
+      <h3>Attendance cards in your Chat space, automatically</h3>
+      <p>Google Chat, Slack, and Discord — set up in under 2 minutes.</p>
+      <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_gchat" target="_blank">Install Attendance Tracker from Marketplace</a>
+    </div>
+
+    <div class="footer-hub" style="margin-top: 50px; padding-top: 30px; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--muted); line-height: 1.8;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; text-align: left; margin-bottom: 24px;">
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Education</strong>
+          <a href="attendance-tracker-for-teachers.html" style="color: var(--muted); text-decoration: none; display: block;">For K-12 Teachers</a>
+          <a href="google-meet-attendance-google-classroom.html" style="color: var(--muted); text-decoration: none; display: block;">Google Classroom</a>
+          <a href="import-google-classroom-roster-to-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">Import Classroom Rosters</a>
+          <a href="google-meet-attendance-for-universities.html" style="color: var(--muted); text-decoration: none; display: block;">Universities &amp; Colleges</a>
+          <a href="google-meet-attendance-for-tutors.html" style="color: var(--muted); text-decoration: none; display: block;">Tutors &amp; Bootcamps</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Integrations</strong>
+          <a href="export-google-meet-attendance-to-moodle.html" style="color: var(--muted); text-decoration: none; display: block;">Moodle Gradebook Export</a>
+          <a href="export-google-meet-attendance-to-canvas.html" style="color: var(--muted); text-decoration: none; display: block;">Canvas Gradebook Export</a>
+          <a href="export-google-meet-attendance-to-sheets.html" style="color: var(--muted); text-decoration: none; display: block;">Export to Google Sheets</a>
+          <a href="how-to-send-google-meet-attendance-to-slack.html" style="color: var(--muted); text-decoration: none; display: block;">Slack Integration</a>
+          <a href="send-google-meet-attendance-to-google-chat.html" style="color: var(--muted); text-decoration: none; display: block;">Google Chat &amp; Discord</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Teams &amp; Business</strong>
+          <a href="google-meet-attendance-for-remote-teams.html" style="color: var(--muted); text-decoration: none; display: block;">Remote Teams &amp; Standups</a>
+          <a href="track-attendance-for-webinars-and-training-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">Webinars &amp; Training</a>
+          <a href="google-meet-attendance-for-cpe-and-cle-credits.html" style="color: var(--muted); text-decoration: none; display: block;">CPE &amp; CLE Credits</a>
+          <a href="google-meet-attendance-for-volunteer-hours.html" style="color: var(--muted); text-decoration: none; display: block;">Volunteer Hours</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Guides &amp; Comparisons</strong>
+          <a href="how-to-track-attendance-in-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">How to Track Attendance</a>
+          <a href="track-google-meet-attendance-without-host.html" style="color: var(--muted); text-decoration: none; display: block;">Track Without Host</a>
+          <a href="google-meet-attendance-report-not-showing-up.html" style="color: var(--muted); text-decoration: none; display: block;">Report Not Showing Up?</a>
+          <a href="best-google-meet-attendance-extensions.html" style="color: var(--muted); text-decoration: none; display: block;">Extension Comparison</a>
+          <a href="google-meet-vs-zoom-attendance-tracking.html" style="color: var(--muted); text-decoration: none; display: block;">Google Meet vs Zoom</a>
+        </div>
+      </div>
+      <div style="text-align: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06);">
+        <a href="/" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Home</a> ·
+        <a href="pricing.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Pricing</a> ·
+        <a href="support.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Support</a> ·
+        <a href="privacy.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Privacy Policy</a> ·
+        <a href="terms.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Terms of Service</a> ·
+        <a href="refunds.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Refund Policy</a>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+  (function () {
+    try {
+      var params = new URLSearchParams(location.search);
+      var utmSource = params.get('utm_source');
+      var utmMedium = params.get('utm_medium');
+      var utmCampaign = params.get('utm_campaign');
+      var ref = params.get('ref');
+      var referrer = document.referrer || null;
+      var ACQ_KEY = 'attendanceTrackerAcq';
+      if (!localStorage.getItem(ACQ_KEY)) {
+        var payload = {
+          utmSource: utmSource,
+          utmMedium: utmMedium,
+          utmCampaign: utmCampaign,
+          ref: ref,
+          referrer: referrer,
+          landingUrl: location.href,
+          capturedAt: Date.now(),
+        };
+        localStorage.setItem(ACQ_KEY, JSON.stringify(payload));
+        var computedSource = utmSource || (ref ? 'referral' : null) || (referrer ? new URL(referrer).hostname : null) || 'direct';
+        document.cookie = 'att_first_touch=' + encodeURIComponent(JSON.stringify(Object.assign({}, payload, { computedSource: computedSource }))) + ';path=/;max-age=7776000;SameSite=Lax';
+      }
+    } catch (e) {}
+
+    var API = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
+    function beacon(payload) {
+      try {
+        var blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        if (navigator.sendBeacon) navigator.sendBeacon(API + '/public/pageview', blob);
+        else fetch(API + '/public/pageview', { method: 'POST', body: blob, keepalive: true });
+      } catch (e) {}
+    }
+    var p = new URLSearchParams(location.search);
+    beacon({
+      path: location.pathname,
+      referrer: document.referrer || null,
+      viewportWidth: window.innerWidth || null,
+      utmSource: p.get('utm_source'),
+      utmMedium: p.get('utm_medium'),
+      utmCampaign: p.get('utm_campaign'),
+    });
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a[href*="marketplace/app/attendance_tracker"]');
+      if (a) beacon({ path: location.pathname, event: 'cta_click', eventLabel: 'marketplace_install_seo', referrer: document.referrer || null });
+    });
+  })();
+  </script>
+</body>
+</html>

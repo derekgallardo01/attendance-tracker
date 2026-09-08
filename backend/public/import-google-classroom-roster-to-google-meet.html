@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How to import your Google Classroom roster into Google Meet attendance (2026 Guide) — Attendance Tracker</title>
+  <meta name="description" content="Pull your Google Classroom class list into Google Meet attendance tracking in one click — automatic Present/Late/Absent roll call with no copy-pasting student names." />
+  <link rel="canonical" href="https://attendancetracker.dev/import-google-classroom-roster-to-google-meet.html" />
+  <meta property="og:title" content="Import your Google Classroom roster into Google Meet attendance" />
+  <meta property="og:description" content="One-click Classroom roster import: automatic roll call, late flags, no-show detection, and gradebook exports for your real class list." />
+  <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
+  <meta property="og:url" content="https://attendancetracker.dev/import-google-classroom-roster-to-google-meet.html" />
+  <meta property="og:type" content="article" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to import a Google Classroom roster into Google Meet attendance",
+    "description": "Step-by-step instructions for importing a Google Classroom class list into the Attendance Tracker Meet add-on.",
+    "step": [
+      {"@type": "HowToStep", "name": "Open the Class Roster tab", "text": "In the Attendance Tracker side panel during a Google Meet call, open Class Roster and click + New Class."},
+      {"@type": "HowToStep", "name": "Import from Google Classroom", "text": "Click Import from Google Classroom, approve the one-time permission, and pick your course."},
+      {"@type": "HowToStep", "name": "Save and track", "text": "Review the imported student list, save the roster, and start tracking — students sort into Present, Late, and Absent automatically."}
+    ]
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #4ade80; --blue: #58a6ff; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 40px 20px; }
+    .container { max-width: 720px; margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+    .brand img { width: 28px; height: 28px; border-radius: 6px; }
+    .brand a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    h1 { font-size: 2rem; line-height: 1.2; margin-bottom: 14px; }
+    .lead { color: var(--muted); font-size: 1.05rem; margin-bottom: 32px; }
+    h2 { font-size: 1.35rem; margin-top: 36px; margin-bottom: 14px; color: var(--text); }
+    h3 { font-size: 1.05rem; margin-top: 22px; margin-bottom: 8px; color: var(--text); }
+    p { margin-bottom: 14px; color: #c9d1d9; }
+    ul, ol { padding-left: 22px; margin-bottom: 14px; color: #c9d1d9; }
+    li { margin-bottom: 6px; }
+    a { color: var(--blue); }
+    code { background: var(--surface); padding: 2px 6px; border-radius: 4px; font-size: .9em; font-family: 'DM Mono', ui-monospace, monospace; }
+    .callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 16px 18px; margin: 22px 0; }
+    .callout strong { color: var(--accent); }
+    .cta { background: linear-gradient(135deg, rgba(74,222,128,.08), rgba(88,166,255,.08)); border: 1px solid rgba(74,222,128,.25); border-radius: 14px; padding: 26px; text-align: center; margin: 36px 0; }
+    .cta h3 { font-size: 1.1rem; margin-top: 0; margin-bottom: 6px; }
+    .cta p { color: var(--muted); font-size: .9rem; margin-bottom: 16px; }
+    .btn { display: inline-block; background: #34A853; color: #fff; text-decoration: none; padding: 11px 24px; border-radius: 8px; font-weight: 600; font-size: .92rem; }
+    .footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border); }
+    .footer a { color: var(--muted); text-decoration: none; margin: 0 6px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <img src="icons/icon-96.png" alt="" />
+      <a href="/">Attendance Tracker</a>
+    </div>
+
+    <h1>Import your Google Classroom roster into Google Meet attendance</h1>
+    <p class="lead">Your class list already lives in Google Classroom. Here is how to pull it into your Google Meet side panel in one click — so roll call, late flags, and no-show detection run against your real roster from the first minute of class.</p>
+
+    <div class="callout">
+      <strong>Why this matters:</strong> Attendance tracking is only as good as the roster behind it. With your Classroom list imported, every student is matched by their school email — you instantly see who is <em>Present</em>, who arrived <em>Late</em>, and crucially, who is <em>Absent</em> — including students who never joined at all.
+    </div>
+
+    <h2>Step-by-step setup</h2>
+
+    <h3>Step 1: Open the Class Roster tab</h3>
+    <ol>
+      <li>Join your Google Meet class and open <strong>Attendance Tracker</strong> from the Activities panel.</li>
+      <li>Sign in with the same Google account you use for Classroom.</li>
+      <li>Open the <strong>Class Roster</strong> tab and click <strong>+ New Class</strong>.</li>
+    </ol>
+
+    <h3>Step 2: Import from Google Classroom</h3>
+    <ol>
+      <li>Click <strong>Import from Google Classroom</strong>.</li>
+      <li>The first time, Google asks for permission to read your Classroom class lists — approve it and the import resumes automatically. This is a one-time, read-only permission covering only courses you teach.</li>
+      <li>Pick your course from the dropdown and click <strong>Import</strong>.</li>
+      <li>Every enrolled student appears in the list — names and school emails — with the class name pre-filled. Edit anything you like, then click <strong>Save Roster</strong>.</li>
+    </ol>
+
+    <h3>Step 3: Track the class</h3>
+    <p>Press <strong>Start</strong>. As students join the Meet, they are matched to your roster by email (with a smart name-based fallback for students who join under a display name). The roster view live-updates:</p>
+    <ul>
+      <li><strong>Present</strong> — joined and staying, with join time and minutes attended.</li>
+      <li><strong>Late</strong> — joined after your grace period (you choose: 5, 10, 15 minutes…).</li>
+      <li><strong>Absent</strong> — on the roster but never joined. Tag genuine excuses as <em>Excused</em> with a private note.</li>
+      <li><strong>Guests</strong> — anyone in the call who is <em>not</em> on your roster, flagged separately.</li>
+    </ul>
+
+    <h2>What an imported roster unlocks</h2>
+    <ul>
+      <li><strong>One-click gradebook exports:</strong> download attendance as a <a href="export-google-meet-attendance-to-moodle.html">Moodle</a> or <a href="export-google-meet-attendance-to-canvas.html">Canvas</a> gradebook CSV, matched by the same emails Classroom gave you.</li>
+      <li><strong>Google Sheets reports:</strong> roster statuses (Present / Late / Absent / Excused) flow into the exported spreadsheet automatically.</li>
+      <li><strong>Semester roll-ups:</strong> recurring classes accumulate per-student attendance percentages across every session.</li>
+    </ul>
+
+    <h2>Privacy: where does the roster live?</h2>
+    <p>Your imported roster is stored <strong>only in your browser</strong> — Classroom data is never persisted on Attendance Tracker's servers. The Classroom permissions are optional, read-only, requested only when you click the import button, and revocable any time from your <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener">Google Account permissions</a>. Full details in our <a href="privacy.html">Privacy Policy</a>.</p>
+
+    <h2>Frequently asked questions</h2>
+    <h3>Do I need to be the Classroom teacher?</h3>
+    <p>Yes — the import lists courses where your signed-in account is a teacher (co-teachers count). Personal @gmail.com Classroom courses work too.</p>
+    <h3>What if my students' Meet names don't match their roster names?</h3>
+    <p>Matching tries the school email first, which is exact. For name-only joins it normalizes and compares display names, so "Alice W." still matches "Alice Walker".</p>
+    <h3>Does the roster update when my Classroom enrollment changes?</h3>
+    <p>Re-run the import any time — open the roster's <strong>Edit</strong> dialog and click <strong>Import from Google Classroom</strong> again to refresh the list.</p>
+    <h3>Is this free?</h3>
+    <p>Yes — Classroom roster import and live roll call are free for every account.</p>
+
+    <div class="cta">
+      <h3>Your Classroom roster, taking attendance for you</h3>
+      <p>Free, one-click import, works with K-12 and higher-ed Classroom accounts.</p>
+      <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_classroom_import" target="_blank">Install Attendance Tracker from Marketplace</a>
+    </div>
+
+    <div class="footer-hub" style="margin-top: 50px; padding-top: 30px; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--muted); line-height: 1.8;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; text-align: left; margin-bottom: 24px;">
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Education</strong>
+          <a href="attendance-tracker-for-teachers.html" style="color: var(--muted); text-decoration: none; display: block;">For K-12 Teachers</a>
+          <a href="google-meet-attendance-google-classroom.html" style="color: var(--muted); text-decoration: none; display: block;">Google Classroom</a>
+          <a href="import-google-classroom-roster-to-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">Import Classroom Rosters</a>
+          <a href="google-meet-attendance-for-universities.html" style="color: var(--muted); text-decoration: none; display: block;">Universities &amp; Colleges</a>
+          <a href="google-meet-attendance-for-tutors.html" style="color: var(--muted); text-decoration: none; display: block;">Tutors &amp; Bootcamps</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Integrations</strong>
+          <a href="export-google-meet-attendance-to-moodle.html" style="color: var(--muted); text-decoration: none; display: block;">Moodle Gradebook Export</a>
+          <a href="export-google-meet-attendance-to-canvas.html" style="color: var(--muted); text-decoration: none; display: block;">Canvas Gradebook Export</a>
+          <a href="export-google-meet-attendance-to-sheets.html" style="color: var(--muted); text-decoration: none; display: block;">Export to Google Sheets</a>
+          <a href="how-to-send-google-meet-attendance-to-slack.html" style="color: var(--muted); text-decoration: none; display: block;">Slack Integration</a>
+          <a href="send-google-meet-attendance-to-google-chat.html" style="color: var(--muted); text-decoration: none; display: block;">Google Chat &amp; Discord</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Teams &amp; Business</strong>
+          <a href="google-meet-attendance-for-remote-teams.html" style="color: var(--muted); text-decoration: none; display: block;">Remote Teams &amp; Standups</a>
+          <a href="track-attendance-for-webinars-and-training-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">Webinars &amp; Training</a>
+          <a href="google-meet-attendance-for-cpe-and-cle-credits.html" style="color: var(--muted); text-decoration: none; display: block;">CPE &amp; CLE Credits</a>
+          <a href="google-meet-attendance-for-volunteer-hours.html" style="color: var(--muted); text-decoration: none; display: block;">Volunteer Hours</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Guides &amp; Comparisons</strong>
+          <a href="how-to-track-attendance-in-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">How to Track Attendance</a>
+          <a href="track-google-meet-attendance-without-host.html" style="color: var(--muted); text-decoration: none; display: block;">Track Without Host</a>
+          <a href="google-meet-attendance-report-not-showing-up.html" style="color: var(--muted); text-decoration: none; display: block;">Report Not Showing Up?</a>
+          <a href="best-google-meet-attendance-extensions.html" style="color: var(--muted); text-decoration: none; display: block;">Extension Comparison</a>
+          <a href="google-meet-vs-zoom-attendance-tracking.html" style="color: var(--muted); text-decoration: none; display: block;">Google Meet vs Zoom</a>
+        </div>
+      </div>
+      <div style="text-align: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06);">
+        <a href="/" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Home</a> ·
+        <a href="pricing.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Pricing</a> ·
+        <a href="support.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Support</a> ·
+        <a href="privacy.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Privacy Policy</a> ·
+        <a href="terms.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Terms of Service</a> ·
+        <a href="refunds.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Refund Policy</a>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+  (function () {
+    try {
+      var params = new URLSearchParams(location.search);
+      var utmSource = params.get('utm_source');
+      var utmMedium = params.get('utm_medium');
+      var utmCampaign = params.get('utm_campaign');
+      var ref = params.get('ref');
+      var referrer = document.referrer || null;
+      var ACQ_KEY = 'attendanceTrackerAcq';
+      if (!localStorage.getItem(ACQ_KEY)) {
+        var payload = {
+          utmSource: utmSource,
+          utmMedium: utmMedium,
+          utmCampaign: utmCampaign,
+          ref: ref,
+          referrer: referrer,
+          landingUrl: location.href,
+          capturedAt: Date.now(),
+        };
+        localStorage.setItem(ACQ_KEY, JSON.stringify(payload));
+        var computedSource = utmSource || (ref ? 'referral' : null) || (referrer ? new URL(referrer).hostname : null) || 'direct';
+        document.cookie = 'att_first_touch=' + encodeURIComponent(JSON.stringify(Object.assign({}, payload, { computedSource: computedSource }))) + ';path=/;max-age=7776000;SameSite=Lax';
+      }
+    } catch (e) {}
+
+    var API = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
+    function beacon(payload) {
+      try {
+        var blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        if (navigator.sendBeacon) navigator.sendBeacon(API + '/public/pageview', blob);
+        else fetch(API + '/public/pageview', { method: 'POST', body: blob, keepalive: true });
+      } catch (e) {}
+    }
+    var p = new URLSearchParams(location.search);
+    beacon({
+      path: location.pathname,
+      referrer: document.referrer || null,
+      viewportWidth: window.innerWidth || null,
+      utmSource: p.get('utm_source'),
+      utmMedium: p.get('utm_medium'),
+      utmCampaign: p.get('utm_campaign'),
+    });
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a[href*="marketplace/app/attendance_tracker"]');
+      if (a) beacon({ path: location.pathname, event: 'cta_click', eventLabel: 'marketplace_install_seo', referrer: document.referrer || null });
+    });
+  })();
+  </script>
+</body>
+</html>

@@ -51,6 +51,26 @@
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://attendancetracker.dev/export-google-meet-attendance-to-moodle.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://attendancetracker.dev/export-google-meet-attendance-to-canvas.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://attendancetracker.dev/import-google-classroom-roster-to-google-meet.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://attendancetracker.dev/send-google-meet-attendance-to-google-chat.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
     <loc>https://attendancetracker.dev/how-to-send-google-meet-attendance-to-slack.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
