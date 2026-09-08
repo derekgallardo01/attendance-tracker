@@ -1570,7 +1570,7 @@
   </div>
 
   <!-- ── Invited list (hidden by default) ── -->
-  <div class="list-header" id="list-header-invited" style="display:none">Invited Guests</div>
+  <div class="list-header" id="list-header-invited" style="display:none" data-i18n="nav.invitedGuests">Invited Guests</div>
   <div id="invited-list" style="display:none"></div>
 
   <!-- ── Activity Feed ── -->
@@ -5367,18 +5367,18 @@ window.addEventListener('DOMContentLoaded', () => {
   <!-- ── Matching Modal ── -->
   <div id="match-modal">
     <div class="modal-box">
-      <div class="modal-title">Match Participants to Invitees</div>
-      <div class="modal-subtitle">Auto-matched where possible. Manually assign emails for the rest.</div>
-      <div class="modal-section-label">Meet Participants → Calendar Invitee</div>
+      <div class="modal-title" data-i18n="match.title">Match Participants to Invitees</div>
+      <div class="modal-subtitle" data-i18n="match.sub">Auto-matched where possible. Manually assign emails for the rest.</div>
+      <div class="modal-section-label" data-i18n="match.colHeader">Meet Participants → Calendar Invitee</div>
       <div id="match-rows"></div>
       <div class="unmatched-section" id="unmatched-section" style="display:none">
-        <div class="modal-section-label">Calendar invitees not matched</div>
+        <div class="modal-section-label" data-i18n="match.unmatched">Calendar invitees not matched</div>
         <div id="unmatched-list"></div>
       </div>
       <div class="modal-actions">
-        <button class="btn-secondary" onclick="closeMatchModal()">Cancel</button>
-        <button class="btn-secondary" onclick="skipMatchAndExport()">Skip matching</button>
-        <button class="btn-primary" onclick="confirmMatchAndExport()">Confirm & Export to Sheets</button>
+        <button class="btn-secondary" onclick="closeMatchModal()" data-i18n="btn.cancel">Cancel</button>
+        <button class="btn-secondary" onclick="skipMatchAndExport()" data-i18n="match.skip">Skip matching</button>
+        <button class="btn-primary" onclick="confirmMatchAndExport()" data-i18n="match.confirm">Confirm &amp; Export to Sheets</button>
       </div>
     </div>
   </div>
@@ -5394,20 +5394,20 @@ window.addEventListener('DOMContentLoaded', () => {
         </div>
         <button onclick="closeProfileModal()" aria-label="Close" style="background:transparent;color:#9ca3af;border:none;font-size:1.4rem;cursor:pointer;padding:0 4px">×</button>
       </div>
-      <div id="profile-loading" style="text-align:center;color:#9ca3af;font-size:.85rem;padding:20px">Loading…</div>
+      <div id="profile-loading" style="text-align:center;color:#9ca3af;font-size:.85rem;padding:20px" data-i18n="common.loading">Loading…</div>
       <div id="profile-body" style="display:none">
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:14px">
-          <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:8px;text-align:center"><div style="font-size:1.1rem;font-weight:700;color:#4ade80" id="profile-meetings">—</div><div style="font-size:.65rem;color:#6e7681;text-transform:uppercase">Meetings</div></div>
-          <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:8px;text-align:center"><div style="font-size:1.1rem;font-weight:700;color:#58a6ff" id="profile-rate">—</div><div style="font-size:.65rem;color:#6e7681;text-transform:uppercase">Attendance</div></div>
-          <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:8px;text-align:center"><div style="font-size:1.1rem;font-weight:700;color:#e6edf3" id="profile-avgdur">—</div><div style="font-size:.65rem;color:#6e7681;text-transform:uppercase">Avg duration</div></div>
+          <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:8px;text-align:center"><div style="font-size:1.1rem;font-weight:700;color:#4ade80" id="profile-meetings">—</div><div style="font-size:.65rem;color:#6e7681;text-transform:uppercase" data-i18n="profile.meetings">Meetings</div></div>
+          <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:8px;text-align:center"><div style="font-size:1.1rem;font-weight:700;color:#58a6ff" id="profile-rate">—</div><div style="font-size:.65rem;color:#6e7681;text-transform:uppercase" data-i18n="profile.attendance">Attendance</div></div>
+          <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:8px;text-align:center"><div style="font-size:1.1rem;font-weight:700;color:#e6edf3" id="profile-avgdur">—</div><div style="font-size:.65rem;color:#6e7681;text-transform:uppercase" data-i18n="profile.avgDuration">Avg duration</div></div>
         </div>
-        <div style="font-size:.7rem;color:#6e7681;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Last 5 meetings</div>
+        <div style="font-size:.7rem;color:#6e7681;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px" data-i18n="profile.last5">Last 5 meetings</div>
         <div id="profile-recent" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px"></div>
-        <div style="font-size:.7rem;color:#6e7681;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Your private note</div>
-        <textarea id="profile-note" rows="3" placeholder="Notes only you can see…" style="width:100%;background:#0d1117;border:1px solid #30363d;color:#e6edf3;border-radius:6px;padding:8px;font-size:.85rem;font-family:inherit;resize:vertical;box-sizing:border-box;margin-bottom:8px"></textarea>
+        <div style="font-size:.7rem;color:#6e7681;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px" data-i18n="profile.noteLabel">Your private note</div>
+        <textarea id="profile-note" rows="3" placeholder="Notes only you can see…" data-i18n-placeholder="profile.notePlaceholder" style="width:100%;background:#0d1117;border:1px solid #30363d;color:#e6edf3;border-radius:6px;padding:8px;font-size:.85rem;font-family:inherit;resize:vertical;box-sizing:border-box;margin-bottom:8px"></textarea>
         <div style="display:flex;justify-content:space-between;align-items:center">
           <span id="profile-note-status" style="font-size:.7rem;color:#6e7681"></span>
-          <button onclick="saveProfileNote()" style="background:#4ade80;color:#0d1117;border:none;border-radius:6px;padding:6px 14px;font-size:.75rem;font-weight:600;cursor:pointer">Save note</button>
+          <button onclick="saveProfileNote()" style="background:#4ade80;color:#0d1117;border:none;border-radius:6px;padding:6px 14px;font-size:.75rem;font-weight:600;cursor:pointer" data-i18n="profile.saveNote">Save note</button>
         </div>
       </div>
     </div>
@@ -5768,20 +5768,20 @@ window.addEventListener('DOMContentLoaded', () => {
       <div class="modal-title" id="source-modal-title">Quick question</div>
       <div class="modal-subtitle" id="source-modal-subtitle">How did you find Attendance Tracker? Helps me figure out where to focus.</div>
       <select id="source-modal-select" class="match-select" onchange="onSourceSelectChange()" style="margin-bottom:10px">
-        <option value="" disabled selected>Pick one…</option>
-        <option value="google_search">Google search</option>
-        <option value="marketplace">Workspace Marketplace</option>
+        <option value="" disabled selected data-i18n="source.pickOne">Pick one…</option>
+        <option value="google_search" data-i18n="source.google">Google search</option>
+        <option value="marketplace" data-i18n="source.marketplace">Workspace Marketplace</option>
         <option value="reddit">Reddit</option>
         <option value="youtube">YouTube</option>
-        <option value="friend">Friend / colleague</option>
-        <option value="other">Other</option>
+        <option value="friend" data-i18n="source.friend">Friend / colleague</option>
+        <option value="other" data-i18n="common.other">Other</option>
       </select>
       <div id="source-modal-other-wrap" style="display:none;margin-bottom:10px">
         <input id="source-modal-other" type="text" class="match-override" placeholder="Where did you hear about it?" maxlength="200" />
       </div>
       <div class="modal-actions">
-        <button class="btn-secondary" onclick="closeSourceModal()">Skip</button>
-        <button class="btn-primary" onclick="submitSource()">Submit</button>
+        <button class="btn-secondary" onclick="closeSourceModal()" data-i18n="common.skip">Skip</button>
+        <button class="btn-primary" onclick="submitSource()" data-i18n="source.submit">Submit</button>
       </div>
     </div>
   </div>
