@@ -2155,9 +2155,22 @@ function renderRosterView() {
   container.innerHTML = html;
 }
 
-// Shared blob-download driver for the CSV variants below.
-function triggerCsvDownload(csvContent, filename) {
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+// Shared download driver. Inside the Meet add-on iframe the sandbox lacks
+// allow-downloads, so Chrome (83+) silently swallows anchor-click downloads —
+// hand the payload to a top-level tab via localStorage + download.html, where
+// downloads work. Outside an iframe (or if the relay fails), download directly.
+function relayDownload(payload) {
+  if (window === window.top) return false;
+  try {
+    localStorage.setItem('attPendingDownload', JSON.stringify(payload));
+    const w = window.open('download.html', '_blank');
+    if (w) return true;
+    localStorage.removeItem('attPendingDownload'); // popup blocked — clean up
+  } catch (e) { /* storage blocked/full — fall through to direct attempt */ }
+  return false;
+}
+
+function directBlobDownload(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -2165,7 +2178,12 @@ function triggerCsvDownload(csvContent, filename) {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+function triggerCsvDownload(csvContent, filename) {
+  if (relayDownload({ filename, mime: 'text/csv;charset=utf-8;', content: csvContent, encoding: 'text' })) return;
+  directBlobDownload(new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }), filename);
 }
 
 // Common inputs for the CSV builders, derived from live tracking state.
@@ -4501,14 +4519,20 @@ async function _downloadPdf({ type, filenameBase, event }) {
       return false;
     }
     const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${filenameBase}-${String(ex.meetingTitle || 'meeting').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 40) || 'meeting'}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    const filename = `${filenameBase}-${String(ex.meetingTitle || 'meeting').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 40) || 'meeting'}.pdf`;
+    // Same iframe-sandbox problem as CSV: relay through download.html when
+    // in the Meet panel. PDFs are binary, so base64-encode for localStorage.
+    let relayed = false;
+    if (window !== window.top) {
+      try {
+        const buf = new Uint8Array(await blob.arrayBuffer());
+        let bin = '';
+        const CHUNK = 0x8000;
+        for (let i = 0; i < buf.length; i += CHUNK) bin += String.fromCharCode.apply(null, buf.subarray(i, i + CHUNK));
+        relayed = relayDownload({ filename, mime: 'application/pdf', content: btoa(bin), encoding: 'base64' });
+      } catch (e) { /* oversized for localStorage — fall through */ }
+    }
+    if (!relayed) directBlobDownload(blob, filename);
     try { logUserEvent(event, {}); } catch (e) { /* best-effort */ }
     return true;
   } catch (e) {

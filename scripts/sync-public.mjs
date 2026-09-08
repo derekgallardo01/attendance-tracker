@@ -61,6 +61,7 @@ const MIRRORED = [
   'setup.html',
   'share.html',
   'verify.html',
+  'download.html',
   'support.html',
   'team.html',
   'terms.html',
