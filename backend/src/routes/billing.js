@@ -109,6 +109,16 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
       sessionParams.subscription_data = { metadata: meta };
     } else {
       sessionParams.payment_intent_data = { metadata: meta };
+      // Payment mode doesn't create a Stripe customer by default, which leaves
+      // stripeCustomerId null in the webhook → the billing portal (receipts,
+      // payment history) 404s for one-time buyers. Always create one.
+      sessionParams.customer_creation = 'always';
+    }
+    if (isEducator && !isRecurring) {
+      // The educator plan is sold as an ANNUAL pass — a one-time price never
+      // renews (and never emits subscription webhooks), so a misconfigured
+      // STRIPE_EDUCATOR_PRICE_ID silently turns annual revenue into lifetime.
+      log.warn('billing: educator price is one-time, not recurring — annual pass will not renew', { priceId });
     }
 
     const session = await stripe.checkout.sessions.create(sessionParams);
@@ -187,6 +197,12 @@ router.post('/billing/public-checkout', async (req, res) => {
       sessionParams.subscription_data = { metadata: meta };
     } else {
       sessionParams.payment_intent_data = { metadata: meta };
+      // Same as the authed checkout: make one-time purchases create a Stripe
+      // customer so the buyer's portal (receipts) works post-purchase.
+      sessionParams.customer_creation = 'always';
+    }
+    if (isEducator && !isRecurring) {
+      log.warn('billing: educator price is one-time, not recurring — annual pass will not renew', { priceId });
     }
 
     const session = await stripe.checkout.sessions.create(sessionParams);

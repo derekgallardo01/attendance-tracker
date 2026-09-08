@@ -3410,12 +3410,21 @@ async function loadBillingStatus() {
       nameEl.style.background = _isPro ? 'rgba(74,222,128,.15)' : 'rgba(255,255,255,.08)';
       nameEl.style.color = _isPro ? '#4ade80' : '#8b949e';
     }
-    if (btn) btn.textContent = _isPro ? 'Manage billing' : 'Upgrade to Pro';
+    // One-time purchases (lifetime/educator pass) made before customer_creation
+    // was enabled have no Stripe customer, so the portal would 404 — hide the
+    // button rather than dead-end a paying user.
+    const hasPortal = !_isPro || !!data.stripeCustomerId;
+    if (btn) {
+      btn.textContent = _isPro ? 'Manage billing' : 'Upgrade to Pro';
+      btn.style.display = hasPortal ? '' : 'none';
+    }
     // Tier-aware copy: personal-Gmail users buy the individual plan (class report
     // + auto-export + digests); Workspace domains buy the org/team plan.
-    if (descEl) descEl.textContent = data.individual
-      ? 'Pro unlocks the cumulative per-student class report, auto-export, and email digests.'
-      : 'Pro unlocks the org-wide team dashboard and auto-export for your whole domain.';
+    if (descEl) descEl.textContent = (_isPro && !hasPortal)
+      ? 'Your Pro pass is active on this account. Need a receipt or help with billing? Reply to your purchase email or contact support.'
+      : (data.individual
+        ? 'Pro unlocks the cumulative per-student class report, auto-export, and email digests.'
+        : 'Pro unlocks the org-wide team dashboard and auto-export for your whole domain.');
     box.style.display = 'block';
   } catch { /* leave hidden on error */ }
 }
@@ -3435,25 +3444,54 @@ function updateQuotaIndicator(used, limit) {
   indicator.style.display = 'flex';
 }
 
+// Inside the Meet iframe, checkout/portal URLs must open in a new tab — but
+// window.open AFTER an awaited fetch can fall outside the browser's user-
+// activation window and get silently popup-blocked (the button just looks like
+// it did nothing, so users click again). Open a placeholder tab synchronously
+// in the click handler, then navigate it once the URL arrives.
+function openBillingTab() {
+  if (window.self === window.top) return null; // top-level: caller redirects
+  const w = window.open('about:blank', '_blank');
+  if (w) { try { w.opener = null; } catch {} }
+  return w; // null → popup blocked
+}
+function navigateBillingTab(tab, url) {
+  if (window.self !== window.top) {
+    if (tab && !tab.closed) { tab.location.href = url; return true; }
+    // Placeholder was blocked or closed — try a direct open as a fallback.
+    const w = window.open(url, '_blank', 'noopener,noreferrer');
+    if (!w) {
+      try { logUserEvent('checkout_open_blocked', {}); } catch {}
+      toast('Your browser blocked the checkout tab. Please allow pop-ups for Meet and try again.');
+      return false;
+    }
+    return true;
+  }
+  window.location.href = url;
+  return true;
+}
+function closeBillingTab(tab) {
+  if (tab && !tab.closed) { try { tab.close(); } catch {} }
+}
+
 // Upgrade (free) → opens Upgrade Modal; manage (pro) → Customer Portal. Both return a URL
 // to redirect the current tab to.
 async function handleBillingClick() {
   if (_isPro) {
     const btn = document.getElementById('settings-billing-btn');
     if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
+    const tab = openBillingTab();
     try {
       const res = await authFetch(`${state.backendUrl}/billing/portal`);
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.url) {
-        if (window.self !== window.top) {
-          window.open(data.url, '_blank', 'noopener,noreferrer');
-        } else {
-          window.location.href = data.url;
-        }
+        navigateBillingTab(tab, data.url);
         return;
       }
+      closeBillingTab(tab);
       toast(data.error || 'Billing is unavailable right now.');
     } catch {
+      closeBillingTab(tab);
       toast('Could not reach billing.');
     } finally {
       if (btn) { btn.disabled = false; btn.textContent = 'Manage billing'; }
@@ -3474,6 +3512,7 @@ async function startUpgradeCheckout(plan, btnId) {
   const btn = btnId ? document.getElementById(btnId) : null;
   const originalText = btn ? btn.textContent : '';
   if (btn) { btn.disabled = true; btn.textContent = 'Connecting to Stripe…'; }
+  const tab = openBillingTab();
   try {
     const res = await authFetch(`${state.backendUrl}/billing/checkout`, {
       method: 'POST',
@@ -3482,19 +3521,47 @@ async function startUpgradeCheckout(plan, btnId) {
     });
     const data = await res.json().catch(() => ({}));
     if (res.ok && data.url) {
-      if (window.self !== window.top) {
-        window.open(data.url, '_blank', 'noopener,noreferrer');
-      } else {
-        window.location.href = data.url;
-      }
+      if (navigateBillingTab(tab, data.url)) watchForUpgradeCompletion();
       return;
     }
+    closeBillingTab(tab);
     toast(data.error || 'Billing is unavailable right now.');
   } catch {
+    closeBillingTab(tab);
     toast('Could not reach billing.');
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = originalText; }
   }
+}
+
+// Checkout happens in another tab, so the add-on iframe never sees the
+// success redirect — poll billing status until the webhook flips the plan,
+// then close the upgrade modal and refresh the Pro UI in place. (Our first
+// customer paid mid-meeting and the upgrade modal just sat there until they
+// dismissed it by hand four minutes later.)
+let _upgradeWatchTimer = null;
+function watchForUpgradeCompletion() {
+  if (_upgradeWatchTimer) return; // already watching
+  const startedAt = Date.now();
+  _upgradeWatchTimer = setInterval(async () => {
+    if (Date.now() - startedAt > 10 * 60 * 1000) { // give up after 10 min
+      clearInterval(_upgradeWatchTimer);
+      _upgradeWatchTimer = null;
+      return;
+    }
+    try {
+      const res = await authFetch(`${state.backendUrl}/billing/status`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.plan !== 'pro') return;
+      clearInterval(_upgradeWatchTimer);
+      _upgradeWatchTimer = null;
+      const modal = document.getElementById('upgrade-modal');
+      if (modal && modal.style.display !== 'none') modal.style.display = 'none';
+      await loadBillingStatus();
+      toast('You’re Pro now — thanks for upgrading! 🎉');
+    } catch { /* transient — next tick retries */ }
+  }, 5000);
 }
 
 function showUpgradeModal(reason) {

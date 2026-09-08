@@ -557,7 +557,28 @@ describe('billing — one-time lifetime payment mode', () => {
     expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(expect.objectContaining({
       mode: 'payment',
       payment_intent_data: expect.objectContaining({ metadata: expect.objectContaining({ domain: 'acme.com' }) }),
+      // Payment mode must create a Stripe customer, or the buyer's billing
+      // portal 404s forever (no customer id ever reaches the webhook).
+      customer_creation: 'always',
     }));
+  });
+
+  test('subscription mode does not send customer_creation', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_PRICE_ID = 'price_sub_999';
+    mockStripeInstance.prices.retrieve.mockResolvedValueOnce({ id: 'price_sub_999', type: 'recurring', recurring: { interval: 'month' } });
+    mockStripeInstance.checkout.sessions.create.mockResolvedValueOnce({ url: 'https://checkout.stripe.com/sub' });
+
+    const res = await request(app)
+      .post('/api/billing/checkout')
+      .set(authedHeader('admin@acme.com', 'acme.com'))
+      .send({});
+
+    expect(res.status).toBe(200);
+    const params = mockStripeInstance.checkout.sessions.create.mock.calls.at(-1)[0];
+    expect(params.mode).toBe('subscription');
+    // Stripe rejects customer_creation in subscription mode — it must be absent.
+    expect(params).not.toHaveProperty('customer_creation');
   });
 });
 
@@ -577,6 +598,7 @@ describe('billing — public-checkout for marketing pages', () => {
     expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(expect.objectContaining({
       customer_email: 'teacher@school.edu',
       client_reference_id: 'user:teacher@school.edu',
+      customer_creation: 'always', // lifetime = payment mode → must create a customer
     }));
   });
 

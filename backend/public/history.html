@@ -443,8 +443,12 @@
         text.textContent = t('history.seriesProActive', 'Pro — cumulative class attendance reports are added to every export.');
         btn.textContent = t('history.manageBilling', 'Manage billing');
         btn.dataset.mode = 'portal';
+        // One-time buyers (lifetime/educator pass) may have no Stripe customer,
+        // so the portal 404s — hide the button instead of dead-ending them.
+        btn.style.display = status.stripeCustomerId ? '' : 'none';
         if (toggle) toggle.style.display = 'none';
       } else {
+        btn.style.display = '';
         text.textContent = t('history.seriesProText', 'Pro adds a cumulative "Class Summary" tab to your export — per-student attendance % across every session of a recurring class.');
         btn.textContent = t('history.upgradeToPro', 'Upgrade to Pro');
         btn.dataset.mode = 'checkout';
