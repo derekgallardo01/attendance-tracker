@@ -90,7 +90,14 @@ Google Meet™, Google Sheets™, Google Drive™, Google Calendar™, Google Cl
 ---
 
 ## 4. Screenshot Recommendations (Upload to Store Listing)
+
+Current files (captured 2026-08-09 — they predate the Classroom import, gradebook exports, and webhook card; refresh when convenient):
+
 1. **Screenshot 1**: Live In-Meeting Roster (`screenshots/01-live-roster.jpg`) — *Caption: "Real-time Google Meet side panel attendance roster"*
-2. **Screenshot 2**: Google Sheets Auto-Export (`screenshots/03-sheets-export.jpg`) — *Caption: "One-click formatted Google Sheets export with join/leave times"*
-3. **Screenshot 3**: Recurring Semester Trends (`screenshots/04-class-attendance.jpg`) — *Caption: "Multi-session attendance percentages and streaks"*
-4. **Screenshot 4**: Slack & Email Digest Modal (`screenshots/02-export-modal.jpg`) — *Caption: "Automated Slack post-meeting summary cards"*
+2. **Screenshot 2**: Google Sheets Auto-Export (`screenshots/02-sheets-export.jpg`) — *Caption: "One-click formatted Google Sheets export with join/leave times"*
+3. **Screenshot 3**: Late Arrivals & No-Shows (`screenshots/03-late-no-shows.jpg`) — *Caption: "Automatic late flags and absent-invitee detection"*
+4. **Screenshot 4**: Recurring Semester Trends (`screenshots/04-class-attendance.jpg`) — *Caption: "Multi-session attendance percentages and streaks"*
+
+Wanted (not yet captured — would showcase the newest features):
+5. Roster tab with **Import from Google Classroom** button + **Export gradebook CSV: Moodle · Canvas** row — *Caption: "One-click Google Classroom roster import and Moodle/Canvas gradebook exports"*
+6. Settings modal **Chat digest webhooks** card (Slack / Google Chat / Discord tabs) — *Caption: "Automated post-meeting digests to Slack, Google Chat, or Discord"*
