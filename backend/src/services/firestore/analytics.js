@@ -1417,6 +1417,145 @@ async function getActivityPulse() {
   }
 }
 
+// ── Admin: revenue funnel ──
+// "Why haven't they subscribed?" — assembles the paid-conversion story from
+// events already logged: activated → saw a Pro gate → clicked checkout →
+// paid (30d window; paid also counted all-time), per-trigger conversion,
+// conversion by country, the CSV quota-leak, and the warm-but-stuck list
+// (3+ paywall views, zero checkouts). Full scan, memoized at the export.
+const GATE_VIEW_TYPES = new Set(['upgrade_modal_shown', 'quota_warning_shown', 'series_csv_gate_shown']);
+const CHECKOUT_CLICK_TYPES = new Set(['upgrade_checkout_clicked', 'quota_upgrade_clicked']);
+
+async function getRevenueFunnel({ days = 30 } = {}) {
+  try {
+    const now = Date.now();
+    const cutoff = now - days * 24 * 60 * 60 * 1000;
+    const [eventsSnap, usersSnap] = await Promise.all([
+      getDb().collectionGroup('events').get(),
+      getDb().collectionGroup('users').get(),
+    ]);
+
+    // Users: identity, geo, and the authoritative paid flag (the user doc,
+    // stamped by the Stripe webhook — events are the fallback).
+    const usersByEmail = {};
+    for (const d of usersSnap.docs) {
+      const u = d.data();
+      const email = d.id;
+      if (email === SUPER_ADMIN_EMAIL) continue;
+      const domain = d.ref.parent.parent.id;
+      if (FUNNEL_EXCLUDED_DOMAINS.has(domain)) continue;
+      usersByEmail[email] = {
+        email, domain,
+        displayName: u.displayName || '',
+        country: u.signupGeo?.country || null,
+        paid: u.individualPlan === 'pro',
+      };
+    }
+
+    const per = {}; // email → per-user rollup
+    const row = (email) => (per[email] ||= {
+      activated: false, gateViews: 0, gateTypes: {}, clicked: false, paidEvent: false,
+      lastGateAt: 0, lastQuotaAt: 0, quotaLeak: false,
+    });
+    const triggers = {}; // trigger label → { shown:Set, clicked:Set, paid:Set }
+    const trig = (t) => (triggers[t] ||= { shown: new Set(), clicked: new Set(), paid: new Set() });
+    const objections = {};
+    const planMix = {};
+
+    for (const d of eventsSnap.docs) {
+      const e = d.data();
+      const ts = tsMs(e.createdAt) || 0;
+      const email = e.email;
+      if (!email || !usersByEmail[email]) continue;
+      const r = row(email);
+
+      if (e.type === 'upgraded') {
+        r.paidEvent = true;
+        const plan = e.meta?.plan || 'unknown';
+        planMix[plan] = (planMix[plan] || 0) + 1;
+      }
+      if (ts < cutoff) continue;
+
+      if (e.type === 'tracked') r.activated = true;
+      if (GATE_VIEW_TYPES.has(e.type)) {
+        r.gateViews++;
+        if (ts > r.lastGateAt) r.lastGateAt = ts;
+        // quota warnings carry no reason meta; label gates by their type or
+        // the modal's reason so the table shows WHICH gate was hit.
+        const label = e.type === 'upgrade_modal_shown' ? (e.meta?.reason || 'manual')
+          : e.type === 'quota_warning_shown' ? 'sheets_quota'
+          : 'series_csv_gate';
+        r.gateTypes[label] = (r.gateTypes[label] || 0) + 1;
+        trig(label).shown.add(email);
+        if (e.type === 'quota_warning_shown') r.lastQuotaAt = ts;
+      }
+      if (CHECKOUT_CLICK_TYPES.has(e.type)) r.clicked = true;
+      // Quota leak: CSV download within 30 min of a quota warning — the free
+      // escape hatch that makes the Sheets quota a redirect, not a paywall.
+      if (e.type === 'export_csv_downloaded' && r.lastQuotaAt && ts - r.lastQuotaAt < 30 * 60 * 1000) {
+        r.quotaLeak = true;
+      }
+      if (e.type === 'paywall_objection') {
+        const reason = String(e.meta?.reason || 'other').slice(0, 40);
+        objections[reason] = (objections[reason] || 0) + 1;
+      }
+    }
+
+    const funnel = { activated: 0, sawGate: 0, clickedCheckout: 0, paid30d: 0, paidEver: 0 };
+    const byCountry = {};
+    const warmStuck = [];
+    let quotaLeakUsers = 0;
+
+    for (const [email, r] of Object.entries(per)) {
+      const u = usersByEmail[email];
+      const paidEver = u.paid || r.paidEvent;
+      if (paidEver) funnel.paidEver++;
+      if (r.activated) funnel.activated++;
+      if (r.quotaLeak) quotaLeakUsers++;
+      if (r.gateViews > 0) {
+        funnel.sawGate++;
+        if (r.clicked) funnel.clickedCheckout++;
+        if (r.clicked && paidEver) funnel.paid30d++;
+        const c = u.country || 'Unknown';
+        const cr = (byCountry[c] ||= { country: c, sawGate: 0, clicked: 0, paid: 0 });
+        cr.sawGate++;
+        if (r.clicked) cr.clicked++;
+        if (paidEver) cr.paid++;
+        for (const label of Object.keys(r.gateTypes)) {
+          if (r.clicked) trig(label).clicked.add(email);
+          if (paidEver) trig(label).paid.add(email);
+        }
+        if (r.gateViews >= 3 && !r.clicked && !paidEver) {
+          const topTrigger = Object.entries(r.gateTypes).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+          warmStuck.push({
+            email, domain: u.domain, displayName: u.displayName, country: u.country,
+            views: r.gateViews, topTrigger,
+            lastGateAt: r.lastGateAt ? new Date(r.lastGateAt).toISOString() : null,
+          });
+        }
+      }
+    }
+    warmStuck.sort((a, b) => b.views - a.views);
+
+    return {
+      generatedAt: new Date(now).toISOString(),
+      windowDays: days,
+      funnel,
+      triggers: Object.entries(triggers).map(([trigger, v]) => ({
+        trigger, shown: v.shown.size, clicked: v.clicked.size, paid: v.paid.size,
+      })).sort((a, b) => b.shown - a.shown),
+      byCountry: Object.values(byCountry).sort((a, b) => b.sawGate - a.sawGate),
+      quotaLeakUsers,
+      warmStuck: warmStuck.slice(0, 50),
+      objections,
+      planMix,
+    };
+  } catch (err) {
+    log.error('firestore: getRevenueFunnel failed', { error: err.message });
+    return null;
+  }
+}
+
 module.exports = {
-  getActivationFunnel, getAggregatedInsights, getWeeklySelfReport, getAdvancedAnalytics, getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, markUserContacted, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, getOutreachList, getActivityPulse,
+  getActivationFunnel, getAggregatedInsights, getWeeklySelfReport, getAdvancedAnalytics, getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, markUserContacted, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, getOutreachList, getActivityPulse, getRevenueFunnel,
 };

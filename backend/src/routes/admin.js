@@ -2,7 +2,7 @@ const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance } = require('../services/firestore');
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getRevenueFunnel, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance } = require('../services/firestore');
 const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, flushDeferredNotifications } = require('../lib/notifications');
 const { requireSuperAdmin, requireSuperAdminOrScheduler, requireKhMetricsKey } = require('../middleware/adminAuth');
 const { requireAuth } = require('../middleware/auth');
@@ -223,6 +223,22 @@ router.get('/admin/pulse', requireSuperAdmin, async (req, res) => {
   } catch (err) {
     log.error('admin: pulse failed', { error: err.message });
     res.status(500).json({ error: 'Failed to compute pulse' });
+  }
+});
+
+// GET /api/admin/revenue-funnel — the paid-conversion story: activated →
+// saw gate → clicked checkout → paid, per-trigger and per-country, plus the
+// CSV quota-leak and the warm-but-stuck outreach list.
+router.get('/admin/revenue-funnel', requireSuperAdmin, async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  try {
+    const days = Math.max(7, Math.min(90, Number(req.query.days) || 30));
+    const data = await getRevenueFunnel({ days });
+    if (!data) return res.status(500).json({ error: 'Failed to compute revenue funnel' });
+    res.json(data);
+  } catch (err) {
+    log.error('admin: revenue-funnel failed', { error: err.message });
+    res.status(500).json({ error: 'Failed to compute revenue funnel' });
   }
 });
 

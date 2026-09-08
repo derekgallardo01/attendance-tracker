@@ -264,6 +264,7 @@
         <button class="admin-tab" data-tab="users" onclick="switchAdminTab('users')">👥 Users</button>
         <button class="admin-tab" data-tab="orgs" onclick="switchAdminTab('orgs')">🏢 Organizations</button>
         <button class="admin-tab" data-tab="analytics" onclick="switchAdminTab('analytics')">📈 Analytics</button>
+        <button class="admin-tab" data-tab="revenue" onclick="switchAdminTab('revenue')" id="tab-btn-revenue" style="display:none">💰 Revenue</button>
       </div>
 
       <div class="stats-grid tab-pane tp-overview active">
@@ -653,6 +654,56 @@
         </p>
       </div>
 
+      <!-- Revenue tab: the "why haven't they subscribed" story -->
+      <div class="section tab-pane tp-revenue" id="revenue-section">
+        <h2 style="display:flex;justify-content:space-between;align-items:center">
+          <span>💰 Paid-conversion funnel <span style="color:var(--muted);font-weight:400;font-size:.75rem">last 30 days · "paid" counts all-time subscribers</span></span>
+          <span style="font-size:.7rem;color:var(--muted);font-weight:400" id="revenue-stamp">—</span>
+        </h2>
+        <div id="revenue-funnel-bars"><div style="color:var(--muted);font-size:.85rem">Crunching the event log — first load takes ~15s, then it's cached…</div></div>
+        <div id="revenue-conversion-note" style="color:var(--muted);font-size:.8rem;margin-top:10px"></div>
+      </div>
+
+      <div class="tab-pane tp-revenue" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(460px,1fr));gap:16px;margin-bottom:24px">
+        <div class="section" style="margin-bottom:0">
+          <h2>Which gate sells <span style="color:var(--muted);font-weight:400;font-size:.75rem">— users shown → clicked → paid</span></h2>
+          <table>
+            <thead><tr><th>Gate</th><th>Shown</th><th>Clicked</th><th>Paid</th><th>Click rate</th></tr></thead>
+            <tbody id="revenue-trigger-rows"><tr><td colspan="5" style="color:var(--muted)">Loading…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="section" style="margin-bottom:0">
+          <h2>Conversion by country <span style="color:var(--muted);font-weight:400;font-size:.75rem">— of users who saw a gate</span></h2>
+          <div class="table-scroll" style="max-height:340px">
+          <table>
+            <thead><tr><th>Country</th><th>Saw gate</th><th>Clicked</th><th>Paid</th></tr></thead>
+            <tbody id="revenue-country-rows"><tr><td colspan="4" style="color:var(--muted)">Loading…</td></tr></tbody>
+          </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane tp-revenue" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(460px,1fr));gap:16px;margin-bottom:24px">
+        <div class="section" style="margin-bottom:0">
+          <h2 style="display:flex;justify-content:space-between;align-items:center">
+            <span>🔥 Warm but stuck <span style="color:var(--muted);font-weight:400;font-size:.75rem">— 3+ paywall views, never clicked · click a row</span></span>
+            <span style="font-size:.7rem;color:var(--muted);font-weight:400" id="revenue-stuck-count">—</span>
+          </h2>
+          <div class="table-scroll" style="max-height:340px">
+          <table>
+            <thead><tr><th>User</th><th>Country</th><th>Views</th><th>Top gate</th><th>Last seen</th></tr></thead>
+            <tbody id="revenue-stuck-rows"><tr><td colspan="5" style="color:var(--muted)">Loading…</td></tr></tbody>
+          </table>
+          </div>
+        </div>
+        <div class="section" style="margin-bottom:0">
+          <h2>Objections &amp; leaks</h2>
+          <div style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">"What's holding you back?" answers</div>
+          <div id="revenue-objections" style="margin-bottom:16px"></div>
+          <div id="revenue-planmix" style="font-size:.85rem;color:#c9d1d9"></div>
+        </div>
+      </div>
+
       <!-- Super admin only: all users across all tenants -->
       <div class="section tab-pane tp-users" id="all-users-section" style="display:none">
         <h2>All Users <span id="all-users-count" style="color:var(--muted);font-weight:400;font-size:.8rem"></span></h2>
@@ -843,10 +894,12 @@
           document.getElementById('founder-tools').style.display = 'flex';
           document.getElementById('founder-section').style.display = 'block';
           document.getElementById('analytics-section').style.display = 'block';
+          document.getElementById('tab-btn-revenue').style.display = '';
           loadSuggestions();
           loadPulse();
           loadActivity();
           loadPowerUsers();
+          loadRevenue();
           loadAllUsers();
           loadInsights();
           loadAnalytics();
@@ -1138,6 +1191,76 @@
       try { saved = localStorage.getItem('adminTab') || 'overview'; } catch (e) { /* ignore */ }
       if (!document.querySelector(`.admin-tab[data-tab="${saved}"]`)) saved = 'overview';
       switchAdminTab(saved);
+    }
+
+    // ── Revenue funnel: why haven't they subscribed ──
+    async function loadRevenue() {
+      const bars = document.getElementById('revenue-funnel-bars');
+      try {
+        const res = await fetch(`${BACKEND_URL}/admin/revenue-funnel`, { headers: { Authorization: `Bearer ${sessionToken}` } });
+        if (!res.ok) {
+          if (bars) bars.innerHTML = `<div style="color:var(--error);font-size:.85rem">Failed to load (HTTP ${res.status}) — hit Refresh to retry.</div>`;
+          return;
+        }
+        const r = await res.json();
+        document.getElementById('revenue-stamp').textContent = `Updated ${new Date().toLocaleTimeString()}`;
+
+        const f = r.funnel;
+        const base = f.activated || 1;
+        bars.innerHTML = [
+          ['Activated (tracked in window)', f.activated, 'var(--blue)'],
+          ['Saw a Pro gate', f.sawGate, 'var(--accent)'],
+          ['Clicked checkout', f.clickedCheckout, '#fbbf24'],
+          ['Paid', f.paid30d, '#a78bfa'],
+        ].map(([label, v, color]) => {
+          const w = Math.round(((v || 0) / base) * 100);
+          return `<div style="margin:6px 0">
+            <div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:2px"><span>${label}</span><span style="color:var(--muted)">${v || 0} (${w}%)</span></div>
+            <div style="background:var(--border);border-radius:4px;height:16px;overflow:hidden"><div style="width:${Math.max(2, w)}%;background:${color};height:100%"></div></div>
+          </div>`;
+        }).join('');
+
+        const pctOf = (a, b) => b ? Math.round((a / b) * 100) + '%' : '—';
+        document.getElementById('revenue-conversion-note').innerHTML =
+          `Gate exposure: <strong>${pctOf(f.sawGate, f.activated)}</strong> of activated users · ` +
+          `gate → checkout: <strong>${pctOf(f.clickedCheckout, f.sawGate)}</strong> · ` +
+          `checkout → paid: <strong>${pctOf(f.paid30d, f.clickedCheckout)}</strong> · ` +
+          `<strong style="color:var(--accent)">${f.paidEver} paid all-time</strong> · ` +
+          `quota-leak (hit quota, took the free CSV instead): <strong style="color:#fbbf24">${r.quotaLeakUsers} users</strong>`;
+
+        document.getElementById('revenue-trigger-rows').innerHTML = r.triggers.length ? r.triggers.map(t =>
+          `<tr><td>${esc(t.trigger)}</td><td>${t.shown}</td><td>${t.clicked}</td><td>${t.paid ? `<strong style="color:var(--accent)">${t.paid}</strong>` : '0'}</td><td style="color:var(--muted)">${t.shown ? Math.round((t.clicked / t.shown) * 100) : 0}%</td></tr>`
+        ).join('') : '<tr><td colspan="5" style="color:var(--muted)">No gate views in the window</td></tr>';
+
+        document.getElementById('revenue-country-rows').innerHTML = r.byCountry.length ? r.byCountry.map(c =>
+          `<tr><td>${c.country === 'Unknown' ? '🌐 Unknown' : flagEmoji(c.country) + ' ' + esc(c.country)}</td><td>${c.sawGate}</td><td>${c.clicked}</td><td>${c.paid ? `<strong style="color:var(--accent)">${c.paid}</strong>` : '0'}</td></tr>`
+        ).join('') : '<tr><td colspan="4" style="color:var(--muted)">No data</td></tr>';
+
+        document.getElementById('revenue-stuck-count').textContent = `${r.warmStuck.length} users`;
+        document.getElementById('revenue-stuck-rows').innerHTML = r.warmStuck.length ? r.warmStuck.map(u =>
+          `<tr onclick="openUserModal('${esc(u.email)}','${esc(u.domain)}')" style="cursor:pointer">
+            <td>${esc(u.displayName || u.email)}<div style="font-size:.7rem;color:var(--muted)">${esc(u.email)}</div></td>
+            <td>${u.country ? flagEmoji(u.country) + ' ' + esc(u.country) : '—'}</td>
+            <td><strong>${u.views}</strong></td>
+            <td style="color:var(--muted);font-size:.8rem">${esc(u.topTrigger || '—')}</td>
+            <td style="color:var(--muted);font-size:.8rem">${u.lastGateAt ? timeAgo(u.lastGateAt) : '—'}</td>
+          </tr>`
+        ).join('') : '<tr><td colspan="5" style="color:var(--muted)">Nobody stuck yet — users either click or haven\'t seen a gate 3+ times</td></tr>';
+
+        const obj = Object.entries(r.objections || {}).sort((a, b) => b[1] - a[1]);
+        const objLabels = { price: 'Too expensive', no_need: "Don't need Pro features", deciding: 'Still deciding', other: 'Other' };
+        document.getElementById('revenue-objections').innerHTML = obj.length
+          ? obj.map(([k, v]) => `<div style="display:flex;justify-content:space-between;font-size:.85rem;padding:4px 0;border-bottom:1px solid var(--border)"><span>${esc(objLabels[k] || k)}</span><strong>${v}</strong></div>`).join('')
+          : '<div style="color:var(--muted);font-size:.85rem">No answers yet — the question appears after a user\'s 3rd paywall dismissal.</div>';
+
+        const mix = Object.entries(r.planMix || {});
+        document.getElementById('revenue-planmix').innerHTML = mix.length
+          ? '<strong>Plan mix:</strong> ' + mix.map(([k, v]) => `${esc(k)} × ${v}`).join(' · ')
+          : '';
+      } catch (err) {
+        console.error('revenue load failed:', err);
+        if (bars) bars.innerHTML = '<div style="color:var(--error);font-size:.85rem">Failed to load — hit Refresh to retry.</div>';
+      }
     }
 
     async function loadPulse() {

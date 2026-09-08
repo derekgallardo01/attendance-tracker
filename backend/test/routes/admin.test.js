@@ -16,6 +16,7 @@ jest.mock('../../src/services/firestore', () => ({
   getOutreachList: jest.fn(),
   getRecentActivity: jest.fn(),
   getActivityPulse: jest.fn(),
+  getRevenueFunnel: jest.fn(),
   getReachOutSuggestions: jest.fn(),
   getPowerUserPipeline: jest.fn(),
   markUserContacted: jest.fn(),
@@ -1348,5 +1349,23 @@ describe('PUT /api/admin/note — save private admin note about a user', () => {
       .send({ email: 'x@y.com', domain: 'y.com' }); // no body → clear
     expect(res.status).toBe(200);
     expect(firestore.setAdminNote).toHaveBeenCalledWith('y.com', 'x@y.com', '', SUPER_ADMIN);
+  });
+});
+
+describe('GET /admin/revenue-funnel', () => {
+  const admin = () => authedHeader(SUPER_ADMIN, 'gmail.com');
+  test('returns the rollup with no-store and a clamped window', async () => {
+    firestore.getRevenueFunnel.mockResolvedValue({ funnel: { paidEver: 2 } });
+    const res = await request(app).get('/api/admin/revenue-funnel?days=999').set(admin());
+    expect(res.status).toBe(200);
+    expect(res.body.funnel.paidEver).toBe(2);
+    expect(res.headers['cache-control']).toContain('no-store');
+    expect(firestore.getRevenueFunnel).toHaveBeenCalledWith({ days: 90 });
+  });
+
+  test('maps a null rollup (service failure) to 500', async () => {
+    firestore.getRevenueFunnel.mockResolvedValue(null);
+    const res = await request(app).get('/api/admin/revenue-funnel').set(admin());
+    expect(res.status).toBe(500);
   });
 });

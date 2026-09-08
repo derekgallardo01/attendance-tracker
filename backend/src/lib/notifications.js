@@ -562,6 +562,7 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
         The sheet lives in your Drive folder "Meet Attendance Tracker" — reuse the same
         spreadsheet next time, each meeting gets its own tab.
       </p>
+      ${unsubscribeFooter(to).html}
     </div>
   `;
 
@@ -583,6 +584,7 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
     ``,
     `Did this save you time today? Leave a quick 5-star review (takes 10s):`,
     reviewUrl,
+    unsubscribeFooter(to).text,
   ].filter(Boolean).join('\n');
 
   return dispatchEmail({

@@ -919,3 +919,17 @@ describe('POST /api/save-to-sheets — Checked In column (self-check-in)', () =>
     expect(noShow).toHaveLength(header.length);
   });
 });
+
+describe('POST /api/save-to-sheets — owner unsubscribe honored', () => {
+  test('an opted-out owner gets no export email (and no extras fan-out)', async () => {
+    firestore.isEmailSuppressed.mockImplementation(async (email) => email === 'user@acme.com');
+    firestore.getUserSettings.mockResolvedValue({ digestExtraEmails: ['co@acme.com'] });
+    await request(app)
+      .post('/api/save-to-sheets')
+      .set(authedHeader('user@acme.com', 'acme.com'))
+      .set('Content-Type', 'application/json')
+      .send({ ...validPayload, sendEmail: true, autoExport: true });
+    await new Promise((r) => setImmediate(r));
+    expect(notifications.sendExportNotification).not.toHaveBeenCalled();
+  });
+});

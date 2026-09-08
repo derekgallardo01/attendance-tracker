@@ -708,3 +708,71 @@ describe('getActivityPulse', () => {
     expect(p.checkins24h).toBe(1);    // the 2-day-old check-in doesn't count
   });
 });
+
+// ═══════════════════════════ revenue funnel ═══════════════════════════
+
+describe('getRevenueFunnel', () => {
+  test('returns an empty-but-shaped payload for an empty store', async () => {
+    const r = await firestore.getRevenueFunnel({ days: 30 });
+    expect(r.funnel).toEqual({ activated: 0, sawGate: 0, clickedCheckout: 0, paid30d: 0, paidEver: 0 });
+    expect(r.triggers).toEqual([]);
+    expect(r.warmStuck).toEqual([]);
+  });
+
+  test('assembles the full story: funnel, triggers, countries, leak, stuck, objections, plan mix', async () => {
+    const now = Date.now();
+    const HOUR = 3600 * 1000;
+    // Buyer: activated → saw the auto-export gate → clicked → paid.
+    seedUser('a.com', 'buyer@a.com', { individualPlan: 'pro', signupGeo: { country: 'US' } });
+    seedEvent('a.com', 'buyer@a.com', 'tracked', now - 5 * HOUR, { conferenceId: 'm1' });
+    seedEvent('a.com', 'buyer@a.com', 'upgrade_modal_shown', now - 4 * HOUR, { reason: 'auto_export' });
+    seedEvent('a.com', 'buyer@a.com', 'upgrade_checkout_clicked', now - 4 * HOUR, { plan: 'lifetime' });
+    seedEvent('a.com', 'buyer@a.com', 'upgraded', now - 3 * HOUR, { plan: 'individual' });
+    // Stuck: 3 quota warnings, never clicked, leaked to CSV, answered the ask.
+    seedUser('b.com', 'stuck@b.com', { signupGeo: { country: 'PH' } });
+    seedEvent('b.com', 'stuck@b.com', 'tracked', now - 9 * HOUR);
+    seedEvent('b.com', 'stuck@b.com', 'quota_warning_shown', now - 8 * HOUR);
+    seedEvent('b.com', 'stuck@b.com', 'quota_warning_shown', now - 7 * HOUR);
+    seedEvent('b.com', 'stuck@b.com', 'quota_warning_shown', now - 6 * HOUR);
+    seedEvent('b.com', 'stuck@b.com', 'export_csv_downloaded', now - 6 * HOUR + 5 * 60000);
+    seedEvent('b.com', 'stuck@b.com', 'paywall_objection', now - 6 * HOUR + 10 * 60000, { reason: 'price' });
+    // Casual: activated, never saw a gate.
+    seedUser('c.com', 'casual@c.com');
+    seedEvent('c.com', 'casual@c.com', 'tracked', now - HOUR);
+    // Excluded legacy domain: must not appear anywhere.
+    seedUser('theyachtgroup.com', 'legacy@theyachtgroup.com');
+    seedEvent('theyachtgroup.com', 'legacy@theyachtgroup.com', 'tracked', now - HOUR);
+    seedEvent('theyachtgroup.com', 'legacy@theyachtgroup.com', 'upgrade_modal_shown', now - HOUR, { reason: 'auto_export' });
+
+    const r = await firestore.getRevenueFunnel({ days: 30 });
+    expect(r.funnel).toEqual({ activated: 3, sawGate: 2, clickedCheckout: 1, paid30d: 1, paidEver: 1 });
+
+    const autoExport = r.triggers.find(t => t.trigger === 'auto_export');
+    expect(autoExport).toEqual({ trigger: 'auto_export', shown: 1, clicked: 1, paid: 1 });
+    const quota = r.triggers.find(t => t.trigger === 'sheets_quota');
+    expect(quota).toEqual({ trigger: 'sheets_quota', shown: 1, clicked: 0, paid: 0 });
+
+    const us = r.byCountry.find(c => c.country === 'US');
+    expect(us).toEqual({ country: 'US', sawGate: 1, clicked: 1, paid: 1 });
+    const ph = r.byCountry.find(c => c.country === 'PH');
+    expect(ph).toEqual({ country: 'PH', sawGate: 1, clicked: 0, paid: 0 });
+
+    expect(r.quotaLeakUsers).toBe(1);
+    expect(r.warmStuck).toHaveLength(1);
+    expect(r.warmStuck[0]).toMatchObject({ email: 'stuck@b.com', views: 3, topTrigger: 'sheets_quota', country: 'PH' });
+    expect(r.objections).toEqual({ price: 1 });
+    expect(r.planMix).toEqual({ individual: 1 });
+  });
+
+  test('old gate views fall outside the window but paid stays all-time', async () => {
+    const now = Date.now();
+    const OLD = now - 60 * 86400000;
+    seedUser('a.com', 'old@a.com', { individualPlan: 'pro' });
+    seedEvent('a.com', 'old@a.com', 'upgrade_modal_shown', OLD, { reason: 'auto_export' });
+    seedEvent('a.com', 'old@a.com', 'upgraded', OLD, { plan: 'individual' });
+    const r = await firestore.getRevenueFunnel({ days: 30 });
+    expect(r.funnel.sawGate).toBe(0);
+    expect(r.funnel.paidEver).toBe(1);
+    expect(r.planMix).toEqual({ individual: 1 }); // plan mix is all-time too
+  });
+});

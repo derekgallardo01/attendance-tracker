@@ -73,6 +73,9 @@ const FRONTEND_EVENT_TYPES = new Set([
   // Attendee self-check-in: fired by the HOST panel when a meeting first
   // shows ≥1 check-in (adoption signal; submissions live in `checkins`).
   'checkin_merged',
+  // One-time "what's holding you back?" answer after the 3rd paywall
+  // dismissal — the only direct WHY signal in the monetization funnel.
+  'paywall_objection',
 ]);
 
 // POST /api/event — let the frontend record activation/funnel events that only

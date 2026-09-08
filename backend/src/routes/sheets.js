@@ -547,8 +547,9 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
 
     // Fire-and-forget: email the organizer the sheet link. Only when explicitly
     // requested by the client (auto-export flow) — manual exports get the
-    // in-product toast and don't need inbox noise. Pro-gated.
-    if (sendEmail && req.user?.email && proAllowed) {
+    // in-product toast and don't need inbox noise. Pro-gated, and the owner's
+    // unsubscribe/opt-out is honored (the email carries a one-click link).
+    if (sendEmail && req.user?.email && proAllowed && !(await isEmailSuppressed(req.user.email))) {
       // Build a digest-friendly participant list (top 25, present first) so the
       // email can render an inline table without exposing the raw row arrays.
       const digestPresent = digestPresentRows(participants, exportedAt, lateMinFor);
