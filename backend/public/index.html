@@ -1861,14 +1861,14 @@ function saveRosterModal() {
 
   const rosterName = nameInput.value.trim();
   if (!rosterName) {
-    alert('Please enter a class name.');
+    alert(t('roster.enterName','Please enter a class name.'));
     nameInput.focus();
     return;
   }
 
   const rawText = studentsInput.value.trim();
   if (!rawText) {
-    alert('Please enter at least one student name or email.');
+    alert(t('roster.enterStudents','Please enter at least one student name or email.'));
     studentsInput.focus();
     return;
   }
@@ -1886,7 +1886,7 @@ function saveRosterModal() {
   closeRosterModal();
   updateTabCounts();
   renderRosterView();
-  toast(`Class "${rosterName}" saved (${students.length} students)`);
+  toast(`"${rosterName}" ${t('roster.saved','saved')} (${students.length} ${t('roster.students','students')})`);
 }
 
 function editCurrentRoster() {
@@ -2203,7 +2203,7 @@ function downloadAttendanceCsv() {
   triggerCsvDownload(csvContent, `Attendance_${ctx.safeTitle}_${ctx.dateStr}.csv`);
 
   try { logUserEvent('export_csv_downloaded', { participantCount: ctx.parts.length, hasRoster: !!ctx.activeRoster }); } catch (e) {}
-  toast('Downloaded attendance CSV', 3000);
+  toast(t('toast.csvDownloaded','Downloaded attendance CSV'), 3000);
 }
 
 // Gradebook CSV formatted for a Moodle or Canvas import. Needs a Class Roster
@@ -2358,12 +2358,12 @@ function signInWithGoogle(extraScopes) {
 async function handleAuthCode(response) {
   if (response.error) {
     console.error('OAuth error:', response.error);
-    toast('Sign-in cancelled');
+    toast(t('toast.signInCancelled','Sign-in cancelled'));
     return;
   }
 
   try {
-    toast('Signing in…');
+    toast(t('toast.signingIn','Signing in…'));
     const acquisition = readStoredAcquisition();
     // Include first-touch cookie as fallback if localStorage was cleared
     let firstTouch = null;
@@ -2389,7 +2389,7 @@ async function handleAuthCode(response) {
     updateAuthUI();
     applyScopeRestrictions();
     saveState();
-    toast('Signed in as ' + data.email);
+    toast(t('toast.signedInAs','Signed in as') + ' ' + data.email);
     // Attach user context to Sentry
     if (window.Sentry) Sentry.setUser({ email: data.email });
 
@@ -2422,7 +2422,7 @@ async function handleAuthCode(response) {
     }
   } catch (err) {
     console.error('Auth exchange failed:', err);
-    toast('Sign-in failed: ' + err.message);
+    toast(t('toast.signInFailed','Sign-in failed:') + ' ' + err.message);
   }
 }
 
@@ -2837,7 +2837,7 @@ async function authFetch(url, opts = {}) {
     state.userEmail = null;
     state.signedIn = false;
     updateAuthUI();
-    toast('Session expired — please sign in again');
+    toast(t('toast.sessionExpired','Session expired — please sign in again'));
     throw new Error('Session expired');
   }
   return res;
@@ -3114,7 +3114,7 @@ function stopTracking() {
   // if there's something to export, so a misclicked Stop isn't punished.
   if (localStorage.getItem('autoExportOnEnd') === '1' && state.participants.size > 0 && !state._autoExportFired) {
     state._autoExportFired = true;
-    toast('Auto-exporting to Sheets…');
+    toast(t('toast.autoExporting','Auto-exporting to Sheets…'));
     setTimeout(() => saveToSheets(), 800);
   }
 }
@@ -3201,7 +3201,7 @@ async function refreshAttendance() {
   } catch (err) {
     console.error(err);
     setStatus('loading', `Error: ${err.message}`);
-    toast('Could not reach backend');
+    toast(t('common.couldNotReach','Could not reach backend'));
   }
 }
 
@@ -3727,7 +3727,7 @@ function watchForUpgradeCompletion() {
       const modal = document.getElementById('upgrade-modal');
       if (modal && modal.style.display !== 'none') modal.style.display = 'none';
       await loadBillingStatus();
-      toast('You’re Pro now — thanks for upgrading! 🎉');
+      toast(t('billing.proNow', 'You’re Pro now — thanks for upgrading! 🎉'));
     } catch { /* transient — next tick retries */ }
   }, 5000);
 }
@@ -3742,10 +3742,10 @@ function showUpgradeModal(reason) {
       note.textContent = 'You reached your monthly limit of 3 free exports. Upgrade to Pro for unlimited exports.';
       note.style.display = 'block';
     } else if (reason === 'autoExport') {
-      note.textContent = 'Auto-exporting to Google Sheets on meeting end is a Pro feature.';
+      note.textContent = t('billing.autoExportPro','Auto-exporting to Google Sheets on meeting end is a Pro feature.');
       note.style.display = 'block';
     } else if (reason === 'certificates') {
-      note.textContent = 'Generating student attendance certificates is a Pro feature.';
+      note.textContent = t('billing.certsPro','Generating student attendance certificates is a Pro feature.');
       note.style.display = 'block';
     } else {
       note.style.display = 'none';
@@ -3855,8 +3855,8 @@ function onExportCtaClick() {
 }
 
 async function saveToSheets() {
-  if (_exporting) return toast('Export already in progress…');
-  if (!state.participants.size) { toast('No data yet'); return; }
+  if (_exporting) return toast(t('toast.exportInProgress','Export already in progress…'));
+  if (!state.participants.size) { toast(t('toast.noData','No data yet')); return; }
   if (document.getElementById('btn-sheets')?.dataset.scopeBlocked === '1') {
     logUserEvent('export_failed', { reason: 'scope_blocked' });
     toast('Grant Drive permission to enable export — click "Grant access" above', 8000);
@@ -4262,7 +4262,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
   };
 
   try {
-    toast('Saving to Sheets…');
+    toast(t('toast.savingSheets','Saving to Sheets…'));
     const res = await authFetch(`${state.backendUrl}/save-to-sheets`, {
       method: 'POST',
       body: JSON.stringify(payload),
@@ -4313,7 +4313,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     state.autoExportedConferenceId = state.conferenceId;
     saveState();
     updateExportCta(); // hide the export prompt now that a Sheet exists
-    toast(opts.autoExport ? 'Auto-exported — sheet link sent to your email' : 'Saved to Sheets', opts.autoExport ? 6000 : 3000);
+    toast(opts.autoExport ? 'Auto-exported — sheet link sent to your email' : t('toast.savedSheets','Saved to Sheets'), opts.autoExport ? 6000 : 3000);
     const btn = document.getElementById('btn-sheets');
     if (btn) {
       btn.textContent = 'Exported';
@@ -4348,7 +4348,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     if (!opts.autoExport) maybeShowReviewAsk();
   } catch (err) {
     logUserEvent('export_failed', { reason: 'error', message: String(err.message || err).slice(0, 200) });
-    toast(`Sheets error: ${err.message}`);
+    toast(`${t('toast.sheetsError','Sheets error:')} ${err.message}`);
   }
 }
 
