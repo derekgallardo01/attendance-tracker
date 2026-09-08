@@ -42,6 +42,40 @@ describe('escHtml', () => {
   });
 });
 
+describe('escJsArg', () => {
+  test('backslash-escapes single quotes for a JS-string-in-attribute context', () => {
+    // The apostrophe must become \' (JS escape), NOT &#39; (which the parser
+    // would decode back to ' and break the handler).
+    expect(utils.escJsArg("O'Brien")).toBe("O\\'Brien");
+  });
+
+  test('escapes backslashes first so they cannot double-escape', () => {
+    expect(utils.escJsArg('a\\b')).toBe('a\\\\b');
+    expect(utils.escJsArg("a\\'b")).toBe("a\\\\\\'b");
+  });
+
+  test('newlines become \\n, and angle/quote/amp are HTML-escaped to keep the attribute well-formed', () => {
+    expect(utils.escJsArg('line1\nline2')).toBe('line1\\nline2');
+    expect(utils.escJsArg('a\r\nb')).toBe('a\\nb');
+    expect(utils.escJsArg('<b> & "q"')).toBe('&lt;b&gt; &amp; &quot;q&quot;');
+  });
+
+  test('coerces null/undefined/number safely', () => {
+    expect(utils.escJsArg(null)).toBe('');
+    expect(utils.escJsArg(undefined)).toBe('');
+    expect(utils.escJsArg(42)).toBe('42');
+  });
+
+  test('a name crafted to break out of onclick is neutralized', () => {
+    // onclick="fn('${escJsArg(x)}')" — the value must not terminate the JS
+    // string OR the HTML attribute.
+    const evil = `'); fetch('//evil');//`;
+    const out = utils.escJsArg(evil);
+    expect(out).not.toMatch(/(^|[^\\])'/); // no unescaped single quote
+    expect(out).not.toContain('"');        // no raw double quote to end the attr
+  });
+});
+
 describe('distinctAttendees', () => {
   test('dedupes by email (case-insensitive) then by trimmed name', () => {
     expect(utils.distinctAttendees([
