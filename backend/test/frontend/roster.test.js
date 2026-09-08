@@ -73,6 +73,106 @@ describe('findParticipantForStudent', () => {
   });
 });
 
+describe('findParticipantForStudent — guard branches', () => {
+  test('returns null for a missing student or participants list', () => {
+    expect(findParticipantForStudent(null, [])).toBeNull();
+    expect(findParticipantForStudent({ name: 'x' }, null)).toBeNull();
+  });
+
+  test('skips null entries and empty display names, then matches by substring', () => {
+    // 'Zoe' vs 'Zoe Q': normalized names differ ('zoe' != 'zoeq'), so the
+    // first loop passes over every entry and the substring loop matches.
+    const target = { displayName: 'Zoe Q' };
+    const p = findParticipantForStudent(
+      { name: 'Zoe', email: '' },
+      [null, { displayName: '' }, target]
+    );
+    expect(p).toBe(target);
+  });
+});
+
+describe('buildAttendanceCsv — fallback and departure branches', () => {
+  const startTime = new Date('2026-09-07T14:00:00Z');
+  const now = new Date('2026-09-07T15:00:00Z');
+
+  test('defaults every opts field when called with an empty opts object', () => {
+    const csv = buildAttendanceCsv(
+      [{ displayName: 'A', present: true, joinTime: new Date(), _accumulatedMs: 0 }],
+      null,
+      {}
+    );
+    expect(csv.startsWith('﻿')).toBe(true);
+    expect(csv).toContain('"A"');
+    // meetingMinutes falls back to opts.meetingMinutes when totalMeetingMs is absent
+    const half = buildAttendanceCsv(
+      [{ displayName: 'B', present: false, _accumulatedMs: 15 * 60000 }],
+      null,
+      { meetingMinutes: 30, now }
+    );
+    expect(half).toContain('"50%"');
+  });
+
+  test('roster rows fall back through every identity/time field', () => {
+    const roster = [
+      { name: 'NoEmail Kid' },                       // no email — matched by name
+      { name: 'Ghost', email: 'ghost@x.com' },       // matched by email
+      { name: 'Away' },                              // absent, no email
+      {},                                            // degenerate: no identity at all
+    ];
+    const parts = [
+      // matched by name; participant has NO email
+      { displayName: 'NoEmail Kid', present: true, joinTime: startTime, _accumulatedMs: 0 },
+      // matched by email; participant has NO displayName, NO joinTime, left with leaveTime
+      { email: 'ghost@x.com', present: false, leaveTime: now, _accumulatedMs: 30 * 60000 },
+    ];
+    const csv = buildAttendanceCsv(parts, roster, {
+      totalMeetingMs: 3600000, startTime, now,
+      // excused entry with NO note (note fallback branch)
+      excusedStudents: { 'noemail kid': { excused: true } },
+    });
+    expect(csv).toContain('"NoEmail Kid"'); // name kept, email column empty
+    expect(csv).toContain('"Ghost"');       // displayName fell back to roster name
+    expect(csv).toContain(now.toLocaleTimeString()); // leaveTime column rendered
+    expect(csv).toContain('"Away"');
+    expect(csv).toContain('"Absent"');
+  });
+
+  test('departed guests and no-roster departures render "Guest (Left)" / "Left"', () => {
+    const roster = [{ name: 'Registered', email: 'r@x.com' }];
+    const parts = [
+      { displayName: 'Registered', email: 'r@x.com', present: true, joinTime: startTime, _accumulatedMs: 0 },
+      // unmatched guest: departed, no email, never got a joinTime, has leaveTime
+      { displayName: 'Ivan Ghost', present: false, leaveTime: now, _accumulatedMs: 60000 },
+    ];
+    const withRoster = buildAttendanceCsv(parts, roster, { totalMeetingMs: 3600000, startTime, now });
+    expect(withRoster).toContain('"Guest (Left)"');
+
+    const noRoster = buildAttendanceCsv(
+      [{ displayName: 'Dep', present: false, leaveTime: now, _accumulatedMs: 0 }],
+      null,
+      { totalMeetingMs: 3600000, startTime, now }
+    );
+    expect(noRoster).toContain('"Left"');
+    expect(noRoster).toContain(now.toLocaleTimeString());
+  });
+
+  test('defensive: tolerates a nonsensical negative meetingMinutes (pct pins to 100)', () => {
+    // meetingMinutes is always >= 1 for real inputs (Math.max(1, ...) or the
+    // || 1 default); a negative survives only via explicit opts. This test
+    // exists purely to exercise the defensive `: 100` branches.
+    const parts = [
+      { displayName: 'M', email: 'm@x.com', present: true, joinTime: startTime, _accumulatedMs: 0 },
+      { displayName: 'G', present: true, joinTime: startTime, _accumulatedMs: 0 },
+    ];
+    const withRoster = buildAttendanceCsv(parts, [{ name: 'M', email: 'm@x.com' }], {
+      totalMeetingMs: 0, meetingMinutes: -1, startTime, now,
+    });
+    expect(withRoster).toContain('"100%"');
+    const noRoster = buildAttendanceCsv(parts, null, { totalMeetingMs: 0, meetingMinutes: -1, startTime, now });
+    expect(noRoster).toContain('"100%"');
+  });
+});
+
 describe('buildAttendanceCsv', () => {
   const startTime = new Date('2026-09-07T14:00:00Z');
   const now = new Date('2026-09-07T15:00:00Z'); // 60 min total

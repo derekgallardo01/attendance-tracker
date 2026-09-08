@@ -29,10 +29,8 @@ test.describe('Landing page (attendancetracker.dev)', () => {
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://attendancetracker.dev/');
   });
 
-  test('feedback widget button is visible', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.locator('#fb-toggle')).toBeVisible({ timeout: 15_000 });
-  });
+  // (feedback-widget test removed — the floating widget was deliberately
+  // deleted in cc07ab3, which had left this spec red on every push since.)
 
   test('"Read more" footer links to all three SEO pages', async ({ page }) => {
     await page.goto('/');

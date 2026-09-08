@@ -30,6 +30,7 @@ const FRONTEND_EVENT_TYPES = new Set([
   'upgrade_modal_shown',
   'upgrade_modal_dismissed',
   'upgrade_checkout_clicked',
+  'checkout_open_blocked', // browser ate the checkout tab — highest-value loss signal
   // Marketplace review funnel
   'review_ask_shown',
   'review_ask_clicked',
@@ -41,7 +42,8 @@ const FRONTEND_EVENT_TYPES = new Set([
   'celebrate_modal_dismissed',
   // PDF reports & certificates
   'pdf_report_downloaded',
-  'pdf_certificates_generated',
+  'pdf_certificates_generated', // legacy name — no frontend caller; kept for compat
+  'certificates_downloaded',    // what _downloadPdf actually fires for certificates
   // Addon & settings usage
   'addon_opened',
   'settings_opened',

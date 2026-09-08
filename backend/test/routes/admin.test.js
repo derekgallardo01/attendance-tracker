@@ -46,6 +46,8 @@ jest.mock('../../src/services/firestore', () => ({
   // For the auto-capture sweep
   getUserSettings: jest.fn(),
   getExportedConferenceIds: jest.fn(),
+  getTenantPlan: jest.fn(), // billing.planIsPro reads this once billing is configured
+  getUserPlan: jest.fn(),
   // For the pre-meeting reminder sweep
   getUserMeetingSeries: jest.fn(),
   persistAttendance: jest.fn(),
@@ -743,6 +745,52 @@ describe('POST /api/admin/auto-capture — server-side auto-capture sweep', () =
     expect(arg.options).toMatchObject({ autoExport: true, sendEmail: true, proAllowed: true });
     expect(arg.data.participants[0]).toMatchObject({ displayName: 'Alex', email: 'alex@acme.com' });
     expect(arg.data.participants[0].joinTimeISO).toBeTruthy();
+  });
+
+  test('skips FREE users entirely once billing is configured — auto-capture is Pro-only', async () => {
+    // With billing live, a free user who flipped autoExportOnEnd must NOT get
+    // server-side exports (that toggle used to bypass the Pro gate + quota).
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_PRICE_ID = 'price_x';
+    try {
+      // Distinct domains so billing's module-level plan cache can't leak
+      // between the two users (planCache is keyed by domain).
+      firestore.getAllUsersAcrossTenants.mockResolvedValue([
+        { email: 'teacher@freecap-test.com', domain: 'freecap-test.com' },
+        { email: 'boss@procap-test.com', domain: 'procap-test.com', displayName: 'Boss' },
+      ]);
+      firestore.getTenantPlan.mockImplementation(async (domain) =>
+        domain === 'procap-test.com' ? { plan: 'pro' } : { plan: 'free' });
+      firestore.getUserSettings.mockResolvedValue({ autoExportOnEnd: true });
+      firestore.getUser.mockResolvedValue({ refreshToken: 'rt' });
+      firestore.getExportedConferenceIds.mockResolvedValue(new Set());
+      const nowIso = new Date().toISOString();
+      meetApi.meetGet.mockImplementation(async (path) => {
+        if (path.startsWith('conferenceRecords?')) return { conferenceRecords: [
+          { name: 'conferenceRecords/rp', space: 'spaces/sp', startTime: nowIso, endTime: nowIso },
+        ] };
+        if (path === 'spaces/sp') return { meetingCode: 'pro-code' };
+        return {};
+      });
+      meetApi.meetGetAll.mockImplementation(async (path, token, key) => {
+        if (key === 'participants') return [{ name: 'conferenceRecords/rp/participants/p1', user: { displayName: 'Kid', email: 'kid@procap-test.com' } }];
+        if (key === 'participantSessions') return [{ startTime: nowIso, endTime: nowIso }];
+        return [];
+      });
+
+      const res = await request(app).post('/api/admin/auto-capture')
+        .set('x-scheduler-secret', SCHEDULER_SECRET).set('Content-Type', 'application/json').send({});
+      expect(res.status).toBe(200);
+      // Only the Pro user's meeting was exported; the free user was skipped
+      // before any Meet API work.
+      expect(res.body.captured).toBe(1);
+      expect(res.body.skippedUsers).toBeGreaterThanOrEqual(1);
+      expect(sheetsMod.buildAndSaveExport).toHaveBeenCalledTimes(1);
+      expect(sheetsMod.buildAndSaveExport.mock.calls[0][0].user.email).toBe('boss@procap-test.com');
+    } finally {
+      delete process.env.STRIPE_SECRET_KEY;
+      delete process.env.STRIPE_PRICE_ID;
+    }
   });
 
   test('skips users without auto-export enabled or without a stored refresh token', async () => {

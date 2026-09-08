@@ -216,6 +216,72 @@ describe('applyTranslations DOM helper', () => {
   });
 });
 
+describe('defensive branches (coverage completeness)', () => {
+  afterEach(() => {
+    strings.setLocale('en');
+    jest.restoreAllMocks();
+    try { localStorage.removeItem('att_locale'); } catch { /* ignore */ }
+  });
+
+  test('t() falls back to English when a locale is missing a key (mutation test)', () => {
+    // Structurally unreachable with real data — the parity test guarantees
+    // every locale carries every en key — so temporarily remove one to pin
+    // the English-fallback behavior.
+    const es = strings.STRINGS.es;
+    const saved = es['btn.start'];
+    delete es['btn.start'];
+    try {
+      strings.setLocale('es');
+      expect(strings.t('btn.start')).toBe('Start');
+    } finally {
+      es['btn.start'] = saved;
+    }
+  });
+
+  test('detectLocale survives a throwing localStorage (private mode)', () => {
+    jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('blocked'); });
+    expect(strings.detectLocale('es')).toBe('es');
+  });
+
+  test('detectLocale walks navigator.language → languages[0] → en', () => {
+    jest.spyOn(Storage.prototype, 'getItem').mockReturnValue(null);
+    const origLang = Object.getOwnPropertyDescriptor(window.navigator, 'language');
+    const origLangs = Object.getOwnPropertyDescriptor(window.navigator, 'languages');
+    try {
+      Object.defineProperty(window.navigator, 'language', { value: '', configurable: true });
+      Object.defineProperty(window.navigator, 'languages', { value: undefined, configurable: true });
+      expect(strings.detectLocale()).toBe('en'); // both hints empty → final 'en'
+      Object.defineProperty(window.navigator, 'languages', { value: ['pt-BR'], configurable: true });
+      expect(strings.detectLocale()).toBe('pt'); // languages[0] path
+    } finally {
+      if (origLang) Object.defineProperty(window.navigator, 'language', origLang); else delete window.navigator.language;
+      if (origLangs) Object.defineProperty(window.navigator, 'languages', origLangs); else delete window.navigator.languages;
+    }
+  });
+
+  test('detectLocale returns en when navigator itself is absent', () => {
+    jest.spyOn(Storage.prototype, 'getItem').mockReturnValue(null);
+    const desc = Object.getOwnPropertyDescriptor(window, 'navigator');
+    Object.defineProperty(window, 'navigator', { value: undefined, configurable: true });
+    try {
+      expect(strings.detectLocale()).toBe('en');
+    } finally {
+      Object.defineProperty(window, 'navigator', desc);
+    }
+  });
+
+  test('setLocale still switches when localStorage.setItem throws (quota/private mode)', () => {
+    jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('quota'); });
+    expect(strings.setLocale('es', true)).toBe('es');
+    expect(strings.getLocale()).toBe('es');
+  });
+
+  test('applyTranslations tolerates a missing or non-DOM root', () => {
+    expect(() => strings.applyTranslations()).not.toThrow();   // no-arg → falls back to document
+    expect(() => strings.applyTranslations({})).not.toThrow(); // no querySelectorAll → early return
+  });
+});
+
 describe('dictionary parity across all locales', () => {
   const locales = strings.getAvailableLocales().map(l => l.code);
   const enKeys = Object.keys(strings.STRINGS.en);

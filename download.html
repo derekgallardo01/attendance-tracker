@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex" />
   <title>Attendance Tracker — Download</title>
+  <!-- i18n: strings.js auto-detects the locale (navigator.language — the
+       panel's stored preference is invisible across storage partitions). -->
+  <script src="js/strings.js"></script>
   <style>
     body { background: #0d1117; color: #e6edf3; font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
     .card { text-align: center; padding: 32px; max-width: 380px; }
@@ -32,6 +35,9 @@
       var detail = document.getElementById('detail');
       var icon = document.getElementById('icon');
       var done = false;
+      var T = (window.AttStrings && window.AttStrings.t) ? window.AttStrings.t : function (k, f) { return f; };
+
+      headline.textContent = T('dl.starting', 'Starting your download…');
 
       function fail(title, msg) {
         if (done) return;
@@ -62,11 +68,11 @@
           document.body.removeChild(a);
           setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
           icon.textContent = '✓';
-          headline.textContent = 'Downloaded ' + (payload.filename || 'your file');
-          detail.textContent = 'Check your browser’s Downloads. You can close this tab.';
+          headline.textContent = T('dl.done', 'Downloaded {filename}').replace('{filename}', payload.filename || 'your file');
+          detail.textContent = T('dl.doneDetail', 'Check your browser’s Downloads. You can close this tab.');
         } catch (e) {
           done = false;
-          fail('Download failed', 'Something went wrong preparing the file. Go back to the Meet panel and try again.');
+          fail(T('dl.failed', 'Download failed'), T('dl.failedDetail', 'Something went wrong preparing the file. Go back to the Meet panel and try again.'));
         }
       }
 
@@ -89,12 +95,14 @@
           if (e.data && e.data.type === 'att-download') deliver(e.data);
         });
         try { window.opener.postMessage('att-download-ready', '*'); } catch (e) { /* opener gone */ }
-        detail.textContent = 'Fetching the file from the Meet panel…';
+        // Reset any Path-1 failure text — the postMessage retry is in flight.
+        headline.textContent = T('dl.starting', 'Starting your download…');
+        detail.textContent = T('dl.fetching', 'Fetching the file from the Meet panel…');
         setTimeout(function () {
-          if (!done) fail('Nothing to download', 'This page only works right after clicking a download button in the Meet panel. Go back and try again.');
+          if (!done) fail(T('dl.nothing', 'Nothing to download'), T('dl.nothingDetail', 'This page only works right after clicking a download button in the Meet panel. Go back and try again.'));
         }, 10000);
       } else {
-        fail('Nothing to download', 'This page only works right after clicking a download button in the Meet panel. Go back and try again.');
+        fail(T('dl.nothing', 'Nothing to download'), T('dl.nothingDetail', 'This page only works right after clicking a download button in the Meet panel. Go back and try again.'));
       }
     })();
   </script>

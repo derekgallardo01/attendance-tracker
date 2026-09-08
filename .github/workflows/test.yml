@@ -45,12 +45,13 @@ jobs:
 
       # Coverage is now a GATE: jest.config.js / jest.frontend.config.js carry
       # coverageThreshold floors, so these steps fail if coverage regresses.
+      # Run on EVERY event — this repo pushes straight to main, so the old
+      # `if: pull_request` condition meant the gate never executed (it silently
+      # rotted for 7 weeks before an audit caught it).
       - name: Coverage report (backend src)
-        if: github.event_name == 'pull_request'
         run: npm run test:coverage -- --ci --maxWorkers=2
 
       - name: Coverage gate (frontend js/ modules — 100%)
-        if: github.event_name == 'pull_request'
         run: npm run test:coverage:frontend -- --ci
 
       - name: Upload coverage artifact

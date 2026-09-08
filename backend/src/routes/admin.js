@@ -842,10 +842,16 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
         if (!userDoc || !userDoc.refreshToken) { skippedUsers++; continue; }
 
         const isPro = await planIsPro(u.domain, u.email);
+        // Auto-capture is a paid feature (pricing sells "Hands-Free Auto-Capture"
+        // on paid tiers only). Skipping free users entirely both enforces that —
+        // the old `!!settings.autoExportOnEnd` branch let a free user opt into
+        // unlimited server-side exports + Pro digests, bypassing the monthly
+        // quota — and saves Meet API quota on accounts that can't export anyway.
+        if (!isPro) { skippedUsers++; continue; }
+
         const settings = await getUserSettings(u.domain, u.email);
-        // Pro users get automated exports by default unless explicitly disabled (settings.autoExportOnEnd === false).
-        // Free users do not get automated exports (locked behind Pro).
-        const shouldAutoExport = isPro ? settings.autoExportOnEnd !== false : !!settings.autoExportOnEnd;
+        // Pro users get automated exports by default unless explicitly disabled.
+        const shouldAutoExport = settings.autoExportOnEnd !== false;
 
         // Mint a fresh access token from the stored refresh token.
         let accessToken;

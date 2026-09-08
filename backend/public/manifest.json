@@ -1,0 +1,38 @@
+{
+  "name": "Attendance Tracker for Google Meet",
+  "short_name": "Attendance",
+  "description": "View, share, and manage your Google Meet attendance — auto roll-call, late-arrival flags, no-shows, and per-class attendance trends. Track live from a computer; check and share results here on any device.",
+  "id": "/history.html",
+  "start_url": "/history.html?utm_source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "orientation": "portrait-primary",
+  "background_color": "#0d1117",
+  "theme_color": "#0d1117",
+  "categories": ["education", "productivity", "business"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-192-maskable.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Meeting history",
+      "short_name": "History",
+      "description": "Browse every meeting you've tracked",
+      "url": "/history.html?utm_source=pwa_shortcut",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Team overview",
+      "short_name": "Team",
+      "description": "Team-wide attendance and members",
+      "url": "/team.html?utm_source=pwa_shortcut",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

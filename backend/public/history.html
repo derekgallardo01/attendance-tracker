@@ -242,7 +242,7 @@
       <div id="tab-series" class="tab-content">
         <!-- Individual Pro CTA — promotes the cumulative class-summary export.
              Shown/hidden by renderProCta() based on /api/billing/status. -->
-        <div id="series-pro-cta" style="display:none;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:10px;padding:18px 20px;margin-bottom:14px;font-size:.85rem;display:flex;flex-direction:column;gap:14px">
+        <div id="series-pro-cta" style="display:none;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:10px;padding:18px 20px;margin-bottom:14px;font-size:.85rem;flex-direction:column;gap:14px">
           <span id="series-pro-text" style="line-height:1.55;color:#c9d1d9"></span>
           <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
             <span id="series-pro-interval" style="display:none;white-space:nowrap">
@@ -459,7 +459,7 @@
           if (status.annualAvailable) setProInterval(proInterval); // paint the active state
         }
       }
-      box.style.display = '';
+      box.style.display = 'flex'; // the card's column layout lives on flex props
     }
 
     async function onSeriesProCta(btn) {

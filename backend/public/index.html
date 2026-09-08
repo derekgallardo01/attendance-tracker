@@ -1376,7 +1376,7 @@
   <!-- ── Export Quota Indicator (Free tier) ── -->
   <div id="export-quota-indicator" style="display:none;align-items:center;justify-content:space-between;padding:5px 16px;font-size:11px;color:#8b949e;background:rgba(255,255,255,.03);border-top:1px solid #30363d">
     <span id="export-quota-text">3 of 3 free exports remaining this month</span>
-    <a href="#" id="export-quota-upgrade-link" onclick="try{logUserEvent('quota_upgrade_clicked',{})}catch(e){};showUpgradeModal('quota_indicator');return false;" style="color:#fdd663;text-decoration:none;font-weight:600;margin-left:8px;white-space:nowrap">Go Unlimited</a>
+    <a href="#" id="export-quota-upgrade-link" onclick="try{logUserEvent('quota_upgrade_clicked',{})}catch(e){};showUpgradeModal('quota_indicator');return false;" data-i18n="quota.goUnlimited" style="color:#fdd663;text-decoration:none;font-weight:600;margin-left:8px;white-space:nowrap">Go Unlimited</a>
   </div>
 
   <div id="sheet-link-bar" style="display:none; padding:4px 16px; font-size:11px;">
@@ -1714,13 +1714,13 @@ function openRosterModal(isEdit) {
 
   if (isEdit && state.activeRosterName && state.rosters[state.activeRosterName]) {
     _editingRosterOriginalName = state.activeRosterName;
-    title.textContent = 'Edit Class Roster';
+    title.textContent = t('roster.editTitle', 'Edit Class Roster');
     nameInput.value = state.activeRosterName;
     const list = state.rosters[state.activeRosterName] || [];
     studentsInput.value = list.map(s => s.email ? `${s.name} <${s.email}>` : s.name).join('\n');
   } else {
     _editingRosterOriginalName = null;
-    title.textContent = 'Create Class Roster';
+    title.textContent = t('roster.createTitle', 'Create Class Roster');
     nameInput.value = '';
     studentsInput.value = '';
   }
@@ -1773,10 +1773,10 @@ function showClassroomStatus(text, color) {
 async function importFromClassroom() {
   const btn = document.getElementById('roster-classroom-btn');
   if (!state.signedIn) {
-    showClassroomStatus('Sign in with Google first, then try again.', '#f85149');
+    showClassroomStatus(t('roster.classroomSignIn', 'Sign in with Google first, then try again.'), '#f85149');
     return;
   }
-  showClassroomStatus('Loading your Classroom courses…');
+  showClassroomStatus(t('roster.classroomLoading', 'Loading your Classroom courses…'));
   if (btn) btn.disabled = true;
   try {
     const res = await authFetch(`${state.backendUrl}/classroom/courses`);
@@ -1785,7 +1785,7 @@ async function importFromClassroom() {
       if (body.scopeMissing) {
         // Needs the optional Classroom scopes — run incremental consent and
         // resume this import when the popup completes.
-        showClassroomStatus('Google will ask for permission to read your Classroom rosters — approving it resumes the import.', '#facc15');
+        showClassroomStatus(t('roster.classroomConsent', 'Google will ask for permission to read your Classroom rosters — approving it resumes the import.'), '#facc15');
         _pendingClassroomImport = true;
         signInWithGoogle(CLASSROOM_SCOPES);
         return;
@@ -1794,7 +1794,7 @@ async function importFromClassroom() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const { courses } = await res.json();
     if (!courses || courses.length === 0) {
-      showClassroomStatus('No active Classroom courses found — you need to be a teacher on at least one course.', '#f85149');
+      showClassroomStatus(t('roster.classroomNoCourses', 'No active Classroom courses found — you need to be a teacher on at least one course.'), '#f85149');
       return;
     }
     const sel = document.getElementById('roster-classroom-course');
@@ -1802,10 +1802,10 @@ async function importFromClassroom() {
       `<option value="${escHtml(c.id)}">${escHtml(c.name)}${c.section ? ' — ' + escHtml(c.section) : ''}</option>`
     ).join('');
     document.getElementById('roster-classroom-picker').style.display = 'flex';
-    showClassroomStatus(`Found ${courses.length} course${courses.length === 1 ? '' : 's'} — pick one and hit Import.`);
+    showClassroomStatus(t('roster.classroomFound', 'Found {count} courses — pick one and hit Import.').replace('{count}', courses.length));
     try { logUserEvent('classroom_courses_listed', { count: courses.length }); } catch {}
   } catch (err) {
-    showClassroomStatus(`Couldn't load Classroom courses (${err.message}). Try again in a moment.`, '#f85149');
+    showClassroomStatus(`${t('roster.classroomLoadFailed', "Couldn't load Classroom courses. Try again in a moment.")} (${err.message})`, '#f85149');
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -1816,13 +1816,13 @@ async function importClassroomCourse() {
   const importBtn = document.getElementById('roster-classroom-import-btn');
   const courseId = sel && sel.value;
   if (!courseId) return;
-  if (importBtn) { importBtn.disabled = true; importBtn.textContent = 'Importing…'; }
+  if (importBtn) { importBtn.disabled = true; importBtn.textContent = t('roster.importing', 'Importing…'); }
   try {
     const res = await authFetch(`${state.backendUrl}/classroom/courses/${encodeURIComponent(courseId)}/students`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const { students } = await res.json();
     if (!students || students.length === 0) {
-      showClassroomStatus('That course has no students yet.', '#f85149');
+      showClassroomStatus(t('roster.classroomNoStudents', 'That course has no students yet.'), '#f85149');
       return;
     }
     const studentsInput = document.getElementById('roster-input-students');
@@ -1834,10 +1834,10 @@ async function importClassroomCourse() {
     const nameInput = document.getElementById('roster-input-name');
     const courseLabel = sel.options[sel.selectedIndex]?.textContent || '';
     if (nameInput && !nameInput.value.trim() && courseLabel) nameInput.value = courseLabel;
-    showClassroomStatus(`Imported ${students.length} student${students.length === 1 ? '' : 's'} — review the list, then Save Roster.`, '#4ade80');
+    showClassroomStatus(t('roster.classroomImported', 'Imported {count} students — review the list, then Save Roster.').replace('{count}', students.length), '#4ade80');
     try { logUserEvent('classroom_roster_imported', { studentCount: students.length }); } catch {}
   } catch (err) {
-    showClassroomStatus(`Import failed (${err.message}). Try again in a moment.`, '#f85149');
+    showClassroomStatus(`${t('roster.classroomImportFailed', 'Import failed. Try again in a moment.')} (${err.message})`, '#f85149');
   } finally {
     if (importBtn) { importBtn.disabled = false; importBtn.textContent = t('roster.importBtn', 'Import'); }
   }
@@ -1936,7 +1936,7 @@ function deleteCurrentRoster() {
     btn.style.color = '#f87171';
     btn.style.fontWeight = '';
   };
-  if (!armedConfirm('roster-delete', `Delete roster "${state.activeRosterName}"? Click again to confirm.`)) {
+  if (!armedConfirm('roster-delete', t('roster.deleteArmToast', 'Delete roster "{name}"? Click again to confirm.').replace('{name}', state.activeRosterName))) {
     // Make the confirmation visible AT the button, not just the bottom toast:
     // the × morphs into a red "Confirm delete?" for the arm window.
     if (btn) {
@@ -1954,7 +1954,7 @@ function deleteCurrentRoster() {
   saveStoredRosters();
   updateTabCounts();
   renderRosterView();
-  toast('Class roster deleted');
+  toast(t('roster.deleted', 'Class roster deleted'));
 }
 
 function onThresholdChange() {
@@ -2215,14 +2215,19 @@ function renderRosterView() {
 // handshake: the tab pings 'att-download-ready', we answer with the payload.
 // The localStorage write stays as a best-effort fallback for environments
 // without partitioning. Outside an iframe, download directly.
+// Returns 'relayed' (tab opened, handoff armed), 'blocked' (popup blocked —
+// the user has been told; callers must NOT claim success or attempt the
+// direct download, which the iframe sandbox silently swallows), or 'direct'
+// (not in an iframe — caller should download directly).
 function relayDownload(payload) {
-  if (window === window.top) return false;
+  if (window === window.top) return 'direct';
   try { localStorage.setItem('attPendingDownload', JSON.stringify(payload)); } catch (e) { /* partitioned/blocked — postMessage covers it */ }
   let w = null;
   try { w = window.open('download.html', '_blank'); } catch (e) { /* blocked */ }
   if (!w) {
     try { localStorage.removeItem('attPendingDownload'); } catch (e) {}
-    return false; // popup blocked — caller falls back to a direct attempt
+    toast(t('toast.popupBlocked', 'Your browser blocked the download tab. Allow pop-ups for meet.google.com and try again.'), 6000);
+    return 'blocked';
   }
   const onMsg = (e) => {
     if (e.source !== w || e.data !== 'att-download-ready') return;
@@ -2230,8 +2235,14 @@ function relayDownload(payload) {
     window.removeEventListener('message', onMsg);
   };
   window.addEventListener('message', onMsg);
-  setTimeout(() => window.removeEventListener('message', onMsg), 15000);
-  return true;
+  setTimeout(() => {
+    window.removeEventListener('message', onMsg);
+    // The tab reads a DIFFERENT (unpartitioned) localStorage inside Meet, so
+    // the panel's copy is never consumed there — clean it up once the handoff
+    // window has passed so megabytes of base64 don't sit in storage forever.
+    try { localStorage.removeItem('attPendingDownload'); } catch (e) {}
+  }, 20000);
+  return 'relayed';
 }
 
 function directBlobDownload(blob, filename) {
@@ -2245,9 +2256,13 @@ function directBlobDownload(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
 
+// Returns false when the download could not be handed off (popup blocked in
+// the iframe) so callers can skip their success toast/telemetry.
 function triggerCsvDownload(csvContent, filename) {
-  if (relayDownload({ filename, mime: 'text/csv;charset=utf-8;', content: csvContent, encoding: 'text' })) return;
-  directBlobDownload(new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }), filename);
+  const mode = relayDownload({ filename, mime: 'text/csv;charset=utf-8;', content: csvContent, encoding: 'text' });
+  if (mode === 'blocked') return false;
+  if (mode === 'direct') directBlobDownload(new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }), filename);
+  return true;
 }
 
 // Common inputs for the CSV builders, derived from live tracking state.
@@ -2275,14 +2290,14 @@ function csvExportContext() {
 function downloadAttendanceCsv() {
   const ctx = csvExportContext();
   if (ctx.parts.length === 0 && (!state.calendarAttendees || state.calendarAttendees.length === 0)) {
-    toast('No attendance data to download yet.');
+    toast(t('toast.noAttendanceData', 'No attendance data to download yet.'));
     return;
   }
 
   const csvContent = (typeof AttUtils !== 'undefined' && AttUtils.buildAttendanceCsv)
     ? AttUtils.buildAttendanceCsv(ctx.parts, ctx.activeRoster, ctx.opts)
     : '';
-  triggerCsvDownload(csvContent, `Attendance_${ctx.safeTitle}_${ctx.dateStr}.csv`);
+  if (!triggerCsvDownload(csvContent, `Attendance_${ctx.safeTitle}_${ctx.dateStr}.csv`)) return;
 
   try { logUserEvent('export_csv_downloaded', { participantCount: ctx.parts.length, hasRoster: !!ctx.activeRoster }); } catch (e) {}
   toast(t('toast.csvDownloaded','Downloaded attendance CSV'), 3000);
@@ -2294,22 +2309,22 @@ function downloadAttendanceCsv() {
 function downloadLmsCsv(format) {
   const ctx = csvExportContext();
   if (!ctx.activeRoster || ctx.activeRoster.length === 0) {
-    toast('Create a Class Roster first — gradebook exports match students by roster email.', 5000);
+    toast(t('roster.lmsNeedRoster', 'Create a Class Roster first — gradebook exports match students by roster email.'), 5000);
     switchTab('roster');
     return;
   }
   if (ctx.parts.length === 0) {
-    toast('No attendance data to download yet.');
+    toast(t('toast.noAttendanceData', 'No attendance data to download yet.'));
     return;
   }
 
   const csvContent = format === 'canvas'
     ? AttUtils.buildCanvasGradebookCsv(ctx.parts, ctx.activeRoster, ctx.opts)
     : AttUtils.buildMoodleGradebookCsv(ctx.parts, ctx.activeRoster, ctx.opts);
-  triggerCsvDownload(csvContent, `Attendance_${format}_${ctx.safeTitle}_${ctx.dateStr}.csv`);
+  if (!triggerCsvDownload(csvContent, `Attendance_${format}_${ctx.safeTitle}_${ctx.dateStr}.csv`)) return;
 
   try { logUserEvent('export_lms_csv_downloaded', { format, participantCount: ctx.parts.length }); } catch (e) {}
-  toast(`Downloaded ${format === 'canvas' ? 'Canvas' : 'Moodle'} gradebook CSV`, 3000);
+  toast(t('toast.lmsCsvDownloaded', 'Downloaded {format} gradebook CSV').replace('{format}', format === 'canvas' ? 'Canvas' : 'Moodle'), 3000);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -2592,7 +2607,6 @@ async function refreshActivationStatus() {
       state._needsSource = true;
       if (status.detectedSource) state._detectedSource = status.detectedSource;
     }
-    renderNudgeBanner();
     renderTeamAdminLink();
   } catch (e) {
     // Best-effort; nudges are a nice-to-have
@@ -2606,11 +2620,6 @@ function renderTeamAdminLink() {
   const link = document.getElementById('team-admin-link');
   if (!link) return;
   link.style.display = state.activation?.teamAdmin ? 'inline-block' : 'none';
-}
-
-function renderNudgeBanner() {
-  const banner = document.getElementById('nudge-banner');
-  if (banner) banner.style.display = 'none';
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -2853,7 +2862,7 @@ async function deleteMyAccount() {
     applyScopeRestrictions();
     toast(t('toast.accountDeleted'));
   } catch (err) {
-    toast('Could not delete your account — try again or contact support.');
+    toast(t('toast.deleteAccountFailed', 'Could not delete your account — try again or contact support.'));
     if (btn) { btn.disabled = false; btn.textContent = t('settings.deleteMyAccount', 'Delete my account'); }
   }
 }
@@ -3279,7 +3288,6 @@ async function refreshAttendance() {
     // "Getting started" to "Almost there" without waiting for next signin.
     if (!hadParticipantsBefore && state.participants.size > 0 && state.activation && !state.activation.hasTracked) {
       state.activation.hasTracked = true;
-      renderNudgeBanner();
     }
 
     // Auto-export when the Meet API reports the meeting has ended. This is
@@ -3697,7 +3705,7 @@ function updateQuotaIndicator(used, limit) {
   const maxLimit = typeof limit === 'number' ? limit : 3;
   const usedCount = typeof used === 'number' ? used : 0;
   const remaining = Math.max(0, maxLimit - usedCount);
-  textEl.textContent = `${remaining} of ${maxLimit} free exports remaining this month`;
+  textEl.textContent = t('quota.remaining', '{remaining} of {limit} free exports remaining this month').replace('{remaining}', remaining).replace('{limit}', maxLimit);
   indicator.style.display = 'flex';
 }
 
@@ -3828,7 +3836,7 @@ function showUpgradeModal(reason) {
   const note = document.getElementById('upgrade-modal-note');
   if (note) {
     if (reason === 'exportQuota') {
-      note.textContent = 'You reached your monthly limit of 3 free exports. Upgrade to Pro for unlimited exports.';
+      note.textContent = t('quota.limitReached', 'You reached your monthly limit of {limit} free exports. Upgrade to Pro for unlimited exports.').replace('{limit}', 3);
       note.style.display = 'block';
     } else if (reason === 'autoExport') {
       note.textContent = t('billing.autoExportPro','Auto-exporting to Google Sheets on meeting end is a Pro feature.');
@@ -4560,11 +4568,11 @@ function closeReviewAsk() {
 async function _downloadPdf({ type, filenameBase, event }) {
   const ex = state._lastExport;
   if (!ex || !ex.participants || !ex.participants.length) {
-    toast('Export first, then download the PDF.');
+    toast(t('toast.pdfExportFirst', 'Export first, then download the PDF.'));
     return false;
   }
   try {
-    toast('Generating PDF…');
+    toast(t('toast.pdfGenerating', 'Generating PDF…'));
     const res = await fetch(`${state.backendUrl}/export/pdf`, {
       method: 'POST',
       headers: authHeaders(),
@@ -4592,22 +4600,29 @@ async function _downloadPdf({ type, filenameBase, event }) {
     const blob = await res.blob();
     const filename = `${filenameBase}-${String(ex.meetingTitle || 'meeting').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 40) || 'meeting'}.pdf`;
     // Same iframe-sandbox problem as CSV: relay through download.html when
-    // in the Meet panel. PDFs are binary, so base64-encode for localStorage.
-    let relayed = false;
+    // in the Meet panel. PDFs are binary, so base64-encode for the handoff
+    // (the payload rides postMessage — localStorage is only a best-effort
+    // fallback inside relayDownload).
+    let mode = 'direct';
     if (window !== window.top) {
       try {
         const buf = new Uint8Array(await blob.arrayBuffer());
         let bin = '';
         const CHUNK = 0x8000;
         for (let i = 0; i < buf.length; i += CHUNK) bin += String.fromCharCode.apply(null, buf.subarray(i, i + CHUNK));
-        relayed = relayDownload({ filename, mime: 'application/pdf', content: btoa(bin), encoding: 'base64' });
-      } catch (e) { /* oversized for localStorage — fall through */ }
+        mode = relayDownload({ filename, mime: 'application/pdf', content: btoa(bin), encoding: 'base64' });
+      } catch (e) {
+        // arrayBuffer/btoa failure — nothing to relay; the direct attempt is
+        // the only remaining option even though the sandbox may swallow it.
+        mode = 'direct';
+      }
     }
-    if (!relayed) directBlobDownload(blob, filename);
+    if (mode === 'blocked') return false; // user was told to allow pop-ups
+    if (mode === 'direct') directBlobDownload(blob, filename);
     try { logUserEvent(event, {}); } catch (e) { /* best-effort */ }
     return true;
   } catch (e) {
-    toast('Could not generate the PDF.');
+    toast(t('toast.pdfFailed', 'Could not generate the PDF.'));
     return false;
   }
 }
@@ -4660,6 +4675,15 @@ function updateUiLanguage() {
 
   const langSel = document.getElementById('settings-lang-select');
   if (langSel) langSel.value = curLocale;
+
+  // The webhook card's description/status are set imperatively (not via
+  // data-i18n), and the language selector lives INSIDE the settings modal —
+  // re-run the provider painter so those strings don't stay in the old
+  // language until the next tab click.
+  const settingsModal = document.getElementById('settings-modal');
+  if (settingsModal && settingsModal.style.display === 'flex' && typeof selectWebhookProvider === 'function') {
+    selectWebhookProvider(_activeWebhookProvider);
+  }
 }
 
 function changeLanguage(lang) {
@@ -4729,10 +4753,15 @@ function closeSettingsModal() {
 }
 
 // Keyboard accessibility: Escape closes whichever overlay is currently open.
-// Checks computed display so it only acts on a visible modal.
+// MUST use getComputedStyle — #match-modal and #source-modal are toggled via
+// an `.open` CSS class, so their inline `style.display` is always '' and an
+// inline-style check silently never fires for them.
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
   const overlays = [
+    ['upgrade-modal', typeof closeUpgradeModal === 'function' ? closeUpgradeModal : null],
+    ['roster-modal', typeof closeRosterModal === 'function' ? closeRosterModal : null],
+    ['survey-modal', typeof closeSurveyModal === 'function' ? closeSurveyModal : null],
     ['settings-modal', closeSettingsModal],
     ['celebrate-modal', typeof closeCelebrateModal === 'function' ? closeCelebrateModal : null],
     ['source-modal', typeof closeSourceModal === 'function' ? closeSourceModal : null],
@@ -4741,7 +4770,7 @@ document.addEventListener('keydown', (e) => {
   ];
   for (const [id, close] of overlays) {
     const el = document.getElementById(id);
-    if (el && el.style.display && el.style.display !== 'none' && close) { close(); return; }
+    if (el && close && getComputedStyle(el).display !== 'none') { close(); return; }
   }
 });
 
@@ -4754,8 +4783,6 @@ const WEBHOOK_UI = {
     field: 'slackWebhookUrl', inputId: 'settings-webhook-url', statusId: 'settings-webhook-status',
     testBtnId: 'settings-webhook-test-btn', saveBtnId: 'settings-webhook-save-btn',
     validate: (u) => AttUtils.isValidSlackWebhook(u),
-    invalidMsg: 'Not a valid Slack webhook URL',
-    testOkMsg: 'Test message sent — check your Slack channel',
     descKey: 'settings.slackDesc', desc: 'Posts an attendance summary card to your Slack channel after every export.',
     placeholder: 'https://hooks.slack.com/services/T.../B.../...',
     guideUrl: 'https://api.slack.com/messaging/webhooks',
@@ -4764,8 +4791,6 @@ const WEBHOOK_UI = {
     field: 'googleChatWebhookUrl', inputId: 'settings-webhook-url', statusId: 'settings-webhook-status',
     testBtnId: 'settings-webhook-test-btn', saveBtnId: 'settings-webhook-save-btn',
     validate: (u) => AttUtils.isValidGoogleChatWebhook(u),
-    invalidMsg: 'Not a valid Google Chat webhook URL',
-    testOkMsg: 'Test message sent — check your Google Chat space',
     descKey: 'settings.chatDesc', desc: 'Posts an attendance summary card to your Google Chat space after every export.',
     placeholder: 'https://chat.googleapis.com/v1/spaces/.../messages?key=...&token=...',
     guideUrl: 'https://developers.google.com/workspace/chat/quickstart/webhooks',
@@ -4774,8 +4799,6 @@ const WEBHOOK_UI = {
     field: 'discordWebhookUrl', inputId: 'settings-webhook-url', statusId: 'settings-webhook-status',
     testBtnId: 'settings-webhook-test-btn', saveBtnId: 'settings-webhook-save-btn',
     validate: (u) => AttUtils.isValidDiscordWebhook(u),
-    invalidMsg: 'Not a valid Discord webhook URL',
-    testOkMsg: 'Test message sent — check your Discord channel',
     descKey: 'settings.discordDesc', desc: 'Posts an attendance summary card to your Discord channel after every export.',
     placeholder: 'https://discord.com/api/webhooks/...',
     guideUrl: 'https://support.discord.com/hc/en-us/articles/228383668',
@@ -4842,7 +4865,7 @@ async function saveWebhookSetting(provider) {
   const url = (input.value || '').trim();
   // Empty = clear the webhook. Anything else must look like the provider's URL.
   if (url && !p.validate(url)) {
-    showSettingsStatus(t('settings.webhookInvalid', p.invalidMsg), '#f85149', p.statusId);
+    showSettingsStatus(t('settings.webhookInvalid', 'Not a valid webhook URL for this provider'), '#f85149', p.statusId);
     return;
   }
   saveBtn.disabled = true;
@@ -4880,7 +4903,7 @@ async function testWebhookSetting(provider) {
   const url = (input.value || '').trim();
   // If user pasted a fresh URL, validate before sending. Empty = use saved.
   if (url && !p.validate(url)) {
-    showSettingsStatus(t('settings.webhookInvalid', p.invalidMsg), '#f85149', p.statusId);
+    showSettingsStatus(t('settings.webhookInvalid', 'Not a valid webhook URL for this provider'), '#f85149', p.statusId);
     return;
   }
   testBtn.disabled = true;
@@ -4895,7 +4918,7 @@ async function testWebhookSetting(provider) {
       const body = await res.json().catch(() => ({}));
       throw new Error(body.error || `HTTP ${res.status}`);
     }
-    showSettingsStatus(t('settings.testSent', p.testOkMsg), '#4ade80', p.statusId);
+    showSettingsStatus(t('settings.testSent', 'Test message sent — check your channel'), '#4ade80', p.statusId);
     try { logUserEvent('webhook_test_sent', { provider }); } catch {}
   } catch (err) {
     showSettingsStatus(err.message, '#f85149', p.statusId);

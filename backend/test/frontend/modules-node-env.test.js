@@ -33,4 +33,9 @@ test('modules load and export in a non-browser (no window) environment', () => {
   expect(typeof admin.fillTemplate).toBe('function');
   expect(typeof panel.computePollInterval).toBe('function');
   expect(typeof simMod.participantsAt).toBe('function');
+
+  // No `document` in this environment — exercises applyTranslations' null-doc
+  // early return (the only place that branch is reachable).
+  expect(typeof document).toBe('undefined');
+  expect(() => strings.applyTranslations()).not.toThrow();
 });

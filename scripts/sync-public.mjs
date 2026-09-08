@@ -71,12 +71,26 @@ const MIRRORED = [
   'js/strings.js',
   'js/api.js',
   'js/share.js',
+  'js/setup.js', // setup.html ships <script src="js/setup.js"> — was 404ing on the mirror
   'js/team.js',
   'js/history.js',
   'js/admin.js',
   'js/panel.js',
   'js/sim.js',
   'pwa-install.js',
+  // PWA assets referenced by absolute path from index.html — without these the
+  // Cloud Run copy 404s the manifest/service-worker (errors are swallowed,
+  // but the installable-PWA affordance silently breaks there).
+  'manifest.json',
+  'sw.js',
+  'icons/icon-32.png',
+  'icons/icon-48.png',
+  'icons/icon-96.png',
+  'icons/icon-128.png',
+  'icons/icon-192.png',
+  'icons/icon-512.png',
+  'icons/icon-192-maskable.png',
+  'icons/icon-512-maskable.png',
   'robots.txt',
   'sitemap.xml',
 ];
