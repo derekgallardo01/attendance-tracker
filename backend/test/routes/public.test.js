@@ -5,6 +5,11 @@
 const request = require('supertest');
 const { buildApp } = require('../helpers/testApp');
 
+// billing-config verifies the Institution price against Stripe (lazy require
+// inside the handler) — mock the SDK factory at module level.
+const mockRetrieve = jest.fn();
+jest.mock('stripe', () => jest.fn(() => ({ prices: { retrieve: (...a) => mockRetrieve(...a) } })));
+
 jest.mock('../../src/services/firestore', () => ({
   getDb: jest.fn(),
   resolveShareLink: jest.fn(),
@@ -410,6 +415,64 @@ describe('GET /api/public/offer-click', () => {
     const res = await request(app).get('/api/public/offer-click');
     expect(res.status).toBe(302);
     expect(res.headers.location).toContain('pricing.html');
+  });
+});
+
+describe('GET /api/public/billing-config — Institution card gate', () => {
+  const publicRoutes = require('../../src/routes/public');
+  const resetCache = () => { publicRoutes._resetInstitutionCache && publicRoutes._resetInstitutionCache(); };
+
+  afterEach(() => {
+    delete process.env.STRIPE_SECRET_KEY;
+    delete process.env.STRIPE_ANNUAL_PRICE_ID;
+    resetCache();
+  });
+
+  test('hidden when Stripe/env are not configured', async () => {
+    resetCache();
+    const app2 = buildApp();
+    const res = await request(app2).get('/api/public/billing-config');
+    expect(res.status).toBe(200);
+    expect(res.body.institutionAvailable).toBe(false);
+  });
+
+  test('visible ONLY when the annual price is exactly $149/yr recurring — a wrong-amount price stays hidden', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_ANNUAL_PRICE_ID = 'price_ann';
+    resetCache();
+    mockRetrieve.mockResolvedValue({ unit_amount: 3998, recurring: { interval: 'year' } }); // the OLD dark-launch price
+    const app2 = buildApp();
+    let res = await request(app2).get('/api/public/billing-config');
+    expect(res.body.institutionAvailable).toBe(false);
+
+    resetCache();
+    mockRetrieve.mockResolvedValue({ unit_amount: 14900, recurring: { interval: 'year' } });
+    res = await request(app2).get('/api/public/billing-config');
+    expect(res.body.institutionAvailable).toBe(true);
+
+    // cache: second call within TTL doesn't re-hit Stripe
+    const calls = mockRetrieve.mock.calls.length;
+    res = await request(app2).get('/api/public/billing-config');
+    expect(res.body.institutionAvailable).toBe(true);
+    expect(mockRetrieve.mock.calls.length).toBe(calls);
+  });
+
+  test('a monthly $149 price stays hidden (must be yearly)', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_ANNUAL_PRICE_ID = 'price_ann';
+    resetCache();
+    mockRetrieve.mockResolvedValue({ unit_amount: 14900, recurring: { interval: 'month' } });
+    const res = await request(buildApp()).get('/api/public/billing-config');
+    expect(res.body.institutionAvailable).toBe(false);
+  });
+
+  test('fails CLOSED when the Stripe lookup throws', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_ANNUAL_PRICE_ID = 'price_ann';
+    resetCache();
+    mockRetrieve.mockRejectedValue(new Error('stripe down'));
+    const res = await request(buildApp()).get('/api/public/billing-config');
+    expect(res.body.institutionAvailable).toBe(false);
   });
 });
 

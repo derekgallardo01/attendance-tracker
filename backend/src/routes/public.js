@@ -140,15 +140,35 @@ const CACHE_MS = 10 * 60 * 1000;
 // page social proof bar. Returns derived org count (union of explicit tenant
 // docs + unique user domains, same as the admin dashboard) plus meeting count.
 // GET /api/public/billing-config — which optional tiers the pricing page may
-// render. The Institution card sells the annual domain price, so it must stay
-// hidden until STRIPE_ANNUAL_PRICE_ID exists (a visible button that 503s on
-// click would be worse than no button).
-router.get('/public/billing-config', (_req, res) => {
+// render. The Institution card advertises $149/yr and charges
+// STRIPE_ANNUAL_PRICE_ID — but that env var predates the Institution tier
+// (the old domain-annual dark launch), so the card must stay hidden until
+// the price it would charge is ACTUALLY $149/yr. Verified against Stripe,
+// cached 10 min, fail-closed.
+const INSTITUTION_PRICE_CENTS = 14900;
+let _instCache = null; // { available, at }
+router.get('/public/billing-config', async (_req, res) => {
   res.set('Cache-Control', 'public, max-age=300');
-  res.json({
-    institutionAvailable: !!(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_ANNUAL_PRICE_ID),
-  });
+  if (_instCache && Date.now() - _instCache.at < 10 * 60 * 1000) {
+    return res.json({ institutionAvailable: _instCache.available });
+  }
+  let available = false;
+  try {
+    const key = process.env.STRIPE_SECRET_KEY;
+    const priceId = process.env.STRIPE_ANNUAL_PRICE_ID;
+    if (key && priceId) {
+      const stripe = require('stripe')(key);
+      const price = await stripe.prices.retrieve(priceId);
+      available = !!(price && price.unit_amount === INSTITUTION_PRICE_CENTS && (price.recurring?.interval === 'year'));
+    }
+  } catch (err) {
+    log.warn('public: billing-config price check failed — Institution card stays hidden', { error: err.message });
+  }
+  _instCache = { available, at: Date.now() };
+  res.json({ institutionAvailable: available });
 });
+// Test hook: the 10-min cache would otherwise leak between test cases.
+router._resetInstitutionCache = () => { _instCache = null; };
 
 router.get('/public/stats', async (_req, res) => {
   try {
