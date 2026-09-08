@@ -3430,6 +3430,10 @@ async function checkInHere() {
   } catch (err) {
     console.error('Check-in failed:', err);
     toast(t('checkin.error', 'Check-in failed. Please try again.'));
+    // Re-enable the (still-present) button on failure — on success renderList
+    // replaces it, but after an error the same node must stay clickable.
+    const b = document.getElementById('checkin-btn');
+    if (b) b.disabled = false;
   } finally {
     _checkingIn = false;
   }

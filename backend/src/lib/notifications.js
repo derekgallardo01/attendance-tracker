@@ -37,7 +37,12 @@ function ownerEmail() {
   return process.env.GMAIL_USER || process.env.NOTIFY_EMAIL || null;
 }
 
-const RESEND_TIMEOUT_MS = Number(process.env.RESEND_TIMEOUT_MS) || 8000;
+// 15s (was 8s): the race between a real delivery and this timer is what turns
+// a delivered email into a duplicate (the timer wins → we "retry" tomorrow).
+// A wider window makes that race rare; the timeout stays only to stop a truly
+// hung call from blocking a fire-and-forget path.
+const RESEND_TIMEOUT_MS = Number(process.env.RESEND_TIMEOUT_MS) || 15000;
+const RESEND_TIMEOUT_MARKER = '__resend_timeout__';
 
 // Single send wrapper. Mirrors nodemailer's sendMail signature so every call
 // site is one-line changed. Throws on hard failure; callers decide whether
@@ -66,7 +71,7 @@ async function send({ from, to, subject, text, html, replyTo, tags }) {
   const result = await Promise.race([
     resend.emails.send(params),
     new Promise((_, reject) => {
-      timer = setTimeout(() => reject(new Error(`Resend send timeout after ${RESEND_TIMEOUT_MS}ms`)), RESEND_TIMEOUT_MS);
+      timer = setTimeout(() => reject(new Error(`${RESEND_TIMEOUT_MARKER} after ${RESEND_TIMEOUT_MS}ms`)), RESEND_TIMEOUT_MS);
     }),
   ]).finally(() => clearTimeout(timer));
   if (result.error) {
@@ -92,6 +97,15 @@ async function dispatchEmail(params, label, logMeta = {}) {
     log.info(`${label} sent`, { to: params.to, ...logMeta });
     return info;
   } catch (err) {
+    // A TIMEOUT is ambiguous — Resend may have delivered after our timer
+    // fired. Report it as sent-optimistic so sweeps DON'T release their dedup
+    // claim and resend a duplicate tomorrow (duplicate email is the category's
+    // top complaint; a rare under-send is the lesser evil). A definite Resend
+    // error still returns {sent:false} → the sweep releases → retries.
+    if (String(err.message || '').includes(RESEND_TIMEOUT_MARKER)) {
+      log.warn(`${label} timed out (assuming delivered — not retrying)`, { to: params.to, ...logMeta });
+      return { sent: true, timedOut: true };
+    }
     log.warn(`${label} failed`, { to: params.to, error: err.message });
     return { sent: false, error: err.message };
   }

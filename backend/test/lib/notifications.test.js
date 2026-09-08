@@ -780,15 +780,18 @@ describe('notifications — dispatch + resend timeout', () => {
     expect(res.sent).toBe(false);
   });
 
-  test('send races a hung Resend call against the timeout', async () => {
+  test('send races a hung Resend call against the timeout → optimistic sent (no duplicate on retry)', async () => {
     process.env.RESEND_TIMEOUT_MS = '30';
     jest.doMock('resend', () => ({ Resend: jest.fn().mockImplementation(() => ({ emails: { send: jest.fn(() => new Promise(() => {})) } })) }));
     process.env.RESEND_API_KEY = 're_test';
     jest.resetModules();
     const n = require('../../src/lib/notifications');
-    // signup webhook swallows the timeout error via dispatchEmail
+    // A TIMEOUT is ambiguous (may have delivered) → dispatchEmail reports
+    // sent:true + timedOut so sweeps keep their dedup claim and never resend a
+    // duplicate. A definite Resend error still returns sent:false → retry.
     const res = await n.sendSignupWebhook({ email: 'a@x.com', displayName: 'A', domain: 'x.com', totalUsers: 1 });
-    expect(res.sent).toBe(false);
+    expect(res.sent).toBe(true);
+    expect(res.timedOut).toBe(true);
   });
 });
 

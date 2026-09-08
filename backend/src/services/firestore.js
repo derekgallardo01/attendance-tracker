@@ -210,17 +210,30 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
     const joinTimes = participants.map(p => p.joinTime).filter(Boolean).map(t => new Date(t));
     const leaveTimes = participants.map(p => p.leaveTime).filter(Boolean).map(t => new Date(t));
     const distinctAttendeeCount = countDistinctAttendees(participants);
+    const newStart = joinTimes.length > 0 ? new Date(Math.min(...joinTimes)) : null;
+    const newEnd = leaveTimes.length > 0 ? new Date(Math.max(...leaveTimes)) : null;
+
+    // Aggregates must be MONOTONIC. Participant docs accumulate (merge, never
+    // removed), but the scalar counts used to be last-writer-wins — so a later
+    // PARTIAL re-fetch (Meet API eventual consistency, a truncated page, or a
+    // reused/recurring meeting code) would shrink participantCount and narrow
+    // start/end, corrupting a fuller earlier snapshot. Read-then-widen instead.
+    let prev = {};
+    try { prev = (await meetingRef.get()).data() || {}; } catch { /* first write */ }
+    const tsMsOf = (v) => (v?.toDate ? v.toDate().getTime() : (v ? new Date(v).getTime() : null));
+    const prevStartMs = tsMsOf(prev.startTime);
+    const prevEndMs = tsMsOf(prev.endTime);
 
     await meetingRef.set({
       conferenceId,
       recordName,
-      participantCount: participants.length,
-      distinctAttendeeCount, // unique humans (deduped by email/name) — activation signal
-      startTime: joinTimes.length > 0 ? new Date(Math.min(...joinTimes)) : null,
-      endTime: leaveTimes.length > 0 ? new Date(Math.max(...leaveTimes)) : null,
+      participantCount: Math.max(participants.length, prev.participantCount || 0),
+      distinctAttendeeCount: Math.max(distinctAttendeeCount, prev.distinctAttendeeCount || 0),
+      startTime: newStart && (prevStartMs == null || newStart.getTime() < prevStartMs) ? newStart : (prev.startTime || newStart || null),
+      endTime: newEnd && (prevEndMs == null || newEnd.getTime() > prevEndMs) ? newEnd : (prev.endTime || newEnd || null),
       lastFetchedAt: now,
       updatedAt: now,
-      createdAt: now,
+      createdAt: prev.createdAt || now,
     }, { merge: true });
 
     // Chunk into batches under Firestore's 500-op limit — a very large meeting
@@ -1126,33 +1139,55 @@ async function getUserMeetingHistory(domain, email, { limit } = {}) {
     // over (the visible set), NOT the true total — otherwise a capped free user
     // gets an understated rate.
     const visibleCount = visibleMeetings.length;
+    // Name→email canonicalization (Sweep-10): a person reported by email in
+    // some meetings and name-only in others must resolve to ONE identity, else
+    // they split into two rows with halved counts. Build the map across all
+    // visible meetings first.
+    const nameToEmail = {};
+    for (let i = 0; i < visibleMeetings.length; i++) {
+      for (const p of participantSnaps[i].docs) {
+        const data = p.data();
+        const email = (data.email || '').toLowerCase();
+        const name = (data.displayName || '').toLowerCase();
+        if (email && name && !nameToEmail[name]) nameToEmail[name] = email;
+      }
+    }
     const peopleMap = new Map();
     for (let i = 0; i < visibleMeetings.length; i++) {
       const m = visibleMeetings[i];
       const meetingDate = m.startTime || m.createdAt || 0;
+      // Per-meeting dedup: one human appearing twice in a single meeting
+      // (anonymous + signed-in join, or two devices) must count ONCE, else
+      // meetingCount can exceed the meeting total and attendanceRate > 100%.
+      const seenThisMeeting = new Set();
       for (const p of participantSnaps[i].docs) {
         const data = p.data();
         const email = (data.email || '').toLowerCase();
+        const nameLower = (data.displayName || '').toLowerCase();
         const name = data.displayName || '';
-        const key = email || `name:${name.toLowerCase()}`;
-        if (!key || key === 'name:') continue;
+        // Canonical key: email if present, else the email this name maps to, else name.
+        const key = email || (nameToEmail[nameLower] ? nameToEmail[nameLower] : (nameLower ? `name:${nameLower}` : ''));
+        if (!key) continue;
 
         let entry = peopleMap.get(key);
         if (!entry) {
           entry = {
-            key, email: email || null, displayName: name,
+            key, email: email || nameToEmail[nameLower] || null, displayName: name,
             meetingCount: 0, totalMinutes: 0, lastSeenAt: 0,
           };
           peopleMap.set(key, entry);
         }
-        entry.meetingCount++;
-        const join = tsMs(data.joinTime);
-        const leave = tsMs(data.leaveTime);
-        if (join && leave && leave > join) {
-          entry.totalMinutes += Math.round((leave - join) / 60000);
+        // Count this meeting for this person only once.
+        if (!seenThisMeeting.has(key)) {
+          seenThisMeeting.add(key);
+          entry.meetingCount++;
+          const join = tsMs(data.joinTime);
+          const leave = tsMs(data.leaveTime);
+          if (join && leave && leave > join) {
+            entry.totalMinutes += Math.round((leave - join) / 60000);
+          }
+          if (meetingDate > entry.lastSeenAt) entry.lastSeenAt = meetingDate;
         }
-        if (meetingDate > entry.lastSeenAt) entry.lastSeenAt = meetingDate;
-        // Prefer a longer displayName if we get one
         if (!entry.displayName || (name && name.length > entry.displayName.length)) {
           entry.displayName = name;
         }
@@ -1296,6 +1331,17 @@ async function getTenantSeriesOverview(domain) {
       .map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
     if (seriesMeetings.length === 0) return [];
     const participantSnaps = await Promise.all(seriesMeetings.map(m => m.ref.collection('participants').get()));
+    // Name→email canonicalization (Sweep-10) so a person reported by email in
+    // some instances and name-only in others isn't split into two rows — the
+    // per-user + shared series views do this; the team-admin view must match.
+    const nameToEmail = {};
+    for (const snap of participantSnaps) {
+      for (const p of snap.docs) {
+        const e = (p.data().email || '').toLowerCase();
+        const n = (p.data().displayName || '').toLowerCase();
+        if (e && n && !nameToEmail[n]) nameToEmail[n] = e;
+      }
+    }
     const seriesMap = new Map();
     for (let i = 0; i < seriesMeetings.length; i++) {
       const m = seriesMeetings[i];
@@ -1323,11 +1369,12 @@ async function getTenantSeriesOverview(domain) {
         const pdata = p.data();
         const e = (pdata.email || '').toLowerCase();
         const n = pdata.displayName || '';
-        const key = e || `name:${n.toLowerCase()}`;
-        if (!key || key === 'name:' || seen.has(key)) continue;
+        const nl = n.toLowerCase();
+        const key = e || (nameToEmail[nl] || (nl ? `name:${nl}` : ''));
+        if (!key || seen.has(key)) continue;
         seen.add(key);
         let person = series.peopleMap.get(key);
-        if (!person) { person = { email: e || null, displayName: n, attended: 0 }; series.peopleMap.set(key, person); }
+        if (!person) { person = { email: e || nameToEmail[nl] || null, displayName: n, attended: 0 }; series.peopleMap.set(key, person); }
         person.attended++;
         if (n && n.length > person.displayName.length) person.displayName = n;
       }
@@ -1371,19 +1418,33 @@ async function getTenantPeopleOverview(domain) {
     const meetings = meetingsSnap.docs.map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
     const partSnaps = await Promise.all(meetings.map(m => m.ref.collection('participants').get()));
     const totalMeetings = meetings.length;
+    // Canonicalize name→email so one human isn't split across rows.
+    const nameToEmail = {};
+    for (const snap of partSnaps) {
+      for (const p of snap.docs) {
+        const e = (p.data().email || '').toLowerCase();
+        const n = (p.data().displayName || '').toLowerCase();
+        if (e && n && !nameToEmail[n]) nameToEmail[n] = e;
+      }
+    }
     const peopleMap = new Map();
     for (let i = 0; i < meetings.length; i++) {
       const m = meetings[i];
       const meetingDate = tsMs(m.data.startTime) || tsMs(m.data.createdAt) || 0;
+      // Per-meeting dedup — a person on two devices / anon+signed-in must not
+      // push meetingCount above totalMeetings (attendanceRate > 100%).
+      const seenThisMeeting = new Set();
       for (const p of partSnaps[i].docs) {
         const data = p.data();
         const email = (data.email || '').toLowerCase();
         const name = data.displayName || '';
-        const key = email || `name:${name.toLowerCase()}`;
-        if (!key || key === 'name:') continue;
+        const nl = name.toLowerCase();
+        const key = email || (nameToEmail[nl] || (nl ? `name:${nl}` : ''));
+        if (!key || seenThisMeeting.has(key)) continue;
+        seenThisMeeting.add(key);
         let entry = peopleMap.get(key);
         if (!entry) {
-          entry = { key, email: email || null, displayName: name, meetingCount: 0, totalMinutes: 0, lastSeenAt: 0 };
+          entry = { key, email: email || nameToEmail[nl] || null, displayName: name, meetingCount: 0, totalMinutes: 0, lastSeenAt: 0 };
           peopleMap.set(key, entry);
         }
         entry.meetingCount++;

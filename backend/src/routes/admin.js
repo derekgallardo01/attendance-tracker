@@ -29,22 +29,36 @@ function csvField(v) {
 const router = Router();
 
 // Time budget for the cron sweeps. The loops stop once elapsed exceeds this so
-// idempotent per-user work resumes on the next run. It MUST stay under the
-// server's request timeout (CONFIG.requestTimeoutMs) — otherwise the socket is
-// destroyed mid-loop and the budget/telemetry never engage (the sweep silently
-// processes only a fraction of users). Clamp to a safe ceiling and warn loudly
-// if SWEEP_BUDGET_MS is configured higher than the request timeout allows.
-const SWEEP_MARGIN_MS = 5000;
+// idempotent per-user work resumes on the next run (and rotateForFairness
+// ensures a different slice is reached each run).
+// The ceiling is Cloud Run's REQUEST timeout, not Node's `requestTimeout`
+// (which only bounds time to RECEIVE the request — a fully-received cron POST
+// with an empty body is not aborted by it, so the old requestTimeoutMs-5s
+// clamp needlessly cut sweeps to ~25s and starved the tail). Cloud Run
+// defaults to 300s; leave a margin for the response to flush.
+const SWEEP_CEILING_MS = Number(process.env.SWEEP_CEILING_MS) || 280000;
 function sweepBudgetMs() {
   const configured = Number(process.env.SWEEP_BUDGET_MS) || 240000;
-  const ceiling = CONFIG.requestTimeoutMs - SWEEP_MARGIN_MS;
-  if (configured > ceiling) {
-    log.warn('admin: SWEEP_BUDGET_MS exceeds request timeout — clamping so the socket cannot die mid-sweep', {
-      configured, requestTimeoutMs: CONFIG.requestTimeoutMs, clampedTo: ceiling,
+  if (configured > SWEEP_CEILING_MS) {
+    log.warn('admin: SWEEP_BUDGET_MS exceeds the Cloud Run request-timeout ceiling — clamping', {
+      configured, ceiling: SWEEP_CEILING_MS,
     });
-    return ceiling;
+    return SWEEP_CEILING_MS;
   }
   return configured;
+}
+
+// Rotate a user list by a day-derived offset so a budget-truncated sweep does
+// NOT process the same front-of-list users every run — collectionGroup returns
+// a stable order, so without rotation the tail is never reached. Deterministic
+// (no Math.random) and cheap. `dayOffset` is passed so callers can vary the
+// clock read for tests; defaults to today's day-of-year.
+function rotateForFairness(arr, dayOffset) {
+  if (!Array.isArray(arr) || arr.length < 2) return arr || [];
+  const off = ((dayOffset == null
+    ? Math.floor(Date.now() / 86400000)
+    : dayOffset) % arr.length + arr.length) % arr.length;
+  return off === 0 ? arr : arr.slice(off).concat(arr.slice(0, off));
 }
 
 // Marketplace webhooks mutate tenant config (activate/deactivate a whole
@@ -328,7 +342,7 @@ router.post('/admin/weekly-report', requireSuperAdminOrScheduler, async (req, re
 // Same auth model as check-alerts: super-admin OR x-scheduler-secret header.
 router.post('/admin/check-reengagement', requireSuperAdminOrScheduler, async (req, res) => {
   try {
-    const users = await getAllUsersAcrossTenants();
+    const users = rotateForFairness(await getAllUsersAcrossTenants());
     let usersChecked = 0;
     let usersWithReminders = 0;
     let totalSent = 0;
@@ -458,7 +472,7 @@ router.post('/admin/check-reengagement', requireSuperAdminOrScheduler, async (re
 // per-user daily slot — safe to retry on transient failures.
 router.post('/admin/check-alerts', requireSuperAdminOrScheduler, async (req, res) => {
   try {
-    const users = await getAllUsersAcrossTenants();
+    const users = rotateForFairness(await getAllUsersAcrossTenants());
     let usersChecked = 0;
     let usersAlerted = 0;
     let usersSkipped = 0;
@@ -870,7 +884,7 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
   let scannedUsers = 0, captured = 0, detectedMeetings = 0, skippedUsers = 0, errored = 0;
   const errors = [];
   try {
-    const users = await getAllUsersAcrossTenants();
+    const users = rotateForFairness(await getAllUsersAcrossTenants());
     for (const u of users) {
       if (Date.now() - startedAt > budgetMs) { log.warn('auto-capture: budget exhausted', { scannedUsers }); break; }
       try {
@@ -939,8 +953,14 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
             await persistAttendance(u.domain, meetingCode, rec.name, participants, u.email);
             detectedMeetings++;
 
-            // For Pro users (or opted-in users): auto-export to Sheets
+            // For Pro users (or opted-in users): auto-export to Sheets.
+            // Atomic per-meeting claim closes the concurrent-fire race
+            // (Cloud Scheduler is at-least-once) — getExportedConferenceIds is
+            // read-once so two overlapping sweeps could otherwise both export,
+            // producing a duplicate Sheet tab AND a duplicate "ready" email.
             if (shouldAutoExport && !alreadyExported.has(meetingCode)) {
+              const claim = await claimReengagementSlot(u.domain, u.email, `autocap:${meetingCode}`);
+              if (!claim.claimed) { alreadyExported.add(meetingCode); continue; }
               await buildAndSaveExport({
                 user: { domain: u.domain, email: u.email, displayName: u.displayName },
                 sheetsAuth,
@@ -993,13 +1013,18 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
 // domain/Institution tier. Dedupe: claimReengagementSlot keyed by ISO week,
 // so retries and manual triggers never double-send.
 router.post('/admin/org-digest', requireSuperAdminOrScheduler, async (req, res) => {
+  const startedAt = Date.now();
+  const budgetMs = sweepBudgetMs();
   const now = new Date();
   const jan1 = Date.UTC(now.getUTCFullYear(), 0, 1);
   const week = `${now.getUTCFullYear()}-w${Math.ceil(((now.getTime() - jan1) / 86400000 + 1) / 7)}`;
   let scanned = 0, sent = 0, skipped = 0, errored = 0;
   try {
     const snap = await getDb().collection('tenants').where('plan', '==', 'pro').get();
-    for (const doc of snap.docs) {
+    // Rotate + budget-guard like the other sweeps — the ISO-week claim makes
+    // the tail resume next run without double-sending.
+    for (const doc of rotateForFairness(snap.docs)) {
+      if (Date.now() - startedAt > budgetMs) break;
       scanned++;
       const domain = doc.id;
       const adminEmail = (doc.data()?.adminEmail || '').toLowerCase();
@@ -1055,7 +1080,7 @@ router.post('/admin/check-upcoming', requireSuperAdminOrScheduler, async (req, r
   let scanned = 0, reminded = 0, skipped = 0, errored = 0;
   const errors = [];
   try {
-    const users = await getAllUsersAcrossTenants();
+    const users = rotateForFairness(await getAllUsersAcrossTenants());
     for (const u of users) {
       if (Date.now() - startedAt > budgetMs) { log.warn('check-upcoming: budget exhausted', { scanned }); break; }
       try {

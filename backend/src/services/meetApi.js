@@ -50,7 +50,11 @@ async function meetGetAll(path, token, responseKey) {
   let pages = 0;
   do {
     const separator = path.includes('?') ? '&' : '?';
-    const url = pageToken ? `${path}${separator}pageToken=${pageToken}` : path;
+    // encodeURIComponent: Meet page tokens are base64url-ish and can contain
+    // '+', '/', '='. An unencoded '+' decodes server-side as a space →
+    // corrupted token → the loop errors or re-fetches a page, silently
+    // dropping or duplicating participants on multi-page (large) meetings.
+    const url = pageToken ? `${path}${separator}pageToken=${encodeURIComponent(pageToken)}` : path;
     const data = await meetGet(url, token);
     if (data[responseKey]) items.push(...data[responseKey]);
     pageToken = data.nextPageToken || null;

@@ -305,3 +305,33 @@ describe('getUserMeetingHistory — free-tier {limit} caps ALL derived data', ()
     expect(res.totalMeetings).toBe(3);
   });
 });
+
+describe('getUserMeetingHistory — people canonicalization + per-meeting dedup', () => {
+  test('a person on two devices in ONE meeting counts once; rate never exceeds 100%', async () => {
+    seedMeeting('m1', {
+      title: 'Bio', startTime: new Date('2026-09-01T10:00:00Z'), participantCount: 1,
+      participants: [
+        { email: 'ana@school.edu', displayName: 'Ana', joinTime: new Date('2026-09-01T10:00:00Z'), leaveTime: new Date('2026-09-01T10:30:00Z') },
+        { displayName: 'Ana', joinTime: new Date('2026-09-01T10:05:00Z'), leaveTime: new Date('2026-09-01T10:20:00Z') }, // second device, name-only
+      ],
+    });
+    seedTracked(['m1']);
+    const res = await firestore.getUserMeetingHistory('acme.com', 'me@acme.com');
+    const ana = res.people.find(p => p.email === 'ana@school.edu');
+    expect(ana).toBeDefined();
+    expect(ana.meetingCount).toBe(1);         // not 2
+    expect(ana.attendanceRate).toBeLessThanOrEqual(1); // never > 100%
+  });
+
+  test('a person reported name-only in one meeting and by email in another merges into one row', async () => {
+    seedMeeting('m1', { title: 'Standup', startTime: new Date('2026-09-01T10:00:00Z'), participantCount: 1,
+      participants: [{ email: 'bob@school.edu', displayName: 'Bob Smith' }] });
+    seedMeeting('m2', { title: 'Standup', startTime: new Date('2026-09-08T10:00:00Z'), participantCount: 1,
+      participants: [{ displayName: 'Bob Smith' }] }); // name-only week
+    seedTracked(['m1', 'm2']);
+    const res = await firestore.getUserMeetingHistory('acme.com', 'me@acme.com');
+    const bobs = res.people.filter(p => (p.displayName || '').toLowerCase().includes('bob'));
+    expect(bobs).toHaveLength(1);              // not split into two
+    expect(bobs[0].meetingCount).toBe(2);
+  });
+});

@@ -659,15 +659,17 @@ router.post('/save-to-sheets', async (req, res) => {
       },
       options: { sendEmail: b.sendEmail, autoExport: b.autoExport, proAllowed },
     });
-    res.json({
-      success: true,
-      sheetUrl,
-      isFirstExport,
-      // Re-exports of the SAME meeting don't consume quota (persistExport
-      // dedupes on email__conferenceId) — only count a first export, or the
-      // panel shows a phantom "3 of 3 used" and fires false gate telemetry.
-      quota: !proAllowed ? { used: monthlyExports + (isFirstExport ? 1 : 0), limit: FREE_MONTHLY_EXPORT_LIMIT } : null,
-    });
+    // Authoritative post-export count for the quota meter: re-reading matches
+    // enforcement exactly (persistExport dedupes re-exports of the same
+    // meeting), so a re-export shows unchanged and a new meeting +1. The old
+    // `isFirstExport` proxy meant "first export EVER", which lagged the meter
+    // for every returning user.
+    let quota = null;
+    if (!proAllowed && req.user) {
+      const usedNow = await countUserMonthlyExports(req.user.domain, req.user.email).catch(() => monthlyExports + 1);
+      quota = { used: usedNow, limit: FREE_MONTHLY_EXPORT_LIMIT };
+    }
+    res.json({ success: true, sheetUrl, isFirstExport, quota });
   } catch (err) {
     if (err.status === 400) return res.status(400).json({ error: err.message });
     if (err.exportCode === 'DRIVE_PERMISSION_MISSING') {

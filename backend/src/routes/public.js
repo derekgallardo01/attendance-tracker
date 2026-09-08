@@ -153,6 +153,7 @@ router.get('/public/billing-config', async (_req, res) => {
     return res.json({ institutionAvailable: _instCache.available });
   }
   let available = false;
+  let priceCheckFailed = false;
   try {
     const key = process.env.STRIPE_SECRET_KEY;
     const priceId = process.env.STRIPE_ANNUAL_PRICE_ID;
@@ -162,9 +163,12 @@ router.get('/public/billing-config', async (_req, res) => {
       available = !!(price && price.unit_amount === INSTITUTION_PRICE_CENTS && (price.recurring?.interval === 'year'));
     }
   } catch (err) {
-    log.warn('public: billing-config price check failed — Institution card stays hidden', { error: err.message });
+    priceCheckFailed = true; // a transient Stripe blip — do NOT cache it
+    log.warn('public: billing-config price check failed — Institution card stays hidden this call only', { error: err.message });
   }
-  _instCache = { available, at: Date.now() };
+  // Only cache a definitive answer; caching a transient failure would hide a
+  // correctly-configured card for the whole 10-min TTL.
+  if (!priceCheckFailed) _instCache = { available, at: Date.now() };
   res.json({ institutionAvailable: available });
 });
 // Test hook: the 10-min cache would otherwise leak between test cases.
