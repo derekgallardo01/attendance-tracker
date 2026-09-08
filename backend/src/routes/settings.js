@@ -55,6 +55,7 @@ router.get('/settings', requireAuth, async (req, res) => {
     const out = {
       autoExportOnEnd: settings.autoExportOnEnd === true,
       emailOptOut: suppressed,
+      digestExtraEmails: Array.isArray(settings.digestExtraEmails) ? settings.digestExtraEmails : [],
     };
     for (const p of WEBHOOK_PROVIDERS) {
       // e.g. slackWebhookConfigured / slackWebhookMasked
@@ -69,17 +70,45 @@ router.get('/settings', requireAuth, async (req, res) => {
   }
 });
 
+// Additional report recipients (co-teacher, coordinator, admin inbox).
+// Bounded + syntax-checked; kept deliberately simple — the export email
+// send re-checks each address against the suppression list at send time.
+const MAX_EXTRA_EMAILS = 5;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+function normalizeExtraEmails(value) {
+  if (value === null || (Array.isArray(value) && value.length === 0)) return { ok: true, emails: null };
+  if (!Array.isArray(value)) return { ok: false };
+  if (value.length > MAX_EXTRA_EMAILS) return { ok: false };
+  const emails = [];
+  for (const v of value) {
+    if (typeof v !== 'string') return { ok: false };
+    const e = v.trim().toLowerCase();
+    if (!EMAIL_RE.test(e) || e.length > 254) return { ok: false };
+    if (!emails.includes(e)) emails.push(e);
+  }
+  return { ok: true, emails: emails.length ? emails : null };
+}
+
 // PUT /api/settings — accept a patch of any supported settings:
 //   slackWebhookUrl / googleChatWebhookUrl / discordWebhookUrl
 //                    — validated incoming-webhook URLs (null/'' clears)
 //   autoExportOnEnd  — boolean, synced across the user's devices
 //   emailOptOut      — boolean, toggles the CAN-SPAM suppression record
+//   digestExtraEmails — up to 5 extra addresses that also receive the
+//                       post-export report email (null/[] clears)
 router.put('/settings', requireAuth, async (req, res) => {
   /* istanbul ignore next: express.json always sets req.body to an object */
   const body = req.body || {};
   const { autoExportOnEnd, emailOptOut } = body;
 
   const patch = {};
+  if ('digestExtraEmails' in body) {
+    const norm = normalizeExtraEmails(body.digestExtraEmails);
+    if (!norm.ok) {
+      return res.status(400).json({ error: `digestExtraEmails must be up to ${MAX_EXTRA_EMAILS} valid email addresses (or null to clear).` });
+    }
+    patch.digestExtraEmails = norm.emails;
+  }
   for (const p of WEBHOOK_PROVIDERS) {
     if (!(p.field in body)) continue;
     const value = body[p.field];

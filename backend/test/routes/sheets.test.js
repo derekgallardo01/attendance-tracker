@@ -63,6 +63,7 @@ jest.mock('../../src/services/firestore', () => ({
   updateUserTokens: jest.fn(),
   getTenantPlan: jest.fn(), // used by billing.planIsPro when billing is configured
   logEvent: jest.fn(), // webhook_digest_sent telemetry from the digest loop
+  isEmailSuppressed: jest.fn(), // per-recipient re-check in the extras fan-out
 }));
 
 jest.mock('../../src/lib/notifications', () => ({
@@ -108,6 +109,7 @@ beforeEach(() => {
   firestore.countUserMonthlyExports.mockResolvedValue(0);
   firestore.getMeetingExcusedEmails.mockResolvedValue([]);
   firestore.getUserSettings.mockResolvedValue({ slackWebhookUrl: null });
+  firestore.isEmailSuppressed.mockResolvedValue(false);
   firestore.getUserMeetingSeries.mockResolvedValue({ series: [], totalSeries: 0 });
   app = buildApp();
 });
@@ -834,5 +836,59 @@ describe('POST /api/save-to-sheets — Pro gating', () => {
     expect(summaryCall[0].requestBody.values).toContainEqual(
       ['Name', 'Email', 'Sessions Attended', 'Total Sessions', 'Attendance %', 'Total Time (min)']);
     expect(JSON.stringify(summaryCall[0].requestBody.values)).not.toContain('attendancetracker.dev/pricing');
+  });
+});
+
+describe('POST /api/save-to-sheets — extra report recipients (digestExtraEmails)', () => {
+  const sendWithExtras = async (extras) => {
+    firestore.getUserSettings.mockResolvedValue({ digestExtraEmails: extras });
+    await request(app)
+      .post('/api/save-to-sheets')
+      .set(authedHeader('user@acme.com', 'acme.com'))
+      .set('Content-Type', 'application/json')
+      .send({ ...validPayload, sendEmail: true, autoExport: true });
+    await new Promise((r) => setImmediate(r)); // let the fire-and-forget extras path run
+  };
+
+  test('sends the report email to each configured extra recipient', async () => {
+    await sendWithExtras(['co@acme.com', 'office@acme.com']);
+    const tos = notifications.sendExportNotification.mock.calls.map((c) => c[0].to);
+    expect(tos).toEqual(['user@acme.com', 'co@acme.com', 'office@acme.com']);
+    // Extra recipients get the generic greeting, not the owner's name
+    const extraCall = notifications.sendExportNotification.mock.calls[1][0];
+    expect(extraCall.displayName).toBeNull();
+    expect(extraCall.meetingTitle).toBe('Sprint Planning');
+  });
+
+  test('skips an extra that duplicates the owner address', async () => {
+    await sendWithExtras(['user@acme.com', 'co@acme.com']);
+    const tos = notifications.sendExportNotification.mock.calls.map((c) => c[0].to);
+    expect(tos).toEqual(['user@acme.com', 'co@acme.com']);
+  });
+
+  test('skips suppressed extras (unsubscribe honored per recipient)', async () => {
+    firestore.isEmailSuppressed.mockImplementation(async (email) => email === 'optedout@acme.com');
+    await sendWithExtras(['optedout@acme.com', 'co@acme.com']);
+    const tos = notifications.sendExportNotification.mock.calls.map((c) => c[0].to);
+    expect(tos).toEqual(['user@acme.com', 'co@acme.com']);
+  });
+
+  test('a settings read failure only logs — the owner email already went out', async () => {
+    firestore.getUserSettings.mockResolvedValueOnce({ slackWebhookUrl: null }); // digest settings read
+    firestore.getUserSettings.mockRejectedValueOnce(new Error('firestore down'));
+    await request(app)
+      .post('/api/save-to-sheets')
+      .set(authedHeader('user@acme.com', 'acme.com'))
+      .set('Content-Type', 'application/json')
+      .send({ ...validPayload, sendEmail: true, autoExport: true });
+    await new Promise((r) => setImmediate(r));
+    const tos = notifications.sendExportNotification.mock.calls.map((c) => c[0].to);
+    expect(tos).toEqual(['user@acme.com']);
+  });
+
+  test('no extras configured → only the owner email', async () => {
+    await sendWithExtras(undefined);
+    const tos = notifications.sendExportNotification.mock.calls.map((c) => c[0].to);
+    expect(tos).toEqual(['user@acme.com']);
   });
 });

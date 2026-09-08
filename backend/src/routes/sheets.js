@@ -3,7 +3,7 @@ const { google } = require('googleapis');
 const { getGoogleClient } = require('../services/googleAuth');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { persistExport, getUserSheetId, setUserSheetId, countUserExports, countUserMonthlyExports, getMeetingExcusedEmails, addMeetingExcusedEmails, getUserSettings, getUserMeetingSeries, logEvent } = require('../services/firestore');
+const { persistExport, getUserSheetId, setUserSheetId, countUserExports, countUserMonthlyExports, getMeetingExcusedEmails, addMeetingExcusedEmails, getUserSettings, getUserMeetingSeries, logEvent, isEmailSuppressed } = require('../services/firestore');
 const { sendExportNotification, sendSlackDigest, sendChatDigest, sendDiscordDigest } = require('../lib/notifications');
 const { planIsPro } = require('./billing');
 
@@ -556,8 +556,7 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
       const digestParticipants = [...digestPresent, ...digestAbsent].slice(0, 25);
       const digestOverflow = (digestPresent.length + digestAbsent.length) - digestParticipants.length;
 
-      sendExportNotification({
-        to: req.user.email,
+      const emailPayload = {
         displayName: req.user.displayName || null,
         sheetUrl,
         meetingTitle: meetingTitle || 'Google Meet',
@@ -568,7 +567,25 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
         overflow: digestOverflow > 0 ? digestOverflow : 0,
         conferenceId: conferenceId || null,
         recurringEventId: recurringEventId || null,
-      });
+      };
+      sendExportNotification({ to: req.user.email, ...emailPayload });
+
+      // Also deliver the report to any configured extra recipients
+      // (co-teacher, coordinator, admin inbox). Fire-and-forget; each
+      // address is re-checked against the suppression list at send time.
+      (async () => {
+        try {
+          const settings = await getUserSettings(domain, req.user.email);
+          const extras = Array.isArray(settings.digestExtraEmails) ? settings.digestExtraEmails : [];
+          for (const extra of extras) {
+            if (extra === req.user.email.toLowerCase()) continue;
+            if (await isEmailSuppressed(extra)) continue;
+            sendExportNotification({ ...emailPayload, to: extra, displayName: null });
+          }
+        } catch (err) {
+          log.warn('export email extras failed', { error: err.message, email: req.user.email });
+        }
+      })();
     }
 
     return { sheetUrl, isFirstExport };

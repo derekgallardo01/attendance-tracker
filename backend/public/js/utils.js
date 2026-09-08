@@ -389,6 +389,7 @@
     const meetingMinutes = totalMeetingMs > 0 ? Math.max(1, Math.round(totalMeetingMs / 60000)) : (opts.meetingMinutes || 1);
     const lateMinutes = (opts.lateMinutes !== undefined) ? Number(opts.lateMinutes) : 10;
     const minPercent = (opts.minPercent !== undefined) ? Number(opts.minPercent) : 0;
+    const minMinutes = (opts.minMinutes !== undefined) ? Number(opts.minMinutes) : 0;
     const excusedStudents = opts.excusedStudents || {};
     const startTime = opts.startTime ? new Date(opts.startTime) : null;
     const now = opts.now ? new Date(opts.now) : new Date();
@@ -429,7 +430,7 @@
           }
 
           let status = 'Present';
-          if (pct < minPercent) {
+          if ((minPercent > 0 && pct < minPercent) || (minMinutes > 0 && durMin < minMinutes)) {
             status = isExcused ? 'Excused (Short Stay)' : 'Left Early / Incomplete';
           } else if (isLate) {
             status = 'Late';

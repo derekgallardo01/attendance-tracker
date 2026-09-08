@@ -472,3 +472,60 @@ describe('settings — non-JSON body (req.body || {})', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('digestExtraEmails (extra report recipients)', () => {
+  test('GET returns [] when unset and the saved list when set', async () => {
+    firestore.getUserSettings.mockResolvedValue({});
+    let res = await request(app).get('/api/settings').set(authedHeader('u@a.com', 'a.com'));
+    expect(res.body.digestExtraEmails).toEqual([]);
+
+    firestore.getUserSettings.mockResolvedValue({ digestExtraEmails: ['co@a.com', 'office@a.com'] });
+    res = await request(app).get('/api/settings').set(authedHeader('u@a.com', 'a.com'));
+    expect(res.body.digestExtraEmails).toEqual(['co@a.com', 'office@a.com']);
+  });
+
+  test('PUT normalizes: trims, lowercases, dedupes', async () => {
+    const res = await request(app)
+      .put('/api/settings')
+      .set(authedHeader('u@a.com', 'a.com'))
+      .send({ digestExtraEmails: [' Co@A.com ', 'co@a.com', 'office@a.com'] });
+    expect(res.status).toBe(200);
+    expect(firestore.updateUserSettings).toHaveBeenCalledWith('a.com', 'u@a.com', {
+      digestExtraEmails: ['co@a.com', 'office@a.com'],
+    });
+  });
+
+  test('PUT null and PUT [] both clear the list', async () => {
+    for (const value of [null, []]) {
+      firestore.updateUserSettings.mockClear();
+      const res = await request(app)
+        .put('/api/settings')
+        .set(authedHeader('u@a.com', 'a.com'))
+        .send({ digestExtraEmails: value });
+      expect(res.status).toBe(200);
+      expect(firestore.updateUserSettings).toHaveBeenCalledWith('a.com', 'u@a.com', {
+        digestExtraEmails: null,
+      });
+    }
+  });
+
+  test('PUT 400 for invalid shapes: non-array, >5 entries, non-string entry, bad address, overlong address', async () => {
+    const bad = [
+      'not-an-array',
+      ['a@a.com', 'b@a.com', 'c@a.com', 'd@a.com', 'e@a.com', 'f@a.com'],
+      [42],
+      ['not-an-email'],
+      ['missing-tld@x.c'],
+      [`${'x'.repeat(250)}@a.com`],
+    ];
+    for (const value of bad) {
+      const res = await request(app)
+        .put('/api/settings')
+        .set(authedHeader('u@a.com', 'a.com'))
+        .send({ digestExtraEmails: value });
+      expect(res.status).toBe(400);
+      expect(res.body.error).toMatch(/digestExtraEmails/);
+    }
+    expect(firestore.updateUserSettings).not.toHaveBeenCalled();
+  });
+});

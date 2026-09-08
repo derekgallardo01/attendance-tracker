@@ -1524,6 +1524,10 @@
           <option value="60">60%</option>
           <option value="75">75%</option>
           <option value="90">90%</option>
+          <option value="m30">30 min</option>
+          <option value="m45">45 min</option>
+          <option value="m60">60 min</option>
+          <option value="m75">75 min</option>
         </select>
       </div>
       <div style="display:flex;align-items:center;gap:4px">
@@ -1961,7 +1965,18 @@ function onThresholdChange() {
   const stay = document.getElementById('threshold-stay');
   const late = document.getElementById('threshold-late');
   if (!state.thresholds) state.thresholds = { minPercent: 0, lateMinutes: 10 };
-  if (stay) state.thresholds.minPercent = Number(stay.value) || 0;
+  if (stay) {
+    // Percent values are plain numbers ("75"); absolute-minute rules are
+    // prefixed ("m45") — CEU/compliance policies are usually stated in
+    // minutes ("at least 45 of 60 minutes"), so both styles are offered.
+    if (stay.value.startsWith('m')) {
+      state.thresholds.minPercent = 0;
+      state.thresholds.minMinutes = Number(stay.value.slice(1)) || 0;
+    } else {
+      state.thresholds.minPercent = Number(stay.value) || 0;
+      state.thresholds.minMinutes = 0;
+    }
+  }
   if (late) state.thresholds.lateMinutes = Number(late.value) || 0;
   saveStoredRosters();
   renderRosterView();
@@ -2083,7 +2098,11 @@ function renderRosterView() {
 
   const staySel = document.getElementById('threshold-stay');
   const lateSel = document.getElementById('threshold-late');
-  if (staySel && state.thresholds) staySel.value = String(state.thresholds.minPercent || 0);
+  if (staySel && state.thresholds) {
+    staySel.value = state.thresholds.minMinutes > 0
+      ? `m${state.thresholds.minMinutes}`
+      : String(state.thresholds.minPercent || 0);
+  }
   if (lateSel && state.thresholds) lateSel.value = String(state.thresholds.lateMinutes !== undefined ? state.thresholds.lateMinutes : 10);
 
   const parts = [...state.participants.values()];
@@ -2092,6 +2111,7 @@ function renderRosterView() {
   const meetingMinutes = totalMeetingMs > 0 ? Math.max(1, Math.round(totalMeetingMs / 60000)) : 1;
   const lateMinutes = (state.thresholds && state.thresholds.lateMinutes !== undefined) ? Number(state.thresholds.lateMinutes) : 10;
   const minPercent = (state.thresholds && state.thresholds.minPercent !== undefined) ? Number(state.thresholds.minPercent) : 0;
+  const minMinutes = (state.thresholds && state.thresholds.minMinutes !== undefined) ? Number(state.thresholds.minMinutes) : 0;
 
   const matchedParts = new Set();
   const presentStudents = [];
@@ -2118,7 +2138,7 @@ function renderRosterView() {
       }
 
       const item = { student, participant: p, durMin, pct, isLate, isExcused, note, studentKey };
-      if (isLate || (minPercent > 0 && pct < minPercent)) {
+      if (isLate || (minPercent > 0 && pct < minPercent) || (minMinutes > 0 && durMin < minMinutes)) {
         lateStudents.push(item);
       } else {
         presentStudents.push(item);
@@ -2280,6 +2300,7 @@ function csvExportContext() {
       totalMeetingMs: (state.startTime && state.startTime.getTime()) ? (now.getTime() - state.startTime.getTime()) : 0,
       lateMinutes: state.thresholds?.lateMinutes,
       minPercent: state.thresholds?.minPercent,
+      minMinutes: state.thresholds?.minMinutes,
       excusedStudents: state.excusedStudents,
       startTime: state.startTime,
       now
@@ -4735,6 +4756,8 @@ async function openSettingsModal() {
       if (autoCheckbox) autoCheckbox.checked = data.autoExportOnEnd === true;
       localStorage.setItem('autoExportOnEnd', data.autoExportOnEnd ? '1' : '0');
       if (emailCheckbox) emailCheckbox.checked = data.emailOptOut !== true;
+      const extraInput = document.getElementById('settings-extra-emails');
+      if (extraInput) extraInput.value = (data.digestExtraEmails || []).join(', ');
       for (const [key, p] of Object.entries(WEBHOOK_UI)) {
         // e.g. slackWebhookConfigured / slackWebhookMasked
         const base = p.field.replace(/Url$/, '');
@@ -4847,6 +4870,41 @@ function selectWebhookProvider(provider) {
   if (status) status.style.display = 'none';
   if (server.configured && !(_webhookDrafts[provider] || '')) {
     showSettingsStatus(t('settings.webhookSavedHint', 'Webhook is saved. Paste a new one to replace it.'), '#9ca3af', ui.statusId);
+  }
+}
+
+// Extra report recipients: comma-separated input → validated list → PUT.
+// Saves on change (blur/Enter) like the toggles; errors render inline.
+async function saveExtraEmails() {
+  const input = document.getElementById('settings-extra-emails');
+  const status = document.getElementById('settings-extra-emails-status');
+  if (!input) return;
+  const show = (text, color) => {
+    if (!status) return;
+    status.textContent = text;
+    status.style.color = color || '#8b949e';
+    status.style.display = 'block';
+  };
+  const raw = (input.value || '').trim();
+  const emails = raw ? raw.split(',').map(e => e.trim().toLowerCase()).filter(Boolean) : [];
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  if (emails.length > 5 || emails.some(e => !emailRe.test(e))) {
+    show(t('settings.extraEmailsInvalid', 'Enter up to 5 valid email addresses, separated by commas.'), '#f85149');
+    return;
+  }
+  try {
+    const res = await authFetch(`${state.backendUrl}/settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ digestExtraEmails: emails.length ? emails : null }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error || `HTTP ${res.status}`);
+    }
+    show(emails.length ? t('settings.webhookSaved', 'Saved') : t('settings.extraEmailsCleared', 'Extra recipients cleared'), '#4ade80');
+  } catch (err) {
+    show(err.message, '#f85149');
   }
 }
 
@@ -5655,6 +5713,20 @@ window.addEventListener('DOMContentLoaded', () => {
             <input type="checkbox" id="setting-email-optout" onchange="toggleEmailNotifications(this.checked)" />
             <span class="settings-slider"></span>
           </label>
+        </div>
+
+        <!-- Extra report recipients (co-teacher / coordinator / admin inbox) -->
+        <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:6px">
+          <div>
+            <div class="settings-row-label">
+              <span data-i18n="settings.extraEmailsLabel">Also email reports to</span>
+            </div>
+            <div class="settings-row-sub" data-i18n="settings.extraEmailsDesc">Up to 5 addresses (comma-separated) that also receive the post-meeting report email — a co-teacher, coordinator, or admin inbox.</div>
+          </div>
+          <input id="settings-extra-emails" type="text" placeholder="co-teacher@school.edu, office@school.edu" autocomplete="off"
+            onchange="saveExtraEmails()"
+            style="width:100%;background:#161b22;border:1px solid #30363d;border-radius:8px;color:#e6edf3;padding:8px 12px;font-size:.76rem;box-sizing:border-box" />
+          <div id="settings-extra-emails-status" style="display:none;font-size:.72rem;color:#8b949e"></div>
         </div>
       </div>
 

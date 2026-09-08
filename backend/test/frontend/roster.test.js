@@ -258,6 +258,40 @@ describe('buildAttendanceCsv', () => {
     expect(csv).toContain('"Present (Left)"');
   });
 
+  test('minMinutes rule: absolute-minutes floor flags short stays independent of percent', () => {
+    // 60-min meeting, no percent floor, 45-minute minimum-stay rule.
+    // Hana stayed 30 min (below the floor), Ivan 50 min (above it).
+    const minRoster = [
+      { name: 'Hana Short', email: 'hana@school.edu' },
+      { name: 'Ivan Stays', email: 'ivan@school.edu' }
+    ];
+    const minParts = [
+      { displayName: 'Hana Short', email: 'hana@school.edu', present: false, joinTime: new Date('2026-09-07T14:00:00Z'), _accumulatedMs: 30 * 60000, rejoins: 0 },
+      { displayName: 'Ivan Stays', email: 'ivan@school.edu', present: false, joinTime: new Date('2026-09-07T14:00:00Z'), _accumulatedMs: 50 * 60000, rejoins: 0 }
+    ];
+    const csv = buildAttendanceCsv(minParts, minRoster, {
+      meetingTitle: 'Biology 101',
+      startTime,
+      now,
+      totalMeetingMs: 3600000,
+      lateMinutes: 10,
+      minPercent: 0,
+      minMinutes: 45,
+      excusedStudents: {}
+    });
+    expect(csv).toContain('"Hana Short","hana@school.edu","Left Early / Incomplete"');
+    expect(csv).toContain('"Ivan Stays","ivan@school.edu","Present (Left)"');
+  });
+
+  test('minMinutes rule: excused short stay reads Excused (Short Stay)', () => {
+    const csv = buildAttendanceCsv(
+      [{ displayName: 'Dave Excused', email: 'dave@school.edu', present: false, joinTime: new Date('2026-09-07T14:00:00Z'), _accumulatedMs: 5 * 60000, rejoins: 0 }],
+      [{ name: 'Dave Excused', email: 'dave@school.edu' }],
+      { startTime, now, totalMeetingMs: 3600000, lateMinutes: 10, minMinutes: 45, excusedStudents }
+    );
+    expect(csv).toContain('"Excused (Short Stay)"');
+  });
+
   test('marks on-time attendee as Present and late attendee as Late', () => {
     const csv = buildAttendanceCsv(participants, roster, {
       meetingTitle: 'Biology 101',
