@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const Sentry = require('@sentry/node');
 const CONFIG = require('./config');
+const log = require('./lib/logger');
 const auth = require('./middleware/auth');
 const apiLimiter = require('./middleware/rateLimit');
 const requestId = require('./middleware/requestId');
@@ -111,5 +112,25 @@ app.use((req, res, next) => {
 
 // Sentry error handler — must be after all routes
 Sentry.setupExpressErrorHandler(app);
+
+// Final error handler — normalize errors to JSON and NEVER leak stack traces or
+// internal file paths. Express's built-in handler dumps the full stack (with
+// /app/node_modules/... paths) unless NODE_ENV==='production', so a malformed
+// JSON body from an anonymous caller could expose the dependency tree. This
+// runs after Sentry has captured the error.
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  const status = err.status || err.statusCode || 500;
+  // Malformed JSON body (body-parser) → clean 400, not a stack trace.
+  if (status === 400 && (err.type === 'entity.parse.failed' || err instanceof SyntaxError)) {
+    return res.status(400).json({ error: 'Invalid JSON body.' });
+  }
+  if (status === 413 || err.type === 'entity.too.large') {
+    return res.status(413).json({ error: 'Request body too large.' });
+  }
+  log.error('unhandled request error', { path: req.path, status, error: err.message });
+  return res.status(status >= 400 && status < 600 ? status : 500).json({ error: 'Internal server error.' });
+});
 
 module.exports = app;
