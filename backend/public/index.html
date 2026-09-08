@@ -1912,7 +1912,27 @@ function editCurrentRoster() {
 
 function deleteCurrentRoster() {
   if (!state.activeRosterName) return;
-  if (!armedConfirm('roster-delete', `Delete roster "${state.activeRosterName}"? Click × again to confirm.`)) return;
+  const btn = document.getElementById('btn-delete-roster');
+  const restoreBtn = () => {
+    if (!btn) return;
+    btn.textContent = '×';
+    btn.style.background = '';
+    btn.style.color = '#f87171';
+    btn.style.fontWeight = '';
+  };
+  if (!armedConfirm('roster-delete', `Delete roster "${state.activeRosterName}"? Click again to confirm.`)) {
+    // Make the confirmation visible AT the button, not just the bottom toast:
+    // the × morphs into a red "Confirm delete?" for the arm window.
+    if (btn) {
+      btn.textContent = 'Confirm delete?';
+      btn.style.background = 'rgba(248,113,113,.15)';
+      btn.style.color = '#f87171';
+      btn.style.fontWeight = '700';
+      setTimeout(() => { if (!_armedClicks['roster-delete'] || Date.now() >= _armedClicks['roster-delete']) restoreBtn(); }, 6100);
+    }
+    return;
+  }
+  restoreBtn();
   delete state.rosters[state.activeRosterName];
   state.activeRosterName = null;
   saveStoredRosters();
