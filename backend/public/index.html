@@ -1507,8 +1507,10 @@
       </select>
       <div style="display:flex;align-items:center;gap:6px">
         <button type="button" class="btn-secondary" onclick="openRosterModal(false)" style="flex:1;padding:6px 10px;font-size:.74rem;white-space:nowrap;font-weight:600" data-i18n="roster.newClass">+ New Class</button>
-        <button type="button" class="btn-secondary" id="btn-edit-roster" onclick="editCurrentRoster()" style="display:none;padding:6px 14px;font-size:.74rem" data-i18n="common.edit">Edit</button>
-        <button type="button" class="btn-secondary" id="btn-delete-roster" onclick="deleteCurrentRoster()" style="display:none;padding:6px 12px;font-size:.74rem;color:#f87171" title="Delete class">×</button>
+        <!-- flex:0 0 auto overrides the global `button { flex:1 }` so these
+             size to their content instead of stretching across the row. -->
+        <button type="button" class="btn-secondary" id="btn-edit-roster" onclick="editCurrentRoster()" style="display:none;flex:0 0 auto;padding:6px 14px;font-size:.74rem" data-i18n="common.edit">Edit</button>
+        <button type="button" class="btn-secondary" id="btn-delete-roster" onclick="deleteCurrentRoster()" style="display:none;flex:0 0 auto;padding:6px 12px;font-size:.74rem;color:#f87171" title="Delete class">×</button>
       </div>
     </div>
 
