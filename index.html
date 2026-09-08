@@ -954,7 +954,9 @@
       gap: 14px;
       padding: 12px 14px;
       transition: background .12s ease;
+      flex-wrap: wrap;
     }
+    .settings-row > select { max-width: 100%; box-sizing: border-box; }
     .settings-row + .settings-row {
       border-top: 1px solid rgba(255, 255, 255, 0.06);
     }
@@ -5362,7 +5364,7 @@ window.addEventListener('DOMContentLoaded', () => {
             <span>Student attendance certificates &amp; multi-session reports</span>
           </div>
         </div>
-        <button type="button" id="btn-upgrade-individual" onclick="startUpgradeCheckout('educator', 'btn-upgrade-individual')" style="width:100%;background:rgba(88,166,255,.14);border:1px solid rgba(88,166,255,.3);color:#79c0ff;padding:9px 14px;border-radius:20px;font-weight:600;font-size:.82rem;cursor:pointer;transition:all .15s ease">
+        <button type="button" id="btn-upgrade-individual" onclick="startUpgradeCheckout('educator', 'btn-upgrade-individual')" style="width:100%;background:rgba(88,166,255,.14);border:1px solid rgba(88,166,255,.3);color:#79c0ff;padding:13px 18px;border-radius:20px;font-weight:600;font-size:.82rem;cursor:pointer;transition:all .15s ease;margin-top:4px">
           Get Educator Annual Pass — $4.99/yr
         </button>
       </div>

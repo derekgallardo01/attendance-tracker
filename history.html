@@ -21,7 +21,7 @@
     .container { max-width: 980px; margin: 0 auto; }
     .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
     .header h1 { font-size: 1.5rem; }
-    .header .user { color: var(--muted); font-size: .85rem; }
+    .header .user { color: var(--text); font-size: .82rem; font-weight: 500; background: rgba(255,255,255,.05); border: 1px solid var(--border); padding: 5px 12px; border-radius: 20px; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: .85rem; font-weight: 600; text-decoration: none; display: inline-block; }
     .btn-primary { background: var(--accent); color: var(--bg); }
     .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
@@ -156,7 +156,7 @@
       <div class="header">
         <h1 data-i18n="history.title">Meeting History</h1>
         <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px">
-          <select id="history-lang-select" class="btn btn-secondary" style="padding:6px 10px;font-size:0.8rem;cursor:pointer" onchange="onLangChange(this.value)">
+          <select id="history-lang-select" class="btn btn-secondary" style="padding:6px 10px;font-size:0.8rem;cursor:pointer;max-width:160px;box-sizing:border-box" onchange="onLangChange(this.value)">
           </select>
           <span class="user" id="user-email"></span>
           <a id="team-link" class="btn btn-secondary" href="/team.html" style="display:none;color:#f59e0b;border-color:rgba(245,158,11,.3)" data-i18n="history.teamAdmin">Team admin</a>
@@ -240,13 +240,13 @@
       <div id="tab-series" class="tab-content">
         <!-- Individual Pro CTA — promotes the cumulative class-summary export.
              Shown/hidden by renderProCta() based on /api/billing/status. -->
-        <div id="series-pro-cta" style="display:none;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:10px;padding:14px 16px;margin-bottom:14px;font-size:.85rem;display:flex;flex-direction:column;gap:10px">
-          <span id="series-pro-text" style="line-height:1.5;color:#c9d1d9"></span>
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div id="series-pro-cta" style="display:none;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:10px;padding:18px 20px;margin-bottom:14px;font-size:.85rem;display:flex;flex-direction:column;gap:14px">
+          <span id="series-pro-text" style="line-height:1.55;color:#c9d1d9"></span>
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
             <span id="series-pro-interval" style="display:none;white-space:nowrap">
               <button type="button" id="pro-int-annual" onclick="setProInterval('annual')" style="border:1px solid var(--border);border-radius:6px 0 0 6px;padding:5px 10px;cursor:pointer;font-size:.8rem">Annual · save 20%</button><button type="button" id="pro-int-monthly" onclick="setProInterval('monthly')" style="border:1px solid var(--border);border-left:none;border-radius:0 6px 6px 0;padding:5px 10px;cursor:pointer;font-size:.8rem">Monthly</button>
             </span>
-            <button id="series-pro-btn" class="btn" style="background:#4ade80;color:#0d1117;padding:6px 14px;font-weight:600" onclick="onSeriesProCta(this)"></button>
+            <button id="series-pro-btn" class="btn" style="background:#4ade80;color:#0d1117;padding:9px 20px;font-weight:600" onclick="onSeriesProCta(this)"></button>
           </div>
         </div>
         <input id="search-series" class="search-box" type="text" data-i18n-placeholder="history.searchSeries" placeholder="Search recurring meetings by title…" oninput="renderSeries()" />
