@@ -56,6 +56,21 @@
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://attendancetracker.dev/google-meet-attendance-which-plan.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://attendancetracker.dev/google-meet-breakout-room-attendance.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://attendancetracker.dev/attendance-taker-for-classroom-alternative.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://attendancetracker.dev/export-google-meet-participants-to-excel.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>

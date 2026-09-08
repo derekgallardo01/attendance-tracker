@@ -5,26 +5,24 @@
   <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
   <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>How to see who attended a Google Meet after it ended (2026 Guide) — Attendance Tracker</title>
-  <meta name="description" content="Google Meet doesn't show a participant list after the meeting ends. Here are three reliable ways to get one — auto-exported reports, hands-free Auto-Capture, and a Meeting History dashboard." />
-  <link rel="canonical" href="https://attendancetracker.dev/see-who-attended-google-meet-after-it-ended.html" />
-  <meta property="og:title" content="How to see who attended a Google Meet after it ended" />
-  <meta property="og:description" content="Get a full participant list — names, emails, join/leave times, duration — for every Google Meet you run, even after everyone has left." />
+  <title>Google Meet breakout room attendance: what's possible in 2026 — Attendance Tracker</title>
+  <meta name="description" content="An honest guide to tracking breakout room attendance in Google Meet: what Google's built-in report covers, why no third-party tool can track per-room membership, and what actually works." />
+  <link rel="canonical" href="https://attendancetracker.dev/google-meet-breakout-room-attendance.html" />
+  <meta property="og:title" content="Google Meet breakout room attendance: what's possible in 2026" />
+  <meta property="og:description" content="What Google's built-in report covers for breakout rooms, why no add-on or extension can track per-room attendance, and the practical patterns teachers actually use." />
   <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
-  <meta property="og:url" content="https://attendancetracker.dev/see-who-attended-google-meet-after-it-ended.html" />
+  <meta property="og:url" content="https://attendancetracker.dev/google-meet-breakout-room-attendance.html" />
   <meta property="og:type" content="article" />
 
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "HowTo",
-    "name": "How to see who attended a Google Meet after it ended",
-    "description": "Step-by-step instructions for getting a full participant list from a Google Meet after the meeting is over.",
-    "step": [
-      {"@type": "HowToStep", "name": "Install Attendance Tracker", "text": "Install the Attendance Tracker add-on from the Google Workspace Marketplace. It appears in Google Meet's Activities panel."},
-      {"@type": "HowToStep", "name": "Run your meeting", "text": "Open the panel during the meeting for a live roster, or let Pro Auto-Capture record meetings you host automatically — no panel needed."},
-      {"@type": "HowToStep", "name": "Open the report after the meeting", "text": "The attendance report exports automatically at meeting end; browse every tracked meeting anytime in Meeting History at attendancetracker.dev."}
-    ]
+    "@type": "Article",
+    "headline": "Google Meet breakout room attendance: what's possible in 2026",
+    "description": "What Google's built-in attendance report covers for breakout rooms, why no third-party tool can track per-room membership, and the practical patterns that actually work.",
+    "author": { "@type": "Organization", "name": "Attendance Tracker" },
+    "publisher": { "@type": "Organization", "name": "Attendance Tracker", "url": "https://attendancetracker.dev" },
+    "mainEntityOfPage": "https://attendancetracker.dev/google-meet-breakout-room-attendance.html"
   }
   </script>
 
@@ -69,70 +67,54 @@
       <a href="/">Attendance Tracker</a>
     </div>
 
-    <h1>How to see who attended a Google Meet after it ended</h1>
-    <p class="lead">The meeting is over, everyone has left, and now you need the participant list. Here is the honest answer to why Google Meet doesn't show you one — and three reliable ways to make sure you always have it.</p>
+    <h1>Google Meet breakout room attendance: what's possible in 2026</h1>
+    <p class="lead">If you run small-group work in Google Meet, you've probably wondered whether anything can tell you who was in which breakout room, and for how long. This page gives you the honest answer — including one thing most tool vendors won't tell you.</p>
 
-    <div class="callout">
-      <strong>The short version:</strong> Google Meet keeps no participant history you can open after the call unless your organization pays for Education Plus or specific enterprise host tools. An <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_after_meeting" target="_blank">official Meet add-on</a> fixes this going forward: it records who joined, when, and for how long — and exports the report automatically when the meeting ends.
-    </div>
-
-    <h2>Why can't I see who joined my Google Meet?</h2>
-    <p>Once a Google Meet ends, the People panel is gone and there is no built-in "past participants" screen. Attendance reports by email exist only on certain paid Workspace editions (Education Plus, Teaching &amp; Learning add-on, and some enterprise tiers), and even there the host has to have the feature enabled before the meeting. On a free Gmail account or a standard Workspace plan, the participant list simply isn't stored anywhere you can reach.</p>
-    <p>That is a problem the moment you need evidence: a student disputes an absence, HR asks who sat the compliance training, or a client claims they were on the kickoff call. The fix is to have something recording attendance while (or, with Pro, whenever) you meet.</p>
-
-    <h2>Three ways to get the participant list with Attendance Tracker</h2>
-
-    <h3>1. Panel open during the meeting → report auto-exports at the end</h3>
-    <ol>
-      <li>In Google Meet, open <strong>Attendance Tracker</strong> from the <strong>Activities</strong> menu (it's an official add-on in the side panel — not a Chrome extension, and it works in Chrome, Edge, Firefox, Safari, and on Chromebooks).</li>
-      <li>The panel shows a live roster — Present, Late, Absent, and Guests — while the meeting runs.</li>
-      <li>When the meeting ends, the attendance report exports automatically. You can also download a CSV (<a href="export-google-meet-participants-to-excel.html">opens straight in Excel</a>) or a PDF report at any point.</li>
-    </ol>
-
-    <h3>2. Forgot to open the panel? Pro Auto-Capture has you covered</h3>
-    <p>With Pro, <strong>Auto-Capture</strong> runs server-side: finished meetings you <strong>hosted</strong> are exported automatically every few hours, even if you never opened the panel — as long as the meeting ended within the last 2 days. It uses the official Google Meet REST API, so there is nothing to keep open, no tab to babysit, and nothing that breaks when Meet's interface changes.</p>
-
-    <h3>3. Browse everything in Meeting History</h3>
-    <p>Every tracked meeting — whether captured live or by Auto-Capture — lands in <strong>Meeting History</strong> at <a href="https://attendancetracker.dev">attendancetracker.dev</a>. Open a recent meeting to see the full participant list with join and leave times, re-download the CSV or PDF, or send the roster to Google Sheets.</p>
-
-    <div class="callout">
-      <strong>Honesty first:</strong> no tool — this one included — can retroactively recover the participant list for a meeting that ended <em>before</em> it was installed and enabled. Google doesn't expose that history. What you can do is install it now, so you never lose another one: from your next meeting onward, every participant list is captured and kept.
-    </div>
-
-    <h2>What the after-meeting report contains</h2>
-    <p>For every participant, the exported report includes:</p>
-    <table>
-      <tr><th>Column</th><th>What it tells you</th></tr>
-      <tr><td>Name</td><td>Display name as shown in Meet</td></tr>
-      <tr><td>Email</td><td>Signed-in participant's address (blank for anonymous guests)</td></tr>
-      <tr><td>Status</td><td>Present / Late / Left Early / Absent / Excused / Guest</td></tr>
-      <tr><td>Attendance %</td><td>Time in meeting ÷ meeting length</td></tr>
-      <tr><td>Duration (min)</td><td>Total minutes in the meeting</td></tr>
-      <tr><td>Join Time / Leave Time</td><td>First join and final leave timestamps</td></tr>
-      <tr><td>Rejoins</td><td>How many times they dropped and came back</td></tr>
-      <tr><td>Notes</td><td>Anything you jotted against a participant during the session</td></tr>
-    </table>
-    <p>That is enough detail to settle "I was there the whole time" disputes with timestamps rather than memory.</p>
-
-    <h2>Three ways this beats Google's own attendance report</h2>
+    <h2>What Google's built-in report offers</h2>
+    <p>Since May 2024, Google's built-in attendance report includes breakout rooms: alongside the main-meeting tab, the report contains a separate tab for each breakout room, listing who was in that room and their in-room join and leave times.</p>
+    <p>The catches are the same ones that apply to the built-in report generally:</p>
     <ul>
-      <li><strong>Rejoins are merged, not lost.</strong> Google's built-in report doesn't itemize someone who drops and rejoins — a flaky connection can look like an early exit. Attendance Tracker merges reconnections into one accurate record and counts the rejoins separately.</li>
-      <li><strong>External emails aren't masked.</strong> Google's report hides participants from outside your domain behind asterisks (<code>li***@s***.com</code>). Your export shows the full address for every signed-in participant.</li>
-      <li><strong>No two-participant minimum.</strong> Google's report only generates with 2+ attendees, which silently excludes 1-on-1 tutoring, office hours, and IEP sessions. Attendance Tracker records a 1-on-1 exactly like a lecture of 200.</li>
+      <li><strong>Eligible editions only.</strong> Attendance reports — breakout tabs included — are limited to editions like Education Plus, the Teaching &amp; Learning Upgrade, Business Plus, and Enterprise. Most teachers on Education Fundamentals or Standard, and most hosts on Business Standard or free accounts, don't get them at all. Check <a href="google-meet-attendance-which-plan.html">which Workspace plans include attendance tracking</a> to see where you stand.</li>
+      <li><strong>Post-meeting email only.</strong> The report arrives in the host's inbox after the meeting ends. There is no way to see room membership live, and nothing to act on while class is still running.</li>
     </ul>
 
+    <h2>The part nobody else will tell you</h2>
+    <div class="callout">
+      <strong>No third-party tool can track breakout-room attendance. Including ours.</strong> Google does not expose breakout-room membership through any public API — not the Meet REST API, not the Add-ons SDK. That means no extension and no add-on can legitimately report who was in which room. Any tool that claims per-room tracking is scraping pixels off the participant list in your browser — an approach that breaks every time Google changes the Meet interface, and one that was never accurate for rooms the tool couldn't see into anyway.
+    </div>
+    <p>We'd love to check that box on a feature list. We don't, because Attendance Tracker is built entirely on Google's official Meet Add-ons platform and official REST API, and the API simply doesn't carry breakout-room data. Accuracy matters more to us than a checkbox — an attendance record you might have to defend to a student, a parent, or an accreditor can't be built on screen-scraping.</p>
+    <p>If Google ever opens breakout-room data to the API, we'll support it. Until then, treat any per-room tracking claim from any vendor with suspicion.</p>
+
+    <h2>What you <em>can</em> do with Attendance Tracker</h2>
+    <p>While per-room membership is off the table for everyone, the surrounding problem — accurate attendance for a session that <em>uses</em> breakout rooms — is very solvable:</p>
+    <ul>
+      <li><strong>Main-room attendance stays accurate through breakout shuffles.</strong> When students bounce between the main room and breakouts, Meet registers leaves and rejoins. Attendance Tracker merges those into one clean record per person, so a student who was present the whole class — main room and breakouts alike — shows one accurate total, not a confusing pile of fragments. (Google's own report doesn't itemize rejoins at all.)</li>
+      <li><strong>Live roster, no minimum, full emails.</strong> You see Present/Late/Absent in real time during class, sessions with even one participant are tracked, and external participants' emails are shown in full rather than masked.</li>
+      <li><strong>Works on every plan.</strong> Free Gmail, Education Fundamentals, Business Standard — the editions Google's report skips are exactly where an add-on earns its keep.</li>
+    </ul>
+
+    <h3>Practical patterns teachers actually use</h3>
+    <ul>
+      <li><strong>When room-level accountability matters, give each group its own Meet link.</strong> Instead of built-in breakout rooms, post three or four ordinary Meet links and assign groups to them. Each "room" is now a real meeting with its own full attendance record — join/leave times, durations, exports — and you (or a co-teacher) can hop between them. This is the only approach that produces per-room records you can rely on.</li>
+      <li><strong>Bracket the breakout window with the live roster.</strong> Take attendance in the main room before sending groups out, then watch the roster as everyone returns. Students who quietly left during breakouts show up immediately in the Late/left tracking — which catches the most common failure mode of small-group time without needing per-room data at all.</li>
+      <li><strong>Pair the roster with a group deliverable.</strong> For graded small-group work, let the attendance record establish who was present for the session, and let each room's shared doc or exit ticket establish who participated in the group. Together they're stronger evidence than a room log alone.</li>
+    </ul>
+
+    <h2>Quick check: is your edition even eligible?</h2>
+    <p>Before building a workflow around Google's built-in breakout tabs, confirm your edition actually generates attendance reports — most don't. Our <a href="google-meet-attendance-which-plan.html">2026 plan-by-plan eligibility table</a> lists exactly which Workspace editions include them, and what to do if yours doesn't.</p>
+
     <h2>Frequently asked questions</h2>
-    <h3>Doesn't Google Workspace Education Plus already do this?</h3>
-    <p>Education Plus (and the Teaching &amp; Learning add-on) can email the host an attendance CSV after meetings above a size threshold. If your school pays for it, use it. Attendance Tracker covers everyone else — free Gmail, Business Starter/Standard, nonprofit and standard Education plans — and adds a live roster, <a href="import-google-classroom-roster-to-google-meet.html">Class Roster matching</a>, gradebook exports, and a browsable Meeting History rather than one email per meeting.</p>
-    <h3>Does it work on a personal Gmail account?</h3>
-    <p>Yes. On personal Gmail meetings the host tracks attendance. In Workspace organizations, TAs and co-hosts can also track once a Workspace admin enables a one-time delegation at <a href="https://attendancetracker.dev/setup">attendancetracker.dev/setup</a>.</p>
-    <h3>Can I get the participant list for a meeting that already happened?</h3>
-    <p>No — and be wary of any tool claiming otherwise. If nothing was recording attendance while the meeting ran (or, for Pro Auto-Capture, if the add-on wasn't enabled when you hosted it), that list is gone. Going forward is a different story: install once, and every future meeting is captured.</p>
+    <h3>Does any extension or add-on track breakout room attendance?</h3>
+    <p>No. Google doesn't expose breakout-room membership through any public API, so no third-party tool can track it legitimately. Tools claiming to are scraping the Meet interface, which is fragile and can't see into rooms the host isn't in.</p>
+    <h3>Does Google's built-in report show breakout rooms?</h3>
+    <p>Yes — since May 2024 it includes a separate tab per breakout room. But only on eligible editions (Education Plus, Teaching &amp; Learning Upgrade, Business Plus, Enterprise), and only as an email to the host after the meeting ends.</p>
+    <h3>What should I do for graded small-group work?</h3>
+    <p>If per-room records must hold up to scrutiny, run each group as its own short Meet link so each room gets a real, complete attendance record. Otherwise, take live attendance in the main room before and after the breakout window and pair it with a per-group deliverable — that combination documents both presence and participation.</p>
 
     <div class="cta">
-      <h3>Never lose a participant list again</h3>
-      <p>Free live roster, automatic export at meeting end, and Meeting History for every tracked call. Installs in under a minute.</p>
-      <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_after_meeting" target="_blank">Install Attendance Tracker from Marketplace</a>
+      <h3>Accurate Meet attendance, breakouts and all</h3>
+      <p>Free to start, live roster on any plan, rejoins merged into one clean record per student.</p>
+      <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_breakout" target="_blank">Install Attendance Tracker from Marketplace</a>
     </div>
 
     <div class="footer-hub" style="margin-top: 50px; padding-top: 30px; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--muted); line-height: 1.8;">

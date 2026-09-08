@@ -101,3 +101,56 @@ Current files (captured 2026-08-09 — they predate the Classroom import, gradeb
 Wanted (not yet captured — would showcase the newest features):
 5. Roster tab with **Import from Google Classroom** button + **Export gradebook CSV: Moodle · Canvas** row — *Caption: "One-click Google Classroom roster import and Moodle/Canvas gradebook exports"*
 6. Settings modal **Chat digest webhooks** card (Slack / Google Chat / Discord tabs) — *Caption: "Automated post-meeting digests to Slack, Google Chat, or Discord"*
+
+Research-based priorities (2026-09-08 competitive scan): the FIRST screenshot
+should be the side panel with a populated roster INSIDE a real Google Meet
+(proves it works where the user lives), the SECOND the resulting Google Sheet
+with realistic class data. Annotate both with callout labels. Listings support
+up to 10 screenshots at 1280x800 — aim for 8-10.
+
+---
+
+## 5. Tagline upgrade (200-char card copy)
+
+The tagline is what renders on search/category cards. Current copy is
+all-feature; top listings (Kami) lead with proof. Marketplace search also
+weights the FRONT of title/tagline — get "take attendance" in early.
+
+Recommended (swap the number in once credible):
+`Take attendance in Google Meet automatically — live roster, one-click Google Sheets export, Classroom roster import. One-time purchase, nothing to cancel.`
+
+The "nothing to cancel" clause is deliberate: the category's most-hated
+competitor (500K installs, 2.8★) is rated down almost entirely on surprise
+subscription billing. Price honesty is a ranking asset here.
+
+---
+
+## 6. Demo video script (30–60s — NO competitor listing has any video)
+
+Record with Loom/QuickTime at 1280x800+, no narration needed (captions in
+post or on-screen text). Upload unlisted to YouTube, add URL to the listing.
+
+1. (0-5s) Google Meet call in progress, 4-6 participants visible.
+2. (5-12s) Open Activities → Attendance Tracker. Panel opens, roster fills
+   in live with join times. On-screen text: "Attendance takes itself."
+3. (12-20s) Class Roster tab: students sorted Present / Late / Absent.
+   Text: "Your real class list — imported from Google Classroom."
+4. (20-30s) Click Save to Google Sheets → cut to the formatted spreadsheet.
+   Text: "One click to Google Sheets. Or Moodle. Or Canvas."
+5. (30-40s) Flash the Meeting History series view (semester percentages).
+   Text: "Every session, all semester, automatic."
+6. (40-45s) End card: logo + "Free to start · No subscription" + install URL.
+
+---
+
+## 7. Category & completeness checklist (console session)
+
+- Reconcile category placement: keep **Works with Google Meet** (direct
+  intent, only ~4 attendance rivals) AND **Education → Teacher & admin
+  tools** (the Education top-20 currently contains NO attendance app).
+- Fill every optional listing field (setup link → attendancetracker.dev/setup,
+  help link → /help.html, report-issue → /support.html) — listing
+  completeness is a documented secondary ranking factor.
+- Later: publish a **pt-BR localized listing** (Marketplace serves listings
+  per user language; zero competitors localize; Brazil has documented
+  institutional demand).
