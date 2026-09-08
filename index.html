@@ -1426,7 +1426,7 @@
   <div class="search-bar" id="search-bar" style="display:none">
     <div class="search-input-wrap">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input class="search-input" id="search-input" type="text" placeholder="Search by name or email…" oninput="handleSearch()" />
+      <input class="search-input" id="search-input" type="text" placeholder="Search by name or email…" data-i18n-placeholder="search.placeholder" oninput="handleSearch()" />
       <button class="search-clear" id="search-clear" onclick="clearSearch()" aria-label="Clear search">×</button>
     </div>
     <div class="search-stats" id="search-stats"></div>
@@ -1435,9 +1435,9 @@
   <!-- ── Sort / Filter / Group toolbar (visible only with participants) ── -->
   <div id="list-toolbar" style="display:none;padding:0 16px 8px;gap:6px;font-size:.7rem">
     <select id="sort-select" onchange="renderList()" style="flex:1;background:#0d1117;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-size:.7rem">
-      <option value="join">Sort: Join time</option>
-      <option value="name">Sort: Name</option>
-      <option value="duration">Sort: Duration</option>
+      <option value="join" data-i18n="sort.joinTime">Sort: Join time</option>
+      <option value="name" data-i18n="sort.name">Sort: Name</option>
+      <option value="duration" data-i18n="sort.duration">Sort: Duration</option>
     </select>
     <select id="filter-select" onchange="renderList()" style="flex:1;background:#0d1117;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-size:.7rem">
       <option value="all">Show: All</option>
@@ -1445,8 +1445,8 @@
       <option value="left">Left only</option>
     </select>
     <select id="group-select" onchange="renderList()" style="flex:1;background:#0d1117;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-size:.7rem">
-      <option value="none">Group: None</option>
-      <option value="domain">By domain</option>
+      <option value="none" data-i18n="group.none">Group: None</option>
+      <option value="domain" data-i18n="group.byDomain">By domain</option>
     </select>
   </div>
 
@@ -1456,7 +1456,7 @@
       <span data-i18n="nav.people">Participants</span> <span class="tab-badge" id="tab-count-participants">0</span>
     </button>
     <button class="tab-btn" id="tab-roster" onclick="switchTab('roster')">
-      <span>Class Roster</span> <span class="tab-badge" id="tab-count-roster">0</span>
+      <span data-i18n="nav.roster">Class Roster</span> <span class="tab-badge" id="tab-count-roster">0</span>
     </button>
     <button class="tab-btn" id="tab-invited" onclick="switchTab('invited')" style="display:none">
       <span data-i18n="attendee.noShows">Invited</span> <span class="tab-badge" id="tab-count-invited">0</span>
@@ -1464,7 +1464,7 @@
   </div>
 
   <!-- ── Participant list ── -->
-  <div class="list-header" id="list-header-participants" style="display:none">Participants</div>
+  <div class="list-header" id="list-header-participants" style="display:none" data-i18n="nav.people">Participants</div>
   <div id="participant-list">
     <div class="empty-state">
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
@@ -4430,13 +4430,15 @@ async function openSettingsModal() {
   const autoCheckbox = document.getElementById('setting-auto-export');
   if (autoCheckbox) autoCheckbox.checked = localStorage.getItem('autoExportOnEnd') === '1';
 
-  // Slack section — clear input, fetch saved settings, show masked form
-  const input = document.getElementById('settings-slack-url');
-  const status = document.getElementById('settings-slack-status');
+  // Webhook cards — clear inputs, fetch saved settings, show masked forms
   const emailCheckbox = document.getElementById('setting-email-optout');
   if (emailCheckbox) emailCheckbox.checked = true;
-  if (input) input.value = '';
-  if (status) status.style.display = 'none';
+  for (const p of Object.values(WEBHOOK_UI)) {
+    const input = document.getElementById(p.inputId);
+    const status = document.getElementById(p.statusId);
+    if (input) input.value = '';
+    if (status) status.style.display = 'none';
+  }
   try {
     const res = await authFetch(`${state.backendUrl}/settings`);
     if (res.ok) {
@@ -4446,14 +4448,19 @@ async function openSettingsModal() {
       if (autoCheckbox) autoCheckbox.checked = data.autoExportOnEnd === true;
       localStorage.setItem('autoExportOnEnd', data.autoExportOnEnd ? '1' : '0');
       if (emailCheckbox) emailCheckbox.checked = data.emailOptOut !== true;
-      if (data.slackWebhookConfigured && input) {
-        input.placeholder = data.slackWebhookMasked || 'Webhook saved (paste to replace)';
-        showSettingsStatus('Webhook is saved. Paste a new one to replace it.', '#9ca3af');
+      for (const p of Object.values(WEBHOOK_UI)) {
+        // e.g. slackWebhookConfigured / slackWebhookMasked
+        const base = p.field.replace(/Url$/, '');
+        const input = document.getElementById(p.inputId);
+        if (data[`${base}Configured`] && input) {
+          input.placeholder = data[`${base}Masked`] || 'Webhook saved (paste to replace)';
+          showSettingsStatus('Webhook is saved. Paste a new one to replace it.', '#9ca3af', p.statusId);
+        }
       }
     }
   } catch { /* fail silently — modal still functional */ }
   loadBillingStatus();
-  setTimeout(() => input?.focus(), 50);
+  setTimeout(() => document.getElementById('settings-slack-url')?.focus(), 50);
 }
 
 function closeSettingsModal() {
@@ -4478,21 +4485,48 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-function showSettingsStatus(text, color) {
-  const status = document.getElementById('settings-slack-status');
+// One entry per chat-webhook integration card in the settings modal.
+// Mirrors the backend WEBHOOK_PROVIDERS table in routes/settings.js.
+const WEBHOOK_UI = {
+  slack: {
+    field: 'slackWebhookUrl', inputId: 'settings-slack-url', statusId: 'settings-slack-status',
+    testBtnId: 'settings-slack-test-btn', saveBtnId: 'settings-slack-save-btn',
+    validate: (u) => AttUtils.isValidSlackWebhook(u),
+    invalidMsg: 'Not a valid Slack webhook URL',
+    testOkMsg: 'Test message sent — check your Slack channel',
+  },
+  googleChat: {
+    field: 'googleChatWebhookUrl', inputId: 'settings-chat-url', statusId: 'settings-chat-status',
+    testBtnId: 'settings-chat-test-btn', saveBtnId: 'settings-chat-save-btn',
+    validate: (u) => AttUtils.isValidGoogleChatWebhook(u),
+    invalidMsg: 'Not a valid Google Chat webhook URL',
+    testOkMsg: 'Test message sent — check your Google Chat space',
+  },
+  discord: {
+    field: 'discordWebhookUrl', inputId: 'settings-discord-url', statusId: 'settings-discord-status',
+    testBtnId: 'settings-discord-test-btn', saveBtnId: 'settings-discord-save-btn',
+    validate: (u) => AttUtils.isValidDiscordWebhook(u),
+    invalidMsg: 'Not a valid Discord webhook URL',
+    testOkMsg: 'Test message sent — check your Discord channel',
+  },
+};
+
+function showSettingsStatus(text, color, statusId) {
+  const status = document.getElementById(statusId || 'settings-slack-status');
   if (!status) return;
   status.textContent = text;
   status.style.color = color || '#9ca3af';
   status.style.display = 'block';
 }
 
-async function saveSettings() {
-  const input = document.getElementById('settings-slack-url');
-  const saveBtn = document.getElementById('settings-save-btn');
+async function saveWebhookSetting(provider) {
+  const p = WEBHOOK_UI[provider];
+  const input = document.getElementById(p.inputId);
+  const saveBtn = document.getElementById(p.saveBtnId);
   const url = (input.value || '').trim();
-  // Empty = clear the webhook. Anything else must look like a Slack webhook.
-  if (url && !AttUtils.isValidSlackWebhook(url)) {
-    showSettingsStatus('Not a valid Slack webhook URL', '#f85149');
+  // Empty = clear the webhook. Anything else must look like the provider's URL.
+  if (url && !p.validate(url)) {
+    showSettingsStatus(p.invalidMsg, '#f85149', p.statusId);
     return;
   }
   saveBtn.disabled = true;
@@ -4501,46 +4535,49 @@ async function saveSettings() {
     const res = await authFetch(`${state.backendUrl}/settings`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slackWebhookUrl: url || null }),
+      body: JSON.stringify({ [p.field]: url || null }),
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       throw new Error(body.error || `HTTP ${res.status}`);
     }
-    showSettingsStatus(url ? 'Saved' : 'Webhook cleared', '#4ade80');
+    showSettingsStatus(url ? 'Saved' : 'Webhook cleared', '#4ade80', p.statusId);
+    try { logUserEvent(url ? 'webhook_saved' : 'webhook_cleared', { provider }); } catch {}
     setTimeout(closeSettingsModal, 1200);
   } catch (err) {
-    showSettingsStatus(err.message, '#f85149');
+    showSettingsStatus(err.message, '#f85149', p.statusId);
   } finally {
     saveBtn.disabled = false;
     saveBtn.textContent = 'Save';
   }
 }
 
-async function testSlackWebhook() {
-  const input = document.getElementById('settings-slack-url');
-  const testBtn = document.getElementById('settings-test-btn');
+async function testWebhookSetting(provider) {
+  const p = WEBHOOK_UI[provider];
+  const input = document.getElementById(p.inputId);
+  const testBtn = document.getElementById(p.testBtnId);
   const url = (input.value || '').trim();
   // If user pasted a fresh URL, validate before sending. Empty = use saved.
-  if (url && !AttUtils.isValidSlackWebhook(url)) {
-    showSettingsStatus('Not a valid Slack webhook URL', '#f85149');
+  if (url && !p.validate(url)) {
+    showSettingsStatus(p.invalidMsg, '#f85149', p.statusId);
     return;
   }
   testBtn.disabled = true;
   testBtn.textContent = 'Sending…';
   try {
-    const res = await authFetch(`${state.backendUrl}/settings/test-slack`, {
+    const res = await authFetch(`${state.backendUrl}/settings/test-webhook`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slackWebhookUrl: url || null }),
+      body: JSON.stringify({ provider, [p.field]: url || null }),
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       throw new Error(body.error || `HTTP ${res.status}`);
     }
-    showSettingsStatus('Test message sent — check your Slack channel', '#4ade80');
+    showSettingsStatus(p.testOkMsg, '#4ade80', p.statusId);
+    try { logUserEvent('webhook_test_sent', { provider }); } catch {}
   } catch (err) {
-    showSettingsStatus(err.message, '#f85149');
+    showSettingsStatus(err.message, '#f85149', p.statusId);
   } finally {
     testBtn.disabled = false;
     testBtn.textContent = 'Send test';
@@ -5239,7 +5276,7 @@ window.addEventListener('DOMContentLoaded', () => {
               </svg>
               <span data-i18n="nav.settings">Language</span>
             </div>
-            <div class="settings-row-sub">Choose your display language</div>
+            <div class="settings-row-sub" data-i18n="settings.langSub">Choose your display language</div>
           </div>
           <select id="settings-lang-select" onchange="changeLanguage(this.value)" style="background:#0d1117;border:1px solid #30363d;color:#e6edf3;border-radius:8px;padding:6px 10px;font-size:.8rem;cursor:pointer">
           </select>
@@ -5252,9 +5289,9 @@ window.addEventListener('DOMContentLoaded', () => {
         <div class="settings-row">
           <div>
             <div class="settings-row-label">
-              <span>Auto-export when meeting ends</span>
+              <span data-i18n="settings.autoExportLabel">Auto-export when meeting ends</span>
             </div>
-            <div class="settings-row-sub">Automatically saves attendance to a Google Sheet when the meeting concludes.</div>
+            <div class="settings-row-sub" data-i18n="settings.autoExportDesc">Automatically saves attendance to a Google Sheet when the meeting concludes.</div>
           </div>
           <label class="settings-switch" aria-label="Toggle auto-export on meeting end">
             <input type="checkbox" id="setting-auto-export" onchange="toggleAutoExport(this.checked)" />
@@ -5266,9 +5303,9 @@ window.addEventListener('DOMContentLoaded', () => {
         <div class="settings-row">
           <div>
             <div class="settings-row-label">
-              <span>Email digests &amp; alerts</span>
+              <span data-i18n="settings.emailLabel">Email digests &amp; alerts</span>
             </div>
-            <div class="settings-row-sub">Send sheet links, meeting summaries, and attendance pattern change alerts.</div>
+            <div class="settings-row-sub" data-i18n="settings.emailDesc">Send sheet links, meeting summaries, and attendance pattern change alerts.</div>
           </div>
           <label class="settings-switch" aria-label="Toggle email notifications">
             <input type="checkbox" id="setting-email-optout" onchange="toggleEmailNotifications(this.checked)" />
@@ -5284,22 +5321,74 @@ window.addEventListener('DOMContentLoaded', () => {
             <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="color:#58a6ff">
               <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.528 2.528 0 0 1 2.521-2.52 2.528 2.528 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.528 2.528 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/>
             </svg>
-            <span>Slack digest webhook</span>
+            <span data-i18n="settings.slackLabel">Slack digest webhook</span>
           </div>
           <a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noopener" style="color:#58a6ff;font-size:.72rem;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
-            <span>Setup guide</span>
+            <span data-i18n="settings.slackSetup">Setup guide</span>
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
           </a>
         </div>
-        <div class="settings-row-sub" style="margin-bottom:10px">
+        <div class="settings-row-sub" style="margin-bottom:10px" data-i18n="settings.slackDesc">
           Posts an attendance summary card to your Slack channel after every export.
         </div>
         <input id="settings-slack-url" type="text" placeholder="https://hooks.slack.com/services/T.../B.../..." autocomplete="off"
           style="width:100%;background:#161b22;border:1px solid #30363d;border-radius:8px;color:#e6edf3;padding:9px 12px;font-size:.76rem;font-family:'DM Mono',ui-monospace,monospace;box-sizing:border-box" />
         <div id="settings-slack-status" style="margin-top:8px;font-size:.74rem;color:#8b949e;display:none;padding:2px 0"></div>
         <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
-          <button type="button" id="settings-test-btn" onclick="testSlackWebhook()" style="background:transparent;border:1px solid #30363d;color:#c9d1d9;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.75rem;font-weight:500">Send test</button>
-          <button type="button" id="settings-save-btn" onclick="saveSettings()" style="background:#4ade80;color:#0d1117;border:none;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:.75rem;font-weight:700">Save</button>
+          <button type="button" id="settings-slack-test-btn" onclick="testWebhookSetting('slack')" data-i18n="settings.sendTest" style="background:transparent;border:1px solid #30363d;color:#c9d1d9;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.75rem;font-weight:500">Send test</button>
+          <button type="button" id="settings-slack-save-btn" onclick="saveWebhookSetting('slack')" data-i18n="btn.save" style="background:#4ade80;color:#0d1117;border:none;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:.75rem;font-weight:700">Save</button>
+        </div>
+      </div>
+
+      <!-- Google Chat webhook integration card -->
+      <div class="settings-group" style="padding:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <div class="settings-row-label">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#34a853" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span data-i18n="settings.chatLabel">Google Chat digest webhook</span>
+          </div>
+          <a href="https://developers.google.com/workspace/chat/quickstart/webhooks" target="_blank" rel="noopener" style="color:#58a6ff;font-size:.72rem;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+            <span data-i18n="settings.slackSetup">Setup guide</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+          </a>
+        </div>
+        <div class="settings-row-sub" style="margin-bottom:10px" data-i18n="settings.chatDesc">
+          Posts an attendance summary card to your Google Chat space after every export.
+        </div>
+        <input id="settings-chat-url" type="text" placeholder="https://chat.googleapis.com/v1/spaces/.../messages?key=...&token=..." autocomplete="off"
+          style="width:100%;background:#161b22;border:1px solid #30363d;border-radius:8px;color:#e6edf3;padding:9px 12px;font-size:.76rem;font-family:'DM Mono',ui-monospace,monospace;box-sizing:border-box" />
+        <div id="settings-chat-status" style="margin-top:8px;font-size:.74rem;color:#8b949e;display:none;padding:2px 0"></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+          <button type="button" id="settings-chat-test-btn" onclick="testWebhookSetting('googleChat')" data-i18n="settings.sendTest" style="background:transparent;border:1px solid #30363d;color:#c9d1d9;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.75rem;font-weight:500">Send test</button>
+          <button type="button" id="settings-chat-save-btn" onclick="saveWebhookSetting('googleChat')" data-i18n="btn.save" style="background:#4ade80;color:#0d1117;border:none;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:.75rem;font-weight:700">Save</button>
+        </div>
+      </div>
+
+      <!-- Discord webhook integration card -->
+      <div class="settings-group" style="padding:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <div class="settings-row-label">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="color:#5865f2">
+              <path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+            </svg>
+            <span data-i18n="settings.discordLabel">Discord digest webhook</span>
+          </div>
+          <a href="https://support.discord.com/hc/en-us/articles/228383668" target="_blank" rel="noopener" style="color:#58a6ff;font-size:.72rem;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+            <span data-i18n="settings.slackSetup">Setup guide</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+          </a>
+        </div>
+        <div class="settings-row-sub" style="margin-bottom:10px" data-i18n="settings.discordDesc">
+          Posts an attendance summary card to your Discord channel after every export.
+        </div>
+        <input id="settings-discord-url" type="text" placeholder="https://discord.com/api/webhooks/..." autocomplete="off"
+          style="width:100%;background:#161b22;border:1px solid #30363d;border-radius:8px;color:#e6edf3;padding:9px 12px;font-size:.76rem;font-family:'DM Mono',ui-monospace,monospace;box-sizing:border-box" />
+        <div id="settings-discord-status" style="margin-top:8px;font-size:.74rem;color:#8b949e;display:none;padding:2px 0"></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+          <button type="button" id="settings-discord-test-btn" onclick="testWebhookSetting('discord')" data-i18n="settings.sendTest" style="background:transparent;border:1px solid #30363d;color:#c9d1d9;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.75rem;font-weight:500">Send test</button>
+          <button type="button" id="settings-discord-save-btn" onclick="saveWebhookSetting('discord')" data-i18n="btn.save" style="background:#4ade80;color:#0d1117;border:none;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:.75rem;font-weight:700">Save</button>
         </div>
       </div>
 
@@ -5308,7 +5397,7 @@ window.addEventListener('DOMContentLoaded', () => {
         <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
           <div>
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-              <span style="font-weight:600;font-size:.85rem;color:#e6edf3">Current Plan:</span>
+              <span style="font-weight:600;font-size:.85rem;color:#e6edf3" data-i18n="settings.currentPlan">Current Plan:</span>
               <span id="settings-plan-name" style="background:rgba(255,255,255,.08);color:#8b949e;padding:2px 8px;border-radius:12px;font-size:.7rem;font-weight:700;letter-spacing:.03em">Free</span>
             </div>
             <div id="settings-billing-desc" class="settings-row-sub">Pro unlocks the org-wide team dashboard and auto-export for your whole domain.</div>
@@ -5324,9 +5413,9 @@ window.addEventListener('DOMContentLoaded', () => {
             <polyline points="3 6 5 6 21 6"></polyline>
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
           </svg>
-          <span>Delete account &amp; data</span>
+          <span data-i18n="settings.deleteAccount">Delete account &amp; data</span>
         </div>
-        <div class="settings-row-sub" style="margin-bottom:10px">Permanently removes your account, settings, activity, and attendance records. This cannot be undone.</div>
+        <div class="settings-row-sub" style="margin-bottom:10px" data-i18n="settings.deleteDesc">Permanently removes your account, settings, activity, and attendance records. This cannot be undone.</div>
         <button type="button" id="settings-delete-btn" onclick="deleteMyAccount()" style="background:transparent;border:1px solid rgba(248,81,73,.4);color:#f85149;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.75rem;font-weight:600">Delete my account</button>
       </div>
     </div>
