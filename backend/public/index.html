@@ -2157,17 +2157,29 @@ function renderRosterView() {
 
 // Shared download driver. Inside the Meet add-on iframe the sandbox lacks
 // allow-downloads, so Chrome (83+) silently swallows anchor-click downloads —
-// hand the payload to a top-level tab via localStorage + download.html, where
-// downloads work. Outside an iframe (or if the relay fails), download directly.
+// hand the payload to a top-level download.html tab, where downloads work.
+// Chrome's third-party storage partitioning means the panel's localStorage is
+// NOT the tab's localStorage, so the primary channel is a postMessage
+// handshake: the tab pings 'att-download-ready', we answer with the payload.
+// The localStorage write stays as a best-effort fallback for environments
+// without partitioning. Outside an iframe, download directly.
 function relayDownload(payload) {
   if (window === window.top) return false;
-  try {
-    localStorage.setItem('attPendingDownload', JSON.stringify(payload));
-    const w = window.open('download.html', '_blank');
-    if (w) return true;
-    localStorage.removeItem('attPendingDownload'); // popup blocked — clean up
-  } catch (e) { /* storage blocked/full — fall through to direct attempt */ }
-  return false;
+  try { localStorage.setItem('attPendingDownload', JSON.stringify(payload)); } catch (e) { /* partitioned/blocked — postMessage covers it */ }
+  let w = null;
+  try { w = window.open('download.html', '_blank'); } catch (e) { /* blocked */ }
+  if (!w) {
+    try { localStorage.removeItem('attPendingDownload'); } catch (e) {}
+    return false; // popup blocked — caller falls back to a direct attempt
+  }
+  const onMsg = (e) => {
+    if (e.source !== w || e.data !== 'att-download-ready') return;
+    w.postMessage({ type: 'att-download', ...payload }, window.location.origin);
+    window.removeEventListener('message', onMsg);
+  };
+  window.addEventListener('message', onMsg);
+  setTimeout(() => window.removeEventListener('message', onMsg), 15000);
+  return true;
 }
 
 function directBlobDownload(blob, filename) {

@@ -31,42 +31,70 @@
       var headline = document.getElementById('headline');
       var detail = document.getElementById('detail');
       var icon = document.getElementById('icon');
-      var raw = null;
-      try {
-        raw = localStorage.getItem('attPendingDownload');
-        localStorage.removeItem('attPendingDownload');
-      } catch (e) { /* storage blocked */ }
-      if (!raw) {
-        headline.textContent = 'Nothing to download';
-        detail.textContent = 'This page only works right after clicking a download button in the Meet panel. Go back and try again.';
-        return;
+      var done = false;
+
+      function fail(title, msg) {
+        if (done) return;
+        headline.textContent = title;
+        detail.textContent = msg;
       }
-      try {
-        var payload = JSON.parse(raw);
-        var parts;
-        if (payload.encoding === 'base64') {
-          var bin = atob(payload.content);
-          var bytes = new Uint8Array(bin.length);
-          for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-          parts = [bytes];
-        } else {
-          parts = [payload.content];
+
+      function deliver(payload) {
+        if (done || !payload || !payload.content) return;
+        done = true;
+        try {
+          var parts;
+          if (payload.encoding === 'base64') {
+            var bin = atob(payload.content);
+            var bytes = new Uint8Array(bin.length);
+            for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            parts = [bytes];
+          } else {
+            parts = [payload.content];
+          }
+          var blob = new Blob(parts, { type: payload.mime || 'application/octet-stream' });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = payload.filename || 'download';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+          icon.textContent = '✓';
+          headline.textContent = 'Downloaded ' + (payload.filename || 'your file');
+          detail.textContent = 'Check your browser’s Downloads. You can close this tab.';
+        } catch (e) {
+          done = false;
+          fail('Download failed', 'Something went wrong preparing the file. Go back to the Meet panel and try again.');
         }
-        var blob = new Blob(parts, { type: payload.mime || 'application/octet-stream' });
-        var url = URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = payload.filename || 'download';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
-        icon.textContent = '✓';
-        headline.textContent = 'Downloaded ' + (payload.filename || 'your file');
-        detail.textContent = 'Check your browser’s Downloads. You can close this tab.';
-      } catch (e) {
-        headline.textContent = 'Download failed';
-        detail.textContent = 'Something went wrong preparing the file. Go back to the Meet panel and try again.';
+      }
+
+      // Path 1: localStorage handoff. Works when the opener shares this
+      // origin's storage (panel opened from a top-level page). Inside Meet,
+      // Chrome's third-party storage partitioning gives the panel iframe a
+      // SEPARATE localStorage, so this comes up empty there.
+      try {
+        var raw = localStorage.getItem('attPendingDownload');
+        localStorage.removeItem('attPendingDownload');
+        if (raw) { deliver(JSON.parse(raw)); if (done) return; }
+      } catch (e) { /* storage blocked */ }
+
+      // Path 2: postMessage handshake with the opener (the Meet panel).
+      // Storage partitioning doesn't apply to postMessage. Only accept
+      // payloads from our own origin.
+      if (window.opener) {
+        window.addEventListener('message', function (e) {
+          if (e.origin !== window.location.origin) return;
+          if (e.data && e.data.type === 'att-download') deliver(e.data);
+        });
+        try { window.opener.postMessage('att-download-ready', '*'); } catch (e) { /* opener gone */ }
+        detail.textContent = 'Fetching the file from the Meet panel…';
+        setTimeout(function () {
+          if (!done) fail('Nothing to download', 'This page only works right after clicking a download button in the Meet panel. Go back and try again.');
+        }, 10000);
+      } else {
+        fail('Nothing to download', 'This page only works right after clicking a download button in the Meet panel. Go back and try again.');
       }
     })();
   </script>
