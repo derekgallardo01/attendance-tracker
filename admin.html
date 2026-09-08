@@ -436,30 +436,56 @@
 
         <!-- Segment cards -->
         <div class="stats-grid">
-          <div class="stat-card" onclick="filterUsersBy('new')" style="cursor:pointer">
+          <div class="stat-card" onclick="filterUsersBy('new')" style="cursor:pointer" title="Click to list these users — each row opens their full activity timeline">
             <div class="stat-label">New</div>
             <div class="stat-value" id="seg-new" style="color:#9ec8ff">—</div>
-            <div class="stat-label">&lt;3d, never tracked</div>
+            <div class="stat-label">&lt;3d, never tracked <span style="color:var(--accent)">· view ›</span></div>
           </div>
-          <div class="stat-card" onclick="filterUsersBy('activating')" style="cursor:pointer">
+          <div class="stat-card" onclick="filterUsersBy('activating')" style="cursor:pointer" title="Click to list these users — each row opens their full activity timeline">
             <div class="stat-label">Activating</div>
             <div class="stat-value" id="seg-activating" style="color:#fbbf24">—</div>
-            <div class="stat-label">&lt;14d, never tracked</div>
+            <div class="stat-label">&lt;14d, never tracked <span style="color:var(--accent)">· view ›</span></div>
           </div>
-          <div class="stat-card" onclick="filterUsersBy('active')" style="cursor:pointer">
+          <div class="stat-card" onclick="filterUsersBy('active')" style="cursor:pointer" title="Click to list these users — each row opens their full activity timeline">
             <div class="stat-label">Active</div>
             <div class="stat-value green" id="seg-active">—</div>
-            <div class="stat-label">Tracked in last 14d</div>
+            <div class="stat-label">Tracked in last 14d <span style="color:var(--accent)">· view ›</span></div>
           </div>
-          <div class="stat-card" onclick="filterUsersBy('atRisk')" style="cursor:pointer">
+          <div class="stat-card" onclick="filterUsersBy('atRisk')" style="cursor:pointer" title="Click to list these users — each row opens their full activity timeline">
             <div class="stat-label">At-risk</div>
             <div class="stat-value" id="seg-atRisk" style="color:#fbbf24">—</div>
-            <div class="stat-label">14-30d since last activity</div>
+            <div class="stat-label">14-30d since last activity <span style="color:var(--accent)">· view ›</span></div>
           </div>
-          <div class="stat-card" onclick="filterUsersBy('churned')" style="cursor:pointer">
+          <div class="stat-card" onclick="filterUsersBy('churned')" style="cursor:pointer" title="Click to list these users — each row opens their full activity timeline">
             <div class="stat-label">Churned</div>
             <div class="stat-value red" id="seg-churned">—</div>
-            <div class="stat-label">30d+ inactive</div>
+            <div class="stat-label">30d+ inactive <span style="color:var(--accent)">· view ›</span></div>
+          </div>
+        </div>
+
+        <!-- Recent signups + countries: painted by loadAllUsers from the
+             same /admin/all-users payload (it carries signupGeo + createdAt) -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(460px,1fr));gap:16px;margin-bottom:24px">
+          <div class="section" style="margin-bottom:0">
+            <h2 style="display:flex;justify-content:space-between;align-items:center">
+              <span>🆕 New signups <span style="color:var(--muted);font-weight:400;font-size:.75rem">last 7 days — click a user for their full activity</span></span>
+              <span style="font-size:.7rem;color:var(--muted);font-weight:400" id="recent-signups-count">—</span>
+            </h2>
+            <div class="table-scroll" style="max-height:380px">
+            <table>
+              <thead><tr><th>User</th><th>Domain</th><th>Country</th><th>Source</th><th>Signed up</th></tr></thead>
+              <tbody id="recent-signups-rows"><tr><td colspan="5" style="color:var(--muted)">Loading…</td></tr></tbody>
+            </table>
+            </div>
+          </div>
+          <div class="section" style="margin-bottom:0">
+            <h2>🌍 Users by country <span style="color:var(--muted);font-weight:400;font-size:.75rem">— green = new this week</span></h2>
+            <div class="table-scroll" style="max-height:380px">
+            <table>
+              <thead><tr><th>Country</th><th>Users</th><th>New (7d)</th><th style="width:38%"></th></tr></thead>
+              <tbody id="country-rows"><tr><td colspan="4" style="color:var(--muted)">Loading…</td></tr></tbody>
+            </table>
+            </div>
           </div>
         </div>
 
@@ -1085,6 +1111,19 @@
       } catch (err) {
         console.error('suggestions load failed:', err);
       }
+    }
+
+    // Bucket machine-y prefixed acquisition sources
+    // (colleague_referral:<email>, invite:<email>, ref:<host>, utm:<x>)
+    // into one label per family for charts and lists.
+    function bucketSource(s) {
+      if (!s) return 'unknown';
+      if (s.startsWith('colleague_referral:')) return 'colleague referral';
+      if (s.startsWith('invite:')) return 'invite link';
+      if (s.startsWith('ref:')) return 'referrer: ' + s.slice(4);
+      if (s.startsWith('utm:')) return 'utm: ' + s.slice(4);
+      if (s === 'marketplace:in_meet_addon') return 'marketplace (in-Meet)';
+      return s;
     }
 
     // Tabbed navigation: panes are class-tagged (.tp-<name>) rather than
@@ -1724,18 +1763,52 @@
           </tr>
         `}).join('');
 
-        // Source breakdown — bucket the machine-y prefixed sources
-        // (colleague_referral:<email>, invite:<email>, ref:<host>, utm:<x>)
-        // so one chart row per FAMILY instead of one per referrer email.
-        const bucketSource = (s) => {
-          if (!s) return 'unknown';
-          if (s.startsWith('colleague_referral:')) return 'colleague referral';
-          if (s.startsWith('invite:')) return 'invite link';
-          if (s.startsWith('ref:')) return 'referrer: ' + s.slice(4);
-          if (s.startsWith('utm:')) return 'utm: ' + s.slice(4);
-          if (s === 'marketplace:in_meet_addon') return 'marketplace (in-Meet)';
-          return s;
-        };
+        // ── Recent signups (7d) — the "who just arrived" list; every row
+        //    opens the full per-user activity/telemetry modal. ──
+        const nowMs = Date.now();
+        const WEEK = 7 * 86400000;
+        const recent = data.users
+          .filter(u => u.createdAt && nowMs - new Date(u.createdAt).getTime() < WEEK)
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        const rsCount = document.getElementById('recent-signups-count');
+        if (rsCount) rsCount.textContent = `${recent.length} this week`;
+        const rsBody = document.getElementById('recent-signups-rows');
+        if (rsBody) {
+          rsBody.innerHTML = recent.length ? recent.map(u => {
+            const c = u.signupGeo?.country || '';
+            return `<tr onclick="openUserModal('${esc(u.email)}','${esc(u.domain)}')" style="cursor:pointer">
+              <td>${esc(u.displayName || u.email)}<div style="font-size:.7rem;color:var(--muted)">${esc(u.email)}</div></td>
+              <td style="color:var(--muted);font-size:.8rem">${esc(u.domain)}</td>
+              <td>${c ? flagEmoji(c) + ' ' + esc(c) : '—'}</td>
+              <td style="color:var(--muted);font-size:.8rem">${esc(bucketSource(u.acquisitionSource || u.signupDetectedSource))}</td>
+              <td style="color:var(--muted);font-size:.8rem">${timeAgo(u.createdAt)}</td>
+            </tr>`;
+          }).join('') : '<tr><td colspan="5" style="color:var(--muted)">No signups this week</td></tr>';
+        }
+
+        // ── Users by country (total + new this week) ──
+        const byCountry = {};
+        data.users.forEach(u => {
+          const c = u.signupGeo?.country || '??';
+          const row = (byCountry[c] ||= { total: 0, recent: 0 });
+          row.total++;
+          if (u.createdAt && nowMs - new Date(u.createdAt).getTime() < WEEK) row.recent++;
+        });
+        const cRows = Object.entries(byCountry).sort((a, b) => b[1].total - a[1].total);
+        const maxCountry = Math.max(1, ...cRows.map(([, v]) => v.total));
+        const cBody = document.getElementById('country-rows');
+        if (cBody) {
+          cBody.innerHTML = cRows.map(([c, v]) => `
+            <tr>
+              <td>${c === '??' ? '🌐 Unknown' : flagEmoji(c) + ' ' + esc(c)}</td>
+              <td><strong>${v.total}</strong></td>
+              <td>${v.recent ? `<span style="color:var(--accent);font-weight:600">+${v.recent}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
+              <td><div style="background:var(--border);border-radius:4px;height:10px;overflow:hidden"><div style="width:${Math.max(3, Math.round((v.total / maxCountry) * 100))}%;background:var(--blue);height:100%"></div></div></td>
+            </tr>`).join('');
+        }
+
+        // Source breakdown — bucketSource collapses the machine-y prefixed
+        // sources so one chart row per FAMILY instead of one per referrer.
         const sources = {};
         data.users.forEach(u => {
           const s = bucketSource(u.acquisitionSource || u.signupDetectedSource);
