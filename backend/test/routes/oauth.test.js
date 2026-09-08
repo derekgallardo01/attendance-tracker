@@ -491,3 +491,51 @@ describe('oauth decodeSession — domain from email', () => {
     expect(res.body.domain).toBe('acme.com');
   });
 });
+
+describe('POST /api/oauth/exchange — attendee mode (self-check-in)', () => {
+  const goodTokens = {
+    id_token: 'fake-id-token',
+    access_token: 'fake-access',
+    refresh_token: 'fake-refresh',
+    expiry_date: Date.now() + 3600 * 1000,
+    scope: 'openid email profile',
+  };
+
+  test('returns an attendee session with NO organizer side effects', async () => {
+    googleAuth.exchangeCode.mockResolvedValue(goodTokens);
+    mockPayload = { email: 'student@uni.edu', hd: 'uni.edu', name: 'Sam Student' };
+    const res = await request(app)
+      .post('/api/oauth/exchange')
+      .send({ code: 'good-code', mode: 'attendee' });
+    expect(res.status).toBe(200);
+    expect(res.body.sessionToken).toBeDefined();
+    expect(res.body.email).toBe('student@uni.edu');
+    expect(res.body.role).toBe('attendee');
+    // The whole point of the mode: a checking-in student must not become a
+    // tenant user (no team-admin auto-claim, no welcome email, no
+    // re-engagement audience) and their tokens must not be stored.
+    expect(firestore.upsertUser).not.toHaveBeenCalled();
+    expect(firestore.updateUserTokens).not.toHaveBeenCalled();
+    expect(firestore.logEvent).not.toHaveBeenCalled();
+  });
+
+  test('attendee session JWT is accepted by requireAuth routes (no user doc)', async () => {
+    googleAuth.exchangeCode.mockResolvedValue(goodTokens);
+    mockPayload = { email: 'student@gmail.com', name: 'Sam' };
+    const res = await request(app)
+      .post('/api/oauth/exchange')
+      .send({ code: 'good-code', mode: 'attendee' });
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(res.body.sessionToken, require('../../src/config').sessionSecret);
+    expect(decoded.email).toBe('student@gmail.com');
+    expect(decoded.role).toBe('attendee');
+    expect(decoded.domain).toBe('gmail.com'); // personal account → email domain
+  });
+
+  test('normal mode is unaffected (upsertUser still called without mode)', async () => {
+    googleAuth.exchangeCode.mockResolvedValue({ ...goodTokens, scope: 'openid email profile https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/meetings.space.readonly https://www.googleapis.com/auth/calendar.events.readonly' });
+    firestore.getUser.mockResolvedValue(null);
+    await request(app).post('/api/oauth/exchange').send({ code: 'good-code' });
+    expect(firestore.upsertUser).toHaveBeenCalled();
+  });
+});

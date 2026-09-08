@@ -335,7 +335,7 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
       return diff > LATE_THRESHOLD_MIN ? diff : 0;
     };
 
-    const header = ['Name', 'Email', 'RSVP Status', 'Late?', `Join Time (${tzAbbr})`, `Leave Time (${tzAbbr})`, 'Duration (min)', 'Attendance %', 'Sessions', 'Status'];
+    const header = ['Name', 'Email', 'RSVP Status', 'Late?', `Join Time (${tzAbbr})`, `Leave Time (${tzAbbr})`, 'Duration (min)', 'Attendance %', 'Sessions', 'Status', 'Checked In'];
 
     const attendedEmails = new Set();
     const attendedNames = new Set();
@@ -353,7 +353,7 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
         : (p.present ? '100%' : '');
       const lateMin = lateMinFor(p.joinTimeISO);
       const lateCell = lateMin > 0 ? `+${lateMin}m` : '';
-      return [sanitizeCell(p.displayName), sanitizeCell(p.email || ''), fmtRsvp(rsvpMap[email]), lateCell, fmtTime(p.joinTimeISO), fmtTime(p.leaveTimeISO), dur, pct, p.sessions, p.present ? 'Present' : 'Left'];
+      return [sanitizeCell(p.displayName), sanitizeCell(p.email || ''), fmtRsvp(rsvpMap[email]), lateCell, fmtTime(p.joinTimeISO), fmtTime(p.leaveTimeISO), dur, pct, p.sessions, p.present ? 'Present' : 'Left', p.checkedInAtISO ? fmtTime(p.checkedInAtISO) : ''];
     });
 
     // Fix 2: Also capture emails from rows (includes manual overrides from frontend)
@@ -377,7 +377,7 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
       })
       .map(a => {
         const status = excusedSet.has((a.email || '').toLowerCase()) ? 'Absent (excused)' : 'Absent';
-        return [sanitizeCell(a.displayName), sanitizeCell(a.email), fmtRsvp(a.status), '', '', '', '', '0%', 0, status];
+        return [sanitizeCell(a.displayName), sanitizeCell(a.email), fmtRsvp(a.status), '', '', '', '', '0%', 0, status, ''];
       });
 
     const allRows = [...rows, ...noShows];

@@ -350,3 +350,40 @@ describe('buildAttendanceCsv', () => {
     expect(csv).toContain('"Eve Guest","eve@guest.org","Present"');
   });
 });
+
+describe('buildAttendanceCsv — self-check-in notes', () => {
+  const startTime = new Date('2026-09-07T14:00:00Z');
+  const now = new Date('2026-09-07T15:00:00Z');
+  const checkedInAt = '2026-09-07T14:03:00.000Z';
+  const chkStr = new Date(checkedInAt).toLocaleTimeString();
+
+  test('roster row: check-in note joins an existing excuse note with "; "', () => {
+    const csv = buildAttendanceCsv(
+      [{ displayName: 'Dave Excused', email: 'dave@school.edu', present: false, joinTime: startTime, _accumulatedMs: 5 * 60000, rejoins: 0, checkedInAt }],
+      [{ name: 'Dave Excused', email: 'dave@school.edu' }],
+      {
+        startTime, now, totalMeetingMs: 3600000, minPercent: 50,
+        excusedStudents: { 'dave@school.edu': { excused: true, note: 'Dentist appointment' } },
+      }
+    );
+    expect(csv).toContain(`"Dentist appointment; Checked in ${chkStr}"`);
+  });
+
+  test('guest row: check-in note appends to the Unregistered guest marker', () => {
+    const csv = buildAttendanceCsv(
+      [{ displayName: 'Eve Guest', email: 'eve@guest.org', present: true, joinTime: startTime, _accumulatedMs: 0, rejoins: 0, checkedInAt }],
+      [{ name: 'Someone Else', email: 'other@school.edu' }],
+      { startTime, now, totalMeetingMs: 3600000, excusedStudents: {} }
+    );
+    expect(csv).toContain(`"Unregistered guest; Checked in ${chkStr}"`);
+  });
+
+  test('no-roster row: check-in stands alone in the Notes column', () => {
+    const csv = buildAttendanceCsv(
+      [{ displayName: 'Solo', email: 's@x.com', present: true, joinTime: startTime, _accumulatedMs: 0, rejoins: 0, checkedInAt }],
+      null,
+      { startTime, now, totalMeetingMs: 3600000 }
+    );
+    expect(csv).toContain(`"Checked in ${chkStr}"`);
+  });
+});

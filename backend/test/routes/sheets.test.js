@@ -892,3 +892,30 @@ describe('POST /api/save-to-sheets — extra report recipients (digestExtraEmail
     expect(tos).toEqual(['user@acme.com']);
   });
 });
+
+describe('POST /api/save-to-sheets — Checked In column (self-check-in)', () => {
+  test('header carries Checked In and rows pass the check-in time through', async () => {
+    await request(app)
+      .post('/api/save-to-sheets')
+      .set(authedHeader('user@acme.com', 'acme.com'))
+      .set('Content-Type', 'application/json')
+      .send({
+        ...validPayload,
+        participants: [{
+          displayName: 'Checked Charlie', email: 'charlie@acme.com',
+          joinTimeISO: new Date(Date.now() - 25 * 60000).toISOString(),
+          leaveTimeISO: null, present: true, sessions: 1,
+          checkedInAtISO: '2026-09-08T14:03:00.000Z',
+        }],
+      });
+    const call = mockSheetsUpdate.mock.calls.find(c => (c[0].requestBody?.values || []).some(r => r[0] === 'Name'));
+    const values = call[0].requestBody.values;
+    const header = values.find(r => r[0] === 'Name');
+    expect(header[header.length - 1]).toBe('Checked In');
+    const charlie = values.find(r => r[0] === 'Checked Charlie');
+    expect(charlie[header.length - 1]).not.toBe('');
+    // no-show rows pad the new column with an empty cell
+    const noShow = values.find(r => r[0] === 'No Show');
+    expect(noShow).toHaveLength(header.length);
+  });
+});

@@ -3298,6 +3298,7 @@ async function refreshAttendance() {
     // Count consecutive empty polls so renderList can stop saying "waiting…".
     _emptyPolls = (!data.participants || data.participants.length === 0) ? _emptyPolls + 1 : 0;
     mergeParticipants(data.participants);
+    await refreshCheckins();
     renderList();
     updateSummary();
     updateTabCounts();
@@ -3324,14 +3325,166 @@ async function refreshAttendance() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   ATTENDEE SELF-CHECK-IN
+   Student side: identity-only sign-in + "I'm here" POST. Host side:
+   /checkins polled alongside /attendance and merged into the list.
+═══════════════════════════════════════════════════════════════ */
+function _checkinStorageKey() { return 'attCheckin:' + (state.conferenceId || ''); }
+function getStoredCheckin() {
+  try { const raw = localStorage.getItem(_checkinStorageKey()); return raw ? JSON.parse(raw) : null; } catch { return null; }
+}
+function rememberCheckin(email, checkedInAt) {
+  try { localStorage.setItem(_checkinStorageKey(), JSON.stringify({ email, checkedInAt })); } catch { /* storage may be blocked */ }
+}
+
+async function submitCheckin(token) {
+  const res = await fetch(`${state.backendUrl}/checkin`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ meetingCode: state.conferenceId }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+async function checkInHere() {
+  if (!state.conferenceId) {
+    toast(t('checkin.noMeeting', 'Open this panel inside a Google Meet call to check in.'));
+    return;
+  }
+  const token = state.sessionToken || state._attendeeToken;
+  if (!token) { attendeeSignIn(); return; }
+  const btn = document.getElementById('checkin-btn');
+  if (btn) btn.disabled = true;
+  try {
+    const data = await submitCheckin(token);
+    rememberCheckin(state.userEmail || state._attendeeEmail || '', data.checkedInAt);
+    renderList();
+    toast(t('checkin.done', 'Checked in') + ' ✓');
+  } catch (err) {
+    console.error('Check-in failed:', err);
+    toast(t('checkin.error', 'Check-in failed. Please try again.'));
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+// Identity-only sign-in for meeting PARTICIPANTS: minimal scopes, and the
+// backend's attendee mode creates no user account (routes/oauth.js). Kept
+// fully separate from signInWithGoogle so a student checking in never
+// enters the organizer signup funnel or its lifecycle emails.
+function attendeeSignIn() {
+  if (!window.google?.accounts?.oauth2) {
+    toast('Google Sign-In not loaded yet');
+    return;
+  }
+  const client = google.accounts.oauth2.initCodeClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: 'openid email profile',
+    ux_mode: 'popup',
+    callback: handleAttendeeAuthCode,
+  });
+  client.requestCode();
+}
+
+async function handleAttendeeAuthCode(response) {
+  if (response.error) {
+    toast(t('toast.signInCancelled', 'Sign-in cancelled'));
+    return;
+  }
+  try {
+    toast(t('toast.signingIn', 'Signing in…'));
+    const res = await fetch(`${state.backendUrl}/oauth/exchange`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: response.code, mode: 'attendee' }),
+    });
+    if (!res.ok) throw new Error(`Auth failed: ${res.status}`);
+    const data = await res.json();
+    state._attendeeToken = data.sessionToken;
+    state._attendeeEmail = data.email;
+    checkInHere();
+  } catch (err) {
+    console.error('Attendee auth failed:', err);
+    toast(t('toast.signInFailed', 'Sign-in failed:') + ' ' + err.message);
+  }
+}
+
+// ── Host side ──
+let _checkinEventLogged = false;
+async function refreshCheckins() {
+  if (!state.conferenceId || !state.sessionToken) return;
+  try {
+    const res = await authFetch(`${state.backendUrl}/checkins?meetingCode=${encodeURIComponent(state.conferenceId)}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    mergeCheckins(data.checkins || []);
+  } catch { /* check-ins are best-effort — never break the poll */ }
+}
+
+function mergeCheckins(checkins) {
+  if (!checkins.length) return;
+  if (!_checkinEventLogged) {
+    _checkinEventLogged = true;
+    logUserEvent('checkin_merged', { count: checkins.length });
+  }
+  for (const c of checkins) {
+    const emailLower = (c.email || '').toLowerCase();
+    if (!emailLower) continue;
+    // Attach to an existing participant by email, then by exact name for
+    // email-less rows (a check-in carries the verified identity an
+    // anonymous display name lacks).
+    let match = null;
+    for (const p of state.participants.values()) {
+      if ((p.email || '').toLowerCase() === emailLower) { match = p; break; }
+    }
+    if (!match) {
+      const nameLower = (c.displayName || '').toLowerCase();
+      if (nameLower) {
+        for (const p of state.participants.values()) {
+          if (!p.email && (p.displayName || '').toLowerCase() === nameLower) { match = p; break; }
+        }
+      }
+    }
+    if (match) {
+      if (!match.checkedInAt) { match.checkedInAt = c.checkedInAt; state._lastChangeTime = Date.now(); }
+      if (!match.email) match.email = c.email;
+    } else if (!state.participants.has('checkin:' + emailLower)) {
+      // Nobody the Meet API can see — e.g. a dial-in participant, or the
+      // API lagging. Their check-in IS the attendance record.
+      state.participants.set('checkin:' + emailLower, {
+        participantId:  null,
+        displayName:    c.displayName || c.email,
+        email:          c.email,
+        joinTime:       c.checkedInAt ? new Date(c.checkedInAt) : new Date(),
+        trackedJoinTime: new Date(),
+        leaveTime:      null,
+        present:        true,
+        sessions:       1,
+        _accumulatedMs: 0,
+        checkedInAt:    c.checkedInAt,
+        checkinOnly:    true,
+      });
+      state._lastChangeTime = Date.now();
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
    MERGE INCOMING PARTICIPANTS INTO STATE MAP
 ═══════════════════════════════════════════════════════════════ */
 function mergeParticipants(incoming = []) {
   let changed = false;
 
-  // Only mark participants as gone if they're NOT in the incoming list at all
+  // Only mark participants as gone if they're NOT in the incoming list at all.
+  // Check-in-only rows are invisible to the Meet API by definition — leaving
+  // them out of `incoming` says nothing about whether they left.
   const incomingKeys = new Set(incoming.map(p => p.participantId || p.displayName));
   for (const [key, p] of state.participants) {
+    if (p.checkinOnly) continue;
     if (p.present && !incomingKeys.has(key)) { p.present = false; changed = true; }
   }
 
@@ -3435,6 +3588,15 @@ function renderList() {
       : stuck
         ? "No attendance data for this meeting. Attendance Tracker can only read attendance for a meeting you host — if you're a participant, the host needs to run it. (If you are the host, give Google Meet a minute or two after everyone joins.)"
         : 'No participants found yet';
+    // Attendee self-check-in: the empty list is exactly where a non-host
+    // participant lands, so offer "I'm here" right there. A stored check-in
+    // for this meeting renders as confirmation instead.
+    const storedCheckin = state.conferenceId ? getStoredCheckin() : null;
+    const checkinBlock = !state.conferenceId ? '' : (storedCheckin
+      ? `<div style="margin-top:14px;font-size:.8rem;color:var(--accent)">✓ ${t('checkin.done', 'Checked in')}${storedCheckin.checkedInAt ? ' · ' + fmtTime(new Date(storedCheckin.checkedInAt)) : ''}</div>
+         <div style="margin-top:4px;font-size:.72rem;color:#8b949e">${t('checkin.doneSub', 'The host will see your check-in on their attendance list.')}</div>`
+      : `<div style="margin-top:14px;font-size:.72rem;color:#8b949e;max-width:280px">${t('checkin.explain', 'Joining as a participant? Check in so the host has a verified record that you were here.')}</div>
+         <button id="checkin-btn" onclick="checkInHere()" style="margin-top:8px;padding:8px 18px;background:rgba(74,222,128,.12);border:1px solid var(--accent);color:var(--accent);border-radius:8px;cursor:pointer;font-size:.8rem;font-weight:600;flex:0 0 auto">✋ ${t('checkin.cta', "I'm here — check in")}</button>`);
     container.innerHTML = `
       <div class="empty-state">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
@@ -3442,6 +3604,7 @@ function renderList() {
           <circle cx="9" cy="7" r="4"/>
         </svg>
         <span>${escHtml(message)}</span>
+        ${checkinBlock}
       </div>`;
     return;
   }
@@ -3522,12 +3685,15 @@ function renderList() {
       const color = avatarColor(p.displayName);
       const lateMin = latenessMin(p);
       const lateChip = lateMin > 0 ? `<span class="late-chip" title="Joined ${lateMin} min after meeting start">+${lateMin}m ${t('attendee.late', 'late')}</span>` : '';
+      const checkinChip = p.checkedInAt
+        ? `<span class="late-chip" style="background:rgba(74,222,128,.15);color:var(--accent)" title="${t('checkin.done', 'Checked in')} ${fmtTime(new Date(p.checkedInAt))}">✓ ${fmtTime(new Date(p.checkedInAt))}</span>`
+        : '';
       const badgeText = p.present ? t('attendee.present', 'Present') : t('attendee.left', 'Left');
       return `
         <div class="participant-card ${p.present ? '' : 'left'}" onclick="openProfileModal('${key}')" style="cursor:pointer">
           <div class="avatar" style="background:${color};color:#fff">${initials}</div>
           <div>
-            <div class="participant-name">${escHtml(p.displayName)}${lateChip}</div>
+            <div class="participant-name">${escHtml(p.displayName)}${lateChip}${checkinChip}</div>
             ${emailStr}
             <div class="participant-meta">${t('attendee.joinedAt', 'Joined')} ${joinStr}${durStr ? ' · ' + durStr : ''}${leaveStr}</div>
           </div>
@@ -4367,6 +4533,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
         leaveTimeISO: leaveTime ? leaveTime.toISOString() : null,
         present:      p.present,
         sessions:     p.sessions,
+        checkedInAtISO: p.checkedInAt || null,
       };
     }),
   };

@@ -8,6 +8,7 @@ const { createShareLink, resolveShareLink, getSharedSeriesView, revokeShareLink 
 const { evaluateSeriesAlerts, evaluateReengagementForUser, claimReengagementSlot, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition } = require('./firestore/reengagement');
 const { suppressEmail, isEmailSuppressed, unsuppressEmail } = require('./firestore/suppression');
 const { deleteUser } = require('./firestore/deletion');
+const { saveCheckin, getCheckins } = require('./firestore/checkins');
 const {
   getActivationFunnel, getAggregatedInsights, getWeeklySelfReport, getAdvancedAnalytics, getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, markUserContacted, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, getOutreachList,
 } = require('./firestore/analytics');
@@ -1719,6 +1720,7 @@ module.exports = {
   getEmailTemplates, setEmailTemplates,
   getAllUsersAcrossTenants,
   deleteUser,
+  saveCheckin, getCheckins,
   // ── Heavy full-DB admin reads: TTL-cached so a dashboard reload doesn't
   //    re-scan the whole users+events+meetings tree for each one. ──
   getAggregatedInsights: memoizeTTL(getAggregatedInsights, 120000),

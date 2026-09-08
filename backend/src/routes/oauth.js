@@ -64,6 +64,24 @@ router.post('/exchange', async (req, res) => {
     const domain = payload.hd || domainOf(email);
     const displayName = payload.name || email;
 
+    // Attendee mode: a meeting PARTICIPANT signing in only to check in
+    // ("I'm here"). Identity-only — we deliberately skip every organizer
+    // side effect: no user doc (so no tenant auto-creation, no team-admin
+    // auto-claim, no welcome email, and they never enter the re-engagement
+    // sweep audience), no token storage (the grant's tokens are dropped on
+    // the floor), no signin event. Just a short-lived session JWT that
+    // requireAuth accepts (the auth middleware tolerates a missing user
+    // doc) so POST /api/checkin can trust the email.
+    if (req.body.mode === 'attendee') {
+      const sessionToken = jwt.sign(
+        { email, domain, displayName, role: 'attendee' },
+        CONFIG.sessionSecret,
+        { expiresIn: '8h' }
+      );
+      log.info('oauth: attendee authenticated for check-in', { domain });
+      return res.json({ sessionToken, email, displayName, role: 'attendee' });
+    }
+
     // Check which of the scopes we asked for were actually granted.
     // Google's consent screen lets users selectively uncheck non-sensitive
     // scopes, which silently breaks features later if we don't detect it.

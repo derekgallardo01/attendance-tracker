@@ -394,6 +394,13 @@
     const startTime = opts.startTime ? new Date(opts.startTime) : null;
     const now = opts.now ? new Date(opts.now) : new Date();
 
+    // Self-check-in attestation rides the Notes column: it augments whatever
+    // note is already there rather than claiming a column of its own.
+    const withCheckinNote = (note, p) => {
+      const chk = p && p.checkedInAt ? 'Checked in ' + new Date(p.checkedInAt).toLocaleTimeString() : '';
+      return [note, chk].filter(Boolean).join('; ');
+    };
+
     const rows = [];
     rows.push([
       'Name',
@@ -447,7 +454,7 @@
             p.joinTime ? new Date(p.joinTime).toLocaleTimeString() : '',
             (!p.present && p.leaveTime) ? new Date(p.leaveTime).toLocaleTimeString() : '',
             p.rejoins || 0,
-            note
+            withCheckinNote(note, p)
           ].map(escapeCsv).join(','));
         } else {
           const status = isExcused ? 'Absent (Excused)' : 'Absent';
@@ -479,7 +486,7 @@
             p.joinTime ? new Date(p.joinTime).toLocaleTimeString() : '',
             (!p.present && p.leaveTime) ? new Date(p.leaveTime).toLocaleTimeString() : '',
             p.rejoins || 0,
-            'Unregistered guest'
+            withCheckinNote('Unregistered guest', p)
           ].map(escapeCsv).join(','));
         }
       }
@@ -497,7 +504,7 @@
           p.joinTime ? new Date(p.joinTime).toLocaleTimeString() : '',
           (!p.present && p.leaveTime) ? new Date(p.leaveTime).toLocaleTimeString() : '',
           p.rejoins || 0,
-          ''
+          withCheckinNote('', p)
         ].map(escapeCsv).join(','));
       }
     }

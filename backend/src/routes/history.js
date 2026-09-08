@@ -70,6 +70,9 @@ const FRONTEND_EVENT_TYPES = new Set([
   // Google Classroom roster import
   'classroom_courses_listed',
   'classroom_roster_imported',
+  // Attendee self-check-in: fired by the HOST panel when a meeting first
+  // shows ≥1 check-in (adoption signal; submissions live in `checkins`).
+  'checkin_merged',
 ]);
 
 // POST /api/event — let the frontend record activation/funnel events that only

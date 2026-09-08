@@ -19,6 +19,7 @@ const pdfRoutes = require('./routes/pdf');
 const teamRoutes = require('./routes/team');
 const settingsRoutes = require('./routes/settings');
 const classroomRoutes = require('./routes/classroom');
+const checkinRoutes = require('./routes/checkin');
 const { router: billingRoutes, webhookHandler: billingWebhookHandler } = require('./routes/billing');
 
 const app = express();
@@ -86,6 +87,7 @@ app.use('/api', pdfRoutes);
 app.use('/api', teamRoutes);
 app.use('/api', settingsRoutes);
 app.use('/api', classroomRoutes);
+app.use('/api', checkinRoutes);
 app.use('/api', billingRoutes); // checkout / portal / status (webhook mounted above)
 
 // Serve frontend from public/
