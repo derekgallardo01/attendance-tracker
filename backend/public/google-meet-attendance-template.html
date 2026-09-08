@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Google Meet attendance template (that fills itself in) — 2026 — Attendance Tracker</title>
+  <meta name="description" content="Looking for a Google Meet attendance template? Here is the exact column layout a good attendance sheet needs — and a free add-on that generates that sheet automatically for every meeting." />
+  <link rel="canonical" href="https://attendancetracker.dev/google-meet-attendance-template.html" />
+  <meta property="og:title" content="Google Meet attendance template (that fills itself in)" />
+  <meta property="og:description" content="The exact columns an online class attendance sheet needs — Name, Email, Status, Attendance %, Duration, Join/Leave times — generated automatically per meeting." />
+  <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
+  <meta property="og:url" content="https://attendancetracker.dev/google-meet-attendance-template.html" />
+  <meta property="og:type" content="article" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to get an auto-filled Google Meet attendance sheet",
+    "description": "Instead of filling in an attendance template by hand, generate a complete attendance sheet automatically for every Google Meet session.",
+    "step": [
+      {"@type": "HowToStep", "name": "Install Attendance Tracker", "text": "Install the free Attendance Tracker add-on from the Google Workspace Marketplace."},
+      {"@type": "HowToStep", "name": "Open it in your meeting", "text": "In Google Meet, open the Activities menu and select Attendance Tracker, then press Start."},
+      {"@type": "HowToStep", "name": "Export your sheet", "text": "When class ends, download the CSV instantly or export to Google Sheets — every column of the template is already filled in."}
+    ]
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #4ade80; --blue: #58a6ff; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 40px 20px; }
+    .container { max-width: 720px; margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+    .brand img { width: 28px; height: 28px; border-radius: 6px; }
+    .brand a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    h1 { font-size: 2rem; line-height: 1.2; margin-bottom: 14px; }
+    .lead { color: var(--muted); font-size: 1.05rem; margin-bottom: 32px; }
+    h2 { font-size: 1.35rem; margin-top: 36px; margin-bottom: 14px; color: var(--text); }
+    h3 { font-size: 1.05rem; margin-top: 22px; margin-bottom: 8px; color: var(--text); }
+    p { margin-bottom: 14px; color: #c9d1d9; }
+    ul, ol { padding-left: 22px; margin-bottom: 14px; color: #c9d1d9; }
+    li { margin-bottom: 6px; }
+    a { color: var(--blue); }
+    code { background: var(--surface); padding: 2px 6px; border-radius: 4px; font-size: .9em; font-family: 'DM Mono', ui-monospace, monospace; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: .85rem; }
+    th, td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; color: #c9d1d9; }
+    th { background: var(--surface); color: var(--text); }
+    .callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 16px 18px; margin: 22px 0; }
+    .callout strong { color: var(--accent); }
+    .cta { background: linear-gradient(135deg, rgba(74,222,128,.08), rgba(88,166,255,.08)); border: 1px solid rgba(74,222,128,.25); border-radius: 14px; padding: 26px; text-align: center; margin: 36px 0; }
+    .cta h3 { font-size: 1.1rem; margin-top: 0; margin-bottom: 6px; }
+    .cta p { color: var(--muted); font-size: .9rem; margin-bottom: 16px; }
+    .btn { display: inline-block; background: #34A853; color: #fff; text-decoration: none; padding: 11px 24px; border-radius: 8px; font-weight: 600; font-size: .92rem; }
+    .footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border); }
+    .footer a { color: var(--muted); text-decoration: none; margin: 0 6px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <img src="icons/icon-96.png" alt="" />
+      <a href="/">Attendance Tracker</a>
+    </div>
+
+    <h1>Google Meet attendance template (that fills itself in) — 2026</h1>
+    <p class="lead">If you searched for an attendance sheet template for your online classes, you have probably already lost a few evenings to copy-pasting names, fixing broken formulas, and filling the same grid in by hand after every session. This page gives you the exact column layout a good Google Meet attendance sheet needs — and then shows you the shortcut: a free add-on that generates that exact sheet automatically, for every meeting, with the data already filled in.</p>
+
+    <div class="callout">
+      <strong>The best template is one you never have to fill in:</strong> Attendance Tracker is an official Google Meet add-on that watches who joins, when, and for how long — then hands you a finished CSV, PDF, or Google Sheet with all nine columns below completed. No formulas, no retyping, no forgetting to mark someone late.
+    </div>
+
+    <h2>The columns every online class attendance template needs</h2>
+    <p>Whether you build the sheet yourself or let software do it, a defensible attendance record needs more than a name and a checkbox. Here is the layout that holds up when a student, parent, or administrator asks questions later:</p>
+    <table>
+      <tr><th>Column</th><th>Why it matters</th></tr>
+      <tr><td><strong>Name</strong></td><td>The student's display name, matched against your roster.</td></tr>
+      <tr><td><strong>Email</strong></td><td>The stable identifier — names change, get abbreviated, or repeat; emails don't.</td></tr>
+      <tr><td><strong>Status</strong></td><td>Present / Late / Left Early / Absent / Excused / Guest — a plain checkmark can't capture the difference between "showed up on time" and "arrived 20 minutes in."</td></tr>
+      <tr><td><strong>Attendance %</strong></td><td>Minutes attended ÷ class length. The fairest single number for participation grades.</td></tr>
+      <tr><td><strong>Duration (min)</strong></td><td>Total active minutes, so a 5-minute drop-in doesn't count like a full session.</td></tr>
+      <tr><td><strong>Join Time</strong></td><td>Proof of when they actually arrived — the basis for late flags.</td></tr>
+      <tr><td><strong>Leave Time</strong></td><td>Catches early leavers, not just late arrivers.</td></tr>
+      <tr><td><strong>Rejoins</strong></td><td>Distinguishes an unstable connection (many rejoins, honest attendance) from someone who left and came back at the end.</td></tr>
+      <tr><td><strong>Notes</strong></td><td>Room for context: excused reasons, tech issues, make-up work.</td></tr>
+    </table>
+    <p>Feel free to recreate those nine columns in a blank Google Sheet — that <em>is</em> the template. But before you do, read the next section.</p>
+
+    <h2>The problem with any manual template</h2>
+    <p>A template solves the formatting problem. It does nothing about the real cost of attendance: <strong>collecting the data</strong>. With a manual sheet you still have to call roll (or scan the People panel), notice who arrived late, notice who quietly left at minute 40, and type it all in — every single session. In a class of 30+ students on Google Meet, that's minutes of lost teaching time and a record that's only as accurate as your peripheral vision.</p>
+    <p>And Google Meet itself won't fill the template in for you: unless your school pays for a specific premium Workspace edition, <a href="how-long-does-google-meet-keep-attendance.html">Meet keeps no attendance report you can access at all</a>.</p>
+
+    <h2>Get the same sheet, auto-filled: 3 steps</h2>
+    <ol>
+      <li><strong>Install the add-on (free):</strong> Open the <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_template" target="_blank" rel="noopener">Attendance Tracker Marketplace page</a> and click Install. It works with personal <code>@gmail.com</code> accounts and school Workspace accounts alike — no Education Plus required — in Chrome, Edge, Firefox, Safari, and on Chromebooks.</li>
+      <li><strong>Open it in your meeting:</strong> In Google Meet, click the <strong>Activities</strong> icon, choose <strong>Attendance Tracker</strong>, and press <strong>Start</strong>. The side panel live-sorts everyone into Present, Late (with a threshold you configure), Absent, and Guests. Optionally create a <strong>Class Roster</strong> first — paste your list or import it from Google Classroom in one click — so absentees show up too.</li>
+      <li><strong>Export the finished sheet:</strong> When class ends, download the CSV instantly, save a PDF report, or export to Google Sheets. Every column from the table above is already filled in for every attendee.</li>
+    </ol>
+
+    <h2>Recurring classes: one spreadsheet, tabbed by session</h2>
+    <p>For a class that meets on a recurring Google Calendar invite, the Google Sheets export doesn't scatter files across your Drive. Each session lands as its own tab in one spreadsheet, and a cumulative <strong>summary tab</strong> rolls up each student's attendance percentage across the whole semester automatically — sessions attended, sessions missed, running percentage. That summary is exactly the "term overview" page template-seekers usually try to build with fragile <code>VLOOKUP</code> formulas.</p>
+    <p>Need it in your gradebook instead? Per-session <a href="export-google-meet-attendance-to-moodle.html">Moodle</a> and <a href="export-google-meet-attendance-to-canvas.html">Canvas</a> gradebook CSVs are free, too.</p>
+
+    <h2>When a manual template still makes sense</h2>
+    <p>Honesty corner: if you teach <strong>in person</strong>, or on a platform other than Google Meet, an add-on that reads Meet's roster can't help you — build the nine-column sheet above in Google Sheets and fill it in by hand or with a form. A manual template is also fine for a one-off meeting with five people, where roll call takes ten seconds. The automation earns its keep when classes are online, recurring, or big enough that watching the participant list becomes a job of its own.</p>
+
+    <h2>Frequently asked questions</h2>
+    <h3>Is the auto-filled sheet free?</h3>
+    <p>Instant CSV downloads, PDF reports, and per-session Moodle/Canvas gradebook CSVs are free with no cap. Google Sheets exports are free up to 3 per month; unlimited Sheets exports come with Pro (a one-time $9.99 Lifetime Pass or $4.99/year Educator Pass).</p>
+    <h3>Do students need to install anything?</h3>
+    <p>No. Only the person tracking attendance needs the add-on. Students just join the Meet as usual.</p>
+    <h3>Can it mark students absent, not just record who came?</h3>
+    <p>Yes — that's what the Class Roster is for. Add your student list once (or import from Google Classroom), and anyone on the roster who never joins is recorded as Absent, with an Excused status available when you know why.</p>
+    <h3>What if I forget to open the panel?</h3>
+    <p>Pro includes hands-free <strong>Auto-Capture</strong>: meetings you host are exported automatically within a few hours of ending, even if you never opened the side panel.</p>
+
+    <div class="cta">
+      <h3>Skip the template. Get the finished sheet.</h3>
+      <p>Free to install, works with any Gmail or Workspace account, auto-fills all nine columns for every meeting.</p>
+      <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_template" target="_blank">Install Attendance Tracker from Marketplace</a>
+    </div>
+
+    <div class="footer-hub" style="margin-top: 50px; padding-top: 30px; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--muted); line-height: 1.8;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; text-align: left; margin-bottom: 24px;">
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Education</strong>
+          <a href="attendance-tracker-for-teachers.html" style="color: var(--muted); text-decoration: none; display: block;">For K-12 Teachers</a>
+          <a href="google-meet-attendance-google-classroom.html" style="color: var(--muted); text-decoration: none; display: block;">Google Classroom</a>
+          <a href="import-google-classroom-roster-to-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">Import Classroom Rosters</a>
+          <a href="google-meet-attendance-for-universities.html" style="color: var(--muted); text-decoration: none; display: block;">Universities &amp; Colleges</a>
+          <a href="google-meet-attendance-for-tutors.html" style="color: var(--muted); text-decoration: none; display: block;">Tutors &amp; Bootcamps</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Integrations</strong>
+          <a href="export-google-meet-attendance-to-moodle.html" style="color: var(--muted); text-decoration: none; display: block;">Moodle Gradebook Export</a>
+          <a href="export-google-meet-attendance-to-canvas.html" style="color: var(--muted); text-decoration: none; display: block;">Canvas Gradebook Export</a>
+          <a href="export-google-meet-attendance-to-sheets.html" style="color: var(--muted); text-decoration: none; display: block;">Export to Google Sheets</a>
+          <a href="how-to-send-google-meet-attendance-to-slack.html" style="color: var(--muted); text-decoration: none; display: block;">Slack Integration</a>
+          <a href="send-google-meet-attendance-to-google-chat.html" style="color: var(--muted); text-decoration: none; display: block;">Google Chat &amp; Discord</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Teams &amp; Business</strong>
+          <a href="google-meet-attendance-for-remote-teams.html" style="color: var(--muted); text-decoration: none; display: block;">Remote Teams &amp; Standups</a>
+          <a href="track-attendance-for-webinars-and-training-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">Webinars &amp; Training</a>
+          <a href="google-meet-attendance-for-cpe-and-cle-credits.html" style="color: var(--muted); text-decoration: none; display: block;">CPE &amp; CLE Credits</a>
+          <a href="google-meet-attendance-for-volunteer-hours.html" style="color: var(--muted); text-decoration: none; display: block;">Volunteer Hours</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Guides &amp; Comparisons</strong>
+          <a href="how-to-track-attendance-in-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">How to Track Attendance</a>
+          <a href="track-google-meet-attendance-without-host.html" style="color: var(--muted); text-decoration: none; display: block;">Track Without Host</a>
+          <a href="google-meet-attendance-report-not-showing-up.html" style="color: var(--muted); text-decoration: none; display: block;">Report Not Showing Up?</a>
+          <a href="best-google-meet-attendance-extensions.html" style="color: var(--muted); text-decoration: none; display: block;">Extension Comparison</a>
+          <a href="google-meet-vs-zoom-attendance-tracking.html" style="color: var(--muted); text-decoration: none; display: block;">Google Meet vs Zoom</a>
+        </div>
+      </div>
+      <div style="text-align: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06);">
+        <a href="/" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Home</a> ·
+        <a href="pricing.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Pricing</a> ·
+        <a href="support.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Support</a> ·
+        <a href="privacy.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Privacy Policy</a> ·
+        <a href="terms.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Terms of Service</a> ·
+        <a href="refunds.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Refund Policy</a>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+  (function () {
+    try {
+      var params = new URLSearchParams(location.search);
+      var utmSource = params.get('utm_source');
+      var utmMedium = params.get('utm_medium');
+      var utmCampaign = params.get('utm_campaign');
+      var ref = params.get('ref');
+      var referrer = document.referrer || null;
+      var ACQ_KEY = 'attendanceTrackerAcq';
+      if (!localStorage.getItem(ACQ_KEY)) {
+        var payload = {
+          utmSource: utmSource,
+          utmMedium: utmMedium,
+          utmCampaign: utmCampaign,
+          ref: ref,
+          referrer: referrer,
+          landingUrl: location.href,
+          capturedAt: Date.now(),
+        };
+        localStorage.setItem(ACQ_KEY, JSON.stringify(payload));
+        var computedSource = utmSource || (ref ? 'referral' : null) || (referrer ? new URL(referrer).hostname : null) || 'direct';
+        document.cookie = 'att_first_touch=' + encodeURIComponent(JSON.stringify(Object.assign({}, payload, { computedSource: computedSource }))) + ';path=/;max-age=7776000;SameSite=Lax';
+      }
+    } catch (e) {}
+
+    var API = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
+    function beacon(payload) {
+      try {
+        var blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        if (navigator.sendBeacon) navigator.sendBeacon(API + '/public/pageview', blob);
+        else fetch(API + '/public/pageview', { method: 'POST', body: blob, keepalive: true });
+      } catch (e) {}
+    }
+    var p = new URLSearchParams(location.search);
+    beacon({
+      path: location.pathname,
+      referrer: document.referrer || null,
+      viewportWidth: window.innerWidth || null,
+      utmSource: p.get('utm_source'),
+      utmMedium: p.get('utm_medium'),
+      utmCampaign: p.get('utm_campaign'),
+    });
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a[href*="marketplace/app/attendance_tracker"]');
+      if (a) beacon({ path: location.pathname, event: 'cta_click', eventLabel: 'marketplace_install_seo', referrer: document.referrer || null });
+    });
+  })();
+  </script>
+</body>
+</html>

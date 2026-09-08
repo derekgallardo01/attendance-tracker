@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cómo tomar asistencia en Google Meet automáticamente (Guía 2026) — Attendance Tracker</title>
+  <meta name="description" content="Guía en español para tomar asistencia en Google Meet automáticamente: lista de asistencia en tiempo real, roster de clase, importación desde Google Classroom y exportación a Sheets, Excel y Moodle." />
+  <link rel="canonical" href="https://attendancetracker.dev/asistencia-google-meet.html" />
+  <meta property="og:title" content="Cómo tomar asistencia en Google Meet automáticamente" />
+  <meta property="og:description" content="Lista de asistencia automática para Google Meet: presentes, tardanzas y ausencias en tiempo real, con exportación a Sheets, Excel y Moodle. Interfaz en español." />
+  <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
+  <meta property="og:url" content="https://attendancetracker.dev/asistencia-google-meet.html" />
+  <meta property="og:type" content="article" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "Cómo tomar asistencia en Google Meet automáticamente",
+    "description": "Instrucciones paso a paso para tomar la asistencia de tus clases en Google Meet con el complemento oficial Attendance Tracker.",
+    "inLanguage": "es",
+    "step": [
+      {"@type": "HowToStep", "name": "Instala el complemento", "text": "Instala Attendance Tracker desde Google Workspace Marketplace y ábrelo desde el menú de Actividades dentro de Google Meet."},
+      {"@type": "HowToStep", "name": "Crea tu roster de clase", "text": "Agrega tu lista de estudiantes en la pestaña Class Roster o impórtala desde Google Classroom con un clic."},
+      {"@type": "HowToStep", "name": "Inicia el seguimiento", "text": "Presiona Iniciar cuando empiece la clase; el panel clasifica a los estudiantes en presentes, tardanzas y ausentes automáticamente."},
+      {"@type": "HowToStep", "name": "Descarga tu lista de asistencia", "text": "Al terminar, descarga la lista en CSV o PDF, o expórtala directamente a Google Sheets o a tu gradebook de Moodle o Canvas."}
+    ]
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #4ade80; --blue: #58a6ff; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 40px 20px; }
+    .container { max-width: 720px; margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+    .brand img { width: 28px; height: 28px; border-radius: 6px; }
+    .brand a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    h1 { font-size: 2rem; line-height: 1.2; margin-bottom: 14px; }
+    .lead { color: var(--muted); font-size: 1.05rem; margin-bottom: 32px; }
+    h2 { font-size: 1.35rem; margin-top: 36px; margin-bottom: 14px; color: var(--text); }
+    h3 { font-size: 1.05rem; margin-top: 22px; margin-bottom: 8px; color: var(--text); }
+    p { margin-bottom: 14px; color: #c9d1d9; }
+    ul, ol { padding-left: 22px; margin-bottom: 14px; color: #c9d1d9; }
+    li { margin-bottom: 6px; }
+    a { color: var(--blue); }
+    code { background: var(--surface); padding: 2px 6px; border-radius: 4px; font-size: .9em; font-family: 'DM Mono', ui-monospace, monospace; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: .85rem; }
+    th, td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; color: #c9d1d9; }
+    th { background: var(--surface); color: var(--text); }
+    .callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 16px 18px; margin: 22px 0; }
+    .callout strong { color: var(--accent); }
+    .cta { background: linear-gradient(135deg, rgba(74,222,128,.08), rgba(88,166,255,.08)); border: 1px solid rgba(74,222,128,.25); border-radius: 14px; padding: 26px; text-align: center; margin: 36px 0; }
+    .cta h3 { font-size: 1.1rem; margin-top: 0; margin-bottom: 6px; }
+    .cta p { color: var(--muted); font-size: .9rem; margin-bottom: 16px; }
+    .btn { display: inline-block; background: #34A853; color: #fff; text-decoration: none; padding: 11px 24px; border-radius: 8px; font-weight: 600; font-size: .92rem; }
+    .footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border); }
+    .footer a { color: var(--muted); text-decoration: none; margin: 0 6px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <img src="icons/icon-96.png" alt="" />
+      <a href="/">Attendance Tracker</a>
+    </div>
+
+    <h1>Cómo tomar asistencia en Google Meet automáticamente</h1>
+    <p class="lead">Google Meet no incluye una lista de asistencia en la mayoría de las cuentas, así que muchos docentes terminan pasando lista a mano o tomando capturas de pantalla de la pestaña de participantes. Hay una forma mucho mejor: un complemento oficial que toma la asistencia por ti, en tiempo real y en español.</p>
+
+    <div class="callout">
+      <strong>Complemento oficial, no una extensión de Chrome:</strong> Attendance Tracker es un complemento oficial de Google Meet que se abre en el panel lateral desde el menú de Actividades y usa la API oficial de Meet. Funciona en Chrome, Edge, Firefox, Safari y Chromebooks — y la interfaz está disponible en español.
+    </div>
+
+    <h2>El problema: Meet no te da la lista de asistencia</h2>
+    <p>Si enseñas por Google Meet, seguramente ya viviste alguno de estos escenarios:</p>
+    <ul>
+      <li>Pasar lista en voz alta al inicio de cada clase, perdiendo cinco minutos de instrucción.</li>
+      <li>Tomar capturas de pantalla de la lista de participantes y transcribirlas después a una planilla.</li>
+      <li>Descubrir que los informes de asistencia nativos de Google solo llegan con ciertas ediciones de pago de Workspace, y aun así como un correo horas después de la reunión.</li>
+      <li>No saber quién llegó tarde, quién se salió a la mitad o cuánto tiempo estuvo realmente cada estudiante.</li>
+    </ul>
+    <p>Attendance Tracker resuelve todo eso desde adentro de la videollamada: mientras das tu clase, el panel registra quién está presente, quién llegó tarde y quién falta, con horas exactas de entrada y salida.</p>
+
+    <h2>Cómo funciona (3 pasos)</h2>
+    <ol>
+      <li><strong>Instálalo una vez.</strong> Agrega Attendance Tracker desde Google Workspace Marketplace. En tu próxima reunión, ábrelo desde el menú de <strong>Actividades</strong> de Google Meet.</li>
+      <li><strong>Presiona Iniciar.</strong> El panel detecta automáticamente a cada participante y lo clasifica como <strong>Presente</strong>, <strong>Tardanza</strong> o <strong>Ausente</strong> (con el umbral de tardanza que tú configures), además de identificar invitados que no están en tu lista.</li>
+      <li><strong>Descarga tu lista.</strong> Al terminar la clase, descarga la asistencia en CSV al instante, genera un informe en PDF o exporta directamente a Google Sheets.</li>
+    </ol>
+
+    <h2>Qué obtienes con cada sesión</h2>
+    <ul>
+      <li><strong>Lista de asistencia en tiempo real:</strong> presentes, tardanzas, ausentes e invitados, actualizados en vivo durante la clase.</li>
+      <li><strong>Umbral de tardanza configurable:</strong> tú decides cuántos minutos de gracia dar antes de marcar una tardanza.</li>
+      <li><strong>Horas exactas de entrada y salida</strong> de cada participante, con reingresos y duración total en minutos.</li>
+      <li><strong>Porcentaje de asistencia</strong> por persona, calculado automáticamente (tiempo en clase ÷ duración de la clase).</li>
+      <li><strong>Descarga instantánea en CSV</strong> (se abre en Excel o Google Sheets) e <strong>informe en PDF</strong> listo para archivar o compartir con dirección.</li>
+      <li><strong>Historial de reuniones</strong> en tu panel de attendancetracker.dev, con todas tus sesiones anteriores.</li>
+      <li><strong>Clases recurrentes:</strong> si tu clase se repite con la misma invitación de Calendar, el porcentaje de asistencia de cada estudiante se acumula automáticamente entre sesiones.</li>
+    </ul>
+
+    <h2>Roster de clase e importación desde Google Classroom</h2>
+    <p>La verdadera magia está en el <strong>roster de clase</strong>. En vez de solo registrar quién se conectó, defines tu lista oficial de estudiantes y el panel compara: quien está en la lista pero no en la reunión aparece como <strong>ausente</strong> — no simplemente desaparece del reporte.</p>
+    <ul>
+      <li>Crea una clase en la pestaña <strong>Class Roster</strong> y pega tu lista de estudiantes (una por línea, como <code>Nombre &lt;correo&gt;</code>).</li>
+      <li>¿Usas Google Classroom? Haz clic en <strong>Importar desde Google Classroom</strong> y trae el roster completo con un solo clic — sin copiar y pegar nada.</li>
+      <li>Puedes marcar ausencias como <strong>justificadas</strong> y agregar notas por estudiante.</li>
+    </ul>
+
+    <h2>Exportar a Sheets, Excel y Moodle</h2>
+    <p>Cada exportación incluye estas columnas: Nombre, Correo, Estado (Presente / Tardanza / Salió antes / Ausente / Justificado / Invitado), Porcentaje de asistencia, Duración (min), Hora de entrada, Hora de salida, Reingresos y Notas.</p>
+    <ul>
+      <li><strong>CSV:</strong> descarga inmediata; ábrelo en Excel o impórtalo donde quieras.</li>
+      <li><strong>Google Sheets:</strong> exporta con un clic a una hoja de cálculo en tu Drive.</li>
+      <li><strong>Moodle y Canvas:</strong> genera un CSV con el formato exacto que espera el gradebook de tu plataforma, emparejado por correo electrónico, para calificar la participación sin retipear nombres.</li>
+      <li><strong>PDF:</strong> un informe formal de la sesión, ideal para coordinación académica o para padres de familia.</li>
+    </ul>
+
+    <h2>Interfaz disponible en español</h2>
+    <p>A diferencia de la mayoría de las herramientas de asistencia para Meet, el panel de Attendance Tracker está <strong>localizado en 30 idiomas, incluido el español</strong>. Los botones, estados y menús aparecen en tu idioma — no necesitas explicarle a nadie qué significa cada cosa en inglés. Si tu escuela tiene docentes que prefieren trabajar en español, esta es la herramienta que pueden adoptar sin fricción.</p>
+
+    <h2>Precios</h2>
+    <table>
+      <tr><th>Plan</th><th>Precio</th><th>Incluye</th></tr>
+      <tr><td><strong>Gratis</strong></td><td>US$0</td><td>Lista en tiempo real, roster de clase, importación desde Classroom, CSV instantáneo, CSV para Moodle/Canvas por sesión, informe PDF, 3 exportaciones a Google Sheets al mes e historial de reuniones.</td></tr>
+      <tr><td><strong>Pase de por vida</strong></td><td>US$9.99 pago único</td><td>Todo lo del plan gratis, más exportaciones ilimitadas a Sheets, captura automática de reuniones, resumen acumulado del semestre, certificados en PDF por asistente y avisos a Slack, Google Chat y Discord.</td></tr>
+      <tr><td><strong>Pase Anual Educador</strong></td><td>US$4.99/año</td><td>Las mismas funciones Pro, con precio pensado para docentes.</td></tr>
+    </table>
+    <p>Sin tarjeta de crédito para empezar: el plan gratuito no vence y funciona tanto con cuentas personales de @gmail.com como con cualquier edición de Google Workspace o Workspace for Education.</p>
+
+    <h2>Paso a paso para tu primera clase</h2>
+    <ol>
+      <li>Instala <strong>Attendance Tracker</strong> desde Google Workspace Marketplace (botón más abajo).</li>
+      <li>Entra a tu clase en Google Meet y ábrelo desde el menú de <strong>Actividades</strong> (el ícono de figuras en la esquina inferior derecha).</li>
+      <li>Opcional pero recomendado: crea tu roster en la pestaña <strong>Class Roster</strong> o impórtalo desde Google Classroom.</li>
+      <li>Presiona <strong>Iniciar</strong> cuando empiece la clase. El panel hace el resto.</li>
+      <li>Al terminar, descarga tu CSV o PDF, o exporta a Google Sheets. Listo: asistencia tomada sin pasar lista.</li>
+    </ol>
+
+    <div class="callout">
+      <strong>¿No eres el anfitrión de la reunión?</strong> Los auxiliares docentes y coanfitriones también pueden tomar asistencia si un administrador de Workspace habilita la delegación (una sola vez) en attendancetracker.dev/setup.
+    </div>
+
+    <h2>Preguntas frecuentes</h2>
+    <h3>¿Funciona con cuentas gratuitas de Gmail?</h3>
+    <p>Sí. Funciona con cuentas personales de @gmail.com y con todas las ediciones de Google Workspace y Workspace for Education. No necesitas Education Plus ni ninguna edición de pago para tomar asistencia.</p>
+    <h3>¿Es una extensión de Chrome?</h3>
+    <p>No. Es un complemento oficial de Google Meet que usa la API oficial de Meet, así que funciona en cualquier navegador — Chrome, Edge, Firefox, Safari — y también en Chromebooks, sin instalar nada en el navegador.</p>
+    <h3>¿Los estudiantes necesitan instalar algo?</h3>
+    <p>No. Solo el docente (o quien toma la asistencia) usa el panel. Los estudiantes entran a la reunión como siempre.</p>
+    <h3>¿Puedo tomar asistencia de clases que se repiten cada semana?</h3>
+    <p>Sí. Si la clase se repite con la misma invitación de Google Calendar, el complemento acumula el porcentaje de asistencia de cada estudiante entre sesiones automáticamente, para que veas la asistencia de todo el curso, no solo de un día.</p>
+    <h3>¿Qué pasa si un estudiante entra y sale varias veces?</h3>
+    <p>Cada reingreso queda registrado. El reporte muestra la hora de entrada, la hora de salida, la cantidad de reingresos y los minutos totales de permanencia, así que el porcentaje de asistencia refleja el tiempo real en clase.</p>
+    <h3>¿El plan gratis tiene límite de tiempo?</h3>
+    <p>No. El plan gratuito es permanente. El único límite mensual es de 3 exportaciones a Google Sheets; las descargas de CSV y PDF son ilimitadas.</p>
+
+    <div class="cta">
+      <h3>Toma asistencia en Google Meet sin pasar lista</h3>
+      <p>Gratis para empezar, interfaz en español, funciona con Gmail personal y Google Workspace.</p>
+      <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_es" target="_blank">Instalar Attendance Tracker desde Marketplace</a>
+    </div>
+
+    <div class="footer-hub" style="margin-top: 50px; padding-top: 30px; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--muted); line-height: 1.8;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; text-align: left; margin-bottom: 24px;">
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Education</strong>
+          <a href="attendance-tracker-for-teachers.html" style="color: var(--muted); text-decoration: none; display: block;">For K-12 Teachers</a>
+          <a href="google-meet-attendance-google-classroom.html" style="color: var(--muted); text-decoration: none; display: block;">Google Classroom</a>
+          <a href="import-google-classroom-roster-to-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">Import Classroom Rosters</a>
+          <a href="google-meet-attendance-for-universities.html" style="color: var(--muted); text-decoration: none; display: block;">Universities &amp; Colleges</a>
+          <a href="google-meet-attendance-for-tutors.html" style="color: var(--muted); text-decoration: none; display: block;">Tutors &amp; Bootcamps</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Integrations</strong>
+          <a href="export-google-meet-attendance-to-moodle.html" style="color: var(--muted); text-decoration: none; display: block;">Moodle Gradebook Export</a>
+          <a href="export-google-meet-attendance-to-canvas.html" style="color: var(--muted); text-decoration: none; display: block;">Canvas Gradebook Export</a>
+          <a href="export-google-meet-attendance-to-sheets.html" style="color: var(--muted); text-decoration: none; display: block;">Export to Google Sheets</a>
+          <a href="how-to-send-google-meet-attendance-to-slack.html" style="color: var(--muted); text-decoration: none; display: block;">Slack Integration</a>
+          <a href="send-google-meet-attendance-to-google-chat.html" style="color: var(--muted); text-decoration: none; display: block;">Google Chat &amp; Discord</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Teams &amp; Business</strong>
+          <a href="google-meet-attendance-for-remote-teams.html" style="color: var(--muted); text-decoration: none; display: block;">Remote Teams &amp; Standups</a>
+          <a href="track-attendance-for-webinars-and-training-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">Webinars &amp; Training</a>
+          <a href="google-meet-attendance-for-cpe-and-cle-credits.html" style="color: var(--muted); text-decoration: none; display: block;">CPE &amp; CLE Credits</a>
+          <a href="google-meet-attendance-for-volunteer-hours.html" style="color: var(--muted); text-decoration: none; display: block;">Volunteer Hours</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Guides &amp; Comparisons</strong>
+          <a href="how-to-track-attendance-in-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">How to Track Attendance</a>
+          <a href="track-google-meet-attendance-without-host.html" style="color: var(--muted); text-decoration: none; display: block;">Track Without Host</a>
+          <a href="google-meet-attendance-report-not-showing-up.html" style="color: var(--muted); text-decoration: none; display: block;">Report Not Showing Up?</a>
+          <a href="best-google-meet-attendance-extensions.html" style="color: var(--muted); text-decoration: none; display: block;">Extension Comparison</a>
+          <a href="google-meet-vs-zoom-attendance-tracking.html" style="color: var(--muted); text-decoration: none; display: block;">Google Meet vs Zoom</a>
+        </div>
+      </div>
+      <div style="text-align: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06);">
+        <a href="/" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Home</a> ·
+        <a href="pricing.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Pricing</a> ·
+        <a href="support.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Support</a> ·
+        <a href="privacy.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Privacy Policy</a> ·
+        <a href="terms.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Terms of Service</a> ·
+        <a href="refunds.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Refund Policy</a>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+  (function () {
+    try {
+      var params = new URLSearchParams(location.search);
+      var utmSource = params.get('utm_source');
+      var utmMedium = params.get('utm_medium');
+      var utmCampaign = params.get('utm_campaign');
+      var ref = params.get('ref');
+      var referrer = document.referrer || null;
+      var ACQ_KEY = 'attendanceTrackerAcq';
+      if (!localStorage.getItem(ACQ_KEY)) {
+        var payload = {
+          utmSource: utmSource,
+          utmMedium: utmMedium,
+          utmCampaign: utmCampaign,
+          ref: ref,
+          referrer: referrer,
+          landingUrl: location.href,
+          capturedAt: Date.now(),
+        };
+        localStorage.setItem(ACQ_KEY, JSON.stringify(payload));
+        var computedSource = utmSource || (ref ? 'referral' : null) || (referrer ? new URL(referrer).hostname : null) || 'direct';
+        document.cookie = 'att_first_touch=' + encodeURIComponent(JSON.stringify(Object.assign({}, payload, { computedSource: computedSource }))) + ';path=/;max-age=7776000;SameSite=Lax';
+      }
+    } catch (e) {}
+
+    var API = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
+    function beacon(payload) {
+      try {
+        var blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        if (navigator.sendBeacon) navigator.sendBeacon(API + '/public/pageview', blob);
+        else fetch(API + '/public/pageview', { method: 'POST', body: blob, keepalive: true });
+      } catch (e) {}
+    }
+    var p = new URLSearchParams(location.search);
+    beacon({
+      path: location.pathname,
+      referrer: document.referrer || null,
+      viewportWidth: window.innerWidth || null,
+      utmSource: p.get('utm_source'),
+      utmMedium: p.get('utm_medium'),
+      utmCampaign: p.get('utm_campaign'),
+    });
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a[href*="marketplace/app/attendance_tracker"]');
+      if (a) beacon({ path: location.pathname, event: 'cta_click', eventLabel: 'marketplace_install_seo', referrer: document.referrer || null });
+    });
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How to export a Google Meet participant list to Excel (2026 Guide) — Attendance Tracker</title>
+  <meta name="description" content="Download your Google Meet attendance as a CSV that opens straight in Excel — names, emails, join/leave times, duration, and attendance % — in one click, free." />
+  <link rel="canonical" href="https://attendancetracker.dev/export-google-meet-participants-to-excel.html" />
+  <meta property="og:title" content="How to export a Google Meet participant list to Excel" />
+  <meta property="og:description" content="One-click CSV download of every Google Meet participant — Name, Email, Status, Attendance %, Duration, Join/Leave times — that opens directly in Excel." />
+  <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
+  <meta property="og:url" content="https://attendancetracker.dev/export-google-meet-participants-to-excel.html" />
+  <meta property="og:type" content="article" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to export a Google Meet participant list to Excel",
+    "description": "Step-by-step instructions for downloading Google Meet attendance as a CSV file that opens directly in Microsoft Excel.",
+    "step": [
+      {"@type": "HowToStep", "name": "Open Attendance Tracker in Google Meet", "text": "In your meeting, open Attendance Tracker from the Activities panel. It tracks every participant with join and leave times automatically."},
+      {"@type": "HowToStep", "name": "Download the CSV", "text": "Click the CSV download button in the panel. A UTF-8 CSV with one row per participant downloads instantly."},
+      {"@type": "HowToStep", "name": "Open it in Excel", "text": "Double-click the downloaded file — it opens directly in Excel with names, emails, status, attendance %, duration, and timestamps in separate columns."}
+    ]
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #4ade80; --blue: #58a6ff; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 40px 20px; }
+    .container { max-width: 720px; margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+    .brand img { width: 28px; height: 28px; border-radius: 6px; }
+    .brand a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    h1 { font-size: 2rem; line-height: 1.2; margin-bottom: 14px; }
+    .lead { color: var(--muted); font-size: 1.05rem; margin-bottom: 32px; }
+    h2 { font-size: 1.35rem; margin-top: 36px; margin-bottom: 14px; color: var(--text); }
+    h3 { font-size: 1.05rem; margin-top: 22px; margin-bottom: 8px; color: var(--text); }
+    p { margin-bottom: 14px; color: #c9d1d9; }
+    ul, ol { padding-left: 22px; margin-bottom: 14px; color: #c9d1d9; }
+    li { margin-bottom: 6px; }
+    a { color: var(--blue); }
+    code { background: var(--surface); padding: 2px 6px; border-radius: 4px; font-size: .9em; font-family: 'DM Mono', ui-monospace, monospace; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: .85rem; }
+    th, td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; color: #c9d1d9; }
+    th { background: var(--surface); color: var(--text); }
+    .callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 16px 18px; margin: 22px 0; }
+    .callout strong { color: var(--accent); }
+    .cta { background: linear-gradient(135deg, rgba(74,222,128,.08), rgba(88,166,255,.08)); border: 1px solid rgba(74,222,128,.25); border-radius: 14px; padding: 26px; text-align: center; margin: 36px 0; }
+    .cta h3 { font-size: 1.1rem; margin-top: 0; margin-bottom: 6px; }
+    .cta p { color: var(--muted); font-size: .9rem; margin-bottom: 16px; }
+    .btn { display: inline-block; background: #34A853; color: #fff; text-decoration: none; padding: 11px 24px; border-radius: 8px; font-weight: 600; font-size: .92rem; }
+    .footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border); }
+    .footer a { color: var(--muted); text-decoration: none; margin: 0 6px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <img src="icons/icon-96.png" alt="" />
+      <a href="/">Attendance Tracker</a>
+    </div>
+
+    <h1>How to export a Google Meet participant list to Excel</h1>
+    <p class="lead">Need your Meet attendance in a spreadsheet — names, emails, who was late, who left early, exact join and leave times? Here is the one-click way to get a CSV that opens straight in Excel, free.</p>
+
+    <div class="callout">
+      <strong>Excel-ready, accents and all:</strong> the downloaded CSV is UTF-8 with a BOM prefix, which is the encoding Excel actually respects — so names like <code>José</code>, <code>Zoë</code>, and <code>Nguyễn</code> render correctly the moment you double-click the file. No Data → Import wizard, no mojibake.
+    </div>
+
+    <h2>Why you can't do this from Meet alone</h2>
+    <p>Google Meet has no "export participants" button. The People panel disappears when the call ends, and attendance CSVs are emailed to hosts only on certain paid Education and enterprise Workspace editions. For everyone else, getting the list into Excel means tracking it yourself — which is exactly what the Attendance Tracker add-on does from the Meet side panel, using the official Google Meet REST API (no screen scraping, works in Chrome, Edge, Firefox, Safari, and on Chromebooks).</p>
+
+    <h2>Step-by-step: Meet → CSV → Excel</h2>
+
+    <h3>Step 1: Open Attendance Tracker during your meeting</h3>
+    <ol>
+      <li><a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_excel" target="_blank">Install the add-on</a> once from the Google Workspace Marketplace.</li>
+      <li>In your meeting, open the <strong>Activities</strong> menu and pick <strong>Attendance Tracker</strong>.</li>
+      <li>The panel tracks everyone automatically — who's present, who joined late, who left early, and every join/leave timestamp.</li>
+    </ol>
+
+    <h3>Step 2: Click the CSV download</h3>
+    <p>Hit the <strong>CSV</strong> download in the panel — during the meeting or right at the end. The file downloads instantly with one row per participant. (If the meeting already ended with the panel open, the report was exported automatically; you can also re-download it later from <a href="see-who-attended-google-meet-after-it-ended.html">Meeting History</a>.)</p>
+
+    <h3>Step 3: Open it in Excel</h3>
+    <p>Double-click the file. Because CSV is Excel's native interchange format, it opens as a clean worksheet with these columns:</p>
+    <table>
+      <tr><th>Column</th><th>Example</th></tr>
+      <tr><td>Name</td><td>Alice Walker</td></tr>
+      <tr><td>Email</td><td>alice@school.edu</td></tr>
+      <tr><td>Status</td><td>Present / Late / Left Early / Absent / Excused / Guest</td></tr>
+      <tr><td>Attendance %</td><td>92</td></tr>
+      <tr><td>Duration (min)</td><td>55</td></tr>
+      <tr><td>Join Time</td><td>9:02 AM</td></tr>
+      <tr><td>Leave Time</td><td>9:57 AM</td></tr>
+      <tr><td>Rejoins</td><td>1</td></tr>
+      <tr><td>Notes</td><td>Camera off, mic issues</td></tr>
+    </table>
+    <p>From there it's ordinary Excel: sort by Status to see absentees together, filter Duration to flag anyone under a threshold, or pivot a term's worth of files into a summary.</p>
+
+    <h2>Prefer a native .xlsx file? Go via Google Sheets</h2>
+    <p>If you want a true <code>.xlsx</code> workbook rather than a CSV, use the <a href="export-google-meet-attendance-to-sheets.html">Google Sheets export</a> instead: one click sends the attendance table to a Sheet in your Drive, then in Sheets choose <strong>File → Download → Microsoft Excel (.xlsx)</strong>. You get real cell formatting and a file that keeps formulas if you add any. Sheets exports are free 3 times per month; the CSV download is always free and unlimited.</p>
+
+    <h2>Grading in an LMS instead?</h2>
+    <p>If the spreadsheet's final destination is a gradebook, skip Excel entirely — the add-on also produces import-ready per-session CSVs for <a href="export-google-meet-attendance-to-moodle.html">Moodle</a> and <a href="export-google-meet-attendance-to-canvas.html">Canvas</a>, with the exact column layouts those systems expect.</p>
+
+    <h2>Frequently asked questions</h2>
+    <h3>Do I need Excel installed for this to work?</h3>
+    <p>No. CSV is a standard format — the same file opens in Excel, Google Sheets, LibreOffice Calc, Apple Numbers, or any tool that reads spreadsheets. "Opens in Excel" is simply the default double-click behavior on machines that have it.</p>
+    <h3>Is the Excel export free?</h3>
+    <p>Yes — the CSV download is part of the free tier, with no export cap. Google Sheets exports are free 3 times per month; unlimited Sheets exports (and hands-free Auto-Capture) come with Pro, from a one-time $9.99 Individual Lifetime Pass.</p>
+    <h3>Can I export a meeting after everyone has left?</h3>
+    <p>If the panel was open during the meeting, yes — the report auto-exports at meeting end and stays available in Meeting History. Pro Auto-Capture also picks up meetings you hosted with the panel closed, within a few hours, for meetings that ended in the last 2 days. What no tool can do is recover a meeting that ended before the add-on was installed — <a href="see-who-attended-google-meet-after-it-ended.html">details here</a>.</p>
+
+    <div class="cta">
+      <h3>Get your next participant list in Excel</h3>
+      <p>One-click CSV, free and unlimited. Nine columns of detail, correct encoding, zero retyping.</p>
+      <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_excel" target="_blank">Install Attendance Tracker from Marketplace</a>
+    </div>
+
+    <div class="footer-hub" style="margin-top: 50px; padding-top: 30px; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--muted); line-height: 1.8;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; text-align: left; margin-bottom: 24px;">
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Education</strong>
+          <a href="attendance-tracker-for-teachers.html" style="color: var(--muted); text-decoration: none; display: block;">For K-12 Teachers</a>
+          <a href="google-meet-attendance-google-classroom.html" style="color: var(--muted); text-decoration: none; display: block;">Google Classroom</a>
+          <a href="import-google-classroom-roster-to-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">Import Classroom Rosters</a>
+          <a href="google-meet-attendance-for-universities.html" style="color: var(--muted); text-decoration: none; display: block;">Universities &amp; Colleges</a>
+          <a href="google-meet-attendance-for-tutors.html" style="color: var(--muted); text-decoration: none; display: block;">Tutors &amp; Bootcamps</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Integrations</strong>
+          <a href="export-google-meet-attendance-to-moodle.html" style="color: var(--muted); text-decoration: none; display: block;">Moodle Gradebook Export</a>
+          <a href="export-google-meet-attendance-to-canvas.html" style="color: var(--muted); text-decoration: none; display: block;">Canvas Gradebook Export</a>
+          <a href="export-google-meet-attendance-to-sheets.html" style="color: var(--muted); text-decoration: none; display: block;">Export to Google Sheets</a>
+          <a href="how-to-send-google-meet-attendance-to-slack.html" style="color: var(--muted); text-decoration: none; display: block;">Slack Integration</a>
+          <a href="send-google-meet-attendance-to-google-chat.html" style="color: var(--muted); text-decoration: none; display: block;">Google Chat &amp; Discord</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Teams &amp; Business</strong>
+          <a href="google-meet-attendance-for-remote-teams.html" style="color: var(--muted); text-decoration: none; display: block;">Remote Teams &amp; Standups</a>
+          <a href="track-attendance-for-webinars-and-training-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">Webinars &amp; Training</a>
+          <a href="google-meet-attendance-for-cpe-and-cle-credits.html" style="color: var(--muted); text-decoration: none; display: block;">CPE &amp; CLE Credits</a>
+          <a href="google-meet-attendance-for-volunteer-hours.html" style="color: var(--muted); text-decoration: none; display: block;">Volunteer Hours</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Guides &amp; Comparisons</strong>
+          <a href="how-to-track-attendance-in-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">How to Track Attendance</a>
+          <a href="track-google-meet-attendance-without-host.html" style="color: var(--muted); text-decoration: none; display: block;">Track Without Host</a>
+          <a href="google-meet-attendance-report-not-showing-up.html" style="color: var(--muted); text-decoration: none; display: block;">Report Not Showing Up?</a>
+          <a href="best-google-meet-attendance-extensions.html" style="color: var(--muted); text-decoration: none; display: block;">Extension Comparison</a>
+          <a href="google-meet-vs-zoom-attendance-tracking.html" style="color: var(--muted); text-decoration: none; display: block;">Google Meet vs Zoom</a>
+        </div>
+      </div>
+      <div style="text-align: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06);">
+        <a href="/" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Home</a> ·
+        <a href="pricing.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Pricing</a> ·
+        <a href="support.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Support</a> ·
+        <a href="privacy.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Privacy Policy</a> ·
+        <a href="terms.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Terms of Service</a> ·
+        <a href="refunds.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Refund Policy</a>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+  (function () {
+    try {
+      var params = new URLSearchParams(location.search);
+      var utmSource = params.get('utm_source');
+      var utmMedium = params.get('utm_medium');
+      var utmCampaign = params.get('utm_campaign');
+      var ref = params.get('ref');
+      var referrer = document.referrer || null;
+      var ACQ_KEY = 'attendanceTrackerAcq';
+      if (!localStorage.getItem(ACQ_KEY)) {
+        var payload = {
+          utmSource: utmSource,
+          utmMedium: utmMedium,
+          utmCampaign: utmCampaign,
+          ref: ref,
+          referrer: referrer,
+          landingUrl: location.href,
+          capturedAt: Date.now(),
+        };
+        localStorage.setItem(ACQ_KEY, JSON.stringify(payload));
+        var computedSource = utmSource || (ref ? 'referral' : null) || (referrer ? new URL(referrer).hostname : null) || 'direct';
+        document.cookie = 'att_first_touch=' + encodeURIComponent(JSON.stringify(Object.assign({}, payload, { computedSource: computedSource }))) + ';path=/;max-age=7776000;SameSite=Lax';
+      }
+    } catch (e) {}
+
+    var API = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
+    function beacon(payload) {
+      try {
+        var blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        if (navigator.sendBeacon) navigator.sendBeacon(API + '/public/pageview', blob);
+        else fetch(API + '/public/pageview', { method: 'POST', body: blob, keepalive: true });
+      } catch (e) {}
+    }
+    var p = new URLSearchParams(location.search);
+    beacon({
+      path: location.pathname,
+      referrer: document.referrer || null,
+      viewportWidth: window.innerWidth || null,
+      utmSource: p.get('utm_source'),
+      utmMedium: p.get('utm_medium'),
+      utmCampaign: p.get('utm_campaign'),
+    });
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a[href*="marketplace/app/attendance_tracker"]');
+      if (a) beacon({ path: location.pathname, event: 'cta_click', eventLabel: 'marketplace_install_seo', referrer: document.referrer || null });
+    });
+  })();
+  </script>
+</body>
+</html>

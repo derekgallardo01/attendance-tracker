@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How long does Google Meet keep attendance? (And how to keep yours forever) — Attendance Tracker</title>
+  <meta name="description" content="Google Meet only emails attendance reports on certain Education editions — and only to the host. Everyone else gets no attendance history at all. Here is how to keep a permanent, browsable record instead." />
+  <link rel="canonical" href="https://attendancetracker.dev/how-long-does-google-meet-keep-attendance.html" />
+  <meta property="og:title" content="How long does Google Meet keep attendance?" />
+  <meta property="og:description" content="The honest answer: for most accounts, Meet keeps no accessible attendance history at all. Here is where the reports go — and how to keep yours permanently." />
+  <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
+  <meta property="og:url" content="https://attendancetracker.dev/how-long-does-google-meet-keep-attendance.html" />
+  <meta property="og:type" content="article" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "How long does Google Meet keep attendance? (And how to keep yours forever)",
+    "description": "Where Google Meet attendance reports actually go, which Workspace editions get them, why most users have no attendance history at all, and how to keep a permanent browsable record.",
+    "author": {
+      "@type": "Organization",
+      "name": "Attendance Tracker"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Attendance Tracker",
+      "url": "https://attendancetracker.dev/"
+    }
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #4ade80; --blue: #58a6ff; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 40px 20px; }
+    .container { max-width: 720px; margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+    .brand img { width: 28px; height: 28px; border-radius: 6px; }
+    .brand a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    h1 { font-size: 2rem; line-height: 1.2; margin-bottom: 14px; }
+    .lead { color: var(--muted); font-size: 1.05rem; margin-bottom: 32px; }
+    h2 { font-size: 1.35rem; margin-top: 36px; margin-bottom: 14px; color: var(--text); }
+    h3 { font-size: 1.05rem; margin-top: 22px; margin-bottom: 8px; color: var(--text); }
+    p { margin-bottom: 14px; color: #c9d1d9; }
+    ul, ol { padding-left: 22px; margin-bottom: 14px; color: #c9d1d9; }
+    li { margin-bottom: 6px; }
+    a { color: var(--blue); }
+    code { background: var(--surface); padding: 2px 6px; border-radius: 4px; font-size: .9em; font-family: 'DM Mono', ui-monospace, monospace; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: .85rem; }
+    th, td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; color: #c9d1d9; }
+    th { background: var(--surface); color: var(--text); }
+    .callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 16px 18px; margin: 22px 0; }
+    .callout strong { color: var(--accent); }
+    .cta { background: linear-gradient(135deg, rgba(74,222,128,.08), rgba(88,166,255,.08)); border: 1px solid rgba(74,222,128,.25); border-radius: 14px; padding: 26px; text-align: center; margin: 36px 0; }
+    .cta h3 { font-size: 1.1rem; margin-top: 0; margin-bottom: 6px; }
+    .cta p { color: var(--muted); font-size: .9rem; margin-bottom: 16px; }
+    .btn { display: inline-block; background: #34A853; color: #fff; text-decoration: none; padding: 11px 24px; border-radius: 8px; font-weight: 600; font-size: .92rem; }
+    .footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border); }
+    .footer a { color: var(--muted); text-decoration: none; margin: 0 6px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <img src="icons/icon-96.png" alt="" />
+      <a href="/">Attendance Tracker</a>
+    </div>
+
+    <h1>How long does Google Meet keep attendance?</h1>
+    <p class="lead">Short answer: for most people, Google Meet doesn't keep attendance at all. There is no attendance tab, no history page, and no report to dig up after the fact. Here is exactly where the reports go on the editions that have them, why yours probably never existed — and how to keep a permanent, browsable attendance history for every meeting from now on.</p>
+
+    <div class="callout">
+      <strong>The direct answer:</strong> Google Meet only generates attendance reports on certain Google Workspace editions — Education Plus, or Education accounts with the Teaching &amp; Learning upgrade — and even there, the report arrives as a <em>one-time email to the meeting host only</em>. Meet keeps no browsable attendance history for anyone. If the email is lost, or you weren't the host, or you're on any other edition (including free Education Fundamentals and personal Gmail), there is nothing to retrieve.
+    </div>
+
+    <h2>Where do Google Meet attendance reports go?</h2>
+    <p>On the eligible Education editions, Meet emails a CSV attendance report to the host shortly after the meeting ends. That email is the entire "storage" story:</p>
+    <ul>
+      <li><strong>It goes only to the host.</strong> Co-hosts, TAs, and co-teachers get nothing.</li>
+      <li><strong>It lives in the host's inbox</strong> — so it lasts exactly as long as that email does. Delete it, lose the account, or have it filtered to spam, and the record is gone.</li>
+      <li><strong>There is no dashboard.</strong> You can't browse past meetings inside Meet, re-download an old report, or see attendance across a semester.</li>
+    </ul>
+    <p>On every other account type — Workspace Education Fundamentals, Business Starter/Standard, and personal <code>@gmail.com</code> — Meet doesn't send the email in the first place. If a report you expected never arrived, that edition restriction is almost always why (see <a href="google-meet-attendance-report-not-showing-up.html">Report not showing up?</a>).</p>
+
+    <h2>Is there a Google Meet attendance history page?</h2>
+    <p>No. This is the part that surprises most teachers: even on the premium editions that email reports, Google Meet itself retains no attendance history you can open. "How long does Meet keep attendance" is really a question about your inbox, not about Meet. The moment you need last month's record and can't find the email, the data is unrecoverable.</p>
+
+    <h2>Meet built-in vs. an add-on that actually keeps history</h2>
+    <table>
+      <tr><th></th><th>Google Meet built-in</th><th>Attendance Tracker add-on</th></tr>
+      <tr><td><strong>Who gets a record</strong></td><td>Host only, by email</td><td>You — in a browsable Meeting History dashboard</td></tr>
+      <tr><td><strong>Which accounts</strong></td><td>Education Plus / Teaching &amp; Learning upgrade only</td><td>Any account: personal Gmail, any Workspace or Education edition</td></tr>
+      <tr><td><strong>How long it's kept</strong></td><td>As long as the email survives</td><td>As long as your account is active</td></tr>
+      <tr><td><strong>Browsable history</strong></td><td>None</td><td>Every tracked meeting at attendancetracker.dev, with per-session detail</td></tr>
+      <tr><td><strong>Semester roll-ups</strong></td><td>No</td><td>Yes — recurring classes roll up per-student attendance % automatically</td></tr>
+      <tr><td><strong>Export formats</strong></td><td>CSV attachment</td><td>CSV, PDF, Google Sheets, Moodle/Canvas gradebook CSVs</td></tr>
+      <tr><td><strong>Who controls deletion</strong></td><td>Whoever manages the inbox</td><td>You — self-serve, from Settings</td></tr>
+    </table>
+
+    <h2>How Attendance Tracker keeps your attendance permanently</h2>
+    <p><strong>Attendance Tracker</strong> is an official Google Meet add-on (it runs in the side panel via the Activities menu and uses the official Meet REST API — it's not a Chrome extension). Every meeting you track is saved to your <strong>Meeting History</strong> at attendancetracker.dev, where you can reopen any past session, see who was Present, Late, or Absent with join/leave times, and re-export it any time.</p>
+    <p>And because retention questions deserve precise answers, here is exactly how long <em>we</em> keep things:</p>
+    <ul>
+      <li><strong>Your attendance data is kept for as long as your account is active</strong> — last week's staff meeting and last year's fall semester are equally one click away.</li>
+      <li><strong>You can delete everything yourself.</strong> Account deletion (including all attendance data) is self-serve from Settings — no support ticket required.</li>
+      <li><strong>Public share links auto-expire after 30 days.</strong> If you share a report link with a colleague, it doesn't float around the internet forever.</li>
+    </ul>
+
+    <h2>Set it up before your next meeting</h2>
+    <ol>
+      <li><strong>Install the add-on:</strong> Open the <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_retention" target="_blank" rel="noopener">Attendance Tracker page on the Google Workspace Marketplace</a> and click Install. Works in Chrome, Edge, Firefox, Safari, and on Chromebooks.</li>
+      <li><strong>Track your meeting:</strong> In Google Meet, open <strong>Activities → Attendance Tracker</strong> and press <strong>Start</strong>. The roster records everyone's status, join/leave times, and attendance percentage.</li>
+      <li><strong>Find it later:</strong> Open <strong>Meeting History</strong> at attendancetracker.dev any time — the record is there whether you exported it on the day or not.</li>
+    </ol>
+    <p>Worried about forgetting step 2? Pro adds <strong>Auto-Capture</strong>: meetings you host are captured and exported automatically within a few hours of ending, even with the panel closed.</p>
+
+    <h2>Frequently asked questions</h2>
+    <h3>Can I recover attendance from a Google Meet meeting that already ended?</h3>
+    <p>Only if you were on an eligible Education edition and still have the report email. Neither Meet nor any add-on can reconstruct attendance for a meeting that ended before tracking was in place — which is the best argument for setting up permanent tracking today rather than after you need it.</p>
+    <h3>Do I need Education Plus for the add-on?</h3>
+    <p>No. Attendance Tracker works on personal <code>@gmail.com</code> accounts and every Workspace/Education edition, with no admin upgrade required.</p>
+    <h3>I'm a TA / co-teacher, not the host. Can I keep my own records?</h3>
+    <p>Yes. Unlike Meet's host-only email, non-hosts can track after a Workspace admin completes a one-time delegation at <a href="https://attendancetracker.dev/setup">attendancetracker.dev/setup</a> — see <a href="track-google-meet-attendance-without-host.html">tracking without being the host</a>.</p>
+    <h3>How much of this is free?</h3>
+    <p>Meeting History, real-time tracking, instant CSV downloads, PDF reports, per-session Moodle/Canvas gradebook CSVs, and 3 Google Sheets exports per month are all free. Pro (one-time $9.99 Lifetime Pass or $4.99/year Educator Pass) adds unlimited Sheets exports, Auto-Capture, and cumulative semester summaries.</p>
+
+    <div class="cta">
+      <h3>Stop hoping the attendance email shows up</h3>
+      <p>Free permanent Meeting History for every tracked meeting — on any Google account, no Education Plus needed.</p>
+      <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_retention" target="_blank">Install Attendance Tracker from Marketplace</a>
+    </div>
+
+    <div class="footer-hub" style="margin-top: 50px; padding-top: 30px; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--muted); line-height: 1.8;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; text-align: left; margin-bottom: 24px;">
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Education</strong>
+          <a href="attendance-tracker-for-teachers.html" style="color: var(--muted); text-decoration: none; display: block;">For K-12 Teachers</a>
+          <a href="google-meet-attendance-google-classroom.html" style="color: var(--muted); text-decoration: none; display: block;">Google Classroom</a>
+          <a href="import-google-classroom-roster-to-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">Import Classroom Rosters</a>
+          <a href="google-meet-attendance-for-universities.html" style="color: var(--muted); text-decoration: none; display: block;">Universities &amp; Colleges</a>
+          <a href="google-meet-attendance-for-tutors.html" style="color: var(--muted); text-decoration: none; display: block;">Tutors &amp; Bootcamps</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Integrations</strong>
+          <a href="export-google-meet-attendance-to-moodle.html" style="color: var(--muted); text-decoration: none; display: block;">Moodle Gradebook Export</a>
+          <a href="export-google-meet-attendance-to-canvas.html" style="color: var(--muted); text-decoration: none; display: block;">Canvas Gradebook Export</a>
+          <a href="export-google-meet-attendance-to-sheets.html" style="color: var(--muted); text-decoration: none; display: block;">Export to Google Sheets</a>
+          <a href="how-to-send-google-meet-attendance-to-slack.html" style="color: var(--muted); text-decoration: none; display: block;">Slack Integration</a>
+          <a href="send-google-meet-attendance-to-google-chat.html" style="color: var(--muted); text-decoration: none; display: block;">Google Chat &amp; Discord</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Teams &amp; Business</strong>
+          <a href="google-meet-attendance-for-remote-teams.html" style="color: var(--muted); text-decoration: none; display: block;">Remote Teams &amp; Standups</a>
+          <a href="track-attendance-for-webinars-and-training-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">Webinars &amp; Training</a>
+          <a href="google-meet-attendance-for-cpe-and-cle-credits.html" style="color: var(--muted); text-decoration: none; display: block;">CPE &amp; CLE Credits</a>
+          <a href="google-meet-attendance-for-volunteer-hours.html" style="color: var(--muted); text-decoration: none; display: block;">Volunteer Hours</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Guides &amp; Comparisons</strong>
+          <a href="how-to-track-attendance-in-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">How to Track Attendance</a>
+          <a href="track-google-meet-attendance-without-host.html" style="color: var(--muted); text-decoration: none; display: block;">Track Without Host</a>
+          <a href="google-meet-attendance-report-not-showing-up.html" style="color: var(--muted); text-decoration: none; display: block;">Report Not Showing Up?</a>
+          <a href="best-google-meet-attendance-extensions.html" style="color: var(--muted); text-decoration: none; display: block;">Extension Comparison</a>
+          <a href="google-meet-vs-zoom-attendance-tracking.html" style="color: var(--muted); text-decoration: none; display: block;">Google Meet vs Zoom</a>
+        </div>
+      </div>
+      <div style="text-align: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06);">
+        <a href="/" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Home</a> ·
+        <a href="pricing.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Pricing</a> ·
+        <a href="support.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Support</a> ·
+        <a href="privacy.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Privacy Policy</a> ·
+        <a href="terms.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Terms of Service</a> ·
+        <a href="refunds.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Refund Policy</a>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+  (function () {
+    try {
+      var params = new URLSearchParams(location.search);
+      var utmSource = params.get('utm_source');
+      var utmMedium = params.get('utm_medium');
+      var utmCampaign = params.get('utm_campaign');
+      var ref = params.get('ref');
+      var referrer = document.referrer || null;
+      var ACQ_KEY = 'attendanceTrackerAcq';
+      if (!localStorage.getItem(ACQ_KEY)) {
+        var payload = {
+          utmSource: utmSource,
+          utmMedium: utmMedium,
+          utmCampaign: utmCampaign,
+          ref: ref,
+          referrer: referrer,
+          landingUrl: location.href,
+          capturedAt: Date.now(),
+        };
+        localStorage.setItem(ACQ_KEY, JSON.stringify(payload));
+        var computedSource = utmSource || (ref ? 'referral' : null) || (referrer ? new URL(referrer).hostname : null) || 'direct';
+        document.cookie = 'att_first_touch=' + encodeURIComponent(JSON.stringify(Object.assign({}, payload, { computedSource: computedSource }))) + ';path=/;max-age=7776000;SameSite=Lax';
+      }
+    } catch (e) {}
+
+    var API = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
+    function beacon(payload) {
+      try {
+        var blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        if (navigator.sendBeacon) navigator.sendBeacon(API + '/public/pageview', blob);
+        else fetch(API + '/public/pageview', { method: 'POST', body: blob, keepalive: true });
+      } catch (e) {}
+    }
+    var p = new URLSearchParams(location.search);
+    beacon({
+      path: location.pathname,
+      referrer: document.referrer || null,
+      viewportWidth: window.innerWidth || null,
+      utmSource: p.get('utm_source'),
+      utmMedium: p.get('utm_medium'),
+      utmCampaign: p.get('utm_campaign'),
+    });
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a[href*="marketplace/app/attendance_tracker"]');
+      if (a) beacon({ path: location.pathname, event: 'cta_click', eventLabel: 'marketplace_install_seo', referrer: document.referrer || null });
+    });
+  })();
+  </script>
+</body>
+</html>

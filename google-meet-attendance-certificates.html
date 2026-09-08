@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Google Meet attendance certificates with public verification (2026 Guide) — Attendance Tracker</title>
+  <meta name="description" content="Generate per-attendee PDF attendance certificates from any Google Meet — with name, session, date, credit hours, and a verification code anyone can check on a public page." />
+  <link rel="canonical" href="https://attendancetracker.dev/google-meet-attendance-certificates.html" />
+  <meta property="og:title" content="Google Meet attendance certificates with public verification" />
+  <meta property="og:description" content="Per-attendee PDF certificates generated from real tracked attendance — each with a unique code that registrars and employers can verify at attendancetracker.dev/verify." />
+  <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
+  <meta property="og:url" content="https://attendancetracker.dev/google-meet-attendance-certificates.html" />
+  <meta property="og:type" content="article" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Google Meet attendance certificates with public verification",
+    "description": "How to generate per-attendee PDF attendance certificates from Google Meet sessions — including attendee name, session title, date, duration or credit hours, and a unique verification code that anyone can confirm on a public verification page."
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #4ade80; --blue: #58a6ff; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 40px 20px; }
+    .container { max-width: 720px; margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+    .brand img { width: 28px; height: 28px; border-radius: 6px; }
+    .brand a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    h1 { font-size: 2rem; line-height: 1.2; margin-bottom: 14px; }
+    .lead { color: var(--muted); font-size: 1.05rem; margin-bottom: 32px; }
+    h2 { font-size: 1.35rem; margin-top: 36px; margin-bottom: 14px; color: var(--text); }
+    h3 { font-size: 1.05rem; margin-top: 22px; margin-bottom: 8px; color: var(--text); }
+    p { margin-bottom: 14px; color: #c9d1d9; }
+    ul, ol { padding-left: 22px; margin-bottom: 14px; color: #c9d1d9; }
+    li { margin-bottom: 6px; }
+    a { color: var(--blue); }
+    code { background: var(--surface); padding: 2px 6px; border-radius: 4px; font-size: .9em; font-family: 'DM Mono', ui-monospace, monospace; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: .85rem; }
+    th, td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; color: #c9d1d9; }
+    th { background: var(--surface); color: var(--text); }
+    .callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 16px 18px; margin: 22px 0; }
+    .callout strong { color: var(--accent); }
+    .cta { background: linear-gradient(135deg, rgba(74,222,128,.08), rgba(88,166,255,.08)); border: 1px solid rgba(74,222,128,.25); border-radius: 14px; padding: 26px; text-align: center; margin: 36px 0; }
+    .cta h3 { font-size: 1.1rem; margin-top: 0; margin-bottom: 6px; }
+    .cta p { color: var(--muted); font-size: .9rem; margin-bottom: 16px; }
+    .btn { display: inline-block; background: #34A853; color: #fff; text-decoration: none; padding: 11px 24px; border-radius: 8px; font-weight: 600; font-size: .92rem; }
+    .footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border); }
+    .footer a { color: var(--muted); text-decoration: none; margin: 0 6px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <img src="icons/icon-96.png" alt="" />
+      <a href="/">Attendance Tracker</a>
+    </div>
+
+    <h1>Google Meet attendance certificates with public verification</h1>
+    <p class="lead">Run a webinar, CPE course, or training on Google Meet and every attendee wants proof they were there. Here is how to generate a personalized PDF certificate for each of them — backed by real tracked attendance and a verification code anyone can check.</p>
+
+    <div class="callout">
+      <strong>Not just a pretty PDF:</strong> every certificate carries a unique verification code, and anyone — a registrar, a state bar, an employer — can confirm it's genuine at <a href="https://attendancetracker.dev/verify">attendancetracker.dev/verify</a>. Public, no account needed. Very few attendance tools offer independent verification at all; it's the difference between a certificate and a claim.
+    </div>
+
+    <h2>What gets generated</h2>
+    <p>Attendance Tracker produces one PDF certificate per attendee, built from the attendance actually recorded during the meeting — not from a sign-up list. Each certificate includes:</p>
+    <table>
+      <tr><th>Field</th><th>Where it comes from</th></tr>
+      <tr><td>Attendee name</td><td>The tracked participant's name from the meeting</td></tr>
+      <tr><td>Session title</td><td>Your meeting's title</td></tr>
+      <tr><td>Date</td><td>The session date</td></tr>
+      <tr><td>Duration / credit hours</td><td>Actual minutes attended, or the credit hours you assign</td></tr>
+      <tr><td>Verification code</td><td>A unique code tied to that attendee and session</td></tr>
+    </table>
+    <p>Because certificates are generated from join/leave data, someone who dipped in for five minutes of a two-hour course doesn't get the same paper as someone who sat the whole session — the duration on the certificate reflects what happened.</p>
+
+    <h2>The verification story</h2>
+    <p>Certificates are easy to forge; verifiable certificates aren't. Every certificate's code can be entered at <a href="https://attendancetracker.dev/verify">attendancetracker.dev/verify</a> — a public page, open to anyone, no login. It confirms the certificate is authentic and matches the recorded session. That matters wherever a certificate is actually inspected:</p>
+    <ul>
+      <li><strong>CPE/CLE audits:</strong> licensing bodies can spot-check credits themselves instead of taking a PDF at face value.</li>
+      <li><strong>Employers and HR:</strong> confirm a candidate's training claim in ten seconds.</li>
+      <li><strong>Schools and registrars:</strong> validate volunteer hours or make-up sessions without emailing the organizer.</li>
+    </ul>
+
+    <h2>How to generate certificates</h2>
+    <ol>
+      <li><strong>Track the meeting.</strong> Open Attendance Tracker from Google Meet's <strong>Activities</strong> panel during your session (it's an official add-on using the Google Meet REST API — works in Chrome, Edge, Firefox, Safari, and on Chromebooks). Attendance records automatically: who joined, when, and for how long.</li>
+      <li><strong>Export the session.</strong> When the meeting ends, the attendance report exports; the session appears in your Meeting History.</li>
+      <li><strong>Click Certificates.</strong> In the panel's link bar, choose <strong>Certificates</strong> — one PDF per attendee is generated, each with its own verification code, ready to distribute.</li>
+    </ol>
+    <p>It works the same for 8 attendees or 300 — bulk generation is one click either way.</p>
+
+    <h2>Who uses attendance certificates?</h2>
+    <ul>
+      <li><strong>CPE &amp; CLE providers:</strong> accountants, lawyers, and other licensed professionals need documented, auditable credit hours — <a href="google-meet-attendance-for-cpe-and-cle-credits.html">see the CPE/CLE guide</a>.</li>
+      <li><strong>Webinar hosts and trainers:</strong> a certificate is the deliverable attendees actually keep and share — <a href="track-attendance-for-webinars-and-training-google-meet.html">webinars &amp; training guide</a>.</li>
+      <li><strong>Corporate L&amp;D and compliance:</strong> proof of completion for mandatory training, with durations HR can defend.</li>
+      <li><strong>Volunteer coordinators:</strong> verified hour counts that schools and scholarship programs accept — <a href="google-meet-attendance-for-volunteer-hours.html">volunteer hours guide</a>.</li>
+    </ul>
+
+    <div class="callout">
+      <strong>Full detail behind every certificate:</strong> the underlying session report keeps Name, Email, Status, Attendance %, Duration, Join/Leave times, and Rejoins for every participant — so if anyone questions a certificate, you have the <a href="export-google-meet-participants-to-excel.html">timestamped record in Excel</a> to back it up.
+    </div>
+
+    <h2>Frequently asked questions</h2>
+    <h3>Are certificates free?</h3>
+    <p>Certificates are a Pro feature. Pro starts at a one-time <strong>$9.99 Individual Lifetime Pass</strong> (pay once, keep it forever); educators can choose a <strong>$4.99/year Educator Annual Pass</strong>, and a <strong>$19.99 one-time Lifetime Domain license</strong> covers everyone in a Workspace domain. Tracking, CSV downloads, and PDF attendance reports stay free.</p>
+    <h3>Can I generate certificates for 100+ attendees?</h3>
+    <p>Yes. Certificates are generated per-attendee in bulk from the tracked session — a 300-person webinar produces 300 individual PDFs, each with its own code, in one click.</p>
+    <h3>Can someone verify a certificate without an account?</h3>
+    <p>Yes — that's the point. The <a href="https://attendancetracker.dev/verify">verification page</a> is public: paste the code, see the confirmation. No sign-in, no install, nothing to explain to a registrar.</p>
+
+    <div class="cta">
+      <h3>Give every attendee proof that holds up</h3>
+      <p>Per-attendee PDF certificates, generated from real attendance, verifiable by anyone. Pro from $9.99 one-time.</p>
+      <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_certificates" target="_blank">Install Attendance Tracker from Marketplace</a>
+    </div>
+
+    <div class="footer-hub" style="margin-top: 50px; padding-top: 30px; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--muted); line-height: 1.8;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; text-align: left; margin-bottom: 24px;">
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Education</strong>
+          <a href="attendance-tracker-for-teachers.html" style="color: var(--muted); text-decoration: none; display: block;">For K-12 Teachers</a>
+          <a href="google-meet-attendance-google-classroom.html" style="color: var(--muted); text-decoration: none; display: block;">Google Classroom</a>
+          <a href="import-google-classroom-roster-to-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">Import Classroom Rosters</a>
+          <a href="google-meet-attendance-for-universities.html" style="color: var(--muted); text-decoration: none; display: block;">Universities &amp; Colleges</a>
+          <a href="google-meet-attendance-for-tutors.html" style="color: var(--muted); text-decoration: none; display: block;">Tutors &amp; Bootcamps</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Integrations</strong>
+          <a href="export-google-meet-attendance-to-moodle.html" style="color: var(--muted); text-decoration: none; display: block;">Moodle Gradebook Export</a>
+          <a href="export-google-meet-attendance-to-canvas.html" style="color: var(--muted); text-decoration: none; display: block;">Canvas Gradebook Export</a>
+          <a href="export-google-meet-attendance-to-sheets.html" style="color: var(--muted); text-decoration: none; display: block;">Export to Google Sheets</a>
+          <a href="how-to-send-google-meet-attendance-to-slack.html" style="color: var(--muted); text-decoration: none; display: block;">Slack Integration</a>
+          <a href="send-google-meet-attendance-to-google-chat.html" style="color: var(--muted); text-decoration: none; display: block;">Google Chat &amp; Discord</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Teams &amp; Business</strong>
+          <a href="google-meet-attendance-for-remote-teams.html" style="color: var(--muted); text-decoration: none; display: block;">Remote Teams &amp; Standups</a>
+          <a href="track-attendance-for-webinars-and-training-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">Webinars &amp; Training</a>
+          <a href="google-meet-attendance-for-cpe-and-cle-credits.html" style="color: var(--muted); text-decoration: none; display: block;">CPE &amp; CLE Credits</a>
+          <a href="google-meet-attendance-for-volunteer-hours.html" style="color: var(--muted); text-decoration: none; display: block;">Volunteer Hours</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Guides &amp; Comparisons</strong>
+          <a href="how-to-track-attendance-in-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">How to Track Attendance</a>
+          <a href="track-google-meet-attendance-without-host.html" style="color: var(--muted); text-decoration: none; display: block;">Track Without Host</a>
+          <a href="google-meet-attendance-report-not-showing-up.html" style="color: var(--muted); text-decoration: none; display: block;">Report Not Showing Up?</a>
+          <a href="best-google-meet-attendance-extensions.html" style="color: var(--muted); text-decoration: none; display: block;">Extension Comparison</a>
+          <a href="google-meet-vs-zoom-attendance-tracking.html" style="color: var(--muted); text-decoration: none; display: block;">Google Meet vs Zoom</a>
+        </div>
+      </div>
+      <div style="text-align: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06);">
+        <a href="/" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Home</a> ·
+        <a href="pricing.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Pricing</a> ·
+        <a href="support.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Support</a> ·
+        <a href="privacy.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Privacy Policy</a> ·
+        <a href="terms.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Terms of Service</a> ·
+        <a href="refunds.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Refund Policy</a>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+  (function () {
+    try {
+      var params = new URLSearchParams(location.search);
+      var utmSource = params.get('utm_source');
+      var utmMedium = params.get('utm_medium');
+      var utmCampaign = params.get('utm_campaign');
+      var ref = params.get('ref');
+      var referrer = document.referrer || null;
+      var ACQ_KEY = 'attendanceTrackerAcq';
+      if (!localStorage.getItem(ACQ_KEY)) {
+        var payload = {
+          utmSource: utmSource,
+          utmMedium: utmMedium,
+          utmCampaign: utmCampaign,
+          ref: ref,
+          referrer: referrer,
+          landingUrl: location.href,
+          capturedAt: Date.now(),
+        };
+        localStorage.setItem(ACQ_KEY, JSON.stringify(payload));
+        var computedSource = utmSource || (ref ? 'referral' : null) || (referrer ? new URL(referrer).hostname : null) || 'direct';
+        document.cookie = 'att_first_touch=' + encodeURIComponent(JSON.stringify(Object.assign({}, payload, { computedSource: computedSource }))) + ';path=/;max-age=7776000;SameSite=Lax';
+      }
+    } catch (e) {}
+
+    var API = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
+    function beacon(payload) {
+      try {
+        var blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        if (navigator.sendBeacon) navigator.sendBeacon(API + '/public/pageview', blob);
+        else fetch(API + '/public/pageview', { method: 'POST', body: blob, keepalive: true });
+      } catch (e) {}
+    }
+    var p = new URLSearchParams(location.search);
+    beacon({
+      path: location.pathname,
+      referrer: document.referrer || null,
+      viewportWidth: window.innerWidth || null,
+      utmSource: p.get('utm_source'),
+      utmMedium: p.get('utm_medium'),
+      utmCampaign: p.get('utm_campaign'),
+    });
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a[href*="marketplace/app/attendance_tracker"]');
+      if (a) beacon({ path: location.pathname, event: 'cta_click', eventLabel: 'marketplace_install_seo', referrer: document.referrer || null });
+    });
+  })();
+  </script>
+</body>
+</html>
