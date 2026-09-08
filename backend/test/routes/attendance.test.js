@@ -95,6 +95,39 @@ describe('GET /api/attendance', () => {
     expect(res.body.conferenceEndTime).toBe(endTime);
   });
 
+  test('REUSED meeting code: picks the ONGOING record, not the oldest (the Five Iron Golf bug)', async () => {
+    // API returns newest-first; the old records[length-1] read the stale
+    // record and showed an empty roster for 46 minutes of a live meeting.
+    mockMeetGet.mockResolvedValue({
+      conferenceRecords: [
+        { name: 'conferenceRecords/live', startTime: '2026-09-08T17:00:00Z' }, // ongoing: no endTime
+        { name: 'conferenceRecords/stale', startTime: '2026-08-01T10:00:00Z', endTime: '2026-08-01T10:05:00Z' },
+      ],
+    });
+    mockMeetGetAll.mockResolvedValue([]);
+    const res = await request(app)
+      .get('/api/attendance?conferenceId=abc-defg-hij')
+      .set(authedHeader('user@acme.com', 'acme.com'));
+    expect(res.status).toBe(200);
+    expect(mockMeetGetAll).toHaveBeenCalledWith('conferenceRecords/live/participants', expect.anything(), 'participants');
+    expect(res.body.conferenceStartTime).toBe('2026-09-08T17:00:00Z');
+  });
+
+  test('REUSED code with only ENDED records: picks the most recent by startTime regardless of API order', async () => {
+    mockMeetGet.mockResolvedValue({
+      conferenceRecords: [
+        { name: 'conferenceRecords/older', startTime: '2026-08-01T10:00:00Z', endTime: '2026-08-01T11:00:00Z' },
+        { name: 'conferenceRecords/newest', startTime: '2026-09-08T17:00:00Z', endTime: '2026-09-08T18:00:00Z' },
+      ],
+    });
+    mockMeetGetAll.mockResolvedValue([]);
+    const res = await request(app)
+      .get('/api/attendance?conferenceId=abc-defg-hij')
+      .set(authedHeader('user@acme.com', 'acme.com'));
+    expect(res.status).toBe(200);
+    expect(mockMeetGetAll).toHaveBeenCalledWith('conferenceRecords/newest/participants', expect.anything(), 'participants');
+  });
+
   test('delegationConfigured:false when no service account configured for tenant', async () => {
     mockMeetGet.mockResolvedValue({
       conferenceRecords: [{ name: 'conferenceRecords/abc', startTime: 'x', endTime: 'y' }],

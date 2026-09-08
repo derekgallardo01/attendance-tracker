@@ -138,8 +138,15 @@ router.get('/attendance', async (req, res) => {
       return res.json({ participants: [], message: 'No conference record yet — meeting may still be live.' });
     }
 
-    const conferenceRecord = records[records.length - 1];
-    log.info('using conference record', { name: conferenceRecord.name });
+    // A REUSED meeting code (standing room link, recurring meeting) has one
+    // record per past conference, returned NEWEST-FIRST by the API — the old
+    // `records[records.length - 1]` therefore read the OLDEST conference and
+    // showed an empty roster for the live one (a user watched an empty panel
+    // for 46 minutes this way). Ordering-agnostic pick: the ongoing record
+    // (no endTime) wins; otherwise the most recent startTime.
+    const conferenceRecord = records.find(r => !r.endTime)
+      || records.slice().sort((a, b) => new Date(b.startTime || 0) - new Date(a.startTime || 0))[0];
+    log.info('using conference record', { name: conferenceRecord.name, ofRecords: records.length, ongoing: !conferenceRecord.endTime });
     const conferenceStartTime = conferenceRecord.startTime || null;
     const conferenceEndTime = conferenceRecord.endTime || null;
 
