@@ -761,6 +761,16 @@ describe('public-checkout team provisioning guard', () => {
     expect(params.allow_promotion_codes).toBeUndefined();
   });
 
+  test('checkout sessions enable abandoned-cart recovery', async () => {
+    mockStripeInstance.prices.retrieve.mockResolvedValue({ id: 'p', type: 'recurring', recurring: {} });
+    const res = await request(app).post('/api/billing/public-checkout')
+      .set('Content-Type', 'application/json')
+      .send({ plan: 'educator' });
+    expect(res.status).toBe(200);
+    const params = mockStripeInstance.checkout.sessions.create.mock.calls[0][0];
+    expect(params.after_expiration).toEqual({ recovery: { enabled: true } });
+  });
+
   test('a stale LAUNCH50 from an old cached client is ignored (still a clean session)', async () => {
     mockStripeInstance.prices.retrieve.mockResolvedValue({ id: 'p', type: 'recurring', recurring: {} });
     const res = await request(app).post('/api/billing/public-checkout')

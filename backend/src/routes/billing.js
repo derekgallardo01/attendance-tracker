@@ -120,6 +120,12 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
       success_url: `${CONFIG.publicSiteUrl}/${backTo}?upgraded=1`,
       cancel_url: `${CONFIG.publicSiteUrl}/${backTo}`,
       metadata: meta,
+      // Abandoned-checkout recovery: if the session expires unpaid (~24h),
+      // Stripe emails the buyer a link to finish — recovering the highest-intent
+      // non-payers (they already reached checkout). Safe now that sessions are
+      // clean (no `discounts`); doesn't reopen a promo box, so Adaptive Pricing
+      // stays eligible. Needs Stripe cart-recovery emails on in the dashboard.
+      after_expiration: { recovery: { enabled: true } },
     };
     if (promo && promo !== 'LAUNCH50') {
       sessionParams.allow_promotion_codes = true;
@@ -227,6 +233,8 @@ router.post('/billing/public-checkout', async (req, res) => {
       success_url: `${CONFIG.publicSiteUrl}/history.html?upgraded=1`,
       cancel_url: `${CONFIG.publicSiteUrl}/pricing.html`,
       metadata: meta,
+      // Abandoned-checkout recovery (see authed checkout above for rationale).
+      after_expiration: { recovery: { enabled: true } },
     };
     if (email) {
       sessionParams.customer_email = email;
