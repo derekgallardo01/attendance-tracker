@@ -316,18 +316,16 @@ describe('POST /api/oauth/exchange — acquisition + scopes + webhook', () => {
     expect(notifications.flushDeferredNotifications).not.toHaveBeenCalled();
   });
 
-  test('brand-new user: seeds the deferred signup notification (detected source) + grace-timer flush', async () => {
-    process.env.SIGNUP_NOTIFY_GRACE_MS = '5'; // short fallback window so the timer fires in-test
+  test('brand-new user: seeds the deferred signup notification (detected source) + immediate flush', async () => {
     exchangeTokens(FULL);
     firestore.getUser.mockResolvedValue(null);
     await request(app).post('/api/oauth/exchange').send({ code: 'c', acquisition: { userAgent: 'UA' } });
     // The detected source is stamped on the new user doc for the deferred ping.
     expect(firestore.upsertUser).toHaveBeenCalledWith('acme.com', expect.objectContaining({ signupDetectedSource: 'direct' }));
-    // The fallback grace timer flushes the deferred notifications (no webhook inline).
-    await new Promise((r) => setTimeout(r, 40));
+    // The flush fires immediately after the response — no grace timer (Cloud
+    // Run throttling silently killed in-process timers on idle instances).
     expect(notifications.flushDeferredNotifications).toHaveBeenCalledWith('acme.com', 'newuser@acme.com');
     expect(notifications.sendSignupWebhook).not.toHaveBeenCalled();
-    delete process.env.SIGNUP_NOTIFY_GRACE_MS;
   });
 
   test('brand-new user: captures IP and geo from x-forwarded-for header', async () => {

@@ -198,19 +198,17 @@ router.post('/exchange', async (req, res) => {
       isNewUser: isBrandNewUser,
     });
 
-    // Signup notification is deferred (see upsertUser): we'd rather the email
-    // carry the user's self-reported source than the auto-detected fallback.
-    // The "how did you find us?" modal POSTs to /api/admin/source within seconds
-    // and flushes it. This grace timer is the fallback for users who dismiss the
-    // modal — after a short window we send with the detected source only. The
-    // flush is claimed transactionally, so whichever trigger fires first wins
-    // and the rest no-op. Unref'd so it never holds the process open.
+    // Flush the signup notification immediately (after the response, so it
+    // never delays sign-in). It used to wait on a 120s grace timer hoping the
+    // "how did you find us?" modal (answered seconds after sign-in) would fill
+    // in the self-reported source first — but the modal now shows post-export,
+    // minutes later or never, so waiting buys nothing. And the timer itself
+    // silently died whenever Cloud Run throttled the idle instance (two stuck
+    // notifications on 2026-09-09). The flush is claimed transactionally, so
+    // the /api/admin/source trigger and the daily-sweep backstop still no-op
+    // if this one won.
     if (isBrandNewUser) {
-      const graceMs = Number(process.env.SIGNUP_NOTIFY_GRACE_MS) || 120000;
-      const timer = setTimeout(() => {
-        flushDeferredNotifications(domain, email);
-      }, graceMs);
-      timer.unref?.();
+      flushDeferredNotifications(domain, email);
     }
   } catch (err) {
     log.error('oauth: exchange failed', { error: err.message });

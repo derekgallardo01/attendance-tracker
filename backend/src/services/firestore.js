@@ -602,13 +602,11 @@ async function upsertUser(domain, { email, displayName, refreshToken, sheetId, a
       }
     }
 
-    // Signup notification is deferred, not fired here: we want it to carry the
-    // user's self-reported source (from the "how did you find us?" modal, which
-    // is answered a few seconds after signup) rather than the auto-detected
-    // fallback. Stamp a pending marker + the detected source on the brand-new
-    // user doc; a later trigger (modal answer / grace timer / sweep) flushes it
-    // via claimSignupNotification. Only oauth passes signupDetectedSource, so
-    // other callers never leave a user stuck pending.
+    // Signup notification is not fired here — stamp a pending marker + the
+    // detected source on the brand-new user doc; the oauth route flushes it
+    // immediately after responding (with the daily sweep as crash backstop),
+    // claimed transactionally via claimSignupNotification. Only oauth passes
+    // signupDetectedSource, so other callers never leave a user stuck pending.
     if (isFirstSignin && signupDetectedSource !== undefined) {
       data.signupNotifyPending = true;
       data.signupDetectedSource = signupDetectedSource || null;
