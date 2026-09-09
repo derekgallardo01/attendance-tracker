@@ -54,7 +54,11 @@
     <h1>Verify an attendance certificate</h1>
     <p class="lead">Enter the verification code printed at the bottom of the certificate (it looks like <span class="code">AT-1A2B3C4D</span>) to independently confirm it was issued by Attendance Tracker.</p>
 
-    <form class="lookup" onsubmit="return doVerify();">
+    <!-- doVerify is async: it RETURNS A PROMISE (always truthy), so
+         `return doVerify()` never cancelled submission — the form GET-posted
+         to itself and the reload wiped every error message before it could
+         be seen. preventDefault + explicit false is reload-proof. -->
+    <form class="lookup" onsubmit="event.preventDefault(); doVerify(); return false;">
       <input id="code" type="text" placeholder="AT-XXXXXXXX" autocomplete="off" spellcheck="false" aria-label="Verification code" />
       <button type="submit">Verify</button>
     </form>

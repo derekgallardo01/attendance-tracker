@@ -391,12 +391,15 @@ async function recordAlertsSent(ref, alerts) {
 }
 
 // Stable dedup key for one alert CONDITION. Keyed by series + person + rule +
-// instanceCount so the SAME ongoing condition ("missed the last 3 of X" at N
-// instances) fires once — not every day until the next instance. When a new
-// instance is recorded, instanceCount increments → a fresh key → the condition
-// can alert again if it still holds.
+// a BUCKET of instanceCount. Raw instanceCount minted a fresh key on every
+// newly-tracked instance, so a student who dropped a weekly class re-alerted
+// ~8 consecutive weeks (the streak window stays true that long). Bucketing by
+// the window size (8) means one alert per condition per ~8 new instances —
+// a dropped student alerts once, and can re-alert if they're STILL gone two
+// months later (or dropped again after returning).
 function seriesAlertKey(a) {
-  return `${a.type}:${a.recurringEventId}:${(a.personEmail || 'name:' + a.personName || '').toLowerCase()}:${a.instanceCount}`;
+  const bucket = Math.floor((a.instanceCount || 0) / 8);
+  return `${a.type}:${a.recurringEventId}:${(a.personEmail || 'name:' + a.personName || '').toLowerCase()}:b${bucket}`;
 }
 
 // Permanent per-condition claim (mirrors claimReengagementSlot). create() throws

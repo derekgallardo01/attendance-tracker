@@ -146,6 +146,15 @@
   <div class="container">
     <!-- Login -->
     <div id="login-screen" class="login-screen">
+      <!-- Post-purchase confirmation for signed-out arrivals: Stripe's
+           success_url lands here in a FRESH top-level tab whose localStorage
+           is partitioned away from the Meet panel — before this, buyers were
+           greeted by a bare login screen seconds after paying, with zero
+           acknowledgment of the purchase. -->
+      <div id="login-upgraded-note" style="display:none;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.35);border-radius:10px;padding:12px 16px;margin:0 auto 22px;max-width:520px;font-size:.9rem;color:#e6edf3;line-height:1.5">
+        🎉 <strong data-i18n="history.paidTitle">Payment received — you're Pro!</strong>
+        <span data-i18n="history.paidBody">Sign in below with the same Google account you use in Meet and everything will be unlocked.</span>
+      </div>
       <h2 data-i18n="history.title">Meeting History</h2>
       <p data-i18n="history.loginPrompt">Sign in to browse every meeting you've tracked.</p>
       <button class="btn btn-primary" onclick="signIn()" data-i18n="btn.signIn">Sign in with Google</button>
@@ -153,6 +162,10 @@
 
     <!-- Loading -->
     <div id="loading" style="display:none" data-i18n="history.loading">Loading history…</div>
+    <div id="load-error" style="display:none;background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.35);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:.85rem;color:#e6edf3">
+      <span data-i18n="history.loadError">Couldn't load your history — check your connection and</span>
+      <a href="javascript:location.reload()" style="color:#58a6ff" data-i18n="history.loadErrorRetry">try again</a>.
+    </div>
 
     <!-- Dashboard -->
     <div id="dashboard">
@@ -212,6 +225,10 @@
             <strong>Hands-Free Auto-Capture</strong>: Pro automatically records and exports every Google Meet to Sheets in the background — even if you close the side-panel.
           </div>
           <button class="btn" style="background:#4ade80;color:#0d1117;padding:6px 14px;font-size:.8rem;white-space:nowrap" onclick="upgradeFromHistory(this)"><span data-i18n="history.upgradeProShort">Upgrade to Pro</span> — <span class="price-lifetime">$9.99</span></button>
+        </div>
+        <div id="history-cap-note" style="display:none;font-size:.78rem;color:var(--muted);margin-bottom:10px">
+          <span data-i18n="history.capNote1">Showing your most recent</span> <span id="history-cap-count">25</span> <span data-i18n="history.capNote2">meetings — Pro keeps your full history.</span>
+          <a href="javascript:void(0)" onclick="upgradeFromHistory(this)" style="color:#58a6ff" data-i18n="history.capUpgrade">Upgrade</a>
         </div>
         <input id="search-meetings" class="search-box" type="text" data-i18n-placeholder="history.searchMeetings" placeholder="Search meetings by title…" oninput="renderMeetings()" />
         <div class="section">
@@ -347,6 +364,16 @@
           sessionToken = token;
           userEmail = me.email;
           try { localStorage.setItem('att_session_token', token); } catch (e) {}
+          // Strip the bearer from the URL — BOTH forms. ?token= previously
+          // survived (replaceState kept the query), so the session token sat
+          // in the URL bar, browser history, and the service worker's Cache
+          // Storage (keyed by full URL) — outliving even sign-out.
+          const cleanParams = new URLSearchParams(window.location.search);
+          if (cleanParams.has('token')) {
+            cleanParams.delete('token');
+            const qs = cleanParams.toString();
+            history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+          }
           if (window.location.hash && window.location.hash.includes('token=')) {
             history.replaceState(null, '', window.location.pathname + window.location.search);
           }
@@ -365,6 +392,14 @@
       }
     }
     initI18n();
+    // Show the purchase confirmation IMMEDIATELY (not inside loadHistory) —
+    // a signed-out buyer never reaches loadHistory, and they just paid.
+    try {
+      if (new URLSearchParams(location.search).get('upgraded') === '1') {
+        const note = document.getElementById('login-upgraded-note');
+        if (note) note.style.display = 'block';
+      }
+    } catch (e) { /* cosmetic */ }
     initSession();
 
     async function loadHistory() {
@@ -410,11 +445,24 @@
         seriesData = sRes.ok ? await sRes.json() : { series: [], totalSeries: 0 };
 
         document.getElementById('stat-meetings').textContent = data.totalMeetings || 0;
-        // Free-tier history cap: the backend returns only the most-recent slice
-        // plus historyCapped/totalMeetings/freeLimit. Surface an upgrade nudge.
         const acBanner = document.getElementById('auto-capture-banner');
         if (acBanner) {
           acBanner.style.display = data.isPro ? 'none' : 'flex';
+        }
+        // Free-tier history cap: the backend returns only the most-recent
+        // slice plus historyCapped/totalMeetings/freeLimit. These fields were
+        // fetched and DISCARDED — a free user with 300 meetings saw "300" in
+        // the stat and exactly 25 rows with no explanation. Gentle inline
+        // note, no popup.
+        const capNote = document.getElementById('history-cap-note');
+        if (capNote) {
+          if (data.historyCapped) {
+            capNote.style.display = 'block';
+            const capCount = document.getElementById('history-cap-count');
+            if (capCount) capCount.textContent = data.freeLimit || 25;
+          } else {
+            capNote.style.display = 'none';
+          }
         }
         document.getElementById('stat-people').textContent = (data.people || []).length;
         document.getElementById('stat-active-days').textContent = AttHistory.activeDays(data.calendar);
@@ -428,6 +476,10 @@
         applyDeepLinkHash();
       } catch (err) {
         console.error('history load failed:', err);
+        // A 5xx/network drop used to render an all-zero dashboard with no
+        // hint anything failed. Say so, with a retry.
+        const errBox = document.getElementById('load-error');
+        if (errBox) errBox.style.display = 'block';
       } finally {
         document.getElementById('loading').style.display = 'none';
       }
@@ -686,8 +738,10 @@
 
       list.innerHTML = rows.map(s => {
         const topPerson = (s.people || [])[0];
+        // Raw here — the render below esc()s it. Double-escaping rendered
+        // O'Brien as O&#39;Brien in the series meta line.
         const topLine = topPerson
-          ? `${esc(topPerson.displayName)} (${topPerson.attended}/${s.instanceCount})`
+          ? `${topPerson.displayName} (${topPerson.attended}/${s.instanceCount})`
           : 'No attendance yet';
         const dateRange = AttHistory.computeRange(s.firstAt, s.lastAt);
         const safeRid = escArg(s.recurringEventId);

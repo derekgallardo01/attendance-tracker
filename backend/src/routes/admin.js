@@ -48,16 +48,22 @@ function sweepBudgetMs() {
   return configured;
 }
 
-// Rotate a user list by a day-derived offset so a budget-truncated sweep does
+// Rotate a user list by a time-derived offset so a budget-truncated sweep does
 // NOT process the same front-of-list users every run — collectionGroup returns
 // a stable order, so without rotation the tail is never reached. Deterministic
 // (no Math.random) and cheap. `dayOffset` is passed so callers can vary the
-// clock read for tests; defaults to today's day-of-year.
+// clock read for tests.
+// The offset advances every 15 MINUTES (not daily) multiplied by a co-prime
+// stride: the old day-derived offset moved ONE position per day, so a user in
+// the truncated tail could wait (N - K) days for first contact — and
+// check-upcoming (which must run every ≤15 min) processed the IDENTICAL
+// prefix all day, meaning everyone past the budget got zero upcoming
+// reminders, every day. Per-user claims/dedup keys make re-visiting the same
+// user within a day a cheap no-op, so finer rotation only adds coverage.
 function rotateForFairness(arr, dayOffset) {
   if (!Array.isArray(arr) || arr.length < 2) return arr || [];
-  const off = ((dayOffset == null
-    ? Math.floor(Date.now() / 86400000)
-    : dayOffset) % arr.length + arr.length) % arr.length;
+  const bucket = dayOffset == null ? Math.floor(Date.now() / 900000) : dayOffset;
+  const off = (((bucket * 131) % arr.length) + arr.length) % arr.length;
   return off === 0 ? arr : arr.slice(off).concat(arr.slice(0, off));
 }
 
@@ -507,7 +513,14 @@ router.post('/admin/check-alerts', requireSuperAdminOrScheduler, async (req, res
         if (!claim.claimed) { usersSkipped++; continue; }
 
         const alerts = await evaluateSeriesAlerts(user.domain, user.email);
-        if (alerts.length === 0) continue; // claim spent, but nothing to send
+        if (alerts.length === 0) {
+          // Release the day slot: evaluateSeriesAlerts swallows its own read
+          // errors into [], so a Firestore blip here used to burn the user's
+          // slot for the day — no alerts until tomorrow. Empty is cheap to
+          // re-check; the per-CONDITION claims are what prevent duplicates.
+          try { await claim.ref.delete(); } catch (_) { /* best-effort */ }
+          continue;
+        }
 
         // Per-condition dedup: only send alerts we haven't already sent for THIS
         // exact condition (series + person + rule + instanceCount). Without this,
@@ -626,6 +639,12 @@ router.post('/admin/send-email', requireSuperAdmin, async (req, res) => {
   try {
     const { to, domain, subject, body } = req.body || {};
     if (!to || !domain || !subject || !body) return res.status(400).json({ error: 'to, domain, subject, body required' });
+    // Every automated sender honors the suppression list; the owner's manual
+    // outreach — the send an unsubscriber is most likely to complain about —
+    // used to bypass it entirely.
+    if (await isEmailSuppressed(to)) {
+      return res.status(400).json({ error: 'This address unsubscribed from emails — not sending.' });
+    }
     const result = await sendAdminEmail({ to, subject, body });
     // Log the conversation entry + mark contacted in one shot.
     await appendConversation(domain, to, { direction: 'sent', subject, body, replyStatus: 'awaiting' });
@@ -1058,8 +1077,11 @@ router.post('/admin/org-digest', requireSuperAdminOrScheduler, async (req, res) 
   const startedAt = Date.now();
   const budgetMs = sweepBudgetMs();
   const now = new Date();
-  const jan1 = Date.UTC(now.getUTCFullYear(), 0, 1);
-  const week = `${now.getUTCFullYear()}-w${Math.ceil(((now.getTime() - jan1) / 86400000 + 1) / 7)}`;
+  // Epoch-week bucket (Monday-aligned): the old Jan-1-anchored ceil produced
+  // a 1–2 day stub week at year rollover, so the digest could double-send on
+  // consecutive Mondays straddling New Year. Epoch weeks are continuous.
+  const EPOCH_MONDAY_MS = Date.UTC(1970, 0, 5); // first Monday after the epoch
+  const week = `w${Math.floor((now.getTime() - EPOCH_MONDAY_MS) / (7 * 86400000))}`;
   let scanned = 0, sent = 0, skipped = 0, errored = 0;
   try {
     const snap = await getDb().collection('tenants').where('plan', '==', 'pro').get();

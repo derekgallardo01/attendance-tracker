@@ -885,7 +885,8 @@
         // reward): checkout opens Stripe's code box instead of auto-LAUNCH50.
         if (qp.get('promo')) _promoOverride = 'code';
         var planParam = qp.get('plan');
-        if (planParam) {
+        var highlightPlanCard = function () {
+          if (!planParam) return;
           sendPricingEvent('pricing_deeplink', planParam);
           var target = { team: 'plan-card-domain', institution: 'plan-card-institution' }[planParam]
             || (document.getElementById('btn-buy-' + planParam) && document.getElementById('btn-buy-' + planParam).closest('.plan-card') && 'btn:' + planParam);
@@ -898,7 +899,13 @@
             cardEl.style.outlineOffset = '3px';
             setTimeout(function () { cardEl.style.outline = ''; }, 3000);
           }
-        }
+        };
+        // ?plan=institution used to run synchronously — scrolling to a card
+        // that is display:none until the billing-config fetch resolves, i.e.
+        // a silent no-op for every Institution campaign link. Highlight after
+        // the card's visibility is settled instead (below); all other plans
+        // highlight immediately.
+        if (planParam && planParam !== 'institution') highlightPlanCard();
       } catch (e) { /* deep link is best-effort */ }
 
       // ── Institution card: render only when the backend can charge it ──
@@ -910,7 +917,22 @@
             if (card) card.style.display = '';
           }
         })
-        .catch(function () { /* card stays hidden */ });
+        .catch(function () { /* card stays hidden */ })
+        .then(function () {
+          try {
+            var qp2 = new URLSearchParams(location.search);
+            if (qp2.get('plan') === 'institution') {
+              var target = document.getElementById('plan-card-institution');
+              if (target && target.style.display !== 'none') {
+                sendPricingEvent('pricing_deeplink', 'institution');
+                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                target.style.outline = '2px solid var(--accent)';
+                target.style.outlineOffset = '3px';
+                setTimeout(function () { target.style.outline = ''; }, 3000);
+              }
+            }
+          } catch (e) { /* best-effort */ }
+        });
       // Track clicks on FAQ questions to understand buyer friction
       document.querySelectorAll('.faq-item details').forEach(function(d) {
         d.addEventListener('toggle', function() {
@@ -981,33 +1003,42 @@
       btn.disabled = true;
       btn.innerHTML = '<span>Connecting to Stripe…</span>';
 
-      const token = getStoredToken();
-      const endpoint = token ? `${BACKEND_URL}/billing/checkout` : `${BACKEND_URL}/billing/public-checkout`;
-      const headers = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
       // Institution is the annual org tier: sold at list price (no LAUNCH50
       // auto-apply — the empty promo tells the backend to skip it), billed on
       // the domain plan's annual Stripe price.
       const isInstitution = plan === 'institution';
-      try {
-        const res = await fetch(endpoint, {
+      const body = JSON.stringify({
+        plan: isInstitution ? 'team' : (plan || 'lifetime'),
+        // 'team' + 'annual' resolves to the Institution price server-side,
+        // so the $19.99 one-time domain card must NOT send 'annual'.
+        interval: isInstitution ? 'annual' : (plan === 'team' ? 'once' : 'annual'),
+        // Referral redemption: landing with ?promo=code (from the reward
+        // email) sends a truthy non-LAUNCH50 marker, which is what makes
+        // the backend open Stripe's promo-code box (billing.js filters
+        // LAUNCH50 and empty). LAUNCH50 itself is retired — never sent.
+        promo: _promoOverride === 'code' ? 'code' : '',
+        ...(_checkoutEmail ? { email: _checkoutEmail } : {})
+      });
+      const postCheckout = (token) => fetch(
+        token ? `${BACKEND_URL}/billing/checkout` : `${BACKEND_URL}/billing/public-checkout`,
+        {
           method: 'POST',
-          headers: headers,
-          body: JSON.stringify({
-            plan: isInstitution ? 'team' : (plan || 'lifetime'),
-            // 'team' + 'annual' resolves to the Institution price server-side,
-            // so the $19.99 one-time domain card must NOT send 'annual'.
-            interval: isInstitution ? 'annual' : (plan === 'team' ? 'once' : 'annual'),
-            // Referral redemption: landing with ?promo=code (from the reward
-            // email) sends a truthy non-LAUNCH50 marker, which is what makes
-            // the backend open Stripe's promo-code box (billing.js filters
-            // LAUNCH50 and empty). LAUNCH50 itself is retired — never sent.
-            promo: _promoOverride === 'code' ? 'code' : '',
-            ...(_checkoutEmail ? { email: _checkoutEmail } : {})
-          })
-        });
-
+          headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+          body,
+        }
+      );
+      try {
+        const token = getStoredToken();
+        let res = await postCheckout(token);
+        // A stale/expired stored token made checkout PERMANENTLY dead here:
+        // the authed endpoint 401'd, we alerted "Session expired", and the
+        // bad token was never cleared — no purchase possible short of
+        // clearing site data. Now: drop the dead token and fall back to the
+        // public checkout (Stripe collects the email itself).
+        if (token && res.status === 401) {
+          try { localStorage.removeItem('att_session_token'); } catch (e) {}
+          res = await postCheckout(null);
+        }
         const data = await res.json().catch(() => ({}));
         if (res.ok && data.url) {
           window.location.href = data.url;

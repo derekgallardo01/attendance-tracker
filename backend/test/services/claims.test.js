@@ -104,20 +104,25 @@ describe('claimReengagementSlot', () => {
 });
 
 describe('seriesAlertKey (Sweep-1 per-condition identity)', () => {
-  test('keys on type + series + person email + instanceCount', () => {
+  test('keys on type + series + person email + a BUCKET of instanceCount', () => {
     const key = firestore.seriesAlertKey({ type: 'streak', recurringEventId: 'r1', personEmail: 'Alex@Acme.com', instanceCount: 9 });
-    expect(key).toBe('streak:r1:alex@acme.com:9');
+    expect(key).toBe('streak:r1:alex@acme.com:b1');
   });
 
   test('falls back to a name: identity when the person has no email', () => {
     const key = firestore.seriesAlertKey({ type: 'threshold', recurringEventId: 'r2', personName: 'Bob', instanceCount: 12 });
-    expect(key).toBe('threshold:r2:name:bob:12');
+    expect(key).toBe('threshold:r2:name:bob:b1');
   });
 
-  test('a new instance (higher instanceCount) yields a fresh key so the condition can re-alert', () => {
+  test('bucketed: the SAME dropped student does NOT re-alert every new instance, but can after ~8', () => {
+    // Raw instanceCount minted a fresh key per instance → ~8 consecutive
+    // weekly emails about the same dropped student while the streak window
+    // stayed true.
     const a = firestore.seriesAlertKey({ type: 'streak', recurringEventId: 'r1', personEmail: 'a@x.com', instanceCount: 9 });
     const b = firestore.seriesAlertKey({ type: 'streak', recurringEventId: 'r1', personEmail: 'a@x.com', instanceCount: 10 });
-    expect(a).not.toBe(b);
+    expect(a).toBe(b); // same bucket → one alert
+    const c = firestore.seriesAlertKey({ type: 'streak', recurringEventId: 'r1', personEmail: 'a@x.com', instanceCount: 17 });
+    expect(c).not.toBe(a); // next bucket → a still-true condition may re-alert
   });
 });
 

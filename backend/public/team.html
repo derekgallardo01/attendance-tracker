@@ -258,6 +258,14 @@
           const me = await res.json();
           sessionToken = token;
           try { localStorage.setItem('att_session_token', token); } catch (e) {}
+          // Strip the bearer from BOTH URL forms (?token= previously survived
+          // into browser history and the service worker's URL-keyed cache).
+          const cleanParams = new URLSearchParams(window.location.search);
+          if (cleanParams.has('token')) {
+            cleanParams.delete('token');
+            const qs = cleanParams.toString();
+            history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+          }
           if (window.location.hash && window.location.hash.includes('token=')) {
             history.replaceState(null, '', window.location.pathname + window.location.search);
           }
@@ -327,7 +335,7 @@
                 document.getElementById('preview-series').textContent = p.totals.series ?? 0;
                 document.getElementById('preview-people').textContent = p.totals.people ?? 0;
                 document.getElementById('preview-rows').innerHTML = (p.sampleUsers || []).map(u =>
-                  `<tr><td>${(u.displayName || '—').replace(/</g, '&lt;')}</td><td style="color:#8b949e">${(u.email || '').replace(/</g, '&lt;')}</td><td style="color:#8b949e">${u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString() : '—'}</td></tr>`
+                  `<tr><td>${esc(u.displayName || '—')}</td><td style="color:#8b949e">${esc(u.email || '')}</td><td style="color:#8b949e">${u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString() : '—'}</td></tr>`
                 ).join('') + (p.moreUsers ? `<tr><td colspan="3" style="color:#8b949e;font-style:italic">…and ${p.moreUsers} more teachers, visible on Pro</td></tr>` : '');
                 box.style.display = 'block';
               }
@@ -354,6 +362,13 @@
         document.getElementById('dashboard').style.display = 'block';
       } catch (err) {
         console.error('team load failed:', err);
+        // A 5xx/network drop left a completely blank page under the header
+        // (the dashboard is only unhidden after a successful fetch).
+        const errBox = document.getElementById('error-not-admin');
+        if (errBox) {
+          errBox.style.display = 'block';
+          errBox.textContent = 'Couldn\'t load the team dashboard — check your connection and refresh to try again.';
+        }
       } finally {
         document.getElementById('loading').style.display = 'none';
       }

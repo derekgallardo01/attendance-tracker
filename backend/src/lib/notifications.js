@@ -48,7 +48,7 @@ const RESEND_TIMEOUT_MARKER = '__resend_timeout__';
 // site is one-line changed. Throws on hard failure; callers decide whether
 // to swallow (fire-and-forget) or surface (admin email, feedback). Tags get
 // passed through to Resend for per-type delivery analytics.
-async function send({ from, to, subject, text, html, replyTo, tags }) {
+async function send({ from, to, subject, text, html, replyTo, tags, headers }) {
   const resend = getResend();
   if (!resend) throw new Error('Resend not configured — set RESEND_API_KEY');
   const params = {
@@ -59,6 +59,7 @@ async function send({ from, to, subject, text, html, replyTo, tags }) {
     html,
   };
   if (replyTo) params.replyTo = replyTo;
+  if (headers) params.headers = headers;
   // Every internal caller passes a tags array, so the no-tags branch is
   // defensive-only.
   /* istanbul ignore next */
@@ -168,6 +169,17 @@ function verifyUnsubscribeToken(email, token) {
 function unsubscribeUrl(email) {
   const t = unsubscribeToken(email);
   return `${CONFIG.publicApiUrl}/public/unsubscribe?e=${encodeURIComponent(email)}&t=${t}`;
+}
+
+// RFC 8058 one-click unsubscribe headers — the Gmail/Yahoo bulk-sender
+// requirement. The POST endpoint suppresses directly; the GET link in the
+// footer shows a confirmation page (scanner-prefetch-proof).
+function unsubscribeHeaders(email) {
+  const url = unsubscribeUrl(email);
+  return {
+    'List-Unsubscribe': `<${url}>`,
+    'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+  };
 }
 
 // Footer appended to lifecycle emails. Returns matching text + HTML fragments.
@@ -639,6 +651,7 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
     from: makeFrom('Attendance Tracker'),
     to, subject, text, html,
     tags: [{ name: 'type', value: 'export_notification' }],
+    headers: unsubscribeHeaders(to),
   }, 'export notification', { sheetUrl });
 }
 
@@ -696,6 +709,7 @@ async function sendSeriesAlertEmail({ to, displayName, alerts }) {
     from: makeFrom('Attendance Tracker'),
     to, subject, text, html,
     tags: [{ name: 'type', value: 'series_alert' }],
+    headers: unsubscribeHeaders(to),
   }, 'series alert email', { alertCount: alerts.length });
 }
 
@@ -771,6 +785,7 @@ async function sendPersonalEmail({ to, displayName, subject, lines, tags, htmlLi
     html,
     replyTo: ownerEmail(),
     tags,
+    headers: unsubscribeHeaders(to),
   }, `${logLabel} email`, logMeta);
 }
 
@@ -1005,7 +1020,24 @@ function digestBuckets(participants) {
 
 function capBucket(names) {
   const shown = names.slice(0, DIGEST_BUCKET_CAP).join(', ');
-  return names.length > DIGEST_BUCKET_CAP ? `${shown}, +${names.length - DIGEST_BUCKET_CAP} more` : shown;
+  const text = names.length > DIGEST_BUCKET_CAP ? `${shown}, +${names.length - DIGEST_BUCKET_CAP} more` : shown;
+  // Hard length guard: Slack rejects the ENTIRE payload (invalid_blocks) when
+  // a field exceeds its limit — the count cap alone doesn't bound very long
+  // display names, and a rejected digest just silently disappears.
+  return text.length > 1800 ? text.slice(0, 1797) + '…' : text;
+}
+
+// Slack mrkdwn control characters. Meet display names are attacker-controlled
+// by anyone who joins a meeting — an unescaped <https://evil|IT Support>
+// rendered as a live link inside the host org's Slack channel.
+function slackEscape(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// Discord renders markdown (incl. masked [links](url)) inside embed field
+// values — neutralize formatting syntax in user-supplied strings.
+function discordEscape(s) {
+  return String(s == null ? '' : s).replace(/([\\`*_~|[\]()])/g, '\\$1');
 }
 
 // Build the Slack Block Kit payload. Pulled out for testability.
@@ -1016,9 +1048,9 @@ function buildSlackDigestBlocks({ meetingTitle, totalAttended, totalInvited, par
   const { present, left, absent } = digestBuckets(participants);
 
   const fields = [];
-  if (present.length) fields.push({ type: 'mrkdwn', text: `*✅ Present (${present.length})*\n${capBucket(present)}` });
-  if (left.length) fields.push({ type: 'mrkdwn', text: `*🟡 Left early (${left.length})*\n${capBucket(left)}` });
-  if (absent.length) fields.push({ type: 'mrkdwn', text: `*❌ Absent (${absent.length})*\n${capBucket(absent)}` });
+  if (present.length) fields.push({ type: 'mrkdwn', text: `*✅ Present (${present.length})*\n${slackEscape(capBucket(present))}` });
+  if (left.length) fields.push({ type: 'mrkdwn', text: `*🟡 Left early (${left.length})*\n${slackEscape(capBucket(left))}` });
+  if (absent.length) fields.push({ type: 'mrkdwn', text: `*❌ Absent (${absent.length})*\n${slackEscape(capBucket(absent))}` });
 
   const blocks = [
     { type: 'header', text: { type: 'plain_text', text: `📊 ${title}`.slice(0, 150) } },
@@ -1037,7 +1069,10 @@ function buildSlackDigestBlocks({ meetingTitle, totalAttended, totalInvited, par
 // Fallback plain-text body, used by Slack clients that don't render blocks
 // and as the Google Chat notification-preview text.
 function buildSlackFallbackText({ meetingTitle, totalAttended, totalInvited, sheetUrl }) {
-  const title = meetingTitle || 'Google Meet';
+  // The fallback `text` IS rendered as mrkdwn by Slack — escape the
+  // user-controlled title (it also feeds the Chat notification preview,
+  // where the entities are harmless).
+  const title = slackEscape(meetingTitle || 'Google Meet');
   const summary = totalInvited ? `${totalAttended} of ${totalInvited} attended` : `${totalAttended} attended`;
   return `📊 ${title} — ${summary}${sheetUrl ? '\nOpen sheet: ' + sheetUrl : ''}`;
 }
@@ -1078,9 +1113,9 @@ function buildDiscordDigestEmbed({ meetingTitle, totalAttended, totalInvited, pa
   const { present, left, absent } = digestBuckets(participants);
 
   const fields = [];
-  if (present.length) fields.push({ name: `✅ Present (${present.length})`, value: capBucket(present).slice(0, 1024), inline: false });
-  if (left.length) fields.push({ name: `🟡 Left early (${left.length})`, value: capBucket(left).slice(0, 1024), inline: false });
-  if (absent.length) fields.push({ name: `❌ Absent (${absent.length})`, value: capBucket(absent).slice(0, 1024), inline: false });
+  if (present.length) fields.push({ name: `✅ Present (${present.length})`, value: discordEscape(capBucket(present)).slice(0, 1024), inline: false });
+  if (left.length) fields.push({ name: `🟡 Left early (${left.length})`, value: discordEscape(capBucket(left)).slice(0, 1024), inline: false });
+  if (absent.length) fields.push({ name: `❌ Absent (${absent.length})`, value: discordEscape(capBucket(absent)).slice(0, 1024), inline: false });
 
   const embed = { title: `📊 ${title}`.slice(0, 256), description, color: 0x4ade80 };
   if (sheetUrl) embed.url = sheetUrl; // makes the title an "Open sheet" link
@@ -1193,6 +1228,7 @@ async function sendOrgWeeklyDigest({ to, domain, totals, weeklyMeetings }) {
     from: makeFrom('Attendance Tracker'),
     to, subject, text, html,
     tags: [{ name: 'type', value: 'org_weekly_digest' }],
+    headers: unsubscribeHeaders(to),
   }, 'org weekly digest', { domain });
 }
 

@@ -76,7 +76,9 @@ describe('buildDiscordDigestEmbed', () => {
     expect(embed.fields).toHaveLength(3);
     expect(embed.fields[0].name).toBe('✅ Present (1)');
     expect(embed.fields[0].value).toBe('Alice');
-    expect(embed.fields[2].value).toBe('Carol (excused)');
+    // Markdown metacharacters are escaped (names are attacker-controlled);
+    // Discord consumes the backslashes and renders "(excused)" as before.
+    expect(embed.fields[2].value).toBe('Carol \\(excused\\)');
   });
 
   test('caps buckets at 8 names with an overflow marker', () => {

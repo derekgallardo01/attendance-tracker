@@ -261,10 +261,42 @@ function unsubscribePage(title, message) {
     + `</div></body></html>`;
 }
 
+// GET renders a CONFIRMATION page instead of unsubscribing directly: link
+// scanners (Outlook SafeLinks, Proofpoint) prefetch every GET in an email,
+// which used to silently unsubscribe recipients who never clicked — they then
+// stopped getting alerts with no signal. The button POSTs; scanners don't.
 router.get('/public/unsubscribe', async (req, res) => {
   res.set('Cache-Control', 'no-store');
   const email = typeof req.query.e === 'string' ? req.query.e : '';
   const token = typeof req.query.t === 'string' ? req.query.t : '';
+  if (!email || !verifyUnsubscribeToken(email, token)) {
+    return res.status(400).type('html').send(
+      unsubscribePage('Invalid link', 'This unsubscribe link is invalid or has expired. If you keep getting emails, reply to any of them and I\'ll remove you.')
+    );
+  }
+  res.type('html').send(
+    `<!doctype html><html lang="en"><head><meta charset="utf-8">`
+    + `<meta name="viewport" content="width=device-width,initial-scale=1"><title>Unsubscribe</title>`
+    + `<style>body{font-family:sans-serif;background:#0d1117;color:#e6edf3;display:flex;`
+    + `min-height:100vh;margin:0;align-items:center;justify-content:center;text-align:center;padding:24px}`
+    + `.card{max-width:420px}h1{font-size:20px;margin:0 0 12px}p{color:#8a8f98;line-height:1.5}`
+    + `button{background:#f85149;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:15px;cursor:pointer}`
+    + `a{color:#1f6feb}</style></head><body><div class="card"><h1>Unsubscribe from emails?</h1>`
+    + `<p>${escapeHtml(email)} will stop receiving re-engagement and alert emails. You can still use Attendance Tracker normally.</p>`
+    + `<form method="POST" action="unsubscribe?e=${encodeURIComponent(email)}&amp;t=${encodeURIComponent(token)}">`
+    + `<button type="submit">Unsubscribe</button></form>`
+    + `<p><a href="https://attendancetracker.dev/">Never mind — back to Attendance Tracker</a></p>`
+    + `</div></body></html>`
+  );
+});
+
+// POST performs the actual suppression: reached from the confirmation page's
+// button AND from mail clients' native one-click unsubscribe (the RFC 8058
+// List-Unsubscribe-Post header points here).
+router.post('/public/unsubscribe', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const email = typeof (req.body?.e ?? req.query.e) === 'string' ? (req.body?.e ?? req.query.e) : '';
+  const token = typeof (req.body?.t ?? req.query.t) === 'string' ? (req.body?.t ?? req.query.t) : '';
   if (!email || !verifyUnsubscribeToken(email, token)) {
     return res.status(400).type('html').send(
       unsubscribePage('Invalid link', 'This unsubscribe link is invalid or has expired. If you keep getting emails, reply to any of them and I\'ll remove you.')

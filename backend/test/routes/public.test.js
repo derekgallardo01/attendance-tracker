@@ -286,18 +286,41 @@ describe('GET /api/public/verify/:code', () => {
 });
 
 describe('GET /api/public/unsubscribe', () => {
-  test('valid token suppresses the email and returns a confirmation page', async () => {
+  test('GET with a valid token shows a CONFIRMATION page and does NOT suppress (scanner-prefetch-proof)', async () => {
+    // Outlook SafeLinks / Proofpoint prefetch every GET in an email — the old
+    // direct-suppress GET silently unsubscribed people who never clicked.
     notifications.verifyUnsubscribeToken.mockReturnValue(true);
     firestore.suppressEmail.mockResolvedValue(true);
     const res = await request(app)
       .get('/api/public/unsubscribe')
       .query({ e: 'user@acme.com', t: 'goodtoken' });
     expect(res.status).toBe(200);
+    expect(firestore.suppressEmail).not.toHaveBeenCalled();
+    expect(res.text).toContain('Unsubscribe from emails?');
+    expect(res.text).toContain('method="POST"');
+    expect(res.headers['cache-control']).toContain('no-store');
+  });
+
+  test('POST with a valid token suppresses (the confirmation button + RFC 8058 one-click)', async () => {
+    notifications.verifyUnsubscribeToken.mockReturnValue(true);
+    firestore.suppressEmail.mockResolvedValue(true);
+    const res = await request(app)
+      .post('/api/public/unsubscribe')
+      .query({ e: 'user@acme.com', t: 'goodtoken' });
+    expect(res.status).toBe(200);
     expect(firestore.suppressEmail).toHaveBeenCalledWith(
       'user@acme.com', expect.objectContaining({ source: 'one_click_unsubscribe' })
     );
     expect(res.text).toContain('unsubscribed');
-    expect(res.headers['cache-control']).toContain('no-store');
+  });
+
+  test('POST with an invalid token returns 400 and does not suppress', async () => {
+    notifications.verifyUnsubscribeToken.mockReturnValue(false);
+    const res = await request(app)
+      .post('/api/public/unsubscribe')
+      .query({ e: 'user@acme.com', t: 'bad' });
+    expect(res.status).toBe(400);
+    expect(firestore.suppressEmail).not.toHaveBeenCalled();
   });
 
   test('invalid token returns 400 and does not suppress', async () => {
@@ -374,10 +397,10 @@ describe('public — error paths + validation branches', () => {
     expect(res.status).toBe(400);
   });
 
-  test('unsubscribe suppresses on a valid token', async () => {
+  test('unsubscribe suppresses on a valid POST', async () => {
     notifications.verifyUnsubscribeToken.mockReturnValue(true);
     firestore.suppressEmail.mockResolvedValue(true);
-    const res = await request(app).get('/api/public/unsubscribe?e=a@x.com&t=good');
+    const res = await request(app).post('/api/public/unsubscribe?e=a@x.com&t=good');
     expect(res.status).toBe(200);
     expect(firestore.suppressEmail).toHaveBeenCalled();
   });

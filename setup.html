@@ -157,6 +157,17 @@
 
       try {
         const domain = AttSetup.parseDomain(email);
+        // parseDomain returns '' for a malformed address — bail BEFORE burning
+        // one of the endpoint's 10-per-10-min attempts on a guaranteed 400
+        // (whose raw developer-string error used to render in the banner).
+        if (!domain) {
+          result.className = 'result error';
+          result.textContent = 'Enter a full work email address (like admin@yourschool.edu).';
+          result.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Verify Setup';
+          return;
+        }
         const res = await fetch(`${BACKEND_URL}/admin/verify-delegation`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
