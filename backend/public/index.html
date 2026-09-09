@@ -2503,6 +2503,18 @@ function signInWithGoogle(extraScopes) {
     toast('Google Sign-In not loaded yet');
     return;
   }
+  // Scope-recovery attempt (signed in but some scopes were declined earlier).
+  // Google's consent screen remembers the earlier choice: the declined
+  // checkbox comes back UNTICKED and nothing on that screen marks it as the
+  // one that matters — users click Continue and nothing changes (observed
+  // 0-for-8 recovery in production). Say what to do BEFORE the popup, and
+  // snapshot what's missing so handleAuthCode can tell whether this attempt
+  // actually fixed it.
+  const missingNow = (state.missingScopes || []).map(m => m.feature);
+  if (state.signedIn && missingNow.length) {
+    state._reconsentMissing = missingNow;
+    toast('In the Google window, tick EVERY checkbox — any you skipped before will start unticked.', 8000);
+  }
   const client = google.accounts.oauth2.initCodeClient({
     client_id: GOOGLE_CLIENT_ID,
     scope: extraScopes ? `${OAUTH_SCOPES} ${extraScopes}` : OAUTH_SCOPES,
@@ -2544,10 +2556,28 @@ async function handleAuthCode(response) {
     state.signedIn = true;
     state.grantedScopes = data.grantedScopes || [];
     state.missingScopes = data.missingScopes || [];
+    // Close the silent re-consent loop: the code exchange succeeds even when a
+    // previously-declined checkbox was left unticked, so without an explicit
+    // check the user gets a success toast and the same yellow banner — and
+    // reads it as "tried that, still broken". Compare against the snapshot
+    // taken when the recovery attempt started.
+    let reconsentOutcome = null;
+    if (state._reconsentMissing) {
+      const stillMissing = (state.missingScopes || []).map(m => m.feature);
+      reconsentOutcome = state._reconsentMissing.some(f => stillMissing.includes(f)) ? 'unfixed' : 'fixed';
+      state._scopeRetryFailed = reconsentOutcome === 'unfixed';
+      state._reconsentMissing = null;
+    }
     updateAuthUI();
     applyScopeRestrictions();
     saveState();
-    toast(t('toast.signedInAs','Signed in as') + ' ' + data.email);
+    if (reconsentOutcome === 'unfixed') {
+      toast('Signed in, but a permission checkbox was left unticked in the Google window — tap "Grant access" and tick every box.', 10000);
+    } else if (reconsentOutcome === 'fixed') {
+      toast('Permission granted — everything is unlocked now.', 6000);
+    } else {
+      toast(t('toast.signedInAs','Signed in as') + ' ' + data.email);
+    }
     // Attach user context to Sentry
     if (window.Sentry) Sentry.setUser({ email: data.email });
 
@@ -2759,6 +2789,7 @@ function applyScopeRestrictions() {
   if (missing.length === 0) {
     banner.style.display = 'none';
     document.getElementById('btn-sheets').title = '';
+    state._scopeRetryFailed = false; // recovered — drop the escalated tip
     return;
   }
 
@@ -2768,7 +2799,11 @@ function applyScopeRestrictions() {
     meet: 'read meeting participants',
   };
   const unavailable = missing.map(m => featureNames[m.feature] || m.feature).join(', ');
-  detail.textContent = `Currently unavailable: ${unavailable}.`;
+  // After a failed recovery attempt, escalate from the passive list to the
+  // actual instruction — the Google popup keeps declined checkboxes unticked
+  // and users won't tick a box nothing told them about.
+  detail.textContent = `Currently unavailable: ${unavailable}.`
+    + (state._scopeRetryFailed ? ' Last sign-in left a checkbox unticked in the Google window — it starts unticked and must be ticked by hand.' : '');
   banner.style.display = 'block';
 
   // Lock the Sheets button when drive.file wasn't granted
