@@ -5218,7 +5218,7 @@ function closeReviewAsk() {
 // Shared PDF fetch+download. Reuses the stashed export payload so the artifact
 // matches the Sheet the user just saved. Returns true on success. Free users who
 // request a Pro artifact (certificates) get a single gentle 402 toast, no modal.
-async function _downloadPdf({ type, filenameBase, event }) {
+async function _downloadPdf({ type, filenameBase, event, options }) {
   const ex = state._lastExport;
   if (!ex || !ex.participants || !ex.participants.length) {
     toast(t('toast.pdfExportFirst', 'Export first, then download the PDF.'));
@@ -5226,6 +5226,9 @@ async function _downloadPdf({ type, filenameBase, event }) {
   }
   try {
     toast(t('toast.pdfGenerating', 'Generating PDF…'));
+    // Certificate/branding options the backend has ALWAYS accepted but no
+    // frontend ever sent — Pro certificates were identical to free output.
+    const o = options || {};
     const res = await fetch(`${state.backendUrl}/export/pdf`, {
       method: 'POST',
       headers: authHeaders(),
@@ -5238,6 +5241,12 @@ async function _downloadPdf({ type, filenameBase, event }) {
         eventEnd: ex.eventEnd,
         timezone: ex.timezone,
         participants: ex.participants,
+        ...(o.issuer ? { issuer: o.issuer } : {}),
+        ...(o.courseCode ? { courseCode: o.courseCode } : {}),
+        ...(o.creditHours ? { creditHours: o.creditHours } : {}),
+        // brand drives the Pro footer on BOTH artifacts; server-side gating
+        // means a free caller just gets the default footer — no hard block.
+        ...(o.brandName ? { brand: { name: o.brandName } } : {}),
       }),
     });
     if (res.status === 402) {
@@ -5280,14 +5289,71 @@ async function _downloadPdf({ type, filenameBase, event }) {
   }
 }
 
-// Free, shareable attendance report (org branding applied server-side for Pro).
-function downloadPdfReport() {
-  return _downloadPdf({ type: 'report', filenameBase: 'attendance', event: 'pdf_report_downloaded' });
+// Saved certificate options — remembered per browser so a weekly class only
+// fills the form once. Panel storage is partitioned; that's fine here.
+const CERT_OPTIONS_KEY = 'att_cert_options';
+function loadCertOptions() {
+  try { return JSON.parse(localStorage.getItem(CERT_OPTIONS_KEY) || '{}') || {}; } catch { return {}; }
+}
+function saveCertOptions(opts) {
+  try { localStorage.setItem(CERT_OPTIONS_KEY, JSON.stringify(opts)); } catch { /* private mode */ }
 }
 
-// Per-attendee certificates (Pro) — the credit-granting artifact.
+// Free, shareable attendance report. The saved org name rides along as the
+// Pro brand (server-gated: free callers just keep the default footer).
+function downloadPdfReport() {
+  const saved = loadCertOptions();
+  return _downloadPdf({
+    type: 'report', filenameBase: 'attendance', event: 'pdf_report_downloaded',
+    options: { brandName: saved.issuer || '' },
+  });
+}
+
+// Per-attendee certificates (Pro) — the credit-granting artifact. Opens a
+// small options form (issuer/course/credit) instead of firing blind: the
+// backend accepted these fields all along, but with nothing sending them
+// every Pro certificate came out generic.
 function downloadCertificates() {
-  return _downloadPdf({ type: 'certificates', filenameBase: 'certificates', event: 'certificates_downloaded' });
+  const modal = document.getElementById('cert-modal');
+  if (!modal) {
+    return _downloadPdf({ type: 'certificates', filenameBase: 'certificates', event: 'certificates_downloaded' });
+  }
+  const saved = loadCertOptions();
+  const issuerEl = document.getElementById('cert-issuer');
+  const courseEl = document.getElementById('cert-course');
+  const creditEl = document.getElementById('cert-credit');
+  if (issuerEl) issuerEl.value = saved.issuer || state._selfDisplayName || '';
+  if (courseEl) courseEl.value = saved.courseCode || '';
+  if (creditEl) creditEl.value = saved.creditHours || '';
+  const errEl = document.getElementById('cert-modal-error');
+  if (errEl) errEl.style.display = 'none';
+  modal.style.display = 'flex';
+}
+
+function closeCertModal() {
+  const modal = document.getElementById('cert-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function submitCertModal(btn) {
+  const issuer = (document.getElementById('cert-issuer')?.value || '').trim().slice(0, 80);
+  const courseCode = (document.getElementById('cert-course')?.value || '').trim().slice(0, 40);
+  const creditRaw = (document.getElementById('cert-credit')?.value || '').trim();
+  const creditHours = creditRaw === '' ? null : Number(creditRaw);
+  const errEl = document.getElementById('cert-modal-error');
+  // Modal overlays cover the bottom toast — validation must render IN-modal.
+  if (creditRaw !== '' && (!Number.isFinite(creditHours) || creditHours <= 0 || creditHours > 1000)) {
+    if (errEl) { errEl.textContent = t('cert.badCredit', 'Credit hours must be a number greater than 0 (or leave it blank to use actual attended time).'); errEl.style.display = 'block'; }
+    return;
+  }
+  saveCertOptions({ issuer, courseCode, creditHours: creditRaw === '' ? '' : creditHours });
+  if (btn) btn.disabled = true;
+  closeCertModal();
+  await _downloadPdf({
+    type: 'certificates', filenameBase: 'certificates', event: 'certificates_downloaded',
+    options: { issuer, courseCode, ...(creditHours ? { creditHours } : {}), brandName: issuer },
+  });
+  if (btn) btn.disabled = false;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -5430,6 +5496,7 @@ document.addEventListener('keydown', (e) => {
     ['upgrade-modal', typeof closeUpgradeModal === 'function' ? closeUpgradeModal : null],
     ['roster-modal', typeof closeRosterModal === 'function' ? closeRosterModal : null],
     ['survey-modal', typeof closeSurveyModal === 'function' ? closeSurveyModal : null],
+    ['cert-modal', typeof closeCertModal === 'function' ? closeCertModal : null],
     ['settings-modal', closeSettingsModal],
     ['celebrate-modal', typeof closeCelebrateModal === 'function' ? closeCelebrateModal : null],
     ['source-modal', typeof closeSourceModal === 'function' ? closeSourceModal : null],
@@ -6743,6 +6810,25 @@ window.addEventListener('DOMContentLoaded', () => {
         <button onclick="submitSurvey('Other')" class="btn btn-secondary" style="text-align:left;justify-content:flex-start" data-i18n="common.other">Other</button>
       </div>
       <button onclick="closeSurveyModal()" style="background:transparent;border:none;color:#8b949e;font-size:.8rem;cursor:pointer" data-i18n="common.skip">Skip</button>
+    </div>
+  </div>
+
+  <!-- ── Certificate options (Pro) — issuer/course/credit; remembered ── -->
+  <div id="cert-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:900;align-items:center;justify-content:center;padding:20px">
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:14px;padding:24px;max-width:400px;width:100%">
+      <div style="font-size:1.05rem;font-weight:700;margin-bottom:4px" data-i18n="cert.title">Certificate details</div>
+      <div style="color:#8b949e;font-size:.8rem;margin-bottom:14px" data-i18n="cert.subtitle">Printed on every attendee's certificate. Saved for next time.</div>
+      <label style="display:block;font-size:.75rem;color:#8b949e;margin-bottom:4px" data-i18n="cert.issuer">Issuer / organization name</label>
+      <input id="cert-issuer" type="text" maxlength="80" placeholder="e.g. Central Bicol State University" style="width:100%;box-sizing:border-box;background:#0d1117;border:1px solid #30363d;color:var(--text);border-radius:8px;padding:8px 10px;font-size:.85rem;margin-bottom:12px" />
+      <label style="display:block;font-size:.75rem;color:#8b949e;margin-bottom:4px" data-i18n="cert.course">Course / reference code (optional)</label>
+      <input id="cert-course" type="text" maxlength="40" placeholder="e.g. BIO-101" style="width:100%;box-sizing:border-box;background:#0d1117;border:1px solid #30363d;color:var(--text);border-radius:8px;padding:8px 10px;font-size:.85rem;margin-bottom:12px" />
+      <label style="display:block;font-size:.75rem;color:#8b949e;margin-bottom:4px" data-i18n="cert.credit">Credit hours (optional — blank uses actual attended time)</label>
+      <input id="cert-credit" type="number" min="0" step="0.25" placeholder="e.g. 1.5" style="width:100%;box-sizing:border-box;background:#0d1117;border:1px solid #30363d;color:var(--text);border-radius:8px;padding:8px 10px;font-size:.85rem;margin-bottom:10px" />
+      <div id="cert-modal-error" style="display:none;color:#f85149;font-size:.75rem;margin-bottom:10px"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;align-items:center">
+        <button onclick="closeCertModal()" style="background:transparent;border:none;color:#8b949e;font-size:.8rem;cursor:pointer" data-i18n="common.cancel">Cancel</button>
+        <button onclick="submitCertModal(this)" class="btn btn-primary" style="padding:8px 16px;font-size:.85rem" data-i18n="cert.generate">Generate certificates</button>
+      </div>
     </div>
   </div>
 

@@ -54,7 +54,14 @@ router.post('/export/pdf', requireAuth, async (req, res) => {
     }
 
     const pro = await planIsPro(req.user.domain, req.user.email);
-    const brand = pro && b.brand && typeof b.brand === 'object' ? b.brand : null;
+    // Length-cap the free-text options: they're drawn into a fixed PDF layout
+    // (an uncapped issuer/brand string overruns the certificate frame).
+    const capStr = (v, n) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, n) : null);
+    const brand = pro && b.brand && typeof b.brand === 'object' && capStr(b.brand.name, 80)
+      ? { name: capStr(b.brand.name, 80) }
+      : null;
+    const issuer = capStr(b.issuer, 80);
+    const courseCode = capStr(b.courseCode, 40);
 
     let pdf;
     let filename;
@@ -65,7 +72,7 @@ router.post('/export/pdf', requireAuth, async (req, res) => {
       }
       const models = buildCertificateModels({
         meeting, attendees,
-        options: { brand, creditHours: b.creditHours, courseCode: b.courseCode, issuer: b.issuer },
+        options: { brand, creditHours: b.creditHours, courseCode, issuer },
       });
       if (!models.length) return res.status(400).json({ error: 'No present attendees to certify.' });
       pdf = await renderCertificatesPdf(models);

@@ -136,4 +136,31 @@ describe('certificates (Pro-gated)', () => {
       .send({ type: 'certificates', meetingTitle: 'CLE', participants: [{ displayName: 'Al', present: false, status: 'Absent' }] });
     expect(res.status).toBe(400);
   });
+
+  test('issuer/courseCode/creditHours flow into the certificate records, LENGTH-CAPPED', async () => {
+    // These fields were accepted by the backend forever but no frontend sent
+    // them — this locks the now-wired contract (and the layout-overrun caps).
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'pro' });
+    const res = await request(app).post('/api/export/pdf').set(H())
+      .send({
+        type: 'certificates', meetingTitle: 'CLE', participants: PARTS,
+        issuer: '  Central Bicol State University ' + 'x'.repeat(200),
+        courseCode: 'BIO-101' + 'y'.repeat(100),
+        creditHours: 1.5,
+      })
+      .buffer(true).parse(binaryParser);
+    expect(res.status).toBe(200);
+    const rec = firestore.saveVerifications.mock.calls[0][0][0];
+    expect(rec.issuer.startsWith('Central Bicol State University')).toBe(true);
+    expect(rec.issuer.length).toBeLessThanOrEqual(80);   // capped
+    expect(rec.detailLabel).toContain('1.5');            // fixed credit label wins
+  });
+
+  test('free user report: brand is stripped (default footer), no hard block', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    const res = await request(app).post('/api/export/pdf').set(H())
+      .send({ type: 'report', meetingTitle: 'CLE', participants: PARTS, brand: { name: 'Fancy Org' } })
+      .buffer(true).parse(binaryParser);
+    expect(res.status).toBe(200); // gentle: report succeeds, brand just ignored
+  });
 });
