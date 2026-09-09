@@ -1184,7 +1184,7 @@
         <!-- Demo video (privacy-enhanced youtube-nocookie embed) -->
         <div style="margin-bottom:28px">
           <div style="position:relative;width:100%;max-width:640px;margin:0 auto;aspect-ratio:16/9;border-radius:14px;overflow:hidden;border:1px solid #30363d;box-shadow:0 12px 40px rgba(0,0,0,.4)">
-            <iframe src="https://www.youtube-nocookie.com/embed/WqX-LxjjY04" title="Attendance Tracker — see it in action" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe>
+            <iframe src="https://www.youtube-nocookie.com/embed/WqX-LxjjY04" data-i18n-title="tip.seeItInAction" title="Attendance Tracker — see it in action" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe>
           </div>
         </div>
 
@@ -1323,17 +1323,17 @@
       <div id="meeting-type" style="font-size:.65rem;color:#9ca3af;margin-top:1px;display:none"></div>
     </div>
     <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
-      <button id="btn-header-pro" type="button" onclick="showUpgradeModal('header')" title="Upgrade to Pro"
+      <button id="btn-header-pro" type="button" onclick="showUpgradeModal('header')" data-i18n-title="upgrade.title" title="Upgrade to Pro"
         style="display:none;background:rgba(253,214,99,.12);border:1px solid rgba(253,214,99,.32);color:#fdd663;border-radius:12px;padding:3px 9px;font-size:.72rem;font-weight:600;cursor:pointer;line-height:1.3;white-space:nowrap"
-        aria-label="Upgrade to Pro">
+        data-i18n-aria="upgrade.title" aria-label="Upgrade to Pro">
         <!-- price painted by paintPrices() from js/pricing.js -->
         Pro: <span class="price-educator">$4.99</span>/yr
       </button>
       <!-- Settings gear icon — only shown when signed in (updateAuthUI sets
            display). Opens the Slack webhook config modal. -->
-      <button id="btn-settings" type="button" onclick="openSettingsModal()" title="Settings"
+      <button id="btn-settings" type="button" onclick="openSettingsModal()" data-i18n-title="nav.settings" title="Settings"
         style="display:none;background:transparent;border:none;color:#8b949e;cursor:pointer;padding:6px"
-        aria-label="Settings">
+        data-i18n-aria="nav.settings" aria-label="Settings">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="3"/>
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
@@ -1354,8 +1354,8 @@
 
   <!-- ── Missing-scope banner (shown when user unchecked permissions during consent) ── -->
   <div id="scope-banner" style="display:none;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.4);border-radius:8px;padding:10px 12px;margin:8px 16px;font-size:.8rem;color:#fde68a">
-    <div style="margin-bottom:8px"><strong>Some features need additional permission.</strong> <span id="scope-banner-detail"></span></div>
-    <button onclick="signInWithGoogle()" style="background:#fbbf24;color:#000;border:none;border-radius:6px;padding:6px 12px;font-weight:600;font-size:.75rem;cursor:pointer">Grant access</button>
+    <div style="margin-bottom:8px"><strong data-i18n="scope.bannerTitle">Some features need additional permission.</strong> <span id="scope-banner-detail"></span></div>
+    <button onclick="signInWithGoogle()" style="background:#fbbf24;color:#000;border:none;border-radius:6px;padding:6px 12px;font-weight:600;font-size:.75rem;cursor:pointer" data-i18n="scope.grantAccess">Grant access</button>
   </div>
 
   <!-- ── Export CTA (real meeting tracked but not yet saved to Sheets) ── -->
@@ -1373,7 +1373,7 @@
   <div id="auto-export-nudge" style="display:none;background:rgba(253,214,99,.08);border:1px solid rgba(253,214,99,.28);border-radius:8px;padding:10px 13px;margin:8px 16px">
     <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
       <div style="font-size:.78rem;color:#fdd663;line-height:1.45" data-i18n="billing.autoNudge">Your attendance was captured ✓ — auto-saving to Drive when the call ends is a Pro feature. You can still export manually for free.</div>
-      <button type="button" onclick="dismissAutoExportNudge()" aria-label="Dismiss" style="flex:0 0 auto;background:none;border:none;color:#9aa0a6;cursor:pointer;font-size:14px;line-height:1;padding:2px">&times;</button>
+      <button type="button" onclick="dismissAutoExportNudge()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="flex:0 0 auto;background:none;border:none;color:#9aa0a6;cursor:pointer;font-size:14px;line-height:1;padding:2px">&times;</button>
     </div>
     <button type="button" id="auto-export-nudge-btn" onclick="onAutoExportNudgeClick()" style="flex:0 0 auto;margin-top:8px;background:transparent;border:1px solid rgba(253,214,99,.4);color:#fdd663;border-radius:6px;padding:6px 14px;font-weight:600;font-size:.76rem;cursor:pointer" data-i18n="billing.autoNudgeCta">See Pro plans</button>
   </div>
@@ -1400,7 +1400,7 @@
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       <span id="btn-sheets-label" data-i18n="btn.sheet">Sheet</span>
     </button>
-    <button class="btn-secondary" id="btn-csv" onclick="downloadAttendanceCsv()" disabled title="Download CSV report directly">
+    <button class="btn-secondary" id="btn-csv" onclick="downloadAttendanceCsv()" disabled data-i18n-title="tip.downloadCsv" title="Download CSV report directly">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       <span id="btn-csv-label">CSV</span>
     </button>
@@ -1422,28 +1422,28 @@
     <a href="#" onclick="downloadAttendanceCsv(); return false;" data-i18n="bar.downloadCsv" style="color:var(--green); text-decoration:none; margin-left:14px;">Download CSV</a>
     <a href="#" onclick="downloadPdfReport(); return false;" data-i18n="bar.pdfReport" style="color:var(--green); text-decoration:none; margin-left:14px;">PDF report</a>
     <a href="#" onclick="downloadCertificates(); return false;" data-i18n="bar.certificates" style="color:var(--green); text-decoration:none; margin-left:14px;">Certificates</a>
-    <a href="#" onclick="downloadLmsCsv('moodle'); return false;" title="Gradebook CSV for Moodle import" style="color:var(--green); text-decoration:none; margin-left:14px;">Moodle</a>
-    <a href="#" onclick="downloadLmsCsv('canvas'); return false;" title="Gradebook CSV for Canvas import" style="color:var(--green); text-decoration:none; margin-left:14px;">Canvas</a>
+    <a href="#" onclick="downloadLmsCsv('moodle'); return false;" data-i18n-title="tip.moodleCsv" title="Gradebook CSV for Moodle import" style="color:var(--green); text-decoration:none; margin-left:14px;">Moodle</a>
+    <a href="#" onclick="downloadLmsCsv('canvas'); return false;" data-i18n-title="tip.canvasCsv" title="Gradebook CSV for Canvas import" style="color:var(--green); text-decoration:none; margin-left:14px;">Canvas</a>
   </div>
   <!-- One-off → recurring tip: only for a NON-recurring meeting whose title was
        exported before (a real repeat). Once ever, dismissible. -->
   <div id="recurring-tip" style="display:none; align-items:flex-start; gap:8px; padding:8px 16px; font-size:11px; color:#9ca3af; background:rgba(74,222,128,.06); border-top:1px solid #30363d">
-    <span style="line-height:1.45">Tracking this one regularly? Put it on a <strong style="color:#c9d1d9">recurring</strong> Google Calendar invite — then you'll see per-person attendance trends across every session.</span>
-    <button type="button" onclick="closeRecurringTip()" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
+    <span style="line-height:1.45" data-i18n="tip.recurring">Tracking this one regularly? Put it on a recurring Google Calendar invite — then you'll see per-person attendance trends across every session.</span>
+    <button type="button" onclick="closeRecurringTip()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
   </div>
   <!-- Review ask at the value moment: shown once ever, after the user's 2nd
          MANUAL export (they've felt the payoff more than once = a genuinely happy
          user, not a one-off tester). Dismissible; never stacks with the recurring
          tip. Respects the at-most-one-lifetime-popup, gentle-upsell rule. -->
   <div id="review-ask" style="display:none; align-items:flex-start; gap:8px; padding:8px 16px; font-size:11px; color:#9ca3af; background:rgba(96,165,250,.06); border-top:1px solid #30363d">
-    <span style="line-height:1.45">Getting value from this? A quick rating helps other hosts find it — <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=inapp_review" target="_blank" rel="noopener" onclick="logUserEvent('review_ask_clicked', {})" style="color:#60a5fa;text-decoration:none;font-weight:600">leave a review</a> (takes 5 seconds).</span>
-    <button type="button" onclick="closeReviewAsk()" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
+    <span style="line-height:1.45"><span data-i18n="review.ask1">Getting value from this? A quick rating helps other hosts find it —</span> <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=inapp_review" target="_blank" rel="noopener" onclick="logUserEvent('review_ask_clicked', {})" style="color:#60a5fa;text-decoration:none;font-weight:600" data-i18n="review.leaveReview">leave a review</a> <span data-i18n="review.ask2">(takes 5 seconds).</span></span>
+    <button type="button" onclick="closeReviewAsk()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
   </div>
 
   <!-- Team admin link — only shown to users where /oauth/me reports
        teamAdmin:true (renderTeamAdminLink() toggles display). Stays hidden
        for personal-gmail users and non-admins. -->
-  <a id="team-admin-link" href="https://attendancetracker.dev/team.html" onclick="openTeamPage(event)" target="_blank" style="display:none;padding:6px 16px;font-size:11px;color:#f59e0b;text-decoration:none">Open team admin dashboard →</a>
+  <a id="team-admin-link" href="https://attendancetracker.dev/team.html" onclick="openTeamPage(event)" target="_blank" style="display:none;padding:6px 16px;font-size:11px;color:#f59e0b;text-decoration:none" data-i18n="footer.teamAdmin">Open team admin dashboard →</a>
 
   <!-- ── Summary ── -->
   <div class="summary-row">
@@ -1470,7 +1470,7 @@
     <div class="search-input-wrap">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       <input class="search-input" id="search-input" type="text" placeholder="Search by name or email…" data-i18n-placeholder="search.placeholder" oninput="handleSearch()" />
-      <button class="search-clear" id="search-clear" onclick="clearSearch()" aria-label="Clear search">×</button>
+      <button class="search-clear" id="search-clear" onclick="clearSearch()" data-i18n-aria="tip.clearSearch" aria-label="Clear search">×</button>
     </div>
     <div class="search-stats" id="search-stats"></div>
   </div>
@@ -1493,7 +1493,7 @@
     </select>
     <!-- Attestation export: appears once anyone has checked in. The
          COMPLIANCE artifact on top of free check-in capture (Pro). -->
-    <button type="button" id="btn-attestation-csv" onclick="downloadAttestationCsv(this)" title="Download the verified check-in list (Pro)"
+    <button type="button" id="btn-attestation-csv" onclick="downloadAttestationCsv(this)" data-i18n-title="tip.downloadCheckins" title="Download the verified check-in list (Pro)"
       style="display:none;flex:0 0 auto;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.35);color:#4ade80;border-radius:6px;padding:5px 10px;font-size:.7rem;cursor:pointer;white-space:nowrap">✓ <span data-i18n="checkin.attestCsv">Check-in CSV</span></button>
   </div>
 
@@ -1532,9 +1532,9 @@
       <div style="margin-top:20px;text-align:left;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:.74rem;color:#9ca3af;line-height:1.5;max-width:280px;box-sizing:border-box">
         <div style="font-weight:600;color:#e6edf3;margin-bottom:6px" data-i18n="empty.qsTitle">Quick Start:</div>
         <div style="display:flex;flex-direction:column;gap:6px">
-          <div><strong style="color:#4ade80">1. Tap Start:</strong> Tracks attendees and timestamps in the background.</div>
-          <div><strong style="color:#58a6ff">2. Class Rosters:</strong> Switch to <span style="color:#4ade80;cursor:pointer;text-decoration:underline" onclick="switchTab('roster')">Class Roster</span> to track enrolled students vs absences.</div>
-          <div><strong style="color:#facc15">3. Export:</strong> Save directly to Google Sheets or download an instant CSV.</div>
+          <div><strong style="color:#4ade80" data-i18n="empty.qs1Label">1. Tap Start:</strong> <span data-i18n="empty.qs1">Tracks attendees and timestamps in the background.</span></div>
+          <div><strong style="color:#58a6ff" data-i18n="empty.qs2Label">2. Class Rosters:</strong> <span data-i18n="empty.qs2a">Switch to</span> <span style="color:#4ade80;cursor:pointer;text-decoration:underline" onclick="switchTab('roster')" data-i18n="empty.qs2Link">Class Roster</span> <span data-i18n="empty.qs2b">to track enrolled students vs absences.</span></div>
+          <div><strong style="color:#facc15" data-i18n="empty.qs3Label">3. Export:</strong> <span data-i18n="empty.qs3">Save directly to Google Sheets or download an instant CSV.</span></div>
         </div>
       </div>
     </div>
@@ -1626,12 +1626,12 @@
 
   <!-- ── Footer ── -->
   <div style="padding:12px 16px;text-align:center;font-size:.65rem;color:#6e7681;margin-top:auto">
-    <a id="history-link" href="https://attendancetracker.dev/history.html" onclick="try{logUserEvent('history_page_opened',{})}catch(e){};openHistoryPage(event)" target="_blank" style="color:#9ec8ff">All meetings</a>
-    · <a href="#" onclick="openSettingsModal();return false" style="color:#9ec8ff">Settings</a>
-    · <a href="https://attendancetracker.dev/pricing.html" target="_blank" onclick="try{logUserEvent('pricing_page_opened',{})}catch(e){}" style="color:#6e7681">Pricing</a>
-    · <a href="https://attendancetracker.dev/privacy.html" target="_blank" style="color:#6e7681">Privacy</a>
-    · <a href="https://attendancetracker.dev/terms.html" target="_blank" style="color:#6e7681">Terms</a>
-    · <a href="https://attendancetracker.dev/refunds.html" target="_blank" style="color:#6e7681">Refunds</a>
+    <a id="history-link" href="https://attendancetracker.dev/history.html" onclick="try{logUserEvent('history_page_opened',{})}catch(e){};openHistoryPage(event)" target="_blank" style="color:#9ec8ff" data-i18n="footer.allMeetings">All meetings</a>
+    · <a href="#" onclick="openSettingsModal();return false" style="color:#9ec8ff" data-i18n="nav.settings">Settings</a>
+    · <a href="https://attendancetracker.dev/pricing.html" target="_blank" onclick="try{logUserEvent('pricing_page_opened',{})}catch(e){}" style="color:#6e7681" data-i18n="footer.pricing">Pricing</a>
+    · <a href="https://attendancetracker.dev/privacy.html" target="_blank" style="color:#6e7681" data-i18n="footer.privacy">Privacy</a>
+    · <a href="https://attendancetracker.dev/terms.html" target="_blank" style="color:#6e7681" data-i18n="footer.terms">Terms</a>
+    · <a href="https://attendancetracker.dev/refunds.html" target="_blank" style="color:#6e7681" data-i18n="footer.refunds">Refunds</a>
   </div>
 
   <!-- ── Toast ── -->
@@ -2557,7 +2557,7 @@ function readStoredAcquisition() {
 // new scope would drop the ones the user already granted.
 function signInWithGoogle(extraScopes) {
   if (!window.google?.accounts?.oauth2) {
-    toast('Google Sign-In not loaded yet');
+    toast(t('toast.gsiNotLoaded', 'Google Sign-In not loaded yet'));
     return;
   }
   // Scope-recovery attempt (signed in but some scopes were declined earlier).
@@ -2574,7 +2574,7 @@ function signInWithGoogle(extraScopes) {
   const missingNow = (state.missingScopes || []).map(m => m.feature);
   if (!extraScopes && state.signedIn && missingNow.length) {
     state._reconsentMissing = missingNow;
-    toast('In the Google window, tick EVERY checkbox — any you skipped before will start unticked.', 8000);
+    toast(t('toast.reconsentTick', 'In the Google window, tick EVERY checkbox — any you skipped before will start unticked.'), 8000);
   }
   const client = google.accounts.oauth2.initCodeClient({
     client_id: GOOGLE_CLIENT_ID,
@@ -2640,9 +2640,9 @@ async function handleAuthCode(response) {
     applyScopeRestrictions();
     saveState();
     if (reconsentOutcome === 'unfixed') {
-      toast('Signed in, but a permission checkbox was left unticked in the Google window — tap "Grant access" and tick every box.', 10000);
+      toast(t('toast.reconsentUnticked', 'Signed in, but a permission checkbox was left unticked in the Google window — tap "Grant access" and tick every box.'), 10000);
     } else if (reconsentOutcome === 'fixed') {
-      toast('Permission granted — everything is unlocked now.', 6000);
+      toast(t('toast.reconsentGranted', 'Permission granted — everything is unlocked now.'), 6000);
     } else {
       toast(t('toast.signedInAs','Signed in as') + ' ' + data.email);
     }
@@ -2798,9 +2798,9 @@ function renderTeamAdminLink() {
 ═══════════════════════════════════════════════════════════════ */
 const TOUR_STORAGE_KEY = 'meetAttendanceTourDone';
 const TOUR_STEPS = [
-  { btn: 'btn-start',   title: 'Start',  body: 'Click <strong>Start</strong> when your meeting is live. We\'ll pull participants from the Google Meet API every ~10 seconds.' },
-  { btn: 'btn-refresh', title: 'Sync',   body: 'Force an immediate refresh. Useful if someone just joined and you don\'t want to wait for the next poll.' },
-  { btn: 'btn-sheets',  title: 'Sheet',  body: 'Export the report to a Google Sheet. First export creates a "Meet Attendance Tracker" folder in your Drive — everything goes there.' },
+  { btn: 'btn-start',   titleKey: 'btn.start', title: 'Start',  bodyKey: 'tour.body1', body: 'Click Start when your meeting is live. We\'ll pull participants from the Google Meet API every ~10 seconds.' },
+  { btn: 'btn-refresh', titleKey: 'btn.sync',  title: 'Sync',   bodyKey: 'tour.body2', body: 'Force an immediate refresh. Useful if someone just joined and you don\'t want to wait for the next poll.' },
+  { btn: 'btn-sheets',  titleKey: 'btn.sheet', title: 'Sheet',  bodyKey: 'tour.body3', body: 'Export the report to a Google Sheet. First export creates a "Meet Attendance Tracker" folder in your Drive — everything goes there.' },
 ];
 
 function maybeStartTour() {
@@ -2834,11 +2834,11 @@ function runTour(stepIdx) {
   const tip = document.createElement('div');
   tip.className = 'tour-tooltip';
   tip.innerHTML = `
-    <strong>${step.title}</strong>
-    <div style="margin-top:4px">${step.body}</div>
+    <strong>${escHtml(t(step.titleKey, step.title))}</strong>
+    <div style="margin-top:4px">${escHtml(t(step.bodyKey, step.body))}</div>
     <div class="tour-actions">
-      <button class="tour-skip" data-action="skip">Skip tour</button>
-      <button data-action="next">${stepIdx === TOUR_STEPS.length - 1 ? 'Got it' : 'Next →'}</button>
+      <button class="tour-skip" data-action="skip">${escHtml(t('tour.skip', 'Skip tour'))}</button>
+      <button data-action="next">${escHtml(stepIdx === TOUR_STEPS.length - 1 ? t('tour.gotIt', 'Got it') : t('tour.next', 'Next →'))}</button>
     </div>
   `;
   document.body.appendChild(tip);
@@ -2874,23 +2874,23 @@ function applyScopeRestrictions() {
   }
 
   const featureNames = {
-    sheets: 'export attendance to Sheets',
-    calendar: 'show invited guests',
-    meet: 'read meeting participants',
+    sheets: t('scope.featSheets', 'export attendance to Sheets'),
+    calendar: t('scope.featCalendar', 'show invited guests'),
+    meet: t('scope.featMeet', 'read meeting participants'),
   };
   const unavailable = missing.map(m => featureNames[m.feature] || m.feature).join(', ');
   // After a failed recovery attempt, escalate from the passive list to the
   // actual instruction — the Google popup keeps declined checkboxes unticked
   // and users won't tick a box nothing told them about.
-  detail.textContent = `Currently unavailable: ${unavailable}.`
-    + (state._scopeRetryFailed ? ' Last sign-in left a checkbox unticked in the Google window — it starts unticked and must be ticked by hand.' : '');
+  detail.textContent = t('scope.unavailable', 'Currently unavailable: {list}.').replace('{list}', unavailable)
+    + (state._scopeRetryFailed ? ' ' + t('scope.escalatedTip', 'Last sign-in left a checkbox unticked in the Google window — it starts unticked and must be ticked by hand.') : '');
   banner.style.display = 'block';
 
   // Lock the Sheets button when drive.file wasn't granted
   const sheetsMissing = missing.some(m => m.feature === 'sheets');
   const sheetsBtn = document.getElementById('btn-sheets');
   if (sheetsBtn) {
-    sheetsBtn.title = sheetsMissing ? 'Grant Drive permission to enable export' : '';
+    sheetsBtn.title = sheetsMissing ? t('scope.grantDriveTip', 'Grant Drive permission to enable export') : '';
     sheetsBtn.dataset.scopeBlocked = sheetsMissing ? '1' : '';
   }
   updateExportCta(); // reflect scope state in the export prompt
@@ -2905,19 +2905,19 @@ function showSourceModal(detectedSource) {
   const title = document.getElementById('source-modal-title');
   const subtitle = document.getElementById('source-modal-subtitle');
   const greetings = {
-    reddit:        ['Hey, saw you came from Reddit', 'Mind sharing which sub? Helps me know where to hang out.'],
-    youtube:       ['Hey, saw you came from YouTube', 'Which video? Trying to figure out what content actually works.'],
-    google_search: ['Hey, found us via Google', 'Quick favor — what were you searching for? Helps me reach more folks like you.'],
-    marketplace:   ['Hey, thanks for installing!', 'Anything in particular you\'re hoping to do? Helps me prioritize.'],
-    friend:        ['Hey, a teammate sent you?', 'I\'d love to know who — drop their name and I\'ll thank them.'],
+    reddit:        [t('source.redditTitle', 'Hey, saw you came from Reddit'), t('source.redditSub', 'Mind sharing which sub? Helps me know where to hang out.')],
+    youtube:       [t('source.youtubeTitle', 'Hey, saw you came from YouTube'), t('source.youtubeSub', 'Which video? Trying to figure out what content actually works.')],
+    google_search: [t('source.googleTitle', 'Hey, found us via Google'), t('source.googleSub', 'Quick favor — what were you searching for? Helps me reach more folks like you.')],
+    marketplace:   [t('source.marketTitle', 'Hey, thanks for installing!'), t('source.marketSub', "Anything in particular you're hoping to do? Helps me prioritize.")],
+    friend:        [t('source.friendTitle', 'Hey, a teammate sent you?'), t('source.friendSub', "I'd love to know who — drop their name and I'll thank them.")],
   };
   const g = greetings[detectedSource];
   if (g && title && subtitle) {
     title.textContent = g[0];
     subtitle.textContent = g[1];
   } else if (title && subtitle) {
-    title.textContent = 'Quick question';
-    subtitle.textContent = 'How did you find Attendance Tracker? Helps me figure out where to focus.';
+    title.textContent = t('source.qTitle', 'Quick question');
+    subtitle.textContent = t('source.qSub', 'How did you find Attendance Tracker? Helps me figure out where to focus.');
   }
 
   modal.classList.add('open');
@@ -2959,12 +2959,12 @@ function onSourceSelectChange() {
   if (!sel || !otherWrap || !otherInput) return;
 
   const placeholders = {
-    google_search: 'What did you search for? (optional)',
-    friend:        'Who recommended Attendance Tracker? (optional)',
-    reddit:        'Which subreddit? (optional)',
-    youtube:       'Which video or creator? (optional)',
-    marketplace:   'Any search keyword? (optional)',
-    other:         'Where did you hear about it? (optional)',
+    google_search: t('source.phSearch', 'What did you search for? (optional)'),
+    friend:        t('source.phFriend', 'Who recommended Attendance Tracker? (optional)'),
+    reddit:        t('source.phReddit', 'Which subreddit? (optional)'),
+    youtube:       t('source.phYoutube', 'Which video or creator? (optional)'),
+    marketplace:   t('source.phMarketplace', 'Any search keyword? (optional)'),
+    other:         t('source.phOther', 'Where did you hear about it? (optional)'),
   };
 
   const placeholder = placeholders[sel.value];
@@ -2979,7 +2979,7 @@ function onSourceSelectChange() {
 async function submitSource() {
   const sel = document.getElementById('source-modal-select');
   const source = sel?.value;
-  if (!source) { toast('Pick an option first'); return; }
+  if (!source) { toast(t('toast.pickOption', 'Pick an option first')); return; }
   const rawDetail = (document.getElementById('source-modal-other')?.value || '').trim();
   const detail = rawDetail ? rawDetail.slice(0, 200) : null;
   try {
@@ -2991,10 +2991,10 @@ async function submitSource() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     state._needsSource = false;
     closeSourceModal(true);
-    toast('Thanks!');
+    toast(t('toast.thanks', 'Thanks!'));
   } catch (err) {
     console.error('source save failed:', err);
-    toast('Could not save — try again later');
+    toast(t('toast.couldNotSave', 'Could not save — try again later'));
   }
 }
 
@@ -3030,7 +3030,7 @@ async function deleteMyAccount() {
     }
     return;
   }
-  if (btn) { btn.disabled = true; btn.textContent = 'Deleting…'; }
+  if (btn) { btn.disabled = true; btn.textContent = t('settings.deleting', 'Deleting…'); }
   try {
     const res = await fetch(`${state.backendUrl}/oauth/delete-account`, {
       method: 'POST',
@@ -3378,7 +3378,7 @@ function startTracking() {
     startBtn.style.color = '#f87171';
     startBtn.title = 'Stop tracking attendance';
   }
-  if (startLabel) startLabel.textContent = 'Stop';
+  if (startLabel) startLabel.textContent = t('btn.stop', 'Stop');
 
   document.getElementById('btn-refresh').disabled = false;
   document.getElementById('btn-sheets').disabled  = false;
@@ -3470,7 +3470,7 @@ async function refreshAttendance() {
         const errBody = await res.json().catch(() => ({}));
         // Handle missing Meet scope — prompt re-consent
         if (errBody.error === 'scope_required') {
-          toast('Additional permission needed — please sign in again');
+          toast(t('toast.additionalPermission', 'Additional permission needed — please sign in again'));
           triggerSignIn();
           return;
         }
@@ -3616,7 +3616,7 @@ async function checkInHere() {
 // enters the organizer signup funnel or its lifecycle emails.
 function attendeeSignIn() {
   if (!window.google?.accounts?.oauth2) {
-    toast('Google Sign-In not loaded yet');
+    toast(t('toast.gsiNotLoaded', 'Google Sign-In not loaded yet'));
     return;
   }
   const client = google.accounts.oauth2.initCodeClient({
@@ -3994,7 +3994,7 @@ function renderList() {
 async function openProfileModal(key) {
   const modal = document.getElementById('profile-modal');
   if (!modal || !state.sessionToken) {
-    if (!state.sessionToken) toast('Sign in to view participant history');
+    if (!state.sessionToken) toast(t('toast.signInHistory', 'Sign in to view participant history'));
     return;
   }
   state._currentProfileKey = key;
@@ -4030,7 +4030,7 @@ async function openProfileModal(key) {
     document.getElementById('profile-loading').style.display = 'none';
     document.getElementById('profile-body').style.display = 'block';
   } catch (err) {
-    document.getElementById('profile-loading').textContent = 'Could not load profile.';
+    document.getElementById('profile-loading').textContent = t('profile.loadError', 'Could not load profile.');
   }
 }
 
@@ -4044,17 +4044,17 @@ async function saveProfileNote() {
   if (!state._currentProfileKey) return;
   const body = document.getElementById('profile-note').value;
   const status = document.getElementById('profile-note-status');
-  status.textContent = 'Saving…';
+  status.textContent = t('settings.saving', 'Saving…');
   try {
     const res = await authFetch(`${state.backendUrl}/participant/note`, {
       method: 'PUT',
       body: JSON.stringify({ key: state._currentProfileKey, body }),
     });
     if (!res.ok) throw new Error(`${res.status}`);
-    status.textContent = 'Saved';
+    status.textContent = t('settings.webhookSaved', 'Saved');
     setTimeout(() => status.textContent = '', 2000);
   } catch (err) {
-    status.textContent = 'Failed';
+    status.textContent = t('profile.saveFailed', 'Failed');
   }
 }
 
@@ -4233,7 +4233,7 @@ function navigateBillingTab(tab, url) {
     const w = window.open(url, '_blank', 'noopener,noreferrer');
     if (!w) {
       try { logUserEvent('checkout_open_blocked', {}); } catch {}
-      toast('Your browser blocked the checkout tab. Please allow pop-ups for Meet and try again.');
+      toast(t('toast.popupBlocked', 'Your browser blocked the checkout tab. Please allow pop-ups for Meet and try again.'));
       return false;
     }
     return true;
@@ -4250,7 +4250,7 @@ function closeBillingTab(tab) {
 async function handleBillingClick() {
   if (_isPro) {
     const btn = document.getElementById('settings-billing-btn');
-    if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
+    if (btn) { btn.disabled = true; btn.textContent = t('common.loading', 'Loading…'); }
     const tab = openBillingTab();
     try {
       const res = await authFetch(`${state.backendUrl}/billing/portal`);
@@ -4260,10 +4260,10 @@ async function handleBillingClick() {
         return;
       }
       closeBillingTab(tab);
-      toast(data.error || 'Billing is unavailable right now.');
+      toast(data.error || t('toast.billingUnavailable', 'Billing is unavailable right now.'));
     } catch {
       closeBillingTab(tab);
-      toast('Could not reach billing.');
+      toast(t('toast.couldNotReachBilling', 'Could not reach billing.'));
     } finally {
       if (btn) { btn.disabled = false; btn.textContent = t('settings.manageBilling', 'Manage billing'); }
     }
@@ -4285,7 +4285,7 @@ async function startUpgradeCheckout(plan, btnId) {
   // Preserve innerHTML (not textContent) — the buttons contain .price-* spans
   // that paintPrices() updates; flattening to a text node would orphan them.
   const originalHtml = btn ? btn.innerHTML : '';
-  if (btn) { btn.disabled = true; btn.textContent = 'Connecting to Stripe…'; }
+  if (btn) { btn.disabled = true; btn.textContent = t('billing.connectingStripe', 'Connecting to Stripe…'); }
   const tab = openBillingTab();
   try {
     const res = await authFetch(`${state.backendUrl}/billing/checkout`, {
@@ -4304,10 +4304,10 @@ async function startUpgradeCheckout(plan, btnId) {
       return;
     }
     closeBillingTab(tab);
-    toast(data.error || 'Billing is unavailable right now.');
+    toast(data.error || t('toast.billingUnavailable', 'Billing is unavailable right now.'));
   } catch {
     closeBillingTab(tab);
-    toast('Could not reach billing.');
+    toast(t('toast.couldNotReachBilling', 'Could not reach billing.'));
   } finally {
     if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; }
   }
@@ -4397,12 +4397,12 @@ function showUpgradeModal(reason) {
   const dealPill = document.getElementById('upgrade-deal-pill');
   if (dealPill) {
     if (isEdu) {
-      dealPill.innerHTML = '<span>Educator plan · verifiable certificates included</span>';
+      dealPill.innerHTML = `<span>${escHtml(t('upgrade.dealEdu', 'Educator plan · verifiable certificates included'))}</span>`;
       dealPill.style.background = 'rgba(74,222,128,.14)';
       dealPill.style.borderColor = 'rgba(74,222,128,.35)';
       dealPill.style.color = '#4ade80';
     } else {
-      dealPill.innerHTML = '<span>One-time payment · yours forever, nothing to cancel</span>';
+      dealPill.innerHTML = `<span>${escHtml(t('upgrade.dealLifetime', 'One-time payment · yours forever, nothing to cancel'))}</span>`;
       dealPill.style.background = 'rgba(253,214,99,.12)';
       dealPill.style.borderColor = 'rgba(253,214,99,.25)';
       dealPill.style.color = '#fdd663';
@@ -4559,7 +4559,7 @@ async function saveToSheets() {
   if (!state.participants.size) { toast(t('toast.noData','No data yet')); return; }
   if (document.getElementById('btn-sheets')?.dataset.scopeBlocked === '1') {
     logUserEvent('export_failed', { reason: 'scope_blocked' });
-    toast('Reconnecting Google to grant Drive access…', 5000);
+    toast(t('toast.reconnectingDrive', 'Reconnecting Google to grant Drive access…'), 5000);
     signInWithGoogle(); // one-click re-consent instead of a dead-end toast
     return;
   }
@@ -4570,9 +4570,9 @@ async function saveToSheets() {
 
   // Note if meeting is still active — export anyway, just warn
   const anyPresent = [...state.participants.values()].some(p => p.present);
-  if (anyPresent) toast('Meeting still active — exporting current data…');
+  if (anyPresent) toast(t('toast.meetingActive', 'Meeting still active — exporting current data…'));
 
-  toast('Checking Calendar…');
+  toast(t('toast.checkingCalendar', 'Checking Calendar…'));
   try {
     const calRes = await authFetch(`${state.backendUrl}/calendar-attendees?meetingCode=${encodeURIComponent(state.conferenceId)}`);
     const calData = calRes.ok ? await calRes.json() : { isScheduled: false, attendees: [] };
@@ -4604,7 +4604,7 @@ async function saveToSheets() {
       const { emailMap, unmatchedCount } = autoMatchAttendees(calData.attendees);
       if (unmatchedCount === 0) {
         state.calendarAttendees = calData.attendees;
-        toast('All participants auto-matched — exporting…');
+        toast(t('toast.autoMatched', 'All participants auto-matched — exporting…'));
         await doExportToSheets(emailMap, calData.attendees);
       } else {
         openMatchModal(calData.attendees, emailMap);
@@ -4641,7 +4641,7 @@ function maybeShowSoloNudge() {
   if (distinctAttendeeCount() > 1) return; // real meeting — no nudge
   state.soloNudgeConferenceId = state.conferenceId;
   saveState();
-  toast('Looks like you were the only one here. Attendance Tracker shines when others join — open it in your next real meeting to see the full roll-call.', 9000);
+  toast(t('toast.onlyYou', 'Looks like you were the only one here. Attendance Tracker shines when others join — open it in your next real meeting to see the full roll-call.'), 9000);
 }
 
 // When the user leaves the panel (tab hidden / navigating away) mid- or
@@ -4709,7 +4709,7 @@ async function maybeAutoExportOnMeetingEnd() {
   if (btn) btn.disabled = true;
 
   logUserEvent('export_clicked', { participantCount: state.participants.size, auto: true });
-  toast('Meeting ended — auto-exporting to Sheets…', 4000);
+  toast(t('toast.meetingEndedExporting', 'Meeting ended — auto-exporting to Sheets…'), 4000);
 
   try {
     // Pull calendar attendees if it's a scheduled event so we can fill in RSVP
@@ -4854,7 +4854,7 @@ async function confirmMatchAndExport() {
     const overrideVal = override ? override.value.trim() : '';
     if (overrideVal) {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(overrideVal)) {
-        toast('Invalid email: ' + overrideVal);
+        toast(t('toast.invalidEmail', 'Invalid email:') + ' ' + overrideVal);
         return; // Stop export — user must fix the email
       }
       emailMap[participant] = overrideVal;
@@ -5032,7 +5032,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
         // snapshot explicitly or this entry point stays the silent loop the
         // re-consent fix was built to close.
         state._reconsentMissing = ['sheets'];
-        toast('Drive permission needed — in the Google window, tick EVERY checkbox (the Drive one will start unticked).', 8000);
+        toast(t('toast.drivePermission', 'Drive permission needed — in the Google window, tick EVERY checkbox (the Drive one will start unticked).'), 8000);
         signInWithGoogle(); // one-click re-consent to add drive.file — no manual sign-out
         return;
       }
@@ -5157,8 +5157,8 @@ function showCelebrateModal(sheetUrl) {
       if (!b || !b.billingConfigured || b.plan === 'pro') return;
       const d = document.getElementById('celebrate-pro-desc');
       if (d) d.textContent = b.individual
-        ? 'Pro adds a cumulative per-student attendance report across every session of your class.'
-        : 'Pro adds auto-export and an org-wide team attendance dashboard for your domain.';
+        ? t('celebrate.proDescIndividual', 'Pro adds a cumulative per-student attendance report across every session of your class.')
+        : t('celebrate.proDescOrg', 'Pro adds auto-export and an org-wide team attendance dashboard for your domain.');
       proBlock.style.display = 'block';
     });
   }
@@ -6406,7 +6406,7 @@ window.addEventListener('DOMContentLoaded', () => {
           <div id="profile-name" style="font-weight:600;font-size:1rem;color:#e6edf3"></div>
           <div id="profile-email" style="color:#9ca3af;font-size:.75rem"></div>
         </div>
-        <button onclick="closeProfileModal()" aria-label="Close" style="background:transparent;color:#9ca3af;border:none;font-size:1.4rem;cursor:pointer;padding:0 4px">×</button>
+        <button onclick="closeProfileModal()" data-i18n-aria="common.close" aria-label="Close" style="background:transparent;color:#9ca3af;border:none;font-size:1.4rem;cursor:pointer;padding:0 4px">×</button>
       </div>
       <div id="profile-loading" style="text-align:center;color:#9ca3af;font-size:.85rem;padding:20px" data-i18n="common.loading">Loading…</div>
       <div id="profile-body" style="display:none">
@@ -6438,7 +6438,7 @@ window.addEventListener('DOMContentLoaded', () => {
           </svg>
           <div id="settings-modal-title" style="font-weight:700;color:#e6edf3;font-size:1.05rem">Settings</div>
         </div>
-        <button onclick="closeSettingsModal()" aria-label="Close settings" class="settings-close-btn">
+        <button onclick="closeSettingsModal()" data-i18n-aria="tip.closeSettings" aria-label="Close settings" class="settings-close-btn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -6475,7 +6475,7 @@ window.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="settings-row-sub" data-i18n="settings.autoExportDesc">Automatically saves attendance to a Google Sheet when the meeting concludes.</div>
           </div>
-          <label class="settings-switch" aria-label="Toggle auto-export on meeting end">
+          <label class="settings-switch" data-i18n-aria="tip.toggleAutoExport" aria-label="Toggle auto-export on meeting end">
             <input type="checkbox" id="setting-auto-export" onchange="toggleAutoExport(this.checked)" />
             <span class="settings-slider"></span>
           </label>
@@ -6489,7 +6489,7 @@ window.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="settings-row-sub" data-i18n="settings.emailDesc">Send sheet links, meeting summaries, and attendance pattern change alerts.</div>
           </div>
-          <label class="settings-switch" aria-label="Toggle email notifications">
+          <label class="settings-switch" data-i18n-aria="tip.toggleEmail" aria-label="Toggle email notifications">
             <input type="checkbox" id="setting-email-optout" onchange="toggleEmailNotifications(this.checked)" />
             <span class="settings-slider"></span>
           </label>
@@ -6503,7 +6503,7 @@ window.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="settings-row-sub" data-i18n="settings.extraEmailsDesc">Up to 5 addresses (comma-separated) that also receive the post-meeting report email — a co-teacher, coordinator, or admin inbox.</div>
           </div>
-          <input id="settings-extra-emails" type="text" placeholder="co-teacher@school.edu, office@school.edu" autocomplete="off"
+          <input id="settings-extra-emails" type="text" data-i18n-placeholder="settings.extraEmailsPlaceholder" placeholder="co-teacher@school.edu, office@school.edu" autocomplete="off"
             onchange="saveExtraEmails()"
             style="width:100%;background:#161b22;border:1px solid #30363d;border-radius:8px;color:#e6edf3;padding:8px 12px;font-size:.76rem;box-sizing:border-box" />
           <div id="settings-extra-emails-status" style="display:none;font-size:.72rem;color:#8b949e"></div>
@@ -6538,7 +6538,7 @@ window.addEventListener('DOMContentLoaded', () => {
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
             </svg>
             <span data-i18n="settings.webhooksLabel">Chat digest webhooks</span>
-            <span class="webhook-pro-badge" title="Meeting digests are included in Pro" style="display:none;background:rgba(74,222,128,.15);color:#4ade80;padding:1px 7px;border-radius:10px;font-size:.62rem;font-weight:700;letter-spacing:.03em;margin-left:6px">PRO</span>
+            <span class="webhook-pro-badge" data-i18n-title="tip.digestsPro" title="Meeting digests are included in Pro" style="display:none;background:rgba(74,222,128,.15);color:#4ade80;padding:1px 7px;border-radius:10px;font-size:.62rem;font-weight:700;letter-spacing:.03em;margin-left:6px">PRO</span>
           </div>
           <a id="settings-webhook-guide" href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noopener" style="color:#58a6ff;font-size:.72rem;text-decoration:none;display:inline-flex;align-items:center;gap:4px;white-space:nowrap">
             <span data-i18n="settings.slackSetup">Setup guide</span>
@@ -6605,8 +6605,8 @@ window.addEventListener('DOMContentLoaded', () => {
       </div>
       <div id="celebrate-pro" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid #30363d;text-align:left">
         <div style="color:#e6edf3;font-size:.85rem;font-weight:600;margin-bottom:4px" data-i18n="celebrate.proTitle">Get more with Pro</div>
-        <div id="celebrate-pro-desc" style="color:#9ca3af;font-size:.78rem;line-height:1.5;margin-bottom:10px">Pro adds a cumulative per-student attendance report across every session.</div>
-        <button type="button" onclick="handleBillingClick()" style="background:transparent;border:1px solid #4ade80;color:#4ade80;padding:9px 14px;border-radius:8px;cursor:pointer;font-size:.82rem;font-weight:600;width:100%">Upgrade to Pro</button>
+        <div id="celebrate-pro-desc" style="color:#9ca3af;font-size:.78rem;line-height:1.5;margin-bottom:10px" data-i18n="celebrate.proDesc">Pro adds a cumulative per-student attendance report across every session.</div>
+        <button type="button" onclick="handleBillingClick()" style="background:transparent;border:1px solid #4ade80;color:#4ade80;padding:9px 14px;border-radius:8px;cursor:pointer;font-size:.82rem;font-weight:600;width:100%" data-i18n="upgrade.title">Upgrade to Pro</button>
       </div>
     </div>
   </div>
@@ -6615,7 +6615,7 @@ window.addEventListener('DOMContentLoaded', () => {
 <!-- One-time paywall objection ask (after the 3rd upgrade-modal dismissal) -->
   <div id="paywall-why-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:1150;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px)">
     <div style="background:#1e1f20;border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:22px;max-width:330px;width:100%;box-shadow:0 24px 48px rgba(0,0,0,.6);position:relative">
-      <button type="button" onclick="dismissPaywallWhy()" aria-label="Close" style="position:absolute;top:14px;right:14px;background:none;border:none;color:#9aa0a6;cursor:pointer;font-size:16px;line-height:1;padding:4px">&times;</button>
+      <button type="button" onclick="dismissPaywallWhy()" data-i18n-aria="common.close" aria-label="Close" style="position:absolute;top:14px;right:14px;background:none;border:none;color:#9aa0a6;cursor:pointer;font-size:16px;line-height:1;padding:4px">&times;</button>
       <div style="font-weight:600;color:#e3e3e3;font-size:1rem;margin-bottom:4px;padding-right:20px" data-i18n="paywall.whyTitle">Quick question — what's holding you back?</div>
       <div style="color:#9aa0a6;font-size:.78rem;margin-bottom:14px" data-i18n="paywall.whySub">One tap. It helps us make Pro worth it.</div>
       <div style="display:flex;flex-direction:column;gap:8px">
@@ -6629,11 +6629,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
   <div id="upgrade-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:1100;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px)">
     <div style="background:#1e1f20;border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:24px;max-width:380px;width:100%;box-shadow:0 24px 48px rgba(0,0,0,.6);position:relative;font-family:var(--font-sans);max-height:90vh;overflow-y:auto">
-      <button type="button" onclick="closeUpgradeModal()" aria-label="Close" style="position:absolute;top:16px;right:16px;background:none;border:none;color:#9aa0a6;cursor:pointer;font-size:16px;line-height:1;padding:4px;border-radius:50%">&times;</button>
+      <button type="button" onclick="closeUpgradeModal()" data-i18n-aria="common.close" aria-label="Close" style="position:absolute;top:16px;right:16px;background:none;border:none;color:#9aa0a6;cursor:pointer;font-size:16px;line-height:1;padding:4px;border-radius:50%">&times;</button>
 
       <!-- Top value pill (repainted per user in showUpgradeModal) -->
       <div id="upgrade-deal-pill" style="display:inline-flex;align-items:center;gap:6px;background:rgba(253,214,99,.12);border:1px solid rgba(253,214,99,.25);color:#fdd663;padding:4px 10px;border-radius:20px;font-size:.72rem;font-weight:600;margin-bottom:12px;letter-spacing:.02em">
-        <span>One-time payment · yours forever, nothing to cancel</span>
+        <span data-i18n="upgrade.dealLifetime">One-time payment · yours forever, nothing to cancel</span>
       </div>
 
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
@@ -6676,7 +6676,7 @@ window.addEventListener('DOMContentLoaded', () => {
         </div>
 
         <button type="button" id="btn-upgrade-lifetime" onclick="startUpgradeCheckout('lifetime', 'btn-upgrade-lifetime')" style="width:100%;background:#34a853;color:#ffffff;border:none;padding:10px 16px;border-radius:20px;font-weight:600;font-size:.84rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 2px 8px rgba(52,168,83,.3);transition:all .15s ease">
-          Get Lifetime Access — <span class="price-lifetime">$9.99</span>
+          <span data-i18n="upgrade.ctaLifetime">Get Lifetime Access —</span> <span class="price-lifetime">$9.99</span>
         </button>
       </div>
 
@@ -6703,7 +6703,7 @@ window.addEventListener('DOMContentLoaded', () => {
           </div>
         </div>
         <button type="button" id="btn-upgrade-individual" onclick="startUpgradeCheckout('educator', 'btn-upgrade-individual')" style="width:100%;background:rgba(88,166,255,.14);border:1px solid rgba(88,166,255,.3);color:#79c0ff;padding:13px 18px;border-radius:20px;font-weight:600;font-size:.82rem;cursor:pointer;transition:all .15s ease;margin-top:4px">
-          Get Educator Annual Pass — <span class="price-educator">$4.99</span>/yr
+          <span data-i18n="upgrade.ctaEdu">Get Educator Annual Pass —</span> <span class="price-educator">$4.99</span>/yr
         </button>
       </div>
 
@@ -6740,7 +6740,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
       <!-- Clean Low-Profile Review Exchange -->
       <div style="text-align:center;font-size:.74rem;color:#9aa0a6;margin-bottom:14px;line-height:1.4">
-        School budget tight? <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" id="upgrade-review-link" target="_blank" onclick="onUpgradeReviewClick(event)" style="color:#8ab4f8;text-decoration:underline">Leave an honest review</a> for 1 month free.
+<span data-i18n="upgrade.reviewOffer1">School budget tight?</span> <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" id="upgrade-review-link" target="_blank" onclick="onUpgradeReviewClick(event)" style="color:#8ab4f8;text-decoration:underline" data-i18n="upgrade.reviewOfferLink">Leave an honest review</a> <span data-i18n="upgrade.reviewOffer2">for 1 month free.</span>
       </div>
 
       <!-- Modal Footer -->
@@ -6760,7 +6760,7 @@ window.addEventListener('DOMContentLoaded', () => {
     <div style="background:#161b22;border:1px solid #30363d;border-radius:14px;padding:22px;max-width:400px;width:100%;box-shadow:0 20px 40px rgba(0,0,0,.5)">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
         <h3 style="margin:0;font-size:1rem;font-weight:600;color:#e6edf3" data-i18n="note.title">Note for student</h3>
-        <button type="button" onclick="closeNoteModal()" aria-label="Close" style="background:none;border:none;color:#8b949e;font-size:18px;cursor:pointer">&times;</button>
+        <button type="button" onclick="closeNoteModal()" data-i18n-aria="common.close" aria-label="Close" style="background:none;border:none;color:#8b949e;font-size:18px;cursor:pointer">&times;</button>
       </div>
       <input id="note-modal-input" type="text" placeholder="Doctor appointment, Excused…" data-i18n-placeholder="note.placeholder"
         style="width:100%;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#e6edf3;padding:9px 12px;font-size:.82rem;box-sizing:border-box" />
@@ -6812,8 +6812,8 @@ window.addEventListener('DOMContentLoaded', () => {
   <!-- ── Acquisition Source Modal (first sign-in) ── -->
   <div id="source-modal">
     <div class="modal-box" style="max-width:380px">
-      <div class="modal-title" id="source-modal-title">Quick question</div>
-      <div class="modal-subtitle" id="source-modal-subtitle">How did you find Attendance Tracker? Helps me figure out where to focus.</div>
+      <div class="modal-title" id="source-modal-title" data-i18n="source.qTitle">Quick question</div>
+      <div class="modal-subtitle" id="source-modal-subtitle" data-i18n="source.qSub">How did you find Attendance Tracker? Helps me figure out where to focus.</div>
       <select id="source-modal-select" class="match-select" onchange="onSourceSelectChange()" style="margin-bottom:10px">
         <option value="" disabled selected data-i18n="source.pickOne">Pick one…</option>
         <option value="google_search" data-i18n="source.google">Google search</option>
@@ -6824,7 +6824,7 @@ window.addEventListener('DOMContentLoaded', () => {
         <option value="other" data-i18n="common.other">Other</option>
       </select>
       <div id="source-modal-other-wrap" style="display:none;margin-bottom:10px">
-        <input id="source-modal-other" type="text" class="match-override" placeholder="Where did you hear about it?" maxlength="200" />
+        <input id="source-modal-other" type="text" class="match-override" data-i18n-placeholder="source.phStatic" placeholder="Where did you hear about it?" maxlength="200" />
       </div>
       <div class="modal-actions">
         <button class="btn-secondary" onclick="closeSourceModal()" data-i18n="common.skip">Skip</button>
@@ -6863,11 +6863,11 @@ window.addEventListener('DOMContentLoaded', () => {
       <div style="font-size:1.05rem;font-weight:700;margin-bottom:4px" data-i18n="cert.title">Certificate details</div>
       <div style="color:#8b949e;font-size:.8rem;margin-bottom:14px" data-i18n="cert.subtitle">Printed on every attendee's certificate. Saved for next time.</div>
       <label style="display:block;font-size:.75rem;color:#8b949e;margin-bottom:4px" data-i18n="cert.issuer">Issuer / organization name</label>
-      <input id="cert-issuer" type="text" maxlength="80" placeholder="e.g. Central Bicol State University" style="width:100%;box-sizing:border-box;background:#0d1117;border:1px solid #30363d;color:var(--text);border-radius:8px;padding:8px 10px;font-size:.85rem;margin-bottom:12px" />
+      <input id="cert-issuer" type="text" maxlength="80" data-i18n-placeholder="cert.issuerPlaceholder" placeholder="e.g. Central Bicol State University" style="width:100%;box-sizing:border-box;background:#0d1117;border:1px solid #30363d;color:var(--text);border-radius:8px;padding:8px 10px;font-size:.85rem;margin-bottom:12px" />
       <label style="display:block;font-size:.75rem;color:#8b949e;margin-bottom:4px" data-i18n="cert.course">Course / reference code (optional)</label>
-      <input id="cert-course" type="text" maxlength="40" placeholder="e.g. BIO-101" style="width:100%;box-sizing:border-box;background:#0d1117;border:1px solid #30363d;color:var(--text);border-radius:8px;padding:8px 10px;font-size:.85rem;margin-bottom:12px" />
+      <input id="cert-course" type="text" maxlength="40" data-i18n-placeholder="cert.coursePlaceholder" placeholder="e.g. BIO-101" style="width:100%;box-sizing:border-box;background:#0d1117;border:1px solid #30363d;color:var(--text);border-radius:8px;padding:8px 10px;font-size:.85rem;margin-bottom:12px" />
       <label style="display:block;font-size:.75rem;color:#8b949e;margin-bottom:4px" data-i18n="cert.credit">Credit hours (optional — blank uses actual attended time)</label>
-      <input id="cert-credit" type="number" min="0" step="0.25" placeholder="e.g. 1.5" style="width:100%;box-sizing:border-box;background:#0d1117;border:1px solid #30363d;color:var(--text);border-radius:8px;padding:8px 10px;font-size:.85rem;margin-bottom:10px" />
+      <input id="cert-credit" type="number" min="0" step="0.25" data-i18n-placeholder="cert.creditPlaceholder" placeholder="e.g. 1.5" style="width:100%;box-sizing:border-box;background:#0d1117;border:1px solid #30363d;color:var(--text);border-radius:8px;padding:8px 10px;font-size:.85rem;margin-bottom:10px" />
       <div id="cert-modal-error" style="display:none;color:#f85149;font-size:.75rem;margin-bottom:10px"></div>
       <div style="display:flex;gap:8px;justify-content:flex-end;align-items:center">
         <button onclick="closeCertModal()" style="background:transparent;border:none;color:#8b949e;font-size:.8rem;cursor:pointer" data-i18n="common.cancel">Cancel</button>

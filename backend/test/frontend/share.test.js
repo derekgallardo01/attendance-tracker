@@ -84,4 +84,13 @@ describe('renderPeopleRows', () => {
     expect(share.renderPeopleRows([], 5, esc)).toContain('No participants tracked.');
     expect(share.renderPeopleRows(undefined, 5, esc)).toContain('No participants tracked.');
   });
+
+  test('the empty-row fallback routes through global t() once available', () => {
+    global.t = (key, fallback) => `[[${key}]]`;
+    try {
+      expect(share.renderPeopleRows([], 5, esc)).toContain('[[share.noParticipants]]');
+    } finally {
+      delete global.t;
+    }
+  });
 });

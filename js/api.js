@@ -11,6 +11,12 @@
 (function (root) {
   'use strict';
 
+  // Translate via the global t() (present once js/strings.js is loaded in the
+  // browser); fall back to the English literal when it isn't (Node/Jest).
+  function tr(key, fallback) {
+    return (typeof root.t === 'function') ? root.t(key, fallback) : fallback;
+  }
+
   // Cloud Run backend. Absolute URL because these pages are served from
   // GitHub Pages (attendancetracker.dev) and call the backend cross-origin;
   // it also resolves correctly when the same file is mirrored under the
@@ -44,7 +50,7 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ code: response.code }),
           });
-          if (!res.ok) throw new Error('Auth failed');
+          if (!res.ok) throw new Error(tr('api.authFailed', 'Auth failed'));
           const data = await res.json();
           if (onSuccess) onSuccess(data);
         } catch (err) {
@@ -84,11 +90,11 @@
         body: JSON.stringify(payload),
       });
     } catch {
-      throw new Error('Could not reach billing.');
+      throw new Error(tr('api.couldNotReachBilling', 'Could not reach billing.'));
     }
     const body = await res.json().catch(() => ({}));
     if (res.ok && body.url) return body.url;
-    throw new Error(body.error || 'Billing is unavailable right now.');
+    throw new Error(body.error || tr('api.billingUnavailable', 'Billing is unavailable right now.'));
   }
 
   const api = { BACKEND_URL, CLIENT_ID, SCOPES, signIn, authedFetch, startCheckout };

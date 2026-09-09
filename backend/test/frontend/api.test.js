@@ -100,6 +100,19 @@ describe('startCheckout', () => {
     global.fetch = () => Promise.reject(new Error('network'));
     await expect(api.startCheckout('tok')).rejects.toThrow('Could not reach billing.');
   });
+
+  test('routes error messages through global t() once it is available', async () => {
+    // Browser parity: js/strings.js exposes a global t(); tr() must use it.
+    global.t = (key, fallback) => `⟦${key}⟧`;
+    try {
+      global.fetch = () => Promise.reject(new Error('network'));
+      await expect(api.startCheckout('tok')).rejects.toThrow('⟦api.couldNotReachBilling⟧');
+      global.fetch = () => Promise.resolve({ ok: false, json: async () => ({}) });
+      await expect(api.startCheckout('tok')).rejects.toThrow('⟦api.billingUnavailable⟧');
+    } finally {
+      delete global.t;
+    }
+  });
 });
 
 describe('signIn (Google popup + code exchange)', () => {

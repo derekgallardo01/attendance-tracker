@@ -10,6 +10,12 @@
 (function (root) {
   'use strict';
 
+  // Translate via the global t() (present once js/strings.js is loaded in the
+  // browser); fall back to the English literal when it isn't (Node/Jest).
+  function tr(key, fallback) {
+    return (typeof root.t === 'function') ? root.t(key, fallback) : fallback;
+  }
+
   // ISO date → "Mar 3, 2026" in the viewer's locale; em-dash when absent.
   function fmtDate(iso) {
     if (!iso) return '—';
@@ -38,7 +44,7 @@
             <td><div style="display:flex;align-items:center;gap:10px"><div class="progress-bar" style="flex:1"><div style="width:${Math.round(p.attendanceRate * 100)}%"></div></div><span style="font-size:.78rem;color:var(--muted);min-width:36px">${pct(p.attendanceRate)}</span></div></td>
           </tr>
         `).join('');
-    return rows || '<tr><td colspan="3" class="muted">No participants tracked.</td></tr>';
+    return rows || `<tr><td colspan="3" class="muted">${esc(tr('share.noParticipants', 'No participants tracked.'))}</td></tr>`;
   }
 
   const api = { fmtDate, pct, computeRange, renderPeopleRows };
