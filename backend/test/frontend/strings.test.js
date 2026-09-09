@@ -301,4 +301,44 @@ describe('dictionary parity across all locales', () => {
   });
 });
 
+describe('no "wired but English-valued" keys (translation-content guard)', () => {
+  // Parity (above) proves every locale HAS every key. This guard proves the
+  // values were actually TRANSLATED, not copied from English — the gap that
+  // let the whole pricing.* set render English in all 30 locales while passing
+  // parity. A key whose value equals English across nearly every locale is
+  // almost certainly untranslated; the few legitimate exceptions are
+  // allowlisted below (language endonyms + brand/tier proper nouns).
+  const nonEn = strings.getAvailableLocales().map(l => l.code).filter(l => l !== 'en');
+  const en = strings.STRINGS.en;
+  const enKeys = Object.keys(en);
+  const THRESHOLD = 20; // English in >= 20 of the ~29 non-en locales
+
+  // Intentionally-identical-across-locales keys:
+  //  - lang.* : language names are written in their own language (endonyms),
+  //    e.g. lang.es === "Español" in every locale by design.
+  //  - brand / product-tier proper nouns kept in English on purpose.
+  const isAllowed = (key) =>
+    key.startsWith('lang.') ||
+    key === 'source.marketplace' ||        // "Workspace Marketplace" (Google product name)
+    key === 'pricing.planDomainName';       // "Domain Pro" tier — kept as a brand label
+
+  test('every non-allowlisted key is translated (not English-valued) in the locales', () => {
+    const offenders = [];
+    for (const key of enKeys) {
+      if (isAllowed(key)) continue;
+      let sameAsEn = 0;
+      for (const loc of nonEn) {
+        if (strings.STRINGS[loc][key] === en[key]) sameAsEn++;
+      }
+      if (sameAsEn >= THRESHOLD) {
+        offenders.push(`${key} (English in ${sameAsEn}/${nonEn.length}: "${en[key]}")`);
+      }
+    }
+    // If this fails, either translate the key across the 30 locales, or — if it
+    // is genuinely meant to be identical everywhere (a brand/proper noun) — add
+    // it to isAllowed() above with a comment saying why.
+    expect(offenders).toEqual([]);
+  });
+});
+
 
