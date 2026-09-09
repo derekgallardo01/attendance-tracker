@@ -226,6 +226,16 @@
           </div>
           <button class="btn" style="background:#4ade80;color:#0d1117;padding:6px 14px;font-size:.8rem;white-space:nowrap" onclick="upgradeFromHistory(this)"><span data-i18n="history.upgradeProShort">Upgrade to Pro</span> — <span class="price-lifetime">$9.99</span></button>
         </div>
+        <!-- Team signpost: a school discovers the team plan on its own. One
+             quiet line, only when the backend says it's genuinely true
+             (3+ teachers on the domain, not already Pro, not dismissed).
+             No popup, no color block; dismiss once = gone for good. -->
+        <div id="team-signpost" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;padding:13px 2px 14px;border-top:1px solid var(--border);margin-bottom:8px;font-size:.84rem;color:var(--muted)">
+          <span style="color:var(--muted);opacity:.6;font-size:.8rem">◆</span>
+          <span id="team-signpost-msg" style="color:var(--text)"></span>
+          <a id="team-signpost-link" href="/team.html" style="color:#58a6ff;text-decoration:none;font-weight:500;white-space:nowrap"></a>
+          <button onclick="dismissTeamSignpost()" aria-label="Dismiss" title="Dismiss" style="margin-left:auto;color:var(--muted);background:none;border:none;font-size:1rem;line-height:1;cursor:pointer;padding:4px 6px;border-radius:6px">×</button>
+        </div>
         <div id="history-cap-note" style="display:none;font-size:.78rem;color:var(--muted);margin-bottom:10px">
           <span data-i18n="history.capNote1">Showing your most recent</span> <span id="history-cap-count">25</span> <span data-i18n="history.capNote2">meetings — Pro keeps your full history.</span>
           <a href="javascript:void(0)" onclick="upgradeFromHistory(this)" style="color:#58a6ff" data-i18n="history.capUpgrade">Upgrade</a>
@@ -467,6 +477,7 @@
         document.getElementById('stat-people').textContent = (data.people || []).length;
         document.getElementById('stat-active-days').textContent = AttHistory.activeDays(data.calendar);
         document.getElementById('stat-series').textContent = seriesData.totalSeries || 0;
+        renderTeamSignpost(data.teamSignpost);
         renderMeetings();
         renderPeople();
         renderCalendar();
@@ -483,6 +494,41 @@
       } finally {
         document.getElementById('loading').style.display = 'none';
       }
+    }
+
+    // Team signpost: paint the quiet "your school is already here" line from
+    // the backend's live, gated payload (null unless genuinely eligible).
+    function renderTeamSignpost(sp) {
+      const box = document.getElementById('team-signpost');
+      if (!box) return;
+      if (!sp || !sp.teacherCount || sp.teacherCount < 3) { box.style.display = 'none'; return; }
+      const msg = document.getElementById('team-signpost-msg');
+      const link = document.getElementById('team-signpost-link');
+      const n = sp.teacherCount;
+      const dom = esc(sp.domain || '');
+      if (sp.isTeamAdmin) {
+        msg.innerHTML = t('history.signpostAdmin', 'Your school has {n} teachers using this.').replace('{n}', '<b>' + n + '</b>');
+        link.textContent = t('history.signpostAdminCta', 'Set up the domain plan →');
+      } else {
+        msg.innerHTML = t('history.signpostTeam', '{n} teachers at {domain} use Attendance Tracker.')
+          .replace('{n}', '<b>' + n + '</b>').replace('{domain}', dom);
+        link.textContent = t('history.signpostCta', 'See the team plan →');
+      }
+      try { logHistoryEvent('team_signpost_shown', { teacherCount: n, isTeamAdmin: !!sp.isTeamAdmin }); } catch (e) {}
+      box.style.display = 'flex';
+    }
+
+    function dismissTeamSignpost() {
+      const box = document.getElementById('team-signpost');
+      if (box) box.style.display = 'none';
+      try { logHistoryEvent('team_signpost_dismissed', {}); } catch (e) {}
+      // Persist so it never returns for this user (fire-and-forget).
+      try {
+        fetch(`${BACKEND_URL}/history/signpost-dismiss`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${sessionToken}` },
+        }).catch(() => {});
+      } catch (e) {}
     }
 
     // Start Stripe checkout. The plan is passed EXPLICITLY: the auto-capture

@@ -15,6 +15,21 @@ afterEach(() => {
   ctx.uninstall();
 });
 
+describe('getDomainTeacherCount (team-signpost live count)', () => {
+  test('counts user docs on a workspace domain', async () => {
+    ctx.seed('tenants/acme.edu/users/a@acme.edu', { email: 'a@acme.edu' });
+    ctx.seed('tenants/acme.edu/users/b@acme.edu', { email: 'b@acme.edu' });
+    ctx.seed('tenants/acme.edu/users/c@acme.edu', { email: 'c@acme.edu' });
+    await expect(firestore.getDomainTeacherCount('acme.edu')).resolves.toBe(3);
+  });
+
+  test('returns 0 for a personal (shared) domain without counting', async () => {
+    ctx.seed('tenants/gmail.com/users/x@gmail.com', { email: 'x@gmail.com' });
+    ctx.seed('tenants/gmail.com/users/y@gmail.com', { email: 'y@gmail.com' });
+    await expect(firestore.getDomainTeacherCount('gmail.com')).resolves.toBe(0);
+  });
+});
+
 describe('countDistinctAttendees', () => {
   test('collapses multiple sessions of the same person (by email)', () => {
     const n = firestore.countDistinctAttendees([

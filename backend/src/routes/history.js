@@ -2,8 +2,41 @@ const { Router } = require('express');
 const CONFIG = require('../config');
 const { requireAuth } = require('../middleware/auth');
 const log = require('../lib/logger');
-const { getUserMeetingHistory, getUserMeetingSeries, getParticipantHistory, setParticipantNote, getParticipantNote, logEvent, createShareLink, revokeShareLink } = require('../services/firestore');
+const { getUserMeetingHistory, getUserMeetingSeries, getParticipantHistory, setParticipantNote, getParticipantNote, logEvent, createShareLink, revokeShareLink, getUser, getTenantConfig, getTenantPlan, getDomainTeacherCount, setTeamSignpostDismissed } = require('../services/firestore');
+const { domainOf } = require('../services/firestore/_core');
+const { PERSONAL_EMAIL_DOMAINS } = require('../services/firestore/_core');
 const { planIsPro } = require('./billing');
+
+const TEAM_SIGNPOST_MIN = 3; // a cluster, not a coincidence
+
+// Build the team-signpost payload for a history response, or null. Everything
+// is live: the teacher count is a fresh count() per call. Gated so it only
+// ever appears when TRUE — never on a personal domain, an already-Pro domain,
+// a lone/paired user, or someone who dismissed it.
+async function buildTeamSignpost(domain, email) {
+  try {
+    const domainLower = (domain || '').toLowerCase();
+    if (PERSONAL_EMAIL_DOMAINS.has(domainLower)) return null; // shared tenant — count is meaningless
+    const [user, tenantPlan, count] = await Promise.all([
+      getUser(domain, email),
+      getTenantPlan(domain).catch(() => ({ plan: 'free' })),
+      getDomainTeacherCount(domain),
+    ]);
+    if (user?.teamSignpostDismissedAt) return null;   // dismissed → gone for good
+    if (tenantPlan?.plan === 'pro') return null;       // domain already on the plan
+    if (count < TEAM_SIGNPOST_MIN) return null;        // not a cluster yet
+    // teamAdmin flag drives the "your school / set up" phrasing vs "N teachers / see".
+    let isTeamAdmin = false;
+    try {
+      const cfg = await getTenantConfig(domain);
+      isTeamAdmin = (cfg?.adminEmail || '').toLowerCase() === email.toLowerCase();
+    } catch { /* default: non-admin phrasing */ }
+    return { domain: domainLower, teacherCount: count, isTeamAdmin };
+  } catch (err) {
+    log.warn('history: buildTeamSignpost failed', { domain, error: err.message });
+    return null;
+  }
+}
 
 const router = Router();
 
@@ -32,6 +65,8 @@ const FRONTEND_EVENT_TYPES = new Set([
   'upgrade_modal_dismissed',
   'upgrade_checkout_clicked',
   'checkout_started', // a click that actually reached a Stripe session
+  'team_signpost_shown',
+  'team_signpost_dismissed',
   'checkout_open_blocked', // browser ate the checkout tab — highest-value loss signal
   // Marketplace review funnel
   'review_ask_shown',
@@ -184,13 +219,26 @@ router.get('/history', requireAuth, async (req, res) => {
     // the meetings list. The service returns historyCapped/freeLimit/totalMeetings
     // so the frontend can show "Upgrade to see all N". Pro passes no limit.
     const pro = await planIsPro(req.user.domain, req.user.email);
-    const data = await getUserMeetingHistory(req.user.domain, req.user.email, {
-      limit: pro ? null : FREE_HISTORY_LIMIT,
-    });
-    res.json({ ...data, isPro: !!pro });
+    const [data, teamSignpost] = await Promise.all([
+      getUserMeetingHistory(req.user.domain, req.user.email, { limit: pro ? null : FREE_HISTORY_LIMIT }),
+      buildTeamSignpost(req.user.domain, req.user.email),
+    ]);
+    res.json({ ...data, isPro: !!pro, teamSignpost });
   } catch (err) {
     log.error('history: fetch failed', { error: err.message, email: req.user.email });
     res.status(500).json({ error: 'Failed to fetch history' });
+  }
+});
+
+// POST /api/history/signpost-dismiss — the team signpost was dismissed. One
+// tap, remembered forever; buildTeamSignpost never returns it again.
+router.post('/history/signpost-dismiss', requireAuth, async (req, res) => {
+  try {
+    await setTeamSignpostDismissed(req.user.domain, req.user.email);
+    res.json({ success: true });
+  } catch (err) {
+    log.error('history: signpost-dismiss failed', { error: err.message });
+    res.status(500).json({ error: 'Failed to dismiss' });
   }
 });
 

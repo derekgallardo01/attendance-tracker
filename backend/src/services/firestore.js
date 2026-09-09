@@ -808,6 +808,35 @@ async function getTenantAdminEmailStrict(domain) {
   };
 }
 
+// LIVE count of distinct teachers (user docs = distinct emails) on a domain,
+// for the team signpost. Uses a count() aggregation — computed fresh per call
+// (real-time, no cache) and cheap (never reads the docs). Personal-email
+// tenants are shared by strangers, so a count there is meaningless — return 0.
+async function getDomainTeacherCount(domain) {
+  try {
+    const domainLower = (domain || '').toLowerCase();
+    if (PERSONAL_EMAIL_DOMAINS.has(domainLower)) return 0;
+    const agg = await tenantRef(domain).collection('users').count().get();
+    return agg.data().count || 0;
+  } catch (err) {
+    log.warn('firestore: getDomainTeacherCount failed', { domain, error: err.message });
+    return 0; // fail closed — no signpost rather than a wrong number
+  }
+}
+
+// The user dismissed the team signpost — remember it forever (per the spec:
+// one tap, never shown again). Stamped on the user doc.
+async function setTeamSignpostDismissed(domain, email) {
+  try {
+    await tenantRef(domain).collection('users').doc(email.toLowerCase()).set(
+      { teamSignpostDismissedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() },
+      { merge: true }
+    );
+  } catch (err) {
+    log.error('firestore: setTeamSignpostDismissed failed', { domain, email, error: err.message });
+  }
+}
+
 // The user dismissed the "how did you find us?" modal — remember that so
 // sign-in/status endpoints stop re-arming it every session. A dismissal is
 // weaker than an answer: setUserAcquisitionSource can still overwrite later.
@@ -2013,6 +2042,7 @@ module.exports = {
   getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens,
   getUserSettings, updateUserSettings,
   setUserAcquisitionSource, setUserAcquisitionDismissed, setPostExportSurvey, claimSignupNotification, releaseSignupNotification, getTenantAdminEmailStrict,
+  getDomainTeacherCount, setTeamSignpostDismissed,
   claimReferral, releaseReferral, recordReferralForInviter, recordReferralPromoCode, getUserTrackingStreak,
   claimWebhookEvent, releaseWebhookEvent,
   logEvent,

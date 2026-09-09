@@ -15,6 +15,10 @@ jest.mock('../../src/services/firestore', () => ({
   getUser: jest.fn(),
   updateUserTokens: jest.fn(),
   getTenantPlan: jest.fn(), // used by billing.planIsPro when billing is configured
+  getTenantConfig: jest.fn(),
+  getDomainTeacherCount: jest.fn(),
+  setTeamSignpostDismissed: jest.fn(),
+  revokeShareLink: jest.fn(),
 }));
 
 const firestore = require('../../src/services/firestore');
@@ -27,6 +31,10 @@ beforeEach(() => {
   // Share endpoint verifies the caller tracked the series — default to owning
   // the ids used across these tests.
   firestore.getUserMeetingSeries.mockResolvedValue({ series: [{ recurringEventId: 'series-x' }, { recurringEventId: 'r' }] });
+  // Signpost defaults: eligible domain, not dismissed, not pro, small cluster.
+  firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+  firestore.getTenantConfig.mockResolvedValue(null);
+  firestore.getDomainTeacherCount.mockResolvedValue(0);
   app = buildApp();
 });
 
@@ -45,6 +53,56 @@ describe('GET /api/history', () => {
       .set(authedHeader('user@acme.com', 'acme.com'));
     expect(res.status).toBe(200);
     expect(firestore.getUserMeetingHistory).toHaveBeenCalledWith('acme.com', 'user@acme.com', { limit: null });
+  });
+
+  test('team signpost: present when 3+ teachers, free, not dismissed', async () => {
+    firestore.getUserMeetingHistory.mockResolvedValue({ meetings: [], people: [], calendar: [], totalMeetings: 0 });
+    firestore.getDomainTeacherCount.mockResolvedValue(4);
+    firestore.getTenantConfig.mockResolvedValue({ adminEmail: 'boss@acme.com' });
+    const res = await request(app).get('/api/history').set(authedHeader('user@acme.com', 'acme.com'));
+    expect(res.status).toBe(200);
+    expect(res.body.teamSignpost).toEqual({ domain: 'acme.com', teacherCount: 4, isTeamAdmin: false });
+  });
+
+  test('team signpost: null below the 3-teacher threshold', async () => {
+    firestore.getUserMeetingHistory.mockResolvedValue({ meetings: [], people: [], calendar: [], totalMeetings: 0 });
+    firestore.getDomainTeacherCount.mockResolvedValue(2);
+    const res = await request(app).get('/api/history').set(authedHeader('user@acme.com', 'acme.com'));
+    expect(res.body.teamSignpost).toBeNull();
+  });
+
+  test('team signpost: null once dismissed, null on a Pro domain, isTeamAdmin flips phrasing', async () => {
+    firestore.getUserMeetingHistory.mockResolvedValue({ meetings: [], people: [], calendar: [], totalMeetings: 0 });
+    firestore.getDomainTeacherCount.mockResolvedValue(9);
+    // dismissed
+    firestore.getUser.mockResolvedValue({ email: 'user@acme.com', domain: 'acme.com', teamSignpostDismissedAt: 'x' });
+    let res = await request(app).get('/api/history').set(authedHeader('user@acme.com', 'acme.com'));
+    expect(res.body.teamSignpost).toBeNull();
+    // pro domain
+    firestore.getUser.mockResolvedValue({ email: 'user@acme.com', domain: 'acme.com' });
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'pro' });
+    res = await request(app).get('/api/history').set(authedHeader('user@acme.com', 'acme.com'));
+    expect(res.body.teamSignpost).toBeNull();
+    // team admin → isTeamAdmin true
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getTenantConfig.mockResolvedValue({ adminEmail: 'user@acme.com' });
+    res = await request(app).get('/api/history').set(authedHeader('user@acme.com', 'acme.com'));
+    expect(res.body.teamSignpost.isTeamAdmin).toBe(true);
+  });
+
+  test('team signpost: never on a personal (shared) domain', async () => {
+    firestore.getUserMeetingHistory.mockResolvedValue({ meetings: [], people: [], calendar: [], totalMeetings: 0 });
+    firestore.getDomainTeacherCount.mockResolvedValue(50); // even with a huge count
+    const res = await request(app).get('/api/history').set(authedHeader('teacher@gmail.com', 'gmail.com'));
+    expect(res.body.teamSignpost).toBeNull();
+    expect(firestore.getDomainTeacherCount).not.toHaveBeenCalledWith('gmail.com');
+  });
+
+  test('POST /history/signpost-dismiss persists and 200s', async () => {
+    firestore.setTeamSignpostDismissed.mockResolvedValue(undefined);
+    const res = await request(app).post('/api/history/signpost-dismiss').set(authedHeader('u@acme.com', 'acme.com'));
+    expect(res.status).toBe(200);
+    expect(firestore.setTeamSignpostDismissed).toHaveBeenCalledWith('acme.com', 'u@acme.com');
   });
 
   test('500 when getUserMeetingHistory throws', async () => {
