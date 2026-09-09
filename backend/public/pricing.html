@@ -510,14 +510,14 @@
         <span>Attendance Tracker</span>
       </a>
       <div class="nav-links">
-        <a href="/">Home</a>
-        <a href="pricing.html" class="active">Pricing</a>
-        <a href="faq.html">Help Center &amp; FAQ</a>
-        <a href="support.html">Support</a>
+        <a href="/" data-i18n="pricing.navHome">Home</a>
+        <a href="pricing.html" class="active" data-i18n="pricing.navPricing">Pricing</a>
+        <a href="faq.html" data-i18n="pricing.navHelp">Help Center &amp; FAQ</a>
+        <a href="support.html" data-i18n="pricing.navSupport">Support</a>
         <select id="pricing-lang-select" class="nav-links-select" style="background:#161b22;color:#e6edf3;border:1px solid #30363d;border-radius:20px;padding:6px 12px;font-size:0.82rem;font-family:inherit;cursor:pointer" onchange="onPricingLangChange(this.value)"></select>
         <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" class="nav-cta">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-          Install Free
+          <span data-i18n="pricing.navInstall">Install Free</span>
         </a>
       </div>
     </div>
@@ -639,15 +639,15 @@
         <ul class="plan-features">
           <li>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            <span><strong>Unlimited</strong> Google Sheets exports</span>
+            <span data-i18n="pricing.featureUnlimitedExports">Unlimited Google Sheets exports</span>
           </li>
           <li>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            <span><strong>Hands-Free Auto-Capture</strong> when meeting ends</span>
+            <span data-i18n="pricing.featureAutoCapture">Hands-Free Auto-Capture when meeting ends</span>
           </li>
           <li>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            <span>Cumulative <strong>Class Summary</strong> multi-session reports</span>
+            <span data-i18n="pricing.featureClassSummary">Cumulative Class Summary multi-session reports</span>
           </li>
           <li>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -772,35 +772,35 @@
     <!-- Why Attendance Tracker Beats Chrome Extensions Comparison -->
     <div class="comparison-card" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;margin-bottom:40px">
       <div style="text-align:center;margin-bottom:24px">
-        <span style="font-size:0.75rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.08em">Built Different</span>
-        <h2 style="font-size:1.4rem;font-weight:700;color:var(--text);margin:6px 0 8px">Why Attendance Tracker Beats Generic Chrome Extensions</h2>
-        <p style="font-size:0.88rem;color:var(--muted);max-width:620px;margin:0 auto">Chrome extensions scrape Google Meet's web page and break whenever Google updates its code. Attendance Tracker is an official Google Workspace Add-on built on the native Google Meet SDK.</p>
+        <span style="font-size:0.75rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.08em" data-i18n="pricing.builtDiffEyebrow">Built Different</span>
+        <h2 style="font-size:1.4rem;font-weight:700;color:var(--text);margin:6px 0 8px" data-i18n="pricing.builtDiffTitle">Why Attendance Tracker Beats Generic Chrome Extensions</h2>
+        <p style="font-size:0.88rem;color:var(--muted);max-width:620px;margin:0 auto" data-i18n="pricing.builtDiffSub">Chrome extensions scrape Google Meet's web page and break whenever Google updates its code. Attendance Tracker is an official Google Workspace Add-on built on the native Google Meet SDK.</p>
       </div>
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px">
         <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;padding:18px">
-          <div style="font-weight:700;color:#fff;font-size:0.95rem;margin-bottom:6px">Official Google Meet Add-on</div>
-          <div style="font-size:0.82rem;color:var(--muted);line-height:1.5">Zero DOM-scraping. Runs natively inside Google Meet across Chrome, Edge, Safari, Firefox, Mac, Windows, and Chromebooks without installing browser extensions.</div>
+          <div style="font-weight:700;color:#fff;font-size:0.95rem;margin-bottom:6px" data-i18n="pricing.cmp1Title">Official Google Meet Add-on</div>
+          <div style="font-size:0.82rem;color:var(--muted);line-height:1.5" data-i18n="pricing.cmp1Body">Zero DOM-scraping. Runs natively inside Google Meet across Chrome, Edge, Safari, Firefox, Mac, Windows, and Chromebooks without installing browser extensions.</div>
         </div>
         <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;padding:18px">
-          <div style="font-weight:700;color:#fff;font-size:0.95rem;margin-bottom:6px">Cumulative Semester Tracking</div>
-          <div style="font-size:0.82rem;color:var(--muted);line-height:1.5">Automatically tracks recurring class series into a single unified Google Sheet with cumulative per-student attendance rates over the entire semester.</div>
+          <div style="font-weight:700;color:#fff;font-size:0.95rem;margin-bottom:6px" data-i18n="pricing.cmp2Title">Cumulative Semester Tracking</div>
+          <div style="font-size:0.82rem;color:var(--muted);line-height:1.5" data-i18n="pricing.cmp2Body">Automatically tracks recurring class series into a single unified Google Sheet with cumulative per-student attendance rates over the entire semester.</div>
         </div>
         <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;padding:18px">
-          <div style="font-weight:700;color:#fff;font-size:0.95rem;margin-bottom:6px">True Auto-Export on Call End</div>
-          <div style="font-size:0.82rem;color:var(--muted);line-height:1.5">Never worry about forgetting to click export. Pro automatically saves the attendance sheet to your Google Drive the moment class concludes.</div>
+          <div style="font-weight:700;color:#fff;font-size:0.95rem;margin-bottom:6px" data-i18n="pricing.cmp3Title">True Auto-Export on Call End</div>
+          <div style="font-size:0.82rem;color:var(--muted);line-height:1.5" data-i18n="pricing.cmp3Body">Never worry about forgetting to click export. Pro automatically saves the attendance sheet to your Google Drive the moment class concludes.</div>
         </div>
         <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;padding:18px">
-          <div style="font-weight:700;color:#fff;font-size:0.95rem;margin-bottom:6px">1-Click CSV &amp; Class Rosters</div>
-          <div style="font-size:0.82rem;color:var(--muted);line-height:1.5">Paste class student lists (or import them from Google Classroom), set attendance thresholds, track Present vs Late vs Absent, and download instant CSV or Moodle/Canvas gradebook reports.</div>
+          <div style="font-weight:700;color:#fff;font-size:0.95rem;margin-bottom:6px" data-i18n="pricing.cmp4Title">1-Click CSV &amp; Class Rosters</div>
+          <div style="font-size:0.82rem;color:var(--muted);line-height:1.5" data-i18n="pricing.cmp4Body">Paste class student lists (or import them from Google Classroom), set attendance thresholds, track Present vs Late vs Absent, and download instant CSV or Moodle/Canvas gradebook reports.</div>
         </div>
         <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;padding:18px">
-          <div style="font-weight:700;color:#fff;font-size:0.95rem;margin-bottom:6px">30 Localized Languages</div>
-          <div style="font-size:0.82rem;color:var(--muted);line-height:1.5">Native translations for 30 languages — including Spanish, Portuguese, Hindi, Tagalog, Indonesian, Vietnamese, Arabic, French, German, Japanese, Korean, Chinese, Russian, Turkish, and more.</div>
+          <div style="font-weight:700;color:#fff;font-size:0.95rem;margin-bottom:6px" data-i18n="pricing.cmp5Title">30 Localized Languages</div>
+          <div style="font-size:0.82rem;color:var(--muted);line-height:1.5" data-i18n="pricing.cmp5Body">Native translations for 30 languages — including Spanish, Portuguese, Hindi, Tagalog, Indonesian, Vietnamese, Arabic, French, German, Japanese, Korean, Chinese, Russian, Turkish, and more.</div>
         </div>
         <div style="background:rgba(74,222,128,0.05);border:1px solid rgba(74,222,128,0.3);border-radius:12px;padding:18px">
-          <div style="font-weight:700;color:var(--accent);font-size:0.95rem;margin-bottom:6px">Disruptive One-Time Pricing</div>
-          <div style="font-size:0.82rem;color:#c9d1d9;line-height:1.5">No predatory recurring billing — a lifetime pass is a single charge with nothing to cancel, ever. Get Lifetime Pro for $9.99 or an entire School Domain License for $19.99 instead of paying $80-$100 every year.</div>
+          <div style="font-weight:700;color:var(--accent);font-size:0.95rem;margin-bottom:6px" data-i18n="pricing.cmp6Title">Disruptive One-Time Pricing</div>
+          <div style="font-size:0.82rem;color:#c9d1d9;line-height:1.5" data-i18n="pricing.cmp6Body">No predatory recurring billing — a lifetime pass is a single charge with nothing to cancel, ever. Get Lifetime Pro for $9.99 or an entire School Domain License for $19.99 instead of paying $80-$100 every year.</div>
         </div>
       </div>
     </div>
@@ -823,10 +823,9 @@
 
     <!-- Fineprint & Compliance -->
     <p class="pricing-fineprint">
-      Prices are in USD and exclusive of any applicable local sales taxes. Lifetime passes are pay-once with no recurring charges.
-      Payments are securely processed by Stripe and billed by Kinetic Helix LLC, operator of Attendance Tracker.
-      See our <a href="refunds.html">Refund &amp; Cancellation Policy</a> and <a href="terms.html">Terms of Service</a>.
-      Questions? Reach us at <a href="mailto:derek@attendancetracker.dev">derek@attendancetracker.dev</a>.
+      <span data-i18n="pricing.fineprintBody">Prices are in USD and exclusive of any applicable local sales taxes. Lifetime passes are pay-once with no recurring charges. Payments are securely processed by Stripe and billed by Kinetic Helix LLC, operator of Attendance Tracker.</span>
+      <span data-i18n="pricing.fineprintSee">See our</span> <a href="refunds.html" data-i18n="pricing.fineprintRefund">Refund &amp; Cancellation Policy</a> <span data-i18n="pricing.fineprintAnd">and</span> <a href="terms.html" data-i18n="pricing.fineprintTerms">Terms of Service</a>.
+      <span data-i18n="pricing.fineprintQuestions">Questions? Reach us at</span> <a href="mailto:derek@attendancetracker.dev">derek@attendancetracker.dev</a>.
     </p>
 
   </div>
@@ -834,16 +833,16 @@
   <!-- Footer -->
   <footer>
     <div class="footer-links">
-      <a href="/">Home</a>
-      <a href="pricing.html">Pricing</a>
-      <a href="faq.html">Help Center &amp; FAQ</a>
-      <a href="privacy.html">Privacy Policy</a>
-      <a href="terms.html">Terms of Service</a>
-      <a href="refunds.html">Refund Policy</a>
-      <a href="support.html">Contact Support</a>
+      <a href="/" data-i18n="pricing.navHome">Home</a>
+      <a href="pricing.html" data-i18n="pricing.navPricing">Pricing</a>
+      <a href="faq.html" data-i18n="pricing.navHelp">Help Center &amp; FAQ</a>
+      <a href="privacy.html" data-i18n="pricing.footerPrivacy">Privacy Policy</a>
+      <a href="terms.html" data-i18n="pricing.footerTerms">Terms of Service</a>
+      <a href="refunds.html" data-i18n="pricing.footerRefunds">Refund Policy</a>
+      <a href="support.html" data-i18n="pricing.footerSupport">Contact Support</a>
     </div>
     <div class="copyright">
-      &copy; 2026 Kinetic Helix LLC. Attendance Tracker for Google Meet™. All rights reserved.
+      <span data-i18n="pricing.copyright">&copy; 2026 Kinetic Helix LLC. Attendance Tracker for Google Meet™. All rights reserved.</span>
     </div>
   </footer>
 
@@ -990,7 +989,7 @@
       if (plan !== 'team' && plan !== 'institution') return true;
       if (getStoredToken()) return true; // authed checkout derives the domain server-side
       if (_checkoutEmail && _checkoutEmail.includes('@')) return true;
-      const entered = window.prompt('Enter your WORK email (it tells us which Google Workspace domain to activate):', _checkoutEmail || '');
+      const entered = window.prompt(t('pricing.workEmailPrompt', 'Enter your WORK email (it tells us which Google Workspace domain to activate):'), _checkoutEmail || '');
       if (!entered || !entered.includes('@')) return false;
       _checkoutEmail = entered.trim().toLowerCase();
       return true;
@@ -1001,7 +1000,7 @@
       if (!ensureTeamEmail(plan)) return;
       const origText = btn.innerHTML;
       btn.disabled = true;
-      btn.innerHTML = '<span>Connecting to Stripe…</span>';
+      btn.innerHTML = `<span>${t('pricing.connectingStripe', 'Connecting to Stripe…')}</span>`;
 
       // Institution is the annual org tier: sold at list price (no LAUNCH50
       // auto-apply — the empty promo tells the backend to skip it), billed on
@@ -1057,9 +1056,9 @@
           window.location.href = data.url;
           return;
         }
-        alert(data.error || 'Billing checkout is currently unavailable. Please try again or email support.');
+        alert(data.error || t('pricing.checkoutUnavailable', 'Billing checkout is currently unavailable. Please try again or email support.'));
       } catch (err) {
-        alert('Could not reach billing service. Please check your internet connection.');
+        alert(t('pricing.checkoutNetwork', 'Could not reach billing service. Please check your internet connection.'));
       } finally {
         btn.disabled = false;
         btn.innerHTML = origText;
