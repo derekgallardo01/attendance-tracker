@@ -102,12 +102,15 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
       }
     }
 
-    // `??` not `||`: an explicit empty promo must skip the LAUNCH50 auto-apply.
-    // Defense-in-depth: the Institution/annual domain price never carries the
-    // launch discount, whatever the client sends.
-    const resolvesToInstitution = isTeamPlan && annual && priceId === process.env.STRIPE_ANNUAL_PRICE_ID;
-    const promo = resolvesToInstitution ? '' : (req.body.promo ?? 'LAUNCH50').toUpperCase();
-    const LAUNCH_PROMO_ID = process.env.STRIPE_LAUNCH_PROMO_CODE || 'promo_1UBiZORPP93YBXrOlZdFv8zM';
+    // Prices are the real selling prices now — LAUNCH50 is retired. A CLEAN
+    // Checkout Session (no `discounts`, and no `allow_promotion_codes` unless a
+    // real code is passed) is what lets Stripe Adaptive Pricing present local
+    // currency + local payment methods (UPI, wallets, …) to PPP buyers; a
+    // `discounts` param or an open promo box suppresses Adaptive Pricing.
+    // Ignore a stale `LAUNCH50` from an old cached client. An explicit
+    // referral/promo code still opens the promo box for that one checkout
+    // (Adaptive Pricing off there — a fair trade for the discount).
+    const promo = (req.body.promo ?? '').trim().toUpperCase();
 
     const sessionParams = {
       mode: isRecurring ? 'subscription' : 'payment',
@@ -118,9 +121,7 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
       cancel_url: `${CONFIG.publicSiteUrl}/${backTo}`,
       metadata: meta,
     };
-    if (promo === 'LAUNCH50' && LAUNCH_PROMO_ID) {
-      sessionParams.discounts = [{ promotion_code: LAUNCH_PROMO_ID }];
-    } else {
+    if (promo && promo !== 'LAUNCH50') {
       sessionParams.allow_promotion_codes = true;
     }
     if (isRecurring) {
@@ -214,14 +215,11 @@ router.post('/billing/public-checkout', async (req, res) => {
       ...(isTeam && email ? { domain: email.split('@')[1] } : {}),
     };
 
-    // `??` not `||`: an explicit empty promo ('' from the Institution card)
-    // must SKIP the LAUNCH50 auto-apply and re-enable the promo-code box.
-    // Defense-in-depth: whenever the resolved price IS the Institution/annual
-    // domain price, force-skip LAUNCH50 regardless of what the client sent —
-    // the Institution tier never carries the launch discount.
-    const resolvesToInstitution = isTeam && annual && priceId === process.env.STRIPE_ANNUAL_PRICE_ID;
-    const promo = resolvesToInstitution ? '' : (req.body?.promo ?? 'LAUNCH50').toUpperCase();
-    const LAUNCH_PROMO_ID = process.env.STRIPE_LAUNCH_PROMO_CODE || 'promo_1UBiZORPP93YBXrOlZdFv8zM';
+    // Real selling prices now — LAUNCH50 retired. Clean session (no discounts,
+    // no promo box unless a real code is passed) so Stripe Adaptive Pricing can
+    // present local currency + rails to PPP buyers. See the authed checkout
+    // above for the full rationale. Ignore a stale LAUNCH50 from cached clients.
+    const promo = (req.body?.promo ?? '').trim().toUpperCase();
 
     const sessionParams = {
       mode: isRecurring ? 'subscription' : 'payment',
@@ -234,9 +232,7 @@ router.post('/billing/public-checkout', async (req, res) => {
       sessionParams.customer_email = email;
       sessionParams.client_reference_id = isTeam ? email.split('@')[1] : `user:${email}`;
     }
-    if (promo === 'LAUNCH50' && LAUNCH_PROMO_ID) {
-      sessionParams.discounts = [{ promotion_code: LAUNCH_PROMO_ID }];
-    } else {
+    if (promo && promo !== 'LAUNCH50') {
       sessionParams.allow_promotion_codes = true;
     }
     if (isRecurring) {

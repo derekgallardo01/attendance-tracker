@@ -747,11 +747,36 @@ describe('public-checkout team provisioning guard', () => {
     expect(params.client_reference_id).toBe('acme.com');
   });
 
-  test('an explicit empty promo skips the LAUNCH50 auto-apply and re-enables the code box', async () => {
+  test('no promo → CLEAN session (no discounts, no promo box) so Adaptive Pricing can present local currency', async () => {
+    // LAUNCH50 is retired and prices are the real selling prices. A clean
+    // session (neither `discounts` nor `allow_promotion_codes`) is required for
+    // Stripe Adaptive Pricing to show local currency + rails to PPP buyers.
     mockStripeInstance.prices.retrieve.mockResolvedValue({ id: 'p', type: 'recurring', recurring: {} });
     const res = await request(app).post('/api/billing/public-checkout')
       .set('Content-Type', 'application/json')
-      .send({ plan: 'educator', promo: '' });
+      .send({ plan: 'educator' });
+    expect(res.status).toBe(200);
+    const params = mockStripeInstance.checkout.sessions.create.mock.calls[0][0];
+    expect(params.discounts).toBeUndefined();
+    expect(params.allow_promotion_codes).toBeUndefined();
+  });
+
+  test('a stale LAUNCH50 from an old cached client is ignored (still a clean session)', async () => {
+    mockStripeInstance.prices.retrieve.mockResolvedValue({ id: 'p', type: 'recurring', recurring: {} });
+    const res = await request(app).post('/api/billing/public-checkout')
+      .set('Content-Type', 'application/json')
+      .send({ plan: 'educator', promo: 'LAUNCH50' });
+    expect(res.status).toBe(200);
+    const params = mockStripeInstance.checkout.sessions.create.mock.calls[0][0];
+    expect(params.discounts).toBeUndefined();
+    expect(params.allow_promotion_codes).toBeUndefined(); // LAUNCH50 no longer opens the box
+  });
+
+  test('an explicit referral/promo code opens the promo box for that checkout', async () => {
+    mockStripeInstance.prices.retrieve.mockResolvedValue({ id: 'p', type: 'recurring', recurring: {} });
+    const res = await request(app).post('/api/billing/public-checkout')
+      .set('Content-Type', 'application/json')
+      .send({ plan: 'educator', promo: 'REF-ABC123' });
     expect(res.status).toBe(200);
     const params = mockStripeInstance.checkout.sessions.create.mock.calls[0][0];
     expect(params.discounts).toBeUndefined();
@@ -772,20 +797,18 @@ describe('public-checkout team provisioning guard', () => {
     delete process.env.STRIPE_ANNUAL_PRICE_ID;
   });
 
-  test('Institution (team + annual) never auto-applies LAUNCH50, even when no explicit promo is sent', async () => {
+  test('Institution (team + annual) is a clean session — no discount ever applied', async () => {
     process.env.STRIPE_ANNUAL_PRICE_ID = 'price_institution_149';
-    process.env.STRIPE_LAUNCH_PROMO_CODE = 'promo_launch';
     mockStripeInstance.prices.retrieve.mockResolvedValue({ id: 'price_institution_149', type: 'recurring', recurring: { interval: 'year' } });
     const res = await request(app).post('/api/billing/public-checkout')
       .set('Content-Type', 'application/json')
-      .send({ plan: 'team', interval: 'annual', email: 'admin@acme.com' }); // NO promo field
+      .send({ plan: 'team', interval: 'annual', email: 'admin@acme.com' });
     expect(res.status).toBe(200);
     const params = mockStripeInstance.checkout.sessions.create.mock.calls[0][0];
     expect(params.line_items[0].price).toBe('price_institution_149');
-    expect(params.discounts).toBeUndefined();       // LAUNCH50 NOT applied
-    expect(params.allow_promotion_codes).toBe(true); // promo box left open instead
+    expect(params.discounts).toBeUndefined();
+    expect(params.allow_promotion_codes).toBeUndefined();
     delete process.env.STRIPE_ANNUAL_PRICE_ID;
-    delete process.env.STRIPE_LAUNCH_PROMO_CODE;
   });
 });
 

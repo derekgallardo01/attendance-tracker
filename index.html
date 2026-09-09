@@ -4123,7 +4123,7 @@ async function startUpgradeCheckout(plan, btnId) {
       headers: { 'Content-Type': 'application/json' },
       // The domain card is ONE-TIME ($19.99): team+annual resolves to the $149
       // Institution price server-side, so team must send interval 'once'.
-      body: JSON.stringify({ plan: plan || 'lifetime', interval: plan === 'team' ? 'once' : 'annual', promo: 'LAUNCH50' }),
+      body: JSON.stringify({ plan: plan || 'lifetime', interval: plan === 'team' ? 'once' : 'annual' }),
     });
     const data = await res.json().catch(() => ({}));
     if (res.ok && data.url) {
@@ -4224,12 +4224,12 @@ function showUpgradeModal(reason) {
   const dealPill = document.getElementById('upgrade-deal-pill');
   if (dealPill) {
     if (isEdu) {
-      dealPill.innerHTML = '<span>Verified Educator Deal · 50% Off Applied</span>';
+      dealPill.innerHTML = '<span>Educator plan · verifiable certificates included</span>';
       dealPill.style.background = 'rgba(74,222,128,.14)';
       dealPill.style.borderColor = 'rgba(74,222,128,.35)';
       dealPill.style.color = '#4ade80';
     } else {
-      dealPill.innerHTML = '<span>Limited Time Launch Deal · 50% Off</span>';
+      dealPill.innerHTML = '<span>One-time payment · yours forever, nothing to cancel</span>';
       dealPill.style.background = 'rgba(253,214,99,.12)';
       dealPill.style.borderColor = 'rgba(253,214,99,.25)';
       dealPill.style.color = '#fdd663';
@@ -6319,9 +6319,9 @@ window.addEventListener('DOMContentLoaded', () => {
     <div style="background:#1e1f20;border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:24px;max-width:380px;width:100%;box-shadow:0 24px 48px rgba(0,0,0,.6);position:relative;font-family:var(--font-sans);max-height:90vh;overflow-y:auto">
       <button type="button" onclick="closeUpgradeModal()" aria-label="Close" style="position:absolute;top:16px;right:16px;background:none;border:none;color:#9aa0a6;cursor:pointer;font-size:16px;line-height:1;padding:4px;border-radius:50%">&times;</button>
 
-      <!-- Top Deal Pill -->
+      <!-- Top value pill (repainted per user in showUpgradeModal) -->
       <div id="upgrade-deal-pill" style="display:inline-flex;align-items:center;gap:6px;background:rgba(253,214,99,.12);border:1px solid rgba(253,214,99,.25);color:#fdd663;padding:4px 10px;border-radius:20px;font-size:.72rem;font-weight:600;margin-bottom:12px;letter-spacing:.02em">
-        <span>Limited Time Launch Deal · 50% Off</span>
+        <span>One-time payment · yours forever, nothing to cancel</span>
       </div>
 
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
