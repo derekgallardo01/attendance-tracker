@@ -4266,6 +4266,9 @@ async function startUpgradeCheckout(plan, btnId) {
     });
     const data = await res.json().catch(() => ({}));
     if (res.ok && data.url) {
+      // A click that actually reached a Stripe session — the funnel stage
+      // between upgrade_checkout_clicked and the webhook's 'upgraded'.
+      try { logUserEvent('checkout_started', { plan: plan || 'lifetime', reason: state._lastUpgradeReason || 'modal' }); } catch {}
       if (navigateBillingTab(tab, data.url)) watchForUpgradeCompletion();
       return;
     }

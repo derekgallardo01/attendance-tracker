@@ -31,6 +31,7 @@ const FRONTEND_EVENT_TYPES = new Set([
   'upgrade_modal_shown',
   'upgrade_modal_dismissed',
   'upgrade_checkout_clicked',
+  'checkout_started', // a click that actually reached a Stripe session
   'checkout_open_blocked', // browser ate the checkout tab — highest-value loss signal
   // Marketplace review funnel
   'review_ask_shown',

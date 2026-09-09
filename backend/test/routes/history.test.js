@@ -176,7 +176,7 @@ describe('POST /api/event — frontend event logging', () => {
   });
 
   test.each([
-    'export_clicked', 'export_failed', 'export_cancelled', 'export_skipped',
+    'export_clicked', 'export_failed', 'export_cancelled', 'export_skipped', 'checkout_started',
     'source_prompt_shown', 'source_prompt_dismissed',
     'upgrade_modal_shown', 'upgrade_modal_dismissed', 'upgrade_checkout_clicked',
     'review_ask_shown', 'review_ask_clicked', 'review_ask_dismissed', 'review_link_clicked',

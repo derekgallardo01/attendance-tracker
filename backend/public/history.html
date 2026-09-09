@@ -491,6 +491,9 @@
     // from the caller's domain, charging something other than what the button
     // said (a subscription for gmail users, the $19.99 domain plan for others).
     async function upgradeFromHistory(btn, plan) {
+      // Conversion telemetry parity with the panel's startUpgradeCheckout —
+      // without this, history-page upgrade intent was invisible in the funnel.
+      try { logHistoryEvent('upgrade_checkout_clicked', { plan: plan || 'lifetime', reason: 'history_page' }); } catch (e) {}
       // Preserve innerHTML (the banner button holds a .price-lifetime span);
       // a failed checkout previously restored a hardcoded English literal,
       // wiping the price and any translation.

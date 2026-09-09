@@ -296,6 +296,14 @@
     }
 
     async function startUpgrade() {
+      // Conversion telemetry (mirrors the panel + history page) — fire-and-forget.
+      try {
+        fetch(`${BACKEND_URL}/event`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}` },
+          body: JSON.stringify({ type: 'upgrade_checkout_clicked', meta: { plan: 'team', reason: 'team_page' } }),
+        }).catch(() => {});
+      } catch (e) {}
       const btn = document.getElementById('upgrade-btn');
       if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
       try {
