@@ -319,8 +319,9 @@ describe('no "wired but English-valued" keys (translation-content guard)', () =>
   //  - brand / product-tier proper nouns kept in English on purpose.
   const isAllowed = (key) =>
     key.startsWith('lang.') ||
-    key === 'source.marketplace' ||        // "Workspace Marketplace" (Google product name)
-    key === 'pricing.planDomainName';       // "Domain Pro" tier — kept as a brand label
+    key === 'source.marketplace' ||          // "Workspace Marketplace" (Google product name)
+    key === 'pricing.planDomainName' ||      // "Domain Pro" tier — kept as a brand label
+    key === 'roster.studentsPlaceholder';    // example names/emails — locale-invariant sample text
 
   test('every non-allowlisted key is translated (not English-valued) in the locales', () => {
     const offenders = [];

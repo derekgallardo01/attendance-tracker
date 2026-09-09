@@ -1483,9 +1483,9 @@
       <option value="duration" data-i18n="sort.duration">Sort: Duration</option>
     </select>
     <select id="filter-select" onchange="renderList()" style="flex:1;background:#0d1117;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-size:.7rem">
-      <option value="all">Show: All</option>
-      <option value="present">Present only</option>
-      <option value="left">Left only</option>
+      <option value="all" data-i18n="filter.showAll">Show: All</option>
+      <option value="present" data-i18n="filter.presentOnly">Present only</option>
+      <option value="left" data-i18n="filter.leftOnly">Left only</option>
     </select>
     <select id="group-select" onchange="renderList()" style="flex:1;background:#0d1117;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-size:.7rem">
       <option value="none" data-i18n="group.none">Group: None</option>
@@ -1545,14 +1545,14 @@
     <div style="margin:10px 0;padding-bottom:10px;border-bottom:1px solid var(--border)">
       <!-- Class picker gets its own full-width row so the class name is never truncated on the narrow panel -->
       <select id="roster-select" onchange="onRosterSelected(this.value)" style="width:100%;min-width:0;background:#0d1117;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 8px;font-size:.78rem;margin-bottom:8px">
-        <option value="">Choose class…</option>
+        <option value="" data-i18n="roster.choose">Choose class…</option>
       </select>
       <div style="display:flex;align-items:center;gap:6px">
         <button type="button" class="btn-secondary" onclick="openRosterModal(false)" style="flex:1;padding:6px 10px;font-size:.74rem;white-space:nowrap;font-weight:600" data-i18n="roster.newClass">+ New Class</button>
         <!-- flex:0 0 auto overrides the global `button { flex:1 }` so these
              size to their content instead of stretching across the row. -->
         <button type="button" class="btn-secondary" id="btn-edit-roster" onclick="editCurrentRoster()" style="display:none;flex:0 0 auto;padding:6px 14px;font-size:.74rem" data-i18n="common.edit">Edit</button>
-        <button type="button" class="btn-secondary" id="btn-delete-roster" onclick="deleteCurrentRoster()" style="display:none;flex:0 0 auto;padding:6px 12px;font-size:.74rem;color:#f87171" title="Delete class">×</button>
+        <button type="button" class="btn-secondary" id="btn-delete-roster" onclick="deleteCurrentRoster()" style="display:none;flex:0 0 auto;padding:6px 12px;font-size:.74rem;color:#f87171" data-i18n-title="roster.deleteClass" title="Delete class">×</button>
       </div>
     </div>
 
@@ -1736,10 +1736,10 @@ function populateRosterDropdown() {
   if (!sel) return;
   const names = Object.keys(state.rosters || {});
   const cur = state.activeRosterName || '';
-  sel.innerHTML = '<option value="">Choose class…</option>' +
+  sel.innerHTML = `<option value="">${escHtml(t('roster.choose', 'Choose class…'))}</option>` +
     names.map(n => {
       const count = (state.rosters[n] || []).length;
-      return `<option value="${escHtml(n)}" ${n === cur ? 'selected' : ''}>${escHtml(n)} (${count} students)</option>`;
+      return `<option value="${escHtml(n)}" ${n === cur ? 'selected' : ''}>${escHtml(n)} (${count} ${escHtml(t('roster.students', 'students'))})</option>`;
     }).join('');
 }
 
@@ -2150,19 +2150,19 @@ function renderRosterView() {
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
             </svg>
           </div>
-          <div style="font-weight:700;color:#e6edf3;font-size:.92rem;margin-bottom:6px">No class rosters yet</div>
-          <p style="font-size:.76rem;color:#8b949e;line-height:1.45;max-width:270px;margin:0 auto 14px">Paste your student list once to automatically detect who is Present, Late, or Absent in real time.</p>
+          <div style="font-weight:700;color:#e6edf3;font-size:.92rem;margin-bottom:6px">${t('roster.emptyTitle', 'No class rosters yet')}</div>
+          <p style="font-size:.76rem;color:#8b949e;line-height:1.45;max-width:270px;margin:0 auto 14px">${t('roster.emptyDesc', 'Paste your student list once to automatically detect who is Present, Late, or Absent in real time.')}</p>
           <button type="button" class="btn-primary" onclick="openRosterModal(false)" style="margin:0 auto;display:inline-flex;align-items:center;gap:6px;padding:8px 16px;font-size:.8rem">
-            + Create Class Roster
+            ${t('roster.createBtn', '+ Create Class Roster')}
           </button>
-          
+
           <div style="margin-top:20px;text-align:left;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:.73rem;color:#9ca3af;line-height:1.5">
-            <div style="font-weight:600;color:#e6edf3;margin-bottom:6px">How Class Rosters work:</div>
+            <div style="font-weight:600;color:#e6edf3;margin-bottom:6px">${t('roster.howTitle', 'How Class Rosters work:')}</div>
             <div style="display:flex;flex-direction:column;gap:5px">
-              <div>• Matches students by email or display name</div>
-              <div>• Flags late arrivals based on your grace period</div>
-              <div>• Tag absent students as excused with private notes</div>
-              <div>• Syncs absence data directly to Google Sheets &amp; CSV</div>
+              <div>• ${t('roster.how1', 'Matches students by email or display name')}</div>
+              <div>• ${t('roster.how2', 'Flags late arrivals based on your grace period')}</div>
+              <div>• ${t('roster.how3', 'Tag absent students as excused with private notes')}</div>
+              <div>• ${t('roster.how4', 'Syncs absence data directly to Google Sheets & CSV')}</div>
             </div>
           </div>
         </div>`;
@@ -2175,10 +2175,10 @@ function renderRosterView() {
             <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
             <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
           </svg>
-          <div style="font-weight:600;color:#e6edf3;font-size:.85rem;margin-top:8px">No class selected</div>
-          <p style="font-size:.76rem;color:#8b949e;margin:4px 0 14px">Select a class from the dropdown above to view student attendance.</p>
+          <div style="font-weight:600;color:#e6edf3;font-size:.85rem;margin-top:8px">${t('roster.noClassTitle', 'No class selected')}</div>
+          <p style="font-size:.76rem;color:#8b949e;margin:4px 0 14px">${t('roster.noClassDesc', 'Select a class from the dropdown above to view student attendance.')}</p>
           <button type="button" class="btn-secondary" onclick="openRosterModal(false)" style="margin:0 auto;padding:7px 14px;font-size:.76rem">
-            + Create another class
+            ${t('roster.createAnotherBtn', '+ Create another class')}
           </button>
         </div>`;
     }
@@ -2252,25 +2252,25 @@ function renderRosterView() {
   let html = '';
 
   if (presentStudents.length > 0) {
-    html += `<div style="font-size:.68rem;font-weight:700;color:#4ade80;text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px">Present (${presentStudents.length})</div>`;
+    html += `<div style="font-size:.68rem;font-weight:700;color:#4ade80;text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px">${t('roster.sectionPresent', 'Present ({n})').replace('{n}', presentStudents.length)}</div>`;
     for (const item of presentStudents) {
       const p = item.participant;
       html += `
         <div class="roster-card present">
           <div style="flex:1;min-width:0">
             <div style="font-weight:600;color:#e6edf3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.displayName || item.student.name)}</div>
-            <div style="font-size:.68rem;color:#8b949e">${escHtml(p.email || item.student.email || 'In call')} · ${item.durMin}m (${item.pct}%)</div>
+            <div style="font-size:.68rem;color:#8b949e">${escHtml(p.email || item.student.email || t('attendee.activeCount', 'In call'))} · ${item.durMin}m (${item.pct}%)</div>
           </div>
-          <span style="font-size:.68rem;color:#4ade80;font-weight:600">Present</span>
+          <span style="font-size:.68rem;color:#4ade80;font-weight:600">${t('attendee.present', 'Present')}</span>
         </div>`;
     }
   }
 
   if (lateStudents.length > 0) {
-    html += `<div style="font-size:.68rem;font-weight:700;color:#facc15;text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px">Late / Short Stay (${lateStudents.length})</div>`;
+    html += `<div style="font-size:.68rem;font-weight:700;color:#facc15;text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px">${t('roster.sectionLate', 'Late / Short Stay ({n})').replace('{n}', lateStudents.length)}</div>`;
     for (const item of lateStudents) {
       const p = item.participant;
-      const tag = item.isLate ? 'Late' : 'Short stay';
+      const tag = item.isLate ? t('attendee.late', 'Late') : t('roster.shortStay', 'Short stay');
       html += `
         <div class="roster-card late">
           <div style="flex:1;min-width:0">
@@ -2283,27 +2283,27 @@ function renderRosterView() {
   }
 
   if (absentStudents.length > 0) {
-    html += `<div style="font-size:.68rem;font-weight:700;color:#f87171;text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px">Absent (${absentStudents.length})</div>`;
+    html += `<div style="font-size:.68rem;font-weight:700;color:#f87171;text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px">${t('roster.sectionAbsent', 'Absent ({n})').replace('{n}', absentStudents.length)}</div>`;
     for (const item of absentStudents) {
       const s = item.student;
       const cardClass = item.isExcused ? 'roster-card excused' : 'roster-card absent';
-      const statusLabel = item.isExcused ? 'Excused' : 'Absent';
+      const statusLabel = item.isExcused ? t('attendee.excused', 'Excused') : t('attendee.absent', 'Absent');
       const statusColor = item.isExcused ? '#818cf8' : '#f87171';
       html += `
         <div class="${cardClass}">
-          <input type="checkbox" ${item.isExcused ? 'checked' : ''} onchange="toggleStudentExcused('${escJsArg(item.studentKey)}', this)" title="Mark excused" style="cursor:pointer;flex-shrink:0" />
+          <input type="checkbox" ${item.isExcused ? 'checked' : ''} onchange="toggleStudentExcused('${escJsArg(item.studentKey)}', this)" title="${escHtml(t('roster.markExcused', 'Mark excused'))}" style="cursor:pointer;flex-shrink:0" />
           <div style="flex:1;min-width:0">
             <div style="font-weight:600;color:#e6edf3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(s.name)}</div>
-            <div style="font-size:.68rem;color:#8b949e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(s.email || 'No email')} ${item.note ? '· Note: ' + escHtml(item.note) : ''}</div>
+            <div style="font-size:.68rem;color:#8b949e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(s.email || t('roster.noEmail', 'No email'))} ${item.note ? '· ' + escHtml(t('roster.notePrefix', 'Note:')) + ' ' + escHtml(item.note) : ''}</div>
           </div>
-          <button type="button" onclick="promptStudentNote('${escJsArg(item.studentKey)}')" style="background:none;border:none;color:#8b949e;cursor:pointer;font-size:.68rem;padding:2px 4px;text-decoration:underline">Note</button>
-          <span style="font-size:.68rem;color:${statusColor};font-weight:600">${statusLabel}</span>
+          <button type="button" onclick="promptStudentNote('${escJsArg(item.studentKey)}')" style="background:none;border:none;color:#8b949e;cursor:pointer;font-size:.68rem;padding:2px 4px;text-decoration:underline">${t('roster.noteBtn', 'Note')}</button>
+          <span style="font-size:.68rem;color:${statusColor};font-weight:600">${escHtml(statusLabel)}</span>
         </div>`;
     }
   }
 
   if (unregisteredGuests.length > 0) {
-    html += `<div style="font-size:.68rem;font-weight:700;color:#58a6ff;text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px">Unregistered Guests (${unregisteredGuests.length})</div>`;
+    html += `<div style="font-size:.68rem;font-weight:700;color:#58a6ff;text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px">${t('roster.sectionGuests', 'Unregistered Guests ({n})').replace('{n}', unregisteredGuests.length)}</div>`;
     for (const p of unregisteredGuests) {
       const durMs = (p._accumulatedMs || 0) + (p.present && p.joinTime ? (now - p.joinTime.getTime()) : 0);
       const durMin = Math.round(durMs / 60000);
@@ -2311,9 +2311,9 @@ function renderRosterView() {
         <div class="roster-card guest">
           <div style="flex:1;min-width:0">
             <div style="font-weight:600;color:#e6edf3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.displayName)}</div>
-            <div style="font-size:.68rem;color:#8b949e">${escHtml(p.email || 'Guest')} · ${durMin}m</div>
+            <div style="font-size:.68rem;color:#8b949e">${escHtml(p.email || t('roster.guest', 'Guest'))} · ${durMin}m</div>
           </div>
-          <span style="font-size:.68rem;color:#58a6ff;font-weight:600">Guest</span>
+          <span style="font-size:.68rem;color:#58a6ff;font-weight:600">${t('roster.guest', 'Guest')}</span>
         </div>`;
     }
   }
@@ -3860,10 +3860,10 @@ function renderList() {
     // covers the legit lagging-host case, so it's never wrong.
     const stuck = !ended && _emptyPolls >= 5;
     const message = ended
-      ? `This meeting ended ${formatRelative(endedAt)}. Attendance tracking only works during a live meeting — try again next time, in the panel, while everyone is still in the call.`
+      ? t('list.ended', 'This meeting ended {rel}. Attendance tracking only works during a live meeting — try again next time, in the panel, while everyone is still in the call.').replace('{rel}', formatRelative(endedAt))
       : stuck
-        ? "No attendance data for this meeting. Attendance Tracker can only read attendance for a meeting you host — if you're a participant, the host needs to run it. (If you are the host, give Google Meet a minute or two after everyone joins.)"
-        : 'No participants found yet';
+        ? t('list.stuck', "No attendance data for this meeting. Attendance Tracker can only read attendance for a meeting you host — if you're a participant, the host needs to run it. (If you are the host, give Google Meet a minute or two after everyone joins.)")
+        : t('list.noneYet', 'No participants found yet');
     // Attendee self-check-in: the empty list is exactly where a non-host
     // participant lands, so offer "I'm here" right there. A stored check-in
     // for this meeting renders as confirmation instead.
@@ -3906,7 +3906,7 @@ function renderList() {
     container.innerHTML = `
       <div class="empty-state">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <span>${_searchQuery ? 'No matches for "' + escHtml(_searchQuery) + '"' : 'No participants match'}</span>
+        <span>${_searchQuery ? escHtml(t('list.noMatchQuery', 'No matches for "{q}"').replace('{q}', _searchQuery)) : t('list.noMatch', 'No participants match')}</span>
       </div>`;
     return;
   }
@@ -3933,8 +3933,10 @@ function renderList() {
   const groups = new Map();
   if (groupMode === 'domain') {
     for (const p of sorted) {
-      const dom = (p.email || '').split('@')[1] || '(no email)';
-      const label = dom === myDomain ? 'Internal · ' + myDomain : (dom === '(no email)' ? 'Anonymous' : 'External · ' + dom);
+      const dom = (p.email || '').split('@')[1] || '';
+      const label = !dom ? t('list.anonymous', 'Anonymous')
+        : dom === myDomain ? t('list.internal', 'Internal') + ' · ' + myDomain
+        : t('list.external', 'External') + ' · ' + dom;
       (groups.get(label) || groups.set(label, []).get(label)).push(p);
     }
   } else {
@@ -3962,7 +3964,7 @@ function renderList() {
       const key = escJsArg(participantKey(p));
       const color = avatarColor(p.displayName);
       const lateMin = latenessMin(p);
-      const lateChip = lateMin > 0 ? `<span class="late-chip" title="Joined ${lateMin} min after meeting start">+${lateMin}m ${t('attendee.late', 'late')}</span>` : '';
+      const lateChip = lateMin > 0 ? `<span class="late-chip" title="${escHtml(t('list.lateTip', 'Joined {n} min after meeting start').replace('{n}', lateMin))}">+${lateMin}m ${t('attendee.late', 'late')}</span>` : '';
       const checkinChip = p.checkedInAt
         ? `<span class="late-chip" style="background:rgba(74,222,128,.15);color:var(--accent)" title="${t('checkin.done', 'Checked in')} ${fmtTime(new Date(p.checkedInAt))}">✓ ${fmtTime(new Date(p.checkedInAt))}</span>`
         : '';
@@ -3983,7 +3985,7 @@ function renderList() {
   const totalAvailable = [...groups.values()].reduce((s, l) => s + l.length, 0);
   const hiddenCount = totalAvailable - totalShown;
   if (hiddenCount > 0 && !state._showAll) {
-    html += `<button onclick="state._showAll=true;renderList()" style="width:100%;padding:8px;margin-top:8px;background:var(--surface);border:1px solid var(--border);color:var(--accent);border-radius:6px;cursor:pointer;font-size:.8rem">Show ${hiddenCount} more participants</button>`;
+    html += `<button onclick="state._showAll=true;renderList()" style="width:100%;padding:8px;margin-top:8px;background:var(--surface);border:1px solid var(--border);color:var(--accent);border-radius:6px;cursor:pointer;font-size:.8rem">${t('list.showMore', 'Show {n} more participants').replace('{n}', hiddenCount)}</button>`;
   }
   container.innerHTML = html;
 }
@@ -4527,11 +4529,11 @@ function updateExportCta() {
   const btnEl = document.getElementById('export-cta-btn');
   const n = distinctAttendeeCount();
   if (scopeBlocked) {
-    textEl.textContent = `You've tracked ${n} people — grant Google Drive access to save this to a Sheet.`;
-    btnEl.textContent = 'Grant Drive access to export';
+    textEl.textContent = t('export.ctaScopeText', "You've tracked {n} people — grant Google Drive access to save this to a Sheet.").replace('{n}', n);
+    btnEl.textContent = t('export.ctaScopeBtn', 'Grant Drive access to export');
   } else {
-    textEl.textContent = `Attendance ready for ${n} people. Save it to Google Sheets before you leave.`;
-    btnEl.textContent = 'Save to Google Sheets';
+    textEl.textContent = t('export.ctaText', 'Attendance ready for {n} people. Save it to Google Sheets before you leave.').replace('{n}', n);
+    btnEl.textContent = t('export.ctaBtn', 'Save to Google Sheets');
   }
   cta.style.display = 'block';
 }
@@ -4578,13 +4580,13 @@ async function saveToSheets() {
     // Display meeting type + event details in header
     const typeEl = document.getElementById('meeting-type');
     if (calData.isScheduled) {
-      state.meetingTitle = calData.eventTitle || 'Scheduled Meeting';
+      state.meetingTitle = calData.eventTitle || t('meeting.scheduled', 'Scheduled Meeting');
       document.getElementById('meeting-title').textContent = state.meetingTitle;
       // Show scheduled time range
       const startStr = calData.eventStart ? new Date(calData.eventStart).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
       const endStr = calData.eventEnd ? new Date(calData.eventEnd).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
       const timeRange = startStr && endStr ? ` · ${startStr} – ${endStr}` : '';
-      typeEl.textContent = `Scheduled Event${timeRange}`;
+      typeEl.textContent = `${t('meeting.scheduledEvent', 'Scheduled Event')}${timeRange}`;
       typeEl.style.display = '';
       state._eventStart = calData.eventStart;
       state._eventEnd = calData.eventEnd;
@@ -4592,7 +4594,7 @@ async function saveToSheets() {
       // state so doExportToSheets can ship it to the backend.
       state._recurringEventId = calData.recurringEventId || null;
     } else {
-      typeEl.textContent = 'Instant Meeting';
+      typeEl.textContent = t('meeting.instant', 'Instant Meeting');
       typeEl.style.display = '';
       state._recurringEventId = null;
     }
@@ -4766,12 +4768,12 @@ function openMatchModal(attendees, emailMap) {
     row.innerHTML = `
       <div class="match-participant">
         <div>${escHtml(p.displayName)}</div>
-        <div class="sub">${p.present ? 'Present' : 'Left'}</div>
+        <div class="sub">${p.present ? t('attendee.present', 'Present') : t('attendee.left', 'Left')}</div>
       </div>
       <div class="match-arrow">→</div>
       <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
         <select class="match-select" data-participant="${escHtml(p.displayName)}" onchange="handleMatchSelectChange(this)">
-          <option value="">— No match —</option>
+          <option value="">${escHtml(t('match.noMatch', '— No match —'))}</option>
           ${attendees.map(a =>
             `<option value="${escHtml(a.email)}" ${a.email === autoEmail ? 'selected' : ''}>${escHtml(a.displayName)} (${escHtml(a.email)})</option>`
           ).join('')}
@@ -4779,7 +4781,7 @@ function openMatchModal(attendees, emailMap) {
         <input
           class="match-override"
           type="email"
-          placeholder="Or type email manually…"
+          placeholder="${escHtml(t('match.manualPlaceholder', 'Or type email manually…'))}"
           data-participant="${escHtml(p.displayName)}"
           style="display:${autoEmail ? 'none' : 'block'}"
         />
@@ -5043,8 +5045,10 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
       if (!_isPro && typeof quota.used === 'number' && quota.used >= 2) {
         try { logUserEvent('quota_warning_shown', { used: quota.used, limit: quota.limit, ...upgradeContext() }); } catch (e) {}
         const msg = quota.used >= quota.limit
-          ? `${quota.used} of ${quota.limit} free monthly exports used. This was your last free export this month. Upgrade to Lifetime Pro (${AttPricing.price('lifetime')}) for unlimited classes.`
-          : `${quota.used} of ${quota.limit} free monthly exports used. Upgrade to Lifetime Pro (${AttPricing.price('lifetime')}) or Domain License (${AttPricing.price('team')}) for unlimited classes.`;
+          ? t('export.quotaLast', '{used} of {limit} free monthly exports used. This was your last free export this month. Upgrade to Lifetime Pro ({price}) for unlimited classes.')
+              .replace('{used}', quota.used).replace('{limit}', quota.limit).replace('{price}', AttPricing.price('lifetime'))
+          : t('export.quotaWarn', '{used} of {limit} free monthly exports used. Upgrade to Lifetime Pro ({price}) or Domain License ({teamPrice}) for unlimited classes.')
+              .replace('{used}', quota.used).replace('{limit}', quota.limit).replace('{price}', AttPricing.price('lifetime')).replace('{teamPrice}', AttPricing.price('team'));
         // If the source modal (full-viewport overlay) is up when the timer
         // fires, the toast renders BEHIND it and dies unseen — and this is
         // the "last free export" warning. Wait the modal out once.
@@ -5080,10 +5084,10 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     state.autoExportedConferenceId = state.conferenceId;
     saveState();
     updateExportCta(); // hide the export prompt now that a Sheet exists
-    toast(opts.autoExport ? 'Auto-exported — sheet link sent to your email' : t('toast.savedSheets','Saved to Sheets'), opts.autoExport ? 6000 : 3000);
+    toast(opts.autoExport ? t('toast.autoExported', 'Auto-exported — sheet link sent to your email') : t('toast.savedSheets','Saved to Sheets'), opts.autoExport ? 6000 : 3000);
     const btn = document.getElementById('btn-sheets');
     if (btn) {
-      btn.textContent = 'Exported';
+      btn.textContent = t('export.exported', 'Exported');
       btn.disabled = true;
       setTimeout(() => {
         btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> <span id="btn-sheets-label" data-i18n="btn.sheet">${(typeof t === 'function' && t('btn.sheet')) || 'Sheet'}</span>`;
@@ -5413,15 +5417,23 @@ function updateUiLanguage() {
   const btnSheetsLabel = document.getElementById('btn-sheets-label');
   if (btnSheetsLabel) btnSheetsLabel.textContent = t('btn.sheet', 'Sheet');
 
-  const filterSel = document.getElementById('filter-select');
-  if (filterSel && filterSel.options.length >= 3) {
-    filterSel.options[0].textContent = `${t('btn.filter', 'Filter')}: ${t('filter.all', 'All')}`;
-    filterSel.options[1].textContent = t('filter.present', 'Present');
-    filterSel.options[2].textContent = t('attendee.left', 'Left');
-  }
+  // filter-select options carry data-i18n (filter.showAll/presentOnly/leftOnly),
+  // so applyTranslations() above already localizes them — no imperative repaint.
 
   if (state.participants && state.participants.size > 0) {
     renderList();
+  }
+
+  // renderRosterView()/renderInvitedList() paint entirely via innerHTML (not
+  // data-i18n), so applyTranslations above can't touch them — repaint the open one.
+  if (_activeTab === 'roster') renderRosterView();
+  if (_activeTab === 'invited') renderInvitedList();
+
+  // #meeting-title holds the live meeting NAME (user data) while tracking, so it
+  // can't carry data-i18n — only localize its idle "Not in a meeting" state.
+  const meetingTitleEl = document.getElementById('meeting-title');
+  if (meetingTitleEl && !state.meetingTitle) {
+    meetingTitleEl.textContent = t('meeting.notIn', 'Not in a meeting');
   }
 
   const langSel = document.getElementById('settings-lang-select');
@@ -5780,7 +5792,7 @@ function updateSearchStats() {
   if (!_searchQuery) { el.textContent = ''; return; }
   const total = state.participants.size;
   const visible = document.querySelectorAll('#participant-list .participant-card').length;
-  el.textContent = `${visible} of ${total} shown`;
+  el.textContent = t('search.stats', '{visible} of {total} shown').replace('{visible}', visible).replace('{total}', total);
 }
 
 function showSearchBar() {
@@ -5843,13 +5855,13 @@ async function fetchCalendarAttendees() {
       const startStr = cal.eventStart ? new Date(cal.eventStart).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
       const endStr = cal.eventEnd ? new Date(cal.eventEnd).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
       const timeRange = startStr && endStr ? ` · ${startStr} – ${endStr}` : '';
-      typeEl.textContent = `Scheduled Event${timeRange}`;
+      typeEl.textContent = `${t('meeting.scheduledEvent', 'Scheduled Event')}${timeRange}`;
       typeEl.style.display = '';
       state._eventStart = cal.eventStart;
       state._eventEnd = cal.eventEnd;
     } else {
       const typeEl = document.getElementById('meeting-type');
-      typeEl.textContent = 'Instant Meeting';
+      typeEl.textContent = t('meeting.instant', 'Instant Meeting');
       typeEl.style.display = '';
       // No tabs for instant meetings — show the list header instead
       document.getElementById('list-header-participants').style.display = '';
@@ -5869,7 +5881,7 @@ function renderInvitedList() {
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
         </svg>
-        <span>No calendar event found</span>
+        <span>${t('invited.noEvent', 'No calendar event found')}</span>
       </div>`;
     return;
   }
@@ -5896,12 +5908,12 @@ function renderInvitedList() {
 
     // RSVP badge
     let rsvpClass = 'rsvp-noresponse';
-    let rsvpText = 'No Response';
+    let rsvpText = t('invited.rsvpNoResponse', 'No Response');
     switch (a.status) {
-      case 'accepted':    rsvpClass = 'rsvp-accepted'; rsvpText = 'Accepted'; break;
-      case 'declined':    rsvpClass = 'rsvp-declined'; rsvpText = 'Declined'; break;
-      case 'tentative':   rsvpClass = 'rsvp-tentative'; rsvpText = 'Tentative'; break;
-      case 'needsAction': rsvpClass = 'rsvp-noresponse'; rsvpText = 'Awaiting'; break;
+      case 'accepted':    rsvpClass = 'rsvp-accepted'; rsvpText = t('invited.rsvpAccepted', 'Accepted'); break;
+      case 'declined':    rsvpClass = 'rsvp-declined'; rsvpText = t('invited.rsvpDeclined', 'Declined'); break;
+      case 'tentative':   rsvpClass = 'rsvp-tentative'; rsvpText = t('invited.rsvpTentative', 'Tentative'); break;
+      case 'needsAction': rsvpClass = 'rsvp-noresponse'; rsvpText = t('invited.rsvpAwaiting', 'Awaiting'); break;
     }
 
     return `
@@ -5911,8 +5923,8 @@ function renderInvitedList() {
           <div class="participant-name">${escHtml(name)}</div>
           <div class="participant-meta">${escHtml(a.email)}</div>
         </div>
-        <span class="rsvp-badge ${rsvpClass}">${rsvpText}</span>
-        <span class="invited-status ${joined ? 'joined' : ''}">${joined ? 'Joined' : 'Not yet'}</span>
+        <span class="rsvp-badge ${rsvpClass}">${escHtml(rsvpText)}</span>
+        <span class="invited-status ${joined ? 'joined' : ''}">${joined ? t('invited.joined', 'Joined') : t('invited.notYet', 'Not yet')}</span>
       </div>`;
   }).join('');
 }
@@ -5949,7 +5961,7 @@ function showActivityNote(name, type) {
   note.className = 'activity-note';
 
   const dotClass = type === 'joined' ? 'joined' : type === 'rejoined' ? 'rejoin' : 'left';
-  const actionText = type === 'joined' ? 'joined' : type === 'rejoined' ? 'rejoined' : 'left';
+  const actionText = type === 'joined' ? t('activity.joined', 'joined') : type === 'rejoined' ? t('activity.rejoined', 'rejoined') : t('activity.left', 'left');
 
   note.innerHTML = `
     <span class="note-dot ${dotClass}"></span>
@@ -6762,12 +6774,12 @@ window.addEventListener('DOMContentLoaded', () => {
   <div id="roster-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1200;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)">
     <div style="background:#161b22;border:1px solid #30363d;border-radius:14px;padding:22px;max-width:420px;width:100%;box-shadow:0 20px 40px rgba(0,0,0,.5);font-family:var(--font-sans)">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <h3 id="roster-modal-title" style="margin:0;font-size:1.1rem;font-weight:600;color:#e6edf3">Create Class Roster</h3>
+        <h3 id="roster-modal-title" style="margin:0;font-size:1.1rem;font-weight:600;color:#e6edf3" data-i18n="roster.createTitle">Create Class Roster</h3>
         <button type="button" onclick="closeRosterModal()" style="background:none;border:none;color:#8b949e;cursor:pointer;font-size:18px;line-height:1;padding:4px">&times;</button>
       </div>
       <div style="margin-bottom:14px">
         <label for="roster-input-name" style="display:block;font-size:.76rem;color:#8b949e;margin-bottom:6px;font-weight:600" data-i18n="roster.nameLabel">Class or Group Name</label>
-        <input id="roster-input-name" type="text" placeholder="e.g. Biology 101 - Section A" style="width:100%;background:#0d1117;border:1px solid #30363d;color:#e6edf3;border-radius:6px;padding:8px 10px;font-size:.82rem;box-sizing:border-box" />
+        <input id="roster-input-name" type="text" data-i18n-placeholder="roster.namePlaceholder" placeholder="e.g. Biology 101 - Section A" style="width:100%;background:#0d1117;border:1px solid #30363d;color:#e6edf3;border-radius:6px;padding:8px 10px;font-size:.82rem;box-sizing:border-box" />
       </div>
       <!-- Import from Google Classroom: fills the textarea below, so the
            teacher can still edit before saving. -->
@@ -6784,7 +6796,7 @@ window.addEventListener('DOMContentLoaded', () => {
       </div>
       <div style="margin-bottom:16px">
         <label for="roster-input-students" style="display:block;font-size:.76rem;color:#8b949e;margin-bottom:6px;font-weight:600" data-i18n="roster.studentsLabel">Students</label>
-        <textarea id="roster-input-students" rows="7" placeholder="Alice Smith &lt;alice@school.edu&gt;&#10;Bob Jones&#10;carol@school.edu" style="width:100%;background:#0d1117;border:1px solid #30363d;color:#e6edf3;border-radius:6px;padding:8px 10px;font-size:.78rem;font-family:monospace;resize:vertical;box-sizing:border-box"></textarea>
+        <textarea id="roster-input-students" rows="7" data-i18n-placeholder="roster.studentsPlaceholder" placeholder="Alice Smith &lt;alice@school.edu&gt;&#10;Bob Jones&#10;carol@school.edu" style="width:100%;background:#0d1117;border:1px solid #30363d;color:#e6edf3;border-radius:6px;padding:8px 10px;font-size:.78rem;font-family:monospace;resize:vertical;box-sizing:border-box"></textarea>
         <div style="font-size:.7rem;color:#8b949e;margin-top:4px" data-i18n="roster.studentsHelp">One student per line — a name, an email, or Name &lt;email&gt;. You can paste straight from a spreadsheet.</div>
       </div>
       <!-- Inline validation — the bottom-of-panel toast renders behind this
