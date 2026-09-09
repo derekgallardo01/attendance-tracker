@@ -2551,15 +2551,15 @@ async function handleAuthCode(response) {
     // Attach user context to Sentry
     if (window.Sentry) Sentry.setUser({ email: data.email });
 
-    // First sign-in & no source captured → ask. Pass detected source so the
-    // modal can greet "Hey, saw you came from Reddit" instead of generic.
-    // Remember the state so we can re-ask at a higher-intent moment (after their
-    // first export) if they skip it here.
+    // First sign-in & no source captured → remember it, but DON'T ask yet.
+    // Sign-in almost always happens mid-meeting (the panel lives inside Meet)
+    // and users swat the modal away to get back to their class. The ask fires
+    // at the post-export moment instead (maybeAskSourcePostExport) — after
+    // they've felt the payoff, when answer rates are far higher. Attribution
+    // is never lost meanwhile: the detected source is already stamped
+    // server-side, and the signup email flushes on a grace timer regardless.
     state._needsSource = !!data.needsAcquisitionSource;
     state._detectedSource = data.detectedSource || null;
-    if (state._needsSource) {
-      showSourceModal(state._detectedSource);
-    }
 
     // Pull activation status so the nudge banner knows whether to render.
     refreshActivationStatus();
@@ -4692,6 +4692,18 @@ function showSurveyModal() {
 function closeSurveyModal() {
   const modal = document.getElementById('survey-modal');
   if (modal) modal.style.display = 'none';
+  // Last car of the first-export train: celebrate → survey → source ask.
+  // One modal at a time; maybeAskSourcePostExport no-ops once answered or
+  // dismissed, so repeat closes never re-summon it.
+  setTimeout(() => maybeAskSourcePostExport(), 400);
+}
+
+// Ask "how did you find us?" at a post-export moment — the only place it is
+// shown since the sign-in ask was retired. One dismissal ends it for good
+// (the dismissed flag also suppresses refreshActivationStatus re-arming).
+function maybeAskSourcePostExport() {
+  if (!state._needsSource || state._needsSourceDismissed) return;
+  showSourceModal(state._detectedSource);
 }
 async function submitSurvey(useCase) {
   closeSurveyModal();
@@ -4877,11 +4889,12 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     if (isFirstExport && !opts.autoExport) {
       showCelebrateModal(sheetUrl);
     }
-    // Second, higher-intent capture moment for "how did you find us?": ask now
-    // that they've felt the payoff, if they skipped it at sign-in. Skip when the
-    // first-export celebrate modal is up (don't stack modals).
-    if (state._needsSource && !(isFirstExport && !opts.autoExport)) {
-      showSourceModal(state._detectedSource);
+    // "How did you find us?" fires here, at the payoff moment — it is no
+    // longer shown at sign-in (mid-meeting asks just got dismissed). On a
+    // first manual export the celebrate→survey chain is up, and its close
+    // handlers call maybeAskSourcePostExport so modals never stack.
+    if (!(isFirstExport && !opts.autoExport)) {
+      maybeAskSourcePostExport();
     }
     // Update activation state so the nudge banner hides itself
     refreshActivationStatus();
@@ -4954,6 +4967,9 @@ function closeCelebrateModal() {
     state._surveyShown = true;
     saveState();
     setTimeout(() => showSurveyModal(), 400);
+  } else {
+    // No survey to show → the source ask takes the post-celebrate slot.
+    setTimeout(() => maybeAskSourcePostExport(), 400);
   }
 }
 
