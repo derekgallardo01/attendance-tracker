@@ -251,10 +251,16 @@
   }
 
   // CSV field escaping shared by the attendance + LMS builders. Always quotes,
-  // doubles inner quotes.
+  // doubles inner quotes, and defuses spreadsheet formula injection: Excel and
+  // LibreOffice evaluate a leading =, +, -, @ (or tab/CR) even INSIDE a quoted
+  // field, and Meet display names are attacker-controlled by anyone who joins
+  // the meeting. The apostrophe prefix renders as a plain leading quote in the
+  // worst case; a hijacked =HYPERLINK/DDE cell is strictly worse.
   function escapeCsv(val) {
     if (val === null || val === undefined) return '""';
-    const s = String(val).replace(/"/g, '""');
+    let s = String(val);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    s = s.replace(/"/g, '""');
     return `"${s}"`;
   }
 

@@ -4853,6 +4853,9 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
         email:        emailMap[p.displayName] || p.email || '',
         joinTimeISO:  joinTime.toISOString(),
         leaveTimeISO: leaveTime ? leaveTime.toISOString() : null,
+        // Actual accumulated in-meeting time — the backend prefers this over
+        // the join→leave span, which over-credits leave-and-return attendees.
+        durationMs:   AttUtils.participantTotalMs(p),
         present:      p.present,
         sessions:     p.sessions,
         checkedInAtISO: p.checkedInAt || null,

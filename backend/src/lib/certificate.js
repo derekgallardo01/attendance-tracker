@@ -31,8 +31,15 @@ function toDate(v) {
 function durationMin(join, leave, fallbackEnd) {
   const j = toDate(join);
   if (!j) return 0;
-  const l = toDate(leave) || toDate(fallbackEnd);
-  if (!l) return 0;
+  // Certificates grant CREDIT — never credit time that hasn't happened yet.
+  // fallbackEnd is usually the SCHEDULED event end, so for a still-present
+  // attendee (leave null) cap the end at `now`: generating certs 10 minutes
+  // into a 2-hour session used to issue 2-hour credits. An entirely unknown
+  // end still credits 0 (under-credit beats inventing time).
+  const l0 = toDate(leave) || toDate(fallbackEnd);
+  if (!l0) return 0;
+  const now = new Date();
+  const l = l0 > now ? now : l0;
   return Math.max(0, Math.round((l - j) / 60000));
 }
 

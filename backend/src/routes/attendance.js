@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const { google } = require('googleapis');
 const { getMeetToken, makeJWT, loadServiceAccountKey } = require('../services/googleAuth');
-const { meetGet, meetGetAll } = require('../services/meetApi');
+const { meetGet, meetGetAll, participantIdentity, sessionsDurationMs } = require('../services/meetApi');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { persistAttendance, getTenantConfig } = require('../services/firestore');
@@ -166,10 +166,12 @@ router.get('/attendance', async (req, res) => {
             const leaveTimes = sessions.map(s => s.endTime).filter(Boolean).map(t => new Date(t));
             return {
               participantId: p.name,
-              displayName:   p.user?.displayName || p.signedinUser?.displayName || 'Unknown',
-              email:         p.user?.email || p.signedinUser?.email || '',
+              ...participantIdentity(p),
               joinTime:      joinTimes.length  > 0 ? new Date(Math.min(...joinTimes)).toISOString()  : null,
               leaveTime:     leaveTimes.length > 0 ? new Date(Math.max(...leaveTimes)).toISOString() : null,
+              // Actual in-meeting time (sum of sessions) — the join/leave span
+              // above over-credits anyone who left and came back.
+              durationMs:    sessionsDurationMs(sessions),
               present:       sessions.some(s => !s.endTime),
               sessions:      sessions.length,
             };
@@ -177,8 +179,7 @@ router.get('/attendance', async (req, res) => {
             log.warn('failed to fetch sessions for participant', { name: p.name, error: err.message });
             return {
               participantId: p.name,
-              displayName:   p.user?.displayName || p.signedinUser?.displayName || 'Unknown',
-              email:         p.user?.email || p.signedinUser?.email || '',
+              ...participantIdentity(p),
               joinTime: null, leaveTime: null, present: true, sessions: 1,
             };
           }

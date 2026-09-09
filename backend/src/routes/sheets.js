@@ -9,10 +9,12 @@ const { planIsPro } = require('./billing');
 
 const router = Router();
 
-// Prevent formula injection — cells starting with =, +, -, @, tab, CR can execute formulas
+// Formula injection is prevented by valueInputOption:'RAW' on every write —
+// RAW stores strings verbatim and never parses formulas. The old "'"-prefix
+// guard was therefore pure downside: with RAW the apostrophe is NOT consumed
+// as a format marker, so dial-in names like "+1 555…" and names starting with
+// "-" rendered with a literal leading quote in the sheet.
 function sanitizeCell(val) {
-  if (typeof val !== 'string') return val;
-  if (/^[=+\-@\t\r]/.test(val)) return "'" + val;
   return val;
 }
 
@@ -22,7 +24,16 @@ function sanitizeTabName(name) {
     .replace(/[\[\]*?/\\]/g, '-')  // Replace forbidden chars with dash
     .replace(/^'|'$/g, '')         // Cannot start or end with apostrophe
     .slice(0, 100)                 // Google Sheets limit
+    .replace(/'$/, '')             // the slice can land ON an apostrophe — re-strip
     || 'Meeting';                  // Fallback if empty after sanitization
+}
+
+// A1-notation range for a tab. INTERNAL apostrophes are legal in tab titles
+// but must be doubled inside the quoted range ("O'Brien's Class" was a
+// guaranteed 400 → 500 on export for every teacher with an apostrophe in
+// their event title).
+function a1Range(tabName, cell = 'A1') {
+  return `'${String(tabName).replace(/'/g, "''")}'!${cell}`;
 }
 
 function fmtRsvp(status) {
@@ -170,11 +181,19 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
     if (req.user) {
       spreadsheetId = await getUserSheetId(req.user.domain, req.user.email);
 
-      // Verify the stored spreadsheet still exists (user may have deleted it)
+      // Verify the stored spreadsheet still exists (user may have deleted it).
+      // Only a POSITIVE 404 (or 403: revoked access to the file) unlinks — a
+      // 429/5xx/timeout used to be treated the same, permanently orphaning the
+      // user's accumulated spreadsheet (all prior tabs) over a transient blip.
       if (spreadsheetId) {
         try {
           await sheets.spreadsheets.get({ spreadsheetId, fields: 'spreadsheetId' });
         } catch (e) {
+          const gone = e?.code === 404 || e?.code === 403 || /not found|notFound/i.test(e?.message || '');
+          if (!gone) {
+            log.warn('spreadsheet existence probe failed transiently — keeping the stored sheet', { email: req.user.email, spreadsheetId, error: e.message });
+            throw e; // fail THIS export rather than abandon the user's history
+          }
           log.warn('stored spreadsheet not found, creating new one', { email: req.user.email, spreadsheetId });
           spreadsheetId = null;
           await setUserSheetId(req.user.domain, req.user.email, null);
@@ -344,9 +363,14 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
       if (email) attendedEmails.add(email);
       const name = (p.displayName || '').toLowerCase().trim();
       if (name) attendedNames.add(name);
-      const durRaw = p.joinTimeISO
-        ? Math.round((new Date(p.leaveTimeISO || exportedAt) - new Date(p.joinTimeISO)) / 60000)
-        : '';
+      // Prefer the summed in-meeting time (panel's accumulated ms / server
+      // session sums). The join→leave SPAN fallback over-credits anyone who
+      // left and came back — it counts the time they were away.
+      const durRaw = (typeof p.durationMs === 'number' && p.durationMs >= 0)
+        ? Math.round(p.durationMs / 60000)
+        : (p.joinTimeISO
+          ? Math.round((new Date(p.leaveTimeISO || exportedAt) - new Date(p.joinTimeISO)) / 60000)
+          : '');
       const dur = (durRaw === 0 && p.present) ? '< 1' : durRaw;
       const pct = (durRaw !== '' && meetDurationMin > 0)
         ? Math.min(100, Math.round((durRaw / meetDurationMin) * 100)) + '%'
@@ -393,7 +417,7 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
     const allValues = [...summary, header, ...allRows, ...footer];
     await sheets.spreadsheets.values.update({
       spreadsheetId,
-      range: `'${tabName}'!A1`,
+      range: a1Range(tabName),
       valueInputOption: 'RAW',
       requestBody: { values: allValues },
     });
@@ -426,7 +450,7 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
           } catch (_) { /* tab already exists — reuse and overwrite it */ }
           await sheets.spreadsheets.values.update({
             spreadsheetId,
-            range: `'${summaryTab}'!A1`,
+            range: a1Range(summaryTab),
             valueInputOption: 'RAW',
             requestBody: {
               values: isPro

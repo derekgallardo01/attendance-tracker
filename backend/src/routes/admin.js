@@ -10,7 +10,7 @@ const { domainOf } = require('../services/firestore/_core'); // pure util; impor
 const { ACQUISITION_SOURCES } = require('../lib/constants');
 const { planIsPro } = require('./billing');
 const { refreshAccessToken, makeUserClient } = require('../services/googleAuth');
-const { meetGet, meetGetAll } = require('../services/meetApi');
+const { meetGet, meetGetAll, participantIdentity, sessionsDurationMs } = require('../services/meetApi');
 const { google } = require('googleapis');
 const { buildAndSaveExport } = require('./sheets');
 
@@ -889,12 +889,12 @@ async function fetchConferenceParticipants(recordName, token) {
       const leaveIso = leaves.length ? new Date(Math.max(...leaves)).toISOString() : null;
       return {
         participantId: p.name,
-        displayName:  p.user?.displayName || p.signedinUser?.displayName || 'Unknown',
-        email:        p.user?.email || p.signedinUser?.email || '',
+        ...participantIdentity(p),
         joinTimeISO:  joinIso,
         leaveTimeISO: leaveIso,
         joinTime:     joinIso,
         leaveTime:    leaveIso,
+        durationMs:   sessionsDurationMs(sessions),
         present:      sessions.some(s => !s.endTime),
         sessions:     sessions.length || 1,
       };
@@ -994,21 +994,30 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
             if (shouldAutoExport && !alreadyExported.has(meetingCode)) {
               const claim = await claimReengagementSlot(u.domain, u.email, `autocap:${meetingCode}`);
               if (!claim.claimed) { alreadyExported.add(meetingCode); continue; }
-              await buildAndSaveExport({
-                user: { domain: u.domain, email: u.email, displayName: u.displayName },
-                sheetsAuth,
-                data: {
-                  meetingTitle: `Meeting ${meetingCode}`,
-                  exportedAt: rec.endTime,
-                  participants,
-                  calendarAttendees: [],
-                  meetingStartTime: rec.startTime || null,
-                  meetingType: 'scheduled',
-                  conferenceId: meetingCode,
-                  timezone: settings.timezone || 'America/New_York',
-                },
-                options: { sendEmail: true, autoExport: true, proAllowed: true },
-              });
+              try {
+                await buildAndSaveExport({
+                  user: { domain: u.domain, email: u.email, displayName: u.displayName },
+                  sheetsAuth,
+                  data: {
+                    meetingTitle: `Meeting ${meetingCode}`,
+                    exportedAt: rec.endTime,
+                    participants,
+                    calendarAttendees: [],
+                    meetingStartTime: rec.startTime || null,
+                    meetingType: 'scheduled',
+                    conferenceId: meetingCode,
+                    timezone: settings.timezone || 'America/New_York',
+                  },
+                  options: { sendEmail: true, autoExport: true, proAllowed: true },
+                });
+              } catch (exportErr) {
+                // Release the claim so the NEXT sweep retries — a transient
+                // Sheets 429/5xx used to leave the claim held forever, and the
+                // meeting was silently never exported (permanent data loss on
+                // the hands-free paid feature).
+                try { await claim.ref?.delete(); } catch { /* best-effort */ }
+                throw exportErr;
+              }
               alreadyExported.add(meetingCode);
               captured++;
             }

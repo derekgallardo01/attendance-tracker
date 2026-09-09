@@ -14,6 +14,9 @@ const mockMeetGetAll = jest.fn();
 jest.mock('../../src/services/meetApi', () => ({
   meetGet: (...a) => mockMeetGet(...a),
   meetGetAll: (...a) => mockMeetGetAll(...a),
+  // Pure helpers — pass the real implementations through.
+  participantIdentity: jest.requireActual('../../src/services/meetApi').participantIdentity,
+  sessionsDurationMs: jest.requireActual('../../src/services/meetApi').sessionsDurationMs,
 }));
 jest.mock('../../src/services/googleAuth', () => ({
   getMeetToken: jest.fn().mockResolvedValue('sa-token'),
@@ -170,7 +173,7 @@ describe('GET /api/attendance', () => {
       .mockResolvedValueOnce([
         {
           name: 'conferenceRecords/abc/participants/p1',
-          user: { displayName: 'Alex', email: 'alex@acme.com' },
+          signedinUser: { displayName: 'Alex', email: 'alex@acme.com' },
         },
       ])
       .mockResolvedValueOnce([
@@ -204,7 +207,7 @@ describe('GET /api/attendance — service account, enrichment, sessions', () => 
 
   test('uses the service account when an impersonation email matches the domain', async () => {
     firestore.getTenantConfig.mockResolvedValue({ impersonateEmail: 'admin@acme.com' });
-    wireMeet({ records: oneRecord, participants: [{ name: 'conferenceRecords/rec-1/participants/999', user: { displayName: 'A', email: 'a@acme.com' } }], sessions: [{ startTime: '2026-06-01T10:00:00Z', endTime: '2026-06-01T10:30:00Z' }] });
+    wireMeet({ records: oneRecord, participants: [{ name: 'conferenceRecords/rec-1/participants/999', signedinUser: { displayName: 'A', email: 'a@acme.com' } }], sessions: [{ startTime: '2026-06-01T10:00:00Z', endTime: '2026-06-01T10:30:00Z' }] });
     const res = await request(app).get('/api/attendance?conferenceId=abc').set(auth());
     expect(res.status).toBe(200);
     expect(res.body.delegationConfigured).toBe(true);
@@ -238,7 +241,7 @@ describe('GET /api/attendance — service account, enrichment, sessions', () => 
     google.admin.mockReturnValue({ users: { get: jest.fn().mockResolvedValue({ data: { primaryEmail: 'found@acme.com' } }) } });
     const CONFIG = require('../../src/config'); const savedAdmin = CONFIG.adminEmail; CONFIG.adminEmail = 'dir-admin@acme.com';
     firestore.getTenantConfig.mockResolvedValue({ impersonateEmail: 'admin@acme.com' });
-    wireMeet({ records: oneRecord, participants: [{ name: 'conferenceRecords/rec-1/participants/123456', user: { displayName: 'NoEmail' } }], sessions: [] });
+    wireMeet({ records: oneRecord, participants: [{ name: 'conferenceRecords/rec-1/participants/123456', signedinUser: { displayName: 'NoEmail' } }], sessions: [] });
     const res = await request(app).get('/api/attendance?conferenceId=abc').set(auth());
     expect(res.status).toBe(200);
     expect(res.body.participants[0].email).toBe('found@acme.com');
@@ -250,7 +253,7 @@ describe('GET /api/attendance — service account, enrichment, sessions', () => 
     firestore.getTenantConfig.mockResolvedValue({ impersonateEmail: 'admin@acme.com' });
     // JWT.authorize throws → the whole enrichment is skipped (outer catch)
     google.auth.JWT.mockImplementation(() => ({ authorize: jest.fn().mockRejectedValue(new Error('no directory scope')) }));
-    wireMeet({ records: oneRecord, participants: [{ name: 'conferenceRecords/rec-1/participants/123456', user: { displayName: 'NoEmail' } }], sessions: [] });
+    wireMeet({ records: oneRecord, participants: [{ name: 'conferenceRecords/rec-1/participants/123456', signedinUser: { displayName: 'NoEmail' } }], sessions: [] });
     const res = await request(app).get('/api/attendance?conferenceId=abc').set(auth());
     expect(res.status).toBe(200);
     CONFIG.adminEmail = savedAdmin;
@@ -260,7 +263,7 @@ describe('GET /api/attendance — service account, enrichment, sessions', () => 
     firestore.getTenantConfig.mockResolvedValue({ impersonateEmail: 'admin@acme.com' });
     mockMeetGet.mockResolvedValue({ conferenceRecords: oneRecord });
     mockMeetGetAll.mockImplementation(async (pathArg) => {
-      if (pathArg.endsWith('/participants')) return [{ name: 'conferenceRecords/rec-1/participants/p1', user: { displayName: 'P', email: 'p@acme.com' } }];
+      if (pathArg.endsWith('/participants')) return [{ name: 'conferenceRecords/rec-1/participants/p1', signedinUser: { displayName: 'P', email: 'p@acme.com' } }];
       throw new Error('session fetch boom'); // sessions call fails
     });
     const res = await request(app).get('/api/attendance?conferenceId=abc').set(auth());
@@ -289,7 +292,7 @@ describe('GET /api/attendance — auth gate + enrichment skips', () => {
     firestore.getTenantConfig.mockResolvedValue({ impersonateEmail: 'admin@acme.com' }); // no adminEmail
     mockMeetGet.mockResolvedValue({ conferenceRecords: oneRecord });
     mockMeetGetAll.mockImplementation(async (p) => p.endsWith('/participants')
-      ? [{ name: 'conferenceRecords/rec-1/participants/123456', user: { displayName: 'NoEmail' } }] : []);
+      ? [{ name: 'conferenceRecords/rec-1/participants/123456', signedinUser: { displayName: 'NoEmail' } }] : []);
     const res = await request(app).get('/api/attendance?conferenceId=abc').set(auth());
     expect(res.status).toBe(200);
     CONFIG.adminEmail = savedAdmin;
@@ -303,7 +306,7 @@ describe('GET /api/attendance — auth gate + enrichment skips', () => {
     firestore.getTenantConfig.mockResolvedValue({ impersonateEmail: 'admin@acme.com' });
     mockMeetGet.mockResolvedValue({ conferenceRecords: oneRecord });
     mockMeetGetAll.mockImplementation(async (p) => p.endsWith('/participants')
-      ? [{ name: 'conferenceRecords/rec-1/participants/123456', user: { displayName: 'External' } }] : []);
+      ? [{ name: 'conferenceRecords/rec-1/participants/123456', signedinUser: { displayName: 'External' } }] : []);
     const res = await request(app).get('/api/attendance?conferenceId=abc').set(auth());
     expect(res.status).toBe(200);
     expect(res.body.participants[0].email).toBe(''); // still no email after miss
@@ -323,7 +326,7 @@ describe('GET /api/attendance — participant + filter edge branches', () => {
     mockMeetGetAll.mockImplementation(async (p) => p.endsWith('/participants')
       ? [
           { name: 'conferenceRecords/rec-2/participants/anon-abc', signedinUser: { displayName: 'Signed In', email: 'si@acme.com' } }, // non-numeric id, signedinUser
-          { name: '', user: {} }, // no path, no name/email → Unknown
+          { name: '', signedinUser: {} }, // no path, no name/email → Unknown
         ]
       : [{ startTime: '2026-06-01T10:00:00Z' }]); // a session with start, no end → present
     const res = await request(app).get('/api/attendance?conferenceId=spaces/xyz').set(auth());
@@ -339,7 +342,7 @@ describe('GET /api/attendance — participant + filter edge branches', () => {
     firestore.getTenantConfig.mockResolvedValue({ impersonateEmail: 'admin@acme.com' });
     mockMeetGet.mockResolvedValue({ conferenceRecords: [{ name: 'conferenceRecords/rec-3' }] });
     mockMeetGetAll.mockImplementation(async (p) => p.endsWith('/participants')
-      ? [{ name: 'conferenceRecords/rec-3/participants/123456', user: { displayName: 'X' } }] : []);
+      ? [{ name: 'conferenceRecords/rec-3/participants/123456', signedinUser: { displayName: 'X' } }] : []);
     const res = await request(app).get('/api/attendance?conferenceId=abc').set(auth());
     expect(res.body.participants[0].email).toBe('');
     CONFIG.adminEmail = savedAdmin;
@@ -374,7 +377,7 @@ describe('GET /api/attendance — final residual branches', () => {
     mockMeetGetAll.mockImplementation(async (p) => {
       if (p.endsWith('/participants')) return [
         { name: 'conferenceRecords/rec-9/participants/p-si', signedinUser: { displayName: 'SignedIn', email: 'si@acme.com' } },
-        { name: 'conferenceRecords/rec-9/participants/p-none', user: {} }, // → Unknown / ''
+        { name: 'conferenceRecords/rec-9/participants/p-none', signedinUser: {} }, // → Unknown / ''
       ];
       throw new Error('sessions boom'); // force the per-participant catch fallback
     });

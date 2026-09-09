@@ -65,6 +65,9 @@ jest.mock('../../src/services/googleAuth', () => ({
 jest.mock('../../src/services/meetApi', () => ({
   meetGet: jest.fn(),
   meetGetAll: jest.fn(),
+  // Pure helpers — pass the real implementations through.
+  participantIdentity: jest.requireActual('../../src/services/meetApi').participantIdentity,
+  sessionsDurationMs: jest.requireActual('../../src/services/meetApi').sessionsDurationMs,
 }));
 // Mock the sheets router with an empty Router that still carries a mocked
 // buildAndSaveExport (the export the auto-capture sweep imports). Keeps buildApp
@@ -810,7 +813,7 @@ describe('POST /api/admin/auto-capture — server-side auto-capture sweep', () =
       return {};
     });
     meetApi.meetGetAll.mockImplementation(async (path, token, key) => {
-      if (key === 'participants') return [{ name: 'conferenceRecords/r1/participants/p1', user: { displayName: 'Alex', email: 'alex@acme.com' } }];
+      if (key === 'participants') return [{ name: 'conferenceRecords/r1/participants/p1', signedinUser: { displayName: 'Alex', email: 'alex@acme.com' } }];
       if (key === 'participantSessions') return [{ startTime: nowIso, endTime: nowIso }];
       return [];
     });

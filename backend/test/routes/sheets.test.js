@@ -375,12 +375,23 @@ describe('POST /api/save-to-sheets — spreadsheet resolution + edge branches', 
     expect(res.body.code).toBe('AUTH_REQUIRED');
   });
 
-  test('sanitizes a formula-injection displayName', async () => {
+  test('formula-looking displayName is written VERBATIM (RAW input mode is the injection guard)', async () => {
     const res = await post({ ...validPayload, participants: [{ displayName: '=SUM(A1:A9)', email: 'x@acme.com', present: true, sessions: 1 }] });
     expect(res.status).toBe(200);
-    // the value written should be prefixed with a quote to defuse the formula
-    const wrote = JSON.stringify(mockSheetsUpdate.mock.calls);
-    expect(wrote).toContain("'=SUM");
+    const call = mockSheetsUpdate.mock.calls.at(-1)[0];
+    // RAW stores strings verbatim and never parses formulas, so the old
+    // apostrophe prefix only corrupted legit names (dial-in "+1 555…").
+    expect(call.valueInputOption).toBe('RAW');
+    const wrote = JSON.stringify(call.requestBody.values);
+    expect(wrote).toContain('=SUM(A1:A9)');
+    expect(wrote).not.toContain("'=SUM");
+  });
+
+  test('apostrophes in the tab name are escaped in the A1 range (O’Brien exports)', async () => {
+    const res = await post({ ...validPayload, tabName: "Ms. O'Brien's Homeroom" });
+    expect(res.status).toBe(200);
+    const call = mockSheetsUpdate.mock.calls.at(-1)[0];
+    expect(call.range).toBe("'Ms. O''Brien''s Homeroom'!A1");
   });
 
   test('renders all RSVP statuses', async () => {

@@ -66,4 +66,32 @@ async function meetGetAll(path, token, responseKey) {
   return items;
 }
 
-module.exports = { meetGet, meetGetAll };
+// Resolve a Meet v2 Participant's identity. The resource is a oneof of
+// signedinUser / anonymousUser / phoneUser — there is NO `user` field, so the
+// old `p.user?.…` fallbacks were dead code and every not-signed-in guest and
+// every dial-in collapsed into a single "Unknown" person (poisoning distinct
+// counts, sheets, digests and the series roll-up).
+function participantIdentity(p) {
+  const displayName = p?.signedinUser?.displayName
+    || p?.anonymousUser?.displayName
+    || p?.phoneUser?.displayName
+    || 'Unknown';
+  const email = p?.signedinUser?.email || '';
+  return { displayName, email };
+}
+
+// Sum of actual in-meeting time across sessions (an open session counts up to
+// `now`). The old first-join→last-leave span credited people for time they
+// were AWAY between sessions.
+function sessionsDurationMs(sessions, nowMs = Date.now()) {
+  let total = 0;
+  for (const s of sessions || []) {
+    if (!s.startTime) continue;
+    const start = new Date(s.startTime).getTime();
+    const end = s.endTime ? new Date(s.endTime).getTime() : nowMs;
+    if (Number.isFinite(start) && Number.isFinite(end) && end > start) total += end - start;
+  }
+  return total;
+}
+
+module.exports = { meetGet, meetGetAll, participantIdentity, sessionsDurationMs };

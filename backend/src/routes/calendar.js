@@ -31,17 +31,28 @@ router.get('/calendar-attendees', requireAuth, async (req, res) => {
     const timeMin = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
     const timeMax = new Date(Date.now() +  7 * 24 * 60 * 60 * 1000).toISOString();
 
-    const eventsResp = await calendar.events.list({
-      calendarId:   calendarId || 'primary',
-      timeMin,
-      timeMax,
-      singleEvents: true,
-      maxResults:   250,
-      conferenceDataVersion: 1, // ensure conferenceData is populated
-    });
-
-    const events = eventsResp.data.items || [];
-    log.info('calendar events scanned', { count: events.length, meetingCode, calendarId: calendarId || 'primary' });
+    // Paginate: a single 250-event page silently missed the tracked meeting
+    // for busy calendars (8 classes/day > 250 events in the 37-day window),
+    // and the route then reported "instant meeting, no invitees" — exporting
+    // a meaningless 100% attendance rate with no Absent rows. Capped at 8
+    // pages (2000 events) as a runaway guard.
+    const events = [];
+    let pageToken;
+    let pages = 0;
+    do {
+      const eventsResp = await calendar.events.list({
+        calendarId:   calendarId || 'primary',
+        timeMin,
+        timeMax,
+        singleEvents: true,
+        maxResults:   250,
+        conferenceDataVersion: 1, // ensure conferenceData is populated
+        ...(pageToken ? { pageToken } : {}),
+      });
+      events.push(...(eventsResp.data.items || []));
+      pageToken = eventsResp.data.nextPageToken || null;
+    } while (pageToken && ++pages < 8);
+    log.info('calendar events scanned', { count: events.length, pages: pages + 1, meetingCode, calendarId: calendarId || 'primary' });
 
     // Find all events matching this meeting code — exact segment match, skip all-day events
     const matchingEvents = events.filter(e => {
