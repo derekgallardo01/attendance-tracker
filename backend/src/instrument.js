@@ -32,6 +32,11 @@ Sentry.init({
   // user id to Sentry — so no raw email/IP reaches Sentry.
   sendDefaultPii: false,
   environment: process.env.NODE_ENV || 'production',
+  // Release tag so an error is attributable to a specific deploy instead of a
+  // featureless "production". Set SENTRY_RELEASE in the Cloud Run env (e.g. to
+  // the git sha) per deploy for per-commit resolution; falls back to the
+  // package version.
+  release: process.env.SENTRY_RELEASE || `attendance-tracker@${require('../package.json').version}`,
   tracesSampleRate: 0.1,
   debug: false,
   beforeSend: scrubEvent,

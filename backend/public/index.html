@@ -122,9 +122,28 @@
   <script src="https://browser.sentry-cdn.com/9.28.1/bundle.min.js" crossorigin="anonymous"></script>
   <script>
     if (window.Sentry) {
+      // Keep the browser layer at least as privacy-careful as the backend:
+      // strip query strings (share tokens / verify codes / ?token= bearers
+      // ride there) and redact any email-looking substring from event text
+      // before it leaves the panel. This handles student PII in a Meet iframe.
+      var SENTRY_EMAIL_RE = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi;
+      var scrubSentry = function (event) {
+        try {
+          if (event.request && event.request.url) event.request.url = event.request.url.split('?')[0];
+          var s = JSON.stringify(event);
+          if (SENTRY_EMAIL_RE.test(s)) {
+            event = JSON.parse(s.replace(SENTRY_EMAIL_RE, '[email]'));
+          }
+        } catch (e) { /* never block delivery over scrubbing */ }
+        return event;
+      };
       Sentry.init({
         dsn: 'https://ca6640c2e0299ad6aa313f210faae19f@o4510162222448640.ingest.us.sentry.io/4511049298280448',
         environment: 'production',
+        // Bump per meaningful frontend deploy so panel errors map to a version
+        // (the served copy has no build step to inject a git sha).
+        release: 'attendance-tracker-panel@2026-09-09',
+        beforeSend: scrubSentry,
       });
     }
   </script>
@@ -2627,8 +2646,18 @@ async function handleAuthCode(response) {
     } else {
       toast(t('toast.signedInAs','Signed in as') + ' ' + data.email);
     }
-    // Attach user context to Sentry
-    if (window.Sentry) Sentry.setUser({ email: data.email });
+    // Attach a HASHED user id to Sentry — never the raw email (matches the
+    // backend's sha256-truncated id so the same person correlates across
+    // layers). crypto.subtle is async; fire-and-forget so sign-in isn't blocked.
+    if (window.Sentry && data.email && window.crypto?.subtle) {
+      (async () => {
+        try {
+          const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(data.email.toLowerCase()));
+          const hex = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+          Sentry.setUser({ id: hex.slice(0, 16) });
+        } catch { /* identity is a nice-to-have */ }
+      })();
+    }
 
     // First sign-in & no source captured → remember it, but DON'T ask yet.
     // Sign-in almost always happens mid-meeting (the panel lives inside Meet)
