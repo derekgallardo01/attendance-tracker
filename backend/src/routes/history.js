@@ -1,4 +1,5 @@
 const { Router } = require('express');
+const CONFIG = require('../config');
 const { requireAuth } = require('../middleware/auth');
 const log = require('../lib/logger');
 const { getUserMeetingHistory, getUserMeetingSeries, getParticipantHistory, setParticipantNote, getParticipantNote, logEvent, createShareLink, revokeShareLink } = require('../services/firestore');
@@ -128,7 +129,7 @@ router.post('/share', requireAuth, async (req, res) => {
     const result = await createShareLink(req.user.domain, req.user.email, { type: type || 'series', recurringEventId });
     res.json({
       token: result.token,
-      url: `https://attendancetracker.dev/share.html?t=${result.token}`,
+      url: `${CONFIG.publicSiteUrl}/share.html?t=${result.token}`, // env-aware — a staging deploy must not mint prod links
       expiresAt: result.expiresAt,
     });
   } catch (err) {

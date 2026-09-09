@@ -103,6 +103,10 @@
     </div>
 
     <div id="loading" style="display:none">Loading team data…</div>
+    <div id="team-load-error" class="error-banner" style="display:none">
+      <strong>Couldn't load the team dashboard.</strong>
+      <div style="margin-top:6px;font-size:.85rem">Refresh to try again — if it keeps failing, sign in again from the panel.</div>
+    </div>
     <div id="error-not-admin" class="error-banner" style="display:none">
       <div id="admin-gate"><strong>Checking your team-admin status…</strong></div>
     </div>
@@ -362,13 +366,12 @@
         document.getElementById('dashboard').style.display = 'block';
       } catch (err) {
         console.error('team load failed:', err);
-        // A 5xx/network drop left a completely blank page under the header
-        // (the dashboard is only unhidden after a successful fetch).
-        const errBox = document.getElementById('error-not-admin');
-        if (errBox) {
-          errBox.style.display = 'block';
-          errBox.textContent = 'Couldn\'t load the team dashboard — check your connection and refresh to try again.';
-        }
+        // A 5xx/network drop left a completely blank page under the header.
+        // Dedicated element — writing into #error-not-admin destroyed its
+        // #admin-gate child for the rest of the page life. Copy stays neutral:
+        // this branch also catches 401s and render errors, not just network.
+        const errBox = document.getElementById('team-load-error');
+        if (errBox) errBox.style.display = 'block';
       } finally {
         document.getElementById('loading').style.display = 'none';
       }

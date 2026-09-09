@@ -171,7 +171,10 @@ async function evaluateSeriesAlerts(domain, email) {
     return alerts;
   } catch (err) {
     log.error('firestore: evaluateSeriesAlerts failed', { domain, email, error: err.message });
-    return [];
+    // null = "evaluation ERRORED" (retryable — the sweep releases the day
+    // slot); [] = "genuinely nothing to alert" (slot stays claimed, keeping
+    // the once-a-day evaluation throttle for the quiet majority).
+    return null;
   }
 }
 

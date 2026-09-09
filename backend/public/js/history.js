@@ -81,9 +81,15 @@
   // attendanceRate/totalMinutes with per-series canonicalized emails — the
   // exact shape an LMS gradebook import wants.
 
+  // Mirrors AttUtils.escapeCsv, INCLUDING the formula-injection prefix: Excel
+  // evaluates a leading = + - @ even inside quoted fields, and both display
+  // names and series titles are attacker-controlled by anyone who joins a
+  // meeting. This twin was missing the guard its sibling documented.
   function csvField(val) {
     if (val === null || val === undefined) return '""';
-    return `"${String(val).replace(/"/g, '""')}"`;
+    let s = String(val);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return `"${s.replace(/"/g, '""')}"`;
   }
 
   // "Alice B Walker" -> first "Alice B", last "Walker" (mirrors js/utils.js).

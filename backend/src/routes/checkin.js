@@ -78,7 +78,8 @@ router.get('/checkin/export', requireAuth, async (req, res) => {
     const checkins = await getCheckins(meetingCode, { strict: true });
     const esc = (v) => {
       let s = String(v ?? '');
-      // Formula-injection guard (same rule as sheets.js sanitizeCell):
+      // Formula-injection guard (sheets.js relies on RAW input mode instead;
+      // this CSV-bound path needs the explicit prefix):
       // display names are attendee-controlled and spreadsheets execute a
       // leading =/+/-/@ even in quoted CSV fields.
       if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;

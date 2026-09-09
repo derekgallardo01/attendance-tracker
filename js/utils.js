@@ -153,9 +153,22 @@
     const usedEmails = new Set();
     const parts = Array.from(participants || []);
     const attendees = calendarAttendees || [];
+    // The map is keyed by displayName — with DUPLICATE names (two "Guest"s,
+    // two same-named students) both export rows would inherit whichever
+    // invitee matched first: a wrong-email attribution in the Sheet. Never
+    // guess for ambiguous names; leave them for the manual match modal.
+    const nameCounts = {};
+    for (const p of parts) {
+      const n = (p.displayName || '').toLowerCase().trim();
+      if (n) nameCounts[n] = (nameCounts[n] || 0) + 1;
+    }
+    let matched = 0;
+    let namedCount = 0;
     for (const p of parts) {
       const pName = (p.displayName || '').toLowerCase().trim();
       if (!pName) continue;
+      namedCount++;
+      if (nameCounts[pName] > 1) continue; // ambiguous — manual match only
       let match = attendees.find(a => (a.displayName || '').toLowerCase().trim() === pName);
       if (!match) {
         const pFirst = pName.split(' ')[0];
@@ -166,9 +179,13 @@
       if (match) {
         emailMap[p.displayName] = match.email;
         usedEmails.add(match.email);
+        matched++;
       }
     }
-    const unmatchedCount = parts.length - Object.keys(emailMap).length;
+    // Count actual unmatched NAMED participants — the old
+    // `parts.length - keys(emailMap).length` over-reported for nameless rows
+    // and name collisions, inflating the match-modal's warning copy.
+    const unmatchedCount = namedCount - matched;
     return { emailMap, unmatchedCount };
   }
 
@@ -180,8 +197,14 @@
     if (!p) return 0;
     const t = typeof now === 'number' ? now : Date.now();
     const past = p._accumulatedMs || 0;
-    const join = p.joinTime instanceof Date ? p.joinTime.getTime()
-      : (p.joinTime ? new Date(p.joinTime).getTime() : null);
+    // The Meet API often supplies NO joinTime (session fetch failed, API lag)
+    // — the panel then tracks its own trackedJoinTime. Reading only joinTime
+    // here returned 0 for a visibly-present participant, and the export layer
+    // preferred that 0 over its own correct span fallback ("< 1 min / 0%"
+    // rows for students present the whole meeting).
+    const start = p.joinTime || p.trackedJoinTime || null;
+    const join = start instanceof Date ? start.getTime()
+      : (start ? new Date(start).getTime() : null);
     const active = p.present && join ? Math.max(0, t - join) : 0;
     return past + active;
   }
@@ -320,6 +343,10 @@
       // unticked") must survive a panel reload — it's the durable half of the
       // re-consent fix; without persistence it reverted to the passive banner.
       _scopeRetryFailed: !!state._scopeRetryFailed,
+      // Attendee check-in session: without persistence a panel reload forced
+      // the student through the Google popup again.
+      _attendeeToken: state._attendeeToken || null,
+      _attendeeEmail: state._attendeeEmail || null,
       savedAt: savedAtMs,
     };
   }
@@ -346,6 +373,8 @@
       autoExportedConferenceId: snap.autoExportedConferenceId || null,
       soloNudgeConferenceId: snap.soloNudgeConferenceId || null,
       _scopeRetryFailed: !!snap._scopeRetryFailed,
+      _attendeeToken: snap._attendeeToken || null,
+      _attendeeEmail: snap._attendeeEmail || null,
       participants: (snap.participants || []).map(([k, v]) => [k, {
         ...v,
         joinTime: date(v.joinTime),
@@ -576,6 +605,10 @@
         const durMs = (p._accumulatedMs || 0) + (p.present && p.joinTime ? (now.getTime() - new Date(p.joinTime).getTime()) : 0);
         const durMin = Math.round(durMs / 60000);
         grade = Math.min(100, Math.round((durMin / meetingMinutes) * 100));
+        // The Settings "Min stay %" threshold: below it, the LMS grade is 0
+        // (counted absent) — the setting was previously dead for gradebooks.
+        const minPercent = Number(opts.minPercent) || 0;
+        if (minPercent > 0 && grade < minPercent) grade = isExcused ? '' : 0;
       } else {
         grade = isExcused ? '' : 0;
       }

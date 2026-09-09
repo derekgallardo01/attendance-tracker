@@ -35,7 +35,10 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
       imgSrc: ["'self'", "data:", "https://*.googleusercontent.com"],
-      frameSrc: ["https://accounts.google.com"],
+      // youtube-nocookie: the demo-video embeds on index.html + ~18 SEO pages
+      // (silently refused before — console-only error the e2e suite can't see
+      // because it tests the Pages origin, which serves no CSP).
+      frameSrc: ["https://accounts.google.com", "https://www.youtube-nocookie.com"],
       frameAncestors: ["https://meet.google.com", "'self'"],
       connectSrc: ["'self'", "https://accounts.google.com", "https://*.ingest.us.sentry.io"],
     },
@@ -48,13 +51,20 @@ app.use(helmet({
 // uses JSON parsing below.
 app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), billingWebhookHandler);
 
-app.use(express.json({ limit: '100kb' }));
+// CORS BEFORE the body parser: a malformed/oversized JSON body throws inside
+// express.json(), and with cors() mounted after it the 400/413 carried no
+// Access-Control-Allow-Origin — cross-origin callers saw an opaque CORS
+// failure instead of the clean JSON error. maxAge lets browsers cache the
+// preflight (authed requests are non-simple, so every poll preflighted and
+// double-counted against the rate limiter without it).
 // credentials:true is required because navigator.sendBeacon (used by the
 // landing-page pageview beacon) auto-includes cookies for cross-origin
 // requests. Without this header on the preflight response the browser
 // drops the beacon silently and we lose visit telemetry. Origin is still
 // restricted to the allowedOrigins whitelist so nothing's been opened up.
-app.use(cors({ origin: CONFIG.allowedOrigins, credentials: true }));
+app.use(cors({ origin: CONFIG.allowedOrigins, credentials: true, maxAge: 600 }));
+
+app.use(express.json({ limit: '100kb' }));
 
 // Request correlation IDs
 app.use(requestId);
@@ -102,8 +112,14 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 // Health check
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
-// 404 fallback for browser navigation
+// 404 fallbacks. API paths get JSON (previously a POST to a mistyped /api
+// route fell through to Express's HTML finalhandler — "Cannot POST /api/…" —
+// and a GET got the full marketing 404 page); browser navigation keeps the
+// styled 404 page.
 app.use((req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'Not found.' });
+  }
   if (req.method === 'GET' && req.accepts('html')) {
     return res.status(404).sendFile(path.join(__dirname, '..', 'public', '404.html'));
   }
@@ -129,7 +145,10 @@ app.use((err, req, res, next) => {
   if (status === 413 || err.type === 'entity.too.large') {
     return res.status(413).json({ error: 'Request body too large.' });
   }
-  log.error('unhandled request error', { path: req.path, status, error: err.message });
+  // req.path can carry bearer-grade segments (share tokens, verify codes) —
+  // log only the route shape, not the values.
+  const safePath = req.path.replace(/(\/public\/(share|verify|unsubscribe))\/.+/, '$1/[redacted]');
+  log.error('unhandled request error', { path: safePath, status, error: err.message });
   return res.status(status >= 400 && status < 600 ? status : 500).json({ error: 'Internal server error.' });
 });
 

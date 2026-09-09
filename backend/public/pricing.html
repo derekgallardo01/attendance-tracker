@@ -1007,7 +1007,7 @@
       // auto-apply — the empty promo tells the backend to skip it), billed on
       // the domain plan's annual Stripe price.
       const isInstitution = plan === 'institution';
-      const body = JSON.stringify({
+      const makeBody = () => JSON.stringify({
         plan: isInstitution ? 'team' : (plan || 'lifetime'),
         // 'team' + 'annual' resolves to the Institution price server-side,
         // so the $19.99 one-time domain card must NOT send 'annual'.
@@ -1024,7 +1024,7 @@
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
-          body,
+          body: makeBody(),
         }
       );
       try {
@@ -1033,10 +1033,23 @@
         // A stale/expired stored token made checkout PERMANENTLY dead here:
         // the authed endpoint 401'd, we alerted "Session expired", and the
         // bad token was never cleared — no purchase possible short of
-        // clearing site data. Now: drop the dead token and fall back to the
-        // public checkout (Stripe collects the email itself).
+        // clearing site data. Now: drop the dead token (EVERY storage slot
+        // getStoredToken reads — clearing just one looped forever for the
+        // legacy keys), collect the work email the authed path skipped, and
+        // fall back to the public checkout.
         if (token && res.status === 401) {
-          try { localStorage.removeItem('att_session_token'); } catch (e) {}
+          try {
+            localStorage.removeItem('att_session_token');
+            localStorage.removeItem('attendance_tracker_session');
+            localStorage.removeItem('token');
+          } catch (e) {}
+          if ((window.location.hash || '').includes('token=')) {
+            try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch (e) {}
+          }
+          // Team/Institution need a work email the authed path never asked
+          // for — prompt now (token is gone, so ensureTeamEmail will ask)
+          // instead of letting public-checkout 400 with a dead-end alert.
+          if (!ensureTeamEmail(plan)) return;
           res = await postCheckout(null);
         }
         const data = await res.json().catch(() => ({}));

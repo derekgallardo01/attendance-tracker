@@ -451,8 +451,12 @@ async function persistExport(domain, { meetingTitle, tabName, exportedAt, partic
     const docId = `${safeEmail}__${safeConf}`;
 
     const ref = tenantRef(domain).collection('exports').doc(docId);
-    const existing = await ref.get();
-    if (existing.exists) {
+    // TRANSACTIONAL meter bump: a manual save racing the meeting-end auto-save
+    // (or the auto-capture sweep) with a plain read-modify-write both read N
+    // and both wrote N+1 — the free-tier cap silently under-counted.
+    const dedupe = await getDb().runTransaction(async (tx) => {
+      const existing = await tx.get(ref);
+      if (!existing.exists) return null;
       // Re-export of an already-counted meeting. Track HOW OFTEN: the dedupe
       // doc doubles as the monthly quota counter, and before this a constant
       // conferenceId gave unlimited free exports (each call wrote a fresh
@@ -464,9 +468,12 @@ async function persistExport(domain, { meetingTitle, tabName, exportedAt, partic
       const monthKey = exportMonthKey();
       const prior = existing.data();
       const reexportCount = (prior.reexportMonth === monthKey ? (prior.reexportCount || 0) : 0) + 1;
-      await ref.set({ reexportCount, reexportMonth: monthKey, lastReexportAt: now }, { merge: true });
-      log.info('firestore: export already persisted, skipping duplicate', { domain, docId });
+      tx.set(ref, { reexportCount, reexportMonth: monthKey, lastReexportAt: now }, { merge: true });
       return { created: false, reexportCount };
+    });
+    if (dedupe) {
+      log.info('firestore: export already persisted, skipping duplicate', { domain, docId });
+      return dedupe;
     }
 
     await ref.set({
@@ -719,12 +726,17 @@ async function setUserAcquisitionSource(domain, email, { source, detail }) {
   }
 }
 
-// Strict read of tenant.adminEmail — THROWS on a read failure instead of
-// swallowing to null (getTenantConfig's null-on-error would fail the
-// verify-delegation anti-takeover guard OPEN on a Firestore blip).
+// Strict read of the tenant's delegation-relevant state — THROWS on a read
+// failure instead of swallowing to null (getTenantConfig's null-on-error
+// would fail the verify-delegation anti-takeover guard OPEN on a blip).
 async function getTenantAdminEmailStrict(domain) {
   const doc = await tenantRef(domain).get();
-  return doc.exists ? (doc.data().adminEmail?.toLowerCase?.() || null) : null;
+  if (!doc.exists) return { adminEmail: null, impersonateEmail: null };
+  const d = doc.data();
+  return {
+    adminEmail: d.adminEmail?.toLowerCase?.() || null,
+    impersonateEmail: d.impersonateEmail?.toLowerCase?.() || null,
+  };
 }
 
 // The user dismissed the "how did you find us?" modal — remember that so

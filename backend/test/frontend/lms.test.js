@@ -62,6 +62,14 @@ describe('buildLmsGradebookRows', () => {
     ]);
   });
 
+  test('minPercent threshold: below it the LMS grade is 0 (absent), excused stays blank', () => {
+    // The Settings "Min stay %" was previously dead for gradebook exports.
+    const rows = utils.buildLmsGradebookRows(participants, roster, { ...opts, minPercent: 50 });
+    expect(rows.find(r => r.name === 'Alice Walker').grade).toBe(100); // above threshold — unchanged
+    expect(rows.find(r => r.name === 'Bob Short').grade).toBe(0);      // 25% < 50% → counted absent
+    expect(rows.find(r => r.name === 'Dave Excused').grade).toBe('');  // excused stays blank
+  });
+
   test('handles missing opts, roster, and email-less name-only students', () => {
     expect(utils.buildLmsGradebookRows([], null)).toEqual([]);
     expect(utils.buildLmsGradebookRows([], [{ name: 'Nadia' }], undefined)).toEqual([
@@ -156,6 +164,18 @@ describe('series gradebook CSVs (js/history.js)', () => {
     expect(lines[0]).toBe('"Student","ID","SIS User ID","SIS Login ID","Section","Algebra II attendance"');
     expect(lines[1]).toBe('"Points Possible","","","","","100"');
     expect(lines[2]).toBe('"Alice B Walker","","","alice@school.edu","","100"');
+  });
+
+  test('formula-looking display names are defused in the series gradebook CSV', () => {
+    // csvField was missing the injection prefix its AttUtils.escapeCsv twin
+    // documents — display names are attacker-controlled by any meeting guest.
+    const evil = {
+      title: 'Algebra II',
+      people: [{ displayName: '=HYPERLINK("http://evil","x")', email: 'e@x.com', attended: 1, missed: 0, attendanceRate: 1, totalMinutes: 60 }],
+    };
+    const csv = history.buildSeriesGradebookCsv(evil, 'generic');
+    expect(csv).toContain('"\'=HYPERLINK');
+    expect(csv).not.toContain('"=HYPERLINK');
   });
 
   test('tolerates a null series and defaults the title', () => {

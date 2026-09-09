@@ -1,0 +1,9 @@
+# Belt-and-braces: the Dockerfile uses explicit COPYs today, but if a future
+# edit switches to `COPY . .` these must never reach the image.
+node_modules
+coverage
+test
+*.test.js
+.env
+.env.*
+COVERAGE.md

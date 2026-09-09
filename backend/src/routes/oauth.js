@@ -209,7 +209,17 @@ router.post('/exchange', async (req, res) => {
     // claimed transactionally, so the /api/admin/source trigger and the
     // daily-sweep backstop still no-op if this one won.
     if (isBrandNewUser) {
-      await flushDeferredNotifications(domain, email);
+      // Deadline-raced: the flush must not hold the sign-in hostage — worst
+      // case it chains a Resend send (15s timeout) and an untimeboxed Stripe
+      // promo-code create on the referral path, and a proxy timeout here BURNS
+      // the single-use Google auth code. 3s covers the common case; anything
+      // slower keeps running while the instance is still hot from the request,
+      // and the transactional claims make later retries safe either way.
+      let flushTimer;
+      await Promise.race([
+        flushDeferredNotifications(domain, email),
+        new Promise((resolve) => { flushTimer = setTimeout(resolve, 3000); }),
+      ]).finally(() => clearTimeout(flushTimer));
     }
 
     res.json({

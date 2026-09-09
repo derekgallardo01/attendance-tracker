@@ -22,9 +22,9 @@ function sanitizeCell(val) {
 function sanitizeTabName(name) {
   return name
     .replace(/[\[\]*?/\\]/g, '-')  // Replace forbidden chars with dash
-    .replace(/^'|'$/g, '')         // Cannot start or end with apostrophe
+    .replace(/^'+|'+$/g, '')       // Cannot start/end with apostrophes (strip RUNS — ''Quiz'' has two)
     .slice(0, 100)                 // Google Sheets limit
-    .replace(/'$/, '')             // the slice can land ON an apostrophe — re-strip
+    .replace(/'+$/, '')            // the slice can land ON an apostrophe — re-strip
     || 'Meeting';                  // Fallback if empty after sanitization
 }
 
@@ -170,7 +170,7 @@ function buildClassSummaryTeaserValues(series) {
 async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
   // Shim so the extracted body's existing `req.user` reads work unchanged.
   const req = { user };
-  const { meetingTitle, tabName: clientTabName, exportedAt, participants, calendarAttendees = [], meetingStartTime, meetingType, eventStart, eventEnd, conferenceId, timezone, recurringEventId, excusedFromClient = [] } = data;
+  const { meetingTitle, tabName: clientTabName, exportedAt, participants, calendarAttendees = [], meetingStartTime, meetingType, eventStart, eventEnd, conferenceId, timezone, recurringEventId, excusedFromClient = [], lateMinutes } = data;
   const { sendEmail, autoExport, proAllowed } = options;
   const sheets = google.sheets({ version: 'v4', auth: sheetsAuth });
 
@@ -189,7 +189,11 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
         try {
           await sheets.spreadsheets.get({ spreadsheetId, fields: 'spreadsheetId' });
         } catch (e) {
-          const gone = e?.code === 404 || e?.code === 403 || /not found|notFound/i.test(e?.message || '');
+          // A bare 403 is NOT "gone" — it's usually PERMISSION_DENIED from a
+          // missing/degraded OAuth scope, which the outer catch classifies as
+          // recoverable (DRIVE_PERMISSION_MISSING → re-consent). Unlinking on
+          // it orphaned the user's history right before they re-consented.
+          const gone = e?.code === 404 || /not.?found|fileNotFound/i.test(e?.message || '');
           if (!gone) {
             log.warn('spreadsheet existence probe failed transiently — keeping the stored sheet', { email: req.user.email, spreadsheetId, error: e.message });
             throw e; // fail THIS export rather than abandon the user's history
@@ -271,7 +275,11 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
     let sheetId = null;
     for (let attempt = 0; attempt < 5; attempt++) {
       try {
-        const tryName = attempt === 0 ? tabName : `${tabName} (${attempt + 1})`;
+        // The collision suffix must fit inside Sheets' 100-char title limit —
+        // appending past a 100-char base produced a non-"already exists" 400
+        // that aborted the whole export.
+        const suffix = ` (${attempt + 1})`;
+        const tryName = attempt === 0 ? tabName : `${tabName.slice(0, 100 - suffix.length)}${suffix}`;
         const addResp = await sheets.spreadsheets.batchUpdate({
           spreadsheetId,
           requestBody: { requests: [{ addSheet: { properties: { title: tryName } } }] },
@@ -341,17 +349,18 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
     ];
 
     // Build participant rows.
-    // Late? column flags anyone who joined more than LATE_THRESHOLD_MIN past
-    // the meeting's true start. Baseline is calendar start when scheduled,
-    // else the actual Meet conference start — matches the in-panel chip.
-    const LATE_THRESHOLD_MIN = 5;
+    // Late? column flags anyone who joined more than the user's configured
+    // "Late after" threshold past the meeting's true start. The panel's
+    // Settings value was previously dead here (hardcoded 5): the roster tab
+    // and the Sheet/email digest disagreed about who was late. 0 = disabled.
+    const lateThresholdMin = Number.isFinite(Number(lateMinutes)) ? Number(lateMinutes) : 5;
     const lateBaselineMs = eventStart
       ? new Date(eventStart).getTime()
       : (meetingStartTime ? new Date(meetingStartTime).getTime() : 0);
     const lateMinFor = (joinIso) => {
-      if (!lateBaselineMs || !joinIso) return 0;
+      if (!lateThresholdMin || !lateBaselineMs || !joinIso) return 0;
       const diff = Math.round((new Date(joinIso).getTime() - lateBaselineMs) / 60000);
-      return diff > LATE_THRESHOLD_MIN ? diff : 0;
+      return diff > lateThresholdMin ? diff : 0;
     };
 
     const header = ['Name', 'Email', 'RSVP Status', 'Late?', `Join Time (${tzAbbr})`, `Leave Time (${tzAbbr})`, 'Duration (min)', 'Attendance %', 'Sessions', 'Status', 'Checked In'];
@@ -698,6 +707,7 @@ router.post('/save-to-sheets', async (req, res) => {
         calendarAttendees: b.calendarAttendees || [], meetingStartTime: b.meetingStartTime, meetingType: b.meetingType,
         eventStart: b.eventStart, eventEnd: b.eventEnd, conferenceId: b.conferenceId, timezone: b.timezone,
         recurringEventId: b.recurringEventId, excusedFromClient: b.excusedEmails || [],
+        lateMinutes: b.lateMinutes, // panel's "Late after" threshold — drives the Late? column + digest
       },
       options: { sendEmail: b.sendEmail, autoExport: b.autoExport, proAllowed },
     });

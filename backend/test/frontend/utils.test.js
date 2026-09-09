@@ -527,6 +527,45 @@ describe('utils — fallback branches', () => {
     expect(typeof U.autoMatchAttendees(undefined, undefined)).toBe('object'); // { emailMap, unmatchedCount }
   });
 
+  test('autoMatchAttendees never guesses for DUPLICATE display names', () => {
+    // Two "Guest"s + one invitee: mapping by name would attribute BOTH export
+    // rows to whichever invitee matched first — wrong email in the Sheet.
+    const parts = [
+      { displayName: 'Guest' }, { displayName: 'Guest' },
+      { displayName: 'Alice Smith' },
+    ];
+    const attendees = [
+      { displayName: 'Guest', email: 'guest1@x.com' },
+      { displayName: 'Alice Smith', email: 'alice@x.com' },
+    ];
+    const { emailMap, unmatchedCount } = U.autoMatchAttendees(parts, attendees);
+    expect(emailMap['Guest']).toBeUndefined(); // ambiguous → manual match modal
+    expect(emailMap['Alice Smith']).toBe('alice@x.com');
+    expect(unmatchedCount).toBe(2); // the two Guests, counted honestly
+  });
+
+  test('autoMatchAttendees unmatchedCount ignores nameless rows (no over-report)', () => {
+    const parts = [{ displayName: '' }, { displayName: 'Bob Lee' }];
+    const attendees = [{ displayName: 'Bob Lee', email: 'bob@x.com' }];
+    const { unmatchedCount } = U.autoMatchAttendees(parts, attendees);
+    expect(unmatchedCount).toBe(0);
+  });
+
+  test('participantTotalMs falls back to trackedJoinTime when the API gave no joinTime', () => {
+    // Meet API lag / failed session fetch → joinTime null; the panel tracked
+    // its own first-seen time. Reading only joinTime returned 0 for a
+    // visibly-present participant and exported "< 1 min / 0%".
+    const now = Date.parse('2026-09-09T10:30:00Z');
+    const p = { present: true, joinTime: null, trackedJoinTime: new Date('2026-09-09T10:00:00Z'), _accumulatedMs: 0 };
+    expect(U.participantTotalMs(p, now)).toBe(30 * 60000);
+  });
+
+  test('escapeCsv defuses spreadsheet formula injection', () => {
+    expect(U.escapeCsv('=HYPERLINK("http://evil","x")')).toBe('"\'=HYPERLINK(""http://evil"",""x"")"');
+    expect(U.escapeCsv('+1 555-0100')).toBe('"\'+1 555-0100"');
+    expect(U.escapeCsv('Alice')).toBe('"Alice"');
+  });
+
   test('fmtTime accepts a Date, a string, and an invalid value', () => {
     expect(U.fmtTime(new Date())).not.toBe('');
     expect(typeof U.fmtTime('2026-06-01T10:00:00Z')).toBe('string');

@@ -55,8 +55,9 @@ test.describe('Auth enforcement on protected endpoints', () => {
 });
 
 test.describe('Feedback submission round-trip', () => {
-  // This actually sends an email via Resend. CI runs trigger one email per
-  // commit on main — acceptable for the signal of "feedback path works end-to-end".
+  // The backend recognizes the smoke-test marker (source github_actions /
+  // ci-smoke@ sender) and skips BOTH the Resend email and the Firestore
+  // feedback row — this validates routing/validation only, writes nothing.
   test('/api/public/feedback accepts a smoke submission (200)', async ({ request }) => {
     const res = await request.post(`${BACKEND}/api/public/feedback`, {
       data: {

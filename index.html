@@ -1695,6 +1695,7 @@ function loadStoredRosters() {
     if (thresh) state.thresholds = Object.assign({ minPercent: 0, lateMinutes: 10 }, JSON.parse(thresh));
     const excused = localStorage.getItem(EXCUSED_STORAGE_KEY);
     if (excused) state.excusedStudents = JSON.parse(excused) || {};
+    paintThresholdSelects(); // sync the selects even when no roster is active
   } catch (e) {
     console.warn('[Attendance] Failed to load stored rosters:', e);
   }
@@ -1925,18 +1926,36 @@ function saveRosterModal() {
     return;
   }
 
+  // Reserved JS object keys silently vanish on assignment (a roster named
+  // __proto__ was unstorable and disappeared without a trace).
+  if (['__proto__', 'prototype', 'constructor'].includes(rosterName)) {
+    showRosterModalError(t('roster.invalidName', 'That name can\'t be used — pick another.'));
+    nameInput.focus();
+    return;
+  }
+
   const rawText = studentsInput.value.trim();
   if (!rawText) {
     showRosterModalError(t('roster.enterStudents','Please enter at least one student name or email.'));
     studentsInput.focus();
     return;
   }
+
+  if (!state.rosters) state.rosters = {};
+  // Collision guard: creating (or renaming onto) an existing name silently
+  // DESTROYED that roster — 40 students gone, localStorage-only, no recovery.
+  const isRename = _editingRosterOriginalName && _editingRosterOriginalName !== rosterName;
+  const isNew = !_editingRosterOriginalName;
+  if ((isNew || isRename) && state.rosters[rosterName]) {
+    showRosterModalError(t('roster.nameTaken', 'A class with that name already exists — pick a different name or edit that class instead.'));
+    nameInput.focus();
+    return;
+  }
   hideRosterModalError();
 
   const students = parseStudentsInput(rawText);
-  if (!state.rosters) state.rosters = {};
 
-  if (_editingRosterOriginalName && _editingRosterOriginalName !== rosterName) {
+  if (isRename) {
     delete state.rosters[_editingRosterOriginalName];
   }
 
@@ -1982,6 +2001,22 @@ function deleteCurrentRoster() {
   updateTabCounts();
   renderRosterView();
   toast(t('roster.deleted', 'Class roster deleted'));
+}
+
+// Paint the threshold <select>s from saved state. Previously this only
+// happened deep inside renderRosterView AFTER its no-active-roster early
+// return — with no roster selected the selects showed HTML defaults, and
+// onThresholdChange (which reads BOTH controls) silently overwrote the other
+// saved value the first time either was touched.
+function paintThresholdSelects() {
+  const staySel = document.getElementById('threshold-stay');
+  const lateSel = document.getElementById('threshold-late');
+  if (staySel && state.thresholds) {
+    staySel.value = state.thresholds.minMinutes > 0
+      ? `m${state.thresholds.minMinutes}`
+      : String(state.thresholds.minPercent || 0);
+  }
+  if (lateSel && state.thresholds) lateSel.value = String(state.thresholds.lateMinutes !== undefined ? state.thresholds.lateMinutes : 10);
 }
 
 function onThresholdChange() {
@@ -2423,6 +2458,8 @@ function restoreState() {
     state.autoExportedConferenceId = s.autoExportedConferenceId;
     state.soloNudgeConferenceId = s.soloNudgeConferenceId;
     state._scopeRetryFailed = s._scopeRetryFailed || false;
+    state._attendeeToken = s._attendeeToken || null;
+    state._attendeeEmail = s._attendeeEmail || null;
     state._selfDisplayName = s.userDisplayName;
     if (s.userEmail) state._selfEmail = s.userEmail.toLowerCase();
 
@@ -2535,8 +2572,11 @@ async function handleAuthCode(response) {
     console.error('OAuth error:', response.error);
     // Abandoned attempt — drop the recovery snapshot, or a LATER unrelated
     // sign-in would be judged against this attempt's missing scopes and toast
-    // the wrong outcome.
+    // the wrong outcome. Same for the pending Classroom import: leaving it
+    // armed made the NEXT sign-in (for any reason) fire an unrequested import
+    // and, on a still-missing scope, ANOTHER consent popup with no visible cause.
     state._reconsentMissing = null;
+    _pendingClassroomImport = false;
     toast(t('toast.signInCancelled','Sign-in cancelled'));
     return;
   }
@@ -2620,6 +2660,7 @@ async function handleAuthCode(response) {
   } catch (err) {
     console.error('Auth exchange failed:', err);
     state._reconsentMissing = null; // failed attempt — don't judge a later sign-in by it
+    _pendingClassroomImport = false; // don't auto-fire an import on the next successful sign-in
     toast(t('toast.signInFailed','Sign-in failed:') + ' ' + err.message);
   }
 }
@@ -3490,7 +3531,9 @@ async function submitCheckin(token) {
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || `HTTP ${res.status}`);
+    const err = new Error(body.error || `HTTP ${res.status}`);
+    err.status = res.status; // callers branch on 401/429 — the message alone was discarded
+    throw err;
   }
   return res.json();
 }
@@ -3516,7 +3559,19 @@ async function checkInHere() {
     toast(t('checkin.done', 'Checked in') + ' ✓');
   } catch (err) {
     console.error('Check-in failed:', err);
-    toast(t('checkin.error', 'Check-in failed. Please try again.'));
+    if (err.status === 429) {
+      // School NAT: the whole class shares one IP against the per-IP limiter.
+      // "Try again" made students hammer it harder.
+      toast(t('checkin.rateLimited', 'Lots of classmates are checking in right now — wait a minute and tap again.'), 8000);
+    } else if (err.status === 401 && !state.sessionToken && state._attendeeToken) {
+      // Expired attendee session: the old generic error left the button
+      // permanently dead. Drop the stale token and restart the sign-in.
+      state._attendeeToken = null;
+      toast(t('checkin.expired', 'Your check-in session expired — sign in again.'), 5000);
+      attendeeSignIn();
+    } else {
+      toast(t('checkin.error', 'Check-in failed. Please try again.'));
+    }
     // Re-enable the (still-present) button on failure — on success renderList
     // replaces it, but after an error the same node must stay clickable.
     const b = document.getElementById('checkin-btn');
@@ -3668,7 +3723,16 @@ function mergeParticipants(incoming = []) {
   const incomingKeys = new Set(incoming.map(p => p.participantId || p.displayName));
   for (const [key, p] of state.participants) {
     if (p.checkinOnly) continue;
-    if (p.present && !incomingKeys.has(key)) { p.present = false; changed = true; }
+    if (p.present && !incomingKeys.has(key)) {
+      // Bank the session before flipping present — this path bypasses the
+      // normal leave handling, and without banking, participantTotalMs (and
+      // the export's durationMs) read 0 for someone who was here all along.
+      const start = p.joinTime || p.trackedJoinTime;
+      if (start) {
+        p._accumulatedMs = (p._accumulatedMs || 0) + Math.max(0, Date.now() - new Date(start).getTime());
+      }
+      p.present = false; changed = true;
+    }
   }
 
   for (const p of incoming) {
@@ -3969,16 +4033,27 @@ async function saveProfileNote() {
 // MODAL section further down.
 function toggleAutoExport(on) {
   localStorage.setItem('autoExportOnEnd', on ? '1' : '0');
-  persistSetting({ autoExportOnEnd: !!on });
+  persistSetting({ autoExportOnEnd: !!on }).then((ok) => {
+    if (!ok) toast(t('toast.settingSaveFailed', "Couldn't save that setting — check your connection and toggle it again."), 6000);
+  });
   try { logUserEvent('auto_export_toggled', { on: !!on }); } catch {}
   toast(on ? t('toast.autoExportOn') : t('toast.autoExportOff'));
 }
 
 // Email lifecycle notifications toggle (opt-in/opt-out). Persists to the server's
-// suppression record so alerts/re-engagement emails stop or resume.
-function toggleEmailNotifications(enabled) {
-  persistSetting({ emailOptOut: !enabled });
-  toast(enabled ? t('toast.emailOn') : t('toast.emailOff'));
+// suppression record so alerts/re-engagement emails stop or resume. The toast
+// waits for the server: this setting has NO local fallback, so confirming
+// before the write landed told users their email was off while digests kept
+// arriving.
+async function toggleEmailNotifications(enabled) {
+  const ok = await persistSetting({ emailOptOut: !enabled });
+  if (ok) {
+    toast(enabled ? t('toast.emailOn') : t('toast.emailOff'));
+  } else {
+    toast(t('toast.settingSaveFailed', "Couldn't save that setting — check your connection and toggle it again."), 6000);
+    const box = document.getElementById('setting-email-optout');
+    if (box) box.checked = !enabled; // revert the visual to reality
+  }
 }
 function toggleEmailOptOut(optedOut) {
   toggleEmailNotifications(!optedOut);
@@ -4370,14 +4445,19 @@ function dismissPaywallWhy() {
 
 // Fire-and-forget PUT of a settings patch. Best-effort — a failure leaves the
 // local UI as the user set it; they can retry by toggling again.
+// Returns true only when the server ACCEPTED the write. fetch resolves on
+// 401/429/500 too — treating any resolution as success made toggles lie
+// ("Email off" toasted while digests kept arriving) and the next settings
+// open silently reverted the switch.
 async function persistSetting(patch) {
   try {
-    await authFetch(`${state.backendUrl}/settings`, {
+    const res = await authFetch(`${state.backendUrl}/settings`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(patch),
     });
-  } catch { /* best-effort sync */ }
+    return res.ok;
+  } catch { return false; }
 }
 
 function updateSummary() {
@@ -4837,6 +4917,9 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     sendEmail: !!opts.sendEmail,
     autoExport: !!opts.autoExport,
     recurringEventId: state._recurringEventId || null,
+    // The Settings "Late after" threshold — without this the Sheet/digest
+    // hardcoded 5 minutes and disagreed with the roster tab.
+    lateMinutes: state.thresholds ? state.thresholds.lateMinutes : undefined,
     excusedEmails: mergedExcusedEmails,
     calendarAttendees: effectiveAttendees,
     participants: [...state.participants.values()].map(p => {
@@ -4855,7 +4938,10 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
         leaveTimeISO: leaveTime ? leaveTime.toISOString() : null,
         // Actual accumulated in-meeting time — the backend prefers this over
         // the join→leave span, which over-credits leave-and-return attendees.
-        durationMs:   AttUtils.participantTotalMs(p),
+        // Omit a ZERO: it means "we have no basis" (no accumulated time, no
+        // join anchor) and the server's span fallback is strictly better than
+        // exporting a hard "< 1 min / 0%" for a present participant.
+        ...(AttUtils.participantTotalMs(p) > 0 ? { durationMs: AttUtils.participantTotalMs(p) } : {}),
         present:      p.present,
         sessions:     p.sessions,
         checkedInAtISO: p.checkedInAt || null,
@@ -5526,7 +5612,8 @@ async function saveWebhookSetting(provider) {
     if (input) input.value = '';
     updateWebhookDots();
     try { logUserEvent(url ? 'webhook_saved' : 'webhook_cleared', { provider }); } catch {}
-    setTimeout(closeSettingsModal, 1200);
+    // Deliberately does NOT close the settings modal: auto-closing after one
+    // provider made configuring Slack AND Discord in one visit impossible.
   } catch (err) {
     showSettingsStatus(err.message, '#f85149', p.statusId);
   } finally {

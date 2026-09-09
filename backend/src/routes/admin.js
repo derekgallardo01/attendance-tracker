@@ -53,17 +53,17 @@ function sweepBudgetMs() {
 // a stable order, so without rotation the tail is never reached. Deterministic
 // (no Math.random) and cheap. `dayOffset` is passed so callers can vary the
 // clock read for tests.
-// The offset advances every 15 MINUTES (not daily) multiplied by a co-prime
-// stride: the old day-derived offset moved ONE position per day, so a user in
-// the truncated tail could wait (N - K) days for first contact — and
-// check-upcoming (which must run every ≤15 min) processed the IDENTICAL
-// prefix all day, meaning everyone past the budget got zero upcoming
-// reminders, every day. Per-user claims/dedup keys make re-visiting the same
-// user within a day a cheap no-op, so finer rotation only adds coverage.
+// The offset is a Knuth-multiplicative HASH of the 15-minute bucket. A plain
+// stride aliases badly for the daily/6-hourly sweeps: a daily job advances 96
+// buckets/run, and 96×stride ≡ 0 (mod len) for many list lengths — the
+// rotation would be IDENTICAL every day, freezing the truncated tail out
+// forever. Hashing the bucket gives a well-spread pseudo-random offset for
+// every cadence and every length. Per-user claims/dedup keys make re-visiting
+// the same user a cheap no-op, so randomized coverage is strictly better.
 function rotateForFairness(arr, dayOffset) {
   if (!Array.isArray(arr) || arr.length < 2) return arr || [];
   const bucket = dayOffset == null ? Math.floor(Date.now() / 900000) : dayOffset;
-  const off = (((bucket * 131) % arr.length) + arr.length) % arr.length;
+  const off = ((Math.imul(bucket, 2654435761) >>> 0) % arr.length + arr.length) % arr.length;
   return off === 0 ? arr : arr.slice(off).concat(arr.slice(0, off));
 }
 
@@ -513,14 +513,13 @@ router.post('/admin/check-alerts', requireSuperAdminOrScheduler, async (req, res
         if (!claim.claimed) { usersSkipped++; continue; }
 
         const alerts = await evaluateSeriesAlerts(user.domain, user.email);
-        if (alerts.length === 0) {
-          // Release the day slot: evaluateSeriesAlerts swallows its own read
-          // errors into [], so a Firestore blip here used to burn the user's
-          // slot for the day — no alerts until tomorrow. Empty is cheap to
-          // re-check; the per-CONDITION claims are what prevent duplicates.
+        if (alerts === null) {
+          // Evaluation ERRORED (Firestore blip) — release the day slot so the
+          // next run retries instead of silencing the user until tomorrow.
           try { await claim.ref.delete(); } catch (_) { /* best-effort */ }
           continue;
         }
+        if (alerts.length === 0) continue; // genuinely nothing: slot stays — the once-a-day evaluation throttle
 
         // Per-condition dedup: only send alerts we haven't already sent for THIS
         // exact condition (series + person + rule + instanceCount). Without this,
@@ -861,22 +860,28 @@ router.post('/admin/verify-delegation', verifyDelegationLimiter, async (req, res
     // (getTenantConfig swallows errors into null, which would fail this guard
     // OPEN on a Firestore blip; a throw here lands in the catch → safe no-op).
     const { getTenantAdminEmailStrict } = require('../services/firestore');
-    const existingAdmin = await getTenantAdminEmailStrict(domainLower);
+    const { adminEmail: existingAdmin, impersonateEmail: existingImpersonate } = await getTenantAdminEmailStrict(domainLower);
+    const seatHeldByOther = !!existingAdmin && existingAdmin !== adminEmailLower;
 
     // Try to get a Meet API token by impersonating the admin
     const { getMeetToken } = require('../services/googleAuth');
     await getMeetToken(adminEmailLower);
 
     // If we get here, delegation works — store the config (lowercased domain:
-    // a case-variant would silently fork a phantom tenant).
+    // a case-variant would silently fork a phantom tenant). On a tenant whose
+    // admin seat is held by SOMEONE ELSE, this unauthenticated endpoint only
+    // records the verification — it must not re-point an already-configured
+    // impersonateEmail (config poisoning: aim it at a suspended mailbox and
+    // every SA lookup silently degrades) nor flip `active` back on for a
+    // possibly-uninstalled tenant.
     await upsertTenantConfig(domainLower, {
-      ...(existingAdmin && existingAdmin !== adminEmailLower ? {} : { adminEmail: adminEmailLower }),
-      impersonateEmail: adminEmailLower,
       delegationVerified: true,
-      active: true,
+      ...(seatHeldByOther
+        ? (existingImpersonate ? {} : { impersonateEmail: adminEmailLower })
+        : { adminEmail: adminEmailLower, impersonateEmail: adminEmailLower, active: true }),
     });
-    if (existingAdmin && existingAdmin !== adminEmailLower) {
-      log.info('admin: delegation verified; admin seat already held — left untouched', { domain: domainLower });
+    if (seatHeldByOther) {
+      log.info('admin: delegation verified; admin seat already held — partial config write', { domain: domainLower, impersonateSet: !existingImpersonate });
     }
 
     log.info('admin: delegation verified', { domain, adminEmail });
@@ -900,8 +905,9 @@ async function fetchConferenceParticipants(recordName, token) {
   for (let i = 0; i < raw.length; i += BATCH) {
     const results = await Promise.all(raw.slice(i, i + BATCH).map(async (p) => {
       let sessions = [];
+      let sessionsFetchFailed = false;
       try { sessions = await meetGetAll(`${p.name}/participantSessions`, token, 'participantSessions'); }
-      catch (e) { log.warn('auto-capture: sessions fetch failed', { participant: p.name, error: e.message }); }
+      catch (e) { sessionsFetchFailed = true; log.warn('auto-capture: sessions fetch failed', { participant: p.name, error: e.message }); }
       const joins  = sessions.map(s => s.startTime).filter(Boolean).map(t => new Date(t));
       const leaves = sessions.map(s => s.endTime).filter(Boolean).map(t => new Date(t));
       const joinIso = joins.length ? new Date(Math.min(...joins)).toISOString() : null;
@@ -913,7 +919,9 @@ async function fetchConferenceParticipants(recordName, token) {
         leaveTimeISO: leaveIso,
         joinTime:     joinIso,
         leaveTime:    leaveIso,
-        durationMs:   sessionsDurationMs(sessions),
+        // A FAILED fetch means "unknown", not "attended 0 minutes" — omitting
+        // the field lets the sheet render blanks instead of a hard 0%.
+        ...(sessionsFetchFailed ? {} : { durationMs: sessionsDurationMs(sessions) }),
         present:      sessions.some(s => !s.endTime),
         sessions:     sessions.length || 1,
       };

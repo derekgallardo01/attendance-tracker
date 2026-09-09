@@ -136,13 +136,30 @@ function transform(relPath, contents) {
 // Normalize to LF so the mirror is stable regardless of the source's line endings.
 const toLF = (s) => s.replace(/\r\n/g, '\n');
 
+// Binary files must be copied as BYTES. The old utf8 read mangled every PNG
+// (invalid UTF-8 bytes → U+FFFD, and toLF collapsed 0D 0A pairs inside the
+// compressed stream), corrupting all mirrored icons — and --check re-read the
+// corrupt copy through the same lossy decode, so it agreed with itself.
+const BINARY_EXT = /\.(png|jpe?g|gif|webp|ico|woff2?|ttf|pdf)$/i;
+
 const check = process.argv.includes('--check');
 const stale = [];
 
 for (const rel of MIRRORED) {
+  const destPath = join(PUBLIC, rel);
+  if (BINARY_EXT.test(rel)) {
+    const want = readFileSync(join(ROOT, rel)); // Buffer — no decode, no LF transform
+    if (check) {
+      let have = null;
+      try { have = readFileSync(destPath); } catch { /* missing */ }
+      if (!have || !want.equals(have)) stale.push(rel);
+    } else {
+      writeFileSync(destPath, want);
+    }
+    continue;
+  }
   const src = toLF(readFileSync(join(ROOT, rel), 'utf8'));
   const want = transform(rel, src);
-  const destPath = join(PUBLIC, rel);
 
   if (check) {
     // Compare CONTENT, not line endings: git (core.autocrlf) may hand us a

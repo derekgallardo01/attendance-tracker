@@ -295,21 +295,22 @@ async function maybeSendSignupNotification(domain, email) {
     return { sent: false, released: true };
   }
 
-  // Welcome email to the newly signed up user (fire-and-forget). Honors the
-  // suppression list like every other lifecycle email — a deferred signup can
-  // be flushed AFTER the user has already unsubscribed.
-  (async () => {
-    try {
-      const { isEmailSuppressed } = require('../services/firestore');
-      if (await isEmailSuppressed(payload.email)) {
-        log.info('welcome email skipped — address suppressed', { to: payload.email });
-        return;
-      }
+  // Welcome email to the newly signed up user — AWAITED, not fire-and-forget:
+  // an unawaited send here ran after the caller's response on Cloud Run (CPU
+  // throttled) with the claim already consumed, so a throttled welcome email
+  // was lost permanently with no retry path. The oauth caller deadline-races
+  // the whole flush, so this can't hold sign-in hostage. Honors the
+  // suppression list like every other lifecycle email.
+  try {
+    const { isEmailSuppressed } = require('../services/firestore');
+    if (await isEmailSuppressed(payload.email)) {
+      log.info('welcome email skipped — address suppressed', { to: payload.email });
+    } else {
       await sendWelcomeEmail({ to: payload.email, displayName: payload.displayName });
-    } catch (err) {
-      log.warn('welcome email failed', { to: payload.email, error: err.message });
     }
-  })();
+  } catch (err) {
+    log.warn('welcome email failed', { to: payload.email, error: err.message });
+  }
 
   return ownerResult;
 }
@@ -1093,8 +1094,12 @@ function buildChatDigestCard({ meetingTitle, totalAttended, totalInvited, partic
     widgets.push({ buttonList: { buttons: [{ text: 'Open sheet', onClick: { openLink: { url: sheetUrl } } }] } });
   }
 
+  // Chat's top-level `text` renders VERBATIM (no mrkdwn, no HTML) — reusing
+  // the Slack fallback (which slackEscapes the title) showed literal &amp;
+  // entities in channel/notification previews for titles containing & < >.
+  const plainSummary = totalInvited ? `${totalAttended} of ${totalInvited} attended` : `${totalAttended} attended`;
   return {
-    text: buildSlackFallbackText({ meetingTitle, totalAttended, totalInvited, sheetUrl }),
+    text: `📊 ${title} — ${plainSummary}${sheetUrl ? '\nOpen sheet: ' + sheetUrl : ''}`,
     cardsV2: [{
       cardId: 'attendance-digest',
       card: {

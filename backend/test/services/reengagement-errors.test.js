@@ -20,11 +20,11 @@ const {
 afterEach(() => jest.clearAllMocks());
 
 describe('evaluate* catch blocks', () => {
-  test('evaluateSeriesAlerts returns [] and logs error on query failure', async () => {
+  test('evaluateSeriesAlerts returns NULL (not []) on query failure — the sweep releases the day slot only for errors', async () => {
     _core.tenantRef.mockReturnValue({
       collection: () => ({ where: () => ({ where: () => ({ get: () => Promise.reject(new Error('boom')) }) }), get: () => Promise.reject(new Error('boom')) }),
     });
-    await expect(evaluateSeriesAlerts('acme.com', 'u@acme.com')).resolves.toEqual([]);
+    await expect(evaluateSeriesAlerts('acme.com', 'u@acme.com')).resolves.toBeNull();
     expect(_core.log.error).toHaveBeenCalledWith('firestore: evaluateSeriesAlerts failed', expect.any(Object));
   });
 

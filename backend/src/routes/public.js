@@ -35,10 +35,14 @@ router.post('/public/feedback', feedbackLimiter, async (req, res) => {
     }
     const safeBody = body.trim().slice(0, 5000);
     const userAgent = cap(req.headers['user-agent'], 500);
+    // CI smoke tests exercise this round-trip against live prod on every push
+    // — skip BOTH the email (below) and the Firestore row (a junk feedback
+    // doc per commit, forever).
+    const isSmokeTest = source === 'github_actions' || fromEmail === 'ci-smoke@attendancetracker.dev';
 
     // Persist before sending so we have a record even if SMTP is down.
     try {
-      await getDb().collection('feedback').add({
+      if (!isSmokeTest) await getDb().collection('feedback').add({
         body: safeBody,
         fromEmail: cap(fromEmail, 200),
         fromName: cap(fromName, 200),
@@ -52,7 +56,6 @@ router.post('/public/feedback', feedbackLimiter, async (req, res) => {
       log.warn('feedback: firestore persist failed', { error: e.message });
     }
 
-    const isSmokeTest = source === 'github_actions' || fromEmail === 'ci-smoke@attendancetracker.dev';
     if (!isSmokeTest) {
       await sendFeedbackEmail({
         body: safeBody,
@@ -96,6 +99,11 @@ router.post('/public/pageview', async (req, res) => {
     ]);
     const event = ALLOWED_EVENTS.has(body.event) ? body.event : 'pageview';
     const isCta = event === 'cta_click' || event === 'pricing_checkout_clicked';
+
+    // CI smoke tests run against LIVE prod on every push — recording their
+    // beacons permanently skewed the pageviewsDaily funnel counter (1–3 rows
+    // per commit, forever). Acknowledge (204 already sent) but store nothing.
+    if (String(body.path || '').startsWith('/e2e-smoke')) return;
 
     // Daily aggregate: always bump total count; bump a cta counter too when
     // this is a conversion click, so the funnel is trendable without scanning

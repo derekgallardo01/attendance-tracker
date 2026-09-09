@@ -6,9 +6,12 @@ const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests, please try again later.' },
-  // Disable rate limits in the test environment so suites can blast through
-  // dozens of requests without hitting the production-tuned cap.
-  skip: () => process.env.NODE_ENV === 'test',
+  // OPTIONS preflights don't count: every authed request is non-simple (the
+  // Authorization header), so counting preflights silently halved the real
+  // budget for live-meeting polling — the exact bug the single-mount comment
+  // in app.js fixed once already, reintroduced through CORS.
+  // Test env skips entirely so suites can blast through requests.
+  skip: (req) => process.env.NODE_ENV === 'test' || req.method === 'OPTIONS',
 });
 
 module.exports = apiLimiter;

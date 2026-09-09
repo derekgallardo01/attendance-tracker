@@ -63,6 +63,23 @@ if (!process.env.SUPER_ADMIN_EMAIL && (process.env.NODE_ENV === 'production' || 
   }));
 }
 
+// These two have NO fallback and fail closed — which is correct, but silently:
+// an unset SCHEDULER_SECRET means every Cloud Scheduler cron sweep 403s
+// forever (re-engagement, alerts, auto-capture, digests all quietly stop),
+// and an unset KH_METRICS_KEY kills the command-center feed. Nothing in the
+// request logs distinguishes that from an attack — so say it once at boot.
+if (process.env.NODE_ENV === 'production' || process.env.K_SERVICE) {
+  for (const name of ['SCHEDULER_SECRET', 'KH_METRICS_KEY']) {
+    if (!process.env[name]) {
+      console.warn(JSON.stringify({
+        severity: 'WARNING',
+        msg: `${name} not set — the endpoints it guards will reject every caller (crons/metrics silently dead).`,
+        ts: new Date().toISOString(),
+      }));
+    }
+  }
+}
+
 // Derive a purpose-separated 32-byte key from SESSION_SECRET. Distinct labels
 // yield cryptographically independent keys (HMAC-as-KDF), so the token-at-rest
 // AES key, the unsubscribe-HMAC key, and the raw session-JWT secret can't be
