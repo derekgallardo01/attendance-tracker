@@ -52,6 +52,17 @@ describe('GET /api/classroom/courses', () => {
     expect(mockCoursesList).not.toHaveBeenCalled();
   });
 
+  test('401 AUTH_EXPIRED when the session has no access token (refresh failed / token gone)', async () => {
+    // Used to be a generic 500 that never triggered the frontend re-auth flow
+    // (Google answers 401 to a credential-less client, which scopeMissing()
+    // doesn't match). Mirrors sheets.js's explicit contract.
+    firestore.getUser.mockResolvedValue({ email: 't@school.edu', domain: 'school.edu' }); // no refreshToken
+    const res = await request(app).get('/api/classroom/courses').set(authedHeader('t@school.edu', 'school.edu'));
+    expect(res.status).toBe(401);
+    expect(res.body.code).toBe('AUTH_EXPIRED');
+    expect(mockCoursesList).not.toHaveBeenCalled();
+  });
+
   test('uses the USER client only — never the service-account fallback', async () => {
     mockCoursesList.mockResolvedValue({ data: { courses: [] } });
     await request(app).get('/api/classroom/courses').set(authedHeader('t@school.edu', 'school.edu'));

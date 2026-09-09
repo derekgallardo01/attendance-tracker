@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const Sentry = require('@sentry/node');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { getUser, updateUserTokens } = require('../services/firestore');
+const { getUser, updateUserTokens, isUserDeleted } = require('../services/firestore');
 const { domainOf } = require('../services/firestore/_core'); // pure util; imported directly so test firestore-mocks needn't stub it
 const { refreshAccessToken } = require('../services/googleAuth');
 
@@ -55,6 +55,16 @@ async function auth(req, res, next) {
     const decoded = jwt.verify(authHeader.slice(7), CONFIG.sessionSecret);
     const domain = decoded.domain || domainOf(decoded.email);
     const user = await getUser(domain, decoded.email);
+
+    // A deleted account's JWT stays valid for up to 8h. Without this check,
+    // any authed merge:true write (settings, survey, source, event beacons)
+    // silently RESURRECTS PII the user just erased. Only consulted when the
+    // user doc is absent (one extra read on a rare path); attendee sessions
+    // never have a doc and never had one deleted — skip them.
+    if (!user && decoded.role !== 'attendee'
+        && typeof isUserDeleted === 'function' && await isUserDeleted(domain, decoded.email)) {
+      return res.status(401).json({ error: 'This account was deleted.' });
+    }
 
     let accessToken = null;
     if (user?.refreshToken) {

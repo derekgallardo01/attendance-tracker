@@ -23,9 +23,22 @@ const router = Router();
 const scopeMissing = (err) =>
   err?.code === 403 || /insufficient|PERMISSION_DENIED/i.test(err?.message || '');
 
+// The auth middleware sets accessToken null when the refresh token is gone or
+// the refresh failed. makeUserClient(null) then gets a 401 from Google — which
+// scopeMissing() does NOT match — so this used to surface as a generic 500
+// that never triggered the frontend's re-auth flow. Mirror sheets.js's
+// explicit AUTH_EXPIRED contract instead.
+function requireAccessToken(req, res) {
+  if (req.user?.accessToken) return true;
+  log.info('classroom: no access token — session needs re-auth', { email: req.user?.email });
+  res.status(401).json({ error: 'Your Google session expired. Please sign in again.', code: 'AUTH_EXPIRED' });
+  return false;
+}
+
 // GET /api/classroom/courses — active courses the user teaches.
 router.get('/classroom/courses', requireAuth, async (req, res) => {
   res.set('Cache-Control', 'no-store');
+  if (!requireAccessToken(req, res)) return;
   try {
     const classroom = google.classroom({ version: 'v1', auth: makeUserClient(req.user.accessToken) });
     const courses = [];
@@ -57,6 +70,7 @@ router.get('/classroom/courses', requireAuth, async (req, res) => {
 // for the panel's parseStudentsInput contract ({ name, email }).
 router.get('/classroom/courses/:courseId/students', requireAuth, async (req, res) => {
   res.set('Cache-Control', 'no-store');
+  if (!requireAccessToken(req, res)) return;
   const { courseId } = req.params;
   try {
     const classroom = google.classroom({ version: 'v1', auth: makeUserClient(req.user.accessToken) });

@@ -6,12 +6,30 @@
 jest.mock('../../src/services/firestore/_core', () => ({
   getDb: jest.fn(),
   tenantRef: jest.fn(),
-  FieldValue: {},
+  FieldValue: { serverTimestamp: () => 'TS' },
   log: { info: jest.fn(), warn: jest.fn(), error: jest.fn() },
 }));
 
 const _core = require('../../src/services/firestore/_core');
-const { deleteUser, deleteRefsInBatches } = require('../../src/services/firestore/deletion');
+const { deleteUser, deleteRefsInBatches, isUserDeleted } = require('../../src/services/firestore/deletion');
+
+// Minimal in-memory tenant fake: enough surface for the cascade (keyed docs,
+// field queries, meetings scan) plus the tombstone write/read.
+function makeFakeTenant() {
+  const stores = {}; // collection -> { docId: data }
+  const queried = []; // which collections got a where(email==) query
+  const tenant = {
+    collection: (name) => ({
+      doc: (id) => ({
+        set: async (data) => { (stores[name] ||= {})[id] = data; },
+        get: async () => ({ exists: !!stores[name]?.[id], data: () => stores[name]?.[id] }),
+      }),
+      where: () => ({ get: async () => { queried.push(name); return { docs: [], size: 0 }; } }),
+      get: async () => ({ docs: [] }), // meetings scan
+    }),
+  };
+  return { tenant, stores, queried };
+}
 
 afterEach(() => jest.clearAllMocks());
 
@@ -35,6 +53,27 @@ describe('deleteRefsInBatches', () => {
 });
 
 describe('deleteUser', () => {
+  test('writes a hashed tombstone FIRST and purges seriesAlertsSent; isUserDeleted flips true', async () => {
+    const { tenant, stores, queried } = makeFakeTenant();
+    _core.tenantRef.mockReturnValue(tenant);
+    _core.getDb.mockReturnValue({
+      collection: (name) => ({ where: () => ({ get: async () => ({ docs: [], size: 0 }) }) }),
+      batch: () => ({ delete() {}, commit: jest.fn().mockResolvedValue({}) }),
+    });
+    await expect(isUserDeleted('acme.com', 'User@Acme.com')).resolves.toBe(false);
+    const res = await deleteUser('acme.com', 'User@Acme.com');
+    expect(res.ok).toBe(true);
+    // Tombstone exists, keyed by a hash (no PII in the id or the doc).
+    const tombstones = Object.keys(stores.deletedUsers || {});
+    expect(tombstones).toHaveLength(1);
+    expect(tombstones[0]).toMatch(/^[0-9a-f]{32}$/);
+    expect(stores.deletedUsers[tombstones[0]]).toEqual({ deletedAt: 'TS' });
+    // seriesAlertsSent joined the purge (it was the missed collection).
+    expect(queried).toContain('seriesAlertsSent');
+    // And the tombstone is readable back through the same email (any casing).
+    await expect(isUserDeleted('acme.com', 'user@acme.com')).resolves.toBe(true);
+  });
+
   test('logs an error (does not throw) when a cascade query rejects', async () => {
     // keyed doc refs are fine, but the field-query Promise.all rejects → catch.
     const rejecting = { collection: () => rejecting, doc: () => ({}), where: () => rejecting, get: () => Promise.reject(new Error('query boom')) };

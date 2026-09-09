@@ -9,10 +9,12 @@
   'use strict';
 
   const DEFAULTS = {
-    lifetime:    { label: '$9.99',  full: '$19.99', period: 'one-time' },
-    educator:    { label: '$4.99',  full: '$9.99',  period: '/yr' },
-    team:        { label: '$19.99', full: null,      period: 'one-time' },
-    institution: { label: '$149',   full: null,      period: '/yr' },
+    // full is null everywhere — the strikethrough "was" price was retired with
+    // LAUNCH50 (mirrors src/config/pricing.js; these files must stay in sync).
+    lifetime:    { label: '$9.99',  full: null, period: 'one-time' },
+    educator:    { label: '$4.99',  full: null, period: '/yr' },
+    team:        { label: '$19.99', full: null, period: 'one-time' },
+    institution: { label: '$149',   full: null, period: '/yr' },
     quotaLimit: 3,
   };
 

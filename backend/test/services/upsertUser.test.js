@@ -109,6 +109,25 @@ describe('upsertUser — PERSONAL_EMAIL_DOMAINS exclusion', () => {
 });
 
 describe('upsertUser — basic upsert behavior', () => {
+  test('stores first-touch attribution on first signin only, length-capped', async () => {
+    // These were passed by oauth all along but never destructured — the admin
+    // drill-down read them back as null for every user.
+    await firestore.upsertUser('acme.com', {
+      email: 'ft@acme.com', displayName: 'FT',
+      firstTouchSource: 'google_search',
+      firstTouchLandingUrl: 'https://attendancetracker.dev/' + 'x'.repeat(600),
+    });
+    const user = ctx.read('tenants/acme.com/users/ft@acme.com');
+    expect(user.firstTouchSource).toBe('google_search');
+    expect(user.firstTouchLandingUrl).toHaveLength(500); // capped
+    // Second signin with different values must NOT overwrite first-touch.
+    await firestore.upsertUser('acme.com', {
+      email: 'ft@acme.com', displayName: 'FT',
+      firstTouchSource: 'reddit',
+    });
+    expect(ctx.read('tenants/acme.com/users/ft@acme.com').firstTouchSource).toBe('google_search');
+  });
+
   test('creates user doc + tenant doc on first signin', async () => {
     await firestore.upsertUser('newco.com', { email: 'a@newco.com', displayName: 'A' });
     expect(ctx.read('tenants/newco.com')).toBeDefined();

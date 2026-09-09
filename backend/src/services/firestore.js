@@ -7,7 +7,7 @@ const {
 const { createShareLink, resolveShareLink, getSharedSeriesView, revokeShareLink } = require('./firestore/shareLinks');
 const { evaluateSeriesAlerts, evaluateReengagementForUser, claimReengagementSlot, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition } = require('./firestore/reengagement');
 const { suppressEmail, isEmailSuppressed, unsuppressEmail } = require('./firestore/suppression');
-const { deleteUser } = require('./firestore/deletion');
+const { deleteUser, isUserDeleted } = require('./firestore/deletion');
 const { saveCheckin, getCheckins } = require('./firestore/checkins');
 const {
   getActivationFunnel, getAggregatedInsights, getWeeklySelfReport, getAdvancedAnalytics, getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, markUserContacted, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, getOutreachList, getActivityPulse, getRevenueFunnel,
@@ -536,7 +536,7 @@ async function getUser(domain, email) {
   }
 }
 
-async function upsertUser(domain, { email, displayName, refreshToken, sheetId, acquisition, scopes, signupDetectedSource, signupIp, signupGeo }) {
+async function upsertUser(domain, { email, displayName, refreshToken, sheetId, acquisition, scopes, signupDetectedSource, signupIp, signupGeo, firstTouchSource, firstTouchLandingUrl }) {
   try {
     const now = FieldValue.serverTimestamp();
     const emailLower = email.toLowerCase();
@@ -641,6 +641,16 @@ async function upsertUser(domain, { email, displayName, refreshToken, sheetId, a
     if (isFirstSignin && signupGeo) {
       data.signupGeo = signupGeo;
     }
+    // First-touch attribution (from the pre-signin cookie/localStorage) —
+    // oauth passed these all along but they were never destructured, so the
+    // admin drill-down read them back as null. Length-capped: they're
+    // client-supplied strings the oauth sanitizer doesn't cover.
+    if (isFirstSignin && typeof firstTouchSource === 'string' && firstTouchSource) {
+      data.firstTouchSource = firstTouchSource.slice(0, 200);
+    }
+    if (isFirstSignin && typeof firstTouchLandingUrl === 'string' && firstTouchLandingUrl) {
+      data.firstTouchLandingUrl = firstTouchLandingUrl.slice(0, 500);
+    }
 
     // Referral loop: a brand-new user who arrived via a ?ref= invite gets a
     // pending marker so we credit + notify the inviter exactly once (claimed
@@ -687,6 +697,20 @@ async function setUserAcquisitionSource(domain, email, { source, detail }) {
     log.info('firestore: set user acquisition source', { domain, email, source });
   } catch (err) {
     log.error('firestore: setUserAcquisitionSource failed', { domain, email, error: err.message });
+  }
+}
+
+// The user dismissed the "how did you find us?" modal — remember that so
+// sign-in/status endpoints stop re-arming it every session. A dismissal is
+// weaker than an answer: setUserAcquisitionSource can still overwrite later.
+async function setUserAcquisitionDismissed(domain, email) {
+  try {
+    await tenantRef(domain).collection('users').doc(email.toLowerCase()).set(
+      { acquisitionDismissed: true, updatedAt: FieldValue.serverTimestamp() },
+      { merge: true }
+    );
+  } catch (err) {
+    log.error('firestore: setUserAcquisitionDismissed failed', { domain, email, error: err.message });
   }
 }
 
@@ -1854,7 +1878,7 @@ module.exports = {
   saveVerifications, getVerification,
   getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens,
   getUserSettings, updateUserSettings,
-  setUserAcquisitionSource, setPostExportSurvey, claimSignupNotification, releaseSignupNotification,
+  setUserAcquisitionSource, setUserAcquisitionDismissed, setPostExportSurvey, claimSignupNotification, releaseSignupNotification,
   claimReferral, releaseReferral, recordReferralForInviter, recordReferralPromoCode, getUserTrackingStreak,
   claimWebhookEvent, releaseWebhookEvent,
   logEvent,
@@ -1873,7 +1897,7 @@ module.exports = {
   createReminder, markReminderDone, getDueReminders,
   getEmailTemplates, setEmailTemplates,
   getAllUsersAcrossTenants,
-  deleteUser,
+  deleteUser, isUserDeleted,
   saveCheckin, getCheckins,
   // ── Heavy full-DB admin reads: TTL-cached so a dashboard reload doesn't
   //    re-scan the whole users+events+meetings tree for each one. ──

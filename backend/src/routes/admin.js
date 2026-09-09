@@ -776,7 +776,15 @@ router.get('/admin/outreach-list', requireSuperAdmin, async (req, res) => {
 // POST /api/admin/source — User self-reports how they found us (from the modal)
 router.post('/admin/source', requireAuth, async (req, res) => {
   try {
-    const { source, detail } = req.body || {};
+    const { source, detail, dismissed } = req.body || {};
+    // Dismissal is an answer too: persist it so /oauth/exchange and /oauth/me
+    // stop re-arming the modal on every new session. (acquisitionDismissed was
+    // read by /oauth/me since forever but nothing ever wrote it.)
+    if (dismissed === true && !source) {
+      const { setUserAcquisitionDismissed } = require('../services/firestore');
+      await setUserAcquisitionDismissed(req.user.domain, req.user.email);
+      return res.json({ success: true, dismissed: true });
+    }
     if (!ACQUISITION_SOURCES.has(source)) {
       return res.status(400).json({ error: 'Invalid source' });
     }

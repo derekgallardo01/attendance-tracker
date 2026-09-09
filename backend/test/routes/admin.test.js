@@ -13,6 +13,7 @@ jest.mock('../../src/services/firestore', () => ({
   getAllUsersAcrossTenants: jest.fn(),
   getAggregatedInsights: jest.fn(),
   setUserAcquisitionSource: jest.fn(),
+  setUserAcquisitionDismissed: jest.fn(),
   getOutreachList: jest.fn(),
   getRecentActivity: jest.fn(),
   getActivityPulse: jest.fn(),
@@ -160,6 +161,17 @@ describe('POST /api/admin/source — self-reported source + deferred signup flus
       .send({ source: 'totally-made-up' });
     expect(res.status).toBe(400);
     expect(notifications.flushDeferredNotifications).not.toHaveBeenCalled();
+  });
+
+  test('dismissed:true persists the dismissal (stops the every-session re-ask)', async () => {
+    const res = await request(app)
+      .post('/api/admin/source')
+      .set(authedHeader('u@acme.com', 'acme.com'))
+      .send({ dismissed: true });
+    expect(res.status).toBe(200);
+    expect(res.body.dismissed).toBe(true);
+    expect(firestore.setUserAcquisitionDismissed).toHaveBeenCalledWith('acme.com', 'u@acme.com');
+    expect(firestore.setUserAcquisitionSource).not.toHaveBeenCalled();
   });
 });
 

@@ -310,6 +310,10 @@
       _lastSheetUrl: state._lastSheetUrl || null,
       autoExportedConferenceId: state.autoExportedConferenceId || null,
       soloNudgeConferenceId: state.soloNudgeConferenceId || null,
+      // The escalated scope-banner state ("last sign-in left a checkbox
+      // unticked") must survive a panel reload — it's the durable half of the
+      // re-consent fix; without persistence it reverted to the passive banner.
+      _scopeRetryFailed: !!state._scopeRetryFailed,
       savedAt: savedAtMs,
     };
   }
@@ -335,6 +339,7 @@
       _lastSheetUrl: snap._lastSheetUrl,
       autoExportedConferenceId: snap.autoExportedConferenceId || null,
       soloNudgeConferenceId: snap.soloNudgeConferenceId || null,
+      _scopeRetryFailed: !!snap._scopeRetryFailed,
       participants: (snap.participants || []).map(([k, v]) => [k, {
         ...v,
         joinTime: date(v.joinTime),

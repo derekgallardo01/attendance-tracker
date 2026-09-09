@@ -1,4 +1,25 @@
+const crypto = require('crypto');
 const { getDb, tenantRef, FieldValue, log } = require('./_core');
+
+// Tombstone id: hashed so the marker itself retains no PII after deletion.
+function deletedUserDocId(email) {
+  return crypto.createHash('sha256').update((email || '').toLowerCase()).digest('hex').slice(0, 32);
+}
+
+// True when this email was deleted via deleteUser. The auth middleware checks
+// this whenever a session presents a valid JWT but no user doc exists — the
+// 8h token otherwise outlives the deletion, and any merge:true write
+// (settings, survey, source, event beacons) would silently RESURRECT the PII
+// the user just asked us to erase.
+async function isUserDeleted(domain, email) {
+  try {
+    const doc = await tenantRef(domain).collection('deletedUsers').doc(deletedUserDocId(email)).get();
+    return doc.exists;
+  } catch (err) {
+    log.warn('firestore: isUserDeleted check failed', { domain, error: err.message });
+    return false; // fail open — a read blip must not lock out a live user
+  }
+}
 
 // Delete an array of DocumentReferences in batches under Firestore's 500-op
 // limit. Best-effort per chunk; logs and continues on a chunk failure so a
@@ -38,6 +59,12 @@ async function deleteUser(domain, email) {
   const tenant = tenantRef(domain);
   const db = getDb();
   try {
+    // Tombstone FIRST (hashed id, no PII): the caller's session JWT stays
+    // valid for up to 8h, and without this marker any later authed write
+    // recreates the user doc via merge:true.
+    await tenant.collection('deletedUsers').doc(deletedUserDocId(emailLower)).set({
+      deletedAt: FieldValue.serverTimestamp(),
+    });
     // 1) Docs keyed directly by the user's email.
     const keyedRefs = [
       tenant.collection('users').doc(emailLower),
@@ -50,17 +77,18 @@ async function deleteUser(domain, email) {
     //    shareLinks + feedback are TOP-LEVEL (not tenant-scoped). shareLinks
     //    matches reliably (ownerEmail stored lowercased); feedback is
     //    best-effort (fromEmail is user-typed, unnormalized).
-    const [eventsSnap, remindersSnap, reengSnap, alertsSnap, shareSnap, feedbackSnap] = await Promise.all([
+    const [eventsSnap, remindersSnap, reengSnap, alertsSnap, seriesAlertsSnap, shareSnap, feedbackSnap] = await Promise.all([
       tenant.collection('events').where('email', '==', emailLower).get(),
       tenant.collection('reminders').where('email', '==', emailLower).get(),
       tenant.collection('reengagementSent').where('email', '==', emailLower).get(),
       tenant.collection('alertsSent').where('email', '==', emailLower).get(),
+      tenant.collection('seriesAlertsSent').where('email', '==', emailLower).get(),
       db.collection('shareLinks').where('ownerEmail', '==', emailLower).get(),
       db.collection('feedback').where('fromEmail', '==', emailLower).get(),
     ]);
     const fieldRefs = [
       ...eventsSnap.docs, ...remindersSnap.docs, ...reengSnap.docs, ...alertsSnap.docs,
-      ...shareSnap.docs, ...feedbackSnap.docs,
+      ...seriesAlertsSnap.docs, ...shareSnap.docs, ...feedbackSnap.docs,
     ].map(d => d.ref);
 
     // 3) Participant sub-docs where this user is the attendee. Scan the tenant's
@@ -91,4 +119,4 @@ async function deleteUser(domain, email) {
 
 // deleteRefsInBatches is exported for direct unit testing of its batch-chunk
 // failure handling; firestore.js only re-exports deleteUser.
-module.exports = { deleteUser, deleteRefsInBatches };
+module.exports = { deleteUser, deleteRefsInBatches, isUserDeleted };

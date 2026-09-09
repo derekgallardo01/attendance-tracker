@@ -2422,6 +2422,7 @@ function restoreState() {
     state._lastSheetUrl = s._lastSheetUrl;
     state.autoExportedConferenceId = s.autoExportedConferenceId;
     state.soloNudgeConferenceId = s.soloNudgeConferenceId;
+    state._scopeRetryFailed = s._scopeRetryFailed || false;
     state._selfDisplayName = s.userDisplayName;
     if (s.userEmail) state._selfEmail = s.userEmail.toLowerCase();
 
@@ -2510,8 +2511,12 @@ function signInWithGoogle(extraScopes) {
   // 0-for-8 recovery in production). Say what to do BEFORE the popup, and
   // snapshot what's missing so handleAuthCode can tell whether this attempt
   // actually fixed it.
+  // Skip when this is a Classroom (extraScopes) incremental consent — that
+  // flow has its own status messaging, and a user who DELIBERATELY declined an
+  // unrelated scope (e.g. calendar) shouldn't get scope-recovery framing (or a
+  // wrongly-armed escalated banner) for importing a roster.
   const missingNow = (state.missingScopes || []).map(m => m.feature);
-  if (state.signedIn && missingNow.length) {
+  if (!extraScopes && state.signedIn && missingNow.length) {
     state._reconsentMissing = missingNow;
     toast('In the Google window, tick EVERY checkbox — any you skipped before will start unticked.', 8000);
   }
@@ -2528,6 +2533,10 @@ function signInWithGoogle(extraScopes) {
 async function handleAuthCode(response) {
   if (response.error) {
     console.error('OAuth error:', response.error);
+    // Abandoned attempt — drop the recovery snapshot, or a LATER unrelated
+    // sign-in would be judged against this attempt's missing scopes and toast
+    // the wrong outcome.
+    state._reconsentMissing = null;
     toast(t('toast.signInCancelled','Sign-in cancelled'));
     return;
   }
@@ -2610,6 +2619,7 @@ async function handleAuthCode(response) {
     }
   } catch (err) {
     console.error('Auth exchange failed:', err);
+    state._reconsentMissing = null; // failed attempt — don't judge a later sign-in by it
     toast(t('toast.signInFailed','Sign-in failed:') + ' ' + err.message);
   }
 }
@@ -2860,6 +2870,15 @@ function closeSourceModal(answered) {
   if (!answered && state._needsSource) {
     state._needsSourceDismissed = true;
     logUserEvent('source_prompt_dismissed', { detected: state._detectedSource || null });
+    // Persist the dismissal server-side (acquisitionDismissed) — the in-memory
+    // flag only lasts the page lifetime, so every new session used to re-ask.
+    try {
+      authFetch(`${state.backendUrl}/admin/source`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dismissed: true }),
+      }).catch(() => {});
+    } catch { /* best-effort */ }
   }
 }
 
@@ -2922,6 +2941,8 @@ async function signOut() {
   state.signedIn = false;
   state.grantedScopes = [];
   state.missingScopes = [];
+  state._reconsentMissing = null;  // recovery snapshot is per-account
+  state._scopeRetryFailed = false; // so is the escalated banner
   updateAuthUI();
   applyScopeRestrictions();
   toast(t('toast.signedOut'));
@@ -3115,14 +3136,19 @@ async function initSDK() {
     state.meetingTitle = meetingInfo.meetingTitle || meetingInfo.title || 'Google Meet';
 
     // Try to restore previous session state (survives panel refreshes)
-    const wasTracking = restoreState();
+    let wasTracking = restoreState();
 
-    // If the meeting changed since last save, clear stale participant data
+    // If the meeting changed since last save, clear stale participant data —
+    // and DON'T "resume" the old meeting's tracking session: resuming with the
+    // just-nulled startTime froze the duration display, exported
+    // meetingStartTime:null, and logged trackedMinutes:0. A new meeting goes
+    // through the fresh-start branch (startTracking stamps a real startTime).
     if (state.conferenceId !== currentMeetingCode) {
       console.log('[Attendance] Meeting changed, clearing old participants');
       state.participants.clear();
       state.startTime = null;
       state._lastSheetUrl = null;
+      wasTracking = false;
     }
     // Always use the current meeting's conferenceId (restoreState may have overwritten it)
     state.conferenceId = currentMeetingCode;
@@ -3994,11 +4020,14 @@ async function ensureBilling() {
 // (js/pricing.js, optionally refreshed by /billing/status.pricing). Markup
 // keeps human-readable fallbacks; this overwrites them at load + on status.
 function paintPrices() {
+  // No -full (strikethrough "was") entries anymore: the discount was retired
+  // (full:null server-side), and the old `if (!text) continue` skip meant a
+  // null could never CLEAR a hardcoded fallback — the markup carried fake
+  // permanent-discount <s> tags long after the real prices changed. Price
+  // markup now shows selling prices only.
   const map = {
     'price-lifetime': AttPricing.price('lifetime'),
-    'price-lifetime-full': (AttPricing.fromStatus(null).lifetime || {}).full || '',
     'price-educator': AttPricing.price('educator'),
-    'price-educator-full': (AttPricing.fromStatus(null).educator || {}).full || '',
     'price-team': AttPricing.price('team'),
   };
   for (const [cls, text] of Object.entries(map)) {
@@ -4366,6 +4395,7 @@ function updateSummary() {
 
 
 let _exporting = false;
+let _lastExportDoneAt = 0; // double-click guard for the "Exported" cooldown window
 // The tracked→export drop-off: engaged users tracked real meetings and walked
 // away with no Sheet (auto-export only fires on Meet's formal meeting-end, which
 // lags; the "Sheet" button is easy to miss). This surfaces a prominent, always-
@@ -4405,6 +4435,11 @@ function onExportCtaClick() {
 
 async function saveToSheets() {
   if (_exporting) return toast(t('toast.exportInProgress','Export already in progress…'));
+  // saveToSheets's finally re-enables the button the moment the export
+  // resolves — inside the 4s window where it still reads "Exported". A second
+  // click there ran a full duplicate export (extra sheet tab). Cooldown covers
+  // the gap without touching the button-state choreography.
+  if (Date.now() - _lastExportDoneAt < 5000) return;
   if (!state.participants.size) { toast(t('toast.noData','No data yet')); return; }
   if (document.getElementById('btn-sheets')?.dataset.scopeBlocked === '1') {
     logUserEvent('export_failed', { reason: 'scope_blocked' });
@@ -4738,6 +4773,11 @@ function closeSurveyModal() {
 // (the dismissed flag also suppresses refreshActivationStatus re-arming).
 function maybeAskSourcePostExport() {
   if (!state._needsSource || state._needsSourceDismissed) return;
+  // Auto-export can fire from a HIDDEN panel (handlePanelLeave) — opening the
+  // modal there logs a source_prompt_shown impression nobody saw and greets
+  // the returning user with a context-free question. Ask only when visible;
+  // a later export (or the next visible one) re-attempts.
+  if (document.visibilityState !== 'visible') return;
   showSourceModal(state._detectedSource);
 }
 async function submitSurvey(useCase) {
@@ -4861,7 +4901,13 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
       }
       if (body.code === 'DRIVE_PERMISSION_MISSING') {
         logUserEvent('export_failed', { reason: 'drive_permission_missing' });
-        toast('Drive permission needed — reconnecting Google to finish the export…', 6000);
+        // The backend just discovered the Drive grant is gone even though the
+        // panel thought scopes were fine (state.missingScopes is stale here),
+        // so signInWithGoogle's own recovery arming won't trigger — seed the
+        // snapshot explicitly or this entry point stays the silent loop the
+        // re-consent fix was built to close.
+        state._reconsentMissing = ['sheets'];
+        toast('Drive permission needed — in the Google window, tick EVERY checkbox (the Drive one will start unticked).', 8000);
         signInWithGoogle(); // one-click re-consent to add drive.file — no manual sign-out
         return;
       }
@@ -4876,9 +4922,17 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
         const msg = quota.used >= quota.limit
           ? `${quota.used} of ${quota.limit} free monthly exports used. This was your last free export this month. Upgrade to Lifetime Pro (${AttPricing.price('lifetime')}) for unlimited classes.`
           : `${quota.used} of ${quota.limit} free monthly exports used. Upgrade to Lifetime Pro (${AttPricing.price('lifetime')}) or Domain License (${AttPricing.price('team')}) for unlimited classes.`;
-        setTimeout(() => {
+        // If the source modal (full-viewport overlay) is up when the timer
+        // fires, the toast renders BEHIND it and dies unseen — and this is
+        // the "last free export" warning. Wait the modal out once.
+        const showQuotaToast = () => {
+          if (document.getElementById('source-modal')?.classList.contains('open')) {
+            setTimeout(showQuotaToast, 4000);
+            return;
+          }
           toast(msg, 7500);
-        }, 3200);
+        };
+        setTimeout(showQuotaToast, 3200);
       }
     }
     try {
@@ -4924,6 +4978,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     if (isFirstExport && !opts.autoExport) {
       showCelebrateModal(sheetUrl);
     }
+    _lastExportDoneAt = Date.now(); // arm the double-click cooldown
     // "How did you find us?" fires here, at the payoff moment — it is no
     // longer shown at sign-in (mid-meeting asks just got dismissed). On a
     // first manual export the celebrate→survey chain is up, and its close
@@ -6394,7 +6449,6 @@ window.addEventListener('DOMContentLoaded', () => {
             <span style="background:#34a853;color:#ffffff;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:12px;letter-spacing:.04em;text-transform:uppercase" data-i18n="upgrade.bestValue">Best Value</span>
           </div>
           <div style="text-align:right">
-            <s class="price-lifetime-full" style="color:#5f6368;font-size:.78rem;margin-right:4px;font-weight:400">$19.99</s>
             <span class="price-lifetime" style="font-weight:700;font-size:1.1rem;color:#81c995">$9.99</span>
             <span style="font-size:.7rem;color:#9aa0a6;font-weight:400;display:block" data-i18n="upgrade.oneTime">one-time</span>
           </div>
@@ -6428,7 +6482,6 @@ window.addEventListener('DOMContentLoaded', () => {
             <span style="background:rgba(88,166,255,.15);color:#58a6ff;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:12px;letter-spacing:.04em;text-transform:uppercase" data-i18n="upgrade.perMo">~$0.41/mo</span>
           </div>
           <div style="text-align:right">
-            <s class="price-educator-full" style="color:#5f6368;font-size:.78rem;margin-right:4px;font-weight:400">$9.99</s>
             <span class="price-educator" style="font-weight:700;font-size:1rem;color:#8ab4f8">$4.99</span>
             <span style="font-size:.7rem;color:#9aa0a6;font-weight:400" data-i18n="upgrade.eduPeriod">/ yr</span>
           </div>

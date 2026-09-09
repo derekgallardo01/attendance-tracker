@@ -126,7 +126,10 @@ router.post('/exchange', async (req, res) => {
     const isBrandNewUser = !existingUser;
     const alreadyHasSource = !!(existingUser?.acquisitionSource);
     const willCaptureFromUTM = !alreadyHasSource && !!sanitizedAcq?.utmSource;
-    const needsAcquisitionSource = !alreadyHasSource && !willCaptureFromUTM;
+    // A persisted dismissal also counts as answered — without this, one
+    // dismissal only lasted the page lifetime and every new session re-asked.
+    const needsAcquisitionSource = !alreadyHasSource && !willCaptureFromUTM
+      && !existingUser?.acquisitionDismissed;
 
     // Auto-detect an acquisition source from the entry point. Priority: explicit
     // user-reported source > ?ref= invite > colleague/domain referral > UTM >
