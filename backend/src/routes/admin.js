@@ -4,7 +4,7 @@ const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getRevenueFunnel, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance, getTeamOverview } = require('../services/firestore');
 const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendOrgWeeklyDigest, flushDeferredNotifications } = require('../lib/notifications');
-const { requireSuperAdmin, requireSuperAdminOrScheduler, requireKhMetricsKey } = require('../middleware/adminAuth');
+const { requireSuperAdmin, requireSuperAdminOrScheduler, requireKhMetricsKey, safeEqual } = require('../middleware/adminAuth');
 const { requireAuth } = require('../middleware/auth');
 const { domainOf } = require('../services/firestore/_core'); // pure util; imported directly (test firestore-mocks needn't stub it)
 const { ACQUISITION_SOURCES } = require('../lib/constants');
@@ -79,7 +79,7 @@ const marketplaceLimiter = rateLimit({
 
 function requireMarketplaceAuth(req, res, next) {
   const secret = process.env.MARKETPLACE_WEBHOOK_SECRET;
-  const hasSecret = !!secret && req.headers['x-marketplace-secret'] === secret;
+  const hasSecret = !!secret && safeEqual(req.headers['x-marketplace-secret'] || '', secret);
   const isSuperAdmin = req.user?.email === SUPER_ADMIN_EMAIL;
   if (!hasSecret && !isSuperAdmin) {
     log.warn('marketplace: unauthorized webhook call', { path: req.path, ip: req.ip });
@@ -820,15 +820,31 @@ router.post('/admin/verify-delegation', verifyDelegationLimiter, async (req, res
     if (domainOf(adminEmail)?.toLowerCase() !== String(domain).toLowerCase()) {
       return res.status(400).json({ error: 'adminEmail must belong to the given domain' });
     }
+    const domainLower = String(domain).toLowerCase();
+    const adminEmailLower = String(adminEmail).toLowerCase();
+
+    // tenant.adminEmail is the single source of truth requireTeamAdmin
+    // authorizes against, and the claim/transfer transactions guard it against
+    // takeover. This endpoint is unauthenticated, so it must never OVERWRITE an
+    // existing admin: with domain-wide delegation configured, getMeetToken
+    // succeeds for ANY address in the domain, and an anonymous caller could
+    // otherwise seize org-wide data access by posting a different adminEmail.
+    const existingCfg = await getTenantConfig(domainLower);
+    const existingAdmin = existingCfg?.adminEmail?.toLowerCase?.() || null;
+    if (existingAdmin && existingAdmin !== adminEmailLower) {
+      log.warn('admin: delegation verify refused — admin seat already taken', { domain: domainLower });
+      return res.status(409).json({ error: 'This domain already has a team admin. Ask them to transfer the role from the team dashboard.' });
+    }
 
     // Try to get a Meet API token by impersonating the admin
     const { getMeetToken } = require('../services/googleAuth');
-    await getMeetToken(adminEmail);
+    await getMeetToken(adminEmailLower);
 
-    // If we get here, delegation works — store the config
-    await upsertTenantConfig(domain, {
-      adminEmail,
-      impersonateEmail: adminEmail,
+    // If we get here, delegation works — store the config (lowercased domain:
+    // a case-variant would silently fork a phantom tenant).
+    await upsertTenantConfig(domainLower, {
+      adminEmail: adminEmailLower,
+      impersonateEmail: adminEmailLower,
       delegationVerified: true,
       active: true,
     });

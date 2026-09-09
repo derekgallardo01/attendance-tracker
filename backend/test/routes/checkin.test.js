@@ -4,7 +4,7 @@
 // with no Firestore user doc (attendee-mode sign-ins).
 
 const request = require('supertest');
-const { authedHeader, buildApp } = require('../helpers/testApp');
+const { authedHeader, buildApp, makeJwt } = require('../helpers/testApp');
 
 jest.mock('../../src/services/firestore', () => ({
   saveCheckin: jest.fn(),
@@ -174,5 +174,23 @@ describe('GET /api/checkins', () => {
       .get('/api/checkins?meetingCode=abc-defg-hij')
       .set(authedHeader('host@a.com', 'a.com'));
     expect(res.status).toBe(500);
+  });
+
+  test('403 for attendee sessions — the roster (emails included) is host-only', async () => {
+    const token = makeJwt({ email: 'student@school.edu', domain: 'school.edu', role: 'attendee' });
+    const res = await request(app)
+      .get('/api/checkins?meetingCode=abc-defg-hij')
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(403);
+    expect(firestore.getCheckins).not.toHaveBeenCalled();
+  });
+
+  test('attendee sessions can still POST /api/checkin (the fence allows only that)', async () => {
+    const token = makeJwt({ email: 'student@school.edu', domain: 'school.edu', role: 'attendee' });
+    const res = await request(app)
+      .post('/api/checkin')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ meetingCode: 'abc-defg-hij' });
+    expect(res.status).toBe(200);
   });
 });

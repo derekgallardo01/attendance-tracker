@@ -91,7 +91,9 @@ async function auth(req, res, next) {
     // passed requireAuth EVERYWHERE — settings, events, share links, even the
     // attestation export — as a fully-privileged session obtainable by any
     // Google account after identity-only consent.
-    if (req.user.role === 'attendee' && req.path !== '/checkin' && req.path !== '/checkins') {
+    // POST /checkin only. GET /checkins is the HOST's poll companion (full
+    // roster with emails) — an attendee token must not enumerate classmates.
+    if (req.user.role === 'attendee' && req.path !== '/checkin') {
       return res.status(403).json({ error: 'This session only supports meeting check-in.' });
     }
 

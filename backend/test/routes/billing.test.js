@@ -674,11 +674,15 @@ describe('billing — public-checkout for marketing pages', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.url).toBe('https://checkout.stripe.com/public_pay');
-    expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(expect.objectContaining({
-      customer_email: 'teacher@school.edu',
+    const params = mockStripeInstance.checkout.sessions.create.mock.calls.at(-1)[0];
+    expect(params).toEqual(expect.objectContaining({
       client_reference_id: 'user:teacher@school.edu',
       customer_creation: 'always', // lifetime = payment mode → must create a customer
     }));
+    // Unauthenticated endpoint must NOT prefill a caller-supplied address —
+    // combined with abandoned-checkout recovery that was an email cannon
+    // (queue Stripe-branded recovery mail to arbitrary victims).
+    expect(params.customer_email).toBeUndefined();
   });
 
   test('returns 503 when Stripe is not configured', async () => {
@@ -704,10 +708,14 @@ describe('billing — public-checkout for marketing pages', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.url).toBe('https://checkout.stripe.com/educator_pay');
-    expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(expect.objectContaining({
+    const params = mockStripeInstance.checkout.sessions.create.mock.calls.at(-1)[0];
+    expect(params).toEqual(expect.objectContaining({
       line_items: [{ price: 'price_educator_499', quantity: 1 }],
-      customer_email: 'teacher@deped.gov.ph',
+      client_reference_id: 'user:teacher@deped.gov.ph',
     }));
+    expect(params.customer_email).toBeUndefined(); // no caller-supplied prefill on the public endpoint
+    // Provisioning still works: the webhook reads metadata.email first.
+    expect(params.metadata.email).toBe('teacher@deped.gov.ph');
   });
 });
 

@@ -237,7 +237,13 @@ router.post('/billing/public-checkout', async (req, res) => {
       after_expiration: { recovery: { enabled: true } },
     };
     if (email) {
-      sessionParams.customer_email = email;
+      // Deliberately NOT prefilled as customer_email: this endpoint is
+      // unauthenticated, and prefilling a caller-supplied address combined with
+      // abandoned-checkout recovery would let anyone queue Stripe-branded
+      // "finish your purchase" emails to arbitrary victims (60/min/IP). The
+      // buyer types their email into Stripe's hosted page instead; recovery
+      // and receipts go to what THEY typed, while metadata/client_reference_id
+      // (harmless — never emailed) keep provisioning intact.
       sessionParams.client_reference_id = isTeam ? email.split('@')[1] : `user:${email}`;
     }
     if (promo && promo !== 'LAUNCH50') {

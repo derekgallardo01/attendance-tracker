@@ -15,7 +15,7 @@ function requireSuperAdmin(req, res, next) {
 // x-scheduler-secret header (so Cloud Scheduler can call them unauthenticated).
 function requireSuperAdminOrScheduler(req, res, next) {
   const schedulerSecret = process.env.SCHEDULER_SECRET;
-  const hasSchedulerToken = !!schedulerSecret && req.headers['x-scheduler-secret'] === schedulerSecret;
+  const hasSchedulerToken = !!schedulerSecret && safeEqual(req.headers['x-scheduler-secret'] || '', schedulerSecret);
   if (req.user?.email !== CONFIG.superAdminEmail && !hasSchedulerToken) {
     return res.status(403).json({ error: 'Forbidden' });
   }
@@ -44,4 +44,4 @@ function requireKhMetricsKey(req, res, next) {
   next();
 }
 
-module.exports = { requireSuperAdmin, requireSuperAdminOrScheduler, requireKhMetricsKey };
+module.exports = { requireSuperAdmin, requireSuperAdminOrScheduler, requireKhMetricsKey, safeEqual };

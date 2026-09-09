@@ -530,6 +530,18 @@ describe('POST /api/oauth/exchange — attendee mode (self-check-in)', () => {
     expect(decoded.domain).toBe('gmail.com'); // personal account → email domain
   });
 
+  test('attendee session tokens are REJECTED by the oauth account routes', async () => {
+    // /api/oauth mounts before the global auth middleware's attendee fence, so
+    // decodeSession must enforce it — otherwise an attendee token on a shared
+    // classroom device could delete the account or revoke its Google grant.
+    const token = makeJwt({ email: 'student@uni.edu', domain: 'uni.edu', role: 'attendee' });
+    const me = await request(app).get('/api/oauth/me').set('Authorization', `Bearer ${token}`);
+    expect(me.status).toBe(401);
+    const del = await request(app).post('/api/oauth/delete-account').set('Authorization', `Bearer ${token}`);
+    expect(del.status).toBe(401);
+    expect(firestore.deleteUser).not.toHaveBeenCalled();
+  });
+
   test('normal mode is unaffected (upsertUser still called without mode)', async () => {
     googleAuth.exchangeCode.mockResolvedValue({ ...goodTokens, scope: 'openid email profile https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/meetings.space.readonly https://www.googleapis.com/auth/calendar.events.readonly' });
     firestore.getUser.mockResolvedValue(null);

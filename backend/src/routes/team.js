@@ -31,8 +31,12 @@ async function requireTeamAdmin(req, res, next) {
     return res.status(401).json({ error: 'Authentication required' });
   }
   try {
-    const { isTeamAdmin } = await getTeamAdminStatus(req.user.domain, req.user.email);
-    if (!isTeamAdmin) {
+    const { isTeamAdmin, isPersonalDomain } = await getTeamAdminStatus(req.user.domain, req.user.email);
+    // Personal-email tenants (gmail.com etc.) are SHARED across unrelated
+    // users — no one may hold org-wide admin there, even if a stray write ever
+    // sets tenant.adminEmail. The claim/transfer transactions already refuse
+    // personal domains; this is the matching fence on the read side.
+    if (isPersonalDomain || !isTeamAdmin) {
       return res.status(403).json({ error: 'Team admin role required' });
     }
     next();

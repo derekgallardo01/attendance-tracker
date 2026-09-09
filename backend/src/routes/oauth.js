@@ -33,6 +33,11 @@ function decodeSession(req) {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) return null;
   const decoded = jwt.verify(authHeader.slice(7), CONFIG.sessionSecret);
+  // Attendee-mode sessions are identity-only check-in credentials. This router
+  // mounts BEFORE the global auth middleware's attendee fence, so without this
+  // check an attendee token (8h, often on a shared classroom device) could hit
+  // /me, /revoke, and — worst — /delete-account.
+  if (decoded.role === 'attendee') return null;
   decoded.domain = decoded.domain || domainOf(decoded.email);
   return decoded;
 }

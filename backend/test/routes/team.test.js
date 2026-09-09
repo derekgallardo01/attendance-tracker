@@ -68,6 +68,17 @@ describe('GET /api/team/overview — auth gating', () => {
     expect(firestore.getTeamOverview).not.toHaveBeenCalled();
   });
 
+  test('403 on personal-email tenants even when adminEmail matches (shared-tenant fence)', async () => {
+    // tenants/gmail.com is shared by unrelated users — org-wide admin must be
+    // impossible there even if a stray write ever sets tenant.adminEmail.
+    firestore.getTeamAdminStatus.mockResolvedValue({ isTeamAdmin: true, isPersonalDomain: true, adminEmail: 'someone@gmail.com' });
+    const res = await request(app)
+      .get('/api/team/overview')
+      .set(authedHeader('someone@gmail.com', 'gmail.com'));
+    expect(res.status).toBe(403);
+    expect(firestore.getTeamOverview).not.toHaveBeenCalled();
+  });
+
   test('200 when caller is the team admin', async () => {
     firestore.getUser.mockResolvedValue({
       email: 'admin@acme.com',
