@@ -4103,6 +4103,7 @@ async function startUpgradeCheckout(plan, btnId) {
       plan: plan || 'lifetime',
       btnId: btnId || null,
       reason: state._lastUpgradeReason || 'modal',
+      ...upgradeContext(),
     });
   } catch {}
   const btn = btnId ? document.getElementById(btnId) : null;
@@ -4164,6 +4165,22 @@ function watchForUpgradeCompletion() {
   }, 5000);
 }
 
+// Shared context stamped on EVERY paywall/upgrade event so the revenue funnel
+// can be sliced by geography, locale, and edu-status — not just on
+// upgrade_modal_shown. (Without this, ~80% of paywall events had no timezone,
+// so the "who bounces at the paywall, and where" analysis was 20%-visible.)
+function upgradeContext() {
+  const email = (state.userEmail || '').toLowerCase();
+  const isEdu = /\.(edu|edu\.[a-z]{2}|ac\.[a-z]{2}|gov\.[a-z]{2}|k12\.[a-z]{2}\.us)$/i.test(email) ||
+                /@(.*\.)?(school|academy|college|university|deped|alokitohridoy)/i.test(email);
+  return {
+    isEdu,
+    language: navigator.language || '',
+    timezone: (typeof Intl !== 'undefined' && Intl.DateTimeFormat) ? Intl.DateTimeFormat().resolvedOptions().timeZone : '',
+    participantCount: (state.participants && state.participants.size) || 0,
+  };
+}
+
 function showUpgradeModal(reason) {
   state._lastUpgradeReason = reason || 'manual';
   const modal = document.getElementById('upgrade-modal');
@@ -4221,10 +4238,7 @@ function showUpgradeModal(reason) {
   try {
     logUserEvent('upgrade_modal_shown', {
       reason: reason || 'manual',
-      isEdu,
-      language: navigator.language || '',
-      timezone: (typeof Intl !== 'undefined' && Intl.DateTimeFormat) ? Intl.DateTimeFormat().resolvedOptions().timeZone : '',
-      participantCount: (state.participants && state.participants.size) || 0,
+      ...upgradeContext(),
     });
   } catch {}
 }
@@ -4257,7 +4271,7 @@ function dismissAutoExportNudge() {
 function closeUpgradeModal() {
   const modal = document.getElementById('upgrade-modal');
   if (modal) modal.style.display = 'none';
-  try { logUserEvent('upgrade_modal_dismissed', {}); } catch {}
+  try { logUserEvent('upgrade_modal_dismissed', { ...upgradeContext() }); } catch {}
   maybeAskPaywallWhy();
 }
 
@@ -4276,7 +4290,7 @@ function maybeAskPaywallWhy() {
   } catch { /* storage blocked → never ask */ }
 }
 function answerPaywallWhy(reason) {
-  try { logUserEvent('paywall_objection', { reason }); } catch {}
+  try { logUserEvent('paywall_objection', { reason, ...upgradeContext() }); } catch {}
   dismissPaywallWhy();
   toast(t('paywall.whyThanks', 'Thanks — that helps!'));
 }
@@ -4804,7 +4818,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     if (quota) {
       updateQuotaIndicator(quota.used, quota.limit);
       if (!_isPro && typeof quota.used === 'number' && quota.used >= 2) {
-        try { logUserEvent('quota_warning_shown', { used: quota.used, limit: quota.limit }); } catch (e) {}
+        try { logUserEvent('quota_warning_shown', { used: quota.used, limit: quota.limit, ...upgradeContext() }); } catch (e) {}
         const msg = quota.used >= quota.limit
           ? `${quota.used} of ${quota.limit} free monthly exports used. This was your last free export this month. Upgrade to Lifetime Pro (${AttPricing.price('lifetime')}) for unlimited classes.`
           : `${quota.used} of ${quota.limit} free monthly exports used. Upgrade to Lifetime Pro (${AttPricing.price('lifetime')}) or Domain License (${AttPricing.price('team')}) for unlimited classes.`;
