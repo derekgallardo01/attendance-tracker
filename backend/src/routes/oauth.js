@@ -199,25 +199,25 @@ router.post('/exchange', async (req, res) => {
 
     log.info('oauth: user authenticated', { email, domain });
 
+    // Flush the signup notification BEFORE responding. Post-response work on
+    // Cloud Run gets CPU-throttled the moment the response is sent — that's
+    // what killed the old 120s grace timer AND would strand an unawaited
+    // flush right between the transactional claim and the actual send (claim
+    // consumed → daily sweep sees pending:false → notification lost forever).
+    // Cost: one-time extra latency on a user's FIRST sign-in only; the send
+    // has its own hard timeout so this can't hang the exchange. The flush is
+    // claimed transactionally, so the /api/admin/source trigger and the
+    // daily-sweep backstop still no-op if this one won.
+    if (isBrandNewUser) {
+      await flushDeferredNotifications(domain, email);
+    }
+
     res.json({
       sessionToken, email, displayName, grantedScopes, missingScopes,
       needsAcquisitionSource,
       detectedSource,
       isNewUser: isBrandNewUser,
     });
-
-    // Flush the signup notification immediately (after the response, so it
-    // never delays sign-in). It used to wait on a 120s grace timer hoping the
-    // "how did you find us?" modal (answered seconds after sign-in) would fill
-    // in the self-reported source first — but the modal now shows post-export,
-    // minutes later or never, so waiting buys nothing. And the timer itself
-    // silently died whenever Cloud Run throttled the idle instance (two stuck
-    // notifications on 2026-09-09). The flush is claimed transactionally, so
-    // the /api/admin/source trigger and the daily-sweep backstop still no-op
-    // if this one won.
-    if (isBrandNewUser) {
-      flushDeferredNotifications(domain, email);
-    }
   } catch (err) {
     log.error('oauth: exchange failed', { error: err.message });
     res.status(401).json({ error: 'Authentication failed' });

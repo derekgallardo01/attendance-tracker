@@ -7,7 +7,7 @@ const {
 const { createShareLink, resolveShareLink, getSharedSeriesView, revokeShareLink } = require('./firestore/shareLinks');
 const { evaluateSeriesAlerts, evaluateReengagementForUser, claimReengagementSlot, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition } = require('./firestore/reengagement');
 const { suppressEmail, isEmailSuppressed, unsuppressEmail } = require('./firestore/suppression');
-const { deleteUser, isUserDeleted } = require('./firestore/deletion');
+const { deleteUser, isUserDeleted, clearDeletedTombstone } = require('./firestore/deletion');
 const { saveCheckin, getCheckins } = require('./firestore/checkins');
 const {
   getActivationFunnel, getAggregatedInsights, getWeeklySelfReport, getAdvancedAnalytics, getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, markUserContacted, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, getOutreachList, getActivityPulse, getRevenueFunnel,
@@ -458,9 +458,15 @@ async function persistExport(domain, { meetingTitle, tabName, exportedAt, partic
       // conferenceId gave unlimited free exports (each call wrote a fresh
       // sheet tab while the meter stayed at 1). The route enforces a cap on
       // this counter for free users BEFORE the sheet is written.
-      await ref.set({ reexportCount: FieldValue.increment(1), lastReexportAt: now }, { merge: true });
+      // The counter is MONTH-SCOPED: recurring classes reuse one Meet code
+      // across weeks, so a lifetime counter would permanently 402 a free
+      // teacher's standing class after 10 sessions. New month → fresh cap.
+      const monthKey = exportMonthKey();
+      const prior = existing.data();
+      const reexportCount = (prior.reexportMonth === monthKey ? (prior.reexportCount || 0) : 0) + 1;
+      await ref.set({ reexportCount, reexportMonth: monthKey, lastReexportAt: now }, { merge: true });
       log.info('firestore: export already persisted, skipping duplicate', { domain, docId });
-      return { created: false, reexportCount: (existing.data().reexportCount || 0) + 1 };
+      return { created: false, reexportCount };
     }
 
     await ref.set({
@@ -492,9 +498,15 @@ async function persistExport(domain, { meetingTitle, tabName, exportedAt, partic
   }
 }
 
-// How many times this user has RE-exported the given conference (0 when never
-// exported). Read by the free-tier quota gate before any sheet work happens —
-// see persistExport for why re-exports must be metered.
+// UTC YYYY-MM key for the re-export meter's monthly window.
+function exportMonthKey(nowMs = Date.now()) {
+  const d = new Date(nowMs);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+// How many times this user has RE-exported the given conference THIS MONTH
+// (0 when never / counter from a prior month). Read by the free-tier quota
+// gate before any sheet work happens — see persistExport for the metering.
 async function getExportReexportCount(domain, email, conferenceId) {
   try {
     if (!conferenceId) return null; // tabName-keyed docs are unique per call — counted normally
@@ -502,6 +514,7 @@ async function getExportReexportCount(domain, email, conferenceId) {
     const safeConf = String(conferenceId).replace(/[^a-zA-Z0-9_-]/g, '_');
     const doc = await tenantRef(domain).collection('exports').doc(`${safeEmail}__${safeConf}`).get();
     if (!doc.exists) return null;
+    if (doc.data().reexportMonth !== exportMonthKey()) return 0; // prior-month counter — expired
     return doc.data().reexportCount || 0;
   } catch (err) {
     log.warn('firestore: getExportReexportCount failed', { domain, email, error: err.message });
@@ -638,6 +651,12 @@ async function upsertUser(domain, { email, displayName, refreshToken, sheetId, a
     if (isFirstSignin && signupIp) {
       data.signupIp = signupIp;
     }
+    // A first sign-in from a previously-deleted account is a legitimate
+    // re-registration — drop the deletion tombstone so the auth middleware
+    // can't later false-401 them on a transient getUser miss. Fire-and-forget.
+    if (isFirstSignin) {
+      clearDeletedTombstone(domain, emailLower).catch(() => {});
+    }
     if (isFirstSignin && signupGeo) {
       data.signupGeo = signupGeo;
     }
@@ -698,6 +717,14 @@ async function setUserAcquisitionSource(domain, email, { source, detail }) {
   } catch (err) {
     log.error('firestore: setUserAcquisitionSource failed', { domain, email, error: err.message });
   }
+}
+
+// Strict read of tenant.adminEmail — THROWS on a read failure instead of
+// swallowing to null (getTenantConfig's null-on-error would fail the
+// verify-delegation anti-takeover guard OPEN on a Firestore blip).
+async function getTenantAdminEmailStrict(domain) {
+  const doc = await tenantRef(domain).get();
+  return doc.exists ? (doc.data().adminEmail?.toLowerCase?.() || null) : null;
 }
 
 // The user dismissed the "how did you find us?" modal — remember that so
@@ -1878,7 +1905,7 @@ module.exports = {
   saveVerifications, getVerification,
   getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens,
   getUserSettings, updateUserSettings,
-  setUserAcquisitionSource, setUserAcquisitionDismissed, setPostExportSurvey, claimSignupNotification, releaseSignupNotification,
+  setUserAcquisitionSource, setUserAcquisitionDismissed, setPostExportSurvey, claimSignupNotification, releaseSignupNotification, getTenantAdminEmailStrict,
   claimReferral, releaseReferral, recordReferralForInviter, recordReferralPromoCode, getUserTrackingStreak,
   claimWebhookEvent, releaseWebhookEvent,
   logEvent,

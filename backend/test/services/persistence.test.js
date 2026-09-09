@@ -238,6 +238,24 @@ describe('persistExport', () => {
     await expect(firestore.persistExport('acme.com', payload)).resolves.toEqual({ created: false, reexportCount: 2 });
   });
 
+  test('re-export meter is MONTH-scoped: a prior-month counter reads back as 0', async () => {
+    // Recurring classes reuse one Meet code across weeks — a lifetime counter
+    // permanently 402'd a free teacher's standing class after 10 sessions.
+    const payload = {
+      meetingTitle: 'X', tabName: 'X', exportedAt: '', participantCount: 1,
+      sheetUrl: '', email: 'me@acme.com', autoExport: false, conferenceId: 'conf-roll',
+    };
+    await firestore.persistExport('acme.com', payload);
+    await firestore.persistExport('acme.com', payload); // reexportCount 1, current month
+    // Simulate the month rolling over by rewriting the stored month key.
+    const docId = 'me_acme_com__conf-roll';
+    const stored = ctx.read(`tenants/acme.com/exports/${docId}`);
+    ctx.seed(`tenants/acme.com/exports/${docId}`, { ...stored, reexportMonth: '1999-01' });
+    await expect(firestore.getExportReexportCount('acme.com', 'me@acme.com', 'conf-roll')).resolves.toBe(0);
+    // And the next dedupe hit RESTARTS the counter at 1 for the new month.
+    await expect(firestore.persistExport('acme.com', payload)).resolves.toEqual({ created: false, reexportCount: 1 });
+  });
+
   test('getExportReexportCount reads the meter (null when never exported / no conferenceId)', async () => {
     const payload = {
       meetingTitle: 'X', tabName: 'X', exportedAt: '', participantCount: 1,

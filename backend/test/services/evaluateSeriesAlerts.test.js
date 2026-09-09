@@ -249,6 +249,23 @@ describe('evaluateSeriesAlerts — filtering and scoping', () => {
     // Only 3 instances tracked → below 6-instance minimum
     expect(alerts).toEqual([]);
   });
+
+  test('a user with ZERO tracked meetings gets NO alerts (shared-tenant privacy fence)', async () => {
+    // The old "no filter when nothing tracked" fallback scanned EVERY
+    // recurring meeting in the tenant — on a shared Workspace domain that
+    // emailed a brand-new signin other teachers' student rosters.
+    const domain = 'acme.com';
+    const day = 86400000;
+    const now = Date.now();
+    for (let i = 0; i < 11; i++) {
+      seedRecurringMeeting(domain, `meet-${i}`, 'series-z', 'Period 4 Biology', now - (11 - i) * day, [
+        { email: 'jane@acme.com', displayName: 'Jane Doe' },
+      ]);
+    }
+    // fresh@acme.com has tracked nothing — must see nothing.
+    const alerts = await firestore.evaluateSeriesAlerts(domain, 'fresh@acme.com');
+    expect(alerts).toEqual([]);
+  });
 });
 
 describe('evaluateSeriesAlerts — defensive', () => {

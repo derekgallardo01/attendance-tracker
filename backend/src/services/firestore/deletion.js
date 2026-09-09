@@ -119,4 +119,15 @@ async function deleteUser(domain, email) {
 
 // deleteRefsInBatches is exported for direct unit testing of its batch-chunk
 // failure handling; firestore.js only re-exports deleteUser.
-module.exports = { deleteUser, deleteRefsInBatches, isUserDeleted };
+// Remove the tombstone when a deleted user signs up again. Without this, the
+// stale marker + a transient getUser read failure would hard-401 a live,
+// legitimately re-registered user with "This account was deleted."
+async function clearDeletedTombstone(domain, email) {
+  try {
+    await tenantRef(domain).collection('deletedUsers').doc(deletedUserDocId(email)).delete();
+  } catch (err) {
+    log.warn('firestore: clearDeletedTombstone failed', { domain, error: err.message });
+  }
+}
+
+module.exports = { deleteUser, deleteRefsInBatches, isUserDeleted, clearDeletedTombstone };

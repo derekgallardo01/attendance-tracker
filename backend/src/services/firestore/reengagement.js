@@ -22,13 +22,19 @@ async function evaluateSeriesAlerts(domain, email) {
       const cid = d.data().meta?.conferenceId;
       if (cid) trackedIds.add(cid);
     }
-    const useFilter = trackedIds.size > 0;
+    // A user with ZERO tracked meetings gets no series alerts, period. The old
+    // "no filter when nothing tracked" fallback made seriesMeetings = every
+    // recurring meeting in the tenant — and a Workspace domain is one tenant
+    // shared by all its teachers, so a brand-new signin could be emailed
+    // OTHER teachers' student rosters ("Jane missed the last 3 of Period 4")
+    // for classes they never taught.
+    if (trackedIds.size === 0) return [];
 
     const seriesMeetings = meetingsSnap.docs
       .filter(d => {
         const data = d.data();
         if (!data.recurringEventId) return false;
-        if (useFilter && !trackedIds.has(d.id)) return false;
+        if (!trackedIds.has(d.id)) return false;
         return true;
       })
       .map(d => ({ id: d.id, ref: d.ref, data: d.data() }));

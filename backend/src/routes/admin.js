@@ -832,17 +832,17 @@ router.post('/admin/verify-delegation', verifyDelegationLimiter, async (req, res
     const adminEmailLower = String(adminEmail).toLowerCase();
 
     // tenant.adminEmail is the single source of truth requireTeamAdmin
-    // authorizes against, and the claim/transfer transactions guard it against
-    // takeover. This endpoint is unauthenticated, so it must never OVERWRITE an
-    // existing admin: with domain-wide delegation configured, getMeetToken
-    // succeeds for ANY address in the domain, and an anonymous caller could
-    // otherwise seize org-wide data access by posting a different adminEmail.
-    const existingCfg = await getTenantConfig(domainLower);
-    const existingAdmin = existingCfg?.adminEmail?.toLowerCase?.() || null;
-    if (existingAdmin && existingAdmin !== adminEmailLower) {
-      log.warn('admin: delegation verify refused — admin seat already taken', { domain: domainLower });
-      return res.status(409).json({ error: 'This domain already has a team admin. Ask them to transfer the role from the team dashboard.' });
-    }
+    // authorizes against — this unauthenticated endpoint must never OVERWRITE
+    // an existing holder (with DWD configured, getMeetToken succeeds for ANY
+    // address in the domain, so overwriting = anonymous seat takeover). But it
+    // must also not DEAD-END legit setup: the first teacher who signs in
+    // auto-claims adminEmail, and the IT admin runs this endpoint later — so
+    // the DELEGATION fields (impersonateEmail/verified/active) always write;
+    // only the authz seat is claim-if-vacant. The read THROWS on failure
+    // (getTenantConfig swallows errors into null, which would fail this guard
+    // OPEN on a Firestore blip; a throw here lands in the catch → safe no-op).
+    const { getTenantAdminEmailStrict } = require('../services/firestore');
+    const existingAdmin = await getTenantAdminEmailStrict(domainLower);
 
     // Try to get a Meet API token by impersonating the admin
     const { getMeetToken } = require('../services/googleAuth');
@@ -851,11 +851,14 @@ router.post('/admin/verify-delegation', verifyDelegationLimiter, async (req, res
     // If we get here, delegation works — store the config (lowercased domain:
     // a case-variant would silently fork a phantom tenant).
     await upsertTenantConfig(domainLower, {
-      adminEmail: adminEmailLower,
+      ...(existingAdmin && existingAdmin !== adminEmailLower ? {} : { adminEmail: adminEmailLower }),
       impersonateEmail: adminEmailLower,
       delegationVerified: true,
       active: true,
     });
+    if (existingAdmin && existingAdmin !== adminEmailLower) {
+      log.info('admin: delegation verified; admin seat already held — left untouched', { domain: domainLower });
+    }
 
     log.info('admin: delegation verified', { domain, adminEmail });
     res.json({ success: true });

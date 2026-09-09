@@ -395,8 +395,13 @@ async function maybeSendReferralNotification(domain, email) {
 // forget one. Both underlying flushes are independently claimed + idempotent,
 // and fired best-effort so a mail hiccup never blocks the caller.
 function flushDeferredNotifications(domain, email) {
-  maybeSendSignupNotification(domain, email).catch(() => { /* best-effort */ });
-  maybeSendReferralNotification(domain, email).catch(() => { /* best-effort */ });
+  // Returns a never-rejecting promise so callers that need the flush to
+  // COMPLETE before their process may be CPU-throttled (the oauth exchange on
+  // Cloud Run) can await it; fire-and-forget callers ignore the return.
+  return Promise.allSettled([
+    maybeSendSignupNotification(domain, email).catch(() => { /* best-effort */ }),
+    maybeSendReferralNotification(domain, email).catch(() => { /* best-effort */ }),
+  ]);
 }
 
 // Generic email send used by the admin "email from dashboard" feature.

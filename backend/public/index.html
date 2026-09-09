@@ -4439,7 +4439,9 @@ async function saveToSheets() {
   // resolves — inside the 4s window where it still reads "Exported". A second
   // click there ran a full duplicate export (extra sheet tab). Cooldown covers
   // the gap without touching the button-state choreography.
-  if (Date.now() - _lastExportDoneAt < 5000) return;
+  if (Date.now() - _lastExportDoneAt < 5000) {
+    return toast(t('toast.justExported', 'Just exported — the Sheet is up to date.'), 3000);
+  }
   if (!state.participants.size) { toast(t('toast.noData','No data yet')); return; }
   if (document.getElementById('btn-sheets')?.dataset.scopeBlocked === '1') {
     logUserEvent('export_failed', { reason: 'scope_blocked' });
@@ -4978,7 +4980,10 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     if (isFirstExport && !opts.autoExport) {
       showCelebrateModal(sheetUrl);
     }
-    _lastExportDoneAt = Date.now(); // arm the double-click cooldown
+    // Arm the double-click cooldown — MANUAL exports only. An auto-export
+    // arming it would silently swallow a deliberate manual re-export made
+    // within 5s of the meeting-end auto-save.
+    if (!opts.autoExport) _lastExportDoneAt = Date.now();
     // "How did you find us?" fires here, at the payoff moment — it is no
     // longer shown at sign-in (mid-meeting asks just got dismissed). On a
     // first manual export the celebrate→survey chain is up, and its close

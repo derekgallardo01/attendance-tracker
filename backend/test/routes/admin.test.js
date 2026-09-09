@@ -14,6 +14,7 @@ jest.mock('../../src/services/firestore', () => ({
   getAggregatedInsights: jest.fn(),
   setUserAcquisitionSource: jest.fn(),
   setUserAcquisitionDismissed: jest.fn(),
+  getTenantAdminEmailStrict: jest.fn(),
   getOutreachList: jest.fn(),
   getRecentActivity: jest.fn(),
   getActivityPulse: jest.fn(),
@@ -194,22 +195,29 @@ describe('POST /api/admin/verify-delegation — domain binding (unauthenticated 
     expect(res.status).toBe(400);
   });
 
-  test('409 when the domain already has a DIFFERENT admin (anti-takeover)', async () => {
-    // With domain-wide delegation configured, getMeetToken succeeds for ANY
-    // address in the domain — so this unauthenticated endpoint must never
-    // overwrite an existing adminEmail (the value requireTeamAdmin trusts).
-    firestore.getTenantConfig.mockResolvedValue({ adminEmail: 'real-admin@acme.com' });
+  test('seat held by a DIFFERENT admin: delegation fields write, adminEmail is NOT touched', async () => {
+    // Anti-takeover + no dead-end: the first teacher who signs in auto-claims
+    // adminEmail, and the IT admin still needs this endpoint to finish DWD
+    // setup. The delegation config writes; the authz seat stays untouched.
+    firestore.getTenantAdminEmailStrict.mockResolvedValue('real-admin@acme.com');
+    googleAuth.getMeetToken.mockResolvedValue('meet-token');
     const res = await request(app)
       .post('/api/admin/verify-delegation')
       .set('Content-Type', 'application/json')
-      .send({ domain: 'acme.com', adminEmail: 'mallory@acme.com' });
-    expect(res.status).toBe(409);
-    expect(googleAuth.getMeetToken).not.toHaveBeenCalled();
-    expect(firestore.upsertTenantConfig).not.toHaveBeenCalled();
+      .send({ domain: 'acme.com', adminEmail: 'it-admin@acme.com' });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    const written = firestore.upsertTenantConfig.mock.calls.at(-1)[1];
+    expect(written).toEqual(expect.objectContaining({
+      impersonateEmail: 'it-admin@acme.com',
+      delegationVerified: true,
+      active: true,
+    }));
+    expect(written.adminEmail).toBeUndefined(); // seat takeover impossible
   });
 
-  test('re-verification by the SAME admin is allowed (idempotent)', async () => {
-    firestore.getTenantConfig.mockResolvedValue({ adminEmail: 'admin@acme.com' });
+  test('re-verification by the SAME admin still stamps the seat (idempotent)', async () => {
+    firestore.getTenantAdminEmailStrict.mockResolvedValue('admin@acme.com');
     googleAuth.getMeetToken.mockResolvedValue('meet-token');
     const res = await request(app)
       .post('/api/admin/verify-delegation')
@@ -223,7 +231,7 @@ describe('POST /api/admin/verify-delegation — domain binding (unauthenticated 
   });
 
   test('vacant seat: stores LOWERCASED domain and admin (no phantom case-variant tenant)', async () => {
-    firestore.getTenantConfig.mockResolvedValue(undefined);
+    firestore.getTenantAdminEmailStrict.mockResolvedValue(null);
     googleAuth.getMeetToken.mockResolvedValue('meet-token');
     const res = await request(app)
       .post('/api/admin/verify-delegation')
@@ -236,6 +244,17 @@ describe('POST /api/admin/verify-delegation — domain binding (unauthenticated 
       impersonateEmail: 'admin@acme.com',
       delegationVerified: true,
     }));
+  });
+
+  test('a failing seat read fails CLOSED (no config write) instead of allowing an overwrite', async () => {
+    firestore.getTenantAdminEmailStrict.mockRejectedValue(new Error('firestore blip'));
+    const res = await request(app)
+      .post('/api/admin/verify-delegation')
+      .set('Content-Type', 'application/json')
+      .send({ domain: 'acme.com', adminEmail: 'someone@acme.com' });
+    expect(res.status).toBe(200); // route reports verification failure, not an HTTP error
+    expect(res.body.success).toBe(false);
+    expect(firestore.upsertTenantConfig).not.toHaveBeenCalled();
   });
 });
 
