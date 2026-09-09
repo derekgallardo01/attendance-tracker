@@ -54,7 +54,18 @@ async function getSharedSeriesView(domain, recurringEventId) {
     const tenant = tenantRef(domain);
     const meetingsSnap = await tenant.collection('meetings').where('recurringEventId', '==', recurringEventId).get();
     if (meetingsSnap.empty) return null;
-    const seriesMeetings = meetingsSnap.docs.map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
+    // Per-instance model: each session is its own doc; a legacy code-keyed doc
+    // counts as one merged instance only while it holds participants, and a
+    // post-migration code doc (metadata-only series anchor) is skipped so it
+    // can't dilute attendance rates as a phantom empty session.
+    const seriesMeetings = meetingsSnap.docs
+      .filter(d => {
+        const data = d.data();
+        const isInstance = !!data.meetingCode && d.id !== data.meetingCode;
+        return isInstance || !data.hasInstances; // hasInstances = metadata-only series anchor (post-migration code doc)
+      })
+      .map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
+    if (!seriesMeetings.length) return null;
     const participantSnaps = await Promise.all(seriesMeetings.map(m => m.ref.collection('participants').get()));
 
     // Identity canonicalization (Sweep-10 class): merge a name-only appearance

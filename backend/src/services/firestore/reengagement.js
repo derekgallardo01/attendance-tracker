@@ -30,12 +30,17 @@ async function evaluateSeriesAlerts(domain, email) {
     // for classes they never taught.
     if (trackedIds.size === 0) return [];
 
+    // Per-instance model: instance docs match the user's tracked CODES via
+    // data.meetingCode; legacy code docs count only when they hold data
+    // (metadata-only series anchors are skipped).
     const seriesMeetings = meetingsSnap.docs
       .filter(d => {
         const data = d.data();
         if (!data.recurringEventId) return false;
-        if (!trackedIds.has(d.id)) return false;
-        return true;
+        const code = data.meetingCode || d.id;
+        if (!trackedIds.has(code)) return false;
+        const isInstance = d.id !== code;
+        return isInstance || !data.hasInstances; // hasInstances = metadata-only series anchor (post-migration code doc)
       })
       .map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
 
@@ -294,7 +299,9 @@ async function evaluateReengagementForUser(domain, email) {
       for (const m of meetingsSnap.docs) {
         const d = m.data();
         if (d.recurringEventId) {
-          cidToRid.set(m.id, d.recurringEventId);
+          // Tracked events carry the meeting CODE — instance docs map back to
+          // it via meetingCode (multiple instances of one code share one rid).
+          cidToRid.set(d.meetingCode || m.id, d.recurringEventId);
           const existing = ridToTitle.get(d.recurringEventId) || '';
           if (d.title && d.title.length > existing.length) ridToTitle.set(d.recurringEventId, d.title);
         }

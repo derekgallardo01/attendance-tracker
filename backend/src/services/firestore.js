@@ -205,7 +205,21 @@ async function logEvent(domain, { email, type, meta }) {
 async function persistAttendance(domain, conferenceId, recordName, participants, actorEmail) {
   try {
     const now = FieldValue.serverTimestamp();
-    const meetingRef = tenantRef(domain).collection('meetings').doc(conferenceId);
+    // ── Per-INSTANCE meeting docs ──
+    // A recurring class reuses one Meet code for every session, so keying the
+    // doc by code alone collapsed the whole series into ONE doc: week 2's
+    // participants overwrote week 1's, instanceCount was always 1 (the Class
+    // Summary Pro feature never fired for normal weekly classes), and
+    // start/end widened across weeks. The Meet API's conferenceRecord name is
+    // unique per SESSION — that's the instance key. The code-keyed doc lives
+    // on as the series/link-level doc (title, recurringEventId, excused,
+    // calendar data, and any pre-migration merged participants); readers
+    // treat `data.meetingCode || doc.id` as the code.
+    const instanceId = recordName ? lastSegment(recordName) : null;
+    const codeRef = tenantRef(domain).collection('meetings').doc(conferenceId);
+    const meetingRef = instanceId
+      ? tenantRef(domain).collection('meetings').doc(`${conferenceId}__${instanceId}`)
+      : codeRef; // no record name (legacy/demo callers) → old behavior
 
     const joinTimes = participants.map(p => p.joinTime).filter(Boolean).map(t => new Date(t));
     const leaveTimes = participants.map(p => p.leaveTime).filter(Boolean).map(t => new Date(t));
@@ -213,20 +227,30 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
     const newStart = joinTimes.length > 0 ? new Date(Math.min(...joinTimes)) : null;
     const newEnd = leaveTimes.length > 0 ? new Date(Math.max(...leaveTimes)) : null;
 
-    // Aggregates must be MONOTONIC. Participant docs accumulate (merge, never
-    // removed), but the scalar counts used to be last-writer-wins — so a later
-    // PARTIAL re-fetch (Meet API eventual consistency, a truncated page, or a
-    // reused/recurring meeting code) would shrink participantCount and narrow
-    // start/end, corrupting a fuller earlier snapshot. Read-then-widen instead.
+    // Aggregates must be MONOTONIC within an instance. Participant docs
+    // accumulate (merge, never removed), but the scalar counts used to be
+    // last-writer-wins — so a later PARTIAL re-fetch (Meet API eventual
+    // consistency, a truncated page) would shrink participantCount and narrow
+    // start/end, corrupting a fuller earlier snapshot. Read-then-widen.
     let prev = {};
+    let codeMeta = {};
     try { prev = (await meetingRef.get()).data() || {}; } catch { /* first write */ }
+    if (instanceId) {
+      try { codeMeta = (await codeRef.get()).data() || {}; } catch { /* fine */ }
+    }
     const tsMsOf = (v) => (v?.toDate ? v.toDate().getTime() : (v ? new Date(v).getTime() : null));
     const prevStartMs = tsMsOf(prev.startTime);
     const prevEndMs = tsMsOf(prev.endTime);
 
     await meetingRef.set({
       conferenceId,
+      meetingCode: conferenceId,
       recordName,
+      // Copy series metadata from the code doc so recurringEventId queries and
+      // series grouping see instances directly (persistCalendarData backfills
+      // instances written before the first export stamped the code doc).
+      ...(instanceId && codeMeta.recurringEventId ? { recurringEventId: codeMeta.recurringEventId } : {}),
+      ...(instanceId && codeMeta.title && !prev.title ? { title: codeMeta.title } : {}),
       participantCount: Math.max(participants.length, prev.participantCount || 0),
       distinctAttendeeCount: Math.max(distinctAttendeeCount, prev.distinctAttendeeCount || 0),
       startTime: newStart && (prevStartMs == null || newStart.getTime() < prevStartMs) ? newStart : (prev.startTime || newStart || null),
@@ -235,6 +259,20 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
       updatedAt: now,
       createdAt: prev.createdAt || now,
     }, { merge: true });
+
+    // Keep the code-level doc alive as the series anchor (metadata target for
+    // calendar/excused writes), WITHOUT participant scalars — freezing it is
+    // what stops the old merge-everything behavior. hasInstances lets readers
+    // skip metadata-only code docs in per-meeting listings.
+    if (instanceId) {
+      await codeRef.set({
+        conferenceId,
+        hasInstances: true,
+        lastFetchedAt: now,
+        updatedAt: now,
+        ...(codeMeta.createdAt ? {} : { createdAt: now }),
+      }, { merge: true });
+    }
 
     // Chunk into batches under Firestore's 500-op limit — a very large meeting
     // (200+ participants) would otherwise exceed a single batch.
@@ -312,7 +350,20 @@ async function getMeetingWithParticipants(domain, conferenceId, requesterEmail) 
       const tracked = evSnap.docs.some((d) => d.data().meta?.conferenceId === conferenceId);
       if (!tracked) return null;
     }
-    const mRef = tenantRef(domain).collection('meetings').doc(conferenceId);
+    // Per-instance model: prefer the LATEST instance of this code (each
+    // session is its own doc now); fall back to the legacy code-keyed doc for
+    // pre-migration meetings. "This meeting's PDF" = the most recent session.
+    let mRef = tenantRef(domain).collection('meetings').doc(conferenceId);
+    try {
+      const instSnap = await tenantRef(domain).collection('meetings')
+        .where('meetingCode', '==', conferenceId).get();
+      const instances = instSnap.docs.filter(d => d.id !== conferenceId);
+      if (instances.length) {
+        const ms = (v) => (v?.toDate ? v.toDate().getTime() : (v ? new Date(v).getTime() : 0));
+        instances.sort((a, b) => ms(b.data().startTime) - ms(a.data().startTime));
+        mRef = instances[0].ref;
+      }
+    } catch { /* fall back to the code doc */ }
     const [mDoc, pSnap] = await Promise.all([mRef.get(), mRef.collection('participants').get()]);
     if (!mDoc.exists) return null;
     const m = mDoc.data();
@@ -431,6 +482,24 @@ async function persistCalendarData(domain, meetingCode, eventTitle, attendees, e
     if (extras.recurringEventId) patch.recurringEventId = extras.recurringEventId;
     if (extras.eventId) patch.eventId = extras.eventId;
     await meetingRef.set(patch, { merge: true });
+
+    // Backfill series metadata onto this code's INSTANCE docs: an instance
+    // written before the first export carries no recurringEventId/title (the
+    // code doc hadn't been stamped yet) and would be invisible to the series
+    // roll-up. Small bounded query; best-effort.
+    try {
+      const instSnap = await tenantRef(domain).collection('meetings')
+        .where('meetingCode', '==', meetingCode).get();
+      const updates = instSnap.docs.filter(d => d.id !== meetingCode && (
+        (extras.recurringEventId && !d.data().recurringEventId) || (eventTitle && !d.data().title)
+      ));
+      await Promise.all(updates.slice(0, 20).map(d => d.ref.set({
+        ...(extras.recurringEventId ? { recurringEventId: extras.recurringEventId } : {}),
+        ...(eventTitle ? { title: eventTitle } : {}),
+      }, { merge: true })));
+    } catch (e) {
+      log.warn('firestore: instance metadata backfill failed', { domain, meetingCode, error: e.message });
+    }
 
     log.info('firestore: persisted calendar data', { domain, meetingCode, eventTitle, recurringEventId: extras.recurringEventId || null });
   } catch (err) {
@@ -1195,15 +1264,34 @@ async function getUserMeetingHistory(domain, email, { limit } = {}) {
       if (cid) trackedConferenceIds.add(cid);
     }
 
+    // Per-instance model: instance docs (id `code__recordId`) match the
+    // user's tracked CODES via data.meetingCode; legacy code-keyed docs match
+    // by id and count only when they actually hold data (participantCount>0)
+    // — a post-migration code doc is a metadata-only series anchor and must
+    // not render as an empty "Untitled meeting" row. Titles live on the code
+    // doc until the export backfill stamps instances, so join them in.
+    const titleByCode = new Map();
+    for (const d of meetingsSnap.docs) {
+      const t = d.data().title;
+      if (t && !d.data().meetingCode) titleByCode.set(d.id, t);
+      else if (t && d.data().meetingCode) titleByCode.set(d.data().meetingCode, titleByCode.get(d.data().meetingCode) || t);
+    }
     const filteredMeetings = meetingsSnap.docs
-      .filter(d => trackedConferenceIds.has(d.id))
+      .filter(d => {
+        const data = d.data();
+        const code = data.meetingCode || d.id;
+        if (!trackedConferenceIds.has(code)) return false;
+        const isInstance = d.id !== code;
+        return isInstance || !data.hasInstances; // hasInstances = metadata-only series anchor (post-migration code doc)
+      })
       .map(d => {
         const data = d.data();
+        const code = data.meetingCode || d.id;
         return {
           id: d.id,
           ref: d.ref,
-          conferenceId: data.conferenceId || d.id,
-          title: data.title || 'Untitled meeting',
+          conferenceId: code,
+          title: data.title || titleByCode.get(code) || 'Untitled meeting',
           participantCount: data.participantCount || 0,
           startTime: tsMs(data.startTime) || null,
           endTime: tsMs(data.endTime) || null,
@@ -1642,12 +1730,19 @@ async function getUserMeetingSeries(domain, email) {
       if (cid) trackedIds.add(cid);
     }
 
+    // Per-instance model: every session is its own doc (id `code__recordId`,
+    // meetingCode = the code) — instanceCount finally counts real sessions,
+    // so the Class Summary fires for a normal weekly class. Legacy code-keyed
+    // docs still count as ONE (merged) instance when they hold participants;
+    // post-migration code docs are metadata-only anchors and are skipped.
     const seriesMeetings = meetingsSnap.docs
       .filter(d => {
         const data = d.data();
         if (!data.recurringEventId) return false; // skip non-recurring meetings
-        if (!trackedIds.has(d.id)) return false;
-        return true;
+        const code = data.meetingCode || d.id;
+        if (!trackedIds.has(code)) return false;
+        const isInstance = d.id !== code;
+        return isInstance || !data.hasInstances; // hasInstances = metadata-only series anchor (post-migration code doc)
       })
       .map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
 

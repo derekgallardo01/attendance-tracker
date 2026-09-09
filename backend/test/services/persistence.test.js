@@ -59,15 +59,57 @@ describe('persistAttendance — batch chunking', () => {
       sessions: 1,
     }));
 
-    await firestore.persistAttendance('acme.com', 'conf-big', 'records/conf-big', participants, 'me@acme.com');
+    await firestore.persistAttendance('acme.com', 'conf-big', 'records/rec-1', participants, 'me@acme.com');
 
-    // Meeting doc reflects the full count...
-    expect(ctx.read('tenants/acme.com/meetings/conf-big').participantCount).toBe(500);
+    // Per-instance model: the data lives on the INSTANCE doc (code__recordId);
+    // the code-keyed doc is a metadata-only series anchor.
+    const inst = 'tenants/acme.com/meetings/conf-big__rec-1';
+    expect(ctx.read(inst).participantCount).toBe(500);
+    expect(ctx.read(inst).meetingCode).toBe('conf-big');
+    expect(ctx.read('tenants/acme.com/meetings/conf-big').hasInstances).toBe(true);
     // ...and participants across the chunk boundary are all persisted.
-    expect(ctx.read('tenants/acme.com/meetings/conf-big/participants/p0')).toBeDefined();
-    expect(ctx.read('tenants/acme.com/meetings/conf-big/participants/p449')).toBeDefined();
-    expect(ctx.read('tenants/acme.com/meetings/conf-big/participants/p450')).toBeDefined();
-    expect(ctx.read('tenants/acme.com/meetings/conf-big/participants/p499')).toBeDefined();
+    expect(ctx.read(`${inst}/participants/p0`)).toBeDefined();
+    expect(ctx.read(`${inst}/participants/p449`)).toBeDefined();
+    expect(ctx.read(`${inst}/participants/p450`)).toBeDefined();
+    expect(ctx.read(`${inst}/participants/p499`)).toBeDefined();
+  });
+
+  test('RECURRING class: each session gets its own doc — week 2 no longer overwrites week 1', async () => {
+    // The old code-keyed model collapsed every session of a reused Meet link
+    // into ONE doc: participants merged across weeks, instanceCount stuck at
+    // 1, and the Class Summary Pro feature never fired for weekly classes.
+    const week1 = [{ participantId: 'pa', displayName: 'Alice', email: 'alice@x.com', joinTime: '2026-09-01T10:00:00Z', leaveTime: '2026-09-01T11:00:00Z', present: false, sessions: 1 }];
+    const week2 = [{ participantId: 'pb', displayName: 'Bob', email: 'bob@x.com', joinTime: '2026-09-08T10:00:00Z', leaveTime: '2026-09-08T11:00:00Z', present: false, sessions: 1 }];
+    await firestore.persistAttendance('acme.com', 'weekly-code', 'conferenceRecords/w1', week1, 'host@x.com');
+    await firestore.persistAttendance('acme.com', 'weekly-code', 'conferenceRecords/w2', week2, 'host@x.com');
+
+    // Two independent instance docs, each with only its own session's roster.
+    expect(ctx.read('tenants/acme.com/meetings/weekly-code__w1/participants/pa')).toBeDefined();
+    expect(ctx.read('tenants/acme.com/meetings/weekly-code__w1/participants/pb')).toBeUndefined();
+    expect(ctx.read('tenants/acme.com/meetings/weekly-code__w2/participants/pb')).toBeDefined();
+    expect(ctx.read('tenants/acme.com/meetings/weekly-code__w2/participants/pa')).toBeUndefined();
+    // Per-instance times: week 2's doc doesn't span back to week 1.
+    const w2 = ctx.read('tenants/acme.com/meetings/weekly-code__w2');
+    const w2start = w2.startTime?.toDate ? w2.startTime.toDate() : new Date(w2.startTime);
+    expect(w2start.toISOString()).toBe('2026-09-08T10:00:00.000Z');
+  });
+
+  test('recurring metadata flows: code-doc rid is copied to new instances, and persistCalendarData backfills old ones', async () => {
+    // Session 1 happens BEFORE any export → no rid anywhere yet.
+    await firestore.persistAttendance('acme.com', 'series-code', 'conferenceRecords/s1',
+      [{ participantId: 'p1', displayName: 'A', email: 'a@x.com', present: true, sessions: 1 }], 'host@x.com');
+    expect(ctx.read('tenants/acme.com/meetings/series-code__s1').recurringEventId).toBeUndefined();
+    // Export stamps the code doc — and backfills the existing instance.
+    await firestore.persistCalendarData('acme.com', 'series-code', 'Algebra II', [], { recurringEventId: 'rid-9' });
+    expect(ctx.read('tenants/acme.com/meetings/series-code__s1').recurringEventId).toBe('rid-9');
+    // Session 2 copies the rid from the code doc at write time.
+    await firestore.persistAttendance('acme.com', 'series-code', 'conferenceRecords/s2',
+      [{ participantId: 'p2', displayName: 'B', email: 'b@x.com', present: true, sessions: 1 }], 'host@x.com');
+    expect(ctx.read('tenants/acme.com/meetings/series-code__s2').recurringEventId).toBe('rid-9');
+    // And the series roll-up finally counts real sessions.
+    const { series } = await firestore.getUserMeetingSeries('acme.com', 'host@x.com');
+    expect(series).toHaveLength(1);
+    expect(series[0].instanceCount).toBe(2);
   });
 
   test('stamps distinctAttendeeCount (deduped) alongside raw participantCount', async () => {
@@ -77,9 +119,9 @@ describe('persistAttendance — batch chunking', () => {
       { participantId: 'p2', displayName: 'Darlene Diaz', email: '', present: false, sessions: 2 },
       { participantId: 'p3', displayName: 'Sam Real', email: 'sam@acme.com', present: true, sessions: 1 },
     ];
-    await firestore.persistAttendance('acme.com', 'conf-dup', 'records/conf-dup', participants, 'host@acme.com');
+    await firestore.persistAttendance('acme.com', 'conf-dup', 'records/rec-dup', participants, 'host@acme.com');
 
-    const meeting = ctx.read('tenants/acme.com/meetings/conf-dup');
+    const meeting = ctx.read('tenants/acme.com/meetings/conf-dup__rec-dup');
     expect(meeting.participantCount).toBe(3);       // raw records preserved for attendance
     expect(meeting.distinctAttendeeCount).toBe(2);  // Darlene x2 collapses → 2 humans
 
