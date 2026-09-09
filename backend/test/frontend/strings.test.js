@@ -198,12 +198,13 @@ describe('detectLocale', () => {
 describe('applyTranslations DOM helper', () => {
   afterEach(() => strings.setLocale('en'));
 
-  test('updates data-i18n, placeholder, and title attributes in DOM', () => {
+  test('updates data-i18n, placeholder, title, and aria-label attributes in DOM', () => {
     document.body.innerHTML = `
       <div id="test-container">
         <button id="start-btn" data-i18n="btn.start">Start</button>
         <input id="search-input" data-i18n-placeholder="btn.filter" placeholder="Filter" />
         <span id="help-icon" data-i18n-title="nav.settings" title="Settings">?</span>
+        <button id="settings-btn" data-i18n-aria="nav.settings" aria-label="Settings"></button>
       </div>
     `;
 
@@ -213,6 +214,7 @@ describe('applyTranslations DOM helper', () => {
     expect(document.getElementById('start-btn').textContent).toBe('Iniciar');
     expect(document.getElementById('search-input').getAttribute('placeholder')).toBe('Filtrar');
     expect(document.getElementById('help-icon').getAttribute('title')).toBe('Configuración');
+    expect(document.getElementById('settings-btn').getAttribute('aria-label')).toBe('Configuración');
   });
 });
 
@@ -321,7 +323,11 @@ describe('no "wired but English-valued" keys (translation-content guard)', () =>
     key.startsWith('lang.') ||
     key === 'source.marketplace' ||          // "Workspace Marketplace" (Google product name)
     key === 'pricing.planDomainName' ||      // "Domain Pro" tier — kept as a brand label
-    key === 'roster.studentsPlaceholder';    // example names/emails — locale-invariant sample text
+    key === 'roster.studentsPlaceholder' ||  // example names/emails — locale-invariant sample text
+    key === 'setup.emailPlaceholder' ||      // "admin@yourcompany.com" — example email
+    key === 'team.transferPlaceholder' ||    // "teammate@yourdomain.com" — example email
+    key === 'team.adminBadge' ||             // "ADMIN" — compact status badge, kept short/uppercase
+    key === 'setup.step2Link';               // admin.google.com console breadcrumb (URL + exact console labels)
 
   test('every non-allowlisted key is translated (not English-valued) in the locales', () => {
     const offenders = [];

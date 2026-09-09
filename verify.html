@@ -43,37 +43,43 @@
     .footer { text-align: center; color: var(--muted); font-size: .75rem; margin-top: 34px; }
     .footer a { color: var(--muted); text-decoration: none; }
     @media (max-width: 640px) { body { padding: 22px 14px; } h1 { font-size: 1.28rem; } .lookup { flex-direction: column; } .lookup button { padding: 11px; } }
+    .lang-row { display: flex; justify-content: flex-end; margin-bottom: 10px; }
+    .lang-row select { background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 4px 8px; font-size: .78rem; cursor: pointer; }
   </style>
+  <script src="js/strings.js"></script>
 </head>
 <body>
   <div class="container">
+    <div class="lang-row">
+      <select id="verify-lang-select" onchange="onVerifyLangChange(this.value)"></select>
+    </div>
     <div class="brand">
       <img src="icons/icon-96.png" alt="" />
-      <span><a href="https://attendancetracker.dev/">Attendance Tracker</a> · Certificate verification</span>
+      <span><a href="https://attendancetracker.dev/">Attendance Tracker</a> · <span data-i18n="verify.brandTag">Certificate verification</span></span>
     </div>
-    <h1>Verify an attendance certificate</h1>
-    <p class="lead">Enter the verification code printed at the bottom of the certificate (it looks like <span class="code">AT-1A2B3C4D</span>) to independently confirm it was issued by Attendance Tracker.</p>
+    <h1 data-i18n="verify.title">Verify an attendance certificate</h1>
+    <p class="lead" data-i18n="verify.lead">Enter the verification code printed at the bottom of the certificate (it looks like AT-1A2B3C4D) to independently confirm it was issued by Attendance Tracker.</p>
 
     <!-- doVerify is async: it RETURNS A PROMISE (always truthy), so
          `return doVerify()` never cancelled submission — the form GET-posted
          to itself and the reload wiped every error message before it could
          be seen. preventDefault + explicit false is reload-proof. -->
     <form class="lookup" onsubmit="event.preventDefault(); doVerify(); return false;">
-      <input id="code" type="text" placeholder="AT-XXXXXXXX" autocomplete="off" spellcheck="false" aria-label="Verification code" />
-      <button type="submit">Verify</button>
+      <input id="code" type="text" placeholder="AT-XXXXXXXX" autocomplete="off" spellcheck="false" data-i18n-aria="verify.codeAria" aria-label="Verification code" />
+      <button type="submit" data-i18n="verify.btnVerify">Verify</button>
     </form>
 
-    <div id="loading" style="display:none; color:var(--muted); text-align:center; padding:20px;">Checking…</div>
+    <div id="loading" style="display:none; color:var(--muted); text-align:center; padding:20px;" data-i18n="verify.checking">Checking…</div>
     <div id="status"></div>
 
     <div class="cta">
-      <h3>Issue verifiable certificates for your own meetings</h3>
-      <p>Attendance Tracker records who attended any Google Meet call and generates certificates like this — with join/leave times and a verification code.</p>
-      <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=verify_page" target="_blank" rel="noopener">Install from Marketplace</a>
+      <h3 data-i18n="verify.ctaTitle">Issue verifiable certificates for your own meetings</h3>
+      <p data-i18n="verify.ctaBody">Attendance Tracker records who attended any Google Meet call and generates certificates like this — with join/leave times and a verification code.</p>
+      <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=verify_page" target="_blank" rel="noopener" data-i18n="verify.ctaBtn">Install from Marketplace</a>
     </div>
 
     <div class="footer">
-      <a href="https://attendancetracker.dev/">attendancetracker.dev</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a>
+      <a href="https://attendancetracker.dev/">attendancetracker.dev</a> · <a href="privacy.html" data-i18n="verify.footerPrivacy">Privacy</a> · <a href="terms.html" data-i18n="verify.footerTerms">Terms</a>
     </div>
   </div>
 
@@ -86,20 +92,20 @@
     function renderVerified(d) {
       const detail = d.detailLabel ? d.detailLabel : null;
       return `<div class="card">
-        <div class="badge ok">✓ Verified certificate</div>
-        ${row('Attendee', d.attendeeName)}
-        ${row('Session', d.session)}
-        ${row('Date', d.dateLabel)}
-        ${detail ? row('Duration / credit', detail) : ''}
-        ${row('Issued by', d.issuer)}
-        <div class="row"><span class="k">Verification code</span><span class="v code">${esc(d.code)}</span></div>
-        ${d.issuedAt ? `<div class="hint">Recorded ${esc(new Date(d.issuedAt).toLocaleString())}. This confirms Attendance Tracker issued this certificate from recorded Google Meet attendance.</div>` : ''}
+        <div class="badge ok">✓ ${esc(t('verify.badgeOk', 'Verified certificate'))}</div>
+        ${row(t('verify.rowAttendee', 'Attendee'), d.attendeeName)}
+        ${row(t('verify.rowSession', 'Session'), d.session)}
+        ${row(t('verify.rowDate', 'Date'), d.dateLabel)}
+        ${detail ? row(t('verify.rowDuration', 'Duration / credit'), detail) : ''}
+        ${row(t('verify.rowIssuer', 'Issued by'), d.issuer)}
+        <div class="row"><span class="k">${esc(t('verify.rowCode', 'Verification code'))}</span><span class="v code">${esc(d.code)}</span></div>
+        ${d.issuedAt ? `<div class="hint">${esc(t('verify.recorded', 'Recorded {when}. This confirms Attendance Tracker issued this certificate from recorded Google Meet attendance.').replace('{when}', new Date(d.issuedAt).toLocaleString()))}</div>` : ''}
       </div>`;
     }
 
     function renderNotFound(code, badFormat) {
-      return `<div class="error"><strong>${badFormat ? 'That doesn’t look like a valid code.' : 'No certificate found for this code.'}</strong>
-        <div style="margin-top:6px;font-size:.85rem">${badFormat ? 'Codes look like AT- followed by 8 characters.' : 'Check the code on the certificate and try again. Very old certificates issued before verification launched may not be on file.'}</div></div>`;
+      return `<div class="error"><strong>${esc(badFormat ? t('verify.badFormat', 'That doesn’t look like a valid code.') : t('verify.notFound', 'No certificate found for this code.'))}</strong>
+        <div style="margin-top:6px;font-size:.85rem">${esc(badFormat ? t('verify.badFormatHint', 'Codes look like AT- followed by 8 characters.') : t('verify.notFoundHint', 'Check the code on the certificate and try again. Very old certificates issued before verification launched may not be on file.'))}</div></div>`;
     }
 
     async function doVerify() {
@@ -124,11 +130,37 @@
         else { statusEl.innerHTML = renderVerified(await res.json()); }
       } catch (e) {
         loadingEl.style.display = 'none';
-        statusEl.innerHTML = `<div class="error"><strong>Couldn’t check right now.</strong><div style="margin-top:6px;font-size:.85rem">Please try again in a moment.</div></div>`;
+        statusEl.innerHTML = `<div class="error"><strong>${esc(t('verify.errNow', 'Couldn’t check right now.'))}</strong><div style="margin-top:6px;font-size:.85rem">${esc(t('verify.errRetry', 'Please try again in a moment.'))}</div></div>`;
       }
       statusEl.style.display = 'block';
       return false;
     }
+
+    // ── i18n (top-level page: full language switcher) ──
+    function initVerifyI18n() {
+      if (typeof AttStrings === 'undefined') return;
+      const cur = AttStrings.getLocale();
+      document.documentElement.dir = (cur === 'ar' || cur === 'he' || cur === 'ur') ? 'rtl' : 'ltr';
+      document.documentElement.lang = cur;
+      const sel = document.getElementById('verify-lang-select');
+      if (sel) {
+        sel.innerHTML = AttStrings.LOCALES.map(l =>
+          `<option value="${l.code}" ${l.code === cur ? 'selected' : ''}>${l.flag} ${l.label}</option>`
+        ).join('');
+      }
+      AttStrings.applyTranslations();
+    }
+    function onVerifyLangChange(code) {
+      if (typeof AttStrings === 'undefined') return;
+      AttStrings.setLocale(code, true);
+      document.documentElement.dir = (code === 'ar' || code === 'he' || code === 'ur') ? 'rtl' : 'ltr';
+      document.documentElement.lang = code;
+      AttStrings.applyTranslations();
+      // Re-run the last verification so the JS-built result card re-localizes.
+      const statusEl = document.getElementById('status');
+      if (statusEl && statusEl.style.display === 'block' && document.getElementById('code').value.trim()) doVerify();
+    }
+    initVerifyI18n();
 
     // Auto-verify when arriving via the URL on a certificate (?c=CODE).
     (function () {

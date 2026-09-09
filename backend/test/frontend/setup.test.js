@@ -50,3 +50,17 @@ describe('verifyNetworkError', () => {
     expect(r.message).toMatch(/Could not reach the server/);
   });
 });
+
+describe('i18n hook (tr uses global t when present)', () => {
+  afterEach(() => { delete global.t; });
+
+  test('result banners route through t() once it is available', () => {
+    // Browser parity: js/strings.js exposes a global t(); tr() must use it.
+    global.t = (key, fallback) => `⟦${key}⟧`;
+    expect(setup.verifyResult({ success: true }).message).toBe('⟦setup.complete⟧');
+    expect(setup.verifyResult({ success: false }).message).toBe('⟦setup.notConfigured⟧');
+    expect(setup.verifyNetworkError().message).toBe('⟦setup.serverError⟧');
+    // A server-provided error still wins over the localized fallback.
+    expect(setup.verifyResult({ success: false, error: 'raw' }).message).toBe('raw');
+  });
+});

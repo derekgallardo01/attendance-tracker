@@ -89,47 +89,51 @@
     }
   </style>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="js/strings.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/api.js"></script>
   <script src="js/team.js"></script>
 </head>
 <body>
   <div class="container">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+      <select id="team-lang-select" onchange="onTeamLangChange(this.value)" style="background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 8px;font-size:.78rem;cursor:pointer"></select>
+    </div>
     <!-- Login -->
     <div id="login-screen" class="login-screen">
-      <h2>Team admin</h2>
-      <p>Sign in with your Google Workspace account to view org-wide attendance.</p>
-      <button class="btn btn-secondary" onclick="signIn()">Sign in with Google</button>
+      <h2 data-i18n="team.title">Team admin</h2>
+      <p data-i18n="team.loginSub">Sign in with your Google Workspace account to view org-wide attendance.</p>
+      <button class="btn btn-secondary" onclick="signIn()" data-i18n="team.signInGoogle">Sign in with Google</button>
     </div>
 
-    <div id="loading" style="display:none">Loading team data…</div>
+    <div id="loading" style="display:none" data-i18n="team.loading">Loading team data…</div>
     <div id="team-load-error" class="error-banner" style="display:none">
-      <strong>Couldn't load the team dashboard.</strong>
-      <div style="margin-top:6px;font-size:.85rem">Refresh to try again — if it keeps failing, sign in again from the panel.</div>
+      <strong data-i18n="team.loadErrorTitle">Couldn't load the team dashboard.</strong>
+      <div style="margin-top:6px;font-size:.85rem" data-i18n="team.loadErrorSub">Refresh to try again — if it keeps failing, sign in again from the panel.</div>
     </div>
     <div id="error-not-admin" class="error-banner" style="display:none">
-      <div id="admin-gate"><strong>Checking your team-admin status…</strong></div>
+      <div id="admin-gate"><strong data-i18n="team.checkingStatus">Checking your team-admin status…</strong></div>
     </div>
 
     <div id="error-upgrade" class="error-banner" style="display:none">
-      <strong>The team dashboard is a Pro feature.</strong>
-      <div style="margin-top:6px;font-size:.85rem">Upgrade to unlock the org-wide view of attendance for your whole domain.</div>
+      <strong data-i18n="team.upgradeTitle">The team dashboard is a Pro feature.</strong>
+      <div style="margin-top:6px;font-size:.85rem" data-i18n="team.upgradeSub">Upgrade to unlock the org-wide view of attendance for your whole domain.</div>
       <div id="team-interval" style="display:none;margin-top:10px;white-space:nowrap">
-        <button type="button" id="team-int-annual" onclick="setTeamInterval('annual')" style="border:1px solid #30363d;border-radius:6px 0 0 6px;padding:6px 12px;cursor:pointer;font-size:.8rem">Annual · save 20%</button><button type="button" id="team-int-monthly" onclick="setTeamInterval('monthly')" style="border:1px solid #30363d;border-left:none;border-radius:0 6px 6px 0;padding:6px 12px;cursor:pointer;font-size:.8rem">Monthly</button>
+        <button type="button" id="team-int-annual" onclick="setTeamInterval('annual')" style="border:1px solid #30363d;border-radius:6px 0 0 6px;padding:6px 12px;cursor:pointer;font-size:.8rem" data-i18n="team.intAnnual">Annual · save 20%</button><button type="button" id="team-int-monthly" onclick="setTeamInterval('monthly')" style="border:1px solid #30363d;border-left:none;border-radius:0 6px 6px 0;padding:6px 12px;cursor:pointer;font-size:.8rem" data-i18n="team.intMonthly">Monthly</button>
       </div>
-      <button id="upgrade-btn" onclick="startUpgrade()" style="margin-top:10px;background:#4ade80;color:#0d1117;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:600">Upgrade to Pro</button>
+      <button id="upgrade-btn" onclick="startUpgrade()" style="margin-top:10px;background:#4ade80;color:#0d1117;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:600" data-i18n="team.upgradeBtn">Upgrade to Pro</button>
 
       <!-- Redacted preview of the real dashboard (the admin's own data) -->
       <div id="preview-teaser" style="display:none;margin-top:18px;text-align:left">
-        <div style="font-size:.78rem;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">A preview of YOUR domain's dashboard</div>
+        <div style="font-size:.78rem;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px" data-i18n="team.previewTitle">A preview of YOUR domain's dashboard</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:12px">
-          <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:12px"><div style="font-size:1.4rem;font-weight:700;color:#4ade80" id="preview-users">—</div><div style="font-size:.72rem;color:#8b949e">Teachers</div></div>
-          <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:12px"><div style="font-size:1.4rem;font-weight:700;color:#58a6ff" id="preview-meetings">—</div><div style="font-size:.72rem;color:#8b949e">Meetings</div></div>
-          <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:12px"><div style="font-size:1.4rem;font-weight:700;color:#58a6ff" id="preview-series">—</div><div style="font-size:.72rem;color:#8b949e">Recurring series</div></div>
-          <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:12px"><div style="font-size:1.4rem;font-weight:700;color:#4ade80" id="preview-people">—</div><div style="font-size:.72rem;color:#8b949e">People tracked</div></div>
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:12px"><div style="font-size:1.4rem;font-weight:700;color:#4ade80" id="preview-users">—</div><div style="font-size:.72rem;color:#8b949e" data-i18n="team.statTeachers">Teachers</div></div>
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:12px"><div style="font-size:1.4rem;font-weight:700;color:#58a6ff" id="preview-meetings">—</div><div style="font-size:.72rem;color:#8b949e" data-i18n="team.statMeetingsShort">Meetings</div></div>
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:12px"><div style="font-size:1.4rem;font-weight:700;color:#58a6ff" id="preview-series">—</div><div style="font-size:.72rem;color:#8b949e" data-i18n="team.statRecurring">Recurring series</div></div>
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:12px"><div style="font-size:1.4rem;font-weight:700;color:#4ade80" id="preview-people">—</div><div style="font-size:.72rem;color:#8b949e" data-i18n="team.statPeopleTracked">People tracked</div></div>
         </div>
         <table style="width:100%;border-collapse:collapse;font-size:.82rem;filter:blur(0.4px);opacity:.85">
-          <thead><tr><th style="text-align:left;padding:6px 10px;color:#8b949e;font-size:.72rem;text-transform:uppercase;border-bottom:1px solid #30363d">Teacher</th><th style="text-align:left;padding:6px 10px;color:#8b949e;font-size:.72rem;text-transform:uppercase;border-bottom:1px solid #30363d">Email</th><th style="text-align:left;padding:6px 10px;color:#8b949e;font-size:.72rem;text-transform:uppercase;border-bottom:1px solid #30363d">Last active</th></tr></thead>
+          <thead><tr><th style="text-align:left;padding:6px 10px;color:#8b949e;font-size:.72rem;text-transform:uppercase;border-bottom:1px solid #30363d" data-i18n="team.thTeacher">Teacher</th><th style="text-align:left;padding:6px 10px;color:#8b949e;font-size:.72rem;text-transform:uppercase;border-bottom:1px solid #30363d" data-i18n="team.thEmail">Email</th><th style="text-align:left;padding:6px 10px;color:#8b949e;font-size:.72rem;text-transform:uppercase;border-bottom:1px solid #30363d" data-i18n="team.thLastActive">Last active</th></tr></thead>
           <tbody id="preview-rows"></tbody>
         </table>
       </div>
@@ -137,77 +141,77 @@
 
     <div id="dashboard">
       <div class="header">
-        <h1>Team admin<span class="domain-chip" id="domain-chip"></span></h1>
+        <h1><span data-i18n="team.title">Team admin</span><span class="domain-chip" id="domain-chip"></span></h1>
         <div>
           <span class="user" id="user-email"></span>
-          <a class="btn btn-secondary" href="/history.html" style="margin-left:8px">My history</a>
-          <a class="btn btn-secondary" href="/" style="margin-left:4px">Back to add-on</a>
-          <button class="btn btn-secondary" onclick="signOut()" style="margin-left:4px">Sign out</button>
+          <a class="btn btn-secondary" href="/history.html" style="margin-left:8px" data-i18n="team.myHistory">My history</a>
+          <a class="btn btn-secondary" href="/" style="margin-left:4px" data-i18n="team.backToAddon">Back to add-on</a>
+          <button class="btn btn-secondary" onclick="signOut()" style="margin-left:4px" data-i18n="team.signOut">Sign out</button>
         </div>
       </div>
 
       <div class="stats-grid">
-        <div class="stat-card"><div class="stat-label">Users in org</div><div class="stat-value green" id="stat-users">—</div></div>
-        <div class="stat-card"><div class="stat-label">Meetings tracked</div><div class="stat-value blue" id="stat-meetings">—</div></div>
-        <div class="stat-card"><div class="stat-label">Recurring series</div><div class="stat-value" id="stat-series">—</div></div>
-        <div class="stat-card"><div class="stat-label">People seen</div><div class="stat-value" id="stat-people">—</div></div>
+        <div class="stat-card"><div class="stat-label" data-i18n="team.statUsers">Users in org</div><div class="stat-value green" id="stat-users">—</div></div>
+        <div class="stat-card"><div class="stat-label" data-i18n="team.statMeetingsTracked">Meetings tracked</div><div class="stat-value blue" id="stat-meetings">—</div></div>
+        <div class="stat-card"><div class="stat-label" data-i18n="team.statRecurring">Recurring series</div><div class="stat-value" id="stat-series">—</div></div>
+        <div class="stat-card"><div class="stat-label" data-i18n="team.statPeopleSeen">People seen</div><div class="stat-value" id="stat-people">—</div></div>
       </div>
 
       <div class="tabs">
-        <button class="tab active" data-tab="users" onclick="switchTab('users')">Users</button>
-        <button class="tab" data-tab="meetings" onclick="switchTab('meetings')">Meetings</button>
-        <button class="tab" data-tab="series" onclick="switchTab('series')">Series</button>
-        <button class="tab" data-tab="people" onclick="switchTab('people')">People</button>
+        <button class="tab active" data-tab="users" onclick="switchTab('users')" data-i18n="team.tabUsers">Users</button>
+        <button class="tab" data-tab="meetings" onclick="switchTab('meetings')" data-i18n="team.tabMeetings">Meetings</button>
+        <button class="tab" data-tab="series" onclick="switchTab('series')" data-i18n="team.tabSeries">Series</button>
+        <button class="tab" data-tab="people" onclick="switchTab('people')" data-i18n="team.tabPeople">People</button>
       </div>
 
       <div id="tab-users" class="tab-content active">
-        <input id="search-users" class="search-box" type="text" placeholder="Search users…" oninput="renderUsers()" />
+        <input id="search-users" class="search-box" type="text" data-i18n-placeholder="team.searchUsers" placeholder="Search users…" oninput="renderUsers()" />
         <div class="section">
           <table>
-            <thead><tr><th>User</th><th class="right">Tracked</th><th class="right">Exported</th><th class="nowrap">Last login</th></tr></thead>
-            <tbody id="users-rows"><tr><td colspan="4" class="muted">No users yet.</td></tr></tbody>
+            <thead><tr><th data-i18n="team.thUser">User</th><th class="right" data-i18n="team.thTracked">Tracked</th><th class="right" data-i18n="team.thExported">Exported</th><th class="nowrap" data-i18n="team.thLastLogin">Last login</th></tr></thead>
+            <tbody id="users-rows"><tr><td colspan="4" class="muted" data-i18n="team.noUsers">No users yet.</td></tr></tbody>
           </table>
         </div>
       </div>
 
       <div id="tab-meetings" class="tab-content">
-        <input id="search-meetings" class="search-box" type="text" placeholder="Search meetings by title…" oninput="renderMeetings()" />
+        <input id="search-meetings" class="search-box" type="text" data-i18n-placeholder="team.searchMeetings" placeholder="Search meetings by title…" oninput="renderMeetings()" />
         <div class="section">
           <table>
-            <thead><tr><th class="nowrap">Date</th><th>Title</th><th class="right">Present</th><th class="right">Duration</th></tr></thead>
-            <tbody id="meetings-rows"><tr><td colspan="4" class="muted">No meetings tracked yet.</td></tr></tbody>
+            <thead><tr><th class="nowrap" data-i18n="team.thDate">Date</th><th data-i18n="team.thTitle">Title</th><th class="right" data-i18n="team.thPresent">Present</th><th class="right" data-i18n="team.thDuration">Duration</th></tr></thead>
+            <tbody id="meetings-rows"><tr><td colspan="4" class="muted" data-i18n="team.noMeetings">No meetings tracked yet.</td></tr></tbody>
           </table>
         </div>
       </div>
 
       <div id="tab-series" class="tab-content">
-        <input id="search-series" class="search-box" type="text" placeholder="Search series…" oninput="renderSeries()" />
-        <div id="series-empty" class="section muted" style="display:none;text-align:center;padding:32px 18px">
+        <input id="search-series" class="search-box" type="text" data-i18n-placeholder="team.searchSeries" placeholder="Search series…" oninput="renderSeries()" />
+        <div id="series-empty" class="section muted" style="display:none;text-align:center;padding:32px 18px" data-i18n="team.seriesEmpty">
           No recurring series rolled up across the org yet. Track a meeting from a Google Calendar series 2+ times to see the cross-user breakdown here.
         </div>
         <div id="series-list"></div>
       </div>
 
       <div id="tab-people" class="tab-content">
-        <input id="search-people" class="search-box" type="text" placeholder="Search people by name or email…" oninput="renderPeople()" />
+        <input id="search-people" class="search-box" type="text" data-i18n-placeholder="team.searchPeople" placeholder="Search people by name or email…" oninput="renderPeople()" />
         <div class="section">
           <table>
-            <thead><tr><th>Person</th><th class="right">Meetings</th><th class="right">Total time</th><th>Attendance %</th><th class="nowrap">Last seen</th></tr></thead>
-            <tbody id="people-rows"><tr><td colspan="5" class="muted">No people tracked yet.</td></tr></tbody>
+            <thead><tr><th data-i18n="team.thPerson">Person</th><th class="right" data-i18n="team.thMeetings">Meetings</th><th class="right" data-i18n="team.thTotalTime">Total time</th><th data-i18n="team.thAttendancePct">Attendance %</th><th class="nowrap" data-i18n="team.thLastSeen">Last seen</th></tr></thead>
+            <tbody id="people-rows"><tr><td colspan="5" class="muted" data-i18n="team.noPeople">No people tracked yet.</td></tr></tbody>
           </table>
         </div>
       </div>
 
       <div class="footer-note">
-        You're seeing org-wide data because you're the team admin for <span id="domain-footer"></span>.
+        <span data-i18n="team.footerNote">You're seeing org-wide data because you're the team admin for</span> <span id="domain-footer"></span>.
         <div style="margin-top:10px">
-          <label style="font-size:.75rem">Transfer the team-admin role to a teammate (they must have signed in at least once):</label>
+          <label style="font-size:.75rem" data-i18n="team.transferLabel">Transfer the team-admin role to a teammate (they must have signed in at least once):</label>
           <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
-            <input id="transfer-email" class="search-box" style="margin:0;max-width:280px" type="email" placeholder="teammate@yourdomain.com" />
-            <button class="btn btn-secondary" onclick="transferAdmin()">Transfer role</button>
+            <input id="transfer-email" class="search-box" style="margin:0;max-width:280px" type="email" data-i18n-placeholder="team.transferPlaceholder" placeholder="teammate@yourdomain.com" />
+            <button class="btn btn-secondary" onclick="transferAdmin()" data-i18n="team.transferBtn">Transfer role</button>
           </div>
         </div>
-        <div style="margin-top:10px">Workspace admins already have similar visibility into meeting attendance via the Google Admin Console.</div>
+        <div style="margin-top:10px" data-i18n="team.adminConsoleNote">Workspace admins already have similar visibility into meeting attendance via the Google Admin Console.</div>
       </div>
     </div>
   </div>
@@ -216,6 +220,34 @@
     const BACKEND_URL = AttApi.BACKEND_URL; // shared js/api.js (loaded in <head>)
     let sessionToken = null;
     let data = { users: [], meetings: [], series: [], people: [], totals: {} };
+
+    // ── i18n (top-level page: full language switcher, mirrors share.html) ──
+    function initTeamI18n() {
+      if (typeof AttStrings === 'undefined') return;
+      const cur = AttStrings.getLocale();
+      document.documentElement.dir = (cur === 'ar' || cur === 'he' || cur === 'ur') ? 'rtl' : 'ltr';
+      document.documentElement.lang = cur;
+      const sel = document.getElementById('team-lang-select');
+      if (sel) {
+        sel.innerHTML = AttStrings.LOCALES.map(l =>
+          `<option value="${l.code}" ${l.code === cur ? 'selected' : ''}>${l.flag} ${l.label}</option>`
+        ).join('');
+      }
+      AttStrings.applyTranslations();
+    }
+    function onTeamLangChange(code) {
+      if (typeof AttStrings === 'undefined') return;
+      AttStrings.setLocale(code, true);
+      document.documentElement.dir = (code === 'ar' || code === 'he' || code === 'ur') ? 'rtl' : 'ltr';
+      document.documentElement.lang = code;
+      AttStrings.applyTranslations();
+      // JS-built rows/gate paint via innerHTML — repaint whatever's on screen.
+      if (document.getElementById('dashboard').style.display === 'block') {
+        renderUsers(); renderMeetings(); renderSeries(); renderPeople();
+      }
+      if (document.getElementById('error-not-admin').style.display === 'block') showAdminGate();
+    }
+    initTeamI18n();
 
     function signIn() {
       AttApi.signIn({
@@ -226,7 +258,7 @@
           document.getElementById('login-screen').style.display = 'none';
           loadOverview();
         },
-        onError: (err) => { alert('Sign-in failed: ' + err.message); },
+        onError: (err) => { alert(t('team.signInFailed', 'Sign-in failed:') + ' ' + err.message); },
       });
     }
 
@@ -305,7 +337,7 @@
         }).catch(() => {});
       } catch (e) {}
       const btn = document.getElementById('upgrade-btn');
-      if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
+      if (btn) { btn.disabled = true; btn.textContent = t('common.loading', 'Loading…'); }
       try {
         // Explicit plan AND explicit 'once': team+annual is the $149
         // Institution price server-side — this page sells the one-time
@@ -315,7 +347,7 @@
       } catch (e) {
         alert(e.message);
       } finally {
-        if (btn) { btn.disabled = false; btn.textContent = 'Upgrade to Pro'; }
+        if (btn) { btn.disabled = false; btn.textContent = t('team.upgradeBtn', 'Upgrade to Pro'); }
       }
     }
 
@@ -348,7 +380,7 @@
                 document.getElementById('preview-people').textContent = p.totals.people ?? 0;
                 document.getElementById('preview-rows').innerHTML = (p.sampleUsers || []).map(u =>
                   `<tr><td>${esc(u.displayName || '—')}</td><td style="color:#8b949e">${esc(u.email || '')}</td><td style="color:#8b949e">${u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString() : '—'}</td></tr>`
-                ).join('') + (p.moreUsers ? `<tr><td colspan="3" style="color:#8b949e;font-style:italic">…and ${p.moreUsers} more teachers, visible on Pro</td></tr>` : '');
+                ).join('') + (p.moreUsers ? `<tr><td colspan="3" style="color:#8b949e;font-style:italic">${esc(t('team.moreTeachers', '…and {n} more teachers, visible on Pro').replace('{n}', p.moreUsers))}</td></tr>` : '');
                 box.style.display = 'block';
               }
             }
@@ -394,23 +426,23 @@
         const res = await fetch(`${BACKEND_URL}/team/admin-status`, { headers: { 'Authorization': `Bearer ${sessionToken}` } });
         const s = await res.json().catch(() => ({}));
         if (s.isPersonalDomain) {
-          el.innerHTML = `<strong>Team features need a Google Workspace domain.</strong>
-            <div style="margin-top:6px;font-size:.85rem">Personal accounts (gmail.com, outlook.com, …) share one space, so there's no org dashboard.</div>`;
+          el.innerHTML = `<strong>${esc(t('team.gateNeedWorkspace', 'Team features need a Google Workspace domain.'))}</strong>
+            <div style="margin-top:6px;font-size:.85rem">${esc(t('team.gateNeedWorkspaceSub', "Personal accounts (gmail.com, outlook.com, …) share one space, so there's no org dashboard."))}</div>`;
         } else if (s.canClaim) {
-          el.innerHTML = `<strong>No team admin yet for your domain.</strong>
-            <div style="margin-top:6px;font-size:.85rem">Claim the role to manage org-wide attendance for your whole team.</div>
-            <button class="btn" style="margin-top:10px;background:#4ade80;color:#0d1117" onclick="claimAdmin(this)">Make me the team admin</button>`;
+          el.innerHTML = `<strong>${esc(t('team.gateNoAdmin', 'No team admin yet for your domain.'))}</strong>
+            <div style="margin-top:6px;font-size:.85rem">${esc(t('team.gateNoAdminSub', 'Claim the role to manage org-wide attendance for your whole team.'))}</div>
+            <button class="btn" style="margin-top:10px;background:#4ade80;color:#0d1117" onclick="claimAdmin(this)">${esc(t('team.claimBtn', 'Make me the team admin'))}</button>`;
         } else {
-          el.innerHTML = `<strong>Your team admin is ${esc(s.adminEmail || 'someone else on your domain')}.</strong>
-            <div style="margin-top:6px;font-size:.85rem">Ask them to open Team admin and transfer the role to you.</div>`;
+          el.innerHTML = `<strong>${esc(t('team.gateHasAdmin', 'Your team admin is {admin}.').replace('{admin}', s.adminEmail || t('team.gateAdminFallback', 'someone else on your domain')))}</strong>
+            <div style="margin-top:6px;font-size:.85rem">${esc(t('team.gateHasAdminSub', 'Ask them to open Team admin and transfer the role to you.'))}</div>`;
         }
       } catch {
-        el.innerHTML = `<strong>Couldn't check your team-admin status. Try refreshing.</strong>`;
+        el.innerHTML = `<strong>${esc(t('team.gateError', "Couldn't check your team-admin status. Try refreshing."))}</strong>`;
       }
     }
 
     async function claimAdmin(btn) {
-      if (btn) { btn.disabled = true; btn.textContent = 'Claiming…'; }
+      if (btn) { btn.disabled = true; btn.textContent = t('team.claimingBtn', 'Claiming…'); }
       try {
         const res = await fetch(`${BACKEND_URL}/team/claim-admin`, {
           method: 'POST', headers: { 'Authorization': `Bearer ${sessionToken}`, 'Content-Type': 'application/json' }, body: '{}',
@@ -421,27 +453,27 @@
           loadOverview();
           return;
         }
-        alert(body.error || 'Could not claim the team-admin role.');
+        alert(body.error || t('team.claimFailed', 'Could not claim the team-admin role.'));
       } catch {
-        alert('Could not reach the server.');
+        alert(t('team.serverError', 'Could not reach the server.'));
       }
-      if (btn) { btn.disabled = false; btn.textContent = 'Make me the team admin'; }
+      if (btn) { btn.disabled = false; btn.textContent = t('team.claimBtn', 'Make me the team admin'); }
     }
 
     async function transferAdmin() {
       const input = document.getElementById('transfer-email');
       const toEmail = (input.value || '').trim();
-      if (!toEmail) { alert('Enter a teammate\'s email.'); return; }
-      if (!confirm(`Transfer the team-admin role to ${toEmail}? You'll lose admin access.`)) return;
+      if (!toEmail) { alert(t('team.enterEmail', "Enter a teammate's email.")); return; }
+      if (!confirm(t('team.transferConfirm', "Transfer the team-admin role to {email}? You'll lose admin access.").replace('{email}', toEmail))) return;
       try {
         const res = await fetch(`${BACKEND_URL}/team/transfer-admin`, {
           method: 'POST', headers: { 'Authorization': `Bearer ${sessionToken}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ toEmail }),
         });
         const body = await res.json().catch(() => ({}));
-        if (res.ok) { alert(`Transferred to ${toEmail}. Signing you out.`); signOut(); return; }
-        alert(body.error || 'Could not transfer the role.');
-      } catch { alert('Could not reach the server.'); }
+        if (res.ok) { alert(t('team.transferred', 'Transferred to {email}. Signing you out.').replace('{email}', toEmail)); signOut(); return; }
+        alert(body.error || t('team.transferFailed', 'Could not transfer the role.'));
+      } catch { alert(t('team.serverError', 'Could not reach the server.')); }
     }
 
     function switchTab(name) {
@@ -461,11 +493,11 @@
     function renderUsers() {
       const rows = AttTeam.filterUsers(data.users, document.getElementById('search-users').value);
       const body = document.getElementById('users-rows');
-      if (!rows.length) { body.innerHTML = '<tr><td colspan="4" class="muted">No users match.</td></tr>'; return; }
+      if (!rows.length) { body.innerHTML = `<tr><td colspan="4" class="muted">${esc(t('team.noUsersMatch', 'No users match.'))}</td></tr>`; return; }
       body.innerHTML = rows.map(u => `
         <tr>
           <td>
-            ${esc(u.displayName || u.email)}${u.teamAdmin ? '<span class="admin-chip">ADMIN</span>' : ''}
+            ${esc(u.displayName || u.email)}${u.teamAdmin ? `<span class="admin-chip">${esc(t('team.adminBadge', 'ADMIN'))}</span>` : ''}
             <div class="muted" style="font-size:.72rem">${esc(u.email)}</div>
           </td>
           <td class="right">${u.tracked || 0}</td>
@@ -478,7 +510,7 @@
     function renderMeetings() {
       const rows = AttTeam.filterMeetings(data.meetings, document.getElementById('search-meetings').value);
       const body = document.getElementById('meetings-rows');
-      if (!rows.length) { body.innerHTML = '<tr><td colspan="4" class="muted">No meetings match.</td></tr>'; return; }
+      if (!rows.length) { body.innerHTML = `<tr><td colspan="4" class="muted">${esc(t('team.noMeetingsMatch', 'No meetings match.'))}</td></tr>`; return; }
       body.innerHTML = rows.map(m => `
         <tr>
           <td class="nowrap">${esc(fmtDate(m.startTime || m.createdAt))}<div class="muted" style="font-size:.7rem">${esc(fmtTime(m.startTime || m.createdAt))}</div></td>
@@ -496,7 +528,7 @@
       const empty = document.getElementById('series-empty');
       if (all.length === 0) { empty.style.display = ''; list.innerHTML = ''; return; }
       empty.style.display = 'none';
-      if (rows.length === 0) { list.innerHTML = '<div class="section muted" style="text-align:center">No series match that search.</div>'; return; }
+      if (rows.length === 0) { list.innerHTML = `<div class="section muted" style="text-align:center">${esc(t('team.noSeriesMatch', 'No series match that search.'))}</div>`; return; }
       list.innerHTML = rows.map(s => {
         const dateRange = AttTeam.computeRange(s.firstAt, s.lastAt);
         const peopleRows = (s.people || []).map(p => `
@@ -505,15 +537,15 @@
             <td class="right nowrap">${p.attended}/${s.instanceCount}</td>
             <td><div style="display:flex;align-items:center;gap:8px;min-width:120px"><div class="progress-bar" style="flex:1"><div style="width:${Math.round(p.attendanceRate * 100)}%"></div></div><span style="font-size:.75rem;color:var(--muted);min-width:36px">${pct(p.attendanceRate)}</span></div></td>
           </tr>
-        `).join('') || '<tr><td colspan="3" class="muted">No participants tracked.</td></tr>';
+        `).join('') || `<tr><td colspan="3" class="muted">${esc(t('team.noParticipants', 'No participants tracked.'))}</td></tr>`;
         return `
           <div class="section" style="padding:0;margin-bottom:14px">
             <div style="padding:14px 18px;border-bottom:1px solid var(--border)">
               <div style="font-weight:600;font-size:.95rem">${esc(s.title)}</div>
-              <div class="muted" style="font-size:.75rem;margin-top:3px">${s.instanceCount} meeting${s.instanceCount===1?'':'s'} · ${esc(dateRange)} · ${s.uniquePeople} ${s.uniquePeople===1?'person':'people'}</div>
+              <div class="muted" style="font-size:.75rem;margin-top:3px">${esc((s.instanceCount===1 ? t('team.seriesMeetingOne', '{n} meeting') : t('team.seriesMeetingOther', '{n} meetings')).replace('{n}', s.instanceCount))} · ${esc(dateRange)} · ${esc((s.uniquePeople===1 ? t('team.peopleOne', '{n} person') : t('team.peopleOther', '{n} people')).replace('{n}', s.uniquePeople))}</div>
             </div>
             <div style="padding:6px 18px 14px">
-              <table style="margin-top:6px"><thead><tr><th>Person</th><th class="right">Attended</th><th>Attendance</th></tr></thead><tbody>${peopleRows}</tbody></table>
+              <table style="margin-top:6px"><thead><tr><th>${esc(t('team.thPerson', 'Person'))}</th><th class="right">${esc(t('team.thAttended', 'Attended'))}</th><th>${esc(t('team.thAttendance', 'Attendance'))}</th></tr></thead><tbody>${peopleRows}</tbody></table>
             </div>
           </div>
         `;
