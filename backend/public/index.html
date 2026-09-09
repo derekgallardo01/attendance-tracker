@@ -3012,6 +3012,11 @@ function logUserEvent(type, meta) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type, meta: meta || null }),
+      // keepalive lets teardown-fired events (auto-export at meeting end,
+      // export_skipped as the tab hides) actually reach the server instead of
+      // being cancelled with the page — otherwise they never land + never get
+      // a server timestamp, skewing funnel counts.
+      keepalive: true,
     }).catch(() => { /* never break the UX path for telemetry */ });
   } catch { /* ignore */ }
 }
@@ -4368,7 +4373,8 @@ async function saveToSheets() {
   if (!state.participants.size) { toast(t('toast.noData','No data yet')); return; }
   if (document.getElementById('btn-sheets')?.dataset.scopeBlocked === '1') {
     logUserEvent('export_failed', { reason: 'scope_blocked' });
-    toast('Grant Drive permission to enable export — click "Grant access" above', 8000);
+    toast('Reconnecting Google to grant Drive access…', 5000);
+    signInWithGoogle(); // one-click re-consent instead of a dead-end toast
     return;
   }
   logUserEvent('export_clicked', { participantCount: state.participants.size });
@@ -4808,7 +4814,8 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
       }
       if (body.code === 'DRIVE_PERMISSION_MISSING') {
         logUserEvent('export_failed', { reason: 'drive_permission_missing' });
-        toast('Drive permission missing — sign out and sign in again with all permissions checked', 8000);
+        toast('Drive permission needed — reconnecting Google to finish the export…', 6000);
+        signInWithGoogle(); // one-click re-consent to add drive.file — no manual sign-out
         return;
       }
       throw new Error(body.error || `${res.status}`);
@@ -4836,6 +4843,14 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
         quotaLimit: quota ? quota.limit : null,
       });
     } catch {}
+    // Count EVERY successful export (manual AND auto) toward the review-ask
+    // threshold. Previously the counter only advanced inside the manual-only
+    // maybeShowReviewAsk path, so auto-exporters — the most engaged users —
+    // were structurally excluded from ever being asked for a review.
+    try {
+      const n = (parseInt(localStorage.getItem('att_export_count') || '0', 10) || 0) + 1;
+      localStorage.setItem('att_export_count', String(n));
+    } catch { /* private mode — best effort */ }
     // Mark this conference as exported so the auto-export poll loop doesn't
     // re-fire after a manual export (and so a reload after auto-export stays quiet).
     state.autoExportedConferenceId = state.conferenceId;
@@ -4974,18 +4989,21 @@ function closeRecurringTip() {
 // one-off tester. Never stacks with the recurring tip (skips if that bar just
 // opened this export). Dismissible; honors the at-most-one-lifetime-popup rule.
 function maybeShowReviewAsk() {
+  // The counter now advances on EVERY successful export (see saveToSheets), so
+  // this only READS it — threshold 2 means "after the user has felt the payoff
+  // at least twice", auto-exports included. The recurring-tip cohort (the
+  // stickiest, most-likely-to-review users) is no longer excluded — if both
+  // bars would show, hide the recurring tip in favor of the one-time ask.
   let count = 0, shown = false;
   try {
-    count = parseInt(localStorage.getItem('att_export_count') || '0', 10) + 1;
-    localStorage.setItem('att_export_count', String(count));
+    count = parseInt(localStorage.getItem('att_export_count') || '0', 10);
     shown = !!localStorage.getItem('att_review_ask_shown');
   } catch (e) { return; } // private mode → skip silently
   if (shown || count < 2) return;
-  // Don't show two bars at once — the recurring tip takes priority this export.
-  const rt = document.getElementById('recurring-tip');
-  if (rt && rt.style.display === 'flex') return;
   const bar = document.getElementById('review-ask');
   if (!bar) return;
+  const rt = document.getElementById('recurring-tip');
+  if (rt && rt.style.display === 'flex') rt.style.display = 'none';
   bar.style.display = 'flex';
   try { localStorage.setItem('att_review_ask_shown', '1'); } catch (e) { /* best-effort */ }
   try { logUserEvent('review_ask_shown', {}); } catch (e) { /* best-effort */ }
