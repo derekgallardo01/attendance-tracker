@@ -990,11 +990,6 @@
       // auto-apply — the empty promo tells the backend to skip it), billed on
       // the domain plan's annual Stripe price.
       const isInstitution = plan === 'institution';
-      // Referral redemption: LAUNCH50 auto-applies by default, which DISABLES
-      // Stripe's promo-code box — so a referred user could never enter their
-      // reward code. Landing with ?promo=code (from the reward email) skips
-      // the auto-apply and opens the box instead.
-      const skipLaunch = isInstitution || _promoOverride === 'code';
       try {
         const res = await fetch(endpoint, {
           method: 'POST',
@@ -1004,7 +999,11 @@
             // 'team' + 'annual' resolves to the Institution price server-side,
             // so the $19.99 one-time domain card must NOT send 'annual'.
             interval: isInstitution ? 'annual' : (plan === 'team' ? 'once' : 'annual'),
-            promo: skipLaunch ? '' : 'LAUNCH50',
+            // Referral redemption: landing with ?promo=code (from the reward
+            // email) sends a truthy non-LAUNCH50 marker, which is what makes
+            // the backend open Stripe's promo-code box (billing.js filters
+            // LAUNCH50 and empty). LAUNCH50 itself is retired — never sent.
+            promo: _promoOverride === 'code' ? 'code' : '',
             ...(_checkoutEmail ? { email: _checkoutEmail } : {})
           })
         });

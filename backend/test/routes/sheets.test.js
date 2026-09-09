@@ -55,6 +55,7 @@ jest.mock('../../src/services/firestore', () => ({
   setUserSheetId: jest.fn(),
   countUserExports: jest.fn(),
   countUserMonthlyExports: jest.fn(),
+  getExportReexportCount: jest.fn(),
   getMeetingExcusedEmails: jest.fn(),
   addMeetingExcusedEmails: jest.fn(),
   getUserSettings: jest.fn(),
@@ -789,6 +790,31 @@ describe('POST /api/save-to-sheets — Pro gating', () => {
       .send({ ...validPayload, autoExport: false });
     expect(res.status).toBe(200);
     expect(res.body.quota).toEqual({ used: 2, limit: 3 });
+  });
+
+  test('402 when a free user hits the per-meeting RE-EXPORT cap (constant-conferenceId exploit)', async () => {
+    // The dedupe doc IS the quota counter — replaying one conferenceId used to
+    // write unlimited fresh sheet tabs while the meter stayed at 1.
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.countUserMonthlyExports.mockResolvedValue(1);
+    firestore.getExportReexportCount.mockResolvedValue(10); // at the cap
+    const res = await request(app).post('/api/save-to-sheets')
+      .set(authedHeader('u@replay.com', 'replay.com')).set('Content-Type', 'application/json')
+      .send({ ...validPayload, autoExport: false });
+    expect(res.status).toBe(402);
+    expect(res.body.feature).toBe('exportQuota');
+    expect(firestore.persistExport).not.toHaveBeenCalled(); // blocked BEFORE sheet work
+  });
+
+  test('re-export below the cap still succeeds for a free user', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.countUserMonthlyExports.mockResolvedValue(1);
+    firestore.getExportReexportCount.mockResolvedValue(2);
+    firestore.persistExport.mockResolvedValue({ created: false, reexportCount: 3 });
+    const res = await request(app).post('/api/save-to-sheets')
+      .set(authedHeader('u@replay2.com', 'replay2.com')).set('Content-Type', 'application/json')
+      .send({ ...validPayload, autoExport: false });
+    expect(res.status).toBe(200);
   });
 
   test('manual export still works for a free domain, but the email digest is suppressed', async () => {

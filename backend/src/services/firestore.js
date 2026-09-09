@@ -453,8 +453,14 @@ async function persistExport(domain, { meetingTitle, tabName, exportedAt, partic
     const ref = tenantRef(domain).collection('exports').doc(docId);
     const existing = await ref.get();
     if (existing.exists) {
+      // Re-export of an already-counted meeting. Track HOW OFTEN: the dedupe
+      // doc doubles as the monthly quota counter, and before this a constant
+      // conferenceId gave unlimited free exports (each call wrote a fresh
+      // sheet tab while the meter stayed at 1). The route enforces a cap on
+      // this counter for free users BEFORE the sheet is written.
+      await ref.set({ reexportCount: FieldValue.increment(1), lastReexportAt: now }, { merge: true });
       log.info('firestore: export already persisted, skipping duplicate', { domain, docId });
-      return { created: false };
+      return { created: false, reexportCount: (existing.data().reexportCount || 0) + 1 };
     }
 
     await ref.set({
@@ -483,6 +489,23 @@ async function persistExport(domain, { meetingTitle, tabName, exportedAt, partic
   } catch (err) {
     log.error('firestore: persistExport failed', { domain, tabName, error: err.message });
     return { created: null }; // unknown — caller treats as "assume it counted"
+  }
+}
+
+// How many times this user has RE-exported the given conference (0 when never
+// exported). Read by the free-tier quota gate before any sheet work happens —
+// see persistExport for why re-exports must be metered.
+async function getExportReexportCount(domain, email, conferenceId) {
+  try {
+    if (!conferenceId) return null; // tabName-keyed docs are unique per call — counted normally
+    const safeEmail = (email || 'anon').toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const safeConf = String(conferenceId).replace(/[^a-zA-Z0-9_-]/g, '_');
+    const doc = await tenantRef(domain).collection('exports').doc(`${safeEmail}__${safeConf}`).get();
+    if (!doc.exists) return null;
+    return doc.data().reexportCount || 0;
+  } catch (err) {
+    log.warn('firestore: getExportReexportCount failed', { domain, email, error: err.message });
+    return null; // fail open like the monthly counter — a read blip must not block a class export
   }
 }
 
@@ -735,6 +758,21 @@ async function claimSignupNotification(domain, email) {
   } catch (err) {
     log.error('firestore: claimSignupNotification failed', { domain, email, error: err.message });
     return null;
+  }
+}
+
+// Re-arm a claimed-but-unsent signup notification so a later trigger (next
+// flush, daily sweep) retries it. Mirrors the reengagement release pattern:
+// without this, one definite Resend failure permanently lost the owner ping
+// AND the welcome email (pending was already false, so the sweep skipped it).
+async function releaseSignupNotification(domain, email) {
+  try {
+    await tenantRef(domain).collection('users').doc(email.toLowerCase()).set(
+      { signupNotifyPending: true },
+      { merge: true }
+    );
+  } catch (err) {
+    log.error('firestore: releaseSignupNotification failed', { domain, email, error: err.message });
   }
 }
 
@@ -1816,11 +1854,11 @@ module.exports = {
   saveVerifications, getVerification,
   getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens,
   getUserSettings, updateUserSettings,
-  setUserAcquisitionSource, setPostExportSurvey, claimSignupNotification,
+  setUserAcquisitionSource, setPostExportSurvey, claimSignupNotification, releaseSignupNotification,
   claimReferral, releaseReferral, recordReferralForInviter, recordReferralPromoCode, getUserTrackingStreak,
   claimWebhookEvent, releaseWebhookEvent,
   logEvent,
-  getUserActivationStatus, countUserExports, countUserMonthlyExports, countAllUsers, getExportedConferenceIds,
+  getUserActivationStatus, countUserExports, countUserMonthlyExports, getExportReexportCount, countAllUsers, getExportedConferenceIds,
   getUserMeetingHistory, getExistingDomainPeer,
   getUserMeetingSeries,
   getTenantUsers, getTenantMeetings, getTenantSeriesOverview, getTenantPeopleOverview, getTeamOverview,

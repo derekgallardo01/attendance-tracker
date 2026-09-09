@@ -14,7 +14,7 @@ const mockStripeInstance = {
   paymentIntents: { retrieve: jest.fn() }, // refund/dispute → metadata lookup
   charges: { retrieve: jest.fn() },
   invoices: { retrieve: jest.fn() },
-  subscriptions: { retrieve: jest.fn() },
+  subscriptions: { retrieve: jest.fn(), update: jest.fn() },
 };
 jest.mock('stripe', () => jest.fn(() => mockStripeInstance));
 
@@ -110,6 +110,31 @@ describe('billing — configured (Stripe env set)', () => {
     expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
       expect.objectContaining({ client_reference_id: 'acme.com' })
     );
+  });
+
+  test('400 on an unknown plan value — no fallthrough to a different product', async () => {
+    // The plan cascade once let a misspelled/off-catalog value resolve to a
+    // DIFFERENT product's price (the "$9.99 button charged team price" class).
+    const res = await request(app)
+      .post('/api/billing/checkout')
+      .set(authedHeader('admin@acme.com', 'acme.com'))
+      .send({ plan: 'institution', interval: 'annual' });
+    expect(res.status).toBe(400);
+    expect(mockStripeInstance.checkout.sessions.create).not.toHaveBeenCalled();
+  });
+
+  test('plan value is case/whitespace-normalized ("Lifetime " buys the lifetime pass, not a subscription)', async () => {
+    process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID = 'price_life_999';
+    mockStripeInstance.checkout.sessions.create.mockResolvedValue({ url: 'https://checkout.stripe.com/life' });
+    const res = await request(app)
+      .post('/api/billing/checkout')
+      .set(authedHeader('teacher@gmail.com', 'gmail.com'))
+      .send({ plan: ' Lifetime ' });
+    expect(res.status).toBe(200);
+    expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({ line_items: [{ price: 'price_life_999', quantity: 1 }], mode: 'payment' })
+    );
+    delete process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID;
   });
 
   test('authed team checkout from a personal domain is refused (400) — never flips the shared tenant', async () => {
@@ -685,6 +710,14 @@ describe('billing — public-checkout for marketing pages', () => {
     expect(params.customer_email).toBeUndefined();
   });
 
+  test('400 on an unknown plan value (public endpoint — same no-fallthrough rule)', async () => {
+    const res = await request(app)
+      .post('/api/billing/public-checkout')
+      .send({ plan: 'institution' });
+    expect(res.status).toBe(400);
+    expect(mockStripeInstance.checkout.sessions.create).not.toHaveBeenCalled();
+  });
+
   test('returns 503 when Stripe is not configured', async () => {
     const oldKey = process.env.STRIPE_SECRET_KEY;
     delete process.env.STRIPE_SECRET_KEY;
@@ -926,6 +959,63 @@ describe('webhook hygiene (dedupe + refunds + org-domain fallback)', () => {
     });
     await post();
     expect(firestore.setTenantPlan).toHaveBeenCalledWith('school.edu', expect.objectContaining({ plan: 'free', billingStatus: 'refunded' }));
+  });
+
+  test('PARTIAL refund (refunded:false, amount_refunded < amount) retains the plan', async () => {
+    mockStripeInstance.paymentIntents.retrieve.mockResolvedValue({ metadata: { individual: '0', plan: 'team', domain: 'acme.com' } });
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_partial', type: 'charge.refunded',
+      data: { object: { payment_intent: 'pi_p', refunded: false, amount: 14900, amount_refunded: 200 } },
+    });
+    const res = await post();
+    expect(res.status).toBe(200);
+    expect(firestore.setTenantPlan).not.toHaveBeenCalled();
+    expect(firestore.setUserPlan).not.toHaveBeenCalled();
+  });
+
+  test('charge.dispute.closed with status won RE-GRANTS the plan revoked at dispute.created', async () => {
+    mockStripeInstance.paymentIntents.retrieve.mockResolvedValue({ metadata: { individual: '1', plan: 'lifetime', email: 'buyer@acme.com', domain: 'acme.com' } });
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_won', type: 'charge.dispute.closed',
+      data: { object: { payment_intent: 'pi_w', status: 'won' } },
+    });
+    await post();
+    expect(firestore.setUserPlan).toHaveBeenCalledWith('acme.com', 'buyer@acme.com', expect.objectContaining({ individualPlan: 'pro', individualBillingStatus: 'active' }));
+  });
+
+  test('charge.dispute.closed with status lost changes nothing (already downgraded at created)', async () => {
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_lost', type: 'charge.dispute.closed',
+      data: { object: { payment_intent: 'pi_l', status: 'lost' } },
+    });
+    const res = await post();
+    expect(res.status).toBe(200);
+    expect(firestore.setUserPlan).not.toHaveBeenCalled();
+    expect(firestore.setTenantPlan).not.toHaveBeenCalled();
+  });
+
+  test('refund with NO metadata anywhere falls back to charge billing_details.email (signed-out one-time buyer)', async () => {
+    mockStripeInstance.paymentIntents.retrieve.mockResolvedValue({ metadata: {} });
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_bd', type: 'charge.refunded',
+      data: { object: { payment_intent: 'pi_bd', metadata: {}, billing_details: { email: 'Anon.Buyer@school.edu' }, refunded: true } },
+    });
+    await post();
+    expect(firestore.setUserPlan).toHaveBeenCalledWith('school.edu', 'anon.buyer@school.edu', expect.objectContaining({ individualPlan: 'free', individualBillingStatus: 'refunded' }));
+  });
+
+  test('completed session WITHOUT metadata email backfills the subscription metadata (signed-out educator)', async () => {
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_backfill', type: 'checkout.session.completed',
+      data: { object: { client_reference_id: null, metadata: { individual: '1', plan: 'educator' }, customer_details: { email: 'teach@deped.gov.ph' }, subscription: 'sub_bf', customer: 'cus_bf' } },
+    });
+    await post();
+    expect(firestore.setUserPlan).toHaveBeenCalledWith('deped.gov.ph', 'teach@deped.gov.ph', expect.objectContaining({ individualPlan: 'pro' }));
+    // Without this, cancellation/non-payment of a signed-out pass never
+    // downgrades: subscription.updated/deleted route on sub.metadata only.
+    expect(mockStripeInstance.subscriptions.update).toHaveBeenCalledWith('sub_bf', {
+      metadata: expect.objectContaining({ individual: '1', email: 'teach@deped.gov.ph', domain: 'deped.gov.ph' }),
+    });
   });
 
   test('checkout.session.completed with payment_status unpaid (delayed method) grants NOTHING yet', async () => {

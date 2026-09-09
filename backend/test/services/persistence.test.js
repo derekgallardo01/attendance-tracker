@@ -232,6 +232,22 @@ describe('persistExport', () => {
       sheetUrl: '', email: 'me@acme.com', autoExport: false, conferenceId: 'conf-9',
     };
     await expect(firestore.persistExport('acme.com', payload)).resolves.toEqual({ created: true });
-    await expect(firestore.persistExport('acme.com', payload)).resolves.toEqual({ created: false });
+    // Re-exports are now METERED on the dedupe doc (they used to be an
+    // unlimited-free-exports hole): each dedupe hit reports its ordinal.
+    await expect(firestore.persistExport('acme.com', payload)).resolves.toEqual({ created: false, reexportCount: 1 });
+    await expect(firestore.persistExport('acme.com', payload)).resolves.toEqual({ created: false, reexportCount: 2 });
+  });
+
+  test('getExportReexportCount reads the meter (null when never exported / no conferenceId)', async () => {
+    const payload = {
+      meetingTitle: 'X', tabName: 'X', exportedAt: '', participantCount: 1,
+      sheetUrl: '', email: 'me@acme.com', autoExport: false, conferenceId: 'conf-m',
+    };
+    await expect(firestore.getExportReexportCount('acme.com', 'me@acme.com', 'conf-m')).resolves.toBeNull();
+    await firestore.persistExport('acme.com', payload);
+    await expect(firestore.getExportReexportCount('acme.com', 'me@acme.com', 'conf-m')).resolves.toBe(0);
+    await firestore.persistExport('acme.com', payload);
+    await expect(firestore.getExportReexportCount('acme.com', 'me@acme.com', 'conf-m')).resolves.toBe(1);
+    await expect(firestore.getExportReexportCount('acme.com', 'me@acme.com', null)).resolves.toBeNull();
   });
 });

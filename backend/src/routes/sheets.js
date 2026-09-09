@@ -3,7 +3,7 @@ const { google } = require('googleapis');
 const { getGoogleClient } = require('../services/googleAuth');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { persistExport, getUserSheetId, setUserSheetId, countUserExports, countUserMonthlyExports, getMeetingExcusedEmails, addMeetingExcusedEmails, getUserSettings, getUserMeetingSeries, logEvent, isEmailSuppressed } = require('../services/firestore');
+const { persistExport, getUserSheetId, setUserSheetId, countUserExports, countUserMonthlyExports, getExportReexportCount, getMeetingExcusedEmails, addMeetingExcusedEmails, getUserSettings, getUserMeetingSeries, logEvent, isEmailSuppressed } = require('../services/firestore');
 const { sendExportNotification, sendSlackDigest, sendChatDigest, sendDiscordDigest } = require('../lib/notifications');
 const { planIsPro } = require('./billing');
 
@@ -636,7 +636,7 @@ router.post('/save-to-sheets', async (req, res) => {
 
     // Monthly export quota check for Free users (single source of truth:
     // config/pricing.js — /billing/status and the panel read the same value)
-    const { FREE_MONTHLY_EXPORT_LIMIT } = require('../config/pricing');
+    const { FREE_MONTHLY_EXPORT_LIMIT, FREE_REEXPORTS_PER_MEETING } = require('../config/pricing');
     let monthlyExports = 0;
     if (req.user && !proAllowed) {
       monthlyExports = await countUserMonthlyExports(req.user.domain, req.user.email);
@@ -644,6 +644,21 @@ router.post('/save-to-sheets', async (req, res) => {
         log.info('sheets: free tier export quota reached', { domain: req.user.domain, email: req.user.email, count: monthlyExports });
         return res.status(402).json({
           error: `You have reached your limit of ${FREE_MONTHLY_EXPORT_LIMIT} free exports this month. Upgrade to Pro for unlimited exports.`,
+          upgrade: true,
+          feature: 'exportQuota',
+          quota: { used: monthlyExports, limit: FREE_MONTHLY_EXPORT_LIMIT },
+        });
+      }
+      // Re-exports of an already-exported meeting dedupe against one quota
+      // slot — legit (mid-meeting + end-of-meeting saves), but unmetered it
+      // was an unlimited-exports exploit: a constant conferenceId wrote a
+      // fresh sheet tab on every call while the meter stayed at 1. Cap the
+      // free ride BEFORE any sheet work happens.
+      const reexports = await getExportReexportCount(req.user.domain, req.user.email, b.conferenceId);
+      if (reexports != null && reexports >= FREE_REEXPORTS_PER_MEETING) {
+        log.info('sheets: free tier re-export cap reached', { domain: req.user.domain, email: req.user.email, conferenceId: b.conferenceId, reexports });
+        return res.status(402).json({
+          error: 'You have re-exported this meeting the maximum number of times on the free plan. Upgrade to Pro for unlimited exports.',
           upgrade: true,
           feature: 'exportQuota',
           quota: { used: monthlyExports, limit: FREE_MONTHLY_EXPORT_LIMIT },

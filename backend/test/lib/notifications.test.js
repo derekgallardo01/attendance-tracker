@@ -342,6 +342,31 @@ describe('notifications — content sanity checks', () => {
     jest.dontMock('../../src/services/firestore');
   });
 
+  test('maybeSendSignupNotification RELEASES the claim on a definite send failure (retryable by the sweep)', async () => {
+    const claimSignupNotification = jest.fn().mockResolvedValue({
+      email: 'b@x.com', displayName: 'B', domain: 'x.com',
+      reportedSource: null, reportedDetail: null, detectedSource: 'direct',
+    });
+    const releaseSignupNotification = jest.fn().mockResolvedValue(undefined);
+    jest.doMock('../../src/services/firestore', () => ({
+      claimSignupNotification,
+      releaseSignupNotification,
+      countAllUsers: jest.fn().mockResolvedValue(22),
+      isEmailSuppressed: jest.fn().mockResolvedValue(false),
+    }));
+    jest.resetModules();
+    const n = require('../../src/lib/notifications');
+    // Definite Resend failure (NOT a timeout) → dispatchEmail returns
+    // {sent:false, error} → the claim must be re-armed so the daily sweep can
+    // retry. Before this, one 5xx permanently lost the signup ping.
+    mockSend.mockRejectedValueOnce(new Error('resend 500'));
+    const res = await n.maybeSendSignupNotification('x.com', 'b@x.com');
+    await new Promise((r) => setImmediate(r));
+    expect(res).toEqual({ sent: false, released: true });
+    expect(releaseSignupNotification).toHaveBeenCalledWith('x.com', 'b@x.com');
+    jest.dontMock('../../src/services/firestore');
+  });
+
   test('maybeSendReferralNotification credits + emails the inviter once, no-ops otherwise', async () => {
     const claimReferral = jest.fn()
       .mockResolvedValueOnce({ referredBy: 'inviter@acme.com', newUserEmail: 'new@acme.com', newUserName: 'New User' })

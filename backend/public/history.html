@@ -487,10 +487,10 @@
         text.textContent = t('history.seriesProText', 'Pro adds a cumulative "Class Summary" tab to your export — per-student attendance % across every session of a recurring class.');
         btn.textContent = t('history.upgradeToPro', 'Upgrade to Pro');
         btn.dataset.mode = 'checkout';
-        if (toggle) {
-          toggle.style.display = status.annualAvailable ? '' : 'none';
-          if (status.annualAvailable) setProInterval(proInterval); // paint the active state
-        }
+        // The CTA sells the one-time lifetime pass — no billing interval to
+        // pick (the old monthly/annual toggle belonged to the retired
+        // individual subscription tier).
+        if (toggle) toggle.style.display = 'none';
       }
       box.style.display = 'flex'; // the card's column layout lives on flex props
     }
@@ -507,9 +507,11 @@
         btn.disabled = false; btn.textContent = orig;
         return;
       }
-      // Series CTA offers the monthly/annual toggle → the individual
-      // SUBSCRIPTION plan (the banner path buys the lifetime pass instead).
-      return upgradeFromHistory(btn, 'individual');
+      // Series CTA sells the $9.99 LIFETIME pass — the cataloged individual
+      // product. It previously sent plan:'individual' + the annual toggle,
+      // which resolved to the retired individual-subscription price ids: an
+      // off-price-list charge at whatever amount those legacy prices held.
+      return upgradeFromHistory(btn, 'lifetime');
     }
 
     // Hash deep links: #meeting=<conferenceId> jumps to and filters the

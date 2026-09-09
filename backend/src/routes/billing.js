@@ -13,7 +13,27 @@ const PRICING = require('../config/pricing');
 // independently of the org tier.
 const isPersonalDomain = (domain) => PERSONAL_EMAIL_DOMAINS.has((domain || '').toLowerCase());
 function individualBillingConfigured() {
-  return !!process.env.STRIPE_SECRET_KEY && !!process.env.STRIPE_INDIVIDUAL_PRICE_ID;
+  // The individual tier is "launched" when ANY of its sellable prices exists.
+  // Keying this on the legacy monthly id alone was a landmine: retiring that
+  // env var would have made every personal-domain user Pro for free AND
+  // stripped workspace users who PAID for a lifetime/educator pass.
+  return !!process.env.STRIPE_SECRET_KEY && !!(
+    process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID
+    || process.env.STRIPE_EDUCATOR_PRICE_ID
+    || process.env.STRIPE_INDIVIDUAL_PRICE_ID
+  );
+}
+
+// Every plan value either checkout endpoint accepts. Anything else 400s —
+// the fallthrough cascade once let an unknown/misspelled plan resolve to a
+// DIFFERENT product's price (the documented "$9.99 button charged team price"
+// class of bug).
+const KNOWN_PLANS = new Set(['team', 'educator', 'lifetime', 'individual']);
+function normalizePlan(raw) {
+  if (raw == null || raw === '') return { plan: null };            // caller omitted it — legacy inference
+  if (typeof raw !== 'string') return { invalid: true };
+  const plan = raw.trim().toLowerCase();
+  return KNOWN_PLANS.has(plan) ? { plan } : { invalid: true };
 }
 
 // Per-domain Pro subscription via Stripe Checkout. Lazy-init the SDK (like the
@@ -44,9 +64,13 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
   const stripe = getStripe();
   const domain = req.user.domain;
   const email = req.user.email;
-  const isEducator = req.body && req.body.plan === 'educator';
-  const isLifetime = req.body && req.body.plan === 'lifetime';
-  const isTeamPlan = req.body && req.body.plan === 'team';
+  const { plan: normalizedPlan, invalid: planInvalid } = normalizePlan(req.body?.plan);
+  if (planInvalid) {
+    return res.status(400).json({ error: 'Unknown plan.' });
+  }
+  const isEducator = normalizedPlan === 'educator';
+  const isLifetime = normalizedPlan === 'lifetime';
+  const isTeamPlan = normalizedPlan === 'team';
   // A personal-email buyer can't own the shared gmail.com/etc tenant — a team
   // purchase from them would flip the SHARED tenant doc Pro (cross-tenant
   // grant) while granting the buyer nothing (their gates read the user doc).
@@ -57,7 +81,7 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
     ? true
     : (isTeamPlan
       ? false
-      : (req.body && req.body.plan === 'individual' ? true : isPersonalDomain(domain)));
+      : (normalizedPlan === 'individual' ? true : isPersonalDomain(domain)));
   // Personal-email users buy the INDIVIDUAL (per-user) plan; Workspace domains
   // buy the per-domain org plan. Each has monthly + optional annual prices.
   // Annual falls back to monthly when its price id isn't set, so annual can be
@@ -68,7 +92,7 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
   // price could charge a "$4.99/yr" button the $19.99+ team price. Missing
   // price id for the named plan = fail closed (503), never cross products.
   const priceId = isEducator
-    ? (process.env.STRIPE_EDUCATOR_PRICE_ID || process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID)
+    ? process.env.STRIPE_EDUCATOR_PRICE_ID // no fallback: educator ($4.99/yr) and individual-annual are DIFFERENT products at different amounts
     : (isLifetime
       ? process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID
       : (individual
@@ -83,7 +107,7 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
     // webhook can route to setUserPlan vs setTenantPlan.
     // `plan` in metadata: the refund/dispute handler routes on it, and it
     // rides payment_intent_data so one-time charges carry it end-to-end.
-    const planName = req.body?.plan || (individual ? 'individual' : 'team');
+    const planName = normalizedPlan || (individual ? 'individual' : 'team');
     const meta = individual
       ? { individual: '1', plan: planName, domain, email: email.toLowerCase() }
       : { individual: '0', plan: planName, domain, initiatedBy: email };
@@ -143,7 +167,10 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
       // The educator plan is sold as an ANNUAL pass — a one-time price never
       // renews (and never emits subscription webhooks), so a misconfigured
       // STRIPE_EDUCATOR_PRICE_ID silently turns annual revenue into lifetime.
-      log.warn('billing: educator price is one-time, not recurring — annual pass will not renew', { priceId });
+      // Fail closed: we only get here when Stripe POSITIVELY reported the
+      // price as one-time (retrieve errors default to recurring above).
+      log.error('billing: educator price is one-time, not recurring — refusing checkout', { priceId });
+      return res.status(503).json({ error: 'The educator plan is temporarily unavailable.' });
     }
 
     const session = await stripe.checkout.sessions.create(sessionParams);
@@ -162,7 +189,11 @@ router.post('/billing/public-checkout', async (req, res) => {
   if (!stripe) {
     return res.status(503).json({ error: 'Billing is not configured yet.' });
   }
-  const plan = req.body?.plan || 'lifetime';
+  const { plan: normalizedPublicPlan, invalid: publicPlanInvalid } = normalizePlan(req.body?.plan);
+  if (publicPlanInvalid) {
+    return res.status(400).json({ error: 'Unknown plan.' });
+  }
+  const plan = normalizedPublicPlan || 'lifetime';
   // Annual is opt-IN only (mirrors the authed checkout at :66). Defaulting to
   // 'annual' was a trap: a bare {plan:'team'} would resolve to the $149/yr
   // Institution price AND auto-apply LAUNCH50 — wrong tier + a discount
@@ -187,7 +218,7 @@ router.post('/billing/public-checkout', async (req, res) => {
   // product boundaries (a "$4.99/yr" button must never resolve to the
   // domain price). Missing price for the named plan → 503.
   const priceId = isEducator
-    ? (process.env.STRIPE_EDUCATOR_PRICE_ID || process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID)
+    ? process.env.STRIPE_EDUCATOR_PRICE_ID // no fallback: educator and individual-annual are DIFFERENT products
     : (isTeam
         ? ((annual && process.env.STRIPE_ANNUAL_PRICE_ID) || process.env.STRIPE_PRICE_ID)
         : (plan === 'lifetime'
@@ -258,7 +289,10 @@ router.post('/billing/public-checkout', async (req, res) => {
       sessionParams.customer_creation = 'always';
     }
     if (isEducator && !isRecurring) {
-      log.warn('billing: educator price is one-time, not recurring — annual pass will not renew', { priceId });
+      // Same fail-closed rule as the authed checkout: a one-time educator price
+      // silently converts annual revenue into a lifetime pass.
+      log.error('billing: educator price is one-time, not recurring — refusing public checkout', { priceId });
+      return res.status(503).json({ error: 'The educator plan is temporarily unavailable.' });
     }
 
     const session = await stripe.checkout.sessions.create(sessionParams);
@@ -399,6 +433,21 @@ async function webhookHandler(req, res) {
               individualStripeSubscriptionId: s.subscription || null,
             });
             try { await logEvent(domain, { email, type: 'upgraded', meta: { plan: 'individual', amount: s.amount_total, currency: s.currency } }); } catch {}
+            // Backfill routing metadata onto the subscription when the session
+            // was created signed-out (email unknown at session time). The
+            // subscription.updated/deleted handlers route ONLY on
+            // sub.metadata — without this, cancellation / non-payment of a
+            // signed-out educator or annual pass never downgrades it.
+            const subId = typeof s.subscription === 'string' ? s.subscription : s.subscription?.id;
+            if (subId && !s.metadata?.email) {
+              try {
+                await stripe.subscriptions.update(subId, {
+                  metadata: { individual: '1', plan: s.metadata?.plan || 'individual', email: email.toLowerCase(), domain },
+                });
+              } catch (e) {
+                log.warn('billing: could not backfill subscription metadata (individual)', { subId, error: e.message });
+              }
+            }
           }
         } else {
           // Provisioning fallback chain: client_reference_id → metadata.domain
@@ -426,6 +475,18 @@ async function webhookHandler(req, res) {
               stripeSubscriptionId: s.subscription || null,
             });
             try { await logEvent(domain, { email: s.customer_email || s.metadata?.initiatedBy || 'admin', type: 'upgraded', meta: { plan: 'team', amount: s.amount_total, currency: s.currency } }); } catch {}
+            // Same backfill as the individual branch: lifecycle events for an
+            // org subscription route on sub.metadata.domain only.
+            const subId = typeof s.subscription === 'string' ? s.subscription : s.subscription?.id;
+            if (subId && !s.metadata?.domain) {
+              try {
+                await stripe.subscriptions.update(subId, {
+                  metadata: { individual: '0', plan: s.metadata?.plan || 'team', domain },
+                });
+              } catch (e) {
+                log.warn('billing: could not backfill subscription metadata (org)', { subId, error: e.message });
+              }
+            }
           }
         }
         break;
@@ -463,7 +524,8 @@ async function webhookHandler(req, res) {
         break;
       }
       case 'charge.refunded':
-      case 'charge.dispute.created': {
+      case 'charge.dispute.created':
+      case 'charge.dispute.closed': {
         // refunds.html promises refunds — honoring one must also revoke the
         // plan (before this, a refunded lifetime pass kept Pro forever).
         // Metadata resolution, in order of where Stripe actually puts it:
@@ -473,6 +535,25 @@ async function webhookHandler(req, res) {
         //      (invoice charges do NOT inherit subscription metadata)
         const obj = event.data.object; // Charge for refunds, Dispute for disputes
         const asId = (v) => (typeof v === 'string' ? v : v?.id) || null;
+        if (event.type === 'charge.refunded') {
+          // charge.refunded fires on ANY refund, including partial. A $2
+          // goodwill refund on a $149 Institution must not yank the whole
+          // org's plan — skip only when Stripe POSITIVELY reports a partial
+          // (refunded:false + amount_refunded < amount); ambiguity revokes,
+          // matching the old behavior.
+          const partialRefund = obj.refunded !== true
+            && obj.amount_refunded != null && obj.amount != null
+            && obj.amount_refunded < obj.amount;
+          if (partialRefund) {
+            log.info('billing: partial refund — plan retained', { eventId: event.id, amount: obj.amount, refunded: obj.amount_refunded });
+            break;
+          }
+        }
+        // A dispute we WON restores the plan the dispute.created handler
+        // revoked; any other closure (lost, warning_closed) leaves the
+        // downgrade in place.
+        if (event.type === 'charge.dispute.closed' && obj.status !== 'won') break;
+        const regrant = event.type === 'charge.dispute.closed';
         const nonEmpty = (m) => (m && Object.keys(m).length ? m : null);
         let meta = nonEmpty(event.type === 'charge.refunded' ? obj.metadata : null);
         try {
@@ -502,23 +583,39 @@ async function webhookHandler(req, res) {
         } catch (e) {
           log.warn('billing: metadata lookup for refund/dispute failed', { eventId: event.id, error: e.message });
         }
+        // Signed-out one-time purchases can lack metadata.email entirely — fall
+        // back to the charge's billing details so a refund/chargeback still
+        // revokes (the GRANT path already falls back to customer_details; the
+        // revoke path must not be weaker than the grant path).
+        let billingEmail = event.type === 'charge.refunded'
+          ? (obj.billing_details?.email || obj.receipt_email || null)
+          : null;
+        if (!meta?.email && !billingEmail && asId(obj.charge)) {
+          try {
+            const ch = await stripe.charges.retrieve(asId(obj.charge));
+            billingEmail = ch?.billing_details?.email || ch?.receipt_email || null;
+          } catch (e) {
+            log.warn('billing: billing_details fallback lookup failed', { eventId: event.id, error: e.message });
+          }
+        }
         // Route on identity, not on a `plan` label (older sessions lack it).
         // A present buyer email means an individual pass UNLESS explicitly
         // flagged as an org (individual==='0'). Authed individual metadata
         // carries `domain` too (billing.js:88), so keying off `!domain` would
         // misroute such a refund into a whole-domain downgrade.
-        const email = (meta?.email || '').toLowerCase();
+        const email = ((meta?.email || billingEmail) || '').toLowerCase();
         const isIndividual = meta?.individual === '1' || (!!email && meta?.individual !== '0');
         const orgDomain = isIndividual ? null : meta?.domain;
         const planLabel = meta?.plan || (isIndividual ? 'individual' : 'team');
-        const status = event.type === 'charge.refunded' ? 'refunded' : 'disputed';
+        const status = regrant ? 'active' : (event.type === 'charge.refunded' ? 'refunded' : 'disputed');
+        const planValue = regrant ? 'pro' : 'free';
         if (isIndividual && email.includes('@')) {
           const domain = meta?.domain || email.split('@')[1];
-          await setUserPlan(domain, email, { individualPlan: 'free', individualBillingStatus: status });
-          try { await logEvent(domain, { email, type: 'refunded', meta: { plan: planLabel, kind: event.type } }); } catch {}
+          await setUserPlan(domain, email, { individualPlan: planValue, individualBillingStatus: status });
+          try { await logEvent(domain, { email, type: regrant ? 'dispute_won' : 'refunded', meta: { plan: planLabel, kind: event.type } }); } catch {}
         } else if (orgDomain && !isPersonalDomain(orgDomain)) {
-          await setTenantPlan(orgDomain, { plan: 'free', billingStatus: status });
-          try { await logEvent(orgDomain, { email: meta?.email || meta?.initiatedBy || 'admin', type: 'refunded', meta: { plan: planLabel, kind: event.type } }); } catch {}
+          await setTenantPlan(orgDomain, { plan: planValue, billingStatus: status });
+          try { await logEvent(orgDomain, { email: meta?.email || meta?.initiatedBy || 'admin', type: regrant ? 'dispute_won' : 'refunded', meta: { plan: planLabel, kind: event.type } }); } catch {}
         } else {
           log.error('billing: refund/dispute with no resolvable owner — manual review needed', { eventId: event.id, type: event.type });
         }

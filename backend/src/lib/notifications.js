@@ -259,7 +259,7 @@ async function sendSignupWebhook({ email, displayName, domain, reportedSource, r
 // the rest are no-ops. Returns { sent: false } when there's nothing pending.
 async function maybeSendSignupNotification(domain, email) {
   // Lazy require to avoid a load-time cycle (firestore ⇄ notifications).
-  const { claimSignupNotification, countAllUsers } = require('../services/firestore');
+  const { claimSignupNotification, releaseSignupNotification, countAllUsers } = require('../services/firestore');
   const payload = await claimSignupNotification(domain, email);
   if (!payload) return { sent: false };
   const totalUsers = await countAllUsers();
@@ -274,6 +274,14 @@ async function maybeSendSignupNotification(domain, email) {
     signupIp: payload.signupIp,
     signupGeo: payload.signupGeo,
   });
+  // Definite send failure (dispatchEmail returned {sent:false, error}) →
+  // release the claim so the next trigger / daily sweep retries. A timeout
+  // reports sent:true (see dispatchEmail) so this can't double-send, and an
+  // unconfigured Resend returns undefined — no release, no retry loop.
+  if (ownerResult && ownerResult.sent === false && ownerResult.error) {
+    await releaseSignupNotification(domain, email);
+    return { sent: false, released: true };
+  }
 
   // Welcome email to the newly signed up user (fire-and-forget). Honors the
   // suppression list like every other lifecycle email — a deferred signup can
@@ -360,7 +368,7 @@ async function maybeSendReferralNotification(domain, email) {
   if (promoCode) await recordReferralPromoCode(claim.referredBy, promoCode);
   // CAN-SPAM: never email a suppressed inviter (still credited above).
   if (await isEmailSuppressed(claim.referredBy)) return { sent: false, recorded: true, promoCode: promoCode || null };
-  return sendReferralNotification({
+  const sendResult = await sendReferralNotification({
     to: claim.referredBy,
     inviterName: rec.inviterDisplayName,
     newUserName: claim.newUserName || claim.newUserEmail,
@@ -369,6 +377,16 @@ async function maybeSendReferralNotification(domain, email) {
     promoCode,
     rewarded: rec.rewardEligible,
   });
+  // The credit + promo code are already recorded (releasing here can't retry
+  // the email — recordReferralForInviter's `already` guard would short-circuit
+  // a re-flush before it sends). Surface the loss loudly instead: the code in
+  // this log line is the one the inviter was never told about.
+  if (sendResult && sendResult.sent === false && sendResult.error) {
+    log.error('referral notification send failed AFTER credit + promo mint — manual follow-up needed', {
+      inviter: claim.referredBy, promoCode: promoCode || null, error: sendResult.error,
+    });
+  }
+  return sendResult;
 }
 
 // Single flush point for both deferred per-signup notifications — the owner
