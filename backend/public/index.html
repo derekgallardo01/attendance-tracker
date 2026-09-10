@@ -1431,6 +1431,14 @@
     <span style="line-height:1.45" data-i18n="tip.recurring">Tracking this one regularly? Put it on a recurring Google Calendar invite — then you'll see per-person attendance trends across every session.</span>
     <button type="button" onclick="closeRecurringTip()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
   </div>
+  <!-- Class-Summary upsell at the POINT OF NEED: a free user just exported an
+       already-recurring class — exactly the moment Pro's cumulative per-student
+       report is relevant. One line, once ever, dismissible; links to the series
+       view (their own data + the Pro teaser), not a popup. -->
+  <div id="class-summary-tip" style="display:none; align-items:flex-start; gap:8px; padding:8px 16px; font-size:11px; color:#9ca3af; background:rgba(253,214,99,.06); border-top:1px solid #30363d">
+    <span style="line-height:1.45"><span data-i18n="tip.classSummary">Recurring class? Pro's cumulative Class Summary tracks each student's attendance % across every session —</span> <a href="https://attendancetracker.dev/history.html" onclick="try{logUserEvent('class_summary_tip_clicked',{})}catch(e){};openHistoryPage(event)" target="_blank" rel="noopener" style="color:#fdd663;text-decoration:none;font-weight:600" data-i18n="tip.classSummaryCta">see your class trends →</a></span>
+    <button type="button" onclick="closeClassSummaryTip()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
+  </div>
   <!-- Review ask at the value moment: shown once ever, after the user's 2nd
          MANUAL export (they've felt the payoff more than once = a genuinely happy
          user, not a one-off tester). Dismissible; never stacks with the recurring
@@ -2415,7 +2423,12 @@ function downloadAttendanceCsv() {
   if (!triggerCsvDownload(csvContent, `Attendance_${ctx.safeTitle}_${ctx.dateStr}.csv`)) return;
 
   try { logUserEvent('export_csv_downloaded', { participantCount: ctx.parts.length, hasRoster: !!ctx.activeRoster }); } catch (e) {}
+  // A CSV download is a real value moment with the user present — advance the
+  // export counter and offer the review ask (previously only Sheets exports
+  // counted, so CSV-only users were never asked).
+  try { const n = (parseInt(localStorage.getItem('att_export_count') || '0', 10) || 0) + 1; localStorage.setItem('att_export_count', String(n)); } catch (e) { /* private mode */ }
   toast(t('toast.csvDownloaded','Downloaded attendance CSV'), 3000);
+  maybeShowReviewAsk();
 }
 
 // Gradebook CSV formatted for a Moodle or Canvas import. Needs a Class Roster
@@ -5136,8 +5149,14 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     refreshActivationStatus();
     // Gentle, targeted "make it recurring" tip (repeat title + not already recurring).
     maybeShowRecurringTip(state.meetingTitle);
-    // Review ask at the value moment — only on a MANUAL export (user is present).
-    if (!opts.autoExport) maybeShowReviewAsk();
+    // Its complement: an ALREADY-recurring class for a free user → the cumulative
+    // Class Summary is Pro's most relevant value right here, at the point of need.
+    maybeShowClassSummaryUpsell();
+    // Review ask at the value moment. Fire on auto-exports too now — the
+    // visibility guard inside maybeShowReviewAsk() skips it when the user has
+    // left, so an engaged auto-exporter who's still watching finally gets asked
+    // (they were the biggest excluded cohort: 108 of 125 exporters never saw it).
+    maybeShowReviewAsk();
   } catch (err) {
     logUserEvent('export_failed', { reason: 'error', message: String(err.message || err).slice(0, 200) });
     toast(`${t('toast.sheetsError','Sheets error:')} ${err.message}`);
@@ -5236,6 +5255,30 @@ function closeRecurringTip() {
   if (b) b.style.display = 'none';
 }
 
+// Class-Summary upsell at the point of need: a FREE user just exported an
+// already-recurring class. Gentle, once ever, dismissible, visible-only, and it
+// steps aside for the review ask so surfaces never crowd each other.
+function maybeShowClassSummaryUpsell() {
+  if (_isPro || !state._recurringEventId) return;        // Pro users / non-recurring → irrelevant
+  if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+  let shown = false;
+  try { shown = !!localStorage.getItem('att_class_summary_tip_shown'); } catch (e) { return; }
+  if (shown) return;
+  const review = document.getElementById('review-ask');
+  if (review && review.style.display === 'flex') return;  // don't stack on the review ask
+  const bar = document.getElementById('class-summary-tip');
+  if (!bar) return;
+  const rt = document.getElementById('recurring-tip');
+  if (rt && rt.style.display === 'flex') rt.style.display = 'none';
+  bar.style.display = 'flex';
+  try { localStorage.setItem('att_class_summary_tip_shown', '1'); } catch (e) { /* best-effort */ }
+  try { logUserEvent('class_summary_tip_shown', {}); } catch (e) { /* best-effort */ }
+}
+function closeClassSummaryTip() {
+  const b = document.getElementById('class-summary-tip');
+  if (b) b.style.display = 'none';
+}
+
 // Review ask, once ever. Fires after the user's 2nd MANUAL export — they've felt
 // the payoff more than once, so they're a genuinely happy user rather than a
 // one-off tester. Never stacks with the recurring tip (skips if that bar just
@@ -5246,6 +5289,10 @@ function maybeShowReviewAsk() {
   // at least twice", auto-exports included. The recurring-tip cohort (the
   // stickiest, most-likely-to-review users) is no longer excluded — if both
   // bars would show, hide the recurring tip in favor of the one-time ask.
+  // Only show while the panel is actually visible — otherwise an auto-export at
+  // meeting-end would silently burn the one-time ask on a user who has already
+  // left. The counter still advanced; we just wait for a present moment to ask.
+  if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
   let count = 0, shown = false;
   try {
     count = parseInt(localStorage.getItem('att_export_count') || '0', 10);

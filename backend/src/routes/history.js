@@ -118,6 +118,9 @@ const FRONTEND_EVENT_TYPES = new Set([
   'auto_export_nudge_clicked',
   // Referral settings row
   'referral_link_copied',
+  // Point-of-need Class-Summary upsell (free user exports a recurring class)
+  'class_summary_tip_shown',
+  'class_summary_tip_clicked',
 ]);
 
 // POST /api/event — let the frontend record activation/funnel events that only

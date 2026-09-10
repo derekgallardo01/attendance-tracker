@@ -166,6 +166,8 @@
 
     const STRINGS = {
     "en": {
+        "tip.classSummary": "Recurring class? Pro's cumulative Class Summary tracks each student's attendance % across every session —",
+        "tip.classSummaryCta": "see your class trends →",
         "toast.rateLimited": "Large meeting — Google is briefly limiting attendance updates. Your roster is safe; retrying shortly.",
         "toast.participantsCapped": "Large meeting — showing the first {n} of {total} attendees.",
         "pricing.builtDiffEyebrow": "Built Different",
@@ -966,6 +968,8 @@
         "pricing.trustGuarantee": "30-Day money-back guarantee"
     },
     "es": {
+        "tip.classSummary": "¿Clase recurrente? El Class Summary acumulativo de Pro registra el % de asistencia de cada estudiante en todas las sesiones —",
+        "tip.classSummaryCta": "mira las tendencias de tu clase →",
         "toast.rateLimited": "Reunión numerosa — Google está limitando brevemente las actualizaciones de asistencia. Tu lista está a salvo; se reintentará en breve.",
         "toast.participantsCapped": "Reunión numerosa — mostrando los primeros {n} de {total} asistentes.",
         "pricing.builtDiffEyebrow": "Hecho diferente",
@@ -1766,6 +1770,8 @@
         "pricing.trustGuarantee": "Garantía de devolución de 30-Day"
     },
     "pt": {
+        "tip.classSummary": "Turma recorrente? O Class Summary cumulativo do Pro acompanha a % de presença de cada aluno em todas as sessões —",
+        "tip.classSummaryCta": "veja as tendências da sua turma →",
         "toast.rateLimited": "Reunião grande — o Google está limitando brevemente as atualizações de presença. Sua lista está segura; tentando novamente em breve.",
         "toast.participantsCapped": "Reunião grande — mostrando os primeiros {n} de {total} participantes.",
         "pricing.builtDiffEyebrow": "Feito diferente",
@@ -2566,6 +2572,8 @@
         "pricing.trustGuarantee": "Garantia de reembolso de 30-Day"
     },
     "hi": {
+        "tip.classSummary": "बार-बार होने वाली क्लास? Pro का संचयी Class Summary हर सत्र में प्रत्येक छात्र की उपस्थिति % को ट्रैक करता है —",
+        "tip.classSummaryCta": "अपनी क्लास के रुझान देखें →",
         "toast.rateLimited": "बड़ी मीटिंग — Google कुछ समय के लिए उपस्थिति अपडेट सीमित कर रहा है। आपकी सूची सुरक्षित है; जल्द ही पुनः प्रयास किया जा रहा है।",
         "toast.participantsCapped": "बड़ी मीटिंग — {total} में से पहले {n} उपस्थित लोग दिखाए जा रहे हैं।",
         "pricing.builtDiffEyebrow": "अलग तरह से बना",
@@ -3366,6 +3374,8 @@
         "pricing.trustGuarantee": "30-Day मनी-बैक गारंटी"
     },
     "tl": {
+        "tip.classSummary": "Umuulit na klase? Sinusubaybayan ng cumulative na Class Summary ng Pro ang attendance % ng bawat estudyante sa lahat ng session —",
+        "tip.classSummaryCta": "tingnan ang mga trend ng iyong klase →",
         "toast.rateLimited": "Malaking meeting — pansamantalang nililimitahan ng Google ang mga update sa attendance. Ligtas ang iyong roster; susubukan ulit sa ilang sandali.",
         "toast.participantsCapped": "Malaking meeting — ipinapakita ang unang {n} sa {total} na dumalo.",
         "pricing.builtDiffEyebrow": "Iba ang Pagkakagawa",
@@ -4166,6 +4176,8 @@
         "pricing.trustGuarantee": "30-Day na garantiyang money-back"
     },
     "ms": {
+        "tip.classSummary": "Kelas berulang? Class Summary terkumpul Pro menjejaki % kehadiran setiap pelajar merentas setiap sesi —",
+        "tip.classSummaryCta": "lihat trend kelas anda →",
         "toast.rateLimited": "Mesyuarat besar — Google sedang mengehadkan kemas kini kehadiran buat sementara. Senarai anda selamat; mencuba semula sebentar lagi.",
         "toast.participantsCapped": "Mesyuarat besar — memaparkan {n} pertama daripada {total} peserta.",
         "pricing.builtDiffEyebrow": "Dibina Berbeza",
@@ -4966,6 +4978,8 @@
         "pricing.trustGuarantee": "Jaminan wang dikembalikan 30-Day"
     },
     "id": {
+        "tip.classSummary": "Kelas berulang? Class Summary kumulatif Pro melacak % kehadiran setiap siswa di seluruh sesi —",
+        "tip.classSummaryCta": "lihat tren kelas Anda →",
         "toast.rateLimited": "Rapat besar — Google untuk sementara membatasi pembaruan kehadiran. Daftar Anda aman; mencoba lagi sebentar lagi.",
         "toast.participantsCapped": "Rapat besar — menampilkan {n} pertama dari {total} peserta.",
         "pricing.builtDiffEyebrow": "Dibangun Berbeda",
@@ -5766,6 +5780,8 @@
         "pricing.trustGuarantee": "Jaminan uang kembali 30-Day"
     },
     "vi": {
+        "tip.classSummary": "Lớp học định kỳ? Class Summary tích lũy của Pro theo dõi % điểm danh của từng học viên qua mọi buổi học —",
+        "tip.classSummaryCta": "xem xu hướng lớp học của bạn →",
         "toast.rateLimited": "Cuộc họp lớn — Google đang tạm thời giới hạn cập nhật điểm danh. Danh sách của bạn vẫn an toàn; sẽ thử lại ngay.",
         "toast.participantsCapped": "Cuộc họp lớn — đang hiển thị {n} người tham dự đầu tiên trong tổng số {total}.",
         "pricing.builtDiffEyebrow": "Được xây dựng khác biệt",
@@ -6566,6 +6582,8 @@
         "pricing.trustGuarantee": "Bảo đảm hoàn tiền trong 30-Day"
     },
     "fr": {
+        "tip.classSummary": "Cours récurrent ? Le Class Summary cumulatif de Pro suit le % de présence de chaque élève sur toutes les séances —",
+        "tip.classSummaryCta": "voyez les tendances de votre classe →",
         "toast.rateLimited": "Réunion nombreuse — Google limite brièvement les mises à jour de présence. Votre liste est en sécurité ; nouvelle tentative sous peu.",
         "toast.participantsCapped": "Réunion nombreuse — affichage des {n} premiers participants sur {total}.",
         "pricing.builtDiffEyebrow": "Conçu différemment",
@@ -7366,6 +7384,8 @@
         "pricing.trustGuarantee": "Garantie satisfait ou remboursé 30-Day"
     },
     "de": {
+        "tip.classSummary": "Wiederkehrender Kurs? Die kumulative Class Summary von Pro verfolgt die Anwesenheit in % jedes Schülers über alle Sitzungen hinweg —",
+        "tip.classSummaryCta": "sehen Sie die Trends Ihres Kurses →",
         "toast.rateLimited": "Große Besprechung — Google begrenzt kurzzeitig die Anwesenheitsaktualisierungen. Ihre Liste ist sicher; wird in Kürze erneut versucht.",
         "toast.participantsCapped": "Große Besprechung — die ersten {n} von {total} Teilnehmenden werden angezeigt.",
         "pricing.builtDiffEyebrow": "Anders gebaut",
@@ -8166,6 +8186,8 @@
         "pricing.trustGuarantee": "30-Day Geld-zurück-Garantie"
     },
     "it": {
+        "tip.classSummary": "Lezione ricorrente? Il Class Summary cumulativo di Pro tiene traccia della % di presenza di ogni studente in tutte le sessioni —",
+        "tip.classSummaryCta": "guarda le tendenze della tua classe →",
         "toast.rateLimited": "Riunione numerosa — Google sta limitando brevemente gli aggiornamenti delle presenze. Il tuo elenco è al sicuro; nuovo tentativo a breve.",
         "toast.participantsCapped": "Riunione numerosa — vengono mostrati i primi {n} di {total} partecipanti.",
         "pricing.builtDiffEyebrow": "Costruito diversamente",
@@ -8966,6 +8988,8 @@
         "pricing.trustGuarantee": "Garanzia di rimborso di 30-Day"
     },
     "nl": {
+        "tip.classSummary": "Terugkerende les? De cumulatieve Class Summary van Pro houdt het aanwezigheids-% van elke student over alle sessies bij —",
+        "tip.classSummaryCta": "bekijk de trends van je klas →",
         "toast.rateLimited": "Grote vergadering — Google beperkt de aanwezigheidsupdates even. Je lijst is veilig; opnieuw proberen over enkele ogenblikken.",
         "toast.participantsCapped": "Grote vergadering — de eerste {n} van {total} deelnemers worden weergegeven.",
         "pricing.builtDiffEyebrow": "Anders gebouwd",
@@ -9766,6 +9790,8 @@
         "pricing.trustGuarantee": "30-Day niet-goed-geld-terug-garantie"
     },
     "pl": {
+        "tip.classSummary": "Zajęcia cykliczne? Skumulowane Class Summary w Pro śledzi % obecności każdego ucznia we wszystkich sesjach —",
+        "tip.classSummaryCta": "zobacz trendy swojej klasy →",
         "toast.rateLimited": "Duże spotkanie — Google chwilowo ogranicza aktualizacje obecności. Twoja lista jest bezpieczna; wkrótce nastąpi ponowna próba.",
         "toast.participantsCapped": "Duże spotkanie — wyświetlanie pierwszych {n} z {total} uczestników.",
         "pricing.builtDiffEyebrow": "Stworzony inaczej",
@@ -10566,6 +10592,8 @@
         "pricing.trustGuarantee": "30-Day gwarancja zwrotu pieniędzy"
     },
     "tr": {
+        "tip.classSummary": "Tekrarlanan ders mi? Pro'nun kümülatif Class Summary'si her öğrencinin katılım %'sini tüm oturumlar boyunca izler —",
+        "tip.classSummaryCta": "sınıfınızın eğilimlerini görün →",
         "toast.rateLimited": "Büyük toplantı — Google, katılım güncellemelerini kısa süreliğine sınırlıyor. Listeniz güvende; kısa süre içinde yeniden denenecek.",
         "toast.participantsCapped": "Büyük toplantı — {total} katılımcının ilk {n} tanesi gösteriliyor.",
         "pricing.builtDiffEyebrow": "Farklı İnşa Edildi",
@@ -11366,6 +11394,8 @@
         "pricing.trustGuarantee": "30-Day para iade garantisi"
     },
     "th": {
+        "tip.classSummary": "คลาสที่จัดซ้ำใช่ไหม Class Summary แบบสะสมของ Pro จะติดตาม % การเข้าร่วมของนักเรียนแต่ละคนในทุกเซสชัน —",
+        "tip.classSummaryCta": "ดูแนวโน้มของคลาสคุณ →",
         "toast.rateLimited": "การประชุมขนาดใหญ่ — Google กำลังจำกัดการอัปเดตการเข้าร่วมชั่วคราว รายชื่อของคุณปลอดภัย กำลังลองใหม่ในอีกสักครู่",
         "toast.participantsCapped": "การประชุมขนาดใหญ่ — กำลังแสดงผู้เข้าร่วม {n} คนแรกจากทั้งหมด {total} คน",
         "pricing.builtDiffEyebrow": "สร้างมาต่างระดับ",
@@ -12166,6 +12196,8 @@
         "pricing.trustGuarantee": "รับประกันคืนเงินภายใน 30-Day"
     },
     "ar": {
+        "tip.classSummary": "حصة متكررة؟ يتتبع Class Summary التراكمي في Pro نسبة حضور كل طالب % عبر كل الجلسات —",
+        "tip.classSummaryCta": "اطّلع على اتجاهات حصتك →",
         "toast.rateLimited": "اجتماع كبير — يقوم Google بتقييد تحديثات الحضور مؤقتًا. قائمتك آمنة؛ ستتم إعادة المحاولة قريبًا.",
         "toast.participantsCapped": "اجتماع كبير — يتم عرض أول {n} من أصل {total} من الحاضرين.",
         "pricing.builtDiffEyebrow": "صُنع بشكل مختلف",
@@ -12966,6 +12998,8 @@
         "pricing.trustGuarantee": "ضمان استرداد الأموال خلال 30-Day"
     },
     "ko": {
+        "tip.classSummary": "반복되는 수업인가요? Pro의 누적 Class Summary가 모든 세션에 걸쳐 각 학생의 출석률 %를 추적합니다 —",
+        "tip.classSummaryCta": "수업 추세 보기 →",
         "toast.rateLimited": "대규모 회의 — Google이 출석 업데이트를 잠시 제한하고 있습니다. 명단은 안전하며 곧 다시 시도합니다.",
         "toast.participantsCapped": "대규모 회의 — 전체 {total}명 중 처음 {n}명의 참석자를 표시합니다.",
         "pricing.builtDiffEyebrow": "남다르게 만들어졌습니다",
@@ -13766,6 +13800,8 @@
         "pricing.trustGuarantee": "30-Day 환불 보장"
     },
     "zh": {
+        "tip.classSummary": "重複性課程？Pro 的累計 Class Summary 會追蹤每位學生在每一節課的出席率 % —",
+        "tip.classSummaryCta": "查看你的課程趨勢 →",
         "toast.rateLimited": "大型會議 — Google 正短暫限制出席更新。您的名單安全無虞；稍後將重試。",
         "toast.participantsCapped": "大型會議 — 正在顯示 {total} 位出席者中的前 {n} 位。",
         "pricing.builtDiffEyebrow": "與眾不同的打造方式",
@@ -14566,6 +14602,8 @@
         "pricing.trustGuarantee": "30-Day 退款保證"
     },
     "ja": {
+        "tip.classSummary": "繰り返しの授業ですか？Pro の累積 Class Summary は、すべてのセッションにわたって各生徒の出席率 % を記録します —",
+        "tip.classSummaryCta": "クラスの傾向を見る →",
         "toast.rateLimited": "大規模な会議 — Google が出席状況の更新を一時的に制限しています。名簿は安全です。まもなく再試行します。",
         "toast.participantsCapped": "大規模な会議 — {total} 人の出席者のうち最初の {n} 人を表示しています。",
         "pricing.builtDiffEyebrow": "作りが違う",
@@ -15366,6 +15404,8 @@
         "pricing.trustGuarantee": "30-Day 返金保証"
     },
     "ta": {
+        "tip.classSummary": "மீண்டும் நடக்கும் வகுப்பா? Pro இன் ஒட்டுமொத்த Class Summary ஒவ்வொரு அமர்விலும் ஒவ்வொரு மாணவரின் வருகை % ஐக் கண்காணிக்கிறது —",
+        "tip.classSummaryCta": "உங்கள் வகுப்பின் போக்குகளைப் பாருங்கள் →",
         "toast.rateLimited": "பெரிய கூட்டம் — Google வருகைப் புதுப்பிப்புகளைச் சிறிது நேரம் வரம்பிடுகிறது. உங்கள் பட்டியல் பாதுகாப்பாக உள்ளது; விரைவில் மீண்டும் முயற்சிக்கிறோம்.",
         "toast.participantsCapped": "பெரிய கூட்டம் — மொத்தம் {total} பங்கேற்பாளர்களில் முதல் {n} பேர் காட்டப்படுகிறார்கள்.",
         "pricing.builtDiffEyebrow": "வித்தியாசமாக உருவாக்கப்பட்டது",
@@ -16166,6 +16206,8 @@
         "pricing.trustGuarantee": "30-Day பணத்தைத் திரும்பப் பெறும் உத்தரவாதம்"
     },
     "te": {
+        "tip.classSummary": "పునరావృత తరగతా? Pro యొక్క సంచిత Class Summary ప్రతి సెషన్‌లో ప్రతి విద్యార్థి హాజరు %ని ట్రాక్ చేస్తుంది —",
+        "tip.classSummaryCta": "మీ తరగతి ధోరణులను చూడండి →",
         "toast.rateLimited": "పెద్ద సమావేశం — Google హాజరు నవీకరణలను కొద్దిసేపు పరిమితం చేస్తోంది. మీ జాబితా సురక్షితం; త్వరలో మళ్లీ ప్రయత్నిస్తోంది.",
         "toast.participantsCapped": "పెద్ద సమావేశం — మొత్తం {total} మంది హాజరైనవారిలో మొదటి {n} మందిని చూపుతోంది.",
         "pricing.builtDiffEyebrow": "విభిన్నంగా నిర్మించబడింది",
@@ -16966,6 +17008,8 @@
         "pricing.trustGuarantee": "30-Day మనీ-బ్యాక్ గ్యారంటీ"
     },
     "bn": {
+        "tip.classSummary": "পুনরাবৃত্ত ক্লাস? Pro-এর ক্রমসঞ্চিত Class Summary প্রতিটি সেশনে প্রতিটি শিক্ষার্থীর উপস্থিতির % ট্র্যাক করে —",
+        "tip.classSummaryCta": "আপনার ক্লাসের প্রবণতা দেখুন →",
         "toast.rateLimited": "বড় মিটিং — Google সাময়িকভাবে উপস্থিতি আপডেট সীমিত করছে। আপনার তালিকা নিরাপদ; শীঘ্রই আবার চেষ্টা করা হচ্ছে।",
         "toast.participantsCapped": "বড় মিটিং — মোট {total} জন উপস্থিতের মধ্যে প্রথম {n} জন দেখানো হচ্ছে।",
         "pricing.builtDiffEyebrow": "ভিন্নভাবে নির্মিত",
@@ -17766,6 +17810,8 @@
         "pricing.trustGuarantee": "30-Day অর্থ-ফেরত গ্যারান্টি"
     },
     "ur": {
+        "tip.classSummary": "بار بار ہونے والی کلاس؟ Pro کا مجموعی Class Summary ہر سیشن میں ہر طالب علم کی حاضری % کو ٹریک کرتا ہے —",
+        "tip.classSummaryCta": "اپنی کلاس کے رجحانات دیکھیں →",
         "toast.rateLimited": "بڑی میٹنگ — Google عارضی طور پر حاضری کی اپ ڈیٹس محدود کر رہا ہے۔ آپ کی فہرست محفوظ ہے؛ جلد دوبارہ کوشش کی جا رہی ہے۔",
         "toast.participantsCapped": "بڑی میٹنگ — کل {total} حاضرین میں سے پہلے {n} دکھائے جا رہے ہیں۔",
         "pricing.builtDiffEyebrow": "مختلف انداز میں تیار کردہ",
@@ -18566,6 +18612,8 @@
         "pricing.trustGuarantee": "30-Day رقم واپسی کی ضمانت"
     },
     "zh-CN": {
+        "tip.classSummary": "重复性课程？Pro 的累计 Class Summary 会追踪每位学生在每节课的出勤率 % —",
+        "tip.classSummaryCta": "查看你的课程趋势 →",
         "toast.rateLimited": "大型会议 — Google 正短暂限制出席更新。您的名单安全无虞；稍后将重试。",
         "toast.participantsCapped": "大型会议 — 正在显示 {total} 位出席者中的前 {n} 位。",
         "pricing.builtDiffEyebrow": "与众不同的打造方式",
@@ -19366,6 +19414,8 @@
         "pricing.trustGuarantee": "30-Day 退款保证"
     },
     "ru": {
+        "tip.classSummary": "Повторяющееся занятие? Накопительная Class Summary в Pro отслеживает % посещаемости каждого ученика по всем сессиям —",
+        "tip.classSummaryCta": "смотрите тенденции вашего класса →",
         "toast.rateLimited": "Крупная встреча — Google временно ограничивает обновления посещаемости. Ваш список в безопасности; скоро повторим попытку.",
         "toast.participantsCapped": "Крупная встреча — показаны первые {n} из {total} участников.",
         "pricing.builtDiffEyebrow": "Создано иначе",
@@ -20166,6 +20216,8 @@
         "pricing.trustGuarantee": "30-Day гарантия возврата денег"
     },
     "uk": {
+        "tip.classSummary": "Повторюване заняття? Накопичувальна Class Summary у Pro відстежує % відвідуваності кожного учня в усіх сесіях —",
+        "tip.classSummaryCta": "перегляньте тенденції вашого класу →",
         "toast.rateLimited": "Велика зустріч — Google тимчасово обмежує оновлення відвідуваності. Ваш список у безпеці; невдовзі повторимо спробу.",
         "toast.participantsCapped": "Велика зустріч — показано перших {n} із {total} учасників.",
         "pricing.builtDiffEyebrow": "Створено інакше",
@@ -20966,6 +21018,8 @@
         "pricing.trustGuarantee": "30-Day гарантія повернення коштів"
     },
     "ro": {
+        "tip.classSummary": "Curs recurent? Class Summary cumulativ din Pro urmărește % de prezență a fiecărui elev pe parcursul tuturor sesiunilor —",
+        "tip.classSummaryCta": "vezi tendințele clasei tale →",
         "toast.rateLimited": "Ședință numeroasă — Google limitează pe scurt actualizările de prezență. Lista ta este în siguranță; se reîncearcă în curând.",
         "toast.participantsCapped": "Ședință numeroasă — se afișează primii {n} din {total} participanți.",
         "pricing.builtDiffEyebrow": "Construit Diferit",
@@ -21766,6 +21820,8 @@
         "pricing.trustGuarantee": "30-Day garanție de returnare a banilor"
     },
     "he": {
+        "tip.classSummary": "שיעור חוזר? ה-Class Summary המצטבר של Pro עוקב אחר אחוז הנוכחות % של כל תלמיד בכל המפגשים —",
+        "tip.classSummaryCta": "צפו במגמות הכיתה שלכם →",
         "toast.rateLimited": "פגישה גדולה — Google מגביל זמנית את עדכוני הנוכחות. הרשימה שלך בטוחה; ניסיון חוזר בקרוב.",
         "toast.participantsCapped": "פגישה גדולה — מוצגים {n} המשתתפים הראשונים מתוך {total}.",
         "pricing.builtDiffEyebrow": "בנוי אחרת",
@@ -22566,6 +22622,8 @@
         "pricing.trustGuarantee": "אחריות החזר כספי של 30-Day"
     },
     "mr": {
+        "tip.classSummary": "पुनरावृत्त वर्ग? Pro चा एकत्रित Class Summary प्रत्येक सत्रात प्रत्येक विद्यार्थ्याची उपस्थिती % ट्रॅक करतो —",
+        "tip.classSummaryCta": "तुमच्या वर्गाचे कल पाहा →",
         "toast.rateLimited": "मोठी मीटिंग — Google काही काळासाठी उपस्थिती अपडेट मर्यादित करत आहे. तुमची यादी सुरक्षित आहे; लवकरच पुन्हा प्रयत्न केला जात आहे.",
         "toast.participantsCapped": "मोठी मीटिंग — एकूण {total} पैकी पहिले {n} उपस्थित दाखवत आहोत.",
         "pricing.builtDiffEyebrow": "वेगळ्या पद्धतीने बनवलेले",
@@ -23366,6 +23424,8 @@
         "pricing.trustGuarantee": "30-Day पैसे-परत हमी"
     },
     "sv": {
+        "tip.classSummary": "Återkommande lektion? Pros kumulativa Class Summary följer varje elevs närvaro i % över alla sessioner —",
+        "tip.classSummaryCta": "se din klass trender →",
         "toast.rateLimited": "Stort möte — Google begränsar tillfälligt närvarouppdateringarna. Din lista är trygg; försöker igen snart.",
         "toast.participantsCapped": "Stort möte — visar de första {n} av {total} deltagare.",
         "pricing.builtDiffEyebrow": "Byggd annorlunda",
