@@ -121,6 +121,12 @@ const FRONTEND_EVENT_TYPES = new Set([
   // Point-of-need Class-Summary upsell (free user exports a recurring class)
   'class_summary_tip_shown',
   'class_summary_tip_clicked',
+  // Proactive auto-export upsell for heavy live-only trackers (track a lot, rarely
+  // export). shown/clicked/dismissed all recorded so the dismiss+ignore rate is
+  // measurable and the surface can be pulled if it grates.
+  'auto_export_tip_shown',
+  'auto_export_tip_clicked',
+  'auto_export_tip_dismissed',
 ]);
 
 // POST /api/event — let the frontend record activation/funnel events that only

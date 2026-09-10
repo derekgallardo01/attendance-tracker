@@ -1684,6 +1684,17 @@
     <span style="line-height:1.45"><span data-i18n="review.ask1">Getting value from this? A quick rating helps other hosts find it —</span> <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=inapp_review" target="_blank" rel="noopener" onclick="logUserEvent('review_ask_clicked', {})" style="color:#60a5fa;text-decoration:none;font-weight:600" data-i18n="review.leaveReview">leave a review</a> <span data-i18n="review.ask2">(takes 5 seconds).</span></span>
     <button type="button" onclick="closeReviewAsk()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
   </div>
+  <!-- Proactive auto-export upsell for heavy LIVE-ONLY trackers: users who track
+       many real meetings but rarely export never hit the export paywall, so they
+       never see a reason to go Pro. This pitches auto-export (a Pro feature) with
+       their own behavior. Value-first, once ever, dismissible, and it never stacks
+       with another tip or the export CTA (see maybeShowAutoExportUpsell).
+       Instrumented shown/clicked/dismissed so the dismiss + ignore rate is
+       measurable and we can pull it if it grates. -->
+  <div id="auto-export-tip" style="display:none; align-items:flex-start; gap:8px; padding:8px 16px; font-size:11px; color:#9ca3af; background:rgba(253,214,99,.06); border-top:1px solid #30363d">
+    <span style="line-height:1.45"><span data-i18n="tip.autoExport">You track a lot of meetings live but rarely export. Pro's auto-export saves each one to Google Sheets the moment the call ends —</span> <a href="#" onclick="onAutoExportTipClick();return false" style="color:#fdd663;text-decoration:none;font-weight:600" data-i18n="tip.autoExportCta">turn on auto-export →</a></span>
+    <button type="button" onclick="closeAutoExportTip()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
+  </div>
 
   <!-- Team admin link — only shown to users where /oauth/me reports
        teamAdmin:true (renderTeamAdminLink() toggles display). Stays hidden
@@ -5541,13 +5552,16 @@ function closeClassSummaryTip() {
 function recordRealMeetingTracked(conferenceId) {
   if (!conferenceId) return;
   try {
-    if (localStorage.getItem('att_review_ask_shown')) return; // already asked → nothing to track
     const list = JSON.parse(localStorage.getItem('att_tracked_meetings') || '[]') || [];
     if (list.includes(conferenceId)) return;                  // this meeting already counted
     list.push(conferenceId);
     localStorage.setItem('att_tracked_meetings', JSON.stringify(list.slice(-50)));
   } catch (e) { return; } // private mode → skip silently
+  // Keep recording every distinct real meeting (the count still climbs after the
+  // review ask has fired) — the auto-export upsell needs it to reach its higher
+  // threshold. Both callees carry their own once-ever guard.
   maybeShowReviewAsk();
+  maybeShowAutoExportUpsell();
 }
 function maybeShowReviewAsk() {
   // The counter now advances on EVERY successful export (see saveToSheets), so
@@ -5584,6 +5598,47 @@ function closeReviewAsk() {
   const b = document.getElementById('review-ask');
   if (b) b.style.display = 'none';
   try { logUserEvent('review_ask_dismissed', {}); } catch (e) {}
+}
+
+// Proactive auto-export upsell for the heavy LIVE-ONLY tracker. Fires once ever
+// when a free user has tracked 4+ distinct real meetings but exported at most
+// once — the dashboard user who extracts full value live and never hits the
+// export paywall, so a generic modal never reaches them. Value-first (pitches
+// the Pro auto-export feature with their own behavior), visibility-guarded,
+// dismissible, and it NEVER stacks on another tip or the export CTA. Every state
+// is logged (shown/clicked/dismissed) so the dismiss + ignore rate is measurable
+// and the surface can be pulled if it grates.
+function maybeShowAutoExportUpsell() {
+  if (_isPro) return;                                     // already has auto-export
+  if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+  let tracked = 0, exportCount = 0, shown = false;
+  try {
+    tracked = (JSON.parse(localStorage.getItem('att_tracked_meetings') || '[]') || []).length;
+    exportCount = parseInt(localStorage.getItem('att_export_count') || '0', 10) || 0;
+    shown = !!localStorage.getItem('att_auto_export_tip_shown');
+  } catch (e) { return; } // private mode → skip silently
+  if (shown || tracked < 4 || exportCount > 1) return;    // not the target segment yet
+  // One surface at a time — never crowd another tip or the export CTA.
+  for (const id of ['review-ask', 'class-summary-tip', 'recurring-tip', 'auto-export-nudge', 'export-cta']) {
+    const el = document.getElementById(id);
+    if (el && getComputedStyle(el).display !== 'none') return;
+  }
+  const bar = document.getElementById('auto-export-tip');
+  if (!bar) return;
+  bar.style.display = 'flex';
+  try { localStorage.setItem('att_auto_export_tip_shown', '1'); } catch (e) { /* best-effort */ }
+  try { logUserEvent('auto_export_tip_shown', { tracked, exportCount }); } catch (e) { /* best-effort */ }
+}
+function onAutoExportTipClick() {
+  try { logUserEvent('auto_export_tip_clicked', {}); } catch (e) { /* best-effort */ }
+  const b = document.getElementById('auto-export-tip');
+  if (b) b.style.display = 'none';
+  showUpgradeModal('autoExport');
+}
+function closeAutoExportTip() {
+  const b = document.getElementById('auto-export-tip');
+  if (b) b.style.display = 'none';
+  try { logUserEvent('auto_export_tip_dismissed', {}); } catch (e) { /* best-effort */ }
 }
 
 // Shared PDF fetch+download. Reuses the stashed export payload so the artifact
