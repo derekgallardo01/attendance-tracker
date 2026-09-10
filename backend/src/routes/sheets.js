@@ -725,7 +725,9 @@ router.post('/save-to-sheets', async (req, res) => {
     }
     res.json({ success: true, sheetUrl, isFirstExport, quota });
   } catch (err) {
-    if (err.status === 400) return res.status(400).json({ error: err.message });
+    // Missing Drive scope is the most specific case (explicitly tagged upstream)
+    // — keep it first so its "insufficient authentication scopes" message never
+    // gets mistaken for a session-expiry auth failure below.
     if (err.exportCode === 'DRIVE_PERMISSION_MISSING') {
       log.warn('sheets export blocked by missing drive permission', { email: req.user?.email });
       return res.status(403).json({
@@ -733,6 +735,20 @@ router.post('/save-to-sheets', async (req, res) => {
         code: 'DRIVE_PERMISSION_MISSING',
       });
     }
+    // A Google auth failure — an expired/revoked user token (invalid_grant /
+    // Invalid Credentials) or a doomed service-account fallback
+    // (unauthorized_client) — used to fall through to the generic 500 below,
+    // leaving the user a dead-end "Failed to export". Turn it into the same
+    // re-auth 401 the guards at the top use, which the panel already handles
+    // (toast + triggerSignIn). Checked before the 400 branch so an invalid_grant
+    // that Google returns as HTTP 400 is still routed to re-auth.
+    const gStatus = err.status || err.code || err.response?.status;
+    const AUTH_FAIL = /invalid_grant|unauthorized_client|invalid credentials|no access, refresh token|invalid authentication cred/i;
+    if (gStatus === 401 || AUTH_FAIL.test(String(err.message || ''))) {
+      log.warn('sheets export: google auth failed — prompting re-auth', { email: req.user?.email, error: err.message });
+      return res.status(401).json({ error: 'Google access expired — please sign in again to export.', code: 'AUTH_EXPIRED' });
+    }
+    if (err.status === 400) return res.status(400).json({ error: err.message });
     log.error('sheets export failed', { error: err.message });
     res.status(500).json({ error: 'Failed to export to Google Sheets.' });
   }

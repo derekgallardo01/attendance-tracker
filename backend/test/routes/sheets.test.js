@@ -336,6 +336,24 @@ describe('POST /api/save-to-sheets — error handling', () => {
       .send(validPayload);
     expect(res.status).toBe(500);
   });
+
+  // A refresh-failed/revoked session or a doomed service-account fallback used
+  // to surface as a dead-end 500 "Failed to export"; it now returns the same
+  // re-auth 401 the panel turns into a "sign in again" prompt.
+  test.each([
+    ['unauthorized_client (doomed service-account fallback)', new Error('unauthorized_client: Client is unauthorized to retrieve access tokens using this method, or client not authorized for any of the scopes requested.')],
+    ['invalid_grant (revoked/expired refresh token)', Object.assign(new Error('invalid_grant'), { status: 400 })],
+    ['Invalid Credentials (expired access token, 401)', Object.assign(new Error('Invalid Credentials'), { code: 401 })],
+  ])('401 AUTH_EXPIRED on a Google auth failure: %s', async (_label, err) => {
+    mockSheetsBatchUpdate.mockRejectedValueOnce(err);
+    const res = await request(app)
+      .post('/api/save-to-sheets')
+      .set(authedHeader('user@acme.com', 'acme.com'))
+      .set('Content-Type', 'application/json')
+      .send(validPayload);
+    expect(res.status).toBe(401);
+    expect(res.body.code).toBe('AUTH_EXPIRED');
+  });
 });
 
 describe('POST /api/save-to-sheets — spreadsheet resolution + edge branches', () => {
