@@ -4560,7 +4560,17 @@ function updateExportCta() {
   if (!cta) return;
   const alreadyExported = state.autoExportedConferenceId === state.conferenceId;
   const realMeeting = distinctAttendeeCount() >= 2;
-  if (!state.signedIn || !state.tracking || !realMeeting || alreadyExported || _exporting) {
+  // Count this as a real meeting tracked (once per conference id) so the review
+  // ask can reach live-only trackers who never export. Runs regardless of the CTA
+  // visibility below — a tracked meeting is a tracked meeting.
+  if (realMeeting) recordRealMeetingTracked(state.conferenceId);
+  // Show whenever there's un-exported real-meeting data — NOT only while
+  // `state.tracking`. The old `!state.tracking` hide made the prompt vanish the
+  // instant tracking stopped (i.e. at meeting end), which is exactly when a host
+  // would save. ~27% of activated users (heavy live-only trackers) never export;
+  // this keeps the gentle inline CTA up through the save moment. It still hides
+  // the moment they export (alreadyExported) or when there's no roster.
+  if (!state.signedIn || !realMeeting || alreadyExported || _exporting) {
     cta.style.display = 'none';
     return;
   }
@@ -5292,10 +5302,27 @@ function closeClassSummaryTip() {
   if (b) b.style.display = 'none';
 }
 
-// Review ask, once ever. Fires after the user's 2nd MANUAL export — they've felt
-// the payoff more than once, so they're a genuinely happy user rather than a
-// one-off tester. Never stacks with the recurring tip (skips if that bar just
-// opened this export). Dismissible; honors the at-most-one-lifetime-popup rule.
+// Review ask, once ever. Fires once the user is genuinely engaged — either 2+
+// exports OR 2+ distinct real meetings tracked — so they're a happy returning
+// user rather than a one-off tester. Never stacks with the recurring tip (skips
+// if that bar just opened). Dismissible; honors the at-most-one-lifetime-popup rule.
+//
+// recordRealMeetingTracked() is the live-tracker arm: called each poll with the
+// current conference id when it has 2+ distinct attendees. It de-dupes by
+// conference id (capped list), and when a NEW real meeting pushes the user over
+// the bar it offers the ask right then — the moment a dashboard-only user would
+// otherwise never reach a conversion surface. Guarded/once-ever like the rest.
+function recordRealMeetingTracked(conferenceId) {
+  if (!conferenceId) return;
+  try {
+    if (localStorage.getItem('att_review_ask_shown')) return; // already asked → nothing to track
+    const list = JSON.parse(localStorage.getItem('att_tracked_meetings') || '[]') || [];
+    if (list.includes(conferenceId)) return;                  // this meeting already counted
+    list.push(conferenceId);
+    localStorage.setItem('att_tracked_meetings', JSON.stringify(list.slice(-50)));
+  } catch (e) { return; } // private mode → skip silently
+  maybeShowReviewAsk();
+}
 function maybeShowReviewAsk() {
   // The counter now advances on EVERY successful export (see saveToSheets), so
   // this only READS it — threshold 2 means "after the user has felt the payoff
@@ -5306,12 +5333,18 @@ function maybeShowReviewAsk() {
   // meeting-end would silently burn the one-time ask on a user who has already
   // left. The counter still advanced; we just wait for a present moment to ask.
   if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
-  let count = 0, shown = false;
+  let count = 0, tracked = 0, shown = false;
   try {
     count = parseInt(localStorage.getItem('att_export_count') || '0', 10);
+    tracked = (JSON.parse(localStorage.getItem('att_tracked_meetings') || '[]') || []).length;
     shown = !!localStorage.getItem('att_review_ask_shown');
   } catch (e) { return; } // private mode → skip silently
-  if (shown || count < 2) return;
+  // Eligible when the user has felt the payoff twice EITHER by exporting twice OR
+  // by tracking two distinct real (2+ person) meetings. The second arm reaches the
+  // heavy live-only trackers who use the panel as a dashboard and never export —
+  // the most-engaged cohort was previously never asked because the ask keyed off
+  // export alone.
+  if (shown || (count < 2 && tracked < 2)) return;
   const bar = document.getElementById('review-ask');
   if (!bar) return;
   const rt = document.getElementById('recurring-tip');
