@@ -9,6 +9,20 @@ const { domainOf } = require('../services/firestore/_core'); // pure util; impor
 
 const router = Router();
 
+// Hard cap on participants processed per attendance read. A pathologically
+// large meeting (e.g. a 5,000-person webinar) otherwise (a) built a 5,000-object
+// array in memory on every ~10s poll — ×concurrency it OOM-killed the 1Gi
+// instance — and (b) fired one participantSessions call per participant, blowing
+// Meet's 600/min/user quota → 429. Real classes are far under this; when we cap,
+// the panel is told (`truncated`) so it can show "first N of M".
+const MAX_PARTICIPANTS = Number(process.env.MAX_ATTENDANCE_PARTICIPANTS) || 500;
+
+// A Meet API 429 (quota exhausted) — detected by the .status meetApi now
+// attaches, with a message fallback for older/wrapped errors.
+function isRateLimited(err) {
+  return err && (err.status === 429 || /Meet API 429|RESOURCE_EXHAUSTED|rate limit/i.test(String(err.message || '')));
+}
+
 // Extract Google user ID from participant path (e.g., "conferenceRecords/.../participants/117409479685467143851")
 function extractUserId(participantPath) {
   const parts = (participantPath || '').split('/');
@@ -151,13 +165,23 @@ router.get('/attendance', async (req, res) => {
     const conferenceEndTime = conferenceRecord.endTime || null;
 
     const rawParticipants = await meetGetAll(`${conferenceRecord.name}/participants`, token, 'participants');
-    log.info('participants found', { count: rawParticipants.length });
+    const totalParticipants = rawParticipants.length;
+    log.info('participants found', { count: totalParticipants });
 
-    // Fetch participant sessions in batches of 10 to avoid rate limits
+    // A6: cap the working set so a giant meeting can't OOM the instance or blow
+    // the Meet quota with thousands of per-participant session calls.
+    const truncated = totalParticipants > MAX_PARTICIPANTS;
+    const toProcess = truncated ? rawParticipants.slice(0, MAX_PARTICIPANTS) : rawParticipants;
+    if (truncated) {
+      log.warn('attendance: participant list capped', { conferenceId, total: totalParticipants, cap: MAX_PARTICIPANTS });
+    }
+
+    // Fetch participant sessions in batches of 10 to avoid rate limits.
     const BATCH_SIZE = 10;
     const participants = [];
-    for (let i = 0; i < rawParticipants.length; i += BATCH_SIZE) {
-      const batch = rawParticipants.slice(i, i + BATCH_SIZE);
+    let rateLimited = false;
+    for (let i = 0; i < toProcess.length; i += BATCH_SIZE) {
+      const batch = toProcess.slice(i, i + BATCH_SIZE);
       const batchResults = await Promise.all(
         batch.map(async (p) => {
           try {
@@ -176,6 +200,7 @@ router.get('/attendance', async (req, res) => {
               sessions:      sessions.length,
             };
           } catch (err) {
+            if (isRateLimited(err)) rateLimited = true;
             log.warn('failed to fetch sessions for participant', { name: p.name, error: err.message });
             return {
               participantId: p.name,
@@ -186,9 +211,19 @@ router.get('/attendance', async (req, res) => {
         })
       );
       participants.push(...batchResults);
+      // A9: once the quota is hit, stop firing more session calls — hammering it
+      // only deepens the rate-limit. Return what we have with a rateLimited flag
+      // (the remaining participants still show, just without precise timings).
+      if (rateLimited) {
+        log.warn('attendance: stopping session fetch early — rate limited', { conferenceId, done: participants.length, total: toProcess.length });
+        for (const p of toProcess.slice(participants.length)) {
+          participants.push({ participantId: p.name, ...participantIdentity(p), joinTime: null, leaveTime: null, present: true, sessions: 1 });
+        }
+        break;
+      }
     }
 
-    // Enrich missing emails via Workspace Directory API
+    // Enrich missing emails via Workspace Directory API (bounded by the cap above)
     await enrichEmails(participants, tenantConfig?.adminEmail);
 
     res.json({
@@ -196,6 +231,9 @@ router.get('/attendance', async (req, res) => {
       delegationConfigured: usingServiceAccount,
       conferenceStartTime,
       conferenceEndTime,
+      totalParticipants,
+      truncated,
+      rateLimited,
     });
 
     // Fire-and-forget: persist to Firestore for analytics
@@ -203,6 +241,17 @@ router.get('/attendance', async (req, res) => {
     persistAttendance(domain, conferenceId, conferenceRecord.name, participants, req.user?.email);
 
   } catch (err) {
+    // A9: a quota-exhausted Meet API (429) on the record/participant-list fetch
+    // used to surface as a blind 500. Return a clear, retryable signal instead
+    // so the panel can show "large meeting — try again shortly" and back off.
+    if (isRateLimited(err)) {
+      log.warn('attendance: Meet API rate limited', { conferenceId, error: err.message });
+      res.set('Retry-After', '30');
+      return res.status(429).json({
+        error: 'This meeting has a lot of participants and Google is briefly rate-limiting attendance lookups. Please try again in a moment.',
+        code: 'RATE_LIMITED',
+      });
+    }
     log.error('attendance fetch failed', { error: err.message });
     res.status(500).json({ error: 'Failed to fetch attendance data.' });
   }

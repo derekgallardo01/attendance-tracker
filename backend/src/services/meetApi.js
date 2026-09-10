@@ -30,12 +30,26 @@ async function meetGet(path, token, retries = 2) {
     }
     if (resp.ok) return resp.json();
     const body = await resp.text();
+    // 429 = quota exhausted (Meet's list_participant_sessions is 600/min/user).
+    // A short honor-the-Retry-After backoff clears transient bursts; a persistent
+    // 429 propagates with .status so callers can degrade gracefully (return a
+    // "large meeting, try again" signal) instead of a blind 500. Retry window is
+    // kept small so it can't eat the request's 30s budget on a large meeting.
+    if (resp.status === 429 && attempt < retries) {
+      const retryAfter = Number(resp.headers.get('retry-after'));
+      const waitMs = Math.min((retryAfter > 0 ? retryAfter : 0.5 * (attempt + 1)) * 1000, 2000);
+      log.warn('meet api rate limited (429), retrying', { attempt, waitMs });
+      await new Promise(r => setTimeout(r, waitMs));
+      continue;
+    }
     if (resp.status >= 500 && attempt < retries) {
       log.warn('meet api transient error, retrying', { status: resp.status, attempt });
       await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
       continue;
     }
-    throw new Error(`Meet API ${resp.status}: ${body}`);
+    const err = new Error(`Meet API ${resp.status}: ${body}`);
+    err.status = resp.status; // let callers detect 429/403 without string-matching
+    throw err;
   }
 }
 

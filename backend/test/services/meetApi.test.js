@@ -55,6 +55,34 @@ describe('meetGet', () => {
     expect(global.fetch).toHaveBeenCalledTimes(1);
   });
 
+  test('retries on 429 (quota) then succeeds', async () => {
+    global.fetch
+      .mockResolvedValueOnce({ ok: false, status: 429, headers: { get: () => null }, text: async () => 'RESOURCE_EXHAUSTED' })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ ok: true }) });
+    const result = await meetGet('x/participantSessions', 'tok', 2);
+    expect(result).toEqual({ ok: true });
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  }, 15000);
+
+  test('a persistent 429 throws an error carrying .status = 429 (callers degrade gracefully)', async () => {
+    global.fetch.mockResolvedValue({ ok: false, status: 429, headers: { get: () => null }, text: async () => 'RESOURCE_EXHAUSTED' });
+    await expect(meetGet('x', 'tok', 2)).rejects.toMatchObject({ status: 429 });
+    expect(global.fetch).toHaveBeenCalledTimes(3);
+  }, 15000);
+
+  test('honors Retry-After header on a 429', async () => {
+    global.fetch
+      .mockResolvedValueOnce({ ok: false, status: 429, headers: { get: (h) => h === 'retry-after' ? '1' : null }, text: async () => 'slow down' })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ done: true }) });
+    const result = await meetGet('x', 'tok', 2);
+    expect(result).toEqual({ done: true });
+  }, 15000);
+
+  test('4xx (non-429) errors also carry .status for caller branching', async () => {
+    global.fetch.mockResolvedValue({ ok: false, status: 403, text: async () => 'forbidden' });
+    await expect(meetGet('x', 'tok')).rejects.toMatchObject({ status: 403 });
+  });
+
   test('retries on network error, then throws when exhausted', async () => {
     global.fetch.mockRejectedValue(new Error('ENOTFOUND'));
     await expect(meetGet('x', 'tok', 2)).rejects.toThrow(/Meet API request failed: ENOTFOUND/);

@@ -360,6 +360,57 @@ describe('GET /api/attendance — participant + filter edge branches', () => {
   });
 });
 
+describe('GET /api/attendance — large-meeting cap (A6) + rate limiting (A9)', () => {
+  const auth = () => authedHeader('user@acme.com', 'acme.com');
+  const oneRecord = [{ name: 'conferenceRecords/big', startTime: '2026-09-10T10:00:00Z', endTime: null }];
+
+  test('caps the participant working set and flags truncated (a giant meeting cannot build an unbounded array)', async () => {
+    // 501 participants → only MAX_PARTICIPANTS (default 500) are processed.
+    const many = Array.from({ length: 501 }, (_, i) => ({ name: `conferenceRecords/big/participants/${i}`, signedinUser: { displayName: `P${i}`, email: `p${i}@acme.com` } }));
+    mockMeetGet.mockResolvedValue({ conferenceRecords: oneRecord });
+    mockMeetGetAll.mockImplementation(async (p) => p.endsWith('/participants') ? many : []); // sessions → []
+    const res = await request(app).get('/api/attendance?conferenceId=big').set(auth());
+    expect(res.status).toBe(200);
+    expect(res.body.totalParticipants).toBe(501);
+    expect(res.body.truncated).toBe(true);
+    expect(res.body.participants).toHaveLength(500);
+    expect(res.body.rateLimited).toBe(false);
+  });
+
+  test('a small meeting is not truncated', async () => {
+    mockMeetGet.mockResolvedValue({ conferenceRecords: oneRecord });
+    mockMeetGetAll.mockImplementation(async (p) => p.endsWith('/participants')
+      ? [{ name: 'conferenceRecords/big/participants/1', signedinUser: { displayName: 'A', email: 'a@acme.com' } }] : []);
+    const res = await request(app).get('/api/attendance?conferenceId=big').set(auth());
+    expect(res.body.truncated).toBe(false);
+    expect(res.body.totalParticipants).toBe(1);
+  });
+
+  test('top-level Meet 429 returns a clear 429 RATE_LIMITED (not a blind 500)', async () => {
+    mockMeetGet.mockResolvedValue({ conferenceRecords: oneRecord });
+    mockMeetGetAll.mockRejectedValue(Object.assign(new Error('Meet API 429: RESOURCE_EXHAUSTED'), { status: 429 }));
+    const res = await request(app).get('/api/attendance?conferenceId=big').set(auth());
+    expect(res.status).toBe(429);
+    expect(res.body.code).toBe('RATE_LIMITED');
+    expect(res.headers['retry-after']).toBe('30');
+  });
+
+  test('a 429 mid session-fetch degrades to partial data with rateLimited:true (200, still shows everyone)', async () => {
+    mockMeetGet.mockResolvedValue({ conferenceRecords: oneRecord });
+    mockMeetGetAll.mockImplementation(async (p) => {
+      if (p.endsWith('/participants')) return [
+        { name: 'conferenceRecords/big/participants/1', signedinUser: { displayName: 'A', email: 'a@acme.com' } },
+        { name: 'conferenceRecords/big/participants/2', signedinUser: { displayName: 'B', email: 'b@acme.com' } },
+      ];
+      throw Object.assign(new Error('Meet API 429: RESOURCE_EXHAUSTED'), { status: 429 }); // sessions rate-limited
+    });
+    const res = await request(app).get('/api/attendance?conferenceId=big').set(auth());
+    expect(res.status).toBe(200);
+    expect(res.body.rateLimited).toBe(true);
+    expect(res.body.participants).toHaveLength(2); // everyone still listed
+  });
+});
+
 describe('GET /api/attendance — final residual branches', () => {
   const auth = () => authedHeader('user@acme.com', 'acme.com');
 

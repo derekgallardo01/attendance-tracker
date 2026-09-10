@@ -166,6 +166,8 @@
 
     const STRINGS = {
     "en": {
+        "toast.rateLimited": "Large meeting — Google is briefly limiting attendance updates. Your roster is safe; retrying shortly.",
+        "toast.participantsCapped": "Large meeting — showing the first {n} of {total} attendees.",
         "pricing.builtDiffEyebrow": "Built Different",
         "pricing.builtDiffSub": "Chrome extensions scrape Google Meet's web page and break whenever Google updates its code. Attendance Tracker is an official Google Workspace Add-on built on the native Google Meet SDK.",
         "pricing.builtDiffTitle": "Why Attendance Tracker Beats Generic Chrome Extensions",
@@ -964,6 +966,8 @@
         "pricing.trustGuarantee": "30-Day money-back guarantee"
     },
     "es": {
+        "toast.rateLimited": "Reunión numerosa — Google está limitando brevemente las actualizaciones de asistencia. Tu lista está a salvo; se reintentará en breve.",
+        "toast.participantsCapped": "Reunión numerosa — mostrando los primeros {n} de {total} asistentes.",
         "pricing.builtDiffEyebrow": "Hecho diferente",
         "pricing.builtDiffSub": "Las extensiones de Chrome extraen datos de la página web de Google Meet y se rompen cada vez que Google actualiza su código. Attendance Tracker es un complemento oficial de Google Workspace creado sobre el SDK nativo de Google Meet.",
         "pricing.builtDiffTitle": "Por qué Attendance Tracker supera a las extensiones genéricas de Chrome",
@@ -1762,6 +1766,8 @@
         "pricing.trustGuarantee": "Garantía de devolución de 30-Day"
     },
     "pt": {
+        "toast.rateLimited": "Reunião grande — o Google está limitando brevemente as atualizações de presença. Sua lista está segura; tentando novamente em breve.",
+        "toast.participantsCapped": "Reunião grande — mostrando os primeiros {n} de {total} participantes.",
         "pricing.builtDiffEyebrow": "Feito diferente",
         "pricing.builtDiffSub": "As extensões do Chrome extraem dados da página da web do Google Meet e quebram sempre que o Google atualiza seu código. O Attendance Tracker é um complemento oficial do Google Workspace criado sobre o SDK nativo do Google Meet.",
         "pricing.builtDiffTitle": "Por que o Attendance Tracker supera as extensões genéricas do Chrome",
@@ -2560,6 +2566,8 @@
         "pricing.trustGuarantee": "Garantia de reembolso de 30-Day"
     },
     "hi": {
+        "toast.rateLimited": "बड़ी मीटिंग — Google कुछ समय के लिए उपस्थिति अपडेट सीमित कर रहा है। आपकी सूची सुरक्षित है; जल्द ही पुनः प्रयास किया जा रहा है।",
+        "toast.participantsCapped": "बड़ी मीटिंग — {total} में से पहले {n} उपस्थित लोग दिखाए जा रहे हैं।",
         "pricing.builtDiffEyebrow": "अलग तरह से बना",
         "pricing.builtDiffSub": "Chrome एक्सटेंशन Google Meet के वेब पेज को स्क्रैप करते हैं और जब भी Google अपना कोड अपडेट करता है तो टूट जाते हैं। Attendance Tracker एक आधिकारिक Google Workspace Add-on है जो नेटिव Google Meet SDK पर बना है।",
         "pricing.builtDiffTitle": "क्यों Attendance Tracker सामान्य Chrome एक्सटेंशनों से बेहतर है",
@@ -3358,6 +3366,8 @@
         "pricing.trustGuarantee": "30-Day मनी-बैक गारंटी"
     },
     "tl": {
+        "toast.rateLimited": "Malaking meeting — pansamantalang nililimitahan ng Google ang mga update sa attendance. Ligtas ang iyong roster; susubukan ulit sa ilang sandali.",
+        "toast.participantsCapped": "Malaking meeting — ipinapakita ang unang {n} sa {total} na dumalo.",
         "pricing.builtDiffEyebrow": "Iba ang Pagkakagawa",
         "pricing.builtDiffSub": "Ang mga Chrome extension ay kinukuha ang web page ng Google Meet at nasisira tuwing ina-update ng Google ang code nito. Ang Attendance Tracker ay opisyal na Google Workspace Add-on na binuo sa native na Google Meet SDK.",
         "pricing.builtDiffTitle": "Bakit Nahihigitan ng Attendance Tracker ang mga Karaniwang Chrome Extension",
@@ -4156,6 +4166,8 @@
         "pricing.trustGuarantee": "30-Day na garantiyang money-back"
     },
     "ms": {
+        "toast.rateLimited": "Mesyuarat besar — Google sedang mengehadkan kemas kini kehadiran buat sementara. Senarai anda selamat; mencuba semula sebentar lagi.",
+        "toast.participantsCapped": "Mesyuarat besar — memaparkan {n} pertama daripada {total} peserta.",
         "pricing.builtDiffEyebrow": "Dibina Berbeza",
         "pricing.builtDiffSub": "Sambungan Chrome mengikis halaman web Google Meet dan rosak setiap kali Google mengemas kini kodnya. Attendance Tracker ialah Google Workspace Add-on rasmi yang dibina pada Google Meet SDK asli.",
         "pricing.builtDiffTitle": "Mengapa Attendance Tracker Mengatasi Sambungan Chrome Generik",
@@ -4954,6 +4966,8 @@
         "pricing.trustGuarantee": "Jaminan wang dikembalikan 30-Day"
     },
     "id": {
+        "toast.rateLimited": "Rapat besar — Google untuk sementara membatasi pembaruan kehadiran. Daftar Anda aman; mencoba lagi sebentar lagi.",
+        "toast.participantsCapped": "Rapat besar — menampilkan {n} pertama dari {total} peserta.",
         "pricing.builtDiffEyebrow": "Dibangun Berbeda",
         "pricing.builtDiffSub": "Ekstensi Chrome mengikis halaman web Google Meet dan rusak setiap kali Google memperbarui kodenya. Attendance Tracker adalah Google Workspace Add-on resmi yang dibangun di atas Google Meet SDK asli.",
         "pricing.builtDiffTitle": "Mengapa Attendance Tracker Mengungguli Ekstensi Chrome Generik",
@@ -5752,6 +5766,8 @@
         "pricing.trustGuarantee": "Jaminan uang kembali 30-Day"
     },
     "vi": {
+        "toast.rateLimited": "Cuộc họp lớn — Google đang tạm thời giới hạn cập nhật điểm danh. Danh sách của bạn vẫn an toàn; sẽ thử lại ngay.",
+        "toast.participantsCapped": "Cuộc họp lớn — đang hiển thị {n} người tham dự đầu tiên trong tổng số {total}.",
         "pricing.builtDiffEyebrow": "Được xây dựng khác biệt",
         "pricing.builtDiffSub": "Các tiện ích mở rộng Chrome cào dữ liệu trang web của Google Meet và hỏng mỗi khi Google cập nhật mã của mình. Attendance Tracker là một Tiện ích bổ sung chính thức của Google Workspace được xây dựng trên Google Meet SDK gốc.",
         "pricing.builtDiffTitle": "Vì sao Attendance Tracker vượt trội hơn các tiện ích mở rộng Chrome thông thường",
@@ -6550,6 +6566,8 @@
         "pricing.trustGuarantee": "Bảo đảm hoàn tiền trong 30-Day"
     },
     "fr": {
+        "toast.rateLimited": "Réunion nombreuse — Google limite brièvement les mises à jour de présence. Votre liste est en sécurité ; nouvelle tentative sous peu.",
+        "toast.participantsCapped": "Réunion nombreuse — affichage des {n} premiers participants sur {total}.",
         "pricing.builtDiffEyebrow": "Conçu différemment",
         "pricing.builtDiffSub": "Les extensions Chrome extraient les données de la page web de Google Meet et cassent chaque fois que Google met à jour son code. Attendance Tracker est un module complémentaire officiel Google Workspace bâti sur le SDK natif de Google Meet.",
         "pricing.builtDiffTitle": "Pourquoi Attendance Tracker surpasse les extensions Chrome génériques",
@@ -7348,6 +7366,8 @@
         "pricing.trustGuarantee": "Garantie satisfait ou remboursé 30-Day"
     },
     "de": {
+        "toast.rateLimited": "Große Besprechung — Google begrenzt kurzzeitig die Anwesenheitsaktualisierungen. Ihre Liste ist sicher; wird in Kürze erneut versucht.",
+        "toast.participantsCapped": "Große Besprechung — die ersten {n} von {total} Teilnehmenden werden angezeigt.",
         "pricing.builtDiffEyebrow": "Anders gebaut",
         "pricing.builtDiffSub": "Chrome-Erweiterungen scrapen die Webseite von Google Meet und gehen kaputt, sobald Google seinen Code aktualisiert. Attendance Tracker ist ein offizielles Google Workspace-Add-on, das auf dem nativen Google Meet SDK aufbaut.",
         "pricing.builtDiffTitle": "Warum Attendance Tracker generische Chrome-Erweiterungen schlägt",
@@ -8146,6 +8166,8 @@
         "pricing.trustGuarantee": "30-Day Geld-zurück-Garantie"
     },
     "it": {
+        "toast.rateLimited": "Riunione numerosa — Google sta limitando brevemente gli aggiornamenti delle presenze. Il tuo elenco è al sicuro; nuovo tentativo a breve.",
+        "toast.participantsCapped": "Riunione numerosa — vengono mostrati i primi {n} di {total} partecipanti.",
         "pricing.builtDiffEyebrow": "Costruito diversamente",
         "pricing.builtDiffSub": "Le estensioni di Chrome estraggono i dati dalla pagina web di Google Meet e si rompono ogni volta che Google aggiorna il suo codice. Attendance Tracker è un componente aggiuntivo ufficiale di Google Workspace costruito sull'SDK nativo di Google Meet.",
         "pricing.builtDiffTitle": "Perché Attendance Tracker batte le estensioni generiche di Chrome",
@@ -8944,6 +8966,8 @@
         "pricing.trustGuarantee": "Garanzia di rimborso di 30-Day"
     },
     "nl": {
+        "toast.rateLimited": "Grote vergadering — Google beperkt de aanwezigheidsupdates even. Je lijst is veilig; opnieuw proberen over enkele ogenblikken.",
+        "toast.participantsCapped": "Grote vergadering — de eerste {n} van {total} deelnemers worden weergegeven.",
         "pricing.builtDiffEyebrow": "Anders gebouwd",
         "pricing.builtDiffSub": "Chrome-extensies scrapen de webpagina van Google Meet en gaan stuk zodra Google zijn code bijwerkt. Attendance Tracker is een officiële Google Workspace-add-on, gebouwd op de native Google Meet SDK.",
         "pricing.builtDiffTitle": "Waarom Attendance Tracker generieke Chrome-extensies verslaat",
@@ -9742,6 +9766,8 @@
         "pricing.trustGuarantee": "30-Day niet-goed-geld-terug-garantie"
     },
     "pl": {
+        "toast.rateLimited": "Duże spotkanie — Google chwilowo ogranicza aktualizacje obecności. Twoja lista jest bezpieczna; wkrótce nastąpi ponowna próba.",
+        "toast.participantsCapped": "Duże spotkanie — wyświetlanie pierwszych {n} z {total} uczestników.",
         "pricing.builtDiffEyebrow": "Stworzony inaczej",
         "pricing.builtDiffSub": "Rozszerzenia do Chrome zeskrobują stronę internetową Google Meet i przestają działać za każdym razem, gdy Google zaktualizuje swój kod. Attendance Tracker to oficjalny dodatek Google Workspace zbudowany na natywnym Google Meet SDK.",
         "pricing.builtDiffTitle": "Dlaczego Attendance Tracker bije na głowę zwykłe rozszerzenia Chrome",
@@ -10540,6 +10566,8 @@
         "pricing.trustGuarantee": "30-Day gwarancja zwrotu pieniędzy"
     },
     "tr": {
+        "toast.rateLimited": "Büyük toplantı — Google, katılım güncellemelerini kısa süreliğine sınırlıyor. Listeniz güvende; kısa süre içinde yeniden denenecek.",
+        "toast.participantsCapped": "Büyük toplantı — {total} katılımcının ilk {n} tanesi gösteriliyor.",
         "pricing.builtDiffEyebrow": "Farklı İnşa Edildi",
         "pricing.builtDiffSub": "Chrome uzantıları Google Meet'in web sayfasını kazır ve Google kodunu her güncellediğinde bozulur. Attendance Tracker, yerel Google Meet SDK üzerine inşa edilmiş resmi bir Google Workspace Eklentisidir.",
         "pricing.builtDiffTitle": "Attendance Tracker Sıradan Chrome Uzantılarını Neden Geride Bırakır",
@@ -11338,6 +11366,8 @@
         "pricing.trustGuarantee": "30-Day para iade garantisi"
     },
     "th": {
+        "toast.rateLimited": "การประชุมขนาดใหญ่ — Google กำลังจำกัดการอัปเดตการเข้าร่วมชั่วคราว รายชื่อของคุณปลอดภัย กำลังลองใหม่ในอีกสักครู่",
+        "toast.participantsCapped": "การประชุมขนาดใหญ่ — กำลังแสดงผู้เข้าร่วม {n} คนแรกจากทั้งหมด {total} คน",
         "pricing.builtDiffEyebrow": "สร้างมาต่างระดับ",
         "pricing.builtDiffSub": "ส่วนขยาย Chrome จะขูดข้อมูลจากหน้าเว็บของ Google Meet และพังทุกครั้งที่ Google อัปเดตโค้ด ส่วน Attendance Tracker เป็น Add-on อย่างเป็นทางการของ Google Workspace ที่สร้างบน Google Meet SDK ดั้งเดิม",
         "pricing.builtDiffTitle": "ทำไม Attendance Tracker จึงเหนือกว่าส่วนขยาย Chrome ทั่วไป",
@@ -12136,6 +12166,8 @@
         "pricing.trustGuarantee": "รับประกันคืนเงินภายใน 30-Day"
     },
     "ar": {
+        "toast.rateLimited": "اجتماع كبير — يقوم Google بتقييد تحديثات الحضور مؤقتًا. قائمتك آمنة؛ ستتم إعادة المحاولة قريبًا.",
+        "toast.participantsCapped": "اجتماع كبير — يتم عرض أول {n} من أصل {total} من الحاضرين.",
         "pricing.builtDiffEyebrow": "صُنع بشكل مختلف",
         "pricing.builtDiffSub": "إضافات Chrome تكشط صفحة الويب الخاصة بـ Google Meet وتتعطل كلما حدّثت Google شيفرتها. أما Attendance Tracker فهو إضافة رسمية لـ Google Workspace مبنية على Google Meet SDK الأصلية.",
         "pricing.builtDiffTitle": "لماذا يتفوّق Attendance Tracker على إضافات Chrome العامة",
@@ -12934,6 +12966,8 @@
         "pricing.trustGuarantee": "ضمان استرداد الأموال خلال 30-Day"
     },
     "ko": {
+        "toast.rateLimited": "대규모 회의 — Google이 출석 업데이트를 잠시 제한하고 있습니다. 명단은 안전하며 곧 다시 시도합니다.",
+        "toast.participantsCapped": "대규모 회의 — 전체 {total}명 중 처음 {n}명의 참석자를 표시합니다.",
         "pricing.builtDiffEyebrow": "남다르게 만들어졌습니다",
         "pricing.builtDiffSub": "Chrome 확장 프로그램은 Google Meet의 웹 페이지를 스크래핑하며 Google이 코드를 업데이트할 때마다 작동을 멈춥니다. Attendance Tracker는 네이티브 Google Meet SDK 기반으로 만들어진 공식 Google Workspace 부가기능입니다.",
         "pricing.builtDiffTitle": "Attendance Tracker가 일반 Chrome 확장 프로그램보다 뛰어난 이유",
@@ -13732,6 +13766,8 @@
         "pricing.trustGuarantee": "30-Day 환불 보장"
     },
     "zh": {
+        "toast.rateLimited": "大型會議 — Google 正短暫限制出席更新。您的名單安全無虞；稍後將重試。",
+        "toast.participantsCapped": "大型會議 — 正在顯示 {total} 位出席者中的前 {n} 位。",
         "pricing.builtDiffEyebrow": "與眾不同的打造方式",
         "pricing.builtDiffSub": "Chrome 擴充功能會抓取 Google Meet 的網頁，每當 Google 更新程式碼時就會失效。Attendance Tracker 是建構於原生 Google Meet SDK 之上的官方 Google Workspace Add-on。",
         "pricing.builtDiffTitle": "為何 Attendance Tracker 勝過一般 Chrome 擴充功能",
@@ -14530,6 +14566,8 @@
         "pricing.trustGuarantee": "30-Day 退款保證"
     },
     "ja": {
+        "toast.rateLimited": "大規模な会議 — Google が出席状況の更新を一時的に制限しています。名簿は安全です。まもなく再試行します。",
+        "toast.participantsCapped": "大規模な会議 — {total} 人の出席者のうち最初の {n} 人を表示しています。",
         "pricing.builtDiffEyebrow": "作りが違う",
         "pricing.builtDiffSub": "Chrome拡張機能はGoogle MeetのWebページをスクレイピングするため、Googleがコードを更新するたびに動かなくなります。Attendance TrackerはネイティブのGoogle Meet SDK上に構築された公式のGoogle Workspaceアドオンです。",
         "pricing.builtDiffTitle": "Attendance Trackerが一般的なChrome拡張機能に勝る理由",
@@ -15328,6 +15366,8 @@
         "pricing.trustGuarantee": "30-Day 返金保証"
     },
     "ta": {
+        "toast.rateLimited": "பெரிய கூட்டம் — Google வருகைப் புதுப்பிப்புகளைச் சிறிது நேரம் வரம்பிடுகிறது. உங்கள் பட்டியல் பாதுகாப்பாக உள்ளது; விரைவில் மீண்டும் முயற்சிக்கிறோம்.",
+        "toast.participantsCapped": "பெரிய கூட்டம் — மொத்தம் {total} பங்கேற்பாளர்களில் முதல் {n} பேர் காட்டப்படுகிறார்கள்.",
         "pricing.builtDiffEyebrow": "வித்தியாசமாக உருவாக்கப்பட்டது",
         "pricing.builtDiffSub": "Chrome நீட்டிப்புகள் Google Meet-இன் வலைப்பக்கத்தை ஸ்க்ரேப் செய்கின்றன, மேலும் Google தனது குறியீட்டை புதுப்பிக்கும் ஒவ்வொரு முறையும் செயலிழக்கின்றன. Attendance Tracker என்பது நேட்டிவ் Google Meet SDK-இல் கட்டமைக்கப்பட்ட ஒரு அதிகாரப்பூர்வ Google Workspace Add-on ஆகும்.",
         "pricing.builtDiffTitle": "பொதுவான Chrome நீட்டிப்புகளை Attendance Tracker ஏன் மிஞ்சுகிறது",
@@ -16126,6 +16166,8 @@
         "pricing.trustGuarantee": "30-Day பணத்தைத் திரும்பப் பெறும் உத்தரவாதம்"
     },
     "te": {
+        "toast.rateLimited": "పెద్ద సమావేశం — Google హాజరు నవీకరణలను కొద్దిసేపు పరిమితం చేస్తోంది. మీ జాబితా సురక్షితం; త్వరలో మళ్లీ ప్రయత్నిస్తోంది.",
+        "toast.participantsCapped": "పెద్ద సమావేశం — మొత్తం {total} మంది హాజరైనవారిలో మొదటి {n} మందిని చూపుతోంది.",
         "pricing.builtDiffEyebrow": "విభిన్నంగా నిర్మించబడింది",
         "pricing.builtDiffSub": "Chrome ఎక్స్‌టెన్షన్లు Google Meet వెబ్ పేజీని స్క్రాప్ చేస్తాయి మరియు Google తన కోడ్‌ను అప్‌డేట్ చేసిన ప్రతిసారీ విరిగిపోతాయి. Attendance Tracker అనేది నేటివ్ Google Meet SDK పై నిర్మించబడిన అధికారిక Google Workspace Add-on.",
         "pricing.builtDiffTitle": "సాధారణ Chrome ఎక్స్‌టెన్షన్లను Attendance Tracker ఎందుకు అధిగమిస్తుంది",
@@ -16924,6 +16966,8 @@
         "pricing.trustGuarantee": "30-Day మనీ-బ్యాక్ గ్యారంటీ"
     },
     "bn": {
+        "toast.rateLimited": "বড় মিটিং — Google সাময়িকভাবে উপস্থিতি আপডেট সীমিত করছে। আপনার তালিকা নিরাপদ; শীঘ্রই আবার চেষ্টা করা হচ্ছে।",
+        "toast.participantsCapped": "বড় মিটিং — মোট {total} জন উপস্থিতের মধ্যে প্রথম {n} জন দেখানো হচ্ছে।",
         "pricing.builtDiffEyebrow": "ভিন্নভাবে নির্মিত",
         "pricing.builtDiffSub": "Chrome এক্সটেনশন Google Meet-এর ওয়েব পেজ স্ক্র্যাপ করে এবং Google যখনই তার কোড আপডেট করে তখনই ভেঙে পড়ে। Attendance Tracker হলো একটি অফিসিয়াল Google Workspace Add-on যা নেটিভ Google Meet SDK-এর উপর নির্মিত।",
         "pricing.builtDiffTitle": "কেন Attendance Tracker সাধারণ Chrome এক্সটেনশনকে ছাড়িয়ে যায়",
@@ -17722,6 +17766,8 @@
         "pricing.trustGuarantee": "30-Day অর্থ-ফেরত গ্যারান্টি"
     },
     "ur": {
+        "toast.rateLimited": "بڑی میٹنگ — Google عارضی طور پر حاضری کی اپ ڈیٹس محدود کر رہا ہے۔ آپ کی فہرست محفوظ ہے؛ جلد دوبارہ کوشش کی جا رہی ہے۔",
+        "toast.participantsCapped": "بڑی میٹنگ — کل {total} حاضرین میں سے پہلے {n} دکھائے جا رہے ہیں۔",
         "pricing.builtDiffEyebrow": "مختلف انداز میں تیار کردہ",
         "pricing.builtDiffSub": "Chrome ایکسٹینشنز Google Meet کے ویب پیج کو اسکریپ کرتی ہیں اور جب بھی Google اپنا کوڈ اپ ڈیٹ کرتا ہے تو خراب ہو جاتی ہیں۔ Attendance Tracker ایک آفیشل Google Workspace Add-on ہے جو نیٹو Google Meet SDK پر بنایا گیا ہے۔",
         "pricing.builtDiffTitle": "Attendance Tracker عام Chrome ایکسٹینشنز سے بہتر کیوں ہے",
@@ -18520,6 +18566,8 @@
         "pricing.trustGuarantee": "30-Day رقم واپسی کی ضمانت"
     },
     "zh-CN": {
+        "toast.rateLimited": "大型会议 — Google 正短暂限制出席更新。您的名单安全无虞；稍后将重试。",
+        "toast.participantsCapped": "大型会议 — 正在显示 {total} 位出席者中的前 {n} 位。",
         "pricing.builtDiffEyebrow": "与众不同的打造方式",
         "pricing.builtDiffSub": "Chrome 扩展程序会抓取 Google Meet 的网页，每当 Google 更新代码时就会失效。Attendance Tracker 是构建于原生 Google Meet SDK 之上的官方 Google Workspace Add-on。",
         "pricing.builtDiffTitle": "为何 Attendance Tracker 胜过普通 Chrome 扩展程序",
@@ -19318,6 +19366,8 @@
         "pricing.trustGuarantee": "30-Day 退款保证"
     },
     "ru": {
+        "toast.rateLimited": "Крупная встреча — Google временно ограничивает обновления посещаемости. Ваш список в безопасности; скоро повторим попытку.",
+        "toast.participantsCapped": "Крупная встреча — показаны первые {n} из {total} участников.",
         "pricing.builtDiffEyebrow": "Создано иначе",
         "pricing.builtDiffSub": "Расширения Chrome считывают веб-страницу Google Meet и ломаются каждый раз, когда Google обновляет свой код. Attendance Tracker — это официальное дополнение Google Workspace, созданное на нативном Google Meet SDK.",
         "pricing.builtDiffTitle": "Почему Attendance Tracker превосходит обычные расширения Chrome",
@@ -20116,6 +20166,8 @@
         "pricing.trustGuarantee": "30-Day гарантия возврата денег"
     },
     "uk": {
+        "toast.rateLimited": "Велика зустріч — Google тимчасово обмежує оновлення відвідуваності. Ваш список у безпеці; невдовзі повторимо спробу.",
+        "toast.participantsCapped": "Велика зустріч — показано перших {n} із {total} учасників.",
         "pricing.builtDiffEyebrow": "Створено інакше",
         "pricing.builtDiffSub": "Розширення Chrome зчитують вебсторінку Google Meet і ламаються щоразу, коли Google оновлює свій код. Attendance Tracker — це офіційне доповнення Google Workspace, створене на нативному Google Meet SDK.",
         "pricing.builtDiffTitle": "Чому Attendance Tracker перевершує звичайні розширення Chrome",
@@ -20914,6 +20966,8 @@
         "pricing.trustGuarantee": "30-Day гарантія повернення коштів"
     },
     "ro": {
+        "toast.rateLimited": "Ședință numeroasă — Google limitează pe scurt actualizările de prezență. Lista ta este în siguranță; se reîncearcă în curând.",
+        "toast.participantsCapped": "Ședință numeroasă — se afișează primii {n} din {total} participanți.",
         "pricing.builtDiffEyebrow": "Construit Diferit",
         "pricing.builtDiffSub": "Extensiile Chrome extrag pagina web Google Meet și se strică ori de câte ori Google își actualizează codul. Attendance Tracker este un supliment oficial Google Workspace construit pe SDK-ul nativ Google Meet.",
         "pricing.builtDiffTitle": "De ce Attendance Tracker întrece extensiile Chrome obișnuite",
@@ -21712,6 +21766,8 @@
         "pricing.trustGuarantee": "30-Day garanție de returnare a banilor"
     },
     "he": {
+        "toast.rateLimited": "פגישה גדולה — Google מגביל זמנית את עדכוני הנוכחות. הרשימה שלך בטוחה; ניסיון חוזר בקרוב.",
+        "toast.participantsCapped": "פגישה גדולה — מוצגים {n} המשתתפים הראשונים מתוך {total}.",
         "pricing.builtDiffEyebrow": "בנוי אחרת",
         "pricing.builtDiffSub": "תוספי Chrome מגרדים את דף האינטרנט של Google Meet ונשברים בכל פעם ש-Google מעדכנת את הקוד שלה. Attendance Tracker הוא תוסף רשמי של Google Workspace הבנוי על Google Meet SDK המקורי.",
         "pricing.builtDiffTitle": "למה Attendance Tracker עדיף על תוספי Chrome גנריים",
@@ -22510,6 +22566,8 @@
         "pricing.trustGuarantee": "אחריות החזר כספי של 30-Day"
     },
     "mr": {
+        "toast.rateLimited": "मोठी मीटिंग — Google काही काळासाठी उपस्थिती अपडेट मर्यादित करत आहे. तुमची यादी सुरक्षित आहे; लवकरच पुन्हा प्रयत्न केला जात आहे.",
+        "toast.participantsCapped": "मोठी मीटिंग — एकूण {total} पैकी पहिले {n} उपस्थित दाखवत आहोत.",
         "pricing.builtDiffEyebrow": "वेगळ्या पद्धतीने बनवलेले",
         "pricing.builtDiffSub": "Chrome एक्सटेंशन Google Meet च्या वेब पेजला स्क्रॅप करतात आणि जेव्हा Google त्याचा कोड अपडेट करते तेव्हा बिघडतात. Attendance Tracker हे नेटिव्ह Google Meet SDK वर बनवलेले अधिकृत Google Workspace Add-on आहे.",
         "pricing.builtDiffTitle": "Attendance Tracker सामान्य Chrome एक्सटेंशनपेक्षा का सरस आहे",
@@ -23308,6 +23366,8 @@
         "pricing.trustGuarantee": "30-Day पैसे-परत हमी"
     },
     "sv": {
+        "toast.rateLimited": "Stort möte — Google begränsar tillfälligt närvarouppdateringarna. Din lista är trygg; försöker igen snart.",
+        "toast.participantsCapped": "Stort möte — visar de första {n} av {total} deltagare.",
         "pricing.builtDiffEyebrow": "Byggd annorlunda",
         "pricing.builtDiffSub": "Chrome-tillägg skrapar Google Meets webbsida och slutar fungera varje gång Google uppdaterar sin kod. Attendance Tracker är ett officiellt Google Workspace-tillägg byggt på det inbyggda Google Meet SDK.",
         "pricing.builtDiffTitle": "Varför Attendance Tracker slår vanliga Chrome-tillägg",

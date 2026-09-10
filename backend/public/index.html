@@ -3474,9 +3474,23 @@ async function refreshAttendance() {
           triggerSignIn();
           return;
         }
+        // A9: a very large meeting can exhaust Google's Meet quota (429). Keep
+        // the roster we already have, tell the host plainly, and just skip this
+        // poll — the next tick retries once Google's per-minute window resets.
+        if (res.status === 429) {
+          toast(t('toast.rateLimited', 'Large meeting — Google is briefly limiting attendance updates. Your roster is safe; retrying shortly.'), 6000);
+          return;
+        }
         throw new Error(`Backend error ${res.status}`);
       }
       data = await res.json();
+      // A6: on a giant meeting the backend caps the working set — surface it
+      // once so the host knows the roster is a subset, not a bug.
+      if (data.truncated && state._cappedNoticeFor !== state.conferenceId) {
+        state._cappedNoticeFor = state.conferenceId;
+        toast(t('toast.participantsCapped', 'Large meeting — showing the first {n} of {total} attendees.')
+          .replace('{n}', (data.participants || []).length).replace('{total}', data.totalParticipants || '?'), 7000);
+      }
     } else {
       // Dev/preview fallback — synthetic demo data
       data = demoParticipants();
