@@ -3488,8 +3488,10 @@ async function refreshAttendance() {
       // once so the host knows the roster is a subset, not a bug.
       if (data.truncated && state._cappedNoticeFor !== state.conferenceId) {
         state._cappedNoticeFor = state.conferenceId;
+        // distinctCount is real people (records are deduped server-side); it's
+        // what the cap is measured against, so it's the honest "of {total}".
         toast(t('toast.participantsCapped', 'Large meeting — showing the first {n} of {total} attendees.')
-          .replace('{n}', (data.participants || []).length).replace('{total}', data.totalParticipants || '?'), 7000);
+          .replace('{n}', (data.participants || []).length).replace('{total}', data.distinctCount || (data.participants || []).length), 7000);
       }
     } else {
       // Dev/preview fallback — synthetic demo data

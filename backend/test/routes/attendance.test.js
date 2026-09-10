@@ -395,6 +395,45 @@ describe('GET /api/attendance — large-meeting cap (A6) + rate limiting (A9)', 
     expect(res.headers['retry-after']).toBe('30');
   });
 
+  test('dedupes reconnection records to distinct people (a churny 257-person / 5000-record meeting keeps everyone, one session call each)', async () => {
+    // Same person rejoining creates multiple participant records. Dedupe by the
+    // countDistinctAttendees identity key so the cap counts PEOPLE, not records.
+    mockMeetGet.mockResolvedValue({ conferenceRecords: oneRecord });
+    let sessionCalls = 0;
+    mockMeetGetAll.mockImplementation(async (p) => {
+      if (p.endsWith('/participants')) return [
+        { name: 'conferenceRecords/big/participants/r1', signedinUser: { displayName: 'Ana', email: 'ana@acme.com' } },
+        { name: 'conferenceRecords/big/participants/r2', signedinUser: { displayName: 'Ana', email: 'ana@acme.com' } }, // Ana rejoined → 2nd record
+        { name: 'conferenceRecords/big/participants/r3', signedinUser: { displayName: 'Ana', email: 'ana@acme.com' } }, // and again
+        { name: 'conferenceRecords/big/participants/r4', signedinUser: { displayName: 'Bo', email: 'bo@acme.com' } },
+      ];
+      sessionCalls++;
+      return [{ startTime: '2026-09-10T10:00:00Z', endTime: '2026-09-10T10:05:00Z' }];
+    });
+    const res = await request(app).get('/api/attendance?conferenceId=big').set(auth());
+    expect(res.status).toBe(200);
+    expect(res.body.totalParticipants).toBe(4);          // raw records
+    expect(res.body.distinctCount).toBe(2);              // Ana + Bo
+    expect(res.body.participants).toHaveLength(2);        // one entry per person
+    expect(sessionCalls).toBe(2);                         // one session call per person, not 4
+    expect(res.body.participants.map(p => p.email).sort()).toEqual(['ana@acme.com', 'bo@acme.com']);
+    expect(res.body.truncated).toBe(false);
+  });
+
+  test('anonymous (no email, no name) participants are NOT collapsed into one', async () => {
+    mockMeetGet.mockResolvedValue({ conferenceRecords: oneRecord });
+    mockMeetGetAll.mockImplementation(async (p) => p.endsWith('/participants')
+      ? [
+          { name: 'conferenceRecords/big/participants/a1', anonymousUser: {} },
+          { name: 'conferenceRecords/big/participants/a2', anonymousUser: {} },
+          { name: 'conferenceRecords/big/participants/a3', anonymousUser: {} },
+        ]
+      : []);
+    const res = await request(app).get('/api/attendance?conferenceId=big').set(auth());
+    expect(res.body.distinctCount).toBe(3); // three separate anon guests, not merged
+    expect(res.body.participants).toHaveLength(3);
+  });
+
   test('a 429 mid session-fetch degrades to partial data with rateLimited:true (200, still shows everyone)', async () => {
     mockMeetGet.mockResolvedValue({ conferenceRecords: oneRecord });
     mockMeetGetAll.mockImplementation(async (p) => {

@@ -168,12 +168,37 @@ router.get('/attendance', async (req, res) => {
     const totalParticipants = rawParticipants.length;
     log.info('participants found', { count: totalParticipants });
 
-    // A6: cap the working set so a giant meeting can't OOM the instance or blow
-    // the Meet quota with thousands of per-participant session calls.
-    const truncated = totalParticipants > MAX_PARTICIPANTS;
-    const toProcess = truncated ? rawParticipants.slice(0, MAX_PARTICIPANTS) : rawParticipants;
+    // A6: dedupe to DISTINCT people before capping. A churny meeting (people
+    // dropping and rejoining) returns many participant records per person — one
+    // 257-person webinar came back as 5,000 records, which OOM-killed the
+    // instance and blew the Meet quota (one session call per record). Collapse
+    // records to distinct identities using the SAME key as countDistinctAttendees
+    // (_core.js) so the cap keeps real people, not reconnection noise. Anonymous
+    // participants (no email AND no name) can't be safely merged — each stays
+    // its own entry so a room full of anon guests isn't collapsed into one.
+    const seen = new Map();
+    let anonSeq = 0;
+    for (const p of rawParticipants) {
+      const idy = participantIdentity(p);
+      const email = (idy.email || '').trim().toLowerCase();
+      const rawName = (idy.displayName || '').trim().toLowerCase();
+      // participantIdentity() returns the 'Unknown' sentinel for anonymous /
+      // no-name participants — never merge those (a room of anon guests must not
+      // collapse to one). Only real emails/names identify a person to dedupe.
+      const name = rawName && rawName !== 'unknown' ? rawName : '';
+      const key = email || (name ? `name:${name}` : `__anon_${anonSeq++}`);
+      if (!seen.has(key)) seen.set(key, p); // first record represents the person
+    }
+    const distinctParticipants = [...seen.values()];
+    const distinctCount = distinctParticipants.length;
+
+    // Cap the DISTINCT set (bounds memory + the per-poll session-call count). For
+    // the 5,000-record/257-person meeting this now processes all 257 rather than
+    // an arbitrary first-500 slice of raw records.
+    const truncated = distinctCount > MAX_PARTICIPANTS;
+    const toProcess = truncated ? distinctParticipants.slice(0, MAX_PARTICIPANTS) : distinctParticipants;
     if (truncated) {
-      log.warn('attendance: participant list capped', { conferenceId, total: totalParticipants, cap: MAX_PARTICIPANTS });
+      log.warn('attendance: distinct participant list capped', { conferenceId, raw: totalParticipants, distinct: distinctCount, cap: MAX_PARTICIPANTS });
     }
 
     // Fetch participant sessions in batches of 10 to avoid rate limits.
@@ -231,7 +256,8 @@ router.get('/attendance', async (req, res) => {
       delegationConfigured: usingServiceAccount,
       conferenceStartTime,
       conferenceEndTime,
-      totalParticipants,
+      totalParticipants, // raw Meet participant records (reconnection-inflated)
+      distinctCount,     // distinct people (what "truncated" is measured against)
       truncated,
       rateLimited,
     });
