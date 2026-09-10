@@ -421,4 +421,40 @@ describe('getMeetingWithParticipants', () => {
       expect(m).toMatchObject({ conferenceId: 'conf1' });
     });
   });
+
+  describe('error-spike alert helpers', () => {
+    const recent = () => new Date();                                   // in the 1h window
+    const old = () => new Date(Date.now() - 2 * 3600 * 1000);          // outside it
+    const since = () => new Date(Date.now() - 3600 * 1000);           // 1h ago
+
+    test('getRecentErrorSpike counts only in-window export_failed, across tenants, by reason', async () => {
+      ctx.seed('tenants/acme.com', { domain: 'acme.com' });
+      ctx.seed('tenants/beta.com', { domain: 'beta.com' });
+      // in window, export_failed
+      ctx.seed('tenants/acme.com/events/e1', { type: 'export_failed', email: 'a@acme.com', meta: { reason: 'error', message: 'boom one' }, createdAt: recent() });
+      ctx.seed('tenants/acme.com/events/e2', { type: 'export_failed', email: 'a@acme.com', meta: { reason: 'error' }, createdAt: recent() }); // same user
+      ctx.seed('tenants/beta.com/events/e3', { type: 'export_failed', email: 'b@beta.com', meta: { reason: 'auto_export_error' }, createdAt: recent() });
+      // noise that must NOT count
+      ctx.seed('tenants/acme.com/events/e4', { type: 'tracked', email: 'a@acme.com', createdAt: recent() });      // wrong type
+      ctx.seed('tenants/acme.com/events/e5', { type: 'export_failed', email: 'c@acme.com', meta: { reason: 'error' }, createdAt: old() }); // out of window
+
+      const spike = await firestore.getRecentErrorSpike(since());
+      expect(spike.total).toBe(3);
+      expect(spike.byReason).toEqual({ error: 2, auto_export_error: 1 });
+      expect(spike.users.sort()).toEqual(['a@acme.com', 'b@beta.com']); // distinct
+      expect(spike.samples).toContain('boom one');
+    });
+
+    test('getRecentErrorSpike returns an empty shape when there are no failures', async () => {
+      ctx.seed('tenants/acme.com', { domain: 'acme.com' });
+      const spike = await firestore.getRecentErrorSpike(since());
+      expect(spike).toEqual({ total: 0, byReason: {}, users: [], samples: [] });
+    });
+
+    test('error-alert cooldown state round-trips', async () => {
+      expect(await firestore.getErrorAlertState()).toBeNull();
+      await firestore.setErrorAlertState({ lastAlertedAt: '2026-09-10T00:00:00.000Z', lastTotal: 7 });
+      expect(await firestore.getErrorAlertState()).toMatchObject({ lastAlertedAt: '2026-09-10T00:00:00.000Z', lastTotal: 7 });
+    });
+  });
 });

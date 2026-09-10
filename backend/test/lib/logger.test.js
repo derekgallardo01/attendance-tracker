@@ -1,9 +1,10 @@
 // The logger emits one JSON line per call and forwards ERROR-level entries to
 // Sentry. Mock Sentry so we can assert the forward without a real DSN.
 
-const mockWithScope = jest.fn((cb) => cb({ setLevel: jest.fn(), setExtras: jest.fn() }));
+const mockWithScope = jest.fn((cb) => cb({ setLevel: jest.fn(), setExtras: jest.fn(), setContext: jest.fn() }));
 const mockCapture = jest.fn();
-jest.mock('@sentry/node', () => ({ withScope: mockWithScope, captureMessage: mockCapture }));
+const mockCaptureException = jest.fn();
+jest.mock('@sentry/node', () => ({ withScope: mockWithScope, captureMessage: mockCapture, captureException: mockCaptureException }));
 
 const log = require('../../src/lib/logger');
 
@@ -45,10 +46,33 @@ test('error() uses console.error, forwards to Sentry, and works with no data arg
 });
 
 test('error() with data attaches it as Sentry extras', () => {
-  const scope = { setLevel: jest.fn(), setExtras: jest.fn() };
+  const scope = { setLevel: jest.fn(), setExtras: jest.fn(), setContext: jest.fn() };
   mockWithScope.mockImplementationOnce((cb) => cb(scope));
   log.error('with-extras', { domain: 'acme.com' });
   expect(scope.setExtras).toHaveBeenCalledWith({ domain: 'acme.com' });
+});
+
+test('error() with an Error in `err` captures the EXCEPTION (stack), not a lumped message', () => {
+  const scope = { setLevel: jest.fn(), setExtras: jest.fn(), setContext: jest.fn() };
+  mockWithScope.mockImplementationOnce((cb) => cb(scope));
+  const boom = new Error('export blew up');
+  log.error('sheets export failed', { err: boom, error: boom.message });
+  expect(mockCaptureException).toHaveBeenCalledWith(boom);   // real exception + stack
+  expect(mockCapture).not.toHaveBeenCalled();                // not the message fallback
+  expect(scope.setContext).toHaveBeenCalledWith('log', { message: 'sheets export failed' });
+  // `err` (the Error object) is stripped from both the console line and the extras.
+  const entry = JSON.parse(errorSpy.mock.calls[0][0]);
+  expect(entry.err).toBeUndefined();
+  expect(entry.error).toBe('export blew up'); // the readable string is kept
+  expect(scope.setExtras.mock.calls[0][0].err).toBeUndefined();
+});
+
+test('error() falls back to captureMessage when `err` is not an Error', () => {
+  const scope = { setLevel: jest.fn(), setExtras: jest.fn(), setContext: jest.fn() };
+  mockWithScope.mockImplementationOnce((cb) => cb(scope));
+  log.error('plain', { err: 'just a string', code: 1 });
+  expect(mockCapture).toHaveBeenCalledWith('plain');
+  expect(mockCaptureException).not.toHaveBeenCalled();
 });
 
 test('error() scrubs email + ip from Sentry extras but keeps them raw in the console line', () => {

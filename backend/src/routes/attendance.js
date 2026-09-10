@@ -278,7 +278,7 @@ router.get('/attendance', async (req, res) => {
         code: 'RATE_LIMITED',
       });
     }
-    log.error('attendance fetch failed', { error: err.message });
+    log.error('attendance fetch failed', { err, error: err.message });
     res.status(500).json({ error: 'Failed to fetch attendance data.' });
   }
 });

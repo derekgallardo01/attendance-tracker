@@ -11,6 +11,7 @@ const { deleteUser, isUserDeleted, clearDeletedTombstone } = require('./firestor
 const { saveCheckin, getCheckins } = require('./firestore/checkins');
 const {
   getActivationFunnel, getAggregatedInsights, getWeeklySelfReport, getAdvancedAnalytics, getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, markUserContacted, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, getOutreachList, getActivityPulse, getRevenueFunnel,
+  getRecentErrorSpike, getErrorAlertState, setErrorAlertState,
 } = require('./firestore/analytics');
 
 // ── Tenant config ──
@@ -2076,4 +2077,6 @@ module.exports = {
   // Full events+users scan, measured 13-18s in prod — cache it like the rest.
   getActivationFunnel: memoizeTTL(getActivationFunnel, 120000),
   getRevenueFunnel: memoizeTTL(getRevenueFunnel, 120000),
+  // Error-spike alert reads — NOT cached (the hourly cron needs fresh counts).
+  getRecentErrorSpike, getErrorAlertState, setErrorAlertState,
 };

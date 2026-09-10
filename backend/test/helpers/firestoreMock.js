@@ -195,14 +195,21 @@ class MockCollectionRef extends MockQuery {
   }
 }
 
+// Normalize Timestamps/Dates to epoch-ms so relational ops (range queries on
+// createdAt etc.) compare correctly; leave everything else untouched.
+function cmp(x) {
+  if (x && typeof x.toDate === 'function') return x.toDate().getTime();
+  if (x instanceof Date) return x.getTime();
+  return x;
+}
 function applyFilter(data, { field, op, value }) {
   const v = getField(data, field);
   if (op === '==') return v === value;
   if (op === '!=') return v !== value;
-  if (op === '<') return v < value;
-  if (op === '<=') return v <= value;
-  if (op === '>') return v > value;
-  if (op === '>=') return v >= value;
+  if (op === '<') return cmp(v) < cmp(value);
+  if (op === '<=') return cmp(v) <= cmp(value);
+  if (op === '>') return cmp(v) > cmp(value);
+  if (op === '>=') return cmp(v) >= cmp(value);
   if (op === 'in') return Array.isArray(value) && value.includes(v);
   if (op === 'array-contains') return Array.isArray(v) && v.includes(value);
   return true;

@@ -317,6 +317,17 @@ gcloud scheduler jobs create http weekly-report \
   --headers="x-scheduler-secret=<your-secret>" \
   --location=us-central1 \
   --project=attendance-tracker-490319
+
+# Hourly export-failure spike alert → emails NOTIFY_EMAIL when export_failed
+# events cross ERROR_ALERT_THRESHOLD (default 5) in the last hour, deduped by an
+# ERROR_ALERT_COOLDOWN_H window (default 6h). Closes the "silent failures" gap.
+gcloud scheduler jobs create http error-alerts-hourly \
+  --schedule="0 * * * *" \
+  --uri="https://attendance-tracker-backend-829771833968.us-central1.run.app/api/admin/check-errors" \
+  --http-method=POST \
+  --headers="x-scheduler-secret=<your-secret>" \
+  --location=us-central1 \
+  --project=attendance-tracker-490319
 ```
 
 Manual trigger for testing:
@@ -324,6 +335,20 @@ Manual trigger for testing:
 curl -X POST .../api/admin/check-alerts \
   -H "x-scheduler-secret: <secret>" -H "Content-Type: application/json" -d '{}'
 ```
+
+### Sentry alerting (dashboard, one-time)
+
+The code sends errors to Sentry (backend `captureException` with stacks;
+frontend `captureError` in the export catches), but Sentry only **emails** you if
+an alert rule exists. In Sentry → **Alerts → Create Alert**:
+1. **Issue alert** — "When a new issue is created" OR "an issue changes state to
+   regressed" → Action: send email to the owner. Catches novel/returning bugs.
+2. **Metric alert** — on event frequency (e.g. "number of errors > 20 in 1 hour")
+   → email. Catches spikes even on a known issue.
+
+This is belt-and-suspenders with the in-app `/api/admin/check-errors` hourly
+email — Sentry gives the stack + context, the in-app alert guarantees delivery
+via the same Resend channel as the signup pings.
 
 ---
 

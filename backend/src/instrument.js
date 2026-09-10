@@ -7,6 +7,7 @@ const Sentry = require('@sentry/node');
 // /public/verify/<code>. Scrub those from every event and transaction —
 // with tracesSampleRate 0.1, 10% of ALL traffic ships a URL otherwise.
 const SENSITIVE_PATH = /(\/public\/(share|verify|unsubscribe))[/?][^\s"']*/g;
+const EMAIL_RE = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi;
 function scrubUrlish(s) {
   return typeof s === 'string' ? s.replace(SENSITIVE_PATH, '$1/[redacted]') : s;
 }
@@ -20,6 +21,11 @@ function scrubEvent(event) {
     if (event.extra) {
       for (const k of Object.keys(event.extra)) event.extra[k] = scrubUrlish(event.extra[k]);
     }
+    // captureException now ships real exception messages, which can carry an
+    // email (e.g. "no user for alex@x.com"). Redact any email-looking substring
+    // from the whole event — mirrors the frontend scrubSentry — so no raw PII
+    // reaches Sentry, matching our privacy policy.
+    return JSON.parse(JSON.stringify(event).replace(EMAIL_RE, '[email]'));
   } catch { /* never block delivery over scrubbing */ }
   return event;
 }

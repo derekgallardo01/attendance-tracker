@@ -1568,6 +1568,47 @@ async function getRevenueFunnel({ days = 30 } = {}) {
   }
 }
 
+// Aggregate recent export_failed events across all tenants for the error-spike
+// alert. Iterates tenants and queries each `events` subcollection by createdAt —
+// a single-field filter that uses Firestore's automatic index (no composite
+// index to provision, unlike a collectionGroup query), the same pattern the
+// activity crons use. Cheap enough for an hourly run.
+async function getRecentErrorSpike(sinceDate) {
+  const db = getDb();
+  let tenants;
+  try { tenants = await db.collection('tenants').get(); }
+  catch (err) { log.error('firestore: getRecentErrorSpike tenant scan failed', { error: err.message }); return { total: 0, byReason: {}, users: [], samples: [] }; }
+  let total = 0; const byReason = {}; const users = new Set(); const samples = [];
+  for (const t of tenants.docs) {
+    let snap;
+    try { snap = await t.ref.collection('events').where('createdAt', '>=', sinceDate).get(); }
+    catch { continue; } // a tenant with no events / transient error — skip
+    for (const d of snap.docs) {
+      const x = d.data();
+      if (x.type !== 'export_failed') continue;
+      total++;
+      const reason = (x.meta && x.meta.reason) || 'unknown';
+      byReason[reason] = (byReason[reason] || 0) + 1;
+      if (x.email) users.add(x.email);
+      if (samples.length < 5 && x.meta && x.meta.message) samples.push(String(x.meta.message).slice(0, 120));
+    }
+  }
+  return { total, byReason, users: [...users], samples };
+}
+
+// Cooldown state for the error-spike alert — a single root doc so an ongoing
+// incident doesn't email every hourly run.
+const ERROR_ALERT_DOC = () => getDb().collection('ops').doc('errorAlertState');
+async function getErrorAlertState() {
+  try { const s = await ERROR_ALERT_DOC().get(); return s.exists ? s.data() : null; }
+  catch (err) { log.error('firestore: getErrorAlertState failed', { error: err.message }); return null; }
+}
+async function setErrorAlertState(data) {
+  try { await ERROR_ALERT_DOC().set(data, { merge: true }); }
+  catch (err) { log.error('firestore: setErrorAlertState failed', { error: err.message }); }
+}
+
 module.exports = {
   getActivationFunnel, getAggregatedInsights, getWeeklySelfReport, getAdvancedAnalytics, getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, markUserContacted, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, getOutreachList, getActivityPulse, getRevenueFunnel,
+  getRecentErrorSpike, getErrorAlertState, setErrorAlertState,
 };

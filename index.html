@@ -146,6 +146,17 @@
         beforeSend: scrubSentry,
       });
     }
+    // Export/tracking errors are caught in try/catch and swallowed into an
+    // analytics beacon, so Sentry's default (uncaught-only) handlers never see
+    // them — 93 export failures went silent this way. Call this from the genuine
+    // bug catches to surface them WITH a stack. Guarded + no-throw so it can
+    // never break the flow it's reporting on. beforeSend/scrubSentry keeps it
+    // PII-safe.
+    window.captureError = function (err, extra) {
+      try {
+        if (window.Sentry) Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { extra: extra || {} });
+      } catch (e) { /* reporting must never throw */ }
+    };
   </script>
 
   <!-- Meet Add-ons SDK — load dynamically so we can detect failures -->
@@ -4769,6 +4780,7 @@ async function maybeAutoExportOnMeetingEnd() {
     state.autoExportedConferenceId = null;
     saveState();
     logUserEvent('export_failed', { reason: 'auto_export_error', message: String(err.message || err).slice(0, 200) });
+    captureError(err, { where: 'maybeAutoExportOnMeetingEnd', reason: 'auto_export_error' });
   } finally {
     _exporting = false;
     if (btn) btn.disabled = false;
@@ -5159,6 +5171,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     maybeShowReviewAsk();
   } catch (err) {
     logUserEvent('export_failed', { reason: 'error', message: String(err.message || err).slice(0, 200) });
+    captureError(err, { where: 'doExportToSheets', reason: 'error' });
     toast(`${t('toast.sheetsError','Sheets error:')} ${err.message}`);
   }
 }

@@ -28,17 +28,25 @@ function scrubExtras(data) {
 }
 
 function emit(severity, consoleFn, msg, data) {
-  const entry = { severity, msg, ...data, ts: new Date().toISOString() };
+  // `err` (an Error) is captured as a Sentry EXCEPTION (stack + grouping) and
+  // kept out of the console JSON — Errors serialize to "{}" and callers already
+  // pass a readable `error: err.message` alongside it.
+  const { err, ...loggable } = data || {};
+  const entry = { severity, msg, ...loggable, ts: new Date().toISOString() };
   consoleFn(JSON.stringify(entry));
-  // Send errors to Sentry
+  // Send errors to Sentry.
   if (severity === 'ERROR' && Sentry) {
     Sentry.withScope(scope => {
       scope.setLevel('error');
-      // data is always an object here (the log.* wrappers default it to {}),
-      // so the falsy branch is unreachable via the public API.
-      /* istanbul ignore else */
-      if (data) scope.setExtras(scrubExtras(data));
-      Sentry.captureMessage(msg);
+      scope.setExtras(scrubExtras(loggable));
+      // Prefer the real exception — stack trace + proper issue grouping. When a
+      // caller passes no Error, fall back to a message event (legacy behavior).
+      if (err instanceof Error) {
+        scope.setContext('log', { message: msg });
+        Sentry.captureException(err);
+      } else {
+        Sentry.captureMessage(msg);
+      }
     });
   }
 }

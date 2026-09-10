@@ -2,7 +2,7 @@ const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getRevenueFunnel, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance, getTeamOverview } = require('../services/firestore');
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getRevenueFunnel, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance, getTeamOverview, getRecentErrorSpike, getErrorAlertState, setErrorAlertState } = require('../services/firestore');
 const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendOrgWeeklyDigest, flushDeferredNotifications } = require('../lib/notifications');
 const { requireSuperAdmin, requireSuperAdminOrScheduler, requireKhMetricsKey, safeEqual } = require('../middleware/adminAuth');
 const { requireAuth } = require('../middleware/auth');
@@ -339,7 +339,54 @@ router.post('/admin/weekly-report', requireSuperAdminOrScheduler, async (req, re
     const result = await sendWeeklySelfReport(report);
     res.json(result);
   } catch (err) {
-    log.error('admin: weekly-report send failed', { error: err.message });
+    log.error('admin: weekly-report send failed', { err, error: err.message });
+    res.status(500).json({ error: err.message || 'Failed' });
+  }
+});
+
+// POST /api/admin/check-errors — hourly export-failure spike alert. Fired by
+// Cloud Scheduler (x-scheduler-secret) like the other crons; only ever emails
+// the owner inbox. Closes the "93 silent failures" gap: export_failed events
+// used to dead-end in Firestore, read by nobody. Emails when failures cross a
+// threshold in the last hour, with a cooldown so an ongoing incident doesn't
+// email every run.
+router.post('/admin/check-errors', requireSuperAdminOrScheduler, async (req, res) => {
+  try {
+    const THRESHOLD = Number(process.env.ERROR_ALERT_THRESHOLD) || 5;
+    const COOLDOWN_H = Number(process.env.ERROR_ALERT_COOLDOWN_H) || 6;
+    const WINDOW_MIN = 60;
+    const since = new Date(Date.now() - WINDOW_MIN * 60 * 1000);
+    const spike = await getRecentErrorSpike(since);
+    if (spike.total < THRESHOLD) {
+      return res.json({ ok: true, total: spike.total, alerted: false, reason: 'below_threshold' });
+    }
+    // Cooldown — don't re-alert while an incident is still ongoing.
+    const state = await getErrorAlertState();
+    const lastMs = state && state.lastAlertedAt ? Date.parse(state.lastAlertedAt) : 0;
+    if (Date.now() - lastMs < COOLDOWN_H * 3600 * 1000) {
+      return res.json({ ok: true, total: spike.total, alerted: false, reason: 'cooldown' });
+    }
+    const to = process.env.NOTIFY_EMAIL || process.env.GMAIL_USER;
+    if (!to) {
+      return res.json({ ok: true, total: spike.total, alerted: false, reason: 'no_recipient' });
+    }
+    const reasons = Object.entries(spike.byReason).sort((a, b) => b[1] - a[1]).map(([r, n]) => `  ${n}× ${r}`).join('\n');
+    const body = [
+      `${spike.total} Attendance Tracker export failures in the last ${WINDOW_MIN} minutes (alert threshold: ${THRESHOLD}).`,
+      '',
+      'By reason:',
+      reasons || '  (none categorized)',
+      '',
+      `Affected users (${spike.users.length}): ${spike.users.slice(0, 20).join(', ')}${spike.users.length > 20 ? ' …' : ''}`,
+      spike.samples.length ? `\nSample messages:\n${spike.samples.map(s => '  ' + s).join('\n')}` : '',
+      '',
+      'Full detail + stack traces are in Sentry (issue "sheets export failed" and recent frontend exceptions).',
+    ].join('\n');
+    await sendAdminEmail({ to, subject: `⚠️ ${spike.total} Attendance Tracker export failures in the last hour`, body });
+    await setErrorAlertState({ lastAlertedAt: new Date().toISOString(), lastTotal: spike.total });
+    res.json({ ok: true, total: spike.total, alerted: true });
+  } catch (err) {
+    log.error('admin: check-errors failed', { err, error: err.message });
     res.status(500).json({ error: err.message || 'Failed' });
   }
 });

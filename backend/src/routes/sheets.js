@@ -749,7 +749,7 @@ router.post('/save-to-sheets', async (req, res) => {
       return res.status(401).json({ error: 'Google access expired — please sign in again to export.', code: 'AUTH_EXPIRED' });
     }
     if (err.status === 400) return res.status(400).json({ error: err.message });
-    log.error('sheets export failed', { error: err.message });
+    log.error('sheets export failed', { err, error: err.message });
     res.status(500).json({ error: 'Failed to export to Google Sheets.' });
   }
 });

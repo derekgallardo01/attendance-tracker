@@ -56,6 +56,10 @@ jest.mock('../../src/services/firestore', () => ({
   getUserMeetingSeries: jest.fn(),
   persistAttendance: jest.fn(),
   getTeamOverview: jest.fn(), // org weekly digest sweep
+  // Error-spike alert (check-errors cron)
+  getRecentErrorSpike: jest.fn(),
+  getErrorAlertState: jest.fn(),
+  setErrorAlertState: jest.fn(),
 }));
 jest.mock('../../src/services/googleAuth', () => ({
   refreshAccessToken: jest.fn(),
@@ -318,6 +322,50 @@ describe('Super-admin gated endpoints', () => {
       .get('/api/admin/outreach-list?days=30&format=json')
       .set(authedHeader('random@acme.com', 'acme.com'));
     expect(res.status).toBe(403);
+  });
+});
+
+describe('POST /api/admin/check-errors — hourly export-failure spike alert', () => {
+  const post = () => request(app).post('/api/admin/check-errors').set('x-scheduler-secret', SCHEDULER_SECRET).set('Content-Type', 'application/json').send({});
+
+  test('below threshold → no email', async () => {
+    firestore.getRecentErrorSpike.mockResolvedValue({ total: 2, byReason: { error: 2 }, users: ['a@x.com'], samples: [] });
+    const res = await post();
+    expect(res.status).toBe(200);
+    expect(res.body.alerted).toBe(false);
+    expect(res.body.reason).toBe('below_threshold');
+    expect(notifications.sendAdminEmail).not.toHaveBeenCalled();
+  });
+
+  test('at/over threshold with no recent alert → emails the owner + records the cooldown marker', async () => {
+    firestore.getRecentErrorSpike.mockResolvedValue({ total: 7, byReason: { error: 5, auto_export_error: 2 }, users: ['a@x.com', 'b@y.com'], samples: ['boom'] });
+    firestore.getErrorAlertState.mockResolvedValue(null); // never alerted before
+    const res = await post();
+    expect(res.status).toBe(200);
+    expect(res.body.alerted).toBe(true);
+    expect(res.body.total).toBe(7);
+    expect(notifications.sendAdminEmail).toHaveBeenCalledWith(expect.objectContaining({
+      to: 'derekgallardo01@gmail.com',
+      subject: expect.stringContaining('7'),
+      body: expect.stringContaining('error'),
+    }));
+    expect(firestore.setErrorAlertState).toHaveBeenCalledWith(expect.objectContaining({ lastAlertedAt: expect.any(String) }));
+  });
+
+  test('over threshold but within cooldown → suppressed (no duplicate email during an ongoing incident)', async () => {
+    firestore.getRecentErrorSpike.mockResolvedValue({ total: 9, byReason: { error: 9 }, users: [], samples: [] });
+    firestore.getErrorAlertState.mockResolvedValue({ lastAlertedAt: new Date(Date.now() - 60 * 60 * 1000).toISOString() }); // alerted 1h ago, cooldown is 6h
+    const res = await post();
+    expect(res.status).toBe(200);
+    expect(res.body.alerted).toBe(false);
+    expect(res.body.reason).toBe('cooldown');
+    expect(notifications.sendAdminEmail).not.toHaveBeenCalled();
+  });
+
+  test('403 without the scheduler secret (auth gate)', async () => {
+    const res = await request(app).post('/api/admin/check-errors').send({});
+    expect(res.status).toBe(403);
+    expect(firestore.getRecentErrorSpike).not.toHaveBeenCalled();
   });
 });
 
