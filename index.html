@@ -4461,6 +4461,7 @@ function paintPrices() {
     'price-lifetime': AttPricing.price('lifetime'),
     'price-educator': AttPricing.price('educator'),
     'price-team': AttPricing.price('team'),
+    'price-department': AttPricing.price('department'),
   };
   for (const [cls, text] of Object.entries(map)) {
     if (!text) continue;
@@ -4617,8 +4618,9 @@ async function startUpgradeCheckout(plan, btnId) {
     const res = await authFetch(`${state.backendUrl}/billing/checkout`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      // The domain card is ONE-TIME ($19.99): team+annual resolves to the $149
-      // Institution price server-side, so team must send interval 'once'.
+      // Domain cards now send 'department' ($59/yr, resolves by plan name). The
+      // legacy 'team' path stays: team+annual = the $149 Institution price, so a
+      // bare 'team' must send 'once' to hit the retired $19.99 one-time price.
       body: JSON.stringify({ plan: plan || 'lifetime', interval: plan === 'team' ? 'once' : 'annual' }),
     });
     const data = await res.json().catch(() => ({}));
@@ -7146,21 +7148,22 @@ window.addEventListener('DOMContentLoaded', () => {
         </button>
       </div>
 
-      <!-- Plan 3: Domain license — workspace orgs only (hidden for personal
-           Gmail by loadBillingStatus; individual===true can't buy a domain).
-           Stays LAST regardless of the edu-first reorder above. -->
+      <!-- Plan 3: Department (recurring domain plan, $59/yr) — workspace orgs
+           only (hidden for personal Gmail by loadBillingStatus; individual===true
+           can't buy a domain). Replaced the retired $19.99 one-time domain
+           lifetime. Stays LAST regardless of the edu-first reorder above. -->
       <div id="plan-card-team" style="display:none;background:rgba(255,255,255,.03);border:1px solid rgba(253,214,99,.25);border-radius:14px;padding:14px;margin-bottom:14px">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
           <div>
             <div style="font-weight:600;font-size:.88rem;color:#e3e3e3" data-i18n="upgrade.teamName">Whole-School License</div>
-            <div style="font-size:.74rem;color:#9aa0a6;line-height:1.4" data-i18n="upgrade.teamDesc">One purchase covers every teacher on your domain — forever.</div>
+            <div style="font-size:.74rem;color:#9aa0a6;line-height:1.4" data-i18n="upgrade.deptDesc">Covers every teacher on your school's Google Workspace domain, billed yearly.</div>
           </div>
           <div style="text-align:right;flex-shrink:0">
-            <span class="price-team" style="font-weight:700;font-size:1rem;color:#fdd663">$19.99</span>
-            <span style="font-size:.7rem;color:#9aa0a6;font-weight:400;display:block" data-i18n="upgrade.oneTime">one-time</span>
+            <span class="price-department" style="font-weight:700;font-size:1rem;color:#fdd663">$59</span>
+            <span style="font-size:.7rem;color:#9aa0a6;font-weight:400;display:block" data-i18n="upgrade.perYear">/yr</span>
           </div>
         </div>
-        <button type="button" id="btn-upgrade-team" onclick="startUpgradeCheckout('team', 'btn-upgrade-team')" style="flex:0 0 auto;width:100%;background:rgba(253,214,99,.14);border:1px solid rgba(253,214,99,.3);color:#fdd663;padding:10px 16px;border-radius:20px;font-weight:600;font-size:.82rem;cursor:pointer;margin-top:10px;transition:all .15s ease" data-i18n="upgrade.teamCta">Get the Domain License — whole org, one payment</button>
+        <button type="button" id="btn-upgrade-team" onclick="startUpgradeCheckout('department', 'btn-upgrade-team')" style="flex:0 0 auto;width:100%;background:rgba(253,214,99,.14);border:1px solid rgba(253,214,99,.3);color:#fdd663;padding:10px 16px;border-radius:20px;font-weight:600;font-size:.82rem;cursor:pointer;margin-top:10px;transition:all .15s ease" data-i18n="upgrade.deptCta">Get the Department plan — your whole school</button>
       </div>
 
       <!-- Architectural Advantage Card -->

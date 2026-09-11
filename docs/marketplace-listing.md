@@ -68,7 +68,7 @@ Q: Can someone track attendance if they are not the meeting host?
 A: The meeting host can, out of the box. For a TA, co-host, or attendee to track a meeting they didn't organize, a Google Workspace™ admin turns on a one-time delegation (a 2-minute setup at attendancetracker.dev/setup). On personal @gmail.com meetings, the host is the one who tracks.
 
 Q: How much does it cost?
-A: Free to start (3 exports/month, no credit card). Paid options are one-time or low-cost: an Individual Lifetime Pass ($9.99 one-time), an Educator Annual Pass ($4.99/year), or a Lifetime Domain license ($19.99 one-time) covering every teacher in your school or company. Pro adds unlimited exports, hands-free auto-capture, cumulative Class Summary reports, gradebook exports, certificates, and chat digests.
+A: Free to start (3 exports/month, no credit card). Paid options: an Individual Lifetime Pass ($9.99 one-time), an Educator Annual Pass ($4.99/year), or a domain plan covering every teacher in your school — Department ($59/year) or Institution ($149/year, with a signed DPA, priority support, and invoice/PO billing). Pro adds unlimited exports, hands-free auto-capture, cumulative Class Summary reports, gradebook exports, certificates, and chat digests.
 
 Q: Does it work on the Google Meet™ mobile app?
 A: Attendance Tracker runs on desktop & laptop web browsers (Chrome™, Edge, Safari, Firefox). While Google Meet™ mobile apps do not currently support side-panel add-ons, you can view, export, and share all your meeting attendance reports from any phone or tablet at attendancetracker.dev.
