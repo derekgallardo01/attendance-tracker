@@ -1701,6 +1701,17 @@
        for personal-gmail users and non-admins. -->
   <a id="team-admin-link" href="https://attendancetracker.dev/team.html" onclick="openTeamPage(event)" target="_blank" style="display:none;padding:6px 16px;font-size:11px;color:#f59e0b;text-decoration:none" data-i18n="footer.teamAdmin">Open team admin dashboard →</a>
 
+  <!-- Team signpost (institutional wedge) — the SAME gated payload the history
+       page shows, surfaced here in the panel where domain admins actually work.
+       Rendered from /oauth/me's teamSignpost (null unless the domain is a genuine
+       3+ teacher cluster, not Pro, not dismissed). Reuses the history.signpost*
+       i18n keys (all 30 locales) + the /history/signpost-dismiss endpoint. This is
+       how the teacher-to-teacher spread inside a school turns into a domain plan. -->
+  <div id="team-signpost" style="display:none; align-items:flex-start; gap:8px; padding:9px 16px; font-size:12px; color:#c9d1d9; background:rgba(74,222,128,.08); border-top:1px solid #30363d">
+    <span style="line-height:1.5"><span id="team-signpost-msg"></span> <a id="team-signpost-link" href="https://attendancetracker.dev/team.html" onclick="onTeamSignpostClick(event)" target="_blank" rel="noopener" style="color:#4ade80;text-decoration:none;font-weight:600;white-space:nowrap"></a></span>
+    <button type="button" onclick="dismissTeamSignpost()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
+  </div>
+
   <!-- ── Summary ── -->
   <div class="summary-row">
     <div class="chip">
@@ -3040,6 +3051,7 @@ async function refreshActivationStatus() {
       if (status.detectedSource) state._detectedSource = status.detectedSource;
     }
     renderTeamAdminLink();
+    renderTeamSignpost(status.teamSignpost);
   } catch (e) {
     // Best-effort; nudges are a nice-to-have
   }
@@ -3052,6 +3064,43 @@ function renderTeamAdminLink() {
   const link = document.getElementById('team-admin-link');
   if (!link) return;
   link.style.display = state.activation?.teamAdmin ? 'inline-block' : 'none';
+}
+
+// Institutional wedge in the panel: "your school is already here". Paints the
+// gated /oauth/me teamSignpost (null unless a genuine 3+ teacher, non-Pro,
+// non-dismissed domain cluster). Admin sees "set up the domain plan"; a
+// non-admin teacher sees "N teachers at {domain} — see the team plan". Same
+// copy + dismissal as the history page (shared i18n keys). Dismiss is permanent
+// (server-persisted) so it never nags.
+function renderTeamSignpost(sp) {
+  const box = document.getElementById('team-signpost');
+  if (!box) return;
+  if (!sp || !sp.teacherCount || sp.teacherCount < 3) { box.style.display = 'none'; return; }
+  const msg = document.getElementById('team-signpost-msg');
+  const link = document.getElementById('team-signpost-link');
+  if (!msg || !link) return;
+  const n = sp.teacherCount;
+  if (sp.isTeamAdmin) {
+    msg.innerHTML = t('history.signpostAdmin', 'Your school has {n} teachers using this.').replace('{n}', '<b>' + n + '</b>');
+    link.textContent = t('history.signpostAdminCta', 'Set up the domain plan →');
+  } else {
+    msg.innerHTML = t('history.signpostTeam', '{n} teachers at {domain} use Attendance Tracker.')
+      .replace('{n}', '<b>' + n + '</b>').replace('{domain}', escHtml(sp.domain || ''));
+    link.textContent = t('history.signpostCta', 'See the team plan →');
+  }
+  try { logUserEvent('team_signpost_shown', { teacherCount: n, isTeamAdmin: !!sp.isTeamAdmin, surface: 'panel' }); } catch (e) { /* best-effort */ }
+  box.style.display = 'flex';
+}
+function onTeamSignpostClick() {
+  // The anchor opens team.html in a new top-level tab; just record the intent.
+  try { logUserEvent('team_signpost_clicked', { surface: 'panel' }); } catch (e) { /* best-effort */ }
+}
+function dismissTeamSignpost() {
+  const box = document.getElementById('team-signpost');
+  if (box) box.style.display = 'none';
+  try { logUserEvent('team_signpost_dismissed', {}); } catch (e) { /* best-effort */ }
+  // Persist so it never returns for this user (fire-and-forget).
+  try { fetch(`${state.backendUrl}/history/signpost-dismiss`, { method: 'POST', headers: authHeaders() }).catch(() => {}); } catch (e) { /* best-effort */ }
 }
 
 /* ═══════════════════════════════════════════════════════════════

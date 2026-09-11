@@ -5,6 +5,9 @@ const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { exchangeCode, revokeToken } = require('../services/googleAuth');
 const { upsertUser, getUser, updateUserTokens, logEvent, getUserActivationStatus, getUserTrackingStreak, getTenantConfig, deleteUser, getExistingDomainPeer } = require('../services/firestore');
+// Institutional wedge: the same gated signpost the history page shows, so the
+// in-Meet panel can surface "your school is already here" where admins actually are.
+const { buildTeamSignpost } = require('../lib/teamSignpost');
 const { domainOf } = require('../services/firestore/_core'); // pure util; imported directly so test firestore-mocks needn't stub it
 const { flushDeferredNotifications } = require('../lib/notifications');
 
@@ -242,16 +245,18 @@ router.get('/me', async (req, res) => {
     const decoded = decodeSession(req);
     if (!decoded) return res.status(401).json({ error: 'Not authenticated' });
     const domain = decoded.domain;
-    const [status, user, weeklyStreak] = await Promise.all([
+    const [status, user, weeklyStreak, teamSignpost] = await Promise.all([
       getUserActivationStatus(domain, decoded.email),
       getUser(domain, decoded.email),
       getUserTrackingStreak(domain, decoded.email),
+      buildTeamSignpost(domain, decoded.email),
     ]);
     res.json({
       email: decoded.email,
       domain,
       teamAdmin: !!user?.teamAdmin,
       weeklyStreak,
+      teamSignpost, // null unless this domain is a genuine multi-teacher cluster
       needsAcquisitionSource: !user?.acquisitionSource && !user?.acquisitionDismissed,
       detectedSource: user?.signupDetectedSource || null,
       ...status,
