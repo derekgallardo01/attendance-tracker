@@ -154,30 +154,42 @@ const CACHE_MS = 10 * 60 * 1000;
 // the price it would charge is ACTUALLY $149/yr. Verified against Stripe,
 // cached 10 min, fail-closed.
 const INSTITUTION_PRICE_CENTS = 14900;
-let _instCache = null; // { available, at }
+const DEPARTMENT_PRICE_CENTS = 5900;
+let _instCache = null; // { institutionAvailable, departmentAvailable, at }
 router.get('/public/billing-config', async (_req, res) => {
   res.set('Cache-Control', 'public, max-age=300');
   if (_instCache && Date.now() - _instCache.at < 10 * 60 * 1000) {
-    return res.json({ institutionAvailable: _instCache.available });
+    return res.json({ institutionAvailable: _instCache.institutionAvailable, departmentAvailable: _instCache.departmentAvailable });
   }
-  let available = false;
+  // Each optional card advertises a specific price and must stay hidden until the
+  // env var it would charge is ACTUALLY that price (both env vars predate their
+  // tiers). Verified against Stripe, cached 10 min, fail-closed.
+  let institutionAvailable = false;
+  let departmentAvailable = false;
   let priceCheckFailed = false;
   try {
     const key = process.env.STRIPE_SECRET_KEY;
-    const priceId = process.env.STRIPE_ANNUAL_PRICE_ID;
-    if (key && priceId) {
+    if (key) {
       const stripe = require('stripe')(key);
-      const price = await stripe.prices.retrieve(priceId);
-      available = !!(price && price.unit_amount === INSTITUTION_PRICE_CENTS && (price.recurring?.interval === 'year'));
+      const instId = process.env.STRIPE_ANNUAL_PRICE_ID;
+      const deptId = process.env.STRIPE_DEPARTMENT_PRICE_ID;
+      if (instId) {
+        const price = await stripe.prices.retrieve(instId);
+        institutionAvailable = !!(price && price.unit_amount === INSTITUTION_PRICE_CENTS && (price.recurring?.interval === 'year'));
+      }
+      if (deptId) {
+        const price = await stripe.prices.retrieve(deptId);
+        departmentAvailable = !!(price && price.unit_amount === DEPARTMENT_PRICE_CENTS && (price.recurring?.interval === 'year'));
+      }
     }
   } catch (err) {
     priceCheckFailed = true; // a transient Stripe blip — do NOT cache it
-    log.warn('public: billing-config price check failed — Institution card stays hidden this call only', { error: err.message });
+    log.warn('public: billing-config price check failed — optional cards stay hidden this call only', { error: err.message });
   }
   // Only cache a definitive answer; caching a transient failure would hide a
   // correctly-configured card for the whole 10-min TTL.
-  if (!priceCheckFailed) _instCache = { available, at: Date.now() };
-  res.json({ institutionAvailable: available });
+  if (!priceCheckFailed) _instCache = { institutionAvailable, departmentAvailable, at: Date.now() };
+  res.json({ institutionAvailable, departmentAvailable });
 });
 // Test hook: the 10-min cache would otherwise leak between test cases.
 router._resetInstitutionCache = () => { _instCache = null; };

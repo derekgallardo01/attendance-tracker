@@ -448,6 +448,7 @@ describe('GET /api/public/billing-config — Institution card gate', () => {
   afterEach(() => {
     delete process.env.STRIPE_SECRET_KEY;
     delete process.env.STRIPE_ANNUAL_PRICE_ID;
+    delete process.env.STRIPE_DEPARTMENT_PRICE_ID;
     resetCache();
   });
 
@@ -478,6 +479,21 @@ describe('GET /api/public/billing-config — Institution card gate', () => {
     res = await request(app2).get('/api/public/billing-config');
     expect(res.body.institutionAvailable).toBe(true);
     expect(mockRetrieve.mock.calls.length).toBe(calls);
+  });
+
+  test('Department card visible ONLY when its price is exactly $59/yr recurring', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_DEPARTMENT_PRICE_ID = 'price_dept';
+    resetCache();
+    mockRetrieve.mockResolvedValue({ unit_amount: 5900, recurring: { interval: 'year' } });
+    let res = await request(buildApp()).get('/api/public/billing-config');
+    expect(res.body.departmentAvailable).toBe(true);
+    expect(res.body.institutionAvailable).toBe(false); // annual price unset → institution stays hidden
+
+    resetCache();
+    mockRetrieve.mockResolvedValue({ unit_amount: 1999, recurring: { interval: 'year' } }); // wrong amount ($19.99)
+    res = await request(buildApp()).get('/api/public/billing-config');
+    expect(res.body.departmentAvailable).toBe(false);
   });
 
   test('a monthly $149 price stays hidden (must be yearly)', async () => {

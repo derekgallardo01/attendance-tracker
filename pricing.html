@@ -7,10 +7,10 @@
   <link rel="icon" type="image/png" sizes="128x128" href="icons/icon-128.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pricing — Attendance Tracker for Google Meet™</title>
-  <meta name="description" content="Attendance Tracker pricing: Free to start (3 exports/month), Individual Pro at $9.99 Lifetime Pass (one-time, nothing to cancel), and Domain Pro at $19.99 for entire Google Workspace domains." />
+  <meta name="description" content="Attendance Tracker pricing: Free to start (3 exports/month), Educator ($4.99/yr) and Individual Lifetime ($9.99) for solo teachers, and domain plans for schools — Department ($59/yr) and Institution ($149/yr) covering your whole Google Workspace." />
   <link rel="canonical" href="https://attendancetracker.dev/pricing.html" />
   <meta property="og:title" content="Pricing — Attendance Tracker for Google Meet™" />
-  <meta property="og:description" content="Free tier (3 exports/mo), Individual Pro ($9.99 Lifetime Pass), and Team Domain Pro ($19.99 one-time) for entire Google Workspace domains." />
+  <meta property="og:description" content="Free tier (3 exports/mo), Individual plans from $4.99/yr, and school domain plans — Department $59/yr and Institution $149/yr — covering every teacher on your Google Workspace domain." />
   <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
   <meta property="og:url" content="https://attendancetracker.dev/pricing.html" />
   <meta property="og:type" content="website" />
@@ -623,9 +623,10 @@
         </button>
       </div>
 
-      <!-- Plan 3: Individual Lifetime Pro (Featured) -->
-      <div class="plan-card featured">
-        <div class="card-ribbon" data-i18n="pricing.ribbonFeatured">Best Value · Most Popular</div>
+      <!-- Individual Lifetime — kept as the low-friction on-ramp for a solo
+           teacher, but no longer the featured plan: the emphasis now sits on the
+           recurring Department tier (the revenue-stream hero). -->
+      <div class="plan-card">
         <div class="card-top">
           <div class="plan-name" data-i18n="pricing.planLifetimeName">Individual Lifetime Pass</div>
           <div class="plan-description" data-i18n="pricing.planLifetimeDesc">Full unrestricted power for school teachers, university professors, tutors, and team leads.</div>
@@ -677,8 +678,46 @@
         </button>
       </div>
 
-      <!-- Plan 3: Domain Pro (Whole School / Org) -->
-      <div class="plan-card" id="plan-card-domain">
+      <!-- Department: the mid recurring DOMAIN tier ($59/yr) — the sweet spot for
+           a single school or small teaching team, where the $149/yr Institution
+           is steep. Hidden until /public/billing-config confirms the price is
+           actually $59/yr recurring (dark-launch guard). -->
+      <div class="plan-card" id="plan-card-department" style="display:none">
+        <div class="card-top">
+          <div class="plan-name" data-i18n="pricing.planDeptName">Department</div>
+          <div class="plan-description" data-i18n="pricing.planDeptDesc">Recurring cover for one school or department — a small teaching team on your Google Workspace domain.</div>
+          <div class="price-wrap">
+            <span class="price-num">$59</span>
+            <span class="price-period" data-i18n="pricing.perYear">/ year</span>
+          </div>
+          <div class="price-note" data-i18n="pricing.planDeptNote">Billed annually · cancel anytime</div>
+        </div>
+
+        <ul class="plan-features">
+          <li>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span data-i18n="pricing.featureEverythingIndividual">Everything in Individual Pro</span>
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span data-i18n="pricing.planDeptSeats">Covers your Google Workspace domain — sized for a single school</span>
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span data-i18n="pricing.featureTeamDashboard">Org-wide team dashboard (team.html)</span>
+          </li>
+        </ul>
+
+        <button type="button" id="btn-buy-department" class="btn-plan btn-plan-primary" onclick="startPricingCheckout('department', this)">
+          <span data-i18n="pricing.btnGetDepartment">Get Department — $59/yr</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </div>
+
+      <!-- Retired: the $19.99 one-time Domain Lifetime undercut the recurring
+           Department tier (why pay $59/yr when $19.99 buys it forever?). Kept in
+           the DOM but hidden — the `team` plan still works server-side. -->
+      <div class="plan-card" id="plan-card-domain" style="display:none">
         <div class="card-top">
           <div class="plan-name" data-i18n="pricing.planDomainName">Lifetime Domain Pro</div>
           <div class="plan-description" data-i18n="pricing.planDomainDesc">Small-team coverage: one purchase unlocks Pro for every teacher on your Google Workspace domain.</div>
@@ -736,7 +775,7 @@
         <ul class="plan-features">
           <li>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            <span data-i18n="pricing.featureEverythingDomain">Everything in Lifetime Domain Pro</span>
+            <span data-i18n="pricing.featureEverythingDept">Everything in Department, for your whole domain</span>
           </li>
           <li>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -915,6 +954,10 @@
             var card = document.getElementById('plan-card-institution');
             if (card) card.style.display = '';
           }
+          if (cfg && cfg.departmentAvailable) {
+            var deptCard = document.getElementById('plan-card-department');
+            if (deptCard) deptCard.style.display = '';
+          }
         })
         .catch(function () { /* card stays hidden */ })
         .then(function () {
@@ -986,7 +1029,7 @@
     let _checkoutEmail = null;
     let _promoOverride = null; // 'code' = user arrived with a promo code to enter
     function ensureTeamEmail(plan) {
-      if (plan !== 'team' && plan !== 'institution') return true;
+      if (plan !== 'team' && plan !== 'institution' && plan !== 'department') return true;
       if (getStoredToken()) return true; // authed checkout derives the domain server-side
       if (_checkoutEmail && _checkoutEmail.includes('@')) return true;
       const entered = window.prompt(t('pricing.workEmailPrompt', 'Enter your WORK email (it tells us which Google Workspace domain to activate):'), _checkoutEmail || '');
