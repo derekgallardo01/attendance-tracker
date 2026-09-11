@@ -28,7 +28,7 @@ function individualBillingConfigured() {
 // the fallthrough cascade once let an unknown/misspelled plan resolve to a
 // DIFFERENT product's price (the documented "$9.99 button charged team price"
 // class of bug).
-const KNOWN_PLANS = new Set(['team', 'educator', 'lifetime', 'individual']);
+const KNOWN_PLANS = new Set(['team', 'department', 'educator', 'lifetime', 'individual']);
 function normalizePlan(raw) {
   if (raw == null || raw === '') return { plan: null };            // caller omitted it — legacy inference
   if (typeof raw !== 'string') return { invalid: true };
@@ -71,15 +71,19 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
   const isEducator = normalizedPlan === 'educator';
   const isLifetime = normalizedPlan === 'lifetime';
   const isTeamPlan = normalizedPlan === 'team';
-  // A personal-email buyer can't own the shared gmail.com/etc tenant — a team
+  const isDepartment = normalizedPlan === 'department';
+  // Department is a DOMAIN plan (a mid tier between the $19.99 team lifetime and
+  // the $149/yr Institution), so it shares every domain-plan rule with `team`.
+  const isDomainPlan = isTeamPlan || isDepartment;
+  // A personal-email buyer can't own the shared gmail.com/etc tenant — a domain
   // purchase from them would flip the SHARED tenant doc Pro (cross-tenant
   // grant) while granting the buyer nothing (their gates read the user doc).
-  if (isTeamPlan && isPersonalDomain(domain)) {
+  if (isDomainPlan && isPersonalDomain(domain)) {
     return res.status(400).json({ error: 'The domain license covers a Google Workspace domain. On a personal account, pick the Lifetime or Educator pass instead.' });
   }
   const individual = (isEducator || isLifetime)
     ? true
-    : (isTeamPlan
+    : (isDomainPlan
       ? false
       : (normalizedPlan === 'individual' ? true : isPersonalDomain(domain)));
   // Personal-email users buy the INDIVIDUAL (per-user) plan; Workspace domains
@@ -95,9 +99,11 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
     ? process.env.STRIPE_EDUCATOR_PRICE_ID // no fallback: educator ($4.99/yr) and individual-annual are DIFFERENT products at different amounts
     : (isLifetime
       ? process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID
-      : (individual
-        ? (annual && process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID) || process.env.STRIPE_INDIVIDUAL_PRICE_ID
-        : (annual && process.env.STRIPE_ANNUAL_PRICE_ID) || process.env.STRIPE_PRICE_ID));
+      : (isDepartment
+        ? process.env.STRIPE_DEPARTMENT_PRICE_ID // recurring $59/yr domain mid-tier; NO fallback so it can never resolve to the team/institution price
+        : (individual
+          ? (annual && process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID) || process.env.STRIPE_INDIVIDUAL_PRICE_ID
+          : (annual && process.env.STRIPE_ANNUAL_PRICE_ID) || process.env.STRIPE_PRICE_ID)));
   if (!stripe || !priceId) {
     return res.status(503).json({ error: 'Billing is not configured yet.' });
   }
@@ -201,12 +207,14 @@ router.post('/billing/public-checkout', async (req, res) => {
   const annual = req.body?.interval === 'annual';
   const email = (req.body?.email || '').trim().toLowerCase() || undefined;
   const isTeam = plan === 'team';
+  const isDepartment = plan === 'department';
+  const isDomain = isTeam || isDepartment; // both are per-domain plans
   const isEducator = plan === 'educator';
 
   // A domain purchase MUST know which domain it activates. Without this, a
-  // signed-out visitor could pay for the team plan and the webhook's org
+  // signed-out visitor could pay for a domain plan and the webhook's org
   // branch would have nothing to provision — money taken, nothing granted.
-  if (isTeam) {
+  if (isDomain) {
     if (!email || !email.includes('@')) {
       return res.status(400).json({ error: 'A work email is required for the domain license — it tells us which domain to activate.' });
     }
@@ -219,11 +227,13 @@ router.post('/billing/public-checkout', async (req, res) => {
   // domain price). Missing price for the named plan → 503.
   const priceId = isEducator
     ? process.env.STRIPE_EDUCATOR_PRICE_ID // no fallback: educator and individual-annual are DIFFERENT products
-    : (isTeam
-        ? ((annual && process.env.STRIPE_ANNUAL_PRICE_ID) || process.env.STRIPE_PRICE_ID)
-        : (plan === 'lifetime'
-            ? process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID
-            : ((annual && process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID) || process.env.STRIPE_INDIVIDUAL_PRICE_ID)));
+    : (isDepartment
+        ? process.env.STRIPE_DEPARTMENT_PRICE_ID // recurring $59/yr domain mid-tier; NO fallback (never the team/institution price)
+        : (isTeam
+            ? ((annual && process.env.STRIPE_ANNUAL_PRICE_ID) || process.env.STRIPE_PRICE_ID)
+            : (plan === 'lifetime'
+                ? process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID
+                : ((annual && process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID) || process.env.STRIPE_INDIVIDUAL_PRICE_ID))));
 
   if (!priceId) {
     return res.status(503).json({ error: 'Selected plan price is not configured.' });
@@ -243,13 +253,13 @@ router.post('/billing/public-checkout', async (req, res) => {
     }
 
     const meta = {
-      individual: isTeam ? '0' : '1',
+      individual: isDomain ? '0' : '1',
       plan,
       source: 'public_pricing',
       ...(email ? { email } : {}),
-      // Stamp the domain for team purchases so the webhook can provision even
+      // Stamp the domain for domain purchases so the webhook can provision even
       // if client_reference_id is ever absent from the completed session.
-      ...(isTeam && email ? { domain: email.split('@')[1] } : {}),
+      ...(isDomain && email ? { domain: email.split('@')[1] } : {}),
     };
 
     // Real selling prices now — LAUNCH50 retired. Clean session (no discounts,
@@ -275,7 +285,7 @@ router.post('/billing/public-checkout', async (req, res) => {
       // buyer types their email into Stripe's hosted page instead; recovery
       // and receipts go to what THEY typed, while metadata/client_reference_id
       // (harmless — never emailed) keep provisioning intact.
-      sessionParams.client_reference_id = isTeam ? email.split('@')[1] : `user:${email}`;
+      sessionParams.client_reference_id = isDomain ? email.split('@')[1] : `user:${email}`;
     }
     if (promo && promo !== 'LAUNCH50') {
       sessionParams.allow_promotion_codes = true;

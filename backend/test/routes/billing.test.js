@@ -371,6 +371,67 @@ describe('billing — annual pricing (monthly + annual per tier)', () => {
   });
 });
 
+describe('billing — Department tier (mid-tier recurring DOMAIN plan, $59/yr)', () => {
+  beforeEach(() => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_PRICE_ID = 'price_org_monthly';       // team price — Department must NEVER resolve to this
+    process.env.STRIPE_ANNUAL_PRICE_ID = 'price_org_annual'; // institution price — nor this
+    process.env.STRIPE_DEPARTMENT_PRICE_ID = 'price_dept_59';
+    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_x';
+    mockStripeInstance.checkout.sessions.create.mockResolvedValue({ url: 'https://checkout.stripe.com/dept' });
+    app = buildApp();
+  });
+  afterEach(() => {
+    delete process.env.STRIPE_ANNUAL_PRICE_ID;
+    delete process.env.STRIPE_DEPARTMENT_PRICE_ID;
+  });
+  const params = () => mockStripeInstance.checkout.sessions.create.mock.calls[0][0];
+
+  test('authed department checkout on a workspace domain → the DEPARTMENT price, subscription, domain-keyed', async () => {
+    const res = await request(app).post('/api/billing/checkout')
+      .set(authedHeader('admin@acme.com', 'acme.com')).send({ plan: 'department' });
+    expect(res.status).toBe(200);
+    const p = params();
+    expect(p.line_items[0].price).toBe('price_dept_59'); // never the team/institution price
+    expect(p.mode).toBe('subscription');
+    expect(p.client_reference_id).toBe('acme.com');       // domain-keyed like team
+    expect(p.metadata.individual).toBe('0');
+    expect(p.metadata.plan).toBe('department');
+  });
+
+  test('a personal-email buyer cannot buy the Department (domain) plan → 400, no session', async () => {
+    const res = await request(app).post('/api/billing/checkout')
+      .set(authedHeader('teacher@gmail.com', 'gmail.com')).send({ plan: 'department' });
+    expect(res.status).toBe(400);
+    expect(mockStripeInstance.checkout.sessions.create).not.toHaveBeenCalled();
+  });
+
+  test('department price unset → 503, never a silent fallthrough to the team price', async () => {
+    delete process.env.STRIPE_DEPARTMENT_PRICE_ID;
+    app = buildApp();
+    const res = await request(app).post('/api/billing/checkout')
+      .set(authedHeader('admin@acme.com', 'acme.com')).send({ plan: 'department' });
+    expect(res.status).toBe(503);
+    expect(mockStripeInstance.checkout.sessions.create).not.toHaveBeenCalled();
+  });
+
+  test('public department checkout with a work email → department price, domain-keyed', async () => {
+    const res = await request(app).post('/api/billing/public-checkout')
+      .send({ plan: 'department', email: 'head@acme.com' });
+    expect(res.status).toBe(200);
+    const p = params();
+    expect(p.line_items[0].price).toBe('price_dept_59');
+    expect(p.client_reference_id).toBe('acme.com');
+    expect(p.metadata.individual).toBe('0');
+  });
+
+  test('public department checkout with NO email → 400 (webhook could not provision the domain)', async () => {
+    const res = await request(app).post('/api/billing/public-checkout').send({ plan: 'department' });
+    expect(res.status).toBe(400);
+    expect(mockStripeInstance.checkout.sessions.create).not.toHaveBeenCalled();
+  });
+});
+
 describe('planIsPro — per-user gating for personal domains', () => {
   const { planIsPro } = require('../../src/routes/billing');
   beforeEach(() => {

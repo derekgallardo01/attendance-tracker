@@ -15,6 +15,7 @@ module.exports = {
     lifetime:    { label: '$9.99',  full: null, period: 'one-time' },
     educator:    { label: '$4.99',  full: null, period: '/yr' },
     team:        { label: '$19.99', full: null, period: 'one-time' },
+    department:  { label: '$59',    full: null, period: '/yr' },
     institution: { label: '$149',   full: null, period: '/yr' },
   },
 };
