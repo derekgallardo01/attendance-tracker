@@ -3542,7 +3542,23 @@ async function initSDK() {
     if (state.signedIn && state.userEmail) {
       updateAuthUI();
       applyScopeRestrictions();
-      refreshActivationStatus();
+      // Await activation status so _needsSource is populated before we
+      // decide whether to show the source modal for returning users.
+      refreshActivationStatus().then(() => {
+        // Returning session (not brand-new sign-in): if the user still
+        // hasn't answered "how did you find us?" show the modal after a
+        // short delay. This catches the 54%+ of users who never export
+        // (the only other trigger). 3 s is enough to let the tour finish
+        // its first step and the meeting UI settle.
+        if (state._needsSource && !state._needsSourceDismissed) {
+          setTimeout(() => {
+            if (state._needsSource && !state._needsSourceDismissed
+                && document.visibilityState === 'visible') {
+              showSourceModal(state._detectedSource);
+            }
+          }, 3000);
+        }
+      }).catch(() => {});
       maybeStartTour();
       try { logUserEvent('addon_opened', { conferenceId: currentMeetingCode }); } catch {}
     }
@@ -5223,9 +5239,10 @@ function closeSurveyModal() {
   setTimeout(() => maybeAskSourcePostExport(), 400);
 }
 
-// Ask "how did you find us?" at a post-export moment — the only place it is
-// shown since the sign-in ask was retired. One dismissal ends it for good
-// (the dismissed flag also suppresses refreshActivationStatus re-arming).
+// Ask "how did you find us?" at a post-export moment — one of two places it is
+// shown (the other is when a returning session is restored in initSDK). One
+// dismissal ends it for good (the dismissed flag also suppresses
+// refreshActivationStatus re-arming).
 function maybeAskSourcePostExport() {
   if (!state._needsSource || state._needsSourceDismissed) return;
   // Auto-export can fire from a HIDDEN panel (handlePanelLeave) — opening the
