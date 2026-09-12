@@ -1676,6 +1676,16 @@
     <span style="line-height:1.45"><span data-i18n="tip.classSummary">Recurring class? Pro's cumulative Class Summary tracks each student's attendance % across every session —</span> <a href="https://attendancetracker.dev/history.html" onclick="try{logUserEvent('class_summary_tip_clicked',{})}catch(e){};openHistoryPage(event)" target="_blank" rel="noopener" style="color:#fdd663;text-decoration:none;font-weight:600" data-i18n="tip.classSummaryCta">see your class trends →</a></span>
     <button type="button" onclick="closeClassSummaryTip()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
   </div>
+  <!-- Term-end payoff (Phase 4): once a recurring class has met enough times, the
+       whole-term cumulative report + certificates are genuinely valuable. Fires
+       once per SERIES at the session milestone — for a free user it lands them on
+       the report teaser (point-of-need conversion); for a Pro user it's the "your
+       term report is ready" moment that turns the subscription into realized value
+       (retention). {n} set in JS. Once-per-series, dismissible, never stacks. -->
+  <div id="term-report-tip" style="display:none; align-items:flex-start; gap:8px; padding:8px 16px; font-size:11px; color:#9ca3af; background:rgba(129,201,149,.09); border-top:1px solid #30363d">
+    <span style="line-height:1.45"><span id="term-report-tip-msg"></span> <a href="https://attendancetracker.dev/history.html" onclick="onTermReportTipClick();openHistoryPage(event)" target="_blank" rel="noopener" style="color:#81c995;text-decoration:none;font-weight:600" data-i18n="tip.termReportCta">open the class report →</a></span>
+    <button type="button" onclick="closeTermReportTip()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
+  </div>
   <!-- Review ask at the value moment: shown once ever, after the user's 2nd
          MANUAL export (they've felt the payoff more than once = a genuinely happy
          user, not a one-off tester). Dismissible; never stacks with the recurring
@@ -4908,6 +4918,10 @@ function updateExportCta() {
   // ask can reach live-only trackers who never export. Runs regardless of the CTA
   // visibility below — a tracked meeting is a tracked meeting.
   if (realMeeting) recordRealMeetingTracked(state.conferenceId);
+  // Count this session toward its recurring SERIES so the term-end report/certs
+  // payoff can surface once a class has met enough times (reaches live-only
+  // trackers of a recurring class too, who never export).
+  if (realMeeting && state._recurringEventId) recordSeriesSession(state._recurringEventId, state.conferenceId);
   // Show whenever there's un-exported real-meeting data — NOT only while
   // `state.tracking`. The old `!state.tracking` hide made the prompt vanish the
   // instant tracking stopped (i.e. at meeting end), which is exactly when a host
@@ -5672,6 +5686,59 @@ function maybeShowClassSummaryUpsell() {
 function closeClassSummaryTip() {
   const b = document.getElementById('class-summary-tip');
   if (b) b.style.display = 'none';
+}
+
+// Term-end payoff (Phase 4). recordSeriesSession() is called each poll with the
+// current recurring series + conference id; it counts DISTINCT sessions per series
+// in localStorage. Once a series crosses TERM_REPORT_MIN_SESSIONS, the whole-term
+// cumulative report + certificates are worth surfacing — for a free user that's a
+// point-of-need conversion (the report page shows the teaser + upgrade), for a Pro
+// user it's realized value at term time (retention). Shown once per series.
+const TERM_REPORT_MIN_SESSIONS = 5;
+function recordSeriesSession(seriesId, conferenceId) {
+  if (!seriesId || !conferenceId) return;
+  let count = 0;
+  try {
+    const map = JSON.parse(localStorage.getItem('att_series_sessions') || '{}') || {};
+    const arr = Array.isArray(map[seriesId]) ? map[seriesId] : [];
+    if (!arr.includes(conferenceId)) {
+      arr.push(conferenceId);
+      map[seriesId] = arr.slice(-100);
+      const keys = Object.keys(map);
+      if (keys.length > 30) delete map[keys[0]]; // bound growth across many series
+      localStorage.setItem('att_series_sessions', JSON.stringify(map));
+    }
+    count = (map[seriesId] || []).length;
+  } catch (e) { return; } // private mode → skip silently
+  maybeShowTermReportNudge(seriesId, count);
+}
+function maybeShowTermReportNudge(seriesId, count) {
+  if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+  if (!seriesId || count < TERM_REPORT_MIN_SESSIONS) return;
+  let shownFor = [];
+  try { shownFor = JSON.parse(localStorage.getItem('att_term_report_shown') || '[]') || []; } catch (e) { return; }
+  if (shownFor.includes(seriesId)) return; // once per series
+  // One surface at a time — never crowd another tip or the export CTA.
+  for (const id of ['review-ask', 'class-summary-tip', 'recurring-tip', 'auto-export-nudge', 'auto-export-tip', 'team-signpost', 'export-cta']) {
+    const el = document.getElementById(id);
+    if (el && getComputedStyle(el).display !== 'none') return;
+  }
+  const bar = document.getElementById('term-report-tip');
+  const msgEl = document.getElementById('term-report-tip-msg');
+  if (!bar || !msgEl) return;
+  msgEl.textContent = t('tip.termReport', 'This class has met {n} times — see the whole-term attendance report: every student’s % across all sessions.').replace('{n}', count);
+  bar.style.display = 'flex';
+  try { shownFor.push(seriesId); localStorage.setItem('att_term_report_shown', JSON.stringify(shownFor.slice(-50))); } catch (e) { /* best-effort */ }
+  try { logUserEvent('term_report_tip_shown', { sessions: count, isPro: !!_isPro }); } catch (e) { /* best-effort */ }
+}
+function onTermReportTipClick() {
+  // The anchor's openHistoryPage handles navigation; just record the intent.
+  try { logUserEvent('term_report_tip_clicked', { isPro: !!_isPro }); } catch (e) { /* best-effort */ }
+}
+function closeTermReportTip() {
+  const b = document.getElementById('term-report-tip');
+  if (b) b.style.display = 'none';
+  try { logUserEvent('term_report_tip_dismissed', {}); } catch (e) { /* best-effort */ }
 }
 
 // Review ask, once ever. Fires once the user is genuinely engaged — either 2+

@@ -183,6 +183,8 @@
 
         "tip.classSummary": "Recurring class? Pro's cumulative Class Summary tracks each student's attendance % across every session —",
         "tip.classSummaryCta": "see your class trends →",
+        "tip.termReport": "This class has met {n} times — see the whole-term attendance report: every student’s % across all sessions.",
+        "tip.termReportCta": "open the class report →",
         "tip.autoExport": "You track a lot of meetings live but rarely export. Pro's auto-export saves each one to Google Sheets the moment the call ends —",
         "tip.autoExportCta": "turn on auto-export →",
         "toast.rateLimited": "Large meeting — Google is briefly limiting attendance updates. Your roster is safe; retrying shortly.",
@@ -1011,6 +1013,8 @@
 
         "tip.classSummary": "¿Clase recurrente? El Class Summary acumulativo de Pro registra el % de asistencia de cada estudiante en todas las sesiones —",
         "tip.classSummaryCta": "mira las tendencias de tu clase →",
+        "tip.termReport": "Esta clase se ha reunido {n} veces: consulta el informe de asistencia de todo el período — el % de cada estudiante en todas las sesiones.",
+        "tip.termReportCta": "abrir el informe de la clase →",
         "tip.autoExport": "Sigues muchas reuniones en vivo pero casi nunca exportas. La exportación automática de Pro guarda cada una en Google Sheets en cuanto termina la llamada —",
         "tip.autoExportCta": "activa la exportación automática →",
         "toast.rateLimited": "Reunión numerosa — Google está limitando brevemente las actualizaciones de asistencia. Tu lista está a salvo; se reintentará en breve.",
@@ -1839,6 +1843,8 @@
 
         "tip.classSummary": "Turma recorrente? O Class Summary cumulativo do Pro acompanha a % de presença de cada aluno em todas as sessões —",
         "tip.classSummaryCta": "veja as tendências da sua turma →",
+        "tip.termReport": "Esta turma já se reuniu {n} vezes — veja o relatório de presença do período inteiro: a % de cada aluno em todas as sessões.",
+        "tip.termReportCta": "abrir o relatório da turma →",
         "tip.autoExport": "Você acompanha muitas reuniões ao vivo, mas quase nunca exporta. A exportação automática do Pro salva cada uma no Google Sheets assim que a chamada termina —",
         "tip.autoExportCta": "ative a exportação automática →",
         "toast.rateLimited": "Reunião grande — o Google está limitando brevemente as atualizações de presença. Sua lista está segura; tentando novamente em breve.",
@@ -2667,6 +2673,8 @@
 
         "tip.classSummary": "बार-बार होने वाली क्लास? Pro का संचयी Class Summary हर सत्र में प्रत्येक छात्र की उपस्थिति % को ट्रैक करता है —",
         "tip.classSummaryCta": "अपनी क्लास के रुझान देखें →",
+        "tip.termReport": "यह कक्षा {n} बार मिल चुकी है — पूरे सत्र की उपस्थिति रिपोर्ट देखें: हर छात्र का % सभी सत्रों में।",
+        "tip.termReportCta": "कक्षा रिपोर्ट खोलें →",
         "tip.autoExport": "आप बहुत सारी मीटिंग लाइव ट्रैक करते हैं लेकिन शायद ही कभी एक्सपोर्ट करते हैं। Pro का ऑटो-एक्सपोर्ट कॉल खत्म होते ही हर मीटिंग को Google Sheets में सहेज देता है —",
         "tip.autoExportCta": "ऑटो-एक्सपोर्ट चालू करें →",
         "toast.rateLimited": "बड़ी मीटिंग — Google कुछ समय के लिए उपस्थिति अपडेट सीमित कर रहा है। आपकी सूची सुरक्षित है; जल्द ही पुनः प्रयास किया जा रहा है।",
@@ -3495,6 +3503,8 @@
 
         "tip.classSummary": "Umuulit na klase? Sinusubaybayan ng cumulative na Class Summary ng Pro ang attendance % ng bawat estudyante sa lahat ng session —",
         "tip.classSummaryCta": "tingnan ang mga trend ng iyong klase →",
+        "tip.termReport": "Nagkita na nang {n} beses ang klaseng ito — tingnan ang buong-term na attendance report: ang % ng bawat estudyante sa lahat ng sesyon.",
+        "tip.termReportCta": "buksan ang class report →",
         "tip.autoExport": "Marami kang sinusubaybayang meeting nang live pero bihira kang mag-export. Awtomatikong ise-save ng auto-export ng Pro ang bawat isa sa Google Sheets pagkatapos ng tawag —",
         "tip.autoExportCta": "i-on ang auto-export →",
         "toast.rateLimited": "Malaking meeting — pansamantalang nililimitahan ng Google ang mga update sa attendance. Ligtas ang iyong roster; susubukan ulit sa ilang sandali.",
@@ -4323,6 +4333,8 @@
 
         "tip.classSummary": "Kelas berulang? Class Summary terkumpul Pro menjejaki % kehadiran setiap pelajar merentas setiap sesi —",
         "tip.classSummaryCta": "lihat trend kelas anda →",
+        "tip.termReport": "Kelas ini telah bertemu sebanyak {n} kali — lihat laporan kehadiran sepanjang penggal: % setiap pelajar merentas semua sesi.",
+        "tip.termReportCta": "buka laporan kelas →",
         "tip.autoExport": "Anda menjejaki banyak mesyuarat secara langsung tetapi jarang mengeksport. Auto-eksport Pro menyimpan setiap satu ke Google Sheets sebaik sahaja panggilan tamat —",
         "tip.autoExportCta": "hidupkan auto-eksport →",
         "toast.rateLimited": "Mesyuarat besar — Google sedang mengehadkan kemas kini kehadiran buat sementara. Senarai anda selamat; mencuba semula sebentar lagi.",
@@ -5151,6 +5163,8 @@
 
         "tip.classSummary": "Kelas berulang? Class Summary kumulatif Pro melacak % kehadiran setiap siswa di seluruh sesi —",
         "tip.classSummaryCta": "lihat tren kelas Anda →",
+        "tip.termReport": "Kelas ini telah bertemu {n} kali — lihat laporan kehadiran satu semester penuh: % setiap siswa di semua sesi.",
+        "tip.termReportCta": "buka laporan kelas →",
         "tip.autoExport": "Anda melacak banyak rapat secara langsung tetapi jarang mengekspor. Auto-ekspor Pro menyimpan setiap rapat ke Google Sheets begitu panggilan berakhir —",
         "tip.autoExportCta": "aktifkan auto-ekspor →",
         "toast.rateLimited": "Rapat besar — Google untuk sementara membatasi pembaruan kehadiran. Daftar Anda aman; mencoba lagi sebentar lagi.",
@@ -5979,6 +5993,8 @@
 
         "tip.classSummary": "Lớp học định kỳ? Class Summary tích lũy của Pro theo dõi % điểm danh của từng học viên qua mọi buổi học —",
         "tip.classSummaryCta": "xem xu hướng lớp học của bạn →",
+        "tip.termReport": "Lớp này đã học {n} buổi — xem báo cáo điểm danh cả kỳ: tỷ lệ % của từng học viên qua tất cả các buổi.",
+        "tip.termReportCta": "mở báo cáo lớp →",
         "tip.autoExport": "Bạn theo dõi nhiều cuộc họp trực tiếp nhưng hiếm khi xuất. Tính năng tự động xuất của Pro lưu từng cuộc họp vào Google Sheets ngay khi cuộc gọi kết thúc —",
         "tip.autoExportCta": "bật tự động xuất →",
         "toast.rateLimited": "Cuộc họp lớn — Google đang tạm thời giới hạn cập nhật điểm danh. Danh sách của bạn vẫn an toàn; sẽ thử lại ngay.",
@@ -6807,6 +6823,8 @@
 
         "tip.classSummary": "Cours récurrent ? Le Class Summary cumulatif de Pro suit le % de présence de chaque élève sur toutes les séances —",
         "tip.classSummaryCta": "voyez les tendances de votre classe →",
+        "tip.termReport": "Cette classe s'est réunie {n} fois — consultez le rapport de présence du trimestre entier : le % de chaque élève sur toutes les séances.",
+        "tip.termReportCta": "ouvrir le rapport de classe →",
         "tip.autoExport": "Vous suivez beaucoup de réunions en direct mais exportez rarement. L'export automatique de Pro enregistre chacune dans Google Sheets dès la fin de l'appel —",
         "tip.autoExportCta": "activer l'export automatique →",
         "toast.rateLimited": "Réunion nombreuse — Google limite brièvement les mises à jour de présence. Votre liste est en sécurité ; nouvelle tentative sous peu.",
@@ -7635,6 +7653,8 @@
 
         "tip.classSummary": "Wiederkehrender Kurs? Die kumulative Class Summary von Pro verfolgt die Anwesenheit in % jedes Schülers über alle Sitzungen hinweg —",
         "tip.classSummaryCta": "sehen Sie die Trends Ihres Kurses →",
+        "tip.termReport": "Diese Klasse hat sich {n}-mal getroffen — sehen Sie den Anwesenheitsbericht des ganzen Semesters: den Prozentsatz jedes Schülers über alle Sitzungen.",
+        "tip.termReportCta": "Klassenbericht öffnen →",
         "tip.autoExport": "Sie verfolgen viele Meetings live, exportieren aber selten. Der Auto-Export von Pro speichert jedes Meeting in Google Sheets, sobald der Anruf endet —",
         "tip.autoExportCta": "Auto-Export aktivieren →",
         "toast.rateLimited": "Große Besprechung — Google begrenzt kurzzeitig die Anwesenheitsaktualisierungen. Ihre Liste ist sicher; wird in Kürze erneut versucht.",
@@ -8463,6 +8483,8 @@
 
         "tip.classSummary": "Lezione ricorrente? Il Class Summary cumulativo di Pro tiene traccia della % di presenza di ogni studente in tutte le sessioni —",
         "tip.classSummaryCta": "guarda le tendenze della tua classe →",
+        "tip.termReport": "Questa classe si è riunita {n} volte — guarda il report presenze dell'intero periodo: la % di ogni studente su tutte le sessioni.",
+        "tip.termReportCta": "apri il report della classe →",
         "tip.autoExport": "Segui molte riunioni in diretta ma esporti raramente. L'esportazione automatica di Pro salva ognuna in Google Sheets appena la chiamata finisce —",
         "tip.autoExportCta": "attiva l'esportazione automatica →",
         "toast.rateLimited": "Riunione numerosa — Google sta limitando brevemente gli aggiornamenti delle presenze. Il tuo elenco è al sicuro; nuovo tentativo a breve.",
@@ -9291,6 +9313,8 @@
 
         "tip.classSummary": "Terugkerende les? De cumulatieve Class Summary van Pro houdt het aanwezigheids-% van elke student over alle sessies bij —",
         "tip.classSummaryCta": "bekijk de trends van je klas →",
+        "tip.termReport": "Deze klas is {n} keer bijeengekomen — bekijk het aanwezigheidsrapport van het hele semester: het % van elke leerling over alle sessies.",
+        "tip.termReportCta": "open het klasrapport →",
         "tip.autoExport": "Je volgt veel vergaderingen live maar exporteert zelden. De auto-export van Pro slaat elke vergadering op in Google Sheets zodra het gesprek eindigt —",
         "tip.autoExportCta": "auto-export inschakelen →",
         "toast.rateLimited": "Grote vergadering — Google beperkt de aanwezigheidsupdates even. Je lijst is veilig; opnieuw proberen over enkele ogenblikken.",
@@ -10119,6 +10143,8 @@
 
         "tip.classSummary": "Zajęcia cykliczne? Skumulowane Class Summary w Pro śledzi % obecności każdego ucznia we wszystkich sesjach —",
         "tip.classSummaryCta": "zobacz trendy swojej klasy →",
+        "tip.termReport": "Ta klasa spotkała się {n} razy — zobacz raport frekwencji za cały okres: % każdego ucznia we wszystkich sesjach.",
+        "tip.termReportCta": "otwórz raport klasy →",
         "tip.autoExport": "Śledzisz wiele spotkań na żywo, ale rzadko eksportujesz. Automatyczny eksport w Pro zapisuje każde spotkanie w Google Sheets zaraz po zakończeniu rozmowy —",
         "tip.autoExportCta": "włącz automatyczny eksport →",
         "toast.rateLimited": "Duże spotkanie — Google chwilowo ogranicza aktualizacje obecności. Twoja lista jest bezpieczna; wkrótce nastąpi ponowna próba.",
@@ -10947,6 +10973,8 @@
 
         "tip.classSummary": "Tekrarlanan ders mi? Pro'nun kümülatif Class Summary'si her öğrencinin katılım %'sini tüm oturumlar boyunca izler —",
         "tip.classSummaryCta": "sınıfınızın eğilimlerini görün →",
+        "tip.termReport": "Bu sınıf {n} kez toplandı — tüm dönemin yoklama raporunu görün: her öğrencinin tüm oturumlardaki yüzdesi.",
+        "tip.termReportCta": "sınıf raporunu aç →",
         "tip.autoExport": "Birçok toplantıyı canlı takip ediyorsun ama nadiren dışa aktarıyorsun. Pro'nun otomatik dışa aktarması, görüşme biter bitmez her birini Google Sheets'e kaydeder —",
         "tip.autoExportCta": "otomatik dışa aktarmayı aç →",
         "toast.rateLimited": "Büyük toplantı — Google, katılım güncellemelerini kısa süreliğine sınırlıyor. Listeniz güvende; kısa süre içinde yeniden denenecek.",
@@ -11775,6 +11803,8 @@
 
         "tip.classSummary": "คลาสที่จัดซ้ำใช่ไหม Class Summary แบบสะสมของ Pro จะติดตาม % การเข้าร่วมของนักเรียนแต่ละคนในทุกเซสชัน —",
         "tip.classSummaryCta": "ดูแนวโน้มของคลาสคุณ →",
+        "tip.termReport": "ชั้นเรียนนี้พบกันแล้ว {n} ครั้ง — ดูรายงานการเข้าเรียนตลอดทั้งเทอม: เปอร์เซ็นต์ของนักเรียนแต่ละคนในทุกคาบ",
+        "tip.termReportCta": "เปิดรายงานชั้นเรียน →",
         "tip.autoExport": "คุณติดตามการประชุมแบบสดหลายรายการแต่แทบไม่เคยส่งออก ระบบส่งออกอัตโนมัติของ Pro จะบันทึกทุกการประชุมลงใน Google Sheets ทันทีที่สายสิ้นสุด —",
         "tip.autoExportCta": "เปิดการส่งออกอัตโนมัติ →",
         "toast.rateLimited": "การประชุมขนาดใหญ่ — Google กำลังจำกัดการอัปเดตการเข้าร่วมชั่วคราว รายชื่อของคุณปลอดภัย กำลังลองใหม่ในอีกสักครู่",
@@ -12603,6 +12633,8 @@
 
         "tip.classSummary": "حصة متكررة؟ يتتبع Class Summary التراكمي في Pro نسبة حضور كل طالب % عبر كل الجلسات —",
         "tip.classSummaryCta": "اطّلع على اتجاهات حصتك →",
+        "tip.termReport": "اجتمع هذا الصف {n} مرة — اطّلع على تقرير الحضور للفصل بأكمله: نسبة كل طالب عبر جميع الجلسات.",
+        "tip.termReportCta": "افتح تقرير الصف →",
         "tip.autoExport": "أنت تتابع الكثير من الاجتماعات مباشرةً لكنك نادرًا ما تصدّرها. يحفظ التصدير التلقائي في Pro كل اجتماع في Google Sheets بمجرد انتهاء المكالمة —",
         "tip.autoExportCta": "فعّل التصدير التلقائي →",
         "toast.rateLimited": "اجتماع كبير — يقوم Google بتقييد تحديثات الحضور مؤقتًا. قائمتك آمنة؛ ستتم إعادة المحاولة قريبًا.",
@@ -13431,6 +13463,8 @@
 
         "tip.classSummary": "반복되는 수업인가요? Pro의 누적 Class Summary가 모든 세션에 걸쳐 각 학생의 출석률 %를 추적합니다 —",
         "tip.classSummaryCta": "수업 추세 보기 →",
+        "tip.termReport": "이 수업은 {n}번 진행되었습니다 — 학기 전체 출석 보고서를 확인하세요: 모든 세션에 걸친 각 학생의 출석률.",
+        "tip.termReportCta": "수업 보고서 열기 →",
         "tip.autoExport": "회의를 실시간으로 많이 추적하지만 거의 내보내지 않으시네요. Pro의 자동 내보내기는 통화가 끝나는 즉시 각 회의를 Google Sheets에 저장합니다 —",
         "tip.autoExportCta": "자동 내보내기 켜기 →",
         "toast.rateLimited": "대규모 회의 — Google이 출석 업데이트를 잠시 제한하고 있습니다. 명단은 안전하며 곧 다시 시도합니다.",
@@ -14259,6 +14293,8 @@
 
         "tip.classSummary": "重複性課程？Pro 的累計 Class Summary 會追蹤每位學生在每一節課的出席率 % —",
         "tip.classSummaryCta": "查看你的課程趨勢 →",
+        "tip.termReport": "這門課已上課 {n} 次 — 查看整學期的出席報告：每位學生在所有課堂的出席率。",
+        "tip.termReportCta": "開啟課堂報告 →",
         "tip.autoExport": "您即時追蹤了許多會議，但很少匯出。Pro 的自動匯出會在通話結束時立即將每場會議儲存到 Google Sheets —",
         "tip.autoExportCta": "開啟自動匯出 →",
         "toast.rateLimited": "大型會議 — Google 正短暫限制出席更新。您的名單安全無虞；稍後將重試。",
@@ -15087,6 +15123,8 @@
 
         "tip.classSummary": "繰り返しの授業ですか？Pro の累積 Class Summary は、すべてのセッションにわたって各生徒の出席率 % を記録します —",
         "tip.classSummaryCta": "クラスの傾向を見る →",
+        "tip.termReport": "このクラスは {n} 回開催されました — 学期全体の出席レポートを確認：全セッションにわたる各生徒の出席率。",
+        "tip.termReportCta": "クラスレポートを開く →",
         "tip.autoExport": "多くの会議をライブで記録していますが、ほとんどエクスポートしていません。Pro の自動エクスポートなら、通話終了と同時に各会議を Google Sheets に保存します —",
         "tip.autoExportCta": "自動エクスポートをオンにする →",
         "toast.rateLimited": "大規模な会議 — Google が出席状況の更新を一時的に制限しています。名簿は安全です。まもなく再試行します。",
@@ -15915,6 +15953,8 @@
 
         "tip.classSummary": "மீண்டும் நடக்கும் வகுப்பா? Pro இன் ஒட்டுமொத்த Class Summary ஒவ்வொரு அமர்விலும் ஒவ்வொரு மாணவரின் வருகை % ஐக் கண்காணிக்கிறது —",
         "tip.classSummaryCta": "உங்கள் வகுப்பின் போக்குகளைப் பாருங்கள் →",
+        "tip.termReport": "இந்த வகுப்பு {n} முறை நடந்துள்ளது — முழு பருவத்தின் வருகை அறிக்கையைப் பாருங்கள்: அனைத்து அமர்வுகளிலும் ஒவ்வொரு மாணவரின் %.",
+        "tip.termReportCta": "வகுப்பு அறிக்கையைத் திற →",
         "tip.autoExport": "நீங்கள் பல கூட்டங்களை நேரலையில் கண்காணிக்கிறீர்கள் ஆனால் அரிதாகவே ஏற்றுமதி செய்கிறீர்கள். Pro இன் தானியங்கி ஏற்றுமதி, அழைப்பு முடிந்தவுடன் ஒவ்வொன்றையும் Google Sheets இல் சேமிக்கிறது —",
         "tip.autoExportCta": "தானியங்கி ஏற்றுமதியை இயக்கு →",
         "toast.rateLimited": "பெரிய கூட்டம் — Google வருகைப் புதுப்பிப்புகளைச் சிறிது நேரம் வரம்பிடுகிறது. உங்கள் பட்டியல் பாதுகாப்பாக உள்ளது; விரைவில் மீண்டும் முயற்சிக்கிறோம்.",
@@ -16743,6 +16783,8 @@
 
         "tip.classSummary": "పునరావృత తరగతా? Pro యొక్క సంచిత Class Summary ప్రతి సెషన్‌లో ప్రతి విద్యార్థి హాజరు %ని ట్రాక్ చేస్తుంది —",
         "tip.classSummaryCta": "మీ తరగతి ధోరణులను చూడండి →",
+        "tip.termReport": "ఈ తరగతి {n} సార్లు జరిగింది — మొత్తం సెమిస్టర్ హాజరు నివేదికను చూడండి: అన్ని సెషన్లలో ప్రతి విద్యార్థి %.",
+        "tip.termReportCta": "తరగతి నివేదికను తెరవండి →",
         "tip.autoExport": "మీరు చాలా సమావేశాలను ప్రత్యక్షంగా ట్రాక్ చేస్తారు కానీ చాలా అరుదుగా ఎగుమతి చేస్తారు. కాల్ ముగియగానే Pro ఆటో-ఎగుమతి ప్రతి సమావేశాన్ని Google Sheets లో సేవ్ చేస్తుంది —",
         "tip.autoExportCta": "ఆటో-ఎగుమతిని ఆన్ చేయండి →",
         "toast.rateLimited": "పెద్ద సమావేశం — Google హాజరు నవీకరణలను కొద్దిసేపు పరిమితం చేస్తోంది. మీ జాబితా సురక్షితం; త్వరలో మళ్లీ ప్రయత్నిస్తోంది.",
@@ -17571,6 +17613,8 @@
 
         "tip.classSummary": "পুনরাবৃত্ত ক্লাস? Pro-এর ক্রমসঞ্চিত Class Summary প্রতিটি সেশনে প্রতিটি শিক্ষার্থীর উপস্থিতির % ট্র্যাক করে —",
         "tip.classSummaryCta": "আপনার ক্লাসের প্রবণতা দেখুন →",
+        "tip.termReport": "এই ক্লাসটি {n} বার হয়েছে — পুরো টার্মের উপস্থিতি রিপোর্ট দেখুন: সব সেশনে প্রতিটি শিক্ষার্থীর %।",
+        "tip.termReportCta": "ক্লাস রিপোর্ট খুলুন →",
         "tip.autoExport": "আপনি অনেক মিটিং লাইভ ট্র্যাক করেন কিন্তু খুব কমই এক্সপোর্ট করেন। Pro-এর অটো-এক্সপোর্ট কল শেষ হওয়ার সঙ্গে সঙ্গে প্রতিটি মিটিং Google Sheets-এ সেভ করে —",
         "tip.autoExportCta": "অটো-এক্সপোর্ট চালু করুন →",
         "toast.rateLimited": "বড় মিটিং — Google সাময়িকভাবে উপস্থিতি আপডেট সীমিত করছে। আপনার তালিকা নিরাপদ; শীঘ্রই আবার চেষ্টা করা হচ্ছে।",
@@ -18399,6 +18443,8 @@
 
         "tip.classSummary": "بار بار ہونے والی کلاس؟ Pro کا مجموعی Class Summary ہر سیشن میں ہر طالب علم کی حاضری % کو ٹریک کرتا ہے —",
         "tip.classSummaryCta": "اپنی کلاس کے رجحانات دیکھیں →",
+        "tip.termReport": "یہ کلاس {n} بار منعقد ہو چکی ہے — پورے دورانیے کی حاضری رپورٹ دیکھیں: تمام سیشنز میں ہر طالب علم کا %۔",
+        "tip.termReportCta": "کلاس رپورٹ کھولیں →",
         "tip.autoExport": "آپ بہت سی میٹنگز کو لائیو ٹریک کرتے ہیں لیکن شاذ و نادر ہی ایکسپورٹ کرتے ہیں۔ Pro کا آٹو ایکسپورٹ کال ختم ہوتے ہی ہر میٹنگ کو Google Sheets میں محفوظ کر دیتا ہے —",
         "tip.autoExportCta": "آٹو ایکسپورٹ آن کریں →",
         "toast.rateLimited": "بڑی میٹنگ — Google عارضی طور پر حاضری کی اپ ڈیٹس محدود کر رہا ہے۔ آپ کی فہرست محفوظ ہے؛ جلد دوبارہ کوشش کی جا رہی ہے۔",
@@ -19227,6 +19273,8 @@
 
         "tip.classSummary": "重复性课程？Pro 的累计 Class Summary 会追踪每位学生在每节课的出勤率 % —",
         "tip.classSummaryCta": "查看你的课程趋势 →",
+        "tip.termReport": "这门课已上课 {n} 次 — 查看整学期的出勤报告：每位学生在所有课堂的出勤率。",
+        "tip.termReportCta": "打开课堂报告 →",
         "tip.autoExport": "您实时跟踪了很多会议，但很少导出。Pro 的自动导出会在通话结束时立即将每场会议保存到 Google Sheets —",
         "tip.autoExportCta": "开启自动导出 →",
         "toast.rateLimited": "大型会议 — Google 正短暂限制出席更新。您的名单安全无虞；稍后将重试。",
@@ -20055,6 +20103,8 @@
 
         "tip.classSummary": "Повторяющееся занятие? Накопительная Class Summary в Pro отслеживает % посещаемости каждого ученика по всем сессиям —",
         "tip.classSummaryCta": "смотрите тенденции вашего класса →",
+        "tip.termReport": "Этот класс встречался {n} раз — посмотрите отчёт о посещаемости за весь семестр: процент каждого ученика по всем занятиям.",
+        "tip.termReportCta": "открыть отчёт по классу →",
         "tip.autoExport": "Вы отслеживаете много встреч вживую, но почти не экспортируете. Автоэкспорт в Pro сохраняет каждую встречу в Google Sheets сразу после завершения звонка —",
         "tip.autoExportCta": "включить автоэкспорт →",
         "toast.rateLimited": "Крупная встреча — Google временно ограничивает обновления посещаемости. Ваш список в безопасности; скоро повторим попытку.",
@@ -20883,6 +20933,8 @@
 
         "tip.classSummary": "Повторюване заняття? Накопичувальна Class Summary у Pro відстежує % відвідуваності кожного учня в усіх сесіях —",
         "tip.classSummaryCta": "перегляньте тенденції вашого класу →",
+        "tip.termReport": "Цей клас зустрічався {n} разів — перегляньте звіт про відвідуваність за весь семестр: відсоток кожного учня за всі заняття.",
+        "tip.termReportCta": "відкрити звіт класу →",
         "tip.autoExport": "Ви відстежуєте багато зустрічей наживо, але майже не експортуєте. Автоекспорт у Pro зберігає кожну зустріч у Google Sheets одразу після завершення дзвінка —",
         "tip.autoExportCta": "увімкнути автоекспорт →",
         "toast.rateLimited": "Велика зустріч — Google тимчасово обмежує оновлення відвідуваності. Ваш список у безпеці; невдовзі повторимо спробу.",
@@ -21711,6 +21763,8 @@
 
         "tip.classSummary": "Curs recurent? Class Summary cumulativ din Pro urmărește % de prezență a fiecărui elev pe parcursul tuturor sesiunilor —",
         "tip.classSummaryCta": "vezi tendințele clasei tale →",
+        "tip.termReport": "Această clasă s-a întâlnit de {n} ori — vezi raportul de prezență pentru tot semestrul: procentul fiecărui elev la toate sesiunile.",
+        "tip.termReportCta": "deschide raportul clasei →",
         "tip.autoExport": "Urmărești multe întâlniri în direct, dar exporți rareori. Exportul automat din Pro salvează fiecare întâlnire în Google Sheets imediat ce se termină apelul —",
         "tip.autoExportCta": "activează exportul automat →",
         "toast.rateLimited": "Ședință numeroasă — Google limitează pe scurt actualizările de prezență. Lista ta este în siguranță; se reîncearcă în curând.",
@@ -22539,6 +22593,8 @@
 
         "tip.classSummary": "שיעור חוזר? ה-Class Summary המצטבר של Pro עוקב אחר אחוז הנוכחות % של כל תלמיד בכל המפגשים —",
         "tip.classSummaryCta": "צפו במגמות הכיתה שלכם →",
+        "tip.termReport": "הכיתה הזו נפגשה {n} פעמים — צפה בדוח הנוכחות של כל התקופה: האחוז של כל תלמיד בכל המפגשים.",
+        "tip.termReportCta": "פתח את דוח הכיתה →",
         "tip.autoExport": "אתה עוקב אחרי הרבה פגישות בזמן אמת אבל כמעט לא מייצא. הייצוא האוטומטי של Pro שומר כל פגישה ב-Google Sheets ברגע שהשיחה מסתיימת —",
         "tip.autoExportCta": "הפעל ייצוא אוטומטי →",
         "toast.rateLimited": "פגישה גדולה — Google מגביל זמנית את עדכוני הנוכחות. הרשימה שלך בטוחה; ניסיון חוזר בקרוב.",
@@ -23367,6 +23423,8 @@
 
         "tip.classSummary": "पुनरावृत्त वर्ग? Pro चा एकत्रित Class Summary प्रत्येक सत्रात प्रत्येक विद्यार्थ्याची उपस्थिती % ट्रॅक करतो —",
         "tip.classSummaryCta": "तुमच्या वर्गाचे कल पाहा →",
+        "tip.termReport": "हा वर्ग {n} वेळा भरला आहे — संपूर्ण सत्राचा उपस्थिती अहवाल पाहा: सर्व सत्रांमधील प्रत्येक विद्यार्थ्याची %.",
+        "tip.termReportCta": "वर्ग अहवाल उघडा →",
         "tip.autoExport": "तुम्ही अनेक मीटिंग थेट ट्रॅक करता पण क्वचितच एक्सपोर्ट करता. Pro चे ऑटो-एक्सपोर्ट कॉल संपताच प्रत्येक मीटिंग Google Sheets मध्ये सेव्ह करते —",
         "tip.autoExportCta": "ऑटो-एक्सपोर्ट चालू करा →",
         "toast.rateLimited": "मोठी मीटिंग — Google काही काळासाठी उपस्थिती अपडेट मर्यादित करत आहे. तुमची यादी सुरक्षित आहे; लवकरच पुन्हा प्रयत्न केला जात आहे.",
@@ -24195,6 +24253,8 @@
 
         "tip.classSummary": "Återkommande lektion? Pros kumulativa Class Summary följer varje elevs närvaro i % över alla sessioner —",
         "tip.classSummaryCta": "se din klass trender →",
+        "tip.termReport": "Den här klassen har träffats {n} gånger — se närvarorapporten för hela terminen: varje elevs % över alla sessioner.",
+        "tip.termReportCta": "öppna klassrapporten →",
         "tip.autoExport": "Du följer många möten live men exporterar sällan. Pros autoexport sparar varje möte i Google Sheets så fort samtalet avslutas —",
         "tip.autoExportCta": "aktivera autoexport →",
         "toast.rateLimited": "Stort möte — Google begränsar tillfälligt närvarouppdateringarna. Din lista är trygg; försöker igen snart.",

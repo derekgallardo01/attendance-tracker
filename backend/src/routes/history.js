@@ -99,6 +99,11 @@ const FRONTEND_EVENT_TYPES = new Set([
   'auto_export_tip_shown',
   'auto_export_tip_clicked',
   'auto_export_tip_dismissed',
+  // Term-end payoff nudge (recurring class hit the session milestone → cumulative
+  // report + certificates). Conversion for free users, retention for Pro.
+  'term_report_tip_shown',
+  'term_report_tip_clicked',
+  'term_report_tip_dismissed',
 ]);
 
 // POST /api/event — let the frontend record activation/funnel events that only
