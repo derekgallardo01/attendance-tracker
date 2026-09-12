@@ -1901,6 +1901,16 @@
   <!-- ── Activity Feed ── -->
   <div id="activity-feed"></div>
 
+  <!-- Persistent, discoverable "invite colleagues" entry (referral loop). The
+       referral SYSTEM (?ref= attribution + reward-month/promo minting) already
+       exists but was only reachable via the one-time celebrate modal + a buried
+       Settings row (0 referred users, 1 copy ever). This is an always-available,
+       no-nag standing link for signed-in users. Teacher-to-teacher spread is the
+       engine that forms the 3+ clusters the team wedge converts. -->
+  <div id="invite-colleagues-row" style="display:none;padding:10px 16px 0;text-align:center">
+    <a href="#" onclick="copyInviteLink();return false" style="font-size:.74rem;color:#4ade80;text-decoration:none;font-weight:600" data-i18n="footer.inviteColleagues">＋ Invite a colleague — copy your link</a>
+  </div>
+
   <!-- ── Footer ── -->
   <div style="padding:12px 16px;text-align:center;font-size:.65rem;color:#6e7681;margin-top:auto">
     <a id="history-link" href="https://attendancetracker.dev/history.html" onclick="try{logUserEvent('history_page_opened',{})}catch(e){};openHistoryPage(event)" target="_blank" style="color:#9ec8ff" data-i18n="footer.allMeetings">All meetings</a>
@@ -3412,6 +3422,8 @@ function updateAuthUI() {
   if (proBtn) proBtn.style.display = (state.signedIn && !_isPro) ? 'inline-flex' : 'none';
   const quotaInd = document.getElementById('export-quota-indicator');
   if (quotaInd && (!state.signedIn || _isPro)) quotaInd.style.display = 'none';
+  const inviteRow = document.getElementById('invite-colleagues-row');
+  if (inviteRow) inviteRow.style.display = state.signedIn ? 'block' : 'none';
 
   if (state.signedIn) {
     loadBillingStatus().catch(() => {});
@@ -6220,6 +6232,27 @@ function selectWebhookProvider(provider) {
   if (server.configured && !(_webhookDrafts[provider] || '')) {
     showSettingsStatus(t('settings.webhookSavedHint', 'Webhook is saved. Paste a new one to replace it.'), '#9ca3af', ui.statusId);
   }
+}
+
+// Persistent footer "invite a colleague" entry. Builds the ?ref= link from the
+// signed-in email and copies it — the existing referral machinery handles
+// attribution + reward when an invitee signs up. A copy + toast, no modal/nag.
+async function copyInviteLink() {
+  if (!state.userEmail) { toast(t('toast.signInToInvite', 'Sign in first to get your invite link.')); return; }
+  const link = buildReferralLink();
+  let ok = false;
+  try { await navigator.clipboard.writeText(link); ok = true; } catch { /* fall through */ }
+  if (!ok) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = link; document.body.appendChild(ta); ta.select();
+      ok = document.execCommand('copy'); document.body.removeChild(ta);
+    } catch { /* both blocked */ }
+  }
+  try { logUserEvent('referral_link_copied', { surface: 'footer' }); } catch (e) { /* best-effort */ }
+  toast(ok
+    ? t('toast.inviteCopied', 'Invite link copied — share it with a colleague who takes attendance.')
+    : t('toast.inviteCopyFailed', 'Could not copy — open Settings to grab your invite link.'), 5000);
 }
 
 // Copy the referral link (Meet iframe: clipboard API works; execCommand as
