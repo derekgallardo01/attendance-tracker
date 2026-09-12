@@ -59,6 +59,7 @@ jest.mock('../../src/services/firestore', () => ({
   getMeetingExcusedEmails: jest.fn(),
   addMeetingExcusedEmails: jest.fn(),
   getUserSettings: jest.fn(),
+  updateUserSettings: jest.fn(), // auto-export trial: lazily starts the trial clock
   getUserMeetingSeries: jest.fn(),
   getUser: jest.fn(),
   updateUserTokens: jest.fn(),
@@ -765,13 +766,26 @@ describe('POST /api/save-to-sheets — Pro gating', () => {
     delete process.env.STRIPE_PRICE_ID;
   });
 
-  test('auto-export is blocked with 402 for a free domain', async () => {
+  test('auto-export: a free user\'s FIRST attempt starts the trial and is allowed (not 402)', async () => {
     firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUserSettings.mockResolvedValue({}); // no trial started yet
     const res = await request(app).post('/api/save-to-sheets')
       .set(authedHeader('u@free1.com', 'free1.com')).set('Content-Type', 'application/json')
       .send({ ...validPayload, autoExport: true });
+    expect(res.status).not.toBe(402); // trial window → allowed through the Pro gate
+    expect(firestore.updateUserSettings).toHaveBeenCalledWith('free1.com', 'u@free1.com',
+      expect.objectContaining({ autoExportTrialStartedAt: expect.any(String) }));
+  });
+
+  test('auto-export is blocked with 402 once the free trial has expired', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    const old = new Date(Date.now() - 20 * 86400000).toISOString(); // 20 days ago > 14-day trial
+    firestore.getUserSettings.mockResolvedValue({ autoExportTrialStartedAt: old });
+    const res = await request(app).post('/api/save-to-sheets')
+      .set(authedHeader('u@free2.com', 'free2.com')).set('Content-Type', 'application/json')
+      .send({ ...validPayload, autoExport: true });
     expect(res.status).toBe(402);
-    expect(res.body).toMatchObject({ upgrade: true, feature: 'autoExport' });
+    expect(res.body).toMatchObject({ upgrade: true, feature: 'autoExport', trialEnded: true });
     expect(firestore.persistExport).not.toHaveBeenCalled(); // failed fast, no export
   });
 

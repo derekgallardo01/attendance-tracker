@@ -11,6 +11,11 @@ module.exports = {
   // user can ride that dedupe — beyond it, a constant conferenceId was an
   // unlimited-free-exports exploit. Generous for humans, fatal for scripts.
   FREE_REEXPORTS_PER_MEETING: 10,
+  // Free trial of auto-export (a Pro feature). The clock starts on a free user's
+  // FIRST auto-export attempt (not the toggle) and grants ~2 weeks of hands-free
+  // exports so they feel the value before the paywall — targets the users who
+  // toggled auto-export on (explicit Pro intent) but never converted.
+  AUTO_EXPORT_TRIAL_DAYS: 14,
   PRICES: {
     lifetime:    { label: '$9.99',  full: null, period: 'one-time' },
     educator:    { label: '$4.99',  full: null, period: '/yr' },

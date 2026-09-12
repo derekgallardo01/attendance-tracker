@@ -4460,7 +4460,13 @@ function toggleAutoExport(on) {
     if (!ok) toast(t('toast.settingSaveFailed', "Couldn't save that setting — check your connection and toggle it again."), 6000);
   });
   try { logUserEvent('auto_export_toggled', { on: !!on }); } catch {}
-  toast(on ? t('toast.autoExportOn') : t('toast.autoExportOff'));
+  if (on) {
+    // Free users get a trial (the backend starts the clock on the first auto-export
+    // and grants ~2 weeks before the paywall) — tell them so it's not a surprise.
+    toast(_isPro ? t('toast.autoExportOn') : t('toast.autoExportOnTrial', 'Auto-export is on — free to try for your first 14 days, then it becomes a Pro feature.'), _isPro ? 3000 : 6000);
+  } else {
+    toast(t('toast.autoExportOff'));
+  }
 }
 
 // Email lifecycle notifications toggle (opt-in/opt-out). Persists to the server's

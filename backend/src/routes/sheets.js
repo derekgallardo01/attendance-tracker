@@ -3,7 +3,7 @@ const { google } = require('googleapis');
 const { getGoogleClient } = require('../services/googleAuth');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { persistExport, getUserSheetId, setUserSheetId, countUserExports, countUserMonthlyExports, getExportReexportCount, getMeetingExcusedEmails, addMeetingExcusedEmails, getUserSettings, getUserMeetingSeries, logEvent, isEmailSuppressed } = require('../services/firestore');
+const { persistExport, getUserSheetId, setUserSheetId, countUserExports, countUserMonthlyExports, getExportReexportCount, getMeetingExcusedEmails, addMeetingExcusedEmails, getUserSettings, updateUserSettings, getUserMeetingSeries, logEvent, isEmailSuppressed } = require('../services/firestore');
 const { sendExportNotification, sendSlackDigest, sendChatDigest, sendDiscordDigest } = require('../lib/notifications');
 const { planIsPro } = require('./billing');
 
@@ -664,7 +664,23 @@ router.post('/save-to-sheets', async (req, res) => {
     // unconfigured) planIsPro is always true so nothing changes.
     const proAllowed = req.user ? await planIsPro(req.user.domain, req.user.email) : true;
     if (b.autoExport && req.user && !proAllowed) {
-      return res.status(402).json({ error: 'Auto-export on meeting end is a Pro feature.', upgrade: true, feature: 'autoExport' });
+      // Auto-export free trial: a free user who reaches for auto-export (explicit
+      // Pro intent) gets ~2 weeks of it before the paywall. The clock starts on
+      // the FIRST attempt (stored authoritatively in settings, not localStorage),
+      // which also covers users who toggled it on before the trial existed.
+      const { AUTO_EXPORT_TRIAL_DAYS } = require('../config/pricing');
+      const s = (await getUserSettings(req.user.domain, req.user.email).catch(() => null)) || {};
+      let start = s.autoExportTrialStartedAt;
+      if (!start) {
+        start = new Date().toISOString();
+        await updateUserSettings(req.user.domain, req.user.email, { autoExportTrialStartedAt: start }).catch(() => {});
+        try { await logEvent(req.user.domain, { email: req.user.email, type: 'auto_export_trial_started', meta: {} }); } catch { /* best-effort */ }
+      }
+      const elapsedDays = (Date.now() - Date.parse(start)) / 86400000;
+      if (!(elapsedDays >= 0 && elapsedDays < AUTO_EXPORT_TRIAL_DAYS)) {
+        return res.status(402).json({ error: 'Auto-export on meeting end is a Pro feature.', upgrade: true, feature: 'autoExport', trialEnded: true });
+      }
+      // else: within the trial window → let this auto-export through.
     }
 
     // Monthly export quota check for Free users (single source of truth:
