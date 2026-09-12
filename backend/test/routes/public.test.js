@@ -24,6 +24,7 @@ jest.mock('../../src/services/firestore', () => ({
 jest.mock('../../src/lib/notifications', () => ({
   sendFeedbackEmail: jest.fn(),
   verifyUnsubscribeToken: jest.fn(),
+  sendAdminEmail: jest.fn(),
 }));
 
 const firestore = require('../../src/services/firestore');
@@ -189,6 +190,50 @@ describe('POST /api/public/feedback', () => {
       .post('/api/public/feedback')
       .set('Content-Type', 'application/json')
       .send({ body: 'Test feedback message here' });
+    expect(res.status).toBe(500);
+  });
+});
+
+describe('POST /api/public/quote-request (institutional buying path)', () => {
+  test('400 without a work email — nothing to follow up on', async () => {
+    const res = await request(app)
+      .post('/api/public/quote-request')
+      .set('Content-Type', 'application/json')
+      .send({ schoolName: 'Acme High' });
+    expect(res.status).toBe(400);
+    expect(notifications.sendAdminEmail).not.toHaveBeenCalled();
+  });
+
+  test('200 with a work email — emails the owner with the lead details', async () => {
+    notifications.sendAdminEmail.mockResolvedValue({ sent: true });
+    const res = await request(app)
+      .post('/api/public/quote-request')
+      .set('Content-Type', 'application/json')
+      .send({ workEmail: 'admin@school.edu', schoolName: 'Acme High', seats: '12', plan: 'department', notes: 'PO please' });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(notifications.sendAdminEmail).toHaveBeenCalledWith(expect.objectContaining({
+      subject: expect.stringContaining('school.edu'),
+      body: expect.stringContaining('admin@school.edu'),
+    }));
+  });
+
+  test('CI smoke email is not persisted or emailed', async () => {
+    notifications.sendAdminEmail.mockClear();
+    const res = await request(app)
+      .post('/api/public/quote-request')
+      .set('Content-Type', 'application/json')
+      .send({ workEmail: 'ci-smoke@attendancetracker.dev' });
+    expect(res.status).toBe(200);
+    expect(notifications.sendAdminEmail).not.toHaveBeenCalled();
+  });
+
+  test('500 when the email send throws', async () => {
+    notifications.sendAdminEmail.mockRejectedValue(new Error('SMTP down'));
+    const res = await request(app)
+      .post('/api/public/quote-request')
+      .set('Content-Type', 'application/json')
+      .send({ workEmail: 'admin@school.edu' });
     expect(res.status).toBe(500);
   });
 

@@ -3,7 +3,7 @@ const rateLimit = require('express-rate-limit');
 const { FieldValue } = require('@google-cloud/firestore');
 const log = require('../lib/logger');
 const { getDb, resolveShareLink, getSharedSeriesView, suppressEmail, getVerification, logEvent } = require('../services/firestore');
-const { sendFeedbackEmail, verifyUnsubscribeToken } = require('../lib/notifications');
+const { sendFeedbackEmail, verifyUnsubscribeToken, sendAdminEmail } = require('../lib/notifications');
 const { escapeHtml } = require('../lib/html');
 
 const router = Router();
@@ -70,6 +70,69 @@ router.post('/public/feedback', feedbackLimiter, async (req, res) => {
   } catch (err) {
     log.error('feedback: send failed', { error: err.message });
     res.status(500).json({ error: 'Failed to submit feedback' });
+  }
+});
+
+// POST /api/public/quote-request — a school/org asks for a quote or invoice.
+// Institutions rarely buy via a self-serve credit-card button — they need a PO,
+// an invoice, and often a signed DPA before money moves. This captures that lead
+// (persist + email Derek) so the institutional pivot has a buying path that
+// matches how schools actually procure. Unauth (school admins land on /pricing
+// before signing in), rate-limited per IP.
+const quoteLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests. Try again later.' },
+});
+router.post('/public/quote-request', quoteLimiter, async (req, res) => {
+  try {
+    /* istanbul ignore next: express.json always sets req.body to an object */
+    const { workEmail, schoolName, seats, plan, notes } = req.body || {};
+    if (!workEmail || typeof workEmail !== 'string' || !workEmail.includes('@')) {
+      return res.status(400).json({ error: 'A work email is required.' });
+    }
+    const email = workEmail.trim().toLowerCase().slice(0, 200);
+    const domain = email.split('@')[1] || '';
+    const rec = {
+      workEmail: email,
+      domain,
+      schoolName: cap(schoolName, 200),
+      seats: cap(String(seats == null ? '' : seats), 40),
+      plan: cap(plan, 40),
+      notes: cap(notes, 2000),
+      userAgent: cap(req.headers['user-agent'], 500),
+      ip: cap(req.ip, 100),
+      createdAt: FieldValue.serverTimestamp(),
+    };
+    const isSmokeTest = email === 'ci-smoke@attendancetracker.dev';
+    try {
+      if (!isSmokeTest) await getDb().collection('quoteRequests').add(rec);
+    } catch (e) {
+      log.warn('quote-request: firestore persist failed', { error: e.message });
+    }
+    if (!isSmokeTest) {
+      const to = process.env.NOTIFY_EMAIL || process.env.GMAIL_USER;
+      const subject = `🏫 Institution quote request: ${rec.schoolName || domain} (${domain})`;
+      const body = [
+        'A school or organization requested a quote / invoice from the pricing page.',
+        '',
+        `School / org:  ${rec.schoolName || '(not given)'}`,
+        `Work email:    ${email}`,
+        `Domain:        ${domain}`,
+        `Teachers:      ${rec.seats || '(not given)'}`,
+        `Interested in: ${rec.plan || '(not given)'}`,
+        `Notes:         ${rec.notes || '(none)'}`,
+        '',
+        `IP: ${rec.ip}`,
+      ].join('\n');
+      await sendAdminEmail({ to, subject, body });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    log.error('quote-request: failed', { error: err.message });
+    res.status(500).json({ error: 'Failed to submit request' });
   }
 });
 
