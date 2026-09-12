@@ -1555,8 +1555,8 @@
       </svg>
     </div>
     <div class="header-info">
-      <div class="app-title" id="app-title-tap">Attendance</div>
-      <div id="meeting-title">Not in a meeting</div>
+      <div class="app-title" id="app-title-tap" data-i18n="profile.attendance">Attendance</div>
+      <div id="meeting-title" data-i18n="meeting.notIn">Not in a meeting</div>
       <div id="meeting-type" style="font-size:.65rem;color:#9ca3af;margin-top:1px;display:none"></div>
     </div>
     <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
@@ -1582,7 +1582,7 @@
   <!-- ── Auth bar ── -->
   <div id="auth-bar">
     <span id="auth-status">
-      <button class="btn-google" id="btn-google-signin" onclick="signInWithGoogle()">
+      <button class="btn-google" id="btn-google-signin" onclick="signInWithGoogle()" data-i18n="btn.signIn">
         <svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#34A853" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#FBBC05" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
         Sign in with Google
       </button>
@@ -1619,7 +1619,7 @@
   <!-- ── Status bar ── -->
   <div id="status-bar">
     <div class="dot" id="status-dot"></div>
-    <span id="status-text">Initializing…</span>
+    <span id="status-text" data-i18n="status.initializing">Initializing…</span>
     <span id="last-refresh"></span>
   </div>
 
@@ -2511,6 +2511,7 @@ function renderRosterView() {
 
   const unregisteredGuests = parts.filter(p => !matchedParts.has(p));
 
+  state._lastAbsentStudents = absentStudents;
   document.getElementById('roster-count-present').textContent = presentStudents.length;
   document.getElementById('roster-count-late').textContent = lateStudents.length;
   document.getElementById('roster-count-absent').textContent = absentStudents.length;
@@ -2550,7 +2551,12 @@ function renderRosterView() {
   }
 
   if (absentStudents.length > 0) {
-    html += `<div style="font-size:.68rem;font-weight:700;color:#f87171;text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px">${t('roster.sectionAbsent', 'Absent ({n})').replace('{n}', absentStudents.length)}</div>`;
+    html += `<div style="display:flex;align-items:center;justify-content:space-between;margin:12px 0 6px">
+      <span style="font-size:.68rem;font-weight:700;color:#f87171;text-transform:uppercase;letter-spacing:.05em">${t('roster.sectionAbsent', 'Absent ({n})').replace('{n}', absentStudents.length)}</span>
+      <button type="button" onclick="copyAbsenteeList()" style="background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.35);color:#f87171;border-radius:4px;padding:2px 8px;font-size:.68rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px">
+        <span>📋</span> <span>${t('roster.copyList', 'Copy List')}</span>
+      </button>
+    </div>`;
     for (const item of absentStudents) {
       const s = item.student;
       const cardClass = item.isExcused ? 'roster-card excused' : 'roster-card absent';
@@ -2586,6 +2592,28 @@ function renderRosterView() {
   }
 
   container.innerHTML = html;
+}
+
+function copyAbsenteeList() {
+  const absents = state._lastAbsentStudents || [];
+  if (!absents.length) return toast(t('roster.noAbsents', 'No absent students'));
+  const names = absents.map(a => (a.student?.name || 'Unknown') + (a.isExcused ? ' (' + t('attendee.excused', 'Excused') + ')' : '')).join(', ');
+  const text = `${t('attendee.absent', 'Absent')} (${absents.length}): ${names}`;
+  let copied = false;
+  if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+    try {
+      navigator.clipboard.writeText(text).then(() => {
+        toast(t('toast.absenteesCopied', 'Copied {n} absentees to clipboard').replace('{n}', absents.length));
+      }).catch(() => {
+        prompt(t('roster.copyManually', 'Copy absent students:'), text);
+      });
+      copied = true;
+    } catch (_) {}
+  }
+  if (!copied) {
+    prompt(t('roster.copyManually', 'Copy absent students:'), text);
+  }
+  try { logUserEvent('absentees_copied', { count: absents.length }); } catch (_) {}
 }
 
 // Shared download driver. Inside the Meet add-on iframe the sandbox lacks
@@ -4500,7 +4528,14 @@ async function loadBillingStatus() {
     // Domain license card: only sensible for Workspace-domain users — a
     // personal-Gmail buyer can't own the shared gmail.com tenant.
     const teamCard = document.getElementById('plan-card-team');
-    if (teamCard) teamCard.style.display = (!data.individual && data.billingConfigured && !_isPro) ? '' : 'none';
+    if (teamCard) {
+      teamCard.style.display = (!data.individual && data.billingConfigured && !_isPro) ? '' : 'none';
+      const domain = data.domain || (state.userEmail || '').split('@')[1] || '';
+      if (data.domainUserCount >= 2 && domain) {
+        const desc = teamCard.querySelector('[data-i18n="upgrade.deptDesc"]');
+        if (desc) desc.textContent = t('upgrade.deptDescWithCount', '{n} colleagues at {domain} are using Attendance Tracker. Covers every teacher on your domain.').replace('{n}', data.domainUserCount).replace('{domain}', domain);
+      }
+    }
     // Digest webhooks send only on Pro — badge the settings cards so free
     // users aren't left wondering why a saved webhook stays quiet.
     document.querySelectorAll('.webhook-pro-badge').forEach(el => {
@@ -4740,7 +4775,12 @@ function showUpgradeModal(reason) {
   }
   const dealPill = document.getElementById('upgrade-deal-pill');
   if (dealPill) {
-    if (isEdu) {
+    if (_billing && _billing.pppDiscount && _billing.pppDiscount.eligible) {
+      dealPill.innerHTML = `<span>${escHtml(t('upgrade.dealPpp', '🏷️ Regional Subsidy: 50% off automatically applied at checkout'))}</span>`;
+      dealPill.style.background = 'rgba(74,222,128,.16)';
+      dealPill.style.borderColor = 'rgba(74,222,128,.4)';
+      dealPill.style.color = '#4ade80';
+    } else if (isEdu) {
       dealPill.innerHTML = `<span>${escHtml(t('upgrade.dealEdu', 'Educator plan · verifiable certificates included'))}</span>`;
       dealPill.style.background = 'rgba(74,222,128,.14)';
       dealPill.style.borderColor = 'rgba(74,222,128,.35)';
@@ -4892,10 +4932,38 @@ function updateExportCta() {
   cta.style.display = 'block';
 }
 
+function openScopeGuideModal() {
+  const m = document.getElementById('scope-guide-modal');
+  if (m) {
+    if (typeof AttStrings !== 'undefined' && AttStrings.applyTranslations) {
+      AttStrings.applyTranslations(m);
+    }
+    m.style.display = 'flex';
+  }
+  try { logUserEvent('scope_guide_shown'); } catch (_) {}
+}
+
+function closeScopeGuideModal() {
+  const m = document.getElementById('scope-guide-modal');
+  if (m) m.style.display = 'none';
+}
+
+function proceedWithScopeAuth() {
+  closeScopeGuideModal();
+  toast(t('toast.reconnectingDrive', 'Opening Google sign-in… check the Google Drive box.'), 5000);
+  signInWithGoogle();
+}
+
+function exportCsvFallback() {
+  closeScopeGuideModal();
+  try { logUserEvent('scope_guide_csv_fallback'); } catch (_) {}
+  downloadAttendanceCsv();
+}
+
 // Export CTA button: recover the Drive scope if it's missing, else export.
 function onExportCtaClick() {
   if (document.getElementById('btn-sheets')?.dataset.scopeBlocked === '1') {
-    signInWithGoogle(); // incremental re-consent to add drive.file
+    openScopeGuideModal();
     return;
   }
   saveToSheets();
@@ -4913,8 +4981,7 @@ async function saveToSheets() {
   if (!state.participants.size) { toast(t('toast.noData','No data yet')); return; }
   if (document.getElementById('btn-sheets')?.dataset.scopeBlocked === '1') {
     logUserEvent('export_failed', { reason: 'scope_blocked' });
-    toast(t('toast.reconnectingDrive', 'Reconnecting Google to grant Drive access…'), 5000);
-    signInWithGoogle(); // one-click re-consent instead of a dead-end toast
+    openScopeGuideModal();
     return;
   }
   logUserEvent('export_clicked', { participantCount: state.participants.size });
@@ -6004,6 +6071,7 @@ document.addEventListener('keydown', (e) => {
     ['source-modal', typeof closeSourceModal === 'function' ? closeSourceModal : null],
     ['profile-modal', typeof closeProfileModal === 'function' ? closeProfileModal : null],
     ['match-modal', typeof closeMatchModal === 'function' ? closeMatchModal : null],
+    ['scope-guide-modal', typeof closeScopeGuideModal === 'function' ? closeScopeGuideModal : null],
   ];
   for (const [id, close] of overlays) {
     const el = document.getElementById(id);
@@ -6894,7 +6962,7 @@ window.addEventListener('DOMContentLoaded', () => {
             <circle cx="12" cy="12" r="3"></circle>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
           </svg>
-          <div id="settings-modal-title" style="font-weight:700;color:#e6edf3;font-size:1.05rem">Settings</div>
+          <div id="settings-modal-title" style="font-weight:700;color:#e6edf3;font-size:1.05rem" data-i18n="nav.settings">Settings</div>
         </div>
         <button onclick="closeSettingsModal()" data-i18n-aria="tip.closeSettings" aria-label="Close settings" class="settings-close-btn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -7331,6 +7399,39 @@ window.addEventListener('DOMContentLoaded', () => {
       <div style="display:flex;gap:8px;justify-content:flex-end;align-items:center">
         <button onclick="closeCertModal()" style="background:transparent;border:none;color:#8b949e;font-size:.8rem;cursor:pointer" data-i18n="common.cancel">Cancel</button>
         <button onclick="submitCertModal(this)" class="btn btn-primary" style="padding:8px 16px;font-size:.85rem" data-i18n="cert.generate">Generate certificates</button>
+      </div>
+    </div>
+  </div>
+  <!-- ── Scope / Drive Permission Guidance Modal ── -->
+  <div id="scope-guide-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:1150;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px)">
+    <div style="background:#1e1f20;border:1px solid rgba(88,166,255,.4);border-radius:16px;padding:24px;max-width:380px;width:100%;box-shadow:0 24px 48px rgba(0,0,0,.6);position:relative">
+      <button type="button" onclick="closeScopeGuideModal()" aria-label="Close" style="position:absolute;top:16px;right:16px;background:none;border:none;color:#9aa0a6;cursor:pointer;font-size:18px;line-height:1;padding:4px">&times;</button>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span style="font-size:1.4rem">📁</span>
+        <div style="font-size:1.15rem;font-weight:600;color:#e6edf3" data-i18n="scopeModal.title">Google Drive Access Needed</div>
+      </div>
+      <p style="margin:0 0 14px;font-size:.82rem;color:#9aa0a6;line-height:1.45" data-i18n="scopeModal.desc">
+        Your export didn't go through because Google Drive access wasn't granted when you signed in. To save your attendance to a spreadsheet, Google requires Drive file permission.
+      </p>
+      <div style="background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.25);border-radius:10px;padding:12px 14px;margin-bottom:16px;text-align:left">
+        <div style="display:flex;align-items:flex-start;gap:8px;font-size:.82rem;color:#e6edf3;font-weight:600">
+          <span style="color:#4ade80;font-size:1.1rem;line-height:1">☑</span>
+          <span data-i18n="scopeModal.boxInstruction">In the Google window that opens, make sure to check the box next to Google Drive:</span>
+        </div>
+        <div style="font-size:.76rem;color:#81c995;margin-top:6px;padding-left:22px" data-i18n="scopeModal.boxQuote">
+          "See, edit, create, and delete only the specific Google Drive files you use with this app"
+        </div>
+        <div style="font-size:.72rem;color:#8b949e;margin-top:6px;padding-left:22px" data-i18n="scopeModal.boxNote">
+          (Google leaves this unchecked by default on sign-in)
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button type="button" class="btn-primary" onclick="proceedWithScopeAuth()" style="width:100%;padding:10px 14px;font-size:.85rem;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px" data-i18n="scopeModal.connectDrive">
+          Connect Google Drive
+        </button>
+        <button type="button" class="btn-secondary" onclick="exportCsvFallback()" style="width:100%;padding:8px 14px;font-size:.8rem;justify-content:center;color:#8b949e" data-i18n="scopeModal.csvFallback">
+          Download CSV Instead (No Drive needed)
+        </button>
       </div>
     </div>
   </div>
