@@ -10,6 +10,7 @@ const PRICING = require('../config/pricing');
 // High-volume education & developing markets eligible for Purchasing Power Parity (PPP) subsidy
 const PPP_COUNTRIES = new Set([
   'PH', 'IN', 'ID', 'MY', 'NG', 'VN', 'PK', 'BD', 'KE', 'ZA', 'BR', 'CO', 'PE',
+  'UA', 'GH', 'EG', 'TH', 'TR', 'AR', 'LK',
 ]);
 
 function detectCountry(req) {
@@ -431,9 +432,12 @@ router.get('/billing/status', requireAuth, async (req, res) => {
       }
     }
 
+    const isEdu = isEduDomain(req.user?.email, req.user?.domain);
+
     res.json({
       ...plan,
       individual,
+      isEdu,
       billingConfigured: individual ? individualBillingConfigured() : billingConfigured(),
       annualAvailable,
       educatorAvailable: !!process.env.STRIPE_EDUCATOR_PRICE_ID,
@@ -451,14 +455,21 @@ router.get('/billing/status', requireAuth, async (req, res) => {
   }
 });
 
+function isEduDomain(email, domain) {
+  const e = (email || '').toLowerCase();
+  const d = (domain || '').toLowerCase();
+  return /\.(edu|edu\.[a-z]{2}|ac\.[a-z]{2}|gov\.[a-z]{2}|k12\.[a-z]{2}(\.us)?|k12\.[a-z]{2}|sch\.[a-z]{2}|education)$/i.test(e) ||
+         /@(.*\.)?(school|academy|college|university|deped|alokitohridoy|education|gymnasium|lyceum)/i.test(e) ||
+         /\.(edu|ac|education)\b/i.test(d) ||
+         /\.(edu|edu\.[a-z]{2}|ac\.[a-z]{2}|gov\.[a-z]{2}|k12\.[a-z]{2}(\.us)?|k12\.[a-z]{2}|sch\.[a-z]{2}|education)$/i.test(d);
+}
+
 // POST /api/billing/school-license-request — 1-click inquiry from institutional / .edu / .ac users
 router.post('/billing/school-license-request', requireAuth, async (req, res) => {
   try {
     const email = (req.user.email || '').toLowerCase();
     const domain = req.user.domain || email.split('@')[1] || '';
-    const isEdu = /\.(edu|edu\.[a-z]{2}|ac\.[a-z]{2}|gov\.[a-z]{2}|k12\.[a-z]{2}\.us)$/i.test(email) ||
-                  /@(.*\.)?(school|academy|college|university|deped|alokitohridoy)/i.test(email) ||
-                  /\.(edu|ac)\b/i.test(domain);
+    const isEdu = isEduDomain(email, domain);
 
     await logEvent(req.user.domain, {
       email,

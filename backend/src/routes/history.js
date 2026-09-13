@@ -8,6 +8,7 @@ const { planIsPro } = require('./billing');
 // The team-signpost (institutional wedge) lives in one shared lib so the history
 // page and the in-Meet panel (/oauth/me) render the same gated payload.
 const { buildTeamSignpost } = require('../lib/teamSignpost');
+const notifications = require('../lib/notifications');
 
 const router = Router();
 
@@ -149,6 +150,19 @@ router.post('/event', requireAuth, async (req, res) => {
         });
       } catch (err) {
         log.warn('export_csv_downloaded: persistExport failed', { error: err.message, email: req.user.email });
+      }
+    }
+    if (type === 'export_failed') {
+      try {
+        await notifications.sendErrorAlertEmail({
+          email: req.user.email,
+          domain: req.user.domain,
+          error: safeMeta?.message || safeMeta?.reason || 'Export failed',
+          context: 'export_failed',
+          meta: safeMeta,
+        });
+      } catch (alertErr) {
+        log.warn('export_failed: error alert email failed', { error: alertErr.message });
       }
     }
     res.json({ ok: true });

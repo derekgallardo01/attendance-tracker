@@ -434,6 +434,48 @@ async function sendAdminEmail({ to, subject, body }) {
   });
 }
 
+// Immediate alert email when a user experiences an error (e.g. export_failed).
+// Sent directly to the owner/NOTIFY_EMAIL so issues are noticed and fixed immediately.
+async function sendErrorAlertEmail({ email, domain, error, context, meta }) {
+  if (!getResend()) return { skipped: 'Resend not configured' };
+  const to = process.env.NOTIFY_EMAIL || ownerEmail();
+  if (!to) return { skipped: 'no NOTIFY_EMAIL/owner' };
+
+  const subject = `⚠️ User Error Alert: ${email || 'Anonymous'} (${context || 'unknown'})`;
+  const text = [
+    `An error was reported by or encountered for user: ${email || 'Unknown'}`,
+    `Domain: ${domain || 'Unknown'}`,
+    `Context: ${context || 'Unknown'}`,
+    `Error: ${error || 'Unknown'}`,
+    `Details: ${JSON.stringify(meta || {}, null, 2)}`,
+    `Timestamp: ${new Date().toISOString()}`,
+  ].join('\n');
+
+  const html = `
+    <div style="font-family:sans-serif;max-width:600px;color:#111;font-size:14px;line-height:1.5">
+      <h2 style="color:#cf222e;margin-top:0">⚠️ User Error Alert</h2>
+      <p>An error was encountered or reported on Attendance Tracker:</p>
+      <table style="border-collapse:collapse;font-size:14px;width:100%">
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-weight:600">User Email</td><td><a href="mailto:${escape(email)}">${escape(email)}</a></td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-weight:600">Domain</td><td>${escape(domain)}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-weight:600">Context</td><td>${escape(context)}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-weight:600">Error Message</td><td style="color:#cf222e;font-family:monospace">${escape(error)}</td></tr>
+      </table>
+      ${meta ? `<h3 style="margin-top:16px">Details</h3><pre style="background:#f6f8fa;padding:12px;border-radius:6px;font-size:12px">${escape(JSON.stringify(meta, null, 2))}</pre>` : ''}
+      <p style="margin-top:20px"><a href="https://attendancetracker.dev/admin.html" style="background:#1f6feb;color:#fff;padding:8px 16px;border-radius:6px;text-decoration:none;font-weight:600">Open Admin Dashboard</a></p>
+    </div>
+  `;
+
+  return dispatchEmail({
+    from: makeFrom('Attendance Tracker Alerts'),
+    to,
+    subject,
+    text,
+    html,
+    tags: [{ name: 'type', value: 'error_alert' }],
+  }, 'error alert', { userEmail: email, context });
+}
+
 // Weekly self-report email. Formats the report from firestore into something
 // you can scan in 30 seconds Monday morning.
 async function sendWeeklySelfReport(report) {
@@ -1238,7 +1280,7 @@ async function sendOrgWeeklyDigest({ to, domain, totals, weeklyMeetings }) {
 }
 
 module.exports = {
-  sendSignupWebhook, maybeSendSignupNotification, sendWelcomeEmail, sendReferralNotification, maybeSendReferralNotification, flushDeferredNotifications, sendAdminEmail, sendWeeklySelfReport, sendExportNotification, sendOrgWeeklyDigest,
+  sendSignupWebhook, maybeSendSignupNotification, sendWelcomeEmail, sendReferralNotification, maybeSendReferralNotification, flushDeferredNotifications, sendAdminEmail, sendErrorAlertEmail, sendWeeklySelfReport, sendExportNotification, sendOrgWeeklyDigest,
   sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail,
   sendSlackDigest, sendSlackTestPing, buildSlackDigestBlocks, buildSlackFallbackText, maskSlackWebhook,
   sendChatDigest, sendChatTestPing, buildChatDigestCard, maskGoogleChatWebhook,

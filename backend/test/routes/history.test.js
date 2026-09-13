@@ -329,6 +329,31 @@ describe('POST /api/event — frontend event logging', () => {
     expect(res.body).toEqual({ ok: true });
   });
 
+  test('POST /api/event with export_failed calls sendErrorAlertEmail and succeeds', async () => {
+    firestore.logEvent.mockResolvedValue(undefined);
+    const notifications = require('../../src/lib/notifications');
+    const spy = jest.spyOn(notifications, 'sendErrorAlertEmail').mockResolvedValue({ sent: true });
+
+    const res = await request(app)
+      .post('/api/event')
+      .set(authedHeader('teacher@school.edu', 'school.edu'))
+      .set('Content-Type', 'application/json')
+      .send({
+        type: 'export_failed',
+        meta: { reason: 'error', message: 'test error' },
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ok: true });
+    expect(spy).toHaveBeenCalledWith(expect.objectContaining({
+      email: 'teacher@school.edu',
+      domain: 'school.edu',
+      error: 'test error',
+      context: 'export_failed',
+    }));
+    spy.mockRestore();
+  });
+
   test('caps meta values + sanitizes non-primitives', async () => {
     firestore.logEvent.mockResolvedValue(undefined);
     const giant = 'x'.repeat(2000);

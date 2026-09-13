@@ -1249,6 +1249,18 @@ describe('billing/status pricing payload', () => {
     );
   });
 
+  test('GET /billing/status recognizes .education and UA for PPP discount', async () => {
+    app = buildApp();
+    const res = await request(app)
+      .get('/api/billing/status')
+      .set(authedHeader('o.paiuk@kig.kiev.ukr.education', 'kig.kiev.ukr.education'))
+      .set('cf-ipcountry', 'UA');
+
+    expect(res.status).toBe(200);
+    expect(res.body.isEdu).toBe(true);
+    expect(res.body.pppDiscount).toEqual({ eligible: true, country: 'UA', percentOff: 50 });
+  });
+
   test('POST /billing/school-license-request returns 500 when logEvent fails', async () => {
     firestore.logEvent.mockRejectedValue(new Error('firestore failure'));
 

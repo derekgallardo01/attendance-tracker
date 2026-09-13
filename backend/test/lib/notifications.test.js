@@ -892,6 +892,30 @@ describe('notifications — final branch closure', () => {
     expect(mockSend).toHaveBeenCalled();
   });
 
+  test('sendErrorAlertEmail sends alert when configured and skips when not', async () => {
+    const mockSend = withResend();
+    const n = require('../../src/lib/notifications');
+    process.env.NOTIFY_EMAIL = 'derekgallardo01@gmail.com';
+    const res = await n.sendErrorAlertEmail({
+      email: 'user@school.edu',
+      domain: 'school.edu',
+      error: 'n is not defined',
+      context: 'export_failed',
+      meta: { message: 'n is not defined' },
+    });
+    expect(mockSend).toHaveBeenCalledWith(expect.objectContaining({
+      to: ['derekgallardo01@gmail.com'],
+      subject: expect.stringContaining('User Error Alert: user@school.edu'),
+    }));
+    expect(res).toEqual(expect.objectContaining({ sent: true }));
+
+    // without NOTIFY_EMAIL / ownerEmail
+    delete process.env.NOTIFY_EMAIL;
+    delete process.env.GMAIL_USER;
+    const skipRes = await n.sendErrorAlertEmail({ email: 'u@x.com' });
+    expect(skipRes).toEqual({ skipped: 'no NOTIFY_EMAIL/owner' });
+  });
+
   test('sendFeedbackEmail throws without a body and includes the source when present', async () => {
     const mockSend = withResend();
     const n = require('../../src/lib/notifications');

@@ -4625,9 +4625,7 @@ async function loadBillingStatus() {
     }
 
     const email = (state.userEmail || '').toLowerCase();
-    const isEdu = /\.(edu|edu\.[a-z]{2}|ac\.[a-z]{2}|gov\.[a-z]{2}|k12\.[a-z]{2}\.us)$/i.test(email) ||
-                  /@(.*\.)?(school|academy|college|university|deped|alokitohridoy)/i.test(email) ||
-                  /\.(edu|ac)\b/i.test(data.domain || '');
+    const isEdu = !!(data && data.isEdu) || isEduDomain(email, data.domain);
     const settingsSchoolBtn = document.getElementById('settings-school-license-btn');
     if (settingsSchoolBtn) {
       settingsSchoolBtn.style.display = (isEdu && !_isPro) ? 'inline-block' : 'none';
@@ -4864,11 +4862,22 @@ function watchForUpgradeCompletion() {
 // Shared context stamped on EVERY paywall/upgrade event so the revenue funnel
 // can be sliced by geography, locale, and edu-status — not just on
 // upgrade_modal_shown. (Without this, ~80% of paywall events had no timezone,
+function isEduDomain(email, domain) {
+  const e = (email || '').toLowerCase();
+  const d = (domain || '').toLowerCase();
+  return /\.(edu|edu\.[a-z]{2}|ac\.[a-z]{2}|gov\.[a-z]{2}|k12\.[a-z]{2}(\.us)?|k12\.[a-z]{2}|sch\.[a-z]{2}|education)$/i.test(e) ||
+         /@(.*\.)?(school|academy|college|university|deped|alokitohridoy|education|gymnasium|lyceum)/i.test(e) ||
+         /\.(edu|ac|education)\b/i.test(d) ||
+         /\.(edu|edu\.[a-z]{2}|ac\.[a-z]{2}|gov\.[a-z]{2}|k12\.[a-z]{2}(\.us)?|k12\.[a-z]{2}|sch\.[a-z]{2}|education)$/i.test(d);
+}
+
+// Shared context stamped on EVERY paywall/upgrade event so the revenue funnel
+// can be sliced by geography, locale, and edu-status — not just on
+// upgrade_modal_shown. (Without this, ~80% of paywall events had no timezone,
 // so the "who bounces at the paywall, and where" analysis was 20%-visible.)
 function upgradeContext() {
   const email = (state.userEmail || '').toLowerCase();
-  const isEdu = /\.(edu|edu\.[a-z]{2}|ac\.[a-z]{2}|gov\.[a-z]{2}|k12\.[a-z]{2}\.us)$/i.test(email) ||
-                /@(.*\.)?(school|academy|college|university|deped|alokitohridoy)/i.test(email);
+  const isEdu = !!(_billing && _billing.isEdu) || isEduDomain(email, (_billing && _billing.domain) || email.split('@')[1]);
   return {
     isEdu,
     language: navigator.language || '',
@@ -4906,9 +4915,7 @@ function showUpgradeModal(reason) {
     }
   }
   const email = (state.userEmail || '').toLowerCase();
-  const isEdu = /\.(edu|edu\.[a-z]{2}|ac\.[a-z]{2}|gov\.[a-z]{2}|k12\.[a-z]{2}\.us)$/i.test(email) ||
-                /@(.*\.)?(school|academy|college|university|deped|alokitohridoy)/i.test(email) ||
-                /\.(edu|ac)\b/i.test((_billing && _billing.domain) || '');
+  const isEdu = !!(_billing && _billing.isEdu) || isEduDomain(email, (_billing && _billing.domain) || email.split('@')[1]);
   const schoolLicenseBtn = document.getElementById('btn-request-school-license');
   if (schoolLicenseBtn) {
     schoolLicenseBtn.style.display = isEdu ? 'block' : 'none';
