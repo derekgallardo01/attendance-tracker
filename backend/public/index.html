@@ -2760,7 +2760,15 @@ function downloadAttendanceCsv() {
   // A CSV download is a real value moment with the user present — advance the
   // export counter and offer the review ask (previously only Sheets exports
   // counted, so CSV-only users were never asked).
-  try { const n = (parseInt(localStorage.getItem('att_export_count') || '0', 10) || 0) + 1; localStorage.setItem('att_export_count', String(n)); } catch (e) { /* private mode */ }
+  try {
+    const n = (parseInt(localStorage.getItem('att_export_count') || '0', 10) || 0) + 1;
+    localStorage.setItem('att_export_count', String(n));
+    const hasReviewed = !!localStorage.getItem('has_reviewed');
+    const isMilestone = (n === 1 || n === 2 || n === 5) && !hasReviewed;
+    if (isMilestone) {
+      showCelebrateModal(null, n);
+    }
+  } catch (e) { /* private mode */ }
   toast(t('toast.csvDownloaded','Downloaded attendance CSV'), 3000);
   maybeShowReviewAsk();
 }
@@ -5671,8 +5679,10 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
       document.getElementById('sheet-link').href = sheetUrl;
       document.getElementById('sheet-link-bar').style.display = 'block';
     }
-    if (isFirstExport && !opts.autoExport) {
-      showCelebrateModal(sheetUrl);
+    const hasReviewed = !!localStorage.getItem('has_reviewed');
+    const isMilestone = (isFirstExport || n === 2 || n === 5) && !hasReviewed;
+    if (isMilestone && !opts.autoExport) {
+      showCelebrateModal(sheetUrl, n);
     }
     // Arm the double-click cooldown — MANUAL exports only. An auto-export
     // arming it would silently swallow a deliberate manual re-export made
@@ -5682,7 +5692,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     // longer shown at sign-in (mid-meeting asks just got dismissed). On a
     // first manual export the celebrate→survey chain is up, and its close
     // handlers call maybeAskSourcePostExport so modals never stack.
-    if (!(isFirstExport && !opts.autoExport)) {
+    if (!((isFirstExport || isMilestone) && !opts.autoExport)) {
       maybeAskSourcePostExport();
     }
     // Update activation state so the nudge banner hides itself
@@ -5712,7 +5722,7 @@ function buildReferralLink() {
   return `https://attendancetracker.dev/${refParam}`;
 }
 
-function showCelebrateModal(sheetUrl) {
+function showCelebrateModal(sheetUrl, milestoneCount = 1) {
   const modal = document.getElementById('celebrate-modal');
   const link = document.getElementById('celebrate-share-link');
   if (!modal || !link) return;
@@ -5722,8 +5732,22 @@ function showCelebrateModal(sheetUrl) {
     `I started using this Google Meet add-on for tracking attendance and exporting to Sheets in one click. Thought you might find it useful too.\n\nMarketplace: https://workspace.google.com/marketplace/app/attendance_tracker/829771833968\nLanding page: ${landingUrl}\n`
   );
   link.href = `mailto:?subject=${subject}&body=${body}`;
+
+  const titleEl = modal.querySelector('[data-i18n="celebrate.title"]');
+  const bodyEl = modal.querySelector('[data-i18n="celebrate.body"]');
+  if (milestoneCount === 2) {
+    if (titleEl) titleEl.textContent = t('celebrate.titleMilestone2', '2nd class saved!');
+    if (bodyEl) bodyEl.textContent = t('celebrate.bodyMilestone2', 'Attendance Tracker is saving you time! Leave a quick rating on Google Marketplace (takes 5s) to help other teachers.');
+  } else if (milestoneCount === 5) {
+    if (titleEl) titleEl.textContent = t('celebrate.titleMilestone5', '5 classes saved!');
+    if (bodyEl) bodyEl.textContent = t('celebrate.bodyMilestone5', "You're a power user! Review Attendance Tracker on Google Marketplace to support independent development.");
+  } else {
+    if (titleEl) titleEl.textContent = t('celebrate.title', 'First export complete!');
+    if (bodyEl) bodyEl.textContent = t('celebrate.body', 'Your attendance report is in Google Sheets. If Attendance Tracker saved you time today, could you leave a quick 5-star rating on Google Marketplace?');
+  }
+
   modal.style.display = 'flex';
-  try { logUserEvent('celebrate_modal_shown', {}); } catch (e) {}
+  try { logUserEvent('celebrate_modal_shown', { milestone: milestoneCount }); } catch (e) {}
   // Surface a Pro upsell inside the celebration — only for free users on a
   // configured tier (personal → individual class report; workspace → team).
   const proBlock = document.getElementById('celebrate-pro');

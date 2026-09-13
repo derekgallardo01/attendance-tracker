@@ -87,18 +87,20 @@ function buildEmail(user) {
   const firstName = user.displayName ? user.displayName.split(' ')[0] : 'there';
   const trackedUrl = `${TRACKED_REDIRECT_BASE}?email=${encodeURIComponent(user.email)}&source=power_user_email`;
 
-  const subject = `Quick question from Derek (Attendance Tracker)`;
+  const subject = `1 month of Attendance Tracker Pro (gift for your feedback)`;
 
   const text = `Hi ${firstName},
 
-I noticed you've tracked and exported several meetings with Attendance Tracker — I really hope it's saving you time!
+I noticed you've already exported ${user.exports} meetings with Attendance Tracker — thank you so much for using it!
 
-I'm an independent developer building this tool, and honest reviews on the Google Workspace Marketplace are the single biggest way other teachers and meeting hosts discover it.
+I'm an independent developer building this tool for teachers and hosts. Honest reviews on the Google Workspace Marketplace are the single biggest way other educators discover it.
 
-Would you be open to leaving a quick 5-star rating? It takes about 10 seconds:
-👉 ${trackedUrl}
+🎁 As a thank you: Leave a quick review, reply to this email with a screenshot or your review name, and I will immediately unlock 1 month of Attendance Tracker Pro for your account (unlimited exports, automated sheets sync, LMS gradebooks, and attendee certificates).
 
-If there is anything you'd like improved, just hit Reply — I read and answer every message personally.
+👉 Leave an Honest Review on Google Marketplace (takes 10s):
+${trackedUrl}
+
+If there is anything you'd like improved or any feature you're missing, simply hit Reply — I read and answer every message personally.
 
 Thanks so much for using Attendance Tracker!
 
@@ -111,12 +113,18 @@ ${DEREK_EMAIL}
   const html = `
 <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1e293b;max-width:560px;line-height:1.6;font-size:14px">
   <p>Hi ${firstName},</p>
-  <p>I noticed you've tracked and exported several meetings with Attendance Tracker — I really hope it's saving you time!</p>
-  <p>I'm an independent developer building this tool, and honest reviews on the Google Workspace Marketplace are the single biggest way other teachers and meeting hosts discover it.</p>
-  <p>Would you be open to leaving a quick 5-star rating? It takes about 10 seconds:</p>
+  <p>I noticed you've already exported <strong>${user.exports} meetings</strong> with Attendance Tracker — thank you so much for using it!</p>
+  <p>I'm an independent developer building this tool for teachers and hosts. Honest reviews on the Google Workspace Marketplace are the single biggest way other educators discover it.</p>
   
-  <p style="margin:20px 0">
-    <a href="${trackedUrl}" style="background:#f59e0b;color:#111;font-weight:700;font-size:14px;padding:11px 22px;border-radius:8px;text-decoration:none;display:inline-block">⭐ Leave a 5-Star Review on Google Marketplace →</a>
+  <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:14px 16px;margin:18px 0">
+    <div style="font-weight:700;color:#92400e;font-size:14px;margin-bottom:4px">🎁 Gift: 1 Month of Pro for Free</div>
+    <div style="color:#78350f;font-size:13px;line-height:1.5">
+      Leave a quick review, then reply to this email with a screenshot or your review name. I will immediately activate <strong>1 month of Pro for free</strong> on your account (unlimited exports, automated sheets sync, Canvas/Moodle LMS gradebooks, and attendee certificates).
+    </div>
+  </div>
+
+  <p style="margin:22px 0">
+    <a href="${trackedUrl}" style="background:#f59e0b;color:#111;font-weight:700;font-size:14px;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block">⭐ Leave a Review on Google Marketplace (10s) →</a>
   </p>
 
   <p style="color:#64748b;font-size:13px">
@@ -193,7 +201,7 @@ async function run() {
       console.log(`[${i + 1}/${toProcess.length}] Sending to ${u.email} (${u.exports} exports)...`);
       
       const { data, error } = await resend.emails.send({
-        from: 'Derek from Attendance Tracker <noreply@attendancetracker.dev>',
+        from: 'Derek Gallardo <hello@attendancetracker.dev>',
         reply_to: DEREK_EMAIL,
         to: u.email,
         subject,
