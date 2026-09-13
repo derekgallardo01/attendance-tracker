@@ -19,6 +19,7 @@ jest.mock('../../src/services/firestore', () => ({
   getDomainTeacherCount: jest.fn(),
   setTeamSignpostDismissed: jest.fn(),
   revokeShareLink: jest.fn(),
+  persistExport: jest.fn(),
 }));
 
 const firestore = require('../../src/services/firestore');
@@ -243,6 +244,8 @@ describe('POST /api/event — frontend event logging', () => {
     'addon_opened', 'settings_opened', 'auto_export_toggled',
     'export_success', 'quota_warning_shown', 'quota_upgrade_clicked',
     'pricing_page_opened', 'history_page_opened', 'upgrade_plan_hovered',
+    'school_license_requested', 'trial_banner_upgrade_clicked', 'trial_banner_dismissed',
+    'export_lms_csv_downloaded',
   ])(
     'accepts allow-listed event type: %s',
     async (type) => {
@@ -258,6 +261,73 @@ describe('POST /api/event — frontend event logging', () => {
       }));
     }
   );
+
+  test('POST /api/event with export_csv_downloaded triggers persistExport', async () => {
+    firestore.logEvent.mockResolvedValue(undefined);
+    firestore.persistExport.mockResolvedValue({ created: true });
+
+    const res = await request(app)
+      .post('/api/event')
+      .set(authedHeader('teacher@school.edu', 'school.edu'))
+      .set('Content-Type', 'application/json')
+      .send({
+        type: 'export_csv_downloaded',
+        meta: {
+          conferenceId: 'conf-123',
+          meetingTitle: 'Physics 101',
+          participantCount: 22,
+        },
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ok: true });
+    expect(firestore.persistExport).toHaveBeenCalledWith('school.edu', expect.objectContaining({
+      conferenceId: 'conf-123',
+      meetingTitle: 'Physics 101',
+      participantCount: 22,
+      email: 'teacher@school.edu',
+      autoExport: false,
+      sheetUrl: null,
+      tabName: 'CSV Export',
+    }));
+  });
+
+  test('POST /api/event with export_csv_downloaded generates conferenceId and fallback title if omitted', async () => {
+    firestore.logEvent.mockResolvedValue(undefined);
+    firestore.persistExport.mockResolvedValue({ created: true });
+
+    const res = await request(app)
+      .post('/api/event')
+      .set(authedHeader('teacher@school.edu', 'school.edu'))
+      .set('Content-Type', 'application/json')
+      .send({
+        type: 'export_csv_downloaded',
+      });
+
+    expect(res.status).toBe(200);
+    expect(firestore.persistExport).toHaveBeenCalledWith('school.edu', expect.objectContaining({
+      meetingTitle: 'Attendance CSV',
+      participantCount: 0,
+      conferenceId: expect.stringMatching(/^csv_\d+/),
+    }));
+  });
+
+  test('POST /api/event with export_csv_downloaded catches persistExport rejection gracefully', async () => {
+    firestore.logEvent.mockResolvedValue(undefined);
+    firestore.persistExport.mockRejectedValue(new Error('firestore write error'));
+
+    const res = await request(app)
+      .post('/api/event')
+      .set(authedHeader('teacher@school.edu', 'school.edu'))
+      .set('Content-Type', 'application/json')
+      .send({
+        type: 'export_csv_downloaded',
+        meta: { conferenceId: 'conf-fail' },
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ok: true });
+  });
 
   test('caps meta values + sanitizes non-primitives', async () => {
     firestore.logEvent.mockResolvedValue(undefined);

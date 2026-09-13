@@ -457,4 +457,27 @@ describe('getMeetingWithParticipants', () => {
       expect(await firestore.getErrorAlertState()).toMatchObject({ lastAlertedAt: '2026-09-10T00:00:00.000Z', lastTotal: 7 });
     });
   });
+
+  describe('countUserAutoExports', () => {
+    test('counts auto-exports for the specified user, ignoring non-auto or other users', async () => {
+      ctx.seed('tenants/acme.com/exports/e1', { email: 'teacher@acme.com', autoExport: true });
+      ctx.seed('tenants/acme.com/exports/e2', { email: 'teacher@acme.com', autoExport: true });
+      ctx.seed('tenants/acme.com/exports/e3', { email: 'teacher@acme.com', autoExport: false }); // manual export
+      ctx.seed('tenants/acme.com/exports/e4', { email: 'other@acme.com', autoExport: true }); // other user
+
+      const count = await firestore.countUserAutoExports('acme.com', 'teacher@acme.com');
+      expect(count).toBe(2);
+    });
+
+    test('case-insensitively matches email address', async () => {
+      ctx.seed('tenants/acme.com/exports/e1', { email: 'teacher@acme.com', autoExport: true });
+      const count = await firestore.countUserAutoExports('acme.com', 'Teacher@Acme.COM');
+      expect(count).toBe(1);
+    });
+
+    test('returns 0 when no auto-exports exist', async () => {
+      const count = await firestore.countUserAutoExports('acme.com', 'nobody@acme.com');
+      expect(count).toBe(0);
+    });
+  });
 });

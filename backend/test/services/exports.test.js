@@ -14,7 +14,7 @@ const REQUIRED_EXPORTS = [
   // settings.js
   'getUserSettings', 'updateUserSettings', 'isEmailSuppressed', 'unsuppressEmail',
   // billing.js
-  'getTenantPlan', 'setTenantPlan', 'getUserPlan', 'setUserPlan',
+  'getTenantPlan', 'setTenantPlan', 'getUserPlan', 'setUserPlan', 'countUserAutoExports',
   // team.js
   'getUser', 'getTeamOverview',
   // admin.js (a representative high-risk subset)

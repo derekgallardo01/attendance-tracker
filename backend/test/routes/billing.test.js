@@ -1248,6 +1248,54 @@ describe('billing/status pricing payload', () => {
       })
     );
   });
+
+  test('POST /billing/school-license-request returns 500 when logEvent fails', async () => {
+    firestore.logEvent.mockRejectedValue(new Error('firestore failure'));
+
+    const res = await request(app)
+      .post('/api/billing/school-license-request')
+      .set(authedHeader('dean@college.edu', 'college.edu'))
+      .send({ domain: 'college.edu' });
+
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual({ error: 'Failed to record school license request' });
+  });
+
+  test('GET /billing/status skips trialInfo if user is Pro or date is invalid or settings throws', async () => {
+    // 1. Pro user
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'pro' });
+    firestore.getUserPlan.mockResolvedValue({ plan: 'pro' });
+    firestore.getUserSettings.mockResolvedValue({
+      autoExportTrialStartedAt: new Date().toISOString(),
+    });
+
+    let res = await request(app)
+      .get('/api/billing/status')
+      .set(authedHeader('pro@school.edu', 'school.edu'));
+    expect(res.status).toBe(200);
+    expect(res.body.trialInfo).toBeNull();
+
+    // 2. Invalid date string
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUserSettings.mockResolvedValue({
+      autoExportTrialStartedAt: 'not-a-valid-date-string',
+    });
+
+    res = await request(app)
+      .get('/api/billing/status')
+      .set(authedHeader('free@school.edu', 'school.edu'));
+    expect(res.status).toBe(200);
+    expect(res.body.trialInfo).toBeNull();
+
+    // 3. Settings error
+    firestore.getUserSettings.mockRejectedValue(new Error('settings read error'));
+    res = await request(app)
+      .get('/api/billing/status')
+      .set(authedHeader('free@school.edu', 'school.edu'));
+    expect(res.status).toBe(200);
+    expect(res.body.trialInfo).toBeNull();
+  });
 });
 
 
