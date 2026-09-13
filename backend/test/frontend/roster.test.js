@@ -292,6 +292,15 @@ describe('buildAttendanceCsv', () => {
     expect(csv).toContain('"Excused (Short Stay)"');
   });
 
+  test('appends free-tier watermark when isFreePlan is true', () => {
+    const csv = buildAttendanceCsv(
+      [{ displayName: 'Dave', email: 'dave@school.edu', present: true, joinTime: new Date('2026-09-07T14:00:00Z'), _accumulatedMs: 3600000, rejoins: 0 }],
+      null,
+      { isFreePlan: true }
+    );
+    expect(csv).toContain('# Generated with Attendance Tracker Free Plan');
+  });
+
   test('marks on-time attendee as Present and late attendee as Late', () => {
     const csv = buildAttendanceCsv(participants, roster, {
       meetingTitle: 'Biology 101',

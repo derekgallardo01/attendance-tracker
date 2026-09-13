@@ -1645,13 +1645,22 @@
 
   <!-- ── Export Quota Indicator (Free tier) ── -->
   <div id="export-quota-indicator" style="display:none;align-items:center;justify-content:space-between;padding:5px 16px;font-size:11px;color:#8b949e;background:rgba(255,255,255,.03);border-top:1px solid #30363d">
-    <span id="export-quota-text">3 of 3 free exports remaining this month</span>
+    <span id="export-quota-text">5 of 5 free exports remaining this month</span>
     <span style="white-space:nowrap;margin-left:8px">
       <!-- Permanent, silent, deliberate path — the only surface that has
            actually converted is self-directed browsing. -->
       <a href="https://attendancetracker.dev/pricing.html?utm_source=panel_quota" target="_blank" rel="noopener" data-i18n="quota.pricingLink" style="color:#8b949e;text-decoration:none;margin-right:10px">Pricing</a>
       <a href="#" id="export-quota-upgrade-link" onclick="try{logUserEvent('quota_upgrade_clicked',{})}catch(e){};showUpgradeModal('quota_indicator');return false;" data-i18n="quota.goUnlimited" style="color:#fdd663;text-decoration:none;font-weight:600;white-space:nowrap">Go Unlimited</a>
     </span>
+  </div>
+
+  <!-- ── Trial Ending Soon Banner (Last 3 days of trial) ── -->
+  <div id="trial-ending-banner" style="display:none;align-items:center;justify-content:space-between;gap:8px;padding:6px 16px;font-size:11px;color:#fdd663;background:rgba(253,214,99,.08);border-top:1px solid rgba(253,214,99,.2)">
+    <span id="trial-ending-text" style="line-height:1.4"></span>
+    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+      <button type="button" id="btn-trial-upgrade" onclick="try{logUserEvent('trial_banner_upgrade_clicked',{})}catch(e){};showUpgradeModal('trial_ending');" style="background:rgba(253,214,99,.2);border:1px solid rgba(253,214,99,.4);color:#fdd663;border-radius:12px;padding:3px 8px;font-size:10px;font-weight:600;cursor:pointer" data-i18n="common.upgrade">Upgrade</button>
+      <button type="button" onclick="closeTrialEndingBanner()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px">×</button>
+    </div>
   </div>
 
   <div id="sheet-link-bar" style="display:none; padding:4px 16px; font-size:11px;">
@@ -2724,12 +2733,30 @@ function downloadAttendanceCsv() {
     return;
   }
 
+  if (!_isPro && _billing && _billing.exportQuota && _billing.exportQuota.used >= _billing.exportQuota.limit) {
+    showUpgradeModal('exportQuota');
+    return;
+  }
+
+  ctx.opts.isFreePlan = !_isPro;
   const csvContent = (typeof AttUtils !== 'undefined' && AttUtils.buildAttendanceCsv)
     ? AttUtils.buildAttendanceCsv(ctx.parts, ctx.activeRoster, ctx.opts)
     : '';
   if (!triggerCsvDownload(csvContent, `Attendance_${ctx.safeTitle}_${ctx.dateStr}.csv`)) return;
 
-  try { logUserEvent('export_csv_downloaded', { participantCount: ctx.parts.length, hasRoster: !!ctx.activeRoster }); } catch (e) {}
+  try {
+    logUserEvent('export_csv_downloaded', {
+      participantCount: ctx.parts.length,
+      hasRoster: !!ctx.activeRoster,
+      meetingTitle: ctx.meetingTitle || 'Attendance CSV',
+    });
+  } catch (e) {}
+
+  if (!_isPro && _billing && _billing.exportQuota) {
+    _billing.exportQuota.used++;
+    updateQuotaIndicator(_billing.exportQuota.used, _billing.exportQuota.limit);
+  }
+
   // A CSV download is a real value moment with the user present — advance the
   // export counter and offer the review ask (previously only Sheets exports
   // counted, so CSV-only users were never asked).
@@ -2740,8 +2767,12 @@ function downloadAttendanceCsv() {
 
 // Gradebook CSV formatted for a Moodle or Canvas import. Needs a Class Roster
 // (gradebooks carry enrolled students, matched by email) — nudge toward the
-// roster tab when there isn't one.
+// roster tab when there isn't one. LMS exports are Pro-only.
 function downloadLmsCsv(format) {
+  if (!_isPro) {
+    showUpgradeModal('lmsCsv');
+    return;
+  }
   const ctx = csvExportContext();
   if (!ctx.activeRoster || ctx.activeRoster.length === 0) {
     toast(t('roster.lmsNeedRoster', 'Create a Class Roster first — gradebook exports match students by roster email.'), 5000);
@@ -4577,6 +4608,23 @@ async function loadBillingStatus() {
       const quotaInd = document.getElementById('export-quota-indicator');
       if (quotaInd) quotaInd.style.display = 'none';
     }
+
+    if (data.trialInfo && data.trialInfo.active && data.trialInfo.daysRemaining <= 3 && !_isPro) {
+      showTrialEndingBanner(data.trialInfo);
+    } else {
+      const trialB = document.getElementById('trial-ending-banner');
+      if (trialB) trialB.style.display = 'none';
+    }
+
+    const email = (state.userEmail || '').toLowerCase();
+    const isEdu = /\.(edu|edu\.[a-z]{2}|ac\.[a-z]{2}|gov\.[a-z]{2}|k12\.[a-z]{2}\.us)$/i.test(email) ||
+                  /@(.*\.)?(school|academy|college|university|deped|alokitohridoy)/i.test(email) ||
+                  /\.(edu|ac)\b/i.test(data.domain || '');
+    const settingsSchoolBtn = document.getElementById('settings-school-license-btn');
+    if (settingsSchoolBtn) {
+      settingsSchoolBtn.style.display = (isEdu && !_isPro) ? 'inline-block' : 'none';
+    }
+
     if (!box) return;
     if (!data.billingConfigured) { box.style.display = 'none'; return; }
     const nameEl = document.getElementById('settings-plan-name');
@@ -4606,6 +4654,61 @@ async function loadBillingStatus() {
   } catch { /* leave hidden on error */ }
 }
 
+function showTrialEndingBanner(trialInfo) {
+  try {
+    if (sessionStorage.getItem('att_trial_banner_dismissed') === 'true') return;
+  } catch (e) {}
+  const banner = document.getElementById('trial-ending-banner');
+  const textEl = document.getElementById('trial-ending-text');
+  if (!banner || !textEl) return;
+  const count = (trialInfo && trialInfo.autoSavedClasses) ? trialInfo.autoSavedClasses : 0;
+  if (trialInfo && trialInfo.pppDiscount) {
+    textEl.textContent = t('trial.bannerPpp', "You've auto-saved {count} classes during your trial. Upgrade with your regional discount to keep auto-export active.").replace('{count}', count);
+  } else {
+    textEl.textContent = t('trial.bannerStandard', "You've auto-saved {count} classes during your trial. Upgrade to Pro to keep auto-export active.").replace('{count}', count);
+  }
+  banner.style.display = 'flex';
+}
+
+function closeTrialEndingBanner() {
+  const banner = document.getElementById('trial-ending-banner');
+  if (banner) banner.style.display = 'none';
+  try {
+    sessionStorage.setItem('att_trial_banner_dismissed', 'true');
+    logUserEvent('trial_banner_dismissed', {});
+  } catch (e) {}
+}
+
+async function requestSchoolLicense() {
+  const email = (state.userEmail || '').toLowerCase();
+  const domain = (_billing && _billing.domain) || email.split('@')[1] || '';
+  const btn = document.getElementById('btn-request-school-license');
+  const settingsBtn = document.getElementById('settings-school-license-btn');
+  if (btn) btn.disabled = true;
+  if (settingsBtn) settingsBtn.disabled = true;
+
+  try {
+    logUserEvent('school_license_requested', { domain, email });
+    await authFetch(`${state.backendUrl}/billing/school-license-request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ domain, email })
+    });
+  } catch (e) {
+    /* best effort */
+  }
+
+  toast(t('upgrade.schoolLicenseSent', 'School license request sent! We will reach out shortly.'), 4000);
+
+  const subject = encodeURIComponent(`School License Request for ${domain || 'our school'}`);
+  const body = encodeURIComponent(`Hello,\n\nI would like to request information and pricing for a school / department license for Attendance Tracker at ${domain || 'our institution'}.\n\nMy email: ${email}\n\nThank you!`);
+  setTimeout(() => {
+    window.location.href = `mailto:derek@attendancetracker.dev?subject=${subject}&body=${body}`;
+    if (btn) btn.disabled = false;
+    if (settingsBtn) settingsBtn.disabled = false;
+  }, 1000);
+}
+
 function updateQuotaIndicator(used, limit) {
   const indicator = document.getElementById('export-quota-indicator');
   const textEl = document.getElementById('export-quota-text');
@@ -4614,7 +4717,7 @@ function updateQuotaIndicator(used, limit) {
     indicator.style.display = 'none';
     return;
   }
-  const maxLimit = typeof limit === 'number' ? limit : 3;
+  const maxLimit = typeof limit === 'number' ? limit : 5;
   const usedCount = typeof used === 'number' ? used : 0;
   const remaining = Math.max(0, maxLimit - usedCount);
   textEl.textContent = t('quota.remaining', '{remaining} of {limit} free exports remaining this month').replace('{remaining}', remaining).replace('{limit}', maxLimit);
@@ -4778,6 +4881,12 @@ function showUpgradeModal(reason) {
     } else if (reason === 'autoExport') {
       note.textContent = t('billing.autoExportPro','Auto-exporting to Google Sheets on meeting end is a Pro feature.');
       note.style.display = 'block';
+    } else if (reason === 'lmsCsv') {
+      note.textContent = t('billing.lmsCsvPro', 'Canvas & Moodle LMS gradebook export is a Pro feature.');
+      note.style.display = 'block';
+    } else if (reason === 'trial_ending') {
+      note.textContent = t('billing.trialEndingPro', 'Your auto-export trial is ending soon. Upgrade to keep automatic attendance recording active.');
+      note.style.display = 'block';
     } else if (reason === 'certificates') {
       note.textContent = t('billing.certsPro','Generating student attendance certificates is a Pro feature.');
       note.style.display = 'block';
@@ -4790,7 +4899,12 @@ function showUpgradeModal(reason) {
   }
   const email = (state.userEmail || '').toLowerCase();
   const isEdu = /\.(edu|edu\.[a-z]{2}|ac\.[a-z]{2}|gov\.[a-z]{2}|k12\.[a-z]{2}\.us)$/i.test(email) ||
-                /@(.*\.)?(school|academy|college|university|deped|alokitohridoy)/i.test(email);
+                /@(.*\.)?(school|academy|college|university|deped|alokitohridoy)/i.test(email) ||
+                /\.(edu|ac)\b/i.test((_billing && _billing.domain) || '');
+  const schoolLicenseBtn = document.getElementById('btn-request-school-license');
+  if (schoolLicenseBtn) {
+    schoolLicenseBtn.style.display = isEdu ? 'block' : 'none';
+  }
   // Revenue-funnel finding: the one organic sale came through a deliberate,
   // self-directed path — and edu-domain users (most of the paywall audience)
   // balk at $9.99 but the $4.99/yr pass is half the ask. Lead with the
@@ -7203,7 +7317,10 @@ window.addEventListener('DOMContentLoaded', () => {
             </div>
             <div id="settings-billing-desc" class="settings-row-sub">Pro unlocks the org-wide team dashboard and auto-export for your whole domain.</div>
           </div>
-          <button type="button" id="settings-billing-btn" onclick="handleBillingClick()" style="background:#4ade80;color:#0d1117;border:none;padding:7px 16px;border-radius:8px;cursor:pointer;font-size:.75rem;font-weight:700;white-space:nowrap;box-shadow:0 2px 8px rgba(74,222,128,.2)">Upgrade to Pro</button>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+            <button type="button" id="settings-billing-btn" onclick="handleBillingClick()" style="background:#4ade80;color:#0d1117;border:none;padding:7px 16px;border-radius:8px;cursor:pointer;font-size:.75rem;font-weight:700;white-space:nowrap;box-shadow:0 2px 8px rgba(74,222,128,.2)">Upgrade to Pro</button>
+            <button type="button" id="settings-school-license-btn" onclick="requestSchoolLicense()" style="display:none;background:transparent;border:1px solid rgba(255,255,255,.2);color:#c9d1d9;padding:5px 12px;border-radius:8px;cursor:pointer;font-size:.72rem;font-weight:600;white-space:nowrap" data-i18n="upgrade.requestSchoolLicense">Request School / Department License</button>
+          </div>
         </div>
       </div>
 
@@ -7355,6 +7472,7 @@ window.addEventListener('DOMContentLoaded', () => {
           </div>
         </div>
         <button type="button" id="btn-upgrade-team" onclick="startUpgradeCheckout('department', 'btn-upgrade-team')" style="flex:0 0 auto;width:100%;background:rgba(253,214,99,.14);border:1px solid rgba(253,214,99,.3);color:#fdd663;padding:10px 16px;border-radius:20px;font-weight:600;font-size:.82rem;cursor:pointer;margin-top:10px;transition:all .15s ease" data-i18n="upgrade.deptCta">Get the Department plan — your whole school</button>
+        <button type="button" id="btn-request-school-license" onclick="requestSchoolLicense()" style="display:none;width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);color:#e3e3e3;padding:8px 14px;border-radius:20px;font-weight:500;font-size:.78rem;cursor:pointer;margin-top:8px;transition:all .15s ease" data-i18n="upgrade.requestSchoolLicense">Request School / Department License</button>
       </div>
 
       <!-- Architectural Advantage Card -->

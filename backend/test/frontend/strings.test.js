@@ -40,22 +40,26 @@ describe('setLocale + fallback chain', () => {
     expect(strings.t('btn.start')).toBe('Iniciar');
     expect(strings.t('status.tracking')).toBe('Registrando asistencia…');
     expect(strings.t('attendee.present')).toBe('Presente');
+    expect(strings.t('roster.copyList')).toBe('Copiar lista');
 
     // Portuguese
     strings.setLocale('pt');
     expect(strings.t('btn.start')).toBe('Iniciar');
     expect(strings.t('status.tracking')).toBe('Registrando presença…');
     expect(strings.t('btn.sheet')).toBe('Planilha');
+    expect(strings.t('roster.copyList')).toBe('Copiar lista');
 
     // Hindi
     strings.setLocale('hi');
     expect(strings.t('btn.start')).toBe('शुरू करें');
     expect(strings.t('attendee.present')).toBe('उपस्थित');
+    expect(strings.t('roster.copyList')).toBe('सूची कॉपी करें');
 
     // Tagalog / Filipino
     strings.setLocale('tl');
     expect(strings.t('btn.start')).toBe('Simulan');
     expect(strings.t('attendee.present')).toBe('Dumalo (Present)');
+    expect(strings.t('roster.copyList')).toBe('Kopyahin ang Listahan');
 
     // Malay
     strings.setLocale('ms');

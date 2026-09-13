@@ -568,6 +568,10 @@
       }
     }
 
+    if (opts.isFreePlan) {
+      rows.push('# Generated with Attendance Tracker Free Plan. Upgrade to Pro for automated Google Sheets sync, LMS gradebooks, and unlimited exports: https://attendancetracker.dev/pricing.html');
+    }
+
     return '\uFEFF' + rows.join('\r\n');
   }
 

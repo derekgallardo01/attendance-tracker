@@ -68,6 +68,14 @@ describe('buildLmsGradebookRows', () => {
     expect(rows.find(r => r.name === 'Alice Walker').grade).toBe(100); // above threshold — unchanged
     expect(rows.find(r => r.name === 'Bob Short').grade).toBe(0);      // 25% < 50% → counted absent
     expect(rows.find(r => r.name === 'Dave Excused').grade).toBe('');  // excused stays blank
+
+    // If a student joined briefly but is excused, grade stays blank instead of 0
+    const rowsExcusedShort = utils.buildLmsGradebookRows(participants, roster, {
+      ...opts,
+      minPercent: 50,
+      excusedStudents: { 'bob@school.edu': { excused: true } },
+    });
+    expect(rowsExcusedShort.find(r => r.name === 'Bob Short').grade).toBe('');
   });
 
   test('handles missing opts, roster, and email-less name-only students', () => {

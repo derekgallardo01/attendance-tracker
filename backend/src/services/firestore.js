@@ -1206,6 +1206,19 @@ async function countUserMonthlyExports(domain, email) {
   }
 }
 
+async function countUserAutoExports(domain, email) {
+  try {
+    const snap = await tenantRef(domain).collection('exports')
+      .where('email', '==', email.toLowerCase())
+      .where('autoExport', '==', true)
+      .get();
+    return snap.size;
+  } catch (err) {
+    log.warn('firestore: countUserAutoExports failed', { domain, email, error: err.message });
+    return 0;
+  }
+}
+
 // The set of conferenceIds this user has already exported — so the auto-capture
 // sweep never double-exports a meeting the panel (or a prior sweep) already saved.
 async function getExportedConferenceIds(domain, email) {
@@ -2047,7 +2060,7 @@ module.exports = {
   claimReferral, releaseReferral, recordReferralForInviter, recordReferralPromoCode, getUserTrackingStreak,
   claimWebhookEvent, releaseWebhookEvent,
   logEvent,
-  getUserActivationStatus, countUserExports, countUserMonthlyExports, getExportReexportCount, countAllUsers, getExportedConferenceIds,
+  getUserActivationStatus, countUserExports, countUserMonthlyExports, countUserAutoExports, getExportReexportCount, countAllUsers, getExportedConferenceIds,
   getUserMeetingHistory, getExistingDomainPeer,
   getUserMeetingSeries,
   getTenantUsers, getTenantMeetings, getTenantSeriesOverview, getTenantPeopleOverview, getTeamOverview,

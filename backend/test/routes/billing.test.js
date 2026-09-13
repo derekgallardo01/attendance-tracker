@@ -27,6 +27,8 @@ jest.mock('../../src/services/firestore', () => ({
   updateUserTokens: jest.fn(),
   getTeamAdminStatus: jest.fn(), // requireTeamAdmin (runs before requireProPlan on /team/overview)
   countUserMonthlyExports: jest.fn().mockResolvedValue(0),
+  countUserAutoExports: jest.fn().mockResolvedValue(0),
+  getUserSettings: jest.fn().mockResolvedValue({}),
   logEvent: jest.fn(),
   claimWebhookEvent: jest.fn(), // webhook idempotency — default re-armed in beforeEach
   releaseWebhookEvent: jest.fn(),
@@ -1148,7 +1150,104 @@ describe('billing/status pricing payload', () => {
     const res = await request(app).get('/api/billing/status').set(authedHeader('u@acme.com', 'acme.com'));
     expect(res.status).toBe(200);
     expect(res.body.pricing.lifetime.label).toBe('$9.99');
-    expect(res.body.pricing.quotaLimit).toBe(3);
+    expect(res.body.pricing.quotaLimit).toBe(5);
+  });
+
+  test('status detects PPP eligibility and returns domain teacher count', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_PRICE_ID = 'price_x';
+    if (firestore.getDomainTeacherCount) {
+      firestore.getDomainTeacherCount.mockResolvedValueOnce(5);
+    }
+    app = buildApp();
+    const res = await request(app)
+      .get('/api/billing/status')
+      .set(authedHeader('teacher@depedqc.ph', 'depedqc.ph'))
+      .set('cf-ipcountry', 'PH');
+    expect(res.status).toBe(200);
+    expect(res.body.pppDiscount).toEqual({ eligible: true, country: 'PH', percentOff: 50 });
+    expect(res.body.domain).toBe('depedqc.ph');
+  });
+
+  test('checkout auto-applies PPP50 coupon for emerging market user', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID = 'price_life';
+    app = buildApp();
+    const res = await request(app)
+      .post('/api/billing/checkout')
+      .set(authedHeader('teacher@depedqc.ph', 'depedqc.ph'))
+      .set('cf-ipcountry', 'PH')
+      .send({ plan: 'lifetime' });
+    expect(res.status).toBe(200);
+    expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        discounts: [{ coupon: 'PPP50' }],
+        metadata: expect.objectContaining({ pppDiscount: '1', country: 'PH' }),
+      })
+    );
+  });
+
+  test('checkout honors custom promo code over PPP discount', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID = 'price_life';
+    app = buildApp();
+    const res = await request(app)
+      .post('/api/billing/checkout')
+      .set(authedHeader('teacher@depedqc.ph', 'depedqc.ph'))
+      .set('cf-ipcountry', 'PH')
+      .send({ plan: 'lifetime', promo: 'SPECIALVIP' });
+    expect(res.status).toBe(200);
+    expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        allow_promotion_codes: true,
+      })
+    );
+    expect(mockStripeInstance.checkout.sessions.create).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        discounts: [{ coupon: 'PPP50' }],
+      })
+    );
+  });
+
+  test('GET /billing/status includes trialInfo when user has autoExport trial started', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUserSettings.mockResolvedValue({
+      autoExportTrialStartedAt: new Date(Date.now() - 12 * 86400000).toISOString(),
+    });
+    firestore.countUserAutoExports.mockResolvedValue(7);
+
+    const res = await request(app)
+      .get('/api/billing/status')
+      .set(authedHeader('prof@neu.edu.ph', 'neu.edu.ph'))
+      .set('cf-ipcountry', 'PH');
+
+    expect(res.status).toBe(200);
+    expect(res.body.trialInfo).toEqual({
+      active: true,
+      daysRemaining: 2,
+      autoSavedClasses: 7,
+      pppDiscount: true,
+    });
+  });
+
+  test('POST /billing/school-license-request records lead and returns 200', async () => {
+    const res = await request(app)
+      .post('/api/billing/school-license-request')
+      .set(authedHeader('dean@college.edu', 'college.edu'))
+      .send({ domain: 'college.edu' });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ok: true, message: 'School license request recorded' });
+    expect(firestore.logEvent).toHaveBeenCalledWith(
+      'college.edu',
+      expect.objectContaining({
+        type: 'school_license_requested',
+        email: 'dean@college.edu',
+        meta: expect.objectContaining({ domain: 'college.edu', isEdu: true }),
+      })
+    );
   });
 });
+
 

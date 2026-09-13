@@ -2,7 +2,7 @@ const { Router } = require('express');
 const CONFIG = require('../config');
 const { requireAuth } = require('../middleware/auth');
 const log = require('../lib/logger');
-const { getUserMeetingHistory, getUserMeetingSeries, getParticipantHistory, setParticipantNote, getParticipantNote, logEvent, createShareLink, revokeShareLink, getUser, setTeamSignpostDismissed } = require('../services/firestore');
+const { getUserMeetingHistory, getUserMeetingSeries, getParticipantHistory, setParticipantNote, getParticipantNote, logEvent, createShareLink, revokeShareLink, getUser, setTeamSignpostDismissed, persistExport } = require('../services/firestore');
 const { domainOf } = require('../services/firestore/_core');
 const { planIsPro } = require('./billing');
 // The team-signpost (institutional wedge) lives in one shared lib so the history
@@ -104,6 +104,16 @@ const FRONTEND_EVENT_TYPES = new Set([
   'term_report_tip_shown',
   'term_report_tip_clicked',
   'term_report_tip_dismissed',
+  // Google Drive scope recovery guidance modal & one-click fallback
+  'scope_guide_shown',
+  'scope_guide_csv_fallback',
+  // Fast absentee clipboard copy
+  'absentees_copied',
+  // School / Department license request from institutional domains
+  'school_license_requested',
+  // Subtle trial ending banner interaction
+  'trial_banner_upgrade_clicked',
+  'trial_banner_dismissed',
 ]);
 
 // POST /api/event — let the frontend record activation/funnel events that only
@@ -124,6 +134,23 @@ router.post('/event', requireAuth, async (req, res) => {
   }
   try {
     await logEvent(req.user.domain, { email: req.user.email, type, meta: safeMeta });
+    if (type === 'export_csv_downloaded') {
+      try {
+        const confId = safeMeta?.conferenceId || ('csv_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6));
+        await persistExport(req.user.domain, {
+          meetingTitle: safeMeta?.meetingTitle || 'Attendance CSV',
+          tabName: 'CSV Export',
+          exportedAt: new Date(),
+          participantCount: safeMeta?.participantCount || 0,
+          sheetUrl: null,
+          email: req.user.email,
+          autoExport: false,
+          conferenceId: confId,
+        });
+      } catch (err) {
+        log.warn('export_csv_downloaded: persistExport failed', { error: err.message, email: req.user.email });
+      }
+    }
     res.json({ ok: true });
   } catch (err) {
     log.error('event log failed', { error: err.message, type });

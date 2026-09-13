@@ -166,6 +166,13 @@
 
     const STRINGS = {
     "en": {
+        "billing.lmsCsvPro": "Canvas & Moodle LMS gradebook export is a Pro feature.",
+        "billing.trialEndingPro": "Your auto-export trial is ending soon. Upgrade to keep automatic attendance recording active.",
+        "trial.bannerPpp": "You've auto-saved {count} classes during your trial. Upgrade with your regional discount to keep auto-export active.",
+        "trial.bannerStandard": "You've auto-saved {count} classes during your trial. Upgrade to Pro to keep auto-export active.",
+        "upgrade.requestSchoolLicense": "Request School / Department License",
+        "upgrade.schoolLicenseSent": "School license request sent! We will reach out shortly.",
+
         "roster.copyList": "Copy List",
         "roster.noAbsents": "No absent students",
         "roster.copyManually": "Copy absent students:",
@@ -1001,6 +1008,13 @@
         "pricing.trustGuarantee": "30-Day money-back guarantee"
     },
     "es": {
+        "billing.lmsCsvPro": "La exportación de calificaciones para Canvas y Moodle es una función Pro.",
+        "billing.trialEndingPro": "Su prueba de exportación automática finalizará pronto. Actualice para mantener el registro automático activo.",
+        "trial.bannerPpp": "Ha guardado automáticamente {count} clases durante su prueba. Actualice con su descuento regional para continuar.",
+        "trial.bannerStandard": "Ha guardado automáticamente {count} clases durante su prueba. Actualice a Pro para mantener la exportación automática.",
+        "upgrade.requestSchoolLicense": "Solicitar licencia escolar o por departamento",
+        "upgrade.schoolLicenseSent": "¡Solicitud de licencia escolar enviada! Nos pondremos en contacto pronto.",
+
         "roster.copyList": "Copiar lista",
         "roster.noAbsents": "No hay estudiantes ausentes",
         "roster.copyManually": "Copiar estudiantes ausentes:",
@@ -1836,6 +1850,13 @@
         "pricing.trustGuarantee": "Garantía de devolución de 30-Day"
     },
     "pt": {
+        "billing.lmsCsvPro": "A exportação de notas para Canvas e Moodle é um recurso Pro.",
+        "billing.trialEndingPro": "Seu teste de exportação automática termina em breve. Atualize para manter o registro automático ativo.",
+        "trial.bannerPpp": "Você salvou automaticamente {count} aulas durante seu teste. Atualize com seu desconto regional para continuar.",
+        "trial.bannerStandard": "Você salvou automaticamente {count} aulas durante seu teste. Atualize para o Pro para manter a exportação automática.",
+        "upgrade.requestSchoolLicense": "Solicitar licença escolar ou de departamento",
+        "upgrade.schoolLicenseSent": "Pedido de licença escolar enviado! Entraremos em contato em breve.",
+
         "roster.copyList": "Copiar lista",
         "roster.noAbsents": "Nenhum aluno ausente",
         "roster.copyManually": "Copiar alunos ausentes:",
@@ -2671,6 +2692,13 @@
         "pricing.trustGuarantee": "Garantia de reembolso de 30-Day"
     },
     "hi": {
+        "billing.lmsCsvPro": "Canvas और Moodle LMS ग्रेडबुक निर्यात एक Pro सुविधा है।",
+        "billing.trialEndingPro": "आपका ऑटो-एक्सपोर्ट ट्रायल जल्द ही समाप्त हो रहा है। उपस्थिति रिकॉर्डिंग जारी रखने के लिए अपग्रेड करें।",
+        "trial.bannerPpp": "आपने अपने ट्रायल के दौरान {count} कक्षाएं ऑटो-सेव की हैं। ऑटो-एक्सपोर्ट चालू रखने के लिए अपने क्षेत्रीय डिस्काउंट के साथ अपग्रेड करें।",
+        "trial.bannerStandard": "आपने अपने ट्रायल के दौरान {count} कक्षाएं ऑटो-सेव की हैं। ऑटो-एक्सपोर्ट जारी रखने के लिए Pro में अपग्रेड करें।",
+        "upgrade.requestSchoolLicense": "स्कूल / विभाग लाइसेंस का अनुरोध करें",
+        "upgrade.schoolLicenseSent": "स्कूल लाइसेंस अनुरोध भेज दिया गया! हम जल्द ही संपर्क करेंगे।",
+
         "roster.copyList": "सूची कॉपी करें",
         "roster.noAbsents": "कोई छात्र अनुपस्थित नहीं है",
         "roster.copyManually": "अनुपस्थित छात्रों को कॉपी करें:",
@@ -3506,6 +3534,13 @@
         "pricing.trustGuarantee": "30-Day मनी-बैक गारंटी"
     },
     "tl": {
+        "billing.lmsCsvPro": "Ang Canvas at Moodle LMS gradebook export ay isang Pro feature.",
+        "billing.trialEndingPro": "Malapit nang matapos ang iyong auto-export trial. Mag-upgrade upang manatiling aktibo ang awtomatikong pagtala.",
+        "trial.bannerPpp": "Naka-auto-save ka ng {count} klase sa iyong trial. Mag-upgrade gamit ang iyong regional discount upang magpatuloy.",
+        "trial.bannerStandard": "Naka-auto-save ka ng {count} klase sa iyong trial. Mag-upgrade sa Pro upang panatilihing aktibo ang auto-export.",
+        "upgrade.requestSchoolLicense": "Humiling ng Lisensya para sa Paaralan / Kagawaran",
+        "upgrade.schoolLicenseSent": "Naipadala na ang kahilingan sa lisensya ng paaralan! Makikipag-ugnayan kami sa lalong madaling panahon.",
+
         "roster.copyList": "Kopyahin ang Listahan",
         "roster.noAbsents": "Walang lumiban na estudyante",
         "roster.copyManually": "Kopyahin ang mga lumiban na estudyante:",
@@ -4341,6 +4376,13 @@
         "pricing.trustGuarantee": "30-Day na garantiyang money-back"
     },
     "ms": {
+        "billing.lmsCsvPro": "Eksport buku gred Canvas & Moodle LMS ialah ciri Pro.",
+        "billing.trialEndingPro": "Percubaan eksport automatik anda akan tamat tidak lama lagi. Naik taraf untuk meneruskan rakaman kehadiran.",
+        "trial.bannerPpp": "Anda telah menyimpan secara automatik {count} kelas sepanjang percubaan. Naik taraf dengan diskaun wilayah anda.",
+        "trial.bannerStandard": "Anda telah menyimpan secara automatik {count} kelas sepanjang percubaan. Naik taraf ke Pro untuk terus menggunakan eksport automatik.",
+        "upgrade.requestSchoolLicense": "Minta Lesen Sekolah / Jabatan",
+        "upgrade.schoolLicenseSent": "Permintaan lesen sekolah dihantar! Kami akan menghubungi anda tidak lama lagi.",
+
         "roster.copyList": "Salin Senarai",
         "roster.noAbsents": "Tiada pelajar yang tidak hadir",
         "roster.copyManually": "Salin pelajar yang tidak hadir:",
@@ -5176,6 +5218,13 @@
         "pricing.trustGuarantee": "Jaminan wang dikembalikan 30-Day"
     },
     "id": {
+        "billing.lmsCsvPro": "Ekspor buku nilai Canvas & Moodle LMS adalah fitur Pro.",
+        "billing.trialEndingPro": "Uji coba ekspor otomatis Anda akan segera berakhir. Tingkatkan untuk mempertahankan pencatatan otomatis.",
+        "trial.bannerPpp": "Anda telah menyimpan otomatis {count} kelas selama uji coba. Tingkatkan dengan diskon regional Anda.",
+        "trial.bannerStandard": "Anda telah menyimpan otomatis {count} kelas selama uji coba. Tingkatkan ke Pro untuk mempertahankan ekspor otomatis.",
+        "upgrade.requestSchoolLicense": "Minta Lisensi Sekolah / Departemen",
+        "upgrade.schoolLicenseSent": "Permintaan lisensi sekolah terkirim! Kami akan segera menghubungi Anda.",
+
         "roster.copyList": "Salin Daftar",
         "roster.noAbsents": "Tidak ada siswa yang absen",
         "roster.copyManually": "Salin siswa yang absen:",
@@ -6011,6 +6060,13 @@
         "pricing.trustGuarantee": "Jaminan uang kembali 30-Day"
     },
     "vi": {
+        "billing.lmsCsvPro": "Xuất bảng điểm Canvas & Moodle LMS là tính năng Pro.",
+        "billing.trialEndingPro": "Bản dùng thử tự động xuất sắp kết thúc. Nâng cấp để duy trì tính năng điểm danh tự động.",
+        "trial.bannerPpp": "Bạn đã tự động lưu {count} lớp học trong thời gian dùng thử. Nâng cấp với giảm giá khu vực để tiếp tục.",
+        "trial.bannerStandard": "Bạn đã tự động lưu {count} lớp học trong thời gian dùng thử. Nâng cấp lên Pro để duy trì tự động xuất.",
+        "upgrade.requestSchoolLicense": "Yêu cầu giấy phép trường học / khoa phòng",
+        "upgrade.schoolLicenseSent": "Đã gửi yêu cầu giấy phép trường học! Chúng tôi sẽ liên hệ sớm.",
+
         "roster.copyList": "Sao chép danh sách",
         "roster.noAbsents": "Không có học sinh vắng mặt",
         "roster.copyManually": "Sao chép học sinh vắng mặt:",
@@ -6846,6 +6902,13 @@
         "pricing.trustGuarantee": "Bảo đảm hoàn tiền trong 30-Day"
     },
     "fr": {
+        "billing.lmsCsvPro": "L'exportation du carnet de notes Canvas et Moodle est une fonctionnalité Pro.",
+        "billing.trialEndingPro": "Votre essai d'exportation automatique se termine bientôt. Passez à Pro pour continuer.",
+        "trial.bannerPpp": "Vous avez enregistré automatiquement {count} cours durant votre essai. Profitez de votre réduction régionale.",
+        "trial.bannerStandard": "Vous avez enregistré automatiquement {count} cours durant votre essai. Passez à Pro pour conserver l'export automatique.",
+        "upgrade.requestSchoolLicense": "Demander une licence pour établissement / département",
+        "upgrade.schoolLicenseSent": "Demande de licence envoyée ! Nous vous contacterons rapidement.",
+
         "roster.copyList": "Copier la liste",
         "roster.noAbsents": "Aucun élève absent",
         "roster.copyManually": "Copier les élèves absents :",
@@ -7681,6 +7744,13 @@
         "pricing.trustGuarantee": "Garantie satisfait ou remboursé 30-Day"
     },
     "de": {
+        "billing.lmsCsvPro": "Der Export von Notenbüchern für Canvas und Moodle ist eine Pro-Funktion.",
+        "billing.trialEndingPro": "Ihre Testphase für den automatischen Export endet bald. Upgraden Sie, um die automatische Aufzeichnung beizubehalten.",
+        "trial.bannerPpp": "Sie haben während der Testphase {count} Unterrichtsstunden automatisch gespeichert. Upgraden Sie mit Ihrem regionalen Rabatt.",
+        "trial.bannerStandard": "Sie haben während der Testphase {count} Unterrichtsstunden automatisch gespeichert. Upgraden Sie auf Pro.",
+        "upgrade.requestSchoolLicense": "Schul- / Abteilungslizenz anfordern",
+        "upgrade.schoolLicenseSent": "Schullizenz-Anfrage gesendet! Wir melden uns in Kürze.",
+
         "roster.copyList": "Liste kopieren",
         "roster.noAbsents": "Keine abwesenden Schüler",
         "roster.copyManually": "Abwesende Schüler kopieren:",
@@ -8516,6 +8586,13 @@
         "pricing.trustGuarantee": "30-Day Geld-zurück-Garantie"
     },
     "it": {
+        "billing.lmsCsvPro": "L'esportazione del registro per Canvas e Moodle è una funzione Pro.",
+        "billing.trialEndingPro": "La tua prova di esportazione automatica sta per scadere. Effettua l'upgrade per continuare.",
+        "trial.bannerPpp": "Hai salvato automaticamente {count} lezioni durante la prova. Effettua l'upgrade con il tuo sconto regionale.",
+        "trial.bannerStandard": "Hai salvato automaticamente {count} lezioni durante la prova. Passa a Pro per continuare.",
+        "upgrade.requestSchoolLicense": "Richiedi licenza per scuola / istituto",
+        "upgrade.schoolLicenseSent": "Richiesta di licenza inviata! Ti contatteremo a breve.",
+
         "roster.copyList": "Copia elenco",
         "roster.noAbsents": "Nessuno studente assente",
         "roster.copyManually": "Copia studenti assenti:",
@@ -9351,6 +9428,13 @@
         "pricing.trustGuarantee": "Garanzia di rimborso di 30-Day"
     },
     "nl": {
+        "billing.lmsCsvPro": "Canvas- & Moodle-cijferlijst exporteren is een Pro-functie.",
+        "billing.trialEndingPro": "Je proefperiode voor automatisch exporteren loopt bijna af. Upgrade om aanwezigheid automatisch bij te houden.",
+        "trial.bannerPpp": "Je hebt {count} lessen automatisch opgeslagen tijdens je proefperiode. Upgrade met je regionale korting.",
+        "trial.bannerStandard": "Je hebt {count} lessen automatisch opgeslagen tijdens je proefperiode. Upgrade naar Pro om automatisch exporteren te behouden.",
+        "upgrade.requestSchoolLicense": "Vraag een school- / afdelingslicentie aan",
+        "upgrade.schoolLicenseSent": "Schoollicentie-aanvraag verzonden! We nemen snel contact op.",
+
         "roster.copyList": "Lijst kopiëren",
         "roster.noAbsents": "Geen afwezige studenten",
         "roster.copyManually": "Afwezige studenten kopiëren:",
@@ -10186,6 +10270,13 @@
         "pricing.trustGuarantee": "30-Day niet-goed-geld-terug-garantie"
     },
     "pl": {
+        "billing.lmsCsvPro": "Eksport dziennika ocen do Canvas i Moodle to funkcja Pro.",
+        "billing.trialEndingPro": "Twój okres próbny automatycznego eksportu dobiega końca. Przejdź na Pro, aby kontynuować.",
+        "trial.bannerPpp": "W okresie próbnym automatycznie zapisano {count} zajęć. Przejdź na Pro ze zniżką regionalną.",
+        "trial.bannerStandard": "W okresie próbnym automatycznie zapisano {count} zajęć. Przejdź na Pro, aby zachować automatyczny eksport.",
+        "upgrade.requestSchoolLicense": "Poproś o licencję dla szkoły / wydziału",
+        "upgrade.schoolLicenseSent": "Wysłano zapytanie o licencję szkolną! Skontaktujemy się wkrótce.",
+
         "roster.copyList": "Kopiuj listę",
         "roster.noAbsents": "Brak nieobecnych uczniów",
         "roster.copyManually": "Kopiuj nieobecnych uczniów:",
@@ -11021,6 +11112,13 @@
         "pricing.trustGuarantee": "30-Day gwarancja zwrotu pieniędzy"
     },
     "tr": {
+        "billing.lmsCsvPro": "Canvas ve Moodle LMS not defteri dışa aktarımı bir Pro özelliğidir.",
+        "billing.trialEndingPro": "Otomatik dışa aktarma deneme süreniz yakında bitiyor. Otomatik kaydı sürdürmek için yükseltin.",
+        "trial.bannerPpp": "Deneme süresinde {count} dersi otomatik kaydettiniz. Bölgesel indiriminizle Pro'ya yükseltin.",
+        "trial.bannerStandard": "Deneme süresinde {count} dersi otomatik kaydettiniz. Otomatik aktarımı korumak için Pro'ya yükseltin.",
+        "upgrade.requestSchoolLicense": "Okul / Bölüm Lisansı İsteyin",
+        "upgrade.schoolLicenseSent": "Okul lisansı talebi gönderildi! Kısa süre içinde iletişime geçeceğiz.",
+
         "roster.copyList": "Listeyi Kopyala",
         "roster.noAbsents": "Devamsız öğrenci yok",
         "roster.copyManually": "Devamsız öğrencileri kopyala:",
@@ -11856,6 +11954,13 @@
         "pricing.trustGuarantee": "30-Day para iade garantisi"
     },
     "th": {
+        "billing.lmsCsvPro": "การส่งออกสมุดเกรดสำหรับ Canvas และ Moodle เป็นฟีเจอร์ Pro",
+        "billing.trialEndingPro": "ช่วงทดลองใช้การส่งออกอัตโนมัติใกล้จะหมดอายุแล้ว อัปเกรดเพื่อบันทึกการเข้าเรียนอัตโนมัติต่อไป",
+        "trial.bannerPpp": "คุณได้บันทึกอัตโนมัติไปแล้ว {count} คลาสในช่วงทดลอง อัปเกรดด้วยส่วนลดภูมิภาคเพื่อใช้งานต่อ",
+        "trial.bannerStandard": "คุณได้บันทึกอัตโนมัติไปแล้ว {count} คลาสในช่วงทดลอง อัปเกรดเป็น Pro เพื่อคงการส่งออกอัตโนมัติ",
+        "upgrade.requestSchoolLicense": "ขอใบอนุญาตสำหรับโรงเรียน / ภาควิชา",
+        "upgrade.schoolLicenseSent": "ส่งคำขอใบอนุญาตสำหรับโรงเรียนแล้ว! เราจะติดต่อกลับโดยเร็ว",
+
         "roster.copyList": "คัดลอกรายชื่อ",
         "roster.noAbsents": "ไม่มีนักเรียนขาดเรียน",
         "roster.copyManually": "คัดลอกรายชื่อนักเรียนที่ขาดเรียน:",
@@ -12691,6 +12796,13 @@
         "pricing.trustGuarantee": "รับประกันคืนเงินภายใน 30-Day"
     },
     "ar": {
+        "billing.lmsCsvPro": "تصدير سجل درجات Canvas و Moodle هي ميزة Pro.",
+        "billing.trialEndingPro": "تنتهي الفترة التجريبية للتصدير التلقائي قريباً. قم بالترقية للحفاظ على تسجيل الحضور.",
+        "trial.bannerPpp": "لقد حفظت تلقائياً {count} فصول أثناء التجربة. قم بالترقية مع الخصم الإقليمي للمتابعة.",
+        "trial.bannerStandard": "لقد حفظت تلقائياً {count} فصول أثناء التجربة. قم بالترقية إلى Pro للمتابعة.",
+        "upgrade.requestSchoolLicense": "طلب ترخيص للمدرسة / القسم",
+        "upgrade.schoolLicenseSent": "تم إرسال طلب ترخيص المدرسة! سنتواصل معك قريباً.",
+
         "roster.copyList": "نسخ القائمة",
         "roster.noAbsents": "لا يوجد طلاب غائبون",
         "roster.copyManually": "نسخ الطلاب الغائبين:",
@@ -13526,6 +13638,13 @@
         "pricing.trustGuarantee": "ضمان استرداد الأموال خلال 30-Day"
     },
     "ko": {
+        "billing.lmsCsvPro": "Canvas 및 Moodle LMS 성적표 내보내기는 Pro 기능입니다.",
+        "billing.trialEndingPro": "자동 내보내기 무료 체험이 곧 종료됩니다. 자동 출석 기록을 계속 유지하려면 업그레이드하세요.",
+        "trial.bannerPpp": "체험 기간 동안 {count}개의 수업을 자동 저장했습니다. 지역 할인으로 업그레이드하여 계속 사용하세요.",
+        "trial.bannerStandard": "체험 기간 동안 {count}개의 수업을 자동 저장했습니다. 자동 내보내기를 유지하려면 Pro로 업그레이드하세요.",
+        "upgrade.requestSchoolLicense": "학교 / 학과 라이선스 문의하기",
+        "upgrade.schoolLicenseSent": "학교 라이선스 문의가 접수되었습니다! 곧 연락드리겠습니다.",
+
         "roster.copyList": "명단 복사",
         "roster.noAbsents": "결석한 학생이 없습니다",
         "roster.copyManually": "결석 학생 복사:",
@@ -14361,6 +14480,13 @@
         "pricing.trustGuarantee": "30-Day 환불 보장"
     },
     "zh": {
+        "billing.lmsCsvPro": "Canvas 與 Moodle LMS 成績單匯出為 Pro 功能。",
+        "billing.trialEndingPro": "您的自動匯出試用期即將結束。升級以維持自動出勤記錄。",
+        "trial.bannerPpp": "您在試用期內已自動儲存 {count} 堂課程。立即使用區域優惠折扣升級。",
+        "trial.bannerStandard": "您在試用期內已自動儲存 {count} 堂課程。升級至 Pro 以保留自動匯出功能。",
+        "upgrade.requestSchoolLicense": "索取全校 / 系所授權",
+        "upgrade.schoolLicenseSent": "學校授權申請已送出！我們將儘快與您聯繫。",
+
         "roster.copyList": "複製名單",
         "roster.noAbsents": "沒有缺席學生",
         "roster.copyManually": "複製缺席學生：",
@@ -15196,6 +15322,13 @@
         "pricing.trustGuarantee": "30-Day 退款保證"
     },
     "ja": {
+        "billing.lmsCsvPro": "CanvasおよびMoodle LMS成績表のエクスポートはPro機能です。",
+        "billing.trialEndingPro": "自動エクスポートの試用期間がまもなく終了します。自動出欠記録を維持するにはアップグレードしてください。",
+        "trial.bannerPpp": "試用期間中に {count} 回の授業を自動保存しました。地域割引を利用してアップグレードしてください。",
+        "trial.bannerStandard": "試用期間中に {count} 回の授業を自動保存しました。自動エクスポートを継続するにはProにアップグレードしてください。",
+        "upgrade.requestSchoolLicense": "学校・学部向けライセンスをリクエスト",
+        "upgrade.schoolLicenseSent": "学校ライセンスのリクエストを送信しました！まもなくご連絡いたします。",
+
         "roster.copyList": "リストをコピー",
         "roster.noAbsents": "欠席者はいません",
         "roster.copyManually": "欠席者をコピー:",
@@ -16031,6 +16164,13 @@
         "pricing.trustGuarantee": "30-Day 返金保証"
     },
     "ta": {
+        "billing.lmsCsvPro": "Canvas & Moodle LMS தரவுப் புத்தகம் ஏற்றுமதி Pro அம்சமாகும்.",
+        "billing.trialEndingPro": "உங்கள் தானியங்கி ஏற்றுமதி சோதனை விரைவில் முடிவடைகிறது. பதிவை தொடர மேம்படுத்தவும்.",
+        "trial.bannerPpp": "சோதனையின் போது {count} வகுப்புகளைத் தானாகச் சேமித்துள்ளீர்கள். தொடர பிராந்திய தள்ளுபடியுடன் மேம்படுத்தவும்.",
+        "trial.bannerStandard": "சோதனையின் போது {count} வகுப்புகளைத் தானாகச் சேமித்துள்ளீர்கள். Pro-விற்கு மேம்படுத்தவும்.",
+        "upgrade.requestSchoolLicense": "பள்ளி / துறை உரிமம் கோரவும்",
+        "upgrade.schoolLicenseSent": "பள்ளி உரிமக் கோரிக்கை அனுப்பப்பட்டது! விரைவில் தொடர்புகொள்வோம்.",
+
         "roster.copyList": "பட்டியலை நகலெடு",
         "roster.noAbsents": "வராத மாணவர்கள் எவருமில்லை",
         "roster.copyManually": "வராத மாணவர்களை நகலெடு:",
@@ -16866,6 +17006,13 @@
         "pricing.trustGuarantee": "30-Day பணத்தைத் திரும்பப் பெறும் உத்தரவாதம்"
     },
     "te": {
+        "billing.lmsCsvPro": "Canvas & Moodle LMS గ్రేడ్‌బుక్ ఎగుమతి Pro ఫీచర్.",
+        "billing.trialEndingPro": "మీ ఆటో-ఎగుమతి ట్రయల్ త్వరలో ముగుస్తుంది. రికార్డింగ్ కొనసాగించడానికి అప్‌గ్రేడ్ చేయండి.",
+        "trial.bannerPpp": "ట్రయల్‌లో మీరు {count} తరగతులను ఆటో-సేవ్ చేసారు. ప్రాంతీయ తగ్గింపుతో అప్‌గ్రేడ్ చేయండి.",
+        "trial.bannerStandard": "ట్రయల్‌లో మీరు {count} తరగతులను ఆటో-సేవ్ చేసారు. Proకి అప్‌గ్రేడ్ చేయండి.",
+        "upgrade.requestSchoolLicense": "పాఠశాల / విభాగానికి లైసెన్స్ అభ్యర్థించండి",
+        "upgrade.schoolLicenseSent": "పాఠశాల లైసెన్స్ అభ్యర్థన పంపబడింది! మేము త్వరలో సంప్రదిస్తాము.",
+
         "roster.copyList": "జాబితాను కాపీ చేయండి",
         "roster.noAbsents": "గైర్హాజరైన విద్యార్థులు లేరు",
         "roster.copyManually": "గైర్హాజరైన విద్యార్థులను కాపీ చేయండి:",
@@ -17701,6 +17848,13 @@
         "pricing.trustGuarantee": "30-Day మనీ-బ్యాక్ గ్యారంటీ"
     },
     "bn": {
+        "billing.lmsCsvPro": "Canvas ও Moodle LMS গ্রেডবুক এক্সপোর্ট একটি Pro ফিচার।",
+        "billing.trialEndingPro": "আপনার অটো-এক্সপোর্ট ট্রায়াল শীঘ্রই শেষ হচ্ছে। স্বয়ংক্রিয় উপস্থিতি সক্রিয় রাখতে আপগ্রেড করুন।",
+        "trial.bannerPpp": "ট্রায়ালে আপনি {count}টি ক্লাস অটো-সেভ করেছেন। অটো-এক্সপোর্ট চালু রাখতে আঞ্চলিক ডিসকাউন্টে আপগ্রেড করুন।",
+        "trial.bannerStandard": "ট্রায়ালে আপনি {count}টি ক্লাস অটো-সেভ করেছেন। Pro-তে আপগ্রেড করুন।",
+        "upgrade.requestSchoolLicense": "স্কুল / বিভাগ লাইসেন্সের জন্য অনুরোধ করুন",
+        "upgrade.schoolLicenseSent": "স্কুল লাইসেন্সের অনুরোধ পাঠানো হয়েছে! শীঘ্রই যোগাযোগ করব।",
+
         "roster.copyList": "তালিকা কপি করুন",
         "roster.noAbsents": "কোনো অনুপস্থিত শিক্ষার্থী নেই",
         "roster.copyManually": "অনুপস্থিত শিক্ষার্থীদের কপি করুন:",
@@ -18536,6 +18690,13 @@
         "pricing.trustGuarantee": "30-Day অর্থ-ফেরত গ্যারান্টি"
     },
     "ur": {
+        "billing.lmsCsvPro": "Canvas اور Moodle LMS گریڈ بک ایکسپورٹ ایک Pro فیچر ہے۔",
+        "billing.trialEndingPro": "آپ کی آٹو ایکسپورٹ آزمائش جلد ختم ہو رہی ہے۔ خودکار حاضری جاری رکھنے کے لیے اپ گریڈ کریں۔",
+        "trial.bannerPpp": "آپ نے ٹرائل کے دوران {count} کلاسز آٹو سیو کی ہیں۔ علاقائی رعایت کے ساتھ اپ گریڈ کریں۔",
+        "trial.bannerStandard": "آپ نے ٹرائل کے دوران {count} کلاسز آٹو سیو کی ہیں۔ Pro میں اپ گریڈ کریں۔",
+        "upgrade.requestSchoolLicense": "اسکول / ڈیپارٹمنٹ لائسنس کی درخواست کریں",
+        "upgrade.schoolLicenseSent": "اسکول لائسنس کی درخواست بھیج دی گئی! ہم جلد رابطہ کریں گے۔",
+
         "roster.copyList": "فہرست کاپی کریں",
         "roster.noAbsents": "کوئی طالب علم غیر حاضر نہیں",
         "roster.copyManually": "غیر حاضر طلباء کو کاپی کریں:",
@@ -19371,6 +19532,13 @@
         "pricing.trustGuarantee": "30-Day رقم واپسی کی ضمانت"
     },
     "zh-CN": {
+        "billing.lmsCsvPro": "Canvas 与 Moodle LMS 成绩单导出为 Pro 功能。",
+        "billing.trialEndingPro": "您的自动导出试用期即将结束。升级以保持自动出勤记录。",
+        "trial.bannerPpp": "您在试用期间已自动保存 {count} 节课程。立即通过区域专属折扣升级。",
+        "trial.bannerStandard": "您在试用期间已自动保存 {count} 节课程。升级至 Pro 以保留自动导出功能。",
+        "upgrade.requestSchoolLicense": "申请全校 / 院系授权",
+        "upgrade.schoolLicenseSent": "学校授权申请已提交！我们将尽快与您联系。",
+
         "roster.copyList": "复制名单",
         "roster.noAbsents": "没有缺勤学生",
         "roster.copyManually": "复制缺勤学生：",
@@ -20206,6 +20374,13 @@
         "pricing.trustGuarantee": "30-Day 退款保证"
     },
     "ru": {
+        "billing.lmsCsvPro": "Экспорт журнала оценок для Canvas и Moodle — функция Pro.",
+        "billing.trialEndingPro": "Пробный период автоэкспорта скоро завершится. Перейдите на Pro для сохранения автозаписи.",
+        "trial.bannerPpp": "За время пробного периода вы автоматически сохранили {count} занятий. Перейдите на Pro с региональной скидкой.",
+        "trial.bannerStandard": "За время пробного периода вы автоматически сохранили {count} занятий. Перейдите на Pro для продолжения автоэкспорта.",
+        "upgrade.requestSchoolLicense": "Запросить лицензию для школы / факультета",
+        "upgrade.schoolLicenseSent": "Запрос на школьную лицензию отправлен! Мы скоро свяжемся с вами.",
+
         "roster.copyList": "Скопировать список",
         "roster.noAbsents": "Нет отсутствующих учеников",
         "roster.copyManually": "Скопировать отсутствующих учеников:",
@@ -21041,6 +21216,13 @@
         "pricing.trustGuarantee": "30-Day гарантия возврата денег"
     },
     "uk": {
+        "billing.lmsCsvPro": "Експорт журналу оцінок для Canvas та Moodle — функція Pro.",
+        "billing.trialEndingPro": "Пробний період автоекспорту скоро закінчиться. Оновіть до Pro, щоб продовжити запис.",
+        "trial.bannerPpp": "Під час пробного періоду ви автоматично зберегли {count} занять. Оновіть із регіональною знижкою.",
+        "trial.bannerStandard": "Під час пробного періоду ви автоматично зберегли {count} занять. Оновіть до Pro, щоб зберегти автоекспорт.",
+        "upgrade.requestSchoolLicense": "Запит ліцензії для школи / кафедри",
+        "upgrade.schoolLicenseSent": "Запит на шкільну ліцензію надіслано! Ми зв'яжемося найближчим часом.",
+
         "roster.copyList": "Скопіювати список",
         "roster.noAbsents": "Немає відсутніх учнів",
         "roster.copyManually": "Скопіювати відсутніх учнів:",
@@ -21876,6 +22058,13 @@
         "pricing.trustGuarantee": "30-Day гарантія повернення коштів"
     },
     "ro": {
+        "billing.lmsCsvPro": "Exportul catalogului pentru Canvas și Moodle este o funcție Pro.",
+        "billing.trialEndingPro": "Perioada de încercare pentru exportul automat se încheie în curând. Treci la Pro pentru a continua.",
+        "trial.bannerPpp": "Ai salvat automat {count} cursuri în perioada de încercare. Treci la Pro cu reducerea regională.",
+        "trial.bannerStandard": "Ai salvat automat {count} cursuri în perioada de încercare. Treci la Pro pentru a păstra exportul automat.",
+        "upgrade.requestSchoolLicense": "Solicită licență pentru școală / departament",
+        "upgrade.schoolLicenseSent": "Solicitarea de licență a fost trimisă! Te vom contacta în curând.",
+
         "roster.copyList": "Copiază lista",
         "roster.noAbsents": "Niciun student absent",
         "roster.copyManually": "Copiază studenții absenți:",
@@ -22711,6 +22900,13 @@
         "pricing.trustGuarantee": "30-Day garanție de returnare a banilor"
     },
     "he": {
+        "billing.lmsCsvPro": "ייצוא גליון ציונים ל-Canvas ו-Moodle הוא תכונת Pro.",
+        "billing.trialEndingPro": "תקופת הניסיון לייצוא אוטומטי מסתיימת בקרוב. שדרג כדי להמשיך להקליט נוכחות.",
+        "trial.bannerPpp": "שמרת אוטומטית {count} שיעורים במהלך הניסיון. שדרג עם ההנחה האזורית שלך להמשך.",
+        "trial.bannerStandard": "שמרת אוטומטית {count} שיעורים במהלך הניסיון. שדרג ל-Pro כדי לשמור על ייצוא אוטומטי.",
+        "upgrade.requestSchoolLicense": "בקש רישיון בית ספרי / מחלקתי",
+        "upgrade.schoolLicenseSent": "בקשת הרישיון לבית הספר נשלחה! ניצור קשר בהקדם.",
+
         "roster.copyList": "העתק רשימה",
         "roster.noAbsents": "אין תלמידים נעדרים",
         "roster.copyManually": "העתק תלמידים נעדרים:",
@@ -23546,6 +23742,13 @@
         "pricing.trustGuarantee": "אחריות החזר כספי של 30-Day"
     },
     "mr": {
+        "billing.lmsCsvPro": "Canvas आणि Moodle LMS ग्रेडबुक निर्यात हे Pro वैशिष्ट्य आहे.",
+        "billing.trialEndingPro": "तुमची ऑटो-एक्सपोर्ट चाचणी लवकरच संपत आहे. हजेरी नोंद सुरू ठेवण्यासाठी अपग्रेड करा.",
+        "trial.bannerPpp": "तुम्ही चाचणीदरम्यान {count} वर्ग ऑटो-सेव्ह केले आहेत. प्रादेशिक सवलतीसह अपग्रेड करा.",
+        "trial.bannerStandard": "तुम्ही चाचणीदरम्यान {count} वर्ग ऑटो-सेव्ह केले आहेत. ऑटो-एक्सपोर्ट सुरू ठेवण्यासाठी Pro वर अपग्रेड करा.",
+        "upgrade.requestSchoolLicense": "शाळा / विभाग परवान्यासाठी विनंती करा",
+        "upgrade.schoolLicenseSent": "शाळा परवाना विनंती पाठवली! आम्ही लवकरच संपर्क करू.",
+
         "roster.copyList": "यादी कॉपी करा",
         "roster.noAbsents": "कोणतेही विद्यार्थी अनुपस्थित नाहीत",
         "roster.copyManually": "अनुपस्थित विद्यार्थी कॉपी करा:",
@@ -24381,6 +24584,13 @@
         "pricing.trustGuarantee": "30-Day पैसे-परत हमी"
     },
     "sv": {
+        "billing.lmsCsvPro": "Export av betygskatalog för Canvas & Moodle är en Pro-funktion.",
+        "billing.trialEndingPro": "Din provperiod för automatisk export går snart ut. Uppgradera för att fortsätta spara närvaro.",
+        "trial.bannerPpp": "Du har sparat {count} lektioner automatiskt under provperioden. Uppgradera med din regionala rabatt.",
+        "trial.bannerStandard": "Du har sparat {count} lektioner automatiskt under provperioden. Uppgradera till Pro för att behålla automatisk export.",
+        "upgrade.requestSchoolLicense": "Begär skol- / avdelningslicens",
+        "upgrade.schoolLicenseSent": "Förfrågan om skollicens skickad! Vi hör av oss inom kort.",
+
         "roster.copyList": "Kopiera lista",
         "roster.noAbsents": "Inga frånvarande elever",
         "roster.copyManually": "Kopiera frånvarande elever:",

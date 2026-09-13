@@ -92,7 +92,7 @@ render inside the modal (see `#roster-modal-error`).
 
 - Pricing appears in: pricing.html, terms, refunds, FAQ/help, the Marketplace
   listing (`docs/marketplace-listing.md` → pasted manually into the console),
-  and SEO pages. Current truth: Free (3 Sheets exports/mo) · $9.99 lifetime
+  and SEO pages. Current truth: Free (5 exports/mo: Sheets or CSV combined) · $9.99 lifetime
   individual (on-ramp) · $4.99/yr educator · $59/yr Department (small-school
   domain plan, card shown when STRIPE_DEPARTMENT_PRICE_ID is set + verified
   $59/yr) · $149/yr Institution (whole-domain, STRIPE_ANNUAL_PRICE_ID). The

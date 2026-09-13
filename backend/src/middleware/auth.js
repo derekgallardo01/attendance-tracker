@@ -94,6 +94,7 @@ async function auth(req, res, next) {
       displayName: decoded.displayName,
       accessToken,
       role: decoded.role || 'user',
+      signupGeo: user?.signupGeo || null,
     };
 
     // Attendee-mode sessions (minted by /oauth/exchange mode:'attendee') are

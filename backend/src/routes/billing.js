@@ -3,9 +3,22 @@ const { requireAuth } = require('../middleware/auth');
 const express = require('express');
 const log = require('../lib/logger');
 const CONFIG = require('../config');
-const { getTenantPlan, setTenantPlan, getUserPlan, setUserPlan, logEvent, countUserMonthlyExports, claimWebhookEvent, releaseWebhookEvent } = require('../services/firestore');
+const { getTenantPlan, setTenantPlan, getUserPlan, setUserPlan, logEvent, countUserMonthlyExports, countUserAutoExports, getUserSettings, getDomainTeacherCount, claimWebhookEvent, releaseWebhookEvent } = require('../services/firestore');
 const { PERSONAL_EMAIL_DOMAINS } = require('../services/firestore/_core');
 const PRICING = require('../config/pricing');
+
+// High-volume education & developing markets eligible for Purchasing Power Parity (PPP) subsidy
+const PPP_COUNTRIES = new Set([
+  'PH', 'IN', 'ID', 'MY', 'NG', 'VN', 'PK', 'BD', 'KE', 'ZA', 'BR', 'CO', 'PE',
+]);
+
+function detectCountry(req) {
+  const rawHeader = req?.headers ? (req.headers['cf-ipcountry'] || req.headers['x-country-code']) : '';
+  const header = (typeof rawHeader === 'string' ? rawHeader : '').trim().toUpperCase();
+  if (header && header !== 'XX' && header !== 'T1') return header;
+  const userCountry = typeof req?.user?.signupGeo?.country === 'string' ? req.user.signupGeo.country.trim().toUpperCase() : '';
+  return userCountry || null;
+}
 
 // Personal-email tenants (gmail.com etc.) are shared by unrelated users, so they
 // can't buy the per-domain org plan — they buy an INDIVIDUAL (per-user) plan
@@ -141,6 +154,14 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
     // referral/promo code still opens the promo box for that one checkout
     // (Adaptive Pricing off there — a fair trade for the discount).
     const promo = (req.body.promo ?? '').trim().toUpperCase();
+    const userCountry = detectCountry(req);
+    const isPppEligible = !promo && userCountry && PPP_COUNTRIES.has(userCountry);
+
+    const sessionMeta = {
+      ...meta,
+      ...(userCountry ? { country: userCountry } : {}),
+      ...(isPppEligible ? { pppDiscount: '1' } : {}),
+    };
 
     const sessionParams = {
       mode: isRecurring ? 'subscription' : 'payment',
@@ -149,16 +170,16 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
       customer_email: email,
       success_url: `${CONFIG.publicSiteUrl}/${backTo}?upgraded=1`,
       cancel_url: `${CONFIG.publicSiteUrl}/${backTo}`,
-      metadata: meta,
+      metadata: sessionMeta,
       // Abandoned-checkout recovery: if the session expires unpaid (~24h),
       // Stripe emails the buyer a link to finish — recovering the highest-intent
-      // non-payers (they already reached checkout). Safe now that sessions are
-      // clean (no `discounts`); doesn't reopen a promo box, so Adaptive Pricing
-      // stays eligible. Needs Stripe cart-recovery emails on in the dashboard.
+      // non-payers (they already reached checkout).
       after_expiration: { recovery: { enabled: true } },
     };
     if (promo && promo !== 'LAUNCH50') {
       sessionParams.allow_promotion_codes = true;
+    } else if (isPppEligible) {
+      sessionParams.discounts = [{ coupon: 'PPP50' }];
     }
     if (isRecurring) {
       sessionParams.subscription_data = { metadata: meta };
@@ -373,6 +394,43 @@ router.get('/billing/status', requireAuth, async (req, res) => {
         log.warn('billing: countUserMonthlyExports failed in status', { error: e.message });
       }
     }
+    let domainUserCount = 0;
+    if (!individual && req.user.domain && typeof getDomainTeacherCount === 'function') {
+      try {
+        domainUserCount = await getDomainTeacherCount(req.user.domain);
+      } catch (_) {}
+    }
+
+    const userCountry = detectCountry(req);
+    const pppDiscount = userCountry && PPP_COUNTRIES.has(userCountry)
+      ? { eligible: true, country: userCountry, percentOff: 50 }
+      : null;
+
+    let trialInfo = null;
+    if (plan.plan !== 'pro' && req.user) {
+      try {
+        const settings = await getUserSettings(req.user.domain, req.user.email);
+        if (settings?.autoExportTrialStartedAt) {
+          const startMs = Date.parse(settings.autoExportTrialStartedAt);
+          if (!isNaN(startMs)) {
+            const elapsedDays = (Date.now() - startMs) / 86400000;
+            const daysRemaining = Math.max(0, (PRICING.AUTO_EXPORT_TRIAL_DAYS || 14) - elapsedDays);
+            const autoSavedClasses = typeof countUserAutoExports === 'function'
+              ? await countUserAutoExports(req.user.domain, req.user.email)
+              : 0;
+            trialInfo = {
+              active: daysRemaining > 0,
+              daysRemaining: Math.ceil(daysRemaining),
+              autoSavedClasses,
+              pppDiscount: !!pppDiscount,
+            };
+          }
+        }
+      } catch (err) {
+        log.warn('billing: trialInfo calculation failed', { error: err.message });
+      }
+    }
+
     res.json({
       ...plan,
       individual,
@@ -380,12 +438,39 @@ router.get('/billing/status', requireAuth, async (req, res) => {
       annualAvailable,
       educatorAvailable: !!process.env.STRIPE_EDUCATOR_PRICE_ID,
       exportQuota,
+      pppDiscount,
+      trialInfo,
+      domainUserCount,
+      domain: req.user?.domain || null,
       // Display-price truth for every frontend surface (see config/pricing.js).
       pricing: { ...PRICING.PRICES, quotaLimit: PRICING.FREE_MONTHLY_EXPORT_LIMIT },
     });
   } catch (err) {
     log.error('billing: status failed', { domain: req.user.domain, error: err.message });
     res.status(500).json({ error: 'Failed to fetch plan.' });
+  }
+});
+
+// POST /api/billing/school-license-request — 1-click inquiry from institutional / .edu / .ac users
+router.post('/billing/school-license-request', requireAuth, async (req, res) => {
+  try {
+    const email = (req.user.email || '').toLowerCase();
+    const domain = req.user.domain || email.split('@')[1] || '';
+    const isEdu = /\.(edu|edu\.[a-z]{2}|ac\.[a-z]{2}|gov\.[a-z]{2}|k12\.[a-z]{2}\.us)$/i.test(email) ||
+                  /@(.*\.)?(school|academy|college|university|deped|alokitohridoy)/i.test(email) ||
+                  /\.(edu|ac)\b/i.test(domain);
+
+    await logEvent(req.user.domain, {
+      email,
+      type: 'school_license_requested',
+      meta: { domain, isEdu, requestedAt: new Date().toISOString() },
+    });
+
+    log.info('billing: school license requested', { domain, email, isEdu });
+    res.json({ ok: true, message: 'School license request recorded' });
+  } catch (err) {
+    log.error('billing: school license request failed', { error: err.message });
+    res.status(500).json({ error: 'Failed to record school license request' });
   }
 });
 

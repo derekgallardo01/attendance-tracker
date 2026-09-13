@@ -234,7 +234,7 @@
           <span style="color:var(--muted);opacity:.6;font-size:.8rem">◆</span>
           <span id="team-signpost-msg" style="color:var(--text)"></span>
           <a id="team-signpost-link" href="/team.html" style="color:#58a6ff;text-decoration:none;font-weight:500;white-space:nowrap"></a>
-          <button onclick="dismissTeamSignpost()" aria-label="Dismiss" title="Dismiss" style="margin-left:auto;color:var(--muted);background:none;border:none;font-size:1rem;line-height:1;cursor:pointer;padding:4px 6px;border-radius:6px">×</button>
+          <button onclick="dismissTeamSignpost()" data-i18n-aria="common.dismiss" data-i18n-title="common.dismiss" aria-label="Dismiss" title="Dismiss" style="margin-left:auto;color:var(--muted);background:none;border:none;font-size:1rem;line-height:1;cursor:pointer;padding:4px 6px;border-radius:6px">×</button>
         </div>
         <div id="history-cap-note" style="display:none;font-size:.78rem;color:var(--muted);margin-bottom:10px">
           <span data-i18n="history.capNote1">Showing your most recent</span> <span id="history-cap-count">25</span> <span data-i18n="history.capNote2">meetings — Pro keeps your full history.</span>
@@ -284,7 +284,7 @@
           <span id="series-pro-text" style="line-height:1.55;color:#c9d1d9"></span>
           <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
             <span id="series-pro-interval" style="display:none;white-space:nowrap">
-              <button type="button" id="pro-int-annual" onclick="setProInterval('annual')" style="border:1px solid var(--border);border-radius:6px 0 0 6px;padding:5px 10px;cursor:pointer;font-size:.8rem">Annual · save 20%</button><button type="button" id="pro-int-monthly" onclick="setProInterval('monthly')" style="border:1px solid var(--border);border-left:none;border-radius:0 6px 6px 0;padding:5px 10px;cursor:pointer;font-size:.8rem">Monthly</button>
+              <button type="button" id="pro-int-annual" onclick="setProInterval('annual')" style="border:1px solid var(--border);border-radius:6px 0 0 6px;padding:5px 10px;cursor:pointer;font-size:.8rem" data-i18n="team.intAnnual">Annual · save 20%</button><button type="button" id="pro-int-monthly" onclick="setProInterval('monthly')" style="border:1px solid var(--border);border-left:none;border-radius:0 6px 6px 0;padding:5px 10px;cursor:pointer;font-size:.8rem" data-i18n="team.intMonthly">Monthly</button>
             </span>
             <button id="series-pro-btn" class="btn" style="background:#4ade80;color:#0d1117;padding:9px 20px;font-weight:600" onclick="onSeriesProCta(this)"></button>
           </div>
@@ -585,7 +585,11 @@
         if (toggle) toggle.style.display = 'none';
       } else {
         btn.style.display = '';
-        text.textContent = t('history.seriesProText', 'Pro adds a cumulative "Class Summary" tab to your export — per-student attendance % across every session of a recurring class.');
+        let ctaDesc = t('history.seriesProText', 'Pro adds a cumulative "Class Summary" tab to your export — per-student attendance % across every session of a recurring class.');
+        if (status.pppDiscount && status.pppDiscount.eligible) {
+          ctaDesc += ' · ' + t('history.regionalSubsidyApplied', '🏷️ 50% Regional Subsidy automatically applied at checkout.');
+        }
+        text.textContent = ctaDesc;
         btn.textContent = t('history.upgradeToPro', 'Upgrade to Pro');
         btn.dataset.mode = 'checkout';
         // The CTA sells the one-time lifetime pass — no billing interval to
