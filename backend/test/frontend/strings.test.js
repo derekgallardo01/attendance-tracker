@@ -134,6 +134,30 @@ describe('setLocale + fallback chain', () => {
     expect(strings.t('btn.start')).toBe('Starta');
     expect(strings.t('attendee.present')).toBe('Närvarande (Present)');
     expect(strings.t('status.tracking')).toBe('Spårar närvaro…');
+
+    // Czech
+    strings.setLocale('cs');
+    expect(strings.t('btn.start')).toBe('Začít');
+    expect(strings.t('attendee.present')).toBe('Přítomen (Present)');
+    expect(strings.t('status.tracking')).toBe('Zaznamenávání docházky…');
+
+    // Danish
+    strings.setLocale('da');
+    expect(strings.t('btn.start')).toBe('Start');
+    expect(strings.t('attendee.present')).toBe('Til stede (Present)');
+    expect(strings.t('status.tracking')).toBe('Registrerer fremmøde…');
+
+    // Finnish
+    strings.setLocale('fi');
+    expect(strings.t('btn.start')).toBe('Aloita');
+    expect(strings.t('attendee.present')).toBe('Paikalla (Present)');
+    expect(strings.t('status.tracking')).toBe('Läsnäoloa seurataan…');
+
+    // Hungarian
+    strings.setLocale('hu');
+    expect(strings.t('btn.start')).toBe('Indítás');
+    expect(strings.t('attendee.present')).toBe('Jelen (Present)');
+    expect(strings.t('status.tracking')).toBe('Jelenlét rögzítése…');
   });
 
   test('persists locale to localStorage when requested', () => {
@@ -189,6 +213,10 @@ describe('detectLocale', () => {
     expect(strings.detectLocale('iw-IL')).toBe('he');
     expect(strings.detectLocale('mr-IN')).toBe('mr');
     expect(strings.detectLocale('sv-SE')).toBe('sv');
+    expect(strings.detectLocale('cs-CZ')).toBe('cs');
+    expect(strings.detectLocale('da-DK')).toBe('da');
+    expect(strings.detectLocale('fi-FI')).toBe('fi');
+    expect(strings.detectLocale('hu-HU')).toBe('hu');
     expect(strings.detectLocale('en-US')).toBe('en');
     expect(strings.detectLocale('xx-YY')).toBe('en'); // unknown fallback
   });

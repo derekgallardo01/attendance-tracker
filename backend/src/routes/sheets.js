@@ -6,6 +6,7 @@ const log = require('../lib/logger');
 const { persistExport, getUserSheetId, setUserSheetId, countUserExports, countUserMonthlyExports, getExportReexportCount, getMeetingExcusedEmails, addMeetingExcusedEmails, getUserSettings, updateUserSettings, getUserMeetingSeries, logEvent, isEmailSuppressed } = require('../services/firestore');
 const { sendExportNotification, sendSlackDigest, sendChatDigest, sendDiscordDigest } = require('../lib/notifications');
 const { planIsPro } = require('./billing');
+const { getSheetHeaders } = require('../lib/i18n');
 
 const router = Router();
 
@@ -363,7 +364,7 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
       return diff > lateThresholdMin ? diff : 0;
     };
 
-    const header = ['Name', 'Email', 'RSVP Status', 'Late?', `Join Time (${tzAbbr})`, `Leave Time (${tzAbbr})`, 'Duration (min)', 'Attendance %', 'Sessions', 'Status', 'Checked In'];
+    const header = getSheetHeaders(data.locale, tzAbbr);
 
     const attendedEmails = new Set();
     const attendedNames = new Set();

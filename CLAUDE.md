@@ -34,8 +34,8 @@ render inside the modal (see `#roster-modal-error`).
 
 ## i18n (breaks tests if forgotten)
 
-- `js/strings.js` holds 30 locales; a parity test requires EVERY `en` key to
-  exist in all 30. Adding a key = adding 30 translations (use the generator
+- `js/strings.js` holds 34 locales; a parity test requires EVERY `en` key to
+  exist in all 34. Adding a key = adding 34 translations (use the generator
   pattern: script that inserts after each `"xx": {` line — see memory /
   scratchpad `add-i18n-keys*.js`). `zh` = Traditional, `zh-CN` = Simplified.
 - User-facing strings in index.html go through `t('key', 'English fallback')`
@@ -118,4 +118,4 @@ render inside the modal (see `#roster-modal-error`).
 - Use `confirm()`/`alert()` in index.html.
 - Add a frontend event type without allowlisting it.
 - Edit `backend/public/*` directly.
-- Ship a `js/strings.js` key to fewer than 30 locales.
+- Ship a `js/strings.js` key to fewer than 34 locales.

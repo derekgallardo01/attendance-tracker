@@ -5538,6 +5538,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     // The Settings "Late after" threshold — without this the Sheet/digest
     // hardcoded 5 minutes and disagreed with the roster tab.
     lateMinutes: state.thresholds ? state.thresholds.lateMinutes : undefined,
+    locale: (window.AttStrings && AttStrings.getLocale()) || 'en',
     excusedEmails: mergedExcusedEmails,
     calendarAttendees: effectiveAttendees,
     participants: [...state.participants.values()].map(p => {
