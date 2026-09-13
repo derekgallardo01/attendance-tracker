@@ -5652,8 +5652,9 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     // threshold. Previously the counter only advanced inside the manual-only
     // maybeShowReviewAsk path, so auto-exporters — the most engaged users —
     // were structurally excluded from ever being asked for a review.
+    let n = 1;
     try {
-      const n = (parseInt(localStorage.getItem('att_export_count') || '0', 10) || 0) + 1;
+      n = (parseInt(localStorage.getItem('att_export_count') || '0', 10) || 0) + 1;
       localStorage.setItem('att_export_count', String(n));
     } catch { /* private mode — best effort */ }
     // Mark this conference as exported so the auto-export poll loop doesn't
