@@ -49,12 +49,12 @@ describe('fromStatus()', () => {
 });
 
 describe('quotaLimit()', () => {
-  test('defaults to 3', () => {
-    expect(pricing.quotaLimit()).toBe(3);
+  test('defaults to 2', () => {
+    expect(pricing.quotaLimit()).toBe(2);
   });
 
   test('falls back to the default when the server sends a falsy limit', () => {
     pricing.fromStatus({ pricing: { quotaLimit: 0 } });
-    expect(pricing.quotaLimit()).toBe(3);
+    expect(pricing.quotaLimit()).toBe(2);
   });
 });

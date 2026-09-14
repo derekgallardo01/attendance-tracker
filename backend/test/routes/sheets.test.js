@@ -789,18 +789,18 @@ describe('POST /api/save-to-sheets — Pro gating', () => {
     expect(firestore.persistExport).not.toHaveBeenCalled(); // failed fast, no export
   });
 
-  test('free tier export is blocked with 402 when monthly quota is reached (5 exports/month)', async () => {
+  test('free tier export is blocked with 402 when monthly quota is reached (2 exports/month)', async () => {
     firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
-    firestore.countUserMonthlyExports.mockResolvedValue(5);
+    firestore.countUserMonthlyExports.mockResolvedValue(2);
     const res = await request(app).post('/api/save-to-sheets')
       .set(authedHeader('u@free-quota.com', 'free-quota.com')).set('Content-Type', 'application/json')
       .send({ ...validPayload, autoExport: false });
     expect(res.status).toBe(402);
-    expect(res.body).toMatchObject({ upgrade: true, feature: 'exportQuota', quota: { used: 5, limit: 5 } });
+    expect(res.body).toMatchObject({ upgrade: true, feature: 'exportQuota', quota: { used: 2, limit: 2 } });
     expect(firestore.persistExport).not.toHaveBeenCalled();
   });
 
-  test('pro user can export beyond 5 exports without quota block', async () => {
+  test('pro user can export beyond 2 exports without quota block', async () => {
     firestore.getTenantPlan.mockResolvedValue({ plan: 'pro' });
     firestore.countUserMonthlyExports.mockResolvedValue(10);
     const res = await request(app).post('/api/save-to-sheets')
@@ -815,24 +815,24 @@ describe('POST /api/save-to-sheets — Pro gating', () => {
     // persistExport write, reporting one export behind. It must now reflect the
     // export that just happened without a second read.
     firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
-    firestore.countUserMonthlyExports.mockResolvedValue(2); // 2 used before this one
+    firestore.countUserMonthlyExports.mockResolvedValue(1); // 1 used before this one
     firestore.persistExport.mockResolvedValue({ created: true });
     const res = await request(app).post('/api/save-to-sheets')
       .set(authedHeader('u@meter-new.com', 'meter-new.com')).set('Content-Type', 'application/json')
       .send({ ...validPayload, autoExport: false });
     expect(res.status).toBe(200);
-    expect(res.body.quota).toEqual({ used: 3, limit: 5 });
+    expect(res.body.quota).toEqual({ used: 2, limit: 2 });
   });
 
   test('free-tier quota meter does NOT advance for a re-export of the same meeting (created:false → unchanged)', async () => {
     firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
-    firestore.countUserMonthlyExports.mockResolvedValue(2);
+    firestore.countUserMonthlyExports.mockResolvedValue(1);
     firestore.persistExport.mockResolvedValue({ created: false });
     const res = await request(app).post('/api/save-to-sheets')
       .set(authedHeader('u@meter-dupe.com', 'meter-dupe.com')).set('Content-Type', 'application/json')
       .send({ ...validPayload, autoExport: false });
     expect(res.status).toBe(200);
-    expect(res.body.quota).toEqual({ used: 2, limit: 5 });
+    expect(res.body.quota).toEqual({ used: 1, limit: 2 });
   });
 
   test('402 when a free user hits the per-meeting RE-EXPORT cap (constant-conferenceId exploit)', async () => {

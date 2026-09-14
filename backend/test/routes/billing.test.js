@@ -1150,7 +1150,7 @@ describe('billing/status pricing payload', () => {
     const res = await request(app).get('/api/billing/status').set(authedHeader('u@acme.com', 'acme.com'));
     expect(res.status).toBe(200);
     expect(res.body.pricing.lifetime.label).toBe('$9.99');
-    expect(res.body.pricing.quotaLimit).toBe(5);
+    expect(res.body.pricing.quotaLimit).toBe(2);
   });
 
   test('status detects PPP eligibility and returns domain teacher count', async () => {

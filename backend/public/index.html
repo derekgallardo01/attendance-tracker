@@ -1671,7 +1671,7 @@
     <a id="sheet-link" href="#" target="_blank" data-i18n="bar.openSheet" style="color:var(--green); text-decoration:none;">Open exported sheet</a>
     <a href="#" onclick="downloadAttendanceCsv(); return false;" data-i18n="bar.downloadCsv" style="color:var(--green); text-decoration:none; margin-left:14px;">Download CSV</a>
     <a href="#" onclick="downloadPdfReport(); return false;" data-i18n="bar.pdfReport" style="color:var(--green); text-decoration:none; margin-left:14px;">PDF report</a>
-    <a href="#" onclick="downloadCertificates(); return false;" data-i18n="bar.certificates" style="color:var(--green); text-decoration:none; margin-left:14px;">Certificates</a>
+    <a href="#" onclick="downloadCertificates(); return false;" style="color:var(--green); text-decoration:none; margin-left:14px; display:inline-flex; align-items:center; gap:4px;"><span data-i18n="bar.certificates">Certificates</span><span style="background:rgba(253,214,99,.2);border:1px solid rgba(253,214,99,.5);color:#fdd663;font-size:9px;font-weight:700;padding:1px 4px;border-radius:4px;line-height:1" data-i18n="badge.pro">Pro</span></a>
     <a href="#" onclick="downloadLmsCsv('moodle'); return false;" data-i18n-title="tip.moodleCsv" title="Gradebook CSV for Moodle import" style="color:var(--green); text-decoration:none; margin-left:14px;">Moodle</a>
     <a href="#" onclick="downloadLmsCsv('canvas'); return false;" data-i18n-title="tip.canvasCsv" title="Gradebook CSV for Canvas import" style="color:var(--green); text-decoration:none; margin-left:14px;">Canvas</a>
   </div>
@@ -1699,13 +1699,52 @@
     <span style="line-height:1.45"><span id="term-report-tip-msg"></span> <a href="https://attendancetracker.dev/history.html" onclick="onTermReportTipClick();openHistoryPage(event)" target="_blank" rel="noopener" style="color:#81c995;text-decoration:none;font-weight:600" data-i18n="tip.termReportCta">open the class report →</a></span>
     <button type="button" onclick="closeTermReportTip()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
   </div>
-  <!-- Review ask at the value moment: shown once ever, after the user's 2nd
-         MANUAL export (they've felt the payoff more than once = a genuinely happy
-         user, not a one-off tester). Dismissible; never stacks with the recurring
-         tip. Respects the at-most-one-lifetime-popup, gentle-upsell rule. -->
-  <div id="review-ask" style="display:none; align-items:flex-start; gap:8px; padding:8px 16px; font-size:11px; color:#9ca3af; background:rgba(96,165,250,.06); border-top:1px solid #30363d">
-    <span style="line-height:1.45"><span data-i18n="review.ask1">Getting value from this? A quick rating helps other hosts find it —</span> <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=inapp_review" target="_blank" rel="noopener" onclick="logUserEvent('review_ask_clicked', {})" style="color:#60a5fa;text-decoration:none;font-weight:600" data-i18n="review.leaveReview">leave a review</a> <span data-i18n="review.ask2">(takes 5 seconds).</span></span>
-    <button type="button" onclick="closeReviewAsk()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
+
+  <!-- Review Experiment Variant A: In-App 1-Click Interactive Star Rating -->
+  <div id="review-stars-widget" style="display:none; flex-direction:column; gap:8px; padding:10px 14px; margin:8px 12px; background:rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.35); border-radius:8px; font-size:.82rem;">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+      <span id="review-stars-title" style="font-weight:600; color:#fde68a;" data-i18n="review.starsTitle">How was your attendance tracking experience?</span>
+      <button type="button" onclick="dismissReviewExperiment('stars')" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:16px;line-height:1;padding:0 2px;">×</button>
+    </div>
+    <!-- Interactive 5 Stars -->
+    <div id="review-stars-row" style="display:flex; align-items:center; gap:6px; cursor:pointer;" onmouseleave="resetStarHover()">
+      <span class="star-btn" data-val="1" onmouseover="hoverStars(1)" onclick="clickStarRating(1)" style="font-size:22px; color:#f59e0b; user-select:none; transition:transform .1s ease;">★</span>
+      <span class="star-btn" data-val="2" onmouseover="hoverStars(2)" onclick="clickStarRating(2)" style="font-size:22px; color:#f59e0b; user-select:none; transition:transform .1s ease;">★</span>
+      <span class="star-btn" data-val="3" onmouseover="hoverStars(3)" onclick="clickStarRating(3)" style="font-size:22px; color:#f59e0b; user-select:none; transition:transform .1s ease;">★</span>
+      <span class="star-btn" data-val="4" onmouseover="hoverStars(4)" onclick="clickStarRating(4)" style="font-size:22px; color:#f59e0b; user-select:none; transition:transform .1s ease;">★</span>
+      <span class="star-btn" data-val="5" onmouseover="hoverStars(5)" onclick="clickStarRating(5)" style="font-size:22px; color:#f59e0b; user-select:none; transition:transform .1s ease;">★</span>
+    </div>
+    <!-- Step 2: High rating follow-up (Marketplace CTA + School account fallback) -->
+    <div id="review-stars-followup-high" style="display:none; flex-direction:column; gap:6px; margin-top:4px;">
+      <span style="font-size:.78rem; color:#d1d5db; line-height:1.4;" data-i18n="review.starsThanks">Thank you! A 5-star rating on Google Marketplace helps other teachers:</span>
+      <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px;">
+        <a id="review-stars-marketplace-btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=inapp_stars" target="_blank" rel="noopener" onclick="onReviewExperimentMarketplaceClick('stars')" style="background:#f59e0b; color:#111; font-weight:700; padding:6px 12px; border-radius:6px; text-decoration:none; font-size:.76rem; display:inline-block;" data-i18n="review.starsRateBtn">Rate 5 Stars on Marketplace (5s)</a>
+        <button type="button" onclick="showReviewFeedbackInput('stars')" style="background:transparent; border:none; color:#9ca3af; text-decoration:underline; cursor:pointer; font-size:.74rem;" data-i18n="review.starsSchoolFallback">School account blocks reviews? Leave feedback</button>
+      </div>
+    </div>
+    <!-- Step 2: Low rating or feedback follow-up -->
+    <div id="review-stars-followup-feedback" style="display:none; flex-direction:column; gap:6px; margin-top:4px;">
+      <span style="font-size:.78rem; color:#d1d5db;" data-i18n="review.starsFeedbackPrompt">How can we make Attendance Tracker better for you?</span>
+      <div style="display:flex; gap:6px;">
+        <input type="text" id="review-stars-feedback-text" placeholder="Your suggestions..." style="flex:1; background:#161b22; border:1px solid #30363d; border-radius:4px; padding:4px 8px; color:#f0f6fc; font-size:.75rem;" />
+        <button type="button" onclick="submitReviewExperimentFeedback('stars')" style="background:#238636; color:#fff; border:none; border-radius:4px; padding:4px 10px; font-size:.75rem; font-weight:600; cursor:pointer;" data-i18n="review.starsSendFeedback">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Review Experiment Variant B: High-Visibility Popping Review Banner -->
+  <div id="review-ask" style="display:none; flex-direction:column; gap:8px; padding:10px 14px; margin:8px 12px; background:linear-gradient(135deg, rgba(245,158,11,.12), rgba(59,130,246,.08)); border:1px solid rgba(245,158,11,.4); border-radius:8px; font-size:.82rem;">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span style="color:#f59e0b; font-size:16px;">★★★★★</span>
+        <strong style="color:#fde68a;" data-i18n="review.bannerTitle">Enjoying Attendance Tracker?</strong>
+      </div>
+      <button type="button" onclick="dismissReviewExperiment('banner')" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:16px;line-height:1;padding:0 2px;">×</button>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px;">
+      <span style="color:#d1d5db; font-size:.78rem; line-height:1.4;"><span data-i18n="review.ask1">Getting value from this? A quick rating helps other hosts find it —</span> <span data-i18n="review.ask2">(takes 5 seconds).</span></span>
+      <a id="review-banner-btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=inapp_banner" target="_blank" rel="noopener" onclick="onReviewExperimentMarketplaceClick('banner')" style="background:#f59e0b; color:#111; font-weight:700; padding:6px 14px; border-radius:6px; text-decoration:none; font-size:.78rem; display:inline-block; white-space:nowrap;" data-i18n="review.bannerCta">Leave a 5-Star Review (5s)</a>
+    </div>
   </div>
   <!-- Proactive auto-export upsell for heavy LIVE-ONLY trackers: users who track
        many real meetings but rarely export never hit the export paywall, so they
@@ -4912,8 +4951,8 @@ function showUpgradeModal(reason) {
     } else if (reason === 'trial_ending') {
       note.textContent = t('billing.trialEndingPro', 'Your auto-export trial is ending soon. Upgrade to keep automatic attendance recording active.');
       note.style.display = 'block';
-    } else if (reason === 'certificates') {
-      note.textContent = t('billing.certsPro','Generating student attendance certificates is a Pro feature.');
+    } else if (reason === 'certificates' || reason === 'classSummary') {
+      note.textContent = t('upgrade.certsEdu', 'Student attendance certificates & multi-session reports require an Educator ($4.99/yr) or Lifetime plan.');
       note.style.display = 'block';
     } else if (reason === 'attestation') {
       note.textContent = t('billing.attestPro', 'Exporting verified check-in attestations is a Pro feature.');
@@ -4935,7 +4974,7 @@ function showUpgradeModal(reason) {
   const lifetimeCard = document.getElementById('plan-card-lifetime');
   const eduCard = document.getElementById('plan-card-educator');
   if (lifetimeCard && eduCard && lifetimeCard.parentNode === eduCard.parentNode) {
-    if (isEdu) lifetimeCard.parentNode.insertBefore(eduCard, lifetimeCard);
+    if (isEdu || reason === 'certificates' || reason === 'classSummary') lifetimeCard.parentNode.insertBefore(eduCard, lifetimeCard);
     else eduCard.parentNode.insertBefore(lifetimeCard, eduCard);
   }
   const dealPill = document.getElementById('upgrade-deal-pill');
@@ -5849,8 +5888,9 @@ function maybeShowClassSummaryUpsell() {
   let shown = false;
   try { shown = !!localStorage.getItem('att_class_summary_tip_shown'); } catch (e) { return; }
   if (shown) return;
-  const review = document.getElementById('review-ask');
-  if (review && review.style.display === 'flex') return;  // don't stack on the review ask
+  const reviewA = document.getElementById('review-stars-widget');
+  const reviewB = document.getElementById('review-ask');
+  if ((reviewA && reviewA.style.display === 'flex') || (reviewB && reviewB.style.display === 'flex')) return;  // don't stack on the review ask
   const bar = document.getElementById('class-summary-tip');
   if (!bar) return;
   const rt = document.getElementById('recurring-tip');
@@ -5895,7 +5935,7 @@ function maybeShowTermReportNudge(seriesId, count) {
   try { shownFor = JSON.parse(localStorage.getItem('att_term_report_shown') || '[]') || []; } catch (e) { return; }
   if (shownFor.includes(seriesId)) return; // once per series
   // One surface at a time — never crowd another tip or the export CTA.
-  for (const id of ['review-ask', 'class-summary-tip', 'recurring-tip', 'auto-export-nudge', 'auto-export-tip', 'team-signpost', 'export-cta']) {
+  for (const id of ['review-stars-widget', 'review-ask', 'class-summary-tip', 'recurring-tip', 'auto-export-nudge', 'auto-export-tip', 'team-signpost', 'export-cta']) {
     const el = document.getElementById(id);
     if (el && getComputedStyle(el).display !== 'none') return;
   }
@@ -5941,41 +5981,126 @@ function recordRealMeetingTracked(conferenceId) {
   maybeShowReviewAsk();
   maybeShowAutoExportUpsell();
 }
+function getReviewExperimentVariant() {
+  try {
+    let variant = localStorage.getItem('att_review_variant');
+    if (!variant) {
+      variant = Math.random() < 0.5 ? 'stars' : 'banner';
+      localStorage.setItem('att_review_variant', variant);
+      try { logUserEvent('review_experiment_assigned', { variant }); } catch (e) {}
+    }
+    return variant;
+  } catch (e) {
+    return 'stars';
+  }
+}
+
 function maybeShowReviewAsk() {
-  // The counter now advances on EVERY successful export (see saveToSheets), so
-  // this only READS it — threshold 2 means "after the user has felt the payoff
-  // at least twice", auto-exports included. The recurring-tip cohort (the
-  // stickiest, most-likely-to-review users) is no longer excluded — if both
-  // bars would show, hide the recurring tip in favor of the one-time ask.
-  // Only show while the panel is actually visible — otherwise an auto-export at
-  // meeting-end would silently burn the one-time ask on a user who has already
-  // left. The counter still advanced; we just wait for a present moment to ask.
   if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
-  let count = 0, tracked = 0, shown = false;
+  let count = 0, tracked = 0, shown = false, hasReviewed = false;
   try {
     count = parseInt(localStorage.getItem('att_export_count') || '0', 10);
     tracked = (JSON.parse(localStorage.getItem('att_tracked_meetings') || '[]') || []).length;
     shown = !!localStorage.getItem('att_review_ask_shown');
+    hasReviewed = !!localStorage.getItem('has_reviewed');
   } catch (e) { return; } // private mode → skip silently
-  // Eligible when the user has felt the payoff twice EITHER by exporting twice OR
-  // by tracking two distinct real (2+ person) meetings. The second arm reaches the
-  // heavy live-only trackers who use the panel as a dashboard and never export —
-  // the most-engaged cohort was previously never asked because the ask keyed off
-  // export alone.
-  if (shown || (count < 2 && tracked < 2)) return;
-  const bar = document.getElementById('review-ask');
+
+  // Value moment trigger: milestone >= 1 (first export or first real tracked meeting)
+  if (shown || hasReviewed || (count < 1 && tracked < 1)) return;
+
+  const variant = getReviewExperimentVariant();
+  const bar = variant === 'stars'
+    ? document.getElementById('review-stars-widget')
+    : document.getElementById('review-ask');
   if (!bar) return;
+
   const rt = document.getElementById('recurring-tip');
   if (rt && rt.style.display === 'flex') rt.style.display = 'none';
+
   bar.style.display = 'flex';
   try { localStorage.setItem('att_review_ask_shown', '1'); } catch (e) { /* best-effort */ }
-  try { logUserEvent('review_ask_shown', {}); } catch (e) { /* best-effort */ }
+  try { logUserEvent('review_experiment_shown', { variant }); } catch (e) { /* best-effort */ }
+}
+
+function dismissReviewExperiment(variant) {
+  const el = variant === 'stars'
+    ? document.getElementById('review-stars-widget')
+    : document.getElementById('review-ask');
+  if (el) el.style.display = 'none';
+  try { localStorage.setItem('has_reviewed', '1'); } catch (e) {}
+  try { logUserEvent('review_experiment_dismissed', { variant }); } catch (e) {}
 }
 
 function closeReviewAsk() {
-  const b = document.getElementById('review-ask');
-  if (b) b.style.display = 'none';
-  try { logUserEvent('review_ask_dismissed', {}); } catch (e) {}
+  dismissReviewExperiment('banner');
+}
+
+function onReviewExperimentMarketplaceClick(variant) {
+  try { localStorage.setItem('has_reviewed', '1'); } catch (e) {}
+  try { logUserEvent('review_experiment_clicked', { variant, action: 'marketplace_click' }); } catch (e) {}
+}
+
+let _selectedStarRating = 0;
+function hoverStars(rating) {
+  const stars = document.querySelectorAll('#review-stars-row .star-btn');
+  stars.forEach((s, idx) => {
+    s.style.color = (idx < rating) ? '#fbbf24' : '#4b5563';
+    s.style.transform = (idx < rating) ? 'scale(1.15)' : 'scale(1)';
+  });
+}
+
+function resetStarHover() {
+  const stars = document.querySelectorAll('#review-stars-row .star-btn');
+  stars.forEach((s, idx) => {
+    s.style.color = (idx < _selectedStarRating) ? '#f59e0b' : (_selectedStarRating > 0 ? '#4b5563' : '#f59e0b');
+    s.style.transform = 'scale(1)';
+  });
+}
+
+function clickStarRating(rating) {
+  _selectedStarRating = rating;
+  resetStarHover();
+  try { logUserEvent('review_experiment_rated', { stars: rating, variant: 'stars' }); } catch (e) {}
+  
+  const highFollowup = document.getElementById('review-stars-followup-high');
+  const lowFollowup = document.getElementById('review-stars-followup-feedback');
+  const titleEl = document.getElementById('review-stars-title');
+
+  if (rating >= 4) {
+    if (highFollowup) highFollowup.style.display = 'flex';
+    if (lowFollowup) lowFollowup.style.display = 'none';
+    if (titleEl) titleEl.textContent = t('review.starsThanks', 'Thank you! A 5-star rating on Google Marketplace helps other teachers:');
+  } else {
+    if (highFollowup) highFollowup.style.display = 'none';
+    if (lowFollowup) lowFollowup.style.display = 'flex';
+    if (titleEl) titleEl.textContent = t('review.starsFeedbackPrompt', 'How can we make Attendance Tracker better for you?');
+  }
+}
+
+function showReviewFeedbackInput(variant) {
+  const highFollowup = document.getElementById('review-stars-followup-high');
+  const lowFollowup = document.getElementById('review-stars-followup-feedback');
+  if (highFollowup) highFollowup.style.display = 'none';
+  if (lowFollowup) lowFollowup.style.display = 'flex';
+  try { logUserEvent('review_experiment_clicked', { variant, action: 'school_feedback_switch' }); } catch (e) {}
+}
+
+async function submitReviewExperimentFeedback(variant) {
+  const input = document.getElementById('review-stars-feedback-text');
+  const text = (input?.value || '').trim();
+  if (!text) return;
+  try {
+    logUserEvent('review_feedback_submitted', { variant, length: text.length });
+    const email = state.userEmail || '';
+    await fetch(`${state.backendUrl}/api/feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, feedback: text, source: `experiment_${variant}`, rating: _selectedStarRating })
+    }).catch(() => {});
+  } catch (e) {}
+  try { localStorage.setItem('has_reviewed', '1'); } catch (e) {}
+  toast(t('feedback.sent', 'Thank you for your feedback!'));
+  dismissReviewExperiment(variant);
 }
 
 // Proactive auto-export upsell for the heavy LIVE-ONLY tracker. Fires once ever
@@ -5997,7 +6122,7 @@ function maybeShowAutoExportUpsell() {
   } catch (e) { return; } // private mode → skip silently
   if (shown || tracked < 4 || exportCount > 1) return;    // not the target segment yet
   // One surface at a time — never crowd another tip or the export CTA.
-  for (const id of ['review-ask', 'class-summary-tip', 'recurring-tip', 'auto-export-nudge', 'export-cta']) {
+  for (const id of ['review-stars-widget', 'review-ask', 'class-summary-tip', 'recurring-tip', 'auto-export-nudge', 'export-cta']) {
     const el = document.getElementById(id);
     if (el && getComputedStyle(el).display !== 'none') return;
   }
@@ -6118,10 +6243,16 @@ function downloadPdfReport() {
 // backend accepted these fields all along, but with nothing sending them
 // every Pro certificate came out generic.
 function downloadCertificates() {
+  if (typeof _isPro !== 'undefined' && !_isPro && _billing && _billing.billingConfigured) {
+    showUpgradeModal('certificates');
+    return;
+  }
   const modal = document.getElementById('cert-modal');
   if (!modal) {
     return _downloadPdf({ type: 'certificates', filenameBase: 'certificates', event: 'certificates_downloaded' });
   }
+  const noticeEl = document.getElementById('cert-pro-notice');
+  if (noticeEl) noticeEl.style.display = !_isPro ? 'block' : 'none';
   const saved = loadCertOptions();
   const issuerEl = document.getElementById('cert-issuer');
   const courseEl = document.getElementById('cert-course');
@@ -6140,6 +6271,11 @@ function closeCertModal() {
 }
 
 async function submitCertModal(btn) {
+  if (typeof _isPro !== 'undefined' && !_isPro && _billing && _billing.billingConfigured) {
+    closeCertModal();
+    showUpgradeModal('certificates');
+    return;
+  }
   const issuer = (document.getElementById('cert-issuer')?.value || '').trim().slice(0, 80);
   const courseCode = (document.getElementById('cert-course')?.value || '').trim().slice(0, 40);
   const creditRaw = (document.getElementById('cert-credit')?.value || '').trim();
@@ -7657,6 +7793,10 @@ window.addEventListener('DOMContentLoaded', () => {
     <div style="background:#161b22;border:1px solid #30363d;border-radius:14px;padding:24px;max-width:400px;width:100%">
       <div style="font-size:1.05rem;font-weight:700;margin-bottom:4px" data-i18n="cert.title">Certificate details</div>
       <div style="color:#8b949e;font-size:.8rem;margin-bottom:14px" data-i18n="cert.subtitle">Printed on every attendee's certificate. Saved for next time.</div>
+      <div id="cert-pro-notice" style="display:none;padding:8px 12px;margin-bottom:12px;background:rgba(253,214,99,.1);border:1px solid rgba(253,214,99,.35);border-radius:6px;font-size:.78rem;color:#fde68a;">
+        <span data-i18n="upgrade.certsEdu">Student attendance certificates &amp; multi-session reports require an Educator ($4.99/yr) or Lifetime plan.</span>
+        <a href="#" onclick="closeCertModal();showUpgradeModal('certificates');return false;" style="color:#60a5fa;font-weight:600;margin-left:6px;text-decoration:underline" data-i18n="common.upgrade">Upgrade</a>
+      </div>
       <label style="display:block;font-size:.75rem;color:#8b949e;margin-bottom:4px" data-i18n="cert.issuer">Issuer / organization name</label>
       <input id="cert-issuer" type="text" maxlength="80" data-i18n-placeholder="cert.issuerPlaceholder" placeholder="e.g. Central Bicol State University" style="width:100%;box-sizing:border-box;background:#0d1117;border:1px solid #30363d;color:var(--text);border-radius:8px;padding:8px 10px;font-size:.85rem;margin-bottom:12px" />
       <label style="display:block;font-size:.75rem;color:#8b949e;margin-bottom:4px" data-i18n="cert.course">Course / reference code (optional)</label>

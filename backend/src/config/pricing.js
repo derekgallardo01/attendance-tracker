@@ -5,7 +5,7 @@
 // everywhere: there is no strikethrough "was" price anymore.
 // Change a price here (and in Stripe) — never in page markup.
 module.exports = {
-  FREE_MONTHLY_EXPORT_LIMIT: 5,
+  FREE_MONTHLY_EXPORT_LIMIT: 2,
   // Re-exports of the SAME meeting dedupe against one quota slot (legit:
   // mid-meeting save + end-of-meeting save). This caps how many times a free
   // user can ride that dedupe — beyond it, a constant conferenceId was an

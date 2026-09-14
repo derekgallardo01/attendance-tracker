@@ -41,11 +41,17 @@ const FRONTEND_EVENT_TYPES = new Set([
   'team_signpost_clicked',
   'team_signpost_dismissed',
   'checkout_open_blocked', // browser ate the checkout tab — highest-value loss signal
-  // Marketplace review funnel
+  // Marketplace review funnel & A/B experiment
   'review_ask_shown',
   'review_ask_clicked',
   'review_ask_dismissed',
   'review_link_clicked',
+  'review_experiment_assigned',
+  'review_experiment_shown',
+  'review_experiment_rated',
+  'review_experiment_clicked',
+  'review_experiment_dismissed',
+  'review_feedback_submitted',
   // Celebration & Referrals
   'celebrate_modal_shown',
   'celebrate_share_clicked',
