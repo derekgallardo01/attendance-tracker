@@ -487,9 +487,10 @@
     /* ── tabs ───────────────────────────────────────────────── */
     .tab-bar {
       display: flex;
-      padding: 0 16px;
-      gap: 4px;
+      padding: 6px 14px;
+      gap: 6px;
       flex-shrink: 0;
+      background: rgba(255, 255, 255, 0.015);
       border-bottom: 1px solid var(--border);
     }
     .tab-bar.visible { display: flex; }
@@ -497,12 +498,16 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 8px 10px;
+      padding: 9px 12px;
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 10px;
       margin-bottom: 6px;
       font-size: .78rem;
+      transition: background .15s ease, border-color .15s ease;
+    }
+    .roster-card:hover {
+      background: var(--surface-hover);
     }
     .roster-card.present { border-left: 3px solid #4ade80; }
     .roster-card.late { border-left: 3px solid #facc15; }
@@ -511,32 +516,48 @@
     .roster-card.guest { border-left: 3px solid #58a6ff; }
     .tab-btn {
       flex: 1;
-      padding: 8px 0;
-      background: none;
-      border: none;
-      border-bottom: 2px solid transparent;
+      padding: 7px 10px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 8px;
       color: var(--muted);
       font-size: .75rem;
       font-weight: 600;
       cursor: pointer;
       text-align: center;
-      transition: all .15s;
+      transition: all .18s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .tab-btn:hover:not(.active) {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.04);
     }
     .tab-btn.active {
       color: var(--accent);
-      border-bottom-color: var(--accent);
+      background: rgba(74, 222, 128, 0.12);
+      border-color: rgba(74, 222, 128, 0.28);
     }
-    .tab-btn:hover:not(.active) { color: var(--text); }
     .tab-badge {
-      display: inline-block;
-      background: var(--surface);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 16px;
+      padding: 0 5px;
+      background: rgba(255, 255, 255, 0.08);
       color: var(--muted);
       font-size: .65rem;
-      padding: 1px 5px;
-      border-radius: 8px;
-      margin-left: 4px;
+      font-weight: 700;
+      border-radius: 9999px;
+      line-height: 1;
     }
-    .tab-btn.active .tab-badge { background: rgba(74,222,128,.15); color: var(--accent); }
+    .tab-btn.active .tab-badge {
+      background: rgba(74, 222, 128, 0.25);
+      color: var(--accent);
+    }
 
     /* ── invited list ─────────────────────────────────────── */
     .invited-card {
@@ -975,18 +996,18 @@
 
     /* ── Settings Modal Design System ───────────────────────── */
     .settings-group {
-      background: #0d1117;
-      border: 1px solid #30363d;
-      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 14px;
       overflow: hidden;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
     .settings-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 14px;
-      padding: 12px 14px;
+      padding: 13px 16px;
       transition: background .12s ease;
       flex-wrap: wrap;
     }
@@ -1003,10 +1024,10 @@
       gap: 8px;
     }
     .settings-row-sub {
-      color: #8b949e;
-      font-size: .73rem;
-      margin-top: 3px;
-      line-height: 1.4;
+      color: #9ca3af;
+      font-size: .75rem;
+      margin-top: 4px;
+      line-height: 1.45;
     }
     .settings-switch {
       position: relative;
@@ -1057,8 +1078,8 @@
       background: transparent;
       color: #8b949e;
       border: none;
-      width: 28px;
-      height: 28px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -1069,6 +1090,28 @@
     .settings-close-btn:hover {
       background: rgba(255, 255, 255, 0.08);
       color: #e6edf3;
+    }
+    .webhook-tab-btn {
+      flex: 1;
+      background: transparent;
+      border: 1px solid #30363d;
+      color: #9ca3af;
+      padding: 7px 6px;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: .74rem;
+      font-weight: 600;
+      transition: all .15s ease;
+    }
+    .webhook-tab-btn:hover:not(.active) {
+      background: rgba(255, 255, 255, 0.04);
+      color: #e6edf3;
+    }
+    .webhook-tab-btn.active {
+      background: rgba(74, 222, 128, 0.16) !important;
+      border-color: #4ade80 !important;
+      color: #4ade80 !important;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
     }
 
     /* ── Matching Modal ─────────────────────────────────────── */
@@ -1648,13 +1691,16 @@
   </div>
 
   <!-- ── Export Quota Indicator (Free tier) ── -->
-  <div id="export-quota-indicator" style="display:none;align-items:center;justify-content:space-between;padding:5px 16px;font-size:11px;color:#8b949e;background:rgba(255,255,255,.03);border-top:1px solid #30363d">
-    <span id="export-quota-text">5 of 5 free exports remaining this month</span>
-    <span style="white-space:nowrap;margin-left:8px">
+  <div id="export-quota-indicator" style="display:none;align-items:center;justify-content:space-between;padding:7px 12px;margin:6px 14px;font-size:11px;color:#9ca3af;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;transition:all .2s ease">
+    <div style="display:flex;align-items:center;gap:6px;min-width:0">
+      <span id="export-quota-dot" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#81c995;flex-shrink:0"></span>
+      <span id="export-quota-text" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">2 of 2 free exports remaining this month</span>
+    </div>
+    <span style="white-space:nowrap;margin-left:8px;display:flex;align-items:center;gap:8px">
       <!-- Permanent, silent, deliberate path — the only surface that has
            actually converted is self-directed browsing. -->
-      <a href="https://attendancetracker.dev/pricing.html?utm_source=panel_quota" target="_blank" rel="noopener" data-i18n="quota.pricingLink" style="color:#8b949e;text-decoration:none;margin-right:10px">Pricing</a>
-      <a href="#" id="export-quota-upgrade-link" onclick="try{logUserEvent('quota_upgrade_clicked',{})}catch(e){};showUpgradeModal('quota_indicator');return false;" data-i18n="quota.goUnlimited" style="color:#fdd663;text-decoration:none;font-weight:600;white-space:nowrap">Go Unlimited</a>
+      <a href="https://attendancetracker.dev/pricing.html?utm_source=panel_quota" target="_blank" rel="noopener" data-i18n="quota.pricingLink" style="color:#8b949e;text-decoration:none;font-size:10.5px">Pricing</a>
+      <a href="#" id="export-quota-upgrade-link" onclick="try{logUserEvent('quota_upgrade_clicked',{})}catch(e){};showUpgradeModal('quota_indicator');return false;" data-i18n="quota.goUnlimited" style="color:#fdd663;text-decoration:none;font-weight:600;white-space:nowrap;font-size:10.5px;transition:all .15s ease">Go Unlimited</a>
     </span>
   </div>
 
@@ -1701,49 +1747,49 @@
   </div>
 
   <!-- Review Experiment Variant A: In-App 1-Click Interactive Star Rating -->
-  <div id="review-stars-widget" style="display:none; flex-direction:column; gap:8px; padding:10px 14px; margin:8px 12px; background:rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.35); border-radius:8px; font-size:.82rem;">
+  <div id="review-stars-widget" style="display:none; flex-direction:column; gap:10px; padding:12px 14px; margin:8px 12px; background:rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.32); border-radius:12px; font-size:.82rem; box-shadow:0 4px 16px rgba(0,0,0,0.25);">
     <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-      <span id="review-stars-title" style="font-weight:600; color:#fde68a;" data-i18n="review.starsTitle">How was your attendance tracking experience?</span>
-      <button type="button" onclick="dismissReviewExperiment('stars')" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:16px;line-height:1;padding:0 2px;">×</button>
+      <span id="review-stars-title" style="font-weight:600; color:#fde68a; line-height:1.35;" data-i18n="review.starsTitle">How was your attendance tracking experience?</span>
+      <button type="button" onclick="dismissReviewExperiment('stars')" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:rgba(255,255,255,0.06);border:none;color:#9ca3af;cursor:pointer;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1;flex-shrink:0;">×</button>
     </div>
     <!-- Interactive 5 Stars -->
-    <div id="review-stars-row" style="display:flex; align-items:center; gap:6px; cursor:pointer;" onmouseleave="resetStarHover()">
-      <span class="star-btn" data-val="1" onmouseover="hoverStars(1)" onclick="clickStarRating(1)" style="font-size:22px; color:#f59e0b; user-select:none; transition:transform .1s ease;">★</span>
-      <span class="star-btn" data-val="2" onmouseover="hoverStars(2)" onclick="clickStarRating(2)" style="font-size:22px; color:#f59e0b; user-select:none; transition:transform .1s ease;">★</span>
-      <span class="star-btn" data-val="3" onmouseover="hoverStars(3)" onclick="clickStarRating(3)" style="font-size:22px; color:#f59e0b; user-select:none; transition:transform .1s ease;">★</span>
-      <span class="star-btn" data-val="4" onmouseover="hoverStars(4)" onclick="clickStarRating(4)" style="font-size:22px; color:#f59e0b; user-select:none; transition:transform .1s ease;">★</span>
-      <span class="star-btn" data-val="5" onmouseover="hoverStars(5)" onclick="clickStarRating(5)" style="font-size:22px; color:#f59e0b; user-select:none; transition:transform .1s ease;">★</span>
+    <div id="review-stars-row" style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:2px 0;" onmouseleave="resetStarHover()">
+      <span class="star-btn" data-val="1" onmouseover="hoverStars(1)" onclick="clickStarRating(1)" style="font-size:24px; color:#f59e0b; user-select:none; transition:transform .12s ease; display:inline-block;">★</span>
+      <span class="star-btn" data-val="2" onmouseover="hoverStars(2)" onclick="clickStarRating(2)" style="font-size:24px; color:#f59e0b; user-select:none; transition:transform .12s ease; display:inline-block;">★</span>
+      <span class="star-btn" data-val="3" onmouseover="hoverStars(3)" onclick="clickStarRating(3)" style="font-size:24px; color:#f59e0b; user-select:none; transition:transform .12s ease; display:inline-block;">★</span>
+      <span class="star-btn" data-val="4" onmouseover="hoverStars(4)" onclick="clickStarRating(4)" style="font-size:24px; color:#f59e0b; user-select:none; transition:transform .12s ease; display:inline-block;">★</span>
+      <span class="star-btn" data-val="5" onmouseover="hoverStars(5)" onclick="clickStarRating(5)" style="font-size:24px; color:#f59e0b; user-select:none; transition:transform .12s ease; display:inline-block;">★</span>
     </div>
     <!-- Step 2: High rating follow-up (Marketplace CTA + School account fallback) -->
-    <div id="review-stars-followup-high" style="display:none; flex-direction:column; gap:6px; margin-top:4px;">
+    <div id="review-stars-followup-high" style="display:none; flex-direction:column; gap:8px; margin-top:2px;">
       <span style="font-size:.78rem; color:#d1d5db; line-height:1.4;" data-i18n="review.starsThanks">Thank you! A 5-star rating on Google Marketplace helps other teachers:</span>
       <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px;">
-        <a id="review-stars-marketplace-btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=inapp_stars" target="_blank" rel="noopener" onclick="onReviewExperimentMarketplaceClick('stars')" style="background:#f59e0b; color:#111; font-weight:700; padding:6px 12px; border-radius:6px; text-decoration:none; font-size:.76rem; display:inline-block;" data-i18n="review.starsRateBtn">Rate 5 Stars on Marketplace (5s)</a>
-        <button type="button" onclick="showReviewFeedbackInput('stars')" style="background:transparent; border:none; color:#9ca3af; text-decoration:underline; cursor:pointer; font-size:.74rem;" data-i18n="review.starsSchoolFallback">School account blocks reviews? Leave feedback</button>
+        <a id="review-stars-marketplace-btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=inapp_stars" target="_blank" rel="noopener" onclick="onReviewExperimentMarketplaceClick('stars')" style="background:#f59e0b; color:#111; font-weight:700; padding:7px 14px; border-radius:8px; text-decoration:none; font-size:.78rem; display:inline-block; box-shadow:0 2px 8px rgba(245,158,11,0.25);" data-i18n="review.starsRateBtn">Rate 5 Stars on Marketplace (5s)</a>
+        <button type="button" onclick="showReviewFeedbackInput('stars')" style="background:transparent; border:none; color:#9ca3af; text-decoration:underline; cursor:pointer; font-size:.74rem; padding:4px;" data-i18n="review.starsSchoolFallback">School account blocks reviews? Leave feedback</button>
       </div>
     </div>
     <!-- Step 2: Low rating or feedback follow-up -->
-    <div id="review-stars-followup-feedback" style="display:none; flex-direction:column; gap:6px; margin-top:4px;">
+    <div id="review-stars-followup-feedback" style="display:none; flex-direction:column; gap:8px; margin-top:2px;">
       <span style="font-size:.78rem; color:#d1d5db;" data-i18n="review.starsFeedbackPrompt">How can we make Attendance Tracker better for you?</span>
       <div style="display:flex; gap:6px;">
-        <input type="text" id="review-stars-feedback-text" placeholder="Your suggestions..." style="flex:1; background:#161b22; border:1px solid #30363d; border-radius:4px; padding:4px 8px; color:#f0f6fc; font-size:.75rem;" />
-        <button type="button" onclick="submitReviewExperimentFeedback('stars')" style="background:#238636; color:#fff; border:none; border-radius:4px; padding:4px 10px; font-size:.75rem; font-weight:600; cursor:pointer;" data-i18n="review.starsSendFeedback">Send</button>
+        <input type="text" id="review-stars-feedback-text" placeholder="Your suggestions..." style="flex:1; background:#161b22; border:1px solid #30363d; border-radius:6px; padding:6px 10px; color:#f0f6fc; font-size:.75rem;" />
+        <button type="button" onclick="submitReviewExperimentFeedback('stars')" style="background:#238636; color:#fff; border:none; border-radius:6px; padding:6px 12px; font-size:.75rem; font-weight:600; cursor:pointer;" data-i18n="review.starsSendFeedback">Send</button>
       </div>
     </div>
   </div>
 
   <!-- Review Experiment Variant B: High-Visibility Popping Review Banner -->
-  <div id="review-ask" style="display:none; flex-direction:column; gap:8px; padding:10px 14px; margin:8px 12px; background:linear-gradient(135deg, rgba(245,158,11,.12), rgba(59,130,246,.08)); border:1px solid rgba(245,158,11,.4); border-radius:8px; font-size:.82rem;">
+  <div id="review-ask" style="display:none; flex-direction:column; gap:10px; padding:12px 14px; margin:8px 12px; background:linear-gradient(135deg, rgba(245,158,11,.14), rgba(59,130,246,.08)); border:1px solid rgba(245,158,11,.38); border-radius:12px; font-size:.82rem; box-shadow:0 4px 16px rgba(0,0,0,0.25);">
     <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-      <div style="display:flex; align-items:center; gap:6px;">
-        <span style="color:#f59e0b; font-size:16px;">★★★★★</span>
+      <div style="display:flex; align-items:center; gap:7px;">
+        <span style="color:#f59e0b; font-size:16px; letter-spacing:1px;">★★★★★</span>
         <strong style="color:#fde68a;" data-i18n="review.bannerTitle">Enjoying Attendance Tracker?</strong>
       </div>
-      <button type="button" onclick="dismissReviewExperiment('banner')" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:16px;line-height:1;padding:0 2px;">×</button>
+      <button type="button" onclick="dismissReviewExperiment('banner')" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:rgba(255,255,255,0.06);border:none;color:#9ca3af;cursor:pointer;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1;flex-shrink:0;">×</button>
     </div>
-    <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px;">
-      <span style="color:#d1d5db; font-size:.78rem; line-height:1.4;"><span data-i18n="review.ask1">Getting value from this? A quick rating helps other hosts find it —</span> <span data-i18n="review.ask2">(takes 5 seconds).</span></span>
-      <a id="review-banner-btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=inapp_banner" target="_blank" rel="noopener" onclick="onReviewExperimentMarketplaceClick('banner')" style="background:#f59e0b; color:#111; font-weight:700; padding:6px 14px; border-radius:6px; text-decoration:none; font-size:.78rem; display:inline-block; white-space:nowrap;" data-i18n="review.bannerCta">Leave a 5-Star Review (5s)</a>
+    <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px;">
+      <span style="color:#d1d5db; font-size:.78rem; line-height:1.45;"><span data-i18n="review.ask1">Getting value from this? A quick rating helps other hosts find it —</span> <span data-i18n="review.ask2">(takes 5 seconds).</span></span>
+      <a id="review-banner-btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=inapp_banner" target="_blank" rel="noopener" onclick="onReviewExperimentMarketplaceClick('banner')" style="background:#f59e0b; color:#111; font-weight:700; padding:7px 14px; border-radius:8px; text-decoration:none; font-size:.78rem; display:inline-block; white-space:nowrap; box-shadow:0 2px 8px rgba(245,158,11,0.25);" data-i18n="review.bannerCta">Leave a 5-Star Review (5s)</a>
     </div>
   </div>
   <!-- Proactive auto-export upsell for heavy LIVE-ONLY trackers: users who track
@@ -1886,10 +1932,10 @@
     </div>
 
     <!-- Threshold Settings -->
-    <div id="roster-thresholds" style="display:flex;align-items:center;justify-content:space-between;gap:6px;padding:7px 10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;margin-bottom:12px;font-size:.72rem;color:var(--muted)">
-      <div style="display:flex;align-items:center;gap:4px">
+    <div id="roster-thresholds" style="display:flex;align-items:center;justify-content:space-between;gap:6px;padding:8px 12px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;margin-bottom:12px;font-size:.74rem;color:var(--muted)">
+      <div style="display:flex;align-items:center;gap:6px">
         <span style="white-space:nowrap" data-i18n="roster.minStay">Min stay:</span>
-        <select id="threshold-stay" onchange="onThresholdChange()" style="background:#161b22;border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 4px;font-size:.72rem">
+        <select id="threshold-stay" onchange="onThresholdChange()" style="background:#161b22;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:3px 6px;font-size:.74rem">
           <option value="0" data-i18n="roster.anyTime">Any time</option>
           <option value="50">50%</option>
           <option value="60">60%</option>
@@ -1901,9 +1947,9 @@
           <option value="m75">75 min</option>
         </select>
       </div>
-      <div style="display:flex;align-items:center;gap:4px">
+      <div style="display:flex;align-items:center;gap:6px">
         <span style="white-space:nowrap" data-i18n="roster.lateAfter">Late after:</span>
-        <select id="threshold-late" onchange="onThresholdChange()" style="background:#161b22;border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 4px;font-size:.72rem">
+        <select id="threshold-late" onchange="onThresholdChange()" style="background:#161b22;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:3px 6px;font-size:.74rem">
           <option value="0" data-i18n="roster.none">None</option>
           <option value="5">5 min</option>
           <option value="10" selected>10 min</option>
@@ -1915,21 +1961,21 @@
 
     <!-- Roster Summary Chips -->
     <div id="roster-chips" style="display:none;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px">
-      <div style="background:#161b22;border:1px solid var(--border);border-radius:6px;padding:6px 4px;text-align:center">
+      <div style="background:#161b22;border:1px solid var(--border);border-radius:8px;padding:8px 4px;text-align:center">
         <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase" data-i18n="attendee.present">Present</div>
-        <div id="roster-count-present" style="font-size:.95rem;font-weight:700;color:#4ade80">0</div>
+        <div id="roster-count-present" style="font-size:1rem;font-weight:700;color:#4ade80">0</div>
       </div>
-      <div style="background:#161b22;border:1px solid var(--border);border-radius:6px;padding:6px 4px;text-align:center">
+      <div style="background:#161b22;border:1px solid var(--border);border-radius:8px;padding:8px 4px;text-align:center">
         <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase" data-i18n="attendee.late">Late</div>
-        <div id="roster-count-late" style="font-size:.95rem;font-weight:700;color:#facc15">0</div>
+        <div id="roster-count-late" style="font-size:1rem;font-weight:700;color:#facc15">0</div>
       </div>
-      <div style="background:#161b22;border:1px solid var(--border);border-radius:6px;padding:6px 4px;text-align:center">
+      <div style="background:#161b22;border:1px solid var(--border);border-radius:8px;padding:8px 4px;text-align:center">
         <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase" data-i18n="attendee.absent">Absent</div>
-        <div id="roster-count-absent" style="font-size:.95rem;font-weight:700;color:#f87171">0</div>
+        <div id="roster-count-absent" style="font-size:1rem;font-weight:700;color:#f87171">0</div>
       </div>
-      <div style="background:#161b22;border:1px solid var(--border);border-radius:6px;padding:6px 4px;text-align:center">
+      <div style="background:#161b22;border:1px solid var(--border);border-radius:8px;padding:8px 4px;text-align:center">
         <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase" data-i18n="roster.guests">Guests</div>
-        <div id="roster-count-guests" style="font-size:.95rem;font-weight:700;color:#58a6ff">0</div>
+        <div id="roster-count-guests" style="font-size:1rem;font-weight:700;color:#58a6ff">0</div>
       </div>
     </div>
 
@@ -4770,10 +4816,49 @@ function updateQuotaIndicator(used, limit) {
     indicator.style.display = 'none';
     return;
   }
-  const maxLimit = typeof limit === 'number' ? limit : 5;
+  const defaultLimit = (window.PRICING && window.PRICING.FREE_MONTHLY_EXPORT_LIMIT) || 2;
+  const maxLimit = typeof limit === 'number' ? limit : defaultLimit;
   const usedCount = typeof used === 'number' ? used : 0;
   const remaining = Math.max(0, maxLimit - usedCount);
   textEl.textContent = t('quota.remaining', '{remaining} of {limit} free exports remaining this month').replace('{remaining}', remaining).replace('{limit}', maxLimit);
+
+  const dot = document.getElementById('export-quota-dot');
+  const upgradeLink = document.getElementById('export-quota-upgrade-link');
+  if (remaining === 0) {
+    indicator.style.background = 'rgba(253, 214, 99, 0.1)';
+    indicator.style.borderColor = 'rgba(253, 214, 99, 0.38)';
+    indicator.style.color = '#fde68a';
+    if (dot) dot.style.background = '#f59e0b';
+    if (upgradeLink) {
+      upgradeLink.style.background = '#f59e0b';
+      upgradeLink.style.color = '#111';
+      upgradeLink.style.padding = '3px 9px';
+      upgradeLink.style.borderRadius = '6px';
+      upgradeLink.style.boxShadow = '0 2px 6px rgba(245, 158, 11, 0.3)';
+    }
+  } else if (remaining === 1) {
+    indicator.style.background = 'rgba(255, 255, 255, 0.04)';
+    indicator.style.borderColor = 'rgba(253, 214, 99, 0.25)';
+    indicator.style.color = '#e6edf3';
+    if (dot) dot.style.background = '#fdd663';
+    if (upgradeLink) {
+      upgradeLink.style.background = 'transparent';
+      upgradeLink.style.color = '#fdd663';
+      upgradeLink.style.padding = '0';
+      upgradeLink.style.boxShadow = 'none';
+    }
+  } else {
+    indicator.style.background = 'rgba(255, 255, 255, 0.03)';
+    indicator.style.borderColor = 'var(--border)';
+    indicator.style.color = '#9ca3af';
+    if (dot) dot.style.background = '#81c995';
+    if (upgradeLink) {
+      upgradeLink.style.background = 'transparent';
+      upgradeLink.style.color = '#fdd663';
+      upgradeLink.style.padding = '0';
+      upgradeLink.style.boxShadow = 'none';
+    }
+  }
   indicator.style.display = 'flex';
 }
 
@@ -5868,6 +5953,11 @@ function maybeShowRecurringTip(title) {
     return; // first time we've seen this title — just remember it
   }
   if (shown) return; // repeat title, but we've already shown the tip once
+  // Single-slot rule: If another banner or review prompt is active, don't stack
+  for (const id of ['review-stars-widget', 'review-ask', 'export-cta', 'scope-banner', 'auto-export-nudge']) {
+    const el = document.getElementById(id);
+    if (el && getComputedStyle(el).display !== 'none') return;
+  }
   const bar = document.getElementById('recurring-tip');
   if (!bar) return;
   bar.style.display = 'flex';
@@ -5888,9 +5978,11 @@ function maybeShowClassSummaryUpsell() {
   let shown = false;
   try { shown = !!localStorage.getItem('att_class_summary_tip_shown'); } catch (e) { return; }
   if (shown) return;
-  const reviewA = document.getElementById('review-stars-widget');
-  const reviewB = document.getElementById('review-ask');
-  if ((reviewA && reviewA.style.display === 'flex') || (reviewB && reviewB.style.display === 'flex')) return;  // don't stack on the review ask
+  // Single-slot rule: never stack on review ask or other banners
+  for (const id of ['review-stars-widget', 'review-ask', 'export-cta', 'scope-banner', 'auto-export-nudge', 'term-report-tip']) {
+    const el = document.getElementById(id);
+    if (el && getComputedStyle(el).display !== 'none') return;
+  }
   const bar = document.getElementById('class-summary-tip');
   if (!bar) return;
   const rt = document.getElementById('recurring-tip');
@@ -6008,14 +6100,23 @@ function maybeShowReviewAsk() {
   // Value moment trigger: milestone >= 1 (first export or first real tracked meeting)
   if (shown || hasReviewed || (count < 1 && tracked < 1)) return;
 
+  // Single-slot rule: If a higher priority action banner is showing, yield to preserve breathing room
+  for (const id of ['export-cta', 'scope-banner', 'auto-export-nudge']) {
+    const el = document.getElementById(id);
+    if (el && getComputedStyle(el).display !== 'none') return;
+  }
+
+  // Dismiss any lower-priority tips so multiple alerts never stack
+  for (const id of ['recurring-tip', 'class-summary-tip', 'term-report-tip', 'auto-export-tip']) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  }
+
   const variant = getReviewExperimentVariant();
   const bar = variant === 'stars'
     ? document.getElementById('review-stars-widget')
     : document.getElementById('review-ask');
   if (!bar) return;
-
-  const rt = document.getElementById('recurring-tip');
-  if (rt && rt.style.display === 'flex') rt.style.display = 'none';
 
   bar.style.display = 'flex';
   try { localStorage.setItem('att_review_ask_shown', '1'); } catch (e) { /* best-effort */ }
@@ -6512,9 +6613,11 @@ function selectWebhookProvider(provider) {
   if (tabs) {
     for (const btn of tabs.querySelectorAll('button')) {
       const active = btn.dataset.provider === provider;
-      btn.style.background = active ? 'rgba(74,222,128,.12)' : 'transparent';
-      btn.style.borderColor = active ? '#4ade80' : '#30363d';
-      btn.style.color = active ? '#4ade80' : '#c9d1d9';
+      btn.classList.toggle('active', active);
+      btn.style.background = active ? 'rgba(74,222,128,.16)' : 'transparent';
+      btn.style.borderColor = active ? '#4ade80' : 'transparent';
+      btn.style.color = active ? '#4ade80' : '#8b949e';
+      btn.style.boxShadow = active ? '0 1px 4px rgba(0,0,0,0.2)' : 'none';
     }
   }
   const desc = document.getElementById('settings-webhook-desc');
@@ -7354,9 +7457,9 @@ window.addEventListener('DOMContentLoaded', () => {
   </div>
 
   <!-- ── Settings Modal ── -->
-  <div id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)">
-    <div class="modal-box" style="background:#161b22;border:1px solid #30363d;border-radius:16px;padding:20px;max-width:440px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 16px 36px rgba(0,0,0,.55)">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+  <div id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:1000;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(8px)">
+    <div class="modal-box" style="background:#161b22;border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:22px;max-width:440px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 48px rgba(0,0,0,.6)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
         <div style="display:flex;align-items:center;gap:8px">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"></circle>
@@ -7471,10 +7574,10 @@ window.addEventListener('DOMContentLoaded', () => {
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
           </a>
         </div>
-        <div id="settings-webhook-tabs" style="display:flex;gap:6px;margin-bottom:10px">
-          <button type="button" data-provider="slack" onclick="selectWebhookProvider('slack')" style="flex:1;background:transparent;border:1px solid #30363d;color:#c9d1d9;padding:6px 4px;border-radius:6px;cursor:pointer;font-size:.72rem;font-weight:600">Slack<span id="webhook-dot-slack" style="display:none;color:#4ade80;margin-left:4px">&#9679;</span></button>
-          <button type="button" data-provider="googleChat" onclick="selectWebhookProvider('googleChat')" style="flex:1;background:transparent;border:1px solid #30363d;color:#c9d1d9;padding:6px 4px;border-radius:6px;cursor:pointer;font-size:.72rem;font-weight:600">Google Chat<span id="webhook-dot-googleChat" style="display:none;color:#4ade80;margin-left:4px">&#9679;</span></button>
-          <button type="button" data-provider="discord" onclick="selectWebhookProvider('discord')" style="flex:1;background:transparent;border:1px solid #30363d;color:#c9d1d9;padding:6px 4px;border-radius:6px;cursor:pointer;font-size:.72rem;font-weight:600">Discord<span id="webhook-dot-discord" style="display:none;color:#4ade80;margin-left:4px">&#9679;</span></button>
+        <div id="settings-webhook-tabs" style="display:flex;gap:4px;margin-bottom:12px;background:rgba(0,0,0,.28);padding:3px;border-radius:10px;border:1px solid rgba(255,255,255,.06)">
+          <button type="button" class="webhook-tab-btn" data-provider="slack" onclick="selectWebhookProvider('slack')">Slack<span id="webhook-dot-slack" style="display:none;color:#4ade80;margin-left:4px">&#9679;</span></button>
+          <button type="button" class="webhook-tab-btn" data-provider="googleChat" onclick="selectWebhookProvider('googleChat')">Google Chat<span id="webhook-dot-googleChat" style="display:none;color:#4ade80;margin-left:4px">&#9679;</span></button>
+          <button type="button" class="webhook-tab-btn" data-provider="discord" onclick="selectWebhookProvider('discord')">Discord<span id="webhook-dot-discord" style="display:none;color:#4ade80;margin-left:4px">&#9679;</span></button>
         </div>
         <div id="settings-webhook-desc" class="settings-row-sub" style="margin-bottom:10px">
           Posts an attendance summary card to your Slack channel after every export.
