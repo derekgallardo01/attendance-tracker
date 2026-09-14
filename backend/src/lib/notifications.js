@@ -483,66 +483,161 @@ async function sendWeeklySelfReport(report) {
   const to = process.env.NOTIFY_EMAIL || ownerEmail();
   if (!to) return { skipped: 'no NOTIFY_EMAIL/owner' };
 
-  const arrow = (s) => s.startsWith('+') ? `<span style="color:#16a34a">▲ ${s}</span>` : s.startsWith('-') ? `<span style="color:#dc2626">▼ ${s}</span>` : `<span style="color:#666">${s}</span>`;
+  const arrow = (s) => {
+    const str = String(s || '');
+    return str.startsWith('+')
+      ? `<span style="color:#4ade80;font-weight:600">▲ ${escape(str)}</span>`
+      : str.startsWith('-')
+        ? `<span style="color:#f85149;font-weight:600">▼ ${escape(str)}</span>`
+        : `<span style="color:#8b949e">${escape(str)}</span>`;
+  };
 
-  const newSignupsList = (report.signups.new || []).map(u =>
-    `<li>${escape(u.displayName || u.email)} &lt;${escape(u.email)}&gt; — ${escape(u.domain)}${u.source ? ` (${escape(u.source)})` : ''}</li>`
-  ).join('') || '<li style="color:#666">No new signups this week.</li>';
+  const newSignupsList = (report.signups?.new || []).map(u => {
+    const adminSearch = `https://attendancetracker.dev/admin.html?search=${encodeURIComponent(u.email)}`;
+    return `<li style="padding:8px 0;border-bottom:1px solid #21262d;list-style:none;font-size:13px;color:#e6edf3;word-break:break-word;"><strong style="color:#e6edf3;">${escape(u.displayName || u.email)}</strong> <span style="color:#8b949e;">&lt;${escape(u.email)}&gt;</span> — <a href="${adminSearch}" style="color:#58a6ff;text-decoration:none;">${escape(u.domain)}</a>${u.source ? ` <span style="font-size:11px;background:#21262d;color:#8b949e;padding:2px 6px;border-radius:6px;white-space:nowrap;">${escape(u.source)}</span>` : ''}</li>`;
+  }).join('') || '<li style="color:#8b949e;padding:6px 0;list-style:none;font-size:13px;">No new signups this week.</li>';
 
-  const concernsList = (report.concerns || []).map(u =>
-    `<li>${escape(u.displayName || u.email)} &lt;${escape(u.email)}&gt; — ${escape(u.domain)}, signed up 3-7d ago, never tracked</li>`
-  ).join('') || '<li style="color:#16a34a">No churn-risk users this week 🎉</li>';
+  const concernsList = (report.concerns || []).map(u => {
+    const name = escape(u.displayName || u.email);
+    const email = escape(u.email);
+    const domain = escape(u.domain || '');
+    const subject = encodeURIComponent('Getting started with Attendance Tracker');
+    const body = encodeURIComponent(`Hi ${u.displayName ? u.displayName.split(' ')[0] : 'there'},\n\nI noticed you signed up for Attendance Tracker for ${u.domain || 'your meetings'} a few days ago. Did you run into any snags tracking your first meeting?\n\nHappy to help or jump on a quick call!\n\nBest,\nDerek`);
+    const mailto = `mailto:${u.email}?subject=${subject}&body=${body}`;
+    const adminSearch = `https://attendancetracker.dev/admin.html?search=${encodeURIComponent(u.email)}`;
+    return `<li style="padding:10px 0;border-bottom:1px solid #30363d;list-style:none;font-size:13px;"><div style="margin-bottom:6px;word-break:break-word;"><strong style="color:#f85149;">${name}</strong> <span style="color:#8b949e;">&lt;${email}&gt;</span> — <a href="${adminSearch}" style="color:#58a6ff;text-decoration:none;">${domain}</a><div style="margin-top:3px;"><span style="font-size:11px;color:#f85149;background:rgba(248,81,73,0.12);padding:2px 6px;border-radius:4px;">signed up 3-7d ago, never tracked</span></div></div><a href="${mailto}" class="touch-btn" style="display:inline-block;padding:7px 12px;background:#21262d;color:#e6edf3;border:1px solid #30363d;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;min-height:36px;box-sizing:border-box;">⚡ 1-Click Outreach</a></li>`;
+  }).join('') || '<li style="color:#4ade80;padding:6px 0;list-style:none;font-size:13px;">No churn-risk users this week 🎉</li>';
 
-  const sourcesList = Object.entries(report.sources || {}).sort((a, b) => b[1] - a[1])
-    .map(([s, n]) => `<li>${escape(s)} — ${n}</li>`).join('') || '<li style="color:#666">No source data yet.</li>';
+  const sourcesEntries = Object.entries(report.sources || {}).sort((a, b) => b[1] - a[1]);
+  const maxSource = sourcesEntries.length ? Math.max(...sourcesEntries.map(e => e[1])) : 1;
+  const sourcesList = sourcesEntries.map(([s, n]) => {
+    const pct = Math.max(8, Math.round((n / maxSource) * 100));
+    return `<li style="padding:6px 0;border-bottom:1px solid #21262d;list-style:none;font-size:13px;"><div style="display:flex;justify-content:space-between;margin-bottom:3px;"><span style="color:#e6edf3;font-weight:500;">${escape(s)}</span><strong style="color:#4ade80;">${n}</strong></div><div style="background:#21262d;border-radius:4px;height:5px;width:100%;overflow:hidden;"><div style="background:#4ade80;height:5px;width:${pct}%;border-radius:4px;"></div></div></li>`;
+  }).join('') || '<li style="color:#8b949e;padding:6px 0;list-style:none;font-size:13px;">No source data yet.</li>';
 
-  const useCasesList = Object.entries(report.useCases || {}).sort((a, b) => b[1] - a[1])
-    .map(([s, n]) => `<li>${escape(s)} — ${n}</li>`).join('') || '<li style="color:#666">No survey responses yet.</li>';
+  const useCasesEntries = Object.entries(report.useCases || {}).sort((a, b) => b[1] - a[1]);
+  const maxUseCase = useCasesEntries.length ? Math.max(...useCasesEntries.map(e => e[1])) : 1;
+  const useCasesList = useCasesEntries.map(([s, n]) => {
+    const pct = Math.max(8, Math.round((n / maxUseCase) * 100));
+    return `<li style="padding:6px 0;border-bottom:1px solid #21262d;list-style:none;font-size:13px;"><div style="display:flex;justify-content:space-between;margin-bottom:3px;"><span style="color:#e6edf3;font-weight:500;">${escape(s)}</span><strong style="color:#58a6ff;">${n}</strong></div><div style="background:#21262d;border-radius:4px;height:5px;width:100%;overflow:hidden;"><div style="background:#58a6ff;height:5px;width:${pct}%;border-radius:4px;"></div></div></li>`;
+  }).join('') || '<li style="color:#8b949e;padding:6px 0;list-style:none;font-size:13px;">No survey responses yet.</li>';
 
   const topUserLine = report.topUser
-    ? `${escape(report.topUser.displayName || report.topUser.email)} (${report.topUser.actions} actions)`
+    ? `<strong style="color:#4ade80;">${escape(report.topUser.displayName || report.topUser.email)}</strong> <span style="color:#8b949e;">(${report.topUser.actions} actions)</span>`
     : 'Nobody yet — quiet week.';
 
   const rt = report.retention;
   const remindersBreakdown = rt ? (Object.entries(rt.remindersThis || {}).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${escape(k)} ${n}`).join(', ') || 'none') : '';
   const retentionHtml = rt ? `
-      <h3 style="margin:0 0 6px">🔁 Retention</h3>
-      <ul style="margin:0 0 16px;padding-left:20px;font-size:14px">
-        <li><b>Return rate:</b> ${rt.returnRate}% — ${rt.returned}/${rt.eligible} came back on a later day</li>
-        <li><b>Retention nudges sent:</b> ${rt.remindersThisTotal} this week ${arrow(rt.remindersDelta || '0')} — ${remindersBreakdown}</li>
-        <li><b>Silent dead-ends:</b> ${rt.deadEnds} user${rt.deadEnds === 1 ? '' : 's'} polled 5+ times but captured nobody (not the host)</li>
-      </ul>` : '';
+      <div style="padding:20px 24px;border-bottom:1px solid #30363d;">
+        <h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:0.05em;color:#58a6ff;">🔁 Retention & Diagnostics</h3>
+        <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:12px 16px;font-size:13px;line-height:1.6;">
+          <div><b style="color:#e6edf3;">Return rate:</b> <span style="color:#4ade80;font-weight:700;">${rt.returnRate}%</span> — <span style="color:#8b949e;">${rt.returned}/${rt.eligible} came back on a later day</span></div>
+          <div><b style="color:#e6edf3;">Retention nudges sent:</b> <strong style="color:#e6edf3;">${rt.remindersThisTotal}</strong> this week ${arrow(rt.remindersDelta || '0')} — <span style="color:#8b949e;">${remindersBreakdown}</span></div>
+          <div><b style="color:#e6edf3;">Silent dead-ends:</b> <span style="color:#f85149;font-weight:600;">${rt.deadEnds} user${rt.deadEnds === 1 ? '' : 's'}</span> <span style="color:#8b949e;">polled 5+ times but captured nobody (not the host)</span></div>
+        </div>
+      </div>` : '';
 
   const subject = `📊 Weekly Attendance Tracker report — ${report.signups.thisWeek} new signup${report.signups.thisWeek === 1 ? '' : 's'}, ${report.tracks.thisWeek} track${report.tracks.thisWeek === 1 ? '' : 's'}`;
 
   const html = `
-    <div style="font-family:sans-serif;max-width:600px;color:#111">
-      <h2 style="margin:0 0 6px;color:#4ade80">Week of ${new Date(report.windowStart).toLocaleDateString()} → ${new Date(report.windowEnd).toLocaleDateString()}</h2>
-      <p style="color:#666;margin:0 0 16px">Snapshot: ${report.totalUsers} total users, ${report.totalMeetings} total meetings tracked.</p>
-      <table style="border-collapse:collapse;width:100%;margin-bottom:18px;font-size:14px">
-        <tr style="background:#f5f5f5"><th style="text-align:left;padding:8px">Metric</th><th style="text-align:right;padding:8px">This week</th><th style="text-align:right;padding:8px">Last week</th><th style="text-align:right;padding:8px">Change</th></tr>
-        <tr><td style="padding:8px;border-top:1px solid #eee">Signups</td><td style="text-align:right;padding:8px;border-top:1px solid #eee">${report.signups.thisWeek}</td><td style="text-align:right;padding:8px;border-top:1px solid #eee">${report.signups.lastWeek}</td><td style="text-align:right;padding:8px;border-top:1px solid #eee">${arrow(report.signups.delta)}</td></tr>
-        <tr><td style="padding:8px;border-top:1px solid #eee">Meetings tracked</td><td style="text-align:right;padding:8px;border-top:1px solid #eee">${report.tracks.thisWeek}</td><td style="text-align:right;padding:8px;border-top:1px solid #eee">${report.tracks.lastWeek}</td><td style="text-align:right;padding:8px;border-top:1px solid #eee">${arrow(report.tracks.delta)}</td></tr>
-        <tr><td style="padding:8px;border-top:1px solid #eee">Exports</td><td style="text-align:right;padding:8px;border-top:1px solid #eee">${report.exports.thisWeek}</td><td style="text-align:right;padding:8px;border-top:1px solid #eee">${report.exports.lastWeek}</td><td style="text-align:right;padding:8px;border-top:1px solid #eee">${arrow(report.exports.delta)}</td></tr>
-      </table>
-      ${retentionHtml}
-      <h3 style="margin:0 0 6px">⭐ Top user this week</h3>
-      <p style="margin:0 0 16px;font-size:14px">${topUserLine}</p>
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 580px) {
+          .responsive-container { width: 100% !important; border-radius: 0 !important; }
+          .metric-cell { display: block !important; width: 100% !important; margin-bottom: 8px !important; box-sizing: border-box !important; }
+          .two-col-cell { display: block !important; width: 100% !important; padding: 0 !important; margin-bottom: 16px !important; }
+          .touch-btn { width: 100% !important; text-align: center !important; min-height: 44px !important; line-height: 44px !important; display: block !important; box-sizing: border-box !important; }
+        }
+      </style>
+    </head>
+    <body style="margin:0;padding:0;background-color:#0d1117;">
+      <div style="background-color:#0d1117;padding:24px 8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#e6edf3;">
+        <div class="responsive-container" style="max-width:640px;margin:0 auto;background-color:#161b22;border:1px solid #30363d;border-radius:12px;overflow:hidden;">
+          
+          <!-- Header -->
+          <div style="padding:24px 20px 18px;border-bottom:1px solid #30363d;background:linear-gradient(180deg,#1c2128 0%,#161b22 100%);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
+              <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#4ade80;background:rgba(74,222,128,0.12);padding:4px 8px;border-radius:10px;border:1px solid rgba(74,222,128,0.25);">
+                Weekly Performance Digest
+              </span>
+              <span style="font-size:12px;color:#8b949e;">${new Date(report.windowStart).toLocaleDateString()} → ${new Date(report.windowEnd).toLocaleDateString()}</span>
+            </div>
+            <h2 style="margin:6px 0 4px;font-size:20px;font-weight:700;color:#e6edf3;">Week of ${new Date(report.windowStart).toLocaleDateString()} → ${new Date(report.windowEnd).toLocaleDateString()}</h2>
+            <p style="margin:0;font-size:13px;color:#8b949e;">Snapshot: <strong style="color:#e6edf3;">${report.totalUsers}</strong> total users, <strong style="color:#e6edf3;">${report.totalMeetings}</strong> total meetings tracked.</p>
+          </div>
 
-      <h3 style="margin:0 0 6px">🌱 New signups</h3>
-      <ul style="margin:0 0 16px;padding-left:20px;font-size:14px">${newSignupsList}</ul>
+          <!-- Core Metrics Cards -->
+          <div style="padding:16px 20px;border-bottom:1px solid #30363d;">
+            <table style="width:100%;border-collapse:separate;border-spacing:8px;margin:-8px;">
+              <tr class="metric-row">
+                <td class="metric-cell" style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px;vertical-align:top;">
+                  <div style="font-size:11px;color:#8b949e;text-transform:uppercase;font-weight:600;letter-spacing:0.05em;">Signups</div>
+                  <div style="font-size:24px;font-weight:700;color:#e6edf3;margin:4px 0;">${report.signups.thisWeek}</div>
+                  <div style="font-size:12px;">${arrow(report.signups.delta || '0')} <span style="color:#8b949e;font-size:11px;">(was ${report.signups.lastWeek})</span></div>
+                </td>
+                <td class="metric-cell" style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px;vertical-align:top;">
+                  <div style="font-size:11px;color:#8b949e;text-transform:uppercase;font-weight:600;letter-spacing:0.05em;">Meetings</div>
+                  <div style="font-size:24px;font-weight:700;color:#4ade80;margin:4px 0;">${report.tracks.thisWeek}</div>
+                  <div style="font-size:12px;">${arrow(report.tracks.delta || '0')} <span style="color:#8b949e;font-size:11px;">(was ${report.tracks.lastWeek})</span></div>
+                </td>
+                <td class="metric-cell" style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px;vertical-align:top;">
+                  <div style="font-size:11px;color:#8b949e;text-transform:uppercase;font-weight:600;letter-spacing:0.05em;">Exports</div>
+                  <div style="font-size:24px;font-weight:700;color:#e6edf3;margin:4px 0;">${report.exports.thisWeek}</div>
+                  <div style="font-size:12px;">${arrow(report.exports.delta || '0')} <span style="color:#8b949e;font-size:11px;">(was ${report.exports.lastWeek})</span></div>
+                </td>
+              </tr>
+            </table>
+          </div>
 
-      <h3 style="margin:0 0 6px">⚠ Churn risk — check in this week</h3>
-      <ul style="margin:0 0 16px;padding-left:20px;font-size:14px">${concernsList}</ul>
+          ${retentionHtml}
 
-      <h3 style="margin:0 0 6px">📡 Where they came from</h3>
-      <ul style="margin:0 0 16px;padding-left:20px;font-size:14px">${sourcesList}</ul>
+          <!-- Top User -->
+          <div style="padding:16px 20px;border-bottom:1px solid #30363d;background:rgba(74,222,128,0.02);">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:#8b949e;margin-bottom:4px;font-weight:600;">⭐ Top user this week</div>
+            <div style="font-size:14px;word-break:break-word;">${topUserLine}</div>
+          </div>
 
-      <h3 style="margin:0 0 6px">🎯 What they're using it for</h3>
-      <ul style="margin:0 0 16px;padding-left:20px;font-size:14px">${useCasesList}</ul>
+          <!-- Churn Risk with 1-Click Outreach -->
+          <div style="padding:20px;border-bottom:1px solid #30363d;background:rgba(248,81,73,0.03);">
+            <h3 style="margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:0.05em;color:#f85149;">⚠ Churn risk — check in this week</h3>
+            <ul style="margin:0;padding:0;">${concernsList}</ul>
+          </div>
 
-      <p style="margin-top:24px;color:#666;font-size:12px"><a href="https://attendancetracker.dev/admin.html">Open admin dashboard →</a></p>
-    </div>
+          <!-- Breakdown: Sources & Use cases with sparkbars -->
+          <div style="padding:20px;border-bottom:1px solid #30363d;">
+            <table style="width:100%;border-collapse:collapse;">
+              <tr>
+                <td class="two-col-cell" style="width:50%;vertical-align:top;padding-right:12px;">
+                  <h3 style="margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:0.05em;color:#8b949e;">📡 Acquisition Sources</h3>
+                  <ul style="margin:0;padding:0;">${sourcesList}</ul>
+                </td>
+                <td class="two-col-cell" style="width:50%;vertical-align:top;padding-left:12px;">
+                  <h3 style="margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:0.05em;color:#8b949e;">🎯 Use Cases</h3>
+                  <ul style="margin:0;padding:0;">${useCasesList}</ul>
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- New Signups -->
+          <div style="padding:20px;border-bottom:1px solid #30363d;">
+            <h3 style="margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:0.05em;color:#4ade80;">🌱 New signups</h3>
+            <ul style="margin:0;padding:0;max-height:360px;overflow-y:auto;">${newSignupsList}</ul>
+          </div>
+
+          <!-- Footer with touch target -->
+          <div style="padding:16px 20px;background:#0d1117;">
+            <a href="https://attendancetracker.dev/admin.html" class="touch-btn" style="background:#4ade80;color:#0d1117;font-size:13px;font-weight:700;padding:10px 18px;border-radius:6px;text-decoration:none;display:inline-block;min-height:44px;line-height:24px;box-sizing:border-box;">Open admin dashboard →</a>
+          </div>
+
+        </div>
+      </div>
+    </body>
+    </html>
   `;
 
   const text = [

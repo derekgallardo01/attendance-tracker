@@ -360,6 +360,7 @@ describe('no "wired but English-valued" keys (translation-content guard)', () =>
     key === 'team.transferPlaceholder' ||    // "teammate@yourdomain.com" — example email
     key === 'team.adminBadge' ||             // "ADMIN" — compact status badge, kept short/uppercase
     key === 'setup.step2Link' ||             // admin.google.com console breadcrumb (URL + exact console labels)
+    key === 'quote.emailPlaceholder' ||      // "you@yourschool.edu" — example email
     key === 'settings.extraEmailsPlaceholder'; // example emails — locale-invariant sample text
 
   test('every non-allowlisted key is translated (not English-valued) in the locales', () => {
