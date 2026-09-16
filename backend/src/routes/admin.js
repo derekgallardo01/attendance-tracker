@@ -783,12 +783,23 @@ router.get('/admin/insights', requireSuperAdmin, async (req, res) => {
   }
 });
 
+// Module-level cache for /kh/metrics so frequent polling (e.g. every 30s)
+// from monitoring dashboards (Kinetic Helix) does not query Firestore on every call.
+let _khMetricsCache = null;
+let _khMetricsCachedAt = 0;
+const KH_METRICS_CACHE_MS = 15 * 60 * 1000; // 15 minutes
+
 // GET /api/kh/metrics — durable metrics pull for the Kinetic Helix command
 // center. Same aggregate as /admin/insights (plus revenue), gated by a static
 // x-kh-key header (KH_METRICS_KEY) so the connection doesn't expire.
 router.get('/kh/metrics', requireKhMetricsKey, async (req, res) => {
   try {
-    const insights = await getAggregatedInsights();
+    const force = req.query.refresh === '1' || req.query.force === '1';
+    if (!force && process.env.NODE_ENV !== 'test' && _khMetricsCache && (Date.now() - _khMetricsCachedAt) < KH_METRICS_CACHE_MS) {
+      return res.json(_khMetricsCache);
+    }
+
+    const insights = await getAggregatedInsights({ force });
     // MRR = pro tenants × seat price (KH_MRR_SEAT_CENTS, set to match Stripe).
     let revenue = { mrrCents: 0, proTenants: 0 };
     try {
@@ -798,7 +809,9 @@ router.get('/kh/metrics', requireKhMetricsKey, async (req, res) => {
     } catch (e) {
       log.warn('admin: kh revenue failed', { error: e.message });
     }
-    res.json({ ...insights, revenue });
+    _khMetricsCache = { ...insights, revenue, cachedAt: new Date().toISOString() };
+    _khMetricsCachedAt = Date.now();
+    res.json(_khMetricsCache);
   } catch (err) {
     log.error('admin: kh metrics failed', { error: err.message });
     res.status(500).json({ error: 'Failed to compute insights' });

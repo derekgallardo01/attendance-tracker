@@ -121,7 +121,15 @@ async function getActivationFunnel() {
   }
 }
 
-async function getAggregatedInsights() {
+// Module-level cache for getAggregatedInsights (scans all tenants, users, meetings, exports, events).
+let _insightsCache = null;
+let _insightsCachedAt = 0;
+const INSIGHTS_CACHE_MS = 15 * 60 * 1000; // 15 minutes
+
+async function getAggregatedInsights({ force = false } = {}) {
+  if (!force && process.env.NODE_ENV !== 'test' && _insightsCache && (Date.now() - _insightsCachedAt) < INSIGHTS_CACHE_MS) {
+    return _insightsCache;
+  }
   try {
     const db = getDb();
     const now = Date.now();
@@ -452,6 +460,8 @@ async function getAggregatedInsights() {
       proIndividuals,
       totalProSubscribers,
     };
+    _insightsCachedAt = Date.now();
+    return _insightsCache;
   } catch (err) {
     log.error('firestore: getAggregatedInsights failed', { error: err.message });
     throw err;
@@ -1608,7 +1618,12 @@ async function setErrorAlertState(data) {
   catch (err) { log.error('firestore: setErrorAlertState failed', { error: err.message }); }
 }
 
+function clearInsightsCache() {
+  _insightsCache = null;
+  _insightsCachedAt = 0;
+}
+
 module.exports = {
-  getActivationFunnel, getAggregatedInsights, getWeeklySelfReport, getAdvancedAnalytics, getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, markUserContacted, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, getOutreachList, getActivityPulse, getRevenueFunnel,
+  getActivationFunnel, getAggregatedInsights, clearInsightsCache, getWeeklySelfReport, getAdvancedAnalytics, getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, markUserContacted, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, getOutreachList, getActivityPulse, getRevenueFunnel,
   getRecentErrorSpike, getErrorAlertState, setErrorAlertState,
 };

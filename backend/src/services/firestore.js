@@ -10,7 +10,7 @@ const { suppressEmail, isEmailSuppressed, unsuppressEmail } = require('./firesto
 const { deleteUser, isUserDeleted, clearDeletedTombstone } = require('./firestore/deletion');
 const { saveCheckin, getCheckins } = require('./firestore/checkins');
 const {
-  getActivationFunnel, getAggregatedInsights, getWeeklySelfReport, getAdvancedAnalytics, getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, markUserContacted, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, getOutreachList, getActivityPulse, getRevenueFunnel,
+  getActivationFunnel, getAggregatedInsights, clearInsightsCache, getWeeklySelfReport, getAdvancedAnalytics, getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, markUserContacted, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, getOutreachList, getActivityPulse, getRevenueFunnel,
   getRecentErrorSpike, getErrorAlertState, setErrorAlertState,
 } = require('./firestore/analytics');
 
@@ -2083,7 +2083,7 @@ module.exports = {
   saveCheckin, getCheckins,
   // ── Heavy full-DB admin reads: TTL-cached so a dashboard reload doesn't
   //    re-scan the whole users+events+meetings tree for each one. ──
-  getAggregatedInsights: memoizeTTL(getAggregatedInsights, 120000),
+  getAggregatedInsights: memoizeTTL(getAggregatedInsights, 900000), // 15 min TTL
   getAdvancedAnalytics: memoizeTTL(getAdvancedAnalytics, 120000),
   getWeeklySelfReport: memoizeTTL(getWeeklySelfReport, 120000),
   getReachOutSuggestions: memoizeTTL(getReachOutSuggestions, 120000),
