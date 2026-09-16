@@ -1104,3 +1104,82 @@ describe('notifications — digest without a participants array', () => {
     expect(Array.isArray(blocks)).toBe(true);
   });
 });
+
+describe('notifications — buildDesignSystemEmail & upgrade link sender', () => {
+  let mockSend;
+  beforeEach(() => {
+    mockSend = jest.fn().mockResolvedValue({ data: { id: 'm' } });
+    jest.doMock('resend', () => ({ Resend: jest.fn().mockImplementation(() => ({ emails: { send: mockSend } })) }));
+    process.env.RESEND_API_KEY = 're_test';
+    jest.resetModules();
+  });
+  afterEach(() => { jest.dontMock('resend'); delete process.env.RESEND_API_KEY; });
+
+  test('buildDesignSystemEmail renders brand header, badges, CTA and footer correctly', () => {
+    const { buildDesignSystemEmail } = require('../../src/lib/notifications');
+    const html = buildDesignSystemEmail({
+      badge: 'Test Badge',
+      badgeType: 'warning',
+      title: 'Test Title',
+      subtitle: 'Test Subtitle',
+      contentHtml: '<p>Body Content</p>',
+      ctaText: 'Click Me',
+      ctaUrl: 'https://attendancetracker.dev/action',
+      ctaColor: 'blue',
+      footerHtml: '<span>Custom Footer</span>',
+    });
+    expect(html).toContain('Attendance Tracker');
+    expect(html).toContain('Test Badge');
+    expect(html).toContain('Test Title');
+    expect(html).toContain('Test Subtitle');
+    expect(html).toContain('Body Content');
+    expect(html).toContain('Click Me');
+    expect(html).toContain('https://attendancetracker.dev/action');
+    expect(html).toContain('Custom Footer');
+    expect(html).toContain('#0d1117');
+    expect(html).toContain('#161b22');
+  });
+
+  test('buildDesignSystemEmail uses defaults when optional props are omitted', () => {
+    const { buildDesignSystemEmail } = require('../../src/lib/notifications');
+    const html = buildDesignSystemEmail({
+      contentHtml: '<p>Minimal</p>',
+    });
+    expect(html).toContain('Minimal');
+    expect(html).toContain('attendancetracker.dev');
+  });
+
+  test('sendUpgradeLinkEmail sends email with plan buttons, pricing and unsubscribe link', async () => {
+    const n = require('../../src/lib/notifications');
+    await n.sendUpgradeLinkEmail({
+      to: 'teacher@school.edu',
+      displayName: 'Sarah Connor',
+      educatorUrl: 'https://buy.stripe.com/educator',
+      lifetimeUrl: 'https://buy.stripe.com/lifetime',
+      educatorPrice: '$49',
+      lifetimePrice: '$119',
+      flag: '🇺🇸',
+      isPpp: true,
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const call = mockSend.mock.calls[0][0];
+    expect(call.to).toEqual(['teacher@school.edu']);
+    expect(call.subject).toContain('upgrade link');
+    expect(call.html).toContain('Sarah');
+    expect(call.html).toContain('Educator Pass');
+    expect(call.html).toContain('Lifetime Pro');
+    expect(call.html).toContain('$49/yr');
+    expect(call.html).toContain('$119 one-time');
+    expect(call.html).toContain('50% Regional Subsidy applied');
+    expect(call.html).toContain('https://buy.stripe.com/educator');
+    expect(call.html).toContain('https://buy.stripe.com/lifetime');
+    expect(call.text).toContain('$49/yr');
+    expect(call.tags).toEqual([{ name: 'type', value: 'upgrade_link_requested' }]);
+  });
+
+  test('sendUpgradeLinkEmail throws if to is missing', async () => {
+    const n = require('../../src/lib/notifications');
+    await expect(n.sendUpgradeLinkEmail({}))
+      .rejects.toThrow(/to is required/);
+  });
+});

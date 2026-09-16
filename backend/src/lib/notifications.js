@@ -187,9 +187,88 @@ function unsubscribeFooter(email) {
   const url = unsubscribeUrl(email);
   return {
     text: `\n\n—\nDon't want these emails? Unsubscribe: ${url}`,
-    html: `<p style="margin:24px 0 0;color:#8a8f98;font-size:12px;font-family:sans-serif">`
-      + `Don't want these emails? <a href="${escape(url)}" style="color:#8a8f98">Unsubscribe</a>.</p>`,
+    html: `<p style="margin:24px 0 0;color:#8b949e;font-size:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">`
+      + `Don't want these emails? <a href="${escape(url)}" style="color:#58a6ff;text-decoration:none;">Unsubscribe</a>.</p>`,
   };
+}
+
+// ── Shared Design System Email Wrapper ────────────────────────────────────
+// Attendance Tracker's signature dark UI theme:
+// Background: #0d1117, Container: #161b22, Border: #30363d, Text: #e6edf3, Muted: #8b949e.
+function buildDesignSystemEmail({
+  badge = null,
+  badgeType = 'info', // 'info' | 'error' | 'warning' | 'success'
+  title = '',
+  subtitle = '',
+  contentHtml = '',
+  ctaText = null,
+  ctaUrl = null,
+  ctaColor = 'green', // 'green' | 'blue'
+  footerHtml = null,
+}) {
+  const badgeColors = {
+    error: 'color:#f85149;background:rgba(248,81,73,0.12);border:1px solid rgba(248,81,73,0.3);',
+    warning: 'color:#e3b341;background:rgba(227,179,65,0.12);border:1px solid rgba(227,179,65,0.3);',
+    success: 'color:#4ade80;background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.25);',
+    info: 'color:#58a6ff;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.25);',
+  };
+  const badgeStyle = badgeColors[badgeType] || badgeColors.info;
+  const ctaBtnStyle = ctaColor === 'blue'
+    ? 'background:#1f6feb;color:#ffffff;padding:10px 18px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;display:inline-block;'
+    : 'background:#238636;color:#ffffff;padding:10px 18px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;display:inline-block;';
+
+  const defaultFooter = `Sent by Attendance Tracker &bull; <a href="https://attendancetracker.dev" style="color:#58a6ff;text-decoration:none;">attendancetracker.dev</a>`;
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    @media only screen and (max-width: 580px) {
+      .responsive-container { width: 100% !important; border-radius: 0 !important; }
+      .touch-btn { width: 100% !important; text-align: center !important; min-height: 44px !important; line-height: 44px !important; display: block !important; box-sizing: border-box !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:#0d1117;">
+  <div style="background-color:#0d1117;padding:24px 8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#e6edf3;">
+    <div class="responsive-container" style="max-width:600px;margin:0 auto;background-color:#161b22;border:1px solid #30363d;border-radius:12px;overflow:hidden;">
+      
+      <!-- Brand Header -->
+      <div style="padding:20px 24px 16px;border-bottom:1px solid #30363d;background:linear-gradient(180deg,#1c2128 0%,#161b22 100%);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+          <span style="font-size:13px;font-weight:700;color:#e6edf3;letter-spacing:0.02em;">
+            <span style="color:#4ade80;">✓</span> Attendance Tracker
+          </span>
+          ${badge ? `<span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;padding:3px 8px;border-radius:10px;${badgeStyle}">
+            ${badge}
+          </span>` : ''}
+        </div>
+        ${title ? `<h2 style="margin:6px 0 4px;font-size:18px;font-weight:700;color:#e6edf3;">${title}</h2>` : ''}
+        ${subtitle ? `<p style="margin:0;font-size:13px;color:#8b949e;">${subtitle}</p>` : ''}
+      </div>
+
+      <!-- Content -->
+      <div style="padding:20px 24px;font-size:14px;line-height:1.6;color:#e6edf3;">
+        ${contentHtml}
+        ${ctaText && ctaUrl ? `
+          <div style="margin-top:20px;">
+            <a href="${escape(ctaUrl)}" class="touch-btn" style="${ctaBtnStyle}">
+              ${escape(ctaText)}
+            </a>
+          </div>
+        ` : ''}
+      </div>
+
+      <!-- Footer -->
+      <div style="padding:14px 24px;border-top:1px solid #21262d;background:#0d1117;font-size:12px;color:#8b949e;line-height:1.5;">
+        ${footerHtml || defaultFooter}
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>`;
 }
 
 // Fire-and-forget signup notification email. Sends to NOTIFY_EMAIL (or the
@@ -226,21 +305,28 @@ async function sendSignupWebhook({ email, displayName, domain, reportedSource, r
     : 'Unknown';
   const ipLink = signupIp ? `https://ipinfo.io/${encodeURIComponent(signupIp)}` : null;
 
-  const html = `
-    <p>A new user just signed up for Attendance Tracker.</p>
-    <table style="border-collapse:collapse;font-family:sans-serif;font-size:14px">
-      <tr><td style="padding:4px 12px 4px 0;color:#666">Name</td><td>${escape(displayName) || '—'}</td></tr>
-      <tr><td style="padding:4px 12px 4px 0;color:#666">Email</td><td><a href="mailto:${escape(email)}">${escape(email)}</a></td></tr>
-      <tr><td style="padding:4px 12px 4px 0;color:#666">Domain</td><td>${escape(domain)}</td></tr>
-      <tr><td style="padding:4px 12px 4px 0;color:#666">Source (self-reported)</td><td>${escape(reportedText)}</td></tr>
-      <tr><td style="padding:4px 12px 4px 0;color:#666">Source (detected)</td><td>${escape(detectedText)}</td></tr>
-      <tr><td style="padding:4px 12px 4px 0;color:#666">IP / Location</td><td>${ipLink ? `<a href="${escape(ipLink)}">${escape(ipLine)}</a>` : escape(ipLine)}</td></tr>
-      <tr><td style="padding:4px 12px 4px 0;color:#666">Total users now</td><td>${totalUsers ?? '?'}</td></tr>
+  const contentHtml = `
+    <table style="border-collapse:collapse;width:100%;font-size:13px;background:#0d1117;border:1px solid #30363d;border-radius:8px;overflow:hidden;margin-bottom:8px;">
+      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;width:160px;">Name</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;color:#e6edf3;">${escape(displayName) || '—'}</td></tr>
+      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Email</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;"><a href="mailto:${escape(email)}" style="color:#58a6ff;text-decoration:none;">${escape(email)}</a></td></tr>
+      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Domain</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;color:#e6edf3;">${escape(domain)}</td></tr>
+      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Source (self-reported)</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;color:#e6edf3;">${escape(reportedText)}</td></tr>
+      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Source (detected)</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;color:#e6edf3;">${escape(detectedText)}</td></tr>
+      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">IP / Location</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;">${ipLink ? `<a href="${escape(ipLink)}" style="color:#58a6ff;text-decoration:none;">${escape(ipLine)}</a>` : `<span style="color:#e6edf3;">${escape(ipLine)}</span>`}</td></tr>
+      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;">Total users now</td><td style="padding:8px 12px;color:#4ade80;font-weight:700;">${totalUsers ?? '?'}</td></tr>
     </table>
-    <p style="margin-top:16px">
-      <a href="https://attendancetracker.dev/admin.html">Open admin dashboard</a>
-    </p>
   `;
+
+  const html = buildDesignSystemEmail({
+    badge: '🎉 New User',
+    badgeType: 'success',
+    title: `🎉 ${displayName || email}`,
+    subtitle: 'A new user just signed up for Attendance Tracker.',
+    contentHtml,
+    ctaText: 'Open admin dashboard →',
+    ctaUrl: 'https://attendancetracker.dev/admin.html',
+    ctaColor: 'green',
+  });
 
   const text = [
     `New Attendance Tracker user: ${displayName || email}`,
@@ -451,20 +537,26 @@ async function sendErrorAlertEmail({ email, domain, error, context, meta }) {
     `Timestamp: ${new Date().toISOString()}`,
   ].join('\n');
 
-  const html = `
-    <div style="font-family:sans-serif;max-width:600px;color:#111;font-size:14px;line-height:1.5">
-      <h2 style="color:#cf222e;margin-top:0">⚠️ User Error Alert</h2>
-      <p>An error was encountered or reported on Attendance Tracker:</p>
-      <table style="border-collapse:collapse;font-size:14px;width:100%">
-        <tr><td style="padding:4px 12px 4px 0;color:#666;font-weight:600">User Email</td><td><a href="mailto:${escape(email)}">${escape(email)}</a></td></tr>
-        <tr><td style="padding:4px 12px 4px 0;color:#666;font-weight:600">Domain</td><td>${escape(domain)}</td></tr>
-        <tr><td style="padding:4px 12px 4px 0;color:#666;font-weight:600">Context</td><td>${escape(context)}</td></tr>
-        <tr><td style="padding:4px 12px 4px 0;color:#666;font-weight:600">Error Message</td><td style="color:#cf222e;font-family:monospace">${escape(error)}</td></tr>
-      </table>
-      ${meta ? `<h3 style="margin-top:16px">Details</h3><pre style="background:#f6f8fa;padding:12px;border-radius:6px;font-size:12px">${escape(JSON.stringify(meta, null, 2))}</pre>` : ''}
-      <p style="margin-top:20px"><a href="https://attendancetracker.dev/admin.html" style="background:#1f6feb;color:#fff;padding:8px 16px;border-radius:6px;text-decoration:none;font-weight:600">Open Admin Dashboard</a></p>
-    </div>
+  const contentHtml = `
+    <table style="border-collapse:collapse;font-size:13px;width:100%;background:#0d1117;border:1px solid #30363d;border-radius:8px;overflow:hidden;margin-bottom:16px;">
+      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;width:130px;">User Email</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;"><a href="mailto:${escape(email)}" style="color:#58a6ff;text-decoration:none;">${escape(email)}</a></td></tr>
+      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Domain</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;color:#e6edf3;">${escape(domain)}</td></tr>
+      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Context</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;"><code style="background:#21262d;color:#f85149;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">${escape(context)}</code></td></tr>
+      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;">Error Message</td><td style="padding:8px 12px;"><code style="background:#21262d;color:#f85149;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">${escape(error)}</code></td></tr>
+    </table>
+    ${meta ? `<div style="margin-top:16px;"><h4 style="margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;color:#8b949e;">Details</h4><pre style="background:#0d1117;border:1px solid #30363d;padding:12px;border-radius:6px;font-size:12px;color:#e6edf3;overflow-x:auto;font-family:monospace;margin:0;">${escape(JSON.stringify(meta, null, 2))}</pre></div>` : ''}
   `;
+
+  const html = buildDesignSystemEmail({
+    badge: '⚠️ Error Alert',
+    badgeType: 'error',
+    title: '⚠️ User Error Alert',
+    subtitle: 'An error was encountered or reported on Attendance Tracker:',
+    contentHtml,
+    ctaText: 'Open Admin Dashboard →',
+    ctaUrl: 'https://attendancetracker.dev/admin.html',
+    ctaColor: 'blue',
+  });
 
   return dispatchEmail({
     from: makeFrom('Attendance Tracker Alerts'),
@@ -691,39 +783,39 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
   // Inline attendance table. Color-codes status: green=present, amber=left
   // early, red=absent. Keeps the email scannable in 2 seconds.
   const statusColor = (s) => {
-    if (s === 'Present') return '#16a34a';
-    if (s === 'Left') return '#d97706';
-    if (s === 'Excused') return '#6b7280'; // muted gray — excused isn't a problem
-    return '#dc2626';
+    if (s === 'Present') return '#4ade80';
+    if (s === 'Left') return '#f59e0b';
+    if (s === 'Excused') return '#8b949e'; // muted gray — excused isn't a problem
+    return '#f85149';
   };
   const fmtDur = (m) => !m ? '—' : hm(m);
   const tableRows = (participants || []).map(p => {
     const lateBadge = p.lateMin > 0
-      ? `<span style="display:inline-block;white-space:nowrap;background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-size:10px;font-weight:600;padding:1px 5px;border-radius:4px;margin-left:4px;vertical-align:middle;line-height:1.3">+${p.lateMin}m late</span>`
+      ? `<span style="display:inline-block;white-space:nowrap;background:rgba(227,179,65,0.15);color:#e3b341;border:1px solid rgba(227,179,65,0.3);font-size:10px;font-weight:600;padding:1px 5px;border-radius:4px;margin-left:4px;vertical-align:middle;line-height:1.3">+${p.lateMin}m late</span>`
       : '';
     return `
     <tr>
-      <td style="padding:8px 10px;border-top:1px solid #e2e8f0;vertical-align:middle">
+      <td style="padding:8px 10px;border-top:1px solid #21262d;vertical-align:middle">
         <div style="font-size:13px;line-height:1.35;word-break:break-word">
-          <span style="font-weight:600;color:#0f172a">${escape(p.displayName || p.email || '—')}</span> ${lateBadge}
+          <span style="font-weight:600;color:#e6edf3">${escape(p.displayName || p.email || '—')}</span> ${lateBadge}
         </div>
-        ${p.email && p.displayName ? `<div style="color:#64748b;font-size:11px;line-height:1.3;margin-top:2px;word-break:break-all">${escape(p.email)}</div>` : ''}
+        ${p.email && p.displayName ? `<div style="color:#8b949e;font-size:11px;line-height:1.3;margin-top:2px;word-break:break-all">${escape(p.email)}</div>` : ''}
       </td>
-      <td style="padding:8px 8px;border-top:1px solid #e2e8f0;vertical-align:middle;color:${statusColor(p.status)};font-weight:600;font-size:12px;white-space:nowrap">${escape(p.status)}</td>
-      <td style="padding:8px 10px;border-top:1px solid #e2e8f0;vertical-align:middle;color:#64748b;text-align:right;font-size:12px;white-space:nowrap">${escape(fmtDur(p.durationMin))}</td>
+      <td style="padding:8px 8px;border-top:1px solid #21262d;vertical-align:middle;color:${statusColor(p.status)};font-weight:600;font-size:12px;white-space:nowrap">${escape(p.status)}</td>
+      <td style="padding:8px 10px;border-top:1px solid #21262d;vertical-align:middle;color:#8b949e;text-align:right;font-size:12px;white-space:nowrap">${escape(fmtDur(p.durationMin))}</td>
     </tr>
   `;
   }).join('');
   const overflowRow = overflow > 0
-    ? `<tr><td colspan="3" style="padding:8px 10px;border-top:1px solid #e2e8f0;color:#64748b;font-size:12px;font-style:italic;background:#f8fafc">…and ${overflow} more in the sheet</td></tr>`
+    ? `<tr><td colspan="3" style="padding:8px 10px;border-top:1px solid #21262d;color:#8b949e;font-size:12px;font-style:italic;background:#0d1117">…and ${overflow} more in the sheet</td></tr>`
     : '';
   const tableHtml = participants?.length ? `
-    <table role="presentation" style="border-collapse:collapse;width:100%;margin:16px 0;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;table-layout:fixed">
+    <table role="presentation" style="border-collapse:collapse;width:100%;margin:16px 0;background:#0d1117;border:1px solid #30363d;border-radius:8px;overflow:hidden;table-layout:fixed">
       <thead>
-        <tr style="background:#f8fafc">
-          <th style="text-align:left;padding:8px 10px;font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;width:58%">Person</th>
-          <th style="text-align:left;padding:8px 8px;font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;width:22%;white-space:nowrap">Status</th>
-          <th style="text-align:right;padding:8px 10px;font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;width:20%;white-space:nowrap">Time</th>
+        <tr style="background:#161b22">
+          <th style="text-align:left;padding:8px 10px;font-size:11px;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:0.5px;width:58%">Person</th>
+          <th style="text-align:left;padding:8px 8px;font-size:11px;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:0.5px;width:22%;white-space:nowrap">Status</th>
+          <th style="text-align:right;padding:8px 10px;font-size:11px;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:0.5px;width:20%;white-space:nowrap">Time</th>
         </tr>
       </thead>
       <tbody>${tableRows}${overflowRow}</tbody>
@@ -740,39 +832,46 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
     : null;
   const reviewUrl = `${CONFIG.publicApiUrl}/public/review-click?email=${encodeURIComponent(to)}&source=export_email`;
 
-  const html = `
-    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;color:#1e293b;font-size:14px;line-height:1.5;padding:16px 12px">
-      <p style="margin:0 0 6px;font-size:15px;color:#1e293b">${greeting}</p>
-      <p style="margin:0 0 14px;font-size:14px;color:#475569">Your meeting just ended — attendance has been auto-exported.</p>
-      <table role="presentation" style="width:100%;border-collapse:collapse;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin:0 0 16px 0">
-        <tr>
-          <td style="padding:12px 14px">
-            <div style="font-weight:700;font-size:15px;color:#0f172a;margin-bottom:4px;word-break:break-word">${escape(title)}</div>
-            <div style="font-size:13px;color:#64748b;line-height:1.4">
-              <span style="font-weight:600;color:#0f172a">${escape(summary)}</span>${dateStr ? `<span style="color:#94a3b8;margin:0 6px">&bull;</span><span>${escape(dateStr)}</span>` : ''}
-            </div>
-          </td>
-        </tr>
-      </table>
-      ${tableHtml}
-      <div style="margin:20px 0 16px 0">
-        <a href="${escape(sheetUrl)}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;margin-right:8px;margin-bottom:8px">Open sheet</a>
-        <a href="${escape(meetingLink)}" style="display:inline-block;background:#ffffff;color:#2563eb;border:1px solid #cbd5e1;padding:9px 16px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;margin-bottom:8px">View on web →</a>
+  const contentHtml = `
+    <p style="margin:0 0 6px;font-size:15px;color:#e6edf3">${greeting}</p>
+    <p style="margin:0 0 16px;font-size:14px;color:#8b949e">Your meeting just ended — attendance has been auto-exported.</p>
+    <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:12px 14px;margin:0 0 16px 0">
+      <div style="font-weight:700;font-size:15px;color:#e6edf3;margin-bottom:4px;word-break:break-word">${escape(title)}</div>
+      <div style="font-size:13px;color:#8b949e;line-height:1.4">
+        <span style="font-weight:600;color:#4ade80">${escape(summary)}</span>${dateStr ? `<span style="color:#8b949e;margin:0 6px">&bull;</span><span>${escape(dateStr)}</span>` : ''}
       </div>
-      ${seriesLink ? `<p style="margin:4px 0 16px;font-size:13px;color:#64748b">This is part of a recurring series — <a href="${escape(seriesLink)}" style="color:#2563eb;font-weight:500;text-decoration:none">see the full trend →</a></p>` : ''}
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px 16px;margin:20px 0;text-align:left">
-        <div style="font-weight:600;color:#0f172a;font-size:13px;margin-bottom:4px">⭐ Did this save you time today?</div>
-        <div style="font-size:12px;color:#64748b;margin-bottom:12px;line-height:1.4">If Attendance Tracker helped your call, could you spare 10 seconds to leave a 5-star review on Google Marketplace? It helps independent creators like me keep building for educators!</div>
-        <a href="${escape(reviewUrl)}" style="display:inline-block;background:#f59e0b;color:#111827;font-size:12px;font-weight:700;padding:8px 14px;border-radius:6px;text-decoration:none">Leave a 5-Star Review (takes 10s) →</a>
-      </div>
-      <p style="color:#64748b;font-size:12px;line-height:1.5;margin-top:24px">
-        You're getting this because you tracked this meeting with Attendance Tracker.
-        The sheet lives in your Drive folder "Meet Attendance Tracker" — reuse the same
-        spreadsheet next time, each meeting gets its own tab.
-      </p>
-      ${unsubscribeFooter(to).html}
+    </div>
+    ${tableHtml}
+    <div style="margin:20px 0 16px 0">
+      <a href="${escape(sheetUrl)}" class="touch-btn" style="display:inline-block;background:#238636;color:#ffffff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;margin-right:8px;margin-bottom:8px">Open sheet</a>
+      <a href="${escape(meetingLink)}" class="touch-btn" style="display:inline-block;background:#21262d;color:#58a6ff;border:1px solid #30363d;padding:9px 16px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;margin-bottom:8px">View on web →</a>
+    </div>
+    ${seriesLink ? `<p style="margin:4px 0 16px;font-size:13px;color:#8b949e">This is part of a recurring series — <a href="${escape(seriesLink)}" style="color:#58a6ff;font-weight:500;text-decoration:none">see the full trend →</a></p>` : ''}
+    <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px 16px;margin:20px 0;text-align:left">
+      <div style="font-weight:600;color:#e6edf3;font-size:13px;margin-bottom:4px">⭐ Did this save you time today?</div>
+      <div style="font-size:12px;color:#8b949e;margin-bottom:12px;line-height:1.4">If Attendance Tracker helped your call, could you spare 10 seconds to leave a 5-star review on Google Marketplace? It helps independent creators like me keep building for educators!</div>
+      <a href="${escape(reviewUrl)}" class="touch-btn" style="display:inline-block;background:#f59e0b;color:#0d1117;font-size:12px;font-weight:700;padding:8px 14px;border-radius:6px;text-decoration:none">Leave a 5-Star Review (takes 10s) →</a>
     </div>
   `;
+
+  const foot = unsubscribeFooter(to);
+  const footerHtml = `
+    <p style="margin:0 0 10px;color:#8b949e;font-size:12px;line-height:1.5;">
+      You're getting this because you tracked this meeting with Attendance Tracker.
+      The sheet lives in your Drive folder "Meet Attendance Tracker" — reuse the same
+      spreadsheet next time, each meeting gets its own tab.
+    </p>
+    ${foot.html}
+  `;
+
+  const html = buildDesignSystemEmail({
+    badge: '📊 Export Ready',
+    badgeType: 'success',
+    title: `Attendance: ${escape(title)}`,
+    subtitle: summary,
+    contentHtml,
+    footerHtml,
+  });
 
   const textRows = (participants || []).map(p => {
     const label = (p.displayName || p.email || '—') + (p.lateMin > 0 ? ` (+${p.lateMin}m late)` : '');
@@ -824,25 +923,29 @@ async function sendSeriesAlertEmail({ to, displayName, alerts }) {
     : `There are ${alerts.length} attendance changes across your recurring meetings:`;
 
   const itemHtml = alerts.map(a => `
-    <li style="margin-bottom:12px">
-      <strong>${escape(a.personName || a.personEmail || 'Someone')}</strong> ${escape(a.detail)}.
-      <div style="color:#666;font-size:12px;margin-top:2px">${a.attended} of ${a.instanceCount} instances attended overall</div>
-    </li>
+    <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:12px 14px;margin-bottom:10px;">
+      <div style="font-size:14px;color:#e6edf3;"><strong style="color:#58a6ff;">${escape(a.personName || a.personEmail || 'Someone')}</strong> ${escape(a.detail)}.</div>
+      <div style="color:#8b949e;font-size:12px;margin-top:4px;">${a.attended} of ${a.instanceCount} instances attended overall</div>
+    </div>
   `).join('');
 
-  const html = `
-    <div style="font-family:sans-serif;max-width:560px;color:#111;font-size:14px;line-height:1.5">
-      <p>${greeting}</p>
-      <p>${leadHtml}</p>
-      <ul style="padding-left:18px;margin:14px 0">${itemHtml}</ul>
-      <p style="margin-top:20px"><a href="https://attendancetracker.dev/history.html" style="display:inline-block;background:#1f6feb;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600">View series →</a></p>
-      <p style="color:#666;font-size:12px;margin-top:24px">
-        You're getting this because you tracked recurring meetings with Attendance Tracker.
-        Alerts run once per day if there's something worth flagging — no email if there's nothing new.
-      </p>
-      ${unsubscribeFooter(to).html}
-    </div>
+  const contentHtml = `
+    <p style="margin:0 0 8px;font-size:15px;color:#e6edf3;">${escape(greeting)}</p>
+    <p style="margin:0 0 16px;font-size:14px;color:#8b949e;">${escape(leadHtml)}</p>
+    <div style="margin:16px 0;">${itemHtml}</div>
   `;
+
+  const foot = unsubscribeFooter(to);
+  const html = buildDesignSystemEmail({
+    badge: '📊 Series Alert',
+    badgeType: 'info',
+    title: subject,
+    contentHtml,
+    ctaText: 'View series →',
+    ctaUrl: 'https://attendancetracker.dev/history.html',
+    ctaColor: 'blue',
+    footerHtml: `<p style="margin:0 0 8px;font-size:12px;color:#8b949e;">You're getting this because you tracked recurring meetings with Attendance Tracker. Alerts run once per day if there's something worth flagging — no email if there's nothing new.</p>${foot.html}`,
+  });
   const text = [
     displayName ? `Hi ${displayName.split(' ')[0]},` : 'Hi,',
     '',
@@ -873,17 +976,27 @@ async function sendFeedbackEmail({ body, fromEmail, fromName, source, conference
   if (!to) throw new Error('NOTIFY_EMAIL or GMAIL_USER must be set as the destination inbox');
   const subjectName = fromName || fromEmail || 'Anonymous';
   const subject = `💬 Feedback from ${subjectName}: ${String(body).slice(0, 60).replace(/\s+/g, ' ')}${body.length > 60 ? '…' : ''}`;
-  const html = `
-    <div style="font-family:sans-serif;max-width:560px;color:#111;font-size:14px;line-height:1.5">
-      <p style="white-space:pre-wrap;border-left:3px solid #4ade80;padding:0 0 0 14px;margin:0">${escape(body)}</p>
-      <table style="border-collapse:collapse;margin-top:18px;font-size:13px;color:#666">
-        <tr><td style="padding:3px 12px 3px 0">From</td><td>${escape(fromName || '')} ${fromEmail ? `&lt;<a href="mailto:${escape(fromEmail)}">${escape(fromEmail)}</a>&gt;` : '(no email)'}</td></tr>
-        ${source ? `<tr><td style="padding:3px 12px 3px 0">Source</td><td>${escape(source)}</td></tr>` : ''}
-        ${conferenceId ? `<tr><td style="padding:3px 12px 3px 0">Meeting</td><td><code>${escape(conferenceId)}</code></td></tr>` : ''}
-        ${userAgent ? `<tr><td style="padding:3px 12px 3px 0">User agent</td><td style="font-size:11px">${escape(userAgent)}</td></tr>` : ''}
-      </table>
-    </div>
+  
+  const contentHtml = `
+    <div style="background:#0d1117;border-left:3px solid #4ade80;border-top:1px solid #30363d;border-right:1px solid #30363d;border-bottom:1px solid #30363d;border-radius:6px;padding:14px 16px;margin:0 0 16px;white-space:pre-wrap;color:#e6edf3;font-size:14px;line-height:1.5;">${escape(body)}</div>
+    <table style="border-collapse:collapse;font-size:13px;width:100%;background:#0d1117;border:1px solid #30363d;border-radius:8px;overflow:hidden;">
+      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;width:100px;border-bottom:1px solid #21262d;">From</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;color:#e6edf3;">${escape(fromName || '')} ${fromEmail ? `&lt;<a href="mailto:${escape(fromEmail)}" style="color:#58a6ff;text-decoration:none;">${escape(fromEmail)}</a>&gt;` : '(no email)'}</td></tr>
+      ${source ? `<tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Source</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;color:#e6edf3;">${escape(source)}</td></tr>` : ''}
+      ${conferenceId ? `<tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Meeting</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;"><code style="background:#21262d;color:#58a6ff;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">${escape(conferenceId)}</code></td></tr>` : ''}
+      ${userAgent ? `<tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;">User agent</td><td style="padding:8px 12px;color:#8b949e;font-size:11px;word-break:break-all;">${escape(userAgent)}</td></tr>` : ''}
+    </table>
   `;
+
+  const html = buildDesignSystemEmail({
+    badge: '💬 Feedback',
+    badgeType: 'info',
+    title: `💬 Feedback from ${escape(subjectName)}`,
+    subtitle: 'Submitted from Attendance Tracker',
+    contentHtml,
+    ctaText: fromEmail ? `Reply to ${fromName || fromEmail} →` : null,
+    ctaUrl: fromEmail ? `mailto:${fromEmail}` : null,
+    ctaColor: 'green',
+  });
   const text = [
     body,
     '',
@@ -1352,21 +1465,29 @@ async function sendOrgWeeklyDigest({ to, domain, totals, weeklyMeetings }) {
   const subject = weeklyMeetings > 0
     ? `${domain}: ${weeklyMeetings} meetings tracked this week`
     : `${domain}: your weekly attendance digest`;
-  const html = `
-    <div style="font-family:sans-serif;max-width:560px;color:#111;font-size:14px;line-height:1.5">
-      <p>Hi,</p>
-      <p>Your weekly attendance summary for <strong>${escape(domain)}</strong>:</p>
-      <table style="border-collapse:collapse;margin:10px 0;font-size:14px">
-        <tr><td style="padding:4px 12px 4px 0;color:#666">Meetings this week</td><td><strong>${weeklyMeetings || 0}</strong></td></tr>
-        <tr><td style="padding:4px 12px 4px 0;color:#666">Teachers using it</td><td>${t.users || 0}</td></tr>
-        <tr><td style="padding:4px 12px 4px 0;color:#666">Meetings all-time</td><td>${t.meetings || 0}</td></tr>
-        <tr><td style="padding:4px 12px 4px 0;color:#666">People tracked</td><td>${t.people || 0}</td></tr>
-      </table>
-      <p style="margin-top:16px"><a href="https://attendancetracker.dev/team.html" style="display:inline-block;background:#1f6feb;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600">Open the org dashboard →</a></p>
-      <p style="color:#666;font-size:12px;margin-top:24px">You're getting this weekly summary because you're the team admin for ${escape(domain)} on Attendance Tracker Pro.</p>
-      ${unsubscribeFooter(to).html}
-    </div>
+
+  const contentHtml = `
+    <p style="margin:0 0 12px;font-size:15px;color:#e6edf3;">Hi,</p>
+    <p style="margin:0 0 16px;font-size:14px;color:#8b949e;">Your weekly attendance summary for <strong style="color:#e6edf3;">${escape(domain)}</strong>:</p>
+    <table style="border-collapse:collapse;font-size:13px;width:100%;background:#0d1117;border:1px solid #30363d;border-radius:8px;overflow:hidden;margin-bottom:16px;">
+      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Meetings this week</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;color:#4ade80;font-weight:700;">${weeklyMeetings || 0}</td></tr>
+      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Teachers using it</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;color:#e6edf3;font-weight:600;">${t.users || 0}</td></tr>
+      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Meetings all-time</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;color:#e6edf3;">${t.meetings || 0}</td></tr>
+      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;">People tracked</td><td style="padding:8px 12px;color:#e6edf3;">${t.people || 0}</td></tr>
+    </table>
   `;
+
+  const foot = unsubscribeFooter(to);
+  const html = buildDesignSystemEmail({
+    badge: '🏛️ Org Digest',
+    badgeType: 'info',
+    title: `Weekly Attendance: ${escape(domain)}`,
+    contentHtml,
+    ctaText: 'Open the org dashboard →',
+    ctaUrl: 'https://attendancetracker.dev/team.html',
+    ctaColor: 'blue',
+    footerHtml: `<p style="margin:0 0 8px;font-size:12px;color:#8b949e;">You're getting this weekly summary because you're the team admin for ${escape(domain)} on Attendance Tracker Pro.</p>${foot.html}`,
+  });
   const text = [
     'Hi,',
     '',
@@ -1396,33 +1517,35 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
   const pppNote = isPpp ? ` (50% Regional Subsidy applied ${flag || ''})` : '';
   const subject = 'Your Attendance Tracker upgrade link (finish anytime)';
 
-  const html = `
-    <div style="font-family:sans-serif;max-width:560px;color:#111;font-size:14px;line-height:1.6;margin:0 auto;padding:20px">
-      <h2 style="color:#1f6feb;margin-top:0">Attendance Tracker for Google Meet</h2>
-      <p>${escape(greeting)}</p>
-      <p>You requested a link to upgrade Attendance Tracker when you're done teaching. No rush at all — whenever your class wraps up and you're back at your desk, you can unlock unlimited classes and exports below:</p>
+  const contentHtml = `
+    <p style="margin:0 0 12px;font-size:15px;color:#e6edf3;">${escape(greeting)}</p>
+    <p style="margin:0 0 20px;font-size:14px;color:#8b949e;line-height:1.5;">You requested a link to upgrade Attendance Tracker when you're done teaching. No rush at all — whenever your class wraps up and you're back at your desk, you can unlock unlimited classes and exports below:</p>
 
-      <div style="margin:24px 0;background:#f6f8fa;border:1px solid #d0d7de;border-radius:8px;padding:20px">
-        <h3 style="margin-top:0;font-size:16px;color:#24292f">Choose the plan that fits best:</h3>
-        
-        <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid #e1e4e8">
-          <div style="font-weight:600;font-size:15px;color:#0969da">Educator Pass — ${escape(educatorPrice)}/yr${escape(pppNote)}</div>
-          <p style="margin:4px 0 10px;color:#57606a;font-size:13px">Unlimited Google Sheets exports & attendance records for 1 full year.</p>
-          <a href="${educatorUrl}" style="display:inline-block;background:#1f6feb;color:#ffffff;text-decoration:none;font-weight:600;padding:8px 18px;border-radius:6px;font-size:13px">Unlock Educator Pass (${escape(educatorPrice)}/yr) →</a>
-        </div>
-
-        <div>
-          <div style="font-weight:600;font-size:15px;color:#0969da">Lifetime Pro — ${escape(lifetimePrice)} one-time${escape(pppNote)}</div>
-          <p style="margin:4px 0 10px;color:#57606a;font-size:13px">Pay once, keep unlimited attendance tracking forever. No recurring subscription.</p>
-          <a href="${lifetimeUrl}" style="display:inline-block;background:#2ea44f;color:#ffffff;text-decoration:none;font-weight:600;padding:8px 18px;border-radius:6px;font-size:13px">Get Lifetime Pro (${escape(lifetimePrice)}) →</a>
-        </div>
-      </div>
-
-      <p style="color:#57606a;font-size:13px">Or view your previous attendance history anytime in your <a href="https://attendancetracker.dev/history.html" style="color:#0969da">Web Dashboard</a>.</p>
-      <p style="color:#57606a;font-size:13px;margin-top:20px">Thank you for teaching with Attendance Tracker!</p>
-      ${unsubscribeFooter(to).html}
+    <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px;margin-bottom:16px;">
+      <div style="font-weight:700;font-size:15px;color:#58a6ff;margin-bottom:4px;">Educator Pass — ${escape(educatorPrice)}/yr${escape(pppNote)}</div>
+      <p style="margin:0 0 12px;color:#8b949e;font-size:13px;">Unlimited Google Sheets exports & attendance records for 1 full year.</p>
+      <a href="${escape(educatorUrl)}" class="touch-btn" style="display:inline-block;background:#238636;color:#ffffff;text-decoration:none;font-weight:600;padding:8px 16px;border-radius:6px;font-size:13px;">Unlock Educator Pass (${escape(educatorPrice)}/yr) →</a>
     </div>
+
+    <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px;margin-bottom:16px;">
+      <div style="font-weight:700;font-size:15px;color:#4ade80;margin-bottom:4px;">Lifetime Pro — ${escape(lifetimePrice)} one-time${escape(pppNote)}</div>
+      <p style="margin:0 0 12px;color:#8b949e;font-size:13px;">Pay once, keep unlimited attendance tracking forever. No recurring subscription.</p>
+      <a href="${escape(lifetimeUrl)}" class="touch-btn" style="display:inline-block;background:#1f6feb;color:#ffffff;text-decoration:none;font-weight:600;padding:8px 16px;border-radius:6px;font-size:13px;">Get Lifetime Pro (${escape(lifetimePrice)}) →</a>
+    </div>
+
+    <p style="margin:16px 0 0;font-size:13px;color:#8b949e;">Or view your previous attendance history anytime in your <a href="https://attendancetracker.dev/history.html" style="color:#58a6ff;text-decoration:none;">Web Dashboard</a>.</p>
+    <p style="margin:8px 0 0;font-size:13px;color:#8b949e;">Thank you for teaching with Attendance Tracker!</p>
   `;
+
+  const foot = unsubscribeFooter(to);
+  const html = buildDesignSystemEmail({
+    badge: '⚡ Upgrade Link',
+    badgeType: 'success',
+    title: 'Attendance Tracker for Google Meet',
+    subtitle: 'Unlock unlimited attendance tracking and exports',
+    contentHtml,
+    footerHtml: foot.html,
+  });
 
   const text = [
     greeting,
@@ -1456,5 +1579,5 @@ module.exports = {
   sendSlackDigest, sendSlackTestPing, buildSlackDigestBlocks, buildSlackFallbackText, maskSlackWebhook,
   sendChatDigest, sendChatTestPing, buildChatDigestCard, maskGoogleChatWebhook,
   sendDiscordDigest, sendDiscordTestPing, buildDiscordDigestEmbed, maskDiscordWebhook,
-  unsubscribeUrl, unsubscribeToken, verifyUnsubscribeToken, unsubscribeFooter,
+  unsubscribeUrl, unsubscribeToken, verifyUnsubscribeToken, unsubscribeFooter, buildDesignSystemEmail,
 };
