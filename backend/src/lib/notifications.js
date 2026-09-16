@@ -222,34 +222,49 @@ function buildDesignSystemEmail({
   return `<!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <meta name="supported-color-schemes" content="dark">
   <style>
+    body, table, td, p, a, span { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
     @media only screen and (max-width: 580px) {
-      .responsive-container { width: 100% !important; border-radius: 0 !important; }
+      .email-body { padding: 12px 6px !important; }
+      .responsive-container { width: 100% !important; max-width: 100% !important; border-radius: 8px !important; }
+      .email-header { padding: 14px 14px 12px !important; }
+      .email-content { padding: 14px 12px !important; }
+      .email-footer { padding: 12px 12px !important; }
+      .responsive-table td { padding: 8px 8px !important; font-size: 12px !important; }
       .touch-btn { width: 100% !important; text-align: center !important; min-height: 44px !important; line-height: 44px !important; display: block !important; box-sizing: border-box !important; }
     }
   </style>
 </head>
 <body style="margin:0;padding:0;background-color:#0d1117;">
-  <div style="background-color:#0d1117;padding:24px 8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#e6edf3;">
-    <div class="responsive-container" style="max-width:600px;margin:0 auto;background-color:#161b22;border:1px solid #30363d;border-radius:12px;overflow:hidden;">
+  <div class="email-body" style="background-color:#0d1117;padding:24px 8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#e6edf3;box-sizing:border-box;">
+    <div class="responsive-container" style="width:100%;max-width:600px;margin:0 auto;background-color:#161b22;border:1px solid #30363d;border-radius:12px;overflow:hidden;box-sizing:border-box;">
       
       <!-- Brand Header -->
-      <div style="padding:20px 24px 16px;border-bottom:1px solid #30363d;background:linear-gradient(180deg,#1c2128 0%,#161b22 100%);">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
-          <span style="font-size:13px;font-weight:700;color:#e6edf3;letter-spacing:0.02em;">
-            <span style="color:#4ade80;">✓</span> Attendance Tracker
-          </span>
-          ${badge ? `<span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;padding:3px 8px;border-radius:10px;${badgeStyle}">
-            ${badge}
-          </span>` : ''}
-        </div>
-        ${title ? `<h2 style="margin:6px 0 4px;font-size:18px;font-weight:700;color:#e6edf3;">${title}</h2>` : ''}
-        ${subtitle ? `<p style="margin:0;font-size:13px;color:#8b949e;">${subtitle}</p>` : ''}
+      <div class="email-header" style="padding:18px 20px 14px;border-bottom:1px solid #30363d;background:linear-gradient(180deg,#1c2128 0%,#161b22 100%);">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;margin-bottom:8px;">
+          <tr>
+            <td align="left" valign="middle" style="vertical-align:middle;text-align:left;">
+              <span style="font-size:13px;font-weight:700;color:#e6edf3;letter-spacing:0.02em;white-space:nowrap;">
+                <span style="color:#4ade80;">✓</span> Attendance Tracker
+              </span>
+            </td>
+            ${badge ? `<td align="right" valign="middle" style="vertical-align:middle;text-align:right;">
+              <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;padding:3px 8px;border-radius:10px;white-space:nowrap;display:inline-block;${badgeStyle}">
+                ${badge}
+              </span>
+            </td>` : ''}
+          </tr>
+        </table>
+        ${title ? `<h2 style="margin:6px 0 4px;font-size:17px;font-weight:700;color:#e6edf3;word-break:break-word;">${title}</h2>` : ''}
+        ${subtitle ? `<p style="margin:0;font-size:13px;color:#8b949e;line-height:1.4;word-break:break-word;">${subtitle}</p>` : ''}
       </div>
 
       <!-- Content -->
-      <div style="padding:20px 24px;font-size:14px;line-height:1.6;color:#e6edf3;">
+      <div class="email-content" style="padding:18px 20px;font-size:14px;line-height:1.6;color:#e6edf3;box-sizing:border-box;word-break:break-word;">
         ${contentHtml}
         ${ctaText && ctaUrl ? `
           <div style="margin-top:20px;">
@@ -261,7 +276,7 @@ function buildDesignSystemEmail({
       </div>
 
       <!-- Footer -->
-      <div style="padding:14px 24px;border-top:1px solid #21262d;background:#0d1117;font-size:12px;color:#8b949e;line-height:1.5;">
+      <div class="email-footer" style="padding:14px 20px;border-top:1px solid #21262d;background:#0d1117;font-size:12px;color:#8b949e;line-height:1.5;box-sizing:border-box;word-break:break-word;">
         ${footerHtml || defaultFooter}
       </div>
 
@@ -306,14 +321,14 @@ async function sendSignupWebhook({ email, displayName, domain, reportedSource, r
   const ipLink = signupIp ? `https://ipinfo.io/${encodeURIComponent(signupIp)}` : null;
 
   const contentHtml = `
-    <table style="border-collapse:collapse;width:100%;font-size:13px;background:#0d1117;border:1px solid #30363d;border-radius:8px;overflow:hidden;margin-bottom:8px;">
-      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;width:160px;">Name</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;color:#e6edf3;">${escape(displayName) || '—'}</td></tr>
-      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Email</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;"><a href="mailto:${escape(email)}" style="color:#58a6ff;text-decoration:none;">${escape(email)}</a></td></tr>
-      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Domain</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;color:#e6edf3;">${escape(domain)}</td></tr>
-      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Source (self-reported)</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;color:#e6edf3;">${escape(reportedText)}</td></tr>
-      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Source (detected)</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;color:#e6edf3;">${escape(detectedText)}</td></tr>
-      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">IP / Location</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;">${ipLink ? `<a href="${escape(ipLink)}" style="color:#58a6ff;text-decoration:none;">${escape(ipLine)}</a>` : `<span style="color:#e6edf3;">${escape(ipLine)}</span>`}</td></tr>
-      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;">Total users now</td><td style="padding:8px 12px;color:#4ade80;font-weight:700;">${totalUsers ?? '?'}</td></tr>
+    <table class="responsive-table" style="table-layout:fixed;border-collapse:collapse;width:100%;font-size:13px;background:#0d1117;border:1px solid #30363d;border-radius:8px;overflow:hidden;margin-bottom:8px;box-sizing:border-box;">
+      <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;width:38%;max-width:120px;vertical-align:top;word-break:break-word;">Name</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;color:#e6edf3;word-break:break-word;overflow-wrap:anywhere;">${escape(displayName) || '—'}</td></tr>
+      <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;width:38%;max-width:120px;vertical-align:top;word-break:break-word;">Email</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;word-break:break-word;overflow-wrap:anywhere;"><a href="mailto:${escape(email)}" style="color:#58a6ff;text-decoration:none;word-break:break-all;">${escape(email)}</a></td></tr>
+      <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;vertical-align:top;word-break:break-word;">Domain</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;color:#e6edf3;word-break:break-word;overflow-wrap:anywhere;">${escape(domain)}</td></tr>
+      <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;vertical-align:top;word-break:break-word;">Source (self-reported)</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;color:#e6edf3;word-break:break-word;overflow-wrap:anywhere;">${escape(reportedText)}</td></tr>
+      <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;vertical-align:top;word-break:break-word;">Source (detected)</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;color:#e6edf3;word-break:break-word;overflow-wrap:anywhere;">${escape(detectedText)}</td></tr>
+      <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;vertical-align:top;word-break:break-word;">IP / Location</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;word-break:break-word;overflow-wrap:anywhere;">${ipLink ? `<a href="${escape(ipLink)}" style="color:#58a6ff;text-decoration:none;word-break:break-all;">${escape(ipLine)}</a>` : `<span style="color:#e6edf3;word-break:break-all;">${escape(ipLine)}</span>`}</td></tr>
+      <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;vertical-align:top;word-break:break-word;">Total users now</td><td style="padding:8px 10px;color:#4ade80;font-weight:700;word-break:break-word;">${totalUsers ?? '?'}</td></tr>
     </table>
   `;
 
@@ -538,13 +553,13 @@ async function sendErrorAlertEmail({ email, domain, error, context, meta }) {
   ].join('\n');
 
   const contentHtml = `
-    <table style="border-collapse:collapse;font-size:13px;width:100%;background:#0d1117;border:1px solid #30363d;border-radius:8px;overflow:hidden;margin-bottom:16px;">
-      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;width:130px;">User Email</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;"><a href="mailto:${escape(email)}" style="color:#58a6ff;text-decoration:none;">${escape(email)}</a></td></tr>
-      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Domain</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;color:#e6edf3;">${escape(domain)}</td></tr>
-      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Context</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;"><code style="background:#21262d;color:#f85149;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">${escape(context)}</code></td></tr>
-      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;">Error Message</td><td style="padding:8px 12px;"><code style="background:#21262d;color:#f85149;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">${escape(error)}</code></td></tr>
+    <table class="responsive-table" style="table-layout:fixed;border-collapse:collapse;font-size:13px;width:100%;background:#0d1117;border:1px solid #30363d;border-radius:8px;overflow:hidden;margin-bottom:16px;box-sizing:border-box;">
+      <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;width:38%;max-width:120px;vertical-align:top;word-break:break-word;">User Email</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;word-break:break-word;overflow-wrap:anywhere;"><a href="mailto:${escape(email)}" style="color:#58a6ff;text-decoration:none;word-break:break-all;">${escape(email)}</a></td></tr>
+      <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;vertical-align:top;word-break:break-word;">Domain</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;color:#e6edf3;word-break:break-word;overflow-wrap:anywhere;">${escape(domain)}</td></tr>
+      <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;vertical-align:top;word-break:break-word;">Context</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;word-break:break-word;overflow-wrap:anywhere;"><code style="background:#21262d;color:#f85149;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;word-break:break-all;">${escape(context)}</code></td></tr>
+      <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;vertical-align:top;word-break:break-word;">Error Message</td><td style="padding:8px 10px;word-break:break-word;overflow-wrap:anywhere;"><code style="background:#21262d;color:#f85149;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;word-break:break-all;">${escape(error)}</code></td></tr>
     </table>
-    ${meta ? `<div style="margin-top:16px;"><h4 style="margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;color:#8b949e;">Details</h4><pre style="background:#0d1117;border:1px solid #30363d;padding:12px;border-radius:6px;font-size:12px;color:#e6edf3;overflow-x:auto;font-family:monospace;margin:0;">${escape(JSON.stringify(meta, null, 2))}</pre></div>` : ''}
+    ${meta ? `<div style="margin-top:16px;"><h4 style="margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;color:#8b949e;">Details</h4><pre style="background:#0d1117;border:1px solid #30363d;padding:10px 12px;border-radius:6px;font-size:12px;color:#e6edf3;overflow-x:auto;white-space:pre-wrap;word-break:break-word;font-family:monospace;margin:0;box-sizing:border-box;">${escape(JSON.stringify(meta, null, 2))}</pre></div>` : ''}
   `;
 
   const html = buildDesignSystemEmail({
@@ -978,12 +993,12 @@ async function sendFeedbackEmail({ body, fromEmail, fromName, source, conference
   const subject = `💬 Feedback from ${subjectName}: ${String(body).slice(0, 60).replace(/\s+/g, ' ')}${body.length > 60 ? '…' : ''}`;
   
   const contentHtml = `
-    <div style="background:#0d1117;border-left:3px solid #4ade80;border-top:1px solid #30363d;border-right:1px solid #30363d;border-bottom:1px solid #30363d;border-radius:6px;padding:14px 16px;margin:0 0 16px;white-space:pre-wrap;color:#e6edf3;font-size:14px;line-height:1.5;">${escape(body)}</div>
-    <table style="border-collapse:collapse;font-size:13px;width:100%;background:#0d1117;border:1px solid #30363d;border-radius:8px;overflow:hidden;">
-      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;width:100px;border-bottom:1px solid #21262d;">From</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;color:#e6edf3;">${escape(fromName || '')} ${fromEmail ? `&lt;<a href="mailto:${escape(fromEmail)}" style="color:#58a6ff;text-decoration:none;">${escape(fromEmail)}</a>&gt;` : '(no email)'}</td></tr>
-      ${source ? `<tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Source</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;color:#e6edf3;">${escape(source)}</td></tr>` : ''}
-      ${conferenceId ? `<tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Meeting</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;"><code style="background:#21262d;color:#58a6ff;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">${escape(conferenceId)}</code></td></tr>` : ''}
-      ${userAgent ? `<tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;">User agent</td><td style="padding:8px 12px;color:#8b949e;font-size:11px;word-break:break-all;">${escape(userAgent)}</td></tr>` : ''}
+    <div style="background:#0d1117;border-left:3px solid #4ade80;border-top:1px solid #30363d;border-right:1px solid #30363d;border-bottom:1px solid #30363d;border-radius:6px;padding:12px 14px;margin:0 0 16px;white-space:pre-wrap;word-break:break-word;color:#e6edf3;font-size:14px;line-height:1.5;box-sizing:border-box;">${escape(body)}</div>
+    <table class="responsive-table" style="table-layout:fixed;border-collapse:collapse;font-size:13px;width:100%;background:#0d1117;border:1px solid #30363d;border-radius:8px;overflow:hidden;box-sizing:border-box;">
+      <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;width:32%;max-width:100px;border-bottom:1px solid #21262d;vertical-align:top;word-break:break-word;">From</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;color:#e6edf3;word-break:break-word;overflow-wrap:anywhere;">${escape(fromName || '')} ${fromEmail ? `&lt;<a href="mailto:${escape(fromEmail)}" style="color:#58a6ff;text-decoration:none;word-break:break-all;">${escape(fromEmail)}</a>&gt;` : '(no email)'}</td></tr>
+      ${source ? `<tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;vertical-align:top;word-break:break-word;">Source</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;color:#e6edf3;word-break:break-word;overflow-wrap:anywhere;">${escape(source)}</td></tr>` : ''}
+      ${conferenceId ? `<tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;vertical-align:top;word-break:break-word;">Meeting</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;word-break:break-word;overflow-wrap:anywhere;"><code style="background:#21262d;color:#58a6ff;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;word-break:break-all;">${escape(conferenceId)}</code></td></tr>` : ''}
+      ${userAgent ? `<tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;vertical-align:top;word-break:break-word;">User agent</td><td style="padding:8px 10px;color:#8b949e;font-size:11px;word-break:break-all;overflow-wrap:anywhere;">${escape(userAgent)}</td></tr>` : ''}
     </table>
   `;
 
@@ -1469,11 +1484,11 @@ async function sendOrgWeeklyDigest({ to, domain, totals, weeklyMeetings }) {
   const contentHtml = `
     <p style="margin:0 0 12px;font-size:15px;color:#e6edf3;">Hi,</p>
     <p style="margin:0 0 16px;font-size:14px;color:#8b949e;">Your weekly attendance summary for <strong style="color:#e6edf3;">${escape(domain)}</strong>:</p>
-    <table style="border-collapse:collapse;font-size:13px;width:100%;background:#0d1117;border:1px solid #30363d;border-radius:8px;overflow:hidden;margin-bottom:16px;">
-      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Meetings this week</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;color:#4ade80;font-weight:700;">${weeklyMeetings || 0}</td></tr>
-      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Teachers using it</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;color:#e6edf3;font-weight:600;">${t.users || 0}</td></tr>
-      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Meetings all-time</td><td style="padding:8px 12px;border-bottom:1px solid #21262d;color:#e6edf3;">${t.meetings || 0}</td></tr>
-      <tr><td style="padding:8px 12px;color:#8b949e;font-weight:600;">People tracked</td><td style="padding:8px 12px;color:#e6edf3;">${t.people || 0}</td></tr>
+    <table class="responsive-table" style="table-layout:fixed;border-collapse:collapse;font-size:13px;width:100%;background:#0d1117;border:1px solid #30363d;border-radius:8px;overflow:hidden;margin-bottom:16px;box-sizing:border-box;">
+      <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;width:45%;vertical-align:top;word-break:break-word;">Meetings this week</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;color:#4ade80;font-weight:700;word-break:break-word;">${weeklyMeetings || 0}</td></tr>
+      <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;vertical-align:top;word-break:break-word;">Teachers using it</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;color:#e6edf3;font-weight:600;word-break:break-word;">${t.users || 0}</td></tr>
+      <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;vertical-align:top;word-break:break-word;">Meetings all-time</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;color:#e6edf3;word-break:break-word;">${t.meetings || 0}</td></tr>
+      <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;vertical-align:top;word-break:break-word;">People tracked</td><td style="padding:8px 10px;color:#e6edf3;word-break:break-word;">${t.people || 0}</td></tr>
     </table>
   `;
 
