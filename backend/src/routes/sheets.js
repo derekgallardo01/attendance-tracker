@@ -737,7 +737,8 @@ router.post('/save-to-sheets', async (req, res) => {
     // and reliably reported one export behind.
     let quota = null;
     if (!proAllowed && req.user) {
-      const used = monthlyExports + (exportCreated === false ? 0 : 1);
+      const isSolo = Array.isArray(b.participants) ? b.participants.length <= 1 : (typeof b.participantCount === 'number' ? b.participantCount <= 1 : false);
+      const used = monthlyExports + ((exportCreated === false || isSolo) ? 0 : 1);
       quota = { used, limit: FREE_MONTHLY_EXPORT_LIMIT };
     }
     res.json({ success: true, sheetUrl, isFirstExport, quota });

@@ -835,6 +835,17 @@ describe('POST /api/save-to-sheets — Pro gating', () => {
     expect(res.body.quota).toEqual({ used: 1, limit: 2 });
   });
 
+  test('free-tier quota meter does NOT advance for a solo test export (<= 1 attendee)', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.countUserMonthlyExports.mockResolvedValue(1);
+    firestore.persistExport.mockResolvedValue({ created: true });
+    const res = await request(app).post('/api/save-to-sheets')
+      .set(authedHeader('u@meter-solo.com', 'meter-solo.com')).set('Content-Type', 'application/json')
+      .send({ ...validPayload, participants: [{ email: 'u@meter-solo.com', displayName: 'User', present: true }], autoExport: false });
+    expect(res.status).toBe(200);
+    expect(res.body.quota).toEqual({ used: 1, limit: 2 });
+  });
+
   test('402 when a free user hits the per-meeting RE-EXPORT cap (constant-conferenceId exploit)', async () => {
     // The dedupe doc IS the quota counter — replaying one conferenceId used to
     // write unlimited fresh sheet tabs while the meter stayed at 1.

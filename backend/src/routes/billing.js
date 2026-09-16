@@ -14,6 +14,13 @@ const PPP_COUNTRIES = new Set([
   'MX', 'CL', 'TN', 'SO', 'EC', 'BO', 'GT', 'MA', 'DZ',
 ]);
 
+const PPP_FLAGS = {
+  PH: '🇵🇭', IN: '🇮🇳', ID: '🇮🇩', MY: '🇲🇾', NG: '🇳🇬', VN: '🇻🇳', PK: '🇵🇰', BD: '🇧🇩',
+  KE: '🇰🇪', ZA: '🇿🇦', BR: '🇧🇷', CO: '🇨🇴', PE: '🇵🇪', UA: '🇺🇦', GH: '🇬🇭', EG: '🇪🇬',
+  TH: '🇹🇭', TR: '🇹🇷', AR: '🇦🇷', LK: '🇱🇰', MX: '🇲🇽', CL: '🇨🇱', TN: '🇹🇳', SO: '🇸🇴',
+  EC: '🇪🇨', BO: '🇧🇴', GT: '🇬🇹', MA: '🇲🇦', DZ: '🇩🇿',
+};
+
 function detectCountry(req) {
   const rawHeader = req?.headers ? (req.headers['cf-ipcountry'] || req.headers['x-country-code']) : '';
   const header = (typeof rawHeader === 'string' ? rawHeader : '').trim().toUpperCase();
@@ -207,6 +214,94 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
   } catch (err) {
     log.error('billing: checkout create failed', { domain, individual, error: err.message });
     res.status(502).json({ error: 'Could not start checkout.' });
+  }
+});
+
+// Cooldown map: email -> timestamp (prevents spam / abuse; 10 min window)
+const upgradeLinkCooldown = new Map();
+
+// POST /api/billing/send-upgrade-link — user-initiated opt-in email with direct
+// upgrade checkout links so teachers ending a live class can review & pay peacefully
+// from their desk without students watching. Zero popup, zero spam.
+router.post('/billing/send-upgrade-link', requireAuth, async (req, res) => {
+  const email = req.user?.email?.toLowerCase();
+  if (!email) return res.status(400).json({ error: 'Email required.' });
+
+  // Rate limit: 1 email every 10 minutes per user
+  const now = Date.now();
+  const lastSent = upgradeLinkCooldown.get(email) || 0;
+  if (now - lastSent < 10 * 60 * 1000) {
+    return res.json({ success: true, alreadySent: true, email });
+  }
+
+  const stripe = getStripe();
+  const domain = req.user.domain;
+  const userCountry = detectCountry(req);
+  const isPppEligible = userCountry && PPP_COUNTRIES.has(userCountry);
+  const flag = userCountry ? (PPP_FLAGS[userCountry] || '') : '';
+
+  let educatorUrl = `${CONFIG.publicSiteUrl}/history.html?upgrade=educator`;
+  let lifetimeUrl = `${CONFIG.publicSiteUrl}/history.html?upgrade=lifetime`;
+
+  if (stripe) {
+    try {
+      const meta = { individual: '1', domain, email, source: 'upgrade_link_email' };
+      const commonDiscounts = isPppEligible ? [{ coupon: 'PPP50' }] : undefined;
+
+      const [educatorSession, lifetimeSession] = await Promise.all([
+        process.env.STRIPE_EDUCATOR_PRICE_ID ? stripe.checkout.sessions.create({
+          mode: 'subscription',
+          line_items: [{ price: process.env.STRIPE_EDUCATOR_PRICE_ID, quantity: 1 }],
+          client_reference_id: `user:${email}`,
+          customer_email: email,
+          success_url: `${CONFIG.publicSiteUrl}/history.html?upgraded=1`,
+          cancel_url: `${CONFIG.publicSiteUrl}/history.html`,
+          metadata: { ...meta, plan: 'educator', ...(isPppEligible ? { pppDiscount: '1' } : {}) },
+          ...(commonDiscounts ? { discounts: commonDiscounts } : {}),
+        }) : null,
+        process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID ? stripe.checkout.sessions.create({
+          mode: 'payment',
+          customer_creation: 'always',
+          line_items: [{ price: process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID, quantity: 1 }],
+          client_reference_id: `user:${email}`,
+          customer_email: email,
+          success_url: `${CONFIG.publicSiteUrl}/history.html?upgraded=1`,
+          cancel_url: `${CONFIG.publicSiteUrl}/history.html`,
+          metadata: { ...meta, plan: 'lifetime', ...(isPppEligible ? { pppDiscount: '1' } : {}) },
+          ...(commonDiscounts ? { discounts: commonDiscounts } : {}),
+        }) : null,
+      ]);
+
+      if (educatorSession?.url) educatorUrl = educatorSession.url;
+      if (lifetimeSession?.url) lifetimeUrl = lifetimeSession.url;
+    } catch (e) {
+      log.warn('billing: could not pre-create Stripe checkout sessions for upgrade email', { error: e.message });
+    }
+  }
+
+  const educatorPrice = isPppEligible ? '$2.49' : '$4.99';
+  const lifetimePrice = isPppEligible ? '$4.99' : '$9.99';
+
+  try {
+    const { sendUpgradeLinkEmail } = require('../lib/notifications');
+    await sendUpgradeLinkEmail({
+      to: email,
+      displayName: req.user.displayName,
+      educatorUrl,
+      lifetimeUrl,
+      educatorPrice,
+      lifetimePrice,
+      flag,
+      isPpp: isPppEligible,
+    });
+    upgradeLinkCooldown.set(email, now);
+    try {
+      await logEvent(domain, { email, type: 'upgrade_link_emailed', meta: { isPpp: isPppEligible, country: userCountry } });
+    } catch {}
+    res.json({ success: true, email });
+  } catch (err) {
+    log.error('billing: sendUpgradeLinkEmail failed', { email, error: err.message });
+    res.status(500).json({ error: 'Could not send upgrade email right now.' });
   }
 });
 

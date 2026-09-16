@@ -18,6 +18,10 @@ const mockStripeInstance = {
 };
 jest.mock('stripe', () => jest.fn(() => mockStripeInstance));
 
+jest.mock('../../src/lib/notifications', () => ({
+  sendUpgradeLinkEmail: jest.fn().mockResolvedValue({ sent: true }),
+}));
+
 jest.mock('../../src/services/firestore', () => ({
   getTenantPlan: jest.fn(),
   setTenantPlan: jest.fn(),
@@ -1319,6 +1323,45 @@ describe('billing/status pricing payload', () => {
       .set(authedHeader('free@school.edu', 'school.edu'));
     expect(res.status).toBe(200);
     expect(res.body.trialInfo).toBeNull();
+  });
+
+  describe('POST /billing/send-upgrade-link', () => {
+    const { sendUpgradeLinkEmail } = require('../../src/lib/notifications');
+
+    test('401 without auth', async () => {
+      const res = await request(app).post('/api/billing/send-upgrade-link').send({});
+      expect(res.status).toBe(401);
+    });
+
+    test('sends upgrade link email with Stripe checkout sessions and rate limits', async () => {
+      process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+      process.env.STRIPE_PRICE_ID = 'price_default';
+      process.env.STRIPE_EDUCATOR_PRICE_ID = 'price_edu';
+      process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID = 'price_life';
+      app = buildApp();
+
+      const uniqueEmail = `teacher_${Date.now()}@school.edu`;
+      const res = await request(app)
+        .post('/api/billing/send-upgrade-link')
+        .set(authedHeader(uniqueEmail, 'school.edu'))
+        .send({});
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(sendUpgradeLinkEmail).toHaveBeenCalledWith(expect.objectContaining({
+        to: uniqueEmail,
+      }));
+
+      // Immediate second call triggers cooldown / alreadySent: true without re-sending email
+      sendUpgradeLinkEmail.mockClear();
+      const res2 = await request(app)
+        .post('/api/billing/send-upgrade-link')
+        .set(authedHeader(uniqueEmail, 'school.edu'))
+        .send({});
+      expect(res2.status).toBe(200);
+      expect(res2.body.alreadySent).toBe(true);
+      expect(sendUpgradeLinkEmail).not.toHaveBeenCalled();
+    });
   });
 });
 

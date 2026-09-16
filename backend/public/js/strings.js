@@ -1071,7 +1071,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "50% Off",
-        "upgrade.perMoPpp": "~$0.20/mo"
+        "upgrade.perMoPpp": "~$0.20/mo",
+        "upgrade.sendEmailLink": "Teaching right now? Email me a link to upgrade later",
+        "upgrade.sendingEmail": "Sending link…",
+        "upgrade.emailSent": "✓ Link sent to {email}! Finish whenever you're ready."
     },
     "es": {
         "review.starsTitle": "¿Cómo fue tu experiencia de registro de asistencia?",
@@ -1954,7 +1957,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "50% dto.",
-        "upgrade.perMoPpp": "~$0.20/mes"
+        "upgrade.perMoPpp": "~$0.20/mes",
+        "upgrade.sendEmailLink": "¿En clase ahora? Envíame un enlace por correo para mejorar más tarde",
+        "upgrade.sendingEmail": "Enviando enlace…",
+        "upgrade.emailSent": "✓ ¡Enlace enviado a {email}! Termina cuando estés listo."
     },
     "pt": {
         "review.starsTitle": "Como foi sua experiência de controle de presença?",
@@ -2837,7 +2843,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "50% off",
-        "upgrade.perMoPpp": "~$0.20/mês"
+        "upgrade.perMoPpp": "~$0.20/mês",
+        "upgrade.sendEmailLink": "Dando aula agora? Envie-me um link por e-mail para atualizar mais tarde",
+        "upgrade.sendingEmail": "Enviando link…",
+        "upgrade.emailSent": "✓ Link enviado para {email}! Conclua quando puder."
     },
     "hi": {
         "review.starsTitle": "उपस्थिति ट्रैकिंग का आपका अनुभव कैसा रहा?",
@@ -3720,7 +3729,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "50% छूट",
-        "upgrade.perMoPpp": "~$0.20/माह"
+        "upgrade.perMoPpp": "~$0.20/माह",
+        "upgrade.sendEmailLink": "अभी क्लास ले रहे हैं? बाद में अपग्रेड करने के लिए मुझे ईमेल पर लिंक भेजें",
+        "upgrade.sendingEmail": "लिंक भेजा जा रहा है…",
+        "upgrade.emailSent": "✓ {email} पर लिंक भेज दिया गया! क्लास के बाद कभी भी पूरा करें।"
     },
     "tl": {
         "review.starsTitle": "Kumusta ang iyong karanasan sa pag-track ng attendance?",
@@ -4603,7 +4615,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "50% diskwento",
-        "upgrade.perMoPpp": "~$0.20/buwan"
+        "upgrade.perMoPpp": "~$0.20/buwan",
+        "upgrade.sendEmailLink": "Nagtuturo ngayon? I-email sa akin ang link para mag-upgrade mamaya",
+        "upgrade.sendingEmail": "Ipinapadala ang link…",
+        "upgrade.emailSent": "✓ Naipadala ang link sa {email}! Tapusin kung kailan ka handa."
     },
     "ms": {
         "review.starsTitle": "Bagaimanakah pengalaman anda mengesan kehadiran?",
@@ -5486,7 +5501,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "Diskaun 50%",
-        "upgrade.perMoPpp": "~$0.20/bln"
+        "upgrade.perMoPpp": "~$0.20/bln",
+        "upgrade.sendEmailLink": "Sedang mengajar sekarang? E-melkan saya pautan untuk menaik taraf kemudian",
+        "upgrade.sendingEmail": "Menghantar pautan…",
+        "upgrade.emailSent": "✓ Pautan dihantar ke {email}! Selesaikan bila-bila masa anda bersedia."
     },
     "id": {
         "review.starsTitle": "Bagaimana pengalaman Anda melacak kehadiran?",
@@ -6369,7 +6387,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "Diskon 50%",
-        "upgrade.perMoPpp": "~$0.20/bln"
+        "upgrade.perMoPpp": "~$0.20/bln",
+        "upgrade.sendEmailLink": "Sedang mengajar sekarang? Kirimkan tautan ke email saya untuk upgrade nanti",
+        "upgrade.sendingEmail": "Mengirim tautan…",
+        "upgrade.emailSent": "✓ Tautan dikirim ke {email}! Selesaikan kapan saja setelah kelas."
     },
     "vi": {
         "review.starsTitle": "Trải nghiệm điểm danh của bạn thế nào?",
@@ -7252,7 +7273,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "Giảm 50%",
-        "upgrade.perMoPpp": "~$0.20/tháng"
+        "upgrade.perMoPpp": "~$0.20/tháng",
+        "upgrade.sendEmailLink": "Đang dạy học? Gửi liên kết đến email của tôi để nâng cấp sau",
+        "upgrade.sendingEmail": "Đang gửi liên kết…",
+        "upgrade.emailSent": "✓ Đã gửi liên kết đến {email}! Hoàn tất bất cứ khi nào bạn sẵn sàng."
     },
     "fr": {
         "review.starsTitle": "Comment s'est passée votre expérience de suivi des présences ?",
@@ -8135,7 +8159,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "-50%",
-        "upgrade.perMoPpp": "~0,20 $/mois"
+        "upgrade.perMoPpp": "~0,20 $/mois",
+        "upgrade.sendEmailLink": "En cours en ce moment ? Envoyez-moi un lien par e-mail pour passer à Pro plus tard",
+        "upgrade.sendingEmail": "Envoi du lien…",
+        "upgrade.emailSent": "✓ Lien envoyé à {email} ! Finalisez quand vous le souhaitez."
     },
     "de": {
         "review.starsTitle": "Wie war Ihre Erfahrung mit der Anwesenheitserfassung?",
@@ -9018,7 +9045,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "50% Rabatt",
-        "upgrade.perMoPpp": "~$0.20/Monat"
+        "upgrade.perMoPpp": "~$0.20/Monat",
+        "upgrade.sendEmailLink": "Gerade im Unterricht? Link per E-Mail senden, um später ein Upgrade durchzuführen",
+        "upgrade.sendingEmail": "Link wird gesendet…",
+        "upgrade.emailSent": "✓ Link an {email} gesendet! Schließen Sie den Vorgang ab, wann immer Sie bereit sind."
     },
     "it": {
         "review.starsTitle": "Com'è stata la tua esperienza di rilevamento presenze?",
@@ -9901,7 +9931,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "50% di sconto",
-        "upgrade.perMoPpp": "~$0.20/mese"
+        "upgrade.perMoPpp": "~$0.20/mese",
+        "upgrade.sendEmailLink": "Stai facendo lezione adesso? Inviami un link via email per eseguire l'upgrade più tardi",
+        "upgrade.sendingEmail": "Invio del link in corso…",
+        "upgrade.emailSent": "✓ Link inviato a {email}! Completa quando sei pronto."
     },
     "nl": {
         "review.starsTitle": "Hoe was uw ervaring met aanwezigheidsregistratie?",
@@ -10784,7 +10817,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "50% korting",
-        "upgrade.perMoPpp": "~$0.20/mnd"
+        "upgrade.perMoPpp": "~$0.20/mnd",
+        "upgrade.sendEmailLink": "Nu aan het lesgeven? E-mail mij een link om later te upgraden",
+        "upgrade.sendingEmail": "Link verzenden…",
+        "upgrade.emailSent": "✓ Link verzonden naar {email}! Rond af wanneer het u uitkomt."
     },
     "pl": {
         "review.starsTitle": "Jak oceniasz sprawdzanie obecności?",
@@ -11667,7 +11703,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "50% taniej",
-        "upgrade.perMoPpp": "~$0.20/mies."
+        "upgrade.perMoPpp": "~$0.20/mies.",
+        "upgrade.sendEmailLink": "Prowadzisz teraz lekcję? Wyślij mi link na e-mail, aby uaktualnić później",
+        "upgrade.sendingEmail": "Wysyłanie linku…",
+        "upgrade.emailSent": "✓ Link wysłany na adres {email}! Dokończ w wolnej chwili."
     },
     "tr": {
         "review.starsTitle": "Yoklama takip deneyiminiz nasıldı?",
@@ -12550,7 +12589,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "%50 İndirim",
-        "upgrade.perMoPpp": "~$0.20/ay"
+        "upgrade.perMoPpp": "~$0.20/ay",
+        "upgrade.sendEmailLink": "Şu an derste misiniz? Daha sonra yükseltmek için bağlantıyı e-postama gönderin",
+        "upgrade.sendingEmail": "Bağlantı gönderiliyor…",
+        "upgrade.emailSent": "✓ Bağlantı {email} adresine gönderildi! Hazır olduğunuzda tamamlayın."
     },
     "th": {
         "review.starsTitle": "ประสบการณ์การเช็คชื่อเข้าชั้นเรียนของคุณเป็นอย่างไรบ้าง?",
@@ -13433,7 +13475,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "ลด 50%",
-        "upgrade.perMoPpp": "~$0.20/เดือน"
+        "upgrade.perMoPpp": "~$0.20/เดือน",
+        "upgrade.sendEmailLink": "กำลังสอนอยู่ใช่ไหม? ส่งลิงก์มาที่อีเมลของฉันเพื่ออัปเกรดภายหลัง",
+        "upgrade.sendingEmail": "กำลังส่งลิงก์…",
+        "upgrade.emailSent": "✓ ส่งลิงก์ไปยัง {email} แล้ว! ดำเนินการต่อเมื่อคุณพร้อม"
     },
     "ar": {
         "review.starsTitle": "كيف كانت تجربتك في تتبع الحضور؟",
@@ -14316,7 +14361,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "خصم 50%",
-        "upgrade.perMoPpp": "~$0.20/شهر"
+        "upgrade.perMoPpp": "~$0.20/شهر",
+        "upgrade.sendEmailLink": "هل تدرّس الآن؟ أرسل لي رابطاً عبر البريد الإلكتروني للترقية لاحقاً",
+        "upgrade.sendingEmail": "جارٍ إرسال الرابط…",
+        "upgrade.emailSent": "✓ تم إرسال الرابط إلى {email}! أكمل الترقية في أي وقت يناسبك."
     },
     "ko": {
         "review.starsTitle": "출석 체크 경험은 어떠셨나요?",
@@ -15199,7 +15247,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "50% 할인",
-        "upgrade.perMoPpp": "~$0.20/월"
+        "upgrade.perMoPpp": "~$0.20/월",
+        "upgrade.sendEmailLink": "지금 수업 중이신가요? 나중에 업그레이드할 수 있도록 이메일로 링크를 보내주세요",
+        "upgrade.sendingEmail": "링크 전송 중…",
+        "upgrade.emailSent": "✓ {email}(으)로 링크가 전송되었습니다! 수업 후 편하실 때 완료하세요."
     },
     "zh": {
         "review.starsTitle": "您的出勤記錄體驗如何？",
@@ -16082,7 +16133,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "5折优惠",
-        "upgrade.perMoPpp": "~$0.20/月"
+        "upgrade.perMoPpp": "~$0.20/月",
+        "upgrade.sendEmailLink": "正在上课？发送链接到我的邮箱，稍后再升级",
+        "upgrade.sendingEmail": "正在发送链接…",
+        "upgrade.emailSent": "✓ 链接已发送至 {email}！随时在空闲时完成升级。"
     },
     "ja": {
         "review.starsTitle": "出席確認の使い心地はいかがでしたか？",
@@ -16965,7 +17019,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "50%オフ",
-        "upgrade.perMoPpp": "~$0.20/月"
+        "upgrade.perMoPpp": "~$0.20/月",
+        "upgrade.sendEmailLink": "授業中ですか？後でアップグレードするためのリンクをメールで送信",
+        "upgrade.sendingEmail": "リンクを送信中…",
+        "upgrade.emailSent": "✓ {email} にリンクを送信しました！授業後にいつでもお手続きいただけます。"
     },
     "ta": {
         "review.starsTitle": "வருகை கண்காணிப்பு அனுபவம் எப்படி இருந்தது?",
@@ -17848,7 +17905,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "50% தள்ளுபடி",
-        "upgrade.perMoPpp": "~$0.20/மாதம்"
+        "upgrade.perMoPpp": "~$0.20/மாதம்",
+        "upgrade.sendEmailLink": "இப்போது கற்பிக்கிறீர்களா? பின்னர் மேம்படுத்த எனக்கு மின்னஞ்சல் இணைப்பை அனுப்பவும்",
+        "upgrade.sendingEmail": "இணைப்பு அனுப்பப்படுகிறது…",
+        "upgrade.emailSent": "✓ {email} முகவரிக்கு இணைப்பு அனுப்பப்பட்டது! நீங்கள் தயாராக இருக்கும்போது முடிக்கவும்."
     },
     "te": {
         "review.starsTitle": "హాజరు ట్రాకింగ్ అనుభవం ఎలా ఉంది?",
@@ -18731,7 +18791,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "50% తగ్గింపు",
-        "upgrade.perMoPpp": "~$0.20/నెల"
+        "upgrade.perMoPpp": "~$0.20/నెల",
+        "upgrade.sendEmailLink": "ఇప్పుడు క్లాస్ బోధిస్తున్నారా? తర్వాత అప్‌గ్రేడ్ చేయడానికి నాకు ఇమెయిల్ లింక్ పంపండి",
+        "upgrade.sendingEmail": "లింక్ పంపుతోంది…",
+        "upgrade.emailSent": "✓ {email}కు లింక్ పంపబడింది! మీకు వీలైనప్పుడు పూర్తి చేయండి."
     },
     "bn": {
         "review.starsTitle": "উপস্থিতি ট্র্যাকিং করার অভিজ্ঞতা কেমন ছিল?",
@@ -19614,7 +19677,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "৫০% ছাড়",
-        "upgrade.perMoPpp": "~$০.২০/মাস"
+        "upgrade.perMoPpp": "~$০.২০/মাস",
+        "upgrade.sendEmailLink": "এখন ক্লাস নিচ্ছেন? পরে আপগ্রেড করার জন্য আমাকে ইমেলে লিঙ্ক পাঠান",
+        "upgrade.sendingEmail": "লিঙ্ক পাঠানো হচ্ছে…",
+        "upgrade.emailSent": "✓ {email} এ লিঙ্ক পাঠানো হয়েছে! পরে যে কোনো সময় শেষ করুন।"
     },
     "ur": {
         "review.starsTitle": "حاضری ٹریک کرنے کا تجربہ کیسا رہا؟",
@@ -20497,7 +20563,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "50% رعایت",
-        "upgrade.perMoPpp": "~$0.20/ماہ"
+        "upgrade.perMoPpp": "~$0.20/ماہ",
+        "upgrade.sendEmailLink": "ابھی کلاس لے رہے ہیں؟ بعد میں اپ گریڈ کرنے کے لیے مجھے ای میل پر لنک بھیجیں",
+        "upgrade.sendingEmail": "لنک بھیجا جا رہا ہے…",
+        "upgrade.emailSent": "✓ {email} پر لنک بھیج دیا گیا! کلاس کے بعد مکمل کریں۔"
     },
     "zh-CN": {
         "review.starsTitle": "您的出勤记录体验如何？",
@@ -21380,7 +21449,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "5折优惠",
-        "upgrade.perMoPpp": "~$0.20/月"
+        "upgrade.perMoPpp": "~$0.20/月",
+        "upgrade.sendEmailLink": "正在上课？发送链接到我的邮箱，稍后再升级",
+        "upgrade.sendingEmail": "正在发送链接…",
+        "upgrade.emailSent": "✓ 链接已发送至 {email}！随时在空闲时完成升级。"
     },
     "ru": {
         "review.starsTitle": "Как вам опыт отслеживания посещаемости?",
@@ -22263,7 +22335,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "Скидка 50%",
-        "upgrade.perMoPpp": "~$0.20/мес"
+        "upgrade.perMoPpp": "~$0.20/мес",
+        "upgrade.sendEmailLink": "Ведёте урок прямо сейчас? Отправьте мне ссылку на почту, чтобы обновиться позже",
+        "upgrade.sendingEmail": "Отправка ссылки…",
+        "upgrade.emailSent": "✓ Ссылка отправлена на {email}! Завершите в удобное время."
     },
     "uk": {
         "review.starsTitle": "Як ваші враження від відстеження присутності?",
@@ -23146,7 +23221,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "Знижка 50%",
-        "upgrade.perMoPpp": "~$0.20/міс"
+        "upgrade.perMoPpp": "~$0.20/міс",
+        "upgrade.sendEmailLink": "Зараз проводите урок? Надішліть мені посилання на пошту, щоб оновитися пізніше",
+        "upgrade.sendingEmail": "Надсилання посилання…",
+        "upgrade.emailSent": "✓ Посилання надіслано на {email}! Завершіть у зручний для вас час."
     },
     "ro": {
         "review.starsTitle": "Cum a fost experiența ta de înregistrare a prezenței?",
@@ -24029,7 +24107,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "50% reducere",
-        "upgrade.perMoPpp": "~$0.20/lună"
+        "upgrade.perMoPpp": "~$0.20/lună",
+        "upgrade.sendEmailLink": "Predai acum? Trimite-mi un link pe e-mail pentru a face upgrade mai târziu",
+        "upgrade.sendingEmail": "Se trimite linkul…",
+        "upgrade.emailSent": "✓ Link trimis la {email}! Finalizează oricând ești pregătit."
     },
     "he": {
         "review.starsTitle": "איך הייתה חוויית מעקב הנוכחות שלך?",
@@ -24912,7 +24993,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "50% הנחה",
-        "upgrade.perMoPpp": "~$0.20/חודש"
+        "upgrade.perMoPpp": "~$0.20/חודש",
+        "upgrade.sendEmailLink": "מלמדים כרגע? שלחו לי קישור למייל כדי לשדרג מאוחר יותר",
+        "upgrade.sendingEmail": "שולח קישור…",
+        "upgrade.emailSent": "✓ הקישור נשלח אל {email}! השלימו את השדרוג כשנוח לכם."
     },
     "mr": {
         "review.starsTitle": "हजेरी ट्रॅकिंगचा अनुभव कसा होता?",
@@ -25795,7 +25879,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "५०% सूट",
-        "upgrade.perMoPpp": "~$०.२०/महिना"
+        "upgrade.perMoPpp": "~$०.२०/महिना",
+        "upgrade.sendEmailLink": "आता क्लास चालू आहे का? नंतर अपग्रेड करण्यासाठी मला ईमेलवर लिंक पाठवा",
+        "upgrade.sendingEmail": "लिंक पाठवत आहे…",
+        "upgrade.emailSent": "✓ {email} वर लिंक पाठवली! तुमच्या सवडीनुसार पूर्ण करा."
     },
     "sv": {
         "review.starsTitle": "Hur var din upplevelse av närvarospårningen?",
@@ -26678,7 +26765,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "50% rabatt",
-        "upgrade.perMoPpp": "~$0.20/mån"
+        "upgrade.perMoPpp": "~$0.20/mån",
+        "upgrade.sendEmailLink": "Undervisar du just nu? Skicka en länk till min e-post för att uppgradera senare",
+        "upgrade.sendingEmail": "Skickar länk…",
+        "upgrade.emailSent": "✓ Länk skickad till {email}! Slutför när du är redo."
     },
     "cs": {
         "review.starsTitle": "Jaká byla vaše zkušenost se sledováním docházky?",
@@ -27561,7 +27651,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "50% sleva",
-        "upgrade.perMoPpp": "~$0.20/měsíc"
+        "upgrade.perMoPpp": "~$0.20/měsíc",
+        "upgrade.sendEmailLink": "Právě učíte? Pošlete mi odkaz na e-mail pro pozdější upgrade",
+        "upgrade.sendingEmail": "Odesílání odkazu…",
+        "upgrade.emailSent": "✓ Odkaz byl odeslán na {email}! Dokončete, až budete mít čas."
     },
     "da": {
         "review.starsTitle": "Hvordan var din oplevelse med fremmøderegistrering?",
@@ -28444,7 +28537,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "50% rabat",
-        "upgrade.perMoPpp": "~$0.20/md."
+        "upgrade.perMoPpp": "~$0.20/md.",
+        "upgrade.sendEmailLink": "Underviser du lige nu? Send mig et link på e-mail for at opgradere senere",
+        "upgrade.sendingEmail": "Sender link…",
+        "upgrade.emailSent": "✓ Link sendt til {email}! Gennemfør, når du har tid."
     },
     "fi": {
         "review.starsTitle": "Miten läsnäolon seuranta sujui?",
@@ -29327,7 +29423,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "50% alennus",
-        "upgrade.perMoPpp": "~$0.20/kk"
+        "upgrade.perMoPpp": "~$0.20/kk",
+        "upgrade.sendEmailLink": "Opetatko juuri nyt? Lähetä linkki sähköpostiini päivittääksesi myöhemmin",
+        "upgrade.sendingEmail": "Lähetetään linkkiä…",
+        "upgrade.emailSent": "✓ Linkki lähetetty osoitteeseen {email}! Viimeistele kun sinulle sopii."
     },
     "hu": {
         "review.starsTitle": "Milyen volt a jelenléti ív vezetési élménye?",
@@ -30210,7 +30309,10 @@
         "lang.hu": "Magyar",
         "lang.so": "Soomaali",
         "upgrade.off50": "50% kedvezmény",
-        "upgrade.perMoPpp": "~$0.20/hó"
+        "upgrade.perMoPpp": "~$0.20/hó",
+        "upgrade.sendEmailLink": "Épp tanítasz? Küldj egy linket az e-mailemre a későbbi frissítéshez",
+        "upgrade.sendingEmail": "Link küldése…",
+        "upgrade.emailSent": "✓ A link elküldve a következő címre: {email}! Fejezd be, amikor ráérsz."
     },
     "so": {
             "badge.pro": "Pro",
@@ -31093,7 +31195,10 @@
             "lang.hu": "Magyar",
             "lang.so": "Soomaali",
         "upgrade.off50": "50% dhimis",
-        "upgrade.perMoPpp": "~$0.20/bishii"
+        "upgrade.perMoPpp": "~$0.20/bishii",
+        "upgrade.sendEmailLink": "Ma wax baad dhigeysaa hadda? Ii soo dir xiriirinta iimaylka si aan dib ugu cusbooneysiiyo",
+        "upgrade.sendingEmail": "Xiriirinta waa la dirayaa…",
+        "upgrade.emailSent": "✓ Xiriirinta waxaa loo diray {email}! Dhamaystir markaad diyaar tahay."
     }
 };
 

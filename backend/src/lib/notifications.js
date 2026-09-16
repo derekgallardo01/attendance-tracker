@@ -1387,9 +1387,72 @@ async function sendOrgWeeklyDigest({ to, domain, totals, weeklyMeetings }) {
   }, 'org weekly digest', { domain });
 }
 
+// ── Requested Upgrade Link (for teachers finishing class) ─────────────────
+async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl, educatorPrice, lifetimePrice, flag, isPpp }) {
+  if (!getResend()) return { skipped: 'Resend not configured' };
+  if (!to) throw new Error('to is required');
+
+  const greeting = displayName ? `Hi ${displayName.split(' ')[0]},` : 'Hi there,';
+  const pppNote = isPpp ? ` (50% Regional Subsidy applied ${flag || ''})` : '';
+  const subject = 'Your Attendance Tracker upgrade link (finish anytime)';
+
+  const html = `
+    <div style="font-family:sans-serif;max-width:560px;color:#111;font-size:14px;line-height:1.6;margin:0 auto;padding:20px">
+      <h2 style="color:#1f6feb;margin-top:0">Attendance Tracker for Google Meet</h2>
+      <p>${escape(greeting)}</p>
+      <p>You requested a link to upgrade Attendance Tracker when you're done teaching. No rush at all — whenever your class wraps up and you're back at your desk, you can unlock unlimited classes and exports below:</p>
+
+      <div style="margin:24px 0;background:#f6f8fa;border:1px solid #d0d7de;border-radius:8px;padding:20px">
+        <h3 style="margin-top:0;font-size:16px;color:#24292f">Choose the plan that fits best:</h3>
+        
+        <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid #e1e4e8">
+          <div style="font-weight:600;font-size:15px;color:#0969da">Educator Pass — ${escape(educatorPrice)}/yr${escape(pppNote)}</div>
+          <p style="margin:4px 0 10px;color:#57606a;font-size:13px">Unlimited Google Sheets exports & attendance records for 1 full year.</p>
+          <a href="${educatorUrl}" style="display:inline-block;background:#1f6feb;color:#ffffff;text-decoration:none;font-weight:600;padding:8px 18px;border-radius:6px;font-size:13px">Unlock Educator Pass (${escape(educatorPrice)}/yr) →</a>
+        </div>
+
+        <div>
+          <div style="font-weight:600;font-size:15px;color:#0969da">Lifetime Pro — ${escape(lifetimePrice)} one-time${escape(pppNote)}</div>
+          <p style="margin:4px 0 10px;color:#57606a;font-size:13px">Pay once, keep unlimited attendance tracking forever. No recurring subscription.</p>
+          <a href="${lifetimeUrl}" style="display:inline-block;background:#2ea44f;color:#ffffff;text-decoration:none;font-weight:600;padding:8px 18px;border-radius:6px;font-size:13px">Get Lifetime Pro (${escape(lifetimePrice)}) →</a>
+        </div>
+      </div>
+
+      <p style="color:#57606a;font-size:13px">Or view your previous attendance history anytime in your <a href="https://attendancetracker.dev/history.html" style="color:#0969da">Web Dashboard</a>.</p>
+      <p style="color:#57606a;font-size:13px;margin-top:20px">Thank you for teaching with Attendance Tracker!</p>
+      ${unsubscribeFooter(to).html}
+    </div>
+  `;
+
+  const text = [
+    greeting,
+    '',
+    "You requested a link to upgrade Attendance Tracker when you're done teaching. No rush at all — whenever your class wraps up and you're back at your desk, you can unlock unlimited classes and exports below:",
+    '',
+    `* Educator Pass: ${educatorPrice}/yr${pppNote}`,
+    `  ${educatorUrl}`,
+    '',
+    `* Lifetime Pro: ${lifetimePrice} one-time${pppNote}`,
+    `  ${lifetimeUrl}`,
+    '',
+    'Or view your attendance history anytime at https://attendancetracker.dev/history.html',
+    '',
+    'Thank you for teaching with Attendance Tracker!',
+    unsubscribeFooter(to).text,
+  ].join('\n');
+
+  return dispatchEmail({
+    from: makeFrom('Derek from Attendance Tracker'),
+    to, subject, text, html,
+    replyTo: ownerEmail(),
+    tags: [{ name: 'type', value: 'upgrade_link_requested' }],
+    headers: unsubscribeHeaders(to),
+  }, 'upgrade link email', { to });
+}
+
 module.exports = {
   sendSignupWebhook, maybeSendSignupNotification, sendWelcomeEmail, sendReferralNotification, maybeSendReferralNotification, flushDeferredNotifications, sendAdminEmail, sendErrorAlertEmail, sendWeeklySelfReport, sendExportNotification, sendOrgWeeklyDigest,
-  sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail,
+  sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendUpgradeLinkEmail,
   sendSlackDigest, sendSlackTestPing, buildSlackDigestBlocks, buildSlackFallbackText, maskSlackWebhook,
   sendChatDigest, sendChatTestPing, buildChatDigestCard, maskGoogleChatWebhook,
   sendDiscordDigest, sendDiscordTestPing, buildDiscordDigestEmbed, maskDiscordWebhook,

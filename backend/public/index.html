@@ -5143,6 +5143,16 @@ function showUpgradeModal(reason) {
   if (upgradeReviewLink) {
     upgradeReviewLink.href = `${state.backendUrl}/public/review-click?email=${encodeURIComponent(email)}&source=upgrade_modal`;
   }
+  const sendEmailBtn = document.getElementById('btn-send-upgrade-email');
+  const sendEmailStatus = document.getElementById('upgrade-email-link-status');
+  if (sendEmailBtn) {
+    sendEmailBtn.style.display = 'inline-block';
+    sendEmailBtn.disabled = false;
+    sendEmailBtn.style.opacity = '1';
+    sendEmailBtn.textContent = t('upgrade.sendEmailLink', 'Teaching right now? Email me a link to upgrade later');
+  }
+  if (sendEmailStatus) sendEmailStatus.style.display = 'none';
+
   modal.style.display = 'flex';
   try {
     logUserEvent('upgrade_modal_shown', {
@@ -5150,6 +5160,39 @@ function showUpgradeModal(reason) {
       ...upgradeContext(),
     });
   } catch {}
+}
+
+async function sendUpgradeLinkToEmail() {
+  const btn = document.getElementById('btn-send-upgrade-email');
+  const status = document.getElementById('upgrade-email-link-status');
+  if (!btn || !status) return;
+
+  btn.disabled = true;
+  btn.style.opacity = '0.6';
+  btn.textContent = t('upgrade.sendingEmail', 'Sending link…');
+
+  try {
+    const res = await authFetch(`${state.backendUrl}/billing/send-upgrade-link`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.success) {
+      btn.style.display = 'none';
+      const email = data.email || state.userEmail || '';
+      status.textContent = t('upgrade.emailSent', '✓ Link sent to {email}! Finish whenever you\'re ready.').replace('{email}', email);
+      status.style.display = 'block';
+      try { logUserEvent('upgrade_link_requested', { email }); } catch {}
+    } else {
+      throw new Error(data.error || 'Failed');
+    }
+  } catch (err) {
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.textContent = t('upgrade.sendEmailLink', 'Teaching right now? Email me a link to upgrade later');
+    toast(t('common.error', 'Something went wrong. Please try again.'), 4000);
+  }
 }
 
 // ── Auto-export Pro nudge (inline, never a popup) ──
@@ -7828,6 +7871,14 @@ window.addEventListener('DOMContentLoaded', () => {
           <div>• <span data-i18n="upgrade.why3">Class rosters, absent matching &amp; instant CSV download</span></div>
           <div>• <span data-i18n="upgrade.why4">True call-end auto export &amp; series roll-up</span></div>
         </div>
+      </div>
+
+      <!-- Opt-in: Send Upgrade Link to Email for busy teachers -->
+      <div id="upgrade-email-link-wrap" style="text-align:center;margin-bottom:12px">
+        <button type="button" id="btn-send-upgrade-email" onclick="sendUpgradeLinkToEmail()" style="background:none;border:none;color:#8ab4f8;cursor:pointer;font-size:.76rem;text-decoration:underline;padding:4px 8px;border-radius:6px;transition:all .15s ease">
+          <span data-i18n="upgrade.sendEmailLink">Teaching right now? Email me a link to upgrade later</span>
+        </button>
+        <div id="upgrade-email-link-status" style="display:none;font-size:.75rem;color:#81c995;font-weight:500;padding:4px 0"></div>
       </div>
 
       <!-- Clean Low-Profile Review Exchange -->

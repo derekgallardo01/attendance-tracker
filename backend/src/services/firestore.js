@@ -1196,6 +1196,10 @@ async function countUserMonthlyExports(domain, email) {
       const data = d.data();
       const createdMs = data.createdAt?.toDate ? data.createdAt.toDate().getTime() : (data.createdAt ? new Date(data.createdAt).getTime() : 0);
       if (createdMs >= startOfMonthMs) {
+        // Solo self-tests (<= 1 attendee) do not consume the teacher's free monthly quota
+        if (data.participantCount != null && Number(data.participantCount) <= 1) {
+          continue;
+        }
         count++;
       }
     }
