@@ -5018,6 +5018,78 @@ function upgradeContext() {
   };
 }
 
+function countryFlagEmoji(code) {
+  if (!code || typeof code !== 'string' || code.length !== 2) return '';
+  const c = code.toUpperCase();
+  const codePoints = [...c].map(char => 127397 + char.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
+}
+
+function updateUpgradeModalPricing() {
+  const isPpp = !!(_billing && _billing.pppDiscount && _billing.pppDiscount.eligible);
+  const country = _billing?.pppDiscount?.country || '';
+  const flag = countryFlagEmoji(country);
+  const email = (state.userEmail || '').toLowerCase();
+  const isEdu = !!(_billing && _billing.isEdu) || isEduDomain(email, (_billing && _billing.domain) || email.split('@')[1]);
+
+  const dealPill = document.getElementById('upgrade-deal-pill');
+  const lifetimePriceEl = document.querySelector('#plan-card-lifetime .price-lifetime');
+  const educatorPriceEl = document.querySelector('#plan-card-educator .price-educator');
+  const eduPerMoBadge = document.querySelector('#plan-card-educator [data-i18n="upgrade.perMo"]');
+  const btnLifetime = document.getElementById('btn-upgrade-lifetime');
+  const btnEdu = document.getElementById('btn-upgrade-individual');
+
+  if (isPpp) {
+    if (dealPill) {
+      const pppLabel = flag
+        ? `${flag} ${t('upgrade.dealPpp', 'Regional Subsidy: 50% off automatically applied at checkout')}`
+        : t('upgrade.dealPpp', '🏷️ Regional Subsidy: 50% off automatically applied at checkout');
+      dealPill.innerHTML = `<span>${escHtml(pppLabel)}</span>`;
+      dealPill.style.background = 'rgba(74,222,128,.16)';
+      dealPill.style.borderColor = 'rgba(74,222,128,.4)';
+      dealPill.style.color = '#4ade80';
+    }
+    if (lifetimePriceEl) {
+      lifetimePriceEl.innerHTML = `<s style="color:#9aa0a6;font-size:.82rem;font-weight:400;margin-right:4px">$9.99</s><span style="color:#81c995;font-weight:700">$4.99</span>`;
+    }
+    if (educatorPriceEl) {
+      educatorPriceEl.innerHTML = `<s style="color:#9aa0a6;font-size:.82rem;font-weight:400;margin-right:4px">$4.99</s><span style="color:#8ab4f8;font-weight:700">$2.49</span>`;
+    }
+    if (eduPerMoBadge) {
+      eduPerMoBadge.textContent = t('upgrade.perMoPpp', '~$0.20/mo');
+    }
+    if (btnLifetime) {
+      btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime" style="color:#ffffff;font-weight:700">$4.99</span> <span style="background:rgba(255,255,255,0.22);color:#fff;font-size:0.68rem;padding:2px 7px;border-radius:10px;margin-left:4px;font-weight:600">${escHtml(t('upgrade.off50', '50% Off'))}</span>`;
+    }
+    if (btnEdu) {
+      btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#79c0ff;font-weight:700">$2.49</span>/yr <span style="background:rgba(88,166,255,0.25);color:#79c0ff;font-size:0.68rem;padding:2px 7px;border-radius:10px;margin-left:4px;font-weight:600">${escHtml(t('upgrade.off50', '50% Off'))}</span>`;
+    }
+  } else {
+    if (dealPill) {
+      if (isEdu) {
+        dealPill.innerHTML = `<span>${escHtml(t('upgrade.dealEdu', 'Educator plan · verifiable certificates included'))}</span>`;
+        dealPill.style.background = 'rgba(74,222,128,.14)';
+        dealPill.style.borderColor = 'rgba(74,222,128,.35)';
+        dealPill.style.color = '#4ade80';
+      } else {
+        dealPill.innerHTML = `<span>${escHtml(t('upgrade.dealLifetime', 'One-time payment · yours forever, nothing to cancel'))}</span>`;
+        dealPill.style.background = 'rgba(253,214,99,.12)';
+        dealPill.style.borderColor = 'rgba(253,214,99,.25)';
+        dealPill.style.color = '#fdd663';
+      }
+    }
+    if (lifetimePriceEl) lifetimePriceEl.textContent = '$9.99';
+    if (educatorPriceEl) educatorPriceEl.textContent = '$4.99';
+    if (eduPerMoBadge) eduPerMoBadge.textContent = t('upgrade.perMo', '~$0.41/mo');
+    if (btnLifetime) {
+      btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime">$9.99</span>`;
+    }
+    if (btnEdu) {
+      btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator">$4.99</span>/yr`;
+    }
+  }
+}
+
 function showUpgradeModal(reason) {
   state._lastUpgradeReason = reason || 'manual';
   const modal = document.getElementById('upgrade-modal');
@@ -5062,24 +5134,10 @@ function showUpgradeModal(reason) {
     if (isEdu || reason === 'certificates' || reason === 'classSummary') lifetimeCard.parentNode.insertBefore(eduCard, lifetimeCard);
     else eduCard.parentNode.insertBefore(lifetimeCard, eduCard);
   }
-  const dealPill = document.getElementById('upgrade-deal-pill');
-  if (dealPill) {
-    if (_billing && _billing.pppDiscount && _billing.pppDiscount.eligible) {
-      dealPill.innerHTML = `<span>${escHtml(t('upgrade.dealPpp', '🏷️ Regional Subsidy: 50% off automatically applied at checkout'))}</span>`;
-      dealPill.style.background = 'rgba(74,222,128,.16)';
-      dealPill.style.borderColor = 'rgba(74,222,128,.4)';
-      dealPill.style.color = '#4ade80';
-    } else if (isEdu) {
-      dealPill.innerHTML = `<span>${escHtml(t('upgrade.dealEdu', 'Educator plan · verifiable certificates included'))}</span>`;
-      dealPill.style.background = 'rgba(74,222,128,.14)';
-      dealPill.style.borderColor = 'rgba(74,222,128,.35)';
-      dealPill.style.color = '#4ade80';
-    } else {
-      dealPill.innerHTML = `<span>${escHtml(t('upgrade.dealLifetime', 'One-time payment · yours forever, nothing to cancel'))}</span>`;
-      dealPill.style.background = 'rgba(253,214,99,.12)';
-      dealPill.style.borderColor = 'rgba(253,214,99,.25)';
-      dealPill.style.color = '#fdd663';
-    }
+
+  updateUpgradeModalPricing();
+  if (!_billing) {
+    ensureBilling().then(() => updateUpgradeModalPricing());
   }
   const upgradeReviewLink = document.getElementById('upgrade-review-link');
   if (upgradeReviewLink) {

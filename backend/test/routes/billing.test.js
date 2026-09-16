@@ -1169,6 +1169,18 @@ describe('billing/status pricing payload', () => {
     expect(res.body.domain).toBe('depedqc.ph');
   });
 
+  test('status detects PPP eligibility for expanded countries (MX, CL, TN, SO, PE)', async () => {
+    app = buildApp();
+    for (const country of ['MX', 'CL', 'TN', 'SO', 'PE']) {
+      const res = await request(app)
+        .get('/api/billing/status')
+        .set(authedHeader(`user@school.${country.toLowerCase()}`, `school.${country.toLowerCase()}`))
+        .set('cf-ipcountry', country);
+      expect(res.status).toBe(200);
+      expect(res.body.pppDiscount).toEqual({ eligible: true, country, percentOff: 50 });
+    }
+  });
+
   test('checkout auto-applies PPP50 coupon for emerging market user', async () => {
     process.env.STRIPE_SECRET_KEY = 'sk_test_x';
     process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID = 'price_life';

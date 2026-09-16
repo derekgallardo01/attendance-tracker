@@ -1069,7 +1069,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "50% Off",
+        "upgrade.perMoPpp": "~$0.20/mo"
     },
     "es": {
         "review.starsTitle": "¿Cómo fue tu experiencia de registro de asistencia?",
@@ -1950,7 +1952,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "50% dto.",
+        "upgrade.perMoPpp": "~$0.20/mes"
     },
     "pt": {
         "review.starsTitle": "Como foi sua experiência de controle de presença?",
@@ -2831,7 +2835,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "50% off",
+        "upgrade.perMoPpp": "~$0.20/mês"
     },
     "hi": {
         "review.starsTitle": "उपस्थिति ट्रैकिंग का आपका अनुभव कैसा रहा?",
@@ -3712,7 +3718,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "50% छूट",
+        "upgrade.perMoPpp": "~$0.20/माह"
     },
     "tl": {
         "review.starsTitle": "Kumusta ang iyong karanasan sa pag-track ng attendance?",
@@ -4593,7 +4601,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "50% diskwento",
+        "upgrade.perMoPpp": "~$0.20/buwan"
     },
     "ms": {
         "review.starsTitle": "Bagaimanakah pengalaman anda mengesan kehadiran?",
@@ -5474,7 +5484,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "Diskaun 50%",
+        "upgrade.perMoPpp": "~$0.20/bln"
     },
     "id": {
         "review.starsTitle": "Bagaimana pengalaman Anda melacak kehadiran?",
@@ -6355,7 +6367,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "Diskon 50%",
+        "upgrade.perMoPpp": "~$0.20/bln"
     },
     "vi": {
         "review.starsTitle": "Trải nghiệm điểm danh của bạn thế nào?",
@@ -7236,7 +7250,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "Giảm 50%",
+        "upgrade.perMoPpp": "~$0.20/tháng"
     },
     "fr": {
         "review.starsTitle": "Comment s'est passée votre expérience de suivi des présences ?",
@@ -8117,7 +8133,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "-50%",
+        "upgrade.perMoPpp": "~0,20 $/mois"
     },
     "de": {
         "review.starsTitle": "Wie war Ihre Erfahrung mit der Anwesenheitserfassung?",
@@ -8998,7 +9016,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "50% Rabatt",
+        "upgrade.perMoPpp": "~$0.20/Monat"
     },
     "it": {
         "review.starsTitle": "Com'è stata la tua esperienza di rilevamento presenze?",
@@ -9879,7 +9899,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "50% di sconto",
+        "upgrade.perMoPpp": "~$0.20/mese"
     },
     "nl": {
         "review.starsTitle": "Hoe was uw ervaring met aanwezigheidsregistratie?",
@@ -10760,7 +10782,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "50% korting",
+        "upgrade.perMoPpp": "~$0.20/mnd"
     },
     "pl": {
         "review.starsTitle": "Jak oceniasz sprawdzanie obecności?",
@@ -11641,7 +11665,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "50% taniej",
+        "upgrade.perMoPpp": "~$0.20/mies."
     },
     "tr": {
         "review.starsTitle": "Yoklama takip deneyiminiz nasıldı?",
@@ -12522,7 +12548,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "%50 İndirim",
+        "upgrade.perMoPpp": "~$0.20/ay"
     },
     "th": {
         "review.starsTitle": "ประสบการณ์การเช็คชื่อเข้าชั้นเรียนของคุณเป็นอย่างไรบ้าง?",
@@ -13403,7 +13431,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "ลด 50%",
+        "upgrade.perMoPpp": "~$0.20/เดือน"
     },
     "ar": {
         "review.starsTitle": "كيف كانت تجربتك في تتبع الحضور؟",
@@ -14284,7 +14314,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "خصم 50%",
+        "upgrade.perMoPpp": "~$0.20/شهر"
     },
     "ko": {
         "review.starsTitle": "출석 체크 경험은 어떠셨나요?",
@@ -15165,7 +15197,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "50% 할인",
+        "upgrade.perMoPpp": "~$0.20/월"
     },
     "zh": {
         "review.starsTitle": "您的出勤記錄體驗如何？",
@@ -16046,7 +16080,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "5折优惠",
+        "upgrade.perMoPpp": "~$0.20/月"
     },
     "ja": {
         "review.starsTitle": "出席確認の使い心地はいかがでしたか？",
@@ -16927,7 +16963,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "50%オフ",
+        "upgrade.perMoPpp": "~$0.20/月"
     },
     "ta": {
         "review.starsTitle": "வருகை கண்காணிப்பு அனுபவம் எப்படி இருந்தது?",
@@ -17808,7 +17846,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "50% தள்ளுபடி",
+        "upgrade.perMoPpp": "~$0.20/மாதம்"
     },
     "te": {
         "review.starsTitle": "హాజరు ట్రాకింగ్ అనుభవం ఎలా ఉంది?",
@@ -18689,7 +18729,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "50% తగ్గింపు",
+        "upgrade.perMoPpp": "~$0.20/నెల"
     },
     "bn": {
         "review.starsTitle": "উপস্থিতি ট্র্যাকিং করার অভিজ্ঞতা কেমন ছিল?",
@@ -19570,7 +19612,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "৫০% ছাড়",
+        "upgrade.perMoPpp": "~$০.২০/মাস"
     },
     "ur": {
         "review.starsTitle": "حاضری ٹریک کرنے کا تجربہ کیسا رہا؟",
@@ -20451,7 +20495,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "50% رعایت",
+        "upgrade.perMoPpp": "~$0.20/ماہ"
     },
     "zh-CN": {
         "review.starsTitle": "您的出勤记录体验如何？",
@@ -21332,7 +21378,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "5折优惠",
+        "upgrade.perMoPpp": "~$0.20/月"
     },
     "ru": {
         "review.starsTitle": "Как вам опыт отслеживания посещаемости?",
@@ -22213,7 +22261,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "Скидка 50%",
+        "upgrade.perMoPpp": "~$0.20/мес"
     },
     "uk": {
         "review.starsTitle": "Як ваші враження від відстеження присутності?",
@@ -23094,7 +23144,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "Знижка 50%",
+        "upgrade.perMoPpp": "~$0.20/міс"
     },
     "ro": {
         "review.starsTitle": "Cum a fost experiența ta de înregistrare a prezenței?",
@@ -23975,7 +24027,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "50% reducere",
+        "upgrade.perMoPpp": "~$0.20/lună"
     },
     "he": {
         "review.starsTitle": "איך הייתה חוויית מעקב הנוכחות שלך?",
@@ -24856,7 +24910,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "50% הנחה",
+        "upgrade.perMoPpp": "~$0.20/חודש"
     },
     "mr": {
         "review.starsTitle": "हजेरी ट्रॅकिंगचा अनुभव कसा होता?",
@@ -25737,7 +25793,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "५०% सूट",
+        "upgrade.perMoPpp": "~$०.२०/महिना"
     },
     "sv": {
         "review.starsTitle": "Hur var din upplevelse av närvarospårningen?",
@@ -26618,7 +26676,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "50% rabatt",
+        "upgrade.perMoPpp": "~$0.20/mån"
     },
     "cs": {
         "review.starsTitle": "Jaká byla vaše zkušenost se sledováním docházky?",
@@ -27499,7 +27559,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "50% sleva",
+        "upgrade.perMoPpp": "~$0.20/měsíc"
     },
     "da": {
         "review.starsTitle": "Hvordan var din oplevelse med fremmøderegistrering?",
@@ -28380,7 +28442,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "50% rabat",
+        "upgrade.perMoPpp": "~$0.20/md."
     },
     "fi": {
         "review.starsTitle": "Miten läsnäolon seuranta sujui?",
@@ -29261,7 +29325,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "50% alennus",
+        "upgrade.perMoPpp": "~$0.20/kk"
     },
     "hu": {
         "review.starsTitle": "Milyen volt a jelenléti ív vezetési élménye?",
@@ -30142,7 +30208,9 @@
         "lang.da": "Dansk",
         "lang.fi": "Suomi",
         "lang.hu": "Magyar",
-        "lang.so": "Soomaali"
+        "lang.so": "Soomaali",
+        "upgrade.off50": "50% kedvezmény",
+        "upgrade.perMoPpp": "~$0.20/hó"
     },
     "so": {
             "badge.pro": "Pro",
@@ -31023,7 +31091,9 @@
             "pricing.trustInstant": "Dhaqdhaqaaqa degdega ah ee akoonkaaga",
             "lang.da": "Dansk",
             "lang.hu": "Magyar",
-            "lang.so": "Soomaali"
+            "lang.so": "Soomaali",
+        "upgrade.off50": "50% dhimis",
+        "upgrade.perMoPpp": "~$0.20/bishii"
     }
 };
 

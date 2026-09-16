@@ -699,26 +699,31 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
   const fmtDur = (m) => !m ? '—' : hm(m);
   const tableRows = (participants || []).map(p => {
     const lateBadge = p.lateMin > 0
-      ? ` <span style="background:rgba(245,158,11,.15);color:#b45309;border:1px solid rgba(245,158,11,.35);font-size:10px;font-weight:600;padding:1px 6px;border-radius:8px;margin-left:6px">+${p.lateMin}m late</span>`
+      ? `<span style="display:inline-block;white-space:nowrap;background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-size:10px;font-weight:600;padding:1px 5px;border-radius:4px;margin-left:4px;vertical-align:middle;line-height:1.3">+${p.lateMin}m late</span>`
       : '';
     return `
     <tr>
-      <td style="padding:6px 10px;border-top:1px solid #eee">${escape(p.displayName || p.email || '—')}${lateBadge}${p.email && p.displayName ? `<div style="color:#888;font-size:11px">${escape(p.email)}</div>` : ''}</td>
-      <td style="padding:6px 10px;border-top:1px solid #eee;color:${statusColor(p.status)};font-weight:600">${escape(p.status)}</td>
-      <td style="padding:6px 10px;border-top:1px solid #eee;color:#666;text-align:right">${escape(fmtDur(p.durationMin))}</td>
+      <td style="padding:8px 10px;border-top:1px solid #e2e8f0;vertical-align:middle">
+        <div style="font-size:13px;line-height:1.35;word-break:break-word">
+          <span style="font-weight:600;color:#0f172a">${escape(p.displayName || p.email || '—')}</span> ${lateBadge}
+        </div>
+        ${p.email && p.displayName ? `<div style="color:#64748b;font-size:11px;line-height:1.3;margin-top:2px;word-break:break-all">${escape(p.email)}</div>` : ''}
+      </td>
+      <td style="padding:8px 8px;border-top:1px solid #e2e8f0;vertical-align:middle;color:${statusColor(p.status)};font-weight:600;font-size:12px;white-space:nowrap">${escape(p.status)}</td>
+      <td style="padding:8px 10px;border-top:1px solid #e2e8f0;vertical-align:middle;color:#64748b;text-align:right;font-size:12px;white-space:nowrap">${escape(fmtDur(p.durationMin))}</td>
     </tr>
   `;
   }).join('');
   const overflowRow = overflow > 0
-    ? `<tr><td colspan="3" style="padding:8px 10px;border-top:1px solid #eee;color:#888;font-size:12px;font-style:italic">…and ${overflow} more in the sheet</td></tr>`
+    ? `<tr><td colspan="3" style="padding:8px 10px;border-top:1px solid #e2e8f0;color:#64748b;font-size:12px;font-style:italic;background:#f8fafc">…and ${overflow} more in the sheet</td></tr>`
     : '';
   const tableHtml = participants?.length ? `
-    <table style="border-collapse:collapse;width:100%;margin:14px 0;font-size:13px">
+    <table role="presentation" style="border-collapse:collapse;width:100%;margin:16px 0;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;table-layout:fixed">
       <thead>
-        <tr style="background:#f5f5f5">
-          <th style="text-align:left;padding:8px 10px;font-size:11px;color:#666;text-transform:uppercase">Person</th>
-          <th style="text-align:left;padding:8px 10px;font-size:11px;color:#666;text-transform:uppercase">Status</th>
-          <th style="text-align:right;padding:8px 10px;font-size:11px;color:#666;text-transform:uppercase">Time</th>
+        <tr style="background:#f8fafc">
+          <th style="text-align:left;padding:8px 10px;font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;width:58%">Person</th>
+          <th style="text-align:left;padding:8px 8px;font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;width:22%;white-space:nowrap">Status</th>
+          <th style="text-align:right;padding:8px 10px;font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;width:20%;white-space:nowrap">Time</th>
         </tr>
       </thead>
       <tbody>${tableRows}${overflowRow}</tbody>
@@ -736,26 +741,31 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
   const reviewUrl = `${CONFIG.publicApiUrl}/public/review-click?email=${encodeURIComponent(to)}&source=export_email`;
 
   const html = `
-    <div style="font-family:sans-serif;max-width:600px;color:#111;font-size:14px;line-height:1.5">
-      <p>${greeting}</p>
-      <p>Your meeting just ended — attendance has been auto-exported.</p>
-      <table style="border-collapse:collapse;margin:8px 0;font-size:14px">
-        <tr><td style="padding:4px 12px 4px 0;color:#666">Meeting</td><td>${escape(title)}</td></tr>
-        <tr><td style="padding:4px 12px 4px 0;color:#666">Attendance</td><td>${escape(summary)}</td></tr>
-        ${dateStr ? `<tr><td style="padding:4px 12px 4px 0;color:#666">When</td><td>${escape(dateStr)}</td></tr>` : ''}
+    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;color:#1e293b;font-size:14px;line-height:1.5;padding:16px 12px">
+      <p style="margin:0 0 6px;font-size:15px;color:#1e293b">${greeting}</p>
+      <p style="margin:0 0 14px;font-size:14px;color:#475569">Your meeting just ended — attendance has been auto-exported.</p>
+      <table role="presentation" style="width:100%;border-collapse:collapse;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin:0 0 16px 0">
+        <tr>
+          <td style="padding:12px 14px">
+            <div style="font-weight:700;font-size:15px;color:#0f172a;margin-bottom:4px;word-break:break-word">${escape(title)}</div>
+            <div style="font-size:13px;color:#64748b;line-height:1.4">
+              <span style="font-weight:600;color:#0f172a">${escape(summary)}</span>${dateStr ? `<span style="color:#94a3b8;margin:0 6px">&bull;</span><span>${escape(dateStr)}</span>` : ''}
+            </div>
+          </td>
+        </tr>
       </table>
       ${tableHtml}
-      <p style="margin-top:18px">
-        <a href="${escape(sheetUrl)}" style="display:inline-block;background:#1f6feb;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;margin-right:8px">Open sheet</a>
-        <a href="${escape(meetingLink)}" style="display:inline-block;color:#1f6feb;padding:10px 4px;text-decoration:none;font-weight:600">View on web →</a>
-      </p>
-      ${seriesLink ? `<p style="margin-top:8px;font-size:13px;color:#666">This is part of a recurring series — <a href="${escape(seriesLink)}" style="color:#1f6feb">see the full trend →</a></p>` : ''}
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;margin:20px 0;text-align:left">
-        <div style="font-weight:600;color:#1e293b;font-size:13px;margin-bottom:3px">⭐ Did this save you time today?</div>
-        <div style="font-size:12px;color:#64748b;margin-bottom:10px;line-height:1.4">If Attendance Tracker helped your call, could you spare 10 seconds to leave a 5-star review on Google Marketplace? It helps independent creators like me keep building for educators!</div>
-        <a href="${escape(reviewUrl)}" style="display:inline-block;background:#f59e0b;color:#111;font-size:12px;font-weight:700;padding:6px 14px;border-radius:6px;text-decoration:none">Leave a 5-Star Review (takes 10s) →</a>
+      <div style="margin:20px 0 16px 0">
+        <a href="${escape(sheetUrl)}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;margin-right:8px;margin-bottom:8px">Open sheet</a>
+        <a href="${escape(meetingLink)}" style="display:inline-block;background:#ffffff;color:#2563eb;border:1px solid #cbd5e1;padding:9px 16px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;margin-bottom:8px">View on web →</a>
       </div>
-      <p style="color:#666;font-size:12px;margin-top:24px">
+      ${seriesLink ? `<p style="margin:4px 0 16px;font-size:13px;color:#64748b">This is part of a recurring series — <a href="${escape(seriesLink)}" style="color:#2563eb;font-weight:500;text-decoration:none">see the full trend →</a></p>` : ''}
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px 16px;margin:20px 0;text-align:left">
+        <div style="font-weight:600;color:#0f172a;font-size:13px;margin-bottom:4px">⭐ Did this save you time today?</div>
+        <div style="font-size:12px;color:#64748b;margin-bottom:12px;line-height:1.4">If Attendance Tracker helped your call, could you spare 10 seconds to leave a 5-star review on Google Marketplace? It helps independent creators like me keep building for educators!</div>
+        <a href="${escape(reviewUrl)}" style="display:inline-block;background:#f59e0b;color:#111827;font-size:12px;font-weight:700;padding:8px 14px;border-radius:6px;text-decoration:none">Leave a 5-Star Review (takes 10s) →</a>
+      </div>
+      <p style="color:#64748b;font-size:12px;line-height:1.5;margin-top:24px">
         You're getting this because you tracked this meeting with Attendance Tracker.
         The sheet lives in your Drive folder "Meet Attendance Tracker" — reuse the same
         spreadsheet next time, each meeting gets its own tab.
@@ -764,7 +774,10 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
     </div>
   `;
 
-  const textRows = (participants || []).map(p => `  ${(p.displayName || p.email || '—').padEnd(28)} ${p.status.padEnd(8)} ${fmtDur(p.durationMin)}`).join('\n');
+  const textRows = (participants || []).map(p => {
+    const label = (p.displayName || p.email || '—') + (p.lateMin > 0 ? ` (+${p.lateMin}m late)` : '');
+    return `  ${label.padEnd(28)} ${p.status.padEnd(8)} ${fmtDur(p.durationMin)}`;
+  }).join('\n');
   const text = [
     `${displayName ? 'Hi ' + displayName.split(' ')[0] + ',' : 'Hi,'}`,
     ``,
