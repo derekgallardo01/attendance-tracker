@@ -32521,7 +32521,7 @@ let locale = 'en';
     const el = typeof container === 'string' ? document.getElementById(container) : container;
     if (!el) return;
 
-    const current = locale || 'en';
+    const current = locale;
     const select = document.createElement('select');
     select.className = 'att-lang-picker';
     select.setAttribute('aria-label', 'Select Language');

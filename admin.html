@@ -163,7 +163,8 @@
     #user-modal[style*="flex"] > div,
     #email-modal[style*="flex"] > div,
     #templates-modal[style*="flex"] > div,
-    #reminder-modal[style*="flex"] > div {
+    #reminder-modal[style*="flex"] > div,
+    #cluster-modal[style*="flex"] > div {
       animation: scaleIn .2s ease-out both;
     }
 
@@ -266,6 +267,7 @@
         <button class="admin-tab" data-tab="analytics" onclick="switchAdminTab('analytics')">📈 Analytics</button>
         <button class="admin-tab" data-tab="revenue" onclick="switchAdminTab('revenue')" id="tab-btn-revenue" style="display:none">💰 Revenue</button>
         <button class="admin-tab" data-tab="reviews" onclick="switchAdminTab('reviews')" id="tab-btn-reviews" style="display:none">⭐ Reviews &amp; Rewards</button>
+        <button class="admin-tab" data-tab="clusters" onclick="switchAdminTab('clusters')" id="tab-btn-clusters" style="display:none">🏫 School Clusters</button>
       </div>
 
       <div class="stats-grid tab-pane tp-overview active">
@@ -836,6 +838,97 @@
             <tr><td colspan="7" style="color:var(--muted)">Loading...</td></tr>
           </tbody>
         </table>
+      <!-- School Clusters tab: Institutional Leads & Department Outreach -->
+      <div class="section tab-pane tp-clusters" id="clusters-section" style="display:none">
+        <h2 style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <span>🏫 Institutional School Clusters <span style="color:var(--muted);font-weight:400;font-size:.75rem">multi-teacher organic adoption &amp; B2B department licenses ($59/yr)</span></span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:.7rem;color:var(--muted);font-weight:400" id="clusters-stamp">—</span>
+            <button class="btn btn-secondary" style="font-size:.75rem;padding:4px 10px" onclick="loadSchoolClusters()">↻ Refresh Clusters</button>
+          </div>
+        </h2>
+
+        <!-- Stat Cards -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:16px 0 16px 0">
+          <div class="stat-card">
+            <div class="stat-label">School Clusters</div>
+            <div class="stat-value green" id="cluster-stat-total">—</div>
+            <div class="stat-label">≥ 2 teachers on domain</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Clustered Educators</div>
+            <div class="stat-value blue" id="cluster-stat-teachers">—</div>
+            <div class="stat-label">active institutional users</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Classes Tracked</div>
+            <div class="stat-value" id="cluster-stat-exports" style="color:#fbbf24">—</div>
+            <div class="stat-label">exported to Sheets</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Students Recorded</div>
+            <div class="stat-value" id="cluster-stat-students" style="color:#a78bfa">—</div>
+            <div class="stat-label">attendee instances</div>
+          </div>
+        </div>
+
+        <!-- School Clusters Table -->
+        <div class="table-scroll" style="max-height:540px">
+          <table>
+            <thead>
+              <tr>
+                <th>School / Domain</th>
+                <th>Country</th>
+                <th>Teachers</th>
+                <th>Classes &amp; Students</th>
+                <th>Primary Contact</th>
+                <th>Plan Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="school-clusters-rows">
+              <tr><td colspan="7" style="color:var(--muted)">Loading school clusters…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Department Outreach & School Cluster Modal -->
+  <div id="cluster-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1150;align-items:center;justify-content:center;padding:20px;overflow-y:auto">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;max-width:680px;width:100%;max-height:90vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div>
+          <div style="font-weight:700;font-size:1.1rem;color:#e6edf3" id="cm-domain">School Domain</div>
+          <div style="font-size:.78rem;color:var(--muted)" id="cm-subtitle">Teacher count &amp; stats</div>
+        </div>
+        <button onclick="closeClusterModal()" style="background:transparent;color:var(--muted);border:none;font-size:1.4rem;cursor:pointer">&times;</button>
+      </div>
+
+      <!-- Teacher Roster Chips -->
+      <div style="margin-bottom:14px">
+        <div style="font-size:.72rem;color:var(--muted);text-transform:uppercase;margin-bottom:6px;font-weight:600">Active Teachers on this Domain</div>
+        <div id="cm-teachers-list" style="display:flex;flex-wrap:wrap;gap:6px;max-height:120px;overflow-y:auto;background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:8px"></div>
+      </div>
+
+      <!-- Outreach Draft -->
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:.72rem;color:var(--muted);text-transform:uppercase;font-weight:600">Department License Outreach Email</span>
+          <span style="font-size:.72rem;color:var(--accent)">Pre-filled with school stats</span>
+        </div>
+        <div style="font-size:.76rem;color:var(--muted);margin-bottom:6px">To: <span id="cm-recipient" style="color:#58a6ff;font-weight:600"></span></div>
+        <input id="cm-subject" style="width:100%;background:#0d1117;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px;font-size:.85rem;margin-bottom:8px;box-sizing:border-box" />
+        <textarea id="cm-body" rows="11" style="width:100%;background:#0d1117;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px;font-size:.82rem;font-family:inherit;resize:vertical;box-sizing:border-box;line-height:1.45"></textarea>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span id="cm-status" style="font-size:.75rem;color:var(--muted)"></span>
+        <div style="display:flex;gap:8px">
+          <button onclick="closeClusterModal()" class="btn btn-secondary">Close</button>
+          <button onclick="copyClusterDraft()" class="btn btn-secondary" id="cm-copy-btn">📋 Copy Draft</button>
+          <button onclick="openClusterMailto()" class="btn btn-primary" id="cm-mailto-btn">✉️ Open in Mail Client</button>
         </div>
       </div>
     </div>
@@ -1016,12 +1109,14 @@
           document.getElementById('analytics-section').style.display = 'block';
           document.getElementById('tab-btn-revenue').style.display = '';
           document.getElementById('tab-btn-reviews').style.display = '';
+          document.getElementById('tab-btn-clusters').style.display = '';
           loadSuggestions();
           loadPulse();
           loadActivity();
           loadPowerUsers();
           loadRevenue();
           loadMarketplaceReviews();
+          loadSchoolClusters();
           loadAllUsers();
           loadInsights();
           loadAnalytics();
@@ -1608,6 +1703,170 @@
       } catch (err) {
         console.error('power users load failed:', err);
       }
+    }
+
+    // ── School Clusters (B2B Department Licenses) ──
+    let _clustersCache = [];
+    let _activeCluster = null;
+
+    async function loadSchoolClusters() {
+      const rows = document.getElementById('school-clusters-rows');
+      try {
+        const res = await fetch(`${BACKEND_URL}/admin/school-clusters`, {
+          headers: { Authorization: `Bearer ${sessionToken}` }
+        });
+        if (!res.ok) {
+          if (rows) rows.innerHTML = `<tr><td colspan="7" style="color:var(--error)">Failed to load school clusters (HTTP ${res.status}).</td></tr>`;
+          return;
+        }
+        const data = await res.json();
+        _clustersCache = data.clusters || [];
+        const stamp = document.getElementById('clusters-stamp');
+        if (stamp) stamp.textContent = `Updated ${new Date().toLocaleTimeString()}`;
+
+        const setStat = (id, val) => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = val != null ? Number(val).toLocaleString() : '—';
+        };
+        setStat('cluster-stat-total', data.totalClusters);
+        setStat('cluster-stat-teachers', data.totalTeachers);
+        setStat('cluster-stat-exports', data.totalExports);
+        setStat('cluster-stat-students', data.totalParticipants);
+
+        if (!rows) return;
+        if (!_clustersCache.length) {
+          rows.innerHTML = '<tr><td colspan="7" style="color:var(--muted)">No institutional school clusters found (≥2 teachers on non-public domain).</td></tr>';
+          return;
+        }
+
+        rows.innerHTML = _clustersCache.map((c, i) => {
+          const countryDisplay = c.country ? `${flagEmoji(c.country)} ${esc(c.country)}` : '<span style="color:var(--muted)">Global</span>';
+          const primaryName = esc(c.primaryContact?.displayName || c.primaryContact?.email || '—');
+          const primaryEmail = esc(c.primaryContact?.email || '');
+          const statusBadge = c.isPro
+            ? '<span class="badge badge-active">Pro Active</span>'
+            : '<span style="color:var(--muted);font-size:.75rem">Free Tier</span>';
+
+          return `
+            <tr>
+              <td>
+                <strong style="color:#c9d1d9">${esc(c.domain)}</strong>
+              </td>
+              <td style="font-size:.82rem">${countryDisplay}</td>
+              <td>
+                <strong>${c.teacherCount}</strong> <span style="color:var(--muted);font-size:.78rem">teachers</span>
+              </td>
+              <td style="font-size:.82rem">
+                <span>${c.exportCount} classes</span>
+                <div style="color:var(--muted);font-size:.72rem">${(c.participantCount || 0).toLocaleString()} student attendances</div>
+              </td>
+              <td>
+                <div style="font-size:.82rem;font-weight:600">${primaryName}</div>
+                <div style="font-size:.72rem;color:var(--muted)">${primaryEmail}</div>
+              </td>
+              <td>${statusBadge}</td>
+              <td>
+                <button onclick="openClusterModal(${i})" class="btn btn-primary" style="font-size:.72rem;padding:4px 8px;white-space:nowrap">✉️ Outreach ($59/yr)</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error('School clusters load failed:', err);
+        if (rows) rows.innerHTML = `<tr><td colspan="7" style="color:var(--error)">Error loading clusters: ${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    function openClusterModal(idx) {
+      const c = _clustersCache[idx];
+      if (!c) return;
+      _activeCluster = c;
+
+      const domainEl = document.getElementById('cm-domain');
+      const subtitleEl = document.getElementById('cm-subtitle');
+      const teachersListEl = document.getElementById('cm-teachers-list');
+      const recipientEl = document.getElementById('cm-recipient');
+      const subjectEl = document.getElementById('cm-subject');
+      const bodyEl = document.getElementById('cm-body');
+      const statusEl = document.getElementById('cm-status');
+
+      if (domainEl) domainEl.textContent = c.domain;
+      if (subtitleEl) subtitleEl.textContent = `${c.teacherCount} active educators · ${c.exportCount} classes exported · ${c.participantCount || 0} student records`;
+
+      if (teachersListEl) {
+        teachersListEl.innerHTML = (c.teachers || []).map(t => `
+          <div style="background:var(--surface-elevated,#161b22);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:.75rem;display:inline-flex;align-items:center;gap:6px">
+            <span style="font-weight:600;color:#c9d1d9">${esc(t.displayName || t.email)}</span>
+            <span style="color:var(--muted);font-size:.68rem">(${t.exported || 0} exp / ${t.tracked || 0} mtr)</span>
+          </div>
+        `).join('') || '<div style="color:var(--muted);font-size:.75rem">No teacher details</div>';
+      }
+
+      const primary = c.primaryContact || {};
+      const primaryEmail = primary.email || `educators@${c.domain}`;
+      const primaryName = primary.displayName ? primary.displayName.split(' ')[0] : 'there';
+      if (recipientEl) recipientEl.textContent = `${primaryEmail} (${primary.displayName || 'Lead Teacher'})`;
+
+      const teacherWord = c.teacherCount === 2 ? 'colleague' : `${c.teacherCount - 1} colleagues`;
+      const exportMention = c.exportCount > 0 ? ` (${c.exportCount} class attendance sheets recorded to date)` : '';
+
+      const draftSubject = `Attendance Tracker for ${c.domain} – Department & School License`;
+      const draftBody = `Hi ${primaryName},
+
+I noticed that you and your ${teacherWord} at ${c.domain} have been using Attendance Tracker for Google Meet to track student presence and export records to Google Sheets${exportMention}.
+
+We're reaching out to see if your school or department would benefit from an Institutional Department License at $59/year.
+
+The department license includes:
+• Unlimited attendance tracking and Google Sheets exports for up to 25 teachers on ${c.domain}
+• Automated absence notifications sent directly to students or advisors
+• Centralized department attendance records and priority educator support
+• Simple school invoice, credit card, or school Purchase Order (PO) payment
+
+Would you or your department chair/administrator be open to a quick quote or invoice for ${c.domain}?
+
+Best regards,
+Derek Gallardo
+Founder, Attendance Tracker
+https://attendance-tracker.org`;
+
+      if (subjectEl) subjectEl.value = draftSubject;
+      if (bodyEl) bodyEl.value = draftBody;
+      if (statusEl) statusEl.textContent = '';
+
+      const modal = document.getElementById('cluster-modal');
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function closeClusterModal() {
+      const modal = document.getElementById('cluster-modal');
+      if (modal) modal.style.display = 'none';
+      _activeCluster = null;
+    }
+
+    async function copyClusterDraft() {
+      const subject = document.getElementById('cm-subject')?.value || '';
+      const body = document.getElementById('cm-body')?.value || '';
+      const textToCopy = `Subject: ${subject}\n\n${body}`;
+      try {
+        await navigator.clipboard.writeText(textToCopy);
+        const statusEl = document.getElementById('cm-status');
+        if (statusEl) {
+          statusEl.textContent = '✓ Copied draft to clipboard';
+          setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 3000);
+        }
+      } catch (err) {
+        alert('Could not copy to clipboard. Please copy manually.');
+      }
+    }
+
+    function openClusterMailto() {
+      if (!_activeCluster) return;
+      const recipient = _activeCluster.primaryContact?.email || '';
+      const subject = document.getElementById('cm-subject')?.value || '';
+      const body = document.getElementById('cm-body')?.value || '';
+      const mailtoUrl = `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.open(mailtoUrl, '_blank');
     }
 
     // ── Weekly self-report ──

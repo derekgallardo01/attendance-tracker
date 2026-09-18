@@ -236,12 +236,100 @@ describe('detectLocale', () => {
     expect(localStorage.getItem('att_locale')).toBe('pt');
   });
 
-  test('renderLanguagePicker renders select with all 35 locales', () => {
+  test('ignores unknown URL query parameter lang and falls back', () => {
+    delete window.location;
+    window.location = new URL('https://attendancetracker.dev/?lang=nonexistent');
+    localStorage.setItem('att_locale', 'ja');
+    expect(strings.detectLocale('es-ES')).toBe('ja');
+  });
+
+  test('renderLanguagePicker renders select with all 35 locales and handles selection', () => {
+    delete window.location;
+    window.location = {
+      href: 'http://localhost/?lang=en',
+      search: '?lang=en',
+    };
+    const replaceSpy = jest.fn();
+    window.history.replaceState = replaceSpy;
+
     document.body.innerHTML = '<div id="picker-mount"></div>';
     strings.renderLanguagePicker('picker-mount');
     const select = document.querySelector('.att-lang-picker');
     expect(select).not.toBeNull();
     expect(select.children.length).toBe(35);
+
+    // Trigger language switch via picker with history.replaceState
+    select.value = 'es';
+    select.dispatchEvent(new Event('change'));
+    expect(strings.getLocale()).toBe('es');
+    expect(replaceSpy).toHaveBeenCalled();
+
+    // Trigger language switch via picker without replaceState
+    window.history.replaceState = null;
+    select.value = 'de';
+    select.dispatchEvent(new Event('change'));
+    expect(strings.getLocale()).toBe('de');
+    expect(window.location.href).toContain('lang=de');
+  });
+
+  test('supports ?hl= query parameter as alternative to ?lang=', () => {
+    delete window.location;
+    window.location = new URL('https://attendancetracker.dev/?hl=fr');
+    expect(strings.detectLocale()).toBe('fr');
+  });
+
+  test('handles query param matching when localStorage.setItem throws', () => {
+    delete window.location;
+    window.location = new URL('https://attendancetracker.dev/?lang=es');
+    jest.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => { throw new Error('storage disabled'); });
+    expect(strings.detectLocale()).toBe('es');
+  });
+
+  test('handles query param without lang or hl and falls back', () => {
+    delete window.location;
+    window.location = new URL('https://attendancetracker.dev/?other=123');
+    expect(strings.detectLocale('fr-FR')).toBe('fr');
+  });
+
+  test('handles URLSearchParams throwing inside detectLocale', () => {
+    delete window.location;
+    window.location = new URL('https://attendancetracker.dev/?lang=es');
+    const origURLSearchParams = global.URLSearchParams;
+    global.URLSearchParams = function() { throw new Error('parse error'); };
+    try {
+      expect(strings.detectLocale('de-DE')).toBe('de');
+    } finally {
+      global.URLSearchParams = origURLSearchParams;
+    }
+  });
+
+  test('detects Somali locale', () => {
+    expect(strings.detectLocale('so-SO')).toBe('so');
+  });
+
+  test('setLocale handles document.cookie throwing', () => {
+    const origCookie = Object.getOwnPropertyDescriptor(document, 'cookie');
+    Object.defineProperty(document, 'cookie', {
+      get: () => '',
+      set: () => { throw new Error('cookie blocked'); },
+      configurable: true,
+    });
+    try {
+      expect(strings.setLocale('es', true)).toBe('es');
+    } finally {
+      if (origCookie) Object.defineProperty(document, 'cookie', origCookie);
+    }
+  });
+
+  test('renderLanguagePicker accepts direct HTMLElement container', () => {
+    const container = document.createElement('div');
+    strings.renderLanguagePicker(container);
+    expect(container.querySelector('select')).not.toBeNull();
+  });
+
+  test('renderLanguagePicker handles container not found gracefully', () => {
+    expect(() => strings.renderLanguagePicker('non-existent-id')).not.toThrow();
+    expect(() => strings.renderLanguagePicker(null)).not.toThrow();
   });
 });
 

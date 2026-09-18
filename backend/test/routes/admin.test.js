@@ -1829,3 +1829,99 @@ describe('POST /api/admin/sync-reviews', () => {
   });
 });
 
+describe('GET /api/admin/school-clusters', () => {
+  const admin = () => authedHeader(SUPER_ADMIN, 'gmail.com');
+  const nonAdmin = () => authedHeader('user@school.edu', 'school.edu');
+
+  test('403 when not super admin', async () => {
+    const unauthed = await request(app).get('/api/admin/school-clusters');
+    expect([401, 403]).toContain(unauthed.status);
+
+    const nonAdminRes = await request(app)
+      .get('/api/admin/school-clusters')
+      .set(nonAdmin());
+    expect(nonAdminRes.status).toBe(403);
+  });
+
+  test('200 groups non-public users into clusters and aggregates stats', async () => {
+    const mockUsers = [
+      { email: 'teacher1@school.edu', domain: 'school.edu', displayName: 'Teacher One', signupGeo: { country: 'PH' } },
+      { email: 'teacher2@school.edu', domain: 'school.edu', displayName: 'Teacher Two', signupGeo: { country: 'PH' } },
+      { email: 'solo@singleton.edu', domain: 'singleton.edu', displayName: 'Solo Teacher' },
+      { email: 'user1@gmail.com', domain: 'gmail.com', displayName: 'Gmail User 1' },
+      { email: 'user2@gmail.com', domain: 'gmail.com', displayName: 'Gmail User 2' },
+    ];
+
+    const usersSnap = {
+      forEach: (cb) => mockUsers.forEach((u) => cb({ data: () => u })),
+    };
+
+    const mockCollectionGroup = jest.fn().mockReturnValue({
+      get: jest.fn().mockResolvedValue(usersSnap),
+    });
+
+    const tenantDoc = {
+      exists: true,
+      data: () => ({ plan: 'free', adminEmail: 'admin@school.edu' }),
+    };
+
+    const exportsSnap = {
+      size: 2,
+      forEach: (cb) => [
+        { data: () => ({ participantCount: 15 }) },
+        { data: () => ({ participantCount: 20 }) },
+      ].forEach(cb),
+    };
+
+    const mockTenantDocRef = {
+      get: jest.fn().mockResolvedValue(tenantDoc),
+      collection: jest.fn().mockReturnValue({
+        get: jest.fn().mockResolvedValue(exportsSnap),
+      }),
+    };
+
+    const mockCollection = jest.fn().mockReturnValue({
+      doc: jest.fn().mockReturnValue(mockTenantDocRef),
+    });
+
+    firestore.getDb.mockReturnValue({
+      collectionGroup: mockCollectionGroup,
+      collection: mockCollection,
+    });
+
+    const res = await request(app)
+      .get('/api/admin/school-clusters')
+      .set(admin());
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.totalClusters).toBe(1);
+    expect(res.body.totalClusterTeachers).toBe(2);
+
+    const cluster = res.body.clusters[0];
+    expect(cluster.domain).toBe('school.edu');
+    expect(cluster.teacherCount).toBe(2);
+    expect(cluster.totalExports).toBe(2);
+    expect(cluster.totalParticipants).toBe(35);
+    expect(cluster.country).toBe('PH');
+    expect(cluster.primaryContact).toBe('admin@school.edu');
+    expect(cluster.planStatus).toBe('free');
+  });
+
+  test('500 when fetching users fails', async () => {
+    firestore.getDb.mockReturnValue({
+      collectionGroup: jest.fn().mockReturnValue({
+        get: jest.fn().mockRejectedValue(new Error('Firestore read failed')),
+      }),
+    });
+
+    const res = await request(app)
+      .get('/api/admin/school-clusters')
+      .set(admin());
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toContain('Failed to fetch school clusters');
+  });
+});
+
+

@@ -58,3 +58,38 @@ describe('quotaLimit()', () => {
     expect(pricing.quotaLimit()).toBe(2);
   });
 });
+
+describe('localCurrencyAnchor()', () => {
+  test('returns local currency estimate for supported countries and plans', () => {
+    expect(pricing.localCurrencyAnchor('PH', 'educator')).toBe('~₱280/yr');
+    expect(pricing.localCurrencyAnchor('PH', 'lifetime')).toBe('~₱560');
+    expect(pricing.localCurrencyAnchor('IN', 'educator')).toBe('~₹415/yr');
+    expect(pricing.localCurrencyAnchor('IN', 'lifetime')).toBe('~₹830');
+    expect(pricing.localCurrencyAnchor('ID', 'lifetime')).toBe('~Rp 155.000');
+    expect(pricing.localCurrencyAnchor('BR', 'educator')).toBe('~R$ 27/yr');
+    expect(pricing.localCurrencyAnchor('MX', 'department')).toBe('~MX$ 1,150/yr');
+    expect(pricing.localCurrencyAnchor('CO', 'lifetime')).toBe('~COP 40.000');
+    expect(pricing.localCurrencyAnchor('MY', 'educator')).toBe('~RM 22/yr');
+  });
+
+  test('normalizes lowercase and whitespace in country code', () => {
+    expect(pricing.localCurrencyAnchor(' ph ', 'educator')).toBe('~₱280/yr');
+  });
+
+  test('returns empty string for unsupported countries', () => {
+    expect(pricing.localCurrencyAnchor('US', 'lifetime')).toBe('');
+    expect(pricing.localCurrencyAnchor('GB', 'educator')).toBe('');
+  });
+
+  test('returns empty string for invalid/missing country code', () => {
+    expect(pricing.localCurrencyAnchor(null, 'lifetime')).toBe('');
+    expect(pricing.localCurrencyAnchor(undefined, 'lifetime')).toBe('');
+    expect(pricing.localCurrencyAnchor('', 'lifetime')).toBe('');
+    expect(pricing.localCurrencyAnchor(123, 'lifetime')).toBe('');
+  });
+
+  test('returns empty string for unknown plan', () => {
+    expect(pricing.localCurrencyAnchor('PH', 'unknown_plan')).toBe('');
+  });
+});
+

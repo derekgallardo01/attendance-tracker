@@ -1437,4 +1437,94 @@ router.post('/admin/reviews/sync', requireSuperAdminOrScheduler, async (req, res
   }
 });
 
+// GET /api/admin/school-clusters — Groups multi-teacher institutional clusters for B2B department outreach
+router.get('/admin/school-clusters', requireSuperAdmin, async (req, res) => {
+  try {
+    const PUBLIC_DOMAINS = new Set([
+      'gmail.com', 'googlemail.com', 'yahoo.com', 'yahoo.co.uk', 'yahoo.co.in',
+      'hotmail.com', 'outlook.com', 'live.com', 'msn.com', 'icloud.com', 'me.com',
+      'aol.com', 'mail.ru', 'protonmail.com', 'proton.me', 'zoho.com', 'yandex.ru'
+    ]);
+
+    const usersSnap = await getDb().collectionGroup('users').get();
+    const domainMap = new Map();
+
+    usersSnap.forEach(doc => {
+      const u = doc.data();
+      if (!u.email) return;
+      const domain = (u.domain || u.email.split('@')[1] || '').toLowerCase().trim();
+      if (!domain || PUBLIC_DOMAINS.has(domain)) return;
+
+      if (!domainMap.has(domain)) {
+        domainMap.set(domain, []);
+      }
+      const createdAt = u.createdAt?.toDate ? u.createdAt.toDate().toISOString() : (u.createdAt || null);
+      const country = u.signupGeo?.country || u.signupCountry || null;
+      domainMap.get(domain).push({
+        email: u.email,
+        displayName: u.displayName || '',
+        createdAt,
+        country,
+        plan: u.individualPlanType || u.plan || 'free',
+        lastLoginAt: u.lastLoginAt ? (u.lastLoginAt.toDate ? u.lastLoginAt.toDate().toISOString() : u.lastLoginAt) : null,
+      });
+    });
+
+    const clusterEntries = Array.from(domainMap.entries())
+      .filter(([, teachers]) => teachers.length >= 2)
+      .sort((a, b) => b[1].length - a[1].length);
+
+    const clusters = await Promise.all(clusterEntries.map(async ([domain, teachers]) => {
+      let totalExports = 0;
+      let totalParticipants = 0;
+      let tenantData = {};
+
+      try {
+        const [tenantDoc, exportsSnap] = await Promise.all([
+          getDb().collection('tenants').doc(domain).get(),
+          getDb().collection('tenants').doc(domain).collection('exports').get(),
+        ]);
+        if (tenantDoc && tenantDoc.exists) {
+          tenantData = tenantDoc.data() || {};
+        }
+        if (exportsSnap && exportsSnap.size) {
+          totalExports = exportsSnap.size;
+          exportsSnap.forEach(expDoc => {
+            const exp = expDoc.data();
+            totalParticipants += (Number(exp.participantCount) || 0);
+          });
+        }
+      } catch (err) {
+        log.warn('admin: failed fetching tenant details for cluster', { domain, error: err.message });
+      }
+
+      const country = teachers.find(t => t.country)?.country || 'Unknown';
+      const primaryContact = tenantData.adminEmail || teachers[0]?.email;
+
+      return {
+        domain,
+        teacherCount: teachers.length,
+        teachers,
+        totalExports,
+        totalParticipants,
+        country,
+        primaryContact,
+        planStatus: tenantData.plan || (teachers.some(t => t.plan === 'pro') ? 'pro' : 'free'),
+        installedAt: tenantData.installedAt?.toDate ? tenantData.installedAt.toDate().toISOString() : (tenantData.installedAt || teachers[teachers.length - 1]?.createdAt),
+      };
+    }));
+
+    res.json({
+      success: true,
+      totalClusters: clusters.length,
+      totalClusterTeachers: clusters.reduce((sum, c) => sum + c.teacherCount, 0),
+      clusters,
+    });
+  } catch (err) {
+    log.error('admin: failed to get school clusters', { error: err.message });
+    res.status(500).json({ error: 'Failed to fetch school clusters' });
+  }
+});
+
 module.exports = router;
+

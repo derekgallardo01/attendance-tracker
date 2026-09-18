@@ -103,11 +103,13 @@ router.post('/exchange', async (req, res) => {
     // UTM fields are length-capped to keep arbitrary blobs out of Firestore.
     const trim = (v) => (typeof v === 'string' ? v.slice(0, 200) : undefined);
     const trimLong = (v) => (typeof v === 'string' ? v.slice(0, 500) : undefined);
-    // Only accept ref values that look like an email — that's all the
-    // celebrate-modal mints. Drops arbitrary strings on the floor.
+    // Only accept ref values that look like an email (optionally prefixed by
+    // colleague: for department shares). Drops arbitrary strings on the floor.
+    const isColleagueRef = typeof acquisition?.ref === 'string' && acquisition.ref.startsWith('colleague:');
     const trimRef = (v) => {
       if (typeof v !== 'string') return undefined;
-      const s = v.slice(0, 200);
+      let s = v.slice(0, 200).trim();
+      if (s.startsWith('colleague:')) s = s.slice(10).trim();
       return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) ? s.toLowerCase() : undefined;
     };
     const sanitizedAcq = acquisition ? {
@@ -151,7 +153,7 @@ router.post('/exchange', async (req, res) => {
     }
 
     const detectedSource = sanitizedAcq?.source
-      || (sanitizedAcq?.ref ? `invite:${sanitizedAcq.ref}` : null)
+      || (sanitizedAcq?.ref ? (isColleagueRef ? `colleague_referral:${sanitizedAcq.ref}` : `invite:${sanitizedAcq.ref}`) : null)
       || (existingPeer ? `colleague_referral:${existingPeer}` : null)
       || (sanitizedAcq?.utmSource ? `utm:${sanitizedAcq.utmSource}` : null)
       || (refHost ? `ref:${refHost}` : null)
@@ -179,6 +181,7 @@ router.post('/exchange', async (req, res) => {
       signupGeo: isBrandNewUser && geo ? geo : undefined,
       firstTouchSource: isBrandNewUser && firstTouch?.computedSource ? firstTouch.computedSource : undefined,
       firstTouchLandingUrl: isBrandNewUser && firstTouch?.landingUrl ? firstTouch.landingUrl : undefined,
+      referredBy: isBrandNewUser && sanitizedAcq?.ref && sanitizedAcq.ref !== email.toLowerCase() ? sanitizedAcq.ref : undefined,
     });
 
     // Per-user signin event — feeds the activity log and "most active this

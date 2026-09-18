@@ -3,7 +3,7 @@ const { google } = require('googleapis');
 const { getGoogleClient } = require('../services/googleAuth');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { persistExport, getUserSheetId, setUserSheetId, countUserExports, countUserMonthlyExports, getExportReexportCount, getMeetingExcusedEmails, addMeetingExcusedEmails, getUserSettings, updateUserSettings, getUserMeetingSeries, logEvent, isEmailSuppressed } = require('../services/firestore');
+const { persistExport, getUser, grantReferralReward, getUserSheetId, setUserSheetId, countUserExports, countUserMonthlyExports, getExportReexportCount, getMeetingExcusedEmails, addMeetingExcusedEmails, getUserSettings, updateUserSettings, getUserMeetingSeries, logEvent, isEmailSuppressed } = require('../services/firestore');
 const { sendExportNotification, sendSlackDigest, sendChatDigest, sendDiscordDigest } = require('../lib/notifications');
 const { planIsPro } = require('./billing');
 const { getSheetHeaders } = require('../lib/i18n');
@@ -532,6 +532,21 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
       conferenceId: conferenceId || null,
     });
     const exportCreated = persistResult ? persistResult.created : null;
+
+    // Fire-and-forget: if this is the user's first export and they joined via
+    // a colleague referral, unlock mutual +35 days Pro for both teachers.
+    if (isFirstExport && req.user?.email) {
+      (async () => {
+        try {
+          const userDoc = await getUser(domain, req.user.email);
+          if (userDoc?.referredBy && !userDoc?.referralRewardGranted) {
+            await grantReferralReward(domain, req.user.email, userDoc.referredBy);
+          }
+        } catch (err) {
+          log.warn('sheets: failed checking referral reward', { email: req.user.email, error: err.message });
+        }
+      })();
+    }
 
     // Fire-and-forget: persist newly-checked excused emails to the meeting doc
     // so future re-exports remember the tagging without the user re-checking.

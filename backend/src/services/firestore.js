@@ -122,6 +122,61 @@ async function getUserPlan(domain, email) {
   return out;
 }
 
+// ── Colleague referral rewards (mutual 35-day Pro unlock) ──
+async function grantReferralReward(domain, email, referrerEmail) {
+  try {
+    const db = getDb();
+    const now = new Date();
+    const REWARD_MS = 35 * 24 * 60 * 60 * 1000;
+    const expiresAt = new Date(now.getTime() + REWARD_MS);
+    const emailLower = (email || '').toLowerCase().trim();
+    const referrerLower = (referrerEmail || '').toLowerCase().trim();
+    if (!emailLower) return { success: false, error: 'missing email' };
+
+    // 1. Grant referred user +35 days Pro
+    await setUserPlan(domain, emailLower, {
+      individualPlan: 'pro',
+      individualBillingStatus: 'active',
+      individualPlanType: 'referral_reward',
+      individualPlanGrantedAt: now.toISOString(),
+      individualPlanExpiresAt: expiresAt.toISOString(),
+      referredBy: referrerLower || null,
+      referralRewardGranted: true,
+    });
+
+    // 2. Grant referrer +35 days Pro (or extend existing Pro if already active)
+    if (referrerLower && referrerLower !== emailLower) {
+      try {
+        const referrerDocs = await db.collectionGroup('users').where('email', '==', referrerLower).limit(1).get();
+        if (!referrerDocs.empty) {
+          const refDoc = referrerDocs.docs[0];
+          const refData = refDoc.data() || {};
+          const refDomain = refData.domain || referrerLower.split('@')[1] || 'gmail.com';
+          let refExpires = expiresAt;
+          if (refData.individualPlanExpiresAt && new Date(refData.individualPlanExpiresAt) > now) {
+            refExpires = new Date(new Date(refData.individualPlanExpiresAt).getTime() + REWARD_MS);
+          }
+          await setUserPlan(refDomain, referrerLower, {
+            individualPlan: 'pro',
+            individualBillingStatus: 'active',
+            individualPlanType: 'referral_reward',
+            individualPlanGrantedAt: now.toISOString(),
+            individualPlanExpiresAt: refExpires.toISOString(),
+          });
+        }
+      } catch (e) {
+        log.warn('firestore: could not grant referrer reward', { referrer: referrerLower, error: e.message });
+      }
+    }
+
+    log.info('firestore: granted colleague referral reward', { email: emailLower, referrer: referrerLower });
+    return { success: true, expiresAt: expiresAt.toISOString() };
+  } catch (err) {
+    log.error('firestore: grantReferralReward failed', { domain, email, referrerEmail, error: err.message });
+    return { success: false, error: err.message };
+  }
+}
+
 // ── Team-admin self-serve claim / transfer ──
 // teamAdmin controls the org dashboard AND per-domain billing, so this is
 // deliberately conservative: personal-email tenants (shared gmail.com etc.)
@@ -2239,7 +2294,7 @@ function encodeNoteKey(key) {
 module.exports = {
   getDb,
   getTenantConfig, upsertTenantConfig,
-  setTenantPlan, getTenantPlan, setUserPlan, getUserPlan,
+  setTenantPlan, getTenantPlan, setUserPlan, getUserPlan, grantReferralReward,
   getTeamAdminStatus, claimTeamAdmin, transferTeamAdmin,
   countDistinctAttendees,
   persistAttendance, persistCalendarData, persistExport,

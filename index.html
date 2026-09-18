@@ -2891,9 +2891,14 @@ function downloadAttendanceCsv() {
     const n = (parseInt(localStorage.getItem('att_export_count') || '0', 10) || 0) + 1;
     localStorage.setItem('att_export_count', String(n));
     const hasReviewed = !!localStorage.getItem('has_reviewed');
-    const isMilestone = !_isPro && !(_billing && _billing.plan === 'pro') && (n === 1 || n === 2 || n === 5) && !hasReviewed;
-    if (isMilestone) {
-      showCelebrateModal(null, n);
+    const referralDismissed = !!localStorage.getItem('att_colleague_referral_dismissed');
+    if (n === 2 && !referralDismissed && !_isPro && !(_billing && _billing.plan === 'pro')) {
+      showDepartmentReferralModal();
+    } else {
+      const isMilestone = !_isPro && !(_billing && _billing.plan === 'pro') && (n === 1 || n === 2 || n === 5) && !hasReviewed;
+      if (isMilestone) {
+        showCelebrateModal(null, n);
+      }
     }
   } catch (e) { /* private mode */ }
   toast(t('toast.csvDownloaded','Downloaded attendance CSV'), 3000);
@@ -5184,7 +5189,7 @@ function countryFlagEmoji(code) {
 
 function updateUpgradeModalPricing() {
   const isPpp = !!(_billing && _billing.pppDiscount && _billing.pppDiscount.eligible);
-  const country = _billing?.pppDiscount?.country || '';
+  const country = _billing?.country || _billing?.pppDiscount?.country || state.signupCountry || '';
   const flag = countryFlagEmoji(country);
   const email = (state.userEmail || '').toLowerCase();
   const isEdu = !!(_billing && _billing.isEdu) || isEduDomain(email, (_billing && _billing.domain) || email.split('@')[1]);
@@ -5195,6 +5200,13 @@ function updateUpgradeModalPricing() {
   const eduPerMoBadge = document.querySelector('#plan-card-educator [data-i18n="upgrade.perMo"]');
   const btnLifetime = document.getElementById('btn-upgrade-lifetime');
   const btnEdu = document.getElementById('btn-upgrade-individual');
+
+  const localLifetimeAnchor = (typeof AttPricing !== 'undefined' && AttPricing.localCurrencyAnchor)
+    ? AttPricing.localCurrencyAnchor(country, isPpp ? 'lifetimePpp' : 'lifetime')
+    : '';
+  const localEduAnchor = (typeof AttPricing !== 'undefined' && AttPricing.localCurrencyAnchor)
+    ? AttPricing.localCurrencyAnchor(country, isPpp ? 'educatorPpp' : 'educator')
+    : '';
 
   if (isPpp) {
     if (dealPill) {
@@ -5207,10 +5219,12 @@ function updateUpgradeModalPricing() {
       dealPill.style.color = '#4ade80';
     }
     if (lifetimePriceEl) {
-      lifetimePriceEl.innerHTML = `<s style="color:#9aa0a6;font-size:.82rem;font-weight:400;margin-right:4px">$9.99</s><span style="color:#81c995;font-weight:700">$4.99</span>`;
+      const localTag = localLifetimeAnchor ? ` <span style="font-size:.73rem;color:#81c995;font-weight:400">(${escHtml(localLifetimeAnchor)})</span>` : '';
+      lifetimePriceEl.innerHTML = `<s style="color:#9aa0a6;font-size:.82rem;font-weight:400;margin-right:4px">$9.99</s><span style="color:#81c995;font-weight:700">$4.99</span>${localTag}`;
     }
     if (educatorPriceEl) {
-      educatorPriceEl.innerHTML = `<s style="color:#9aa0a6;font-size:.82rem;font-weight:400;margin-right:4px">$4.99</s><span style="color:#8ab4f8;font-weight:700">$2.49</span>`;
+      const localTag = localEduAnchor ? ` <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(${escHtml(localEduAnchor)})</span>` : '';
+      educatorPriceEl.innerHTML = `<s style="color:#9aa0a6;font-size:.82rem;font-weight:400;margin-right:4px">$4.99</s><span style="color:#8ab4f8;font-weight:700">$2.49</span>${localTag}`;
     }
     if (eduPerMoBadge) {
       eduPerMoBadge.textContent = t('upgrade.perMoPpp', '~$0.20/mo');
@@ -5235,8 +5249,14 @@ function updateUpgradeModalPricing() {
         dealPill.style.color = '#fdd663';
       }
     }
-    if (lifetimePriceEl) lifetimePriceEl.textContent = '$9.99';
-    if (educatorPriceEl) educatorPriceEl.textContent = '$4.99';
+    if (lifetimePriceEl) {
+      const localTag = localLifetimeAnchor ? ` <span style="font-size:.73rem;color:#81c995;font-weight:400">(${escHtml(localLifetimeAnchor)})</span>` : '';
+      lifetimePriceEl.innerHTML = `<span>$9.99</span>${localTag}`;
+    }
+    if (educatorPriceEl) {
+      const localTag = localEduAnchor ? ` <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(${escHtml(localEduAnchor)})</span>` : '';
+      educatorPriceEl.innerHTML = `<span>$4.99</span>${localTag}`;
+    }
     if (eduPerMoBadge) eduPerMoBadge.textContent = t('upgrade.perMo', '~$0.41/mo');
     if (btnLifetime) {
       btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime">$9.99</span>`;
@@ -6095,9 +6115,17 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
       document.getElementById('sheet-link-bar').style.display = 'block';
     }
     const hasReviewed = !!localStorage.getItem('has_reviewed');
-    const isMilestone = !_isPro && !(_billing && _billing.plan === 'pro') && (isFirstExport || n === 2 || n === 5) && !hasReviewed;
-    if (isMilestone && !opts.autoExport) {
-      showCelebrateModal(sheetUrl, n);
+    const referralDismissed = !!localStorage.getItem('att_colleague_referral_dismissed');
+    let modalShown = false;
+    if (n === 2 && !referralDismissed && !_isPro && !(_billing && _billing.plan === 'pro') && !opts.autoExport) {
+      showDepartmentReferralModal();
+      modalShown = true;
+    } else {
+      const isMilestone = !_isPro && !(_billing && _billing.plan === 'pro') && (isFirstExport || n === 2 || n === 5) && !hasReviewed;
+      if (isMilestone && !opts.autoExport) {
+        showCelebrateModal(sheetUrl, n);
+        modalShown = true;
+      }
     }
     // Arm the double-click cooldown — MANUAL exports only. An auto-export
     // arming it would silently swallow a deliberate manual re-export made
@@ -6107,7 +6135,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     // longer shown at sign-in (mid-meeting asks just got dismissed). On a
     // first manual export the celebrate→survey chain is up, and its close
     // handlers call maybeAskSourcePostExport so modals never stack.
-    if (!((isFirstExport || isMilestone) && !opts.autoExport)) {
+    if (!modalShown) {
       maybeAskSourcePostExport();
     }
     // Update activation state so the nudge banner hides itself
@@ -6130,12 +6158,13 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
   }
 }
 
-// Referral landing link, tagged ?ref=<inviter-email> so the backend can
-// attribute the signup (acquisition source ref:<email> → reward machinery).
-// Shared by the celebrate modal and the Settings referral row.
-function buildReferralLink() {
-  const refParam = state.userEmail ? `?ref=${encodeURIComponent(state.userEmail)}` : '';
-  return `https://attendancetracker.dev/${refParam}`;
+// Referral landing link, tagged ?ref=<inviter-email> (or ?ref=colleague:<inviter-email>)
+// so the backend can attribute the signup (acquisition source ref:<email> → reward machinery).
+// Shared by the celebrate modal, department referral modal, and the Settings referral row.
+function buildReferralLink(type) {
+  if (!state.userEmail) return 'https://attendancetracker.dev/';
+  const prefix = type === 'colleague' ? 'colleague:' : '';
+  return `https://attendancetracker.dev/?ref=${prefix}${encodeURIComponent(state.userEmail)}`;
 }
 
 function showCelebrateModal(sheetUrl, milestoneCount = 1) {
@@ -6268,6 +6297,78 @@ function closeCelebrateModal() {
     // No survey to show → the source ask takes the post-celebrate slot.
     setTimeout(() => maybeAskSourcePostExport(), 400);
   }
+}
+
+function showDepartmentReferralModal() {
+  if (_isPro || (_billing && _billing.plan === 'pro')) return;
+  const modal = document.getElementById('department-referral-modal');
+  if (!modal) return;
+  const link = buildReferralLink('colleague');
+  const input = document.getElementById('department-referral-link-input');
+  if (input) input.value = link;
+
+  const emailBtn = document.getElementById('department-referral-email-btn');
+  if (emailBtn) {
+    const subject = encodeURIComponent(t('referral.emailSubject', 'Attendance Tracker for Google Meet – thought of your classes'));
+    const body = encodeURIComponent(
+      t('referral.emailBody', "Hi,\n\nI've been using Attendance Tracker for Google Meet to automatically take attendance and export class records to Google Sheets in one click. It's saved me a ton of time: ") + `${link}\n`
+    );
+    emailBtn.href = `mailto:?subject=${subject}&body=${body}`;
+  }
+  modal.style.display = 'flex';
+  try { logUserEvent('colleague_referral_modal_shown', {}); } catch (e) {}
+}
+
+function closeDepartmentReferralModal() {
+  const modal = document.getElementById('department-referral-modal');
+  if (modal) modal.style.display = 'none';
+  try { localStorage.setItem('att_colleague_referral_dismissed', '1'); } catch (e) {}
+  try { logUserEvent('colleague_referral_modal_dismissed', {}); } catch (e) {}
+  setTimeout(() => maybeAskSourcePostExport(), 400);
+}
+
+function copyDepartmentReferralLink() {
+  const link = buildReferralLink('colleague');
+  const copyBtn = document.getElementById('department-referral-copy-btn');
+  try { localStorage.setItem('att_colleague_referral_dismissed', '1'); } catch (e) {}
+  try { logUserEvent('colleague_referral_link_copied', {}); } catch (e) {}
+
+  const showCopied = () => {
+    if (copyBtn) {
+      const orig = copyBtn.textContent;
+      copyBtn.textContent = t('referral.copied', '✓ Copied!');
+      copyBtn.style.background = '#1b5e20';
+      setTimeout(() => {
+        if (copyBtn) {
+          copyBtn.textContent = orig;
+          copyBtn.style.background = '#238636';
+        }
+      }, 2000);
+    }
+  };
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(link).then(showCopied).catch(() => {
+      const input = document.getElementById('department-referral-link-input');
+      if (input) {
+        input.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        showCopied();
+      }
+    });
+  } else {
+    const input = document.getElementById('department-referral-link-input');
+    if (input) {
+      input.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      showCopied();
+    }
+  }
+}
+
+function onDepartmentReferralEmailClick(e) {
+  try { localStorage.setItem('att_colleague_referral_dismissed', '1'); } catch (e) {}
+  try { logUserEvent('colleague_referral_email_clicked', {}); } catch (e) {}
 }
 
 // One-off → recurring tip. Fires ONLY when the just-exported meeting is NOT
@@ -8065,6 +8166,30 @@ window.addEventListener('DOMContentLoaded', () => {
     </div>
   </div>
 
+  <!-- ── Department Colleague Referral Modal ── -->
+  <div id="department-referral-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)">
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:16px;padding:24px;max-width:380px;width:100%;text-align:center;position:relative;box-shadow:0 20px 40px rgba(0,0,0,.6)">
+      <button type="button" onclick="closeDepartmentReferralModal()" data-i18n-aria="common.close" aria-label="Close" style="position:absolute;top:14px;right:14px;background:none;border:none;color:#9ca3af;cursor:pointer;font-size:18px;line-height:1;padding:4px">&times;</button>
+      <div style="width:48px;height:48px;border-radius:50%;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.25);color:#4ade80;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:600;margin-bottom:10px">Give 1 Month Pro · Get 1 Month Pro</div>
+      <div style="font-size:1.1rem;font-weight:700;color:#e6edf3;margin-bottom:6px" data-i18n="referral.title">Share with your department</div>
+      <div style="color:#9ca3af;font-size:.84rem;line-height:1.5;margin-bottom:16px" data-i18n="referral.body">Save your fellow teachers time taking roll in Google Meet. When a colleague joins with your link and takes attendance, both of you unlock 1 month of Pro free.</div>
+      <div style="display:flex;align-items:center;gap:8px;background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:6px 10px;margin-bottom:12px">
+        <input id="department-referral-link-input" type="text" readonly style="flex:1;background:transparent;border:none;color:#9ca3af;font-size:.78rem;outline:none;font-family:monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" />
+        <button id="department-referral-copy-btn" type="button" onclick="copyDepartmentReferralLink()" style="background:#238636;border:none;color:#fff;font-weight:600;font-size:.75rem;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap" data-i18n="referral.copyLink">Copy Link</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <a id="department-referral-email-btn" href="#" onclick="onDepartmentReferralEmailClick(event)" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#21262d;border:1px solid #30363d;color:#e6edf3;text-decoration:none;padding:9px 16px;border-radius:8px;font-weight:600;font-size:.82rem" data-i18n="referral.emailBtn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          Email a Colleague
+        </a>
+        <button type="button" onclick="closeDepartmentReferralModal()" style="background:transparent;color:#9ca3af;border:none;font-size:.8rem;cursor:pointer;padding:4px" data-i18n="referral.notNow">Not now</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Pro Upgrade Modal ── -->
 <!-- One-time paywall objection ask (after the 3rd upgrade-modal dismissal) -->
   <div id="paywall-why-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:1150;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px)">
@@ -8197,6 +8322,11 @@ window.addEventListener('DOMContentLoaded', () => {
           <span data-i18n="upgrade.sendEmailLink">Teaching right now? Email me a link to upgrade later</span>
         </button>
         <div id="upgrade-email-link-status" style="display:none;font-size:.75rem;color:#81c995;font-weight:500;padding:3px 0"></div>
+      </div>
+
+      <!-- School reimbursement reassurance -->
+      <div style="text-align:center;font-size:.71rem;color:#9aa0a6;margin-bottom:8px;line-height:1.3">
+        <span>Single classroom purchase · eligible for school supply or PD reimbursement</span>
       </div>
 
       <!-- Modal Footer -->

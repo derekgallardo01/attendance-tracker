@@ -62,6 +62,7 @@ jest.mock('../../src/services/firestore', () => ({
   updateUserSettings: jest.fn(), // auto-export trial: lazily starts the trial clock
   getUserMeetingSeries: jest.fn(),
   getUser: jest.fn(),
+  grantReferralReward: jest.fn(),
   updateUserTokens: jest.fn(),
   getTenantPlan: jest.fn(), // used by billing.planIsPro when billing is configured
   logEvent: jest.fn(), // webhook_digest_sent telemetry from the digest loop
@@ -1063,5 +1064,31 @@ describe('POST /api/save-to-sheets — owner unsubscribe honored', () => {
       .send({ ...validPayload, sendEmail: true, autoExport: true });
     await new Promise((r) => setImmediate(r));
     expect(notifications.sendExportNotification).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /api/save-to-sheets — colleague referral reward', () => {
+  test('grants mutual referral reward on first export when user was referred', async () => {
+    firestore.countUserExports.mockResolvedValue(0);
+    firestore.getUser.mockResolvedValue({
+      email: 'user@acme.com',
+      domain: 'acme.com',
+      refreshToken: 'rt',
+      accessToken: 'at',
+      tokenExpiresAt: new Date(Date.now() + 3600000),
+      referredBy: 'referrer@acme.com',
+      referralRewardGranted: false,
+    });
+    firestore.grantReferralReward.mockResolvedValue({ success: true });
+
+    await request(app)
+      .post('/api/save-to-sheets')
+      .set(authedHeader('user@acme.com', 'acme.com'))
+      .set('Content-Type', 'application/json')
+      .send({ ...validPayload });
+
+    // Allow the fire-and-forget promise chain to tick
+    await new Promise((r) => setImmediate(r));
+    expect(firestore.grantReferralReward).toHaveBeenCalledWith('acme.com', 'user@acme.com', 'referrer@acme.com');
   });
 });

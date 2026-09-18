@@ -730,6 +730,7 @@ router.get('/billing/status', requireAuth, async (req, res) => {
       educatorAvailable: !!process.env.STRIPE_EDUCATOR_PRICE_ID,
       exportQuota,
       pppDiscount,
+      country: userCountry || null,
       trialInfo,
       domainUserCount,
       domain: req.user?.domain || null,

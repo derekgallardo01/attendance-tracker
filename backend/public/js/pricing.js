@@ -39,7 +39,27 @@
     return current.quotaLimit || DEFAULTS.quotaLimit;
   }
 
-  const api = { DEFAULTS, fromStatus, price, quotaLimit, _reset: function () { current = DEFAULTS; } };
+  // Approximate local currency anchor for top non-USD markets.
+  // Helps teachers understand local equivalent (e.g. Philippines, India, Brazil).
+  const LOCAL_CURRENCY_ESTIMATES = {
+    PH: { educator: '~₱280/yr', lifetime: '~₱560', educatorPpp: '~₱140/yr', lifetimePpp: '~₱280', department: '~₱3,300/yr' },
+    IN: { educator: '~₹415/yr', lifetime: '~₹830', educatorPpp: '~₹205/yr', lifetimePpp: '~₹415', department: '~₹4,900/yr' },
+    ID: { educator: '~Rp 78.000/yr', lifetime: '~Rp 155.000', educatorPpp: '~Rp 39.000/yr', lifetimePpp: '~Rp 78.000', department: '~Rp 920.000/yr' },
+    BR: { educator: '~R$ 27/yr', lifetime: '~R$ 55', educatorPpp: '~R$ 14/yr', lifetimePpp: '~R$ 27', department: '~R$ 325/yr' },
+    MX: { educator: '~MX$ 95/yr', lifetime: '~MX$ 190', educatorPpp: '~MX$ 48/yr', lifetimePpp: '~MX$ 95', department: '~MX$ 1,150/yr' },
+    CO: { educator: '~COP 20.000/yr', lifetime: '~COP 40.000', educatorPpp: '~COP 10.000/yr', lifetimePpp: '~COP 20.000', department: '~COP 240.000/yr' },
+    MY: { educator: '~RM 22/yr', lifetime: '~RM 44', educatorPpp: '~RM 11/yr', lifetimePpp: '~RM 22', department: '~RM 260/yr' },
+  };
+
+  function localCurrencyAnchor(countryCode, plan) {
+    if (!countryCode || typeof countryCode !== 'string') return '';
+    const upper = countryCode.toUpperCase().trim();
+    const rates = LOCAL_CURRENCY_ESTIMATES[upper];
+    if (!rates) return '';
+    return rates[plan] || '';
+  }
+
+  const api = { DEFAULTS, LOCAL_CURRENCY_ESTIMATES, fromStatus, price, quotaLimit, localCurrencyAnchor, _reset: function () { current = DEFAULTS; } };
   root.AttPricing = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
