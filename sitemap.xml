@@ -261,6 +261,11 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://attendancetracker.dev/unsubscribe.html</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
     <loc>https://attendancetracker.dev/google-meet-attendance-for-online-classes.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>

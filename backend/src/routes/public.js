@@ -2,9 +2,11 @@ const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
 const { FieldValue } = require('@google-cloud/firestore');
 const log = require('../lib/logger');
-const { getDb, resolveShareLink, getSharedSeriesView, suppressEmail, getVerification, logEvent } = require('../services/firestore');
-const { sendFeedbackEmail, verifyUnsubscribeToken, sendAdminEmail } = require('../lib/notifications');
+const geoip = require('geoip-lite');
+const { getDb, resolveShareLink, getSharedSeriesView, suppressEmail, unsuppressEmail, isEmailSuppressed, getUserSettings, updateUserSettings, getVerification, logEvent, recordCancellationTelemetry, recordPublicPageview } = require('../services/firestore');
+const { sendFeedbackEmail, verifyUnsubscribeToken, sendAdminEmail, sendAdminEmailUnsubscribedNotification } = require('../lib/notifications');
 const { escapeHtml } = require('../lib/html');
+const { verifyUserReview } = require('../services/review-verifier');
 
 const router = Router();
 
@@ -149,6 +151,14 @@ router.post('/public/pageview', async (req, res) => {
     const today = new Date().toISOString().slice(0, 10);
     const db = getDb();
 
+    let country = req.headers['x-client-geo-country'] || req.headers['cf-ipcountry'] || null;
+    if (!country && req.ip) {
+      try {
+        const geo = geoip.lookup(req.ip);
+        if (geo?.country) country = geo.country;
+      } catch (_) {}
+    }
+
     // Event type — 'pageview' by default, or an interaction like 'cta_click'
     // (e.g. the Marketplace install button) so we can measure landing→install
     // conversion, which was previously a blind spot. Allow-list to keep the
@@ -177,6 +187,7 @@ router.post('/public/pageview', async (req, res) => {
       updatedAt: FieldValue.serverTimestamp(),
     };
     if (isCta) dailyPatch.ctaClicks = FieldValue.increment(1);
+    if (country) dailyPatch[`countries.${country}`] = FieldValue.increment(1);
 
     // Two writes: one per-visit row for analysis, one daily aggregate counter
     // for cheap dashboard reads. Both fire-and-forget.
@@ -188,6 +199,8 @@ router.post('/public/pageview', async (req, res) => {
         utmSource: cap(body.utmSource, 100),
         utmMedium: cap(body.utmMedium, 100),
         utmCampaign: cap(body.utmCampaign, 100),
+        country: cap(country, 10),
+        ref: cap(body.ref, 50),
         event,
         eventLabel: cap(body.eventLabel, 100),
         userAgent: cap(req.headers['user-agent'], 500),
@@ -195,6 +208,7 @@ router.post('/public/pageview', async (req, res) => {
         createdAt: FieldValue.serverTimestamp(),
       }),
       db.collection('pageviewsDaily').doc(today).set(dailyPatch, { merge: true }),
+      recordPublicPageview({ path: body.path, referrer: body.referrer, country, ref: body.ref }),
     ]);
   } catch (err) {
     log.warn('pageview beacon failed', { error: err.message });
@@ -336,15 +350,16 @@ router.get('/public/verify/:code', async (req, res) => {
 function unsubscribePage(title, message) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">`
     + `<meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title>`
-    + `<style>body{font-family:sans-serif;background:#0d1117;color:#e6edf3;display:flex;`
+    + `<style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;background:#0d1117;color:#e6edf3;display:flex;`
     + `min-height:100vh;margin:0;align-items:center;justify-content:center;text-align:center;padding:24px}`
-    + `.card{max-width:420px}h1{font-size:20px;margin:0 0 12px}p{color:#8a8f98;line-height:1.5}`
-    + `a{color:#1f6feb}</style></head><body><div class="card"><h1>${title}</h1>`
-    + `<p>${message}</p><p><a href="https://attendancetracker.dev/">Back to Attendance Tracker</a></p>`
+    + `.card{max-width:460px;background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;box-shadow:0 8px 24px rgba(0,0,0,0.4)}`
+    + `h1{font-size:20px;margin:0 0 12px;font-weight:600}p{color:#8b949e;line-height:1.5;font-size:14px}`
+    + `a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}</style></head><body><div class="card"><h1>${title}</h1>`
+    + `<p>${message}</p><p style="margin-top:20px"><a href="https://attendancetracker.dev/">Back to Attendance Tracker</a></p>`
     + `</div></body></html>`;
 }
 
-// GET renders a CONFIRMATION page instead of unsubscribing directly: link
+// GET renders a granular preference & confirmation page instead of unsubscribing directly: link
 // scanners (Outlook SafeLinks, Proofpoint) prefetch every GET in an email,
 // which used to silently unsubscribe recipients who never clicked — they then
 // stopped getting alerts with no signal. The button POSTs; scanners don't.
@@ -357,25 +372,70 @@ router.get('/public/unsubscribe', async (req, res) => {
       unsubscribePage('Invalid link', 'This unsubscribe link is invalid or has expired. If you keep getting emails, reply to any of them and I\'ll remove you.')
     );
   }
+
+  const domain = email.split('@')[1];
+  let suppressed = false;
+  let prefs = {};
+  try {
+    if (typeof isEmailSuppressed === 'function') {
+      suppressed = await isEmailSuppressed(email);
+    }
+    if (domain && typeof getUserSettings === 'function') {
+      const settings = await getUserSettings(domain, email);
+      prefs = settings?.notificationPreferences || {};
+    }
+  } catch (err) {
+    log.warn('public: error fetching preferences for unsubscribe page', { email, error: err.message });
+  }
+
+  const exportSummary = !suppressed && prefs.exportSummary !== false;
+  const seriesAlerts = !suppressed && prefs.seriesAlerts !== false;
+  const weeklyDigest = !suppressed && prefs.weeklyDigest !== false;
+  const tipsAndUpdates = !suppressed && prefs.tipsAndUpdates !== false;
+
   res.type('html').send(
     `<!doctype html><html lang="en"><head><meta charset="utf-8">`
-    + `<meta name="viewport" content="width=device-width,initial-scale=1"><title>Unsubscribe</title>`
-    + `<style>body{font-family:sans-serif;background:#0d1117;color:#e6edf3;display:flex;`
-    + `min-height:100vh;margin:0;align-items:center;justify-content:center;text-align:center;padding:24px}`
-    + `.card{max-width:420px}h1{font-size:20px;margin:0 0 12px}p{color:#8a8f98;line-height:1.5}`
-    + `button{background:#f85149;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:15px;cursor:pointer}`
-    + `a{color:#1f6feb}</style></head><body><div class="card"><h1>Unsubscribe from emails?</h1>`
-    + `<p>${escapeHtml(email)} will stop receiving re-engagement and alert emails. You can still use Attendance Tracker normally.</p>`
-    + `<form method="POST" action="unsubscribe?e=${encodeURIComponent(email)}&amp;t=${encodeURIComponent(token)}">`
-    + `<button type="submit">Unsubscribe</button></form>`
-    + `<p><a href="https://attendancetracker.dev/">Never mind — back to Attendance Tracker</a></p>`
+    + `<meta name="viewport" content="width=device-width,initial-scale=1"><title>Unsubscribe &amp; Email Preferences</title>`
+    + `<style>`
+    + `body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;background:#0d1117;color:#e6edf3;display:flex;min-height:100vh;margin:0;align-items:center;justify-content:center;padding:24px;box-sizing:border-box}`
+    + `.card{max-width:480px;width:100%;background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;box-shadow:0 8px 24px rgba(0,0,0,0.4);text-align:center}`
+    + `h1{font-size:20px;margin:0 0 8px;font-weight:600;color:#f0f6fc}`
+    + `p.sub{color:#8b949e;line-height:1.5;font-size:14px;margin:0 0 20px}`
+    + `.pref-group{text-align:left;background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px 16px;margin-bottom:20px}`
+    + `.pref-item{display:flex;align-items:flex-start;gap:12px;padding:8px 0;cursor:pointer}`
+    + `.pref-item:not(:last-child){border-bottom:1px solid #21262d}`
+    + `.pref-item input{margin-top:3px;accent-color:#238636;cursor:pointer}`
+    + `.pref-title{font-size:14px;font-weight:600;color:#c9d1d9}`
+    + `.pref-desc{font-size:12px;color:#8b949e;line-height:1.4;margin-top:2px}`
+    + `.btn-save{background:#238636;color:#fff;border:none;border-radius:6px;padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;width:100%;margin-bottom:10px}`
+    + `.btn-save:hover{background:#2ea043}`
+    + `.btn-unsub{background:transparent;color:#f85149;border:1px solid #30363d;border-radius:6px;padding:9px 16px;font-size:13px;cursor:pointer;width:100%}`
+    + `.btn-unsub:hover{border-color:#f85149;background:rgba(248,81,73,0.08)}`
+    + `.notice{background:#21262d;border-radius:6px;padding:10px 12px;margin-bottom:16px;font-size:13px;color:#f0883e;text-align:left}`
+    + `a{color:#58a6ff;text-decoration:none;font-size:13px}a:hover{text-decoration:underline}`
+    + `.footer-link{text-align:center;margin-top:18px}`
+    + `</style></head><body><div class="card"><h1>Unsubscribe from emails?</h1>`
+    + `<p class="sub">Choose which notifications <strong>${escapeHtml(email)}</strong> should receive, or opt out of all messages.</p>`
+    + (suppressed ? `<div class="notice">⚠️ You are currently opted out of all emails. Checking any box below will reactivate that specific notification.</div>` : '')
+    + `<form method="POST" action="unsubscribe?e=${encodeURIComponent(email)}&amp;t=${encodeURIComponent(token)}" id="pref-form">`
+    + `<input type="hidden" name="action" id="action-input" value="save">`
+    + `<div class="pref-group">`
+    + `<label class="pref-item"><input type="checkbox" name="exportSummary" ${exportSummary ? 'checked' : ''}><div><div class="pref-title">Export &amp; Attendance Summaries</div><div class="pref-desc">Reports generated after taking attendance or exporting to Google Sheets.</div></div></label>`
+    + `<label class="pref-item"><input type="checkbox" name="seriesAlerts" ${seriesAlerts ? 'checked' : ''}><div><div class="pref-title">Absence &amp; Streak Alerts</div><div class="pref-desc">Notifications when participants hit absence thresholds or notable streaks.</div></div></label>`
+    + `<label class="pref-item"><input type="checkbox" name="weeklyDigest" ${weeklyDigest ? 'checked' : ''}><div><div class="pref-title">Weekly Digest</div><div class="pref-desc">Weekly summary of meetings held, attendance rates, and team trends.</div></div></label>`
+    + `<label class="pref-item"><input type="checkbox" name="tipsAndUpdates" ${tipsAndUpdates ? 'checked' : ''}><div><div class="pref-title">Tips &amp; Feature Updates</div><div class="pref-desc">Helpful tips and major feature announcements.</div></div></label>`
+    + `</div>`
+    + `<button type="submit" class="btn-save">Save Preferences</button>`
+    + `<button type="button" class="btn-unsub" onclick="document.getElementById('action-input').value='all';document.getElementById('pref-form').submit();">Unsubscribe from All Emails</button>`
+    + `</form>`
+    + `<div class="footer-link"><a href="https://attendancetracker.dev/">Never mind — back to Attendance Tracker</a></div>`
     + `</div></body></html>`
   );
 });
 
-// POST performs the actual suppression: reached from the confirmation page's
-// button AND from mail clients' native one-click unsubscribe (the RFC 8058
-// List-Unsubscribe-Post header points here).
+// POST performs the actual suppression or updates granular preferences:
+// reached from the confirmation page buttons AND from mail clients' native
+// one-click unsubscribe (the RFC 8058 List-Unsubscribe-Post header points here).
 router.post('/public/unsubscribe', async (req, res) => {
   res.set('Cache-Control', 'no-store');
   const email = typeof (req.body?.e ?? req.query.e) === 'string' ? (req.body?.e ?? req.query.e) : '';
@@ -385,11 +445,181 @@ router.post('/public/unsubscribe', async (req, res) => {
       unsubscribePage('Invalid link', 'This unsubscribe link is invalid or has expired. If you keep getting emails, reply to any of them and I\'ll remove you.')
     );
   }
-  await suppressEmail(email, { source: 'one_click_unsubscribe' });
-  log.info('public: unsubscribe', { email: email.toLowerCase() });
-  res.type('html').send(
-    unsubscribePage('You\'re unsubscribed', `${escapeHtml(email)} won't receive any more re-engagement or alert emails. You can still use Attendance Tracker normally.`)
+
+  const action = req.body?.action;
+  // If explicitly 'all', or if neither 'action' nor any category is provided
+  // (e.g. standard RFC 8058 one-click unsubscribe from email clients)
+  if (action === 'all' || (!action && !req.body?.exportSummary && !req.body?.seriesAlerts && !req.body?.weeklyDigest && !req.body?.tipsAndUpdates)) {
+    await suppressEmail(email, { source: 'one_click_unsubscribe' });
+    const unsubSource = action === 'all' ? 'public_all_button' : 'one_click_unsubscribe';
+    const domain = email.split('@')[1];
+    try {
+      await recordCancellationTelemetry({
+        category: 'email',
+        type: 'unsubscribed_all',
+        email,
+        domain,
+        meta: { source: unsubSource },
+      });
+      log.info('telemetry: email_unsubscribed_all', { email: email.toLowerCase(), domain, source: unsubSource });
+    } catch {}
+    try {
+      sendAdminEmailUnsubscribedNotification({
+        email,
+        domain,
+        type: 'all',
+        source: unsubSource,
+      }).catch(err => log.warn('public: sendAdminEmailUnsubscribedNotification failed', { email, error: err.message }));
+    } catch {}
+    log.info('public: unsubscribe all', { email: email.toLowerCase() });
+    return res.type('html').send(
+      unsubscribePage('You\'re unsubscribed', `${escapeHtml(email)} won't receive any more re-engagement or alert emails. You can still use Attendance Tracker normally.`)
+    );
+  }
+
+  // Otherwise, user submitted granular preferences form
+  const exportSummary = req.body.exportSummary === 'on' || req.body.exportSummary === true || req.body.exportSummary === 'true';
+  const seriesAlerts = req.body.seriesAlerts === 'on' || req.body.seriesAlerts === true || req.body.seriesAlerts === 'true';
+  const weeklyDigest = req.body.weeklyDigest === 'on' || req.body.weeklyDigest === true || req.body.weeklyDigest === 'true';
+  const tipsAndUpdates = req.body.tipsAndUpdates === 'on' || req.body.tipsAndUpdates === true || req.body.tipsAndUpdates === 'true';
+
+  const domain = email.split('@')[1];
+  const disabledCategories = [];
+  const enabledCategories = [];
+  if (exportSummary) enabledCategories.push('exportSummary'); else disabledCategories.push('exportSummary');
+  if (seriesAlerts) enabledCategories.push('seriesAlerts'); else disabledCategories.push('seriesAlerts');
+  if (weeklyDigest) enabledCategories.push('weeklyDigest'); else disabledCategories.push('weeklyDigest');
+  if (tipsAndUpdates) enabledCategories.push('tipsAndUpdates'); else disabledCategories.push('tipsAndUpdates');
+
+  if (disabledCategories.length === 4) {
+    // All unchecked = full unsubscribe
+    await suppressEmail(email, { source: 'granular_unsubscribe_all' });
+    if (domain && typeof updateUserSettings === 'function') {
+      try {
+        await updateUserSettings(domain, email, {
+          notificationPreferences: { exportSummary: false, seriesAlerts: false, weeklyDigest: false, tipsAndUpdates: false }
+        });
+      } catch (err) {
+        log.warn('public: updateUserSettings failed on granular unsubscribe all', { email, error: err.message });
+      }
+    }
+    try {
+      await recordCancellationTelemetry({
+        category: 'email',
+        type: 'unsubscribed_all',
+        email,
+        domain,
+        meta: { source: 'granular_unsubscribe_all' },
+      });
+      log.info('telemetry: email_unsubscribed_all', { email: email.toLowerCase(), domain, source: 'granular_unsubscribe_all' });
+    } catch {}
+    try {
+      sendAdminEmailUnsubscribedNotification({
+        email,
+        domain,
+        type: 'all',
+        source: 'granular_unsubscribe_all',
+      }).catch(err => log.warn('public: sendAdminEmailUnsubscribedNotification failed', { email, error: err.message }));
+    } catch {}
+    log.info('public: unsubscribe all via preferences', { email: email.toLowerCase() });
+    return res.type('html').send(
+      unsubscribePage('You\'re unsubscribed', `${escapeHtml(email)} won't receive any more re-engagement or alert emails. You can still use Attendance Tracker normally.`)
+    );
+  }
+
+  // At least one notification enabled -> unsuppress from global suppression if suppressed
+  if (typeof unsuppressEmail === 'function') {
+    await unsuppressEmail(email);
+  }
+  if (domain && typeof updateUserSettings === 'function') {
+    try {
+      await updateUserSettings(domain, email, {
+        notificationPreferences: { exportSummary, seriesAlerts, weeklyDigest, tipsAndUpdates }
+      });
+    } catch (err) {
+      log.warn('public: updateUserSettings failed on save preferences', { email, error: err.message });
+    }
+  }
+  try {
+    await recordCancellationTelemetry({
+      category: 'email',
+      type: 'preferences_updated',
+      email,
+      domain,
+      meta: { disabledCategories, enabledCategories, source: 'public_preferences' },
+    });
+    log.info('telemetry: email_preferences_updated', { email: email.toLowerCase(), domain, disabledCategories, enabledCategories, source: 'public_preferences' });
+  } catch {}
+  if (disabledCategories.length > 0) {
+    try {
+      sendAdminEmailUnsubscribedNotification({
+        email,
+        domain,
+        type: 'categories',
+        disabledCategories,
+        enabledCategories,
+        source: 'public_preferences',
+      }).catch(err => log.warn('public: sendAdminEmailUnsubscribedNotification failed', { email, error: err.message }));
+    } catch {}
+  }
+  log.info('public: preferences updated', { email: email.toLowerCase(), exportSummary, seriesAlerts, weeklyDigest, tipsAndUpdates });
+  return res.type('html').send(
+    unsubscribePage('Preferences updated', `Your email notification preferences for ${escapeHtml(email)} have been updated.`)
   );
+});
+
+// POST /api/public/unsubscribe-direct — Self-serve unsubscription from /unsubscribe.html
+// without requiring an email HMAC token (for users navigating from footers or site links).
+const unsubDirectLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests. Please try again later.' },
+  skip: () => process.env.NODE_ENV === 'test',
+});
+
+router.post('/public/unsubscribe-direct', unsubDirectLimiter, async (req, res) => {
+  try {
+    const rawEmail = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+    if (!rawEmail || !rawEmail.includes('@') || rawEmail.length > 200) {
+      return res.status(400).json({ error: 'A valid email address is required.' });
+    }
+    const email = rawEmail;
+    const domain = email.split('@')[1] || '';
+    const unsubSource = 'public_direct_form';
+
+    await suppressEmail(email, { source: unsubSource });
+
+    try {
+      await recordCancellationTelemetry({
+        category: 'email',
+        type: 'unsubscribed_all',
+        email,
+        domain,
+        meta: { source: unsubSource },
+      });
+      log.info('telemetry: email_unsubscribed_all', { email, domain, source: unsubSource });
+    } catch {}
+
+    try {
+      sendAdminEmailUnsubscribedNotification({
+        email,
+        domain,
+        type: 'all',
+        source: unsubSource,
+      }).catch(err => log.warn('public: sendAdminEmailUnsubscribedNotification failed', { email, error: err.message }));
+    } catch {}
+
+    log.info('public: direct unsubscribe', { email });
+    return res.json({
+      success: true,
+      message: `${email} has been successfully unsubscribed from all emails.`,
+    });
+  } catch (err) {
+    log.error('public: unsubscribe-direct failed', { error: err.message });
+    return res.status(500).json({ error: 'Failed to process unsubscribe request.' });
+  }
 });
 
 // GET /api/public/review-click — Tracked redirect for Marketplace 5-star reviews.
@@ -454,6 +684,23 @@ router.get('/public/offer-click', async (req, res) => {
   }
 
   res.redirect(302, target);
+});
+
+// POST /api/public/verify-review — Verify a submitted review and unlock 1 month of Pro
+router.post('/public/verify-review', async (req, res) => {
+  const { email, declaredName } = req.body || {};
+  if (!email || typeof email !== 'string' || !email.includes('@')) {
+    return res.status(400).json({ error: 'Valid email is required.' });
+  }
+  const cleanEmail = email.trim().toLowerCase();
+  const domain = cleanEmail.split('@')[1];
+  try {
+    const result = await verifyUserReview(domain, cleanEmail, declaredName);
+    res.json(result);
+  } catch (err) {
+    log.error('public: verify-review failed', { email: cleanEmail, error: err.message });
+    res.status(500).json({ error: 'Failed to verify review.' });
+  }
 });
 
 module.exports = router;

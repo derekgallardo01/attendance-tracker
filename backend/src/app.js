@@ -22,6 +22,7 @@ const settingsRoutes = require('./routes/settings');
 const classroomRoutes = require('./routes/classroom');
 const checkinRoutes = require('./routes/checkin');
 const { router: billingRoutes, webhookHandler: billingWebhookHandler } = require('./routes/billing');
+const { resendWebhookHandler } = require('./routes/webhooks');
 
 const app = express();
 app.set('trust proxy', 1); // Cloud Run runs behind a load balancer
@@ -31,16 +32,16 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com", "https://apis.google.com", "https://www.gstatic.com", "https://browser.sentry-cdn.com"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com", "https://apis.google.com", "https://www.gstatic.com", "https://browser.sentry-cdn.com", "https://translate.google.com", "https://translate.googleapis.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://translate.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
-      imgSrc: ["'self'", "data:", "https://*.googleusercontent.com"],
+      imgSrc: ["'self'", "data:", "https://*.googleusercontent.com", "https://translate.google.com", "https://www.gstatic.com"],
       // youtube-nocookie: the demo-video embeds on index.html + ~18 SEO pages
       // (silently refused before — console-only error the e2e suite can't see
       // because it tests the Pages origin, which serves no CSP).
       frameSrc: ["https://accounts.google.com", "https://www.youtube-nocookie.com"],
       frameAncestors: ["https://meet.google.com", "'self'"],
-      connectSrc: ["'self'", "https://accounts.google.com", "https://*.ingest.us.sentry.io"],
+      connectSrc: ["'self'", "https://accounts.google.com", "https://*.ingest.us.sentry.io", "https://translate.googleapis.com"],
     },
   },
   crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' }, // needed for GIS popup
@@ -50,6 +51,7 @@ app.use(helmet({
 // is mounted BEFORE express.json() with its own raw parser. Everything else
 // uses JSON parsing below.
 app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), billingWebhookHandler);
+app.post('/api/webhooks/resend', express.raw({ type: 'application/json' }), resendWebhookHandler);
 
 // CORS BEFORE the body parser: a malformed/oversized JSON body throws inside
 // express.json(), and with cors() mounted after it the 400/413 carried no
@@ -65,6 +67,7 @@ app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), bill
 app.use(cors({ origin: CONFIG.allowedOrigins, credentials: true, maxAge: 600 }));
 
 app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: false, limit: '100kb' }));
 
 // Request correlation IDs
 app.use(requestId);
@@ -106,8 +109,57 @@ app.use('/api', classroomRoutes);
 app.use('/api', checkinRoutes);
 app.use('/api', billingRoutes); // checkout / portal / status (webhook mounted above)
 
-// Serve frontend from public/
-app.use(express.static(path.join(__dirname, '..', 'public')));
+const SUPPORTED_LOCALES = new Set([
+  'en', 'es', 'pt', 'hi', 'ta', 'te', 'bn', 'ur', 'tl', 'ms', 'id', 'vi',
+  'fr', 'de', 'it', 'nl', 'pl', 'ro', 'ru', 'uk', 'tr', 'th', 'ar', 'ko',
+  'zh', 'zh-CN', 'ja', 'he', 'mr', 'sv', 'cs', 'da', 'fi', 'hu', 'so',
+]);
+
+function parseLocale(raw) {
+  if (!raw || typeof raw !== 'string') return null;
+  const val = raw.trim().toLowerCase();
+  if (val.startsWith('zh-cn') || val.startsWith('zh-sg') || val === 'zh-hans') return 'zh-CN';
+  if (val.startsWith('zh')) return 'zh';
+  if (val.startsWith('tl') || val.startsWith('fil')) return 'tl';
+  if (val.startsWith('he') || val.startsWith('iw')) return 'he';
+  if (val.startsWith('id') || val.startsWith('in')) return 'id';
+  const prefix2 = val.slice(0, 2);
+  if (SUPPORTED_LOCALES.has(prefix2)) return prefix2;
+  return null;
+}
+
+// Server-side language routing & content negotiation for HTML pages:
+// Detects ?lang= or ?hl= query param, att_locale cookie, or Accept-Language header.
+// Sets Content-Language header and att_locale cookie for consistency.
+app.use((req, res, next) => {
+  if (req.method === 'GET' && req.accepts('html')) {
+    const queryLang = parseLocale(req.query?.lang || req.query?.hl);
+    let cookieLang = null;
+    if (req.headers.cookie) {
+      const match = req.headers.cookie.match(/(?:^|;\s*)att_locale=([^;]+)/);
+      if (match) cookieLang = parseLocale(decodeURIComponent(match[1]));
+    }
+    let headerLang = null;
+    if (req.headers['accept-language']) {
+      const firstLang = req.headers['accept-language'].split(',')[0]?.split(';')[0];
+      headerLang = parseLocale(firstLang);
+    }
+    const detected = queryLang || cookieLang || headerLang || 'en';
+    res.setHeader('Content-Language', detected);
+    if (queryLang && queryLang !== cookieLang) {
+      res.setHeader('Set-Cookie', `att_locale=${encodeURIComponent(queryLang)}; Path=/; Max-Age=31536000; SameSite=Lax`);
+    }
+  }
+  next();
+});
+
+// Dedicated /unsubscribe route for direct navigation
+app.get('/unsubscribe', (_req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'unsubscribe.html'));
+});
+
+// Serve frontend from public/ (enabling clean HTML extension fallback)
+app.use(express.static(path.join(__dirname, '..', 'public'), { extensions: ['html'] }));
 
 // Health check
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));

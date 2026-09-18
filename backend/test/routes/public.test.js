@@ -17,6 +17,7 @@ jest.mock('../../src/services/firestore', () => ({
   suppressEmail: jest.fn(),
   getVerification: jest.fn(),
   logEvent: jest.fn(),
+  recordPublicPageview: jest.fn(),
   // Auth middleware deps (unused on public routes but module is loaded)
   getUser: jest.fn(),
   updateUserTokens: jest.fn(),
@@ -142,6 +143,34 @@ describe('POST /api/public/pageview', () => {
 
     expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({ event: 'pageview' }));
     expect(setSpy.mock.calls[0][0]).not.toHaveProperty('ctaClicks');
+  });
+
+  test('records country and ref parameter and calls recordPublicPageview', async () => {
+    const addSpy = jest.fn().mockResolvedValue(undefined);
+    const setSpy = jest.fn().mockResolvedValue(undefined);
+    firestore.getDb.mockReturnValue({
+      collection: (name) => name === 'pageviews'
+        ? { add: addSpy }
+        : { doc: () => ({ set: setSpy }) },
+    });
+
+    const res = await request(app)
+      .post('/api/public/pageview')
+      .set('Content-Type', 'application/json')
+      .set('x-client-geo-country', 'US')
+      .send({ path: '/pricing.html', referrer: 'google.com', ref: 'launch' });
+
+    expect(res.status).toBe(204);
+    await new Promise((r) => setImmediate(r));
+    expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({
+      country: 'US',
+      ref: 'launch',
+    }));
+    expect(firestore.recordPublicPageview).toHaveBeenCalledWith(expect.objectContaining({
+      path: '/pricing.html',
+      country: 'US',
+      ref: 'launch',
+    }));
   });
 });
 

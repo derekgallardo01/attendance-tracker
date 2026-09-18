@@ -20,6 +20,7 @@ jest.mock('stripe', () => jest.fn(() => mockStripeInstance));
 
 jest.mock('../../src/lib/notifications', () => ({
   sendUpgradeLinkEmail: jest.fn().mockResolvedValue({ sent: true }),
+  sendSubscriptionCancelledEmail: jest.fn().mockResolvedValue({ sent: true }),
 }));
 
 jest.mock('../../src/services/firestore', () => ({
@@ -1173,9 +1174,9 @@ describe('billing/status pricing payload', () => {
     expect(res.body.domain).toBe('depedqc.ph');
   });
 
-  test('status detects PPP eligibility for expanded countries (MX, CL, TN, SO, PE)', async () => {
+  test('status detects PPP eligibility for expanded countries (MX, CL, TN, SO, PE, ZM)', async () => {
     app = buildApp();
-    for (const country of ['MX', 'CL', 'TN', 'SO', 'PE']) {
+    for (const country of ['MX', 'CL', 'TN', 'SO', 'PE', 'ZM']) {
       const res = await request(app)
         .get('/api/billing/status')
         .set(authedHeader(`user@school.${country.toLowerCase()}`, `school.${country.toLowerCase()}`))
@@ -1361,6 +1362,123 @@ describe('billing/status pricing payload', () => {
       expect(res2.status).toBe(200);
       expect(res2.body.alreadySent).toBe(true);
       expect(sendUpgradeLinkEmail).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('POST /billing/cancel-subscription and /billing/resume-subscription', () => {
+    const { sendSubscriptionCancelledEmail } = require('../../src/lib/notifications');
+
+    beforeEach(() => {
+      process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+      app = buildApp();
+    });
+
+    test('cancel-subscription 401 without auth', async () => {
+      const res = await request(app).post('/api/billing/cancel-subscription').send({});
+      expect(res.status).toBe(401);
+    });
+
+    test('cancel-subscription 404 when user has no active subscription', async () => {
+      firestore.getUserPlan.mockResolvedValue({ plan: 'free', stripeSubscriptionId: null });
+      firestore.getTenantPlan.mockResolvedValue({ plan: 'free', stripeSubscriptionId: null });
+
+      const res = await request(app)
+        .post('/api/billing/cancel-subscription')
+        .set(authedHeader('user@school.edu', 'school.edu'))
+        .send({});
+
+      expect(res.status).toBe(404);
+      expect(res.body.error).toContain('No active recurring subscription');
+    });
+
+    test('cancel-subscription successfully updates Stripe and sends email confirmation', async () => {
+      const periodEndTs = Math.floor(Date.now() / 1000) + 30 * 86400;
+      firestore.getUserPlan.mockResolvedValue({
+        plan: 'pro',
+        stripeSubscriptionId: 'sub_12345',
+        stripeCustomerId: 'cus_123',
+        billingStatus: 'active',
+      });
+      mockStripeInstance.subscriptions.update.mockResolvedValue({
+        id: 'sub_12345',
+        cancel_at_period_end: true,
+        cancel_at: periodEndTs,
+        current_period_end: periodEndTs,
+        status: 'active',
+      });
+
+      const res = await request(app)
+        .post('/api/billing/cancel-subscription')
+        .set(authedHeader('user@school.edu', 'school.edu'))
+        .send({ language: 'es', country: 'ES' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.cancelAtPeriodEnd).toBe(true);
+      expect(mockStripeInstance.subscriptions.update).toHaveBeenCalledWith(
+        'sub_12345',
+        { cancel_at_period_end: true }
+      );
+      expect(firestore.setUserPlan).toHaveBeenCalledWith(
+        'school.edu',
+        'user@school.edu',
+        expect.objectContaining({
+          cancelAtPeriodEnd: true,
+          cancelAt: expect.any(String),
+          currentPeriodEnd: expect.any(String),
+        })
+      );
+      expect(sendSubscriptionCancelledEmail).toHaveBeenCalledWith(expect.objectContaining({
+        to: 'user@school.edu',
+        language: 'es',
+        country: 'ES',
+      }));
+    });
+
+    test('resume-subscription 404 when no subscription exists', async () => {
+      firestore.getUserPlan.mockResolvedValue({ plan: 'free', stripeSubscriptionId: null });
+      firestore.getTenantPlan.mockResolvedValue({ plan: 'free', stripeSubscriptionId: null });
+
+      const res = await request(app)
+        .post('/api/billing/resume-subscription')
+        .set(authedHeader('user@school.edu', 'school.edu'))
+        .send({});
+
+      expect(res.status).toBe(404);
+    });
+
+    test('resume-subscription successfully reactivates renewal in Stripe and Firestore', async () => {
+      firestore.getUserPlan.mockResolvedValue({
+        plan: 'pro',
+        stripeSubscriptionId: 'sub_12345',
+        cancelAtPeriodEnd: true,
+      });
+      mockStripeInstance.subscriptions.update.mockResolvedValue({
+        id: 'sub_12345',
+        cancel_at_period_end: false,
+        status: 'active',
+      });
+
+      const res = await request(app)
+        .post('/api/billing/resume-subscription')
+        .set(authedHeader('user@school.edu', 'school.edu'))
+        .send({});
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.cancelAtPeriodEnd).toBe(false);
+      expect(mockStripeInstance.subscriptions.update).toHaveBeenCalledWith(
+        'sub_12345',
+        { cancel_at_period_end: false }
+      );
+      expect(firestore.setUserPlan).toHaveBeenCalledWith(
+        'school.edu',
+        'user@school.edu',
+        expect.objectContaining({
+          cancelAtPeriodEnd: false,
+          cancelAt: null,
+        })
+      );
     });
   });
 });

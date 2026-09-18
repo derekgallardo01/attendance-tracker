@@ -9,6 +9,44 @@
   <title>Pricing — Attendance Tracker for Google Meet™</title>
   <meta name="description" content="Attendance Tracker pricing: Free to start (5 exports/month), Educator ($4.99/yr) and Individual Lifetime ($9.99) for solo teachers, and domain plans for schools — Department ($59/yr) and Institution ($149/yr) covering your whole Google Workspace." />
   <link rel="canonical" href="https://attendancetracker.dev/pricing.html" />
+
+  <!-- Localized alternate hreflang tags for 35 languages -->
+  <link rel="alternate" hreflang="x-default" href="https://attendancetracker.dev/pricing.html" />
+  <link rel="alternate" hreflang="en" href="https://attendancetracker.dev/pricing.html?lang=en" />
+  <link rel="alternate" hreflang="es" href="https://attendancetracker.dev/pricing.html?lang=es" />
+  <link rel="alternate" hreflang="pt" href="https://attendancetracker.dev/pricing.html?lang=pt" />
+  <link rel="alternate" hreflang="hi" href="https://attendancetracker.dev/pricing.html?lang=hi" />
+  <link rel="alternate" hreflang="ta" href="https://attendancetracker.dev/pricing.html?lang=ta" />
+  <link rel="alternate" hreflang="te" href="https://attendancetracker.dev/pricing.html?lang=te" />
+  <link rel="alternate" hreflang="bn" href="https://attendancetracker.dev/pricing.html?lang=bn" />
+  <link rel="alternate" hreflang="ur" href="https://attendancetracker.dev/pricing.html?lang=ur" />
+  <link rel="alternate" hreflang="tl" href="https://attendancetracker.dev/pricing.html?lang=tl" />
+  <link rel="alternate" hreflang="ms" href="https://attendancetracker.dev/pricing.html?lang=ms" />
+  <link rel="alternate" hreflang="id" href="https://attendancetracker.dev/pricing.html?lang=id" />
+  <link rel="alternate" hreflang="vi" href="https://attendancetracker.dev/pricing.html?lang=vi" />
+  <link rel="alternate" hreflang="fr" href="https://attendancetracker.dev/pricing.html?lang=fr" />
+  <link rel="alternate" hreflang="de" href="https://attendancetracker.dev/pricing.html?lang=de" />
+  <link rel="alternate" hreflang="it" href="https://attendancetracker.dev/pricing.html?lang=it" />
+  <link rel="alternate" hreflang="nl" href="https://attendancetracker.dev/pricing.html?lang=nl" />
+  <link rel="alternate" hreflang="pl" href="https://attendancetracker.dev/pricing.html?lang=pl" />
+  <link rel="alternate" hreflang="ro" href="https://attendancetracker.dev/pricing.html?lang=ro" />
+  <link rel="alternate" hreflang="ru" href="https://attendancetracker.dev/pricing.html?lang=ru" />
+  <link rel="alternate" hreflang="uk" href="https://attendancetracker.dev/pricing.html?lang=uk" />
+  <link rel="alternate" hreflang="tr" href="https://attendancetracker.dev/pricing.html?lang=tr" />
+  <link rel="alternate" hreflang="th" href="https://attendancetracker.dev/pricing.html?lang=th" />
+  <link rel="alternate" hreflang="ar" href="https://attendancetracker.dev/pricing.html?lang=ar" />
+  <link rel="alternate" hreflang="ko" href="https://attendancetracker.dev/pricing.html?lang=ko" />
+  <link rel="alternate" hreflang="zh-Hant" href="https://attendancetracker.dev/pricing.html?lang=zh" />
+  <link rel="alternate" hreflang="zh-Hans" href="https://attendancetracker.dev/pricing.html?lang=zh-CN" />
+  <link rel="alternate" hreflang="ja" href="https://attendancetracker.dev/pricing.html?lang=ja" />
+  <link rel="alternate" hreflang="he" href="https://attendancetracker.dev/pricing.html?lang=he" />
+  <link rel="alternate" hreflang="mr" href="https://attendancetracker.dev/pricing.html?lang=mr" />
+  <link rel="alternate" hreflang="sv" href="https://attendancetracker.dev/pricing.html?lang=sv" />
+  <link rel="alternate" hreflang="cs" href="https://attendancetracker.dev/pricing.html?lang=cs" />
+  <link rel="alternate" hreflang="da" href="https://attendancetracker.dev/pricing.html?lang=da" />
+  <link rel="alternate" hreflang="fi" href="https://attendancetracker.dev/pricing.html?lang=fi" />
+  <link rel="alternate" hreflang="hu" href="https://attendancetracker.dev/pricing.html?lang=hu" />
+  <link rel="alternate" hreflang="so" href="https://attendancetracker.dev/pricing.html?lang=so" />
   <meta property="og:title" content="Attendance Tracker Pricing — Google Meet Attendance Plans" />
   <meta property="og:description" content="Free tier (5 exports/mo), Individual plans from $4.99/yr, and school domain plans — Department $59/yr and Institution $149/yr — covering every teacher on your Google Workspace domain." />
   <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
@@ -913,10 +951,12 @@
       <a href="privacy.html" data-i18n="pricing.footerPrivacy">Privacy Policy</a>
       <a href="terms.html" data-i18n="pricing.footerTerms">Terms of Service</a>
       <a href="refunds.html" data-i18n="pricing.footerRefunds">Refund Policy</a>
+      <a href="student-data-privacy.html">Student Privacy</a>
       <a href="support.html" data-i18n="pricing.footerSupport">Contact Support</a>
+      <a href="unsubscribe.html">Unsubscribe</a>
     </div>
     <div class="copyright">
-      <span data-i18n="pricing.copyright">&copy; 2026 Kinetic Helix LLC. Attendance Tracker for Google Meet™. All rights reserved.</span>
+      &copy; 2026 Kinetic Helix LLC. Attendance Tracker for Google Meet™. Support: Derek Gallardo (<a href="mailto:derekgallardo01@gmail.com" style="color:inherit;text-decoration:underline;">derekgallardo01@gmail.com</a> / <a href="mailto:derek@attendancetracker.dev" style="color:inherit;text-decoration:underline;">derek@attendancetracker.dev</a>). All rights reserved.
     </div>
   </footer>
 
@@ -1230,6 +1270,7 @@
           utmSource: params.get('utm_source'),
           utmMedium: params.get('utm_medium'),
           utmCampaign: params.get('utm_campaign'),
+          ref: params.get('ref'),
         })], { type: 'application/json' });
         if (navigator.sendBeacon) navigator.sendBeacon(BACKEND_URL + '/public/pageview', blob);
         else fetch(BACKEND_URL + '/public/pageview', { method: 'POST', body: blob, keepalive: true });

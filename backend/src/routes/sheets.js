@@ -597,6 +597,7 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
       const digestParticipants = [...digestPresent, ...digestAbsent].slice(0, 25);
       const digestOverflow = (digestPresent.length + digestAbsent.length) - digestParticipants.length;
 
+      const isProUser = req.user ? await planIsPro(req.user.domain, req.user.email) : false;
       const emailPayload = {
         displayName: req.user.displayName || null,
         sheetUrl,
@@ -608,6 +609,10 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
         overflow: digestOverflow > 0 ? digestOverflow : 0,
         conferenceId: conferenceId || null,
         recurringEventId: recurringEventId || null,
+        isPro: !!isProUser,
+        language: req.body?.language || req.user?.language || null,
+        country: req.body?.country || req.user?.country || null,
+        domain: domain || null,
       };
       sendExportNotification({ to: req.user.email, ...emailPayload });
 
@@ -621,7 +626,7 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
           for (const extra of extras) {
             if (extra === req.user.email.toLowerCase()) continue;
             if (await isEmailSuppressed(extra)) continue;
-            sendExportNotification({ ...emailPayload, to: extra, displayName: null });
+            sendExportNotification({ ...emailPayload, to: extra, displayName: null, isPro: true });
           }
         } catch (err) {
           log.warn('export email extras failed', { error: err.message, email: req.user.email });

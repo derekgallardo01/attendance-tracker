@@ -75,11 +75,16 @@ async function getTenantPlan(domain) {
   // otherwise a transient blip silently downgrades a paying customer to Free.
   const doc = await tenantRef(domain).get();
   const cfg = doc.exists ? doc.data() : null;
-  return {
+  const out = {
     plan: cfg?.plan === 'pro' ? 'pro' : 'free',
     billingStatus: cfg?.billingStatus || null,
     stripeCustomerId: cfg?.stripeCustomerId || null,
   };
+  if (cfg?.stripeSubscriptionId !== undefined) out.stripeSubscriptionId = cfg.stripeSubscriptionId;
+  if (cfg?.cancelAtPeriodEnd !== undefined) out.cancelAtPeriodEnd = cfg.cancelAtPeriodEnd;
+  if (cfg?.cancelAt !== undefined) out.cancelAt = cfg.cancelAt;
+  if (cfg?.currentPeriodEnd !== undefined) out.currentPeriodEnd = cfg.currentPeriodEnd;
+  return out;
 }
 
 // ── Individual (per-user) billing ──
@@ -90,7 +95,7 @@ async function getTenantPlan(domain) {
 async function setUserPlan(domain, email, patch) {
   try {
     await tenantRef(domain).collection('users').doc(email.toLowerCase()).set({
-      ...patch, // { individualPlan, individualBillingStatus, individualStripeCustomerId, individualStripeSubscriptionId }
+      ...patch, // { individualPlan, individualBillingStatus, individualStripeCustomerId, individualStripeSubscriptionId, cancelAtPeriodEnd, cancelAt, currentPeriodEnd }
       individualPlanUpdatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
     log.info('firestore: set user plan', { domain, email: email.toLowerCase(), plan: patch.individualPlan, status: patch.individualBillingStatus });
@@ -105,11 +110,16 @@ async function setUserPlan(domain, email, patch) {
 async function getUserPlan(domain, email) {
   const doc = await tenantRef(domain).collection('users').doc(email.toLowerCase()).get();
   const u = doc.exists ? doc.data() : null;
-  return {
+  const out = {
     plan: u?.individualPlan === 'pro' ? 'pro' : 'free',
     billingStatus: u?.individualBillingStatus || null,
     stripeCustomerId: u?.individualStripeCustomerId || null,
   };
+  if (u?.individualStripeSubscriptionId !== undefined) out.stripeSubscriptionId = u.individualStripeSubscriptionId;
+  if (u?.cancelAtPeriodEnd !== undefined) out.cancelAtPeriodEnd = u.cancelAtPeriodEnd;
+  if (u?.cancelAt !== undefined) out.cancelAt = u.cancelAt;
+  if (u?.currentPeriodEnd !== undefined) out.currentPeriodEnd = u.currentPeriodEnd;
+  return out;
 }
 
 // ── Team-admin self-serve claim / transfer ──
@@ -200,6 +210,169 @@ async function logEvent(domain, { email, type, meta }) {
     });
   } catch (err) {
     log.warn('firestore: logEvent failed', { domain, email, type, error: err.message });
+  }
+}
+
+// Dedicated audit & telemetry logger for cancellations and unsubscribes.
+// Fire-and-forget; records to root collection `telemetry_cancellations` and per-tenant `events`.
+async function recordCancellationTelemetry({ category, type, email, domain, meta } = {}) {
+  if (!email || !category || !type) return;
+  const emailLower = email.toLowerCase();
+  const safeDomain = domain || emailLower.split('@')[1] || 'unknown';
+  try {
+    const docData = {
+      category, // 'subscription' | 'email'
+      type,     // 'cancelled' | 'resumed' | 'unsubscribed_all' | 'preferences_updated' | 'webhook_deleted'
+      email: emailLower,
+      domain: safeDomain,
+      meta: meta || null,
+      createdAt: FieldValue.serverTimestamp(),
+    };
+    await Promise.all([
+      getDb().collection('telemetry_cancellations').add(docData),
+      logEvent(safeDomain, {
+        email: emailLower,
+        type: category === 'subscription' ? `subscription_${type}` : `email_${type}`,
+        meta,
+      }),
+    ]);
+  } catch (err) {
+    log.warn('firestore: recordCancellationTelemetry failed', { email, category, type, error: err.message });
+  }
+}
+
+async function getCancellationTelemetry({ limit = 50, category = null } = {}) {
+  try {
+    let query = getDb().collection('telemetry_cancellations');
+    if (category && typeof query.where === 'function') {
+      query = query.where('category', '==', category);
+    }
+    if (typeof query.orderBy === 'function') {
+      query = query.orderBy('createdAt', 'desc');
+    }
+    if (typeof query.limit === 'function') {
+      query = query.limit(limit);
+    }
+    const snap = await query.get();
+    return (snap.docs || []).map(d => {
+      const data = d.data();
+      return {
+        id: d.id,
+        ...data,
+        createdAt: tsMs(data.createdAt) ? new Date(tsMs(data.createdAt)).toISOString() : null,
+      };
+    });
+  } catch (err) {
+    log.warn('firestore: getCancellationTelemetry failed', { error: err.message });
+    return [];
+  }
+}
+
+// Lightweight, cookieless, privacy-preserving public pageview aggregation
+async function recordPublicPageview({ path, referrer, country, ref } = {}) {
+  try {
+    const dayKey = new Date().toISOString().slice(0, 10);
+    const cleanPath = (path || '/').split('?')[0].replace(/[^a-zA-Z0-9_\-\/]/g, '').slice(0, 100);
+    const safePathKey = cleanPath.replace(/^\//, '').replace(/\//g, '_') || 'root';
+
+    const updates = {
+      total: FieldValue.increment(1),
+      [`paths.${safePathKey}`]: FieldValue.increment(1),
+      updatedAt: FieldValue.serverTimestamp(),
+    };
+
+    if (country && typeof country === 'string') {
+      const safeCountry = country.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2);
+      if (safeCountry.length === 2) {
+        updates[`countries.${safeCountry}`] = FieldValue.increment(1);
+      }
+    }
+
+    if (referrer && typeof referrer === 'string') {
+      const safeRef = referrer.toLowerCase().replace(/[^a-z0-9_\-.]/g, '').replace(/[.]/g, '_').slice(0, 50);
+      if (safeRef) {
+        updates[`referrers.${safeRef}`] = FieldValue.increment(1);
+      }
+    }
+
+    if (ref && typeof ref === 'string') {
+      const safePromo = ref.replace(/[^a-zA-Z0-9_\-]/g, '').slice(0, 30);
+      if (safePromo) {
+        updates[`campaigns.${safePromo}`] = FieldValue.increment(1);
+      }
+    }
+
+    await getDb().collection('analytics_pageviews').doc(dayKey).set(updates, { merge: true });
+    return true;
+  } catch (err) {
+    log.warn('firestore: recordPublicPageview failed', { error: err.message });
+    return false;
+  }
+}
+
+// Log an outbound email dispatch to notifications_log
+async function recordNotificationLog(emailId, { to, subject, template, lang } = {}) {
+  if (!emailId || !to) return;
+  try {
+    await getDb().collection('notifications_log').doc(emailId).set({
+      emailId,
+      to: to.toLowerCase(),
+      subject: subject || null,
+      template: template || 'notification',
+      lang: lang || 'en',
+      status: 'sent',
+      sentAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+  } catch (err) {
+    log.warn('firestore: recordNotificationLog failed', { emailId, error: err.message });
+  }
+}
+
+// Update notifications_log on incoming Resend webhook events
+async function updateNotificationWebhook(emailId, eventType, data = {}) {
+  if (!emailId || !eventType) return false;
+  try {
+    const ref = getDb().collection('notifications_log').doc(emailId);
+    const now = FieldValue.serverTimestamp();
+    const updates = { updatedAt: now };
+
+    if (eventType === 'email.delivered') {
+      updates.status = 'delivered';
+      updates.deliveredAt = now;
+    } else if (eventType === 'email.opened') {
+      updates.opened = true;
+      updates.openedAt = now;
+      updates.openCount = FieldValue.increment(1);
+    } else if (eventType === 'email.clicked') {
+      updates.clicked = true;
+      updates.clickedAt = now;
+      updates.clickCount = FieldValue.increment(1);
+      if (data.click?.link) {
+        updates.lastClickedUrl = String(data.click.link).slice(0, 500);
+      }
+    } else if (eventType === 'email.bounced') {
+      updates.status = 'bounced';
+      updates.bounced = true;
+      updates.bouncedAt = now;
+      updates.bounceType = data.bounce?.type || 'hard';
+      if (Array.isArray(data.to) && data.to[0]) {
+        await suppressEmail(data.to[0], { reason: 'email_bounced', source: 'resend_webhook', bounceType: updates.bounceType });
+      }
+    } else if (eventType === 'email.complained') {
+      updates.status = 'complained';
+      updates.complained = true;
+      updates.complainedAt = now;
+      if (Array.isArray(data.to) && data.to[0]) {
+        await suppressEmail(data.to[0], { reason: 'spam_complaint', source: 'resend_webhook' });
+      }
+    }
+
+    await ref.set(updates, { merge: true });
+    return true;
+  } catch (err) {
+    log.warn('firestore: updateNotificationWebhook failed', { emailId, eventType, error: err.message });
+    return false;
   }
 }
 
@@ -1107,6 +1280,21 @@ async function updateUserSettings(domain, email, patch) {
   } catch (err) {
     log.error('firestore: updateUserSettings failed', { domain, email, error: err.message });
     throw err;
+  }
+}
+
+// Check whether a specific notification category is enabled for the user.
+// Defaults to true if no explicit preference is recorded.
+async function isNotificationCategoryEnabled(domain, email, category) {
+  try {
+    if (!domain || !email || !category) return true;
+    const settings = await getUserSettings(domain, email);
+    const prefs = settings?.notificationPreferences;
+    if (!prefs || typeof prefs !== 'object') return true;
+    return prefs[category] !== false;
+  } catch (err) {
+    log.warn('firestore: isNotificationCategoryEnabled failed, defaulting to enabled', { domain, email, category, error: err.message });
+    return true;
   }
 }
 
@@ -2058,12 +2246,13 @@ module.exports = {
   getMeetingExcusedEmails, addMeetingExcusedEmails, getMeetingWithParticipants,
   saveVerifications, getVerification,
   getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens,
-  getUserSettings, updateUserSettings,
+  getUserSettings, updateUserSettings, isNotificationCategoryEnabled,
   setUserAcquisitionSource, setUserAcquisitionDismissed, setPostExportSurvey, claimSignupNotification, releaseSignupNotification, getTenantAdminEmailStrict,
   getDomainTeacherCount, setTeamSignpostDismissed,
   claimReferral, releaseReferral, recordReferralForInviter, recordReferralPromoCode, getUserTrackingStreak,
   claimWebhookEvent, releaseWebhookEvent,
-  logEvent,
+  logEvent, recordCancellationTelemetry, getCancellationTelemetry,
+  recordPublicPageview, recordNotificationLog, updateNotificationWebhook,
   getUserActivationStatus, countUserExports, countUserMonthlyExports, countUserAutoExports, getExportReexportCount, countAllUsers, getExportedConferenceIds,
   getUserMeetingHistory, getExistingDomainPeer,
   getUserMeetingSeries,

@@ -1,8 +1,8 @@
 const { Router } = require('express');
 const { requireAuth } = require('../middleware/auth');
 const log = require('../lib/logger');
-const { getUserSettings, updateUserSettings, setPostExportSurvey, isEmailSuppressed, suppressEmail, unsuppressEmail, getUser } = require('../services/firestore');
-const { sendSlackTestPing, sendChatTestPing, sendDiscordTestPing } = require('../lib/notifications');
+const { getUserSettings, updateUserSettings, setPostExportSurvey, isEmailSuppressed, suppressEmail, unsuppressEmail, getUser, recordCancellationTelemetry } = require('../services/firestore');
+const { sendSlackTestPing, sendChatTestPing, sendDiscordTestPing, sendAdminEmailUnsubscribedNotification } = require('../lib/notifications');
 const { isValidSlackWebhook, maskSlackWebhook } = require('../lib/slack');
 const { isValidGoogleChatWebhook, maskGoogleChatWebhook } = require('../lib/googleChat');
 const { isValidDiscordWebhook, maskDiscordWebhook } = require('../lib/discord');
@@ -53,9 +53,16 @@ router.get('/settings', requireAuth, async (req, res) => {
       isEmailSuppressed(req.user.email),
       getUser(req.user.domain, req.user.email).catch(() => null), // referral count is nice-to-have
     ]);
+    const notifPrefs = settings.notificationPreferences || {};
     const out = {
       autoExportOnEnd: settings.autoExportOnEnd === true,
       emailOptOut: suppressed,
+      notificationPreferences: {
+        exportSummary: notifPrefs.exportSummary !== false,
+        seriesAlerts: notifPrefs.seriesAlerts !== false,
+        weeklyDigest: notifPrefs.weeklyDigest !== false,
+        tipsAndUpdates: notifPrefs.tipsAndUpdates !== false,
+      },
       digestExtraEmails: Array.isArray(settings.digestExtraEmails) ? settings.digestExtraEmails : [],
       referralCount: user?.referralCount || 0,
     };
@@ -96,6 +103,7 @@ function normalizeExtraEmails(value) {
 //                    — validated incoming-webhook URLs (null/'' clears)
 //   autoExportOnEnd  — boolean, synced across the user's devices
 //   emailOptOut      — boolean, toggles the CAN-SPAM suppression record
+//   notificationPreferences — object with exportSummary, seriesAlerts, weeklyDigest, tipsAndUpdates
 //   digestExtraEmails — up to 5 extra addresses that also receive the
 //                       post-export report email (null/[] clears)
 router.put('/settings', requireAuth, async (req, res) => {
@@ -131,6 +139,23 @@ router.put('/settings', requireAuth, async (req, res) => {
     }
     patch.autoExportOnEnd = autoExportOnEnd;
   }
+  if ('notificationPreferences' in body) {
+    const np = body.notificationPreferences;
+    if (typeof np !== 'object' || np === null || Array.isArray(np)) {
+      return res.status(400).json({ error: 'notificationPreferences must be an object.' });
+    }
+    const validKeys = ['exportSummary', 'seriesAlerts', 'weeklyDigest', 'tipsAndUpdates'];
+    const sanitized = {};
+    for (const k of validKeys) {
+      if (k in np) {
+        if (typeof np[k] !== 'boolean') {
+          return res.status(400).json({ error: `notificationPreferences.${k} must be a boolean.` });
+        }
+        sanitized[k] = np[k];
+      }
+    }
+    patch.notificationPreferences = sanitized;
+  }
 
   const hasEmailOptOut = 'emailOptOut' in body;
   if (hasEmailOptOut && typeof emailOptOut !== 'boolean') {
@@ -149,8 +174,57 @@ router.put('/settings', requireAuth, async (req, res) => {
     // one the unsubscribe link writes) so a single toggle governs all lifecycle
     // mail regardless of which tenant the user signs in from.
     if (hasEmailOptOut) {
-      if (emailOptOut) await suppressEmail(req.user.email, { source: 'settings_toggle' });
-      else await unsuppressEmail(req.user.email);
+      if (emailOptOut) {
+        await suppressEmail(req.user.email, { source: 'settings_toggle' });
+        try {
+          await recordCancellationTelemetry({
+            category: 'email',
+            type: 'unsubscribed_all',
+            email: req.user.email,
+            domain: req.user.domain,
+            meta: { source: 'settings_toggle' },
+          });
+          log.info('telemetry: email_unsubscribed_all', { email: req.user.email, domain: req.user.domain, source: 'settings_toggle' });
+        } catch {}
+        try {
+          sendAdminEmailUnsubscribedNotification({
+            email: req.user.email,
+            domain: req.user.domain,
+            type: 'all',
+            source: 'settings_toggle',
+          }).catch(err => log.warn('settings: sendAdminEmailUnsubscribedNotification failed', { email: req.user.email, error: err.message }));
+        } catch {}
+      } else {
+        await unsuppressEmail(req.user.email);
+      }
+    }
+
+    if (patch.notificationPreferences) {
+      const np = patch.notificationPreferences;
+      const disabledCategories = Object.keys(np).filter(k => np[k] === false);
+      const enabledCategories = Object.keys(np).filter(k => np[k] === true);
+      try {
+        await recordCancellationTelemetry({
+          category: 'email',
+          type: 'preferences_updated',
+          email: req.user.email,
+          domain: req.user.domain,
+          meta: { disabledCategories, enabledCategories, source: 'settings_modal' },
+        });
+        log.info('telemetry: email_preferences_updated', { email: req.user.email, domain: req.user.domain, disabledCategories, enabledCategories, source: 'settings_modal' });
+      } catch {}
+      if (disabledCategories.length > 0) {
+        try {
+          sendAdminEmailUnsubscribedNotification({
+            email: req.user.email,
+            domain: req.user.domain,
+            type: 'categories',
+            disabledCategories,
+            enabledCategories,
+            source: 'settings_modal',
+          }).catch(err => log.warn('settings: sendAdminEmailUnsubscribedNotification failed', { email: req.user.email, error: err.message }));
+        } catch {}
+      }
     }
     res.json({ saved: true });
   } catch (err) {

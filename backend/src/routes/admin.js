@@ -2,7 +2,7 @@ const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getRevenueFunnel, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance, getTeamOverview, getRecentErrorSpike, getErrorAlertState, setErrorAlertState } = require('../services/firestore');
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getRevenueFunnel, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance, getTeamOverview, getRecentErrorSpike, getErrorAlertState, setErrorAlertState, getCancellationTelemetry } = require('../services/firestore');
 const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendOrgWeeklyDigest, flushDeferredNotifications } = require('../lib/notifications');
 const { requireSuperAdmin, requireSuperAdminOrScheduler, requireKhMetricsKey, safeEqual } = require('../middleware/adminAuth');
 const { requireAuth } = require('../middleware/auth');
@@ -13,6 +13,8 @@ const { refreshAccessToken, makeUserClient } = require('../services/googleAuth')
 const { meetGet, meetGetAll, participantIdentity, sessionsDurationMs } = require('../services/meetApi');
 const { google } = require('googleapis');
 const { buildAndSaveExport } = require('./sheets');
+const { reconcilePendingReviews } = require('../services/review-verifier');
+const { syncMarketplaceReviews } = require('../services/marketplace-reviews');
 
 const SUPER_ADMIN_EMAIL = CONFIG.superAdminEmail;
 const MARKETPLACE_REVIEW_URL = 'https://workspace.google.com/marketplace/app/attendance_tracker/829771833968';
@@ -246,6 +248,19 @@ router.get('/admin/activity', requireSuperAdmin, async (req, res) => {
   }
 });
 
+// GET /api/admin/telemetry/cancellations — dedicated stream of subscription and email cancellations
+router.get('/admin/telemetry/cancellations', requireSuperAdmin, async (req, res) => {
+  try {
+    const limit = Math.max(1, Math.min(200, Number(req.query.limit) || 50));
+    const category = typeof req.query.category === 'string' ? req.query.category : null;
+    const cancellations = await getCancellationTelemetry({ limit, category });
+    res.json({ cancellations });
+  } catch (err) {
+    log.error('admin: telemetry/cancellations failed', { error: err.message });
+    res.status(500).json({ error: 'Failed to fetch cancellation telemetry' });
+  }
+});
+
 // GET /api/admin/pulse — the real-time header numbers for the dashboard:
 // distinct active users (15min/24h/7d), signups, exports, upgrades, check-ins.
 // Backed by a 60s-memoized full scan, so the 30s dashboard poll is cheap.
@@ -456,18 +471,27 @@ router.post('/admin/check-reengagement', requireSuperAdminOrScheduler, async (re
               displayName: user.displayName || null,
               daysSinceLogin: r.daysSinceLogin,
               variant: r.type === 'reactivation_7d' ? '7d' : '30d',
+              domain: user.domain,
+              country: user.signupGeo?.country,
+              language: user.language,
             });
           } else if (r.type === 'activation_7d') {
             result = await sendActivationNudgeEmail({
               to: user.email,
               displayName: user.displayName || null,
               daysSinceLogin: r.daysSinceLogin,
+              domain: user.domain,
+              country: user.signupGeo?.country,
+              language: user.language,
             });
           } else if (r.type === 'solo_nudge_7d') {
             result = await sendSoloNudgeEmail({
               to: user.email,
               displayName: user.displayName || null,
               daysSinceLogin: r.daysSinceLogin,
+              domain: user.domain,
+              country: user.signupGeo?.country,
+              language: user.language,
             });
           } else if (r.type === 'forgotten_meeting') {
             result = await sendForgottenMeetingEmail({
@@ -477,6 +501,9 @@ router.post('/admin/check-reengagement', requireSuperAdminOrScheduler, async (re
               recurringEventId: r.recurringEventId,
               trackedInWindow: r.trackedInWindow,
               daysSinceLast: r.daysSinceLast,
+              domain: user.domain,
+              country: user.signupGeo?.country,
+              language: user.language,
             });
           } else if (r.type === 'comeback_7d') {
             result = await sendComebackEmail({
@@ -484,6 +511,9 @@ router.post('/admin/check-reengagement', requireSuperAdminOrScheduler, async (re
               displayName: user.displayName || null,
               meetingTitle: r.meetingTitle,
               daysSinceLogin: r.daysSinceLogin,
+              domain: user.domain,
+              country: user.signupGeo?.country,
+              language: user.language,
             });
           } else if (r.type === 'export_gap') {
             result = await sendExportGapEmail({
@@ -491,6 +521,9 @@ router.post('/admin/check-reengagement', requireSuperAdminOrScheduler, async (re
               displayName: user.displayName || null,
               meetingTitle: r.meetingTitle,
               daysSinceLogin: r.daysSinceLogin,
+              domain: user.domain,
+              country: user.signupGeo?.country,
+              language: user.language,
             });
           }
           if (!result || result.sent !== true) {
@@ -587,6 +620,9 @@ router.post('/admin/check-alerts', requireSuperAdminOrScheduler, async (req, res
           to: user.email,
           displayName: user.displayName || null,
           alerts: fresh,
+          language: user.language || null,
+          country: user.country || null,
+          domain: user.domain || null,
         });
         if (!result || result.sent !== true) {
           try { await claim.ref.delete(); } catch (_) { /* best-effort */ }
@@ -1265,6 +1301,9 @@ router.post('/admin/check-upcoming', requireSuperAdminOrScheduler, async (req, r
             to: u.email, displayName: u.displayName || null,
             meetingTitle: ev.summary || lapsing.get(ev.recurringEventId) || 'your meeting',
             minutesUntil,
+            domain: u.domain,
+            country: userDoc?.signupGeo?.country || u.signupGeo?.country,
+            language: userDoc?.language || u.language,
           });
           if (!result || result.sent !== true) {
             try { await claim.ref.delete(); } catch (_) { /* let a later run retry */ }
@@ -1284,6 +1323,117 @@ router.post('/admin/check-upcoming', requireSuperAdminOrScheduler, async (req, r
   } catch (err) {
     log.error('check-upcoming sweep failed', { error: err.message });
     res.status(500).json({ error: 'check-upcoming sweep failed' });
+  }
+});
+
+// GET /api/admin/marketplace-reviews — Fetch all reviews, rewards, and matching statuses
+router.get('/admin/marketplace-reviews', requireSuperAdmin, async (req, res) => {
+  try {
+    const db = getDb();
+    const reviewsSnap = await db.collection('marketplace_reviews').get();
+    const reviews = [];
+    reviewsSnap.forEach(d => {
+      const data = d.data();
+      reviews.push({
+        reviewId: d.id,
+        ...data,
+        firstSeenAt: data.firstSeenAt?.toDate?.() ? data.firstSeenAt.toDate().toISOString() : data.firstSeenAt,
+        redeemedAt: data.redeemedAt?.toDate?.() ? data.redeemedAt.toDate().toISOString() : data.redeemedAt,
+        lastSyncedAt: data.lastSyncedAt?.toDate?.() ? data.lastSyncedAt.toDate().toISOString() : data.lastSyncedAt,
+      });
+    });
+
+    reviews.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
+
+    // Fetch users with review rewards or who interacted with the review system
+    const usersSnap = await db.collectionGroup('users').get();
+    const rewardedUsers = [];
+    const pendingClickers = [];
+
+    usersSnap.forEach(doc => {
+      if (!doc.ref.parent || !doc.ref.parent.parent) return;
+      const data = doc.data();
+      const domain = doc.ref.parent.parent.id;
+      const email = doc.id.toLowerCase();
+
+      if (data.individualPlanType === 'review_reward' || data.reviewStatus === 'verified_reviewed') {
+        rewardedUsers.push({
+          email,
+          domain,
+          displayName: data.displayName || '',
+          individualPlan: data.individualPlan || 'pro',
+          individualBillingStatus: data.individualBillingStatus || 'active',
+          individualPlanType: data.individualPlanType || 'review_reward',
+          individualPlanGrantedAt: data.individualPlanGrantedAt || null,
+          individualPlanExpiresAt: data.individualPlanExpiresAt || null,
+          reviewId: data.reviewId || null,
+          reviewRating: data.reviewRating || 5,
+          reviewStatus: data.reviewStatus || 'verified_reviewed',
+          reviewVerifiedAt: data.reviewVerifiedAt || null,
+          language: data.language || null,
+          country: data.signupGeo?.country || null,
+        });
+      } else if (data.reviewStatus === 'clicked' || data.reviewLinkClickedAt) {
+        pendingClickers.push({
+          email,
+          domain,
+          displayName: data.displayName || '',
+          reviewStatus: data.reviewStatus || null,
+          reviewLinkClickedAt: data.reviewLinkClickedAt || null,
+        });
+      }
+    });
+
+    const totalReviews = reviews.length;
+    const avgRating = totalReviews > 0
+      ? Number((reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / totalReviews).toFixed(1))
+      : 5.0;
+    const redeemedCount = reviews.filter(r => r.redeemed).length;
+
+    res.json({
+      reviews,
+      rewardedUsers,
+      pendingClickers,
+      summary: {
+        totalReviews,
+        avgRating,
+        rewardedCount: rewardedUsers.length,
+        unredeemedReviews: Math.max(0, totalReviews - redeemedCount),
+        pendingClickersCount: pendingClickers.length,
+      },
+    });
+  } catch (err) {
+    log.error('admin: failed to get marketplace reviews', { error: err.message });
+    res.status(500).json({ error: 'Failed to fetch marketplace reviews' });
+  }
+});
+
+// POST /api/admin/sync-reviews — On-demand marketplace scraping and pending review reconciliation
+router.post('/admin/sync-reviews', requireSuperAdmin, async (req, res) => {
+  try {
+    const syncRes = await syncMarketplaceReviews();
+    const reconcileRes = await reconcilePendingReviews();
+    res.json({
+      success: true,
+      synced: syncRes.total,
+      newlyDiscovered: syncRes.newlyDiscovered,
+      reconciled: reconcileRes.reconciled || 0,
+      candidatesChecked: reconcileRes.candidatesChecked || 0,
+    });
+  } catch (err) {
+    log.error('admin: sync-reviews failed', { error: err.message });
+    res.status(500).json({ error: 'Failed to sync marketplace reviews' });
+  }
+});
+
+// POST /api/admin/reviews/sync — Sweep and reconcile marketplace reviews against pending users (scheduler / legacy)
+router.post('/admin/reviews/sync', requireSuperAdminOrScheduler, async (req, res) => {
+  try {
+    const result = await reconcilePendingReviews();
+    res.json({ success: true, ...result });
+  } catch (err) {
+    log.error('admin: reviews/sync failed', { error: err.message });
+    res.status(500).json({ error: 'Failed to sync reviews' });
   }
 });
 

@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
+  <link rel="icon" type="image/png" sizes="128x128" href="icons/icon-128.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unsubscribe &amp; Subscription Management — Attendance Tracker</title>
+  <meta name="description" content="Manage your email preferences, unsubscribe from notifications, cancel your subscription, or reach out directly to Derek Gallardo for support." />
+  <link rel="canonical" href="https://attendancetracker.dev/unsubscribe.html" />
+  <meta property="og:title" content="Unsubscribe &amp; Subscription Management — Attendance Tracker" />
+  <meta property="og:description" content="Self-serve email opt-out, subscription cancellation guidance, and direct personal support." />
+  <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
+  <meta property="og:url" content="https://attendancetracker.dev/unsubscribe.html" />
+  <meta property="og:type" content="website" />
+
+  <!-- Localized alternate hreflang tags for 35 languages -->
+  <link rel="alternate" hreflang="x-default" href="https://attendancetracker.dev/unsubscribe.html" />
+  <link rel="alternate" hreflang="en" href="https://attendancetracker.dev/unsubscribe.html?lang=en" />
+  <link rel="alternate" hreflang="es" href="https://attendancetracker.dev/unsubscribe.html?lang=es" />
+  <link rel="alternate" hreflang="pt" href="https://attendancetracker.dev/unsubscribe.html?lang=pt" />
+  <link rel="alternate" hreflang="hi" href="https://attendancetracker.dev/unsubscribe.html?lang=hi" />
+  <link rel="alternate" hreflang="ta" href="https://attendancetracker.dev/unsubscribe.html?lang=ta" />
+  <link rel="alternate" hreflang="te" href="https://attendancetracker.dev/unsubscribe.html?lang=te" />
+  <link rel="alternate" hreflang="bn" href="https://attendancetracker.dev/unsubscribe.html?lang=bn" />
+  <link rel="alternate" hreflang="ur" href="https://attendancetracker.dev/unsubscribe.html?lang=ur" />
+  <link rel="alternate" hreflang="tl" href="https://attendancetracker.dev/unsubscribe.html?lang=tl" />
+  <link rel="alternate" hreflang="ms" href="https://attendancetracker.dev/unsubscribe.html?lang=ms" />
+  <link rel="alternate" hreflang="id" href="https://attendancetracker.dev/unsubscribe.html?lang=id" />
+  <link rel="alternate" hreflang="vi" href="https://attendancetracker.dev/unsubscribe.html?lang=vi" />
+  <link rel="alternate" hreflang="fr" href="https://attendancetracker.dev/unsubscribe.html?lang=fr" />
+  <link rel="alternate" hreflang="de" href="https://attendancetracker.dev/unsubscribe.html?lang=de" />
+  <link rel="alternate" hreflang="it" href="https://attendancetracker.dev/unsubscribe.html?lang=it" />
+  <link rel="alternate" hreflang="nl" href="https://attendancetracker.dev/unsubscribe.html?lang=nl" />
+  <link rel="alternate" hreflang="pl" href="https://attendancetracker.dev/unsubscribe.html?lang=pl" />
+  <link rel="alternate" hreflang="ro" href="https://attendancetracker.dev/unsubscribe.html?lang=ro" />
+  <link rel="alternate" hreflang="ru" href="https://attendancetracker.dev/unsubscribe.html?lang=ru" />
+  <link rel="alternate" hreflang="uk" href="https://attendancetracker.dev/unsubscribe.html?lang=uk" />
+  <link rel="alternate" hreflang="tr" href="https://attendancetracker.dev/unsubscribe.html?lang=tr" />
+  <link rel="alternate" hreflang="th" href="https://attendancetracker.dev/unsubscribe.html?lang=th" />
+  <link rel="alternate" hreflang="ar" href="https://attendancetracker.dev/unsubscribe.html?lang=ar" />
+  <link rel="alternate" hreflang="ko" href="https://attendancetracker.dev/unsubscribe.html?lang=ko" />
+  <link rel="alternate" hreflang="zh-Hant" href="https://attendancetracker.dev/unsubscribe.html?lang=zh" />
+  <link rel="alternate" hreflang="zh-Hans" href="https://attendancetracker.dev/unsubscribe.html?lang=zh-CN" />
+  <link rel="alternate" hreflang="ja" href="https://attendancetracker.dev/unsubscribe.html?lang=ja" />
+  <link rel="alternate" hreflang="he" href="https://attendancetracker.dev/unsubscribe.html?lang=he" />
+  <link rel="alternate" hreflang="mr" href="https://attendancetracker.dev/unsubscribe.html?lang=mr" />
+  <link rel="alternate" hreflang="sv" href="https://attendancetracker.dev/unsubscribe.html?lang=sv" />
+  <link rel="alternate" hreflang="cs" href="https://attendancetracker.dev/unsubscribe.html?lang=cs" />
+  <link rel="alternate" hreflang="da" href="https://attendancetracker.dev/unsubscribe.html?lang=da" />
+  <link rel="alternate" hreflang="fi" href="https://attendancetracker.dev/unsubscribe.html?lang=fi" />
+  <link rel="alternate" hreflang="hu" href="https://attendancetracker.dev/unsubscribe.html?lang=hu" />
+  <link rel="alternate" hreflang="so" href="https://attendancetracker.dev/unsubscribe.html?lang=so" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface-elevated: #21262d;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #4ade80;
+      --accent-dim: rgba(74, 222, 128, 0.15);
+      --danger: #f85149;
+      --danger-dim: rgba(248, 81, 73, 0.15);
+      --blue: #58a6ff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 0;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13, 17, 23, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+    }
+    .nav-container {
+      max-width: 860px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+    .brand img { width: 28px; height: 28px; border-radius: 6px; }
+    .nav-links { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 44px 20px 80px;
+      flex: 1;
+      width: 100%;
+    }
+    h1 { font-size: 2.1rem; color: var(--text); margin-bottom: 12px; font-weight: 700; }
+    .lead { color: var(--muted); font-size: 1.02rem; margin-bottom: 32px; }
+    
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 26px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    }
+    .card h2 {
+      font-size: 1.28rem;
+      color: var(--text);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card p {
+      color: var(--muted);
+      font-size: 0.94rem;
+      line-height: 1.6;
+      margin-bottom: 18px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    @media (min-width: 540px) {
+      .form-row {
+        display: flex;
+        gap: 10px;
+      }
+      .form-row input[type="email"] {
+        flex: 1;
+      }
+    }
+    input[type="email"] {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 11px 14px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input[type="email"]:focus {
+      border-color: var(--blue);
+    }
+    .btn-danger {
+      background: #da3633;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      padding: 11px 18px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .btn-danger:hover:not(:disabled) {
+      background: #f85149;
+    }
+    .btn-danger:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .status-box {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      display: none;
+    }
+    .status-box.success {
+      display: block;
+      background: rgba(74, 222, 128, 0.12);
+      border: 1px solid rgba(74, 222, 128, 0.35);
+      color: #4ade80;
+    }
+    .status-box.error {
+      display: block;
+      background: var(--danger-dim);
+      border: 1px solid var(--danger);
+      color: var(--danger);
+    }
+    .steps-list {
+      list-style: none;
+      margin: 12px 0;
+      padding: 0;
+    }
+    .steps-list li {
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.92rem;
+      color: var(--text);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .steps-list li:last-child {
+      border-bottom: none;
+    }
+    .step-num {
+      background: var(--surface-elevated);
+      color: var(--accent);
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.78rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .support-box {
+      background: rgba(88, 166, 255, 0.08);
+      border: 1px solid rgba(88, 166, 255, 0.25);
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 14px;
+    }
+    .support-box a {
+      color: var(--blue);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .support-box a:hover {
+      text-decoration: underline;
+    }
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 20px;
+      text-align: center;
+      background: #090d13;
+      margin-top: auto;
+    }
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .footer-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.82rem;
+      transition: color 0.15s;
+    }
+    .footer-links a:hover { color: var(--text); }
+    .copyright {
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.5;
+    }
+  </style>
+
+  <!-- i18n Foundation -->
+  <script src="js/strings.js"></script>
+</head>
+<body>
+
+  <!-- Top Sticky Nav -->
+  <nav class="top-nav">
+    <div class="nav-container">
+      <a href="/" class="brand">
+        <img src="icons/icon-128.png" alt="Attendance Tracker logo" />
+        <span>Attendance Tracker</span>
+      </a>
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="faq.html">FAQ</a>
+        <a href="support.html">Contact Support</a>
+        <div id="nav-lang-picker"></div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="container">
+    <h1>Email &amp; Subscription Management</h1>
+    <p class="lead">We believe in 100% transparency. You have complete control over your notifications and subscriptions at all times.</p>
+
+    <!-- Card 1: Direct Email Unsubscribe -->
+    <section class="card" id="email-optout">
+      <h2>🔕 Unsubscribe from Emails</h2>
+      <p>Enter your email address below to immediately opt out of all re-engagement, tips, feature announcements, and automated digests. You will never receive marketing emails from us again.</p>
+      
+      <form id="unsub-form" class="form-group" onsubmit="handleDirectUnsubscribe(event)">
+        <div class="form-row">
+          <input type="email" id="email-input" placeholder="you@yourschool.edu" required autocomplete="email" aria-label="Email Address" />
+          <button type="submit" id="unsub-submit-btn" class="btn-danger">Unsubscribe from All Emails</button>
+        </div>
+        <div id="unsub-status" class="status-box" role="alert"></div>
+      </form>
+      <p style="margin-top:14px;font-size:0.82rem;color:var(--muted);">
+        ℹ️ Note: If you clicked an "Unsubscribe" link directly from a recent email, that link includes a secure token allowing you to selectively turn specific alerts on or off without opting out completely.
+      </p>
+    </section>
+
+    <!-- Card 2: Subscription Cancellation -->
+    <section class="card" id="subscription-cancel">
+      <h2>💳 Cancel Pro / Educator Subscription ($0 Fees)</h2>
+      <p>Need to cancel your paid plan? You can cancel auto-renewal at any time with zero hassle or cancellation fees:</p>
+      <ul class="steps-list">
+        <li>
+          <span class="step-num">1</span>
+          <div>
+            <strong>In Google Meet:</strong> Open the Attendance Tracker side panel &rarr; Click ⚙️ <strong>Settings</strong> &rarr; Click <strong>Manage Subscription</strong> to open the Stripe Customer Portal and cancel in 1 click.
+          </div>
+        </li>
+        <li>
+          <span class="step-num">2</span>
+          <div>
+            <strong>Access Stays Active:</strong> When you cancel, your account remains Pro until the end of your prepaid period. You will never be charged again.
+          </div>
+        </li>
+        <li>
+          <span class="step-num">3</span>
+          <div>
+            <strong>Need Us to Cancel for You?</strong> Just email us from your billing email and we will cancel it immediately for you.
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Card 3: Direct Personal Support -->
+    <section class="card" id="direct-support">
+      <h2>👋 Direct Personal Support</h2>
+      <p>Attendance Tracker is independently maintained by <strong>Derek Gallardo</strong>. If you ran into an issue, need an immediate refund, or have questions regarding your school's data privacy:</p>
+      <div class="support-box">
+        <p style="margin-bottom:8px;color:var(--text);font-weight:600;">Contact Derek directly:</p>
+        <p style="margin-bottom:6px;font-size:0.92rem;">
+          📧 <strong>Personal Support Email:</strong> <a href="mailto:derekgallardo01@gmail.com">derekgallardo01@gmail.com</a>
+        </p>
+        <p style="margin-bottom:6px;font-size:0.92rem;">
+          📧 <strong>Official App Email:</strong> <a href="mailto:derek@attendancetracker.dev">derek@attendancetracker.dev</a>
+        </p>
+        <p style="font-size:0.84rem;color:var(--muted);margin-bottom:0;">
+          ⏱️ Fast response: Derek personally reads and responds to all teacher inquiries, usually within a few hours (or within 1 business day).
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="faq.html">Help Center &amp; FAQ</a>
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Terms of Service</a>
+      <a href="student-data-privacy.html">Student Privacy</a>
+      <a href="refunds.html">Refund Policy</a>
+      <a href="support.html">Contact Support</a>
+      <a href="unsubscribe.html" style="color:var(--text);font-weight:600;">Unsubscribe</a>
+    </div>
+    <div class="copyright">
+      &copy; 2026 Kinetic Helix LLC. Attendance Tracker for Google Meet™. Support: Derek Gallardo (<a href="mailto:derekgallardo01@gmail.com" style="color:inherit;text-decoration:underline;">derekgallardo01@gmail.com</a> / <a href="mailto:derek@attendancetracker.dev" style="color:inherit;text-decoration:underline;">derek@attendancetracker.dev</a>). All rights reserved.
+    </div>
+  </footer>
+
+  <script>
+    // Initialize 35-language switcher
+    document.addEventListener('DOMContentLoaded', function () {
+      if (window.AttStrings && window.AttStrings.renderLanguagePicker) {
+        window.AttStrings.renderLanguagePicker('nav-lang-picker');
+      }
+      // Prefill email if provided in query string
+      try {
+        var params = new URLSearchParams(window.location.search);
+        var qEmail = params.get('e') || params.get('email');
+        if (qEmail) {
+          var inp = document.getElementById('email-input');
+          if (inp) inp.value = qEmail;
+        }
+      } catch (e) {}
+    });
+
+    async function handleDirectUnsubscribe(e) {
+      e.preventDefault();
+      var btn = document.getElementById('unsub-submit-btn');
+      var statusEl = document.getElementById('unsub-status');
+      var emailEl = document.getElementById('email-input');
+      var email = (emailEl.value || '').trim();
+
+      if (!email || !email.includes('@')) {
+        statusEl.className = 'status-box error';
+        statusEl.textContent = 'Please enter a valid email address.';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Unsubscribing…';
+      statusEl.className = 'status-box';
+      statusEl.textContent = '';
+
+      try {
+        var res = await fetch('/api/public/unsubscribe-direct', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email })
+        });
+        var data = await res.json();
+        if (res.ok && data.success) {
+          statusEl.className = 'status-box success';
+          statusEl.textContent = '✓ ' + email + ' has been unsubscribed from all emails. You will receive no further marketing or alert messages.';
+          emailEl.value = '';
+        } else {
+          statusEl.className = 'status-box error';
+          statusEl.textContent = data.error || 'Failed to unsubscribe. Please email derekgallardo01@gmail.com directly and I will remove you.';
+        }
+      } catch (err) {
+        statusEl.className = 'status-box error';
+        statusEl.textContent = 'Network error. Please email derekgallardo01@gmail.com directly and I will remove you immediately.';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Unsubscribe from All Emails';
+      }
+    }
+
+    (function () {
+      try {
+        if (window.self !== window.top) return;
+        var BACKEND_URL = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
+        var params = new URLSearchParams(location.search);
+        var blob = new Blob([JSON.stringify({
+          path: location.pathname,
+          referrer: document.referrer || null,
+          viewportWidth: window.innerWidth || null,
+          utmSource: params.get('utm_source'),
+          utmMedium: params.get('utm_medium'),
+          utmCampaign: params.get('utm_campaign'),
+          ref: params.get('ref'),
+        })], { type: 'application/json' });
+        if (navigator.sendBeacon) navigator.sendBeacon(BACKEND_URL + '/public/pageview', blob);
+        else fetch(BACKEND_URL + '/public/pageview', { method: 'POST', body: blob, keepalive: true });
+      } catch (e) {}
+    })();
+  </script>
+</body>
+</html>

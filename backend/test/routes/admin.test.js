@@ -60,6 +60,7 @@ jest.mock('../../src/services/firestore', () => ({
   getRecentErrorSpike: jest.fn(),
   getErrorAlertState: jest.fn(),
   setErrorAlertState: jest.fn(),
+  getCancellationTelemetry: jest.fn(),
 }));
 jest.mock('../../src/services/googleAuth', () => ({
   refreshAccessToken: jest.fn(),
@@ -100,12 +101,23 @@ jest.mock('../../src/lib/notifications', () => ({
   sendOrgWeeklyDigest: jest.fn(), // org weekly digest sweep
   flushDeferredNotifications: jest.fn(), // single flush point (signup + referral)
 }));
+jest.mock('../../src/services/review-verifier', () => ({
+  reconcilePendingReviews: jest.fn(),
+  verifyUserReview: jest.fn(),
+}));
+jest.mock('../../src/services/marketplace-reviews', () => ({
+  syncMarketplaceReviews: jest.fn(),
+  fetchLiveMarketplaceReviews: jest.fn(),
+  parseMarketplaceReviews: jest.fn(),
+}));
 
 const firestore = require('../../src/services/firestore');
 const notifications = require('../../src/lib/notifications');
 const googleAuth = require('../../src/services/googleAuth');
 const meetApi = require('../../src/services/meetApi');
 const sheetsMod = require('../../src/routes/sheets');
+const reviewVerifier = require('../../src/services/review-verifier');
+const marketplaceReviews = require('../../src/services/marketplace-reviews');
 
 const SUPER_ADMIN = 'derekgallardo01@gmail.com';
 const SCHEDULER_SECRET = 'test-scheduler-secret-xyz';
@@ -1071,6 +1083,23 @@ describe('Super-admin endpoint happy paths', () => {
     expect(firestore.getRecentActivity).toHaveBeenCalledWith({ limit: 200 });
   });
 
+  test('GET /admin/telemetry/cancellations returns cancellations with limit and category filters', async () => {
+    firestore.getCancellationTelemetry.mockResolvedValue([
+      { category: 'subscription', type: 'cancelled', email: 'u@x.com' },
+    ]);
+    const res = await request(app).get('/api/admin/telemetry/cancellations?limit=25&category=subscription').set(admin());
+    expect(res.status).toBe(200);
+    expect(res.body.cancellations).toHaveLength(1);
+    expect(firestore.getCancellationTelemetry).toHaveBeenCalledWith({ limit: 25, category: 'subscription' });
+  });
+
+  test('GET /admin/telemetry/cancellations returns 500 when getCancellationTelemetry throws', async () => {
+    firestore.getCancellationTelemetry.mockRejectedValue(new Error('firestore timeout'));
+    const res = await request(app).get('/api/admin/telemetry/cancellations').set(admin());
+    expect(res.status).toBe(500);
+    expect(res.body.error).toContain('Failed to fetch cancellation telemetry');
+  });
+
   test('GET /admin/pulse returns the real-time numbers with no-store', async () => {
     firestore.getActivityPulse.mockResolvedValue({ activeNow: 3, totalUsers: 214 });
     const res = await request(app).get('/api/admin/pulse').set(admin());
@@ -1590,3 +1619,213 @@ describe('GET /admin/revenue-funnel', () => {
     expect(res.status).toBe(500);
   });
 });
+
+describe('POST /api/admin/reviews/sync', () => {
+  const admin = () => authedHeader(SUPER_ADMIN, 'gmail.com');
+  const scheduler = () => ({ 'x-scheduler-secret': SCHEDULER_SECRET });
+
+  test('403 when no auth provided', async () => {
+    const res = await request(app).post('/api/admin/reviews/sync');
+    expect([401, 403]).toContain(res.status);
+    expect(reviewVerifier.reconcilePendingReviews).not.toHaveBeenCalled();
+  });
+
+  test('200 and calls reconcilePendingReviews when authenticated via scheduler', async () => {
+    reviewVerifier.reconcilePendingReviews.mockResolvedValue({
+      reconciled: 1,
+      totalPendingReviews: 3,
+      candidatesChecked: 5,
+    });
+
+    const res = await request(app)
+      .post('/api/admin/reviews/sync')
+      .set(scheduler());
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.reconciled).toBe(1);
+    expect(reviewVerifier.reconcilePendingReviews).toHaveBeenCalled();
+  });
+
+  test('500 when reconcilePendingReviews fails', async () => {
+    reviewVerifier.reconcilePendingReviews.mockRejectedValue(new Error('scrape failure'));
+
+    const res = await request(app)
+      .post('/api/admin/reviews/sync')
+      .set(admin());
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toContain('Failed to sync reviews');
+  });
+});
+
+describe('GET /api/admin/marketplace-reviews', () => {
+  const admin = () => authedHeader(SUPER_ADMIN, 'gmail.com');
+  const nonAdmin = () => authedHeader('user@school.edu', 'school.edu');
+
+  test('403 when not super admin', async () => {
+    const unauthed = await request(app).get('/api/admin/marketplace-reviews');
+    expect([401, 403]).toContain(unauthed.status);
+
+    const nonAdminRes = await request(app).get('/api/admin/marketplace-reviews').set(nonAdmin());
+    expect(nonAdminRes.status).toBe(403);
+  });
+
+  test('200 with reviews and rewarded users when super admin', async () => {
+    const mockReviews = [
+      {
+        id: 'rev-1',
+        data: () => ({
+          rating: 5,
+          comment: 'Outstanding app!',
+          timestampMs: 1726000000000,
+          authorName: 'Mario Delgado',
+          avatarUrl: 'https://avatar.com/1',
+          redeemed: true,
+          redeemedByEmail: 'mario@school.edu',
+        }),
+      },
+      {
+        id: 'rev-2',
+        data: () => ({
+          rating: 5,
+          comment: 'Great tool!',
+          timestampMs: 1726100000000,
+          authorName: 'Mike Haynes',
+          avatarUrl: 'https://avatar.com/2',
+          redeemed: false,
+          redeemedByEmail: null,
+        }),
+      },
+    ];
+
+    const mockUsers = [
+      {
+        id: 'mario@school.edu',
+        ref: { parent: { parent: { id: 'school.edu' } } },
+        data: () => ({
+          displayName: 'Mario Delgado',
+          individualPlan: 'pro',
+          individualPlanType: 'review_reward',
+          individualBillingStatus: 'active',
+          reviewStatus: 'verified_reviewed',
+          reviewRating: 5,
+        }),
+      },
+      {
+        id: 'clicker@domain.com',
+        ref: { parent: { parent: { id: 'domain.com' } } },
+        data: () => ({
+          displayName: 'Clicker User',
+          reviewStatus: 'clicked',
+          reviewLinkClickedAt: '2026-09-17T10:00:00Z',
+        }),
+      },
+      {
+        id: 'regular@acme.com',
+        ref: { parent: { parent: { id: 'acme.com' } } },
+        data: () => ({
+          displayName: 'Regular User',
+        }),
+      },
+    ];
+
+    firestore.getDb.mockReturnValue({
+      collection: jest.fn().mockReturnValue({
+        get: jest.fn().mockResolvedValue({
+          forEach: (cb) => mockReviews.forEach(cb),
+        }),
+      }),
+      collectionGroup: jest.fn().mockReturnValue({
+        get: jest.fn().mockResolvedValue({
+          forEach: (cb) => mockUsers.forEach(cb),
+        }),
+      }),
+    });
+
+    const res = await request(app)
+      .get('/api/admin/marketplace-reviews')
+      .set(admin());
+
+    expect(res.status).toBe(200);
+    expect(res.body.reviews).toHaveLength(2);
+    expect(res.body.rewardedUsers).toHaveLength(1);
+    expect(res.body.rewardedUsers[0].email).toBe('mario@school.edu');
+    expect(res.body.pendingClickers).toHaveLength(1);
+    expect(res.body.pendingClickers[0].email).toBe('clicker@domain.com');
+    expect(res.body.summary).toEqual({
+      totalReviews: 2,
+      avgRating: 5,
+      rewardedCount: 1,
+      unredeemedReviews: 1,
+      pendingClickersCount: 1,
+    });
+  });
+
+  test('500 when firestore fails', async () => {
+    firestore.getDb.mockReturnValue({
+      collection: jest.fn().mockReturnValue({
+        get: jest.fn().mockRejectedValue(new Error('firestore timeout')),
+      }),
+    });
+
+    const res = await request(app)
+      .get('/api/admin/marketplace-reviews')
+      .set(admin());
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toContain('Failed to fetch marketplace reviews');
+  });
+});
+
+describe('POST /api/admin/sync-reviews', () => {
+  const admin = () => authedHeader(SUPER_ADMIN, 'gmail.com');
+  const nonAdmin = () => authedHeader('user@school.edu', 'school.edu');
+
+  test('403 when not super admin', async () => {
+    const unauthed = await request(app).post('/api/admin/sync-reviews');
+    expect([401, 403]).toContain(unauthed.status);
+
+    const nonAdminRes = await request(app).post('/api/admin/sync-reviews').set(nonAdmin());
+    expect(nonAdminRes.status).toBe(403);
+  });
+
+  test('200 and triggers both sync and reconciliation', async () => {
+    marketplaceReviews.syncMarketplaceReviews.mockResolvedValue({
+      total: 4,
+      newlyDiscovered: 1,
+      reviews: [],
+    });
+    reviewVerifier.reconcilePendingReviews.mockResolvedValue({
+      reconciled: 1,
+      candidatesChecked: 3,
+    });
+
+    const res = await request(app)
+      .post('/api/admin/sync-reviews')
+      .set(admin());
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      success: true,
+      synced: 4,
+      newlyDiscovered: 1,
+      reconciled: 1,
+      candidatesChecked: 3,
+    });
+    expect(marketplaceReviews.syncMarketplaceReviews).toHaveBeenCalled();
+    expect(reviewVerifier.reconcilePendingReviews).toHaveBeenCalled();
+  });
+
+  test('500 when sync fails', async () => {
+    marketplaceReviews.syncMarketplaceReviews.mockRejectedValue(new Error('network down'));
+
+    const res = await request(app)
+      .post('/api/admin/sync-reviews')
+      .set(admin());
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toContain('Failed to sync marketplace reviews');
+  });
+});
+

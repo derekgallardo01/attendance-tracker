@@ -1,10 +1,16 @@
 // Tests for the notifications module — Resend wiring, From-address resolution,
 // HTML escaping, and the no-op behavior when RESEND_API_KEY is unset.
 
+const { installFirestoreMock } = require('../helpers/firestoreMock');
+let firestoreCtx;
+beforeEach(() => { firestoreCtx = installFirestoreMock(); });
+afterEach(() => { if (firestoreCtx) firestoreCtx.uninstall(); });
+
 describe('notifications — module structure', () => {
   test('exports all expected send functions', () => {
     const n = require('../../src/lib/notifications');
     expect(typeof n.sendSignupWebhook).toBe('function');
+    expect(typeof n.sendUpgradeNotification).toBe('function');
     expect(typeof n.sendAdminEmail).toBe('function');
     expect(typeof n.sendWeeklySelfReport).toBe('function');
     expect(typeof n.sendExportNotification).toBe('function');
@@ -14,6 +20,9 @@ describe('notifications — module structure', () => {
     expect(typeof n.sendActivationNudgeEmail).toBe('function');
     expect(typeof n.sendSoloNudgeEmail).toBe('function');
     expect(typeof n.sendForgottenMeetingEmail).toBe('function');
+    expect(typeof n.sendSubscriptionCancelledEmail).toBe('function');
+    expect(typeof n.sendAdminSubscriptionCancelledNotification).toBe('function');
+    expect(typeof n.sendAdminEmailUnsubscribedNotification).toBe('function');
   });
 });
 
@@ -82,6 +91,12 @@ describe('notifications — no-op when Resend not configured', () => {
       acquisitionSource: 'reddit', totalUsers: 19,
     });
     expect(result).toBeUndefined();
+  });
+
+  test('sendUpgradeNotification returns skipped silently when Resend unset', async () => {
+    const n = require('../../src/lib/notifications');
+    const result = await n.sendUpgradeNotification({ email: 'new@acme.com', plan: 'educator' });
+    expect(result).toEqual({ skipped: 'no resend' });
   });
 
   test('sendExportNotification returns undefined silently', async () => {
@@ -681,6 +696,105 @@ describe('notifications — remaining sender branches (Resend mocked)', () => {
     expect(call.text).toContain('Unknown');
   });
 
+  test('sendUpgradeNotification formats educator plan, amount, currency, Stripe links, and country flag', async () => {
+    const n = require('../../src/lib/notifications');
+    await n.sendUpgradeNotification({
+      email: 'karla@example.com',
+      displayName: 'Karla',
+      domain: 'example.com',
+      plan: 'educator',
+      amountTotal: 249,
+      currency: 'usd',
+      customerId: 'cus_123',
+      subscriptionId: 'sub_456',
+      country: 'BR',
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const call = mockSend.mock.calls[0][0];
+    expect(call.subject).toContain('💰 New Upgrade: Karla ($2.49 USD - Educator Pro)');
+    expect(call.html).toContain('Educator Pro');
+    expect(call.html).toContain('$2.49 USD');
+    expect(call.html).toContain('https://dashboard.stripe.com/subscriptions/sub_456');
+    expect(call.html).toContain('https://dashboard.stripe.com/customers/cus_123');
+    expect(call.text).toContain('karla@example.com');
+  });
+
+  test('sendUpgradeNotification formats team and lifetime plans, and handles missing amount/country/customer gracefully', async () => {
+    const n = require('../../src/lib/notifications');
+    await n.sendUpgradeNotification({
+      email: 'admin@school.org',
+      domain: 'school.org',
+      plan: 'lifetime',
+      amountTotal: null,
+    });
+    await n.sendUpgradeNotification({
+      email: 'team@company.com',
+      domain: 'company.com',
+      plan: 'team',
+      amountTotal: 1999,
+      currency: 'usd',
+      isTeam: true,
+    });
+    expect(mockSend).toHaveBeenCalledTimes(2);
+    const call1 = mockSend.mock.calls[0][0];
+    expect(call1.subject).toContain('Lifetime Pass');
+    expect(call1.html).toContain('Active');
+    const call2 = mockSend.mock.calls[1][0];
+    expect(call2.subject).toContain('Team Pro');
+    expect(call2.html).toContain('$19.99 USD');
+  });
+
+  test('sendAdminSubscriptionCancelledNotification formats plan, dates, Stripe links, and source', async () => {
+    const n = require('../../src/lib/notifications');
+    await n.sendAdminSubscriptionCancelledNotification({
+      email: 'teacher@school.edu',
+      displayName: 'Teacher Jane',
+      domain: 'school.edu',
+      plan: 'educator',
+      subscriptionId: 'sub_cancel_123',
+      customerId: 'cus_test_123',
+      currentPeriodEnd: 'October 15, 2026',
+      source: 'in_app_settings',
+    });
+    expect(mockSend).toHaveBeenCalled();
+    const call = mockSend.mock.calls[mockSend.mock.calls.length - 1][0];
+    expect(call.subject).toContain('⚠️ Subscription Cancelled: Teacher Jane (Educator Pro)');
+    expect(call.html).toContain('Educator Pro');
+    expect(call.html).toContain('October 15, 2026');
+    expect(call.html).toContain('https://dashboard.stripe.com/subscriptions/sub_cancel_123');
+    expect(call.html).toContain('https://dashboard.stripe.com/customers/cus_test_123');
+    expect(call.html).toContain('in_app_settings');
+    expect(call.text).toContain('teacher@school.edu');
+  });
+
+  test('sendAdminEmailUnsubscribedNotification formats all and granular categories', async () => {
+    const n = require('../../src/lib/notifications');
+    await n.sendAdminEmailUnsubscribedNotification({
+      email: 'unsub@domain.com',
+      domain: 'domain.com',
+      type: 'all',
+      source: 'one_click_unsubscribe',
+    });
+    let call = mockSend.mock.calls[mockSend.mock.calls.length - 1][0];
+    expect(call.subject).toContain('🔕 Email Opt-Out: unsub@domain.com unsubscribed from all emails');
+    expect(call.html).toContain('Unsubscribed from ALL emails');
+    expect(call.html).toContain('one_click_unsubscribe');
+
+    await n.sendAdminEmailUnsubscribedNotification({
+      email: 'granular@domain.com',
+      domain: 'domain.com',
+      type: 'categories',
+      disabledCategories: ['weeklyDigest', 'tipsAndUpdates'],
+      enabledCategories: ['exportSummary', 'seriesAlerts'],
+      source: 'settings_modal',
+    });
+    call = mockSend.mock.calls[mockSend.mock.calls.length - 1][0];
+    expect(call.subject).toContain('🔕 Email Preferences: granular@domain.com disabled');
+    expect(call.html).toContain('Weekly digest');
+    expect(call.html).toContain('Tips &amp; product updates');
+    expect(call.html).toContain('Export &amp; attendance summaries');
+  });
+
   test('sendReactivationEmail 7d and 30d variants', async () => {
     const n = require('../../src/lib/notifications');
     await n.sendReactivationEmail({ to: 'u@x.com', displayName: 'U', daysSinceLogin: 8, variant: '7d' });
@@ -841,6 +955,140 @@ describe('notifications — minimal-field fallbacks (Resend mocked)', () => {
     const n = require('../../src/lib/notifications');
     await n.sendExportNotification({ to: 'u@x.com', sheetUrl: 'https://s', totalAttended: 1, participants: [{ status: 'Present', durationMin: 0 }] });
     expect(mockSend).toHaveBeenCalled();
+    const sent = mockSend.mock.calls[0][0];
+    expect(sent.html).toContain('Leave a 5-Star Review');
+    expect(sent.text).toContain('Leave a quick 5-star review');
+  });
+
+  test('export notification suppresses review prompt for isPro users', async () => {
+    const n = require('../../src/lib/notifications');
+    await n.sendExportNotification({ to: 'pro@school.edu', sheetUrl: 'https://s', totalAttended: 5, participants: [{ status: 'Present', durationMin: 45 }], isPro: true });
+    expect(mockSend).toHaveBeenCalled();
+    const sent = mockSend.mock.calls[0][0];
+    expect(sent.html).not.toContain('Leave a 5-Star Review');
+    expect(sent.text).not.toContain('Leave a quick 5-star review');
+  });
+
+  test('sendExportNotification localizes to Spanish, Portuguese, and Bengali', async () => {
+    const n = require('../../src/lib/notifications');
+    // Spanish
+    await n.sendExportNotification({
+      to: 'docente@colegio.edu.co',
+      displayName: 'Carlos Rodriguez',
+      sheetUrl: 'https://s',
+      meetingTitle: 'Clase de Historia',
+      totalAttended: 15,
+      totalInvited: 20,
+      exportedAt: Date.now(),
+      participants: [
+        { displayName: 'Juan', status: 'Present', durationMin: 45, lateMin: 5 },
+        { displayName: 'Maria', status: 'Left', durationMin: 20 },
+        { displayName: 'Pedro', status: 'Excused', durationMin: 0 },
+        { displayName: 'Luis', status: 'Absent', durationMin: 0 },
+      ],
+      overflow: 5,
+      conferenceId: 'conf-es',
+      recurringEventId: 'rec-es',
+      isPro: false,
+    });
+    const esSent = mockSend.mock.calls[0][0];
+    expect(esSent.subject).toContain('Asistencia: Clase de Historia — 15 de 20 asistieron');
+    expect(esSent.html).toContain('Hola Carlos,');
+    expect(esSent.html).toContain('Exportación lista');
+    expect(esSent.html).toContain('Tu reunión acaba de finalizar');
+    expect(esSent.html).toContain('Persona');
+    expect(esSent.html).toContain('Estado');
+    expect(esSent.html).toContain('Tiempo');
+    expect(esSent.html).toContain('Presente');
+    expect(esSent.html).toContain('Salió');
+    expect(esSent.html).toContain('Justificado');
+    expect(esSent.html).toContain('Ausente');
+    expect(esSent.html).toContain('+5 min tarde');
+    expect(esSent.html).toContain('…y 5 más en la hoja');
+    expect(esSent.html).toContain('Abrir hoja');
+    expect(esSent.html).toContain('Ver en la web →');
+    expect(esSent.html).toContain('ver la tendencia completa →');
+    expect(esSent.html).toContain('¿Te ahorró tiempo hoy?');
+    expect(esSent.html).toContain('Dejar reseña de 5 estrellas (10s) →');
+    expect(esSent.tags).toEqual(expect.arrayContaining([{ name: 'lang', value: 'es' }]));
+
+    mockSend.mockClear();
+
+    // Portuguese
+    await n.sendExportNotification({
+      to: 'prof@escola.com.br',
+      displayName: 'Ana Silva',
+      sheetUrl: 'https://s',
+      meetingTitle: 'Aula de Matemática',
+      totalAttended: 10,
+      totalInvited: 12,
+      exportedAt: Date.now(),
+      participants: [
+        { displayName: 'Lucas', status: 'Present', durationMin: 50, lateMin: 3 },
+        { displayName: 'Julia', status: 'Left', durationMin: 15 },
+        { displayName: 'Bruno', status: 'Excused', durationMin: 0 },
+      ],
+      overflow: 2,
+      recurringEventId: 'rec-pt',
+      isPro: false,
+    });
+    const ptSent = mockSend.mock.calls[0][0];
+    expect(ptSent.subject).toContain('Presença: Aula de Matemática — 10 de 12 presentes');
+    expect(ptSent.html).toContain('Olá Ana,');
+    expect(ptSent.html).toContain('Exportação pronta');
+    expect(ptSent.html).toContain('Sua reunião terminou');
+    expect(ptSent.html).toContain('Pessoa');
+    expect(ptSent.html).toContain('Status');
+    expect(ptSent.html).toContain('Tempo');
+    expect(ptSent.html).toContain('Presente');
+    expect(ptSent.html).toContain('Saiu');
+    expect(ptSent.html).toContain('Justificado');
+    expect(ptSent.html).toContain('+3 min atrasado');
+    expect(ptSent.html).toContain('…e mais 2 na planilha');
+    expect(ptSent.html).toContain('Abrir planilha');
+    expect(ptSent.html).toContain('Ver na web →');
+    expect(ptSent.html).toContain('ver a tendência completa →');
+    expect(ptSent.html).toContain('Isso economizou seu tempo hoje?');
+    expect(ptSent.html).toContain('Deixar avaliação de 5 estrelas (10s) →');
+    expect(ptSent.tags).toEqual(expect.arrayContaining([{ name: 'lang', value: 'pt' }]));
+
+    mockSend.mockClear();
+
+    // Bengali
+    await n.sendExportNotification({
+      to: 'teacher@school.edu.bd',
+      displayName: 'রহিম চৌধুরী',
+      sheetUrl: 'https://s',
+      meetingTitle: 'বিজ্ঞান ক্লাস',
+      totalAttended: 18,
+      totalInvited: 20,
+      exportedAt: Date.now(),
+      participants: [
+        { displayName: 'করিম', status: 'Present', durationMin: 40, lateMin: 2 },
+        { displayName: 'সাকিব', status: 'Absent', durationMin: 0 },
+      ],
+      overflow: 1,
+      recurringEventId: 'rec-bn',
+      isPro: false,
+    });
+    const bnSent = mockSend.mock.calls[0][0];
+    expect(bnSent.subject).toContain('উপস্থিতি: বিজ্ঞান ক্লাস — 20 জনের মধ্যে 18 জন উপস্থিত');
+    expect(bnSent.html).toContain('হ্যালো রহিম,');
+    expect(bnSent.html).toContain('এক্সপোর্ট সম্পন্ন');
+    expect(bnSent.html).toContain('আপনার মিটিং শেষ হয়েছে');
+    expect(bnSent.html).toContain('ব্যক্তি');
+    expect(bnSent.html).toContain('অবস্থা');
+    expect(bnSent.html).toContain('সময়');
+    expect(bnSent.html).toContain('উপস্থিত');
+    expect(bnSent.html).toContain('অনুপস্থিত');
+    expect(bnSent.html).toContain('+2 মি. দেরিতে');
+    expect(bnSent.html).toContain('…এবং শিটে আরও 1 জন');
+    expect(bnSent.html).toContain('শিট খুলুন');
+    expect(bnSent.html).toContain('ওয়েবে দেখুন →');
+    expect(bnSent.html).toContain('সম্পূর্ণ ট্রেন্ড দেখুন →');
+    expect(bnSent.html).toContain('এটি কি আজ আপনার সময় বাঁচিয়েছে?');
+    expect(bnSent.html).toContain('৫-স্টার রিভিউ দিন (১০ সেকেন্ড লাগবে) →');
+    expect(bnSent.tags).toEqual(expect.arrayContaining([{ name: 'lang', value: 'bn' }]));
   });
 
   test('series alert (single, personEmail only) and reactivation/forgotten without displayName', async () => {
@@ -883,6 +1131,8 @@ describe('notifications — final branch closure', () => {
     const n = require('../../src/lib/notifications');
     const res = await n.sendSignupWebhook({ email: 'a@x.com', domain: 'x.com' });
     expect(res).toBeUndefined();
+    const upRes = await n.sendUpgradeNotification({ email: 'a@x.com', plan: 'educator' });
+    expect(upRes).toEqual({ skipped: 'no NOTIFY_EMAIL/owner' });
   });
 
   test('sendAdminEmail with no body renders empty paragraphs', async () => {
@@ -1174,7 +1424,7 @@ describe('notifications — buildDesignSystemEmail & upgrade link sender', () =>
     expect(call.html).toContain('https://buy.stripe.com/educator');
     expect(call.html).toContain('https://buy.stripe.com/lifetime');
     expect(call.text).toContain('$49/yr');
-    expect(call.tags).toEqual([{ name: 'type', value: 'upgrade_link_requested' }]);
+    expect(call.tags).toEqual([{ name: 'type', value: 'upgrade_link_requested' }, { name: 'lang', value: 'en' }]);
   });
 
   test('sendUpgradeLinkEmail throws if to is missing', async () => {
@@ -1182,4 +1432,506 @@ describe('notifications — buildDesignSystemEmail & upgrade link sender', () =>
     await expect(n.sendUpgradeLinkEmail({}))
       .rejects.toThrow(/to is required/);
   });
+
+  test('resolveLanguage resolves language correctly across language, country, domain, and email', () => {
+    const { resolveLanguage } = require('../../src/lib/notifications');
+    // Explicit language tag
+    expect(resolveLanguage({ language: 'es' })).toBe('es');
+    expect(resolveLanguage({ language: 'es-419' })).toBe('es');
+    expect(resolveLanguage({ language: 'pt' })).toBe('pt');
+    expect(resolveLanguage({ language: 'pt-BR' })).toBe('pt');
+    expect(resolveLanguage({ language: 'bn' })).toBe('bn');
+    expect(resolveLanguage({ language: 'en' })).toBe('en');
+    expect(resolveLanguage({ language: 'fr' })).toBe('en'); // fallback
+    expect(resolveLanguage()).toBe('en'); // empty
+
+    // Country resolution
+    expect(resolveLanguage({ country: 'CO' })).toBe('es');
+    expect(resolveLanguage({ country: 'MX' })).toBe('es');
+    expect(resolveLanguage({ country: 'BR' })).toBe('pt');
+    expect(resolveLanguage({ country: 'PT' })).toBe('pt');
+    expect(resolveLanguage({ country: 'BD' })).toBe('bn');
+    expect(resolveLanguage({ country: 'US' })).toBe('en');
+
+    // Domain / email resolution
+    expect(resolveLanguage({ domain: 'nuestrasenoradeguadalupe.edu.co' })).toBe('es');
+    expect(resolveLanguage({ domain: 'usp.br' })).toBe('pt');
+    expect(resolveLanguage({ domain: 'du.ac.bd' })).toBe('bn');
+    expect(resolveLanguage({ email: 'jsuarez@nuestrasenoradeguadalupe.edu.co' })).toBe('es');
+    expect(resolveLanguage({ email: 'karlamelhado@gmail.com', country: 'BR' })).toBe('pt');
+  });
+
+  test('multilingual sendUpgradeLinkEmail in Spanish, Portuguese, and Bengali', async () => {
+    const n = require('../../src/lib/notifications');
+
+    // Spanish via Colombia domain
+    mockSend.mockClear();
+    await n.sendUpgradeLinkEmail({
+      to: 'jsuarez@nuestrasenoradeguadalupe.edu.co',
+      displayName: 'Jhon Fredy',
+      educatorUrl: 'https://buy.stripe.com/educator_co',
+      lifetimeUrl: 'https://buy.stripe.com/lifetime_co',
+      educatorPrice: '$2.49',
+      lifetimePrice: '$4.99',
+      flag: '🇨🇴',
+      isPpp: true,
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    let call = mockSend.mock.calls[0][0];
+    expect(call.subject).toContain('Tu enlace para actualizar Attendance Tracker');
+    expect(call.html).toContain('Hola Jhon');
+    expect(call.html).toContain('Pase Educador');
+    expect(call.html).toContain('Pro de por vida');
+    expect(call.html).toContain('50% de subsidio regional aplicado 🇨🇴');
+    expect(call.tags).toEqual([{ name: 'type', value: 'upgrade_link_requested' }, { name: 'lang', value: 'es' }]);
+
+    // Portuguese via BR country
+    mockSend.mockClear();
+    await n.sendUpgradeLinkEmail({
+      to: 'karlamelhado@gmail.com',
+      displayName: 'Karla Melhado',
+      educatorUrl: 'https://buy.stripe.com/educator_br',
+      lifetimeUrl: 'https://buy.stripe.com/lifetime_br',
+      educatorPrice: '$2.49',
+      lifetimePrice: '$4.99',
+      flag: '🇧🇷',
+      isPpp: true,
+      country: 'BR',
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    call = mockSend.mock.calls[0][0];
+    expect(call.subject).toContain('Seu link para atualizar o Attendance Tracker');
+    expect(call.html).toContain('Olá Karla');
+    expect(call.html).toContain('Passe Educador');
+    expect(call.html).toContain('Pro Vitalício');
+    expect(call.html).toContain('50% de subsídio regional aplicado 🇧🇷');
+    expect(call.tags).toEqual([{ name: 'type', value: 'upgrade_link_requested' }, { name: 'lang', value: 'pt' }]);
+
+    // Bengali via BD country
+    mockSend.mockClear();
+    await n.sendUpgradeLinkEmail({
+      to: 'tariq@school.edu.bd',
+      displayName: 'Tariq Ahmed',
+      educatorUrl: 'https://buy.stripe.com/educator_bd',
+      lifetimeUrl: 'https://buy.stripe.com/lifetime_bd',
+      educatorPrice: '$2.49',
+      lifetimePrice: '$4.99',
+      flag: '🇧🇩',
+      isPpp: true,
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    call = mockSend.mock.calls[0][0];
+    expect(call.subject).toContain('আপনার Attendance Tracker আপগ্রেড লিংক');
+    expect(call.html).toContain('হ্যালো Tariq');
+    expect(call.html).toContain('এডুকেটর পাস');
+    expect(call.html).toContain('লাইফটাইম প্রো');
+    expect(call.tags).toEqual([{ name: 'type', value: 'upgrade_link_requested' }, { name: 'lang', value: 'bn' }]);
+  });
+
+  test('multilingual lifecycle emails render localized content for es, pt, bn', async () => {
+    const n = require('../../src/lib/notifications');
+
+    // sendWelcomeEmail Spanish
+    mockSend.mockClear();
+    await n.sendWelcomeEmail({
+      to: 'user@escuela.mx',
+      displayName: 'Carlos Vega',
+      country: 'MX',
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    let call = mockSend.mock.calls[0][0];
+    expect(call.subject).toContain('Bienvenido a Attendance Tracker');
+    expect(call.html).toContain('Hola Carlos');
+    expect(call.html).toContain('3 sencillos pasos');
+    expect(call.html).toContain('¿No deseas recibir estos correos?');
+
+    // sendReactivationEmail Portuguese
+    mockSend.mockClear();
+    await n.sendReactivationEmail({
+      to: 'prof@escola.pt',
+      displayName: 'Ana Paula',
+      daysSinceLogin: 7,
+      variant: '7d',
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    call = mockSend.mock.calls[0][0];
+    expect(call.subject).toContain('Como estão suas reuniões no Attendance Tracker?');
+    expect(call.html).toContain('Olá Ana');
+    expect(call.html).toContain('Não deseja receber estes e-mails?');
+
+    // sendActivationNudgeEmail Spanish
+    mockSend.mockClear();
+    await n.sendActivationNudgeEmail({
+      to: 'profe@colegio.edu.co',
+      displayName: 'Javier Gomez',
+      daysSinceLogin: 7,
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    call = mockSend.mock.calls[0][0];
+    expect(call.subject).toBe('Cómo empezar con Attendance Tracker');
+    expect(call.html).toContain('Hola Javier');
+
+    // sendSoloNudgeEmail Portuguese
+    mockSend.mockClear();
+    await n.sendSoloNudgeEmail({
+      to: 'aluno@usp.br',
+      displayName: 'Lucas Silva',
+      daysSinceLogin: 7,
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    call = mockSend.mock.calls[0][0];
+    expect(call.subject).toContain('Você testou o Attendance Tracker sozinho');
+    expect(call.html).toContain('Olá Lucas');
+
+    // sendUpcomingMeetingEmail Bengali
+    mockSend.mockClear();
+    await n.sendUpcomingMeetingEmail({
+      to: 'teacher@du.ac.bd',
+      displayName: 'Rahim',
+      meetingTitle: 'Physics 101',
+      minutesUntil: 5,
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    call = mockSend.mock.calls[0][0];
+    expect(call.subject).toContain('Physics 101');
+    expect(call.html).toContain('Physics 101');
+    expect(call.tags).toEqual([{ name: 'type', value: 'upcoming_reminder' }, { name: 'lang', value: 'bn' }]);
+
+    // sendSeriesAlertEmail in Spanish, Portuguese, Bengali
+    mockSend.mockClear();
+    await n.sendSeriesAlertEmail({
+      to: 'profe@colegio.es',
+      displayName: 'Mateo',
+      alerts: [{ personName: 'Juan', detail: 'faltó a 3 reuniones', attended: 2, instanceCount: 5 }],
+      language: 'es',
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    call = mockSend.mock.calls[0][0];
+    expect(call.subject).toBe('Alerta de asistencia: Juan faltó a 3 reuniones');
+    expect(call.html).toContain('Hola Mateo');
+    expect(call.html).toContain('2 de 5 sesiones asistidas en total');
+    expect(call.html).toContain('Ver series →');
+    expect(call.tags).toEqual([{ name: 'type', value: 'series_alert' }, { name: 'lang', value: 'es' }]);
+
+    mockSend.mockClear();
+    await n.sendSeriesAlertEmail({
+      to: 'prof@escola.com.br',
+      displayName: 'Juliana',
+      alerts: [{ personName: 'Pedro', detail: 'faltou a 2 reuniões', attended: 3, instanceCount: 5 }],
+      language: 'pt',
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    call = mockSend.mock.calls[0][0];
+    expect(call.subject).toBe('Alerta de presença: Pedro faltou a 2 reuniões');
+    expect(call.html).toContain('Olá Juliana');
+    expect(call.html).toContain('3 de 5 sessões comparecidas no total');
+    expect(call.html).toContain('Ver séries →');
+    expect(call.tags).toEqual([{ name: 'type', value: 'series_alert' }, { name: 'lang', value: 'pt' }]);
+
+    mockSend.mockClear();
+    await n.sendSeriesAlertEmail({
+      to: 'teacher@school.edu.bd',
+      displayName: 'Farhana',
+      alerts: [
+        { personName: 'করিম', detail: 'অনুপস্থিত ছিলেন', attended: 1, instanceCount: 5 },
+        { personName: 'রহিম', detail: 'অনুপস্থিত ছিলেন', attended: 2, instanceCount: 5 },
+      ],
+      language: 'bn',
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    call = mockSend.mock.calls[0][0];
+    expect(call.subject).toBe('আপনার নিয়মিত মিটিংগুলো থেকে 2টি উপস্থিতির সতর্কতা');
+    expect(call.html).toContain('হ্যালো Farhana');
+    expect(call.html).toContain('সর্বমোট 5টি সেশনের মধ্যে 1টিতে উপস্থিত');
+    expect(call.html).toContain('সিরিজ দেখুন →');
+    expect(call.tags).toEqual([{ name: 'type', value: 'series_alert' }, { name: 'lang', value: 'bn' }]);
+
+    // sendReferralNotification in Spanish, Portuguese, Bengali
+    mockSend.mockClear();
+    await n.sendReferralNotification({
+      to: 'referral@colegio.es',
+      inviterName: 'Lucia',
+      newUserName: 'Carlos',
+      totalReferrals: 1,
+      promoCode: 'FRIEND10',
+      language: 'es',
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    call = mockSend.mock.calls[0][0];
+    expect(call.subject).toBe('🎉 Carlos se unió a Attendance Tracker — ganaste un mes gratis');
+    expect(call.html).toContain('Carlos acaba de registrarse');
+    expect(call.html).toContain('FRIEND10');
+    expect(call.html).toContain('un mes gratis de Pro');
+    expect(call.tags).toEqual([{ name: 'type', value: 'referral' }, { name: 'lang', value: 'es' }]);
+
+    mockSend.mockClear();
+    await n.sendReferralNotification({
+      to: 'amigo@usp.br',
+      inviterName: 'Rodrigo',
+      newUserName: 'Mariana',
+      totalReferrals: 2,
+      promoCode: 'AMIGO10',
+      language: 'pt',
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    call = mockSend.mock.calls[0][0];
+    expect(call.subject).toBe('🎉 Mariana entrou no Attendance Tracker — você ganhou um mês grátis');
+    expect(call.html).toContain('Mariana acabou de se cadastrar');
+    expect(call.html).toContain('AMIGO10');
+    expect(call.tags).toEqual([{ name: 'type', value: 'referral' }, { name: 'lang', value: 'pt' }]);
+
+    mockSend.mockClear();
+    await n.sendReferralNotification({
+      to: 'mentor@du.ac.bd',
+      inviterName: 'Kamal',
+      newUserName: 'তানভীর',
+      totalReferrals: 3,
+      promoCode: 'BENGALI10',
+      language: 'bn',
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    call = mockSend.mock.calls[0][0];
+    expect(call.subject).toBe('🎉 তানভীর Attendance Tracker-এ যোগ দিয়েছেন — আপনি ১ মাস ফ্রি পেয়েছেন');
+    expect(call.html).toContain('তানভীর এইমাত্র');
+    expect(call.html).toContain('BENGALI10');
+    expect(call.tags).toEqual([{ name: 'type', value: 'referral' }, { name: 'lang', value: 'bn' }]);
+
+    // sendOrgWeeklyDigest in Spanish, Portuguese, Bengali
+    mockSend.mockClear();
+    await n.sendOrgWeeklyDigest({
+      to: 'admin@escuela.edu.co',
+      domain: 'escuela.edu.co',
+      weeklyMeetings: 12,
+      activeTeachers: 4,
+      totalMeetings: 80,
+      totalParticipants: 320,
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    call = mockSend.mock.calls[0][0];
+    expect(call.subject).toBe('escuela.edu.co: 12 reuniones registradas esta semana');
+    expect(call.html).toContain('Reuniones esta semana');
+    expect(call.html).toContain('Docentes activos');
+    expect(call.html).toContain('Abrir panel institucional →');
+    expect(call.tags).toEqual([{ name: 'type', value: 'org_weekly_digest' }, { name: 'lang', value: 'es' }]);
+
+    mockSend.mockClear();
+    await n.sendOrgWeeklyDigest({
+      to: 'diretoria@colegio.edu.br',
+      domain: 'colegio.edu.br',
+      weeklyMeetings: 15,
+      activeTeachers: 5,
+      totalMeetings: 120,
+      totalParticipants: 450,
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    call = mockSend.mock.calls[0][0];
+    expect(call.subject).toBe('colegio.edu.br: 15 reuniões registradas esta semana');
+    expect(call.html).toContain('Reuniões esta semana');
+    expect(call.html).toContain('Professores ativos');
+    expect(call.html).toContain('Abrir painel institucional →');
+    expect(call.tags).toEqual([{ name: 'type', value: 'org_weekly_digest' }, { name: 'lang', value: 'pt' }]);
+
+    mockSend.mockClear();
+    await n.sendOrgWeeklyDigest({
+      to: 'admin@school.edu.bd',
+      domain: 'school.edu.bd',
+      weeklyMeetings: 8,
+      activeTeachers: 3,
+      totalMeetings: 45,
+      totalParticipants: 190,
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    call = mockSend.mock.calls[0][0];
+    expect(call.subject).toBe('school.edu.bd: এই সপ্তাহে 8টি মিটিং ট্র্যাক করা হয়েছে');
+    expect(call.html).toContain('এই সপ্তাহের মিটিং');
+    expect(call.html).toContain('ব্যবহারকারী শিক্ষক');
+    expect(call.html).toContain('প্রাতিষ্ঠানিক ড্যাশবোর্ড খুলুন →');
+    expect(call.tags).toEqual([{ name: 'type', value: 'org_weekly_digest' }, { name: 'lang', value: 'bn' }]);
+  });
+
+  test('sendSubscriptionCancelledEmail sends clear cancellation confirmation in en, es, pt, bn', async () => {
+    const n = require('../../src/lib/notifications');
+
+    // English
+    mockSend.mockClear();
+    await n.sendSubscriptionCancelledEmail({
+      to: 'user@school.edu',
+      displayName: 'Derek Gallardo',
+      planName: 'Pro Annual',
+      currentPeriodEnd: 'October 18, 2026',
+      language: 'en',
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    let call = mockSend.mock.calls[0][0];
+    expect(call.subject).toContain('subscription has been cancelled');
+    expect(call.html).toContain('Hi Derek');
+    expect(call.html).toContain('charged again');
+    expect(call.html).toContain('October 18, 2026');
+    expect(call.html).toContain('Google Drive');
+    expect(call.tags).toEqual([{ name: 'type', value: 'subscription_cancelled' }, { name: 'lang', value: 'en' }]);
+
+    // Spanish
+    mockSend.mockClear();
+    await n.sendSubscriptionCancelledEmail({
+      to: 'usuario@colegio.es',
+      displayName: 'Carlos',
+      planName: 'Pro',
+      currentPeriodEnd: '18 de octubre de 2026',
+      language: 'es',
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    call = mockSend.mock.calls[0][0];
+    expect(call.subject).toContain('ha sido cancelada');
+    expect(call.html).toContain('Hola Carlos');
+    expect(call.html).toContain('NO volverá a recibir ningún cargo');
+    expect(call.html).toContain('Google Drive');
+    expect(call.tags).toEqual([{ name: 'type', value: 'subscription_cancelled' }, { name: 'lang', value: 'es' }]);
+
+    // Portuguese
+    mockSend.mockClear();
+    await n.sendSubscriptionCancelledEmail({
+      to: 'usuario@escola.br',
+      displayName: 'Fernanda',
+      planName: 'Pro',
+      currentPeriodEnd: '18 de outubro de 2026',
+      language: 'pt',
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    call = mockSend.mock.calls[0][0];
+    expect(call.subject).toContain('foi cancelada');
+    expect(call.html).toContain('Olá Fernanda');
+    expect(call.html).toContain('NÃO receberá novas cobranças');
+    expect(call.html).toContain('Google Drive');
+    expect(call.tags).toEqual([{ name: 'type', value: 'subscription_cancelled' }, { name: 'lang', value: 'pt' }]);
+
+    // Bengali
+    mockSend.mockClear();
+    await n.sendSubscriptionCancelledEmail({
+      to: 'user@school.bd',
+      displayName: 'Tariq',
+      planName: 'Pro',
+      currentPeriodEnd: '১৮ অক্টোবর ২০২৬',
+      language: 'bn',
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    call = mockSend.mock.calls[0][0];
+    expect(call.subject).toContain('বাতিল করা হয়েছে');
+    expect(call.html).toContain('হ্যালো Tariq');
+    expect(call.html).toContain('আর কোনো চার্জ কাটা হবে না');
+    expect(call.html).toContain('গুগল ড্রাইভ');
+    expect(call.tags).toEqual([{ name: 'type', value: 'subscription_cancelled' }, { name: 'lang', value: 'bn' }]);
+  });
+
+  test('category preference filtering respects isNotificationCategoryEnabled', async () => {
+    const firestore = require('../../src/services/firestore');
+    jest.spyOn(firestore, 'isNotificationCategoryEnabled').mockResolvedValue(false);
+
+    const n = require('../../src/lib/notifications');
+
+    // exportSummary disabled -> sendExportNotification skips
+    mockSend.mockClear();
+    await n.sendExportNotification({
+      to: 'teacher@school.edu',
+      domain: 'school.edu',
+      sheetUrl: 'https://docs.google.com/test',
+      meetingTitle: 'Math 101',
+    });
+    expect(mockSend).not.toHaveBeenCalled();
+
+    // seriesAlerts disabled -> sendSeriesAlertEmail skips
+    mockSend.mockClear();
+    await n.sendSeriesAlertEmail({
+      to: 'teacher@school.edu',
+      domain: 'school.edu',
+      seriesTitle: 'Math 101',
+      recurringEventId: 'rec_123',
+      alerts: [{ type: 'absence_spike', name: 'Student' }],
+    });
+    expect(mockSend).not.toHaveBeenCalled();
+
+    // weeklyDigest disabled -> sendOrgWeeklyDigest skips
+    mockSend.mockClear();
+    await n.sendOrgWeeklyDigest({
+      to: 'admin@school.edu',
+      domain: 'school.edu',
+      weeklyMeetings: 10,
+      activeTeachers: 3,
+      totalMeetings: 50,
+      totalParticipants: 200,
+    });
+    expect(mockSend).not.toHaveBeenCalled();
+  });
+
+  test('sendReviewRewardEmail sends localized email in en, es, pt, bn', async () => {
+    const n = require('../../src/lib/notifications');
+
+    // English
+    mockSend.mockClear();
+    await n.sendReviewRewardEmail({
+      to: 'teacher@school.edu',
+      displayName: 'Jane Doe',
+      expiresAt: '2026-10-23T00:00:00.000Z',
+      language: 'en',
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    let call = mockSend.mock.calls[0][0];
+    expect(call.subject).toContain('Your Free Month of Pro is Active');
+    expect(call.html).toContain('Hi Jane');
+    expect(call.html).toContain('1 Month of Educator Pro Activated');
+    expect(call.html).toContain('No credit card required');
+    expect(call.tags).toEqual([{ name: 'type', value: 'review_reward' }, { name: 'lang', value: 'en' }]);
+
+    // Spanish (resolved via country MX)
+    mockSend.mockClear();
+    await n.sendReviewRewardEmail({
+      to: 'profesor@colegio.edu.mx',
+      displayName: 'Carlos Sanchez',
+      country: 'MX',
+      expiresAt: '2026-10-23T00:00:00.000Z',
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    call = mockSend.mock.calls[0][0];
+    expect(call.subject).toContain('Tu mes de Pro gratuito ya está activo');
+    expect(call.html).toContain('Carlos');
+    expect(call.html).toContain('1 mes de Educator Pro activado');
+    expect(call.html).toContain('Sin requerir tarjeta de crédito');
+    expect(call.tags).toEqual([{ name: 'type', value: 'review_reward' }, { name: 'lang', value: 'es' }]);
+
+    // Portuguese
+    mockSend.mockClear();
+    await n.sendReviewRewardEmail({
+      to: 'prof@escola.com.br',
+      displayName: 'Mariana Silva',
+      country: 'BR',
+      expiresAt: '2026-10-23T00:00:00.000Z',
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    call = mockSend.mock.calls[0][0];
+    expect(call.subject).toContain('Seu mês de Pro gratuito já está ativo');
+    expect(call.html).toContain('Mariana');
+    expect(call.html).toContain('1 mês de Educator Pro ativado');
+    expect(call.html).toContain('Sem necessidade de cartão de crédito');
+    expect(call.tags).toEqual([{ name: 'type', value: 'review_reward' }, { name: 'lang', value: 'pt' }]);
+
+    // Bengali
+    mockSend.mockClear();
+    await n.sendReviewRewardEmail({
+      to: 'teacher@du.ac.bd',
+      displayName: 'তানভীর',
+      country: 'BD',
+      expiresAt: '2026-10-23T00:00:00.000Z',
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    call = mockSend.mock.calls[0][0];
+    expect(call.subject).toContain('আপনার ১ মাসের ফ্রি প্রো সক্রিয় হয়েছে');
+    expect(call.html).toContain('১ মাসের এডুকেটর প্রো আনলক হয়েছে');
+    expect(call.tags).toEqual([{ name: 'type', value: 'review_reward' }, { name: 'lang', value: 'bn' }]);
+
+    // Invalid email returns failure without calling mockSend
+    mockSend.mockClear();
+    const badRes = await n.sendReviewRewardEmail({ to: 'invalid-email' });
+    expect(badRes.sent).toBe(false);
+    expect(mockSend).not.toHaveBeenCalled();
+  });
 });
+

@@ -553,3 +553,60 @@ describe('digestExtraEmails (extra report recipients)', () => {
     expect(firestore.updateUserSettings).not.toHaveBeenCalled();
   });
 });
+
+describe('notificationPreferences (granular email notifications)', () => {
+  test('GET returns default true for all categories when unset', async () => {
+    firestore.getUserSettings.mockResolvedValue({});
+    const res = await request(app).get('/api/settings').set(authedHeader('u@a.com', 'a.com'));
+    expect(res.status).toBe(200);
+    expect(res.body.notificationPreferences).toEqual({
+      exportSummary: true,
+      seriesAlerts: true,
+      weeklyDigest: true,
+      tipsAndUpdates: true,
+    });
+  });
+
+  test('GET returns persisted preference values', async () => {
+    firestore.getUserSettings.mockResolvedValue({
+      notificationPreferences: {
+        exportSummary: false,
+        seriesAlerts: true,
+        weeklyDigest: false,
+        tipsAndUpdates: true,
+      },
+    });
+    const res = await request(app).get('/api/settings').set(authedHeader('u@a.com', 'a.com'));
+    expect(res.status).toBe(200);
+    expect(res.body.notificationPreferences).toEqual({
+      exportSummary: false,
+      seriesAlerts: true,
+      weeklyDigest: false,
+      tipsAndUpdates: true,
+    });
+  });
+
+  test('PUT validates and updates notificationPreferences', async () => {
+    const res = await request(app)
+      .put('/api/settings')
+      .set(authedHeader('u@a.com', 'a.com'))
+      .send({
+        notificationPreferences: {
+          exportSummary: false,
+          seriesAlerts: false,
+          weeklyDigest: true,
+          tipsAndUpdates: false,
+          unsupportedField: 'ignored',
+        },
+      });
+    expect(res.status).toBe(200);
+    expect(firestore.updateUserSettings).toHaveBeenCalledWith('a.com', 'u@a.com', {
+      notificationPreferences: {
+        exportSummary: false,
+        seriesAlerts: false,
+        weeklyDigest: true,
+        tipsAndUpdates: false,
+      },
+    });
+  });
+});

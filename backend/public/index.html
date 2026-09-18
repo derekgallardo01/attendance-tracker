@@ -25,6 +25,44 @@
   <meta name="keywords" content="google meet attendance tracker, track attendance google meet, google meet attendance report, attendance tracker, how to take attendance in google meet, meeting attendance tracker, google meet export to sheets" />
   <link rel="canonical" href="https://attendancetracker.dev/" />
 
+  <!-- Localized alternate hreflang tags for 35 languages -->
+  <link rel="alternate" hreflang="x-default" href="https://attendancetracker.dev/" />
+  <link rel="alternate" hreflang="en" href="https://attendancetracker.dev/?lang=en" />
+  <link rel="alternate" hreflang="es" href="https://attendancetracker.dev/?lang=es" />
+  <link rel="alternate" hreflang="pt" href="https://attendancetracker.dev/?lang=pt" />
+  <link rel="alternate" hreflang="hi" href="https://attendancetracker.dev/?lang=hi" />
+  <link rel="alternate" hreflang="ta" href="https://attendancetracker.dev/?lang=ta" />
+  <link rel="alternate" hreflang="te" href="https://attendancetracker.dev/?lang=te" />
+  <link rel="alternate" hreflang="bn" href="https://attendancetracker.dev/?lang=bn" />
+  <link rel="alternate" hreflang="ur" href="https://attendancetracker.dev/?lang=ur" />
+  <link rel="alternate" hreflang="tl" href="https://attendancetracker.dev/?lang=tl" />
+  <link rel="alternate" hreflang="ms" href="https://attendancetracker.dev/?lang=ms" />
+  <link rel="alternate" hreflang="id" href="https://attendancetracker.dev/?lang=id" />
+  <link rel="alternate" hreflang="vi" href="https://attendancetracker.dev/?lang=vi" />
+  <link rel="alternate" hreflang="fr" href="https://attendancetracker.dev/?lang=fr" />
+  <link rel="alternate" hreflang="de" href="https://attendancetracker.dev/?lang=de" />
+  <link rel="alternate" hreflang="it" href="https://attendancetracker.dev/?lang=it" />
+  <link rel="alternate" hreflang="nl" href="https://attendancetracker.dev/?lang=nl" />
+  <link rel="alternate" hreflang="pl" href="https://attendancetracker.dev/?lang=pl" />
+  <link rel="alternate" hreflang="ro" href="https://attendancetracker.dev/?lang=ro" />
+  <link rel="alternate" hreflang="ru" href="https://attendancetracker.dev/?lang=ru" />
+  <link rel="alternate" hreflang="uk" href="https://attendancetracker.dev/?lang=uk" />
+  <link rel="alternate" hreflang="tr" href="https://attendancetracker.dev/?lang=tr" />
+  <link rel="alternate" hreflang="th" href="https://attendancetracker.dev/?lang=th" />
+  <link rel="alternate" hreflang="ar" href="https://attendancetracker.dev/?lang=ar" />
+  <link rel="alternate" hreflang="ko" href="https://attendancetracker.dev/?lang=ko" />
+  <link rel="alternate" hreflang="zh-Hant" href="https://attendancetracker.dev/?lang=zh" />
+  <link rel="alternate" hreflang="zh-Hans" href="https://attendancetracker.dev/?lang=zh-CN" />
+  <link rel="alternate" hreflang="ja" href="https://attendancetracker.dev/?lang=ja" />
+  <link rel="alternate" hreflang="he" href="https://attendancetracker.dev/?lang=he" />
+  <link rel="alternate" hreflang="mr" href="https://attendancetracker.dev/?lang=mr" />
+  <link rel="alternate" hreflang="sv" href="https://attendancetracker.dev/?lang=sv" />
+  <link rel="alternate" hreflang="cs" href="https://attendancetracker.dev/?lang=cs" />
+  <link rel="alternate" hreflang="da" href="https://attendancetracker.dev/?lang=da" />
+  <link rel="alternate" hreflang="fi" href="https://attendancetracker.dev/?lang=fi" />
+  <link rel="alternate" hreflang="hu" href="https://attendancetracker.dev/?lang=hu" />
+  <link rel="alternate" hreflang="so" href="https://attendancetracker.dev/?lang=so" />
+
   <!-- Schema.org SoftwareApplication + FAQPage structured data for Google Search rich snippets -->
   <script type="application/ld+json">
   {
@@ -2853,7 +2891,7 @@ function downloadAttendanceCsv() {
     const n = (parseInt(localStorage.getItem('att_export_count') || '0', 10) || 0) + 1;
     localStorage.setItem('att_export_count', String(n));
     const hasReviewed = !!localStorage.getItem('has_reviewed');
-    const isMilestone = (n === 1 || n === 2 || n === 5) && !hasReviewed;
+    const isMilestone = !_isPro && !(_billing && _billing.plan === 'pro') && (n === 1 || n === 2 || n === 5) && !hasReviewed;
     if (isMilestone) {
       showCelebrateModal(null, n);
     }
@@ -4610,6 +4648,10 @@ async function toggleEmailNotifications(enabled) {
   const ok = await persistSetting({ emailOptOut: !enabled });
   if (ok) {
     toast(enabled ? t('toast.emailOn') : t('toast.emailOff'));
+    ['exportSummary', 'seriesAlerts', 'weeklyDigest', 'tipsAndUpdates'].forEach(cat => {
+      const box = document.getElementById(`setting-pref-${cat}`);
+      if (box) box.checked = enabled;
+    });
   } else {
     toast(t('toast.settingSaveFailed', "Couldn't save that setting — check your connection and toggle it again."), 6000);
     const box = document.getElementById('setting-email-optout');
@@ -4618,6 +4660,25 @@ async function toggleEmailNotifications(enabled) {
 }
 function toggleEmailOptOut(optedOut) {
   toggleEmailNotifications(!optedOut);
+}
+
+async function toggleNotificationPref(category, enabled) {
+  const prefs = {};
+  prefs[category] = enabled;
+  const payload = { notificationPreferences: prefs };
+  const masterBox = document.getElementById('setting-email-optout');
+  if (enabled && masterBox && !masterBox.checked) {
+    masterBox.checked = true;
+    payload.emailOptOut = false;
+  }
+  const ok = await persistSetting(payload);
+  if (ok) {
+    toast(t('toast.prefSaved', 'Notification preferences saved'));
+  } else {
+    toast(t('toast.settingSaveFailed', "Couldn't save that setting — check your connection and toggle it again."), 6000);
+    const box = document.getElementById(`setting-pref-${category}`);
+    if (box) box.checked = !enabled;
+  }
 }
 
 // Non-admins can't configure domain-wide delegation themselves, so give them a
@@ -4647,7 +4708,10 @@ async function ensureBilling() {
   if (_billing) return _billing;
   try {
     const res = await authFetch(`${state.backendUrl}/billing/status`);
-    if (res.ok) _billing = await res.json();
+    if (res.ok) {
+      _billing = await res.json();
+      if (_billing && _billing.plan === 'pro') _isPro = true;
+    }
   } catch { /* leave null → upsell just won't show */ }
   return _billing;
 }
@@ -4749,8 +4813,101 @@ async function loadBillingStatus() {
       : (data.individual
         ? t('settings.proDesc', 'Pro unlocks the cumulative per-student class report, auto-export, and email digests.')
         : t('settings.proDescOrg', 'Pro unlocks the org-wide team dashboard and auto-export for your whole domain.'));
+
+    const cancelNotice = document.getElementById('settings-cancel-notice');
+    const subActions = document.getElementById('settings-sub-actions');
+    const resumeBtn = document.getElementById('settings-resume-btn');
+    const cancelBtn = document.getElementById('settings-cancel-btn');
+
+    if (_isPro && data.cancelAtPeriodEnd) {
+      const endStr = data.currentPeriodEnd
+        ? new Date(data.currentPeriodEnd).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+        : 'the end of your billing cycle';
+      if (cancelNotice) {
+        cancelNotice.textContent = t('settings.cancelledNotice', 'Auto-renewal cancelled · Pro active through {date} · Zero future charges').replace('{date}', endStr);
+        cancelNotice.style.display = 'block';
+      }
+      if (subActions) subActions.style.display = 'flex';
+      if (resumeBtn) resumeBtn.style.display = 'inline-block';
+      if (cancelBtn) cancelBtn.style.display = 'none';
+    } else if (_isPro && (data.isRecurring || data.subscriptionId)) {
+      if (cancelNotice) cancelNotice.style.display = 'none';
+      if (subActions) subActions.style.display = 'flex';
+      if (resumeBtn) resumeBtn.style.display = 'none';
+      if (cancelBtn) cancelBtn.style.display = 'inline-block';
+    } else {
+      if (cancelNotice) cancelNotice.style.display = 'none';
+      if (subActions) subActions.style.display = 'none';
+    }
+
     box.style.display = 'block';
   } catch { /* leave hidden on error */ }
+}
+
+function openCancelSubscriptionModal() {
+  const modal = document.getElementById('cancel-subscription-modal');
+  if (!modal) return;
+  const periodEndEl = document.getElementById('cancel-modal-period-end');
+  if (periodEndEl) {
+    const endStr = _billing?.currentPeriodEnd
+      ? new Date(_billing.currentPeriodEnd).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
+      : 'the end of your billing cycle';
+    periodEndEl.textContent = endStr;
+  }
+  modal.style.display = 'flex';
+}
+
+function closeCancelSubscriptionModal() {
+  const modal = document.getElementById('cancel-subscription-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function confirmCancelSubscription() {
+  const btn = document.getElementById('btn-confirm-cancel-sub');
+  if (btn) { btn.disabled = true; btn.textContent = t('common.loading', 'Processing…'); }
+  try {
+    const locale = typeof AttStrings !== 'undefined' && AttStrings.getLocale ? AttStrings.getLocale() : 'en';
+    const res = await authFetch(`${state.backendUrl}/billing/cancel-subscription`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ language: locale })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.success) {
+      closeCancelSubscriptionModal();
+      toast(t('settings.subCancelledToast', 'Auto-renewal cancelled. A confirmation email has been sent to your inbox.'));
+      await loadBillingStatus();
+    } else {
+      toast(data.error || t('settings.cancelFailed', 'Could not cancel subscription right now. Please try again.'));
+    }
+  } catch {
+    toast(t('settings.cancelFailed', 'Could not cancel subscription right now. Please try again.'));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = t('settings.confirmCancelBtn', 'Cancel Auto-Renewal'); }
+  }
+}
+
+async function resumeSubscription() {
+  const btn = document.getElementById('settings-resume-btn');
+  if (btn) { btn.disabled = true; btn.textContent = t('common.loading', 'Resuming…'); }
+  try {
+    const res = await authFetch(`${state.backendUrl}/billing/resume-subscription`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.success) {
+      toast(t('settings.subResumedToast', 'Subscription resumed. Auto-renewal is active.'));
+      await loadBillingStatus();
+    } else {
+      toast(data.error || t('settings.resumeFailed', 'Could not resume subscription. Please try again.'));
+    }
+  } catch {
+    toast(t('settings.resumeFailed', 'Could not resume subscription. Please try again.'));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = t('settings.resumeSubBtn', 'Resume Auto-Renewal'); }
+  }
 }
 
 function showTrialEndingBanner(trialInfo) {
@@ -5059,7 +5216,7 @@ function updateUpgradeModalPricing() {
       eduPerMoBadge.textContent = t('upgrade.perMoPpp', '~$0.20/mo');
     }
     if (btnLifetime) {
-      btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime" style="color:#ffffff;font-weight:700">$4.99</span> <span style="background:rgba(255,255,255,0.22);color:#fff;font-size:0.68rem;padding:2px 7px;border-radius:10px;margin-left:4px;font-weight:600">${escHtml(t('upgrade.off50', '50% Off'))}</span>`;
+      btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime" style="color:#ffffff;font-weight:700">$4.99</span> <span style="background:rgba(255,255,255,0.22);color:#fff;font-size:0.68rem;padding:2px 7px;border-radius:10px;margin-left:4px;font-weight:600">${escHtml(t('upgrade.off50PayOnce', '50% Off · Pay Once'))}</span>`;
     }
     if (btnEdu) {
       btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#79c0ff;font-weight:700">$2.49</span>/yr <span style="background:rgba(88,166,255,0.25);color:#79c0ff;font-size:0.68rem;padding:2px 7px;border-radius:10px;margin-left:4px;font-weight:600">${escHtml(t('upgrade.off50', '50% Off'))}</span>`;
@@ -5091,6 +5248,7 @@ function updateUpgradeModalPricing() {
 }
 
 function showUpgradeModal(reason) {
+  if (_isPro || (_billing && _billing.plan === 'pro')) return;
   state._lastUpgradeReason = reason || 'manual';
   const modal = document.getElementById('upgrade-modal');
   if (!modal) return;
@@ -5124,15 +5282,20 @@ function showUpgradeModal(reason) {
   if (schoolLicenseBtn) {
     schoolLicenseBtn.style.display = isEdu ? 'block' : 'none';
   }
-  // Revenue-funnel finding: the one organic sale came through a deliberate,
-  // self-directed path — and edu-domain users (most of the paywall audience)
-  // balk at $9.99 but the $4.99/yr pass is half the ask. Lead with the
-  // educator card for edu users; everyone else keeps Lifetime first.
+  // In PPP regions, Lifetime Pro is $4.99 one-time (no recurring renewal),
+  // which eliminates foreign credit-card recurring subscription fears.
+  // Keep Lifetime Pro prominently visible at the top for all PPP regions.
+  const isPpp = !!(_billing && _billing.pppDiscount && _billing.pppDiscount.eligible);
   const lifetimeCard = document.getElementById('plan-card-lifetime');
   const eduCard = document.getElementById('plan-card-educator');
   if (lifetimeCard && eduCard && lifetimeCard.parentNode === eduCard.parentNode) {
-    if (isEdu || reason === 'certificates' || reason === 'classSummary') lifetimeCard.parentNode.insertBefore(eduCard, lifetimeCard);
-    else eduCard.parentNode.insertBefore(lifetimeCard, eduCard);
+    if (isPpp) {
+      eduCard.parentNode.insertBefore(lifetimeCard, eduCard);
+    } else if (isEdu || reason === 'certificates' || reason === 'classSummary') {
+      lifetimeCard.parentNode.insertBefore(eduCard, lifetimeCard);
+    } else {
+      eduCard.parentNode.insertBefore(lifetimeCard, eduCard);
+    }
   }
 
   updateUpgradeModalPricing();
@@ -5143,6 +5306,7 @@ function showUpgradeModal(reason) {
   if (upgradeReviewLink) {
     upgradeReviewLink.href = `${state.backendUrl}/public/review-click?email=${encodeURIComponent(email)}&source=upgrade_modal`;
   }
+  if (typeof checkReviewVerificationState === 'function') checkReviewVerificationState();
   const sendEmailBtn = document.getElementById('btn-send-upgrade-email');
   const sendEmailStatus = document.getElementById('upgrade-email-link-status');
   if (sendEmailBtn) {
@@ -5197,6 +5361,7 @@ async function sendUpgradeLinkToEmail() {
 
 // ── Auto-export Pro nudge (inline, never a popup) ──
 function showAutoExportNudge() {
+  if (_isPro || (_billing && _billing.plan === 'pro')) return;
   try { if (sessionStorage.getItem('attAutoNudgeDismissed')) return; } catch { /* storage blocked */ }
   const el = document.getElementById('auto-export-nudge');
   if (!el || el.style.display !== 'none') return;
@@ -5232,6 +5397,7 @@ function closeUpgradeModal() {
 // the gentle-upsell rule — and the answer is the only direct WHY signal in
 // the monetization funnel (event: paywall_objection).
 function maybeAskPaywallWhy() {
+  if (_isPro || (_billing && _billing.plan === 'pro')) return;
   try {
     const n = (Number(localStorage.getItem('attPaywallDismissals')) || 0) + 1;
     localStorage.setItem('attPaywallDismissals', String(n));
@@ -5812,6 +5978,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     eventEnd: payload.eventEnd, timezone: payload.timezone, participants: payload.participants,
   };
 
+  const exportStartMs = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
   try {
     toast(t('toast.savingSheets','Saving to Sheets…'));
     const res = await authFetch(`${state.backendUrl}/save-to-sheets`, {
@@ -5821,11 +5988,12 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     if (!res.ok) {
       let body = {};
       try { body = await res.json(); } catch {}
+      const durationMs = Math.round(((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - exportStartMs);
       // Free tier has monthly quota; auto-export is also Pro.
       if (res.status === 402) {
         const feature = body.feature || 'pro_required';
         if (body.quota) updateQuotaIndicator(body.quota.used, body.quota.limit);
-        logUserEvent('export_skipped', { reason: feature });
+        logUserEvent('export_skipped', { reason: feature, durationMs });
         // autoExport 402s fire from a BACKGROUND action (meeting-end auto
         // save) — popping a modal there was the product's worst-converting
         // surface (3% click) and its one real popup. Show the inline nudge
@@ -5840,13 +6008,13 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
       // Expired/hollow session: the backend now 401s with a re-auth code
       // instead of dying in a doomed service-account path. Prompt sign-in.
       if (res.status === 401) {
-        logUserEvent('export_failed', { reason: 'auth_expired' });
+        logUserEvent('export_failed', { reason: 'auth_expired', durationMs });
         toast(t('toast.sessionExpiredExport', 'Your session expired — sign in again to export'), 6000);
         triggerSignIn();
         return;
       }
       if (body.code === 'DRIVE_PERMISSION_MISSING') {
-        logUserEvent('export_failed', { reason: 'drive_permission_missing' });
+        logUserEvent('export_failed', { reason: 'drive_permission_missing', durationMs });
         // The backend just discovered the Drive grant is gone even though the
         // panel thought scopes were fine (state.missingScopes is stale here),
         // so signInWithGoogle's own recovery arming won't trigger — seed the
@@ -5884,12 +6052,14 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
       }
     }
     try {
+      const durationMs = Math.round(((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - exportStartMs);
       logUserEvent('export_success', {
         attendees: state.participants ? state.participants.size : 0,
         autoExport: !!opts.autoExport,
         isFirstExport: !!isFirstExport,
         quotaUsed: quota ? quota.used : null,
         quotaLimit: quota ? quota.limit : null,
+        durationMs,
       });
     } catch {}
     // Count EVERY successful export (manual AND auto) toward the review-ask
@@ -5925,7 +6095,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
       document.getElementById('sheet-link-bar').style.display = 'block';
     }
     const hasReviewed = !!localStorage.getItem('has_reviewed');
-    const isMilestone = (isFirstExport || n === 2 || n === 5) && !hasReviewed;
+    const isMilestone = !_isPro && !(_billing && _billing.plan === 'pro') && (isFirstExport || n === 2 || n === 5) && !hasReviewed;
     if (isMilestone && !opts.autoExport) {
       showCelebrateModal(sheetUrl, n);
     }
@@ -5953,7 +6123,8 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     // (they were the biggest excluded cohort: 108 of 125 exporters never saw it).
     maybeShowReviewAsk();
   } catch (err) {
-    logUserEvent('export_failed', { reason: 'error', message: String(err.message || err).slice(0, 200) });
+    const durationMs = Math.round(((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - exportStartMs);
+    logUserEvent('export_failed', { reason: 'error', message: String(err.message || err).slice(0, 200), durationMs });
     captureError(err, { where: 'doExportToSheets', reason: 'error' });
     toast(`${t('toast.sheetsError','Sheets error:')} ${err.message}`);
   }
@@ -5968,6 +6139,7 @@ function buildReferralLink() {
 }
 
 function showCelebrateModal(sheetUrl, milestoneCount = 1) {
+  if (_isPro || (_billing && _billing.plan === 'pro')) return;
   const modal = document.getElementById('celebrate-modal');
   const link = document.getElementById('celebrate-share-link');
   if (!modal || !link) return;
@@ -6021,6 +6193,66 @@ function onCelebrateReviewClick(e) {
 
 function onUpgradeReviewClick(e) {
   try { logUserEvent('review_ask_clicked', { source: 'upgrade_modal' }); } catch {}
+  try { localStorage.setItem('has_clicked_review', '1'); } catch {}
+  const box = document.getElementById('verify-review-box');
+  if (box) box.style.display = 'block';
+}
+
+function checkReviewVerificationState() {
+  try {
+    if (localStorage.getItem('has_clicked_review') === '1') {
+      const box = document.getElementById('verify-review-box');
+      if (box) box.style.display = 'block';
+    }
+  } catch {}
+}
+
+async function triggerReviewVerification(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const btn = document.getElementById('verify-review-btn');
+  const statusEl = document.getElementById('verify-review-status');
+  if (!btn || !statusEl) return;
+
+  btn.disabled = true;
+  btn.textContent = t('upgrade.checkingMarketplace', 'Checking Google Marketplace…');
+  statusEl.style.display = 'none';
+
+  try {
+    const res = await fetch(`${state.backendUrl || ''}/api/public/verify-review`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: (state.userEmail || '').toLowerCase(),
+        declaredName: state.userName || '',
+      }),
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      statusEl.style.display = 'block';
+      statusEl.style.color = '#81c995';
+      statusEl.textContent = t('upgrade.reviewVerifiedSuccess', '🎉 Review verified! 1 Month of Pro unlocked!');
+      btn.textContent = t('upgrade.proUnlocked', '✓ Pro Unlocked');
+      state.isPro = true;
+      try { localStorage.setItem('has_reviewed', '1'); } catch {}
+      if (typeof updateProFeatures === 'function') updateProFeatures();
+      setTimeout(() => {
+        if (typeof closeUpgradeModal === 'function') closeUpgradeModal();
+      }, 2200);
+    } else {
+      btn.disabled = false;
+      btn.textContent = t('upgrade.recheckReviewBtn', 'Re-check Review');
+      statusEl.style.display = 'block';
+      statusEl.style.color = '#fbc02d';
+      statusEl.textContent = data.message || t('upgrade.reviewNotFoundYet', 'Review not found on the listing yet. Google may take a few minutes to publish new reviews. Please click Re-check shortly!');
+    }
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = t('upgrade.verifyReviewBtn', 'Verify Review & Unlock 1 Month Free');
+    statusEl.style.display = 'block';
+    statusEl.style.color = '#e57373';
+    statusEl.textContent = t('upgrade.verifyReviewNetworkError', 'Network error verifying review. Please try again.');
+  }
 }
 
 function closeCelebrateModal() {
@@ -6074,7 +6306,7 @@ function closeRecurringTip() {
 // already-recurring class. Gentle, once ever, dismissible, visible-only, and it
 // steps aside for the review ask so surfaces never crowd each other.
 function maybeShowClassSummaryUpsell() {
-  if (_isPro || !state._recurringEventId) return;        // Pro users / non-recurring → irrelevant
+  if (_isPro || (_billing && _billing.plan === 'pro') || !state._recurringEventId) return;        // Pro users / non-recurring → irrelevant
   if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
   let shown = false;
   try { shown = !!localStorage.getItem('att_class_summary_tip_shown'); } catch (e) { return; }
@@ -6189,6 +6421,7 @@ function getReviewExperimentVariant() {
 }
 
 function maybeShowReviewAsk() {
+  if (_isPro || (_billing && _billing.plan === 'pro')) return;
   if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
   let count = 0, tracked = 0, shown = false, hasReviewed = false;
   try {
@@ -6314,7 +6547,7 @@ async function submitReviewExperimentFeedback(variant) {
 // is logged (shown/clicked/dismissed) so the dismiss + ignore rate is measurable
 // and the surface can be pulled if it grates.
 function maybeShowAutoExportUpsell() {
-  if (_isPro) return;                                     // already has auto-export
+  if (_isPro || (_billing && _billing.plan === 'pro')) return;                                     // already has auto-export
   if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
   let tracked = 0, exportCount = 0, shown = false;
   try {
@@ -6610,6 +6843,15 @@ async function openSettingsModal() {
       if (autoCheckbox) autoCheckbox.checked = data.autoExportOnEnd === true;
       localStorage.setItem('autoExportOnEnd', data.autoExportOnEnd ? '1' : '0');
       if (emailCheckbox) emailCheckbox.checked = data.emailOptOut !== true;
+      const notifPrefs = data.notificationPreferences || {};
+      const exportPref = document.getElementById('setting-pref-exportSummary');
+      if (exportPref) exportPref.checked = data.emailOptOut !== true && notifPrefs.exportSummary !== false;
+      const seriesPref = document.getElementById('setting-pref-seriesAlerts');
+      if (seriesPref) seriesPref.checked = data.emailOptOut !== true && notifPrefs.seriesAlerts !== false;
+      const weeklyPref = document.getElementById('setting-pref-weeklyDigest');
+      if (weeklyPref) weeklyPref.checked = data.emailOptOut !== true && notifPrefs.weeklyDigest !== false;
+      const tipsPref = document.getElementById('setting-pref-tipsAndUpdates');
+      if (tipsPref) tipsPref.checked = data.emailOptOut !== true && notifPrefs.tipsAndUpdates !== false;
       const extraInput = document.getElementById('settings-extra-emails');
       if (extraInput) extraInput.value = (data.digestExtraEmails || []).join(', ');
       // Referral row: personal share link + how many colleagues joined via it.
@@ -6641,6 +6883,7 @@ function closeSettingsModal() {
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
   const overlays = [
+    ['cancel-subscription-modal', typeof closeCancelSubscriptionModal === 'function' ? closeCancelSubscriptionModal : null],
     ['note-modal', typeof closeNoteModal === 'function' ? closeNoteModal : null],
     ['paywall-why-modal', typeof dismissPaywallWhy === 'function' ? dismissPaywallWhy : null],
     ['upgrade-modal', typeof closeUpgradeModal === 'function' ? closeUpgradeModal : null],
@@ -7625,6 +7868,41 @@ window.addEventListener('DOMContentLoaded', () => {
           </label>
         </div>
 
+        <!-- Granular email notification categories -->
+        <div id="settings-email-categories" style="margin-top:-2px;margin-bottom:12px;padding:10px 14px;background:#161b22;border:1px solid #30363d;border-radius:8px">
+          <div style="font-size:.72rem;font-weight:600;color:#8b949e;margin-bottom:8px" data-i18n="settings.emailCategoriesTitle">Notification Categories:</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
+              <input type="checkbox" id="setting-pref-exportSummary" onchange="toggleNotificationPref('exportSummary', this.checked)" style="margin-top:2px;accent-color:#4ade80" />
+              <div>
+                <div style="font-size:.75rem;font-weight:600;color:#c9d1d9" data-i18n="settings.emailPrefExport">Export &amp; attendance summaries</div>
+                <div style="font-size:.68rem;color:#8b949e" data-i18n="settings.emailPrefExportDesc">Email report generated after taking attendance or exporting to Google Sheets.</div>
+              </div>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
+              <input type="checkbox" id="setting-pref-seriesAlerts" onchange="toggleNotificationPref('seriesAlerts', this.checked)" style="margin-top:2px;accent-color:#4ade80" />
+              <div>
+                <div style="font-size:.75rem;font-weight:600;color:#c9d1d9" data-i18n="settings.emailPrefSeries">Absence &amp; streak alerts</div>
+                <div style="font-size:.68rem;color:#8b949e" data-i18n="settings.emailPrefSeriesDesc">Alerts when recurring participants miss multiple meetings or hit streaks.</div>
+              </div>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
+              <input type="checkbox" id="setting-pref-weeklyDigest" onchange="toggleNotificationPref('weeklyDigest', this.checked)" style="margin-top:2px;accent-color:#4ade80" />
+              <div>
+                <div style="font-size:.75rem;font-weight:600;color:#c9d1d9" data-i18n="settings.emailPrefWeekly">Weekly digest</div>
+                <div style="font-size:.68rem;color:#8b949e" data-i18n="settings.emailPrefWeeklyDesc">Summary of weekly meetings and attendance trends for your organization.</div>
+              </div>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
+              <input type="checkbox" id="setting-pref-tipsAndUpdates" onchange="toggleNotificationPref('tipsAndUpdates', this.checked)" style="margin-top:2px;accent-color:#4ade80" />
+              <div>
+                <div style="font-size:.75rem;font-weight:600;color:#c9d1d9" data-i18n="settings.emailPrefTips">Tips &amp; product updates</div>
+                <div style="font-size:.68rem;color:#8b949e" data-i18n="settings.emailPrefTipsDesc">Helpful tips and major feature announcements.</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
         <!-- Extra report recipients (co-teacher / coordinator / admin inbox) -->
         <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:6px">
           <div>
@@ -7702,9 +7980,15 @@ window.addEventListener('DOMContentLoaded', () => {
             <div id="settings-billing-desc" class="settings-row-sub">Pro unlocks the org-wide team dashboard and auto-export for your whole domain.</div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-            <button type="button" id="settings-billing-btn" onclick="handleBillingClick()" style="background:#4ade80;color:#0d1117;border:none;padding:7px 16px;border-radius:8px;cursor:pointer;font-size:.75rem;font-weight:700;white-space:nowrap;box-shadow:0 2px 8px rgba(74,222,128,.2)">Upgrade to Pro</button>
+            <button type="button" id="settings-billing-btn" onclick="handleBillingClick()" style="background:#4ade80;color:#0d1117;border:none;padding:7px 16px;border-radius:8px;cursor:pointer;font-size:.75rem;font-weight:700;white-space:nowrap;box-shadow:0 2px 8px rgba(74,222,128,.2)" data-i18n="settings.upgradeToPro">Upgrade to Pro</button>
             <button type="button" id="settings-school-license-btn" onclick="requestSchoolLicense()" style="display:none;background:transparent;border:1px solid rgba(255,255,255,.2);color:#c9d1d9;padding:5px 12px;border-radius:8px;cursor:pointer;font-size:.72rem;font-weight:600;white-space:nowrap" data-i18n="upgrade.requestSchoolLicense">Request School / Department License</button>
           </div>
+        </div>
+        <!-- Subscription cancellation status notice & actions -->
+        <div id="settings-cancel-notice" style="display:none;margin-top:10px;padding:8px 12px;background:rgba(240,136,62,.15);border:1px solid rgba(240,136,62,.35);border-radius:8px;font-size:.74rem;color:#f0883e;line-height:1.4"></div>
+        <div id="settings-sub-actions" style="display:none;margin-top:8px;align-items:center;justify-content:space-between">
+          <button type="button" id="settings-resume-btn" onclick="resumeSubscription()" style="display:none;background:#238636;color:#fff;border:none;padding:5px 12px;border-radius:6px;font-size:.72rem;font-weight:600;cursor:pointer" data-i18n="settings.resumeSubBtn">Resume Auto-Renewal</button>
+          <button type="button" id="settings-cancel-btn" onclick="openCancelSubscriptionModal()" style="display:none;background:transparent;border:none;color:#8b949e;font-size:.72rem;cursor:pointer;text-decoration:underline;padding:2px 0" data-i18n="settings.cancelSubBtn">Cancel Auto-Renewal</button>
         </div>
       </div>
 
@@ -7719,6 +8003,43 @@ window.addEventListener('DOMContentLoaded', () => {
         </div>
         <div class="settings-row-sub" style="margin-bottom:10px" data-i18n="settings.deleteDesc">Permanently removes your account, settings, activity, and attendance records. This cannot be undone.</div>
         <button type="button" id="settings-delete-btn" onclick="deleteMyAccount()" data-i18n="settings.deleteMyAccount" style="background:transparent;border:1px solid rgba(248,81,73,.4);color:#f85149;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.75rem;font-weight:600">Delete my account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Cancel Subscription Confirmation Modal ── -->
+  <div id="cancel-subscription-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1200;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)">
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:14px;padding:24px;max-width:420px;width:100%;box-shadow:0 24px 48px rgba(0,0,0,.7);box-sizing:border-box">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div style="width:36px;height:36px;border-radius:50%;background:rgba(240,136,62,.15);display:flex;align-items:center;justify-content:center;color:#f0883e;flex-shrink:0">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div>
+          <div style="font-size:1rem;font-weight:700;color:#f0f6fc" data-i18n="settings.cancelModalTitle">Cancel Auto-Renewal?</div>
+          <div style="font-size:.75rem;color:#4ade80;font-weight:600" data-i18n="settings.cancelModalSub">Zero-Surprise Guarantee: $0 Future Charges</div>
+        </div>
+      </div>
+      <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:12px;margin-bottom:16px;font-size:.76rem;line-height:1.5;color:#c9d1d9">
+        <div style="margin-bottom:6px;display:flex;align-items:flex-start;gap:6px">
+          <span style="color:#4ade80">✓</span>
+          <span><strong>No future charges:</strong> Your payment method will never be billed again.</span>
+        </div>
+        <div style="margin-bottom:6px;display:flex;align-items:flex-start;gap:6px">
+          <span style="color:#4ade80">✓</span>
+          <span><strong>Keep your Pro access:</strong> You will enjoy full Pro features until <strong id="cancel-modal-period-end">the end of your billing cycle</strong>.</span>
+        </div>
+        <div style="margin-bottom:6px;display:flex;align-items:flex-start;gap:6px">
+          <span style="color:#4ade80">✓</span>
+          <span><strong>Your sheets remain safe:</strong> All attendance logs and spreadsheets in Google Drive stay yours forever.</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:6px">
+          <span style="color:#4ade80">✓</span>
+          <span><strong>Written receipt:</strong> We will immediately email you written proof of this cancellation for your records.</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button type="button" id="btn-confirm-cancel-sub" onclick="confirmCancelSubscription()" style="background:#f85149;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-weight:600;font-size:.82rem;cursor:pointer;width:100%" data-i18n="settings.confirmCancelBtn">Cancel Auto-Renewal</button>
+        <button type="button" onclick="closeCancelSubscriptionModal()" style="background:transparent;border:1px solid #30363d;color:#c9d1d9;padding:9px 16px;border-radius:8px;font-weight:500;font-size:.8rem;cursor:pointer;width:100%" data-i18n="settings.keepSubBtn">Never mind, keep Pro</button>
       </div>
     </div>
   </div>
@@ -7761,27 +8082,27 @@ window.addEventListener('DOMContentLoaded', () => {
   </div>
 
   <div id="upgrade-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:1100;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px)">
-    <div style="background:#1e1f20;border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:24px;max-width:380px;width:100%;box-shadow:0 24px 48px rgba(0,0,0,.6);position:relative;font-family:var(--font-sans);max-height:90vh;overflow-y:auto">
-      <button type="button" onclick="closeUpgradeModal()" data-i18n-aria="common.close" aria-label="Close" style="position:absolute;top:16px;right:16px;background:none;border:none;color:#9aa0a6;cursor:pointer;font-size:16px;line-height:1;padding:4px;border-radius:50%">&times;</button>
+    <div style="background:#1e1f20;border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:20px 16px;max-width:370px;width:100%;box-shadow:0 24px 48px rgba(0,0,0,.6);position:relative;font-family:var(--font-sans);max-height:90vh;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent">
+      <button type="button" onclick="closeUpgradeModal()" data-i18n-aria="common.close" aria-label="Close" style="position:absolute;top:14px;right:14px;background:none;border:none;color:#9aa0a6;cursor:pointer;font-size:16px;line-height:1;padding:4px;border-radius:50%">&times;</button>
 
       <!-- Top value pill (repainted per user in showUpgradeModal) -->
-      <div id="upgrade-deal-pill" style="display:inline-flex;align-items:center;gap:6px;background:rgba(253,214,99,.12);border:1px solid rgba(253,214,99,.25);color:#fdd663;padding:4px 10px;border-radius:20px;font-size:.72rem;font-weight:600;margin-bottom:12px;letter-spacing:.02em">
+      <div id="upgrade-deal-pill" style="display:inline-flex;align-items:center;gap:6px;background:rgba(253,214,99,.12);border:1px solid rgba(253,214,99,.25);color:#fdd663;padding:4px 10px;border-radius:20px;font-size:.72rem;font-weight:600;margin-bottom:10px;letter-spacing:.02em">
         <span data-i18n="upgrade.dealLifetime">One-time payment · yours forever, nothing to cancel</span>
       </div>
 
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-        <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#fdd663,#f59e0b);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(245,158,11,.3)">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="#1e1f20"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+        <div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#fdd663,#f59e0b);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(245,158,11,.3);flex-shrink:0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#1e1f20"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
         </div>
-        <h3 style="margin:0;font-size:1.25rem;font-weight:600;color:#e3e3e3;letter-spacing:-.01em" data-i18n="upgrade.title">Upgrade to Pro</h3>
+        <h3 style="margin:0;font-size:1.18rem;font-weight:600;color:#e3e3e3;letter-spacing:-.01em" data-i18n="upgrade.title">Upgrade to Pro</h3>
       </div>
-      <p style="margin:0 0 14px;font-size:.82rem;color:#9aa0a6;line-height:1.45" data-i18n="upgrade.sub">Unlock unlimited Google Sheets exports, automatic background capture, and attendee certificates.</p>
+      <p style="margin:0 0 12px;font-size:.80rem;color:#9aa0a6;line-height:1.4" data-i18n="upgrade.sub">Unlock unlimited Sheets exports, auto-recording, and certificates.</p>
 
       <!-- Contextual trigger reason (e.g. autoExport or quota) -->
-      <div id="upgrade-modal-note" style="display:none;background:rgba(253,214,99,.1);border:1px solid rgba(253,214,99,.25);color:#fdd663;padding:8px 12px;border-radius:10px;font-size:.78rem;margin-bottom:14px;line-height:1.4"></div>
+      <div id="upgrade-modal-note" style="display:none;background:rgba(253,214,99,.1);border:1px solid rgba(253,214,99,.25);color:#fdd663;padding:7px 11px;border-radius:10px;font-size:.76rem;margin-bottom:10px;line-height:1.4"></div>
 
       <!-- Plan 1: Featured Lifetime Pro Pass (Crown Jewel / Best Value) -->
-      <div id="plan-card-lifetime" style="background:linear-gradient(180deg, rgba(52,168,83,.08), rgba(255,255,255,.02));border:1.5px solid rgba(129,201,149,.4);border-radius:14px;padding:16px;margin-bottom:12px;position:relative">
+      <div id="plan-card-lifetime" style="background:linear-gradient(180deg, rgba(52,168,83,.08), rgba(255,255,255,.02));border:1.5px solid rgba(129,201,149,.4);border-radius:12px;padding:13px 14px 12px;margin-bottom:10px;position:relative">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <div style="display:flex;align-items:center;gap:6px">
             <span style="font-weight:600;font-size:.92rem;color:#e3e3e3" data-i18n="upgrade.lifetimeName">Lifetime Pass</span>
@@ -7793,28 +8114,24 @@ window.addEventListener('DOMContentLoaded', () => {
           </div>
         </div>
 
-        <div style="display:flex;flex-direction:column;gap:6px;font-size:.76rem;color:#c4c7c5;margin-bottom:14px">
+        <div style="display:flex;flex-direction:column;gap:5px;font-size:.76rem;color:#c4c7c5;margin-bottom:11px">
           <div style="display:flex;align-items:center;gap:7px">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#81c995" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#81c995" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
             <span><strong data-i18n="upgrade.payOnce">Pay once, own forever</strong> — <span data-i18n="upgrade.noRenewal">no recurring renewal</span></span>
           </div>
           <div style="display:flex;align-items:center;gap:7px">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#81c995" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#81c995" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
             <span data-i18n="upgrade.featLifetime">Unlimited Sheets exports &amp; auto-capture</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:7px">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#81c995" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
-            <span data-i18n="upgrade.featPayMethods">Cards, Pix, OXXO, UPI &amp; local payment methods</span>
           </div>
         </div>
 
-        <button type="button" id="btn-upgrade-lifetime" onclick="startUpgradeCheckout('lifetime', 'btn-upgrade-lifetime')" style="width:100%;background:#34a853;color:#ffffff;border:none;padding:10px 16px;border-radius:20px;font-weight:600;font-size:.84rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 2px 8px rgba(52,168,83,.3);transition:all .15s ease">
+        <button type="button" id="btn-upgrade-lifetime" onclick="startUpgradeCheckout('lifetime', 'btn-upgrade-lifetime')" style="width:100%;background:#34a853;color:#ffffff;border:none;padding:9.5px 16px;border-radius:20px;font-weight:600;font-size:.83rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 2px 8px rgba(52,168,83,.3);transition:all .15s ease">
           <span data-i18n="upgrade.ctaLifetime">Get Lifetime Access —</span> <span class="price-lifetime">$9.99</span>
         </button>
       </div>
 
       <!-- Plan 2: Annual (Educator / Classroom Pass) -->
-      <div id="plan-card-educator" style="background:rgba(255,255,255,.03);border:1px solid rgba(88,166,255,.2);border-radius:14px;padding:14px;margin-bottom:14px">
+      <div id="plan-card-educator" style="background:rgba(255,255,255,.03);border:1px solid rgba(88,166,255,.2);border-radius:12px;padding:12px 14px 11px;margin-bottom:10px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <div style="display:flex;align-items:center;gap:6px">
             <span style="font-weight:600;font-size:.88rem;color:#e3e3e3" data-i18n="pricing.planEduName">Educator Annual Pass</span>
@@ -7825,7 +8142,7 @@ window.addEventListener('DOMContentLoaded', () => {
             <span style="font-size:.7rem;color:#9aa0a6;font-weight:400" data-i18n="upgrade.eduPeriod">/ yr</span>
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:5px;font-size:.75rem;color:#9aa0a6;margin-bottom:12px">
+        <div style="display:flex;flex-direction:column;gap:5px;font-size:.75rem;color:#9aa0a6;margin-bottom:10px">
           <div style="display:flex;align-items:center;gap:7px">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8ab4f8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
             <span data-i18n="upgrade.featEduExport">Unlimited classes &amp; automated Sheets export</span>
@@ -7835,16 +8152,13 @@ window.addEventListener('DOMContentLoaded', () => {
             <span data-i18n="upgrade.featEduCerts">Student attendance certificates &amp; multi-session reports</span>
           </div>
         </div>
-        <button type="button" id="btn-upgrade-individual" onclick="startUpgradeCheckout('educator', 'btn-upgrade-individual')" style="width:100%;background:rgba(88,166,255,.14);border:1px solid rgba(88,166,255,.3);color:#79c0ff;padding:13px 18px;border-radius:20px;font-weight:600;font-size:.82rem;cursor:pointer;transition:all .15s ease;margin-top:4px">
+        <button type="button" id="btn-upgrade-individual" onclick="startUpgradeCheckout('educator', 'btn-upgrade-individual')" style="width:100%;background:rgba(88,166,255,.14);border:1px solid rgba(88,166,255,.3);color:#79c0ff;padding:9px 16px;border-radius:20px;font-weight:600;font-size:.81rem;cursor:pointer;transition:all .15s ease;margin-top:2px">
           <span data-i18n="upgrade.ctaEdu">Get Educator Annual Pass —</span> <span class="price-educator">$4.99</span>/yr
         </button>
       </div>
 
-      <!-- Plan 3: Department (recurring domain plan, $59/yr) — workspace orgs
-           only (hidden for personal Gmail by loadBillingStatus; individual===true
-           can't buy a domain). Replaced the retired $19.99 one-time domain
-           lifetime. Stays LAST regardless of the edu-first reorder above. -->
-      <div id="plan-card-team" style="display:none;background:rgba(255,255,255,.03);border:1px solid rgba(253,214,99,.25);border-radius:14px;padding:14px;margin-bottom:14px">
+      <!-- Plan 3: Department (recurring domain plan, $59/yr) — workspace orgs only -->
+      <div id="plan-card-team" style="display:none;background:rgba(255,255,255,.03);border:1px solid rgba(253,214,99,.25);border-radius:12px;padding:12px 14px;margin-bottom:10px">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
           <div>
             <div style="font-weight:600;font-size:.88rem;color:#e3e3e3" data-i18n="upgrade.teamName">Whole-School License</div>
@@ -7855,44 +8169,43 @@ window.addEventListener('DOMContentLoaded', () => {
             <span style="font-size:.7rem;color:#9aa0a6;font-weight:400;display:block" data-i18n="upgrade.perYear">/yr</span>
           </div>
         </div>
-        <button type="button" id="btn-upgrade-team" onclick="startUpgradeCheckout('department', 'btn-upgrade-team')" style="flex:0 0 auto;width:100%;background:rgba(253,214,99,.14);border:1px solid rgba(253,214,99,.3);color:#fdd663;padding:10px 16px;border-radius:20px;font-weight:600;font-size:.82rem;cursor:pointer;margin-top:10px;transition:all .15s ease" data-i18n="upgrade.deptCta">Get the Department plan — your whole school</button>
+        <button type="button" id="btn-upgrade-team" onclick="startUpgradeCheckout('department', 'btn-upgrade-team')" style="flex:0 0 auto;width:100%;background:rgba(253,214,99,.14);border:1px solid rgba(253,214,99,.3);color:#fdd663;padding:9px 16px;border-radius:20px;font-weight:600;font-size:.81rem;cursor:pointer;margin-top:8px;transition:all .15s ease" data-i18n="upgrade.deptCta">Get the Department plan — your whole school</button>
         <button type="button" id="btn-request-school-license" onclick="requestSchoolLicense()" style="display:none;width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);color:#e3e3e3;padding:8px 14px;border-radius:20px;font-weight:500;font-size:.78rem;cursor:pointer;margin-top:8px;transition:all .15s ease" data-i18n="upgrade.requestSchoolLicense">Request School / Department License</button>
       </div>
 
-      <!-- Architectural Advantage Card -->
-      <div style="background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;margin-bottom:14px;font-size:.73rem;color:#c4c7c5;line-height:1.45">
-        <div style="font-weight:600;color:#e3e3e3;margin-bottom:6px;display:flex;align-items:center;gap:6px">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          <span data-i18n="upgrade.whyTitle">Why Attendance Tracker beats Chrome extensions:</span>
+      <!-- Clean Low-Profile Review Exchange — right below plan checkout cards -->
+      <div id="upgrade-review-exchange-box" style="background:rgba(255,255,255,.025);border:1px dashed rgba(129,201,149,.3);border-radius:10px;padding:9px 12px;text-align:center;font-size:.75rem;color:#c4c7c5;margin-bottom:10px;line-height:1.4">
+        <div>
+          <span style="color:#fdd663;font-weight:600">⭐ <span data-i18n="upgrade.reviewOffer1">School budget tight?</span></span> <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" id="upgrade-review-link" target="_blank" onclick="onUpgradeReviewClick(event)" style="color:#58a6ff;font-weight:600;text-decoration:underline;margin:0 3px" data-i18n="upgrade.reviewOfferLink">Leave an honest review</a> <span data-i18n="upgrade.reviewOffer2">for 1 month free.</span>
         </div>
-        <div style="display:flex;flex-direction:column;gap:4px;color:#9aa0a6">
-          <div>• <span data-i18n="upgrade.why1">Official Google Meet Add-on (no DOM scraping breakage)</span></div>
-          <div>• <span data-i18n="upgrade.why2">Direct Google Drive &amp; Sheets API sync</span></div>
-          <div>• <span data-i18n="upgrade.why3">Class rosters, absent matching &amp; instant CSV download</span></div>
-          <div>• <span data-i18n="upgrade.why4">True call-end auto export &amp; series roll-up</span></div>
+        <div id="verify-review-box" style="display:none;margin-top:8px;background:rgba(129,201,149,.1);padding:8px 12px;border-radius:8px;border:1px solid rgba(129,201,149,.35)">
+          <div style="font-weight:600;color:#81c995;margin-bottom:6px" data-i18n="upgrade.verifyReviewPrompt">Left your review on the listing?</div>
+          <button type="button" id="verify-review-btn" onclick="triggerReviewVerification(event)" style="background:#238636;color:#ffffff;border:none;border-radius:16px;padding:6px 14px;font-size:.75rem;cursor:pointer;font-weight:600;box-shadow:0 2px 6px rgba(35,134,54,.3)" data-i18n="upgrade.verifyReviewBtn">Verify Review &amp; Unlock 1 Month Free</button>
+          <div id="verify-review-status" style="display:none;margin-top:6px;font-size:.72rem"></div>
         </div>
+      </div>
+
+      <!-- Trust & Reliability Note -->
+      <div style="background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:7px 10px;margin-bottom:10px;font-size:.72rem;color:#9aa0a6;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
+        <span><span data-i18n="upgrade.why1">Official Google Meet Add-on (no DOM scraping breakage)</span> · <span data-i18n="upgrade.why2">Direct Google Drive &amp; Sheets API sync</span></span>
       </div>
 
       <!-- Opt-in: Send Upgrade Link to Email for busy teachers -->
-      <div id="upgrade-email-link-wrap" style="text-align:center;margin-bottom:12px">
-        <button type="button" id="btn-send-upgrade-email" onclick="sendUpgradeLinkToEmail()" style="background:none;border:none;color:#8ab4f8;cursor:pointer;font-size:.76rem;text-decoration:underline;padding:4px 8px;border-radius:6px;transition:all .15s ease">
+      <div id="upgrade-email-link-wrap" style="text-align:center;margin-bottom:8px">
+        <button type="button" id="btn-send-upgrade-email" onclick="sendUpgradeLinkToEmail()" style="background:none;border:none;color:#8ab4f8;cursor:pointer;font-size:.74rem;text-decoration:underline;padding:3px 6px;border-radius:6px;transition:all .15s ease">
           <span data-i18n="upgrade.sendEmailLink">Teaching right now? Email me a link to upgrade later</span>
         </button>
-        <div id="upgrade-email-link-status" style="display:none;font-size:.75rem;color:#81c995;font-weight:500;padding:4px 0"></div>
-      </div>
-
-      <!-- Clean Low-Profile Review Exchange -->
-      <div style="text-align:center;font-size:.74rem;color:#9aa0a6;margin-bottom:14px;line-height:1.4">
-<span data-i18n="upgrade.reviewOffer1">School budget tight?</span> <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" id="upgrade-review-link" target="_blank" onclick="onUpgradeReviewClick(event)" style="color:#8ab4f8;text-decoration:underline" data-i18n="upgrade.reviewOfferLink">Leave an honest review</a> <span data-i18n="upgrade.reviewOffer2">for 1 month free.</span>
+        <div id="upgrade-email-link-status" style="display:none;font-size:.75rem;color:#81c995;font-weight:500;padding:3px 0"></div>
       </div>
 
       <!-- Modal Footer -->
-      <div style="display:flex;justify-content:space-between;align-items:center;font-size:.73rem;color:#5f6368;padding-top:8px;border-top:1px solid rgba(255,255,255,.06)">
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:.72rem;color:#5f6368;padding-top:8px;border-top:1px solid rgba(255,255,255,.06)">
         <span style="display:flex;align-items:center;gap:4px">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style="color:#9aa0a6"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
           <span data-i18n="upgrade.stripe">Encrypted checkout via Stripe</span>
         </span>
-        <button type="button" onclick="closeUpgradeModal()" style="background:none;border:none;color:#9aa0a6;cursor:pointer;font-size:.73rem;padding:0;text-decoration:underline" data-i18n="upgrade.maybeLater">Maybe later</button>
+        <button type="button" onclick="closeUpgradeModal()" style="background:none;border:none;color:#9aa0a6;cursor:pointer;font-size:.72rem;padding:0;text-decoration:underline" data-i18n="upgrade.maybeLater">Maybe later</button>
       </div>
     </div>
   </div>

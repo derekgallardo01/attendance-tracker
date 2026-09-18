@@ -170,6 +170,8 @@ describe('setLocale + fallback chain', () => {
 describe('detectLocale', () => {
   afterEach(() => {
     localStorage.removeItem('att_locale');
+    delete window.location;
+    window.location = new URL('https://attendancetracker.dev/');
   });
 
   test('detects locale from browser language prefix', () => {
@@ -224,6 +226,22 @@ describe('detectLocale', () => {
   test('prefers stored locale in localStorage over browser language', () => {
     localStorage.setItem('att_locale', 'ja');
     expect(strings.detectLocale('es-ES')).toBe('ja');
+  });
+
+  test('prefers URL query parameter lang over localStorage and browser language', () => {
+    delete window.location;
+    window.location = new URL('https://attendancetracker.dev/?lang=pt');
+    localStorage.setItem('att_locale', 'ja');
+    expect(strings.detectLocale('es-ES')).toBe('pt');
+    expect(localStorage.getItem('att_locale')).toBe('pt');
+  });
+
+  test('renderLanguagePicker renders select with all 35 locales', () => {
+    document.body.innerHTML = '<div id="picker-mount"></div>';
+    strings.renderLanguagePicker('picker-mount');
+    const select = document.querySelector('.att-lang-picker');
+    expect(select).not.toBeNull();
+    expect(select.children.length).toBe(35);
   });
 });
 

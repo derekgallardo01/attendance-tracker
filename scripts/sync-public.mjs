@@ -86,6 +86,7 @@ const MIRRORED = [
   'support.html',
   'team.html',
   'terms.html',
+  'unsubscribe.html',
   'track-attendance-for-webinars-and-training-google-meet.html',
   'track-google-meet-attendance-without-host.html',
   'js/utils.js',

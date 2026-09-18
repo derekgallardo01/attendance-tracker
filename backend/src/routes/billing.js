@@ -3,7 +3,7 @@ const { requireAuth } = require('../middleware/auth');
 const express = require('express');
 const log = require('../lib/logger');
 const CONFIG = require('../config');
-const { getTenantPlan, setTenantPlan, getUserPlan, setUserPlan, logEvent, countUserMonthlyExports, countUserAutoExports, getUserSettings, getDomainTeacherCount, claimWebhookEvent, releaseWebhookEvent } = require('../services/firestore');
+const { getTenantPlan, setTenantPlan, getUserPlan, setUserPlan, logEvent, recordCancellationTelemetry, countUserMonthlyExports, countUserAutoExports, getUserSettings, getDomainTeacherCount, claimWebhookEvent, releaseWebhookEvent } = require('../services/firestore');
 const { PERSONAL_EMAIL_DOMAINS } = require('../services/firestore/_core');
 const PRICING = require('../config/pricing');
 
@@ -11,14 +11,14 @@ const PRICING = require('../config/pricing');
 const PPP_COUNTRIES = new Set([
   'PH', 'IN', 'ID', 'MY', 'NG', 'VN', 'PK', 'BD', 'KE', 'ZA', 'BR', 'CO', 'PE',
   'UA', 'GH', 'EG', 'TH', 'TR', 'AR', 'LK',
-  'MX', 'CL', 'TN', 'SO', 'EC', 'BO', 'GT', 'MA', 'DZ',
+  'MX', 'CL', 'TN', 'SO', 'EC', 'BO', 'GT', 'MA', 'DZ', 'ZM',
 ]);
 
 const PPP_FLAGS = {
   PH: '🇵🇭', IN: '🇮🇳', ID: '🇮🇩', MY: '🇲🇾', NG: '🇳🇬', VN: '🇻🇳', PK: '🇵🇰', BD: '🇧🇩',
   KE: '🇰🇪', ZA: '🇿🇦', BR: '🇧🇷', CO: '🇨🇴', PE: '🇵🇪', UA: '🇺🇦', GH: '🇬🇭', EG: '🇪🇬',
   TH: '🇹🇭', TR: '🇹🇷', AR: '🇦🇷', LK: '🇱🇰', MX: '🇲🇽', CL: '🇨🇱', TN: '🇹🇳', SO: '🇸🇴',
-  EC: '🇪🇨', BO: '🇧🇴', GT: '🇬🇹', MA: '🇲🇦', DZ: '🇩🇿',
+  EC: '🇪🇨', BO: '🇧🇴', GT: '🇬🇹', MA: '🇲🇦', DZ: '🇩🇿', ZM: '🇿🇲',
 };
 
 function detectCountry(req) {
@@ -293,6 +293,9 @@ router.post('/billing/send-upgrade-link', requireAuth, async (req, res) => {
       lifetimePrice,
       flag,
       isPpp: isPppEligible,
+      country: userCountry,
+      domain,
+      language: req.user.language || req.user.locale || null,
     });
     upgradeLinkCooldown.set(email, now);
     try {
@@ -460,6 +463,194 @@ router.get('/billing/portal', requireAuth, async (req, res) => {
   }
 });
 
+// POST /api/billing/cancel-subscription — transparent self-serve cancellation.
+// Tells Stripe to cancel the subscription AT PERIOD END:
+// 1. The customer's credit card is NEVER charged again (auto-renewal stopped).
+// 2. The customer keeps full Pro access through the end of the period they paid for.
+// 3. Sends an immediate email confirmation with the exact end date.
+router.post('/billing/cancel-subscription', requireAuth, async (req, res) => {
+  const stripe = getStripe();
+  if (!stripe) return res.status(503).json({ error: 'Billing is not configured yet.' });
+  const email = (req.user.email || '').toLowerCase();
+  const domain = req.user.domain;
+  let individual = isPersonalDomain(domain);
+
+  try {
+    let planInfo = individual
+      ? await getUserPlan(domain, email)
+      : await getTenantPlan(domain);
+    if (!planInfo.stripeSubscriptionId && !individual) {
+      const userPlan = await getUserPlan(domain, email);
+      if (userPlan.stripeSubscriptionId) {
+        planInfo = userPlan;
+        individual = true;
+      }
+    }
+
+    const subId = planInfo.stripeSubscriptionId;
+    if (!subId) {
+      return res.status(404).json({ error: 'No active recurring subscription found to cancel.' });
+    }
+
+    // Cancel at period end in Stripe — guarantees NO further charges while preserving access
+    const subscription = await stripe.subscriptions.update(subId, {
+      cancel_at_period_end: true,
+    });
+
+    const currentPeriodEnd = subscription.current_period_end
+      ? new Date(subscription.current_period_end * 1000).toISOString()
+      : null;
+
+    const cancelPatch = {
+      cancelAtPeriodEnd: true,
+      cancelAt: currentPeriodEnd,
+      currentPeriodEnd,
+      canceledAt: new Date().toISOString(),
+    };
+
+    if (individual) {
+      await setUserPlan(domain, email, {
+        individualPlan: 'pro',
+        individualBillingStatus: subscription.status,
+        ...cancelPatch,
+      });
+    } else {
+      await setTenantPlan(domain, {
+        plan: 'pro',
+        billingStatus: subscription.status,
+        ...cancelPatch,
+      });
+    }
+
+    try {
+      await recordCancellationTelemetry({
+        category: 'subscription',
+        type: 'cancelled',
+        email,
+        domain,
+        meta: { subId, currentPeriodEnd, individual, source: 'in_app_settings' },
+      });
+      log.info('telemetry: subscription_cancelled', { email, domain, subId, currentPeriodEnd, individual, source: 'in_app_settings' });
+    } catch {}
+
+    // Send immediate confirmation email with written guarantee to user
+    const formattedDate = currentPeriodEnd
+      ? new Date(currentPeriodEnd).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+      : null;
+    try {
+      const { sendSubscriptionCancelledEmail } = require('../lib/notifications');
+      await sendSubscriptionCancelledEmail({
+        to: email,
+        displayName: req.user.displayName,
+        planName: planInfo.plan || 'Pro',
+        currentPeriodEnd: formattedDate,
+        language: req.body?.language || req.user.language || req.user.locale || null,
+        country: req.body?.country || detectCountry(req),
+        domain,
+      });
+    } catch (e) {
+      log.warn('billing: sendSubscriptionCancelledEmail failed', { email, error: e.message });
+    }
+
+    // Send admin notification alert to owner
+    try {
+      const { sendAdminSubscriptionCancelledNotification } = require('../lib/notifications');
+      sendAdminSubscriptionCancelledNotification({
+        email,
+        displayName: req.user.displayName,
+        domain,
+        plan: planInfo.plan || (individual ? 'educator' : 'team'),
+        subscriptionId: subId,
+        customerId: subscription.customer,
+        currentPeriodEnd: formattedDate,
+        source: 'in_app_settings',
+      }).catch(err => log.warn('billing: sendAdminSubscriptionCancelledNotification failed', { email, error: err.message }));
+    } catch (e) {
+      log.warn('billing: sendAdminSubscriptionCancelledNotification trigger error', { email, error: e.message });
+    }
+
+    res.json({
+      success: true,
+      cancelAtPeriodEnd: true,
+      currentPeriodEnd,
+      message: 'Subscription auto-renewal cancelled. Your card will not be charged again.',
+    });
+  } catch (err) {
+    log.error('billing: cancel-subscription failed', { domain, email, error: err.message });
+    res.status(500).json({ error: 'Could not cancel subscription right now. Please try again or contact support.' });
+  }
+});
+
+// POST /api/billing/resume-subscription — revert cancellation before period end.
+router.post('/billing/resume-subscription', requireAuth, async (req, res) => {
+  const stripe = getStripe();
+  if (!stripe) return res.status(503).json({ error: 'Billing is not configured yet.' });
+  const email = (req.user.email || '').toLowerCase();
+  const domain = req.user.domain;
+  let individual = isPersonalDomain(domain);
+
+  try {
+    let planInfo = individual
+      ? await getUserPlan(domain, email)
+      : await getTenantPlan(domain);
+    if (!planInfo.stripeSubscriptionId && !individual) {
+      const userPlan = await getUserPlan(domain, email);
+      if (userPlan.stripeSubscriptionId) {
+        planInfo = userPlan;
+        individual = true;
+      }
+    }
+
+    const subId = planInfo.stripeSubscriptionId;
+    if (!subId) {
+      return res.status(404).json({ error: 'No subscription found to resume.' });
+    }
+
+    const subscription = await stripe.subscriptions.update(subId, {
+      cancel_at_period_end: false,
+    });
+
+    const resumePatch = {
+      cancelAtPeriodEnd: false,
+      cancelAt: null,
+    };
+
+    if (individual) {
+      await setUserPlan(domain, email, {
+        individualPlan: 'pro',
+        individualBillingStatus: subscription.status,
+        ...resumePatch,
+      });
+    } else {
+      await setTenantPlan(domain, {
+        plan: 'pro',
+        billingStatus: subscription.status,
+        ...resumePatch,
+      });
+    }
+
+    try {
+      await recordCancellationTelemetry({
+        category: 'subscription',
+        type: 'resumed',
+        email,
+        domain,
+        meta: { subId, individual, source: 'in_app_settings' },
+      });
+      log.info('telemetry: subscription_resumed', { email, domain, subId, individual, source: 'in_app_settings' });
+    } catch {}
+
+    res.json({
+      success: true,
+      cancelAtPeriodEnd: false,
+      message: 'Your subscription has been resumed.',
+    });
+  } catch (err) {
+    log.error('billing: resume-subscription failed', { domain, email, error: err.message });
+    res.status(500).json({ error: 'Could not resume subscription right now.' });
+  }
+});
+
 // GET /api/billing/status — current plan for the caller's domain (drives the
 // upgrade CTA in the UI).
 router.get('/billing/status', requireAuth, async (req, res) => {
@@ -542,6 +733,11 @@ router.get('/billing/status', requireAuth, async (req, res) => {
       trialInfo,
       domainUserCount,
       domain: req.user?.domain || null,
+      cancelAtPeriodEnd: !!plan.cancelAtPeriodEnd,
+      cancelAt: plan.cancelAt || null,
+      currentPeriodEnd: plan.currentPeriodEnd || plan.cancelAt || null,
+      isRecurring: !!plan.stripeSubscriptionId,
+      subscriptionId: plan.stripeSubscriptionId || null,
       // Display-price truth for every frontend surface (see config/pricing.js).
       pricing: { ...PRICING.PRICES, quotaLimit: PRICING.FREE_MONTHLY_EXPORT_LIMIT },
     });
@@ -635,6 +831,25 @@ async function webhookHandler(req, res) {
               individualStripeSubscriptionId: s.subscription || null,
             });
             try { await logEvent(domain, { email, type: 'upgraded', meta: { plan: 'individual', amount: s.amount_total, currency: s.currency } }); } catch {}
+            try {
+              const { sendUpgradeNotification } = require('../lib/notifications');
+              const { getUser } = require('../services/firestore');
+              const userDoc = await getUser(domain, email.toLowerCase());
+              sendUpgradeNotification({
+                email: email.toLowerCase(),
+                displayName: userDoc?.displayName || s.customer_details?.name || '',
+                domain,
+                plan: s.metadata?.plan || 'individual',
+                amountTotal: s.amount_total,
+                currency: s.currency,
+                customerId: s.customer || null,
+                subscriptionId: s.subscription || null,
+                country: s.customer_details?.address?.country || userDoc?.signupGeo?.country || null,
+                isTeam: false,
+              }).catch(err => log.warn('billing: sendUpgradeNotification failed (individual)', { email, error: err.message }));
+            } catch (e) {
+              log.warn('billing: error dispatching upgrade notification (individual)', { email, error: e.message });
+            }
             // Backfill routing metadata onto the subscription when the session
             // was created signed-out (email unknown at session time). The
             // subscription.updated/deleted handlers route ONLY on
@@ -677,6 +892,24 @@ async function webhookHandler(req, res) {
               stripeSubscriptionId: s.subscription || null,
             });
             try { await logEvent(domain, { email: s.customer_email || s.metadata?.initiatedBy || 'admin', type: 'upgraded', meta: { plan: 'team', amount: s.amount_total, currency: s.currency } }); } catch {}
+            try {
+              const { sendUpgradeNotification } = require('../lib/notifications');
+              const buyerEmail = s.customer_details?.email || s.customer_email || s.metadata?.initiatedBy || 'admin';
+              sendUpgradeNotification({
+                email: buyerEmail,
+                displayName: s.customer_details?.name || '',
+                domain,
+                plan: s.metadata?.plan || 'team',
+                amountTotal: s.amount_total,
+                currency: s.currency,
+                customerId: s.customer || null,
+                subscriptionId: s.subscription || null,
+                country: s.customer_details?.address?.country || null,
+                isTeam: true,
+              }).catch(err => log.warn('billing: sendUpgradeNotification failed (team)', { domain, error: err.message }));
+            } catch (e) {
+              log.warn('billing: error dispatching upgrade notification (team)', { domain, error: e.message });
+            }
             // Same backfill as the individual branch: lifecycle events for an
             // org subscription route on sub.metadata.domain only.
             const subId = typeof s.subscription === 'string' ? s.subscription : s.subscription?.id;
@@ -701,6 +934,15 @@ async function webhookHandler(req, res) {
         // decline shouldn't yank access mid-retry. `unpaid`/`canceled`/etc.
         // (retries exhausted or ended) downgrade to Free.
         const active = ['active', 'trialing', 'past_due'].includes(sub.status);
+        const cancelAtPeriodEnd = active && sub.cancel_at_period_end === true;
+        const currentPeriodEnd = active && sub.current_period_end
+          ? new Date(sub.current_period_end * 1000).toISOString()
+          : null;
+        const cancelPatch = {
+          cancelAtPeriodEnd,
+          cancelAt: cancelAtPeriodEnd ? currentPeriodEnd : null,
+          currentPeriodEnd: currentPeriodEnd || null,
+        };
         if (sub.metadata?.individual === '1') {
           const domain = sub.metadata?.domain;
           const email = sub.metadata?.email;
@@ -708,8 +950,9 @@ async function webhookHandler(req, res) {
             await setUserPlan(domain, email, {
               individualPlan: active ? 'pro' : 'free',
               individualBillingStatus: sub.status,
-              individualStripeSubscriptionId: sub.id,
+              individualStripeSubscriptionId: active ? sub.id : null,
               ...(sub.customer ? { individualStripeCustomerId: sub.customer } : {}),
+              ...cancelPatch,
             });
           }
         } else {
@@ -718,10 +961,37 @@ async function webhookHandler(req, res) {
             await setTenantPlan(domain, {
               plan: active ? 'pro' : 'free',
               billingStatus: sub.status,
-              stripeSubscriptionId: sub.id,
+              stripeSubscriptionId: active ? sub.id : null,
               ...(sub.customer ? { stripeCustomerId: sub.customer } : {}), // also persist on subscription events (B6/portal)
+              ...cancelPatch,
             });
           }
+        }
+
+        const subEmail = sub.metadata?.email || sub.customer;
+        const subDomain = sub.metadata?.domain || (sub.metadata?.email ? sub.metadata.email.split('@')[1] : null);
+        if (cancelAtPeriodEnd) {
+          try {
+            await recordCancellationTelemetry({
+              category: 'subscription',
+              type: 'cancelled_webhook',
+              email: subEmail,
+              domain: subDomain,
+              meta: { subId: sub.id, customerId: sub.customer, source: 'stripe_webhook' },
+            });
+            log.info('telemetry: subscription_cancelled_webhook', { subId: sub.id, email: subEmail });
+          } catch {}
+        } else if (event.type === 'customer.subscription.deleted') {
+          try {
+            await recordCancellationTelemetry({
+              category: 'subscription',
+              type: 'deleted_webhook',
+              email: subEmail,
+              domain: subDomain,
+              meta: { subId: sub.id, customerId: sub.customer, source: 'stripe_webhook' },
+            });
+            log.info('telemetry: subscription_deleted_webhook', { subId: sub.id, email: subEmail });
+          } catch {}
         }
         break;
       }

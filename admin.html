@@ -265,6 +265,7 @@
         <button class="admin-tab" data-tab="orgs" onclick="switchAdminTab('orgs')">🏢 Organizations</button>
         <button class="admin-tab" data-tab="analytics" onclick="switchAdminTab('analytics')">📈 Analytics</button>
         <button class="admin-tab" data-tab="revenue" onclick="switchAdminTab('revenue')" id="tab-btn-revenue" style="display:none">💰 Revenue</button>
+        <button class="admin-tab" data-tab="reviews" onclick="switchAdminTab('reviews')" id="tab-btn-reviews" style="display:none">⭐ Reviews &amp; Rewards</button>
       </div>
 
       <div class="stats-grid tab-pane tp-overview active">
@@ -412,6 +413,34 @@
             </thead>
             <tbody id="power-users-rows"><tr><td colspan="7" style="color:var(--muted)">Loading…</td></tr></tbody>
           </table>
+          </div>
+        </div>
+
+        <!-- Marketplace Reviews & Rewards card -->
+        <div class="section">
+          <h2 style="display:flex;justify-content:space-between;align-items:center">
+            <span>⭐ Marketplace Reviews &amp; Rewards</span>
+            <div>
+              <button class="btn btn-secondary" style="font-size:.7rem;padding:4px 8px;margin-right:6px" onclick="triggerReviewSync()">↻ Sync</button>
+              <button class="btn btn-secondary" style="font-size:.7rem;padding:4px 8px" onclick="switchAdminTab('reviews')">View Pipeline →</button>
+            </div>
+          </h2>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">
+            <div class="stat-card" style="padding:10px 12px">
+              <div class="stat-label">Marketplace Rating</div>
+              <div class="stat-value" id="quick-reviews-rating" style="font-size:1.5rem;color:#fbbf24">5.0 ★</div>
+              <div class="stat-label"><span id="quick-reviews-count">—</span> total reviews</div>
+            </div>
+            <div class="stat-card" style="padding:10px 12px">
+              <div class="stat-label">Active Pro Rewards</div>
+              <div class="stat-value green" id="quick-reviews-rewarded" style="font-size:1.5rem">—</div>
+              <div class="stat-label">1-month Pro unlocks</div>
+            </div>
+            <div class="stat-card" style="padding:10px 12px">
+              <div class="stat-label">Unmatched Reviews</div>
+              <div class="stat-value blue" id="quick-reviews-unredeemed" style="font-size:1.5rem">—</div>
+              <div class="stat-label">waiting to match</div>
+            </div>
           </div>
         </div>
       </div>
@@ -704,6 +733,97 @@
         </div>
       </div>
 
+      <!-- Reviews & Rewards tab: Marketplace reviews and 1-month Pro unlocks -->
+      <div class="section tab-pane tp-reviews" id="reviews-section" style="display:none">
+        <h2 style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <span>⭐ Marketplace Reviews &amp; Rewards Pipeline <span style="color:var(--muted);font-weight:400;font-size:.75rem">verified 5-star reviews &amp; automated 1-month Pro unlocks</span></span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:.7rem;color:var(--muted);font-weight:400" id="reviews-stamp">—</span>
+            <button class="btn btn-secondary" style="font-size:.75rem;padding:4px 10px" id="btn-sync-reviews" onclick="triggerReviewSync()">↻ Sync Marketplace</button>
+            <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" class="btn btn-secondary" style="font-size:.75rem;padding:4px 10px;text-decoration:none">Store Page ↗</a>
+          </div>
+        </h2>
+
+        <!-- Stat Cards -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:16px 0 6px 0">
+          <div class="stat-card">
+            <div class="stat-label">Total Reviews</div>
+            <div class="stat-value green" id="rev-stat-total">—</div>
+            <div class="stat-label">on Marketplace</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Average Rating</div>
+            <div class="stat-value" id="rev-stat-avg" style="color:#fbbf24">5.0 ★</div>
+            <div class="stat-label">100% 5-star streak</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Active Rewarded Users</div>
+            <div class="stat-value green" id="rev-stat-rewarded">—</div>
+            <div class="stat-label">1-month Pro unlocked</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Unmatched Reviews</div>
+            <div class="stat-value blue" id="rev-stat-unmatched">—</div>
+            <div class="stat-label">unredeemed reviews</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Pending Clickers</div>
+            <div class="stat-value" id="rev-stat-clickers" style="color:#a78bfa">—</div>
+            <div class="stat-label">clicked review prompt</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane tp-reviews" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(460px,1fr));gap:16px;margin-bottom:24px">
+        <!-- Live Marketplace Reviews List -->
+        <div class="section" style="margin-bottom:0">
+          <h2 style="display:flex;justify-content:space-between;align-items:center">
+            <span>Marketplace Reviews</span>
+            <span style="font-size:.7rem;color:var(--muted);font-weight:400" id="marketplace-reviews-count">—</span>
+          </h2>
+          <div class="table-scroll" style="max-height:480px">
+            <table>
+              <thead>
+                <tr>
+                  <th>Author</th>
+                  <th>Rating</th>
+                  <th>Date</th>
+                  <th>Comment</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="marketplace-reviews-rows">
+                <tr><td colspan="5" style="color:var(--muted)">Loading reviews…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Rewarded Pro Accounts -->
+        <div class="section" style="margin-bottom:0">
+          <h2 style="display:flex;justify-content:space-between;align-items:center">
+            <span>Active Review Rewards</span>
+            <span style="font-size:.7rem;color:var(--muted);font-weight:400" id="rewarded-users-count">—</span>
+          </h2>
+          <div class="table-scroll" style="max-height:480px">
+            <table>
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Domain</th>
+                  <th>Plan &amp; Status</th>
+                  <th>Expires</th>
+                  <th>Matched Review</th>
+                </tr>
+              </thead>
+              <tbody id="rewarded-users-rows">
+                <tr><td colspan="5" style="color:var(--muted)">Loading rewards…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <!-- Super admin only: all users across all tenants -->
       <div class="section tab-pane tp-users" id="all-users-section" style="display:none">
         <h2>All Users <span id="all-users-count" style="color:var(--muted);font-weight:400;font-size:.8rem"></span></h2>
@@ -895,11 +1015,13 @@
           document.getElementById('founder-section').style.display = 'block';
           document.getElementById('analytics-section').style.display = 'block';
           document.getElementById('tab-btn-revenue').style.display = '';
+          document.getElementById('tab-btn-reviews').style.display = '';
           loadSuggestions();
           loadPulse();
           loadActivity();
           loadPowerUsers();
           loadRevenue();
+          loadMarketplaceReviews();
           loadAllUsers();
           loadInsights();
           loadAnalytics();
@@ -1276,6 +1398,143 @@
       }
     }
 
+    // ── Marketplace Reviews & Rewards Pipeline ──
+    async function loadMarketplaceReviews() {
+      try {
+        const res = await fetch(`${BACKEND_URL}/admin/marketplace-reviews`, {
+          headers: { 'Authorization': `Bearer ${sessionToken}` },
+        });
+        if (!res.ok) {
+          console.warn('loadMarketplaceReviews failed:', res.status);
+          return;
+        }
+        const data = await res.json();
+        const reviews = data.reviews || [];
+        const rewarded = data.rewardedUsers || [];
+        const summary = data.summary || {};
+
+        const reviewsSec = document.getElementById('reviews-section');
+        if (reviewsSec) reviewsSec.style.display = '';
+
+        // Update Overview quick card
+        const qRating = document.getElementById('quick-reviews-rating');
+        if (qRating) qRating.textContent = `${summary.avgRating || 5.0} ★`;
+        const qCount = document.getElementById('quick-reviews-count');
+        if (qCount) qCount.textContent = summary.totalReviews || 0;
+        const qRew = document.getElementById('quick-reviews-rewarded');
+        if (qRew) qRew.textContent = summary.rewardedCount || 0;
+        const qUnred = document.getElementById('quick-reviews-unredeemed');
+        if (qUnred) qUnred.textContent = summary.unredeemedReviews || 0;
+
+        // Update Dedicated Tab stat cards
+        const sTotal = document.getElementById('rev-stat-total');
+        if (sTotal) sTotal.textContent = summary.totalReviews || 0;
+        const sAvg = document.getElementById('rev-stat-avg');
+        if (sAvg) sAvg.textContent = `${summary.avgRating || 5.0} ★`;
+        const sRew = document.getElementById('rev-stat-rewarded');
+        if (sRew) sRew.textContent = summary.rewardedCount || 0;
+        const sUnmatched = document.getElementById('rev-stat-unmatched');
+        if (sUnmatched) sUnmatched.textContent = summary.unredeemedReviews || 0;
+        const sClickers = document.getElementById('rev-stat-clickers');
+        if (sClickers) sClickers.textContent = summary.pendingClickersCount || 0;
+        const stamp = document.getElementById('reviews-stamp');
+        if (stamp) stamp.textContent = `Updated ${new Date().toLocaleTimeString()}`;
+
+        // Render Reviews table
+        const rCount = document.getElementById('marketplace-reviews-count');
+        if (rCount) rCount.textContent = `${reviews.length} reviews`;
+        const rRows = document.getElementById('marketplace-reviews-rows');
+        if (rRows) {
+          if (reviews.length === 0) {
+            rRows.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">No marketplace reviews found yet.</td></tr>';
+          } else {
+            rRows.innerHTML = reviews.map(r => {
+              const stars = '★'.repeat(r.rating || 5) + '☆'.repeat(Math.max(0, 5 - (r.rating || 5)));
+              const statusBadge = r.redeemed
+                ? `<span class="badge" style="background:rgba(46,160,67,.15);color:var(--accent);border:1px solid rgba(46,160,67,.4)">✔ Rewarded (${esc(r.redeemedByEmail || 'user')})</span>`
+                : `<span class="badge" style="background:rgba(88,166,255,.15);color:#58a6ff;border:1px solid rgba(88,166,255,.4)">Unmatched</span>`;
+              const avatar = r.avatarUrl
+                ? `<img src="${esc(r.avatarUrl)}" style="width:20px;height:20px;border-radius:50%;vertical-align:middle;margin-right:6px" alt="" onerror="this.style.display='none'">`
+                : '';
+              const dateStr = r.date ? fmtDate(r.date) : (r.timestampMs ? fmtDate(new Date(r.timestampMs).toISOString()) : '—');
+              return `<tr>
+                <td style="white-space:nowrap">${avatar}<strong>${esc(r.authorName || 'Anonymous')}</strong></td>
+                <td style="color:#fbbf24;white-space:nowrap">${stars}</td>
+                <td style="white-space:nowrap;font-size:.8rem;color:var(--muted)">${dateStr}</td>
+                <td style="font-size:.85rem;max-width:280px;word-break:break-word">${esc(r.comment || '—')}</td>
+                <td>${statusBadge}</td>
+              </tr>`;
+            }).join('');
+          }
+        }
+
+        // Render Rewarded Users table
+        const rewCount = document.getElementById('rewarded-users-count');
+        if (rewCount) rewCount.textContent = `${rewarded.length} accounts`;
+        const rewRows = document.getElementById('rewarded-users-rows');
+        if (rewRows) {
+          if (rewarded.length === 0) {
+            rewRows.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">No accounts have redeemed review rewards yet.</td></tr>';
+          } else {
+            rewRows.innerHTML = rewarded.map(u => {
+              const expiresDate = u.individualPlanExpiresAt ? new Date(u.individualPlanExpiresAt) : null;
+              const now = new Date();
+              let expiresHtml = '—';
+              if (expiresDate) {
+                const daysLeft = Math.ceil((expiresDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                const daysColor = daysLeft > 7 ? 'var(--accent)' : daysLeft > 0 ? '#fbbf24' : 'var(--error)';
+                expiresHtml = `<div>${fmtDate(u.individualPlanExpiresAt)} <span class="badge" style="color:${daysColor};border:1px solid ${daysColor}">${daysLeft > 0 ? daysLeft + 'd left' : 'Expired'}</span></div>`;
+              }
+              const planPill = `<span class="badge" style="background:rgba(46,160,67,.15);color:var(--accent);font-weight:600">PRO (Review Reward)</span>`;
+              const matchedReview = u.reviewId ? `<span style="font-size:.8rem;color:#fbbf24">5★ Review (${esc(u.reviewId.slice(-6))})</span>` : '—';
+              const nameHtml = u.displayName ? `<div style="font-size:.75rem;color:var(--muted)">${esc(u.displayName)}</div>` : '';
+
+              return `<tr>
+                <td><strong>${esc(u.email)}</strong>${nameHtml}</td>
+                <td>${esc(u.domain)}</td>
+                <td>${planPill}</td>
+                <td>${expiresHtml}</td>
+                <td>${matchedReview}</td>
+              </tr>`;
+            }).join('');
+          }
+        }
+      } catch (err) {
+        console.error('loadMarketplaceReviews error:', err);
+      }
+    }
+
+    async function triggerReviewSync() {
+      const btn = document.getElementById('btn-sync-reviews');
+      const origText = btn ? btn.textContent : '↻ Sync Marketplace';
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Syncing…';
+      }
+      try {
+        const res = await fetch(`${BACKEND_URL}/admin/sync-reviews`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${sessionToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert('Sync failed: ' + (data.error || res.statusText));
+        } else {
+          await loadMarketplaceReviews();
+        }
+      } catch (err) {
+        alert('Sync error: ' + err.message);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = origText;
+        }
+      }
+    }
+
     async function loadPulse() {
       try {
         const res = await fetch(`${BACKEND_URL}/admin/pulse`, { headers: { Authorization: `Bearer ${sessionToken}` } });
@@ -1574,7 +1833,11 @@
         ? u.meetings.slice(0, 10).map(m => `<div style="display:flex;justify-content:space-between;padding:5px 8px;background:#0d1117;border:1px solid var(--border);border-radius:6px;font-size:.78rem"><span>${esc(m.title)}</span><span style="color:var(--muted)">${m.participantCount} ppl · ${fmtDate(m.startTime)}</span></div>`).join('')
         : '<div style="color:var(--muted);font-size:.8rem">No meetings tracked yet.</div>';
 
-      const timelineHtml = u.events.slice(0, 30).map(e => `<div style="display:flex;gap:8px;padding:4px 0;font-size:.78rem"><div>${eventIcons[e.type] || '•'}</div><div style="flex:1"><span style="color:#c9d1d9">${esc(e.type)}</span> <span style="color:var(--muted);font-size:.7rem">${timeAgo(e.createdAt)}</span></div></div>`).join('');
+      const timelineHtml = u.events.slice(0, 30).map(e => {
+        const metaDuration = e.meta?.durationMs ? ` <span style="font-size:.7rem;color:${e.meta.durationMs > 4000 ? 'var(--error)' : 'var(--accent)'}">(${e.meta.durationMs >= 1000 ? (e.meta.durationMs/1000).toFixed(1) + 's' : e.meta.durationMs + 'ms'})</span>` : '';
+        const metaReason = e.meta?.reason ? ` <span style="font-size:.7rem;color:var(--muted)">[${esc(e.meta.reason)}]</span>` : '';
+        return `<div style="display:flex;gap:8px;padding:4px 0;font-size:.78rem"><div>${eventIcons[e.type] || '•'}</div><div style="flex:1"><span style="color:#c9d1d9">${esc(e.type)}</span>${metaReason}${metaDuration} <span style="color:var(--muted);font-size:.7rem">${timeAgo(e.createdAt)}</span></div></div>`;
+      }).join('');
 
       const replyStatus = u.outreach?.replyStatus || null;
       const statusBadge = replyStatus
