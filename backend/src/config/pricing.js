@@ -6,6 +6,9 @@
 // Change a price here (and in Stripe) — never in page markup.
 module.exports = {
   FREE_MONTHLY_EXPORT_LIMIT: 2,
+  // Maximum attendees allowed per free export. Classes with >25 attendees represent
+  // institutional or large lecture value and require Pro.
+  FREE_MAX_PARTICIPANTS_PER_EXPORT: 25,
   // Re-exports of the SAME meeting dedupe against one quota slot (legit:
   // mid-meeting save + end-of-meeting save). This caps how many times a free
   // user can ride that dedupe — beyond it, a constant conferenceId was an

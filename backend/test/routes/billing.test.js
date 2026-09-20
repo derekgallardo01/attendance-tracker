@@ -37,6 +37,7 @@ jest.mock('../../src/services/firestore', () => ({
   logEvent: jest.fn(),
   claimWebhookEvent: jest.fn(), // webhook idempotency — default re-armed in beforeEach
   releaseWebhookEvent: jest.fn(),
+  isEmailSuppressed: jest.fn().mockResolvedValue(false),
 }));
 
 const firestore = require('../../src/services/firestore');
@@ -1351,6 +1352,11 @@ describe('billing/status pricing payload', () => {
       expect(res.body.success).toBe(true);
       expect(sendUpgradeLinkEmail).toHaveBeenCalledWith(expect.objectContaining({
         to: uniqueEmail,
+        educatorPrice: '$3.99',
+        lifetimePrice: '$7.99',
+      }));
+      expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(expect.objectContaining({
+        discounts: [{ coupon: 'SAVE20' }],
       }));
 
       // Immediate second call triggers cooldown / alreadySent: true without re-sending email
@@ -1362,6 +1368,56 @@ describe('billing/status pricing payload', () => {
       expect(res2.status).toBe(200);
       expect(res2.body.alreadySent).toBe(true);
       expect(sendUpgradeLinkEmail).not.toHaveBeenCalled();
+    });
+
+    test('sends upgrade link email with PPP 50% discount for emerging market user', async () => {
+      process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+      process.env.STRIPE_PRICE_ID = 'price_default';
+      process.env.STRIPE_EDUCATOR_PRICE_ID = 'price_edu';
+      process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID = 'price_life';
+      app = buildApp();
+
+      const uniqueEmail = `teacher_ph_${Date.now()}@deped.gov.ph`;
+      const res = await request(app)
+        .post('/api/billing/send-upgrade-link')
+        .set(authedHeader(uniqueEmail, 'deped.gov.ph'))
+        .set('cf-ipcountry', 'PH')
+        .send({});
+
+      expect(res.status).toBe(200);
+      expect(sendUpgradeLinkEmail).toHaveBeenCalledWith(expect.objectContaining({
+        to: uniqueEmail,
+        educatorPrice: '$2.49',
+        lifetimePrice: '$4.99',
+        isPpp: true,
+      }));
+      expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(expect.objectContaining({
+        discounts: [{ coupon: 'PPP50' }],
+      }));
+    });
+
+    test('sendUpgradeLinkForUser skips if user is already pro or suppressed', async () => {
+      process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+      process.env.STRIPE_PRICE_ID = 'price_default';
+      process.env.STRIPE_EDUCATOR_PRICE_ID = 'price_edu';
+      const { sendUpgradeLinkForUser } = require('../../src/routes/billing');
+
+      firestore.getUserPlan.mockResolvedValue({ plan: 'pro' });
+      const resPro = await sendUpgradeLinkForUser({
+        email: 'pro_user@school.edu',
+        domain: 'school.edu',
+        reason: 'large_class',
+      });
+      expect(resPro.skipped).toBe('already_pro');
+
+      firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+      firestore.isEmailSuppressed.mockResolvedValue(true);
+      const resSupp = await sendUpgradeLinkForUser({
+        email: 'suppressed_user@school.edu',
+        domain: 'school.edu',
+        reason: 'large_class',
+      });
+      expect(resSupp.skipped).toBe('suppressed');
     });
   });
 

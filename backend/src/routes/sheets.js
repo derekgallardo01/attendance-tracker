@@ -5,7 +5,7 @@ const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { persistExport, getUser, grantReferralReward, getUserSheetId, setUserSheetId, countUserExports, countUserMonthlyExports, getExportReexportCount, getMeetingExcusedEmails, addMeetingExcusedEmails, getUserSettings, updateUserSettings, getUserMeetingSeries, logEvent, isEmailSuppressed } = require('../services/firestore');
 const { sendExportNotification, sendSlackDigest, sendChatDigest, sendDiscordDigest } = require('../lib/notifications');
-const { planIsPro } = require('./billing');
+const { planIsPro, sendUpgradeLinkForUser } = require('./billing');
 const { getSheetHeaders } = require('../lib/i18n');
 
 const router = Router();
@@ -704,14 +704,52 @@ router.post('/save-to-sheets', async (req, res) => {
       // else: within the trial window → let this auto-export through.
     }
 
-    // Monthly export quota check for Free users (single source of truth:
+    // Monthly export quota and large class capacity check for Free users (single source of truth:
     // config/pricing.js — /billing/status and the panel read the same value)
-    const { FREE_MONTHLY_EXPORT_LIMIT, FREE_REEXPORTS_PER_MEETING } = require('../config/pricing');
+    const { FREE_MONTHLY_EXPORT_LIMIT, FREE_REEXPORTS_PER_MEETING, FREE_MAX_PARTICIPANTS_PER_EXPORT } = require('../config/pricing');
     let monthlyExports = 0;
     if (req.user && !proAllowed) {
+      const participants = Array.isArray(b.participants) ? b.participants : [];
+      const participantCount = participants.length || (typeof b.participantCount === 'number' ? b.participantCount : 0);
+      if (participantCount > FREE_MAX_PARTICIPANTS_PER_EXPORT) {
+        log.info('sheets: free tier large class capacity reached', {
+          domain: req.user.domain,
+          email: req.user.email,
+          participantCount,
+          limit: FREE_MAX_PARTICIPANTS_PER_EXPORT,
+        });
+        if (typeof sendUpgradeLinkForUser === 'function') {
+          sendUpgradeLinkForUser({
+            email: req.user.email,
+            domain: req.user.domain,
+            displayName: req.user.displayName,
+            reason: 'large_class',
+            language: req.user.language || req.user.locale || null,
+            req,
+          }).catch(err => log.warn('sheets: failed to send upgrade link email on large class limit', { error: err.message }));
+        }
+        return res.status(402).json({
+          error: `Tracking attendance for large classes (>${FREE_MAX_PARTICIPANTS_PER_EXPORT} attendees) is a Pro feature. Upgrade to Pro for unlimited class sizes & exports.`,
+          upgrade: true,
+          feature: 'largeClass',
+          participantCount,
+          limit: FREE_MAX_PARTICIPANTS_PER_EXPORT,
+        });
+      }
+
       monthlyExports = await countUserMonthlyExports(req.user.domain, req.user.email);
       if (monthlyExports >= FREE_MONTHLY_EXPORT_LIMIT) {
         log.info('sheets: free tier export quota reached', { domain: req.user.domain, email: req.user.email, count: monthlyExports });
+        if (typeof sendUpgradeLinkForUser === 'function') {
+          sendUpgradeLinkForUser({
+            email: req.user.email,
+            domain: req.user.domain,
+            displayName: req.user.displayName,
+            reason: 'quota_reached',
+            language: req.user.language || req.user.locale || null,
+            req,
+          }).catch(err => log.warn('sheets: failed to send upgrade link email on quota reach', { error: err.message }));
+        }
         return res.status(402).json({
           error: `You have reached your limit of ${FREE_MONTHLY_EXPORT_LIMIT} free exports this month. Upgrade to Pro for unlimited exports.`,
           upgrade: true,
@@ -760,6 +798,17 @@ router.post('/save-to-sheets', async (req, res) => {
       const isSolo = Array.isArray(b.participants) ? b.participants.length <= 1 : (typeof b.participantCount === 'number' ? b.participantCount <= 1 : false);
       const used = monthlyExports + ((exportCreated === false || isSolo) ? 0 : 1);
       quota = { used, limit: FREE_MONTHLY_EXPORT_LIMIT };
+
+      if (typeof sendUpgradeLinkForUser === 'function') {
+        sendUpgradeLinkForUser({
+          email: req.user.email,
+          domain: req.user.domain,
+          displayName: req.user.displayName,
+          reason: 'near_quota',
+          language: req.user.language || req.user.locale || null,
+          req,
+        }).catch(err => log.warn('sheets: failed to send post-export upgrade link email', { error: err.message }));
+      }
     }
     res.json({ success: true, sheetUrl, isFirstExport, quota });
   } catch (err) {

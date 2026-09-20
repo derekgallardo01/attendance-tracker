@@ -801,6 +801,43 @@ describe('POST /api/save-to-sheets — Pro gating', () => {
     expect(firestore.persistExport).not.toHaveBeenCalled();
   });
 
+  test('free tier export is blocked with 402 when class capacity exceeds limit (>25 attendees)', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.countUserMonthlyExports.mockResolvedValue(0);
+    const largeClassParticipants = Array.from({ length: 26 }, (_, i) => ({
+      displayName: `Student ${i + 1}`,
+      email: `student${i + 1}@school.edu`,
+      joinTimeISO: new Date().toISOString(),
+      leaveTimeISO: null,
+      present: true,
+      sessions: 1,
+    }));
+    const res = await request(app).post('/api/save-to-sheets')
+      .set(authedHeader('u@large-class.com', 'large-class.com')).set('Content-Type', 'application/json')
+      .send({ ...validPayload, participants: largeClassParticipants, autoExport: false });
+    expect(res.status).toBe(402);
+    expect(res.body).toMatchObject({ upgrade: true, feature: 'largeClass', participantCount: 26, limit: 25 });
+    expect(firestore.persistExport).not.toHaveBeenCalled();
+  });
+
+  test('pro user can export large classes with >25 attendees without block', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'pro' });
+    firestore.countUserMonthlyExports.mockResolvedValue(0);
+    const largeClassParticipants = Array.from({ length: 30 }, (_, i) => ({
+      displayName: `Student ${i + 1}`,
+      email: `student${i + 1}@school.edu`,
+      joinTimeISO: new Date().toISOString(),
+      leaveTimeISO: null,
+      present: true,
+      sessions: 1,
+    }));
+    const res = await request(app).post('/api/save-to-sheets')
+      .set(authedHeader('u@pro-large-class.com', 'pro-large-class.com')).set('Content-Type', 'application/json')
+      .send({ ...validPayload, participants: largeClassParticipants, autoExport: false });
+    expect(res.status).toBe(200);
+    expect(firestore.persistExport).toHaveBeenCalled();
+  });
+
   test('pro user can export beyond 2 exports without quota block', async () => {
     firestore.getTenantPlan.mockResolvedValue({ plan: 'pro' });
     firestore.countUserMonthlyExports.mockResolvedValue(10);

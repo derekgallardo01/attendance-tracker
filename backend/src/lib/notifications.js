@@ -2562,9 +2562,9 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
   const lang = resolveLanguage({ language, country, domain: domain || (to && to.includes('@') ? to.split('@')[1] : null), email: to });
 
   let greeting = displayName ? `Hi ${displayName.split(' ')[0]},` : 'Hi there,';
-  let pppNote = isPpp ? ` (50% Regional Subsidy applied ${flag || ''})` : '';
-  let subject = 'Your Attendance Tracker upgrade link (finish anytime)';
-  let bodyIntro = "You requested a link to upgrade Attendance Tracker when you're done teaching. No rush at all — whenever your class wraps up and you're back at your desk, you can unlock unlimited classes and exports below:";
+  let pppNote = isPpp ? ` (50% Regional Subsidy applied ${flag || ''})` : ' (20% 24-Hour Discount applied ⚡)';
+  let subject = 'Your Attendance Tracker 24-hour discount & upgrade link';
+  let bodyIntro = "Here is your direct 1-click link to unlock unlimited classes and exports with a special 24-hour discount. Whenever your class wraps up and you're back at your desk, you can complete your upgrade below:";
   let educatorTitle = `Educator Pass — ${escape(educatorPrice)}/yr${escape(pppNote)}`;
   let educatorDesc = 'Unlimited Google Sheets exports & attendance records for 1 full year.';
   let educatorBtn = `Unlock Educator Pass (${escape(educatorPrice)}/yr) →`;
@@ -2574,14 +2574,14 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
   let dashboardNote = 'Or view your previous attendance history anytime in your';
   let dashboardLinkText = 'Web Dashboard';
   let thankYouNote = 'Thank you for teaching with Attendance Tracker!';
-  let badgeText = '⚡ Upgrade Link';
-  let badgeSubtitle = 'Unlock unlimited attendance tracking and exports';
+  let badgeText = '⚡ 24-Hour Special Offer';
+  let badgeSubtitle = 'Special discount on unlimited attendance tracking and exports';
 
   if (lang === 'es') {
     greeting = displayName ? `Hola ${displayName.split(' ')[0]},` : 'Hola,';
-    pppNote = isPpp ? ` (50% de subsidio regional aplicado ${flag || ''})` : '';
-    subject = 'Tu enlace para actualizar Attendance Tracker (completa cuando gustes)';
-    bodyIntro = 'Solicitaste un enlace para actualizar Attendance Tracker cuando termines de dar clase. Sin ningún apuro — cuando tu clase termine y vuelvas a tu escritorio, puedes desbloquear clases y exportaciones ilimitadas aquí:';
+    pppNote = isPpp ? ` (50% de subsidio regional aplicado ${flag || ''})` : ' (20% de descuento por 24 horas ⚡)';
+    subject = 'Tu enlace para actualizar Attendance Tracker (descuento especial de 24 horas)';
+    bodyIntro = 'Aquí tienes tu enlace directo para desbloquear clases y exportaciones ilimitadas con un descuento especial de 24 horas. Cuando tu clase termine y vuelvas a tu escritorio, puedes completar tu actualización aquí:';
     educatorTitle = `Pase Educador — ${escape(educatorPrice)}/año${escape(pppNote)}`;
     educatorDesc = 'Exportaciones ilimitadas a Google Sheets y registros de asistencia por 1 año completo.';
     educatorBtn = `Desbloquear Pase Educador (${escape(educatorPrice)}/año) →`;
@@ -2591,13 +2591,13 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
     dashboardNote = 'O consulta tu historial de asistencia en cualquier momento en tu';
     dashboardLinkText = 'Panel Web';
     thankYouNote = '¡Gracias por enseñar con Attendance Tracker!';
-    badgeText = '⚡ Enlace de actualización';
-    badgeSubtitle = 'Desbloquea registros y exportaciones ilimitadas';
+    badgeText = '⚡ Oferta especial de 24 horas';
+    badgeSubtitle = 'Descuento especial en registros y exportaciones ilimitadas';
   } else if (lang === 'pt') {
     greeting = displayName ? `Olá ${displayName.split(' ')[0]},` : 'Olá,';
-    pppNote = isPpp ? ` (50% de subsídio regional aplicado ${flag || ''})` : '';
-    subject = 'Seu link para atualizar o Attendance Tracker (conclua quando quiser)';
-    bodyIntro = 'Você solicitou um link para atualizar o Attendance Tracker quando terminar de dar aula. Sem pressa — quando sua aula terminar, você pode desbloquear turmas e exportações ilimitadas abaixo:';
+    pppNote = isPpp ? ` (50% de subsídio regional aplicado ${flag || ''})` : ' (20% de desconto por 24 horas ⚡)';
+    subject = 'Seu link para atualizar o Attendance Tracker (desconto especial de 24 horas)';
+    bodyIntro = 'Aqui está o seu link direto para desbloquear turmas e exportações ilimitadas com um desconto especial de 24 horas. Quando sua aula terminar e você estiver de volta à sua mesa, você pode concluir seu upgrade abaixo:';
     educatorTitle = `Passe Educador — ${escape(educatorPrice)}/ano${escape(pppNote)}`;
     educatorDesc = 'Exportações ilimitadas para o Google Sheets e registros de presença por 1 ano completo.';
     educatorBtn = `Desbloquear Passe Educador (${escape(educatorPrice)}/ano) →`;
@@ -2607,13 +2607,13 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
     dashboardNote = 'Ou visualize seu histórico de presença a qualquer momento no seu';
     dashboardLinkText = 'Painel Web';
     thankYouNote = 'Obrigado por ensinar com o Attendance Tracker!';
-    badgeText = '⚡ Link de Upgrade';
-    badgeSubtitle = 'Desbloqueie registros e exportações ilimitadas';
+    badgeText = '⚡ Oferta especial de 24 horas';
+    badgeSubtitle = 'Desconto especial em registros e exportações ilimitadas';
   } else if (lang === 'bn') {
     greeting = displayName ? `হ্যালো ${displayName.split(' ')[0]},` : 'হ্যালো,';
-    pppNote = isPpp ? ` (৫০% আঞ্চলিক ডিসকাউন্ট প্রযোজ্য ${flag || ''})` : '';
-    subject = 'আপনার Attendance Tracker আপগ্রেড লিংক';
-    bodyIntro = 'ক্লাস শেষে Attendance Tracker আপগ্রেড করার জন্য আপনি লিংক চেয়েছিলেন। কোনো তাড়াহুড়ো নেই — ক্লাস শেষ করে যখনই ফ্রি হবেন, নিচের লিংক থেকে আনলিমিটেড ক্লাস ও এক্সপোর্ট আনলক করতে পারবেন:';
+    pppNote = isPpp ? ` (৫০% আঞ্চলিক ডিসকাউন্ট প্রযোজ্য ${flag || ''})` : ' (২৪ ঘণ্টার জন্য ২০% বিশেষ ছাড় ⚡)';
+    subject = 'আপনার Attendance Tracker আপগ্রেড লিংক (২৪ ঘণ্টার বিশেষ অফার)';
+    bodyIntro = '২৪ ঘণ্টার বিশেষ ডিসকাউন্টে আনলিমিটেড ক্লাস ও এক্সপোর্ট আনলক করার জন্য সরাসরি লিংক এখানে দেওয়া হলো। ক্লাস শেষ করে যখনই টেবিলে ফিরবেন, নিচের লিংক থেকে আপগ্রেড সম্পন্ন করতে পারবেন:';
     educatorTitle = `এডুকেটর পাস — ${escape(educatorPrice)}/বছর${escape(pppNote)}`;
     educatorDesc = 'পুরো ১ বছরের জন্য আনলিমিটেড গুগল শিট এক্সপোর্ট ও উপস্থিতি রেকর্ড।';
     educatorBtn = `এডুকেটর পাস আনলক করুন (${escape(educatorPrice)}/বছর) →`;
@@ -2623,8 +2623,8 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
     dashboardNote = 'অথবা যেকোনো সময় আপনার পূর্বের হিস্ট্রি দেখতে ভিজিট করুন';
     dashboardLinkText = 'ওয়েব ড্যাশবোর্ড';
     thankYouNote = 'Attendance Tracker ব্যবহার করার জন্য ধন্যবাদ!';
-    badgeText = '⚡ আপগ্রেড লিংক';
-    badgeSubtitle = 'আনলিমিটেড উপস্থিতি ও এক্সপোর্ট আনলক করুন';
+    badgeText = '⚡ ২৪ ঘণ্টার বিশেষ অফার';
+    badgeSubtitle = 'আনলিমিটেড উপস্থিতি ও এক্সপোর্টে বিশেষ ডিসকাউন্ট';
   }
 
   const contentHtml = `

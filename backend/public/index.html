@@ -2865,6 +2865,11 @@ function downloadAttendanceCsv() {
     return;
   }
 
+  if (!_isPro && ctx.parts.length > 25) {
+    showUpgradeModal('largeClass');
+    return;
+  }
+
   ctx.opts.isFreePlan = !_isPro;
   const csvContent = (typeof AttUtils !== 'undefined' && AttUtils.buildAttendanceCsv)
     ? AttUtils.buildAttendanceCsv(ctx.parts, ctx.activeRoster, ctx.opts)
@@ -5276,6 +5281,9 @@ function showUpgradeModal(reason) {
   if (note) {
     if (reason === 'exportQuota') {
       note.textContent = t('quota.limitReached', 'You reached your monthly limit of {limit} free exports. Upgrade to Pro for unlimited exports.').replace('{limit}', AttPricing.quotaLimit());
+      note.style.display = 'block';
+    } else if (reason === 'largeClass') {
+      note.textContent = t('quota.largeClassLimit', 'Attendance tracking for large classes (>25 attendees) is a Pro feature. Upgrade to Pro for unlimited class sizes & exports.');
       note.style.display = 'block';
     } else if (reason === 'autoExport') {
       note.textContent = t('billing.autoExportPro','Auto-exporting to Google Sheets on meeting end is a Pro feature.');
