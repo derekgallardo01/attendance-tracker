@@ -70,6 +70,9 @@ describe('localCurrencyAnchor()', () => {
     expect(pricing.localCurrencyAnchor('MX', 'department')).toBe('~MX$ 1,150/yr');
     expect(pricing.localCurrencyAnchor('CO', 'lifetime')).toBe('~COP 40.000');
     expect(pricing.localCurrencyAnchor('MY', 'educator')).toBe('~RM 22/yr');
+    expect(pricing.localCurrencyAnchor('ES', 'lifetime')).toBe('~8,99 €');
+    expect(pricing.localCurrencyAnchor('GB', 'lifetime')).toBe('~£7.90');
+    expect(pricing.localCurrencyAnchor('IL', 'educator')).toBe('~₪18.50/yr');
   });
 
   test('normalizes lowercase and whitespace in country code', () => {
@@ -78,7 +81,7 @@ describe('localCurrencyAnchor()', () => {
 
   test('returns empty string for unsupported countries', () => {
     expect(pricing.localCurrencyAnchor('US', 'lifetime')).toBe('');
-    expect(pricing.localCurrencyAnchor('GB', 'educator')).toBe('');
+    expect(pricing.localCurrencyAnchor('AU', 'educator')).toBe('');
   });
 
   test('returns empty string for invalid/missing country code', () => {

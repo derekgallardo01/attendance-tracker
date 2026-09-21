@@ -33,6 +33,13 @@ describe('backend i18n', () => {
       expect(i18n.normalizeLocale('hu-HU')).toBe('hu');
       expect(i18n.normalizeLocale('sv-SE')).toBe('sv');
       expect(i18n.normalizeLocale('he-IL')).toBe('he');
+      expect(i18n.normalizeLocale('sw-KE')).toBe('sw');
+      expect(i18n.normalizeLocale('am-ET')).toBe('am');
+      expect(i18n.normalizeLocale('si-LK')).toBe('si');
+      expect(i18n.normalizeLocale('el-GR')).toBe('el');
+      expect(i18n.normalizeLocale('nb-NO')).toBe('no');
+      expect(i18n.normalizeLocale('nn-NO')).toBe('no');
+      expect(i18n.normalizeLocale('ca-ES')).toBe('ca');
     });
   });
 
@@ -116,6 +123,30 @@ describe('backend i18n', () => {
       const heHeaders = i18n.getSheetHeaders('he-IL', 'IST');
       expect(heHeaders[0]).toBe('שם');
       expect(heHeaders[1]).toBe('אימייל');
+
+      const swHeaders = i18n.getSheetHeaders('sw-KE', 'EAT');
+      expect(swHeaders[0]).toBe('Jina');
+      expect(swHeaders[1]).toBe('Barua pepe');
+
+      const amHeaders = i18n.getSheetHeaders('am-ET', 'EAT');
+      expect(amHeaders[0]).toBe('ስም');
+      expect(amHeaders[1]).toBe('ኢሜይል');
+
+      const siHeaders = i18n.getSheetHeaders('si-LK', 'IST');
+      expect(siHeaders[0]).toBe('නම');
+      expect(siHeaders[1]).toBe('විද්‍යුත් තැපෑල');
+
+      const elHeaders = i18n.getSheetHeaders('el-GR', 'EET');
+      expect(elHeaders[0]).toBe('Όνομα');
+      expect(elHeaders[1]).toBe('Email');
+
+      const noHeaders = i18n.getSheetHeaders('nb-NO', 'CET');
+      expect(noHeaders[0]).toBe('Navn');
+      expect(noHeaders[1]).toBe('E-post');
+
+      const caHeaders = i18n.getSheetHeaders('ca-ES', 'CET');
+      expect(caHeaders[0]).toBe('Nom');
+      expect(caHeaders[1]).toBe('Correu electrònic');
     });
   });
 

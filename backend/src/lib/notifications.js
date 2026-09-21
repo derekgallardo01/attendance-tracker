@@ -2565,12 +2565,13 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
   let pppNote = isPpp ? ` (50% Regional Subsidy applied ${flag || ''})` : ' (20% 24-Hour Discount applied ⚡)';
   let subject = 'Your Attendance Tracker 24-hour discount & upgrade link';
   let bodyIntro = "Here is your direct 1-click link to unlock unlimited classes and exports with a special 24-hour discount. Whenever your class wraps up and you're back at your desk, you can complete your upgrade below:";
+  let bestValueTag = 'Best Value';
+  let lifetimeTitle = `Lifetime Pro — ${escape(lifetimePrice)} one-time${escape(pppNote)}`;
+  let lifetimeDesc = 'Pay once, own forever — no recurring subscription. Unlimited Sheets exports & auto-capture.';
+  let lifetimeBtn = `Get Lifetime Pro (${escape(lifetimePrice)}) →`;
   let educatorTitle = `Educator Pass — ${escape(educatorPrice)}/yr${escape(pppNote)}`;
   let educatorDesc = 'Unlimited Google Sheets exports & attendance records for 1 full year.';
   let educatorBtn = `Unlock Educator Pass (${escape(educatorPrice)}/yr) →`;
-  let lifetimeTitle = `Lifetime Pro — ${escape(lifetimePrice)} one-time${escape(pppNote)}`;
-  let lifetimeDesc = 'Pay once, keep unlimited attendance tracking forever. No recurring subscription.';
-  let lifetimeBtn = `Get Lifetime Pro (${escape(lifetimePrice)}) →`;
   let dashboardNote = 'Or view your previous attendance history anytime in your';
   let dashboardLinkText = 'Web Dashboard';
   let thankYouNote = 'Thank you for teaching with Attendance Tracker!';
@@ -2582,12 +2583,13 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
     pppNote = isPpp ? ` (50% de subsidio regional aplicado ${flag || ''})` : ' (20% de descuento por 24 horas ⚡)';
     subject = 'Tu enlace para actualizar Attendance Tracker (descuento especial de 24 horas)';
     bodyIntro = 'Aquí tienes tu enlace directo para desbloquear clases y exportaciones ilimitadas con un descuento especial de 24 horas. Cuando tu clase termine y vuelvas a tu escritorio, puedes completar tu actualización aquí:';
+    bestValueTag = 'Mejor valor';
+    lifetimeTitle = `Pro de por vida — ${escape(lifetimePrice)} pago único${escape(pppNote)}`;
+    lifetimeDesc = 'Pago único · Para siempre · Sin renovaciones ni sorpresas. Exportaciones automáticas y registros ilimitados.';
+    lifetimeBtn = `Obtener Pro de por vida (${escape(lifetimePrice)}) →`;
     educatorTitle = `Pase Educador — ${escape(educatorPrice)}/año${escape(pppNote)}`;
     educatorDesc = 'Exportaciones ilimitadas a Google Sheets y registros de asistencia por 1 año completo.';
     educatorBtn = `Desbloquear Pase Educador (${escape(educatorPrice)}/año) →`;
-    lifetimeTitle = `Pro de por vida — ${escape(lifetimePrice)} pago único${escape(pppNote)}`;
-    lifetimeDesc = 'Paga una sola vez y obtén seguimiento ilimitado de asistencia para siempre. Sin suscripciones recurrentes.';
-    lifetimeBtn = `Obtener Pro de por vida (${escape(lifetimePrice)}) →`;
     dashboardNote = 'O consulta tu historial de asistencia en cualquier momento en tu';
     dashboardLinkText = 'Panel Web';
     thankYouNote = '¡Gracias por enseñar con Attendance Tracker!';
@@ -2598,12 +2600,13 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
     pppNote = isPpp ? ` (50% de subsídio regional aplicado ${flag || ''})` : ' (20% de desconto por 24 horas ⚡)';
     subject = 'Seu link para atualizar o Attendance Tracker (desconto especial de 24 horas)';
     bodyIntro = 'Aqui está o seu link direto para desbloquear turmas e exportações ilimitadas com um desconto especial de 24 horas. Quando sua aula terminar e você estiver de volta à sua mesa, você pode concluir seu upgrade abaixo:';
+    bestValueTag = 'Melhor valor';
+    lifetimeTitle = `Pro Vitalício — ${escape(lifetimePrice)} pagamento único${escape(pppNote)}`;
+    lifetimeDesc = 'Pagamento único · Para sempre · Sem renovações nem surpresas. Exportações automáticas e registros ilimitados.';
+    lifetimeBtn = `Obter Pro Vitalício (${escape(lifetimePrice)}) →`;
     educatorTitle = `Passe Educador — ${escape(educatorPrice)}/ano${escape(pppNote)}`;
     educatorDesc = 'Exportações ilimitadas para o Google Sheets e registros de presença por 1 ano completo.';
     educatorBtn = `Desbloquear Passe Educador (${escape(educatorPrice)}/ano) →`;
-    lifetimeTitle = `Pro Vitalício — ${escape(lifetimePrice)} pagamento único${escape(pppNote)}`;
-    lifetimeDesc = 'Pague uma única vez e tenha registros ilimitados para sempre. Sem assinaturas recorrentes.';
-    lifetimeBtn = `Obter Pro Vitalício (${escape(lifetimePrice)}) →`;
     dashboardNote = 'Ou visualize seu histórico de presença a qualquer momento no seu';
     dashboardLinkText = 'Painel Web';
     thankYouNote = 'Obrigado por ensinar com o Attendance Tracker!';
@@ -2614,12 +2617,13 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
     pppNote = isPpp ? ` (৫০% আঞ্চলিক ডিসকাউন্ট প্রযোজ্য ${flag || ''})` : ' (২৪ ঘণ্টার জন্য ২০% বিশেষ ছাড় ⚡)';
     subject = 'আপনার Attendance Tracker আপগ্রেড লিংক (২৪ ঘণ্টার বিশেষ অফার)';
     bodyIntro = '২৪ ঘণ্টার বিশেষ ডিসকাউন্টে আনলিমিটেড ক্লাস ও এক্সপোর্ট আনলক করার জন্য সরাসরি লিংক এখানে দেওয়া হলো। ক্লাস শেষ করে যখনই টেবিলে ফিরবেন, নিচের লিংক থেকে আপগ্রেড সম্পন্ন করতে পারবেন:';
+    bestValueTag = 'সেরা অফার';
+    lifetimeTitle = `লাইফটাইম প্রো — ${escape(lifetimePrice)} এককালীন${escape(pppNote)}`;
+    lifetimeDesc = 'একবার পেমেন্ট করুন, আজীবন আনলিমিটেড ব্যবহার করুন। কোনো মাসিক বা বাৎসরিক ফি নেই।';
+    lifetimeBtn = `লাইফটাইম প্রো নিন (${escape(lifetimePrice)}) →`;
     educatorTitle = `এডুকেটর পাস — ${escape(educatorPrice)}/বছর${escape(pppNote)}`;
     educatorDesc = 'পুরো ১ বছরের জন্য আনলিমিটেড গুগল শিট এক্সপোর্ট ও উপস্থিতি রেকর্ড।';
     educatorBtn = `এডুকেটর পাস আনলক করুন (${escape(educatorPrice)}/বছর) →`;
-    lifetimeTitle = `লাইফটাইম প্রো — ${escape(lifetimePrice)} এককালীন${escape(pppNote)}`;
-    lifetimeDesc = 'একবার পেমেন্ট করুন, আজীবন আনলিমিটেড উপস্থিতি ট্র্যাক করুন। কোনো মাসিক ফি নেই।';
-    lifetimeBtn = `লাইফটাইম প্রো নিন (${escape(lifetimePrice)}) →`;
     dashboardNote = 'অথবা যেকোনো সময় আপনার পূর্বের হিস্ট্রি দেখতে ভিজিট করুন';
     dashboardLinkText = 'ওয়েব ড্যাশবোর্ড';
     thankYouNote = 'Attendance Tracker ব্যবহার করার জন্য ধন্যবাদ!';
@@ -2631,16 +2635,21 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
     <p style="margin:0 0 12px;font-size:15px;color:#e6edf3;">${escape(greeting)}</p>
     <p style="margin:0 0 20px;font-size:14px;color:#8b949e;line-height:1.5;">${escape(bodyIntro)}</p>
 
-    <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px;margin-bottom:16px;">
-      <div style="font-weight:700;font-size:15px;color:#58a6ff;margin-bottom:4px;">${educatorTitle}</div>
-      <p style="margin:0 0 12px;color:#8b949e;font-size:13px;">${escape(educatorDesc)}</p>
-      <a href="${escape(educatorUrl)}" class="touch-btn" style="display:inline-block;background:#238636;color:#ffffff;text-decoration:none;font-weight:600;padding:8px 16px;border-radius:6px;font-size:13px;">${educatorBtn}</a>
+    <!-- Plan 1: Featured Lifetime Pro Pass (Crown Jewel / Best Value) -->
+    <div style="background:#161b22;border:1.5px solid rgba(74,222,128,0.45);border-radius:10px;padding:16px 18px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px;">
+        <span style="font-weight:700;font-size:15px;color:#4ade80;">${lifetimeTitle}</span>
+        <span style="background:rgba(35,134,54,0.22);border:1px solid rgba(74,222,128,0.4);color:#4ade80;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;text-transform:uppercase;letter-spacing:0.04em;">${escape(bestValueTag)}</span>
+      </div>
+      <p style="margin:0 0 14px;color:#c9d1d9;font-size:13px;line-height:1.5;">${escape(lifetimeDesc)}</p>
+      <a href="${escape(lifetimeUrl)}" class="touch-btn" style="display:inline-block;background:#238636;color:#ffffff;text-decoration:none;font-weight:600;padding:9px 18px;border-radius:6px;font-size:13px;">${lifetimeBtn}</a>
     </div>
 
-    <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:16px;margin-bottom:16px;">
-      <div style="font-weight:700;font-size:15px;color:#4ade80;margin-bottom:4px;">${lifetimeTitle}</div>
-      <p style="margin:0 0 12px;color:#8b949e;font-size:13px;">${escape(lifetimeDesc)}</p>
-      <a href="${escape(lifetimeUrl)}" class="touch-btn" style="display:inline-block;background:#1f6feb;color:#ffffff;text-decoration:none;font-weight:600;padding:8px 16px;border-radius:6px;font-size:13px;">${lifetimeBtn}</a>
+    <!-- Plan 2: Annual Educator Pass -->
+    <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px 16px;margin-bottom:16px;">
+      <div style="font-weight:700;font-size:14px;color:#58a6ff;margin-bottom:4px;">${educatorTitle}</div>
+      <p style="margin:0 0 12px;color:#8b949e;font-size:12.5px;line-height:1.45;">${escape(educatorDesc)}</p>
+      <a href="${escape(educatorUrl)}" class="touch-btn" style="display:inline-block;background:#21262d;border:1px solid #388bfd;color:#79c0ff;text-decoration:none;font-weight:600;padding:7px 15px;border-radius:6px;font-size:12px;">${educatorBtn}</a>
     </div>
 
     <p style="margin:16px 0 0;font-size:13px;color:#8b949e;">${escape(dashboardNote)} <a href="https://attendancetracker.dev/history.html" style="color:#58a6ff;text-decoration:none;">${escape(dashboardLinkText)}</a>.</p>
@@ -2662,11 +2671,11 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
     '',
     bodyIntro,
     '',
-    `* ${educatorTitle.replace(/&amp;/g, '&')}`,
-    `  ${educatorUrl}`,
-    '',
     `* ${lifetimeTitle.replace(/&amp;/g, '&')}`,
     `  ${lifetimeUrl}`,
+    '',
+    `* ${educatorTitle.replace(/&amp;/g, '&')}`,
+    `  ${educatorUrl}`,
     '',
     `${dashboardNote} https://attendancetracker.dev/history.html`,
     '',

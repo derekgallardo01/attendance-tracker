@@ -7,6 +7,23 @@
   <link rel="icon" type="image/png" sizes="128x128" href="icons/icon-128.png" />
   <meta name="google-site-verification" content="A4dDuj7bYeeAQ2vstaR8Y0J_jYbxmXty9ikiZOtdDCY" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script>
+    // Synchronously detect if running as the standalone marketing website
+    // (top-level browser window, outside an iframe, and not in ?demo=1 preview mode).
+    // Marking <html> immediately prevents any flash of the side-panel add-on UI.
+    (function () {
+      try {
+        var isDemo = new URLSearchParams(window.location.search).get('demo') === '1';
+        var isIframe = window.self !== window.top;
+        window._isLandingMode = !isIframe && !isDemo;
+        if (window._isLandingMode) {
+          document.documentElement.classList.add('landing-mode');
+        }
+      } catch (e) {
+        window._isLandingMode = false;
+      }
+    })();
+  </script>
   <!-- PWA — installable dashboard on mobile ("Add to Home Screen") -->
   <link rel="manifest" href="/manifest.json" />
   <meta name="theme-color" content="#0d1117" />
@@ -200,6 +217,10 @@
   <!-- Meet Add-ons SDK — load dynamically so we can detect failures -->
   <script>
     window._meetSdkReady = new Promise((resolve) => {
+      if (window._isLandingMode) {
+        resolve(false);
+        return;
+      }
       const s = document.createElement('script');
       s.src = 'https://www.gstatic.com/meetjs/addons/1.1.0/meet.addons.js';
       s.onload = () => {
@@ -265,7 +286,8 @@
     /* Public landing page (shown at attendancetracker.dev outside Meet). The
        panel's fixed 100vh + overflow:hidden clips the marketing content and
        kills page scroll — the landing view needs the whole document to scroll. */
-    body.landing-mode {
+    body.landing-mode,
+    html.landing-mode body {
       height: auto;
       overflow: visible;
     }
@@ -1277,7 +1299,19 @@
       background-repeat:no-repeat;
       text-align:left;
     }
-    body.landing-mode{background:#05070a}
+    body.landing-mode,
+    html.landing-mode body{background:#05070a}
+    #landing-page {
+      display: none;
+    }
+    html.landing-mode #landing-page,
+    body.landing-mode #landing-page {
+      display: block;
+    }
+    html.landing-mode #addon-ui,
+    body.landing-mode #addon-ui {
+      display: none;
+    }
     #landing-page a{color:inherit;text-decoration:none}
     #landing-page h1,#landing-page h2,#landing-page h3,#landing-page h4{font-family:var(--lp-display);margin:0;text-wrap:balance;letter-spacing:-.02em;color:var(--lp-text)}
     #landing-page p{margin:0}
@@ -1395,7 +1429,7 @@
     @media(max-width:720px){#landing-page .lp-nav-links a.lp-hide-sm{display:none}}
     @media(prefers-reduced-motion:reduce){#landing-page *{animation:none!important}}
   </style>
-  <div id="landing-page" style="display:none">
+  <div id="landing-page">
 
     <!-- Header -->
     <div class="lp-header">
@@ -3703,6 +3737,12 @@ async function waitForMeet() {
 
 async function initSDK() {
   console.log('[Attendance] initSDK starting, window.meet =', typeof window.meet);
+  if (window._isLandingMode) {
+    document.body.classList.add('landing-mode');
+    loadPublicStats();
+    sendPageviewBeacon();
+    return;
+  }
   try {
     const ready = await waitForMeet();
     console.log('[Attendance] waitForMeet result:', ready, 'window.meet =', typeof window.meet);
@@ -7852,6 +7892,13 @@ function latenessMin(p) {
    BOOT
 ═══════════════════════════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
+  if (window._isLandingMode) {
+    document.body.classList.add('landing-mode');
+    populateLanguageSelect();
+    updateUiLanguage();
+    initSDK();
+    return;
+  }
   loadStoredRosters();
   populateLanguageSelect();
   updateUiLanguage();

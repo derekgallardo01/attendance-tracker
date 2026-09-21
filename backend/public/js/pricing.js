@@ -49,6 +49,15 @@
     MX: { educator: '~MX$ 95/yr', lifetime: '~MX$ 190', educatorPpp: '~MX$ 48/yr', lifetimePpp: '~MX$ 95', department: '~MX$ 1,150/yr' },
     CO: { educator: '~COP 20.000/yr', lifetime: '~COP 40.000', educatorPpp: '~COP 10.000/yr', lifetimePpp: '~COP 20.000', department: '~COP 240.000/yr' },
     MY: { educator: '~RM 22/yr', lifetime: '~RM 44', educatorPpp: '~RM 11/yr', lifetimePpp: '~RM 22', department: '~RM 260/yr' },
+    ES: { educator: '~4,50 €/yr', lifetime: '~8,99 €', educatorPpp: '~2,25 €/yr', lifetimePpp: '~4,50 €', department: '~53 €/yr' },
+    DE: { educator: '~4,50 €/yr', lifetime: '~8,99 €', educatorPpp: '~2,25 €/yr', lifetimePpp: '~4,50 €', department: '~53 €/yr' },
+    FR: { educator: '~4,50 €/yr', lifetime: '~8,99 €', educatorPpp: '~2,25 €/yr', lifetimePpp: '~4,50 €', department: '~53 €/yr' },
+    IT: { educator: '~4,50 €/yr', lifetime: '~8,99 €', educatorPpp: '~2,25 €/yr', lifetimePpp: '~4,50 €', department: '~53 €/yr' },
+    NL: { educator: '~4,50 €/yr', lifetime: '~8,99 €', educatorPpp: '~2,25 €/yr', lifetimePpp: '~4,50 €', department: '~53 €/yr' },
+    PT: { educator: '~4,50 €/yr', lifetime: '~8,99 €', educatorPpp: '~2,25 €/yr', lifetimePpp: '~4,50 €', department: '~53 €/yr' },
+    IE: { educator: '~4,50 €/yr', lifetime: '~8,99 €', educatorPpp: '~2,25 €/yr', lifetimePpp: '~4,50 €', department: '~53 €/yr' },
+    GB: { educator: '~£3.95/yr', lifetime: '~£7.90', educatorPpp: '~£1.95/yr', lifetimePpp: '~£3.95', department: '~£47/yr' },
+    IL: { educator: '~₪18.50/yr', lifetime: '~₪37', educatorPpp: '~₪9.25/yr', lifetimePpp: '~₪18.50', department: '~₪220/yr' },
   };
 
   function localCurrencyAnchor(countryCode, plan) {

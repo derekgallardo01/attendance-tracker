@@ -158,6 +158,36 @@ describe('setLocale + fallback chain', () => {
     expect(strings.t('btn.start')).toBe('Indítás');
     expect(strings.t('attendee.present')).toBe('Jelen (Present)');
     expect(strings.t('status.tracking')).toBe('Jelenlét rögzítése…');
+
+    // Swahili
+    strings.setLocale('sw');
+    expect(strings.t('btn.start')).toBe('Anza');
+    expect(strings.t('attendee.present')).toBe('Yupo');
+
+    // Amharic
+    strings.setLocale('am');
+    expect(strings.t('btn.start')).toBe('ጀምር');
+    expect(strings.t('attendee.present')).toBe('ተገኝቷል');
+
+    // Sinhala
+    strings.setLocale('si');
+    expect(strings.t('btn.start')).toBe('ආරම්භ කරන්න');
+    expect(strings.t('attendee.present')).toBe('පැමිණ සිටී');
+
+    // Greek
+    strings.setLocale('el');
+    expect(strings.t('btn.start')).toBe('Έναρξη');
+    expect(strings.t('attendee.present')).toBe('Παρών/Παρούσα');
+
+    // Norwegian
+    strings.setLocale('no');
+    expect(strings.t('btn.start')).toBe('Start');
+    expect(strings.t('attendee.present')).toBe('Tilstede');
+
+    // Catalan
+    strings.setLocale('ca');
+    expect(strings.t('btn.start')).toBe('Inicia');
+    expect(strings.t('attendee.present')).toBe('Present');
   });
 
   test('persists locale to localStorage when requested', () => {
@@ -219,6 +249,14 @@ describe('detectLocale', () => {
     expect(strings.detectLocale('da-DK')).toBe('da');
     expect(strings.detectLocale('fi-FI')).toBe('fi');
     expect(strings.detectLocale('hu-HU')).toBe('hu');
+    expect(strings.detectLocale('sw-KE')).toBe('sw');
+    expect(strings.detectLocale('am-ET')).toBe('am');
+    expect(strings.detectLocale('si-LK')).toBe('si');
+    expect(strings.detectLocale('el-GR')).toBe('el');
+    expect(strings.detectLocale('no-NO')).toBe('no');
+    expect(strings.detectLocale('nb-NO')).toBe('no');
+    expect(strings.detectLocale('nn-NO')).toBe('no');
+    expect(strings.detectLocale('ca-ES')).toBe('ca');
     expect(strings.detectLocale('en-US')).toBe('en');
     expect(strings.detectLocale('xx-YY')).toBe('en'); // unknown fallback
   });
@@ -243,7 +281,7 @@ describe('detectLocale', () => {
     expect(strings.detectLocale('es-ES')).toBe('ja');
   });
 
-  test('renderLanguagePicker renders select with all 35 locales and handles selection', () => {
+  test('renderLanguagePicker renders select with all 41 locales and handles selection', () => {
     delete window.location;
     window.location = {
       href: 'http://localhost/?lang=en',
@@ -256,7 +294,7 @@ describe('detectLocale', () => {
     strings.renderLanguagePicker('picker-mount');
     const select = document.querySelector('.att-lang-picker');
     expect(select).not.toBeNull();
-    expect(select.children.length).toBe(35);
+    expect(select.children.length).toBe(41);
 
     // Trigger language switch via picker with history.replaceState
     select.value = 'es';

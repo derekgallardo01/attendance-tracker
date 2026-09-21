@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "sync:public": "node scripts/sync-public.mjs",
-    "check:public": "node scripts/sync-public.mjs --check"
+    "check:public": "node scripts/sync-public.mjs --check",
+    "audit:i18n": "node scripts/audit-website-strings.cjs"
   }
 }
