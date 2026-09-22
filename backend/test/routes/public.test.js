@@ -213,6 +213,21 @@ describe('POST /api/public/feedback', () => {
     }));
   });
 
+  test('200 with feedback/email alias and rating from experiment widget', async () => {
+    notifications.sendFeedbackEmail.mockResolvedValue({ sent: true });
+    const res = await request(app)
+      .post('/api/public/feedback')
+      .set('Content-Type', 'application/json')
+      .send({
+        feedback: 'Loving the app so far!',
+        email: 'experiment@school.edu',
+        rating: 5,
+        source: 'experiment_stars',
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+
   test('500 when sendFeedbackEmail throws (SMTP unavailable)', async () => {
     notifications.sendFeedbackEmail.mockRejectedValue(new Error('SMTP down'));
     const res = await request(app)

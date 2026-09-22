@@ -23,6 +23,7 @@ const feedbackLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many feedback submissions. Try again later.' },
+  skip: () => process.env.NODE_ENV === 'test',
 });
 
 // POST /api/public/feedback — In-product feedback widget submissions.
@@ -31,7 +32,11 @@ const feedbackLimiter = rateLimit({
 router.post('/public/feedback', feedbackLimiter, async (req, res) => {
   try {
     /* istanbul ignore next: express.json always sets req.body to an object */
-    const { body, fromEmail, fromName, source, conferenceId } = req.body || {};
+    const raw = req.body || {};
+    const body = raw.body || raw.feedback;
+    const fromEmail = raw.fromEmail || raw.email;
+    const fromName = raw.fromName || raw.name || raw.declaredName;
+    const { source, conferenceId, rating } = raw;
     if (!body || typeof body !== 'string' || body.trim().length < 2) {
       return res.status(400).json({ error: 'Feedback body is required' });
     }
@@ -50,6 +55,7 @@ router.post('/public/feedback', feedbackLimiter, async (req, res) => {
         fromName: cap(fromName, 200),
         source: cap(source, 100),
         conferenceId: cap(conferenceId, 100),
+        rating: typeof rating === 'number' ? rating : null,
         userAgent,
         ip: cap(req.ip, 100),
         createdAt: FieldValue.serverTimestamp(),

@@ -6308,7 +6308,7 @@ async function triggerReviewVerification(e) {
   statusEl.style.display = 'none';
 
   try {
-    const res = await fetch(`${state.backendUrl || ''}/api/public/verify-review`, {
+    const res = await fetch(`${state.backendUrl || ''}/public/verify-review`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -6689,10 +6689,10 @@ async function submitReviewExperimentFeedback(variant) {
   try {
     logUserEvent('review_feedback_submitted', { variant, length: text.length });
     const email = state.userEmail || '';
-    await fetch(`${state.backendUrl}/api/feedback`, {
+    await fetch(`${state.backendUrl}/public/feedback`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, feedback: text, source: `experiment_${variant}`, rating: _selectedStarRating })
+      body: JSON.stringify({ body: text, feedback: text, fromEmail: email, email, source: `experiment_${variant}`, rating: _selectedStarRating })
     }).catch(() => {});
   } catch (e) {}
   try { localStorage.setItem('has_reviewed', '1'); } catch (e) {}
