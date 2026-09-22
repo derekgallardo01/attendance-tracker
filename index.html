@@ -3555,9 +3555,9 @@ async function submitSource() {
   const rawDetail = (document.getElementById('source-modal-other')?.value || '').trim();
   const detail = rawDetail ? rawDetail.slice(0, 200) : null;
   try {
-    const res = await fetch(`${state.backendUrl}/admin/source`, {
+    const res = await authFetch(`${state.backendUrl}/admin/source`, {
       method: 'POST',
-      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ source, detail }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -5966,12 +5966,9 @@ function maybeAskSourcePostExport() {
 async function submitSurvey(useCase) {
   closeSurveyModal();
   try {
-    await fetch(`${state.backendUrl}/user/survey`, {
+    await authFetch(`${state.backendUrl}/user/survey`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${state.sessionToken}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ useCase }),
     });
   } catch (e) { /* silent — survey is best-effort */ }
@@ -6215,7 +6212,9 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     const durationMs = Math.round(((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - exportStartMs);
     logUserEvent('export_failed', { reason: 'error', message: String(err.message || err).slice(0, 200), durationMs });
     captureError(err, { where: 'doExportToSheets', reason: 'error' });
-    toast(`${t('toast.sheetsError','Sheets error:')} ${err.message}`);
+    const isNetwork = err?.name === 'TypeError' || /failed to fetch|networkerror|load failed/i.test(err?.message || '');
+    const errMsg = isNetwork ? t('common.couldNotReach', 'Could not reach server') : (err?.message || 'Error');
+    toast(`${t('toast.sheetsError','Sheets error:')} ${errMsg}`);
   }
 }
 
