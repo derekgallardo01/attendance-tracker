@@ -13,7 +13,7 @@
 //   node scripts/sync-public.mjs          # write the mirror
 //   node scripts/sync-public.mjs --check  # exit 1 if the mirror is stale (CI)
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -114,6 +114,10 @@ const MIRRORED = [
   'icons/icon-512.png',
   'icons/icon-192-maskable.png',
   'icons/icon-512-maskable.png',
+  'screenshots/01-live-roster.jpg',
+  'screenshots/02-sheets-export.jpg',
+  'screenshots/03-late-no-shows.jpg',
+  'screenshots/04-class-attendance.jpg',
   'robots.txt',
   'sitemap.xml',
 ];
@@ -155,6 +159,7 @@ for (const rel of MIRRORED) {
       try { have = readFileSync(destPath); } catch { /* missing */ }
       if (!have || !want.equals(have)) stale.push(rel);
     } else {
+      mkdirSync(dirname(destPath), { recursive: true });
       writeFileSync(destPath, want);
     }
     continue;
@@ -169,6 +174,7 @@ for (const rel of MIRRORED) {
     try { have = toLF(readFileSync(destPath, 'utf8')); } catch { /* missing */ }
     if (have !== want) stale.push(rel);
   } else {
+    mkdirSync(dirname(destPath), { recursive: true });
     writeFileSync(destPath, want);
   }
 }

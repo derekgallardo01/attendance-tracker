@@ -126,6 +126,12 @@ router.get('/calendar-attendees', requireAuth, async (req, res) => {
       log.info('calendar permission not granted, skipping calendar lookup', { email: req.user?.email });
       return res.json({ attendees: [], isScheduled: false, calendarPermissionMissing: true });
     }
+    // Invalid Credentials (401) means user's token expired or was revoked.
+    // Degrade gracefully rather than throwing a 500 server error.
+    if (err.code === 401 || /invalid credentials/i.test(err.message)) {
+      log.info('calendar credentials invalid or expired, skipping calendar lookup', { email: req.user?.email });
+      return res.json({ attendees: [], isScheduled: false, calendarAuthExpired: true });
+    }
     log.error('calendar lookup failed', { error: err.message });
     res.status(500).json({ error: 'Failed to look up calendar data.' });
   }

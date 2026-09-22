@@ -3696,6 +3696,7 @@ async function authFetch(url, opts = {}) {
     state.userEmail = null;
     state.signedIn = false;
     updateAuthUI();
+    if (state.tracking && typeof stopTracking === 'function') stopTracking();
     toast(t('toast.sessionExpired','Session expired — please sign in again'));
     throw new Error('Session expired');
   }
@@ -4046,6 +4047,11 @@ let _emptyPolls = 0;
 let _refreshing = false;
 async function refreshAttendance() {
   if (!state.tracking) return;
+  if (!state.signedIn && state.conferenceId) {
+    if (state.tracking && typeof stopTracking === 'function') stopTracking();
+    setStatus('idle', t('status.stopped', 'Tracking stopped'));
+    return;
+  }
   // Re-entrancy guard: the poll timer, the Sync button, and the
   // visibilitychange handler can all fire this concurrently. Without the
   // guard, an older response resolving last could repaint a stale
@@ -4063,6 +4069,12 @@ async function refreshAttendance() {
         `${state.backendUrl}/attendance?conferenceId=${encodeURIComponent(state.conferenceId)}`
       );
       if (!res.ok) {
+        if (res.status === 401) {
+          if (state.tracking && typeof stopTracking === 'function') stopTracking();
+          updateAuthUI();
+          toast(t('toast.sessionExpired', 'Session expired — please sign in again'));
+          return;
+        }
         const errBody = await res.json().catch(() => ({}));
         // Handle missing Meet scope — prompt re-consent
         if (errBody.error === 'scope_required') {
@@ -4129,6 +4141,7 @@ async function refreshAttendance() {
 
   } catch (err) {
     console.error(err);
+    if (err.message === 'Session expired') return;
     setStatus('loading', `Error: ${err.message}`);
     toast(t('common.couldNotReach','Could not reach backend'));
   } finally {

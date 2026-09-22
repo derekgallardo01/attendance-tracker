@@ -121,6 +121,13 @@ const FRONTEND_EVENT_TYPES = new Set([
   // Subtle trial ending banner interaction
   'trial_banner_upgrade_clicked',
   'trial_banner_dismissed',
+  // Email upgrade link requested from paywall modal
+  'upgrade_link_requested',
+  // Colleague referral modal interactions
+  'colleague_referral_modal_shown',
+  'colleague_referral_modal_dismissed',
+  'colleague_referral_link_copied',
+  'colleague_referral_email_clicked',
 ]);
 
 // POST /api/event — let the frontend record activation/funnel events that only

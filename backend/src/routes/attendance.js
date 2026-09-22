@@ -31,6 +31,11 @@ function extractUserId(participantPath) {
   return /^\d+$/.test(id) ? id : null;
 }
 
+// Cache Directory API authorization failures (unauthorized_client, missing delegation)
+// with a 15-minute cooldown to avoid hammering failed token requests on every 10-30s poll.
+const DIR_AUTH_COOLDOWN_MS = 15 * 60 * 1000;
+const dirAuthFailures = new Map();
+
 // Look up emails from Google Workspace Directory for participants missing emails
 async function enrichEmails(participants, adminEmail) {
   const needsLookup = participants.filter(p => !p.email && extractUserId(p.participantId));
@@ -39,6 +44,10 @@ async function enrichEmails(participants, adminEmail) {
   const resolvedAdmin = adminEmail || CONFIG.adminEmail;
   if (!resolvedAdmin) {
     log.info('no admin email configured, skipping directory enrichment');
+    return;
+  }
+  const lastFailure = dirAuthFailures.get(resolvedAdmin);
+  if (lastFailure && (Date.now() - lastFailure) < DIR_AUTH_COOLDOWN_MS) {
     return;
   }
 
@@ -73,6 +82,9 @@ async function enrichEmails(participants, adminEmail) {
 
     log.info('directory email enrichment', { looked: needsLookup.length, found: needsLookup.filter(p => p.email).length });
   } catch (err) {
+    if (err.message && (err.message.includes('unauthorized_client') || err.message.includes('not authorized') || err.message.includes('no directory scope'))) {
+      dirAuthFailures.set(resolvedAdmin, Date.now());
+    }
     log.warn('directory API unavailable, skipping email enrichment', { error: err.message });
   }
 }

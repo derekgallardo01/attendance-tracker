@@ -246,6 +246,8 @@ describe('POST /api/event — frontend event logging', () => {
     'pricing_page_opened', 'history_page_opened', 'upgrade_plan_hovered',
     'school_license_requested', 'trial_banner_upgrade_clicked', 'trial_banner_dismissed',
     'export_lms_csv_downloaded',
+    'upgrade_link_requested', 'colleague_referral_modal_shown', 'colleague_referral_modal_dismissed',
+    'colleague_referral_link_copied', 'colleague_referral_email_clicked',
   ])(
     'accepts allow-listed event type: %s',
     async (type) => {
