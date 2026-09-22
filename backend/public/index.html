@@ -3608,6 +3608,15 @@ async function deleteMyAccount() {
       method: 'POST',
       headers: authHeaders(),
     });
+    if (res.status === 401) {
+      state.sessionToken = null;
+      state.userEmail = null;
+      state.signedIn = false;
+      closeSettingsModal();
+      updateAuthUI();
+      toast(t('toast.sessionExpired', 'Session expired — please sign in again'));
+      return;
+    }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     // Clear all local traces of the session.
     try { sessionStorage.removeItem(STORAGE_KEY); } catch {}
