@@ -427,7 +427,7 @@ router.get('/public/unsubscribe', async (req, res) => {
     + `<input type="hidden" name="action" id="action-input" value="save">`
     + `<div class="pref-group">`
     + `<label class="pref-item"><input type="checkbox" name="exportSummary" ${exportSummary ? 'checked' : ''}><div><div class="pref-title">Export &amp; Attendance Summaries</div><div class="pref-desc">Reports generated after taking attendance or exporting to Google Sheets.</div></div></label>`
-    + `<label class="pref-item"><input type="checkbox" name="seriesAlerts" ${seriesAlerts ? 'checked' : ''}><div><div class="pref-title">Absence &amp; Streak Alerts</div><div class="pref-desc">Notifications when participants hit absence thresholds or notable streaks.</div></div></label>`
+    + `<label class="pref-item"><input type="checkbox" name="seriesAlerts" ${seriesAlerts ? 'checked' : ''}><div><div class="pref-title">Absence &amp; Streak Alerts</div><div class="pref-desc">Notifications when students or cohort members miss multiple classes or hit streaks (for groups with 4+ attendees).</div></div></label>`
     + `<label class="pref-item"><input type="checkbox" name="weeklyDigest" ${weeklyDigest ? 'checked' : ''}><div><div class="pref-title">Weekly Digest</div><div class="pref-desc">Weekly summary of meetings held, attendance rates, and team trends.</div></div></label>`
     + `<label class="pref-item"><input type="checkbox" name="tipsAndUpdates" ${tipsAndUpdates ? 'checked' : ''}><div><div class="pref-title">Tips &amp; Feature Updates</div><div class="pref-desc">Helpful tips and major feature announcements.</div></div></label>`
     + `</div>`

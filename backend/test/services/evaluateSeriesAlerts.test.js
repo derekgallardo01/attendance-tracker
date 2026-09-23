@@ -29,7 +29,7 @@ function seedTrackedEvent(domain, email, conferenceId, atMs) {
 }
 
 // Helper: seed a recurring meeting + its participants.
-function seedRecurringMeeting(domain, conferenceId, recurringEventId, title, startMs, participants) {
+function seedRecurringMeeting(domain, conferenceId, recurringEventId, title, startMs, participants, includeCohortFillers = true) {
   ctx.seed(`tenants/${domain}/meetings/${conferenceId}`, {
     conferenceId,
     recurringEventId,
@@ -37,7 +37,15 @@ function seedRecurringMeeting(domain, conferenceId, recurringEventId, title, sta
     startTime: wrapTimestamp(new Date(startMs)),
     createdAt: wrapTimestamp(new Date(startMs)),
   });
-  for (const p of participants) {
+  const allParticipants = [...participants];
+  if (includeCohortFillers) {
+    // Cohort fillers ensure the recurring series represents a class/group cohort (4+ attendees)
+    allParticipants.push(
+      { email: 'filler1@acme.com', displayName: 'Filler One', present: true },
+      { email: 'filler2@acme.com', displayName: 'Filler Two', present: true }
+    );
+  }
+  for (const p of allParticipants) {
     const docId = p.id || p.email || p.displayName;
     ctx.seed(`tenants/${domain}/meetings/${conferenceId}/participants/${docId}`, {
       participantId: docId,
@@ -264,6 +272,24 @@ describe('evaluateSeriesAlerts — filtering and scoping', () => {
     }
     // fresh@acme.com has tracked nothing — must see nothing.
     const alerts = await firestore.evaluateSeriesAlerts(domain, 'fresh@acme.com');
+    expect(alerts).toEqual([]);
+  });
+
+  test('suppresses alerts for small recurring series with fewer than 4 distinct attendees (1-on-1s, small consultations)', async () => {
+    const domain = 'acme.com';
+    const email = 'admin@acme.com';
+    const day = 86400000;
+    const now = Date.now();
+    // 11 instances, but only 2 distinct people across the entire series (Alex + Beth).
+    // Even if Alex misses the last 3 meetings, smart suppression must skip it (includeCohortFillers = false).
+    for (let i = 0; i < 11; i++) {
+      const cid = `meet-small-${i}`;
+      seedTrackedEvent(domain, email, cid, now - (11 - i) * day);
+      const participants = [{ email: 'beth@acme.com', displayName: 'Beth' }];
+      if (i < 8) participants.push({ email: 'alex@acme.com', displayName: 'Alex' });
+      seedRecurringMeeting(domain, cid, 'series-consultation', '1-on-1 Coaching', now - (11 - i) * day, participants, false);
+    }
+    const alerts = await firestore.evaluateSeriesAlerts(domain, email);
     expect(alerts).toEqual([]);
   });
 });

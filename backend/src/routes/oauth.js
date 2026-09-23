@@ -4,7 +4,7 @@ const { google } = require('googleapis');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { exchangeCode, revokeToken } = require('../services/googleAuth');
-const { upsertUser, getUser, updateUserTokens, logEvent, getUserActivationStatus, getUserTrackingStreak, getTenantConfig, deleteUser, getExistingDomainPeer } = require('../services/firestore');
+const { upsertUser, getUser, updateUserTokens, logEvent, getUserActivationStatus, getUserTrackingStreak, getTenantConfig, deleteUser, getExistingDomainPeer, getUserSettings, updateUserSettings } = require('../services/firestore');
 // Institutional wedge: the same gated signpost the history page shows, so the
 // in-Meet panel can surface "your school is already here" where admins actually are.
 const { buildTeamSignpost } = require('../lib/teamSignpost');
@@ -57,7 +57,7 @@ function computeMissingScopes(granted) {
 // POST /api/oauth/exchange — swap authorization code for session token
 router.post('/exchange', async (req, res) => {
   try {
-    const { code, acquisition, firstTouch } = req.body;
+    const { code, acquisition, firstTouch, timezone: clientTz } = req.body;
     if (!code) return res.status(400).json({ error: 'Authorization code required' });
 
     // Exchange code for Google tokens
@@ -194,6 +194,27 @@ router.post('/exchange', async (req, res) => {
         accessToken: tokens.access_token,
         tokenExpiresAt: new Date(tokens.expiry_date || Date.now() + 3600 * 1000),
       });
+    }
+
+    // Auto-seed userSettings.timezone if supplied from client or GeoIP and not already set
+    let candidateTz = null;
+    if (typeof clientTz === 'string' && clientTz.trim()) {
+      try {
+        Intl.DateTimeFormat(undefined, { timeZone: clientTz.trim() });
+        candidateTz = clientTz.trim();
+      } catch {}
+    } else if (geo?.timezone) {
+      candidateTz = geo.timezone;
+    }
+    if (candidateTz) {
+      try {
+        const curSettings = await getUserSettings(domain, email);
+        if (!curSettings?.timezone) {
+          await updateUserSettings(domain, email, { timezone: candidateTz });
+        }
+      } catch (err) {
+        log.warn('oauth: failed to auto-seed timezone setting', { error: err.message });
+      }
     }
 
     // Issue backend session JWT (8 hour expiry — covers full-day meetings)

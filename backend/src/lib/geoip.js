@@ -25,6 +25,7 @@ function lookupGeo(ip) {
       region: geo.region || null,
       city: geo.city || null,
       ll: geo.ll || null,
+      timezone: geo.timezone || null,
     };
   } catch (err) {
     return null;

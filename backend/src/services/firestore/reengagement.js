@@ -122,6 +122,12 @@ async function evaluateSeriesAlerts(domain, email) {
 
       const seriesTitle = meetings[meetings.length - 1].data.title || 'Recurring meeting';
 
+      // Smart alert suppression: Only evaluate absence & streak alerts for
+      // classes, teams, and cohort groups (4+ distinct attendees).
+      // 1-on-1 check-ins, personal counseling, interviews, or 2-person consultations
+      // should never generate automated absence alerts.
+      if (peopleTimeline.size < 4) continue;
+
       for (const [, p] of peopleTimeline) {
         const t = p.attendance;
         const n = t.length;

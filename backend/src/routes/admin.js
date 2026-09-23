@@ -1129,7 +1129,7 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
                     meetingStartTime: rec.startTime || null,
                     meetingType: 'scheduled',
                     conferenceId: meetingCode,
-                    timezone: settings.timezone || 'America/New_York',
+                    timezone: settings.timezone || userDoc.timezone || userDoc.signupGeo?.timezone || 'America/New_York',
                   },
                   options: { sendEmail: true, autoExport: true, proAllowed: true },
                 });

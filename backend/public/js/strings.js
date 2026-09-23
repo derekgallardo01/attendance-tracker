@@ -221,6 +221,10 @@
 
     const STRINGS = {
     "en": {
+        "settings.timezoneLabel": "Timezone",
+        "settings.timezoneSub": "Used for sheet exports and attendance reports",
+        "toast.timezoneSaved": "Timezone updated",
+
         "quota.largeClassSaved": "✓ We captured all {count} attendees for today’s session! Upgrade to Pro to export today’s full roster to Google Sheets.",
         "upgrade.deskLinkToast": "We saved your attendance! We emailed a 1-click link to finish upgrading from your desk after class.",
         "history.signpostTeam59": "{n} teachers at {domain} are using Attendance Tracker. Request a whole-school license for $59/yr.",
@@ -1164,6 +1168,10 @@
         "toast.prefSaved": "Notification preferences saved"
     },
     "es": {
+        "settings.timezoneLabel": "Zona horaria",
+        "settings.timezoneSub": "Utilizada para la exportación de hojas y reportes de asistencia",
+        "toast.timezoneSaved": "Zona horaria actualizada",
+
         "quota.largeClassSaved": "✓ ¡Capturamos a los {count} asistentes de la sesión de hoy! Actualiza a Pro para exportar la lista completa a Google Sheets.",
         "upgrade.deskLinkToast": "¡Guardamos tu asistencia! Te enviamos un enlace de 1 clic para completar la actualización desde tu escritorio después de clase.",
         "history.signpostTeam59": "{n} profesores de {domain} usan Attendance Tracker. Solicita una licencia para toda la escuela por $59/año.",
@@ -2107,6 +2115,10 @@
         "toast.prefSaved": "Preferencias de notificación guardadas"
     },
     "pt": {
+        "settings.timezoneLabel": "Fuso horário",
+        "settings.timezoneSub": "Usado para exportação de planilhas e relatórios de presença",
+        "toast.timezoneSaved": "Fuso horário atualizado",
+
         "quota.largeClassSaved": "✓ Registramos todos os {count} participantes da sessão de hoje! Faça upgrade para o Pro para exportar a lista completa para o Google Planilhas.",
         "upgrade.deskLinkToast": "Salvamos sua presença! Enviamos um link de 1 clique para você concluir o upgrade da sua mesa após a aula.",
         "history.signpostTeam59": "{n} professores em {domain} usam o Attendance Tracker. Solicite uma licença para toda a escola por $59/ano.",
@@ -3050,6 +3062,10 @@
         "toast.prefSaved": "Preferências de notificação salvas"
     },
     "hi": {
+        "settings.timezoneLabel": "समय क्षेत्र",
+        "settings.timezoneSub": "शीट निर्यात और उपस्थिति रिपोर्ट के लिए उपयोग किया जाता है",
+        "toast.timezoneSaved": "समय क्षेत्र अपडेट किया गया",
+
         "quota.largeClassSaved": "✓ हमने आज के सत्र के सभी {count} उपस्थित लोगों को रिकॉर्ड कर लिया है! पूरी सूची को Google Sheets में निर्यात करने के लिए Pro में अपग्रेड करें।",
         "upgrade.deskLinkToast": "हमने आपकी उपस्थिति सहेज ली है! कक्षा के बाद अपनी डेस्क से अपग्रेड पूरा करने के लिए हमने 1-क्लिक लिंक ईमेल कर दिया है।",
         "history.signpostTeam59": "{domain} के {n} शिक्षक Attendance Tracker का उपयोग कर रहे हैं। $59/वर्ष में पूरे स्कूल का लाइसेंस अनुरोध करें।",
@@ -3993,6 +4009,10 @@
         "toast.prefSaved": "अधिसूचना प्राथमिकताएं सहेजी गईं"
     },
     "tl": {
+        "settings.timezoneLabel": "Sona ng oras",
+        "settings.timezoneSub": "Ginagamit para sa pag-export ng sheet at mga ulat sa pagdalo",
+        "toast.timezoneSaved": "Na-update ang timezone",
+
         "quota.largeClassSaved": "✓ Na-capture namin ang lahat ng {count} attendees para sa session ngayon! Mag-upgrade sa Pro para ma-export ang buong roster sa Google Sheets.",
         "upgrade.deskLinkToast": "Nai-save namin ang attendance mo! Nag-email kami ng 1-click link para tapusin ang pag-upgrade mula sa desk mo pagkatapos ng klase.",
         "history.signpostTeam59": "{n} guro sa {domain} ang gumagamit ng Attendance Tracker. Humiling ng lisensya para sa buong paaralan sa $59/taon.",
@@ -4936,6 +4956,10 @@
         "toast.prefSaved": "Nai-save ang mga kagustuhan sa notification"
     },
     "ms": {
+        "settings.timezoneLabel": "Zon masa",
+        "settings.timezoneSub": "Digunakan untuk eksport helaian dan laporan kehadiran",
+        "toast.timezoneSaved": "Zon masa dikemas kini",
+
         "quota.largeClassSaved": "✓ Kami telah merekodkan semua {count} peserta untuk sesi hari ini! Naik taraf ke Pro untuk mengeksport senarai penuh ke Google Sheets.",
         "upgrade.deskLinkToast": "Kami telah menyimpan kehadiran anda! Kami telah menghantar pautan 1-klik melalui e-mel untuk menyelesaikan naik taraf selepas kelas.",
         "history.signpostTeam59": "{n} guru di {domain} menggunakan Attendance Tracker. Mohon lesen seluruh sekolah untuk $59/tahun.",
@@ -5879,6 +5903,10 @@
         "toast.prefSaved": "Keutamaan pemberitahuan disimpan"
     },
     "id": {
+        "settings.timezoneLabel": "Zona waktu",
+        "settings.timezoneSub": "Digunakan untuk ekspor sheet dan laporan kehadiran",
+        "toast.timezoneSaved": "Zona waktu diperbarui",
+
         "quota.largeClassSaved": "✓ Kami mencatat semua {count} peserta untuk sesi hari ini! Tingkatkan ke Pro untuk mengekspor daftar lengkap ke Google Spreadsheet.",
         "upgrade.deskLinkToast": "Kehadiran Anda telah disimpan! Kami mengirimkan tautan 1 klik melalui email untuk menyelesaikan peningkatan dari meja Anda setelah kelas.",
         "history.signpostTeam59": "{n} guru di {domain} menggunakan Attendance Tracker. Ajukan lisensi satu sekolah seharga $59/tahun.",
@@ -6822,6 +6850,10 @@
         "toast.prefSaved": "Preferensi notifikasi disimpan"
     },
     "vi": {
+        "settings.timezoneLabel": "Múi giờ",
+        "settings.timezoneSub": "Dùng để xuất trang tính và báo cáo điểm danh",
+        "toast.timezoneSaved": "Đã cập nhật múi giờ",
+
         "quota.largeClassSaved": "✓ Đã ghi nhận tất cả {count} người tham gia buổi học hôm nay! Nâng cấp lên Pro để xuất toàn bộ danh sách sang Google Trang tính.",
         "upgrade.deskLinkToast": "Chúng tôi đã lưu điểm danh của bạn! Chúng tôi đã gửi email liên kết 1 nhấp để bạn hoàn tất nâng cấp tại bàn làm việc sau giờ học.",
         "history.signpostTeam59": "{n} giáo viên tại {domain} đang sử dụng Attendance Tracker. Yêu cầu giấy phép toàn trường với giá $59/năm.",
@@ -7765,6 +7797,10 @@
         "toast.prefSaved": "Đã lưu tùy chọn thông báo"
     },
     "fr": {
+        "settings.timezoneLabel": "Fuseau horaire",
+        "settings.timezoneSub": "Utilisé pour les exports de feuilles et les rapports de présence",
+        "toast.timezoneSaved": "Fuseau horaire mis à jour",
+
         "quota.largeClassSaved": "✓ Nous avons enregistré les {count} participants de la session d'aujourd'hui ! Passez à Pro pour exporter la liste complète vers Google Sheets.",
         "upgrade.deskLinkToast": "Vos présences sont enregistrées ! Nous vous avons envoyé un lien en 1 clic pour finaliser la mise à niveau depuis votre bureau après le cours.",
         "history.signpostTeam59": "{n} enseignants de {domain} utilisent Attendance Tracker. Demandez une licence pour tout l'établissement à 59 $/an.",
@@ -8708,6 +8744,10 @@
         "toast.prefSaved": "Préférences de notification enregistrées"
     },
     "de": {
+        "settings.timezoneLabel": "Zeitzone",
+        "settings.timezoneSub": "Wird für Tabellen-Exporte und Anwesenheitsberichte verwendet",
+        "toast.timezoneSaved": "Zeitzone aktualisiert",
+
         "quota.largeClassSaved": "✓ Wir haben alle {count} Teilnehmer der heutigen Sitzung erfasst! Upgraden Sie auf Pro, um die vollständige Liste nach Google Sheets zu exportieren.",
         "upgrade.deskLinkToast": "Ihre Anwesenheit wurde gespeichert! Wir haben Ihnen einen 1-Klick-Link gesendet, um das Upgrade nach dem Unterricht am Schreibtisch abzuschließen.",
         "history.signpostTeam59": "{n} Lehrkräfte bei {domain} nutzen Attendance Tracker. Fordern Sie eine Schullizenz für 59 $/Jahr an.",
@@ -9651,6 +9691,10 @@
         "toast.prefSaved": "Benachrichtigungseinstellungen gespeichert"
     },
     "it": {
+        "settings.timezoneLabel": "Fuso orario",
+        "settings.timezoneSub": "Utilizzato per le esportazioni di fogli e i report delle presenze",
+        "toast.timezoneSaved": "Fuso orario aggiornato",
+
         "quota.largeClassSaved": "✓ Abbiamo registrato tutti i {count} partecipanti della sessione di oggi! Passa a Pro per esportare l'elenco completo su Fogli Google.",
         "upgrade.deskLinkToast": "Presenze salvate! Ti abbiamo inviato un'email con un link a 1 clic per completare l'upgrade dalla scrivania dopo la lezione.",
         "history.signpostTeam59": "{n} docenti di {domain} usano Attendance Tracker. Richiedi una licenza per l'intero istituto a $59/anno.",
@@ -10594,6 +10638,10 @@
         "toast.prefSaved": "Preferenze di notifica salvate"
     },
     "nl": {
+        "settings.timezoneLabel": "Tijdzone",
+        "settings.timezoneSub": "Gebruikt voor werkbladexport en aanwezigheidsrapporten",
+        "toast.timezoneSaved": "Tijdzone bijgewerkt",
+
         "quota.largeClassSaved": "✓ We hebben alle {count} deelnemers van de sessie van vandaag vastgelegd! Upgrade naar Pro om de volledige lijst naar Google Spreadsheets te exporteren.",
         "upgrade.deskLinkToast": "We hebben je aanwezigheid opgeslagen! We hebben je een 1-klik-link gemaild om na de les vanaf je bureau te upgraden.",
         "history.signpostTeam59": "{n} docenten bij {domain} gebruiken Attendance Tracker. Vraag een licentie voor de hele school aan voor $59/jaar.",
@@ -11537,6 +11585,10 @@
         "toast.prefSaved": "Notificatievoorkeuren opgeslagen"
     },
     "pl": {
+        "settings.timezoneLabel": "Strefa czasowa",
+        "settings.timezoneSub": "Używane do eksportu arkuszy i raportów obecności",
+        "toast.timezoneSaved": "Strefa czasowa zaktualizowana",
+
         "quota.largeClassSaved": "✓ Zarejestrowaliśmy wszystkich {count} uczestników dzisiejszej sesji! Przejdź na Pro, aby wyeksportować pełną listę do Arkuszy Google.",
         "upgrade.deskLinkToast": "Zapisaliśmy listę obecności! Wysłaliśmy link 1-kliknięciem, aby dokończyć aktualizację przy biurku po lekcji.",
         "history.signpostTeam59": "{n} nauczycieli w {domain} używa Attendance Tracker. Poproś o licencję dla całej szkoły za $59/rok.",
@@ -12480,6 +12532,10 @@
         "toast.prefSaved": "Preferencje powiadomień zapisane"
     },
     "tr": {
+        "settings.timezoneLabel": "Saat dilimi",
+        "settings.timezoneSub": "E-tablo dışa aktarma ve katılım raporları için kullanılır",
+        "toast.timezoneSaved": "Saat dilimi güncellendi",
+
         "quota.largeClassSaved": "✓ Bugünkü oturumun tüm {count} katılımcısını kaydettik! Tam listeyi Google E-Tablolar'a aktarmak için Pro'ya yükseltin.",
         "upgrade.deskLinkToast": "Yoklamanızı kaydettik! Dersten sonra masanızdan yükseltmeyi tamamlamanız için 1 tıklamalı bir bağlantı e-postayla gönderdik.",
         "history.signpostTeam59": "{domain} alanındaki {n} öğretmen Attendance Tracker kullanıyor. $59/yıl karşılığında tüm okul lisansı talep edin.",
@@ -13423,6 +13479,10 @@
         "toast.prefSaved": "Bildirim tercihleri kaydedildi"
     },
     "th": {
+        "settings.timezoneLabel": "เขตเวลา",
+        "settings.timezoneSub": "ใช้สำหรับการส่งออกชีตและรายงานการเข้าร่วม",
+        "toast.timezoneSaved": "อัปเดตเขตเวลาแล้ว",
+
         "quota.largeClassSaved": "✓ เราได้บันทึกผู้เข้าร่วมทั้งหมด {count} คนสำหรับเซสชันวันนี้แล้ว! อัปเกรดเป็น Pro เพื่อส่งออกรายชื่อทั้งหมดไปยัง Google ชีต",
         "upgrade.deskLinkToast": "เราบันทึกการเข้าเรียนของคุณแล้ว! เราได้ส่งลิงก์แบบคลิกเดียวทางอีเมลเพื่อให้คุณอัปเกรดต่อที่โต๊ะทำงานหลังเลิกเรียน",
         "history.signpostTeam59": "ครู {n} คนที่ {domain} ใช้ Attendance Tracker ขอรับใบอนุญาตสำหรับทั้งโรงเรียนในราคา $59/ปี",
@@ -14366,6 +14426,10 @@
         "toast.prefSaved": "บันทึกการตั้งค่าการแจ้งเตือนแล้ว"
     },
     "ar": {
+        "settings.timezoneLabel": "المنطقة الزمنية",
+        "settings.timezoneSub": "تُستخدم لتصدير جداول البيانات وتقارير الحضور",
+        "toast.timezoneSaved": "تم تحديث المنطقة الزمنية",
+
         "quota.largeClassSaved": "✓ لقد قمنا بتسجيل جميع الحاضرين البالغ عددهم {count} لجلسة اليوم! قم بالترقية إلى Pro لتصدير القائمة الكاملة إلى جداول بيانات Google.",
         "upgrade.deskLinkToast": "لقد حفظنا الحضور! أرسلنا لك رابطًا بنقرة واحدة عبر البريد الإلكتروني لإتمام الترقية من مكتبك بعد انتهاء الحصة.",
         "history.signpostTeam59": "{n} من المعلمين في {domain} يستخدمون Attendance Tracker. اطلب ترخيصًا للمدرسة بأكملها مقابل 59 دولارًا في السنة.",
@@ -15309,6 +15373,10 @@
         "toast.prefSaved": "تم حفظ تفضيلات الإشعارات"
     },
     "ko": {
+        "settings.timezoneLabel": "시간대",
+        "settings.timezoneSub": "시트 내보내기 및 출석 보고서에 사용됩니다",
+        "toast.timezoneSaved": "시간대가 업데이트되었습니다",
+
         "quota.largeClassSaved": "✓ 오늘 세션의 참석자 {count}명을 모두 기록했습니다! 전체 명단을 Google 스프레드시트로 내보내려면 Pro로 업그레이드하세요.",
         "upgrade.deskLinkToast": "출석 데이터가 저장되었습니다! 수업이 끝난 후 자리에서 업그레이드를 완료할 수 있는 1클릭 링크를 이메일로 보내드렸습니다.",
         "history.signpostTeam59": "{domain}의 교사 {n}명이 Attendance Tracker를 사용하고 있습니다. 연 $59로 학교 전체 라이선스를 요청하세요.",
@@ -16252,6 +16320,10 @@
         "toast.prefSaved": "알림 설정이 저장되었습니다"
     },
     "zh": {
+        "settings.timezoneLabel": "時區",
+        "settings.timezoneSub": "用於試算表匯出和出勤報告",
+        "toast.timezoneSaved": "時區已更新",
+
         "quota.largeClassSaved": "✓ 我們已完整記錄今日會議的全部 {count} 位出席者！升級至 Pro 即可將完整名單匯出至 Google 試算表。",
         "upgrade.deskLinkToast": "已為您儲存出席紀錄！我們已發送一鍵升級連結至您的電子郵件，方便您課後在辦公桌前完成升級。",
         "history.signpostTeam59": "{domain} 已有 {n} 位教師正在使用 Attendance Tracker。立即申請全校授權，每年僅需 $59。",
@@ -17195,6 +17267,10 @@
         "toast.prefSaved": "通知偏好設定已儲存"
     },
     "ja": {
+        "settings.timezoneLabel": "タイムゾーン",
+        "settings.timezoneSub": "シートのエクスポートと出席レポートに使用されます",
+        "toast.timezoneSaved": "タイムゾーンを更新しました",
+
         "quota.largeClassSaved": "✓ 本日のセッションの参加者全員（{count}名）を記録しました！名簿全体をGoogleスプレッドシートに書き出すにはProへアップグレードしてください。",
         "upgrade.deskLinkToast": "出席データを保存しました！授業後にデスクからアップグレードを完了できるよう、1クリックリンクをメールでお送りしました。",
         "history.signpostTeam59": "{domain} では {n} 名の先生が Attendance Tracker を利用しています。年間$59で学校全体ライセンスをリクエストできます。",
@@ -18138,6 +18214,10 @@
         "toast.prefSaved": "通知設定を保存しました"
     },
     "ta": {
+        "settings.timezoneLabel": "நேர மண்டலம்",
+        "settings.timezoneSub": "தாள் ஏற்றுமதி மற்றும் வருகை அறிக்கைகளுக்குப் பயன்படுகிறது",
+        "toast.timezoneSaved": "நேர மண்டலம் புதுப்பிக்கப்பட்டது",
+
         "quota.largeClassSaved": "✓ இன்றைய அமர்வின் அனைத்து {count} பங்கேற்பாளர்களையும் பதிவு செய்துள்ளோம்! முழுப் பட்டியலையும் Google Sheets-க்கு ஏற்றுமதி செய்ய Pro-விற்கு மேம்படுத்தவும்.",
         "upgrade.deskLinkToast": "உங்கள் வருகைப்பதிவு சேமிக்கப்பட்டது! வகுப்பு முடிந்ததும் மேம்படுத்த 1-கிளிக் இணைப்பை மின்னஞ்சல் செய்துள்ளோம்.",
         "history.signpostTeam59": "{domain}-இல் {n} ஆசிரியர்கள் Attendance Tracker-ஐப் பயன்படுத்துகின்றனர். $59/வருடத்திற்கு முழு பள்ளி உரிமத்தைக் கோரவும்.",
@@ -19081,6 +19161,10 @@
         "toast.prefSaved": "அறிவிப்பு விருப்பங்கள் சேமிக்கப்பட்டன"
     },
     "te": {
+        "settings.timezoneLabel": "సమయ మండలం",
+        "settings.timezoneSub": "షీట్ ఎగుమతి మరియు హాజరు నివేదికల కోసం ఉపయోగించబడుతుంది",
+        "toast.timezoneSaved": "సమయ మండలం నవీకరించబడింది",
+
         "quota.largeClassSaved": "✓ నేటి సెషన్ కోసం మొత్తం {count} మంది హాజరైన వారిని మేము రికార్డ్ చేసాము! పూర్తి రోస్టర్‌ను Google Sheetsకి ఎగుమతి చేయడానికి ప్రోకి అప్‌గ్రేడ్ చేయండి.",
         "upgrade.deskLinkToast": "మీ హాజరు సేవ్ చేయబడింది! క్లాస్ తర్వాత మీ డెస్క్ నుండి అప్‌గ్రేడ్‌ను పూర్తి చేయడానికి మేము 1-క్లిక్ లింక్‌ను ఇమెయిల్ చేసాము.",
         "history.signpostTeam59": "{domain}లో {n} మంది ఉపాధ్యాయులు Attendance Trackerని ఉపయోగిస్తున్నారు. $59/సంవత్సరానికి పాఠశాల మొత్తానికి లైసెన్స్‌ను అభ్యర్థించండి.",
@@ -20024,6 +20108,10 @@
         "toast.prefSaved": "నోటిఫికేషన్ ప్రాధాన్యతలు సేవ్ చేయబడ్డాయి"
     },
     "bn": {
+        "settings.timezoneLabel": "সময় অঞ্চল",
+        "settings.timezoneSub": "শীট রপ্তানি এবং উপস্থিতি প্রতিবেদনের জন্য ব্যবহৃত হয়",
+        "toast.timezoneSaved": "সময় অঞ্চল আপডেট করা হয়েছে",
+
         "quota.largeClassSaved": "✓ আজকের সেশনের সমস্ত {count} জন উপস্থিতির তথ্য রেকর্ড করা হয়েছে! সম্পূর্ণ তালিকা Google Sheets-এ এক্সপোর্ট করতে প্রো-তে আপগ্রেড করুন।",
         "upgrade.deskLinkToast": "উপস্থিতি সংরক্ষিত হয়েছে! ক্লাস শেষে আপনার ডেস্ক থেকে আপগ্রেড সম্পন্ন করতে আমরা একটি ১-ক্লিক লিংক ইমেইল করেছি।",
         "history.signpostTeam59": "{domain}-এর {n} জন শিক্ষক Attendance Tracker ব্যবহার করছেন। $৫৯/বছরে সম্পূর্ণ স্কুলের লাইসেন্স অনুরোধ করুন।",
@@ -20967,6 +21055,10 @@
         "toast.prefSaved": "বিজ্ঞপ্তি পছন্দ সংরক্ষিত হয়েছে"
     },
     "ur": {
+        "settings.timezoneLabel": "ٹائم زون",
+        "settings.timezoneSub": "شیٹ ایکسپورٹ اور حاضری کی رپورٹس کے لیے استعمال ہوتا ہے",
+        "toast.timezoneSaved": "ٹائم زون اپ ڈیٹ ہو گیا",
+
         "quota.largeClassSaved": "✓ ہم نے آج کے سیشن کے تمام {count} شرکاء کو ریکارڈ کر لیا ہے! مکمل فہرست کو گوگل شیٹس میں ایکسپورٹ کرنے کے لیے پرو میں اپ گریڈ کریں۔",
         "upgrade.deskLinkToast": "آپ کی حاضری محفوظ ہو گئی ہے! کلاس کے بعد ڈیسک سے اپ گریڈ مکمل کرنے کے لیے ہم نے 1-کلک لنک ای میل کر دیا ہے۔",
         "history.signpostTeam59": "{domain} کے {n} اساتذہ Attendance Tracker استعمال کر رہے ہیں۔ $59 سالانہ میں پورے اسکول کا لائسنس طلب کریں۔",
@@ -21910,6 +22002,10 @@
         "toast.prefSaved": "اطلاعات کی ترجیحات محفوظ کر لی گئیں"
     },
     "zh-CN": {
+        "settings.timezoneLabel": "时区",
+        "settings.timezoneSub": "用于电子表格导出和出勤报告",
+        "toast.timezoneSaved": "时区已更新",
+
         "quota.largeClassSaved": "✓ 我们已完整记录今日会议的全部 {count} 位出席人员！升级至 Pro 即可将完整花名册导出至 Google 表格。",
         "upgrade.deskLinkToast": "已保存您的考勤记录！我们已将一键升级链接发送至您的邮箱，方便您下课后在办公桌前完成升级。",
         "history.signpostTeam59": "{domain} 已有 {n} 位教师正在使用 Attendance Tracker。申请全校授权，每年仅需 $59。",
@@ -22853,6 +22949,10 @@
         "toast.prefSaved": "通知偏好设置已保存"
     },
     "ru": {
+        "settings.timezoneLabel": "Часовой пояс",
+        "settings.timezoneSub": "Используется для экспорта таблиц и отчетов о посещаемости",
+        "toast.timezoneSaved": "Часовой пояс обновлен",
+
         "quota.largeClassSaved": "✓ Мы зафиксировали всех {count} участников сегодняшней встречи! Перейдите на Pro, чтобы экспортировать весь список в Google Таблицы.",
         "upgrade.deskLinkToast": "Данные посещаемости сохранены! Мы отправили вам ссылку в 1 клик, чтобы вы могли обновиться после урока.",
         "history.signpostTeam59": "{n} преп. в {domain} используют Attendance Tracker. Запросите общешкольную лицензию за $59/год.",
@@ -23796,6 +23896,10 @@
         "toast.prefSaved": "Настройки уведомлений сохранены"
     },
     "uk": {
+        "settings.timezoneLabel": "Часовий пояс",
+        "settings.timezoneSub": "Використовується для експорту таблиць та звітів про відвідуваність",
+        "toast.timezoneSaved": "Часовий пояс оновлено",
+
         "quota.largeClassSaved": "✓ Ми зафіксували всіх {count} учасників сьогоднішнього уроку! Перейдіть на Pro, щоб експортувати повний список у Google Таблиці.",
         "upgrade.deskLinkToast": "Дані відвідуваності збережено! Ми надіслали посилання в 1 клік, щоб ви могли оновитися після уроку.",
         "history.signpostTeam59": "{n} викладачів у {domain} використовують Attendance Tracker. Замовте ліцензію для всієї школи за $59/рік.",
@@ -24739,6 +24843,10 @@
         "toast.prefSaved": "Налаштування сповіщень збережено"
     },
     "ro": {
+        "settings.timezoneLabel": "Fus orar",
+        "settings.timezoneSub": "Folosit pentru exportul foilor și rapoartele de prezență",
+        "toast.timezoneSaved": "Fus orar actualizat",
+
         "quota.largeClassSaved": "✓ Am înregistrat toți cei {count} participanți la sesiunea de astăzi! Faceți upgrade la Pro pentru a exporta întreaga listă în Google Sheets.",
         "upgrade.deskLinkToast": "Prezența a fost salvată! V-am trimis prin e-mail un link cu 1 clic pentru a finaliza upgrade-ul după oră.",
         "history.signpostTeam59": "{n} profesori din {domain} folosesc Attendance Tracker. Solicitați o licență pentru întreaga școală pentru 59 $/an.",
@@ -25682,6 +25790,10 @@
         "toast.prefSaved": "Preferințele de notificare au fost salvate"
     },
     "he": {
+        "settings.timezoneLabel": "אזור זמן",
+        "settings.timezoneSub": "משמש לייצוא גיליונות ודוחות נוכחות",
+        "toast.timezoneSaved": "אזור הזמן עודכן",
+
         "quota.largeClassSaved": "✓ רשמנו את כל {count} המשתתפים במפגש של היום! שדרג ל-Pro כדי לייצא את הרשימה המלאה ל-Google Sheets.",
         "upgrade.deskLinkToast": "הנוכחות נשמרה! שלחנו קישור בלחיצה אחת כדי שתוכל לשדרג בנוחות מהשולחן אחרי השיעור.",
         "history.signpostTeam59": "{n} מורים ב-{domain} משתמשים ב-Attendance Tracker. בקש רישיון לכל בית הספר ב-$59 לשנה.",
@@ -26625,6 +26737,10 @@
         "toast.prefSaved": "העדפות ההודעות נשמרו"
     },
     "mr": {
+        "settings.timezoneLabel": "वेळ क्षेत्र",
+        "settings.timezoneSub": "शीट निर्यात आणि उपस्थिती अहवालांसाठी वापरले जाते",
+        "toast.timezoneSaved": "वेळ क्षेत्र अपडेट केले",
+
         "quota.largeClassSaved": "✓ आम्ही आजच्या सत्रातील सर्व {count} उपस्थितांची नोंद केली आहे! संपूर्ण यादी Google Sheets मध्ये निर्यात करण्यासाठी Pro वर अपग्रेड करा.",
         "upgrade.deskLinkToast": "आम्ही तुमची उपस्थिती जतन केली आहे! वर्गानंतर डेस्कवरून अपग्रेड पूर्ण करण्यासाठी आम्ही 1-क्लिक लिंक ईमेल केली आहे.",
         "history.signpostTeam59": "{domain} मधील {n} शिक्षक Attendance Tracker वापरत आहेत. $59/वर्ष दराने संपूर्ण शाळेच्या परवान्याची विनंती करा.",
@@ -27568,6 +27684,10 @@
         "toast.prefSaved": "सूचना प्राधान्ये जतन केली"
     },
     "sv": {
+        "settings.timezoneLabel": "Tidszon",
+        "settings.timezoneSub": "Används för kalkylblads-export och närvarorapporter",
+        "toast.timezoneSaved": "Tidszon uppdaterad",
+
         "quota.largeClassSaved": "✓ Vi har registrerat alla {count} deltagare för dagens lektion! Uppgradera till Pro för att exportera hela listan till Google Kalkylark.",
         "upgrade.deskLinkToast": "Närvaron har sparats! Vi har mejlat en 1-klickslänk så att du kan uppgradera från skrivbordet efter lektionen.",
         "history.signpostTeam59": "{n} lärare på {domain} använder Attendance Tracker. Begär en helskolelicens för $59/år.",
@@ -28511,6 +28631,10 @@
         "toast.prefSaved": "Aviseringsinställningar sparade"
     },
     "cs": {
+        "settings.timezoneLabel": "Časové pásmo",
+        "settings.timezoneSub": "Používá se pro export tabulek a přehledy docházky",
+        "toast.timezoneSaved": "Časové pásmo aktualizováno",
+
         "quota.largeClassSaved": "✓ Zaznamenali jsme všech {count} účastníků dnešní hodiny! Upgradujte na Pro a exportujte kompletní seznam do Tabulek Google.",
         "upgrade.deskLinkToast": "Docházka byla uložena! Poslali jsme vám e-mail s odkazem na 1 kliknutí, abyste mohli po hodině přejít na Pro.",
         "history.signpostTeam59": "{n} učitelů v doméně {domain} používá Attendance Tracker. Požádejte o licenci pro celou školu za 59 $/rok.",
@@ -29454,6 +29578,10 @@
         "toast.prefSaved": "Předvolby oznámení uloženy"
     },
     "da": {
+        "settings.timezoneLabel": "Tidszone",
+        "settings.timezoneSub": "Bruges til regnearkseksport og fremmøderapporter",
+        "toast.timezoneSaved": "Tidszone opdateret",
+
         "quota.largeClassSaved": "✓ Vi har registreret alle {count} deltagere for dagens session! Opgrader til Pro for at eksportere hele listen til Google Sheets.",
         "upgrade.deskLinkToast": "Oppmødet er gemt! Vi har mailet et 1-klik link, så du kan opgradere fra dit skrivebord efter timen.",
         "history.signpostTeam59": "{n} lærere hos {domain} bruger Attendance Tracker. Anmod om en skolelicens for $59/år.",
@@ -30397,6 +30525,10 @@
         "toast.prefSaved": "Notifikationspræferencer gemt"
     },
     "fi": {
+        "settings.timezoneLabel": "Aikavyöhyke",
+        "settings.timezoneSub": "Käytetään taulukoiden vientiin ja läsnäoloraportteihin",
+        "toast.timezoneSaved": "Aikavyöhyke päivitetty",
+
         "quota.largeClassSaved": "✓ Olemme tallentaneet kaikki {count} osallistujaa tämän päivän istunnosta! Päivitä Prohon viedäksesi koko luettelon Google Sheetsiin.",
         "upgrade.deskLinkToast": "Läsnäolosi on tallennettu! Olemme lähettäneet sähköpostitse 1-klikkilinkin päivityksen suorittamiseksi tunnin jälkeen.",
         "history.signpostTeam59": "{n} opettajaa organisaatiossa {domain} käyttää Attendance Tracker -sovellusta. Pyydä koko koulun lisenssiä hintaan $59/vuosi.",
@@ -31340,6 +31472,10 @@
         "toast.prefSaved": "Ilmoitusasetukset tallennettu"
     },
     "hu": {
+        "settings.timezoneLabel": "Időzóna",
+        "settings.timezoneSub": "Táblázat-exportáláshoz és jelenléti jelentésekhez használatos",
+        "toast.timezoneSaved": "Időzóna frissítve",
+
         "quota.largeClassSaved": "✓ Rögzítettük a mai alkalom mind a {count} résztvevőjét! Frissítsen Pro-ra a teljes névsor Google Táblázatokba exportálásához.",
         "upgrade.deskLinkToast": "Elmentettük a jelenléti ívet! E-mailben elküldtünk egy 1-kattintásos linket az óra utáni frissítéshez.",
         "history.signpostTeam59": "{n} tanár használja a(z) {domain} domainen az Attendance Trackert. Kérjen iskolai licencet $59/év áron.",
@@ -32283,6 +32419,10 @@
         "toast.prefSaved": "Értesítési beállítások elmentve"
     },
     "so": {
+        "settings.timezoneLabel": "Aagga saacadda",
+        "settings.timezoneSub": "Loo adeegsaday dhoofinta xaashida iyo warbixinnada xaadiritaanka",
+        "toast.timezoneSaved": "Aagga saacadda waa la cusbooneysiiyay",
+
         "quota.largeClassSaved": "✓ Waxaan diiwaangelinay dhamaan {count} qof ee ka qaybgalay kalfadhiga maanta! U cusboonaysii Pro si aad liiska ugu dhoofiso Google Sheets.",
         "upgrade.deskLinkToast": "Imaanshaha waa la keydiyay! Waxaan kuu soo dirnay xiriiriye 1-guji ah si aad u cusboonaysiiso fasalka ka dib.",
         "history.signpostTeam59": "{n} macallin oo ka tirsan {domain} ayaa isticmaala Attendance Tracker. Codso shatiga dugsiga oo dhan $59/sanadkii.",
@@ -33226,6 +33366,10 @@
         "toast.prefSaved": "Dookhyada ogeysiinta waa la keydiyay"
     },
     "sw": {
+        "settings.timezoneLabel": "Ukanda wa saa",
+        "settings.timezoneSub": "Inatumika kwa usafirishaji wa laha na ripoti za mahudhurio",
+        "toast.timezoneSaved": "Ukanda wa saa umesasishwa",
+
         "quota.largeClassSaved": "✓ Tumenakili washiriki wote {count} wa kipindi cha leo! Boresha hadi Pro ili kusafirisha orodha kamili kwenye Google Sheets.",
         "upgrade.deskLinkToast": "Tumehifadhi mahudhurio yako! Tumekutumia kiungo cha kubofya mara 1 ili kukamilisha usasishaji baada ya darasa.",
         "history.signpostTeam59": "Walimu {n} katika {domain} wanatumia Attendance Tracker. Omba leseni ya shule nzima kwa $59/mwaka.",
@@ -34167,6 +34311,10 @@
         "lang.ca": "Català"
     },
     "am": {
+        "settings.timezoneLabel": "የሰዓት ሰቅ",
+        "settings.timezoneSub": "ለሉህ መላክ እና የክትትል ሪፖርቶች ጥቅም ላይ ይውላል",
+        "toast.timezoneSaved": "የሰዓት ሰቅ ዘምኗል",
+
         "quota.largeClassSaved": "✓ የዛሬውን ክፍለ ጊዜ {count} ተሳታፊዎች በሙሉ መዝግበናል! ሙሉውን ዝርዝር ወደ Google Sheets ለመላክ ወደ Pro ያሻሽሉ።",
         "upgrade.deskLinkToast": "የመገኘት መረጃዎ ተቀምጧል! ከክፍል በኋላ ለማሻሻል የሚያስችል የ1-ጠቅታ አገናኝ በኢሜይል ልከንልዎታል።",
         "history.signpostTeam59": "በ{domain} ውስጥ {n} መምህራን Attendance Trackerን ይጠቀማሉ። የሙሉ ትምህርት ቤት ፈቃድ በ$59/ዓመት ይጠይቁ።",
@@ -35108,6 +35256,10 @@
         "lang.ca": "Català"
     },
     "si": {
+        "settings.timezoneLabel": "වේලා කලාපය",
+        "settings.timezoneSub": "පත්‍රිකා අපනයනය සහ පැමිණීමේ වාර්තා සඳහා භාවිතා වේ",
+        "toast.timezoneSaved": "වේලා කලාපය යාවත්කාලීන කරන ලදී",
+
         "quota.largeClassSaved": "✓ අද සැසියේ සියලුම සහභාගිවන්නන් {count} දෙනාම සටහන් කර ඇත! සම්පූර්ණ ලැයිස්තුව Google Sheets වෙත එක්ස්පෝට් කිරීමට Pro වෙත උත්ශ්‍රේණි කරන්න.",
         "upgrade.deskLinkToast": "පැමිණීම සුරකින ලදි! පන්තියෙන් පසු උත්ශ්‍රේණි කිරීම සඳහා අපි ක්ලික් 1ක ලින්ක් එකක් ඊමේල් කර ඇත.",
         "history.signpostTeam59": "{domain} හි ගුරුවරුන් {n} දෙනෙක් Attendance Tracker භාවිතා කරයි. $59/වසරකට පාසල් බලපත්‍රයක් ඉල්ලන්න.",
@@ -36049,6 +36201,10 @@
         "lang.ca": "Català"
     },
     "el": {
+        "settings.timezoneLabel": "Ζώνη ώρας",
+        "settings.timezoneSub": "Χρησιμοποιείται για εξαγωγές φύλλων και αναφορές παρουσιών",
+        "toast.timezoneSaved": "Η ζώνη ώρας ενημερώθηκε",
+
         "quota.largeClassSaved": "✓ Καταγράψαμε και τους {count} συμμετέχοντες της σημερινής συνεδρίας! Αναβαθμίστε σε Pro για εξαγωγή της πλήρους λίστας στο Google Sheets.",
         "upgrade.deskLinkToast": "Οι παρουσίες σας αποθηκεύτηκαν! Σας στείλαμε έναν σύνδεσμο με 1 κλικ για να ολοκληρώσετε την αναβάθμιση μετά το μάθημα.",
         "history.signpostTeam59": "{n} εκπαιδευτικοί στο {domain} χρησιμοποιούν το Attendance Tracker. Ζητήστε άδεια για όλο το σχολείο με $59/έτος.",
@@ -36990,6 +37146,10 @@
         "lang.ca": "Català"
     },
     "no": {
+        "settings.timezoneLabel": "Tidssone",
+        "settings.timezoneSub": "Brukes til regnearkeksport og oppmøterapporter",
+        "toast.timezoneSaved": "Tidssone oppdatert",
+
         "quota.largeClassSaved": "✓ Vi har registrert alle {count} deltakere for dagens økt! Oppgrader til Pro for å eksportere hele listen til Google Sheets.",
         "upgrade.deskLinkToast": "Oppmøtet er lagret! Vi har sendt en 1-klikks lenke på e-post slik at du kan oppgradere fra pulten etter timen.",
         "history.signpostTeam59": "{n} lærere ved {domain} bruker Attendance Tracker. Be om skolelisens for $59/år.",
@@ -37931,6 +38091,10 @@
         "lang.ca": "Català"
     },
     "ca": {
+        "settings.timezoneLabel": "Zona horària",
+        "settings.timezoneSub": "Utilitzada per a l'exportació de fulls i informes d'assistència",
+        "toast.timezoneSaved": "Zona horària actualitzada",
+
         "quota.largeClassSaved": "✓ Hem enregistrat tots els {count} participants de la sessió d'avui! Actualitza a Pro per exportar la llista completa a Google Sheets.",
         "upgrade.deskLinkToast": "Hem desat la teva assistència! T'hem enviat per correu electrònic un enllaç d'1 clic per completar l'actualització des de l'escriptori després de classe.",
         "history.signpostTeam59": "{n} professors de {domain} utilitzen Attendance Tracker. Sol·licita una llicència per a tot el centre per 59 $/any.",

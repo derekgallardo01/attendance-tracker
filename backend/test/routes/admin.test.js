@@ -870,7 +870,7 @@ describe('POST /api/admin/auto-capture — server-side auto-capture sweep', () =
       { email: 'pro@acme.com', domain: 'acme.com', displayName: 'Pro' },
     ]);
     firestore.getUserSettings.mockResolvedValue({ autoExportOnEnd: true });
-    firestore.getUser.mockResolvedValue({ email: 'pro@acme.com', domain: 'acme.com', refreshToken: 'rt' });
+    firestore.getUser.mockResolvedValue({ email: 'pro@acme.com', domain: 'acme.com', refreshToken: 'rt', signupGeo: { timezone: 'Europe/Madrid' } });
     firestore.getExportedConferenceIds.mockResolvedValue(new Set(['old-code'])); // one already exported
     const nowIso = new Date().toISOString();
     meetApi.meetGet.mockImplementation(async (path) => {
@@ -895,6 +895,7 @@ describe('POST /api/admin/auto-capture — server-side auto-capture sweep', () =
     expect(sheetsMod.buildAndSaveExport).toHaveBeenCalledTimes(1);
     const arg = sheetsMod.buildAndSaveExport.mock.calls[0][0];
     expect(arg.data.conferenceId).toBe('new-code');
+    expect(arg.data.timezone).toBe('Europe/Madrid');
     expect(arg.options).toMatchObject({ autoExport: true, sendEmail: true, proAllowed: true });
     expect(arg.data.participants[0]).toMatchObject({ displayName: 'Alex', email: 'alex@acme.com' });
     expect(arg.data.participants[0].joinTimeISO).toBeTruthy();

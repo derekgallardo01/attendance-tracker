@@ -17,6 +17,8 @@ jest.mock('../../src/services/firestore', () => ({
   getTenantConfig: jest.fn(),
   deleteUser: jest.fn(),
   getExistingDomainPeer: jest.fn().mockResolvedValue(null),
+  getUserSettings: jest.fn().mockResolvedValue({}),
+  updateUserSettings: jest.fn().mockResolvedValue({}),
 }));
 jest.mock('../../src/services/googleAuth', () => ({
   exchangeCode: jest.fn(),
@@ -131,6 +133,23 @@ describe('POST /api/oauth/exchange', () => {
       signupDetectedSource: 'colleague_referral:colleague@acme.com',
       referredBy: 'colleague@acme.com',
     }));
+  });
+
+  test('seeds userSettings.timezone if supplied in exchange body', async () => {
+    googleAuth.exchangeCode.mockResolvedValue({
+      id_token: 'x', access_token: 'y', refresh_token: 'z',
+      expiry_date: Date.now() + 3600000,
+      scope: 'openid email profile https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/meetings.space.readonly https://www.googleapis.com/auth/calendar.events.readonly',
+    });
+    firestore.getUser.mockResolvedValue(null);
+    firestore.getUserSettings.mockResolvedValue({});
+    firestore.updateUserSettings.mockResolvedValue({});
+
+    await request(app)
+      .post('/api/oauth/exchange')
+      .send({ code: 'c', timezone: 'Europe/Madrid' });
+
+    expect(firestore.updateUserSettings).toHaveBeenCalledWith('acme.com', 'newuser@acme.com', { timezone: 'Europe/Madrid' });
   });
 });
 

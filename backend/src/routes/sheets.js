@@ -307,7 +307,18 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
     }
 
     // Format helpers — display in user's timezone (falls back to US Eastern)
-    const tz = timezone || 'America/New_York';
+    let tz = timezone;
+    if (!tz && req.user?.email) {
+      try {
+        const s = await getUserSettings(req.user.domain, req.user.email);
+        tz = s?.timezone;
+        if (!tz) {
+          const u = await getUser(req.user.domain, req.user.email);
+          tz = u?.timezone || u?.signupGeo?.timezone;
+        }
+      } catch {}
+    }
+    tz = tz || 'America/New_York';
     const tzAbbr = (() => { try {
       return new Date().toLocaleString('en-US', { timeZone: tz, timeZoneName: 'short' }).split(' ').pop();
     } catch { return 'ET'; } })();

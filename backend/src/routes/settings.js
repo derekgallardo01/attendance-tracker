@@ -57,6 +57,7 @@ router.get('/settings', requireAuth, async (req, res) => {
     const out = {
       autoExportOnEnd: settings.autoExportOnEnd === true,
       emailOptOut: suppressed,
+      timezone: settings.timezone || null,
       notificationPreferences: {
         exportSummary: notifPrefs.exportSummary !== false,
         seriesAlerts: notifPrefs.seriesAlerts !== false,
@@ -103,6 +104,7 @@ function normalizeExtraEmails(value) {
 //                    — validated incoming-webhook URLs (null/'' clears)
 //   autoExportOnEnd  — boolean, synced across the user's devices
 //   emailOptOut      — boolean, toggles the CAN-SPAM suppression record
+//   timezone         — valid IANA timezone string (null/'' clears)
 //   notificationPreferences — object with exportSummary, seriesAlerts, weeklyDigest, tipsAndUpdates
 //   digestExtraEmails — up to 5 extra addresses that also receive the
 //                       post-export report email (null/[] clears)
@@ -138,6 +140,25 @@ router.put('/settings', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'autoExportOnEnd must be a boolean.' });
     }
     patch.autoExportOnEnd = autoExportOnEnd;
+  }
+  if ('timezone' in body) {
+    const tz = body.timezone;
+    if (tz === null || tz === '') {
+      patch.timezone = null;
+    } else if (typeof tz === 'string') {
+      const trimmed = tz.trim();
+      let valid = false;
+      try {
+        Intl.DateTimeFormat(undefined, { timeZone: trimmed });
+        valid = true;
+      } catch {}
+      if (!valid) {
+        return res.status(400).json({ error: 'timezone must be a valid IANA timezone identifier (e.g. "Europe/Madrid") or null to clear.' });
+      }
+      patch.timezone = trimmed;
+    } else {
+      return res.status(400).json({ error: 'timezone must be a valid IANA timezone identifier (e.g. "Europe/Madrid") or null to clear.' });
+    }
   }
   if ('notificationPreferences' in body) {
     const np = body.notificationPreferences;

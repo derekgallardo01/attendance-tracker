@@ -93,6 +93,15 @@ describe('GET /api/settings', () => {
       .set(authedHeader('u@a.com', 'a.com'));
     expect(res.body.autoExportOnEnd).toBe(false);
     expect(res.body.emailOptOut).toBe(false);
+    expect(res.body.timezone).toBeNull();
+  });
+
+  test('returns timezone when configured', async () => {
+    firestore.getUserSettings.mockResolvedValue({ timezone: 'Europe/Madrid' });
+    const res = await request(app)
+      .get('/api/settings')
+      .set(authedHeader('u@a.com', 'a.com'));
+    expect(res.body.timezone).toBe('Europe/Madrid');
   });
 });
 
@@ -216,6 +225,54 @@ describe('PUT /api/settings', () => {
     expect(res.status).toBe(200);
     expect(firestore.updateUserSettings).toHaveBeenCalledWith('a.com', 'u@a.com', { autoExportOnEnd: false });
     expect(firestore.suppressEmail).toHaveBeenCalled();
+  });
+
+  test('200 with valid timezone', async () => {
+    const res = await request(app)
+      .put('/api/settings')
+      .set(authedHeader('u@a.com', 'a.com'))
+      .set('Content-Type', 'application/json')
+      .send({ timezone: 'Europe/Madrid' });
+    expect(res.status).toBe(200);
+    expect(firestore.updateUserSettings).toHaveBeenCalledWith('a.com', 'u@a.com', { timezone: 'Europe/Madrid' });
+  });
+
+  test('200 with null or empty timezone to clear', async () => {
+    let res = await request(app)
+      .put('/api/settings')
+      .set(authedHeader('u@a.com', 'a.com'))
+      .set('Content-Type', 'application/json')
+      .send({ timezone: null });
+    expect(res.status).toBe(200);
+    expect(firestore.updateUserSettings).toHaveBeenCalledWith('a.com', 'u@a.com', { timezone: null });
+
+    res = await request(app)
+      .put('/api/settings')
+      .set(authedHeader('u@a.com', 'a.com'))
+      .set('Content-Type', 'application/json')
+      .send({ timezone: '' });
+    expect(res.status).toBe(200);
+    expect(firestore.updateUserSettings).toHaveBeenCalledWith('a.com', 'u@a.com', { timezone: null });
+  });
+
+  test('400 with invalid timezone string', async () => {
+    const res = await request(app)
+      .put('/api/settings')
+      .set(authedHeader('u@a.com', 'a.com'))
+      .set('Content-Type', 'application/json')
+      .send({ timezone: 'Mars/Phobos' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain('timezone must be a valid IANA timezone identifier');
+  });
+
+  test('400 with non-string non-null timezone', async () => {
+    const res = await request(app)
+      .put('/api/settings')
+      .set(authedHeader('u@a.com', 'a.com'))
+      .set('Content-Type', 'application/json')
+      .send({ timezone: 12345 });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain('timezone must be a valid IANA timezone identifier');
   });
 });
 
