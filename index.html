@@ -1230,6 +1230,35 @@
     }
     #match-modal.open,
     #source-modal.open { display: flex; flex-direction: column; }
+    .source-chips-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .source-chip {
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 16px;
+      color: #c9d1d9;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: all .15s ease;
+      font-family: inherit;
+      line-height: 1.3;
+    }
+    .source-chip:hover {
+      background: #30363d;
+      border-color: #8b949e;
+      color: #f0f6fc;
+    }
+    .source-chip.selected {
+      background: #1f6feb;
+      border-color: #388bfd;
+      color: #fff;
+      font-weight: 600;
+    }
     .modal-box {
       background: #161b22;
       border: 1px solid #30363d;
@@ -3588,6 +3617,8 @@ function showSourceModal(detectedSource) {
   logUserEvent('source_prompt_shown', { detected: detectedSource || null });
   document.getElementById('source-modal-other-wrap').style.display = 'none';
   document.getElementById('source-modal-other').value = '';
+  state._selectedSourceChip = null;
+  document.querySelectorAll('#source-modal-chips .source-chip').forEach(c => c.classList.remove('selected'));
   const sel = document.getElementById('source-modal-select');
   if (sel) {
     // Pre-select the detected option when we have one — saves them a click.
@@ -3616,11 +3647,40 @@ function closeSourceModal(answered) {
   }
 }
 
+function selectSourceChip(el, value) {
+  document.querySelectorAll('#source-modal-chips .source-chip').forEach(c => c.classList.remove('selected'));
+  el?.classList.add('selected');
+  const otherWrap = document.getElementById('source-modal-other-wrap');
+  const otherInput = document.getElementById('source-modal-other');
+  if (value === 'other') {
+    state._selectedSourceChip = null;
+    if (otherWrap) otherWrap.style.display = 'block';
+    if (otherInput) {
+      otherInput.value = '';
+      otherInput.focus();
+    }
+  } else {
+    state._selectedSourceChip = value;
+    if (otherWrap) otherWrap.style.display = 'none';
+    if (otherInput) otherInput.value = value;
+  }
+}
+
 function onSourceSelectChange() {
   const sel = document.getElementById('source-modal-select');
+  const chipsWrap = document.getElementById('source-modal-chips');
   const otherWrap = document.getElementById('source-modal-other-wrap');
   const otherInput = document.getElementById('source-modal-other');
   if (!sel || !otherWrap || !otherInput) return;
+
+  state._selectedSourceChip = null;
+  document.querySelectorAll('#source-modal-chips .source-chip').forEach(c => c.classList.remove('selected'));
+  otherInput.value = '';
+
+  const showChips = sel.value === 'google_search' || sel.value === 'marketplace';
+  if (chipsWrap) {
+    chipsWrap.style.display = showChips ? 'flex' : 'none';
+  }
 
   const placeholders = {
     google_search: t('source.phSearch', 'What did you search for? (optional)'),
@@ -3634,7 +3694,7 @@ function onSourceSelectChange() {
   const placeholder = placeholders[sel.value];
   if (placeholder) {
     otherInput.placeholder = placeholder;
-    otherWrap.style.display = 'block';
+    otherWrap.style.display = showChips ? 'none' : 'block';
   } else {
     otherWrap.style.display = 'none';
   }
@@ -3644,7 +3704,8 @@ async function submitSource() {
   const sel = document.getElementById('source-modal-select');
   const source = sel?.value;
   if (!source) { toast(t('toast.pickOption', 'Pick an option first')); return; }
-  const rawDetail = (document.getElementById('source-modal-other')?.value || '').trim();
+  const rawInput = (document.getElementById('source-modal-other')?.value || '').trim();
+  const rawDetail = state._selectedSourceChip || rawInput;
   const detail = rawDetail ? rawDetail.slice(0, 200) : null;
   try {
     const res = await authFetch(`${state.backendUrl}/admin/source`, {
@@ -8627,6 +8688,12 @@ window.addEventListener('DOMContentLoaded', () => {
         <option value="friend" data-i18n="source.friend">Friend / colleague</option>
         <option value="other" data-i18n="common.other">Other</option>
       </select>
+      <div id="source-modal-chips" class="source-chips-wrap" style="display:none;margin-bottom:10px">
+        <button type="button" class="source-chip" onclick="selectSourceChip(this, 'Google Meet attendance')" data-i18n="source.chipAttendance">Meet attendance</button>
+        <button type="button" class="source-chip" onclick="selectSourceChip(this, 'Export to Sheets')" data-i18n="source.chipSheets">Export to Sheets</button>
+        <button type="button" class="source-chip" onclick="selectSourceChip(this, 'Track participant time')" data-i18n="source.chipTime">Track participant time</button>
+        <button type="button" class="source-chip" onclick="selectSourceChip(this, 'other')" data-i18n="source.chipOther">Other…</button>
+      </div>
       <div id="source-modal-other-wrap" style="display:none;margin-bottom:10px">
         <input id="source-modal-other" type="text" class="match-override" data-i18n-placeholder="source.phStatic" placeholder="Where did you hear about it?" maxlength="200" />
       </div>
