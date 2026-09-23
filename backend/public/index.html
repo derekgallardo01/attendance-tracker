@@ -7031,8 +7031,10 @@ function updateUiLanguage() {
   // re-run the provider painter so those strings don't stay in the old
   // language until the next tab click.
   const settingsModal = document.getElementById('settings-modal');
-  if (settingsModal && settingsModal.style.display === 'flex' && typeof selectWebhookProvider === 'function') {
-    selectWebhookProvider(_activeWebhookProvider);
+  if (settingsModal && settingsModal.style.display === 'flex') {
+    if (typeof selectWebhookProvider === 'function') selectWebhookProvider(_activeWebhookProvider);
+    const tzSel = document.getElementById('settings-timezone-select');
+    if (tzSel) populateTimezoneSelect(tzSel.value);
   }
 }
 
@@ -7075,11 +7077,12 @@ function populateTimezoneSelect(activeTz) {
   const current = activeTz || localStorage.getItem('userTimezone') || detected;
   const zones = Array.from(new Set([current, detected, ...COMMON_TIMEZONES])).sort((a, b) => a.localeCompare(b));
   sel.innerHTML = '';
+  const detectedLabel = (window.AttStrings && AttStrings.t) ? AttStrings.t('settings.timezoneDetected', 'Detected') : 'Detected';
   zones.forEach(tz => {
     const opt = document.createElement('option');
     opt.value = tz;
     let label = tz.replace(/_/g, ' ');
-    if (tz === detected) label += ' (Detected)';
+    if (tz === detected) label += ` (${detectedLabel})`;
     opt.textContent = label;
     if (tz === current) opt.selected = true;
     sel.appendChild(opt);

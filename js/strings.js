@@ -223,6 +223,7 @@
     "en": {
         "settings.timezoneLabel": "Timezone",
         "settings.timezoneSub": "Used for sheet exports and attendance reports",
+        "settings.timezoneDetected": "Detected",
         "toast.timezoneSaved": "Timezone updated",
 
         "quota.largeClassSaved": "✓ We captured all {count} attendees for today’s session! Upgrade to Pro to export today’s full roster to Google Sheets.",
@@ -1170,6 +1171,7 @@
     "es": {
         "settings.timezoneLabel": "Zona horaria",
         "settings.timezoneSub": "Utilizada para la exportación de hojas y reportes de asistencia",
+        "settings.timezoneDetected": "Detectada",
         "toast.timezoneSaved": "Zona horaria actualizada",
 
         "quota.largeClassSaved": "✓ ¡Capturamos a los {count} asistentes de la sesión de hoy! Actualiza a Pro para exportar la lista completa a Google Sheets.",
@@ -2117,6 +2119,7 @@
     "pt": {
         "settings.timezoneLabel": "Fuso horário",
         "settings.timezoneSub": "Usado para exportação de planilhas e relatórios de presença",
+        "settings.timezoneDetected": "Detetada",
         "toast.timezoneSaved": "Fuso horário atualizado",
 
         "quota.largeClassSaved": "✓ Registramos todos os {count} participantes da sessão de hoje! Faça upgrade para o Pro para exportar a lista completa para o Google Planilhas.",
@@ -3064,6 +3067,7 @@
     "hi": {
         "settings.timezoneLabel": "समय क्षेत्र",
         "settings.timezoneSub": "शीट निर्यात और उपस्थिति रिपोर्ट के लिए उपयोग किया जाता है",
+        "settings.timezoneDetected": "पहचाना गया",
         "toast.timezoneSaved": "समय क्षेत्र अपडेट किया गया",
 
         "quota.largeClassSaved": "✓ हमने आज के सत्र के सभी {count} उपस्थित लोगों को रिकॉर्ड कर लिया है! पूरी सूची को Google Sheets में निर्यात करने के लिए Pro में अपग्रेड करें।",
@@ -4011,6 +4015,7 @@
     "tl": {
         "settings.timezoneLabel": "Sona ng oras",
         "settings.timezoneSub": "Ginagamit para sa pag-export ng sheet at mga ulat sa pagdalo",
+        "settings.timezoneDetected": "Natukoy",
         "toast.timezoneSaved": "Na-update ang timezone",
 
         "quota.largeClassSaved": "✓ Na-capture namin ang lahat ng {count} attendees para sa session ngayon! Mag-upgrade sa Pro para ma-export ang buong roster sa Google Sheets.",
@@ -4958,6 +4963,7 @@
     "ms": {
         "settings.timezoneLabel": "Zon masa",
         "settings.timezoneSub": "Digunakan untuk eksport helaian dan laporan kehadiran",
+        "settings.timezoneDetected": "Dikesan",
         "toast.timezoneSaved": "Zon masa dikemas kini",
 
         "quota.largeClassSaved": "✓ Kami telah merekodkan semua {count} peserta untuk sesi hari ini! Naik taraf ke Pro untuk mengeksport senarai penuh ke Google Sheets.",
@@ -5905,6 +5911,7 @@
     "id": {
         "settings.timezoneLabel": "Zona waktu",
         "settings.timezoneSub": "Digunakan untuk ekspor sheet dan laporan kehadiran",
+        "settings.timezoneDetected": "Terdeteksi",
         "toast.timezoneSaved": "Zona waktu diperbarui",
 
         "quota.largeClassSaved": "✓ Kami mencatat semua {count} peserta untuk sesi hari ini! Tingkatkan ke Pro untuk mengekspor daftar lengkap ke Google Spreadsheet.",
@@ -6852,6 +6859,7 @@
     "vi": {
         "settings.timezoneLabel": "Múi giờ",
         "settings.timezoneSub": "Dùng để xuất trang tính và báo cáo điểm danh",
+        "settings.timezoneDetected": "Đã phát hiện",
         "toast.timezoneSaved": "Đã cập nhật múi giờ",
 
         "quota.largeClassSaved": "✓ Đã ghi nhận tất cả {count} người tham gia buổi học hôm nay! Nâng cấp lên Pro để xuất toàn bộ danh sách sang Google Trang tính.",
@@ -7799,6 +7807,7 @@
     "fr": {
         "settings.timezoneLabel": "Fuseau horaire",
         "settings.timezoneSub": "Utilisé pour les exports de feuilles et les rapports de présence",
+        "settings.timezoneDetected": "Détecté",
         "toast.timezoneSaved": "Fuseau horaire mis à jour",
 
         "quota.largeClassSaved": "✓ Nous avons enregistré les {count} participants de la session d'aujourd'hui ! Passez à Pro pour exporter la liste complète vers Google Sheets.",
@@ -8746,6 +8755,7 @@
     "de": {
         "settings.timezoneLabel": "Zeitzone",
         "settings.timezoneSub": "Wird für Tabellen-Exporte und Anwesenheitsberichte verwendet",
+        "settings.timezoneDetected": "Erkannt",
         "toast.timezoneSaved": "Zeitzone aktualisiert",
 
         "quota.largeClassSaved": "✓ Wir haben alle {count} Teilnehmer der heutigen Sitzung erfasst! Upgraden Sie auf Pro, um die vollständige Liste nach Google Sheets zu exportieren.",
@@ -9693,6 +9703,7 @@
     "it": {
         "settings.timezoneLabel": "Fuso orario",
         "settings.timezoneSub": "Utilizzato per le esportazioni di fogli e i report delle presenze",
+        "settings.timezoneDetected": "Rilevato",
         "toast.timezoneSaved": "Fuso orario aggiornato",
 
         "quota.largeClassSaved": "✓ Abbiamo registrato tutti i {count} partecipanti della sessione di oggi! Passa a Pro per esportare l'elenco completo su Fogli Google.",
@@ -10640,6 +10651,7 @@
     "nl": {
         "settings.timezoneLabel": "Tijdzone",
         "settings.timezoneSub": "Gebruikt voor werkbladexport en aanwezigheidsrapporten",
+        "settings.timezoneDetected": "Gedetecteerd",
         "toast.timezoneSaved": "Tijdzone bijgewerkt",
 
         "quota.largeClassSaved": "✓ We hebben alle {count} deelnemers van de sessie van vandaag vastgelegd! Upgrade naar Pro om de volledige lijst naar Google Spreadsheets te exporteren.",
@@ -11587,6 +11599,7 @@
     "pl": {
         "settings.timezoneLabel": "Strefa czasowa",
         "settings.timezoneSub": "Używane do eksportu arkuszy i raportów obecności",
+        "settings.timezoneDetected": "Wykryto",
         "toast.timezoneSaved": "Strefa czasowa zaktualizowana",
 
         "quota.largeClassSaved": "✓ Zarejestrowaliśmy wszystkich {count} uczestników dzisiejszej sesji! Przejdź na Pro, aby wyeksportować pełną listę do Arkuszy Google.",
@@ -12534,6 +12547,7 @@
     "tr": {
         "settings.timezoneLabel": "Saat dilimi",
         "settings.timezoneSub": "E-tablo dışa aktarma ve katılım raporları için kullanılır",
+        "settings.timezoneDetected": "Algılandı",
         "toast.timezoneSaved": "Saat dilimi güncellendi",
 
         "quota.largeClassSaved": "✓ Bugünkü oturumun tüm {count} katılımcısını kaydettik! Tam listeyi Google E-Tablolar'a aktarmak için Pro'ya yükseltin.",
@@ -13481,6 +13495,7 @@
     "th": {
         "settings.timezoneLabel": "เขตเวลา",
         "settings.timezoneSub": "ใช้สำหรับการส่งออกชีตและรายงานการเข้าร่วม",
+        "settings.timezoneDetected": "ตรวจพบแล้ว",
         "toast.timezoneSaved": "อัปเดตเขตเวลาแล้ว",
 
         "quota.largeClassSaved": "✓ เราได้บันทึกผู้เข้าร่วมทั้งหมด {count} คนสำหรับเซสชันวันนี้แล้ว! อัปเกรดเป็น Pro เพื่อส่งออกรายชื่อทั้งหมดไปยัง Google ชีต",
@@ -14428,6 +14443,7 @@
     "ar": {
         "settings.timezoneLabel": "المنطقة الزمنية",
         "settings.timezoneSub": "تُستخدم لتصدير جداول البيانات وتقارير الحضور",
+        "settings.timezoneDetected": "تم اكتشافه",
         "toast.timezoneSaved": "تم تحديث المنطقة الزمنية",
 
         "quota.largeClassSaved": "✓ لقد قمنا بتسجيل جميع الحاضرين البالغ عددهم {count} لجلسة اليوم! قم بالترقية إلى Pro لتصدير القائمة الكاملة إلى جداول بيانات Google.",
@@ -15375,6 +15391,7 @@
     "ko": {
         "settings.timezoneLabel": "시간대",
         "settings.timezoneSub": "시트 내보내기 및 출석 보고서에 사용됩니다",
+        "settings.timezoneDetected": "감지됨",
         "toast.timezoneSaved": "시간대가 업데이트되었습니다",
 
         "quota.largeClassSaved": "✓ 오늘 세션의 참석자 {count}명을 모두 기록했습니다! 전체 명단을 Google 스프레드시트로 내보내려면 Pro로 업그레이드하세요.",
@@ -16322,6 +16339,7 @@
     "zh": {
         "settings.timezoneLabel": "時區",
         "settings.timezoneSub": "用於試算表匯出和出勤報告",
+        "settings.timezoneDetected": "已偵測",
         "toast.timezoneSaved": "時區已更新",
 
         "quota.largeClassSaved": "✓ 我們已完整記錄今日會議的全部 {count} 位出席者！升級至 Pro 即可將完整名單匯出至 Google 試算表。",
@@ -17269,6 +17287,7 @@
     "ja": {
         "settings.timezoneLabel": "タイムゾーン",
         "settings.timezoneSub": "シートのエクスポートと出席レポートに使用されます",
+        "settings.timezoneDetected": "検出",
         "toast.timezoneSaved": "タイムゾーンを更新しました",
 
         "quota.largeClassSaved": "✓ 本日のセッションの参加者全員（{count}名）を記録しました！名簿全体をGoogleスプレッドシートに書き出すにはProへアップグレードしてください。",
@@ -18216,6 +18235,7 @@
     "ta": {
         "settings.timezoneLabel": "நேர மண்டலம்",
         "settings.timezoneSub": "தாள் ஏற்றுமதி மற்றும் வருகை அறிக்கைகளுக்குப் பயன்படுகிறது",
+        "settings.timezoneDetected": "கண்டறியப்பட்டது",
         "toast.timezoneSaved": "நேர மண்டலம் புதுப்பிக்கப்பட்டது",
 
         "quota.largeClassSaved": "✓ இன்றைய அமர்வின் அனைத்து {count} பங்கேற்பாளர்களையும் பதிவு செய்துள்ளோம்! முழுப் பட்டியலையும் Google Sheets-க்கு ஏற்றுமதி செய்ய Pro-விற்கு மேம்படுத்தவும்.",
@@ -19163,6 +19183,7 @@
     "te": {
         "settings.timezoneLabel": "సమయ మండలం",
         "settings.timezoneSub": "షీట్ ఎగుమతి మరియు హాజరు నివేదికల కోసం ఉపయోగించబడుతుంది",
+        "settings.timezoneDetected": "గుర్తించబడింది",
         "toast.timezoneSaved": "సమయ మండలం నవీకరించబడింది",
 
         "quota.largeClassSaved": "✓ నేటి సెషన్ కోసం మొత్తం {count} మంది హాజరైన వారిని మేము రికార్డ్ చేసాము! పూర్తి రోస్టర్‌ను Google Sheetsకి ఎగుమతి చేయడానికి ప్రోకి అప్‌గ్రేడ్ చేయండి.",
@@ -20110,6 +20131,7 @@
     "bn": {
         "settings.timezoneLabel": "সময় অঞ্চল",
         "settings.timezoneSub": "শীট রপ্তানি এবং উপস্থিতি প্রতিবেদনের জন্য ব্যবহৃত হয়",
+        "settings.timezoneDetected": "শনাক্ত করা হয়েছে",
         "toast.timezoneSaved": "সময় অঞ্চল আপডেট করা হয়েছে",
 
         "quota.largeClassSaved": "✓ আজকের সেশনের সমস্ত {count} জন উপস্থিতির তথ্য রেকর্ড করা হয়েছে! সম্পূর্ণ তালিকা Google Sheets-এ এক্সপোর্ট করতে প্রো-তে আপগ্রেড করুন।",
@@ -21057,6 +21079,7 @@
     "ur": {
         "settings.timezoneLabel": "ٹائم زون",
         "settings.timezoneSub": "شیٹ ایکسپورٹ اور حاضری کی رپورٹس کے لیے استعمال ہوتا ہے",
+        "settings.timezoneDetected": "شناخت شدہ",
         "toast.timezoneSaved": "ٹائم زون اپ ڈیٹ ہو گیا",
 
         "quota.largeClassSaved": "✓ ہم نے آج کے سیشن کے تمام {count} شرکاء کو ریکارڈ کر لیا ہے! مکمل فہرست کو گوگل شیٹس میں ایکسپورٹ کرنے کے لیے پرو میں اپ گریڈ کریں۔",
@@ -22004,6 +22027,7 @@
     "zh-CN": {
         "settings.timezoneLabel": "时区",
         "settings.timezoneSub": "用于电子表格导出和出勤报告",
+        "settings.timezoneDetected": "已检测",
         "toast.timezoneSaved": "时区已更新",
 
         "quota.largeClassSaved": "✓ 我们已完整记录今日会议的全部 {count} 位出席人员！升级至 Pro 即可将完整花名册导出至 Google 表格。",
@@ -22951,6 +22975,7 @@
     "ru": {
         "settings.timezoneLabel": "Часовой пояс",
         "settings.timezoneSub": "Используется для экспорта таблиц и отчетов о посещаемости",
+        "settings.timezoneDetected": "Обнаружено",
         "toast.timezoneSaved": "Часовой пояс обновлен",
 
         "quota.largeClassSaved": "✓ Мы зафиксировали всех {count} участников сегодняшней встречи! Перейдите на Pro, чтобы экспортировать весь список в Google Таблицы.",
@@ -23898,6 +23923,7 @@
     "uk": {
         "settings.timezoneLabel": "Часовий пояс",
         "settings.timezoneSub": "Використовується для експорту таблиць та звітів про відвідуваність",
+        "settings.timezoneDetected": "Виявлено",
         "toast.timezoneSaved": "Часовий пояс оновлено",
 
         "quota.largeClassSaved": "✓ Ми зафіксували всіх {count} учасників сьогоднішнього уроку! Перейдіть на Pro, щоб експортувати повний список у Google Таблиці.",
@@ -24845,6 +24871,7 @@
     "ro": {
         "settings.timezoneLabel": "Fus orar",
         "settings.timezoneSub": "Folosit pentru exportul foilor și rapoartele de prezență",
+        "settings.timezoneDetected": "Detectat",
         "toast.timezoneSaved": "Fus orar actualizat",
 
         "quota.largeClassSaved": "✓ Am înregistrat toți cei {count} participanți la sesiunea de astăzi! Faceți upgrade la Pro pentru a exporta întreaga listă în Google Sheets.",
@@ -25792,6 +25819,7 @@
     "he": {
         "settings.timezoneLabel": "אזור זמן",
         "settings.timezoneSub": "משמש לייצוא גיליונות ודוחות נוכחות",
+        "settings.timezoneDetected": "זוהה",
         "toast.timezoneSaved": "אזור הזמן עודכן",
 
         "quota.largeClassSaved": "✓ רשמנו את כל {count} המשתתפים במפגש של היום! שדרג ל-Pro כדי לייצא את הרשימה המלאה ל-Google Sheets.",
@@ -26739,6 +26767,7 @@
     "mr": {
         "settings.timezoneLabel": "वेळ क्षेत्र",
         "settings.timezoneSub": "शीट निर्यात आणि उपस्थिती अहवालांसाठी वापरले जाते",
+        "settings.timezoneDetected": "शोधले",
         "toast.timezoneSaved": "वेळ क्षेत्र अपडेट केले",
 
         "quota.largeClassSaved": "✓ आम्ही आजच्या सत्रातील सर्व {count} उपस्थितांची नोंद केली आहे! संपूर्ण यादी Google Sheets मध्ये निर्यात करण्यासाठी Pro वर अपग्रेड करा.",
@@ -27686,6 +27715,7 @@
     "sv": {
         "settings.timezoneLabel": "Tidszon",
         "settings.timezoneSub": "Används för kalkylblads-export och närvarorapporter",
+        "settings.timezoneDetected": "Identifierad",
         "toast.timezoneSaved": "Tidszon uppdaterad",
 
         "quota.largeClassSaved": "✓ Vi har registrerat alla {count} deltagare för dagens lektion! Uppgradera till Pro för att exportera hela listan till Google Kalkylark.",
@@ -28633,6 +28663,7 @@
     "cs": {
         "settings.timezoneLabel": "Časové pásmo",
         "settings.timezoneSub": "Používá se pro export tabulek a přehledy docházky",
+        "settings.timezoneDetected": "Zjištěno",
         "toast.timezoneSaved": "Časové pásmo aktualizováno",
 
         "quota.largeClassSaved": "✓ Zaznamenali jsme všech {count} účastníků dnešní hodiny! Upgradujte na Pro a exportujte kompletní seznam do Tabulek Google.",
@@ -29580,6 +29611,7 @@
     "da": {
         "settings.timezoneLabel": "Tidszone",
         "settings.timezoneSub": "Bruges til regnearkseksport og fremmøderapporter",
+        "settings.timezoneDetected": "Registreret",
         "toast.timezoneSaved": "Tidszone opdateret",
 
         "quota.largeClassSaved": "✓ Vi har registreret alle {count} deltagere for dagens session! Opgrader til Pro for at eksportere hele listen til Google Sheets.",
@@ -30527,6 +30559,7 @@
     "fi": {
         "settings.timezoneLabel": "Aikavyöhyke",
         "settings.timezoneSub": "Käytetään taulukoiden vientiin ja läsnäoloraportteihin",
+        "settings.timezoneDetected": "Havaittu",
         "toast.timezoneSaved": "Aikavyöhyke päivitetty",
 
         "quota.largeClassSaved": "✓ Olemme tallentaneet kaikki {count} osallistujaa tämän päivän istunnosta! Päivitä Prohon viedäksesi koko luettelon Google Sheetsiin.",
@@ -31474,6 +31507,7 @@
     "hu": {
         "settings.timezoneLabel": "Időzóna",
         "settings.timezoneSub": "Táblázat-exportáláshoz és jelenléti jelentésekhez használatos",
+        "settings.timezoneDetected": "Észlelve",
         "toast.timezoneSaved": "Időzóna frissítve",
 
         "quota.largeClassSaved": "✓ Rögzítettük a mai alkalom mind a {count} résztvevőjét! Frissítsen Pro-ra a teljes névsor Google Táblázatokba exportálásához.",
@@ -32421,6 +32455,7 @@
     "so": {
         "settings.timezoneLabel": "Aagga saacadda",
         "settings.timezoneSub": "Loo adeegsaday dhoofinta xaashida iyo warbixinnada xaadiritaanka",
+        "settings.timezoneDetected": "La ogaaday",
         "toast.timezoneSaved": "Aagga saacadda waa la cusbooneysiiyay",
 
         "quota.largeClassSaved": "✓ Waxaan diiwaangelinay dhamaan {count} qof ee ka qaybgalay kalfadhiga maanta! U cusboonaysii Pro si aad liiska ugu dhoofiso Google Sheets.",
@@ -33368,6 +33403,7 @@
     "sw": {
         "settings.timezoneLabel": "Ukanda wa saa",
         "settings.timezoneSub": "Inatumika kwa usafirishaji wa laha na ripoti za mahudhurio",
+        "settings.timezoneDetected": "Imetambuliwa",
         "toast.timezoneSaved": "Ukanda wa saa umesasishwa",
 
         "quota.largeClassSaved": "✓ Tumenakili washiriki wote {count} wa kipindi cha leo! Boresha hadi Pro ili kusafirisha orodha kamili kwenye Google Sheets.",
@@ -34313,6 +34349,7 @@
     "am": {
         "settings.timezoneLabel": "የሰዓት ሰቅ",
         "settings.timezoneSub": "ለሉህ መላክ እና የክትትል ሪፖርቶች ጥቅም ላይ ይውላል",
+        "settings.timezoneDetected": "ተገኝቷል",
         "toast.timezoneSaved": "የሰዓት ሰቅ ዘምኗል",
 
         "quota.largeClassSaved": "✓ የዛሬውን ክፍለ ጊዜ {count} ተሳታፊዎች በሙሉ መዝግበናል! ሙሉውን ዝርዝር ወደ Google Sheets ለመላክ ወደ Pro ያሻሽሉ።",
@@ -35258,6 +35295,7 @@
     "si": {
         "settings.timezoneLabel": "වේලා කලාපය",
         "settings.timezoneSub": "පත්‍රිකා අපනයනය සහ පැමිණීමේ වාර්තා සඳහා භාවිතා වේ",
+        "settings.timezoneDetected": "හඳුනා ගන්නා ලදී",
         "toast.timezoneSaved": "වේලා කලාපය යාවත්කාලීන කරන ලදී",
 
         "quota.largeClassSaved": "✓ අද සැසියේ සියලුම සහභාගිවන්නන් {count} දෙනාම සටහන් කර ඇත! සම්පූර්ණ ලැයිස්තුව Google Sheets වෙත එක්ස්පෝට් කිරීමට Pro වෙත උත්ශ්‍රේණි කරන්න.",
@@ -36203,6 +36241,7 @@
     "el": {
         "settings.timezoneLabel": "Ζώνη ώρας",
         "settings.timezoneSub": "Χρησιμοποιείται για εξαγωγές φύλλων και αναφορές παρουσιών",
+        "settings.timezoneDetected": "Εντοπίστηκε",
         "toast.timezoneSaved": "Η ζώνη ώρας ενημερώθηκε",
 
         "quota.largeClassSaved": "✓ Καταγράψαμε και τους {count} συμμετέχοντες της σημερινής συνεδρίας! Αναβαθμίστε σε Pro για εξαγωγή της πλήρους λίστας στο Google Sheets.",
@@ -37148,6 +37187,7 @@
     "no": {
         "settings.timezoneLabel": "Tidssone",
         "settings.timezoneSub": "Brukes til regnearkeksport og oppmøterapporter",
+        "settings.timezoneDetected": "Oppdaget",
         "toast.timezoneSaved": "Tidssone oppdatert",
 
         "quota.largeClassSaved": "✓ Vi har registrert alle {count} deltakere for dagens økt! Oppgrader til Pro for å eksportere hele listen til Google Sheets.",
@@ -38093,6 +38133,7 @@
     "ca": {
         "settings.timezoneLabel": "Zona horària",
         "settings.timezoneSub": "Utilitzada per a l'exportació de fulls i informes d'assistència",
+        "settings.timezoneDetected": "Detectat",
         "toast.timezoneSaved": "Zona horària actualitzada",
 
         "quota.largeClassSaved": "✓ Hem enregistrat tots els {count} participants de la sessió d'avui! Actualitza a Pro per exportar la llista completa a Google Sheets.",
