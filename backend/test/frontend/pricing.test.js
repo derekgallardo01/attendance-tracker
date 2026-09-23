@@ -73,6 +73,8 @@ describe('localCurrencyAnchor()', () => {
     expect(pricing.localCurrencyAnchor('ES', 'lifetime')).toBe('~8,99 €');
     expect(pricing.localCurrencyAnchor('GB', 'lifetime')).toBe('~£7.90');
     expect(pricing.localCurrencyAnchor('IL', 'educator')).toBe('~₪18.50/yr');
+    expect(pricing.localCurrencyAnchor('KZ', 'educator')).toBe('~2,500 ₸/yr');
+    expect(pricing.localCurrencyAnchor('KZ', 'lifetime')).toBe('~5,000 ₸');
   });
 
   test('normalizes lowercase and whitespace in country code', () => {

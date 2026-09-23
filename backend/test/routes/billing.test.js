@@ -1175,9 +1175,9 @@ describe('billing/status pricing payload', () => {
     expect(res.body.domain).toBe('depedqc.ph');
   });
 
-  test('status detects PPP eligibility for expanded countries (MX, CL, TN, SO, PE, ZM)', async () => {
+  test('status detects PPP eligibility for expanded countries (MX, CL, TN, SO, PE, ZM, KZ)', async () => {
     app = buildApp();
-    for (const country of ['MX', 'CL', 'TN', 'SO', 'PE', 'ZM']) {
+    for (const country of ['MX', 'CL', 'TN', 'SO', 'PE', 'ZM', 'KZ']) {
       const res = await request(app)
         .get('/api/billing/status')
         .set(authedHeader(`user@school.${country.toLowerCase()}`, `school.${country.toLowerCase()}`))

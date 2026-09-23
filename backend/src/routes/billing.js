@@ -11,14 +11,14 @@ const PRICING = require('../config/pricing');
 const PPP_COUNTRIES = new Set([
   'PH', 'IN', 'ID', 'MY', 'NG', 'VN', 'PK', 'BD', 'KE', 'ZA', 'BR', 'CO', 'PE',
   'UA', 'GH', 'EG', 'TH', 'TR', 'AR', 'LK',
-  'MX', 'CL', 'TN', 'SO', 'EC', 'BO', 'GT', 'MA', 'DZ', 'ZM',
+  'MX', 'CL', 'TN', 'SO', 'EC', 'BO', 'GT', 'MA', 'DZ', 'ZM', 'KZ',
 ]);
 
 const PPP_FLAGS = {
   PH: '🇵🇭', IN: '🇮🇳', ID: '🇮🇩', MY: '🇲🇾', NG: '🇳🇬', VN: '🇻🇳', PK: '🇵🇰', BD: '🇧🇩',
   KE: '🇰🇪', ZA: '🇿🇦', BR: '🇧🇷', CO: '🇨🇴', PE: '🇵🇪', UA: '🇺🇦', GH: '🇬🇭', EG: '🇪🇬',
   TH: '🇹🇭', TR: '🇹🇷', AR: '🇦🇷', LK: '🇱🇰', MX: '🇲🇽', CL: '🇨🇱', TN: '🇹🇳', SO: '🇸🇴',
-  EC: '🇪🇨', BO: '🇧🇴', GT: '🇬🇹', MA: '🇲🇦', DZ: '🇩🇿', ZM: '🇿🇲',
+  EC: '🇪🇨', BO: '🇧🇴', GT: '🇬🇹', MA: '🇲🇦', DZ: '🇩🇿', ZM: '🇿🇲', KZ: '🇰🇿',
 };
 
 const { getClientIp, lookupGeo } = require('../lib/geoip');
