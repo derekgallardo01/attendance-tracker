@@ -3190,7 +3190,12 @@ async function handleAuthCode(response) {
     const res = await fetch(`${state.backendUrl}/oauth/exchange`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: response.code, acquisition: acquisition || undefined, firstTouch: firstTouch || undefined }),
+      body: JSON.stringify({
+        code: response.code,
+        acquisition: acquisition || undefined,
+        firstTouch: firstTouch || undefined,
+        timezone: localStorage.getItem('userTimezone') || ((typeof Intl !== 'undefined' && Intl.DateTimeFormat) ? Intl.DateTimeFormat().resolvedOptions().timeZone : undefined),
+      }),
     });
     if (!res.ok) throw new Error(`Auth failed: ${res.status}`);
     const data = await res.json();
@@ -6109,7 +6114,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     meetingType: state._eventStart ? 'scheduled' : 'instant',
     eventStart: state._eventStart || null,
     eventEnd: state._eventEnd || null,
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    timezone: localStorage.getItem('userTimezone') || ((typeof Intl !== 'undefined' && Intl.DateTimeFormat) ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'America/New_York'),
     sendEmail: !!opts.sendEmail,
     autoExport: !!opts.autoExport,
     recurringEventId: state._recurringEventId || null,
@@ -7050,10 +7055,59 @@ function populateLanguageSelect() {
   langSel.value = AttStrings.getLocale();
 }
 
+const COMMON_TIMEZONES = [
+  'Pacific/Honolulu', 'America/Anchorage', 'America/Los_Angeles', 'America/Denver',
+  'America/Chicago', 'America/New_York', 'America/Toronto', 'America/Sao_Paulo',
+  'America/Buenos_Aires', 'America/Bogota', 'America/Mexico_City', 'UTC',
+  'Europe/London', 'Europe/Paris', 'Europe/Madrid', 'Europe/Berlin', 'Europe/Rome',
+  'Europe/Amsterdam', 'Europe/Warsaw', 'Europe/Athens', 'Europe/Bucharest', 'Europe/Kyiv',
+  'Europe/Moscow', 'Europe/Istanbul', 'Africa/Cairo', 'Africa/Johannesburg', 'Africa/Nairobi',
+  'Asia/Jerusalem', 'Asia/Dubai', 'Asia/Karachi', 'Asia/Kolkata', 'Asia/Dhaka',
+  'Asia/Bangkok', 'Asia/Jakarta', 'Asia/Singapore', 'Asia/Manila', 'Asia/Hong_Kong',
+  'Asia/Shanghai', 'Asia/Tokyo', 'Asia/Seoul', 'Australia/Perth', 'Australia/Sydney',
+  'Pacific/Auckland'
+];
+
+function populateTimezoneSelect(activeTz) {
+  const sel = document.getElementById('settings-timezone-select');
+  if (!sel) return;
+  const detected = (typeof Intl !== 'undefined' && Intl.DateTimeFormat) ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'UTC';
+  const current = activeTz || localStorage.getItem('userTimezone') || detected;
+  const zones = Array.from(new Set([current, detected, ...COMMON_TIMEZONES])).sort((a, b) => a.localeCompare(b));
+  sel.innerHTML = '';
+  zones.forEach(tz => {
+    const opt = document.createElement('option');
+    opt.value = tz;
+    let label = tz.replace(/_/g, ' ');
+    if (tz === detected) label += ' (Detected)';
+    opt.textContent = label;
+    if (tz === current) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+async function changeTimezone(tz) {
+  if (!tz) return;
+  localStorage.setItem('userTimezone', tz);
+  try {
+    const res = await authFetch(`${state.backendUrl}/settings`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ timezone: tz }),
+    });
+    if (res.ok) {
+      toast((window.AttStrings && AttStrings.t) ? AttStrings.t('toast.timezoneSaved', 'Timezone updated') : 'Timezone updated');
+    }
+  } catch {}
+}
+
 async function openSettingsModal() {
   const modal = document.getElementById('settings-modal');
   if (!modal) return;
   populateLanguageSelect();
+  const detectedTz = (typeof Intl !== 'undefined' && Intl.DateTimeFormat) ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'UTC';
+  const savedTz = localStorage.getItem('userTimezone') || detectedTz;
+  populateTimezoneSelect(savedTz);
   modal.style.display = 'flex';
   try { logUserEvent('settings_opened', {}); } catch {}
 
@@ -7097,6 +7151,16 @@ async function openSettingsModal() {
       if (tipsPref) tipsPref.checked = data.emailOptOut !== true && notifPrefs.tipsAndUpdates !== false;
       const extraInput = document.getElementById('settings-extra-emails');
       if (extraInput) extraInput.value = (data.digestExtraEmails || []).join(', ');
+      if (data.timezone) {
+        localStorage.setItem('userTimezone', data.timezone);
+        populateTimezoneSelect(data.timezone);
+      } else if (detectedTz) {
+        authFetch(`${state.backendUrl}/settings`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ timezone: detectedTz }),
+        }).catch(() => {});
+      }
       // Referral row: personal share link + how many colleagues joined via it.
       const refInput = document.getElementById('settings-referral-link');
       if (refInput) refInput.value = buildReferralLink();
@@ -8084,6 +8148,20 @@ window.addEventListener('DOMContentLoaded', () => {
             <div class="settings-row-sub" data-i18n="settings.langSub">Choose your display language</div>
           </div>
           <select id="settings-lang-select" onchange="changeLanguage(this.value)" style="background:#0d1117;border:1px solid #30363d;color:#e6edf3;border-radius:8px;padding:6px 10px;font-size:.8rem;cursor:pointer">
+          </select>
+        </div>
+        <div class="settings-row" style="margin-top:10px;padding-top:10px;border-top:1px solid #21262d">
+          <div>
+            <div class="settings-row-label">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span data-i18n="settings.timezoneLabel">Timezone</span>
+            </div>
+            <div class="settings-row-sub" data-i18n="settings.timezoneSub">Used for sheet exports and attendance reports</div>
+          </div>
+          <select id="settings-timezone-select" onchange="changeTimezone(this.value)" style="background:#0d1117;border:1px solid #30363d;color:#e6edf3;border-radius:8px;padding:6px 10px;font-size:.8rem;cursor:pointer;max-width:200px">
           </select>
         </div>
       </div>
