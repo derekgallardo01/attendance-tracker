@@ -176,6 +176,27 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
   const sheets = google.sheets({ version: 'v4', auth: sheetsAuth });
 
   try {
+    // Resolve user's timezone early with full fallback cascade
+    let tz = timezone;
+    if (!tz && req.user?.email) {
+      try {
+        const s = await getUserSettings(req.user.domain, req.user.email);
+        tz = s?.timezone;
+        if (!tz) {
+          const u = await getUser(req.user.domain, req.user.email);
+          tz = u?.timezone || u?.signupGeo?.timezone;
+        }
+      } catch {}
+    }
+    tz = tz || 'America/New_York';
+    const validSpreadsheetTz = (() => {
+      try {
+        Intl.DateTimeFormat(undefined, { timeZone: tz });
+        return tz;
+      } catch {
+        return 'America/New_York';
+      }
+    })();
 
     // Resolve spreadsheet ID: per-user sheet (OAuth) or shared sheet (legacy)
     let spreadsheetId;
@@ -188,7 +209,20 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
       // user's accumulated spreadsheet (all prior tabs) over a transient blip.
       if (spreadsheetId) {
         try {
-          await sheets.spreadsheets.get({ spreadsheetId, fields: 'spreadsheetId' });
+          const sheetMeta = await sheets.spreadsheets.get({ spreadsheetId, fields: 'spreadsheetId,properties.timeZone' });
+          if (sheetMeta?.data?.properties?.timeZone && sheetMeta.data.properties.timeZone !== validSpreadsheetTz) {
+            sheets.spreadsheets.batchUpdate({
+              spreadsheetId,
+              requestBody: {
+                requests: [{
+                  updateSpreadsheetProperties: {
+                    properties: { timeZone: validSpreadsheetTz },
+                    fields: 'timeZone',
+                  },
+                }],
+              },
+            }).catch(() => {});
+          }
         } catch (e) {
           // A bare 403 is NOT "gone" — it's usually PERMISSION_DENIED from a
           // missing/degraded OAuth scope, which the outer catch classifies as
@@ -233,7 +267,7 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
         // Create spreadsheet
         const createResp = await sheets.spreadsheets.create({
           requestBody: {
-            properties: { title: 'Meet Attendance Tracker' },
+            properties: { title: 'Meet Attendance Tracker', timeZone: validSpreadsheetTz },
             sheets: [{ properties: { title: 'Info' } }],
           },
         });
@@ -307,18 +341,6 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
     }
 
     // Format helpers — display in user's timezone (falls back to US Eastern)
-    let tz = timezone;
-    if (!tz && req.user?.email) {
-      try {
-        const s = await getUserSettings(req.user.domain, req.user.email);
-        tz = s?.timezone;
-        if (!tz) {
-          const u = await getUser(req.user.domain, req.user.email);
-          tz = u?.timezone || u?.signupGeo?.timezone;
-        }
-      } catch {}
-    }
-    tz = tz || 'America/New_York';
     const tzAbbr = (() => { try {
       return new Date().toLocaleString('en-US', { timeZone: tz, timeZoneName: 'short' }).split(' ').pop();
     } catch { return 'ET'; } })();
