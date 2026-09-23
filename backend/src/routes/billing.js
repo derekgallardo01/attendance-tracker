@@ -21,12 +21,22 @@ const PPP_FLAGS = {
   EC: '🇪🇨', BO: '🇧🇴', GT: '🇬🇹', MA: '🇲🇦', DZ: '🇩🇿', ZM: '🇿🇲',
 };
 
+const { getClientIp, lookupGeo } = require('../lib/geoip');
+
 function detectCountry(req) {
   const rawHeader = req?.headers ? (req.headers['cf-ipcountry'] || req.headers['x-country-code']) : '';
   const header = (typeof rawHeader === 'string' ? rawHeader : '').trim().toUpperCase();
   if (header && header !== 'XX' && header !== 'T1') return header;
   const userCountry = typeof req?.user?.signupGeo?.country === 'string' ? req.user.signupGeo.country.trim().toUpperCase() : '';
-  return userCountry || null;
+  if (userCountry) return userCountry;
+  if (req) {
+    try {
+      const ip = getClientIp(req);
+      const geo = lookupGeo(ip);
+      if (geo?.country) return geo.country.trim().toUpperCase();
+    } catch (_) {}
+  }
+  return null;
 }
 
 // Personal-email tenants (gmail.com etc.) are shared by unrelated users, so they

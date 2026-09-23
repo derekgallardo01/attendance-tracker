@@ -16,7 +16,7 @@ const log = require('./logger');
 const { PERSONAL_EMAIL_DOMAINS } = require('../services/firestore/_core');
 const { getUser, getTenantPlan, getTenantConfig, getDomainTeacherCount } = require('../services/firestore');
 
-const TEAM_SIGNPOST_MIN = 3; // a cluster, not a coincidence
+const TEAM_SIGNPOST_MIN = 2; // a cluster, not a coincidence
 
 async function buildTeamSignpost(domain, email) {
   try {

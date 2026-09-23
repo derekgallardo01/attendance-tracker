@@ -65,9 +65,9 @@ describe('GET /api/history', () => {
     expect(res.body.teamSignpost).toEqual({ domain: 'acme.com', teacherCount: 4, isTeamAdmin: false });
   });
 
-  test('team signpost: null below the 3-teacher threshold', async () => {
+  test('team signpost: null below the 2-teacher threshold', async () => {
     firestore.getUserMeetingHistory.mockResolvedValue({ meetings: [], people: [], calendar: [], totalMeetings: 0 });
-    firestore.getDomainTeacherCount.mockResolvedValue(2);
+    firestore.getDomainTeacherCount.mockResolvedValue(1);
     const res = await request(app).get('/api/history').set(authedHeader('user@acme.com', 'acme.com'));
     expect(res.body.teamSignpost).toBeNull();
   });

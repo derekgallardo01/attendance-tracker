@@ -221,6 +221,11 @@
 
     const STRINGS = {
     "en": {
+        "quota.largeClassSaved": "✓ We captured all {count} attendees for today’s session! Upgrade to Pro to export today’s full roster to Google Sheets.",
+        "upgrade.deskLinkToast": "We saved your attendance! We emailed a 1-click link to finish upgrading from your desk after class.",
+        "history.signpostTeam59": "{n} teachers at {domain} are using Attendance Tracker. Request a whole-school license for $59/yr.",
+        "history.signpostCta59": "Request school license ($59/yr) →",
+
     "upgrade.reimburseNote": "Single classroom purchase · Instant VAT invoice & receipt for reimbursement",
     "quota.largeClassLimit": "Attendance tracking for large classes (>25 attendees) is a Pro feature. Upgrade to Pro for unlimited class sizes & exports.",
     "referral.badge": "Give 1 Month Pro · Get 1 Month Pro",
@@ -236,6 +241,7 @@
         "review.starsThanks": "Thank you! A 5-star rating on Google Marketplace helps other teachers:",
         "review.starsRateBtn": "Rate 5 Stars on Marketplace (5s)",
         "review.starsFeedbackPrompt": "How can we make Attendance Tracker better for you?",
+        "review.feedbackPlaceholder": "Your suggestions…",
         "review.starsSendFeedback": "Send Feedback",
         "review.starsSchoolFallback": "School account blocks reviews? Leave feedback",
         "review.bannerTitle": "Enjoying Attendance Tracker?",
@@ -1158,6 +1164,11 @@
         "toast.prefSaved": "Notification preferences saved"
     },
     "es": {
+        "quota.largeClassSaved": "✓ ¡Capturamos a los {count} asistentes de la sesión de hoy! Actualiza a Pro para exportar la lista completa a Google Sheets.",
+        "upgrade.deskLinkToast": "¡Guardamos tu asistencia! Te enviamos un enlace de 1 clic para completar la actualización desde tu escritorio después de clase.",
+        "history.signpostTeam59": "{n} profesores de {domain} usan Attendance Tracker. Solicita una licencia para toda la escuela por $59/año.",
+        "history.signpostCta59": "Solicitar licencia escolar ($59/año) →",
+
     "upgrade.reimburseNote": "Compra única para tu clase · Factura con IVA y recibo instantáneo para reembolso",
     "quota.largeClassLimit": "El control de asistencia para clases grandes (>25 participantes) es una función Pro. Actualiza a Pro para clases y exportaciones ilimitadas.",
     "referral.badge": "Regala 1 mes de Pro · Recibe 1 mes de Pro",
@@ -1173,6 +1184,7 @@
         "review.starsThanks": "¡Gracias! Una valoración de 5 estrellas en Google Marketplace ayuda a otros profesores:",
         "review.starsRateBtn": "Calificar con 5 estrellas en Marketplace (5s)",
         "review.starsFeedbackPrompt": "¿Cómo podemos mejorar Attendance Tracker para ti?",
+        "review.feedbackPlaceholder": "Tus sugerencias…",
         "review.starsSendFeedback": "Enviar comentarios",
         "review.starsSchoolFallback": "¿Tu cuenta escolar bloquea reseñas? Deja tus comentarios",
         "review.bannerTitle": "¿Te gusta Attendance Tracker?",
@@ -2095,6 +2107,11 @@
         "toast.prefSaved": "Preferencias de notificación guardadas"
     },
     "pt": {
+        "quota.largeClassSaved": "✓ Registramos todos os {count} participantes da sessão de hoje! Faça upgrade para o Pro para exportar a lista completa para o Google Planilhas.",
+        "upgrade.deskLinkToast": "Salvamos sua presença! Enviamos um link de 1 clique para você concluir o upgrade da sua mesa após a aula.",
+        "history.signpostTeam59": "{n} professores em {domain} usam o Attendance Tracker. Solicite uma licença para toda a escola por $59/ano.",
+        "history.signpostCta59": "Solicitar licença escolar ($59/ano) →",
+
     "upgrade.reimburseNote": "Compra única para sua turma · Nota fiscal/recibo instantâneo para reembolso",
     "quota.largeClassLimit": "O controle de presença para turmas grandes (>25 participantes) é um recurso Pro. Faça upgrade para Pro para turmas e exportações ilimitadas.",
     "referral.badge": "Dê 1 mês Pro · Ganhe 1 mês Pro",
@@ -2110,6 +2127,7 @@
         "review.starsThanks": "Obrigado! Uma avaliação 5 estrelas no Google Marketplace ajuda outros professores:",
         "review.starsRateBtn": "Avaliar com 5 estrelas no Marketplace (5s)",
         "review.starsFeedbackPrompt": "Como podemos melhorar o Attendance Tracker para você?",
+        "review.feedbackPlaceholder": "Suas sugestões…",
         "review.starsSendFeedback": "Enviar feedback",
         "review.starsSchoolFallback": "Conta escolar bloqueia avaliações? Deixe seu feedback",
         "review.bannerTitle": "Gostando do Attendance Tracker?",
@@ -3032,6 +3050,11 @@
         "toast.prefSaved": "Preferências de notificação salvas"
     },
     "hi": {
+        "quota.largeClassSaved": "✓ हमने आज के सत्र के सभी {count} उपस्थित लोगों को रिकॉर्ड कर लिया है! पूरी सूची को Google Sheets में निर्यात करने के लिए Pro में अपग्रेड करें।",
+        "upgrade.deskLinkToast": "हमने आपकी उपस्थिति सहेज ली है! कक्षा के बाद अपनी डेस्क से अपग्रेड पूरा करने के लिए हमने 1-क्लिक लिंक ईमेल कर दिया है।",
+        "history.signpostTeam59": "{domain} के {n} शिक्षक Attendance Tracker का उपयोग कर रहे हैं। $59/वर्ष में पूरे स्कूल का लाइसेंस अनुरोध करें।",
+        "history.signpostCta59": "स्कूल लाइसेंस का अनुरोध करें ($59/वर्ष) →",
+
     "upgrade.reimburseNote": "आपकी कक्षा के लिए एकमुश्त खरीद · प्रतिपूर्ति के लिए तत्काल चालान और रसीद",
     "quota.largeClassLimit": "बड़ी कक्षाओं (>25 प्रतिभागी) के लिए उपस्थिति ट्रैकिंग एक प्रो सुविधा है। असीमित कक्षा आकार और निर्यात के लिए प्रो में अपग्रेड करें।",
     "referral.badge": "1 महीना प्रो दें · 1 महीना प्रो पाएं",
@@ -3047,6 +3070,7 @@
         "review.starsThanks": "धन्यवाद! Google Marketplace पर 5-स्टार रेटिंग अन्य शिक्षकों की मदद करती है:",
         "review.starsRateBtn": "Marketplace पर 5 स्टार दें (5s)",
         "review.starsFeedbackPrompt": "हम आपके लिए Attendance Tracker को कैसे बेहतर बना सकते हैं?",
+        "review.feedbackPlaceholder": "आपके सुझाव…",
         "review.starsSendFeedback": "प्रतिक्रिया भेजें",
         "review.starsSchoolFallback": "स्कूल खाता समीक्षा रोकता है? प्रतिक्रिया दें",
         "review.bannerTitle": "Attendance Tracker पसंद आ रहा है?",
@@ -3969,6 +3993,11 @@
         "toast.prefSaved": "अधिसूचना प्राथमिकताएं सहेजी गईं"
     },
     "tl": {
+        "quota.largeClassSaved": "✓ Na-capture namin ang lahat ng {count} attendees para sa session ngayon! Mag-upgrade sa Pro para ma-export ang buong roster sa Google Sheets.",
+        "upgrade.deskLinkToast": "Nai-save namin ang attendance mo! Nag-email kami ng 1-click link para tapusin ang pag-upgrade mula sa desk mo pagkatapos ng klase.",
+        "history.signpostTeam59": "{n} guro sa {domain} ang gumagamit ng Attendance Tracker. Humiling ng lisensya para sa buong paaralan sa $59/taon.",
+        "history.signpostCta59": "Humiling ng lisensya ng paaralan ($59/taon) →",
+
     "upgrade.reimburseNote": "Isang beses na pagbili para sa iyong klase · Instant na resibo para sa reimbursement",
     "quota.largeClassLimit": "Ang attendance tracking para sa malalaking klase (>25 attendees) ay isang Pro feature. Mag-upgrade sa Pro para sa walang limitasyong laki ng klase at exports.",
     "referral.badge": "Magbigay ng 1 Buwang Pro · Kumuha ng 1 Buwang Pro",
@@ -3984,6 +4013,7 @@
         "review.starsThanks": "Salamat! Ang 5-star rating sa Google Marketplace ay tumutulong sa ibang guro:",
         "review.starsRateBtn": "Mag-rate ng 5 Stars sa Marketplace (5s)",
         "review.starsFeedbackPrompt": "Paano namin mapapahusay ang Attendance Tracker para sa iyo?",
+        "review.feedbackPlaceholder": "Iyong mga mungkahi…",
         "review.starsSendFeedback": "Magpadala ng Feedback",
         "review.starsSchoolFallback": "Bawal mag-review ang school account? Mag-iwan ng feedback",
         "review.bannerTitle": "Nagugustuhan mo ba ang Attendance Tracker?",
@@ -4906,6 +4936,11 @@
         "toast.prefSaved": "Nai-save ang mga kagustuhan sa notification"
     },
     "ms": {
+        "quota.largeClassSaved": "✓ Kami telah merekodkan semua {count} peserta untuk sesi hari ini! Naik taraf ke Pro untuk mengeksport senarai penuh ke Google Sheets.",
+        "upgrade.deskLinkToast": "Kami telah menyimpan kehadiran anda! Kami telah menghantar pautan 1-klik melalui e-mel untuk menyelesaikan naik taraf selepas kelas.",
+        "history.signpostTeam59": "{n} guru di {domain} menggunakan Attendance Tracker. Mohon lesen seluruh sekolah untuk $59/tahun.",
+        "history.signpostCta59": "Minta lesen sekolah ($59/tahun) →",
+
     "upgrade.reimburseNote": "Pembelian sekali bayar untuk kelas anda · Invois & resit segera untuk pembayaran balik",
     "quota.largeClassLimit": "Penjejakan kehadiran untuk kelas besar (>25 peserta) adalah ciri Pro. Naik taraf ke Pro untuk saiz kelas & eksport tanpa had.",
     "referral.badge": "Beri 1 Bulan Pro · Dapatkan 1 Bulan Pro",
@@ -4921,6 +4956,7 @@
         "review.starsThanks": "Terima kasih! Penarafan 5 bintang di Google Marketplace membantu guru lain:",
         "review.starsRateBtn": "Nilaikan 5 Bintang di Marketplace (5s)",
         "review.starsFeedbackPrompt": "Bagaimanakah kami boleh menambah baik Attendance Tracker untuk anda?",
+        "review.feedbackPlaceholder": "Cadangan anda…",
         "review.starsSendFeedback": "Hantar Maklum Balas",
         "review.starsSchoolFallback": "Akaun sekolah sekat ulasan? Tinggalkan maklum balas",
         "review.bannerTitle": "Menikmati Attendance Tracker?",
@@ -5843,6 +5879,11 @@
         "toast.prefSaved": "Keutamaan pemberitahuan disimpan"
     },
     "id": {
+        "quota.largeClassSaved": "✓ Kami mencatat semua {count} peserta untuk sesi hari ini! Tingkatkan ke Pro untuk mengekspor daftar lengkap ke Google Spreadsheet.",
+        "upgrade.deskLinkToast": "Kehadiran Anda telah disimpan! Kami mengirimkan tautan 1 klik melalui email untuk menyelesaikan peningkatan dari meja Anda setelah kelas.",
+        "history.signpostTeam59": "{n} guru di {domain} menggunakan Attendance Tracker. Ajukan lisensi satu sekolah seharga $59/tahun.",
+        "history.signpostCta59": "Minta lisensi sekolah ($59/tahun) →",
+
     "upgrade.reimburseNote": "Pembelian sekali bayar untuk kelas Anda · Faktur instan & tanda terima untuk penggantian biaya",
     "quota.largeClassLimit": "Pelacakan kehadiran untuk kelas besar (>25 peserta) adalah fitur Pro. Tingkatkan ke Pro untuk ukuran kelas & ekspor tanpa batas.",
     "referral.badge": "Beri 1 Bulan Pro · Dapatkan 1 Bulan Pro",
@@ -5858,6 +5899,7 @@
         "review.starsThanks": "Terima kasih! Penilaian bintang 5 di Google Marketplace membantu guru lainnya:",
         "review.starsRateBtn": "Beri Bintang 5 di Marketplace (5 dtk)",
         "review.starsFeedbackPrompt": "Bagaimana kami dapat meningkatkan Attendance Tracker untuk Anda?",
+        "review.feedbackPlaceholder": "Saran Anda…",
         "review.starsSendFeedback": "Kirim Masukan",
         "review.starsSchoolFallback": "Akun sekolah memblokir ulasan? Beri masukan",
         "review.bannerTitle": "Menyukai Attendance Tracker?",
@@ -6780,6 +6822,11 @@
         "toast.prefSaved": "Preferensi notifikasi disimpan"
     },
     "vi": {
+        "quota.largeClassSaved": "✓ Đã ghi nhận tất cả {count} người tham gia buổi học hôm nay! Nâng cấp lên Pro để xuất toàn bộ danh sách sang Google Trang tính.",
+        "upgrade.deskLinkToast": "Chúng tôi đã lưu điểm danh của bạn! Chúng tôi đã gửi email liên kết 1 nhấp để bạn hoàn tất nâng cấp tại bàn làm việc sau giờ học.",
+        "history.signpostTeam59": "{n} giáo viên tại {domain} đang sử dụng Attendance Tracker. Yêu cầu giấy phép toàn trường với giá $59/năm.",
+        "history.signpostCta59": "Yêu cầu giấy phép trường học ($59/năm) →",
+
     "upgrade.reimburseNote": "Mua một lần cho lớp học của bạn · Hóa đơn VAT & biên lai tức thì để thanh toán lại",
     "quota.largeClassLimit": "Theo dõi điểm danh cho lớp học lớn (>25 người tham gia) là tính năng Pro. Nâng cấp lên Pro để không giới hạn sĩ số lớp & số lượt xuất.",
     "referral.badge": "Tặng 1 tháng Pro · Nhận 1 tháng Pro",
@@ -6795,6 +6842,7 @@
         "review.starsThanks": "Cảm ơn bạn! Đánh giá 5 sao trên Google Marketplace sẽ giúp các giáo viên khác:",
         "review.starsRateBtn": "Đánh giá 5 sao trên Marketplace (5 giây)",
         "review.starsFeedbackPrompt": "Chúng tôi có thể cải thiện Attendance Tracker thế nào cho bạn?",
+        "review.feedbackPlaceholder": "Ý kiến đóng góp của bạn…",
         "review.starsSendFeedback": "Gửi phản hồi",
         "review.starsSchoolFallback": "Tài khoản trường chặn đánh giá? Để lại phản hồi",
         "review.bannerTitle": "Bạn thích Attendance Tracker chứ?",
@@ -7717,6 +7765,11 @@
         "toast.prefSaved": "Đã lưu tùy chọn thông báo"
     },
     "fr": {
+        "quota.largeClassSaved": "✓ Nous avons enregistré les {count} participants de la session d'aujourd'hui ! Passez à Pro pour exporter la liste complète vers Google Sheets.",
+        "upgrade.deskLinkToast": "Vos présences sont enregistrées ! Nous vous avons envoyé un lien en 1 clic pour finaliser la mise à niveau depuis votre bureau après le cours.",
+        "history.signpostTeam59": "{n} enseignants de {domain} utilisent Attendance Tracker. Demandez une licence pour tout l'établissement à 59 $/an.",
+        "history.signpostCta59": "Demander une licence établissement (59 $/an) →",
+
     "upgrade.reimburseNote": "Achat unique pour votre classe · Facture avec TVA et reçu instantané pour remboursement",
     "quota.largeClassLimit": "Le suivi des présences pour les grandes classes (>25 participants) est une fonctionnalité Pro. Passez à Pro pour des classes et des exports illimités.",
     "referral.badge": "Offrez 1 mois Pro · Recevez 1 mois Pro",
@@ -7732,6 +7785,7 @@
         "review.starsThanks": "Merci ! Une note de 5 étoiles sur Google Marketplace aide d'autres enseignants :",
         "review.starsRateBtn": "Noter 5 étoiles sur Marketplace (5s)",
         "review.starsFeedbackPrompt": "Comment pouvons-nous améliorer Attendance Tracker pour vous ?",
+        "review.feedbackPlaceholder": "Vos suggestions…",
         "review.starsSendFeedback": "Envoyer des commentaires",
         "review.starsSchoolFallback": "Votre compte scolaire bloque les avis ? Laissez un commentaire",
         "review.bannerTitle": "Vous appréciez Attendance Tracker ?",
@@ -8654,6 +8708,11 @@
         "toast.prefSaved": "Préférences de notification enregistrées"
     },
     "de": {
+        "quota.largeClassSaved": "✓ Wir haben alle {count} Teilnehmer der heutigen Sitzung erfasst! Upgraden Sie auf Pro, um die vollständige Liste nach Google Sheets zu exportieren.",
+        "upgrade.deskLinkToast": "Ihre Anwesenheit wurde gespeichert! Wir haben Ihnen einen 1-Klick-Link gesendet, um das Upgrade nach dem Unterricht am Schreibtisch abzuschließen.",
+        "history.signpostTeam59": "{n} Lehrkräfte bei {domain} nutzen Attendance Tracker. Fordern Sie eine Schullizenz für 59 $/Jahr an.",
+        "history.signpostCta59": "Schullizenz anfordern (59 $/Jahr) →",
+
     "upgrade.reimburseNote": "Einmaliger Kauf für Ihren Unterricht · Sofortige Rechnung mit MwSt. für Spesenabrechnung",
     "quota.largeClassLimit": "Die Anwesenheitserfassung für große Klassen (>25 Teilnehmer) ist eine Pro-Funktion. Upgraden Sie auf Pro für unbegrenzte Klassengrößen und Exporte.",
     "referral.badge": "1 Monat Pro verschenken · 1 Monat Pro erhalten",
@@ -8669,6 +8728,7 @@
         "review.starsThanks": "Vielen Dank! Eine 5-Sterne-Bewertung im Google Marketplace hilft anderen Lehrkräften:",
         "review.starsRateBtn": "Mit 5 Sternen im Marketplace bewerten (5 Sek.)",
         "review.starsFeedbackPrompt": "Wie können wir Attendance Tracker für Sie verbessern?",
+        "review.feedbackPlaceholder": "Ihre Vorschläge…",
         "review.starsSendFeedback": "Feedback senden",
         "review.starsSchoolFallback": "Schulkonto blockiert Bewertungen? Feedback hinterlassen",
         "review.bannerTitle": "Gefällt Ihnen Attendance Tracker?",
@@ -9591,6 +9651,11 @@
         "toast.prefSaved": "Benachrichtigungseinstellungen gespeichert"
     },
     "it": {
+        "quota.largeClassSaved": "✓ Abbiamo registrato tutti i {count} partecipanti della sessione di oggi! Passa a Pro per esportare l'elenco completo su Fogli Google.",
+        "upgrade.deskLinkToast": "Presenze salvate! Ti abbiamo inviato un'email con un link a 1 clic per completare l'upgrade dalla scrivania dopo la lezione.",
+        "history.signpostTeam59": "{n} docenti di {domain} usano Attendance Tracker. Richiedi una licenza per l'intero istituto a $59/anno.",
+        "history.signpostCta59": "Richiedi licenza istituto ($59/anno) →",
+
     "upgrade.reimburseNote": "Acquisto singolo per la tua classe · Fattura con IVA e ricevuta istantanea per rimborso",
     "quota.largeClassLimit": "Il monitoraggio delle presenze per classi numerose (>25 partecipanti) è una funzione Pro. Passa a Pro per dimensioni di classe ed esportazioni illimitate.",
     "referral.badge": "Regala 1 mese Pro · Ricevi 1 mese Pro",
@@ -9606,6 +9671,7 @@
         "review.starsThanks": "Grazie! Una valutazione a 5 stelle su Google Marketplace aiuta altri insegnanti:",
         "review.starsRateBtn": "Valuta 5 stelle su Marketplace (5s)",
         "review.starsFeedbackPrompt": "Come possiamo migliorare Attendance Tracker per te?",
+        "review.feedbackPlaceholder": "I tuoi suggerimenti…",
         "review.starsSendFeedback": "Invia feedback",
         "review.starsSchoolFallback": "L'account scolastico blocca le recensioni? Lascia un feedback",
         "review.bannerTitle": "Ti piace Attendance Tracker?",
@@ -10528,6 +10594,11 @@
         "toast.prefSaved": "Preferenze di notifica salvate"
     },
     "nl": {
+        "quota.largeClassSaved": "✓ We hebben alle {count} deelnemers van de sessie van vandaag vastgelegd! Upgrade naar Pro om de volledige lijst naar Google Spreadsheets te exporteren.",
+        "upgrade.deskLinkToast": "We hebben je aanwezigheid opgeslagen! We hebben je een 1-klik-link gemaild om na de les vanaf je bureau te upgraden.",
+        "history.signpostTeam59": "{n} docenten bij {domain} gebruiken Attendance Tracker. Vraag een licentie voor de hele school aan voor $59/jaar.",
+        "history.signpostCta59": "Vraag schoollicentie aan ($59/jaar) →",
+
     "upgrade.reimburseNote": "Eenmalige aankoop voor je klas · Direct btw-factuur en bon voor declaratie",
     "quota.largeClassLimit": "Aanwezigheidsregistratie voor grote klassen (>25 deelnemers) is een Pro-functie. Upgrade naar Pro voor onbeperkte groepsgroottes en exports.",
     "referral.badge": "Geef 1 maand Pro · Krijg 1 maand Pro",
@@ -10543,6 +10614,7 @@
         "review.starsThanks": "Bedankt! Een 5-sterrenbeoordeling op Google Marketplace helpt andere docenten:",
         "review.starsRateBtn": "Beoordeel met 5 sterren op Marketplace (5s)",
         "review.starsFeedbackPrompt": "Hoe kunnen we Attendance Tracker voor u verbeteren?",
+        "review.feedbackPlaceholder": "Uw suggesties…",
         "review.starsSendFeedback": "Feedback verzenden",
         "review.starsSchoolFallback": "Blokkeert uw schoolaccount reviews? Laat feedback achter",
         "review.bannerTitle": "Tevreden over Attendance Tracker?",
@@ -11465,6 +11537,11 @@
         "toast.prefSaved": "Notificatievoorkeuren opgeslagen"
     },
     "pl": {
+        "quota.largeClassSaved": "✓ Zarejestrowaliśmy wszystkich {count} uczestników dzisiejszej sesji! Przejdź na Pro, aby wyeksportować pełną listę do Arkuszy Google.",
+        "upgrade.deskLinkToast": "Zapisaliśmy listę obecności! Wysłaliśmy link 1-kliknięciem, aby dokończyć aktualizację przy biurku po lekcji.",
+        "history.signpostTeam59": "{n} nauczycieli w {domain} używa Attendance Tracker. Poproś o licencję dla całej szkoły za $59/rok.",
+        "history.signpostCta59": "Poproś o licencję szkolną ($59/rok) →",
+
     "upgrade.reimburseNote": "Jednorazowy zakup dla Twojej klasy · Natychmiastowa faktura VAT i rachunek do zwrotu",
     "quota.largeClassLimit": "Sprawdzanie obecności dla dużych grup (>25 uczestników) to funkcja Pro. Przejdź na Pro, aby uzyskać nielimitowaną liczbę uczestników i eksportów.",
     "referral.badge": "Podaruj 1 miesiąc Pro · Odbierz 1 miesiąc Pro",
@@ -11480,6 +11557,7 @@
         "review.starsThanks": "Dziękujemy! 5-gwiazdkowa ocena w Google Marketplace pomaga innym nauczycielom:",
         "review.starsRateBtn": "Oceń na 5 gwiazdek w Marketplace (5 sek.)",
         "review.starsFeedbackPrompt": "Jak możemy ulepszyć Attendance Tracker dla Ciebie?",
+        "review.feedbackPlaceholder": "Twoje sugestie…",
         "review.starsSendFeedback": "Wyślij opinię",
         "review.starsSchoolFallback": "Konto szkolne blokuje opinie? Zostaw komentarz",
         "review.bannerTitle": "Podoba Ci się Attendance Tracker?",
@@ -12402,6 +12480,11 @@
         "toast.prefSaved": "Preferencje powiadomień zapisane"
     },
     "tr": {
+        "quota.largeClassSaved": "✓ Bugünkü oturumun tüm {count} katılımcısını kaydettik! Tam listeyi Google E-Tablolar'a aktarmak için Pro'ya yükseltin.",
+        "upgrade.deskLinkToast": "Yoklamanızı kaydettik! Dersten sonra masanızdan yükseltmeyi tamamlamanız için 1 tıklamalı bir bağlantı e-postayla gönderdik.",
+        "history.signpostTeam59": "{domain} alanındaki {n} öğretmen Attendance Tracker kullanıyor. $59/yıl karşılığında tüm okul lisansı talep edin.",
+        "history.signpostCta59": "Okul lisansı talep et ($59/yıl) →",
+
     "upgrade.reimburseNote": "Sınıfınız için tek seferlik satın alma · Geri ödeme için anında KDV faturası ve makbuz",
     "quota.largeClassLimit": "Büyük sınıflar (>25 katılımcı) için yoklama takibi bir Pro özelliğidir. Sınırsız sınıf mevcudu ve dışa aktarma için Pro'ya yükseltin.",
     "referral.badge": "1 Ay Pro Hediye Et · 1 Ay Pro Kazan",
@@ -12417,6 +12500,7 @@
         "review.starsThanks": "Teşekkürler! Google Marketplace'te 5 yıldızlı bir değerlendirme diğer öğretmenlere yardımcı olur:",
         "review.starsRateBtn": "Marketplace'te 5 Yıldız Ver (5 sn)",
         "review.starsFeedbackPrompt": "Attendance Tracker'ı sizin için nasıl daha iyi hale getirebiliriz?",
+        "review.feedbackPlaceholder": "Önerileriniz…",
         "review.starsSendFeedback": "Geri Bildirim Gönder",
         "review.starsSchoolFallback": "Okul hesabı yorumları engelliyor mu? Geri bildirim bırakın",
         "review.bannerTitle": "Attendance Tracker'dan memnun musunuz?",
@@ -13339,6 +13423,11 @@
         "toast.prefSaved": "Bildirim tercihleri kaydedildi"
     },
     "th": {
+        "quota.largeClassSaved": "✓ เราได้บันทึกผู้เข้าร่วมทั้งหมด {count} คนสำหรับเซสชันวันนี้แล้ว! อัปเกรดเป็น Pro เพื่อส่งออกรายชื่อทั้งหมดไปยัง Google ชีต",
+        "upgrade.deskLinkToast": "เราบันทึกการเข้าเรียนของคุณแล้ว! เราได้ส่งลิงก์แบบคลิกเดียวทางอีเมลเพื่อให้คุณอัปเกรดต่อที่โต๊ะทำงานหลังเลิกเรียน",
+        "history.signpostTeam59": "ครู {n} คนที่ {domain} ใช้ Attendance Tracker ขอรับใบอนุญาตสำหรับทั้งโรงเรียนในราคา $59/ปี",
+        "history.signpostCta59": "ขอใบอนุญาตโรงเรียน ($59/ปี) →",
+
     "upgrade.reimburseNote": "การซื้อแบบจ่ายครั้งเดียวสำหรับชั้นเรียน · ใบเสร็จรับเงินทันทีสำหรับการเบิกจ่าย",
     "quota.largeClassLimit": "การติดตามการเข้าเรียนสำหรับชั้นเรียนขนาดใหญ่ (>25 คน) เป็นฟีเจอร์ Pro อัปเกรดเป็น Pro สำหรับขนาดชั้นเรียนและการส่งออกไม่จำกัด",
     "referral.badge": "มอบ Pro 1 เดือน · รับ Pro 1 เดือน",
@@ -13354,6 +13443,7 @@
         "review.starsThanks": "ขอบคุณครับ! การให้คะแนน 5 ดาวใน Google Marketplace ช่วยให้ครูท่านอื่นค้นพบเราได้ง่ายขึ้น:",
         "review.starsRateBtn": "ให้คะแนน 5 ดาวบน Marketplace (5 วินาที)",
         "review.starsFeedbackPrompt": "เราจะปรับปรุง Attendance Tracker ให้ดีขึ้นสำหรับคุณได้อย่างไร?",
+        "review.feedbackPlaceholder": "ข้อเสนอแนะของคุณ…",
         "review.starsSendFeedback": "ส่งความคิดเห็น",
         "review.starsSchoolFallback": "บัญชีโรงเรียนบล็อกการรีวิวใช่ไหม? ส่งข้อเสนอแนะที่นี่",
         "review.bannerTitle": "ชอบ Attendance Tracker ไหม?",
@@ -14276,6 +14366,11 @@
         "toast.prefSaved": "บันทึกการตั้งค่าการแจ้งเตือนแล้ว"
     },
     "ar": {
+        "quota.largeClassSaved": "✓ لقد قمنا بتسجيل جميع الحاضرين البالغ عددهم {count} لجلسة اليوم! قم بالترقية إلى Pro لتصدير القائمة الكاملة إلى جداول بيانات Google.",
+        "upgrade.deskLinkToast": "لقد حفظنا الحضور! أرسلنا لك رابطًا بنقرة واحدة عبر البريد الإلكتروني لإتمام الترقية من مكتبك بعد انتهاء الحصة.",
+        "history.signpostTeam59": "{n} من المعلمين في {domain} يستخدمون Attendance Tracker. اطلب ترخيصًا للمدرسة بأكملها مقابل 59 دولارًا في السنة.",
+        "history.signpostCta59": "طلب ترخيص للمدرسة (59 دولارًا/السنة) →",
+
     "upgrade.reimburseNote": "شراء لمرة واحدة لفصلك الدراسي · فاتورة ضريبية وإيصال فوري لاسترداد النفقات",
     "quota.largeClassLimit": "تتبع الحضور للفصول الكبيرة (أكثر من 25 مشاركًا) ميزة مدفوعة في Pro. قم بالترقية إلى Pro لأحجام فصول وتصديرات غير محدودة.",
     "referral.badge": "امنح شهرًا من Pro · احصل على شهر من Pro",
@@ -14291,6 +14386,7 @@
         "review.starsThanks": "شكراً لك! يساعد تقييم 5 نجوم على Google Marketplace المعلمين الآخرين:",
         "review.starsRateBtn": "تقييم 5 نجوم على Marketplace (5 ثوانٍ)",
         "review.starsFeedbackPrompt": "كيف يمكننا تحسين Attendance Tracker بالنسبة لك؟",
+        "review.feedbackPlaceholder": "اقتراحاتك…",
         "review.starsSendFeedback": "إرسال التعليقات",
         "review.starsSchoolFallback": "حساب المدرسة يمنع التقييمات؟ اترك تعليقاً",
         "review.bannerTitle": "هل يعجبك Attendance Tracker؟",
@@ -15213,6 +15309,11 @@
         "toast.prefSaved": "تم حفظ تفضيلات الإشعارات"
     },
     "ko": {
+        "quota.largeClassSaved": "✓ 오늘 세션의 참석자 {count}명을 모두 기록했습니다! 전체 명단을 Google 스프레드시트로 내보내려면 Pro로 업그레이드하세요.",
+        "upgrade.deskLinkToast": "출석 데이터가 저장되었습니다! 수업이 끝난 후 자리에서 업그레이드를 완료할 수 있는 1클릭 링크를 이메일로 보내드렸습니다.",
+        "history.signpostTeam59": "{domain}의 교사 {n}명이 Attendance Tracker를 사용하고 있습니다. 연 $59로 학교 전체 라이선스를 요청하세요.",
+        "history.signpostCta59": "학교 라이선스 요청 (연 $59) →",
+
     "upgrade.reimburseNote": "수업을 위한 1회 결제 · 경비 처리를 위한 즉시 영수증 및 인보이스 발급",
     "quota.largeClassLimit": "대규모 수업(참석자 25명 초과)의 출석 추적은 Pro 기능입니다. 인원수 및 내보내기 제한 없이 사용하려면 Pro로 업그레이드하세요.",
     "referral.badge": "Pro 1개월 선물 · Pro 1개월 받기",
@@ -15228,6 +15329,7 @@
         "review.starsThanks": "감사합니다! Google Marketplace에 5점 별점을 남겨주시면 다른 선생님들께 큰 도움이 됩니다:",
         "review.starsRateBtn": "Marketplace에서 5점 평가하기 (5초)",
         "review.starsFeedbackPrompt": "Attendance Tracker를 어떻게 개선하면 좋을까요?",
+        "review.feedbackPlaceholder": "의견을 남겨주세요…",
         "review.starsSendFeedback": "피드백 보내기",
         "review.starsSchoolFallback": "학교 계정으로 리뷰 작성이 제한되나요? 의견 남기기",
         "review.bannerTitle": "Attendance Tracker가 마음에 드시나요?",
@@ -16150,6 +16252,11 @@
         "toast.prefSaved": "알림 설정이 저장되었습니다"
     },
     "zh": {
+        "quota.largeClassSaved": "✓ 我們已完整記錄今日會議的全部 {count} 位出席者！升級至 Pro 即可將完整名單匯出至 Google 試算表。",
+        "upgrade.deskLinkToast": "已為您儲存出席紀錄！我們已發送一鍵升級連結至您的電子郵件，方便您課後在辦公桌前完成升級。",
+        "history.signpostTeam59": "{domain} 已有 {n} 位教師正在使用 Attendance Tracker。立即申請全校授權，每年僅需 $59。",
+        "history.signpostCta59": "申請全校授權 ($59/年) →",
+
     "upgrade.reimburseNote": "為您的課堂單次購買 · 提供即時發票與收據以便報帳報銷",
     "quota.largeClassLimit": "大型班級（超過 25 位學員）的出勤追蹤為 Pro 專業版功能。升級至 Pro 即可享有不限班級人數與匯出次數。",
     "referral.badge": "贈送 1 個月 Pro · 獲得 1 個月 Pro",
@@ -16165,6 +16272,7 @@
         "review.starsThanks": "感謝您！在 Google Marketplace 上給予 5 星好評能幫助其他老師：",
         "review.starsRateBtn": "在 Marketplace 評分 5 星 (5秒)",
         "review.starsFeedbackPrompt": "我們如何為您改進 Attendance Tracker？",
+        "review.feedbackPlaceholder": "您的建議…",
         "review.starsSendFeedback": "發送反饋",
         "review.starsSchoolFallback": "學校帳號無法撰寫評價？留下反饋",
         "review.bannerTitle": "喜歡 Attendance Tracker 嗎？",
@@ -17087,6 +17195,11 @@
         "toast.prefSaved": "通知偏好設定已儲存"
     },
     "ja": {
+        "quota.largeClassSaved": "✓ 本日のセッションの参加者全員（{count}名）を記録しました！名簿全体をGoogleスプレッドシートに書き出すにはProへアップグレードしてください。",
+        "upgrade.deskLinkToast": "出席データを保存しました！授業後にデスクからアップグレードを完了できるよう、1クリックリンクをメールでお送りしました。",
+        "history.signpostTeam59": "{domain} では {n} 名の先生が Attendance Tracker を利用しています。年間$59で学校全体ライセンスをリクエストできます。",
+        "history.signpostCta59": "学校ライセンスをリクエスト ($59/年) →",
+
     "upgrade.reimburseNote": "クラス向け買い切り購入 · 経費精算用の領収書・請求書を即時発行",
     "quota.largeClassLimit": "大規模クラス（参加者25名超）の出席記録はPro限定機能です。クラス規模およびエクスポートを無制限にするにはProへアップグレードしてください。",
     "referral.badge": "Proを1ヶ月プレゼント · Proを1ヶ月獲得",
@@ -17102,6 +17215,7 @@
         "review.starsThanks": "ありがとうございます！Google Marketplaceでの5つ星評価は他の先生方の助けになります：",
         "review.starsRateBtn": "Marketplaceで5つ星評価をする (5秒)",
         "review.starsFeedbackPrompt": "Attendance Trackerをどのように改善できますか？",
+        "review.feedbackPlaceholder": "ご意見・ご提案…",
         "review.starsSendFeedback": "フィードバックを送信",
         "review.starsSchoolFallback": "学校アカウントでレビューが制限されていますか？ご意見をお送りください",
         "review.bannerTitle": "Attendance Trackerをお気に入りいただけましたか？",
@@ -18024,6 +18138,11 @@
         "toast.prefSaved": "通知設定を保存しました"
     },
     "ta": {
+        "quota.largeClassSaved": "✓ இன்றைய அமர்வின் அனைத்து {count} பங்கேற்பாளர்களையும் பதிவு செய்துள்ளோம்! முழுப் பட்டியலையும் Google Sheets-க்கு ஏற்றுமதி செய்ய Pro-விற்கு மேம்படுத்தவும்.",
+        "upgrade.deskLinkToast": "உங்கள் வருகைப்பதிவு சேமிக்கப்பட்டது! வகுப்பு முடிந்ததும் மேம்படுத்த 1-கிளிக் இணைப்பை மின்னஞ்சல் செய்துள்ளோம்.",
+        "history.signpostTeam59": "{domain}-இல் {n} ஆசிரியர்கள் Attendance Tracker-ஐப் பயன்படுத்துகின்றனர். $59/வருடத்திற்கு முழு பள்ளி உரிமத்தைக் கோரவும்.",
+        "history.signpostCta59": "பள்ளி உரிமத்தைக் கோரவும் ($59/வருடம்) →",
+
     "upgrade.reimburseNote": "உங்கள் வகுப்பிற்கான ஒரு முறை வாங்குதல் · திருப்பிச் செலுத்துவதற்கான உடனடி ரசீது",
     "quota.largeClassLimit": "பெரிய வகுப்புகளுக்கான (>25 பங்கேற்பாளர்கள்) வருகைக் கண்காணிப்பு ஒரு Pro அம்சமாகும். வரம்பற்ற வகுப்பு அளவுகள் மற்றும் ஏற்றுமதிகளுக்கு Pro-விற்கு மேம்படுத்தவும்.",
     "referral.badge": "1 மாதம் Pro வழங்குங்கள் · 1 மாதம் Pro பெறுங்கள்",
@@ -18039,6 +18158,7 @@
         "review.starsThanks": "நன்றி! Google Marketplace-ல் 5-நட்சத்திர மதிப்பீடு பிற ஆசிரியர்களுக்கு உதவும்:",
         "review.starsRateBtn": "Marketplace-ல் 5 நட்சத்திரம் வழங்குக (5 நொடி)",
         "review.starsFeedbackPrompt": "Attendance Tracker-ஐ உங்களுக்காக எவ்வாறு மேம்படுத்தலாம்?",
+        "review.feedbackPlaceholder": "உங்கள் பரிந்துரைகள்…",
         "review.starsSendFeedback": "கருத்து அனுப்புக",
         "review.starsSchoolFallback": "பள்ளி கணக்கு மதிப்பாய்வைத் தடுக்கிறதா? கருத்து தெரிவிக்கவும்",
         "review.bannerTitle": "Attendance Tracker பிடித்திருக்கிறதா?",
@@ -18961,6 +19081,11 @@
         "toast.prefSaved": "அறிவிப்பு விருப்பங்கள் சேமிக்கப்பட்டன"
     },
     "te": {
+        "quota.largeClassSaved": "✓ నేటి సెషన్ కోసం మొత్తం {count} మంది హాజరైన వారిని మేము రికార్డ్ చేసాము! పూర్తి రోస్టర్‌ను Google Sheetsకి ఎగుమతి చేయడానికి ప్రోకి అప్‌గ్రేడ్ చేయండి.",
+        "upgrade.deskLinkToast": "మీ హాజరు సేవ్ చేయబడింది! క్లాస్ తర్వాత మీ డెస్క్ నుండి అప్‌గ్రేడ్‌ను పూర్తి చేయడానికి మేము 1-క్లిక్ లింక్‌ను ఇమెయిల్ చేసాము.",
+        "history.signpostTeam59": "{domain}లో {n} మంది ఉపాధ్యాయులు Attendance Trackerని ఉపయోగిస్తున్నారు. $59/సంవత్సరానికి పాఠశాల మొత్తానికి లైసెన్స్‌ను అభ్యర్థించండి.",
+        "history.signpostCta59": "పాఠశాల లైసెన్స్‌ని అభ్యర్థించండి ($59/సం.) →",
+
     "upgrade.reimburseNote": "మీ తరగతి కోసం ఒకేసారి కొनुగోలు · రీయింబర్స్‌మెంట్ కోసం తక్షణ రసీదు",
     "quota.largeClassLimit": "పెద్ద తరగతుల కోసం (>25 మంది హాజరైనవారు) హాజరు ట్రాకింగ్ అనేది ప్రో ఫీచర్. అపరిమిత తరగతి పరిమాణాలు & ఎగుమతుల కోసం ప్రోకి అప్‌గ్రేడ్ చేయండి.",
     "referral.badge": "1 నెల ప్రో ఇవ్వండి · 1 నెల ప్రో పొందండి",
@@ -18976,6 +19101,7 @@
         "review.starsThanks": "ధన్యవాదాలు! Google Marketplace లో 5-స్టార్ రేటింగ్ ఇతర ఉపాధ్యాయులకు సహాయపడుతుంది:",
         "review.starsRateBtn": "Marketplace లో 5 స్టార్స్ ఇవ్వండి (5 సె)",
         "review.starsFeedbackPrompt": "మీ కోసం Attendance Tracker ని ఎలా మెరుగుపరచగలం?",
+        "review.feedbackPlaceholder": "మీ సూచనలు…",
         "review.starsSendFeedback": "అభిప్రాయాన్ని పంపండి",
         "review.starsSchoolFallback": "స్కూల్ ఖాతా సమీక్షలను నిరోధిస్తుందా? అభిప్రాయాన్ని తెలపండి",
         "review.bannerTitle": "Attendance Tracker నచ్చిందా?",
@@ -19898,6 +20024,11 @@
         "toast.prefSaved": "నోటిఫికేషన్ ప్రాధాన్యతలు సేవ్ చేయబడ్డాయి"
     },
     "bn": {
+        "quota.largeClassSaved": "✓ আজকের সেশনের সমস্ত {count} জন উপস্থিতির তথ্য রেকর্ড করা হয়েছে! সম্পূর্ণ তালিকা Google Sheets-এ এক্সপোর্ট করতে প্রো-তে আপগ্রেড করুন।",
+        "upgrade.deskLinkToast": "উপস্থিতি সংরক্ষিত হয়েছে! ক্লাস শেষে আপনার ডেস্ক থেকে আপগ্রেড সম্পন্ন করতে আমরা একটি ১-ক্লিক লিংক ইমেইল করেছি।",
+        "history.signpostTeam59": "{domain}-এর {n} জন শিক্ষক Attendance Tracker ব্যবহার করছেন। $৫৯/বছরে সম্পূর্ণ স্কুলের লাইসেন্স অনুরোধ করুন।",
+        "history.signpostCta59": "স্কুল লাইসেন্সের অনুরোধ করুন ($৫৯/বছর) →",
+
     "upgrade.reimburseNote": "আপনার ক্লাসের জন্য এককালীন কেনাকাটা · খরচের রসিদ ও তাৎক্ষণিক চালান",
     "quota.largeClassLimit": "বড় ক্লাসের (>২৫ জন অংশগ্রহণকারী) জন্য উপস্থিতি ট্র্যাকিং একটি প্রো বৈশিষ্ট্য। সীমাহীন ক্লাস সাইজ ও এক্সপোর্টের জন্য প্রো-তে আপগ্রেড করুন।",
     "referral.badge": "১ মাস প্রো দিন · ১ মাস প্রো পান",
@@ -19913,6 +20044,7 @@
         "review.starsThanks": "ধন্যবাদ! Google Marketplace-এ একটি ৫-স্টার রেটিং অন্যান্য শিক্ষকদের সাহায্য করে:",
         "review.starsRateBtn": "Marketplace-এ ৫-স্টার রেটিং দিন (৫ সেকেন্ড)",
         "review.starsFeedbackPrompt": "আমরা কীভাবে Attendance Tracker আরও উন্নত করতে পারি?",
+        "review.feedbackPlaceholder": "আপনার পরামর্শ…",
         "review.starsSendFeedback": "মতামত পাঠান",
         "review.starsSchoolFallback": "স্কুল অ্যাকাউন্ট রিভিউ ব্লক করে? মতামত দিন",
         "review.bannerTitle": "Attendance Tracker ভালো লাগছে?",
@@ -20835,6 +20967,11 @@
         "toast.prefSaved": "বিজ্ঞপ্তি পছন্দ সংরক্ষিত হয়েছে"
     },
     "ur": {
+        "quota.largeClassSaved": "✓ ہم نے آج کے سیشن کے تمام {count} شرکاء کو ریکارڈ کر لیا ہے! مکمل فہرست کو گوگل شیٹس میں ایکسپورٹ کرنے کے لیے پرو میں اپ گریڈ کریں۔",
+        "upgrade.deskLinkToast": "آپ کی حاضری محفوظ ہو گئی ہے! کلاس کے بعد ڈیسک سے اپ گریڈ مکمل کرنے کے لیے ہم نے 1-کلک لنک ای میل کر دیا ہے۔",
+        "history.signpostTeam59": "{domain} کے {n} اساتذہ Attendance Tracker استعمال کر رہے ہیں۔ $59 سالانہ میں پورے اسکول کا لائسنس طلب کریں۔",
+        "history.signpostCta59": "اسکول لائسنس کی درخواست کریں ($59/سال) →",
+
     "upgrade.reimburseNote": "آپ کی کلاس کے لیے یک وقتی خریداری · معاوضے کے لیے فوری رسید اور انوائس",
     "quota.largeClassLimit": "بڑی کلاسوں (25 سے زائد شرکاء) کے لیے حاضری ٹریکنگ پرو فیچر ہے۔ لامحدود کلاس سائز اور ایکسپورٹ کے لیے پرو میں اپ گریڈ کریں۔",
     "referral.badge": "1 مہینہ پرو تحفہ دیں · 1 مہینہ پرو حاصل کریں",
@@ -20850,6 +20987,7 @@
         "review.starsThanks": "شکریہ! Google Marketplace پر 5 اسٹار ریٹنگ دیگر اساتذہ کی مدد کرتی ہے:",
         "review.starsRateBtn": "Marketplace پر 5 اسٹارز دیں (5 سیکنڈ)",
         "review.starsFeedbackPrompt": "ہم آپ کے لیے Attendance Tracker کو کیسے بہتر بنا سکتے ہیں؟",
+        "review.feedbackPlaceholder": "آپ کی تجاویز…",
         "review.starsSendFeedback": "رائے بھیجیں",
         "review.starsSchoolFallback": "اسکول اکاؤنٹ ریویو روکتا ہے؟ رائے درج کریں",
         "review.bannerTitle": "کیا Attendance Tracker پسند آیا؟",
@@ -21772,6 +21910,11 @@
         "toast.prefSaved": "اطلاعات کی ترجیحات محفوظ کر لی گئیں"
     },
     "zh-CN": {
+        "quota.largeClassSaved": "✓ 我们已完整记录今日会议的全部 {count} 位出席人员！升级至 Pro 即可将完整花名册导出至 Google 表格。",
+        "upgrade.deskLinkToast": "已保存您的考勤记录！我们已将一键升级链接发送至您的邮箱，方便您下课后在办公桌前完成升级。",
+        "history.signpostTeam59": "{domain} 已有 {n} 位教师正在使用 Attendance Tracker。申请全校授权，每年仅需 $59。",
+        "history.signpostCta59": "申请全校授权 ($59/年) →",
+
     "upgrade.reimburseNote": "为您的课堂单次购买 · 提供即时发票与收据以便报销",
     "quota.largeClassLimit": "大型班级（超过 25 人）的出勤考勤是 Pro 专业版功能。升级至 Pro 可享受无限班级人数及导出次数。",
     "referral.badge": "赠送 1 个月 Pro · 获得 1 个月 Pro",
@@ -21787,6 +21930,7 @@
         "review.starsThanks": "感谢您！在 Google Marketplace 上给予 5 星好评能帮助其他老师：",
         "review.starsRateBtn": "在 Marketplace 评分 5 星 (5秒)",
         "review.starsFeedbackPrompt": "我们如何为您改进 Attendance Tracker？",
+        "review.feedbackPlaceholder": "您的建议…",
         "review.starsSendFeedback": "发送反馈",
         "review.starsSchoolFallback": "学校账号无法撰写评价？留下反馈",
         "review.bannerTitle": "喜欢 Attendance Tracker 吗？",
@@ -22709,6 +22853,11 @@
         "toast.prefSaved": "通知偏好设置已保存"
     },
     "ru": {
+        "quota.largeClassSaved": "✓ Мы зафиксировали всех {count} участников сегодняшней встречи! Перейдите на Pro, чтобы экспортировать весь список в Google Таблицы.",
+        "upgrade.deskLinkToast": "Данные посещаемости сохранены! Мы отправили вам ссылку в 1 клик, чтобы вы могли обновиться после урока.",
+        "history.signpostTeam59": "{n} преп. в {domain} используют Attendance Tracker. Запросите общешкольную лицензию за $59/год.",
+        "history.signpostCta59": "Запросить школьную лицензию ($59/год) →",
+
     "upgrade.reimburseNote": "Разовая покупка для класса · Чек и счет с НДС для компенсации расходов",
     "quota.largeClassLimit": "Учет посещаемости для больших групп (>25 участников) доступен в версии Pro. Перейдите на Pro для снятия ограничений на размер классов и экспорты.",
     "referral.badge": "Подарите 1 месяц Pro · Получите 1 месяц Pro",
@@ -22724,6 +22873,7 @@
         "review.starsThanks": "Спасибо! Оценка 5 звезд в Google Marketplace поможет другим преподавателям:",
         "review.starsRateBtn": "Оценить на 5 звезд в Marketplace (5 сек)",
         "review.starsFeedbackPrompt": "Как мы можем улучшить Attendance Tracker для вас?",
+        "review.feedbackPlaceholder": "Ваши предложения…",
         "review.starsSendFeedback": "Отправить отзыв",
         "review.starsSchoolFallback": "Школьный аккаунт блокирует отзывы? Оставьте отзыв здесь",
         "review.bannerTitle": "Нравится Attendance Tracker?",
@@ -23646,6 +23796,11 @@
         "toast.prefSaved": "Настройки уведомлений сохранены"
     },
     "uk": {
+        "quota.largeClassSaved": "✓ Ми зафіксували всіх {count} учасників сьогоднішнього уроку! Перейдіть на Pro, щоб експортувати повний список у Google Таблиці.",
+        "upgrade.deskLinkToast": "Дані відвідуваності збережено! Ми надіслали посилання в 1 клік, щоб ви могли оновитися після уроку.",
+        "history.signpostTeam59": "{n} викладачів у {domain} використовують Attendance Tracker. Замовте ліцензію для всієї школи за $59/рік.",
+        "history.signpostCta59": "Замовити шкільну ліцензію ($59/рік) →",
+
     "upgrade.reimburseNote": "Одноразова покупка для класу · Чек та рахунок із ПДВ для компенсації витрат",
     "quota.largeClassLimit": "Облік відвідуваності для великих класів (>25 учасників) — це функція Pro. Перейдіть на Pro для необмеженого розміру класів та експортів.",
     "referral.badge": "Подаруйте 1 місяць Pro · Отримайте 1 місяць Pro",
@@ -23661,6 +23816,7 @@
         "review.starsThanks": "Дякуємо! 5-зірковий рейтинг у Google Marketplace допоможе іншим викладачам:",
         "review.starsRateBtn": "Оцінити на 5 зірок у Marketplace (5 сек)",
         "review.starsFeedbackPrompt": "Як ми можемо покращити Attendance Tracker для вас?",
+        "review.feedbackPlaceholder": "Ваші пропозиції…",
         "review.starsSendFeedback": "Надіслати відгук",
         "review.starsSchoolFallback": "Шкільний обліковий запис блокує відгуки? Залиште відгук тут",
         "review.bannerTitle": "Подобається Attendance Tracker?",
@@ -24583,6 +24739,11 @@
         "toast.prefSaved": "Налаштування сповіщень збережено"
     },
     "ro": {
+        "quota.largeClassSaved": "✓ Am înregistrat toți cei {count} participanți la sesiunea de astăzi! Faceți upgrade la Pro pentru a exporta întreaga listă în Google Sheets.",
+        "upgrade.deskLinkToast": "Prezența a fost salvată! V-am trimis prin e-mail un link cu 1 clic pentru a finaliza upgrade-ul după oră.",
+        "history.signpostTeam59": "{n} profesori din {domain} folosesc Attendance Tracker. Solicitați o licență pentru întreaga școală pentru 59 $/an.",
+        "history.signpostCta59": "Solicitați licență școlară (59 $/an) →",
+
     "upgrade.reimburseNote": "Achiziție unică pentru clasa ta · Factură cu TVA și chitanță instantanee pentru decontare",
     "quota.largeClassLimit": "Urmărirea prezenței pentru clase mari (>25 de participanți) este o funcție Pro. Faceți upgrade la Pro pentru dimensiuni nelimitate de clase și exporturi.",
     "referral.badge": "Oferă 1 lună Pro · Primește 1 lună Pro",
@@ -24598,6 +24759,7 @@
         "review.starsThanks": "Mulțumim! O evaluare de 5 stele pe Google Marketplace îi ajută pe alți profesori:",
         "review.starsRateBtn": "Evaluează cu 5 stele pe Marketplace (5s)",
         "review.starsFeedbackPrompt": "Cum putem îmbunătăți Attendance Tracker pentru tine?",
+        "review.feedbackPlaceholder": "Sugestiile tale…",
         "review.starsSendFeedback": "Trimite feedback",
         "review.starsSchoolFallback": "Contul școlar blochează recenziile? Lasă feedback",
         "review.bannerTitle": "Îți place Attendance Tracker?",
@@ -25520,6 +25682,11 @@
         "toast.prefSaved": "Preferințele de notificare au fost salvate"
     },
     "he": {
+        "quota.largeClassSaved": "✓ רשמנו את כל {count} המשתתפים במפגש של היום! שדרג ל-Pro כדי לייצא את הרשימה המלאה ל-Google Sheets.",
+        "upgrade.deskLinkToast": "הנוכחות נשמרה! שלחנו קישור בלחיצה אחת כדי שתוכל לשדרג בנוחות מהשולחן אחרי השיעור.",
+        "history.signpostTeam59": "{n} מורים ב-{domain} משתמשים ב-Attendance Tracker. בקש רישיון לכל בית הספר ב-$59 לשנה.",
+        "history.signpostCta59": "בקש רישיון בית ספרי ($59/שנה) →",
+
     "upgrade.reimburseNote": "רכישה חד-פעמית לכיתה שלך · חשבונית מס וקבלה מיידית להחזר הוצאات",
     "quota.largeClassLimit": "מעקב נוכחות עבור כיתות גדולות (מעל 25 משתתפים) הוא תכונת Pro. שדרג ל-Pro עבור מספר משתתפים וייצוא ללא הגבלה.",
     "referral.badge": "הענק חודש Pro · קבל חודש Pro",
@@ -25535,6 +25702,7 @@
         "review.starsThanks": "תודה! דירוג 5 כוכבים ב-Google Marketplace עוזר למורים אחרים:",
         "review.starsRateBtn": "דרג 5 כוכבים ב-Marketplace (5 שניות)",
         "review.starsFeedbackPrompt": "כיצד נוכל לשפר את Attendance Tracker עבורך?",
+        "review.feedbackPlaceholder": "ההצעות שלך…",
         "review.starsSendFeedback": "שלח משוב",
         "review.starsSchoolFallback": "חשבון בית הספר חוסם ביקורות? השאר משוב",
         "review.bannerTitle": "נהנה מ-Attendance Tracker?",
@@ -26457,6 +26625,11 @@
         "toast.prefSaved": "העדפות ההודעות נשמרו"
     },
     "mr": {
+        "quota.largeClassSaved": "✓ आम्ही आजच्या सत्रातील सर्व {count} उपस्थितांची नोंद केली आहे! संपूर्ण यादी Google Sheets मध्ये निर्यात करण्यासाठी Pro वर अपग्रेड करा.",
+        "upgrade.deskLinkToast": "आम्ही तुमची उपस्थिती जतन केली आहे! वर्गानंतर डेस्कवरून अपग्रेड पूर्ण करण्यासाठी आम्ही 1-क्लिक लिंक ईमेल केली आहे.",
+        "history.signpostTeam59": "{domain} मधील {n} शिक्षक Attendance Tracker वापरत आहेत. $59/वर्ष दराने संपूर्ण शाळेच्या परवान्याची विनंती करा.",
+        "history.signpostCta59": "शाळा परवान्याची विनंती करा ($59/वर्ष) →",
+
     "upgrade.reimburseNote": "आपल्या वर्गासाठी एकरकमी खरेदी · परतफेडीसाठी त्वरित बीजक आणि पावती",
     "quota.largeClassLimit": "मोठ्या वर्गांसाठी (>२५ उपस्थित) उपस्थिती ट्रॅकिंग हे प्रो वैशिष्ट्य आहे. अमर्यादित वर्ग आकार आणि निर्यातीसाठी प्रो वर अपग्रेड करा.",
     "referral.badge": "१ महिना प्रो द्या · १ महिना प्रो मिळवा",
@@ -26472,6 +26645,7 @@
         "review.starsThanks": "धन्यवाद! Google Marketplace वर ५-स्टार रेटिंग इतर शिक्षकांना मदत करते:",
         "review.starsRateBtn": "Marketplace वर ५ स्टार द्या (५ सेकंद)",
         "review.starsFeedbackPrompt": "आम्ही तुमच्यासाठी Attendance Tracker कसे सुधारू शकतो?",
+        "review.feedbackPlaceholder": "तुमच्या सूचना…",
         "review.starsSendFeedback": "अभिप्राय पाठवा",
         "review.starsSchoolFallback": "शाळा खाते रिव्ह्यू ब्लॉक करत आहे? अभिप्राय नोंदवा",
         "review.bannerTitle": "Attendance Tracker आवडले का?",
@@ -27394,6 +27568,11 @@
         "toast.prefSaved": "सूचना प्राधान्ये जतन केली"
     },
     "sv": {
+        "quota.largeClassSaved": "✓ Vi har registrerat alla {count} deltagare för dagens lektion! Uppgradera till Pro för att exportera hela listan till Google Kalkylark.",
+        "upgrade.deskLinkToast": "Närvaron har sparats! Vi har mejlat en 1-klickslänk så att du kan uppgradera från skrivbordet efter lektionen.",
+        "history.signpostTeam59": "{n} lärare på {domain} använder Attendance Tracker. Begär en helskolelicens för $59/år.",
+        "history.signpostCta59": "Begär skolicens ($59/år) →",
+
     "upgrade.reimburseNote": "Engångsköp för ditt klassrum · Direkt kvitto med moms för utläggsersättning",
     "quota.largeClassLimit": "Närvaroregistrering för stora klasser (>25 deltagare) är en Pro-funktion. Uppgradera till Pro för obegränsad klassstorlek och export.",
     "referral.badge": "Ge 1 månad Pro · Få 1 månad Pro",
@@ -27409,6 +27588,7 @@
         "review.starsThanks": "Tack! Ett 5-stjärnigt betyg på Google Marketplace hjälper andra lärare:",
         "review.starsRateBtn": "Betygsätt med 5 stjärnor på Marketplace (5s)",
         "review.starsFeedbackPrompt": "Hur kan vi förbättra Attendance Tracker för dig?",
+        "review.feedbackPlaceholder": "Dina förslag…",
         "review.starsSendFeedback": "Skicka feedback",
         "review.starsSchoolFallback": "Blockerar skolkontot recensioner? Lämna feedback",
         "review.bannerTitle": "Gillar du Attendance Tracker?",
@@ -28331,6 +28511,11 @@
         "toast.prefSaved": "Aviseringsinställningar sparade"
     },
     "cs": {
+        "quota.largeClassSaved": "✓ Zaznamenali jsme všech {count} účastníků dnešní hodiny! Upgradujte na Pro a exportujte kompletní seznam do Tabulek Google.",
+        "upgrade.deskLinkToast": "Docházka byla uložena! Poslali jsme vám e-mail s odkazem na 1 kliknutí, abyste mohli po hodině přejít na Pro.",
+        "history.signpostTeam59": "{n} učitelů v doméně {domain} používá Attendance Tracker. Požádejte o licenci pro celou školu za 59 $/rok.",
+        "history.signpostCta59": "Požádat o školní licenci (59 $/rok) →",
+
     "upgrade.reimburseNote": "Jednorázový nákup pro vaši třídu · Okamžitá faktura s DPH a účtenka k proplacení",
     "quota.largeClassLimit": "Sledování docházky pro velké třídy (>25 účastníků) je funkce Pro. Přejděte na Pro pro neomezenou velikost tříd a exporty.",
     "referral.badge": "Darujte 1 měsíc Pro · Získejte 1 měsíc Pro",
@@ -28346,6 +28531,7 @@
         "review.starsThanks": "Děkujeme! 5hvězdičkové hodnocení na Google Marketplace pomůže dalším učitelům:",
         "review.starsRateBtn": "Ohodnotit 5 hvězdičkami na Marketplace (5 s)",
         "review.starsFeedbackPrompt": "Jak můžeme Attendance Tracker pro vás vylepšit?",
+        "review.feedbackPlaceholder": "Vaše návrhy…",
         "review.starsSendFeedback": "Odeslat zpětnou vazbu",
         "review.starsSchoolFallback": "Školní účet blokuje recenze? Zanechte zpětnou vazbu",
         "review.bannerTitle": "Líbí se vám Attendance Tracker?",
@@ -29268,6 +29454,11 @@
         "toast.prefSaved": "Předvolby oznámení uloženy"
     },
     "da": {
+        "quota.largeClassSaved": "✓ Vi har registreret alle {count} deltagere for dagens session! Opgrader til Pro for at eksportere hele listen til Google Sheets.",
+        "upgrade.deskLinkToast": "Oppmødet er gemt! Vi har mailet et 1-klik link, så du kan opgradere fra dit skrivebord efter timen.",
+        "history.signpostTeam59": "{n} lærere hos {domain} bruger Attendance Tracker. Anmod om en skolelicens for $59/år.",
+        "history.signpostCta59": "Anmod om skolelicens ($59/år) →",
+
     "upgrade.reimburseNote": "Engangskøb til dit klasserum · Øjeblikkelig momsfaktura og kvittering til refusion",
     "quota.largeClassLimit": "Fraværsregistrering for store klasser (>25 deltagere) er en Pro-funktion. Opgrader til Pro for ubegrænset klassestørrelse og eksport.",
     "referral.badge": "Giv 1 måned Pro · Få 1 måned Pro",
@@ -29283,6 +29474,7 @@
         "review.starsThanks": "Tak! En 5-stjernet vurdering på Google Marketplace hjælper andre undervisere:",
         "review.starsRateBtn": "Giv 5 stjerner på Marketplace (5 sek.)",
         "review.starsFeedbackPrompt": "Hvordan kan vi gøre Attendance Tracker bedre for dig?",
+        "review.feedbackPlaceholder": "Dine forslag…",
         "review.starsSendFeedback": "Send feedback",
         "review.starsSchoolFallback": "Blokerer skolekontoen anmeldelser? Send feedback",
         "review.bannerTitle": "Er du glad for Attendance Tracker?",
@@ -30205,6 +30397,11 @@
         "toast.prefSaved": "Notifikationspræferencer gemt"
     },
     "fi": {
+        "quota.largeClassSaved": "✓ Olemme tallentaneet kaikki {count} osallistujaa tämän päivän istunnosta! Päivitä Prohon viedäksesi koko luettelon Google Sheetsiin.",
+        "upgrade.deskLinkToast": "Läsnäolosi on tallennettu! Olemme lähettäneet sähköpostitse 1-klikkilinkin päivityksen suorittamiseksi tunnin jälkeen.",
+        "history.signpostTeam59": "{n} opettajaa organisaatiossa {domain} käyttää Attendance Tracker -sovellusta. Pyydä koko koulun lisenssiä hintaan $59/vuosi.",
+        "history.signpostCta59": "Pyydä koululisenssiä ($59/v) →",
+
     "upgrade.reimburseNote": "Kertahankinta luokkahuoneellesi · Välitön alv-kuitti kuluveloitusta varten",
     "quota.largeClassLimit": "Läsnäoloseuranta suurille luokille (>25 osallistujaa) on Pro-ominaisuus. Päivitä Pro-versioon rajoittamatonta luokkakokoa ja vientiä varten.",
     "referral.badge": "Anna 1 kuukausi Prota · Saat 1 kuukauden Prota",
@@ -30220,6 +30417,7 @@
         "review.starsThanks": "Kiitos! 5 tähden arvio Google Marketplacessa auttaa muita opettajia:",
         "review.starsRateBtn": "Anna 5 tähteä Marketplacessa (5 s)",
         "review.starsFeedbackPrompt": "Miten voimme parantaa Attendance Tracker -palvelua?",
+        "review.feedbackPlaceholder": "Ehdotuksesi…",
         "review.starsSendFeedback": "Lähetä palautetta",
         "review.starsSchoolFallback": "Estääkö koulutili arvostelut? Jätä palautetta",
         "review.bannerTitle": "Pidätkö Attendance Trackerista?",
@@ -31142,6 +31340,11 @@
         "toast.prefSaved": "Ilmoitusasetukset tallennettu"
     },
     "hu": {
+        "quota.largeClassSaved": "✓ Rögzítettük a mai alkalom mind a {count} résztvevőjét! Frissítsen Pro-ra a teljes névsor Google Táblázatokba exportálásához.",
+        "upgrade.deskLinkToast": "Elmentettük a jelenléti ívet! E-mailben elküldtünk egy 1-kattintásos linket az óra utáni frissítéshez.",
+        "history.signpostTeam59": "{n} tanár használja a(z) {domain} domainen az Attendance Trackert. Kérjen iskolai licencet $59/év áron.",
+        "history.signpostCta59": "Iskolai licenc kérése ($59/év) →",
+
     "upgrade.reimburseNote": "Egyszeri vásárlás az osztályodnak · Azonnali áfás számla és nyugta elszámoláshoz",
     "quota.largeClassLimit": "A jelenlét követése nagy létszámú osztályoknál (>25 résztvevő) Pro funkció. Váltson Pro-ra a korlátlan osztályméretekért és exportálásokért.",
     "referral.badge": "Ajándékozzon 1 hónap Pro-t · Kapjon 1 hónap Pro-t",
@@ -31157,6 +31360,7 @@
         "review.starsThanks": "Köszönjük! Az 5 csillagos értékelés a Google Marketplace-en segít más tanároknak:",
         "review.starsRateBtn": "Értékelés 5 csillaggal a Marketplace-en (5 mp)",
         "review.starsFeedbackPrompt": "Hogyan tehetnénk jobbá az Attendance Trackert az Ön számára?",
+        "review.feedbackPlaceholder": "Az Ön javaslatai…",
         "review.starsSendFeedback": "Visszajelzés küldése",
         "review.starsSchoolFallback": "Az iskolai fiók tiltja az értékeléseket? Hagyjon visszajelzést",
         "review.bannerTitle": "Tetszik az Attendance Tracker?",
@@ -32079,6 +32283,11 @@
         "toast.prefSaved": "Értesítési beállítások elmentve"
     },
     "so": {
+        "quota.largeClassSaved": "✓ Waxaan diiwaangelinay dhamaan {count} qof ee ka qaybgalay kalfadhiga maanta! U cusboonaysii Pro si aad liiska ugu dhoofiso Google Sheets.",
+        "upgrade.deskLinkToast": "Imaanshaha waa la keydiyay! Waxaan kuu soo dirnay xiriiriye 1-guji ah si aad u cusboonaysiiso fasalka ka dib.",
+        "history.signpostTeam59": "{n} macallin oo ka tirsan {domain} ayaa isticmaala Attendance Tracker. Codso shatiga dugsiga oo dhan $59/sanadkii.",
+        "history.signpostCta59": "Codso shatiga dugsiga ($59/sanad) →",
+
     "upgrade.reimburseNote": "Iibsi hal mar ah oo fasalkaaga ah · Qaansheeg degdeg ah & rasiid lacag celin ah",
     "quota.largeClassLimit": "Dabagalka imaanshaha fasallada waaweyn (>25 qof) waa adeeg Pro ah. U cusboonaysii Pro cabbirka fasalka iyo dhoofinta bilaa xadka ah.",
     "referral.badge": "Bixi 1 Bil oo Pro ah · Hel 1 Bil oo Pro ah",
@@ -32092,6 +32301,7 @@
     "referral.copied": "✓ Waa la koobiyeeyay!",
             "badge.pro": "Pro",
             "review.starsFeedbackPrompt": "Sideen kuugu hagaajin karnaa Tracker-ka xaadirka ah?",
+        "review.feedbackPlaceholder": "Soo-jeedintaada…",
             "upgrade.certsEdu": "Shahaadooyinka imaanshaha ardayga & warbixinada kalfadhiyada badan waxay u baahan yihiin Baraha ($4.99/sanad) ama qorshe nololeed.",
             "review.starsRateBtn": "Ku qiimee 5 Xiddig ee Suuqa (5s)",
             "review.bannerTitle": "Ma ku raaxaysanaysa Tracker imaanshaha?",
@@ -33016,6 +33226,11 @@
         "toast.prefSaved": "Dookhyada ogeysiinta waa la keydiyay"
     },
     "sw": {
+        "quota.largeClassSaved": "✓ Tumenakili washiriki wote {count} wa kipindi cha leo! Boresha hadi Pro ili kusafirisha orodha kamili kwenye Google Sheets.",
+        "upgrade.deskLinkToast": "Tumehifadhi mahudhurio yako! Tumekutumia kiungo cha kubofya mara 1 ili kukamilisha usasishaji baada ya darasa.",
+        "history.signpostTeam59": "Walimu {n} katika {domain} wanatumia Attendance Tracker. Omba leseni ya shule nzima kwa $59/mwaka.",
+        "history.signpostCta59": "Omba leseni ya shule ($59/mwaka) →",
+
     "upgrade.reimburseNote": "Ununuzi wa mara moja kwa darasa lako · Risiti ya papo hapo kwa urejeshaji wa gharama",
     "quota.largeClassLimit": "Ufuatiliaji wa mahudhurio kwa madarasa makubwa (>washiriki 25) ni kipengele cha Pro. Boresha hadi Pro kwa ukubwa wa darasa na usafirishaji usio na kikomo.",
     "referral.badge": "Toa Mwezi 1 wa Pro · Pata Mwezi 1 wa Pro",
@@ -33031,6 +33246,7 @@
         "review.starsThanks": "Asante! Ukadiriaji wa nyota 5 kwenye Google Marketplace huwasaidia walimu wengine:",
         "review.starsRateBtn": "Kadiria Nyota 5 kwenye Marketplace (sek 5)",
         "review.starsFeedbackPrompt": "Tunawezaje kuboresha Attendance Tracker kwa ajili yako?",
+        "review.feedbackPlaceholder": "Mapendekezo yako…",
         "review.starsSendFeedback": "Tuma Maoni",
         "review.starsSchoolFallback": "Akaunti ya shule inazuia ukaguzi? Toa maoni",
         "review.bannerTitle": "Je, unafurahia Attendance Tracker?",
@@ -33951,6 +34167,11 @@
         "lang.ca": "Català"
     },
     "am": {
+        "quota.largeClassSaved": "✓ የዛሬውን ክፍለ ጊዜ {count} ተሳታፊዎች በሙሉ መዝግበናል! ሙሉውን ዝርዝር ወደ Google Sheets ለመላክ ወደ Pro ያሻሽሉ።",
+        "upgrade.deskLinkToast": "የመገኘት መረጃዎ ተቀምጧል! ከክፍል በኋላ ለማሻሻል የሚያስችል የ1-ጠቅታ አገናኝ በኢሜይል ልከንልዎታል።",
+        "history.signpostTeam59": "በ{domain} ውስጥ {n} መምህራን Attendance Trackerን ይጠቀማሉ። የሙሉ ትምህርት ቤት ፈቃድ በ$59/ዓመት ይጠይቁ።",
+        "history.signpostCta59": "የትምህርት ቤት ፈቃድ ይጠይቁ ($59/ዓመት) →",
+
     "upgrade.reimburseNote": "ለክፍልዎ የአንድ ጊዜ ግዢ · ለወጪ ማካካሻ ፈጣን ደረሰኝ",
     "quota.largeClassLimit": "ለትላልቅ ክፍሎች (>25 ተሳታፊዎች) የክትትል አገልግሎት የPro ባህሪ ነው። ላልተገደበ የክፍል መጠን እና ኤክስፖርት ወደ Pro ያሻሽሉ።",
     "referral.badge": "1 ወር Pro ይስጡ · 1 ወር Pro ያግኙ",
@@ -33966,6 +34187,7 @@
         "review.starsThanks": "እናመሰግናለን! በGoogle Marketplace ላይ ባለ 5 ኮከብ ደረጃ መስጠት ሌሎች መምህራንን ይረዳል፦",
         "review.starsRateBtn": "በMarketplace ላይ ባለ 5 ኮከብ ደረጃ ይስጡ (5 ሰከንድ)",
         "review.starsFeedbackPrompt": "የAttendance Tracker አገልግሎትን ለእርስዎ እንዴት የተሻለ ማድረግ እንችላለን?",
+        "review.feedbackPlaceholder": "የእርስዎ አስተያየቶች…",
         "review.starsSendFeedback": "አስተያየት ይላኩ",
         "review.starsSchoolFallback": "የትምህርት ቤት መለያ ግምገማዎችን ይከለክላል? አስተያየት ይተዉ",
         "review.bannerTitle": "Attendance Trackerን ወደዱት?",
@@ -34886,6 +35108,11 @@
         "lang.ca": "Català"
     },
     "si": {
+        "quota.largeClassSaved": "✓ අද සැසියේ සියලුම සහභාගිවන්නන් {count} දෙනාම සටහන් කර ඇත! සම්පූර්ණ ලැයිස්තුව Google Sheets වෙත එක්ස්පෝට් කිරීමට Pro වෙත උත්ශ්‍රේණි කරන්න.",
+        "upgrade.deskLinkToast": "පැමිණීම සුරකින ලදි! පන්තියෙන් පසු උත්ශ්‍රේණි කිරීම සඳහා අපි ක්ලික් 1ක ලින්ක් එකක් ඊමේල් කර ඇත.",
+        "history.signpostTeam59": "{domain} හි ගුරුවරුන් {n} දෙනෙක් Attendance Tracker භාවිතා කරයි. $59/වසරකට පාසල් බලපත්‍රයක් ඉල්ලන්න.",
+        "history.signpostCta59": "පාසල් බලපත්‍රයක් ඉල්ලන්න ($59/වසර) →",
+
     "upgrade.reimburseNote": "ඔබේ පන්තිය සඳහා එක් වරක් මිලදී ගැනීමක් · වියදම් ප්‍රතිපූරණය සඳහා ක්ෂණික රිසිට්පතක්",
     "quota.largeClassLimit": "විශාල පන්ති (>සහභාගිවන්නන් 25) සඳහා පැමිණීම ලකුණු කිරීම Pro අංගයකි. අසීමිත පන්ති ප්‍රමාණ සහ එක්ස්පෝට් සඳහා Pro වෙත උත්ශ්‍රේණි කරන්න.",
     "referral.badge": "Pro මාස 1ක් දෙන්න · Pro මාස 1ක් ලබාගන්න",
@@ -34901,6 +35128,7 @@
         "review.starsThanks": "ස්තූතියි! Google Marketplace හි තරු 5 ක ඇගයීමක් ලබා දීම අනෙකුත් ගුරුවරුන්ට උපකාරී වේ:",
         "review.starsRateBtn": "Marketplace හි තරු 5 ක ඇගයීමක් ලබා දෙන්න (තත්පර 5 යි)",
         "review.starsFeedbackPrompt": "අපට Attendance Tracker ඔබ වෙනුවෙන් තවත් වැඩිදියුණු කළ හැක්කේ කෙසේද?",
+        "review.feedbackPlaceholder": "ඔබගේ යෝජනා…",
         "review.starsSendFeedback": "ප්‍රතිපෝෂණ එවන්න",
         "review.starsSchoolFallback": "පාසල් ගිණුම සමාලෝචන අවහිර කරයිද? ප්‍රතිපෝෂණයක් ලබා දෙන්න",
         "review.bannerTitle": "Attendance Tracker භාවිතා කිරීමෙන් සතුටක් ලබනවාද?",
@@ -35821,6 +36049,11 @@
         "lang.ca": "Català"
     },
     "el": {
+        "quota.largeClassSaved": "✓ Καταγράψαμε και τους {count} συμμετέχοντες της σημερινής συνεδρίας! Αναβαθμίστε σε Pro για εξαγωγή της πλήρους λίστας στο Google Sheets.",
+        "upgrade.deskLinkToast": "Οι παρουσίες σας αποθηκεύτηκαν! Σας στείλαμε έναν σύνδεσμο με 1 κλικ για να ολοκληρώσετε την αναβάθμιση μετά το μάθημα.",
+        "history.signpostTeam59": "{n} εκπαιδευτικοί στο {domain} χρησιμοποιούν το Attendance Tracker. Ζητήστε άδεια για όλο το σχολείο με $59/έτος.",
+        "history.signpostCta59": "Αίτημα για σχολική άδεια ($59/έτος) →",
+
     "upgrade.reimburseNote": "Εφάπαξ αγορά για την τάξη σας · Άμεσο τιμολόγιο με ΦΠΑ & απόδειξη για αποζημίωση",
     "quota.largeClassLimit": "Η παρακολούθηση παρουσιών για μεγάλα τμήματα (>25 συμμετέχοντες) είναι λειτουργία Pro. Αναβαθμίστε σε Pro για απεριόριστο μέγεθος τάξεων και εξαγωγές.",
     "referral.badge": "Χαρίστε 1 μήνα Pro · Λάβετε 1 μήνα Pro",
@@ -35836,6 +36069,7 @@
         "review.starsThanks": "Σας ευχαριστούμε! Μια βαθμολογία 5 αστέρων στο Google Marketplace βοηθά άλλους εκπαιδευτικούς:",
         "review.starsRateBtn": "Αξιολογήστε με 5 αστέρια στο Marketplace (5 δευτ.)",
         "review.starsFeedbackPrompt": "Πώς μπορούμε να κάνουμε το Attendance Tracker καλύτερο για εσάς;",
+        "review.feedbackPlaceholder": "Οι προτάσεις σας…",
         "review.starsSendFeedback": "Αποστολή σχολίων",
         "review.starsSchoolFallback": "Ο σχολικός λογαριασμός αποκλείει τις κριτικές; Αφήστε σχόλια",
         "review.bannerTitle": "Σας αρέσει το Attendance Tracker;",
@@ -36756,6 +36990,11 @@
         "lang.ca": "Català"
     },
     "no": {
+        "quota.largeClassSaved": "✓ Vi har registrert alle {count} deltakere for dagens økt! Oppgrader til Pro for å eksportere hele listen til Google Sheets.",
+        "upgrade.deskLinkToast": "Oppmøtet er lagret! Vi har sendt en 1-klikks lenke på e-post slik at du kan oppgradere fra pulten etter timen.",
+        "history.signpostTeam59": "{n} lærere ved {domain} bruker Attendance Tracker. Be om skolelisens for $59/år.",
+        "history.signpostCta59": "Be om skolelisens ($59/år) →",
+
     "upgrade.reimburseNote": "Engangskjøp for klasserommet ditt · Umiddelbar mva-faktura og kvittering for refusjon",
     "quota.largeClassLimit": "Oppmøteregistrering for store klasser (>25 deltakere) er en Pro-funksjon. Oppgrader til Pro for ubegrenset klassestørrelse og eksport.",
     "referral.badge": "Gi 1 måned Pro · Få 1 måned Pro",
@@ -36771,6 +37010,7 @@
         "review.starsThanks": "Takk! En 5-stjerners vurdering på Google Marketplace hjelper andre lærere:",
         "review.starsRateBtn": "Gi 5 stjerner på Marketplace (5 sek)",
         "review.starsFeedbackPrompt": "Hvordan kan vi gjøre Attendance Tracker bedre for deg?",
+        "review.feedbackPlaceholder": "Dine forslag…",
         "review.starsSendFeedback": "Send tilbakemelding",
         "review.starsSchoolFallback": "Blokkerer skolekontoen anmeldelser? Gi tilbakemelding",
         "review.bannerTitle": "Liker du Attendance Tracker?",
@@ -37691,6 +37931,11 @@
         "lang.ca": "Català"
     },
     "ca": {
+        "quota.largeClassSaved": "✓ Hem enregistrat tots els {count} participants de la sessió d'avui! Actualitza a Pro per exportar la llista completa a Google Sheets.",
+        "upgrade.deskLinkToast": "Hem desat la teva assistència! T'hem enviat per correu electrònic un enllaç d'1 clic per completar l'actualització des de l'escriptori després de classe.",
+        "history.signpostTeam59": "{n} professors de {domain} utilitzen Attendance Tracker. Sol·licita una llicència per a tot el centre per 59 $/any.",
+        "history.signpostCta59": "Sol·licitar llicència escolar (59 $/any) →",
+
     "upgrade.reimburseNote": "Compra única per a la teva classe · Factura amb IVA i rebut instantani per a reemborsament",
     "quota.largeClassLimit": "El control d'assistència per a classes grans (>25 participants) és una funció Pro. Actualitza a Pro per a classes i exportacions il·limitades.",
     "referral.badge": "Regala 1 mes de Pro · Aconsegueix 1 mes de Pro",
@@ -37706,6 +37951,7 @@
         "review.starsThanks": "Gràcies! Una valoració de 5 estrelles a Google Marketplace ajuda altres professors:",
         "review.starsRateBtn": "Valora amb 5 estrelles al Marketplace (5 s)",
         "review.starsFeedbackPrompt": "Com podem millorar Attendance Tracker per a tu?",
+        "review.feedbackPlaceholder": "Les teves suggerències…",
         "review.starsSendFeedback": "Envia comentaris",
         "review.starsSchoolFallback": "El compte del teu centre bloqueja les ressenyes? Deixa un comentari",
         "review.bannerTitle": "T'agrada Attendance Tracker?",

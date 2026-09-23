@@ -1,10 +1,10 @@
 const { Router } = require('express');
 const { google } = require('googleapis');
-const { getMeetToken, makeJWT, loadServiceAccountKey } = require('../services/googleAuth');
+const { getMeetToken, makeJWT, loadServiceAccountKey, refreshAccessToken } = require('../services/googleAuth');
 const { meetGet, meetGetAll, participantIdentity, sessionsDurationMs } = require('../services/meetApi');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { persistAttendance, getTenantConfig } = require('../services/firestore');
+const { persistAttendance, getTenantConfig, getUser, updateUserTokens } = require('../services/firestore');
 const { domainOf } = require('../services/firestore/_core'); // pure util; imported directly so test firestore-mocks needn't stub it
 
 const router = Router();
@@ -21,6 +21,13 @@ const MAX_PARTICIPANTS = Number(process.env.MAX_ATTENDANCE_PARTICIPANTS) || 500;
 // attaches, with a message fallback for older/wrapped errors.
 function isRateLimited(err) {
   return err && (err.status === 429 || /Meet API 429|RESOURCE_EXHAUSTED|rate limit/i.test(String(err.message || '')));
+}
+
+// Google OAuth / Meet API auth errors (expired or revoked access token, 401 unauthenticated)
+const AUTH_FAIL_REGEX = /invalid_grant|unauthorized_client|invalid credentials|no access, refresh token|invalid authentication cred|unauthenticated|401/i;
+function isAuthError(err) {
+  const status = err?.status || err?.code || err?.response?.status;
+  return status === 401 || AUTH_FAIL_REGEX.test(String(err?.message || ''));
 }
 
 // Extract Google user ID from participant path (e.g., "conferenceRecords/.../participants/117409479685467143851")
@@ -138,13 +145,50 @@ router.get('/attendance', async (req, res) => {
     if (!token) {
       return res.status(401).json({ error: 'No authentication available for Meet API. Admin setup may be required.' });
     }
+
+    let refreshedUserToken = false;
+    async function ensureFreshToken(failedErr) {
+      if (refreshedUserToken || usingServiceAccount || !req.user) return false;
+      if (!isAuthError(failedErr)) return false;
+      refreshedUserToken = true;
+      try {
+        const userDoc = await getUser(req.user.domain, req.user.email);
+        if (!userDoc?.refreshToken) return false;
+        const credentials = await refreshAccessToken(userDoc.refreshToken);
+        if (!credentials?.access_token) return false;
+        token = credentials.access_token;
+        req.user.accessToken = token;
+        const tokenExpiresAt = new Date(credentials.expiry_date || Date.now() + 3600 * 1000);
+        await updateUserTokens(req.user.domain, req.user.email, { accessToken: token, tokenExpiresAt });
+        log.info('attendance: auto-refreshed user Google access token on 401', { email: req.user.email });
+        return true;
+      } catch (refreshErr) {
+        log.warn('attendance: token refresh after 401 failed', { email: req.user.email, error: refreshErr.message });
+        return false;
+      }
+    }
+
+    async function callWithTokenRefresh(fn) {
+      try {
+        return await fn(token);
+      } catch (err) {
+        if (await ensureFreshToken(err)) {
+          return await fn(token);
+        }
+        throw err;
+      }
+    }
+
     let records = [];
 
     try {
-      const data = await meetGet(`conferenceRecords?filter=space.meeting_code%3D%22${conferenceId}%22`, token);
+      const data = await callWithTokenRefresh(tok =>
+        meetGet(`conferenceRecords?filter=space.meeting_code%3D%22${conferenceId}%22`, tok)
+      );
       records = data.conferenceRecords || [];
       log.info('records by meeting_code', { count: records.length });
     } catch (e) {
+      if (isAuthError(e)) throw e;
       log.warn('meeting_code filter failed', { error: e.message });
     }
 
@@ -152,10 +196,13 @@ router.get('/attendance', async (req, res) => {
       try {
         const spaceName = conferenceId.startsWith('spaces/') ? conferenceId : `spaces/${conferenceId}`;
         const encoded = encodeURIComponent(`space.name="${spaceName}"`);
-        const data = await meetGet(`conferenceRecords?filter=${encoded}`, token);
+        const data = await callWithTokenRefresh(tok =>
+          meetGet(`conferenceRecords?filter=${encoded}`, tok)
+        );
         records = data.conferenceRecords || [];
         log.info('records by space.name', { count: records.length });
       } catch (e) {
+        if (isAuthError(e)) throw e;
         log.warn('space.name filter failed', { error: e.message });
       }
     }
@@ -176,7 +223,9 @@ router.get('/attendance', async (req, res) => {
     const conferenceStartTime = conferenceRecord.startTime || null;
     const conferenceEndTime = conferenceRecord.endTime || null;
 
-    const rawParticipants = await meetGetAll(`${conferenceRecord.name}/participants`, token, 'participants');
+    const rawParticipants = await callWithTokenRefresh(tok =>
+      meetGetAll(`${conferenceRecord.name}/participants`, tok, 'participants')
+    );
     const totalParticipants = rawParticipants.length;
     log.info('participants found', { count: totalParticipants });
 
@@ -222,7 +271,9 @@ router.get('/attendance', async (req, res) => {
       const batchResults = await Promise.all(
         batch.map(async (p) => {
           try {
-            const sessions = await meetGetAll(`${p.name}/participantSessions`, token, 'participantSessions');
+            const sessions = await callWithTokenRefresh(tok =>
+              meetGetAll(`${p.name}/participantSessions`, tok, 'participantSessions')
+            );
             const joinTimes  = sessions.map(s => s.startTime).filter(Boolean).map(t => new Date(t));
             const leaveTimes = sessions.map(s => s.endTime).filter(Boolean).map(t => new Date(t));
             return {
@@ -237,6 +288,7 @@ router.get('/attendance', async (req, res) => {
               sessions:      sessions.length,
             };
           } catch (err) {
+            if (isAuthError(err)) throw err;
             if (isRateLimited(err)) rateLimited = true;
             log.warn('failed to fetch sessions for participant', { name: p.name, error: err.message });
             return {
@@ -279,6 +331,14 @@ router.get('/attendance', async (req, res) => {
     persistAttendance(domain, conferenceId, conferenceRecord.name, participants, req.user?.email);
 
   } catch (err) {
+    // Google Meet API auth failure (token expired, revoked, or unauthenticated)
+    if (isAuthError(err)) {
+      log.warn('attendance: Google Meet auth expired or revoked', { email: req.user?.email, error: err.message });
+      return res.status(401).json({
+        error: 'Google session expired — please sign in again.',
+        code: 'AUTH_EXPIRED',
+      });
+    }
     // A9: a quota-exhausted Meet API (429) on the record/participant-list fetch
     // used to surface as a blind 500. Return a clear, retryable signal instead
     // so the panel can show "large meeting — try again shortly" and back off.

@@ -1187,6 +1187,16 @@ describe('billing/status pricing payload', () => {
     }
   });
 
+  test('status detects PPP eligibility from x-forwarded-for IP GeoIP fallback when cf-ipcountry is absent', async () => {
+    app = buildApp();
+    const res = await request(app)
+      .get('/api/billing/status')
+      .set(authedHeader('teacher@depedqc.ph', 'depedqc.ph'))
+      .set('x-forwarded-for', '120.28.221.70, 169.254.1.1');
+    expect(res.status).toBe(200);
+    expect(res.body.pppDiscount).toEqual({ eligible: true, country: 'PH', percentOff: 50 });
+  });
+
   test('checkout auto-applies PPP50 coupon for emerging market user', async () => {
     process.env.STRIPE_SECRET_KEY = 'sk_test_x';
     process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID = 'price_life';

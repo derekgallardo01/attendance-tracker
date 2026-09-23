@@ -22,6 +22,7 @@ jest.mock('../../src/services/googleAuth', () => ({
   getMeetToken: jest.fn().mockResolvedValue('sa-token'),
   makeJWT: jest.fn().mockResolvedValue({}),
   loadServiceAccountKey: jest.fn().mockResolvedValue({ client_email: 'sa@x.iam', private_key: 'k' }),
+  refreshAccessToken: jest.fn().mockResolvedValue({ access_token: 'refreshed-tok', expiry_date: Date.now() + 3600000 }),
 }));
 jest.mock('../../src/services/firestore', () => ({
   persistAttendance: jest.fn(),
@@ -475,4 +476,54 @@ describe('GET /api/attendance — final residual branches', () => {
     expect(res.status).toBe(200);
     expect(res.body.participants.map(p => p.displayName).sort()).toEqual(['SignedIn', 'Unknown']);
   });
+
+  test('Meet API 401 auto-refreshes token and retries successfully', async () => {
+    firestore.getTenantConfig.mockResolvedValue(null); // use user OAuth
+    mockMeetGet.mockResolvedValue({ conferenceRecords: [{ name: 'conferenceRecords/rec-401' }] });
+    const googleAuth = require('../../src/services/googleAuth');
+    googleAuth.refreshAccessToken.mockResolvedValue({ access_token: 'fresh-token-401', expiry_date: Date.now() + 3600000 });
+
+    let callCount = 0;
+    mockMeetGetAll.mockImplementation(async (p, tok) => {
+      if (p.endsWith('/participants')) {
+        callCount++;
+        if (callCount === 1) {
+          const err = new Error('Meet API 401: {"error":{"status":"UNAUTHENTICATED"}}');
+          err.status = 401;
+          throw err;
+        }
+        // Second call with refreshed token succeeds
+        expect(tok).toBe('fresh-token-401');
+        return [
+          { name: 'conferenceRecords/rec-401/participants/p-1', signedinUser: { displayName: 'Student 1', email: 's1@acme.com' } }
+        ];
+      }
+      return [];
+    });
+
+    const res = await request(app).get('/api/attendance?conferenceId=abc').set(auth());
+    expect(res.status).toBe(200);
+    expect(res.body.participants).toHaveLength(1);
+    expect(googleAuth.refreshAccessToken).toHaveBeenCalledWith('rt');
+    expect(firestore.updateUserTokens).toHaveBeenCalledWith('acme.com', 'user@acme.com', expect.objectContaining({ accessToken: 'fresh-token-401' }));
+  });
+
+  test('Meet API 401 returns 401 AUTH_EXPIRED when token refresh fails', async () => {
+    firestore.getTenantConfig.mockResolvedValue(null);
+    mockMeetGet.mockResolvedValue({ conferenceRecords: [{ name: 'conferenceRecords/rec-fail' }] });
+    const googleAuth = require('../../src/services/googleAuth');
+    googleAuth.refreshAccessToken.mockRejectedValue(new Error('invalid_grant'));
+
+    mockMeetGetAll.mockImplementation(async () => {
+      const err = new Error('Meet API 401: {"error":{"status":"UNAUTHENTICATED"}}');
+      err.status = 401;
+      throw err;
+    });
+
+    const res = await request(app).get('/api/attendance?conferenceId=abc').set(auth());
+    expect(res.status).toBe(401);
+    expect(res.body.code).toBe('AUTH_EXPIRED');
+    expect(res.body.error).toMatch(/session expired/i);
+  });
 });
+

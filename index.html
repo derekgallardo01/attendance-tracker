@@ -292,6 +292,17 @@
       overflow: visible;
     }
 
+    /* ── Add-on UI Panel Container ──────────────────────────── */
+    #addon-ui {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      height: 100dvh;
+      min-height: 0;
+      overflow: hidden;
+      position: relative;
+    }
+
     /* ── header ──────────────────────────────────────────────── */
     header {
       padding: 12px 16px;
@@ -377,6 +388,20 @@
       padding: 8px 16px 10px;
       flex-shrink: 0;
       border-bottom: 1px solid var(--border);
+    }
+
+    .controls button {
+      min-width: 0;
+      padding: 7px 8px;
+    }
+    .controls button span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .controls button svg {
+      flex-shrink: 0;
     }
 
     button {
@@ -475,6 +500,10 @@
       text-transform: uppercase;
       letter-spacing: .06em;
       color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
     }
 
     .chip-value {
@@ -601,6 +630,7 @@
       border-color: rgba(74, 222, 128, 0.28);
     }
     .tab-badge {
+      flex-shrink: 0;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -664,18 +694,31 @@
       background: var(--border);
     }
 
-    #participant-list {
+    #participant-list,
+    #roster-view,
+    #invited-list {
       flex: 1;
+      min-height: 0;
       overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+
+    #participant-list {
       padding: 0 16px 16px;
       display: flex;
       flex-direction: column;
       gap: 5px;
     }
 
-    #participant-list::-webkit-scrollbar { width: 4px; }
-    #participant-list::-webkit-scrollbar-track { background: transparent; }
-    #participant-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    #participant-list::-webkit-scrollbar,
+    #roster-view::-webkit-scrollbar,
+    #invited-list::-webkit-scrollbar { width: 4px; }
+    #participant-list::-webkit-scrollbar-track,
+    #roster-view::-webkit-scrollbar-track,
+    #invited-list::-webkit-scrollbar-track { background: transparent; }
+    #participant-list::-webkit-scrollbar-thumb,
+    #roster-view::-webkit-scrollbar-thumb,
+    #invited-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
     /* ── empty / error states ────────────────────────────────── */
     .empty-state {
@@ -1744,15 +1787,15 @@
 
   <!-- ── Controls ── -->
   <div class="controls">
-    <button class="btn-primary" id="btn-start" onclick="toggleTracking()">
+    <button class="btn-primary" id="btn-start" onclick="toggleTracking()" data-i18n-title="btn.start" title="Start">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
       <span id="btn-start-label" data-i18n="btn.start">Start</span>
     </button>
-    <button class="btn-secondary" id="btn-refresh" onclick="manualSync()" disabled>
+    <button class="btn-secondary" id="btn-refresh" onclick="manualSync()" disabled data-i18n-title="btn.sync" title="Sync">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
       <span id="btn-refresh-label" data-i18n="btn.sync">Sync</span>
     </button>
-    <button class="btn-secondary" id="btn-sheets" onclick="saveToSheets()" disabled>
+    <button class="btn-secondary" id="btn-sheets" onclick="saveToSheets()" disabled data-i18n-title="btn.sheet" title="Sheet">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       <span id="btn-sheets-label" data-i18n="btn.sheet">Sheet</span>
     </button>
@@ -1763,7 +1806,7 @@
   </div>
 
   <!-- ── Export Quota Indicator (Free tier) ── -->
-  <div id="export-quota-indicator" style="display:none;align-items:center;justify-content:space-between;padding:7px 12px;margin:6px 14px;font-size:11px;color:#9ca3af;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;transition:all .2s ease">
+  <div id="export-quota-indicator" style="display:none;align-items:center;justify-content:space-between;padding:7px 12px;margin:6px 16px;font-size:11px;color:#9ca3af;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;transition:all .2s ease">
     <div style="display:flex;align-items:center;gap:6px;min-width:0">
       <span id="export-quota-dot" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#81c995;flex-shrink:0"></span>
       <span id="export-quota-text" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">2 of 2 free exports remaining this month</span>
@@ -1795,7 +1838,7 @@
   </div>
   <!-- One-off → recurring tip: only for a NON-recurring meeting whose title was
        exported before (a real repeat). Once ever, dismissible. -->
-  <div id="recurring-tip" style="display:none; align-items:flex-start; gap:8px; padding:8px 16px; font-size:11px; color:#9ca3af; background:rgba(74,222,128,.06); border-top:1px solid #30363d">
+  <div id="recurring-tip" style="display:none; align-items:flex-start; gap:8px; padding:8px 12px; margin:6px 16px; border-radius:8px; font-size:11px; color:#9ca3af; background:rgba(74,222,128,.06); border:1px solid rgba(74,222,128,.2)">
     <span style="line-height:1.45" data-i18n="tip.recurring">Tracking this one regularly? Put it on a recurring Google Calendar invite — then you'll see per-person attendance trends across every session.</span>
     <button type="button" onclick="closeRecurringTip()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
   </div>
@@ -1803,7 +1846,7 @@
        already-recurring class — exactly the moment Pro's cumulative per-student
        report is relevant. One line, once ever, dismissible; links to the series
        view (their own data + the Pro teaser), not a popup. -->
-  <div id="class-summary-tip" style="display:none; align-items:flex-start; gap:8px; padding:8px 16px; font-size:11px; color:#9ca3af; background:rgba(253,214,99,.06); border-top:1px solid #30363d">
+  <div id="class-summary-tip" style="display:none; align-items:flex-start; gap:8px; padding:8px 12px; margin:6px 16px; border-radius:8px; font-size:11px; color:#9ca3af; background:rgba(253,214,99,.06); border:1px solid rgba(253,214,99,.2)">
     <span style="line-height:1.45"><span data-i18n="tip.classSummary">Recurring class? Pro's cumulative Class Summary tracks each student's attendance % across every session —</span> <a href="https://attendancetracker.dev/history.html" onclick="try{logUserEvent('class_summary_tip_clicked',{})}catch(e){};openHistoryPage(event)" target="_blank" rel="noopener" style="color:#fdd663;text-decoration:none;font-weight:600" data-i18n="tip.classSummaryCta">see your class trends →</a></span>
     <button type="button" onclick="closeClassSummaryTip()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
   </div>
@@ -1813,30 +1856,30 @@
        the report teaser (point-of-need conversion); for a Pro user it's the "your
        term report is ready" moment that turns the subscription into realized value
        (retention). {n} set in JS. Once-per-series, dismissible, never stacks. -->
-  <div id="term-report-tip" style="display:none; align-items:flex-start; gap:8px; padding:8px 16px; font-size:11px; color:#9ca3af; background:rgba(129,201,149,.09); border-top:1px solid #30363d">
+  <div id="term-report-tip" style="display:none; align-items:flex-start; gap:8px; padding:8px 12px; margin:6px 16px; border-radius:8px; font-size:11px; color:#9ca3af; background:rgba(129,201,149,.09); border:1px solid rgba(129,201,149,.2)">
     <span style="line-height:1.45"><span id="term-report-tip-msg"></span> <a href="https://attendancetracker.dev/history.html" onclick="onTermReportTipClick();openHistoryPage(event)" target="_blank" rel="noopener" style="color:#81c995;text-decoration:none;font-weight:600" data-i18n="tip.termReportCta">open the class report →</a></span>
     <button type="button" onclick="closeTermReportTip()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
   </div>
 
   <!-- Review Experiment Variant A: In-App 1-Click Interactive Star Rating -->
-  <div id="review-stars-widget" style="display:none; flex-direction:column; gap:10px; padding:12px 14px; margin:8px 12px; background:rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.32); border-radius:12px; font-size:.82rem; box-shadow:0 4px 16px rgba(0,0,0,0.25);">
+  <div id="review-stars-widget" style="display:none; flex-direction:column; gap:8px; padding:10px 12px; margin:6px 16px; background:rgba(245,158,11,.07); border:1px solid rgba(245,158,11,.25); border-radius:10px; font-size:.8rem;">
     <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
       <span id="review-stars-title" style="font-weight:600; color:#fde68a; line-height:1.35;" data-i18n="review.starsTitle">How was your attendance tracking experience?</span>
       <button type="button" onclick="dismissReviewExperiment('stars')" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:rgba(255,255,255,0.06);border:none;color:#9ca3af;cursor:pointer;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1;flex-shrink:0;">×</button>
     </div>
     <!-- Interactive 5 Stars -->
     <div id="review-stars-row" style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:2px 0;" onmouseleave="resetStarHover()">
-      <span class="star-btn" data-val="1" onmouseover="hoverStars(1)" onclick="clickStarRating(1)" style="font-size:24px; color:#f59e0b; user-select:none; transition:transform .12s ease; display:inline-block;">★</span>
-      <span class="star-btn" data-val="2" onmouseover="hoverStars(2)" onclick="clickStarRating(2)" style="font-size:24px; color:#f59e0b; user-select:none; transition:transform .12s ease; display:inline-block;">★</span>
-      <span class="star-btn" data-val="3" onmouseover="hoverStars(3)" onclick="clickStarRating(3)" style="font-size:24px; color:#f59e0b; user-select:none; transition:transform .12s ease; display:inline-block;">★</span>
-      <span class="star-btn" data-val="4" onmouseover="hoverStars(4)" onclick="clickStarRating(4)" style="font-size:24px; color:#f59e0b; user-select:none; transition:transform .12s ease; display:inline-block;">★</span>
-      <span class="star-btn" data-val="5" onmouseover="hoverStars(5)" onclick="clickStarRating(5)" style="font-size:24px; color:#f59e0b; user-select:none; transition:transform .12s ease; display:inline-block;">★</span>
+      <span class="star-btn" data-val="1" onmouseover="hoverStars(1)" onclick="clickStarRating(1)" style="font-size:22px; color:#f59e0b; user-select:none; transition:transform .12s ease; display:inline-block;">★</span>
+      <span class="star-btn" data-val="2" onmouseover="hoverStars(2)" onclick="clickStarRating(2)" style="font-size:22px; color:#f59e0b; user-select:none; transition:transform .12s ease; display:inline-block;">★</span>
+      <span class="star-btn" data-val="3" onmouseover="hoverStars(3)" onclick="clickStarRating(3)" style="font-size:22px; color:#f59e0b; user-select:none; transition:transform .12s ease; display:inline-block;">★</span>
+      <span class="star-btn" data-val="4" onmouseover="hoverStars(4)" onclick="clickStarRating(4)" style="font-size:22px; color:#f59e0b; user-select:none; transition:transform .12s ease; display:inline-block;">★</span>
+      <span class="star-btn" data-val="5" onmouseover="hoverStars(5)" onclick="clickStarRating(5)" style="font-size:22px; color:#f59e0b; user-select:none; transition:transform .12s ease; display:inline-block;">★</span>
     </div>
     <!-- Step 2: High rating follow-up (Marketplace CTA + School account fallback) -->
     <div id="review-stars-followup-high" style="display:none; flex-direction:column; gap:8px; margin-top:2px;">
       <span style="font-size:.78rem; color:#d1d5db; line-height:1.4;" data-i18n="review.starsThanks">Thank you! A 5-star rating on Google Marketplace helps other teachers:</span>
       <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px;">
-        <a id="review-stars-marketplace-btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=inapp_stars" target="_blank" rel="noopener" onclick="onReviewExperimentMarketplaceClick('stars')" style="background:#f59e0b; color:#111; font-weight:700; padding:7px 14px; border-radius:8px; text-decoration:none; font-size:.78rem; display:inline-block; box-shadow:0 2px 8px rgba(245,158,11,0.25);" data-i18n="review.starsRateBtn">Rate 5 Stars on Marketplace (5s)</a>
+        <a id="review-stars-marketplace-btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=inapp_stars" target="_blank" rel="noopener" onclick="onReviewExperimentMarketplaceClick('stars')" style="background:#f59e0b; color:#111; font-weight:700; padding:6px 12px; border-radius:6px; text-decoration:none; font-size:.76rem; display:inline-block;" data-i18n="review.starsRateBtn">Rate 5 Stars on Marketplace (5s)</a>
         <button type="button" onclick="showReviewFeedbackInput('stars')" style="background:transparent; border:none; color:#9ca3af; text-decoration:underline; cursor:pointer; font-size:.74rem; padding:4px;" data-i18n="review.starsSchoolFallback">School account blocks reviews? Leave feedback</button>
       </div>
     </div>
@@ -1844,24 +1887,24 @@
     <div id="review-stars-followup-feedback" style="display:none; flex-direction:column; gap:8px; margin-top:2px;">
       <span style="font-size:.78rem; color:#d1d5db;" data-i18n="review.starsFeedbackPrompt">How can we make Attendance Tracker better for you?</span>
       <div style="display:flex; gap:6px;">
-        <input type="text" id="review-stars-feedback-text" placeholder="Your suggestions..." style="flex:1; background:#161b22; border:1px solid #30363d; border-radius:6px; padding:6px 10px; color:#f0f6fc; font-size:.75rem;" />
+        <input type="text" id="review-stars-feedback-text" placeholder="Your suggestions…" data-i18n-placeholder="review.feedbackPlaceholder" style="flex:1; background:#161b22; border:1px solid #30363d; border-radius:6px; padding:6px 10px; color:#f0f6fc; font-size:.75rem;" />
         <button type="button" onclick="submitReviewExperimentFeedback('stars')" style="background:#238636; color:#fff; border:none; border-radius:6px; padding:6px 12px; font-size:.75rem; font-weight:600; cursor:pointer;" data-i18n="review.starsSendFeedback">Send</button>
       </div>
     </div>
   </div>
 
   <!-- Review Experiment Variant B: High-Visibility Popping Review Banner -->
-  <div id="review-ask" style="display:none; flex-direction:column; gap:10px; padding:12px 14px; margin:8px 12px; background:linear-gradient(135deg, rgba(245,158,11,.14), rgba(59,130,246,.08)); border:1px solid rgba(245,158,11,.38); border-radius:12px; font-size:.82rem; box-shadow:0 4px 16px rgba(0,0,0,0.25);">
+  <div id="review-ask" style="display:none; flex-direction:column; gap:8px; padding:10px 12px; margin:6px 16px; background:rgba(245,158,11,.07); border:1px solid rgba(245,158,11,.25); border-radius:10px; font-size:.8rem;">
     <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
       <div style="display:flex; align-items:center; gap:7px;">
-        <span style="color:#f59e0b; font-size:16px; letter-spacing:1px;">★★★★★</span>
+        <span style="color:#f59e0b; font-size:15px; letter-spacing:1px;">★★★★★</span>
         <strong style="color:#fde68a;" data-i18n="review.bannerTitle">Enjoying Attendance Tracker?</strong>
       </div>
       <button type="button" onclick="dismissReviewExperiment('banner')" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:rgba(255,255,255,0.06);border:none;color:#9ca3af;cursor:pointer;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1;flex-shrink:0;">×</button>
     </div>
-    <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px;">
-      <span style="color:#d1d5db; font-size:.78rem; line-height:1.45;"><span data-i18n="review.ask1">Getting value from this? A quick rating helps other hosts find it —</span> <span data-i18n="review.ask2">(takes 5 seconds).</span></span>
-      <a id="review-banner-btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=inapp_banner" target="_blank" rel="noopener" onclick="onReviewExperimentMarketplaceClick('banner')" style="background:#f59e0b; color:#111; font-weight:700; padding:7px 14px; border-radius:8px; text-decoration:none; font-size:.78rem; display:inline-block; white-space:nowrap; box-shadow:0 2px 8px rgba(245,158,11,0.25);" data-i18n="review.bannerCta">Leave a 5-Star Review (5s)</a>
+    <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px;">
+      <span style="color:#d1d5db; font-size:.76rem; line-height:1.4;"><span data-i18n="review.ask1">Getting value from this? A quick rating helps other hosts find it —</span> <span data-i18n="review.ask2">(takes 5 seconds).</span></span>
+      <a id="review-banner-btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=inapp_banner" target="_blank" rel="noopener" onclick="onReviewExperimentMarketplaceClick('banner')" style="background:#f59e0b; color:#111; font-weight:700; padding:6px 12px; border-radius:6px; text-decoration:none; font-size:.76rem; display:inline-block; white-space:nowrap;" data-i18n="review.bannerCta">Leave a 5-Star Review (5s)</a>
     </div>
   </div>
   <!-- Proactive auto-export upsell for heavy LIVE-ONLY trackers: users who track
@@ -1871,7 +1914,7 @@
        with another tip or the export CTA (see maybeShowAutoExportUpsell).
        Instrumented shown/clicked/dismissed so the dismiss + ignore rate is
        measurable and we can pull it if it grates. -->
-  <div id="auto-export-tip" style="display:none; align-items:flex-start; gap:8px; padding:8px 16px; font-size:11px; color:#9ca3af; background:rgba(253,214,99,.06); border-top:1px solid #30363d">
+  <div id="auto-export-tip" style="display:none; align-items:flex-start; gap:8px; padding:8px 12px; margin:6px 16px; border-radius:8px; font-size:11px; color:#9ca3af; background:rgba(253,214,99,.06); border:1px solid rgba(253,214,99,.2)">
     <span style="line-height:1.45"><span data-i18n="tip.autoExport">You track a lot of meetings live but rarely export. Pro's auto-export saves each one to Google Sheets the moment the call ends —</span> <a href="#" onclick="onAutoExportTipClick();return false" style="color:#fdd663;text-decoration:none;font-weight:600" data-i18n="tip.autoExportCta">turn on auto-export →</a></span>
     <button type="button" onclick="closeAutoExportTip()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
   </div>
@@ -1887,7 +1930,7 @@
        3+ teacher cluster, not Pro, not dismissed). Reuses the history.signpost*
        i18n keys (all 30 locales) + the /history/signpost-dismiss endpoint. This is
        how the teacher-to-teacher spread inside a school turns into a domain plan. -->
-  <div id="team-signpost" style="display:none; align-items:flex-start; gap:8px; padding:9px 16px; font-size:12px; color:#c9d1d9; background:rgba(74,222,128,.08); border-top:1px solid #30363d">
+  <div id="team-signpost" style="display:none; align-items:flex-start; gap:8px; padding:8px 12px; margin:6px 16px; border-radius:8px; font-size:11.5px; color:#c9d1d9; background:rgba(74,222,128,.08); border:1px solid rgba(74,222,128,.2)">
     <span style="line-height:1.5"><span id="team-signpost-msg"></span> <a id="team-signpost-link" href="https://attendancetracker.dev/team.html" onclick="onTeamSignpostClick(event)" target="_blank" rel="noopener" style="color:#4ade80;text-decoration:none;font-weight:600;white-space:nowrap"></a></span>
     <button type="button" onclick="dismissTeamSignpost()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
   </div>
@@ -1923,37 +1966,39 @@
   </div>
 
   <!-- ── Sort / Filter / Group toolbar (visible only with participants) ── -->
-  <div id="list-toolbar" style="display:none;padding:0 16px 8px;gap:6px;font-size:.7rem">
-    <select id="sort-select" onchange="renderList()" style="flex:1;background:#0d1117;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-size:.7rem">
-      <option value="join" data-i18n="sort.joinTime">Sort: Join time</option>
-      <option value="name" data-i18n="sort.name">Sort: Name</option>
-      <option value="duration" data-i18n="sort.duration">Sort: Duration</option>
-    </select>
-    <select id="filter-select" onchange="renderList()" style="flex:1;background:#0d1117;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-size:.7rem">
-      <option value="all" data-i18n="filter.showAll">Show: All</option>
-      <option value="present" data-i18n="filter.presentOnly">Present only</option>
-      <option value="left" data-i18n="filter.leftOnly">Left only</option>
-    </select>
-    <select id="group-select" onchange="renderList()" style="flex:1;background:#0d1117;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-size:.7rem">
-      <option value="none" data-i18n="group.none">Group: None</option>
-      <option value="domain" data-i18n="group.byDomain">By domain</option>
-    </select>
+  <div id="list-toolbar" style="display:none;padding:0 16px 8px;gap:6px;font-size:.7rem;flex-direction:column">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:100%">
+      <select id="sort-select" onchange="renderList()" style="width:100%;min-width:0;background:#0d1117;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-size:.7rem;text-overflow:ellipsis">
+        <option value="join" data-i18n="sort.joinTime">Sort: Join time</option>
+        <option value="name" data-i18n="sort.name">Sort: Name</option>
+        <option value="duration" data-i18n="sort.duration">Sort: Duration</option>
+      </select>
+      <select id="filter-select" onchange="renderList()" style="width:100%;min-width:0;background:#0d1117;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-size:.7rem;text-overflow:ellipsis">
+        <option value="all" data-i18n="filter.showAll">Show: All</option>
+        <option value="present" data-i18n="filter.presentOnly">Present only</option>
+        <option value="left" data-i18n="filter.leftOnly">Left only</option>
+      </select>
+      <select id="group-select" onchange="renderList()" style="width:100%;min-width:0;background:#0d1117;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-size:.7rem;text-overflow:ellipsis">
+        <option value="none" data-i18n="group.none">Group: None</option>
+        <option value="domain" data-i18n="group.byDomain">By domain</option>
+      </select>
+    </div>
     <!-- Attestation export: appears once anyone has checked in. The
          COMPLIANCE artifact on top of free check-in capture (Pro). -->
     <button type="button" id="btn-attestation-csv" onclick="downloadAttestationCsv(this)" data-i18n-title="tip.downloadCheckins" title="Download the verified check-in list (Pro)"
-      style="display:none;flex:0 0 auto;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.35);color:#4ade80;border-radius:6px;padding:5px 10px;font-size:.7rem;cursor:pointer;white-space:nowrap">✓ <span data-i18n="checkin.attestCsv">Check-in CSV</span></button>
+      style="display:none;width:100%;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.35);color:#4ade80;border-radius:6px;padding:5px 10px;font-size:.7rem;cursor:pointer;white-space:nowrap;justify-content:center">✓ <span data-i18n="checkin.attestCsv">Check-in CSV</span></button>
   </div>
 
   <!-- ── Tabs ── -->
   <div class="tab-bar visible" id="tab-bar">
-    <button class="tab-btn active" id="tab-participants" onclick="switchTab('participants')">
-      <span data-i18n="nav.people">Participants</span> <span class="tab-badge" id="tab-count-participants">0</span>
+    <button class="tab-btn active" id="tab-participants" onclick="switchTab('participants')" data-i18n-title="nav.people" title="Participants">
+      <span class="tab-label" data-i18n="nav.people">Participants</span> <span class="tab-badge" id="tab-count-participants">0</span>
     </button>
-    <button class="tab-btn" id="tab-roster" onclick="switchTab('roster')">
-      <span data-i18n="nav.roster">Class Roster</span> <span class="tab-badge" id="tab-count-roster">0</span>
+    <button class="tab-btn" id="tab-roster" onclick="switchTab('roster')" data-i18n-title="nav.roster" title="Class Roster">
+      <span class="tab-label" data-i18n="nav.roster">Class Roster</span> <span class="tab-badge" id="tab-count-roster">0</span>
     </button>
-    <button class="tab-btn" id="tab-invited" onclick="switchTab('invited')" style="display:none">
-      <span data-i18n="tab.invited">Invited</span> <span class="tab-badge" id="tab-count-invited">0</span>
+    <button class="tab-btn" id="tab-invited" onclick="switchTab('invited')" data-i18n-title="tab.invited" title="Invited" style="display:none">
+      <span class="tab-label" data-i18n="tab.invited">Invited</span> <span class="tab-badge" id="tab-count-invited">0</span>
     </button>
   </div>
 
@@ -1976,7 +2021,7 @@
       </div>
 
       <!-- Quick Start card to eliminate empty space -->
-      <div style="margin-top:20px;text-align:left;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:.74rem;color:#9ca3af;line-height:1.5;max-width:280px;box-sizing:border-box">
+      <div style="margin:16px auto 0;text-align:left;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:.74rem;color:#9ca3af;line-height:1.5;width:100%;max-width:280px;box-sizing:border-box">
         <div style="font-weight:600;color:#e6edf3;margin-bottom:6px" data-i18n="empty.qsTitle">Quick Start:</div>
         <div style="display:flex;flex-direction:column;gap:6px">
           <div><strong style="color:#4ade80" data-i18n="empty.qs1Label">1. Tap Start:</strong> <span data-i18n="empty.qs1">Tracks attendees and timestamps in the background.</span></div>
@@ -2004,7 +2049,7 @@
     </div>
 
     <!-- Threshold Settings -->
-    <div id="roster-thresholds" style="display:flex;align-items:center;justify-content:space-between;gap:6px;padding:8px 12px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;margin-bottom:12px;font-size:.74rem;color:var(--muted)">
+    <div id="roster-thresholds" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:8px 12px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;margin-bottom:12px;font-size:.74rem;color:var(--muted)">
       <div style="display:flex;align-items:center;gap:6px">
         <span style="white-space:nowrap" data-i18n="roster.minStay">Min stay:</span>
         <select id="threshold-stay" onchange="onThresholdChange()" style="background:#161b22;border:1px solid var(--border);color:var(--text);border-radius:6px;padding:3px 6px;font-size:.74rem">
@@ -2900,6 +2945,9 @@ function downloadAttendanceCsv() {
   }
 
   if (!_isPro && ctx.parts.length > 25) {
+    if (typeof sendUpgradeLinkToEmail === 'function') {
+      sendUpgradeLinkToEmail().catch(() => {});
+    }
     showUpgradeModal('largeClass');
     return;
   }
@@ -3324,6 +3372,35 @@ function renderTeamAdminLink() {
   link.style.display = state.activation?.teamAdmin ? 'inline-block' : 'none';
 }
 
+// Central Contextual Banner Coordinator.
+// Enforces a strict single-banner policy inside the add-on panel:
+// At most ONE promotional/contextual alert is visible at any given time,
+// ensuring the UI never feels crowded or spammy during live calls.
+const CONTEXTUAL_BANNERS = [
+  'scope-banner',
+  'export-cta',
+  'auto-export-nudge',
+  'trial-ending-banner',
+  'team-signpost',
+  'class-summary-tip',
+  'term-report-tip',
+  'auto-export-tip',
+  'recurring-tip',
+  'review-stars-widget',
+  'review-ask',
+];
+
+function isAnyContextualBannerVisible(exceptId) {
+  for (const id of CONTEXTUAL_BANNERS) {
+    if (id === exceptId) continue;
+    const el = document.getElementById(id);
+    if (el && el.style.display !== 'none' && getComputedStyle(el).display !== 'none') {
+      return true;
+    }
+  }
+  return false;
+}
+
 // Institutional wedge in the panel: "your school is already here". Paints the
 // gated /oauth/me teamSignpost (null unless a genuine 3+ teacher, non-Pro,
 // non-dismissed domain cluster). Admin sees "set up the domain plan"; a
@@ -3333,7 +3410,8 @@ function renderTeamAdminLink() {
 function renderTeamSignpost(sp) {
   const box = document.getElementById('team-signpost');
   if (!box) return;
-  if (!sp || !sp.teacherCount || sp.teacherCount < 3) { box.style.display = 'none'; return; }
+  if (!sp || !sp.teacherCount || sp.teacherCount < 2) { box.style.display = 'none'; return; }
+  if (isAnyContextualBannerVisible('team-signpost')) return;
   const msg = document.getElementById('team-signpost-msg');
   const link = document.getElementById('team-signpost-link');
   if (!msg || !link) return;
@@ -3341,10 +3419,19 @@ function renderTeamSignpost(sp) {
   if (sp.isTeamAdmin) {
     msg.innerHTML = t('history.signpostAdmin', 'Your school has {n} teachers using this.').replace('{n}', '<b>' + n + '</b>');
     link.textContent = t('history.signpostAdminCta', 'Set up the domain plan →');
+    link.href = 'https://attendancetracker.dev/team.html';
+    link.onclick = (e) => { onTeamSignpostClick(e); };
   } else {
-    msg.innerHTML = t('history.signpostTeam', '{n} teachers at {domain} use Attendance Tracker.')
+    msg.innerHTML = t('history.signpostTeam59', '{n} teachers at {domain} are using Attendance Tracker. Request a whole-school license for $59/yr.')
       .replace('{n}', '<b>' + n + '</b>').replace('{domain}', escHtml(sp.domain || ''));
-    link.textContent = t('history.signpostCta', 'See the team plan →');
+    link.textContent = t('history.signpostCta59', 'Request school license ($59/yr) →');
+    link.href = '#';
+    link.onclick = (e) => {
+      e.preventDefault();
+      onTeamSignpostClick(e);
+      if (typeof requestSchoolLicense === 'function') requestSchoolLicense();
+      return false;
+    };
   }
   try { logUserEvent('team_signpost_shown', { teacherCount: n, isTeamAdmin: !!sp.isTeamAdmin, surface: 'panel' }); } catch (e) { /* best-effort */ }
   box.style.display = 'flex';
@@ -5345,7 +5432,9 @@ function showUpgradeModal(reason) {
       note.textContent = t('quota.limitReached', 'You reached your monthly limit of {limit} free exports. Upgrade to Pro for unlimited exports.').replace('{limit}', AttPricing.quotaLimit());
       note.style.display = 'block';
     } else if (reason === 'largeClass') {
-      note.textContent = t('quota.largeClassLimit', 'Attendance tracking for large classes (>25 attendees) is a Pro feature. Upgrade to Pro for unlimited class sizes & exports.');
+      const count = (state.participants && state.participants.size) || state._lastLargeClassCount || 0;
+      const countStr = count > 0 ? count : '>25';
+      note.textContent = t('quota.largeClassSaved', '✓ We captured all {count} attendees for today’s session! Upgrade to Pro to export today’s full roster to Google Sheets.').replace('{count}', countStr);
       note.style.display = 'block';
     } else if (reason === 'autoExport') {
       note.textContent = t('billing.autoExportPro','Auto-exporting to Google Sheets on meeting end is a Pro feature.');
@@ -5372,20 +5461,13 @@ function showUpgradeModal(reason) {
   if (schoolLicenseBtn) {
     schoolLicenseBtn.style.display = isEdu ? 'block' : 'none';
   }
-  // In PPP regions, Lifetime Pro is $4.99 one-time (no recurring renewal),
-  // which eliminates foreign credit-card recurring subscription fears.
-  // Keep Lifetime Pro prominently visible at the top for all PPP regions.
-  const isPpp = !!(_billing && _billing.pppDiscount && _billing.pppDiscount.eligible);
+  // Lifetime Pro is $9.99 (or $4.99 in PPP regions) one-time (no recurring renewal).
+  // Keep Lifetime Pass prominently featured at the top for all users (including educators)
+  // to eliminate foreign recurring credit-card subscription fears.
   const lifetimeCard = document.getElementById('plan-card-lifetime');
   const eduCard = document.getElementById('plan-card-educator');
   if (lifetimeCard && eduCard && lifetimeCard.parentNode === eduCard.parentNode) {
-    if (isPpp) {
-      eduCard.parentNode.insertBefore(lifetimeCard, eduCard);
-    } else if (isEdu || reason === 'certificates' || reason === 'classSummary') {
-      lifetimeCard.parentNode.insertBefore(eduCard, lifetimeCard);
-    } else {
-      eduCard.parentNode.insertBefore(lifetimeCard, eduCard);
-    }
+    eduCard.parentNode.insertBefore(lifetimeCard, eduCard);
   }
 
   updateUpgradeModalPricing();
@@ -5478,7 +5560,14 @@ function dismissAutoExportNudge() {
 function closeUpgradeModal() {
   const modal = document.getElementById('upgrade-modal');
   if (modal) modal.style.display = 'none';
+  const reason = state._lastUpgradeReason;
   try { logUserEvent('upgrade_modal_dismissed', { ...upgradeContext() }); } catch {}
+  if (reason === 'largeClass' || (state.participants && state.participants.size > 25)) {
+    toast(t('upgrade.deskLinkToast', 'We saved your attendance! We emailed a 1-click link to finish upgrading from your desk after class.'), 8000);
+    if (typeof sendUpgradeLinkToEmail === 'function') {
+      sendUpgradeLinkToEmail().catch(() => {});
+    }
+  }
   maybeAskPaywallWhy();
 }
 
@@ -6079,6 +6168,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
       // Free tier has monthly quota; auto-export is also Pro.
       if (res.status === 402) {
         const feature = body.feature || 'pro_required';
+        if (body.participantCount) state._lastLargeClassCount = body.participantCount;
         if (body.quota) updateQuotaIndicator(body.quota.used, body.quota.limit);
         logUserEvent('export_skipped', { reason: feature, durationMs });
         // autoExport 402s fire from a BACKGROUND action (meeting-end auto
@@ -6457,10 +6547,7 @@ function maybeShowRecurringTip(title) {
   }
   if (shown) return; // repeat title, but we've already shown the tip once
   // Single-slot rule: If another banner or review prompt is active, don't stack
-  for (const id of ['review-stars-widget', 'review-ask', 'export-cta', 'scope-banner', 'auto-export-nudge']) {
-    const el = document.getElementById(id);
-    if (el && getComputedStyle(el).display !== 'none') return;
-  }
+  if (isAnyContextualBannerVisible('recurring-tip')) return;
   const bar = document.getElementById('recurring-tip');
   if (!bar) return;
   bar.style.display = 'flex';
@@ -6482,10 +6569,7 @@ function maybeShowClassSummaryUpsell() {
   try { shown = !!localStorage.getItem('att_class_summary_tip_shown'); } catch (e) { return; }
   if (shown) return;
   // Single-slot rule: never stack on review ask or other banners
-  for (const id of ['review-stars-widget', 'review-ask', 'export-cta', 'scope-banner', 'auto-export-nudge', 'term-report-tip']) {
-    const el = document.getElementById(id);
-    if (el && getComputedStyle(el).display !== 'none') return;
-  }
+  if (isAnyContextualBannerVisible('class-summary-tip')) return;
   const bar = document.getElementById('class-summary-tip');
   if (!bar) return;
   const rt = document.getElementById('recurring-tip');
@@ -6530,10 +6614,7 @@ function maybeShowTermReportNudge(seriesId, count) {
   try { shownFor = JSON.parse(localStorage.getItem('att_term_report_shown') || '[]') || []; } catch (e) { return; }
   if (shownFor.includes(seriesId)) return; // once per series
   // One surface at a time — never crowd another tip or the export CTA.
-  for (const id of ['review-stars-widget', 'review-ask', 'class-summary-tip', 'recurring-tip', 'auto-export-nudge', 'auto-export-tip', 'team-signpost', 'export-cta']) {
-    const el = document.getElementById(id);
-    if (el && getComputedStyle(el).display !== 'none') return;
-  }
+  if (isAnyContextualBannerVisible('term-report-tip')) return;
   const bar = document.getElementById('term-report-tip');
   const msgEl = document.getElementById('term-report-tip-msg');
   if (!bar || !msgEl) return;
@@ -6601,22 +6682,15 @@ function maybeShowReviewAsk() {
     hasReviewed = !!localStorage.getItem('has_reviewed');
   } catch (e) { return; } // private mode → skip silently
 
-  // Value moment trigger: milestone >= 1 (first export or first real tracked meeting)
-  if (shown || hasReviewed || (count < 1 && tracked < 1)) return;
-
-  // Single-slot rule: If a higher priority action banner is showing, yield to preserve breathing room
-  for (const id of ['export-cta', 'scope-banner', 'auto-export-nudge']) {
-    const el = document.getElementById(id);
-    if (el && getComputedStyle(el).display !== 'none') return;
-  }
-
-  // Dismiss any lower-priority tips so multiple alerts never stack
-  for (const id of ['recurring-tip', 'class-summary-tip', 'term-report-tip', 'auto-export-tip']) {
-    const el = document.getElementById(id);
-    if (el) el.style.display = 'none';
-  }
+  // Value moment trigger: requires genuine engagement (at least 1 export or 2+ distinct tracked meetings)
+  if (shown || hasReviewed || (count < 1 && tracked < 2)) return;
 
   const variant = getReviewExperimentVariant();
+  const targetId = variant === 'stars' ? 'review-stars-widget' : 'review-ask';
+
+  // Single-slot rule: If another banner is active, yield to preserve breathing room
+  if (isAnyContextualBannerVisible(targetId)) return;
+
   const bar = variant === 'stars'
     ? document.getElementById('review-stars-widget')
     : document.getElementById('review-ask');
@@ -6726,11 +6800,10 @@ function maybeShowAutoExportUpsell() {
     shown = !!localStorage.getItem('att_auto_export_tip_shown');
   } catch (e) { return; } // private mode → skip silently
   if (shown || tracked < 4 || exportCount > 1) return;    // not the target segment yet
-  // One surface at a time — never crowd another tip or the export CTA.
-  for (const id of ['review-stars-widget', 'review-ask', 'class-summary-tip', 'recurring-tip', 'auto-export-nudge', 'export-cta']) {
-    const el = document.getElementById(id);
-    if (el && getComputedStyle(el).display !== 'none') return;
-  }
+  // One surface at a time — coordinator ensures no other contextual banner or export CTA is active.
+  if (isAnyContextualBannerVisible('auto-export-tip')) return;
+  const exportCta = document.getElementById('export-cta');
+  if (exportCta && getComputedStyle(exportCta).display !== 'none') return;
   const bar = document.getElementById('auto-export-tip');
   if (!bar) return;
   bar.style.display = 'flex';
@@ -8372,18 +8445,6 @@ window.addEventListener('DOMContentLoaded', () => {
         </div>
         <button type="button" id="btn-upgrade-team" onclick="startUpgradeCheckout('department', 'btn-upgrade-team')" style="flex:0 0 auto;width:100%;background:rgba(253,214,99,.14);border:1px solid rgba(253,214,99,.3);color:#fdd663;padding:9px 16px;border-radius:20px;font-weight:600;font-size:.81rem;cursor:pointer;margin-top:8px;transition:all .15s ease" data-i18n="upgrade.deptCta">Get the Department plan — your whole school</button>
         <button type="button" id="btn-request-school-license" onclick="requestSchoolLicense()" style="display:none;width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);color:#e3e3e3;padding:8px 14px;border-radius:20px;font-weight:500;font-size:.78rem;cursor:pointer;margin-top:8px;transition:all .15s ease" data-i18n="upgrade.requestSchoolLicense">Request School / Department License</button>
-      </div>
-
-      <!-- Clean Low-Profile Review Exchange — right below plan checkout cards -->
-      <div id="upgrade-review-exchange-box" style="background:rgba(255,255,255,.025);border:1px dashed rgba(129,201,149,.3);border-radius:10px;padding:9px 12px;text-align:center;font-size:.75rem;color:#c4c7c5;margin-bottom:10px;line-height:1.4">
-        <div>
-          <span style="color:#fdd663;font-weight:600">⭐ <span data-i18n="upgrade.reviewOffer1">School budget tight?</span></span> <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" id="upgrade-review-link" target="_blank" onclick="onUpgradeReviewClick(event)" style="color:#58a6ff;font-weight:600;text-decoration:underline;margin:0 3px" data-i18n="upgrade.reviewOfferLink">Leave an honest review</a> <span data-i18n="upgrade.reviewOffer2">for 1 month free.</span>
-        </div>
-        <div id="verify-review-box" style="display:none;margin-top:8px;background:rgba(129,201,149,.1);padding:8px 12px;border-radius:8px;border:1px solid rgba(129,201,149,.35)">
-          <div style="font-weight:600;color:#81c995;margin-bottom:6px" data-i18n="upgrade.verifyReviewPrompt">Left your review on the listing?</div>
-          <button type="button" id="verify-review-btn" onclick="triggerReviewVerification(event)" style="background:#238636;color:#ffffff;border:none;border-radius:16px;padding:6px 14px;font-size:.75rem;cursor:pointer;font-weight:600;box-shadow:0 2px 6px rgba(35,134,54,.3)" data-i18n="upgrade.verifyReviewBtn">Verify Review &amp; Unlock 1 Month Free</button>
-          <div id="verify-review-status" style="display:none;margin-top:6px;font-size:.72rem"></div>
-        </div>
       </div>
 
       <!-- Trust & Reliability Note -->
