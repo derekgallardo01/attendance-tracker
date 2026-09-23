@@ -291,8 +291,21 @@ async function sendUpgradeLinkForUser({
       const meta = { individual: '1', domain, email: normalizedEmail, source: 'upgrade_link_email', reason };
       const commonDiscounts = isPppEligible ? [{ coupon: 'PPP50' }] : [{ coupon: 'SAVE20' }];
 
+      const createSession = async (params) => {
+        try {
+          return await stripe.checkout.sessions.create(params);
+        } catch (err) {
+          if (params.discounts && /coupon|promo/i.test(err.message)) {
+            log.warn('billing: checkout coupon error, falling back without discount', { error: err.message });
+            const { discounts, ...rest } = params;
+            return await stripe.checkout.sessions.create(rest);
+          }
+          throw err;
+        }
+      };
+
       const [educatorSession, lifetimeSession] = await Promise.all([
-        process.env.STRIPE_EDUCATOR_PRICE_ID ? stripe.checkout.sessions.create({
+        process.env.STRIPE_EDUCATOR_PRICE_ID ? createSession({
           mode: 'subscription',
           line_items: [{ price: process.env.STRIPE_EDUCATOR_PRICE_ID, quantity: 1 }],
           client_reference_id: `user:${normalizedEmail}`,
@@ -302,7 +315,7 @@ async function sendUpgradeLinkForUser({
           metadata: { ...meta, plan: 'educator', ...(isPppEligible ? { pppDiscount: '1' } : { promoDiscount: 'SAVE20' }) },
           ...(commonDiscounts ? { discounts: commonDiscounts } : {}),
         }) : null,
-        process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID ? stripe.checkout.sessions.create({
+        process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID ? createSession({
           mode: 'payment',
           customer_creation: 'always',
           line_items: [{ price: process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID, quantity: 1 }],

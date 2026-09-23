@@ -1406,6 +1406,35 @@ describe('billing/status pricing payload', () => {
       }));
     });
 
+    test('falls back without discount when coupon fails during checkout session creation', async () => {
+      process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+      process.env.STRIPE_PRICE_ID = 'price_default';
+      process.env.STRIPE_EDUCATOR_PRICE_ID = 'price_edu';
+      process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID = 'price_life';
+      app = buildApp();
+
+      let callCount = 0;
+      mockStripeInstance.checkout.sessions.create.mockImplementation(async (params) => {
+        if (params.discounts) {
+          throw new Error("No such coupon: 'SAVE20'");
+        }
+        return { id: 'cs_fallback', url: 'https://checkout.stripe.com/pay/cs_fallback' };
+      });
+
+      const uniqueEmail = `teacher_fallback_${Date.now()}@school.edu`;
+      const res = await request(app)
+        .post('/api/billing/send-upgrade-link')
+        .set(authedHeader(uniqueEmail, 'school.edu'))
+        .send({});
+
+      expect(res.status).toBe(200);
+      expect(sendUpgradeLinkEmail).toHaveBeenCalledWith(expect.objectContaining({
+        to: uniqueEmail,
+        educatorUrl: 'https://checkout.stripe.com/pay/cs_fallback',
+        lifetimeUrl: 'https://checkout.stripe.com/pay/cs_fallback',
+      }));
+    });
+
     test('sendUpgradeLinkForUser skips if user is already pro or suppressed', async () => {
       process.env.STRIPE_SECRET_KEY = 'sk_test_123';
       process.env.STRIPE_PRICE_ID = 'price_default';
