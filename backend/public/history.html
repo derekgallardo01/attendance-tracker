@@ -736,7 +736,12 @@
         const res = await fetch(`${BACKEND_URL}/export/pdf`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}` },
-          body: JSON.stringify({ type, conferenceId }),
+          body: JSON.stringify({
+            type,
+            conferenceId,
+            timezone: (typeof Intl !== 'undefined' && Intl.DateTimeFormat) ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'America/New_York',
+            locale: (window.AttStrings && AttStrings.getLocale()) || 'en',
+          }),
         });
         if (res.status === 402) { alert(t('history.certsPro', 'Certificates are a Pro feature — upgrade on this page to issue them.')); return; }
         if (!res.ok) { let b = {}; try { b = await res.json(); } catch (e) {} alert(t('history.pdfError', "Couldn't generate the PDF: {err}").replace('{err}', b.error || res.status)); return; }

@@ -442,6 +442,77 @@
     return null;
   }
 
+  const CSV_HEADER_LOCALIZATIONS = {
+    pt: ['Nome', 'E-mail', 'Status', '% Presença', 'Duração (min)', 'Horário de Entrada', 'Horário de Saída', 'Reconexões', 'Notas'],
+    es: ['Nombre', 'Correo', 'Estado', '% Asistencia', 'Duración (min)', 'Hora de Entrada', 'Hora de Salida', 'Reingresos', 'Notas'],
+    fr: ['Nom', 'E-mail', 'Statut', '% Présence', 'Durée (min)', 'Heure d\'Arrivée', 'Heure de Départ', 'Reconnexions', 'Remarques'],
+    de: ['Name', 'E-Mail', 'Status', 'Anwesenheit %', 'Dauer (Min.)', 'Beitrittszeit', 'Verlassenszeit', 'Wiedereintritte', 'Notizen'],
+    it: ['Nome', 'E-mail', 'Stato', '% Presenze', 'Durata (min)', 'Ora di Entrata', 'Ora di Uscita', 'Riconnessioni', 'Note'],
+  };
+
+  const CSV_STATUS_LOCALIZATIONS = {
+    pt: {
+      'Present': 'Presente',
+      'Left': 'Saiu',
+      'Present (Left)': 'Presente (Saiu)',
+      'Left Early / Incomplete': 'Saiu antes / Incompleto',
+      'Late': 'Atrasado',
+      'Excused (Short Stay)': 'Justificado (Estadia curta)',
+      'Absent': 'Ausente',
+      'Absent (Excused)': 'Ausente (Justificado)',
+      'Guest (Present)': 'Convidado (Presente)',
+      'Guest (Left)': 'Convidado (Saiu)',
+    },
+    es: {
+      'Present': 'Presente',
+      'Left': 'Salió',
+      'Present (Left)': 'Presente (Salió)',
+      'Left Early / Incomplete': 'Salió antes / Incompleto',
+      'Late': 'Tarde',
+      'Excused (Short Stay)': 'Justificado (Estadía corta)',
+      'Absent': 'Ausente',
+      'Absent (Excused)': 'Ausente (Justificado)',
+      'Guest (Present)': 'Invitado (Presente)',
+      'Guest (Left)': 'Invitado (Salió)',
+    },
+    fr: {
+      'Present': 'Présent',
+      'Left': 'Parti',
+      'Present (Left)': 'Présent (Parti)',
+      'Left Early / Incomplete': 'Parti plus tôt / Incomplet',
+      'Late': 'En retard',
+      'Excused (Short Stay)': 'Excusé (Court séjour)',
+      'Absent': 'Absent',
+      'Absent (Excused)': 'Absent (Excusé)',
+      'Guest (Present)': 'Invité (Présent)',
+      'Guest (Left)': 'Invité (Parti)',
+    },
+    de: {
+      'Present': 'Anwesend',
+      'Left': 'Verlassen',
+      'Present (Left)': 'Anwesend (Verlassen)',
+      'Left Early / Incomplete': 'Frühzeitig verlassen / Unvollständig',
+      'Late': 'Verspätet',
+      'Excused (Short Stay)': 'Entschuldigt (Kurzer Aufenthalt)',
+      'Absent': 'Abwesend',
+      'Absent (Excused)': 'Abwesend (Entschuldigt)',
+      'Guest (Present)': 'Gast (Anwesend)',
+      'Guest (Left)': 'Gast (Verlassen)',
+    },
+    it: {
+      'Present': 'Presente',
+      'Left': 'Uscito',
+      'Present (Left)': 'Presente (Uscito)',
+      'Left Early / Incomplete': 'Uscito prima / Incompleto',
+      'Late': 'In ritardo',
+      'Excused (Short Stay)': 'Giustificato (Breve permanenza)',
+      'Absent': 'Assente',
+      'Absent (Excused)': 'Assente (Giustificato)',
+      'Guest (Present)': 'Ospite (Presente)',
+      'Guest (Left)': 'Ospite (Uscito)',
+    },
+  };
+
   function buildAttendanceCsv(parts, activeRoster, opts = {}) {
     const meetingTitle = opts.meetingTitle || 'Meeting';
     const totalMeetingMs = opts.totalMeetingMs || 0;
@@ -453,15 +524,31 @@
     const startTime = opts.startTime ? new Date(opts.startTime) : null;
     const now = opts.now ? new Date(opts.now) : new Date();
 
+    const loc = (opts.locale || 'en').split(/[-_]/)[0].toLowerCase();
+    const locStatus = (s) => (CSV_STATUS_LOCALIZATIONS[loc]?.[s] || s);
+
+    const fmtTime = (v) => {
+      const d = new Date(v);
+      if (isNaN(d.getTime())) return '';
+      if (!opts.timezone && !opts.locale) return d.toLocaleTimeString();
+      try {
+        return d.toLocaleTimeString(opts.locale || undefined, {
+          timeZone: opts.timezone || undefined,
+        });
+      } catch {
+        return d.toLocaleTimeString();
+      }
+    };
+
     // Self-check-in attestation rides the Notes column: it augments whatever
     // note is already there rather than claiming a column of its own.
     const withCheckinNote = (note, p) => {
-      const chk = p && p.checkedInAt ? 'Checked in ' + new Date(p.checkedInAt).toLocaleTimeString() : '';
+      const chk = p && p.checkedInAt ? 'Checked in ' + fmtTime(p.checkedInAt) : '';
       return [note, chk].filter(Boolean).join('; ');
     };
 
     const rows = [];
-    rows.push([
+    const headerCols = CSV_HEADER_LOCALIZATIONS[loc] || [
       'Name',
       'Email',
       'Status',
@@ -471,7 +558,8 @@
       'Leave Time',
       'Rejoins',
       'Notes'
-    ].map(escapeCsv).join(','));
+    ];
+    rows.push(headerCols.map(escapeCsv).join(','));
 
     if (activeRoster && Array.isArray(activeRoster) && activeRoster.length > 0) {
       const matchedParticipants = new Set();
@@ -507,11 +595,11 @@
           rows.push([
             p.displayName || student.name,
             p.email || student.email || '',
-            status,
+            locStatus(status),
             `${pct}%`,
             durMin,
-            p.joinTime ? new Date(p.joinTime).toLocaleTimeString() : '',
-            (!p.present && p.leaveTime) ? new Date(p.leaveTime).toLocaleTimeString() : '',
+            p.joinTime ? fmtTime(p.joinTime) : '',
+            (!p.present && p.leaveTime) ? fmtTime(p.leaveTime) : '',
             Math.max(0, (p.rejoins != null ? p.rejoins : (p.sessions || 1) - 1)),
             withCheckinNote(note, p)
           ].map(escapeCsv).join(','));
@@ -520,7 +608,7 @@
           rows.push([
             student.name,
             student.email || '',
-            status,
+            locStatus(status),
             '0%',
             0,
             '',
@@ -539,11 +627,11 @@
           rows.push([
             p.displayName,
             p.email || '',
-            p.present ? 'Guest (Present)' : 'Guest (Left)',
+            locStatus(p.present ? 'Guest (Present)' : 'Guest (Left)'),
             `${pct}%`,
             durMin,
-            p.joinTime ? new Date(p.joinTime).toLocaleTimeString() : '',
-            (!p.present && p.leaveTime) ? new Date(p.leaveTime).toLocaleTimeString() : '',
+            p.joinTime ? fmtTime(p.joinTime) : '',
+            (!p.present && p.leaveTime) ? fmtTime(p.leaveTime) : '',
             Math.max(0, (p.rejoins != null ? p.rejoins : (p.sessions || 1) - 1)),
             withCheckinNote('Unregistered guest', p)
           ].map(escapeCsv).join(','));
@@ -557,11 +645,11 @@
         rows.push([
           p.displayName,
           p.email || '',
-          p.present ? 'Present' : 'Left',
+          locStatus(p.present ? 'Present' : 'Left'),
           `${pct}%`,
           durMin,
-          p.joinTime ? new Date(p.joinTime).toLocaleTimeString() : '',
-          (!p.present && p.leaveTime) ? new Date(p.leaveTime).toLocaleTimeString() : '',
+          p.joinTime ? fmtTime(p.joinTime) : '',
+          (!p.present && p.leaveTime) ? fmtTime(p.leaveTime) : '',
           Math.max(0, (p.rejoins != null ? p.rejoins : (p.sessions || 1) - 1)),
           withCheckinNote('', p)
         ].map(escapeCsv).join(','));

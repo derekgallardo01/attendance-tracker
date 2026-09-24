@@ -150,6 +150,79 @@ describe('backend i18n', () => {
     });
   });
 
+  describe('getSheetSummaryLabels', () => {
+    test('returns default English summary labels for en or unknown locale', () => {
+      expect(i18n.getSheetSummaryLabels('en').meeting).toBe('Meeting');
+      expect(i18n.getSheetSummaryLabels('unknown').date).toBe('Date');
+    });
+
+    test('returns localized summary labels for pt, es, fr, de', () => {
+      expect(i18n.getSheetSummaryLabels('pt').meeting).toBe('Reunião');
+      expect(i18n.getSheetSummaryLabels('pt').attendanceRate).toBe('Taxa de Presença');
+      expect(i18n.getSheetSummaryLabels('es').meeting).toBe('Reunión');
+      expect(i18n.getSheetSummaryLabels('fr').meeting).toBe('Réunion');
+      expect(i18n.getSheetSummaryLabels('de').scheduledEvent).toBe('Geplantes Ereignis');
+    });
+  });
+
+  describe('localizeStatus', () => {
+    test('returns unchanged status for English or missing locale', () => {
+      expect(i18n.localizeStatus('Present', 'en')).toBe('Present');
+      expect(i18n.localizeStatus('', 'es')).toBe('');
+      expect(i18n.localizeStatus('Present', null)).toBe('Present');
+    });
+
+    test('localizes statuses into pt, es, fr, de', () => {
+      expect(i18n.localizeStatus('Present', 'pt')).toBe('Presente');
+      expect(i18n.localizeStatus('Left', 'pt')).toBe('Saiu');
+      expect(i18n.localizeStatus('Absent', 'pt')).toBe('Ausente');
+      expect(i18n.localizeStatus('Absent (excused)', 'pt')).toBe('Ausente (justificado)');
+      expect(i18n.localizeStatus('Left Early / Incomplete', 'pt')).toBe('Saiu antes / Incompleto');
+      expect(i18n.localizeStatus('Left', 'es')).toBe('Salió');
+      expect(i18n.localizeStatus('Present', 'de')).toBe('Anwesend');
+      expect(i18n.localizeStatus('Unmapped Custom Status', 'pt')).toBe('Unmapped Custom Status');
+    });
+  });
+
+  describe('localizeRsvp', () => {
+    test('returns English RSVP for en or unknown', () => {
+      expect(i18n.localizeRsvp('accepted', 'en')).toBe('Accepted');
+      expect(i18n.localizeRsvp('declined', 'en')).toBe('Declined');
+      expect(i18n.localizeRsvp('tentative', 'en')).toBe('Tentative');
+      expect(i18n.localizeRsvp('needsAction', 'en')).toBe('No Response');
+      expect(i18n.localizeRsvp('unknown_status', 'en')).toBe('');
+      expect(i18n.localizeRsvp('', 'pt')).toBe('');
+    });
+
+    test('localizes RSVP into target languages', () => {
+      expect(i18n.localizeRsvp('accepted', 'pt')).toBe('Aceito');
+      expect(i18n.localizeRsvp('declined', 'pt')).toBe('Recusado');
+      expect(i18n.localizeRsvp('tentative', 'es')).toBe('Provisional');
+      expect(i18n.localizeRsvp('needsAction', 'de')).toBe('Keine Antwort');
+    });
+  });
+
+  describe('getPdfLabels', () => {
+    test('returns default English labels for en or unknown locale', () => {
+      const en = i18n.getPdfLabels('en');
+      expect(en.reportTitle).toBe('Attendance Report');
+      expect(en.columns.joined).toBe('Joined');
+      expect(en.summaryFormat(5, 10)).toBe('5 of 10 recorded as present');
+    });
+
+    test('returns localized labels for pt, es, fr, de', () => {
+      const pt = i18n.getPdfLabels('pt');
+      expect(pt.reportTitle).toBe('Relatório de Presença');
+      expect(pt.dateLabel).toBe('Data');
+      expect(pt.columns.joined).toBe('Entrada');
+      expect(pt.summaryFormat(5, 10)).toBe('5 de 10 registrados como presentes');
+
+      const es = i18n.getPdfLabels('es');
+      expect(es.reportTitle).toBe('Informe de Asistencia');
+      expect(es.columns.status).toBe('Estado');
+    });
+  });
+
   describe('getStrings caching', () => {
     test('reuses cached instance on repeated calls', () => {
       const s1 = i18n.getStrings();

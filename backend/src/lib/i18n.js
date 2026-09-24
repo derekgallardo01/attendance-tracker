@@ -318,11 +318,301 @@ function getSheetHeaders(locale, tzAbbr) {
   ];
 }
 
+const DEFAULT_SUMMARY_LABELS = {
+  meeting: 'Meeting',
+  meetingId: 'Meeting ID',
+  type: 'Type',
+  scheduledRange: 'Scheduled Time',
+  scheduledEvent: 'Scheduled Event',
+  instantMeeting: 'Instant Meeting',
+  date: 'Date',
+  duration: 'Duration (min)',
+  totalInvited: 'Total Invited',
+  totalAttended: 'Total Attended',
+  attendanceRate: 'Attendance Rate',
+};
+
+const LOCALIZED_SUMMARY_LABELS = {
+  pt: {
+    meeting: 'Reunião',
+    meetingId: 'ID da Reunião',
+    type: 'Tipo',
+    scheduledRange: 'Horário Agendado',
+    scheduledEvent: 'Evento Agendado',
+    instantMeeting: 'Reunião Instantânea',
+    date: 'Data',
+    duration: 'Duração (min)',
+    totalInvited: 'Total de Convidados',
+    totalAttended: 'Total Presente',
+    attendanceRate: 'Taxa de Presença',
+  },
+  es: {
+    meeting: 'Reunión',
+    meetingId: 'ID de la Reunión',
+    type: 'Tipo',
+    scheduledRange: 'Hora Programada',
+    scheduledEvent: 'Evento Programado',
+    instantMeeting: 'Reunión Instantánea',
+    date: 'Fecha',
+    duration: 'Duración (min)',
+    totalInvited: 'Total Invitados',
+    totalAttended: 'Total Asistentes',
+    attendanceRate: 'Tasa de Asistencia',
+  },
+  fr: {
+    meeting: 'Réunion',
+    meetingId: 'ID de la Réunion',
+    type: 'Type',
+    scheduledRange: 'Heure Prévue',
+    scheduledEvent: 'Événement Programmé',
+    instantMeeting: 'Réunion Instantanée',
+    date: 'Date',
+    duration: 'Durée (min)',
+    totalInvited: 'Total Invités',
+    totalAttended: 'Total Participants',
+    attendanceRate: 'Taux de Présence',
+  },
+  de: {
+    meeting: 'Meeting',
+    meetingId: 'Meeting-ID',
+    type: 'Typ',
+    scheduledRange: 'Geplante Zeit',
+    scheduledEvent: 'Geplantes Ereignis',
+    instantMeeting: 'Sofort-Meeting',
+    date: 'Datum',
+    duration: 'Dauer (Min.)',
+    totalInvited: 'Insgesamt Eingeladen',
+    totalAttended: 'Insgesamt Anwesend',
+    attendanceRate: 'Anwesenheitsrate',
+  },
+  it: {
+    meeting: 'Riunione',
+    meetingId: 'ID Riunione',
+    type: 'Tipo',
+    scheduledRange: 'Orario Programmato',
+    scheduledEvent: 'Evento Programmato',
+    instantMeeting: 'Riunione Istantanea',
+    date: 'Data',
+    duration: 'Durata (min)',
+    totalInvited: 'Totale Invitati',
+    totalAttended: 'Totale Presenti',
+    attendanceRate: 'Tasso di Presenza',
+  },
+  nl: {
+    meeting: 'Vergadering',
+    meetingId: 'Vergadering-ID',
+    type: 'Type',
+    scheduledRange: 'Geplande Tijd',
+    scheduledEvent: 'Gepland Evenement',
+    instantMeeting: 'Directe Vergadering',
+    date: 'Datum',
+    duration: 'Duur (min)',
+    totalInvited: 'Totaal Uitgenodigd',
+    totalAttended: 'Totaal Aanwezig',
+    attendanceRate: 'Aanwezigheidspercentage',
+  },
+};
+
+function getSheetSummaryLabels(locale) {
+  const norm = normalizeLocale(locale);
+  return LOCALIZED_SUMMARY_LABELS[norm] || DEFAULT_SUMMARY_LABELS;
+}
+
+const STATUS_TRANSLATIONS = {
+  pt: {
+    'Present': 'Presente',
+    'Left': 'Saiu',
+    'Absent': 'Ausente',
+    'Absent (excused)': 'Ausente (justificado)',
+    'Late': 'Atrasado',
+    'Left Early / Incomplete': 'Saiu antes / Incompleto',
+    'Excused (Short Stay)': 'Justificado (Estadia curta)',
+    'Present (Left)': 'Presente (Saiu)',
+    'Guest (Present)': 'Convidado (Presente)',
+    'Guest (Left)': 'Convidado (Saiu)',
+  },
+  es: {
+    'Present': 'Presente',
+    'Left': 'Salió',
+    'Absent': 'Ausente',
+    'Absent (excused)': 'Ausente (justificado)',
+    'Late': 'Tarde',
+    'Left Early / Incomplete': 'Salió antes / Incompleto',
+    'Excused (Short Stay)': 'Justificado (Estadía corta)',
+    'Present (Left)': 'Presente (Salió)',
+    'Guest (Present)': 'Invitado (Presente)',
+    'Guest (Left)': 'Invitado (Salió)',
+  },
+  fr: {
+    'Present': 'Présent',
+    'Left': 'Parti',
+    'Absent': 'Absent',
+    'Absent (excused)': 'Absent (excusé)',
+    'Late': 'En retard',
+    'Left Early / Incomplete': 'Parti plus tôt / Incomplet',
+    'Excused (Short Stay)': 'Excusé (Court séjour)',
+    'Present (Left)': 'Présent (Parti)',
+    'Guest (Present)': 'Invité (Présent)',
+    'Guest (Left)': 'Invité (Parti)',
+  },
+  de: {
+    'Present': 'Anwesend',
+    'Left': 'Verlassen',
+    'Absent': 'Abwesend',
+    'Absent (excused)': 'Abwesend (entschuldigt)',
+    'Late': 'Verspätet',
+    'Left Early / Incomplete': 'Frühzeitig verlassen / Unvollständig',
+    'Excused (Short Stay)': 'Entschuldigt (Kurzer Aufenthalt)',
+    'Present (Left)': 'Anwesend (Verlassen)',
+    'Guest (Present)': 'Gast (Anwesend)',
+    'Guest (Left)': 'Gast (Verlassen)',
+  },
+  it: {
+    'Present': 'Presente',
+    'Left': 'Uscito',
+    'Absent': 'Assente',
+    'Absent (excused)': 'Assente (giustificato)',
+    'Late': 'In ritardo',
+    'Left Early / Incomplete': 'Uscito prima / Incompleto',
+    'Excused (Short Stay)': 'Giustificato (Breve permanenza)',
+    'Present (Left)': 'Presente (Uscito)',
+    'Guest (Present)': 'Ospite (Presente)',
+    'Guest (Left)': 'Ospite (Uscito)',
+  },
+};
+
+function localizeStatus(status, locale) {
+  if (!status) return '';
+  const norm = normalizeLocale(locale);
+  if (norm === 'en') return status;
+  return STATUS_TRANSLATIONS[norm]?.[status] || status;
+}
+
+const RSVP_TRANSLATIONS = {
+  pt: {
+    accepted: 'Aceito',
+    declined: 'Recusado',
+    tentative: 'Talvez',
+    needsAction: 'Sem Resposta',
+  },
+  es: {
+    accepted: 'Aceptado',
+    declined: 'Rechazado',
+    tentative: 'Provisional',
+    needsAction: 'Sin Respuesta',
+  },
+  fr: {
+    accepted: 'Accepté',
+    declined: 'Refusé',
+    tentative: 'Provisoire',
+    needsAction: 'Sans Réponse',
+  },
+  de: {
+    accepted: 'Zugesagt',
+    declined: 'Abgelehnt',
+    tentative: 'Vorläufig',
+    needsAction: 'Keine Antwort',
+  },
+  it: {
+    accepted: 'Accettato',
+    declined: 'Rifiutato',
+    tentative: 'Provvisorio',
+    needsAction: 'Nessuna Risposta',
+  },
+};
+
+function localizeRsvp(status, locale) {
+  if (!status) return '';
+  const norm = normalizeLocale(locale);
+  if (norm === 'en') {
+    switch (status) {
+      case 'accepted':    return 'Accepted';
+      case 'declined':    return 'Declined';
+      case 'tentative':   return 'Tentative';
+      case 'needsAction': return 'No Response';
+      default:            return '';
+    }
+  }
+  const map = RSVP_TRANSLATIONS[norm];
+  if (map && map[status]) return map[status];
+  switch (status) {
+    case 'accepted':    return 'Accepted';
+    case 'declined':    return 'Declined';
+    case 'tentative':   return 'Tentative';
+    case 'needsAction': return 'No Response';
+    default:            return '';
+  }
+}
+
+const PDF_TRANSLATIONS = {
+  pt: {
+    reportTitle: 'Relatório de Presença',
+    dateLabel: 'Data',
+    hostLabel: 'Organizador',
+    durationLabel: 'Duração',
+    columns: { name: 'Nome', email: 'E-mail', joined: 'Entrada', left: 'Saída', active: 'Duração', status: 'Status' },
+    summaryFormat: (present, total) => `${present} de ${total} registrados como presentes`,
+  },
+  es: {
+    reportTitle: 'Informe de Asistencia',
+    dateLabel: 'Fecha',
+    hostLabel: 'Organizador',
+    durationLabel: 'Duración',
+    columns: { name: 'Nombre', email: 'Correo', joined: 'Entrada', left: 'Salida', active: 'Duración', status: 'Estado' },
+    summaryFormat: (present, total) => `${present} de ${total} registrados como presentes`,
+  },
+  fr: {
+    reportTitle: 'Rapport de Présence',
+    dateLabel: 'Date',
+    hostLabel: 'Hôte',
+    durationLabel: 'Durée',
+    columns: { name: 'Nom', email: 'E-mail', joined: 'Arrivée', left: 'Départ', active: 'Durée', status: 'Statut' },
+    summaryFormat: (present, total) => `${present} sur ${total} enregistrés comme présents`,
+  },
+  de: {
+    reportTitle: 'Anwesenheitsbericht',
+    dateLabel: 'Datum',
+    hostLabel: 'Gastgeber',
+    durationLabel: 'Dauer',
+    columns: { name: 'Name', email: 'E-Mail', joined: 'Beitritt', left: 'Verlassen', active: 'Dauer', status: 'Status' },
+    summaryFormat: (present, total) => `${present} von ${total} als anwesend erfasst`,
+  },
+  it: {
+    reportTitle: 'Rapporto Presenze',
+    dateLabel: 'Data',
+    hostLabel: 'Organizzatore',
+    durationLabel: 'Durata',
+    columns: { name: 'Nome', email: 'E-mail', joined: 'Entrata', left: 'Uscita', active: 'Durata', status: 'Stato' },
+    summaryFormat: (present, total) => `${present} su ${total} registrati come presenti`,
+  },
+};
+
+const DEFAULT_PDF_LABELS = {
+  reportTitle: 'Attendance Report',
+  dateLabel: 'Date',
+  hostLabel: 'Host',
+  durationLabel: 'Duration',
+  columns: { name: 'Name', email: 'Email', joined: 'Joined', left: 'Left', active: 'Active', status: 'Status' },
+  summaryFormat: (present, total) => `${present} of ${total} recorded as present`,
+};
+
+function getPdfLabels(locale) {
+  const norm = normalizeLocale(locale);
+  return PDF_TRANSLATIONS[norm] || DEFAULT_PDF_LABELS;
+}
+
 module.exports = {
   getStrings,
   normalizeLocale,
   t,
   getSheetHeaders,
+  getSheetSummaryLabels,
+  localizeStatus,
+  localizeRsvp,
+  getPdfLabels,
   LOCALIZED_HEADERS,
+  DEFAULT_SUMMARY_LABELS,
+  LOCALIZED_SUMMARY_LABELS,
+  DEFAULT_PDF_LABELS,
   _resetCache: () => { cachedStrings = null; },
 };

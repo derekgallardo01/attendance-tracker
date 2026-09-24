@@ -396,3 +396,118 @@ describe('buildAttendanceCsv — self-check-in notes', () => {
     expect(csv).toContain(`"Checked in ${chkStr}"`);
   });
 });
+
+describe('buildAttendanceCsv — localization & timezone', () => {
+  const startTime = new Date('2026-09-07T14:00:00Z');
+  const now = new Date('2026-09-07T15:00:00Z');
+  const joinTime = '2026-09-07T14:05:00.000Z';
+  const leaveTime = '2026-09-07T14:50:00.000Z';
+
+  test('localizes headers, status, and formats times with locale and timezone', () => {
+    const parts = [
+      { displayName: 'Larissa', email: 'l@test.com', present: false, joinTime, leaveTime, rejoins: 1 }
+    ];
+    const csv = buildAttendanceCsv(parts, null, {
+      locale: 'pt-BR',
+      timezone: 'America/Sao_Paulo',
+      startTime,
+      now,
+      totalMeetingMs: 3600000,
+    });
+    expect(csv).toContain('"Nome","E-mail","Status","% Presença"');
+    expect(csv).toContain('Saiu');
+    const expectedJoin = new Date(joinTime).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    expect(csv).toContain(expectedJoin);
+  });
+
+  test('formats times when only timezone is provided', () => {
+    const parts = [{ displayName: 'User', email: 'u@test.com', present: true, joinTime }];
+    const csv = buildAttendanceCsv(parts, null, {
+      timezone: 'America/New_York',
+    });
+    const expectedJoin = new Date(joinTime).toLocaleTimeString(undefined, { timeZone: 'America/New_York' });
+    expect(csv).toContain(expectedJoin);
+    expect(csv).toContain('"Name","Email","Status"');
+  });
+
+  test('formats times and localizes when only locale is provided', () => {
+    const parts = [{ displayName: 'User', email: 'u@test.com', present: true, joinTime }];
+    const csv = buildAttendanceCsv(parts, null, {
+      locale: 'es',
+    });
+    const expectedJoin = new Date(joinTime).toLocaleTimeString('es', { timeZone: undefined });
+    expect(csv).toContain(expectedJoin);
+    expect(csv).toContain('"Nombre","Correo","Estado"');
+    expect(csv).toContain('Presente');
+  });
+
+  test('falls back to default toLocaleTimeString when timezone throws', () => {
+    const parts = [{ displayName: 'User', email: 'u@test.com', present: true, joinTime }];
+    const csv = buildAttendanceCsv(parts, null, {
+      timezone: 'Invalid/NonExistent_Zone',
+      locale: 'en',
+    });
+    const expectedJoin = new Date(joinTime).toLocaleTimeString();
+    expect(csv).toContain(expectedJoin);
+  });
+
+  test('handles invalid date in checkedInAt gracefully in fmtTime', () => {
+    const parts = [{ displayName: 'User', email: 'u@test.com', present: true, joinTime, checkedInAt: 'invalid-date' }];
+    const csv = buildAttendanceCsv(parts, null, {
+      locale: 'pt',
+      timezone: 'America/Sao_Paulo',
+    });
+    expect(csv).toContain('Checked in');
+  });
+
+  test('localizes all statuses across roster, late, excused, short stay, and guests in Portuguese', () => {
+    const roster = [
+      { name: 'Late Student', email: 'late@test.com' },
+      { name: 'Left Early Student', email: 'early@test.com' },
+      { name: 'Excused Short Student', email: 'short@test.com' },
+      { name: 'Left Student', email: 'left@test.com' },
+      { name: 'Absent Student', email: 'absent@test.com' },
+      { name: 'Excused Absent Student', email: 'absentexcused@test.com' },
+    ];
+    const parts = [
+      { displayName: 'Late Student', email: 'late@test.com', present: true, joinTime: new Date('2026-09-07T14:20:00Z'), _accumulatedMs: 40 * 60000 },
+      { displayName: 'Left Early Student', email: 'early@test.com', present: false, joinTime, leaveTime, _accumulatedMs: 10 * 60000 },
+      { displayName: 'Excused Short Student', email: 'short@test.com', present: false, joinTime, leaveTime, _accumulatedMs: 10 * 60000 },
+      { displayName: 'Left Student', email: 'left@test.com', present: false, joinTime, leaveTime, _accumulatedMs: 50 * 60000 },
+      { displayName: 'Guest Present', email: 'gp@test.com', present: true, joinTime, _accumulatedMs: 40 * 60000 },
+      { displayName: 'Guest Left', email: 'gl@test.com', present: false, joinTime, leaveTime, _accumulatedMs: 40 * 60000 },
+    ];
+    const csv = buildAttendanceCsv(parts, roster, {
+      locale: 'pt',
+      timezone: 'America/Sao_Paulo',
+      startTime,
+      now,
+      totalMeetingMs: 3600000,
+      minPercent: 50,
+      lateMinutes: 10,
+      excusedStudents: {
+        'short@test.com': { excused: true, note: 'Allowed early departure' },
+        'absentexcused@test.com': { excused: true, note: 'Illness' },
+      },
+    });
+
+    expect(csv).toContain('Atrasado');
+    expect(csv).toContain('Saiu antes / Incompleto');
+    expect(csv).toContain('Justificado (Estadia curta)');
+    expect(csv).toContain('Presente (Saiu)');
+    expect(csv).toContain('Ausente');
+    expect(csv).toContain('Ausente (Justificado)');
+    expect(csv).toContain('Convidado (Presente)');
+    expect(csv).toContain('Convidado (Saiu)');
+  });
+
+  test('falls back to default English headers and statuses when locale is unsupported', () => {
+    const parts = [{ displayName: 'User', email: 'u@test.com', present: true, joinTime }];
+    const csv = buildAttendanceCsv(parts, null, {
+      locale: 'xx',
+    });
+    expect(csv).toContain('"Name","Email","Status"');
+    expect(csv).toContain('Present');
+  });
+});
+

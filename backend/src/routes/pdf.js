@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const { requireAuth } = require('../middleware/auth');
 const { planIsPro } = require('./billing');
-const { getMeetingWithParticipants, saveVerifications } = require('../services/firestore');
+const { getMeetingWithParticipants, saveVerifications, getUserSettings, getUser } = require('../services/firestore');
 const { buildReportModel, renderReportPdf, buildCertificateModels, renderCertificatesPdf } = require('../lib/certificate');
 const log = require('../lib/logger');
 
@@ -33,13 +33,34 @@ router.post('/export/pdf', requireAuth, async (req, res) => {
     let meeting;
     let attendees;
 
+    // Resolve user's timezone early with full fallback cascade
+    let tz = b.timezone;
+    if (!tz && req.user?.email) {
+      try {
+        const s = await getUserSettings(req.user.domain, req.user.email);
+        tz = s?.timezone;
+        if (!tz) {
+          const u = await getUser(req.user.domain, req.user.email);
+          tz = u?.timezone || u?.signupGeo?.timezone;
+        }
+      } catch {}
+    }
+    tz = tz || 'America/New_York';
+
+    // Resolve user's locale with fallback cascade
+    let locale = b.locale || req.user?.locale;
+    if (!locale && req.headers?.['accept-language']) {
+      locale = req.headers['accept-language'].split(',')[0].trim();
+    }
+    locale = locale || 'en';
+
     if (b.conferenceId && !Array.isArray(b.participants)) {
       // History path — pull the persisted attendance for this meeting.
       const m = await getMeetingWithParticipants(req.user.domain, b.conferenceId, req.user.email);
       if (!m) return res.status(404).json({ error: 'Meeting not found.' });
       meeting = {
         title: m.title, conferenceId: m.conferenceId, startTime: m.startTime,
-        endTime: m.endTime, host: req.user.displayName || null, timezone: b.timezone || null,
+        endTime: m.endTime, host: req.user.displayName || null, timezone: tz, locale,
       };
       attendees = m.participants;
     } else {
@@ -49,7 +70,7 @@ router.post('/export/pdf', requireAuth, async (req, res) => {
       meeting = {
         title: b.meetingTitle, conferenceId: b.conferenceId || null,
         startTime: b.meetingStartTime || b.eventStart || null, endTime: b.eventEnd || null,
-        host: req.user.displayName || null, timezone: b.timezone || null,
+        host: req.user.displayName || null, timezone: tz, locale,
       };
     }
 
@@ -72,7 +93,7 @@ router.post('/export/pdf', requireAuth, async (req, res) => {
       }
       const models = buildCertificateModels({
         meeting, attendees,
-        options: { brand, creditHours: b.creditHours, courseCode, issuer },
+        options: { brand, creditHours: b.creditHours, courseCode, issuer, locale, timezone: tz },
       });
       if (!models.length) return res.status(400).json({ error: 'No present attendees to certify.' });
       pdf = await renderCertificatesPdf(models);
@@ -87,7 +108,7 @@ router.post('/export/pdf', requireAuth, async (req, res) => {
       })));
     } else {
       // Base report: free. Branding is the only Pro lever (default footer otherwise).
-      const model = buildReportModel({ meeting, attendees, options: { brand } });
+      const model = buildReportModel({ meeting, attendees, options: { brand, locale, timezone: tz } });
       pdf = await renderReportPdf(model);
       filename = `attendance-${slugify(meeting.title)}.pdf`;
     }

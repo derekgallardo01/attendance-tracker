@@ -1129,3 +1129,45 @@ describe('POST /api/save-to-sheets — colleague referral reward', () => {
     expect(firestore.grantReferralReward).toHaveBeenCalledWith('acme.com', 'user@acme.com', 'referrer@acme.com');
   });
 });
+
+describe('POST /api/save-to-sheets — localization and timezone', () => {
+  test('uses Portuguese summary, headers, and status when locale is pt', async () => {
+    mockSheetsUpdate.mockClear();
+
+    const res = await request(app)
+      .post('/api/save-to-sheets')
+      .set(authedHeader('user@acme.com', 'acme.com'))
+      .set('Content-Type', 'application/json')
+      .send({
+        ...validPayload,
+        locale: 'pt',
+        timezone: 'America/Sao_Paulo',
+        calendarAttendees: [
+          { email: 'absent@acme.com', displayName: 'Absent Person', status: 'accepted' },
+        ],
+      });
+
+    expect(res.status).toBe(200);
+    expect(mockSheetsUpdate).toHaveBeenCalled();
+
+    const capturedValues = mockSheetsUpdate.mock.calls[0][0].requestBody.values;
+    const meetingRow = capturedValues.find(r => r[0] === 'Reunião');
+    expect(meetingRow).toBeDefined();
+
+    // Headers should be Portuguese
+    const headerRow = capturedValues.find(r => r[0] === 'Nome');
+    expect(headerRow).toBeDefined();
+    expect(headerRow[1]).toBe('E-mail');
+
+    // Status should be Presente for present, Ausente for no-show
+    const presentRow = capturedValues.find(r => r[0] === 'Alex');
+    expect(presentRow).toBeDefined();
+    expect(presentRow[9]).toBe('Presente');
+
+    const absentRow = capturedValues.find(r => r[0] === 'Absent Person');
+    expect(absentRow).toBeDefined();
+    expect(absentRow[9]).toBe('Ausente');
+    expect(absentRow[2]).toBe('Aceito'); // RSVP localized
+  });
+});
+

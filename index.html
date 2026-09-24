@@ -3130,6 +3130,8 @@ function csvExportContext() {
       minMinutes: state.thresholds?.minMinutes,
       excusedStudents: state.excusedStudents,
       startTime: state.startTime,
+      timezone: localStorage.getItem('userTimezone') || ((typeof Intl !== 'undefined' && Intl.DateTimeFormat) ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'America/New_York'),
+      locale: (window.AttStrings && AttStrings.getLocale()) || 'en',
       now
     },
   };
@@ -7133,6 +7135,7 @@ async function _downloadPdf({ type, filenameBase, event, options }) {
         eventStart: ex.eventStart,
         eventEnd: ex.eventEnd,
         timezone: ex.timezone,
+        locale: (window.AttStrings && AttStrings.getLocale()) || 'en',
         participants: ex.participants,
         ...(o.issuer ? { issuer: o.issuer } : {}),
         ...(o.courseCode ? { courseCode: o.courseCode } : {}),

@@ -68,6 +68,19 @@ describe('buildReportModel (pure)', () => {
     });
     expect(m.summary).toMatchObject({ present: 1, total: 3 });
   });
+
+  test('localizes columns, titles, summary, and status for pt locale', () => {
+    const m = buildReportModel({
+      ...BASE,
+      meeting: { ...BASE.meeting, locale: 'pt', timezone: 'America/Sao_Paulo' },
+    });
+    expect(m.reportTitle).toBe('Relatório de Presença');
+    expect(m.columns).toEqual(['Nome', 'E-mail', 'Entrada', 'Saída', 'Duração', 'Status']);
+    expect(m.rows[0].status).toBe('Saiu');
+    expect(m.rows[1].status).toBe('Presente');
+    expect(m.rows[0].joined).toBe('11:00'); // 14:00 UTC in Sao Paulo (UTC-3)
+    expect(m.summary.text).toBe('2 de 2 registrados como presentes');
+  });
 });
 
 describe('_internals', () => {

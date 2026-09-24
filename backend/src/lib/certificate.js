@@ -13,6 +13,7 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const PDFDocument = require('pdfkit');
+const { getPdfLabels, localizeStatus } = require('./i18n');
 
 const FONT_PATH = path.join(__dirname, '..', '..', 'assets', 'fonts', 'NotoSans-Regular.ttf');
 // Resolve once at load; if the font is somehow missing we fall back to pdfkit's
@@ -51,13 +52,14 @@ function fmtDuration(min) {
   return r ? `${h}h ${String(r).padStart(2, '0')}m` : `${h}h`;
 }
 
-// HH:MM in the meeting's timezone when given, else the server locale. Best-effort:
+// HH:MM in the meeting's timezone when given, formatted for the locale. Best-effort:
 // a bad tz string falls back rather than throwing.
-function fmtTime(v, tz) {
+function fmtTime(v, tz, locale) {
   const d = toDate(v);
   if (!d) return '—';
+  const loc = locale || 'en-US';
   try {
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat(loc, {
       hour: '2-digit', minute: '2-digit', hour12: false, timeZone: tz || undefined,
     }).format(d);
   } catch (_) {
@@ -65,11 +67,12 @@ function fmtTime(v, tz) {
   }
 }
 
-function fmtDate(v, tz) {
+function fmtDate(v, tz, locale) {
   const d = toDate(v);
   if (!d) return '—';
+  const loc = locale || 'en-US';
   try {
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat(loc, {
       weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', timeZone: tz || undefined,
     }).format(d);
   } catch (_) {
@@ -77,10 +80,12 @@ function fmtDate(v, tz) {
   }
 }
 
-function statusOf(p) {
-  if (p.present) return 'Present';
-  if (p.status) return String(p.status);
-  return toDate(p.leaveTime ?? p.leaveTimeISO) ? 'Left' : 'Present';
+function statusOf(p, locale) {
+  let raw = 'Present';
+  if (p.present) raw = 'Present';
+  else if (p.status) raw = String(p.status);
+  else raw = toDate(p.leaveTime ?? p.leaveTimeISO) ? 'Left' : 'Present';
+  return localizeStatus(raw, locale);
 }
 
 // A short, stable, human-quotable code so a report can be referenced later.
@@ -96,7 +101,9 @@ function verificationCode(seed) {
 // joinTimeISO/leaveTimeISO strings) into a flat render model.
 function buildReportModel({ meeting = {}, attendees = [], options = {} } = {}) {
   const tz = meeting.timezone || null;
+  const locale = meeting.locale || options.locale || 'en';
   const fallbackEnd = meeting.endTime || null;
+  const labels = getPdfLabels(locale);
 
   const rows = (attendees || []).map((p) => {
     const join = p.joinTime ?? p.joinTimeISO ?? null;
@@ -105,30 +112,36 @@ function buildReportModel({ meeting = {}, attendees = [], options = {} } = {}) {
     return {
       name: (p.displayName || p.name || 'Unknown').toString(),
       email: (p.email || '').toString(),
-      joined: fmtTime(join, tz),
-      left: leave ? fmtTime(leave, tz) : '—',
+      joined: fmtTime(join, tz, locale),
+      left: leave ? fmtTime(leave, tz, locale) : '—',
       active: fmtDuration(mins),
       activeMin: mins,
-      status: statusOf(p),
+      status: statusOf(p, locale),
     };
   });
 
-  const presentCount = rows.filter((r) => r.status !== 'Absent' && r.status !== 'Excused').length;
+  const presentCount = (attendees || []).filter((p) => p.present || (!String(p.status || '').includes('Absent') && !String(p.status || '').includes('Excused'))).length;
   const brandName = options.brand && options.brand.name ? String(options.brand.name) : null;
+  const cols = [labels.columns.name, labels.columns.email, labels.columns.joined, labels.columns.left, labels.columns.active, labels.columns.status];
 
   return {
     title: (meeting.title || 'Google Meet').toString(),
-    date: fmtDate(meeting.startTime || meeting.date, tz),
+    reportTitle: labels.reportTitle,
+    date: fmtDate(meeting.startTime || meeting.date, tz, locale),
+    datePrefix: labels.dateLabel,
     host: meeting.host ? String(meeting.host) : null,
+    hostPrefix: labels.hostLabel,
     durationLabel: meeting.startTime && meeting.endTime
       ? fmtDuration(durationMin(meeting.startTime, meeting.endTime))
       : null,
-    columns: ['Name', 'Email', 'Joined', 'Left', 'Active', 'Status'],
+    durationPrefix: labels.durationLabel,
+    columns: cols,
+    colLabels: labels.columns,
     rows,
     summary: {
       present: presentCount,
       total: rows.length,
-      text: `${presentCount} of ${rows.length} recorded as present`,
+      text: labels.summaryFormat(presentCount, rows.length),
     },
     footer: brandName ? `${brandName} · via attendancetracker.dev` : DEFAULT_FOOTER,
     verificationCode: verificationCode(
@@ -156,13 +169,15 @@ function renderReportPdf(model) {
       const width = right - left;
 
       // Header
-      doc.font(font).fontSize(20).fillColor('#111827').text('Attendance Report', left, 50);
+      doc.font(font).fontSize(20).fillColor('#111827').text(model.reportTitle || 'Attendance Report', left, 50);
       doc.moveDown(0.2);
       doc.fontSize(13).fillColor('#374151').text(model.title, { width });
       doc.moveDown(0.4);
       doc.fontSize(10).fillColor('#6b7280');
-      const metaBits = [model.date && `Date: ${model.date}`, model.host && `Host: ${model.host}`,
-        model.durationLabel && `Duration: ${model.durationLabel}`].filter(Boolean);
+      const dateText = model.date && `${model.datePrefix ? model.datePrefix + ': ' : 'Date: '}${model.date}`;
+      const hostText = model.host && `${model.hostPrefix ? model.hostPrefix + ': ' : 'Host: '}${model.host}`;
+      const durText = model.durationLabel && `${model.durationPrefix ? model.durationPrefix + ': ' : 'Duration: '}${model.durationLabel}`;
+      const metaBits = [dateText, hostText, durText].filter(Boolean);
       if (metaBits.length) doc.text(metaBits.join('     '), { width });
       doc.moveDown(0.2);
       doc.fillColor('#111827').fontSize(11).text(model.summary.text, { width });
@@ -170,12 +185,12 @@ function renderReportPdf(model) {
 
       // Table
       const cols = [
-        { key: 'name', label: 'Name', w: 0.26 },
-        { key: 'email', label: 'Email', w: 0.28 },
-        { key: 'joined', label: 'Joined', w: 0.11 },
-        { key: 'left', label: 'Left', w: 0.11 },
-        { key: 'active', label: 'Active', w: 0.11 },
-        { key: 'status', label: 'Status', w: 0.13 },
+        { key: 'name', label: model.colLabels?.name || 'Name', w: 0.26 },
+        { key: 'email', label: model.colLabels?.email || 'Email', w: 0.28 },
+        { key: 'joined', label: model.colLabels?.joined || 'Joined', w: 0.11 },
+        { key: 'left', label: model.colLabels?.left || 'Left', w: 0.11 },
+        { key: 'active', label: model.colLabels?.active || 'Active', w: 0.11 },
+        { key: 'status', label: model.colLabels?.status || 'Status', w: 0.13 },
       ];
       const xs = [];
       let acc = left;
@@ -224,9 +239,10 @@ function renderReportPdf(model) {
 // certificate states the individual's active duration.
 function buildCertificateModels({ meeting = {}, attendees = [], options = {} } = {}) {
   const tz = meeting.timezone || null;
+  const locale = meeting.locale || options.locale || 'en';
   const fallbackEnd = meeting.endTime || null;
   const session = (meeting.title || 'Google Meet').toString();
-  const dateLabel = fmtDate(meeting.startTime || meeting.date, tz);
+  const dateLabel = fmtDate(meeting.startTime || meeting.date, tz, locale);
   const issuer = options.issuer ? String(options.issuer) : (meeting.host ? String(meeting.host) : null);
   const courseCode = options.courseCode ? String(options.courseCode) : null;
   const fixedCredit = Number(options.creditHours);

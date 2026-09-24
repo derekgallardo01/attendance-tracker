@@ -6,7 +6,7 @@ const log = require('../lib/logger');
 const { persistExport, getUser, grantReferralReward, getUserSheetId, setUserSheetId, countUserExports, countUserMonthlyExports, getExportReexportCount, getMeetingExcusedEmails, addMeetingExcusedEmails, getUserSettings, updateUserSettings, getUserMeetingSeries, logEvent, isEmailSuppressed } = require('../services/firestore');
 const { sendExportNotification, sendSlackDigest, sendChatDigest, sendDiscordDigest } = require('../lib/notifications');
 const { planIsPro, sendUpgradeLinkForUser } = require('./billing');
-const { getSheetHeaders } = require('../lib/i18n');
+const { getSheetHeaders, getSheetSummaryLabels, localizeStatus, localizeRsvp } = require('../lib/i18n');
 
 const router = Router();
 
@@ -37,14 +37,8 @@ function a1Range(tabName, cell = 'A1') {
   return `'${String(tabName).replace(/'/g, "''")}'!${cell}`;
 }
 
-function fmtRsvp(status) {
-  switch (status) {
-    case 'accepted':    return 'Accepted';
-    case 'declined':    return 'Declined';
-    case 'tentative':   return 'Tentative';
-    case 'needsAction': return 'No Response';
-    default:            return '';
-  }
+function fmtRsvp(status, locale = 'en') {
+  return localizeRsvp(status, locale);
 }
 
 // ── Digest row shaping ──
@@ -189,6 +183,17 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
       } catch {}
     }
     tz = tz || 'America/New_York';
+
+    // Resolve user's locale with fallback cascade
+    let locale = data.locale;
+    if (!locale && req.user?.email) {
+      try {
+        const u = await getUser(req.user.domain, req.user.email);
+        locale = u?.locale;
+      } catch {}
+    }
+    locale = locale || 'en';
+
     const validSpreadsheetTz = (() => {
       try {
         Intl.DateTimeFormat(undefined, { timeZone: tz });
@@ -340,13 +345,13 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
       rsvpMap[(a.email || '').toLowerCase()] = a.status;
     }
 
-    // Format helpers — display in user's timezone (falls back to US Eastern)
+    // Format helpers — display in user's timezone and locale (falls back to US Eastern / en-US)
     const tzAbbr = (() => { try {
-      return new Date().toLocaleString('en-US', { timeZone: tz, timeZoneName: 'short' }).split(' ').pop();
+      return new Date().toLocaleString(locale || 'en-US', { timeZone: tz, timeZoneName: 'short' }).split(' ').pop();
     } catch { return 'ET'; } })();
     const fmtTime = (iso) => {
       if (!iso) return '';
-      return new Date(iso).toLocaleString('en-US', { timeZone: tz, dateStyle: 'medium', timeStyle: 'short' }) + ' ' + tzAbbr;
+      return new Date(iso).toLocaleString(locale || 'en-US', { timeZone: tz, dateStyle: 'medium', timeStyle: 'short' }) + ' ' + tzAbbr;
     };
     /* istanbul ignore next: only ever called with meetingStartTime||exportedAt (always truthy) */
     const fmtDate = iso => iso ? fmtTime(iso) : '';
@@ -363,22 +368,23 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
     const fmtTimeOnly = (iso) => {
       /* istanbul ignore next: only called when eventStart && eventEnd are truthy */
       if (!iso) return '';
-      return new Date(iso).toLocaleString('en-US', { timeZone: tz, timeStyle: 'short' }) + ' ' + tzAbbr;
+      return new Date(iso).toLocaleString(locale || 'en-US', { timeZone: tz, timeStyle: 'short' }) + ' ' + tzAbbr;
     };
     const scheduledRange = eventStart && eventEnd
       ? `${fmtTimeOnly(eventStart)} – ${fmtTimeOnly(eventEnd)}`
       : null;
 
+    const sumLabels = getSheetSummaryLabels(locale);
     const summary = [
-      ['Meeting', meetingTitle || 'Google Meet'],
-      ['Meeting ID', conferenceId || 'N/A'],
-      ['Type', meetingType === 'scheduled' ? 'Scheduled Event' : 'Instant Meeting'],
-      ...(scheduledRange ? [['Scheduled Time', scheduledRange]] : []),
-      ['Date', fmtDate(meetingStartTime || exportedAt)],
-      ['Duration (min)', meetStart ? (meetDurationMin || '< 1') : 'N/A'],
-      ['Total Invited', totalInvited],
-      ['Total Attended', totalAttended],
-      ['Attendance Rate', attendanceRate],
+      [sumLabels.meeting, meetingTitle || 'Google Meet'],
+      [sumLabels.meetingId, conferenceId || 'N/A'],
+      [sumLabels.type, meetingType === 'scheduled' ? sumLabels.scheduledEvent : sumLabels.instantMeeting],
+      ...(scheduledRange ? [[sumLabels.scheduledRange, scheduledRange]] : []),
+      [sumLabels.date, fmtDate(meetingStartTime || exportedAt)],
+      [sumLabels.duration, meetStart ? (meetDurationMin || '< 1') : 'N/A'],
+      [sumLabels.totalInvited, totalInvited],
+      [sumLabels.totalAttended, totalAttended],
+      [sumLabels.attendanceRate, attendanceRate],
       [],
     ];
 
@@ -397,7 +403,7 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
       return diff > lateThresholdMin ? diff : 0;
     };
 
-    const header = getSheetHeaders(data.locale, tzAbbr);
+    const header = getSheetHeaders(locale, tzAbbr);
 
     const attendedEmails = new Set();
     const attendedNames = new Set();
@@ -420,7 +426,8 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
         : (p.present ? '100%' : '');
       const lateMin = lateMinFor(p.joinTimeISO);
       const lateCell = lateMin > 0 ? `+${lateMin}m` : '';
-      return [sanitizeCell(p.displayName), sanitizeCell(p.email || ''), fmtRsvp(rsvpMap[email]), lateCell, fmtTime(p.joinTimeISO), fmtTime(p.leaveTimeISO), dur, pct, p.sessions, p.present ? 'Present' : 'Left', p.checkedInAtISO ? fmtTime(p.checkedInAtISO) : ''];
+      const statusStr = p.present ? localizeStatus('Present', locale) : localizeStatus('Left', locale);
+      return [sanitizeCell(p.displayName), sanitizeCell(p.email || ''), fmtRsvp(rsvpMap[email], locale), lateCell, fmtTime(p.joinTimeISO), fmtTime(p.leaveTimeISO), dur, pct, p.sessions, statusStr, p.checkedInAtISO ? fmtTime(p.checkedInAtISO) : ''];
     });
 
     // Fix 2: Also capture emails from rows (includes manual overrides from frontend)
@@ -443,8 +450,9 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
         return true;
       })
       .map(a => {
-        const status = excusedSet.has((a.email || '').toLowerCase()) ? 'Absent (excused)' : 'Absent';
-        return [sanitizeCell(a.displayName), sanitizeCell(a.email), fmtRsvp(a.status), '', '', '', '', '0%', 0, status, ''];
+        const rawStatus = excusedSet.has((a.email || '').toLowerCase()) ? 'Absent (excused)' : 'Absent';
+        const status = localizeStatus(rawStatus, locale);
+        return [sanitizeCell(a.displayName), sanitizeCell(a.email), fmtRsvp(a.status, locale), '', '', '', '', '0%', 0, status, ''];
       });
 
     const allRows = [...rows, ...noShows];
@@ -814,6 +822,7 @@ router.post('/save-to-sheets', async (req, res) => {
         meetingTitle: b.meetingTitle, tabName: b.tabName, exportedAt: b.exportedAt, participants: b.participants,
         calendarAttendees: b.calendarAttendees || [], meetingStartTime: b.meetingStartTime, meetingType: b.meetingType,
         eventStart: b.eventStart, eventEnd: b.eventEnd, conferenceId: b.conferenceId, timezone: b.timezone,
+        locale: b.locale,
         recurringEventId: b.recurringEventId, excusedFromClient: b.excusedEmails || [],
         lateMinutes: b.lateMinutes, // panel's "Late after" threshold — drives the Late? column + digest
       },
