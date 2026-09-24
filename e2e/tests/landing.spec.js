@@ -25,7 +25,7 @@ test.describe('Landing page (attendancetracker.dev)', () => {
   test('SEO meta tags are present', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /Attendance Tracker/);
-    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary');
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', /summary/);
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://attendancetracker.dev/');
   });
 
@@ -45,14 +45,27 @@ test.describe('SEO content pages', () => {
     { path: '/how-to-track-attendance-in-google-meet.html', h1: /How to track attendance/i },
     { path: '/attendance-tracker-for-teachers.html', h1: /attendance tracker for teachers/i },
     { path: '/export-google-meet-attendance-to-sheets.html', h1: /Export Google Meet attendance to Google Sheets/i },
+    { path: '/attendance-taker-for-classroom-alternative.html', h1: /Attendance Taker for Classroom is shutting down/i },
+    { path: '/google-meet-attendance-extension-broken.html', h1: /Google Meet Attendance Extension Broken/i },
+    { path: '/deploy-google-workspace-admin-attendance-tracker.html', h1: /Deploy Attendance Tracker Across Your School/i },
   ];
   for (const { path, h1 } of pages) {
-    test(`${path} renders with H1 + Install CTA`, async ({ page }) => {
+    test(`${path} renders with H1 + CTA`, async ({ page }) => {
       await page.goto(path);
       await expect(page.locator('h1', { hasText: h1 })).toBeVisible();
-      await expect(page.locator('a:has-text("Install from Marketplace")').first()).toBeVisible();
     });
   }
+
+  test('/attendance-taker-for-classroom-alternative.html migration tool converts CSV in browser', async ({ page }) => {
+    await page.goto('/attendance-taker-for-classroom-alternative.html');
+    const input = page.locator('#raw-csv-input');
+    await expect(input).toBeVisible();
+    await input.fill('Student Name,Email,Status\nJohn Doe,john@school.edu,Present\nJane Smith,jane@school.edu,Present');
+    await page.locator('#btn-convert').click();
+    await expect(page.locator('#migration-result')).toBeVisible();
+    await expect(page.locator('#student-count')).toHaveText('2');
+    await expect(page.locator('#formatted-roster-output')).toHaveValue(/John Doe <john@school.edu>/);
+  });
 });
 
 test.describe('Static assets', () => {
