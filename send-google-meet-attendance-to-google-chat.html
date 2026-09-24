@@ -10,20 +10,61 @@
   <link rel="canonical" href="https://attendancetracker.dev/send-google-meet-attendance-to-google-chat.html" />
   <meta property="og:title" content="Send Google Meet attendance to Google Chat or Discord" />
   <meta property="og:description" content="Automated post-meeting attendance cards — present, left early, absent, and a sheet link — delivered to Google Chat spaces and Discord channels." />
-  <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
+  <meta property="og:image" content="https://attendancetracker.dev/screenshots/01-live-roster.jpg" />
+  <meta property="og:image:width" content="1920" />
+  <meta property="og:image:height" content="1200" />
   <meta property="og:url" content="https://attendancetracker.dev/send-google-meet-attendance-to-google-chat.html" />
   <meta property="og:type" content="article" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Send Google Meet attendance to Google Chat or Discord" />
+  <meta name="twitter:description" content="Automated post-meeting attendance cards — present, left early, absent, and a sheet link — delivered to Google Chat spaces and Discord channels." />
+  <meta name="twitter:image" content="https://attendancetracker.dev/screenshots/01-live-roster.jpg" />
 
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "HowTo",
-    "name": "How to send Google Meet attendance to Google Chat",
-    "description": "Step-by-step instructions for connecting Google Meet attendance summaries to a Google Chat space via incoming webhooks.",
-    "step": [
-      {"@type": "HowToStep", "name": "Create a Google Chat webhook", "text": "In your Google Chat space, open Apps & integrations and add an incoming webhook."},
-      {"@type": "HowToStep", "name": "Paste the webhook into Attendance Tracker", "text": "Open Settings in the Attendance Tracker add-on, choose the Google Chat tab, paste the webhook URL, send a test, and save."},
-      {"@type": "HowToStep", "name": "Receive automatic post-meeting cards", "text": "After every export, a formatted attendance card posts to your Chat space automatically."}
+    "@graph": [
+      {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        "name": "How to send Google Meet attendance to Google Chat",
+        "description": "Step-by-step instructions for connecting Google Meet attendance summaries to a Google Chat space via incoming webhooks.",
+        "step": [
+          {
+            "@type": "HowToStep",
+            "name": "Create a Google Chat webhook",
+            "text": "In your Google Chat space, open Apps & integrations and add an incoming webhook."
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Paste the webhook into Attendance Tracker",
+            "text": "Open Settings in the Attendance Tracker add-on, choose the Google Chat tab, paste the webhook URL, send a test, and save."
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Receive automatic post-meeting cards",
+            "text": "After every export, a formatted attendance card posts to your Chat space automatically."
+          }
+        ],
+        "image": "https://attendancetracker.dev/screenshots/01-live-roster.jpg"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://attendancetracker.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Send Google Meet attendance to Google Chat (or Discord)",
+            "item": "https://attendancetracker.dev/send-google-meet-attendance-to-google-chat.html"
+          }
+        ]
+      }
     ]
   }
   </script>

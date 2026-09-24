@@ -10,20 +10,61 @@
   <link rel="canonical" href="https://attendancetracker.dev/how-to-send-google-meet-attendance-to-slack.html" />
   <meta property="og:title" content="How to automatically post Google Meet attendance to Slack" />
   <meta property="og:description" content="Post instant Block Kit attendance cards with present/absent rosters and Google Sheets links to Slack after every meeting." />
-  <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
+  <meta property="og:image" content="https://attendancetracker.dev/screenshots/01-live-roster.jpg" />
+  <meta property="og:image:width" content="1920" />
+  <meta property="og:image:height" content="1200" />
   <meta property="og:url" content="https://attendancetracker.dev/how-to-send-google-meet-attendance-to-slack.html" />
   <meta property="og:type" content="article" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="How to automatically post Google Meet attendance to Slack" />
+  <meta name="twitter:description" content="Post instant Block Kit attendance cards with present/absent rosters and Google Sheets links to Slack after every meeting." />
+  <meta name="twitter:image" content="https://attendancetracker.dev/screenshots/01-live-roster.jpg" />
 
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "HowTo",
-    "name": "How to automatically post Google Meet attendance to Slack",
-    "description": "Step-by-step instructions for connecting Google Meet attendance reports to Slack channels via incoming webhooks.",
-    "step": [
-      {"@type": "HowToStep", "name": "Create a Slack Webhook", "text": "Create an Incoming Webhook in your Slack workspace for your target channel."},
-      {"@type": "HowToStep", "name": "Paste webhook into Attendance Tracker", "text": "Open Settings in the Attendance Tracker add-on and paste your Slack Webhook URL."},
-      {"@type": "HowToStep", "name": "Receive automatic post-meeting digests", "text": "Whenever a meeting finishes and exports, a formatted Block Kit summary card posts to your Slack channel automatically."}
+    "@graph": [
+      {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        "name": "How to automatically post Google Meet attendance to Slack",
+        "description": "Step-by-step instructions for connecting Google Meet attendance reports to Slack channels via incoming webhooks.",
+        "step": [
+          {
+            "@type": "HowToStep",
+            "name": "Create a Slack Webhook",
+            "text": "Create an Incoming Webhook in your Slack workspace for your target channel."
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Paste webhook into Attendance Tracker",
+            "text": "Open Settings in the Attendance Tracker add-on and paste your Slack Webhook URL."
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Receive automatic post-meeting digests",
+            "text": "Whenever a meeting finishes and exports, a formatted Block Kit summary card posts to your Slack channel automatically."
+          }
+        ],
+        "image": "https://attendancetracker.dev/screenshots/01-live-roster.jpg"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://attendancetracker.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "How to automatically post Google Meet attendance to Slack",
+            "item": "https://attendancetracker.dev/how-to-send-google-meet-attendance-to-slack.html"
+          }
+        ]
+      }
     ]
   }
   </script>
