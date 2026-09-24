@@ -66,8 +66,8 @@ app.post('/api/webhooks/resend', express.raw({ type: 'application/json' }), rese
 // restricted to the allowedOrigins whitelist so nothing's been opened up.
 app.use(cors({ origin: CONFIG.allowedOrigins, credentials: true, maxAge: 600 }));
 
-app.use(express.json({ limit: '100kb' }));
-app.use(express.urlencoded({ extended: false, limit: '100kb' }));
+app.use(express.json({ limit: CONFIG.bodyLimit }));
+app.use(express.urlencoded({ extended: false, limit: CONFIG.bodyLimit }));
 
 // Request correlation IDs
 app.use(requestId);

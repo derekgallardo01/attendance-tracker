@@ -24,7 +24,7 @@ describe('global error handler — never leaks stack traces', () => {
   });
 
   test('oversized JSON body → 413 JSON, not a stack trace', async () => {
-    const huge = JSON.stringify({ blob: 'x'.repeat(150 * 1024) }); // > 100kb limit
+    const huge = JSON.stringify({ blob: 'x'.repeat(1.5 * 1024 * 1024) }); // > 1mb limit in test env
     const res = await request(app)
       .post('/api/export/pdf')
       .set('Content-Type', 'application/json')
@@ -33,6 +33,7 @@ describe('global error handler — never leaks stack traces', () => {
     expect(res.body).toEqual({ error: 'Request body too large.' });
     expect(res.text).not.toMatch(/node_modules|\/app\//);
   });
+
 
   test('other body-parser errors (unsupported charset) → generic JSON error, no stack', async () => {
     // Hits the generic tail of the handler: preserves the error status but

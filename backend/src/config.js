@@ -39,6 +39,12 @@ const CONFIG = {
   // if you want longer sweeps.
   requestTimeoutMs: Number(process.env.REQUEST_TIMEOUT_MS) || 30000,
 
+  // Maximum request body size for JSON and urlencoded parsers.
+  // Large classes (100-500+ attendees) with multi-session intervals and
+  // calendar attendee lists can easily reach 200KB - 2MB. Defaulting to 15mb
+  // prevents 413 "Request body too large" errors on enterprise/all-hands exports.
+  bodyLimit:        process.env.BODY_LIMIT || (process.env.NODE_ENV === 'test' ? '1mb' : '15mb'),
+
   // Public, absolute URL of this backend's /api mount. Used to build links in
   // emails (e.g. one-click unsubscribe) that must hit the API directly — the
   // marketing site on attendancetracker.dev is static GitHub Pages and does
