@@ -42,7 +42,7 @@
   <meta name="keywords" content="google meet attendance tracker, track attendance google meet, google meet attendance report, attendance tracker, how to take attendance in google meet, meeting attendance tracker, google meet export to sheets" />
   <link rel="canonical" href="https://attendancetracker.dev/" />
 
-  <!-- Localized alternate hreflang tags for 35 languages -->
+  <!-- Localized alternate hreflang tags for 41 languages -->
   <link rel="alternate" hreflang="x-default" href="https://attendancetracker.dev/" />
   <link rel="alternate" hreflang="en" href="https://attendancetracker.dev/?lang=en" />
   <link rel="alternate" hreflang="es" href="https://attendancetracker.dev/?lang=es" />
@@ -79,56 +79,12 @@
   <link rel="alternate" hreflang="fi" href="https://attendancetracker.dev/?lang=fi" />
   <link rel="alternate" hreflang="hu" href="https://attendancetracker.dev/?lang=hu" />
   <link rel="alternate" hreflang="so" href="https://attendancetracker.dev/?lang=so" />
-
-  <!-- Schema.org SoftwareApplication + FAQPage structured data for Google Search rich snippets -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "SoftwareApplication",
-        "name": "Attendance Tracker for Google Meet",
-        "operatingSystem": "Web, Chrome, Google Workspace",
-        "applicationCategory": "EducationalApplication, BusinessApplication",
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "USD"
-        },
-        "description": "Real-time attendance tracking add-on for Google Meet with one-click export to Google Sheets."
-      },
-      {
-        "@type": "FAQPage",
-        "mainEntity": [
-          {
-            "@type": "Question",
-            "name": "How do I track attendance in Google Meet?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Open the Attendance Tracker add-on inside your Google Meet meeting. It automatically tracks everyone who joins, leaves, and their total active duration. When your meeting ends, click 'Save to Sheets' to export a complete attendance report."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Can I export Google Meet attendance to Google Sheets?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Yes! Attendance Tracker exports clean, formatted attendance rosters directly to Google Sheets with student names, emails, join times, leave times, and total duration."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Is Attendance Tracker for Google Meet free?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Yes, Attendance Tracker offers a free tier with direct Google Sheets export and real-time attendance monitoring."
-            }
-          }
-        ]
-      }
-    ]
-  }
-  </script>
+  <link rel="alternate" hreflang="sw" href="https://attendancetracker.dev/?lang=sw" />
+  <link rel="alternate" hreflang="am" href="https://attendancetracker.dev/?lang=am" />
+  <link rel="alternate" hreflang="si" href="https://attendancetracker.dev/?lang=si" />
+  <link rel="alternate" hreflang="el" href="https://attendancetracker.dev/?lang=el" />
+  <link rel="alternate" hreflang="no" href="https://attendancetracker.dev/?lang=no" />
+  <link rel="alternate" hreflang="ca" href="https://attendancetracker.dev/?lang=ca" />
 
   <!-- Shared pure-helper module — loaded synchronously before any inline
        script so the inline code can rely on window.AttUtils. Kept as a
@@ -139,37 +95,175 @@
        engine — unit-tested in isolation. -->
   <script src="js/panel.js"></script>
   <script src="js/sim.js"></script>
-  <!-- i18n foundation — provides window.t() for user-facing strings. -->
+  <!-- i18n foundation — provides window.t() for user-facing strings across 41 locales. -->
   <script src="js/strings.js"></script>
 
-  <!-- Open Graph + Twitter card — controls the preview when this URL is
-       shared on Slack, Twitter, LinkedIn, iMessage, etc. Without these the
-       social preview shows nothing and conversion from shared links tanks. -->
+  <!-- Open Graph + Twitter card — rich preview on Slack, Twitter/X, LinkedIn, iMessage -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://attendancetracker.dev/" />
   <meta property="og:title" content="Attendance Tracker — Real-time attendance tracking for Google Meet" />
-  <meta property="og:description" content="Track who joined, who left, and how long they stayed. One-click export to Google Sheets. Free." />
-  <meta property="og:image" content="https://attendancetracker.dev/icons/icon-128.png" />
-  <meta property="og:image:alt" content="Attendance Tracker for Google Meet" />
+  <meta property="og:description" content="Track who joined, who left, and how long they stayed. 1-click export to Google Sheets. No bots, works on all Google Workspace and personal accounts." />
+  <meta property="og:image" content="https://attendancetracker.dev/screenshots/01-live-roster.jpg" />
+  <meta property="og:image:width" content="1920" />
+  <meta property="og:image:height" content="1200" />
+  <meta property="og:image:alt" content="Attendance Tracker live roster side panel in Google Meet" />
   <meta property="og:site_name" content="Attendance Tracker" />
-  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Attendance Tracker — Real-time attendance for Google Meet" />
-  <meta name="twitter:description" content="Track who joined, who left, and how long they stayed. One-click export to Google Sheets. Free." />
-  <meta name="twitter:image" content="https://attendancetracker.dev/icons/icon-128.png" />
+  <meta name="twitter:description" content="Track who joined, who left, and how long they stayed. 1-click export to Google Sheets. Free." />
+  <meta name="twitter:image" content="https://attendancetracker.dev/screenshots/01-live-roster.jpg" />
 
-  <!-- Structured data: lets Google show rich snippets in search results
-       (app name, rating slot, category). Schema.org SoftwareApplication. -->
+  <!-- Structured data (Schema.org) for Google Search rich snippets + AI answer engines (GEO) -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "Attendance Tracker for Google Meet",
-    "applicationCategory": "BusinessApplication",
-    "operatingSystem": "Web",
-    "url": "https://attendancetracker.dev/",
-    "description": "Real-time attendance tracking for Google Meet. See who joins, leaves, and how long they stay. Export to Google Sheets in one click.",
-    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-    "publisher": { "@type": "Organization", "name": "Attendance Tracker", "url": "https://attendancetracker.dev/" }
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://attendancetracker.dev/#software",
+        "name": "Attendance Tracker for Google Meet",
+        "alternateName": ["Attendance Tracker", "Google Meet Attendance Tracker", "Attendance Tracker Add-on"],
+        "operatingSystem": "Web, Google Meet, Google Workspace, Chrome, Edge, Firefox, Safari",
+        "applicationCategory": "EducationalApplication, BusinessApplication",
+        "url": "https://attendancetracker.dev/",
+        "downloadUrl": "https://workspace.google.com/marketplace/app/attendance_tracker/829771833968",
+        "installUrl": "https://workspace.google.com/marketplace/app/attendance_tracker/829771833968",
+        "sameAs": [
+          "https://workspace.google.com/marketplace/app/attendance_tracker/829771833968",
+          "https://kinetichelix.io"
+        ],
+        "screenshot": "https://attendancetracker.dev/screenshots/01-live-roster.jpg",
+        "offers": [
+          {
+            "@type": "Offer",
+            "name": "Free Tier",
+            "price": "0",
+            "priceCurrency": "USD",
+            "description": "5 exports per month (Sheets or CSV combined), real-time participant tracking, side panel attendance monitoring."
+          },
+          {
+            "@type": "Offer",
+            "name": "Educator Annual",
+            "price": "4.99",
+            "priceCurrency": "USD",
+            "priceSpecification": {
+              "@type": "UnitPriceSpecification",
+              "price": "4.99",
+              "priceCurrency": "USD",
+              "unitCode": "ANN"
+            },
+            "description": "Unlimited exports, Google Classroom roster sync, attendance certificates, LMS gradebook CSVs."
+          },
+          {
+            "@type": "Offer",
+            "name": "Individual Lifetime",
+            "price": "9.99",
+            "priceCurrency": "USD",
+            "description": "One-time purchase with lifetime Pro access for a single organizer account."
+          }
+        ],
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "5.0",
+          "bestRating": "5",
+          "worstRating": "1",
+          "ratingCount": "3",
+          "reviewCount": "3"
+        },
+        "description": "Real-time attendance tracking add-on for Google Meet with one-click export to Google Sheets, Classroom roster sync, and late arrival alerts.",
+        "inLanguage": [
+          "en", "es", "pt", "hi", "ta", "te", "bn", "ur", "tl", "ms", "id", "vi", "fr", "de", "it",
+          "nl", "pl", "ro", "ru", "uk", "tr", "th", "ar", "ko", "zh-Hant", "zh-Hans", "ja", "he",
+          "mr", "sv", "cs", "da", "fi", "hu", "so", "sw", "am", "si", "el", "no", "ca"
+        ],
+        "author": {
+          "@type": "Organization",
+          "@id": "https://attendancetracker.dev/#organization"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "@id": "https://attendancetracker.dev/#organization"
+        }
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://attendancetracker.dev/#organization",
+        "name": "Attendance Tracker",
+        "url": "https://attendancetracker.dev/",
+        "logo": "https://attendancetracker.dev/icons/icon-128.png",
+        "sameAs": [
+          "https://workspace.google.com/marketplace/app/attendance_tracker/829771833968",
+          "https://kinetichelix.io"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://attendancetracker.dev/#website",
+        "url": "https://attendancetracker.dev/",
+        "name": "Attendance Tracker for Google Meet",
+        "inLanguage": [
+          "en", "es", "pt", "hi", "ta", "te", "bn", "ur", "tl", "ms", "id", "vi", "fr", "de", "it",
+          "nl", "pl", "ro", "ru", "uk", "tr", "th", "ar", "ko", "zh-Hant", "zh-Hans", "ja", "he",
+          "mr", "sv", "cs", "da", "fi", "hu", "so", "sw", "am", "si", "el", "no", "ca"
+        ],
+        "publisher": {
+          "@id": "https://attendancetracker.dev/#organization"
+        }
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How do I track attendance in Google Meet?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Open the Attendance Tracker add-on inside your Google Meet meeting side panel. It automatically records participant join times, leave times, and total duration in real-time. When the meeting ends, click 'Save to Sheets' to export a complete attendance spreadsheet to Google Drive."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does Google Meet have built-in attendance tracking?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Google Meet only provides native attendance tracking on premium tiers: Google Workspace Education Plus and Teaching & Learning Upgrade. For Google Workspace Business, Enterprise, Fundamentals, and personal @gmail.com accounts, Attendance Tracker provides full attendance tracking with live monitoring and 1-click Google Sheets export."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I export Google Meet attendance to Google Sheets?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes! Attendance Tracker exports clean, formatted attendance rosters directly to Google Sheets with student names, emails, join times, leave times, late arrival flags, and total duration."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is Attendance Tracker for Google Meet free?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, Attendance Tracker offers a free forever tier with 5 exports per month (Google Sheets or CSV) and real-time attendance monitoring. Pro plans start at $4.99/year for educators and $9.99 for lifetime individual access."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is Attendance Tracker FERPA and COPPA compliant for student data privacy?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Attendance Tracker is designed with student privacy by default. It uses official Google Meet add-on APIs with AES-256-GCM encrypted tokens, does not perform DOM screen scraping, does not inject invasive bots into calls, and never sells student or attendee data."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What languages does Attendance Tracker support?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Attendance Tracker natively supports 41 languages, including English, Spanish, Portuguese, Hindi, Tamil, Telugu, Bengali, Urdu, Tagalog, Malay, Indonesian, Vietnamese, French, German, Italian, Dutch, Polish, Arabic, Japanese, Korean, Simplified Chinese, Traditional Chinese, and 19 more."
+            }
+          }
+        ]
+      }
+    ]
   }
   </script>
 
@@ -1488,9 +1582,23 @@
     #landing-page .lp-footer{border-top:1px solid var(--lp-line-soft);padding:44px 0 56px;margin-top:20px}
     #landing-page .lp-fnav{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 26px;color:var(--lp-faint);font-size:.86rem}
     #landing-page .lp-fnav a:hover{color:var(--lp-text)}
-    #landing-page .lp-seo{text-align:center;color:var(--lp-faint);font-size:.84rem;margin:34px 0 0}
-    #landing-page .lp-seo a{color:var(--lp-blue);margin:0 6px}
-    #landing-page .lp-copy{text-align:center;color:var(--lp-faint);font-size:.78rem;margin-top:22px}
+    #landing-page .lp-seo-dir{margin:40px 0 24px;border-top:1px solid var(--lp-line-soft);padding-top:32px;text-align:left}
+    #landing-page .lp-seo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:28px 20px}
+    #landing-page .lp-seo-col h4{font-size:.82rem;font-weight:600;color:var(--lp-text);margin-bottom:12px;letter-spacing:.02em}
+    #landing-page .lp-seo-col ul{list-style:none;padding:0;margin:0}
+    #landing-page .lp-seo-col li{margin-bottom:8px}
+    #landing-page .lp-seo-col a{font-size:.78rem;color:var(--lp-muted);text-decoration:none;transition:color .15s}
+    #landing-page .lp-seo-col a:hover{color:var(--lp-blue);text-decoration:underline}
+    #landing-page .lp-llm-badge{text-align:center;font-size:.76rem;color:var(--lp-faint);margin:24px 0 8px}
+    #landing-page .lp-llm-badge a{color:var(--lp-blue);text-decoration:none}
+    #landing-page .lp-copy{text-align:center;color:var(--lp-faint);font-size:.78rem;margin-top:14px}
+
+    @media(max-width:960px){
+      #landing-page .lp-seo-grid{grid-template-columns:repeat(2,1fr)}
+    }
+    @media(max-width:540px){
+      #landing-page .lp-seo-grid{grid-template-columns:1fr}
+    }
 
     @media(max-width:860px){
       #landing-page .lp-hero{grid-template-columns:1fr;gap:40px;padding:52px 0 44px}
@@ -1720,13 +1828,78 @@
           <a href="support.html">Support</a>
           <a href="https://kinetichelix.io" target="_blank" rel="noopener">Built by Kinetic Helix</a>
         </div>
-        <div class="lp-seo">
-          Read more:
-          <a href="how-to-track-attendance-in-google-meet.html">How to track attendance in Google Meet</a>·
-          <a href="attendance-tracker-for-teachers.html">For teachers</a>·
-          <a href="export-google-meet-attendance-to-sheets.html">Export to Sheets</a>
+        <!-- Guides, Integrations, Solutions & Global Topic Directory (SEO & GEO internal link graph) -->
+        <div class="lp-seo-dir">
+          <div class="lp-seo-grid">
+            <div class="lp-seo-col">
+              <h4>Guides &amp; How-Tos</h4>
+              <ul>
+                <li><a href="how-to-track-attendance-in-google-meet.html">How to Track Attendance</a></li>
+                <li><a href="automatic-attendance-google-meet.html">Automatic Attendance Tracking</a></li>
+                <li><a href="best-google-meet-attendance-extensions.html">Best Attendance Extensions (2026)</a></li>
+                <li><a href="track-attendance-google-meet-without-extension.html">Track Without Extension</a></li>
+                <li><a href="track-google-meet-attendance-without-host.html">Track Attendance Without Host</a></li>
+                <li><a href="see-who-attended-google-meet-after-it-ended.html">See Attendees After Call Ended</a></li>
+                <li><a href="google-meet-attendance-report-not-showing-up.html">Attendance Report Not Showing Up</a></li>
+                <li><a href="how-long-does-google-meet-keep-attendance.html">How Long Meet Keeps Attendance</a></li>
+                <li><a href="google-meet-breakout-room-attendance.html">Breakout Room Attendance</a></li>
+                <li><a href="google-meet-attendance-which-plan.html">Which Google Workspace Plan?</a></li>
+                <li><a href="google-meet-attendance-certificates.html">Attendance Certificates</a></li>
+                <li><a href="google-meet-vs-zoom-attendance-tracking.html">Google Meet vs Zoom Attendance</a></li>
+              </ul>
+            </div>
+            <div class="lp-seo-col">
+              <h4>Integrations &amp; LMS</h4>
+              <ul>
+                <li><a href="export-google-meet-attendance-to-sheets.html">Export to Google Sheets</a></li>
+                <li><a href="export-google-meet-participants-to-excel.html">Export to Excel &amp; CSV</a></li>
+                <li><a href="google-meet-attendance-google-classroom.html">Google Classroom Sync</a></li>
+                <li><a href="import-google-classroom-roster-to-google-meet.html">Import Classroom Roster</a></li>
+                <li><a href="export-google-meet-attendance-to-canvas.html">Export Attendance to Canvas</a></li>
+                <li><a href="export-google-meet-attendance-to-moodle.html">Export Attendance to Moodle</a></li>
+                <li><a href="how-to-send-google-meet-attendance-to-slack.html">Send Attendance to Slack</a></li>
+                <li><a href="send-google-meet-attendance-to-google-chat.html">Send to Google Chat Spaces</a></li>
+                <li><a href="google-meet-attendance-template.html">Attendance Spreadsheets &amp; Templates</a></li>
+                <li><a href="attendance-taker-for-classroom-alternative.html">Attendance Taker Alternative</a></li>
+              </ul>
+            </div>
+            <div class="lp-seo-col">
+              <h4>Roles &amp; Industries</h4>
+              <ul>
+                <li><a href="attendance-tracker-for-teachers.html">For K-12 Teachers &amp; Schools</a></li>
+                <li><a href="google-meet-attendance-for-universities.html">Universities &amp; Higher Education</a></li>
+                <li><a href="google-meet-attendance-for-tutors.html">Private Tutors &amp; Coaches</a></li>
+                <li><a href="google-meet-attendance-for-remote-teams.html">Remote Teams &amp; Standups</a></li>
+                <li><a href="google-meet-attendance-corporate-training.html">Corporate Training &amp; L&amp;D</a></li>
+                <li><a href="track-attendance-for-webinars-and-training-google-meet.html">Webinars &amp; Workshops</a></li>
+                <li><a href="google-meet-attendance-for-language-schools.html">Language Schools &amp; Bootcamps</a></li>
+                <li><a href="google-meet-attendance-for-homeschool.html">Homeschool Groups &amp; Co-ops</a></li>
+                <li><a href="google-meet-attendance-for-cpe-and-cle-credits.html">CPE &amp; CLE Credit Verification</a></li>
+                <li><a href="google-meet-attendance-for-churches.html">Churches &amp; Non-Profit Groups</a></li>
+                <li><a href="google-meet-attendance-for-volunteer-hours.html">Volunteer Hours Tracking</a></li>
+                <li><a href="student-data-privacy.html">Student Data Privacy &amp; FERPA</a></li>
+              </ul>
+            </div>
+            <div class="lp-seo-col">
+              <h4>Global &amp; Regional</h4>
+              <ul>
+                <li><a href="asistencia-google-meet.html">Asistencia Google Meet (Español)</a></li>
+                <li><a href="google-meet-attendance-india-teachers.html">Teachers in India (CBSE/ICSE)</a></li>
+                <li><a href="google-meet-attendance-philippines-teachers.html">Teachers in Philippines (DepEd)</a></li>
+                <li><a href="google-meet-attendance-indonesia-teachers.html">Guru Indonesia (Kemdikbud)</a></li>
+                <li><a href="google-meet-attendance-malaysia-teachers.html">Cikgu Malaysia (KPM / MOE)</a></li>
+                <li><a href="google-meet-attendance-vietnam-teachers.html">Giáo viên Việt Nam</a></li>
+                <li><a href="google-meet-attendance-nigeria-teachers.html">Teachers in Nigeria</a></li>
+                <li><a href="google-meet-attendance-on-ipad-and-mobile.html">iPad &amp; Mobile Attendance</a></li>
+                <li><a href="changelog.html">Product Changelog</a></li>
+              </ul>
+            </div>
+          </div>
         </div>
-        <div class="lp-copy">© Attendance Tracker for Google Meet</div>
+        <div class="lp-llm-badge">
+          AI &amp; Search Engine Specifications: <a href="llms.txt">llms.txt</a> · <a href="llms-full.txt">llms-full.txt</a> · <a href="sitemap.xml">sitemap.xml</a>
+        </div>
+        <div class="lp-copy">© 2026 Attendance Tracker for Google Meet · Verified Google Workspace Marketplace Add-on</div>
       </div>
     </footer>
   </div>

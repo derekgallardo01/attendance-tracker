@@ -120,6 +120,8 @@ const MIRRORED = [
   'screenshots/04-class-attendance.jpg',
   'robots.txt',
   'sitemap.xml',
+  'llms.txt',
+  'llms-full.txt',
 ];
 
 // index.html is the only file that differs: the served copy uses same-origin /api.

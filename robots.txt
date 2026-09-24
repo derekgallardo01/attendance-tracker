@@ -1,8 +1,40 @@
+# Robots.txt for Attendance Tracker (https://attendancetracker.dev/)
+
 User-agent: *
 Allow: /
 Disallow: /admin.html
 Disallow: /setup.html
 Disallow: /share.html
+Disallow: /download.html
+Disallow: /verify.html
 Disallow: /api/
 
+# AI Search & LLM Engines (Permitted for Generative Engine Optimization / GEO)
+User-agent: GPTBot
+Allow: /
+Disallow: /api/
+Disallow: /admin.html
+Disallow: /setup.html
+Disallow: /share.html
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /api/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /api/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /api/
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# Sitemap & Machine-Readable Knowledge
 Sitemap: https://attendancetracker.dev/sitemap.xml
+LLMs-Txt: https://attendancetracker.dev/llms.txt

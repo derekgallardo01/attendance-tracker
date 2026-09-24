@@ -15,53 +15,54 @@
   <meta property="og:type" content="article" />
 
   <script type="application/ld+json">
-  [
-    {
-      "@context": "https://schema.org",
-      "@type": "Article",
-      "headline": "How to Track Interviewer & Candidate Attendance in Google Meet",
-      "description": "A guide for corporate recruiters and talent acquisition leads on tracking panel interviews and virtual career fairs in Google Meet.",
-      "author": {
-        "@type": "Organization",
-        "name": "Attendance Tracker"
-      },
-      "publisher": {
-        "@type": "Organization",
-        "name": "Attendance Tracker",
-        "url": "https://attendancetracker.dev/"
-      }
-    },
-    {
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "Does Attendance Tracker work if the candidate joins from a personal Gmail?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. Regardless of whether a candidate joins from a corporate email, a personal @gmail.com address, or a temporary link, Attendance Tracker logs their display name, connection time, and total minutes."
-          }
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Article",
+        "headline": "How to Track Interviewer & Candidate Attendance in Google Meet",
+        "description": "A guide for corporate recruiters and talent acquisition leads on tracking panel interviews and virtual career fairs in Google Meet.",
+        "author": {
+          "@type": "Organization",
+          "name": "Attendance Tracker"
         },
-        {
-          "@type": "Question",
-          "name": "Can recruiting coordinators view attendance without joining the call?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. If your company uses our Team Pro plan, all interview session records sync to your company's central Google Sheets audit log in Drive and your designated Slack channel, allowing coordinators to monitor interview completion asynchronously."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Is candidate PII safe and compliant?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. Attendance Tracker is an official Google Workspace Marketplace add-on with token encryption at rest (AES-256-GCM). We never sell or share candidate data with third parties."
-          }
+        "publisher": {
+          "@type": "Organization",
+          "name": "Attendance Tracker",
+          "url": "https://attendancetracker.dev/"
         }
-      ]
-    }
-  ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Does Attendance Tracker work if the candidate joins from a personal Gmail?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Regardless of whether a candidate joins from a corporate email, a personal @gmail.com address, or a temporary link, Attendance Tracker logs their display name, connection time, and total minutes."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can recruiting coordinators view attendance without joining the call?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. If your company uses our Team Pro plan, all interview session records sync to your company's central Google Sheets audit log in Drive and your designated Slack channel, allowing coordinators to monitor interview completion asynchronously."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is candidate PII safe and compliant?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Attendance Tracker is an official Google Workspace Marketplace add-on with token encryption at rest (AES-256-GCM). We never sell or share candidate data with third parties."
+            }
+          }
+        ]
+      }
+    ]
+  }
   </script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />

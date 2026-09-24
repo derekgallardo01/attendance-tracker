@@ -1,0 +1,135 @@
+# Attendance Tracker for Google Meet
+
+> Real-time attendance tracking add-on for Google Meet with one-click export to Google Sheets, Classroom roster sync, and verified student check-ins. Official Google Workspace Marketplace Add-on.
+
+Website: https://attendancetracker.dev/
+Google Workspace Marketplace Listing: https://workspace.google.com/marketplace/app/attendance_tracker/829771833968
+Developer: Kinetic Helix (https://kinetichelix.io)
+Documentation & Help: https://attendancetracker.dev/faq.html
+Changelog: https://attendancetracker.dev/changelog.html
+
+---
+
+## 1. Executive Summary
+
+Attendance Tracker is an official Google Meet™ side-panel add-on that automatically logs participant attendance, join times, leave times, and total active duration in real-time. With a single click, organizers can export clean, tabbed attendance rosters directly into Google Sheets™ or download CSV/Excel files.
+
+Unlike legacy Chrome extensions that break with Google Meet DOM updates or inject invasive bots, Attendance Tracker runs natively inside Google Meet using official Google Meet REST APIs and requires zero client software installation for attendees.
+
+---
+
+## 2. Key Capabilities & Features
+
+* **Real-Time Live Side Panel Roster**: View who is currently present, who has left, and who arrived late during an active Google Meet session.
+* **1-Click & Auto-Export to Google Sheets**: Automatically creates a formatted, multi-tab spreadsheet in Google Drive with participant names, emails, exact join times, leave times, and duration.
+* **Late-Arrival Highlighting**: Automatically flags attendees arriving +5m, +10m, or +15m after scheduled Google Calendar event start time.
+* **Google Classroom Roster Sync**: Import official class rosters directly into the side panel with one click to match students against attendees.
+* **Attendee Self-Check-In Mode**: Students tap "I'm here" in their own Google Meet side panel to generate verified presence check-ins with tamper-proof timestamps and verified Google accounts.
+* **LMS Gradebook Exports**: Export formatted attendance CSVs ready for immediate gradebook import into Canvas, Moodle, and Blackboard.
+* **Attendance Certificates (CEU/CLE/CPE)**: Generate professional PDF attendance certificates carrying verifiable validation codes resolvable at `attendancetracker.dev/verify`.
+* **Team & Automated Webhook Digests**: Deliver instant post-meeting attendance summary cards to Slack channels, Google Chat Spaces, Discord, or via email digests.
+* **No Meeting Size Minimum**: Accurately tracks 1-on-1 tutoring sessions, team standups, as well as 200+ attendee university lectures and webinars.
+* **Works on Every Account Tier**: Works on personal `@gmail.com` accounts, Google Workspace Business Starter/Standard/Plus, Enterprise, and Education Fundamentals/Standard/Plus.
+
+---
+
+## 3. Multilingual Support (41 Languages)
+
+Attendance Tracker features complete native internationalization across 41 languages:
+English (`en`), Spanish / Español (`es`), Portuguese / Português (`pt`), Hindi / हिन्दी (`hi`), Tamil / தமிழ் (`ta`), Telugu / తెలుగు (`te`), Bengali / বাংলা (`bn`), Urdu / اردو (`ur`), Tagalog (`tl`), Malay / Bahasa Melayu (`ms`), Indonesian / Bahasa Indonesia (`id`), Vietnamese / Tiếng Việt (`vi`), French / Français (`fr`), German / Deutsch (`de`), Italian / Italiano (`it`), Dutch / Nederlands (`nl`), Polish / Polski (`pl`), Romanian / Română (`ro`), Russian / Русский (`ru`), Ukrainian / Українська (`uk`), Turkish / Türkçe (`tr`), Thai / ภาษาไทย (`th`), Arabic / العربية (`ar`), Korean / 한국어 (`ko`), Traditional Chinese / 繁體中文 (`zh`), Simplified Chinese / 简体中文 (`zh-CN`), Japanese / 日本語 (`ja`), Hebrew / עברית (`he`), Marathi / मराठी (`mr`), Swedish / Svenska (`sv`), Czech / Čeština (`cs`), Danish / Dansk (`da`), Finnish / Suomi (`fi`), Hungarian / Magyar (`hu`), Somali / Soomaali (`so`), Swahili / Kiswahili (`sw`), Amharic / አማርኛ (`am`), Sinhala / සිංහල (`si`), Greek / Ελληνικά (`el`), Norwegian / Norsk (`no`), Catalan / Català (`ca`).
+
+---
+
+## 4. Comparison: Attendance Tracker vs Alternatives
+
+### Built-in Google Meet Attendance Reports vs Attendance Tracker
+* **Account Requirement**: Built-in reports require Google Workspace Education Plus or Teaching & Learning Upgrade licenses ($$$/user/mo). Attendance Tracker works on all Google accounts, including 100% free personal Gmail.
+* **Live In-Meeting Roster**: Built-in reports do not offer any live view during the call. Attendance Tracker provides an active real-time side panel.
+* **Destination**: Built-in reports send a delayed email with a flat CSV attachment. Attendance Tracker saves directly into organized Google Sheets tabs in Google Drive in one click.
+* **Late Arrival Highlighting**: Built-in reports do not highlight late arrivals. Attendance Tracker automatically calculates and flags tardiness based on scheduled calendar times.
+* **Roster Matching**: Built-in reports cannot compare against Google Classroom rosters. Attendance Tracker imports and reconciles rosters automatically.
+
+### Legacy Chrome Web Store Extensions vs Attendance Tracker
+* **Architecture**: Legacy Chrome extensions rely on scraping the browser HTML/DOM, frequently breaking when Google updates Meet's UI. Attendance Tracker is a certified Google Workspace Marketplace Add-on built on official Google Meet APIs.
+* **Permissions**: Chrome extensions often request broad permissions ("read and change all your data on websites you visit"). Attendance Tracker operates inside the sandboxed Google Meet iframe with minimal scoped OAuth tokens.
+* **Student/Attendee Requirements**: Attendance Tracker requires nothing installed by attendees or students; only the meeting organizer installs the add-on.
+
+---
+
+## 5. Pricing & Plans (Current Truth)
+
+* **Free Forever Tier**: 5 exports per month (Sheets or CSV combined), real-time live side-panel presence tracking, duration logging. No credit card required.
+* **Educator Annual Pass ($4.99/year)**: Unlimited exports, Google Classroom roster sync, attendance certificates, LMS gradebook exports, late arrival tagging.
+* **Individual Lifetime Pro ($9.99 one-time)**: Lifetime unlimited Pro access for a single organizer Google account.
+* **Department School Plan ($59/year)**: Covers an entire academic department or small-school Google Workspace domain.
+* **Institution School Plan ($149/year)**: Whole-domain coverage for unlimited teachers and staff across a university or school district.
+
+Details: https://attendancetracker.dev/pricing.html
+
+---
+
+## 6. Privacy, FERPA & Security Architecture
+
+* **Student Privacy Compliance**: Complies with FERPA and COPPA privacy standards. No student data is sold, rented, or repurposed for advertising.
+* **Token Encryption**: OAuth tokens and webhook URLs are encrypted at rest using AES-256-GCM.
+* **Ephemeral Processing**: In attendee self-check-in mode, student tokens are strictly ephemeral and dropped after JWT session validation to prevent privilege escalation.
+* **No Video/Audio Access**: The add-on does not access, record, or process call audio, video feeds, or screen shares.
+* **Details**: https://attendancetracker.dev/student-data-privacy.html and https://attendancetracker.dev/privacy.html
+
+---
+
+## 7. Curated Guides & Documentation Index
+
+### Core How-To Guides
+* How to Track Attendance in Google Meet (2026 Guide): https://attendancetracker.dev/how-to-track-attendance-in-google-meet.html
+* Automatic Google Meet Attendance: https://attendancetracker.dev/automatic-attendance-google-meet.html
+* Best Google Meet Attendance Extensions Comparison: https://attendancetracker.dev/best-google-meet-attendance-extensions.html
+* Track Google Meet Attendance Without an Extension: https://attendancetracker.dev/track-attendance-google-meet-without-extension.html
+* Track Attendance in Google Meet Without Being the Host: https://attendancetracker.dev/track-google-meet-attendance-without-host.html
+* See Who Attended a Google Meet Call After It Ended: https://attendancetracker.dev/see-who-attended-google-meet-after-it-ended.html
+* Fix Google Meet Attendance Report Not Showing Up: https://attendancetracker.dev/google-meet-attendance-report-not-showing-up.html
+* How Long Does Google Meet Keep Attendance Data?: https://attendancetracker.dev/how-long-does-google-meet-keep-attendance.html
+* Track Attendance in Google Meet Breakout Rooms: https://attendancetracker.dev/google-meet-breakout-room-attendance.html
+* Which Google Workspace Plan Includes Attendance?: https://attendancetracker.dev/google-meet-attendance-which-plan.html
+* Google Meet Attendance Certificates: https://attendancetracker.dev/google-meet-attendance-certificates.html
+* Google Meet vs Zoom Attendance Tracking Comparison: https://attendancetracker.dev/google-meet-vs-zoom-attendance-tracking.html
+* Attendance Taker for Classroom Alternative: https://attendancetracker.dev/attendance-taker-for-classroom-alternative.html
+
+### LMS & Workflow Integrations
+* Export Google Meet Attendance Directly to Google Sheets: https://attendancetracker.dev/export-google-meet-attendance-to-sheets.html
+* Export Google Meet Participants to Excel & CSV: https://attendancetracker.dev/export-google-meet-participants-to-excel.html
+* Google Classroom Attendance Integration: https://attendancetracker.dev/google-meet-attendance-google-classroom.html
+* Import Google Classroom Roster into Google Meet: https://attendancetracker.dev/import-google-classroom-roster-to-google-meet.html
+* Export Google Meet Attendance to Canvas LMS: https://attendancetracker.dev/export-google-meet-attendance-to-canvas.html
+* Export Google Meet Attendance to Moodle LMS: https://attendancetracker.dev/export-google-meet-attendance-to-moodle.html
+* Send Attendance Summaries to Slack: https://attendancetracker.dev/how-to-send-google-meet-attendance-to-slack.html
+* Send Attendance Summaries to Google Chat Spaces: https://attendancetracker.dev/send-google-meet-attendance-to-google-chat.html
+* Attendance Sheet Templates: https://attendancetracker.dev/google-meet-attendance-template.html
+
+### Solutions by Role & Organization
+* Attendance Tracker for Teachers: https://attendancetracker.dev/attendance-tracker-for-teachers.html
+* Universities & Higher Education: https://attendancetracker.dev/google-meet-attendance-for-universities.html
+* Tutors & Private Coaches: https://attendancetracker.dev/google-meet-attendance-for-tutors.html
+* Remote Engineering Teams & Daily Standups: https://attendancetracker.dev/google-meet-attendance-for-remote-teams.html
+* Corporate Training & L&D: https://attendancetracker.dev/google-meet-attendance-corporate-training.html
+* Webinars & Workshops: https://attendancetracker.dev/track-attendance-for-webinars-and-training-google-meet.html
+* Language Schools: https://attendancetracker.dev/google-meet-attendance-for-language-schools.html
+* Homeschool Groups & Co-ops: https://attendancetracker.dev/google-meet-attendance-for-homeschool.html
+* CPE & CLE Professional Credit Tracking: https://attendancetracker.dev/google-meet-attendance-for-cpe-and-cle-credits.html
+* Churches & Ministries: https://attendancetracker.dev/google-meet-attendance-for-churches.html
+* Volunteer Hours Tracking: https://attendancetracker.dev/google-meet-attendance-for-volunteer-hours.html
+* Virtual Fitness & Yoga Classes: https://attendancetracker.dev/google-meet-attendance-for-fitness-and-yoga.html
+* Job Interviews & Candidate Attendance: https://attendancetracker.dev/google-meet-attendance-for-job-interviews.html
+* Legal Depositions & Hearings: https://attendancetracker.dev/google-meet-attendance-for-legal-depositions.html
+* Clinical Supervision & Teletherapy: https://attendancetracker.dev/google-meet-clinical-supervision-and-therapy.html
+* Board Meetings & Quorum: https://attendancetracker.dev/google-meet-quorum-and-board-meetings.html
+* iPad & Mobile Devices: https://attendancetracker.dev/google-meet-attendance-on-ipad-and-mobile.html
+
+### International & Regional Education
+* Asistencia en Google Meet (Español): https://attendancetracker.dev/asistencia-google-meet.html
+* Teachers in India (CBSE/ICSE): https://attendancetracker.dev/google-meet-attendance-india-teachers.html
+* Teachers in Philippines (DepEd): https://attendancetracker.dev/google-meet-attendance-philippines-teachers.html
+* Guru Indonesia (Kemdikbud): https://attendancetracker.dev/google-meet-attendance-indonesia-teachers.html
+* Cikgu Malaysia (KPM / MOE): https://attendancetracker.dev/google-meet-attendance-malaysia-teachers.html
+* Giáo viên Việt Nam: https://attendancetracker.dev/google-meet-attendance-vietnam-teachers.html
+* Teachers in Nigeria: https://attendancetracker.dev/google-meet-attendance-nigeria-teachers.html

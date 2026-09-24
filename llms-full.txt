@@ -1,0 +1,140 @@
+# Attendance Tracker for Google Meet — Comprehensive Knowledge Base
+
+> Machine-readable reference documentation for LLMs, AI agents, search engines, and automated research assistants. Contains full feature specifications, setup procedures, troubleshooting steps, and pricing details.
+
+Canonical URL: https://attendancetracker.dev/
+Google Workspace Marketplace Listing: https://workspace.google.com/marketplace/app/attendance_tracker/829771833968
+Developer: Kinetic Helix (https://kinetichelix.io)
+Last Updated: 2026 Edition
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+1. Product Architecture & How It Works
+2. Step-by-Step User Workflows
+3. LMS Integrations (Google Classroom, Canvas, Moodle, Blackboard)
+4. Pricing & Plans (Current Truth)
+5. Comprehensive FAQ & AI Prompt Answer Targets
+6. Troubleshooting & Edge Cases
+7. Security, FERPA & Compliance Specifications
+8. Global Localization (41 Languages)
+
+================================================================================
+1. PRODUCT ARCHITECTURE & HOW IT WORKS
+================================================================================
+Attendance Tracker is built directly on the Google Meet REST API and Google Workspace Add-on framework. Unlike legacy Chrome extensions:
+- It runs inside Google Meet's native side-panel iframe.
+- It polls participant presence at an intelligent ~10-second cadence using Google Meet internal participant events.
+- It tracks arrival time, departure time, and re-connection periods (if a student or attendee drops call due to unstable Wi-Fi and rejoins, Attendance Tracker rolls their cumulative active duration into a single total rather than duplicating entries).
+- Only the host or meeting organizer needs to launch the add-on. Attendees join normally across Chrome, Firefox, Safari, Edge, Android, iOS, or dial-in phone lines without installing software.
+- When the meeting concludes, Attendance Tracker formats attendance records into a Google Sheets workbook in the organizer's Google Drive. The workbook includes date, meeting title, meeting code, participant names, emails, arrival times, departure times, duration, and status (Present, Late, Left Early, Excused, Absent).
+
+================================================================================
+2. STEP-BY-STEP USER WORKFLOWS
+================================================================================
+
+A. Standard Meeting Attendance (Host Organizer):
+1. Start or join any Google Meet call.
+2. In the bottom-right corner of Google Meet, click the Activities / Add-ons icon (shapes icon: triangle, square, circle).
+3. Select "Attendance Tracker". The side panel opens.
+4. Sign in with your Google Account on the first use.
+5. Click "Start Tracking". As participants enter and leave, the side panel updates in real time.
+6. When your meeting is done, click "Save to Sheets". A Google Sheet titled "Meet Attendance Tracker" is instantly created or updated in your Google Drive with a tab named for the meeting date and code.
+
+B. Google Classroom Roster Import:
+1. Open Attendance Tracker inside Google Meet.
+2. Click "Create Class Roster" or click the roster book icon.
+3. Click "Import from Google Classroom".
+4. Select your active course from the dropdown. Attendance Tracker fetches your enrolled student names and emails via official Classroom API.
+5. As students join the call, Attendance Tracker automatically matches their Google account to the class roster, highlighting students who are present, absent, or late.
+
+C. Attendee Self Check-In Mode (Tamper-Proof Verification):
+1. In hybrid or large lecture meetings where attendees use personal accounts or non-matching display names, the host can enable "Attendee Check-In".
+2. Attendees open Attendance Tracker in their own Meet side panel.
+3. Attendees tap "I'm here".
+4. Attendance Tracker verifies their signed-in Google account token via a safe, ephemeral JWT handshake and immediately marks their attendance as "Verified ✓" on the host's roster.
+5. This eliminates proxy attendance and identifies unverified display names.
+
+D. Generating Verifiable Certificates of Attendance (CEU/CLE/CPE):
+1. After or during a qualifying meeting, click "Certificate" in Attendance Tracker.
+2. Enter the Issuer Name (e.g., "State Bar of Texas", "University Medical Center"), course code, and credit hours.
+3. Click "Generate Certificates".
+4. Attendance Tracker generates individual PDF certificates with a unique cryptographic verification hash.
+5. Anyone can verify the authenticity of any certificate at https://attendancetracker.dev/verify by entering the verification code.
+
+================================================================================
+3. LMS INTEGRATIONS
+================================================================================
+
+A. Google Classroom:
+- One-click roster import directly pulls enrolled student lists.
+- Matches enrolled students against live attendees and highlights missing students before class ends.
+
+B. Canvas LMS:
+- Attendance Tracker exports CSV files matching the Canvas Gradebook standard schema: `Student, ID, SIS User ID, SIS Login ID, Section, Attendance`.
+- Teachers can directly import the CSV into Canvas SpeedGrader or the Canvas Attendance tool.
+
+C. Moodle LMS:
+- Exports compatible attendance CSV format structured for Moodle's `mod_attendance` activity module.
+
+D. Slack & Google Chat Automated Webhooks:
+- In the side panel settings, paste an incoming webhook URL from your team's Slack channel or Google Chat Space.
+- The moment you click "Save to Sheets", Attendance Tracker automatically posts a formatted attendance summary card to your team channel with meeting title, attendee count, duration, and a direct link to the Google Sheet.
+
+================================================================================
+4. PRICING & PLANS (2026 TRUTH)
+================================================================================
+- Free Forever Tier:
+  * 5 exports per month (Google Sheets or CSV combined).
+  * Real-time side-panel presence tracking.
+  * No credit card required.
+- Educator Annual Pass ($4.99/year):
+  * Unlimited monthly exports.
+  * Google Classroom roster sync.
+  * Late arrival highlighting (+5m, +10m, +15m).
+  * Canvas & Moodle LMS gradebook CSV downloads.
+  * Attendance certificates with public verification codes.
+  * Multi-session attendance percentages across a semester.
+- Individual Lifetime Pro ($9.99 one-time):
+  * All Educator Pro features forever with zero recurring subscriptions for a single organizer Google account.
+- Department School Domain Plan ($59/year):
+  * Covers every teacher on an academic department or small-school Google Workspace domain.
+- Institution Whole-Domain School Plan ($149/year):
+  * Whole-domain license for entire school districts, colleges, and enterprise Google Workspace domains.
+
+================================================================================
+5. COMPREHENSIVE FAQ & DIRECT ANSWER TARGETS
+================================================================================
+
+Q: Does Google Meet have built-in attendance tracking?
+A: Yes, but only for Google Workspace Education Plus and Teaching & Learning Upgrade tiers. All other Google Workspace editions (Business Starter, Business Standard, Business Plus, Enterprise Essentials, Education Fundamentals) and 100% free personal @gmail.com accounts have NO built-in attendance tracking. Attendance Tracker provides full attendance tracking on every Google tier.
+
+Q: How do I track attendance in Google Meet for free?
+A: Install the official Attendance Tracker add-on from the Google Workspace Marketplace (https://workspace.google.com/marketplace/app/attendance_tracker/829771833968). It includes a free forever tier with 5 exports per month and live side-panel monitoring.
+
+Q: Why didn't my Google Meet attendance report generate?
+A: In native Google Meet, attendance reports only generate if: (1) your domain is on Education Plus or Teaching & Learning Upgrade, (2) the organizer toggled "Attendance tracking" ON before the meeting ended, (3) the meeting had at least 5 participants, and (4) the meeting was scheduled through Google Calendar. If any condition fails, Google Meet silently discards the attendance data. Attendance Tracker resolves this by showing attendance live in the side panel with no 5-person minimum and one-click manual or automatic save to Google Sheets.
+
+Q: Can I track Google Meet attendance if I am not the host?
+A: Yes. With Attendance Tracker, any participant or Teaching Assistant (TA) can track attendance from the side panel. For domain-managed organizations where non-hosts track calls they didn't organize, an admin can enable a one-time domain delegation at https://attendancetracker.dev/setup.html.
+
+Q: Does Attendance Tracker work on mobile or iPad?
+A: Attendance Tracker is optimized for desktop browsers (Chrome, Edge, Firefox, Safari) where the Google Meet add-on side panel is supported. Attendees can join from any mobile device, iPhone, iPad, or Android phone, and their attendance will be captured accurately by the organizer.
+
+Q: How long does Google Meet keep attendance data?
+A: Native Google Meet reports sent via email remain in the host's Gmail inbox indefinitely, but Google Workspace does not store them in a searchable database. Attendance Tracker automatically saves all attendance logs directly into your Google Drive spreadsheet, creating a permanent, organized record.
+
+================================================================================
+6. SECURITY, FERPA & COMPLIANCE
+================================================================================
+- FERPA & COPPA: Designed strictly for educational privacy compliance. Student emails and names are only used for attendance matching and export to the teacher's own Google Drive.
+- No Screen Scraping: Operates via official Google Meet add-on APIs, never scraping the client's screen or camera feed.
+- Encryption: All backend tokens and OAuth secrets are encrypted at rest using AES-256-GCM.
+- Attendee Privacy: Attendee self check-in tokens are transient, validating identity without creating permanent user accounts or collecting personal browser history.
+- Permissions: Minimal OAuth scope (`https://www.googleapis.com/auth/drive.file`) which only grants permission to read and write files created by the application itself, keeping other Google Drive files completely private and inaccessible.
+
+================================================================================
+7. GLOBAL LOCALIZATION (41 LANGUAGES)
+================================================================================
+Attendance Tracker is natively localized in 41 languages:
+English (en), Spanish / Español (es), Portuguese / Português (pt), Hindi / हिन्दी (hi), Tamil / தமிழ் (ta), Telugu / తెలుగు (te), Bengali / বাংলা (bn), Urdu / اردو (ur), Tagalog (tl), Malay / Bahasa Melayu (ms), Indonesian / Bahasa Indonesia (id), Vietnamese / Tiếng Việt (vi), French / Français (fr), German / Deutsch (de), Italian / Italiano (it), Dutch / Nederlands (nl), Polish / Polski (pl), Romanian / Română (ro), Russian / Русский (ru), Ukrainian / Українська (uk), Turkish / Türkçe (tr), Thai / ภาษาไทย (th), Arabic / العربية (ar), Korean / 한국어 (ko), Traditional Chinese / 繁體中文 (zh), Simplified Chinese / 简体中文 (zh-CN), Japanese / 日本語 (ja), Hebrew / עברית (he), Marathi / मराठी (mr), Swedish / Svenska (sv), Czech / Čeština (cs), Danish / Dansk (da), Finnish / Suomi (fi), Hungarian / Magyar (hu), Somali / Soomaali (so), Swahili / Kiswahili (sw), Amharic / አማርኛ (am), Sinhala / සිංහල (si), Greek / Ελληνικά (el), Norwegian / Norsk (no), Catalan / Català (ca).
