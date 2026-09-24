@@ -122,6 +122,7 @@ const MIRRORED = [
   'sitemap.xml',
   'llms.txt',
   'llms-full.txt',
+  '1fdd9ce446aa86d1aff5b1ff97d22c9b.txt',
 ];
 
 // index.html is the only file that differs: the served copy uses same-origin /api.
