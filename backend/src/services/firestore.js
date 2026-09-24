@@ -540,7 +540,9 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
 
     log.info('firestore: persisted attendance', { domain, conferenceId, participants: participants.length });
   } catch (err) {
-    log.error('firestore: persistAttendance failed', { domain, conferenceId, error: err.message });
+    const isTransient = /DEADLINE_EXCEEDED|timeout|ETIMEDOUT|ECONNRESET|UNAVAILABLE/i.test(err.message || '');
+    const logFn = isTransient ? log.warn : log.error;
+    logFn('firestore: persistAttendance failed', { domain, conferenceId, error: err.message, transient: isTransient });
   }
 }
 
