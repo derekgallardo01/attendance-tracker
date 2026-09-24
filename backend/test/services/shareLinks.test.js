@@ -459,4 +459,90 @@ describe('getSharedMeetingView', () => {
     expect(view.title).toBe('Instance Meeting');
     expect(view.totalAttendees).toBe(1);
   });
+
+  test('creates meeting share link with conferenceId fallback and resolves correctly', async () => {
+    // Only conferenceId provided
+    const link1 = await firestore.createShareLink('acme.com', 'owner@acme.com', {
+      type: 'meeting',
+      conferenceId: 'conf-only-123',
+    });
+    const res1 = await firestore.resolveShareLink(link1.token);
+    expect(res1.meetingId).toBe('conf-only-123');
+    expect(res1.conferenceId).toBe('conf-only-123');
+
+    // Only meetingId provided
+    const link2 = await firestore.createShareLink('acme.com', 'owner@acme.com', {
+      type: 'meeting',
+      meetingId: 'meet-only-456',
+    });
+    const res2 = await firestore.resolveShareLink(link2.token);
+    expect(res2.meetingId).toBe('meet-only-456');
+    expect(res2.conferenceId).toBe('meet-only-456');
+  });
+
+  test('resolves meeting share link with null fallbacks if meeting fields are missing', async () => {
+    ctx.seed('shareLinks/tok-meet-empty', {
+      token: 'tok-meet-empty',
+      type: 'meeting',
+      domain: 'acme.com',
+      ownerEmail: 'o@acme.com',
+      revoked: false,
+    });
+    const res = await firestore.resolveShareLink('tok-meet-empty');
+    expect(res.meetingId).toBeNull();
+    expect(res.conferenceId).toBeNull();
+  });
+
+  test('getSharedMeetingView handles fallback defaults and zero attendees', async () => {
+    ctx.seed('tenants/acme.com/meetings/m-empty', {
+      conferenceId: 'conf-fallback',
+      // title missing -> defaults to Google Meet
+      // meetingCode missing -> falls back to conferenceId
+    });
+    const view = await firestore.getSharedMeetingView('acme.com', 'm-empty');
+    expect(view).not.toBeNull();
+    expect(view.title).toBe('Google Meet');
+    expect(view.meetingCode).toBe('conf-fallback');
+    expect(view.totalAttendees).toBe(0);
+    expect(view.attendanceRate).toBe(1);
+  });
+
+  test('getSharedMeetingView catches errors and logs error when lookup throws', async () => {
+    const db = firestore.getDb();
+    jest.spyOn(db, 'collection').mockImplementationOnce(() => {
+      throw new Error('Database connection failed');
+    });
+    const view = await firestore.getSharedMeetingView('acme.com', 'broken-id');
+    expect(view).toBeNull();
+  });
+
+  test('getSharedSeriesView catches errors and logs error when query throws', async () => {
+    const db = firestore.getDb();
+    jest.spyOn(db, 'collection').mockImplementationOnce(() => {
+      throw new Error('Series query failed');
+    });
+    const view = await firestore.getSharedSeriesView('acme.com', 'broken-series');
+    expect(view).toBeNull();
+  });
+
+  test('resolveShareLink catches errors and logs warning when get throws', async () => {
+    const db = firestore.getDb();
+    jest.spyOn(db, 'collection').mockImplementationOnce(() => {
+      throw new Error('Resolve failed');
+    });
+    const res = await firestore.resolveShareLink('broken-token');
+    expect(res).toBeNull();
+  });
+
+  test('revokeShareLink catches errors and returns revoked: false, reason: error', async () => {
+    const db = firestore.getDb();
+    jest.spyOn(db, 'collection').mockImplementationOnce(() => {
+      throw new Error('Revoke failed');
+    });
+    const res = await firestore.revokeShareLink('tok', 'owner@acme.com');
+    expect(res).toEqual({ revoked: false, reason: 'error' });
+  });
 });
+
+
+
