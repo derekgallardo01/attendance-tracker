@@ -47,7 +47,27 @@
     return rows || `<tr><td colspan="3" class="muted">${esc(tr('share.noParticipants', 'No participants tracked.'))}</td></tr>`;
   }
 
-  const api = { fmtDate, pct, computeRange, renderPeopleRows };
+  // Build the <tr> rows for a single meeting's participant table.
+  function renderMeetingPeopleRows(people, esc) {
+    const rows = (people || []).map(p => {
+      const dur = (p.durationMin != null && p.durationMin > 0) ? `${p.durationMin}m` : (p.durationMin === 0 ? '< 1m' : '—');
+      const isPres = p.present !== false;
+      const statusText = isPres ? tr('attendee.present', 'Present') : tr('attendee.absent', 'Absent');
+      const badgeStyle = isPres
+        ? 'color:var(--accent);background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.25)'
+        : 'color:var(--muted);background:rgba(255,255,255,.05);border:1px solid var(--border)';
+      return `
+          <tr>
+            <td>${esc(p.displayName || tr('roster.guest', 'Guest'))}</td>
+            <td class="right">${dur}</td>
+            <td><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:.75rem;font-weight:600;${badgeStyle}">${statusText}</span></td>
+          </tr>
+        `;
+    }).join('');
+    return rows || `<tr><td colspan="3" class="muted">${esc(tr('share.noParticipants', 'No participants tracked.'))}</td></tr>`;
+  }
+
+  const api = { fmtDate, pct, computeRange, renderPeopleRows, renderMeetingPeopleRows };
   root.AttShare = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

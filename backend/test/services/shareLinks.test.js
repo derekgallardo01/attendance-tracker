@@ -24,12 +24,20 @@ async function flush() {
 }
 
 describe('createShareLink', () => {
-  test('rejects when type is not "series"', async () => {
+  test('rejects when type is invalid', async () => {
     await expect(
       firestore.createShareLink('acme.com', 'owner@acme.com', {
-        type: 'meeting', recurringEventId: 'x',
+        type: 'invalid', recurringEventId: 'x',
       })
-    ).rejects.toThrow(/series/);
+    ).rejects.toThrow(/type must be series or meeting/);
+  });
+
+  test('rejects when meetingId and conferenceId are missing for type meeting', async () => {
+    await expect(
+      firestore.createShareLink('acme.com', 'owner@acme.com', {
+        type: 'meeting',
+      })
+    ).rejects.toThrow(/meetingId or conferenceId required/);
   });
 
   test('rejects when recurringEventId is missing', async () => {
@@ -390,5 +398,65 @@ describe('revokeShareLink (Sweep-2 — kill switch for a leaked link)', () => {
 
   test('revoking an unknown token reports not_found', async () => {
     expect(await firestore.revokeShareLink('nope', 'owner@acme.com')).toMatchObject({ revoked: false, reason: 'not_found' });
+  });
+});
+
+describe('getSharedMeetingView', () => {
+  test('returns null when meeting does not exist', async () => {
+    const view = await firestore.getSharedMeetingView('acme.com', 'nonexistent-meeting');
+    expect(view).toBeNull();
+  });
+
+  test('returns sanitized meeting view without emails', async () => {
+    ctx.seed('tenants/acme.com/meetings/m1', {
+      title: 'Math 101 Lecture',
+      meetingCode: 'abc-defg-hij',
+      startTime: wrapTimestamp(new Date('2026-03-01T10:00:00Z')),
+      endTime: wrapTimestamp(new Date('2026-03-01T11:00:00Z')),
+    });
+    ctx.seed('tenants/acme.com/meetings/m1/participants/p1', {
+      displayName: 'Alice Student',
+      email: 'alice@secret.edu',
+      present: true,
+      durationMs: 3600000,
+      joinTime: wrapTimestamp(new Date('2026-03-01T10:00:00Z')),
+      leaveTime: wrapTimestamp(new Date('2026-03-01T11:00:00Z')),
+    });
+    ctx.seed('tenants/acme.com/meetings/m1/participants/p2', {
+      displayName: 'Bob Absent',
+      email: 'bob@secret.edu',
+      present: false,
+      durationMs: 0,
+    });
+
+    const view = await firestore.getSharedMeetingView('acme.com', 'm1');
+    expect(view).not.toBeNull();
+    expect(view.title).toBe('Math 101 Lecture');
+    expect(view.totalAttendees).toBe(2);
+    expect(view.presentCount).toBe(1);
+    expect(view.attendanceRate).toBe(0.5);
+    expect(view.people).toHaveLength(2);
+    expect(view.people[0].displayName).toBe('Alice Student');
+    expect(view.people[0]).not.toHaveProperty('email');
+    expect(view.people[1].displayName).toBe('Bob Absent');
+    expect(view.people[1]).not.toHaveProperty('email');
+  });
+
+  test('resolves meeting by meetingCode when direct id lookup misses', async () => {
+    ctx.seed('tenants/acme.com/meetings/inst_1', {
+      title: 'Instance Meeting',
+      meetingCode: 'code-xyz',
+      startTime: wrapTimestamp(new Date('2026-03-02T10:00:00Z')),
+    });
+    ctx.seed('tenants/acme.com/meetings/inst_1/participants/p1', {
+      displayName: 'Charlie',
+      present: true,
+      durationMin: 30,
+    });
+
+    const view = await firestore.getSharedMeetingView('acme.com', 'code-xyz');
+    expect(view).not.toBeNull();
+    expect(view.title).toBe('Instance Meeting');
+    expect(view.totalAttendees).toBe(1);
   });
 });

@@ -128,6 +128,14 @@ const FRONTEND_EVENT_TYPES = new Set([
   'colleague_referral_modal_dismissed',
   'colleague_referral_link_copied',
   'colleague_referral_email_clicked',
+  // Public share link interactions
+  'share_meeting_link_created',
+  'share_meeting_link_copied',
+  'share_meeting_link_failed',
+  'share_series_link_copied',
+  // Migration tool interactions
+  'migration_csv_dropped',
+  'migration_roster_downloaded',
 ]);
 
 // POST /api/event — let the frontend record activation/funnel events that only
@@ -185,32 +193,57 @@ router.post('/event', requireAuth, async (req, res) => {
   }
 });
 
-// POST /api/share — mint a public share link for a series. The owner picks
-// a recurringEventId from their Series tab; we return an opaque token they
+// POST /api/share — mint a public share link for a series or meeting. The owner picks
+// a recurringEventId or meetingId; we return an opaque token they
 // can paste into Slack/email/etc. Recipients hit /share.html?t=<token>.
 router.post('/share', requireAuth, async (req, res) => {
   /* istanbul ignore next: express.json always sets req.body to an object */
-  const { recurringEventId, type } = req.body || {};
-  if (!recurringEventId) return res.status(400).json({ error: 'recurringEventId is required' });
-  try {
-    // Ownership check: the caller must have TRACKED this series themselves.
-    // Without it, anyone in the tenant who knew a recurringEventId (e.g. an
-    // invitee reading their own calendar) could mint a public link exposing
-    // another teacher's full student roster.
-    const mine = await getUserMeetingSeries(req.user.domain, req.user.email);
-    const owns = (mine?.series || []).some(s => s.recurringEventId === recurringEventId);
-    if (!owns) {
-      return res.status(403).json({ error: 'You can only share a recurring series you tracked yourself.' });
+  const { recurringEventId, meetingId, conferenceId, type } = req.body || {};
+  const shareType = type || (recurringEventId ? 'series' : 'meeting');
+
+  if (shareType === 'series') {
+    if (!recurringEventId) return res.status(400).json({ error: 'recurringEventId is required' });
+    try {
+      // Ownership check: the caller must have TRACKED this series themselves.
+      // Without it, anyone in the tenant who knew a recurringEventId (e.g. an
+      // invitee reading their own calendar) could mint a public link exposing
+      // another teacher's full student roster.
+      const mine = await getUserMeetingSeries(req.user.domain, req.user.email);
+      const owns = (mine?.series || []).some(s => s.recurringEventId === recurringEventId);
+      if (!owns) {
+        return res.status(403).json({ error: 'You can only share a recurring series you tracked yourself.' });
+      }
+      const result = await createShareLink(req.user.domain, req.user.email, { type: 'series', recurringEventId });
+      res.json({
+        token: result.token,
+        url: `${CONFIG.publicSiteUrl}/share.html?t=${result.token}`, // env-aware — a staging deploy must not mint prod links
+        expiresAt: result.expiresAt,
+      });
+    } catch (err) {
+      log.error('share: create series failed', { error: err.message, email: req.user.email });
+      res.status(500).json({ error: 'Failed to create share link' });
     }
-    const result = await createShareLink(req.user.domain, req.user.email, { type: type || 'series', recurringEventId });
-    res.json({
-      token: result.token,
-      url: `${CONFIG.publicSiteUrl}/share.html?t=${result.token}`, // env-aware — a staging deploy must not mint prod links
-      expiresAt: result.expiresAt,
-    });
-  } catch (err) {
-    log.error('share: create failed', { error: err.message, email: req.user.email });
-    res.status(500).json({ error: 'Failed to create share link' });
+  } else if (shareType === 'meeting') {
+    const mid = meetingId || conferenceId;
+    if (!mid) return res.status(400).json({ error: 'meetingId or conferenceId is required' });
+    try {
+      const history = await getUserMeetingHistory(req.user.domain, req.user.email);
+      const owns = (history?.meetings || []).some(m => m.id === mid || m.conferenceId === mid || m.meetingCode === mid);
+      if (!owns) {
+        return res.status(403).json({ error: 'You can only share a meeting you tracked yourself.' });
+      }
+      const result = await createShareLink(req.user.domain, req.user.email, { type: 'meeting', meetingId: mid, conferenceId: mid });
+      res.json({
+        token: result.token,
+        url: `${CONFIG.publicSiteUrl}/share.html?t=${result.token}`,
+        expiresAt: result.expiresAt,
+      });
+    } catch (err) {
+      log.error('share: create meeting failed', { error: err.message, email: req.user.email });
+      res.status(500).json({ error: 'Failed to create share link' });
+    }
+  } else {
+    return res.status(400).json({ error: 'Unsupported share type' });
   }
 });
 

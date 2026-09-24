@@ -68,6 +68,8 @@ const MIRRORED = [
   'google-meet-attendance-which-plan.html',
   'google-meet-breakout-room-attendance.html',
   'attendance-taker-for-classroom-alternative.html',
+  'google-meet-attendance-extension-broken.html',
+  'deploy-google-workspace-admin-attendance-tracker.html',
   'export-google-meet-participants-to-excel.html',
   'google-meet-attendance-certificates.html',
   'track-attendance-google-meet-without-extension.html',

@@ -1170,7 +1170,13 @@
         "settings.subResumedToast": "Subscription resumed. Auto-renewal is active.",
         "settings.cancelFailed": "Could not cancel subscription right now. Please try again.",
         "settings.resumeFailed": "Could not resume subscription. Please try again.",
-        "toast.prefSaved": "Notification preferences saved"
+        "toast.prefSaved": "Notification preferences saved",
+        "bar.shareLink": "Share report",
+        "celebrate.shareReport": "Copy Shareable Report Link",
+        "toast.signInToShare": "Sign in with Google first to share a report link.",
+        "toast.noMeetingToShare": "No active or exported meeting data to share yet.",
+        "toast.shareLinkCopied": "Shareable report link copied to clipboard! (Expires in 30 days)",
+        "share.singleMeetingMeta": "{count} participants · {date}"
     },
     "es": {
         "settings.timezoneLabel": "Zona horaria",
@@ -2122,7 +2128,13 @@
         "settings.subResumedToast": "Suscripción reanudada. La renovación automática está activa.",
         "settings.cancelFailed": "No se pudo cancelar la suscripción ahora. Por favor, inténtalo de nuevo.",
         "settings.resumeFailed": "No se pudo reanudar la suscripción. Por favor, inténtalo de nuevo.",
-        "toast.prefSaved": "Preferencias de notificación guardadas"
+        "toast.prefSaved": "Preferencias de notificación guardadas",
+        "bar.shareLink": "Compartir informe",
+        "celebrate.shareReport": "Copiar enlace de informe compartible",
+        "toast.signInToShare": "Inicia sesión con Google primero para compartir un enlace de informe.",
+        "toast.noMeetingToShare": "Aún no hay datos de reunión activos o exportados para compartir.",
+        "toast.shareLinkCopied": "¡Enlace de informe copiado al portapapeles! (Caduca en 30 días)",
+        "share.singleMeetingMeta": "{count} participantes · {date}"
     },
     "pt": {
         "settings.timezoneLabel": "Fuso horário",
@@ -3074,7 +3086,13 @@
         "settings.subResumedToast": "Assinatura retomada. A renovação automática está ativa.",
         "settings.cancelFailed": "Não foi possível cancelar a assinatura no momento. Tente novamente.",
         "settings.resumeFailed": "Não foi possível retomar a assinatura. Tente novamente.",
-        "toast.prefSaved": "Preferências de notificação salvas"
+        "toast.prefSaved": "Preferências de notificação salvas",
+        "bar.shareLink": "Compartilhar relatório",
+        "celebrate.shareReport": "Copiar link do relatório compartilhável",
+        "toast.signInToShare": "Faça login com o Google primeiro para compartilhar o link do relatório.",
+        "toast.noMeetingToShare": "Ainda não há dados de reunião ativos ou exportados para compartilhar.",
+        "toast.shareLinkCopied": "Link do relatório copiado para a área de transferência! (Expira em 30 dias)",
+        "share.singleMeetingMeta": "{count} participantes · {date}"
     },
     "hi": {
         "settings.timezoneLabel": "समय क्षेत्र",
@@ -4026,7 +4044,13 @@
         "settings.subResumedToast": "सदस्यता फिर से शुरू हो गई। स्वतः नवीनीकरण सक्रिय है।",
         "settings.cancelFailed": "अभी सदस्यता रद्द नहीं हो सकी। कृपया पुन: प्रयास करें।",
         "settings.resumeFailed": "सदस्यता फिर से शुरू नहीं हो सकी। कृपया पुन: प्रयास करें।",
-        "toast.prefSaved": "अधिसूचना प्राथमिकताएं सहेजी गईं"
+        "toast.prefSaved": "अधिसूचना प्राथमिकताएं सहेजी गईं",
+        "bar.shareLink": "रिपोर्ट साझा करें",
+        "celebrate.shareReport": "साझा करने योग्य रिपोर्ट लिंक कॉपी करें",
+        "toast.signInToShare": "रिपोर्ट लिंक साझा करने के लिए पहले Google से साइन इन करें।",
+        "toast.noMeetingToShare": "साझा करने के लिए अभी कोई सक्रिय या निर्यात किया गया मीटिंग डेटा नहीं है।",
+        "toast.shareLinkCopied": "रिपोर्ट लिंक क्लिपबोर्ड पर कॉपी हो गया! (30 दिनों में समाप्त)",
+        "share.singleMeetingMeta": "{count} प्रतिभागी · {date}"
     },
     "tl": {
         "settings.timezoneLabel": "Sona ng oras",
@@ -4978,7 +5002,13 @@
         "settings.subResumedToast": "Ipinagpatuloy ang subscription. Aktibo ang auto-renewal.",
         "settings.cancelFailed": "Hindi makansela ang subscription ngayon. Pakisubukan muli.",
         "settings.resumeFailed": "Hindi maipagpatuloy ang subscription. Pakisubukan muli.",
-        "toast.prefSaved": "Nai-save ang mga kagustuhan sa notification"
+        "toast.prefSaved": "Nai-save ang mga kagustuhan sa notification",
+        "bar.shareLink": "Ibahagi ang ulat",
+        "celebrate.shareReport": "Kopyahin ang Maibabahaging Link ng Ulat",
+        "toast.signInToShare": "Mag-sign in muna gamit ang Google upang magbahagi ng link ng ulat.",
+        "toast.noMeetingToShare": "Wala pang aktibo o na-export na data ng pulong na maibabahagi.",
+        "toast.shareLinkCopied": "Nakopya ang link ng ulat sa clipboard! (Mag-e-expire sa loob ng 30 araw)",
+        "share.singleMeetingMeta": "{count} kalahok · {date}"
     },
     "ms": {
         "settings.timezoneLabel": "Zon masa",
@@ -5930,7 +5960,13 @@
         "settings.subResumedToast": "Langganan disambung semula. Pembaharuan automatik aktif.",
         "settings.cancelFailed": "Tidak dapat membatalkan langganan sekarang. Sila cuba lagi.",
         "settings.resumeFailed": "Tidak dapat menyambung semula langganan. Sila cuba lagi.",
-        "toast.prefSaved": "Keutamaan pemberitahuan disimpan"
+        "toast.prefSaved": "Keutamaan pemberitahuan disimpan",
+        "bar.shareLink": "Kongsi laporan",
+        "celebrate.shareReport": "Salin Pautan Laporan Boleh Kongsi",
+        "toast.signInToShare": "Log masuk dengan Google dahulu untuk berkongsi pautan laporan.",
+        "toast.noMeetingToShare": "Tiada data mesyuarat aktif atau dieksport untuk dikongsi lagi.",
+        "toast.shareLinkCopied": "Pautan laporan disalin ke papan keratan! (Tamat tempoh dalam 30 hari)",
+        "share.singleMeetingMeta": "{count} peserta · {date}"
     },
     "id": {
         "settings.timezoneLabel": "Zona waktu",
@@ -6882,7 +6918,13 @@
         "settings.subResumedToast": "Langganan dilanjutkan. Perpanjangan otomatis aktif.",
         "settings.cancelFailed": "Tidak dapat membatalkan langganan saat ini. Silakan coba lagi.",
         "settings.resumeFailed": "Tidak dapat melanjutkan langganan. Silakan coba lagi.",
-        "toast.prefSaved": "Preferensi notifikasi disimpan"
+        "toast.prefSaved": "Preferensi notifikasi disimpan",
+        "bar.shareLink": "Bagikan laporan",
+        "celebrate.shareReport": "Salin Tautan Laporan yang Dapat Dibagikan",
+        "toast.signInToShare": "Masuk dengan Google terlebih dahulu untuk membagikan tautan laporan.",
+        "toast.noMeetingToShare": "Belum ada data rapat aktif atau yang diekspor untuk dibagikan.",
+        "toast.shareLinkCopied": "Tautan laporan disalin ke papan klip! (Kedaluwarsa dalam 30 hari)",
+        "share.singleMeetingMeta": "{count} peserta · {date}"
     },
     "vi": {
         "settings.timezoneLabel": "Múi giờ",
@@ -7834,7 +7876,13 @@
         "settings.subResumedToast": "Đã tiếp tục gói đăng ký. Tự động gia hạn đang hoạt động.",
         "settings.cancelFailed": "Không thể hủy gói đăng ký lúc này. Vui lòng thử lại.",
         "settings.resumeFailed": "Không thể tiếp tục gói đăng ký. Vui lòng thử lại.",
-        "toast.prefSaved": "Đã lưu tùy chọn thông báo"
+        "toast.prefSaved": "Đã lưu tùy chọn thông báo",
+        "bar.shareLink": "Chia sẻ báo cáo",
+        "celebrate.shareReport": "Sao chép liên kết báo cáo có thể chia sẻ",
+        "toast.signInToShare": "Đăng nhập bằng Google trước để chia sẻ liên kết báo cáo.",
+        "toast.noMeetingToShare": "Chưa có dữ liệu cuộc họp đang hoạt động hoặc đã xuất để chia sẻ.",
+        "toast.shareLinkCopied": "Đã sao chép liên kết báo cáo vào khay nhớ tạm! (Hết hạn sau 30 ngày)",
+        "share.singleMeetingMeta": "{count} người tham gia · {date}"
     },
     "fr": {
         "settings.timezoneLabel": "Fuseau horaire",
@@ -8786,7 +8834,13 @@
         "settings.subResumedToast": "Abonnement réactivé. Le renouvellement automatique est actif.",
         "settings.cancelFailed": "Impossible d'annuler l'abonnement pour le moment. Veuillez réessayer.",
         "settings.resumeFailed": "Impossible de réactiver l'abonnement. Veuillez réessayer.",
-        "toast.prefSaved": "Préférences de notification enregistrées"
+        "toast.prefSaved": "Préférences de notification enregistrées",
+        "bar.shareLink": "Partager le rapport",
+        "celebrate.shareReport": "Copier le lien du rapport partageable",
+        "toast.signInToShare": "Connectez-vous d'abord avec Google pour partager un lien de rapport.",
+        "toast.noMeetingToShare": "Aucune donnée de réunion active ou exportée à partager pour l'instant.",
+        "toast.shareLinkCopied": "Lien du rapport copié dans le presse-papiers ! (Expire dans 30 jours)",
+        "share.singleMeetingMeta": "{count} participants · {date}"
     },
     "de": {
         "settings.timezoneLabel": "Zeitzone",
@@ -9738,7 +9792,13 @@
         "settings.subResumedToast": "Abonnement fortgesetzt. Die automatische Verlängerung ist aktiv.",
         "settings.cancelFailed": "Abonnement konnte derzeit nicht gekündigt werden. Bitte versuchen Sie es erneut.",
         "settings.resumeFailed": "Abonnement konnte nicht fortgesetzt werden. Bitte versuchen Sie es erneut.",
-        "toast.prefSaved": "Benachrichtigungseinstellungen gespeichert"
+        "toast.prefSaved": "Benachrichtigungseinstellungen gespeichert",
+        "bar.shareLink": "Bericht teilen",
+        "celebrate.shareReport": "Freigabelink zum Bericht kopieren",
+        "toast.signInToShare": "Melden Sie sich zuerst bei Google an, um einen Freigabelink zu teilen.",
+        "toast.noMeetingToShare": "Noch keine aktiven oder exportierten Besprechungsdaten zum Teilen vorhanden.",
+        "toast.shareLinkCopied": "Freigabelink in die Zwischenablage kopiert! (Gültig für 30 Tage)",
+        "share.singleMeetingMeta": "{count} Teilnehmer · {date}"
     },
     "it": {
         "settings.timezoneLabel": "Fuso orario",
@@ -10690,7 +10750,13 @@
         "settings.subResumedToast": "Abbonamento ripristinato. Il rinnovo automatico è attivo.",
         "settings.cancelFailed": "Impossibile annullare l'abbonamento in questo momento. Riprova.",
         "settings.resumeFailed": "Impossibile ripristinare l'abbonamento. Riprova.",
-        "toast.prefSaved": "Preferenze di notifica salvate"
+        "toast.prefSaved": "Preferenze di notifica salvate",
+        "bar.shareLink": "Condividi rapporto",
+        "celebrate.shareReport": "Copia link rapporto condivisibile",
+        "toast.signInToShare": "Accedi prima con Google per condividere un link del rapporto.",
+        "toast.noMeetingToShare": "Nessun dato della riunione attivo o esportato da condividere ancora.",
+        "toast.shareLinkCopied": "Link del rapporto copiato negli appunti! (Scade tra 30 giorni)",
+        "share.singleMeetingMeta": "{count} partecipanti · {date}"
     },
     "nl": {
         "settings.timezoneLabel": "Tijdzone",
@@ -11642,7 +11708,13 @@
         "settings.subResumedToast": "Abonnement hervat. Automatische verlenging is actief.",
         "settings.cancelFailed": "Kon abonnement momenteel niet annuleren. Probeer het opnieuw.",
         "settings.resumeFailed": "Kon abonnement niet hervatten. Probeer het opnieuw.",
-        "toast.prefSaved": "Notificatievoorkeuren opgeslagen"
+        "toast.prefSaved": "Notificatievoorkeuren opgeslagen",
+        "bar.shareLink": "Rapport delen",
+        "celebrate.shareReport": "Kopieer deelbare rapportlink",
+        "toast.signInToShare": "Log eerst in met Google om een rapportlink te delen.",
+        "toast.noMeetingToShare": "Nog geen actieve of geëxporteerde vergadergegevens om te delen.",
+        "toast.shareLinkCopied": "Rapportlink gekopieerd naar klembord! (Verloopt over 30 dagen)",
+        "share.singleMeetingMeta": "{count} deelnemers · {date}"
     },
     "pl": {
         "settings.timezoneLabel": "Strefa czasowa",
@@ -12594,7 +12666,13 @@
         "settings.subResumedToast": "Subskrypcja wznowiona. Automatyczne odnawianie jest aktywne.",
         "settings.cancelFailed": "Nie można teraz anulować subskrypcji. Spróbuj ponownie.",
         "settings.resumeFailed": "Nie można wznowić subskrypcji. Spróbuj ponownie.",
-        "toast.prefSaved": "Preferencje powiadomień zapisane"
+        "toast.prefSaved": "Preferencje powiadomień zapisane",
+        "bar.shareLink": "Udostępnij raport",
+        "celebrate.shareReport": "Kopiuj link do raportu",
+        "toast.signInToShare": "Zaloguj się najpierw przez Google, aby udostępnić link do raportu.",
+        "toast.noMeetingToShare": "Brak aktywnych lub wyeksportowanych danych ze spotkania do udostępnienia.",
+        "toast.shareLinkCopied": "Link do raportu skopiowany do schowka! (Wygasa za 30 dni)",
+        "share.singleMeetingMeta": "{count} uczestników · {date}"
     },
     "tr": {
         "settings.timezoneLabel": "Saat dilimi",
@@ -13546,7 +13624,13 @@
         "settings.subResumedToast": "Abonelik devam ettirildi. Otomatik yenileme aktif.",
         "settings.cancelFailed": "Abonelik şu anda iptal edilemedi. Lütfen tekrar deneyin.",
         "settings.resumeFailed": "Abonelik devam ettirilemedi. Lütfen tekrar deneyin.",
-        "toast.prefSaved": "Bildirim tercihleri kaydedildi"
+        "toast.prefSaved": "Bildirim tercihleri kaydedildi",
+        "bar.shareLink": "Raporu paylaş",
+        "celebrate.shareReport": "Paylaşılabilir Rapor Bağlantısını Kopyala",
+        "toast.signInToShare": "Rapor bağlantısını paylaşmak için önce Google ile oturum açın.",
+        "toast.noMeetingToShare": "Henüz paylaşılacak etkin veya dışa aktarılmış toplantı verisi yok.",
+        "toast.shareLinkCopied": "Rapor bağlantısı panoya kopyalandı! (30 gün içinde sona erer)",
+        "share.singleMeetingMeta": "{count} katılımcı · {date}"
     },
     "th": {
         "settings.timezoneLabel": "เขตเวลา",
@@ -14498,7 +14582,13 @@
         "settings.subResumedToast": "เปิดใช้งานการสมัครสมาชิกต่อแล้ว การต่ออายุอัตโนมัติทำงานอยู่",
         "settings.cancelFailed": "ไม่สามารถยกเลิกการสมัครสมาชิกได้ในขณะนี้ โปรดลองอีกครั้ง",
         "settings.resumeFailed": "ไม่สามารถเปิดใช้งานการสมัครสมาชิกต่อได้ โปรดลองอีกครั้ง",
-        "toast.prefSaved": "บันทึกการตั้งค่าการแจ้งเตือนแล้ว"
+        "toast.prefSaved": "บันทึกการตั้งค่าการแจ้งเตือนแล้ว",
+        "bar.shareLink": "แชร์รายงาน",
+        "celebrate.shareReport": "คัดลอกลิงก์รายงานที่แชร์ได้",
+        "toast.signInToShare": "ลงชื่อเข้าใช้ด้วย Google ก่อนเพื่อแชร์ลิงก์รายงาน",
+        "toast.noMeetingToShare": "ยังไม่มีข้อมูลการประชุมที่ใช้งานอยู่หรือส่งออกเพื่อแชร์",
+        "toast.shareLinkCopied": "คัดลอกลิงก์รายงานไปยังคลิปบอร์ดแล้ว! (หมดอายุใน 30 วัน)",
+        "share.singleMeetingMeta": "{count} ผู้เข้าร่วม · {date}"
     },
     "ar": {
         "settings.timezoneLabel": "المنطقة الزمنية",
@@ -15450,7 +15540,13 @@
         "settings.subResumedToast": "تم استئناف الاشتراك. التجديد التلقائي نشط الآن.",
         "settings.cancelFailed": "تعذر إلغاء الاشتراك الآن. يرجى المحاولة مرة أخرى.",
         "settings.resumeFailed": "تعذر استئناف الاشتراك. يرجى المحاولة مرة أخرى.",
-        "toast.prefSaved": "تم حفظ تفضيلات الإشعارات"
+        "toast.prefSaved": "تم حفظ تفضيلات الإشعارات",
+        "bar.shareLink": "مشاركة التقرير",
+        "celebrate.shareReport": "نسخ رابط التقرير القابل للمشاركة",
+        "toast.signInToShare": "سجّل الدخول باستخدام Google أولاً لمشاركة رابط التقرير.",
+        "toast.noMeetingToShare": "لا توجد بيانات اجتماع نشطة أو تم تصديرها للمشاركة حتى الآن.",
+        "toast.shareLinkCopied": "تم نسخ رابط التقرير إلى الحافظة! (تنتهي الصلاحية خلال 30 يومًا)",
+        "share.singleMeetingMeta": "{count} مشارك · {date}"
     },
     "ko": {
         "settings.timezoneLabel": "시간대",
@@ -16402,7 +16498,13 @@
         "settings.subResumedToast": "구독이 재개되었습니다. 자동 갱신이 활성화되었습니다.",
         "settings.cancelFailed": "지금 구독을 취소할 수 없습니다. 다시 시도해 주세요.",
         "settings.resumeFailed": "구독을 재개할 수 없습니다. 다시 시도해 주세요.",
-        "toast.prefSaved": "알림 설정이 저장되었습니다"
+        "toast.prefSaved": "알림 설정이 저장되었습니다",
+        "bar.shareLink": "보고서 공유",
+        "celebrate.shareReport": "공유 가능한 보고서 링크 복사",
+        "toast.signInToShare": "보고서 링크를 공유하려면 먼저 Google 계정으로 로그인하세요.",
+        "toast.noMeetingToShare": "아직 공유할 활성 또는 내보낸 회의 데이터가 없습니다.",
+        "toast.shareLinkCopied": "보고서 링크가 클립보드에 복사되었습니다! (30일 후 만료)",
+        "share.singleMeetingMeta": "{count}명 참석 · {date}"
     },
     "zh": {
         "settings.timezoneLabel": "時區",
@@ -17354,7 +17456,13 @@
         "settings.subResumedToast": "訂閱已恢復。自動續訂現已生效。",
         "settings.cancelFailed": "目前無法取消訂閱。請再試一次。",
         "settings.resumeFailed": "無法恢復訂閱。請再試一次。",
-        "toast.prefSaved": "通知偏好設定已儲存"
+        "toast.prefSaved": "通知偏好設定已儲存",
+        "bar.shareLink": "分享報告",
+        "celebrate.shareReport": "複製可分享的報告連結",
+        "toast.signInToShare": "請先使用 Google 登入以分享報告連結。",
+        "toast.noMeetingToShare": "尚無進行中或已匯出的會議資料可供分享。",
+        "toast.shareLinkCopied": "報告連結已複製到剪貼簿！（30 天後過期）",
+        "share.singleMeetingMeta": "{count} 位參與者 · {date}"
     },
     "ja": {
         "settings.timezoneLabel": "タイムゾーン",
@@ -18306,7 +18414,13 @@
         "settings.subResumedToast": "サブスクリプションを再開しました。自動更新が有効です。",
         "settings.cancelFailed": "現在サブスクリプションをキャンセルできません。もう一度お試しください。",
         "settings.resumeFailed": "サブスクリプションを再開できませんでした。もう一度お試しください。",
-        "toast.prefSaved": "通知設定を保存しました"
+        "toast.prefSaved": "通知設定を保存しました",
+        "bar.shareLink": "レポートを共有",
+        "celebrate.shareReport": "共有レポートリンクをコピー",
+        "toast.signInToShare": "レポートリンクを共有するには、まずGoogleでログインしてください。",
+        "toast.noMeetingToShare": "共有可能なアクティブまたはエクスポートされた会議データがまだありません。",
+        "toast.shareLinkCopied": "レポートリンクをクリップボードにコピーしました！（30日間有効）",
+        "share.singleMeetingMeta": "{count} 人の参加者 · {date}"
     },
     "ta": {
         "settings.timezoneLabel": "நேர மண்டலம்",
@@ -19258,7 +19372,13 @@
         "settings.subResumedToast": "சந்தா மீண்டும் தொடங்கப்பட்டது. தானியங்கு புதுப்பித்தல் செயலில் உள்ளது.",
         "settings.cancelFailed": "இப்போது சந்தாவை ரத்துசெய்ய முடியவில்லை. மீண்டும் முயற்சிக்கவும்.",
         "settings.resumeFailed": "சந்தாவை மீண்டும் தொடங்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.",
-        "toast.prefSaved": "அறிவிப்பு விருப்பங்கள் சேமிக்கப்பட்டன"
+        "toast.prefSaved": "அறிவிப்பு விருப்பங்கள் சேமிக்கப்பட்டன",
+        "bar.shareLink": "அறிக்கையைப் பகிரவும்",
+        "celebrate.shareReport": "பகிர்வு அறிக்கை இணைப்பை நகலெடு",
+        "toast.signInToShare": "அறிக்கை இணைப்பைப் பகிர முதலில் Google இல் உள்நுழையவும்.",
+        "toast.noMeetingToShare": "பகிர்வதற்கு இன்னும் செயலில் உள்ள அல்லது ஏற்றுமதி செய்யப்பட்ட சந்திப்புத் தரவு எதுவும் இல்லை.",
+        "toast.shareLinkCopied": "அறிக்கை இணைப்பு கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டது! (30 நாட்களில் காலாவதியாகும்)",
+        "share.singleMeetingMeta": "{count} பங்கேற்பாளர்கள் · {date}"
     },
     "te": {
         "settings.timezoneLabel": "సమయ మండలం",
@@ -20210,7 +20330,13 @@
         "settings.subResumedToast": "సభ్యత్వం పునఃప్రారంభించబడింది. ఆటో-రెన్యూవల్ సక్రియంగా ఉంది.",
         "settings.cancelFailed": "ప్రస్తుతం సభ్యత్వాన్ని రద్దు చేయడం సాధ్యం కాలేదు. దయచేసి మళ్లీ ప్రయత్నించండి.",
         "settings.resumeFailed": "సభ్యత్వాన్ని పునఃప్రారంభించడం సాధ్యం కాలేదు. దయచేసి మళ్లీ ప్రయత్నించండి.",
-        "toast.prefSaved": "నోటిఫికేషన్ ప్రాధాన్యతలు సేవ్ చేయబడ్డాయి"
+        "toast.prefSaved": "నోటిఫికేషన్ ప్రాధాన్యతలు సేవ్ చేయబడ్డాయి",
+        "bar.shareLink": "నివేదికను భాగస్వామ్యం చేయండి",
+        "celebrate.shareReport": "భాగస్వామ్యం చేయగల నివేదిక లింక్‌ను కాపీ చేయండి",
+        "toast.signInToShare": "నివేదిక లింక్‌ను భాగస్వామ్యం చేయడానికి ముందుగా Googleతో సైన్ ఇన్ చేయండి.",
+        "toast.noMeetingToShare": "భాగస్వామ్యం చేయడానికి ఇంకా సక్రియ లేదా ఎగుమతి చేసిన సమావేశ డేటా లేదు.",
+        "toast.shareLinkCopied": "నివేదిక లింక్ క్లిప్‌బోర్డ్‌కి కాపీ చేయబడింది! (30 రోజుల్లో గడువు ముగుస్తుంది)",
+        "share.singleMeetingMeta": "{count} మంది పాల్గొనేవారు · {date}"
     },
     "bn": {
         "settings.timezoneLabel": "সময় অঞ্চল",
@@ -21162,7 +21288,13 @@
         "settings.subResumedToast": "সাবস্ক্রিপশন পুনরায় সক্রিয় হয়েছে। স্বয়ংক্রিয় পুনর্নবীকরণ চালু আছে।",
         "settings.cancelFailed": "এই মুহূর্তে সাবস্ক্রিপশন বাতিল করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
         "settings.resumeFailed": "সাবস্ক্রিপশন পুনরায় সক্রিয় করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
-        "toast.prefSaved": "বিজ্ঞপ্তি পছন্দ সংরক্ষিত হয়েছে"
+        "toast.prefSaved": "বিজ্ঞপ্তি পছন্দ সংরক্ষিত হয়েছে",
+        "bar.shareLink": "রিপোর্ট শেয়ার করুন",
+        "celebrate.shareReport": "শেয়ারযোগ্য রিপোর্ট লিংক কপি করুন",
+        "toast.signInToShare": "রিপোর্ট লিংক শেয়ার করতে প্রথমে Google দিয়ে সাইন ইন করুন।",
+        "toast.noMeetingToShare": "শেয়ার করার মতো কোনো সক্রিয় বা রপ্তানিকৃত মিটিং ডেটা এখনও নেই।",
+        "toast.shareLinkCopied": "রিপোর্ট লিংক ক্লিপবোর্ডে কপি করা হয়েছে! (৩০ দিনে মেয়াদ শেষ)",
+        "share.singleMeetingMeta": "{count} অংশগ্রহণকারী · {date}"
     },
     "ur": {
         "settings.timezoneLabel": "ٹائم زون",
@@ -22114,7 +22246,13 @@
         "settings.subResumedToast": "سبسکرپشن بحال ہو گئی۔ خودکار تجدید فعال ہے۔",
         "settings.cancelFailed": "اس وقت سبسکرپشن منسوخ نہیں ہو سکی۔ براہ کرم دوبارہ کوشش کریں۔",
         "settings.resumeFailed": "سبسکرپشن بحال نہیں ہو سکی۔ براہ کرم دوبارہ کوشش کریں۔",
-        "toast.prefSaved": "اطلاعات کی ترجیحات محفوظ کر لی گئیں"
+        "toast.prefSaved": "اطلاعات کی ترجیحات محفوظ کر لی گئیں",
+        "bar.shareLink": "رپورٹ شیئر کریں",
+        "celebrate.shareReport": "قابل اشتراک رپورٹ لنک کاپی کریں",
+        "toast.signInToShare": "رپورٹ کا لنک شیئر کرنے کے لیے پہلے Google سے سائن ان کریں۔",
+        "toast.noMeetingToShare": "شیئر کرنے کے لیے ابھی تک کوئی فعال یا برآمد شدہ میٹنگ ڈیٹا موجود نہیں ہے۔",
+        "toast.shareLinkCopied": "رپورٹ کا لنک کلپ بورڈ پر کاپی ہو گیا! (30 دنوں میں ختم)",
+        "share.singleMeetingMeta": "{count} شرکاء · {date}"
     },
     "zh-CN": {
         "settings.timezoneLabel": "时区",
@@ -23066,7 +23204,13 @@
         "settings.subResumedToast": "订阅已恢复。自动续费现已生效。",
         "settings.cancelFailed": "目前无法取消订阅。请重试。",
         "settings.resumeFailed": "无法恢复订阅。请重试。",
-        "toast.prefSaved": "通知偏好设置已保存"
+        "toast.prefSaved": "通知偏好设置已保存",
+        "bar.shareLink": "分享报告",
+        "celebrate.shareReport": "复制可分享的报告链接",
+        "toast.signInToShare": "请先使用 Google 登录以分享报告链接。",
+        "toast.noMeetingToShare": "暂无可分享的进行中或已导出的会议数据。",
+        "toast.shareLinkCopied": "报告链接已复制到剪贴板！（30 天后过期）",
+        "share.singleMeetingMeta": "{count} 位参与者 · {date}"
     },
     "ru": {
         "settings.timezoneLabel": "Часовой пояс",
@@ -24018,7 +24162,13 @@
         "settings.subResumedToast": "Подписка возобновлена. Автопродление активно.",
         "settings.cancelFailed": "Не удалось отменить подписку сейчас. Пожалуйста, попробуйте еще раз.",
         "settings.resumeFailed": "Не удалось возобновить подписку. Пожалуйста, попробуйте еще раз.",
-        "toast.prefSaved": "Настройки уведомлений сохранены"
+        "toast.prefSaved": "Настройки уведомлений сохранены",
+        "bar.shareLink": "Поделиться отчетом",
+        "celebrate.shareReport": "Скопировать ссылку на отчет",
+        "toast.signInToShare": "Войдите через Google, чтобы поделиться ссылкой на отчет.",
+        "toast.noMeetingToShare": "Пока нет активных или экспортированных данных встречи для отправки.",
+        "toast.shareLinkCopied": "Ссылка на отчет скопирована в буфер обмена! (Действительна 30 дней)",
+        "share.singleMeetingMeta": "{count} участников · {date}"
     },
     "uk": {
         "settings.timezoneLabel": "Часовий пояс",
@@ -24970,7 +25120,13 @@
         "settings.subResumedToast": "Підписку відновлено. Автоподовження активне.",
         "settings.cancelFailed": "Не вдалося скасувати підписку зараз. Будь ласка, спробуйте ще раз.",
         "settings.resumeFailed": "Не вдалося відновити підписку. Будь ласка, спробуйте ще раз.",
-        "toast.prefSaved": "Налаштування сповіщень збережено"
+        "toast.prefSaved": "Налаштування сповіщень збережено",
+        "bar.shareLink": "Поділитися звітом",
+        "celebrate.shareReport": "Скопіювати посилання на звіт",
+        "toast.signInToShare": "Увійдіть через Google, щоб поділитися посиланням на звіт.",
+        "toast.noMeetingToShare": "Поки немає активних або експортованих даних зустрічі для спільного доступу.",
+        "toast.shareLinkCopied": "Посилання на звіт скопійовано в буфер обміну! (Дійсне 30 днів)",
+        "share.singleMeetingMeta": "{count} учасників · {date}"
     },
     "ro": {
         "settings.timezoneLabel": "Fus orar",
@@ -25922,7 +26078,13 @@
         "settings.subResumedToast": "Abonamentul a fost reluat. Reînnoirea automată este activă.",
         "settings.cancelFailed": "Nu s-a putut anula abonamentul în acest moment. Vă rugăm să încercați din nou.",
         "settings.resumeFailed": "Nu s-a putut relua abonamentul. Vă rugăm să încercați din nou.",
-        "toast.prefSaved": "Preferințele de notificare au fost salvate"
+        "toast.prefSaved": "Preferințele de notificare au fost salvate",
+        "bar.shareLink": "Distribuie raportul",
+        "celebrate.shareReport": "Copiază linkul raportului distribuibil",
+        "toast.signInToShare": "Conectează-te mai întâi cu Google pentru a distribui un link de raport.",
+        "toast.noMeetingToShare": "Nu există încă date active sau exportate ale întâlnirii de distribuit.",
+        "toast.shareLinkCopied": "Linkul raportului a fost copiat în clipboard! (Expiră în 30 de zile)",
+        "share.singleMeetingMeta": "{count} participanți · {date}"
     },
     "he": {
         "settings.timezoneLabel": "אזור זמן",
@@ -26874,7 +27036,13 @@
         "settings.subResumedToast": "המנוי חודש. החידוש האוטומטי פעיל.",
         "settings.cancelFailed": "לא ניתן לבטל את המנוי כעת. אנא נסה שוב.",
         "settings.resumeFailed": "לא ניתן לחדש את המנוי. אנא נסה שוב.",
-        "toast.prefSaved": "העדפות ההודעות נשמרו"
+        "toast.prefSaved": "העדפות ההודעות נשמרו",
+        "bar.shareLink": "שתף דוח",
+        "celebrate.shareReport": "העתק קישור לדוח הניתן לשיתוף",
+        "toast.signInToShare": "היכנס תחילה באמצעות Google כדי לשתף קישור לדוח.",
+        "toast.noMeetingToShare": "אין עדיין נתוני פגישה פעילים או מיוצאים לשיתוף.",
+        "toast.shareLinkCopied": "קישור הדוח הועתק ללוח! (יפוג בעוד 30 יום)",
+        "share.singleMeetingMeta": "{count} משתתפים · {date}"
     },
     "mr": {
         "settings.timezoneLabel": "वेळ क्षेत्र",
@@ -27826,7 +27994,13 @@
         "settings.subResumedToast": "सदस्यता पुन्हा सुरू झाली. स्वयं-नूतनीकरण सक्रिय आहे.",
         "settings.cancelFailed": "सध्या सदस्यता रद्द करता आली नाही. कृपया पुन्हा प्रयत्न करा.",
         "settings.resumeFailed": "सदस्यता पुन्हा सुरू करता आली नाही. कृपया पुन्हा प्रयत्न करा.",
-        "toast.prefSaved": "सूचना प्राधान्ये जतन केली"
+        "toast.prefSaved": "सूचना प्राधान्ये जतन केली",
+        "bar.shareLink": "अहवाल सामायिक करा",
+        "celebrate.shareReport": "सामायिक करण्यायोग्य अहवाल लिंक कॉपी करा",
+        "toast.signInToShare": "अहवाल लिंक सामायिक करण्यासाठी प्रथम Google ने साइन इन करा.",
+        "toast.noMeetingToShare": "सामायिक करण्यासाठी अद्याप कोणताही सक्रिय किंवा निर्यात केलेला डेटा नाही.",
+        "toast.shareLinkCopied": "अहवाल लिंक क्लिपबोर्डवर कॉपी केली! (३० दिवसांत कालबाह्य होईल)",
+        "share.singleMeetingMeta": "{count} सहभागी · {date}"
     },
     "sv": {
         "settings.timezoneLabel": "Tidszon",
@@ -28778,7 +28952,13 @@
         "settings.subResumedToast": "Prenumerationen återupptagen. Automatisk förnyelse är aktiv.",
         "settings.cancelFailed": "Kunde inte avbryta prenumerationen just nu. Försök igen.",
         "settings.resumeFailed": "Kunde inte återuppta prenumerationen. Försök igen.",
-        "toast.prefSaved": "Aviseringsinställningar sparade"
+        "toast.prefSaved": "Aviseringsinställningar sparade",
+        "bar.shareLink": "Dela rapport",
+        "celebrate.shareReport": "Kopiera delbar rapportlänk",
+        "toast.signInToShare": "Logga in med Google först för att dela en rapportlänk.",
+        "toast.noMeetingToShare": "Ingen aktiv eller exporterad mötesdata att dela än.",
+        "toast.shareLinkCopied": "Rapportlänk kopierad till urklipp! (Går ut om 30 dagar)",
+        "share.singleMeetingMeta": "{count} deltagare · {date}"
     },
     "cs": {
         "settings.timezoneLabel": "Časové pásmo",
@@ -29730,7 +29910,13 @@
         "settings.subResumedToast": "Předplatné obnoveno. Automatické obnovení je aktivní.",
         "settings.cancelFailed": "Předplatné se v tuto chvíli nepodařilo zrušit. Zkuste to prosím znovu.",
         "settings.resumeFailed": "Předplatné se nepodařilo obnovit. Zkuste to prosím znovu.",
-        "toast.prefSaved": "Předvolby oznámení uloženy"
+        "toast.prefSaved": "Předvolby oznámení uloženy",
+        "bar.shareLink": "Sdílet přehled",
+        "celebrate.shareReport": "Zkopírovat odkaz na sdílený přehled",
+        "toast.signInToShare": "Nejprve se přihlaste přes Google, abyste mohli sdílet odkaz na přehled.",
+        "toast.noMeetingToShare": "Zatím žádná aktivní nebo exportovaná data ze schůzky ke sdílení.",
+        "toast.shareLinkCopied": "Odkaz na přehled byl zkopírován do schránky! (Platnost vyprší za 30 dní)",
+        "share.singleMeetingMeta": "{count} účastníků · {date}"
     },
     "da": {
         "settings.timezoneLabel": "Tidszone",
@@ -30682,7 +30868,13 @@
         "settings.subResumedToast": "Abonnement genoptaget. Automatisk fornyelse er aktiv.",
         "settings.cancelFailed": "Kunne ikke annullere abonnementet lige nu. Prøv venligst igen.",
         "settings.resumeFailed": "Kunne ikke genoptage abonnementet. Prøv venligst igen.",
-        "toast.prefSaved": "Notifikationspræferencer gemt"
+        "toast.prefSaved": "Notifikationspræferencer gemt",
+        "bar.shareLink": "Del rapport",
+        "celebrate.shareReport": "Kopiér delbart rapportlink",
+        "toast.signInToShare": "Log ind med Google først for at dele et rapportlink.",
+        "toast.noMeetingToShare": "Ingen aktive eller eksporterede mødedata at dele endnu.",
+        "toast.shareLinkCopied": "Rapportlink kopieret til udklipsholder! (Udløber om 30 dage)",
+        "share.singleMeetingMeta": "{count} deltagere · {date}"
     },
     "fi": {
         "settings.timezoneLabel": "Aikavyöhyke",
@@ -31634,7 +31826,13 @@
         "settings.subResumedToast": "Tilaus jatkuu. Automaattinen uusiminen on aktiivinen.",
         "settings.cancelFailed": "Tilausta ei voitu peruuttaa juuri nyt. Yritä uudelleen.",
         "settings.resumeFailed": "Tilausta ei voitu jatkaa. Yritä uudelleen.",
-        "toast.prefSaved": "Ilmoitusasetukset tallennettu"
+        "toast.prefSaved": "Ilmoitusasetukset tallennettu",
+        "bar.shareLink": "Jaa raportti",
+        "celebrate.shareReport": "Kopioi jaettavan raportin linkki",
+        "toast.signInToShare": "Kirjaudu ensin sisään Googlella jakaaksesi raporttilinkin.",
+        "toast.noMeetingToShare": "Ei vielä aktiivisia tai vietyjä kokoustietoja jaettavaksi.",
+        "toast.shareLinkCopied": "Raporttilinkki kopioitu leikepöydälle! (Vanhenee 30 päivässä)",
+        "share.singleMeetingMeta": "{count} osallistujaa · {date}"
     },
     "hu": {
         "settings.timezoneLabel": "Időzóna",
@@ -32586,7 +32784,13 @@
         "settings.subResumedToast": "Előfizetés folytatva. Az automatikus megújítás aktív.",
         "settings.cancelFailed": "Jelenleg nem sikerült lemondani az előfizetést. Kérjük, próbálja újra.",
         "settings.resumeFailed": "Nem sikerült folytatni az előfizetést. Kérjük, próbálja újra.",
-        "toast.prefSaved": "Értesítési beállítások elmentve"
+        "toast.prefSaved": "Értesítési beállítások elmentve",
+        "bar.shareLink": "Jelentés megosztása",
+        "celebrate.shareReport": "Megosztható jelentés linkjének másolása",
+        "toast.signInToShare": "Először jelentkezzen be a Google-lal a jelentés linkjének megosztásához.",
+        "toast.noMeetingToShare": "Még nincs aktív vagy exportált értekezletadat a megosztáshoz.",
+        "toast.shareLinkCopied": "Jelentés linkje a vágólapra másolva! (30 nap múlva lejár)",
+        "share.singleMeetingMeta": "{count} résztvevő · {date}"
     },
     "so": {
         "settings.timezoneLabel": "Aagga saacadda",
@@ -33538,7 +33742,13 @@
         "settings.subResumedToast": "Diiwaangelinta waa dib loo bilaabay. Cusboonaysiinta tooska ah waa shaqeyneysaa.",
         "settings.cancelFailed": "Lama joojin karo diiwaangelinta hadda. Fadlan isku day markale.",
             "settings.resumeFailed": "Lama dib u bilaabi karo diiwaangelinta. Fadlan isku day markale.",
-        "toast.prefSaved": "Dookhyada ogeysiinta waa la keydiyay"
+        "toast.prefSaved": "Dookhyada ogeysiinta waa la keydiyay",
+        "bar.shareLink": "La wadaag warbixinta",
+        "celebrate.shareReport": "Koobiyi Xiriirinta Warbixinta La Wadaagi Karo",
+        "toast.signInToShare": "Marka hore ku gal Google si aad ula wadaagto xiriirinta warbixinta.",
+        "toast.noMeetingToShare": "Weli ma jiraan xog kulan oo firfircoon ama la dhoofiyay oo la wadaago.",
+        "toast.shareLinkCopied": "Xiriirinta warbixinta waxaa lagu koobiyay sabuuradda! (Waxay dhacaysaa 30 maalmood gudahood)",
+        "share.singleMeetingMeta": "{count} ka qaybgalayaal · {date}"
     },
     "sw": {
         "settings.timezoneLabel": "Ukanda wa saa",
@@ -34483,6 +34693,12 @@
         "settings.cancelFailed": "Haikuweza kughairi usajili kwa sasa. Tafadhali jaribu tena.",
         "settings.resumeFailed": "Haikuweza kurejesha usajili. Tafadhali jaribu tena.",
         "toast.prefSaved": "Mapendeleo ya arifa yamehifadhiwa",
+        "bar.shareLink": "Shiriki ripoti",
+        "celebrate.shareReport": "Nakili Kiungo cha Ripoti Inayoweza Kushirikiwa",
+        "toast.signInToShare": "Ingia kwanza ukitumia Google ili kushiriki kiungo cha ripoti.",
+        "toast.noMeetingToShare": "Bado hakuna data ya mkutano inayotumika au iliyohamishwa ya kushiriki.",
+        "toast.shareLinkCopied": "Kiungo cha ripoti kimenakiliwa kwenye ubao wa kunakili! (Itaisha baada ya siku 30)",
+        "share.singleMeetingMeta": "{count} washiriki · {date}",
         "lang.sw": "Kiswahili",
         "lang.am": "አማርኛ",
         "lang.si": "සිංහල",
@@ -35433,6 +35649,12 @@
         "settings.cancelFailed": "በአሁኑ ጊዜ የደንበኝነት ምዝገባን መሰረዝ አልተቻለም። እባክዎ እንደገና ይሞክሩ።",
         "settings.resumeFailed": "የደንበኝነት ምዝገባን መቀጠል አልተቻለም። እባክዎ እንደገና ይሞክሩ።",
         "toast.prefSaved": "የማሳወቂያ ምርጫዎች ተቀምጠዋል",
+        "bar.shareLink": "ሪፖርት አጋራ",
+        "celebrate.shareReport": "የሚጋራ የሪፖርት አገናኝ ቅዳ",
+        "toast.signInToShare": "የሪፖርት አገናኝ ለማጋራት በመጀመሪያ በGoogle ይግቡ።",
+        "toast.noMeetingToShare": "እስካሁን ለማጋራት ምንም ገባሪ ወይም ወደ ውጭ የተላከ የስብሰባ ውሂብ የለም።",
+        "toast.shareLinkCopied": "የሪፖርት አገናኝ ወደ ቅንጥብ ሰሌዳ ተቀድቷል! (በ30 ቀናት ውስጥ ያበቃል)",
+        "share.singleMeetingMeta": "{count} ተሳታፊዎች · {date}",
         "lang.sw": "Kiswahili",
         "lang.am": "አማርኛ",
         "lang.si": "සිංහල",
@@ -36383,6 +36605,12 @@
         "settings.cancelFailed": "දැනට දායකත්වය අවලංගු කිරීමට නොහැකි විය. කරුණාකර නැවත උත්සාහ කරන්න.",
         "settings.resumeFailed": "දායකත්වය නැවත ආරම්භ කිරීමට නොහැකි විය. කරුණාකර නැවත උත්සාහ කරන්න.",
         "toast.prefSaved": "දැනුම්දීම් මනාප සුරකින ලදී",
+        "bar.shareLink": "වාර්තාව බෙදාගන්න",
+        "celebrate.shareReport": "බෙදාගත හැකි වාර්තා සබැඳිය පිටපත් කරන්න",
+        "toast.signInToShare": "වාර්තා සබැඳියක් බෙදාගැනීමට පළමුව Google සමඟ පුරනය වන්න.",
+        "toast.noMeetingToShare": "බෙදාගැනීමට තවමත් සක්‍රිය හෝ අපනයනය කළ රැස්වීම් දත්ත නොමැත.",
+        "toast.shareLinkCopied": "වාර්තා සබැඳිය පසුපුවරුවට පිටපත් කරන ලදී! (දින 30 කින් කල් ඉකුත් වේ)",
+        "share.singleMeetingMeta": "{count} සහභාගිවන්නන් · {date}",
         "lang.sw": "Kiswahili",
         "lang.am": "አማርኛ",
         "lang.si": "සිංහල",
@@ -37333,6 +37561,12 @@
         "settings.cancelFailed": "Δεν ήταν δυνατή η ακύρωση της συνδρομής αυτήν τη στιγμή. Παρακαλούμε δοκιμάστε ξανά.",
         "settings.resumeFailed": "Δεν ήταν δυνατή η συνέχιση της συνδρομής. Παρακαλούμε δοκιμάστε ξανά.",
         "toast.prefSaved": "Οι προτιμήσεις ειδοποιήσεων αποθηκεύτηκαν",
+        "bar.shareLink": "Κοινοποίηση αναφοράς",
+        "celebrate.shareReport": "Αντιγραφή συνδέσμου αναφοράς",
+        "toast.signInToShare": "Συνδεθείτε πρώτα με το Google για να μοιραστείτε έναν σύνδεσμο αναφοράς.",
+        "toast.noMeetingToShare": "Δεν υπάρχουν ακόμα ενεργά ή εξαγόμενα δεδομένα σύσκεψης για κοινή χρήση.",
+        "toast.shareLinkCopied": "Ο σύνδεσμος αναφοράς αντιγράφηκε στο πρόχειρο! (Λήγει σε 30 ημέρες)",
+        "share.singleMeetingMeta": "{count} συμμετέχοντες · {date}",
         "lang.sw": "Kiswahili",
         "lang.am": "አማርኛ",
         "lang.si": "සිංහල",
@@ -38283,6 +38517,12 @@
         "settings.cancelFailed": "Kunne ikke avbryte abonnementet akkurat nå. Vennligst prøv igjen.",
         "settings.resumeFailed": "Kunne ikke gjenoppta abonnementet. Vennligst prøv igjen.",
         "toast.prefSaved": "Varselinnstillinger lagret",
+        "bar.shareLink": "Del rapport",
+        "celebrate.shareReport": "Kopier delbar rapportlenke",
+        "toast.signInToShare": "Logg på med Google først for å dele en rapportlenke.",
+        "toast.noMeetingToShare": "Ingen aktive eller eksporterte møtedata å dele ennå.",
+        "toast.shareLinkCopied": "Rapportlenke kopiert til utklippstavlen! (Utløper om 30 dager)",
+        "share.singleMeetingMeta": "{count} deltakere · {date}",
         "lang.sw": "Kiswahili",
         "lang.am": "አማርኛ",
         "lang.si": "සිංහල",
@@ -39233,6 +39473,12 @@
         "settings.cancelFailed": "No s'ha pogut cancel·lar la subscripció ara mateix. Si us plau, torna-ho a provar.",
         "settings.resumeFailed": "No s'ha pogut reprendre la subscripció. Si us plau, torna-ho a provar.",
         "toast.prefSaved": "Preferències de notificació desades",
+        "bar.shareLink": "Comparteix l'informe",
+        "celebrate.shareReport": "Copia l'enllaç de l'informe compartible",
+        "toast.signInToShare": "Inicia la sessió amb Google primer per compartir un enllaç d'informe.",
+        "toast.noMeetingToShare": "Encara no hi ha dades de reunions actives o exportades per compartir.",
+        "toast.shareLinkCopied": "L'enllaç de l'informe s'ha copiat al porta-retalls! (Caduca en 30 dies)",
+        "share.singleMeetingMeta": "{count} participants · {date}",
         "lang.sw": "Kiswahili",
         "lang.am": "አማርኛ",
         "lang.si": "සිංහල",

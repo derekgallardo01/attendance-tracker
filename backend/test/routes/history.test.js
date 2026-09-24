@@ -430,15 +430,68 @@ describe('POST /api/share — mint share link', () => {
     expect(res.status).toBe(500);
   });
 
-  test('403 when the caller never tracked that series (no minting another teacher\'s roster)', async () => {
-    firestore.getUserMeetingSeries.mockResolvedValue({ series: [{ recurringEventId: 'my-own-series' }] });
+  test('400 when meetingId is missing for type meeting', async () => {
     const res = await request(app)
       .post('/api/share')
-      .set(authedHeader('invitee@acme.com', 'acme.com'))
+      .set(authedHeader('u@a.com', 'a.com'))
       .set('Content-Type', 'application/json')
-      .send({ recurringEventId: 'someone-elses-series' });
+      .send({ type: 'meeting' });
+    expect(res.status).toBe(400);
+  });
+
+  test('200 for type meeting when owner owns the meeting', async () => {
+    firestore.getUserMeetingHistory.mockResolvedValue({
+      meetings: [{ id: 'm-123', title: 'Biology Class' }],
+    });
+    firestore.createShareLink.mockResolvedValue({
+      token: 'meet-tok', expiresAt: '2026-08-01T00:00:00Z',
+    });
+    const res = await request(app)
+      .post('/api/share')
+      .set(authedHeader('teacher@acme.com', 'acme.com'))
+      .set('Content-Type', 'application/json')
+      .send({ meetingId: 'm-123', type: 'meeting' });
+    expect(res.status).toBe(200);
+    expect(res.body.token).toBe('meet-tok');
+    expect(res.body.url).toContain('share.html?t=meet-tok');
+    expect(firestore.createShareLink).toHaveBeenCalledWith(
+      'acme.com', 'teacher@acme.com',
+      expect.objectContaining({ type: 'meeting', meetingId: 'm-123' })
+    );
+  });
+
+  test('403 for type meeting when caller does not own the meeting', async () => {
+    firestore.getUserMeetingHistory.mockResolvedValue({
+      meetings: [{ id: 'other-meeting' }],
+    });
+    const res = await request(app)
+      .post('/api/share')
+      .set(authedHeader('teacher@acme.com', 'acme.com'))
+      .set('Content-Type', 'application/json')
+      .send({ meetingId: 'm-123', type: 'meeting' });
     expect(res.status).toBe(403);
-    expect(firestore.createShareLink).not.toHaveBeenCalled();
+  });
+
+  test('500 when meeting createShareLink throws', async () => {
+    firestore.getUserMeetingHistory.mockResolvedValue({
+      meetings: [{ id: 'm-123' }],
+    });
+    firestore.createShareLink.mockRejectedValue(new Error('fail'));
+    const res = await request(app)
+      .post('/api/share')
+      .set(authedHeader('teacher@acme.com', 'acme.com'))
+      .set('Content-Type', 'application/json')
+      .send({ meetingId: 'm-123', type: 'meeting' });
+    expect(res.status).toBe(500);
+  });
+
+  test('400 when type is invalid', async () => {
+    const res = await request(app)
+      .post('/api/share')
+      .set(authedHeader('u@a.com', 'a.com'))
+      .set('Content-Type', 'application/json')
+      .send({ type: 'invalid_type' });
+    expect(res.status).toBe(400);
   });
 });
 

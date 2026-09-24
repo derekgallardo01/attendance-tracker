@@ -720,7 +720,7 @@
           <td>${esc(m.title)}<div class="muted" style="font-size:.72rem;margin-top:2px">${esc((m.presentNames || []).slice(0, 4).join(', '))}${m.presentNames && m.presentNames.length > 4 ? ' ' + esc(t('history.moreNames', '+{n} more').replace('{n}', m.presentNames.length - 4)) : ''}</div></td>
           <td class="right">${m.participantCount || 0}</td>
           <td class="right nowrap">${fmtDuration(m.durationMs)}</td>
-          <td class="right nowrap">${m.conferenceId ? `<a href="#" onclick="downloadMeetingArtifact('${escArg(m.conferenceId)}','report');return false" title="${esc(t('history.pdfTip', 'Attendance report PDF'))}" style="color:var(--accent);text-decoration:none">PDF</a> <a href="#" onclick="downloadMeetingArtifact('${escArg(m.conferenceId)}','certificates');return false" title="${esc(t('history.certsTip', 'Per-attendee certificates (Pro)'))}" style="color:var(--accent);text-decoration:none;margin-left:8px">${esc(t('history.certs', 'Certs'))}</a>` : '<span class="muted">—</span>'}</td>
+          <td class="right nowrap">${m.conferenceId ? `<a href="#" onclick="downloadMeetingArtifact('${escArg(m.conferenceId)}','report');return false" title="${esc(t('history.pdfTip', 'Attendance report PDF'))}" style="color:var(--accent);text-decoration:none">PDF</a> <a href="#" onclick="downloadMeetingArtifact('${escArg(m.conferenceId)}','certificates');return false" title="${esc(t('history.certsTip', 'Per-attendee certificates (Pro)'))}" style="color:var(--accent);text-decoration:none;margin-left:8px">${esc(t('history.certs', 'Certs'))}</a> <a href="#" onclick="shareMeeting('${escArg(m.id || m.conferenceId)}', this);return false" title="${esc(t('btn.share', 'Share'))}" style="color:var(--accent);text-decoration:none;margin-left:8px">${esc(t('btn.share', 'Share'))}</a>` : '<span class="muted">—</span>'}</td>
         </tr>
       `).join('');
     }
@@ -905,6 +905,36 @@
       URL.revokeObjectURL(url);
     }
 
+    // Mint a public share link for a single meeting and copy it to the clipboard.
+    async function shareMeeting(meetingId, btn) {
+      if (!meetingId) return;
+      const original = btn ? btn.textContent : '';
+      if (btn) { btn.textContent = t('history.creating', 'Creating…'); btn.disabled = true; }
+      try {
+        const res = await fetch(`${BACKEND_URL}/share`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}` },
+          body: JSON.stringify({ meetingId, type: 'meeting' }),
+        });
+        if (!res.ok) throw new Error(res.status);
+        const { url } = await res.json();
+        try {
+          await navigator.clipboard.writeText(url);
+          if (btn) btn.textContent = t('history.copied', 'Copied');
+          logHistoryEvent('share_meeting_link_copied', { meetingId });
+        } catch {
+          window.prompt(t('history.shareThisLink', 'Share this link:'), url);
+          if (btn) btn.textContent = t('history.link', 'Link');
+          logHistoryEvent('share_meeting_link_copied', { meetingId });
+        }
+        setTimeout(() => { if (btn) { btn.textContent = original; btn.disabled = false; } }, 2500);
+      } catch (e) {
+        logHistoryEvent('share_meeting_link_failed', { meetingId, error: e.message });
+        if (btn) btn.textContent = t('history.error', 'Error');
+        setTimeout(() => { if (btn) { btn.textContent = original; btn.disabled = false; } }, 2500);
+      }
+    }
+
     // Mint a public share link for the given series and copy it to the
     // clipboard. The button is rendered inside the series-summary row so we
     // stop event propagation in the caller to prevent expand-toggle.
@@ -924,9 +954,11 @@
         try {
           await navigator.clipboard.writeText(url);
           btn.textContent = t('history.copied', 'Copied');
+          logHistoryEvent('share_series_link_copied', { recurringEventId });
         } catch {
           window.prompt(t('history.shareThisLink', 'Share this link:'), url);
           btn.textContent = t('history.link', 'Link');
+          logHistoryEvent('share_series_link_copied', { recurringEventId });
         }
         setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 2500);
       } catch (e) {

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Google Meet Attendance Extension Broken or Not Showing Up? Causes &amp; Permanent Fix — Attendance Tracker</title>
+  <meta name="description" content="Fix 'Google Meet attendance extension not showing up', 'first join a meeting' error loop, or missing attendance icons after Meet updates. Why Chrome scrapers fail and the permanent add-on fix." />
+  <link rel="canonical" href="https://attendancetracker.dev/google-meet-attendance-extension-broken.html" />
+  <meta property="og:title" content="Google Meet Attendance Extension Broken or Not Showing Up? Causes &amp; Permanent Fix" />
+  <meta property="og:description" content="Fix 'Google Meet attendance extension not showing up', 'first join a meeting' loop, or missing icons. Why DOM scrapers fail and how official add-ons solve it." />
+  <meta property="og:image" content="https://attendancetracker.dev/screenshots/01-live-roster.jpg" />
+  <meta property="og:image:width" content="1920" />
+  <meta property="og:image:height" content="1200" />
+  <meta property="og:url" content="https://attendancetracker.dev/google-meet-attendance-extension-broken.html" />
+  <meta property="og:type" content="article" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Google Meet Attendance Extension Broken or Not Showing Up? Causes &amp; Fix" />
+  <meta name="twitter:description" content="Fix 'Google Meet attendance extension not showing up' or 'first join a meeting' loop. Why DOM scrapers fail and how official add-ons solve it." />
+  <meta name="twitter:image" content="https://attendancetracker.dev/screenshots/01-live-roster.jpg" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Google Meet Attendance Extension Broken or Not Showing Up? 5 Causes & The Permanent Fix",
+        "description": "Troubleshooting guide explaining why Chrome extensions for Google Meet attendance stop working, cause 'first join a meeting' errors, and how to switch to a reliable official add-on.",
+        "author": {
+          "@type": "Organization",
+          "name": "Attendance Tracker",
+          "sameAs": [
+            "https://workspace.google.com/marketplace/app/attendance_tracker/829771833968"
+          ]
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Attendance Tracker",
+          "url": "https://attendancetracker.dev/",
+          "sameAs": [
+            "https://workspace.google.com/marketplace/app/attendance_tracker/829771833968"
+          ]
+        },
+        "image": "https://attendancetracker.dev/screenshots/01-live-roster.jpg"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://attendancetracker.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Google Meet attendance extension broken? Here is why & how to fix it.",
+            "item": "https://attendancetracker.dev/google-meet-attendance-extension-broken.html"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #4ade80; --blue: #58a6ff; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 40px 20px; }
+    .container { max-width: 720px; margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+    .brand img { width: 28px; height: 28px; border-radius: 6px; }
+    .brand a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    h1 { font-size: 2rem; line-height: 1.25; margin-bottom: 14px; }
+    .lead { color: var(--muted); font-size: 1.05rem; margin-bottom: 32px; }
+    h2 { font-size: 1.35rem; margin-top: 36px; margin-bottom: 14px; color: var(--text); }
+    h3 { font-size: 1.05rem; margin-top: 22px; margin-bottom: 8px; color: var(--text); }
+    p { margin-bottom: 14px; color: #c9d1d9; }
+    ul, ol { padding-left: 22px; margin-bottom: 14px; color: #c9d1d9; }
+    li { margin-bottom: 6px; }
+    a { color: var(--blue); }
+    .callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 16px 18px; margin: 22px 0; }
+    .callout strong { color: var(--accent); }
+    .callout-warn { border-left-color: #f85149; }
+    .callout-warn strong { color: #f85149; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: .88rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    th { text-align: left; padding: 10px 14px; background: rgba(255,255,255,.03); color: var(--muted); font-weight: 600; font-size: .8rem; text-transform: uppercase; letter-spacing: .03em; }
+    td { padding: 10px 14px; border-top: 1px solid var(--border); color: #c9d1d9; }
+    .cta { background: linear-gradient(135deg, rgba(74,222,128,.08), rgba(88,166,255,.08)); border: 1px solid rgba(74,222,128,.25); border-radius: 14px; padding: 26px; text-align: center; margin: 36px 0; }
+    .cta h3 { font-size: 1.15rem; margin-top: 0; margin-bottom: 6px; }
+    .cta p { color: var(--muted); font-size: .9rem; margin-bottom: 16px; }
+    .btn { display: inline-block; background: #34A853; color: #fff; text-decoration: none; padding: 11px 24px; border-radius: 8px; font-weight: 600; font-size: .92rem; }
+    .footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border); }
+    .footer a { color: var(--muted); text-decoration: none; margin: 0 6px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <img src="icons/icon-96.png" alt="Attendance Tracker logo" />
+      <a href="/">Attendance Tracker</a>
+    </div>
+
+    <h1>Google Meet Attendance Extension Broken or Not Showing Up? (Causes &amp; Permanent Fix)</h1>
+    <p class="lead">If your Google Meet attendance extension suddenly stopped showing up, won't record participants, or is stuck on a <strong>"first join a meeting"</strong> error loop, you aren't alone. Here is why Chrome attendance extensions repeatedly break after Meet updates — and how to fix it permanently.</p>
+
+    <div class="callout callout-warn">
+      <strong>Why this happens:</strong> Most legacy Chrome Web Store attendance extensions are <em>screen scrapers</em>. When Google updates Google Meet's web code (which happens multiple times a week), the HTML classes that extensions search for change. The extension fails silently, missing your entire class attendance.
+    </div>
+
+    <h2>Common Symptoms &amp; Quick Checks</h2>
+    <h3>1. The "First join a meeting" error loop</h3>
+    <p>You are actively inside a Google Meet call with 25 students, but clicking the extension icon displays an error: <em>"Please first join a meeting"</em> or <em>"No active meeting found"</em>.</p>
+    <p><strong>Cause:</strong> The extension's background script checks the browser tab URL or DOM for obsolete identifiers (like <code>meet.google.com/lookup/</code>). When Google alters room URL structures or internal iframe states, the extension cannot recognize that a call is in progress.</p>
+
+    <h3>2. Attendance icon missing from the Meet top bar or participant tray</h3>
+    <p>Older extensions used to inject green checkmarks or custom buttons right beside the "People" tab inside Google Meet. After a Meet UI refresh, the button completely disappears.</p>
+    <p><strong>Cause:</strong> Extensions inject their interface using CSS selectors like <code>document.querySelector('div[aria-label="People"]')</code>. Google Meet's engineers regularly rename obfuscated class names (e.g. <code>.VfPpkd-Bz112c-LgbsSe</code>). When a class changes, the extension's code can no longer find where to attach.</p>
+
+    <h3>3. Extension crashes or freezes on calls with 50+ participants</h3>
+    <p>The extension works fine in a test call with 2 colleagues, but spins indefinitely or freezes Chrome during a large class or webinar.</p>
+    <p><strong>Cause:</strong> DOM scraping requires constantly traversing hundreds of nested HTML nodes in the browser's main thread. In large meetings, Google Meet virtualizes the participant list (only rendering visible attendees). Screen scrapers miss non-visible attendees or trigger high CPU thrashing.</p>
+
+    <h3>4. "This extension may soon no longer be supported" warning in Chrome</h3>
+    <p>Google Chrome is completing its transition to <strong>Manifest V3</strong>. Hundreds of older Manifest V2 attendance extensions have been abandoned by their creators, delisted from the Chrome Web Store, or disabled by default on modern Chrome versions.</p>
+
+    <h2>The Architectural Difference: Scrapers vs. Official Add-ons</h2>
+    <p>Understanding why your tool broke requires looking at how attendance solutions are built:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Chrome Web Store Scraper</th>
+          <th>Google Workspace Add-on (Attendance Tracker)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>How it reads attendance</strong></td>
+          <td>Scrapes HTML elements from the web page</td>
+          <td>Official Google Meet REST API &amp; Add-on SDK</td>
+        </tr>
+        <tr>
+          <td><strong>UI updates in Meet</strong></td>
+          <td>Breaks whenever Google redesigns Meet</td>
+          <td>Immune — runs natively in Meet's Activities panel</td>
+        </tr>
+        <tr>
+          <td><strong>Device support</strong></td>
+          <td>Chrome desktop only (no Safari, Firefox, iPad)</td>
+          <td>All modern browsers &amp; managed Chromebooks</td>
+        </tr>
+        <tr>
+          <td><strong>Performance impact</strong></td>
+          <td>Can lag browser tabs during 100+ user calls</td>
+          <td>Zero DOM interference; sandboxed iframe</td>
+        </tr>
+        <tr>
+          <td><strong>Student privacy</strong></td>
+          <td>Requires broad "read and change all data" rights</td>
+          <td>Verified by Google Workspace Marketplace; scoped OAuth</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>The Permanent Fix: Switch to an Official Google Meet Add-on</h2>
+    <p>Rather than waiting days or weeks for an extension author to push an emergency patch (only for it to break again on the next Meet update), switch to an official Google Workspace Add-on. Official add-ons live inside Google Meet's native <strong>Activities</strong> panel.</p>
+
+    <h3>Step 1: Install Attendance Tracker from Google Workspace Marketplace</h3>
+    <p>Click the button below to install Attendance Tracker. Because it is an official Workspace Marketplace app, it connects directly to your Google account with zero browser-level sideloading.</p>
+
+    <h3>Step 2: Open Google Meet</h3>
+    <p>Join any Google Meet call. Look at the bottom-right control bar and click the <strong>Activities</strong> icon (the triangle, square, and circle icon).</p>
+
+    <h3>Step 3: Launch Attendance Tracker</h3>
+    <p>Select <strong>Attendance Tracker</strong> from your list of add-ons. Sign in once with Google to authorize saving reports to your Google Drive.</p>
+
+    <h3>Step 4: Press "Start"</h3>
+    <p>Attendance Tracker automatically monitors joins, leaves, and total duration in real time. When class ends, export directly to Google Sheets, download a CSV, or generate a PDF report with one click.</p>
+
+    <div class="cta">
+      <h3>Never lose class attendance to a broken extension again</h3>
+      <p>Free for teachers and hosts. Real-time roll call, Google Classroom roster sync, and one-click Sheets exports that never break.</p>
+      <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_broken_extension" target="_blank" rel="noopener">Install Attendance Tracker Free from Marketplace</a>
+    </div>
+
+    <h2>Frequently Asked Questions</h2>
+    <h3>Can I still recover attendance if my extension failed mid-meeting?</h3>
+    <p>If you have an eligible Google Workspace Education or Enterprise edition and were the host, Google might generate a basic attendance CSV in your email. If not, open Attendance Tracker immediately in the same meeting: it reads everyone currently present and starts tracking timestamps from that moment forward.</p>
+
+    <h3>Does Attendance Tracker require student extensions?</h3>
+    <p>No. Students and attendees do not install anything. Only the host or teacher opens the add-on in their side panel.</p>
+
+    <h3>Will Attendance Tracker break if Meet updates its layout?</h3>
+    <p>No. Attendance Tracker is built on Google's official Meet Add-ons SDK and REST APIs. It does not scrape DOM elements, CSS classes, or screen pixels, so Meet layout updates do not affect attendance accuracy.</p>
+
+    <div class="footer-hub" style="margin-top: 50px; padding-top: 30px; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--muted); line-height: 1.8;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; text-align: left; margin-bottom: 24px;">
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Guides &amp; Comparisons</strong>
+          <a href="how-to-track-attendance-in-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">How to Track Attendance</a>
+          <a href="best-google-meet-attendance-extensions.html" style="color: var(--muted); text-decoration: none; display: block;">Extension Comparison</a>
+          <a href="track-attendance-google-meet-without-extension.html" style="color: var(--muted); text-decoration: none; display: block;">Track Without Extensions</a>
+          <a href="google-meet-attendance-report-not-showing-up.html" style="color: var(--muted); text-decoration: none; display: block;">Report Not Showing Up?</a>
+          <a href="attendance-taker-for-classroom-alternative.html" style="color: var(--muted); text-decoration: none; display: block;">Attendance Taker Alternative</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Education</strong>
+          <a href="attendance-tracker-for-teachers.html" style="color: var(--muted); text-decoration: none; display: block;">For K-12 Teachers</a>
+          <a href="google-meet-attendance-google-classroom.html" style="color: var(--muted); text-decoration: none; display: block;">Google Classroom Sync</a>
+          <a href="import-google-classroom-roster-to-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">Import Classroom Rosters</a>
+          <a href="google-meet-attendance-for-universities.html" style="color: var(--muted); text-decoration: none; display: block;">Universities &amp; Colleges</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Integrations</strong>
+          <a href="export-google-meet-attendance-to-sheets.html" style="color: var(--muted); text-decoration: none; display: block;">Export to Google Sheets</a>
+          <a href="export-google-meet-participants-to-excel.html" style="color: var(--muted); text-decoration: none; display: block;">Export to Excel &amp; CSV</a>
+          <a href="export-google-meet-attendance-to-moodle.html" style="color: var(--muted); text-decoration: none; display: block;">Moodle Gradebook Export</a>
+          <a href="export-google-meet-attendance-to-canvas.html" style="color: var(--muted); text-decoration: none; display: block;">Canvas Gradebook Export</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Platform &amp; Safety</strong>
+          <a href="student-data-privacy.html" style="color: var(--muted); text-decoration: none; display: block;">Student Data Privacy</a>
+          <a href="deploy-google-workspace-admin-attendance-tracker.html" style="color: var(--muted); text-decoration: none; display: block;">Workspace Admin Deployment</a>
+          <a href="pricing.html" style="color: var(--muted); text-decoration: none; display: block;">Pricing Plans</a>
+          <a href="changelog.html" style="color: var(--muted); text-decoration: none; display: block;">Product Changelog</a>
+        </div>
+      </div>
+      <div style="text-align: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06);">
+        <a href="/" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Home</a> ·
+        <a href="pricing.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Pricing</a> ·
+        <a href="support.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Support</a> ·
+        <a href="privacy.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Privacy Policy</a> ·
+        <a href="terms.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Terms of Service</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    try {
+      var params = new URLSearchParams(location.search);
+      var utmSource = params.get('utm_source');
+      var utmMedium = params.get('utm_medium');
+      var utmCampaign = params.get('utm_campaign');
+      var ref = params.get('ref');
+      var referrer = document.referrer || null;
+      var ACQ_KEY = 'attendanceTrackerAcq';
+      if (!localStorage.getItem(ACQ_KEY)) {
+        var payload = {
+          utmSource: utmSource,
+          utmMedium: utmMedium,
+          utmCampaign: utmCampaign,
+          ref: ref,
+          referrer: referrer,
+          landingUrl: location.href,
+          capturedAt: Date.now(),
+        };
+        localStorage.setItem(ACQ_KEY, JSON.stringify(payload));
+        var computedSource = utmSource || (ref ? 'referral' : null) || (referrer ? new URL(referrer).hostname : null) || 'direct';
+        document.cookie = 'att_first_touch=' + encodeURIComponent(JSON.stringify(Object.assign({}, payload, { computedSource: computedSource }))) + ';path=/;max-age=7776000;SameSite=Lax';
+      }
+    } catch (e) {}
+
+    var API = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
+    function beacon(payload) {
+      try {
+        var blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        if (navigator.sendBeacon) navigator.sendBeacon(API + '/public/pageview', blob);
+        else fetch(API + '/public/pageview', { method: 'POST', body: blob, keepalive: true });
+      } catch (e) {}
+    }
+    var p = new URLSearchParams(location.search);
+    beacon({
+      path: location.pathname,
+      referrer: document.referrer || null,
+      viewportWidth: window.innerWidth || null,
+      utmSource: p.get('utm_source'),
+      utmMedium: p.get('utm_medium'),
+      utmCampaign: p.get('utm_campaign'),
+    });
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a[href*="marketplace/app/attendance_tracker"]');
+      if (a) beacon({ path: location.pathname, event: 'cta_click', eventLabel: 'marketplace_install_broken_recovery', referrer: document.referrer || null });
+    });
+  })();
+  </script>
+</body>
+</html>

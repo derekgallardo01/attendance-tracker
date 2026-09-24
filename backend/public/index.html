@@ -2032,6 +2032,7 @@
 
   <div id="sheet-link-bar" style="display:none; padding:4px 16px; font-size:11px;">
     <a id="sheet-link" href="#" target="_blank" data-i18n="bar.openSheet" style="color:var(--green); text-decoration:none;">Open exported sheet</a>
+    <a href="#" onclick="copyCurrentMeetingShareLink(this); return false;" style="color:var(--green); text-decoration:none; margin-left:14px;" data-i18n="bar.shareLink">Share report</a>
     <a href="#" onclick="downloadAttendanceCsv(); return false;" data-i18n="bar.downloadCsv" style="color:var(--green); text-decoration:none; margin-left:14px;">Download CSV</a>
     <a href="#" onclick="downloadPdfReport(); return false;" data-i18n="bar.pdfReport" style="color:var(--green); text-decoration:none; margin-left:14px;">PDF report</a>
     <a href="#" onclick="downloadCertificates(); return false;" style="color:var(--green); text-decoration:none; margin-left:14px; display:inline-flex; align-items:center; gap:4px;"><span data-i18n="bar.certificates">Certificates</span><span style="background:rgba(253,214,99,.2);border:1px solid rgba(253,214,99,.5);color:#fdd663;font-size:9px;font-weight:700;padding:1px 4px;border-radius:4px;line-height:1" data-i18n="badge.pro">Pro</span></a>
@@ -6613,6 +6614,52 @@ function showCelebrateModal(sheetUrl, milestoneCount = 1) {
   }
 }
 
+async function copyCurrentMeetingShareLink(btn) {
+  if (!state.sessionToken) {
+    toast(t('toast.signInToShare', 'Sign in with Google first to share a report link.'), 4000);
+    return;
+  }
+  const mid = state.conferenceId || (state._lastExport && state._lastExport.conferenceId);
+  if (!mid) {
+    toast(t('toast.noMeetingToShare', 'No active or exported meeting data to share yet.'), 4000);
+    return;
+  }
+  const origText = btn ? btn.textContent : '';
+  if (btn) { btn.textContent = t('history.creating', 'Creating…'); btn.disabled = true; }
+  try {
+    const res = await authFetch(`${state.backendUrl}/share`, {
+      method: 'POST',
+      body: JSON.stringify({ meetingId: mid, type: 'meeting' }),
+    });
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    const url = data.url;
+    let ok = false;
+    try { await navigator.clipboard.writeText(url); ok = true; } catch {}
+    if (!ok) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = url; document.body.appendChild(ta); ta.select();
+        ok = document.execCommand('copy'); document.body.removeChild(ta);
+      } catch {}
+    }
+    if (ok) {
+      try { logUserEvent('share_meeting_link_copied', { meetingId: mid }); } catch {}
+      toast(t('toast.shareLinkCopied', 'Shareable report link copied to clipboard! (Expires in 30 days)'), 5000);
+      if (btn) btn.textContent = t('history.copied', 'Copied');
+    } else {
+      toast(url, 10000);
+    }
+    setTimeout(() => { if (btn) { btn.textContent = origText; btn.disabled = false; } }, 2500);
+  } catch (err) {
+    try { logUserEvent('share_meeting_link_failed', { meetingId: mid, error: err.message }); } catch {}
+    toast(t('history.error', 'Could not create share link right now.'), 4000);
+    if (btn) { btn.textContent = origText; btn.disabled = false; }
+  }
+}
+
 function onCelebrateReviewClick(e) {
   try { logUserEvent('review_ask_clicked', { source: 'celebrate_modal' }); } catch {}
   localStorage.setItem('has_reviewed', '1');
@@ -8619,6 +8666,7 @@ window.addEventListener('DOMContentLoaded', () => {
       <div style="color:#9ca3af;font-size:.84rem;line-height:1.5;margin-bottom:16px" data-i18n="celebrate.body">Your attendance report is in Google Sheets. If Attendance Tracker saved you time today, could you leave a quick 5-star rating on Google Marketplace?</div>
       <div style="display:flex;flex-direction:column;gap:10px">
         <a id="celebrate-review-btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" onclick="onCelebrateReviewClick(event)" style="background:#f59e0b;color:#111;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:700;font-size:.85rem;display:inline-block" data-i18n="celebrate.review">Leave a 5-Star Review (5s)</a>
+        <button id="celebrate-share-report-btn" type="button" onclick="copyCurrentMeetingShareLink(this)" style="background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.35);color:#4ade80;padding:9px 16px;border-radius:8px;font-weight:700;font-size:.82rem;cursor:pointer;display:inline-block" data-i18n="celebrate.shareReport">Copy Shareable Report Link</button>
         <a id="celebrate-share-link" href="#" style="background:transparent;border:1px solid #30363d;color:#e6edf3;text-decoration:none;padding:8px 16px;border-radius:8px;font-weight:600;font-size:.8rem;display:inline-block" data-i18n="celebrate.share">Share with a teammate</a>
         <button onclick="closeCelebrateModal()" style="background:transparent;color:#9ca3af;border:none;font-size:.8rem;cursor:pointer;padding:4px" data-i18n="upgrade.maybeLater">Maybe later</button>
       </div>

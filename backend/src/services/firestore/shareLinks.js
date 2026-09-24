@@ -1,29 +1,43 @@
 const crypto = require('crypto');
 const { getDb, tenantRef, FieldValue, log, tsMs } = require('./_core');
 
-// ── Public share links for series dashboards ──
+// ── Public share links for series dashboards & meeting reports ──
 // Owner mints a token; recipient hits /api/public/share/:token and sees a
-// read-only view of one series. Tokens are opaque random strings stored as
+// read-only view of one series or meeting. Tokens are opaque random strings stored as
 // Firestore doc IDs. 30-day expiry by default so a leaked link doesn't haunt
 // the owner forever — they can re-mint when they need it again.
 const SHARE_LINK_TTL_DAYS = 30;
 
-async function createShareLink(domain, ownerEmail, { type, recurringEventId }) {
-  if (type !== 'series' || !recurringEventId) {
-    throw new Error('type=series and recurringEventId required');
+async function createShareLink(domain, ownerEmail, { type, recurringEventId, meetingId, conferenceId }) {
+  if (type === 'series') {
+    if (!recurringEventId) {
+      throw new Error('type=series and recurringEventId required');
+    }
+  } else if (type === 'meeting') {
+    if (!meetingId && !conferenceId) {
+      throw new Error('type=meeting and meetingId or conferenceId required');
+    }
+  } else {
+    throw new Error('type must be series or meeting');
   }
   const token = crypto.randomBytes(12).toString('base64')
     .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); // url-safe
   const now = new Date();
   const expiresAt = new Date(now.getTime() + SHARE_LINK_TTL_DAYS * 86400000);
-  await getDb().collection('shareLinks').doc(token).set({
+  const docData = {
     token, type, domain, ownerEmail: ownerEmail.toLowerCase(),
-    recurringEventId,
     createdAt: FieldValue.serverTimestamp(),
     expiresAt,
     revoked: false,
     viewCount: 0,
-  });
+  };
+  if (type === 'series') {
+    docData.recurringEventId = recurringEventId;
+  } else {
+    docData.meetingId = meetingId || conferenceId;
+    docData.conferenceId = conferenceId || meetingId;
+  }
+  await getDb().collection('shareLinks').doc(token).set(docData);
   return { token, expiresAt: expiresAt.toISOString() };
 }
 
@@ -39,7 +53,19 @@ async function resolveShareLink(token) {
     // Bump view counter — fire-and-forget; failure shouldn't block the read.
     doc.ref.update({ viewCount: FieldValue.increment(1), lastViewedAt: FieldValue.serverTimestamp() })
       .catch(() => {});
-    return { token, type: d.type, domain: d.domain, ownerEmail: d.ownerEmail, recurringEventId: d.recurringEventId };
+    const out = {
+      token,
+      type: d.type,
+      domain: d.domain,
+      ownerEmail: d.ownerEmail,
+    };
+    if (d.type === 'series') {
+      out.recurringEventId = d.recurringEventId;
+    } else {
+      out.meetingId = d.meetingId || null;
+      out.conferenceId = d.conferenceId || null;
+    }
+    return out;
   } catch (err) {
     log.warn('firestore: resolveShareLink failed', { error: err.message });
     return null;
@@ -150,4 +176,61 @@ async function revokeShareLink(token, ownerEmail) {
   }
 }
 
-module.exports = { createShareLink, resolveShareLink, getSharedSeriesView, revokeShareLink };
+// Build a public-safe view of a single meeting. Personal emails are stripped
+// so recipient only sees names, dwell time, and attendance status.
+async function getSharedMeetingView(domain, meetingId) {
+  try {
+    const tenant = tenantRef(domain);
+    let mRef = tenant.collection('meetings').doc(meetingId);
+    let mDoc = await mRef.get();
+    if (!mDoc.exists) {
+      // Try searching by meetingCode / conferenceId
+      const codeSnap = await tenant.collection('meetings')
+        .where('meetingCode', '==', meetingId).get();
+      if (!codeSnap.empty) {
+        const instances = codeSnap.docs.filter(d => d.id !== meetingId);
+        const docs = instances.length ? instances : codeSnap.docs;
+        const ms = (v) => (v?.toDate ? v.toDate().getTime() : (v ? new Date(v).getTime() : 0));
+        docs.sort((a, b) => ms(b.data().startTime) - ms(a.data().startTime));
+        mRef = docs[0].ref;
+        mDoc = docs[0];
+      }
+    }
+    if (!mDoc.exists) return null;
+    const m = mDoc.data();
+    const pSnap = await mRef.collection('participants').get();
+
+    const iso = (v) => (v && typeof v.toDate === 'function' ? v.toDate().toISOString() : (v ? new Date(v).toISOString() : null));
+
+    const people = pSnap.docs.map(d => {
+      const p = d.data();
+      return {
+        displayName: p.displayName || 'Guest',
+        present: p.present !== false,
+        joinTime: iso(p.joinTime),
+        leaveTime: iso(p.leaveTime),
+        durationMin: typeof p.durationMin === 'number' ? p.durationMin : Math.round((p.durationMs || 0) / 60000),
+      };
+    }).sort((a, b) => (b.durationMin || 0) - (a.durationMin || 0) || a.displayName.localeCompare(b.displayName));
+
+    const totalAttendees = people.length;
+    const presentCount = people.filter(p => p.present).length;
+    const attendanceRate = totalAttendees > 0 ? (presentCount / totalAttendees) : 1;
+
+    return {
+      title: m.title || 'Google Meet',
+      meetingCode: m.meetingCode || m.conferenceId || null,
+      startTime: iso(m.startTime),
+      endTime: iso(m.endTime),
+      totalAttendees,
+      presentCount,
+      attendanceRate,
+      people,
+    };
+  } catch (err) {
+    log.error('firestore: getSharedMeetingView failed', { domain, meetingId, error: err.message });
+    return null;
+  }
+}
+
+module.exports = { createShareLink, resolveShareLink, getSharedSeriesView, getSharedMeetingView, revokeShareLink };

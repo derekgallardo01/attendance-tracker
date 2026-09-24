@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Deploy Attendance Tracker Across Your School or District — Google Workspace Admin Guide</title>
+  <meta name="description" content="Step-by-step guide for Google Workspace administrators to force-install Attendance Tracker for specific Organizational Units (OUs) or entire school domains." />
+  <link rel="canonical" href="https://attendancetracker.dev/deploy-google-workspace-admin-attendance-tracker.html" />
+  <meta property="og:title" content="Deploy Attendance Tracker Across Your School or District — Google Workspace Admin Guide" />
+  <meta property="og:description" content="Admin guide for installing Attendance Tracker via Google Workspace Admin Console across specific OUs or entire school districts." />
+  <meta property="og:image" content="https://attendancetracker.dev/screenshots/01-live-roster.jpg" />
+  <meta property="og:image:width" content="1920" />
+  <meta property="og:image:height" content="1200" />
+  <meta property="og:url" content="https://attendancetracker.dev/deploy-google-workspace-admin-attendance-tracker.html" />
+  <meta property="og:type" content="article" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Deploy Attendance Tracker Across Your School or District — Admin Guide" />
+  <meta name="twitter:description" content="Step-by-step OU force-install guide for Google Workspace Super Admins." />
+  <meta name="twitter:image" content="https://attendancetracker.dev/screenshots/01-live-roster.jpg" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Deploy Attendance Tracker Across Your School or District: Google Workspace Admin Guide",
+        "description": "Comprehensive guide for Google Workspace administrators to configure, domain-install, and license Attendance Tracker across specific Organizational Units.",
+        "author": {
+          "@type": "Organization",
+          "name": "Attendance Tracker",
+          "sameAs": [
+            "https://workspace.google.com/marketplace/app/attendance_tracker/829771833968"
+          ]
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Attendance Tracker",
+          "url": "https://attendancetracker.dev/",
+          "sameAs": [
+            "https://workspace.google.com/marketplace/app/attendance_tracker/829771833968"
+          ]
+        },
+        "image": "https://attendancetracker.dev/screenshots/01-live-roster.jpg"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://attendancetracker.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Google Workspace Admin Deployment Guide",
+            "item": "https://attendancetracker.dev/deploy-google-workspace-admin-attendance-tracker.html"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #4ade80; --blue: #58a6ff; --amber: #f59e0b; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 40px 20px; }
+    .container { max-width: 740px; margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+    .brand img { width: 28px; height: 28px; border-radius: 6px; }
+    .brand a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    h1 { font-size: 2.1rem; line-height: 1.25; margin-bottom: 14px; }
+    .lead { color: var(--muted); font-size: 1.05rem; margin-bottom: 32px; }
+    h2 { font-size: 1.4rem; margin-top: 36px; margin-bottom: 14px; color: var(--text); }
+    h3 { font-size: 1.1rem; margin-top: 22px; margin-bottom: 8px; color: var(--text); }
+    p { margin-bottom: 14px; color: #c9d1d9; }
+    ul, ol { padding-left: 22px; margin-bottom: 14px; color: #c9d1d9; }
+    li { margin-bottom: 8px; }
+    a { color: var(--blue); }
+    code { background: var(--surface); padding: 2px 6px; border-radius: 4px; font-size: .9em; font-family: 'DM Mono', ui-monospace, monospace; color: #f0f6fc; }
+    .callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 16px 18px; margin: 22px 0; }
+    .callout strong { color: var(--accent); }
+    .callout-blue { border-left-color: var(--blue); }
+    .callout-blue strong { color: var(--blue); }
+    .step-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+    .step-num { display: inline-block; background: rgba(74,222,128,.15); color: var(--accent); border: 1px solid rgba(74,222,128,.3); font-weight: 700; font-size: .78rem; padding: 2px 10px; border-radius: 20px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .03em; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: .88rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    th { text-align: left; padding: 10px 14px; background: rgba(255,255,255,.03); color: var(--muted); font-weight: 600; font-size: .8rem; text-transform: uppercase; letter-spacing: .03em; }
+    td { padding: 10px 14px; border-top: 1px solid var(--border); color: #c9d1d9; }
+    .pricing-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 24px 0; }
+    .price-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; }
+    .price-card.featured { border-color: var(--accent); background: linear-gradient(180deg, rgba(74,222,128,.06), rgba(22,27,34,1)); }
+    .price-val { font-size: 1.8rem; font-weight: 700; color: var(--text); margin: 10px 0 6px; }
+    .price-sub { font-size: .78rem; color: var(--muted); margin-bottom: 14px; }
+    .cta { background: linear-gradient(135deg, rgba(74,222,128,.08), rgba(88,166,255,.08)); border: 1px solid rgba(74,222,128,.25); border-radius: 14px; padding: 26px; text-align: center; margin: 36px 0; }
+    .cta h3 { font-size: 1.15rem; margin-top: 0; margin-bottom: 6px; }
+    .cta p { color: var(--muted); font-size: .9rem; margin-bottom: 16px; }
+    .btn { display: inline-block; background: #34A853; color: #fff; text-decoration: none; padding: 11px 24px; border-radius: 8px; font-weight: 600; font-size: .92rem; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <img src="icons/icon-96.png" alt="Attendance Tracker logo" />
+      <a href="/">Attendance Tracker</a>
+    </div>
+
+    <h1>Deploy Attendance Tracker Across Your School or District</h1>
+    <p class="lead">A complete guide for Google Workspace administrators: how to force-install Attendance Tracker for specific Organizational Units (OUs), configure OAuth permissions safely, and provision domain-wide licensing.</p>
+
+    <div class="callout callout-blue">
+      <strong>Zero Client-Side Maintenance:</strong> Unlike browser extensions that require Chrome policy sideloading and break after Chrome or Meet updates, Attendance Tracker is an official Google Workspace Marketplace Add-on. Deploying it via Admin Console instantly provisions it for your teachers inside Google Meet on Chromebooks, Macs, Windows, and Linux.
+    </div>
+
+    <h2>Step-by-Step: Admin Console Installation</h2>
+
+    <div class="step-box">
+      <span class="step-num">Step 1</span>
+      <h3>Access Google Workspace Admin Console</h3>
+      <p>Sign in to <a href="https://admin.google.com" target="_blank" rel="noopener">admin.google.com</a> using a Google Workspace Super Admin or Services Admin account.</p>
+    </div>
+
+    <div class="step-box">
+      <span class="step-num">Step 2</span>
+      <h3>Navigate to Marketplace Apps</h3>
+      <p>From the main admin navigation menu, go to:</p>
+      <p><code>Apps</code> &rarr; <code>Google Workspace Marketplace apps</code> &rarr; <code>Apps list</code></p>
+      <p>Click <strong>Add app to Admin Install list</strong> (or <strong>Domain Install</strong>).</p>
+    </div>
+
+    <div class="step-box">
+      <span class="step-num">Step 3</span>
+      <h3>Search for Attendance Tracker</h3>
+      <p>In the Marketplace search bar, type: <strong>Attendance Tracker for Google Meet</strong></p>
+      <p>Select the verified app published by <em>Attendance Tracker</em> (App ID: <code>829771833968</code>), and click <strong>Admin install</strong> &rarr; <strong>Continue</strong>.</p>
+    </div>
+
+    <div class="step-box">
+      <span class="step-num">Step 4</span>
+      <h3>Target Specific Organizational Units (OUs)</h3>
+      <p>You can choose who has access to the add-on:</p>
+      <ul>
+        <li><strong>Specific organizational units:</strong> Highly recommended. Select your <code>Staff</code>, <code>Teachers</code>, or <code>Faculty</code> OU so students are not granted unnecessary add-on tiles.</li>
+        <li><strong>Everyone at your organization:</strong> Installs the add-on domain-wide for all accounts.</li>
+      </ul>
+      <p>Check the box agreeing to terms and click <strong>Finish</strong>.</p>
+    </div>
+
+    <h2>Security &amp; Data Privacy Architecture (FERPA &amp; COPPA)</h2>
+    <p>School district IT leaders choose Attendance Tracker because of its privacy-by-design architecture:</p>
+    <ul>
+      <li><strong>Direct-to-Drive Storage:</strong> Attendance records and spreadsheets are generated and saved directly into the teacher's own Google Drive. We do not store, copy, or index your students' names or email addresses on external database servers.</li>
+      <li><strong>No Screen Scraping:</strong> Attendance is read directly from Google's official Meet Add-ons SDK and REST APIs via sandboxed iframe. The app cannot read browser history, open tabs, or microphone/camera feeds.</li>
+      <li><strong>Scoped OAuth Grants:</strong> Permissions are restricted strictly to Google Meet space metadata, read-only Calendar attendee matching, and write-only access to sheets created by the app (<code>drive.file</code> scope — we cannot access or read any pre-existing files in Google Drive).</li>
+    </ul>
+
+    <h2>Institutional Licensing &amp; PO Options</h2>
+    <p>Individual teachers can use Attendance Tracker free or upgrade on their own. For schools and districts requiring centralized billing, purchase orders, or bulk licensing:</p>
+
+    <div class="pricing-cards">
+      <div class="price-card">
+        <h4 style="font-size:1.05rem;color:var(--text)">Department</h4>
+        <div class="price-val">$59</div>
+        <div class="price-sub">One-time payment · Lifetime access</div>
+        <ul style="text-align:left;font-size:.82rem;color:var(--muted);padding-left:18px;margin-bottom:0">
+          <li>Up to 15 teachers</li>
+          <li>Auto-export to Google Sheets</li>
+          <li>Attendance certificates</li>
+          <li>PO &amp; credit card billing</li>
+        </ul>
+      </div>
+
+      <div class="price-card featured">
+        <div style="font-size:.7rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Best Value for Schools</div>
+        <h4 style="font-size:1.05rem;color:var(--text)">School / Institution</h4>
+        <div class="price-val">$149</div>
+        <div class="price-sub">One-time payment · Lifetime access</div>
+        <ul style="text-align:left;font-size:.82rem;color:var(--muted);padding-left:18px;margin-bottom:0">
+          <li><strong>Unlimited teachers</strong> on domain</li>
+          <li>Centralized domain admin dashboard</li>
+          <li>Automated Google Classroom sync</li>
+          <li>Priority admin support</li>
+          <li>Invoice &amp; Purchase Order support</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="cta">
+      <h3>Set Up Your School's Domain License</h3>
+      <p>Activate centralized domain access or request a formal vendor quote/W-9 for your business office.</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <a class="btn" href="https://attendancetracker.dev/team.html" target="_blank" rel="noopener">Open Team &amp; Domain Admin</a>
+        <a class="btn btn-outline" href="mailto:support@attendancetracker.dev?subject=School%20District%20Quote%20Request">Request Invoice / Quote</a>
+      </div>
+    </div>
+
+    <div class="footer-hub" style="margin-top: 50px; padding-top: 30px; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--muted); line-height: 1.8;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; text-align: left; margin-bottom: 24px;">
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">School &amp; District</strong>
+          <a href="student-data-privacy.html" style="color: var(--muted); text-decoration: none; display: block;">Student Data Privacy &amp; FERPA</a>
+          <a href="attendance-tracker-for-teachers.html" style="color: var(--muted); text-decoration: none; display: block;">For K-12 Teachers</a>
+          <a href="google-meet-attendance-google-classroom.html" style="color: var(--muted); text-decoration: none; display: block;">Google Classroom Sync</a>
+          <a href="import-google-classroom-roster-to-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">Import Classroom Rosters</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Admin &amp; IT</strong>
+          <a href="team.html" style="color: var(--muted); text-decoration: none; display: block;">Team &amp; Domain Admin</a>
+          <a href="pricing.html" style="color: var(--muted); text-decoration: none; display: block;">Pricing &amp; District Plans</a>
+          <a href="security.html" style="color: var(--muted); text-decoration: none; display: block;">Security Architecture</a>
+          <a href="faq.html" style="color: var(--muted); text-decoration: none; display: block;">Enterprise FAQ</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Integrations</strong>
+          <a href="export-google-meet-attendance-to-moodle.html" style="color: var(--muted); text-decoration: none; display: block;">Moodle Gradebook</a>
+          <a href="export-google-meet-attendance-to-canvas.html" style="color: var(--muted); text-decoration: none; display: block;">Canvas Gradebook</a>
+          <a href="export-google-meet-attendance-to-sheets.html" style="color: var(--muted); text-decoration: none; display: block;">Google Sheets Sync</a>
+          <a href="how-to-send-google-meet-attendance-to-slack.html" style="color: var(--muted); text-decoration: none; display: block;">Slack &amp; Google Chat</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Troubleshooting</strong>
+          <a href="google-meet-attendance-extension-broken.html" style="color: var(--muted); text-decoration: none; display: block;">Broken Extension Recovery</a>
+          <a href="attendance-taker-for-classroom-alternative.html" style="color: var(--muted); text-decoration: none; display: block;">Attendance Taker Migration</a>
+          <a href="google-meet-attendance-report-not-showing-up.html" style="color: var(--muted); text-decoration: none; display: block;">Report Not Showing Up?</a>
+          <a href="changelog.html" style="color: var(--muted); text-decoration: none; display: block;">Changelog</a>
+        </div>
+      </div>
+      <div style="text-align: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06);">
+        <a href="/" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Home</a> ·
+        <a href="pricing.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Pricing</a> ·
+        <a href="support.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Support</a> ·
+        <a href="privacy.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Privacy Policy</a> ·
+        <a href="terms.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Terms of Service</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    try {
+      var params = new URLSearchParams(location.search);
+      var utmSource = params.get('utm_source');
+      var utmMedium = params.get('utm_medium');
+      var utmCampaign = params.get('utm_campaign');
+      var ref = params.get('ref');
+      var referrer = document.referrer || null;
+      var ACQ_KEY = 'attendanceTrackerAcq';
+      if (!localStorage.getItem(ACQ_KEY)) {
+        var payload = {
+          utmSource: utmSource,
+          utmMedium: utmMedium,
+          utmCampaign: utmCampaign,
+          ref: ref,
+          referrer: referrer,
+          landingUrl: location.href,
+          capturedAt: Date.now(),
+        };
+        localStorage.setItem(ACQ_KEY, JSON.stringify(payload));
+        var computedSource = utmSource || (ref ? 'referral' : null) || (referrer ? new URL(referrer).hostname : null) || 'direct';
+        document.cookie = 'att_first_touch=' + encodeURIComponent(JSON.stringify(Object.assign({}, payload, { computedSource: computedSource }))) + ';path=/;max-age=7776000;SameSite=Lax';
+      }
+    } catch (e) {}
+
+    var API = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
+    function beacon(payload) {
+      try {
+        var blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        if (navigator.sendBeacon) navigator.sendBeacon(API + '/public/pageview', blob);
+        else fetch(API + '/public/pageview', { method: 'POST', body: blob, keepalive: true });
+      } catch (e) {}
+    }
+    var p = new URLSearchParams(location.search);
+    beacon({
+      path: location.pathname,
+      referrer: document.referrer || null,
+      viewportWidth: window.innerWidth || null,
+      utmSource: p.get('utm_source'),
+      utmMedium: p.get('utm_medium'),
+      utmCampaign: p.get('utm_campaign'),
+    });
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a[href*="team.html"]');
+      if (a) beacon({ path: location.pathname, event: 'cta_click', eventLabel: 'team_page_admin_guide', referrer: document.referrer || null });
+    });
+  })();
+  </script>
+</body>
+</html>

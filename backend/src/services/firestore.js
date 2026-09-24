@@ -4,7 +4,7 @@ const {
   encryptToken, decryptToken,
   getDb, memoizeTTL, tenantRef, lastSegment, countDistinctAttendees, weeklyStreak, tsMs, domainOf,
 } = require('./firestore/_core');
-const { createShareLink, resolveShareLink, getSharedSeriesView, revokeShareLink } = require('./firestore/shareLinks');
+const { createShareLink, resolveShareLink, getSharedSeriesView, getSharedMeetingView, revokeShareLink } = require('./firestore/shareLinks');
 const { evaluateSeriesAlerts, evaluateReengagementForUser, claimReengagementSlot, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition } = require('./firestore/reengagement');
 const { suppressEmail, isEmailSuppressed, unsuppressEmail } = require('./firestore/suppression');
 const { deleteUser, isUserDeleted, clearDeletedTombstone } = require('./firestore/deletion');
@@ -2314,7 +2314,7 @@ module.exports = {
   getTenantUsers, getTenantMeetings, getTenantSeriesOverview, getTenantPeopleOverview, getTeamOverview,
   evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition,
   evaluateReengagementForUser, claimReengagementSlot,
-  createShareLink, resolveShareLink, getSharedSeriesView, revokeShareLink,
+  createShareLink, resolveShareLink, getSharedSeriesView, getSharedMeetingView, revokeShareLink,
   getParticipantHistory, setParticipantNote, getParticipantNote,
   markUserContacted,
   getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes,

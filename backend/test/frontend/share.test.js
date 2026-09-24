@@ -94,3 +94,41 @@ describe('renderPeopleRows', () => {
     }
   });
 });
+
+describe('renderMeetingPeopleRows', () => {
+  const esc = (s) => String(s).replace(/</g, '&lt;');
+
+  test('renders rows with durations, status badges, and escapes XSS', () => {
+    const people = [
+      { displayName: '<b>Alice</b>', durationMin: 45, present: true },
+      { displayName: 'Bob', durationMin: 0, present: true },
+      { displayName: 'Charlie', durationMin: null, present: false },
+      { displayName: '', durationMin: 12, present: true }, // fallback to Guest
+    ];
+    const html = share.renderMeetingPeopleRows(people, esc);
+    expect(html).toContain('&lt;b>Alice&lt;/b>');
+    expect(html).toContain('45m');
+    expect(html).toContain('< 1m');
+    expect(html).toContain('—');
+    expect(html).toContain('Present');
+    expect(html).toContain('Absent');
+    expect(html).toContain('Guest');
+  });
+
+  test('empty or missing list → a single "no participants" row', () => {
+    expect(share.renderMeetingPeopleRows([], esc)).toContain('No participants tracked.');
+    expect(share.renderMeetingPeopleRows(null, esc)).toContain('No participants tracked.');
+  });
+
+  test('uses global.t for translations when present', () => {
+    global.t = (key, fallback) => `[[${key}]]`;
+    try {
+      const html = share.renderMeetingPeopleRows([{ displayName: '', present: true, durationMin: 10 }], esc);
+      expect(html).toContain('[[attendee.present]]');
+      expect(html).toContain('[[roster.guest]]');
+      expect(share.renderMeetingPeopleRows([], esc)).toContain('[[share.noParticipants]]');
+    } finally {
+      delete global.t;
+    }
+  });
+});

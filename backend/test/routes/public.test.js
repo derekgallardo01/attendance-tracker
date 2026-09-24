@@ -14,6 +14,7 @@ jest.mock('../../src/services/firestore', () => ({
   getDb: jest.fn(),
   resolveShareLink: jest.fn(),
   getSharedSeriesView: jest.fn(),
+  getSharedMeetingView: jest.fn(),
   suppressEmail: jest.fn(),
   getVerification: jest.fn(),
   logEvent: jest.fn(),
@@ -325,7 +326,31 @@ describe('GET /api/public/share/:token', () => {
     expect(res.body.people[0]).not.toHaveProperty('email'); // privacy
   });
 
-  test('400 for non-series link types (future-proofing)', async () => {
+  test('200 returns meeting view when link type is meeting', async () => {
+    firestore.resolveShareLink.mockResolvedValue({
+      type: 'meeting', domain: 'acme.com', meetingId: 'm1', ownerEmail: 'admin@acme.com',
+    });
+    firestore.getSharedMeetingView.mockResolvedValue({
+      title: 'Math Lecture', totalAttendees: 5, presentCount: 4, attendanceRate: 0.8,
+      people: [{ displayName: 'Alice', present: true, durationMin: 45 }],
+    });
+    const res = await request(app).get('/api/public/share/valid-token');
+    expect(res.status).toBe(200);
+    expect(res.body.type).toBe('meeting');
+    expect(res.body.title).toBe('Math Lecture');
+    expect(res.body.people[0].displayName).toBe('Alice');
+  });
+
+  test('404 when meeting share link resolves but meeting is gone', async () => {
+    firestore.resolveShareLink.mockResolvedValue({
+      type: 'meeting', domain: 'acme.com', meetingId: 'm1',
+    });
+    firestore.getSharedMeetingView.mockResolvedValue(null);
+    const res = await request(app).get('/api/public/share/valid-token');
+    expect(res.status).toBe(404);
+  });
+
+  test('400 for non-series/meeting link types (future-proofing)', async () => {
     firestore.resolveShareLink.mockResolvedValue({
       type: 'unknown_type', domain: 'acme.com',
     });

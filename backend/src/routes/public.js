@@ -3,7 +3,7 @@ const rateLimit = require('express-rate-limit');
 const { FieldValue } = require('@google-cloud/firestore');
 const log = require('../lib/logger');
 const geoip = require('geoip-lite');
-const { getDb, resolveShareLink, getSharedSeriesView, suppressEmail, unsuppressEmail, isEmailSuppressed, getUserSettings, updateUserSettings, getVerification, logEvent, recordCancellationTelemetry, recordPublicPageview } = require('../services/firestore');
+const { getDb, resolveShareLink, getSharedSeriesView, getSharedMeetingView, suppressEmail, unsuppressEmail, isEmailSuppressed, getUserSettings, updateUserSettings, getVerification, logEvent, recordCancellationTelemetry, recordPublicPageview } = require('../services/firestore');
 const { sendFeedbackEmail, verifyUnsubscribeToken, sendAdminEmail, sendAdminEmailUnsubscribedNotification } = require('../lib/notifications');
 const { escapeHtml } = require('../lib/html');
 const { verifyUserReview } = require('../services/review-verifier');
@@ -175,6 +175,13 @@ router.post('/public/pageview', async (req, res) => {
       'pricing_plan_hover',
       'pricing_lang_change',
       'pricing_faq_click',
+      'migration_csv_dropped',
+      'migration_roster_downloaded',
+      'shared_report_viewed',
+      'shared_report_cta_clicked',
+      'companion_ext_opened',
+      'companion_ext_launch_meet',
+      'companion_ext_install_marketplace',
     ]);
     const event = ALLOWED_EVENTS.has(body.event) ? body.event : 'pageview';
     const isCta = event === 'cta_click' || event === 'pricing_checkout_clicked';
@@ -310,18 +317,26 @@ router.get('/public/stats', async (_req, res) => {
 });
 
 // GET /api/public/share/:token — Resolve a share link and return the public
-// read-only view of the linked series. Unauth so recipients can hit the URL
+// GET /api/public/share/:token — recipient hits a shared dashboard. Returns a
+// read-only view of the linked series or meeting. Unauth so recipients can hit the URL
 // without a Google account. Emails are stripped from the response — name +
-// attendance count only.
+// attendance metrics only.
 router.get('/public/share/:token', async (req, res) => {
   res.set('Cache-Control', 'no-store');
   try {
     const link = await resolveShareLink(req.params.token);
     if (!link) return res.status(404).json({ error: 'Link not found, expired, or revoked' });
-    if (link.type !== 'series') return res.status(400).json({ error: 'Unsupported share type' });
-    const view = await getSharedSeriesView(link.domain, link.recurringEventId);
-    if (!view) return res.status(404).json({ error: 'Series no longer available' });
-    res.json({ type: link.type, ...view });
+    if (link.type === 'series') {
+      const view = await getSharedSeriesView(link.domain, link.recurringEventId);
+      if (!view) return res.status(404).json({ error: 'Series no longer available' });
+      return res.json({ type: link.type, ...view });
+    }
+    if (link.type === 'meeting') {
+      const view = await getSharedMeetingView(link.domain, link.meetingId || link.conferenceId);
+      if (!view) return res.status(404).json({ error: 'Meeting no longer available' });
+      return res.json({ type: link.type, ...view });
+    }
+    return res.status(400).json({ error: 'Unsupported share type' });
   } catch (err) {
     log.error('share: resolve failed', { error: err.message });
     res.status(500).json({ error: 'Failed to load shared view' });

@@ -90,15 +90,15 @@
       <div class="meta" id="meta"></div>
       <div class="stat-row">
         <div class="stat-card">
-          <div class="stat-label" data-i18n="share.statInstances">Instances</div>
+          <div class="stat-label" id="stat-label-1" data-i18n="share.statInstances">Instances</div>
           <div class="stat-value green" id="stat-instances">—</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label" data-i18n="share.statPeople">People tracked</div>
+          <div class="stat-label" id="stat-label-2" data-i18n="share.statPeople">People tracked</div>
           <div class="stat-value blue" id="stat-people">—</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label" data-i18n="share.statRange">Date range</div>
+          <div class="stat-label" id="stat-label-3" data-i18n="share.statRange">Date range</div>
           <div class="stat-value" id="stat-range" style="font-size:.95rem;font-weight:600">—</div>
         </div>
       </div>
@@ -107,7 +107,7 @@
           <thead>
             <tr>
               <th data-i18n="history.thPerson">Person</th>
-              <th class="right" data-i18n="share.thAttended">Attended</th>
+              <th class="right" id="th-attended" data-i18n="share.thAttended">Attended</th>
               <th data-i18n="history.thAttendance">Attendance</th>
             </tr>
           </thead>
@@ -117,7 +117,7 @@
       <div class="cta">
         <h3 data-i18n="share.ctaTitle">Want this for your own meetings?</h3>
         <p data-i18n="share.ctaSubtitle">Track attendance in any Google Meet call and get a dashboard like this — free.</p>
-        <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=share_link" target="_blank" data-i18n="share.ctaBtn">Install from Marketplace</a>
+        <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=share_link" target="_blank" data-i18n="share.ctaBtn" onclick="beacon({ path: '/share.html', event: 'shared_report_cta_clicked', eventLabel: 'install_marketplace' })">Install from Marketplace</a>
       </div>
     </div>
     <div id="errorBox" class="error" style="display:none">
@@ -159,15 +159,52 @@
       if (window._lastShareData) renderShareData(window._lastShareData);
     }
 
+    function beacon(payload) {
+      try {
+        const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        if (navigator.sendBeacon) navigator.sendBeacon(`${BACKEND_URL}/public/pageview`, blob);
+        else fetch(`${BACKEND_URL}/public/pageview`, { method: 'POST', body: blob, keepalive: true }).catch(() => {});
+      } catch (_) {}
+    }
+
     function renderShareData(data) {
-      document.getElementById('title').textContent = data.title;
-      const range = AttShare.computeRange(data.firstAt, data.lastAt);
-      const seriesLabel = t('history.statSeries', 'Recurring meeting');
-      document.getElementById('meta').textContent = `${seriesLabel} · ${range}`;
-      document.getElementById('stat-instances').textContent = data.instanceCount;
-      document.getElementById('stat-people').textContent = data.uniquePeople;
-      document.getElementById('stat-range').textContent = range;
-      document.getElementById('rows').innerHTML = AttShare.renderPeopleRows(data.people, data.instanceCount, esc);
+      document.getElementById('title').textContent = data.title || 'Google Meet';
+      const isMeeting = data.type === 'meeting';
+
+      const thAttended = document.getElementById('th-attended');
+      const statLabel1 = document.getElementById('stat-label-1');
+      const statLabel2 = document.getElementById('stat-label-2');
+      const statLabel3 = document.getElementById('stat-label-3');
+
+      if (isMeeting) {
+        const dateStr = AttShare.fmtDate(data.startTime);
+        const metaLabel = t('share.singleMeetingMeta', 'Meeting attendance report');
+        document.getElementById('meta').textContent = `${metaLabel} · ${dateStr}`;
+        if (statLabel1) statLabel1.textContent = t('share.statPeople', 'People tracked');
+        if (statLabel2) statLabel2.textContent = t('attendee.present', 'Present');
+        if (statLabel3) statLabel3.textContent = t('history.thAttendancePct', 'Attendance %');
+
+        document.getElementById('stat-instances').textContent = data.totalAttendees != null ? data.totalAttendees : '—';
+        document.getElementById('stat-people').textContent = data.presentCount != null ? data.presentCount : '—';
+        document.getElementById('stat-range').textContent = data.attendanceRate != null ? AttShare.pct(data.attendanceRate) : '—';
+
+        if (thAttended) thAttended.textContent = t('history.thTotalTime', 'Total time');
+        document.getElementById('rows').innerHTML = AttShare.renderMeetingPeopleRows(data.people, esc);
+      } else {
+        const range = AttShare.computeRange(data.firstAt, data.lastAt);
+        const seriesLabel = t('history.statSeries', 'Recurring meeting');
+        document.getElementById('meta').textContent = `${seriesLabel} · ${range}`;
+        if (statLabel1) statLabel1.textContent = t('share.statInstances', 'Instances');
+        if (statLabel2) statLabel2.textContent = t('share.statPeople', 'People tracked');
+        if (statLabel3) statLabel3.textContent = t('share.statRange', 'Date range');
+
+        document.getElementById('stat-instances').textContent = data.instanceCount;
+        document.getElementById('stat-people').textContent = data.uniquePeople;
+        document.getElementById('stat-range').textContent = range;
+
+        if (thAttended) thAttended.textContent = t('share.thAttended', 'Attended');
+        document.getElementById('rows').innerHTML = AttShare.renderPeopleRows(data.people, data.instanceCount, esc);
+      }
     }
 
     async function load() {
@@ -190,6 +227,7 @@
         renderShareData(data);
         loadingEl.style.display = 'none';
         contentEl.style.display = 'block';
+        beacon({ path: '/share.html', event: 'shared_report_viewed', eventLabel: data.type || 'series' });
       } catch (e) {
         loadingEl.style.display = 'none';
         errEl.style.display = 'block';
