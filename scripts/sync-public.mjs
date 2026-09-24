@@ -123,6 +123,7 @@ const MIRRORED = [
   'llms.txt',
   'llms-full.txt',
   '1fdd9ce446aa86d1aff5b1ff97d22c9b.txt',
+  '86c91a38e8f94cdaaf4b7d65bb22632d.txt',
 ];
 
 // index.html is the only file that differs: the served copy uses same-origin /api.

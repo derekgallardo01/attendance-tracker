@@ -1,7 +1,7 @@
 const fs = require('fs');
 const https = require('https');
 
-const KEY = '1fdd9ce446aa86d1aff5b1ff97d22c9b';
+const KEY = '86c91a38e8f94cdaaf4b7d65bb22632d';
 const HOST = 'attendancetracker.dev';
 const KEY_LOCATION = `https://${HOST}/${KEY}.txt`;
 
