@@ -66,10 +66,41 @@ function parseMarketplaceReviews(html, appId = DEFAULT_APP_ID) {
   return deduped.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
 }
 
-const REVIEW_LOCALES = ['en', 'es', 'pt'];
+const REVIEW_LOCALES = [
+  'en', 'es', 'pt', 'id', 'tl', 'fil', 'fr', 'de', 'it', 'hi',
+  'bn', 'ur', 'ta', 'te', 'ms', 'vi', 'nl', 'pl', 'ro', 'ru',
+  'uk', 'tr', 'th', 'ar', 'ko', 'zh-CN', 'zh-TW', 'ja', 'he',
+  'mr', 'sv', 'cs', 'da', 'fi', 'hu', 'so', 'sw', 'am', 'si',
+  'el', 'no', 'ca'
+];
+
+async function fetchLocaleReviews(baseUrl, loc) {
+  const locUrl = baseUrl.includes('?') ? `${baseUrl}&hl=${loc}` : `${baseUrl}?hl=${loc}`;
+  try {
+    const res = await fetch(locUrl, {
+      signal: AbortSignal.timeout(4000),
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+        'Accept-Language': `${loc},en;q=0.8`,
+      },
+    });
+
+    if (!res.ok) {
+      log.warn('marketplace-reviews: fetch failed with status', { status: res.status, loc });
+      return [];
+    }
+
+    const html = await res.text();
+    return parseMarketplaceReviews(html);
+  } catch (err) {
+    log.warn('marketplace-reviews: error fetching reviews for locale', { loc, error: err.message });
+    return [];
+  }
+}
 
 /**
  * Fetch the public Marketplace page and extract live reviews across supported locales.
+ * Queries all supported languages in concurrent batches for comprehensive global coverage.
  *
  * @param {string} [baseUrl]
  * @returns {Promise<Array>}
@@ -77,32 +108,18 @@ const REVIEW_LOCALES = ['en', 'es', 'pt'];
 async function fetchLiveMarketplaceReviews(baseUrl = MARKETPLACE_URL) {
   const allReviews = [];
   const seen = new Set();
+  const chunkSize = 8;
 
-  for (const loc of REVIEW_LOCALES) {
-    try {
-      const locUrl = baseUrl.includes('?') ? `${baseUrl}&hl=${loc}` : `${baseUrl}?hl=${loc}`;
-      const res = await fetch(locUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
-          'Accept-Language': `${loc},en;q=0.8`,
-        },
-      });
-
-      if (!res.ok) {
-        log.warn('marketplace-reviews: fetch failed with status', { status: res.status, loc });
-        continue;
-      }
-
-      const html = await res.text();
-      const reviews = parseMarketplaceReviews(html);
+  for (let i = 0; i < REVIEW_LOCALES.length; i += chunkSize) {
+    const chunk = REVIEW_LOCALES.slice(i, i + chunkSize);
+    const results = await Promise.all(chunk.map(loc => fetchLocaleReviews(baseUrl, loc)));
+    for (const reviews of results) {
       for (const r of reviews) {
         if (!seen.has(r.reviewId)) {
           seen.add(r.reviewId);
           allReviews.push(r);
         }
       }
-    } catch (err) {
-      log.error('marketplace-reviews: error fetching reviews', { error: err.message, loc });
     }
   }
 
@@ -160,4 +177,5 @@ module.exports = {
   syncMarketplaceReviews,
   DEFAULT_APP_ID,
   MARKETPLACE_URL,
+  REVIEW_LOCALES,
 };

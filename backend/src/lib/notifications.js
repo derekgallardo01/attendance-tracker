@@ -2800,13 +2800,10 @@ async function sendSubscriptionCancelledEmail({ to, displayName, planName, curre
 }
 
 /**
- * Send a warm, localized confirmation email to an educator whose review has been verified,
+ * Build a warm, localized confirmation email content for an educator whose review has been verified,
  * unlocking 1 free month of Educator Pro ($0 cost, zero surprise charges).
  */
-async function sendReviewRewardEmail({ to, displayName, domain, country, language, expiresAt, reviewId, rating = 5 }) {
-  if (!getResend()) return { sent: false, reason: 'no_resend' };
-  if (!to || !to.includes('@')) return { sent: false, reason: 'invalid_email' };
-
+function buildReviewRewardEmailContent({ to, displayName, domain, country, language, expiresAt, reviewId, rating = 5 }) {
   const lang = resolveLanguage({ language, country, domain, email: to });
   const name = displayName ? displayName.trim().split(' ')[0] : '';
   const dateStr = expiresAt
@@ -2939,20 +2936,138 @@ async function sendReviewRewardEmail({ to, displayName, domain, country, languag
     foot.text,
   ].join('\n');
 
+  const from = process.env.RESEND_FROM_DOMAIN
+    ? 'Derek Gallardo <derek@attendancetracker.dev>'
+    : makeFrom('Derek Gallardo');
+
+  return {
+    to,
+    from,
+    replyTo: 'derek@attendancetracker.dev',
+    subject,
+    text,
+    html,
+    lang,
+    dateStr,
+  };
+}
+
+const REVIEW_APPROVAL_KEY_LABEL = 'review_approval:v1';
+function createReviewApprovalToken(reviewId, email) {
+  return crypto
+    .createHmac('sha256', CONFIG.deriveSecret(REVIEW_APPROVAL_KEY_LABEL))
+    .update(`${String(reviewId)}:${String(email).toLowerCase()}`)
+    .digest('hex')
+    .slice(0, 32);
+}
+
+function verifyReviewApprovalToken(reviewId, email, token) {
+  if (!reviewId || !email || !token) return false;
+  const expected = createReviewApprovalToken(reviewId, email);
+  const a = Buffer.from(expected);
+  const b = Buffer.from(String(token));
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+function reviewApprovalUrl(reviewId, email) {
+  const t = createReviewApprovalToken(reviewId, email);
+  return `${CONFIG.publicApiUrl}/admin/reviews/approve-reward?reviewId=${encodeURIComponent(reviewId)}&email=${encodeURIComponent(email)}&t=${t}`;
+}
+
+/**
+ * Alert Derek about a new verified review + Pro activation with full draft email
+ * for inspection before sending out to the user.
+ */
+async function sendReviewRewardDraftAlert({
+  to = 'derekgallardo01@gmail.com',
+  userEmail,
+  domain,
+  displayName,
+  review,
+  expiresAt,
+  draft,
+}) {
+  const approvalUrl = reviewApprovalUrl(review.reviewId, userEmail);
+  const stars = '★'.repeat(review.rating || 5) + '☆'.repeat(5 - (review.rating || 5));
+  const dateStr = draft.dateStr || new Date(expiresAt).toISOString().slice(0, 10);
+  const mailtoUrl = `mailto:${encodeURIComponent(userEmail)}?subject=${encodeURIComponent(draft.subject)}&body=${encodeURIComponent(draft.text)}`;
+
+  const bodyText = `⭐ Verified Marketplace Review & Pro Activated: ${userEmail}
+
+A Google Workspace Marketplace review has been verified, and 1 Month Educator Pro has been ACTIVATED in Firestore!
+
+[STATUS]:
+- User: ${userEmail} (${displayName || 'Unknown Name'})
+- Domain: ${domain}
+- Pro Activated: YES (Active until ${dateStr}, 35 days)
+- Reward Email to User: PENDING YOUR APPROVAL (Not yet sent)
+
+[REVIEW DETAILS]:
+- Rating: ${stars} (${review.rating}/5)
+- Author: ${review.authorName}
+- Date: ${review.date || (review.timestampMs ? new Date(review.timestampMs).toISOString() : 'Recent')}
+- Comment:
+"${review.comment}"
+
+[DRAFT EMAIL FOR USER (Language: ${draft.lang.toUpperCase()})]:
+From: ${draft.from}
+Reply-To: ${draft.replyTo}
+To: ${userEmail}
+Subject: ${draft.subject}
+
+${draft.text}
+
+--------------------------------------------------
+[ACTIONS FOR DEREK]:
+1. One-Click Approve & Dispatch Email via Resend:
+${approvalUrl}
+
+2. Or Send via your Email Client (from derek@attendancetracker.dev):
+${mailtoUrl}
+
+3. Admin Dashboard:
+${CONFIG.publicSiteUrl}/admin.html
+`;
+
+  return sendAdminEmail({
+    to,
+    subject: `⭐ Review Verified & Pro Activated: ${userEmail} (${review.rating}★) - Review Draft Email`,
+    body: bodyText,
+  });
+}
+
+/**
+ * Send a warm, localized confirmation email to an educator whose review has been verified.
+ * Always sends from Derek Gallardo <derek@attendancetracker.dev>.
+ */
+async function sendReviewRewardEmail(params) {
+  const { to } = params || {};
+  if (!getResend()) return { sent: false, reason: 'no_resend' };
+  if (!to || !to.includes('@')) return { sent: false, reason: 'invalid_email' };
+
+  const content = buildReviewRewardEmailContent(params);
+  const subject = params.customSubject || content.subject;
+  const text = params.customText || content.text;
+  const html = params.customHtml || content.html;
+
   return dispatchEmail({
-    from: makeFrom('Attendance Tracker'),
-    to, subject, text, html,
+    from: content.from,
+    replyTo: content.replyTo,
+    to,
+    subject,
+    text,
+    html,
     tags: [
       { name: 'type', value: 'review_reward' },
-      { name: 'lang', value: lang },
+      { name: 'lang', value: content.lang },
     ],
     headers: unsubscribeHeaders(to),
-  }, 'review reward email', { to, lang });
+  }, 'review reward email', { to, lang: content.lang });
 }
 
 module.exports = {
   sendSignupWebhook, sendUpgradeNotification, sendAdminSubscriptionCancelledNotification, sendAdminEmailUnsubscribedNotification, maybeSendSignupNotification, sendWelcomeEmail, sendReferralNotification, maybeSendReferralNotification, flushDeferredNotifications, sendAdminEmail, sendErrorAlertEmail, sendWeeklySelfReport, sendExportNotification, sendOrgWeeklyDigest,
-  sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendUpgradeLinkEmail, sendSubscriptionCancelledEmail, sendReviewRewardEmail,
+  sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendUpgradeLinkEmail, sendSubscriptionCancelledEmail, sendReviewRewardEmail, buildReviewRewardEmailContent, sendReviewRewardDraftAlert, createReviewApprovalToken, verifyReviewApprovalToken, reviewApprovalUrl,
   sendSlackDigest, sendSlackTestPing, buildSlackDigestBlocks, buildSlackFallbackText, maskSlackWebhook,
   sendChatDigest, sendChatTestPing, buildChatDigestCard, maskGoogleChatWebhook,
   sendDiscordDigest, sendDiscordTestPing, buildDiscordDigestEmbed, maskDiscordWebhook,

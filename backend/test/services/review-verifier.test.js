@@ -65,10 +65,10 @@ describe('grantReviewReward & verifyUserReview', () => {
     expect(reviewDoc.redeemedByEmail).toBe(userEmail);
   });
 
-  test('calls sendReviewRewardEmail and notifies admin', async () => {
+  test('activates Pro, creates localized draft, and alerts Derek without auto-sending to user', async () => {
     const notifications = require('../../src/lib/notifications');
     const spyUserEmail = jest.spyOn(notifications, 'sendReviewRewardEmail').mockResolvedValue({ sent: true, lang: 'es', id: 'resend-123' });
-    const spyAdminEmail = jest.spyOn(notifications, 'sendAdminEmail').mockResolvedValue({ sent: true });
+    const spyDraftAlert = jest.spyOn(notifications, 'sendReviewRewardDraftAlert').mockResolvedValue({ sent: true });
 
     const userEmail = 'profesor@escuela.mx';
     ctx.seed('tenants/escuela.mx/users/profesor@escuela.mx', {
@@ -93,21 +93,35 @@ describe('grantReviewReward & verifyUserReview', () => {
 
     const res = await reviewVerifier.grantReviewReward('escuela.mx', userEmail, mockReview);
     expect(res.success).toBe(true);
+    expect(res.emailPendingApproval).toBe(true);
+    expect(res.draft).toBeDefined();
+    expect(res.draft.lang).toBe('es');
+    expect(res.draft.subject).toContain('Tu mes de Pro gratuito');
 
-    expect(spyUserEmail).toHaveBeenCalledWith(expect.objectContaining({
-      to: userEmail,
-      displayName: 'Carlos Sanchez',
-      country: 'MX',
-      domain: 'escuela.mx',
-      rating: 5,
-    }));
+    // Email to user must NOT have been sent automatically
+    expect(spyUserEmail).not.toHaveBeenCalled();
 
-    expect(spyAdminEmail).toHaveBeenCalledWith(expect.objectContaining({
+    // Admin alert to Derek must have been called with draft details
+    expect(spyDraftAlert).toHaveBeenCalledWith(expect.objectContaining({
       to: 'derekgallardo01@gmail.com',
-      body: expect.stringContaining('Sent to User: YES (Language: es, ID: resend-123)'),
+      userEmail,
+      displayName: 'Carlos Sanchez',
+      domain: 'escuela.mx',
+      review: mockReview,
+      draft: expect.objectContaining({
+        lang: 'es',
+        subject: expect.stringContaining('Tu mes de Pro gratuito'),
+      }),
     }));
+
+    // Verify user doc state
+    const userDoc = ctx.read('tenants/escuela.mx/users/profesor@escuela.mx');
+    expect(userDoc.individualPlan).toBe('pro');
+    expect(userDoc.reviewRewardEmailSent).toBe(false);
+    expect(userDoc.reviewRewardEmailPendingApproval).toBe(true);
+    expect(userDoc.reviewRewardDraft.subject).toContain('Tu mes de Pro gratuito');
 
     spyUserEmail.mockRestore();
-    spyAdminEmail.mockRestore();
+    spyDraftAlert.mockRestore();
   });
 });

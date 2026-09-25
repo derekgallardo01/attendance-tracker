@@ -100,6 +100,8 @@ jest.mock('../../src/lib/notifications', () => ({
   sendUpcomingMeetingEmail: jest.fn(),
   sendOrgWeeklyDigest: jest.fn(), // org weekly digest sweep
   flushDeferredNotifications: jest.fn(), // single flush point (signup + referral)
+  verifyReviewApprovalToken: jest.fn(),
+  sendReviewRewardEmail: jest.fn(),
 }));
 jest.mock('../../src/services/review-verifier', () => ({
   reconcilePendingReviews: jest.fn(),
@@ -1827,6 +1829,165 @@ describe('POST /api/admin/sync-reviews', () => {
 
     expect(res.status).toBe(500);
     expect(res.body.error).toContain('Failed to sync marketplace reviews');
+  });
+});
+
+describe('GET /api/admin/reviews/approve-reward', () => {
+  test('400 when missing query parameters', async () => {
+    const res = await request(app).get('/api/admin/reviews/approve-reward');
+    expect(res.status).toBe(400);
+    expect(res.text).toContain('Invalid or missing approval parameters');
+  });
+
+  test('403 when token verification fails', async () => {
+    notifications.verifyReviewApprovalToken.mockReturnValue(false);
+    const res = await request(app).get('/api/admin/reviews/approve-reward?reviewId=rev-1&email=teacher@school.edu&t=badtoken');
+    expect(res.status).toBe(403);
+    expect(res.text).toContain('Invalid or expired approval token');
+  });
+
+  test('404 when user not found in Firestore', async () => {
+    notifications.verifyReviewApprovalToken.mockReturnValue(true);
+    const mockUserDocRef = {
+      get: jest.fn().mockResolvedValue({ exists: false }),
+    };
+    firestore.getDb.mockReturnValue({
+      collection: jest.fn().mockReturnValue({
+        doc: jest.fn().mockReturnValue({
+          collection: jest.fn().mockReturnValue({
+            doc: jest.fn().mockReturnValue(mockUserDocRef),
+          }),
+        }),
+      }),
+    });
+
+    const res = await request(app).get('/api/admin/reviews/approve-reward?reviewId=rev-1&email=teacher@school.edu&t=validtoken');
+    expect(res.status).toBe(404);
+    expect(res.text).toContain('User document not found');
+  });
+
+  test('200 with already-sent message if previously sent', async () => {
+    notifications.verifyReviewApprovalToken.mockReturnValue(true);
+    const mockUserDocRef = {
+      get: jest.fn().mockResolvedValue({
+        exists: true,
+        data: () => ({
+          reviewRewardEmailSent: true,
+          reviewRewardEmailSentAt: '2026-09-25T12:00:00.000Z',
+        }),
+      }),
+    };
+    firestore.getDb.mockReturnValue({
+      collection: jest.fn().mockReturnValue({
+        doc: jest.fn().mockReturnValue({
+          collection: jest.fn().mockReturnValue({
+            doc: jest.fn().mockReturnValue(mockUserDocRef),
+          }),
+        }),
+      }),
+    });
+
+    const res = await request(app).get('/api/admin/reviews/approve-reward?reviewId=rev-1&email=teacher@school.edu&t=validtoken');
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('Reward Email Already Sent');
+  });
+
+  test('200 and dispatches reward email when valid', async () => {
+    notifications.verifyReviewApprovalToken.mockReturnValue(true);
+    notifications.sendReviewRewardEmail.mockResolvedValue({ sent: true, lang: 'es', id: 'res-999' });
+
+    const mockSet = jest.fn().mockResolvedValue({});
+    const mockUserDocRef = {
+      get: jest.fn().mockResolvedValue({
+        exists: true,
+        data: () => ({
+          displayName: 'Carlos Sanchez',
+          individualPlanExpiresAt: '2026-10-30T00:00:00.000Z',
+          reviewRating: 5,
+          language: 'es',
+        }),
+      }),
+      set: mockSet,
+    };
+    firestore.getDb.mockReturnValue({
+      collection: jest.fn().mockReturnValue({
+        doc: jest.fn().mockReturnValue({
+          collection: jest.fn().mockReturnValue({
+            doc: jest.fn().mockReturnValue(mockUserDocRef),
+          }),
+        }),
+      }),
+    });
+
+    const res = await request(app).get('/api/admin/reviews/approve-reward?reviewId=rev-1&email=carlos@escuela.mx&t=validtoken');
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('Review Reward Email Dispatched');
+    expect(notifications.sendReviewRewardEmail).toHaveBeenCalledWith(expect.objectContaining({
+      to: 'carlos@escuela.mx',
+      displayName: 'Carlos Sanchez',
+      reviewId: 'rev-1',
+    }));
+    expect(mockSet).toHaveBeenCalledWith(expect.objectContaining({
+      reviewRewardEmailSent: true,
+      reviewRewardEmailPendingApproval: false,
+    }), { merge: true });
+  });
+});
+
+describe('POST /api/admin/reviews/send-reward-email', () => {
+  const admin = () => authedHeader(SUPER_ADMIN, 'gmail.com');
+  const nonAdmin = () => authedHeader('user@school.edu', 'school.edu');
+
+  test('403 when not super admin', async () => {
+    const res = await request(app).post('/api/admin/reviews/send-reward-email').set(nonAdmin());
+    expect(res.status).toBe(403);
+  });
+
+  test('400 when invalid email', async () => {
+    const res = await request(app).post('/api/admin/reviews/send-reward-email').set(admin()).send({ email: 'bad' });
+    expect(res.status).toBe(400);
+  });
+
+  test('200 and sends email when valid', async () => {
+    notifications.sendReviewRewardEmail.mockResolvedValue({ sent: true, lang: 'en', id: 'res-101' });
+
+    const mockSet = jest.fn().mockResolvedValue({});
+    const mockUserDocRef = {
+      get: jest.fn().mockResolvedValue({
+        exists: true,
+        data: () => ({
+          displayName: 'Jane Doe',
+          individualPlanExpiresAt: '2026-10-30T00:00:00.000Z',
+          reviewId: 'rev-2',
+          reviewRating: 5,
+        }),
+      }),
+      set: mockSet,
+    };
+    firestore.getDb.mockReturnValue({
+      collection: jest.fn().mockReturnValue({
+        doc: jest.fn().mockReturnValue({
+          collection: jest.fn().mockReturnValue({
+            doc: jest.fn().mockReturnValue(mockUserDocRef),
+          }),
+        }),
+      }),
+    });
+
+    const res = await request(app).post('/api/admin/reviews/send-reward-email').set(admin()).send({
+      email: 'jane@school.edu',
+      customSubject: 'Special subject',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(notifications.sendReviewRewardEmail).toHaveBeenCalledWith(expect.objectContaining({
+      to: 'jane@school.edu',
+      customSubject: 'Special subject',
+    }));
+    expect(mockSet).toHaveBeenCalledWith(expect.objectContaining({
+      reviewRewardEmailSent: true,
+    }), { merge: true });
   });
 });
 

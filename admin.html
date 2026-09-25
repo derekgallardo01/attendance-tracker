@@ -817,10 +817,11 @@
                   <th>Plan &amp; Status</th>
                   <th>Expires</th>
                   <th>Matched Review</th>
+                  <th>Email Status</th>
                 </tr>
               </thead>
               <tbody id="rewarded-users-rows">
-                <tr><td colspan="5" style="color:var(--muted)">Loading rewards…</td></tr>
+                <tr><td colspan="6" style="color:var(--muted)">Loading rewards…</td></tr>
               </tbody>
             </table>
           </div>
@@ -1570,7 +1571,7 @@
         const rewRows = document.getElementById('rewarded-users-rows');
         if (rewRows) {
           if (rewarded.length === 0) {
-            rewRows.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">No accounts have redeemed review rewards yet.</td></tr>';
+            rewRows.innerHTML = '<tr><td colspan="6" style="color:var(--muted)">No accounts have redeemed review rewards yet.</td></tr>';
           } else {
             rewRows.innerHTML = rewarded.map(u => {
               const expiresDate = u.individualPlanExpiresAt ? new Date(u.individualPlanExpiresAt) : null;
@@ -1584,6 +1585,9 @@
               const planPill = `<span class="badge" style="background:rgba(46,160,67,.15);color:var(--accent);font-weight:600">PRO (Review Reward)</span>`;
               const matchedReview = u.reviewId ? `<span style="font-size:.8rem;color:#fbbf24">5★ Review (${esc(u.reviewId.slice(-6))})</span>` : '—';
               const nameHtml = u.displayName ? `<div style="font-size:.75rem;color:var(--muted)">${esc(u.displayName)}</div>` : '';
+              const emailStatusHtml = u.reviewRewardEmailSent
+                ? `<span class="badge" style="background:rgba(46,160,67,.15);color:var(--accent);font-weight:600">✓ Sent</span>`
+                : `<span class="badge" style="background:rgba(217,119,6,.15);color:#d97706;font-weight:600">Pending Review</span> <button class="btn btn-secondary" style="font-size:.7rem;padding:2px 8px;margin-left:4px" onclick="sendRewardEmailFromAdmin('${esc(u.email)}')">Send Email</button>`;
 
               return `<tr>
                 <td><strong>${esc(u.email)}</strong>${nameHtml}</td>
@@ -1591,12 +1595,36 @@
                 <td>${planPill}</td>
                 <td>${expiresHtml}</td>
                 <td>${matchedReview}</td>
+                <td>${emailStatusHtml}</td>
               </tr>`;
             }).join('');
           }
         }
       } catch (err) {
         console.error('loadMarketplaceReviews error:', err);
+      }
+    }
+
+    async function sendRewardEmailFromAdmin(email) {
+      if (!confirm(`Dispatch the localized reward email to ${email} from Derek Gallardo <derek@attendancetracker.dev>?`)) return;
+      try {
+        const res = await fetch(`${BACKEND_URL}/admin/reviews/send-reward-email`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${sessionToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          alert(`Reward email successfully dispatched to ${email}!`);
+          await loadMarketplaceReviews();
+        } else {
+          alert(`Failed to send email: ${data.error || data.reason || 'Unknown error'}`);
+        }
+      } catch (err) {
+        alert(`Error sending email: ${err.message}`);
       }
     }
 

@@ -70,7 +70,19 @@ async function grantReviewReward(domain, email, review) {
   const existingDoc = await userRef.get();
   const userData = existingDoc.exists ? existingDoc.data() : {};
 
-  // Update user document
+  // Build localized draft confirmation email
+  const draft = notifications.buildReviewRewardEmailContent({
+    to: emailLower,
+    displayName: userData.displayName || review.authorName,
+    domain: domainLower,
+    country: userData.signupGeo?.country,
+    language: userData.language,
+    expiresAt: expiresAt.toISOString(),
+    reviewId: review.reviewId,
+    rating: review.rating,
+  });
+
+  // Update user document: activate Pro immediately, mark email pending Derek's approval
   await userRef.set({
     individualPlan: 'pro',
     individualBillingStatus: 'active',
@@ -82,6 +94,15 @@ async function grantReviewReward(domain, email, review) {
     reviewId: review.reviewId,
     reviewRating: review.rating,
     reviewText: review.comment || '',
+    reviewRewardEmailSent: false,
+    reviewRewardEmailPendingApproval: true,
+    reviewRewardDraft: {
+      subject: draft.subject,
+      text: draft.text,
+      lang: draft.lang,
+      from: draft.from,
+      replyTo: draft.replyTo,
+    },
     updatedAt: FieldValue.serverTimestamp(),
   }, { merge: true });
 
@@ -93,59 +114,26 @@ async function grantReviewReward(domain, email, review) {
     redeemedAt: FieldValue.serverTimestamp(),
   }, { merge: true });
 
-  log.info('review-verifier: granted review reward', { email: emailLower, reviewId: review.reviewId, rating: review.rating });
+  log.info('review-verifier: granted review reward (Pro active, email pending admin review)', {
+    email: emailLower,
+    reviewId: review.reviewId,
+    rating: review.rating,
+  });
 
-  // Send localized celebration & confirmation email to user
-  let userEmailInfo = null;
+  // Alert Derek with full review details + draft email to review before sending
   try {
-    userEmailInfo = await notifications.sendReviewRewardEmail({
-      to: emailLower,
-      displayName: userData.displayName || review.authorName,
-      domain: domainLower,
-      country: userData.signupGeo?.country,
-      language: userData.language,
-      expiresAt: expiresAt.toISOString(),
-      reviewId: review.reviewId,
-      rating: review.rating,
-    });
-    log.info('review-verifier: sent user review reward email', {
-      email: emailLower,
-      sent: userEmailInfo?.sent,
-      lang: userEmailInfo?.lang,
-    });
-  } catch (err) {
-    log.warn('review-verifier: user reward email failed', { email: emailLower, error: err.message });
-  }
-
-  // Notify Derek via admin email
-  try {
-    const userEmailStatus = userEmailInfo && userEmailInfo.sent
-      ? `YES (Language: ${userEmailInfo.lang || 'en'}, ID: ${userEmailInfo.id || 'ok'})`
-      : 'NO / SKIPPED';
-
-    await notifications.sendAdminEmail({
+    await notifications.sendReviewRewardDraftAlert({
       to: 'derekgallardo01@gmail.com',
-      subject: `⭐ Verified Marketplace Review: 1 Month Pro Granted to ${emailLower}`,
-      body: `A Google Workspace Marketplace review has been verified and rewarded!
-
-User Email: ${emailLower}
-Review Author: ${review.authorName}
-Rating: ${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)} (${review.rating}/5)
-Date: ${review.date || new Date(review.timestampMs).toISOString()}
-Review Comment:
-"${review.comment}"
-
-Reward Granted:
-- Tier: Pro (Individual)
-- Duration: ${REWARD_DURATION_DAYS} days (Expires ${expiresAt.toISOString()})
-- Review ID: ${review.reviewId}
-
-User Confirmation Email:
-- Sent to User: ${userEmailStatus}
-`,
+      userEmail: emailLower,
+      domain: domainLower,
+      displayName: userData.displayName || review.authorName,
+      review,
+      expiresAt: expiresAt.toISOString(),
+      draft,
     });
+    log.info('review-verifier: sent review draft alert to Derek', { email: emailLower, reviewId: review.reviewId });
   } catch (err) {
-    log.warn('review-verifier: admin alert email failed', { error: err.message });
+    log.warn('review-verifier: admin draft alert email failed', { error: err.message });
   }
 
   return {
@@ -153,6 +141,8 @@ User Confirmation Email:
     email: emailLower,
     reviewId: review.reviewId,
     planExpiresAt: expiresAt.toISOString(),
+    emailPendingApproval: true,
+    draft,
   };
 }
 

@@ -1933,5 +1933,66 @@ describe('notifications — buildDesignSystemEmail & upgrade link sender', () =>
     expect(badRes.sent).toBe(false);
     expect(mockSend).not.toHaveBeenCalled();
   });
+
+  test('buildReviewRewardEmailContent, approval tokens, and sendReviewRewardDraftAlert', async () => {
+    const n = require('../../src/lib/notifications');
+
+    // 1. Approval token roundtrip
+    const token = n.createReviewApprovalToken('rev-123', 'teacher@school.edu');
+    expect(typeof token).toBe('string');
+    expect(token.length).toBe(32);
+    expect(n.verifyReviewApprovalToken('rev-123', 'teacher@school.edu', token)).toBe(true);
+    expect(n.verifyReviewApprovalToken('rev-123', 'other@school.edu', token)).toBe(false);
+    expect(n.verifyReviewApprovalToken('rev-999', 'teacher@school.edu', token)).toBe(false);
+    expect(n.verifyReviewApprovalToken(null, null, null)).toBe(false);
+
+    const approvalUrl = n.reviewApprovalUrl('rev-123', 'teacher@school.edu');
+    expect(approvalUrl).toContain('/admin/reviews/approve-reward');
+    expect(approvalUrl).toContain('rev-123');
+    expect(approvalUrl).toContain('teacher%40school.edu');
+    expect(approvalUrl).toContain(`t=${token}`);
+
+    // 2. buildReviewRewardEmailContent
+    const draft = n.buildReviewRewardEmailContent({
+      to: 'profesor@colegio.edu.mx',
+      displayName: 'Carlos Sanchez',
+      country: 'MX',
+      expiresAt: '2026-10-30T00:00:00.000Z',
+      reviewId: 'rev-mx-1',
+      rating: 5,
+    });
+    expect(draft.lang).toBe('es');
+    expect(draft.subject).toContain('Tu mes de Pro gratuito ya está activo');
+    expect(draft.from).toContain('Derek Gallardo');
+    expect(draft.replyTo).toBe('derek@attendancetracker.dev');
+    expect(draft.text).toContain('Estimado/a Carlos');
+    expect(draft.html).toContain('1 mes de Educator Pro activado');
+
+    // 3. sendReviewRewardDraftAlert sends email to admin with draft content and approval URL
+    mockSend.mockClear();
+    await n.sendReviewRewardDraftAlert({
+      to: 'derekgallardo01@gmail.com',
+      userEmail: 'profesor@colegio.edu.mx',
+      domain: 'colegio.edu.mx',
+      displayName: 'Carlos Sanchez',
+      review: {
+        reviewId: 'rev-mx-1',
+        authorName: 'Carlos Sanchez',
+        rating: 5,
+        comment: 'Excelente herramienta!',
+      },
+      expiresAt: '2026-10-30T00:00:00.000Z',
+      draft,
+    });
+
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const alertCall = mockSend.mock.calls[0][0];
+    expect(alertCall.to).toEqual(['derekgallardo01@gmail.com']);
+    expect(alertCall.subject).toContain('Review Verified & Pro Activated');
+    expect(alertCall.subject).toContain('profesor@colegio.edu.mx');
+    expect(alertCall.text).toContain('A Google Workspace Marketplace review has been verified, and 1 Month Educator Pro has been ACTIVATED in Firestore!');
+    expect(alertCall.text).toContain('Tu mes de Pro gratuito ya está activo');
+    expect(alertCall.text).toContain('/admin/reviews/approve-reward');
+  });
 });
 

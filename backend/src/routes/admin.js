@@ -3,7 +3,8 @@ const rateLimit = require('express-rate-limit');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getRevenueFunnel, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance, getTeamOverview, getRecentErrorSpike, getErrorAlertState, setErrorAlertState, getCancellationTelemetry } = require('../services/firestore');
-const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendOrgWeeklyDigest, flushDeferredNotifications } = require('../lib/notifications');
+const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendOrgWeeklyDigest, flushDeferredNotifications, verifyReviewApprovalToken, sendReviewRewardEmail } = require('../lib/notifications');
+const { escapeHtml } = require('../lib/html');
 const { requireSuperAdmin, requireSuperAdminOrScheduler, requireKhMetricsKey, safeEqual } = require('../middleware/adminAuth');
 const { requireAuth } = require('../middleware/auth');
 const { domainOf } = require('../services/firestore/_core'); // pure util; imported directly (test firestore-mocks needn't stub it)
@@ -549,9 +550,18 @@ router.post('/admin/check-reengagement', requireSuperAdminOrScheduler, async (re
       }
     }
 
+    // Daily review sweep: scrape marketplace reviews across all languages and reconcile with pending users
+    let reviewSweep = null;
+    try {
+      reviewSweep = await reconcilePendingReviews();
+      log.info('admin: check-reengagement review sweep completed', reviewSweep);
+    } catch (err) {
+      log.error('admin: check-reengagement review sweep failed', { error: err.message });
+    }
+
     const remaining = timedOut ? users.length - index : 0;
     if (timedOut) log.warn('admin: check-reengagement hit time budget', { processed: index, remaining });
-    res.json({ usersChecked, usersWithReminders, totalSent, totalSkipped, errors, timedOut, remaining });
+    res.json({ usersChecked, usersWithReminders, totalSent, totalSkipped, errors, timedOut, remaining, reviewSweep });
   } catch (err) {
     log.error('admin: check-reengagement failed', { error: err.message });
     res.status(500).json({ error: 'Failed to run re-engagement sweep' });
@@ -1370,6 +1380,9 @@ router.get('/admin/marketplace-reviews', requireSuperAdmin, async (req, res) => 
           reviewRating: data.reviewRating || 5,
           reviewStatus: data.reviewStatus || 'verified_reviewed',
           reviewVerifiedAt: data.reviewVerifiedAt || null,
+          reviewRewardEmailSent: !!data.reviewRewardEmailSent,
+          reviewRewardEmailPendingApproval: !!data.reviewRewardEmailPendingApproval,
+          reviewRewardEmailSentAt: data.reviewRewardEmailSentAt || null,
           language: data.language || null,
           country: data.signupGeo?.country || null,
         });
@@ -1434,6 +1447,130 @@ router.post('/admin/reviews/sync', requireSuperAdminOrScheduler, async (req, res
   } catch (err) {
     log.error('admin: reviews/sync failed', { error: err.message });
     res.status(500).json({ error: 'Failed to sync reviews' });
+  }
+});
+
+// GET /api/admin/reviews/approve-reward — 1-click tokenized approval to send review reward email
+router.get('/admin/reviews/approve-reward', async (req, res) => {
+  const { reviewId, email, t: token } = req.query;
+  if (!reviewId || !email || !token) {
+    return res.status(400).send('<h3>Invalid or missing approval parameters.</h3>');
+  }
+
+  if (!verifyReviewApprovalToken(reviewId, email, token)) {
+    return res.status(403).send('<h3>Invalid or expired approval token.</h3>');
+  }
+
+  try {
+    const db = getDb();
+    const emailLower = String(email).toLowerCase();
+    const domainLower = emailLower.split('@')[1] || 'gmail.com';
+    const userRef = db.collection('tenants').doc(domainLower).collection('users').doc(emailLower);
+    const userSnap = await userRef.get();
+
+    if (!userSnap.exists) {
+      return res.status(404).send(`<h3>User document not found for ${escapeHtml(emailLower)}.</h3>`);
+    }
+
+    const userData = userSnap.data();
+    if (userData.reviewRewardEmailSent) {
+      return res.status(200).send(`
+        <div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:40px auto;padding:28px;border:1px solid #d0d7de;border-radius:10px;background:#ffffff;">
+          <h2 style="color:#0969da;margin-top:0;">ℹ️ Reward Email Already Sent</h2>
+          <p style="font-size:15px;color:#24292f;line-height:1.6;">The reward email for <strong>${escapeHtml(emailLower)}</strong> was already sent on ${escapeHtml(userData.reviewRewardEmailSentAt || 'a previous date')}.</p>
+          <hr style="border:none;border-top:1px solid #d0d7de;margin:20px 0;">
+          <p><a href="https://attendancetracker.dev/admin.html" style="color:#0969da;text-decoration:none;font-weight:600;">← Return to Admin Dashboard</a></p>
+        </div>
+      `);
+    }
+
+    const sendResult = await sendReviewRewardEmail({
+      to: emailLower,
+      displayName: userData.displayName,
+      domain: domainLower,
+      country: userData.signupGeo?.country,
+      language: userData.language,
+      expiresAt: userData.individualPlanExpiresAt,
+      reviewId,
+      rating: userData.reviewRating || 5,
+    });
+
+    if (!sendResult.sent) {
+      return res.status(500).send(`<h3>Failed to dispatch email: ${escapeHtml(sendResult.reason || 'Unknown error')}</h3>`);
+    }
+
+    await userRef.set({
+      reviewRewardEmailSent: true,
+      reviewRewardEmailPendingApproval: false,
+      reviewRewardEmailSentAt: new Date().toISOString(),
+    }, { merge: true });
+
+    return res.status(200).send(`
+      <div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:40px auto;padding:28px;border:1px solid #2da44e;border-radius:10px;background:#f6f8fa;">
+        <h2 style="color:#1a7f37;margin-top:0;">✅ Review Reward Email Dispatched!</h2>
+        <p style="font-size:15px;color:#24292f;line-height:1.6;">Successfully dispatched personalized reward email to <strong>${escapeHtml(emailLower)}</strong>.</p>
+        <ul style="font-size:14px;color:#57606a;line-height:1.8;">
+          <li><strong>Sender:</strong> Derek Gallardo &lt;derek@attendancetracker.dev&gt;</li>
+          <li><strong>Language:</strong> ${escapeHtml(sendResult.lang || 'en')}</li>
+          <li><strong>Resend ID:</strong> ${escapeHtml(sendResult.id || 'ok')}</li>
+        </ul>
+        <hr style="border:none;border-top:1px solid #d0d7de;margin:20px 0;">
+        <p><a href="https://attendancetracker.dev/admin.html" style="color:#0969da;text-decoration:none;font-weight:600;">← Return to Admin Dashboard</a></p>
+      </div>
+    `);
+  } catch (err) {
+    log.error('admin: failed to approve review reward email', { error: err.message, reviewId, email });
+    return res.status(500).send(`<h3>Error approving reward email: ${escapeHtml(err.message)}</h3>`);
+  }
+});
+
+// POST /api/admin/reviews/send-reward-email — Dispatch or re-send review reward email (Super Admin)
+router.post('/admin/reviews/send-reward-email', requireSuperAdmin, async (req, res) => {
+  const { email, customSubject, customText, customHtml } = req.body;
+  if (!email || !email.includes('@')) {
+    return res.status(400).json({ error: 'Valid email is required' });
+  }
+
+  try {
+    const db = getDb();
+    const emailLower = String(email).toLowerCase();
+    const domainLower = emailLower.split('@')[1] || 'gmail.com';
+    const userRef = db.collection('tenants').doc(domainLower).collection('users').doc(emailLower);
+    const userSnap = await userRef.get();
+
+    if (!userSnap.exists) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const userData = userSnap.data();
+    const sendResult = await sendReviewRewardEmail({
+      to: emailLower,
+      displayName: userData.displayName,
+      domain: domainLower,
+      country: userData.signupGeo?.country,
+      language: userData.language,
+      expiresAt: userData.individualPlanExpiresAt,
+      reviewId: userData.reviewId,
+      rating: userData.reviewRating || 5,
+      customSubject,
+      customText,
+      customHtml,
+    });
+
+    if (!sendResult.sent) {
+      return res.status(500).json({ error: 'Failed to send email', reason: sendResult.reason });
+    }
+
+    await userRef.set({
+      reviewRewardEmailSent: true,
+      reviewRewardEmailPendingApproval: false,
+      reviewRewardEmailSentAt: new Date().toISOString(),
+    }, { merge: true });
+
+    res.json({ success: true, ...sendResult });
+  } catch (err) {
+    log.error('admin: send-reward-email failed', { error: err.message, email });
+    res.status(500).json({ error: 'Failed to send reward email' });
   }
 });
 
