@@ -98,11 +98,31 @@ describe('meetGet', () => {
     expect(global.fetch).toHaveBeenCalledTimes(2);
   }, 15000);
 
+  test('recovers if response body stream aborts (terminated / other side closed)', async () => {
+    const socketErr = new TypeError('terminated');
+    socketErr.cause = new Error('other side closed');
+    global.fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => { throw socketErr; },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ recovered: true }),
+      });
+    const result = await meetGet('conferenceRecords/stream-drop', 'tok', 2);
+    expect(result).toEqual({ recovered: true });
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  }, 15000);
+
   test('treats a timeout (AbortError) as a retryable failure', async () => {
     const abortErr = new Error('The operation was aborted');
     abortErr.name = 'AbortError';
     global.fetch.mockRejectedValue(abortErr);
-    await expect(meetGet('x', 'tok', 1)).rejects.toThrow(/Meet API timeout after \d+ms/);
+    await expect(meetGet('x', 'tok', 1)).rejects.toMatchObject({
+      message: expect.stringMatching(/Meet API timeout after \d+ms/),
+      isNetworkError: true,
+    });
     expect(global.fetch).toHaveBeenCalledTimes(2); // initial + 1 retry
   }, 15000);
 

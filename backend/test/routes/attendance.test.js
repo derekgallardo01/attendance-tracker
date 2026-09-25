@@ -525,5 +525,25 @@ describe('GET /api/attendance — final residual branches', () => {
     expect(res.body.code).toBe('AUTH_EXPIRED');
     expect(res.body.error).toMatch(/session expired/i);
   });
+
+  test('Meet API transient socket drop returns 503 UPSTREAM_NETWORK_ERROR without 500 crash', async () => {
+    mockMeetGet.mockResolvedValue({ conferenceRecords: [{ name: 'conferenceRecords/rec-net' }] });
+    mockMeetGetAll.mockRejectedValue(new TypeError('terminated'));
+
+    const res = await request(app).get('/api/attendance?conferenceId=abc').set(auth());
+    expect(res.status).toBe(503);
+    expect(res.header['retry-after']).toBe('5');
+    expect(res.body.code).toBe('UPSTREAM_NETWORK_ERROR');
+    expect(res.body.error).toMatch(/Temporary connection issue/i);
+  });
+
+  test('unexpected error returns 500 Failed to fetch attendance data', async () => {
+    mockMeetGet.mockResolvedValue({ conferenceRecords: [{ name: 'conferenceRecords/rec-crash' }] });
+    mockMeetGetAll.mockRejectedValue(new Error('unanticipated fatal crash'));
+
+    const res = await request(app).get('/api/attendance?conferenceId=abc').set(auth());
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Failed to fetch attendance data.');
+  });
 });
 

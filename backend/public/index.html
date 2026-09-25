@@ -5180,6 +5180,10 @@ async function refreshAttendance() {
           toast(t('toast.rateLimited', 'Large meeting — Google is briefly limiting attendance updates. Your roster is safe; retrying shortly.'), 6000);
           return;
         }
+        if (res.status === 503) {
+          // Upstream Google network interruption — keep existing roster, skip poll
+          return;
+        }
         throw new Error(`Backend error ${res.status}`);
       }
       data = await res.json();

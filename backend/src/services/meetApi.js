@@ -10,11 +10,18 @@ async function meetGet(path, token, retries = 2) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), MEET_TIMEOUT_MS);
     let resp;
+    let data;
+    let body;
     try {
       resp = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
         signal: controller.signal,
       });
+      if (resp.ok) {
+        data = await resp.json();
+      } else {
+        body = await resp.text();
+      }
     } catch (err) {
       // Timeout (AbortError) or network error — retry like a transient 5xx.
       clearTimeout(timer);
@@ -24,12 +31,13 @@ async function meetGet(path, token, retries = 2) {
         await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
         continue;
       }
-      throw new Error(isTimeout ? `Meet API timeout after ${MEET_TIMEOUT_MS}ms` : `Meet API request failed: ${err.message}`);
+      const wrappedErr = new Error(isTimeout ? `Meet API timeout after ${MEET_TIMEOUT_MS}ms` : `Meet API request failed: ${err.message}`);
+      wrappedErr.isNetworkError = true;
+      throw wrappedErr;
     } finally {
       clearTimeout(timer);
     }
-    if (resp.ok) return resp.json();
-    const body = await resp.text();
+    if (resp.ok) return data;
     // 429 = quota exhausted (Meet's list_participant_sessions is 600/min/user).
     // A short honor-the-Retry-After backoff clears transient bursts; a persistent
     // 429 propagates with .status so callers can degrade gracefully (return a

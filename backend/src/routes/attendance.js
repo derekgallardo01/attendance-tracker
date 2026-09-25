@@ -30,6 +30,11 @@ function isAuthError(err) {
   return status === 401 || AUTH_FAIL_REGEX.test(String(err?.message || ''));
 }
 
+// Upstream Google Meet API transient network / socket failures (e.g. terminated, socket closed, timeout)
+function isNetworkError(err) {
+  return err && (err.isNetworkError || /terminated|other side closed|socket hang up|ECONNRESET|ETIMEDOUT|EAI_AGAIN|ENOTFOUND|timeout after/i.test(String(err.message || '')));
+}
+
 // Extract Google user ID from participant path (e.g., "conferenceRecords/.../participants/117409479685467143851")
 function extractUserId(participantPath) {
   const parts = (participantPath || '').split('/');
@@ -348,6 +353,15 @@ router.get('/attendance', async (req, res) => {
       return res.status(429).json({
         error: 'This meeting has a lot of participants and Google is briefly rate-limiting attendance lookups. Please try again in a moment.',
         code: 'RATE_LIMITED',
+      });
+    }
+    // Upstream transient socket / network drops from Google Meet API
+    if (isNetworkError(err)) {
+      log.warn('attendance: upstream Google Meet network interruption', { conferenceId, error: err.message });
+      res.set('Retry-After', '5');
+      return res.status(503).json({
+        error: 'Temporary connection issue with Google Meet API. Retrying automatically...',
+        code: 'UPSTREAM_NETWORK_ERROR',
       });
     }
     log.error('attendance fetch failed', { err, error: err.message });
