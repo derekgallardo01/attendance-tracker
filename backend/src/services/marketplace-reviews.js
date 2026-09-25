@@ -66,34 +66,48 @@ function parseMarketplaceReviews(html, appId = DEFAULT_APP_ID) {
   return deduped.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
 }
 
+const REVIEW_LOCALES = ['en', 'es', 'pt'];
+
 /**
- * Fetch the public Marketplace page and extract live reviews.
+ * Fetch the public Marketplace page and extract live reviews across supported locales.
  *
- * @param {string} [url]
+ * @param {string} [baseUrl]
  * @returns {Promise<Array>}
  */
-async function fetchLiveMarketplaceReviews(url = MARKETPLACE_URL) {
-  try {
-    const res = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
-        'Accept-Language': 'en-US,en;q=0.9',
-      },
-    });
+async function fetchLiveMarketplaceReviews(baseUrl = MARKETPLACE_URL) {
+  const allReviews = [];
+  const seen = new Set();
 
-    if (!res.ok) {
-      log.warn('marketplace-reviews: fetch failed with status', { status: res.status });
-      return [];
+  for (const loc of REVIEW_LOCALES) {
+    try {
+      const locUrl = baseUrl.includes('?') ? `${baseUrl}&hl=${loc}` : `${baseUrl}?hl=${loc}`;
+      const res = await fetch(locUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+          'Accept-Language': `${loc},en;q=0.8`,
+        },
+      });
+
+      if (!res.ok) {
+        log.warn('marketplace-reviews: fetch failed with status', { status: res.status, loc });
+        continue;
+      }
+
+      const html = await res.text();
+      const reviews = parseMarketplaceReviews(html);
+      for (const r of reviews) {
+        if (!seen.has(r.reviewId)) {
+          seen.add(r.reviewId);
+          allReviews.push(r);
+        }
+      }
+    } catch (err) {
+      log.error('marketplace-reviews: error fetching reviews', { error: err.message, loc });
     }
-
-    const html = await res.text();
-    const reviews = parseMarketplaceReviews(html);
-    log.info('marketplace-reviews: fetched live reviews', { count: reviews.length });
-    return reviews;
-  } catch (err) {
-    log.error('marketplace-reviews: error fetching reviews', { error: err.message });
-    return [];
   }
+
+  log.info('marketplace-reviews: fetched live reviews', { count: allReviews.length });
+  return allReviews.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
 }
 
 /**
