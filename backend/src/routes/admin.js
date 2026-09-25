@@ -1107,7 +1107,10 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
           // Resolve meeting code from space
           let meetingCode = null;
           try {
-            if (rec.space) { const space = await meetGet(rec.space, accessToken); meetingCode = space.meetingCode || null; }
+            if (rec.space && rec.space !== 'spaces/-' && rec.space.startsWith('spaces/') && rec.space.length > 7) {
+              const space = await meetGet(rec.space, accessToken);
+              meetingCode = space.meetingCode || null;
+            }
           } catch (e) { log.warn('auto-capture: space fetch failed', { record: rec.name, error: e.message }); }
           if (!meetingCode) continue;
 
