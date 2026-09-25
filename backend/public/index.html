@@ -36,7 +36,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>Attendance Tracker for Google Meet — Free Add-on, Export to Sheets</title>
   <meta name="description" content="Track attendance in Google Meet in real-time. Automatically record participant join and leave times, duration, and export directly to Google Sheets with one click. Free, private, and no bots required." />
-  <meta name="keywords" content="google meet attendance tracker, track attendance google meet, google meet attendance report, attendance tracker, how to take attendance in google meet, meeting attendance tracker, google meet export to sheets" />
+  <meta name="keywords" content="google meet attendance tracker, track attendance google meet, google meet attendance report, attendance tracker, how to take attendance in google meet, meeting attendance tracker, google meet export to sheets, asistencia google meet, pasar lista google meet, tomar asistencia google meet, control de asistencia meet, lista de asistencia sheets, chamada google meet, presenca google meet, controle de chamada google meet" />
   <link rel="canonical" href="https://attendancetracker.dev/" />
 
   <!-- Localized alternate hreflang tags for 41 languages -->
@@ -7346,6 +7346,19 @@ function showCelebrateModal(sheetUrl, milestoneCount = 1) {
     if (bodyEl) bodyEl.textContent = t('celebrate.body', 'Your attendance report is in Google Sheets. If Attendance Tracker saved you time today, could you leave a quick 5-star rating on Google Marketplace?');
   }
 
+  const rawEmail = (state.userEmail || '').trim().toLowerCase();
+  const domain = rawEmail.includes('@') ? rawEmail.split('@')[1] : (state.userDomain || '');
+  const isPersonal = !domain || ['gmail.com', 'googlemail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'icloud.com', 'aol.com', 'live.com'].includes(domain);
+  const eduBtn = document.getElementById('celebrate-edu-invite-btn');
+  if (eduBtn) {
+    if (domain && !isPersonal) {
+      eduBtn.style.display = 'inline-block';
+      eduBtn.textContent = t('referral.celebrateBtn', 'Invite colleagues at @{domain}').replace('{domain}', domain);
+    } else {
+      eduBtn.style.display = 'none';
+    }
+  }
+
   modal.style.display = 'flex';
   try { logUserEvent('celebrate_modal_shown', { milestone: milestoneCount }); } catch (e) {}
   // Surface a Pro upsell inside the celebration — only for free users on a
@@ -7500,23 +7513,67 @@ function closeCelebrateModal() {
 }
 
 function showDepartmentReferralModal() {
-  if (_isPro || (_billing && _billing.plan === 'pro')) return;
   const modal = document.getElementById('department-referral-modal');
   if (!modal) return;
   const link = buildReferralLink('colleague');
   const input = document.getElementById('department-referral-link-input');
   if (input) input.value = link;
 
+  const rawEmail = (state.userEmail || '').trim().toLowerCase();
+  const domain = rawEmail.includes('@') ? rawEmail.split('@')[1] : (state.userDomain || '');
+  const isPersonal = !domain || ['gmail.com', 'googlemail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'icloud.com', 'aol.com', 'live.com'].includes(domain);
+
+  const titleEl = modal.querySelector('[data-i18n="referral.title"]');
+  const bodyEl = modal.querySelector('[data-i18n="referral.body"]');
+
+  if (domain && !isPersonal) {
+    if (titleEl) {
+      titleEl.textContent = t('referral.titleDomain', 'Invite your fellow teachers at @{domain}').replace('{domain}', domain);
+    }
+    if (bodyEl) {
+      if (_isPro || (_billing && _billing.plan === 'pro')) {
+        bodyEl.textContent = t('referral.proReward', 'You have Pro! Share your link with fellow teachers at @{domain} — each colleague who joins adds +35 days of Pro to your account.').replace('{domain}', domain);
+      } else {
+        bodyEl.textContent = t('referral.bodyDomain', 'Help fellow teachers at @{domain} save time taking roll in Google Meet. When a colleague joins with your link and takes attendance, both of you unlock 1 month of Pro free!').replace('{domain}', domain);
+      }
+    }
+  } else {
+    if (titleEl) titleEl.textContent = t('referral.title', 'Share with your department');
+    if (bodyEl) bodyEl.textContent = t('referral.body', 'Save your fellow teachers time taking roll in Google Meet. When a colleague joins with your link and takes attendance, both of you unlock 1 month of Pro free.');
+  }
+
+  // Wire WhatsApp
+  const waBtn = document.getElementById('department-referral-whatsapp-btn');
+  if (waBtn) {
+    const waText = t('referral.whatsappText', "Hi! I use Attendance Tracker to take attendance automatically in Google Meet and export class reports directly to Google Sheets in 1 click. Highly recommend it for your classes: ") + link;
+    waBtn.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(waText)}`;
+  }
+
+  // Wire Email
   const emailBtn = document.getElementById('department-referral-email-btn');
   if (emailBtn) {
-    const subject = encodeURIComponent(t('referral.emailSubject', 'Attendance Tracker for Google Meet – thought of your classes'));
+    const subject = encodeURIComponent(
+      (domain && !isPersonal)
+        ? t('referral.emailSubject', 'Attendance Tracker for Google Meet – thought of your classes') + ` (@${domain})`
+        : t('referral.emailSubject', 'Attendance Tracker for Google Meet – thought of your classes')
+    );
     const body = encodeURIComponent(
       t('referral.emailBody', "Hi,\n\nI've been using Attendance Tracker for Google Meet to automatically take attendance and export class records to Google Sheets in one click. It's saved me a ton of time: ") + `${link}\n`
     );
     emailBtn.href = `mailto:?subject=${subject}&body=${body}`;
   }
   modal.style.display = 'flex';
-  try { logUserEvent('colleague_referral_modal_shown', {}); } catch (e) {}
+  try { logUserEvent('colleague_referral_modal_shown', { domain: domain || null }); } catch (e) {}
+}
+
+function onDepartmentReferralWhatsAppClick(e) {
+  try { localStorage.setItem('att_colleague_referral_dismissed', '1'); } catch (e) {}
+  try { logUserEvent('colleague_referral_whatsapp_clicked', {}); } catch (e) {}
+}
+
+function openSchoolColleaguePrompt() {
+  if (typeof closeCelebrateModal === 'function') closeCelebrateModal();
+  setTimeout(() => showDepartmentReferralModal(), 200);
 }
 
 function closeDepartmentReferralModal() {
@@ -9423,6 +9480,7 @@ window.addEventListener('DOMContentLoaded', () => {
       <div style="display:flex;flex-direction:column;gap:10px">
         <a id="celebrate-review-btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" onclick="onCelebrateReviewClick(event)" style="background:#f59e0b;color:#111;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:700;font-size:.85rem;display:inline-block" data-i18n="celebrate.review">Leave a 5-Star Review (5s)</a>
         <button id="celebrate-share-report-btn" type="button" onclick="copyCurrentMeetingShareLink(this)" style="background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.35);color:#4ade80;padding:9px 16px;border-radius:8px;font-weight:700;font-size:.82rem;cursor:pointer;display:inline-block" data-i18n="celebrate.shareReport">Copy Shareable Report Link</button>
+        <button id="celebrate-edu-invite-btn" type="button" onclick="openSchoolColleaguePrompt()" style="display:none;background:rgba(88,166,255,.15);border:1px solid rgba(88,166,255,.35);color:#58a6ff;padding:9px 16px;border-radius:8px;font-weight:700;font-size:.82rem;cursor:pointer" data-i18n="referral.celebrateBtn">Invite colleagues at school</button>
         <a id="celebrate-share-link" href="#" style="background:transparent;border:1px solid #30363d;color:#e6edf3;text-decoration:none;padding:8px 16px;border-radius:8px;font-weight:600;font-size:.8rem;display:inline-block" data-i18n="celebrate.share">Share with a teammate</a>
         <button onclick="closeCelebrateModal()" style="background:transparent;color:#9ca3af;border:none;font-size:.8rem;cursor:pointer;padding:4px" data-i18n="upgrade.maybeLater">Maybe later</button>
       </div>
@@ -9449,6 +9507,10 @@ window.addEventListener('DOMContentLoaded', () => {
         <button id="department-referral-copy-btn" type="button" onclick="copyDepartmentReferralLink()" style="background:#238636;border:none;color:#fff;font-weight:600;font-size:.75rem;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap" data-i18n="referral.copyLink">Copy Link</button>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px">
+        <a id="department-referral-whatsapp-btn" href="#" target="_blank" rel="noopener" onclick="onDepartmentReferralWhatsAppClick(event)" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#1f7a3f;border:1px solid #2ea043;color:#fff;text-decoration:none;padding:9px 16px;border-radius:8px;font-weight:600;font-size:.82rem" data-i18n="referral.whatsappBtn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm.01 1.67c4.54 0 8.24 3.7 8.24 8.24 0 2.2-.86 4.27-2.41 5.83a8.188 8.188 0 0 1-5.83 2.41c-1.48 0-2.93-.39-4.2-1.14l-.3-.18-3.12.82.83-3.04-.2-.31a8.17 8.17 0 0 1-1.25-4.39c0-4.54 3.7-8.24 8.24-8.24zm4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.24-.75-.67-1.25-1.5-1.4-1.75-.15-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.15.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.78 2.72 4.31 3.81.6.26 1.07.42 1.44.53.61.19 1.16.17 1.6.1.49-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.07-.1-.23-.17-.48-.29z"/></svg>
+          Share via WhatsApp
+        </a>
         <a id="department-referral-email-btn" href="#" onclick="onDepartmentReferralEmailClick(event)" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#21262d;border:1px solid #30363d;color:#e6edf3;text-decoration:none;padding:9px 16px;border-radius:8px;font-weight:600;font-size:.82rem" data-i18n="referral.emailBtn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
           Email a Colleague

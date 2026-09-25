@@ -221,6 +221,12 @@
 
     const STRINGS = {
     "en": {
+        "referral.whatsappBtn": "Share via WhatsApp",
+        "referral.whatsappText": "Hi! I use Attendance Tracker to take attendance automatically in Google Meet and export class reports directly to Google Sheets in 1 click. Highly recommend it for your classes: ",
+        "referral.titleDomain": "Invite your fellow teachers at @{domain}",
+        "referral.bodyDomain": "Help fellow teachers at @{domain} save time taking roll in Google Meet. When a colleague joins with your link and takes attendance, both of you unlock 1 month of Pro free!",
+        "referral.proReward": "You have Pro! Share your link with fellow teachers at @{domain} — each colleague who joins adds +35 days of Pro to your account.",
+        "referral.celebrateBtn": "Invite colleagues at @{domain}",
         "lp2_nav_how": "How it works",
         "lp2_nav_compare": "Why an add-on",
         "lp2_nav_pricing": "Pricing",
@@ -1353,6 +1359,12 @@
         "share.singleMeetingMeta": "{count} participants · {date}"
     },
     "es": {
+        "referral.whatsappBtn": "Compartir por WhatsApp",
+        "referral.whatsappText": "¡Hola colegas! Les recomiendo mucho Attendance Tracker para pasar lista automáticamente en Google Meet y exportar reportes directos a Google Sheets en 1 clic. Me ha ahorrado muchísimo tiempo en mis clases: ",
+        "referral.titleDomain": "Invita a tus colegas profesores de @{domain}",
+        "referral.bodyDomain": "Ayuda a tus compañeros de @{domain} a ahorrar tiempo al pasar lista en Google Meet. Cuando un colega se una con tu enlace y pase asistencia, ¡ambos desbloquean 1 mes gratis de Pro!",
+        "referral.proReward": "¡Ya tienes Pro! Comparte tu enlace con tus colegas de @{domain}: cada profesor que se una sumará +35 días de Pro a tu cuenta.",
+        "referral.celebrateBtn": "Invitar a colegas de @{domain}",
         "lp2_nav_how": "Cómo funciona",
         "lp2_nav_compare": "Por qué un complemento",
         "lp2_nav_pricing": "Precios",
@@ -1365,8 +1377,8 @@
         "lp2_hero_btn_install": "Instalar desde Marketplace",
         "lp2_hero_btn_demo": "Ver demostración",
         "lp2_price_line_1": "Gratis para empezar",
-        "lp2_price_line_2": "$9",
-        "lp2_price_line_3": "99 un solo pago para uso ilimitado",
+        "lp2_price_line_2": "Pago único de $9.99 para uso ilimitado",
+        "lp2_price_line_3": "Sin suscripciones ni cobros recurrentes",
         "lp2_roster_live": "REGISTRO EN VIVO",
         "lp2_roster_class": "Biology 101 · 14:32",
         "lp2_roster_p1_detail": "Joined 10:00 · 42m",
@@ -2485,6 +2497,12 @@
         "share.singleMeetingMeta": "{count} participantes · {date}"
     },
     "pt": {
+        "referral.whatsappBtn": "Compartilhar no WhatsApp",
+        "referral.whatsappText": "Olá colegas! Recomendo muito o Attendance Tracker para fazer chamada automaticamente no Google Meet e exportar para o Google Planilhas em 1 clique. Me economizou muito tempo nas aulas: ",
+        "referral.titleDomain": "Convide seus colegas professores de @{domain}",
+        "referral.bodyDomain": "Ajude os professores de @{domain} a economizar tempo na chamada do Google Meet. Quando um colega entrar com seu link e registrar presença, ambos ganham 1 mês de Pro grátis!",
+        "referral.proReward": "Você tem Pro! Compartilhe seu link com os professores de @{domain}: cada colega que entrar adiciona +35 dias de Pro à sua conta.",
+        "referral.celebrateBtn": "Convidar colegas de @{domain}",
         "lp2_nav_how": "Como funciona",
         "lp2_nav_compare": "Por que um complemento",
         "lp2_nav_pricing": "Preços",
@@ -3617,6 +3635,12 @@
         "share.singleMeetingMeta": "{count} participantes · {date}"
     },
     "hi": {
+        "referral.whatsappBtn": "WhatsApp पर साझा करें",
+        "referral.whatsappText": "नमस्ते! मैं Google Meet में उपस्थिति लेने और सीधे Google Sheets में निर्यात करने के लिए Attendance Tracker का उपयोग करता हूँ: ",
+        "referral.titleDomain": "@{domain} के साथी शिक्षकों को आमंत्रित करें",
+        "referral.bodyDomain": "@{domain} के शिक्षकों का समय बचाएं। दोनों को 1 महीने का मुफ़्त Pro मिलेगा!",
+        "referral.proReward": "आपके पास Pro है! @{domain} का प्रत्येक सहकर्मी आपके खाते में +35 दिन Pro जोड़ता है।",
+        "referral.celebrateBtn": "@{domain} के साथियों को आमंत्रित करें",
         "lp2_nav_how": "यह कैसे काम करता है",
         "lp2_nav_compare": "ऐड-ऑन क्यों चुनें",
         "lp2_nav_pricing": "कीमतें",
@@ -4749,6 +4773,12 @@
         "share.singleMeetingMeta": "{count} प्रतिभागी · {date}"
     },
     "tl": {
+        "referral.whatsappBtn": "Ibahagi sa WhatsApp",
+        "referral.whatsappText": "Kumusta mga guro! Gamit ko ang Attendance Tracker para sa automated attendance sa Google Meet at Google Sheets: ",
+        "referral.titleDomain": "Anyayahan ang mga guro sa @{domain}",
+        "referral.bodyDomain": "Tulungan ang kapwa guro sa @{domain} makatipid ng oras sa Google Meet. Pareho kayong may 1 buwang libreng Pro!",
+        "referral.proReward": "May Pro ka na! Bawat guro sa @{domain} na sumali ay magdadagdag ng +35 araw ng Pro.",
+        "referral.celebrateBtn": "Anyayahan ang guro sa @{domain}",
         "lp2_nav_how": "Paano gumagana",
         "lp2_nav_compare": "Bakit add-on",
         "lp2_nav_pricing": "Presyo",
@@ -5881,6 +5911,12 @@
         "share.singleMeetingMeta": "{count} kalahok · {date}"
     },
     "ms": {
+        "referral.whatsappBtn": "Kongsi melalui WhatsApp",
+        "referral.whatsappText": "Hai rakan guru! Saya guna Attendance Tracker untuk kehadiran Google Meet dan eksport ke Google Sheets: ",
+        "referral.titleDomain": "Jemput rakan guru di @{domain}",
+        "referral.bodyDomain": "Bantu rakan di @{domain} jimat masa kehadiran Google Meet. Kedua-duanya dapat 1 bulan Pro percuma!",
+        "referral.proReward": "Anda ada Pro! Setiap rakan di @{domain} yang sertai menambah +35 hari Pro.",
+        "referral.celebrateBtn": "Jemput rakan di @{domain}",
         "lp2_nav_how": "Cara Kerja",
         "lp2_nav_compare": "Keunggulan Add-on",
         "lp2_nav_pricing": "Harga",
@@ -7013,6 +7049,12 @@
         "share.singleMeetingMeta": "{count} peserta · {date}"
     },
     "id": {
+        "referral.whatsappBtn": "Bagikan via WhatsApp",
+        "referral.whatsappText": "Halo rekan guru! Saya pakai Attendance Tracker untuk absensi otomatis di Google Meet dan ekspor ke Google Spreadsheet: ",
+        "referral.titleDomain": "Undang rekan guru di @{domain}",
+        "referral.bodyDomain": "Bantu rekan guru di @{domain} hemat waktu absensi di Google Meet. Keduanya dapat 1 bulan Pro gratis!",
+        "referral.proReward": "Anda sudah Pro! Setiap rekan di @{domain} yang bergabung menambah +35 hari Pro.",
+        "referral.celebrateBtn": "Undang rekan guru di @{domain}",
         "lp2_nav_how": "Cara Kerja",
         "lp2_nav_compare": "Keunggulan Add-on",
         "lp2_nav_pricing": "Harga",
@@ -8145,6 +8187,12 @@
         "share.singleMeetingMeta": "{count} peserta · {date}"
     },
     "vi": {
+        "referral.whatsappBtn": "Chia sẻ qua WhatsApp",
+        "referral.whatsappText": "Chào bạn! Tôi dùng Attendance Tracker để điểm danh Google Meet và xuất sang Google Sheets: ",
+        "referral.titleDomain": "Mời đồng nghiệp tại @{domain}",
+        "referral.bodyDomain": "Giúp giáo viên tại @{domain} tiết kiệm thời gian điểm danh Google Meet. Cả hai nhận 1 tháng Pro miễn phí!",
+        "referral.proReward": "Bạn đã có Pro! Mỗi đồng nghiệp tại @{domain} tham gia sẽ cộng thêm +35 ngày Pro.",
+        "referral.celebrateBtn": "Mời đồng nghiệp tại @{domain}",
         "lp2_nav_how": "Cách hoạt động",
         "lp2_nav_compare": "Vì sao chọn tiện ích",
         "lp2_nav_pricing": "Bảng giá",
@@ -9277,6 +9325,12 @@
         "share.singleMeetingMeta": "{count} người tham gia · {date}"
     },
     "fr": {
+        "referral.whatsappBtn": "Partager via WhatsApp",
+        "referral.whatsappText": "Bonjour ! J'utilise Attendance Tracker pour faire l'appel automatiquement dans Google Meet et exporter vers Google Sheets en 1 clic : ",
+        "referral.titleDomain": "Invitez vos collègues enseignants de @{domain}",
+        "referral.bodyDomain": "Aidez vos collègues de @{domain} à gagner du temps pour l'appel dans Google Meet. Débloquez 1 mois de Pro gratuit pour chacun !",
+        "referral.proReward": "Vous avez Pro ! Chaque collègue de @{domain} qui rejoint ajoute +35 jours de Pro à votre compte.",
+        "referral.celebrateBtn": "Inviter des collègues de @{domain}",
         "lp2_nav_how": "Comment ça marche",
         "lp2_nav_compare": "Pourquoi un module",
         "lp2_nav_pricing": "Tarifs",
@@ -10409,6 +10463,12 @@
         "share.singleMeetingMeta": "{count} participants · {date}"
     },
     "de": {
+        "referral.whatsappBtn": "Über WhatsApp teilen",
+        "referral.whatsappText": "Hallo! Ich nutze Attendance Tracker für automatische Anwesenheit in Google Meet mit 1-Klick-Export nach Google Sheets: ",
+        "referral.titleDomain": "Lehrerkollegen an @{domain} einladen",
+        "referral.bodyDomain": "Helfen Sie Kollegen an @{domain} Zeit zu sparen. Jeder Beitritt schaltet 1 Gratismonat Pro für beide frei!",
+        "referral.proReward": "Sie haben Pro! Jeder beitretende Kollege an @{domain} verlängert Ihr Pro um +35 Tage.",
+        "referral.celebrateBtn": "Kollegen an @{domain} einladen",
         "lp2_nav_how": "So funktioniert's",
         "lp2_nav_compare": "Warum ein Add-on",
         "lp2_nav_pricing": "Preise",
@@ -11541,6 +11601,12 @@
         "share.singleMeetingMeta": "{count} Teilnehmer · {date}"
     },
     "it": {
+        "referral.whatsappBtn": "Condividi su WhatsApp",
+        "referral.whatsappText": "Ciao! Uso Attendance Tracker per prendere le presenze su Google Meet ed esportare in Google Fogli con 1 clic: ",
+        "referral.titleDomain": "Invita i colleghi docenti di @{domain}",
+        "referral.bodyDomain": "Aiuta i docenti di @{domain} a risparmiare tempo su Google Meet. 1 mese di Pro gratis per entrambi!",
+        "referral.proReward": "Hai Pro! Ogni collega di @{domain} che si unisce aggiunge +35 giorni di Pro al tuo account.",
+        "referral.celebrateBtn": "Invita colleghi di @{domain}",
         "lp2_nav_how": "Come funziona",
         "lp2_nav_compare": "Perché un componente",
         "lp2_nav_pricing": "Prezzi",
@@ -12673,6 +12739,12 @@
         "share.singleMeetingMeta": "{count} partecipanti · {date}"
     },
     "nl": {
+        "referral.whatsappBtn": "Delen via WhatsApp",
+        "referral.whatsappText": "Hoi! Ik gebruik Attendance Tracker voor automatische aanwezigheid in Google Meet en export naar Google Sheets: ",
+        "referral.titleDomain": "Nodig collega's uit bij @{domain}",
+        "referral.bodyDomain": "Bespaar tijd bij aanwezigheid in Google Meet. Ontvang allebei 1 maand gratis Pro!",
+        "referral.proReward": "Je hebt Pro! Elke collega bij @{domain} levert +35 dagen extra Pro op.",
+        "referral.celebrateBtn": "Nodig collega's bij @{domain} uit",
         "lp2_nav_how": "Zo werkt het",
         "lp2_nav_compare": "Waarom een add-on",
         "lp2_nav_pricing": "Prijzen",
@@ -13805,6 +13877,12 @@
         "share.singleMeetingMeta": "{count} deelnemers · {date}"
     },
     "pl": {
+        "referral.whatsappBtn": "Udostępnij przez WhatsApp",
+        "referral.whatsappText": "Cześć! Używam Attendance Tracker do sprawdzania obecności w Google Meet i eksportu do Google Sheets: ",
+        "referral.titleDomain": "Zaproś nauczycieli z @{domain}",
+        "referral.bodyDomain": "Pomóż kolegom z @{domain} oszczędzać czas na Google Meet. Oboje otrzymacie 1 miesiąc Pro gratis!",
+        "referral.proReward": "Masz Pro! Każdy zarejestrowany kolega z @{domain} dodaje +35 dni Pro.",
+        "referral.celebrateBtn": "Zaproś współpracowników z @{domain}",
         "lp2_nav_how": "Jak to działa",
         "lp2_nav_compare": "Dlaczego dodatek",
         "lp2_nav_pricing": "Cennik",
@@ -14937,6 +15015,12 @@
         "share.singleMeetingMeta": "{count} uczestników · {date}"
     },
     "tr": {
+        "referral.whatsappBtn": "WhatsApp ile Paylaş",
+        "referral.whatsappText": "Merhaba! Google Meet yoklamasını otomatik alıp Google E-Tablolar'a aktarmak için Attendance Tracker kullanıyorum: ",
+        "referral.titleDomain": "@{domain} öğretmen arkadaşlarını davet et",
+        "referral.bodyDomain": "@{domain} kurumundaki öğretmenlere zaman kazandırın. İkiniz de 1 ay ücretsiz Pro kazanın!",
+        "referral.proReward": "Pro üyesisiniz! @{domain} alanından katılan her meslektaşınız +35 gün Pro kazandırır.",
+        "referral.celebrateBtn": "@{domain} meslektaşlarını davet et",
         "lp2_nav_how": "Nasıl Çalışır",
         "lp2_nav_compare": "Neden Eklenti",
         "lp2_nav_pricing": "Fiyatlar",
@@ -16069,6 +16153,12 @@
         "share.singleMeetingMeta": "{count} katılımcı · {date}"
     },
     "th": {
+        "referral.whatsappBtn": "แชร์ผ่าน WhatsApp",
+        "referral.whatsappText": "สวัสดีครับ/ค่ะ ฉันใช้ Attendance Tracker เช็คชื่ออัตโนมัติใน Google Meet และส่งออกไปยัง Google Sheets: ",
+        "referral.titleDomain": "เชิญเพื่อนครูใน @{domain}",
+        "referral.bodyDomain": "ช่วยเพื่อนครูใน @{domain} ประหยัดเวลาเช็คชื่อ ทั้งสองคนรับ Pro ฟรี 1 เดือน!",
+        "referral.proReward": "คุณมี Pro แล้ว! เพื่อนร่วมงานใน @{domain} ทุกคนที่เข้าร่วมจะเพิ่ม Pro +35 วัน",
+        "referral.celebrateBtn": "เชิญเพื่อนร่วมงานใน @{domain}",
         "lp2_nav_how": "วิธีใช้งาน",
         "lp2_nav_compare": "ทำไมต้องแอดออน",
         "lp2_nav_pricing": "ราคา",
@@ -17201,6 +17291,12 @@
         "share.singleMeetingMeta": "{count} ผู้เข้าร่วม · {date}"
     },
     "ar": {
+        "referral.whatsappBtn": "مشاركة عبر واتساب",
+        "referral.whatsappText": "مرحبًا! أستخدم Attendance Tracker لتسجيل الحضور تلقائيًا في Google Meet والتصدير إلى Google Sheets: ",
+        "referral.titleDomain": "ادعُ زملائك المعلمين في @{domain}",
+        "referral.bodyDomain": "وفّر وقت زملائك في @{domain}. يحصل كليكما على شهر Pro مجانًا!",
+        "referral.proReward": "لديك Pro! كل زميل ينضم من @{domain} يمنحك +35 يومًا إضافيًا من Pro.",
+        "referral.celebrateBtn": "دعوة الزملاء في @{domain}",
         "lp2_nav_how": "كيف يعمل",
         "lp2_nav_compare": "لماذا الملحق",
         "lp2_nav_pricing": "الأسعار",
@@ -18333,6 +18429,12 @@
         "share.singleMeetingMeta": "{count} مشارك · {date}"
     },
     "ko": {
+        "referral.whatsappBtn": "WhatsApp으로 공유",
+        "referral.whatsappText": "안녕하세요! Google Meet 자동 출석 관리 및 Google 스프레드시트 내보내기를 위해 Attendance Tracker를 사용하고 있습니다: ",
+        "referral.titleDomain": "@{domain} 동료 교사 초대하기",
+        "referral.bodyDomain": "@{domain} 동료 교사들의 출석 체크 시간을 절약하세요. 두 분 모두 1개월 무료 Pro를 받으실 수 있습니다!",
+        "referral.proReward": "현재 Pro를 사용 중입니다! @{domain} 동료가 참여할 때마다 Pro가 +35일 추가됩니다.",
+        "referral.celebrateBtn": "@{domain} 동료 초대하기",
         "lp2_nav_how": "사용 방법",
         "lp2_nav_compare": "애드온 선택 이유",
         "lp2_nav_pricing": "가격",
@@ -19465,6 +19567,12 @@
         "share.singleMeetingMeta": "{count}명 참석 · {date}"
     },
     "zh": {
+        "referral.whatsappBtn": "透過 WhatsApp 分享",
+        "referral.whatsappText": "嗨！我使用 Attendance Tracker 在 Google Meet 自動點名並匯出至 Google 試算表：",
+        "referral.titleDomain": "邀請 @{domain} 的教師同仁",
+        "referral.bodyDomain": "協助 @{domain} 的同仁節省 Google Meet 點名時間。雙方均可免費獲贈 1 個月 Pro！",
+        "referral.proReward": "您已擁有 Pro！@{domain} 每位同仁加入即可為您增加 +35 天 Pro。",
+        "referral.celebrateBtn": "邀請 @{domain} 的同仁",
         "lp2_nav_how": "運作方式",
         "lp2_nav_compare": "為何選擇外掛程式",
         "lp2_nav_pricing": "定價方案",
@@ -20597,6 +20705,12 @@
         "share.singleMeetingMeta": "{count} 位參與者 · {date}"
     },
     "ja": {
+        "referral.whatsappBtn": "WhatsAppで共有",
+        "referral.whatsappText": "こんにちは！Google Meetの自動出席確認とGoogleスプレッドシートへのエクスポートにAttendance Trackerを使っています：",
+        "referral.titleDomain": "@{domain}の同僚の先生を招待",
+        "referral.bodyDomain": "@{domain}の先生方の出席確認時間を節約。両者に1か月分のProを無料で提供！",
+        "referral.proReward": "Proをご利用中です！@{domain}の同僚が参加するたびにProが+35日延長されます。",
+        "referral.celebrateBtn": "@{domain}の同僚を招待",
         "lp2_nav_how": "使い方",
         "lp2_nav_compare": "アドオンを選ぶ理由",
         "lp2_nav_pricing": "料金プラン",
@@ -21729,6 +21843,12 @@
         "share.singleMeetingMeta": "{count} 人の参加者 · {date}"
     },
     "ta": {
+        "referral.whatsappBtn": "WhatsApp இல் பகிரவும்",
+        "referral.whatsappText": "வணக்கம்! Google Meet வருகைப்பதிவை தானாக எடுக்க Attendance Tracker பயன்படுத்துகிறேன்: ",
+        "referral.titleDomain": "@{domain} ஆசிரியர் சக ஊழியர்களை அழைக்கவும்",
+        "referral.bodyDomain": "@{domain} ஆசிரியர்களின் நேரத்தை மிச்சப்படுத்துங்கள். இருவருக்கும் 1 மாதம் Pro இலவசம்!",
+        "referral.proReward": "உங்களிடம் Pro உள்ளது! @{domain} சக ஊழியர் இணைந்தால் +35 நாட்கள் Pro கிடைக்கும்.",
+        "referral.celebrateBtn": "@{domain} சக ஊழியர்களை அழைக்கவும்",
         "lp2_nav_how": "How it works",
         "lp2_nav_compare": "Why an add-on",
         "lp2_nav_pricing": "Pricing",
@@ -22861,6 +22981,12 @@
         "share.singleMeetingMeta": "{count} பங்கேற்பாளர்கள் · {date}"
     },
     "te": {
+        "referral.whatsappBtn": "WhatsApp ద్వారా భాగస్వామ్యం చేయండి",
+        "referral.whatsappText": "నమస్కారం! Google Meet హాజరు కోసం Attendance Tracker వాడుతున్నాను: ",
+        "referral.titleDomain": "@{domain} ఉపాధ్యాయులను ఆహ్వానించండి",
+        "referral.bodyDomain": "@{domain} ఉపాధ్యాయులకు సమయం ఆదా చేయండి. ఇద్దరికీ 1 నెల Pro ఉచితం!",
+        "referral.proReward": "మీకు Pro ఉంది! @{domain} సహోద్యోగి చేరినప్పుడు +35 రోజుల Pro లభిస్తుంది.",
+        "referral.celebrateBtn": "@{domain} సహోద్యోగులను ఆహ్వానించండి",
         "lp2_nav_how": "How it works",
         "lp2_nav_compare": "Why an add-on",
         "lp2_nav_pricing": "Pricing",
@@ -23993,6 +24119,12 @@
         "share.singleMeetingMeta": "{count} మంది పాల్గొనేవారు · {date}"
     },
     "bn": {
+        "referral.whatsappBtn": "WhatsApp-এ শেয়ার করুন",
+        "referral.whatsappText": "নমস্কার! আমি Google Meet-এ উপস্থিতির জন্য Attendance Tracker ব্যবহার করি: ",
+        "referral.titleDomain": "@{domain}-এর শিক্ষক সহকর্মীদের আমন্ত্রণ জানান",
+        "referral.bodyDomain": "@{domain}-এর সহকর্মীদের সময় বাঁচান। দুজনেই ১ মাস বিনামূল্যে Pro পাবেন!",
+        "referral.proReward": "আপনার Pro আছে! @{domain}-এর প্রতিটি যোগদানে +৩৫ দিন Pro যুক্ত হয়।",
+        "referral.celebrateBtn": "@{domain}-এর সহকর্মীদের আমন্ত্রণ জানান",
         "lp2_nav_how": "How it works",
         "lp2_nav_compare": "Why an add-on",
         "lp2_nav_pricing": "Pricing",
@@ -25125,6 +25257,12 @@
         "share.singleMeetingMeta": "{count} অংশগ্রহণকারী · {date}"
     },
     "ur": {
+        "referral.whatsappBtn": "WhatsApp پر شیئر کریں",
+        "referral.whatsappText": "ہیلو! میں Google Meet میں حاضری کے لیے Attendance Tracker استعمال کرتا ہوں: ",
+        "referral.titleDomain": "@{domain} کے ساتھی اساتذہ کو مدعو کریں",
+        "referral.bodyDomain": "@{domain} کے اساتذہ کا وقت بچائیں۔ دونوں کو 1 ماہ Pro مفت ملے گا!",
+        "referral.proReward": "آپ کے پاس Pro ہے! @{domain} کا ہر ساتھی +35 دن Pro کا اضافہ کرتا ہے۔",
+        "referral.celebrateBtn": "@{domain} کے ساتھیوں کو مدعو کریں",
         "lp2_nav_how": "How it works",
         "lp2_nav_compare": "Why an add-on",
         "lp2_nav_pricing": "Pricing",
@@ -26257,6 +26395,12 @@
         "share.singleMeetingMeta": "{count} شرکاء · {date}"
     },
     "zh-CN": {
+        "referral.whatsappBtn": "通过 WhatsApp 分享",
+        "referral.whatsappText": "您好！我正在使用 Attendance Tracker 在 Google Meet 自动点名并导出至 Google 表格：",
+        "referral.titleDomain": "邀请 @{domain} 的教师同事",
+        "referral.bodyDomain": "帮助 @{domain} 的同事节省 Google Meet 点名时间。双方均可免费获赠 1 个月 Pro！",
+        "referral.proReward": "您已拥有 Pro！@{domain} 每位同事加入即可为您增加 +35 天 Pro。",
+        "referral.celebrateBtn": "邀请 @{domain} 的同事",
         "lp2_nav_how": "使用方法",
         "lp2_nav_compare": "为什么选择插件",
         "lp2_nav_pricing": "价格方案",
@@ -27389,6 +27533,12 @@
         "share.singleMeetingMeta": "{count} 位参与者 · {date}"
     },
     "ru": {
+        "referral.whatsappBtn": "Поделиться в WhatsApp",
+        "referral.whatsappText": "Привет! Я использую Attendance Tracker для учета посещаемости в Google Meet и экспорта в Google Таблицы: ",
+        "referral.titleDomain": "Пригласите коллег из @{domain}",
+        "referral.bodyDomain": "Помогите коллегам из @{domain} экономить время на перекличках в Google Meet. Получите по 1 месяцу Pro бесплатно!",
+        "referral.proReward": "У вас Pro! Каждый коллега из @{domain} добавит +35 дней Pro к вашей подписке.",
+        "referral.celebrateBtn": "Пригласить коллег из @{domain}",
         "lp2_nav_how": "Как это работает",
         "lp2_nav_compare": "Преимущества дополнения",
         "lp2_nav_pricing": "Цены",
@@ -28521,6 +28671,12 @@
         "share.singleMeetingMeta": "{count} участников · {date}"
     },
     "uk": {
+        "referral.whatsappBtn": "Поділитися у WhatsApp",
+        "referral.whatsappText": "Привіт! Використовую Attendance Tracker для обліку відвідуваності в Google Meet та експорту в Google Таблиці: ",
+        "referral.titleDomain": "Запросіть колег із @{domain}",
+        "referral.bodyDomain": "Допоможіть викладачам із @{domain} економити час у Google Meet. Отримайте по 1 місяцю Pro безкоштовно!",
+        "referral.proReward": "У вас Pro! Кожен колега із @{domain} додає +35 днів Pro до вашого облікового запису.",
+        "referral.celebrateBtn": "Запросити колег із @{domain}",
         "lp2_nav_how": "How it works",
         "lp2_nav_compare": "Why an add-on",
         "lp2_nav_pricing": "Pricing",
@@ -29653,6 +29809,12 @@
         "share.singleMeetingMeta": "{count} учасників · {date}"
     },
     "ro": {
+        "referral.whatsappBtn": "Trimite pe WhatsApp",
+        "referral.whatsappText": "Salut! Folosesc Attendance Tracker pentru prezență automată pe Google Meet și export în Google Sheets: ",
+        "referral.titleDomain": "Invită colegii profesori de la @{domain}",
+        "referral.bodyDomain": "Ajută colegii de la @{domain} să economisească timp pe Google Meet. Primiți amândoi 1 lună Pro gratuit!",
+        "referral.proReward": "Ai Pro! Fiecare coleg de la @{domain} adaugă +35 zile de Pro contului tău.",
+        "referral.celebrateBtn": "Invită colegi de la @{domain}",
         "lp2_nav_how": "How it works",
         "lp2_nav_compare": "Why an add-on",
         "lp2_nav_pricing": "Pricing",
@@ -30785,6 +30947,12 @@
         "share.singleMeetingMeta": "{count} participanți · {date}"
     },
     "he": {
+        "referral.whatsappBtn": "שיתוף בוואטסאפ",
+        "referral.whatsappText": "היי! אני משתמש ב-Attendance Tracker לניהול נוכחות ב-Google Meet וייצוא ל-Sheets: ",
+        "referral.titleDomain": "הזמן מורים עמיתים ב-@{domain}",
+        "referral.bodyDomain": "עזור למורים ב-@{domain} לחסוך זמן. שניכם מקבלים חודש Pro חינם!",
+        "referral.proReward": "יש לך Pro! כל מורה מ-@{domain} שמצטרף מוסיף +35 ימי Pro לחשבונך.",
+        "referral.celebrateBtn": "הזמן עמיתים ב-@{domain}",
         "lp2_nav_how": "איך זה עובד",
         "lp2_nav_compare": "למה תוסף רשמי",
         "lp2_nav_pricing": "מחירים",
@@ -31917,6 +32085,12 @@
         "share.singleMeetingMeta": "{count} משתתפים · {date}"
     },
     "mr": {
+        "referral.whatsappBtn": "WhatsApp वर शेअर करा",
+        "referral.whatsappText": "नमस्कार! मी Google Meet उपस्थितीसाठी Attendance Tracker वापरतो: ",
+        "referral.titleDomain": "@{domain} मधील सहकारी शिक्षकांना आमंत्रित करा",
+        "referral.bodyDomain": "@{domain} मधील शिक्षकांचा वेळ वाचवा. दोघांनाही 1 महिना Pro मोफत मिळेल!",
+        "referral.proReward": "तुमच्याकडे Pro आहे! @{domain} मधील प्रत्येक सहकारी +35 दिवस Pro जोडतो.",
+        "referral.celebrateBtn": "@{domain} मधील सहकाऱ्यांना आमंत्रित करा",
         "lp2_nav_how": "How it works",
         "lp2_nav_compare": "Why an add-on",
         "lp2_nav_pricing": "Pricing",
@@ -33049,6 +33223,12 @@
         "share.singleMeetingMeta": "{count} सहभागी · {date}"
     },
     "sv": {
+        "referral.whatsappBtn": "Dela via WhatsApp",
+        "referral.whatsappText": "Hej! Jag använder Attendance Tracker för automatisk närvaro i Google Meet och export till Google Sheets: ",
+        "referral.titleDomain": "Bjud in lärarkollegor på @{domain}",
+        "referral.bodyDomain": "Hjälp kollegor på @{domain} att spara tid. Båda får 1 månad gratis Pro!",
+        "referral.proReward": "Du har Pro! Varje kollega på @{domain} ger dig +35 dagar extra Pro.",
+        "referral.celebrateBtn": "Bjud in kollegor på @{domain}",
         "lp2_nav_how": "Så fungerar det",
         "lp2_nav_compare": "Varför ett tillägg",
         "lp2_nav_pricing": "Priser",
@@ -34181,6 +34361,12 @@
         "share.singleMeetingMeta": "{count} deltagare · {date}"
     },
     "cs": {
+        "referral.whatsappBtn": "Sdílet přes WhatsApp",
+        "referral.whatsappText": "Ahoj! Používám Attendance Tracker pro automatickou docházku v Google Meet a export do Google Sheets: ",
+        "referral.titleDomain": "Pozvěte kolegy učitele z @{domain}",
+        "referral.bodyDomain": "Pomozte kolegům z @{domain} ušetřit čas. Získejte oba 1 měsíc Pro zdarma!",
+        "referral.proReward": "Máte Pro! Každý kolega z @{domain} vám přidá +35 dní Pro.",
+        "referral.celebrateBtn": "Pozvat kolegy z @{domain}",
         "lp2_nav_how": "Jak to funguje",
         "lp2_nav_compare": "Proč doplněk",
         "lp2_nav_pricing": "Ceny",
@@ -35313,6 +35499,12 @@
         "share.singleMeetingMeta": "{count} účastníků · {date}"
     },
     "da": {
+        "referral.whatsappBtn": "Del via WhatsApp",
+        "referral.whatsappText": "Hej! Jeg bruger Attendance Tracker til automatisk fremmøde i Google Meet og eksport til Google Sheets: ",
+        "referral.titleDomain": "Inviter lærerkolleger på @{domain}",
+        "referral.bodyDomain": "Hjælp kolleger på @{domain} med at spare tid. I får begge 1 måned gratis Pro!",
+        "referral.proReward": "Du har Pro! Hver kollega på @{domain} tilføjer +35 dage Pro til din konto.",
+        "referral.celebrateBtn": "Inviter kolleger på @{domain}",
         "lp2_nav_how": "Sådan virker det",
         "lp2_nav_compare": "Hvorfor en tilføjelse",
         "lp2_nav_pricing": "Priser",
@@ -36445,6 +36637,12 @@
         "share.singleMeetingMeta": "{count} deltagere · {date}"
     },
     "fi": {
+        "referral.whatsappBtn": "Jaa WhatsAppissa",
+        "referral.whatsappText": "Hei! Käytän Attendance Trackeria läsnäolon seurantaan Google Meetissä ja vientiin Google Sheetsiin: ",
+        "referral.titleDomain": "Kutsu opettajakollegoita osoitteessa @{domain}",
+        "referral.bodyDomain": "Auta kollegoita osoitteessa @{domain} säästämään aikaa. Molemmat saavat 1 kuukauden ilmaisen Pro-tilauksen!",
+        "referral.proReward": "Sinulla on Pro! Jokainen liittyvä kollega osoitteessa @{domain} lisää +35 päivää Pro-aikaa.",
+        "referral.celebrateBtn": "Kutsu kollegoita osoitteessa @{domain}",
         "lp2_nav_how": "Näin se toimii",
         "lp2_nav_compare": "Miksi lisäosa",
         "lp2_nav_pricing": "Hinnat",
@@ -37577,6 +37775,12 @@
         "share.singleMeetingMeta": "{count} osallistujaa · {date}"
     },
     "hu": {
+        "referral.whatsappBtn": "Megosztás WhatsAppon",
+        "referral.whatsappText": "Szia! Az Attendance Trackert használom jelenléti ívhez Google Meetben és Google Táblázatokba exportáláshoz: ",
+        "referral.titleDomain": "Hívd meg tanár kollégáidat a(z) @{domain} domainről",
+        "referral.bodyDomain": "Segíts a(z) @{domain} kollégáinak időt spórolni. Mindketten 1 hónap ingyenes Pro-t kaptok!",
+        "referral.proReward": "Már van Pro előfizetésed! Minden csatlakozó kolléga a(z) @{domain} domainről +35 nappal hosszabbítja meg.",
+        "referral.celebrateBtn": "Kollégák meghívása a(z) @{domain} domainről",
         "lp2_nav_how": "Hogyan működik",
         "lp2_nav_compare": "Miért bővítmény",
         "lp2_nav_pricing": "Árak",
@@ -38709,6 +38913,12 @@
         "share.singleMeetingMeta": "{count} résztvevő · {date}"
     },
     "so": {
+        "referral.whatsappBtn": "Ku wadaag WhatsApp",
+        "referral.whatsappText": "Haye! Waxaan isticmaalaa Attendance Tracker si toos ah xaadirinta Google Meet loogu qoro: ",
+        "referral.titleDomain": "Ku martiqaad macallimiinta @{domain}",
+        "referral.bodyDomain": "Ka caawi macallimiinta @{domain} inay badbaadiyaan waqti. Labadiinuba waxaad helaysaan 1 bil oo Pro bilaash ah!",
+        "referral.proReward": "Waxaad leedahay Pro! Qof kasta oo @{domain} ku biira wuxuu ku darayaa +35 maalmood oo Pro.",
+        "referral.celebrateBtn": "Martiqaad asxaabta @{domain}",
         "lp2_nav_how": "How it works",
         "lp2_nav_compare": "Why an add-on",
         "lp2_nav_pricing": "Pricing",
@@ -39841,6 +40051,12 @@
         "share.singleMeetingMeta": "{count} ka qaybgalayaal · {date}"
     },
     "sw": {
+        "referral.whatsappBtn": "Shiriki kupitia WhatsApp",
+        "referral.whatsappText": "Habari! Ninatumia Attendance Tracker kusajili mahudhurio Google Meet na kuhamisha kwenye Google Sheets: ",
+        "referral.titleDomain": "Waalike walimu wenzako katika @{domain}",
+        "referral.bodyDomain": "Wasaidie walimu katika @{domain} kuokoa muda. Wote mtapata mwezi 1 wa Pro bila malipo!",
+        "referral.proReward": "Una Pro! Kila mfanyakazi mwenzako katika @{domain} anayejiunga anaongeza siku +35 za Pro.",
+        "referral.celebrateBtn": "Alika wafanyakazi wenzako katika @{domain}",
         "lp2_nav_how": "How it works",
         "lp2_nav_compare": "Why an add-on",
         "lp2_nav_pricing": "Pricing",
@@ -40971,6 +41187,12 @@
         "lang.ca": "Català"
     },
     "am": {
+        "referral.whatsappBtn": "በWhatsApp ያጋሩ",
+        "referral.whatsappText": "ሰላም! በGoogle Meet ውስጥ አቴንዳንስ ለመውሰድ Attendance Tracker እጠቀማለሁ፡ ",
+        "referral.titleDomain": "የ@{domain} የስራ ባልደረቦችዎን ይጋብዙ",
+        "referral.bodyDomain": "በ@{domain} ውስጥ ያሉ መምህራንን ጊዜ ይቆጥቡ። ሁለታችሁም 1 ወር ነፃ Pro ታገኛላችሁ!",
+        "referral.proReward": "እርስዎ Pro አለዎት! እያንዳንዱ በ@{domain} የሚቀላቀል የስራ ባልደረባ +35 ቀናት Pro ያክላል።",
+        "referral.celebrateBtn": "የ@{domain} የስራ ባልደረቦችን ይጋብዙ",
         "lp2_nav_how": "How it works",
         "lp2_nav_compare": "Why an add-on",
         "lp2_nav_pricing": "Pricing",
@@ -42101,6 +42323,12 @@
         "lang.ca": "Català"
     },
     "si": {
+        "referral.whatsappBtn": "WhatsApp හරහා බෙදාගන්න",
+        "referral.whatsappText": "ආයුබෝවන්! Google Meet හි පැමිණීම සටහන් කර ගැනීමට මම Attendance Tracker භාවිතා කරමි: ",
+        "referral.titleDomain": "@{domain} හි ගුරු සගයන්ට ආරාධනා කරන්න",
+        "referral.bodyDomain": "@{domain} හි ගුරුවරුන්ගේ කාලය ඉතිරි කරන්න. ඔබ දෙදෙනාටම මාස 1ක නොමිලේ Pro ලැබේ!",
+        "referral.proReward": "ඔබට Pro ඇත! @{domain} හි සම්බන්ධ වන සෑම සගයෙකුම +35 දින Pro එක් කරයි.",
+        "referral.celebrateBtn": "@{domain} හි සගයන්ට ආරාධනා කරන්න",
         "lp2_nav_how": "How it works",
         "lp2_nav_compare": "Why an add-on",
         "lp2_nav_pricing": "Pricing",
@@ -43231,6 +43459,12 @@
         "lang.ca": "Català"
     },
     "el": {
+        "referral.whatsappBtn": "Κοινοποίηση μέσω WhatsApp",
+        "referral.whatsappText": "Γεια σας! Χρησιμοποιώ το Attendance Tracker για αυτόματο παρουσιολόγιο στο Google Meet και εξαγωγή σε Google Sheets: ",
+        "referral.titleDomain": "Προσκαλέστε συναδέλφους εκπαιδευτικούς στο @{domain}",
+        "referral.bodyDomain": "Βοηθήστε συναδέλφους στο @{domain} να εξοικονομήσουν χρόνο. Κερδίστε και οι δύο 1 μήνα δωρεάν Pro!",
+        "referral.proReward": "Έχετε Pro! Κάθε συνάδελφος στο @{domain} προσθέτει +35 ημέρες Pro.",
+        "referral.celebrateBtn": "Πρόσκληση συναδέλφων στο @{domain}",
         "lp2_nav_how": "How it works",
         "lp2_nav_compare": "Why an add-on",
         "lp2_nav_pricing": "Pricing",
@@ -44361,6 +44595,12 @@
         "lang.ca": "Català"
     },
     "no": {
+        "referral.whatsappBtn": "Del via WhatsApp",
+        "referral.whatsappText": "Hei! Jeg bruker Attendance Tracker for automatisk oppmøte i Google Meet og eksport til Google Sheets: ",
+        "referral.titleDomain": "Inviter lærerkolleger ved @{domain}",
+        "referral.bodyDomain": "Hjelp kolleger ved @{domain} å spare tid. Begge får 1 måned gratis Pro!",
+        "referral.proReward": "Du har Pro! Hver kollega ved @{domain} gir deg +35 dager ekstra Pro.",
+        "referral.celebrateBtn": "Inviter kolleger ved @{domain}",
         "lp2_nav_how": "Sådan virker det",
         "lp2_nav_compare": "Hvorfor en tilføjelse",
         "lp2_nav_pricing": "Priser",
@@ -45491,6 +45731,12 @@
         "lang.ca": "Català"
     },
     "ca": {
+        "referral.whatsappBtn": "Comparteix per WhatsApp",
+        "referral.whatsappText": "Hola! Utilitzo Attendance Tracker per passar llista a Google Meet i exportar a Google Sheets: ",
+        "referral.titleDomain": "Convida companys docents de @{domain}",
+        "referral.bodyDomain": "Ajuda els companys de @{domain} a estalviar temps. Tots dos rebreu 1 mes de Pro gratis!",
+        "referral.proReward": "Ja tens Pro! Cada company de @{domain} que s'hi uneixi suma +35 dies de Pro.",
+        "referral.celebrateBtn": "Convida companys de @{domain}",
         "lp2_nav_how": "Cómo funciona",
         "lp2_nav_compare": "Por qué un complemento",
         "lp2_nav_pricing": "Precios",

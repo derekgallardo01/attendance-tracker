@@ -128,6 +128,7 @@ const FRONTEND_EVENT_TYPES = new Set([
   'colleague_referral_modal_dismissed',
   'colleague_referral_link_copied',
   'colleague_referral_email_clicked',
+  'colleague_referral_whatsapp_clicked',
   // Public share link interactions
   'share_meeting_link_created',
   'share_meeting_link_copied',
