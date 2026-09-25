@@ -5,13 +5,19 @@ Store-listing screenshots for the Google Workspace Marketplace, rendered from
 assets). Each frame is a two-column "benefit + product UI" layout.
 
 ## Files
-Upload the four **1280×800** PNGs (Marketplace's recommended spec) in this order —
+Upload the ten **1280×800** PNGs (Marketplace's recommended spec) in this order —
 it front-loads the strongest value:
 
-1. `01-live-roster.png` — *See who's really in the room* (real-time panel)
-2. `02-sheets-export.png` — *One click → a clean Google Sheet* (export)
+1. `01-live-roster.png` — *See who's really in the room* (real-time live roster)
+2. `02-sheets-export.png` — *One click → a clean Google Sheet* (export with duration & %)
 3. `03-late-no-shows.png` — *Catch every late arrival & no-show* (calendar match)
-4. `04-class-attendance.png` — *Track a class across every session* (recurring %)
+4. `04-self-check-in.png` — *Students check themselves in* (attendee "I'm here" button)
+5. `05-classroom-lms.png` — *Google Classroom, Moodle & Canvas* (roster sync & gradebook exports)
+6. `06-semester-trends.png` — *Semester & sprint trends* (attendance streaks across sessions)
+7. `07-meeting-history.png` — *Meeting history* (all tracked calls saved & accessible)
+8. `08-chat-digests.png` — *Slack, Chat, Discord & Gmail digests* (instant post-meeting summaries)
+9. `09-certificates.png` — *Verifiable certificates* (tamper-proof attendee credentials)
+10. `10-pricing-trust.png` — *Pay once. Nothing to cancel.* (Free tier, Lifetime & Educator plans)
 
 The `*@2x.png` files are 2560×1600 (retina) — use them on `attendancetracker.dev`
 or anywhere higher resolution helps. Same aspect (16:10).

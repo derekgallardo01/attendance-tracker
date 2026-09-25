@@ -506,7 +506,20 @@ describe('no "wired but English-valued" keys (translation-content guard)', () =>
     key === 'setup.step2Link' ||             // admin.google.com console breadcrumb (URL + exact console labels)
     key === 'quote.emailPlaceholder' ||      // "you@yourschool.edu" — example email
     key === 'badge.pro' ||                   // "Pro" — tier brand label
-    key === 'settings.extraEmailsPlaceholder'; // example emails — locale-invariant sample text
+    key === 'settings.extraEmailsPlaceholder' || // example emails — locale-invariant sample text
+    key === 'lp2_cmp_th_us' ||               // "Attendance Tracker" brand name in comparison table header
+    key === 'lp2_roster_class' ||            // "Biology 101 · 14:32" sample meeting title in hero mockup
+    key === 'lp2_roster_p1_detail' ||        // "Joined 10:00 · 42m" sample join time in hero mockup
+    key === 'lp2_roster_p2_detail' ||        // "Joined 10:01 · 41m" sample join time in hero mockup
+    key === 'lp2_roster_p3_detail' ||        // "Joined 10:12 · 30m" sample join time in hero mockup
+    key === 'lp2_roster_p3_status' ||        // "Late +12m" sample badge in hero mockup
+    key === 'lp2_roster_p4_detail' ||        // "Invited · not joined" sample status in hero mockup
+    key === 'lp2_plan_free_price' ||         // "$0" price amount
+    key === 'lp2_plan_life_price' ||         // "$9.99" price amount
+    key === 'lp2_plan_edu_price' ||          // "$4.99" price amount
+    key === 'lp2_plan_school_price' ||       // "From $59" price amount
+    key === 'lp2_sheet_th_min' ||            // "Min" table column abbreviation for duration in minutes
+    key === 'lp2_sheet_th_status';           // "Status" column header identical in English, German, Dutch, Nordic, Polish, etc.
 
   test('every non-allowlisted key is translated (not English-valued) in the locales', () => {
     const offenders = [];

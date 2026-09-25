@@ -1,158 +1,90 @@
-# Google Workspace Marketplace listing — optimized copy (2026 Edition)
+# Marketplace listing v2
 
-Paste these into the Google Cloud Console -> **Google Workspace Marketplace SDK** -> **Store Listing** configuration.
+## Fix before publishing (current copy)
+1. **Retired price.** "$19.99 one-time Domain License" is retired per CLAUDE.md. Current: Department $59/yr, Institution $149/yr. Screenshot 10 already says "From $59/yr".
+2. **Blackboard.** The repo only builds Moodle and Canvas gradebook files. Remove Blackboard unless it's tested.
+3. **Risky absolutes.** "Tamper-proof", "fraud-proof", "privacy compliant" invite scrutiny from Google review and buyers. Say what's true: "public verification code", "data stays in your Drive".
+4. **Biggest differentiator missing.** Attendee self-check-in isn't mentioned at all.
+5. **No price-honesty line.** "Nothing to cancel" is your answer to the category's angriest complaint.
+6. **Too long before the point.** Search and readers weight the first lines. Lead with "take attendance", proof, and price.
 
-The Marketplace renders **plain text + emoji + line breaks** (no markdown/HTML), so the blocks below are formatted exactly as they should appear on the live store.
+## Short description (80 char limit)
+Recommended (78):
+Take attendance in Google Meet™ automatically. Live roster, export to Sheets™.
+
+Alternative (72), leads with price honesty:
+Take Google Meet™ attendance automatically. Pay once, nothing to cancel.
+
+Current (74), fine but keyword "take attendance" missing:
+Auto-track Google Meet™ attendance, join times & export to Sheets™ or CSV.
 
 ---
 
-## 1. App Details
+## Detailed description (paste as plain text)
 
-* **App Name**: `Attendance Tracker for Google Meet™`
-* **Short Description** (76 characters, under 80-char limit):
-  `Track Google Meet™ attendance, late arrivals, and auto-export to Google Sheets™.`
+Attendance Tracker — take attendance in Google Meet™ automatically
 
----
+A live roster in your Meet™ side panel: who joined, who's late, who left, and for how long. One click sends a clean report to Google Sheets™ or CSV. Works on any Google account, including personal Gmail™.
 
-## 2. Detailed Description (Paste into Overview Box)
-
-```
-Attendance Tracker — Automatic Google Meet™ Attendance, Join/Leave Times & Google Sheets™ Export
-
-Stop tracking attendance by hand. Attendance Tracker is an official Google Meet™ add-on that records who attended your call — a class, standup, tutoring session, webinar, or deposition — live in your Meet™ side panel, and automatically exports clean reports to Google Sheets™.
-
-No screenshots. No manual counting. No expensive Google Workspace for Education Plus™ upgrade needed.
+Free to start. $9.99 once for unlimited. Nothing to cancel.
 
 ⏱️ HOW IT WORKS
-1. Open the Attendance Tracker panel during any Google Meet™ call.
-2. It captures join times, leave times, and total active minutes for every participant in real-time.
-3. When the meeting ends, it automatically exports a formatted, tabbed spreadsheet to your Google Drive™.
+1. Open Attendance Tracker from Activities in any Google Meet™ call.
+2. The roster fills in live: join and leave times, late arrivals, total minutes.
+3. Export to Google Sheets™ or CSV in one click, or let it export automatically when the meeting ends.
 
 ✅ WHAT YOU GET
-• Real-time Live Roster: View present, left, and arriving participants in the side panel.
-• 1-Click & Auto-Export to Google Sheets™: Creates a tabbed spreadsheet in your Google Drive™ with join times, leave times, and duration.
-• Late-Arrival Highlighting: Automatically flags latecomers (+5m, +12m) based on your scheduled Google Calendar™ start time.
-• Recurring Class & Meeting Trends: Multi-session roll-ups track attendance percentages and streaks across a 15-week semester or daily sprint.
-• Host & TA Tracking: The meeting host tracks attendance out of the box. For TAs, co-hosts, or attendees to track meetings they didn't organize, a Workspace admin enables a one-time delegation (attendancetracker.dev/setup).
-• Attendee Self-Check-In (NEW — only here): Students and attendees tap "I'm here" in their own side panel, giving you a verified ✓ check-in (real name, email, time) merged into your list — identifies anonymous display names and even counts dial-in callers. Chrome extensions can't do this: they can't run on your students' screens.
-• Verifiable Credentials: Pro attendance certificates each carry a public verification code — a registrar, HR team, or CEU body can confirm any certificate in seconds at attendancetracker.dev/verify. Pro also exports attested check-in lists (who actively confirmed presence, with verified email + timestamp).
-• Google Classroom™ Roster Import: Pull your class list into the panel in one click — no more pasting student names by hand.
-• Moodle & Canvas Gradebook CSVs: Download attendance as import-ready gradebook files for your LMS, per session or across a whole semester.
-• Slack, Google Chat™ & Discord Digests: Send automated attendance summary cards to your team channel or space after every export, plus Gmail™ digests.
-• Excused Absences Tagging: Mark absent invitees as "Excused" before exporting to keep clean records.
-• No 5-Person Minimum: Accurately records 1-on-1 tutoring sessions just as seamlessly as 200+ student lectures.
-• 30 Languages: The panel speaks Spanish, Portuguese, Hindi, Tagalog, Indonesian, Vietnamese, Arabic, and 23 more.
-• Zero Setup: Works in under 30 seconds on any Google™ account.
+• Live roster — present, late, and left, updating in real time.
+• Google Sheets™ and CSV export — formatted, tabbed reports with attendance % calculated for you.
+• Late arrivals and no-shows — matched to your Google Calendar™ invite. Mark excused absences in one tap.
+• Attendee self-check-in — students and attendees tap "I'm here" in their own panel for a verified name, email and time. Identifies "iPhone (2)" and counts dial-in callers. Chrome extensions can't do this.
+• Google Classroom™ roster import — your class list in one click.
+• Moodle and Canvas gradebook CSVs — per session or across a whole semester.
+• Semester and sprint trends — attendance % and streaks across every recurring session.
+• Meeting history — every tracked meeting saved; open, share or export from any device at attendancetracker.dev.
+• Verifiable certificates — each carries a public code anyone can check at attendancetracker.dev/verify.
+• Slack, Google Chat™, Discord and Gmail™ digests — a summary card after every meeting.
+• Works for 1-on-1s too — no 5-person minimum.
+• 30 languages — Spanish, Portuguese, Hindi, Tagalog, Ukrainian, Indonesian, Vietnamese, Arabic and more.
 
 👤 WHO IT'S FOR
-• K-12 Teachers & Google Classroom™: Import your Classroom roster, take automatic roll call, and export Moodle/Canvas gradebook files — no expensive Education Plus license.
-• University Professors & TAs: Multi-semester lecture roll-ups and TA delegation.
-• Tutors & Bootcamps: Exact minute-by-minute session logs to protect billable hours.
-• Remote Engineering Teams & Scrum Masters: Automated Slack standup cards and participation streaks.
-• Webinars, CLE/CPE Training & Non-Profits: Verified attendance logs for certificates and audits.
+• K-12 teachers — Classroom roster in, automatic roll call, gradebook files out. No Education Plus needed.
+• Professors and TAs — semester roll-ups and TA delegation.
+• Tutors and bootcamps — minute-by-minute logs for billable hours.
+• Trainers, CLE/CPE and non-profits — certificates with public verification codes.
+• Remote teams — standup recaps and participation streaks in Slack or Chat.
 
-🔒 PRIVATE & SECURE BY DESIGN
-• Verified Google Workspace™ Add-on built with official Google Meet™ REST APIs.
-• Token encryption at rest using AES-256-GCM.
-• No invasive browser screen-scraping, no DOM lag, and no broad Chrome™ permissions.
-• Compliant with student and organization privacy standards.
+🔒 PRIVATE BY DESIGN
+• Official Google Workspace™ add-on built on Google Meet™ REST APIs. Nothing to break when Meet's interface changes.
+• No browser extension, no screen-scraping, no broad Chrome™ permissions.
+• Reports stay in your own Google Drive™. Tokens encrypted at rest (AES-256-GCM).
 
-❓ FREQUENTLY ASKED QUESTIONS
+💳 HONEST PRICING
+• Free — live roster and 5 exports a month. No credit card.
+• Lifetime — $9.99 once. Unlimited exports, auto-capture, auto-export, trends, gradebook files, certificates, digests. Nothing to cancel.
+• Educator — $4.99/year.
+• Whole school — Department $59/year or Institution $149/year (DPA, priority support, invoice/PO).
+• 50% regional discount applied automatically at checkout in eligible markets.
+
+❓ FAQ
 Q: Does it work with a personal Gmail™ account?
-A: Yes! It works with personal @gmail.com accounts, Google Workspace™ Starter, Standard, Education Fundamentals, and Enterprise.
+A: Yes. Personal @gmail.com, Workspace Starter through Enterprise, and every Education tier.
 
-Q: Does it require Google Workspace for Education Plus™?
-A: No. Unlike the built-in attendance tool, Attendance Tracker works on all Education tiers including Education Fundamentals and Standard.
+Q: Do I need Google Workspace for Education Plus™?
+A: No. Google's built-in report needs an eligible paid edition. Attendance Tracker works on all of them, including free Gmail and Education Fundamentals.
 
-Q: Can someone track attendance if they are not the meeting host?
-A: The meeting host can, out of the box. For a TA, co-host, or attendee to track a meeting they didn't organize, a Google Workspace™ admin turns on a one-time delegation (a 2-minute setup at attendancetracker.dev/setup). On personal @gmail.com meetings, the host is the one who tracks.
+Q: Can someone other than the host track?
+A: The host tracks out of the box. For a TA or co-host, a Workspace admin turns on a one-time delegation (2 minutes at attendancetracker.dev/setup).
 
-Q: How much does it cost?
-A: Free to start (3 exports/month, no credit card). Paid options: an Individual Lifetime Pass ($9.99 one-time), an Educator Annual Pass ($4.99/year), or a domain plan covering every teacher in your school — Department ($59/year) or Institution ($149/year, with a signed DPA, priority support, and invoice/PO billing). Pro adds unlimited exports, hands-free auto-capture, cumulative Class Summary reports, gradebook exports, certificates, and chat digests.
+Q: Will I be charged again?
+A: Lifetime is one payment. Annual plans renew only once a year, and you can cancel any time.
 
-Q: Does it work on the Google Meet™ mobile app?
-A: Attendance Tracker runs on desktop & laptop web browsers (Chrome™, Edge, Safari, Firefox). While Google Meet™ mobile apps do not currently support side-panel add-ons, you can view, export, and share all your meeting attendance reports from any phone or tablet at attendancetracker.dev.
+Q: Does it work on the Meet™ mobile app?
+A: The panel runs in desktop browsers (Chrome™, Edge, Safari, Firefox). View and share reports from any phone at attendancetracker.dev.
 
-Install free in 30 seconds — no credit card required!
+Install free in 30 seconds. No credit card.
 
 By Kinetic Helix · attendancetracker.dev
 
 ---
 Google Meet™, Google Sheets™, Google Drive™, Google Calendar™, Google Classroom™, Gmail™, and Google Workspace™ are trademarks of Google LLC.
-```
-
----
-
-## 3. Categories & Search Keywords
-
-* **App Category**: `Education`, `Productivity`, `Business Tools`
-* **Search Keywords**:
-  `google meet attendance`, `attendance tracker`, `google classroom attendance`, `classroom roster import`, `meet to sheets`, `moodle attendance`, `canvas gradebook`, `attendance report`, `track student hours`, `slack google meet`, `google chat attendance`, `discord attendance`, `remote standup attendance`, `zoom attendance alternative`, `tutor attendance`, `ceu webinar attendance`
-
----
-
-## 4. Screenshot Recommendations (Upload to Store Listing)
-
-Current files (captured 2026-08-09 — they predate the Classroom import, gradebook exports, and webhook card; refresh when convenient):
-
-1. **Screenshot 1**: Live In-Meeting Roster (`screenshots/01-live-roster.jpg`) — *Caption: "Real-time Google Meet side panel attendance roster"*
-2. **Screenshot 2**: Google Sheets Auto-Export (`screenshots/02-sheets-export.jpg`) — *Caption: "One-click formatted Google Sheets export with join/leave times"*
-3. **Screenshot 3**: Late Arrivals & No-Shows (`screenshots/03-late-no-shows.jpg`) — *Caption: "Automatic late flags and absent-invitee detection"*
-4. **Screenshot 4**: Recurring Semester Trends (`screenshots/04-class-attendance.jpg`) — *Caption: "Multi-session attendance percentages and streaks"*
-
-Wanted (not yet captured — would showcase the newest features):
-5. Roster tab with **Import from Google Classroom** button + **Export gradebook CSV: Moodle · Canvas** row — *Caption: "One-click Google Classroom roster import and Moodle/Canvas gradebook exports"*
-6. Settings modal **Chat digest webhooks** card (Slack / Google Chat / Discord tabs) — *Caption: "Automated post-meeting digests to Slack, Google Chat, or Discord"*
-
-Research-based priorities (2026-09-08 competitive scan): the FIRST screenshot
-should be the side panel with a populated roster INSIDE a real Google Meet
-(proves it works where the user lives), the SECOND the resulting Google Sheet
-with realistic class data. Annotate both with callout labels. Listings support
-up to 10 screenshots at 1280x800 — aim for 8-10.
-
----
-
-## 5. Tagline upgrade (200-char card copy)
-
-The tagline is what renders on search/category cards. Current copy is
-all-feature; top listings (Kami) lead with proof. Marketplace search also
-weights the FRONT of title/tagline — get "take attendance" in early.
-
-Recommended (swap the number in once credible):
-`Take attendance in Google Meet automatically — live roster, one-click Google Sheets export, Classroom roster import. One-time purchase, nothing to cancel.`
-
-The "nothing to cancel" clause is deliberate: the category's most-hated
-competitor (500K installs, 2.8★) is rated down almost entirely on surprise
-subscription billing. Price honesty is a ranking asset here.
-
----
-
-## 6. Demo video script (30–60s — NO competitor listing has any video)
-
-Record with Loom/QuickTime at 1280x800+, no narration needed (captions in
-post or on-screen text). Upload unlisted to YouTube, add URL to the listing.
-
-1. (0-5s) Google Meet call in progress, 4-6 participants visible.
-2. (5-12s) Open Activities → Attendance Tracker. Panel opens, roster fills
-   in live with join times. On-screen text: "Attendance takes itself."
-3. (12-20s) Class Roster tab: students sorted Present / Late / Absent.
-   Text: "Your real class list — imported from Google Classroom."
-4. (20-30s) Click Save to Google Sheets → cut to the formatted spreadsheet.
-   Text: "One click to Google Sheets. Or Moodle. Or Canvas."
-5. (30-40s) Flash the Meeting History series view (semester percentages).
-   Text: "Every session, all semester, automatic."
-6. (40-45s) End card: logo + "Free to start · No subscription" + install URL.
-
----
-
-## 7. Category & completeness checklist (console session)
-
-- Reconcile category placement: keep **Works with Google Meet** (direct
-  intent, only ~4 attendance rivals) AND **Education → Teacher & admin
-  tools** (the Education top-20 currently contains NO attendance app).
-- Fill every optional listing field (setup link → attendancetracker.dev/setup,
-  help link → /help.html, report-issue → /support.html) — listing
-  completeness is a documented secondary ranking factor.
-- Later: publish a **pt-BR localized listing** (Marketplace serves listings
-  per user language; zero competitors localize; Brazil has documented
-  institutional demand).
