@@ -4,8 +4,16 @@
 // Replaces ~24 identical inline `if (req.user?.email !== …) return 403` checks.
 const CONFIG = require('../config');
 
+function isSuperAdminUser(email) {
+  if (!email) return false;
+  if (typeof CONFIG.isSuperAdmin === 'function') {
+    return CONFIG.isSuperAdmin(email);
+  }
+  return String(email).trim().toLowerCase() === (CONFIG.superAdminEmail || '').toLowerCase();
+}
+
 function requireSuperAdmin(req, res, next) {
-  if (req.user?.email !== CONFIG.superAdminEmail) {
+  if (!isSuperAdminUser(req.user?.email)) {
     return res.status(403).json({ error: 'Forbidden' });
   }
   next();
@@ -16,7 +24,7 @@ function requireSuperAdmin(req, res, next) {
 function requireSuperAdminOrScheduler(req, res, next) {
   const schedulerSecret = process.env.SCHEDULER_SECRET;
   const hasSchedulerToken = !!schedulerSecret && safeEqual(req.headers['x-scheduler-secret'] || '', schedulerSecret);
-  if (req.user?.email !== CONFIG.superAdminEmail && !hasSchedulerToken) {
+  if (!isSuperAdminUser(req.user?.email) && !hasSchedulerToken) {
     return res.status(403).json({ error: 'Forbidden' });
   }
   next();

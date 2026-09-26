@@ -727,21 +727,34 @@ router.post('/billing/resume-subscription', requireAuth, async (req, res) => {
   }
 });
 
+function isSuperAdminUser(email) {
+  if (!email) return false;
+  if (typeof CONFIG.isSuperAdmin === 'function') {
+    return CONFIG.isSuperAdmin(email);
+  }
+  return String(email).trim().toLowerCase() === (CONFIG.superAdminEmail || '').toLowerCase();
+}
+
 // GET /api/billing/status — current plan for the caller's domain (drives the
 // upgrade CTA in the UI).
 router.get('/billing/status', requireAuth, async (req, res) => {
   res.set('Cache-Control', 'no-store');
   let individual = isPersonalDomain(req.user.domain);
   try {
-    let plan = individual
-      ? await getUserPlan(req.user.domain, req.user.email)
-      : await getTenantPlan(req.user.domain);
-    // Workspace-domain user without a domain plan may hold an INDIVIDUAL pass
-    // (mirrors planIsPro). Report it as their plan so the UI shows Pro +
-    // Manage billing instead of an upgrade CTA for something already bought.
-    if (!individual && plan.plan !== 'pro' && individualBillingConfigured()) {
-      const userPlan = await getUserPlan(req.user.domain, req.user.email);
-      if (userPlan.plan === 'pro') { plan = userPlan; individual = true; }
+    let plan;
+    if (isSuperAdminUser(req.user.email)) {
+      plan = { plan: 'pro', status: 'active', billingStatus: 'active', isSuperAdmin: true };
+    } else {
+      plan = individual
+        ? await getUserPlan(req.user.domain, req.user.email)
+        : await getTenantPlan(req.user.domain);
+      // Workspace-domain user without a domain plan may hold an INDIVIDUAL pass
+      // (mirrors planIsPro). Report it as their plan so the UI shows Pro +
+      // Manage billing instead of an upgrade CTA for something already bought.
+      if (!individual && plan.plan !== 'pro' && individualBillingConfigured()) {
+        const userPlan = await getUserPlan(req.user.domain, req.user.email);
+        if (userPlan.plan === 'pro') { plan = userPlan; individual = true; }
+      }
     }
     // annualAvailable tells the frontend whether to offer the monthly/annual
     // toggle — only once the matching annual price id is set (so we never show
@@ -1204,6 +1217,7 @@ const PLAN_CACHE_TTL_MS = 5 * 60 * 1000;
 // plan; absent that we fail CLOSED (the gated features are non-critical
 // dashboards, so a brief denial beats giving Pro away for free).
 async function requireProPlan(req, res, next) {
+  if (isSuperAdminUser(req.user?.email)) return next();
   if (!billingConfigured()) return next(); // pre-launch: nothing is gated
   const domain = req.user?.domain;
   try {
@@ -1230,6 +1244,7 @@ async function requireProPlan(req, res, next) {
 // for personal-domain users AND as the fallback for workspace-domain users
 // who bought an individual pass themselves.
 async function userPlanIsPro(domain, email) {
+  if (isSuperAdminUser(email)) return true;
   const key = `${(domain || '').toLowerCase()}:${email.toLowerCase()}`;
   try {
     const { plan } = await getUserPlan(domain, email);
@@ -1244,6 +1259,7 @@ async function userPlanIsPro(domain, email) {
 }
 
 async function planIsPro(domain, email) {
+  if (isSuperAdminUser(email)) return true;
   if (!billingConfigured()) return true; // pre-launch: nothing is gated
   if (isPersonalDomain(domain)) {
     // Personal-email tenants bill per USER, not per domain. Gate ONLY when the

@@ -70,6 +70,7 @@ router.post('/export/pdf', requireAuth, async (req, res) => {
       meeting = {
         title: b.meetingTitle, conferenceId: b.conferenceId || null,
         startTime: b.meetingStartTime || b.eventStart || null, endTime: b.eventEnd || null,
+        exportedAt: b.exportedAt || null,
         host: req.user.displayName || null, timezone: tz, locale,
       };
     }

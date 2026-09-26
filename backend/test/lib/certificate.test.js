@@ -81,16 +81,44 @@ describe('buildReportModel (pure)', () => {
     expect(m.rows[0].joined).toBe('11:00'); // 14:00 UTC in Sao Paulo (UTC-3)
     expect(m.summary.text).toBe('2 de 2 registrados como presentes');
   });
+
+  test('prioritizes durationMs from panel over join/leave span', () => {
+    const m = buildReportModel({
+      meeting: { title: 'Test', timezone: 'UTC' },
+      attendees: [
+        { displayName: 'Derek', email: 'derek@x.com', joinTimeISO: '2026-09-26T14:27:00Z', present: true, durationMs: 26 * 60 * 1000 },
+      ],
+    });
+    expect(m.rows[0].active).toBe('26m');
+    expect(m.rows[0].activeMin).toBe(26);
+  });
+
+  test('computes active time for ongoing instant meeting using exportedAt', () => {
+    const m = buildReportModel({
+      meeting: { title: 'Instant Meeting', timezone: 'UTC', exportedAt: '2026-09-26T14:53:00Z' },
+      attendees: [
+        { displayName: 'Derek', email: 'derek@x.com', joinTimeISO: '2026-09-26T14:27:00Z', present: true },
+      ],
+    });
+    expect(m.rows[0].active).toBe('26m');
+    expect(m.rows[0].activeMin).toBe(26);
+  });
 });
 
 describe('_internals', () => {
-  const { durationMin, fmtDuration, statusOf } = _internals;
+  const { durationMin, calcActiveMins, fmtDuration, statusOf } = _internals;
 
   test('durationMin', () => {
     expect(durationMin('2026-08-20T14:00:00Z', '2026-08-20T14:30:00Z')).toBe(30);
     expect(durationMin(null, '2026-08-20T14:30:00Z')).toBe(0);
     expect(durationMin('2026-08-20T14:00:00Z', null, '2026-08-20T14:10:00Z')).toBe(10); // fallback end
     expect(durationMin('2026-08-20T14:00:00Z', null)).toBe(0); // no leave, no fallback
+  });
+
+  test('calcActiveMins', () => {
+    expect(calcActiveMins({ durationMs: 120000 })).toBe(2);
+    expect(calcActiveMins({ durationMin: 15 })).toBe(15);
+    expect(calcActiveMins({ present: true }, '2026-09-26T14:00:00Z', null, null, '2026-09-26T14:20:00Z')).toBe(20);
   });
 
   test('fmtDuration', () => {

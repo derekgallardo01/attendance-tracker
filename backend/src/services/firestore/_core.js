@@ -22,6 +22,13 @@ const PERSONAL_EMAIL_DOMAINS = new Set([
 // Owner / super-admin account — excluded from user-facing analytics + lifecycle
 // email so the founder's own testing doesn't skew metrics.
 const SUPER_ADMIN_EMAIL = CONFIG.superAdminEmail;
+function isSuperAdmin(email) {
+  if (!email) return false;
+  if (typeof CONFIG.isSuperAdmin === 'function') {
+    return CONFIG.isSuperAdmin(email);
+  }
+  return String(email).trim().toLowerCase() === (CONFIG.superAdminEmail || '').toLowerCase();
+}
 
 // ── Token encryption (AES-256-GCM) ──
 // The key is purpose-separated (CONFIG.deriveSecret) so it can't be conflated
@@ -159,7 +166,7 @@ function weeklyStreak(timestamps, nowMs) {
 
 module.exports = {
   FieldValue, log, CONFIG,
-  PERSONAL_EMAIL_DOMAINS, SUPER_ADMIN_EMAIL,
+  PERSONAL_EMAIL_DOMAINS, SUPER_ADMIN_EMAIL, isSuperAdmin,
   encryptToken, decryptToken,
   getDb, memoizeTTL, tenantRef, lastSegment, countDistinctAttendees, weeklyStreak, tsMs, domainOf,
 };

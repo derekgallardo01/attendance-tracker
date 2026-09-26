@@ -2,7 +2,7 @@
 // Self-contained on _core (no calls into operational firestore functions).
 // The heavy read functions are memoize-wrapped at the services/firestore.js
 // export site, not here.
-const { getDb, tenantRef, FieldValue, log, SUPER_ADMIN_EMAIL, PERSONAL_EMAIL_DOMAINS, countDistinctAttendees, tsMs, domainOf } = require('./_core');
+const { getDb, tenantRef, FieldValue, log, SUPER_ADMIN_EMAIL, isSuperAdmin, PERSONAL_EMAIL_DOMAINS, countDistinctAttendees, tsMs, domainOf } = require('./_core');
 
 // Module-level cache for getActivationFunnel (scans all users + events).
 let _funnelCache = null;
@@ -33,7 +33,7 @@ const FUNNEL_EXCLUDED_DOMAINS = new Set(['marketplacetest.net', 'theyachtgroup.c
 // getActivationFunnel() applies inline, so the aggregate `counts.users` reported
 // to the Kinetic Helix command center matches the funnel's real-user definition.
 function isNonCustomerUser(email, domain, createdMs) {
-  if ((email || '').toLowerCase() === SUPER_ADMIN_EMAIL) return true;
+  if (isSuperAdmin(email)) return true;
   if (FUNNEL_EXCLUDED_DOMAINS.has(domain)) return true;
   if (createdMs && createdMs < ANALYTICS_START_MS) return true;
   return false;
@@ -74,7 +74,7 @@ async function getActivationFunnel() {
       if (!tenantDoc) continue;
       const data = u.data();
       const email = (data.email || u.id).toLowerCase();
-      if (email === SUPER_ADMIN_EMAIL) continue; // exclude the owner's own account
+      if (isSuperAdmin(email)) continue; // exclude the owner's own account
 
       const domain = tenantDoc.id;
       const createdMs = tsMs(data.createdAt) || 0;
@@ -1251,7 +1251,7 @@ async function getPowerUserPipeline({ days = 7, minMeetings = 3 } = {}) {
       if (!data.email || ts < cutoff) continue;
       if (data.type !== 'tracked' && data.type !== 'exported') continue;
       // The owner and the legacy/test domains aren't outreach targets.
-      if (data.email === SUPER_ADMIN_EMAIL || FUNNEL_EXCLUDED_DOMAINS.has(domainOf(data.email))) continue;
+      if (isSuperAdmin(data.email) || FUNNEL_EXCLUDED_DOMAINS.has(domainOf(data.email))) continue;
       const row = (agg[data.email] ||= { email: data.email, meetings: new Set(), exported: 0, lastActivity: 0 });
       if (data.type === 'tracked') {
         // 'tracked' fires once per POLL, so raw counts are meaningless
@@ -1460,7 +1460,7 @@ async function getRevenueFunnel({ days = 30 } = {}) {
     for (const d of usersSnap.docs) {
       const u = d.data();
       const email = d.id;
-      if (email === SUPER_ADMIN_EMAIL) continue;
+      if (isSuperAdmin(email)) continue;
       const domain = (d.ref.parent.parent?.id ?? null);
       if (FUNNEL_EXCLUDED_DOMAINS.has(domain)) continue;
       usersByEmail[email] = {

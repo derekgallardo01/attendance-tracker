@@ -7296,6 +7296,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     meetingTitle: payload.meetingTitle, conferenceId: payload.conferenceId,
     meetingStartTime: payload.meetingStartTime, eventStart: payload.eventStart,
     eventEnd: payload.eventEnd, timezone: payload.timezone, participants: payload.participants,
+    exportedAt: payload.exportedAt,
   };
 
   const exportStartMs = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
@@ -8094,6 +8095,7 @@ async function _downloadPdf({ type, filenameBase, event, options }) {
         eventStart: ex.eventStart,
         eventEnd: ex.eventEnd,
         timezone: ex.timezone,
+        exportedAt: ex.exportedAt || null,
         locale: (window.AttStrings && AttStrings.getLocale()) || 'en',
         participants: ex.participants,
         ...(o.issuer ? { issuer: o.issuer } : {}),

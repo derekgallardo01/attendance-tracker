@@ -96,6 +96,20 @@ function verificationCode(seed) {
   return `AT-${h}`;
 }
 
+function calcActiveMins(p, join, leave, fallbackEnd, referenceTime) {
+  if (typeof p?.durationMs === 'number' && p.durationMs >= 0) {
+    return Math.round(p.durationMs / 60000);
+  }
+  if (typeof p?.durationMin === 'number' && p.durationMin >= 0) {
+    return Math.round(p.durationMin);
+  }
+  if (join && !leave && (referenceTime || p?.present)) {
+    const end = referenceTime || new Date();
+    return durationMin(join, end, fallbackEnd);
+  }
+  return durationMin(join, leave, fallbackEnd);
+}
+
 // PURE: normalize whatever attendance shape we were handed (persisted Firestore
 // participants use joinTime/leaveTime Dates; the live client payload uses
 // joinTimeISO/leaveTimeISO strings) into a flat render model.
@@ -108,7 +122,7 @@ function buildReportModel({ meeting = {}, attendees = [], options = {} } = {}) {
   const rows = (attendees || []).map((p) => {
     const join = p.joinTime ?? p.joinTimeISO ?? null;
     const leave = p.leaveTime ?? p.leaveTimeISO ?? null;
-    const mins = durationMin(join, leave, fallbackEnd);
+    const mins = calcActiveMins(p, join, leave, fallbackEnd, options.now || meeting.exportedAt);
     return {
       name: (p.displayName || p.name || 'Unknown').toString(),
       email: (p.email || '').toString(),
@@ -257,7 +271,7 @@ function buildCertificateModels({ meeting = {}, attendees = [], options = {} } =
     .map((p) => {
       const join = p.joinTime ?? p.joinTimeISO ?? null;
       const leave = p.leaveTime ?? p.leaveTimeISO ?? null;
-      const mins = durationMin(join, leave, fallbackEnd);
+      const mins = calcActiveMins(p, join, leave, fallbackEnd, options.now || meeting.exportedAt);
       return {
         name: (p.displayName || p.name || 'Attendee').toString(),
         session,
@@ -342,5 +356,5 @@ module.exports = {
   buildCertificateModels,
   renderCertificatesPdf,
   // exported for unit tests
-  _internals: { durationMin, fmtDuration, fmtTime, fmtDate, statusOf, verificationCode, UNICODE_FONT },
+  _internals: { durationMin, calcActiveMins, fmtDuration, fmtTime, fmtDate, statusOf, verificationCode, UNICODE_FONT },
 };

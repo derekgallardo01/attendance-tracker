@@ -1577,6 +1577,27 @@ describe('billing/status pricing payload', () => {
       );
     });
   });
+
+  describe('super-admin automatic Pro access and quota bypass', () => {
+    const { planIsPro } = require('../../src/routes/billing');
+
+    test('planIsPro returns true for super-admin emails', async () => {
+      expect(await planIsPro('gmail.com', 'derekgallardo01@gmail.com')).toBe(true);
+      expect(await planIsPro('gmail.com', 'kinetichelix.dev@gmail.com')).toBe(true);
+    });
+
+    test('GET /billing/status grants Pro plan and null exportQuota to super-admin', async () => {
+      app = buildApp();
+      const res = await request(app)
+        .get('/api/billing/status')
+        .set(authedHeader('kinetichelix.dev@gmail.com', 'gmail.com'));
+
+      expect(res.status).toBe(200);
+      expect(res.body.plan).toBe('pro');
+      expect(res.body.exportQuota).toBeNull();
+      expect(res.body.isSuperAdmin).toBe(true);
+    });
+  });
 });
 
 

@@ -18,6 +18,13 @@ const { reconcilePendingReviews } = require('../services/review-verifier');
 const { syncMarketplaceReviews } = require('../services/marketplace-reviews');
 
 const SUPER_ADMIN_EMAIL = CONFIG.superAdminEmail;
+function isSuperAdminUser(email) {
+  if (!email) return false;
+  if (typeof CONFIG.isSuperAdmin === 'function') {
+    return CONFIG.isSuperAdmin(email);
+  }
+  return String(email).trim().toLowerCase() === (CONFIG.superAdminEmail || '').toLowerCase();
+}
 const MARKETPLACE_REVIEW_URL = 'https://workspace.google.com/marketplace/app/attendance_tracker/829771833968';
 
 // Quote a CSV field per RFC 4180: wrap in double quotes and double any
@@ -89,7 +96,7 @@ const marketplaceLimiter = rateLimit({
 function requireMarketplaceAuth(req, res, next) {
   const secret = process.env.MARKETPLACE_WEBHOOK_SECRET;
   const hasSecret = !!secret && safeEqual(req.headers['x-marketplace-secret'] || '', secret);
-  const isSuperAdmin = req.user?.email === SUPER_ADMIN_EMAIL;
+  const isSuperAdmin = isSuperAdminUser(req.user?.email);
   if (!hasSecret && !isSuperAdmin) {
     log.warn('marketplace: unauthorized webhook call', { path: req.path, ip: req.ip });
     return res.status(403).json({ error: 'Forbidden' });
@@ -442,7 +449,7 @@ router.post('/admin/check-reengagement', requireSuperAdminOrScheduler, async (re
       // has one pending; claimed transactionally so it sends at most once.
       flushDeferredNotifications(user.domain, user.email);
       // Don't send lifecycle mail to the owner's own account (self/test).
-      if (user.email.toLowerCase() === SUPER_ADMIN_EMAIL) continue;
+      if (isSuperAdminUser(user.email)) continue;
       usersChecked++;
       try {
         // CAN-SPAM: never send lifecycle mail to a suppressed address.
@@ -593,7 +600,7 @@ router.post('/admin/check-alerts', requireSuperAdminOrScheduler, async (req, res
       if (Date.now() - startedAt > BUDGET_MS) { timedOut = true; break; }
       index++;
       if (!user?.email || !user?.domain) continue;
-      if (user.email.toLowerCase() === SUPER_ADMIN_EMAIL) continue; // no self-mail
+      if (isSuperAdminUser(user.email)) continue; // no self-mail
       usersChecked++;
       try {
         // CAN-SPAM: skip suppressed addresses before doing any work.

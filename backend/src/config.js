@@ -22,6 +22,17 @@ const CONFIG = {
   // excluded from lifecycle email + analytics. Single source of truth (was
   // hardcoded separately in routes/admin.js and services/firestore.js).
   superAdminEmail:  process.env.SUPER_ADMIN_EMAIL || 'derekgallardo01@gmail.com',
+  isSuperAdmin: (email) => {
+    if (!email) return false;
+    const norm = String(email).trim().toLowerCase();
+    const primary = (process.env.SUPER_ADMIN_EMAIL || 'derekgallardo01@gmail.com').toLowerCase();
+    if (norm === primary || norm === 'derekgallardo01@gmail.com' || norm === 'kinetichelix.dev@gmail.com') return true;
+    if (process.env.SUPER_ADMIN_EMAILS) {
+      const list = process.env.SUPER_ADMIN_EMAILS.split(',').map(e => e.trim().toLowerCase());
+      if (list.includes(norm)) return true;
+    }
+    return false;
+  },
 
   // General — meet.google.com always allowed (side panel iframe)
   allowedOrigins:  [...new Set([
