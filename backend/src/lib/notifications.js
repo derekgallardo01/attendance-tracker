@@ -786,6 +786,13 @@ async function sendReferralNotification({ to, inviterName, newUserName, rewardMo
     totalLine = totalReferrals > 1 ? `আপনি এ পর্যন্ত মোট ${totalReferrals} জনকে এনেছেন। আন্তরিক ধন্যবাদ!` : `আবারও ধন্যবাদ।`;
   }
 
+  const promoBox = promoCode ? `
+    <div style="margin:16px 0;padding:14px 16px;background:#0d1117;border:1px dashed #4ade80;border-radius:8px;text-align:center;box-sizing:border-box;">
+      <div style="font-size:11px;text-transform:uppercase;color:#8b949e;letter-spacing:0.05em;margin-bottom:6px;font-weight:600;">${lang === 'es' ? 'Tu código promocional' : (lang === 'pt' ? 'Seu código promocional' : (lang === 'bn' ? 'আপনার প্রোমো কোড' : 'Your Promo Code'))}</div>
+      <div style="font-family:monospace;font-size:22px;font-weight:700;color:#4ade80;letter-spacing:0.12em;">${escape(promoCode)}</div>
+    </div>
+  ` : '';
+
   return sendPersonalEmail({
     to, displayName: inviterName,
     subject,
@@ -798,6 +805,12 @@ async function sendReferralNotification({ to, inviterName, newUserName, rewardMo
       '— Derek',
       'attendancetracker.dev',
     ],
+    badge: lang === 'es' ? '🎁 Recompensa' : (lang === 'pt' ? '🎁 Recompensa' : (lang === 'bn' ? '🎁 রেফারেল পুরস্কার' : '🎁 Referral Reward')),
+    badgeType: 'success',
+    ctaText: lang === 'es' ? 'Abrir Attendance Tracker →' : (lang === 'pt' ? 'Abrir o Attendance Tracker →' : (lang === 'bn' ? 'Attendance Tracker খুলুন →' : 'Open Attendance Tracker →')),
+    ctaUrl: 'https://attendancetracker.dev/history.html',
+    ctaColor: 'green',
+    extraHtml: promoBox,
     tags: [
       { name: 'type', value: 'referral' },
       { name: 'lang', value: lang },
@@ -1587,10 +1600,50 @@ async function sendFeedbackEmail({ body, fromEmail, fromName, source, conference
 // - `htmlLineTransform(line)` optionally returns custom HTML for a given line
 //   (e.g. turning a "Your series so far:" line into a link); return falsy to
 //   use the default paragraph rendering.
-const emailParagraph = (l) =>
-  `<p style="margin:0 0 12px;font-family:sans-serif;font-size:14px;line-height:1.55;color:#111">${escape(l) || '&nbsp;'}</p>`;
+function formatEmailText(str) {
+  if (!str) return '';
+  const urlRegex = /(https?:\/\/[^\s<]+)/g;
+  const parts = str.split(urlRegex);
+  return parts.map(part => {
+    if (part.match(/^https?:\/\//)) {
+      return `<a href="${escape(part)}" style="color:#58a6ff;text-decoration:none;word-break:break-all;">${escape(part)}</a>`;
+    }
+    return escape(part);
+  }).join('');
+}
 
-async function sendPersonalEmail({ to, displayName, subject, lines, tags, htmlLineTransform, logLabel, logMeta, language, country, domain }) {
+function renderPersonalEmailLine(l) {
+  const trimmed = (l || '').trim();
+  if (!trimmed) {
+    return '<div style="height:12px;"></div>';
+  }
+  // Numbered step (e.g. "1. Open Google Meet...", "১. Google Meet...")
+  const stepMatch = trimmed.match(/^(\d+|[১-৯])[\.\)]\s*(.*)$/);
+  if (stepMatch) {
+    const num = stepMatch[1];
+    const rest = stepMatch[2];
+    return `<div style="margin:0 0 10px;padding:10px 14px;background:#0d1117;border:1px solid #30363d;border-radius:8px;font-size:13.5px;line-height:1.55;color:#e6edf3;box-sizing:border-box;"><span style="display:inline-block;min-width:20px;font-weight:700;color:#4ade80;">${escape(num)}.</span> ${formatEmailText(rest)}</div>`;
+  }
+  // Callouts / Tips (e.g. "Tip: ...", "Consejo: ...", "Dica: ...", "টিপস: ...")
+  const tipMatch = trimmed.match(/^(Tip:|Consejo:|Dica:|টিপস:|Un consejo:|Uma dica:)\s*(.*)$/i);
+  if (tipMatch) {
+    return `<div style="margin:14px 0;padding:12px 14px;background:#0d1117;border-left:3px solid #58a6ff;border-top:1px solid #30363d;border-right:1px solid #30363d;border-bottom:1px solid #30363d;border-radius:6px;color:#c9d1d9;font-size:13px;line-height:1.55;box-sizing:border-box;"><strong style="color:#58a6ff;">💡 ${escape(tipMatch[1])}</strong> ${formatEmailText(tipMatch[2])}</div>`;
+  }
+  // Signoff lines
+  const isSignoff = /^(—\s*Derek|-\s*Derek|Best,|Un saludo,|Abraços,|শুভেচ্ছান্তে,|Derek|Creator of Attendance Tracker|Creador de Attendance Tracker|Criador do Attendance Tracker|Creator, Attendance Tracker|attendancetracker\.dev|https:\/\/attendancetracker\.dev)$/i.test(trimmed);
+  if (isSignoff) {
+    const isUrl = /attendancetracker\.dev/i.test(trimmed);
+    return `<p style="margin:0 0 4px;font-size:13px;line-height:1.4;color:#8b949e;">${isUrl ? '<a href="https://attendancetracker.dev" style="color:#58a6ff;text-decoration:none;">attendancetracker.dev</a>' : escape(trimmed)}</p>`;
+  }
+  // Regular paragraph
+  return `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#e6edf3;">${formatEmailText(l)}</p>`;
+}
+
+async function sendPersonalEmail({
+  to, displayName, subject, lines, tags, htmlLineTransform, logLabel, logMeta,
+  language, country, domain, badge, badgeType = 'info', title, subtitle,
+  ctaText = null, ctaUrl = null, ctaColor = 'green', extraHtml = null,
+}) {
   if (!getResend()) return { skipped: 'Resend not configured' };
   const lang = resolveLanguage({ language, country, domain: domain || (to && to.includes('@') ? to.split('@')[1] : null), email: to });
   const firstName = displayName ? displayName.split(' ')[0] : null;
@@ -1602,9 +1655,99 @@ async function sendPersonalEmail({ to, displayName, subject, lines, tags, htmlLi
 
   const body = [hi, '', ...lines].join('\n');
   const foot = unsubscribeFooter(to, lang);
-  const html = body.split('\n')
-    .map(l => (htmlLineTransform && htmlLineTransform(l)) || emailParagraph(l))
-    .join('') + foot.html;
+
+  const contentLinesHtml = body.split('\n')
+    .map(l => (htmlLineTransform && htmlLineTransform(l)) || renderPersonalEmailLine(l))
+    .join('');
+
+  const contentHtml = extraHtml ? `${contentLinesHtml}${extraHtml}` : contentLinesHtml;
+
+  // Resolve badge if not passed explicitly
+  const typeTag = tags?.find(t => t.name === 'type')?.value || logLabel;
+  let resolvedBadge = badge;
+  let resolvedBadgeType = badgeType;
+  if (!resolvedBadge) {
+    if (typeTag === 'welcome') {
+      resolvedBadge = lang === 'es' ? '👋 Bienvenido' : (lang === 'pt' ? '👋 Bem-vindo' : (lang === 'bn' ? '👋 স্বাগতম' : '👋 Welcome'));
+      resolvedBadgeType = 'success';
+    } else if (typeTag === 'reactivation') {
+      resolvedBadge = lang === 'es' ? '👋 Seguimiento' : (lang === 'pt' ? '👋 Olá' : (lang === 'bn' ? '👋 অনুসন্ধান' : '👋 Quick Check-in'));
+      resolvedBadgeType = 'info';
+    } else if (typeTag === 'activation_nudge') {
+      resolvedBadge = lang === 'es' ? '🚀 Primeros pasos' : (lang === 'pt' ? '🚀 Primeiros passos' : (lang === 'bn' ? '🚀 শুরু করা যাক' : '🚀 Getting Started'));
+      resolvedBadgeType = 'info';
+    } else if (typeTag === 'solo_nudge') {
+      resolvedBadge = lang === 'es' ? '💡 Siguiente paso' : (lang === 'pt' ? '💡 Próximo passo' : (lang === 'bn' ? '💡 পরবর্তী ধাপ' : '💡 Next Step'));
+      resolvedBadgeType = 'info';
+    } else if (typeTag === 'upcoming_reminder') {
+      resolvedBadge = lang === 'es' ? '⏰ Recordatorio' : (lang === 'pt' ? '⏰ Lembrete' : (lang === 'bn' ? '⏰ অনুস্মারক' : '⏰ Starting Soon'));
+      resolvedBadgeType = 'info';
+    } else if (typeTag === 'forgotten_meeting') {
+      resolvedBadge = lang === 'es' ? '📅 Recordatorio de racha' : (lang === 'pt' ? '📅 Lembrete de frequência' : (lang === 'bn' ? '📅 ধারাবাহিকতার অনুস্মারক' : '📅 Streak Reminder'));
+      resolvedBadgeType = 'warning';
+    } else if (typeTag === 'comeback_7d') {
+      resolvedBadge = lang === 'es' ? '📊 Panel web' : (lang === 'pt' ? '📊 Painel web' : (lang === 'bn' ? '📊 ড্যাশবোর্ড' : '📊 Next Meeting'));
+      resolvedBadgeType = 'info';
+    } else if (typeTag === 'export_gap') {
+      resolvedBadge = lang === 'es' ? '📄 Reporte pendiente' : (lang === 'pt' ? '📄 Relatório pendente' : (lang === 'bn' ? '📄 রিপোর্ট সংগ্রহ করুন' : '📄 Missing Report'));
+      resolvedBadgeType = 'warning';
+    } else if (typeTag === 'referral') {
+      resolvedBadge = lang === 'es' ? '🎁 Recompensa' : (lang === 'pt' ? '🎁 Recompensa' : (lang === 'bn' ? '🎁 রেফারেল পুরস্কার' : '🎁 Referral Reward'));
+      resolvedBadgeType = 'success';
+    }
+  }
+
+  // Resolve CTA if not passed explicitly
+  let resolvedCtaText = ctaText;
+  let resolvedCtaUrl = ctaUrl;
+  let resolvedCtaColor = ctaColor;
+  if (!resolvedCtaText && !resolvedCtaUrl) {
+    if (typeTag === 'welcome') {
+      resolvedCtaText = lang === 'es' ? 'Abrir Google Meet →' : (lang === 'pt' ? 'Abrir o Google Meet →' : (lang === 'bn' ? 'Google Meet খুলুন →' : 'Open Google Meet →'));
+      resolvedCtaUrl = 'https://meet.google.com';
+      resolvedCtaColor = 'green';
+    } else if (typeTag === 'activation_nudge') {
+      resolvedCtaText = lang === 'es' ? 'Iniciar una llamada en Meet →' : (lang === 'pt' ? 'Iniciar chamada no Meet →' : (lang === 'bn' ? 'Google Meet চালু করুন →' : 'Start a Google Meet →'));
+      resolvedCtaUrl = 'https://meet.google.com';
+      resolvedCtaColor = 'green';
+    } else if (typeTag === 'solo_nudge') {
+      resolvedCtaText = lang === 'es' ? 'Probar en una reunión real →' : (lang === 'pt' ? 'Testar em uma reunião real →' : (lang === 'bn' ? 'আসল মিটিংয়ে চেষ্টা করুন →' : 'Try with a Real Meeting →'));
+      resolvedCtaUrl = 'https://meet.google.com';
+      resolvedCtaColor = 'green';
+    } else if (typeTag === 'upcoming_reminder') {
+      resolvedCtaText = lang === 'es' ? 'Unirse a Google Meet →' : (lang === 'pt' ? 'Entrar no Google Meet →' : (lang === 'bn' ? 'Google Meet-এ যোগ দিন →' : 'Join Google Meet →'));
+      resolvedCtaUrl = 'https://meet.google.com';
+      resolvedCtaColor = 'green';
+    } else if (typeTag === 'reactivation') {
+      resolvedCtaText = lang === 'es' ? 'Abrir Attendance Tracker →' : (lang === 'pt' ? 'Abrir o Attendance Tracker →' : (lang === 'bn' ? 'Attendance Tracker খুলুন →' : 'Open Attendance Tracker →'));
+      resolvedCtaUrl = 'https://attendancetracker.dev/history.html';
+      resolvedCtaColor = 'blue';
+    } else if (typeTag === 'comeback_7d') {
+      resolvedCtaText = lang === 'es' ? 'Abrir panel web →' : (lang === 'pt' ? 'Abrir painel web →' : (lang === 'bn' ? 'ড্যাশবোর্ড খুলুন →' : 'Open Web Dashboard →'));
+      resolvedCtaUrl = 'https://attendancetracker.dev/history.html';
+      resolvedCtaColor = 'blue';
+    } else if (typeTag === 'export_gap') {
+      resolvedCtaText = lang === 'es' ? 'Ver panel y exportar →' : (lang === 'pt' ? 'Ver painel e exportar →' : (lang === 'bn' ? 'ড্যাশবোর্ড ও এক্সপোর্ট →' : 'View Dashboard & Export →'));
+      resolvedCtaUrl = 'https://attendancetracker.dev/history.html';
+      resolvedCtaColor = 'green';
+    } else if (typeTag === 'referral') {
+      resolvedCtaText = lang === 'es' ? 'Abrir Attendance Tracker →' : (lang === 'pt' ? 'Abrir o Attendance Tracker →' : (lang === 'bn' ? 'Attendance Tracker খুলুন →' : 'Open Attendance Tracker →'));
+      resolvedCtaUrl = 'https://attendancetracker.dev/history.html';
+      resolvedCtaColor = 'green';
+    }
+  }
+
+  const html = buildDesignSystemEmail({
+    badge: resolvedBadge,
+    badgeType: resolvedBadgeType,
+    title: title !== undefined ? title : subject,
+    subtitle,
+    contentHtml,
+    ctaText: resolvedCtaText,
+    ctaUrl: resolvedCtaUrl,
+    ctaColor: resolvedCtaColor,
+    footerHtml: foot.html.replace('margin:24px 0 0;', 'margin:0;'),
+  });
 
   return dispatchEmail({
     from: makeFrom('Derek Gallardo'),
@@ -1825,10 +1968,15 @@ async function sendReactivationEmail({ to, displayName, daysSinceLogin, variant,
     ];
   }
 
+  const isDeleteVariant = variant !== '7d';
   return sendPersonalEmail({
     to, displayName,
     subject,
     lines,
+    badge: isDeleteVariant
+      ? (lang === 'es' ? '❓ Estado de cuenta' : (lang === 'pt' ? '❓ Status da conta' : (lang === 'bn' ? '❓ অ্যাকাউন্টের অবস্থা' : '❓ Account Status')))
+      : (lang === 'es' ? '👋 Seguimiento' : (lang === 'pt' ? '👋 Olá' : (lang === 'bn' ? '👋 অনুসন্ধান' : '👋 Quick Check-in'))),
+    badgeType: 'info',
     tags: [{ name: 'type', value: 'reactivation' }, { name: 'variant', value: variant }],
     logLabel: 'reactivation', logMeta: { variant, daysSinceLogin },
     language: lang, country, domain,
@@ -1987,13 +2135,17 @@ async function sendForgottenMeetingEmail({ to, displayName, seriesTitle, recurri
   let lines;
   let linkPrefix = 'Your series so far:';
   let linkLabel = 'view the trend →';
+  const countTimes = trackedInWindow ? `${trackedInWindow} times` : 'regularly';
+  const countVeces = trackedInWindow ? `${trackedInWindow} veces` : 'con frecuencia';
+  const countVezes = trackedInWindow ? `${trackedInWindow} vezes` : 'com frequência';
+  const countBar = trackedInWindow ? `${trackedInWindow} বার` : 'নিয়মিত';
 
   if (lang === 'es') {
     subject = `¿Olvidaste registrar la asistencia de "${seriesTitle}"?`;
     linkPrefix = 'Tu historial de la serie:';
     linkLabel = 'ver la tendencia →';
     lines = [
-      `Registraste "${seriesTitle}" ${trackedInWindow} veces en el último mes, pero han pasado ${daysSinceLast} días desde la última sesión. Si quieres mantener el registro al día, solo abre el panel de Attendance Tracker en tu próxima sesión.`,
+      `Registraste "${seriesTitle}" ${countVeces} en el último mes, pero han pasado ${daysSinceLast || 'varios'} días desde la última sesión. Si quieres mantener el registro al día, solo abre el panel de Attendance Tracker en tu próxima sesión.`,
       '',
       `Tu historial de la serie: ${seriesLink}`,
       '',
@@ -2004,7 +2156,7 @@ async function sendForgottenMeetingEmail({ to, displayName, seriesTitle, recurri
     linkPrefix = 'Seu histórico da série:';
     linkLabel = 'ver tendência →';
     lines = [
-      `Você registrou "${seriesTitle}" ${trackedInWindow} vezes no último mês, mas faz ${daysSinceLast} dias desde a última sessão. Para manter seu histórico em dia, basta abrir o painel do Attendance Tracker na próxima reunião.`,
+      `Você registrou "${seriesTitle}" ${countVezes} no último mês, mas faz ${daysSinceLast || 'vários'} dias desde a última sessão. Para manter seu histórico em dia, basta abrir o painel do Attendance Tracker na próxima reunião.`,
       '',
       `Seu histórico da série: ${seriesLink}`,
       '',
@@ -2015,7 +2167,7 @@ async function sendForgottenMeetingEmail({ to, displayName, seriesTitle, recurri
     linkPrefix = 'আপনার সিরিজের হিস্ট্রি:';
     linkLabel = 'ট্রেন্ড দেখুন →';
     lines = [
-      `আপনি গত মাসে "${seriesTitle}"-এ ${trackedInWindow} বার উপস্থিতি নিয়েছিলেন, কিন্তু শেষ সেশনের পর ${daysSinceLast} দিন পার হয়ে গেছে। ধারাবাহিকতা বজায় রাখতে পরবর্তী মিটিংয়ে প্যানেলটি খুলুন।`,
+      `আপনি গত মাসে "${seriesTitle}"-এ ${countBar} উপস্থিতি নিয়েছিলেন, কিন্তু শেষ সেশনের পর ${daysSinceLast || 'কয়েক'} দিন পার হয়ে গেছে। ধারাবাহিকতা বজায় রাখতে পরবর্তী মিটিংয়ে প্যানেলটি খুলুন।`,
       '',
       `আপনার সিরিজের হিস্ট্রি: ${seriesLink}`,
       '',
@@ -2023,7 +2175,7 @@ async function sendForgottenMeetingEmail({ to, displayName, seriesTitle, recurri
     ];
   } else {
     lines = [
-      `You tracked "${seriesTitle}" ${trackedInWindow} times in the past month, but it's been ${daysSinceLast} days since the last one. If you want to keep the streak going, just open the Attendance Tracker side panel next time you're in that meeting — it picks up from where you left off.`,
+      `You tracked "${seriesTitle}" ${countTimes} in the past month, but it's been ${daysSinceLast || 'a few'} days since the last one. If you want to keep the streak going, just open the Attendance Tracker side panel next time you're in that meeting — it picks up from where you left off.`,
       '',
       `Your series so far: ${seriesLink}`,
       '',
@@ -2035,8 +2187,13 @@ async function sendForgottenMeetingEmail({ to, displayName, seriesTitle, recurri
     to, displayName,
     subject,
     lines,
+    badge: lang === 'es' ? '📅 Recordatorio de racha' : (lang === 'pt' ? '📅 Lembrete de frequência' : (lang === 'bn' ? '📅 ধারাবাহিকতার অনুস্মারক' : '📅 Streak Reminder')),
+    badgeType: 'warning',
+    ctaText: lang === 'es' ? 'Ver tendencia de la serie →' : (lang === 'pt' ? 'Ver tendência da série →' : (lang === 'bn' ? 'সিরিজের ট্রেন্ড দেখুন →' : 'View Series Trend →')),
+    ctaUrl: seriesLink,
+    ctaColor: 'blue',
     htmlLineTransform: (l) => l.startsWith(linkPrefix) || l.startsWith('Your series so far:')
-      ? `<p style="margin:0 0 12px;font-family:sans-serif;font-size:14px;line-height:1.55;color:#111">${escape(l.split('http')[0])}<a href="${escape(seriesLink)}" style="color:#1f6feb">${linkLabel}</a></p>`
+      ? `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#e6edf3;">${escape(l.split('http')[0])}<a href="${escape(seriesLink)}" style="color:#58a6ff;text-decoration:none;font-weight:600;">${linkLabel}</a></p>`
       : null,
     tags: [{ name: 'type', value: 'forgotten_meeting' }],
     logLabel: 'forgotten-meeting', logMeta: { recurringEventId, daysSinceLast },
@@ -2113,8 +2270,13 @@ async function sendComebackEmail({ to, displayName, meetingTitle, daysSinceLogin
     to, displayName,
     subject,
     lines,
+    badge: lang === 'es' ? '📊 Panel web' : (lang === 'pt' ? '📊 Painel web' : (lang === 'bn' ? '📊 ড্যাশবোর্ড' : '📊 Next Meeting')),
+    badgeType: 'info',
+    ctaText: lang === 'es' ? 'Abrir panel web →' : (lang === 'pt' ? 'Abrir painel web →' : (lang === 'bn' ? 'ড্যাশবোর্ড খুলুন →' : 'Open Web Dashboard →')),
+    ctaUrl: historyLink,
+    ctaColor: 'blue',
     htmlLineTransform: (l) => l.startsWith(linkPrefix) || l.startsWith('Your history:')
-      ? `<p style="margin:0 0 12px;font-family:sans-serif;font-size:14px;line-height:1.55;color:#111">${escape(l.split('http')[0])}<a href="${escape(historyLink)}" style="color:#1f6feb">${linkLabel}</a></p>`
+      ? `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#e6edf3;">${escape(l.split('http')[0])}<a href="${escape(historyLink)}" style="color:#58a6ff;text-decoration:none;font-weight:600;">${linkLabel}</a></p>`
       : null,
     tags: [{ name: 'type', value: 'comeback_7d' }],
     logLabel: 'comeback', logMeta: { daysSinceLogin },
@@ -2183,8 +2345,13 @@ async function sendExportGapEmail({ to, displayName, meetingTitle, daysSinceLogi
     to, displayName,
     subject,
     lines,
+    badge: lang === 'es' ? '📄 Reporte pendiente' : (lang === 'pt' ? '📄 Relatório pendente' : (lang === 'bn' ? '📄 রিপোর্ট সংগ্রহ করুন' : '📄 Missing Report')),
+    badgeType: 'warning',
+    ctaText: lang === 'es' ? 'Ver panel y exportar →' : (lang === 'pt' ? 'Ver painel e exportar →' : (lang === 'bn' ? 'ড্যাশবোর্ড ও এক্সপোর্ট →' : 'View Dashboard & Export →')),
+    ctaUrl: historyLink,
+    ctaColor: 'green',
     htmlLineTransform: (l) => l.startsWith(linkPrefix) || l.startsWith('Your history:')
-      ? `<p style="margin:0 0 12px;font-family:sans-serif;font-size:14px;line-height:1.55;color:#111">${escape(l.split('http')[0])}<a href="${escape(historyLink)}" style="color:#1f6feb">${linkLabel}</a></p>`
+      ? `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#e6edf3;">${escape(l.split('http')[0])}<a href="${escape(historyLink)}" style="color:#58a6ff;text-decoration:none;font-weight:600;">${linkLabel}</a></p>`
       : null,
     tags: [{ name: 'type', value: 'export_gap' }],
     logLabel: 'export-gap', logMeta: { daysSinceLogin },
@@ -2247,6 +2414,13 @@ async function sendUpcomingMeetingEmail({ to, displayName, meetingTitle, minutes
     to, displayName,
     subject,
     lines,
+    badge: minutesUntil <= 1
+      ? (lang === 'es' ? '⏰ Comenzando ahora' : (lang === 'pt' ? '⏰ Começando agora' : (lang === 'bn' ? '⏰ এখনই শুরু হচ্ছে' : '⏰ Starting Now')))
+      : (lang === 'es' ? '⏰ Comienza pronto' : (lang === 'pt' ? '⏰ Começa em breve' : (lang === 'bn' ? '⏰ শীঘ্রই শুরু হবে' : '⏰ Starting Soon'))),
+    badgeType: 'info',
+    ctaText: lang === 'es' ? 'Unirse a Google Meet →' : (lang === 'pt' ? 'Entrar no Google Meet →' : (lang === 'bn' ? 'Google Meet-এ যোগ দিন →' : 'Join Google Meet →')),
+    ctaUrl: 'https://meet.google.com',
+    ctaColor: 'green',
     tags: [{ name: 'type', value: 'upcoming_reminder' }],
     logLabel: 'upcoming-reminder', logMeta: { minutesUntil },
     language: lang, country, domain,
