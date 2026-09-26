@@ -302,15 +302,15 @@
       {
         "@type": "VideoObject",
         "@id": "https://attendancetracker.dev/#video",
-        "name": "Attendance Tracker for Google Meet — 90-Second Demo",
+        "name": "How to Automatically Take Attendance in Google Meet (1-Click)",
         "description": "Watch how Attendance Tracker automatically tracks attendance in Google Meet side panel and exports a clean spreadsheet to Google Sheets.",
         "thumbnailUrl": [
-          "https://attendancetracker.dev/screenshots/01-live-roster.jpg"
+          "https://attendancetracker.dev/screenshots/video-thumbnail.jpg"
         ],
-        "uploadDate": "2026-09-01T08:00:00+00:00",
-        "duration": "PT1M30S",
-        "embedUrl": "https://www.youtube-nocookie.com/embed/WqX-LxjjY04",
-        "contentUrl": "https://www.youtube.com/watch?v=WqX-LxjjY04"
+        "uploadDate": "2026-09-26T08:00:00+00:00",
+        "duration": "PT3M50S",
+        "embedUrl": "https://www.youtube-nocookie.com/embed/bQAd1Rdivpw",
+        "contentUrl": "https://www.youtube.com/watch?v=bQAd1Rdivpw"
       }
     ]
   }
@@ -1770,7 +1770,7 @@
       font-weight: 700; letter-spacing: -.02em; text-align: center;
     }
     #landing-page .lp2-video-container {
-      position: relative; width: 100%; aspect-ratio: 16/10;
+      position: relative; width: 100%; aspect-ratio: 16/9;
       border-radius: 16px; overflow: hidden; border: 1px solid var(--border);
       background: var(--surface); box-shadow: 0 30px 80px rgba(0,0,0,.45);
     }
@@ -2152,7 +2152,7 @@
         <p class="lp2-hero-p" data-i18n="lp2_hero_sub">A live roster in your Meet side panel: who joined, who's late, who left, and for how long. One click sends a clean report to Google Sheets or CSV.</p>
         <div class="lp2-hero-ctas">
           <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" onclick="trackCtaClick('marketplace_install_hero')" class="lp2-btn-primary" data-i18n="lp2_hero_btn_install">Install from Marketplace</a>
-          <a href="#video" class="lp2-btn-outline">
+          <a href="#video" class="lp2-btn-outline" onclick="playLandingVideo()">
             <span style="font-size:12px;color:var(--accent)">▶</span><span data-i18n="lp2_hero_btn_demo">Watch the demo</span>
           </a>
         </div>
@@ -2239,7 +2239,7 @@
       <h2 class="lp2-h2" data-i18n="lp2_video_title">Ninety seconds, start to Sheet</h2>
       <div class="lp2-video-container" id="lp2-video-box">
         <button type="button" class="lp2-video-btn" onclick="playLandingVideo()" aria-label="Play demo video">
-          <img src="screenshots/01-live-roster.jpg" alt="Attendance Tracker side panel in Google Meet" data-i18n-alt="lp2_video_alt" />
+          <img src="screenshots/video-thumbnail.jpg" alt="How to Automatically Take Attendance in Google Meet" data-i18n-alt="lp2_video_alt" />
           <span class="lp2-video-overlay"></span>
           <span class="lp2-play-circle">
             <span class="lp2-play-triangle"></span>
@@ -2730,7 +2730,7 @@
       function playLandingVideo() {
         var b = document.getElementById('lp2-video-box');
         if (!b) return;
-        b.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/WqX-LxjjY04?autoplay=1&rel=0" title="Attendance Tracker demo" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe>';
+        b.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/bQAd1Rdivpw?autoplay=1&rel=0" title="How to Automatically Take Attendance in Google Meet (1-Click)" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe>';
       }
 
       function toggleLandingFaq(index) {

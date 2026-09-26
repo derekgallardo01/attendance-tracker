@@ -120,6 +120,7 @@ const MIRRORED = [
   'screenshots/02-sheets-export.jpg',
   'screenshots/03-late-no-shows.jpg',
   'screenshots/04-class-attendance.jpg',
+  'screenshots/video-thumbnail.jpg',
   'robots.txt',
   'sitemap.xml',
   'llms.txt',
