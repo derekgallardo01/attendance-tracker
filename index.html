@@ -1342,18 +1342,57 @@
       background: transparent;
       color: #8b949e;
       border: none;
-      width: 30px;
-      height: 30px;
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+      max-width: 32px;
+      min-height: 32px;
+      max-height: 32px;
+      flex: 0 0 32px;
+      padding: 0;
       border-radius: 50%;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: all .15s ease;
+      transition: background .15s ease, color .15s ease;
     }
     .settings-close-btn:hover {
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.1);
       color: #e6edf3;
+    }
+    .modal-close-icon-btn {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 28px;
+      height: 28px;
+      min-width: 28px;
+      max-width: 28px;
+      min-height: 28px;
+      max-height: 28px;
+      flex: 0 0 28px;
+      padding: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #f0f6fc;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .15s ease;
+      z-index: 10;
+    }
+    .modal-close-icon-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+      transform: scale(1.06);
+    }
+    .sheet-chip:hover {
+      background: rgba(255, 255, 255, 0.1) !important;
+      color: #ffffff !important;
+      border-color: rgba(255, 255, 255, 0.2) !important;
     }
     .webhook-tab-btn {
       flex: 1;
@@ -2840,14 +2879,26 @@
     </div>
   </div>
 
-  <div id="sheet-link-bar" style="display:none; padding:4px 16px; font-size:11px;">
-    <a id="sheet-link" href="#" target="_blank" data-i18n="bar.openSheet" style="color:var(--green); text-decoration:none;">Open exported sheet</a>
-    <a href="#" onclick="copyCurrentMeetingShareLink(this); return false;" style="color:var(--green); text-decoration:none; margin-left:14px;" data-i18n="bar.shareLink">Share report</a>
-    <a href="#" onclick="downloadAttendanceCsv(); return false;" data-i18n="bar.downloadCsv" style="color:var(--green); text-decoration:none; margin-left:14px;">Download CSV</a>
-    <a href="#" onclick="downloadPdfReport(); return false;" data-i18n="bar.pdfReport" style="color:var(--green); text-decoration:none; margin-left:14px;">PDF report</a>
-    <a href="#" onclick="downloadCertificates(); return false;" style="color:var(--green); text-decoration:none; margin-left:14px; display:inline-flex; align-items:center; gap:4px;"><span data-i18n="bar.certificates">Certificates</span><span style="background:rgba(253,214,99,.2);border:1px solid rgba(253,214,99,.5);color:#fdd663;font-size:9px;font-weight:700;padding:1px 4px;border-radius:4px;line-height:1" data-i18n="badge.pro">Pro</span></a>
-    <a href="#" onclick="downloadLmsCsv('moodle'); return false;" data-i18n-title="tip.moodleCsv" title="Gradebook CSV for Moodle import" style="color:var(--green); text-decoration:none; margin-left:14px;">Moodle</a>
-    <a href="#" onclick="downloadLmsCsv('canvas'); return false;" data-i18n-title="tip.canvasCsv" title="Gradebook CSV for Canvas import" style="color:var(--green); text-decoration:none; margin-left:14px;">Canvas</a>
+  <div id="sheet-link-bar" style="display:none;margin:6px 12px;padding:9px 12px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
+      <a id="sheet-link" href="#" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;background:rgba(74,222,128,.14);border:1px solid rgba(74,222,128,.3);color:#4ade80;font-size:11px;font-weight:600;padding:5px 10px;border-radius:8px;text-decoration:none;transition:all .15s ease">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span data-i18n="bar.openSheet">Open exported sheet</span>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+      </a>
+      <a href="#" onclick="copyCurrentMeetingShareLink(this); return false;" style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#c9d1d9;font-size:11px;font-weight:500;padding:5px 10px;border-radius:8px;text-decoration:none;transition:all .15s ease">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        <span data-i18n="bar.shareLink">Share report</span>
+      </a>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+      <span style="font-size:10px;color:#8b949e;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-right:2px">Downloads:</span>
+      <a href="#" onclick="downloadAttendanceCsv(); return false;" class="sheet-chip" style="display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#c9d1d9;font-size:10.5px;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap;transition:all .15s ease" data-i18n="bar.downloadCsv">CSV</a>
+      <a href="#" onclick="downloadPdfReport(); return false;" class="sheet-chip" style="display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#c9d1d9;font-size:10.5px;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap;transition:all .15s ease" data-i18n="bar.pdfReport">PDF report</a>
+      <a href="#" onclick="downloadCertificates(); return false;" class="sheet-chip" style="display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#c9d1d9;font-size:10.5px;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap;transition:all .15s ease"><span data-i18n="bar.certificates">Certificates</span><span style="background:rgba(253,214,99,.18);border:1px solid rgba(253,214,99,.4);color:#fdd663;font-size:8.5px;font-weight:700;padding:0 4px;border-radius:3px;line-height:1.2" data-i18n="badge.pro">Pro</span></a>
+      <a href="#" onclick="downloadLmsCsv('moodle'); return false;" class="sheet-chip" data-i18n-title="tip.moodleCsv" title="Gradebook CSV for Moodle import" style="display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#8b949e;font-size:10.5px;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap;transition:all .15s ease">Moodle</a>
+      <a href="#" onclick="downloadLmsCsv('canvas'); return false;" class="sheet-chip" data-i18n-title="tip.canvasCsv" title="Gradebook CSV for Canvas import" style="display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#8b949e;font-size:10.5px;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap;transition:all .15s ease">Canvas</a>
+    </div>
   </div>
   <!-- One-off → recurring tip: only for a NON-recurring meeting whose title was
        exported before (a real repeat). Once ever, dismissible. -->
@@ -9450,18 +9501,20 @@ window.addEventListener('DOMContentLoaded', () => {
            WEBHOOK_UI table + selectWebhookProvider() drive which provider the
            shared input/buttons act on. -->
       <div class="settings-group" style="padding:14px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <div class="settings-row-label">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px">
+          <div class="settings-row-label" style="min-width:0">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
             </svg>
             <span data-i18n="settings.webhooksLabel">Chat digest webhooks</span>
-            <span class="webhook-pro-badge" data-i18n-title="tip.digestsPro" title="Meeting digests are included in Pro" style="display:none;background:rgba(74,222,128,.15);color:#4ade80;padding:1px 7px;border-radius:10px;font-size:.62rem;font-weight:700;letter-spacing:.03em;margin-left:6px">PRO</span>
           </div>
-          <a id="settings-webhook-guide" href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noopener" style="color:#58a6ff;font-size:.72rem;text-decoration:none;display:inline-flex;align-items:center;gap:4px;white-space:nowrap">
-            <span data-i18n="settings.slackSetup">Setup guide</span>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-          </a>
+          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;margin-left:auto">
+            <span class="webhook-pro-badge" data-i18n-title="tip.digestsPro" title="Meeting digests are included in Pro" style="display:none;background:rgba(74,222,128,.15);color:#4ade80;padding:2px 8px;border-radius:10px;font-size:.62rem;font-weight:700;letter-spacing:.03em">PRO</span>
+            <a id="settings-webhook-guide" href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noopener" style="color:#58a6ff;font-size:.72rem;text-decoration:none;display:inline-flex;align-items:center;gap:4px;white-space:nowrap">
+              <span data-i18n="settings.slackSetup">Setup guide</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            </a>
+          </div>
         </div>
         <div id="settings-webhook-tabs" style="display:flex;gap:4px;margin-bottom:12px;background:rgba(0,0,0,.28);padding:3px;border-radius:10px;border:1px solid rgba(255,255,255,.06)">
           <button type="button" class="webhook-tab-btn" data-provider="slack" onclick="selectWebhookProvider('slack')">Slack<span id="webhook-dot-slack" style="display:none;color:#4ade80;margin-left:4px">&#9679;</span></button>
@@ -9580,7 +9633,12 @@ window.addEventListener('DOMContentLoaded', () => {
   <!-- ── Department Colleague Referral Modal ── -->
   <div id="department-referral-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)">
     <div style="background:#161b22;border:1px solid #30363d;border-radius:16px;padding:24px;max-width:380px;width:100%;text-align:center;position:relative;box-shadow:0 20px 40px rgba(0,0,0,.6)">
-      <button type="button" onclick="closeDepartmentReferralModal()" data-i18n-aria="common.close" aria-label="Close" style="position:absolute;top:14px;right:14px;background:none;border:none;color:#9ca3af;cursor:pointer;font-size:18px;line-height:1;padding:4px">&times;</button>
+      <button type="button" onclick="closeDepartmentReferralModal()" data-i18n-aria="common.close" aria-label="Close" class="modal-close-icon-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
       <div style="width:48px;height:48px;border-radius:50%;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       </div>
@@ -9609,7 +9667,12 @@ window.addEventListener('DOMContentLoaded', () => {
 <!-- One-time paywall objection ask (after the 3rd upgrade-modal dismissal) -->
   <div id="paywall-why-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:1150;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px)">
     <div style="background:#1e1f20;border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:22px;max-width:330px;width:100%;box-shadow:0 24px 48px rgba(0,0,0,.6);position:relative">
-      <button type="button" onclick="dismissPaywallWhy()" data-i18n-aria="common.close" aria-label="Close" style="position:absolute;top:14px;right:14px;background:none;border:none;color:#9aa0a6;cursor:pointer;font-size:16px;line-height:1;padding:4px">&times;</button>
+      <button type="button" onclick="dismissPaywallWhy()" data-i18n-aria="common.close" aria-label="Close" class="modal-close-icon-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
       <div style="font-weight:600;color:#e3e3e3;font-size:1rem;margin-bottom:4px;padding-right:20px" data-i18n="paywall.whyTitle">Quick question — what's holding you back?</div>
       <div style="color:#9aa0a6;font-size:.78rem;margin-bottom:14px" data-i18n="paywall.whySub">One tap. It helps us make Pro worth it.</div>
       <div style="display:flex;flex-direction:column;gap:8px">
@@ -9623,7 +9686,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
   <div id="upgrade-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:1100;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px)">
     <div style="background:#1e1f20;border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:20px 16px;max-width:370px;width:100%;box-shadow:0 24px 48px rgba(0,0,0,.6);position:relative;font-family:var(--font-sans);max-height:90vh;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent">
-      <button type="button" onclick="closeUpgradeModal()" data-i18n-aria="common.close" aria-label="Close" style="position:absolute;top:14px;right:14px;background:none;border:none;color:#9aa0a6;cursor:pointer;font-size:16px;line-height:1;padding:4px;border-radius:50%">&times;</button>
+      <button type="button" onclick="closeUpgradeModal()" data-i18n-aria="common.close" aria-label="Close" class="modal-close-icon-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
 
       <!-- Top value pill (repainted per user in showUpgradeModal) -->
       <div id="upgrade-deal-pill" style="display:inline-flex;align-items:center;gap:6px;background:rgba(253,214,99,.12);border:1px solid rgba(253,214,99,.25);color:#fdd663;padding:4px 10px;border-radius:20px;font-size:.72rem;font-weight:600;margin-bottom:10px;letter-spacing:.02em">
