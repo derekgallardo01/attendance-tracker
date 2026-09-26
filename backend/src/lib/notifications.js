@@ -807,8 +807,10 @@ async function sendReferralNotification({ to, inviterName, newUserName, rewardMo
     ],
     badge: lang === 'es' ? '🎁 Recompensa' : (lang === 'pt' ? '🎁 Recompensa' : (lang === 'bn' ? '🎁 রেফারেল পুরস্কার' : '🎁 Referral Reward')),
     badgeType: 'success',
-    ctaText: lang === 'es' ? 'Abrir Attendance Tracker →' : (lang === 'pt' ? 'Abrir o Attendance Tracker →' : (lang === 'bn' ? 'Attendance Tracker খুলুন →' : 'Open Attendance Tracker →')),
-    ctaUrl: 'https://attendancetracker.dev/history.html',
+    ctaText: promoCode
+      ? (lang === 'es' ? 'Canjear código de descuento →' : (lang === 'pt' ? 'Resgatar código de desconto →' : (lang === 'bn' ? 'ডিসকাউন্ট কোড ব্যবহার করুন →' : 'Redeem Discount Code →')))
+      : (lang === 'es' ? 'Abrir Attendance Tracker →' : (lang === 'pt' ? 'Abrir o Attendance Tracker →' : (lang === 'bn' ? 'Attendance Tracker খুলুন →' : 'Open Attendance Tracker →'))),
+    ctaUrl: promoCode ? `https://attendancetracker.dev/pricing.html?promo=${encodeURIComponent(promoCode)}` : 'https://attendancetracker.dev/pricing.html',
     ctaColor: 'green',
     extraHtml: promoBox,
     tags: [

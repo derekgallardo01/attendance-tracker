@@ -1281,7 +1281,10 @@ async function createReferralPromoCode(inviterEmail) {
   if (!stripe || !couponId) return null;
   try {
     const pc = await stripe.promotionCodes.create({
-      coupon: couponId,
+      promotion: {
+        coupon: couponId,
+        type: 'coupon',
+      },
       max_redemptions: 1,
       metadata: { referrer: inviterEmail, kind: 'referral_reward' },
     });

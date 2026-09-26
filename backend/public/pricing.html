@@ -875,6 +875,16 @@
 
     </div>
 
+    <!-- Promo code indicator / toggle -->
+    <div style="text-align:center;margin:-10px 0 32px">
+      <span id="promo-code-active" style="display:none;font-size:0.85rem;color:#4ade80;font-weight:600;background:rgba(74,222,128,0.1);padding:4px 12px;border-radius:20px;border:1px solid rgba(74,222,128,0.25);">
+        🎁 Promo code box enabled for checkout
+      </span>
+      <a href="javascript:void(0)" id="promo-code-toggle" onclick="enablePromoCodeEntry()" style="color:var(--muted);font-size:0.82rem;text-decoration:underline;">
+        Have a promo or referral code?
+      </a>
+    </div>
+
     <!-- Institutions rarely buy via a credit-card button — they need a quote, a
          PO, an invoice, a signed DPA. Give that its own prominent, frictionless
          path (form → emails us) instead of a buried mailto. -->
@@ -1030,7 +1040,10 @@
         if (emailParam && emailParam.indexOf('@') !== -1) _checkoutEmail = emailParam.trim().toLowerCase();
         // ?promo=<anything> → the visitor holds a code (e.g. a referral
         // reward): checkout opens Stripe's code box instead of auto-LAUNCH50.
-        if (qp.get('promo')) _promoOverride = 'code';
+        if (qp.get('promo')) {
+          _promoOverride = 'code';
+          updatePromoUI(true);
+        }
         var planParam = qp.get('plan');
         var highlightPlanCard = function () {
           if (!planParam) return;
@@ -1137,6 +1150,16 @@
     // ?email= deep link; otherwise we prompt right before checkout.
     let _checkoutEmail = null;
     let _promoOverride = null; // 'code' = user arrived with a promo code to enter
+    function enablePromoCodeEntry() {
+      _promoOverride = 'code';
+      updatePromoUI(true);
+    }
+    function updatePromoUI(active) {
+      const actEl = document.getElementById('promo-code-active');
+      const togEl = document.getElementById('promo-code-toggle');
+      if (actEl) actEl.style.display = active ? 'inline-block' : 'none';
+      if (togEl) togEl.style.display = active ? 'none' : 'inline';
+    }
     // ── Institutional quote / invoice request (the procurement-friendly path) ──
     function openQuoteModal() {
       const m = document.getElementById('quote-modal');

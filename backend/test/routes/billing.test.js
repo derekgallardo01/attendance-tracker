@@ -699,7 +699,8 @@ describe('createReferralPromoCode', () => {
     const code = await createReferralPromoCode('inviter@x.com');
     expect(code).toBe('ABC123');
     expect(mockStripeInstance.promotionCodes.create).toHaveBeenCalledWith(expect.objectContaining({
-      coupon: 'coup_123', max_redemptions: 1,
+      promotion: { coupon: 'coup_123', type: 'coupon' },
+      max_redemptions: 1,
       metadata: expect.objectContaining({ referrer: 'inviter@x.com', kind: 'referral_reward' }),
     }));
   });
