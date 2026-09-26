@@ -1114,6 +1114,8 @@
       transition: color .15s;
     }
     #auth-bar .auth-action:hover { color: var(--text); }
+    #auth-bar .auth-action[disabled] { pointer-events: none; opacity: .7; text-decoration: none; cursor: default; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .btn-google {
       background: #fff;
       color: #3c4043;
@@ -4257,7 +4259,14 @@ function signInWithGoogle(extraScopes) {
     scope: extraScopes ? `${OAUTH_SCOPES} ${extraScopes}` : OAUTH_SCOPES,
     ux_mode: 'popup',
     access_type: 'offline',
+    prompt: state._reconsentMissing ? 'consent select_account' : 'select_account',
     callback: handleAuthCode,
+    error_callback: (err) => {
+      console.warn('Google Sign-In popup error:', err);
+      if (err?.type === 'popup_closed') {
+        toast(t('toast.signInCancelled', 'Sign-in cancelled'));
+      }
+    },
   });
   client.requestCode();
 }
@@ -4793,6 +4802,12 @@ async function submitSource() {
 }
 
 async function signOut() {
+  const btn = document.getElementById('btn-signout');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span style="display:inline-block;width:9px;height:9px;border:2px solid var(--muted);border-top-color:var(--text);border-radius:50%;animation:spin .6s linear infinite;margin-right:4px;vertical-align:middle"></span>${escHtml(t('btn.signOut', 'Sign out'))}…`;
+  }
+
   try {
     await fetch(`${state.backendUrl}/oauth/revoke`, {
       method: 'POST',
@@ -4874,7 +4889,7 @@ function updateAuthUI() {
     loadBillingStatus().catch(() => {});
     bar.innerHTML = `
       <span class="auth-email">${escHtml(state.userEmail)}</span>
-      <button class="auth-action" onclick="signOut()">${escHtml(t('btn.signOut', 'Sign out'))}</button>
+      <button class="auth-action" id="btn-signout" onclick="signOut()">${escHtml(t('btn.signOut', 'Sign out'))}</button>
     `;
   } else {
     bar.innerHTML = `
