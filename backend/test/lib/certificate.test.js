@@ -39,9 +39,9 @@ describe('buildReportModel (pure)', () => {
   });
 
   test('timezone shifts the displayed join time', () => {
-    expect(buildReportModel(BASE).rows[0].joined).toBe('14:00');
+    expect(buildReportModel(BASE).rows[0].joined).toBe('2:00 PM');
     const ny = buildReportModel({ ...BASE, meeting: { ...BASE.meeting, timezone: 'America/New_York' } });
-    expect(ny.rows[0].joined).toBe('10:00');
+    expect(ny.rows[0].joined).toBe('10:00 AM');
   });
 
   test('empty attendees still builds a valid model', () => {

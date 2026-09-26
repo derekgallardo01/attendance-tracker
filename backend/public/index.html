@@ -8094,7 +8094,7 @@ async function _downloadPdf({ type, filenameBase, event, options }) {
         meetingStartTime: ex.meetingStartTime,
         eventStart: ex.eventStart,
         eventEnd: ex.eventEnd,
-        timezone: ex.timezone,
+        timezone: ex.timezone || localStorage.getItem('userTimezone') || ((typeof Intl !== 'undefined' && Intl.DateTimeFormat) ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'America/New_York'),
         exportedAt: ex.exportedAt || null,
         locale: (window.AttStrings && AttStrings.getLocale()) || 'en',
         participants: ex.participants,

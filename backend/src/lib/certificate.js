@@ -52,7 +52,21 @@ function fmtDuration(min) {
   return r ? `${h}h ${String(r).padStart(2, '0')}m` : `${h}h`;
 }
 
-// HH:MM in the meeting's timezone when given, formatted for the locale. Best-effort:
+function getTzAbbr(tz, locale, date = new Date()) {
+  if (!tz) return null;
+  try {
+    const parts = new Intl.DateTimeFormat(locale || 'en-US', {
+      timeZone: tz,
+      timeZoneName: 'short',
+    }).formatToParts(date);
+    const tzPart = parts.find((p) => p.type === 'timeZoneName');
+    return tzPart ? tzPart.value : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+// Time in the meeting's timezone when given, formatted for the locale. Best-effort:
 // a bad tz string falls back rather than throwing.
 function fmtTime(v, tz, locale) {
   const d = toDate(v);
@@ -60,10 +74,10 @@ function fmtTime(v, tz, locale) {
   const loc = locale || 'en-US';
   try {
     return new Intl.DateTimeFormat(loc, {
-      hour: '2-digit', minute: '2-digit', hour12: false, timeZone: tz || undefined,
+      hour: 'numeric', minute: '2-digit', timeZone: tz || undefined,
     }).format(d);
   } catch (_) {
-    return new Intl.DateTimeFormat('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }).format(d);
+    return new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' }).format(d);
   }
 }
 
@@ -136,13 +150,21 @@ function buildReportModel({ meeting = {}, attendees = [], options = {} } = {}) {
 
   const presentCount = (attendees || []).filter((p) => p.present || (!String(p.status || '').includes('Absent') && !String(p.status || '').includes('Excused'))).length;
   const brandName = options.brand && options.brand.name ? String(options.brand.name) : null;
+  const tzAbbr = getTzAbbr(tz, locale, toDate(meeting.startTime || meeting.date) || new Date());
   const cols = [labels.columns.name, labels.columns.email, labels.columns.joined, labels.columns.left, labels.columns.active, labels.columns.status];
+  const colLabels = {
+    ...labels.columns,
+    joined: tzAbbr ? `${labels.columns.joined} (${tzAbbr})` : labels.columns.joined,
+    left: tzAbbr ? `${labels.columns.left} (${tzAbbr})` : labels.columns.left,
+  };
 
   return {
     title: (meeting.title || 'Google Meet').toString(),
     reportTitle: labels.reportTitle,
-    date: fmtDate(meeting.startTime || meeting.date, tz, locale),
+    date: fmtDate(meeting.startTime || meeting.date, tz, locale) + (tzAbbr ? ` (${tzAbbr})` : ''),
     datePrefix: labels.dateLabel,
+    timezone: tz,
+    tzAbbr,
     host: meeting.host ? String(meeting.host) : null,
     hostPrefix: labels.hostLabel,
     durationLabel: meeting.startTime && meeting.endTime
@@ -150,7 +172,7 @@ function buildReportModel({ meeting = {}, attendees = [], options = {} } = {}) {
       : null,
     durationPrefix: labels.durationLabel,
     columns: cols,
-    colLabels: labels.columns,
+    colLabels,
     rows,
     summary: {
       present: presentCount,
@@ -199,10 +221,10 @@ function renderReportPdf(model) {
 
       // Table
       const cols = [
-        { key: 'name', label: model.colLabels?.name || 'Name', w: 0.26 },
-        { key: 'email', label: model.colLabels?.email || 'Email', w: 0.28 },
-        { key: 'joined', label: model.colLabels?.joined || 'Joined', w: 0.11 },
-        { key: 'left', label: model.colLabels?.left || 'Left', w: 0.11 },
+        { key: 'name', label: model.colLabels?.name || 'Name', w: 0.25 },
+        { key: 'email', label: model.colLabels?.email || 'Email', w: 0.27 },
+        { key: 'joined', label: model.colLabels?.joined || 'Joined', w: 0.12 },
+        { key: 'left', label: model.colLabels?.left || 'Left', w: 0.12 },
         { key: 'active', label: model.colLabels?.active || 'Active', w: 0.11 },
         { key: 'status', label: model.colLabels?.status || 'Status', w: 0.13 },
       ];
@@ -356,5 +378,5 @@ module.exports = {
   buildCertificateModels,
   renderCertificatesPdf,
   // exported for unit tests
-  _internals: { durationMin, calcActiveMins, fmtDuration, fmtTime, fmtDate, statusOf, verificationCode, UNICODE_FONT },
+  _internals: { durationMin, calcActiveMins, getTzAbbr, fmtDuration, fmtTime, fmtDate, statusOf, verificationCode, UNICODE_FONT },
 };
