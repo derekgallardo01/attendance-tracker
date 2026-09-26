@@ -356,6 +356,33 @@ describe('POST /api/event — frontend event logging', () => {
     spy.mockRestore();
   });
 
+  test('POST /api/event with export_failed (scope_blocked) logs event but skips sendErrorAlertEmail', async () => {
+    firestore.logEvent.mockResolvedValue(undefined);
+    const notifications = require('../../src/lib/notifications');
+    const spy = jest.spyOn(notifications, 'sendErrorAlertEmail').mockResolvedValue({ sent: true });
+
+    const res = await request(app)
+      .post('/api/event')
+      .set(authedHeader('teacher@school.edu', 'school.edu'))
+      .set('Content-Type', 'application/json')
+      .send({
+        type: 'export_failed',
+        meta: { reason: 'scope_blocked' },
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ok: true });
+    expect(firestore.logEvent).toHaveBeenCalledWith(
+      'school.edu',
+      expect.objectContaining({
+        type: 'export_failed',
+        meta: { reason: 'scope_blocked' },
+      }),
+    );
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
   test('caps meta values + sanitizes non-primitives', async () => {
     firestore.logEvent.mockResolvedValue(undefined);
     const giant = 'x'.repeat(2000);

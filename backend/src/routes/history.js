@@ -174,7 +174,7 @@ router.post('/event', requireAuth, async (req, res) => {
         log.warn('export_csv_downloaded: persistExport failed', { error: err.message, email: req.user.email });
       }
     }
-    if (type === 'export_failed') {
+    if (type === 'export_failed' && safeMeta?.reason !== 'scope_blocked') {
       try {
         await notifications.sendErrorAlertEmail({
           email: req.user.email,
