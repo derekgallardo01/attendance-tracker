@@ -288,10 +288,31 @@ function buildDesignSystemEmail({
       .email-header { padding: 14px 14px 12px !important; }
       .email-content { padding: 14px 12px !important; }
       .email-footer { padding: 12px 12px !important; }
+      .brand-table, .brand-table tbody, .brand-table tr, .brand-logo-cell, .brand-badge-cell {
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+      }
+      .brand-logo-cell {
+        margin-bottom: 6px !important;
+        text-align: left !important;
+      }
+      .brand-badge-cell {
+        text-align: left !important;
+        margin-bottom: 2px !important;
+      }
+      .brand-badge-pill {
+        font-size: 10px !important;
+        padding: 2px 7px !important;
+        white-space: normal !important;
+        display: inline-block !important;
+        line-height: 1.35 !important;
+      }
       .responsive-table td { padding: 8px 8px !important; font-size: 12px !important; }
       .touch-btn { display: inline-block !important; width: auto !important; max-width: 100% !important; text-align: center !important; padding: 9px 16px !important; font-size: 13px !important; line-height: 1.35 !important; box-sizing: border-box !important; vertical-align: middle !important; }
       .touch-btn-block { display: block !important; width: 100% !important; text-align: center !important; padding: 10px 16px !important; font-size: 13px !important; line-height: 1.35 !important; box-sizing: border-box !important; }
       .touch-btn-sm { display: inline-block !important; width: auto !important; max-width: 100% !important; text-align: center !important; padding: 7px 12px !important; font-size: 12px !important; line-height: 1.35 !important; box-sizing: border-box !important; }
+      .plan-card { padding: 14px 12px !important; }
     }
   </style>
 </head>
@@ -301,15 +322,15 @@ function buildDesignSystemEmail({
       
       <!-- Brand Header -->
       <div class="email-header" style="padding:18px 20px 14px;border-bottom:1px solid #30363d;background:linear-gradient(180deg,#1c2128 0%,#161b22 100%);">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;margin-bottom:8px;">
+        <table class="brand-table" role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;margin-bottom:8px;">
           <tr>
-            <td align="left" valign="middle" style="vertical-align:middle;text-align:left;">
+            <td class="brand-logo-cell" align="left" valign="middle" style="vertical-align:middle;text-align:left;">
               <span style="font-size:13px;font-weight:700;color:#e6edf3;letter-spacing:0.02em;white-space:nowrap;">
                 <span style="color:#4ade80;">✓</span> Attendance Tracker
               </span>
             </td>
-            ${badge ? `<td align="right" valign="middle" style="vertical-align:middle;text-align:right;">
-              <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;padding:3px 8px;border-radius:10px;white-space:nowrap;display:inline-block;${badgeStyle}">
+            ${badge ? `<td class="brand-badge-cell" align="right" valign="middle" style="vertical-align:middle;text-align:right;">
+              <span class="brand-badge-pill" style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;padding:2px 8px;border-radius:10px;white-space:nowrap;display:inline-block;max-width:100%;box-sizing:border-box;line-height:1.4;${badgeStyle}">
                 ${badge}
               </span>
             </td>` : ''}
@@ -2636,20 +2657,20 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
     <p style="margin:0 0 20px;font-size:14px;color:#8b949e;line-height:1.5;">${escape(bodyIntro)}</p>
 
     <!-- Plan 1: Featured Lifetime Pro Pass (Crown Jewel / Best Value) -->
-    <div style="background:#161b22;border:1.5px solid rgba(74,222,128,0.45);border-radius:10px;padding:16px 18px;margin-bottom:14px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px;">
-        <span style="font-weight:700;font-size:15px;color:#4ade80;">${lifetimeTitle}</span>
-        <span style="background:rgba(35,134,54,0.22);border:1px solid rgba(74,222,128,0.4);color:#4ade80;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;text-transform:uppercase;letter-spacing:0.04em;">${escape(bestValueTag)}</span>
+    <div class="plan-card" style="background:#161b22;border:1.5px solid rgba(74,222,128,0.45);border-radius:10px;padding:16px 18px;margin-bottom:14px;box-sizing:border-box;">
+      <div style="margin-bottom:8px;">
+        <span style="display:inline-block;background:rgba(35,134,54,0.25);border:1px solid rgba(74,222,128,0.4);color:#4ade80;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap;line-height:1.4;">${escape(bestValueTag)}</span>
       </div>
+      <div style="font-weight:700;font-size:15px;color:#4ade80;line-height:1.4;margin-bottom:8px;word-break:break-word;">${lifetimeTitle}</div>
       <p style="margin:0 0 14px;color:#c9d1d9;font-size:13px;line-height:1.5;">${escape(lifetimeDesc)}</p>
-      <a href="${escape(lifetimeUrl)}" class="touch-btn" style="display:inline-block;background:#238636;color:#ffffff;text-decoration:none;font-weight:600;padding:9px 18px;border-radius:6px;font-size:13px;">${lifetimeBtn}</a>
+      <a href="${escape(lifetimeUrl)}" class="touch-btn-block" style="display:block;width:100%;text-align:center;box-sizing:border-box;background:#238636;color:#ffffff;text-decoration:none;font-weight:600;padding:10px 18px;border-radius:6px;font-size:13px;line-height:1.35;">${lifetimeBtn}</a>
     </div>
 
     <!-- Plan 2: Annual Educator Pass -->
-    <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px 16px;margin-bottom:16px;">
-      <div style="font-weight:700;font-size:14px;color:#58a6ff;margin-bottom:4px;">${educatorTitle}</div>
+    <div class="plan-card" style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px 16px;margin-bottom:16px;box-sizing:border-box;">
+      <div style="font-weight:700;font-size:14px;color:#58a6ff;margin-bottom:6px;line-height:1.4;word-break:break-word;">${educatorTitle}</div>
       <p style="margin:0 0 12px;color:#8b949e;font-size:12.5px;line-height:1.45;">${escape(educatorDesc)}</p>
-      <a href="${escape(educatorUrl)}" class="touch-btn" style="display:inline-block;background:#21262d;border:1px solid #388bfd;color:#79c0ff;text-decoration:none;font-weight:600;padding:7px 15px;border-radius:6px;font-size:12px;">${educatorBtn}</a>
+      <a href="${escape(educatorUrl)}" class="touch-btn-block" style="display:block;width:100%;text-align:center;box-sizing:border-box;background:#21262d;border:1px solid #388bfd;color:#79c0ff;text-decoration:none;font-weight:600;padding:9px 15px;border-radius:6px;font-size:12.5px;line-height:1.35;">${educatorBtn}</a>
     </div>
 
     <p style="margin:16px 0 0;font-size:13px;color:#8b949e;">${escape(dashboardNote)} <a href="https://attendancetracker.dev/history.html" style="color:#58a6ff;text-decoration:none;">${escape(dashboardLinkText)}</a>.</p>
