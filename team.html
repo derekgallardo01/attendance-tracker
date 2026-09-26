@@ -481,14 +481,14 @@
       document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${name}`));
     }
 
-    const esc = (s) => AttUtils.escHtml(s); // shared js/utils.js (loaded in <head>)
+    const esc = (s) => ((typeof AttUtils !== 'undefined' && AttUtils.escHtml) ? AttUtils.escHtml(s) : String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))); // shared js/utils.js (loaded in <head>)
     // Pure formatters + filters delegate to js/team.js (AttTeam). fmtTime stays
     // inline (page-specific, not extracted).
-    const fmtDate = AttTeam.fmtDate;
+    const fmtDate = (typeof AttTeam !== 'undefined' && AttTeam.fmtDate) ? AttTeam.fmtDate : (() => '');
     function fmtTime(iso) { if (!iso) return ''; return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); }
-    const fmtDuration = AttTeam.fmtDuration;
-    const fmtMinutes = AttTeam.fmtMinutes;
-    const pct = AttTeam.pct;
+    const fmtDuration = (typeof AttTeam !== 'undefined' && AttTeam.fmtDuration) ? AttTeam.fmtDuration : (() => '');
+    const fmtMinutes = (typeof AttTeam !== 'undefined' && AttTeam.fmtMinutes) ? AttTeam.fmtMinutes : (() => '');
+    const pct = (typeof AttTeam !== 'undefined' && AttTeam.pct) ? AttTeam.pct : (() => '0%');
 
     function renderUsers() {
       const rows = AttTeam.filterUsers(data.users, document.getElementById('search-users').value);

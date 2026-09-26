@@ -654,7 +654,7 @@
 
     // Tiny CSS-selector escape — recurringEventId values are usually safe but
     // can contain underscores/digits we want to pass literally.
-    const cssEscape = AttHistory.cssEscape;
+    const cssEscape = (typeof AttHistory !== 'undefined' && AttHistory.cssEscape) ? AttHistory.cssEscape : (s => s);
 
     function switchTab(name) {
       document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
@@ -663,13 +663,13 @@
 
     // esc delegates to js/utils.js; the pure formatters/filters/heatmap math to
     // js/history.js (AttHistory).
-    const esc = (s) => AttUtils.escHtml(s);
-    const escArg = (s) => AttUtils.escJsArg(s); // for values in inline onclick JS-string args
-    const fmtDate = AttHistory.fmtDate;
-    const fmtTime = AttHistory.fmtTime;
-    const fmtDuration = AttHistory.fmtDuration;
-    const fmtMinutes = AttHistory.fmtMinutes;
-    const pct = AttHistory.pct;
+    const esc = (s) => ((typeof AttUtils !== 'undefined' && AttUtils.escHtml) ? AttUtils.escHtml(s) : String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])));
+    const escArg = (s) => ((typeof AttUtils !== 'undefined' && AttUtils.escJsArg) ? AttUtils.escJsArg(s) : String(s == null ? '' : s));
+    const fmtDate = (typeof AttHistory !== 'undefined' && AttHistory.fmtDate) ? AttHistory.fmtDate : (() => '');
+    const fmtTime = (typeof AttHistory !== 'undefined' && AttHistory.fmtTime) ? AttHistory.fmtTime : (() => '');
+    const fmtDuration = (typeof AttHistory !== 'undefined' && AttHistory.fmtDuration) ? AttHistory.fmtDuration : (() => '');
+    const fmtMinutes = (typeof AttHistory !== 'undefined' && AttHistory.fmtMinutes) ? AttHistory.fmtMinutes : (() => '');
+    const pct = (typeof AttHistory !== 'undefined' && AttHistory.pct) ? AttHistory.pct : (() => '0%');
     const t = (key, fallback) => (typeof window.t === 'function' ? window.t(key, fallback) : (fallback || key));
 
     function initI18n() {

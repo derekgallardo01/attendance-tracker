@@ -94,6 +94,45 @@
   <script src="js/sim.js"></script>
   <!-- i18n foundation — provides window.t() for user-facing strings across 41 locales. -->
   <script src="js/strings.js"></script>
+  <script>
+    // Resilience fallback: if external helper scripts fail to load (offline, network hiccup,
+    // proxy filter, crawler), guarantee baseline globals so execution never halts on ReferenceError.
+    window.AttUtils = window.AttUtils || {
+      LATE_THRESHOLD_MIN: 5,
+      AVATAR_PALETTE: ['#1f6feb', '#238636', '#9e6a03', '#b62324', '#5e35d6', '#0e7c66', '#bf3989', '#a04600'],
+      escHtml: function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); },
+      escJsArg: function (s) { return String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r?\n/g, '\\n').replace(/[<>"&]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); },
+      formatRelative: function () { return ''; },
+      fmtTime: function () { return ''; },
+      fmtDur: function () { return ''; },
+      fmtDurMs: function () { return ''; },
+      latenessMin: function () { return 0; },
+      avatarColor: function () { return '#1f6feb'; },
+      participantKey: function (p) { return (p && (p.id || p.email || p.displayName)) || ''; },
+      distinctAttendees: function (iter) { return Array.from(iter || []); },
+      autoMatchAttendees: function () { return []; },
+      participantTotalMs: function () { return 0; },
+      isSelfParticipant: function () { return false; },
+      isValidSlackWebhook: function () { return false; },
+      isValidGoogleChatWebhook: function () { return false; },
+      isValidDiscordWebhook: function () { return false; },
+      serializeSession: function () { return {}; },
+      parseSession: function () { return null; },
+    };
+    window.AttPricing = window.AttPricing || {
+      price: function () { return ''; },
+      fromStatus: function () {},
+      quotaLimit: function () { return '10'; },
+    };
+    window.AttPanel = window.AttPanel || {
+      computePollInterval: function () { return 5000; },
+      resolvePresence: function () { return { state: 'present' }; },
+    };
+    window.AttSim = window.AttSim || {
+      buildSchedule: function () { return []; },
+      participantsAt: function () { return []; },
+    };
+  </script>
 
   <!-- Open Graph + Twitter card — rich preview on Slack, Twitter/X, LinkedIn, iMessage -->
   <meta property="og:type" content="website" />
@@ -301,7 +340,7 @@
         environment: 'production',
         // Bump per meaningful frontend deploy so panel errors map to a version
         // (the served copy has no build step to inject a git sha).
-        release: 'attendance-tracker-panel@2026-09-09',
+        release: 'attendance-tracker-panel@2026-09-26',
         beforeSend: scrubSentry,
       });
     }
@@ -3096,6 +3135,13 @@
   <div id="toast"></div>
 
 <script>
+// Defensive bindings: ensure references to shared modules never throw ReferenceError
+var AttUtils = window.AttUtils || {};
+var AttPricing = window.AttPricing || {};
+var AttPanel = window.AttPanel || {};
+var AttSim = window.AttSim || {};
+var AttStrings = window.AttStrings || {};
+
 /* ═══════════════════════════════════════════════════════════════
    STATE
 ═══════════════════════════════════════════════════════════════ */
@@ -5560,8 +5606,12 @@ function mergeParticipants(incoming = []) {
 ═══════════════════════════════════════════════════════════════ */
 // Both delegate to the shared js/utils.js module (loaded in <head>).
 // Kept as wrappers so the dozens of existing call sites don't have to change.
-function avatarColor(name) { return AttUtils.avatarColor(name); }
-function participantKey(p) { return AttUtils.participantKey(p); }
+function avatarColor(name) { return (AttUtils && AttUtils.avatarColor) ? AttUtils.avatarColor(name) : '#1f6feb'; }
+function participantKey(p) {
+  if (AttUtils && AttUtils.participantKey) return AttUtils.participantKey(p);
+  if (p?.email) return p.email.toLowerCase();
+  return 'name:' + (p?.displayName || 'Unknown');
+}
 
 function renderList() {
   const container = document.getElementById('participant-list');
@@ -9136,15 +9186,27 @@ function demoParticipants() {
 // <head>). Wrappers preserve every existing call site signature. latenessMin
 // is the only one that reads state — utils.js exposes a pure version that
 // takes baseline times as args, so the wrapper does the state read here.
-function fmtTime(d) { return AttUtils.fmtTime(d); }
-function fmtDur(start, end) { return AttUtils.fmtDur(start, end); }
-function fmtDurMs(ms) { return AttUtils.fmtDurMs(ms); }
-function escHtml(s) { return AttUtils.escHtml(s); }
-function escJsArg(s) { return AttUtils.escJsArg(s); }
-function formatRelative(d) { return AttUtils.formatRelative(d); }
-const LATE_THRESHOLD_MIN = AttUtils.LATE_THRESHOLD_MIN;
+function fmtTime(d) { return (AttUtils && AttUtils.fmtTime) ? AttUtils.fmtTime(d) : ''; }
+function fmtDur(start, end) { return (AttUtils && AttUtils.fmtDur) ? AttUtils.fmtDur(start, end) : ''; }
+function fmtDurMs(ms) { return (AttUtils && AttUtils.fmtDurMs) ? AttUtils.fmtDurMs(ms) : ''; }
+function escHtml(s) {
+  if (AttUtils && AttUtils.escHtml) return AttUtils.escHtml(s);
+  return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function escJsArg(s) {
+  if (AttUtils && AttUtils.escJsArg) return AttUtils.escJsArg(s);
+  return String(s == null ? '' : s)
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\r?\n/g, '\\n')
+    .replace(/[<>"&]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function formatRelative(d) { return (AttUtils && AttUtils.formatRelative) ? AttUtils.formatRelative(d) : ''; }
+const LATE_THRESHOLD_MIN = (AttUtils && AttUtils.LATE_THRESHOLD_MIN) || 5;
 function latenessMin(p) {
-  return AttUtils.latenessMin(p?.joinTime, state._eventStart, state.conferenceStartTime);
+  return (AttUtils && AttUtils.latenessMin)
+    ? AttUtils.latenessMin(p?.joinTime, state._eventStart, state.conferenceStartTime)
+    : 0;
 }
 
 /* ═══════════════════════════════════════════════════════════════

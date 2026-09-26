@@ -1131,11 +1131,11 @@
     }
 
     // Delegates to the shared js/utils.js module (loaded in <head>).
-    const esc = (s) => AttUtils.escHtml(s);
+    const esc = (s) => ((typeof AttUtils !== 'undefined' && AttUtils.escHtml) ? AttUtils.escHtml(s) : String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])));
     // For values dropped into inline onclick="fn('...')" handlers: escHtml
     // turns ' into &#39;, which the parser decodes back to ' → broken/unsafe
     // handler. escJsArg backslash-escapes for the JS-string-in-attribute context.
-    const escArg = (s) => AttUtils.escJsArg(s);
+    const escArg = (s) => ((typeof AttUtils !== 'undefined' && AttUtils.escJsArg) ? AttUtils.escJsArg(s) : String(s == null ? '' : s));
 
     // Convert 2-letter country code to flag emoji (regional indicator symbols).
     const flagEmoji = (cc) => {

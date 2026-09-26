@@ -133,7 +133,7 @@
     const BACKEND_URL = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
     // Delegates to the shared js/ modules (loaded in <head>): escaping to
     // AttUtils, and the pure date/range/row-render logic to AttShare.
-    const esc = (s) => AttUtils.escHtml(s);
+    const esc = (s) => ((typeof AttUtils !== 'undefined' && AttUtils.escHtml) ? AttUtils.escHtml(s) : String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])));
     const t = (key, fallback) => (typeof window.t === 'function' ? window.t(key, fallback) : (fallback || key));
 
     function initShareI18n() {

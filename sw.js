@@ -6,13 +6,14 @@
  * cross-origin request (Google sign-in, Stripe, Google Fonts, YouTube) are never
  * intercepted — the SW stays out of auth and data paths entirely.
  */
-const CACHE = 'att-shell-v2';
+const CACHE = 'att-shell-v3';
 
 // App shell to pre-cache for offline. A single missing asset must not fail the
 // whole install, so we add them individually via allSettled.
 const SHELL = [
   '/history.html', '/team.html', '/share.html', '/setup.html', '/index.html',
-  '/js/utils.js', '/js/api.js', '/js/history.js', '/js/team.js', '/js/share.js',
+  '/js/utils.js', '/js/pricing.js', '/js/panel.js', '/js/sim.js', '/js/strings.js',
+  '/js/api.js', '/js/history.js', '/js/team.js', '/js/share.js',
   '/icons/icon-192.png', '/icons/icon-512.png', '/manifest.json',
 ];
 
