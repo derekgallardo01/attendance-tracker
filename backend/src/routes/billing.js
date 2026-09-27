@@ -68,6 +68,17 @@ function normalizePlan(raw) {
   return KNOWN_PLANS.has(plan) ? { plan } : { invalid: true };
 }
 
+// Dedicated INR prices for India (₹399 lifetime, ₹199/yr educator).
+// Cross-border USD payments in India face severe RBI friction (mandatory international
+// transaction enablement, 2FA e-mandate rules for recurring subs). Presenting INR
+// with UPI + Card support unlocks local payment rails (GPay, PhonePe, Paytm, RuPay).
+function getInrPrices() {
+  return {
+    lifetime: process.env.STRIPE_INDIVIDUAL_LIFETIME_INR_PRICE_ID || 'price_1UKHrcRPP93YBXrOCFvHs1yV',
+    educator: process.env.STRIPE_EDUCATOR_INR_PRICE_ID || 'price_1UKHrjRPP93YBXrOYKcp9Ft9',
+  };
+}
+
 // Per-domain Pro subscription via Stripe Checkout. Lazy-init the SDK (like the
 // Resend wrapper) so the service boots and runs fine before billing is
 // configured — every billing endpoint degrades to a clear 503 until the
@@ -150,6 +161,27 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
       ? { individual: '1', plan: planName, domain, email: email.toLowerCase() }
       : { individual: '0', plan: planName, domain, initiatedBy: email };
     const backTo = individual ? 'history.html' : 'team.html';
+    const promo = (req.body.promo ?? '').trim().toUpperCase();
+    const userCountry = detectCountry(req);
+    const isIndia = userCountry === 'IN';
+    const isPppEligible = !promo && userCountry && PPP_COUNTRIES.has(userCountry);
+
+    // In India, cross-border USD payments hit strict RBI card blocks and subscription
+    // e-mandate failures. Route individual/educator/lifetime checkouts to INR prices
+    // with UPI + Card rails enabled.
+    let resolvedPriceId = priceId;
+    let paymentMethodTypes = null;
+    if (isIndia && (isLifetime || isEducator || individual)) {
+      const inrPrices = getInrPrices();
+      if (isLifetime) {
+        resolvedPriceId = inrPrices.lifetime;
+        paymentMethodTypes = ['card', 'upi'];
+      } else if (isEducator) {
+        resolvedPriceId = inrPrices.educator;
+        paymentMethodTypes = ['card', 'upi'];
+      }
+    }
+
     // Retrieve price details to dynamically use 'subscription' for recurring plans
     // or 'payment' for one-time / lifetime purchases.
     let isRecurring = !isLifetime;
@@ -157,24 +189,12 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
       isRecurring = false;
     } else if (stripe.prices && typeof stripe.prices.retrieve === 'function') {
       try {
-        const priceObj = await stripe.prices.retrieve(priceId);
+        const priceObj = await stripe.prices.retrieve(resolvedPriceId);
         isRecurring = priceObj ? (priceObj.type === 'recurring' || !!priceObj.recurring) : true;
       } catch (e) {
-        log.warn('billing: could not retrieve price object, defaulting to subscription', { priceId, error: e.message });
+        log.warn('billing: could not retrieve price object, defaulting to subscription', { priceId: resolvedPriceId, error: e.message });
       }
     }
-
-    // Prices are the real selling prices now — LAUNCH50 is retired. A CLEAN
-    // Checkout Session (no `discounts`, and no `allow_promotion_codes` unless a
-    // real code is passed) is what lets Stripe Adaptive Pricing present local
-    // currency + local payment methods (UPI, wallets, …) to PPP buyers; a
-    // `discounts` param or an open promo box suppresses Adaptive Pricing.
-    // Ignore a stale `LAUNCH50` from an old cached client. An explicit
-    // referral/promo code still opens the promo box for that one checkout
-    // (Adaptive Pricing off there — a fair trade for the discount).
-    const promo = (req.body.promo ?? '').trim().toUpperCase();
-    const userCountry = detectCountry(req);
-    const isPppEligible = !promo && userCountry && PPP_COUNTRIES.has(userCountry);
 
     const sessionMeta = {
       ...meta,
@@ -184,7 +204,7 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
 
     const sessionParams = {
       mode: isRecurring ? 'subscription' : 'payment',
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items: [{ price: resolvedPriceId, quantity: 1 }],
       client_reference_id: individual ? `user:${email.toLowerCase()}` : domain,
       customer_email: email,
       success_url: `${CONFIG.publicSiteUrl}/${backTo}?upgraded=1`,
@@ -194,10 +214,13 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
       // Stripe emails the buyer a link to finish — recovering the highest-intent
       // non-payers (they already reached checkout).
       after_expiration: { recovery: { enabled: true } },
+      ...(paymentMethodTypes ? { payment_method_types: paymentMethodTypes } : {}),
     };
     if (promo && promo !== 'LAUNCH50') {
       sessionParams.allow_promotion_codes = true;
-    } else if (isPppEligible) {
+    } else if (isPppEligible && !isIndia) {
+      // For India, dedicated INR prices already reflect the subsidized PPP price.
+      // Keeping discounts empty preserves INR currency and unlocks UPI.
       sessionParams.discounts = [{ coupon: 'PPP50' }];
     }
     if (isRecurring) {
@@ -215,7 +238,7 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
       // STRIPE_EDUCATOR_PRICE_ID silently turns annual revenue into lifetime.
       // Fail closed: we only get here when Stripe POSITIVELY reported the
       // price as one-time (retrieve errors default to recurring above).
-      log.error('billing: educator price is one-time, not recurring — refusing checkout', { priceId });
+      log.error('billing: educator price is one-time, not recurring — refusing checkout', { priceId: resolvedPriceId });
       return res.status(503).json({ error: 'The educator plan is temporarily unavailable.' });
     }
 
@@ -280,6 +303,7 @@ async function sendUpgradeLinkForUser({
 
   const stripe = getStripe();
   const userCountry = country || (req ? detectCountry(req) : null);
+  const isIndia = userCountry === 'IN';
   const isPppEligible = userCountry && PPP_COUNTRIES.has(userCountry);
   const flag = userCountry ? (PPP_FLAGS[userCountry] || '') : '';
 
@@ -289,7 +313,7 @@ async function sendUpgradeLinkForUser({
   if (stripe) {
     try {
       const meta = { individual: '1', domain, email: normalizedEmail, source: 'upgrade_link_email', reason };
-      const commonDiscounts = isPppEligible ? [{ coupon: 'PPP50' }] : [{ coupon: 'SAVE20' }];
+      const commonDiscounts = isIndia ? null : (isPppEligible ? [{ coupon: 'PPP50' }] : [{ coupon: 'SAVE20' }]);
 
       const createSession = async (params) => {
         try {
@@ -304,27 +328,38 @@ async function sendUpgradeLinkForUser({
         }
       };
 
+      const inrPrices = isIndia ? getInrPrices() : null;
+      const educatorPriceId = isIndia
+        ? inrPrices.educator
+        : process.env.STRIPE_EDUCATOR_PRICE_ID;
+      const lifetimePriceId = isIndia
+        ? inrPrices.lifetime
+        : process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID;
+      const inPaymentMethods = isIndia ? { payment_method_types: ['card', 'upi'] } : {};
+
       const [educatorSession, lifetimeSession] = await Promise.all([
-        process.env.STRIPE_EDUCATOR_PRICE_ID ? createSession({
+        educatorPriceId ? createSession({
           mode: 'subscription',
-          line_items: [{ price: process.env.STRIPE_EDUCATOR_PRICE_ID, quantity: 1 }],
+          line_items: [{ price: educatorPriceId, quantity: 1 }],
           client_reference_id: `user:${normalizedEmail}`,
           customer_email: normalizedEmail,
           success_url: `${CONFIG.publicSiteUrl}/history.html?upgraded=1`,
           cancel_url: `${CONFIG.publicSiteUrl}/history.html`,
           metadata: { ...meta, plan: 'educator', ...(isPppEligible ? { pppDiscount: '1' } : { promoDiscount: 'SAVE20' }) },
           ...(commonDiscounts ? { discounts: commonDiscounts } : {}),
+          ...inPaymentMethods,
         }) : null,
-        process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID ? createSession({
+        lifetimePriceId ? createSession({
           mode: 'payment',
           customer_creation: 'always',
-          line_items: [{ price: process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID, quantity: 1 }],
+          line_items: [{ price: lifetimePriceId, quantity: 1 }],
           client_reference_id: `user:${normalizedEmail}`,
           customer_email: normalizedEmail,
           success_url: `${CONFIG.publicSiteUrl}/history.html?upgraded=1`,
           cancel_url: `${CONFIG.publicSiteUrl}/history.html`,
           metadata: { ...meta, plan: 'lifetime', ...(isPppEligible ? { pppDiscount: '1' } : { promoDiscount: 'SAVE20' }) },
           ...(commonDiscounts ? { discounts: commonDiscounts } : {}),
+          ...inPaymentMethods,
         }) : null,
       ]);
 
@@ -335,9 +370,9 @@ async function sendUpgradeLinkForUser({
     }
   }
 
-  // 24-hour special offer: 20% discount ($3.99/yr, $7.99) or 50% PPP subsidy ($2.49/yr, $4.99)
-  const educatorPrice = isPppEligible ? '$2.49' : '$3.99';
-  const lifetimePrice = isPppEligible ? '$4.99' : '$7.99';
+  // 24-hour special offer: 20% discount ($3.99/yr, $7.99) or 50% PPP subsidy ($2.49/yr, $4.99; ₹199/yr, ₹399 in India)
+  const educatorPrice = isIndia ? '₹199/yr' : (isPppEligible ? '$2.49' : '$3.99');
+  const lifetimePrice = isIndia ? '₹399' : (isPppEligible ? '$4.99' : '$7.99');
 
   const { sendUpgradeLinkEmail } = require('../lib/notifications');
   await sendUpgradeLinkEmail({
@@ -436,16 +471,31 @@ router.post('/billing/public-checkout', async (req, res) => {
     return res.status(503).json({ error: 'Selected plan price is not configured.' });
   }
 
+  const userCountry = detectCountry(req);
+  const isIndia = userCountry === 'IN';
+  let resolvedPriceId = priceId;
+  let paymentMethodTypes = null;
+  if (isIndia && !isDomain) {
+    const inrPrices = getInrPrices();
+    if (plan === 'lifetime') {
+      resolvedPriceId = inrPrices.lifetime;
+      paymentMethodTypes = ['card', 'upi'];
+    } else if (plan === 'educator') {
+      resolvedPriceId = inrPrices.educator;
+      paymentMethodTypes = ['card', 'upi'];
+    }
+  }
+
   try {
     let isRecurring = true;
     if (plan === 'lifetime') {
       isRecurring = false;
     } else if (stripe.prices && typeof stripe.prices.retrieve === 'function') {
       try {
-        const priceObj = await stripe.prices.retrieve(priceId);
+        const priceObj = await stripe.prices.retrieve(resolvedPriceId);
         isRecurring = priceObj ? (priceObj.type === 'recurring' || !!priceObj.recurring) : true;
       } catch (e) {
-        log.warn('billing: could not retrieve price object in public checkout', { priceId, error: e.message });
+        log.warn('billing: could not retrieve price object in public checkout', { priceId: resolvedPriceId, error: e.message });
       }
     }
 
@@ -467,12 +517,13 @@ router.post('/billing/public-checkout', async (req, res) => {
 
     const sessionParams = {
       mode: isRecurring ? 'subscription' : 'payment',
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items: [{ price: resolvedPriceId, quantity: 1 }],
       success_url: `${CONFIG.publicSiteUrl}/history.html?upgraded=1`,
       cancel_url: `${CONFIG.publicSiteUrl}/pricing.html`,
       metadata: meta,
       // Abandoned-checkout recovery (see authed checkout above for rationale).
       after_expiration: { recovery: { enabled: true } },
+      ...(paymentMethodTypes ? { payment_method_types: paymentMethodTypes } : {}),
     };
     if (email) {
       // Deliberately NOT prefilled as customer_email: this endpoint is
@@ -498,7 +549,7 @@ router.post('/billing/public-checkout', async (req, res) => {
     if (isEducator && !isRecurring) {
       // Same fail-closed rule as the authed checkout: a one-time educator price
       // silently converts annual revenue into a lifetime pass.
-      log.error('billing: educator price is one-time, not recurring — refusing public checkout', { priceId });
+      log.error('billing: educator price is one-time, not recurring — refusing public checkout', { priceId: resolvedPriceId });
       return res.status(503).json({ error: 'The educator plan is temporarily unavailable.' });
     }
 
@@ -829,7 +880,14 @@ router.get('/billing/status', requireAuth, async (req, res) => {
       isRecurring: !!plan.stripeSubscriptionId,
       subscriptionId: plan.stripeSubscriptionId || null,
       // Display-price truth for every frontend surface (see config/pricing.js).
-      pricing: { ...PRICING.PRICES, quotaLimit: PRICING.FREE_MONTHLY_EXPORT_LIMIT },
+      pricing: {
+        ...PRICING.PRICES,
+        ...(userCountry === 'IN' ? {
+          lifetime: { label: '₹399', full: null, period: 'one-time' },
+          educator: { label: '₹199', full: null, period: '/yr' },
+        } : {}),
+        quotaLimit: PRICING.FREE_MONTHLY_EXPORT_LIMIT,
+      },
     });
   } catch (err) {
     log.error('billing: status failed', { domain: req.user.domain, error: err.message });

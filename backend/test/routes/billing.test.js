@@ -1238,6 +1238,63 @@ describe('billing/status pricing payload', () => {
     );
   });
 
+  test('checkout for user in India (IN) routes to INR lifetime price and enables UPI + card', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID = 'price_life';
+    process.env.STRIPE_INDIVIDUAL_LIFETIME_INR_PRICE_ID = 'price_inr_life_399';
+    app = buildApp();
+    const res = await request(app)
+      .post('/api/billing/checkout')
+      .set(authedHeader('teacher@gmail.com', 'gmail.com'))
+      .set('cf-ipcountry', 'IN')
+      .send({ plan: 'lifetime' });
+    expect(res.status).toBe(200);
+    expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        line_items: [{ price: 'price_inr_life_399', quantity: 1 }],
+        payment_method_types: ['card', 'upi'],
+      })
+    );
+    expect(mockStripeInstance.checkout.sessions.create).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        discounts: [{ coupon: 'PPP50' }],
+      })
+    );
+    delete process.env.STRIPE_INDIVIDUAL_LIFETIME_INR_PRICE_ID;
+  });
+
+  test('checkout for user in India (IN) routes to INR educator price and enables UPI + card', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_EDUCATOR_PRICE_ID = 'price_edu_usd';
+    process.env.STRIPE_EDUCATOR_INR_PRICE_ID = 'price_inr_edu_199';
+    app = buildApp();
+    const res = await request(app)
+      .post('/api/billing/checkout')
+      .set(authedHeader('teacher@mituniversity.edu.in', 'mituniversity.edu.in'))
+      .set('cf-ipcountry', 'IN')
+      .send({ plan: 'educator' });
+    expect(res.status).toBe(200);
+    expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        line_items: [{ price: 'price_inr_edu_199', quantity: 1 }],
+        payment_method_types: ['card', 'upi'],
+      })
+    );
+    delete process.env.STRIPE_EDUCATOR_INR_PRICE_ID;
+  });
+
+  test('GET /billing/status for Indian user returns clean INR prices in pricing table', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+    const res = await request(app)
+      .get('/api/billing/status')
+      .set(authedHeader('teacher@gmail.com', 'gmail.com'))
+      .set('cf-ipcountry', 'IN');
+    expect(res.status).toBe(200);
+    expect(res.body.pricing.lifetime.label).toBe('₹399');
+    expect(res.body.pricing.educator.label).toBe('₹199');
+  });
+
   test('GET /billing/status includes trialInfo when user has autoExport trial started', async () => {
     firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
     firestore.getUserPlan.mockResolvedValue({ plan: 'free' });

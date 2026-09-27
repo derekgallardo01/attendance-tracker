@@ -2828,6 +2828,9 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
     badgeSubtitle = 'আনলিমিটেড উপস্থিতি ও এক্সপোর্টে বিশেষ ডিসকাউন্ট';
   }
 
+  const isIndia = (country || '').toUpperCase() === 'IN';
+  const upiBadgeHtml = isIndia ? '<p style="margin:8px 0 0;font-size:11.5px;color:#7ee787;text-align:center;line-height:1.4;">⚡ Supports UPI (Google Pay, PhonePe, Paytm) & Cards</p>' : '';
+
   const contentHtml = `
     <p style="margin:0 0 12px;font-size:15px;color:#e6edf3;">${escape(greeting)}</p>
     <p style="margin:0 0 20px;font-size:14px;color:#8b949e;line-height:1.5;">${escape(bodyIntro)}</p>
@@ -2840,6 +2843,7 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
       <div style="font-weight:700;font-size:15px;color:#4ade80;line-height:1.4;margin-bottom:8px;word-break:break-word;">${lifetimeTitle}</div>
       <p style="margin:0 0 14px;color:#c9d1d9;font-size:13px;line-height:1.5;">${escape(lifetimeDesc)}</p>
       <a href="${escape(lifetimeUrl)}" class="touch-btn-block" style="display:block;width:100%;text-align:center;box-sizing:border-box;background:#238636;color:#ffffff;text-decoration:none;font-weight:600;padding:10px 18px;border-radius:6px;font-size:13px;line-height:1.35;">${lifetimeBtn}</a>
+      ${upiBadgeHtml}
     </div>
 
     <!-- Plan 2: Annual Educator Pass -->
@@ -2847,6 +2851,7 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
       <div style="font-weight:700;font-size:14px;color:#58a6ff;margin-bottom:6px;line-height:1.4;word-break:break-word;">${educatorTitle}</div>
       <p style="margin:0 0 12px;color:#8b949e;font-size:12.5px;line-height:1.45;">${escape(educatorDesc)}</p>
       <a href="${escape(educatorUrl)}" class="touch-btn-block" style="display:block;width:100%;text-align:center;box-sizing:border-box;background:#21262d;border:1px solid #388bfd;color:#79c0ff;text-decoration:none;font-weight:600;padding:9px 15px;border-radius:6px;font-size:12.5px;line-height:1.35;">${educatorBtn}</a>
+      ${upiBadgeHtml}
     </div>
 
     <p style="margin:16px 0 0;font-size:13px;color:#8b949e;">${escape(dashboardNote)} <a href="https://attendancetracker.dev/history.html" style="color:#58a6ff;text-decoration:none;">${escape(dashboardLinkText)}</a>.</p>
