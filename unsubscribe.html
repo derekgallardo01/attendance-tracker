@@ -429,7 +429,7 @@
       <div class="support-box">
         <p style="margin-bottom:8px;color:var(--text);font-weight:600;">Contact Derek directly:</p>
         <p style="margin-bottom:6px;font-size:0.92rem;">
-          📧 <strong>Personal Support Email:</strong> <a href="mailto:derekgallardo01@gmail.com">derekgallardo01@gmail.com</a>
+          📧 <strong>Support Email:</strong> <a href="mailto:support@attendancetracker.dev">support@attendancetracker.dev</a>
         </p>
         <p style="margin-bottom:6px;font-size:0.92rem;">
           📧 <strong>Official App Email:</strong> <a href="mailto:derek@attendancetracker.dev">derek@attendancetracker.dev</a>
@@ -455,7 +455,7 @@
       <a href="unsubscribe.html" style="color:var(--text);font-weight:600;">Unsubscribe</a>
     </div>
     <div class="copyright">
-      &copy; 2026 Kinetic Helix LLC. Attendance Tracker for Google Meet™. Support: Derek Gallardo (<a href="mailto:derekgallardo01@gmail.com" style="color:inherit;text-decoration:underline;">derekgallardo01@gmail.com</a> / <a href="mailto:derek@attendancetracker.dev" style="color:inherit;text-decoration:underline;">derek@attendancetracker.dev</a>). All rights reserved.
+      &copy; 2026 Kinetic Helix LLC. Attendance Tracker for Google Meet™. Support: Kinetic Helix LLC (<a href="mailto:legal@kinetichelix.io" style="color:inherit;text-decoration:underline;">legal@kinetichelix.io</a> / <a href="mailto:support@attendancetracker.dev" style="color:inherit;text-decoration:underline;">support@attendancetracker.dev</a>). All rights reserved.
     </div>
   </footer>
 
@@ -507,11 +507,11 @@
           emailEl.value = '';
         } else {
           statusEl.className = 'status-box error';
-          statusEl.textContent = data.error || 'Failed to unsubscribe. Please email derekgallardo01@gmail.com directly and I will remove you.';
+          statusEl.textContent = data.error || 'Failed to unsubscribe. Please email support@attendancetracker.dev directly and our team will remove you.';
         }
       } catch (err) {
         statusEl.className = 'status-box error';
-        statusEl.textContent = 'Network error. Please email derekgallardo01@gmail.com directly and I will remove you immediately.';
+        statusEl.textContent = 'Network error. Please email support@attendancetracker.dev directly and our team will remove you immediately.';
       } finally {
         btn.disabled = false;
         btn.textContent = 'Unsubscribe from All Emails';
