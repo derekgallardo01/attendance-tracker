@@ -6640,13 +6640,24 @@ function showUpgradeModal(reason) {
   if (typeof checkReviewVerificationState === 'function') checkReviewVerificationState();
   const sendEmailBtn = document.getElementById('btn-send-upgrade-email');
   const sendEmailStatus = document.getElementById('upgrade-email-link-status');
-  if (sendEmailBtn) {
-    sendEmailBtn.style.display = 'inline-block';
-    sendEmailBtn.disabled = false;
-    sendEmailBtn.style.opacity = '1';
-    sendEmailBtn.textContent = t('upgrade.sendEmailLink', 'Teaching right now? Email me a link to upgrade later');
+  let alreadySent = false;
+  try { alreadySent = !!sessionStorage.getItem('attUpgradeEmailSent'); } catch {}
+  if (alreadySent) {
+    if (sendEmailBtn) sendEmailBtn.style.display = 'none';
+    if (sendEmailStatus) {
+      const email = state.userEmail || '';
+      sendEmailStatus.textContent = t('upgrade.emailSent', '✓ Link sent to {email}! Finish whenever you\'re ready.').replace('{email}', email);
+      sendEmailStatus.style.display = 'block';
+    }
+  } else {
+    if (sendEmailBtn) {
+      sendEmailBtn.style.display = 'inline-block';
+      sendEmailBtn.disabled = false;
+      sendEmailBtn.style.opacity = '1';
+      sendEmailBtn.textContent = t('upgrade.sendEmailLink', 'Teaching right now? Email me a link to upgrade later');
+    }
+    if (sendEmailStatus) sendEmailStatus.style.display = 'none';
   }
-  if (sendEmailStatus) sendEmailStatus.style.display = 'none';
 
   modal.style.display = 'flex';
   try {
@@ -6657,10 +6668,21 @@ function showUpgradeModal(reason) {
   } catch {}
 }
 
-async function sendUpgradeLinkToEmail() {
+async function sendUpgradeLinkToEmail(force = false) {
   const btn = document.getElementById('btn-send-upgrade-email');
   const status = document.getElementById('upgrade-email-link-status');
   if (!btn || !status) return;
+
+  // Session throttle: avoid sending more than 1 automated upgrade email per meeting session
+  try {
+    if (!force && sessionStorage.getItem('attUpgradeEmailSent')) {
+      btn.style.display = 'none';
+      const email = state.userEmail || '';
+      status.textContent = t('upgrade.emailSent', '✓ Link sent to {email}! Finish whenever you\'re ready.').replace('{email}', email);
+      status.style.display = 'block';
+      return;
+    }
+  } catch {}
 
   btn.disabled = true;
   btn.style.opacity = '0.6';
@@ -6674,6 +6696,7 @@ async function sendUpgradeLinkToEmail() {
     });
     const data = await res.json().catch(() => ({}));
     if (res.ok && data.success) {
+      try { sessionStorage.setItem('attUpgradeEmailSent', '1'); } catch {}
       btn.style.display = 'none';
       const email = data.email || state.userEmail || '';
       status.textContent = t('upgrade.emailSent', '✓ Link sent to {email}! Finish whenever you\'re ready.').replace('{email}', email);
@@ -6686,7 +6709,9 @@ async function sendUpgradeLinkToEmail() {
     btn.disabled = false;
     btn.style.opacity = '1';
     btn.textContent = t('upgrade.sendEmailLink', 'Teaching right now? Email me a link to upgrade later');
-    toast(t('common.error', 'Something went wrong. Please try again.'), 4000);
+    if (force) {
+      toast(t('common.error', 'Something went wrong. Please try again.'), 4000);
+    }
   }
 }
 
@@ -9837,7 +9862,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
       <!-- Opt-in: Send Upgrade Link to Email for busy teachers -->
       <div id="upgrade-email-link-wrap" style="text-align:center;margin-bottom:8px">
-        <button type="button" id="btn-send-upgrade-email" onclick="sendUpgradeLinkToEmail()" style="background:none;border:none;color:#8ab4f8;cursor:pointer;font-size:.74rem;text-decoration:underline;padding:3px 6px;border-radius:6px;transition:all .15s ease">
+        <button type="button" id="btn-send-upgrade-email" onclick="sendUpgradeLinkToEmail(true)" style="background:none;border:none;color:#8ab4f8;cursor:pointer;font-size:.74rem;text-decoration:underline;padding:3px 6px;border-radius:6px;transition:all .15s ease">
           <span data-i18n="upgrade.sendEmailLink">Teaching right now? Email me a link to upgrade later</span>
         </button>
         <div id="upgrade-email-link-status" style="display:none;font-size:.75rem;color:#81c995;font-weight:500;padding:3px 0"></div>
