@@ -2829,7 +2829,15 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
   }
 
   const isIndia = (country || '').toUpperCase() === 'IN';
-  const upiBadgeHtml = isIndia ? '<p style="margin:8px 0 0;font-size:11.5px;color:#7ee787;text-align:center;line-height:1.4;">⚡ Supports UPI (Google Pay, PhonePe, Paytm) & Cards</p>' : '';
+  if (isIndia) {
+    subject = 'Unlock Attendance Tracker Lifetime Pro (₹299 Special Offer 🇮🇳)';
+    bodyIntro = "Here is your direct 1-click link to unlock unlimited classes and exports with the India Lifetime Pass. No recurring auto-debit, zero subscription fees — pay once via UPI or Card and own forever:";
+    bestValueTag = 'Special Offer (No Subscriptions)';
+    lifetimeTitle = `Lifetime Pro — ${escape(lifetimePrice)} one-time (Special Offer 🇮🇳)`;
+    lifetimeDesc = 'Pay once, own forever — zero recurring subscriptions or bank auto-debits. Unlimited Sheets exports & auto-capture.';
+    lifetimeBtn = `Unlock Lifetime Pro with UPI or Card (${escape(lifetimePrice)}) →`;
+  }
+  const upiBadgeHtml = isIndia ? '<p style="margin:8px 0 0;font-size:11.5px;color:#7ee787;text-align:center;line-height:1.4;">⚡ Supports UPI (Google Pay, PhonePe, Paytm, BHIM) & Cards</p>' : '';
 
   const contentHtml = `
     <p style="margin:0 0 12px;font-size:15px;color:#e6edf3;">${escape(greeting)}</p>
@@ -2846,6 +2854,7 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
       ${upiBadgeHtml}
     </div>
 
+    ${educatorUrl ? `
     <!-- Plan 2: Annual Educator Pass -->
     <div class="plan-card" style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px 16px;margin-bottom:16px;box-sizing:border-box;">
       <div style="font-weight:700;font-size:14px;color:#58a6ff;margin-bottom:6px;line-height:1.4;word-break:break-word;">${educatorTitle}</div>
@@ -2853,6 +2862,7 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
       <a href="${escape(educatorUrl)}" class="touch-btn-block" style="display:block;width:100%;text-align:center;box-sizing:border-box;background:#21262d;border:1px solid #388bfd;color:#79c0ff;text-decoration:none;font-weight:600;padding:9px 15px;border-radius:6px;font-size:12.5px;line-height:1.35;">${educatorBtn}</a>
       ${upiBadgeHtml}
     </div>
+    ` : ''}
 
     <p style="margin:16px 0 0;font-size:13px;color:#8b949e;">${escape(dashboardNote)} <a href="https://attendancetracker.dev/history.html" style="color:#58a6ff;text-decoration:none;">${escape(dashboardLinkText)}</a>.</p>
     <p style="margin:8px 0 0;font-size:13px;color:#8b949e;">${escape(thankYouNote)}</p>
@@ -2875,9 +2885,11 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
     '',
     `* ${lifetimeTitle.replace(/&amp;/g, '&')}`,
     `  ${lifetimeUrl}`,
-    '',
-    `* ${educatorTitle.replace(/&amp;/g, '&')}`,
-    `  ${educatorUrl}`,
+    ...(educatorUrl ? [
+      '',
+      `* ${educatorTitle.replace(/&amp;/g, '&')}`,
+      `  ${educatorUrl}`,
+    ] : []),
     '',
     `${dashboardNote} https://attendancetracker.dev/history.html`,
     '',

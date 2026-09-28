@@ -27,7 +27,7 @@ const Stripe = require(path.resolve(__dirname, '../backend/node_modules/stripe')
 const db = new Firestore({ projectId: 'attendance-tracker-490319' });
 const RESEND_API_KEY = process.env.RESEND_API_KEY || (process.argv.find(a => a.startsWith('--resend-key=')) || '').split('=')[1];
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || (process.argv.find(a => a.startsWith('--stripe-key=')) || '').split('=')[1];
-const INR_LIFETIME_PRICE_ID = process.env.STRIPE_INDIVIDUAL_LIFETIME_INR_PRICE_ID || 'price_1UKHrcRPP93YBXrOCFvHs1yV';
+const INR_LIFETIME_PRICE_ID = process.env.STRIPE_INDIVIDUAL_LIFETIME_INR_PRICE_ID || 'price_1UKfQpRPP93YBXrOP42OOuV0';
 const INR_EDUCATOR_PRICE_ID = process.env.STRIPE_EDUCATOR_INR_PRICE_ID || 'price_1UKHrjRPP93YBXrOYKcp9Ft9';
 
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
@@ -132,7 +132,7 @@ function buildEmailHtml({ name, checkoutUrl, unsubUrl }) {
             Individual Lifetime Pro
           </td>
           <td style="font-weight:800;font-size:20px;color:#4ade80;vertical-align:baseline;text-align:right;white-space:nowrap;padding-left:16px;">
-            ₹399 <span style="font-size:12px;font-weight:400;color:#8b949e;">one-time</span>
+            ₹299 <span style="font-size:12px;font-weight:400;color:#8b949e;">one-time</span>
           </td>
         </tr>
       </table>
@@ -141,7 +141,7 @@ function buildEmailHtml({ name, checkoutUrl, unsubUrl }) {
       </p>
 
       <a href="${checkoutUrl}" style="display:block;width:100%;text-align:center;box-sizing:border-box;background:#238636;color:#ffffff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:6px;font-size:14px;">
-        Pay with UPI or Card (₹399) &rarr;
+        Pay with UPI or Card (₹299) &rarr;
       </a>
       <p style="margin:10px 0 0;font-size:11.5px;color:#7ee787;text-align:center;">
         ⚡ Instant activation &bull; Scan QR or enter UPI ID
@@ -176,7 +176,7 @@ You recently tried exporting attendance or upgrading on Attendance Tracker for G
 
 We just enabled direct UPI payments (Google Pay, PhonePe, Paytm) and Indian debit cards in Indian Rupees:
 
-Lifetime Pro Pass — ₹399 one-time (Pay once, keep forever, no subscription)
+Lifetime Pro Pass — ₹299 one-time (Pay once, keep forever, no subscription)
 Upgrade link: ${checkoutUrl}
 
 Instant activation with zero international bank markup fees. If you have any questions or need an invoice/receipt, feel free to reply directly to this email.
@@ -211,7 +211,7 @@ async function main() {
       from: FROM_ADDRESS,
       to: testEmail,
       replyTo: DEREK_EMAIL,
-      subject: 'UPI & Indian Rupee (₹399) now supported on Attendance Tracker',
+      subject: 'UPI & Indian Rupee (₹299) now supported on Attendance Tracker',
       html,
       text,
     });
@@ -303,7 +303,7 @@ async function main() {
           from: FROM_ADDRESS,
           to: user.email,
           replyTo: DEREK_EMAIL,
-          subject: 'UPI & Indian Rupee (₹399) now supported on Attendance Tracker',
+          subject: 'UPI & Indian Rupee (₹299) now supported on Attendance Tracker',
           html,
           text,
         });

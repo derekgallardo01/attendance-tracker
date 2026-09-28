@@ -1263,10 +1263,10 @@ describe('billing/status pricing payload', () => {
     delete process.env.STRIPE_INDIVIDUAL_LIFETIME_INR_PRICE_ID;
   });
 
-  test('checkout for user in India (IN) routes to INR educator price and enables UPI + card', async () => {
+  test('checkout for user in India (IN) requesting educator plan routes to INR lifetime price and mode: payment (killing recurring subs)', async () => {
     process.env.STRIPE_SECRET_KEY = 'sk_test_x';
     process.env.STRIPE_EDUCATOR_PRICE_ID = 'price_edu_usd';
-    process.env.STRIPE_EDUCATOR_INR_PRICE_ID = 'price_inr_edu_199';
+    process.env.STRIPE_INDIVIDUAL_LIFETIME_INR_PRICE_ID = 'price_inr_life_299';
     app = buildApp();
     const res = await request(app)
       .post('/api/billing/checkout')
@@ -1276,11 +1276,12 @@ describe('billing/status pricing payload', () => {
     expect(res.status).toBe(200);
     expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        line_items: [{ price: 'price_inr_edu_199', quantity: 1 }],
+        mode: 'payment',
+        line_items: [{ price: 'price_inr_life_299', quantity: 1 }],
         payment_method_types: ['card', 'upi'],
       })
     );
-    delete process.env.STRIPE_EDUCATOR_INR_PRICE_ID;
+    delete process.env.STRIPE_INDIVIDUAL_LIFETIME_INR_PRICE_ID;
   });
 
   test('GET /billing/status for Indian user returns clean INR prices in pricing table', async () => {
@@ -1291,8 +1292,9 @@ describe('billing/status pricing payload', () => {
       .set(authedHeader('teacher@gmail.com', 'gmail.com'))
       .set('cf-ipcountry', 'IN');
     expect(res.status).toBe(200);
-    expect(res.body.pricing.lifetime.label).toBe('₹399');
-    expect(res.body.pricing.educator.label).toBe('₹199');
+    expect(res.body.pricing.lifetime.label).toBe('₹299');
+    expect(res.body.pricing.educator).toBeNull();
+    expect(res.body.educatorAvailable).toBe(false);
   });
 
   test('GET /billing/status includes trialInfo when user has autoExport trial started', async () => {

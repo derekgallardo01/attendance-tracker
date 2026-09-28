@@ -74,8 +74,7 @@ function normalizePlan(raw) {
 // with UPI + Card support unlocks local payment rails (GPay, PhonePe, Paytm, RuPay).
 function getInrPrices() {
   return {
-    lifetime: process.env.STRIPE_INDIVIDUAL_LIFETIME_INR_PRICE_ID || 'price_1UKHrcRPP93YBXrOCFvHs1yV',
-    educator: process.env.STRIPE_EDUCATOR_INR_PRICE_ID || 'price_1UKHrjRPP93YBXrOYKcp9Ft9',
+    lifetime: process.env.STRIPE_INDIVIDUAL_LIFETIME_INR_PRICE_ID || 'price_1UKfQpRPP93YBXrOP42OOuV0',
   };
 }
 
@@ -138,15 +137,22 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
   // Fallbacks stay WITHIN a product: a chain that terminates in the domain
   // price could charge a "$4.99/yr" button the $19.99+ team price. Missing
   // price id for the named plan = fail closed (503), never cross products.
-  const priceId = isEducator
-    ? process.env.STRIPE_EDUCATOR_PRICE_ID // no fallback: educator ($4.99/yr) and individual-annual are DIFFERENT products at different amounts
-    : (isLifetime
-      ? process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID
-      : (isDepartment
-        ? process.env.STRIPE_DEPARTMENT_PRICE_ID // recurring $59/yr domain mid-tier; NO fallback so it can never resolve to the team/institution price
-        : (individual
-          ? (annual && process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID) || process.env.STRIPE_INDIVIDUAL_PRICE_ID
-          : (annual && process.env.STRIPE_ANNUAL_PRICE_ID) || process.env.STRIPE_PRICE_ID)));
+  const promo = (req.body?.promo ?? '').trim().toUpperCase();
+  const userCountry = detectCountry(req);
+  const isIndia = userCountry === 'IN';
+  const isPppEligible = !promo && userCountry && PPP_COUNTRIES.has(userCountry);
+
+  const priceId = (isIndia && (isLifetime || isEducator || individual))
+    ? getInrPrices().lifetime
+    : (isEducator
+      ? process.env.STRIPE_EDUCATOR_PRICE_ID // no fallback: educator ($4.99/yr) and individual-annual are DIFFERENT products at different amounts
+      : (isLifetime
+        ? process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID
+        : (isDepartment
+          ? process.env.STRIPE_DEPARTMENT_PRICE_ID // recurring $59/yr domain mid-tier; NO fallback so it can never resolve to the team/institution price
+          : (individual
+            ? (annual && process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID) || process.env.STRIPE_INDIVIDUAL_PRICE_ID
+            : (annual && process.env.STRIPE_ANNUAL_PRICE_ID) || process.env.STRIPE_PRICE_ID))));
   if (!stripe || !priceId) {
     return res.status(503).json({ error: 'Billing is not configured yet.' });
   }
@@ -156,36 +162,23 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
     // webhook can route to setUserPlan vs setTenantPlan.
     // `plan` in metadata: the refund/dispute handler routes on it, and it
     // rides payment_intent_data so one-time charges carry it end-to-end.
-    const planName = normalizedPlan || (individual ? 'individual' : 'team');
+    let planName = normalizedPlan || (individual ? 'individual' : 'team');
+    if (isIndia && (isLifetime || isEducator || individual)) {
+      planName = 'lifetime';
+    }
     const meta = individual
       ? { individual: '1', plan: planName, domain, email: email.toLowerCase() }
       : { individual: '0', plan: planName, domain, initiatedBy: email };
     const backTo = individual ? 'history.html' : 'team.html';
-    const promo = (req.body.promo ?? '').trim().toUpperCase();
-    const userCountry = detectCountry(req);
-    const isIndia = userCountry === 'IN';
-    const isPppEligible = !promo && userCountry && PPP_COUNTRIES.has(userCountry);
 
     // In India, cross-border USD payments hit strict RBI card blocks and subscription
-    // e-mandate failures. Route individual/educator/lifetime checkouts to INR prices
-    // with UPI + Card rails enabled.
+    // e-mandate failures. Route all individual/educator/lifetime checkouts exclusively
+    // to the one-time Lifetime Pass in INR (₹299) with UPI + Card rails enabled.
     let resolvedPriceId = priceId;
-    let paymentMethodTypes = null;
-    if (isIndia && (isLifetime || isEducator || individual)) {
-      const inrPrices = getInrPrices();
-      if (isLifetime) {
-        resolvedPriceId = inrPrices.lifetime;
-        paymentMethodTypes = ['card', 'upi'];
-      } else if (isEducator) {
-        resolvedPriceId = inrPrices.educator;
-        paymentMethodTypes = ['card', 'upi'];
-      }
-    }
+    let paymentMethodTypes = (isIndia && (isLifetime || isEducator || individual)) ? ['card', 'upi'] : null;
+    let isRecurring = !isLifetime && !(isIndia && (isLifetime || isEducator || individual));
 
-    // Retrieve price details to dynamically use 'subscription' for recurring plans
-    // or 'payment' for one-time / lifetime purchases.
-    let isRecurring = !isLifetime;
-    if (isLifetime) {
+    if (isLifetime || (isIndia && (isLifetime || isEducator || individual))) {
       isRecurring = false;
     } else if (stripe.prices && typeof stripe.prices.retrieve === 'function') {
       try {
@@ -232,7 +225,7 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
       // payment history) 404s for one-time buyers. Always create one.
       sessionParams.customer_creation = 'always';
     }
-    if (isEducator && !isRecurring) {
+    if (isEducator && !isRecurring && !isIndia) {
       // The educator plan is sold as an ANNUAL pass — a one-time price never
       // renews (and never emits subscription webhooks), so a misconfigured
       // STRIPE_EDUCATOR_PRICE_ID silently turns annual revenue into lifetime.
@@ -330,7 +323,7 @@ async function sendUpgradeLinkForUser({
 
       const inrPrices = isIndia ? getInrPrices() : null;
       const educatorPriceId = isIndia
-        ? inrPrices.educator
+        ? null // In India, kill recurring subscriptions — Lifetime Pass is the ONLY option
         : process.env.STRIPE_EDUCATOR_PRICE_ID;
       const lifetimePriceId = isIndia
         ? inrPrices.lifetime
@@ -364,15 +357,16 @@ async function sendUpgradeLinkForUser({
       ]);
 
       if (educatorSession?.url) educatorUrl = educatorSession.url;
+      else if (isIndia) educatorUrl = null;
       if (lifetimeSession?.url) lifetimeUrl = lifetimeSession.url;
     } catch (e) {
       log.warn('billing: could not pre-create Stripe checkout sessions for upgrade email', { error: e.message });
     }
   }
 
-  // 24-hour special offer: 20% discount ($3.99/yr, $7.99) or 50% PPP subsidy ($2.49/yr, $4.99; ₹199/yr, ₹399 in India)
-  const educatorPrice = isIndia ? '₹199/yr' : (isPppEligible ? '$2.49' : '$3.99');
-  const lifetimePrice = isIndia ? '₹399' : (isPppEligible ? '$4.99' : '$7.99');
+  // 24-hour special offer: 20% discount ($3.99/yr, $7.99) or 50% PPP subsidy ($2.49/yr, $4.99; ₹299 lifetime in India)
+  const educatorPrice = isIndia ? null : (isPppEligible ? '$2.49' : '$3.99');
+  const lifetimePrice = isIndia ? '₹299' : (isPppEligible ? '$4.99' : '$7.99');
 
   const { sendUpgradeLinkEmail } = require('../lib/notifications');
   await sendUpgradeLinkEmail({
@@ -477,18 +471,13 @@ router.post('/billing/public-checkout', async (req, res) => {
   let paymentMethodTypes = null;
   if (isIndia && !isDomain) {
     const inrPrices = getInrPrices();
-    if (plan === 'lifetime') {
-      resolvedPriceId = inrPrices.lifetime;
-      paymentMethodTypes = ['card', 'upi'];
-    } else if (plan === 'educator') {
-      resolvedPriceId = inrPrices.educator;
-      paymentMethodTypes = ['card', 'upi'];
-    }
+    resolvedPriceId = inrPrices.lifetime;
+    paymentMethodTypes = ['card', 'upi'];
   }
 
   try {
-    let isRecurring = true;
-    if (plan === 'lifetime') {
+    let isRecurring = plan !== 'lifetime' && !(isIndia && !isDomain);
+    if (plan === 'lifetime' || (isIndia && !isDomain)) {
       isRecurring = false;
     } else if (stripe.prices && typeof stripe.prices.retrieve === 'function') {
       try {
@@ -546,7 +535,7 @@ router.post('/billing/public-checkout', async (req, res) => {
       // customer so the buyer's portal (receipts) works post-purchase.
       sessionParams.customer_creation = 'always';
     }
-    if (isEducator && !isRecurring) {
+    if (isEducator && !isRecurring && !isIndia) {
       // Same fail-closed rule as the authed checkout: a one-time educator price
       // silently converts annual revenue into a lifetime pass.
       log.error('billing: educator price is one-time, not recurring — refusing public checkout', { priceId: resolvedPriceId });
@@ -867,7 +856,7 @@ router.get('/billing/status', requireAuth, async (req, res) => {
       isEdu,
       billingConfigured: individual ? individualBillingConfigured() : billingConfigured(),
       annualAvailable,
-      educatorAvailable: !!process.env.STRIPE_EDUCATOR_PRICE_ID,
+      educatorAvailable: userCountry === 'IN' ? false : !!process.env.STRIPE_EDUCATOR_PRICE_ID,
       exportQuota,
       pppDiscount,
       country: userCountry || null,
@@ -883,8 +872,8 @@ router.get('/billing/status', requireAuth, async (req, res) => {
       pricing: {
         ...PRICING.PRICES,
         ...(userCountry === 'IN' ? {
-          lifetime: { label: '₹399', full: null, period: 'one-time' },
-          educator: { label: '₹199', full: null, period: '/yr' },
+          lifetime: { label: '₹299', full: null, period: 'one-time' },
+          educator: null,
         } : {}),
         quotaLimit: PRICING.FREE_MONTHLY_EXPORT_LIMIT,
       },
