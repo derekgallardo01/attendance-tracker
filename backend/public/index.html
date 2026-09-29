@@ -6416,7 +6416,11 @@ async function startUpgradeCheckout(plan, btnId) {
       // Domain cards now send 'department' ($59/yr, resolves by plan name). The
       // legacy 'team' path stays: team+annual = the $149 Institution price, so a
       // bare 'team' must send 'once' to hit the retired $19.99 one-time price.
-      body: JSON.stringify({ plan: plan || 'lifetime', interval: plan === 'team' ? 'once' : 'annual' }),
+      body: JSON.stringify({
+        plan: plan || 'lifetime',
+        interval: plan === 'team' ? 'once' : 'annual',
+        conferenceId: (typeof state !== 'undefined' && state.conferenceId) ? state.conferenceId : null,
+      }),
     });
     const data = await res.json().catch(() => ({}));
     if (res.ok && data.url) {
@@ -6452,16 +6456,21 @@ function watchForUpgradeCompletion() {
       return;
     }
     try {
-      const res = await authFetch(`${state.backendUrl}/billing/status`);
+      const confParam = (typeof state !== 'undefined' && state.conferenceId) ? `?conferenceId=${encodeURIComponent(state.conferenceId)}` : '';
+      const res = await authFetch(`${state.backendUrl}/billing/status${confParam}`);
       if (!res.ok) return;
       const data = await res.json();
-      if (data.plan !== 'pro') return;
+      if (data.plan !== 'pro' && !data.meetingUnlocked) return;
       clearInterval(_upgradeWatchTimer);
       _upgradeWatchTimer = null;
       const modal = document.getElementById('upgrade-modal');
       if (modal && modal.style.display !== 'none') modal.style.display = 'none';
       await loadBillingStatus();
-      toast(t('billing.proNow', 'You’re Pro now — thanks for upgrading! 🎉'));
+      if (data.meetingUnlocked && data.plan !== 'pro') {
+        toast(t('billing.meetingUnlocked', 'This meeting is now unlocked! You can export your full attendance. 🎉'));
+      } else {
+        toast(t('billing.proNow', 'You’re Pro now — thanks for upgrading! 🎉'));
+      }
     } catch { /* transient — next tick retries */ }
   }, 5000);
 }
@@ -9838,6 +9847,23 @@ window.addEventListener('DOMContentLoaded', () => {
         </button>
       </div>
 
+      <!-- Plan: Single-Meeting Pass ($1.99 one-time) -->
+      <div id="plan-card-single-meeting" style="background:rgba(255,255,255,.02);border:1px dashed rgba(255,255,255,.2);border-radius:12px;padding:11px 14px 10px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <div>
+            <span style="font-weight:600;font-size:.85rem;color:#e3e3e3" data-i18n="upgrade.singleMeetingName">Single-Meeting Pass</span>
+            <span style="font-size:.72rem;color:#9aa0a6;display:block" data-i18n="upgrade.singleMeetingDesc">Export this meeting with no limits</span>
+          </div>
+          <div style="text-align:right">
+            <span class="price-single-meeting" style="font-weight:700;font-size:1rem;color:#e3e3e3">$1.99</span>
+            <span style="font-size:.68rem;color:#9aa0a6;display:block" data-i18n="upgrade.oneTime">one-time</span>
+          </div>
+        </div>
+        <button type="button" id="btn-upgrade-single-meeting" onclick="startUpgradeCheckout('single_meeting', 'btn-upgrade-single-meeting')" style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#e3e3e3;padding:7.5px 14px;border-radius:20px;font-weight:600;font-size:.78rem;cursor:pointer;transition:all .15s ease">
+          <span data-i18n="upgrade.ctaSingleMeeting">Unlock This Meeting — $1.99</span>
+        </button>
+      </div>
+
       <!-- Plan 3: Department (recurring domain plan, $59/yr) — workspace orgs only -->
       <div id="plan-card-team" style="display:none;background:rgba(255,255,255,.03);border:1px solid rgba(253,214,99,.25);border-radius:12px;padding:12px 14px;margin-bottom:10px">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
@@ -9866,6 +9892,11 @@ window.addEventListener('DOMContentLoaded', () => {
           <span data-i18n="upgrade.sendEmailLink">Teaching right now? Email me a link to upgrade later</span>
         </button>
         <div id="upgrade-email-link-status" style="display:none;font-size:.75rem;color:#81c995;font-weight:500;padding:3px 0"></div>
+      </div>
+
+      <!-- School Invoicing / Purchase Order Request -->
+      <div style="text-align:center;margin-bottom:8px">
+        <a href="mailto:derekgallardo01@gmail.com?subject=Attendance%20Tracker%20School%20Quote%20%2F%20Purchase%20Order%20Request&amp;body=Hello%20Derek,%0A%0AWe%20would%20like%20to%20request%20an%20official%20school%20invoice%2Fquote%20for%20Attendance%20Tracker.%0A%0ASchool%20Name:%0ACountry%20%2F%20State:%0AContact%20Person:%0ANumber%20of%20Teachers:%0A%0AThank%20you!" style="color:#9aa0a6;font-size:.72rem;text-decoration:underline" data-i18n="upgrade.schoolQuoteLink">Need a School Quote or Purchase Order? Request an invoice</a>
       </div>
 
       <!-- School reimbursement reassurance -->

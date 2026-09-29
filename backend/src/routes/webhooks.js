@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 const log = require('../lib/logger');
-const { updateNotificationWebhook } = require('../services/firestore');
+const { updateNotificationWebhook, unlockMeetingForUser } = require('../services/firestore');
 
 /**
  * Verify Svix HMAC-SHA256 webhook signatures (standard for Resend webhooks).
@@ -96,7 +96,41 @@ async function resendWebhookHandler(req, res) {
   }
 }
 
+/**
+ * Handle checkout.session.completed event specifically for single_meeting pass.
+ * Stores the unlocked meeting code in Firestore for that user/tenant and in the set of unlocked meetings.
+ *
+ * @param {Object} session - Stripe checkout session object
+ * @returns {Promise<boolean>} whether this session was handled as single_meeting
+ */
+async function handleSingleMeetingCheckout(session) {
+  if (!session) return false;
+  const plan = session.metadata?.plan;
+  const conferenceId = session.metadata?.conferenceId || session.client_reference_id?.replace(/^meet:/, '');
+
+  if (plan === 'single_meeting' || (conferenceId && session.metadata?.meetingPass === '1')) {
+    const ref = session.client_reference_id || '';
+    const email = session.metadata?.email || (ref.startsWith('user:') ? ref.slice(5) : (session.customer_details?.email || session.customer_email));
+    const domain = session.metadata?.domain || (email && email.includes('@') ? email.split('@')[1] : null);
+
+    if (conferenceId) {
+      await unlockMeetingForUser(domain, email, conferenceId, {
+        stripeSessionId: session.id,
+        amountTotal: session.amount_total,
+        currency: session.currency,
+        stripeCustomerId: session.customer || null,
+      });
+      log.info('webhooks: single meeting unlocked via checkout', { conferenceId, email, domain, sessionId: session.id });
+      return true;
+    } else {
+      log.warn('webhooks: single_meeting checkout completed without conferenceId', { sessionId: session.id, email });
+    }
+  }
+  return false;
+}
+
 module.exports = {
   resendWebhookHandler,
   verifySvixSignature,
+  handleSingleMeetingCheckout,
 };

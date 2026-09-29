@@ -122,6 +122,63 @@ async function getUserPlan(domain, email) {
   return out;
 }
 
+// ── Single-Meeting Pass unlocks ──
+async function unlockMeetingForUser(domain, email, conferenceId, meta = {}) {
+  if (!conferenceId) return;
+  const cid = String(conferenceId).trim().toLowerCase();
+  const emailLower = email ? String(email).trim().toLowerCase() : null;
+  const dom = domain || (emailLower && emailLower.includes('@') ? emailLower.split('@')[1] : null);
+
+  try {
+    const db = getDb();
+    await db.collection('unlocked_meetings').doc(cid).set({
+      conferenceId: cid,
+      email: emailLower,
+      domain: dom,
+      unlockedAt: FieldValue.serverTimestamp(),
+      source: 'single_meeting_pass',
+      ...meta,
+    }, { merge: true });
+
+    if (dom && emailLower) {
+      await tenantRef(dom).collection('users').doc(emailLower).set({
+        unlockedMeetings: FieldValue.arrayUnion(cid),
+        lastMeetingUnlockedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+    }
+    log.info('firestore: unlocked meeting', { conferenceId: cid, email: emailLower, domain: dom });
+  } catch (err) {
+    log.error('firestore: unlockMeetingForUser failed', { conferenceId: cid, email: emailLower, error: err.message });
+    throw err;
+  }
+}
+
+async function isMeetingUnlocked(domain, email, conferenceId) {
+  if (!conferenceId) return false;
+  const cid = String(conferenceId).trim().toLowerCase();
+  const emailLower = email ? String(email).trim().toLowerCase() : null;
+  const dom = domain || (emailLower && emailLower.includes('@') ? emailLower.split('@')[1] : null);
+
+  try {
+    const db = getDb();
+    const doc = await db.collection('unlocked_meetings').doc(cid).get();
+    if (doc.exists) return true;
+
+    if (dom && emailLower) {
+      const uDoc = await tenantRef(dom).collection('users').doc(emailLower).get();
+      if (uDoc.exists) {
+        const data = uDoc.data() || {};
+        if (Array.isArray(data.unlockedMeetings) && data.unlockedMeetings.includes(cid)) {
+          return true;
+        }
+      }
+    }
+  } catch (err) {
+    log.warn('firestore: isMeetingUnlocked check failed', { conferenceId: cid, email: emailLower, error: err.message });
+  }
+  return false;
+}
+
 // ── Colleague referral rewards (mutual 35-day Pro unlock) ──
 async function grantReferralReward(domain, email, referrerEmail) {
   try {
@@ -2327,6 +2384,7 @@ module.exports = {
   getAllUsersAcrossTenants,
   deleteUser, isUserDeleted,
   saveCheckin, getCheckins,
+  unlockMeetingForUser, isMeetingUnlocked,
   // ── Heavy full-DB admin reads: TTL-cached so a dashboard reload doesn't
   //    re-scan the whole users+events+meetings tree for each one. ──
   getAggregatedInsights: memoizeTTL(getAggregatedInsights, 900000), // 15 min TTL

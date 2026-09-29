@@ -60,7 +60,7 @@ function individualBillingConfigured() {
 // the fallthrough cascade once let an unknown/misspelled plan resolve to a
 // DIFFERENT product's price (the documented "$9.99 button charged team price"
 // class of bug).
-const KNOWN_PLANS = new Set(['team', 'department', 'educator', 'lifetime', 'individual']);
+const KNOWN_PLANS = new Set(['team', 'department', 'educator', 'lifetime', 'individual', 'single_meeting']);
 function normalizePlan(raw) {
   if (raw == null || raw === '') return { plan: null };            // caller omitted it — legacy inference
   if (typeof raw !== 'string') return { invalid: true };
@@ -110,6 +110,7 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
   if (planInvalid) {
     return res.status(400).json({ error: 'Unknown plan.' });
   }
+  const isSingleMeeting = normalizedPlan === 'single_meeting';
   const isEducator = normalizedPlan === 'educator';
   const isLifetime = normalizedPlan === 'lifetime';
   const isTeamPlan = normalizedPlan === 'team';
@@ -123,7 +124,7 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
   if (isDomainPlan && isPersonalDomain(domain)) {
     return res.status(400).json({ error: 'The domain license covers a Google Workspace domain. On a personal account, pick the Lifetime or Educator pass instead.' });
   }
-  const individual = (isEducator || isLifetime)
+  const individual = (isEducator || isLifetime || isSingleMeeting)
     ? true
     : (isDomainPlan
       ? false
@@ -142,17 +143,19 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
   const isIndia = userCountry === 'IN';
   const isPppEligible = !promo && userCountry && PPP_COUNTRIES.has(userCountry);
 
-  const priceId = (isIndia && (isLifetime || isEducator || individual))
-    ? getInrPrices().lifetime
-    : (isEducator
-      ? process.env.STRIPE_EDUCATOR_PRICE_ID // no fallback: educator ($4.99/yr) and individual-annual are DIFFERENT products at different amounts
-      : (isLifetime
-        ? process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID
-        : (isDepartment
-          ? process.env.STRIPE_DEPARTMENT_PRICE_ID // recurring $59/yr domain mid-tier; NO fallback so it can never resolve to the team/institution price
-          : (individual
-            ? (annual && process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID) || process.env.STRIPE_INDIVIDUAL_PRICE_ID
-            : (annual && process.env.STRIPE_ANNUAL_PRICE_ID) || process.env.STRIPE_PRICE_ID))));
+  const priceId = isSingleMeeting
+    ? (process.env.STRIPE_SINGLE_MEETING_PRICE_ID || 'price_1UKowpRPP93YBXrOjjKjUUlz')
+    : ((isIndia && (isLifetime || isEducator || individual))
+      ? getInrPrices().lifetime
+      : (isEducator
+        ? process.env.STRIPE_EDUCATOR_PRICE_ID // no fallback: educator ($4.99/yr) and individual-annual are DIFFERENT products at different amounts
+        : (isLifetime
+          ? process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID
+          : (isDepartment
+            ? process.env.STRIPE_DEPARTMENT_PRICE_ID // recurring $59/yr domain mid-tier; NO fallback so it can never resolve to the team/institution price
+            : (individual
+              ? (annual && process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID) || process.env.STRIPE_INDIVIDUAL_PRICE_ID
+              : (annual && process.env.STRIPE_ANNUAL_PRICE_ID) || process.env.STRIPE_PRICE_ID)))));
   if (!stripe || !priceId) {
     return res.status(503).json({ error: 'Billing is not configured yet.' });
   }
@@ -163,22 +166,28 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
     // `plan` in metadata: the refund/dispute handler routes on it, and it
     // rides payment_intent_data so one-time charges carry it end-to-end.
     let planName = normalizedPlan || (individual ? 'individual' : 'team');
-    if (isIndia && (isLifetime || isEducator || individual)) {
+    if (isIndia && (isLifetime || isEducator || individual) && !isSingleMeeting) {
       planName = 'lifetime';
     }
     const meta = individual
       ? { individual: '1', plan: planName, domain, email: email.toLowerCase() }
       : { individual: '0', plan: planName, domain, initiatedBy: email };
+
+    const conferenceId = req.body?.conferenceId ? String(req.body.conferenceId).trim().toLowerCase() : null;
+    if (isSingleMeeting && conferenceId) {
+      meta.conferenceId = conferenceId;
+      meta.meetingPass = '1';
+    }
     const backTo = individual ? 'history.html' : 'team.html';
 
     // In India, cross-border USD payments hit strict RBI card blocks and subscription
     // e-mandate failures. Route all individual/educator/lifetime checkouts exclusively
     // to the one-time Lifetime Pass in INR (₹299) with UPI + Card rails enabled.
     let resolvedPriceId = priceId;
-    let paymentMethodTypes = (isIndia && (isLifetime || isEducator || individual)) ? ['card', 'upi'] : null;
-    let isRecurring = !isLifetime && !(isIndia && (isLifetime || isEducator || individual));
+    let paymentMethodTypes = (isIndia && (isLifetime || isEducator || individual) && !isSingleMeeting) ? ['card', 'upi'] : null;
+    let isRecurring = !isLifetime && !isSingleMeeting && !(isIndia && (isLifetime || isEducator || individual));
 
-    if (isLifetime || (isIndia && (isLifetime || isEducator || individual))) {
+    if (isLifetime || isSingleMeeting || (isIndia && (isLifetime || isEducator || individual))) {
       isRecurring = false;
     } else if (stripe.prices && typeof stripe.prices.retrieve === 'function') {
       try {
@@ -850,10 +859,19 @@ router.get('/billing/status', requireAuth, async (req, res) => {
 
     const isEdu = isEduDomain(req.user?.email, req.user?.domain);
 
+    let meetingUnlocked = false;
+    if (req.query?.conferenceId) {
+      try {
+        const { isMeetingUnlocked } = require('../services/firestore');
+        meetingUnlocked = await isMeetingUnlocked(req.user.domain, req.user.email, req.query.conferenceId);
+      } catch (_) {}
+    }
+
     res.json({
       ...plan,
       individual,
       isEdu,
+      meetingUnlocked,
       billingConfigured: individual ? individualBillingConfigured() : billingConfigured(),
       annualAvailable,
       educatorAvailable: userCountry === 'IN' ? false : !!process.env.STRIPE_EDUCATOR_PRICE_ID,
@@ -956,6 +974,11 @@ async function webhookHandler(req, res) {
           break;
         }
         const ref = s.client_reference_id || '';
+        const { handleSingleMeetingCheckout } = require('./webhooks');
+        if (await handleSingleMeetingCheckout(s)) {
+          log.info('billing: handled single_meeting checkout in webhook', { sessionId: s.id });
+          break;
+        }
         if (ref.startsWith('user:') || s.metadata?.individual === '1') {
           // Individual (per-user) plan → write the user doc.
           const email = s.metadata?.email || (ref.startsWith('user:') ? ref.slice(5) : (s.customer_details?.email || s.customer_email));
