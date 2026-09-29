@@ -310,7 +310,7 @@ async function transferTeamAdmin(domain, fromEmail, toEmail) {
 
 // Activity event types indexed in the root admin_activity collection for fast dashboard reads.
 const ACTIVITY_EVENT_TYPES = new Set([
-  'signin', 'exported', 'export_success', 'upgraded', 'first_tracked', 'quota_warning_shown', 'tracked',
+  'signin', 'exported', 'export_success', 'upgraded', 'first_tracked', 'quota_warning_shown',
 ]);
 
 // One-time backfill helper to seed recent (7-day) activity into root admin_activity
@@ -666,6 +666,16 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
         type: 'tracked',
         meta: { conferenceId, participantCount: participants.length, distinctAttendees: distinctAttendeeCount },
       });
+      // In admin_activity, store one idempotent doc per meeting to prevent poll ticks from exploding
+      const cleanEmail = actorEmail.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const cleanConf = (conferenceId || 'unknown').replace(/[^a-z0-9]/g, '_');
+      getDb().collection('admin_activity').doc(`mtg_${cleanConf}_${cleanEmail}`).set({
+        email: actorEmail.toLowerCase(),
+        domain,
+        type: 'meeting',
+        meta: { conferenceId, participantCount: participants.length, distinctAttendees: distinctAttendeeCount },
+        createdAt: FieldValue.serverTimestamp(),
+      }, { merge: true }).catch(() => {});
     }
 
     log.info('firestore: persisted attendance', { domain, conferenceId, participants: participants.length });

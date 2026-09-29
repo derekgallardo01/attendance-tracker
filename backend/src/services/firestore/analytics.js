@@ -1174,7 +1174,7 @@ async function getReachOutSuggestions({ force = false } = {}) {
         const snap = await getDb().collectionGroup('events').get();
         return snap.docs;
       })(),
-      getDb().collectionGroup('users').get(),
+      getDb().collectionGroup('users').select('displayName', 'acquisitionSource', 'createdAt').get(),
       getDb().collectionGroup('outreach').get(),
     ]);
 
@@ -1216,7 +1216,7 @@ async function getReachOutSuggestions({ force = false } = {}) {
 
       // a) Just signed in within the last hour and never tracked
       const justSignedIn = lastEvent.type === 'signin' && (now - lastEvent.ts) < HOUR;
-      const hasTracked = events.some(e => e.type === 'tracked' || e.type === 'first_tracked');
+      const hasTracked = events.some(e => e.type === 'tracked' || e.type === 'first_tracked' || e.type === 'meeting');
       if (justSignedIn && !hasTracked) {
         suggestions.push({
           priority: 1,
@@ -1300,7 +1300,7 @@ async function getPowerUserPipeline({ days = 7, minMeetings = 3, force = false }
         const snap = await getDb().collectionGroup('events').get();
         return snap.docs;
       })(),
-      getDb().collectionGroup('users').get(),
+      getDb().collectionGroup('users').select('displayName', 'acquisitionSource').get(),
       getDb().collectionGroup('outreach').get(),
     ]);
 
@@ -1327,11 +1327,11 @@ async function getPowerUserPipeline({ days = 7, minMeetings = 3, force = false }
       const data = d.data();
       const ts = tsMs(data.createdAt) || (data.createdAt instanceof Date ? data.createdAt.getTime() : (typeof data.createdAt === 'string' ? Date.parse(data.createdAt) : 0)) || 0;
       if (!data.email || ts < cutoff) continue;
-      if (data.type !== 'tracked' && data.type !== 'exported') continue;
+      if (data.type !== 'tracked' && data.type !== 'meeting' && data.type !== 'exported') continue;
       // The owner and the legacy/test domains aren't outreach targets.
       if (isSuperAdmin(data.email) || FUNNEL_EXCLUDED_DOMAINS.has(domainOf(data.email))) continue;
       const row = (agg[data.email] ||= { email: data.email, meetings: new Set(), exported: 0, lastActivity: 0 });
-      if (data.type === 'tracked') {
+      if (data.type === 'tracked' || data.type === 'meeting') {
         // 'tracked' fires once per POLL, so raw counts are meaningless
         // (thousands per user). Count distinct MEETINGS via the
         // conferenceId meta; day-bucket as a fallback for legacy events.
@@ -1483,7 +1483,7 @@ async function getActivityPulse() {
       }
       if (age <= M15 && e.email) {
         activeNow.add(e.email);
-        if (e.type === 'tracked' || e.type === 'first_tracked') trackingUsersNow.add(e.email);
+        if (e.type === 'tracked' || e.type === 'first_tracked' || e.type === 'meeting') trackingUsersNow.add(e.email);
       }
     }
 

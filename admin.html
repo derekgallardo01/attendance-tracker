@@ -1874,7 +1874,7 @@
             <td>${u.exported}</td>
             <td style="color:var(--muted);font-size:.8rem">${esc(u.acquisitionSource || '—')}</td>
             <td style="color:var(--muted);font-size:.8rem">${timeAgo(u.lastActivityAt)}</td>
-            <td onclick="event.stopPropagation()"><div style="display:flex;gap:4px;justify-content:flex-end"><button onclick="openEmailModal('${escArg(u.email)}','${escArg(u.domain)}','${escArg(u.displayName)}','${u.tracked}','${u.exported}','?')" style="background:var(--accent);color:var(--bg);border:none;padding:4px 8px;border-radius:6px;font-size:.72rem;font-weight:600;cursor:pointer"></button><button onclick="markContacted('${escArg(u.email)}','${escArg(u.domain)}')" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:.72rem;cursor:pointer">✓</button></div></td>
+            <td onclick="event.stopPropagation()"><div style="display:flex;gap:4px;justify-content:flex-end"><button onclick="openEmailModal('${escArg(u.email)}','${escArg(u.domain)}','${escArg(u.displayName)}','${u.tracked}','${u.exported}','?')" style="background:var(--accent);color:var(--bg);border:none;padding:4px 8px;border-radius:6px;font-size:.72rem;font-weight:600;cursor:pointer">Email</button><button onclick="markContacted('${escArg(u.email)}','${escArg(u.domain)}')" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:.72rem;cursor:pointer">✓</button></div></td>
           </tr>
         `).join('');
       } catch (err) {
