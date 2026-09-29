@@ -82,6 +82,45 @@
     .badge-active { background: rgba(74,222,128,.15); color: var(--accent); }
     .badge-inactive { background: rgba(248,81,73,.15); color: var(--error); }
 
+    /* Pill buttons for Activity filtering */
+    .pill-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 14px;
+      padding: 3px 10px;
+      font-size: .75rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .15s ease;
+    }
+    .pill-btn:hover {
+      color: var(--text);
+      border-color: var(--muted);
+    }
+    .pill-btn.active {
+      background: rgba(88,166,255,.15);
+      border-color: var(--blue);
+      color: var(--blue);
+      font-weight: 600;
+    }
+
+    .search-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background .12s ease;
+    }
+    .search-item:hover {
+      background: rgba(255,255,255,.05);
+    }
+    .search-item:last-child {
+      border-bottom: none;
+    }
+
     .login-screen { text-align: center; padding: 80px 20px; }
     .login-screen h2 { margin-bottom: 16px; }
     .login-screen p { color: var(--muted); margin-bottom: 24px; }
@@ -256,11 +295,27 @@
 
     <!-- Dashboard -->
     <div id="dashboard">
-      <div class="header">
-        <h1>Admin Dashboard</h1>
-        <div>
+      <div class="header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:32px">
+        <div style="display:flex;align-items:center;gap:16px;flex:1;min-width:300px">
+          <h1>Admin Dashboard</h1>
+          <div class="header-search-wrap" style="position:relative;flex:1;max-width:320px">
+            <input type="text" id="global-search-input" placeholder="🔍 Search user or domain... (Ctrl+K)"
+                   oninput="onGlobalSearchInput(this.value)"
+                   onfocus="onGlobalSearchFocus()"
+                   autocomplete="off"
+                   style="width:100%;padding:7px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.82rem;outline:none" />
+            <div id="global-search-dropdown" class="custom-scroll"
+                 style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:6px;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.6);max-height:360px;overflow-y:auto;z-index:1000">
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button id="btn-auto-refresh" class="btn btn-secondary" onclick="toggleAutoRefresh()" style="display:inline-flex;align-items:center;gap:6px;font-size:.78rem;padding:6px 12px" title="Toggle 30s auto-refresh">
+            <span id="live-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted)"></span>
+            <span id="live-text">Live / Auto-refresh (30s)</span>
+          </button>
           <span class="user" id="user-email"></span>
-          <button class="btn btn-secondary" onclick="signOut()" style="margin-left:8px">Sign out</button>
+          <button class="btn btn-secondary" onclick="signOut()" style="margin-left:4px">Sign out</button>
           <button class="btn btn-secondary" onclick="loadDashboard(true)" style="margin-left:4px">Refresh</button>
         </div>
       </div>
@@ -291,6 +346,11 @@
         <div class="stat-card">
           <div class="stat-label">Exports</div>
           <div class="stat-value" id="stat-exports">—</div>
+        </div>
+        <div class="stat-card" id="stat-card-mrr" style="display:none">
+          <div class="stat-label">Active Pro / MRR</div>
+          <div class="stat-value green" id="stat-pro-users">—</div>
+          <div class="stat-sub" id="stat-pro-mrr" style="font-size:.78rem;color:var(--muted);margin-top:4px">—</div>
         </div>
       </div>
 
@@ -389,7 +449,10 @@
           <div class="section" style="margin-bottom:0">
             <h2 style="display:flex;justify-content:space-between;align-items:center">
               <span>Reach out now</span>
-              <button class="btn btn-secondary" style="font-size:.7rem;padding:4px 8px" onclick="loadSuggestions()">↻</button>
+              <div>
+                <button class="btn btn-secondary" style="font-size:.7rem;padding:4px 8px;margin-right:4px" onclick="exportReachOutCSV()">Export CSV</button>
+                <button class="btn btn-secondary" style="font-size:.7rem;padding:4px 8px" onclick="loadSuggestions()">↻</button>
+              </div>
             </h2>
             <div id="suggestions-list" class="custom-scroll" style="display:flex;flex-direction:column;gap:10px;max-height:380px;overflow-y:auto;padding-right:6px">
               <div style="color:var(--muted);font-size:.85rem">Loading…</div>
@@ -397,11 +460,18 @@
           </div>
           <!-- Activity feed -->
           <div class="section" style="margin-bottom:0">
-            <h2 style="display:flex;justify-content:space-between;align-items:center">
+            <h2 style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
               <span><span class="live-dot"></span>Live activity</span>
               <span style="font-size:.7rem;color:var(--muted);font-weight:400" id="activity-stamp">—</span>
             </h2>
-            <div id="activity-feed" class="custom-scroll" style="display:flex;flex-direction:column;gap:6px;max-height:380px;overflow-y:auto;padding-right:6px;font-size:.85rem">
+            <div class="activity-filter-pills" style="display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap">
+              <button class="pill-btn active" data-filter="all" onclick="filterActivity('all')">All</button>
+              <button class="pill-btn" data-filter="meetings" onclick="filterActivity('meetings')">👥 Meetings</button>
+              <button class="pill-btn" data-filter="exports" onclick="filterActivity('exports')">📊 Exports</button>
+              <button class="pill-btn" data-filter="upgrades" onclick="filterActivity('upgrades')">💎 Upgrades</button>
+              <button class="pill-btn" data-filter="signins" onclick="filterActivity('signins')">🔑 Signins</button>
+            </div>
+            <div id="activity-feed" class="custom-scroll" style="display:flex;flex-direction:column;gap:6px;max-height:340px;overflow-y:auto;padding-right:6px;font-size:.85rem">
               <div style="color:var(--muted)">Loading…</div>
             </div>
           </div>
@@ -411,7 +481,10 @@
         <div class="section">
           <h2 style="display:flex;justify-content:space-between;align-items:center">
             <span>⭐ Power users — not yet contacted</span>
-            <span style="font-size:.7rem;color:var(--muted);font-weight:400" id="power-users-stamp">last 7 days, 3+ meetings</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:.7rem;color:var(--muted);font-weight:400" id="power-users-stamp">last 7 days, 3+ meetings</span>
+              <button class="btn btn-secondary" style="font-size:.7rem;padding:4px 8px" onclick="exportPowerUsersCSV()">Export CSV</button>
+            </div>
           </h2>
           <div class="table-scroll">
           <table>
@@ -1015,6 +1088,78 @@
     const SUPER_ADMIN_EMAIL = 'derekgallardo01@gmail.com';
     let sessionToken = null;
     let userEmail = null;
+    let autoRefreshTimer = null;
+    let cachedSuggestions = [];
+    let cachedPowerUsers = [];
+    let cachedActivityEvents = [];
+    let currentActivityFilter = 'all';
+    const _searchRegistry = {
+      users: new Map(),
+      domains: new Map(),
+    };
+
+    function initAutoRefresh() {
+      const saved = localStorage.getItem('admin_auto_refresh');
+      const enabled = saved === null || saved === 'true';
+      if (enabled) {
+        enableAutoRefresh(true);
+      } else {
+        updateAutoRefreshUI(false);
+      }
+    }
+
+    function toggleAutoRefresh() {
+      const isEnabled = localStorage.getItem('admin_auto_refresh') === 'true' || (localStorage.getItem('admin_auto_refresh') === null && autoRefreshTimer !== null);
+      if (isEnabled) {
+        disableAutoRefresh();
+      } else {
+        enableAutoRefresh();
+      }
+    }
+
+    function enableAutoRefresh(initial = false) {
+      localStorage.setItem('admin_auto_refresh', 'true');
+      updateAutoRefreshUI(true);
+      if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+      autoRefreshTimer = setInterval(() => {
+        if (sessionToken && userEmail === SUPER_ADMIN_EMAIL) {
+          loadPulse().catch(() => {});
+          loadActivity().catch(() => {});
+          loadSuggestions().catch(() => {});
+        }
+      }, 30000);
+    }
+
+    function disableAutoRefresh() {
+      localStorage.setItem('admin_auto_refresh', 'false');
+      updateAutoRefreshUI(false);
+      if (autoRefreshTimer) {
+        clearInterval(autoRefreshTimer);
+        autoRefreshTimer = null;
+      }
+    }
+
+    function updateAutoRefreshUI(enabled) {
+      const btn = document.getElementById('btn-auto-refresh') || document.getElementById('btn-live-toggle');
+      const dot = document.getElementById('live-dot');
+      const txt = document.getElementById('live-text');
+      if (!btn || !dot) return;
+      if (enabled) {
+        dot.style.background = 'var(--accent, #4ade80)';
+        dot.style.boxShadow = '0 0 6px var(--accent, #4ade80)';
+        btn.style.borderColor = 'var(--accent, #4ade80)';
+        btn.style.color = 'var(--accent, #4ade80)';
+        btn.title = 'Click to disable 30s auto-refresh';
+        if (txt) txt.textContent = 'Live / Auto-refresh (30s)';
+      } else {
+        dot.style.background = 'var(--muted, #8b949e)';
+        dot.style.boxShadow = 'none';
+        btn.style.borderColor = 'var(--border, #30363d)';
+        btn.style.color = 'var(--muted, #8b949e)';
+        btn.title = 'Click to enable 30s auto-refresh';
+        if (txt) txt.textContent = 'Live / Auto-refresh (30s)';
+      }
+    }
 
     function setLoadingStep(text, sub) {
       document.getElementById('loading-text').textContent = text;
@@ -1057,6 +1202,7 @@
       sessionToken = null;
       userEmail = null;
       try { localStorage.removeItem('att_session_token'); } catch (e) {}
+      if (autoRefreshTimer) { clearInterval(autoRefreshTimer); autoRefreshTimer = null; }
       if (typeof liveRefreshTimer !== 'undefined') clearInterval(liveRefreshTimer);
       if (_preloadTimer) clearTimeout(_preloadTimer);
       loadedTabs.clear();
@@ -1088,9 +1234,25 @@
           document.getElementById('stat-exports').textContent = data.yourDomain?.exports || 0;
         }
 
+        const proCount = data.activeProUsers != null ? data.activeProUsers : (data.globalStats?.activeProUsers);
+        const mrr = data.estimatedMrr != null ? data.estimatedMrr : (data.globalStats?.estimatedMrr);
+        const mrrCard = document.getElementById('stat-card-mrr');
+        if (mrrCard && (proCount != null || mrr != null)) {
+          mrrCard.style.display = '';
+          document.getElementById('stat-pro-users').textContent = `${proCount || 0} Pro`;
+          document.getElementById('stat-pro-mrr').textContent = `~$${mrr || 0} MRR`;
+        }
+
         // Tenant rows
         const tenantBody = document.getElementById('tenant-rows');
         if (data.tenants?.length > 0) {
+          data.tenants.forEach(t => {
+            if (t.domain) {
+              const d = t.domain.toLowerCase().trim();
+              const prev = _searchRegistry.domains.get(d) || { domain: d, count: 0, isCluster: false };
+              _searchRegistry.domains.set(d, prev);
+            }
+          });
           tenantBody.innerHTML = data.tenants.map(t => `
             <tr>
               <td>${esc(t.domain)}</td>
@@ -1142,6 +1304,7 @@
           loadPowerUsers();
           loadMarketplaceReviews();
           loadDueReminders();
+          loadSchoolClusters();
           break;
         case 'users':
           loadAllUsers();
@@ -1191,7 +1354,7 @@
         document.getElementById('tab-btn-reviews').style.display = '';
         document.getElementById('tab-btn-clusters').style.display = '';
         loadTab(activeTab, force);
-        startLiveRefresh();
+        initAutoRefresh();
         idlePreloadOtherTabs();
       }
 
@@ -1492,6 +1655,84 @@
     const timeAgo = AttAdmin.timeAgo;
     const priorityBadge = AttAdmin.priorityBadge;
 
+    function downloadCSV(filename, rows) {
+      const escapeCell = (v) => {
+        if (v == null) return '';
+        const s = String(v);
+        if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+        return s;
+      };
+      const csvContent = rows.map(r => r.map(escapeCell).join(',')).join('\r\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportReachOutCSV() {
+      if (!cachedSuggestions || !cachedSuggestions.length) {
+        alert('No reach out leads loaded yet to export.');
+        return;
+      }
+      const header = ['Email', 'Name', 'Domain', 'Priority', 'Reason', 'Last Event'];
+      const rows = [header, ...cachedSuggestions.map(s => [
+        s.email || '',
+        s.displayName || '',
+        s.domain || '',
+        s.priority || '',
+        s.reason || '',
+        s.lastEventAt || '',
+      ])];
+      downloadCSV('reach-out-leads.csv', rows);
+    }
+
+    function exportPowerUsersCSV() {
+      if (!cachedPowerUsers || !cachedPowerUsers.length) {
+        alert('No power users loaded yet to export.');
+        return;
+      }
+      const header = ['Email', 'Name', 'Domain', 'Meetings', 'Exports', 'Source', 'Last Active'];
+      const rows = [header, ...cachedPowerUsers.map(u => [
+        u.email || '',
+        u.displayName || '',
+        u.domain || '',
+        u.tracked || 0,
+        u.exported || 0,
+        u.acquisitionSource || '',
+        u.lastActivityAt || '',
+      ])];
+      downloadCSV('power-users.csv', rows);
+    }
+
+    async function dismissSuggestionCard(email, cardId) {
+      const card = document.getElementById(cardId);
+      if (card) {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(-6px)';
+        setTimeout(() => { if (card) card.remove(); }, 250);
+      }
+      cachedSuggestions = (cachedSuggestions || []).filter(s => s.email !== email);
+      if (cachedSuggestions.length === 0) {
+        setTimeout(() => {
+          const list = document.getElementById('suggestions-list');
+          if (list && (!list.children.length || list.querySelectorAll('[id^="suggestion-card-"]').length === 0)) {
+            list.innerHTML = '<div style="color:var(--muted);font-size:.85rem;padding:8px 0">No suggestions right now. Quiet day.</div>';
+          }
+        }, 300);
+      }
+      try {
+        await fetch(`${BACKEND_URL}/admin/dismiss-suggestion`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${sessionToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+      } catch (err) {
+        console.error('Failed to dismiss suggestion:', err);
+      }
+    }
+
     async function loadSuggestions() {
       const list = document.getElementById('suggestions-list');
       try {
@@ -1501,13 +1742,15 @@
           return;
         }
         const { suggestions } = await res.json();
+        cachedSuggestions = suggestions || [];
+        registerSearchEntities('users', cachedSuggestions);
         if (!list) return;
         if (!suggestions || !suggestions.length) {
           list.innerHTML = '<div style="color:var(--muted);font-size:.85rem;padding:8px 0">No suggestions right now. Quiet day.</div>';
           return;
         }
-        list.innerHTML = suggestions.map(s => `
-          <div style="padding:10px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:8px">
+        list.innerHTML = suggestions.map((s, idx) => `
+          <div id="suggestion-card-${idx}" style="padding:10px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:8px;transition:opacity .25s ease,transform .25s ease">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px">
               <div>
                 <div style="font-weight:600;font-size:.88rem">${esc(s.displayName || s.email)}</div>
@@ -1520,6 +1763,7 @@
             <div style="display:flex;gap:6px">
               <a href="mailto:${esc(s.email)}?subject=${encodeURIComponent('Quick question about Attendance Tracker')}" style="background:var(--accent);color:var(--bg);text-decoration:none;padding:4px 10px;border-radius:6px;font-size:.72rem;font-weight:600">Email</a>
               <button onclick="markContacted('${escArg(s.email)}','${escArg(s.domain)}')" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:.72rem;cursor:pointer">✓ Mark contacted</button>
+              <button onclick="dismissSuggestionCard('${escArg(s.email)}', 'suggestion-card-${idx}')" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:.72rem;cursor:pointer;opacity:.8" title="Dismiss suggestion">✕ Dismiss</button>
             </div>
           </div>
         `).join('');
@@ -1822,6 +2066,249 @@
       }
     }
 
+    const PUBLIC_DOMAINS_SET = new Set([
+      'gmail.com', 'googlemail.com', 'yahoo.com', 'yahoo.co.uk', 'yahoo.co.in',
+      'hotmail.com', 'outlook.com', 'live.com', 'msn.com', 'icloud.com', 'me.com',
+      'aol.com', 'mail.ru', 'protonmail.com', 'proton.me', 'zoho.com', 'yandex.ru'
+    ]);
+
+    const schoolClusterBadge = AttAdmin.schoolClusterBadge;
+
+    function getClusterBadge(domainOrEmail) {
+      if (!domainOrEmail) return '';
+      let d = domainOrEmail.toLowerCase().trim();
+      if (d.includes('@')) d = d.split('@')[1];
+      if (!d || PUBLIC_DOMAINS_SET.has(d)) return '';
+      const c = _clustersCache.find(x => x.domain && x.domain.toLowerCase() === d);
+      if (c && c.teacherCount >= 2) {
+        return ' ' + schoolClusterBadge(c.teacherCount);
+      }
+      const reg = _searchRegistry.domains.get(d);
+      if (reg && reg.count >= 2) {
+        return ' ' + schoolClusterBadge(reg.count);
+      }
+      return '';
+    }
+
+    function registerSearchEntities(type, list) {
+      if (!list) return;
+      if (type === 'users') {
+        list.forEach(u => {
+          if (u.email) {
+            const em = u.email.toLowerCase().trim();
+            const dom = (u.domain || em.split('@')[1] || '').toLowerCase().trim();
+            _searchRegistry.users.set(em, {
+              email: u.email,
+              domain: dom,
+              displayName: u.displayName || '',
+            });
+            if (dom && !PUBLIC_DOMAINS_SET.has(dom)) {
+              const prev = _searchRegistry.domains.get(dom) || { domain: dom, users: new Set(), count: 0, isCluster: false };
+              if (!prev.users) prev.users = new Set();
+              prev.users.add(em);
+              prev.count = Math.max(prev.users.size, prev.count);
+              _searchRegistry.domains.set(dom, prev);
+            }
+          }
+        });
+      } else if (type === 'clusters') {
+        list.forEach(c => {
+          if (c.domain) {
+            const dom = c.domain.toLowerCase().trim();
+            const prev = _searchRegistry.domains.get(dom) || { domain: dom, users: new Set(), count: c.teacherCount || 0, isCluster: true };
+            if (!prev.users) prev.users = new Set();
+            prev.isCluster = true;
+            if (c.teacherCount) prev.count = Math.max(prev.count, c.teacherCount);
+            _searchRegistry.domains.set(dom, prev);
+          }
+        });
+      }
+    }
+
+    function onGlobalSearchInput(val) {
+      const q = (val || '').trim().toLowerCase();
+      const dd = document.getElementById('global-search-dropdown');
+      if (!dd) return;
+      if (!q) {
+        dd.style.display = 'none';
+        return;
+      }
+
+      const matchedUsers = [];
+      for (const u of _searchRegistry.users.values()) {
+        if (u.email.toLowerCase().includes(q) || (u.displayName && u.displayName.toLowerCase().includes(q))) {
+          matchedUsers.push(u);
+          if (matchedUsers.length >= 8) break;
+        }
+      }
+
+      const matchedDomains = [];
+      for (const d of _searchRegistry.domains.values()) {
+        if (d.domain.includes(q)) {
+          matchedDomains.push(d);
+          if (matchedDomains.length >= 5) break;
+        }
+      }
+
+      if (!matchedUsers.length && !matchedDomains.length) {
+        dd.innerHTML = '<div style="padding:12px;color:var(--muted);font-size:.8rem;text-align:center">No users or domains match</div>';
+        dd.style.display = 'block';
+        return;
+      }
+
+      let html = '';
+      if (matchedDomains.length) {
+        html += `<div style="padding:6px 12px;font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;background:rgba(255,255,255,.02)">Organizations / Domains</div>`;
+        html += matchedDomains.map(d => `
+          <div class="search-item" onclick="selectSearchDomain('${escArg(d.domain)}')">
+            <div>
+              <div style="font-weight:600;font-size:.82rem">🏢 ${esc(d.domain)}</div>
+              <div style="font-size:.72rem;color:var(--muted)">${d.count ? `${d.count} user(s)` : 'Organization'}${d.isCluster ? ' · 🏫 School Cluster' : ''}</div>
+            </div>
+            <span class="badge" style="background:rgba(74,222,128,.15);color:var(--accent);font-size:.68rem">Domain</span>
+          </div>
+        `).join('');
+      }
+
+      if (matchedUsers.length) {
+        html += `<div style="padding:6px 12px;font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;background:rgba(255,255,255,.02)">Users</div>`;
+        html += matchedUsers.map(u => `
+          <div class="search-item" onclick="selectSearchUser('${escArg(u.email)}', '${escArg(u.domain)}')">
+            <div>
+              <div style="font-weight:600;font-size:.82rem">${esc(u.displayName || u.email)}</div>
+              <div style="font-size:.72rem;color:var(--muted)">${esc(u.email)} · ${esc(u.domain)}</div>
+            </div>
+            <span class="badge" style="background:rgba(88,166,255,.15);color:var(--blue);font-size:.68rem">User</span>
+          </div>
+        `).join('');
+      }
+
+      dd.innerHTML = html;
+      dd.style.display = 'block';
+    }
+
+    function onGlobalSearchFocus() {
+      if (_searchRegistry.users.size === 0 && sessionToken && userEmail === SUPER_ADMIN_EMAIL) {
+        fetch(`${BACKEND_URL}/admin/all-users`, { headers: { 'Authorization': `Bearer ${sessionToken}` } })
+          .then(r => r.ok ? r.json() : null)
+          .then(data => { if (data?.users) registerSearchEntities('users', data.users); })
+          .catch(() => {});
+      }
+      const input = document.getElementById('global-search-input');
+      if (input && input.value) onGlobalSearchInput(input.value);
+    }
+
+    function selectSearchUser(email, domain) {
+      const dd = document.getElementById('global-search-dropdown');
+      if (dd) dd.style.display = 'none';
+      const input = document.getElementById('global-search-input');
+      if (input) input.value = '';
+      openUserModal(email, domain);
+    }
+
+    function selectSearchDomain(domain) {
+      const dd = document.getElementById('global-search-dropdown');
+      if (dd) dd.style.display = 'none';
+      const input = document.getElementById('global-search-input');
+      if (input) input.value = '';
+      const cluster = _clustersCache.find(c => c.domain.toLowerCase() === domain.toLowerCase());
+      if (cluster) {
+        switchAdminTab('clusters');
+      } else {
+        switchAdminTab('orgs');
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        const input = document.getElementById('global-search-input');
+        if (input) {
+          input.focus();
+          input.select();
+        }
+      } else if (e.key === 'Escape') {
+        const dd = document.getElementById('global-search-dropdown');
+        if (dd) dd.style.display = 'none';
+      }
+    });
+
+    const searchInput = document.getElementById('global-search-input');
+    if (searchInput) {
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const dd = document.getElementById('global-search-dropdown');
+          if (dd && dd.style.display !== 'none') {
+            const firstItem = dd.querySelector('.search-item');
+            if (firstItem) firstItem.click();
+          }
+        }
+      });
+    }
+
+    document.addEventListener('click', (e) => {
+      const wrap = document.querySelector('.header-search-wrap');
+      if (wrap && !wrap.contains(e.target)) {
+        const dd = document.getElementById('global-search-dropdown');
+        if (dd) dd.style.display = 'none';
+      }
+    });
+
+    function filterActivity(type) {
+      currentActivityFilter = type;
+      document.querySelectorAll('.activity-filter-pills .pill-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === type);
+      });
+      renderActivityFeed();
+    }
+
+    function renderActivityFeed() {
+      const feed = document.getElementById('activity-feed');
+      if (!feed) return;
+      if (!cachedActivityEvents || !cachedActivityEvents.length) {
+        feed.innerHTML = '<div style="color:var(--muted)">No activity yet</div>';
+        return;
+      }
+
+      let filtered = cachedActivityEvents;
+      if (currentActivityFilter === 'meetings') {
+        filtered = cachedActivityEvents.filter(e => e.type === 'tracked' || e.type === 'meeting' || e.type === 'first_tracked');
+      } else if (currentActivityFilter === 'exports') {
+        filtered = cachedActivityEvents.filter(e => e.type === 'exported' || e.type === 'export_success');
+      } else if (currentActivityFilter === 'upgrades') {
+        filtered = cachedActivityEvents.filter(e => e.type === 'upgraded');
+      } else if (currentActivityFilter === 'signins') {
+        filtered = cachedActivityEvents.filter(e => e.type === 'signin');
+      }
+
+      if (!filtered.length) {
+        feed.innerHTML = `<div style="color:var(--muted);padding:8px 0">No ${esc(currentActivityFilter)} events recorded</div>`;
+        return;
+      }
+
+      const icon = { signin: '🔑', tracked: '👥', meeting: '👥', exported: '📊', export_success: '📊', upgraded: '💎', quota_warning_shown: '⚠️' };
+      const label = { signin: 'signed in', tracked: 'tracked a meeting', meeting: 'tracked a meeting', exported: 'exported to Sheets', export_success: 'exported to Sheets', upgraded: 'upgraded to Pro', quota_warning_shown: 'hit quota warning' };
+      const isSameAction = (t1, t2) => (t1 === t2) || (t1 === 'meeting' && t2 === 'tracked') || (t1 === 'tracked' && t2 === 'meeting') || (t1 === 'exported' && t2 === 'export_success') || (t1 === 'export_success' && t2 === 'exported');
+      const collapsed = [];
+      for (const e of filtered) {
+        const last = collapsed[collapsed.length - 1];
+        if (last && last.email === e.email && isSameAction(last.type, e.type)) last.count++;
+        else collapsed.push({ ...e, count: 1 });
+      }
+      feed.innerHTML = collapsed.map(e => `
+        <div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
+          <div style="font-size:.95rem;flex-shrink:0">${icon[e.type] || '•'}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:.82rem"><strong style="color:#c9d1d9">${esc(e.email || 'unknown')}</strong> ${esc(label[e.type] || e.type)}${e.count > 1 ? ` <span style="background:var(--surface-elevated,#21262d);border:1px solid var(--border);border-radius:10px;padding:0 7px;font-size:.68rem;color:var(--muted)">×${e.count}</span>` : ''}</div>
+            <div style="font-size:.7rem;color:var(--muted);display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-top:2px">
+              <span>${timeAgo(e.createdAt)} · ${esc(e.domain)}</span>
+              ${getClusterBadge(e.domain || e.email)}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
     async function loadActivity() {
       const feed = document.getElementById('activity-feed');
       const stamp = document.getElementById('activity-stamp');
@@ -1834,35 +2321,34 @@
         }
         const { events } = await res.json();
         if (stamp) stamp.textContent = `Updated ${new Date().toLocaleTimeString()}`;
-        if (!feed) return;
-        if (!events || !events.length) {
-          feed.innerHTML = '<div style="color:var(--muted)">No activity yet</div>';
-          return;
-        }
-        const icon = { signin: '🔑', tracked: '👥', meeting: '👥', exported: '📊', export_success: '📊', upgraded: '💎', quota_warning_shown: '⚠️' };
-        const label = { signin: 'signed in', tracked: 'tracked a meeting', meeting: 'tracked a meeting', exported: 'exported to Sheets', export_success: 'exported to Sheets', upgraded: 'upgraded to Pro', quota_warning_shown: 'hit quota warning' };
-        // Collapse consecutive same-user same-action events
-        const isSameAction = (t1, t2) => (t1 === t2) || (t1 === 'meeting' && t2 === 'tracked') || (t1 === 'tracked' && t2 === 'meeting') || (t1 === 'exported' && t2 === 'export_success') || (t1 === 'export_success' && t2 === 'exported');
-        const collapsed = [];
-        for (const e of events) {
-          const last = collapsed[collapsed.length - 1];
-          if (last && last.email === e.email && isSameAction(last.type, e.type)) last.count++;
-          else collapsed.push({ ...e, count: 1 });
-        }
-        feed.innerHTML = collapsed.map(e => `
-          <div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
-            <div style="font-size:.95rem;flex-shrink:0">${icon[e.type] || '•'}</div>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:.82rem"><strong style="color:#c9d1d9">${esc(e.email || 'unknown')}</strong> ${esc(label[e.type] || e.type)}${e.count > 1 ? ` <span style="background:var(--surface-elevated,#21262d);border:1px solid var(--border);border-radius:10px;padding:0 7px;font-size:.68rem;color:var(--muted)">×${e.count}</span>` : ''}</div>
-              <div style="font-size:.7rem;color:var(--muted)">${timeAgo(e.createdAt)} · ${esc(e.domain)}</div>
-            </div>
-          </div>
-        `).join('');
+        cachedActivityEvents = events || [];
+        registerSearchEntities('users', cachedActivityEvents.filter(e => e.email).map(e => ({ email: e.email, domain: e.domain })));
+        renderActivityFeed();
       } catch (err) {
         console.error('activity load failed:', err);
         if (feed) feed.innerHTML = `<div style="color:var(--error,#f85149);padding:8px 0">Failed to load activity. <button class="btn btn-secondary" style="font-size:.7rem;padding:2px 6px;margin-left:6px" onclick="loadActivity()">Retry</button></div>`;
         if (stamp) stamp.textContent = 'Error';
       }
+    }
+
+    function renderPowerUsers() {
+      const body = document.getElementById('power-users-rows');
+      if (!body) return;
+      if (!cachedPowerUsers || !cachedPowerUsers.length) {
+        body.innerHTML = '<tr><td colspan="7" style="color:var(--muted)">No uncontacted power users right now.</td></tr>';
+        return;
+      }
+      body.innerHTML = cachedPowerUsers.map(u => `
+        <tr onclick="openUserModal('${escArg(u.email)}','${escArg(u.domain)}')" style="cursor:pointer">
+          <td>${esc(u.displayName || u.email)}<div class="muted" style="font-size:.7rem">${esc(u.email)}</div></td>
+          <td style="color:var(--muted);font-size:.8rem"><div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px"><span>${esc(u.domain)}</span>${getClusterBadge(u.domain || u.email)}</div></td>
+          <td>${u.tracked}</td>
+          <td>${u.exported}</td>
+          <td style="color:var(--muted);font-size:.8rem">${esc(u.acquisitionSource || '—')}</td>
+          <td style="color:var(--muted);font-size:.8rem">${timeAgo(u.lastActivityAt)}</td>
+          <td onclick="event.stopPropagation()"><div style="display:flex;gap:4px;justify-content:flex-end"><button onclick="openEmailModal('${escArg(u.email)}','${escArg(u.domain)}','${escArg(u.displayName)}','${u.tracked}','${u.exported}','?')" style="background:var(--accent);color:var(--bg);border:none;padding:4px 8px;border-radius:6px;font-size:.72rem;font-weight:600;cursor:pointer">Email</button><button onclick="markContacted('${escArg(u.email)}','${escArg(u.domain)}')" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:.72rem;cursor:pointer">✓</button></div></td>
+        </tr>
+      `).join('');
     }
 
     async function loadPowerUsers() {
@@ -1874,22 +2360,9 @@
           return;
         }
         const { users } = await res.json();
-        if (!body) return;
-        if (!users || !users.length) {
-          body.innerHTML = '<tr><td colspan="7" style="color:var(--muted)">No uncontacted power users right now.</td></tr>';
-          return;
-        }
-        body.innerHTML = users.map(u => `
-          <tr onclick="openUserModal('${escArg(u.email)}','${escArg(u.domain)}')" style="cursor:pointer">
-            <td>${esc(u.displayName || u.email)}<div class="muted" style="font-size:.7rem">${esc(u.email)}</div></td>
-            <td style="color:var(--muted);font-size:.8rem">${esc(u.domain)}</td>
-            <td>${u.tracked}</td>
-            <td>${u.exported}</td>
-            <td style="color:var(--muted);font-size:.8rem">${esc(u.acquisitionSource || '—')}</td>
-            <td style="color:var(--muted);font-size:.8rem">${timeAgo(u.lastActivityAt)}</td>
-            <td onclick="event.stopPropagation()"><div style="display:flex;gap:4px;justify-content:flex-end"><button onclick="openEmailModal('${escArg(u.email)}','${escArg(u.domain)}','${escArg(u.displayName)}','${u.tracked}','${u.exported}','?')" style="background:var(--accent);color:var(--bg);border:none;padding:4px 8px;border-radius:6px;font-size:.72rem;font-weight:600;cursor:pointer">Email</button><button onclick="markContacted('${escArg(u.email)}','${escArg(u.domain)}')" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:.72rem;cursor:pointer">✓</button></div></td>
-          </tr>
-        `).join('');
+        cachedPowerUsers = users || [];
+        registerSearchEntities('users', cachedPowerUsers);
+        renderPowerUsers();
       } catch (err) {
         console.error('power users load failed:', err);
         if (body) body.innerHTML = `<tr><td colspan="7" style="color:var(--error,#f85149)">Failed to load power users. <button class="btn btn-secondary" style="font-size:.7rem;padding:2px 6px;margin-left:6px" onclick="loadPowerUsers()">Retry</button></td></tr>`;
@@ -1912,6 +2385,9 @@
         }
         const data = await res.json();
         _clustersCache = data.clusters || [];
+        registerSearchEntities('clusters', _clustersCache);
+        renderActivityFeed();
+        renderPowerUsers();
         const stamp = document.getElementById('clusters-stamp');
         if (stamp) stamp.textContent = `Updated ${new Date().toLocaleTimeString()}`;
 
@@ -2562,20 +3038,7 @@ https://attendance-tracker.org`;
         alert('Failed to mark contacted');
       }
     }
-
     let liveRefreshTimer = null;
-    function startLiveRefresh() {
-      clearInterval(liveRefreshTimer);
-      // Poll the activity feed every 30s so the dashboard stays live without
-      // hammering Firestore. Suggestions + power users refresh every 2min.
-      let tick = 0;
-      liveRefreshTimer = setInterval(() => {
-        tick++;
-        loadPulse();
-        loadActivity();
-        if (tick % 4 === 0) { loadSuggestions(); loadPowerUsers(); }
-      }, 30000);
-    }
 
     async function loadAllUsers() {
       try {
@@ -2587,6 +3050,9 @@ https://attendance-tracker.org`;
           return;
         }
         const data = await res.json();
+        if (data.users?.length) {
+          registerSearchEntities('users', data.users);
+        }
         document.getElementById('all-users-section').style.display = 'block';
         document.getElementById('all-users-count').textContent = `(${data.totalCount})`;
         const body = document.getElementById('all-users-rows');

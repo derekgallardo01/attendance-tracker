@@ -99,3 +99,16 @@ describe('templateSubs / fillTemplate', () => {
     expect(a.fillTemplate('x{{exported}}y', { exported: null })).toBe('xy');
   });
 });
+
+describe('schoolClusterBadge', () => {
+  test('returns badge for >= 2 teachers', () => {
+    expect(a.schoolClusterBadge(2)).toContain('School Cluster (2 teachers)');
+    expect(a.schoolClusterBadge(5)).toContain('School Cluster (5 teachers)');
+  });
+
+  test('returns empty string for < 2 teachers or falsy', () => {
+    expect(a.schoolClusterBadge(1)).toBe('');
+    expect(a.schoolClusterBadge(0)).toBe('');
+    expect(a.schoolClusterBadge(null)).toBe('');
+  });
+});

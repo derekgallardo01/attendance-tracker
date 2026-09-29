@@ -22,6 +22,7 @@ jest.mock('../../src/services/firestore', () => ({
   getReachOutSuggestions: jest.fn(),
   getPowerUserPipeline: jest.fn(),
   markUserContacted: jest.fn(),
+  dismissSuggestion: jest.fn(),
   getUserDetail: jest.fn(),
   setAdminNote: jest.fn(),
   searchAdminNotes: jest.fn(),
@@ -2085,5 +2086,147 @@ describe('GET /api/admin/school-clusters', () => {
     expect(res.body.error).toContain('Failed to fetch school clusters');
   });
 });
+
+describe('POST /api/admin/dismiss-suggestion', () => {
+  const admin = () => authedHeader(SUPER_ADMIN, 'gmail.com');
+  const nonAdmin = () => authedHeader('user@school.edu', 'school.edu');
+
+  test('403 when not super admin', async () => {
+    const res = await request(app)
+      .post('/api/admin/dismiss-suggestion')
+      .set(nonAdmin())
+      .send({ email: 'target@school.edu' });
+    expect(res.status).toBe(403);
+  });
+
+  test('400 when email is missing or empty', async () => {
+    const res = await request(app)
+      .post('/api/admin/dismiss-suggestion')
+      .set(admin())
+      .send({});
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain('email required');
+  });
+
+  test('200 and calls dismissSuggestion on valid request', async () => {
+    firestore.dismissSuggestion.mockResolvedValue();
+
+    const res = await request(app)
+      .post('/api/admin/dismiss-suggestion')
+      .set(admin())
+      .send({ email: 'target@school.edu' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+    expect(firestore.dismissSuggestion).toHaveBeenCalledWith('target@school.edu');
+  });
+
+  test('500 when dismissSuggestion throws', async () => {
+    firestore.dismissSuggestion.mockRejectedValue(new Error('DB failure'));
+
+    const res = await request(app)
+      .post('/api/admin/dismiss-suggestion')
+      .set(admin())
+      .send({ email: 'target@school.edu' });
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toContain('Failed to dismiss suggestion');
+  });
+});
+
+describe('GET /api/admin/stats — activeProUsers & estimatedMrr', () => {
+  const admin = () => authedHeader(SUPER_ADMIN, 'gmail.com');
+  const nonAdmin = () => authedHeader('user@school.edu', 'school.edu');
+
+  test('returns activeProUsers and estimatedMrr for super admin', async () => {
+    const mockUsers = [
+      { email: 'pro1@school.edu', domain: 'school.edu', individualPlan: 'pro', individualBillingStatus: 'active' },
+      { email: 'pro2@school.edu', domain: 'school.edu', individualPlan: 'pro', individualBillingStatus: 'active' },
+      { email: 'free1@school.edu', domain: 'school.edu', individualPlan: 'free', individualBillingStatus: null },
+      { email: 'pro_pastdue@school.edu', domain: 'school.edu', individualPlan: 'pro', individualBillingStatus: 'past_due' },
+    ];
+    firestore.getAllUsersAcrossTenants.mockResolvedValue(mockUsers);
+
+    const mockTenantsSnap = {
+      docs: [
+        { id: 'school.edu', data: () => ({ plan: 'free' }) },
+      ],
+    };
+
+    const mockEmptyCollection = {
+      get: jest.fn().mockResolvedValue({ docs: [], size: 0 }),
+      count: jest.fn().mockReturnValue({
+        get: jest.fn().mockResolvedValue({ data: () => ({ count: 0 }) }),
+      }),
+    };
+
+    const mockTenantDoc = {
+      collection: jest.fn().mockReturnValue(mockEmptyCollection),
+    };
+
+    const mockTenantsCol = {
+      get: jest.fn().mockResolvedValue(mockTenantsSnap),
+      doc: jest.fn().mockReturnValue(mockTenantDoc),
+    };
+
+    const mockCountAgg = {
+      count: jest.fn().mockReturnValue({
+        get: jest.fn().mockResolvedValue({ data: () => ({ count: 10 }) }),
+      }),
+    };
+
+    firestore.getDb.mockReturnValue({
+      collection: jest.fn((colName) => {
+        if (colName === 'tenants') return mockTenantsCol;
+        return mockEmptyCollection;
+      }),
+      collectionGroup: jest.fn().mockReturnValue(mockCountAgg),
+    });
+
+    const res = await request(app)
+      .get('/api/admin/stats?nocache=1')
+      .set(admin());
+
+    expect(res.status).toBe(200);
+    expect(res.body.activeProUsers).toBe(2);
+    expect(res.body.estimatedMrr).toBe(20);
+    expect(res.body.globalStats.activeProUsers).toBe(2);
+    expect(res.body.globalStats.estimatedMrr).toBe(20);
+  });
+
+  test('returns null for activeProUsers and estimatedMrr for non-superadmin', async () => {
+    const mockEmptyCollection = {
+      get: jest.fn().mockResolvedValue({ docs: [], size: 0 }),
+      count: jest.fn().mockReturnValue({
+        get: jest.fn().mockResolvedValue({ data: () => ({ count: 0 }) }),
+      }),
+    };
+
+    const mockTenantDoc = {
+      collection: jest.fn().mockReturnValue(mockEmptyCollection),
+    };
+
+    const mockTenantsCol = {
+      doc: jest.fn().mockReturnValue(mockTenantDoc),
+    };
+
+    firestore.getDb.mockReturnValue({
+      collection: jest.fn((colName) => {
+        if (colName === 'tenants') return mockTenantsCol;
+        return mockEmptyCollection;
+      }),
+    });
+
+    const res = await request(app)
+      .get('/api/admin/stats?nocache=1')
+      .set(nonAdmin());
+
+    expect(res.status).toBe(200);
+    expect(res.body.activeProUsers).toBeNull();
+    expect(res.body.estimatedMrr).toBeNull();
+    expect(res.body.globalStats).toBeNull();
+  });
+});
+
 
 

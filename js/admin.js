@@ -70,9 +70,15 @@
     return String(str || '').replace(/\{\{(\w+)\}\}/g, (_, k) => (subs[k] != null ? subs[k] : ''));
   }
 
+  // Multi-teacher school cluster badge for non-public domains with >= 2 users.
+  function schoolClusterBadge(teacherCount) {
+    if (!teacherCount || teacherCount < 2) return '';
+    return `<span class="badge" style="background:rgba(88,166,255,.18);color:#58a6ff;font-size:.7rem;font-weight:600;vertical-align:middle" title="${teacherCount} teachers registered">🏫 School Cluster (${teacherCount} teachers)</span>`;
+  }
+
   const api = {
     pct, fmtMs, fmtDate, fmtDateTime, timeAgo, ageDaysCalc,
-    priorityBadge, healthBadge, templateSubs, fillTemplate,
+    priorityBadge, healthBadge, schoolClusterBadge, templateSubs, fillTemplate,
   };
   root.AttAdmin = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

@@ -399,6 +399,25 @@ describe('getReachOutSuggestions', () => {
     // Should appear in the list (or at least the function should return without throwing)
     expect(Array.isArray(suggestions)).toBe(true);
   });
+
+  test('excludes dismissed suggestions', async () => {
+    const now = Date.now();
+    seedUser('a.com', 'candidate@a.com', {
+      createdAt: new Date(now - 10 * 60 * 1000),
+      lastLoginAt: new Date(now - 10 * 60 * 1000),
+    });
+    // Signin 10 minutes ago, no tracking events -> triggers priority 1 suggestion
+    seedEvent('a.com', 'candidate@a.com', 'signin', now - 10 * 60 * 1000);
+
+    const before = await firestore.getReachOutSuggestions({ force: true });
+    expect(before.find(s => s.email === 'candidate@a.com')).toBeDefined();
+
+    // Dismiss the suggestion
+    await firestore.dismissSuggestion('candidate@a.com');
+
+    const after = await firestore.getReachOutSuggestions({ force: true });
+    expect(after.find(s => s.email === 'candidate@a.com')).toBeUndefined();
+  });
 });
 
 // ═══════════════════════════ power user pipeline ═══════════════════════════

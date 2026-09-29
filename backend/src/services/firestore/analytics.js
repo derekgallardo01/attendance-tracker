@@ -10,6 +10,8 @@ const FUNNEL_CACHE_MS = 2 * 60 * 1000;
 
 // Email templates are stored under a single super-admin doc.
 const TEMPLATES_DOC = () => getDb().collection('admin').doc('templates');
+// Dismissed/snoozed suggestions are stored in a single super-admin doc.
+const DISMISSED_SUGGESTIONS_DOC = () => getDb().collection('admin').doc('dismissed_suggestions');
 
 // The activation funnel that actually matters: signup → tracked anything →
 // tracked a REAL multi-person meeting → exported → came back. Uses the deduped
@@ -1146,6 +1148,25 @@ let _suggestionsCache = null;
 let _suggestionsCachedAt = 0;
 const SUGGESTIONS_CACHE_MS = 120 * 1000;
 
+// Dismiss/snooze a suggestion so it is excluded from reach-out suggestions
+async function dismissSuggestion(email) {
+  if (!email) return;
+  const normalized = email.toLowerCase().trim();
+  try {
+    await DISMISSED_SUGGESTIONS_DOC().set({
+      [normalized]: {
+        dismissedAt: FieldValue.serverTimestamp(),
+      },
+    }, { merge: true });
+    _suggestionsCache = null;
+    _suggestionsCachedAt = 0;
+    log.info('firestore: suggestion dismissed', { email: normalized });
+  } catch (err) {
+    log.error('firestore: dismissSuggestion failed', { email, error: err.message });
+    throw err;
+  }
+}
+
 // ── Admin: suggestions panel ──
 // Surfaces users worth reaching out to RIGHT NOW based on event patterns.
 // Uses cached getAllUsersAcrossTenants() to avoid redundant collectionGroup('users') reads.
@@ -1159,7 +1180,7 @@ async function getReachOutSuggestions({ limit = 10, force = false } = {}) {
     const DAY = 24 * HOUR;
     const minTs = new Date(now - 7 * DAY);
 
-    const [eventsDocs, usersSnap, outreachSnap] = await Promise.all([
+    const [eventsDocs, usersSnap, outreachSnap, dismissedSnap] = await Promise.all([
       (async () => {
         try {
           const adminActSnap = await getDb().collection('admin_activity')
@@ -1176,7 +1197,17 @@ async function getReachOutSuggestions({ limit = 10, force = false } = {}) {
       })(),
       getDb().collectionGroup('users').select('displayName', 'acquisitionSource', 'createdAt').get(),
       getDb().collectionGroup('outreach').get(),
+      (async () => {
+        try {
+          const snap = await DISMISSED_SUGGESTIONS_DOC().get();
+          return snap.exists ? (snap.data() || {}) : {};
+        } catch (e) {
+          return {};
+        }
+      })(),
     ]);
+
+    const dismissedMap = dismissedSnap || {};
 
     const outreachByEmail = {};
     for (const d of outreachSnap.docs) {
@@ -1210,6 +1241,7 @@ async function getReachOutSuggestions({ limit = 10, force = false } = {}) {
       const user = usersByEmail[email];
       if (!user) continue;
       if (isSuperAdmin(email) || FUNNEL_EXCLUDED_DOMAINS.has(domainOf(email))) continue;
+      if (dismissedMap[email] || dismissedMap[email.toLowerCase()]) continue;
       const lastEvent = events.reduce((a, b) => b.ts > a.ts ? b : a, { ts: 0, type: null });
       const lastContacted = outreachByEmail[email] || 0;
       const wasContactedRecently = lastContacted && (now - lastContacted) < 7 * DAY;
@@ -1726,6 +1758,6 @@ function clearInsightsCache() {
 }
 
 module.exports = {
-  getActivationFunnel, getAggregatedInsights, clearInsightsCache, getWeeklySelfReport, getAdvancedAnalytics, getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, markUserContacted, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, getOutreachList, getActivityPulse, getRevenueFunnel,
+  getActivationFunnel, getAggregatedInsights, clearInsightsCache, getWeeklySelfReport, getAdvancedAnalytics, getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, markUserContacted, dismissSuggestion, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, getOutreachList, getActivityPulse, getRevenueFunnel,
   getRecentErrorSpike, getErrorAlertState, setErrorAlertState,
 };

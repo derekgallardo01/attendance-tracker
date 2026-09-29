@@ -10,7 +10,7 @@ const { suppressEmail, isEmailSuppressed, unsuppressEmail } = require('./firesto
 const { deleteUser, isUserDeleted, clearDeletedTombstone } = require('./firestore/deletion');
 const { saveCheckin, getCheckins } = require('./firestore/checkins');
 const {
-  getActivationFunnel, getAggregatedInsights, clearInsightsCache, getWeeklySelfReport, getAdvancedAnalytics, getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, markUserContacted, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, getOutreachList, getActivityPulse, getRevenueFunnel,
+  getActivationFunnel, getAggregatedInsights, clearInsightsCache, getWeeklySelfReport, getAdvancedAnalytics, getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, markUserContacted, dismissSuggestion, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, getOutreachList, getActivityPulse, getRevenueFunnel,
   getRecentErrorSpike, getErrorAlertState, setErrorAlertState,
 } = require('./firestore/analytics');
 
@@ -2464,6 +2464,7 @@ module.exports = {
   createShareLink, resolveShareLink, getSharedSeriesView, getSharedMeetingView, revokeShareLink,
   getParticipantHistory, setParticipantNote, getParticipantNote,
   markUserContacted,
+  dismissSuggestion,
   getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes,
   appendConversation, setOutreachStatus,
   suppressEmail, isEmailSuppressed, unsuppressEmail,
@@ -2478,7 +2479,7 @@ module.exports = {
   getAggregatedInsights: memoizeTTL(getAggregatedInsights, 900000), // 15 min TTL
   getAdvancedAnalytics: memoizeTTL(getAdvancedAnalytics, 120000),
   getWeeklySelfReport: memoizeTTL(getWeeklySelfReport, 120000),
-  getReachOutSuggestions: memoizeTTL(getReachOutSuggestions, 120000),
+  getReachOutSuggestions,
   getPowerUserPipeline: memoizeTTL(getPowerUserPipeline, 120000),
   getOutreachList: memoizeTTL(getOutreachList, 120000),
   getRecentActivity: memoizeTTL(getRecentActivity, 60000),

@@ -2,7 +2,7 @@ const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getRevenueFunnel, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance, getTeamOverview, getRecentErrorSpike, getErrorAlertState, setErrorAlertState, getCancellationTelemetry, backfillAdminActivityIfSparse } = require('../services/firestore');
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getRevenueFunnel, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, dismissSuggestion, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance, getTeamOverview, getRecentErrorSpike, getErrorAlertState, setErrorAlertState, getCancellationTelemetry, backfillAdminActivityIfSparse } = require('../services/firestore');
 const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendOrgWeeklyDigest, flushDeferredNotifications, verifyReviewApprovalToken, sendReviewRewardEmail } = require('../lib/notifications');
 const { escapeHtml } = require('../lib/html');
 const { requireSuperAdmin, requireSuperAdminOrScheduler, requireKhMetricsKey, safeEqual } = require('../middleware/adminAuth');
@@ -168,12 +168,14 @@ router.get('/admin/stats', requireAuth, async (req, res) => {
     const db = getDb();
 
     let tenants = [];
+    let allUsers = [];
     if (isSuper) {
       // Tenant list: explicit docs + any domain we have users in.
-      const [tenantsSnap, allUsers] = await Promise.all([
+      const [tenantsSnap, fetchedUsers] = await Promise.all([
         db.collection('tenants').get(),
         getAllUsersAcrossTenants(),
       ]);
+      allUsers = fetchedUsers || [];
       const tenantMap = new Map();
       for (const d of tenantsSnap.docs) {
         tenantMap.set(d.id, { domain: d.id, ...d.data() });
@@ -219,7 +221,14 @@ router.get('/admin/stats', requireAuth, async (req, res) => {
       : [];
 
     let globalStats = null;
+    let activeProUsers = 0;
+    let estimatedMrr = 0;
     if (isSuper) {
+      const activeProList = (allUsers || []).filter(u => u.individualPlan === 'pro' && u.individualBillingStatus === 'active');
+      activeProUsers = activeProList.length;
+      const seatPrice = (Number(process.env.KH_MRR_SEAT_CENTS) > 0 ? Number(process.env.KH_MRR_SEAT_CENTS) / 100 : 9.99);
+      estimatedMrr = Math.round(activeProUsers * seatPrice);
+
       const [usersAgg, meetingsAgg, exportsAgg] = await Promise.all([
         db.collectionGroup('users').count().get().catch(() => null),
         db.collectionGroup('meetings').count().get().catch(() => null),
@@ -229,11 +238,15 @@ router.get('/admin/stats', requireAuth, async (req, res) => {
         users: usersAgg?.data ? usersAgg.data().count : null,
         meetings: meetingsAgg?.data ? meetingsAgg.data().count : null,
         exports: exportsAgg?.data ? exportsAgg.data().count : null,
+        activeProUsers,
+        estimatedMrr,
       };
     }
 
     const responseData = {
       totalTenants: isSuper ? tenants.length : null,
+      activeProUsers: isSuper ? activeProUsers : null,
+      estimatedMrr: isSuper ? estimatedMrr : null,
       globalStats,
       tenants: isSuper ? tenants.map(t => ({
         domain: t.domain,
@@ -382,6 +395,21 @@ router.post('/admin/contacted', requireSuperAdmin, async (req, res) => {
   } catch (err) {
     log.error('admin: contacted failed', { error: err.message });
     res.status(500).json({ error: 'Failed to mark contacted' });
+  }
+});
+
+// POST /api/admin/dismiss-suggestion — dismiss or snooze a reach-out suggestion
+router.post('/admin/dismiss-suggestion', requireSuperAdmin, async (req, res) => {
+  try {
+    const { email } = req.body || {};
+    if (!email || typeof email !== 'string') {
+      return res.status(400).json({ error: 'email required' });
+    }
+    await dismissSuggestion(email);
+    res.json({ ok: true });
+  } catch (err) {
+    log.error('admin: dismiss-suggestion failed', { error: err.message });
+    res.status(500).json({ error: 'Failed to dismiss suggestion' });
   }
 });
 
