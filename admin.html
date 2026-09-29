@@ -70,6 +70,10 @@
     .table-scroll thead th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
     .table-scroll::-webkit-scrollbar { width: 8px; }
     .table-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    .custom-scroll { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+    .custom-scroll::-webkit-scrollbar { width: 6px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
     table { width: 100%; border-collapse: collapse; font-size: .85rem; }
     th { text-align: left; color: var(--muted); font-weight: 600; padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: .75rem; text-transform: uppercase; }
     td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
@@ -387,7 +391,7 @@
               <span>Reach out now</span>
               <button class="btn btn-secondary" style="font-size:.7rem;padding:4px 8px" onclick="loadSuggestions()">↻</button>
             </h2>
-            <div id="suggestions-list" style="display:flex;flex-direction:column;gap:10px">
+            <div id="suggestions-list" class="custom-scroll" style="display:flex;flex-direction:column;gap:10px;max-height:380px;overflow-y:auto;padding-right:6px">
               <div style="color:var(--muted);font-size:.85rem">Loading…</div>
             </div>
           </div>
@@ -397,7 +401,7 @@
               <span><span class="live-dot"></span>Live activity</span>
               <span style="font-size:.7rem;color:var(--muted);font-weight:400" id="activity-stamp">—</span>
             </h2>
-            <div id="activity-feed" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;font-size:.85rem">
+            <div id="activity-feed" class="custom-scroll" style="display:flex;flex-direction:column;gap:6px;max-height:380px;overflow-y:auto;padding-right:6px;font-size:.85rem">
               <div style="color:var(--muted)">Loading…</div>
             </div>
           </div>
@@ -1481,7 +1485,7 @@
     async function loadSuggestions() {
       const list = document.getElementById('suggestions-list');
       try {
-        const res = await fetch(`${BACKEND_URL}/admin/suggestions`, { headers: { Authorization: `Bearer ${sessionToken}` } });
+        const res = await fetch(`${BACKEND_URL}/admin/suggestions?limit=10`, { headers: { Authorization: `Bearer ${sessionToken}` } });
         if (!res.ok) {
           if (list) list.innerHTML = `<div style="color:var(--error,#f85149);font-size:.85rem;padding:8px 0">Failed to load suggestions (HTTP ${res.status}). <button class="btn btn-secondary" style="font-size:.7rem;padding:2px 6px;margin-left:6px" onclick="loadSuggestions()">Retry</button></div>`;
           return;

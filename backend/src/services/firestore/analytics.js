@@ -1149,9 +1149,9 @@ const SUGGESTIONS_CACHE_MS = 120 * 1000;
 // ── Admin: suggestions panel ──
 // Surfaces users worth reaching out to RIGHT NOW based on event patterns.
 // Uses cached getAllUsersAcrossTenants() to avoid redundant collectionGroup('users') reads.
-async function getReachOutSuggestions({ force = false } = {}) {
+async function getReachOutSuggestions({ limit = 10, force = false } = {}) {
   if (!force && process.env.NODE_ENV !== 'test' && _suggestionsCache && (Date.now() - _suggestionsCachedAt) < SUGGESTIONS_CACHE_MS) {
-    return _suggestionsCache;
+    return _suggestionsCache.slice(0, limit);
   }
   try {
     const now = Date.now();
@@ -1259,7 +1259,7 @@ async function getReachOutSuggestions({ force = false } = {}) {
     const result = suggestions.slice(0, 20);
     _suggestionsCache = result;
     _suggestionsCachedAt = Date.now();
-    return result;
+    return result.slice(0, limit);
   } catch (err) {
     log.error('firestore: getReachOutSuggestions failed', { error: err.message });
     return [];

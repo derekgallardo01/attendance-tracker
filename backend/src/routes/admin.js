@@ -321,8 +321,9 @@ router.get('/admin/revenue-funnel', requireSuperAdmin, async (req, res) => {
 // GET /api/admin/suggestions — "reach out NOW" cards
 router.get('/admin/suggestions', requireSuperAdmin, async (req, res) => {
   try {
-    const suggestions = await getReachOutSuggestions();
-    res.json({ suggestions });
+    const limit = Math.max(1, Math.min(50, Number(req.query.limit) || 10));
+    const suggestions = await getReachOutSuggestions({ limit });
+    res.json({ suggestions: suggestions.slice(0, limit) });
   } catch (err) {
     log.error('admin: suggestions failed', { error: err.message });
     res.status(500).json({ error: 'Failed to fetch suggestions' });
