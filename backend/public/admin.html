@@ -281,7 +281,7 @@
           <div class="stat-value green" id="stat-tenants">—</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Your Org Users</div>
+          <div class="stat-label" id="stat-users-label">Your Org Users</div>
           <div class="stat-value blue" id="stat-users">—</div>
         </div>
         <div class="stat-card">
@@ -1074,9 +1074,19 @@
         const data = await res.json();
 
         document.getElementById('stat-tenants').textContent = data.totalTenants || 0;
-        document.getElementById('stat-users').textContent = data.yourDomain?.users || 0;
-        document.getElementById('stat-meetings').textContent = data.yourDomain?.meetings || 0;
-        document.getElementById('stat-exports').textContent = data.yourDomain?.exports || 0;
+        if (data.globalStats) {
+          const uLabel = document.getElementById('stat-users-label');
+          if (uLabel) uLabel.textContent = 'Total Users';
+          document.getElementById('stat-users').textContent = (data.globalStats.users != null ? data.globalStats.users : data.yourDomain?.users) || 0;
+          document.getElementById('stat-meetings').textContent = (data.globalStats.meetings != null ? data.globalStats.meetings : data.yourDomain?.meetings) || 0;
+          document.getElementById('stat-exports').textContent = (data.globalStats.exports != null ? data.globalStats.exports : data.yourDomain?.exports) || 0;
+        } else {
+          const uLabel = document.getElementById('stat-users-label');
+          if (uLabel) uLabel.textContent = 'Your Org Users';
+          document.getElementById('stat-users').textContent = data.yourDomain?.users || 0;
+          document.getElementById('stat-meetings').textContent = data.yourDomain?.meetings || 0;
+          document.getElementById('stat-exports').textContent = data.yourDomain?.exports || 0;
+        }
 
         // Tenant rows
         const tenantBody = document.getElementById('tenant-rows');
@@ -1829,15 +1839,14 @@
           feed.innerHTML = '<div style="color:var(--muted)">No activity yet</div>';
           return;
         }
-        const icon = { signin: '', tracked: '', exported: '' };
-        const label = { signin: 'signed in', tracked: 'tracked a meeting', exported: 'exported to Sheets' };
-        // 'tracked' fires once per poll, so a live meeting floods the feed
-        // with identical rows — collapse consecutive same-user same-type
-        // events into one row with a ×N chip.
+        const icon = { signin: '🔑', tracked: '👥', meeting: '👥', exported: '📊', export_success: '📊', upgraded: '💎', quota_warning_shown: '⚠️' };
+        const label = { signin: 'signed in', tracked: 'tracked a meeting', meeting: 'tracked a meeting', exported: 'exported to Sheets', export_success: 'exported to Sheets', upgraded: 'upgraded to Pro', quota_warning_shown: 'hit quota warning' };
+        // Collapse consecutive same-user same-action events
+        const isSameAction = (t1, t2) => (t1 === t2) || (t1 === 'meeting' && t2 === 'tracked') || (t1 === 'tracked' && t2 === 'meeting') || (t1 === 'exported' && t2 === 'export_success') || (t1 === 'export_success' && t2 === 'exported');
         const collapsed = [];
         for (const e of events) {
           const last = collapsed[collapsed.length - 1];
-          if (last && last.email === e.email && last.type === e.type) last.count++;
+          if (last && last.email === e.email && isSameAction(last.type, e.type)) last.count++;
           else collapsed.push({ ...e, count: 1 });
         }
         feed.innerHTML = collapsed.map(e => `

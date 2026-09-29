@@ -1209,6 +1209,7 @@ async function getReachOutSuggestions({ limit = 10, force = false } = {}) {
     for (const [email, events] of Object.entries(eventsByEmail)) {
       const user = usersByEmail[email];
       if (!user) continue;
+      if (isSuperAdmin(email) || FUNNEL_EXCLUDED_DOMAINS.has(domainOf(email))) continue;
       const lastEvent = events.reduce((a, b) => b.ts > a.ts ? b : a, { ts: 0, type: null });
       const lastContacted = outreachByEmail[email] || 0;
       const wasContactedRecently = lastContacted && (now - lastContacted) < 7 * DAY;

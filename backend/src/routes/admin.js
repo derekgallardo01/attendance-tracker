@@ -218,8 +218,23 @@ router.get('/admin/stats', requireAuth, async (req, res) => {
         }))
       : [];
 
+    let globalStats = null;
+    if (isSuper) {
+      const [usersAgg, meetingsAgg, exportsAgg] = await Promise.all([
+        db.collectionGroup('users').count().get().catch(() => null),
+        db.collectionGroup('meetings').count().get().catch(() => null),
+        db.collectionGroup('exports').count().get().catch(() => null),
+      ]);
+      globalStats = {
+        users: usersAgg?.data ? usersAgg.data().count : null,
+        meetings: meetingsAgg?.data ? meetingsAgg.data().count : null,
+        exports: exportsAgg?.data ? exportsAgg.data().count : null,
+      };
+    }
+
     const responseData = {
       totalTenants: isSuper ? tenants.length : null,
+      globalStats,
       tenants: isSuper ? tenants.map(t => ({
         domain: t.domain,
         active: t.active !== false,
