@@ -4045,9 +4045,6 @@ function downloadAttendanceCsv() {
   }
 
   if (!_isPro && ctx.parts.length > 25) {
-    if (typeof sendUpgradeLinkToEmail === 'function') {
-      sendUpgradeLinkToEmail().catch(() => {});
-    }
     showUpgradeModal('largeClass');
     return;
   }
@@ -6787,14 +6784,7 @@ function dismissAutoExportNudge() {
 function closeUpgradeModal() {
   const modal = document.getElementById('upgrade-modal');
   if (modal) modal.style.display = 'none';
-  const reason = state._lastUpgradeReason;
   try { logUserEvent('upgrade_modal_dismissed', { ...upgradeContext() }); } catch {}
-  if (reason === 'largeClass' || (state.participants && state.participants.size > 25)) {
-    toast(t('upgrade.deskLinkToast', 'We saved your attendance! We emailed a 1-click link to finish upgrading from your desk after class.'), 8000);
-    if (typeof sendUpgradeLinkToEmail === 'function') {
-      sendUpgradeLinkToEmail().catch(() => {});
-    }
-  }
   maybeAskPaywallWhy();
 }
 
@@ -6847,7 +6837,51 @@ function answerPaywallWhy(reason) {
   if (vOpt) vOpt.style.display = 'none';
 
   if (reason === 'expensive' || reason === 'price') {
-    if (vExp) vExp.style.display = 'flex';
+    if (vExp) {
+      vExp.style.display = 'flex';
+      const country = _billing?.country || _billing?.pppDiscount?.country || state.signupCountry || '';
+      const singlePriceEl = document.getElementById('paywall-why-single-price');
+      const regionalOffer = document.getElementById('paywall-why-regional-offer');
+      if (country === 'IN') {
+        if (singlePriceEl) singlePriceEl.innerHTML = `$1.99 <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(~₹99)</span> <span style="font-size:.7rem;font-weight:400;color:#9aa0a6">one-time</span>`;
+        if (regionalOffer) {
+          regionalOffer.innerHTML = `<div style="background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.25);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:.82rem;font-weight:600;color:#e3e3e3">🇮🇳 India Special — ₹299 INR UPI</div>
+              <div style="font-size:.73rem;color:#9aa0a6">Google Pay, PhonePe, Paytm (Lifetime Pass)</div>
+            </div>
+            <button type="button" onclick="dismissPaywallWhy();showUpgradeModal();" style="background:#58a6ff;color:#0d1117;border:none;border-radius:6px;padding:6px 10px;font-size:.76rem;font-weight:700;cursor:pointer">View UPI Plan</button>
+          </div>`;
+          regionalOffer.style.display = 'block';
+        }
+      } else if (country === 'PH') {
+        if (singlePriceEl) singlePriceEl.innerHTML = `$1.99 <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(~₱49)</span> <span style="font-size:.7rem;font-weight:400;color:#9aa0a6">one-time</span>`;
+        if (regionalOffer) {
+          regionalOffer.innerHTML = `<div style="background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:.82rem;font-weight:600;color:#e3e3e3">🇵🇭 Philippines Special — ₱99 PHP</div>
+              <div style="font-size:.73rem;color:#9aa0a6">50% Educator Pass subsidy applied</div>
+            </div>
+            <button type="button" onclick="dismissPaywallWhy();showUpgradeModal();" style="background:#34a853;color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:.76rem;font-weight:700;cursor:pointer">View ₱99 Pass</button>
+          </div>`;
+          regionalOffer.style.display = 'block';
+        }
+      } else if (_billing && _billing.pppDiscount && _billing.pppDiscount.eligible) {
+        if (regionalOffer) {
+          regionalOffer.innerHTML = `<div style="background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:.82rem;font-weight:600;color:#e3e3e3">🏷️ 50% Regional Subsidy Active</div>
+              <div style="font-size:.73rem;color:#9aa0a6">$2.49/yr Educator or $4.99 Lifetime</div>
+            </div>
+            <button type="button" onclick="dismissPaywallWhy();showUpgradeModal();" style="background:#34a853;color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:.76rem;font-weight:700;cursor:pointer">View Plans</button>
+          </div>`;
+          regionalOffer.style.display = 'block';
+        }
+      } else {
+        if (singlePriceEl) singlePriceEl.innerHTML = `$1.99 <span style="font-size:.7rem;font-weight:400;color:#9aa0a6">one-time</span>`;
+        if (regionalOffer) regionalOffer.style.display = 'none';
+      }
+    }
   } else if (reason === 'school_approval' || reason === 'school') {
     if (vSch) {
       vSch.style.display = 'flex';
@@ -6858,6 +6892,8 @@ function answerPaywallWhy(reason) {
     if (vFbk) {
       vFbk.style.display = 'flex';
       const title = document.getElementById('paywall-feedback-title');
+      const emailInput = document.getElementById('paywall-feedback-email');
+      if (emailInput && state.userEmail) emailInput.value = state.userEmail;
       if (title && reason === 'missing_feature') {
         title.textContent = t('paywall.missingFeatureTitle', 'What feature is missing?');
       }
@@ -6905,25 +6941,16 @@ async function submitPaywallSchoolQuote() {
         status.style.display = 'block';
       }
       toast(t('paywall.quoteSentToast', 'School quote request sent!'));
-      const subject = encodeURIComponent(`School Quote / PO Request: ${schoolName || workEmail}`);
-      const body = encodeURIComponent(`Hello Derek,\n\nWe would like to request an official school invoice/quote for Attendance Tracker.\n\nSchool/Org: ${schoolName}\nContact: ${workEmail}\n\nThank you!`);
-      setTimeout(() => {
-        window.location.href = `mailto:derekgallardo01@gmail.com?subject=${subject}&body=${body}`;
-        dismissPaywallWhy();
-      }, 1500);
+      setTimeout(dismissPaywallWhy, 1500);
     } else {
       throw new Error('Failed');
     }
   } catch (err) {
     if (status) {
-      status.textContent = t('common.error', 'Could not send request right now. Opening email directly…');
+      status.innerHTML = `${escHtml(t('paywall.quoteFallback', 'Could not send request right now. You can email Derek directly:'))} <a href="mailto:derekgallardo01@gmail.com?subject=School%20Quote%20Request" style="color:#58a6ff;text-decoration:underline">derekgallardo01@gmail.com</a>`;
       status.style.color = '#f85149';
       status.style.display = 'block';
     }
-    const subject = encodeURIComponent(`School Quote / PO Request: ${schoolName || workEmail}`);
-    const body = encodeURIComponent(`Hello Derek,\n\nWe would like to request an official school invoice/quote for Attendance Tracker.\n\nSchool/Org: ${schoolName}\nContact: ${workEmail}\n\nThank you!`);
-    window.location.href = `mailto:derekgallardo01@gmail.com?subject=${subject}&body=${body}`;
-    setTimeout(dismissPaywallWhy, 1500);
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = t('paywall.schoolSubmit', 'Request Official School Quote'); }
   }
@@ -6931,15 +6958,16 @@ async function submitPaywallSchoolQuote() {
 
 async function submitPaywallFeatureFeedback() {
   const textInput = document.getElementById('paywall-feedback-text');
+  const emailInput = document.getElementById('paywall-feedback-email');
   const btn = document.getElementById('btn-paywall-feedback-submit');
   const text = (textInput?.value || '').trim();
+  const email = (emailInput?.value || state.userEmail || '').trim().toLowerCase();
   if (!text) {
     dismissPaywallWhy();
     return;
   }
   if (btn) { btn.disabled = true; btn.textContent = t('common.sending', 'Sending…'); }
   try {
-    const email = state.userEmail || '';
     await fetch(`${state.backendUrl}/public/feedback`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -9964,13 +9992,14 @@ window.addEventListener('DOMContentLoaded', () => {
       <div id="paywall-why-view-expensive" style="display:none;flex-direction:column;gap:10px">
         <div style="font-weight:600;color:#e3e3e3;font-size:1rem;margin-bottom:2px" data-i18n="paywall.expensiveTitle">We want roll-call to be accessible!</div>
         <div style="color:#9aa0a6;font-size:.78rem;line-height:1.4" data-i18n="paywall.expensiveDesc">Need to export right now without a recurring subscription? Unlock this meeting for just $1.99, or get Educator Annual for ~$0.41/mo.</div>
-        <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px;margin:4px 0">
+        <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px;margin:2px 0">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
             <span style="font-weight:600;font-size:.86rem;color:#e3e3e3" data-i18n="upgrade.singleMeetingName">Single-Meeting Pass</span>
-            <span style="font-weight:700;color:#81c995">$1.99 <span style="font-size:.7rem;font-weight:400;color:#9aa0a6">one-time</span></span>
+            <span style="font-weight:700;color:#81c995" id="paywall-why-single-price">$1.99 <span style="font-size:.7rem;font-weight:400;color:#9aa0a6">one-time</span></span>
           </div>
           <button type="button" onclick="startUpgradeCheckout('single_meeting', 'btn-paywall-why-single');dismissPaywallWhy();" id="btn-paywall-why-single" style="width:100%;background:#34a853;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-weight:600;font-size:.8rem;cursor:pointer" data-i18n="upgrade.ctaSingleMeeting">Unlock This Meeting — $1.99</button>
         </div>
+        <div id="paywall-why-regional-offer" style="display:none"></div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding-top:4px">
           <button type="button" onclick="resetPaywallWhyModal()" style="background:none;border:none;color:#9aa0a6;font-size:.75rem;cursor:pointer;text-decoration:underline">← Back</button>
           <button type="button" onclick="dismissPaywallWhy();showUpgradeModal();" style="background:none;border:none;color:#58a6ff;font-size:.75rem;cursor:pointer;font-weight:600">View Educator &amp; Lifetime Plans →</button>
@@ -9980,7 +10009,7 @@ window.addEventListener('DOMContentLoaded', () => {
       <!-- View 3: "Need school approval" resolution (1-click quote / invoice request) -->
       <div id="paywall-why-view-school" style="display:none;flex-direction:column;gap:10px">
         <div style="font-weight:600;color:#e3e3e3;font-size:1rem;margin-bottom:2px" data-i18n="paywall.schoolTitle">School Invoice / Purchase Order</div>
-        <div style="color:#9aa0a6;font-size:.78rem;line-height:1.4" data-i18n="paywall.schoolDesc">Schools often pay via Purchase Order or invoice. We'll generate an official quote for your administrator or finance office:</div>
+        <div style="color:#9aa0a6;font-size:.78rem;line-height:1.4" data-i18n="paywall.schoolDesc">Derek Gallardo (derekgallardo01@gmail.com) will generate an official quote or invoice for your school administration or finance office:</div>
         <div style="display:flex;flex-direction:column;gap:6px">
           <input type="text" id="paywall-school-name" placeholder="School or District name" data-i18n-placeholder="paywall.schoolNamePh" style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:7px 10px;color:#e6edf3;font-size:.78rem" />
           <input type="email" id="paywall-school-email" placeholder="Work email" data-i18n-placeholder="paywall.schoolEmailPh" style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:7px 10px;color:#e6edf3;font-size:.78rem" />
@@ -9997,6 +10026,7 @@ window.addEventListener('DOMContentLoaded', () => {
         <div style="font-weight:600;color:#e3e3e3;font-size:1rem;margin-bottom:2px" id="paywall-feedback-title" data-i18n="paywall.feedbackTitle">Tell us what you need</div>
         <div style="color:#9aa0a6;font-size:.78rem;line-height:1.4" id="paywall-feedback-sub" data-i18n="paywall.feedbackSub">Derek reviews every feature request directly. What would make Attendance Tracker an absolute must-have for you?</div>
         <textarea id="paywall-feedback-text" rows="3" placeholder="Tell us what's missing or what would help…" data-i18n-placeholder="paywall.feedbackPh" style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:8px 10px;color:#e6edf3;font-size:.78rem;resize:vertical"></textarea>
+        <input type="email" id="paywall-feedback-email" placeholder="Your email (so Derek can follow up)" data-i18n-placeholder="paywall.feedbackEmailPh" style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:7px 10px;color:#e6edf3;font-size:.78rem" />
         <button type="button" id="btn-paywall-feedback-submit" onclick="submitPaywallFeatureFeedback()" style="width:100%;background:#238636;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-weight:600;font-size:.8rem;cursor:pointer" data-i18n="paywall.feedbackSubmit">Send to Founder (Derek)</button>
         <div style="text-align:center">
           <button type="button" onclick="resetPaywallWhyModal()" style="background:none;border:none;color:#9aa0a6;font-size:.75rem;cursor:pointer;text-decoration:underline">← Back</button>

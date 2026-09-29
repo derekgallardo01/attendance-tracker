@@ -1016,6 +1016,11 @@ describe('notifications — minimal-field fallbacks (Resend mocked)', () => {
     expect(esSent.html).toContain('ver la tendencia completa →');
     expect(esSent.html).toContain('¿Te ahorró tiempo hoy?');
     expect(esSent.html).toContain('Dejar reseña de 5 estrellas (10s) →');
+    expect(esSent.html).toContain('Duración');
+    expect(esSent.html).toContain('Mayor asistencia');
+    expect(esSent.html).toContain('Juan');
+    expect(esSent.text).toContain('Duración: 45m');
+    expect(esSent.text).toContain('Mayor asistencia: Juan (45m)');
     expect(esSent.tags).toEqual(expect.arrayContaining([{ name: 'lang', value: 'es' }]));
 
     mockSend.mockClear();
@@ -1056,6 +1061,11 @@ describe('notifications — minimal-field fallbacks (Resend mocked)', () => {
     expect(ptSent.html).toContain('ver a tendência completa →');
     expect(ptSent.html).toContain('Isso economizou seu tempo hoje?');
     expect(ptSent.html).toContain('Deixar avaliação de 5 estrelas (10s) →');
+    expect(ptSent.html).toContain('Duração');
+    expect(ptSent.html).toContain('Maior presença');
+    expect(ptSent.html).toContain('Lucas');
+    expect(ptSent.text).toContain('Duração: 50m');
+    expect(ptSent.text).toContain('Maior presença: Lucas (50m)');
     expect(ptSent.tags).toEqual(expect.arrayContaining([{ name: 'lang', value: 'pt' }]));
 
     mockSend.mockClear();
@@ -1094,6 +1104,11 @@ describe('notifications — minimal-field fallbacks (Resend mocked)', () => {
     expect(bnSent.html).toContain('সম্পূর্ণ ট্রেন্ড দেখুন →');
     expect(bnSent.html).toContain('এটি কি আজ আপনার সময় বাঁচিয়েছে?');
     expect(bnSent.html).toContain('৫-স্টার রিভিউ দিন (১০ সেকেন্ড লাগবে) →');
+    expect(bnSent.html).toContain('সময়কাল');
+    expect(bnSent.html).toContain('শীর্ষ উপস্থিতি');
+    expect(bnSent.html).toContain('করিম');
+    expect(bnSent.text).toContain('সময়কাল: 40m');
+    expect(bnSent.text).toContain('শীর্ষ উপস্থিতি: করিম (40m)');
     expect(bnSent.tags).toEqual(expect.arrayContaining([{ name: 'lang', value: 'bn' }]));
   });
 

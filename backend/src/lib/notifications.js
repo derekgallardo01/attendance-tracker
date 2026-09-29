@@ -1318,7 +1318,7 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
   // Executive summary highlights
   const meetingDur = (durationMin != null && durationMin > 0)
     ? durationMin
-    : Math.max(0, ...(participants || []).map(p => p.durationMin || 0));
+    : (participants || []).reduce((max, p) => Math.max(max, p.durationMin || 0), 0);
 
   const attendeesWithDuration = (participants || []).filter(p => (p.durationMin || 0) > 0);
   const topAttendee = attendeesWithDuration.length > 0
