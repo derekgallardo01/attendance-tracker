@@ -1159,7 +1159,7 @@ async function sendWeeklySelfReport(report) {
 // link, even if they close the side panel and never look at it again. Now
 // includes an inline attendance table so the email is actionable on its own
 // — the user doesn't have to open the sheet to see what happened.
-async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle, totalAttended, totalInvited, exportedAt, participants, overflow, conferenceId, recurringEventId, isPro = false, language, country, domain }) {
+async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle, totalAttended, totalInvited, exportedAt, participants, overflow, conferenceId, recurringEventId, isPro = false, language, country, domain, durationMin }) {
   if (!getResend()) return;
   const resolvedDomain = domain || (to && to.includes('@') ? to.split('@')[1] : null);
   try {
@@ -1183,6 +1183,9 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
   let colPerson = 'Person';
   let colStatus = 'Status';
   let colTime = 'Time';
+  let colDuration = 'Duration';
+  let colAttendance = 'Attendance';
+  let colTopAttendee = 'Top Attendee';
   let overflowText = (n) => `…and ${n} more in the sheet`;
   let openSheetText = 'Open sheet';
   let viewOnWebText = 'View on web →';
@@ -1206,6 +1209,9 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
     colPerson = 'Persona';
     colStatus = 'Estado';
     colTime = 'Tiempo';
+    colDuration = 'Duración';
+    colAttendance = 'Asistencia';
+    colTopAttendee = 'Mayor asistencia';
     overflowText = (n) => `…y ${n} más en la hoja`;
     openSheetText = 'Abrir hoja';
     viewOnWebText = 'Ver en la web →';
@@ -1228,6 +1234,9 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
     colPerson = 'Pessoa';
     colStatus = 'Status';
     colTime = 'Tempo';
+    colDuration = 'Duração';
+    colAttendance = 'Presença';
+    colTopAttendee = 'Maior presença';
     overflowText = (n) => `…e mais ${n} na planilha`;
     openSheetText = 'Abrir planilha';
     viewOnWebText = 'Ver na web →';
@@ -1250,6 +1259,9 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
     colPerson = 'ব্যক্তি';
     colStatus = 'অবস্থা';
     colTime = 'সময়';
+    colDuration = 'সময়কাল';
+    colAttendance = 'উপস্থিতি';
+    colTopAttendee = 'শীর্ষ উপস্থিতি';
     overflowText = (n) => `…এবং শিটে আরও ${n} জন`;
     openSheetText = 'শিট খুলুন';
     viewOnWebText = 'ওয়েবে দেখুন →';
@@ -1302,6 +1314,17 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
     return '#f85149';
   };
   const fmtDur = (m) => !m ? '—' : hm(m);
+
+  // Executive summary highlights
+  const meetingDur = (durationMin != null && durationMin > 0)
+    ? durationMin
+    : Math.max(0, ...(participants || []).map(p => p.durationMin || 0));
+
+  const attendeesWithDuration = (participants || []).filter(p => (p.durationMin || 0) > 0);
+  const topAttendee = attendeesWithDuration.length > 0
+    ? attendeesWithDuration.reduce((max, p) => ((p.durationMin || 0) > (max.durationMin || 0) ? p : max), attendeesWithDuration[0])
+    : null;
+
   const tableRows = (participants || []).map(p => {
     const lateBadge = p.lateMin > 0
       ? `<span style="display:inline-block;white-space:nowrap;background:rgba(227,179,65,0.15);color:#e3b341;border:1px solid rgba(227,179,65,0.3);font-size:10px;font-weight:600;padding:1px 5px;border-radius:4px;margin-left:4px;vertical-align:middle;line-height:1.3">${lateLabel(p.lateMin)}</span>`
@@ -1345,6 +1368,24 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
     : null;
   const reviewUrl = `${CONFIG.publicApiUrl}/public/review-click?email=${encodeURIComponent(to)}&source=export_email`;
 
+  const highlightsHtml = `
+      <div style="display:table;width:100%;table-layout:fixed;border-top:1px solid #21262d;margin-top:12px;padding-top:10px">
+        <div style="display:table-cell;width:33%;text-align:left;vertical-align:top">
+          <div style="font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:0.5px;font-weight:600">${escape(colDuration)}</div>
+          <div style="font-size:13px;color:#e6edf3;font-weight:600;margin-top:2px">${escape(meetingDur > 0 ? fmtDur(meetingDur) : '—')}</div>
+        </div>
+        <div style="display:table-cell;width:33%;text-align:left;vertical-align:top">
+          <div style="font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:0.5px;font-weight:600">${escape(colAttendance)}</div>
+          <div style="font-size:13px;color:#4ade80;font-weight:600;margin-top:2px">${escape(String(totalAttended))}${totalInvited ? `<span style="color:#8b949e;font-size:11px"> / ${escape(String(totalInvited))}</span>` : ''}</div>
+        </div>
+        ${topAttendee ? `
+        <div style="display:table-cell;width:34%;text-align:left;vertical-align:top">
+          <div style="font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:0.5px;font-weight:600">${escape(colTopAttendee)}</div>
+          <div style="font-size:12px;color:#e6edf3;font-weight:600;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escape(topAttendee.displayName || topAttendee.email || '—')} <span style="color:#8b949e;font-size:11px">(${escape(fmtDur(topAttendee.durationMin))})</span></div>
+        </div>` : ''}
+      </div>
+  `;
+
   const contentHtml = `
     <p style="margin:0 0 6px;font-size:15px;color:#e6edf3">${greeting}</p>
     <p style="margin:0 0 16px;font-size:14px;color:#8b949e">${escape(meetingEndedText)}</p>
@@ -1353,6 +1394,7 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
       <div style="font-size:13px;color:#8b949e;line-height:1.4">
         <span style="font-weight:600;color:#4ade80">${escape(summary)}</span>${dateStr ? `<span style="color:#8b949e;margin:0 6px">&bull;</span><span>${escape(dateStr)}</span>` : ''}
       </div>
+      ${highlightsHtml}
     </div>
     ${tableHtml}
     <div style="margin:16px 0 12px 0">
@@ -1396,6 +1438,8 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
     `${lang === 'es' ? 'Reunión' : lang === 'pt' ? 'Reunião' : lang === 'bn' ? 'মিটিং' : 'Meeting'}: ${title}`,
     `${lang === 'es' ? 'Asistencia' : lang === 'pt' ? 'Presença' : lang === 'bn' ? 'উপস্থিতি' : 'Attendance'}: ${summary}`,
     dateStr ? `${lang === 'es' ? 'Cuándo' : lang === 'pt' ? 'Quando' : lang === 'bn' ? 'সময়' : 'When'}: ${dateStr}` : '',
+    `${colDuration}: ${meetingDur > 0 ? fmtDur(meetingDur) : '—'}`,
+    topAttendee ? `${colTopAttendee}: ${topAttendee.displayName || topAttendee.email || '—'} (${fmtDur(topAttendee.durationMin)})` : '',
     ``,
     participants?.length ? `${textRows}${overflow > 0 ? `\n  ${overflowText(overflow)}` : ''}` : '',
     ``,

@@ -669,6 +669,7 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
         language: req.body?.language || req.user?.language || null,
         country: req.body?.country || req.user?.country || null,
         domain: domain || null,
+        durationMin: meetDurationMin,
       };
       sendExportNotification({ to: req.user.email, ...emailPayload });
 

@@ -627,9 +627,15 @@ describe('notifications — email template branches (Resend mocked)', () => {
       ],
       overflow: 2, conferenceId: 'conf-1', recurringEventId: 'rid-1',
     });
-    const html = mockSend.mock.calls[0][0].html;
+    const sent = mockSend.mock.calls[0][0];
+    const html = sent.html;
     expect(html).toContain('late'); expect(html).toContain('more in the sheet');
     expect(html).toContain('see the full trend');
+    expect(html).toContain('Duration');
+    expect(html).toContain('Top Attendee');
+    expect(html).toContain('30m');
+    expect(sent.text).toContain('Duration: 30m');
+    expect(sent.text).toContain('Top Attendee: A (30m)');
   });
 
   test('sendExportNotification minimal (no participants/invited/date/name/links)', async () => {

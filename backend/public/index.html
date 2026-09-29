@@ -2922,7 +2922,7 @@
       <span style="font-size:10px;color:#8b949e;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-right:2px">Downloads:</span>
       <a href="#" onclick="downloadAttendanceCsv(); return false;" class="sheet-chip" style="display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#c9d1d9;font-size:10.5px;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap;transition:all .15s ease" data-i18n="bar.downloadCsv">CSV</a>
       <a href="#" onclick="downloadPdfReport(); return false;" class="sheet-chip" style="display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#c9d1d9;font-size:10.5px;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap;transition:all .15s ease" data-i18n="bar.pdfReport">PDF report</a>
-      <a href="#" onclick="downloadCertificates(); return false;" class="sheet-chip" style="display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#c9d1d9;font-size:10.5px;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap;transition:all .15s ease"><span data-i18n="bar.certificates">Certificates</span><span style="background:rgba(253,214,99,.18);border:1px solid rgba(253,214,99,.4);color:#fdd663;font-size:8.5px;font-weight:700;padding:0 4px;border-radius:3px;line-height:1.2" data-i18n="badge.pro">Pro</span></a>
+      <a href="#" onclick="downloadCertificates(); return false;" class="sheet-chip" style="display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#c9d1d9;font-size:10.5px;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap;transition:all .15s ease" title="Generate verifiable student attendance certificates (Educator Pro)"><span data-i18n="bar.certificates">Certificates</span><span style="background:rgba(253,214,99,.18);border:1px solid rgba(253,214,99,.4);color:#fdd663;font-size:8.5px;font-weight:700;padding:0 4px;border-radius:3px;line-height:1.2" data-i18n="badge.pro">Pro</span></a>
       <a href="#" onclick="downloadLmsCsv('moodle'); return false;" class="sheet-chip" data-i18n-title="tip.moodleCsv" title="Gradebook CSV for Moodle import" style="display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#8b949e;font-size:10.5px;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap;transition:all .15s ease">Moodle</a>
       <a href="#" onclick="downloadLmsCsv('canvas'); return false;" class="sheet-chip" data-i18n-title="tip.canvasCsv" title="Gradebook CSV for Canvas import" style="display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#8b949e;font-size:10.5px;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap;transition:all .15s ease">Canvas</a>
     </div>
@@ -2968,9 +2968,9 @@
     </div>
     <!-- Step 2: High rating follow-up (Marketplace CTA + School account fallback) -->
     <div id="review-stars-followup-high" style="display:none; flex-direction:column; gap:8px; margin-top:2px;">
-      <span style="font-size:.78rem; color:#d1d5db; line-height:1.4;" data-i18n="review.starsThanks">Thank you! A 5-star rating on Google Marketplace helps other teachers:</span>
+      <span style="font-size:.78rem; color:#d1d5db; line-height:1.4;" data-i18n="review.starsThanks">Enjoying Attendance Tracker? Leave a quick rating on Google Workspace Marketplace and unlock 1 Month of Educator Pro free ($0):</span>
       <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px;">
-        <a id="review-stars-marketplace-btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=inapp_stars" target="_blank" rel="noopener" onclick="onReviewExperimentMarketplaceClick('stars')" style="background:#f59e0b; color:#111; font-weight:700; padding:6px 12px; border-radius:6px; text-decoration:none; font-size:.76rem; display:inline-block;" data-i18n="review.starsRateBtn">Rate 5 Stars on Marketplace (5s)</a>
+        <a id="review-stars-marketplace-btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=inapp_stars" target="_blank" rel="noopener" onclick="onReviewExperimentMarketplaceClick('stars')" style="background:#f59e0b; color:#111; font-weight:700; padding:6px 12px; border-radius:6px; text-decoration:none; font-size:.76rem; display:inline-block;" data-i18n="review.starsRateBtn">Rate on Marketplace &amp; Get Pro ($0) →</a>
         <button type="button" onclick="showReviewFeedbackInput('stars')" style="background:transparent; border:none; color:#9ca3af; text-decoration:underline; cursor:pointer; font-size:.74rem; padding:4px;" data-i18n="review.starsSchoolFallback">School account blocks reviews? Leave feedback</button>
       </div>
     </div>
@@ -2994,8 +2994,8 @@
       <button type="button" onclick="dismissReviewExperiment('banner')" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:rgba(255,255,255,0.06);border:none;color:#9ca3af;cursor:pointer;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1;flex-shrink:0;">×</button>
     </div>
     <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px;">
-      <span style="color:#d1d5db; font-size:.76rem; line-height:1.4;"><span data-i18n="review.ask1">Getting value from this? A quick rating helps other hosts find it —</span> <span data-i18n="review.ask2">(takes 5 seconds).</span></span>
-      <a id="review-banner-btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=inapp_banner" target="_blank" rel="noopener" onclick="onReviewExperimentMarketplaceClick('banner')" style="background:#f59e0b; color:#111; font-weight:700; padding:6px 12px; border-radius:6px; text-decoration:none; font-size:.76rem; display:inline-block; white-space:nowrap;" data-i18n="review.bannerCta">Leave a 5-Star Review (5s)</a>
+      <span style="color:#d1d5db; font-size:.76rem; line-height:1.4;"><span data-i18n="review.bannerOffer">Leave a quick rating on Google Workspace Marketplace and unlock 1 Month of Educator Pro free ($0).</span></span>
+      <a id="review-banner-btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=inapp_banner" target="_blank" rel="noopener" onclick="onReviewExperimentMarketplaceClick('banner')" style="background:#f59e0b; color:#111; font-weight:700; padding:6px 12px; border-radius:6px; text-decoration:none; font-size:.76rem; display:inline-block; white-space:nowrap;" data-i18n="review.bannerCta">Rate on Marketplace &amp; Get Pro ($0) →</a>
     </div>
   </div>
   <!-- Proactive auto-export upsell for heavy LIVE-ONLY trackers: users who track
@@ -6045,6 +6045,7 @@ function paintPrices() {
   const map = {
     'price-lifetime': AttPricing.price('lifetime'),
     'price-educator': AttPricing.price('educator'),
+    'price-single-meeting': AttPricing.price('single_meeting') || '$1.99',
     'price-team': AttPricing.price('team'),
     'price-department': AttPricing.price('department'),
   };
@@ -6587,6 +6588,39 @@ function updateUpgradeModalPricing() {
       btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator">$4.99</span>/yr`;
     }
   }
+
+  if (country === 'IN') {
+    if (dealPill) {
+      dealPill.innerHTML = `<span>🇮🇳 India Special: ₹299 INR UPI (Google Pay, PhonePe, Paytm, RuPay)</span>`;
+      dealPill.style.background = 'rgba(74,222,128,.16)';
+      dealPill.style.borderColor = 'rgba(74,222,128,.4)';
+      dealPill.style.color = '#4ade80';
+    }
+    if (educatorPriceEl) {
+      educatorPriceEl.innerHTML = `<s style="color:#9aa0a6;font-size:.82rem;font-weight:400;margin-right:4px">$4.99</s><span style="color:#8ab4f8;font-weight:700">₹299 INR UPI</span>`;
+    }
+  } else if (country === 'PH') {
+    if (dealPill) {
+      dealPill.innerHTML = `<span>🇵🇭 Philippines Special: ₱99 PHP Educator Pass · 50% Subsidy Applied</span>`;
+      dealPill.style.background = 'rgba(74,222,128,.16)';
+      dealPill.style.borderColor = 'rgba(74,222,128,.4)';
+      dealPill.style.color = '#4ade80';
+    }
+    if (educatorPriceEl) {
+      educatorPriceEl.innerHTML = `<s style="color:#9aa0a6;font-size:.82rem;font-weight:400;margin-right:4px">$4.99</s><span style="color:#8ab4f8;font-weight:700">₱99 PHP</span>`;
+    }
+  }
+
+  const singlePriceEl = document.querySelector('#plan-card-single-meeting .price-single-meeting');
+  if (singlePriceEl) {
+    if (country === 'IN') {
+      singlePriceEl.innerHTML = `$1.99 <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(~₹99)</span>`;
+    } else if (country === 'PH') {
+      singlePriceEl.innerHTML = `$1.99 <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(~₱49)</span>`;
+    } else {
+      singlePriceEl.innerHTML = `$1.99`;
+    }
+  }
 }
 
 function showUpgradeModal(reason) {
@@ -6768,25 +6802,160 @@ function closeUpgradeModal() {
 // paywall dismissal ever (localStorage-counted). One lifetime ask — honors
 // the gentle-upsell rule — and the answer is the only direct WHY signal in
 // the monetization funnel (event: paywall_objection).
+function resetPaywallWhyModal() {
+  const vOpt = document.getElementById('paywall-why-view-options');
+  const vExp = document.getElementById('paywall-why-view-expensive');
+  const vSch = document.getElementById('paywall-why-view-school');
+  const vFbk = document.getElementById('paywall-why-view-feedback');
+  if (vOpt) vOpt.style.display = 'block';
+  if (vExp) vExp.style.display = 'none';
+  if (vSch) vSch.style.display = 'none';
+  if (vFbk) vFbk.style.display = 'none';
+  const schStatus = document.getElementById('paywall-school-status');
+  if (schStatus) schStatus.style.display = 'none';
+}
+
+function dismissPaywallWhy() {
+  const m = document.getElementById('paywall-why-modal');
+  if (m) m.style.display = 'none';
+  resetPaywallWhyModal();
+}
+
 function maybeAskPaywallWhy() {
   if (_isPro || (_billing && _billing.plan === 'pro')) return;
   try {
     const n = (Number(localStorage.getItem('attPaywallDismissals')) || 0) + 1;
     localStorage.setItem('attPaywallDismissals', String(n));
-    if (n < 3 || localStorage.getItem('attPaywallWhyAsked')) return;
-    localStorage.setItem('attPaywallWhyAsked', '1'); // asked = spent, even if they close it unanswered
+    if (n < 2 || localStorage.getItem('attPaywallWhyAsked')) return;
+    localStorage.setItem('attPaywallWhyAsked', '1'); // asked = spent, even if closed
     const m = document.getElementById('paywall-why-modal');
-    if (m) m.style.display = 'flex';
+    if (m) {
+      resetPaywallWhyModal();
+      m.style.display = 'flex';
+      const emailInput = document.getElementById('paywall-school-email');
+      if (emailInput && state.userEmail) emailInput.value = state.userEmail;
+    }
   } catch { /* storage blocked → never ask */ }
 }
+
 function answerPaywallWhy(reason) {
   try { logUserEvent('paywall_objection', { reason, ...upgradeContext() }); } catch {}
-  dismissPaywallWhy();
-  toast(t('paywall.whyThanks', 'Thanks — that helps!'));
+  const vOpt = document.getElementById('paywall-why-view-options');
+  const vExp = document.getElementById('paywall-why-view-expensive');
+  const vSch = document.getElementById('paywall-why-view-school');
+  const vFbk = document.getElementById('paywall-why-view-feedback');
+  if (vOpt) vOpt.style.display = 'none';
+
+  if (reason === 'expensive' || reason === 'price') {
+    if (vExp) vExp.style.display = 'flex';
+  } else if (reason === 'school_approval' || reason === 'school') {
+    if (vSch) {
+      vSch.style.display = 'flex';
+      const emailInput = document.getElementById('paywall-school-email');
+      if (emailInput && state.userEmail) emailInput.value = state.userEmail;
+    }
+  } else if (reason === 'missing_feature' || reason === 'other' || reason === 'no_need' || reason === 'deciding') {
+    if (vFbk) {
+      vFbk.style.display = 'flex';
+      const title = document.getElementById('paywall-feedback-title');
+      if (title && reason === 'missing_feature') {
+        title.textContent = t('paywall.missingFeatureTitle', 'What feature is missing?');
+      }
+    }
+  } else {
+    dismissPaywallWhy();
+    toast(t('paywall.whyThanks', 'Thanks — that helps!'));
+  }
 }
-function dismissPaywallWhy() {
-  const m = document.getElementById('paywall-why-modal');
-  if (m) m.style.display = 'none';
+
+async function submitPaywallSchoolQuote() {
+  const nameInput = document.getElementById('paywall-school-name');
+  const emailInput = document.getElementById('paywall-school-email');
+  const btn = document.getElementById('btn-paywall-school-submit');
+  const status = document.getElementById('paywall-school-status');
+  const schoolName = (nameInput?.value || '').trim();
+  const workEmail = (emailInput?.value || state.userEmail || '').trim().toLowerCase();
+
+  if (!workEmail || !workEmail.includes('@')) {
+    if (status) {
+      status.textContent = t('common.invalidEmail', 'Please enter a valid work email.');
+      status.style.color = '#f85149';
+      status.style.display = 'block';
+    }
+    return;
+  }
+
+  if (btn) { btn.disabled = true; btn.textContent = t('common.sending', 'Sending request…'); }
+  try {
+    const res = await fetch(`${state.backendUrl}/public/quote-request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        schoolName,
+        workEmail,
+        plan: 'department',
+        notes: 'Inquiry via paywall objection resolution',
+      }),
+    });
+    if (res.ok) {
+      try { logUserEvent('paywall_quote_requested', { schoolName, workEmail }); } catch {}
+      if (status) {
+        status.textContent = t('paywall.quoteSent', '✓ Request sent! We will email you an official quote/invoice shortly.');
+        status.style.color = '#81c995';
+        status.style.display = 'block';
+      }
+      toast(t('paywall.quoteSentToast', 'School quote request sent!'));
+      const subject = encodeURIComponent(`School Quote / PO Request: ${schoolName || workEmail}`);
+      const body = encodeURIComponent(`Hello Derek,\n\nWe would like to request an official school invoice/quote for Attendance Tracker.\n\nSchool/Org: ${schoolName}\nContact: ${workEmail}\n\nThank you!`);
+      setTimeout(() => {
+        window.location.href = `mailto:derekgallardo01@gmail.com?subject=${subject}&body=${body}`;
+        dismissPaywallWhy();
+      }, 1500);
+    } else {
+      throw new Error('Failed');
+    }
+  } catch (err) {
+    if (status) {
+      status.textContent = t('common.error', 'Could not send request right now. Opening email directly…');
+      status.style.color = '#f85149';
+      status.style.display = 'block';
+    }
+    const subject = encodeURIComponent(`School Quote / PO Request: ${schoolName || workEmail}`);
+    const body = encodeURIComponent(`Hello Derek,\n\nWe would like to request an official school invoice/quote for Attendance Tracker.\n\nSchool/Org: ${schoolName}\nContact: ${workEmail}\n\nThank you!`);
+    window.location.href = `mailto:derekgallardo01@gmail.com?subject=${subject}&body=${body}`;
+    setTimeout(dismissPaywallWhy, 1500);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = t('paywall.schoolSubmit', 'Request Official School Quote'); }
+  }
+}
+
+async function submitPaywallFeatureFeedback() {
+  const textInput = document.getElementById('paywall-feedback-text');
+  const btn = document.getElementById('btn-paywall-feedback-submit');
+  const text = (textInput?.value || '').trim();
+  if (!text) {
+    dismissPaywallWhy();
+    return;
+  }
+  if (btn) { btn.disabled = true; btn.textContent = t('common.sending', 'Sending…'); }
+  try {
+    const email = state.userEmail || '';
+    await fetch(`${state.backendUrl}/public/feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        body: text,
+        feedback: text,
+        fromEmail: email,
+        email,
+        source: 'paywall_objection',
+        conferenceId: state.conferenceId || null,
+      }),
+    });
+    try { logUserEvent('paywall_feedback_submitted', { length: text.length }); } catch {}
+    toast(t('feedback.sent', 'Thank you for your feedback!'));
+  } catch {}
+  dismissPaywallWhy();
 }
 
 // Fire-and-forget PUT of a settings patch. Best-effort — a failure leaves the
@@ -6836,6 +7005,7 @@ function updateExportCta() {
   // ask can reach live-only trackers who never export. Runs regardless of the CTA
   // visibility below — a tracked meeting is a tracked meeting.
   if (realMeeting) recordRealMeetingTracked(state.conferenceId);
+  if (distinctAttendeeCount() >= 10) maybeShowReviewAsk();
   // Count this session toward its recurring SERIES so the term-end report/certs
   // payoff can surface once a class has met enough times (reaches live-only
   // trackers of a recurring class too, who never export).
@@ -7034,6 +7204,7 @@ function handlePanelLeave() {
     distinctAttendees: distinctAttendeeCount(),
     trackedMinutes: state.startTime ? Math.round((Date.now() - new Date(state.startTime).getTime()) / 60000) : 0,
   });
+  maybeAskPaywallWhy();
 }
 document.addEventListener('visibilitychange', handlePanelLeave);
 
@@ -7979,8 +8150,10 @@ function maybeShowReviewAsk() {
     hasReviewed = !!localStorage.getItem('has_reviewed');
   } catch (e) { return; } // private mode → skip silently
 
-  // Value moment trigger: requires genuine engagement (at least 1 export or 2+ distinct tracked meetings)
-  if (shown || hasReviewed || (count < 1 && tracked < 2)) return;
+  // Value moment trigger: requires genuine engagement (at least 2 exports or >= 10 attendees tracked or 1 export and 1 tracked)
+  const attendees = typeof distinctAttendeeCount === 'function' ? distinctAttendeeCount() : 0;
+  if (shown || hasReviewed) return;
+  if (count < 2 && attendees < 10 && !(count >= 1 && tracked >= 1)) return;
 
   const variant = getReviewExperimentVariant();
   const targetId = variant === 'stars' ? 'review-stars-widget' : 'review-ask';
@@ -7993,9 +8166,15 @@ function maybeShowReviewAsk() {
     : document.getElementById('review-ask');
   if (!bar) return;
 
+  const email = (state.userEmail || '').toLowerCase();
+  const btnStars = document.getElementById('review-stars-marketplace-btn');
+  const btnBanner = document.getElementById('review-banner-btn');
+  if (btnStars) btnStars.href = `${state.backendUrl}/public/review-click?email=${encodeURIComponent(email)}&source=inapp_stars`;
+  if (btnBanner) btnBanner.href = `${state.backendUrl}/public/review-click?email=${encodeURIComponent(email)}&source=inapp_banner`;
+
   bar.style.display = 'flex';
   try { localStorage.setItem('att_review_ask_shown', '1'); } catch (e) { /* best-effort */ }
-  try { logUserEvent('review_experiment_shown', { variant }); } catch (e) { /* best-effort */ }
+  try { logUserEvent('review_experiment_shown', { variant, count, attendees }); } catch (e) { /* best-effort */ }
 }
 
 function dismissReviewExperiment(variant) {
@@ -8013,6 +8192,8 @@ function closeReviewAsk() {
 
 function onReviewExperimentMarketplaceClick(variant) {
   try { localStorage.setItem('has_reviewed', '1'); } catch (e) {}
+  try { localStorage.setItem('has_clicked_review', '1'); } catch (e) {}
+  try { logUserEvent('review_ask_clicked', { source: `inapp_${variant}` }); } catch (e) {}
   try { logUserEvent('review_experiment_clicked', { variant, action: 'marketplace_click' }); } catch (e) {}
 }
 
@@ -9482,10 +9663,11 @@ window.addEventListener('DOMContentLoaded', () => {
           <div>
             <div class="settings-row-label">
               <span data-i18n="settings.autoExportLabel">Auto-export when meeting ends</span>
+              <span class="pro-badge" title="Auto-export is an Educator Pro feature" style="background:rgba(74,222,128,.15);color:#4ade80;font-size:.62rem;font-weight:700;padding:2px 6px;border-radius:10px;margin-left:6px;letter-spacing:.03em">PRO</span>
             </div>
             <div class="settings-row-sub" data-i18n="settings.autoExportDesc">Automatically saves attendance to a Google Sheet when the meeting concludes.</div>
           </div>
-          <label class="settings-switch" data-i18n-aria="tip.toggleAutoExport" aria-label="Toggle auto-export on meeting end">
+          <label class="settings-switch" data-i18n-aria="tip.toggleAutoExport" aria-label="Toggle auto-export on meeting end" title="Auto-export is included in Educator Pro">
             <input type="checkbox" id="setting-auto-export" onchange="toggleAutoExport(this.checked)" />
             <span class="settings-slider"></span>
           </label>
@@ -9746,23 +9928,81 @@ window.addEventListener('DOMContentLoaded', () => {
   </div>
 
   <!-- ── Pro Upgrade Modal ── -->
-<!-- One-time paywall objection ask (after the 3rd upgrade-modal dismissal) -->
+<!-- Paywall objection diagnosis and real-time resolution modal -->
   <div id="paywall-why-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:1150;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px)">
-    <div style="background:#1e1f20;border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:22px;max-width:330px;width:100%;box-shadow:0 24px 48px rgba(0,0,0,.6);position:relative">
+    <div style="background:#1e1f20;border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:22px;max-width:350px;width:100%;box-shadow:0 24px 48px rgba(0,0,0,.6);position:relative;font-family:var(--font-sans)">
       <button type="button" onclick="dismissPaywallWhy()" data-i18n-aria="common.close" aria-label="Close" class="modal-close-icon-btn">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"></line>
           <line x1="6" y1="6" x2="18" y2="18"></line>
         </svg>
       </button>
-      <div style="font-weight:600;color:#e3e3e3;font-size:1rem;margin-bottom:4px;padding-right:20px" data-i18n="paywall.whyTitle">Quick question — what's holding you back?</div>
-      <div style="color:#9aa0a6;font-size:.78rem;margin-bottom:14px" data-i18n="paywall.whySub">One tap. It helps us make Pro worth it.</div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <button type="button" onclick="answerPaywallWhy('price')" style="flex:0 0 auto;text-align:left;background:#161b22;border:1px solid #30363d;color:#e6edf3;border-radius:10px;padding:10px 14px;font-size:.85rem;cursor:pointer" data-i18n="paywall.whyPrice">Too expensive</button>
-        <button type="button" onclick="answerPaywallWhy('no_need')" style="flex:0 0 auto;text-align:left;background:#161b22;border:1px solid #30363d;color:#e6edf3;border-radius:10px;padding:10px 14px;font-size:.85rem;cursor:pointer" data-i18n="paywall.whyNoNeed">I don't need the Pro features</button>
-        <button type="button" onclick="answerPaywallWhy('deciding')" style="flex:0 0 auto;text-align:left;background:#161b22;border:1px solid #30363d;color:#e6edf3;border-radius:10px;padding:10px 14px;font-size:.85rem;cursor:pointer" data-i18n="paywall.whyDeciding">Still deciding</button>
-        <button type="button" onclick="answerPaywallWhy('other')" style="flex:0 0 auto;text-align:left;background:#161b22;border:1px solid #30363d;color:#e6edf3;border-radius:10px;padding:10px 14px;font-size:.85rem;cursor:pointer" data-i18n="paywall.whyOther">Something else</button>
+
+      <!-- View 1: Main Objection Options -->
+      <div id="paywall-why-view-options">
+        <div style="font-weight:600;color:#e3e3e3;font-size:1rem;margin-bottom:4px;padding-right:20px" data-i18n="paywall.whyTitle">Quick question — what's holding you back?</div>
+        <div style="color:#9aa0a6;font-size:.78rem;margin-bottom:14px" data-i18n="paywall.whySub">One tap. It helps us make Pro worth it for your classes.</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button type="button" onclick="answerPaywallWhy('expensive')" style="flex:0 0 auto;text-align:left;background:#161b22;border:1px solid #30363d;color:#e6edf3;border-radius:10px;padding:10px 14px;font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:space-between">
+            <span data-i18n="paywall.whyPrice">Too expensive / budget</span>
+            <span style="color:#81c995;font-size:.75rem;font-weight:600">$1.99 pass</span>
+          </button>
+          <button type="button" onclick="answerPaywallWhy('school_approval')" style="flex:0 0 auto;text-align:left;background:#161b22;border:1px solid #30363d;color:#e6edf3;border-radius:10px;padding:10px 14px;font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:space-between">
+            <span data-i18n="paywall.whySchoolApproval">Need school approval / invoice</span>
+            <span style="color:#58a6ff;font-size:.75rem;font-weight:600">PO / Quote</span>
+          </button>
+          <button type="button" onclick="answerPaywallWhy('missing_feature')" style="flex:0 0 auto;text-align:left;background:#161b22;border:1px solid #30363d;color:#e6edf3;border-radius:10px;padding:10px 14px;font-size:.85rem;cursor:pointer">
+            <span data-i18n="paywall.whyMissingFeature">Missing a specific feature</span>
+          </button>
+          <button type="button" onclick="answerPaywallWhy('other')" style="flex:0 0 auto;text-align:left;background:#161b22;border:1px solid #30363d;color:#e6edf3;border-radius:10px;padding:10px 14px;font-size:.85rem;cursor:pointer">
+            <span data-i18n="paywall.whyOther">Something else</span>
+          </button>
+        </div>
       </div>
+
+      <!-- View 2: "Too expensive" resolution ($1.99 Single Pass / Regional Discount) -->
+      <div id="paywall-why-view-expensive" style="display:none;flex-direction:column;gap:10px">
+        <div style="font-weight:600;color:#e3e3e3;font-size:1rem;margin-bottom:2px" data-i18n="paywall.expensiveTitle">We want roll-call to be accessible!</div>
+        <div style="color:#9aa0a6;font-size:.78rem;line-height:1.4" data-i18n="paywall.expensiveDesc">Need to export right now without a recurring subscription? Unlock this meeting for just $1.99, or get Educator Annual for ~$0.41/mo.</div>
+        <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px;margin:4px 0">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span style="font-weight:600;font-size:.86rem;color:#e3e3e3" data-i18n="upgrade.singleMeetingName">Single-Meeting Pass</span>
+            <span style="font-weight:700;color:#81c995">$1.99 <span style="font-size:.7rem;font-weight:400;color:#9aa0a6">one-time</span></span>
+          </div>
+          <button type="button" onclick="startUpgradeCheckout('single_meeting', 'btn-paywall-why-single');dismissPaywallWhy();" id="btn-paywall-why-single" style="width:100%;background:#34a853;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-weight:600;font-size:.8rem;cursor:pointer" data-i18n="upgrade.ctaSingleMeeting">Unlock This Meeting — $1.99</button>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding-top:4px">
+          <button type="button" onclick="resetPaywallWhyModal()" style="background:none;border:none;color:#9aa0a6;font-size:.75rem;cursor:pointer;text-decoration:underline">← Back</button>
+          <button type="button" onclick="dismissPaywallWhy();showUpgradeModal();" style="background:none;border:none;color:#58a6ff;font-size:.75rem;cursor:pointer;font-weight:600">View Educator &amp; Lifetime Plans →</button>
+        </div>
+      </div>
+
+      <!-- View 3: "Need school approval" resolution (1-click quote / invoice request) -->
+      <div id="paywall-why-view-school" style="display:none;flex-direction:column;gap:10px">
+        <div style="font-weight:600;color:#e3e3e3;font-size:1rem;margin-bottom:2px" data-i18n="paywall.schoolTitle">School Invoice / Purchase Order</div>
+        <div style="color:#9aa0a6;font-size:.78rem;line-height:1.4" data-i18n="paywall.schoolDesc">Schools often pay via Purchase Order or invoice. We'll generate an official quote for your administrator or finance office:</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <input type="text" id="paywall-school-name" placeholder="School or District name" data-i18n-placeholder="paywall.schoolNamePh" style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:7px 10px;color:#e6edf3;font-size:.78rem" />
+          <input type="email" id="paywall-school-email" placeholder="Work email" data-i18n-placeholder="paywall.schoolEmailPh" style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:7px 10px;color:#e6edf3;font-size:.78rem" />
+        </div>
+        <div id="paywall-school-status" style="display:none;font-size:.74rem;color:#81c995"></div>
+        <button type="button" id="btn-paywall-school-submit" onclick="submitPaywallSchoolQuote()" style="width:100%;background:#58a6ff;color:#0d1117;border:none;border-radius:8px;padding:8px 12px;font-weight:700;font-size:.8rem;cursor:pointer" data-i18n="paywall.schoolSubmit">Request Official School Quote</button>
+        <div style="text-align:center">
+          <button type="button" onclick="resetPaywallWhyModal()" style="background:none;border:none;color:#9aa0a6;font-size:.75rem;cursor:pointer;text-decoration:underline">← Back</button>
+        </div>
+      </div>
+
+      <!-- View 4: "Missing a feature" / "Other" feedback input -->
+      <div id="paywall-why-view-feedback" style="display:none;flex-direction:column;gap:10px">
+        <div style="font-weight:600;color:#e3e3e3;font-size:1rem;margin-bottom:2px" id="paywall-feedback-title" data-i18n="paywall.feedbackTitle">Tell us what you need</div>
+        <div style="color:#9aa0a6;font-size:.78rem;line-height:1.4" id="paywall-feedback-sub" data-i18n="paywall.feedbackSub">Derek reviews every feature request directly. What would make Attendance Tracker an absolute must-have for you?</div>
+        <textarea id="paywall-feedback-text" rows="3" placeholder="Tell us what's missing or what would help…" data-i18n-placeholder="paywall.feedbackPh" style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:8px 10px;color:#e6edf3;font-size:.78rem;resize:vertical"></textarea>
+        <button type="button" id="btn-paywall-feedback-submit" onclick="submitPaywallFeatureFeedback()" style="width:100%;background:#238636;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-weight:600;font-size:.8rem;cursor:pointer" data-i18n="paywall.feedbackSubmit">Send to Founder (Derek)</button>
+        <div style="text-align:center">
+          <button type="button" onclick="resetPaywallWhyModal()" style="background:none;border:none;color:#9aa0a6;font-size:.75rem;cursor:pointer;text-decoration:underline">← Back</button>
+        </div>
+      </div>
+
     </div>
   </div>
 

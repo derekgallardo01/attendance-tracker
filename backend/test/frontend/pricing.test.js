@@ -12,6 +12,7 @@ beforeEach(() => pricing._reset());
 
 describe('price()', () => {
   test('returns the default label for every known plan', () => {
+    expect(pricing.price('single_meeting')).toBe('$1.99');
     expect(pricing.price('lifetime')).toBe('$9.99');
     expect(pricing.price('educator')).toBe('$4.99');
     expect(pricing.price('team')).toBe('$19.99');
