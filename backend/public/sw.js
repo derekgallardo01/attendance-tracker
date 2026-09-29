@@ -6,7 +6,7 @@
  * cross-origin request (Google sign-in, Stripe, Google Fonts, YouTube) are never
  * intercepted — the SW stays out of auth and data paths entirely.
  */
-const CACHE = 'att-shell-v3';
+const CACHE = 'att-shell-v4';
 
 // App shell to pre-cache for offline. A single missing asset must not fail the
 // whole install, so we add them individually via allSettled.
@@ -40,7 +40,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   // Same-origin only; never the API, never cross-origin.
   if (url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith('/api')) return;
+  if (url.pathname.startsWith('/api') || url.pathname.includes('admin')) return;
 
   event.respondWith((async () => {
     try {

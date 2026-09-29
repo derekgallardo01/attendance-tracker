@@ -160,8 +160,16 @@ app.get('/unsubscribe', (_req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'unsubscribe.html'));
 });
 
-// Serve frontend from public/ (enabling clean HTML extension fallback)
-app.use(express.static(path.join(__dirname, '..', 'public'), { extensions: ['html'] }));
+app.use(express.static(path.join(__dirname, '..', 'public'), {
+  extensions: ['html'],
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('admin.html') || filePath.endsWith('admin.js')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+  },
+}));
 
 // Health check
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
