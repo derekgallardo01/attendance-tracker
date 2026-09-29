@@ -1156,7 +1156,7 @@
         loadTab(nextTab).then(() => {
           idlePreloadOtherTabs();
         }).catch(() => {});
-      }, 2000);
+      }, 30000);
     }
 
     async function loadDashboard(force = false, preferredTab = null) {
@@ -1410,12 +1410,16 @@
     const priorityBadge = AttAdmin.priorityBadge;
 
     async function loadSuggestions() {
+      const list = document.getElementById('suggestions-list');
       try {
         const res = await fetch(`${BACKEND_URL}/admin/suggestions`, { headers: { Authorization: `Bearer ${sessionToken}` } });
-        if (!res.ok) return;
+        if (!res.ok) {
+          if (list) list.innerHTML = `<div style="color:var(--error,#f85149);font-size:.85rem;padding:8px 0">Failed to load suggestions (HTTP ${res.status}). <button class="btn btn-secondary" style="font-size:.7rem;padding:2px 6px;margin-left:6px" onclick="loadSuggestions()">Retry</button></div>`;
+          return;
+        }
         const { suggestions } = await res.json();
-        const list = document.getElementById('suggestions-list');
-        if (!suggestions.length) {
+        if (!list) return;
+        if (!suggestions || !suggestions.length) {
           list.innerHTML = '<div style="color:var(--muted);font-size:.85rem;padding:8px 0">No suggestions right now. Quiet day.</div>';
           return;
         }
@@ -1438,6 +1442,7 @@
         `).join('');
       } catch (err) {
         console.error('suggestions load failed:', err);
+        if (list) list.innerHTML = `<div style="color:var(--error,#f85149);font-size:.85rem;padding:8px 0">Failed to load suggestions. <button class="btn btn-secondary" style="font-size:.7rem;padding:2px 6px;margin-left:6px" onclick="loadSuggestions()">Retry</button></div>`;
       }
     }
 
@@ -1717,26 +1722,37 @@
     }
 
     async function loadPulse() {
+      const stamp = document.getElementById('pulse-stamp');
       try {
         const res = await fetch(`${BACKEND_URL}/admin/pulse`, { headers: { Authorization: `Bearer ${sessionToken}` } });
-        if (!res.ok) return;
+        if (!res.ok) {
+          if (stamp) stamp.innerHTML = `<span style="color:var(--error,#f85149)">Failed to load (HTTP ${res.status})</span> · <a href="javascript:void(0)" onclick="loadPulse()" style="color:var(--accent);text-decoration:underline">Retry</a>`;
+          return;
+        }
         const p = await res.json();
         const set = (id, v) => { const el = document.getElementById('pulse-' + id); if (el) el.textContent = String(v ?? '—'); };
         for (const k of ['activeNow', 'trackingNow', 'active24h', 'active7d', 'signups24h', 'signups7d', 'totalUsers', 'exports24h', 'quotaHits24h', 'upgrades24h', 'checkins24h']) set(k, p[k]);
-        document.getElementById('pulse-stamp').textContent = `Updated ${new Date().toLocaleTimeString()}`;
+        if (stamp) stamp.textContent = `Updated ${new Date().toLocaleTimeString()}`;
       } catch (err) {
         console.error('pulse load failed:', err);
+        if (stamp) stamp.innerHTML = `<span style="color:var(--error,#f85149)">Failed to load</span> · <a href="javascript:void(0)" onclick="loadPulse()" style="color:var(--accent);text-decoration:underline">Retry</a>`;
       }
     }
 
     async function loadActivity() {
+      const feed = document.getElementById('activity-feed');
+      const stamp = document.getElementById('activity-stamp');
       try {
         const res = await fetch(`${BACKEND_URL}/admin/activity?limit=30`, { headers: { Authorization: `Bearer ${sessionToken}` } });
-        if (!res.ok) return;
+        if (!res.ok) {
+          if (feed) feed.innerHTML = `<div style="color:var(--error,#f85149);padding:8px 0">Failed to load activity (HTTP ${res.status}). <button class="btn btn-secondary" style="font-size:.7rem;padding:2px 6px;margin-left:6px" onclick="loadActivity()">Retry</button></div>`;
+          if (stamp) stamp.textContent = 'Error';
+          return;
+        }
         const { events } = await res.json();
-        const feed = document.getElementById('activity-feed');
-        document.getElementById('activity-stamp').textContent = `Updated ${new Date().toLocaleTimeString()}`;
-        if (!events.length) {
+        if (stamp) stamp.textContent = `Updated ${new Date().toLocaleTimeString()}`;
+        if (!feed) return;
+        if (!events || !events.length) {
           feed.innerHTML = '<div style="color:var(--muted)">No activity yet</div>';
           return;
         }
@@ -1762,16 +1778,22 @@
         `).join('');
       } catch (err) {
         console.error('activity load failed:', err);
+        if (feed) feed.innerHTML = `<div style="color:var(--error,#f85149);padding:8px 0">Failed to load activity. <button class="btn btn-secondary" style="font-size:.7rem;padding:2px 6px;margin-left:6px" onclick="loadActivity()">Retry</button></div>`;
+        if (stamp) stamp.textContent = 'Error';
       }
     }
 
     async function loadPowerUsers() {
+      const body = document.getElementById('power-users-rows');
       try {
         const res = await fetch(`${BACKEND_URL}/admin/power-users?days=7&minMeetings=3`, { headers: { Authorization: `Bearer ${sessionToken}` } });
-        if (!res.ok) return;
+        if (!res.ok) {
+          if (body) body.innerHTML = `<tr><td colspan="7" style="color:var(--error,#f85149)">Failed to load power users (HTTP ${res.status}). <button class="btn btn-secondary" style="font-size:.7rem;padding:2px 6px;margin-left:6px" onclick="loadPowerUsers()">Retry</button></td></tr>`;
+          return;
+        }
         const { users } = await res.json();
-        const body = document.getElementById('power-users-rows');
-        if (!users.length) {
+        if (!body) return;
+        if (!users || !users.length) {
           body.innerHTML = '<tr><td colspan="7" style="color:var(--muted)">No uncontacted power users right now.</td></tr>';
           return;
         }
@@ -1788,6 +1810,7 @@
         `).join('');
       } catch (err) {
         console.error('power users load failed:', err);
+        if (body) body.innerHTML = `<tr><td colspan="7" style="color:var(--error,#f85149)">Failed to load power users. <button class="btn btn-secondary" style="font-size:.7rem;padding:2px 6px;margin-left:6px" onclick="loadPowerUsers()">Retry</button></td></tr>`;
       }
     }
 

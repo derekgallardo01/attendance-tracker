@@ -1,7 +1,6 @@
 // Admin CRM + analytics reads/writes — the founder-only dashboard cluster.
 // Self-contained on _core (no calls into operational firestore functions).
 // The heavy read functions are memoize-wrapped at the services/firestore.js
-// export site, not here.
 const { getDb, tenantRef, FieldValue, log, SUPER_ADMIN_EMAIL, isSuperAdmin, PERSONAL_EMAIL_DOMAINS, countDistinctAttendees, tsMs, domainOf } = require('./_core');
 
 // Module-level cache for getActivationFunnel (scans all users + events).
@@ -1089,10 +1088,39 @@ async function setEmailTemplates(items) {
 
 // ── Admin: recent activity feed (super admin only) ──
 // Returns the most recent events across every tenant for the live feed.
-async function getRecentActivity({ limit = 50 } = {}) {
+// Queries the optimized root collection admin_activity, with graceful fallback
+// to collectionGroup('events') if admin_activity is empty or unindexed.
+async function getRecentActivity({ limit = 30 } = {}) {
   try {
-    const snap = await getDb().collectionGroup('events').get();
-    return snap.docs
+    let snap = null;
+    try {
+      snap = await getDb().collection('admin_activity').orderBy('createdAt', 'desc').limit(limit).get();
+    } catch (e) {
+      log.warn('firestore: admin_activity query failed, falling back to events', { error: e.message });
+      snap = null;
+    }
+
+    if (snap && !snap.empty) {
+      return snap.docs
+        .map(d => {
+          const data = d.data();
+          const ms = tsMs(data.createdAt) || (data.createdAt instanceof Date ? data.createdAt.getTime() : (typeof data.createdAt === 'string' ? Date.parse(data.createdAt) : 0));
+          return {
+            email: data.email || null,
+            type: data.type,
+            domain: data.domain || null,
+            createdAt: ms > 0 ? new Date(ms).toISOString() : (typeof data.createdAt === 'string' ? data.createdAt : null),
+            meta: data.meta || null,
+          };
+        })
+        .filter(e => Boolean(e.createdAt))
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, limit);
+    }
+
+    // Graceful fallback if admin_activity is empty (e.g. before backfill or in tests)
+    const fallbackSnap = await getDb().collectionGroup('events').get();
+    return fallbackSnap.docs
       .map(d => {
         const data = d.data();
         return {
@@ -1113,9 +1141,18 @@ async function getRecentActivity({ limit = 50 } = {}) {
   }
 }
 
+// Module-level cache for getReachOutSuggestions (scans events + uses cached users).
+let _suggestionsCache = null;
+let _suggestionsCachedAt = 0;
+const SUGGESTIONS_CACHE_MS = 120 * 1000;
+
 // ── Admin: suggestions panel ──
 // Surfaces users worth reaching out to RIGHT NOW based on event patterns.
-async function getReachOutSuggestions() {
+// Uses cached getAllUsersAcrossTenants() to avoid redundant collectionGroup('users') reads.
+async function getReachOutSuggestions({ force = false } = {}) {
+  if (!force && process.env.NODE_ENV !== 'test' && _suggestionsCache && (Date.now() - _suggestionsCachedAt) < SUGGESTIONS_CACHE_MS) {
+    return _suggestionsCache;
+  }
   try {
     const now = Date.now();
     const HOUR = 60 * 60 * 1000;
@@ -1205,17 +1242,31 @@ async function getReachOutSuggestions() {
     }
 
     suggestions.sort((a, b) => a.priority - b.priority || new Date(b.lastEventAt) - new Date(a.lastEventAt));
-    return suggestions.slice(0, 20);
+    const result = suggestions.slice(0, 20);
+    _suggestionsCache = result;
+    _suggestionsCachedAt = Date.now();
+    return result;
   } catch (err) {
     log.error('firestore: getReachOutSuggestions failed', { error: err.message });
     return [];
   }
 }
 
+// Module-level cache for getPowerUserPipeline.
+let _powerUserCache = null;
+let _powerUserCachedAt = 0;
+let _powerUserCacheKey = '';
+const POWER_USER_CACHE_MS = 120 * 1000;
+
 // ── Admin: power user pipeline ──
 // Active users who've crossed a threshold of recent activity but haven't been
 // reached out to. Targets for personalized outreach + testimonial requests.
-async function getPowerUserPipeline({ days = 7, minMeetings = 3 } = {}) {
+// Uses cached getAllUsersAcrossTenants() to avoid raw users scan and ensure memoization.
+async function getPowerUserPipeline({ days = 7, minMeetings = 3, force = false } = {}) {
+  const cacheKey = `${days}:${minMeetings}`;
+  if (!force && process.env.NODE_ENV !== 'test' && _powerUserCache && _powerUserCacheKey === cacheKey && (Date.now() - _powerUserCachedAt) < POWER_USER_CACHE_MS) {
+    return _powerUserCache;
+  }
   try {
     const now = Date.now();
     const cutoff = now - days * 24 * 60 * 60 * 1000;
@@ -1264,7 +1315,7 @@ async function getPowerUserPipeline({ days = 7, minMeetings = 3 } = {}) {
       if (ts > row.lastActivity) row.lastActivity = ts;
     }
 
-    return Object.values(agg)
+    const result = Object.values(agg)
       .filter(row => row.meetings.size >= minMeetings)
       .map(row => {
         const u = usersByEmail[row.email] || {};
@@ -1283,6 +1334,11 @@ async function getPowerUserPipeline({ days = 7, minMeetings = 3 } = {}) {
       })
       .filter(row => !row.lastContactedAt)
       .sort((a, b) => b.totalActions - a.totalActions);
+
+    _powerUserCache = result;
+    _powerUserCacheKey = cacheKey;
+    _powerUserCachedAt = Date.now();
+    return result;
   } catch (err) {
     log.error('firestore: getPowerUserPipeline failed', { error: err.message });
     return [];
@@ -1353,25 +1409,39 @@ async function getOutreachList({ days = 30, limit = 50 } = {}) {
 // ── Admin: real-time pulse ──
 // The "how is the product doing RIGHT NOW" numbers for the dashboard header:
 // distinct active users (15min/24h/7d), signups, exports, upgrades, check-ins.
-// Same full events scan getRecentActivity already pays for (no range index on
-// the events collection group exists) — memoized 60s at the export site, so
-// the 30s dashboard poll re-reads Firestore at most once a minute.
+// Uses cached getAllUsersAcrossTenants() to compute totalUsers and signup windows
+// without full Firestore collectionGroup('users') scan.
+// Queries admin_activity within the last 7 days (or falls back to events scan).
 async function getActivityPulse() {
   try {
     const now = Date.now();
     const M15 = 15 * 60e3, H24 = 24 * 3600e3, D7 = 7 * 86400e3;
-    const [eventsSnap, usersSnap, checkinsSnap] = await Promise.all([
-      getDb().collectionGroup('events').get(),
+
+    const [usersSnap, checkinsSnap, rawEvents] = await Promise.all([
       getDb().collectionGroup('users').select('createdAt').get(),
       getDb().collection('checkins').get(),
+      (async () => {
+        try {
+          const minTs = new Date(now - D7);
+          const adminActSnap = await getDb().collection('admin_activity')
+            .where('createdAt', '>=', minTs)
+            .get();
+          if (!adminActSnap.empty) {
+            return adminActSnap.docs.map(d => d.data());
+          }
+        } catch (e) {
+          // fall through
+        }
+        const eventsSnap = await getDb().collectionGroup('events').get();
+        return eventsSnap.docs.map(d => d.data());
+      })(),
     ]);
 
     const activeNow = new Set(), active24 = new Set(), active7 = new Set();
     let signins24 = 0, exports24 = 0, upgrades24 = 0, quotaHits24 = 0;
     const trackingUsersNow = new Set();
-    for (const d of eventsSnap.docs) {
-      const e = d.data();
-      const at = tsMs(e.createdAt) || 0;
+    for (const e of rawEvents) {
+      const at = tsMs(e.createdAt) || (e.createdAt instanceof Date ? e.createdAt.getTime() : (typeof e.createdAt === 'string' ? Date.parse(e.createdAt) : 0)) || 0;
       const age = now - at;
       if (!at || age > D7) continue;
       if (e.email) active7.add(e.email);
@@ -1386,7 +1456,7 @@ async function getActivityPulse() {
       }
       if (age <= M15 && e.email) {
         activeNow.add(e.email);
-        if (e.type === 'tracked') trackingUsersNow.add(e.email);
+        if (e.type === 'tracked' || e.type === 'first_tracked') trackingUsersNow.add(e.email);
       }
     }
 
@@ -1621,6 +1691,10 @@ async function setErrorAlertState(data) {
 function clearInsightsCache() {
   _insightsCache = null;
   _insightsCachedAt = 0;
+  _suggestionsCache = null;
+  _suggestionsCachedAt = 0;
+  _powerUserCache = null;
+  _powerUserCachedAt = 0;
 }
 
 module.exports = {

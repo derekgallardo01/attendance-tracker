@@ -308,18 +308,39 @@ async function transferTeamAdmin(domain, fromEmail, toEmail) {
 
 // ── Meeting persistence (tenant-scoped) ──
 
+// Activity event types indexed in the root admin_activity collection for fast dashboard reads.
+const ACTIVITY_EVENT_TYPES = new Set([
+  'signin', 'exported', 'export_success', 'upgraded', 'first_tracked', 'quota_warning_shown',
+]);
+
 // Per-user event log — lets us compute true individual activity (most active
 // this month, real per-user tracked/exported counts) instead of bucketing by
 // domain. Fire-and-forget; never block the caller.
+// Dual-writes key activity events to top-level admin_activity for fast dashboard reads.
 async function logEvent(domain, { email, type, meta }) {
   if (!domain || !email || !type) return;
+  const emailLower = email.toLowerCase();
   try {
-    await tenantRef(domain).collection('events').add({
-      email: email.toLowerCase(),
-      type,
-      meta: meta || null,
-      createdAt: FieldValue.serverTimestamp(),
-    });
+    const writes = [
+      tenantRef(domain).collection('events').add({
+        email: emailLower,
+        type,
+        meta: meta || null,
+        createdAt: FieldValue.serverTimestamp(),
+      }),
+    ];
+    if (ACTIVITY_EVENT_TYPES.has(type)) {
+      writes.push(
+        getDb().collection('admin_activity').add({
+          email: emailLower,
+          domain,
+          type,
+          meta: meta || null,
+          createdAt: FieldValue.serverTimestamp(),
+        })
+      );
+    }
+    await Promise.all(writes);
   } catch (err) {
     log.warn('firestore: logEvent failed', { domain, email, type, error: err.message });
   }
@@ -2399,6 +2420,7 @@ module.exports = {
   getPowerUserPipeline: memoizeTTL(getPowerUserPipeline, 120000),
   getOutreachList: memoizeTTL(getOutreachList, 120000),
   getRecentActivity: memoizeTTL(getRecentActivity, 60000),
+  getAdminActivity: memoizeTTL(getRecentActivity, 60000),
   getActivityPulse: memoizeTTL(getActivityPulse, 60000),
   // Full events+users scan, measured 13-18s in prod — cache it like the rest.
   getActivationFunnel: memoizeTTL(getActivationFunnel, 120000),
