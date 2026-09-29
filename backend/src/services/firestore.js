@@ -1575,6 +1575,11 @@ async function getAllUsersAcrossTenants() {
         acquisitionSource: data.acquisitionSource || null,
         signupDetectedSource: data.signupDetectedSource || null,
         postExportSurvey: data.postExportSurvey || null,
+        individualPlan: data.individualPlan || null,
+        individualBillingStatus: data.individualBillingStatus || null,
+        individualPlanType: data.individualPlanType || null,
+        reviewStatus: data.reviewStatus || null,
+        reviewLinkClickedAt: data.reviewLinkClickedAt || null,
       };
     });
   } catch (err) {
@@ -2381,7 +2386,7 @@ module.exports = {
   suppressEmail, isEmailSuppressed, unsuppressEmail,
   createReminder, markReminderDone, getDueReminders,
   getEmailTemplates, setEmailTemplates,
-  getAllUsersAcrossTenants,
+  getAllUsersAcrossTenants: memoizeTTL(getAllUsersAcrossTenants, 120000),
   deleteUser, isUserDeleted,
   saveCheckin, getCheckins,
   unlockMeetingForUser, isMeetingUnlocked,

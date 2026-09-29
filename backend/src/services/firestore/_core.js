@@ -86,18 +86,27 @@ function getDb() {
 // couple of minutes turns N full-DB re-scans into one. Admin-only data, so mild
 // staleness is fine. (Does NOT bound a single cold call's memory.)
 function memoizeTTL(fn, ttlMs, maxEntries = 200) {
-  const cache = new Map(); // argsKey -> { at, value }
+  const cache = new Map(); // argsKey -> { at, value, promise }
   return async function (...args) {
     const key = JSON.stringify(args);
     const hit = cache.get(key);
-    if (hit && (Date.now() - hit.at) < ttlMs) return hit.value;
-    const value = await fn.apply(this, args);
-    cache.set(key, { at: Date.now(), value });
-    // Bound the cache so a large spread of distinct arg keys can't grow it
-    // without limit (it was only ever TTL-checked on read, never size-evicted).
-    // Map preserves insertion order, so the first key is the oldest.
-    if (cache.size > maxEntries) cache.delete(cache.keys().next().value);
-    return value;
+    if (hit) {
+      if ((Date.now() - hit.at) < ttlMs && hit.value !== undefined) return hit.value;
+      if (hit.promise) return hit.promise;
+    }
+    const promise = (async () => {
+      try {
+        const value = await fn.apply(this, args);
+        cache.set(key, { at: Date.now(), value, promise: null });
+        if (cache.size > maxEntries) cache.delete(cache.keys().next().value);
+        return value;
+      } catch (err) {
+        cache.delete(key);
+        throw err;
+      }
+    })();
+    cache.set(key, { at: Date.now(), value: undefined, promise });
+    return promise;
   };
 }
 

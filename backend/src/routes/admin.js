@@ -148,48 +148,60 @@ router.post('/admin/uninstall', marketplaceLimiter, requireMarketplaceAuth, asyn
 // OWN domain's numbers; the cross-tenant list (every customer domain + when
 // they installed) is founder-only — it was previously returned to any
 // authenticated session, i.e. a full customer-list disclosure.
+const _statsCache = new Map();
+const STATS_CACHE_MS = 60 * 1000;
+
 router.get('/admin/stats', requireAuth, async (req, res) => {
   try {
+    const isSuper = isSuperAdminUser(req.user.email);
+    const domain = req.user.domain;
+    const force = req.query.nocache === '1' || req.query.refresh === '1';
+    const cacheKey = `${domain}:${isSuper}`;
 
-    const { Firestore } = require('@google-cloud/firestore');
-    const db = new Firestore();
+    if (!force && process.env.NODE_ENV !== 'test') {
+      const hit = _statsCache.get(cacheKey);
+      if (hit && (Date.now() - hit.at) < STATS_CACHE_MS) {
+        return res.json(hit.data);
+      }
+    }
 
-    const isSuper = req.user.email === CONFIG.superAdminEmail;
+    const db = getDb();
+
     let tenants = [];
     if (isSuper) {
       // Tenant list: explicit docs + any domain we have users in.
-      // Firestore doesn't auto-create the parent doc for subcollection writes,
-      // so users can exist under tenants/{domain}/users/* without a tenant doc.
-      const [tenantsSnap, allUsersSnap] = await Promise.all([
+      const [tenantsSnap, allUsers] = await Promise.all([
         db.collection('tenants').get(),
-        db.collectionGroup('users').get(),
+        getAllUsersAcrossTenants(),
       ]);
       const tenantMap = new Map();
       for (const d of tenantsSnap.docs) {
         tenantMap.set(d.id, { domain: d.id, ...d.data() });
       }
-      for (const d of allUsersSnap.docs) {
-        const parent = d.ref.parent.parent;
-        if (!parent) continue; // legacy root-level users doc
-        const dom = parent.id;
-        if (!tenantMap.has(dom)) {
+      for (const u of allUsers) {
+        const dom = u.domain;
+        if (dom && !tenantMap.has(dom)) {
           tenantMap.set(dom, { domain: dom, active: true, installedAt: null });
         }
       }
       tenants = [...tenantMap.values()];
     }
 
-    // Count users for the requesting user's domain
-    const domain = req.user.domain;
-    const usersSnap = await db.collection('tenants').doc(domain).collection('users').get();
-    const meetingsSnap = await db.collection('tenants').doc(domain).collection('meetings').get();
-    const exportsSnap = await db.collection('tenants').doc(domain).collection('exports').get();
+    // Count users, meetings, exports for the requesting user's domain
+    const usersRef = db.collection('tenants').doc(domain).collection('users');
+    const meetingsRef = db.collection('tenants').doc(domain).collection('meetings');
+    const exportsRef = db.collection('tenants').doc(domain).collection('exports');
 
-    // Recent users are per-user PII (email, name, last login). This endpoint
-    // returns aggregate counts to ANY authenticated caller, but on a shared
-    // tenant (every gmail.com user lands in tenants/gmail.com) that list would
-    // hand any signed-in stranger 20 unrelated users' emails. Gate it to the
-    // founder; a real Workspace admin has /team/overview for their roster.
+    const [usersSnap, meetingsCountSnap, exportsCountSnap] = await Promise.all([
+      usersRef.get(),
+      typeof meetingsRef.count === 'function' ? meetingsRef.count().get() : meetingsRef.get(),
+      typeof exportsRef.count === 'function' ? exportsRef.count().get() : exportsRef.get(),
+    ]);
+
+    const meetingsCount = meetingsCountSnap.data ? meetingsCountSnap.data().count : meetingsCountSnap.size;
+    const exportsCount = exportsCountSnap.data ? exportsCountSnap.data().count : exportsCountSnap.size;
+
+    // Recent users are per-user PII. Gate it to the founder.
     const recentUsers = isSuper
       ? usersSnap.docs
         .map(d => ({ email: d.id, ...d.data() }))
@@ -206,7 +218,7 @@ router.get('/admin/stats', requireAuth, async (req, res) => {
         }))
       : [];
 
-    res.json({
+    const responseData = {
       totalTenants: isSuper ? tenants.length : null,
       tenants: isSuper ? tenants.map(t => ({
         domain: t.domain,
@@ -216,11 +228,17 @@ router.get('/admin/stats', requireAuth, async (req, res) => {
       yourDomain: {
         domain,
         users: usersSnap.size,
-        meetings: meetingsSnap.size,
-        exports: exportsSnap.size,
+        meetings: meetingsCount,
+        exports: exportsCount,
         recentUsers,
       },
-    });
+    };
+
+    if (process.env.NODE_ENV !== 'test') {
+      _statsCache.set(cacheKey, { at: Date.now(), data: responseData });
+    }
+
+    res.json(responseData);
   } catch (err) {
     log.error('admin: stats failed', { error: err.message });
     res.status(500).json({ error: 'Failed to fetch stats' });

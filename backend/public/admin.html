@@ -257,7 +257,7 @@
         <div>
           <span class="user" id="user-email"></span>
           <button class="btn btn-secondary" onclick="signOut()" style="margin-left:8px">Sign out</button>
-          <button class="btn btn-secondary" onclick="loadDashboard()" style="margin-left:4px">Refresh</button>
+          <button class="btn btn-secondary" onclick="loadDashboard(true)" style="margin-left:4px">Refresh</button>
         </div>
       </div>
 
@@ -1031,14 +1031,10 @@
           sessionToken = data.sessionToken;
           userEmail = data.email;
           document.getElementById('user-email').textContent = data.email;
-          setLoadingStep('Loading your dashboard…', 'Pulling stats, users, and live activity');
-          // Tiny delay so the message change is perceptible — the actual
-          // data load takes a few seconds anyway.
-          await new Promise(r => setTimeout(r, 350));
           loading.style.display = 'none';
           document.getElementById('dashboard').style.display = 'block';
-          restoreAdminTab();
-          loadDashboard();
+          const activeTab = restoreAdminTab();
+          loadDashboard(false, activeTab);
         },
         onError: (err) => {
           loading.style.display = 'none';
@@ -1048,15 +1044,23 @@
       });
     }
 
+    const loadedTabs = new Set();
+    let currentAdminTab = 'overview';
+    let _preloadTimer = null;
+
     function signOut() {
       sessionToken = null;
+      if (typeof liveRefreshTimer !== 'undefined') clearInterval(liveRefreshTimer);
+      if (_preloadTimer) clearTimeout(_preloadTimer);
+      loadedTabs.clear();
       document.getElementById('login-screen').style.display = '';
       document.getElementById('dashboard').style.display = 'none';
     }
 
-    async function loadDashboard() {
+    async function loadStats(force = false) {
       try {
-        const res = await fetch(`${BACKEND_URL}/admin/stats`, {
+        const url = `${BACKEND_URL}/admin/stats${force ? '?nocache=1' : ''}`;
+        const res = await fetch(url, {
           headers: { 'Authorization': `Bearer ${sessionToken}` },
         });
         if (!res.ok) throw new Error(`${res.status}`);
@@ -1103,31 +1107,79 @@
           <tr><td>Meetings Tracked</td><td>${d.meetings || 0}</td></tr>
           <tr><td>Exports</td><td>${d.exports || 0}</td></tr>
         `;
+      } catch (err) {
+        console.error('Stats load failed:', err);
+      }
+    }
 
-        // Super admin: load all users across tenants + insights
-        if (userEmail === SUPER_ADMIN_EMAIL) {
-          document.getElementById('founder-tools').style.display = 'flex';
-          document.getElementById('founder-section').style.display = 'block';
-          document.getElementById('analytics-section').style.display = 'block';
-          document.getElementById('tab-btn-revenue').style.display = '';
-          document.getElementById('tab-btn-reviews').style.display = '';
-          document.getElementById('tab-btn-clusters').style.display = '';
+    async function loadTab(name, force = false) {
+      if (!sessionToken || userEmail !== SUPER_ADMIN_EMAIL) return;
+      if (!force && loadedTabs.has(name)) return;
+      loadedTabs.add(name);
+
+      switch (name) {
+        case 'overview':
           loadSuggestions();
           loadPulse();
           loadActivity();
           loadPowerUsers();
-          loadRevenue();
           loadMarketplaceReviews();
-          loadSchoolClusters();
+          loadDueReminders();
+          break;
+        case 'users':
           loadAllUsers();
+          break;
+        case 'analytics':
           loadInsights();
           loadAnalytics();
-          loadDueReminders();
-          startLiveRefresh();
-        }
-      } catch (err) {
-        console.error('Dashboard load failed:', err);
+          break;
+        case 'revenue':
+          loadRevenue();
+          break;
+        case 'reviews':
+          loadMarketplaceReviews();
+          break;
+        case 'clusters':
+          loadSchoolClusters();
+          break;
       }
+    }
+
+    function idlePreloadOtherTabs() {
+      if (_preloadTimer) clearTimeout(_preloadTimer);
+      _preloadTimer = setTimeout(() => {
+        if (!sessionToken || userEmail !== SUPER_ADMIN_EMAIL) return;
+        const allTabs = ['overview', 'users', 'analytics', 'revenue', 'reviews', 'clusters'];
+        const pending = allTabs.filter(t => !loadedTabs.has(t));
+        if (pending.length === 0) return;
+        const nextTab = pending[0];
+        loadTab(nextTab).then(() => {
+          idlePreloadOtherTabs();
+        }).catch(() => {});
+      }, 2000);
+    }
+
+    async function loadDashboard(force = false, preferredTab = null) {
+      if (force) {
+        loadedTabs.clear();
+      }
+      const activeTab = preferredTab || currentAdminTab || 'overview';
+
+      // Super admin: display founder tabs and tools, load active tab widgets
+      if (userEmail === SUPER_ADMIN_EMAIL) {
+        document.getElementById('founder-tools').style.display = 'flex';
+        document.getElementById('founder-section').style.display = 'block';
+        document.getElementById('analytics-section').style.display = 'block';
+        document.getElementById('tab-btn-revenue').style.display = '';
+        document.getElementById('tab-btn-reviews').style.display = '';
+        document.getElementById('tab-btn-clusters').style.display = '';
+        loadTab(activeTab, force);
+        startLiveRefresh();
+        idlePreloadOtherTabs();
+      }
+
+      // Load general domain stats in parallel (doesn't block active tab widgets!)
+      loadStats(force);
     }
 
     // Delegates to the shared js/utils.js module (loaded in <head>).
@@ -1405,15 +1457,20 @@
     // Tabbed navigation: panes are class-tagged (.tp-<name>) rather than
     // physically grouped, so every existing loader keeps its element IDs.
     function switchAdminTab(name) {
+      currentAdminTab = name;
       document.querySelectorAll('.admin-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
       document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.classList.contains('tp-' + name)));
       try { localStorage.setItem('adminTab', name); } catch (e) { /* storage may be blocked */ }
+      if (sessionToken && userEmail === SUPER_ADMIN_EMAIL) {
+        loadTab(name);
+      }
     }
     function restoreAdminTab() {
       let saved = 'overview';
       try { saved = localStorage.getItem('adminTab') || 'overview'; } catch (e) { /* ignore */ }
       if (!document.querySelector(`.admin-tab[data-tab="${saved}"]`)) saved = 'overview';
       switchAdminTab(saved);
+      return saved;
     }
 
     // ── Revenue funnel: why haven't they subscribed ──
