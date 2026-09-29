@@ -5,7 +5,15 @@ const app = require('./src/app');
 const CONFIG = require('./src/config');
 const log = require('./src/lib/logger');
 
-const server = app.listen(CONFIG.port, () => log.info('server started', { port: CONFIG.port }));
+const server = app.listen(CONFIG.port, () => {
+  log.info('server started', { port: CONFIG.port });
+  try {
+    const { backfillAdminActivityIfSparse } = require('./src/services/firestore');
+    if (typeof backfillAdminActivityIfSparse === 'function') {
+      backfillAdminActivityIfSparse().catch(err => log.warn('startup: backfill admin_activity failed', { error: err.message }));
+    }
+  } catch (e) {}
+});
 
 // Cap how long any single request may run before the socket is destroyed, so a
 // stuck handler (hung upstream, slow query) can't hold a connection forever.

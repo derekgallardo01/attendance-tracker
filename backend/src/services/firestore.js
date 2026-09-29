@@ -310,8 +310,60 @@ async function transferTeamAdmin(domain, fromEmail, toEmail) {
 
 // Activity event types indexed in the root admin_activity collection for fast dashboard reads.
 const ACTIVITY_EVENT_TYPES = new Set([
-  'signin', 'exported', 'export_success', 'upgraded', 'first_tracked', 'quota_warning_shown',
+  'signin', 'exported', 'export_success', 'upgraded', 'first_tracked', 'quota_warning_shown', 'tracked',
 ]);
+
+// One-time backfill helper to seed recent (7-day) activity into root admin_activity
+// so dashboard queries run in sub-30ms without unindexed events scans.
+async function backfillAdminActivityIfSparse({ force = false } = {}) {
+  if (process.env.NODE_ENV === 'test') return { skipped: true };
+  try {
+    const minTs = new Date(Date.now() - 7 * 86400e3);
+    if (!force) {
+      const snap = await getDb().collection('admin_activity')
+        .where('createdAt', '>=', minTs)
+        .limit(30)
+        .get();
+      if (snap.size >= 30) return { skipped: true, existing: snap.size };
+    }
+
+    log.info('firestore: backfilling admin_activity with recent events');
+    const eventsSnap = await getDb().collectionGroup('events').get();
+    let batch = getDb().batch();
+    let count = 0;
+    let totalWritten = 0;
+    for (const d of eventsSnap.docs) {
+      const data = d.data();
+      const ts = tsMs(data.createdAt) || (data.createdAt instanceof Date ? data.createdAt.getTime() : (typeof data.createdAt === 'string' ? Date.parse(data.createdAt) : 0)) || 0;
+      if (!ts || ts < minTs.getTime()) continue;
+      if (!ACTIVITY_EVENT_TYPES.has(data.type)) continue;
+
+      const ref = getDb().collection('admin_activity').doc(`backfill_${d.id}`);
+      batch.set(ref, {
+        email: data.email ? data.email.toLowerCase() : null,
+        domain: data.domain || (d.ref.parent.parent?.id ?? null),
+        type: data.type,
+        meta: data.meta || null,
+        createdAt: data.createdAt,
+      }, { merge: true });
+      count++;
+      totalWritten++;
+      if (count >= 400) {
+        await batch.commit();
+        batch = getDb().batch();
+        count = 0;
+      }
+    }
+    if (count > 0) {
+      await batch.commit();
+    }
+    log.info('firestore: backfilled admin_activity events', { totalWritten });
+    return { backfilled: totalWritten };
+  } catch (err) {
+    log.warn('firestore: backfillAdminActivityIfSparse failed', { error: err.message });
+    return { error: err.message };
+  }
+}
 
 // Per-user event log — lets us compute true individual activity (most active
 // this month, real per-user tracked/exported counts) instead of bucketing by
@@ -2427,4 +2479,5 @@ module.exports = {
   getRevenueFunnel: memoizeTTL(getRevenueFunnel, 120000),
   // Error-spike alert reads — NOT cached (the hourly cron needs fresh counts).
   getRecentErrorSpike, getErrorAlertState, setErrorAlertState,
+  backfillAdminActivityIfSparse,
 };

@@ -1157,9 +1157,23 @@ async function getReachOutSuggestions({ force = false } = {}) {
     const now = Date.now();
     const HOUR = 60 * 60 * 1000;
     const DAY = 24 * HOUR;
+    const minTs = new Date(now - 7 * DAY);
 
-    const [eventsSnap, usersSnap, outreachSnap] = await Promise.all([
-      getDb().collectionGroup('events').get(),
+    const [eventsDocs, usersSnap, outreachSnap] = await Promise.all([
+      (async () => {
+        try {
+          const adminActSnap = await getDb().collection('admin_activity')
+            .where('createdAt', '>=', minTs)
+            .get();
+          if (!adminActSnap.empty) {
+            return adminActSnap.docs;
+          }
+        } catch (e) {
+          // fall through
+        }
+        const snap = await getDb().collectionGroup('events').get();
+        return snap.docs;
+      })(),
       getDb().collectionGroup('users').get(),
       getDb().collectionGroup('outreach').get(),
     ]);
@@ -1172,10 +1186,10 @@ async function getReachOutSuggestions({ force = false } = {}) {
     }
 
     const eventsByEmail = {};
-    for (const d of eventsSnap.docs) {
+    for (const d of eventsDocs) {
       const data = d.data();
       if (!data.email) continue;
-      const ts = tsMs(data.createdAt) || 0;
+      const ts = tsMs(data.createdAt) || (data.createdAt instanceof Date ? data.createdAt.getTime() : (typeof data.createdAt === 'string' ? Date.parse(data.createdAt) : 0)) || 0;
       (eventsByEmail[data.email] ||= []).push({ type: data.type, ts });
     }
 
@@ -1202,7 +1216,7 @@ async function getReachOutSuggestions({ force = false } = {}) {
 
       // a) Just signed in within the last hour and never tracked
       const justSignedIn = lastEvent.type === 'signin' && (now - lastEvent.ts) < HOUR;
-      const hasTracked = events.some(e => e.type === 'tracked');
+      const hasTracked = events.some(e => e.type === 'tracked' || e.type === 'first_tracked');
       if (justSignedIn && !hasTracked) {
         suggestions.push({
           priority: 1,
@@ -1215,7 +1229,7 @@ async function getReachOutSuggestions({ force = false } = {}) {
       }
 
       // b) First export happened in the last 24 hours
-      const exports_ = events.filter(e => e.type === 'exported').sort((a, b) => a.ts - b.ts);
+      const exports_ = events.filter(e => e.type === 'exported' || e.type === 'export_success').sort((a, b) => a.ts - b.ts);
       if (exports_.length === 1 && (now - exports_[0].ts) < DAY) {
         suggestions.push({
           priority: 2,
@@ -1261,7 +1275,6 @@ const POWER_USER_CACHE_MS = 120 * 1000;
 // ── Admin: power user pipeline ──
 // Active users who've crossed a threshold of recent activity but haven't been
 // reached out to. Targets for personalized outreach + testimonial requests.
-// Uses cached getAllUsersAcrossTenants() to avoid raw users scan and ensure memoization.
 async function getPowerUserPipeline({ days = 7, minMeetings = 3, force = false } = {}) {
   const cacheKey = `${days}:${minMeetings}`;
   if (!force && process.env.NODE_ENV !== 'test' && _powerUserCache && _powerUserCacheKey === cacheKey && (Date.now() - _powerUserCachedAt) < POWER_USER_CACHE_MS) {
@@ -1270,9 +1283,23 @@ async function getPowerUserPipeline({ days = 7, minMeetings = 3, force = false }
   try {
     const now = Date.now();
     const cutoff = now - days * 24 * 60 * 60 * 1000;
+    const minTs = new Date(cutoff);
 
-    const [eventsSnap, usersSnap, outreachSnap] = await Promise.all([
-      getDb().collectionGroup('events').get(),
+    const [eventsDocs, usersSnap, outreachSnap] = await Promise.all([
+      (async () => {
+        try {
+          const adminActSnap = await getDb().collection('admin_activity')
+            .where('createdAt', '>=', minTs)
+            .get();
+          if (!adminActSnap.empty) {
+            return adminActSnap.docs;
+          }
+        } catch (e) {
+          // fall through
+        }
+        const snap = await getDb().collectionGroup('events').get();
+        return snap.docs;
+      })(),
       getDb().collectionGroup('users').get(),
       getDb().collectionGroup('outreach').get(),
     ]);
@@ -1296,9 +1323,9 @@ async function getPowerUserPipeline({ days = 7, minMeetings = 3, force = false }
     }
 
     const agg = {};
-    for (const d of eventsSnap.docs) {
+    for (const d of eventsDocs) {
       const data = d.data();
-      const ts = tsMs(data.createdAt) || 0;
+      const ts = tsMs(data.createdAt) || (data.createdAt instanceof Date ? data.createdAt.getTime() : (typeof data.createdAt === 'string' ? Date.parse(data.createdAt) : 0)) || 0;
       if (!data.email || ts < cutoff) continue;
       if (data.type !== 'tracked' && data.type !== 'exported') continue;
       // The owner and the legacy/test domains aren't outreach targets.
