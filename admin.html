@@ -1327,17 +1327,8 @@
     }
 
     function idlePreloadOtherTabs() {
-      if (_preloadTimer) clearTimeout(_preloadTimer);
-      _preloadTimer = setTimeout(() => {
-        if (!sessionToken || userEmail !== SUPER_ADMIN_EMAIL) return;
-        const allTabs = ['overview', 'users', 'analytics', 'revenue', 'reviews', 'clusters'];
-        const pending = allTabs.filter(t => !loadedTabs.has(t));
-        if (pending.length === 0) return;
-        const nextTab = pending[0];
-        loadTab(nextTab).then(() => {
-          idlePreloadOtherTabs();
-        }).catch(() => {});
-      }, 30000);
+      // Disabled to prevent unwanted background collectionGroup queries that exhaust Cloud Run memory/CPU.
+      // Tabs are loaded on-demand when the admin navigates to them.
     }
 
     async function loadDashboard(force = false, preferredTab = null) {
@@ -1456,85 +1447,100 @@
         });
         if (!res.ok) { console.warn('insights failed:', res.status); return; }
         const d = await res.json();
-        document.getElementById('insights-section').style.display = 'grid'; // the pane lays out as a 2-col card grid
+        const insSec = document.getElementById('insights-section');
+        if (insSec) insSec.style.display = 'grid';
 
         // Stat cards
-        document.getElementById('ins-activation').textContent = pct(d.activationRate);
-        document.getElementById('ins-activation-sub').textContent = `${d.funnel.tracked} of ${d.funnel.signedIn} users`;
-        document.getElementById('ins-firstexport').textContent = pct(d.firstExportRate);
-        document.getElementById('ins-firstexport-sub').textContent = `${d.funnel.exported} of ${d.funnel.signedIn} users`;
-        document.getElementById('ins-paywall').textContent = d.paywallHits ?? 0;
-        document.getElementById('ins-wau').textContent = d.wau;
-        document.getElementById('ins-mau').textContent = d.mau;
-        document.getElementById('ins-d7').textContent = pct(d.d7Retention);
-        document.getElementById('ins-d7-sub').textContent = d.d7Retention == null ? 'No 7d+ cohort yet' : 'of 7-day cohort';
-        document.getElementById('ins-d30').textContent = pct(d.d30Retention);
-        document.getElementById('ins-d30-sub').textContent = d.d30Retention == null ? 'No 30d+ cohort yet' : 'of 30-day cohort';
-        document.getElementById('ins-revenue').textContent = d.totalProSubscribers ?? 0;
-        document.getElementById('ins-revenue-sub').textContent = `${d.proDomains ?? 0} orgs + ${d.proIndividuals ?? 0} individuals`;
-        document.getElementById('ins-ttft').textContent = fmtMs(d.medianTimeToFirstTrackMs);
-        document.getElementById('ins-avgp').textContent = d.avgParticipants ? d.avgParticipants.toFixed(1) : '—';
+        const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+        const setHtml = (id, val) => { const el = document.getElementById(id); if (el) el.innerHTML = val; };
+
+        setTxt('ins-activation', pct(d.activationRate));
+        setTxt('ins-activation-sub', `${d.funnel?.tracked ?? 0} of ${d.funnel?.signedIn ?? 0} users`);
+        setTxt('ins-firstexport', pct(d.firstExportRate));
+        setTxt('ins-firstexport-sub', `${d.funnel?.exported ?? 0} of ${d.funnel?.signedIn ?? 0} users`);
+        setTxt('ins-paywall', d.paywallHits ?? 0);
+        setTxt('ins-wau', d.wau ?? '—');
+        setTxt('ins-mau', d.mau ?? '—');
+        setTxt('ins-d7', pct(d.d7Retention));
+        setTxt('ins-d7-sub', d.d7Retention == null ? 'No 7d+ cohort yet' : 'of 7-day cohort');
+        setTxt('ins-d30', pct(d.d30Retention));
+        setTxt('ins-d30-sub', d.d30Retention == null ? 'No 30d+ cohort yet' : 'of 30-day cohort');
+        setTxt('ins-revenue', d.totalProSubscribers ?? 0);
+        setTxt('ins-revenue-sub', `${d.proDomains ?? 0} orgs + ${d.proIndividuals ?? 0} individuals`);
+        setTxt('ins-ttft', fmtMs(d.medianTimeToFirstTrackMs));
+        setTxt('ins-avgp', d.avgParticipants ? d.avgParticipants.toFixed(1) : '—');
 
         // Funnel
-        const totalForBar = d.funnel.installed || 1;
-        document.getElementById('funnel-rows').innerHTML = [
-          ['Installed', d.funnel.installed],
-          ['Signed in', d.funnel.signedIn],
-          ['Tracked a meeting', d.funnel.tracked],
-          ['Exported to Sheets', d.funnel.exported],
-          ['Hit Pro paywall', d.paywallHits ?? 0],
-        ].map(([label, v]) => {
-          const w = Math.max(2, Math.round((v / totalForBar) * 100));
-          return `<div style="margin:8px 0">
-            <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:2px">
-              <span>${label}</span><span style="color:var(--muted)">${v}</span>
-            </div>
-            <div style="background:var(--border);border-radius:4px;height:18px;overflow:hidden">
-              <div style="width:${w}%;background:var(--accent);height:100%"></div>
-            </div>
-          </div>`;
-        }).join('');
+        const totalForBar = d.funnel?.installed || 1;
+        const funnelEl = document.getElementById('funnel-rows');
+        if (funnelEl && d.funnel) {
+          funnelEl.innerHTML = [
+            ['Installed', d.funnel.installed],
+            ['Signed in', d.funnel.signedIn],
+            ['Tracked a meeting', d.funnel.tracked],
+            ['Exported to Sheets', d.funnel.exported],
+            ['Hit Pro paywall', d.paywallHits ?? 0],
+          ].map(([label, v]) => {
+            const w = Math.max(2, Math.round((v / totalForBar) * 100));
+            return `<div style="margin:8px 0">
+              <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:2px">
+                <span>${label}</span><span style="color:var(--muted)">${v}</span>
+              </div>
+              <div style="background:var(--border);border-radius:4px;height:18px;overflow:hidden">
+                <div style="width:${w}%;background:var(--accent);height:100%"></div>
+              </div>
+            </div>`;
+          }).join('');
+        }
 
         // Daily chart
-        const maxCount = Math.max(1, ...d.meetingsByDay.map(x => x.count));
-        document.getElementById('daily-chart').innerHTML = d.meetingsByDay.map(x => {
-          const h = Math.max(2, Math.round((x.count / maxCount) * 100));
-          return `<div title="${x.date}: ${x.count}" style="flex:1;background:var(--blue);height:${h}%;min-width:6px;border-radius:2px 2px 0 0;opacity:${x.count > 0 ? 1 : 0.2}"></div>`;
-        }).join('');
+        const dailyChart = document.getElementById('daily-chart');
+        if (dailyChart && d.meetingsByDay?.length) {
+          const maxCount = Math.max(1, ...d.meetingsByDay.map(x => x.count));
+          dailyChart.innerHTML = d.meetingsByDay.map(x => {
+            const h = Math.max(2, Math.round((x.count / maxCount) * 100));
+            return `<div title="${x.date}: ${x.count}" style="flex:1;background:var(--blue);height:${h}%;min-width:6px;border-radius:2px 2px 0 0;opacity:${x.count > 0 ? 1 : 0.2}"></div>`;
+          }).join('');
+        }
 
         // Repeat usage histogram
-        const totalOrgs = Object.values(d.meetingCountBuckets).reduce((a, b) => a + b, 0) || 1;
-        document.getElementById('repeat-rows').innerHTML = Object.entries(d.meetingCountBuckets).map(([bucket, count]) => {
-          const w = Math.max(2, Math.round((count / totalOrgs) * 100));
-          return `<div style="margin:8px 0">
-            <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:2px">
-              <span>${bucket} meetings</span><span style="color:var(--muted)">${count} org${count === 1 ? '' : 's'}</span>
-            </div>
-            <div style="background:var(--border);border-radius:4px;height:14px;overflow:hidden">
-              <div style="width:${w}%;background:var(--blue);height:100%"></div>
-            </div>
-          </div>`;
-        }).join('');
+        const repeatEl = document.getElementById('repeat-rows');
+        if (repeatEl && d.meetingCountBuckets) {
+          const totalOrgs = Object.values(d.meetingCountBuckets).reduce((a, b) => a + b, 0) || 1;
+          repeatEl.innerHTML = Object.entries(d.meetingCountBuckets).map(([bucket, count]) => {
+            const w = Math.max(2, Math.round((count / totalOrgs) * 100));
+            return `<div style="margin:8px 0">
+              <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:2px">
+                <span>${bucket} meetings</span><span style="color:var(--muted)">${count} org${count === 1 ? '' : 's'}</span>
+              </div>
+              <div style="background:var(--border);border-radius:4px;height:14px;overflow:hidden">
+                <div style="width:${w}%;background:var(--blue);height:100%"></div>
+              </div>
+            </div>`;
+          }).join('');
+        }
 
         // Top orgs
         const topOrgsBody = document.getElementById('top-orgs-rows');
-        if (!d.orgActivity?.length) {
-          topOrgsBody.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">No orgs yet</td></tr>';
-        } else {
-          topOrgsBody.innerHTML = d.orgActivity.slice(0, 10).map(o => `
-            <tr>
-              <td>${esc(o.domain)}${o.delegationConfigured ? ' <span class="badge badge-active" style="margin-left:4px">DWD</span>' : ''}</td>
-              <td>${o.users}</td>
-              <td>${o.meetings}</td>
-              <td>${o.exports}</td>
-              <td style="color:var(--muted)">${fmtDateTime(o.lastActivityAt)}</td>
-            </tr>
-          `).join('');
+        if (topOrgsBody) {
+          if (!d.orgActivity?.length) {
+            topOrgsBody.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">No orgs yet</td></tr>';
+          } else {
+            topOrgsBody.innerHTML = d.orgActivity.slice(0, 10).map(o => `
+              <tr>
+                <td>${esc(o.domain)}${o.delegationConfigured ? ' <span class="badge badge-active" style="margin-left:4px">DWD</span>' : ''}</td>
+                <td>${o.users}</td>
+                <td>${o.meetings}</td>
+                <td>${o.exports}</td>
+                <td style="color:var(--muted)">${fmtDateTime(o.lastActivityAt)}</td>
+              </tr>
+            `).join('');
+          }
         }
 
         // Top exporters
         const expBody = document.getElementById('top-exporters-rows');
-        if (d.topExporters?.length) {
+        if (expBody && d.topExporters?.length) {
           expBody.innerHTML = d.topExporters.map(u => `
             <tr><td>${esc(u.email)}</td><td style="color:var(--muted)">${esc(u.domain)}</td><td>${u.count}</td></tr>
           `).join('');
