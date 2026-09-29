@@ -232,6 +232,7 @@ async function main() {
         name: d.displayName || '',
         domain: doc.ref.parent.parent?.id || email.split('@')[1],
         plan: d.individualPlan || 'free',
+        createdAt: d.createdAt || null,
         philippinesPromoSentAt: d.philippinesPromoSentAt || null,
         events: []
       });
@@ -247,10 +248,18 @@ async function main() {
   }
 
   const eligible = [];
+  const nowSec = Math.floor(Date.now() / 1000);
   for (const [email, u] of phUsersMap.entries()) {
     if (u.plan === 'pro') continue;
     if (suppressed.has(email)) continue;
     if (u.philippinesPromoSentAt) continue;
+
+    // 48-Hour New-Signup "No-Sales" Grace Period:
+    // Allow new users at least 48 hours to explore and test the app in peace
+    const createdSec = u.createdAt?._seconds || (u.createdAt ? Math.floor(new Date(u.createdAt).getTime() / 1000) : 0);
+    if (createdSec && (nowSec - createdSec) < (48 * 3600)) {
+      continue;
+    }
 
     const hasGate = u.events.some(t => t.includes('upgrade') || t.includes('quota') || t.includes('paywall') || t.includes('export_skipped'));
     if (hasGate) {

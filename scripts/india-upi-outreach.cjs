@@ -236,6 +236,7 @@ async function main() {
         name: d.displayName || '',
         domain: doc.ref.parent.parent?.id || doc.id.split('@')[1],
         plan: d.individualPlan || 'free',
+        createdAt: d.createdAt || null,
         indiaUpiOfferSentAt: d.indiaUpiOfferSentAt || null,
         events: []
       });
@@ -251,10 +252,18 @@ async function main() {
   }
 
   const eligible = [];
+  const nowSec = Math.floor(Date.now() / 1000);
   for (const [email, u] of inUsersMap.entries()) {
     if (u.plan === 'pro') continue;
     if (suppressed.has(email)) continue;
     if (u.indiaUpiOfferSentAt) continue;
+
+    // 48-Hour New-Signup "No-Sales" Grace Period:
+    // Allow new users at least 48 hours to explore and test the app in peace
+    const createdSec = u.createdAt?._seconds || (u.createdAt ? Math.floor(new Date(u.createdAt).getTime() / 1000) : 0);
+    if (createdSec && (nowSec - createdSec) < (48 * 3600)) {
+      continue;
+    }
 
     const hasGate = u.events.some(t => t.includes('upgrade') || t.includes('quota') || t.includes('paywall'));
     if (hasGate) {

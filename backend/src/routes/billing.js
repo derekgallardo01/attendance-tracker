@@ -292,6 +292,13 @@ async function sendUpgradeLinkForUser({
     }
   }
 
+  // STRICT OPT-IN GUARDRAIL: Upgrade link emails are user-initiated only
+  // (teacher clicked "Teaching right now? Email me a link to upgrade later" in Meet).
+  // Background/automated sales pitches to inboxes are disabled to eliminate spam complaints.
+  if (reason !== 'manual') {
+    return { skipped: 'automated_sales_disabled' };
+  }
+
   // Cooldown check (10 min for manual, 72h for automated by default)
   const now = Date.now();
   const lastSent = upgradeLinkCooldown.get(normalizedEmail) || 0;
