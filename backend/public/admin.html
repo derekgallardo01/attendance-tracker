@@ -273,9 +273,9 @@
     }
   </style>
   <script src="https://accounts.google.com/gsi/client" async></script>
-  <script src="js/utils.js"></script>
-  <script src="js/api.js"></script>
-  <script src="js/admin.js"></script>
+  <script src="js/utils.js?v=20260929-2"></script>
+  <script src="js/api.js?v=20260929-2"></script>
+  <script src="js/admin.js?v=20260929-2"></script>
 </head>
 <body>
   <div class="container">
@@ -2072,7 +2072,13 @@
       'aol.com', 'mail.ru', 'protonmail.com', 'proton.me', 'zoho.com', 'yandex.ru'
     ]);
 
-    const schoolClusterBadge = AttAdmin.schoolClusterBadge;
+    function schoolClusterBadge(teacherCount) {
+      if (typeof AttAdmin !== 'undefined' && typeof AttAdmin.schoolClusterBadge === 'function') {
+        return AttAdmin.schoolClusterBadge(teacherCount);
+      }
+      if (!teacherCount || teacherCount < 2) return '';
+      return `<span class="badge" style="background:rgba(88,166,255,.18);color:#58a6ff;font-size:.7rem;font-weight:600;vertical-align:middle" title="${teacherCount} teachers registered">🏫 School Cluster (${teacherCount} teachers)</span>`;
+    }
 
     function getClusterBadge(domainOrEmail) {
       if (!domainOrEmail) return '';
