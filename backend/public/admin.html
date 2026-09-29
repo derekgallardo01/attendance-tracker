@@ -1030,6 +1030,7 @@
         onSuccess: async (data) => {
           sessionToken = data.sessionToken;
           userEmail = data.email;
+          try { localStorage.setItem('att_session_token', sessionToken); } catch (e) {}
           document.getElementById('user-email').textContent = data.email;
           loading.style.display = 'none';
           document.getElementById('dashboard').style.display = 'block';
@@ -1050,6 +1051,8 @@
 
     function signOut() {
       sessionToken = null;
+      userEmail = null;
+      try { localStorage.removeItem('att_session_token'); } catch (e) {}
       if (typeof liveRefreshTimer !== 'undefined') clearInterval(liveRefreshTimer);
       if (_preloadTimer) clearTimeout(_preloadTimer);
       loadedTabs.clear();
@@ -1181,6 +1184,72 @@
       // Load general domain stats in parallel (doesn't block active tab widgets!)
       loadStats(force);
     }
+
+    async function initSession() {
+      let token = null;
+      if (window.location.hash) {
+        const match = window.location.hash.match(/[#&]token=([^&]+)/);
+        if (match) token = decodeURIComponent(match[1]);
+      }
+      if (!token && window.location.search) {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('token')) token = params.get('token');
+      }
+      if (!token) {
+        try { token = localStorage.getItem('att_session_token'); } catch (e) {}
+      }
+
+      if (!token) return;
+
+      const loading = document.getElementById('loading');
+      document.getElementById('login-screen').style.display = 'none';
+      if (loading) {
+        loading.style.display = 'block';
+        setLoadingStep('Restoring admin session…', 'Verifying authorization');
+      }
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/oauth/me`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const me = await res.json();
+          if (me.email !== SUPER_ADMIN_EMAIL) {
+            if (loading) loading.style.display = 'none';
+            document.getElementById('login-screen').style.display = '';
+            alert('Access restricted to super admin (' + SUPER_ADMIN_EMAIL + ')');
+            return;
+          }
+          sessionToken = token;
+          userEmail = me.email;
+          try { localStorage.setItem('att_session_token', token); } catch (e) {}
+          // Strip the bearer from BOTH URL forms (?token= / #token=)
+          const cleanParams = new URLSearchParams(window.location.search);
+          if (cleanParams.has('token')) {
+            cleanParams.delete('token');
+            const qs = cleanParams.toString();
+            history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+          }
+          if (window.location.hash && window.location.hash.includes('token=')) {
+            history.replaceState(null, '', window.location.pathname + window.location.search);
+          }
+          document.getElementById('user-email').textContent = me.email;
+          if (loading) loading.style.display = 'none';
+          document.getElementById('dashboard').style.display = 'block';
+          const activeTab = restoreAdminTab();
+          loadDashboard(false, activeTab);
+        } else {
+          try { localStorage.removeItem('att_session_token'); } catch (e) {}
+          if (loading) loading.style.display = 'none';
+          document.getElementById('login-screen').style.display = '';
+        }
+      } catch (err) {
+        console.warn('Admin auto-login failed:', err);
+        if (loading) loading.style.display = 'none';
+        document.getElementById('login-screen').style.display = '';
+      }
+    }
+    initSession();
 
     // Delegates to the shared js/utils.js module (loaded in <head>).
     const esc = (s) => ((typeof AttUtils !== 'undefined' && AttUtils.escHtml) ? AttUtils.escHtml(s) : String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])));
