@@ -78,6 +78,14 @@ function getInrPrices() {
   };
 }
 
+// Sanitizes a Stripe price ID string, stripping accidental extra whitespace,
+// newlines, or concatenated env-var keys (e.g. from space-separated CLI updates).
+function sanitizePriceId(raw) {
+  if (!raw || typeof raw !== 'string') return null;
+  const token = raw.trim().split(/\s+/)[0];
+  return token || null;
+}
+
 // Per-domain Pro subscription via Stripe Checkout. Lazy-init the SDK (like the
 // Resend wrapper) so the service boots and runs fine before billing is
 // configured — every billing endpoint degrades to a clear 503 until the
@@ -183,7 +191,7 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
     // In India, cross-border USD payments hit strict RBI card blocks and subscription
     // e-mandate failures. Route all individual/educator/lifetime checkouts exclusively
     // to the one-time Lifetime Pass in INR (₹299) with UPI + Card rails enabled.
-    let resolvedPriceId = priceId;
+    let resolvedPriceId = sanitizePriceId(priceId);
     let paymentMethodTypes = (isIndia && (isLifetime || isEducator || individual) && !isSingleMeeting) ? ['card', 'upi'] : null;
     let isRecurring = !isLifetime && !isSingleMeeting && !(isIndia && (isLifetime || isEducator || individual));
 
@@ -340,10 +348,10 @@ async function sendUpgradeLinkForUser({
       const inrPrices = isIndia ? getInrPrices() : null;
       const educatorPriceId = isIndia
         ? null // In India, kill recurring subscriptions — Lifetime Pass is the ONLY option
-        : process.env.STRIPE_EDUCATOR_PRICE_ID;
+        : sanitizePriceId(process.env.STRIPE_EDUCATOR_PRICE_ID);
       const lifetimePriceId = isIndia
-        ? inrPrices.lifetime
-        : process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID;
+        ? sanitizePriceId(inrPrices.lifetime)
+        : sanitizePriceId(process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID);
       const inPaymentMethods = isIndia ? { payment_method_types: ['card', 'upi'] } : {};
 
       const [educatorSession, lifetimeSession] = await Promise.all([
@@ -483,7 +491,7 @@ router.post('/billing/public-checkout', async (req, res) => {
 
   const userCountry = detectCountry(req);
   const isIndia = userCountry === 'IN';
-  let resolvedPriceId = priceId;
+  let resolvedPriceId = sanitizePriceId(priceId);
   let paymentMethodTypes = null;
   if (isIndia && !isDomain) {
     const inrPrices = getInrPrices();

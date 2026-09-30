@@ -1657,6 +1657,22 @@ describe('billing/status pricing payload', () => {
       expect(res.body.isSuperAdmin).toBe(true);
     });
   });
+
+  describe('malformed price env var resilience', () => {
+    test('authed checkout sanitizes priceId if env var has concatenated space-separated tokens', async () => {
+      const orig = process.env.STRIPE_SINGLE_MEETING_PRICE_ID;
+      process.env.STRIPE_SINGLE_MEETING_PRICE_ID = 'price_1UKowpRPP93YBXrOjjKjUUlz STRIPE_INDIVIDUAL_LIFETIME_PHP_PRICE_ID=price_1UKowpRPP93YBXrOVreZdJO3';
+      app = buildApp();
+      const res = await request(app)
+        .post('/api/billing/checkout')
+        .set(authedHeader('teacher@school.edu', 'school.edu'))
+        .send({ plan: 'single_meeting', conferenceId: 'abc-defg-hij' });
+      expect(res.status).toBe(200);
+      const p = mockStripeInstance.checkout.sessions.create.mock.calls.at(-1)[0];
+      expect(p.line_items[0].price).toBe('price_1UKowpRPP93YBXrOjjKjUUlz');
+      process.env.STRIPE_SINGLE_MEETING_PRICE_ID = orig;
+    });
+  });
 });
 
 
