@@ -174,7 +174,8 @@ router.post('/event', requireAuth, async (req, res) => {
         log.warn('export_csv_downloaded: persistExport failed', { error: err.message, email: req.user.email });
       }
     }
-    if (type === 'export_failed' && safeMeta?.reason !== 'scope_blocked') {
+    const isClientNetworkError = /failed to fetch|networkerror|load failed|offline|err_internet_disconnected/i.test(String(safeMeta?.message || ''));
+    if (type === 'export_failed' && safeMeta?.reason !== 'scope_blocked' && !isClientNetworkError) {
       try {
         await notifications.sendErrorAlertEmail({
           email: req.user.email,

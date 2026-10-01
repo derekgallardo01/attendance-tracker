@@ -352,6 +352,10 @@
     // PII-safe.
     window.captureError = function (err, extra) {
       try {
+        const msg = String(err?.message || err || '');
+        if (/failed to fetch|networkerror|load failed|offline/i.test(msg)) {
+          return; // Client network drop (user closed laptop, WiFi dropped) — not an actionable code defect
+        }
         if (window.Sentry) Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { extra: extra || {} });
       } catch (e) { /* reporting must never throw */ }
     };
@@ -7550,10 +7554,24 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
   const exportStartMs = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
   try {
     toast(t('toast.savingSheets','Saving to Sheets…'));
-    const res = await authFetch(`${state.backendUrl}/save-to-sheets`, {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
+    let res;
+    try {
+      res = await authFetch(`${state.backendUrl}/save-to-sheets`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    } catch (fetchErr) {
+      const isNetwork = fetchErr?.name === 'TypeError' || /failed to fetch|networkerror|load failed/i.test(fetchErr?.message || '');
+      if (isNetwork) {
+        await new Promise(r => setTimeout(r, 2000));
+        res = await authFetch(`${state.backendUrl}/save-to-sheets`, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+      } else {
+        throw fetchErr;
+      }
+    }
     if (!res.ok) {
       let body = {};
       try { body = await res.json(); } catch {}

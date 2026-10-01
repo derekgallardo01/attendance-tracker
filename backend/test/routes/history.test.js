@@ -383,6 +383,26 @@ describe('POST /api/event — frontend event logging', () => {
     spy.mockRestore();
   });
 
+  test('POST /api/event with export_failed (client network disconnect / Failed to fetch) logs event but skips sendErrorAlertEmail', async () => {
+    firestore.logEvent.mockResolvedValue(undefined);
+    const notifications = require('../../src/lib/notifications');
+    const spy = jest.spyOn(notifications, 'sendErrorAlertEmail').mockResolvedValue({ sent: true });
+
+    const res = await request(app)
+      .post('/api/event')
+      .set(authedHeader('teacher@school.edu', 'school.edu'))
+      .set('Content-Type', 'application/json')
+      .send({
+        type: 'export_failed',
+        meta: { reason: 'error', message: 'Failed to fetch (attendance-tracker-backend-829771833968.us-central1.run.app)' },
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ok: true });
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
   test('caps meta values + sanitizes non-primitives', async () => {
     firestore.logEvent.mockResolvedValue(undefined);
     const giant = 'x'.repeat(2000);
