@@ -1,15 +1,24 @@
 const fs = require('fs');
 const path = require('path');
-const { getStrings } = require('../backend/src/lib/i18n.js');
+const { execFileSync } = require('child_process');
 
+execFileSync(process.execPath, [path.join(__dirname, 'sync-public.mjs')], { stdio: 'inherit' });
+execFileSync(process.execPath, [path.join(__dirname, 'sync-public.mjs'), '--check'], { stdio: 'inherit' });
+
+const { getStrings, _resetCache } = require('../backend/src/lib/i18n.js');
+if (_resetCache) _resetCache();
 const s = getStrings();
 const en = s.STRINGS.en;
 const ROOT = path.join(__dirname, '..');
 
 const htmlFiles = fs.readdirSync(ROOT).filter(f => f.endsWith('.html')).map(f => path.join(ROOT, f));
 const jsFiles = fs.readdirSync(path.join(ROOT, 'js')).filter(f => f.endsWith('.js')).map(f => path.join(ROOT, 'js', f));
+const extFiles = [
+  path.join(ROOT, 'companion-extension', 'popup.html'),
+  path.join(ROOT, 'companion-extension', 'popup.js')
+].filter(f => fs.existsSync(f));
 
-const allFiles = [...htmlFiles, ...jsFiles];
+const allFiles = [...htmlFiles, ...jsFiles, ...extFiles];
 console.log(`Scanning ${allFiles.length} website HTML & JS files for i18n usage...`);
 
 const missingKeys = new Set();

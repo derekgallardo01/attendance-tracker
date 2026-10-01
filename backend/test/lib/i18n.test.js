@@ -15,6 +15,16 @@ describe('backend i18n', () => {
       expect(i18n.normalizeLocale('xx-YY')).toBe('en');
     });
 
+    test('returns country-based fallback in normalizeLocale', () => {
+      expect(i18n.normalizeLocale('en-BR')).toBe('pt');
+      expect(i18n.normalizeLocale('en-MX')).toBe('es');
+      expect(i18n.normalizeLocale('en-BD')).toBe('bn');
+      expect(i18n.normalizeLocale('en-FR')).toBe('fr');
+      expect(i18n.normalizeLocale(null, 'CO')).toBe('es');
+      expect(i18n.normalizeLocale(null, 'BR')).toBe('pt');
+      expect(i18n.normalizeLocale(null, 'US')).toBe('en');
+    });
+
     test('handles Chinese language codes', () => {
       expect(i18n.normalizeLocale('zh-CN')).toBe('zh-CN');
       expect(i18n.normalizeLocale('zh-SG')).toBe('zh-CN');
@@ -144,6 +154,26 @@ describe('backend i18n', () => {
       expect(noHeaders[0]).toBe('Navn');
       expect(noHeaders[1]).toBe('E-post');
 
+      const hiHeaders = i18n.getSheetHeaders('hi-IN', 'IST');
+      expect(hiHeaders[0]).toBe('नाम');
+      expect(hiHeaders[1]).toBe('ईमेल');
+
+      const bnHeaders = i18n.getSheetHeaders('bn-BD', 'BST');
+      expect(bnHeaders[0]).toBe('নাম');
+      expect(bnHeaders[1]).toBe('ইমেইল');
+
+      const itHeaders = i18n.getSheetHeaders('it-IT', 'CET');
+      expect(itHeaders[0]).toBe('Nome');
+      expect(itHeaders[1]).toBe('Email');
+
+      const nlHeaders = i18n.getSheetHeaders('nl-NL', 'CET');
+      expect(nlHeaders[0]).toBe('Naam');
+      expect(nlHeaders[1]).toBe('E-mail');
+
+      const jaHeaders = i18n.getSheetHeaders('ja-JP', 'JST');
+      expect(jaHeaders[0]).toBe('氏名');
+      expect(jaHeaders[1]).toBe('メールアドレス');
+
       const caHeaders = i18n.getSheetHeaders('ca-ES', 'CET');
       expect(caHeaders[0]).toBe('Nom');
       expect(caHeaders[1]).toBe('Correu electrònic');
@@ -162,6 +192,9 @@ describe('backend i18n', () => {
       expect(i18n.getSheetSummaryLabels('es').meeting).toBe('Reunión');
       expect(i18n.getSheetSummaryLabels('fr').meeting).toBe('Réunion');
       expect(i18n.getSheetSummaryLabels('de').scheduledEvent).toBe('Geplantes Ereignis');
+      expect(i18n.getSheetSummaryLabels('hi').meeting).toBe('मीटिंग');
+      expect(i18n.getSheetSummaryLabels('bn').meeting).toBe('মিটিং');
+      expect(i18n.getSheetSummaryLabels('ja').meeting).toBe('ミーティング');
     });
   });
 
@@ -180,6 +213,9 @@ describe('backend i18n', () => {
       expect(i18n.localizeStatus('Left Early / Incomplete', 'pt')).toBe('Saiu antes / Incompleto');
       expect(i18n.localizeStatus('Left', 'es')).toBe('Salió');
       expect(i18n.localizeStatus('Present', 'de')).toBe('Anwesend');
+      expect(i18n.localizeStatus('Present', 'hi')).toBe('उपस्थित');
+      expect(i18n.localizeStatus('Present', 'bn')).toBe('উপস্থিত');
+      expect(i18n.localizeStatus('Present', 'ja')).toBe('出席');
       expect(i18n.localizeStatus('Unmapped Custom Status', 'pt')).toBe('Unmapped Custom Status');
     });
   });
@@ -199,6 +235,9 @@ describe('backend i18n', () => {
       expect(i18n.localizeRsvp('declined', 'pt')).toBe('Recusado');
       expect(i18n.localizeRsvp('tentative', 'es')).toBe('Provisional');
       expect(i18n.localizeRsvp('needsAction', 'de')).toBe('Keine Antwort');
+      expect(i18n.localizeRsvp('accepted', 'hi')).toBe('स्वीकार किया');
+      expect(i18n.localizeRsvp('accepted', 'bn')).toBe('গৃহীত');
+      expect(i18n.localizeRsvp('accepted', 'ja')).toBe('承諾');
     });
   });
 
@@ -220,6 +259,80 @@ describe('backend i18n', () => {
       const es = i18n.getPdfLabels('es');
       expect(es.reportTitle).toBe('Informe de Asistencia');
       expect(es.columns.status).toBe('Estado');
+
+      const nl = i18n.getPdfLabels('nl');
+      expect(nl.reportTitle).toBe('Aanwezigheidsrapport');
+      expect(nl.columns.joined).toBe('Deelgenomen');
+
+      const pl = i18n.getPdfLabels('pl');
+      expect(pl.reportTitle).toBe('Raport obecności');
+
+      const ru = i18n.getPdfLabels('ru');
+      expect(ru.reportTitle).toBe('Отчёт о присутствии');
+
+      const tr = i18n.getPdfLabels('tr');
+      expect(tr.reportTitle).toBe('Yoklama Raporu');
+
+      const vi = i18n.getPdfLabels('vi');
+      expect(vi.reportTitle).toBe('Báo cáo điểm danh');
+
+      const cs = i18n.getPdfLabels('cs');
+      expect(cs.reportTitle).toBe('Zpráva o docházce');
+
+      const da = i18n.getPdfLabels('da');
+      expect(da.reportTitle).toBe('Deltagerrapport');
+
+      const sv = i18n.getPdfLabels('sv');
+      expect(sv.reportTitle).toBe('Närvarorapport');
+
+      const el = i18n.getPdfLabels('el');
+      expect(el.reportTitle).toBe('Αναφορά παρουσιών');
+
+      const ca = i18n.getPdfLabels('ca');
+      expect(ca.reportTitle).toBe("Informe d'assistència");
+    });
+
+    test('returns localized summary labels for Asian, European, and Middle Eastern locales', () => {
+      const pl = i18n.getSheetSummaryLabels('pl');
+      expect(pl.meeting).toBe('Spotkanie');
+      expect(pl.attendanceRate).toBe('Wskaźnik obecności');
+
+      const vi = i18n.getSheetSummaryLabels('vi');
+      expect(vi.meeting).toBe('Cuộc họp');
+
+      const id = i18n.getSheetSummaryLabels('id');
+      expect(id.meeting).toBe('Rapat');
+
+      const ko = i18n.getSheetSummaryLabels('ko');
+      expect(ko.meeting).toBe('회의');
+
+      const ar = i18n.getSheetSummaryLabels('ar');
+      expect(ar.meeting).toBe('اجتماع');
+
+      const th = i18n.getSheetSummaryLabels('th');
+      expect(th.meeting).toBe('การประชุม');
+    });
+
+    test('localizes status across newly added European and Asian locales', () => {
+      expect(i18n.localizeStatus('Present', 'ru')).toBe('Присутствовал');
+      expect(i18n.localizeStatus('Absent', 'ru')).toBe('Отсутствовал');
+      expect(i18n.localizeStatus('Present', 'tr')).toBe('Katıldı');
+      expect(i18n.localizeStatus('Present', 'vi')).toBe('Có mặt');
+      expect(i18n.localizeStatus('Present', 'id')).toBe('Hadir');
+      expect(i18n.localizeStatus('Present', 'pl')).toBe('Obecny');
+      expect(i18n.localizeStatus('Present', 'ko')).toBe('출석');
+      expect(i18n.localizeStatus('Present', 'ar')).toBe('حاضر');
+    });
+
+    test('localizes RSVP responses across newly added European and Asian locales', () => {
+      expect(i18n.localizeRsvp('accepted', 'ru')).toBe('Принято');
+      expect(i18n.localizeRsvp('declined', 'ru')).toBe('Отклонено');
+      expect(i18n.localizeRsvp('accepted', 'tr')).toBe('Kabul edildi');
+      expect(i18n.localizeRsvp('accepted', 'vi')).toBe('Đã chấp nhận');
+      expect(i18n.localizeRsvp('accepted', 'id')).toBe('Diterima');
+      expect(i18n.localizeRsvp('accepted', 'pl')).toBe('Zaakceptowano');
+      expect(i18n.localizeRsvp('accepted', 'ko')).toBe('수락됨');
+      expect(i18n.localizeRsvp('accepted', 'ar')).toBe('تم القبول');
     });
   });
 

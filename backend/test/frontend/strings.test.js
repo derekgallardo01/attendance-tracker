@@ -261,6 +261,43 @@ describe('detectLocale', () => {
     expect(strings.detectLocale('xx-YY')).toBe('en'); // unknown fallback
   });
 
+  test('resolves country fallback when browser language is English or generic', () => {
+    expect(strings.detectLocale('en-MX')).toBe('es');
+    expect(strings.detectLocale('en-BR')).toBe('pt');
+    expect(strings.detectLocale('en-BD')).toBe('bn');
+    expect(strings.detectLocale('en-FR')).toBe('fr');
+    expect(strings.detectLocale('en-DE')).toBe('de');
+    expect(strings.detectLocale('en', 'CO')).toBe('es');
+    expect(strings.detectLocale('en-US', 'MX')).toBe('es');
+
+    window._attCountry = 'MX';
+    expect(strings.detectLocale('en-US')).toBe('es');
+    window._attCountry = 'BR';
+    expect(strings.detectLocale('en-US')).toBe('pt');
+    delete window._attCountry;
+  });
+
+  test('newly added paywall, settings, and toast keys exist across locales', () => {
+    strings.setLocale('es');
+    expect(strings.t('settings.cancelBullet1')).toContain('Sin cargos futuros');
+    expect(strings.t('referral.pillOffer')).toBe('Regala 1 mes de Pro · Recibe 1 mes de Pro');
+    expect(strings.t('toast.pdfError')).toBe('Error de PDF:');
+
+    strings.setLocale('pt');
+    expect(strings.t('settings.cancelBullet1')).toContain('Sem cobranças futuras');
+    expect(strings.t('referral.pillOffer')).toBe('Dê 1 mês de Pro · Ganhe 1 mês de Pro');
+    expect(strings.t('toast.pdfError')).toBe('Erro no PDF:');
+
+    strings.setLocale('bn');
+    expect(strings.t('settings.cancelBullet1')).toContain('ভবিষ্যতে কোনো চার্জ নেই');
+    expect(strings.t('referral.pillOffer')).toBe('১ মাস Pro দিন · ১ মাস Pro পান');
+
+    strings.setLocale('en');
+    expect(strings.t('settings.cancelBullet1')).toContain('No future charges');
+    expect(strings.t('referral.pillOffer')).toBe('Give 1 Month Pro · Get 1 Month Pro');
+    expect(strings.t('toast.pdfError')).toBe('PDF error:');
+  });
+
   test('prefers stored locale in localStorage over browser language', () => {
     localStorage.setItem('att_locale', 'ja');
     expect(strings.detectLocale('es-ES')).toBe('ja');
@@ -338,6 +375,28 @@ describe('detectLocale', () => {
       expect(strings.detectLocale('de-DE')).toBe('de');
     } finally {
       global.URLSearchParams = origURLSearchParams;
+    }
+  });
+
+  test('detects locale from country fallback when language is English or unrecognized', () => {
+    expect(strings.detectLocale('en-BR')).toBe('pt');
+    expect(strings.detectLocale('en-MX')).toBe('es');
+    expect(strings.detectLocale('en-CO')).toBe('es');
+    expect(strings.detectLocale('en-BD')).toBe('bn');
+    expect(strings.detectLocale('en-FR')).toBe('fr');
+    expect(strings.detectLocale('en-DE')).toBe('de');
+    expect(strings.detectLocale('en-IT')).toBe('it');
+    expect(strings.detectLocale('en', 'ES')).toBe('es');
+    expect(strings.detectLocale('en', 'BR')).toBe('pt');
+    expect(strings.detectLocale('en-US')).toBe('en');
+  });
+
+  test('detects locale from window._attCountry fallback', () => {
+    window._attCountry = 'MX';
+    try {
+      expect(strings.detectLocale('en')).toBe('es');
+    } finally {
+      delete window._attCountry;
     }
   });
 
@@ -498,6 +557,7 @@ describe('no "wired but English-valued" keys (translation-content guard)', () =>
   const isAllowed = (key) =>
     key.startsWith('lang.') ||
     key === 'source.marketplace' ||          // "Workspace Marketplace" (Google product name)
+    key === 'ext.title' ||                   // "Attendance Tracker" product title in companion extension
     key === 'pricing.planDomainName' ||      // "Domain Pro" tier — kept as a brand label
     key === 'roster.studentsPlaceholder' ||  // example names/emails — locale-invariant sample text
     key === 'setup.emailPlaceholder' ||      // "admin@yourcompany.com" — example email
