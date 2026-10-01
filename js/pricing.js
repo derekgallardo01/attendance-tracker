@@ -11,7 +11,7 @@
   const DEFAULTS = {
     // full is null everywhere — the strikethrough "was" price was retired with
     // LAUNCH50 (mirrors src/config/pricing.js; these files must stay in sync).
-    single_meeting: { label: '$1.99', full: null, period: 'one-time' },
+    single_meeting: { label: '$2.99', full: null, period: 'one-time' },
     lifetime:    { label: '$9.99',  full: null, period: 'one-time' },
     educator:    { label: '$4.99',  full: null, period: '/yr' },
     team:        { label: '$19.99', full: null, period: 'one-time' },

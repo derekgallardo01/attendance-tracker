@@ -3260,7 +3260,7 @@ const APP_CONFIG = {
     return '829771833968'; // default: public project
   })(),
   googleClientId: '829771833968-92hq9toga2ga92mg7nfuf6dqclj7er2n.apps.googleusercontent.com',
-  backendUrl: '/api',
+  backendUrl: 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api',
 };
 const GOOGLE_CLIENT_ID = APP_CONFIG.googleClientId;
 const OAUTH_SCOPES = 'openid email profile https://www.googleapis.com/auth/calendar.events.readonly https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/meetings.space.readonly';
@@ -6046,7 +6046,7 @@ function paintPrices() {
   const map = {
     'price-lifetime': AttPricing.price('lifetime'),
     'price-educator': AttPricing.price('educator'),
-    'price-single-meeting': AttPricing.price('single_meeting') || '$1.99',
+    'price-single-meeting': AttPricing.price('single_meeting') || '$2.99',
     'price-team': AttPricing.price('team'),
     'price-department': AttPricing.price('department'),
   };
@@ -6615,11 +6615,11 @@ function updateUpgradeModalPricing() {
   const singlePriceEl = document.querySelector('#plan-card-single-meeting .price-single-meeting');
   if (singlePriceEl) {
     if (country === 'IN') {
-      singlePriceEl.innerHTML = `$1.99 <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(~₹99)</span>`;
+      singlePriceEl.innerHTML = `$2.99 <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(~₹249)</span>`;
     } else if (country === 'PH') {
-      singlePriceEl.innerHTML = `$1.99 <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(~₱49)</span>`;
+      singlePriceEl.innerHTML = `$2.99 <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(~₱170)</span>`;
     } else {
-      singlePriceEl.innerHTML = `$1.99`;
+      singlePriceEl.innerHTML = `$2.99`;
     }
   }
 }
@@ -6847,7 +6847,7 @@ function answerPaywallWhy(reason) {
       const singlePriceEl = document.getElementById('paywall-why-single-price');
       const regionalOffer = document.getElementById('paywall-why-regional-offer');
       if (country === 'IN') {
-        if (singlePriceEl) singlePriceEl.innerHTML = `$1.99 <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(~₹99)</span> <span style="font-size:.7rem;font-weight:400;color:#9aa0a6">one-time</span>`;
+        if (singlePriceEl) singlePriceEl.innerHTML = `$2.99 <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(~₹249)</span> <span style="font-size:.7rem;font-weight:400;color:#9aa0a6">one-time</span>`;
         if (regionalOffer) {
           regionalOffer.innerHTML = `<div style="background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.25);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
             <div>
@@ -6859,7 +6859,7 @@ function answerPaywallWhy(reason) {
           regionalOffer.style.display = 'block';
         }
       } else if (country === 'PH') {
-        if (singlePriceEl) singlePriceEl.innerHTML = `$1.99 <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(~₱49)</span> <span style="font-size:.7rem;font-weight:400;color:#9aa0a6">one-time</span>`;
+        if (singlePriceEl) singlePriceEl.innerHTML = `$2.99 <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(~₱170)</span> <span style="font-size:.7rem;font-weight:400;color:#9aa0a6">one-time</span>`;
         if (regionalOffer) {
           regionalOffer.innerHTML = `<div style="background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
             <div>
@@ -6882,7 +6882,7 @@ function answerPaywallWhy(reason) {
           regionalOffer.style.display = 'block';
         }
       } else {
-        if (singlePriceEl) singlePriceEl.innerHTML = `$1.99 <span style="font-size:.7rem;font-weight:400;color:#9aa0a6">one-time</span>`;
+        if (singlePriceEl) singlePriceEl.innerHTML = `$2.99 <span style="font-size:.7rem;font-weight:400;color:#9aa0a6">one-time</span>`;
         if (regionalOffer) regionalOffer.style.display = 'none';
       }
     }
@@ -10006,16 +10006,16 @@ window.addEventListener('DOMContentLoaded', () => {
         </div>
       </div>
 
-      <!-- View 2: "Too expensive" resolution ($1.99 Single Pass / Regional Discount) -->
+      <!-- View 2: "Too expensive" resolution ($2.99 Single Pass / Regional Discount) -->
       <div id="paywall-why-view-expensive" style="display:none;flex-direction:column;gap:10px">
         <div style="font-weight:600;color:#e3e3e3;font-size:1rem;margin-bottom:2px" data-i18n="paywall.expensiveTitle">We want roll-call to be accessible!</div>
-        <div style="color:#9aa0a6;font-size:.78rem;line-height:1.4" data-i18n="paywall.expensiveDesc">Need to export right now without a recurring subscription? Unlock this meeting for just $1.99, or get Educator Annual for ~$0.41/mo.</div>
+        <div style="color:#9aa0a6;font-size:.78rem;line-height:1.4" data-i18n="paywall.expensiveDesc">Need to export right now without a recurring subscription? Unlock this meeting for just $2.99, or get Educator Annual for ~$0.41/mo.</div>
         <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px;margin:2px 0">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
             <span style="font-weight:600;font-size:.86rem;color:#e3e3e3" data-i18n="upgrade.singleMeetingName">Single-Meeting Pass</span>
-            <span style="font-weight:700;color:#81c995" id="paywall-why-single-price">$1.99 <span style="font-size:.7rem;font-weight:400;color:#9aa0a6">one-time</span></span>
+            <span style="font-weight:700;color:#81c995" id="paywall-why-single-price">$2.99 <span style="font-size:.7rem;font-weight:400;color:#9aa0a6">one-time</span></span>
           </div>
-          <button type="button" onclick="startUpgradeCheckout('single_meeting', 'btn-paywall-why-single');dismissPaywallWhy();" id="btn-paywall-why-single" style="width:100%;background:#34a853;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-weight:600;font-size:.8rem;cursor:pointer" data-i18n="upgrade.ctaSingleMeeting">Unlock This Meeting — $1.99</button>
+          <button type="button" onclick="startUpgradeCheckout('single_meeting', 'btn-paywall-why-single');dismissPaywallWhy();" id="btn-paywall-why-single" style="width:100%;background:#34a853;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-weight:600;font-size:.8rem;cursor:pointer" data-i18n="upgrade.ctaSingleMeeting">Unlock This Meeting — $2.99</button>
         </div>
         <div id="paywall-why-regional-offer" style="display:none"></div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding-top:4px">
@@ -10135,7 +10135,7 @@ window.addEventListener('DOMContentLoaded', () => {
         </button>
       </div>
 
-      <!-- Plan: Single-Meeting Pass ($1.99 one-time) -->
+      <!-- Plan: Single-Meeting Pass ($2.99 one-time) -->
       <div id="plan-card-single-meeting" style="background:rgba(255,255,255,.02);border:1px dashed rgba(255,255,255,.2);border-radius:12px;padding:11px 14px 10px;margin-bottom:10px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <div>
@@ -10143,12 +10143,12 @@ window.addEventListener('DOMContentLoaded', () => {
             <span style="font-size:.72rem;color:#9aa0a6;display:block" data-i18n="upgrade.singleMeetingDesc">Export this meeting with no limits</span>
           </div>
           <div style="text-align:right">
-            <span class="price-single-meeting" style="font-weight:700;font-size:1rem;color:#e3e3e3">$1.99</span>
+            <span class="price-single-meeting" style="font-weight:700;font-size:1rem;color:#e3e3e3">$2.99</span>
             <span style="font-size:.68rem;color:#9aa0a6;display:block" data-i18n="upgrade.oneTime">one-time</span>
           </div>
         </div>
         <button type="button" id="btn-upgrade-single-meeting" onclick="startUpgradeCheckout('single_meeting', 'btn-upgrade-single-meeting')" style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#e3e3e3;padding:7.5px 14px;border-radius:20px;font-weight:600;font-size:.78rem;cursor:pointer;transition:all .15s ease">
-          <span data-i18n="upgrade.ctaSingleMeeting">Unlock This Meeting — $1.99</span>
+          <span data-i18n="upgrade.ctaSingleMeeting">Unlock This Meeting — $2.99</span>
         </button>
       </div>
 

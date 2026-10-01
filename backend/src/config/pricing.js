@@ -20,7 +20,7 @@ module.exports = {
   // toggled auto-export on (explicit Pro intent) but never converted.
   AUTO_EXPORT_TRIAL_DAYS: 14,
   PRICES: {
-    single_meeting: { label: '$1.99', full: null, period: 'one-time' },
+    single_meeting: { label: '$2.99', full: null, period: 'one-time' },
     lifetime:    { label: '$9.99',  full: null, period: 'one-time' },
     educator:    { label: '$4.99',  full: null, period: '/yr' },
     team:        { label: '$19.99', full: null, period: 'one-time' },

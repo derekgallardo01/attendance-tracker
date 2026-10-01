@@ -25,7 +25,6 @@
     "@context": "https://schema.org",
     "@graph": [
       {
-        "@context": "https://schema.org",
         "@type": "HowTo",
         "name": "How to get an auto-filled Google Meet attendance sheet",
         "description": "Instead of filling in an attendance template by hand, generate a complete attendance sheet automatically for every Google Meet session.",
@@ -64,6 +63,48 @@
             "item": "https://attendancetracker.dev/google-meet-attendance-template.html"
           }
         ]
+      },
+      {
+        "@type": "DigitalDocument",
+        "@id": "https://attendancetracker.dev/google-meet-attendance-template.html#template",
+        "name": "Google Meet Attendance Template for Google Sheets & Excel",
+        "description": "Free, pre-formatted Google Sheets and CSV attendance tracking spreadsheet template with automated formulas for session duration, status flags (Present, Late, Absent), and attendance rate percentages.",
+        "url": "https://attendancetracker.dev/google-meet-attendance-template.html",
+        "fileFormat": "application/vnd.google-apps.spreadsheet",
+        "encodingFormat": [
+          "application/vnd.google-apps.spreadsheet",
+          "text/csv"
+        ],
+        "isAccessibleForFree": true,
+        "author": {
+          "@type": "Organization",
+          "name": "Attendance Tracker",
+          "url": "https://attendancetracker.dev/"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Attendance Tracker",
+          "url": "https://attendancetracker.dev/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://attendancetracker.dev/icons/icon-128.png"
+          }
+        },
+        "genre": "Spreadsheet Template",
+        "keywords": "google meet attendance template, google sheets attendance template, classroom attendance sheet, online meeting attendance spreadsheet"
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://attendancetracker.dev/#addon",
+        "name": "Attendance Tracker for Google Meet",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Web Browser (Chrome, Edge, Firefox, Safari)",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "url": "https://workspace.google.com/marketplace/app/attendance_tracker/829771833968"
       }
     ]
   }
@@ -101,6 +142,82 @@
     .btn { display: inline-block; background: #34A853; color: #fff; text-decoration: none; padding: 11px 24px; border-radius: 8px; font-weight: 600; font-size: .92rem; }
     .footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border); }
     .footer a { color: var(--muted); text-decoration: none; margin: 0 6px; }
+
+    /* 1-Click Template Hub & Live Preview */
+    .template-hub { background: var(--surface); border: 1px solid rgba(74, 222, 128, 0.35); border-radius: 16px; padding: 28px 24px; margin: 34px 0; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35); }
+    .template-badge { display: inline-flex; align-items: center; gap: 7px; background: rgba(74, 222, 128, 0.12); color: var(--accent); border: 1px solid rgba(74, 222, 128, 0.28); border-radius: 20px; padding: 5px 13px; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 14px; }
+    .template-hub h3 { font-size: 1.35rem; margin-top: 0; margin-bottom: 8px; color: #fff; }
+    .template-sublead { color: #8b949e; font-size: 0.92rem; line-height: 1.5; margin-bottom: 20px; }
+    .template-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .btn-template { display: inline-flex; flex-direction: column; align-items: flex-start; justify-content: center; padding: 12px 16px; border-radius: 9px; text-decoration: none; cursor: pointer; border: 1px solid transparent; font-family: inherit; transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease; text-align: left; }
+    .btn-template:hover { transform: translateY(-2px); }
+    .btn-template:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .btn-sheets { background: #0f9d58; color: #fff; border-color: #0b8043; box-shadow: 0 4px 14px rgba(15, 157, 88, 0.35); }
+    .btn-sheets:hover { background: #13aa60; box-shadow: 0 6px 18px rgba(15, 157, 88, 0.45); color: #fff; }
+    .btn-csv { background: #21262d; color: var(--text); border-color: var(--border); }
+    .btn-csv:hover { background: #30363d; border-color: var(--muted); }
+    .btn-clipboard { background: #21262d; color: var(--text); border-color: var(--border); }
+    .btn-clipboard:hover { background: #30363d; border-color: var(--muted); }
+    .btn-title { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.92rem; line-height: 1.2; width: 100%; }
+    .btn-sub { font-size: 0.74rem; opacity: 0.85; margin-top: 4px; font-weight: 400; }
+    .template-alt-links { font-size: 0.82rem; color: var(--muted); margin-bottom: 24px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
+    .template-alt-links a { color: var(--blue); text-decoration: none; }
+    .template-alt-links a:hover { text-decoration: underline; }
+
+    /* Interactive Spreadsheet Mockup */
+    .sheet-mockup { background: #0d1117; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin: 20px 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); }
+    .sheet-topbar { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #161b22; border-bottom: 1px solid var(--border); font-size: 0.8rem; color: var(--muted); }
+    .sheet-tab-name { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--text); }
+    .sheet-simulator-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; padding: 10px 14px; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); font-size: 0.82rem; color: var(--text); }
+    .sheet-simulator-bar label { display: inline-flex; align-items: center; gap: 6px; }
+    .sheet-select { background: #21262d; color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: 0.82rem; font-family: inherit; cursor: pointer; }
+    .sheet-select:focus { outline: 2px solid var(--accent); border-color: transparent; }
+    .formula-bar-container { display: flex; align-items: center; background: #161b22; border-bottom: 1px solid var(--border); font-family: 'DM Mono', monospace; font-size: 0.82rem; }
+    .formula-cell-coord { padding: 7px 12px; color: var(--accent); font-weight: 600; border-right: 1px solid var(--border); background: rgba(74,222,128,0.08); min-width: 52px; text-align: center; }
+    .formula-fx { padding: 7px 10px; color: var(--muted); font-weight: bold; border-right: 1px solid var(--border); user-select: none; font-style: italic; }
+    .formula-input { padding: 7px 12px; color: #58a6ff; flex: 1; overflow-x: auto; white-space: nowrap; }
+    .sheet-scroll-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .sheet-grid { width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 680px; margin-bottom: 0; }
+    .sheet-grid th { background: #1c2128; color: var(--muted); padding: 6px 8px; font-size: 0.72rem; text-align: center; font-weight: 600; user-select: none; border: 1px solid #30363d; }
+    .sheet-grid td { padding: 7px 10px; border: 1px solid #30363d; color: #c9d1d9; font-size: 0.8rem; cursor: pointer; transition: background 0.1s ease; }
+    .sheet-grid td.row-num { background: #1c2128; color: var(--muted); text-align: center; font-size: 0.72rem; font-weight: 600; width: 34px; user-select: none; cursor: default; }
+    .sheet-grid td:hover:not(.row-num) { background: rgba(88, 166, 255, 0.1); }
+    .sheet-grid td.active-cell { outline: 2px solid var(--accent); outline-offset: -2px; background: rgba(74, 222, 128, 0.12) !important; }
+    .sheet-grid tr.summary-row td { background: rgba(255, 255, 255, 0.04); font-weight: 600; color: var(--text); border-top: 2px solid var(--border); }
+
+    /* Badges */
+    .badge-status { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 0.74rem; font-weight: 600; line-height: 1.3; }
+    .badge-present { background: rgba(74, 222, 128, 0.16); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.35); }
+    .badge-late { background: rgba(210, 153, 34, 0.2); color: #e3b341; border: 1px solid rgba(210, 153, 34, 0.4); }
+    .badge-left-early { background: rgba(219, 109, 40, 0.2); color: #f0883e; border: 1px solid rgba(219, 109, 40, 0.4); }
+    .badge-absent { background: rgba(248, 81, 73, 0.2); color: #f85149; border: 1px solid rgba(248, 81, 73, 0.4); }
+    .badge-excused { background: rgba(163, 113, 247, 0.2); color: #bc8cff; border: 1px solid rgba(163, 113, 247, 0.4); }
+
+    /* Formulas Grid */
+    .formulas-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin: 24px 0 20px; }
+    .formula-card { background: #0d1117; border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+    .formula-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 8px; }
+    .formula-card-title { font-weight: 600; font-size: 0.92rem; color: var(--text); display: flex; align-items: center; gap: 7px; }
+    .btn-copy-formula { background: #21262d; border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 4px 10px; font-size: 0.76rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s ease; }
+    .btn-copy-formula:hover { background: #30363d; border-color: var(--muted); }
+    .btn-copy-formula:focus-visible { outline: 2px solid var(--accent); }
+    .formula-code-box { background: #161b22; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-family: 'DM Mono', monospace; font-size: 0.82rem; color: #58a6ff; margin-bottom: 8px; overflow-x: auto; white-space: nowrap; }
+    .formula-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+
+    /* Comparison Card */
+    .comparison-card { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; background: rgba(22, 27, 34, 0.6); border: 1px solid var(--border); border-radius: 12px; padding: 22px; margin: 28px 0; }
+    @media (max-width: 640px) { .comparison-card { grid-template-columns: 1fr; } }
+    .comparison-col h4 { font-size: 0.96rem; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+    .comparison-col ul { padding-left: 20px; margin-bottom: 0; font-size: 0.84rem; }
+    .comparison-col.manual { border-right: 1px solid var(--border); padding-right: 16px; }
+    @media (max-width: 640px) { .comparison-col.manual { border-right: none; border-bottom: 1px solid var(--border); padding-bottom: 16px; padding-right: 0; } }
+    .comparison-col.manual ul { color: var(--muted); }
+    .comparison-col.automated ul { color: #c9d1d9; }
+
+    /* Toast Notification */
+    .toast { position: fixed; bottom: 24px; right: 24px; max-width: calc(100vw - 32px); background: #238636; color: #fff; padding: 12px 18px; border-radius: 8px; font-size: 0.86rem; font-weight: 600; box-shadow: 0 8px 24px rgba(0,0,0,0.5); opacity: 0; pointer-events: none; transform: translateY(14px); transition: opacity 0.22s ease, transform 0.22s ease; z-index: 9999; display: flex; align-items: center; gap: 8px; }
+    .toast.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+    @media (max-width: 600px) { .toast { left: 16px; right: 16px; bottom: 16px; justify-content: center; text-align: center; } }
   </style>
 </head>
 <body>
@@ -131,7 +248,281 @@
       <tr><td><strong>Rejoins</strong></td><td>Distinguishes an unstable connection (many rejoins, honest attendance) from someone who left and came back at the end.</td></tr>
       <tr><td><strong>Notes</strong></td><td>Room for context: excused reasons, tech issues, make-up work.</td></tr>
     </table>
-    <p>Feel free to recreate those nine columns in a blank Google Sheet — that <em>is</em> the template. But before you do, read the next section.</p>
+
+    <div class="template-hub" id="template">
+      <div class="template-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        Ready-to-Use Google Sheets Template · Free
+      </div>
+      <h3>Google Meet Attendance Spreadsheet Template (With Built-in Formulas)</h3>
+      <p class="template-sublead">Don't waste time rebuilding this by hand. Make a copy of our pre-formatted Google Sheets attendance template below — complete with active formulas for duration calculation, automated status flags (Present / Late / Absent), and attendance rate percentages.</p>
+
+      <!-- Action Buttons -->
+      <div class="template-actions">
+        <a class="btn-template btn-sheets" href="https://docs.google.com/spreadsheets/create" target="_blank" rel="noopener" id="btn-make-copy" title="Open Google Sheets with attendance template ready to paste">
+          <span class="btn-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H6v-2h6v2zm4-4H6v-2h10v2zm0-4H6V7h10v2z"/></svg>
+            1-Click Copy in Google Sheets
+          </span>
+          <span class="btn-sub">Opens fresh sheet + copies template (Ctrl+V)</span>
+        </a>
+
+        <button type="button" class="btn-template btn-csv" id="btn-download-csv" title="Download CSV template file for Excel or Numbers">
+          <span class="btn-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Download CSV Template
+          </span>
+          <span class="btn-sub">With formulas &amp; UTF-8 Excel support</span>
+        </button>
+
+        <button type="button" class="btn-template btn-clipboard" id="btn-copy-table" title="Copy formatted table cells to clipboard for instant pasting">
+          <span class="btn-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            Copy Table to Clipboard
+          </span>
+          <span class="btn-sub">Ctrl+V / Cmd+V directly into any Sheet</span>
+        </button>
+      </div>
+
+      <div class="template-alt-links">
+        Need a blank sheet instead? <a href="https://docs.google.com/spreadsheets/create" target="_blank" rel="noopener">docs.google.com/spreadsheets/create</a> · Opening in Microsoft Excel? <a href="export-google-meet-participants-to-excel.html">Excel guide &amp; UTF-8 formatting</a>
+      </div>
+
+      <!-- Interactive Spreadsheet UI Mockup -->
+      <div class="sheet-mockup" id="spreadsheet-preview">
+        <div class="sheet-topbar">
+          <div class="sheet-tab-name">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="#0f9d58"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H6v-2h6v2zm4-4H6v-2h10v2zm0-4H6V7h10v2z"/></svg>
+            <span>Google Meet Attendance — Session 1 (Sample Data)</span>
+          </div>
+          <div>Tab: <strong>Class 101</strong></div>
+        </div>
+
+        <div class="sheet-simulator-bar">
+          <label for="sim-duration">
+            <span style="color: var(--muted);">Class Length:</span>
+            <select id="sim-duration" class="sheet-select" aria-label="Class Length">
+              <option value="45">45 minutes</option>
+              <option value="60" selected>60 minutes (1 hour)</option>
+              <option value="90">90 minutes</option>
+            </select>
+          </label>
+          <label for="sim-threshold">
+            <span style="color: var(--muted);">Late After:</span>
+            <select id="sim-threshold" class="sheet-select" aria-label="Late Threshold">
+              <option value="5">5 min</option>
+              <option value="10">10 min</option>
+              <option value="15" selected>15 min</option>
+              <option value="20">20 min</option>
+            </select>
+          </label>
+          <span style="color: var(--muted); font-size: 0.76rem; margin-left: auto;">💡 Click any cell to inspect its underlying formula</span>
+        </div>
+
+        <div class="formula-bar-container">
+          <div class="formula-cell-coord" id="active-coord">F2</div>
+          <div class="formula-fx">fx</div>
+          <div class="formula-input" id="active-formula">=IF(E2=0, IF(AND(ISNUMBER(SEARCH("excused", I2)), ISERROR(SEARCH("unexcused", I2))), "Excused", "Absent"), IF(E2>=45, "Present", IF(E2>=15, "Late", "Absent")))</div>
+        </div>
+
+        <div class="sheet-scroll-container">
+          <table class="sheet-grid" id="interactive-sheet-grid">
+            <thead>
+              <tr>
+                <th style="width: 34px;"></th>
+                <th>A</th>
+                <th>B</th>
+                <th>C</th>
+                <th>D</th>
+                <th>E</th>
+                <th>F</th>
+                <th>G</th>
+                <th>H</th>
+                <th>I</th>
+              </tr>
+              <tr>
+                <th class="row-num">1</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Join Time</th>
+                <th>Leave Time</th>
+                <th>Duration (min)</th>
+                <th>Status</th>
+                <th>Attendance %</th>
+                <th>Rejoins</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Row 2: Sarah Jenkins (Present) -->
+              <tr data-row="2">
+                <td class="row-num">2</td>
+                <td data-col="A" data-formula="Sarah Jenkins">Sarah Jenkins</td>
+                <td data-col="B" data-formula="sarah.j@school.edu">sarah.j@school.edu</td>
+                <td data-col="C" data-formula="09:00 AM">09:00 AM</td>
+                <td data-col="D" data-formula="10:00 AM">10:00 AM</td>
+                <td data-col="E" class="cell-duration" data-formula="=IF(AND(ISNUMBER(C2), ISNUMBER(D2)), ROUND((D2 - C2) * 1440), 60)">60</td>
+                <td data-col="F" class="cell-status active-cell" data-formula='=IF(E2=0, IF(AND(ISNUMBER(SEARCH("excused", I2)), ISERROR(SEARCH("unexcused", I2))), "Excused", "Absent"), IF(E2>=45, "Present", IF(E2>=15, "Late", "Absent")))'><span class="badge-status badge-present">Present</span></td>
+                <td data-col="G" class="cell-rate" data-formula="=IF(E2>0, MIN(1, ROUND(E2 / 60, 2)), 0)">100%</td>
+                <td data-col="H" data-formula="0">0</td>
+                <td data-col="I" data-formula="Full session participation">Full session participation</td>
+              </tr>
+              <!-- Row 3: David Chen (Late) -->
+              <tr data-row="3">
+                <td class="row-num">3</td>
+                <td data-col="A" data-formula="David Chen">David Chen</td>
+                <td data-col="B" data-formula="d.chen@school.edu">d.chen@school.edu</td>
+                <td data-col="C" data-formula="09:18 AM">09:18 AM</td>
+                <td data-col="D" data-formula="10:00 AM">10:00 AM</td>
+                <td data-col="E" class="cell-duration" data-formula="=IF(AND(ISNUMBER(C3), ISNUMBER(D3)), ROUND((D3 - C3) * 1440), 42)">42</td>
+                <td data-col="F" class="cell-status" data-formula='=IF(E3=0, IF(AND(ISNUMBER(SEARCH("excused", I3)), ISERROR(SEARCH("unexcused", I3))), "Excused", "Absent"), IF(E3>=45, "Present", IF(E3>=15, "Late", "Absent")))'><span class="badge-status badge-late">Late (+18m)</span></td>
+                <td data-col="G" class="cell-rate" data-formula="=IF(E3>0, MIN(1, ROUND(E3 / 60, 2)), 0)">70%</td>
+                <td data-col="H" data-formula="0">0</td>
+                <td data-col="I" data-formula="Joined 18m past start">Joined 18m past start</td>
+              </tr>
+              <!-- Row 4: Maria Rodriguez (Late - Left Early) -->
+              <tr data-row="4">
+                <td class="row-num">4</td>
+                <td data-col="A" data-formula="Maria Rodriguez">Maria Rodriguez</td>
+                <td data-col="B" data-formula="m.rodriguez@school.edu">m.rodriguez@school.edu</td>
+                <td data-col="C" data-formula="09:01 AM">09:01 AM</td>
+                <td data-col="D" data-formula="09:35 AM">09:35 AM</td>
+                <td data-col="E" class="cell-duration" data-formula="=IF(AND(ISNUMBER(C4), ISNUMBER(D4)), ROUND((D4 - C4) * 1440), 34)">34</td>
+                <td data-col="F" class="cell-status" data-formula='=IF(E4=0, IF(AND(ISNUMBER(SEARCH("excused", I4)), ISERROR(SEARCH("unexcused", I4))), "Excused", "Absent"), IF(E4>=45, "Present", IF(E4>=15, "Late", "Absent")))'><span class="badge-status badge-late">Late (34m)</span></td>
+                <td data-col="G" class="cell-rate" data-formula="=IF(E4>0, MIN(1, ROUND(E4 / 60, 2)), 0)">57%</td>
+                <td data-col="H" data-formula="2">2</td>
+                <td data-col="I" data-formula="Left early (Wi-Fi dropped)">Left early (Wi-Fi dropped)</td>
+              </tr>
+              <!-- Row 5: James Wilson (Absent) -->
+              <tr data-row="5">
+                <td class="row-num">5</td>
+                <td data-col="A" data-formula="James Wilson">James Wilson</td>
+                <td data-col="B" data-formula="j.wilson@school.edu">j.wilson@school.edu</td>
+                <td data-col="C" data-formula="—">—</td>
+                <td data-col="D" data-formula="—">—</td>
+                <td data-col="E" class="cell-duration" data-formula="0">0</td>
+                <td data-col="F" class="cell-status" data-formula='=IF(E5=0, IF(AND(ISNUMBER(SEARCH("excused", I5)), ISERROR(SEARCH("unexcused", I5))), "Excused", "Absent"), IF(E5>=45, "Present", IF(E5>=15, "Late", "Absent")))'><span class="badge-status badge-absent">Absent</span></td>
+                <td data-col="G" class="cell-rate" data-formula="=IF(E5>0, MIN(1, ROUND(E5 / 60, 2)), 0)">0%</td>
+                <td data-col="H" data-formula="0">0</td>
+                <td data-col="I" data-formula="Unexcused absence">Unexcused absence</td>
+              </tr>
+              <!-- Row 6: Elena Rostova (Excused) -->
+              <tr data-row="6">
+                <td class="row-num">6</td>
+                <td data-col="A" data-formula="Elena Rostova">Elena Rostova</td>
+                <td data-col="B" data-formula="elena.r@school.edu">elena.r@school.edu</td>
+                <td data-col="C" data-formula="—">—</td>
+                <td data-col="D" data-formula="—">—</td>
+                <td data-col="E" class="cell-duration" data-formula="0">0</td>
+                <td data-col="F" class="cell-status" data-formula='=IF(E6=0, IF(AND(ISNUMBER(SEARCH("excused", I6)), ISERROR(SEARCH("unexcused", I6))), "Excused", "Absent"), IF(E6>=45, "Present", IF(E6>=15, "Late", "Absent")))'><span class="badge-status badge-excused">Excused</span></td>
+                <td data-col="G" class="cell-rate" data-formula="=IF(E6>0, MIN(1, ROUND(E6 / 60, 2)), 0)">0%</td>
+                <td data-col="H" data-formula="0">0</td>
+                <td data-col="I" data-formula="Doctor appointment (excused)">Doctor appointment (excused)</td>
+              </tr>
+              <!-- Row 7: Summary Rollup Row -->
+              <tr data-row="7" class="summary-row">
+                <td class="row-num">7</td>
+                <td data-col="A" data-formula="Class Summary" colspan="4"><strong>Class Summary (5 Enrolled)</strong></td>
+                <td data-col="E" id="summary-avg-dur" data-formula="=ROUND(AVERAGE(E2:E6), 0)">Avg: 27m</td>
+                <td data-col="F" id="summary-counts" data-formula='=COUNTIF(F2:F6, "Present") & " Pres, " & COUNTIF(F2:F6, "Late") & " Late"'>1 Pres · 2 Late · 2 Abs</td>
+                <td data-col="G" id="summary-avg-rate" data-formula='=ROUND((COUNTIF(F2:F6, "Present") + 0.5 * COUNTIF(F2:F6, "Late")) / COUNTA(A2:A6), 2)'>Rate: 40%</td>
+                <td data-col="H" data-formula="=SUM(H2:H6)">2 rejoins</td>
+                <td data-col="I" data-formula="Auto-calculated summary">Auto-calculated summary</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Formula Breakdown Cards -->
+      <h4 style="font-size: 1.05rem; margin: 26px 0 10px; color: var(--text);">How the template formulas work</h4>
+      <p style="font-size: 0.88rem; color: var(--muted); margin-bottom: 14px;">If you want to customize your spreadsheet or add these calculations to an existing gradebook, here are the exact formulas running in the template above:</p>
+
+      <div class="formulas-grid">
+        <!-- Formula 1: Duration -->
+        <div class="formula-card">
+          <div class="formula-card-header">
+            <span class="formula-card-title">
+              <code>Column E</code> Duration Calculation Formula
+            </span>
+            <button type="button" class="btn-copy-formula" data-formula='=IF(AND(ISNUMBER(C2), ISNUMBER(D2)), ROUND((D2 - C2) * 1440), IF(ISBLANK(C2), 0, ""))'>Copy Formula</button>
+          </div>
+          <div class="formula-code-box">=IF(AND(ISNUMBER(C2), ISNUMBER(D2)), ROUND((D2 - C2) * 1440), IF(ISBLANK(C2), 0, ""))</div>
+          <div class="formula-desc">
+            In Google Sheets, subtracting two time values (<code>D2 - C2</code>) returns the elapsed time as a fraction of a 24-hour day. Multiplying by <code>1440</code> (24 hours &times; 60 minutes) yields exact active minutes. If join time is blank, it defaults cleanly to 0.
+          </div>
+        </div>
+
+        <!-- Formula 2: Status -->
+        <div class="formula-card">
+          <div class="formula-card-header">
+            <span class="formula-card-title">
+              <code>Column F</code> Dynamic Status Formula
+            </span>
+            <button type="button" class="btn-copy-formula" data-formula='=IF(E2=0, IF(AND(ISNUMBER(SEARCH("excused", I2)), ISERROR(SEARCH("unexcused", I2))), "Excused", "Absent"), IF(E2>=45, "Present", IF(E2>=15, "Late", "Absent")))'>Copy Formula</button>
+          </div>
+          <div class="formula-code-box">=IF(E2=0, IF(AND(ISNUMBER(SEARCH("excused", I2)), ISERROR(SEARCH("unexcused", I2))), "Excused", "Absent"), IF(E2>=45, "Present", IF(E2>=15, "Late", "Absent")))</div>
+          <div class="formula-desc">
+            Automatically categorizes each attendee: attended &ge; 45 minutes flags as <code>Present</code>; between 15&ndash;44 minutes flags as <code>Late</code> (partial attendance); 0 minutes flags as <code>Absent</code> (or <code>Excused</code> if marked in column I without being unexcused).
+          </div>
+        </div>
+
+        <!-- Formula 3: Attendance Rate % -->
+        <div class="formula-card">
+          <div class="formula-card-header">
+            <span class="formula-card-title">
+              <code>Column G</code> Individual Attendance Rate %
+            </span>
+            <button type="button" class="btn-copy-formula" data-formula='=IF(E2>0, MIN(1, ROUND(E2 / 60, 2)), 0)'>Copy Formula</button>
+          </div>
+          <div class="formula-code-box">=IF(E2>0, MIN(1, ROUND(E2 / 60, 2)), 0)</div>
+          <div class="formula-desc">
+            Divides minutes attended (<code>E2</code>) by the scheduled meeting duration (60 minutes). <code>MIN(1, ...)</code> caps the rate at 100% so students who stay after class don't skew grading formulas. Format column G as Percentage.
+          </div>
+        </div>
+
+        <!-- Formula 4: Class Rollup Rate -->
+        <div class="formula-card">
+          <div class="formula-card-header">
+            <span class="formula-card-title">
+              <code>Row 7</code> Overall Class Attendance Rate
+            </span>
+            <button type="button" class="btn-copy-formula" data-formula='=ROUND((COUNTIF(F2:F6, "Present") + 0.5 * COUNTIF(F2:F6, "Late")) / COUNTA(A2:A6), 2)'>Copy Formula</button>
+          </div>
+          <div class="formula-code-box">=ROUND((COUNTIF(F2:F6, "Present") + 0.5 * COUNTIF(F2:F6, "Late")) / COUNTA(A2:A6), 2)</div>
+          <div class="formula-desc">
+            Weights full attendance as 1.0 and late arrivals as 0.5, divided by total enrolled roster count. Perfect for weekly department check-ins and semester rollups.
+          </div>
+        </div>
+      </div>
+
+      <!-- Friction Comparison: Manual vs Auto-filled -->
+      <div class="comparison-card">
+        <div class="comparison-col manual">
+          <h4 style="color: #f85149;">⚠️ The Manual Template Hassle</h4>
+          <ul>
+            <li>Constantly stare at Google Meet's People panel during class</li>
+            <li>Manually jot down join times while trying to lecture</li>
+            <li>Miss students who drop out at minute 35 due to connection drops</li>
+            <li>Accidentally overwrite sheet formulas when pasting student lists</li>
+            <li>Spend 10&ndash;15 minutes after every single call doing data entry</li>
+          </ul>
+        </div>
+        <div class="comparison-col automated">
+          <h4 style="color: var(--accent);">✨ The Auto-Filled Shortcut</h4>
+          <ul>
+            <li>Official Google Meet add-on tracks participants in background</li>
+            <li>Roster matches students to your Google Classroom list in 1 click</li>
+            <li>Detects exact active duration and multiple rejoins automatically</li>
+            <li>Direct 1-click export to Google Sheets, CSV, or PDF reports</li>
+            <li>Includes semester summary tabs rolled up across all dates</li>
+          </ul>
+          <div style="margin-top: 14px;">
+            <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_template_hub" target="_blank" rel="noopener">Install Free Google Meet Add-on</a>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <h2>The problem with any manual template</h2>
     <p>A template solves the formatting problem. It does nothing about the real cost of attendance: <strong>collecting the data</strong>. With a manual sheet you still have to call roll (or scan the People panel), notice who arrived late, notice who quietly left at minute 40, and type it all in — every single session. In a class of 30+ students on Google Meet, that's minutes of lost teaching time and a record that's only as accurate as your peripheral vision.</p>
@@ -258,8 +649,272 @@
     });
     document.addEventListener('click', function (e) {
       var a = e.target.closest && e.target.closest('a[href*="marketplace/app/attendance_tracker"]');
-      if (a) beacon({ path: location.pathname, event: 'cta_click', eventLabel: 'marketplace_install_seo', referrer: document.referrer || null });
+      if (a) {
+        var label = (a.getAttribute('href') || '').indexOf('seo_template_hub') !== -1 ? 'template_hub_marketplace_install' : 'marketplace_install_seo';
+        beacon({ path: location.pathname, event: 'cta_click', eventLabel: label, referrer: document.referrer || null });
+        return;
+      }
+      var makeCopy = e.target.closest && e.target.closest('#btn-make-copy');
+      if (makeCopy) {
+        beacon({ path: location.pathname, event: 'cta_click', eventLabel: 'template_sheets_copy', referrer: document.referrer || null });
+        return;
+      }
+      var dlCsv = e.target.closest && e.target.closest('#btn-download-csv');
+      if (dlCsv) {
+        beacon({ path: location.pathname, event: 'cta_click', eventLabel: 'template_csv_download', referrer: document.referrer || null });
+        return;
+      }
+      var copyTbl = e.target.closest && e.target.closest('#btn-copy-table');
+      if (copyTbl) {
+        beacon({ path: location.pathname, event: 'cta_click', eventLabel: 'template_copy_table', referrer: document.referrer || null });
+        return;
+      }
     });
+  })();
+  </script>
+
+  <!-- Template interactive scripts & toast -->
+  <div id="copy-toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+  (function () {
+    var toast = document.getElementById('copy-toast');
+    var toastTimer = null;
+    function showToast(msg) {
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.classList.add('visible');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () {
+        toast.classList.remove('visible');
+      }, 3500);
+    }
+
+    function getTsvData() {
+      var rows = [
+        ['Student Name', 'Email', 'Join Time', 'Leave Time', 'Duration (min)', 'Status', 'Attendance %', 'Rejoins', 'Notes'],
+        ['Sarah Jenkins', 'sarah.j@school.edu', '09:00 AM', '10:00 AM', '=IF(AND(ISNUMBER(C2),ISNUMBER(D2)),ROUND((D2-C2)*1440),60)', '=IF(E2=0,IF(AND(ISNUMBER(SEARCH("excused",I2)),ISERROR(SEARCH("unexcused",I2))),"Excused","Absent"),IF(E2>=45,"Present",IF(E2>=15,"Late","Absent")))', '=IF(E2>0,MIN(1,ROUND(E2/60,2)),0)', '0', 'Full session participation'],
+        ['David Chen', 'd.chen@school.edu', '09:18 AM', '10:00 AM', '=IF(AND(ISNUMBER(C3),ISNUMBER(D3)),ROUND((D3-C3)*1440),42)', '=IF(E3=0,IF(AND(ISNUMBER(SEARCH("excused",I3)),ISERROR(SEARCH("unexcused",I3))),"Excused","Absent"),IF(E3>=45,"Present",IF(E3>=15,"Late","Absent")))', '=IF(E3>0,MIN(1,ROUND(E3/60,2)),0)', '0', 'Joined 18m past start'],
+        ['Maria Rodriguez', 'm.rodriguez@school.edu', '09:01 AM', '09:35 AM', '=IF(AND(ISNUMBER(C4),ISNUMBER(D4)),ROUND((D4-C4)*1440),34)', '=IF(E4=0,IF(AND(ISNUMBER(SEARCH("excused",I4)),ISERROR(SEARCH("unexcused",I4))),"Excused","Absent"),IF(E4>=45,"Present",IF(E4>=15,"Late","Absent")))', '=IF(E4>0,MIN(1,ROUND(E4/60,2)),0)', '2', 'Left early (Wi-Fi dropped)'],
+        ['James Wilson', 'j.wilson@school.edu', '', '', '0', '=IF(E5=0,IF(AND(ISNUMBER(SEARCH("excused",I5)),ISERROR(SEARCH("unexcused",I5))),"Excused","Absent"),IF(E5>=45,"Present",IF(E5>=15,"Late","Absent")))', '=IF(E5>0,MIN(1,ROUND(E5/60,2)),0)', '0', 'Unexcused absence'],
+        ['Elena Rostova', 'elena.r@school.edu', '', '', '0', '=IF(E6=0,IF(AND(ISNUMBER(SEARCH("excused",I6)),ISERROR(SEARCH("unexcused",I6))),"Excused","Absent"),IF(E6>=45,"Present",IF(E6>=15,"Late","Absent")))', '=IF(E6>0,MIN(1,ROUND(E6/60,2)),0)', '0', 'Doctor appointment (excused)'],
+        ['Class Summary (5 Enrolled)', '', '', '', '=ROUND(AVERAGE(E2:E6),0)', '=COUNTIF(F2:F6,"Present")&" Pres · "&COUNTIF(F2:F6,"Late")&" Late · 2 Abs"', '=ROUND((COUNTIF(F2:F6,"Present")+0.5*COUNTIF(F2:F6,"Late"))/COUNTA(A2:A6),2)', '=SUM(H2:H6)', 'Auto-calculated summary']
+      ];
+      return rows.map(function (r) { return r.join('\t'); }).join('\n');
+    }
+
+    function downloadCsv() {
+      var csvContent = '\uFEFF' + [
+        'Student Name,Email,Join Time,Leave Time,Duration (min),Status,Attendance %,Rejoins,Notes',
+        'Sarah Jenkins,sarah.j@school.edu,09:00 AM,10:00 AM,60,Present,100%,0,"Full session participation"',
+        'David Chen,d.chen@school.edu,09:18 AM,10:00 AM,42,Late,70%,0,"Joined 18m past start"',
+        'Maria Rodriguez,m.rodriguez@school.edu,09:01 AM,09:35 AM,34,Late,57%,2,"Left early (Wi-Fi dropped)"',
+        'James Wilson,j.wilson@school.edu,,,0,Absent,0%,0,"Unexcused absence"',
+        'Elena Rostova,elena.r@school.edu,,,0,Excused,0%,0,"Doctor appointment (excused)"',
+        ',,,,,,,,',
+        'Template Formulas (Copy into row 2 of any blank sheet):,,,,,,,,',
+        'Duration Formula (Col E):,"=IF(AND(ISNUMBER(C2), ISNUMBER(D2)), ROUND((D2 - C2) * 1440), 0)",,,,,,,',
+        'Status Formula (Col F):,"=IF(E2=0, IF(AND(ISNUMBER(SEARCH(""excused"", I2)), ISERROR(SEARCH(""unexcused"", I2))), ""Excused"", ""Absent""), IF(E2>=45, ""Present"", IF(E2>=15, ""Late"", ""Absent"")))",,,,,,,',
+        'Attendance Rate (Col G):,"=IF(E2>0, MIN(1, ROUND(E2 / 60, 2)), 0)",,,,,,,',
+        'Overall Class Rollup (G7):,"=ROUND((COUNTIF(F2:F6, ""Present"") + 0.5 * COUNTIF(F2:F6, ""Late"")) / COUNTA(A2:A6), 2)",,,,,,,',
+        ',,,,,,,,',
+        '"Tip: Install Attendance Tracker from Google Workspace Marketplace to auto-fill this sheet for every Google Meet call without manual data entry: https://attendancetracker.dev",,,,,,,,'
+      ].join('\r\n');
+
+      var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      var url = URL.createObjectURL(blob);
+      var link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'google-meet-attendance-template.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    function copyTable() {
+      var tsv = getTsvData();
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(tsv).then(function () {
+          showToast('Copied formatted table with live formulas! Paste directly into Google Sheets or Excel (Ctrl+V).');
+        }).catch(function () {
+          fallbackCopy(tsv);
+        });
+      } else {
+        fallbackCopy(tsv);
+      }
+    }
+
+    function fallbackCopy(text) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        showToast('Copied formatted table with live formulas! Paste directly into Google Sheets or Excel (Ctrl+V).');
+      } catch (err) {
+        showToast('Unable to copy automatically — please use the CSV download.');
+      }
+      document.body.removeChild(ta);
+    }
+
+    // Action button handlers
+    var btnMakeCopy = document.getElementById('btn-make-copy');
+    if (btnMakeCopy) {
+      btnMakeCopy.addEventListener('click', function () {
+        var tsv = getTsvData();
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(tsv).catch(function () {});
+        }
+        showToast('Opened Google Sheets! Template with formulas copied to your clipboard — press Ctrl+V to paste.');
+      });
+    }
+
+    var btnDownloadCsv = document.getElementById('btn-download-csv');
+    if (btnDownloadCsv) {
+      btnDownloadCsv.addEventListener('click', function () {
+        downloadCsv();
+        showToast('Downloaded google-meet-attendance-template.csv!');
+      });
+    }
+
+    var btnCopyTable = document.getElementById('btn-copy-table');
+    if (btnCopyTable) {
+      btnCopyTable.addEventListener('click', function () {
+        copyTable();
+      });
+    }
+
+    // Formula copy buttons
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest && e.target.closest('.btn-copy-formula');
+      if (btn) {
+        var formula = btn.getAttribute('data-formula');
+        if (formula && navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(formula).then(function () {
+            var orig = btn.textContent;
+            btn.textContent = 'Copied!';
+            btn.style.borderColor = 'var(--accent)';
+            btn.style.color = 'var(--accent)';
+            showToast('Formula copied: ' + formula);
+            setTimeout(function () {
+              btn.textContent = orig;
+              btn.style.borderColor = '';
+              btn.style.color = '';
+            }, 2000);
+          });
+        }
+      }
+    });
+
+    // Cell Inspector: clicking any cell in the sheet preview updates formula bar
+    var sheetGrid = document.getElementById('interactive-sheet-grid');
+    var activeCoord = document.getElementById('active-coord');
+    var activeFormula = document.getElementById('active-formula');
+
+    if (sheetGrid && activeCoord && activeFormula) {
+      sheetGrid.addEventListener('click', function (e) {
+        var td = e.target.closest && e.target.closest('td[data-col]');
+        if (!td) return;
+        var row = td.closest('tr');
+        var rowNum = row.getAttribute('data-row');
+        var col = td.getAttribute('data-col');
+        var formula = td.getAttribute('data-formula') || td.textContent.trim();
+
+        var allCells = sheetGrid.querySelectorAll('td.active-cell');
+        for (var i = 0; i < allCells.length; i++) {
+          allCells[i].classList.remove('active-cell');
+        }
+        td.classList.add('active-cell');
+
+        activeCoord.textContent = col + rowNum;
+        activeFormula.textContent = formula;
+      });
+    }
+
+    // Dynamic Simulator: update sample table when user changes Class Length or Late Threshold
+    var simDuration = document.getElementById('sim-duration');
+    var simThreshold = document.getElementById('sim-threshold');
+
+    function updateSimulator() {
+      if (!simDuration || !simThreshold || !sheetGrid) return;
+      var classLen = parseInt(simDuration.value, 10) || 60;
+      var lateThresh = parseInt(simThreshold.value, 10) || 15;
+      var presentCutoff = Math.max(15, classLen - lateThresh);
+
+      // Sarah Jenkins (on time, stayed full class)
+      var sarahRow = sheetGrid.querySelector('tr[data-row="2"]');
+      if (sarahRow) {
+        var sDur = classLen;
+        sarahRow.querySelector('.cell-duration').textContent = sDur;
+        sarahRow.querySelector('.cell-duration').setAttribute('data-formula', '=IF(AND(ISNUMBER(C2), ISNUMBER(D2)), ROUND((D2 - C2) * 1440), ' + sDur + ')');
+        sarahRow.querySelector('.cell-rate').textContent = '100%';
+        sarahRow.querySelector('.cell-rate').setAttribute('data-formula', '=IF(E2>0, MIN(1, ROUND(E2 / ' + classLen + ', 2)), 0)');
+        sarahRow.querySelector('.cell-status').innerHTML = '<span class="badge-status badge-present">Present</span>';
+        sarahRow.querySelector('.cell-status').setAttribute('data-formula', '=IF(E2=0, IF(AND(ISNUMBER(SEARCH("excused", I2)), ISERROR(SEARCH("unexcused", I2))), "Excused", "Absent"), IF(E2>=' + presentCutoff + ', "Present", IF(E2>=15, "Late", "Absent")))');
+      }
+
+      // David Chen (joined at 09:18, +18m past start)
+      var davidRow = sheetGrid.querySelector('tr[data-row="3"]');
+      if (davidRow) {
+        var dDur = Math.max(0, classLen - 18);
+        var dRate = Math.round((dDur / classLen) * 100) + '%';
+        davidRow.querySelector('.cell-duration').textContent = dDur;
+        davidRow.querySelector('.cell-duration').setAttribute('data-formula', '=IF(AND(ISNUMBER(C3), ISNUMBER(D3)), ROUND((D3 - C3) * 1440), ' + dDur + ')');
+        davidRow.querySelector('.cell-rate').textContent = dRate;
+        davidRow.querySelector('.cell-rate').setAttribute('data-formula', '=IF(E3>0, MIN(1, ROUND(E3 / ' + classLen + ', 2)), 0)');
+        if (18 > lateThresh) {
+          davidRow.querySelector('.cell-status').innerHTML = '<span class="badge-status badge-late">Late (+18m)</span>';
+        } else {
+          davidRow.querySelector('.cell-status').innerHTML = '<span class="badge-status badge-present">Present</span>';
+        }
+        davidRow.querySelector('.cell-status').setAttribute('data-formula', '=IF(E3=0, IF(AND(ISNUMBER(SEARCH("excused", I3)), ISERROR(SEARCH("unexcused", I3))), "Excused", "Absent"), IF(E3>=' + presentCutoff + ', "Present", IF(E3>=15, "Late", "Absent")))');
+      }
+
+      // Maria Rodriguez (09:01 to 09:35, 34m)
+      var mariaRow = sheetGrid.querySelector('tr[data-row="4"]');
+      if (mariaRow) {
+        var mDur = Math.min(34, classLen);
+        var mRate = Math.round((mDur / classLen) * 100) + '%';
+        mariaRow.querySelector('.cell-duration').textContent = mDur;
+        mariaRow.querySelector('.cell-duration').setAttribute('data-formula', '=IF(AND(ISNUMBER(C4), ISNUMBER(D4)), ROUND((D4 - C4) * 1440), ' + mDur + ')');
+        mariaRow.querySelector('.cell-rate').textContent = mRate;
+        mariaRow.querySelector('.cell-rate').setAttribute('data-formula', '=IF(E4>0, MIN(1, ROUND(E4 / ' + classLen + ', 2)), 0)');
+        if (mDur >= presentCutoff) {
+          mariaRow.querySelector('.cell-status').innerHTML = '<span class="badge-status badge-present">Present</span>';
+        } else {
+          mariaRow.querySelector('.cell-status').innerHTML = '<span class="badge-status badge-late">Late (34m)</span>';
+        }
+        mariaRow.querySelector('.cell-status').setAttribute('data-formula', '=IF(E4=0, IF(AND(ISNUMBER(SEARCH("excused", I4)), ISERROR(SEARCH("unexcused", I4))), "Excused", "Absent"), IF(E4>=' + presentCutoff + ', "Present", IF(E4>=15, "Late", "Absent")))');
+      }
+
+      // Update Summary row (Row 7)
+      var totalDur = classLen + Math.max(0, classLen - 18) + Math.min(34, classLen);
+      var avgDur = Math.round(totalDur / 5);
+      var summaryAvgDur = document.getElementById('summary-avg-dur');
+      if (summaryAvgDur) summaryAvgDur.textContent = 'Avg: ' + avgDur + 'm';
+
+      var presCount = 1 + ((18 <= lateThresh) ? 1 : 0) + ((Math.min(34, classLen) >= presentCutoff) ? 1 : 0);
+      var lateCount = 3 - presCount;
+      var summaryCounts = document.getElementById('summary-counts');
+      if (summaryCounts) summaryCounts.textContent = presCount + ' Pres · ' + lateCount + ' Late · 2 Abs';
+
+      var rollupRate = Math.round(((presCount + 0.5 * lateCount) / 5) * 100);
+      var summaryAvgRate = document.getElementById('summary-avg-rate');
+      if (summaryAvgRate) summaryAvgRate.textContent = 'Rate: ' + rollupRate + '%';
+
+      // Refresh active cell formula display if an updated cell is active
+      var activeCell = sheetGrid.querySelector('td.active-cell');
+      if (activeCell && activeFormula) {
+        activeFormula.textContent = activeCell.getAttribute('data-formula') || activeCell.textContent.trim();
+      }
+    }
+
+    if (simDuration) simDuration.addEventListener('change', updateSimulator);
+    if (simThreshold) simThreshold.addEventListener('change', updateSimulator);
   })();
   </script>
 </body>

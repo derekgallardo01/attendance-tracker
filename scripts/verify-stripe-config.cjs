@@ -14,7 +14,7 @@ const Stripe = require(path.resolve(__dirname, '../backend/node_modules/stripe')
 const { SecretManagerServiceClient } = require(path.resolve(__dirname, '../backend/node_modules/@google-cloud/secret-manager'));
 
 const EXPECTED_PRICES = {
-  'Single Meeting Pass ($1.99)': 'price_1UKowpRPP93YBXrOjjKjUUlz',
+  'Single Meeting Pass ($2.99)': 'price_1ULk3CRPP93YBXrOlYO6xpWk',
   'Educator Annual ($4.99/yr)': 'price_1UDZsvRPP93YBXrOGfe1d4Ig',
   'Individual Lifetime ($9.99)': 'price_1UDZsuRPP93YBXrOAUWBPqO2',
   'Department Annual ($59/yr)': 'price_1UEYZZRPP93YBXrO9aLcJNcO',

@@ -152,7 +152,7 @@ router.post('/billing/checkout', requireAuth, async (req, res) => {
   const isPppEligible = !promo && userCountry && PPP_COUNTRIES.has(userCountry);
 
   const priceId = isSingleMeeting
-    ? (process.env.STRIPE_SINGLE_MEETING_PRICE_ID || 'price_1UKowpRPP93YBXrOjjKjUUlz')
+    ? (process.env.STRIPE_SINGLE_MEETING_PRICE_ID || 'price_1ULk3CRPP93YBXrOlYO6xpWk')
     : ((isIndia && (isLifetime || isEducator || individual))
       ? getInrPrices().lifetime
       : (isEducator
