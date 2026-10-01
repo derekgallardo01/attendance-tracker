@@ -329,8 +329,19 @@ describe('POST /api/save-to-sheets — error handling', () => {
     expect(res.body.code).toBe('DRIVE_PERMISSION_MISSING');
   });
 
+  test('retries and succeeds on transient 503 / "The service is currently unavailable"', async () => {
+    mockSheetsBatchUpdate.mockRejectedValueOnce(Object.assign(new Error('The service is currently unavailable.'), { status: 503 }));
+    const res = await request(app)
+      .post('/api/save-to-sheets')
+      .set(authedHeader('user@acme.com', 'acme.com'))
+      .set('Content-Type', 'application/json')
+      .send(validPayload);
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+
   test('500 for any other sheets API failure', async () => {
-    mockSheetsBatchUpdate.mockRejectedValueOnce(new Error('Network error'));
+    mockSheetsBatchUpdate.mockRejectedValueOnce(new Error('Persistent internal database failure'));
     const res = await request(app)
       .post('/api/save-to-sheets')
       .set(authedHeader('user@acme.com', 'acme.com'))

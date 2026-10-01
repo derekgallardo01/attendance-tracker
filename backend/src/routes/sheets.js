@@ -801,7 +801,15 @@ router.post('/save-to-sheets', async (req, res) => {
       }
     }
     const sheetsAuth = await getGoogleClient(req, 'https://www.googleapis.com/auth/spreadsheets');
-    const { sheetUrl, isFirstExport, exportCreated } = await buildAndSaveExport({
+    const isTransientGoogleError = (err) => {
+      const status = err?.status || err?.code || err?.response?.status;
+      if (status === 500 || status === 502 || status === 503 || status === 504) return true;
+      const msg = String(err?.message || '');
+      return /service is currently unavailable|socket hang up|ETIMEDOUT|ECONNRESET|network timeout/i.test(msg);
+    };
+
+    let exportResult;
+    const exportParams = {
       user: req.user ? { domain: req.user.domain, email: req.user.email, displayName: req.user.displayName } : null,
       sheetsAuth,
       data: {
@@ -813,7 +821,20 @@ router.post('/save-to-sheets', async (req, res) => {
         lateMinutes: b.lateMinutes, // panel's "Late after" threshold — drives the Late? column + digest
       },
       options: { sendEmail: b.sendEmail, autoExport: b.autoExport, proAllowed },
-    });
+    };
+
+    try {
+      exportResult = await buildAndSaveExport(exportParams);
+    } catch (firstErr) {
+      if (isTransientGoogleError(firstErr)) {
+        log.warn('sheets export: transient Google API error, retrying after backoff', { email: req.user?.email, error: firstErr.message });
+        await new Promise(r => setTimeout(r, 1000));
+        exportResult = await buildAndSaveExport(exportParams);
+      } else {
+        throw firstErr;
+      }
+    }
+    const { sheetUrl, isFirstExport, exportCreated } = exportResult;
     // Deterministic post-export meter. `monthlyExports` is the count BEFORE
     // this export (from enforcement above). persistExport dedupes re-exports of
     // the same meeting, so only a newly-created record advances the meter; a
