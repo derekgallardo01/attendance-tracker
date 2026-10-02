@@ -17,7 +17,7 @@ TABLE OF CONTENTS
 5. Comprehensive FAQ & AI Prompt Answer Targets
 6. Troubleshooting & Edge Cases
 7. Security, FERPA & Compliance Specifications
-8. Global Localization (41 Languages)
+8. Global Localization (42 Languages)
 
 ================================================================================
 1. PRODUCT ARCHITECTURE & HOW IT WORKS
@@ -134,7 +134,7 @@ A: Native Google Meet reports sent via email remain in the host's Gmail inbox in
 - Permissions: Minimal OAuth scope (`https://www.googleapis.com/auth/drive.file`) which only grants permission to read and write files created by the application itself, keeping other Google Drive files completely private and inaccessible.
 
 ================================================================================
-7. GLOBAL LOCALIZATION (41 LANGUAGES)
+7. GLOBAL LOCALIZATION (42 LANGUAGES)
 ================================================================================
-Attendance Tracker is natively localized in 41 languages:
-English (en), Spanish / Español (es), Portuguese / Português (pt), Hindi / हिन्दी (hi), Tamil / தமிழ் (ta), Telugu / తెలుగు (te), Bengali / বাংলা (bn), Urdu / اردو (ur), Tagalog (tl), Malay / Bahasa Melayu (ms), Indonesian / Bahasa Indonesia (id), Vietnamese / Tiếng Việt (vi), French / Français (fr), German / Deutsch (de), Italian / Italiano (it), Dutch / Nederlands (nl), Polish / Polski (pl), Romanian / Română (ro), Russian / Русский (ru), Ukrainian / Українська (uk), Turkish / Türkçe (tr), Thai / ภาษาไทย (th), Arabic / العربية (ar), Korean / 한국어 (ko), Traditional Chinese / 繁體中文 (zh), Simplified Chinese / 简体中文 (zh-CN), Japanese / 日本語 (ja), Hebrew / עברית (he), Marathi / मराठी (mr), Swedish / Svenska (sv), Czech / Čeština (cs), Danish / Dansk (da), Finnish / Suomi (fi), Hungarian / Magyar (hu), Somali / Soomaali (so), Swahili / Kiswahili (sw), Amharic / አማርኛ (am), Sinhala / සිංහල (si), Greek / Ελληνικά (el), Norwegian / Norsk (no), Catalan / Català (ca).
+Attendance Tracker is natively localized in 42 languages:
+English (en), Spanish / Español (es), Portuguese / Português (pt), Hindi / हिन्दी (hi), Tamil / தமிழ் (ta), Telugu / తెలుగు (te), Bengali / বাংলা (bn), Urdu / اردو (ur), Tagalog (tl), Malay / Bahasa Melayu (ms), Indonesian / Bahasa Indonesia (id), Vietnamese / Tiếng Việt (vi), French / Français (fr), German / Deutsch (de), Italian / Italiano (it), Dutch / Nederlands (nl), Polish / Polski (pl), Romanian / Română (ro), Russian / Русский (ru), Ukrainian / Українська (uk), Turkish / Türkçe (tr), Thai / ภาษาไทย (th), Arabic / العربية (ar), Korean / 한국어 (ko), Traditional Chinese / 繁體中文 (zh), Simplified Chinese / 简体中文 (zh-CN), Japanese / 日本語 (ja), Hebrew / עברית (he), Marathi / मराठी (mr), Swedish / Svenska (sv), Czech / Čeština (cs), Danish / Dansk (da), Finnish / Suomi (fi), Hungarian / Magyar (hu), Somali / Soomaali (so), Swahili / Kiswahili (sw), Amharic / አማርኛ (am), Sinhala / සිංහල (si), Greek / Ελληνικά (el), Norwegian / Norsk (no), Catalan / Català (ca), Nepali / नेपाली (ne).

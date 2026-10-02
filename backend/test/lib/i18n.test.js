@@ -22,6 +22,7 @@ describe('backend i18n', () => {
       expect(i18n.normalizeLocale('en-FR')).toBe('fr');
       expect(i18n.normalizeLocale(null, 'CO')).toBe('es');
       expect(i18n.normalizeLocale(null, 'BR')).toBe('pt');
+      expect(i18n.normalizeLocale(null, 'NP')).toBe('ne');
       expect(i18n.normalizeLocale(null, 'US')).toBe('en');
     });
 
@@ -50,6 +51,7 @@ describe('backend i18n', () => {
       expect(i18n.normalizeLocale('nb-NO')).toBe('no');
       expect(i18n.normalizeLocale('nn-NO')).toBe('no');
       expect(i18n.normalizeLocale('ca-ES')).toBe('ca');
+      expect(i18n.normalizeLocale('ne-NP')).toBe('ne');
     });
   });
 
@@ -177,6 +179,10 @@ describe('backend i18n', () => {
       const caHeaders = i18n.getSheetHeaders('ca-ES', 'CET');
       expect(caHeaders[0]).toBe('Nom');
       expect(caHeaders[1]).toBe('Correu electrònic');
+ 
+      const neHeaders = i18n.getSheetHeaders('ne-NP', 'NPT');
+      expect(neHeaders[0]).toBe('नाम');
+      expect(neHeaders[1]).toBe('इमेल');
     });
   });
 
@@ -195,6 +201,7 @@ describe('backend i18n', () => {
       expect(i18n.getSheetSummaryLabels('hi').meeting).toBe('मीटिंग');
       expect(i18n.getSheetSummaryLabels('bn').meeting).toBe('মিটিং');
       expect(i18n.getSheetSummaryLabels('ja').meeting).toBe('ミーティング');
+      expect(i18n.getSheetSummaryLabels('ne').meeting).toBe('बैठक');
     });
   });
 
@@ -216,6 +223,7 @@ describe('backend i18n', () => {
       expect(i18n.localizeStatus('Present', 'hi')).toBe('उपस्थित');
       expect(i18n.localizeStatus('Present', 'bn')).toBe('উপস্থিত');
       expect(i18n.localizeStatus('Present', 'ja')).toBe('出席');
+      expect(i18n.localizeStatus('Present', 'ne')).toBe('उपस्थित');
       expect(i18n.localizeStatus('Unmapped Custom Status', 'pt')).toBe('Unmapped Custom Status');
     });
   });
@@ -238,6 +246,7 @@ describe('backend i18n', () => {
       expect(i18n.localizeRsvp('accepted', 'hi')).toBe('स्वीकार किया');
       expect(i18n.localizeRsvp('accepted', 'bn')).toBe('গৃহীত');
       expect(i18n.localizeRsvp('accepted', 'ja')).toBe('承諾');
+      expect(i18n.localizeRsvp('accepted', 'ne')).toBe('स्वीकार गरियो');
     });
   });
 
@@ -290,6 +299,12 @@ describe('backend i18n', () => {
 
       const ca = i18n.getPdfLabels('ca');
       expect(ca.reportTitle).toBe("Informe d'assistència");
+ 
+      const ne = i18n.getPdfLabels('ne');
+      expect(ne.reportTitle).toBe('उपस्थिति प्रतिवेदन');
+      expect(ne.columns.name).toBe('नाम');
+      expect(ne.columns.status).toBe('स्थिति');
+      expect(ne.summaryFormat(5, 10)).toBe('5 / 10 उपस्थितको रूपमा दर्ता गरियो');
     });
 
     test('returns localized summary labels for Asian, European, and Middle Eastern locales', () => {

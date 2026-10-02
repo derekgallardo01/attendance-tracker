@@ -40,7 +40,7 @@ const COUNTRY_TO_LOCALE = {
   GT: 'es', CU: 'es', BO: 'es', DO: 'es', HN: 'es', PY: 'es', SV: 'es', NI: 'es',
   CR: 'es', PR: 'es', PA: 'es', UY: 'es', GQ: 'es',
   BR: 'pt', PT: 'pt', AO: 'pt', MZ: 'pt', GW: 'pt', CV: 'pt', ST: 'pt', TL: 'pt',
-  BD: 'bn', IN: 'hi', PK: 'ur', LK: 'si', FR: 'fr', DE: 'de', AT: 'de', IT: 'it',
+  BD: 'bn', IN: 'hi', PK: 'ur', LK: 'si', NP: 'ne', FR: 'fr', DE: 'de', AT: 'de', IT: 'it',
   NL: 'nl', PL: 'pl', RO: 'ro', MD: 'ro', RU: 'ru', BY: 'ru', KZ: 'ru', UA: 'uk',
   TR: 'tr', TH: 'th', SA: 'ar', AE: 'ar', EG: 'ar', QA: 'ar', KW: 'ar', OM: 'ar',
   BH: 'ar', KR: 'ko', TW: 'zh', HK: 'zh', CN: 'zh-CN', SG: 'zh-CN', JP: 'ja',
@@ -605,6 +605,19 @@ const LOCALIZED_HEADERS = {
     status: 'Estat',
     checkedIn: 'Registrat',
   },
+  ne: {
+    name: 'नाम',
+    email: 'इमेल',
+    rsvp: 'RSVP स्थिति',
+    late: 'ढिलो?',
+    joinTime: 'सामेल भएको समय',
+    leaveTime: 'छोडेको समय',
+    duration: 'अवधि (मिनेट)',
+    pct: 'उपस्थिति %',
+    sessions: 'सत्रहरू',
+    status: 'स्थिति',
+    checkedIn: 'चेक इन गरिएको',
+  },
 };
 
 function getSheetHeaders(locale, tzAbbr) {
@@ -910,6 +923,19 @@ const LOCALIZED_SUMMARY_LABELS = {
     totalAttended: 'Total assistents',
     attendanceRate: "Taxa d'assistència",
   },
+  ne: {
+    meeting: 'बैठक',
+    meetingId: 'बैठक आईडी',
+    type: 'प्रकार',
+    scheduledRange: 'निर्धारित समय',
+    scheduledEvent: 'निर्धारित कार्यक्रम',
+    instantMeeting: 'तत्काल बैठक',
+    date: 'मिति',
+    duration: 'अवधि (मिनेट)',
+    totalInvited: 'कुल आमन्त्रित',
+    totalAttended: 'कुल उपस्थित',
+    attendanceRate: 'उपस्थिति दर',
+  },
 };
 
 function getSheetSummaryLabels(locale) {
@@ -1067,6 +1093,18 @@ const STATUS_TRANSLATIONS = {
     'Guest (Present)': 'ضيف (حاضر)',
     'Guest (Left)': 'ضيف (غادر)',
   },
+  ne: {
+    Present: 'उपस्थित',
+    Left: 'छोडियो',
+    Absent: 'अनुपस्थित',
+    'Absent (excused)': 'अनुपस्थित (माफ गरिएको)',
+    Late: 'ढिलो',
+    'Left Early / Incomplete': 'छिटो छोडेको / अपूर्ण',
+    'Excused (Short Stay)': 'माफ गरिएको (छोटो बसाइ)',
+    'Present (Left)': 'उपस्थित (छोडियो)',
+    'Guest (Present)': 'अतिथि (उपस्थित)',
+    'Guest (Left)': 'अतिथि (छोडियो)',
+  },
 };
 
 function localizeStatus(status, locale) {
@@ -1154,7 +1192,15 @@ const RSVP_TRANSLATIONS = {
     tentative: 'مبدئي',
     needsAction: 'لا يوجد رد',
   },
+  ne: {
+    accepted: 'स्वीकार गरियो',
+    declined: 'अस्वीकार गरियो',
+    tentative: 'अस्थायी',
+    needsAction: 'कुनै प्रतिक्रिया छैन',
+  },
 };
+const LOCALIZED_RSVP = RSVP_TRANSLATIONS;
+
 
 function localizeRsvp(status, locale) {
   if (!status) return '';
@@ -1364,6 +1410,14 @@ const PDF_TRANSLATIONS = {
     columns: { name: 'Navn', email: 'E-post', joined: 'Ble med', left: 'Forlot', active: 'Aktiv', status: 'Status' },
     summaryFormat: (present, total) => `${present} av ${total} registrert som til stede`,
   },
+  ne: {
+    reportTitle: 'उपस्थिति प्रतिवेदन',
+    dateLabel: 'मिति',
+    hostLabel: 'आयोजक',
+    durationLabel: 'अवधि',
+    columns: { name: 'नाम', email: 'इमेल', joined: 'सामेल भएको', left: 'छोडेको', active: 'सक्रिय', status: 'स्थिति' },
+    summaryFormat: (present, total) => `${present} / ${total} उपस्थितको रूपमा दर्ता गरियो`,
+  },
 };
 
 const DEFAULT_PDF_LABELS = {
@@ -1393,5 +1447,9 @@ module.exports = {
   DEFAULT_SUMMARY_LABELS,
   LOCALIZED_SUMMARY_LABELS,
   DEFAULT_PDF_LABELS,
+  STATUS_TRANSLATIONS,
+  RSVP_TRANSLATIONS,
+  LOCALIZED_RSVP,
+  PDF_TRANSLATIONS,
   _resetCache: () => { cachedStrings = null; },
 };

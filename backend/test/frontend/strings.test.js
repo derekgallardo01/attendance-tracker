@@ -188,6 +188,11 @@ describe('setLocale + fallback chain', () => {
     strings.setLocale('ca');
     expect(strings.t('btn.start')).toBe('Inicia');
     expect(strings.t('attendee.present')).toBe('Present');
+
+    // Nepali
+    strings.setLocale('ne');
+    expect(strings.t('btn.start')).toBe('सुरु गर्नुहोस्');
+    expect(strings.t('attendee.present')).toBe('उपस्थित');
   });
 
   test('persists locale to localStorage when requested', () => {
@@ -257,6 +262,7 @@ describe('detectLocale', () => {
     expect(strings.detectLocale('nb-NO')).toBe('no');
     expect(strings.detectLocale('nn-NO')).toBe('no');
     expect(strings.detectLocale('ca-ES')).toBe('ca');
+    expect(strings.detectLocale('ne-NP')).toBe('ne');
     expect(strings.detectLocale('en-US')).toBe('en');
     expect(strings.detectLocale('xx-YY')).toBe('en'); // unknown fallback
   });
@@ -318,7 +324,7 @@ describe('detectLocale', () => {
     expect(strings.detectLocale('es-ES')).toBe('ja');
   });
 
-  test('renderLanguagePicker renders select with all 41 locales and handles selection', () => {
+  test('renderLanguagePicker renders select with all 42 locales and handles selection', () => {
     delete window.location;
     window.location = {
       href: 'http://localhost/?lang=en',
@@ -331,7 +337,7 @@ describe('detectLocale', () => {
     strings.renderLanguagePicker('picker-mount');
     const select = document.querySelector('.att-lang-picker');
     expect(select).not.toBeNull();
-    expect(select.children.length).toBe(41);
+    expect(select.children.length).toBe(42);
 
     // Trigger language switch via picker with history.replaceState
     select.value = 'es';

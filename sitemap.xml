@@ -45,6 +45,7 @@
     <xhtml:link rel="alternate" hreflang="el" href="https://attendancetracker.dev/?lang=el" />
     <xhtml:link rel="alternate" hreflang="no" href="https://attendancetracker.dev/?lang=no" />
     <xhtml:link rel="alternate" hreflang="ca" href="https://attendancetracker.dev/?lang=ca" />
+    <xhtml:link rel="alternate" hreflang="ne" href="https://attendancetracker.dev/?lang=ne" />
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
@@ -312,6 +313,7 @@
     <xhtml:link rel="alternate" hreflang="el" href="https://attendancetracker.dev/pricing.html?lang=el" />
     <xhtml:link rel="alternate" hreflang="no" href="https://attendancetracker.dev/pricing.html?lang=no" />
     <xhtml:link rel="alternate" hreflang="ca" href="https://attendancetracker.dev/pricing.html?lang=ca" />
+    <xhtml:link rel="alternate" hreflang="ne" href="https://attendancetracker.dev/pricing.html?lang=ne" />
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>

@@ -493,6 +493,18 @@
     "ext.openMarketplace": "Instal·lar / Veure al Marketplace",
     "ext.openHistory": "Veure tauler d'historial de reunions",
     "ext.privacy": "Privacidea"
+  },
+  "ne": {
+    "ext.title": "Attendance Tracker",
+    "ext.subtitle": "आधिकारिक Google Meet एड-अन",
+    "ext.howToTitle": "🚀 Google Meet मा कसरी खोल्ने:",
+    "ext.step1": "कुनै पनि Google Meet कलमा सामेल हुनुहोस् वा सुरु गर्नुहोस्।",
+    "ext.step2": "तल दायाँमा रहेको गतिविधि आइकन (आकारहरू) मा क्लिक गर्नुहोस्।",
+    "ext.step3": "Attendance Tracker चयन गर्नुहोस् र सुरु गर्नुहोस् थिच्नुहोस्।",
+    "ext.openMeet": "Google Meet खोल्नुहोस्",
+    "ext.openMarketplace": "Marketplace मा स्थापना / अवलोकन गर्नुहोस्",
+    "ext.openHistory": "बैठक इतिहास ड्यासबोर्ड हेर्नुहोस्",
+    "ext.privacy": "गोपनीयता"
   }
 };
 
