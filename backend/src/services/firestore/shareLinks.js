@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const CONFIG = require('../../config');
 const { getDb, tenantRef, FieldValue, log, tsMs } = require('./_core');
 
 // ── Public share links for series dashboards & meeting reports ──
@@ -233,4 +234,70 @@ async function getSharedMeetingView(domain, meetingId) {
   }
 }
 
-module.exports = { createShareLink, resolveShareLink, getSharedSeriesView, getSharedMeetingView, revokeShareLink };
+// List all public share links minted by this owner, enriched with target meeting/series titles.
+async function listUserShareLinks(domain, ownerEmail) {
+  if (!ownerEmail) return [];
+  try {
+    const emailLower = ownerEmail.toLowerCase();
+    const snap = await getDb().collection('shareLinks')
+      .where('ownerEmail', '==', emailLower)
+      .get();
+    if (snap.empty) return [];
+
+    // Lookup meeting and series titles from tenant
+    const meetingTitleMap = new Map();
+    const seriesTitleMap = new Map();
+    if (domain) {
+      try {
+        const meetingsSnap = await tenantRef(domain).collection('meetings').get();
+        for (const d of meetingsSnap.docs) {
+          const data = d.data();
+          const code = data.meetingCode || d.id;
+          if (data.title) {
+            meetingTitleMap.set(d.id, data.title);
+            if (code) meetingTitleMap.set(code, data.title);
+            if (data.recurringEventId && !seriesTitleMap.has(data.recurringEventId)) {
+              seriesTitleMap.set(data.recurringEventId, data.title);
+            }
+          }
+        }
+      } catch (e) {
+        log.warn('firestore: listUserShareLinks title lookup failed', { error: e.message });
+      }
+    }
+
+    const iso = (v) => (v && typeof v.toDate === 'function' ? v.toDate().toISOString() : (v ? new Date(v).toISOString() : null));
+
+    const links = snap.docs.map(doc => {
+      const d = doc.data();
+      let targetTitle = 'Untitled';
+      if (d.type === 'series') {
+        targetTitle = seriesTitleMap.get(d.recurringEventId) || 'Recurring Series';
+      } else {
+        const mid = d.meetingId || d.conferenceId;
+        targetTitle = meetingTitleMap.get(mid) || (mid ? `Meeting ${mid}` : 'Single Meeting');
+      }
+      return {
+        token: d.token || doc.id,
+        type: d.type || 'meeting',
+        targetTitle,
+        meetingId: d.meetingId || d.conferenceId || null,
+        recurringEventId: d.recurringEventId || null,
+        createdAt: iso(d.createdAt),
+        expiresAt: iso(d.expiresAt),
+        revoked: !!d.revoked,
+        viewCount: d.viewCount || 0,
+        url: `${CONFIG.publicSiteUrl}/share.html?t=${d.token || doc.id}`,
+      };
+    });
+
+    links.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    return links;
+  } catch (err) {
+    log.error('firestore: listUserShareLinks failed', { domain, ownerEmail, error: err.message });
+    return [];
+  }
+}
+
+module.exports = { createShareLink, resolveShareLink, getSharedSeriesView, getSharedMeetingView, revokeShareLink, listUserShareLinks };
+

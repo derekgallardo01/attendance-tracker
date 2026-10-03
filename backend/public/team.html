@@ -87,6 +87,211 @@
       table { font-size: .78rem; min-width: 480px; }
       th, td { padding: 8px 10px; }
     }
+    /* ── School Quote Modal & Print Styles ── */
+    .quote-modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.78);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .quote-modal-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      max-width: 680px;
+      width: 100%;
+      padding: 32px;
+      color: var(--text);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+      position: relative;
+    }
+    .quote-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .quote-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .quote-badge {
+      display: inline-block;
+      background: rgba(74,222,128,.15);
+      color: var(--accent);
+      border: 1px solid rgba(74,222,128,.3);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: .75rem;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+    .quote-meta {
+      text-align: right;
+      font-size: .8rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .quote-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .quote-box {
+      background: rgba(255,255,255,.02);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+    .quote-box-label {
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    .quote-input {
+      width: 100%;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: .85rem;
+      padding: 6px 8px;
+      margin-bottom: 6px;
+    }
+    .quote-input:focus {
+      outline: none;
+      border-color: var(--blue);
+    }
+    .quote-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    .quote-table th {
+      background: rgba(255,255,255,.03);
+      padding: 8px 12px;
+      font-size: .72rem;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    .quote-table td {
+      padding: 12px;
+      font-size: .85rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .quote-total-row {
+      display: flex;
+      justify-content: flex-end;
+      align-items: baseline;
+      gap: 16px;
+      padding: 12px 0;
+      font-size: 1rem;
+      font-weight: 700;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .quote-total-amount {
+      font-size: 1.4rem;
+      color: var(--accent);
+    }
+    .quote-terms {
+      font-size: .75rem;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+    .quote-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #111827 !important;
+        padding: 0 !important;
+      }
+      .container, #team-lang-select, .no-print {
+        display: none !important;
+      }
+      .quote-modal-overlay {
+        display: block !important;
+        position: static !important;
+        background: transparent !important;
+        padding: 0 !important;
+        backdrop-filter: none !important;
+      }
+      .quote-modal-card {
+        background: #ffffff !important;
+        color: #111827 !important;
+        border: none !important;
+        box-shadow: none !important;
+        max-width: 100% !important;
+        padding: 24px !important;
+      }
+      .quote-header {
+        border-color: #e5e7eb !important;
+      }
+      .quote-title {
+        color: #111827 !important;
+      }
+      .quote-badge {
+        background: #ecfdf5 !important;
+        color: #065f46 !important;
+        border-color: #a7f3d0 !important;
+      }
+      .quote-meta {
+        color: #4b5563 !important;
+      }
+      .quote-box {
+        background: #f9fafb !important;
+        border-color: #e5e7eb !important;
+      }
+      .quote-box-label {
+        color: #6b7280 !important;
+      }
+      .quote-input {
+        border: none !important;
+        background: transparent !important;
+        color: #111827 !important;
+        padding: 2px 0 !important;
+        font-weight: 600 !important;
+      }
+      .quote-table th {
+        background: #f3f4f6 !important;
+        color: #4b5563 !important;
+        border-color: #e5e7eb !important;
+      }
+      .quote-table td {
+        color: #111827 !important;
+        border-color: #e5e7eb !important;
+      }
+      .quote-total-row {
+        border-color: #e5e7eb !important;
+        color: #111827 !important;
+      }
+      .quote-total-amount {
+        color: #059669 !important;
+      }
+      .quote-terms {
+        color: #4b5563 !important;
+      }
+    }
   </style>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="js/strings.js"></script>
@@ -122,6 +327,7 @@
         <button type="button" id="team-int-annual" onclick="setTeamInterval('annual')" style="border:1px solid #30363d;border-radius:6px 0 0 6px;padding:6px 12px;cursor:pointer;font-size:.8rem" data-i18n="team.intAnnual">Annual · save 20%</button><button type="button" id="team-int-monthly" onclick="setTeamInterval('monthly')" style="border:1px solid #30363d;border-left:none;border-radius:0 6px 6px 0;padding:6px 12px;cursor:pointer;font-size:.8rem" data-i18n="team.intMonthly">Monthly</button>
       </div>
       <button id="upgrade-btn" onclick="startUpgrade()" style="margin-top:10px;background:#4ade80;color:#0d1117;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:600" data-i18n="team.upgradeBtn">Upgrade to Pro</button>
+      <button id="btn-quote-upgrade" onclick="openSchoolQuoteModal()" class="btn btn-secondary" style="margin-top:10px;margin-left:8px" data-i18n="team.generateQuote">Generate School Quote (PDF)</button>
 
       <!-- Redacted preview of the real dashboard (the admin's own data) -->
       <div id="preview-teaser" style="display:none;margin-top:18px;text-align:left">
@@ -145,6 +351,7 @@
         <div>
           <span class="user" id="user-email"></span>
           <a class="btn btn-secondary" href="/history.html" style="margin-left:8px" data-i18n="team.myHistory">My history</a>
+          <button class="btn btn-secondary" onclick="openSchoolQuoteModal()" style="margin-left:4px" data-i18n="team.generateQuote">Generate School Quote (PDF)</button>
           <a class="btn btn-secondary" href="/" style="margin-left:4px" data-i18n="team.backToAddon">Back to add-on</a>
           <button class="btn btn-secondary" onclick="signOut()" style="margin-left:4px" data-i18n="team.signOut">Sign out</button>
         </div>
@@ -212,6 +419,81 @@
           </div>
         </div>
         <div style="margin-top:10px" data-i18n="team.adminConsoleNote">Workspace admins already have similar visibility into meeting attendance via the Google Admin Console.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── School Quote / Invoice Modal ── -->
+  <div id="school-quote-modal" class="quote-modal-overlay" onclick="if(event.target===this)closeSchoolQuoteModal()">
+    <div class="quote-modal-card">
+      <div class="quote-header">
+        <div>
+          <div class="quote-title" data-i18n="team.quoteTitle">Official School Quote / Invoice</div>
+          <div class="quote-badge" id="quote-edu-badge" style="display:none">Academic / School Institution Plan</div>
+        </div>
+        <div class="quote-meta">
+          <div><strong>Quote #:</strong> <span id="quote-ref-no">—</span></div>
+          <div><strong>Date:</strong> <span id="quote-date">—</span></div>
+          <div><strong>Valid for:</strong> 60 days</div>
+        </div>
+      </div>
+
+      <div class="quote-grid">
+        <div class="quote-box">
+          <div class="quote-box-label" data-i18n="team.quoteBillTo">Bill To / School Organization</div>
+          <input type="text" id="quote-org-name" class="quote-input" placeholder="School or District Name" aria-label="School or District Name" />
+          <input type="email" id="quote-org-email" class="quote-input" placeholder="Billing or Administrator Email" aria-label="Billing or Administrator Email" />
+          <div id="quote-domain-line" style="font-size:.75rem;color:var(--muted);margin-top:2px">Domain: <span id="quote-domain-text"></span></div>
+        </div>
+        <div class="quote-box">
+          <div class="quote-box-label">Vendor / Provider Info</div>
+          <div style="font-size:.85rem;font-weight:600">Attendance Tracker for Google Meet</div>
+          <div style="font-size:.78rem;color:var(--muted);margin-top:2px">support@attendancetracker.com</div>
+          <div style="font-size:.75rem;color:var(--muted);margin-top:4px">W-9 Form & Vendor Registration available upon request.</div>
+        </div>
+      </div>
+
+      <table class="quote-table">
+        <thead>
+          <tr>
+            <th>Item Description</th>
+            <th class="nowrap" style="text-align:center">Term</th>
+            <th class="nowrap right">Qty</th>
+            <th class="nowrap right">Price</th>
+            <th class="nowrap right">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <strong>Attendance Tracker Pro — Annual Department Plan</strong>
+              <div style="font-size:.75rem;color:var(--muted);margin-top:3px">
+                Unlimited teachers & classes across domain · Google Sheets sync · Direct Excel (.xlsx) export · LMS export · Priority support
+              </div>
+            </td>
+            <td style="text-align:center" class="nowrap">1 Year</td>
+            <td class="right">1</td>
+            <td class="right nowrap">$59.00</td>
+            <td class="right nowrap"><strong>$59.00 USD</strong></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="quote-total-row">
+        <span data-i18n="team.quoteTotal">Total Amount Due</span>:
+        <span class="quote-total-amount">$59.00 USD</span>
+      </div>
+
+      <div class="quote-terms">
+        <div><strong>Purchase Order (PO) & Payment Instructions:</strong></div>
+        <div>• School Purchase Orders accepted with <strong>Net 30</strong> payment terms.</div>
+        <div>• Payment methods accepted: Credit Card, ACH / Direct Deposit, Wire Transfer, or Check.</div>
+        <div>• To activate your license via Purchase Order, email your approved PO referencing the Quote # above to: <strong>support@attendancetracker.com</strong></div>
+      </div>
+
+      <div class="quote-actions no-print">
+        <button class="btn btn-secondary" onclick="closeSchoolQuoteModal()" data-i18n="common.close">Close</button>
+        <button class="btn" style="background:#4ade80;color:#0d1117" onclick="window.print()" data-i18n="team.printQuote">Print / Save as PDF</button>
       </div>
     </div>
   </div>
@@ -566,6 +848,76 @@
         </tr>
       `).join('');
     }
+
+    // ── School Quote / Invoice Generator ──
+    function openSchoolQuoteModal() {
+      const email = (document.getElementById('user-email')?.textContent || '').trim();
+      const domain = data.domain || (email ? email.split('@')[1] : '') || '';
+
+      const emailInput = document.getElementById('quote-org-email');
+      if (emailInput && !emailInput.value && email) {
+        emailInput.value = email;
+      }
+
+      const domainText = document.getElementById('quote-domain-text');
+      if (domainText) domainText.textContent = domain || '—';
+
+      const nameInput = document.getElementById('quote-org-name');
+      if (nameInput && !nameInput.value && domain) {
+        const parts = domain.split('.');
+        const rawName = parts[0] || domain;
+        nameInput.value = rawName.charAt(0).toUpperCase() + rawName.slice(1) + (domain.includes('k12') || domain.includes('edu') || domain.includes('school') ? ' School / District' : '');
+      }
+
+      const isEdu = isSchoolDomain(email, domain);
+      const eduBadge = document.getElementById('quote-edu-badge');
+      if (eduBadge) eduBadge.style.display = isEdu ? 'inline-block' : 'none';
+
+      const dateEl = document.getElementById('quote-date');
+      if (dateEl) {
+        dateEl.textContent = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+      }
+
+      const refEl = document.getElementById('quote-ref-no');
+      if (refEl && (refEl.textContent === '—' || !refEl.textContent)) {
+        const hash = Math.random().toString(36).substring(2, 7).toUpperCase();
+        refEl.textContent = `AT-${new Date().getFullYear()}-${hash}`;
+      }
+
+      const modal = document.getElementById('school-quote-modal');
+      if (modal) {
+        modal.style.display = 'flex';
+        if (typeof AttStrings !== 'undefined') AttStrings.applyTranslations();
+      }
+
+      try {
+        if (sessionToken) {
+          fetch(`${BACKEND_URL}/event`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}` },
+            body: JSON.stringify({ type: 'school_quote_generated', meta: { domain, isEdu } }),
+          }).catch(() => {});
+        }
+      } catch (e) {}
+    }
+
+    function closeSchoolQuoteModal() {
+      const modal = document.getElementById('school-quote-modal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function isSchoolDomain(email, domain) {
+      const e = (email || '').toLowerCase();
+      const d = (domain || '').toLowerCase();
+      return /\.(edu|edu\.[a-z]{2}|ac\.[a-z]{2}|gov\.[a-z]{2}|k12\.[a-z]{2}(\.us)?|k12\.[a-z]{2}|sch\.[a-z]{2}|education)$/i.test(e) ||
+             /@(.*\.)?(school|academy|college|university|deped|alokitohridoy|education|gymnasium|lyceum)/i.test(e) ||
+             /\.(edu|ac|education)\b/i.test(d) ||
+             /\.(edu|edu\.[a-z]{2}|ac\.[a-z]{2}|gov\.[a-z]{2}|k12\.[a-z]{2}(\.us)?|k12\.[a-z]{2}|sch\.[a-z]{2}|education)$/i.test(d);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeSchoolQuoteModal();
+    });
   </script>
   <script src="pwa-install.js"></script>
   <script>

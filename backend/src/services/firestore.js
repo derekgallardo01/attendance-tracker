@@ -4,7 +4,7 @@ const {
   encryptToken, decryptToken,
   getDb, memoizeTTL, tenantRef, lastSegment, countDistinctAttendees, weeklyStreak, tsMs, domainOf,
 } = require('./firestore/_core');
-const { createShareLink, resolveShareLink, getSharedSeriesView, getSharedMeetingView, revokeShareLink } = require('./firestore/shareLinks');
+const { createShareLink, resolveShareLink, getSharedSeriesView, getSharedMeetingView, revokeShareLink, listUserShareLinks } = require('./firestore/shareLinks');
 const { evaluateSeriesAlerts, evaluateReengagementForUser, claimReengagementSlot, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition } = require('./firestore/reengagement');
 const { suppressEmail, isEmailSuppressed, unsuppressEmail } = require('./firestore/suppression');
 const { deleteUser, isUserDeleted, clearDeletedTombstone } = require('./firestore/deletion');
@@ -761,6 +761,190 @@ async function getMeetingWithParticipants(domain, conferenceId, requesterEmail) 
     return null;
   }
 }
+
+// Detailed single meeting drill-down view with merged Google Calendar invitees and status calculation.
+async function getMeetingDetail(domain, requesterEmail, meetingId) {
+  if (!meetingId) return null;
+  try {
+    const tenant = tenantRef(domain);
+    const emailLower = (requesterEmail || '').toLowerCase();
+
+    // Locate meeting document
+    let mRef = tenant.collection('meetings').doc(meetingId);
+    let mDoc = await mRef.get();
+    if (!mDoc.exists) {
+      const snap = await tenant.collection('meetings').where('meetingCode', '==', meetingId).get();
+      if (!snap.empty) {
+        const instances = snap.docs.filter(d => d.id !== meetingId);
+        const docs = instances.length ? instances : snap.docs;
+        const ms = (v) => (v?.toDate ? v.toDate().getTime() : (v ? new Date(v).getTime() : 0));
+        docs.sort((a, b) => ms(b.data().startTime) - ms(a.data().startTime));
+        mRef = docs[0].ref;
+        mDoc = docs[0];
+      }
+    }
+    if (!mDoc.exists) return null;
+
+    const m = mDoc.data();
+    const code = m.meetingCode || m.conferenceId || mDoc.id;
+
+    if (requesterEmail) {
+      const evSnap = await tenant.collection('events')
+        .where('email', '==', emailLower)
+        .where('type', '==', 'tracked').get();
+      const trackedIds = new Set(evSnap.docs.map(d => d.data().meta?.conferenceId).filter(Boolean));
+      const owns = trackedIds.has(meetingId) ||
+        trackedIds.has(code) ||
+        trackedIds.has(mDoc.id) ||
+        trackedIds.has(m.conferenceId);
+      if (!owns) {
+        const err = new Error('forbidden');
+        throw err;
+      }
+    }
+
+    let calendarAttendees = m.calendarAttendees || [];
+    let title = m.title || null;
+    if (code && (!calendarAttendees.length || !title)) {
+      try {
+        const codeDoc = await tenant.collection('meetings').doc(code).get();
+        if (codeDoc.exists) {
+          const cd = codeDoc.data();
+          if (!calendarAttendees.length && cd.calendarAttendees) calendarAttendees = cd.calendarAttendees;
+          if (!title && cd.title) title = cd.title;
+        }
+      } catch (e) { /* ignore */ }
+    }
+    if (!title) title = `Meeting ${code || meetingId}`;
+
+    const pSnap = await mRef.collection('participants').get();
+    const iso = (v) => (v && typeof v.toDate === 'function' ? v.toDate().toISOString() : (v ? new Date(v).toISOString() : null));
+
+    const participants = pSnap.docs.map(d => {
+      const p = d.data();
+      return {
+        participantId: p.participantId || d.id,
+        displayName: p.displayName || 'Guest',
+        email: p.email ? p.email.toLowerCase() : null,
+        joinTime: iso(p.joinTime),
+        leaveTime: iso(p.leaveTime),
+        durationMin: typeof p.durationMin === 'number' ? p.durationMin : Math.round((p.durationMs || 0) / 60000),
+        durationMs: p.durationMs || 0,
+        present: p.present !== false,
+        sessions: p.sessions || 1,
+      };
+    });
+
+    const meetingStartTime = m.startTime?.toDate ? m.startTime.toDate() : (m.startTime ? new Date(m.startTime) : null);
+    const meetingEndTime = m.endTime?.toDate ? m.endTime.toDate() : (m.endTime ? new Date(m.endTime) : null);
+
+    const attendees = [];
+    const matchedInviteeEmails = new Set();
+    const matchedInviteeNames = new Set();
+
+    for (const p of participants) {
+      const pEmail = (p.email || '').toLowerCase();
+      const pName = (p.displayName || '').toLowerCase();
+      const calMatch = calendarAttendees.find(ca => {
+        const caEmail = (ca.email || '').toLowerCase();
+        const caName = (ca.displayName || '').toLowerCase();
+        return (pEmail && caEmail === pEmail) || (pName && caName === pName);
+      });
+
+      let rsvpStatus = 'needsAction';
+      if (calMatch) {
+        if (calMatch.email) matchedInviteeEmails.add(calMatch.email.toLowerCase());
+        if (calMatch.displayName) matchedInviteeNames.add(calMatch.displayName.toLowerCase());
+        rsvpStatus = calMatch.responseStatus || calMatch.status || 'needsAction';
+      }
+
+      let isLate = false;
+      if (meetingStartTime && p.joinTime) {
+        const diffMs = new Date(p.joinTime).getTime() - meetingStartTime.getTime();
+        if (diffMs > 5 * 60 * 1000) isLate = true;
+      }
+
+      let status = 'present';
+      if (!p.present || (p.durationMs === 0 && p.durationMin === 0)) {
+        status = 'absent';
+      } else if (isLate) {
+        status = 'late';
+      }
+
+      attendees.push({
+        ...p,
+        rsvpStatus,
+        status,
+      });
+    }
+
+    for (const ca of calendarAttendees) {
+      const caEmail = (ca.email || '').toLowerCase();
+      const caName = (ca.displayName || '').toLowerCase();
+      if ((caEmail && matchedInviteeEmails.has(caEmail)) || (caName && matchedInviteeNames.has(caName))) {
+        continue;
+      }
+      attendees.push({
+        participantId: `cal_${caEmail || caName}`,
+        displayName: ca.displayName || (caEmail ? caEmail.split('@')[0] : 'Guest'),
+        email: ca.email || null,
+        rsvpStatus: ca.responseStatus || ca.status || 'needsAction',
+        status: 'absent',
+        joinTime: null,
+        leaveTime: null,
+        durationMin: 0,
+        durationMs: 0,
+        present: false,
+        sessions: 0,
+      });
+    }
+
+    attendees.sort((a, b) => {
+      const rank = { present: 0, late: 1, absent: 2 };
+      if (rank[a.status] !== rank[b.status]) return rank[a.status] - rank[b.status];
+      if (a.status !== 'absent') return (b.durationMin || 0) - (a.durationMin || 0);
+      return (a.displayName || '').localeCompare(b.displayName || '');
+    });
+
+    const presentCount = attendees.filter(a => a.status === 'present').length;
+    const lateCount = attendees.filter(a => a.status === 'late').length;
+    const absentCount = attendees.filter(a => a.status === 'absent').length;
+    const totalCount = attendees.length;
+    const attendedCount = presentCount + lateCount;
+    const attendanceRate = totalCount > 0 ? (attendedCount / totalCount) : 1;
+
+    const actualDurationMs = (meetingStartTime && meetingEndTime) ? (meetingEndTime.getTime() - meetingStartTime.getTime()) : (m.durationMs || null);
+    const scheduledDurationMs = m.scheduledDurationMs || actualDurationMs;
+
+    return {
+      id: mDoc.id,
+      conferenceId: code,
+      meetingCode: code,
+      title,
+      startTime: iso(m.startTime),
+      endTime: iso(m.endTime),
+      scheduledStartTime: iso(m.scheduledStartTime || m.startTime),
+      scheduledEndTime: iso(m.scheduledEndTime || m.endTime),
+      scheduledDurationMs,
+      scheduledDuration: scheduledDurationMs,
+      actualDurationMs,
+      actualDuration: actualDurationMs,
+      durationMs: actualDurationMs,
+      participantCount: participants.length,
+      totalCount,
+      presentCount,
+      lateCount,
+      absentCount,
+      attendanceRate,
+      attendees,
+    };
+  } catch (err) {
+    if (err.message === 'forbidden') throw err;
+    log.error('firestore: getMeetingDetail failed', { domain, meetingId, error: err.message });
+    return null;
+  }
+}
+
 
 // Persist verification records for issued certificates so the public
 // /verify page can independently confirm one. Keyed by the certificate's
@@ -1627,6 +1811,54 @@ async function getExportedConferenceIds(domain, email) {
   }
 }
 
+// The set of conferenceIds/meetingCodes/recordNames this user has tracked.
+async function getTrackedConferenceIds(domain, email) {
+  try {
+    const tenant = tenantRef(domain);
+    const snap = await tenant.collection('events')
+      .where('email', '==', (email || '').toLowerCase())
+      .where('type', '==', 'tracked')
+      .get();
+    const userTracked = new Set();
+    for (const d of snap.docs) {
+      const cid = d.data().meta?.conferenceId;
+      if (cid) userTracked.add(cid);
+    }
+    const ids = new Set(userTracked);
+    const meetingsSnap = await tenant.collection('meetings').get();
+    for (const d of meetingsSnap.docs) {
+      const m = d.data();
+      const code = m.meetingCode || m.conferenceId;
+      if (userTracked.has(d.id) || (code && userTracked.has(code))) {
+        if (m.recordName) ids.add(m.recordName);
+        if (m.meetingCode) ids.add(m.meetingCode);
+        ids.add(d.id);
+      }
+    }
+    return ids;
+  } catch (err) {
+    log.warn('firestore: getTrackedConferenceIds failed', { domain, email, error: err.message });
+    return new Set();
+  }
+}
+
+// Update instance start/end timestamps on meeting doc
+async function updateMeetingTimes(domain, meetingCode, recordName, startTime, endTime) {
+  if (!domain || !meetingCode) return;
+  try {
+    const instanceId = recordName ? lastSegment(recordName) : null;
+    const docId = instanceId ? `${meetingCode}__${instanceId}` : meetingCode;
+    const mRef = tenantRef(domain).collection('meetings').doc(docId);
+    await mRef.set({
+      startTime: startTime ? new Date(startTime) : null,
+      endTime: endTime ? new Date(endTime) : null,
+    }, { merge: true });
+  } catch (err) {
+    log.warn('firestore: updateMeetingTimes failed', { domain, meetingCode, error: err.message });
+  }
+}
+
+
 async function countAllUsers() {
   try {
     // count() aggregation instead of loading every user doc into memory.
@@ -1759,6 +1991,7 @@ async function getUserMeetingHistory(domain, email, { limit } = {}) {
         const presentNames = (presentParts.length > 0 ? presentParts : parts).map(p => p.displayName).filter(Boolean);
         const durationMs = (m.startTime && m.endTime) ? (m.endTime - m.startTime) : null;
         return {
+          id: m.id,
           conferenceId: m.conferenceId,
           title: m.title,
           participantCount: m.participantCount || parts.length,
@@ -2351,13 +2584,18 @@ async function getParticipantHistory(domain, userEmail, key) {
         const join = tsMs(data.joinTime) || null;
         const leave = tsMs(data.leaveTime) || null;
         const start = tsMs(meetings[i].data.startTime) || null;
+        const durationMin = (join && leave && leave > join) ? Math.round((leave - join) / 60000) : 0;
         appearances.push({
           conferenceId: meetings[i].id,
+          title: meetings[i].data.title || 'Untitled meeting',
           meetingTitle: meetings[i].data.title || 'Untitled meeting',
+          date: start ? new Date(start).toISOString() : null,
+          startTime: start ? new Date(start).toISOString() : null,
           meetingStart: start ? new Date(start).toISOString() : null,
           joinTime: join ? new Date(join).toISOString() : null,
           leaveTime: leave ? new Date(leave).toISOString() : null,
           durationMs: (join && leave && leave > join) ? (leave - join) : null,
+          durationMin,
           present: !!data.present,
           displayName: data.displayName || '',
           email: pEmail || null,
@@ -2384,6 +2622,8 @@ async function getParticipantHistory(domain, userEmail, key) {
       totalMinutes,
       avgDurationMinutes: avgDurationMs ? Math.round(avgDurationMs / 60000) : null,
       recent: appearances.slice(0, 5),
+      appearances,
+      meetings: appearances,
       firstSeen: appearances.length > 0 ? appearances[appearances.length - 1].meetingStart : null,
       lastSeen: appearances.length > 0 ? appearances[0].meetingStart : null,
     };
@@ -2455,13 +2695,14 @@ module.exports = {
   claimWebhookEvent, releaseWebhookEvent,
   logEvent, recordCancellationTelemetry, getCancellationTelemetry,
   recordPublicPageview, recordNotificationLog, updateNotificationWebhook,
-  getUserActivationStatus, countUserExports, countUserMonthlyExports, countUserAutoExports, getExportReexportCount, countAllUsers, getExportedConferenceIds,
+  getUserActivationStatus, countUserExports, countUserMonthlyExports, countUserAutoExports, getExportReexportCount, countAllUsers, getExportedConferenceIds, getTrackedConferenceIds, updateMeetingTimes,
   getUserMeetingHistory, getExistingDomainPeer,
   getUserMeetingSeries,
   getTenantUsers, getTenantMeetings, getTenantSeriesOverview, getTenantPeopleOverview, getTeamOverview,
   evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition,
   evaluateReengagementForUser, claimReengagementSlot,
-  createShareLink, resolveShareLink, getSharedSeriesView, getSharedMeetingView, revokeShareLink,
+  createShareLink, resolveShareLink, getSharedSeriesView, getSharedMeetingView, revokeShareLink, listUserShareLinks,
+  getMeetingDetail,
   getParticipantHistory, setParticipantNote, getParticipantNote,
   markUserContacted,
   dismissSuggestion,

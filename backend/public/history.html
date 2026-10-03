@@ -134,7 +134,85 @@
       .series-meta { font-size: .7rem; }
       /* Calendar heat-map: shrink cell size so 90 days still fits */
       .calendar-grid { gap: 22px; }
+      /* Drawer and modal breathing room on mobile */
+      .drawer-panel { width: 100vw; max-width: 100vw; border-left: none; }
+      .drawer-header { padding: 16px 18px; }
+      .drawer-body { padding: 16px 18px; gap: 16px; }
+      .modal-box { max-height: 90vh; }
+      .modal-header { padding: 14px 16px; }
+      .modal-body { padding: 16px; }
     }
+
+    /* Clickable table rows */
+    .clickable-row { cursor: pointer; transition: background .15s ease; }
+    .clickable-row:hover { background: rgba(255, 255, 255, .04); }
+
+    /* Drawer overlay / slide-over */
+    .drawer-overlay {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(3px); z-index: 999;
+      opacity: 0; pointer-events: none; transition: opacity .25s ease;
+    }
+    .drawer-overlay.open { opacity: 1; pointer-events: auto; }
+    .drawer-panel {
+      position: fixed; top: 0; right: 0; bottom: 0;
+      width: 620px; max-width: 92vw; background: #161b22;
+      border-left: 1px solid #30363d; z-index: 1000;
+      transform: translateX(100%); transition: transform .3s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex; flex-direction: column; overflow: hidden; box-shadow: -8px 0 24px rgba(0,0,0,0.5);
+    }
+    .drawer-panel.open { transform: translateX(0); }
+    .drawer-header {
+      padding: 20px 24px; border-bottom: 1px solid #30363d;
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 14px;
+      background: #0d1117;
+    }
+    .drawer-body {
+      padding: 24px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 20px;
+    }
+    .drawer-close {
+      background: none; border: none; color: #8b949e; font-size: 1.4rem;
+      line-height: 1; cursor: pointer; padding: 4px 8px; border-radius: 6px;
+    }
+    .drawer-close:hover { color: #e6edf3; background: #21262d; }
+
+    /* Segmented attendance progress bar */
+    .segmented-bar {
+      display: flex; height: 10px; border-radius: 5px; overflow: hidden;
+      background: #21262d; margin-top: 8px;
+    }
+    .seg-present { background: #4ade80; }
+    .seg-late { background: #f59e0b; }
+    .seg-absent { background: #30363d; }
+
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 12px; font-size: 0.72rem; font-weight: 600; text-transform: capitalize; }
+    .badge-present { background: rgba(74, 222, 128, 0.15); color: #4ade80; }
+    .badge-late { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .badge-absent { background: rgba(139, 148, 158, 0.15); color: #8b949e; }
+    .badge-rsvp { background: rgba(88, 166, 255, 0.12); color: #58a6ff; }
+    .badge-active { background: rgba(74, 222, 128, 0.15); color: #4ade80; }
+    .badge-revoked { background: rgba(248, 81, 73, 0.15); color: #f85149; }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(3px); z-index: 1050;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity .2s ease; padding: 16px;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .modal-box {
+      background: #161b22; border: 1px solid #30363d; border-radius: 12px;
+      width: 600px; max-width: 100%; max-height: 85vh;
+      display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 12px 32px rgba(0,0,0,0.6);
+    }
+    .modal-header {
+      padding: 18px 20px; border-bottom: 1px solid #30363d;
+      display: flex; align-items: center; justify-content: space-between;
+      background: #0d1117;
+    }
+    .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
   </style>
   <script src="https://accounts.google.com/gsi/client" async></script>
   <script src="js/utils.js"></script>
@@ -206,6 +284,7 @@
         <button class="tab" data-tab="series" onclick="switchTab('series')" data-i18n="nav.series">Series</button>
         <button class="tab" data-tab="people" onclick="switchTab('people')" data-i18n="nav.people">People</button>
         <button class="tab" data-tab="calendar" onclick="switchTab('calendar')" data-i18n="nav.calendar">Calendar</button>
+        <button class="tab" data-tab="links" onclick="switchTab('links')" data-i18n="history.tabLinks">Links</button>
       </div>
 
       <!-- Meetings tab -->
@@ -241,7 +320,13 @@
           <span data-i18n="history.capNote1">Showing your most recent</span> <span id="history-cap-count">25</span> <span data-i18n="history.capNote2">meetings — Pro keeps your full history.</span>
           <a href="javascript:void(0)" onclick="upgradeFromHistory(this)" style="color:#58a6ff" data-i18n="history.capUpgrade">Upgrade</a>
         </div>
-        <input id="search-meetings" class="search-box" type="text" data-i18n-placeholder="history.searchMeetings" placeholder="Search meetings by title…" oninput="renderMeetings()" />
+        <div style="display:flex;gap:10px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
+          <input id="search-meetings" class="search-box" style="margin-bottom:0;flex:1;min-width:200px" type="text" data-i18n-placeholder="history.searchMeetings" placeholder="Search meetings by title…" oninput="renderMeetings()" />
+          <button class="btn btn-secondary" onclick="openPastMeetingsModal()" data-i18n="history.retrievePastMeetings" style="white-space:nowrap;display:flex;align-items:center;gap:6px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            <span data-i18n="history.retrievePastMeetings">Retrieve past meetings</span>
+          </button>
+        </div>
         <div class="section">
           <table>
             <thead>
@@ -312,6 +397,39 @@
             <span data-i18n="history.calMore">More</span>
           </div>
           <div id="calendar-detail" style="margin-top:16px;color:var(--muted);font-size:.85rem;min-height:20px"></div>
+        </div>
+      </div>
+
+      <!-- Links tab -->
+      <div id="tab-links" class="tab-content">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+          <div>
+            <h3 style="font-size:1.05rem;font-weight:600" data-i18n="history.shareLinksTitle">Share Links Hub</h3>
+            <p class="muted" style="font-size:.8rem;margin-top:2px" data-i18n="history.shareLinksDesc">Manage public links generated for meetings and series. Revoke access instantly with one click.</p>
+          </div>
+          <button class="btn btn-secondary" onclick="loadShareLinks()" style="font-size:.8rem;display:flex;align-items:center;gap:6px">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            <span data-i18n="history.refresh">Refresh</span>
+          </button>
+        </div>
+        <input id="search-links" class="search-box" type="text" data-i18n-placeholder="history.searchLinks" placeholder="Filter links by title, token, or type…" oninput="renderShareLinks()" />
+        <div class="section">
+          <table>
+            <thead>
+              <tr>
+                <th data-i18n="history.thTarget">Target</th>
+                <th data-i18n="history.thType">Type</th>
+                <th data-i18n="history.thStatus">Status</th>
+                <th class="right" data-i18n="history.linkViews">Views</th>
+                <th data-i18n="history.thCreated">Created</th>
+                <th data-i18n="history.thExpires">Expires</th>
+                <th class="right" data-i18n="history.thActions">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="links-rows">
+              <tr><td colspan="7" class="muted" data-i18n="common.loading">Loading share links…</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -659,6 +777,7 @@
     function switchTab(name) {
       document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
       document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${name}`));
+      if (name === 'links') loadShareLinks();
     }
 
     // esc delegates to js/utils.js; the pure formatters/filters/heatmap math to
@@ -715,12 +834,12 @@
         return;
       }
       body.innerHTML = rows.map(m => `
-        <tr>
+        <tr class="clickable-row" onclick="openMeetingDetail('${escArg(m.id || m.conferenceId)}')">
           <td class="nowrap">${esc(fmtDate(m.startTime || m.createdAt))}<div class="muted" style="font-size:.7rem">${esc(fmtTime(m.startTime || m.createdAt))}</div></td>
-          <td>${esc(m.title)}<div class="muted" style="font-size:.72rem;margin-top:2px">${esc((m.presentNames || []).slice(0, 4).join(', '))}${m.presentNames && m.presentNames.length > 4 ? ' ' + esc(t('history.moreNames', '+{n} more').replace('{n}', m.presentNames.length - 4)) : ''}</div></td>
+          <td><strong style="color:var(--text)">${esc(m.title)}</strong><div class="muted" style="font-size:.72rem;margin-top:2px">${esc((m.presentNames || []).slice(0, 4).join(', '))}${m.presentNames && m.presentNames.length > 4 ? ' ' + esc(t('history.moreNames', '+{n} more').replace('{n}', m.presentNames.length - 4)) : ''}</div></td>
           <td class="right">${m.participantCount || 0}</td>
           <td class="right nowrap">${fmtDuration(m.durationMs)}</td>
-          <td class="right nowrap">${m.conferenceId ? `<a href="#" onclick="downloadMeetingArtifact('${escArg(m.conferenceId)}','report');return false" title="${esc(t('history.pdfTip', 'Attendance report PDF'))}" style="color:var(--accent);text-decoration:none">PDF</a> <a href="#" onclick="downloadMeetingArtifact('${escArg(m.conferenceId)}','certificates');return false" title="${esc(t('history.certsTip', 'Per-attendee certificates (Pro)'))}" style="color:var(--accent);text-decoration:none;margin-left:8px">${esc(t('history.certs', 'Certs'))}</a> <a href="#" onclick="shareMeeting('${escArg(m.id || m.conferenceId)}', this);return false" title="${esc(t('btn.share', 'Share'))}" style="color:var(--accent);text-decoration:none;margin-left:8px">${esc(t('btn.share', 'Share'))}</a>` : '<span class="muted">—</span>'}</td>
+          <td class="right nowrap" onclick="event.stopPropagation()">${m.conferenceId ? `<a href="#" onclick="downloadMeetingArtifact('${escArg(m.conferenceId)}','report');return false" title="${esc(t('history.pdfTip', 'Attendance report PDF'))}" style="color:var(--accent);text-decoration:none">PDF</a> <a href="#" onclick="downloadMeetingArtifact('${escArg(m.conferenceId)}','certificates');return false" title="${esc(t('history.certsTip', 'Per-attendee certificates (Pro)'))}" style="color:var(--accent);text-decoration:none;margin-left:8px">${esc(t('history.certs', 'Certs'))}</a> <a href="#" onclick="shareMeeting('${escArg(m.id || m.conferenceId)}', this);return false" title="${esc(t('btn.share', 'Share'))}" style="color:var(--accent);text-decoration:none;margin-left:8px">${esc(t('btn.share', 'Share'))}</a>` : '<span class="muted">—</span>'}</td>
         </tr>
       `).join('');
     }
@@ -768,8 +887,8 @@
         return;
       }
       body.innerHTML = rows.map(p => `
-        <tr>
-          <td>${esc(p.displayName || p.email || '—')}<div class="muted" style="font-size:.72rem">${esc(p.email || '')}</div></td>
+        <tr class="clickable-row" onclick="openParticipantProfile('${escArg(p.email || p.displayName)}')">
+          <td><strong style="color:var(--text)">${esc(p.displayName || p.email || '—')}</strong><div class="muted" style="font-size:.72rem">${esc(p.email || '')}</div></td>
           <td class="right">${p.meetingCount}</td>
           <td class="right nowrap">${fmtMinutes(p.totalMinutes)}</td>
           <td><div style="display:flex;align-items:center;gap:8px;min-width:140px"><div class="progress-bar" style="flex:1"><div style="width:${Math.round(p.attendanceRate * 100)}%"></div></div><span style="font-size:.78rem;color:var(--muted);min-width:32px">${pct(p.attendanceRate)}</span></div></td>
@@ -1034,7 +1153,571 @@
         });
       });
     }
+
+    // ── Single Meeting Visual Drill-Down Drawer ──
+    let activeMeetingDetail = null;
+    let activeParticipantKey = null;
+    let userShareLinks = [];
+
+    async function openMeetingDetail(id) {
+      if (!id) return;
+      const overlay = document.getElementById('meeting-drawer-overlay');
+      const drawer = document.getElementById('meeting-detail-drawer');
+      const loading = document.getElementById('meeting-drawer-loading');
+      const content = document.getElementById('meeting-drawer-content');
+
+      overlay.classList.add('open');
+      drawer.classList.add('open');
+      loading.style.display = 'block';
+      content.style.display = 'none';
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/history/meeting/${encodeURIComponent(id)}`, {
+          headers: { 'Authorization': `Bearer ${sessionToken}` }
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const detail = await res.json();
+        activeMeetingDetail = detail;
+
+        document.getElementById('meeting-drawer-title').textContent = detail.title || t('history.meetingDetails', 'Meeting Details');
+        const dateStr = fmtDate(detail.startTime || detail.createdAt);
+        const timeStr = fmtTime(detail.startTime || detail.createdAt);
+        const durMs = detail.actualDurationMs || detail.actualDuration || detail.durationMs || 0;
+        document.getElementById('meeting-drawer-sub').textContent = `${dateStr}${timeStr ? ' · ' + timeStr : ''} · ${fmtDuration(durMs)}`;
+
+        // Render Radial SVG Donut
+        const donutContainer = document.getElementById('meeting-donut-container');
+        if (typeof AttHistory !== 'undefined' && AttHistory.renderDonutSvg) {
+          donutContainer.innerHTML = AttHistory.renderDonutSvg(detail.attendanceRate || 0, 96);
+        } else {
+          donutContainer.innerHTML = '';
+        }
+        document.getElementById('meeting-rate-text').textContent = pct(detail.attendanceRate || 0);
+
+        // Segmented bar & counts
+        const pCount = detail.presentCount || 0;
+        const lCount = detail.lateCount || 0;
+        const aCount = detail.absentCount || 0;
+        const totalCount = pCount + lCount + aCount || 1;
+        document.getElementById('seg-present').style.width = `${(pCount / totalCount) * 100}%`;
+        document.getElementById('seg-late').style.width = `${(lCount / totalCount) * 100}%`;
+        document.getElementById('seg-absent').style.width = `${(aCount / totalCount) * 100}%`;
+        document.getElementById('meeting-breakdown-legend').textContent = `${pCount} ${t('attendee.present', 'present').toLowerCase()} · ${lCount} ${t('attendee.late', 'late').toLowerCase()} · ${aCount} ${t('attendee.absent', 'absent').toLowerCase()}`;
+
+        // Scheduled vs Actual comparison
+        const schedMs = detail.scheduledDurationMs || detail.scheduledDuration || 0;
+        const schedMin = schedMs ? Math.round(schedMs / 60000) : 0;
+        const actMs = detail.actualDurationMs || detail.actualDuration || detail.durationMs || 0;
+        const actMin = actMs ? Math.round(actMs / 60000) : 0;
+        const compText = document.getElementById('meeting-time-comp-text');
+        if (schedMin > 0) {
+          const ratio = Math.round((actMin / schedMin) * 100);
+          compText.textContent = `${t('history.scheduled', 'Scheduled')}: ${schedMin}m · ${t('history.actual', 'Actual')}: ${actMin}m (${ratio}% ${t('history.ofSchedule', 'of schedule')})`;
+        } else {
+          compText.textContent = `${t('history.actualDuration', 'Actual duration')}: ${actMin}m`;
+        }
+
+        // Attendees table with calendar RSVP juxtaposition
+        const attendees = detail.attendees || [];
+        document.getElementById('meeting-attendee-count').textContent = `${attendees.length} ${t('history.total', 'total')}`;
+        const tbody = document.getElementById('meeting-attendees-tbody');
+        if (!attendees.length) {
+          tbody.innerHTML = `<tr><td colspan="4" class="muted">${esc(t('history.noAttendeeRecords', 'No attendee records found.'))}</td></tr>`;
+        } else {
+          tbody.innerHTML = attendees.map(a => {
+            let rBadge = '<span class="badge badge-absent">—</span>';
+            if (a.rsvpStatus === 'accepted') rBadge = `<span class="badge badge-present">${esc(t('rsvp.accepted', 'Accepted'))}</span>`;
+            else if (a.rsvpStatus === 'declined') rBadge = `<span class="badge badge-revoked">${esc(t('rsvp.declined', 'Declined'))}</span>`;
+            else if (a.rsvpStatus === 'tentative') rBadge = `<span class="badge badge-rsvp">${esc(t('rsvp.tentative', 'Tentative'))}</span>`;
+            else if (a.rsvpStatus === 'needsAction') rBadge = `<span class="badge badge-late">${esc(t('rsvp.needsAction', 'Needs Action'))}</span>`;
+
+            let sBadge = `<span class="badge badge-absent">${esc(t('attendee.absent', 'Absent'))}</span>`;
+            if (a.status === 'present') sBadge = `<span class="badge badge-present">${esc(t('attendee.present', 'Present'))}</span>`;
+            else if (a.status === 'late') sBadge = `<span class="badge badge-late">${esc(t('attendee.late', 'Late'))}</span>`;
+
+            const dur = a.durationMin != null ? `${a.durationMin}m` : (a.durationMs ? `${Math.round(a.durationMs / 60000)}m` : '—');
+            return `
+              <tr>
+                <td><strong>${esc(a.displayName || a.email || t('attendee.guest', 'Attendee'))}</strong><div class="muted" style="font-size:.72rem">${esc(a.email || '')}</div></td>
+                <td>${rBadge}</td>
+                <td>${sBadge}</td>
+                <td class="right nowrap">${dur}</td>
+              </tr>
+            `;
+          }).join('');
+        }
+
+        loading.style.display = 'none';
+        content.style.display = 'flex';
+      } catch (err) {
+        loading.innerHTML = `<div style="color:var(--error)">Failed to load meeting details: ${esc(err.message)}</div>`;
+      }
+    }
+
+    function closeMeetingDetail() {
+      document.getElementById('meeting-drawer-overlay').classList.remove('open');
+      document.getElementById('meeting-detail-drawer').classList.remove('open');
+      activeMeetingDetail = null;
+    }
+
+    function exportMeetingCsvCurrent() {
+      if (!activeMeetingDetail || typeof AttHistory === 'undefined' || !AttHistory.buildMeetingCsv) return;
+      const csv = AttHistory.buildMeetingCsv(activeMeetingDetail);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const safeTitle = (activeMeetingDetail.title || 'meeting').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
+      a.download = `meeting-${safeTitle}-${fmtDate(activeMeetingDetail.startTime || activeMeetingDetail.createdAt)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    }
+
+    function downloadDrawerPdf() {
+      if (!activeMeetingDetail || !activeMeetingDetail.conferenceId) {
+        alert(t('history.noStoredAttendance', 'This meeting has no stored attendance to export.'));
+        return;
+      }
+      downloadMeetingArtifact(activeMeetingDetail.conferenceId, 'report');
+    }
+
+    function shareCurrentMeeting(btn) {
+      if (!activeMeetingDetail) return;
+      shareMeeting(activeMeetingDetail.id || activeMeetingDetail.conferenceId, btn);
+    }
+
+    // ── Retroactive Past Meeting Retrieval ──
+    async function openPastMeetingsModal() {
+      const modal = document.getElementById('past-meetings-modal');
+      const loading = document.getElementById('past-meetings-loading');
+      const errBox = document.getElementById('past-meetings-error');
+      const list = document.getElementById('past-meetings-list');
+
+      modal.classList.add('open');
+      loading.style.display = 'block';
+      errBox.style.display = 'none';
+      list.innerHTML = '';
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/history/recent-conferences`, {
+          headers: { 'Authorization': `Bearer ${sessionToken}` }
+        });
+        const body = await res.json();
+        loading.style.display = 'none';
+
+        if (!res.ok) {
+          errBox.textContent = body.error || 'Failed to fetch conferences';
+          errBox.style.display = 'block';
+          return;
+        }
+
+        const confs = body.conferences || [];
+        if (!confs.length) {
+          list.innerHTML = `<div class="muted" style="text-align:center;padding:20px">${esc(t('history.noPastConferences', 'No recent Google Meet conferences found in the last 14 days.'))}</div>`;
+          return;
+        }
+
+        list.innerHTML = confs.map(c => {
+          const dateStr = fmtDate(c.startTime || c.createTime);
+          const timeStr = fmtTime(c.startTime || c.createTime);
+          const durStr = fmtDuration(c.durationMs);
+          const title = c.title || (c.meetingCode ? `Google Meet (${c.meetingCode})` : 'Google Meet Call');
+          const recName = c.recordName || c.name || '';
+          const isTracked = !!(c.tracked || c.alreadyImported);
+          return `
+            <div style="background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+              <div style="flex:1;min-width:180px">
+                <div style="font-weight:600;color:var(--text);font-size:.9rem">${esc(title)}</div>
+                <div class="muted" style="font-size:.75rem;margin-top:2px">${dateStr} · ${timeStr} · ${durStr}</div>
+              </div>
+              <div>
+                ${isTracked ? `<span class="badge badge-active" style="padding:4px 10px">${esc(t('history.alreadyTracked', 'Already tracked'))}</span>` : `<button class="btn btn-primary" onclick="importPastMeeting('${escArg(recName)}', this)" style="font-size:.78rem;padding:6px 12px">${esc(t('history.importMeeting', 'Import'))}</button>`}
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (e) {
+        loading.style.display = 'none';
+        errBox.textContent = e.message || 'Failed to fetch conferences';
+        errBox.style.display = 'block';
+      }
+    }
+
+    function closePastMeetingsModal() {
+      document.getElementById('past-meetings-modal').classList.remove('open');
+    }
+
+    async function importPastMeeting(recordName, btn) {
+      if (!recordName || !btn) return;
+      const original = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = t('history.importing', 'Importing…');
+      const errBox = document.getElementById('past-meetings-error');
+      if (errBox) errBox.style.display = 'none';
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/history/import-conference`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}` },
+          body: JSON.stringify({ conferenceRecordName: recordName }),
+        });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.error || 'Import failed');
+        btn.textContent = t('history.imported', 'Imported ✓');
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-secondary');
+        loadHistory();
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = original;
+        if (errBox) {
+          errBox.textContent = `${t('history.importFailed', 'Import failed:')} ${err.message || ''}`;
+          errBox.style.display = 'block';
+        }
+      }
+    }
+
+    // ── Longitudinal Participant Profiles & Host Notes ──
+    async function openParticipantProfile(key) {
+      if (!key) return;
+      activeParticipantKey = key;
+      const overlay = document.getElementById('participant-drawer-overlay');
+      const drawer = document.getElementById('participant-drawer');
+      const nameEl = document.getElementById('participant-drawer-name');
+      const emailEl = document.getElementById('participant-drawer-email');
+      const rateEl = document.getElementById('participant-stat-rate');
+      const timeEl = document.getElementById('participant-stat-time');
+      const noteInput = document.getElementById('participant-note-input');
+      const tbody = document.getElementById('participant-meetings-tbody');
+
+      overlay.classList.add('open');
+      drawer.classList.add('open');
+
+      const p = (data.people || []).find(x => (x.email && x.email.toLowerCase() === key.toLowerCase()) || x.displayName === key) || {};
+      nameEl.textContent = p.displayName || key;
+      emailEl.textContent = p.email || '';
+      rateEl.textContent = pct(p.attendanceRate || 0);
+      timeEl.textContent = fmtMinutes(p.totalMinutes || 0);
+      noteInput.value = '';
+      tbody.innerHTML = `<tr><td colspan="4" class="muted">Loading participant history…</td></tr>`;
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/participant?key=${encodeURIComponent(key)}`, {
+          headers: { 'Authorization': `Bearer ${sessionToken}` }
+        });
+        if (res.ok) {
+          const detail = await res.json();
+          if (detail.note) noteInput.value = detail.note;
+          const meetings = detail.meetings || detail.appearances || detail.recent || [];
+          if (!meetings.length) {
+            tbody.innerHTML = `<tr><td colspan="4" class="muted">${esc(t('history.noParticipantMeetings', 'No recorded meetings for this participant.'))}</td></tr>`;
+          } else {
+            tbody.innerHTML = meetings.map(m => {
+              let sBadge = `<span class="badge badge-absent">${esc(t('attendee.absent', 'Absent'))}</span>`;
+              if (m.present) sBadge = `<span class="badge badge-present">${esc(t('attendee.present', 'Present'))}</span>`;
+              const titleStr = m.title || m.meetingTitle || t('history.meetingDetails', 'Meeting');
+              const dateStr = fmtDate(m.date || m.startTime || m.meetingStart);
+              const timeStr = fmtTime(m.date || m.startTime || m.meetingStart);
+              const dur = m.durationMin != null ? `${m.durationMin}m` : (m.durationMs ? `${Math.round(m.durationMs / 60000)}m` : '—');
+              return `
+                <tr>
+                  <td><strong>${esc(titleStr)}</strong></td>
+                  <td class="nowrap muted">${esc(dateStr)}${timeStr ? `<div style="font-size:.7rem">${esc(timeStr)}</div>` : ''}</td>
+                  <td>${sBadge}</td>
+                  <td class="right nowrap">${dur}</td>
+                </tr>
+              `;
+            }).join('');
+          }
+        }
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="4" class="muted">${esc(t('history.couldNotLoadHistory', 'Could not load additional history.'))}</td></tr>`;
+      }
+    }
+
+    function closeParticipantDrawer() {
+      document.getElementById('participant-drawer-overlay').classList.remove('open');
+      document.getElementById('participant-drawer').classList.remove('open');
+      activeParticipantKey = null;
+    }
+
+    async function saveActiveParticipantNote() {
+      if (!activeParticipantKey) return;
+      const note = document.getElementById('participant-note-input').value;
+      const fb = document.getElementById('participant-note-feedback');
+      try {
+        const res = await fetch(`${BACKEND_URL}/participant/note`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}` },
+          body: JSON.stringify({ key: activeParticipantKey, body: note })
+        });
+        if (res.ok) {
+          fb.style.display = 'inline';
+          setTimeout(() => { fb.style.display = 'none'; }, 2500);
+        }
+      } catch (e) { /* best-effort */ }
+    }
+
+    // ── Public Share Links Hub ──
+    async function loadShareLinks() {
+      const tbody = document.getElementById('links-rows');
+      if (!tbody) return;
+      tbody.innerHTML = `<tr><td colspan="7" class="muted">Loading share links…</td></tr>`;
+      try {
+        const res = await fetch(`${BACKEND_URL}/share/links`, {
+          headers: { 'Authorization': `Bearer ${sessionToken}` }
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const result = await res.json();
+        userShareLinks = result.links || [];
+        renderShareLinks();
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" class="muted" style="color:var(--error)">Failed to load share links: ${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    function renderShareLinks() {
+      const q = (document.getElementById('search-links')?.value || '');
+      const links = (typeof AttHistory !== 'undefined' && AttHistory.filterLinks)
+        ? AttHistory.filterLinks(userShareLinks, q)
+        : (userShareLinks || []);
+      const tbody = document.getElementById('links-rows');
+      if (!tbody) return;
+
+      if (!links.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="muted" data-i18n="history.noShareLinks">No share links found.</td></tr>`;
+        return;
+      }
+
+      const now = Date.now();
+      tbody.innerHTML = links.map(l => {
+        const isExpired = l.expiresAt && new Date(l.expiresAt).getTime() < now;
+        let sBadge = '<span class="badge badge-active" data-i18n="history.linkActive">Active</span>';
+        if (l.revoked) sBadge = '<span class="badge badge-revoked" data-i18n="history.linkRevoked">Revoked</span>';
+        else if (isExpired) sBadge = '<span class="badge badge-absent">Expired</span>';
+
+        const typeBadge = `<span class="badge badge-rsvp" style="text-transform:uppercase">${esc(l.type || 'meeting')}</span>`;
+        const linkUrl = l.url || (window.location.origin + '/share.html?t=' + l.token);
+
+        return `
+          <tr>
+            <td><strong>${esc(l.targetTitle || 'Report')}</strong><div class="muted" style="font-size:.7rem;font-family:monospace">${esc(l.token)}</div></td>
+            <td>${typeBadge}</td>
+            <td>${sBadge}</td>
+            <td class="right">${l.viewCount || 0}</td>
+            <td class="nowrap muted">${esc(fmtDate(l.createdAt))}</td>
+            <td class="nowrap muted">${esc(fmtDate(l.expiresAt))}</td>
+            <td class="right nowrap">
+              <button class="btn btn-secondary" onclick="copyLinkUrl('${escArg(linkUrl)}', this)" style="padding:4px 10px;font-size:.75rem" data-i18n="history.copyLink">Copy link</button>
+              ${!l.revoked ? `<button class="btn btn-secondary" onclick="revokeShareLinkFromTab('${escArg(l.token)}', this)" style="padding:4px 10px;font-size:.75rem;color:var(--error);border-color:rgba(248,81,73,.35);margin-left:6px" data-i18n="history.revokeLink">Revoke</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function copyLinkUrl(url, btn) {
+      if (!url) return;
+      const original = btn.textContent;
+      try {
+        await navigator.clipboard.writeText(url);
+        btn.textContent = t('history.copied', 'Copied');
+        setTimeout(() => { btn.textContent = original; }, 2000);
+      } catch {
+        window.prompt(t('history.shareThisLink', 'Share this link:'), url);
+      }
+    }
+
+    async function revokeShareLinkFromTab(token, btn) {
+      if (!token) return;
+      const original = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Revoking…';
+      try {
+        const res = await fetch(`${BACKEND_URL}/share/revoke`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}` },
+          body: JSON.stringify({ token }),
+        });
+        if (!res.ok) throw new Error(res.status);
+        loadShareLinks();
+      } catch (e) {
+        btn.disabled = false;
+        btn.textContent = t('history.error', 'Error');
+        setTimeout(() => { btn.textContent = original; }, 2500);
+      }
+    }
+
+    // Keyboard navigation: Escape key closes active drawer or modal
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (document.getElementById('meeting-detail-drawer')?.classList.contains('open')) closeMeetingDetail();
+        if (document.getElementById('participant-drawer')?.classList.contains('open')) closeParticipantDrawer();
+        if (document.getElementById('past-meetings-modal')?.classList.contains('open')) closePastMeetingsModal();
+      }
+    });
   </script>
+
+  <!-- Meeting Detail Slide-Over Drawer -->
+  <div id="meeting-drawer-overlay" class="drawer-overlay" onclick="closeMeetingDetail()"></div>
+  <div id="meeting-detail-drawer" class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="meeting-drawer-title">
+    <div class="drawer-header">
+      <div style="flex:1;min-width:0">
+        <h2 id="meeting-drawer-title" style="font-size:1.15rem;font-weight:600;color:var(--text);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" data-i18n="history.meetingDetails">Meeting Details</h2>
+        <div id="meeting-drawer-sub" class="muted" style="font-size:.78rem"></div>
+      </div>
+      <button class="drawer-close" onclick="closeMeetingDetail()" aria-label="Close drawer">×</button>
+    </div>
+    <div class="drawer-body">
+      <div id="meeting-drawer-loading" style="text-align:center;padding:40px;color:var(--muted)" data-i18n="history.loadingDetails">Loading details…</div>
+      <div id="meeting-drawer-content" style="display:none;flex-direction:column;gap:20px">
+        <!-- Visual Stats Card: Radial Donut + Metrics -->
+        <div style="background:#0d1117;border:1px solid var(--border);border-radius:10px;padding:18px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+          <div id="meeting-donut-container" style="flex-shrink:0"></div>
+          <div style="flex:1;min-width:180px">
+            <div style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600" data-i18n="history.attendanceRate">Attendance Rate</div>
+            <div style="font-size:1.6rem;font-weight:700;color:#4ade80;margin:2px 0 6px" id="meeting-rate-text">0%</div>
+
+            <!-- Segmented Present / Late / Absent Bar -->
+            <div style="font-size:.72rem;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:4px">
+              <span data-i18n="history.rosterBreakdown">Roster Breakdown</span>
+              <span id="meeting-breakdown-legend"></span>
+            </div>
+            <div class="segmented-bar" id="meeting-segmented-bar">
+              <div id="seg-present" class="seg-present" style="width:0%"></div>
+              <div id="seg-late" class="seg-late" style="width:0%"></div>
+              <div id="seg-absent" class="seg-absent" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scheduled vs Actual pill -->
+        <div id="meeting-time-comparison" style="background:rgba(88,166,255,0.08);border:1px solid rgba(88,166,255,0.2);border-radius:8px;padding:10px 14px;font-size:.82rem;color:var(--text);display:flex;align-items:center;gap:8px">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          <span id="meeting-time-comp-text"></span>
+        </div>
+
+        <!-- Action buttons row -->
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-secondary" onclick="exportMeetingCsvCurrent()" style="font-size:.8rem;display:flex;align-items:center;gap:6px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span data-i18n="history.exportCsv">Export CSV</span>
+          </button>
+          <button class="btn btn-secondary" onclick="downloadDrawerPdf()" style="font-size:.8rem;display:flex;align-items:center;gap:6px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span data-i18n="history.downloadPdf">Download PDF</span>
+          </button>
+          <button class="btn btn-secondary" onclick="shareCurrentMeeting(this)" style="font-size:.8rem;display:flex;align-items:center;gap:6px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            <span data-i18n="btn.share">Share</span>
+          </button>
+        </div>
+
+        <!-- Attendee Table with Calendar RSVP Juxtaposition -->
+        <div>
+          <div style="font-size:.85rem;font-weight:600;margin-bottom:8px;color:var(--text);display:flex;justify-content:space-between;align-items:center">
+            <span data-i18n="history.participantsRsvp">Participants & Calendar RSVPs</span>
+            <span id="meeting-attendee-count" class="muted" style="font-size:.78rem"></span>
+          </div>
+          <div class="section" style="max-height:360px;overflow-y:auto;padding:0">
+            <table style="width:100%;margin:0">
+              <thead>
+                <tr>
+                  <th data-i18n="history.thPerson">Participant</th>
+                  <th data-i18n="history.rsvpStatus">RSVP</th>
+                  <th data-i18n="attendee.present">Attendance</th>
+                  <th class="right" data-i18n="attendee.duration">Duration</th>
+                </tr>
+              </thead>
+              <tbody id="meeting-attendees-tbody">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Past Meetings Modal -->
+  <div id="past-meetings-modal" class="modal-overlay" onclick="if(event.target===this)closePastMeetingsModal()">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div>
+          <h3 style="font-size:1.05rem;font-weight:600;color:var(--text)" data-i18n="history.retrievePastMeetings">Retrieve past meetings</h3>
+          <p class="muted" style="font-size:.78rem;margin-top:2px" data-i18n="history.pastMeetingsDesc">Import Google Meet conferences ended in the last 14 days.</p>
+        </div>
+        <button class="drawer-close" onclick="closePastMeetingsModal()" aria-label="Close modal">×</button>
+      </div>
+      <div class="modal-body">
+        <div id="past-meetings-loading" style="text-align:center;padding:30px;color:var(--muted)" data-i18n="history.pastMeetingsLoading">Checking Google Meet API for past conferences…</div>
+        <div id="past-meetings-error" style="display:none;background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);border-radius:8px;padding:12px;color:var(--text);font-size:.82rem"></div>
+        <div id="past-meetings-list" style="display:flex;flex-direction:column;gap:10px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Participant Profile Drawer -->
+  <div id="participant-drawer-overlay" class="drawer-overlay" onclick="closeParticipantDrawer()"></div>
+  <div id="participant-drawer" class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="participant-drawer-name">
+    <div class="drawer-header">
+      <div style="flex:1;min-width:0">
+        <h2 id="participant-drawer-name" style="font-size:1.15rem;font-weight:600;color:var(--text);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" data-i18n="history.participantProfile">Participant Profile</h2>
+        <div id="participant-drawer-email" class="muted" style="font-size:.78rem"></div>
+      </div>
+      <button class="drawer-close" onclick="closeParticipantDrawer()" aria-label="Close drawer">×</button>
+    </div>
+    <div class="drawer-body">
+      <!-- High-level stats -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="stat-card" style="padding:14px">
+          <div class="stat-label" data-i18n="history.attendanceRate">Attendance Rate</div>
+          <div class="stat-value green" id="participant-stat-rate" style="font-size:1.3rem">—</div>
+        </div>
+        <div class="stat-card" style="padding:14px">
+          <div class="stat-label" data-i18n="history.thTotalTime">Total Time</div>
+          <div class="stat-value blue" id="participant-stat-time" style="font-size:1.3rem">—</div>
+        </div>
+      </div>
+
+      <!-- Private Host Notes -->
+      <div style="background:#0d1117;border:1px solid var(--border);border-radius:10px;padding:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <label for="participant-note-input" style="font-size:.85rem;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            <span data-i18n="history.participantNotes">Host Notes (Private)</span>
+          </label>
+          <span id="participant-note-feedback" style="font-size:.72rem;color:var(--accent);display:none" data-i18n="history.noteSaved">Saved</span>
+        </div>
+        <textarea id="participant-note-input" rows="3" style="width:100%;background:#161b22;border:1px solid var(--border);border-radius:6px;color:var(--text);padding:10px;font-family:inherit;font-size:.82rem;resize:vertical" data-i18n-placeholder="history.participantNotesPlaceholder" placeholder="Private notes visible only to you (e.g. participation goals, excused absence reasons, performance)…"></textarea>
+        <div style="display:flex;justify-content:flex-end;margin-top:8px">
+          <button class="btn btn-secondary" onclick="saveActiveParticipantNote()" style="font-size:.78rem;padding:5px 12px">
+            <span data-i18n="history.saveNote">Save note</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Longitudinal Meeting History -->
+      <div>
+        <h4 style="font-size:.88rem;font-weight:600;margin-bottom:10px;color:var(--text)" data-i18n="history.title">Meeting History</h4>
+        <div class="section" style="max-height:360px;overflow-y:auto;padding:0">
+          <table style="width:100%;margin:0">
+            <thead>
+              <tr>
+                <th data-i18n="history.thTitle">Meeting</th>
+                <th data-i18n="history.thDate">Date</th>
+                <th data-i18n="history.thStatus">Status</th>
+                <th class="right" data-i18n="attendee.duration">Duration</th>
+              </tr>
+            </thead>
+            <tbody id="participant-meetings-tbody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
   <script src="pwa-install.js"></script>
   <script>
     // PWA service worker — registered only at the top level, so it is never

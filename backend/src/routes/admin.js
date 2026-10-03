@@ -1119,6 +1119,7 @@ async function fetchConferenceParticipants(recordName, token) {
 }
 
 // POST /api/admin/auto-capture — server-side attendance capture. Lists each
+
 // active user's recent COMPLETED Meet conferences server-side and persists the
 // final attendance roster to Firestore so meeting history is never lost even if
 // the side panel was closed early. For Pro users, automatically exports to Google

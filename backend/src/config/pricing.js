@@ -27,4 +27,10 @@ module.exports = {
     department:  { label: '$59',    full: null, period: '/yr' },
     institution: { label: '$149',   full: null, period: '/yr' },
   },
+  REGIONAL_PRICING: {
+    PH: { currency: 'php', amount: 28000, symbol: '₱280', label: '₱280', methods: ['card', 'gcash', 'grabpay', 'paymaya'] },
+    MY: { currency: 'myr', amount: 2200, symbol: 'RM 22', label: 'RM 22', methods: ['card', 'fpx', 'grabpay'] },
+    ID: { currency: 'idr', amount: 7800000, symbol: 'Rp 78.000', label: 'Rp 78.000', methods: ['card', 'qris'] },
+    IN: { currency: 'inr', amount: 29900, symbol: '₹299', label: '₹299', methods: ['card', 'upi'] },
+  },
 };

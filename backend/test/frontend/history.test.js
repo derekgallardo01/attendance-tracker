@@ -94,3 +94,40 @@ describe('calendar heatmap', () => {
     expect(h.calendarLevel(8, 8)).toBe('l4');  // top
   });
 });
+
+describe('donut svg and meeting helpers', () => {
+  test('renderDonutSvg produces SVG with percentage text and stroke', () => {
+    const svg = h.renderDonutSvg(0.85);
+    expect(svg).toContain('<svg');
+    expect(svg).toContain('85%');
+    expect(svg).toContain('stroke="#4ade80"');
+  });
+
+  test('filterLinks matches by title, token, or type; null-safe', () => {
+    const links = [
+      { token: 'abc123xyz', targetTitle: 'Math 101', type: 'meeting' },
+      { token: 'def456uvw', targetTitle: 'Daily Standup', type: 'series' },
+    ];
+    expect(h.filterLinks(links, 'math')).toHaveLength(1);
+    expect(h.filterLinks(links, 'standup')).toHaveLength(1);
+    expect(h.filterLinks(links, 'abc123xyz')).toHaveLength(1);
+    expect(h.filterLinks(links, '')).toHaveLength(2);
+    expect(h.filterLinks(null, 'test')).toHaveLength(0);
+  });
+
+  test('buildMeetingCsv generates CSV with header and attendee rows', () => {
+    const detail = {
+      title: 'Class A',
+      attendees: [
+        { displayName: 'Student One', email: 's1@acme.com', status: 'present', rsvpStatus: 'accepted', durationMin: 45 },
+        { displayName: 'Student Two', email: 's2@acme.com', durationMs: 1800000 },
+      ],
+    };
+    const csv = h.buildMeetingCsv(detail);
+    expect(csv).toContain('"Name","Email","Status","Calendar RSVP"');
+    expect(csv).toContain('"Student One","s1@acme.com","present","accepted"');
+    expect(csv).toContain('"Student Two","s2@acme.com","absent","needsAction"');
+    expect(csv).toContain('30'); // 1,800,000 ms = 30 min
+  });
+});
+

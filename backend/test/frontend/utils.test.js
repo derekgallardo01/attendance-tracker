@@ -619,3 +619,59 @@ describe('utils — fallback branches', () => {
     expect(parsed.participants[0][1]._accumulatedMs).toBe(0);
   });
 });
+
+describe('buildAttendanceExcelXml and escapeXml', () => {
+  test('escapeXml escapes & < > " \'', () => {
+    expect(utils.escapeXml('a & b < c > "d" \'e\'')).toBe('a &amp; b &lt; c &gt; &quot;d&quot; &apos;e&apos;');
+    expect(utils.escapeXml(null)).toBe('');
+    expect(utils.escapeXml(undefined)).toBe('');
+  });
+
+  test('buildAttendanceExcelXml produces valid SpreadsheetML XML with styles and headers', () => {
+    const parts = [
+      { displayName: 'Alice Smith', email: 'alice@school.edu', present: true, joinTime: new Date('2026-03-01T10:00:00Z'), _accumulatedMs: 0 },
+      { displayName: 'Bob Jones', email: 'bob@school.edu', present: false, joinTime: new Date('2026-03-01T10:00:00Z'), leaveTime: new Date('2026-03-01T10:30:00Z'), _accumulatedMs: 1800000, rejoins: 1 },
+    ];
+    const xml = utils.buildAttendanceExcelXml(parts, null, {
+      meetingTitle: 'Math 101 <Advanced>',
+      totalMeetingMs: 3600000,
+      startTime: new Date('2026-03-01T10:00:00Z'),
+      now: new Date('2026-03-01T11:00:00Z'),
+      isFreePlan: true,
+    });
+
+    expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
+    expect(xml).toContain('<?mso-application progid="Excel.Sheet"?>');
+    expect(xml).toContain('<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"');
+    expect(xml).toContain('Math 101 &lt;Advanced&gt;');
+    expect(xml).toContain('Alice Smith');
+    expect(xml).toContain('alice@school.edu');
+    expect(xml).toContain('Bob Jones');
+    expect(xml).toContain('bob@school.edu');
+    expect(xml).toContain('<Data ss:Type="Number">60</Data>');
+    expect(xml).toContain('<Data ss:Type="Number">30</Data>');
+    expect(xml).toContain('Generated with Attendance Tracker Free Plan');
+  });
+
+  test('buildAttendanceExcelXml matches active roster and handles absentees', () => {
+    const parts = [
+      { displayName: 'Charlie Brown', email: 'charlie@school.edu', present: true, joinTime: new Date('2026-03-01T10:00:00Z'), _accumulatedMs: 3600000 },
+    ];
+    const roster = [
+      { name: 'Charlie Brown', email: 'charlie@school.edu' },
+      { name: 'Diana Prince', email: 'diana@school.edu' },
+    ];
+    const xml = utils.buildAttendanceExcelXml(parts, roster, {
+      meetingTitle: 'Physics',
+      totalMeetingMs: 3600000,
+      now: new Date('2026-03-01T11:00:00Z'),
+      excusedStudents: { 'diana@school.edu': { excused: true, note: 'Doctor note' } },
+    });
+
+    expect(xml).toContain('Charlie Brown');
+    expect(xml).toContain('Diana Prince');
+    expect(xml).toContain('Absent (Excused)');
+    expect(xml).toContain('Doctor note');
+    expect(xml).not.toContain('Generated with Attendance Tracker Free Plan');
+  });
+});

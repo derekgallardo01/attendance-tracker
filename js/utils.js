@@ -663,6 +663,247 @@
     return '\uFEFF' + rows.join('\r\n');
   }
 
+  function escapeXml(val) {
+    if (val == null) return '';
+    return String(val)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
+  }
+
+  function buildAttendanceExcelXml(parts, activeRoster, opts = {}) {
+    parts = parts || [];
+    const meetingTitle = opts.meetingTitle || 'Meeting';
+    const totalMeetingMs = opts.totalMeetingMs || 0;
+    const meetingMinutes = totalMeetingMs > 0 ? Math.max(1, Math.round(totalMeetingMs / 60000)) : (opts.meetingMinutes || 1);
+    const lateMinutes = (opts.lateMinutes !== undefined) ? Number(opts.lateMinutes) : 10;
+    const minPercent = (opts.minPercent !== undefined) ? Number(opts.minPercent) : 0;
+    const minMinutes = (opts.minMinutes !== undefined) ? Number(opts.minMinutes) : 0;
+    const excusedStudents = opts.excusedStudents || {};
+    const startTime = opts.startTime ? new Date(opts.startTime) : null;
+    const now = opts.now ? new Date(opts.now) : new Date();
+
+    const loc = (opts.locale || 'en').split(/[-_]/)[0].toLowerCase();
+    const locStatus = (s) => (CSV_STATUS_LOCALIZATIONS[loc]?.[s] || s);
+
+    const fmtTimeVal = (v) => {
+      const d = new Date(v);
+      if (isNaN(d.getTime())) return '';
+      if (!opts.timezone && !opts.locale) return d.toLocaleTimeString();
+      try {
+        return d.toLocaleTimeString(opts.locale || undefined, {
+          timeZone: opts.timezone || undefined,
+        });
+      } catch {
+        return d.toLocaleTimeString();
+      }
+    };
+
+    const withCheckinNote = (note, p) => {
+      const chk = p && p.checkedInAt ? 'Checked in ' + fmtTimeVal(p.checkedInAt) : '';
+      return [note, chk].filter(Boolean).join('; ');
+    };
+
+    const headerCols = CSV_HEADER_LOCALIZATIONS[loc] || [
+      'Name',
+      'Email',
+      'Status',
+      'Attendance %',
+      'Duration (min)',
+      'Join Time',
+      'Leave Time',
+      'Rejoins',
+      'Notes'
+    ];
+
+    const dataRows = [];
+
+    if (activeRoster && Array.isArray(activeRoster) && activeRoster.length > 0) {
+      const matchedParticipants = new Set();
+
+      for (const student of activeRoster) {
+        const p = findParticipantForStudent(student, parts);
+        const studentKey = (student.email || student.name || '').toLowerCase();
+        const excuse = excusedStudents[studentKey] || null;
+        const isExcused = !!(excuse && excuse.excused);
+        const note = excuse ? (excuse.note || '') : '';
+
+        if (p) {
+          matchedParticipants.add(p);
+          const durMs = (p._accumulatedMs || 0) + (p.present && p.joinTime ? (now.getTime() - new Date(p.joinTime).getTime()) : 0);
+          const durMin = Math.round(durMs / 60000);
+          const pct = meetingMinutes > 0 ? Math.min(100, Math.round((durMin / meetingMinutes) * 100)) : 100;
+
+          let isLate = false;
+          if (startTime && p.joinTime && lateMinutes > 0) {
+            const diffMin = (new Date(p.joinTime).getTime() - startTime.getTime()) / 60000;
+            if (diffMin > lateMinutes) isLate = true;
+          }
+
+          let status = 'Present';
+          if ((minPercent > 0 && pct < minPercent) || (minMinutes > 0 && durMin < minMinutes)) {
+            status = isExcused ? 'Excused (Short Stay)' : 'Left Early / Incomplete';
+          } else if (isLate) {
+            status = 'Late';
+          } else if (!p.present) {
+            status = 'Present (Left)';
+          }
+
+          dataRows.push({
+            name: p.displayName || student.name,
+            email: p.email || student.email || '',
+            status: locStatus(status),
+            pct: `${pct}%`,
+            durMin,
+            joinTime: p.joinTime ? fmtTimeVal(p.joinTime) : '',
+            leaveTime: (!p.present && p.leaveTime) ? fmtTimeVal(p.leaveTime) : '',
+            rejoins: Math.max(0, (p.rejoins != null ? p.rejoins : (p.sessions || 1) - 1)),
+            notes: withCheckinNote(note, p),
+          });
+        } else {
+          const status = isExcused ? 'Absent (Excused)' : 'Absent';
+          dataRows.push({
+            name: student.name,
+            email: student.email || '',
+            status: locStatus(status),
+            pct: '0%',
+            durMin: 0,
+            joinTime: '',
+            leaveTime: '',
+            rejoins: 0,
+            notes: note,
+          });
+        }
+      }
+
+      for (const p of parts) {
+        if (!matchedParticipants.has(p)) {
+          const durMs = (p._accumulatedMs || 0) + (p.present && p.joinTime ? (now.getTime() - new Date(p.joinTime).getTime()) : 0);
+          const durMin = Math.round(durMs / 60000);
+          const pct = meetingMinutes > 0 ? Math.min(100, Math.round((durMin / meetingMinutes) * 100)) : 100;
+          dataRows.push({
+            name: p.displayName,
+            email: p.email || '',
+            status: locStatus(p.present ? 'Guest (Present)' : 'Guest (Left)'),
+            pct: `${pct}%`,
+            durMin,
+            joinTime: p.joinTime ? fmtTimeVal(p.joinTime) : '',
+            leaveTime: (!p.present && p.leaveTime) ? fmtTimeVal(p.leaveTime) : '',
+            rejoins: Math.max(0, (p.rejoins != null ? p.rejoins : (p.sessions || 1) - 1)),
+            notes: withCheckinNote('Unregistered guest', p),
+          });
+        }
+      }
+    } else {
+      for (const p of parts) {
+        const durMs = (p._accumulatedMs || 0) + (p.present && p.joinTime ? (now.getTime() - new Date(p.joinTime).getTime()) : 0);
+        const durMin = Math.round(durMs / 60000);
+        const pct = meetingMinutes > 0 ? Math.min(100, Math.round((durMin / meetingMinutes) * 100)) : 100;
+        dataRows.push({
+          name: p.displayName,
+          email: p.email || '',
+          status: locStatus(p.present ? 'Present' : 'Left'),
+          pct: `${pct}%`,
+          durMin,
+          joinTime: p.joinTime ? fmtTimeVal(p.joinTime) : '',
+          leaveTime: (!p.present && p.leaveTime) ? fmtTimeVal(p.leaveTime) : '',
+          rejoins: Math.max(0, (p.rejoins != null ? p.rejoins : (p.sessions || 1) - 1)),
+          notes: withCheckinNote('', p),
+        });
+      }
+    }
+
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\r\n' +
+      '<?mso-application progid="Excel.Sheet"?>\r\n' +
+      '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"\r\n' +
+      ' xmlns:o="urn:schemas-microsoft-com:office:office"\r\n' +
+      ' xmlns:x="urn:schemas-microsoft-com:office:excel"\r\n' +
+      ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"\r\n' +
+      ' xmlns:html="http://www.w3.org/TR/REC-html40">\r\n' +
+      ' <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">\r\n' +
+      `  <Title>${escapeXml(meetingTitle)}</Title>\r\n` +
+      `  <Created>${escapeXml(now.toISOString())}</Created>\r\n` +
+      ' </DocumentProperties>\r\n' +
+      ' <Styles>\r\n' +
+      '  <Style ss:ID="Default" ss:Name="Normal">\r\n' +
+      '   <Alignment ss:Vertical="Center"/>\r\n' +
+      '   <Borders/>\r\n' +
+      '   <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#000000"/>\r\n' +
+      '   <Interior/>\r\n' +
+      '   <NumberFormat/>\r\n' +
+      '   <Protection/>\r\n' +
+      '  </Style>\r\n' +
+      '  <Style ss:ID="Header">\r\n' +
+      '   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>\r\n' +
+      '   <Borders>\r\n' +
+      '    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#15803D"/>\r\n' +
+      '   </Borders>\r\n' +
+      '   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#FFFFFF"/>\r\n' +
+      '   <Interior ss:Color="#15803D" ss:Pattern="Solid"/>\r\n' +
+      '  </Style>\r\n' +
+      '  <Style ss:ID="CellLeft">\r\n' +
+      '   <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>\r\n' +
+      '   <Borders>\r\n' +
+      '    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E5E7EB"/>\r\n' +
+      '   </Borders>\r\n' +
+      '  </Style>\r\n' +
+      '  <Style ss:ID="CellCenter">\r\n' +
+      '   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>\r\n' +
+      '   <Borders>\r\n' +
+      '    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E5E7EB"/>\r\n' +
+      '   </Borders>\r\n' +
+      '  </Style>\r\n' +
+      '  <Style ss:ID="CellRight">\r\n' +
+      '   <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>\r\n' +
+      '   <Borders>\r\n' +
+      '    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E5E7EB"/>\r\n' +
+      '   </Borders>\r\n' +
+      '  </Style>\r\n' +
+      '  <Style ss:ID="FooterNotice">\r\n' +
+      '   <Font ss:FontName="Calibri" ss:Size="9" ss:Italic="1" ss:Color="#6B7280"/>\r\n' +
+      '  </Style>\r\n' +
+      ' </Styles>\r\n' +
+      ' <Worksheet ss:Name="Attendance">\r\n' +
+      '  <Table>\r\n' +
+      '   <Column ss:Width="160"/>\r\n' +
+      '   <Column ss:Width="190"/>\r\n' +
+      '   <Column ss:Width="120"/>\r\n' +
+      '   <Column ss:Width="95"/>\r\n' +
+      '   <Column ss:Width="95"/>\r\n' +
+      '   <Column ss:Width="90"/>\r\n' +
+      '   <Column ss:Width="90"/>\r\n' +
+      '   <Column ss:Width="65"/>\r\n' +
+      '   <Column ss:Width="200"/>\r\n' +
+      '   <Row ss:Height="26">\r\n' +
+      headerCols.map(col => `    <Cell ss:StyleID="Header"><Data ss:Type="String">${escapeXml(col)}</Data></Cell>`).join('\r\n') +
+      '\r\n   </Row>\r\n';
+
+    for (const r of dataRows) {
+      xml += '   <Row ss:Height="20">\r\n' +
+        `    <Cell ss:StyleID="CellLeft"><Data ss:Type="String">${escapeXml(r.name)}</Data></Cell>\r\n` +
+        `    <Cell ss:StyleID="CellLeft"><Data ss:Type="String">${escapeXml(r.email)}</Data></Cell>\r\n` +
+        `    <Cell ss:StyleID="CellCenter"><Data ss:Type="String">${escapeXml(r.status)}</Data></Cell>\r\n` +
+        `    <Cell ss:StyleID="CellCenter"><Data ss:Type="String">${escapeXml(r.pct)}</Data></Cell>\r\n` +
+        `    <Cell ss:StyleID="CellRight"><Data ss:Type="Number">${Number(r.durMin) || 0}</Data></Cell>\r\n` +
+        `    <Cell ss:StyleID="CellCenter"><Data ss:Type="String">${escapeXml(r.joinTime)}</Data></Cell>\r\n` +
+        `    <Cell ss:StyleID="CellCenter"><Data ss:Type="String">${escapeXml(r.leaveTime)}</Data></Cell>\r\n` +
+        `    <Cell ss:StyleID="CellRight"><Data ss:Type="Number">${Number(r.rejoins) || 0}</Data></Cell>\r\n` +
+        `    <Cell ss:StyleID="CellLeft"><Data ss:Type="String">${escapeXml(r.notes)}</Data></Cell>\r\n` +
+        '   </Row>\r\n';
+    }
+
+    if (opts.isFreePlan) {
+      xml += '   <Row ss:Height="18">\r\n' +
+        '    <Cell ss:StyleID="FooterNotice"><Data ss:Type="String">Generated with Attendance Tracker Free Plan. Upgrade to Pro for automated Google Sheets sync, LMS gradebooks, and unlimited exports: https://attendancetracker.dev/pricing.html</Data></Cell>\r\n' +
+        '   </Row>\r\n';
+    }
+
+    xml += '  </Table>\r\n </Worksheet>\r\n</Workbook>';
+    return xml;
+  }
+
   // \u2500\u2500 LMS gradebook exports (Moodle / Canvas) \u2500\u2500
   // One row per ROSTER student \u2014 gradebooks only carry enrolled students, so
   // unregistered guests are omitted. Grade = attendance % for anyone who
@@ -748,8 +989,8 @@
     autoMatchAttendees, participantTotalMs, isSelfParticipant,
     isValidSlackWebhook, isValidGoogleChatWebhook, isValidDiscordWebhook, maskWebhookUrl,
     serializeSession, parseSession,
-    parseStudentsInput, findParticipantForStudent, buildAttendanceCsv,
-    splitName, buildLmsGradebookRows, buildMoodleGradebookCsv, buildCanvasGradebookCsv, escapeCsv,
+    parseStudentsInput, findParticipantForStudent, buildAttendanceCsv, buildAttendanceExcelXml,
+    splitName, buildLmsGradebookRows, buildMoodleGradebookCsv, buildCanvasGradebookCsv, escapeCsv, escapeXml,
     LATE_THRESHOLD_MIN, AVATAR_PALETTE, SLACK_WEBHOOK_PREFIX, CHAT_WEBHOOK_PREFIX, DISCORD_WEBHOOK_PREFIXES,
   };
 

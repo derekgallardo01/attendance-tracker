@@ -128,12 +128,58 @@
     return '﻿' + rows.join('\r\n');
   }
 
+
+  // Radial SVG Donut chart helper
+  function renderDonutSvg(pctVal, size) {
+    const s = size || 96;
+    const r = Math.round(s * 0.38);
+    const cx = s / 2;
+    const cy = s / 2;
+    const c = 2 * Math.PI * r;
+    const clamped = Math.max(0, Math.min(1, Number(pctVal) || 0));
+    const offset = c * (1 - clamped);
+    const pctText = `${Math.round(clamped * 100)}%`;
+    return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" class="att-donut-svg">` +
+      `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#21262d" stroke-width="8" />` +
+      `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#4ade80" stroke-width="8" ` +
+      `stroke-dasharray="${c.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}" ` +
+      `stroke-linecap="round" transform="rotate(-90 ${cx} ${cy})" style="transition:stroke-dashoffset .5s ease" />` +
+      `<text x="${cx}" y="${cy + 5}" text-anchor="middle" font-size="${Math.round(s * 0.22)}" font-weight="700" fill="#e6edf3">${pctText}</text>` +
+    `</svg>`;
+  }
+
+  function filterLinks(links, query) {
+    const q = norm(query);
+    return (links || []).filter(l => !q || has(l.targetTitle, q) || has(l.token, q) || has(l.type, q));
+  }
+
+  function buildMeetingCsv(detail) {
+    const attendees = (detail && detail.attendees) || [];
+    const rows = [
+      ['Name', 'Email', 'Status', 'Calendar RSVP', 'Join Time', 'Leave Time', 'Duration (min)'].map(csvField).join(','),
+    ];
+    for (const a of attendees) {
+      rows.push([
+        a.displayName || '',
+        a.email || '',
+        a.status || 'absent',
+        a.rsvpStatus || 'needsAction',
+        a.joinTime || '',
+        a.leaveTime || '',
+        typeof a.durationMin === 'number' ? a.durationMin : Math.round((a.durationMs || 0) / 60000),
+      ].map(csvField).join(','));
+    }
+    return '\uFEFF' + rows.join('\r\n');
+  }
+
   const api = {
     fmtDate, fmtTime, fmtDuration, fmtMinutes, pct, computeRange, cssEscape,
-    filterMeetings, filterPeople, filterSeries,
+    filterMeetings, filterPeople, filterSeries, filterLinks,
     activeDays, maxCalendarCount, calendarLevel,
-    splitPersonName, buildSeriesGradebookCsv, csvField,
+    splitPersonName, buildSeriesGradebookCsv, buildMeetingCsv, csvField,
+    renderDonutSvg,
   };
   root.AttHistory = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
+

@@ -920,14 +920,16 @@ describe('POST /api/save-to-sheets — Pro gating', () => {
     expect(res.status).toBe(200);
   });
 
-  test('manual export still works for a free domain, but the email digest is suppressed', async () => {
+  test('manual export for a free domain sends email digest with isPro: false', async () => {
     firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
     firestore.countUserMonthlyExports.mockResolvedValue(1);
     const res = await request(app).post('/api/save-to-sheets')
       .set(authedHeader('u@free2.com', 'free2.com')).set('Content-Type', 'application/json')
       .send({ ...validPayload, sendEmail: true, autoExport: false });
     expect(res.status).toBe(200);
-    expect(notifications.sendExportNotification).not.toHaveBeenCalled(); // gated
+    expect(notifications.sendExportNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ to: 'u@free2.com', isPro: false })
+    );
   });
 
   test('Slack digest is suppressed for a free domain even with a webhook saved', async () => {

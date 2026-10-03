@@ -544,5 +544,113 @@ describe('getSharedMeetingView', () => {
   });
 });
 
+describe('listUserShareLinks', () => {
+  test('returns empty array when ownerEmail is missing', async () => {
+    const links = await firestore.listUserShareLinks('acme.com', '');
+    expect(links).toEqual([]);
+  });
+
+  test('returns empty array when no links match', async () => {
+    const links = await firestore.listUserShareLinks('acme.com', 'nobody@acme.com');
+    expect(links).toEqual([]);
+  });
+
+  test('lists links and enriches with target titles', async () => {
+    await firestore.getDb().collection('tenants').doc('acme.com').collection('meetings').doc('m1').set({
+      title: 'Math Class',
+      meetingCode: 'm1',
+      recurringEventId: 'series1',
+    });
+
+    await firestore.createShareLink('acme.com', 'teacher@acme.com', {
+      type: 'meeting',
+      meetingId: 'm1',
+    });
+
+    await firestore.createShareLink('acme.com', 'teacher@acme.com', {
+      type: 'series',
+      recurringEventId: 'series1',
+    });
+
+    const links = await firestore.listUserShareLinks('acme.com', 'teacher@acme.com');
+    expect(links).toHaveLength(2);
+    expect(links[0].url).toContain('/share.html?t=');
+    const meetingLink = links.find(l => l.type === 'meeting');
+    expect(meetingLink.targetTitle).toBe('Math Class');
+    const seriesLink = links.find(l => l.type === 'series');
+    expect(seriesLink.targetTitle).toBe('Math Class');
+  });
+});
+
+describe('getMeetingDetail', () => {
+  test('returns null for missing meetingId or non-existent meeting', async () => {
+    expect(await firestore.getMeetingDetail('acme.com', 'u@acme.com', null)).toBeNull();
+    expect(await firestore.getMeetingDetail('acme.com', 'u@acme.com', 'non-existent')).toBeNull();
+  });
+
+  test('throws forbidden when requester did not track meeting', async () => {
+    const mRef = firestore.getDb().collection('tenants').doc('acme.com').collection('meetings').doc('conf1');
+    await mRef.set({ title: 'Secret Mtg', conferenceId: 'conf1', meetingCode: 'conf1' });
+
+    await expect(
+      firestore.getMeetingDetail('acme.com', 'stranger@acme.com', 'conf1')
+    ).rejects.toThrow('forbidden');
+  });
+
+  test('returns complete meeting details with merged calendar attendees and attendance metrics', async () => {
+    const tenant = firestore.getDb().collection('tenants').doc('acme.com');
+    await tenant.collection('events').doc('ev1').set({
+      email: 'host@acme.com',
+      type: 'tracked',
+      meta: { conferenceId: 'conf-meet' },
+    });
+
+    const mRef = tenant.collection('meetings').doc('conf-meet');
+    const start = new Date('2026-10-01T10:00:00Z');
+    const end = new Date('2026-10-01T11:00:00Z');
+    await mRef.set({
+      title: 'Chemistry 101',
+      conferenceId: 'conf-meet',
+      meetingCode: 'conf-meet',
+      startTime: wrapTimestamp(start),
+      endTime: wrapTimestamp(end),
+      calendarAttendees: [
+        { email: 'student1@acme.com', displayName: 'Student One', responseStatus: 'accepted' },
+        { email: 'student2@acme.com', displayName: 'Student Two', responseStatus: 'declined' },
+      ],
+    });
+
+    // Add participant who joined 10 mins late
+    const lateJoin = new Date('2026-10-01T10:10:00Z');
+    await mRef.collection('participants').doc('p1').set({
+      participantId: 'p1',
+      displayName: 'Student One',
+      email: 'student1@acme.com',
+      joinTime: wrapTimestamp(lateJoin),
+      leaveTime: wrapTimestamp(end),
+      durationMs: 50 * 60000,
+      present: true,
+      sessions: 1,
+    });
+
+    const detail = await firestore.getMeetingDetail('acme.com', 'host@acme.com', 'conf-meet');
+    expect(detail).not.toBeNull();
+    expect(detail.title).toBe('Chemistry 101');
+    expect(detail.totalCount).toBe(2); // 1 participant + 1 absent invitee
+    expect(detail.lateCount).toBe(1); // Student 1 joined 10m late
+    expect(detail.absentCount).toBe(1); // Student 2 was absent
+    expect(detail.attendanceRate).toBe(0.5);
+
+    const s1 = detail.attendees.find(a => a.email === 'student1@acme.com');
+    expect(s1.status).toBe('late');
+    expect(s1.rsvpStatus).toBe('accepted');
+
+    const s2 = detail.attendees.find(a => a.email === 'student2@acme.com');
+    expect(s2.status).toBe('absent');
+    expect(s2.rsvpStatus).toBe('declined');
+  });
+});
+
+
 
 

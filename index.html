@@ -2886,6 +2886,10 @@
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       <span id="btn-csv-label">CSV</span>
     </button>
+    <button class="btn-secondary" id="btn-excel" onclick="downloadAttendanceExcel()" disabled data-i18n-title="tip.downloadExcel" title="Download Excel (.xlsx) report directly">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+      <span id="btn-excel-label" data-i18n="btn.exportExcel">Excel</span>
+    </button>
   </div>
 
   <!-- ── Export Quota Indicator (Free tier) ── -->
@@ -2926,6 +2930,7 @@
     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
       <span style="font-size:10px;color:#8b949e;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-right:2px">Downloads:</span>
       <a href="#" onclick="downloadAttendanceCsv(); return false;" class="sheet-chip" style="display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#c9d1d9;font-size:10.5px;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap;transition:all .15s ease" data-i18n="bar.downloadCsv">CSV</a>
+      <a href="#" onclick="downloadAttendanceExcel(); return false;" class="sheet-chip" style="display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#c9d1d9;font-size:10.5px;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap;transition:all .15s ease" data-i18n="btn.exportExcel">Excel</a>
       <a href="#" onclick="downloadPdfReport(); return false;" class="sheet-chip" style="display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#c9d1d9;font-size:10.5px;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap;transition:all .15s ease" data-i18n="bar.pdfReport">PDF report</a>
       <a href="#" onclick="downloadCertificates(); return false;" class="sheet-chip" style="display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#c9d1d9;font-size:10.5px;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap;transition:all .15s ease" title="Generate verifiable student attendance certificates (Educator Pro)"><span data-i18n="bar.certificates">Certificates</span><span style="background:rgba(253,214,99,.18);border:1px solid rgba(253,214,99,.4);color:#fdd663;font-size:8.5px;font-weight:700;padding:0 4px;border-radius:3px;line-height:1.2" data-i18n="badge.pro">Pro</span></a>
       <a href="#" onclick="downloadLmsCsv('moodle'); return false;" class="sheet-chip" data-i18n-title="tip.moodleCsv" title="Gradebook CSV for Moodle import" style="display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#8b949e;font-size:10.5px;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap;transition:all .15s ease">Moodle</a>
@@ -3100,6 +3105,14 @@
 
   <!-- ── Participant list ── -->
   <div class="list-header" id="list-header-participants" style="display:none" data-i18n="nav.people">Participants</div>
+  <!-- ── Large Class Banner (Free tier > 25 attendees) ── -->
+  <div id="large-class-banner" style="display:none;margin:6px 12px;padding:8px 12px;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:10px;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:#fde68a">
+    <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span id="large-class-banner-text" style="line-height:1.3"></span>
+    </div>
+    <button type="button" id="btn-unlock-pro" onclick="try{logUserEvent('large_class_banner_clicked',{})}catch(e){};showUpgradeModal('largeClass');" style="background:#f59e0b;color:#0b0f19;border:none;border-radius:6px;padding:4px 9px;font-size:10.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0" data-i18n="btn.unlockPro">Unlock Pro</button>
+  </div>
   <div id="participant-list">
     <div class="empty-state">
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
@@ -4065,6 +4078,7 @@ function downloadAttendanceCsv() {
       participantCount: ctx.parts.length,
       hasRoster: !!ctx.activeRoster,
       meetingTitle: ctx.meetingTitle || 'Attendance CSV',
+      conferenceId: state.conferenceId || state.meetingCode || (typeof currentMeetingCode !== 'undefined' ? currentMeetingCode : null) || null,
     });
   } catch (e) {}
 
@@ -4092,6 +4106,59 @@ function downloadAttendanceCsv() {
   } catch (e) { /* private mode */ }
   toast(t('toast.csvDownloaded','Downloaded attendance CSV'), 3000);
   maybeShowReviewAsk();
+}
+ 
+function triggerExcelDownload(xmlContent, filename) {
+  const mime = 'application/vnd.ms-excel;charset=utf-8;';
+  const mode = relayDownload({ filename, mime, content: xmlContent, encoding: 'text' });
+  if (mode === 'blocked') return false;
+  if (mode === 'direct') directBlobDownload(new Blob([xmlContent], { type: mime }), filename);
+  return true;
+}
+
+function downloadAttendanceExcel() {
+  const ctx = csvExportContext();
+  if (ctx.parts.length === 0 && (!state.calendarAttendees || state.calendarAttendees.length === 0)) {
+    toast(t('toast.noAttendanceData', 'No attendance data to download yet.'));
+    return;
+  }
+
+  if (!_isPro && _billing && _billing.exportQuota && _billing.exportQuota.used >= _billing.exportQuota.limit) {
+    showUpgradeModal('exportQuota');
+    return;
+  }
+
+  if (!_isPro && ctx.parts.length > 25) {
+    showUpgradeModal('largeClass');
+    return;
+  }
+
+  ctx.opts.isFreePlan = !_isPro;
+  const xmlContent = (typeof AttUtils !== 'undefined' && AttUtils.buildAttendanceExcelXml)
+    ? AttUtils.buildAttendanceExcelXml(ctx.parts, ctx.activeRoster, ctx.opts)
+    : '';
+  if (!triggerExcelDownload(xmlContent, `Attendance_${ctx.safeTitle}_${ctx.dateStr}.xlsx`)) return;
+
+  try {
+    logUserEvent('export_excel_downloaded', {
+      participantCount: ctx.parts.length,
+      hasRoster: !!ctx.activeRoster,
+      meetingTitle: ctx.meetingTitle || 'Attendance Excel',
+      conferenceId: state.conferenceId || state.meetingCode || (typeof currentMeetingCode !== 'undefined' ? currentMeetingCode : null) || null,
+    });
+  } catch (e) {}
+
+  if (!_isPro && _billing && _billing.exportQuota) {
+    _billing.exportQuota.used++;
+    updateQuotaIndicator(_billing.exportQuota.used, _billing.exportQuota.limit);
+  }
+
+  try {
+    const n = (parseInt(localStorage.getItem('att_export_count') || '0', 10) || 0) + 1;
+    localStorage.setItem('att_export_count', String(n));
+  } catch (e) {}
+
+  toast(t('toast.excelDownloaded', 'Excel (.xlsx) report downloaded.'));
 }
 
 // Gradebook CSV formatted for a Moodle or Canvas import. Needs a Class Roster
@@ -5229,6 +5296,8 @@ function startTracking() {
   document.getElementById('btn-sheets').disabled  = false;
   const btnCsv = document.getElementById('btn-csv');
   if (btnCsv) btnCsv.disabled = false;
+  const btnExcel = document.getElementById('btn-excel');
+  if (btnExcel) btnExcel.disabled = false;
 
   setStatus('active', t('status.tracking', 'Tracking attendance…'));
   showSearchBar();
@@ -5727,8 +5796,10 @@ function participantKey(p) {
 function renderList() {
   const container = document.getElementById('participant-list');
   const toolbar = document.getElementById('list-toolbar');
+  const largeClassBanner = document.getElementById('large-class-banner');
 
   if (state.participants.size === 0) {
+    if (largeClassBanner) largeClassBanner.style.display = 'none';
     if (toolbar) toolbar.style.display = 'none';
     // If the Meet API tells us the conference already ended, say so explicitly.
     // The silent "no participants" state was reading as "this product is broken"
@@ -5768,6 +5839,16 @@ function renderList() {
   // Only show the participants toolbar on the participants tab — renderList
   // runs every poll and was popping it back over the Roster/Invited tabs.
   if (toolbar) toolbar.style.display = (_activeTab === 'participants') ? 'flex' : 'none';
+  if (largeClassBanner) {
+    const isLarge = (_activeTab === 'participants') && !_isPro && state.participants.size > 25;
+    largeClassBanner.style.display = isLarge ? 'flex' : 'none';
+    if (isLarge) {
+      const bannerText = document.getElementById('large-class-banner-text');
+      if (bannerText) {
+        bannerText.textContent = t('banner.largeClassDetected', 'Large class detected ({count} attendees) · Upgrade to Pro for unlimited class sizes & Excel reports.').replace('{count}', state.participants.size);
+      }
+    }
+  }
 
   // Filter by search query first
   let filtered = [...state.participants.values()];
@@ -6598,19 +6679,57 @@ function updateUpgradeModalPricing() {
       dealPill.style.borderColor = 'rgba(74,222,128,.4)';
       dealPill.style.color = '#4ade80';
     }
-    if (educatorPriceEl) {
-      educatorPriceEl.innerHTML = `<s style="color:#9aa0a6;font-size:.82rem;font-weight:400;margin-right:4px">$4.99</s><span style="color:#8ab4f8;font-weight:700">₹299 INR UPI</span>`;
+    if (lifetimePriceEl) {
+      lifetimePriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">₹299 INR UPI</span>`;
     }
+    if (btnLifetime) {
+      btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime" style="color:#ffffff;font-weight:700">₹299</span>`;
+    }
+    if (eduCard) eduCard.style.display = 'none';
   } else if (country === 'PH') {
     if (dealPill) {
-      dealPill.innerHTML = `<span>🇵🇭 Philippines Special: ₱99 PHP Educator Pass · 50% Subsidy Applied</span>`;
+      dealPill.innerHTML = `<span>🇵🇭 Philippines Special: ₱280 PHP Lifetime Pass (GCash & Maya)</span>`;
       dealPill.style.background = 'rgba(74,222,128,.16)';
       dealPill.style.borderColor = 'rgba(74,222,128,.4)';
       dealPill.style.color = '#4ade80';
     }
-    if (educatorPriceEl) {
-      educatorPriceEl.innerHTML = `<s style="color:#9aa0a6;font-size:.82rem;font-weight:400;margin-right:4px">$4.99</s><span style="color:#8ab4f8;font-weight:700">₱99 PHP</span>`;
+    if (lifetimePriceEl) {
+      lifetimePriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">₱280 PHP</span>`;
     }
+    if (btnLifetime) {
+      btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime" style="color:#ffffff;font-weight:700">₱280</span>`;
+    }
+    if (eduCard) eduCard.style.display = 'none';
+  } else if (country === 'MY') {
+    if (dealPill) {
+      dealPill.innerHTML = `<span>🇲🇾 Malaysia Special: RM 22 MYR Lifetime Pass (FPX & GrabPay)</span>`;
+      dealPill.style.background = 'rgba(74,222,128,.16)';
+      dealPill.style.borderColor = 'rgba(74,222,128,.4)';
+      dealPill.style.color = '#4ade80';
+    }
+    if (lifetimePriceEl) {
+      lifetimePriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">RM 22 MYR</span>`;
+    }
+    if (btnLifetime) {
+      btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime" style="color:#ffffff;font-weight:700">RM 22</span>`;
+    }
+    if (eduCard) eduCard.style.display = 'none';
+  } else if (country === 'ID') {
+    if (dealPill) {
+      dealPill.innerHTML = `<span>🇮🇩 Indonesia Special: Rp 78.000 IDR Lifetime Pass (QRIS)</span>`;
+      dealPill.style.background = 'rgba(74,222,128,.16)';
+      dealPill.style.borderColor = 'rgba(74,222,128,.4)';
+      dealPill.style.color = '#4ade80';
+    }
+    if (lifetimePriceEl) {
+      lifetimePriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">Rp 78.000 IDR</span>`;
+    }
+    if (btnLifetime) {
+      btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime" style="color:#ffffff;font-weight:700">Rp 78.000</span>`;
+    }
+    if (eduCard) eduCard.style.display = 'none';
+  } else {
+    if (eduCard) eduCard.style.display = (_billing && _billing.educatorAvailable === false) ? 'none' : '';
   }
 
   const singlePriceEl = document.querySelector('#plan-card-single-meeting .price-single-meeting');
@@ -6619,6 +6738,10 @@ function updateUpgradeModalPricing() {
       singlePriceEl.innerHTML = `$2.99 <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(~₹249)</span>`;
     } else if (country === 'PH') {
       singlePriceEl.innerHTML = `$2.99 <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(~₱170)</span>`;
+    } else if (country === 'MY') {
+      singlePriceEl.innerHTML = `$2.99 <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(~RM 14)</span>`;
+    } else if (country === 'ID') {
+      singlePriceEl.innerHTML = `$2.99 <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(~Rp 49.000)</span>`;
     } else {
       singlePriceEl.innerHTML = `$2.99`;
     }
@@ -6864,10 +6987,34 @@ function answerPaywallWhy(reason) {
         if (regionalOffer) {
           regionalOffer.innerHTML = `<div style="background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
             <div>
-              <div style="font-size:.82rem;font-weight:600;color:#e3e3e3">🇵🇭 Philippines Special — ₱99 PHP</div>
-              <div style="font-size:.73rem;color:#9aa0a6">50% Educator Pass subsidy applied</div>
+              <div style="font-size:.82rem;font-weight:600;color:#e3e3e3">🇵🇭 Philippines Special — ₱280 PHP</div>
+              <div style="font-size:.73rem;color:#9aa0a6">GCash &amp; Maya (Lifetime Pass)</div>
             </div>
-            <button type="button" onclick="dismissPaywallWhy();showUpgradeModal();" style="background:#34a853;color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:.76rem;font-weight:700;cursor:pointer">View ₱99 Pass</button>
+            <button type="button" onclick="dismissPaywallWhy();showUpgradeModal();" style="background:#34a853;color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:.76rem;font-weight:700;cursor:pointer">View ₱280 Pass</button>
+          </div>`;
+          regionalOffer.style.display = 'block';
+        }
+      } else if (country === 'MY') {
+        if (singlePriceEl) singlePriceEl.innerHTML = `$2.99 <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(~RM 14)</span> <span style="font-size:.7rem;font-weight:400;color:#9aa0a6">${t('upgrade.oneTime', 'one-time')}</span>`;
+        if (regionalOffer) {
+          regionalOffer.innerHTML = `<div style="background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:.82rem;font-weight:600;color:#e3e3e3">🇲🇾 Malaysia Special — RM 22 MYR</div>
+              <div style="font-size:.73rem;color:#9aa0a6">FPX &amp; GrabPay (Lifetime Pass)</div>
+            </div>
+            <button type="button" onclick="dismissPaywallWhy();showUpgradeModal();" style="background:#34a853;color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:.76rem;font-weight:700;cursor:pointer">View RM 22 Pass</button>
+          </div>`;
+          regionalOffer.style.display = 'block';
+        }
+      } else if (country === 'ID') {
+        if (singlePriceEl) singlePriceEl.innerHTML = `$2.99 <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(~Rp 49.000)</span> <span style="font-size:.7rem;font-weight:400;color:#9aa0a6">${t('upgrade.oneTime', 'one-time')}</span>`;
+        if (regionalOffer) {
+          regionalOffer.innerHTML = `<div style="background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:.82rem;font-weight:600;color:#e3e3e3">🇮🇩 Indonesia Special — Rp 78.000 IDR</div>
+              <div style="font-size:.73rem;color:#9aa0a6">QRIS &amp; DANA (Lifetime Pass)</div>
+            </div>
+            <button type="button" onclick="dismissPaywallWhy();showUpgradeModal();" style="background:#34a853;color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:.76rem;font-weight:700;cursor:pointer">View Rp 78.000 Pass</button>
           </div>`;
           regionalOffer.style.display = 'block';
         }
@@ -9027,6 +9174,11 @@ function switchTab(tab) {
   if (rView) rView.style.display = tab === 'roster' ? 'block' : 'none';
   if (iList) iList.style.display = tab === 'invited' ? '' : 'none';
   if (tb) tb.style.display = (tab === 'participants' && state.participants && state.participants.size > 0) ? 'flex' : 'none';
+  const largeClassBanner = document.getElementById('large-class-banner');
+  if (largeClassBanner) {
+    const isLarge = (tab === 'participants') && !_isPro && state.participants && state.participants.size > 25;
+    largeClassBanner.style.display = isLarge ? 'flex' : 'none';
+  }
 
   if (tab === 'roster') renderRosterView();
   if (tab === 'invited') renderInvitedList();
@@ -9151,6 +9303,11 @@ function updateTabCounts() {
   if (btnCsv) {
     const hasData = state.participants.size > 0 || (state.activeRosterName && state.rosters && state.rosters[state.activeRosterName]?.length > 0);
     btnCsv.disabled = !hasData;
+  }
+  const btnExcel = document.getElementById('btn-excel');
+  if (btnExcel) {
+    const hasData = state.participants.size > 0 || (state.activeRosterName && state.rosters && state.rosters[state.activeRosterName]?.length > 0);
+    btnExcel.disabled = !hasData;
   }
   // Re-render tabs if active
   if (_activeTab === 'roster') renderRosterView();

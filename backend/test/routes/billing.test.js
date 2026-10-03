@@ -1204,14 +1204,14 @@ describe('billing/status pricing payload', () => {
     app = buildApp();
     const res = await request(app)
       .post('/api/billing/checkout')
-      .set(authedHeader('teacher@depedqc.ph', 'depedqc.ph'))
-      .set('cf-ipcountry', 'PH')
+      .set(authedHeader('teacher@colegio.edu.co', 'colegio.edu.co'))
+      .set('cf-ipcountry', 'CO')
       .send({ plan: 'lifetime' });
     expect(res.status).toBe(200);
     expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
       expect.objectContaining({
         discounts: [{ coupon: 'PPP50' }],
-        metadata: expect.objectContaining({ pppDiscount: '1', country: 'PH' }),
+        metadata: expect.objectContaining({ pppDiscount: '1', country: 'CO' }),
       })
     );
   });
@@ -1222,8 +1222,8 @@ describe('billing/status pricing payload', () => {
     app = buildApp();
     const res = await request(app)
       .post('/api/billing/checkout')
-      .set(authedHeader('teacher@depedqc.ph', 'depedqc.ph'))
-      .set('cf-ipcountry', 'PH')
+      .set(authedHeader('teacher@colegio.edu.co', 'colegio.edu.co'))
+      .set('cf-ipcountry', 'CO')
       .send({ plan: 'lifetime', promo: 'SPECIALVIP' });
     expect(res.status).toBe(200);
     expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
@@ -1447,11 +1447,11 @@ describe('billing/status pricing payload', () => {
       process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID = 'price_life';
       app = buildApp();
 
-      const uniqueEmail = `teacher_ph_${Date.now()}@deped.gov.ph`;
+      const uniqueEmail = `teacher_co_${Date.now()}@colegio.edu.co`;
       const res = await request(app)
         .post('/api/billing/send-upgrade-link')
-        .set(authedHeader(uniqueEmail, 'deped.gov.ph'))
-        .set('cf-ipcountry', 'PH')
+        .set(authedHeader(uniqueEmail, 'colegio.edu.co'))
+        .set('cf-ipcountry', 'CO')
         .send({});
 
       expect(res.status).toBe(200);

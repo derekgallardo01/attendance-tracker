@@ -2,8 +2,10 @@ const { Router } = require('express');
 const CONFIG = require('../config');
 const { requireAuth } = require('../middleware/auth');
 const log = require('../lib/logger');
-const { getUserMeetingHistory, getUserMeetingSeries, getParticipantHistory, setParticipantNote, getParticipantNote, logEvent, createShareLink, revokeShareLink, getUser, setTeamSignpostDismissed, persistExport } = require('../services/firestore');
+const { getUserMeetingHistory, getUserMeetingSeries, getParticipantHistory, setParticipantNote, getParticipantNote, logEvent, createShareLink, revokeShareLink, getUser, setTeamSignpostDismissed, persistExport, listUserShareLinks, getMeetingDetail, persistAttendance, getTrackedConferenceIds, updateMeetingTimes } = require('../services/firestore');
 const { domainOf } = require('../services/firestore/_core');
+const { meetGet, fetchConferenceParticipants } = require('../services/meetApi');
+const { refreshAccessToken } = require('../services/googleAuth');
 const { planIsPro } = require('./billing');
 // The team-signpost (institutional wedge) lives in one shared lib so the history
 // page and the in-Meet panel (/oauth/me) render the same gated payload.
@@ -73,12 +75,15 @@ const FRONTEND_EVENT_TYPES = new Set([
   'history_page_opened',
   'upgrade_plan_hovered',
   'offer_link_clicked',
-  // CSV / LMS exports (export_csv_downloaded predates this list but was
+  // CSV / Excel / LMS exports (export_csv_downloaded predates this list but was
   // missing from it, so those beacons were 400ing silently)
   'export_csv_downloaded',
+  'export_excel_downloaded',
   'export_lms_csv_downloaded',
   'series_csv_downloaded',
   'series_csv_gate_shown',
+  // Large class banner & conversion triggers
+  'large_class_banner_clicked',
   // Chat-webhook integrations (Slack / Google Chat / Discord)
   'webhook_saved',
   'webhook_cleared',
@@ -116,8 +121,10 @@ const FRONTEND_EVENT_TYPES = new Set([
   'scope_guide_csv_fallback',
   // Fast absentee clipboard copy
   'absentees_copied',
-  // School / Department license request from institutional domains
+  // School / Department license request & quote generation
   'school_license_requested',
+  'school_quote_generated',
+  'paywall_quote_requested',
   // Subtle trial ending banner interaction
   'trial_banner_upgrade_clicked',
   'trial_banner_dismissed',
@@ -157,12 +164,13 @@ router.post('/event', requireAuth, async (req, res) => {
   }
   try {
     await logEvent(req.user.domain, { email: req.user.email, type, meta: safeMeta });
-    if (type === 'export_csv_downloaded') {
+    if (type === 'export_csv_downloaded' || type === 'export_excel_downloaded') {
       try {
-        const confId = safeMeta?.conferenceId || ('csv_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6));
+        const isExcel = type === 'export_excel_downloaded';
+        const confId = safeMeta?.conferenceId || ((isExcel ? 'excel_' : 'csv_') + Date.now() + '_' + Math.random().toString(36).slice(2, 6));
         await persistExport(req.user.domain, {
-          meetingTitle: safeMeta?.meetingTitle || 'Attendance CSV',
-          tabName: 'CSV Export',
+          meetingTitle: safeMeta?.meetingTitle || (isExcel ? 'Attendance Excel' : 'Attendance CSV'),
+          tabName: isExcel ? 'Excel Export' : 'CSV Export',
           exportedAt: new Date(),
           participantCount: safeMeta?.participantCount || 0,
           sheetUrl: null,
@@ -171,7 +179,7 @@ router.post('/event', requireAuth, async (req, res) => {
           conferenceId: confId,
         });
       } catch (err) {
-        log.warn('export_csv_downloaded: persistExport failed', { error: err.message, email: req.user.email });
+        log.warn(`${type}: persistExport failed`, { error: err.message, email: req.user.email });
       }
     }
     const isClientNetworkError = /failed to fetch|networkerror|load failed|offline|err_internet_disconnected/i.test(String(safeMeta?.message || ''));
@@ -267,6 +275,172 @@ router.post('/share/revoke', requireAuth, async (req, res) => {
     res.status(500).json({ error: 'Failed to revoke share link' });
   }
 });
+
+// GET /api/share/links — list all public share links minted by the signed-in user.
+router.get('/share/links', requireAuth, async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  try {
+    const links = await listUserShareLinks(req.user.domain, req.user.email);
+    res.json({ links });
+  } catch (err) {
+    log.error('share: list links failed', { error: err.message, email: req.user.email });
+    res.status(500).json({ error: 'Failed to list share links' });
+  }
+});
+
+// GET /api/history/meeting/:id — detailed drill-down of a single tracked meeting with merged calendar invitees.
+router.get('/history/meeting/:id', requireAuth, async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const meetingId = req.params.id;
+  if (!meetingId) return res.status(400).json({ error: 'Meeting ID is required' });
+  try {
+    const detail = await getMeetingDetail(req.user.domain, req.user.email, meetingId);
+    if (!detail) return res.status(404).json({ error: 'Meeting not found' });
+    const isPro = await planIsPro(req.user.domain, req.user.email);
+    res.json({ ...detail, isPro: !!isPro });
+  } catch (err) {
+    if (err.message === 'forbidden') {
+      return res.status(403).json({ error: 'You do not have access to this meeting' });
+    }
+    log.error('history: meeting detail failed', { error: err.message, meetingId });
+    res.status(500).json({ error: 'Failed to fetch meeting detail' });
+  }
+});
+
+// GET /api/history/recent-conferences — list recent Google Meet calls available for retroactive import.
+router.get('/history/recent-conferences', requireAuth, async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  let accessToken = req.user.accessToken;
+  if (!accessToken) {
+    try {
+      const userDoc = await getUser(req.user.domain, req.user.email);
+      if (userDoc?.refreshToken) {
+        const creds = await refreshAccessToken(userDoc.refreshToken);
+        accessToken = creds.access_token;
+      }
+    } catch (e) {
+      log.warn('recent-conferences: token refresh failed', { email: req.user.email, error: e.message });
+    }
+  }
+  if (!accessToken) {
+    return res.status(401).json({ error: 'Google Meet authorization required', code: 'SCOPE_REQUIRED' });
+  }
+
+  let records = [];
+  try {
+    const data = await meetGet('conferenceRecords?pageSize=20', accessToken);
+    records = data.conferenceRecords || [];
+  } catch (e) {
+    log.warn('recent-conferences: conferenceRecords list failed', { email: req.user.email, error: e.message });
+    if (e.status === 401 || e.status === 403 || /unauthenticated|permission/i.test(e.message)) {
+      return res.status(401).json({ error: 'Meet API permission required. Please re-authorize.', code: 'SCOPE_REQUIRED' });
+    }
+    return res.status(500).json({ error: 'Failed to fetch conference records from Google Meet' });
+  }
+
+  const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  const recent = records.filter(r => {
+    const ts = r.endTime ? new Date(r.endTime).getTime() : (r.startTime ? new Date(r.startTime).getTime() : 0);
+    return ts && (now - ts) < FOURTEEN_DAYS_MS;
+  });
+
+  const trackedConferenceIds = await getTrackedConferenceIds(req.user.domain, req.user.email);
+
+  const conferences = await Promise.all(recent.map(async rec => {
+    let meetingCode = null;
+    if (rec.space && rec.space.startsWith('spaces/') && rec.space !== 'spaces/-') {
+      try {
+        const space = await meetGet(rec.space, accessToken);
+        meetingCode = space.meetingCode || null;
+      } catch (e) { /* ignore */ }
+    }
+    const recId = rec.name ? rec.name.split('/').pop() : null;
+    const isImported = trackedConferenceIds.has(rec.name) ||
+      (recId && trackedConferenceIds.has(recId)) ||
+      (meetingCode && trackedConferenceIds.has(meetingCode)) ||
+      (recId && meetingCode && trackedConferenceIds.has(`${meetingCode}__${recId}`));
+    const startMs = rec.startTime ? new Date(rec.startTime).getTime() : null;
+    const endMs = rec.endTime ? new Date(rec.endTime).getTime() : null;
+    const durationMs = (startMs && endMs) ? (endMs - startMs) : null;
+    return {
+      name: rec.name,
+      recordName: rec.name,
+      space: rec.space || null,
+      meetingCode: meetingCode || (recId ? `Call (${recId.slice(0, 8)})` : 'Google Meet'),
+      startTime: rec.startTime || null,
+      endTime: rec.endTime || null,
+      durationMs,
+      alreadyImported: !!isImported,
+      tracked: !!isImported,
+    };
+  }));
+
+  conferences.sort((a, b) => new Date(b.startTime || 0) - new Date(a.startTime || 0));
+  res.json({ conferences });
+});
+
+// POST /api/history/import-conference — retroactive import of a past Google Meet conference.
+router.post('/history/import-conference', requireAuth, async (req, res) => {
+  const { conferenceRecordName } = req.body || {};
+  if (!conferenceRecordName) return res.status(400).json({ error: 'conferenceRecordName is required' });
+
+  let accessToken = req.user.accessToken;
+  if (!accessToken) {
+    try {
+      const userDoc = await getUser(req.user.domain, req.user.email);
+      if (userDoc?.refreshToken) {
+        const creds = await refreshAccessToken(userDoc.refreshToken);
+        accessToken = creds.access_token;
+      }
+    } catch (e) {
+      log.warn('import-conference: token refresh failed', { email: req.user.email, error: e.message });
+    }
+  }
+  if (!accessToken) {
+    return res.status(401).json({ error: 'Google Meet authorization required', code: 'SCOPE_REQUIRED' });
+  }
+
+  let rec;
+  try {
+    rec = await meetGet(conferenceRecordName, accessToken);
+  } catch (err) {
+    log.error('import-conference: meetGet failed', { record: conferenceRecordName, error: err.message });
+    return res.status(err.status || 500).json({ error: `Failed to fetch conference: ${err.message}` });
+  }
+
+  let meetingCode = null;
+  if (rec.space && rec.space.startsWith('spaces/') && rec.space !== 'spaces/-') {
+    try {
+      const space = await meetGet(rec.space, accessToken);
+      meetingCode = space.meetingCode || null;
+    } catch (e) {
+      log.warn('import-conference: space fetch failed', { record: conferenceRecordName, error: e.message });
+    }
+  }
+  if (!meetingCode) {
+    meetingCode = conferenceRecordName.replace(/^conferenceRecords\//, '');
+  }
+
+  try {
+    const participants = await fetchConferenceParticipants(conferenceRecordName, accessToken);
+    await persistAttendance(req.user.domain, meetingCode, conferenceRecordName, participants, req.user.email);
+    if (rec.startTime || rec.endTime) {
+      await updateMeetingTimes(req.user.domain, meetingCode, conferenceRecordName, rec.startTime, rec.endTime);
+    }
+
+    res.json({
+      success: true,
+      meetingCode,
+      conferenceRecordName,
+      participantCount: participants.length,
+    });
+  } catch (err) {
+    log.error('import-conference: persist failed', { record: conferenceRecordName, error: err.message });
+    res.status(500).json({ error: 'Failed to import conference attendance' });
+  }
+});
+
 
 // GET /api/series — recurring-meeting roll-ups for the signed-in user.
 // Groups tracked meetings by Calendar's recurringEventId and aggregates per-person

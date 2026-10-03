@@ -116,4 +116,37 @@ function sessionsDurationMs(sessions, nowMs = Date.now()) {
   return total;
 }
 
-module.exports = { meetGet, meetGetAll, participantIdentity, sessionsDurationMs };
+// Fetch all participants and their sessions for a conferenceRecord.
+async function fetchConferenceParticipants(recordName, token) {
+  const raw = await meetGetAll(`${recordName}/participants`, token, 'participants');
+  const out = [];
+  const BATCH = 10;
+  for (let i = 0; i < raw.length; i += BATCH) {
+    const results = await Promise.all(raw.slice(i, i + BATCH).map(async (p) => {
+      let sessions = [];
+      let sessionsFetchFailed = false;
+      try { sessions = await meetGetAll(`${p.name}/participantSessions`, token, 'participantSessions'); }
+      catch (e) { sessionsFetchFailed = true; log.warn('meetApi: sessions fetch failed', { participant: p.name, error: e.message }); }
+      const joins  = sessions.map(s => s.startTime).filter(Boolean).map(t => new Date(t));
+      const leaves = sessions.map(s => s.endTime).filter(Boolean).map(t => new Date(t));
+      const joinIso = joins.length ? new Date(Math.min(...joins)).toISOString() : null;
+      const leaveIso = leaves.length ? new Date(Math.max(...leaves)).toISOString() : null;
+      return {
+        participantId: p.name,
+        ...participantIdentity(p),
+        joinTimeISO:  joinIso,
+        leaveTimeISO: leaveIso,
+        joinTime:     joinIso,
+        leaveTime:    leaveIso,
+        ...(sessionsFetchFailed ? {} : { durationMs: sessionsDurationMs(sessions) }),
+        present:      sessions.length > 0 || sessions.some(s => !s.endTime),
+        sessions:     sessions.length || 1,
+      };
+    }));
+    out.push(...results);
+  }
+  return out;
+}
+
+module.exports = { meetGet, meetGetAll, participantIdentity, sessionsDurationMs, fetchConferenceParticipants };
+

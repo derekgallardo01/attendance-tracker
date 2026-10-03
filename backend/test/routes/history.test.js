@@ -314,21 +314,49 @@ describe('POST /api/event — frontend event logging', () => {
     }));
   });
 
-  test('POST /api/event with export_csv_downloaded catches persistExport rejection gracefully', async () => {
+  test('POST /api/event with export_excel_downloaded triggers persistExport', async () => {
     firestore.logEvent.mockResolvedValue(undefined);
-    firestore.persistExport.mockRejectedValue(new Error('firestore write error'));
+    firestore.persistExport.mockResolvedValue({ created: true });
 
     const res = await request(app)
       .post('/api/event')
       .set(authedHeader('teacher@school.edu', 'school.edu'))
       .set('Content-Type', 'application/json')
       .send({
-        type: 'export_csv_downloaded',
-        meta: { conferenceId: 'conf-fail' },
+        type: 'export_excel_downloaded',
+        meta: {
+          conferenceId: 'conf-excel-456',
+          meetingTitle: 'Biology 202',
+          participantCount: 30,
+        },
       });
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ ok: true });
+    expect(firestore.persistExport).toHaveBeenCalledWith('school.edu', expect.objectContaining({
+      conferenceId: 'conf-excel-456',
+      meetingTitle: 'Biology 202',
+      participantCount: 30,
+      email: 'teacher@school.edu',
+      autoExport: false,
+      sheetUrl: null,
+      tabName: 'Excel Export',
+    }));
+  });
+
+  test('POST /api/event allows large_class_banner_clicked, school_quote_generated, and paywall_quote_requested', async () => {
+    firestore.logEvent.mockResolvedValue(undefined);
+
+    for (const type of ['large_class_banner_clicked', 'school_quote_generated', 'paywall_quote_requested']) {
+      const res = await request(app)
+        .post('/api/event')
+        .set(authedHeader('teacher@school.edu', 'school.edu'))
+        .set('Content-Type', 'application/json')
+        .send({ type, meta: { test: true } });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ ok: true });
+    }
   });
 
   test('POST /api/event with export_failed calls sendErrorAlertEmail and succeeds', async () => {
