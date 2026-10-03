@@ -6601,6 +6601,8 @@ function updateUpgradeModalPricing() {
   const isEdu = !!(_billing && _billing.isEdu) || isEduDomain(email, (_billing && _billing.domain) || email.split('@')[1]);
 
   const dealPill = document.getElementById('upgrade-deal-pill');
+  const eduCard = document.getElementById('plan-card-educator');
+  const lifetimeCard = document.getElementById('plan-card-lifetime');
   const lifetimePriceEl = document.querySelector('#plan-card-lifetime .price-lifetime');
   const educatorPriceEl = document.querySelector('#plan-card-educator .price-educator');
   const eduPerMoBadge = document.querySelector('#plan-card-educator [data-i18n="upgrade.perMo"]');
