@@ -790,7 +790,7 @@ router.post('/save-to-sheets', async (req, res) => {
       // fresh sheet tab on every call while the meter stayed at 1. Cap the
       // free ride BEFORE any sheet work happens.
       const reexports = await getExportReexportCount(req.user.domain, req.user.email, b.conferenceId);
-      if (reexports != null && reexports >= FREE_REEXPORTS_PER_MEETING) {
+      if (reexports != null && reexports >= FREE_REEXPORTS_PER_MEETING && !meetingUnlocked) {
         log.info('sheets: free tier re-export cap reached', { domain: req.user.domain, email: req.user.email, conferenceId: b.conferenceId, reexports });
         return res.status(402).json({
           error: 'You have re-exported this meeting the maximum number of times on the free plan. Upgrade to Pro for unlimited exports.',

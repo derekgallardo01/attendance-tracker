@@ -51065,7 +51065,6 @@ let locale = 'en';
     if (raw.startsWith('si')) return 'si';
     if (raw.startsWith('el')) return 'el';
     if (raw.startsWith('no') || raw.startsWith('nb') || raw.startsWith('nn')) return 'no';
-    if (raw.startsWith('no') || raw.startsWith('nb') || raw.startsWith('nn')) return 'no';
     if (raw.startsWith('ca')) return 'ca';
     if (raw.startsWith('ne')) return 'ne';
 

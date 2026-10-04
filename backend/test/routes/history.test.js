@@ -344,10 +344,10 @@ describe('POST /api/event — frontend event logging', () => {
     }));
   });
 
-  test('POST /api/event allows large_class_banner_clicked, school_quote_generated, and paywall_quote_requested', async () => {
+  test('POST /api/event allows large_class_banner_clicked, school_quote_generated, paywall_quote_requested, and paywall_feedback_submitted', async () => {
     firestore.logEvent.mockResolvedValue(undefined);
 
-    for (const type of ['large_class_banner_clicked', 'school_quote_generated', 'paywall_quote_requested']) {
+    for (const type of ['large_class_banner_clicked', 'school_quote_generated', 'paywall_quote_requested', 'paywall_feedback_submitted']) {
       const res = await request(app)
         .post('/api/event')
         .set(authedHeader('teacher@school.edu', 'school.edu'))

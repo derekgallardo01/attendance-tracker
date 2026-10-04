@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 const log = require('../lib/logger');
-const { updateNotificationWebhook, unlockMeetingForUser } = require('../services/firestore');
+const { updateNotificationWebhook, unlockMeetingForUser, logEvent } = require('../services/firestore');
 
 /**
  * Verify Svix HMAC-SHA256 webhook signatures (standard for Resend webhooks).
@@ -120,6 +120,7 @@ async function handleSingleMeetingCheckout(session) {
         currency: session.currency,
         stripeCustomerId: session.customer || null,
       });
+      await logEvent(domain, { email, type: 'upgraded', meta: { plan: 'single_meeting', amount: session.amount_total, currency: session.currency } });
       log.info('webhooks: single meeting unlocked via checkout', { conferenceId, email, domain, sessionId: session.id });
       return true;
     } else {

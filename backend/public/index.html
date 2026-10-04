@@ -2219,6 +2219,17 @@
       </div>
     </section>
 
+    <!-- Stat strip (orgs + meetings filled live by loadPublicStats) -->
+    <div id="social-proof-bar" style="border-top:1px solid var(--border-subtle);background:rgba(255,255,255,.01);padding:14px 24px;text-align:center">
+      <div style="max-width:1160px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:32px;flex-wrap:wrap;font-size:14px;color:var(--text-muted)">
+        <div><strong id="stat-orgs-public" style="color:var(--text);font-size:16px">—</strong> organizations</div>
+        <span style="color:var(--border)">•</span>
+        <div><strong id="stat-meetings-public" style="color:var(--text);font-size:16px">—</strong> meetings tracked</div>
+        <span style="color:var(--border)">•</span>
+        <div><strong style="color:var(--text);font-size:16px">30+</strong> languages</div>
+      </div>
+    </div>
+
     <!-- Proof Strip -->
     <section class="lp2-proof-strip">
       <div class="lp2-proof-grid">
@@ -4471,10 +4482,10 @@ async function loadPublicStats() {
     if (!res.ok) return;
     const s = await res.json();
     if (s.organizations != null && s.organizations > 0) {
-      orgsEl.textContent = fmt(Math.max(s.organizations, STATIC_FALLBACK_ORGS));
+      if (orgsEl) orgsEl.textContent = fmt(Math.max(s.organizations, STATIC_FALLBACK_ORGS));
     }
     if (s.meetings != null && s.meetings > 0) {
-      meetsEl.textContent = fmt(Math.max(s.meetings, STATIC_FALLBACK_MEETINGS));
+      if (meetsEl) meetsEl.textContent = fmt(Math.max(s.meetings, STATIC_FALLBACK_MEETINGS));
     }
   } catch (e) {
     // Fallback already on screen
@@ -10326,6 +10337,15 @@ window.addEventListener('DOMContentLoaded', () => {
         </div>
         <button type="button" id="btn-upgrade-team" onclick="startUpgradeCheckout('department', 'btn-upgrade-team')" style="flex:0 0 auto;width:100%;background:rgba(253,214,99,.14);border:1px solid rgba(253,214,99,.3);color:#fdd663;padding:9px 16px;border-radius:20px;font-weight:600;font-size:.81rem;cursor:pointer;margin-top:8px;transition:all .15s ease" data-i18n="upgrade.deptCta">Get the Department plan — your whole school</button>
         <button type="button" id="btn-request-school-license" onclick="requestSchoolLicense()" style="display:none;width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);color:#e3e3e3;padding:8px 14px;border-radius:20px;font-weight:500;font-size:.78rem;cursor:pointer;margin-top:8px;transition:all .15s ease" data-i18n="upgrade.requestSchoolLicense">Request School / Department License</button>
+      </div>
+
+      <!-- Review for Pro exchange -->
+      <div style="background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.2);border-radius:8px;padding:9px 12px;margin-bottom:10px;font-size:.76rem;color:#94a3b8;line-height:1.45;text-align:center">
+        🎓 <strong>School budget tight?</strong> <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" id="upgrade-review-link" target="_blank" onclick="onUpgradeReviewClick(event)" style="color:#38bdf8;font-weight:600;text-decoration:underline">Leave an honest 5-star review</a> on Google Marketplace to unlock 1 month of Pro free.
+        <div id="verify-review-box" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed rgba(56,189,248,.3)">
+          <button type="button" id="verify-review-btn" onclick="triggerReviewVerification(event)" style="background:#0284c7;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:.75rem;font-weight:600;cursor:pointer">Verify Review &amp; Unlock 1 Month Free</button>
+          <div id="verify-review-status" style="display:none;font-size:.72rem;margin-top:6px;line-height:1.35"></div>
+        </div>
       </div>
 
       <!-- Trust & Reliability Note -->

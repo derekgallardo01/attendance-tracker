@@ -194,6 +194,9 @@ router.post(['/billing/checkout', '/billing/create-checkout-session'], requireAu
       : { individual: '0', plan: planName, domain, initiatedBy: email };
 
     const conferenceId = req.body?.conferenceId ? String(req.body.conferenceId).trim().toLowerCase() : null;
+    if (isSingleMeeting && !conferenceId) {
+      return res.status(400).json({ error: 'Conference ID is required for a single-meeting pass.' });
+    }
     if (isSingleMeeting && conferenceId) {
       meta.conferenceId = conferenceId;
       meta.meetingPass = '1';
@@ -504,6 +507,9 @@ router.post('/billing/public-checkout', async (req, res) => {
     return res.status(400).json({ error: 'Unknown plan.' });
   }
   const plan = normalizedPublicPlan || 'lifetime';
+  if (plan === 'single_meeting') {
+    return res.status(400).json({ error: 'Single-meeting pass must be purchased from within an active meeting session.' });
+  }
   // Annual is opt-IN only (mirrors the authed checkout at :66). Defaulting to
   // 'annual' was a trap: a bare {plan:'team'} would resolve to the $149/yr
   // Institution price AND auto-apply LAUNCH50 — wrong tier + a discount
@@ -1080,6 +1086,10 @@ async function webhookHandler(req, res) {
         const { handleSingleMeetingCheckout } = require('./webhooks');
         if (await handleSingleMeetingCheckout(s)) {
           log.info('billing: handled single_meeting checkout in webhook', { sessionId: s.id });
+          break;
+        }
+        if (s.metadata?.plan === 'single_meeting') {
+          log.warn('billing: single_meeting checkout unhandled or missing conferenceId, skipping pro grant', { sessionId: s.id });
           break;
         }
         if (ref.startsWith('user:') || s.metadata?.individual === '1') {

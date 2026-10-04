@@ -281,6 +281,10 @@ describe('detectLocale', () => {
     window._attCountry = 'BR';
     expect(strings.detectLocale('en-US')).toBe('pt');
     delete window._attCountry;
+
+    window._signupCountry = 'MX';
+    expect(strings.detectLocale('en-US')).toBe('es');
+    delete window._signupCountry;
   });
 
   test('newly added paywall, settings, and toast keys exist across locales', () => {

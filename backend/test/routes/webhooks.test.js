@@ -1,12 +1,14 @@
 const request = require('supertest');
 const crypto = require('crypto');
 const { buildApp } = require('../helpers/testApp');
-const { verifySvixSignature } = require('../../src/routes/webhooks');
+const { verifySvixSignature, handleSingleMeetingCheckout } = require('../../src/routes/webhooks');
 
 jest.mock('../../src/services/firestore', () => ({
   updateNotificationWebhook: jest.fn(),
   suppressEmail: jest.fn(),
   getDb: jest.fn(),
+  unlockMeetingForUser: jest.fn(),
+  logEvent: jest.fn(),
 }));
 
 const firestore = require('../../src/services/firestore');

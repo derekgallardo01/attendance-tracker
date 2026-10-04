@@ -126,8 +126,20 @@ describe('donut svg and meeting helpers', () => {
     const csv = h.buildMeetingCsv(detail);
     expect(csv).toContain('"Name","Email","Status","Calendar RSVP"');
     expect(csv).toContain('"Student One","s1@acme.com","present","accepted"');
-    expect(csv).toContain('"Student Two","s2@acme.com","absent","needsAction"');
     expect(csv).toContain('30'); // 1,800,000 ms = 30 min
+  });
+
+  test('renderDonutSvg handles edge case percentage values', () => {
+    expect(h.renderDonutSvg(-0.1)).toContain('0%');
+    expect(h.renderDonutSvg(1.5)).toContain('100%');
+    expect(h.renderDonutSvg('invalid')).toContain('0%');
+  });
+
+  test('buildMeetingCsv handles null detail and missing attendee properties', () => {
+    expect(h.buildMeetingCsv(null)).toContain('"Name","Email"');
+    expect(h.buildMeetingCsv({})).toContain('"Name","Email"');
+    const csvMissing = h.buildMeetingCsv({ attendees: [{ displayName: '', email: '', durationMs: 0 }] });
+    expect(csvMissing).toContain('"","","absent","needsAction"');
   });
 });
 

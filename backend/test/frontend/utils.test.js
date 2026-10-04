@@ -674,4 +674,141 @@ describe('buildAttendanceExcelXml and escapeXml', () => {
     expect(xml).toContain('Doctor note');
     expect(xml).not.toContain('Generated with Attendance Tracker Free Plan');
   });
+
+  test('buildAttendanceExcelXml handles late arrivals, excused short stays, present-left, and timezone fallbacks', () => {
+    const startTime = new Date('2026-03-01T10:00:00Z');
+    const now = new Date('2026-03-01T11:00:00Z');
+    const roster = [
+      { name: 'Late Student', email: 'late@school.edu' },
+      { name: 'Short Excused', email: 'short.excused@school.edu' },
+      { name: 'Short Incomplete', email: 'short.incomp@school.edu' },
+      { name: 'Left Early Normal', email: 'left.early@school.edu' },
+    ];
+    const parts = [
+      // 1. Late arrival (>10 min late): joined at 10:15
+      { displayName: 'Late Student', email: 'late@school.edu', present: true, joinTime: new Date('2026-03-01T10:15:00Z'), _accumulatedMs: 2700000 },
+      // 2. Excused short stay (dur 10 min < minMinutes 30)
+      { displayName: 'Short Excused', email: 'short.excused@school.edu', present: false, joinTime: new Date('2026-03-01T10:00:00Z'), leaveTime: new Date('2026-03-01T10:10:00Z'), _accumulatedMs: 600000 },
+      // 3. Unexcused incomplete stay (dur 10 min < minMinutes 30)
+      { displayName: 'Short Incomplete', email: 'short.incomp@school.edu', present: false, joinTime: new Date('2026-03-01T10:00:00Z'), leaveTime: new Date('2026-03-01T10:10:00Z'), _accumulatedMs: 600000 },
+      // 4. Present (Left): stayed 40 min, not late, not short stay (minMinutes: 30)
+      { displayName: 'Left Early Normal', email: 'left.early@school.edu', present: false, joinTime: new Date('2026-03-01T10:00:00Z'), leaveTime: new Date('2026-03-01T10:40:00Z'), _accumulatedMs: 2400000 },
+      // 5. Unregistered guest (Present) with check-in time
+      { displayName: 'Guest Alice', email: 'guest.a@other.org', present: true, joinTime: new Date('2026-03-01T10:05:00Z'), checkedInAt: new Date('2026-03-01T10:06:00Z'), _accumulatedMs: 3300000 },
+      // 6. Unregistered guest (Left)
+      { displayName: 'Guest Bob', email: 'guest.b@other.org', present: false, joinTime: new Date('2026-03-01T10:02:00Z'), leaveTime: new Date('2026-03-01T10:35:00Z'), _accumulatedMs: 1980000 },
+    ];
+
+    // Test with invalid timezone to exercise the catch fallback block
+    const xml = utils.buildAttendanceExcelXml(parts, roster, {
+      meetingTitle: 'Advanced Bio',
+      totalMeetingMs: 3600000,
+      startTime,
+      now,
+      lateMinutes: 10,
+      minMinutes: 30,
+      minPercent: 50,
+      timezone: 'INVALID_ZONE_FOR_CATCH',
+      excusedStudents: {
+        'short.excused@school.edu': { excused: true, note: 'Field trip' },
+      },
+    });
+
+    expect(xml).toContain('Late');
+    expect(xml).toContain('Excused (Short Stay)');
+    expect(xml).toContain('Left Early / Incomplete');
+    expect(xml).toContain('Present (Left)');
+    expect(xml).toContain('Guest (Present)');
+    expect(xml).toContain('Guest (Left)');
+    expect(xml).toContain('Unregistered guest');
+    expect(xml).toContain('Checked in');
+  });
+
+  test('buildAttendanceExcelXml exercises valid timezone and localized Spanish statuses', () => {
+    const parts = [
+      { displayName: 'Carlos Ruiz', email: 'carlos@colegio.es', present: true, joinTime: new Date('2026-03-01T10:00:00Z'), _accumulatedMs: 3600000 },
+    ];
+    const xml = utils.buildAttendanceExcelXml(parts, null, {
+      meetingTitle: 'Historia',
+      totalMeetingMs: 3600000,
+      timezone: 'UTC',
+      locale: 'es-ES',
+    });
+    expect(xml).toContain('Presente');
+  });
+
+  test('buildAttendanceExcelXml exercises edge cases and default branches', () => {
+    // 1. parts = null, opts = default {}
+    const xmlEmpty = utils.buildAttendanceExcelXml(null);
+    expect(xmlEmpty).toContain('<Title>Meeting</Title>');
+
+    // 2. meetingMinutes <= 0 fallback with participants to hit the : 100 branch
+    const partsMeetingMinZero = [
+      { displayName: 'Student Zero', email: 'zero@school.edu', present: true, joinTime: new Date('2026-03-01T10:00:00Z'), _accumulatedMs: 1000 },
+      { displayName: 'Guest Zero', email: 'guest0@other.edu', present: true, joinTime: new Date('2026-03-01T10:00:00Z'), rejoins: -1 },
+    ];
+    const rosterZero = [
+      { name: 'Student Zero', email: 'zero@school.edu' },
+      {}, // Student with neither name nor email (line 728: || '' fallback)
+    ];
+    const xmlZero = utils.buildAttendanceExcelXml(partsMeetingMinZero, rosterZero, {
+      totalMeetingMs: 0,
+      meetingMinutes: -1,
+      locale: 'fr', // line 697: opts.locale truthy, opts.timezone undefined
+    });
+    expect(xmlZero).toContain('<Workbook');
+    expect(xmlZero).toContain('Student Zero');
+    expect(xmlZero).toContain('Guest Zero');
+
+    // 3. Roster with students having name-only, no-email, no displayName participant, invalid dates, null sessions
+    const roster = [
+      { name: 'Name Only' },
+      { name: 'Student Name Fallback', email: 'studentfallback@school.edu' },
+      { name: 'Student Name Only2', email: 'studentnameonly2@school.edu' },
+      { name: 'Student Both Empty', email: '' },
+      { name: 'Has Note', email: 'hasnote@school.edu' },
+      { name: 'No Excuse Note', email: 'nonote@school.edu' },
+      { name: 'Unexcused Absent', email: 'absent@school.edu' },
+    ];
+    const parts = [
+      // Matches 'Name Only' by name
+      { displayName: 'Name Only', email: '', present: false, joinTime: 'not-a-date', leaveTime: null, rejoins: null, sessions: null },
+      // Matches 'Student Name Fallback' by email: empty displayName, has email -> exercises p.displayName || student.name
+      { displayName: '', email: 'studentfallback@school.edu', present: true, joinTime: new Date('2026-03-01T10:00:00Z'), rejoins: -1 },
+      // Matches 'Student Name Only2' by name: has displayName, empty email -> exercises p.email || student.email
+      { displayName: 'Student Name Only2', email: '', present: true, joinTime: new Date('2026-03-01T10:00:00Z'), rejoins: null, sessions: 2 },
+      // Matches 'Student Both Empty' by name: empty email on both -> exercises || '' fallback
+      { displayName: 'Student Both Empty', email: '', present: true, joinTime: new Date('2026-03-01T10:00:00Z'), rejoins: null, sessions: null },
+      // Matches 'Has Note'
+      { displayName: 'Has Note', email: 'hasnote@school.edu', present: true, joinTime: null, _accumulatedMs: null, sessions: 3 },
+      // Matches 'No Excuse Note'
+      { displayName: 'No Excuse Note', email: 'nonote@school.edu', present: true, joinTime: new Date('2026-03-01T10:00:00Z') },
+      // Guest with no email, no displayName, no joinTime, no leaveTime
+      { displayName: 'Guest Anonymous', email: null, present: false, leaveTime: null, sessions: 2 },
+      // Guest with null rejoins and null sessions (line 794)
+      { displayName: 'Guest NoRejoins', email: 'g@x.com', present: true, rejoins: null, sessions: null },
+    ];
+
+    const xml = utils.buildAttendanceExcelXml(parts, roster, {
+      totalMeetingMs: 3600000,
+      excusedStudents: {
+        'hasnote@school.edu': { excused: true, note: 'Excused' },
+        'nonote@school.edu': { excused: true },
+      },
+    });
+
+    expect(xml).toContain('Name Only');
+    expect(xml).toContain('Student Name Fallback');
+    expect(xml).toContain('Absent');
+    expect(xml).toContain('Guest Anonymous');
+
+    // 4. Non-roster path (activeRoster is null) with meetingMinutes <= 0 and missing fields on participants
+    const partsNoRoster = [
+      { displayName: 'Bare Part', email: null, present: false, leaveTime: null, rejoins: null, sessions: null },
+      { displayName: 'Checked Part', email: 'c@x.com', present: true, joinTime: new Date('2026-03-01T10:00:00Z'), checkedInAt: new Date('2026-03-01T10:01:00Z') },
+    ];
+    const xmlNoRoster = utils.buildAttendanceExcelXml(partsNoRoster, null, { totalMeetingMs: 0, meetingMinutes: -1 });
+    expect(xmlNoRoster).toContain('Bare Part');
+    expect(xmlNoRoster).toContain('Checked in');
+  });
 });
