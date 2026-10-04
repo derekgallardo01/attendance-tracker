@@ -3,7 +3,7 @@ const rateLimit = require('express-rate-limit');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getRevenueFunnel, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, dismissSuggestion, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance, getTeamOverview, getRecentErrorSpike, getErrorAlertState, setErrorAlertState, getCancellationTelemetry, backfillAdminActivityIfSparse } = require('../services/firestore');
-const { sendAdminEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendOrgWeeklyDigest, flushDeferredNotifications, verifyReviewApprovalToken, sendReviewRewardEmail } = require('../lib/notifications');
+const { sendAdminEmail, sendErrorSpikeAlertEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendOrgWeeklyDigest, flushDeferredNotifications, verifyReviewApprovalToken, sendReviewRewardEmail } = require('../lib/notifications');
 const { escapeHtml } = require('../lib/html');
 const { requireSuperAdmin, requireSuperAdminOrScheduler, requireKhMetricsKey, safeEqual } = require('../middleware/adminAuth');
 const { requireAuth } = require('../middleware/auth');
@@ -467,19 +467,15 @@ router.post('/admin/check-errors', requireSuperAdminOrScheduler, async (req, res
     if (!to) {
       return res.json({ ok: true, total: spike.total, alerted: false, reason: 'no_recipient' });
     }
-    const reasons = Object.entries(spike.byReason).sort((a, b) => b[1] - a[1]).map(([r, n]) => `  ${n}× ${r}`).join('\n');
-    const body = [
-      `${spike.total} Attendance Tracker export failures in the last ${WINDOW_MIN} minutes (alert threshold: ${THRESHOLD}).`,
-      '',
-      'By reason:',
-      reasons || '  (none categorized)',
-      '',
-      `Affected users (${spike.users.length}): ${spike.users.slice(0, 20).join(', ')}${spike.users.length > 20 ? ' …' : ''}`,
-      spike.samples.length ? `\nSample messages:\n${spike.samples.map(s => '  ' + s).join('\n')}` : '',
-      '',
-      'Full detail + stack traces are in Sentry (issue "sheets export failed" and recent frontend exceptions).',
-    ].join('\n');
-    await sendAdminEmail({ to, subject: `⚠️ ${spike.total} Attendance Tracker export failures in the last hour`, body });
+    await sendErrorSpikeAlertEmail({
+      to,
+      total: spike.total,
+      threshold: THRESHOLD,
+      windowMin: WINDOW_MIN,
+      byReason: spike.byReason,
+      users: spike.users,
+      samples: spike.samples,
+    });
     await setErrorAlertState({ lastAlertedAt: new Date().toISOString(), lastTotal: spike.total });
     res.json({ ok: true, total: spike.total, alerted: true });
   } catch (err) {

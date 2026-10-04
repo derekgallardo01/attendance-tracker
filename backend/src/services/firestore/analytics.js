@@ -1727,10 +1727,16 @@ async function getRecentErrorSpike(sinceDate) {
       const x = d.data();
       if (x.type !== 'export_failed') continue;
       total++;
-      const reason = (x.meta && x.meta.reason) || 'unknown';
+      const rawReason = (x.meta && (x.meta.reason || x.meta.code || (typeof x.meta.error === 'string' ? x.meta.error : (x.meta.error?.code || x.meta.error?.message))))
+        || (x.error && (x.error.code || (typeof x.error === 'string' ? x.error : x.error.message)))
+        || 'unknown';
+      const reason = typeof rawReason === 'string' && rawReason.trim() ? rawReason.trim() : 'unknown';
       byReason[reason] = (byReason[reason] || 0) + 1;
       if (x.email) users.add(x.email);
-      if (samples.length < 5 && x.meta && x.meta.message) samples.push(String(x.meta.message).slice(0, 120));
+      const sampleMsg = (x.meta && (x.meta.message || (typeof x.meta.error === 'string' ? x.meta.error : x.meta.error?.message)))
+        || (typeof x.message === 'string' ? x.message : null)
+        || (typeof x.error === 'string' ? x.error : x.error?.message);
+      if (samples.length < 5 && sampleMsg) samples.push(String(sampleMsg).slice(0, 120));
     }
   }
   return { total, byReason, users: [...users], samples };

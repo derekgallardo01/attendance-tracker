@@ -23,6 +23,7 @@ describe('notifications — module structure', () => {
     expect(typeof n.sendSubscriptionCancelledEmail).toBe('function');
     expect(typeof n.sendAdminSubscriptionCancelledNotification).toBe('function');
     expect(typeof n.sendAdminEmailUnsubscribedNotification).toBe('function');
+    expect(typeof n.sendErrorSpikeAlertEmail).toBe('function');
   });
 });
 
@@ -97,6 +98,12 @@ describe('notifications — no-op when Resend not configured', () => {
     const n = require('../../src/lib/notifications');
     const result = await n.sendUpgradeNotification({ email: 'new@acme.com', plan: 'educator' });
     expect(result).toEqual({ skipped: 'no resend' });
+  });
+
+  test('sendErrorSpikeAlertEmail returns skipped silently when Resend unset', async () => {
+    const n = require('../../src/lib/notifications');
+    const result = await n.sendErrorSpikeAlertEmail({ total: 5, threshold: 5 });
+    expect(result).toEqual({ skipped: 'Resend not configured' });
   });
 
   test('sendExportNotification returns undefined silently', async () => {
@@ -799,6 +806,99 @@ describe('notifications — remaining sender branches (Resend mocked)', () => {
     expect(call.html).toContain('Weekly digest');
     expect(call.html).toContain('Tips &amp; product updates');
     expect(call.html).toContain('Export &amp; attendance summaries');
+  });
+
+  test('sendErrorSpikeAlertEmail formats metrics box, reasons breakdown, user emails, and samples using design system', async () => {
+    const n = require('../../src/lib/notifications');
+    mockSend.mockClear();
+    await n.sendErrorSpikeAlertEmail({
+      to: 'derekgallardo01@gmail.com',
+      total: 3,
+      threshold: 1,
+      windowMin: 60,
+      byReason: { scope_blocked: 3, error: 1 },
+      users: ['yrodriguez@upnfm.edu.hn', 'test@school.edu'],
+      samples: ['client permission denied: drive.file missing'],
+    });
+
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const call = mockSend.mock.calls[0][0];
+    expect(call.to).toEqual(['derekgallardo01@gmail.com']);
+    expect(call.from).toContain('Attendance Tracker Alerts');
+    expect(call.subject).toBe('⚠️ 3 Attendance Tracker export failures in the last hour');
+    expect(call.tags).toEqual([{ name: 'type', value: 'error_spike_alert' }]);
+
+    // HTML contains design system badge, metrics, reasons, users, sample code block
+    expect(call.html).toContain('Export Failure Spike Detected');
+    expect(call.html).toContain('3 failures in the last 60 minutes');
+    expect(call.html).toContain('Failures');
+    expect(call.html).toContain('Window');
+    expect(call.html).toContain('Threshold');
+    expect(call.html).toContain('scope_blocked');
+    expect(call.html).toContain('(client permission)');
+    expect(call.html).toContain('mailto:yrodriguez@upnfm.edu.hn');
+    expect(call.html).toContain('client permission denied');
+    expect(call.html).toContain('Open Admin Dashboard');
+    expect(call.html).toContain('Sentry');
+
+    // Plain text verification
+    expect(call.text).toContain('3 Attendance Tracker export failures');
+    expect(call.text).toContain('3× scope_blocked');
+    expect(call.text).toContain('yrodriguez@upnfm.edu.hn');
+    expect(call.text).toContain('Sample messages:');
+  });
+
+  test('sendErrorSpikeAlertEmail handles empty reasons, empty users, empty samples and fallback recipient', async () => {
+    const n = require('../../src/lib/notifications');
+    mockSend.mockClear();
+    await n.sendErrorSpikeAlertEmail({
+      total: 5,
+      threshold: 5,
+      windowMin: 60,
+    });
+
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const call = mockSend.mock.calls[0][0];
+    expect(call.html).toContain('(none categorized)');
+    expect(call.html).toContain('(none recorded)');
+    expect(call.text).toContain('(none categorized)');
+  });
+
+  test('sendErrorSpikeAlertEmail truncates >20 users and recognizes permission keyword reasons', async () => {
+    const n = require('../../src/lib/notifications');
+    mockSend.mockClear();
+    const twentyFiveUsers = Array.from({ length: 25 }, (_, i) => `user${i}@school.edu`);
+    await n.sendErrorSpikeAlertEmail({
+      to: 'derekgallardo01@gmail.com',
+      total: 25,
+      threshold: 5,
+      windowMin: 60,
+      byReason: { permission_denied: 20, export_aborted: 5 },
+      users: twentyFiveUsers,
+      samples: ['error 1', 'error 2'],
+    });
+
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const call = mockSend.mock.calls[0][0];
+    expect(call.html).toContain('(+5 more)');
+    expect(call.html).toContain('(client permission)');
+    expect(call.text).toContain('user0@school.edu');
+    expect(call.text).toContain('…');
+  });
+
+  test('sendErrorSpikeAlertEmail returns skipped when no recipient is available', async () => {
+    const n = require('../../src/lib/notifications');
+    const origNotify = process.env.NOTIFY_EMAIL;
+    const origGmail = process.env.GMAIL_USER;
+    try {
+      delete process.env.NOTIFY_EMAIL;
+      delete process.env.GMAIL_USER;
+      const res = await n.sendErrorSpikeAlertEmail({ total: 5 });
+      expect(res).toEqual({ skipped: 'no NOTIFY_EMAIL/owner' });
+    } finally {
+      if (origNotify) process.env.NOTIFY_EMAIL = origNotify;
+      if (origGmail) process.env.GMAIL_USER = origGmail;
+    }
   });
 
   test('sendReactivationEmail 7d and 30d variants', async () => {

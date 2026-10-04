@@ -445,6 +445,23 @@ describe('getMeetingWithParticipants', () => {
       expect(spike.samples).toContain('boom one');
     });
 
+    test('getRecentErrorSpike extracts reason and samples from meta.error, code, and root error objects', async () => {
+      ctx.seed('tenants/gamma.com', { domain: 'gamma.com' });
+      ctx.seed('tenants/gamma.com/events/e1', { type: 'export_failed', email: 'g1@gamma.com', meta: { code: 'permission_denied', error: { message: 'insufficient permissions' } }, createdAt: recent() });
+      ctx.seed('tenants/gamma.com/events/e2', { type: 'export_failed', email: 'g2@gamma.com', error: { code: 'auth_expired', message: 'Token expired' }, createdAt: recent() });
+      ctx.seed('tenants/gamma.com/events/e3', { type: 'export_failed', message: 'plain message failure', createdAt: recent() });
+
+      const spike = await firestore.getRecentErrorSpike(since());
+      expect(spike.total).toBe(3);
+      expect(spike.byReason).toEqual({
+        permission_denied: 1,
+        auth_expired: 1,
+        unknown: 1,
+      });
+      expect(spike.users).toEqual(['g1@gamma.com', 'g2@gamma.com']);
+      expect(spike.samples).toEqual(['insufficient permissions', 'Token expired', 'plain message failure']);
+    });
+
     test('getRecentErrorSpike returns an empty shape when there are no failures', async () => {
       ctx.seed('tenants/acme.com', { domain: 'acme.com' });
       const spike = await firestore.getRecentErrorSpike(since());

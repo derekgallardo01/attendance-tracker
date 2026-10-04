@@ -90,6 +90,7 @@ jest.mock('googleapis', () => ({
 }));
 jest.mock('../../src/lib/notifications', () => ({
   sendAdminEmail: jest.fn(),
+  sendErrorSpikeAlertEmail: jest.fn(),
   sendWeeklySelfReport: jest.fn(),
   sendSeriesAlertEmail: jest.fn(),
   sendReactivationEmail: jest.fn(),
@@ -349,6 +350,7 @@ describe('POST /api/admin/check-errors — hourly export-failure spike alert', (
     expect(res.status).toBe(200);
     expect(res.body.alerted).toBe(false);
     expect(res.body.reason).toBe('below_threshold');
+    expect(notifications.sendErrorSpikeAlertEmail).not.toHaveBeenCalled();
     expect(notifications.sendAdminEmail).not.toHaveBeenCalled();
   });
 
@@ -359,10 +361,14 @@ describe('POST /api/admin/check-errors — hourly export-failure spike alert', (
     expect(res.status).toBe(200);
     expect(res.body.alerted).toBe(true);
     expect(res.body.total).toBe(7);
-    expect(notifications.sendAdminEmail).toHaveBeenCalledWith(expect.objectContaining({
+    expect(notifications.sendErrorSpikeAlertEmail).toHaveBeenCalledWith(expect.objectContaining({
       to: 'derekgallardo01@gmail.com',
-      subject: expect.stringContaining('7'),
-      body: expect.stringContaining('error'),
+      total: 7,
+      threshold: 5,
+      windowMin: 60,
+      byReason: { error: 5, auto_export_error: 2 },
+      users: ['a@x.com', 'b@y.com'],
+      samples: ['boom'],
     }));
     expect(firestore.setErrorAlertState).toHaveBeenCalledWith(expect.objectContaining({ lastAlertedAt: expect.any(String) }));
   });
@@ -374,6 +380,7 @@ describe('POST /api/admin/check-errors — hourly export-failure spike alert', (
     expect(res.status).toBe(200);
     expect(res.body.alerted).toBe(false);
     expect(res.body.reason).toBe('cooldown');
+    expect(notifications.sendErrorSpikeAlertEmail).not.toHaveBeenCalled();
     expect(notifications.sendAdminEmail).not.toHaveBeenCalled();
   });
 

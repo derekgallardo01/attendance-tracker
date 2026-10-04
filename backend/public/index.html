@@ -4711,14 +4711,24 @@ function applyScopeRestrictions() {
   const missing = state.missingScopes || [];
   const banner = document.getElementById('scope-banner');
   const detail = document.getElementById('scope-banner-detail');
-  if (!banner) return;
 
   if (missing.length === 0) {
-    banner.style.display = 'none';
-    document.getElementById('btn-sheets').title = '';
+    if (banner) banner.style.display = 'none';
+    const sheetsBtn = document.getElementById('btn-sheets');
+    if (sheetsBtn) {
+      sheetsBtn.title = '';
+      sheetsBtn.dataset.scopeBlocked = '';
+    }
+    const scopeCsvBtn = document.getElementById('scope-banner-csv-btn');
+    if (scopeCsvBtn) {
+      scopeCsvBtn.style.display = 'none';
+    }
     state._scopeRetryFailed = false; // recovered — drop the escalated tip
+    updateExportCta();
     return;
   }
+
+  if (!banner) return;
 
   const featureNames = {
     sheets: t('scope.featSheets', 'export attendance to Sheets'),
@@ -4902,6 +4912,11 @@ async function signOut() {
   state.missingScopes = [];
   state._reconsentMissing = null;  // recovery snapshot is per-account
   state._scopeRetryFailed = false; // so is the escalated banner
+  const sheetsBtn = document.getElementById('btn-sheets');
+  if (sheetsBtn) {
+    sheetsBtn.title = '';
+    sheetsBtn.dataset.scopeBlocked = '';
+  }
   updateAuthUI();
   applyScopeRestrictions();
   toast(t('toast.signedOut'));
@@ -4929,8 +4944,18 @@ async function deleteMyAccount() {
       state.sessionToken = null;
       state.userEmail = null;
       state.signedIn = false;
+      state.grantedScopes = [];
+      state.missingScopes = [];
+      state._reconsentMissing = null;
+      state._scopeRetryFailed = false;
+      const sheetsBtn = document.getElementById('btn-sheets');
+      if (sheetsBtn) {
+        sheetsBtn.title = '';
+        sheetsBtn.dataset.scopeBlocked = '';
+      }
       closeSettingsModal();
       updateAuthUI();
+      applyScopeRestrictions();
       toast(t('toast.sessionExpired', 'Session expired — please sign in again'));
       return;
     }
@@ -4942,6 +4967,13 @@ async function deleteMyAccount() {
     state.signedIn = false;
     state.grantedScopes = [];
     state.missingScopes = [];
+    state._reconsentMissing = null;
+    state._scopeRetryFailed = false;
+    const sheetsBtn = document.getElementById('btn-sheets');
+    if (sheetsBtn) {
+      sheetsBtn.title = '';
+      sheetsBtn.dataset.scopeBlocked = '';
+    }
     closeSettingsModal();
     updateAuthUI();
     applyScopeRestrictions();

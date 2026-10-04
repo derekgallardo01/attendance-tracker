@@ -956,6 +956,135 @@ async function sendErrorAlertEmail({ email, domain, error, context, meta }) {
   }, 'error alert', { userEmail: email, context });
 }
 
+// Hourly error spike alert email. Alerts admin/owner using the design system
+// when export failure volume exceeds the configured threshold.
+async function sendErrorSpikeAlertEmail({ to, total, threshold = 5, windowMin = 60, byReason = {}, users = [], samples = [] }) {
+  if (!getResend()) return { skipped: 'Resend not configured' };
+  const target = to || process.env.NOTIFY_EMAIL || ownerEmail();
+  if (!target) return { skipped: 'no NOTIFY_EMAIL/owner' };
+
+  const sortedReasons = Object.entries(byReason || {}).sort((a, b) => b[1] - a[1]);
+  const userList = Array.isArray(users) ? users : [];
+  const sampleList = Array.isArray(samples) ? samples : [];
+
+  const isClientPermission = (reason) => {
+    if (!reason || typeof reason !== 'string') return false;
+    const r = reason.toLowerCase();
+    return ['scope_blocked', 'drive_permission_missing', 'auth_expired', 'permission_denied', 'access_denied', 'insufficient_permissions'].includes(r)
+      || r.includes('permission') || r.includes('scope');
+  };
+
+  const reasonRowsHtml = sortedReasons.length > 0
+    ? sortedReasons.map(([r, n]) => {
+        const isPerm = isClientPermission(r);
+        const pillStyle = isPerm
+          ? 'color:#e3b341;background:rgba(227,179,65,0.12);border:1px solid rgba(227,179,65,0.3);'
+          : 'color:#f85149;background:rgba(248,81,73,0.12);border:1px solid rgba(248,81,73,0.3);';
+        const label = isPerm ? '<span style="font-size:11px;color:#8b949e;margin-left:6px;">(client permission)</span>' : '';
+        return `<tr>
+          <td style="padding:8px 10px;border-bottom:1px solid #21262d;vertical-align:middle;word-break:break-word;">
+            <span style="font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:10px;font-family:monospace;display:inline-block;${pillStyle}">${escape(r)}</span>${label}
+          </td>
+          <td style="padding:8px 10px;border-bottom:1px solid #21262d;text-align:right;font-weight:700;color:#e6edf3;">${escape(n)}×</td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="2" style="padding:8px 10px;color:#8b949e;font-size:12px;">(none categorized)</td></tr>';
+
+  const userEmailsHtml = userList.length > 0
+    ? `<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.5;margin-bottom:16px;word-break:break-word;">
+        ${userList.slice(0, 20).map(u => `<a href="mailto:${escape(u)}" style="color:#58a6ff;text-decoration:none;word-break:break-all;">${escape(u)}</a>`).join(', ')}${userList.length > 20 ? ` <span style="color:#8b949e;">(+${userList.length - 20} more)</span>` : ''}
+      </div>`
+    : '<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:10px 12px;font-size:13px;color:#8b949e;margin-bottom:16px;">(none recorded)</div>';
+
+  const sampleMessagesHtml = sampleList.length > 0
+    ? `<div style="margin-top:16px;">
+        <h4 style="margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;color:#8b949e;">Sample Messages</h4>
+        <pre style="background:#0d1117;border:1px solid #30363d;padding:10px 12px;border-radius:6px;font-size:12px;color:#f85149;overflow-x:auto;white-space:pre-wrap;word-break:break-word;font-family:monospace;margin:0 0 16px;box-sizing:border-box;">${escape(sampleList.join('\n'))}</pre>
+      </div>`
+    : '';
+
+  const contentHtml = `
+    <!-- Summary Metrics -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;margin-bottom:16px;">
+      <tr>
+        <td style="padding:12px 8px;background:#0d1117;border:1px solid #30363d;border-radius:8px;text-align:center;width:33%;">
+          <div style="font-size:11px;color:#8b949e;text-transform:uppercase;font-weight:600;letter-spacing:0.04em;">Failures</div>
+          <div style="font-size:22px;font-weight:700;color:#f85149;margin-top:4px;">${Number(total) || 0}</div>
+        </td>
+        <td style="width:8px;"></td>
+        <td style="padding:12px 8px;background:#0d1117;border:1px solid #30363d;border-radius:8px;text-align:center;width:33%;">
+          <div style="font-size:11px;color:#8b949e;text-transform:uppercase;font-weight:600;letter-spacing:0.04em;">Window</div>
+          <div style="font-size:20px;font-weight:700;color:#e6edf3;margin-top:4px;">${windowMin}m</div>
+        </td>
+        <td style="width:8px;"></td>
+        <td style="padding:12px 8px;background:#0d1117;border:1px solid #30363d;border-radius:8px;text-align:center;width:33%;">
+          <div style="font-size:11px;color:#8b949e;text-transform:uppercase;font-weight:600;letter-spacing:0.04em;">Threshold</div>
+          <div style="font-size:20px;font-weight:700;color:#e6edf3;margin-top:4px;">${threshold}</div>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Breakdown by Reason -->
+    <h4 style="margin:16px 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;color:#8b949e;">Breakdown by Reason</h4>
+    <table class="responsive-table" style="table-layout:fixed;border-collapse:collapse;font-size:13px;width:100%;background:#0d1117;border:1px solid #30363d;border-radius:8px;overflow:hidden;margin-bottom:16px;box-sizing:border-box;">
+      <thead>
+        <tr style="border-bottom:1px solid #30363d;background:#161b22;">
+          <th style="padding:8px 10px;text-align:left;color:#8b949e;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;">Reason</th>
+          <th style="padding:8px 10px;text-align:right;color:#8b949e;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;width:80px;">Count</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${reasonRowsHtml}
+      </tbody>
+    </table>
+
+    <!-- Affected Users -->
+    <h4 style="margin:16px 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;color:#8b949e;">Affected Users (${userList.length})</h4>
+    ${userEmailsHtml}
+
+    ${sampleMessagesHtml}
+
+    <p style="margin:12px 0 0;font-size:12px;color:#8b949e;line-height:1.5;">
+      Full detail + stack traces are in Sentry (issue &ldquo;sheets export failed&rdquo; and recent frontend exceptions).
+    </p>
+  `;
+
+  const html = buildDesignSystemEmail({
+    badge: '⚠️ Export Alert',
+    badgeType: 'error',
+    title: 'Export Failure Spike Detected',
+    subtitle: `${total} failures in the last ${windowMin} minutes (threshold: ${threshold})`,
+    contentHtml,
+    ctaText: 'Open Admin Dashboard →',
+    ctaUrl: `${CONFIG.publicSiteUrl}/admin.html`,
+    ctaColor: 'blue',
+  });
+
+  const reasonsText = sortedReasons.map(([r, n]) => `  ${n}× ${r}`).join('\n');
+  const text = [
+    `${total} Attendance Tracker export failures in the last ${windowMin} minutes (alert threshold: ${threshold}).`,
+    '',
+    'By reason:',
+    reasonsText || '  (none categorized)',
+    '',
+    `Affected users (${userList.length}): ${userList.slice(0, 20).join(', ')}${userList.length > 20 ? ' …' : ''}`,
+    sampleList.length ? `\nSample messages:\n${sampleList.map(s => '  ' + s).join('\n')}` : '',
+    '',
+    'Full detail + stack traces are in Sentry (issue "sheets export failed" and recent frontend exceptions).',
+    '',
+    `Open Admin Dashboard: ${CONFIG.publicSiteUrl}/admin.html`,
+  ].filter(Boolean).join('\n');
+
+  return dispatchEmail({
+    from: makeFrom('Attendance Tracker Alerts'),
+    to: target,
+    subject: `⚠️ ${total} Attendance Tracker export failures in the last hour`,
+    text,
+    html,
+    tags: [{ name: 'type', value: 'error_spike_alert' }],
+  }, 'error spike alert', { total, threshold, windowMin });
+}
+
 // Weekly self-report email. Formats the report from firestore into something
 // you can scan in 30 seconds Monday morning.
 async function sendWeeklySelfReport(report) {
@@ -3324,7 +3453,7 @@ async function sendReviewRewardEmail(params) {
 }
 
 module.exports = {
-  sendSignupWebhook, sendUpgradeNotification, sendAdminSubscriptionCancelledNotification, sendAdminEmailUnsubscribedNotification, maybeSendSignupNotification, sendWelcomeEmail, sendReferralNotification, maybeSendReferralNotification, flushDeferredNotifications, sendAdminEmail, sendErrorAlertEmail, sendWeeklySelfReport, sendExportNotification, sendOrgWeeklyDigest,
+  sendSignupWebhook, sendUpgradeNotification, sendAdminSubscriptionCancelledNotification, sendAdminEmailUnsubscribedNotification, maybeSendSignupNotification, sendWelcomeEmail, sendReferralNotification, maybeSendReferralNotification, flushDeferredNotifications, sendAdminEmail, sendErrorAlertEmail, sendErrorSpikeAlertEmail, sendWeeklySelfReport, sendExportNotification, sendOrgWeeklyDigest,
   sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendUpgradeLinkEmail, sendSubscriptionCancelledEmail, sendReviewRewardEmail, buildReviewRewardEmailContent, sendReviewRewardDraftAlert, createReviewApprovalToken, verifyReviewApprovalToken, reviewApprovalUrl,
   sendSlackDigest, sendSlackTestPing, buildSlackDigestBlocks, buildSlackFallbackText, maskSlackWebhook,
   sendChatDigest, sendChatTestPing, buildChatDigestCard, maskGoogleChatWebhook,
