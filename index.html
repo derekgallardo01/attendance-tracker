@@ -6777,21 +6777,30 @@ function updateUpgradeModalPricing() {
 
   if (country === 'IN') {
     if (dealPill) {
-      dealPill.innerHTML = `<span>🇮🇳 India Special: ₹299 INR UPI (Google Pay, PhonePe, Paytm, RuPay)</span>`;
+      dealPill.innerHTML = `<span>🇮🇳 India Special: ₹299 INR Lifetime · ₹199/yr Educator</span>`;
       dealPill.style.background = 'rgba(74,222,128,.16)';
       dealPill.style.borderColor = 'rgba(74,222,128,.4)';
       dealPill.style.color = '#4ade80';
     }
     if (lifetimePriceEl) {
-      lifetimePriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">₹299 INR UPI</span>`;
+      lifetimePriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">₹299 INR</span>`;
     }
     if (btnLifetime) {
       btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime" style="color:#ffffff;font-weight:700">₹299</span>`;
     }
-    if (eduCard) eduCard.style.display = 'none';
+    if (educatorPriceEl) {
+      educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">₹199</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-left:4px">₹399</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.40)</span>`;
+    }
+    if (eduPerMoBadge) {
+      eduPerMoBadge.textContent = '~₹16/mo';
+    }
+    if (btnEdu) {
+      btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#ffffff;font-weight:700">₹199</span>/yr`;
+    }
+    if (eduCard) eduCard.style.display = (_billing && _billing.educatorAvailable === false) ? 'none' : '';
   } else if (country === 'PH') {
     if (dealPill) {
-      dealPill.innerHTML = `<span>🇵🇭 Philippines Special: ₱280 PHP Lifetime Pass (GCash & Maya)</span>`;
+      dealPill.innerHTML = `<span>🇵🇭 Philippines Special: ₱280 PHP Lifetime · ₱140/yr Educator</span>`;
       dealPill.style.background = 'rgba(74,222,128,.16)';
       dealPill.style.borderColor = 'rgba(74,222,128,.4)';
       dealPill.style.color = '#4ade80';
@@ -6802,10 +6811,19 @@ function updateUpgradeModalPricing() {
     if (btnLifetime) {
       btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime" style="color:#ffffff;font-weight:700">₱280</span>`;
     }
-    if (eduCard) eduCard.style.display = 'none';
+    if (educatorPriceEl) {
+      educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">₱140</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-left:4px">₱280</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.49)</span>`;
+    }
+    if (eduPerMoBadge) {
+      eduPerMoBadge.textContent = '~₱12/mo';
+    }
+    if (btnEdu) {
+      btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#ffffff;font-weight:700">₱140</span>/yr`;
+    }
+    if (eduCard) eduCard.style.display = (_billing && _billing.educatorAvailable === false) ? 'none' : '';
   } else if (country === 'MY') {
     if (dealPill) {
-      dealPill.innerHTML = `<span>🇲🇾 Malaysia Special: RM 22 MYR Lifetime Pass (FPX & GrabPay)</span>`;
+      dealPill.innerHTML = `<span>🇲🇾 Malaysia Special: RM 22 MYR Lifetime · RM 12/yr Educator</span>`;
       dealPill.style.background = 'rgba(74,222,128,.16)';
       dealPill.style.borderColor = 'rgba(74,222,128,.4)';
       dealPill.style.color = '#4ade80';
@@ -6816,10 +6834,19 @@ function updateUpgradeModalPricing() {
     if (btnLifetime) {
       btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime" style="color:#ffffff;font-weight:700">RM 22</span>`;
     }
-    if (eduCard) eduCard.style.display = 'none';
+    if (educatorPriceEl) {
+      educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">RM 12</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-left:4px">RM 24</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.49)</span>`;
+    }
+    if (eduPerMoBadge) {
+      eduPerMoBadge.textContent = '~RM 1/mo';
+    }
+    if (btnEdu) {
+      btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#ffffff;font-weight:700">RM 12</span>/yr`;
+    }
+    if (eduCard) eduCard.style.display = (_billing && _billing.educatorAvailable === false) ? 'none' : '';
   } else if (country === 'ID') {
     if (dealPill) {
-      dealPill.innerHTML = `<span>🇮🇩 Indonesia Special: Rp 78.000 IDR Lifetime Pass (QRIS)</span>`;
+      dealPill.innerHTML = `<span>🇮🇩 Indonesia Special: Rp 78.000 IDR Lifetime · Rp 39.000/yr Educator</span>`;
       dealPill.style.background = 'rgba(74,222,128,.16)';
       dealPill.style.borderColor = 'rgba(74,222,128,.4)';
       dealPill.style.color = '#4ade80';
@@ -6830,7 +6857,16 @@ function updateUpgradeModalPricing() {
     if (btnLifetime) {
       btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime" style="color:#ffffff;font-weight:700">Rp 78.000</span>`;
     }
-    if (eduCard) eduCard.style.display = 'none';
+    if (educatorPriceEl) {
+      educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">Rp 39.000</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-left:4px">Rp 78.000</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.49)</span>`;
+    }
+    if (eduPerMoBadge) {
+      eduPerMoBadge.textContent = '~Rp 3.250/mo';
+    }
+    if (btnEdu) {
+      btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#ffffff;font-weight:700">Rp 39.000</span>/yr`;
+    }
+    if (eduCard) eduCard.style.display = (_billing && _billing.educatorAvailable === false) ? 'none' : '';
   } else {
     if (eduCard) eduCard.style.display = (_billing && _billing.educatorAvailable === false) ? 'none' : '';
   }

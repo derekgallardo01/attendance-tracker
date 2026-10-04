@@ -76,7 +76,7 @@ describe('Regional payment rails — PHP, MYR, IDR, IN', () => {
           },
           quantity: 1,
         }],
-        payment_method_types: ['card', 'gcash', 'grabpay', 'paymaya'],
+        automatic_payment_methods: { enabled: true },
         metadata: expect.objectContaining({
           country: 'PH',
           currency: 'php',
@@ -105,7 +105,7 @@ describe('Regional payment rails — PHP, MYR, IDR, IN', () => {
           },
           quantity: 1,
         }],
-        payment_method_types: ['card', 'fpx', 'grabpay'],
+        automatic_payment_methods: { enabled: true },
         metadata: expect.objectContaining({
           country: 'MY',
           currency: 'myr',
@@ -133,7 +133,7 @@ describe('Regional payment rails — PHP, MYR, IDR, IN', () => {
           },
           quantity: 1,
         }],
-        payment_method_types: ['card', 'qris'],
+        automatic_payment_methods: { enabled: true },
         metadata: expect.objectContaining({
           country: 'ID',
           currency: 'idr',
@@ -156,33 +156,35 @@ describe('Regional payment rails — PHP, MYR, IDR, IN', () => {
     expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
       expect.objectContaining({
         line_items: [{ price: 'price_php_env_123', quantity: 1 }],
-        payment_method_types: ['card', 'gcash', 'grabpay', 'paymaya'],
+        automatic_payment_methods: { enabled: true },
       })
     );
   });
 
-  test('GET /billing/status returns localized prices and disables educator for PH, MY, ID', async () => {
+  test('GET /billing/status returns localized prices and enables educator for PH, MY, ID', async () => {
     const resPH = await request(app)
       .get('/api/billing/status')
       .set(authedHeader('user@ph.edu', 'ph.edu'))
       .set('cf-ipcountry', 'PH');
     expect(resPH.body.pricing.lifetime.label).toBe('₱280');
-    expect(resPH.body.pricing.educator).toBeNull();
-    expect(resPH.body.educatorAvailable).toBe(false);
+    expect(resPH.body.pricing.educator.label).toBe('₱140/yr');
+    expect(resPH.body.educatorAvailable).toBe(true);
 
     const resMY = await request(app)
       .get('/api/billing/status')
       .set(authedHeader('user@my.edu', 'my.edu'))
       .set('cf-ipcountry', 'MY');
     expect(resMY.body.pricing.lifetime.label).toBe('RM 22');
-    expect(resMY.body.educatorAvailable).toBe(false);
+    expect(resMY.body.pricing.educator.label).toBe('RM 12/yr');
+    expect(resMY.body.educatorAvailable).toBe(true);
 
     const resID = await request(app)
       .get('/api/billing/status')
       .set(authedHeader('user@id.edu', 'id.edu'))
       .set('cf-ipcountry', 'ID');
     expect(resID.body.pricing.lifetime.label).toBe('Rp 78.000');
-    expect(resID.body.educatorAvailable).toBe(false);
+    expect(resID.body.pricing.educator.label).toBe('Rp 39.000/yr');
+    expect(resID.body.educatorAvailable).toBe(true);
   });
 
   test('POST /billing/create-checkout-session alias routes successfully', async () => {
@@ -214,7 +216,7 @@ describe('Regional payment rails — PHP, MYR, IDR, IN', () => {
           },
           quantity: 1,
         }],
-        payment_method_types: ['card', 'qris'],
+        automatic_payment_methods: { enabled: true },
       })
     );
   });

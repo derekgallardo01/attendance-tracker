@@ -12,6 +12,7 @@ const PPP_COUNTRIES = new Set([
   'PH', 'IN', 'ID', 'MY', 'NG', 'VN', 'PK', 'BD', 'KE', 'ZA', 'BR', 'CO', 'PE',
   'UA', 'GH', 'EG', 'TH', 'TR', 'AR', 'LK',
   'MX', 'CL', 'TN', 'SO', 'EC', 'BO', 'GT', 'MA', 'DZ', 'ZM', 'KZ',
+  'RO', 'HN', 'SV', 'NI', 'BG', 'PY',
 ]);
 
 const PPP_FLAGS = {
@@ -19,7 +20,9 @@ const PPP_FLAGS = {
   KE: '🇰🇪', ZA: '🇿🇦', BR: '🇧🇷', CO: '🇨🇴', PE: '🇵🇪', UA: '🇺🇦', GH: '🇬🇭', EG: '🇪🇬',
   TH: '🇹🇭', TR: '🇹🇷', AR: '🇦🇷', LK: '🇱🇰', MX: '🇲🇽', CL: '🇨🇱', TN: '🇹🇳', SO: '🇸🇴',
   EC: '🇪🇨', BO: '🇧🇴', GT: '🇬🇹', MA: '🇲🇦', DZ: '🇩🇿', ZM: '🇿🇲', KZ: '🇰🇿',
+  RO: '🇷🇴', HN: '🇭🇳', SV: '🇸🇻', NI: '🇳🇮', BG: '🇧🇬', PY: '🇵🇾',
 };
+
 
 const { getClientIp, lookupGeo } = require('../lib/geoip');
 
@@ -159,16 +162,16 @@ router.post(['/billing/checkout', '/billing/create-checkout-session'], requireAu
       : (userCountry === 'ID'
         ? process.env.STRIPE_INDIVIDUAL_LIFETIME_IDR_PRICE_ID
         : null));
-  const isRegionalTarget = isRegional && (isLifetime || isEducator || individual) && !isSingleMeeting && !isDomainPlan;
+  const isRegionalTarget = isRegional && !isEducator && (isLifetime || individual) && !isSingleMeeting && !isDomainPlan;
 
   const priceId = isSingleMeeting
     ? (process.env.STRIPE_SINGLE_MEETING_PRICE_ID || 'price_1ULk3CRPP93YBXrOlYO6xpWk')
-    : ((isIndia && (isLifetime || isEducator || individual))
-      ? getInrPrices().lifetime
-      : (isRegionalTarget
-        ? (regionalPriceEnv || process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID || (individualBillingConfigured() ? 'price_regional_dynamic' : null))
-        : (isEducator
-          ? process.env.STRIPE_EDUCATOR_PRICE_ID // no fallback: educator ($4.99/yr) and individual-annual are DIFFERENT products at different amounts
+    : (isEducator
+      ? process.env.STRIPE_EDUCATOR_PRICE_ID // no fallback: educator ($4.99/yr) and individual-annual are DIFFERENT products at different amounts
+      : ((isIndia && (isLifetime || individual))
+        ? getInrPrices().lifetime
+        : (isRegionalTarget
+          ? (regionalPriceEnv || process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID || (individualBillingConfigured() ? 'price_regional_dynamic' : null))
           : (isLifetime
             ? process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID
             : (isDepartment
@@ -186,7 +189,7 @@ router.post(['/billing/checkout', '/billing/create-checkout-session'], requireAu
     // `plan` in metadata: the refund/dispute handler routes on it, and it
     // rides payment_intent_data so one-time charges carry it end-to-end.
     let planName = normalizedPlan || (individual ? 'individual' : 'team');
-    if (((isIndia || isRegionalTarget) && (isLifetime || isEducator || individual)) && !isSingleMeeting) {
+    if ((isIndia || isRegionalTarget) && isLifetime && !isSingleMeeting) {
       planName = 'lifetime';
     }
     const meta = individual
@@ -204,15 +207,12 @@ router.post(['/billing/checkout', '/billing/create-checkout-session'], requireAu
     const backTo = individual ? 'history.html' : 'team.html';
 
     // In India and regional markets (PH, MY, ID), cross-border recurring USD subscriptions
-    // hit banking friction / e-mandate blocks. Route all individual/educator/lifetime checkouts
-    // to the one-time Lifetime Pass with localized payment rails (UPI, GCash/Maya, FPX, QRIS).
+    // hit banking friction / e-mandate blocks. Route all individual/lifetime checkouts
+    // to the one-time Lifetime Pass with localized payment rails.
     let resolvedPriceId = sanitizePriceId(priceId);
-    let paymentMethodTypes = (isIndia && (isLifetime || isEducator || individual) && !isSingleMeeting)
-      ? ['card', 'upi']
-      : (isRegionalTarget ? regionalConfig.methods : null);
-    let isRecurring = !isLifetime && !isSingleMeeting && !(isIndia && (isLifetime || isEducator || individual)) && !isRegionalTarget;
+    let isRecurring = !isLifetime && !isSingleMeeting && !(isIndia && !isEducator && (isLifetime || individual)) && !isRegionalTarget;
 
-    if (isLifetime || isSingleMeeting || (isIndia && (isLifetime || isEducator || individual)) || isRegionalTarget) {
+    if (isLifetime || isSingleMeeting || (isIndia && !isEducator && (isLifetime || individual)) || isRegionalTarget) {
       isRecurring = false;
     } else if (stripe.prices && typeof stripe.prices.retrieve === 'function') {
       try {
@@ -253,13 +253,13 @@ router.post(['/billing/checkout', '/billing/create-checkout-session'], requireAu
       // Stripe emails the buyer a link to finish — recovering the highest-intent
       // non-payers (they already reached checkout).
       after_expiration: { recovery: { enabled: true } },
-      ...(paymentMethodTypes ? { payment_method_types: paymentMethodTypes } : {}),
+      automatic_payment_methods: { enabled: true },
     };
     if (promo && promo !== 'LAUNCH50') {
       sessionParams.allow_promotion_codes = true;
-    } else if (isPppEligible && !isIndia && !isRegionalTarget) {
+    } else if (isPppEligible && (isEducator || (!isIndia && !isRegionalTarget))) {
       // For India and regional currencies, dedicated INR/PHP/MYR/IDR prices already reflect the subsidized PPP price.
-      // Keeping discounts empty preserves local currency and unlocks regional payment rails.
+      // Educator in PPP countries receives PPP50 discount coupon for $2.49/yr pricing.
       sessionParams.discounts = [{ coupon: 'PPP50' }];
     }
     if (isRecurring) {
@@ -271,7 +271,7 @@ router.post(['/billing/checkout', '/billing/create-checkout-session'], requireAu
       // payment history) 404s for one-time buyers. Always create one.
       sessionParams.customer_creation = 'always';
     }
-    if (isEducator && !isRecurring && !isIndia && !isRegionalTarget) {
+    if (isEducator && !isRecurring) {
       // The educator plan is sold as an ANNUAL pass — a one-time price never
       // renews (and never emits subscription webhooks), so a misconfigured
       // STRIPE_EDUCATOR_PRICE_ID silently turns annual revenue into lifetime.
@@ -280,6 +280,7 @@ router.post(['/billing/checkout', '/billing/create-checkout-session'], requireAu
       log.error('billing: educator price is one-time, not recurring — refusing checkout', { priceId: resolvedPriceId });
       return res.status(503).json({ error: 'The educator plan is temporarily unavailable.' });
     }
+
 
     const session = await stripe.checkout.sessions.create(sessionParams);
     res.json({ url: session.url });
@@ -560,26 +561,23 @@ router.post('/billing/public-checkout', async (req, res) => {
       : (userCountry === 'ID'
         ? process.env.STRIPE_INDIVIDUAL_LIFETIME_IDR_PRICE_ID
         : null));
-  const isRegionalTarget = !isDomain && isRegional;
+  const isRegionalTarget = !isDomain && isRegional && !isEducator;
 
   let resolvedPriceId = sanitizePriceId(priceId);
-  let paymentMethodTypes = null;
-  if (!isDomain) {
+  if (!isDomain && !isEducator) {
     if (isIndia) {
       const inrPrices = getInrPrices();
       resolvedPriceId = inrPrices.lifetime;
-      paymentMethodTypes = ['card', 'upi'];
     } else if (regionalConfig) {
       if (regionalPriceEnv) {
         resolvedPriceId = sanitizePriceId(regionalPriceEnv);
       }
-      paymentMethodTypes = regionalConfig.methods;
     }
   }
 
   try {
-    let isRecurring = plan !== 'lifetime' && !(!isDomain && (isIndia || isRegionalTarget));
-    if (plan === 'lifetime' || (!isDomain && (isIndia || isRegionalTarget))) {
+    let isRecurring = plan !== 'lifetime' && !(!isDomain && !isEducator && (isIndia || isRegionalTarget));
+    if (plan === 'lifetime' || (!isDomain && !isEducator && (isIndia || isRegionalTarget))) {
       isRecurring = false;
     } else if (stripe.prices && typeof stripe.prices.retrieve === 'function') {
       try {
@@ -592,7 +590,7 @@ router.post('/billing/public-checkout', async (req, res) => {
 
     const meta = {
       individual: isDomain ? '0' : '1',
-      plan: (!isDomain && (isIndia || isRegionalTarget)) ? 'lifetime' : plan,
+      plan: (!isDomain && !isEducator && (isIndia || isRegionalTarget)) ? 'lifetime' : plan,
       source: 'public_pricing',
       ...(email ? { email } : {}),
       // Stamp the domain for domain purchases so the webhook can provision even
@@ -607,6 +605,7 @@ router.post('/billing/public-checkout', async (req, res) => {
     // present local currency + rails to PPP buyers. See the authed checkout
     // above for the full rationale. Ignore a stale LAUNCH50 from cached clients.
     const promo = (req.body?.promo ?? '').trim().toUpperCase();
+    const isPppEligible = !promo && userCountry && PPP_COUNTRIES.has(userCountry);
 
     const lineItems = (isRegionalTarget && !regionalPriceEnv)
       ? [{
@@ -627,7 +626,7 @@ router.post('/billing/public-checkout', async (req, res) => {
       metadata: meta,
       // Abandoned-checkout recovery (see authed checkout above for rationale).
       after_expiration: { recovery: { enabled: true } },
-      ...(paymentMethodTypes ? { payment_method_types: paymentMethodTypes } : {}),
+      automatic_payment_methods: { enabled: true },
     };
     if (email) {
       // Deliberately NOT prefilled as customer_email: this endpoint is
@@ -641,6 +640,8 @@ router.post('/billing/public-checkout', async (req, res) => {
     }
     if (promo && promo !== 'LAUNCH50') {
       sessionParams.allow_promotion_codes = true;
+    } else if (isPppEligible && (isEducator || (!isIndia && !isRegionalTarget))) {
+      sessionParams.discounts = [{ coupon: 'PPP50' }];
     }
     if (isRecurring) {
       sessionParams.subscription_data = { metadata: meta };
@@ -650,7 +651,7 @@ router.post('/billing/public-checkout', async (req, res) => {
       // customer so the buyer's portal (receipts) works post-purchase.
       sessionParams.customer_creation = 'always';
     }
-    if (isEducator && !isRecurring && !isIndia && !isRegionalTarget) {
+    if (isEducator && !isRecurring) {
       // Same fail-closed rule as the authed checkout: a one-time educator price
       // silently converts annual revenue into a lifetime pass.
       log.error('billing: educator price is one-time, not recurring — refusing public checkout', { priceId: resolvedPriceId });
@@ -980,7 +981,7 @@ router.get('/billing/status', requireAuth, async (req, res) => {
       meetingUnlocked,
       billingConfigured: individual ? individualBillingConfigured() : billingConfigured(),
       annualAvailable,
-      educatorAvailable: (userCountry === 'IN' || (PRICING.REGIONAL_PRICING && PRICING.REGIONAL_PRICING[userCountry])) ? false : !!process.env.STRIPE_EDUCATOR_PRICE_ID,
+      educatorAvailable: !!process.env.STRIPE_EDUCATOR_PRICE_ID,
       exportQuota,
       pppDiscount,
       country: userCountry || null,
@@ -997,10 +998,10 @@ router.get('/billing/status', requireAuth, async (req, res) => {
         ...PRICING.PRICES,
         ...(userCountry === 'IN' ? {
           lifetime: { label: '₹299', full: null, period: 'one-time' },
-          educator: null,
+          educator: { label: PRICING.REGIONAL_PRICING?.IN?.eduLabel || '₹199/yr', full: null, period: '/yr' },
         } : ((PRICING.REGIONAL_PRICING && PRICING.REGIONAL_PRICING[userCountry]) ? {
           lifetime: { label: PRICING.REGIONAL_PRICING[userCountry].label, full: null, period: 'one-time' },
-          educator: null,
+          educator: { label: PRICING.REGIONAL_PRICING[userCountry].eduLabel || '$2.49/yr', full: null, period: '/yr' },
         } : {})),
         quotaLimit: PRICING.FREE_MONTHLY_EXPORT_LIMIT,
       },

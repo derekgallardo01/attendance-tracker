@@ -10,21 +10,16 @@
   let _classroomCourses = [];
   let _canvasCourses = [];
 
-  function t(key, fallback) {
-    if (typeof root.t === 'function') {
-      const val = root.t(key);
-      if (val && val !== key) return val;
-    }
-    return fallback;
+  const HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, (c) => HTML_ESCAPES[c]);
   }
 
-  function esc(str) {
-    if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+  function t(key, fallback) {
+    if (typeof root.t === 'function') {
+      return root.t(key, fallback);
+    }
+    return fallback;
   }
 
   function ensureModalElement() {
@@ -169,7 +164,6 @@
 
   function showStatus(msg, type = 'info') {
     const box = document.getElementById('lms-sync-status-box');
-    if (!box) return;
     box.style.display = 'block';
     if (type === 'error') {
       box.style.background = 'rgba(248,81,73,.12)';
@@ -189,12 +183,12 @@
 
   function clearStatus() {
     const box = document.getElementById('lms-sync-status-box');
-    if (box) box.style.display = 'none';
+    box.style.display = 'none';
   }
 
   function getBackendUrl() {
     if (_activeContext && typeof _activeContext.getBackendUrl === 'function') {
-      return _activeContext.getBackendUrl() || '/api';
+      return _activeContext.getBackendUrl();
     }
     if (typeof root.state !== 'undefined' && root.state.backendUrl) {
       return root.state.backendUrl;
@@ -204,7 +198,7 @@
 
   function getAuthToken() {
     if (_activeContext && typeof _activeContext.getAuthToken === 'function') {
-      return _activeContext.getAuthToken() || '';
+      return _activeContext.getAuthToken();
     }
     if (typeof root.state !== 'undefined' && root.state.sessionToken) {
       return root.state.sessionToken;
@@ -215,10 +209,10 @@
   async function apiFetch(endpoint, opts = {}) {
     const baseUrl = getBackendUrl();
     const token = getAuthToken();
-    const headers = Object.assign({}, opts.headers || {});
+    const headers = Object.assign({}, opts.headers);
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    const url = endpoint.startsWith('http') ? endpoint : `${baseUrl.replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;
+    const url = `${baseUrl.replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;
     return fetch(url, { ...opts, headers });
   }
 
@@ -303,19 +297,15 @@
         const data = await res.json();
 
         if (res.status === 401 && data.code === 'AUTH_EXPIRED') {
-          if (authBox) {
-            authBox.style.display = 'block';
-            document.getElementById('lms-classroom-auth-msg').textContent = t('roster.classroomSignIn', 'Sign in with Google first, then try again.');
-          }
+          authBox.style.display = 'block';
+          document.getElementById('lms-classroom-auth-msg').textContent = t('roster.classroomSignIn', 'Sign in with Google first, then try again.');
           sel.innerHTML = '<option value="">(Session expired)</option>';
           return;
         }
 
         if (res.status === 403 || data.scopeMissing) {
-          if (authBox) {
-            authBox.style.display = 'block';
-            document.getElementById('lms-classroom-auth-msg').textContent = t('lms.reconsent', 'Classroom write permission required. Click here to approve.');
-          }
+          authBox.style.display = 'block';
+          document.getElementById('lms-classroom-auth-msg').textContent = t('lms.reconsent', 'Classroom write permission required. Click here to approve.');
           sel.innerHTML = '<option value="">(Permission required)</option>';
           return;
         }
@@ -349,7 +339,6 @@
     async onClassroomCourseChanged() {
       const courseSel = document.getElementById('lms-classroom-course-select');
       const assignSel = document.getElementById('lms-classroom-assignment-select');
-      if (!courseSel || !assignSel) return;
       const courseId = courseSel.value;
       if (!courseId) return;
 
@@ -364,10 +353,8 @@
 
         if (res.status === 403 || data.scopeMissing) {
           const authBox = document.getElementById('lms-classroom-auth-box');
-          if (authBox) {
-            authBox.style.display = 'block';
-            document.getElementById('lms-classroom-auth-msg').textContent = t('lms.reconsent', 'Classroom write permission required. Click here to approve.');
-          }
+          authBox.style.display = 'block';
+          document.getElementById('lms-classroom-auth-msg').textContent = t('lms.reconsent', 'Classroom write permission required. Click here to approve.');
         }
 
         if (!res.ok) {
@@ -392,14 +379,13 @@
       const assignSel = document.getElementById('lms-classroom-assignment-select');
       const newFields = document.getElementById('lms-classroom-new-fields');
       const maxPtsInput = document.getElementById('lms-classroom-max-points');
-      if (!assignSel || !newFields) return;
 
       if (assignSel.value === '__new__') {
         newFields.style.display = 'block';
       } else {
         newFields.style.display = 'none';
         const opt = assignSel.options[assignSel.selectedIndex];
-        if (opt && opt.dataset.points && maxPtsInput) {
+        if (opt && opt.dataset.points) {
           maxPtsInput.value = opt.dataset.points;
         }
       }
@@ -411,10 +397,10 @@
         const data = await res.json();
         if (data.instanceUrl) {
           const urlInput = document.getElementById('lms-canvas-url');
-          if (urlInput && !urlInput.value) urlInput.value = data.instanceUrl;
+          if (!urlInput.value) urlInput.value = data.instanceUrl;
         }
         if (data.configured) {
-          this.loadCanvasCourses();
+          await this.loadCanvasCourses();
         }
       } catch (e) {}
     },
@@ -423,10 +409,9 @@
       const urlInput = document.getElementById('lms-canvas-url');
       const tokenInput = document.getElementById('lms-canvas-token');
       const courseSel = document.getElementById('lms-canvas-course-select');
-      if (!courseSel) return;
 
-      const instanceUrl = urlInput ? urlInput.value.trim() : '';
-      const token = tokenInput ? tokenInput.value.trim() : '';
+      const instanceUrl = urlInput.value.trim();
+      const token = tokenInput.value.trim();
 
       courseSel.innerHTML = `<option value="">${esc(t('lms.loadingCourses', 'Loading courses…'))}</option>`;
       clearStatus();
@@ -455,7 +440,7 @@
           <option value="${esc(c.id)}">${esc(c.name)}${c.courseCode ? ` (${esc(c.courseCode)})` : ''}</option>
         `).join('');
 
-        this.onCanvasCourseChanged();
+        await this.onCanvasCourseChanged();
       } catch (err) {
         showStatus(`Canvas connection error: ${err.message}`, 'error');
         courseSel.innerHTML = '<option value="">(Connection failed)</option>';
@@ -467,7 +452,6 @@
       const assignSel = document.getElementById('lms-canvas-assignment-select');
       const urlInput = document.getElementById('lms-canvas-url');
       const tokenInput = document.getElementById('lms-canvas-token');
-      if (!courseSel || !assignSel) return;
       const courseId = courseSel.value;
       if (!courseId) return;
 
@@ -478,8 +462,8 @@
 
       try {
         const headers = {};
-        if (urlInput?.value) headers['x-canvas-url'] = urlInput.value.trim();
-        if (tokenInput?.value) headers['x-canvas-token'] = tokenInput.value.trim();
+        if (urlInput.value) headers['x-canvas-url'] = urlInput.value.trim();
+        if (tokenInput.value) headers['x-canvas-token'] = tokenInput.value.trim();
 
         const res = await apiFetch(`canvas/courses/${encodeURIComponent(courseId)}/assignments`, { headers });
         const data = await res.json();
@@ -506,14 +490,13 @@
       const assignSel = document.getElementById('lms-canvas-assignment-select');
       const newFields = document.getElementById('lms-canvas-new-fields');
       const maxPtsInput = document.getElementById('lms-canvas-max-points');
-      if (!assignSel || !newFields) return;
 
       if (assignSel.value === '__new__') {
         newFields.style.display = 'block';
       } else {
         newFields.style.display = 'none';
         const opt = assignSel.options[assignSel.selectedIndex];
-        if (opt && opt.dataset.points && maxPtsInput) {
+        if (opt && opt.dataset.points) {
           maxPtsInput.value = opt.dataset.points;
         }
       }
@@ -522,13 +505,12 @@
     async pushGrades() {
       const pushBtn = document.getElementById('btn-lms-push-action');
       const pushLabel = document.getElementById('btn-lms-push-label');
-      if (!pushBtn) return;
 
       const records = typeof _activeContext?.getRecords === 'function'
         ? _activeContext.getRecords()
         : (_activeContext?.records || []);
 
-      if (!records || records.length === 0) {
+      if (records.length === 0) {
         showStatus(t('lms.noAttendees', 'No meeting attendees available to sync.'), 'error');
         return;
       }
@@ -544,10 +526,10 @@
           const newTitle = document.getElementById('lms-classroom-new-title');
           const maxPtsInput = document.getElementById('lms-classroom-max-points');
 
-          const courseId = courseSel ? courseSel.value : '';
-          const courseWorkId = assignSel ? assignSel.value : '__new__';
-          const maxPoints = parseInt(maxPtsInput?.value || '100', 10) || 100;
-          const title = newTitle?.value.trim() || 'Meeting Attendance';
+          const courseId = courseSel.value;
+          const courseWorkId = assignSel.value;
+          const maxPoints = parseInt(maxPtsInput.value, 10) || 100;
+          const title = newTitle.value.trim() || 'Meeting Attendance';
 
           if (!courseId) {
             throw new Error('Please select a Classroom course.');
@@ -601,13 +583,13 @@
           const newTitle = document.getElementById('lms-canvas-new-title');
           const maxPtsInput = document.getElementById('lms-canvas-max-points');
 
-          const instanceUrl = urlInput ? urlInput.value.trim() : '';
-          const token = tokenInput ? tokenInput.value.trim() : '';
-          const saveToken = saveCheckbox ? saveCheckbox.checked : false;
-          const courseId = courseSel ? courseSel.value : '';
-          const assignmentId = assignSel ? assignSel.value : '__new__';
-          const maxPoints = parseInt(maxPtsInput?.value || '100', 10) || 100;
-          const title = newTitle?.value.trim() || 'Meeting Attendance';
+          const instanceUrl = urlInput.value.trim();
+          const token = tokenInput.value.trim();
+          const saveToken = saveCheckbox.checked;
+          const courseId = courseSel.value;
+          const assignmentId = assignSel.value;
+          const maxPoints = parseInt(maxPtsInput.value, 10) || 100;
+          const title = newTitle.value.trim() || 'Meeting Attendance';
 
           if (!courseId) {
             throw new Error('Please select a Canvas course.');

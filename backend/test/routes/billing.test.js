@@ -1252,7 +1252,7 @@ describe('billing/status pricing payload', () => {
     expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
       expect.objectContaining({
         line_items: [{ price: 'price_inr_life_399', quantity: 1 }],
-        payment_method_types: ['card', 'upi'],
+        automatic_payment_methods: { enabled: true },
       })
     );
     expect(mockStripeInstance.checkout.sessions.create).not.toHaveBeenCalledWith(
@@ -1263,7 +1263,7 @@ describe('billing/status pricing payload', () => {
     delete process.env.STRIPE_INDIVIDUAL_LIFETIME_INR_PRICE_ID;
   });
 
-  test('checkout for user in India (IN) requesting educator plan routes to INR lifetime price and mode: payment (killing recurring subs)', async () => {
+  test('checkout for user in India (IN) requesting educator plan routes to educator price with PPP50 discount and automatic payment methods', async () => {
     process.env.STRIPE_SECRET_KEY = 'sk_test_x';
     process.env.STRIPE_EDUCATOR_PRICE_ID = 'price_edu_usd';
     process.env.STRIPE_INDIVIDUAL_LIFETIME_INR_PRICE_ID = 'price_inr_life_299';
@@ -1276,9 +1276,10 @@ describe('billing/status pricing payload', () => {
     expect(res.status).toBe(200);
     expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        mode: 'payment',
-        line_items: [{ price: 'price_inr_life_299', quantity: 1 }],
-        payment_method_types: ['card', 'upi'],
+        mode: 'subscription',
+        line_items: [{ price: 'price_edu_usd', quantity: 1 }],
+        automatic_payment_methods: { enabled: true },
+        discounts: [{ coupon: 'PPP50' }],
       })
     );
     delete process.env.STRIPE_INDIVIDUAL_LIFETIME_INR_PRICE_ID;
@@ -1293,8 +1294,8 @@ describe('billing/status pricing payload', () => {
       .set('cf-ipcountry', 'IN');
     expect(res.status).toBe(200);
     expect(res.body.pricing.lifetime.label).toBe('₹299');
-    expect(res.body.pricing.educator).toBeNull();
-    expect(res.body.educatorAvailable).toBe(false);
+    expect(res.body.pricing.educator.label).toBe('₹199/yr');
+    expect(res.body.educatorAvailable).toBe(true);
   });
 
   test('GET /billing/status includes trialInfo when user has autoExport trial started', async () => {

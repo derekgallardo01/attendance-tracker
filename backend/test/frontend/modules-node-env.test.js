@@ -24,8 +24,10 @@ test('modules load and export in a non-browser (no window) environment', () => {
   const panel = require(path.join(jsDir, 'panel.js'));
   const simMod = require(path.join(jsDir, 'sim.js'));
   const pricingMod = require(path.join(jsDir, 'pricing.js'));
+  const lmsSync = require(path.join(jsDir, 'lms-sync.js'));
   expect(typeof utils.escHtml).toBe('function');
   expect(typeof pricingMod.price).toBe('function');
+  expect(typeof lmsSync.openModal).toBe('function');
   expect(typeof api.authedFetch).toBe('function');
   expect(typeof strings.t === 'function' || typeof strings.setLocale === 'function').toBe(true);
   expect(typeof share.computeRange).toBe('function');
