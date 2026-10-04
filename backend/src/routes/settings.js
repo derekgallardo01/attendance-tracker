@@ -73,6 +73,9 @@ router.get('/settings', requireAuth, async (req, res) => {
       out[`${base}Configured`] = !!settings[p.field];
       out[`${base}Masked`] = maskForApi(settings[p.field], p.mask);
     }
+    out.canvasConfigured = !!(settings.canvasInstanceUrl && settings.canvasToken);
+    out.canvasInstanceUrl = settings.canvasInstanceUrl || null;
+    out.canvasTokenMasked = settings.canvasToken ? ('••••' + String(settings.canvasToken).slice(-4)) : null;
     res.json(out);
   } catch (err) {
     log.error('settings: get failed', { email: req.user.email, error: err.message });
@@ -176,6 +179,34 @@ router.put('/settings', requireAuth, async (req, res) => {
       }
     }
     patch.notificationPreferences = sanitized;
+  }
+  if ('canvasInstanceUrl' in body) {
+    const ciu = body.canvasInstanceUrl;
+    if (ciu === null || ciu === '') {
+      patch.canvasInstanceUrl = null;
+    } else if (typeof ciu === 'string') {
+      const trimmed = ciu.trim();
+      try {
+        const u = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
+        if (u.protocol !== 'http:' && u.protocol !== 'https:') throw new Error();
+        if (!u.hostname) throw new Error();
+        patch.canvasInstanceUrl = u.origin;
+      } catch {
+        return res.status(400).json({ error: 'canvasInstanceUrl must be a valid http or https URL.' });
+      }
+    } else {
+      return res.status(400).json({ error: 'canvasInstanceUrl must be a string or null.' });
+    }
+  }
+  if ('canvasToken' in body) {
+    const ct = body.canvasToken;
+    if (ct === null || ct === '') {
+      patch.canvasToken = null;
+    } else if (typeof ct === 'string') {
+      patch.canvasToken = ct.trim();
+    } else {
+      return res.status(400).json({ error: 'canvasToken must be a string or null.' });
+    }
   }
 
   const hasEmailOptOut = 'emailOptOut' in body;

@@ -590,6 +590,9 @@ describe('no "wired but English-valued" keys (translation-content guard)', () =>
     key === 'lp2_plan_school_price' ||       // "From $59" price amount
     key === 'lp2_sheet_th_min' ||            // "Min" table column abbreviation for duration in minutes
     key === 'btn.exportExcel' ||             // "Excel" — Microsoft Excel product brand name
+    key === 'lms.providerClassroom' ||       // "Google Classroom" brand name
+    key === 'lms.providerCanvas' ||          // "Canvas LMS" brand name
+    key === 'lms.canvasInstancePlaceholder' || // "https://canvas.instructure.com" example URL
     key === 'lp2_sheet_th_status';           // "Status" column header identical in English, German, Dutch, Nordic, Polish, etc.
 
   test('every non-allowlisted key is translated (not English-valued) in the locales', () => {

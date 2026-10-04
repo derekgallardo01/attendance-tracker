@@ -102,6 +102,7 @@ const MIRRORED = [
   'js/panel.js',
   'js/sim.js',
   'js/pricing.js',
+  'js/lms-sync.js',
   'pwa-install.js',
   // PWA assets referenced by absolute path from index.html — without these the
   // Cloud Run copy 404s the manifest/service-worker (errors are swallowed,

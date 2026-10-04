@@ -95,6 +95,7 @@
   <script src="js/sim.js"></script>
   <!-- i18n foundation — provides window.t() for user-facing strings across 42 locales. -->
   <script src="js/strings.js"></script>
+  <script src="js/lms-sync.js"></script>
   <script>
     // Resilience fallback: if external helper scripts fail to load (offline, network hiccup,
     // proxy filter, crawler), guarantee baseline globals so execution never halts on ReferenceError.
@@ -2901,6 +2902,10 @@
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
       <span id="btn-excel-label" data-i18n="btn.exportExcel">Excel</span>
     </button>
+    <button class="btn-secondary" id="btn-lms-sync" onclick="openLmsSyncModal()" disabled data-i18n-title="lms.syncBtn" title="Sync Grades to LMS">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      <span id="btn-lms-sync-label">LMS</span>
+    </button>
   </div>
 
   <!-- ── Export Quota Indicator (Free tier) ── -->
@@ -2946,6 +2951,10 @@
       <a href="#" onclick="downloadCertificates(); return false;" class="sheet-chip" style="display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#c9d1d9;font-size:10.5px;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap;transition:all .15s ease" title="Generate verifiable student attendance certificates (Educator Pro)"><span data-i18n="bar.certificates">Certificates</span><span style="background:rgba(253,214,99,.18);border:1px solid rgba(253,214,99,.4);color:#fdd663;font-size:8.5px;font-weight:700;padding:0 4px;border-radius:3px;line-height:1.2" data-i18n="badge.pro">Pro</span></a>
       <a href="#" onclick="downloadLmsCsv('moodle'); return false;" class="sheet-chip" data-i18n-title="tip.moodleCsv" title="Gradebook CSV for Moodle import" style="display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#8b949e;font-size:10.5px;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap;transition:all .15s ease">Moodle</a>
       <a href="#" onclick="downloadLmsCsv('canvas'); return false;" class="sheet-chip" data-i18n-title="tip.canvasCsv" title="Gradebook CSV for Canvas import" style="display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#8b949e;font-size:10.5px;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap;transition:all .15s ease">Canvas</a>
+      <a href="#" onclick="openLmsSyncModal(); return false;" class="sheet-chip" style="display:inline-flex;align-items:center;gap:4px;background:rgba(88,166,255,.14);border:1px solid rgba(88,166,255,.35);color:#58a6ff;font-size:10.5px;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap;font-weight:600;transition:all .15s ease" data-i18n-title="lms.syncBtn" title="Sync Grades to Google Classroom or Canvas">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        <span data-i18n="lms.syncBtn">Sync to LMS</span>
+      </a>
     </div>
   </div>
   <!-- One-off → recurring tip: only for a NON-recurring meeting whose title was
@@ -3292,7 +3301,7 @@ const OAUTH_SCOPES = 'openid email profile https://www.googleapis.com/auth/calen
 // Optional scopes requested via incremental consent ONLY when the user clicks
 // "Import from Google Classroom" — never part of the base sign-in, so
 // non-teachers are never asked for Classroom access.
-const CLASSROOM_SCOPES = 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.rosters.readonly https://www.googleapis.com/auth/classroom.profile.emails';
+const CLASSROOM_SCOPES = 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.rosters.readonly https://www.googleapis.com/auth/classroom.profile.emails https://www.googleapis.com/auth/classroom.coursework.students';
 
 const state = {
   tracking:      false,
@@ -4200,6 +4209,45 @@ function downloadLmsCsv(format) {
   toast(t('toast.lmsCsvDownloaded', 'Downloaded {format} gradebook CSV').replace('{format}', format === 'canvas' ? 'Canvas' : 'Moodle'), 3000);
 }
 
+// 1-Click LMS Grade Sync Modal
+function openLmsSyncModal() {
+  if (typeof AttLmsSync === 'undefined' || !AttLmsSync.openModal) return;
+  const ctx = (typeof csvExportContext === 'function') ? csvExportContext() : {};
+  AttLmsSync.openModal({
+    meetingTitle: (ctx && ctx.meetingTitle) || state.meetingTitle || 'Google Meet',
+    meetingDate: (ctx && ctx.dateStr) || (typeof AttUtils !== 'undefined' ? AttUtils.datestamp(state.startTime || new Date()) : ''),
+    getRecords: () => {
+      const parts = Array.from(state.participants?.values() || []);
+      const activeRoster = (state.activeRosterName && state.rosters && state.rosters[state.activeRosterName]) || [];
+      if (activeRoster.length > 0 && typeof AttUtils !== 'undefined' && AttUtils.buildLmsGradebookRows) {
+        const rows = AttUtils.buildLmsGradebookRows(parts, activeRoster, {
+          meetingTitle: state.meetingTitle || 'Google Meet',
+          startTime: state.startTime,
+          now: new Date(),
+        });
+        return rows.map(r => ({
+          name: r.name,
+          email: (r.email || '').toLowerCase(),
+          points: typeof r.grade === 'number' ? r.grade : (r.grade === '' ? null : 0),
+          status: (typeof r.grade === 'number' && r.grade > 0) ? (r.grade >= 100 ? 'present' : 'late') : 'absent',
+        }));
+      }
+      return parts.map(p => {
+        const durMin = Math.round(((p._accumulatedMs || 0) + (p.present && p.joinTime ? (Date.now() - new Date(p.joinTime).getTime()) : 0)) / 60000);
+        const isLate = p.isLate || (p.joinTime && typeof AttUtils !== 'undefined' && AttUtils.latenessMin(state.startTime, p.joinTime) >= 5);
+        return {
+          name: p.displayName || p.name || '',
+          email: (p.email || '').toLowerCase(),
+          status: isLate ? 'late' : (p.present || durMin > 0 ? 'present' : 'absent'),
+          durationMin: durMin,
+        };
+      });
+    },
+    getAuthToken: () => state.sessionToken,
+    getBackendUrl: () => state.backendUrl,
+  });
+}
+
 /* ═══════════════════════════════════════════════════════════════
    STATE PERSISTENCE — survive panel refreshes via sessionStorage
 ═══════════════════════════════════════════════════════════════ */
@@ -4455,6 +4503,12 @@ async function handleAuthCode(response) {
     if (_pendingClassroomImport) {
       _pendingClassroomImport = false;
       importFromClassroom();
+    }
+
+    // Refresh LMS modal if open when re-consent completes
+    const lmsModal = document.getElementById('lms-sync-modal');
+    if (lmsModal && lmsModal.style.display !== 'none' && typeof AttLmsSync !== 'undefined' && AttLmsSync.loadClassroomCourses) {
+      AttLmsSync.loadClassroomCourses();
     }
   } catch (err) {
     console.error('Auth exchange failed:', err);
@@ -5221,6 +5275,8 @@ async function initSDK() {
       document.getElementById('btn-start').disabled = true;
       document.getElementById('btn-refresh').disabled = false;
       document.getElementById('btn-sheets').disabled = false;
+      const btnLms = document.getElementById('btn-lms-sync');
+      if (btnLms) btnLms.disabled = false;
       setStatus('active', `Tracking · ${state.participants.size} seen`);
       showSearchBar();
       startDurationTimer();
@@ -5341,6 +5397,8 @@ function startTracking() {
   if (btnCsv) btnCsv.disabled = false;
   const btnExcel = document.getElementById('btn-excel');
   if (btnExcel) btnExcel.disabled = false;
+  const btnLms = document.getElementById('btn-lms-sync');
+  if (btnLms) btnLms.disabled = false;
 
   setStatus('active', t('status.tracking', 'Tracking attendance…'));
   showSearchBar();
@@ -9354,6 +9412,11 @@ function updateTabCounts() {
     const hasData = state.participants.size > 0 || (state.activeRosterName && state.rosters && state.rosters[state.activeRosterName]?.length > 0);
     btnExcel.disabled = !hasData;
   }
+  const btnLmsSync = document.getElementById('btn-lms-sync');
+  if (btnLmsSync) {
+    const hasData = state.participants.size > 0 || (state.activeRosterName && state.rosters && state.rosters[state.activeRosterName]?.length > 0);
+    btnLmsSync.disabled = !hasData;
+  }
   // Re-render tabs if active
   if (_activeTab === 'roster') renderRosterView();
   if (_activeTab === 'invited') renderInvitedList();
@@ -9592,6 +9655,8 @@ function resetSimulation() {
   document.getElementById('btn-start').disabled = false;
   document.getElementById('btn-refresh').disabled = true;
   document.getElementById('btn-sheets').disabled = true;
+  const btnLms = document.getElementById('btn-lms-sync');
+  if (btnLms) btnLms.disabled = true;
   document.getElementById('meeting-title').textContent = 'Dev Preview Mode';
   document.getElementById('count-present').textContent = '—';
   document.getElementById('count-left').textContent = '—';
