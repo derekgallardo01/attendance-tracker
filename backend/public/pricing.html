@@ -518,6 +518,29 @@
       color: var(--text);
     }
 
+    /* Competitor Comparison Table */
+    .competitor-table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin: 28px 0;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+    }
+    .competitor-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.86rem;
+      min-width: 760px;
+      text-align: left;
+    }
+    .competitor-table tbody tr {
+      transition: background-color 0.15s ease;
+    }
+    .competitor-table tbody tr:hover {
+      background-color: rgba(255, 255, 255, 0.035);
+    }
+
     /* Legal Note */
     .pricing-fineprint {
       text-align: center;

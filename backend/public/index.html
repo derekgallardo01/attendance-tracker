@@ -177,7 +177,7 @@
             "name": "Free Tier",
             "price": "0",
             "priceCurrency": "USD",
-            "description": "5 exports per month (Sheets or CSV combined), real-time participant tracking, side panel attendance monitoring."
+            "description": "2 free Google Sheets cloud exports/mo + unlimited direct CSV & binary Excel (.xlsx) exports for classes up to 25 attendees, real-time participant tracking, side panel attendance monitoring."
           },
           {
             "@type": "Offer",
@@ -280,7 +280,7 @@
             "name": "Is Attendance Tracker for Google Meet free?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes, Attendance Tracker offers a free forever tier with 5 exports per month (Google Sheets or CSV) and real-time attendance monitoring. Pro plans start at $4.99/year for educators and $9.99 for lifetime individual access."
+              "text": "Yes, Attendance Tracker offers a free forever tier with 2 free Google Sheets cloud exports per month (plus unlimited direct CSV & binary Excel downloads for classes up to 25 attendees) and real-time attendance monitoring. Pro plans start at $4.99/year for educators and $9.99 for lifetime individual access."
             }
           },
           {
@@ -2266,7 +2266,7 @@
         <span style="color:var(--border)">•</span>
         <div><strong id="stat-meetings-public" style="color:var(--text);font-size:16px">—</strong> meetings tracked</div>
         <span style="color:var(--border)">•</span>
-        <div><strong style="color:var(--text);font-size:16px">30+</strong> languages</div>
+        <div><strong style="color:var(--text);font-size:16px">42</strong> languages</div>
       </div>
     </div>
 
@@ -2286,7 +2286,7 @@
           <div class="lp2-proof-body" data-i18n="lp2_proof_3_body">1-on-1 tutoring to 200-student lectures.</div>
         </div>
         <div class="lp2-proof-item">
-          <div class="lp2-proof-title" data-i18n="lp2_proof_4_title">30 languages</div>
+          <div class="lp2-proof-title" data-i18n="lp2_proof_4_title">42 languages</div>
           <div class="lp2-proof-body" data-i18n="lp2_proof_4_body">Spanish, Hindi, Tagalog, Arabic and more.</div>
         </div>
       </div>
@@ -2482,7 +2482,7 @@
           <div class="lp2-feat-body" data-i18n="lp2_feat_7_body">A summary card after every meeting.</div>
         </div>
         <div class="lp2-feat-card">
-          <div class="lp2-feat-title" data-i18n="lp2_feat_8_title">30 languages</div>
+          <div class="lp2-feat-title" data-i18n="lp2_feat_8_title">42 languages</div>
           <div class="lp2-feat-body" data-i18n="lp2_feat_8_body">Spanish, Portuguese, Hindi, Tagalog, Ukrainian, Arabic and more.</div>
         </div>
       </div>
@@ -2601,7 +2601,7 @@
           <div class="lp2-plan-top"><span class="lp2-plan-name" data-i18n="lp2_plan_free_name">Free</span></div>
           <div class="lp2-plan-price" id="lp2-price-free" data-i18n="lp2_plan_free_price">$0</div>
           <div class="lp2-plan-unit" data-i18n="lp2_plan_free_unit">forever</div>
-          <div class="lp2-plan-body" data-i18n="lp2_plan_free_body">Live roster and 5 exports a month. No credit card.</div>
+          <div class="lp2-plan-body" data-i18n="lp2_plan_free_body">Live roster, 2 free Google Sheets exports/mo, unlimited CSV &amp; Excel (up to 25 attendees). No credit card.</div>
         </div>
         <div class="lp2-plan-card lp2-plan-highlight">
           <div class="lp2-plan-top">
@@ -4249,7 +4249,7 @@ function downloadLmsCsv(format) {
       : AttUtils.buildMoodleGradebookCsv(ctx.parts, ctx.activeRoster, ctx.opts);
   } catch (err) {
     window.captureError(err, { where: 'downloadLmsCsv_format', format });
-    toast(t('toast.lmsCsvFailed', 'Failed to generate LMS gradebook CSV'));
+    toast(t('toast.couldNotSave', 'Failed to generate LMS gradebook CSV'));
     return;
   }
   if (!triggerCsvDownload(csvContent, `Attendance_${format}_${ctx.safeTitle}_${ctx.dateStr}.csv`)) return;

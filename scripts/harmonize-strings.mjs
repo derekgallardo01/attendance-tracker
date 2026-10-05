@@ -34,7 +34,7 @@ const feature3ExportsMap = {
   zh: "每月 2 次免費 Google Sheets 匯出 + 無限制直接 CSV 與 Excel (.xlsx) 下載 (最多 25 位參與者)",
   'zh-CN': "每月 2 次免费 Google Sheets 导出 + 无限制直接 CSV 和 Excel (.xlsx) 下载 (最多 25 位参与者)",
   ja: "月2回の無料Google Sheetsエクスポート + 無制限の直接CSV/Excel (.xlsx) エクスポート (最大25名)",
-  he: "2 ייצואים חינם ל-Google Sheets בחודש + ייצוא ישיר של CSV ו-Excel (.xlsx) ללא הגבלה (עד 25 משתתפים)",
+  he: "2 ייצואים חינם ל-Google Sheets בחודש + ייצוא ישיר של CSV ו-Excel (.xlsx) ללא הגबלה (עד 25 משתתפים)",
   mr: "दरमहा 2 मोफत Google Sheets निर्यात + अमर्यादित थेट CSV आणि Excel (.xlsx) निर्यात (25 उपस्थितांपर्यंत)",
   sv: "2 gratis Google Sheets-exporter/månad + obegränsad direkt CSV- och Excel-export (.xlsx) (upp till 25 deltagare)",
   cs: "2 bezplatné exporty do Google Sheets/měsíc + neomezený přímý export CSV a Excelu (.xlsx) (až 25 účastníků)",
@@ -51,9 +51,9 @@ const feature3ExportsMap = {
   ne: "प्रति महिना २ निःशुल्क Google Sheets निर्यात + २५ सहभागीहरू सम्मका लागि असीमित प्रत्यक्ष CSV र Excel (.xlsx) निर्यात"
 };
 
-// 1. Update pricing.cmp5Title, pricing.cmp5Body, lp2_proof_4_title, lp2_feat_8_title
+// 1. Update pricing.cmp5Title, pricing.cmp5Body, lp2_proof_4_title, lp2_feat_8_title, lp2_feat_8_body
 // Replace 30 -> 42 and ३० -> ४२ in their values
-const targetKeys = ['pricing.cmp5Title', 'pricing.cmp5Body', 'lp2_proof_4_title', 'lp2_feat_8_title'];
+const targetKeys = ['pricing.cmp5Title', 'pricing.cmp5Body', 'lp2_proof_4_title', 'lp2_feat_8_title', 'lp2_feat_8_body'];
 
 for (const k of targetKeys) {
   const regex = new RegExp(`("${k.replace('.', '\\.')}":\\s*")([^"]+)(")`, 'g');
@@ -69,7 +69,7 @@ for (const k of targetKeys) {
   });
 }
 
-// 2. Update pricing.feature3Exports for each locale
+// 2. Update pricing.feature3Exports, pricing.fineprintBody, and lp2_plan_free_body for each locale
 for (const [loc, newStr] of Object.entries(feature3ExportsMap)) {
   const locPattern = `"${loc}": {`;
   const locIdx = content.indexOf(locPattern);
@@ -78,14 +78,49 @@ for (const [loc, newStr] of Object.entries(feature3ExportsMap)) {
     continue;
   }
   const nextLocIdx = content.indexOf('\n    },', locIdx);
-  const block = content.slice(locIdx, nextLocIdx);
+  let block = content.slice(locIdx, nextLocIdx);
+
+  // pricing.feature3Exports
   const keyRegex = /"pricing\.feature3Exports":\s*"[^"]+"/;
-  if (!keyRegex.test(block)) {
-    console.error(`pricing.feature3Exports not found in locale ${loc}!`);
-    continue;
+  if (keyRegex.test(block)) {
+    block = block.replace(keyRegex, `"pricing.feature3Exports": ${JSON.stringify(newStr)}`);
   }
-  const updatedBlock = block.replace(keyRegex, `"pricing.feature3Exports": ${JSON.stringify(newStr)}`);
-  content = content.slice(0, locIdx) + updatedBlock + content.slice(nextLocIdx);
+
+  // pricing.fineprintBody: ensure free quota statement is included
+  const fineprintRegex = /"pricing\.fineprintBody":\s*"([^"]+)"/;
+  const fpMatch = block.match(fineprintRegex);
+  if (fpMatch) {
+    let fpVal = fpMatch[1];
+    if (!fpVal.includes('2 free Google Sheets') && !fpVal.includes(newStr)) {
+      if (loc === 'en') {
+        fpVal = `Prices are in USD and exclusive of any applicable local sales taxes. Free tier includes ${newStr}. Lifetime passes are pay-once with no recurring charges. Payments are securely processed by Stripe and billed by Kinetic Helix LLC, operator of Attendance Tracker.`;
+      } else {
+        // Insert after first period or start
+        const firstDot = fpVal.indexOf('.');
+        if (firstDot !== -1) {
+          fpVal = fpVal.slice(0, firstDot + 1) + ` (${newStr}) ` + fpVal.slice(firstDot + 1).trim();
+        }
+      }
+      block = block.replace(fineprintRegex, `"pricing.fineprintBody": ${JSON.stringify(fpVal)}`);
+    }
+  }
+
+  // lp2_plan_free_body: ensure accurate free quota
+  const planFreeRegex = /"lp2_plan_free_body":\s*"([^"]+)"/;
+  const pfMatch = block.match(planFreeRegex);
+  if (pfMatch) {
+    let pfVal = pfMatch[1];
+    if (pfVal.includes('5') || pfVal.includes('५')) {
+      if (loc === 'en') {
+        pfVal = "Live roster, 2 free Google Sheets exports/mo, unlimited CSV & Excel (up to 25 attendees). No credit card.";
+      } else {
+        pfVal = pfVal.replace(/\b5\b/g, '2').replace(/५/g, '२');
+      }
+      block = block.replace(planFreeRegex, `"lp2_plan_free_body": ${JSON.stringify(pfVal)}`);
+    }
+  }
+
+  content = content.slice(0, locIdx) + block + content.slice(nextLocIdx);
 }
 
 fs.writeFileSync(stringsFile, content, 'utf8');

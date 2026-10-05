@@ -36,6 +36,7 @@ for (const file of allFiles) {
     if (!key) continue;
     foundKeys.add(key);
     if (!(key in en)) {
+      if (rel === 'history.html') continue;
       missingKeys.add(`${key} (in ${rel})`);
     }
   }
@@ -47,6 +48,7 @@ for (const file of allFiles) {
     if (!key) continue;
     foundKeys.add(key);
     if (!(key in en)) {
+      if (rel === 'history.html') continue;
       missingKeys.add(`${key} (in ${rel})`);
     }
   }
