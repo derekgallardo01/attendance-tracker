@@ -108,6 +108,64 @@ function billingConfigured() {
   return !!process.env.STRIPE_SECRET_KEY && !!process.env.STRIPE_PRICE_ID;
 }
 
+/**
+ * Safely create a Stripe checkout session with defensive parameter sanitization and fallback:
+ * 1. Sanitizes metadata (ensures values are strings <= 500 chars, eliminates undefined/null)
+ * 2. Removes any unsupported properties (e.g. automatic_payment_methods is only valid on PaymentIntents, not Checkout Sessions)
+ * 3. Catches coupon/discount rejection errors (e.g. invalid, inactive, or currency mismatch)
+ *    and retries creation without discounts so the buyer never suffers a 502 checkout crash.
+ * 4. Logs detailed context on any unhandled Stripe API errors.
+ */
+async function createSafeCheckoutSession(stripe, sessionParams, context = {}) {
+  const params = { ...sessionParams };
+
+  // Never pass automatic_payment_methods to stripe.checkout.sessions.create
+  delete params.automatic_payment_methods;
+
+  // Sanitize metadata objects
+  const sanitizeMeta = (metaObj) => {
+    if (!metaObj || typeof metaObj !== 'object') return metaObj;
+    const clean = {};
+    for (const [k, v] of Object.entries(metaObj)) {
+      if (v !== undefined && v !== null) {
+        clean[String(k).slice(0, 40)] = String(v).slice(0, 500);
+      }
+    }
+    return clean;
+  };
+
+  if (params.metadata) {
+    params.metadata = sanitizeMeta(params.metadata);
+  }
+  if (params.subscription_data?.metadata) {
+    params.subscription_data = {
+      ...params.subscription_data,
+      metadata: sanitizeMeta(params.subscription_data.metadata),
+    };
+  }
+  if (params.payment_intent_data?.metadata) {
+    params.payment_intent_data = {
+      ...params.payment_intent_data,
+      metadata: sanitizeMeta(params.payment_intent_data.metadata),
+    };
+  }
+
+  try {
+    return await stripe.checkout.sessions.create(params);
+  } catch (err) {
+    if (params.discounts && /coupon|promo|discount/i.test(err.message)) {
+      log.warn('billing: checkout coupon error, falling back without discount', {
+        error: err.message,
+        discounts: params.discounts,
+        context,
+      });
+      const { discounts, ...paramsWithoutDiscounts } = params;
+      return await stripe.checkout.sessions.create(paramsWithoutDiscounts);
+    }
+    throw err;
+  }
+}
+
 const router = Router();
 
 // POST /api/billing/checkout (and /api/billing/create-checkout-session) — start a Checkout Session for the caller's
@@ -281,10 +339,10 @@ router.post(['/billing/checkout', '/billing/create-checkout-session'], requireAu
     }
 
 
-    const session = await stripe.checkout.sessions.create(sessionParams);
+    const session = await createSafeCheckoutSession(stripe, sessionParams, { domain, email, plan: normalizedPlan });
     res.json({ url: session.url });
   } catch (err) {
-    log.error('billing: checkout create failed', { domain, individual, error: err.message });
+    log.error('billing: checkout create failed', { domain, individual, plan: normalizedPlan, error: err.message, code: err.code });
     res.status(502).json({ error: 'Could not start checkout.' });
   }
 });
@@ -363,18 +421,7 @@ async function sendUpgradeLinkForUser({
       const meta = { individual: '1', domain, email: normalizedEmail, source: 'upgrade_link_email', reason };
       const commonDiscounts = (isIndia || isRegional) ? null : (isPppEligible ? [{ coupon: 'PPP50' }] : [{ coupon: 'SAVE20' }]);
 
-      const createSession = async (params) => {
-        try {
-          return await stripe.checkout.sessions.create(params);
-        } catch (err) {
-          if (params.discounts && /coupon|promo/i.test(err.message)) {
-            log.warn('billing: checkout coupon error, falling back without discount', { error: err.message });
-            const { discounts, ...rest } = params;
-            return await stripe.checkout.sessions.create(rest);
-          }
-          throw err;
-        }
-      };
+      const createSession = (params) => createSafeCheckoutSession(stripe, params, { email: normalizedEmail, source: 'upgrade_link_email' });
 
       const inrPrices = isIndia ? getInrPrices() : null;
       const educatorPriceId = (isIndia || isRegional)
@@ -656,10 +703,10 @@ router.post('/billing/public-checkout', async (req, res) => {
       return res.status(503).json({ error: 'The educator plan is temporarily unavailable.' });
     }
 
-    const session = await stripe.checkout.sessions.create(sessionParams);
+    const session = await createSafeCheckoutSession(stripe, sessionParams, { email, plan, source: 'public_checkout' });
     res.json({ url: session.url });
   } catch (err) {
-    log.error('billing: public checkout failed', { plan, error: err.message });
+    log.error('billing: public checkout failed', { plan, email, error: err.message, code: err.code });
     res.status(502).json({ error: 'Could not start checkout.' });
   }
 });
@@ -1501,4 +1548,5 @@ module.exports = {
   createReferralPromoCode,
   sendUpgradeLinkForUser,
   upgradeLinkCooldown,
+  createSafeCheckoutSession,
 };

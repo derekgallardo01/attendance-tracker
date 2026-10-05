@@ -1672,6 +1672,123 @@ describe('billing/status pricing payload', () => {
       process.env.STRIPE_SINGLE_MEETING_PRICE_ID = orig;
     });
   });
+
+  describe('createSafeCheckoutSession resilience & sanitization', () => {
+    const { createSafeCheckoutSession } = require('../../src/routes/billing');
+
+    test('strips automatic_payment_methods and sanitizes metadata', async () => {
+      const mockStripe = {
+        checkout: {
+          sessions: {
+            create: jest.fn().mockResolvedValue({ id: 'cs_safe', url: 'https://checkout.stripe.com/pay/cs_safe' }),
+          },
+        },
+      };
+
+      const params = {
+        mode: 'payment',
+        automatic_payment_methods: { enabled: true },
+        metadata: {
+          shortKey: 'hello',
+          nullVal: null,
+          undefVal: undefined,
+          veryLongVal: 'a'.repeat(600),
+        },
+        payment_intent_data: {
+          metadata: {
+            shortKey: 'hello_pi',
+          },
+        },
+      };
+
+      const res = await createSafeCheckoutSession(mockStripe, params, { test: true });
+      expect(res.id).toBe('cs_safe');
+      const calledWith = mockStripe.checkout.sessions.create.mock.calls[0][0];
+      expect(calledWith.automatic_payment_methods).toBeUndefined();
+      expect(calledWith.metadata.shortKey).toBe('hello');
+      expect(calledWith.metadata.nullVal).toBeUndefined();
+      expect(calledWith.metadata.veryLongVal.length).toBe(500);
+      expect(calledWith.payment_intent_data.metadata.shortKey).toBe('hello_pi');
+    });
+
+    test('retries without discounts when Stripe rejects coupon', async () => {
+      const mockStripe = {
+        checkout: {
+          sessions: {
+            create: jest.fn()
+              .mockRejectedValueOnce(new Error("No such coupon: 'PPP50'"))
+              .mockResolvedValueOnce({ id: 'cs_retry_success', url: 'https://checkout.stripe.com/pay/cs_retry_success' }),
+          },
+        },
+      };
+
+      const params = {
+        mode: 'subscription',
+        discounts: [{ coupon: 'PPP50' }],
+        line_items: [{ price: 'price_edu', quantity: 1 }],
+      };
+
+      const res = await createSafeCheckoutSession(mockStripe, params, { plan: 'educator' });
+      expect(res.id).toBe('cs_retry_success');
+      expect(mockStripe.checkout.sessions.create).toHaveBeenCalledTimes(2);
+      expect(mockStripe.checkout.sessions.create.mock.calls[0][0].discounts).toBeDefined();
+      expect(mockStripe.checkout.sessions.create.mock.calls[1][0].discounts).toBeUndefined();
+    });
+
+    test('rethrows non-discount Stripe errors', async () => {
+      const mockStripe = {
+        checkout: {
+          sessions: {
+            create: jest.fn().mockRejectedValue(new Error('Stripe API network timeout')),
+          },
+        },
+      };
+
+      await expect(createSafeCheckoutSession(mockStripe, { mode: 'payment' })).rejects.toThrow('Stripe API network timeout');
+    });
+
+    test('/api/billing/checkout recovers seamlessly when PPP50 coupon fails in Stripe', async () => {
+      process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+      process.env.STRIPE_PRICE_ID = 'price_default';
+      process.env.STRIPE_EDUCATOR_PRICE_ID = 'price_edu';
+      app = buildApp();
+
+      mockStripeInstance.checkout.sessions.create
+        .mockRejectedValueOnce(new Error("No such coupon: 'PPP50'"))
+        .mockResolvedValueOnce({ id: 'cs_recovered', url: 'https://checkout.stripe.com/pay/cs_recovered' });
+
+      const res = await request(app)
+        .post('/api/billing/checkout')
+        .set(authedHeader('teacher@babcock.edu.ng', 'babcock.edu.ng'))
+        .set('cf-ipcountry', 'NG')
+        .send({ plan: 'educator' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.url).toBe('https://checkout.stripe.com/pay/cs_recovered');
+      expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledTimes(2);
+    });
+
+    test('/api/billing/public-checkout recovers seamlessly when coupon fails in Stripe', async () => {
+      process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+      process.env.STRIPE_PRICE_ID = 'price_default';
+      process.env.STRIPE_EDUCATOR_PRICE_ID = 'price_edu';
+      app = buildApp();
+
+      mockStripeInstance.checkout.sessions.create
+        .mockRejectedValueOnce(new Error("No such coupon: 'PPP50'"))
+        .mockResolvedValueOnce({ id: 'cs_public_recovered', url: 'https://checkout.stripe.com/pay/cs_public_recovered' });
+
+      const res = await request(app)
+        .post('/api/billing/public-checkout')
+        .set('cf-ipcountry', 'NG')
+        .send({ plan: 'educator', email: 'teacher@babcock.edu.ng' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.url).toBe('https://checkout.stripe.com/pay/cs_public_recovered');
+      expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledTimes(2);
+    });
+  });
 });
+
 
 
