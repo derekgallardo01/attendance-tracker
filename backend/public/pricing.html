@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" sizes="128x128" href="icons/icon-128.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pricing — Attendance Tracker for Google Meet™</title>
-  <meta name="description" content="Attendance Tracker pricing: Free to start (5 exports/month), Educator ($4.99/yr) and Individual Lifetime ($9.99) for solo teachers, and domain plans for schools — Department ($59/yr) and Institution ($149/yr) covering your whole Google Workspace." />
+  <meta name="description" content="Attendance Tracker pricing: Free to start (2 Google Sheets exports/mo, unlimited CSV & Excel), Educator ($4.99/yr) and Individual Lifetime ($9.99) for solo teachers, and domain plans for schools — Department ($59/yr) and Institution ($149/yr) covering your whole Google Workspace." />
   <link rel="canonical" href="https://attendancetracker.dev/pricing.html" />
 
   <!-- Localized alternate hreflang tags for 42 languages -->
@@ -55,7 +55,7 @@
   <link rel="alternate" hreflang="ca" href="https://attendancetracker.dev/pricing.html?lang=ca" />
   <link rel="alternate" hreflang="ne" href="https://attendancetracker.dev/pricing.html?lang=ne" />
   <meta property="og:title" content="Attendance Tracker Pricing — Google Meet Attendance Plans" />
-  <meta property="og:description" content="Free tier (5 exports/mo), Individual plans from $4.99/yr, and school domain plans — Department $59/yr and Institution $149/yr — covering every teacher on your Google Workspace domain." />
+  <meta property="og:description" content="Free tier (2 Google Sheets exports/mo, unlimited CSV & Excel), Individual plans from $4.99/yr, and school domain plans — Department $59/yr and Institution $149/yr — covering every teacher on your Google Workspace domain." />
   <meta property="og:image" content="https://attendancetracker.dev/screenshots/01-live-roster.jpg" />
   <meta property="og:image:width" content="1920" />
   <meta property="og:image:height" content="1200" />
@@ -63,7 +63,7 @@
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Attendance Tracker Pricing — Google Meet Attendance Plans" />
-  <meta name="twitter:description" content="Free tier (5 exports/mo), Individual plans from $4.99/yr, and school domain plans — Department $59/yr and Institution $149/yr." />
+  <meta name="twitter:description" content="Free tier (2 Google Sheets exports/mo, unlimited CSV & Excel), Individual plans from $4.99/yr, and school domain plans — Department $59/yr and Institution $149/yr." />
   <meta name="twitter:image" content="https://attendancetracker.dev/screenshots/01-live-roster.jpg" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -87,7 +87,7 @@
     "inLanguage": [
       "en", "es", "pt", "hi", "ta", "te", "bn", "ur", "tl", "ms", "id", "vi", "fr", "de", "it",
       "nl", "pl", "ro", "ru", "uk", "tr", "th", "ar", "ko", "zh-Hant", "zh-Hans", "ja", "he",
-      "mr", "sv", "cs", "da", "fi", "hu", "so", "sw", "am", "si", "el", "no", "ca"
+      "mr", "sv", "cs", "da", "fi", "hu", "so", "sw", "am", "si", "el", "no", "ca", "ne"
     ],
     "aggregateRating": {
       "@type": "AggregateRating",
@@ -603,6 +603,12 @@
       <p class="hero-sub" data-i18n="pricing.heroSub">Free to start. Choose a lifetime pass or school domain license. No complicated contracts or hidden fees.</p>
     </div>
 
+    <!-- Migration Banner for Displaced Teachers -->
+    <div class="migration-banner" style="max-width:860px;margin:0 auto 36px;padding:14px 20px;background:rgba(88,166,255,0.08);border:1px solid rgba(88,166,255,0.3);border-radius:12px;display:flex;align-items:center;justify-content:center;gap:12px;text-align:center;font-size:0.92rem;color:var(--text);line-height:1.5">
+      <span style="font-size:1.2rem">🔄</span>
+      <span><strong>Switching from Attendance Taker for Classroom before March 1, 2026?</strong> <a href="attendance-taker-for-classroom-alternative.html" style="color:var(--blue);font-weight:600;text-decoration:underline;margin-left:4px">Use our free 5-second roster migration tool &rarr;</a></span>
+    </div>
+
     <!-- 3 Tier Cards -->
     <div class="plans-grid">
 
@@ -625,7 +631,7 @@
           </li>
           <li>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            <span data-i18n="pricing.feature3Exports">Up to 5 meeting exports per month (Sheets or CSV)</span>
+            <span data-i18n="pricing.feature3Exports">2 free Google Sheets cloud exports/mo + unlimited direct CSV &amp; binary Excel (.xlsx) exports for classes up to 25 attendees</span>
           </li>
           <li>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -931,7 +937,146 @@
       <div style="text-align:center;margin-bottom:24px">
         <span style="font-size:0.75rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.08em" data-i18n="pricing.builtDiffEyebrow">Built Different</span>
         <h2 style="font-size:1.4rem;font-weight:700;color:var(--text);margin:6px 0 8px" data-i18n="pricing.builtDiffTitle">Why Attendance Tracker Beats Generic Chrome Extensions</h2>
-        <p style="font-size:0.88rem;color:var(--muted);max-width:620px;margin:0 auto" data-i18n="pricing.builtDiffSub">Chrome extensions scrape Google Meet's web page and break whenever Google updates its code. Attendance Tracker is an official Google Workspace Add-on built on the native Google Meet SDK.</p>
+        <p style="font-size:0.88rem;color:var(--muted);max-width:680px;margin:0 auto" data-i18n="pricing.builtDiffSub">Chrome extensions scrape Google Meet's web page and break whenever Google updates its code. Attendance Tracker is an official Google Workspace Add-on built on the native Google Meet SDK.</p>
+      </div>
+
+      <!-- Direct Head-to-Head Competitor Comparison Table -->
+      <div class="competitor-table-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin:28px 0;border:1px solid var(--border);border-radius:12px;background:var(--surface)">
+        <table class="competitor-table" style="width:100%;border-collapse:collapse;font-size:0.86rem;min-width:760px;text-align:left">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)">
+              <th style="padding:16px;color:var(--muted);font-weight:600;width:24%">Feature / Capability</th>
+              <th style="padding:16px;color:var(--text);font-weight:700;width:26%;background:rgba(74,222,128,0.08);border-left:1px solid rgba(74,222,128,0.3);border-right:1px solid rgba(74,222,128,0.3)">
+                <div style="display:flex;align-items:center;gap:6px;justify-content:space-between">
+                  <span>Attendance Tracker</span>
+                  <span style="font-size:0.68rem;padding:2px 8px;border-radius:12px;background:#2ea043;color:#fff;font-weight:700;letter-spacing:0.04em">OURS</span>
+                </div>
+              </th>
+              <th style="padding:16px;color:var(--muted);font-weight:600;width:18%">AttendKit</th>
+              <th style="padding:16px;color:var(--muted);font-weight:600;width:16%">MeetList</th>
+              <th style="padding:16px;color:var(--muted);font-weight:600;width:16%">Google Meet Native</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Architecture -->
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:14px 16px;font-weight:600;color:var(--text)">Architecture</td>
+              <td style="padding:14px 16px;background:rgba(74,222,128,0.05);border-left:1px solid rgba(74,222,128,0.3);border-right:1px solid rgba(74,222,128,0.3);color:#fff">
+                <span style="display:inline-flex;align-items:center;gap:6px;font-weight:600;color:#4ade80">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  Official Meet REST API
+                </span>
+                <div style="font-size:0.78rem;color:var(--muted);margin-top:2px">100% DOM-immune, zero page scraping</div>
+              </td>
+              <td style="padding:14px 16px;color:var(--muted)">DOM Screen Scraper<div style="font-size:0.75rem;color:#f87171">Breaks on Meet UI changes</div></td>
+              <td style="padding:14px 16px;color:var(--muted)">DOM Screen Scraper<div style="font-size:0.75rem;color:#f87171">Breaks on Meet UI changes</div></td>
+              <td style="padding:14px 16px;color:var(--muted)">1st-party cloud<div style="font-size:0.75rem;color:var(--muted)">Host-only, post-meeting email</div></td>
+            </tr>
+
+            <!-- Supported Browsers & Devices -->
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:14px 16px;font-weight:600;color:var(--text)">Supported Browsers &amp; Devices</td>
+              <td style="padding:14px 16px;background:rgba(74,222,128,0.05);border-left:1px solid rgba(74,222,128,0.3);border-right:1px solid rgba(74,222,128,0.3);color:#fff">
+                <span style="display:inline-flex;align-items:center;gap:6px;font-weight:600;color:#4ade80">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  Every Browser + Mobile
+                </span>
+                <div style="font-size:0.78rem;color:var(--muted);margin-top:2px">Chrome, Edge, Safari, Firefox, Mac, Windows, iPads, Managed Chromebooks</div>
+              </td>
+              <td style="padding:14px 16px;color:var(--muted)">Chrome desktop only<div style="font-size:0.75rem;color:#f87171">No Safari, Firefox, or iPad</div></td>
+              <td style="padding:14px 16px;color:var(--muted)">Chrome desktop only<div style="font-size:0.75rem;color:#f87171">No Safari, Firefox, or iPad</div></td>
+              <td style="padding:14px 16px;color:var(--muted)">Any browser<div style="font-size:0.75rem;color:var(--muted)">(High-tier Workspace only)</div></td>
+            </tr>
+
+            <!-- Team / School License -->
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:14px 16px;font-weight:600;color:var(--text)">Team / School License</td>
+              <td style="padding:14px 16px;background:rgba(74,222,128,0.05);border-left:1px solid rgba(74,222,128,0.3);border-right:1px solid rgba(74,222,128,0.3);color:#fff">
+                <span style="font-weight:700;color:#4ade80">$59/yr Flat Department</span>
+                <div style="font-size:0.78rem;color:#fff;margin-top:2px"><strong>Unlimited Teachers</strong> across domain (or $149/yr Institution)</div>
+              </td>
+              <td style="padding:14px 16px;color:var(--muted)">
+                <div style="color:#f87171;font-weight:600">$149/yr (5 seats)</div>
+                <div style="color:#f87171;font-weight:600">$499/yr (20 seats)</div>
+                <div style="font-size:0.75rem;color:var(--muted)">Steep per-seat penalty</div>
+              </td>
+              <td style="padding:14px 16px;color:var(--muted)">Not offered<div style="font-size:0.75rem;color:var(--muted)">Per-user seat licenses only</div></td>
+              <td style="padding:14px 16px;color:var(--muted)">Domain Workspace upgrade<div style="font-size:0.75rem;color:var(--muted)">Requires $4–$20/user/mo domain-wide</div></td>
+            </tr>
+
+            <!-- Individual Pricing -->
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:14px 16px;font-weight:600;color:var(--text)">Individual Pricing</td>
+              <td style="padding:14px 16px;background:rgba(74,222,128,0.05);border-left:1px solid rgba(74,222,128,0.3);border-right:1px solid rgba(74,222,128,0.3);color:#fff">
+                <span style="font-weight:700;color:#4ade80">$9.99 Lifetime / $4.99/yr Edu</span>
+                <div style="font-size:0.78rem;color:var(--muted);margin-top:2px">Pay-once lifetime option; &lt; 42¢/mo educator pass</div>
+              </td>
+              <td style="padding:14px 16px;color:var(--muted)">$39.00/yr recurring<div style="font-size:0.75rem;color:#f87171">No lifetime option</div></td>
+              <td style="padding:14px 16px;color:var(--muted)">Free / $30.00/yr ($2.50/mo)<div style="font-size:0.75rem;color:var(--muted)">Recurring subscription</div></td>
+              <td style="padding:14px 16px;color:var(--muted)">Included in Education Plus<div style="font-size:0.75rem;color:var(--muted)">Unavailable on Starter / Free</div></td>
+            </tr>
+
+            <!-- LMS Gradebook Writeback -->
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:14px 16px;font-weight:600;color:var(--text)">LMS Gradebook Writeback</td>
+              <td style="padding:14px 16px;background:rgba(74,222,128,0.05);border-left:1px solid rgba(74,222,128,0.3);border-right:1px solid rgba(74,222,128,0.3);color:#fff">
+                <span style="display:inline-flex;align-items:center;gap:6px;font-weight:600;color:#4ade80">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  1-Click Google Classroom &amp; Canvas
+                </span>
+                <div style="font-size:0.78rem;color:var(--muted);margin-top:2px">Direct REST grade sync + Moodle gradebook CSV</div>
+              </td>
+              <td style="padding:14px 16px;color:var(--muted)"><span style="color:#f87171">&#10005;</span> None</td>
+              <td style="padding:14px 16px;color:var(--muted)"><span style="color:#f87171">&#10005;</span> None</td>
+              <td style="padding:14px 16px;color:var(--muted)"><span style="color:#f87171">&#10005;</span> None<div style="font-size:0.75rem;color:var(--muted)">Manual grade entry only</div></td>
+            </tr>
+
+            <!-- Past Meeting Retrieval -->
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:14px 16px;font-weight:600;color:var(--text)">Past Meeting Retrieval</td>
+              <td style="padding:14px 16px;background:rgba(74,222,128,0.05);border-left:1px solid rgba(74,222,128,0.3);border-right:1px solid rgba(74,222,128,0.3);color:#fff">
+                <span style="display:inline-flex;align-items:center;gap:6px;font-weight:600;color:#4ade80">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  14-Day Retroactive Import
+                </span>
+                <div style="font-size:0.78rem;color:var(--muted);margin-top:2px">Via conferenceRecords even if panel was closed</div>
+              </td>
+              <td style="padding:14px 16px;color:var(--muted)">30-meeting lifetime limit<div style="font-size:0.75rem;color:var(--muted)">Must be recorded live</div></td>
+              <td style="padding:14px 16px;color:var(--muted)"><span style="color:#f87171">&#10005;</span> None<div style="font-size:0.75rem;color:var(--muted)">Lost if tab closed</div></td>
+              <td style="padding:14px 16px;color:var(--muted)"><span style="color:#f87171">&#10005;</span> None<div style="font-size:0.75rem;color:var(--muted)">No retroactive sync</div></td>
+            </tr>
+
+            <!-- Regional Payment Rails -->
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:14px 16px;font-weight:600;color:var(--text)">Regional Payment Rails</td>
+              <td style="padding:14px 16px;background:rgba(74,222,128,0.05);border-left:1px solid rgba(74,222,128,0.3);border-right:1px solid rgba(74,222,128,0.3);color:#fff">
+                <span style="display:inline-flex;align-items:center;gap:6px;font-weight:600;color:#4ade80">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  Localized Currencies &amp; Wallets
+                </span>
+                <div style="font-size:0.78rem;color:var(--muted);margin-top:2px">UPI (₹299), GCash/Maya (₱280), QRIS (Rp 78k), FPX (RM 22)</div>
+              </td>
+              <td style="padding:14px 16px;color:var(--muted)">USD Credit Card only</td>
+              <td style="padding:14px 16px;color:var(--muted)">USD Credit Card only</td>
+              <td style="padding:14px 16px;color:var(--muted)">Workspace Enterprise invoice</td>
+            </tr>
+
+            <!-- Languages Supported -->
+            <tr>
+              <td style="padding:14px 16px;font-weight:600;color:var(--text)">Languages Supported</td>
+              <td style="padding:14px 16px;background:rgba(74,222,128,0.05);border-left:1px solid rgba(74,222,128,0.3);border-right:1px solid rgba(74,222,128,0.3);color:#fff">
+                <span style="display:inline-flex;align-items:center;gap:6px;font-weight:600;color:#4ade80">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  42 Localized Languages
+                </span>
+                <div style="font-size:0.78rem;color:var(--muted);margin-top:2px">Auto-detected browser locale + in-app switcher</div>
+              </td>
+              <td style="padding:14px 16px;color:var(--muted)">English-only</td>
+              <td style="padding:14px 16px;color:var(--muted)">English-only</td>
+              <td style="padding:14px 16px;color:var(--muted)">Standard Google UI</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px">
@@ -952,8 +1097,8 @@
           <div style="font-size:0.82rem;color:var(--muted);line-height:1.5" data-i18n="pricing.cmp4Body">Paste class student lists (or import them from Google Classroom), set attendance thresholds, track Present vs Late vs Absent, and download instant CSV or Moodle/Canvas gradebook reports.</div>
         </div>
         <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;padding:18px">
-          <div style="font-weight:700;color:#fff;font-size:0.95rem;margin-bottom:6px" data-i18n="pricing.cmp5Title">30 Localized Languages</div>
-          <div style="font-size:0.82rem;color:var(--muted);line-height:1.5" data-i18n="pricing.cmp5Body">Native translations for 30 languages — including Spanish, Portuguese, Hindi, Tagalog, Indonesian, Vietnamese, Arabic, French, German, Japanese, Korean, Chinese, Russian, Turkish, and more.</div>
+          <div style="font-weight:700;color:#fff;font-size:0.95rem;margin-bottom:6px" data-i18n="pricing.cmp5Title">42 Localized Languages</div>
+          <div style="font-size:0.82rem;color:var(--muted);line-height:1.5" data-i18n="pricing.cmp5Body">Native translations for 42 languages — including Spanish, Portuguese, Hindi, Tagalog, Indonesian, Vietnamese, Arabic, French, German, Japanese, Korean, Chinese, Russian, Turkish, and more.</div>
         </div>
         <div style="background:rgba(74,222,128,0.05);border:1px solid rgba(74,222,128,0.3);border-radius:12px;padding:18px">
           <div style="font-weight:700;color:var(--accent);font-size:0.95rem;margin-bottom:6px" data-i18n="pricing.cmp6Title">Fair, Flat Pricing</div>
@@ -980,7 +1125,7 @@
 
     <!-- Fineprint & Compliance -->
     <p class="pricing-fineprint">
-      <span data-i18n="pricing.fineprintBody">Prices are in USD and exclusive of any applicable local sales taxes. Lifetime passes are pay-once with no recurring charges. Payments are securely processed by Stripe and billed by Kinetic Helix LLC, operator of Attendance Tracker.</span>
+      <span data-i18n="pricing.fineprintBody">Prices are in USD and exclusive of any applicable local sales taxes. Free tier includes 2 free Google Sheets cloud exports/mo + unlimited direct CSV &amp; binary Excel (.xlsx) exports for classes up to 25 attendees. Lifetime passes are pay-once with no recurring charges. Payments are securely processed by Stripe and billed by Kinetic Helix LLC, operator of Attendance Tracker.</span>
       <span data-i18n="pricing.fineprintSee">See our</span> <a href="refunds.html" data-i18n="pricing.fineprintRefund">Refund &amp; Cancellation Policy</a> <span data-i18n="pricing.fineprintAnd">and</span> <a href="terms.html" data-i18n="pricing.fineprintTerms">Terms of Service</a>.
       <span data-i18n="pricing.fineprintQuestions">Questions? Reach us at</span> <a href="mailto:derek@attendancetracker.dev">derek@attendancetracker.dev</a>.
     </p>
@@ -1126,6 +1271,24 @@
         var blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
         if (navigator.sendBeacon) navigator.sendBeacon(BACKEND_URL + '/public/pageview', blob);
         else fetch(BACKEND_URL + '/public/pageview', { method: 'POST', body: blob, keepalive: true });
+      } catch (e) {}
+    }
+
+    function sendPricingError(msg, extra) {
+      try {
+        var payload = {
+          message: String(msg || 'Pricing checkout failed').slice(0, 2000),
+          path: window.location.pathname || '/pricing.html',
+          where: (extra && extra.where) || 'pricing_checkout',
+          reason: (extra && extra.reason) || undefined,
+          release: 'pricing@2026-09-26',
+        };
+        var blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon(BACKEND_URL + '/public/error', blob);
+        } else if (typeof fetch === 'function') {
+          fetch(BACKEND_URL + '/public/error', { method: 'POST', body: blob, keepalive: true }).catch(function () {});
+        }
       } catch (e) {}
     }
 
@@ -1287,8 +1450,10 @@
           window.location.href = data.url;
           return;
         }
+        sendPricingError(data.error || `Stripe checkout session creation failed (HTTP ${res.status})`, { where: 'pricing_checkout_failed', reason: `status_${res.status}` });
         alert(data.error || t('pricing.checkoutUnavailable', 'Billing checkout is currently unavailable. Please try again or email support.'));
       } catch (err) {
+        sendPricingError(err.message || 'Stripe checkout network exception', { where: 'pricing_checkout_exception', reason: err.name });
         alert(t('pricing.checkoutNetwork', 'Could not reach billing service. Please check your internet connection.'));
       } finally {
         btn.disabled = false;

@@ -32,7 +32,7 @@ module.exports = {
     {
       displayName: 'backend',
       testEnvironment: 'node',
-      testMatch: ['<rootDir>/test/services/**/*.test.js', '<rootDir>/test/lib/**/*.test.js', '<rootDir>/test/routes/**/*.test.js'],
+      testMatch: ['<rootDir>/test/services/**/*.test.js', '<rootDir>/test/lib/**/*.test.js', '<rootDir>/test/routes/**/*.test.js', '<rootDir>/test/middleware/**/*.test.js'],
       setupFiles: ['<rootDir>/test/setup-env.js'],
     },
     {

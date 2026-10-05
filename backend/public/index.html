@@ -358,9 +358,47 @@
         if (/failed to fetch|networkerror|load failed|offline/i.test(msg)) {
           return; // Client network drop (user closed laptop, WiFi dropped) — not an actionable code defect
         }
-        if (window.Sentry) Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { extra: extra || {} });
+        if (window.Sentry && typeof window.Sentry.captureException === 'function') {
+          Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { extra: extra || {} });
+        } else {
+          const backendUrl = (typeof state !== 'undefined' && state.backendUrl) ||
+            (typeof APP_CONFIG !== 'undefined' && APP_CONFIG.backendUrl) ||
+            ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+              ? 'http://localhost:8080/api'
+              : 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api');
+          const endpoint = `${backendUrl.replace(/\/$/, '')}/public/error`;
+          const stackStr = (err && err.stack ? String(err.stack) : '') ||
+            (extra && (extra.lineno || extra.colno) ? `at ${window.location.pathname || 'index.html'}:${extra.lineno || 0}:${extra.colno || 0}` : '');
+          const payload = {
+            message: msg.slice(0, 2000),
+            stack: stackStr.slice(0, 5000) || undefined,
+            path: window.location.pathname || '/',
+            where: (extra && extra.where) ? String(extra.where) : undefined,
+            reason: (extra && extra.reason) ? String(extra.reason) : undefined,
+            release: 'attendance-tracker-panel@2026-09-26',
+          };
+          const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon(endpoint, blob);
+          } else if (typeof fetch === 'function') {
+            fetch(endpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+              keepalive: true,
+            }).catch(() => {});
+          }
+        }
       } catch (e) { /* reporting must never throw */ }
     };
+
+    // Global error listeners registered immediately after Sentry initialization
+    window.onerror = function (message, source, lineno, colno, error) {
+      window.captureError(error || message, { where: 'window.onerror', lineno: lineno, colno: colno });
+    };
+    window.addEventListener('unhandledrejection', function (event) {
+      window.captureError(event.reason || 'unhandledrejection', { where: 'unhandledrejection' });
+    });
   </script>
 
   <!-- Meet Add-ons SDK — load dynamically so we can detect failures -->
@@ -378,6 +416,7 @@
       };
       s.onerror = () => {
         console.warn('[Attendance] SDK script failed to load — demo mode');
+        window.captureError(new Error('Meet SDK script failed to load'), { where: 'meet_sdk_script_load' });
         resolve(false);
       };
       document.head.appendChild(s);
@@ -3490,6 +3529,7 @@ async function importFromClassroom() {
     showClassroomStatus(t('roster.classroomFound', 'Found {count} courses — pick one and hit Import.').replace('{count}', courses.length));
     try { logUserEvent('classroom_courses_listed', { count: courses.length }); } catch {}
   } catch (err) {
+    window.captureError(err, { where: 'classroom_courses_load' });
     showClassroomStatus(`${t('roster.classroomLoadFailed', "Couldn't load Classroom courses. Try again in a moment.")} (${err.message})`, '#f85149');
   } finally {
     if (btn) btn.disabled = false;
@@ -3522,6 +3562,7 @@ async function importClassroomCourse() {
     showClassroomStatus(t('roster.classroomImported', 'Imported {count} students — review the list, then Save Roster.').replace('{count}', students.length), '#4ade80');
     try { logUserEvent('classroom_roster_imported', { studentCount: students.length }); } catch {}
   } catch (err) {
+    window.captureError(err, { where: 'classroom_roster_import' });
     showClassroomStatus(`${t('roster.classroomImportFailed', 'Import failed. Try again in a moment.')} (${err.message})`, '#f85149');
   } finally {
     if (importBtn) { importBtn.disabled = false; importBtn.textContent = t('roster.importBtn', 'Import'); }
@@ -4007,6 +4048,7 @@ function relayDownload(payload) {
   if (!w) {
     try { localStorage.removeItem('attPendingDownload'); } catch (e) {}
     toast(t('toast.popupBlocked', 'Your browser blocked the download tab. Allow pop-ups for meet.google.com and try again.'), 6000);
+    window.captureError(new Error('Browser blocked download popup window'), { where: 'relayDownload_popup_blocked', filename: payload?.filename });
     return 'blocked';
   }
   const onMsg = (e) => {
@@ -4200,9 +4242,16 @@ function downloadLmsCsv(format) {
     return;
   }
 
-  const csvContent = format === 'canvas'
-    ? AttUtils.buildCanvasGradebookCsv(ctx.parts, ctx.activeRoster, ctx.opts)
-    : AttUtils.buildMoodleGradebookCsv(ctx.parts, ctx.activeRoster, ctx.opts);
+  let csvContent;
+  try {
+    csvContent = format === 'canvas'
+      ? AttUtils.buildCanvasGradebookCsv(ctx.parts, ctx.activeRoster, ctx.opts)
+      : AttUtils.buildMoodleGradebookCsv(ctx.parts, ctx.activeRoster, ctx.opts);
+  } catch (err) {
+    window.captureError(err, { where: 'downloadLmsCsv_format', format });
+    toast(t('toast.lmsCsvFailed', 'Failed to generate LMS gradebook CSV'));
+    return;
+  }
   if (!triggerCsvDownload(csvContent, `Attendance_${format}_${ctx.safeTitle}_${ctx.dateStr}.csv`)) return;
 
   try { logUserEvent('export_lms_csv_downloaded', { format, participantCount: ctx.parts.length }); } catch (e) {}
@@ -4217,31 +4266,36 @@ function openLmsSyncModal() {
     meetingTitle: (ctx && ctx.meetingTitle) || state.meetingTitle || 'Google Meet',
     meetingDate: (ctx && ctx.dateStr) || (typeof AttUtils !== 'undefined' ? AttUtils.datestamp(state.startTime || new Date()) : ''),
     getRecords: () => {
-      const parts = Array.from(state.participants?.values() || []);
-      const activeRoster = (state.activeRosterName && state.rosters && state.rosters[state.activeRosterName]) || [];
-      if (activeRoster.length > 0 && typeof AttUtils !== 'undefined' && AttUtils.buildLmsGradebookRows) {
-        const rows = AttUtils.buildLmsGradebookRows(parts, activeRoster, {
-          meetingTitle: state.meetingTitle || 'Google Meet',
-          startTime: state.startTime,
-          now: new Date(),
+      try {
+        const parts = Array.from(state.participants?.values() || []);
+        const activeRoster = (state.activeRosterName && state.rosters && state.rosters[state.activeRosterName]) || [];
+        if (activeRoster.length > 0 && typeof AttUtils !== 'undefined' && AttUtils.buildLmsGradebookRows) {
+          const rows = AttUtils.buildLmsGradebookRows(parts, activeRoster, {
+            meetingTitle: state.meetingTitle || 'Google Meet',
+            startTime: state.startTime,
+            now: new Date(),
+          });
+          return rows.map(r => ({
+            name: r.name,
+            email: (r.email || '').toLowerCase(),
+            points: typeof r.grade === 'number' ? r.grade : (r.grade === '' ? null : 0),
+            status: (typeof r.grade === 'number' && r.grade > 0) ? (r.grade >= 100 ? 'present' : 'late') : 'absent',
+          }));
+        }
+        return parts.map(p => {
+          const durMin = Math.round(((p._accumulatedMs || 0) + (p.present && p.joinTime ? (Date.now() - new Date(p.joinTime).getTime()) : 0)) / 60000);
+          const isLate = p.isLate || (p.joinTime && typeof AttUtils !== 'undefined' && AttUtils.latenessMin(state.startTime, p.joinTime) >= 5);
+          return {
+            name: p.displayName || p.name || '',
+            email: (p.email || '').toLowerCase(),
+            status: isLate ? 'late' : (p.present || durMin > 0 ? 'present' : 'absent'),
+            durationMin: durMin,
+          };
         });
-        return rows.map(r => ({
-          name: r.name,
-          email: (r.email || '').toLowerCase(),
-          points: typeof r.grade === 'number' ? r.grade : (r.grade === '' ? null : 0),
-          status: (typeof r.grade === 'number' && r.grade > 0) ? (r.grade >= 100 ? 'present' : 'late') : 'absent',
-        }));
+      } catch (err) {
+        window.captureError(err, { where: 'lms_sync_getRecords' });
+        return [];
       }
-      return parts.map(p => {
-        const durMin = Math.round(((p._accumulatedMs || 0) + (p.present && p.joinTime ? (Date.now() - new Date(p.joinTime).getTime()) : 0)) / 60000);
-        const isLate = p.isLate || (p.joinTime && typeof AttUtils !== 'undefined' && AttUtils.latenessMin(state.startTime, p.joinTime) >= 5);
-        return {
-          name: p.displayName || p.name || '',
-          email: (p.email || '').toLowerCase(),
-          status: isLate ? 'late' : (p.present || durMin > 0 ? 'present' : 'absent'),
-          durationMin: durMin,
-        };
-      });
     },
     getAuthToken: () => state.sessionToken,
     getBackendUrl: () => state.backendUrl,
@@ -4512,6 +4566,7 @@ async function handleAuthCode(response) {
     }
   } catch (err) {
     console.error('Auth exchange failed:', err);
+    window.captureError(err, { where: 'handleAuthCode_exchange' });
     state._reconsentMissing = null; // failed attempt — don't judge a later sign-in by it
     _pendingClassroomImport = false; // don't auto-fire an import on the next successful sign-in
     toast(t('toast.signInFailed','Sign-in failed:') + ' ' + err.message);
@@ -5145,6 +5200,7 @@ async function waitForMeet() {
     if (window.meet?.addon?.createAddonSession) return true;
     await new Promise(r => setTimeout(r, 100));
   }
+  window.captureError(new Error('waitForMeet timed out waiting for addon API'), { where: 'waitForMeet_timeout' });
   return false;
 }
 

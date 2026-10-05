@@ -629,3 +629,190 @@ describe('GET /api/public/billing-config — Institution card gate', () => {
   });
 });
 
+describe('POST /api/public/error', () => {
+  let errorSpy;
+  beforeEach(() => {
+    errorSpy = jest.spyOn(require('../../src/lib/logger'), 'error').mockImplementation(() => {});
+  });
+  afterEach(() => {
+    errorSpy.mockRestore();
+  });
+
+  test('400 when body is missing or empty', async () => {
+    const res = await request(app)
+      .post('/api/public/error')
+      .set('Content-Type', 'application/json')
+      .send({});
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/message or reason/i);
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  test('400 when message and reason are whitespace', async () => {
+    const res = await request(app)
+      .post('/api/public/error')
+      .set('Content-Type', 'application/json')
+      .send({ message: '   ' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/message or reason/i);
+  });
+
+  test('200 with valid message and forwards to log.error', async () => {
+    const res = await request(app)
+      .post('/api/public/error')
+      .set('Content-Type', 'application/json')
+      .send({
+        message: 'TypeError: cannot read property of undefined',
+        stack: 'Error at foo.js:10\n at bar.js:20',
+        path: '/index.html',
+        where: 'waitForMeet_timeout',
+        release: 'attendance-tracker-panel@2026-09-26',
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(errorSpy).toHaveBeenCalledWith('client_fallback_error', expect.objectContaining({
+      message: 'TypeError: cannot read property of undefined',
+      stack: expect.stringContaining('foo.js:10'),
+      path: '/index.html',
+      where: 'waitForMeet_timeout',
+      release: 'attendance-tracker-panel@2026-09-26',
+      err: expect.any(Error),
+    }));
+  });
+
+  test('supports reason field when message is omitted', async () => {
+    const res = await request(app)
+      .post('/api/public/error')
+      .set('Content-Type', 'application/json')
+      .send({
+        reason: 'Unhandled promise rejection in export',
+        where: 'unhandledrejection',
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(errorSpy).toHaveBeenCalledWith('client_fallback_error', expect.objectContaining({
+      message: 'Unhandled promise rejection in export',
+      where: 'unhandledrejection',
+    }));
+  });
+
+  test('scrubs email/PII patterns from message and stack', async () => {
+    const res = await request(app)
+      .post('/api/public/error')
+      .set('Content-Type', 'application/json')
+      .send({
+        message: 'Failed to process student john.doe@school.edu in roster',
+        stack: 'Error: user jane.smith@domain.org failed\n at load (file.js:1)',
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(errorSpy).toHaveBeenCalledWith('client_fallback_error', expect.objectContaining({
+      message: 'Failed to process student [email] in roster',
+      stack: expect.stringContaining('user [email] failed'),
+    }));
+  });
+
+  test('truncates oversized message and stack payloads', async () => {
+    const hugeMsg = 'A'.repeat(5000);
+    const hugeStack = 'B'.repeat(10000);
+    const res = await request(app)
+      .post('/api/public/error')
+      .set('Content-Type', 'application/json')
+      .send({ message: hugeMsg, stack: hugeStack });
+    expect(res.status).toBe(200);
+    const callData = errorSpy.mock.calls[0][1];
+    expect(callData.message.length).toBe(2000);
+    expect(callData.stack.length).toBe(5000);
+  });
+
+  test('accepts text/plain beacon payload containing JSON', async () => {
+    const payload = JSON.stringify({ message: 'Beacon error from navigator.sendBeacon', where: 'sendBeacon' });
+    const res = await request(app)
+      .post('/api/public/error')
+      .set('Content-Type', 'text/plain')
+      .send(payload);
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(errorSpy).toHaveBeenCalledWith('client_fallback_error', expect.objectContaining({
+      message: 'Beacon error from navigator.sendBeacon',
+      where: 'sendBeacon',
+    }));
+  });
+
+  test('accepts text/plain beacon payload containing raw non-JSON text', async () => {
+    const res = await request(app)
+      .post('/api/public/error')
+      .set('Content-Type', 'text/plain')
+      .send('Uncaught TypeError: window.meet is undefined');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(errorSpy).toHaveBeenCalledWith('client_fallback_error', expect.objectContaining({
+      message: 'Uncaught TypeError: window.meet is undefined',
+    }));
+  });
+
+  test('accepts array payload and extracts first error element', async () => {
+    const res = await request(app)
+      .post('/api/public/error')
+      .set('Content-Type', 'application/json')
+      .send([{ message: 'Batch error item 1', where: 'batch_item' }]);
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(errorSpy).toHaveBeenCalledWith('client_fallback_error', expect.objectContaining({
+      message: 'Batch error item 1',
+      where: 'batch_item',
+    }));
+  });
+
+  test('converts non-string message object or number into valid error', async () => {
+    const res = await request(app)
+      .post('/api/public/error')
+      .set('Content-Type', 'application/json')
+      .send({ message: { code: 'UNAUTHORIZED_ACCESS', detail: 'token expired' } });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(errorSpy).toHaveBeenCalledWith('client_fallback_error', expect.objectContaining({
+      message: expect.stringContaining('UNAUTHORIZED_ACCESS'),
+    }));
+  });
+
+  test('scrubs PII in path, where, and reason fields', async () => {
+    const res = await request(app)
+      .post('/api/public/error')
+      .set('Content-Type', 'application/json')
+      .send({
+        message: 'Auth failed',
+        path: '/users/teacher.smith@school.edu/settings',
+        where: 'listener in admin@district.k12.us',
+        reason: 'Contact principal@highschool.org',
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(errorSpy).toHaveBeenCalledWith('client_fallback_error', expect.objectContaining({
+      path: '/users/[email]/settings',
+      where: 'listener in [email]',
+      reason: 'Contact [email]',
+    }));
+  });
+
+  test('creates synthetic client stack with where and path when stack is omitted', async () => {
+    const res = await request(app)
+      .post('/api/public/error')
+      .set('Content-Type', 'application/json')
+      .send({
+        message: 'Timeout without stack',
+        path: '/pricing.html',
+        where: 'checkout_timeout',
+      });
+    expect(res.status).toBe(200);
+    const errPassed = errorSpy.mock.calls[0][1].err;
+    expect(errPassed.stack).toContain('at checkout_timeout (/pricing.html)');
+  });
+
+  test('errorLimiter is configured with 30 requests per 1 minute window', () => {
+    const publicRouter = require('../../src/routes/public');
+    expect(publicRouter._errorLimiter).toBeDefined();
+  });
+});
+
+

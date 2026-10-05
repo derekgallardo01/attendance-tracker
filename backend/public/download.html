@@ -37,6 +37,28 @@
       var done = false;
       var T = (window.AttStrings && window.AttStrings.t) ? window.AttStrings.t : function (k, f) { return f; };
 
+      var BACKEND_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:8080/api'
+        : 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
+
+      function reportDownloadError(msg, extra) {
+        try {
+          var payload = {
+            message: String(msg || 'Download error').slice(0, 2000),
+            path: window.location.pathname || '/download.html',
+            where: (extra && extra.where) || 'download_page',
+            reason: (extra && extra.reason) || undefined,
+            release: 'download@2026-09-26',
+          };
+          var blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon(BACKEND_URL + '/public/error', blob);
+          } else if (typeof fetch === 'function') {
+            fetch(BACKEND_URL + '/public/error', { method: 'POST', body: blob, keepalive: true }).catch(function () {});
+          }
+        } catch (e) {}
+      }
+
       headline.textContent = T('dl.starting', 'Starting your download…');
 
       function fail(title, msg) {
@@ -72,6 +94,7 @@
           detail.textContent = T('dl.doneDetail', 'Check your browser’s Downloads. You can close this tab.');
         } catch (e) {
           done = false;
+          reportDownloadError((e && e.message) || 'Blob decoding failed', { where: 'download_blob_decode', reason: (payload && payload.filename) ? payload.filename : undefined });
           fail(T('dl.failed', 'Download failed'), T('dl.failedDetail', 'Something went wrong preparing the file. Go back to the Meet panel and try again.'));
         }
       }
@@ -94,12 +117,19 @@
           if (e.origin !== window.location.origin) return;
           if (e.data && e.data.type === 'att-download') deliver(e.data);
         });
-        try { window.opener.postMessage('att-download-ready', '*'); } catch (e) { /* opener gone */ }
+        try {
+          window.opener.postMessage('att-download-ready', '*');
+        } catch (e) {
+          reportDownloadError((e && e.message) || 'postMessage to opener failed', { where: 'postMessage_opener_error' });
+        }
         // Reset any Path-1 failure text — the postMessage retry is in flight.
         headline.textContent = T('dl.starting', 'Starting your download…');
         detail.textContent = T('dl.fetching', 'Fetching the file from the Meet panel…');
         setTimeout(function () {
-          if (!done) fail(T('dl.nothing', 'Nothing to download'), T('dl.nothingDetail', 'This page only works right after clicking a download button in the Meet panel. Go back and try again.'));
+          if (!done) {
+            reportDownloadError('postMessage handshake timed out waiting for payload', { where: 'postMessage_handshake_timeout' });
+            fail(T('dl.nothing', 'Nothing to download'), T('dl.nothingDetail', 'This page only works right after clicking a download button in the Meet panel. Go back and try again.'));
+          }
         }, 10000);
       } else {
         fail(T('dl.nothing', 'Nothing to download'), T('dl.nothingDetail', 'This page only works right after clicking a download button in the Meet panel. Go back and try again.'));

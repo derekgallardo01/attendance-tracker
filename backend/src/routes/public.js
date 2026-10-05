@@ -1,4 +1,4 @@
-const { Router } = require('express');
+const { Router, text: expressText } = require('express');
 const rateLimit = require('express-rate-limit');
 const { FieldValue } = require('@google-cloud/firestore');
 const log = require('../lib/logger');
@@ -226,6 +226,84 @@ router.post('/public/pageview', async (req, res) => {
   } catch (err) {
     log.warn('pageview beacon failed', { error: err.message });
   }
+});
+
+// Rate limiter for client-side fallback error reporting (30 req/min per IP)
+const errorLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many error reports. Try again later.' },
+  skip: () => process.env.NODE_ENV === 'test',
+});
+
+// Scrub emails / PII patterns from client error strings before logging / Sentry forwarding
+const PII_EMAIL_RE = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi;
+function scrubPii(str) {
+  if (typeof str !== 'string') return '';
+  return str.replace(PII_EMAIL_RE, '[email]');
+}
+
+// POST /api/public/error — First-party fallback error tracking endpoint.
+// Used when client-side Sentry CDN is blocked by school content filters or adblockers.
+router._errorLimiter = errorLimiter;
+router.post('/public/error', errorLimiter, expressText({ type: ['text/plain', 'application/json'] }), (req, res) => {
+  let body = req.body;
+  if (typeof body === 'string') {
+    try {
+      body = JSON.parse(body);
+    } catch (_) {
+      body = { message: body };
+    }
+  }
+  if (Array.isArray(body)) {
+    body = body[0] || {};
+  }
+  body = body || {};
+
+  const rawMsg = typeof body.message === 'string'
+    ? body.message
+    : (body.message != null
+      ? (typeof body.message === 'object' ? JSON.stringify(body.message) : String(body.message))
+      : (typeof body.reason === 'string'
+        ? body.reason
+        : (body.reason != null ? (typeof body.reason === 'object' ? JSON.stringify(body.reason) : String(body.reason)) : '')));
+
+  if (!rawMsg || !String(rawMsg).trim()) {
+    return res.status(400).json({ error: 'Error message or reason is required' });
+  }
+
+  const message = scrubPii(String(rawMsg).trim()).slice(0, 2000);
+  const rawStack = typeof body.stack === 'string' ? body.stack.trim() : '';
+  const stack = rawStack ? scrubPii(rawStack).slice(0, 5000) : null;
+  const path = typeof body.path === 'string' ? scrubPii(body.path.trim()).slice(0, 500) : null;
+  const where = typeof body.where === 'string' ? scrubPii(body.where.trim()).slice(0, 200) : null;
+  const reason = typeof body.reason === 'string'
+    ? scrubPii(body.reason).slice(0, 1000)
+    : (body.reason != null ? scrubPii(typeof body.reason === 'object' ? JSON.stringify(body.reason) : String(body.reason)).slice(0, 1000) : null);
+  const release = cap(body.release, 100);
+
+  const clientErr = new Error(message);
+  if (stack) {
+    clientErr.stack = stack;
+  } else {
+    clientErr.stack = `${message}\n    at ${where || 'client'} (${path || 'unknown'})`;
+  }
+
+  log.error('client_fallback_error', {
+    err: clientErr,
+    message,
+    stack: stack || undefined,
+    path: path || undefined,
+    where: where || undefined,
+    reason: reason || undefined,
+    release: release || undefined,
+    userAgent: cap(req.headers['user-agent'], 500),
+    ip: cap(req.ip, 100),
+  });
+
+  res.json({ success: true });
 });
 
 // Cache the public stats payload for 10 minutes so a viral landing page

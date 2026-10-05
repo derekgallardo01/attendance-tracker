@@ -778,6 +778,28 @@ describe('AttLmsSync', () => {
     await AttLmsSync.pushGrades();
     expect(document.getElementById('lms-sync-status-box').textContent).toContain('No meeting attendees matched students');
   });
+
+  test('pushGrades reports to root.captureError if available on error', async () => {
+    global.captureError = jest.fn();
+    AttLmsSync.openModal({
+      records: [{ name: 'Test', email: 't@test.com', status: 'present' }],
+    });
+    const cSel = document.getElementById('lms-classroom-course-select');
+    cSel.innerHTML = '<option value="c-err" selected>C-Err</option>';
+    cSel.value = 'c-err';
+    global.fetch = jest.fn(async () => ({
+      ok: false,
+      status: 500,
+      json: async () => ({ error: 'Sync broke down' }),
+    }));
+    await AttLmsSync.pushGrades();
+    expect(global.captureError).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({ where: 'lms_sync_pushGrades', tab: 'classroom' })
+    );
+    delete global.captureError;
+  });
 });
+
 
 

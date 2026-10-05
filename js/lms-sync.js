@@ -637,6 +637,9 @@
           }
         }
       } catch (err) {
+        if (typeof root.captureError === 'function') {
+          root.captureError(err, { where: 'lms_sync_pushGrades', tab: _activeTab });
+        }
         showStatus(`Error: ${err.message}`, 'error');
       } finally {
         pushBtn.disabled = false;
