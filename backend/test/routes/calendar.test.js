@@ -175,6 +175,29 @@ describe('GET /api/calendar-attendees', () => {
     expect(res.body.attendees).toEqual([]);
   });
 
+  test('gracefully degrades when user has no accessToken in session', async () => {
+    firestore.getUser.mockResolvedValueOnce({
+      email: 'user@acme.com', domain: 'acme.com', refreshToken: null, accessToken: null,
+    });
+    const res = await request(app)
+      .get('/api/calendar-attendees?meetingCode=abc-defg-hij')
+      .set(authedHeader('user@acme.com', 'acme.com'));
+    expect(res.status).toBe(200);
+    expect(res.body.calendarAuthExpired).toBe(true);
+    expect(res.body.attendees).toEqual([]);
+    expect(mockEventsList).not.toHaveBeenCalled();
+  });
+
+  test('gracefully degrades when googleapis throws missing token error', async () => {
+    mockEventsList.mockRejectedValue(new Error('No access, refresh token, API key or refresh handler callback is set.'));
+    const res = await request(app)
+      .get('/api/calendar-attendees?meetingCode=abc-defg-hij')
+      .set(authedHeader('user@acme.com', 'acme.com'));
+    expect(res.status).toBe(200);
+    expect(res.body.calendarAuthExpired).toBe(true);
+    expect(res.body.attendees).toEqual([]);
+  });
+
   test('filters out room resources from attendees', async () => {
     mockEventsList.mockResolvedValue({
       data: {

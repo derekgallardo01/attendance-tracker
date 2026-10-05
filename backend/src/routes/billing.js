@@ -253,7 +253,6 @@ router.post(['/billing/checkout', '/billing/create-checkout-session'], requireAu
       // Stripe emails the buyer a link to finish — recovering the highest-intent
       // non-payers (they already reached checkout).
       after_expiration: { recovery: { enabled: true } },
-      automatic_payment_methods: { enabled: true },
     };
     if (promo && promo !== 'LAUNCH50') {
       sessionParams.allow_promotion_codes = true;
@@ -626,7 +625,6 @@ router.post('/billing/public-checkout', async (req, res) => {
       metadata: meta,
       // Abandoned-checkout recovery (see authed checkout above for rationale).
       after_expiration: { recovery: { enabled: true } },
-      automatic_payment_methods: { enabled: true },
     };
     if (email) {
       // Deliberately NOT prefilled as customer_email: this endpoint is

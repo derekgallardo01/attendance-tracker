@@ -1252,7 +1252,6 @@ describe('billing/status pricing payload', () => {
     expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
       expect.objectContaining({
         line_items: [{ price: 'price_inr_life_399', quantity: 1 }],
-        automatic_payment_methods: { enabled: true },
       })
     );
     expect(mockStripeInstance.checkout.sessions.create).not.toHaveBeenCalledWith(
@@ -1263,7 +1262,7 @@ describe('billing/status pricing payload', () => {
     delete process.env.STRIPE_INDIVIDUAL_LIFETIME_INR_PRICE_ID;
   });
 
-  test('checkout for user in India (IN) requesting educator plan routes to educator price with PPP50 discount and automatic payment methods', async () => {
+  test('checkout for user in India (IN) requesting educator plan routes to educator price with PPP50 discount and dynamic payment methods', async () => {
     process.env.STRIPE_SECRET_KEY = 'sk_test_x';
     process.env.STRIPE_EDUCATOR_PRICE_ID = 'price_edu_usd';
     process.env.STRIPE_INDIVIDUAL_LIFETIME_INR_PRICE_ID = 'price_inr_life_299';
@@ -1278,7 +1277,6 @@ describe('billing/status pricing payload', () => {
       expect.objectContaining({
         mode: 'subscription',
         line_items: [{ price: 'price_edu_usd', quantity: 1 }],
-        automatic_payment_methods: { enabled: true },
         discounts: [{ coupon: 'PPP50' }],
       })
     );

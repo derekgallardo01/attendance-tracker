@@ -76,7 +76,6 @@ describe('Regional payment rails — PHP, MYR, IDR, IN', () => {
           },
           quantity: 1,
         }],
-        automatic_payment_methods: { enabled: true },
         metadata: expect.objectContaining({
           country: 'PH',
           currency: 'php',
@@ -105,7 +104,6 @@ describe('Regional payment rails — PHP, MYR, IDR, IN', () => {
           },
           quantity: 1,
         }],
-        automatic_payment_methods: { enabled: true },
         metadata: expect.objectContaining({
           country: 'MY',
           currency: 'myr',
@@ -133,7 +131,6 @@ describe('Regional payment rails — PHP, MYR, IDR, IN', () => {
           },
           quantity: 1,
         }],
-        automatic_payment_methods: { enabled: true },
         metadata: expect.objectContaining({
           country: 'ID',
           currency: 'idr',
@@ -156,7 +153,6 @@ describe('Regional payment rails — PHP, MYR, IDR, IN', () => {
     expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
       expect.objectContaining({
         line_items: [{ price: 'price_php_env_123', quantity: 1 }],
-        automatic_payment_methods: { enabled: true },
       })
     );
   });
@@ -216,7 +212,6 @@ describe('Regional payment rails — PHP, MYR, IDR, IN', () => {
           },
           quantity: 1,
         }],
-        automatic_payment_methods: { enabled: true },
       })
     );
   });

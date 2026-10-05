@@ -23,6 +23,12 @@ router.get('/calendar-attendees', requireAuth, async (req, res) => {
   const { meetingCode, calendarId } = req.query;
   if (!meetingCode) return res.status(400).json({ error: 'meetingCode is required' });
 
+  // If user has no active Google access token, degrade gracefully immediately.
+  if (req.user && !req.user.accessToken) {
+    log.info('user has no google access token, skipping calendar lookup', { email: req.user.email });
+    return res.json({ attendees: [], isScheduled: false, calendarAuthExpired: true });
+  }
+
   try {
     // Use user's OAuth token if available, otherwise fall back to service account
     const calAuth = await getGoogleClient(req, 'https://www.googleapis.com/auth/calendar.readonly');
@@ -122,14 +128,16 @@ router.get('/calendar-attendees', requireAuth, async (req, res) => {
   } catch (err) {
     // Insufficient Permission (403) means user didn't grant calendar scope during OAuth.
     // Degrade gracefully — let the rest of the add-on work without calendar features.
-    if (err.code === 403 || /insufficient permission/i.test(err.message)) {
+    if (err.code === 403 || /insufficient permission|insufficient authentication scopes/i.test(err.message)) {
       log.info('calendar permission not granted, skipping calendar lookup', { email: req.user?.email });
       return res.json({ attendees: [], isScheduled: false, calendarPermissionMissing: true });
     }
-    // Invalid Credentials (401) means user's token expired or was revoked.
+    // Invalid Credentials (401), invalid_grant, or missing token means user's token expired, was revoked, or is unset.
     // Degrade gracefully rather than throwing a 500 server error.
-    if (err.code === 401 || /invalid credentials/i.test(err.message)) {
-      log.info('calendar credentials invalid or expired, skipping calendar lookup', { email: req.user?.email });
+    const gStatus = err.status || err.code || err.response?.status;
+    const AUTH_FAIL = /invalid_grant|unauthorized_client|invalid credentials|no access, refresh token|invalid authentication cred/i;
+    if (gStatus === 401 || AUTH_FAIL.test(String(err.message || ''))) {
+      log.info('calendar credentials invalid or expired, skipping calendar lookup', { email: req.user?.email, error: err.message });
       return res.json({ attendees: [], isScheduled: false, calendarAuthExpired: true });
     }
     log.error('calendar lookup failed', { error: err.message });
