@@ -21,6 +21,7 @@ jest.mock('stripe', () => jest.fn(() => mockStripeInstance));
 jest.mock('../../src/lib/notifications', () => ({
   sendUpgradeLinkEmail: jest.fn().mockResolvedValue({ sent: true }),
   sendSubscriptionCancelledEmail: jest.fn().mockResolvedValue({ sent: true }),
+  sendAdminEmail: jest.fn().mockResolvedValue({ sent: true }),
 }));
 
 jest.mock('../../src/services/firestore', () => ({
@@ -41,6 +42,7 @@ jest.mock('../../src/services/firestore', () => ({
 }));
 
 const firestore = require('../../src/services/firestore');
+const notifications = require('../../src/lib/notifications');
 
 let app;
 
@@ -1322,7 +1324,13 @@ describe('billing/status pricing payload', () => {
     const res = await request(app)
       .post('/api/billing/school-license-request')
       .set(authedHeader('dean@college.edu', 'college.edu'))
-      .send({ domain: 'college.edu' });
+      .send({
+        domain: 'college.edu',
+        teacherName: 'Dean Smith',
+        organizationName: 'College of Engineering',
+        tier: 'department',
+        adminEmail: 'it-admin@college.edu',
+      });
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ ok: true, message: 'School license request recorded' });
@@ -1331,9 +1339,101 @@ describe('billing/status pricing payload', () => {
       expect.objectContaining({
         type: 'school_license_requested',
         email: 'dean@college.edu',
-        meta: expect.objectContaining({ domain: 'college.edu', isEdu: true }),
+        meta: expect.objectContaining({
+          domain: 'college.edu',
+          isEdu: true,
+          teacherName: 'Dean Smith',
+          organizationName: 'College of Engineering',
+          tier: 'department',
+          adminEmail: 'it-admin@college.edu',
+        }),
       })
     );
+    expect(notifications.sendAdminEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: expect.any(String),
+        subject: expect.stringContaining('College of Engineering'),
+        body: expect.stringContaining('Dean Smith'),
+      })
+    );
+  });
+
+  test('POST /billing/school-license-request still succeeds when sendAdminEmail throws', async () => {
+    notifications.sendAdminEmail.mockRejectedValueOnce(new Error('Resend down'));
+
+    const res = await request(app)
+      .post('/api/billing/school-license-request')
+      .set(authedHeader('dean@college.edu', 'college.edu'))
+      .send({ domain: 'college.edu' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+  });
+
+  test('POST /billing/school-license-request recognizes international edu domains (.edu.ph, .edu.my, .sch.id, .k12.org, .ac.uk, .education)', async () => {
+    const testCases = [
+      { email: 'prof@up.edu.ph', domain: 'up.edu.ph' },
+      { email: 'dr@um.edu.my', domain: 'um.edu.my' },
+      { email: 'guru@smp1.sch.id', domain: 'smp1.sch.id' },
+      { email: 'admin@district.k12.org', domain: 'district.k12.org' },
+      { email: 'fellow@oxford.ac.uk', domain: 'oxford.ac.uk' },
+      { email: 'teacher@learn.education', domain: 'learn.education' },
+    ];
+
+    for (const { email, domain } of testCases) {
+      firestore.logEvent.mockClear();
+      const res = await request(app)
+        .post('/api/billing/school-license-request')
+        .set(authedHeader(email, domain))
+        .send({
+          domain,
+          teacherName: 'Educator',
+          organizationName: 'School Org',
+          tier: 'institution',
+        });
+
+      expect(res.status).toBe(200);
+      expect(firestore.logEvent).toHaveBeenCalledWith(
+        domain,
+        expect.objectContaining({
+          type: 'school_license_requested',
+          email,
+          meta: expect.objectContaining({
+            domain,
+            isEdu: true,
+            tier: 'institution',
+          }),
+        })
+      );
+    }
+  });
+
+  test('POST /billing/checkout rejects single_meeting without conferenceId', async () => {
+    const res = await request(app)
+      .post('/api/billing/checkout')
+      .set(authedHeader('teacher@school.edu', 'school.edu'))
+      .send({ plan: 'single_meeting' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain('Conference ID is required');
+  });
+
+  test('POST /billing/checkout creates single_meeting payment session without PPP50 coupon', async () => {
+    const res = await request(app)
+      .post('/api/billing/checkout')
+      .set(authedHeader('teacher@school.edu.ph', 'school.edu.ph'))
+      .set('cf-ipcountry', 'PH')
+      .send({ plan: 'single_meeting', conferenceId: 'xyz-abcd-efg' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.url).toBeDefined();
+
+    const p = mockStripeInstance.checkout.sessions.create.mock.calls.at(-1)[0];
+    expect(p.mode).toBe('payment');
+    expect(p.metadata.plan).toBe('single_meeting');
+    expect(p.metadata.conferenceId).toBe('xyz-abcd-efg');
+    expect(p.metadata.meetingPass).toBe('1');
+    expect(p.discounts).toBeUndefined(); // single_meeting does not get PPP50
   });
 
   test('GET /billing/status recognizes .education and UA for PPP discount', async () => {

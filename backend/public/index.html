@@ -6497,34 +6497,137 @@ function closeTrialEndingBanner() {
   } catch (e) {}
 }
 
-async function requestSchoolLicense() {
+function inferSchoolName(domain) {
+  if (!domain || typeof domain !== 'string') return '';
+  const clean = domain.toLowerCase().trim();
+  const parts = clean.split('.');
+  const ignore = new Set([
+    'edu', 'ac', 'k12', 'sch', 'school', 'org', 'com', 'net', 'gov',
+    'us', 'uk', 'ph', 'my', 'id', 'in', 'au', 'ca', 'nz', 'education',
+    'mail', 'webmail', 'email', 'staff', 'faculty', 'student', 'students', 'post', 'alumni', 'www'
+  ]);
+  const filtered = parts.filter(p => !ignore.has(p) && p.length > 1);
+  if (!filtered.length) {
+    const fallback = parts[0] || '';
+    return fallback ? fallback.charAt(0).toUpperCase() + fallback.slice(1) : '';
+  }
+  const token = filtered[filtered.length - 1];
+  return token.split(/[-_]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+function openSchoolLicenseModal() {
+  const modal = document.getElementById('school-license-modal');
+  if (!modal) return;
   const email = (state.userEmail || '').toLowerCase();
   const domain = (_billing && _billing.domain) || email.split('@')[1] || '';
-  const btn = document.getElementById('btn-request-school-license');
-  const settingsBtn = document.getElementById('settings-school-license-btn');
-  if (btn) btn.disabled = true;
-  if (settingsBtn) settingsBtn.disabled = true;
 
-  try {
-    logUserEvent('school_license_requested', { domain, email });
-    await authFetch(`${state.backendUrl}/billing/school-license-request`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ domain, email })
-    });
-  } catch (e) {
-    /* best effort */
+  const teacherNameInput = document.getElementById('school-license-teacher-name');
+  if (teacherNameInput) {
+    const rawName = state.userName || state.userDisplayName || state._selfDisplayName || '';
+    let formattedName = rawName ? rawName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : '';
+    if (!formattedName && email && email.includes('@')) {
+      const local = email.split('@')[0];
+      if (local.includes('.') || local.includes('_')) {
+        formattedName = local.split(/[._]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      }
+    }
+    teacherNameInput.value = formattedName || '';
+  }
+  const teacherEmailInput = document.getElementById('school-license-teacher-email');
+  if (teacherEmailInput) {
+    teacherEmailInput.value = email;
+  }
+  const orgNameInput = document.getElementById('school-license-org-name');
+  if (orgNameInput) {
+    orgNameInput.value = inferSchoolName(domain);
+  }
+  const adminEmailInput = document.getElementById('school-license-admin-email');
+  if (adminEmailInput) {
+    adminEmailInput.value = '';
+  }
+  const statusEl = document.getElementById('school-license-status');
+  if (statusEl) {
+    statusEl.style.display = 'none';
+    statusEl.textContent = '';
+  }
+  const submitBtn = document.getElementById('school-license-submit-btn');
+  if (submitBtn) {
+    submitBtn.disabled = false;
+    submitBtn.textContent = t('schoolLicense.submitBtn', 'Submit Request');
   }
 
-  toast(t('upgrade.schoolLicenseSent', 'School license request sent! We will reach out shortly.'), 4000);
+  if (typeof applyTranslations === 'function') {
+    applyTranslations(modal);
+  }
 
-  const subject = encodeURIComponent(`School License Request for ${domain || 'our school'}`);
-  const body = encodeURIComponent(`Hello,\n\nI would like to request information and pricing for a school / department license for Attendance Tracker at ${domain || 'our institution'}.\n\nMy email: ${email}\n\nThank you!`);
-  setTimeout(() => {
-    window.location.href = `mailto:derek@attendancetracker.dev?subject=${subject}&body=${body}`;
-    if (btn) btn.disabled = false;
-    if (settingsBtn) settingsBtn.disabled = false;
-  }, 1000);
+  modal.style.display = 'flex';
+}
+
+function closeSchoolLicenseModal() {
+  const modal = document.getElementById('school-license-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function requestSchoolLicense() {
+  openSchoolLicenseModal();
+}
+
+async function submitSchoolLicenseForm(event) {
+  if (event && event.preventDefault) event.preventDefault();
+  const submitBtn = document.getElementById('school-license-submit-btn');
+  const statusEl = document.getElementById('school-license-status');
+  const teacherName = (document.getElementById('school-license-teacher-name')?.value || '').trim();
+  const teacherEmail = (document.getElementById('school-license-teacher-email')?.value || '').trim().toLowerCase();
+  const organizationName = (document.getElementById('school-license-org-name')?.value || '').trim();
+  const tier = document.getElementById('school-license-tier')?.value || 'department';
+  const adminEmail = (document.getElementById('school-license-admin-email')?.value || '').trim();
+  const domain = (_billing && _billing.domain) || teacherEmail.split('@')[1] || '';
+
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = t('schoolLicense.submitting', 'Submitting...');
+  }
+  if (statusEl) {
+    statusEl.style.display = 'none';
+  }
+
+  try {
+    logUserEvent('school_license_requested', { domain, email: teacherEmail, teacherName, organizationName, tier, adminEmail });
+    const res = await authFetch(`${state.backendUrl}/billing/school-license-request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        domain,
+        teacherName,
+        organizationName,
+        tier,
+        adminEmail,
+      }),
+    });
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+
+    if (statusEl) {
+      statusEl.style.display = 'block';
+      statusEl.style.color = '#81c995';
+      statusEl.textContent = t('schoolLicense.success', '✓ Request submitted! Our school licensing team will reach out with a quote shortly.');
+    }
+    toast(t('schoolLicense.success', '✓ Request submitted! Our school licensing team will reach out with a quote shortly.'), 4000);
+    setTimeout(() => {
+      closeSchoolLicenseModal();
+    }, 2000);
+  } catch (err) {
+    if (statusEl) {
+      statusEl.style.display = 'block';
+      statusEl.style.color = '#f87171';
+      statusEl.textContent = t('schoolLicense.error', 'Could not submit request. Please try again or email us directly.');
+    }
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = t('schoolLicense.submitBtn', 'Submit Request');
+    }
+  }
 }
 
 function updateQuotaIndicator(used, limit) {
@@ -6664,7 +6767,7 @@ async function startUpgradeCheckout(plan, btnId) {
       body: JSON.stringify({
         plan: plan || 'lifetime',
         interval: plan === 'team' ? 'once' : 'annual',
-        conferenceId: (typeof state !== 'undefined' && state.conferenceId) ? state.conferenceId : null,
+        conferenceId: (typeof state !== 'undefined' && (state.conferenceId || state.meetingCode)) || (typeof currentMeetingCode !== 'undefined' ? currentMeetingCode : null) || null,
       }),
     });
     const data = await res.json().catch(() => ({}));
@@ -6724,12 +6827,14 @@ function watchForUpgradeCompletion() {
 // can be sliced by geography, locale, and edu-status — not just on
 // upgrade_modal_shown. (Without this, ~80% of paywall events had no timezone,
 function isEduDomain(email, domain) {
-  const e = (email || '').toLowerCase();
-  const d = (domain || '').toLowerCase();
-  return /\.(edu|edu\.[a-z]{2}|ac\.[a-z]{2}|gov\.[a-z]{2}|k12\.[a-z]{2}(\.us)?|k12\.[a-z]{2}|sch\.[a-z]{2}|education)$/i.test(e) ||
+  const e = (email || '').toLowerCase().trim();
+  const d = (domain || (e.includes('@') ? e.split('@')[1] : '')).toLowerCase().trim();
+  const target = d || e;
+  if (!target) return false;
+  return /\.(edu(\.[a-z]{2,})?|ac\.[a-z0-9.-]+|gov\.[a-z]{2,}|k12\.[a-z0-9.-]+|sch\.[a-z0-9.-]+|education)$/i.test(target) ||
+         /\.education\b/i.test(target) ||
          /@(.*\.)?(school|academy|college|university|deped|alokitohridoy|education|gymnasium|lyceum)/i.test(e) ||
-         /\.(edu|ac|education)\b/i.test(d) ||
-         /\.(edu|edu\.[a-z]{2}|ac\.[a-z]{2}|gov\.[a-z]{2}|k12\.[a-z]{2}(\.us)?|k12\.[a-z]{2}|sch\.[a-z]{2}|education)$/i.test(d);
+         /\.(edu|ac|education)\b/i.test(target);
 }
 
 // Shared context stamped on EVERY paywall/upgrade event so the revenue funnel
@@ -6756,7 +6861,8 @@ function countryFlagEmoji(code) {
 
 function updateUpgradeModalPricing() {
   const isPpp = !!(_billing && _billing.pppDiscount && _billing.pppDiscount.eligible);
-  const country = _billing?.country || _billing?.pppDiscount?.country || state.signupCountry || '';
+  const rawCountry = _billing?.country || _billing?.pppDiscount?.country || state.signupCountry || (typeof window !== 'undefined' && window._attCountry) || '';
+  const country = typeof rawCountry === 'string' ? rawCountry.trim().toUpperCase() : '';
   const flag = countryFlagEmoji(country);
   const email = (state.userEmail || '').toLowerCase();
   const isEdu = !!(_billing && _billing.isEdu) || isEduDomain(email, (_billing && _billing.domain) || email.split('@')[1]);
@@ -6932,17 +7038,54 @@ function updateUpgradeModalPricing() {
   }
 
   const singlePriceEl = document.querySelector('#plan-card-single-meeting .price-single-meeting');
+  const btnSingleMeeting = document.getElementById('btn-upgrade-single-meeting');
+  let singlePriceStr = '$2.99';
+  let singleCardHeaderPrice = '$2.99';
+
+  if (country === 'IN') {
+    singlePriceStr = '₹99';
+    singleCardHeaderPrice = '₹99 INR';
+  } else if (country === 'PH') {
+    singlePriceStr = '₱99';
+    singleCardHeaderPrice = '₱99 PHP';
+  } else if (country === 'MY') {
+    singlePriceStr = 'RM 12';
+    singleCardHeaderPrice = 'RM 12 MYR';
+  } else if (country === 'ID') {
+    singlePriceStr = 'Rp 29.000';
+    singleCardHeaderPrice = 'Rp 29.000 IDR';
+  }
+
   if (singlePriceEl) {
-    if (country === 'IN') {
-      singlePriceEl.innerHTML = `$2.99 <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(~₹249)</span>`;
-    } else if (country === 'PH') {
-      singlePriceEl.innerHTML = `$2.99 <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(~₱170)</span>`;
-    } else if (country === 'MY') {
-      singlePriceEl.innerHTML = `$2.99 <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(~RM 14)</span>`;
-    } else if (country === 'ID') {
-      singlePriceEl.innerHTML = `$2.99 <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(~Rp 49.000)</span>`;
+    singlePriceEl.innerHTML = `<span style="font-weight:700">${escHtml(singleCardHeaderPrice)}</span>`;
+  }
+
+  if (btnSingleMeeting) {
+    const isInstant = (state._lastUpgradeReason === 'exportQuota' || state._lastUpgradeReason === 'largeClass');
+    if (isInstant) {
+      btnSingleMeeting.innerHTML = `<span data-i18n="upgrade.ctaSingleMeetingNow">${escHtml(t('upgrade.ctaSingleMeetingNow', 'Unlock This Meeting Now'))}</span> — <span class="price-single-meeting" style="font-weight:700">${escHtml(singlePriceStr)}</span>`;
     } else {
-      singlePriceEl.innerHTML = `$2.99`;
+      btnSingleMeeting.innerHTML = `<span data-i18n="upgrade.ctaSingleMeeting">${escHtml(t('upgrade.ctaSingleMeeting', 'Unlock This Meeting —'))}</span> <span class="price-single-meeting" style="font-weight:700">${escHtml(singlePriceStr)}</span>`;
+    }
+  }
+
+  const badgeText = document.getElementById('upgrade-payment-badge-text');
+  if (badgeText) {
+    if (country === 'PH') {
+      badgeText.textContent = t('upgrade.badgesPH', '🇵🇭 GCash & Maya Accepted');
+      badgeText.setAttribute('data-i18n', 'upgrade.badgesPH');
+    } else if (country === 'MY') {
+      badgeText.textContent = t('upgrade.badgesMY', '🇲🇾 FPX & GrabPay Accepted');
+      badgeText.setAttribute('data-i18n', 'upgrade.badgesMY');
+    } else if (country === 'ID') {
+      badgeText.textContent = t('upgrade.badgesID', '🇮🇩 QRIS & GoPay Accepted');
+      badgeText.setAttribute('data-i18n', 'upgrade.badgesID');
+    } else if (country === 'IN') {
+      badgeText.textContent = t('upgrade.badgesIN', '🇮🇳 UPI & RuPay Accepted');
+      badgeText.setAttribute('data-i18n', 'upgrade.badgesIN');
+    } else {
+      badgeText.textContent = t('upgrade.badgesDefault', '💳 Credit / Debit Cards, Apple Pay & Google Pay Accepted');
+      badgeText.setAttribute('data-i18n', 'upgrade.badgesDefault');
     }
   }
 }
@@ -6987,13 +7130,52 @@ function showUpgradeModal(reason) {
   if (schoolLicenseBtn) {
     schoolLicenseBtn.style.display = isEdu ? 'block' : 'none';
   }
-  // Lifetime Pro is $9.99 (or $4.99 in PPP regions) one-time (no recurring renewal).
-  // Keep Lifetime Pass prominently featured at the top for all users (including educators)
-  // to eliminate foreign recurring credit-card subscription fears.
+
+  const singleCard = document.getElementById('plan-card-single-meeting');
   const lifetimeCard = document.getElementById('plan-card-lifetime');
   const eduCard = document.getElementById('plan-card-educator');
-  if (lifetimeCard && eduCard && lifetimeCard.parentNode === eduCard.parentNode) {
-    eduCard.parentNode.insertBefore(lifetimeCard, eduCard);
+  const teamCard = document.getElementById('plan-card-team');
+  const isInstantMeetingReason = (reason === 'exportQuota' || reason === 'largeClass');
+
+  if (singleCard && lifetimeCard && eduCard && singleCard.parentNode) {
+    const parent = singleCard.parentNode;
+    if (isInstantMeetingReason) {
+      parent.insertBefore(singleCard, lifetimeCard);
+      singleCard.style.background = 'linear-gradient(180deg, rgba(74,222,128,.12), rgba(255,255,255,.02))';
+      singleCard.style.border = '1.5px solid #4ade80';
+      const instantBadge = document.getElementById('single-meeting-instant-badge');
+      if (instantBadge) {
+        instantBadge.style.display = 'inline-block';
+        instantBadge.textContent = t('upgrade.unlockThisMeetingBadge', 'Instant Unlock');
+      }
+      const btnSingleMeeting = document.getElementById('btn-upgrade-single-meeting');
+      if (btnSingleMeeting) {
+        btnSingleMeeting.style.background = '#22c55e';
+        btnSingleMeeting.style.color = '#0d1117';
+        btnSingleMeeting.style.border = 'none';
+        btnSingleMeeting.style.fontWeight = '700';
+      }
+    } else {
+      if (teamCard) {
+        parent.insertBefore(singleCard, teamCard);
+      } else {
+        parent.appendChild(singleCard);
+      }
+      parent.insertBefore(lifetimeCard, eduCard);
+      singleCard.style.background = 'rgba(255,255,255,.02)';
+      singleCard.style.border = '1px dashed rgba(255,255,255,.2)';
+      const instantBadge = document.getElementById('single-meeting-instant-badge');
+      if (instantBadge) {
+        instantBadge.style.display = 'none';
+      }
+      const btnSingleMeeting = document.getElementById('btn-upgrade-single-meeting');
+      if (btnSingleMeeting) {
+        btnSingleMeeting.style.background = 'rgba(255,255,255,.08)';
+        btnSingleMeeting.style.color = '#e3e3e3';
+        btnSingleMeeting.style.border = '1px solid rgba(255,255,255,.2)';
+        btnSingleMeeting.style.fontWeight = '600';
+      }
+    }
   }
 
   updateUpgradeModalPricing();
@@ -9062,6 +9244,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
   const overlays = [
     ['cancel-subscription-modal', typeof closeCancelSubscriptionModal === 'function' ? closeCancelSubscriptionModal : null],
+    ['school-license-modal', typeof closeSchoolLicenseModal === 'function' ? closeSchoolLicenseModal : null],
     ['note-modal', typeof closeNoteModal === 'function' ? closeNoteModal : null],
     ['paywall-why-modal', typeof dismissPaywallWhy === 'function' ? dismissPaywallWhy : null],
     ['upgrade-modal', typeof closeUpgradeModal === 'function' ? closeUpgradeModal : null],
@@ -10506,7 +10689,10 @@ window.addEventListener('DOMContentLoaded', () => {
       <div id="plan-card-single-meeting" style="background:rgba(255,255,255,.02);border:1px dashed rgba(255,255,255,.2);border-radius:12px;padding:11px 14px 10px;margin-bottom:10px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <div>
-            <span style="font-weight:600;font-size:.85rem;color:#e3e3e3" data-i18n="upgrade.singleMeetingName">Single-Meeting Pass</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-weight:600;font-size:.85rem;color:#e3e3e3" data-i18n="upgrade.singleMeetingName">Single-Meeting Pass</span>
+              <span id="single-meeting-instant-badge" style="display:none;background:#22c55e;color:#0d1117;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:12px;letter-spacing:.04em;text-transform:uppercase" data-i18n="upgrade.unlockThisMeetingBadge">Instant Unlock</span>
+            </div>
             <span style="font-size:.72rem;color:#9aa0a6;display:block" data-i18n="upgrade.singleMeetingDesc">Export this meeting with no limits</span>
           </div>
           <div style="text-align:right">
@@ -10532,7 +10718,18 @@ window.addEventListener('DOMContentLoaded', () => {
           </div>
         </div>
         <button type="button" id="btn-upgrade-team" onclick="startUpgradeCheckout('department', 'btn-upgrade-team')" style="flex:0 0 auto;width:100%;background:rgba(253,214,99,.14);border:1px solid rgba(253,214,99,.3);color:#fdd663;padding:9px 16px;border-radius:20px;font-weight:600;font-size:.81rem;cursor:pointer;margin-top:8px;transition:all .15s ease" data-i18n="upgrade.deptCta">Get the Department plan — your whole school</button>
-        <button type="button" id="btn-request-school-license" onclick="requestSchoolLicense()" style="display:none;width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);color:#e3e3e3;padding:8px 14px;border-radius:20px;font-weight:500;font-size:.78rem;cursor:pointer;margin-top:8px;transition:all .15s ease" data-i18n="upgrade.requestSchoolLicense">Request School / Department License</button>
+      </div>
+
+      <!-- Prominent Institutional School / Department License Button for .edu / .ac users -->
+      <button type="button" id="btn-request-school-license" onclick="openSchoolLicenseModal()" style="display:none;width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.2);color:#e6edf3;padding:9px 14px;border-radius:10px;font-weight:600;font-size:.82rem;cursor:pointer;margin-bottom:10px;text-align:center;transition:all .15s ease">
+        🏢 <span data-i18n="upgrade.requestSchoolLicense">Request School / Department License</span>
+      </button>
+
+      <!-- Localized payment trust badges beneath pricing cards -->
+      <div id="upgrade-payment-badges" style="display:flex;justify-content:center;align-items:center;margin:6px 0 10px">
+        <div id="upgrade-payment-badge-pill" style="background:#0d1117;border:1px solid #30363d;border-radius:20px;font-size:11px;padding:4px 10px;color:#8b949e;display:inline-flex;align-items:center;gap:6px">
+          <span id="upgrade-payment-badge-text" data-i18n="upgrade.badgesDefault">💳 Credit / Debit Cards, Apple Pay &amp; Google Pay Accepted</span>
+        </div>
       </div>
 
       <!-- Review for Pro exchange -->
@@ -10576,6 +10773,56 @@ window.addEventListener('DOMContentLoaded', () => {
         </span>
         <button type="button" onclick="closeUpgradeModal()" style="background:none;border:none;color:#9aa0a6;cursor:pointer;font-size:.72rem;padding:0;text-decoration:underline" data-i18n="upgrade.maybeLater">Maybe later</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ── School / Department License Request Modal ── -->
+  <div id="school-license-modal" onclick="if(event.target===this)closeSchoolLicenseModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1250;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)">
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:14px;padding:24px;max-width:440px;width:100%;box-shadow:0 20px 40px rgba(0,0,0,.5);box-sizing:border-box">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        <div>
+          <h3 style="margin:0;font-size:1.15rem;font-weight:600;color:#e6edf3" data-i18n="upgrade.requestSchoolLicense">Request School / Department License</h3>
+          <p style="margin:4px 0 0;font-size:.78rem;color:#8b949e;line-height:1.4" data-i18n="schoolLicense.subtitle">Equip your team or whole school with unlimited Google Meet attendance.</p>
+        </div>
+        <button type="button" onclick="closeSchoolLicenseModal()" data-i18n-aria="common.close" aria-label="Close" style="background:none;border:none;color:#8b949e;font-size:20px;cursor:pointer;line-height:1">&times;</button>
+      </div>
+
+      <form id="school-license-form" onsubmit="submitSchoolLicenseForm(event)" style="display:flex;flex-direction:column;gap:12px">
+        <div>
+          <label for="school-license-teacher-name" style="display:block;font-size:.76rem;color:#8b949e;margin-bottom:4px" data-i18n="schoolLicense.teacherName">Your Name</label>
+          <input id="school-license-teacher-name" type="text" required style="width:100%;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#e6edf3;padding:8px 12px;font-size:.82rem;box-sizing:border-box" />
+        </div>
+
+        <div>
+          <label for="school-license-teacher-email" style="display:block;font-size:.76rem;color:#8b949e;margin-bottom:4px" data-i18n="schoolLicense.teacherEmail">Your School Email</label>
+          <input id="school-license-teacher-email" type="email" required style="width:100%;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#e6edf3;padding:8px 12px;font-size:.82rem;box-sizing:border-box" />
+        </div>
+
+        <div>
+          <label for="school-license-org-name" style="display:block;font-size:.76rem;color:#8b949e;margin-bottom:4px" data-i18n="schoolLicense.schoolName">School or Organization</label>
+          <input id="school-license-org-name" type="text" required style="width:100%;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#e6edf3;padding:8px 12px;font-size:.82rem;box-sizing:border-box" />
+        </div>
+
+        <div>
+          <label for="school-license-tier" style="display:block;font-size:.76rem;color:#8b949e;margin-bottom:4px" data-i18n="schoolLicense.tierLabel">License Tier</label>
+          <select id="school-license-tier" style="width:100%;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#e6edf3;padding:8px 12px;font-size:.82rem;box-sizing:border-box">
+            <option value="department" data-i18n="schoolLicense.tierDept">Department Plan — $59/yr</option>
+            <option value="institution" data-i18n="schoolLicense.tierInst">Whole-School Institution — $149/yr</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="school-license-admin-email" style="display:block;font-size:.76rem;color:#8b949e;margin-bottom:4px" data-i18n="schoolLicense.adminEmail">IT / Dept Administrator Email (Optional)</label>
+          <input id="school-license-admin-email" type="email" placeholder="admin@school.edu" style="width:100%;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#e6edf3;padding:8px 12px;font-size:.82rem;box-sizing:border-box" />
+        </div>
+
+        <div id="school-license-status" style="display:none;font-size:.78rem;padding:6px 0;line-height:1.4"></div>
+
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:4px">
+          <button type="button" onclick="closeSchoolLicenseModal()" style="background:#21262d;border:1px solid #30363d;color:#e6edf3;border-radius:8px;padding:8px 14px;font-size:.8rem;cursor:pointer" data-i18n="common.cancel">Cancel</button>
+          <button type="submit" id="school-license-submit-btn" style="background:#4ade80;border:none;color:#0d1117;border-radius:8px;padding:8px 16px;font-size:.8rem;font-weight:600;cursor:pointer" data-i18n="schoolLicense.submitBtn">Submit Request</button>
+        </div>
+      </form>
     </div>
   </div>
 

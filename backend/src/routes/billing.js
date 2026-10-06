@@ -314,7 +314,7 @@ router.post(['/billing/checkout', '/billing/create-checkout-session'], requireAu
     };
     if (promo && promo !== 'LAUNCH50') {
       sessionParams.allow_promotion_codes = true;
-    } else if (isPppEligible && (isEducator || (!isIndia && !isRegionalTarget))) {
+    } else if (isPppEligible && (isEducator || (!isIndia && !isRegionalTarget && !isSingleMeeting))) {
       // For India and regional currencies, dedicated INR/PHP/MYR/IDR prices already reflect the subsidized PPP price.
       // Educator in PPP countries receives PPP50 discount coupon for $2.49/yr pricing.
       sessionParams.discounts = [{ coupon: 'PPP50' }];
@@ -1058,12 +1058,14 @@ router.get('/billing/status', requireAuth, async (req, res) => {
 });
 
 function isEduDomain(email, domain) {
-  const e = (email || '').toLowerCase();
-  const d = (domain || '').toLowerCase();
-  return /\.(edu|edu\.[a-z]{2}|ac\.[a-z]{2}|gov\.[a-z]{2}|k12\.[a-z]{2}(\.us)?|k12\.[a-z]{2}|sch\.[a-z]{2}|education)$/i.test(e) ||
+  const e = (email || '').toLowerCase().trim();
+  const d = (domain || (e.includes('@') ? e.split('@')[1] : '')).toLowerCase().trim();
+  const target = d || e;
+  if (!target) return false;
+  return /\.(edu(\.[a-z]{2,})?|ac\.[a-z0-9.-]+|gov\.[a-z]{2,}|k12\.[a-z0-9.-]+|sch\.[a-z0-9.-]+|education)$/i.test(target) ||
+         /\.education\b/i.test(target) ||
          /@(.*\.)?(school|academy|college|university|deped|alokitohridoy|education|gymnasium|lyceum)/i.test(e) ||
-         /\.(edu|ac|education)\b/i.test(d) ||
-         /\.(edu|edu\.[a-z]{2}|ac\.[a-z]{2}|gov\.[a-z]{2}|k12\.[a-z]{2}(\.us)?|k12\.[a-z]{2}|sch\.[a-z]{2}|education)$/i.test(d);
+         /\.(edu|ac|education)\b/i.test(target);
 }
 
 // POST /api/billing/school-license-request — 1-click inquiry from institutional / .edu / .ac users
@@ -1072,14 +1074,45 @@ router.post('/billing/school-license-request', requireAuth, async (req, res) => 
     const email = (req.user.email || '').toLowerCase();
     const domain = req.user.domain || email.split('@')[1] || '';
     const isEdu = isEduDomain(email, domain);
+    const { teacherName, organizationName, tier, adminEmail } = req.body || {};
 
     await logEvent(req.user.domain, {
       email,
       type: 'school_license_requested',
-      meta: { domain, isEdu, requestedAt: new Date().toISOString() },
+      meta: {
+        domain,
+        isEdu,
+        teacherName: teacherName || null,
+        organizationName: organizationName || null,
+        tier: tier || null,
+        adminEmail: adminEmail || null,
+        requestedAt: new Date().toISOString(),
+      },
     });
 
-    log.info('billing: school license requested', { domain, email, isEdu });
+    log.info('billing: school license requested', { domain, email, isEdu, teacherName, organizationName, tier, adminEmail });
+
+    const to = process.env.NOTIFY_EMAIL || process.env.GMAIL_USER;
+    if (to) {
+      try {
+        const { sendAdminEmail } = require('../lib/notifications');
+        const subject = `🏫 School License Request: ${organizationName || domain} (${tier || 'inquiry'})`;
+        const body = [
+          'A teacher requested a school or department license.',
+          '',
+          `Teacher:       ${teacherName || '(not given)'}`,
+          `Teacher email: ${email}`,
+          `School / org:  ${organizationName || '(not given)'}`,
+          `Domain:        ${domain}`,
+          `Plan tier:     ${tier || '(not specified)'}`,
+          `Admin email:   ${adminEmail || '(none)'}`,
+        ].join('\n');
+        await sendAdminEmail({ to, subject, body });
+      } catch (e) {
+        log.warn('billing: school license sendAdminEmail failed', { error: e.message });
+      }
+    }
+
     res.json({ ok: true, message: 'School license request recorded' });
   } catch (err) {
     log.error('billing: school license request failed', { error: err.message });

@@ -345,6 +345,54 @@ describe('detectLocale', () => {
     expect(strings.t('lang.mn')).toBe('Монгол');
   });
 
+  test('conversion optimization and school license keys exist and are translated across locales', () => {
+    const checkKeys = [
+      'upgrade.singleMeetingName',
+      'upgrade.ctaSingleMeetingNow',
+      'upgrade.unlockThisMeetingBadge',
+      'upgrade.badgesPH',
+      'upgrade.badgesMY',
+      'upgrade.badgesID',
+      'upgrade.badgesIN',
+      'upgrade.badgesDefault',
+      'schoolLicense.subtitle',
+      'schoolLicense.teacherName',
+      'schoolLicense.teacherEmail',
+      'schoolLicense.schoolName',
+      'schoolLicense.tierLabel',
+      'schoolLicense.tierDept',
+      'schoolLicense.tierInst',
+      'schoolLicense.adminEmail',
+      'schoolLicense.submitBtn',
+      'schoolLicense.submitting',
+      'schoolLicense.success',
+      'schoolLicense.error',
+    ];
+
+    strings.setLocale('tl');
+    expect(strings.t('upgrade.singleMeetingName')).toBe('Pang-isahang Pulong na Pass');
+    expect(strings.t('upgrade.badgesPH')).toContain('GCash');
+
+    strings.setLocale('ms');
+    expect(strings.t('upgrade.badgesMY')).toContain('GrabPay');
+
+    strings.setLocale('id');
+    expect(strings.t('upgrade.badgesID')).toContain('QRIS');
+
+    strings.setLocale('hi');
+    expect(strings.t('upgrade.badgesIN')).toContain('UPI');
+
+    for (const loc of strings.getAvailableLocales()) {
+      strings.setLocale(loc.code);
+      for (const k of checkKeys) {
+        const val = strings.t(k);
+        expect(typeof val).toBe('string');
+        expect(val.trim().length).toBeGreaterThan(0);
+        expect(val).not.toBe(k);
+      }
+    }
+  });
+
   test('prefers stored locale in localStorage over browser language', () => {
     localStorage.setItem('att_locale', 'ja');
     expect(strings.detectLocale('es-ES')).toBe('ja');
