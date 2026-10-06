@@ -1691,10 +1691,11 @@
       flex-shrink: 0;
     }
     #landing-page .lp2-nav-links {
-      display: flex; align-items: center; gap: 28px; font-size: 14px;
+      display: flex; align-items: center; gap: 20px; font-size: 14px;
     }
     #landing-page .lp2-nav-links a.lp2-nav-link {
       color: var(--text-muted); text-decoration: none; transition: color .15s;
+      white-space: nowrap;
     }
     #landing-page .lp2-nav-links a.lp2-nav-link:hover {
       color: var(--accent);
@@ -2172,13 +2173,102 @@
       border-top: 1px solid var(--border);
       align-items: center; justify-content: space-between; gap: 12px;
     }
-    @media (max-width: 760px) {
-      #landing-page .lp2-header {
-        overflow: hidden;
+    #landing-page .lp2-hamburger {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      color: #e6edf3;
+      cursor: pointer;
+      padding: 0;
+      transition: background 0.15s, border-color 0.15s;
+      flex-shrink: 0;
+    }
+    #landing-page .lp2-hamburger:hover {
+      background: #21262d;
+      border-color: #8b949e;
+    }
+    #landing-page .lp2-mobile-menu {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: rgba(13, 17, 23, 0.98);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 20px 35px rgba(0, 0, 0, 0.6);
+      z-index: 99;
+      animation: lp2MenuSlide .18s ease-out;
+    }
+    @keyframes lp2MenuSlide {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    #landing-page .lp2-mobile-menu.lp2-open {
+      display: block;
+    }
+    @media (min-width: 981px) {
+      #landing-page .lp2-mobile-menu {
+        display: none !important;
       }
+    }
+    #landing-page .lp2-mobile-menu-inner {
+      display: flex;
+      flex-direction: column;
+      padding: 12px 16px 20px;
+      gap: 4px;
+      max-width: 1160px;
+      margin: 0 auto;
+    }
+    #landing-page .lp2-mobile-link {
+      display: flex;
+      align-items: center;
+      padding: 12px 14px;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text);
+      text-decoration: none;
+      border-radius: 8px;
+      transition: background 0.15s, color 0.15s;
+    }
+    #landing-page .lp2-mobile-link:hover,
+    #landing-page .lp2-mobile-link:active {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--accent);
+    }
+    #landing-page .lp2-mobile-menu-divider {
+      height: 1px;
+      background: var(--border-subtle);
+      margin: 8px 0;
+    }
+    #landing-page .lp2-btn-install-mobile {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent);
+      color: #0d1117 !important;
+      font-weight: 600;
+      font-size: 15px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      text-decoration: none;
+      margin-top: 4px;
+      transition: background 0.15s;
+    }
+    #landing-page .lp2-btn-install-mobile:hover {
+      background: var(--accent-hover);
+    }
+
+    @media (max-width: 980px) {
       #landing-page .lp2-nav-wrap {
         padding: 10px 16px;
-        gap: 12px;
+        gap: 10px;
       }
       #landing-page .lp2-logo {
         font-size: 15px;
@@ -2196,6 +2286,7 @@
       }
       #landing-page .lp2-nav-links .lp2-nav-link { display: none; }
       #landing-page .lp2-header .lp2-btn-install-sm { display: none; }
+      #landing-page .lp2-hamburger { display: inline-flex; }
       #landing-page .att-lang-picker,
       #landing-lang-picker select {
         max-width: 140px;
@@ -2209,7 +2300,7 @@
     @media (max-width: 400px) {
       #landing-page .lp2-nav-wrap {
         padding: 8px 12px;
-        gap: 8px;
+        gap: 6px;
       }
       #landing-page .lp2-logo {
         font-size: 14px;
@@ -2221,9 +2312,13 @@
       }
       #landing-page .att-lang-picker,
       #landing-lang-picker select {
-        max-width: 115px;
+        max-width: 110px;
         font-size: 0.75rem;
         padding: 4px 6px;
+      }
+      #landing-page .lp2-hamburger {
+        width: 32px;
+        height: 32px;
       }
     }
     @media (max-width: 520px) {
@@ -2248,8 +2343,25 @@
           <a href="#pricing" class="lp2-nav-link" data-i18n="lp2_nav_pricing">Pricing</a>
           <a href="#faq" class="lp2-nav-link" data-i18n="lp2_nav_faq">FAQ</a>
           <div id="landing-lang-picker"></div>
+          <button id="lp2-hamburger" class="lp2-hamburger" aria-label="Open navigation menu" aria-expanded="false" onclick="toggleMobileMenu(event)">
+            <svg class="lp2-icon-menu" style="pointer-events:none" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            <svg class="lp2-icon-close" style="pointer-events:none;display:none" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
           <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" onclick="trackCtaClick('marketplace_install_nav')" class="lp2-btn-install-sm" data-i18n="lp2_nav_install">Install free</a>
         </nav>
+      </div>
+      <!-- Mobile Drawer / Dropdown Menu -->
+      <div id="lp2-mobile-menu" class="lp2-mobile-menu" aria-hidden="true">
+        <div class="lp2-mobile-menu-inner">
+          <a href="#how" class="lp2-mobile-link" onclick="closeMobileMenu()" data-i18n="lp2_nav_how">How it works</a>
+          <a href="#compare" class="lp2-mobile-link" onclick="closeMobileMenu()" data-i18n="lp2_nav_compare">Why an add-on</a>
+          <a href="pricing.html" class="lp2-mobile-link" onclick="closeMobileMenu()" data-i18n="lp2_nav_pricing">Pricing</a>
+          <a href="faq.html" class="lp2-mobile-link" onclick="closeMobileMenu()" data-i18n="lp2_nav_faq">Help Center &amp; FAQ</a>
+          <a href="support.html" class="lp2-mobile-link" onclick="closeMobileMenu()" data-i18n="pricing.navSupport">Support</a>
+          <a href="history.html" class="lp2-mobile-link" onclick="closeMobileMenu()" data-i18n="history.title">Meeting History</a>
+          <div class="lp2-mobile-menu-divider"></div>
+          <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" onclick="trackCtaClick('marketplace_install_mobile_menu'); closeMobileMenu();" class="lp2-btn-install-mobile" data-i18n="lp2_nav_install">Install free</a>
+        </div>
       </div>
     </header>
 
@@ -2847,6 +2959,49 @@
     </div>
 
     <script>
+      function toggleMobileMenu(e) {
+        if (e && e.stopPropagation) e.stopPropagation();
+        var menu = document.getElementById('lp2-mobile-menu');
+        if (!menu) return;
+        if (menu.classList.contains('lp2-open')) closeMobileMenu();
+        else openMobileMenu();
+      }
+      function openMobileMenu() {
+        var menu = document.getElementById('lp2-mobile-menu');
+        var btn = document.getElementById('lp2-hamburger');
+        if (!menu || !btn) return;
+        menu.classList.add('lp2-open');
+        menu.setAttribute('aria-hidden', 'false');
+        btn.setAttribute('aria-expanded', 'true');
+        var m = btn.querySelector('.lp2-icon-menu');
+        var c = btn.querySelector('.lp2-icon-close');
+        if (m) m.style.display = 'none';
+        if (c) c.style.display = 'block';
+      }
+      function closeMobileMenu() {
+        var menu = document.getElementById('lp2-mobile-menu');
+        var btn = document.getElementById('lp2-hamburger');
+        if (!menu || !btn) return;
+        menu.classList.remove('lp2-open');
+        menu.setAttribute('aria-hidden', 'true');
+        btn.setAttribute('aria-expanded', 'false');
+        var m = btn.querySelector('.lp2-icon-menu');
+        var c = btn.querySelector('.lp2-icon-close');
+        if (m) m.style.display = 'block';
+        if (c) c.style.display = 'none';
+      }
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeMobileMenu();
+      });
+      document.addEventListener('click', function(e) {
+        var menu = document.getElementById('lp2-mobile-menu');
+        var btn = document.getElementById('lp2-hamburger');
+        if (!menu || !btn) return;
+        if (menu.classList.contains('lp2-open') && !menu.contains(e.target) && !btn.contains(e.target)) {
+          closeMobileMenu();
+        }
+      });
+
       function playLandingVideo() {
         var b = document.getElementById('lp2-video-box');
         if (!b) return;
@@ -2877,7 +3032,7 @@
         function handleScroll() {
           var bar = document.getElementById('lp2-mobile-bar');
           if (!bar) return;
-          if (window.innerWidth <= 760 && window.scrollY > 640) {
+          if (window.innerWidth <= 980 && window.scrollY > 640) {
             bar.classList.add('lp2-show');
           } else {
             bar.classList.remove('lp2-show');
