@@ -215,6 +215,22 @@
       transform: translateY(-1px);
     }
 
+    @media (max-width: 768px) {
+      .top-nav { padding: 10px 16px; overflow: hidden; }
+      .nav-container { gap: 12px; }
+      .brand { font-size: 0.95rem; white-space: nowrap; flex-shrink: 0; gap: 8px; }
+      .brand img { width: 26px; height: 26px; flex-shrink: 0; }
+      .nav-links { gap: 8px; flex-shrink: 0; }
+      .nav-links a:not(.brand) { display: none; }
+      .att-lang-picker, #nav-lang-picker select { max-width: 140px; font-size: 0.8rem; padding: 5px 8px; }
+    }
+    @media (max-width: 400px) {
+      .top-nav { padding: 8px 12px; }
+      .brand { font-size: 0.88rem; gap: 6px; }
+      .brand img { width: 24px; height: 24px; }
+      .att-lang-picker, #nav-lang-picker select { max-width: 115px; font-size: 0.75rem; padding: 4px 6px; }
+    }
+
     /* Content Container */
     .container {
       max-width: 860px;

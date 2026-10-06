@@ -1673,13 +1673,22 @@
       -webkit-backdrop-filter: blur(10px);
       border-bottom: 1px solid var(--border-subtle);
     }
+    #landing-page .lp2-header {
+      width: 100%;
+      box-sizing: border-box;
+    }
     #landing-page .lp2-nav-wrap {
       max-width: 1160px; margin: 0 auto; padding: 14px 24px;
       display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      width: 100%; box-sizing: border-box;
     }
     #landing-page .lp2-logo {
       display: flex; align-items: center; gap: 10px;
       color: var(--text); font-weight: 600; font-size: 16px; text-decoration: none;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    #landing-page .lp2-logo img {
+      flex-shrink: 0;
     }
     #landing-page .lp2-nav-links {
       display: flex; align-items: center; gap: 28px; font-size: 14px;
@@ -1693,7 +1702,7 @@
     #landing-page .lp2-btn-install-sm {
       background: var(--accent); color: #0d1117; font-weight: 600;
       padding: 9px 16px; border-radius: 8px; text-decoration: none;
-      transition: background .15s; white-space: nowrap; display: inline-block;
+      transition: background .15s; white-space: nowrap; display: inline-block; flex-shrink: 0;
     }
     #landing-page .lp2-btn-install-sm:hover {
       background: var(--accent-hover);
@@ -2164,9 +2173,58 @@
       align-items: center; justify-content: space-between; gap: 12px;
     }
     @media (max-width: 760px) {
+      #landing-page .lp2-header {
+        overflow: hidden;
+      }
+      #landing-page .lp2-nav-wrap {
+        padding: 10px 16px;
+        gap: 12px;
+      }
+      #landing-page .lp2-logo {
+        font-size: 15px;
+        gap: 8px;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      #landing-page .lp2-logo img {
+        width: 26px;
+        height: 26px;
+      }
+      #landing-page .lp2-nav-links {
+        gap: 8px;
+        flex-shrink: 0;
+      }
       #landing-page .lp2-nav-links .lp2-nav-link { display: none; }
+      #landing-page .lp2-header .lp2-btn-install-sm { display: none; }
+      #landing-page .att-lang-picker,
+      #landing-lang-picker select {
+        max-width: 140px;
+        font-size: 0.8rem;
+        padding: 5px 8px;
+        border-radius: 8px;
+      }
       #landing-page .lp2-mobile-bar.lp2-show { display: flex; }
       #landing-page .lp2-seo-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 400px) {
+      #landing-page .lp2-nav-wrap {
+        padding: 8px 12px;
+        gap: 8px;
+      }
+      #landing-page .lp2-logo {
+        font-size: 14px;
+        gap: 6px;
+      }
+      #landing-page .lp2-logo img {
+        width: 24px;
+        height: 24px;
+      }
+      #landing-page .att-lang-picker,
+      #landing-lang-picker select {
+        max-width: 115px;
+        font-size: 0.75rem;
+        padding: 4px 6px;
+      }
     }
     @media (max-width: 520px) {
       #landing-page .lp2-seo-grid { grid-template-columns: 1fr; }
