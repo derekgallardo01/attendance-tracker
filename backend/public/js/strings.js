@@ -317,6 +317,14 @@
 
     const STRINGS = {
     "en": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "Sync to LMS",
         "lms.modalTitle": "Sync Grades to LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -1554,6 +1562,14 @@
         "schoolLicense.error": "Could not submit request. Please try again or email us directly."
     },
     "es": {
+        "lp2_stat_orgs": "organizaciones",
+        "lp2_stat_meetings": "reuniones registradas",
+        "lp2_stat_languages": "idiomas",
+        "footer.builtBy": "Creado por Kinetic Helix",
+        "footer.colGuides": "Guías y tutoriales",
+        "footer.colIntegrations": "Integraciones y LMS",
+        "footer.colRoles": "Roles e industrias",
+        "footer.colGlobal": "Global y regional",
         "lms.syncBtn": "Sincronizar con LMS",
         "lms.modalTitle": "Sincronizar calificaciones con LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -2791,6 +2807,14 @@
         "schoolLicense.error": "No se pudo enviar la solicitud. Inténtalo de nuevo o escríbenos directamente."
     },
     "pt": {
+        "lp2_stat_orgs": "organizações",
+        "lp2_stat_meetings": "reuniões registradas",
+        "lp2_stat_languages": "idiomas",
+        "footer.builtBy": "Criado por Kinetic Helix",
+        "footer.colGuides": "Guias e tutoriais",
+        "footer.colIntegrations": "Integrações e LMS",
+        "footer.colRoles": "Funções e setores",
+        "footer.colGlobal": "Global e regional",
         "lms.syncBtn": "Sincronizar com LMS",
         "lms.modalTitle": "Sincronizar notas com LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -4028,6 +4052,14 @@
         "schoolLicense.error": "Não foi possível enviar a solicitação. Tente novamente ou envie um e-mail."
     },
     "hi": {
+        "lp2_stat_orgs": "संगठन",
+        "lp2_stat_meetings": "मीटिंग्स ट्रैक की गईं",
+        "lp2_stat_languages": "भाषाएँ",
+        "footer.builtBy": "Kinetic Helix द्वारा निर्मित",
+        "footer.colGuides": "गाइड और ट्यूटोरियल",
+        "footer.colIntegrations": "इंटीग्रेशन और LMS",
+        "footer.colRoles": "भूमिकाएँ और उद्योग",
+        "footer.colGlobal": "ग्लोबल और रीजनल",
         "lms.syncBtn": "LMS से सिंक करें",
         "lms.modalTitle": "LMS में ग्रेड सिंक करें",
         "lms.providerClassroom": "Google Classroom",
@@ -5265,6 +5297,14 @@
         "schoolLicense.error": "अनुरोध सबमिट नहीं हो सका। कृपया पुनः प्रयास करें या हमें ईमेल करें।"
     },
     "tl": {
+        "lp2_stat_orgs": "mga organisasyon",
+        "lp2_stat_meetings": "mga meeting na nasubaybayan",
+        "lp2_stat_languages": "mga wika",
+        "footer.builtBy": "Binuo ng Kinetic Helix",
+        "footer.colGuides": "Mga Gabay at Tutorial",
+        "footer.colIntegrations": "Mga Integrasyon at LMS",
+        "footer.colRoles": "Mga Tungkulin at Industriya",
+        "footer.colGlobal": "Pandaigdigan at Rehiyonal",
         "lms.syncBtn": "I-sync sa LMS",
         "lms.modalTitle": "I-sync ang mga Grado sa LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -6502,6 +6542,14 @@
         "schoolLicense.error": "Hindi maisumite ang kahilingan. Pakisubukang muli o mag-email nang direkta."
     },
     "ms": {
+        "lp2_stat_orgs": "organisasi",
+        "lp2_stat_meetings": "mesyuarat dijejaki",
+        "lp2_stat_languages": "bahasa",
+        "footer.builtBy": "Dibina oleh Kinetic Helix",
+        "footer.colGuides": "Panduan & Tutorial",
+        "footer.colIntegrations": "Integrasi & LMS",
+        "footer.colRoles": "Peranan & Industri",
+        "footer.colGlobal": "Global & Serantau",
         "lms.syncBtn": "Segerak ke LMS",
         "lms.modalTitle": "Segerak Gred ke LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -7739,6 +7787,14 @@
         "schoolLicense.error": "Tidak dapat menghantar permintaan. Sila cuba lagi atau e-mel kepada kami."
     },
     "id": {
+        "lp2_stat_orgs": "organisasi",
+        "lp2_stat_meetings": "rapat dilacak",
+        "lp2_stat_languages": "bahasa",
+        "footer.builtBy": "Dibuat oleh Kinetic Helix",
+        "footer.colGuides": "Panduan & Tutorial",
+        "footer.colIntegrations": "Integrasi & LMS",
+        "footer.colRoles": "Peran & Industri",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "Sinkronkan ke LMS",
         "lms.modalTitle": "Sinkronkan Nilai ke LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -8976,6 +9032,14 @@
         "schoolLicense.error": "Tidak dapat mengirim permintaan. Silakan coba lagi atau kirim email langsung."
     },
     "vi": {
+        "lp2_stat_orgs": "tổ chức",
+        "lp2_stat_meetings": "cuộc họp đã theo dõi",
+        "lp2_stat_languages": "ngôn ngữ",
+        "footer.builtBy": "Phát triển bởi Kinetic Helix",
+        "footer.colGuides": "Hướng dẫn & Cách làm",
+        "footer.colIntegrations": "Tích hợp & LMS",
+        "footer.colRoles": "Vai trò & Ngành nghề",
+        "footer.colGlobal": "Toàn cầu & Khu vực",
         "lms.syncBtn": "Đồng bộ với LMS",
         "lms.modalTitle": "Đồng bộ điểm với LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -10213,6 +10277,14 @@
         "schoolLicense.error": "Không thể gửi yêu cầu. Vui lòng thử lại hoặc gửi email trực tiếp."
     },
     "fr": {
+        "lp2_stat_orgs": "organisations",
+        "lp2_stat_meetings": "réunions suivies",
+        "lp2_stat_languages": "langues",
+        "footer.builtBy": "Créé par Kinetic Helix",
+        "footer.colGuides": "Guides et tutoriels",
+        "footer.colIntegrations": "Intégrations et LMS",
+        "footer.colRoles": "Rôles et secteurs",
+        "footer.colGlobal": "Mondial et régional",
         "lms.syncBtn": "Synchroniser avec le LMS",
         "lms.modalTitle": "Synchroniser les notes avec le LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -11450,6 +11522,14 @@
         "schoolLicense.error": "Impossible d'envoyer la demande. Réessayez ou contactez-nous par e-mail."
     },
     "de": {
+        "lp2_stat_orgs": "Organisationen",
+        "lp2_stat_meetings": "Meetings erfasst",
+        "lp2_stat_languages": "Sprachen",
+        "footer.builtBy": "Erstellt von Kinetic Helix",
+        "footer.colGuides": "Anleitungen & Tutorials",
+        "footer.colIntegrations": "Integrationen & LMS",
+        "footer.colRoles": "Rollen & Branchen",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "Mit LMS synchronisieren",
         "lms.modalTitle": "Noten mit LMS synchronisieren",
         "lms.providerClassroom": "Google Classroom",
@@ -12687,6 +12767,14 @@
         "schoolLicense.error": "Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es erneut oder mailen Sie uns."
     },
     "it": {
+        "lp2_stat_orgs": "organizzazioni",
+        "lp2_stat_meetings": "riunioni registrate",
+        "lp2_stat_languages": "lingue",
+        "footer.builtBy": "Creato da Kinetic Helix",
+        "footer.colGuides": "Guide e tutorial",
+        "footer.colIntegrations": "Integrazioni e LMS",
+        "footer.colRoles": "Ruoli e settori",
+        "footer.colGlobal": "Globale e regionale",
         "lms.syncBtn": "Sincronizza con LMS",
         "lms.modalTitle": "Sincronizza voti con LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -13924,6 +14012,14 @@
         "schoolLicense.error": "Impossibile inviare la richiesta. Riprova o inviaci un'email direttamente."
     },
     "nl": {
+        "lp2_stat_orgs": "organisaties",
+        "lp2_stat_meetings": "vergaderingen bijgehouden",
+        "lp2_stat_languages": "talen",
+        "footer.builtBy": "Gebouwd door Kinetic Helix",
+        "footer.colGuides": "Handleidingen & Tips",
+        "footer.colIntegrations": "Integraties & LMS",
+        "footer.colRoles": "Rollen & Sectoren",
+        "footer.colGlobal": "Wereldwijd & Regionaal",
         "lms.syncBtn": "Synchroniseren met LMS",
         "lms.modalTitle": "Cijfers synchroniseren met LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -15161,6 +15257,14 @@
         "schoolLicense.error": "Kan aanvraag niet verzenden. Probeer opnieuw of stuur een e-mail."
     },
     "pl": {
+        "lp2_stat_orgs": "organizacje",
+        "lp2_stat_meetings": "zarejestrowanych spotkań",
+        "lp2_stat_languages": "języków",
+        "footer.builtBy": "Stworzone przez Kinetic Helix",
+        "footer.colGuides": "Przewodniki i poradniki",
+        "footer.colIntegrations": "Integracje i LMS",
+        "footer.colRoles": "Role i branże",
+        "footer.colGlobal": "Globalne i regionalne",
         "lms.syncBtn": "Synchronizuj z LMS",
         "lms.modalTitle": "Synchronizuj oceny z LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -16398,6 +16502,14 @@
         "schoolLicense.error": "Nie udało się przesłać zapytania. Spróbuj ponownie lub napisz do nas."
     },
     "tr": {
+        "lp2_stat_orgs": "kuruluş",
+        "lp2_stat_meetings": "toplantı takip edildi",
+        "lp2_stat_languages": "dil",
+        "footer.builtBy": "Kinetic Helix tarafından yapıldı",
+        "footer.colGuides": "Rehberler ve İpuçları",
+        "footer.colIntegrations": "Entegrasyonlar ve LMS",
+        "footer.colRoles": "Roller ve Sektörler",
+        "footer.colGlobal": "Küresel ve Bölgesel",
         "lms.syncBtn": "LMS ile Senkronize Et",
         "lms.modalTitle": "Notları LMS ile Senkronize Et",
         "lms.providerClassroom": "Google Classroom",
@@ -17635,6 +17747,14 @@
         "schoolLicense.error": "Talep gönderilemedi. Lütfen tekrar deneyin veya doğrudan bize e-posta gönderin."
     },
     "th": {
+        "lp2_stat_orgs": "องค์กร",
+        "lp2_stat_meetings": "การประชุมที่บันทึก",
+        "lp2_stat_languages": "ภาษา",
+        "footer.builtBy": "สร้างโดย Kinetic Helix",
+        "footer.colGuides": "คู่มือและวิธีใช้",
+        "footer.colIntegrations": "การผสานรวม & LMS",
+        "footer.colRoles": "บทบาทและอุตสาหกรรม",
+        "footer.colGlobal": "ทั่วโลกและภูมิภาค",
         "lms.syncBtn": "ซิงค์กับ LMS",
         "lms.modalTitle": "ซิงค์เกรดไปยัง LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -18872,6 +18992,14 @@
         "schoolLicense.error": "ไม่สามารถส่งคำขอได้ โปรดลองอีกครั้งหรือส่งอีเมลถึงเราโดยตรง"
     },
     "ar": {
+        "lp2_stat_orgs": "منظمة",
+        "lp2_stat_meetings": "اجتماع تم تتبعه",
+        "lp2_stat_languages": "لغة",
+        "footer.builtBy": "تم تطويره بواسطة Kinetic Helix",
+        "footer.colGuides": "الأدلة والتعليمات",
+        "footer.colIntegrations": "التكاملات وأنظمة LMS",
+        "footer.colRoles": "الأدوار والقطاعات",
+        "footer.colGlobal": "عالمي وإقليمي",
         "lms.syncBtn": "مزامنة مع LMS",
         "lms.modalTitle": "مزامنة الدرجات مع LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -20109,6 +20237,14 @@
         "schoolLicense.error": "تعذر إرسال الطلب. يرجى المحاولة مرة أخرى أو مراسلتنا مباشرة."
     },
     "ko": {
+        "lp2_stat_orgs": "개 조직",
+        "lp2_stat_meetings": "회 미팅 추적됨",
+        "lp2_stat_languages": "개 언어",
+        "footer.builtBy": "Kinetic Helix 제작",
+        "footer.colGuides": "가이드 및 사용법",
+        "footer.colIntegrations": "연동 및 LMS",
+        "footer.colRoles": "역할 및 분야",
+        "footer.colGlobal": "글로벌 및 지역",
         "lms.syncBtn": "LMS로 동기화",
         "lms.modalTitle": "LMS로 성적 동기화",
         "lms.providerClassroom": "Google Classroom",
@@ -21346,6 +21482,14 @@
         "schoolLicense.error": "요청을 제출할 수 없습니다. 다시 시도하거나 직접 이메일을 보내주세요."
     },
     "zh": {
+        "lp2_stat_orgs": "個組織",
+        "lp2_stat_meetings": "場會議已記錄",
+        "lp2_stat_languages": "種語言",
+        "footer.builtBy": "由 Kinetic Helix 開發",
+        "footer.colGuides": "指南與操作步驟",
+        "footer.colIntegrations": "整合與 LMS",
+        "footer.colRoles": "角色與產業",
+        "footer.colGlobal": "全球與區域",
         "lms.syncBtn": "同步至 LMS",
         "lms.modalTitle": "同步成績至 LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -22583,6 +22727,14 @@
         "schoolLicense.error": "無法送出申請。請重試或直接寄信聯絡我們。"
     },
     "ja": {
+        "lp2_stat_orgs": "の組織",
+        "lp2_stat_meetings": "回の会議を記録",
+        "lp2_stat_languages": "言語",
+        "footer.builtBy": "Kinetic Helix 開発",
+        "footer.colGuides": "ガイド＆使い方",
+        "footer.colIntegrations": "連携＆LMS",
+        "footer.colRoles": "用途・業界",
+        "footer.colGlobal": "グローバル・地域",
         "lms.syncBtn": "LMSに同期",
         "lms.modalTitle": "成績をLMSに同期",
         "lms.providerClassroom": "Google Classroom",
@@ -23820,6 +23972,14 @@
         "schoolLicense.error": "リクエストを送信できませんでした。再試行するか、直接メールでお問い合わせください。"
     },
     "ta": {
+        "lp2_stat_orgs": "நிறுவனங்கள்",
+        "lp2_stat_meetings": "கூட்டங்கள் கண்காணிக்கப்பட்டன",
+        "lp2_stat_languages": "மொழிகள்",
+        "footer.builtBy": "Kinetic Helix உருவாக்கியது",
+        "footer.colGuides": "வழிகாட்டிகள்",
+        "footer.colIntegrations": "ஒருங்கிணைப்புகள் & LMS",
+        "footer.colRoles": "பணிகள் & துறைகள்",
+        "footer.colGlobal": "உலகளாவிய & பிராந்திய",
         "lms.syncBtn": "LMS உடன் ஒத்திசைக்கவும்",
         "lms.modalTitle": "LMS இல் தரங்களை ஒத்திசைக்கவும்",
         "lms.providerClassroom": "Google Classroom",
@@ -25057,6 +25217,14 @@
         "schoolLicense.error": "கோரிக்கையை சமர்ப்பிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும் அல்லது எங்களுக்கு மின்னஞ்சல் அனுப்பவும்."
     },
     "te": {
+        "lp2_stat_orgs": "సంస్థలు",
+        "lp2_stat_meetings": "సమావేశాలు ట్రాక్ చేయబడ్డాయి",
+        "lp2_stat_languages": "భాషలు",
+        "footer.builtBy": "Kinetic Helix ద్వారా అభివృద్ధి చేయబడింది",
+        "footer.colGuides": "గైడ్‌లు",
+        "footer.colIntegrations": "ఇంటిగ్రేషన్లు & LMS",
+        "footer.colRoles": "పాత్రలు & రంగాలు",
+        "footer.colGlobal": "గ్లోబల్ & ప్రాంతీయ",
         "lms.syncBtn": "LMS తో సమకాలీకరించండి",
         "lms.modalTitle": "LMS లో గ్రేడ్‌లను సమకాలీకరించండి",
         "lms.providerClassroom": "Google Classroom",
@@ -26294,6 +26462,14 @@
         "schoolLicense.error": "అభ్యర్థనను సమర్పించడం సాధ్యం కాలేదు. దయచేసి మళ్లీ ప్రయత్నించండి లేదా నేరుగా ఇమెయిల్ చేయండి."
     },
     "bn": {
+        "lp2_stat_orgs": "প্রতিষ্ঠান",
+        "lp2_stat_meetings": "মিটিং ট্র্যাক করা হয়েছে",
+        "lp2_stat_languages": "ভাষা",
+        "footer.builtBy": "Kinetic Helix দ্বারা তৈরি",
+        "footer.colGuides": "গাইড ও টিউটোরিয়াল",
+        "footer.colIntegrations": "ইন্টিগ্রেশন ও LMS",
+        "footer.colRoles": "ভূমিকা ও ক্ষেত্র",
+        "footer.colGlobal": "গ্লোবাল ও আঞ্চলিক",
         "lms.syncBtn": "LMS-এ সিঙ্ক করুন",
         "lms.modalTitle": "LMS-এ গ্রেড সিঙ্ক করুন",
         "lms.providerClassroom": "Google Classroom",
@@ -27531,6 +27707,14 @@
         "schoolLicense.error": "অনুরোধ জমা দেওয়া যায়নি। দয়া করে আবার চেষ্টা করুন বা সরাসরি আমাদের ইমেল করুন।"
     },
     "ur": {
+        "lp2_stat_orgs": "تنظیمیں",
+        "lp2_stat_meetings": "میٹنگز ٹریک کی گئیں",
+        "lp2_stat_languages": "زبانیں",
+        "footer.builtBy": "Kinetic Helix کا تخلیق کردہ",
+        "footer.colGuides": "ہدایات اور گائیڈز",
+        "footer.colIntegrations": "انٹیگریشنز اور LMS",
+        "footer.colRoles": "کردار اور شعبے",
+        "footer.colGlobal": "عالمی اور علاقائی",
         "lms.syncBtn": "LMS کے ساتھ مطابقت پذیری کریں",
         "lms.modalTitle": "LMS میں گریڈز کی مطابقت پذیری",
         "lms.providerClassroom": "Google Classroom",
@@ -28768,6 +28952,14 @@
         "schoolLicense.error": "درخواست جمع نہیں ہو سکی۔ براہ کرम دوبارہ کوشش کریں یا براہ راست ای میل کریں۔"
     },
     "zh-CN": {
+        "lp2_stat_orgs": "个组织",
+        "lp2_stat_meetings": "场会议已记录",
+        "lp2_stat_languages": "种语言",
+        "footer.builtBy": "由 Kinetic Helix 开发",
+        "footer.colGuides": "指南与教程",
+        "footer.colIntegrations": "集成与 LMS",
+        "footer.colRoles": "角色与行业",
+        "footer.colGlobal": "全球与区域",
         "lms.syncBtn": "同步至 LMS",
         "lms.modalTitle": "同步成绩至 LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -30005,6 +30197,14 @@
         "schoolLicense.error": "无法发送申请。请重试或直接发邮件联系我们。"
     },
     "ru": {
+        "lp2_stat_orgs": "организаций",
+        "lp2_stat_meetings": "встреч отслежено",
+        "lp2_stat_languages": "языков",
+        "footer.builtBy": "Создано Kinetic Helix",
+        "footer.colGuides": "Руководства и инструкции",
+        "footer.colIntegrations": "Интеграции и LMS",
+        "footer.colRoles": "Роли и сферы",
+        "footer.colGlobal": "Глобальное и региональное",
         "lms.syncBtn": "Синхронизировать с LMS",
         "lms.modalTitle": "Синхронизировать оценки с LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -31242,6 +31442,14 @@
         "schoolLicense.error": "Не удалось отправить запрос. Повторите попытку или напишите нам."
     },
     "uk": {
+        "lp2_stat_orgs": "організацій",
+        "lp2_stat_meetings": "зустрічей відстежено",
+        "lp2_stat_languages": "мов",
+        "footer.builtBy": "Створено Kinetic Helix",
+        "footer.colGuides": "Посібники та інструкції",
+        "footer.colIntegrations": "Інтеграції та LMS",
+        "footer.colRoles": "Ролі та сфери",
+        "footer.colGlobal": "Глобальне та регіональне",
         "lms.syncBtn": "Синхронізувати з LMS",
         "lms.modalTitle": "Синхронізувати оцінки з LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -32479,6 +32687,14 @@
         "schoolLicense.error": "Не вдалося надіслати запит. Спробуйте ще раз або напишіть нам."
     },
     "ro": {
+        "lp2_stat_orgs": "organizații",
+        "lp2_stat_meetings": "întâlniri înregistrate",
+        "lp2_stat_languages": "limbi",
+        "footer.builtBy": "Creat de Kinetic Helix",
+        "footer.colGuides": "Ghiduri și instrucțiuni",
+        "footer.colIntegrations": "Integrări și LMS",
+        "footer.colRoles": "Roluri și domenii",
+        "footer.colGlobal": "Global și regional",
         "lms.syncBtn": "Sincronizare cu LMS",
         "lms.modalTitle": "Sincronizează notele cu LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -33716,6 +33932,14 @@
         "schoolLicense.error": "Nu s-a putut trimite cererea. Vă rugăm să încercați din nou sau să ne trimiteți un e-mail."
     },
     "he": {
+        "lp2_stat_orgs": "ארגונים",
+        "lp2_stat_meetings": "פגישות נרشמו",
+        "lp2_stat_languages": "שפות",
+        "footer.builtBy": "פותח על ידי Kinetic Helix",
+        "footer.colGuides": "מדריכים והסברים",
+        "footer.colIntegrations": "אינטגרציות ו-LMS",
+        "footer.colRoles": "תפקידים ותחומים",
+        "footer.colGlobal": "גלובלי ואזורי",
         "lms.syncBtn": "סנכרן ל-LMS",
         "lms.modalTitle": "סנכרן ציונים ל-LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -34953,6 +35177,14 @@
         "schoolLicense.error": "לא ניתן היה לשלוח את הבקשה. נסה שוב או פנה אלינו ישירות באימייל."
     },
     "mr": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "LMS सह सिंक करा",
         "lms.modalTitle": "LMS मध्ये ग्रेड सिंक करा",
         "lms.providerClassroom": "Google Classroom",
@@ -36190,6 +36422,14 @@
         "schoolLicense.error": "विनंती सबमिट करता आली नाही. कृपया पुन्हा प्रयत्न करा किंवा आम्हाला थेट ईमेल करा."
     },
     "sv": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "Synka till LMS",
         "lms.modalTitle": "Synkronisera betyg till LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -37427,6 +37667,14 @@
         "schoolLicense.error": "Kunde inte skicka förfrågan. Försök igen eller mejla oss direkt."
     },
     "cs": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "Synchronizovat s LMS",
         "lms.modalTitle": "Synchronizovat známky s LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -38664,6 +38912,14 @@
         "schoolLicense.error": "Žádost se nepodařilo odeslat. Zkuste to prosím znovu nebo nám napište e-mail."
     },
     "da": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "Synkroniser til LMS",
         "lms.modalTitle": "Synkroniser karakterer til LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -39901,6 +40157,14 @@
         "schoolLicense.error": "Kunne ikke sende anmodningen. Prøv venligst igen eller send os en e-mail."
     },
     "fi": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "Synkronoi LMS:ään",
         "lms.modalTitle": "Synkronoi arvosanat LMS:ään",
         "lms.providerClassroom": "Google Classroom",
@@ -41138,6 +41402,14 @@
         "schoolLicense.error": "Pyyntöä ei voitu lähettää. Yritä uudelleen tai lähetä meille sähköpostia."
     },
     "hu": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "Szinkronizálás LMS-sel",
         "lms.modalTitle": "Jegyek szinkronizálása az LMS-be",
         "lms.providerClassroom": "Google Classroom",
@@ -42375,6 +42647,14 @@
         "schoolLicense.error": "A kérést nem sikerült elküldeni. Kérjük, próbálja újra vagy írjon nekünk."
     },
     "so": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "Isku dubaridi LMS",
         "lms.modalTitle": "U wareeji buundooyinka LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -43612,6 +43892,14 @@
         "schoolLicense.error": "Codsiga lama diri karin. Fadlan isku day mar kale ama si toos ah noo soo iimayl garee."
     },
     "sw": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "Sawazisha kwa LMS",
         "lms.modalTitle": "Sawazisha alama kwa LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -44847,6 +45135,14 @@
         "schoolLicense.error": "Haikuweza kuwasilisha ombi. Tafadhali jaribu tena au tutumie barua pepe moja kwa moja."
     },
     "am": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "ወደ LMS አስምር",
         "lms.modalTitle": "ውጤቶችን ወደ LMS አስምር",
         "lms.providerClassroom": "Google Classroom",
@@ -46082,6 +46378,14 @@
         "schoolLicense.error": "ጥያቄውን ማስገባት አልተቻለም። እባክዎ እንደገና ይሞክሩ ወይም በቀጥታ ኢሜይል ያድርጉልን።"
     },
     "si": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "LMS වෙත සමමුහුර්ත කරන්න",
         "lms.modalTitle": "LMS වෙත ශ්‍රේණි සමමුහුර්ත කරන්න",
         "lms.providerClassroom": "Google Classroom",
@@ -47317,6 +47621,14 @@
         "schoolLicense.error": "ඉල්ලීම ඉදිරිපත් කිරීමට නොහැකි විය. කරුණාකර නැවත උත්සාහ කරන්න හෝ අපට කෙලින්ම විද්‍යුත් තැපෑල එවන්න."
     },
     "el": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "Συγχρονισμός με LMS",
         "lms.modalTitle": "Συγχρονισμός βαθμολογιών με LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -48552,6 +48864,14 @@
         "schoolLicense.error": "Δεν ήταν δυνατή η υποβολή του αιτήματος. Δοκιμάστε ξανά ή στείλτε μας email απευθείας."
     },
     "no": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "Synkroniser til LMS",
         "lms.modalTitle": "Synkroniser karakterer til LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -49787,6 +50107,14 @@
         "schoolLicense.error": "Kunne ikke sende forespørselen. Prøv igjen eller send oss en e-post direkte."
     },
     "ca": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "Sincronitza amb LMS",
         "lms.modalTitle": "Sincronitza notes amb LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -51022,6 +51350,14 @@
         "schoolLicense.error": "No s'ha pogut enviar la sol·licitud. Torna-ho a provar o envia'ns un correu directament."
     },
     "ne": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "LMS मा सिङ्क गर्नुहोस्",
         "lms.modalTitle": "LMS मा ग्रेड सिङ्क गर्नुहोस्",
         "lms.providerClassroom": "Google Classroom",
@@ -52255,6 +52591,14 @@
         "schoolLicense.error": "अनुरोध पेश गर्न सकिएन। कृपया फेरि प्रयास गर्नुहोस् वा सिधै हामीलाई इमेल गर्नुहोस्。"
     },
     "ml": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "review.bannerOffer": "Google Workspace Marketplace-ൽ ഒരു ദ്രുത റേറ്റിംഗ് നൽകി 1 മാസത്തെ എഡ്യൂക്കേറ്റർ പ്രോ സൗജന്യമായി നേടൂ ($0).",
         "upgrade.singleMeetingName": "സിംഗിൾ-മീറ്റിംഗ് പാസ്",
         "upgrade.ctaSingleMeeting": "ഈ മീറ്റിംഗ് അൺലോക്ക് ചെയ്യുക — $2.99",
@@ -53487,6 +53831,14 @@
         "schoolLicense.error": "അഭ്യർത്ഥന സമർപ്പിക്കാൻ കഴിഞ്ഞില്ല. ദയവായി വീണ്ടും ശ്രമിക്കുക അല്ലെങ്കിൽ നേരിട്ട് ഇമെയിൽ ചെയ്യുക."
     },
     "mn": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "review.bannerOffer": "Google Workspace Marketplace дээр хурдан үнэлгээ үлдээгээд Багшийн Про хувилбарыг 1 сар үнэгүй ($0) аваарай.",
         "upgrade.singleMeetingName": "Нэг уулзалтын эрх",
         "upgrade.ctaSingleMeeting": "Энэ уулзалтыг нээх — $2.99",
@@ -54719,6 +55071,14 @@
         "schoolLicense.error": "Хүсэлтийг илгээж чадсангүй. Дахин оролдоно уу эсвэл бидэнд шууд имэйл илгээнэ үү."
     },
     "kn": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "LMS ಗೆ ಸಿಂಕ್ ಮಾಡಿ",
         "lms.modalTitle": "LMS ಗೆ ಗ್ರೇಡ್‌ಗಳನ್ನು ಸಿಂಕ್ ಮಾಡಿ",
         "lms.providerClassroom": "Google Classroom",
@@ -55996,6 +56356,14 @@
         "lang.af": "Afrikaans"
     },
     "gu": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "LMS સાથે સિંક કરો",
         "lms.modalTitle": "LMS માં ગ્રેડ સિંક કરો",
         "lms.providerClassroom": "Google Classroom",
@@ -57273,6 +57641,14 @@
         "lang.af": "Afrikaans"
     },
     "pa": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "LMS ਨਾਲ ਸਿੰਕ ਕਰੋ",
         "lms.modalTitle": "ਗ੍ਰੇਡ LMS ਨਾਲ ਸਿੰਕ ਕਰੋ",
         "lms.providerClassroom": "Google Classroom",
@@ -58550,6 +58926,14 @@
         "lang.af": "Afrikaans"
     },
     "kk": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "LMS-ке синхрондау",
         "lms.modalTitle": "Бағаларды LMS-ке синхрондау",
         "lms.providerClassroom": "Google Classroom",
@@ -59827,6 +60211,14 @@
         "lang.af": "Afrikaans"
     },
     "lv": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "Sinhronizēt ar LMS",
         "lms.modalTitle": "Sinhronizēt atzīmes ar LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -61104,6 +61496,14 @@
         "lang.af": "Afrikaans"
     },
     "lt": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "Sinchronizuoti su LMS",
         "lms.modalTitle": "Sinchronizuoti pažymius su LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -62381,6 +62781,14 @@
         "lang.af": "Afrikaans"
     },
     "lo": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "ຊິ້ງໄປຍັງ LMS",
         "lms.modalTitle": "ຊິ້ງຄະແນນໄປຍັງ LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -63658,6 +64066,14 @@
         "lang.af": "Afrikaans"
     },
     "my": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "LMS သို့ ချိတ်ဆက်ညှိရန်",
         "lms.modalTitle": "အမှတ်များကို LMS သို့ ချိတ်ဆက်ညှိရန်",
         "lms.providerClassroom": "Google Classroom",
@@ -64935,6 +65351,14 @@
         "lang.af": "Afrikaans"
     },
     "km": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "ធ្វើសមកាលកម្មទៅ LMS",
         "lms.modalTitle": "ធ្វើសមកាលកម្មពិន្ទុទៅ LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -66212,6 +66636,14 @@
         "lang.af": "Afrikaans"
     },
     "ceb": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "I-sync sa LMS",
         "lms.modalTitle": "I-sync ang mga Grado sa LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -67489,6 +67921,14 @@
         "lang.af": "Afrikaans"
     },
     "bg": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "Синхронизиране с LMS",
         "lms.modalTitle": "Синхронизиране на оценки с LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -68766,6 +69206,14 @@
         "lang.af": "Afrikaans"
     },
     "hr": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "Sinkroniziraj s LMS-om",
         "lms.modalTitle": "Sinkronizacija ocjena s LMS-om",
         "lms.providerClassroom": "Google Classroom",
@@ -70043,6 +70491,14 @@
         "lang.af": "Afrikaans"
     },
     "sr": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "Синхронизуј са LMS-ом",
         "lms.modalTitle": "Синхронизација оцена са LMS-ом",
         "lms.providerClassroom": "Google Classroom",
@@ -71320,6 +71776,14 @@
         "lang.af": "Afrikaans"
     },
     "sk": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "Synchronizovať s LMS",
         "lms.modalTitle": "Synchronizovať známky s LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -72597,6 +73061,14 @@
         "lang.af": "Afrikaans"
     },
     "sl": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "Sinhroniziraj z LMS",
         "lms.modalTitle": "Sinhronizacija ocen v LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -73874,6 +74346,14 @@
         "lang.af": "Afrikaans"
     },
     "af": {
+        "lp2_stat_orgs": "organizations",
+        "lp2_stat_meetings": "meetings tracked",
+        "lp2_stat_languages": "languages",
+        "footer.builtBy": "Built by Kinetic Helix",
+        "footer.colGuides": "Guides & How-Tos",
+        "footer.colIntegrations": "Integrations & LMS",
+        "footer.colRoles": "Roles & Industries",
+        "footer.colGlobal": "Global & Regional",
         "lms.syncBtn": "Sinkroniseer na LMS",
         "lms.modalTitle": "Sinkroniseer punte na LMS",
         "lms.providerClassroom": "Google Classroom",
@@ -76246,6 +76726,9 @@ let locale = 'en';
       const chosen = e.target.value;
       setLocale(chosen, true);
       applyTranslations();
+      if (typeof window !== 'undefined' && typeof window.updateUiLanguage === 'function') {
+        window.updateUiLanguage();
+      }
       // Update URL query param without reload if history API available
       if (typeof window !== 'undefined' && window.location) {
         const url = new URL(window.location.href);

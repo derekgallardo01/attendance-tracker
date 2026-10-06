@@ -444,11 +444,15 @@ describe('detectLocale', () => {
     expect(select).not.toBeNull();
     expect(select.children.length).toBe(60);
 
-    // Trigger language switch via picker with history.replaceState
+    // Trigger language switch via picker with history.replaceState and updateUiLanguage callback
+    const updateUiSpy = jest.fn();
+    window.updateUiLanguage = updateUiSpy;
     select.value = 'es';
     select.dispatchEvent(new Event('change'));
     expect(strings.getLocale()).toBe('es');
     expect(replaceSpy).toHaveBeenCalled();
+    expect(updateUiSpy).toHaveBeenCalled();
+    delete window.updateUiLanguage;
 
     // Trigger language switch via picker without replaceState
     window.history.replaceState = null;
