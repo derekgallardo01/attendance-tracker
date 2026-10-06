@@ -297,6 +297,22 @@ describe('detectLocale', () => {
     expect(strings.detectLocale('ne-NP')).toBe('ne');
     expect(strings.detectLocale('ml-IN')).toBe('ml');
     expect(strings.detectLocale('mn-MN')).toBe('mn');
+    expect(strings.detectLocale('kn-IN')).toBe('kn');
+    expect(strings.detectLocale('gu-IN')).toBe('gu');
+    expect(strings.detectLocale('pa-IN')).toBe('pa');
+    expect(strings.detectLocale('kk-KZ')).toBe('kk');
+    expect(strings.detectLocale('lv-LV')).toBe('lv');
+    expect(strings.detectLocale('lt-LT')).toBe('lt');
+    expect(strings.detectLocale('lo-LA')).toBe('lo');
+    expect(strings.detectLocale('my-MM')).toBe('my');
+    expect(strings.detectLocale('km-KH')).toBe('km');
+    expect(strings.detectLocale('ceb-PH')).toBe('ceb');
+    expect(strings.detectLocale('bg-BG')).toBe('bg');
+    expect(strings.detectLocale('hr-HR')).toBe('hr');
+    expect(strings.detectLocale('sr-RS')).toBe('sr');
+    expect(strings.detectLocale('sk-SK')).toBe('sk');
+    expect(strings.detectLocale('sl-SI')).toBe('sl');
+    expect(strings.detectLocale('af-ZA')).toBe('af');
     expect(strings.detectLocale('en-US')).toBe('en');
     expect(strings.detectLocale('xx-YY')).toBe('en'); // unknown fallback
   });
@@ -413,7 +429,7 @@ describe('detectLocale', () => {
     expect(strings.detectLocale('es-ES')).toBe('ja');
   });
 
-  test('renderLanguagePicker renders select with all 44 locales and handles selection', () => {
+  test('renderLanguagePicker renders select with all 60 locales and handles selection', () => {
     delete window.location;
     window.location = {
       href: 'http://localhost/?lang=en',
@@ -426,7 +442,7 @@ describe('detectLocale', () => {
     strings.renderLanguagePicker('picker-mount');
     const select = document.querySelector('.att-lang-picker');
     expect(select).not.toBeNull();
-    expect(select.children.length).toBe(44);
+    expect(select.children.length).toBe(60);
 
     // Trigger language switch via picker with history.replaceState
     select.value = 'es';
@@ -661,7 +677,7 @@ describe('no "wired but English-valued" keys (translation-content guard)', () =>
   const nonEn = strings.getAvailableLocales().map(l => l.code).filter(l => l !== 'en');
   const en = strings.STRINGS.en;
   const enKeys = Object.keys(en);
-  const THRESHOLD = 20; // English in >= 20 of the ~29 non-en locales
+  const THRESHOLD = Math.round(nonEn.length * 0.6); // English in >= 60% of the non-en locales (formerly 20 of ~29)
 
   // Intentionally-identical-across-locales keys:
   //  - lang.* : language names are written in their own language (endonyms),
@@ -689,8 +705,11 @@ describe('no "wired but English-valued" keys (translation-content guard)', () =>
     key === 'lp2_roster_p4_detail' ||        // "Invited · not joined" sample status in hero mockup
     key === 'lp2_plan_free_price' ||         // "$0" price amount
     key === 'lp2_plan_life_price' ||         // "$9.99" price amount
+    key === 'lp2_plan_life_name' ||          // "Lifetime" plan tier brand name
     key === 'lp2_plan_edu_price' ||          // "$4.99" price amount
+    key === 'lp2_plan_edu_name' ||           // "Educator" plan tier brand name
     key === 'lp2_plan_school_price' ||       // "From $59" price amount
+    key === 'lp2_nav_faq' ||                 // "FAQ" international acronym
     key === 'lp2_sheet_th_min' ||            // "Min" table column abbreviation for duration in minutes
     key === 'btn.exportExcel' ||             // "Excel" — Microsoft Excel product brand name
     key === 'lms.providerClassroom' ||       // "Google Classroom" brand name

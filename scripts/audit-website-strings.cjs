@@ -64,5 +64,5 @@ if (missingKeys.size > 0) {
   }
   process.exit(1);
 } else {
-  console.log('SUCCESS: Every single i18n string referenced on the website is defined in STRINGS.en and all 44 languages!');
+  console.log(`SUCCESS: Every single i18n string referenced on the website is defined in STRINGS.en and all ${s.LOCALES.length} languages!`);
 }
