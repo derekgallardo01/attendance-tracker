@@ -71,6 +71,8 @@ English
 | Asset | Dimensions | Status | Location |
 | :--- | :--- | :--- | :--- |
 | **Store Icon** [REQUIRED] | 128×128 PNG | ✅ Ready | `companion-extension/icons/icon-128.png` |
+| **Small Promo Tile** [RECOMMENDED] | 440×280 JPEG (no alpha) | ✅ Ready | `screenshots/cws/small-promo-tile-440x280.jpg` |
+| **Marquee Promo Tile** [RECOMMENDED] | 1400×560 JPEG (no alpha) | ✅ Ready | `screenshots/cws/marquee-promo-tile-1400x560.jpg` |
 | **Screenshot 1** [REQUIRED] | 1280×800 JPEG | ✅ Ready | `screenshots/cws/01-live-roster.jpg` |
 | **Screenshot 2** [RECOMMENDED] | 1280×800 JPEG | ✅ Ready | `screenshots/cws/02-sheets-export.jpg` |
 | **Screenshot 3** [RECOMMENDED] | 1280×800 JPEG | ✅ Ready | `screenshots/cws/03-late-no-shows.jpg` |
