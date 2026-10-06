@@ -115,7 +115,7 @@ const SUPPORTED_LOCALES = new Set([
   'en', 'es', 'pt', 'hi', 'ta', 'te', 'bn', 'ur', 'tl', 'ms', 'id', 'vi',
   'fr', 'de', 'it', 'nl', 'pl', 'ro', 'ru', 'uk', 'tr', 'th', 'ar', 'ko',
   'zh', 'zh-CN', 'ja', 'he', 'mr', 'sv', 'cs', 'da', 'fi', 'hu', 'so',
-  'sw', 'am', 'si', 'el', 'no', 'ca', 'ne',
+  'sw', 'am', 'si', 'el', 'no', 'ca', 'ne', 'ml', 'mn',
 ]);
 
 function parseLocale(raw) {

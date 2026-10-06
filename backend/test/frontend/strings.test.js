@@ -34,6 +34,28 @@ describe('setLocale + fallback chain', () => {
     expect(strings.getLocale()).toBe('en');
   });
 
+  test('sets documentElement.lang and documentElement.dir correctly for RTL and LTR', () => {
+    strings.setLocale('ar');
+    expect(document.documentElement.lang).toBe('ar');
+    expect(document.documentElement.dir).toBe('rtl');
+
+    strings.setLocale('he');
+    expect(document.documentElement.lang).toBe('he');
+    expect(document.documentElement.dir).toBe('rtl');
+
+    strings.setLocale('ur');
+    expect(document.documentElement.lang).toBe('ur');
+    expect(document.documentElement.dir).toBe('rtl');
+
+    strings.setLocale('en');
+    expect(document.documentElement.lang).toBe('en');
+    expect(document.documentElement.dir).toBe('ltr');
+
+    strings.setLocale('es');
+    expect(document.documentElement.lang).toBe('es');
+    expect(document.documentElement.dir).toBe('ltr');
+  });
+
   test('switches between supported locales accurately', () => {
     // Spanish
     strings.setLocale('es');
@@ -193,6 +215,16 @@ describe('setLocale + fallback chain', () => {
     strings.setLocale('ne');
     expect(strings.t('btn.start')).toBe('सुरु गर्नुहोस्');
     expect(strings.t('attendee.present')).toBe('उपस्थित');
+
+    // Malayalam
+    strings.setLocale('ml');
+    expect(strings.t('btn.start')).toBe('ആരംഭിക്കുക');
+    expect(strings.t('attendee.present')).toBe('ഹാജർ');
+
+    // Mongolian
+    strings.setLocale('mn');
+    expect(strings.t('btn.start')).toBe('Эхлүүлэх');
+    expect(strings.t('attendee.present')).toBe('Ирсэн');
   });
 
   test('persists locale to localStorage when requested', () => {
@@ -263,6 +295,8 @@ describe('detectLocale', () => {
     expect(strings.detectLocale('nn-NO')).toBe('no');
     expect(strings.detectLocale('ca-ES')).toBe('ca');
     expect(strings.detectLocale('ne-NP')).toBe('ne');
+    expect(strings.detectLocale('ml-IN')).toBe('ml');
+    expect(strings.detectLocale('mn-MN')).toBe('mn');
     expect(strings.detectLocale('en-US')).toBe('en');
     expect(strings.detectLocale('xx-YY')).toBe('en'); // unknown fallback
   });
@@ -306,6 +340,9 @@ describe('detectLocale', () => {
     expect(strings.t('settings.cancelBullet1')).toContain('No future charges');
     expect(strings.t('referral.pillOffer')).toBe('Give 1 Month Pro · Get 1 Month Pro');
     expect(strings.t('toast.pdfError')).toBe('PDF error:');
+    expect(strings.t('lang.ne')).toBe('नेपाली');
+    expect(strings.t('lang.ml')).toBe('മലയാളം');
+    expect(strings.t('lang.mn')).toBe('Монгол');
   });
 
   test('prefers stored locale in localStorage over browser language', () => {
@@ -328,7 +365,7 @@ describe('detectLocale', () => {
     expect(strings.detectLocale('es-ES')).toBe('ja');
   });
 
-  test('renderLanguagePicker renders select with all 42 locales and handles selection', () => {
+  test('renderLanguagePicker renders select with all 44 locales and handles selection', () => {
     delete window.location;
     window.location = {
       href: 'http://localhost/?lang=en',
@@ -341,7 +378,7 @@ describe('detectLocale', () => {
     strings.renderLanguagePicker('picker-mount');
     const select = document.querySelector('.att-lang-picker');
     expect(select).not.toBeNull();
-    expect(select.children.length).toBe(42);
+    expect(select.children.length).toBe(44);
 
     // Trigger language switch via picker with history.replaceState
     select.value = 'es';
@@ -361,6 +398,24 @@ describe('detectLocale', () => {
     delete window.location;
     window.location = new URL('https://attendancetracker.dev/?hl=fr');
     expect(strings.detectLocale()).toBe('fr');
+  });
+
+  test('normalizes Chinese and regional query parameters without throwing', () => {
+    delete window.location;
+    window.location = new URL('https://attendancetracker.dev/?lang=zh-Hant');
+    expect(strings.detectLocale()).toBe('zh');
+
+    window.location = new URL('https://attendancetracker.dev/?lang=zh-Hans');
+    expect(strings.detectLocale()).toBe('zh-CN');
+
+    window.location = new URL('https://attendancetracker.dev/?lang=zh-TW');
+    expect(strings.detectLocale()).toBe('zh');
+
+    window.location = new URL('https://attendancetracker.dev/?lang=pt-BR');
+    expect(strings.detectLocale()).toBe('pt');
+
+    window.location = new URL('https://attendancetracker.dev/?lang=es-MX');
+    expect(strings.detectLocale()).toBe('es');
   });
 
   test('handles query param matching when localStorage.setItem throws', () => {

@@ -39,7 +39,7 @@
   <meta name="keywords" content="google meet attendance tracker, track attendance google meet, google meet attendance report, attendance tracker, how to take attendance in google meet, meeting attendance tracker, google meet export to sheets, asistencia google meet, pasar lista google meet, tomar asistencia google meet, control de asistencia meet, lista de asistencia sheets, chamada google meet, presenca google meet, controle de chamada google meet" />
   <link rel="canonical" href="https://attendancetracker.dev/" />
 
-  <!-- Localized alternate hreflang tags for 42 languages -->
+  <!-- Localized alternate hreflang tags for 44 languages -->
   <link rel="alternate" hreflang="x-default" href="https://attendancetracker.dev/" />
   <link rel="alternate" hreflang="en" href="https://attendancetracker.dev/?lang=en" />
   <link rel="alternate" hreflang="es" href="https://attendancetracker.dev/?lang=es" />
@@ -83,6 +83,8 @@
   <link rel="alternate" hreflang="no" href="https://attendancetracker.dev/?lang=no" />
   <link rel="alternate" hreflang="ca" href="https://attendancetracker.dev/?lang=ca" />
   <link rel="alternate" hreflang="ne" href="https://attendancetracker.dev/?lang=ne" />
+  <link rel="alternate" hreflang="ml" href="https://attendancetracker.dev/?lang=ml" />
+  <link rel="alternate" hreflang="mn" href="https://attendancetracker.dev/?lang=mn" />
 
   <!-- Shared pure-helper module — loaded synchronously before any inline
        script so the inline code can rely on window.AttUtils. Kept as a
@@ -93,7 +95,7 @@
        engine — unit-tested in isolation. -->
   <script src="js/panel.js"></script>
   <script src="js/sim.js"></script>
-  <!-- i18n foundation — provides window.t() for user-facing strings across 42 locales. -->
+  <!-- i18n foundation — provides window.t() for user-facing strings across 44 locales. -->
   <script src="js/strings.js"></script>
   <script src="js/lms-sync.js"></script>
   <script>
@@ -209,10 +211,11 @@
           "reviewCount": "3"
         },
         "description": "Real-time attendance tracking add-on for Google Meet with one-click export to Google Sheets, Classroom roster sync, and late arrival alerts.",
+        "areaServed": "Worldwide",
         "inLanguage": [
           "en", "es", "pt", "hi", "ta", "te", "bn", "ur", "tl", "ms", "id", "vi", "fr", "de", "it",
           "nl", "pl", "ro", "ru", "uk", "tr", "th", "ar", "ko", "zh-Hant", "zh-Hans", "ja", "he",
-          "mr", "sv", "cs", "da", "fi", "hu", "so", "sw", "am", "si", "el", "no", "ca"
+          "mr", "sv", "cs", "da", "fi", "hu", "so", "sw", "am", "si", "el", "no", "ca", "ne", "ml", "mn"
         ],
         "author": {
           "@type": "Organization",
@@ -242,7 +245,7 @@
         "inLanguage": [
           "en", "es", "pt", "hi", "ta", "te", "bn", "ur", "tl", "ms", "id", "vi", "fr", "de", "it",
           "nl", "pl", "ro", "ru", "uk", "tr", "th", "ar", "ko", "zh-Hant", "zh-Hans", "ja", "he",
-          "mr", "sv", "cs", "da", "fi", "hu", "so", "sw", "am", "si", "el", "no", "ca"
+          "mr", "sv", "cs", "da", "fi", "hu", "so", "sw", "am", "si", "el", "no", "ca", "ne", "ml", "mn"
         ],
         "publisher": {
           "@id": "https://attendancetracker.dev/#organization"
@@ -296,7 +299,7 @@
             "name": "What languages does Attendance Tracker support?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Attendance Tracker natively supports 42 languages, including English, Spanish, Portuguese, Hindi, Tamil, Telugu, Bengali, Urdu, Tagalog, Malay, Indonesian, Vietnamese, French, German, Italian, Dutch, Polish, Arabic, Japanese, Korean, Simplified Chinese, Traditional Chinese, and 20 more."
+              "text": "Attendance Tracker natively supports 44 languages, including English, Spanish, Portuguese, Hindi, Tamil, Telugu, Bengali, Urdu, Tagalog, Malay, Indonesian, Vietnamese, French, German, Italian, Dutch, Polish, Arabic, Japanese, Korean, Simplified Chinese, Traditional Chinese, and 22 more."
             }
           }
         ]
@@ -2186,6 +2189,7 @@
           <a href="#compare" class="lp2-nav-link" data-i18n="lp2_nav_compare">Why an add-on</a>
           <a href="#pricing" class="lp2-nav-link" data-i18n="lp2_nav_pricing">Pricing</a>
           <a href="#faq" class="lp2-nav-link" data-i18n="lp2_nav_faq">FAQ</a>
+          <div id="landing-lang-picker"></div>
           <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" onclick="trackCtaClick('marketplace_install_nav')" class="lp2-btn-install-sm" data-i18n="lp2_nav_install">Install free</a>
         </nav>
       </div>
@@ -2266,7 +2270,7 @@
         <span style="color:var(--border)">•</span>
         <div><strong id="stat-meetings-public" style="color:var(--text);font-size:16px">—</strong> meetings tracked</div>
         <span style="color:var(--border)">•</span>
-        <div><strong style="color:var(--text);font-size:16px">42</strong> languages</div>
+        <div><strong style="color:var(--text);font-size:16px">44</strong> languages</div>
       </div>
     </div>
 
@@ -2286,7 +2290,7 @@
           <div class="lp2-proof-body" data-i18n="lp2_proof_3_body">1-on-1 tutoring to 200-student lectures.</div>
         </div>
         <div class="lp2-proof-item">
-          <div class="lp2-proof-title" data-i18n="lp2_proof_4_title">42 languages</div>
+          <div class="lp2-proof-title" data-i18n="lp2_proof_4_title">44 languages</div>
           <div class="lp2-proof-body" data-i18n="lp2_proof_4_body">Spanish, Hindi, Tagalog, Arabic and more.</div>
         </div>
       </div>
@@ -2482,7 +2486,7 @@
           <div class="lp2-feat-body" data-i18n="lp2_feat_7_body">A summary card after every meeting.</div>
         </div>
         <div class="lp2-feat-card">
-          <div class="lp2-feat-title" data-i18n="lp2_feat_8_title">42 languages</div>
+          <div class="lp2-feat-title" data-i18n="lp2_feat_8_title">44 languages</div>
           <div class="lp2-feat-body" data-i18n="lp2_feat_8_body">Spanish, Portuguese, Hindi, Tagalog, Ukrainian, Arabic and more.</div>
         </div>
       </div>
@@ -9949,6 +9953,9 @@ window.addEventListener('DOMContentLoaded', () => {
   if (window._isLandingMode) {
     document.body.classList.add('landing-mode');
     populateLanguageSelect();
+    if (window.AttStrings && window.AttStrings.renderLanguagePicker) {
+      window.AttStrings.renderLanguagePicker('landing-lang-picker');
+    }
     updateUiLanguage();
     initSDK();
     return;

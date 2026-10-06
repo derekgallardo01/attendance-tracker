@@ -23,7 +23,31 @@ describe('backend i18n', () => {
       expect(i18n.normalizeLocale(null, 'CO')).toBe('es');
       expect(i18n.normalizeLocale(null, 'BR')).toBe('pt');
       expect(i18n.normalizeLocale(null, 'NP')).toBe('ne');
+      expect(i18n.normalizeLocale(null, 'TN')).toBe('ar');
+      expect(i18n.normalizeLocale(null, 'JO')).toBe('ar');
+      expect(i18n.normalizeLocale(null, 'DZ')).toBe('ar');
+      expect(i18n.normalizeLocale(null, 'MA')).toBe('ar');
+      expect(i18n.normalizeLocale(null, 'IQ')).toBe('ar');
+      expect(i18n.normalizeLocale(null, 'LB')).toBe('ar');
+      expect(i18n.normalizeLocale(null, 'RW')).toBe('fr');
+      expect(i18n.normalizeLocale(null, 'MN')).toBe('mn');
+      expect(i18n.normalizeLocale(null, 'ZA')).toBe('en');
+      expect(i18n.normalizeLocale(null, 'BW')).toBe('en');
+      expect(i18n.normalizeLocale(null, 'MV')).toBe('en');
+      expect(i18n.normalizeLocale('en', ' MN ')).toBe('mn');
+      expect(i18n.normalizeLocale('en', ' TN ')).toBe('ar');
+      expect(i18n.normalizeLocale('en', ' JO ')).toBe('ar');
       expect(i18n.normalizeLocale(null, 'US')).toBe('en');
+    });
+
+    test('maintains 100% parity between backend and frontend COUNTRY_TO_LOCALE tables', () => {
+      const feStrings = i18n.getStrings();
+      expect(feStrings.COUNTRY_TO_LOCALE).toBeDefined();
+      const feKeys = Object.keys(feStrings.COUNTRY_TO_LOCALE);
+      expect(feKeys.length).toBeGreaterThan(50);
+      for (const c of feKeys) {
+        expect(i18n.normalizeLocale(null, c)).toBe(feStrings.COUNTRY_TO_LOCALE[c]);
+      }
     });
 
     test('handles Chinese language codes', () => {
@@ -52,6 +76,8 @@ describe('backend i18n', () => {
       expect(i18n.normalizeLocale('nn-NO')).toBe('no');
       expect(i18n.normalizeLocale('ca-ES')).toBe('ca');
       expect(i18n.normalizeLocale('ne-NP')).toBe('ne');
+      expect(i18n.normalizeLocale('ml-IN')).toBe('ml');
+      expect(i18n.normalizeLocale('mn-MN')).toBe('mn');
     });
   });
 
@@ -183,6 +209,14 @@ describe('backend i18n', () => {
       const neHeaders = i18n.getSheetHeaders('ne-NP', 'NPT');
       expect(neHeaders[0]).toBe('नाम');
       expect(neHeaders[1]).toBe('इमेल');
+
+      const mlHeaders = i18n.getSheetHeaders('ml-IN', 'IST');
+      expect(mlHeaders[0]).toBe('പേര്');
+      expect(mlHeaders[1]).toBe('ഇമെയിൽ');
+
+      const mnHeaders = i18n.getSheetHeaders('mn-MN', 'ULAT');
+      expect(mnHeaders[0]).toBe('Нэр');
+      expect(mnHeaders[1]).toBe('Имэйл');
     });
   });
 
@@ -202,6 +236,8 @@ describe('backend i18n', () => {
       expect(i18n.getSheetSummaryLabels('bn').meeting).toBe('মিটিং');
       expect(i18n.getSheetSummaryLabels('ja').meeting).toBe('ミーティング');
       expect(i18n.getSheetSummaryLabels('ne').meeting).toBe('बैठक');
+      expect(i18n.getSheetSummaryLabels('ml').meeting).toBe('മീറ്റിംഗ്');
+      expect(i18n.getSheetSummaryLabels('mn').meeting).toBe('Уулзалт');
     });
   });
 
@@ -224,6 +260,8 @@ describe('backend i18n', () => {
       expect(i18n.localizeStatus('Present', 'bn')).toBe('উপস্থিত');
       expect(i18n.localizeStatus('Present', 'ja')).toBe('出席');
       expect(i18n.localizeStatus('Present', 'ne')).toBe('उपस्थित');
+      expect(i18n.localizeStatus('Present', 'ml')).toBe('ഹാജർ');
+      expect(i18n.localizeStatus('Present', 'mn')).toBe('Ирсэн');
       expect(i18n.localizeStatus('Unmapped Custom Status', 'pt')).toBe('Unmapped Custom Status');
     });
   });
@@ -247,6 +285,8 @@ describe('backend i18n', () => {
       expect(i18n.localizeRsvp('accepted', 'bn')).toBe('গৃহীত');
       expect(i18n.localizeRsvp('accepted', 'ja')).toBe('承諾');
       expect(i18n.localizeRsvp('accepted', 'ne')).toBe('स्वीकार गरियो');
+      expect(i18n.localizeRsvp('accepted', 'ml')).toBe('സ്വീകരിച്ചു');
+      expect(i18n.localizeRsvp('accepted', 'mn')).toBe('Зөвшөөрсөн');
     });
   });
 
@@ -305,6 +345,18 @@ describe('backend i18n', () => {
       expect(ne.columns.name).toBe('नाम');
       expect(ne.columns.status).toBe('स्थिति');
       expect(ne.summaryFormat(5, 10)).toBe('5 / 10 उपस्थितको रूपमा दर्ता गरियो');
+
+      const ml = i18n.getPdfLabels('ml');
+      expect(ml.reportTitle).toBe('ഹാജർ റിപ്പോർട്ട്');
+      expect(ml.columns.name).toBe('പേര്');
+      expect(ml.columns.status).toBe('സ്റ്റാറ്റസ്');
+      expect(ml.summaryFormat(5, 10)).toBe('10-ൽ 5 പേർ ഹാജരായി രേഖപ്പെടുത്തി');
+
+      const mn = i18n.getPdfLabels('mn');
+      expect(mn.reportTitle).toBe('Ирцийн тайлан');
+      expect(mn.columns.name).toBe('Нэр');
+      expect(mn.columns.status).toBe('Төлөв');
+      expect(mn.summaryFormat(5, 10)).toBe('10-аас 5 оролцогч ирснээр бүртгэгдсэн');
     });
 
     test('returns localized summary labels for Asian, European, and Middle Eastern locales', () => {

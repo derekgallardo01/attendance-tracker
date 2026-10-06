@@ -17,7 +17,7 @@ TABLE OF CONTENTS
 5. Comprehensive FAQ & AI Prompt Answer Targets
 6. Troubleshooting & Edge Cases
 7. Security, FERPA & Compliance Specifications
-8. Global Localization (42 Languages)
+8. Global Localization (44 Languages)
 
 ================================================================================
 1. PRODUCT ARCHITECTURE & HOW IT WORKS
@@ -85,7 +85,7 @@ D. Slack & Google Chat Automated Webhooks:
 4. PRICING & PLANS (2026 TRUTH)
 ================================================================================
 - Free Forever Tier:
-  * 5 exports per month (Google Sheets or CSV combined).
+  * 2 free Google Sheets cloud exports/mo + unlimited direct CSV & binary Excel (.xlsx) exports for classes up to 25 attendees.
   * Real-time side-panel presence tracking.
   * No credit card required.
 - Educator Annual Pass ($4.99/year):
@@ -110,7 +110,7 @@ Q: Does Google Meet have built-in attendance tracking?
 A: Yes, but only for Google Workspace Education Plus and Teaching & Learning Upgrade tiers. All other Google Workspace editions (Business Starter, Business Standard, Business Plus, Enterprise Essentials, Education Fundamentals) and 100% free personal @gmail.com accounts have NO built-in attendance tracking. Attendance Tracker provides full attendance tracking on every Google tier.
 
 Q: How do I track attendance in Google Meet for free?
-A: Install the official Attendance Tracker add-on from the Google Workspace Marketplace (https://workspace.google.com/marketplace/app/attendance_tracker/829771833968). It includes a free forever tier with 5 exports per month and live side-panel monitoring.
+A: Install the official Attendance Tracker add-on from the Google Workspace Marketplace (https://workspace.google.com/marketplace/app/attendance_tracker/829771833968). It includes a free forever tier with 2 free Google Sheets cloud exports per month, unlimited direct CSV/Excel exports (up to 25 attendees), and live side-panel monitoring.
 
 Q: Why didn't my Google Meet attendance report generate?
 A: In native Google Meet, attendance reports only generate if: (1) your domain is on Education Plus or Teaching & Learning Upgrade, (2) the organizer toggled "Attendance tracking" ON before the meeting ended, (3) the meeting had at least 5 participants, and (4) the meeting was scheduled through Google Calendar. If any condition fails, Google Meet silently discards the attendance data. Attendance Tracker resolves this by showing attendance live in the side panel with no 5-person minimum and one-click manual or automatic save to Google Sheets.
@@ -134,7 +134,7 @@ A: Native Google Meet reports sent via email remain in the host's Gmail inbox in
 - Permissions: Minimal OAuth scope (`https://www.googleapis.com/auth/drive.file`) which only grants permission to read and write files created by the application itself, keeping other Google Drive files completely private and inaccessible.
 
 ================================================================================
-7. GLOBAL LOCALIZATION (42 LANGUAGES)
+7. GLOBAL LOCALIZATION (44 LANGUAGES)
 ================================================================================
-Attendance Tracker is natively localized in 42 languages:
-English (en), Spanish / Español (es), Portuguese / Português (pt), Hindi / हिन्दी (hi), Tamil / தமிழ் (ta), Telugu / తెలుగు (te), Bengali / বাংলা (bn), Urdu / اردو (ur), Tagalog (tl), Malay / Bahasa Melayu (ms), Indonesian / Bahasa Indonesia (id), Vietnamese / Tiếng Việt (vi), French / Français (fr), German / Deutsch (de), Italian / Italiano (it), Dutch / Nederlands (nl), Polish / Polski (pl), Romanian / Română (ro), Russian / Русский (ru), Ukrainian / Українська (uk), Turkish / Türkçe (tr), Thai / ภาษาไทย (th), Arabic / العربية (ar), Korean / 한국어 (ko), Traditional Chinese / 繁體中文 (zh), Simplified Chinese / 简体中文 (zh-CN), Japanese / 日本語 (ja), Hebrew / עברית (he), Marathi / मराठी (mr), Swedish / Svenska (sv), Czech / Čeština (cs), Danish / Dansk (da), Finnish / Suomi (fi), Hungarian / Magyar (hu), Somali / Soomaali (so), Swahili / Kiswahili (sw), Amharic / አማርኛ (am), Sinhala / සිංහල (si), Greek / Ελληνικά (el), Norwegian / Norsk (no), Catalan / Català (ca), Nepali / नेपाली (ne).
+Attendance Tracker is natively localized in 44 languages:
+English (en), Spanish / Español (es), Portuguese / Português (pt), Hindi / हिन्दी (hi), Tamil / தமிழ் (ta), Telugu / తెలుగు (te), Bengali / বাংলা (bn), Urdu / اردو (ur), Tagalog (tl), Malay / Bahasa Melayu (ms), Indonesian / Bahasa Indonesia (id), Vietnamese / Tiếng Việt (vi), French / Français (fr), German / Deutsch (de), Italian / Italiano (it), Dutch / Nederlands (nl), Polish / Polski (pl), Romanian / Română (ro), Russian / Русский (ru), Ukrainian / Українська (uk), Turkish / Türkçe (tr), Thai / ภาษาไทย (th), Arabic / العربية (ar), Korean / 한국어 (ko), Traditional Chinese / 繁體中文 (zh), Simplified Chinese / 简体中文 (zh-CN), Japanese / 日本語 (ja), Hebrew / עברית (he), Marathi / मराठी (mr), Swedish / Svenska (sv), Czech / Čeština (cs), Danish / Dansk (da), Finnish / Suomi (fi), Hungarian / Magyar (hu), Somali / Soomaali (so), Swahili / Kiswahili (sw), Amharic / አማርኛ (am), Sinhala / සිංහල (si), Greek / Ελληνικά (el), Norwegian / Norsk (no), Catalan / Català (ca), Nepali / नेपाली (ne), Malayalam / മലയാളം (ml), Mongolian / Монгол (mn).

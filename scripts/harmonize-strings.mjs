@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const stringsFile = path.join(ROOT, 'js', 'strings.js');
 let content = fs.readFileSync(stringsFile, 'utf8');
+const initialContent = content;
 
 const feature3ExportsMap = {
   en: "2 free Google Sheets cloud exports/mo + unlimited direct CSV & binary Excel (.xlsx) exports for classes up to 25 attendees",
@@ -48,22 +49,27 @@ const feature3ExportsMap = {
   el: "2 δωρεάν εξαγωγές Google Sheets/μήνα + απεριόριστες άμεσες εξαγωγές CSV & Excel (.xlsx) (έως 25 συμμετέχοντες)",
   no: "2 gratis Google Sheets-eksporter/måned + ubegrenset direkte CSV- og Excel-eksport (.xlsx) (opptil 25 deltakere)",
   ca: "2 exportacions gratuïtes a Google Sheets/mes + descàrregues directes il·limitades de CSV i Excel (.xlsx) (fins a 25 assistents)",
-  ne: "प्रति महिना २ निःशुल्क Google Sheets निर्यात + २५ सहभागीहरू सम्मका लागि असीमित प्रत्यक्ष CSV र Excel (.xlsx) निर्यात"
+  ne: "प्रति महिना २ निःशुल्क Google Sheets निर्यात + २५ सहभागीहरू सम्मका लागि असीमित प्रत्यक्ष CSV र Excel (.xlsx) निर्यात",
+  ml: "പ്രതിമാസം 2 സൗജന്യ Google Sheets ക്ലൗഡ് എക്സ്പോർട്ടുകൾ + 25 പങ്കെടുത്തവർ വരെയുള്ള ക്ലാസുകൾക്ക് പരിധിയില്ലാത്ത നേരിട്ടുള്ള CSV & Excel (.xlsx) എക്സ്പോർട്ടുകൾ",
+  mn: "Сард 2 үнэгүй Google Sheets үүлэн экспорт + 25 хүртэлх суралцагчтай ангиудад хязгааргүй шууд CSV & Excel (.xlsx) экспорт"
 };
 
 // 1. Update pricing.cmp5Title, pricing.cmp5Body, lp2_proof_4_title, lp2_feat_8_title, lp2_feat_8_body
-// Replace 30 -> 42 and ३० -> ४२ in their values
+// Replace 42 -> 44 and ४२ -> ४४ in their values
 const targetKeys = ['pricing.cmp5Title', 'pricing.cmp5Body', 'lp2_proof_4_title', 'lp2_feat_8_title', 'lp2_feat_8_body'];
 
 for (const k of targetKeys) {
   const regex = new RegExp(`("${k.replace('.', '\\.')}":\\s*")([^"]+)(")`, 'g');
   content = content.replace(regex, (match, prefix, val, suffix) => {
     let updated = val;
-    if (updated.includes('30')) {
-      updated = updated.replace(/\b30\b/g, '42');
+    if (updated.includes('42')) {
+      updated = updated.replace(/\b42\b/g, '44');
     }
-    if (updated.includes('३०')) {
-      updated = updated.replace(/३०/g, '४२');
+    if (updated.includes('४२')) {
+      updated = updated.replace(/४२/g, '४४');
+    }
+    if (updated.includes('30')) {
+      updated = updated.replace(/\b30\b/g, '44');
     }
     return `${prefix}${updated}${suffix}`;
   });
@@ -123,5 +129,7 @@ for (const [loc, newStr] of Object.entries(feature3ExportsMap)) {
   content = content.slice(0, locIdx) + block + content.slice(nextLocIdx);
 }
 
-fs.writeFileSync(stringsFile, content, 'utf8');
-console.log('Successfully harmonized strings in js/strings.js');
+if (content !== initialContent) {
+  fs.writeFileSync(stringsFile, content, 'utf8');
+  console.log('Successfully harmonized strings in js/strings.js');
+}

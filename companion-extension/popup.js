@@ -505,6 +505,30 @@
     "ext.openMarketplace": "Marketplace मा स्थापना / अवलोकन गर्नुहोस्",
     "ext.openHistory": "बैठक इतिहास ड्यासबोर्ड हेर्नुहोस्",
     "ext.privacy": "गोपनीयता"
+  },
+  "ml": {
+    "ext.title": "Attendance Tracker",
+    "ext.subtitle": "ഔദ്യോഗിക Google Meet ആഡ്-ഓൺ",
+    "ext.howToTitle": "🚀 Google Meet-ൽ എങ്ങനെ തുറക്കാം:",
+    "ext.step1": "ഏതെങ്കിലും Google Meet കോളിൽ ചേരുക അല്ലെങ്കിൽ ആരംഭിക്കുക.",
+    "ext.step2": "താഴെ വലതുവശത്തുള്ള ആക്റ്റിവിറ്റീസ് ഐക്കണിൽ (രൂപങ്ങൾ) ക്ലിക്ക് ചെയ്യുക.",
+    "ext.step3": "Attendance Tracker തിരഞ്ഞെടുത്ത് ആരംഭിക്കുക അമർത്തുക.",
+    "ext.openMeet": "Google Meet തുറക്കുക",
+    "ext.openMarketplace": "Marketplace-ൽ ഇൻസ്റ്റാൾ ചെയ്യുക / കാണുക",
+    "ext.openHistory": "മീറ്റിംഗ് ഹിസ്റ്ററി ഡാഷ്‌ബോർഡ് കാണുക",
+    "ext.privacy": "സ്വകാര്യത"
+  },
+  "mn": {
+    "ext.title": "Attendance Tracker",
+    "ext.subtitle": "Албан ёсны Google Meet нэмэлт",
+    "ext.howToTitle": "🚀 Google Meet дээр хэрхэн нээх вэ:",
+    "ext.step1": "Google Meet дуудлагад нэгдэх эсвэл шинээр эхлүүлэх.",
+    "ext.step2": "Баруун доод буланд байрлах Үйл ажиллагаа (дүрсүүд) дээр дарна уу.",
+    "ext.step3": "Attendance Tracker-ийг сонгоод Эхлүүлэх товчийг дарна уу.",
+    "ext.openMeet": "Google Meet нээх",
+    "ext.openMarketplace": "Marketplace дээр үзэх / суулгах",
+    "ext.openHistory": "Уулзалтын түүхийн самбарыг үзэх",
+    "ext.privacy": "Нууцлал"
   }
 };
 

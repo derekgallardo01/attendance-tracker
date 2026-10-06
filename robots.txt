@@ -7,33 +7,109 @@ Disallow: /setup.html
 Disallow: /share.html
 Disallow: /download.html
 Disallow: /verify.html
+Disallow: /history.html
+Disallow: /team.html
 Disallow: /api/
 
-# AI Search & LLM Engines (Permitted for Generative Engine Optimization / GEO)
+# AI Search & LLM Engines (Explicitly Permitted for Generative Engine Optimization / GEO)
 User-agent: GPTBot
 Allow: /
-Disallow: /api/
 Disallow: /admin.html
 Disallow: /setup.html
 Disallow: /share.html
+Disallow: /download.html
+Disallow: /verify.html
+Disallow: /history.html
+Disallow: /team.html
+Disallow: /api/
 
 User-agent: OAI-SearchBot
 Allow: /
+Disallow: /admin.html
+Disallow: /setup.html
+Disallow: /share.html
+Disallow: /download.html
+Disallow: /verify.html
+Disallow: /history.html
+Disallow: /team.html
 Disallow: /api/
 
 User-agent: PerplexityBot
 Allow: /
+Disallow: /admin.html
+Disallow: /setup.html
+Disallow: /share.html
+Disallow: /download.html
+Disallow: /verify.html
+Disallow: /history.html
+Disallow: /team.html
 Disallow: /api/
 
 User-agent: ClaudeBot
 Allow: /
+Disallow: /admin.html
+Disallow: /setup.html
+Disallow: /share.html
+Disallow: /download.html
+Disallow: /verify.html
+Disallow: /history.html
+Disallow: /team.html
+Disallow: /api/
+
+User-agent: Claude-Web
+Allow: /
+Disallow: /admin.html
+Disallow: /setup.html
+Disallow: /share.html
+Disallow: /download.html
+Disallow: /verify.html
+Disallow: /history.html
+Disallow: /team.html
 Disallow: /api/
 
 User-agent: Google-Extended
 Allow: /
+Disallow: /admin.html
+Disallow: /setup.html
+Disallow: /share.html
+Disallow: /download.html
+Disallow: /verify.html
+Disallow: /history.html
+Disallow: /team.html
+Disallow: /api/
 
 User-agent: Applebot-Extended
 Allow: /
+Disallow: /admin.html
+Disallow: /setup.html
+Disallow: /share.html
+Disallow: /download.html
+Disallow: /verify.html
+Disallow: /history.html
+Disallow: /team.html
+Disallow: /api/
+
+User-agent: Meta-ExternalAgent
+Allow: /
+Disallow: /admin.html
+Disallow: /setup.html
+Disallow: /share.html
+Disallow: /download.html
+Disallow: /verify.html
+Disallow: /history.html
+Disallow: /team.html
+Disallow: /api/
+
+User-agent: cohere-ai
+Allow: /
+Disallow: /admin.html
+Disallow: /setup.html
+Disallow: /share.html
+Disallow: /download.html
+Disallow: /verify.html
+Disallow: /history.html
+Disallow: /team.html
+Disallow: /api/
 
 # Sitemap & Machine-Readable Knowledge
 Sitemap: https://attendancetracker.dev/sitemap.xml

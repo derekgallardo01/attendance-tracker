@@ -40,12 +40,14 @@ const COUNTRY_TO_LOCALE = {
   GT: 'es', CU: 'es', BO: 'es', DO: 'es', HN: 'es', PY: 'es', SV: 'es', NI: 'es',
   CR: 'es', PR: 'es', PA: 'es', UY: 'es', GQ: 'es',
   BR: 'pt', PT: 'pt', AO: 'pt', MZ: 'pt', GW: 'pt', CV: 'pt', ST: 'pt', TL: 'pt',
-  BD: 'bn', IN: 'hi', PK: 'ur', LK: 'si', NP: 'ne', FR: 'fr', DE: 'de', AT: 'de', IT: 'it',
+  BD: 'bn', IN: 'hi', PK: 'ur', LK: 'si', NP: 'ne', FR: 'fr', RW: 'fr', DE: 'de', AT: 'de', IT: 'it',
   NL: 'nl', PL: 'pl', RO: 'ro', MD: 'ro', RU: 'ru', BY: 'ru', KZ: 'ru', UA: 'uk',
   TR: 'tr', TH: 'th', SA: 'ar', AE: 'ar', EG: 'ar', QA: 'ar', KW: 'ar', OM: 'ar',
-  BH: 'ar', KR: 'ko', TW: 'zh', HK: 'zh', CN: 'zh-CN', SG: 'zh-CN', JP: 'ja',
+  BH: 'ar', DZ: 'ar', MA: 'ar', TN: 'ar', IQ: 'ar', JO: 'ar', LB: 'ar',
+  KR: 'ko', TW: 'zh', HK: 'zh', CN: 'zh-CN', SG: 'zh-CN', JP: 'ja',
   IL: 'he', SE: 'sv', CZ: 'cs', DK: 'da', FI: 'fi', HU: 'hu', SO: 'so', KE: 'sw',
-  TZ: 'sw', ET: 'am', GR: 'el', CY: 'el', NO: 'no', PH: 'tl', MY: 'ms', ID: 'id', VN: 'vi'
+  TZ: 'sw', ET: 'am', GR: 'el', CY: 'el', NO: 'no', PH: 'tl', MY: 'ms', ID: 'id', VN: 'vi',
+  MN: 'mn', ZA: 'en', BW: 'en', MV: 'en'
 };
 
 function normalizeLocale(rawLocale, countryHint) {
@@ -62,7 +64,7 @@ function normalizeLocale(rawLocale, countryHint) {
   if (raw.startsWith('nb') || raw.startsWith('nn')) return 'no';
   const prefix = raw.split(/[-_]/)[0];
   const parts = raw.split(/[-_]/);
-  const country = (countryHint || (parts.length > 1 ? parts[1] : null) || '').toUpperCase();
+  const country = String(countryHint || (parts.length > 1 ? parts[1] : '') || '').trim().toUpperCase();
   if (prefix !== 'en') {
     const { STRINGS } = getStrings();
     if (STRINGS && STRINGS[prefix]) return prefix;
@@ -618,6 +620,32 @@ const LOCALIZED_HEADERS = {
     status: 'स्थिति',
     checkedIn: 'चेक इन गरिएको',
   },
+  ml: {
+    name: 'പേര്',
+    email: 'ഇമെയിൽ',
+    rsvp: 'RSVP സ്റ്റാറ്റസ്',
+    late: 'വൈകിയോ?',
+    joinTime: 'ചേർന്ന സമയം',
+    leaveTime: 'ഇറങ്ങിയ സമയം',
+    duration: 'ദൈർഘ്യം (മിനിറ്റ്)',
+    pct: 'ഹാജർ %',
+    sessions: 'സെഷനുകൾ',
+    status: 'സ്റ്റാറ്റസ്',
+    checkedIn: 'ചെക്ക് ഇൻ ചെയ്തു',
+  },
+  mn: {
+    name: 'Нэр',
+    email: 'Имэйл',
+    rsvp: 'RSVP төлөв',
+    late: 'Хоцорсон уу?',
+    joinTime: 'Нэвтэрсэн цаг',
+    leaveTime: 'Гарсан цаг',
+    duration: 'Хугацаа (мин)',
+    pct: 'Ирц %',
+    sessions: 'Хичээлүүд',
+    status: 'Төлөв',
+    checkedIn: 'Бүртгүүлсэн',
+  },
 };
 
 function getSheetHeaders(locale, tzAbbr) {
@@ -936,6 +964,32 @@ const LOCALIZED_SUMMARY_LABELS = {
     totalAttended: 'कुल उपस्थित',
     attendanceRate: 'उपस्थिति दर',
   },
+  ml: {
+    meeting: 'മീറ്റിംഗ്',
+    meetingId: 'മീറ്റിംഗ് ഐഡി',
+    type: 'തരം',
+    scheduledRange: 'നിശ്ചയിച്ച സമയം',
+    scheduledEvent: 'നിശ്ചയിച്ച ഇവന്റ്',
+    instantMeeting: 'തൽക്ഷണ മീറ്റിംഗ്',
+    date: 'തീയതി',
+    duration: 'ദൈർഘ്യം (മിനിറ്റ്)',
+    totalInvited: 'ആകെ ക്ഷണിക്കപ്പെട്ടവർ',
+    totalAttended: 'ആകെ പങ്കെടുത്തവർ',
+    attendanceRate: 'ഹാജർ നിരക്ക്',
+  },
+  mn: {
+    meeting: 'Уулзалт',
+    meetingId: 'Уулзалтын ID',
+    type: 'Төрөл',
+    scheduledRange: 'Төлөвлөсөн цаг',
+    scheduledEvent: 'Төлөвлөсөн арга хэмжээ',
+    instantMeeting: 'Шуурхай уулзалт',
+    date: 'Огноо',
+    duration: 'Хугацаа (мин)',
+    totalInvited: 'Нийт уригдсан',
+    totalAttended: 'Нийт оролцсон',
+    attendanceRate: 'Ирцийн хувь',
+  },
 };
 
 function getSheetSummaryLabels(locale) {
@@ -1105,6 +1159,30 @@ const STATUS_TRANSLATIONS = {
     'Guest (Present)': 'अतिथि (उपस्थित)',
     'Guest (Left)': 'अतिथि (छोडियो)',
   },
+  ml: {
+    Present: 'ഹാജർ',
+    Left: 'പുറത്തുപോയി',
+    Absent: 'ഹാജരായില്ല',
+    'Absent (excused)': 'ഹാജരായില്ല (അനുവദിച്ചത്)',
+    Late: 'വൈകി',
+    'Left Early / Incomplete': 'നേരത്തെ ഇറങ്ങി / അപൂർണ്ണം',
+    'Excused (Short Stay)': 'അനുവദിച്ചത് (കുറഞ്ഞ സമയം)',
+    'Present (Left)': 'ഹാജർ (പുറത്തുപോയി)',
+    'Guest (Present)': 'അതിഥി (ഹാജർ)',
+    'Guest (Left)': 'അതിഥി (പുറത്തുപോയി)',
+  },
+  mn: {
+    Present: 'Ирсэн',
+    Left: 'Гарсан',
+    Absent: 'Тасалсан',
+    'Absent (excused)': 'Тасалсан (чөлөөтэй)',
+    Late: 'Хоцорсон',
+    'Left Early / Incomplete': 'Эрт гарсан / Дутуу',
+    'Excused (Short Stay)': 'Чөлөөтэй (богино хугацаа)',
+    'Present (Left)': 'Ирсэн (гарсан)',
+    'Guest (Present)': 'Зочин (ирсэн)',
+    'Guest (Left)': 'Зочин (гарсан)',
+  },
 };
 
 function localizeStatus(status, locale) {
@@ -1197,6 +1275,18 @@ const RSVP_TRANSLATIONS = {
     declined: 'अस्वीकार गरियो',
     tentative: 'अस्थायी',
     needsAction: 'कुनै प्रतिक्रिया छैन',
+  },
+  ml: {
+    accepted: 'സ്വീകരിച്ചു',
+    declined: 'നിരസിച്ചു',
+    tentative: 'താൽക്കാലികം',
+    needsAction: 'പ്രതികരണമില്ല',
+  },
+  mn: {
+    accepted: 'Зөвшөөрсөн',
+    declined: 'Татгалзсан',
+    tentative: 'Тодорхойгүй',
+    needsAction: 'Хариу өгөөгүй',
   },
 };
 const LOCALIZED_RSVP = RSVP_TRANSLATIONS;
@@ -1417,6 +1507,22 @@ const PDF_TRANSLATIONS = {
     durationLabel: 'अवधि',
     columns: { name: 'नाम', email: 'इमेल', joined: 'सामेल भएको', left: 'छोडेको', active: 'सक्रिय', status: 'स्थिति' },
     summaryFormat: (present, total) => `${present} / ${total} उपस्थितको रूपमा दर्ता गरियो`,
+  },
+  ml: {
+    reportTitle: 'ഹാജർ റിപ്പോർട്ട്',
+    dateLabel: 'തീയതി',
+    hostLabel: 'ഹോസ്റ്റ്',
+    durationLabel: 'ദൈർഘ്യം',
+    columns: { name: 'പേര്', email: 'ഇമെയിൽ', joined: 'ചേർന്നു', left: 'ഇറങ്ങി', active: 'സജീവം', status: 'സ്റ്റാറ്റസ്' },
+    summaryFormat: (present, total) => `${total}-ൽ ${present} പേർ ഹാജരായി രേഖപ്പെടുത്തി`,
+  },
+  mn: {
+    reportTitle: 'Ирцийн тайлан',
+    dateLabel: 'Огноо',
+    hostLabel: 'Зохион байгуулагч',
+    durationLabel: 'Үргэлжлэх хугацаа',
+    columns: { name: 'Нэр', email: 'Имэйл', joined: 'Нэвтэрсэн', left: 'Гарсан', active: 'Идэвхтэй', status: 'Төлөв' },
+    summaryFormat: (present, total) => `${total}-аас ${present} оролцогч ирснээр бүртгэгдсэн`,
   },
 };
 

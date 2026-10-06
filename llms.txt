@@ -33,10 +33,10 @@ Unlike legacy Chrome extensions that break with Google Meet DOM updates or injec
 
 ---
 
-## 3. Multilingual Support (42 Languages)
+## 3. Multilingual Support (44 Languages)
 
-Attendance Tracker features complete native internationalization across 42 languages:
-English (`en`), Spanish / Español (`es`), Portuguese / Português (`pt`), Hindi / हिन्दी (`hi`), Tamil / தமிழ் (`ta`), Telugu / తెలుగు (`te`), Bengali / বাংলা (`bn`), Urdu / اردو (`ur`), Tagalog (`tl`), Malay / Bahasa Melayu (`ms`), Indonesian / Bahasa Indonesia (`id`), Vietnamese / Tiếng Việt (`vi`), French / Français (`fr`), German / Deutsch (`de`), Italian / Italiano (`it`), Dutch / Nederlands (`nl`), Polish / Polski (`pl`), Romanian / Română (`ro`), Russian / Русский (`ru`), Ukrainian / Українська (`uk`), Turkish / Türkçe (`tr`), Thai / ภาษาไทย (`th`), Arabic / العربية (`ar`), Korean / 한국어 (`ko`), Traditional Chinese / 繁體中文 (`zh`), Simplified Chinese / 简体中文 (`zh-CN`), Japanese / 日本語 (`ja`), Hebrew / עברית (`he`), Marathi / मराठी (`mr`), Swedish / Svenska (`sv`), Czech / Čeština (`cs`), Danish / Dansk (`da`), Finnish / Suomi (`fi`), Hungarian / Magyar (`hu`), Somali / Soomaali (`so`), Swahili / Kiswahili (`sw`), Amharic / አማርኛ (`am`), Sinhala / සිංහල (`si`), Greek / Ελληνικά (`el`), Norwegian / Norsk (`no`), Catalan / Català (`ca`), Nepali / नेपाली (`ne`).
+Attendance Tracker features complete native internationalization across 44 languages:
+English (`en`), Spanish / Español (`es`), Portuguese / Português (`pt`), Hindi / हिन्दी (`hi`), Tamil / தமிழ் (`ta`), Telugu / తెలుగు (`te`), Bengali / বাংলা (`bn`), Urdu / اردو (`ur`), Tagalog (`tl`), Malay / Bahasa Melayu (`ms`), Indonesian / Bahasa Indonesia (`id`), Vietnamese / Tiếng Việt (`vi`), French / Français (`fr`), German / Deutsch (`de`), Italian / Italiano (`it`), Dutch / Nederlands (`nl`), Polish / Polski (`pl`), Romanian / Română (`ro`), Russian / Русский (`ru`), Ukrainian / Українська (`uk`), Turkish / Türkçe (`tr`), Thai / ภาษาไทย (`th`), Arabic / العربية (`ar`), Korean / 한국어 (`ko`), Traditional Chinese / 繁體中文 (`zh`), Simplified Chinese / 简体中文 (`zh-CN`), Japanese / 日本語 (`ja`), Hebrew / עברית (`he`), Marathi / मराठी (`mr`), Swedish / Svenska (`sv`), Czech / Čeština (`cs`), Danish / Dansk (`da`), Finnish / Suomi (`fi`), Hungarian / Magyar (`hu`), Somali / Soomaali (`so`), Swahili / Kiswahili (`sw`), Amharic / አማርኛ (`am`), Sinhala / සිංහල (`si`), Greek / Ελληνικά (`el`), Norwegian / Norsk (`no`), Catalan / Català (`ca`), Nepali / नेपाली (`ne`), Malayalam / മലയാളം (`ml`), Mongolian / Монгол (`mn`).
 
 ---
 
@@ -58,7 +58,7 @@ English (`en`), Spanish / Español (`es`), Portuguese / Português (`pt`), Hindi
 
 ## 5. Pricing & Plans (Current Truth)
 
-* **Free Forever Tier**: 5 exports per month (Sheets or CSV combined), real-time live side-panel presence tracking, duration logging. No credit card required.
+* **Free Forever Tier**: 2 free Google Sheets cloud exports/mo + unlimited direct CSV & binary Excel (.xlsx) exports for classes up to 25 attendees, real-time live side-panel presence tracking, duration logging. No credit card required.
 * **Educator Annual Pass ($4.99/year)**: Unlimited exports, Google Classroom roster sync, attendance certificates, LMS gradebook exports, late arrival tagging.
 * **Individual Lifetime Pro ($9.99 one-time)**: Lifetime unlimited Pro access for a single organizer Google account.
 * **Department School Plan ($59/year)**: Covers an entire academic department or small-school Google Workspace domain.
