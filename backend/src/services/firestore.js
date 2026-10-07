@@ -561,128 +561,230 @@ async function updateNotificationWebhook(emailId, eventType, data = {}) {
   }
 }
 
-async function persistAttendance(domain, conferenceId, recordName, participants, actorEmail) {
-  try {
-    const now = FieldValue.serverTimestamp();
-    // ── Per-INSTANCE meeting docs ──
-    // A recurring class reuses one Meet code for every session, so keying the
-    // doc by code alone collapsed the whole series into ONE doc: week 2's
-    // participants overwrote week 1's, instanceCount was always 1 (the Class
-    // Summary Pro feature never fired for normal weekly classes), and
-    // start/end widened across weeks. The Meet API's conferenceRecord name is
-    // unique per SESSION — that's the instance key. The code-keyed doc lives
-    // on as the series/link-level doc (title, recurringEventId, excused,
-    // calendar data, and any pre-migration merged participants); readers
-    // treat `data.meetingCode || doc.id` as the code.
-    const instanceId = recordName ? lastSegment(recordName) : null;
-    const codeRef = tenantRef(domain).collection('meetings').doc(conferenceId);
-    const meetingRef = instanceId
-      ? tenantRef(domain).collection('meetings').doc(`${conferenceId}__${instanceId}`)
-      : codeRef; // no record name (legacy/demo callers) → old behavior
+// In-memory debounce cache to prevent hammering Firestore on every 10–30s Meet panel poll.
+// Persists immediately on first poll, immediately on any roster change (join/leave/present/sessions),
+// or on a 5-minute checkpoint timer. Drops Firestore writes by 90-95% during live calls.
+const attendanceDebounceCache = new Map();
+const ATTENDANCE_CHECKPOINT_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+const ATTENDANCE_CACHE_TTL_MS = 3 * 60 * 60 * 1000; // 3 hours
 
-    const joinTimes = participants.map(p => p.joinTime).filter(Boolean).map(t => new Date(t));
-    const leaveTimes = participants.map(p => p.leaveTime).filter(Boolean).map(t => new Date(t));
-    const distinctAttendeeCount = countDistinctAttendees(participants);
-    const newStart = joinTimes.length > 0 ? new Date(Math.min(...joinTimes)) : null;
-    const newEnd = leaveTimes.length > 0 ? new Date(Math.max(...leaveTimes)) : null;
+function computeRosterFingerprint(participants) {
+  if (!Array.isArray(participants) || participants.length === 0) return '0:empty';
+  const sigs = participants.map(p => {
+    const pid = p.participantId || '';
+    const email = (p.email || '').toLowerCase().trim();
+    const name = (p.displayName || '').trim();
+    const present = p.present ? 1 : 0;
+    const sessions = p.sessions || 1;
+    const join = p.joinTime ? (typeof p.joinTime === 'string' ? p.joinTime : p.joinTime.toISOString?.() || String(p.joinTime)) : '';
+    const leave = p.leaveTime ? (typeof p.leaveTime === 'string' ? p.leaveTime : p.leaveTime.toISOString?.() || String(p.leaveTime)) : '';
+    return `${pid}|${email}|${name}|${present}|${sessions}|${join}|${leave}`;
+  });
+  sigs.sort();
+  return `${participants.length}:${sigs.join(';')}`;
+}
 
-    // Aggregates must be MONOTONIC within an instance. Participant docs
-    // accumulate (merge, never removed), but the scalar counts used to be
-    // last-writer-wins — so a later PARTIAL re-fetch (Meet API eventual
-    // consistency, a truncated page) would shrink participantCount and narrow
-    // start/end, corrupting a fuller earlier snapshot. Read-then-widen.
-    let prev = {};
-    let codeMeta = {};
-    try { prev = (await meetingRef.get()).data() || {}; } catch { /* first write */ }
-    if (instanceId) {
-      try { codeMeta = (await codeRef.get()).data() || {}; } catch { /* fine */ }
+function getDebounceEntry(key) {
+  const now = Date.now();
+  if (attendanceDebounceCache.size > 500) {
+    for (const [k, v] of attendanceDebounceCache.entries()) {
+      if (now - v.lastSeenAt > ATTENDANCE_CACHE_TTL_MS) {
+        attendanceDebounceCache.delete(k);
+      }
     }
-    const tsMsOf = (v) => (v?.toDate ? v.toDate().getTime() : (v ? new Date(v).getTime() : null));
-    const prevStartMs = tsMsOf(prev.startTime);
-    const prevEndMs = tsMsOf(prev.endTime);
+  }
+  return attendanceDebounceCache.get(key);
+}
 
-    await meetingRef.set({
-      conferenceId,
-      meetingCode: conferenceId,
-      recordName,
-      // Copy series metadata from the code doc so recurringEventId queries and
-      // series grouping see instances directly (persistCalendarData backfills
-      // instances written before the first export stamped the code doc).
-      ...(instanceId && codeMeta.recurringEventId ? { recurringEventId: codeMeta.recurringEventId } : {}),
-      ...(instanceId && codeMeta.title && !prev.title ? { title: codeMeta.title } : {}),
-      participantCount: Math.max(participants.length, prev.participantCount || 0),
-      distinctAttendeeCount: Math.max(distinctAttendeeCount, prev.distinctAttendeeCount || 0),
-      startTime: newStart && (prevStartMs == null || newStart.getTime() < prevStartMs) ? newStart : (prev.startTime || newStart || null),
-      endTime: newEnd && (prevEndMs == null || newEnd.getTime() > prevEndMs) ? newEnd : (prev.endTime || newEnd || null),
-      lastFetchedAt: now,
-      updatedAt: now,
-      createdAt: prev.createdAt || now,
-    }, { merge: true });
+function clearAttendanceDebounceCache() {
+  attendanceDebounceCache.clear();
+}
 
-    // Keep the code-level doc alive as the series anchor (metadata target for
-    // calendar/excused writes), WITHOUT participant scalars — freezing it is
-    // what stops the old merge-everything behavior. hasInstances lets readers
-    // skip metadata-only code docs in per-meeting listings.
-    if (instanceId) {
-      await codeRef.set({
+async function persistAttendance(domain, conferenceId, recordName, participants, actorEmail, options = {}) {
+  const sessionKey = `${domain}:${conferenceId}:${recordName || ''}`;
+  try {
+    const nowMs = Date.now();
+    const currentFingerprint = computeRosterFingerprint(participants);
+    const cached = getDebounceEntry(sessionKey);
+
+    const isFirstPersist = !cached;
+    const rosterChanged = cached ? cached.fingerprint !== currentFingerprint : false;
+    const isCheckpointDue = cached ? (nowMs - cached.lastPersistedAt >= ATTENDANCE_CHECKPOINT_INTERVAL_MS) : false;
+    const forcePersist = Boolean(options?.force);
+
+    if (!forcePersist && !isFirstPersist && !rosterChanged && !isCheckpointDue) {
+      cached.lastSeenAt = nowMs;
+      // If a co-host/TA loads the panel for the first time during an unchanged meeting, ensure their tracked event exists
+      if (actorEmail) {
+        const actorLower = actorEmail.toLowerCase();
+        if (cached.trackedActors && !cached.trackedActors.has(actorLower)) {
+          cached.trackedActors.add(actorLower);
+          logEvent(domain, {
+            email: actorEmail,
+            type: 'tracked',
+            meta: { conferenceId, participantCount: participants.length, distinctAttendees: countDistinctAttendees(participants) },
+          });
+        }
+      }
+      return false;
+    }
+
+    // Wait for any concurrent in-flight write to this session to complete
+    if (cached?.inFlightPromise) {
+      try {
+        await cached.inFlightPromise;
+      } catch { /* proceed with current write */ }
+    }
+
+    const entry = cached || {
+      fingerprint: currentFingerprint,
+      lastPersistedAt: nowMs,
+      lastSeenAt: nowMs,
+      trackedActors: new Set(),
+      inFlightPromise: null,
+    };
+    if (isFirstPersist) {
+      attendanceDebounceCache.set(sessionKey, entry);
+    }
+
+    const distinctAttendeeCount = countDistinctAttendees(participants);
+
+    const writePromise = (async () => {
+      const now = FieldValue.serverTimestamp();
+      // ── Per-INSTANCE meeting docs ──
+      // A recurring class reuses one Meet code for every session, so keying the
+      // doc by code alone collapsed the whole series into ONE doc: week 2's
+      // participants overwrote week 1's, instanceCount was always 1 (the Class
+      // Summary Pro feature never fired for normal weekly classes), and
+      // start/end widened across weeks. The Meet API's conferenceRecord name is
+      // unique per SESSION — that's the instance key. The code-keyed doc lives
+      // on as the series/link-level doc (title, recurringEventId, excused,
+      // calendar data, and any pre-migration merged participants); readers
+      // treat `data.meetingCode || doc.id` as the code.
+      const instanceId = recordName ? lastSegment(recordName) : null;
+      const codeRef = tenantRef(domain).collection('meetings').doc(conferenceId);
+      const meetingRef = instanceId
+        ? tenantRef(domain).collection('meetings').doc(`${conferenceId}__${instanceId}`)
+        : codeRef; // no record name (legacy/demo callers) → old behavior
+
+      const joinTimes = participants.map(p => p.joinTime).filter(Boolean).map(t => new Date(t));
+      const leaveTimes = participants.map(p => p.leaveTime).filter(Boolean).map(t => new Date(t));
+      const newStart = joinTimes.length > 0 ? new Date(Math.min(...joinTimes)) : null;
+      const newEnd = leaveTimes.length > 0 ? new Date(Math.max(...leaveTimes)) : null;
+
+      // Aggregates must be MONOTONIC within an instance. Participant docs
+      // accumulate (merge, never removed), but the scalar counts used to be
+      // last-writer-wins — so a later PARTIAL re-fetch (Meet API eventual
+      // consistency, a truncated page) would shrink participantCount and narrow
+      // start/end, corrupting a fuller earlier snapshot. Read-then-widen.
+      let prev = {};
+      let codeMeta = {};
+      try { prev = (await meetingRef.get()).data() || {}; } catch { /* first write */ }
+      if (instanceId) {
+        try { codeMeta = (await codeRef.get()).data() || {}; } catch { /* fine */ }
+      }
+      const tsMsOf = (v) => (v?.toDate ? v.toDate().getTime() : (v ? new Date(v).getTime() : null));
+      const prevStartMs = tsMsOf(prev.startTime);
+      const prevEndMs = tsMsOf(prev.endTime);
+
+      await meetingRef.set({
         conferenceId,
-        hasInstances: true,
+        meetingCode: conferenceId,
+        recordName,
+        // Copy series metadata from the code doc so recurringEventId queries and
+        // series grouping see instances directly (persistCalendarData backfills
+        // instances written before the first export stamped the code doc).
+        ...(instanceId && codeMeta.recurringEventId ? { recurringEventId: codeMeta.recurringEventId } : {}),
+        ...(instanceId && codeMeta.title && !prev.title ? { title: codeMeta.title } : {}),
+        participantCount: Math.max(participants.length, prev.participantCount || 0),
+        distinctAttendeeCount: Math.max(distinctAttendeeCount, prev.distinctAttendeeCount || 0),
+        startTime: newStart && (prevStartMs == null || newStart.getTime() < prevStartMs) ? newStart : (prev.startTime || newStart || null),
+        endTime: newEnd && (prevEndMs == null || newEnd.getTime() > prevEndMs) ? newEnd : (prev.endTime || newEnd || null),
         lastFetchedAt: now,
         updatedAt: now,
-        ...(codeMeta.createdAt ? {} : { createdAt: now }),
+        createdAt: prev.createdAt || now,
       }, { merge: true });
-    }
 
-    // Chunk into batches under Firestore's 500-op limit — a very large meeting
-    // (200+ participants) would otherwise exceed a single batch.
-    const CHUNK = 450;
-    for (let i = 0; i < participants.length; i += CHUNK) {
-      const batch = getDb().batch();
-      for (const p of participants.slice(i, i + CHUNK)) {
-        const docId = lastSegment(p.participantId);
-        const pRef = meetingRef.collection('participants').doc(docId);
-        batch.set(pRef, {
-          participantId: p.participantId,
-          displayName: p.displayName,
-          // Normalize to lowercase so account-deletion (which queries
-          // email == emailLower) reliably matches, and so per-person rollups
-          // key consistently. Reads already lowercase before comparing.
-          email: p.email ? p.email.toLowerCase() : null,
-          joinTime: p.joinTime ? new Date(p.joinTime) : null,
-          leaveTime: p.leaveTime ? new Date(p.leaveTime) : null,
-          present: p.present,
-          sessions: p.sessions,
-          lastSeenAt: now,
+      // Keep the code-level doc alive as the series anchor (metadata target for
+      // calendar/excused writes), WITHOUT participant scalars — freezing it is
+      // what stops the old merge-everything behavior. hasInstances lets readers
+      // skip metadata-only code docs in per-meeting listings.
+      if (instanceId) {
+        await codeRef.set({
+          conferenceId,
+          hasInstances: true,
+          lastFetchedAt: now,
           updatedAt: now,
-          createdAt: now,
+          ...(codeMeta.createdAt ? {} : { createdAt: now }),
         }, { merge: true });
       }
-      await batch.commit();
-    }
 
-    if (actorEmail) {
-      logEvent(domain, {
-        email: actorEmail,
-        type: 'tracked',
-        meta: { conferenceId, participantCount: participants.length, distinctAttendees: distinctAttendeeCount },
-      });
-      // In admin_activity, store one idempotent doc per meeting to prevent poll ticks from exploding
-      const cleanEmail = actorEmail.toLowerCase().replace(/[^a-z0-9]/g, '_');
-      const cleanConf = (conferenceId || 'unknown').replace(/[^a-z0-9]/g, '_');
-      getDb().collection('admin_activity').doc(`mtg_${cleanConf}_${cleanEmail}`).set({
-        email: actorEmail.toLowerCase(),
-        domain,
-        type: 'meeting',
-        meta: { conferenceId, participantCount: participants.length, distinctAttendees: distinctAttendeeCount },
-        createdAt: FieldValue.serverTimestamp(),
-      }, { merge: true }).catch(() => {});
-    }
+      // Chunk into batches under Firestore's 500-op limit — a very large meeting
+      // (200+ participants) would otherwise exceed a single batch.
+      const CHUNK = 450;
+      for (let i = 0; i < participants.length; i += CHUNK) {
+        const batch = getDb().batch();
+        for (const p of participants.slice(i, i + CHUNK)) {
+          const docId = lastSegment(p.participantId);
+          const pRef = meetingRef.collection('participants').doc(docId);
+          batch.set(pRef, {
+            participantId: p.participantId,
+            displayName: p.displayName,
+            // Normalize to lowercase so account-deletion (which queries
+            // email == emailLower) reliably matches, and so per-person rollups
+            // key consistently. Reads already lowercase before comparing.
+            email: p.email ? p.email.toLowerCase() : null,
+            joinTime: p.joinTime ? new Date(p.joinTime) : null,
+            leaveTime: p.leaveTime ? new Date(p.leaveTime) : null,
+            present: p.present,
+            sessions: p.sessions,
+            lastSeenAt: now,
+            updatedAt: now,
+            createdAt: now,
+          }, { merge: true });
+        }
+        await batch.commit();
+      }
+
+      if (actorEmail) {
+        const actorLower = actorEmail.toLowerCase();
+        if (!entry.trackedActors.has(actorLower)) {
+          entry.trackedActors.add(actorLower);
+          logEvent(domain, {
+            email: actorEmail,
+            type: 'tracked',
+            meta: { conferenceId, participantCount: participants.length, distinctAttendees: distinctAttendeeCount },
+          });
+        }
+        // In admin_activity, store one idempotent doc per meeting to prevent poll ticks from exploding
+        const cleanEmail = actorLower.replace(/[^a-z0-9]/g, '_');
+        const cleanConf = (conferenceId || 'unknown').replace(/[^a-z0-9]/g, '_');
+        getDb().collection('admin_activity').doc(`mtg_${cleanConf}_${cleanEmail}`).set({
+          email: actorLower,
+          domain,
+          type: 'meeting',
+          meta: { conferenceId, participantCount: participants.length, distinctAttendees: distinctAttendeeCount },
+          createdAt: FieldValue.serverTimestamp(),
+        }, { merge: true }).catch(() => {});
+      }
+    })();
+
+    entry.inFlightPromise = writePromise;
+    await writePromise;
+
+    entry.fingerprint = currentFingerprint;
+    entry.lastPersistedAt = Date.now();
+    entry.lastSeenAt = Date.now();
+    entry.inFlightPromise = null;
 
     log.info('firestore: persisted attendance', { domain, conferenceId, participants: participants.length });
+    return true;
   } catch (err) {
+    attendanceDebounceCache.delete(sessionKey);
     const isTransient = /DEADLINE_EXCEEDED|timeout|ETIMEDOUT|ECONNRESET|UNAVAILABLE/i.test(err.message || '');
     const logFn = isTransient ? log.warn : log.error;
     logFn('firestore: persistAttendance failed', { domain, conferenceId, error: err.message, transient: isTransient });
+    return false;
   }
 }
 
@@ -2684,7 +2786,7 @@ module.exports = {
   setTenantPlan, getTenantPlan, setUserPlan, getUserPlan, grantReferralReward,
   getTeamAdminStatus, claimTeamAdmin, transferTeamAdmin,
   countDistinctAttendees,
-  persistAttendance, persistCalendarData, persistExport,
+  persistAttendance, clearAttendanceDebounceCache, persistCalendarData, persistExport,
   getMeetingExcusedEmails, addMeetingExcusedEmails, getMeetingWithParticipants,
   saveVerifications, getVerification,
   getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens,
