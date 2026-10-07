@@ -803,12 +803,11 @@ router.post('/save-to-sheets', async (req, res) => {
     const sheetsAuth = await getGoogleClient(req, 'https://www.googleapis.com/auth/spreadsheets');
     const isTransientGoogleError = (err) => {
       const status = err?.status || err?.code || err?.response?.status;
-      if (status === 500 || status === 502 || status === 503 || status === 504) return true;
+      if (status === 429 || status === 500 || status === 502 || status === 503 || status === 504) return true;
       const msg = String(err?.message || '');
-      return /service is currently unavailable|socket hang up|ETIMEDOUT|ECONNRESET|network timeout/i.test(msg);
+      return /service is currently unavailable|socket hang up|ETIMEDOUT|ECONNRESET|network timeout|backendError|rateLimitExceeded|userRateLimitExceeded/i.test(msg);
     };
 
-    let exportResult;
     const exportParams = {
       user: req.user ? { domain: req.user.domain, email: req.user.email, displayName: req.user.displayName } : null,
       sheetsAuth,
@@ -823,15 +822,29 @@ router.post('/save-to-sheets', async (req, res) => {
       options: { sendEmail: b.sendEmail, autoExport: b.autoExport, proAllowed },
     };
 
-    try {
-      exportResult = await buildAndSaveExport(exportParams);
-    } catch (firstErr) {
-      if (isTransientGoogleError(firstErr)) {
-        log.warn('sheets export: transient Google API error, retrying after backoff', { email: req.user?.email, error: firstErr.message });
-        await new Promise(r => setTimeout(r, 1000));
+    const MAX_EXPORT_RETRIES = 3;
+    let exportResult;
+    for (let attempt = 1; attempt <= MAX_EXPORT_RETRIES; attempt++) {
+      try {
         exportResult = await buildAndSaveExport(exportParams);
-      } else {
-        throw firstErr;
+        break;
+      } catch (err) {
+        if (isTransientGoogleError(err) && attempt < MAX_EXPORT_RETRIES) {
+          const isTest = process.env.NODE_ENV === 'test';
+          const baseDelay = isTest ? 10 : Math.min(500 * Math.pow(2, attempt - 1), 3000);
+          const jitter = isTest ? 0 : Math.floor(Math.random() * 250);
+          const delay = baseDelay + jitter;
+          log.warn('sheets export: transient Google API error, retrying after backoff', {
+            email: req.user?.email,
+            attempt,
+            maxRetries: MAX_EXPORT_RETRIES,
+            delayMs: delay,
+            error: err.message,
+          });
+          await new Promise(r => setTimeout(r, delay));
+          continue;
+        }
+        throw err;
       }
     }
     const { sheetUrl, isFirstExport, exportCreated } = exportResult;

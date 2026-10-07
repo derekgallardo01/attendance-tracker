@@ -340,6 +340,32 @@ describe('POST /api/save-to-sheets — error handling', () => {
     expect(res.body.success).toBe(true);
   });
 
+  test('retries up to 3 times on consecutive transient errors (503, 429) and succeeds on 3rd attempt', async () => {
+    mockSheetsBatchUpdate
+      .mockRejectedValueOnce(Object.assign(new Error('Backend error'), { status: 503 }))
+      .mockRejectedValueOnce(Object.assign(new Error('rateLimitExceeded'), { status: 429 }));
+    const res = await request(app)
+      .post('/api/save-to-sheets')
+      .set(authedHeader('user@acme.com', 'acme.com'))
+      .set('Content-Type', 'application/json')
+      .send(validPayload);
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+
+  test('fails when transient errors persist beyond 3 attempts', async () => {
+    mockSheetsBatchUpdate
+      .mockRejectedValueOnce(Object.assign(new Error('The service is currently unavailable.'), { status: 503 }))
+      .mockRejectedValueOnce(Object.assign(new Error('The service is currently unavailable.'), { status: 503 }))
+      .mockRejectedValueOnce(Object.assign(new Error('The service is currently unavailable.'), { status: 503 }));
+    const res = await request(app)
+      .post('/api/save-to-sheets')
+      .set(authedHeader('user@acme.com', 'acme.com'))
+      .set('Content-Type', 'application/json')
+      .send(validPayload);
+    expect(res.status).toBe(500);
+  });
+
   test('500 for any other sheets API failure', async () => {
     mockSheetsBatchUpdate.mockRejectedValueOnce(new Error('Persistent internal database failure'));
     const res = await request(app)
