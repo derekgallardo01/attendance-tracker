@@ -1,0 +1,18 @@
+{
+  "appName": {
+    "message": "Attendance Tracker за Google Meet — Стартер",
+    "description": "The title of the extension"
+  },
+  "appShortName": {
+    "message": "Attendance Tracker",
+    "description": "Short name for the extension"
+  },
+  "appDesc": {
+    "message": "Стартер за Attendance Tracker в Google Meet. Присъствие в реално време и експортиране в Google Таблици с едно щракване.",
+    "description": "Description of the extension"
+  },
+  "actionTitle": {
+    "message": "Attendance Tracker за Google Meet",
+    "description": "Tooltip for the action icon"
+  }
+}

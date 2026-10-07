@@ -1,9 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Attendance Tracker for Google Meet — Launcher",
-  "short_name": "Attendance Tracker",
+  "default_locale": "en",
+  "name": "__MSG_appName__",
+  "short_name": "__MSG_appShortName__",
   "version": "1.0.0",
-  "description": "Companion launcher for Attendance Tracker in Google Meet. Real-time roll call, timestamps, and one-click Sheets export.",
+  "description": "__MSG_appDesc__",
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -12,7 +13,7 @@
       "48": "icons/icon-48.png",
       "128": "icons/icon-128.png"
     },
-    "default_title": "Attendance Tracker for Google Meet"
+    "default_title": "__MSG_actionTitle__"
   },
   "icons": {
     "16": "icons/icon-16.png",

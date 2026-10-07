@@ -733,6 +733,19 @@
 
     var dict = EXT_STRINGS[raw] || EXT_STRINGS[lang] || EXT_STRINGS['en'] || {};
 
+    function formatStepHtml(key, text) {
+      if (!text) return '';
+      if (text.indexOf('<strong>') !== -1) return text;
+      if (key === 'ext.step2') {
+        return text.replace(/(Activities(?: icon)?|Actividades|Atividades|активности|figuras geométricas|formas|आकृतियाँ|செயல்பாடுகள்|యాక్టిവിటీస్|অ্যাক্টিভিটিজ|سرگرمیوں|กิจกรรม|Hoạt động|الأنشطة|פעילויות|Aktiviteter|Toiminnot|Aktivita|Tevékenységek|Δραστηριότητες|Activități|Дейности|Aktivnosti|Aktivity|Dejavnosti|Дії|Activitats|Mga Aktibidad|Aktiviti)/i, '<strong>$1</strong>');
+      }
+      if (key === 'ext.step3') {
+        var res = text.replace(/(Attendance Tracker)/g, '<strong>$1</strong>');
+        return res.replace(/(Start|Iniciar|Démarrer|Starten|Avvia|Início|Başlat|Rozpocznij|Начать|Запустить|開始|시작|开始|शुरू करें|தொடங்கு|ప్రారంభించు|শুরু|شروع کریں|Bắt đầu|เริ่ม|ابدأ|התחל|Aloita|Kezdés|Έναρξη|Pornire|Старт|Pokreni|Začni|Почати|Inicia|Magsimula|Mula)/i, '<strong>$1</strong>');
+      }
+      return text;
+    }
+
     document.querySelectorAll('[data-i18n]').forEach(function (el) {
       var key = el.getAttribute('data-i18n');
       if (!key) return;
@@ -740,12 +753,12 @@
         var msgKey = key.replace(/[^a-zA-Z0-9_]/g, '_');
         var msg = chrome.i18n.getMessage(msgKey);
         if (msg) {
-          el.innerHTML = msg;
+          el.innerHTML = formatStepHtml(key, msg);
           return;
         }
       }
       if (dict[key]) {
-        el.innerHTML = dict[key];
+        el.innerHTML = formatStepHtml(key, dict[key]);
       }
     });
   }

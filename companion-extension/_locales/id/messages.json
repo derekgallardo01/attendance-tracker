@@ -1,0 +1,18 @@
+{
+  "appName": {
+    "message": "Attendance Tracker untuk Google Meet — Peluncur",
+    "description": "The title of the extension"
+  },
+  "appShortName": {
+    "message": "Attendance Tracker",
+    "description": "Short name for the extension"
+  },
+  "appDesc": {
+    "message": "Peluncur untuk Attendance Tracker di Google Meet. Presensi kehadiran langsung dan ekspor Google Spreadsheet dalam satu klik.",
+    "description": "Description of the extension"
+  },
+  "actionTitle": {
+    "message": "Attendance Tracker untuk Google Meet",
+    "description": "Tooltip for the action icon"
+  }
+}

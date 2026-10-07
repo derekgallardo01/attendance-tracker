@@ -1,0 +1,18 @@
+{
+  "appName": {
+    "message": "Google Meet用出席トラッカー — ランチャー",
+    "description": "The title of the extension"
+  },
+  "appShortName": {
+    "message": "出席トラッカー",
+    "description": "Short name for the extension"
+  },
+  "appDesc": {
+    "message": "Google Meet用出席トラッカーのランチャー。リアルタイムの点呼、入退出時間、Googleスプレッドシートへのワンクリック出力。",
+    "description": "Description of the extension"
+  },
+  "actionTitle": {
+    "message": "Google Meet用出席トラッカー",
+    "description": "Tooltip for the action icon"
+  }
+}

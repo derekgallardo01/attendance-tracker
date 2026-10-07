@@ -1,0 +1,18 @@
+{
+  "appName": {
+    "message": "Attendance Tracker لـ Google Meet — المشغّل",
+    "description": "The title of the extension"
+  },
+  "appShortName": {
+    "message": "Attendance Tracker",
+    "description": "Short name for the extension"
+  },
+  "appDesc": {
+    "message": "مشغّل ملحق لـ Attendance Tracker في Google Meet. تسجيل الحضور في الوقت الفعلي والتصدير بنقرة واحدة إلى Google Sheets.",
+    "description": "Description of the extension"
+  },
+  "actionTitle": {
+    "message": "Attendance Tracker لـ Google Meet",
+    "description": "Tooltip for the action icon"
+  }
+}

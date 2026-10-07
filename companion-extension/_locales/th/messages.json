@@ -1,0 +1,18 @@
+{
+  "appName": {
+    "message": "Attendance Tracker สำหรับ Google Meet — ตัวเปิดใช้",
+    "description": "The title of the extension"
+  },
+  "appShortName": {
+    "message": "Attendance Tracker",
+    "description": "Short name for the extension"
+  },
+  "appDesc": {
+    "message": "ตัวเปิดใช้สำหรับ Attendance Tracker ใน Google Meet เช็คชื่อแบบเรียลไทม์ และส่งออกไปยัง Google ชีตในคลิกเดียว",
+    "description": "Description of the extension"
+  },
+  "actionTitle": {
+    "message": "Attendance Tracker สำหรับ Google Meet",
+    "description": "Tooltip for the action icon"
+  }
+}

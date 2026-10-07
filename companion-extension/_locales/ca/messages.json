@@ -1,0 +1,18 @@
+{
+  "appName": {
+    "message": "Attendance Tracker per a Google Meet — Llançador",
+    "description": "The title of the extension"
+  },
+  "appShortName": {
+    "message": "Attendance Tracker",
+    "description": "Short name for the extension"
+  },
+  "appDesc": {
+    "message": "Llançador complementari per a Attendance Tracker a Google Meet. Control d'assistència en temps real i exportació a Google Sheets.",
+    "description": "Description of the extension"
+  },
+  "actionTitle": {
+    "message": "Attendance Tracker per a Google Meet",
+    "description": "Tooltip for the action icon"
+  }
+}

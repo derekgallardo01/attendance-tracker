@@ -573,6 +573,7 @@ describe('applyTranslations DOM helper', () => {
         <input id="search-input" data-i18n-placeholder="btn.filter" placeholder="Filter" />
         <span id="help-icon" data-i18n-title="nav.settings" title="Settings">?</span>
         <button id="settings-btn" data-i18n-aria="nav.settings" aria-label="Settings"></button>
+        <span id="html-elem" data-i18n="pricing.matrixTeamOursSub">Unlimited</span>
       </div>
     `;
 
@@ -583,6 +584,7 @@ describe('applyTranslations DOM helper', () => {
     expect(document.getElementById('search-input').getAttribute('placeholder')).toBe('Filtrar');
     expect(document.getElementById('help-icon').getAttribute('title')).toBe('Configuración');
     expect(document.getElementById('settings-btn').getAttribute('aria-label')).toBe('Configuración');
+    expect(document.getElementById('html-elem').innerHTML).toContain('<strong>');
   });
 });
 

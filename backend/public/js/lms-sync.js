@@ -322,8 +322,8 @@
 
         await this.onClassroomCourseChanged();
       } catch (err) {
-        sel.innerHTML = '<option value="">(Failed to load courses)</option>';
-        showStatus(`Failed to load courses: ${err.message}`, 'error');
+        sel.innerHTML = `<option value="">(${esc(t('lms.failedToLoadCourses', 'Failed to load courses'))})</option>`;
+        showStatus(t('lms.failedToLoadCoursesErr', 'Failed to load courses: {err}').replace('{err}', err.message), 'error');
       }
     },
 
@@ -332,7 +332,7 @@
       if (typeof root.signInWithGoogle === 'function') {
         root.signInWithGoogle(CLASSROOM_WRITE_SCOPES);
       } else {
-        alert('Please sign in from the main panel to grant Google Classroom write permissions.');
+        alert(t('lms.alertSignInRequired', 'Please sign in from the main panel to grant Google Classroom write permissions.'));
       }
     },
 
@@ -358,7 +358,7 @@
         }
 
         if (!res.ok) {
-          showStatus(data.error || 'Failed to load assignments.', 'error');
+          showStatus(data.error || t('lms.failedToLoadAssignments', 'Failed to load assignments.'), 'error');
           assignSel.innerHTML = `<option value="__new__">${esc(t('lms.createNewAssignment', '+ Create new assignment'))}</option>`;
           return;
         }
@@ -370,7 +370,7 @@
         `;
         this.onClassroomAssignmentChanged();
       } catch (err) {
-        showStatus(`Failed to load assignments: ${err.message}`, 'error');
+        showStatus(t('lms.failedToLoadAssignmentsErr', 'Failed to load assignments: {err}').replace('{err}', err.message), 'error');
         assignSel.innerHTML = `<option value="__new__">${esc(t('lms.createNewAssignment', '+ Create new assignment'))}</option>`;
       }
     },
@@ -425,8 +425,8 @@
         const data = await res.json();
 
         if (!res.ok) {
-          showStatus(data.error || 'Failed to load Canvas courses. Check URL and token.', 'error');
-          courseSel.innerHTML = '<option value="">(Failed to load courses)</option>';
+          showStatus(data.error || t('lms.failedToLoadCanvasCourses', 'Failed to load Canvas courses. Check URL and token.'), 'error');
+          courseSel.innerHTML = `<option value="">(${esc(t('lms.failedToLoadCourses', 'Failed to load courses'))})</option>`;
           return;
         }
 
@@ -442,8 +442,8 @@
 
         await this.onCanvasCourseChanged();
       } catch (err) {
-        showStatus(`Canvas connection error: ${err.message}`, 'error');
-        courseSel.innerHTML = '<option value="">(Connection failed)</option>';
+        showStatus(t('lms.canvasConnectionError', 'Canvas connection error: {err}').replace('{err}', err.message), 'error');
+        courseSel.innerHTML = `<option value="">(${esc(t('lms.connectionFailed', 'Connection failed'))})</option>`;
       }
     },
 
@@ -469,7 +469,7 @@
         const data = await res.json();
 
         if (!res.ok) {
-          showStatus(data.error || 'Failed to load Canvas assignments.', 'error');
+          showStatus(data.error || t('lms.failedToLoadCanvasAssignments', 'Failed to load Canvas assignments.'), 'error');
           assignSel.innerHTML = `<option value="__new__">${esc(t('lms.createNewAssignment', '+ Create new assignment'))}</option>`;
           return;
         }
@@ -481,7 +481,7 @@
         `;
         this.onCanvasAssignmentChanged();
       } catch (err) {
-        showStatus(`Failed to load Canvas assignments: ${err.message}`, 'error');
+        showStatus(t('lms.failedToLoadCanvasAssignmentsErr', 'Failed to load Canvas assignments: {err}').replace('{err}', err.message), 'error');
         assignSel.innerHTML = `<option value="__new__">${esc(t('lms.createNewAssignment', '+ Create new assignment'))}</option>`;
       }
     },
@@ -532,7 +532,7 @@
           const title = newTitle.value.trim() || 'Meeting Attendance';
 
           if (!courseId) {
-            throw new Error('Please select a Classroom course.');
+            throw new Error(t('lms.selectClassroomCourse', 'Please select a Classroom course.'));
           }
 
           const res = await apiFetch('classroom/sync-grades', {
@@ -550,11 +550,11 @@
 
           const data = await res.json();
           if (!res.ok) {
-            throw new Error(data.error || 'Classroom sync failed.');
+            throw new Error(data.error || t('lms.classroomSyncFailed', 'Classroom sync failed.'));
           }
 
           if (data.syncedCount === 0) {
-            showStatus(`Warning: ${data.message || 'No students matched the course roster.'}`, 'error');
+            showStatus(t('lms.warningPrefix', 'Warning: {msg}').replace('{msg}', data.message || t('lms.noStudentsMatchedRoster', 'No students matched the course roster.')), 'error');
           } else {
             const totalCount = data.totalCount || records.length;
             const unmatchedCount = totalCount - data.syncedCount;
@@ -592,7 +592,7 @@
           const title = newTitle.value.trim() || 'Meeting Attendance';
 
           if (!courseId) {
-            throw new Error('Please select a Canvas course.');
+            throw new Error(t('lms.selectCanvasCourse', 'Please select a Canvas course.'));
           }
 
           const res = await apiFetch('canvas/sync-grades', {
@@ -612,11 +612,11 @@
 
           const data = await res.json();
           if (!res.ok) {
-            throw new Error(data.error || 'Canvas sync failed.');
+            throw new Error(data.error || t('lms.canvasSyncFailed', 'Canvas sync failed.'));
           }
 
           if (data.syncedCount === 0) {
-            showStatus(`Warning: ${data.message || 'No meeting attendees matched students in the Canvas course roster.'}`, 'error');
+            showStatus(t('lms.warningPrefix', 'Warning: {msg}').replace('{msg}', data.message || t('lms.noAttendeesMatchedCanvas', 'No meeting attendees matched students in the Canvas course roster.')), 'error');
           } else {
             const totalCount = data.totalCount || records.length;
             const unmatchedCount = totalCount - data.syncedCount;
@@ -640,7 +640,7 @@
         if (typeof root.captureError === 'function') {
           root.captureError(err, { where: 'lms_sync_pushGrades', tab: _activeTab });
         }
-        showStatus(`Error: ${err.message}`, 'error');
+        showStatus(t('lms.errorPrefix', 'Error: {msg}').replace('{msg}', err.message), 'error');
       } finally {
         pushBtn.disabled = false;
         pushLabel.textContent = t('lms.pushGrades', 'Push Grades');

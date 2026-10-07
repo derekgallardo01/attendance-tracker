@@ -1,0 +1,18 @@
+{
+  "appName": {
+    "message": "Google Meet 출석 트래커 — 실행기",
+    "description": "The title of the extension"
+  },
+  "appShortName": {
+    "message": "출석 트래커",
+    "description": "Short name for the extension"
+  },
+  "appDesc": {
+    "message": "Google Meet용 Attendance Tracker 실행기. 실시간 출석 체크, 타임스탬프 및 클릭 한 번으로 스프레드시트 내보내기.",
+    "description": "Description of the extension"
+  },
+  "actionTitle": {
+    "message": "Google Meet 출석 트래커",
+    "description": "Tooltip for the action icon"
+  }
+}

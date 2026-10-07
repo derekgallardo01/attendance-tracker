@@ -1,0 +1,18 @@
+{
+  "appName": {
+    "message": "Attendance Tracker a Google Meet-hez — Indító",
+    "description": "The title of the extension"
+  },
+  "appShortName": {
+    "message": "Attendance Tracker",
+    "description": "Short name for the extension"
+  },
+  "appDesc": {
+    "message": "Indítóprogram az Attendance Trackerhez a Google Meetben. Valós idejű jelenléti ív és exportálás a Google Táblázatokba egyetlen kattintással.",
+    "description": "Description of the extension"
+  },
+  "actionTitle": {
+    "message": "Attendance Tracker a Google Meet-hez",
+    "description": "Tooltip for the action icon"
+  }
+}

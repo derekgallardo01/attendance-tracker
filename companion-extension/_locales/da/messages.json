@@ -1,0 +1,18 @@
+{
+  "appName": {
+    "message": "Attendance Tracker til Google Meet — Starter",
+    "description": "The title of the extension"
+  },
+  "appShortName": {
+    "message": "Attendance Tracker",
+    "description": "Short name for the extension"
+  },
+  "appDesc": {
+    "message": "Startprogram til Attendance Tracker i Google Meet. Fremmøderegistrering i realtid og eksport til Google Sheets med et enkelt klik.",
+    "description": "Description of the extension"
+  },
+  "actionTitle": {
+    "message": "Attendance Tracker til Google Meet",
+    "description": "Tooltip for the action icon"
+  }
+}

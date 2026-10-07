@@ -1,0 +1,18 @@
+{
+  "appName": {
+    "message": "Attendance Tracker cho Google Meet — Trình khởi chạy",
+    "description": "The title of the extension"
+  },
+  "appShortName": {
+    "message": "Attendance Tracker",
+    "description": "Short name for the extension"
+  },
+  "appDesc": {
+    "message": "Trình khởi chạy cho Attendance Tracker trong Google Meet. Điểm danh theo thời gian thực và xuất Google Trang tính với 1 cú nhấp.",
+    "description": "Description of the extension"
+  },
+  "actionTitle": {
+    "message": "Attendance Tracker cho Google Meet",
+    "description": "Tooltip for the action icon"
+  }
+}

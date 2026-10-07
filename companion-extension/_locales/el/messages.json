@@ -1,0 +1,18 @@
+{
+  "appName": {
+    "message": "Attendance Tracker για το Google Meet — Πρόγραμμα εκκίνησης",
+    "description": "The title of the extension"
+  },
+  "appShortName": {
+    "message": "Attendance Tracker",
+    "description": "Short name for the extension"
+  },
+  "appDesc": {
+    "message": "Βοηθητικό πρόγραμμα εκκίνησης για το Attendance Tracker στο Google Meet. Παρουσίες σε πραγματικό χρόνο και εξαγωγή στα Φύλλα Google.",
+    "description": "Description of the extension"
+  },
+  "actionTitle": {
+    "message": "Attendance Tracker για το Google Meet",
+    "description": "Tooltip for the action icon"
+  }
+}

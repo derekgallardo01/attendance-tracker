@@ -99,9 +99,17 @@
     return i === -1 ? { first: s, last: '' } : { first: s.slice(0, i), last: s.slice(i + 1) };
   }
 
+  function resolveCsvHeaders(locHeaders) {
+    if (typeof locHeaders !== 'string') return locHeaders;
+    if (typeof AttUtils === 'undefined') return null;
+    const map = AttUtils.CSV_HEADER_LOCALIZATIONS;
+    if (!map) return null;
+    return map[locHeaders] || null;
+  }
+
   // format: 'generic' | 'moodle' | 'canvas'. Grade = attendance % across the
   // series' tracked sessions.
-  function buildSeriesGradebookCsv(series, format) {
+  function buildSeriesGradebookCsv(series, format, locHeaders) {
     const title = (series && series.title) || 'Recurring meeting';
     const people = (series && series.people) || [];
     const gradeOf = (p) => Math.round((p.attendanceRate || 0) * 100);
@@ -120,12 +128,15 @@
         rows.push([p.displayName, '', '', p.email || '', '', gradeOf(p)].map(csvField).join(','));
       }
     } else {
-      rows.push(['Name', 'Email', 'Attended', 'Missed', 'Attendance %', 'Total minutes'].map(csvField).join(','));
+      const resolved = resolveCsvHeaders(locHeaders);
+      const headerCols = (resolved && resolved.series)
+        || ['Name', 'Email', 'Attended', 'Missed', 'Attendance %', 'Total minutes'];
+      rows.push(headerCols.map(csvField).join(','));
       for (const p of people) {
         rows.push([p.displayName, p.email || '', p.attended || 0, p.missed || 0, gradeOf(p), p.totalMinutes || 0].map(csvField).join(','));
       }
     }
-    return '﻿' + rows.join('\r\n');
+    return '\uFEFF' + rows.join('\r\n');
   }
 
 
@@ -153,10 +164,13 @@
     return (links || []).filter(l => !q || has(l.targetTitle, q) || has(l.token, q) || has(l.type, q));
   }
 
-  function buildMeetingCsv(detail) {
+  function buildMeetingCsv(detail, locHeaders) {
     const attendees = (detail && detail.attendees) || [];
+    const resolved = resolveCsvHeaders(locHeaders);
+    const headerCols = (resolved && resolved.meeting)
+      || ['Name', 'Email', 'Status', 'Calendar RSVP', 'Join Time', 'Leave Time', 'Duration (min)'];
     const rows = [
-      ['Name', 'Email', 'Status', 'Calendar RSVP', 'Join Time', 'Leave Time', 'Duration (min)'].map(csvField).join(','),
+      headerCols.map(csvField).join(','),
     ];
     for (const a of attendees) {
       rows.push([

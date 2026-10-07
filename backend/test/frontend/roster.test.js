@@ -395,6 +395,17 @@ describe('buildAttendanceCsv — self-check-in notes', () => {
     );
     expect(csv).toContain(`"Checked in ${chkStr}"`);
   });
+
+  test('uses localized check-in prefix if t() is provided', () => {
+    window.t = (key, fallback) => (key === 'export.checkedInPrefix' ? 'Registrado ' : fallback);
+    const csv = buildAttendanceCsv(
+      [{ displayName: 'Solo', email: 's@x.com', present: true, joinTime: startTime, _accumulatedMs: 0, rejoins: 0, checkedInAt }],
+      null,
+      { startTime, now, totalMeetingMs: 3600000 }
+    );
+    expect(csv).toContain(`"Registrado ${chkStr}"`);
+    delete window.t;
+  });
 });
 
 describe('buildAttendanceCsv — localization & timezone', () => {

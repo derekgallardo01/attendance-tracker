@@ -10,7 +10,7 @@
   <meta name="description" content="Attendance Tracker pricing: Free to start (2 Google Sheets exports/mo, unlimited CSV & Excel), Educator ($4.99/yr) and Individual Lifetime ($9.99) for solo teachers, and domain plans for schools — Department ($59/yr) and Institution ($149/yr) covering your whole Google Workspace." />
   <link rel="canonical" href="https://attendancetracker.dev/pricing.html" />
 
-  <!-- Localized alternate hreflang tags for 44 languages -->
+  <!-- Localized alternate hreflang tags for 60 languages -->
   <link rel="alternate" hreflang="x-default" href="https://attendancetracker.dev/pricing.html" />
   <link rel="alternate" hreflang="en" href="https://attendancetracker.dev/pricing.html?lang=en" />
   <link rel="alternate" hreflang="es" href="https://attendancetracker.dev/pricing.html?lang=es" />
@@ -795,7 +795,7 @@
     <!-- Migration Banner for Displaced Teachers -->
     <div class="migration-banner" style="max-width:860px;margin:0 auto 36px;padding:14px 20px;background:rgba(88,166,255,0.08);border:1px solid rgba(88,166,255,0.3);border-radius:12px;display:flex;align-items:center;justify-content:center;gap:12px;text-align:center;font-size:0.92rem;color:var(--text);line-height:1.5">
       <span style="font-size:1.2rem">🔄</span>
-      <span><strong>Switching from Attendance Taker for Classroom or a retired tool?</strong> <a href="attendance-taker-for-classroom-alternative.html" style="color:var(--blue);font-weight:600;text-decoration:underline;margin-left:4px">Use our free 5-second roster migration tool &rarr;</a></span>
+      <span data-i18n="pricing.teacherMigrationBanner"><strong>Switching from Attendance Taker for Classroom or a retired tool?</strong> <a href="attendance-taker-for-classroom-alternative.html" style="color:var(--blue);font-weight:600;text-decoration:underline;margin-left:4px">Use our free 5-second roster migration tool &rarr;</a></span>
     </div>
 
     <!-- 3 Tier Cards -->
@@ -1073,10 +1073,10 @@
 
     <!-- Promo code indicator / toggle -->
     <div style="text-align:center;margin:-10px 0 32px">
-      <span id="promo-code-active" style="display:none;font-size:0.85rem;color:#4ade80;font-weight:600;background:rgba(74,222,128,0.1);padding:4px 12px;border-radius:20px;border:1px solid rgba(74,222,128,0.25);">
+      <span id="promo-code-active" data-i18n="pricing.promoApplied" style="display:none;font-size:0.85rem;color:#4ade80;font-weight:600;background:rgba(74,222,128,0.1);padding:4px 12px;border-radius:20px;border:1px solid rgba(74,222,128,0.25);">
         🎁 Promo code box enabled for checkout
       </span>
-      <a href="javascript:void(0)" id="promo-code-toggle" onclick="enablePromoCodeEntry()" style="color:var(--muted);font-size:0.82rem;text-decoration:underline;">
+      <a href="javascript:void(0)" id="promo-code-toggle" data-i18n="pricing.havePromoCode" onclick="enablePromoCodeEntry()" style="color:var(--muted);font-size:0.82rem;text-decoration:underline;">
         Have a promo or referral code?
       </a>
     </div>
@@ -1134,135 +1134,135 @@
         <table class="competitor-table" style="width:100%;border-collapse:collapse;font-size:0.86rem;min-width:760px;text-align:left">
           <thead>
             <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)">
-              <th style="padding:16px;color:var(--muted);font-weight:600;width:24%">Feature / Capability</th>
+              <th style="padding:16px;color:var(--muted);font-weight:600;width:24%" data-i18n="pricing.matrixColFeature">Feature / Capability</th>
               <th style="padding:16px;color:var(--text);font-weight:700;width:26%;background:rgba(74,222,128,0.08);border-left:1px solid rgba(74,222,128,0.3);border-right:1px solid rgba(74,222,128,0.3)">
                 <div style="display:flex;align-items:center;gap:6px;justify-content:space-between">
                   <span>Attendance Tracker</span>
-                  <span style="font-size:0.68rem;padding:2px 8px;border-radius:12px;background:#2ea043;color:#fff;font-weight:700;letter-spacing:0.04em">OURS</span>
+                  <span style="font-size:0.68rem;padding:2px 8px;border-radius:12px;background:#2ea043;color:#fff;font-weight:700;letter-spacing:0.04em" data-i18n="pricing.matrixBadgeOurs">OURS</span>
                 </div>
               </th>
-              <th style="padding:16px;color:var(--muted);font-weight:600;width:18%">Other Workspace Add-ons</th>
-              <th style="padding:16px;color:var(--muted);font-weight:600;width:16%">Browser Extensions</th>
-              <th style="padding:16px;color:var(--muted);font-weight:600;width:16%">Native Meet Built-in</th>
+              <th style="padding:16px;color:var(--muted);font-weight:600;width:18%" data-i18n="pricing.matrixColOtherAddons">Other Workspace Add-ons</th>
+              <th style="padding:16px;color:var(--muted);font-weight:600;width:16%" data-i18n="pricing.matrixColExtensions">Browser Extensions</th>
+              <th style="padding:16px;color:var(--muted);font-weight:600;width:16%" data-i18n="pricing.matrixColNative">Native Meet Built-in</th>
             </tr>
           </thead>
           <tbody>
             <!-- Architecture -->
             <tr style="border-bottom:1px solid var(--border)">
-              <td style="padding:14px 16px;font-weight:600;color:var(--text)">Architecture</td>
+              <td style="padding:14px 16px;font-weight:600;color:var(--text)" data-i18n="pricing.matrixRowArch">Architecture</td>
               <td style="padding:14px 16px;background:rgba(74,222,128,0.05);border-left:1px solid rgba(74,222,128,0.3);border-right:1px solid rgba(74,222,128,0.3);color:#fff">
                 <span style="display:inline-flex;align-items:center;gap:6px;font-weight:600;color:#4ade80">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                  Official Meet REST API
+                  <span data-i18n="pricing.matrixArchOurs">Official Meet REST API</span>
                 </span>
-                <div style="font-size:0.78rem;color:var(--muted);margin-top:2px">100% DOM-immune, zero page scraping</div>
+                <div style="font-size:0.78rem;color:var(--muted);margin-top:2px" data-i18n="pricing.matrixArchOursSub">100% DOM-immune, zero page scraping</div>
               </td>
-              <td style="padding:14px 16px;color:var(--muted)">DOM Screen Scraper<div style="font-size:0.75rem;color:#f87171">Breaks on Meet UI changes</div></td>
-              <td style="padding:14px 16px;color:var(--muted)">DOM Screen Scraper<div style="font-size:0.75rem;color:#f87171">Breaks on Meet UI changes</div></td>
-              <td style="padding:14px 16px;color:var(--muted)">1st-party cloud<div style="font-size:0.75rem;color:var(--muted)">Host-only, post-meeting email</div></td>
+              <td style="padding:14px 16px;color:var(--muted)"><span data-i18n="pricing.matrixArchOther">DOM Screen Scraper</span><div style="font-size:0.75rem;color:#f87171" data-i18n="pricing.matrixArchOtherSub">Breaks on Meet UI changes</div></td>
+              <td style="padding:14px 16px;color:var(--muted)"><span data-i18n="pricing.matrixArchExt">DOM Screen Scraper</span><div style="font-size:0.75rem;color:#f87171" data-i18n="pricing.matrixArchExtSub">Breaks on Meet UI changes</div></td>
+              <td style="padding:14px 16px;color:var(--muted)"><span data-i18n="pricing.matrixArchNative">1st-party cloud</span><div style="font-size:0.75rem;color:var(--muted)" data-i18n="pricing.matrixArchNativeSub">Host-only, post-meeting email</div></td>
             </tr>
 
             <!-- Supported Browsers & Devices -->
             <tr style="border-bottom:1px solid var(--border)">
-              <td style="padding:14px 16px;font-weight:600;color:var(--text)">Supported Browsers &amp; Devices</td>
+              <td style="padding:14px 16px;font-weight:600;color:var(--text)" data-i18n="pricing.matrixRowBrowsers">Supported Browsers &amp; Devices</td>
               <td style="padding:14px 16px;background:rgba(74,222,128,0.05);border-left:1px solid rgba(74,222,128,0.3);border-right:1px solid rgba(74,222,128,0.3);color:#fff">
                 <span style="display:inline-flex;align-items:center;gap:6px;font-weight:600;color:#4ade80">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                  Every Browser + Mobile
+                  <span data-i18n="pricing.matrixBrowsersOurs">Every Browser + Mobile</span>
                 </span>
-                <div style="font-size:0.78rem;color:var(--muted);margin-top:2px">Chrome, Edge, Safari, Firefox, Mac, Windows, iPads, Managed Chromebooks</div>
+                <div style="font-size:0.78rem;color:var(--muted);margin-top:2px" data-i18n="pricing.matrixBrowsersOursSub">Chrome, Edge, Safari, Firefox, Mac, Windows, iPads, Managed Chromebooks</div>
               </td>
-              <td style="padding:14px 16px;color:var(--muted)">Chrome desktop only<div style="font-size:0.75rem;color:#f87171">No Safari, Firefox, or iPad</div></td>
-              <td style="padding:14px 16px;color:var(--muted)">Chrome desktop only<div style="font-size:0.75rem;color:#f87171">No Safari, Firefox, or iPad</div></td>
-              <td style="padding:14px 16px;color:var(--muted)">Any browser<div style="font-size:0.75rem;color:var(--muted)">(High-tier Workspace only)</div></td>
+              <td style="padding:14px 16px;color:var(--muted)"><span data-i18n="pricing.matrixBrowsersOther">Chrome desktop only</span><div style="font-size:0.75rem;color:#f87171" data-i18n="pricing.matrixBrowsersOtherSub">No Safari, Firefox, or iPad</div></td>
+              <td style="padding:14px 16px;color:var(--muted)"><span data-i18n="pricing.matrixBrowsersExt">Chrome desktop only</span><div style="font-size:0.75rem;color:#f87171" data-i18n="pricing.matrixBrowsersExtSub">No Safari, Firefox, or iPad</div></td>
+              <td style="padding:14px 16px;color:var(--muted)"><span data-i18n="pricing.matrixBrowsersNative">Any browser</span><div style="font-size:0.75rem;color:var(--muted)" data-i18n="pricing.matrixBrowsersNativeSub">(High-tier Workspace only)</div></td>
             </tr>
 
             <!-- Team / School License -->
             <tr style="border-bottom:1px solid var(--border)">
-              <td style="padding:14px 16px;font-weight:600;color:var(--text)">Team / School License</td>
+              <td style="padding:14px 16px;font-weight:600;color:var(--text)" data-i18n="pricing.matrixRowTeam">Team / School License</td>
               <td style="padding:14px 16px;background:rgba(74,222,128,0.05);border-left:1px solid rgba(74,222,128,0.3);border-right:1px solid rgba(74,222,128,0.3);color:#fff">
-                <span style="font-weight:700;color:#4ade80">$59/yr Flat Department</span>
-                <div style="font-size:0.78rem;color:#fff;margin-top:2px"><strong>Unlimited Teachers</strong> across domain (or $149/yr Institution)</div>
+                <span style="font-weight:700;color:#4ade80" data-i18n="pricing.matrixTeamOurs">$59/yr Flat Department</span>
+                <div style="font-size:0.78rem;color:#fff;margin-top:2px" data-i18n="pricing.matrixTeamOursSub"><strong>Unlimited Teachers</strong> across domain (or $149/yr Institution)</div>
               </td>
               <td style="padding:14px 16px;color:var(--muted)">
-                <div style="color:#f87171;font-weight:600">$149/yr (5 seats)</div>
-                <div style="color:#f87171;font-weight:600">$499/yr (20 seats)</div>
-                <div style="font-size:0.75rem;color:var(--muted)">Steep per-seat penalty</div>
+                <div style="color:#f87171;font-weight:600" data-i18n="pricing.matrixTeamOther5">$149/yr (5 seats)</div>
+                <div style="color:#f87171;font-weight:600" data-i18n="pricing.matrixTeamOther20">$499/yr (20 seats)</div>
+                <div style="font-size:0.75rem;color:var(--muted)" data-i18n="pricing.matrixTeamOtherSub">Steep per-seat penalty</div>
               </td>
-              <td style="padding:14px 16px;color:var(--muted)">Not offered<div style="font-size:0.75rem;color:var(--muted)">Per-user seat licenses only</div></td>
-              <td style="padding:14px 16px;color:var(--muted)">Domain Workspace upgrade<div style="font-size:0.75rem;color:var(--muted)">Requires $4–$20/user/mo domain-wide</div></td>
+              <td style="padding:14px 16px;color:var(--muted)"><span data-i18n="pricing.matrixTeamExt">Not offered</span><div style="font-size:0.75rem;color:var(--muted)" data-i18n="pricing.matrixTeamExtSub">Per-user seat licenses only</div></td>
+              <td style="padding:14px 16px;color:var(--muted)"><span data-i18n="pricing.matrixTeamNative">Domain Workspace upgrade</span><div style="font-size:0.75rem;color:var(--muted)" data-i18n="pricing.matrixTeamNativeSub">Requires $4–$20/user/mo domain-wide</div></td>
             </tr>
 
             <!-- Individual Pricing -->
             <tr style="border-bottom:1px solid var(--border)">
-              <td style="padding:14px 16px;font-weight:600;color:var(--text)">Individual Pricing</td>
+              <td style="padding:14px 16px;font-weight:600;color:var(--text)" data-i18n="pricing.matrixRowIndividual">Individual Pricing</td>
               <td style="padding:14px 16px;background:rgba(74,222,128,0.05);border-left:1px solid rgba(74,222,128,0.3);border-right:1px solid rgba(74,222,128,0.3);color:#fff">
-                <span style="font-weight:700;color:#4ade80">$9.99 Lifetime / $4.99/yr Edu</span>
-                <div style="font-size:0.78rem;color:var(--muted);margin-top:2px">Pay-once lifetime option; &lt; 42¢/mo educator pass</div>
+                <span style="font-weight:700;color:#4ade80" data-i18n="pricing.matrixIndivOurs">$9.99 Lifetime / $4.99/yr Edu</span>
+                <div style="font-size:0.78rem;color:var(--muted);margin-top:2px" data-i18n="pricing.matrixIndivOursSub">Pay-once lifetime option; &lt; 42¢/mo educator pass</div>
               </td>
-              <td style="padding:14px 16px;color:var(--muted)">$39.00/yr recurring<div style="font-size:0.75rem;color:#f87171">No lifetime option</div></td>
-              <td style="padding:14px 16px;color:var(--muted)">Free / $30.00/yr ($2.50/mo)<div style="font-size:0.75rem;color:var(--muted)">Recurring subscription</div></td>
-              <td style="padding:14px 16px;color:var(--muted)">Included in Education Plus<div style="font-size:0.75rem;color:var(--muted)">Unavailable on Starter / Free</div></td>
+              <td style="padding:14px 16px;color:var(--muted)"><span data-i18n="pricing.matrixIndivOther">$39.00/yr recurring</span><div style="font-size:0.75rem;color:#f87171" data-i18n="pricing.matrixIndivOtherSub">No lifetime option</div></td>
+              <td style="padding:14px 16px;color:var(--muted)"><span data-i18n="pricing.matrixIndivExt">Free / $30.00/yr ($2.50/mo)</span><div style="font-size:0.75rem;color:var(--muted)" data-i18n="pricing.matrixIndivExtSub">Recurring subscription</div></td>
+              <td style="padding:14px 16px;color:var(--muted)"><span data-i18n="pricing.matrixIndivNative">Included in Education Plus</span><div style="font-size:0.75rem;color:var(--muted)" data-i18n="pricing.matrixIndivNativeSub">Unavailable on Starter / Free</div></td>
             </tr>
 
             <!-- LMS Gradebook Writeback -->
             <tr style="border-bottom:1px solid var(--border)">
-              <td style="padding:14px 16px;font-weight:600;color:var(--text)">LMS Gradebook Writeback</td>
+              <td style="padding:14px 16px;font-weight:600;color:var(--text)" data-i18n="pricing.matrixRowLms">LMS Gradebook Writeback</td>
               <td style="padding:14px 16px;background:rgba(74,222,128,0.05);border-left:1px solid rgba(74,222,128,0.3);border-right:1px solid rgba(74,222,128,0.3);color:#fff">
                 <span style="display:inline-flex;align-items:center;gap:6px;font-weight:600;color:#4ade80">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                  1-Click Google Classroom &amp; Canvas
+                  <span data-i18n="pricing.matrixLmsOurs">1-Click Google Classroom &amp; Canvas</span>
                 </span>
-                <div style="font-size:0.78rem;color:var(--muted);margin-top:2px">Direct REST grade sync + Moodle gradebook CSV</div>
+                <div style="font-size:0.78rem;color:var(--muted);margin-top:2px" data-i18n="pricing.matrixLmsOursSub">Direct REST grade sync + Moodle gradebook CSV</div>
               </td>
-              <td style="padding:14px 16px;color:var(--muted)"><span style="color:#f87171">&#10005;</span> None</td>
-              <td style="padding:14px 16px;color:var(--muted)"><span style="color:#f87171">&#10005;</span> None</td>
-              <td style="padding:14px 16px;color:var(--muted)"><span style="color:#f87171">&#10005;</span> None<div style="font-size:0.75rem;color:var(--muted)">Manual grade entry only</div></td>
+              <td style="padding:14px 16px;color:var(--muted)"><span style="color:#f87171">&#10005;</span> <span data-i18n="pricing.matrixLmsOther">None</span></td>
+              <td style="padding:14px 16px;color:var(--muted)"><span style="color:#f87171">&#10005;</span> <span data-i18n="pricing.matrixLmsExt">None</span></td>
+              <td style="padding:14px 16px;color:var(--muted)"><span style="color:#f87171">&#10005;</span> <span data-i18n="pricing.matrixLmsNative">None</span><div style="font-size:0.75rem;color:var(--muted)" data-i18n="pricing.matrixLmsNativeSub">Manual grade entry only</div></td>
             </tr>
 
             <!-- Past Meeting Retrieval -->
             <tr style="border-bottom:1px solid var(--border)">
-              <td style="padding:14px 16px;font-weight:600;color:var(--text)">Past Meeting Retrieval</td>
+              <td style="padding:14px 16px;font-weight:600;color:var(--text)" data-i18n="pricing.matrixRowPast">Past Meeting Retrieval</td>
               <td style="padding:14px 16px;background:rgba(74,222,128,0.05);border-left:1px solid rgba(74,222,128,0.3);border-right:1px solid rgba(74,222,128,0.3);color:#fff">
                 <span style="display:inline-flex;align-items:center;gap:6px;font-weight:600;color:#4ade80">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                  14-Day Retroactive Import
+                  <span data-i18n="pricing.matrixPastOurs">14-Day Retroactive Import</span>
                 </span>
-                <div style="font-size:0.78rem;color:var(--muted);margin-top:2px">Via conferenceRecords even if panel was closed</div>
+                <div style="font-size:0.78rem;color:var(--muted);margin-top:2px" data-i18n="pricing.matrixPastOursSub">Via conferenceRecords even if panel was closed</div>
               </td>
-              <td style="padding:14px 16px;color:var(--muted)">30-meeting lifetime limit<div style="font-size:0.75rem;color:var(--muted)">Must be recorded live</div></td>
-              <td style="padding:14px 16px;color:var(--muted)"><span style="color:#f87171">&#10005;</span> None<div style="font-size:0.75rem;color:var(--muted)">Lost if tab closed</div></td>
-              <td style="padding:14px 16px;color:var(--muted)"><span style="color:#f87171">&#10005;</span> None<div style="font-size:0.75rem;color:var(--muted)">No retroactive sync</div></td>
+              <td style="padding:14px 16px;color:var(--muted)"><span data-i18n="pricing.matrixPastOther">30-meeting lifetime limit</span><div style="font-size:0.75rem;color:var(--muted)" data-i18n="pricing.matrixPastOtherSub">Must be recorded live</div></td>
+              <td style="padding:14px 16px;color:var(--muted)"><span style="color:#f87171">&#10005;</span> <span data-i18n="pricing.matrixPastExt">None</span><div style="font-size:0.75rem;color:var(--muted)" data-i18n="pricing.matrixPastExtSub">Lost if tab closed</div></td>
+              <td style="padding:14px 16px;color:var(--muted)"><span style="color:#f87171">&#10005;</span> <span data-i18n="pricing.matrixPastNative">None</span><div style="font-size:0.75rem;color:var(--muted)" data-i18n="pricing.matrixPastNativeSub">No retroactive sync</div></td>
             </tr>
 
             <!-- Regional Payment Rails -->
             <tr style="border-bottom:1px solid var(--border)">
-              <td style="padding:14px 16px;font-weight:600;color:var(--text)">Regional Payment Rails</td>
+              <td style="padding:14px 16px;font-weight:600;color:var(--text)" data-i18n="pricing.matrixRowRails">Regional Payment Rails</td>
               <td style="padding:14px 16px;background:rgba(74,222,128,0.05);border-left:1px solid rgba(74,222,128,0.3);border-right:1px solid rgba(74,222,128,0.3);color:#fff">
                 <span style="display:inline-flex;align-items:center;gap:6px;font-weight:600;color:#4ade80">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                  Localized Currencies &amp; Wallets
+                  <span data-i18n="pricing.matrixRailsOurs">Localized Currencies &amp; Wallets</span>
                 </span>
-                <div style="font-size:0.78rem;color:var(--muted);margin-top:2px">UPI (₹299), GCash/Maya (₱280), QRIS (Rp 78k), FPX (RM 22)</div>
+                <div style="font-size:0.78rem;color:var(--muted);margin-top:2px" data-i18n="pricing.matrixRailsOursSub">UPI (₹299), GCash/Maya (₱280), QRIS (Rp 78k), FPX (RM 22)</div>
               </td>
-              <td style="padding:14px 16px;color:var(--muted)">USD Credit Card only</td>
-              <td style="padding:14px 16px;color:var(--muted)">USD Credit Card only</td>
-              <td style="padding:14px 16px;color:var(--muted)">Workspace Enterprise invoice</td>
+              <td style="padding:14px 16px;color:var(--muted)" data-i18n="pricing.matrixRailsOther">USD Credit Card only</td>
+              <td style="padding:14px 16px;color:var(--muted)" data-i18n="pricing.matrixRailsExt">USD Credit Card only</td>
+              <td style="padding:14px 16px;color:var(--muted)" data-i18n="pricing.matrixRailsNative">Workspace Enterprise invoice</td>
             </tr>
 
             <!-- Languages Supported -->
             <tr>
-              <td style="padding:14px 16px;font-weight:600;color:var(--text)">Languages Supported</td>
+              <td style="padding:14px 16px;font-weight:600;color:var(--text)" data-i18n="pricing.matrixRowLanguages">Languages Supported</td>
               <td style="padding:14px 16px;background:rgba(74,222,128,0.05);border-left:1px solid rgba(74,222,128,0.3);border-right:1px solid rgba(74,222,128,0.3);color:#fff">
                 <span style="display:inline-flex;align-items:center;gap:6px;font-weight:600;color:#4ade80">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                  44 Localized Languages
+                  <span data-i18n="pricing.matrixLanguagesOurs">60 Localized Languages</span>
                 </span>
-                <div style="font-size:0.78rem;color:var(--muted);margin-top:2px">Auto-detected browser locale + in-app switcher</div>
+                <div style="font-size:0.78rem;color:var(--muted);margin-top:2px" data-i18n="pricing.matrixLanguagesOursSub">Auto-detected browser locale + in-app switcher</div>
               </td>
-              <td style="padding:14px 16px;color:var(--muted)">English-only</td>
-              <td style="padding:14px 16px;color:var(--muted)">English-only</td>
-              <td style="padding:14px 16px;color:var(--muted)">Standard Google UI</td>
+              <td style="padding:14px 16px;color:var(--muted)" data-i18n="pricing.matrixLanguagesOther">English-only</td>
+              <td style="padding:14px 16px;color:var(--muted)" data-i18n="pricing.matrixLanguagesExt">English-only</td>
+              <td style="padding:14px 16px;color:var(--muted)" data-i18n="pricing.matrixLanguagesNative">Standard Google UI</td>
             </tr>
           </tbody>
         </table>
@@ -1286,8 +1286,8 @@
           <div style="font-size:0.82rem;color:var(--muted);line-height:1.5" data-i18n="pricing.cmp4Body">Paste class student lists (or import them from Google Classroom), set attendance thresholds, track Present vs Late vs Absent, and download instant CSV or Moodle/Canvas gradebook reports.</div>
         </div>
         <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;padding:18px">
-          <div style="font-weight:700;color:#fff;font-size:0.95rem;margin-bottom:6px" data-i18n="pricing.cmp5Title">44 Localized Languages</div>
-          <div style="font-size:0.82rem;color:var(--muted);line-height:1.5" data-i18n="pricing.cmp5Body">Native translations for 44 languages — including Spanish, Portuguese, Hindi, Tagalog, Indonesian, Vietnamese, Arabic, French, German, Japanese, Korean, Chinese, Russian, Turkish, and more.</div>
+          <div style="font-weight:700;color:#fff;font-size:0.95rem;margin-bottom:6px" data-i18n="pricing.cmp5Title">60 Localized Languages</div>
+          <div style="font-size:0.82rem;color:var(--muted);line-height:1.5" data-i18n="pricing.cmp5Body">Native translations for 60 languages — including Spanish, Portuguese, Hindi, Tagalog, Indonesian, Vietnamese, Arabic, French, German, Japanese, Korean, Chinese, Russian, Turkish, and more.</div>
         </div>
         <div style="background:rgba(74,222,128,0.05);border:1px solid rgba(74,222,128,0.3);border-radius:12px;padding:18px">
           <div style="font-weight:700;color:var(--accent);font-size:0.95rem;margin-bottom:6px" data-i18n="pricing.cmp6Title">Fair, Flat Pricing</div>

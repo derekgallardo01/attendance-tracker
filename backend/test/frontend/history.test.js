@@ -141,5 +141,82 @@ describe('donut svg and meeting helpers', () => {
     const csvMissing = h.buildMeetingCsv({ attendees: [{ displayName: '', email: '', durationMs: 0 }] });
     expect(csvMissing).toContain('"","","absent","needsAction"');
   });
+
+  test('buildMeetingCsv supports localized meeting headers', () => {
+    const detail = { attendees: [{ displayName: 'Juan', email: 'juan@test.com' }] };
+    const locHeaders = { meeting: ['Nombre', 'Correo', 'Estado', 'RSVP', 'Entrada', 'Salida', 'Duración (min)'] };
+    const csv = h.buildMeetingCsv(detail, locHeaders);
+    expect(csv).toContain('"Nombre","Correo","Estado"');
+    expect(csv).toContain('"Juan","juan@test.com"');
+    expect(h.buildMeetingCsv(detail, {})).toContain('"Name","Email"');
+    expect(h.buildMeetingCsv(detail, { series: [] })).toContain('"Name","Email"');
+
+    delete global.AttUtils;
+    expect(h.buildMeetingCsv(detail, 'es')).toContain('"Name","Email"');
+
+    global.AttUtils = {};
+    expect(h.buildMeetingCsv(detail, 'es')).toContain('"Name","Email"');
+
+    global.AttUtils = {
+      CSV_HEADER_LOCALIZATIONS: {
+        es: { meeting: ['Nombre', 'Correo', 'Estado'], series: ['Nombre', 'Correo', 'Asistió'] }
+      }
+    };
+    expect(h.buildMeetingCsv(detail, 'es')).toContain('"Nombre","Correo","Estado"');
+    expect(h.buildMeetingCsv(detail, 'unknown')).toContain('"Name","Email"');
+    delete global.AttUtils;
+  });
+
+  test('buildSeriesGradebookCsv formats moodle, canvas, generic and localized headers', () => {
+    const series = {
+      title: 'Math 101',
+      people: [
+        { displayName: 'Alice Smith', email: 'alice@test.com', attendanceRate: 0.95, attended: 9, missed: 1, totalMinutes: 450 },
+        { displayName: 'Bob', attendanceRate: 0 },
+      ],
+    };
+
+    // Generic default
+    const genericCsv = h.buildSeriesGradebookCsv(series, 'generic');
+    expect(genericCsv).toContain('"Name","Email","Attended","Missed","Attendance %","Total minutes"');
+    expect(genericCsv).toContain('"Alice Smith","alice@test.com","9","1","95","450"');
+    expect(genericCsv).toContain('"Bob","","0","0","0","0"');
+
+    // Generic localized & empty locHeaders fallback & string locale code
+    const locHeaders = { series: ['Nombre', 'Correo', 'Asistió', 'Ausente', '% Asistencia', 'Minutos totales'] };
+    const locCsv = h.buildSeriesGradebookCsv(series, 'generic', locHeaders);
+    expect(locCsv).toContain('"Nombre","Correo","Asistió"');
+    expect(h.buildSeriesGradebookCsv(series, 'generic', {})).toContain('"Name","Email"');
+    expect(h.buildSeriesGradebookCsv(series, 'generic', { meeting: [] })).toContain('"Name","Email"');
+
+    delete global.AttUtils;
+    expect(h.buildSeriesGradebookCsv(series, 'generic', 'es')).toContain('"Name","Email"');
+
+    global.AttUtils = {};
+    expect(h.buildSeriesGradebookCsv(series, 'generic', 'es')).toContain('"Name","Email"');
+
+    global.AttUtils = {
+      CSV_HEADER_LOCALIZATIONS: {
+        es: { meeting: ['Nombre', 'Correo', 'Estado'], series: ['Nombre', 'Correo', 'Asistió'] }
+      }
+    };
+    expect(h.buildSeriesGradebookCsv(series, 'generic', 'es')).toContain('"Nombre","Correo","Asistió"');
+    expect(h.buildSeriesGradebookCsv(series, 'generic', 'unknown')).toContain('"Name","Email"');
+    delete global.AttUtils;
+
+    // Moodle format
+    const moodleCsv = h.buildSeriesGradebookCsv(series, 'moodle');
+    expect(moodleCsv).toContain('"First name","Last name","Email address","Math 101 attendance (%)"');
+    expect(moodleCsv).toContain('"Alice","Smith","alice@test.com","95"');
+
+    // Canvas format
+    const canvasCsv = h.buildSeriesGradebookCsv(series, 'canvas');
+    expect(canvasCsv).toContain('"Student","ID","SIS User ID","SIS Login ID","Section","Math 101 attendance"');
+    expect(canvasCsv).toContain('"Alice Smith","","","alice@test.com","","95"');
+
+    // Defaults for empty series
+    expect(h.buildSeriesGradebookCsv(null, 'moodle')).toContain('"First name"');
+    expect(h.buildSeriesGradebookCsv({}, 'canvas')).toContain('"Student"');
+  });
 });
 

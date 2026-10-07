@@ -1019,7 +1019,9 @@
         return;
       }
       logHistoryEvent('series_csv_downloaded', { format, people: (s.people || []).length });
-      const csv = AttHistory.buildSeriesGradebookCsv(s, format);
+      const loc = (typeof AttStrings !== 'undefined' && AttStrings.getLocale) ? AttStrings.getLocale() : 'en';
+      const locHeaders = (typeof AttUtils !== 'undefined' && AttUtils.CSV_HEADER_LOCALIZATIONS) ? AttUtils.CSV_HEADER_LOCALIZATIONS[loc] : null;
+      const csv = AttHistory.buildSeriesGradebookCsv(s, format, locHeaders);
       const safeTitle = String(s.title || 'series').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
@@ -1265,7 +1267,9 @@
 
     function exportMeetingCsvCurrent() {
       if (!activeMeetingDetail || typeof AttHistory === 'undefined' || !AttHistory.buildMeetingCsv) return;
-      const csv = AttHistory.buildMeetingCsv(activeMeetingDetail);
+      const loc = (typeof AttStrings !== 'undefined' && AttStrings.getLocale) ? AttStrings.getLocale() : 'en';
+      const locHeaders = (typeof AttUtils !== 'undefined' && AttUtils.CSV_HEADER_LOCALIZATIONS) ? AttUtils.CSV_HEADER_LOCALIZATIONS[loc] : null;
+      const csv = AttHistory.buildMeetingCsv(activeMeetingDetail, locHeaders);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');

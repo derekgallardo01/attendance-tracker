@@ -1,0 +1,18 @@
+{
+  "appName": {
+    "message": "Google Meet 出勤跟踪器 — 启动器",
+    "description": "The title of the extension"
+  },
+  "appShortName": {
+    "message": "出勤跟踪器",
+    "description": "Short name for the extension"
+  },
+  "appDesc": {
+    "message": "Google Meet 出勤跟踪器的配套启动器。实时点名、时间戳记录及一键导出到 Google 表格。",
+    "description": "Description of the extension"
+  },
+  "actionTitle": {
+    "message": "Google Meet 出勤跟踪器",
+    "description": "Tooltip for the action icon"
+  }
+}

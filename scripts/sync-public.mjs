@@ -17,6 +17,9 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import './harmonize-strings.mjs';
+import './generate-extension-locales.mjs';
+import './add-i18n-keys.mjs';
+import './expand-utils-locales.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PUBLIC = join(ROOT, 'backend', 'public');

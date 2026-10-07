@@ -1,0 +1,18 @@
+{
+  "appName": {
+    "message": "Attendance Tracker za Google Meet — Pokretač",
+    "description": "The title of the extension"
+  },
+  "appShortName": {
+    "message": "Attendance Tracker",
+    "description": "Short name for the extension"
+  },
+  "appDesc": {
+    "message": "Prateći pokretač za Attendance Tracker u usluzi Google Meet. Praćenje prisutnosti u stvarnom vremenu i izvoz u Google tablice jednim klikom.",
+    "description": "Description of the extension"
+  },
+  "actionTitle": {
+    "message": "Attendance Tracker za Google Meet",
+    "description": "Tooltip for the action icon"
+  }
+}

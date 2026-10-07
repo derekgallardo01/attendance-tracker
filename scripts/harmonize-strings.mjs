@@ -55,21 +55,27 @@ const feature3ExportsMap = {
 };
 
 // 1. Update pricing.cmp5Title, pricing.cmp5Body, lp2_proof_4_title, lp2_feat_8_title, lp2_feat_8_body
-// Replace 42 -> 44 and ४२ -> ४४ in their values
+// Replace 42/44 -> 60 and ४२/४४ -> ६० in their values
 const targetKeys = ['pricing.cmp5Title', 'pricing.cmp5Body', 'lp2_proof_4_title', 'lp2_feat_8_title', 'lp2_feat_8_body'];
 
 for (const k of targetKeys) {
   const regex = new RegExp(`("${k.replace('.', '\\.')}":\\s*")([^"]+)(")`, 'g');
   content = content.replace(regex, (match, prefix, val, suffix) => {
     let updated = val;
+    if (updated.includes('44')) {
+      updated = updated.replace(/\b44\b/g, '60');
+    }
     if (updated.includes('42')) {
-      updated = updated.replace(/\b42\b/g, '44');
+      updated = updated.replace(/\b42\b/g, '60');
+    }
+    if (updated.includes('४४')) {
+      updated = updated.replace(/४४/g, '६०');
     }
     if (updated.includes('४२')) {
-      updated = updated.replace(/४२/g, '४४');
+      updated = updated.replace(/४२/g, '६०');
     }
     if (updated.includes('30')) {
-      updated = updated.replace(/\b30\b/g, '44');
+      updated = updated.replace(/\b30\b/g, '60');
     }
     return `${prefix}${updated}${suffix}`;
   });
