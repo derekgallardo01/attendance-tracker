@@ -75,11 +75,22 @@ async function getTenantPlan(domain) {
   // otherwise a transient blip silently downgrades a paying customer to Free.
   const doc = await tenantRef(domain).get();
   const cfg = doc.exists ? doc.data() : null;
+  let plan = cfg?.plan === 'pro' ? 'pro' : 'free';
+  let billingStatus = cfg?.billingStatus || null;
+  if (plan === 'pro' && cfg?.planExpiresAt) {
+    const expiresMs = Date.parse(cfg.planExpiresAt);
+    const hasActiveSubscription = !!cfg?.stripeSubscriptionId;
+    if (!isNaN(expiresMs) && expiresMs <= Date.now() && !hasActiveSubscription) {
+      plan = 'free';
+      billingStatus = 'expired';
+    }
+  }
   const out = {
-    plan: cfg?.plan === 'pro' ? 'pro' : 'free',
-    billingStatus: cfg?.billingStatus || null,
+    plan,
+    billingStatus,
     stripeCustomerId: cfg?.stripeCustomerId || null,
   };
+  if (cfg?.planExpiresAt !== undefined) out.planExpiresAt = cfg.planExpiresAt;
   if (cfg?.stripeSubscriptionId !== undefined) out.stripeSubscriptionId = cfg.stripeSubscriptionId;
   if (cfg?.cancelAtPeriodEnd !== undefined) out.cancelAtPeriodEnd = cfg.cancelAtPeriodEnd;
   if (cfg?.cancelAt !== undefined) out.cancelAt = cfg.cancelAt;
@@ -110,11 +121,26 @@ async function setUserPlan(domain, email, patch) {
 async function getUserPlan(domain, email) {
   const doc = await tenantRef(domain).collection('users').doc(email.toLowerCase()).get();
   const u = doc.exists ? doc.data() : null;
+  let plan = u?.individualPlan === 'pro' ? 'pro' : 'free';
+  let billingStatus = u?.individualBillingStatus || null;
+
+  if (plan === 'pro' && u?.individualPlanExpiresAt) {
+    const expiresMs = Date.parse(u.individualPlanExpiresAt);
+    const hasActiveSubscription = !!u?.individualStripeSubscriptionId;
+    const isLifetime = u?.individualPlanType === 'lifetime';
+    if (!isNaN(expiresMs) && expiresMs <= Date.now() && !hasActiveSubscription && !isLifetime) {
+      plan = 'free';
+      billingStatus = 'expired';
+    }
+  }
+
   const out = {
-    plan: u?.individualPlan === 'pro' ? 'pro' : 'free',
-    billingStatus: u?.individualBillingStatus || null,
+    plan,
+    billingStatus,
     stripeCustomerId: u?.individualStripeCustomerId || null,
   };
+  if (u?.individualPlanExpiresAt !== undefined) out.individualPlanExpiresAt = u.individualPlanExpiresAt;
+  if (u?.individualPlanType !== undefined) out.individualPlanType = u.individualPlanType;
   if (u?.individualStripeSubscriptionId !== undefined) out.stripeSubscriptionId = u.individualStripeSubscriptionId;
   if (u?.cancelAtPeriodEnd !== undefined) out.cancelAtPeriodEnd = u.cancelAtPeriodEnd;
   if (u?.cancelAt !== undefined) out.cancelAt = u.cancelAt;

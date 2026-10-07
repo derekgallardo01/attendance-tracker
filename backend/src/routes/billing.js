@@ -1176,9 +1176,12 @@ async function webhookHandler(req, res) {
           const email = s.metadata?.email || (ref.startsWith('user:') ? ref.slice(5) : (s.customer_details?.email || s.customer_email));
           const domain = s.metadata?.domain || (email && email.includes('@') ? email.split('@')[1] : null);
           if (domain && email) {
+            const planType = s.metadata?.plan || (s.subscription ? 'subscription' : 'lifetime');
             await setUserPlan(domain, email.toLowerCase(), {
               individualPlan: 'pro',
               individualBillingStatus: 'active',
+              individualPlanType: planType,
+              individualPlanExpiresAt: null,
               individualStripeCustomerId: s.customer || null,
               individualStripeSubscriptionId: s.subscription || null,
             });

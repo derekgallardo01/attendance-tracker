@@ -128,6 +128,60 @@ describe('user plan (individual per-user billing)', () => {
     await firestore.setUserPlan('gmail.com', 'u@gmail.com', { individualPlan: 'canceled' });
     expect((await firestore.getUserPlan('gmail.com', 'u@gmail.com')).plan).toBe('free');
   });
+
+  test('temporary reward with individualPlanExpiresAt in the past downgrades to free and marks billingStatus expired', async () => {
+    const past = new Date(Date.now() - 3600 * 1000).toISOString();
+    await firestore.setUserPlan('gmail.com', 'expired@gmail.com', {
+      individualPlan: 'pro',
+      individualBillingStatus: 'active',
+      individualPlanType: 'referral_reward',
+      individualPlanExpiresAt: past,
+    });
+    const result = await firestore.getUserPlan('gmail.com', 'expired@gmail.com');
+    expect(result.plan).toBe('free');
+    expect(result.billingStatus).toBe('expired');
+    expect(result.individualPlanExpiresAt).toBe(past);
+  });
+
+  test('temporary reward with individualPlanExpiresAt in the future retains pro status', async () => {
+    const future = new Date(Date.now() + 86400 * 1000 * 30).toISOString();
+    await firestore.setUserPlan('gmail.com', 'active_reward@gmail.com', {
+      individualPlan: 'pro',
+      individualBillingStatus: 'active',
+      individualPlanType: 'referral_reward',
+      individualPlanExpiresAt: future,
+    });
+    const result = await firestore.getUserPlan('gmail.com', 'active_reward@gmail.com');
+    expect(result.plan).toBe('pro');
+    expect(result.billingStatus).toBe('active');
+    expect(result.individualPlanExpiresAt).toBe(future);
+  });
+
+  test('active Stripe subscription retains pro even if an old individualPlanExpiresAt exists', async () => {
+    const past = new Date(Date.now() - 3600 * 1000).toISOString();
+    await firestore.setUserPlan('gmail.com', 'paying_sub@gmail.com', {
+      individualPlan: 'pro',
+      individualBillingStatus: 'active',
+      individualStripeSubscriptionId: 'sub_123',
+      individualPlanExpiresAt: past,
+    });
+    const result = await firestore.getUserPlan('gmail.com', 'paying_sub@gmail.com');
+    expect(result.plan).toBe('pro');
+    expect(result.billingStatus).toBe('active');
+  });
+
+  test('lifetime plan retains pro even if an old individualPlanExpiresAt exists', async () => {
+    const past = new Date(Date.now() - 3600 * 1000).toISOString();
+    await firestore.setUserPlan('gmail.com', 'lifetime_user@gmail.com', {
+      individualPlan: 'pro',
+      individualBillingStatus: 'active',
+      individualPlanType: 'lifetime',
+      individualPlanExpiresAt: past,
+    });
+    const result = await firestore.getUserPlan('gmail.com', 'lifetime_user@gmail.com');
+    expect(result.plan).toBe('pro');
+    expect(result.billingStatus).toBe('active');
+  });
 });
 
 describe('meeting excused emails', () => {
