@@ -920,18 +920,45 @@ describe('public-checkout team provisioning guard', () => {
     delete process.env.STRIPE_ANNUAL_PRICE_ID;
   });
 
-  test('Institution (team + annual) is a clean session — no discount ever applied', async () => {
+  test('Institution (team + annual) is a clean session — no discount ever applied even in PPP countries', async () => {
     process.env.STRIPE_ANNUAL_PRICE_ID = 'price_institution_149';
     mockStripeInstance.prices.retrieve.mockResolvedValue({ id: 'price_institution_149', type: 'recurring', recurring: { interval: 'year' } });
     const res = await request(app).post('/api/billing/public-checkout')
       .set('Content-Type', 'application/json')
-      .send({ plan: 'team', interval: 'annual', email: 'admin@acme.com' });
+      .set('cf-ipcountry', 'CO')
+      .send({ plan: 'team', interval: 'annual', email: 'admin@acme.edu.co' });
     expect(res.status).toBe(200);
     const params = mockStripeInstance.checkout.sessions.create.mock.calls[0][0];
     expect(params.line_items[0].price).toBe('price_institution_149');
     expect(params.discounts).toBeUndefined();
     expect(params.allow_promotion_codes).toBeUndefined();
     delete process.env.STRIPE_ANNUAL_PRICE_ID;
+  });
+
+  test('Department ($59/yr) is a clean session — no PPP discount ever applied', async () => {
+    process.env.STRIPE_DEPARTMENT_PRICE_ID = 'price_dept_59';
+    mockStripeInstance.prices.retrieve.mockResolvedValue({ id: 'price_dept_59', type: 'recurring', recurring: { interval: 'year' } });
+    const res = await request(app).post('/api/billing/public-checkout')
+      .set('Content-Type', 'application/json')
+      .set('cf-ipcountry', 'CO')
+      .send({ plan: 'department', email: 'chair@physics.edu.co' });
+    expect(res.status).toBe(200);
+    const params = mockStripeInstance.checkout.sessions.create.mock.calls[0][0];
+    expect(params.line_items[0].price).toBe('price_dept_59');
+    expect(params.discounts).toBeUndefined();
+    delete process.env.STRIPE_DEPARTMENT_PRICE_ID;
+  });
+
+  test('Authed Team checkout does not apply PPP discount to domain license', async () => {
+    process.env.STRIPE_PRICE_ID = 'price_team_1999';
+    const res = await request(app).post('/api/billing/checkout')
+      .set(authedHeader('admin@school.edu.co', 'school.edu.co'))
+      .set('cf-ipcountry', 'CO')
+      .send({ plan: 'team' });
+    expect(res.status).toBe(200);
+    const params = mockStripeInstance.checkout.sessions.create.mock.calls[0][0];
+    expect(params.discounts).toBeUndefined();
+    delete process.env.STRIPE_PRICE_ID;
   });
 });
 

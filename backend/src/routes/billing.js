@@ -314,7 +314,7 @@ router.post(['/billing/checkout', '/billing/create-checkout-session'], requireAu
     };
     if (promo && promo !== 'LAUNCH50') {
       sessionParams.allow_promotion_codes = true;
-    } else if (isPppEligible && (isEducator || (!isIndia && !isRegionalTarget && !isSingleMeeting))) {
+    } else if (!isDomainPlan && isPppEligible && (isEducator || (!isIndia && !isRegionalTarget && !isSingleMeeting))) {
       // For India and regional currencies, dedicated INR/PHP/MYR/IDR prices already reflect the subsidized PPP price.
       // Educator in PPP countries receives PPP50 discount coupon for $2.49/yr pricing.
       sessionParams.discounts = [{ coupon: 'PPP50' }];
@@ -685,7 +685,7 @@ router.post('/billing/public-checkout', async (req, res) => {
     }
     if (promo && promo !== 'LAUNCH50') {
       sessionParams.allow_promotion_codes = true;
-    } else if (isPppEligible && (isEducator || (!isIndia && !isRegionalTarget))) {
+    } else if (!isDomain && isPppEligible && (isEducator || (!isIndia && !isRegionalTarget))) {
       sessionParams.discounts = [{ coupon: 'PPP50' }];
     }
     if (isRecurring) {
