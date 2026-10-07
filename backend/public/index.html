@@ -358,8 +358,8 @@
     window.captureError = function (err, extra) {
       try {
         const msg = String(err?.message || err || '');
-        if (/failed to fetch|networkerror|load failed|offline/i.test(msg)) {
-          return; // Client network drop (user closed laptop, WiFi dropped) — not an actionable code defect
+        if (/failed to fetch|networkerror|load failed|failed to load|script error|net::err|offline/i.test(msg)) {
+          return; // Client network drop or ad-blocker — not an actionable code defect
         }
         if (window.Sentry && typeof window.Sentry.captureException === 'function') {
           Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { extra: extra || {} });
@@ -404,25 +404,35 @@
     });
   </script>
 
-  <!-- Meet Add-ons SDK — load dynamically so we can detect failures -->
+  <!-- Meet Add-ons SDK — load dynamically with retry so transient network blips recover automatically -->
   <script>
-    window._meetSdkReady = new Promise((resolve) => {
+    window._meetSdkReady = new Promise(function (resolve) {
       if (window._isLandingMode) {
         resolve(false);
         return;
       }
-      const s = document.createElement('script');
-      s.src = 'https://www.gstatic.com/meetjs/addons/1.1.0/meet.addons.js';
-      s.onload = () => {
-        console.log('[Attendance] SDK script loaded, window.meet =', typeof window.meet);
-        resolve(true);
-      };
-      s.onerror = () => {
-        console.warn('[Attendance] SDK script failed to load — demo mode');
-        window.captureError(new Error('Meet SDK script failed to load'), { where: 'meet_sdk_script_load' });
-        resolve(false);
-      };
-      document.head.appendChild(s);
+      var maxAttempts = 3;
+      var attempt = 0;
+      function tryLoad() {
+        attempt++;
+        var s = document.createElement('script');
+        s.src = 'https://www.gstatic.com/meetjs/addons/1.1.0/meet.addons.js';
+        s.onload = function () {
+          console.log('[Attendance] SDK script loaded, window.meet =', typeof window.meet);
+          resolve(true);
+        };
+        s.onerror = function () {
+          if (attempt < maxAttempts) {
+            console.warn('[Attendance] SDK script failed to load, retrying attempt ' + (attempt + 1) + '...');
+            setTimeout(tryLoad, attempt * 800);
+          } else {
+            console.warn('[Attendance] SDK script failed to load after retries — falling back to demo mode');
+            resolve(false);
+          }
+        };
+        document.head.appendChild(s);
+      }
+      tryLoad();
     });
   </script>
 
