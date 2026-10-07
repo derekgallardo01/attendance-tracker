@@ -445,6 +445,67 @@
             </div>
           </div>
         </div>
+
+        <!-- Growth Milestones Section -->
+        <div class="section" id="milestones-section" style="margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+            <h2 style="margin:0;display:flex;align-items:center;gap:8px">
+              <span>🏆</span> Growth Milestones
+            </h2>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:.75rem;color:var(--muted)" id="milestones-stamp">Automated Founder Alerts</span>
+              <button class="btn btn-secondary" onclick="checkMilestonesNow()" style="padding:4px 10px;font-size:.75rem">⚡ Check Now</button>
+            </div>
+          </div>
+          <div id="milestones-container" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
+            <div class="stat-card" style="padding:14px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <span class="stat-label" style="margin:0">👥 Users Target</span>
+                <span id="milestone-users-target" style="font-size:.85rem;font-weight:700;color:var(--accent)">—</span>
+              </div>
+              <div style="background:#21262d;border-radius:999px;height:8px;overflow:hidden;margin-bottom:6px">
+                <div id="milestone-users-bar" style="background:var(--accent);width:0%;height:100%;transition:width .4s ease"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted)">
+                <span id="milestone-users-current">Current: —</span>
+                <span id="milestone-users-remaining">— remaining</span>
+              </div>
+            </div>
+            <div class="stat-card" style="padding:14px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <span class="stat-label" style="margin:0">💰 Pro Target</span>
+                <span id="milestone-pro-target" style="font-size:.85rem;font-weight:700;color:#fbbf24">—</span>
+              </div>
+              <div style="background:#21262d;border-radius:999px;height:8px;overflow:hidden;margin-bottom:6px">
+                <div id="milestone-pro-bar" style="background:#fbbf24;width:0%;height:100%;transition:width .4s ease"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted)">
+                <span id="milestone-pro-current">Current: —</span>
+                <span id="milestone-pro-remaining">— remaining</span>
+              </div>
+            </div>
+            <div class="stat-card" style="padding:14px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <span class="stat-label" style="margin:0">📊 Meetings Target</span>
+                <span id="milestone-meetings-target" style="font-size:.85rem;font-weight:700;color:var(--blue)">—</span>
+              </div>
+              <div style="background:#21262d;border-radius:999px;height:8px;overflow:hidden;margin-bottom:6px">
+                <div id="milestone-meetings-bar" style="background:var(--blue);width:0%;height:100%;transition:width .4s ease"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted)">
+                <span id="milestone-meetings-current">Current: —</span>
+                <span id="milestone-meetings-remaining">— remaining</span>
+              </div>
+            </div>
+          </div>
+          <div id="achieved-milestones-box" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+            <div style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Achieved Milestones</div>
+            <div id="achieved-milestones-list" style="display:flex;flex-wrap:wrap;gap:6px">
+              <span style="font-size:.75rem;color:var(--muted)">None yet</span>
+            </div>
+          </div>
+        </div>
+
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;margin-bottom:24px">
           <!-- Reach out NOW -->
           <div class="section" style="margin-bottom:0">
@@ -1244,6 +1305,10 @@
           document.getElementById('stat-pro-mrr').textContent = `~$${mrr || 0} MRR`;
         }
 
+        if (data.milestones) {
+          renderMilestones(data.milestones);
+        }
+
         // Tenant rows
         const tenantBody = document.getElementById('tenant-rows');
         if (data.tenants?.length > 0) {
@@ -1289,6 +1354,69 @@
         `;
       } catch (err) {
         console.error('Stats load failed:', err);
+      }
+    }
+
+    function renderMilestones(milestones) {
+      if (!milestones) return;
+      const u = milestones.upcoming?.users;
+      const p = milestones.upcoming?.pro;
+      const m = milestones.upcoming?.meetings;
+
+      if (u) {
+        document.getElementById('milestone-users-target').textContent = u.target ? `${u.target.toLocaleString()} Users` : 'All unlocked!';
+        document.getElementById('milestone-users-bar').style.width = `${u.progressPercent || 0}%`;
+        document.getElementById('milestone-users-current').textContent = `Current: ${Number(u.current).toLocaleString()}`;
+        document.getElementById('milestone-users-remaining').textContent = u.target ? `${Number(u.remaining).toLocaleString()} to next` : 'Goal reached!';
+      }
+      if (p) {
+        document.getElementById('milestone-pro-target').textContent = p.target ? `${p.target.toLocaleString()} Pro` : 'All unlocked!';
+        document.getElementById('milestone-pro-bar').style.width = `${p.progressPercent || 0}%`;
+        document.getElementById('milestone-pro-current').textContent = `Current: ${Number(p.current).toLocaleString()}`;
+        document.getElementById('milestone-pro-remaining').textContent = p.target ? `${Number(p.remaining).toLocaleString()} to next` : 'Goal reached!';
+      }
+      if (m) {
+        document.getElementById('milestone-meetings-target').textContent = m.target ? `${m.target.toLocaleString()} Meetings` : 'All unlocked!';
+        document.getElementById('milestone-meetings-bar').style.width = `${m.progressPercent || 0}%`;
+        document.getElementById('milestone-meetings-current').textContent = `Current: ${Number(m.current).toLocaleString()}`;
+        document.getElementById('milestone-meetings-remaining').textContent = m.target ? `${Number(m.remaining).toLocaleString()} to next` : 'Goal reached!';
+      }
+
+      const listEl = document.getElementById('achieved-milestones-list');
+      if (listEl && Array.isArray(milestones.achieved)) {
+        if (milestones.achieved.length === 0) {
+          listEl.innerHTML = '<span style="font-size:.75rem;color:var(--muted)">No milestones unlocked yet — on the way!</span>';
+        } else {
+          listEl.innerHTML = milestones.achieved.map(a => `
+            <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.25);font-size:.75rem;color:#4ade80;font-weight:600">
+              ${esc(a.label || a.id)}
+            </span>
+          `).join('');
+        }
+      }
+    }
+
+    async function checkMilestonesNow() {
+      const btn = event?.target;
+      if (btn) btn.disabled = true;
+      try {
+        const res = await fetch(`${BACKEND_URL}/admin/check-milestones`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${sessionToken}`, 'Content-Type': 'application/json' },
+        });
+        const data = await res.json();
+        if (data.progress) {
+          renderMilestones(data.progress);
+        }
+        if (data.newlyUnlockedCount > 0) {
+          alert(`🎉 Unlocked ${data.newlyUnlockedCount} new milestone(s)! Check your email for celebration alert.`);
+        } else {
+          alert('Milestones evaluated: no new thresholds reached yet.');
+        }
+      } catch (err) {
+        console.error('Milestone check failed:', err);
+      } finally {
+        if (btn) btn.disabled = false;
       }
     }
 

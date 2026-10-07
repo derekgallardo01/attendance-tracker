@@ -2,7 +2,7 @@ const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getRevenueFunnel, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, dismissSuggestion, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance, getTeamOverview, getRecentErrorSpike, getErrorAlertState, setErrorAlertState, getCancellationTelemetry, backfillAdminActivityIfSparse } = require('../services/firestore');
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getRevenueFunnel, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, dismissSuggestion, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance, getTeamOverview, getRecentErrorSpike, getErrorAlertState, setErrorAlertState, getCancellationTelemetry, backfillAdminActivityIfSparse, checkAndRecordMilestones, getMilestoneProgress } = require('../services/firestore');
 const { sendAdminEmail, sendErrorSpikeAlertEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendOrgWeeklyDigest, flushDeferredNotifications, verifyReviewApprovalToken, sendReviewRewardEmail } = require('../lib/notifications');
 const { escapeHtml } = require('../lib/html');
 const { requireSuperAdmin, requireSuperAdminOrScheduler, requireKhMetricsKey, safeEqual } = require('../middleware/adminAuth');
@@ -223,6 +223,7 @@ router.get('/admin/stats', requireAuth, async (req, res) => {
     let globalStats = null;
     let activeProUsers = 0;
     let estimatedMrr = 0;
+    let milestones = null;
     if (isSuper) {
       const activeProList = (allUsers || []).filter(u => u.individualPlan === 'pro' && u.individualBillingStatus === 'active');
       activeProUsers = activeProList.length;
@@ -241,6 +242,18 @@ router.get('/admin/stats', requireAuth, async (req, res) => {
         activeProUsers,
         estimatedMrr,
       };
+
+      try {
+        const counts = {
+          userCount: globalStats.users || 0,
+          proCount: activeProUsers || 0,
+          meetingCount: globalStats.meetings || 0,
+        };
+        await checkAndRecordMilestones(counts);
+        milestones = await getMilestoneProgress(counts);
+      } catch (mErr) {
+        log.warn('admin: milestone check in stats failed', { error: mErr.message });
+      }
     }
 
     const responseData = {
@@ -248,6 +261,7 @@ router.get('/admin/stats', requireAuth, async (req, res) => {
       activeProUsers: isSuper ? activeProUsers : null,
       estimatedMrr: isSuper ? estimatedMrr : null,
       globalStats,
+      milestones: isSuper ? milestones : null,
       tenants: isSuper ? tenants.map(t => ({
         domain: t.domain,
         active: t.active !== false,
@@ -270,6 +284,71 @@ router.get('/admin/stats', requireAuth, async (req, res) => {
   } catch (err) {
     log.error('admin: stats failed', { error: err.message });
     res.status(500).json({ error: 'Failed to fetch stats' });
+  }
+});
+
+// GET /api/admin/milestones — Return achieved and upcoming founder growth milestones
+router.get('/admin/milestones', requireSuperAdmin, async (req, res) => {
+  try {
+    const db = getDb();
+    const hasColGroup = typeof db?.collectionGroup === 'function';
+    const [usersAgg, meetingsAgg, allUsers] = await Promise.all([
+      hasColGroup ? Promise.resolve().then(() => db.collectionGroup('users').count().get()).catch(() => null) : null,
+      hasColGroup ? Promise.resolve().then(() => db.collectionGroup('meetings').count().get()).catch(() => null) : null,
+      Promise.resolve().then(() => typeof getAllUsersAcrossTenants === 'function' ? getAllUsersAcrossTenants() : []).catch(() => []),
+    ]);
+
+    const userList = Array.isArray(allUsers) ? allUsers : [];
+    const activeProUsers = userList.filter(u => u?.individualPlan === 'pro' && u?.individualBillingStatus === 'active').length;
+    const counts = {
+      userCount: usersAgg?.data ? usersAgg.data().count : userList.length,
+      proCount: activeProUsers,
+      meetingCount: meetingsAgg?.data ? meetingsAgg.data().count : 0,
+    };
+
+    const progress = await getMilestoneProgress(counts);
+    res.json({
+      success: true,
+      counts,
+      ...progress,
+    });
+  } catch (err) {
+    log.error('admin: failed to get milestones', { error: err.message });
+    res.status(500).json({ error: 'Failed to fetch growth milestones' });
+  }
+});
+
+// POST /api/admin/check-milestones — Trigger milestone evaluation and alert dispatch
+router.post('/admin/check-milestones', requireSuperAdminOrScheduler, async (req, res) => {
+  try {
+    const db = getDb();
+    const hasColGroup = typeof db?.collectionGroup === 'function';
+    const [usersAgg, meetingsAgg, allUsers] = await Promise.all([
+      hasColGroup ? Promise.resolve().then(() => db.collectionGroup('users').count().get()).catch(() => null) : null,
+      hasColGroup ? Promise.resolve().then(() => db.collectionGroup('meetings').count().get()).catch(() => null) : null,
+      Promise.resolve().then(() => typeof getAllUsersAcrossTenants === 'function' ? getAllUsersAcrossTenants() : []).catch(() => []),
+    ]);
+
+    const userList = Array.isArray(allUsers) ? allUsers : [];
+    const activeProUsers = userList.filter(u => u?.individualPlan === 'pro' && u?.individualBillingStatus === 'active').length;
+    const counts = {
+      userCount: usersAgg?.data ? usersAgg.data().count : userList.length,
+      proCount: activeProUsers,
+      meetingCount: meetingsAgg?.data ? meetingsAgg.data().count : 0,
+    };
+
+    const newlyUnlocked = await checkAndRecordMilestones(counts);
+    const progress = await getMilestoneProgress(counts);
+
+    res.json({
+      success: true,
+      newlyUnlockedCount: newlyUnlocked.length,
+      newlyUnlocked,
+      progress,
+    });
+  } catch (err) {
+    log.error('admin: failed to check milestones', { error: err.message });
+    res.status(500).json({ error: 'Failed to check growth milestones' });
   }
 });
 

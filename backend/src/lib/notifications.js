@@ -595,6 +595,87 @@ async function sendAdminSubscriptionCancelledNotification({
   }, 'admin subscription cancelled notification', { email, domain, plan, source });
 }
 
+// Fire-and-forget celebratory founder email when a major growth milestone is unlocked.
+// Alerts NOTIFY_EMAIL / owner with milestone metrics, growth trajectory, and a ready-to-share social snippet.
+async function sendAdminMilestoneEmail({
+  milestone,
+  currentStats = {},
+  meta = {},
+} = {}) {
+  if (!getResend()) return { skipped: 'no resend' };
+  const to = process.env.NOTIFY_EMAIL || ownerEmail() || 'derekgallardo01@gmail.com';
+  if (!to) return { skipped: 'no NOTIFY_EMAIL/owner' };
+
+  const metric = milestone?.metric || 'users';
+  const threshold = milestone?.threshold || 0;
+  const label = milestone?.label || `${threshold} ${metric}`;
+  const userCount = Number(currentStats.userCount || currentStats.users || threshold);
+  const proCount = Number(currentStats.proCount || currentStats.activeProUsers || 0);
+  const meetingCount = Number(currentStats.meetingCount || currentStats.meetings || 0);
+
+  const subject = `🎉 Milestone Unlocked: ${label} on Attendance Tracker!`;
+
+  let socialCopy = '';
+  if (metric === 'users') {
+    socialCopy = `🎉 Milestone unlocked: Attendance Tracker just crossed ${Number(threshold).toLocaleString()} registered educators and organizers across Google Meet! 🚀\n\nBuilt as an independent, bootstrapped add-on with zero VC funding.\n\nThank you to all our teachers and teams!\nhttps://attendancetracker.dev`;
+  } else if (metric === 'pro') {
+    socialCopy = `💰 Milestone unlocked: Attendance Tracker just reached ${Number(threshold).toLocaleString()} paying Pro customers! 📈\n\nProfitable, sustainable unit economics for a Google Workspace add-on.\nhttps://attendancetracker.dev/pricing.html`;
+  } else {
+    socialCopy = `📊 Milestone unlocked: ${Number(threshold).toLocaleString()} meetings tracked automatically on Attendance Tracker! Millions of minutes saved for teachers worldwide. 🍎\nhttps://attendancetracker.dev`;
+  }
+
+  const contentHtml = `
+    <div style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.25);border-radius:10px;padding:16px;margin-bottom:18px;text-align:center;">
+      <div style="font-size:2rem;margin-bottom:4px;">🎉 🏆 🚀</div>
+      <div style="font-size:1.15rem;font-weight:700;color:#4ade80;margin-bottom:4px;">${escape(label)}</div>
+      <div style="font-size:13px;color:#8b949e;">Huge accomplishment Derek! Attendance Tracker just crossed another milestone on its growth trajectory.</div>
+    </div>
+
+    <table class="responsive-table" style="table-layout:fixed;border-collapse:collapse;width:100%;font-size:13px;background:#0d1117;border:1px solid #30363d;border-radius:8px;overflow:hidden;margin-bottom:18px;box-sizing:border-box;">
+      <tr><td style="padding:9px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;width:40%;">Milestone Metric</td><td style="padding:9px 12px;border-bottom:1px solid #21262d;color:#4ade80;font-weight:700;">${escape(label)}</td></tr>
+      <tr><td style="padding:9px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Total Registered Users</td><td style="padding:9px 12px;border-bottom:1px solid #21262d;color:#e6edf3;font-weight:600;">${userCount.toLocaleString()}</td></tr>
+      <tr><td style="padding:9px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Active Pro Customers</td><td style="padding:9px 12px;border-bottom:1px solid #21262d;color:#e6edf3;font-weight:600;">${proCount.toLocaleString()}</td></tr>
+      <tr><td style="padding:9px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Meetings Tracked</td><td style="padding:9px 12px;border-bottom:1px solid #21262d;color:#e6edf3;font-weight:600;">${meetingCount.toLocaleString()}</td></tr>
+      <tr><td style="padding:9px 12px;color:#8b949e;font-weight:600;">Unlocked At</td><td style="padding:9px 12px;color:#e6edf3;">${new Date().toUTCString()}</td></tr>
+    </table>
+
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:14px;margin-bottom:14px;">
+      <div style="font-size:12px;font-weight:700;color:#58a6ff;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;">📱 Ready-to-Post Social Snippet (X / LinkedIn / Indie Hackers)</div>
+      <pre style="margin:0;padding:10px;background:#0d1117;border:1px solid #21262d;border-radius:6px;font-size:12px;color:#e6edf3;white-space:pre-wrap;font-family:monospace;line-height:1.5;">${escape(socialCopy)}</pre>
+    </div>
+  `;
+
+  const html = buildDesignSystemEmail({
+    badge: '🏆 Growth Milestone',
+    badgeType: 'success',
+    title: `🎉 ${label} Reached!`,
+    subtitle: 'Automated growth milestone notification for Kinetic Helix.',
+    contentHtml,
+    ctaText: 'Open Admin Command Center →',
+    ctaUrl: 'https://attendancetracker.dev/admin.html',
+    ctaColor: 'green',
+  });
+
+  const text = [
+    `🎉 MILESTONE UNLOCKED: ${label}!`,
+    '',
+    `Total Users: ${userCount.toLocaleString()}`,
+    `Pro Customers: ${proCount.toLocaleString()}`,
+    `Meetings Tracked: ${meetingCount.toLocaleString()}`,
+    '',
+    'Social Snippet:',
+    socialCopy,
+    '',
+    'Open admin dashboard: https://attendancetracker.dev/admin.html',
+  ].join('\n');
+
+  return dispatchEmail({
+    from: makeFrom('Attendance Tracker Milestones'),
+    to, subject, text, html,
+    tags: [{ name: 'type', value: 'admin_milestone' }],
+  }, 'admin milestone notification', { metric, threshold });
+}
+
 // Fire-and-forget admin notification email for email unsubscribes / opt-outs.
 // Alerts NOTIFY_EMAIL / owner when a user opts out of all emails or disables specific categories.
 async function sendAdminEmailUnsubscribedNotification({
@@ -3453,7 +3534,7 @@ async function sendReviewRewardEmail(params) {
 }
 
 module.exports = {
-  sendSignupWebhook, sendUpgradeNotification, sendAdminSubscriptionCancelledNotification, sendAdminEmailUnsubscribedNotification, maybeSendSignupNotification, sendWelcomeEmail, sendReferralNotification, maybeSendReferralNotification, flushDeferredNotifications, sendAdminEmail, sendErrorAlertEmail, sendErrorSpikeAlertEmail, sendWeeklySelfReport, sendExportNotification, sendOrgWeeklyDigest,
+  sendSignupWebhook, sendUpgradeNotification, sendAdminSubscriptionCancelledNotification, sendAdminEmailUnsubscribedNotification, sendAdminMilestoneEmail, maybeSendSignupNotification, sendWelcomeEmail, sendReferralNotification, maybeSendReferralNotification, flushDeferredNotifications, sendAdminEmail, sendErrorAlertEmail, sendErrorSpikeAlertEmail, sendWeeklySelfReport, sendExportNotification, sendOrgWeeklyDigest,
   sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendUpgradeLinkEmail, sendSubscriptionCancelledEmail, sendReviewRewardEmail, buildReviewRewardEmailContent, sendReviewRewardDraftAlert, createReviewApprovalToken, verifyReviewApprovalToken, reviewApprovalUrl,
   sendSlackDigest, sendSlackTestPing, buildSlackDigestBlocks, buildSlackFallbackText, maskSlackWebhook,
   sendChatDigest, sendChatTestPing, buildChatDigestCard, maskGoogleChatWebhook,

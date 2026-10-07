@@ -62,6 +62,8 @@ jest.mock('../../src/services/firestore', () => ({
   getErrorAlertState: jest.fn(),
   setErrorAlertState: jest.fn(),
   getCancellationTelemetry: jest.fn(),
+  checkAndRecordMilestones: jest.fn().mockResolvedValue([]),
+  getMilestoneProgress: jest.fn().mockResolvedValue({ achieved: [], upcoming: {} }),
 }));
 jest.mock('../../src/services/googleAuth', () => ({
   refreshAccessToken: jest.fn(),
@@ -2234,6 +2236,62 @@ describe('GET /api/admin/stats — activeProUsers & estimatedMrr', () => {
     expect(res.body.globalStats).toBeNull();
   });
 });
+
+describe('GET /api/admin/milestones & POST /api/admin/check-milestones', () => {
+  const admin = () => authedHeader(SUPER_ADMIN, 'gmail.com');
+  const nonAdmin = () => authedHeader('user@school.edu', 'school.edu');
+
+  test('rejects unauthenticated requests with 401 or 403', async () => {
+    const resGet = await request(app).get('/api/admin/milestones');
+    expect([401, 403]).toContain(resGet.status);
+
+    const resPost = await request(app).post('/api/admin/check-milestones');
+    expect([401, 403]).toContain(resPost.status);
+  });
+
+  test('rejects non-superadmin users with 403', async () => {
+    const resGet = await request(app)
+      .get('/api/admin/milestones')
+      .set(nonAdmin());
+    expect(resGet.status).toBe(403);
+  });
+
+  test('GET /api/admin/milestones returns progress for superadmin', async () => {
+    firestore.getMilestoneProgress.mockResolvedValueOnce({
+      achieved: [{ id: 'users_100', metric: 'users', threshold: 100 }],
+      upcoming: { users: { target: 250, remaining: 150 } },
+    });
+
+    const res = await request(app)
+      .get('/api/admin/milestones')
+      .set(admin());
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.achieved.length).toBe(1);
+    expect(res.body.upcoming.users.target).toBe(250);
+  });
+
+  test('POST /api/admin/check-milestones evaluates milestones with scheduler secret', async () => {
+    firestore.checkAndRecordMilestones.mockResolvedValueOnce([
+      { id: 'users_1000', metric: 'users', threshold: 1000 },
+    ]);
+    firestore.getMilestoneProgress.mockResolvedValueOnce({
+      achieved: [{ id: 'users_1000', metric: 'users', threshold: 1000 }],
+      upcoming: { users: { target: 2500, remaining: 1500 } },
+    });
+
+    const res = await request(app)
+      .post('/api/admin/check-milestones')
+      .set('x-scheduler-secret', SCHEDULER_SECRET);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.newlyUnlockedCount).toBe(1);
+    expect(res.body.newlyUnlocked[0].id).toBe('users_1000');
+  });
+});
+
 
 
 

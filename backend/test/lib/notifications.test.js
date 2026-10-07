@@ -2115,5 +2115,34 @@ describe('notifications — buildDesignSystemEmail & upgrade link sender', () =>
     expect(alertCall.text).toContain('Tu mes de Pro gratuito ya está activo');
     expect(alertCall.text).toContain('/admin/reviews/approve-reward');
   });
+
+  test('sendAdminMilestoneEmail sends celebratory alert with stats and social copy', async () => {
+    const n = require('../../src/lib/notifications');
+    mockSend.mockClear();
+    await n.sendAdminMilestoneEmail({
+      milestone: {
+        metric: 'users',
+        threshold: 1000,
+        label: '👥 1,000 Users',
+      },
+      currentStats: {
+        userCount: 1024,
+        proCount: 52,
+        meetingCount: 2850,
+      },
+    });
+
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const call = mockSend.mock.calls[0][0];
+    expect(call.subject).toContain('Milestone Unlocked: 👥 1,000 Users on Attendance Tracker!');
+    expect(call.text).toContain('Total Users: 1,024');
+    expect(call.text).toContain('Pro Customers: 52');
+    expect(call.text).toContain('Meetings Tracked: 2,850');
+    expect(call.text).toContain('Social Snippet');
+    expect(call.html).toContain('Growth Milestone');
+    expect(call.html).toContain('1,000 Users');
+    expect(call.tags).toEqual([{ name: 'type', value: 'admin_milestone' }]);
+  });
 });
+
 
