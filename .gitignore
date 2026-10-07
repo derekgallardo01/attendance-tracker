@@ -9,3 +9,5 @@ backend/coverage-frontend/
 test-results/
 scripts/send-*.cjs
 docs/*-dispatch-log.json
+dist/
+screenshots/
