@@ -81,6 +81,13 @@ for (const k of targetKeys) {
   });
 }
 
+// Update empty.demo (10 demo students -> 25 demo students)
+const demoRegex = /("empty\.demo":\s*")([^"]+)(")/g;
+content = content.replace(demoRegex, (match, prefix, val, suffix) => {
+  let updated = val.replace(/\b10\b/g, '25').replace(/१०/g, '२५').replace(/১০/g, '২৫');
+  return `${prefix}${updated}${suffix}`;
+});
+
 // 2. Update pricing.feature3Exports, pricing.fineprintBody, and lp2_plan_free_body for each locale
 for (const [loc, newStr] of Object.entries(feature3ExportsMap)) {
   const locPattern = `"${loc}": {`;

@@ -621,18 +621,28 @@
     function renderTeamSignpost(sp) {
       const box = document.getElementById('team-signpost');
       if (!box) return;
-      if (!sp || !sp.teacherCount || sp.teacherCount < 3) { box.style.display = 'none'; return; }
+      if (!sp || !sp.teacherCount || sp.teacherCount < 2) { box.style.display = 'none'; return; }
+      try {
+        const dismissUntil = localStorage.getItem('att_dismiss_cluster_promo_until');
+        if (dismissUntil && Date.now() < parseInt(dismissUntil, 10)) {
+          box.style.display = 'none';
+          return;
+        }
+      } catch (e) {}
       const msg = document.getElementById('team-signpost-msg');
       const link = document.getElementById('team-signpost-link');
       const n = sp.teacherCount;
       const dom = esc(sp.domain || '');
       if (sp.isTeamAdmin) {
-        msg.innerHTML = t('history.signpostAdmin', 'Your school has {n} teachers using this.').replace('{n}', '<b>' + n + '</b>');
-        link.textContent = t('history.signpostAdminCta', 'Set up the domain plan →');
+        msg.innerHTML = t('history.clusterPromoMsg', '{n} teachers from your school are using Attendance Tracker. Upgrade to a Department Pass ($59/yr) to cover all colleagues.')
+          .replace('{n}', '<b>' + n + '</b>');
+        link.textContent = t('history.clusterPromoCta', 'Upgrade to Department Pass ($59/yr) →');
+        link.href = '/pricing.html?plan=department&domain=' + encodeURIComponent(sp.domain || '');
       } else {
-        msg.innerHTML = t('history.signpostTeam', '{n} teachers at {domain} use Attendance Tracker.')
-          .replace('{n}', '<b>' + n + '</b>').replace('{domain}', dom);
-        link.textContent = t('history.signpostCta', 'See the team plan →');
+        msg.innerHTML = t('history.clusterPromoMsg', '{n} teachers from your school are using Attendance Tracker. Upgrade to a Department Pass ($59/yr) to cover all colleagues.')
+          .replace('{n}', '<b>' + n + '</b>');
+        link.textContent = t('history.clusterPromoCta', 'Upgrade to Department Pass ($59/yr) →');
+        link.href = '/pricing.html?plan=department&domain=' + encodeURIComponent(sp.domain || '');
       }
       try { logHistoryEvent('team_signpost_shown', { teacherCount: n, isTeamAdmin: !!sp.isTeamAdmin }); } catch (e) {}
       box.style.display = 'flex';
@@ -641,6 +651,7 @@
     function dismissTeamSignpost() {
       const box = document.getElementById('team-signpost');
       if (box) box.style.display = 'none';
+      try { localStorage.setItem('att_dismiss_cluster_promo_until', String(Date.now() + 14 * 24 * 3600 * 1000)); } catch (e) {}
       try { logHistoryEvent('team_signpost_dismissed', {}); } catch (e) {}
       // Persist so it never returns for this user (fire-and-forget).
       try {

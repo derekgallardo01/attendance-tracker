@@ -1596,6 +1596,53 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
       </div>
   `;
 
+  let clusterBoxHtml = '';
+  let clusterBoxText = '';
+  if (!isPro && resolvedDomain) {
+    try {
+      const { PERSONAL_EMAIL_DOMAINS } = require('../services/firestore/_core');
+      if (!PERSONAL_EMAIL_DOMAINS.has(resolvedDomain.toLowerCase())) {
+        const { getDomainTeacherCount, getUser, setUserSettings } = require('../services/firestore');
+        if (typeof getDomainTeacherCount === 'function') {
+          const teacherCount = await getDomainTeacherCount(resolvedDomain);
+          if (teacherCount >= 2) {
+            const userObj = (typeof getUser === 'function') ? await getUser(resolvedDomain, to) : null;
+            const lastClusterSent = userObj?.lastClusterPromoSentAt ? new Date(userObj.lastClusterPromoSentAt).getTime() : 0;
+            // Frequency cap: maximum once every 14 days
+            if (!lastClusterSent || (Date.now() - lastClusterSent > 14 * 24 * 3600 * 1000)) {
+              let clusterTitle = `${teacherCount} teachers from your school are using Attendance Tracker`;
+              let clusterBody = `${teacherCount} teachers from your school domain (${resolvedDomain}) are using Attendance Tracker. Upgrade to a Department Pass ($59/yr) to cover all colleagues.`;
+              let clusterCta = 'Upgrade to Department Pass ($59/yr) →';
+              if (lang === 'es') {
+                clusterTitle = `${teacherCount} profesores de tu escuela están usando Attendance Tracker`;
+                clusterBody = `${teacherCount} profesores de tu dominio escolar (${resolvedDomain}) usan Attendance Tracker. Mejora a un Pase Departamental ($59/año) para cubrir a todos tus colegas.`;
+                clusterCta = 'Mejorar a Pase Departamental ($59/año) →';
+              } else if (lang === 'pt') {
+                clusterTitle = `${teacherCount} professores da sua escola estão usando o Attendance Tracker`;
+                clusterBody = `${teacherCount} professores da sua escola (${resolvedDomain}) usam o Attendance Tracker. Faça upgrade para o Passe Departamental ($59/ano) para cobrir todos os colegas.`;
+                clusterCta = 'Fazer upgrade para o Passe Departamental ($59/ano) →';
+              }
+              const clusterUrl = `https://attendancetracker.dev/pricing.html?plan=department&domain=${encodeURIComponent(resolvedDomain)}&utm_source=export_email_cluster`;
+              clusterBoxHtml = `
+                <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px 14px;margin:16px 0;text-align:left">
+                  <div style="font-weight:600;color:#e6edf3;font-size:13px;margin-bottom:4px">🏫 ${escape(clusterTitle)}</div>
+                  <div style="font-size:12px;color:#8b949e;margin-bottom:10px;line-height:1.4">${escape(clusterBody)}</div>
+                  <a href="${escape(clusterUrl)}" class="touch-btn-sm" style="display:inline-block;background:#238636;color:#ffffff;font-size:12px;font-weight:600;padding:7px 13px;border-radius:6px;text-decoration:none;line-height:1.35">${escape(clusterCta)}</a>
+                </div>
+              `;
+              clusterBoxText = `\n${clusterTitle}\n${clusterBody}\n${clusterUrl}\n`;
+              try {
+                if (typeof setUserSettings === 'function') {
+                  setUserSettings(resolvedDomain, to, { lastClusterPromoSentAt: new Date().toISOString() }).catch(() => {});
+                }
+              } catch (_) {}
+            }
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
   const contentHtml = `
     <p style="margin:0 0 6px;font-size:15px;color:#e6edf3">${greeting}</p>
     <p style="margin:0 0 16px;font-size:14px;color:#8b949e">${escape(meetingEndedText)}</p>
@@ -1612,6 +1659,7 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
       <a href="${escape(meetingLink)}" class="touch-btn" style="display:inline-block;background:#21262d;color:#58a6ff;border:1px solid #30363d;padding:8px 14px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;line-height:1.35;margin-bottom:8px">${escape(viewOnWebText)}</a>
     </div>
     ${seriesLink ? `<p style="margin:4px 0 16px;font-size:13px;color:#8b949e">${seriesTrendHtml(seriesLink)}</p>` : ''}
+    ${clusterBoxHtml}
     ${isPro ? '' : `<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:12px 14px;margin:16px 0;text-align:left">
       <div style="font-weight:600;color:#e6edf3;font-size:13px;margin-bottom:4px">${escape(reviewBoxTitle)}</div>
       <div style="font-size:12px;color:#8b949e;margin-bottom:10px;line-height:1.4">${escape(reviewBoxBody)}</div>
@@ -1656,6 +1704,7 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
     `${openSheetText}: ${sheetUrl}`,
     `${viewOnWebText.replace(' →', '')}: ${meetingLink}`,
     seriesLink ? seriesTrendPlain(seriesLink) : '',
+    clusterBoxText ? clusterBoxText.trim() : '',
     ``,
     ...(isPro ? [] : [
       reviewBoxPlainPrompt,

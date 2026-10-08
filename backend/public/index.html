@@ -3196,6 +3196,17 @@
       <button type="button" onclick="closeTrialEndingBanner()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px">×</button>
     </div>
   </div>
+  <!-- ── 25-Student Truncation Banner (Free Tier Cutoff) ── -->
+  <div id="export-truncated-banner" style="display:none;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;margin:6px 12px;background:rgba(251,191,36,.09);border:1px solid rgba(251,191,36,.3);border-radius:10px;font-size:11px;color:#fde68a">
+    <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1 1 auto">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span id="export-truncated-text" style="line-height:1.35"></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <button type="button" onclick="showUpgradeModal('largeClass')" class="btn-primary" style="padding:4px 10px;font-size:10.5px;font-weight:600;background:#fbbf24;color:#0d1117;border:none;border-radius:6px;cursor:pointer;white-space:nowrap" data-i18n="common.upgrade">Upgrade</button>
+      <button type="button" onclick="closeExportTruncatedBanner()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px">×</button>
+    </div>
+  </div>
 
   <div id="sheet-link-bar" style="display:none;margin:6px 12px;padding:9px 12px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
@@ -3399,6 +3410,30 @@
     </div>
     <button type="button" id="btn-unlock-pro" onclick="try{logUserEvent('large_class_banner_clicked',{})}catch(e){};showUpgradeModal('largeClass');" style="background:#f59e0b;color:#0b0f19;border:none;border-radius:6px;padding:4px 9px;font-size:10.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0" data-i18n="btn.unlockPro">Unlock Pro</button>
   </div>
+
+  <!-- ── Solo Tester Prompt Banner ── -->
+  <div id="solo-tester-banner" style="display:none;margin:6px 12px;padding:8px 12px;background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.25);border-radius:10px;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:#93c5fd">
+    <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1">
+      <span style="font-size:13px;flex-shrink:0">🎓</span>
+      <span data-i18n="soloTest.bannerSolo" style="line-height:1.35">Testing solo? Load a sample class of 25 students to test attendance formulas, late arrival badges, and Google Sheets export.</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <button type="button" onclick="loadSampleClass()" style="padding:4px 9px;font-size:10.5px;font-weight:600;background:rgba(88,166,255,.2);color:#93c5fd;border:1px solid rgba(88,166,255,.4);border-radius:6px;cursor:pointer;white-space:nowrap" data-i18n="soloTest.loadBtn">Load Sample Class (25 students)</button>
+      <button type="button" onclick="closeSoloTesterBanner()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#8b949e;cursor:pointer;font-size:14px;line-height:1;padding:0 2px">×</button>
+    </div>
+  </div>
+
+  <!-- ── Active Sample Class Banner ── -->
+  <div id="sample-class-active-banner" style="display:none;margin:6px 12px;padding:8px 12px;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);border-radius:10px;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:#86efac">
+    <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1">
+      <span style="font-size:13px;flex-shrink:0">✓</span>
+      <span data-i18n="soloTest.bannerActive" style="line-height:1.35">Sample Class loaded (25 students) · Try exporting to Google Sheets!</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <button type="button" onclick="clearSampleClass()" style="padding:4px 9px;font-size:10.5px;font-weight:600;background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3);border-radius:6px;cursor:pointer;white-space:nowrap" data-i18n="soloTest.clearBtn">Clear Sample Class</button>
+    </div>
+  </div>
+
   <div id="participant-list">
     <div class="empty-state">
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
@@ -3410,8 +3445,8 @@
       <div style="font-weight:600;color:#e6edf3;font-size:.88rem;margin-top:4px" data-i18n="empty.ready">Ready when you are</div>
       <span style="font-size:.78rem;color:#8b949e" data-i18n="empty.readySub">Press <strong style="color:#4ade80">Start</strong> above to begin tracking attendance</span>
       <div style="margin-top:12px">
-        <button type="button" onclick="startSimulation()" style="background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.35);color:#4ade80;border-radius:20px;padding:7px 14px;font-size:.75rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s ease">
-          <span data-i18n="empty.demo">Testing solo? Load 10 demo students →</span>
+        <button type="button" onclick="loadSampleClass()" style="background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.35);color:#4ade80;border-radius:20px;padding:7px 14px;font-size:.75rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s ease">
+          <span data-i18n="soloTest.loadBtn">Load Sample Class (25 students)</span>
         </button>
       </div>
 
@@ -4351,9 +4386,10 @@ function downloadAttendanceCsv() {
     return;
   }
 
-  if (!_isPro && ctx.parts.length > 25) {
-    showUpgradeModal('largeClass');
-    return;
+  const originalPartsCount = ctx.parts.length;
+  const isTruncated = !_isPro && originalPartsCount > 25;
+  if (isTruncated) {
+    ctx.parts = ctx.parts.slice(0, 25);
   }
 
   ctx.opts.isFreePlan = !_isPro;
@@ -4361,6 +4397,9 @@ function downloadAttendanceCsv() {
     ? AttUtils.buildAttendanceCsv(ctx.parts, ctx.activeRoster, ctx.opts)
     : '';
   if (!triggerCsvDownload(csvContent, `Attendance_${ctx.safeTitle}_${ctx.dateStr}.csv`)) return;
+  if (isTruncated) {
+    showExportTruncatedBanner(25, originalPartsCount);
+  }
 
   try {
     logUserEvent('export_csv_downloaded', {
@@ -4417,9 +4456,10 @@ function downloadAttendanceExcel() {
     return;
   }
 
-  if (!_isPro && ctx.parts.length > 25) {
-    showUpgradeModal('largeClass');
-    return;
+  const originalPartsCount = ctx.parts.length;
+  const isTruncated = !_isPro && originalPartsCount > 25;
+  if (isTruncated) {
+    ctx.parts = ctx.parts.slice(0, 25);
   }
 
   ctx.opts.isFreePlan = !_isPro;
@@ -4427,6 +4467,9 @@ function downloadAttendanceExcel() {
     ? AttUtils.buildAttendanceExcelXml(ctx.parts, ctx.activeRoster, ctx.opts)
     : '';
   if (!triggerExcelDownload(xmlContent, `Attendance_${ctx.safeTitle}_${ctx.dateStr}.xlsx`)) return;
+  if (isTruncated) {
+    showExportTruncatedBanner(25, originalPartsCount);
+  }
 
   try {
     logUserEvent('export_excel_downloaded', {
@@ -4939,38 +4982,35 @@ function renderTeamSignpost(sp) {
   const box = document.getElementById('team-signpost');
   if (!box) return;
   if (!sp || !sp.teacherCount || sp.teacherCount < 2) { box.style.display = 'none'; return; }
+  try {
+    const dismissUntil = localStorage.getItem('att_dismiss_cluster_promo_until');
+    if (dismissUntil && Date.now() < parseInt(dismissUntil, 10)) {
+      box.style.display = 'none';
+      return;
+    }
+  } catch (e) {}
   if (isAnyContextualBannerVisible('team-signpost')) return;
   const msg = document.getElementById('team-signpost-msg');
   const link = document.getElementById('team-signpost-link');
   if (!msg || !link) return;
   const n = sp.teacherCount;
-  if (sp.isTeamAdmin) {
-    msg.innerHTML = t('history.signpostAdmin', 'Your school has {n} teachers using this.').replace('{n}', '<b>' + n + '</b>');
-    link.textContent = t('history.signpostAdminCta', 'Set up the domain plan →');
-    link.href = 'https://attendancetracker.dev/team.html';
-    link.onclick = (e) => { onTeamSignpostClick(e); };
-  } else {
-    msg.innerHTML = t('history.signpostTeam59', '{n} teachers at {domain} are using Attendance Tracker. Request a whole-school license for $59/yr.')
-      .replace('{n}', '<b>' + n + '</b>').replace('{domain}', escHtml(sp.domain || ''));
-    link.textContent = t('history.signpostCta59', 'Request school license ($59/yr) →');
-    link.href = '#';
-    link.onclick = (e) => {
-      e.preventDefault();
-      onTeamSignpostClick(e);
-      if (typeof requestSchoolLicense === 'function') requestSchoolLicense();
-      return false;
-    };
-  }
+  msg.innerHTML = t('history.clusterPromoMsg', '{n} teachers from your school are using Attendance Tracker. Upgrade to a Department Pass ($59/yr) to cover all colleagues.')
+    .replace('{n}', '<b>' + n + '</b>');
+  link.textContent = t('history.clusterPromoCta', 'Upgrade to Department Pass ($59/yr) →');
+  link.href = 'https://attendancetracker.dev/pricing.html?plan=department&domain=' + encodeURIComponent(sp.domain || '');
+  link.target = '_blank';
+  link.onclick = (e) => { onTeamSignpostClick(e); };
   try { logUserEvent('team_signpost_shown', { teacherCount: n, isTeamAdmin: !!sp.isTeamAdmin, surface: 'panel' }); } catch (e) { /* best-effort */ }
   box.style.display = 'flex';
 }
 function onTeamSignpostClick() {
-  // The anchor opens team.html in a new top-level tab; just record the intent.
+  // The anchor opens pricing.html in a new top-level tab; just record the intent.
   try { logUserEvent('team_signpost_clicked', { surface: 'panel' }); } catch (e) { /* best-effort */ }
 }
 function dismissTeamSignpost() {
   const box = document.getElementById('team-signpost');
   if (box) box.style.display = 'none';
+  try { localStorage.setItem('att_dismiss_cluster_promo_until', String(Date.now() + 14 * 24 * 3600 * 1000)); } catch (e) {}
   try { logUserEvent('team_signpost_dismissed', {}); } catch (e) { /* best-effort */ }
   // Persist so it never returns for this user (fire-and-forget).
   try { fetch(`${state.backendUrl}/history/signpost-dismiss`, { method: 'POST', headers: authHeaders() }).catch(() => {}); } catch (e) { /* best-effort */ }
@@ -6181,6 +6221,24 @@ function renderList() {
   const container = document.getElementById('participant-list');
   const toolbar = document.getElementById('list-toolbar');
   const largeClassBanner = document.getElementById('large-class-banner');
+  const soloBanner = document.getElementById('solo-tester-banner');
+  const sampleActiveBanner = document.getElementById('sample-class-active-banner');
+
+  if (sampleActiveBanner) {
+    sampleActiveBanner.style.display = state._sampleClassActive ? 'flex' : 'none';
+  }
+  if (soloBanner) {
+    let showSolo = false;
+    if (_activeTab === 'participants' && !state._sampleClassActive && state.participants.size <= 1) {
+      try {
+        const dismissed = localStorage.getItem('att_dismiss_solo_tester');
+        if (!dismissed || Date.now() >= parseInt(dismissed, 10)) {
+          showSolo = true;
+        }
+      } catch (e) { showSolo = true; }
+    }
+    soloBanner.style.display = showSolo ? 'flex' : 'none';
+  }
 
   if (state.participants.size === 0) {
     if (largeClassBanner) largeClassBanner.style.display = 'none';
@@ -6720,6 +6778,32 @@ function closeTrialEndingBanner() {
   } catch (e) {}
 }
 
+function showExportTruncatedBanner(count, total) {
+  const banner = document.getElementById('export-truncated-banner');
+  const textEl = document.getElementById('export-truncated-text');
+  if (!banner || !textEl) return;
+  const msg = t('exportTruncated.banner', 'Exporting 25 of {total} students. Upgrade to Educator Pass ($4.99/yr) for unlimited students.')
+    .replace('{total}', String(total));
+  textEl.textContent = msg;
+  banner.style.display = 'flex';
+  try { logUserEvent('export_truncated_banner_shown', { count, total }); } catch (e) {}
+}
+
+function closeExportTruncatedBanner() {
+  const banner = document.getElementById('export-truncated-banner');
+  if (banner) banner.style.display = 'none';
+  try { logUserEvent('export_truncated_banner_dismissed', {}); } catch (e) {}
+}
+
+function closeSoloTesterBanner() {
+  const banner = document.getElementById('solo-tester-banner');
+  if (banner) banner.style.display = 'none';
+  try {
+    localStorage.setItem('att_dismiss_solo_tester', String(Date.now() + 7 * 24 * 3600 * 1000));
+    logUserEvent('solo_tester_banner_dismissed', {});
+  } catch (e) {}
+}
+
 function inferSchoolName(domain) {
   if (!domain || typeof domain !== 'string') return '';
   const clean = domain.toLowerCase().trim();
@@ -7256,6 +7340,29 @@ function updateUpgradeModalPricing() {
       btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#ffffff;font-weight:700">Rp 39.000</span>/yr`;
     }
     if (eduCard) eduCard.style.display = (_billing && _billing.educatorAvailable === false) ? 'none' : '';
+  } else if (country === 'MX') {
+    if (dealPill) {
+      dealPill.innerHTML = `<span>🇲🇽 México Especial: $99 MXN De por vida · $49/año Educador</span>`;
+      dealPill.style.background = 'rgba(74,222,128,.16)';
+      dealPill.style.borderColor = 'rgba(74,222,128,.4)';
+      dealPill.style.color = '#4ade80';
+    }
+    if (lifetimePriceEl) {
+      lifetimePriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">$99 MXN</span>`;
+    }
+    if (btnLifetime) {
+      btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime" style="color:#ffffff;font-weight:700">$99 MXN</span>`;
+    }
+    if (educatorPriceEl) {
+      educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">$49 MXN</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-left:4px">$99</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.49)</span>`;
+    }
+    if (eduPerMoBadge) {
+      eduPerMoBadge.textContent = '~$4 MXN/mes';
+    }
+    if (btnEdu) {
+      btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#ffffff;font-weight:700">$49 MXN</span>/año`;
+    }
+    if (eduCard) eduCard.style.display = (_billing && _billing.educatorAvailable === false) ? 'none' : '';
   } else {
     if (eduCard) eduCard.style.display = (_billing && _billing.educatorAvailable === false) ? 'none' : '';
   }
@@ -7277,6 +7384,9 @@ function updateUpgradeModalPricing() {
   } else if (country === 'ID') {
     singlePriceStr = 'Rp 29.000';
     singleCardHeaderPrice = 'Rp 29.000 IDR';
+  } else if (country === 'MX') {
+    singlePriceStr = '$29 MXN';
+    singleCardHeaderPrice = '$29 MXN';
   }
 
   if (singlePriceEl) {
@@ -7295,17 +7405,20 @@ function updateUpgradeModalPricing() {
   const badgeText = document.getElementById('upgrade-payment-badge-text');
   if (badgeText) {
     if (country === 'PH') {
-      badgeText.textContent = t('upgrade.badgesPH', '🇵🇭 GCash & Maya Accepted');
+      badgeText.textContent = t('upgrade.badgesPH', '🇵🇭 GCash, Maya & GrabPay Accepted');
       badgeText.setAttribute('data-i18n', 'upgrade.badgesPH');
     } else if (country === 'MY') {
       badgeText.textContent = t('upgrade.badgesMY', '🇲🇾 FPX & GrabPay Accepted');
       badgeText.setAttribute('data-i18n', 'upgrade.badgesMY');
     } else if (country === 'ID') {
-      badgeText.textContent = t('upgrade.badgesID', '🇮🇩 QRIS & GoPay Accepted');
+      badgeText.textContent = t('upgrade.badgesID', '🇮🇩 QRIS, GoPay & OVO Accepted');
       badgeText.setAttribute('data-i18n', 'upgrade.badgesID');
     } else if (country === 'IN') {
-      badgeText.textContent = t('upgrade.badgesIN', '🇮🇳 UPI & RuPay Accepted');
+      badgeText.textContent = t('upgrade.badgesIN', '🇮🇳 UPI, PhonePe & Google Pay Accepted');
       badgeText.setAttribute('data-i18n', 'upgrade.badgesIN');
+    } else if (country === 'MX') {
+      badgeText.textContent = t('upgrade.badgesMX', '🇲🇽 OXXO, Mercado Pago & SPEI Accepted');
+      badgeText.setAttribute('data-i18n', 'upgrade.badgesMX');
     } else {
       badgeText.textContent = t('upgrade.badgesDefault', '💳 Credit / Debit Cards, Apple Pay & Google Pay Accepted');
       badgeText.setAttribute('data-i18n', 'upgrade.badgesDefault');
@@ -8294,6 +8407,12 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     }),
   };
 
+  const totalAttendeeCount = payload.participants.length;
+  const isTruncated = !_isPro && totalAttendeeCount > 25;
+  if (isTruncated) {
+    payload.participants = payload.participants.slice(0, 25);
+  }
+
   // Stash the exact exported data so the "PDF report" button regenerates the
   // same roster the user just saved (rather than re-deriving from live state).
   state._lastExport = {
@@ -8433,6 +8552,9 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
       if (!opts.autoExport) window.open(sheetUrl, '_blank');
       document.getElementById('sheet-link').href = sheetUrl;
       document.getElementById('sheet-link-bar').style.display = 'block';
+    }
+    if (isTruncated) {
+      showExportTruncatedBanner(25, totalAttendeeCount);
     }
     const hasReviewed = !!localStorage.getItem('has_reviewed');
     const referralDismissed = !!localStorage.getItem('att_colleague_referral_dismissed');
@@ -10084,6 +10206,123 @@ const sim = {
 function generateSimSchedule(count) { return AttSim.buildSchedule(SIM_NAMES, count); }
 
 function getSimulationState() { return AttSim.participantsAt(sim.pool, sim.startTime, sim.elapsed); }
+
+const SAMPLE_CLASS_ROSTER = [
+  { displayName: 'Alex Rivera', email: 'alex.rivera@school.edu', minsAgo: 30, present: true },
+  { displayName: 'Beatrice Chen', email: 'beatrice.chen@school.edu', minsAgo: 29, present: true },
+  { displayName: 'Carlos Mendez', email: 'carlos.m@school.edu', minsAgo: 28, present: true },
+  { displayName: 'Daphne Patel', email: 'daphne.p@school.edu', minsAgo: 30, present: true },
+  { displayName: 'Ethan Walker', email: 'ethan.w@school.edu', minsAgo: 29, present: true },
+  { displayName: 'Fatima Al-Mansoor', email: 'fatima.m@school.edu', minsAgo: 30, present: true },
+  { displayName: 'Gabriel Santos', email: 'gabriel.s@school.edu', minsAgo: 28, present: true },
+  { displayName: 'Hannah Kim', email: 'hannah.kim@school.edu', minsAgo: 29, present: true },
+  { displayName: 'Isaac Newton', email: 'isaac.n@school.edu', minsAgo: 30, present: true },
+  { displayName: 'Jasmine Kaur', email: 'jasmine.k@school.edu', minsAgo: 29, present: true },
+  { displayName: 'Liam O\'Connor', email: 'liam.oc@school.edu', minsAgo: 30, present: true },
+  { displayName: 'Maya Lin', email: 'maya.lin@school.edu', minsAgo: 28, present: true },
+  { displayName: 'Noah Miller', email: 'noah.m@school.edu', minsAgo: 30, present: true },
+  { displayName: 'Olivia Rossi', email: 'olivia.r@school.edu', minsAgo: 29, present: true },
+  { displayName: 'Priya Sharma', email: 'priya.s@school.edu', minsAgo: 30, present: true },
+  { displayName: 'Quinn Adams', email: 'quinn.a@school.edu', minsAgo: 28, present: true },
+  { displayName: 'Rafael Silva', email: 'rafael.s@school.edu', minsAgo: 29, present: true },
+  { displayName: 'Sofia Hernandez', email: 'sofia.h@school.edu', minsAgo: 30, present: true },
+  // 4 Late arrivals (joined 12-16 min ago, meeting started 30 min ago -> late by >10 min)
+  { displayName: 'Tariq Hassan', email: 'tariq.h@school.edu', minsAgo: 16, present: true },
+  { displayName: 'Uma Raman', email: 'uma.r@school.edu', minsAgo: 15, present: true },
+  { displayName: 'Victor Hugo', email: 'victor.h@school.edu', minsAgo: 14, present: true },
+  { displayName: 'Wendy Zhang', email: 'wendy.z@school.edu', minsAgo: 12, present: true },
+  // 3 Left early (joined 30 min ago, left 10-15 min ago)
+  { displayName: 'Xavier Dupont', email: 'xavier.d@school.edu', minsAgo: 30, leftMinsAgo: 15, present: false },
+  { displayName: 'Yasmine Benali', email: 'yasmine.b@school.edu', minsAgo: 30, leftMinsAgo: 12, present: false },
+  { displayName: 'Zachary Taylor', email: 'zach.t@school.edu', minsAgo: 30, leftMinsAgo: 10, present: false }
+];
+
+function loadSampleClass() {
+  const now = Date.now();
+  const startTime = new Date(now - 30 * 60 * 1000);
+  state._sampleClassActive = true;
+  state.tracking = true;
+  state.startTime = startTime;
+  state.conferenceStartTime = startTime;
+  state._eventStart = startTime.toISOString();
+  state.meetingTitle = 'Biology 101 · Sample Class (25 students)';
+  const titleEl = document.getElementById('meeting-title');
+  if (titleEl) titleEl.textContent = state.meetingTitle;
+
+  state.participants.clear();
+  for (const s of SAMPLE_CLASS_ROSTER) {
+    const joinTime = new Date(now - s.minsAgo * 60 * 1000);
+    const leaveTime = s.leftMinsAgo ? new Date(now - s.leftMinsAgo * 60 * 1000) : null;
+    const durMs = leaveTime
+      ? Math.max(0, leaveTime.getTime() - joinTime.getTime())
+      : Math.max(0, now - joinTime.getTime());
+    state.participants.set(s.displayName, {
+      participantId: 'sample_' + s.displayName.toLowerCase().replace(/[^a-z0-9]/g, '_'),
+      displayName: s.displayName,
+      email: s.email,
+      joinTime,
+      trackedJoinTime: joinTime,
+      leaveTime,
+      present: s.present,
+      sessions: 1,
+      _accumulatedMs: s.present ? 0 : durMs,
+      _sample: true
+    });
+  }
+
+  const btnStart = document.getElementById('btn-start');
+  const btnRefresh = document.getElementById('btn-refresh');
+  const btnSheets = document.getElementById('btn-sheets');
+  const btnCsv = document.getElementById('btn-csv');
+  const btnExcel = document.getElementById('btn-excel');
+  if (btnStart) btnStart.disabled = true;
+  if (btnRefresh) btnRefresh.disabled = false;
+  if (btnSheets) btnSheets.disabled = false;
+  if (btnCsv) btnCsv.disabled = false;
+  if (btnExcel) btnExcel.disabled = false;
+
+  setStatus('active', 'Sample class loaded · 25 students');
+  showSearchBar();
+  startDurationTimer();
+  renderList();
+  updateSummary();
+  updateLastRefresh();
+
+  toast(t('soloTest.bannerActive', 'Sample Class loaded (25 students) · Try exporting to Google Sheets!'), 4000);
+  try { logUserEvent('sample_class_loaded', { count: 25 }); } catch (e) {}
+}
+
+function clearSampleClass() {
+  state._sampleClassActive = false;
+  state.tracking = false;
+  state.startTime = null;
+  state.conferenceStartTime = null;
+  state._eventStart = null;
+  state.participants.clear();
+
+  const titleEl = document.getElementById('meeting-title');
+  if (titleEl) titleEl.textContent = 'Google Meet';
+
+  const btnStart = document.getElementById('btn-start');
+  const btnRefresh = document.getElementById('btn-refresh');
+  const btnSheets = document.getElementById('btn-sheets');
+  const btnCsv = document.getElementById('btn-csv');
+  const btnExcel = document.getElementById('btn-excel');
+  if (btnStart) btnStart.disabled = false;
+  if (btnRefresh) btnRefresh.disabled = true;
+  if (btnSheets) btnSheets.disabled = true;
+  if (btnCsv) btnCsv.disabled = true;
+  if (btnExcel) btnExcel.disabled = true;
+
+  clearInterval(state.durationTimer);
+  const durEl = document.getElementById('meeting-duration');
+  if (durEl) durEl.textContent = '—';
+
+  setStatus('loading', t('empty.ready', 'Ready when you are'));
+  renderList();
+  updateSummary();
+  try { logUserEvent('sample_class_cleared', {}); } catch (e) {}
+}
 
 function startSimulation() {
   sim.active = true;

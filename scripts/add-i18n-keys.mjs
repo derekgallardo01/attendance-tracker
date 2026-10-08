@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { EXTRA_LOCALE_OVERRIDES } from './build-locale-overrides.mjs';
+import { GROWTH_KEYS_EN, GROWTH_LOCALE_MAPS, getGrowthTranslationsForLocale } from './add-growth-keys.mjs';
 const require = createRequire(import.meta.url);
 const i18nBackend = require('../backend/src/lib/i18n.js');
 
@@ -128,6 +129,8 @@ const NEW_KEYS_EN = {
   "lms.sessionExpired": "Session expired",
   "lms.permissionRequired": "Permission required"
 };
+
+Object.assign(NEW_KEYS_EN, GROWTH_KEYS_EN);
 
 // Specialized translations for non-English locales
 const LOCALE_OVERRIDES = {
@@ -537,7 +540,7 @@ export function updateStringsFile() {
     const locHeader = LOCALIZED_HEADERS[loc] || LOCALIZED_HEADERS['en'] || {};
     const checkedInWord = locHeader.checkedIn || (loc === 'es' || loc === 'pt' ? 'Registrado' : 'Checked in');
 
-    const overrides = { ...(EXTRA_LOCALE_OVERRIDES[loc] || {}), ...(LOCALE_OVERRIDES[loc] || {}) };
+    const overrides = { ...(EXTRA_LOCALE_OVERRIDES[loc] || {}), ...(LOCALE_OVERRIDES[loc] || {}), ...(GROWTH_LOCALE_MAPS[loc] || getGrowthTranslationsForLocale(loc)) };
 
     const locPattern = `"${loc}": {`;
     const locIdx = code.indexOf(locPattern);
@@ -553,7 +556,7 @@ export function updateStringsFile() {
     const endBlockIdx = nextCloseIdx !== -1 ? nextCloseIdx : code.indexOf('\n    }', locIdx);
     let block = code.slice(locIdx, endBlockIdx);
 
-    for (const [k, enVal] of Object.entries(NEW_KEYS_EN)) {
+    for (const [k, enVal] of Object.entries({ ...NEW_KEYS_EN, ...GROWTH_KEYS_EN })) {
       const desiredVal = (k in overrides)
         ? overrides[k]
         : (k === 'export.checkedInPrefix'

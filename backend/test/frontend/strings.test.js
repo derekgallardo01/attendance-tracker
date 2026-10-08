@@ -691,6 +691,7 @@ describe('no "wired but English-valued" keys (translation-content guard)', () =>
   //  - brand / product-tier proper nouns kept in English on purpose.
   const isAllowed = (key) =>
     key.startsWith('lang.') ||
+    key.startsWith('upgrade.badges') ||      // Regional payment brands (OXXO, GCash, UPI, QRIS, FPX)
     key === 'source.marketplace' ||          // "Workspace Marketplace" (Google product name)
     key === 'ext.title' ||                   // "Attendance Tracker" product title in companion extension
     key === 'pricing.planDomainName' ||      // "Domain Pro" tier — kept as a brand label
