@@ -634,8 +634,8 @@ async function sendAdminMilestoneEmail({
     <table class="responsive-table" style="table-layout:fixed;border-collapse:collapse;width:100%;font-size:13px;background:#0d1117;border:1px solid #30363d;border-radius:8px;overflow:hidden;margin-bottom:18px;box-sizing:border-box;">
       <tr><td style="padding:9px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;width:40%;">Milestone Metric</td><td style="padding:9px 12px;border-bottom:1px solid #21262d;color:#4ade80;font-weight:700;">${escape(label)}</td></tr>
       <tr><td style="padding:9px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Total Registered Users</td><td style="padding:9px 12px;border-bottom:1px solid #21262d;color:#e6edf3;font-weight:600;">${userCount.toLocaleString()}</td></tr>
-      <tr><td style="padding:9px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Active Pro Customers</td><td style="padding:9px 12px;border-bottom:1px solid #21262d;color:#e6edf3;font-weight:600;">${proCount.toLocaleString()}</td></tr>
-      <tr><td style="padding:9px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Meetings Tracked</td><td style="padding:9px 12px;border-bottom:1px solid #21262d;color:#e6edf3;font-weight:600;">${meetingCount.toLocaleString()}</td></tr>
+      <tr><td style="padding:9px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Active Pro Customers</td><td style="padding:9px 12px;border-bottom:1px solid #21262d;color:#e6edf3;font-weight:600;">${proCount > 0 ? proCount.toLocaleString() : '—'}</td></tr>
+      <tr><td style="padding:9px 12px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;">Meetings Tracked</td><td style="padding:9px 12px;border-bottom:1px solid #21262d;color:#e6edf3;font-weight:600;">${meetingCount > 0 ? meetingCount.toLocaleString() : '—'}</td></tr>
       <tr><td style="padding:9px 12px;color:#8b949e;font-weight:600;">Unlocked At</td><td style="padding:9px 12px;color:#e6edf3;">${new Date().toUTCString()}</td></tr>
     </table>
 
@@ -660,8 +660,8 @@ async function sendAdminMilestoneEmail({
     `🎉 MILESTONE UNLOCKED: ${label}!`,
     '',
     `Total Users: ${userCount.toLocaleString()}`,
-    `Pro Customers: ${proCount.toLocaleString()}`,
-    `Meetings Tracked: ${meetingCount.toLocaleString()}`,
+    `Pro Customers: ${proCount > 0 ? proCount.toLocaleString() : '—'}`,
+    `Meetings Tracked: ${meetingCount > 0 ? meetingCount.toLocaleString() : '—'}`,
     '',
     'Social Snippet:',
     socialCopy,
@@ -783,6 +783,21 @@ async function maybeSendSignupNotification(domain, email) {
   if (ownerResult && ownerResult.sent === false && ownerResult.error) {
     await releaseSignupNotification(domain, email);
     return { sent: false, released: true };
+  }
+
+  // Automatic founder milestone check: when a new signup crosses a growth threshold
+  // (e.g. 100, 250, 500, 1,000, 2,500, 5,000, 10,000+ users), trigger celebration email immediately.
+  if (typeof totalUsers === 'number' && totalUsers > 0) {
+    try {
+      const { checkAndRecordMilestones } = require('../services/firestore');
+      if (typeof checkAndRecordMilestones === 'function') {
+        await checkAndRecordMilestones({ userCount: totalUsers }, {
+          meta: { trigger: 'signup', email: payload.email, domain: payload.domain },
+        });
+      }
+    } catch (mErr) {
+      log.warn('milestone check on signup failed', { error: mErr.message, totalUsers });
+    }
   }
 
   // Welcome email to the newly signed up user — AWAITED, not fire-and-forget:

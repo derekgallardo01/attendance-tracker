@@ -364,6 +364,30 @@ describe('notifications — content sanity checks', () => {
     jest.dontMock('../../src/services/firestore');
   });
 
+  test('maybeSendSignupNotification evaluates milestones automatically on signup', async () => {
+    const claimSignupNotification = jest.fn().mockResolvedValue({
+      email: 'founder@school.edu', displayName: 'Teacher', domain: 'school.edu',
+      reportedSource: 'marketplace', reportedDetail: null, detectedSource: 'marketplace',
+    });
+    const checkAndRecordMilestones = jest.fn().mockResolvedValue([]);
+    jest.doMock('../../src/services/firestore', () => ({
+      claimSignupNotification,
+      countAllUsers: jest.fn().mockResolvedValue(1000),
+      isEmailSuppressed: jest.fn().mockResolvedValue(false),
+      checkAndRecordMilestones,
+    }));
+    jest.resetModules();
+    const n = require('../../src/lib/notifications');
+
+    await n.maybeSendSignupNotification('school.edu', 'founder@school.edu');
+    expect(checkAndRecordMilestones).toHaveBeenCalledWith(
+      { userCount: 1000 },
+      expect.objectContaining({ meta: expect.objectContaining({ trigger: 'signup', email: 'founder@school.edu' }) })
+    );
+
+    jest.dontMock('../../src/services/firestore');
+  });
+
   test('maybeSendSignupNotification RELEASES the claim on a definite send failure (retryable by the sweep)', async () => {
     const claimSignupNotification = jest.fn().mockResolvedValue({
       email: 'b@x.com', displayName: 'B', domain: 'x.com',
