@@ -6,7 +6,7 @@
  * cross-origin request (Google sign-in, Stripe, Google Fonts, YouTube) are never
  * intercepted — the SW stays out of auth and data paths entirely.
  */
-const CACHE = 'att-shell-v4';
+const CACHE = 'att-shell-v5';
 
 // App shell to pre-cache for offline. A single missing asset must not fail the
 // whole install, so we add them individually via allSettled.

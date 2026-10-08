@@ -136,6 +136,17 @@
       buildSchedule: function () { return []; },
       participantsAt: function () { return []; },
     };
+    window.AttStrings = window.AttStrings || {
+      t: function (k, f) { return f || k; },
+      setLocale: function () {},
+      getLocale: function () { return 'en'; },
+      detectLocale: function () { return 'en'; },
+      applyTranslations: function () {},
+      renderLanguagePicker: function () {},
+      getAvailableLocales: function () { return [{ code: 'en', label: 'English', flag: '🇺🇸' }]; },
+      LOCALES: [{ code: 'en', label: 'English', flag: '🇺🇸' }],
+      STRINGS: {},
+    };
   </script>
 
   <!-- Open Graph + Twitter card — rich preview on Slack, Twitter/X, LinkedIn, iMessage -->
@@ -9382,13 +9393,15 @@ async function submitCertModal(btn) {
    i18n UI HELPERS
 ═══════════════════════════════════════════════════════════════ */
 function updateUiLanguage() {
-  if (!window.AttStrings) return;
-  const curLocale = AttStrings.getLocale();
+  if (typeof window.AttStrings === 'undefined') return;
+  const curLocale = (typeof AttStrings.getLocale === 'function') ? AttStrings.getLocale() : 'en';
   const isRtl = (curLocale === 'he' || curLocale === 'ar' || curLocale === 'ur');
   const addonEl = document.getElementById('addon-ui');
   if (addonEl) addonEl.dir = isRtl ? 'rtl' : 'ltr';
 
-  AttStrings.applyTranslations(document.body);
+  if (typeof AttStrings.applyTranslations === 'function') {
+    AttStrings.applyTranslations(document.body);
+  }
 
   const btnStartLabel = document.getElementById('btn-start-label');
   if (btnStartLabel) {
@@ -9434,22 +9447,30 @@ function updateUiLanguage() {
 }
 
 function changeLanguage(lang) {
-  if (window.AttStrings) {
+  if (typeof window.AttStrings !== 'undefined' && typeof AttStrings.setLocale === 'function') {
     AttStrings.setLocale(lang, true);
     updateUiLanguage();
-    const matched = AttStrings.LOCALES.find(l => l.code === lang);
+    const list = (typeof AttStrings.getAvailableLocales === 'function')
+      ? AttStrings.getAvailableLocales()
+      : (Array.isArray(AttStrings.LOCALES) ? AttStrings.LOCALES : []);
+    const matched = list.find(l => l.code === lang);
     toast(`${matched ? matched.flag + ' ' + matched.label : lang}`);
   }
 }
 
 function populateLanguageSelect() {
   const langSel = document.getElementById('settings-lang-select');
-  if (!langSel || !window.AttStrings) return;
-  const locales = AttStrings.getAvailableLocales();
+  if (!langSel || typeof window.AttStrings === 'undefined') return;
+  const locales = (typeof AttStrings.getAvailableLocales === 'function')
+    ? AttStrings.getAvailableLocales()
+    : (Array.isArray(AttStrings.LOCALES) ? AttStrings.LOCALES : []);
+  if (!locales || !locales.length) return;
   langSel.innerHTML = locales.map(l => 
     `<option value="${l.code}">${l.flag} ${l.label}</option>`
   ).join('');
-  langSel.value = AttStrings.getLocale();
+  if (typeof AttStrings.getLocale === 'function') {
+    langSel.value = AttStrings.getLocale();
+  }
 }
 
 const COMMON_TIMEZONES = [
