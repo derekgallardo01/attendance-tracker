@@ -773,7 +773,8 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
       for (let i = 0; i < participants.length; i += CHUNK) {
         const batch = getDb().batch();
         for (const p of participants.slice(i, i + CHUNK)) {
-          const docId = lastSegment(p.participantId);
+          const rawDocId = (p.participantId ? lastSegment(p.participantId) : '') || p.email || p.displayName || 'unknown';
+          const docId = String(rawDocId).replace(/\//g, '_').trim() || 'unknown';
           const pRef = meetingRef.collection('participants').doc(docId);
           batch.set(pRef, {
             participantId: p.participantId,
@@ -784,6 +785,8 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
             email: p.email ? p.email.toLowerCase() : null,
             joinTime: p.joinTime ? new Date(p.joinTime) : null,
             leaveTime: p.leaveTime ? new Date(p.leaveTime) : null,
+            durationMs: typeof p.durationMs === 'number' ? p.durationMs : 0,
+            durationMin: typeof p.durationMin === 'number' ? p.durationMin : Math.round((p.durationMs || 0) / 60000),
             present: p.present,
             sessions: p.sessions,
             lastSeenAt: now,

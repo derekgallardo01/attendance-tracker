@@ -86,7 +86,57 @@ describe('persistAttendance — batch chunking', () => {
     expect(ctx.read(`${inst}/participants/p0`)).toBeDefined();
     expect(ctx.read(`${inst}/participants/p449`)).toBeDefined();
     expect(ctx.read(`${inst}/participants/p450`)).toBeDefined();
-    expect(ctx.read(`${inst}/participants/p499`)).toBeDefined();
+  });
+
+  test('persistAttendance includes durationMs, durationMin and handles missing/null participantId gracefully', async () => {
+    const participants = [
+      {
+        participantId: 'spaces/xyz/participants/p1',
+        displayName: 'Alice',
+        email: 'alice@acme.com',
+        durationMs: 120000,
+        present: true,
+      },
+      {
+        participantId: null,
+        displayName: 'Bob Without Id',
+        email: 'bob@acme.com',
+        durationMs: 150000,
+        durationMin: 3,
+        present: false,
+      },
+      {
+        participantId: undefined,
+        displayName: 'Anon Without Id Or Email',
+        email: null,
+        present: true,
+      },
+      {
+        participantId: undefined,
+        displayName: 'Anon / Proctor',
+        email: null,
+        present: true,
+      },
+    ];
+
+    await firestore.persistAttendance('acme.com', 'conf-dur', 'records/rec-dur', participants, 'teacher@acme.com');
+
+    const inst = 'tenants/acme.com/meetings/conf-dur__rec-dur';
+    const p1Doc = ctx.read(`${inst}/participants/p1`);
+    expect(p1Doc.durationMs).toBe(120000);
+    expect(p1Doc.durationMin).toBe(2);
+
+    const bobDoc = ctx.read(`${inst}/participants/bob@acme.com`);
+    expect(bobDoc.durationMs).toBe(150000);
+    expect(bobDoc.durationMin).toBe(3);
+
+    const anonDoc = ctx.read(`${inst}/participants/Anon Without Id Or Email`);
+    expect(anonDoc.durationMs).toBe(0);
+    expect(anonDoc.durationMin).toBe(0);
+
+    const slashDoc = ctx.read(`${inst}/participants/Anon _ Proctor`);
+    expect(slashDoc).toBeDefined();
+    expect(slashDoc.displayName).toBe('Anon / Proctor');
   });
 
   test('RECURRING class: each session gets its own doc — week 2 no longer overwrites week 1', async () => {

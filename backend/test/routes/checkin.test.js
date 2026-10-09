@@ -14,6 +14,7 @@ jest.mock('../../src/services/firestore', () => ({
   // planIsPro (routes/billing) reads these for the attestation-export gate
   getTenantPlan: jest.fn(),
   getUserPlan: jest.fn(),
+  isMeetingUnlocked: jest.fn(),
 }));
 
 const firestore = require('../../src/services/firestore');
@@ -27,6 +28,7 @@ beforeEach(() => {
   firestore.getUser.mockResolvedValue(undefined);
   firestore.saveCheckin.mockResolvedValue({ checkedInAt: '2026-09-08T10:00:00.000Z', already: false });
   firestore.getCheckins.mockResolvedValue([]);
+  firestore.isMeetingUnlocked.mockResolvedValue(false);
   app = buildApp();
 });
 
@@ -133,6 +135,22 @@ describe('GET /api/checkin/export — attestation CSV (Pro)', () => {
     const res = await request(app).get('/api/checkin/export?meetingCode=abc-defg-hij').set(authedHeader('host@a.com', 'a.com'));
     expect(res.status).toBe(402);
     expect(res.body.feature).toBe('attestation');
+  });
+
+  test('allows export for a free user when the meeting is unlocked', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_PRICE_ID = 'price_x';
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+    firestore.isMeetingUnlocked.mockResolvedValue(true);
+    firestore.getCheckins.mockResolvedValue([
+      { email: 's@x.com', displayName: 'Sam', checkedInAt: '2026-09-08T14:03:00.000Z' },
+    ]);
+    app = buildApp();
+    const res = await request(app).get('/api/checkin/export?meetingCode=abc-defg-hij').set(authedHeader('host@a.com', 'a.com'));
+    expect(res.status).toBe(200);
+    expect(res.body.count).toBe(1);
+    expect(firestore.isMeetingUnlocked).toHaveBeenCalledWith('a.com', 'host@a.com', 'abc-defg-hij');
   });
 
   test('500 on a service failure', async () => {

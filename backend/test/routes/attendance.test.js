@@ -416,7 +416,7 @@ describe('GET /api/attendance — large-meeting cap (A6) + rate limiting (A9)', 
     expect(res.body.totalParticipants).toBe(4);          // raw records
     expect(res.body.distinctCount).toBe(2);              // Ana + Bo
     expect(res.body.participants).toHaveLength(2);        // one entry per person
-    expect(sessionCalls).toBe(2);                         // one session call per person, not 4
+    expect(sessionCalls).toBe(4);                         // fetches sessions for all participant records to merge
     expect(res.body.participants.map(p => p.email).sort()).toEqual(['ana@acme.com', 'bo@acme.com']);
     expect(res.body.truncated).toBe(false);
   });
@@ -537,13 +537,83 @@ describe('GET /api/attendance — final residual branches', () => {
     expect(res.body.error).toMatch(/Temporary connection issue/i);
   });
 
-  test('unexpected error returns 500 Failed to fetch attendance data', async () => {
-    mockMeetGet.mockResolvedValue({ conferenceRecords: [{ name: 'conferenceRecords/rec-crash' }] });
-    mockMeetGetAll.mockRejectedValue(new Error('unanticipated fatal crash'));
+  test('participant rejoin merges records sharing the same identity (combining sessions, summing durations, setting present=true for open session)', async () => {
+    firestore.getTenantConfig.mockResolvedValue(null);
+    mockMeetGet.mockResolvedValue({ conferenceRecords: [{ name: 'conferenceRecords/rec-rejoin', startTime: null, endTime: null }] });
+
+    mockMeetGetAll.mockImplementation(async (pathArg) => {
+      if (pathArg.endsWith('/participants')) {
+        return [
+          {
+            name: 'conferenceRecords/rec-rejoin/participants/part-1',
+            signedinUser: { displayName: 'Rejoining User', email: 'rejoin@acme.com' },
+          },
+          {
+            name: 'conferenceRecords/rec-rejoin/participants/part-2',
+            signedinUser: { displayName: 'Rejoining User', email: 'rejoin@acme.com' },
+          },
+        ];
+      }
+      if (pathArg.includes('part-1/participantSessions')) {
+        return [
+          { startTime: '2026-06-01T10:00:00.000Z', endTime: '2026-06-01T10:15:00.000Z' },
+        ];
+      }
+      if (pathArg.includes('part-2/participantSessions')) {
+        return [
+          { startTime: '2026-06-01T10:20:00.000Z', endTime: null },
+        ];
+      }
+      return [];
+    });
 
     const res = await request(app).get('/api/attendance?conferenceId=abc').set(auth());
-    expect(res.status).toBe(500);
-    expect(res.body.error).toBe('Failed to fetch attendance data.');
+    expect(res.status).toBe(200);
+    expect(res.body.participants).toHaveLength(1);
+    const p = res.body.participants[0];
+    expect(p.email).toBe('rejoin@acme.com');
+    expect(p.sessions).toBe(2);
+    expect(p.present).toBe(true);
+    expect(p.durationMs).toBeGreaterThanOrEqual(900000);
+  });
+
+  test('participant rejoin preserves presence and duration for successfully fetched sessions even when another session fetch in the group throws a transient error', async () => {
+    firestore.getTenantConfig.mockResolvedValue(null);
+    mockMeetGet.mockResolvedValue({ conferenceRecords: [{ name: 'conferenceRecords/rec-rejoin-partial', startTime: null, endTime: null }] });
+
+    mockMeetGetAll.mockImplementation(async (pathArg) => {
+      if (pathArg.endsWith('/participants')) {
+        return [
+          {
+            name: 'conferenceRecords/rec-rejoin-partial/participants/part-1',
+            signedinUser: { displayName: 'Rejoining User', email: 'rejoin-partial@acme.com' },
+          },
+          {
+            name: 'conferenceRecords/rec-rejoin-partial/participants/part-2',
+            signedinUser: { displayName: 'Rejoining User', email: 'rejoin-partial@acme.com' },
+          },
+        ];
+      }
+      if (pathArg.includes('part-1/participantSessions')) {
+        return [
+          { startTime: '2026-06-01T10:00:00.000Z', endTime: '2026-06-01T10:20:00.000Z' },
+        ];
+      }
+      if (pathArg.includes('part-2/participantSessions')) {
+        throw new Error('Meet API transient socket hang up');
+      }
+      return [];
+    });
+
+    const res = await request(app).get('/api/attendance?conferenceId=abc').set(auth());
+    expect(res.status).toBe(200);
+    expect(res.body.participants).toHaveLength(1);
+    const p = res.body.participants[0];
+    expect(p.email).toBe('rejoin-partial@acme.com');
+    expect(p.present).toBe(true);
+    expect(p.durationMs).toBe(1200000);
+    expect(p.joinTime).toBe('2026-06-01T10:00:00.000Z');
+    expect(p.leaveTime).toBe('2026-06-01T10:20:00.000Z');
   });
 });
 

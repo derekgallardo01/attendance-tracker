@@ -220,7 +220,7 @@ async function createCheckoutSessionForUser({ user, plan, interval, conferenceId
     || (userCountry === 'MY' && process.env.STRIPE_EDUCATOR_MYR_PRICE_ID)
     || (userCountry === 'ID' && process.env.STRIPE_EDUCATOR_IDR_PRICE_ID)
     || (isIndia && process.env.STRIPE_EDUCATOR_INR_PRICE_ID)
-    || process.env.STRIPE_EDUCATOR_ANNUAL_PRICE_ID;
+    || (!isPppEligible && process.env.STRIPE_EDUCATOR_ANNUAL_PRICE_ID);
 
   let eduCurrency = 'usd';
   let eduUnitAmount = 249; // $2.49 USD equivalent for PPP countries
@@ -733,7 +733,7 @@ router.post('/billing/public-checkout', async (req, res) => {
     || (userCountry === 'MY' && process.env.STRIPE_EDUCATOR_MYR_PRICE_ID)
     || (userCountry === 'ID' && process.env.STRIPE_EDUCATOR_IDR_PRICE_ID)
     || (isIndia && process.env.STRIPE_EDUCATOR_INR_PRICE_ID)
-    || process.env.STRIPE_EDUCATOR_ANNUAL_PRICE_ID;
+    || (!isPppEligible && process.env.STRIPE_EDUCATOR_ANNUAL_PRICE_ID);
 
   let eduCurrency = 'usd';
   let eduUnitAmount = 249;
@@ -1548,6 +1548,15 @@ async function webhookHandler(req, res) {
           const domain = sub.metadata?.domain;
           const email = sub.metadata?.email;
           if (domain && email) {
+            if (event.type === 'customer.subscription.deleted') {
+              const userPlan = await getUserPlan(domain, email);
+              if (userPlan?.individualPlanType === 'lifetime' || (userPlan?.stripeSubscriptionId && userPlan.stripeSubscriptionId !== sub.id)) {
+                log.info('billing: ignoring subscription.deleted for lifetime or superseded individual subscription', {
+                  domain, email, deletedSubId: sub.id, activeSubId: userPlan?.stripeSubscriptionId, planType: userPlan?.individualPlanType,
+                });
+                break;
+              }
+            }
             await setUserPlan(domain, email, {
               individualPlan: active ? 'pro' : 'free',
               individualBillingStatus: sub.status,
@@ -1559,6 +1568,15 @@ async function webhookHandler(req, res) {
         } else {
           const domain = sub.metadata?.domain;
           if (domain) {
+            if (event.type === 'customer.subscription.deleted') {
+              const tenant = await getTenantPlan(domain);
+              if (tenant?.planType === 'lifetime' || (tenant?.stripeSubscriptionId && tenant.stripeSubscriptionId !== sub.id)) {
+                log.info('billing: ignoring subscription.deleted for lifetime or superseded tenant subscription', {
+                  domain, deletedSubId: sub.id, activeSubId: tenant?.stripeSubscriptionId, planType: tenant?.planType,
+                });
+                break;
+              }
+            }
             await setTenantPlan(domain, {
               plan: active ? 'pro' : 'free',
               billingStatus: sub.status,
@@ -1808,10 +1826,7 @@ async function createReferralPromoCode(inviterEmail) {
   if (!stripe || !couponId) return null;
   try {
     const pc = await stripe.promotionCodes.create({
-      promotion: {
-        coupon: couponId,
-        type: 'coupon',
-      },
+      coupon: couponId,
       max_redemptions: 1,
       metadata: { referrer: inviterEmail, kind: 'referral_reward' },
     });

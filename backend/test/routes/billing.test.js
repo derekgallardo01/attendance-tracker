@@ -212,6 +212,20 @@ describe('billing — configured (Stripe env set)', () => {
     }));
   });
 
+  test('webhook subscription.deleted does not downgrade tenant when subscription is superseded', async () => {
+    firestore.getTenantPlan.mockResolvedValueOnce({ plan: 'pro', billingStatus: 'active', stripeSubscriptionId: 'sub_active' });
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      type: 'customer.subscription.deleted',
+      data: { object: { id: 'sub_old', status: 'canceled', metadata: { domain: 'acme.com' } } },
+    });
+    await request(app)
+      .post('/api/billing/webhook')
+      .set('Content-Type', 'application/json')
+      .set('stripe-signature', 'good')
+      .send({});
+    expect(firestore.setTenantPlan).not.toHaveBeenCalled();
+  });
+
   test('webhook subscription.updated → past_due KEEPS Pro (dunning grace)', async () => {
     mockStripeInstance.webhooks.constructEvent.mockReturnValue({
       type: 'customer.subscription.updated',
@@ -313,6 +327,40 @@ describe('billing — individual (per-user) tier for personal-email users', () =
     });
     await request(app).post('/api/billing/webhook').set('Content-Type', 'application/json').set('stripe-signature', 'good').send({});
     expect(firestore.setUserPlan).toHaveBeenCalledWith('gmail.com', GMAIL, expect.objectContaining({ individualPlan: 'free', individualBillingStatus: 'canceled' }));
+    expect(firestore.setTenantPlan).not.toHaveBeenCalled();
+  });
+
+  test('webhook subscription.deleted does not downgrade user when subscription is superseded', async () => {
+    firestore.getUserPlan.mockResolvedValueOnce({ plan: 'pro', billingStatus: 'active', stripeSubscriptionId: 'sub_user_active' });
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      type: 'customer.subscription.deleted',
+      data: { object: { id: 'sub_user_old', status: 'canceled', metadata: { individual: '1', domain: 'gmail.com', email: GMAIL } } },
+    });
+    await request(app).post('/api/billing/webhook').set('Content-Type', 'application/json').set('stripe-signature', 'good').send({});
+    expect(firestore.setUserPlan).not.toHaveBeenCalled();
+  });
+
+  test('webhook subscription.deleted does not downgrade user holding lifetime pass', async () => {
+    firestore.getUserPlan.mockResolvedValueOnce({ plan: 'pro', individualPlanType: 'lifetime', billingStatus: 'active' });
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      type: 'customer.subscription.deleted',
+      data: { object: { id: 'sub_user_old', status: 'canceled', metadata: { individual: '1', domain: 'gmail.com', email: GMAIL } } },
+    });
+    await request(app).post('/api/billing/webhook').set('Content-Type', 'application/json').set('stripe-signature', 'good').send({});
+    expect(firestore.setUserPlan).not.toHaveBeenCalled();
+  });
+
+  test('webhook subscription.deleted does not downgrade tenant when subscription is superseded or holding lifetime pass', async () => {
+    firestore.getTenantPlan.mockResolvedValueOnce({ plan: 'pro', billingStatus: 'active', stripeSubscriptionId: 'sub_tenant_active' });
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      type: 'customer.subscription.deleted',
+      data: { object: { id: 'sub_tenant_old', status: 'canceled', metadata: { domain: 'acme.com' } } },
+    });
+    await request(app).post('/api/billing/webhook').set('Content-Type', 'application/json').set('stripe-signature', 'good').send({});
+    expect(firestore.setTenantPlan).not.toHaveBeenCalled();
+
+    firestore.getTenantPlan.mockResolvedValueOnce({ plan: 'pro', planType: 'lifetime', billingStatus: 'active' });
+    await request(app).post('/api/billing/webhook').set('Content-Type', 'application/json').set('stripe-signature', 'good').send({});
     expect(firestore.setTenantPlan).not.toHaveBeenCalled();
   });
 
@@ -705,7 +753,7 @@ describe('createReferralPromoCode', () => {
     const code = await createReferralPromoCode('inviter@x.com');
     expect(code).toBe('ABC123');
     expect(mockStripeInstance.promotionCodes.create).toHaveBeenCalledWith(expect.objectContaining({
-      promotion: { coupon: 'coup_123', type: 'coupon' },
+      coupon: 'coup_123',
       max_redemptions: 1,
       metadata: expect.objectContaining({ referrer: 'inviter@x.com', kind: 'referral_reward' }),
     }));
@@ -1325,6 +1373,59 @@ describe('billing/status pricing payload', () => {
       })
     );
     delete process.env.STRIPE_INDIVIDUAL_LIFETIME_INR_PRICE_ID;
+  });
+
+  test('checkout for PPP eligible user (e.g. Nigeria NG) requesting educator uses dynamic $2.49 USD rate even when STRIPE_EDUCATOR_ANNUAL_PRICE_ID is set', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_EDUCATOR_ANNUAL_PRICE_ID = 'price_edu_annual_global';
+    process.env.STRIPE_EDUCATOR_PRICE_ID = 'price_edu_usd';
+    app = buildApp();
+    const res = await request(app)
+      .post('/api/billing/checkout')
+      .set(authedHeader('teacher@uni.edu.ng', 'uni.edu.ng'))
+      .set('cf-ipcountry', 'NG')
+      .send({ plan: 'educator' });
+    expect(res.status).toBe(200);
+    expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: 'payment',
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: { name: 'Attendance Tracker Pro (Educator - 1 Year)' },
+            unit_amount: 249,
+          },
+          quantity: 1,
+        }],
+      })
+    );
+    delete process.env.STRIPE_EDUCATOR_ANNUAL_PRICE_ID;
+  });
+
+  test('public-checkout for PPP eligible user (e.g. Colombia CO) requesting educator uses dynamic $2.49 USD rate even when STRIPE_EDUCATOR_ANNUAL_PRICE_ID is set', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_EDUCATOR_ANNUAL_PRICE_ID = 'price_edu_annual_global';
+    process.env.STRIPE_EDUCATOR_PRICE_ID = 'price_edu_usd';
+    app = buildApp();
+    const res = await request(app)
+      .post('/api/billing/public-checkout')
+      .set('cf-ipcountry', 'CO')
+      .send({ plan: 'educator', email: 'teacher@colegio.edu.co' });
+    expect(res.status).toBe(200);
+    expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: 'payment',
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: { name: 'Attendance Tracker Pro (Educator - 1 Year)' },
+            unit_amount: 249,
+          },
+          quantity: 1,
+        }],
+      })
+    );
+    delete process.env.STRIPE_EDUCATOR_ANNUAL_PRICE_ID;
   });
 
   test('GET /billing/status for Indian user returns clean INR prices in pricing table', async () => {

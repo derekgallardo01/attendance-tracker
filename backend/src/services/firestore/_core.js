@@ -132,8 +132,9 @@ function tenantRef(domain) {
 
 // Extract last segment from a Meet API resource name.
 function lastSegment(resourceName) {
-  const parts = resourceName.split('/');
-  return parts[parts.length - 1];
+  if (!resourceName || typeof resourceName !== 'string') return '';
+  const parts = resourceName.replace(/\/+$/, '').split('/');
+  return parts[parts.length - 1] || '';
 }
 
 // Count DISTINCT human attendees, not raw participant records. Meet assigns a

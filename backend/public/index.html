@@ -4488,10 +4488,11 @@ async function downloadAttendanceCsv() {
 }
  
 function triggerExcelDownload(xmlContent, filename) {
+  const finalFilename = (filename || 'attendance.xls').replace(/\.xlsx$/i, '.xls');
   const mime = 'application/vnd.ms-excel;charset=utf-8;';
-  const mode = relayDownload({ filename, mime, content: xmlContent, encoding: 'text' });
+  const mode = relayDownload({ filename: finalFilename, mime, content: xmlContent, encoding: 'text' });
   if (mode === 'blocked') return false;
-  if (mode === 'direct') directBlobDownload(new Blob([xmlContent], { type: mime }), filename);
+  if (mode === 'direct') directBlobDownload(new Blob([xmlContent], { type: mime }), finalFilename);
   return true;
 }
 
@@ -4555,7 +4556,7 @@ async function downloadAttendanceExcel() {
   const xmlContent = (typeof AttUtils !== 'undefined' && AttUtils.buildAttendanceExcelXml)
     ? AttUtils.buildAttendanceExcelXml(ctx.parts, ctx.activeRoster, ctx.opts)
     : '';
-  if (!triggerExcelDownload(xmlContent, `Attendance_${ctx.safeTitle}_${ctx.dateStr}.xlsx`)) return;
+  if (!triggerExcelDownload(xmlContent, `Attendance_${ctx.safeTitle}_${ctx.dateStr}.xls`)) return;
 
   try {
     logUserEvent('export_excel_downloaded', {

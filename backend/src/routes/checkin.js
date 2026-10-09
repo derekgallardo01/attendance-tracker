@@ -2,7 +2,7 @@ const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
 const { requireAuth } = require('../middleware/auth');
 const log = require('../lib/logger');
-const { saveCheckin, getCheckins } = require('../services/firestore');
+const { saveCheckin, getCheckins, isMeetingUnlocked } = require('../services/firestore');
 
 const router = Router();
 
@@ -69,7 +69,8 @@ router.get('/checkin/export', requireAuth, async (req, res) => {
     const { meetingCode } = req.query;
     if (!meetingCode) return res.status(400).json({ error: 'meetingCode is required' });
     const { planIsPro } = require('./billing');
-    const pro = await planIsPro(req.user.domain, req.user.email);
+    const pro = (await planIsPro(req.user.domain, req.user.email))
+      || (typeof isMeetingUnlocked === 'function' && await isMeetingUnlocked(req.user.domain, req.user.email, meetingCode));
     if (!pro) {
       return res.status(402).json({ error: 'Check-in attestation exports are a Pro feature.', upgrade: true, feature: 'attestation' });
     }

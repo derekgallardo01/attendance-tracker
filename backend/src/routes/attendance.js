@@ -253,16 +253,20 @@ router.get('/attendance', async (req, res) => {
       // collapse to one). Only real emails/names identify a person to dedupe.
       const name = rawName && rawName !== 'unknown' ? rawName : '';
       const key = email || (name ? `name:${name}` : `__anon_${anonSeq++}`);
-      if (!seen.has(key)) seen.set(key, p); // first record represents the person
+      if (!seen.has(key)) {
+        seen.set(key, [p]);
+      } else {
+        seen.get(key).push(p);
+      }
     }
-    const distinctParticipants = [...seen.values()];
-    const distinctCount = distinctParticipants.length;
+    const distinctGroups = [...seen.values()];
+    const distinctCount = distinctGroups.length;
 
     // Cap the DISTINCT set (bounds memory + the per-poll session-call count). For
     // the 5,000-record/257-person meeting this now processes all 257 rather than
     // an arbitrary first-500 slice of raw records.
     const truncated = distinctCount > MAX_PARTICIPANTS;
-    const toProcess = truncated ? distinctParticipants.slice(0, MAX_PARTICIPANTS) : distinctParticipants;
+    const toProcess = truncated ? distinctGroups.slice(0, MAX_PARTICIPANTS) : distinctGroups;
     if (truncated) {
       log.warn('attendance: distinct participant list capped', { conferenceId, raw: totalParticipants, distinct: distinctCount, cap: MAX_PARTICIPANTS });
     }
@@ -274,32 +278,57 @@ router.get('/attendance', async (req, res) => {
     for (let i = 0; i < toProcess.length; i += BATCH_SIZE) {
       const batch = toProcess.slice(i, i + BATCH_SIZE);
       const batchResults = await Promise.all(
-        batch.map(async (p) => {
+        batch.map(async (group) => {
+          const primary = group.find(p => p.signedinUser?.email && p.signedinUser?.displayName)
+            || group.find(p => p.signedinUser?.email)
+            || group.find(p => p.signedinUser?.displayName || p.anonymousUser?.displayName || p.phoneUser?.displayName)
+            || group[0];
+          let hadFetchError = false;
           try {
-            const sessions = await callWithTokenRefresh(tok =>
-              meetGetAll(`${p.name}/participantSessions`, tok, 'participantSessions')
+            const sessionArrays = await Promise.all(
+              group.map(async (p) => {
+                try {
+                  return await callWithTokenRefresh(tok =>
+                    meetGetAll(`${p.name}/participantSessions`, tok, 'participantSessions')
+                  );
+                } catch (err) {
+                  if (isAuthError(err)) throw err;
+                  if (isRateLimited(err)) rateLimited = true;
+                  hadFetchError = true;
+                  log.warn('failed to fetch sessions for participant record', { name: p.name, error: err.message });
+                  return [];
+                }
+              })
             );
+            const sessions = sessionArrays.flat();
+            if (sessions.length === 0 && hadFetchError) {
+              return {
+                participantId: primary.name,
+                ...participantIdentity(primary),
+                joinTime: null, leaveTime: null, present: true, sessions: group.length || 1,
+              };
+            }
             const joinTimes  = sessions.map(s => s.startTime).filter(Boolean).map(t => new Date(t));
             const leaveTimes = sessions.map(s => s.endTime).filter(Boolean).map(t => new Date(t));
             return {
-              participantId: p.name,
-              ...participantIdentity(p),
+              participantId: primary.name,
+              ...participantIdentity(primary),
               joinTime:      joinTimes.length  > 0 ? new Date(Math.min(...joinTimes)).toISOString()  : null,
               leaveTime:     leaveTimes.length > 0 ? new Date(Math.max(...leaveTimes)).toISOString() : null,
               // Actual in-meeting time (sum of sessions) — the join/leave span
               // above over-credits anyone who left and came back.
               durationMs:    sessionsDurationMs(sessions),
-              present:       sessions.some(s => !s.endTime),
-              sessions:      sessions.length,
+              present:       sessions.some(s => !s.endTime) || hadFetchError,
+              sessions:      sessions.length || group.length,
             };
           } catch (err) {
             if (isAuthError(err)) throw err;
             if (isRateLimited(err)) rateLimited = true;
-            log.warn('failed to fetch sessions for participant', { name: p.name, error: err.message });
+            log.warn('failed to fetch sessions for participant', { name: primary.name, error: err.message });
             return {
-              participantId: p.name,
-              ...participantIdentity(p),
-              joinTime: null, leaveTime: null, present: true, sessions: 1,
+              participantId: primary.name,
+              ...participantIdentity(primary),
+              joinTime: null, leaveTime: null, present: true, sessions: group.length || 1,
             };
           }
         })
@@ -310,8 +339,12 @@ router.get('/attendance', async (req, res) => {
       // (the remaining participants still show, just without precise timings).
       if (rateLimited) {
         log.warn('attendance: stopping session fetch early — rate limited', { conferenceId, done: participants.length, total: toProcess.length });
-        for (const p of toProcess.slice(participants.length)) {
-          participants.push({ participantId: p.name, ...participantIdentity(p), joinTime: null, leaveTime: null, present: true, sessions: 1 });
+        for (const group of toProcess.slice(participants.length)) {
+          const primary = group.find(p => p.signedinUser?.email && p.signedinUser?.displayName)
+            || group.find(p => p.signedinUser?.email)
+            || group.find(p => p.signedinUser?.displayName || p.anonymousUser?.displayName || p.phoneUser?.displayName)
+            || group[0];
+          participants.push({ participantId: primary.name, ...participantIdentity(primary), joinTime: null, leaveTime: null, present: true, sessions: group.length || 1 });
         }
         break;
       }

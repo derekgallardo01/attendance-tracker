@@ -147,6 +147,19 @@ describe('lastSegment', () => {
   test('returns the final path segment of a Meet resource name', () => {
     expect(core.lastSegment('conferenceRecords/abc/participants/xyz')).toBe('xyz');
   });
+
+  test('strips trailing slashes correctly', () => {
+    expect(core.lastSegment('conferenceRecords/abc/participants/xyz/')).toBe('xyz');
+    expect(core.lastSegment('conferenceRecords/abc/participants/xyz///')).toBe('xyz');
+  });
+
+  test('safely returns empty string for null, undefined, empty, or non-string inputs', () => {
+    expect(core.lastSegment(null)).toBe('');
+    expect(core.lastSegment(undefined)).toBe('');
+    expect(core.lastSegment('')).toBe('');
+    expect(core.lastSegment(12345)).toBe('');
+    expect(core.lastSegment({})).toBe('');
+  });
 });
 
 describe('getDb', () => {
