@@ -501,6 +501,7 @@ router.get('/admin/weekly-report', requireSuperAdmin, async (req, res) => {
     const report = await getWeeklySelfReport();
     res.json(report || { error: 'failed' });
   } catch (err) {
+    log.error('admin: weekly-report get failed', { error: err.message });
     res.status(500).json({ error: 'Failed' });
   }
 });
@@ -685,7 +686,7 @@ router.post('/admin/check-reengagement', requireSuperAdminOrScheduler, async (re
           }
           if (!result || result.sent !== true) {
             // Release the claim; leave it open for the next run.
-            try { await claim.ref.delete(); } catch (_) { /* best-effort */ }
+            try { await claim.ref.delete(); } catch (delErr) { log.warn('admin: failed to release reengagement claim', { email: user.email, error: delErr.message }); }
             totalSkipped++;
             if (result?.error) errors.push({ email: user.email, error: result.error });
             continue;
@@ -762,7 +763,7 @@ router.post('/admin/check-alerts', requireSuperAdminOrScheduler, async (req, res
         if (alerts === null) {
           // Evaluation ERRORED (Firestore blip) — release the day slot so the
           // next run retries instead of silencing the user until tomorrow.
-          try { await claim.ref.delete(); } catch (_) { /* best-effort */ }
+          try { await claim.ref.delete(); } catch (delErr) { log.warn('admin: failed to release alert claim on eval error', { email: user.email, error: delErr.message }); }
           continue;
         }
         if (alerts.length === 0) continue; // genuinely nothing: slot stays — the once-a-day evaluation throttle
@@ -791,8 +792,8 @@ router.post('/admin/check-alerts', requireSuperAdminOrScheduler, async (req, res
           domain: user.domain || null,
         });
         if (!result || result.sent !== true) {
-          try { await claim.ref.delete(); } catch (_) { /* best-effort */ }
-          for (const c of conditionClaims) { try { await c.ref.delete(); } catch (_) { /* best-effort */ } }
+          try { await claim.ref.delete(); } catch (delErr) { log.warn('admin: failed to release alert claim on send failure', { email: user.email, error: delErr.message }); }
+          for (const c of conditionClaims) { try { await c.ref.delete(); } catch (delErr) { log.warn('admin: failed to release condition claim', { email: user.email, error: delErr.message }); } }
           usersSkipped++;
           if (result?.error) errors.push({ email: user.email, error: result.error });
           continue;
@@ -869,6 +870,7 @@ router.put('/admin/note', requireSuperAdmin, async (req, res) => {
     const result = await setAdminNote(domain, email, body || '', req.user.email);
     res.json(result);
   } catch (err) {
+    log.error('admin: set note failed', { email: req.body?.email, domain: req.body?.domain, error: err.message });
     res.status(500).json({ error: 'Failed to save note' });
   }
 });
@@ -878,6 +880,7 @@ router.get('/admin/notes/search', requireSuperAdmin, async (req, res) => {
     const results = await searchAdminNotes(req.query.q || '');
     res.json({ results });
   } catch (err) {
+    log.error('admin: search notes failed', { query: req.query?.q, error: err.message });
     res.status(500).json({ error: 'Search failed' });
   }
 });
@@ -910,6 +913,7 @@ router.put('/admin/outreach/status', requireSuperAdmin, async (req, res) => {
     await setOutreachStatus(domain, email, status);
     res.json({ success: true });
   } catch (err) {
+    log.error('admin: set outreach status failed', { email: req.body?.email, domain: req.body?.domain, error: err.message });
     res.status(500).json({ error: 'Failed' });
   }
 });
@@ -921,6 +925,7 @@ router.post('/admin/outreach/log-reply', requireSuperAdmin, async (req, res) => 
     await appendConversation(domain, email, { direction: 'received', subject: '', body: body || '', replyStatus: status || 'replied' });
     res.json({ success: true });
   } catch (err) {
+    log.error('admin: log reply failed', { email: req.body?.email, domain: req.body?.domain, error: err.message });
     res.status(500).json({ error: 'Failed' });
   }
 });
@@ -930,6 +935,7 @@ router.get('/admin/templates', requireSuperAdmin, async (req, res) => {
     const items = await getEmailTemplates();
     res.json({ items });
   } catch (err) {
+    log.error('admin: get email templates failed', { error: err.message });
     res.status(500).json({ error: 'Failed' });
   }
 });
@@ -939,6 +945,7 @@ router.put('/admin/templates', requireSuperAdmin, async (req, res) => {
     await setEmailTemplates(req.body?.items || []);
     res.json({ success: true });
   } catch (err) {
+    log.error('admin: set email templates failed', { error: err.message });
     res.status(500).json({ error: 'Failed' });
   }
 });
@@ -951,6 +958,7 @@ router.post('/admin/reminders', requireSuperAdmin, async (req, res) => {
     const r = await createReminder(domain, email, { remindAt, body, createdBy: req.user.email });
     res.json(r);
   } catch (err) {
+    log.error('admin: create reminder failed', { email: req.body?.email, domain: req.body?.domain, error: err.message });
     res.status(500).json({ error: 'Failed' });
   }
 });
@@ -962,6 +970,7 @@ router.put('/admin/reminders/:id/done', requireSuperAdmin, async (req, res) => {
     await markReminderDone(domain, req.params.id);
     res.json({ success: true });
   } catch (err) {
+    log.error('admin: mark reminder done failed', { id: req.params.id, domain: req.body?.domain, error: err.message });
     res.status(500).json({ error: 'Failed' });
   }
 });
@@ -971,6 +980,7 @@ router.get('/admin/reminders/due', requireSuperAdmin, async (req, res) => {
     const reminders = await getDueReminders();
     res.json({ reminders });
   } catch (err) {
+    log.error('admin: get due reminders failed', { error: err.message });
     res.status(500).json({ error: 'Failed' });
   }
 });
@@ -1184,7 +1194,7 @@ async function fetchConferenceParticipants(recordName, token) {
         // A FAILED fetch means "unknown", not "attended 0 minutes" — omitting
         // the field lets the sheet render blanks instead of a hard 0%.
         ...(sessionsFetchFailed ? {} : { durationMs: sessionsDurationMs(sessions) }),
-        present:      sessions.some(s => !s.endTime),
+        present:      sessions.length > 0 || sessions.some(s => !s.endTime),
         sessions:     sessions.length || 1,
       };
     }));
@@ -1308,7 +1318,7 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
                 // Sheets 429/5xx used to leave the claim held forever, and the
                 // meeting was silently never exported (permanent data loss on
                 // the hands-free paid feature).
-                try { await claim.ref?.delete(); } catch { /* best-effort */ }
+                try { await claim.ref?.delete(); } catch (delErr) { log.warn('auto-capture: failed to release claim', { email: u.email, conferenceId: meetingCode, error: delErr.message }); }
                 throw exportErr;
               }
               alreadyExported.add(meetingCode);
@@ -1374,7 +1384,7 @@ router.post('/admin/org-digest', requireSuperAdminOrScheduler, async (req, res) 
         // From here on, a failure must RELEASE the week slot — the claim is
         // permanent, so leaving it would silently cancel this domain's digest
         // for the week (dispatchEmail returns {sent:false} rather than throw).
-        const release = async () => { try { await slot.ref?.delete(); } catch { /* best-effort */ } };
+        const release = async () => { try { await slot.ref?.delete(); } catch (delErr) { log.warn('admin: failed to release digest slot', { domain, adminEmail, error: delErr.message }); } };
         try {
           const overview = await getTeamOverview(domain);
           // Nothing tracked yet → nothing to digest (no empty-brag emails).
@@ -1476,7 +1486,7 @@ router.post('/admin/check-upcoming', requireSuperAdminOrScheduler, async (req, r
             language: userDoc?.language || u.language,
           });
           if (!result || result.sent !== true) {
-            try { await claim.ref.delete(); } catch (_) { /* let a later run retry */ }
+            try { await claim.ref.delete(); } catch (delErr) { log.warn('admin: failed to release upcoming claim', { email: u.email, error: delErr.message }); }
             errored++; if (result && result.error) errors.push({ email: u.email, error: result.error });
             continue;
           }

@@ -103,17 +103,33 @@ function participantIdentity(p) {
 }
 
 // Sum of actual in-meeting time across sessions (an open session counts up to
-// `now`). The old first-join→last-leave span credited people for time they
-// were AWAY between sessions.
+// `now`). Overlapping intervals (e.g. multi-device sessions) are merged first
+// so concurrent minutes are not double-counted.
 function sessionsDurationMs(sessions, nowMs = Date.now()) {
-  let total = 0;
+  const intervals = [];
   for (const s of sessions || []) {
     if (!s.startTime) continue;
     const start = new Date(s.startTime).getTime();
     const end = s.endTime ? new Date(s.endTime).getTime() : nowMs;
-    if (Number.isFinite(start) && Number.isFinite(end) && end > start) total += end - start;
+    if (Number.isFinite(start) && Number.isFinite(end) && end > start) {
+      intervals.push([start, end]);
+    }
   }
-  return total;
+  if (intervals.length === 0) return 0;
+  intervals.sort((a, b) => a[0] - b[0]);
+
+  const merged = [intervals[0]];
+  for (let i = 1; i < intervals.length; i++) {
+    const prev = merged[merged.length - 1];
+    const curr = intervals[i];
+    if (curr[0] <= prev[1]) {
+      prev[1] = Math.max(prev[1], curr[1]);
+    } else {
+      merged.push(curr);
+    }
+  }
+
+  return merged.reduce((total, [start, end]) => total + (end - start), 0);
 }
 
 // Fetch all participants and their sessions for a conferenceRecord.

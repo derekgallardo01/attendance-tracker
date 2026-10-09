@@ -227,6 +227,7 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
         return 'America/New_York';
       }
     })();
+    tz = validSpreadsheetTz;
 
     // Resolve spreadsheet ID: per-user sheet (OAuth) or shared sheet (legacy)
     let spreadsheetId;

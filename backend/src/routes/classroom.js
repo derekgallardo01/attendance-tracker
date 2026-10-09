@@ -25,6 +25,13 @@ const router = Router();
 const scopeMissing = (err) =>
   err?.code === 403 || /insufficient|PERMISSION_DENIED/i.test(err?.message || '');
 
+const isAuthExpired = (err) => {
+  const gStatus = err?.status || err?.code || err?.response?.status;
+  const msg = `${err?.message || ''} ${err?.response?.data?.error || ''} ${err?.response?.data?.error_description || ''}`;
+  const hasAuthErrorReason = Array.isArray(err?.errors) && err.errors.some(e => e.reason === 'authError' || e.reason === 'invalidCredentials');
+  return gStatus === 401 || hasAuthErrorReason || /invalid_grant|invalid credentials|unauthorized_client|no access, refresh token|invalid authentication cred/i.test(msg);
+};
+
 // Mirror sheets.js's explicit AUTH_EXPIRED contract.
 function requireAccessToken(req, res) {
   if (req.user?.accessToken) return true;
@@ -87,6 +94,10 @@ router.get('/classroom/courses', requireAuth, async (req, res) => {
       courses: courses.map(c => ({ id: c.id, name: c.name, section: c.section || '' })),
     });
   } catch (err) {
+    if (isAuthExpired(err)) {
+      log.warn('classroom: google auth expired', { email: req.user.email, error: err.message });
+      return res.status(401).json({ error: 'Your Google session expired. Please sign in again.', code: 'AUTH_EXPIRED' });
+    }
     if (scopeMissing(err)) {
       log.info('classroom: courses scope not granted', { email: req.user.email });
       return res.status(403).json({ error: 'classroom_scope_missing', scopeMissing: true });
@@ -121,6 +132,10 @@ router.get('/classroom/courses/:courseId/students', requireAuth, async (req, res
     } while (pageToken && students.length < 1000);
     res.json({ students });
   } catch (err) {
+    if (isAuthExpired(err)) {
+      log.warn('classroom: google auth expired', { email: req.user.email, error: err.message });
+      return res.status(401).json({ error: 'Your Google session expired. Please sign in again.', code: 'AUTH_EXPIRED' });
+    }
     if (scopeMissing(err)) {
       log.info('classroom: roster scope not granted', { email: req.user.email });
       return res.status(403).json({ error: 'classroom_scope_missing', scopeMissing: true });
@@ -162,6 +177,10 @@ router.get('/classroom/courses/:courseId/courseWork', requireAuth, async (req, r
     } while (pageToken && courseWork.length < 500);
     res.json({ courseWork });
   } catch (err) {
+    if (isAuthExpired(err)) {
+      log.warn('classroom: google auth expired', { email: req.user.email, error: err.message });
+      return res.status(401).json({ error: 'Your Google session expired. Please sign in again.', code: 'AUTH_EXPIRED' });
+    }
     if (scopeMissing(err)) {
       log.info('classroom: coursework scope not granted', { email: req.user.email });
       return res.status(403).json({ error: 'classroom_scope_missing', scopeMissing: true });
@@ -210,6 +229,10 @@ router.post('/classroom/courses/:courseId/courseWork', requireAuth, async (req, 
       },
     });
   } catch (err) {
+    if (isAuthExpired(err)) {
+      log.warn('classroom: google auth expired', { email: req.user.email, error: err.message });
+      return res.status(401).json({ error: 'Your Google session expired. Please sign in again.', code: 'AUTH_EXPIRED' });
+    }
     if (scopeMissing(err)) {
       log.info('classroom: coursework create scope not granted', { email: req.user.email });
       return res.status(403).json({ error: 'classroom_scope_missing', scopeMissing: true });
@@ -339,24 +362,32 @@ async function handleClassroomGradeSync(req, res) {
       if (submission) {
         const grade = calculateClassroomGrade(rec, maxPoints, opts);
         try {
+          const isReturned = submission.state === 'RETURNED';
           await classroom.courses.courseWork.studentSubmissions.patch({
             courseId,
             courseWorkId,
             id: submission.id,
-            updateMask: 'assignedGrade,draftGrade',
-            requestBody: {
+            updateMask: isReturned ? 'assignedGrade,draftGrade' : 'draftGrade',
+            requestBody: isReturned ? {
               assignedGrade: grade,
+              draftGrade: grade,
+            } : {
               draftGrade: grade,
             },
           });
 
           if (returnGrades && classroom.courses.courseWork.studentSubmissions.return) {
-            await classroom.courses.courseWork.studentSubmissions.return({
-              courseId,
-              courseWorkId,
-              id: submission.id,
-              requestBody: {},
-            }).catch(retErr => log.warn('classroom: return grade warning', { error: retErr.message }));
+            try {
+              await classroom.courses.courseWork.studentSubmissions.return({
+                courseId,
+                courseWorkId,
+                id: submission.id,
+                requestBody: {},
+              });
+            } catch (retErr) {
+              if (isAuthExpired(retErr)) throw retErr;
+              log.warn('classroom: return grade warning', { error: retErr.message });
+            }
           }
 
           const prof = userIdToProfile.get(matchedUserId) || {};
@@ -369,6 +400,7 @@ async function handleClassroomGradeSync(req, res) {
             submissionId: submission.id,
           });
         } catch (patchErr) {
+          if (isAuthExpired(patchErr)) throw patchErr;
           results.push({
             userId: matchedUserId,
             email: rec.email || '',
@@ -418,6 +450,10 @@ async function handleClassroomGradeSync(req, res) {
       results,
     });
   } catch (err) {
+    if (isAuthExpired(err)) {
+      log.warn('classroom: google auth expired', { email: req.user.email, error: err.message });
+      return res.status(401).json({ error: 'Your Google session expired. Please sign in again.', code: 'AUTH_EXPIRED' });
+    }
     if (scopeMissing(err)) {
       log.info('classroom: grade sync scope not granted', { email: req.user.email });
       return res.status(403).json({ error: 'classroom_scope_missing', scopeMissing: true });

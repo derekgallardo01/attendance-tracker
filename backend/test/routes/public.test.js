@@ -518,6 +518,14 @@ describe('public — error paths + validation branches', () => {
     expect(res.status).toBe(200);
     expect(firestore.suppressEmail).toHaveBeenCalled();
   });
+
+  test('unsubscribe returns 500 on database error during suppression', async () => {
+    notifications.verifyUnsubscribeToken.mockReturnValue(true);
+    firestore.suppressEmail.mockRejectedValueOnce(new Error('Firestore connection failure'));
+    const res = await request(app).post('/api/public/unsubscribe?e=a@x.com&t=good');
+    expect(res.status).toBe(500);
+    expect(res.text).toContain('An error occurred');
+  });
 });
 
 describe('public — final residual branches', () => {

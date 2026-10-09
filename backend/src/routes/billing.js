@@ -171,7 +171,7 @@ async function createSafeCheckoutSession(stripe, sessionParams, context = {}) {
 
 const router = Router();
 
-async function createCheckoutSessionForUser({ user, plan, interval, conferenceId, country, promo, req }) {
+async function createCheckoutSessionForUser({ user, plan, interval, conferenceId, country, promo, req, returnUrl }) {
   const stripe = getStripe();
   const domain = user.domain;
   const email = user.email;
@@ -308,7 +308,21 @@ async function createCheckoutSessionForUser({ user, plan, interval, conferenceId
     meta.conferenceId = confId;
     meta.meetingPass = '1';
   }
-  const backTo = individual ? 'history.html' : 'team.html';
+  const defaultBackTo = isSingleMeeting
+    ? (confId ? `index.html?unlocked=${encodeURIComponent(confId)}` : 'index.html')
+    : (individual ? 'history.html' : 'team.html');
+  let backTo = returnUrl || defaultBackTo;
+  if (isSingleMeeting && confId && !backTo.includes('unlocked=')) {
+    const bSep = backTo.includes('?') ? '&' : '?';
+    backTo = `${backTo}${bSep}unlocked=${encodeURIComponent(confId)}`;
+  }
+  const sep = backTo.includes('?') ? '&' : '?';
+  const successUrl = backTo.startsWith('http://') || backTo.startsWith('https://')
+    ? `${backTo}${sep}upgraded=1`
+    : `${CONFIG.publicSiteUrl}/${backTo.replace(/^\//, '')}${sep}upgraded=1`;
+  const cancelUrl = backTo.startsWith('http://') || backTo.startsWith('https://')
+    ? backTo
+    : `${CONFIG.publicSiteUrl}/${backTo.replace(/^\//, '')}`;
 
   let resolvedPriceId = sanitizePriceId(priceId);
   let isRecurring = !isLifetime && !isSingleMeeting && !(isIndia && !isEducator && (isLifetime || individual)) && !isRegionalTarget && !isRegionalEducator;
@@ -369,8 +383,8 @@ async function createCheckoutSessionForUser({ user, plan, interval, conferenceId
     line_items: lineItems,
     client_reference_id: individual ? `user:${email.toLowerCase()}` : domain,
     customer_email: email,
-    success_url: `${CONFIG.publicSiteUrl}/${backTo}?upgraded=1`,
-    cancel_url: `${CONFIG.publicSiteUrl}/${backTo}`,
+    success_url: successUrl,
+    cancel_url: cancelUrl,
     metadata: sessionMeta,
     after_expiration: { recovery: { enabled: true } },
   };
@@ -415,6 +429,7 @@ router.post(['/billing/checkout', '/billing/create-checkout-session'], requireAu
       conferenceId: req.body?.conferenceId,
       country: req.body?.country || detectCountry(req),
       promo: req.body?.promo,
+      returnUrl: req.body?.returnUrl || req.body?.redirect,
       req,
     });
     res.json({ url: session.url });
@@ -435,11 +450,6 @@ router.get(['/billing/checkout-redirect', '/checkout-redirect'], async (req, res
     try {
       const decoded = jwt.verify(queryToken, CONFIG.sessionSecret);
       if (decoded && decoded.email) {
-        if (typeof isUserDeleted === 'function' && await isUserDeleted(decoded.email)) {
-          log.warn('billing: checkout-redirect account deleted', { email: decoded.email });
-          const errorMsg = 'This account has been deleted.';
-          return res.redirect(`${CONFIG.publicSiteUrl}/index.html?checkout_error=${encodeURIComponent(errorMsg)}`);
-        }
         const domain = decoded.domain || domainOf(decoded.email);
         const userDoc = await getUser(domain, decoded.email);
         user = {
@@ -460,7 +470,15 @@ router.get(['/billing/checkout-redirect', '/checkout-redirect'], async (req, res
     return res.redirect(`${CONFIG.publicSiteUrl}/index.html?checkout_error=${encodeURIComponent(errorMsg)}`);
   }
 
+  const userDomain = user.domain || domainOf(user.email);
+  if (typeof isUserDeleted === 'function' && await isUserDeleted(userDomain, user.email)) {
+    log.warn('billing: checkout-redirect account deleted', { email: user.email });
+    const errorMsg = 'This account has been deleted.';
+    return res.redirect(`${CONFIG.publicSiteUrl}/index.html?checkout_error=${encodeURIComponent(errorMsg)}`);
+  }
+
   try {
+    const returnUrl = req.query?.returnUrl || req.query?.redirect;
     const session = await createCheckoutSessionForUser({
       user,
       plan: req.query?.plan,
@@ -468,6 +486,7 @@ router.get(['/billing/checkout-redirect', '/checkout-redirect'], async (req, res
       conferenceId: req.query?.conferenceId,
       country: (typeof req.query?.country === 'string' ? req.query.country.trim().toUpperCase() : null) || detectCountry(req),
       promo: req.query?.promo,
+      returnUrl,
       req,
     });
     if (!session || !session.url) {

@@ -51,4 +51,13 @@ describe('sessionsDurationMs', () => {
     // end before start contributes nothing
     expect(sessionsDurationMs([{ startTime: '2026-09-09T10:05:00Z', endTime: '2026-09-09T10:00:00Z' }])).toBe(0);
   });
+
+  test('merges overlapping multi-device sessions so active minutes are not double counted', () => {
+    const sessions = [
+      { startTime: '2026-09-09T10:00:00Z', endTime: '2026-09-09T10:30:00Z' }, // 30m
+      { startTime: '2026-09-09T10:15:00Z', endTime: '2026-09-09T10:45:00Z' }, // overlapping 30m
+    ];
+    // Combined span is 10:00 to 10:45 = 45m (NOT 30 + 30 = 60m)
+    expect(sessionsDurationMs(sessions)).toBe(45 * 60000);
+  });
 });

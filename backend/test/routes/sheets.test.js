@@ -690,11 +690,11 @@ describe('POST /api/save-to-sheets — final edge branches', () => {
   const auth = () => authedHeader('user@acme.com', 'acme.com');
   const post = (body) => request(app).post('/api/save-to-sheets').set(auth()).set('Content-Type', 'application/json').send(body);
 
-  test('invalid timezone triggers the ET fallback (and fails the export)', async () => {
-    // The tzAbbr IIFE catches the bad zone (→ 'ET'), then fmtTime re-throws on
-    // the same bad zone → 500. The point is exercising the tzAbbr catch branch.
+  test('invalid timezone triggers validSpreadsheetTz fallback and succeeds', async () => {
+    // The tz falls back to validSpreadsheetTz ('America/New_York') and tzAbbr catches
+    // any residual bad zone, ensuring fmtTime never throws RangeError.
     const res = await post({ ...validPayload, timezone: 'Not/AZone' });
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(200);
   });
 
   test('participants with missing name/email/join and present=false', async () => {

@@ -6280,8 +6280,8 @@ function mergeParticipants(incoming = []) {
         { isSelf, now: Date.now() }
       );
       if (decision.note) showActivityNote(p.displayName, decision.note);
-      if (decision.resetJoinTime) existing.joinTime = p.joinTime ? new Date(p.joinTime) : new Date(); // new session start
       if (decision.accumulateMs) existing._accumulatedMs = (existing._accumulatedMs || 0) + decision.accumulateMs;
+      if (decision.resetJoinTime) existing.joinTime = existing._accumulatedMs ? new Date() : (p.joinTime ? new Date(p.joinTime) : new Date()); // new session start
       existing.present    = decision.present;
       existing._leftStreak = decision.leftStreak;
       if (decision.changed) changed = true;

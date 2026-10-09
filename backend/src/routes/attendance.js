@@ -317,7 +317,7 @@ router.get('/attendance', async (req, res) => {
               leaveTime:     leaveTimes.length > 0 ? new Date(Math.max(...leaveTimes)).toISOString() : null,
               // Actual in-meeting time (sum of sessions) — the join/leave span
               // above over-credits anyone who left and came back.
-              durationMs:    sessionsDurationMs(sessions),
+              durationMs:    sessionsDurationMs(sessions, conferenceEndTime && Number.isFinite(new Date(conferenceEndTime).getTime()) ? new Date(conferenceEndTime).getTime() : Date.now()),
               present:       sessions.some(s => !s.endTime) || hadFetchError,
               sessions:      sessions.length || group.length,
             };

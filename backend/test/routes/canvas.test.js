@@ -173,6 +173,72 @@ describe('GET /api/canvas/courses', () => {
     expect(res.status).toBe(502);
     expect(res.body.code).toBe('CANVAS_NETWORK_ERROR');
   });
+
+  test('paginates courses following RFC 5988 Link header', async () => {
+    global.fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: {
+          get: (name) => name.toLowerCase() === 'link' ? '<https://canvas.school.edu/api/v1/courses?page=2&per_page=100>; rel="next", <https://canvas.school.edu/api/v1/courses?page=2&per_page=100>; rel="last"' : null,
+        },
+        json: async () => [{ id: 101, name: 'Course 1', course_code: 'C1' }],
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: {
+          get: () => null,
+        },
+        json: async () => [{ id: 102, name: 'Course 2', course_code: 'C2' }],
+      });
+
+    const res = await request(app)
+      .get('/api/canvas/courses')
+      .set(authedHeader('teacher@school.edu', 'school.edu'))
+      .set('x-canvas-url', 'https://canvas.school.edu')
+      .set('x-canvas-token', 'tok123');
+
+    expect(res.status).toBe(200);
+    expect(res.body.courses).toHaveLength(2);
+    expect(res.body.courses[0].id).toBe(101);
+    expect(res.body.courses[1].id).toBe(102);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(global.fetch).toHaveBeenLastCalledWith('https://canvas.school.edu/api/v1/courses?page=2&per_page=100', expect.any(Object));
+  });
+
+  test('paginates courses with unquoted rel=next and relative URLs', async () => {
+    global.fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: {
+          get: (name) => name.toLowerCase() === 'link' ? '</api/v1/courses?page=2&per_page=100>; title="next"; rel=next' : null,
+        },
+        json: async () => [{ id: 103, name: 'Course 3', course_code: 'C3' }],
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: {
+          get: () => null,
+        },
+        json: async () => [{ id: 104, name: 'Course 4', course_code: 'C4' }],
+      });
+
+    const res = await request(app)
+      .get('/api/canvas/courses')
+      .set(authedHeader('teacher@school.edu', 'school.edu'))
+      .set('x-canvas-url', 'https://canvas.school.edu')
+      .set('x-canvas-token', 'tok123');
+
+    expect(res.status).toBe(200);
+    expect(res.body.courses).toHaveLength(2);
+    expect(res.body.courses[0].id).toBe(103);
+    expect(res.body.courses[1].id).toBe(104);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(global.fetch).toHaveBeenLastCalledWith('https://canvas.school.edu/api/v1/courses?page=2&per_page=100', expect.any(Object));
+  });
 });
 
 describe('GET /api/canvas/courses/:courseId/assignments', () => {
@@ -217,6 +283,38 @@ describe('GET /api/canvas/courses/:courseId/assignments', () => {
 
     expect(res.status).toBe(404);
     expect(res.body.code).toBe('CANVAS_NOT_FOUND');
+  });
+
+  test('paginates assignments following RFC 5988 Link header', async () => {
+    global.fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: {
+          get: (name) => name.toLowerCase() === 'link' ? '<https://canvas.school.edu/api/v1/courses/101/assignments?page=2>; rel="next"' : null,
+        },
+        json: async () => [{ id: 201, name: 'Assignment 1', points_possible: 100 }],
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: {
+          get: () => null,
+        },
+        json: async () => [{ id: 202, name: 'Assignment 2', points_possible: 50 }],
+      });
+
+    const res = await request(app)
+      .get('/api/canvas/courses/101/assignments')
+      .set(authedHeader('teacher@school.edu', 'school.edu'))
+      .set('x-canvas-url', 'https://canvas.school.edu')
+      .set('x-canvas-token', 'tok');
+
+    expect(res.status).toBe(200);
+    expect(res.body.assignments).toHaveLength(2);
+    expect(res.body.assignments[0].id).toBe(201);
+    expect(res.body.assignments[1].id).toBe(202);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
   });
 });
 

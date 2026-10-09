@@ -625,6 +625,7 @@ describe('buildAttendanceExcelXml and escapeXml', () => {
     expect(utils.escapeXml('a & b < c > "d" \'e\'')).toBe('a &amp; b &lt; c &gt; &quot;d&quot; &apos;e&apos;');
     expect(utils.escapeXml(null)).toBe('');
     expect(utils.escapeXml(undefined)).toBe('');
+    expect(utils.escapeXml('hello\x00\x08\x0b\x0c\x1fworld')).toBe('helloworld');
   });
 
   test('buildAttendanceExcelXml produces valid SpreadsheetML XML with styles and headers', () => {

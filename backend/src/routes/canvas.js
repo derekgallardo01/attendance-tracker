@@ -137,6 +137,31 @@ router.post('/canvas/settings', requireAuth, async (req, res) => {
   }
 });
 
+// Canvas RFC 5988 Link header helper for pagination
+function getNextPageUrl(linkHeader, baseUrl) {
+  if (!linkHeader || typeof linkHeader !== 'string') return null;
+  const parts = linkHeader.split(',');
+  for (const part of parts) {
+    const urlMatch = part.match(/<([^>]+)>/);
+    const relMatch = part.match(/;\s*rel="?([^";,\s]+)"?/i);
+    if (urlMatch && relMatch) {
+      const rels = relMatch[1].toLowerCase().split(/\s+/);
+      if (rels.includes('next')) {
+        let next = urlMatch[1].trim();
+        if (baseUrl && next.startsWith('/')) {
+          try {
+            next = new URL(next, baseUrl).toString();
+          } catch {
+            next = `${baseUrl.replace(/\/+$/, '')}${next}`;
+          }
+        }
+        return next;
+      }
+    }
+  }
+  return null;
+}
+
 // GET /api/canvas/courses — list active courses where user is teacher
 router.get('/canvas/courses', requireAuth, async (req, res) => {
   res.set('Cache-Control', 'no-store');
@@ -149,31 +174,44 @@ router.get('/canvas/courses', requireAuth, async (req, res) => {
   }
 
   try {
-    const canvasRes = await fetch(`${instanceUrl}/api/v1/courses?enrollment_type=teacher&state[]=available&per_page=100`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json',
-      },
-    });
+    let nextUrl = `${instanceUrl}/api/v1/courses?enrollment_type=teacher&state[]=available&per_page=100`;
+    const courses = [];
+    let pageCount = 0;
 
-    if (canvasRes.status === 401) {
-      return res.status(401).json({ error: 'Canvas API token is invalid or expired.', code: 'CANVAS_UNAUTHORIZED' });
-    }
-    if (canvasRes.status === 403) {
-      return res.status(403).json({ error: 'Canvas permissions insufficient to list courses.', code: 'CANVAS_FORBIDDEN' });
-    }
-    if (!canvasRes.ok) {
-      const errText = await canvasRes.text().catch(() => '');
-      log.warn('canvas: list courses upstream error', { status: canvasRes.status, body: errText });
-      return res.status(canvasRes.status).json({ error: `Canvas error: ${canvasRes.statusText}` });
-    }
+    while (nextUrl && pageCount < 10) {
+      pageCount++;
+      const canvasRes = await fetch(nextUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
 
-    const data = await canvasRes.json();
-    const courses = (Array.isArray(data) ? data : []).map(c => ({
-      id: c.id,
-      name: c.name || `Course ${c.id}`,
-      courseCode: c.course_code || '',
-    }));
+      if (canvasRes.status === 401) {
+        return res.status(401).json({ error: 'Canvas API token is invalid or expired.', code: 'CANVAS_UNAUTHORIZED' });
+      }
+      if (canvasRes.status === 403) {
+        return res.status(403).json({ error: 'Canvas permissions insufficient to list courses.', code: 'CANVAS_FORBIDDEN' });
+      }
+      if (!canvasRes.ok) {
+        const errText = await canvasRes.text().catch(() => '');
+        log.warn('canvas: list courses upstream error', { status: canvasRes.status, body: errText });
+        return res.status(canvasRes.status).json({ error: `Canvas error: ${canvasRes.statusText}` });
+      }
+
+      const data = await canvasRes.json();
+      if (Array.isArray(data)) {
+        for (const c of data) {
+          courses.push({
+            id: c.id,
+            name: c.name || `Course ${c.id}`,
+            courseCode: c.course_code || '',
+          });
+        }
+      }
+
+      nextUrl = getNextPageUrl(canvasRes.headers?.get('Link') || canvasRes.headers?.get('link'), instanceUrl);
+    }
 
     res.json({ courses });
   } catch (err) {
@@ -192,31 +230,44 @@ router.get('/canvas/courses/:courseId/assignments', requireAuth, async (req, res
   }
 
   try {
-    const canvasRes = await fetch(`${instanceUrl}/api/v1/courses/${encodeURIComponent(courseId)}/assignments?per_page=100`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json',
-      },
-    });
+    let nextUrl = `${instanceUrl}/api/v1/courses/${encodeURIComponent(courseId)}/assignments?per_page=100`;
+    const assignments = [];
+    let pageCount = 0;
 
-    if (canvasRes.status === 401) {
-      return res.status(401).json({ error: 'Canvas API token invalid or expired.', code: 'CANVAS_UNAUTHORIZED' });
-    }
-    if (canvasRes.status === 404) {
-      return res.status(404).json({ error: 'Canvas course not found.', code: 'CANVAS_NOT_FOUND' });
-    }
-    if (!canvasRes.ok) {
-      return res.status(canvasRes.status).json({ error: `Canvas error: ${canvasRes.statusText}` });
-    }
+    while (nextUrl && pageCount < 10) {
+      pageCount++;
+      const canvasRes = await fetch(nextUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
 
-    const data = await canvasRes.json();
-    const assignments = (Array.isArray(data) ? data : []).map(a => ({
-      id: a.id,
-      name: a.name || `Assignment ${a.id}`,
-      pointsPossible: a.points_possible ?? 100,
-      published: a.published !== false,
-      htmlUrl: a.html_url || '',
-    }));
+      if (canvasRes.status === 401) {
+        return res.status(401).json({ error: 'Canvas API token invalid or expired.', code: 'CANVAS_UNAUTHORIZED' });
+      }
+      if (canvasRes.status === 404) {
+        return res.status(404).json({ error: 'Canvas course not found.', code: 'CANVAS_NOT_FOUND' });
+      }
+      if (!canvasRes.ok) {
+        return res.status(canvasRes.status).json({ error: `Canvas error: ${canvasRes.statusText}` });
+      }
+
+      const data = await canvasRes.json();
+      if (Array.isArray(data)) {
+        for (const a of data) {
+          assignments.push({
+            id: a.id,
+            name: a.name || `Assignment ${a.id}`,
+            pointsPossible: a.points_possible ?? 100,
+            published: a.published !== false,
+            htmlUrl: a.html_url || '',
+          });
+        }
+      }
+
+      nextUrl = getNextPageUrl(canvasRes.headers?.get('Link') || canvasRes.headers?.get('link'), instanceUrl);
+    }
 
     res.json({ assignments });
   } catch (err) {
@@ -357,11 +408,6 @@ async function handleCanvasGradeSync(req, res) {
     }
 
     // 2. Fetch enrolled students to match records by email / login_id / name (with pagination support)
-    function getNextPageUrl(linkHeader) {
-      if (!linkHeader) return null;
-      const match = linkHeader.match(/<([^>]+)>;\s*rel="next"/i);
-      return match ? match[1] : null;
-    }
 
     let nextUrl = `${instanceUrl}/api/v1/courses/${encodeURIComponent(courseId)}/users?enrollment_type[]=student&include[]=email&per_page=100`;
     const students = [];
@@ -391,7 +437,7 @@ async function handleCanvasGradeSync(req, res) {
         students.push(...pageStudents);
       }
       const linkHdr = typeof studentsRes.headers?.get === 'function' ? studentsRes.headers.get('link') : null;
-      nextUrl = getNextPageUrl(linkHdr);
+      nextUrl = getNextPageUrl(linkHdr, instanceUrl);
     }
 
     const emailToStudent = new Map();

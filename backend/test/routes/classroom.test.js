@@ -326,7 +326,8 @@ describe('POST /api/classroom/courses/:courseId/courseWork/:courseWorkId/sync-gr
       courseId: 'c1',
       courseWorkId: 'cw1',
       id: 'sub1',
-      requestBody: { assignedGrade: 100, draftGrade: 100 },
+      updateMask: 'draftGrade',
+      requestBody: { draftGrade: 100 },
     }));
 
     // Bob: late -> 80 points
@@ -334,7 +335,8 @@ describe('POST /api/classroom/courses/:courseId/courseWork/:courseWorkId/sync-gr
       courseId: 'c1',
       courseWorkId: 'cw1',
       id: 'sub2',
-      requestBody: { assignedGrade: 80, draftGrade: 80 },
+      updateMask: 'draftGrade',
+      requestBody: { draftGrade: 80 },
     }));
 
     // Unknown student tracked as unmatched
@@ -365,7 +367,8 @@ describe('POST /api/classroom/courses/:courseId/courseWork/:courseWorkId/sync-gr
     expect(res.status).toBe(200);
     expect(mockSubmissionsPatch).toHaveBeenCalledWith(expect.objectContaining({
       id: 'sub1',
-      requestBody: { assignedGrade: 95, draftGrade: 95 },
+      updateMask: 'draftGrade',
+      requestBody: { draftGrade: 95 },
     }));
     expect(mockSubmissionsReturn).toHaveBeenCalledWith(expect.objectContaining({
       courseId: 'c1',
@@ -477,17 +480,20 @@ describe('POST /api/classroom/courses/:courseId/courseWork/:courseWorkId/sync-gr
     // sub1: 45 / 50
     expect(mockSubmissionsPatch).toHaveBeenCalledWith(expect.objectContaining({
       id: 'sub1',
-      requestBody: { assignedGrade: 45, draftGrade: 45 },
+      updateMask: 'draftGrade',
+      requestBody: { draftGrade: 45 },
     }));
     // sub2: 40 / 50
     expect(mockSubmissionsPatch).toHaveBeenCalledWith(expect.objectContaining({
       id: 'sub2',
-      requestBody: { assignedGrade: 40, draftGrade: 40 },
+      updateMask: 'draftGrade',
+      requestBody: { draftGrade: 40 },
     }));
     // sub3: 80% of 50 = 40
     expect(mockSubmissionsPatch).toHaveBeenCalledWith(expect.objectContaining({
       id: 'sub3',
-      requestBody: { assignedGrade: 40, draftGrade: 40 },
+      updateMask: 'draftGrade',
+      requestBody: { draftGrade: 40 },
     }));
   });
 
@@ -603,6 +609,90 @@ describe('POST /api/classroom/courses/:courseId/courseWork/:courseWorkId/sync-gr
         });
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
+    });
+
+    test('patches assignedGrade and draftGrade when submission.state === RETURNED', async () => {
+      firestore.getTenantPlan.mockResolvedValue({ plan: 'pro' });
+      firestore.getUserPlan.mockResolvedValue({ plan: 'pro' });
+      mockStudentsList.mockResolvedValue({
+        data: { students: [{ userId: 'u1', profile: { emailAddress: 's@school.edu' } }] },
+      });
+      mockSubmissionsList.mockResolvedValue({
+        data: { studentSubmissions: [{ id: 'sub1', userId: 'u1', state: 'RETURNED' }] },
+      });
+      mockSubmissionsPatch.mockResolvedValue({ data: {} });
+
+      const res = await request(app)
+        .post('/api/classroom/sync-grades')
+        .set(authedHeader('t@school.edu', 'school.edu'))
+        .send({
+          courseId: 'c1',
+          courseWorkId: 'cw1',
+          records: [{ email: 's@school.edu', status: 'present' }],
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(mockSubmissionsPatch).toHaveBeenCalledWith(expect.objectContaining({
+        courseId: 'c1',
+        courseWorkId: 'cw1',
+        id: 'sub1',
+        updateMask: 'assignedGrade,draftGrade',
+        requestBody: { assignedGrade: 100, draftGrade: 100 },
+      }));
+    });
+
+    test('catches 401 / invalid_grant / Invalid Credentials errors and returns AUTH_EXPIRED', async () => {
+      mockCoursesList.mockRejectedValueOnce(new Error('invalid_grant: Token has been expired or revoked.'));
+      const res1 = await request(app)
+        .get('/api/classroom/courses')
+        .set(authedHeader('t@school.edu', 'school.edu'));
+      expect(res1.status).toBe(401);
+      expect(res1.body).toEqual({
+        error: 'Your Google session expired. Please sign in again.',
+        code: 'AUTH_EXPIRED',
+      });
+
+      mockStudentsList.mockRejectedValueOnce(Object.assign(new Error('Invalid Credentials'), { code: 401 }));
+      const res2 = await request(app)
+        .get('/api/classroom/courses/c1/students')
+        .set(authedHeader('t@school.edu', 'school.edu'));
+      expect(res2.status).toBe(401);
+      expect(res2.body.code).toBe('AUTH_EXPIRED');
+
+      firestore.getTenantPlan.mockResolvedValue({ plan: 'pro' });
+      firestore.getUserPlan.mockResolvedValue({ plan: 'pro' });
+      mockSubmissionsList.mockRejectedValueOnce(new Error('invalid_grant'));
+      const res3 = await request(app)
+        .post('/api/classroom/sync-grades')
+        .set(authedHeader('t@school.edu', 'school.edu'))
+        .send({ courseId: 'c1', courseWorkId: 'cw1', records: [{ email: 's@school.edu' }] });
+      expect(res3.status).toBe(401);
+      expect(res3.body.code).toBe('AUTH_EXPIRED');
+
+      // Test returnGrades throwing expired auth
+      mockStudentsList.mockResolvedValueOnce({
+        data: { students: [{ userId: 'u1', profile: { emailAddress: 's@school.edu' } }] },
+      });
+      mockSubmissionsList.mockResolvedValueOnce({
+        data: { studentSubmissions: [{ id: 'sub1', userId: 'u1', state: 'CREATED' }] },
+      });
+      mockSubmissionsPatch.mockResolvedValueOnce({ data: {} });
+      mockSubmissionsReturn.mockRejectedValueOnce(Object.assign(new Error('Token expired'), {
+        errors: [{ reason: 'authError' }],
+      }));
+
+      const res4 = await request(app)
+        .post('/api/classroom/sync-grades')
+        .set(authedHeader('t@school.edu', 'school.edu'))
+        .send({
+          courseId: 'c1',
+          courseWorkId: 'cw1',
+          returnGrades: true,
+          records: [{ email: 's@school.edu', status: 'present' }],
+        });
+      expect(res4.status).toBe(401);
+      expect(res4.body.code).toBe('AUTH_EXPIRED');
     });
   });
 });

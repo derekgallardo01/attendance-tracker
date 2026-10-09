@@ -545,126 +545,133 @@ router.post('/public/unsubscribe', async (req, res) => {
     );
   }
 
-  const action = req.body?.action;
-  // If explicitly 'all', or if neither 'action' nor any category is provided
-  // (e.g. standard RFC 8058 one-click unsubscribe from email clients)
-  if (action === 'all' || (!action && !req.body?.exportSummary && !req.body?.seriesAlerts && !req.body?.weeklyDigest && !req.body?.tipsAndUpdates)) {
-    await suppressEmail(email, { source: 'one_click_unsubscribe' });
-    const unsubSource = action === 'all' ? 'public_all_button' : 'one_click_unsubscribe';
+  try {
+    const action = req.body?.action;
+    // If explicitly 'all', or if neither 'action' nor any category is provided
+    // (e.g. standard RFC 8058 one-click unsubscribe from email clients)
+    if (action === 'all' || (!action && !req.body?.exportSummary && !req.body?.seriesAlerts && !req.body?.weeklyDigest && !req.body?.tipsAndUpdates)) {
+      await suppressEmail(email, { source: 'one_click_unsubscribe' });
+      const unsubSource = action === 'all' ? 'public_all_button' : 'one_click_unsubscribe';
+      const domain = email.split('@')[1];
+      try {
+        await recordCancellationTelemetry({
+          category: 'email',
+          type: 'unsubscribed_all',
+          email,
+          domain,
+          meta: { source: unsubSource },
+        });
+        log.info('telemetry: email_unsubscribed_all', { email: email.toLowerCase(), domain, source: unsubSource });
+      } catch {}
+      try {
+        sendAdminEmailUnsubscribedNotification({
+          email,
+          domain,
+          type: 'all',
+          source: unsubSource,
+        }).catch(err => log.warn('public: sendAdminEmailUnsubscribedNotification failed', { email, error: err.message }));
+      } catch {}
+      log.info('public: unsubscribe all', { email: email.toLowerCase() });
+      return res.type('html').send(
+        unsubscribePage('You\'re unsubscribed', `${escapeHtml(email)} won't receive any more re-engagement or alert emails. You can still use Attendance Tracker normally.`)
+      );
+    }
+
+    // Otherwise, user submitted granular preferences form
+    const exportSummary = req.body.exportSummary === 'on' || req.body.exportSummary === true || req.body.exportSummary === 'true';
+    const seriesAlerts = req.body.seriesAlerts === 'on' || req.body.seriesAlerts === true || req.body.seriesAlerts === 'true';
+    const weeklyDigest = req.body.weeklyDigest === 'on' || req.body.weeklyDigest === true || req.body.weeklyDigest === 'true';
+    const tipsAndUpdates = req.body.tipsAndUpdates === 'on' || req.body.tipsAndUpdates === true || req.body.tipsAndUpdates === 'true';
+
     const domain = email.split('@')[1];
-    try {
-      await recordCancellationTelemetry({
-        category: 'email',
-        type: 'unsubscribed_all',
-        email,
-        domain,
-        meta: { source: unsubSource },
-      });
-      log.info('telemetry: email_unsubscribed_all', { email: email.toLowerCase(), domain, source: unsubSource });
-    } catch {}
-    try {
-      sendAdminEmailUnsubscribedNotification({
-        email,
-        domain,
-        type: 'all',
-        source: unsubSource,
-      }).catch(err => log.warn('public: sendAdminEmailUnsubscribedNotification failed', { email, error: err.message }));
-    } catch {}
-    log.info('public: unsubscribe all', { email: email.toLowerCase() });
-    return res.type('html').send(
-      unsubscribePage('You\'re unsubscribed', `${escapeHtml(email)} won't receive any more re-engagement or alert emails. You can still use Attendance Tracker normally.`)
-    );
-  }
+    const disabledCategories = [];
+    const enabledCategories = [];
+    if (exportSummary) enabledCategories.push('exportSummary'); else disabledCategories.push('exportSummary');
+    if (seriesAlerts) enabledCategories.push('seriesAlerts'); else disabledCategories.push('seriesAlerts');
+    if (weeklyDigest) enabledCategories.push('weeklyDigest'); else disabledCategories.push('weeklyDigest');
+    if (tipsAndUpdates) enabledCategories.push('tipsAndUpdates'); else disabledCategories.push('tipsAndUpdates');
 
-  // Otherwise, user submitted granular preferences form
-  const exportSummary = req.body.exportSummary === 'on' || req.body.exportSummary === true || req.body.exportSummary === 'true';
-  const seriesAlerts = req.body.seriesAlerts === 'on' || req.body.seriesAlerts === true || req.body.seriesAlerts === 'true';
-  const weeklyDigest = req.body.weeklyDigest === 'on' || req.body.weeklyDigest === true || req.body.weeklyDigest === 'true';
-  const tipsAndUpdates = req.body.tipsAndUpdates === 'on' || req.body.tipsAndUpdates === true || req.body.tipsAndUpdates === 'true';
+    if (disabledCategories.length === 4) {
+      // All unchecked = full unsubscribe
+      await suppressEmail(email, { source: 'granular_unsubscribe_all' });
+      if (domain && typeof updateUserSettings === 'function') {
+        try {
+          await updateUserSettings(domain, email, {
+            notificationPreferences: { exportSummary: false, seriesAlerts: false, weeklyDigest: false, tipsAndUpdates: false }
+          });
+        } catch (err) {
+          log.warn('public: updateUserSettings failed on granular unsubscribe all', { email, error: err.message });
+        }
+      }
+      try {
+        await recordCancellationTelemetry({
+          category: 'email',
+          type: 'unsubscribed_all',
+          email,
+          domain,
+          meta: { source: 'granular_unsubscribe_all' },
+        });
+        log.info('telemetry: email_unsubscribed_all', { email: email.toLowerCase(), domain, source: 'granular_unsubscribe_all' });
+      } catch {}
+      try {
+        sendAdminEmailUnsubscribedNotification({
+          email,
+          domain,
+          type: 'all',
+          source: 'granular_unsubscribe_all',
+        }).catch(err => log.warn('public: sendAdminEmailUnsubscribedNotification failed', { email, error: err.message }));
+      } catch {}
+      log.info('public: unsubscribe all via preferences', { email: email.toLowerCase() });
+      return res.type('html').send(
+        unsubscribePage('You\'re unsubscribed', `${escapeHtml(email)} won't receive any more re-engagement or alert emails. You can still use Attendance Tracker normally.`)
+      );
+    }
 
-  const domain = email.split('@')[1];
-  const disabledCategories = [];
-  const enabledCategories = [];
-  if (exportSummary) enabledCategories.push('exportSummary'); else disabledCategories.push('exportSummary');
-  if (seriesAlerts) enabledCategories.push('seriesAlerts'); else disabledCategories.push('seriesAlerts');
-  if (weeklyDigest) enabledCategories.push('weeklyDigest'); else disabledCategories.push('weeklyDigest');
-  if (tipsAndUpdates) enabledCategories.push('tipsAndUpdates'); else disabledCategories.push('tipsAndUpdates');
-
-  if (disabledCategories.length === 4) {
-    // All unchecked = full unsubscribe
-    await suppressEmail(email, { source: 'granular_unsubscribe_all' });
+    // At least one notification enabled -> unsuppress from global suppression if suppressed
+    if (typeof unsuppressEmail === 'function') {
+      await unsuppressEmail(email);
+    }
     if (domain && typeof updateUserSettings === 'function') {
       try {
         await updateUserSettings(domain, email, {
-          notificationPreferences: { exportSummary: false, seriesAlerts: false, weeklyDigest: false, tipsAndUpdates: false }
+          notificationPreferences: { exportSummary, seriesAlerts, weeklyDigest, tipsAndUpdates }
         });
       } catch (err) {
-        log.warn('public: updateUserSettings failed on granular unsubscribe all', { email, error: err.message });
+        log.warn('public: updateUserSettings failed on save preferences', { email, error: err.message });
       }
     }
     try {
       await recordCancellationTelemetry({
         category: 'email',
-        type: 'unsubscribed_all',
+        type: 'preferences_updated',
         email,
         domain,
-        meta: { source: 'granular_unsubscribe_all' },
+        meta: { disabledCategories, enabledCategories, source: 'public_preferences' },
       });
-      log.info('telemetry: email_unsubscribed_all', { email: email.toLowerCase(), domain, source: 'granular_unsubscribe_all' });
+      log.info('telemetry: email_preferences_updated', { email: email.toLowerCase(), domain, disabledCategories, enabledCategories, source: 'public_preferences' });
     } catch {}
-    try {
-      sendAdminEmailUnsubscribedNotification({
-        email,
-        domain,
-        type: 'all',
-        source: 'granular_unsubscribe_all',
-      }).catch(err => log.warn('public: sendAdminEmailUnsubscribedNotification failed', { email, error: err.message }));
-    } catch {}
-    log.info('public: unsubscribe all via preferences', { email: email.toLowerCase() });
+    if (disabledCategories.length > 0) {
+      try {
+        sendAdminEmailUnsubscribedNotification({
+          email,
+          domain,
+          type: 'categories',
+          disabledCategories,
+          enabledCategories,
+          source: 'public_preferences',
+        }).catch(err => log.warn('public: sendAdminEmailUnsubscribedNotification failed', { email, error: err.message }));
+      } catch {}
+    }
+    log.info('public: preferences updated', { email: email.toLowerCase(), exportSummary, seriesAlerts, weeklyDigest, tipsAndUpdates });
     return res.type('html').send(
-      unsubscribePage('You\'re unsubscribed', `${escapeHtml(email)} won't receive any more re-engagement or alert emails. You can still use Attendance Tracker normally.`)
+      unsubscribePage('Preferences updated', `Your email notification preferences for ${escapeHtml(email)} have been updated.`)
+    );
+  } catch (err) {
+    log.error('public: unsubscribe failed', { email, error: err.message });
+    return res.status(500).type('html').send(
+      unsubscribePage('Error', 'An error occurred while updating your unsubscribe preferences. Please try again or contact support.')
     );
   }
-
-  // At least one notification enabled -> unsuppress from global suppression if suppressed
-  if (typeof unsuppressEmail === 'function') {
-    await unsuppressEmail(email);
-  }
-  if (domain && typeof updateUserSettings === 'function') {
-    try {
-      await updateUserSettings(domain, email, {
-        notificationPreferences: { exportSummary, seriesAlerts, weeklyDigest, tipsAndUpdates }
-      });
-    } catch (err) {
-      log.warn('public: updateUserSettings failed on save preferences', { email, error: err.message });
-    }
-  }
-  try {
-    await recordCancellationTelemetry({
-      category: 'email',
-      type: 'preferences_updated',
-      email,
-      domain,
-      meta: { disabledCategories, enabledCategories, source: 'public_preferences' },
-    });
-    log.info('telemetry: email_preferences_updated', { email: email.toLowerCase(), domain, disabledCategories, enabledCategories, source: 'public_preferences' });
-  } catch {}
-  if (disabledCategories.length > 0) {
-    try {
-      sendAdminEmailUnsubscribedNotification({
-        email,
-        domain,
-        type: 'categories',
-        disabledCategories,
-        enabledCategories,
-        source: 'public_preferences',
-      }).catch(err => log.warn('public: sendAdminEmailUnsubscribedNotification failed', { email, error: err.message }));
-    } catch {}
-  }
-  log.info('public: preferences updated', { email: email.toLowerCase(), exportSummary, seriesAlerts, weeklyDigest, tipsAndUpdates });
-  return res.type('html').send(
-    unsubscribePage('Preferences updated', `Your email notification preferences for ${escapeHtml(email)} have been updated.`)
-  );
 });
 
 // POST /api/public/unsubscribe-direct — Self-serve unsubscription from /unsubscribe.html

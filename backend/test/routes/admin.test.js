@@ -2292,6 +2292,53 @@ describe('GET /api/admin/milestones & POST /api/admin/check-milestones', () => {
   });
 });
 
+describe('Admin error paths and logging', () => {
+  const admin = () => authedHeader(SUPER_ADMIN, 'gmail.com');
+
+  test('PUT /api/admin/note logs error and returns 500 when setAdminNote throws', async () => {
+    firestore.setAdminNote.mockRejectedValueOnce(new Error('Firestore note write failure'));
+    const res = await request(app)
+      .put('/api/admin/note')
+      .set(admin())
+      .send({ email: 'u@school.edu', domain: 'school.edu', body: 'test note' });
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Failed to save note');
+  });
+
+  test('GET /api/admin/notes/search logs error and returns 500 when searchAdminNotes throws', async () => {
+    firestore.searchAdminNotes.mockRejectedValueOnce(new Error('Firestore search failure'));
+    const res = await request(app)
+      .get('/api/admin/notes/search?q=test')
+      .set(admin());
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Search failed');
+  });
+
+  test('PUT /api/admin/templates logs error and returns 500 when setEmailTemplates throws', async () => {
+    firestore.setEmailTemplates.mockRejectedValueOnce(new Error('Firestore template write failure'));
+    const res = await request(app)
+      .put('/api/admin/templates')
+      .set(admin())
+      .send({ items: [] });
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Failed');
+  });
+
+  test('POST /api/admin/reminders logs error and returns 500 when createReminder throws', async () => {
+    firestore.createReminder.mockRejectedValueOnce(new Error('Firestore reminder creation failure'));
+    const res = await request(app)
+      .post('/api/admin/reminders')
+      .set(admin())
+      .send({ email: 'u@school.edu', domain: 'school.edu', remindAt: new Date().toISOString() });
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Failed');
+  });
+});
+
 
 
 

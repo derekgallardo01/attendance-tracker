@@ -2419,6 +2419,18 @@ describe('billing/status pricing payload', () => {
 
       expect(res.status).toBe(302);
       expect(res.header.location).toContain('This%20account%20has%20been%20deleted');
+      expect(firestore.isUserDeleted).toHaveBeenCalledWith('school.edu', 'deleted@school.edu');
+    });
+
+    test('redirects to index.html with checkout_error when req.user is authenticated but deleted', async () => {
+      firestore.isUserDeleted.mockResolvedValueOnce(true);
+      const res = await request(app)
+        .get('/api/billing/checkout-redirect?plan=lifetime')
+        .set(authedHeader('deleted@school.edu', 'school.edu'));
+
+      expect(res.status).toBe(302);
+      expect(res.header.location).toContain('This%20account%20has%20been%20deleted');
+      expect(firestore.isUserDeleted).toHaveBeenCalledWith('school.edu', 'deleted@school.edu');
     });
 
     test('supports single_meeting pass with conferenceId and regional pricing in PH', async () => {
@@ -2431,6 +2443,8 @@ describe('billing/status pricing payload', () => {
         expect.objectContaining({
           mode: 'payment',
           payment_method_types: ['card', 'gcash', 'grabpay'],
+          success_url: expect.stringContaining('index.html?unlocked=conf-123&upgraded=1'),
+          cancel_url: expect.stringContaining('index.html?unlocked=conf-123'),
           line_items: [{
             price_data: {
               currency: 'php',
@@ -2443,6 +2457,20 @@ describe('billing/status pricing payload', () => {
             conferenceId: 'conf-123',
             meetingPass: '1',
           }),
+        })
+      );
+    });
+
+    test('single_meeting pass appends unlocked parameter to custom returnUrl', async () => {
+      const token = makeJwt({ email: 'teacher@deped.gov.ph', domain: 'deped.gov.ph' });
+      const res = await request(app)
+        .get(`/api/billing/checkout-redirect?plan=single_meeting&conferenceId=conf-123&returnUrl=${encodeURIComponent('/index.html')}&token=${encodeURIComponent(token)}`);
+
+      expect(res.status).toBe(302);
+      expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success_url: expect.stringContaining('index.html?unlocked=conf-123&upgraded=1'),
+          cancel_url: expect.stringContaining('index.html?unlocked=conf-123'),
         })
       );
     });
