@@ -3,7 +3,7 @@ const { google } = require('googleapis');
 const { getGoogleClient } = require('../services/googleAuth');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { persistExport, getUser, grantReferralReward, getUserSheetId, setUserSheetId, countUserExports, countUserMonthlyExports, getExportReexportCount, getMeetingExcusedEmails, addMeetingExcusedEmails, getUserSettings, updateUserSettings, getUserMeetingSeries, logEvent, isEmailSuppressed, isMeetingUnlocked } = require('../services/firestore');
+const { persistExport, getUser, grantReferralReward, getUserSheetId, setUserSheetId, countUserExports, countUserMonthlyExports, getExportReexportCount, getMeetingExcusedEmails, addMeetingExcusedEmails, getUserSettings, updateUserSettings, getUserMeetingSeries, logEvent, isEmailSuppressed, isMeetingUnlocked, markUserLargeClassGraceUsed } = require('../services/firestore');
 const { sendExportNotification, sendSlackDigest, sendChatDigest, sendDiscordDigest } = require('../lib/notifications');
 const { planIsPro } = require('./billing');
 const { getSheetHeaders, getSheetSummaryLabels, localizeStatus, localizeRsvp } = require('../lib/i18n');
@@ -750,29 +750,13 @@ router.post('/save-to-sheets', async (req, res) => {
     // config/pricing.js — /billing/status and the panel read the same value)
     const { FREE_MONTHLY_EXPORT_LIMIT, FREE_REEXPORTS_PER_MEETING, FREE_MAX_PARTICIPANTS_PER_EXPORT } = require('../config/pricing');
     let monthlyExports = 0;
+    let graceUsed = false;
+    let largeClassCount = 0;
     if (req.user && !proAllowed) {
       const confId = b.conferenceId || null;
       const meetingUnlocked = confId && typeof isMeetingUnlocked === 'function'
         ? await isMeetingUnlocked(req.user.domain, req.user.email, confId)
         : false;
-
-      const participants = Array.isArray(b.participants) ? b.participants : [];
-      const participantCount = participants.length || (typeof b.participantCount === 'number' ? b.participantCount : 0);
-      if (participantCount > FREE_MAX_PARTICIPANTS_PER_EXPORT && !meetingUnlocked) {
-        log.info('sheets: free tier large class capacity reached', {
-          domain: req.user.domain,
-          email: req.user.email,
-          participantCount,
-          limit: FREE_MAX_PARTICIPANTS_PER_EXPORT,
-        });
-        return res.status(402).json({
-          error: `Tracking attendance for large classes (>${FREE_MAX_PARTICIPANTS_PER_EXPORT} attendees) is a Pro feature. Upgrade to Pro for unlimited class sizes & exports.`,
-          upgrade: true,
-          feature: 'largeClass',
-          participantCount,
-          limit: FREE_MAX_PARTICIPANTS_PER_EXPORT,
-        });
-      }
 
       monthlyExports = await countUserMonthlyExports(req.user.domain, req.user.email);
       if (monthlyExports >= FREE_MONTHLY_EXPORT_LIMIT && !meetingUnlocked) {
@@ -783,6 +767,30 @@ router.post('/save-to-sheets', async (req, res) => {
           feature: 'exportQuota',
           quota: { used: monthlyExports, limit: FREE_MONTHLY_EXPORT_LIMIT },
         });
+      }
+
+      const participants = Array.isArray(b.participants) ? b.participants : [];
+      const participantCount = participants.length || (typeof b.participantCount === 'number' ? b.participantCount : 0);
+      if (participantCount > FREE_MAX_PARTICIPANTS_PER_EXPORT && !meetingUnlocked) {
+        const userDoc = await getUser(req.user.domain, req.user.email);
+        if (userDoc?.hasUsedLargeClassGrace === true) {
+          log.info('sheets: free tier large class capacity reached', {
+            domain: req.user.domain,
+            email: req.user.email,
+            participantCount,
+            limit: FREE_MAX_PARTICIPANTS_PER_EXPORT,
+          });
+          return res.status(402).json({
+            error: `Tracking attendance for large classes (>${FREE_MAX_PARTICIPANTS_PER_EXPORT} attendees) is a Pro feature. Upgrade to Pro for unlimited class sizes & exports.`,
+            upgrade: true,
+            feature: 'largeClass',
+            participantCount,
+            limit: FREE_MAX_PARTICIPANTS_PER_EXPORT,
+          });
+        }
+        await markUserLargeClassGraceUsed(req.user.domain, req.user.email);
+        graceUsed = true;
+        largeClassCount = participantCount;
       }
       // Re-exports of an already-exported meeting dedupe against one quota
       // slot — legit (mid-meeting + end-of-meeting saves), but unmetered it
@@ -861,7 +869,13 @@ router.post('/save-to-sheets', async (req, res) => {
       const used = monthlyExports + ((exportCreated === false || isSolo) ? 0 : 1);
       quota = { used, limit: FREE_MONTHLY_EXPORT_LIMIT };
     }
-    res.json({ success: true, sheetUrl, isFirstExport, quota });
+    res.json({
+      success: true,
+      sheetUrl,
+      isFirstExport,
+      quota,
+      ...(graceUsed ? { graceUsed: true, participantCount: largeClassCount } : {}),
+    });
   } catch (err) {
     // Missing Drive scope is the most specific case (explicitly tagged upstream)
     // — keep it first so its "insufficient authentication scopes" message never

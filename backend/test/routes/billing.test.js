@@ -2,7 +2,7 @@
 // requireProPlan gate. The Stripe SDK is mocked so no network calls happen.
 
 const request = require('supertest');
-const { authedHeader, buildApp } = require('../helpers/testApp');
+const { authedHeader, makeJwt, buildApp } = require('../helpers/testApp');
 
 // Controllable Stripe instance returned by the mocked SDK factory.
 const mockStripeInstance = {
@@ -41,6 +41,8 @@ jest.mock('../../src/services/firestore', () => ({
   isEmailSuppressed: jest.fn().mockResolvedValue(false),
   persistExport: jest.fn().mockResolvedValue({ id: 'exp_123' }),
   isMeetingUnlocked: jest.fn().mockResolvedValue(false),
+  markUserLargeClassGraceUsed: jest.fn().mockResolvedValue(true),
+  isUserDeleted: jest.fn().mockResolvedValue(false),
 }));
 
 const firestore = require('../../src/services/firestore');
@@ -1954,8 +1956,9 @@ describe('billing/status pricing payload', () => {
       expect(firestore.persistExport).not.toHaveBeenCalled();
     });
 
-    test('returns 402 largeClass if participantCount exceeds 25 on free tier', async () => {
+    test('returns 402 largeClass if participantCount exceeds 25 on free tier when grace already used', async () => {
       firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+      firestore.getUser.mockResolvedValue({ hasUsedLargeClassGrace: true });
       const res = await request(app)
         .post('/api/billing/record-export')
         .set(authedHeader('free@gmail.com', 'gmail.com'))
@@ -1963,6 +1966,21 @@ describe('billing/status pricing payload', () => {
       expect(res.status).toBe(402);
       expect(res.body.feature).toBe('largeClass');
       expect(firestore.persistExport).not.toHaveBeenCalled();
+    });
+
+    test('grants grace on first large class (>25 attendees) on free tier', async () => {
+      firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+      firestore.getUser.mockResolvedValue({ hasUsedLargeClassGrace: false });
+      const res = await request(app)
+        .post('/api/billing/record-export')
+        .set(authedHeader('free@gmail.com', 'gmail.com'))
+        .send({ exportType: 'csv', participantCount: 26 });
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.graceUsed).toBe(true);
+      expect(res.body.participantCount).toBe(26);
+      expect(firestore.markUserLargeClassGraceUsed).toHaveBeenCalledWith('gmail.com', 'free@gmail.com');
+      expect(firestore.persistExport).toHaveBeenCalled();
     });
 
     test('returns 402 exportQuota if free user has reached monthly export limit', async () => {
@@ -2249,6 +2267,124 @@ describe('billing/status pricing payload', () => {
       const diffDays = Math.round((expiry - now) / (1000 * 60 * 60 * 24));
       expect(diffDays).toBeGreaterThanOrEqual(364);
       expect(diffDays).toBeLessThanOrEqual(366);
+    });
+  });
+
+  describe('GET /api/billing/checkout-redirect', () => {
+    beforeEach(() => {
+      process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+      process.env.STRIPE_PRICE_ID = 'price_domain';
+      process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID = 'price_lifetime';
+      process.env.STRIPE_EDUCATOR_PRICE_ID = 'price_edu';
+      process.env.STRIPE_SINGLE_MEETING_PRICE_ID = 'price_sm';
+      app = buildApp();
+      firestore.getUser.mockResolvedValue({ email: 'teacher@deped.gov.ph', domain: 'deped.gov.ph' });
+      firestore.isUserDeleted.mockResolvedValue(false);
+      mockStripeInstance.checkout.sessions.create.mockResolvedValue({ url: 'https://checkout.stripe.com/c/pay/cs_test_123' });
+    });
+
+    test('302 redirects to Stripe Checkout URL when authed via header', async () => {
+      const res = await request(app)
+        .get('/api/billing/checkout-redirect?plan=educator')
+        .set(authedHeader('teacher@deped.gov.ph', 'deped.gov.ph'));
+
+      expect(res.status).toBe(302);
+      expect(res.header.location).toBe('https://checkout.stripe.com/c/pay/cs_test_123');
+    });
+
+    test('302 redirects to Stripe Checkout URL when authed via ?token query param', async () => {
+      const token = makeJwt({ email: 'teacher@deped.gov.ph', domain: 'deped.gov.ph' });
+      const res = await request(app)
+        .get(`/api/billing/checkout-redirect?plan=lifetime&token=${encodeURIComponent(token)}`);
+
+      expect(res.status).toBe(302);
+      expect(res.header.location).toBe('https://checkout.stripe.com/c/pay/cs_test_123');
+    });
+
+    test('redirects to index.html with checkout_error when token is invalid or missing', async () => {
+      const res = await request(app)
+        .get('/api/billing/checkout-redirect?plan=lifetime');
+
+      expect(res.status).toBe(302);
+      expect(res.header.location).toContain('/index.html?checkout_error=');
+      expect(res.header.location).toContain('Please%20sign%20in');
+    });
+
+    test('redirects to index.html with checkout_error when user is deleted', async () => {
+      firestore.isUserDeleted.mockResolvedValue(true);
+      const token = makeJwt({ email: 'deleted@school.edu', domain: 'school.edu' });
+      const res = await request(app)
+        .get(`/api/billing/checkout-redirect?plan=lifetime&token=${encodeURIComponent(token)}`);
+
+      expect(res.status).toBe(302);
+      expect(res.header.location).toContain('This%20account%20has%20been%20deleted');
+    });
+
+    test('supports single_meeting pass with conferenceId and regional pricing in PH', async () => {
+      const token = makeJwt({ email: 'teacher@deped.gov.ph', domain: 'deped.gov.ph' });
+      const res = await request(app)
+        .get(`/api/billing/checkout-redirect?plan=single_meeting&conferenceId=conf-123&country=ph&token=${encodeURIComponent(token)}`);
+
+      expect(res.status).toBe(302);
+      expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mode: 'payment',
+          payment_method_types: ['card', 'gcash', 'grabpay'],
+          line_items: [{
+            price_data: {
+              currency: 'php',
+              unit_amount: 9900,
+              product_data: { name: 'Attendance Tracker Pro (Single Meeting Pass)' },
+            },
+            quantity: 1,
+          }],
+          metadata: expect.objectContaining({
+            conferenceId: 'conf-123',
+            meetingPass: '1',
+          }),
+        })
+      );
+    });
+
+    test('redirects to index.html with checkout_error if Stripe checkout session creation fails', async () => {
+      mockStripeInstance.checkout.sessions.create.mockRejectedValue(new Error('Stripe card rails error'));
+      const token = makeJwt({ email: 'teacher@deped.gov.ph', domain: 'deped.gov.ph' });
+      const res = await request(app)
+        .get(`/api/billing/checkout-redirect?plan=lifetime&token=${encodeURIComponent(token)}`);
+
+      expect(res.status).toBe(302);
+      expect(res.header.location).toContain('Stripe%20card%20rails%20error');
+    });
+  });
+
+  describe('POST /api/billing/record-export quota & grace interaction', () => {
+    beforeEach(() => {
+      process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+      process.env.STRIPE_PRICE_ID = 'price_domain';
+      app = buildApp();
+      firestore.getUser.mockResolvedValue({ email: 'user@school.edu', domain: 'school.edu', hasUsedLargeClassGrace: false });
+      firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+      firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    });
+
+    afterEach(() => {
+      delete process.env.STRIPE_SECRET_KEY;
+      delete process.env.STRIPE_PRICE_ID;
+    });
+
+    test('does not consume large class grace if monthly export quota is exhausted', async () => {
+      firestore.countUserMonthlyExports.mockResolvedValue(2);
+      const res = await request(app)
+        .post('/api/billing/record-export')
+        .set(authedHeader('user@school.edu', 'school.edu'))
+        .send({
+          exportType: 'csv',
+          participantCount: 30,
+        });
+
+      expect(res.status).toBe(402);
+      expect(res.body.feature).toBe('exportQuota');
+      expect(firestore.markUserLargeClassGraceUsed).not.toHaveBeenCalled();
     });
   });
 });

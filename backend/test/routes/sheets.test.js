@@ -67,6 +67,8 @@ jest.mock('../../src/services/firestore', () => ({
   getTenantPlan: jest.fn(), // used by billing.planIsPro when billing is configured
   logEvent: jest.fn(), // webhook_digest_sent telemetry from the digest loop
   isEmailSuppressed: jest.fn(), // per-recipient re-check in the extras fan-out
+  markUserLargeClassGraceUsed: jest.fn().mockResolvedValue(true),
+  isMeetingUnlocked: jest.fn().mockResolvedValue(false),
 }));
 
 jest.mock('../../src/lib/notifications', () => ({
@@ -840,6 +842,11 @@ describe('POST /api/save-to-sheets — Pro gating', () => {
 
   test('free tier export is blocked with 402 when class capacity exceeds limit (>25 attendees)', async () => {
     firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUser.mockImplementation(async (domain, email) => ({
+      email, domain, refreshToken: 'rt', accessToken: 'at',
+      tokenExpiresAt: new Date(Date.now() + 3600000),
+      hasUsedLargeClassGrace: true,
+    }));
     firestore.countUserMonthlyExports.mockResolvedValue(0);
     const largeClassParticipants = Array.from({ length: 26 }, (_, i) => ({
       displayName: `Student ${i + 1}`,
@@ -855,6 +862,55 @@ describe('POST /api/save-to-sheets — Pro gating', () => {
     expect(res.status).toBe(402);
     expect(res.body).toMatchObject({ upgrade: true, feature: 'largeClass', participantCount: 26, limit: 25 });
     expect(firestore.persistExport).not.toHaveBeenCalled();
+  });
+
+  test('free tier export grants grace on first-time large class (>25 attendees)', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUser.mockImplementation(async (domain, email) => ({
+      email, domain, refreshToken: 'rt', accessToken: 'at',
+      tokenExpiresAt: new Date(Date.now() + 3600000),
+      hasUsedLargeClassGrace: false,
+    }));
+    firestore.countUserMonthlyExports.mockResolvedValue(0);
+    const largeClassParticipants = Array.from({ length: 26 }, (_, i) => ({
+      displayName: `Student ${i + 1}`,
+      email: `student${i + 1}@school.edu`,
+      joinTimeISO: new Date().toISOString(),
+      leaveTimeISO: null,
+      present: true,
+      sessions: 1,
+    }));
+    const res = await request(app).post('/api/save-to-sheets')
+      .set(authedHeader('u@large-class.com', 'large-class.com')).set('Content-Type', 'application/json')
+      .send({ ...validPayload, participants: largeClassParticipants, autoExport: false });
+    expect(res.status).toBe(200);
+    expect(res.body.graceUsed).toBe(true);
+    expect(res.body.participantCount).toBe(26);
+    expect(firestore.markUserLargeClassGraceUsed).toHaveBeenCalledWith('large-class.com', 'u@large-class.com');
+  });
+
+  test('free tier export does not consume large class grace if monthly export quota is already exhausted', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUser.mockImplementation(async (domain, email) => ({
+      email, domain, refreshToken: 'rt', accessToken: 'at',
+      tokenExpiresAt: new Date(Date.now() + 3600000),
+      hasUsedLargeClassGrace: false,
+    }));
+    firestore.countUserMonthlyExports.mockResolvedValue(2);
+    const largeClassParticipants = Array.from({ length: 26 }, (_, i) => ({
+      displayName: `Student ${i + 1}`,
+      email: `student${i + 1}@school.edu`,
+      joinTimeISO: new Date().toISOString(),
+      leaveTimeISO: null,
+      present: true,
+      sessions: 1,
+    }));
+    const res = await request(app).post('/api/save-to-sheets')
+      .set(authedHeader('u@quota-and-large.com', 'quota-and-large.com')).set('Content-Type', 'application/json')
+      .send({ ...validPayload, participants: largeClassParticipants, autoExport: false });
+    expect(res.status).toBe(402);
+    expect(res.body.feature).toBe('exportQuota');
+    expect(firestore.markUserLargeClassGraceUsed).not.toHaveBeenCalled();
   });
 
   test('pro user can export large classes with >25 attendees without block', async () => {

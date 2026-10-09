@@ -4398,7 +4398,7 @@ async function downloadAttendanceCsv() {
   }
 
   const count = ctx.parts.length;
-  if (!_isPro && count > 25) {
+  if (!_isPro && count > 25 && _billing?.hasUsedLargeClassGrace === true) {
     state._lastLargeClassCount = count;
     showUpgradeModal('largeClass');
     return;
@@ -4433,6 +4433,11 @@ async function downloadAttendanceCsv() {
     if (res.ok) {
       const data = await res.json();
       if (data.quota) quota = data.quota;
+      if (data.graceUsed) {
+        if (!_billing) _billing = {};
+        _billing.hasUsedLargeClassGrace = true;
+        toast(t('export.graceUsed', '🎉 Complimentary Full-Roster Export: We unlocked all {count} attendees for your first large class! Upgrade to Educator ($4.99/yr) for unlimited class sizes on future classes.').replace('{count}', data.participantCount || count), 7000);
+      }
     }
   } catch (err) {}
 
@@ -4503,7 +4508,7 @@ async function downloadAttendanceExcel() {
   }
 
   const count = ctx.parts.length;
-  if (!_isPro && count > 25) {
+  if (!_isPro && count > 25 && _billing?.hasUsedLargeClassGrace === true) {
     state._lastLargeClassCount = count;
     showUpgradeModal('largeClass');
     return;
@@ -4538,6 +4543,11 @@ async function downloadAttendanceExcel() {
     if (res.ok) {
       const data = await res.json();
       if (data.quota) quota = data.quota;
+      if (data.graceUsed) {
+        if (!_billing) _billing = {};
+        _billing.hasUsedLargeClassGrace = true;
+        toast(t('export.graceUsed', '🎉 Complimentary Full-Roster Export: We unlocked all {count} attendees for your first large class! Upgrade to Educator ($4.99/yr) for unlimited class sizes on future classes.').replace('{count}', data.participantCount || count), 7000);
+      }
     }
   } catch (err) {}
 
@@ -5558,6 +5568,11 @@ async function initSDK() {
     document.body.classList.add('landing-mode');
     loadPublicStats();
     sendPageviewBeacon();
+    const params = new URLSearchParams(window.location.search);
+    const checkoutErr = params.get('checkout_error');
+    if (checkoutErr) {
+      setTimeout(() => toast(checkoutErr, 6000), 300);
+    }
     return;
   }
   try {
@@ -5567,6 +5582,10 @@ async function initSDK() {
     if (!ready) {
       // Not inside Meet — show landing page or demo mode
       const params = new URLSearchParams(window.location.search);
+      const checkoutErr = params.get('checkout_error');
+      if (checkoutErr) {
+        setTimeout(() => toast(checkoutErr, 6000), 300);
+      }
       if (params.get('demo') === '1') {
         document.getElementById('meeting-title').textContent = 'Dev Preview Mode';
         setStatus('loading', 'Demo mode — configure simulation below');
@@ -7130,50 +7149,37 @@ async function handleBillingClick() {
   }
 }
 
-async function startUpgradeCheckout(plan, btnId) {
+function startStripeCheckout(plan) {
   try {
     logUserEvent('upgrade_checkout_clicked', {
       plan: plan || 'lifetime',
-      btnId: btnId || null,
       reason: state._lastUpgradeReason || 'modal',
       ...upgradeContext(),
     });
   } catch {}
-  const btn = btnId ? document.getElementById(btnId) : null;
-  // Preserve innerHTML (not textContent) — the buttons contain .price-* spans
-  // that paintPrices() updates; flattening to a text node would orphan them.
-  const originalHtml = btn ? btn.innerHTML : '';
-  if (btn) { btn.disabled = true; btn.textContent = t('billing.connectingStripe', 'Connecting to Stripe…'); }
-  const tab = openBillingTab();
-  try {
-    const res = await authFetch(`${state.backendUrl}/billing/checkout`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      // Domain cards now send 'department' ($59/yr, resolves by plan name). The
-      // legacy 'team' path stays: team+annual = the $149 Institution price, so a
-      // bare 'team' must send 'once' to hit the retired $19.99 one-time price.
-      body: JSON.stringify({
-        plan: plan || 'lifetime',
-        interval: plan === 'team' ? 'once' : 'annual',
-        conferenceId: (typeof state !== 'undefined' && (state.conferenceId || state.meetingCode)) || (typeof currentMeetingCode !== 'undefined' ? currentMeetingCode : null) || null,
-      }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (res.ok && data.url) {
-      // A click that actually reached a Stripe session — the funnel stage
-      // between upgrade_checkout_clicked and the webhook's 'upgraded'.
-      try { logUserEvent('checkout_started', { plan: plan || 'lifetime', reason: state._lastUpgradeReason || 'modal' }); } catch {}
-      if (navigateBillingTab(tab, data.url)) watchForUpgradeCompletion();
-      return;
+  const token = state.sessionToken || '';
+  const confId = (typeof state !== 'undefined' && (state.conferenceId || state.meetingCode)) || (typeof currentMeetingCode !== 'undefined' ? currentMeetingCode : null) || '';
+  const country = (_billing && _billing.country) || '';
+  const params = new URLSearchParams();
+  if (plan) params.set('plan', plan);
+  if (token) params.set('token', token);
+  if (confId) params.set('conferenceId', confId);
+  if (country) params.set('country', country);
+  const url = `${state.backendUrl}/billing/checkout-redirect?${params.toString()}`;
+  const win = window.open(url, '_blank');
+  if (!win) {
+    if (window.self === window.top) {
+      window.location.href = url;
+    } else {
+      try { logUserEvent('checkout_open_blocked', {}); } catch {}
+      toast(t('toast.popupBlocked', 'Your browser blocked the checkout tab. Please allow pop-ups for Meet and try again.'));
     }
-    closeBillingTab(tab);
-    toast(data.error || t('toast.billingUnavailable', 'Billing is unavailable right now.'));
-  } catch {
-    closeBillingTab(tab);
-    toast(t('toast.couldNotReachBilling', 'Could not reach billing.'));
-  } finally {
-    if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; }
   }
+  watchForUpgradeCompletion();
+}
+
+async function startUpgradeCheckout(plan, btnId) {
+  startStripeCheckout(plan);
 }
 
 // Checkout happens in another tab, so the add-on iframe never sees the
@@ -7320,7 +7326,7 @@ function updateUpgradeModalPricing() {
       const localTag = localEduAnchor ? ` <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(${escHtml(localEduAnchor)})</span>` : '';
       educatorPriceEl.innerHTML = `<span>$4.99</span>${localTag}`;
     }
-    if (eduPerMoBadge) eduPerMoBadge.textContent = t('upgrade.perMo', '~$0.41/mo');
+    if (eduPerMoBadge) eduPerMoBadge.textContent = t('upgrade.perMo', 'Under 42¢/month');
     if (btnLifetime) {
       btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime">$9.99</span>`;
     }
@@ -7475,12 +7481,7 @@ function updateUpgradeModalPricing() {
   }
 
   if (btnSingleMeeting) {
-    const isInstant = (state._lastUpgradeReason === 'exportQuota' || state._lastUpgradeReason === 'largeClass');
-    if (isInstant) {
-      btnSingleMeeting.innerHTML = `<span data-i18n="upgrade.ctaSingleMeetingNow">${escHtml(t('upgrade.ctaSingleMeetingNow', 'Unlock This Meeting Now'))}</span> — <span class="price-single-meeting" style="font-weight:700">${escHtml(singlePriceStr)}</span>`;
-    } else {
-      btnSingleMeeting.innerHTML = `<span data-i18n="upgrade.ctaSingleMeeting">${escHtml(t('upgrade.ctaSingleMeeting', 'Unlock This Meeting —'))}</span> <span class="price-single-meeting" style="font-weight:700">${escHtml(singlePriceStr)}</span>`;
-    }
+    btnSingleMeeting.innerHTML = `<span data-i18n="upgrade.singleAltPrefix">${escHtml(t('upgrade.singleAltPrefix', 'Only need this single meeting? Unlock for'))}</span> <span class="price-single-meeting" style="font-weight:700;color:#e3e3e3">${escHtml(singlePriceStr)}</span> →`;
   }
 
   const badgeText = document.getElementById('upgrade-payment-badge-text');
@@ -7555,46 +7556,14 @@ function showUpgradeModal(reason) {
   const lifetimeCard = document.getElementById('plan-card-lifetime');
   const eduCard = document.getElementById('plan-card-educator');
   const teamCard = document.getElementById('plan-card-team');
-  const isInstantMeetingReason = (reason === 'exportQuota' || reason === 'largeClass');
 
   if (singleCard && lifetimeCard && eduCard && singleCard.parentNode) {
     const parent = singleCard.parentNode;
-    if (isInstantMeetingReason) {
-      parent.insertBefore(singleCard, lifetimeCard);
-      singleCard.style.background = 'linear-gradient(180deg, rgba(74,222,128,.12), rgba(255,255,255,.02))';
-      singleCard.style.border = '1.5px solid #4ade80';
-      const instantBadge = document.getElementById('single-meeting-instant-badge');
-      if (instantBadge) {
-        instantBadge.style.display = 'inline-block';
-        instantBadge.textContent = t('upgrade.unlockThisMeetingBadge', 'Instant Unlock');
-      }
-      const btnSingleMeeting = document.getElementById('btn-upgrade-single-meeting');
-      if (btnSingleMeeting) {
-        btnSingleMeeting.style.background = '#22c55e';
-        btnSingleMeeting.style.color = '#0d1117';
-        btnSingleMeeting.style.border = 'none';
-        btnSingleMeeting.style.fontWeight = '700';
-      }
+    parent.insertBefore(lifetimeCard, eduCard);
+    if (teamCard) {
+      parent.insertBefore(singleCard, teamCard);
     } else {
-      if (teamCard) {
-        parent.insertBefore(singleCard, teamCard);
-      } else {
-        parent.appendChild(singleCard);
-      }
-      parent.insertBefore(lifetimeCard, eduCard);
-      singleCard.style.background = 'rgba(255,255,255,.02)';
-      singleCard.style.border = '1px dashed rgba(255,255,255,.2)';
-      const instantBadge = document.getElementById('single-meeting-instant-badge');
-      if (instantBadge) {
-        instantBadge.style.display = 'none';
-      }
-      const btnSingleMeeting = document.getElementById('btn-upgrade-single-meeting');
-      if (btnSingleMeeting) {
-        btnSingleMeeting.style.background = 'rgba(255,255,255,.08)';
-        btnSingleMeeting.style.color = '#e3e3e3';
-        btnSingleMeeting.style.border = '1px solid rgba(255,255,255,.2)';
-        btnSingleMeeting.style.fontWeight = '600';
-      }
+      parent.appendChild(singleCard);
     }
   }
 
@@ -8492,7 +8461,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
   };
 
   const totalAttendeeCount = payload.participants.length;
-  if (!_isPro && totalAttendeeCount > 25) {
+  if (!_isPro && totalAttendeeCount > 25 && _billing?.hasUsedLargeClassGrace === true) {
     state._lastLargeClassCount = totalAttendeeCount;
     showUpgradeModal('largeClass');
     return;
@@ -8578,7 +8547,12 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
       throw new Error(body.error || `${res.status}`);
     }
     const exportResult = await res.json();
-    const { sheetUrl, isFirstExport, quota } = exportResult;
+    const { sheetUrl, isFirstExport, quota, graceUsed, participantCount } = exportResult;
+    if (graceUsed) {
+      if (!_billing) _billing = {};
+      _billing.hasUsedLargeClassGrace = true;
+      toast(t('export.graceUsed', '🎉 Complimentary Full-Roster Export: We unlocked all {count} attendees for your first large class! Upgrade to Educator ($4.99/yr) for unlimited class sizes on future classes.').replace('{count}', participantCount || totalAttendeeCount), 7000);
+    }
     if (quota) {
       if (!_billing) _billing = {};
       if (!_billing.exportQuota) _billing.exportQuota = { used: quota.used, limit: quota.limit };
@@ -11226,7 +11200,7 @@ window.addEventListener('DOMContentLoaded', () => {
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <div style="display:flex;align-items:center;gap:6px">
             <span style="font-weight:600;font-size:.88rem;color:#e3e3e3" data-i18n="pricing.planEduName">Educator Annual Pass</span>
-            <span style="background:rgba(88,166,255,.15);color:#58a6ff;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:12px;letter-spacing:.04em;text-transform:uppercase" data-i18n="upgrade.perMo">~$0.41/mo</span>
+            <span style="background:rgba(88,166,255,.15);color:#58a6ff;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:12px;letter-spacing:.04em;text-transform:uppercase" data-i18n="upgrade.perMo">Under 42¢/month</span>
           </div>
           <div style="text-align:right">
             <span class="price-educator" style="font-weight:700;font-size:1rem;color:#8ab4f8">$4.99</span>
@@ -11248,24 +11222,11 @@ window.addEventListener('DOMContentLoaded', () => {
         </button>
       </div>
 
-      <!-- Plan: Single-Meeting Pass ($2.99 one-time) -->
-      <div id="plan-card-single-meeting" style="background:rgba(255,255,255,.02);border:1px dashed rgba(255,255,255,.2);border-radius:12px;padding:11px 14px 10px;margin-bottom:10px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <div>
-            <div style="display:flex;align-items:center;gap:6px">
-              <span style="font-weight:600;font-size:.85rem;color:#e3e3e3" data-i18n="upgrade.singleMeetingName">Single-Meeting Pass</span>
-              <span id="single-meeting-instant-badge" style="display:none;background:#22c55e;color:#0d1117;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:12px;letter-spacing:.04em;text-transform:uppercase" data-i18n="upgrade.unlockThisMeetingBadge">Instant Unlock</span>
-            </div>
-            <span style="font-size:.72rem;color:#9aa0a6;display:block" data-i18n="upgrade.singleMeetingDesc">Export this meeting with no limits</span>
-          </div>
-          <div style="text-align:right">
-            <span class="price-single-meeting" style="font-weight:700;font-size:1rem;color:#e3e3e3">$2.99</span>
-            <span style="font-size:.68rem;color:#9aa0a6;display:block" data-i18n="upgrade.oneTime">one-time</span>
-          </div>
-        </div>
-        <button type="button" id="btn-upgrade-single-meeting" onclick="startUpgradeCheckout('single_meeting', 'btn-upgrade-single-meeting')" style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#e3e3e3;padding:7.5px 14px;border-radius:20px;font-weight:600;font-size:.78rem;cursor:pointer;transition:all .15s ease">
-          <span data-i18n="upgrade.ctaSingleMeeting">Unlock This Meeting — $2.99</span>
-        </button>
+      <!-- Plan: Single-Meeting Pass as subordinate alternative link/option below main cards -->
+      <div id="plan-card-single-meeting" style="text-align:center;padding:8px 10px 4px;margin-bottom:8px">
+        <a href="#" id="btn-upgrade-single-meeting" onclick="startUpgradeCheckout('single_meeting', 'btn-upgrade-single-meeting');return false;" style="color:#9aa0a6;font-size:.76rem;text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:color .15s ease" onmouseover="this.style.color='#e3e3e3'" onmouseout="this.style.color='#9aa0a6'">
+          <span data-i18n="upgrade.singleAltPrefix">Only need this single meeting? Unlock for</span> <span class="price-single-meeting" style="font-weight:700;color:#e3e3e3">$2.99</span> →
+        </a>
       </div>
 
       <!-- Plan 3: Department (recurring domain plan, $59/yr) — workspace orgs only -->

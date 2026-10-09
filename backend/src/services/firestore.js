@@ -208,6 +208,25 @@ async function isMeetingUnlocked(domain, email, conferenceId) {
   return false;
 }
 
+// ── 1-time grace export for first large class (>25 attendees) ──
+async function markUserLargeClassGraceUsed(domain, email) {
+  try {
+    const emailLower = (email || '').toLowerCase().trim();
+    const dom = domain || (emailLower.includes('@') ? emailLower.split('@')[1] : null);
+    if (!dom || !emailLower) return false;
+    await tenantRef(dom).collection('users').doc(emailLower).set({
+      hasUsedLargeClassGrace: true,
+      largeClassGraceUsedAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+    log.info('firestore: marked large class grace used', { domain: dom, email: emailLower });
+    return true;
+  } catch (err) {
+    log.error('firestore: markUserLargeClassGraceUsed failed', { domain, email, error: err.message });
+    return false;
+  }
+}
+
 // ── Colleague referral rewards (mutual 35-day Pro unlock) ──
 async function grantReferralReward(domain, email, referrerEmail) {
   try {
@@ -2846,7 +2865,7 @@ module.exports = {
   getAllUsersAcrossTenants: memoizeTTL(getAllUsersAcrossTenants, 120000),
   deleteUser, isUserDeleted,
   saveCheckin, getCheckins,
-  unlockMeetingForUser, isMeetingUnlocked,
+  unlockMeetingForUser, isMeetingUnlocked, markUserLargeClassGraceUsed,
   // ── Heavy full-DB admin reads: TTL-cached so a dashboard reload doesn't
   //    re-scan the whole users+events+meetings tree for each one. ──
   getAggregatedInsights: memoizeTTL(getAggregatedInsights, 900000), // 15 min TTL

@@ -44,6 +44,7 @@ jest.mock('../../src/services/firestore', () => ({
   updateUserTokens: jest.fn(),
   getTenantPlan: jest.fn(),
   getUserPlan: jest.fn(),
+  isMeetingUnlocked: jest.fn(),
 }));
 
 const { google } = require('googleapis');
@@ -58,6 +59,7 @@ beforeEach(() => {
   delete process.env.STRIPE_PRICE_ID;
   firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
   firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+  firestore.isMeetingUnlocked.mockResolvedValue(false);
   firestore.getUser.mockImplementation(async (domain, email) => ({
     email, domain, refreshToken: 'rt', accessToken: 'at',
     tokenExpiresAt: new Date(Date.now() + 3600000),
@@ -559,6 +561,48 @@ describe('POST /api/classroom/courses/:courseId/courseWork/:courseWorkId/sync-gr
         .send({ courseId: 'c1', records: [{ email: 's@school.edu', status: 'present' }] });
       expect(res.status).toBe(402);
       expect(res.body.feature).toBe('lmsSync');
+    });
+
+    test('POST /classroom/courses/:courseId/courseWork allows unlocked single-meeting pass holder through', async () => {
+      firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+      firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+      firestore.isMeetingUnlocked.mockResolvedValue(true);
+      mockCourseWorkCreate.mockResolvedValue({
+        data: { id: 'cw-unlocked', title: 'Single Meeting Assignment', maxPoints: 100 },
+      });
+      const res = await request(app)
+        .post('/api/classroom/courses/c1/courseWork')
+        .set(authedHeader('t@school.edu', 'school.edu'))
+        .send({ title: 'Single Meeting Assignment', conferenceId: 'conf-123' });
+      expect(res.status).toBe(200);
+      expect(res.body.courseWork.id).toBe('cw-unlocked');
+      expect(firestore.isMeetingUnlocked).toHaveBeenCalledWith('school.edu', 't@school.edu', 'conf-123');
+    });
+
+    test('POST /classroom/sync-grades allows unlocked single-meeting pass holder through', async () => {
+      firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+      firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+      firestore.isMeetingUnlocked.mockResolvedValue(true);
+      mockStudentsList.mockResolvedValue({
+        data: { students: [{ userId: 'u1', profile: { emailAddress: 's@school.edu' } }] },
+      });
+      mockSubmissionsList.mockResolvedValue({
+        data: { studentSubmissions: [{ id: 'sub1', userId: 'u1' }] },
+      });
+      mockSubmissionsPatch.mockResolvedValue({ data: {} });
+      mockCourseWorkList.mockResolvedValue({ data: { courseWork: [{ id: 'cw1', title: 'A1' }] } });
+
+      const res = await request(app)
+        .post('/api/classroom/sync-grades')
+        .set(authedHeader('t@school.edu', 'school.edu'))
+        .send({
+          courseId: 'c1',
+          courseWorkId: 'cw1',
+          conferenceId: 'conf-123',
+          records: [{ email: 's@school.edu', status: 'present' }],
+        });
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
     });
   });
 });

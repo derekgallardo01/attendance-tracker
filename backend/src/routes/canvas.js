@@ -13,7 +13,7 @@ const { Router } = require('express');
 const { requireAuth } = require('../middleware/auth');
 const { planIsPro } = require('./billing');
 const log = require('../lib/logger');
-const { getUserSettings, updateUserSettings } = require('../services/firestore');
+const { getUserSettings, updateUserSettings, isMeetingUnlocked } = require('../services/firestore');
 
 const router = Router();
 
@@ -228,8 +228,10 @@ router.get('/canvas/courses/:courseId/assignments', requireAuth, async (req, res
 // POST /api/canvas/courses/:courseId/assignments — create an assignment in Canvas
 router.post('/canvas/courses/:courseId/assignments', requireAuth, async (req, res) => {
   res.set('Cache-Control', 'no-store');
-  const isPro = await planIsPro(req.user?.domain, req.user?.email);
-  if (!isPro) {
+  const confId = req.body?.conferenceId || req.query?.conferenceId;
+  const isAllowed = (await planIsPro(req.user?.domain, req.user?.email))
+    || (confId && typeof isMeetingUnlocked === 'function' && await isMeetingUnlocked(req.user?.domain, req.user?.email, confId));
+  if (!isAllowed) {
     return res.status(402).json({ error: 'Canvas LMS grade sync is a Pro feature.', feature: 'lmsSync' });
   }
   const { courseId } = req.params;
@@ -287,8 +289,10 @@ router.post('/canvas/courses/:courseId/assignments', requireAuth, async (req, re
 // Sync handler implementation for Canvas
 async function handleCanvasGradeSync(req, res) {
   res.set('Cache-Control', 'no-store');
-  const isPro = await planIsPro(req.user?.domain, req.user?.email);
-  if (!isPro) {
+  const confId = req.body?.conferenceId || req.query?.conferenceId;
+  const isAllowed = (await planIsPro(req.user?.domain, req.user?.email))
+    || (confId && typeof isMeetingUnlocked === 'function' && await isMeetingUnlocked(req.user?.domain, req.user?.email, confId));
+  if (!isAllowed) {
     return res.status(402).json({ error: 'Canvas LMS grade sync is a Pro feature.', feature: 'lmsSync' });
   }
   const courseId = req.params.courseId || req.body?.courseId;

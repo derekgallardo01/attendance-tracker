@@ -12,6 +12,7 @@ const { google } = require('googleapis');
 const { makeUserClient } = require('../services/googleAuth');
 const { requireAuth } = require('../middleware/auth');
 const { planIsPro } = require('./billing');
+const { isMeetingUnlocked } = require('../services/firestore');
 const log = require('../lib/logger');
 
 const router = Router();
@@ -177,8 +178,10 @@ router.get('/classroom/courses/:courseId/courseWork', requireAuth, async (req, r
 router.post('/classroom/courses/:courseId/courseWork', requireAuth, async (req, res) => {
   res.set('Cache-Control', 'no-store');
   if (!requireAccessToken(req, res)) return;
-  const isPro = await planIsPro(req.user?.domain, req.user?.email);
-  if (!isPro) {
+  const confId = req.body?.conferenceId || req.query?.conferenceId;
+  const isAllowed = (await planIsPro(req.user?.domain, req.user?.email))
+    || (confId && typeof isMeetingUnlocked === 'function' && await isMeetingUnlocked(req.user?.domain, req.user?.email, confId));
+  if (!isAllowed) {
     return res.status(402).json({ error: 'Google Classroom grade sync is a Pro feature.', feature: 'lmsSync' });
   }
   const { courseId } = req.params;
@@ -220,8 +223,10 @@ router.post('/classroom/courses/:courseId/courseWork', requireAuth, async (req, 
 async function handleClassroomGradeSync(req, res) {
   res.set('Cache-Control', 'no-store');
   if (!requireAccessToken(req, res)) return;
-  const isPro = await planIsPro(req.user?.domain, req.user?.email);
-  if (!isPro) {
+  const confId = req.body?.conferenceId || req.query?.conferenceId;
+  const isAllowed = (await planIsPro(req.user?.domain, req.user?.email))
+    || (confId && typeof isMeetingUnlocked === 'function' && await isMeetingUnlocked(req.user?.domain, req.user?.email, confId));
+  if (!isAllowed) {
     return res.status(402).json({ error: 'Google Classroom grade sync is a Pro feature.', feature: 'lmsSync' });
   }
 

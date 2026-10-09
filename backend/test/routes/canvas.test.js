@@ -11,6 +11,7 @@ jest.mock('../../src/services/firestore', () => ({
   getUser: jest.fn(),
   getTenantPlan: jest.fn(),
   getUserPlan: jest.fn(),
+  isMeetingUnlocked: jest.fn(),
 }));
 
 const firestore = require('../../src/services/firestore');
@@ -24,6 +25,7 @@ beforeEach(() => {
   delete process.env.STRIPE_PRICE_ID;
   firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
   firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+  firestore.isMeetingUnlocked.mockResolvedValue(false);
   firestore.getUser.mockResolvedValue({ email: 'teacher@school.edu', domain: 'school.edu' });
   firestore.getUserSettings.mockResolvedValue({});
   firestore.updateUserSettings.mockResolvedValue({ saved: true });
@@ -560,6 +562,55 @@ describe('POST /api/canvas/courses/:courseId/assignments/:assignmentId/sync-grad
         .send({ records: [{ email: 'a@school.edu', points: '10' }] });
       expect(res.status).toBe(402);
       expect(res.body.feature).toBe('lmsSync');
+    });
+
+    test('POST /canvas/courses/:courseId/assignments allows unlocked single-meeting pass holder through', async () => {
+      firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+      firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+      firestore.isMeetingUnlocked.mockResolvedValue(true);
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ id: 777, name: 'Single Meeting Assignment', points_possible: 100 }),
+      });
+      const res = await request(app)
+        .post('/api/canvas/courses/101/assignments')
+        .set(authedHeader('teacher@school.edu', 'school.edu'))
+        .set('x-canvas-url', 'https://canvas.school.edu')
+        .set('x-canvas-token', 'tok')
+        .send({ name: 'Single Meeting Assignment', conferenceId: 'conf-123' });
+      expect(res.status).toBe(200);
+      expect(res.body.assignment.id).toBe(777);
+      expect(firestore.isMeetingUnlocked).toHaveBeenCalledWith('school.edu', 'teacher@school.edu', 'conf-123');
+    });
+
+    test('POST /canvas/sync-grades allows unlocked single-meeting pass holder through', async () => {
+      firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+      firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+      firestore.isMeetingUnlocked.mockResolvedValue(true);
+      global.fetch
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => [{ id: 1001, email: 'a@school.edu' }],
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => ({ id: 1 }),
+        });
+
+      const res = await request(app)
+        .post('/api/canvas/courses/101/assignments/201/sync-grades')
+        .set(authedHeader('teacher@school.edu', 'school.edu'))
+        .set('x-canvas-url', 'https://canvas.school.edu')
+        .set('x-canvas-token', 'tok')
+        .send({
+          conferenceId: 'conf-123',
+          records: [{ email: 'a@school.edu', points: '10' }],
+        });
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
     });
   });
 });

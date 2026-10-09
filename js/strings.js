@@ -317,6 +317,8 @@
 
     const STRINGS = {
     "en": {
+        "upgrade.singleAltPrefix": "Only need this single meeting? Unlock for",
+        "export.graceUsed": "🎉 Complimentary Full-Roster Export: We unlocked all {count} attendees for your first large class! Upgrade to Educator ($4.99/yr) for unlimited class sizes on future classes.",
         "billing.lmsSyncPro": "Syncing grades directly to Google Classroom and Canvas requires an Educator ($4.99/yr) or Pro plan.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago & SPEI Accepted",
         "soloTest.clearBtn": "Clear Sample Class",
@@ -1359,7 +1361,7 @@
         "upgrade.noRenewal": "no recurring renewal",
         "upgrade.featLifetime": "Unlimited Sheets exports & auto-capture",
         "upgrade.featPayMethods": "Cards, Pix, OXXO, UPI & local payment methods",
-        "upgrade.perMo": "~$0.41/mo",
+        "upgrade.perMo": "Under 42¢/month",
         "upgrade.eduPeriod": "/ yr",
         "upgrade.featEduExport": "Unlimited classes & automated Sheets export",
         "upgrade.featEduCerts": "Student attendance certificates & multi-session reports",
@@ -1671,6 +1673,8 @@
         "schoolLicense.error": "Could not submit request. Please try again or email us directly."
     },
     "es": {
+        "upgrade.singleAltPrefix": "¿Solo necesitas esta reunión? Desbloquear por",
+        "export.graceUsed": "🎉 Exportación completa de cortesía: ¡Desbloqueamos a los {count} asistentes para tu primera clase grande! Actualiza a Educator ($4.99/año) para clases ilimitadas en el futuro.",
         "billing.lmsSyncPro": "La sincronización de calificaciones directamente con Google Classroom y Canvas requiere un plan Educador ($4.99/año) o Pro.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago y SPEI aceptados",
         "soloTest.clearBtn": "Borrar clase de muestra",
@@ -3025,6 +3029,8 @@
         "schoolLicense.error": "No se pudo enviar la solicitud. Inténtalo de nuevo o escríbenos directamente."
     },
     "pt": {
+        "upgrade.singleAltPrefix": "Só precisa desta reunião? Desbloquear por",
+        "export.graceUsed": "🎉 Exportação completa cortesia: Desbloqueamos todos os {count} participantes para sua primeira turma grande! Atualize para Educator ($4.99/ano) para turmas ilimitadas no futuro.",
         "billing.lmsSyncPro": "A sincronização de notas diretamente com o Google Classroom e o Canvas requer um plano Educador ($4.99/ano) ou Pro.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago e SPEI aceitos",
         "soloTest.clearBtn": "Limpar turma de exemplo",
@@ -4379,6 +4385,8 @@
         "schoolLicense.error": "Não foi possível enviar a solicitação. Tente novamente ou envie um e-mail."
     },
     "hi": {
+        "upgrade.singleAltPrefix": "केवल इस मीटिंग की आवश्यकता है? इसके लिए अनलॉक करें",
+        "export.graceUsed": "🎉 मानार्थ पूर्ण-रोस्टर निर्यात: हमने आपकी पहली बड़ी कक्षा के लिए सभी {count} उपस्थित लोगों को अनलॉक कर दिया है! भविष्य में असीमित कक्षाओं के लिए Educator ($4.99/वर्ष) में अपग्रेड करें।",
         "billing.lmsSyncPro": "Google Classroom और Canvas में सीधे ग्रेड सिंक करने के लिए Educator ($4.99/वर्ष) या Pro प्लान आवश्यक है।",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago और SPEI स्वीकृत",
         "soloTest.clearBtn": "नमूना कक्षा साफ़ करें",
@@ -5733,6 +5741,8 @@
         "schoolLicense.error": "अनुरोध सबमिट नहीं हो सका। कृपया पुनः प्रयास करें या हमें ईमेल करें।"
     },
     "tl": {
+        "upgrade.singleAltPrefix": "Kailangan lang ba ang pulong na ito? I-unlock sa halagang",
+        "export.graceUsed": "🎉 Libreng Buong Talaan ng Export: Na-unlock namin ang lahat ng {count} dumalo para sa iyong unang malaking klase! Mag-upgrade sa Educator ($4.99/taon) para sa walang limitasyong mga klase sa hinaharap.",
         "billing.lmsSyncPro": "Ang direktang pag-sync ng mga marka sa Google Classroom at Canvas ay nangangailangan ng Educator ($4.99/taon) o Pro plan.",
         "upgrade.badgesMX": "🇲🇽 Tinatanggap ang OXXO, Mercado Pago at SPEI",
         "soloTest.clearBtn": "I-clear ang Sample Class",
@@ -7087,6 +7097,8 @@
         "schoolLicense.error": "Hindi maisumite ang kahilingan. Pakisubukang muli o mag-email nang direkta."
     },
     "ms": {
+        "upgrade.singleAltPrefix": "Hanya perlukan mesyuarat ini? Buka kunci untuk",
+        "export.graceUsed": "🎉 Eksport Senarai Penuh Percuma: Kami membuka kunci semua {count} peserta untuk kelas besar pertama anda! Naik taraf ke Educator ($4.99/thn) untuk kelas tanpa had pada masa hadapan.",
         "billing.lmsSyncPro": "Penyelarasan gred terus ke Google Classroom dan Canvas memerlukan pelan Educator ($4.99/thn) atau Pro.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago & SPEI Diterima",
         "soloTest.clearBtn": "Kosongkan Kelas Contoh",
@@ -8441,6 +8453,8 @@
         "schoolLicense.error": "Tidak dapat menghantar permintaan. Sila cuba lagi atau e-mel kepada kami."
     },
     "id": {
+        "upgrade.singleAltPrefix": "Hanya butuh pertemuan ini? Buka kunci seharga",
+        "export.graceUsed": "🎉 Ekspor Daftar Lengkap Gratis: Kami membuka kunci semua {count} peserta untuk kelas besar pertama Anda! Tingkatkan ke Educator ($4.99/tahun) untuk ukuran kelas tak terbatas di masa mendatang.",
         "billing.lmsSyncPro": "Sinkronisasi nilai langsung ke Google Classroom dan Canvas memerlukan paket Educator ($4.99/tahun) atau Pro.",
         "upgrade.badgesMX": "🇲🇽 Menerima OXXO, Mercado Pago & SPEI",
         "soloTest.clearBtn": "Hapus Kelas Contoh",
@@ -9795,6 +9809,8 @@
         "schoolLicense.error": "Tidak dapat mengirim permintaan. Silakan coba lagi atau kirim email langsung."
     },
     "vi": {
+        "upgrade.singleAltPrefix": "Chỉ cần cuộc họp này? Mở khóa với giá",
+        "export.graceUsed": "🎉 Xuất danh sách đầy đủ miễn phí: Chúng tôi đã mở khóa tất cả {count} người tham dự cho lớp học lớn đầu tiên của bạn! Nâng cấp lên Giáo viên ($4.99/năm) cho các lớp học tương lai không giới hạn.",
         "billing.lmsSyncPro": "Đồng bộ điểm trực tiếp với Google Classroom và Canvas yêu cầu gói Giáo viên ($4.99/năm) hoặc Pro.",
         "upgrade.badgesMX": "🇲🇽 Chấp nhận OXXO, Mercado Pago & SPEI",
         "soloTest.clearBtn": "Xóa lớp mẫu",
@@ -11149,6 +11165,8 @@
         "schoolLicense.error": "Không thể gửi yêu cầu. Vui lòng thử lại hoặc gửi email trực tiếp."
     },
     "fr": {
+        "upgrade.singleAltPrefix": "Besoin uniquement de cette réunion ? Débloquer pour",
+        "export.graceUsed": "🎉 Exportation complète offerte : Nous avons débloqué les {count} participants pour votre première grande classe ! Passez à Educator ($4.99/an) pour des tailles de classe illimitées.",
         "billing.lmsSyncPro": "La synchronisation des notes directement avec Google Classroom et Canvas nécessite un forfait Éducateur ($4.99/an) ou Pro.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago et SPEI acceptés",
         "soloTest.clearBtn": "Effacer la classe modèle",
@@ -12503,6 +12521,8 @@
         "schoolLicense.error": "Impossible d'envoyer la demande. Réessayez ou contactez-nous par e-mail."
     },
     "de": {
+        "upgrade.singleAltPrefix": "Nur dieses eine Meeting benötigt? Freischalten für",
+        "export.graceUsed": "🎉 Kostenloser vollständiger Roster-Export: Wir haben alle {count} Teilnehmer für Ihre erste große Klasse freigeschaltet! Upgraden Sie auf Educator ($4.99/Jahr) für unbegrenzte Klassengrößen.",
         "billing.lmsSyncPro": "Die direkte Synchronisierung von Noten mit Google Classroom und Canvas erfordert einen Educator- ($4.99/Jahr) oder Pro-Plan.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago & SPEI akzeptiert",
         "soloTest.clearBtn": "Beispielklasse leeren",
@@ -13857,6 +13877,8 @@
         "schoolLicense.error": "Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es erneut oder mailen Sie uns."
     },
     "it": {
+        "upgrade.singleAltPrefix": "Serve solo questa riunione? Sblocca per",
+        "export.graceUsed": "🎉 Esportazione completa omaggio: Abbiamo sbloccato tutti i {count} partecipanti per la tua prima grande classe! Passa a Educator ($4.99/anno) per classi illimitate.",
         "billing.lmsSyncPro": "La sincronizzazione dei voti direttamente su Google Classroom e Canvas richiede un piano Educator ($4.99/anno) o Pro.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago e SPEI accettati",
         "soloTest.clearBtn": "Cancella classe di prova",
@@ -15211,6 +15233,8 @@
         "schoolLicense.error": "Impossibile inviare la richiesta. Riprova o inviaci un'email direttamente."
     },
     "nl": {
+        "upgrade.singleAltPrefix": "Alleen deze vergadering nodig? Ontgrendel voor",
+        "export.graceUsed": "🎉 Gratis volledige rooster-export: We hebben alle {count} deelnemers ontgrendeld voor je eerste grote klas! Upgrade naar Educator ($4.99/jr) voor onbeperkte klasgroottes.",
         "billing.lmsSyncPro": "Het rechtstreeks synchroniseren van cijfers naar Google Classroom en Canvas vereist een Educator- ($4.99/jaar) of Pro-abonnement.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago & SPEI geaccepteerd",
         "soloTest.clearBtn": "Voorbeeldklas wissen",
@@ -16565,6 +16589,8 @@
         "schoolLicense.error": "Kan aanvraag niet verzenden. Probeer opnieuw of stuur een e-mail."
     },
     "pl": {
+        "upgrade.singleAltPrefix": "Potrzebujesz tylko tego spotkania? Odblokuj za",
+        "export.graceUsed": "🎉 Bezpłatny pełny eksport listy: Odblokowaliśmy wszystkich {count} uczestników na Twoje pierwsze duże zajęcia! Przejdź na Educator ($4.99/rok) na przyszłość.",
         "billing.lmsSyncPro": "Bezpośrednia synchronizacja ocen z Google Classroom i Canvas wymaga planu Educator ($4.99/rok) lub Pro.",
         "upgrade.badgesMX": "🇲🇽 Akceptowane OXXO, Mercado Pago i SPEI",
         "soloTest.clearBtn": "Wyczyść przykładową klasę",
@@ -17919,6 +17945,8 @@
         "schoolLicense.error": "Nie udało się przesłać zapytania. Spróbuj ponownie lub napisz do nas."
     },
     "tr": {
+        "upgrade.singleAltPrefix": "Yalnızca bu toplantıya mı ihtiyacınız var? Şunun için açın:",
+        "export.graceUsed": "🎉 Ücretsiz Tam Liste Dışa Aktarma: İlk büyük sınıfınız için {count} katılımcının tamamının kilidini açtık! Sınırsız sınıf boyutları için Educator ($4.99/yıl) planına yükseltin.",
         "billing.lmsSyncPro": "Notları doğrudan Google Classroom ve Canvas ile senkronize etmek için Educator ($4.99/yıl) veya Pro planı gerekir.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago ve SPEI Kabul Edilir",
         "soloTest.clearBtn": "Örnek Sınıfı Temizle",
@@ -19273,6 +19301,8 @@
         "schoolLicense.error": "Talep gönderilemedi. Lütfen tekrar deneyin veya doğrudan bize e-posta gönderin."
     },
     "th": {
+        "upgrade.singleAltPrefix": "ต้องการเพียงการประชุมนี้หรือไม่? ปลดล็อกสำหรับ",
+        "export.graceUsed": "🎉 ส่งออกรายชื่อเต็มฟรี: เราได้ปลดล็อกผู้เข้าร่วมทั้งหมด {count} คนสำหรับชั้นเรียนขนาดใหญ่ครั้งแรกของคุณ! อัปเกรดเป็น Educator ($4.99/ปี) สำหรับขนาดชั้นเรียนไม่จำกัด",
         "billing.lmsSyncPro": "การซิงค์เกรดไปยัง Google Classroom และ Canvas โดยตรงต้องใช้แผน Educator ($4.99/ปี) หรือ Pro",
         "upgrade.badgesMX": "🇲🇽 รองรับ OXXO, Mercado Pago และ SPEI",
         "soloTest.clearBtn": "ล้างห้องเรียนตัวอย่าง",
@@ -20627,6 +20657,8 @@
         "schoolLicense.error": "ไม่สามารถส่งคำขอได้ โปรดลองอีกครั้งหรือส่งอีเมลถึงเราโดยตรง"
     },
     "ar": {
+        "upgrade.singleAltPrefix": "هل تحتاج إلى هذا الاجتماع فقط؟ افتح مقابل",
+        "export.graceUsed": "🎉 تصدير مجاني للقائمة الكاملة: لقد فتحنا جميع الحاضرين البالغ عددهم {count} لفصلك الكبير الأول! قم بالترقية إلى Educator ($4.99/سنة) لأحجام فصول غير محدودة.",
         "billing.lmsSyncPro": "تتطلب مزامنة الدرجات مباشرة مع Google Classroom و Canvas خطة المعلم ($4.99/سنويًا) أو Pro.",
         "upgrade.badgesMX": "🇲🇽 يُقبل OXXO وMercado Pago وSPEI",
         "soloTest.clearBtn": "مسح الفصل النموذجي",
@@ -21981,6 +22013,8 @@
         "schoolLicense.error": "تعذر إرسال الطلب. يرجى المحاولة مرة أخرى أو مراسلتنا مباشرة."
     },
     "ko": {
+        "upgrade.singleAltPrefix": "이 모임만 필요하신가요? 잠금 해제:",
+        "export.graceUsed": "🎉 무료 전체 명단 내보내기: 첫 번째 대규모 수업의 참석자 {count}명을 모두 잠금 해제했습니다! 향후 무제한 수업을 위해 Educator($4.99/년)로 업그레이드하세요.",
         "billing.lmsSyncPro": "Google 클래스룸 및 Canvas로 성적을 직접 동기화하려면 Educator($4.99/년) 또는 Pro 플랜이 필요합니다.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago, SPEI 지원",
         "soloTest.clearBtn": "샘플 학급 지우기",
@@ -23335,6 +23369,8 @@
         "schoolLicense.error": "요청을 제출할 수 없습니다. 다시 시도하거나 직접 이메일을 보내주세요."
     },
     "zh": {
+        "upgrade.singleAltPrefix": "Only need this single meeting? Unlock for",
+        "export.graceUsed": "🎉 Complimentary Full-Roster Export: We unlocked all {count} attendees for your first large class! Upgrade to Educator ($4.99/yr) for unlimited class sizes on future classes.",
         "billing.lmsSyncPro": "直接同步成績至 Google Classroom 與 Canvas 需要 Educator（$4.99/年）或 Pro 方案。",
         "upgrade.badgesMX": "🇲🇽 支援 OXXO、Mercado Pago 與 SPEI",
         "soloTest.clearBtn": "清除示範班級",
@@ -24689,6 +24725,8 @@
         "schoolLicense.error": "無法送出申請。請重試或直接寄信聯絡我們。"
     },
     "ja": {
+        "upgrade.singleAltPrefix": "このミーティングのみ必要ですか？ロック解除:",
+        "export.graceUsed": "🎉 無料の完全な名簿エクスポート: 最初の大きなクラスの参加者 {count} 人全員のロックを解除しました! 今後の無制限のクラスのために Educator ($4.99/年) にアップグレードしてください。",
         "billing.lmsSyncPro": "Google ClassroomおよびCanvasへの成績の直接同期には、Educator（$4.99/年）またはProプランが必要です。",
         "upgrade.badgesMX": "🇲🇽 OXXO、Mercado Pago、SPEI 対応",
         "soloTest.clearBtn": "サンプルクラスをクリア",
@@ -26043,6 +26081,8 @@
         "schoolLicense.error": "リクエストを送信できませんでした。再試行するか、直接メールでお問い合わせください。"
     },
     "ta": {
+        "upgrade.singleAltPrefix": "இந்த மீட்டிங் மட்டும் தேவையா? அன்லாக் செய்ய",
+        "export.graceUsed": "🎉 இலவச முழு-பட்டியல் ஏற்றுமதி: உங்கள் முதல் பெரிய வகுப்பிற்கான அனைத்து {count} பங்கேற்பாளர்களையும் நாங்கள் திறந்துள்ளோம்! வரம்பற்ற வகுப்புகளுக்கு Educator ($4.99/ஆண்டு) க்கு மேம்படுத்தவும்.",
         "billing.lmsSyncPro": "Google Classroom மற்றும் Canvas-ல் நேரடியாக மதிப்பெண்களை ஒத்திசைக்க Educator ($4.99/ஆண்டு) அல்லது Pro திட்டம் தேவை.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago & SPEI ஏற்கப்படுகிறது",
         "soloTest.clearBtn": "மாதிரி வகுப்பை நீக்கு",
@@ -27397,6 +27437,8 @@
         "schoolLicense.error": "கோரிக்கையை சமர்ப்பிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும் அல்லது எங்களுக்கு மின்னஞ்சல் அனுப்பவும்."
     },
     "te": {
+        "upgrade.singleAltPrefix": "ఈ మీటింగ్ మాత్రమే అవసరమా? అన్‌లాక్ చేయండి",
+        "export.graceUsed": "🎉 ఉచిత పూర్తి-రోస్టర్ ఎగుమతి: మీ మొదటి పెద్ద తరగతి కోసం మేము అందరు {count} మంది హాజరైన వారిని అన్‌లాక్ చేసాము! అపరిమిత తరగతుల కోసం Educator ($4.99/సంవత్సరం) కి అప్‌గ్రేడ్ చేయండి.",
         "billing.lmsSyncPro": "Google Classroom మరియు Canvas కు నేరుగా గ్రేడ్‌లను సమకాలీకరించడానికి Educator ($4.99/సంవత్సరం) లేదా Pro ప్లాన్ అవసరం.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago & SPEI ఆమోదించబడతాయి",
         "soloTest.clearBtn": "నమూనా తరగతిని క్లియర్ చేయండి",
@@ -28751,6 +28793,8 @@
         "schoolLicense.error": "అభ్యర్థనను సమర్పించడం సాధ్యం కాలేదు. దయచేసి మళ్లీ ప్రయత్నించండి లేదా నేరుగా ఇమెయిల్ చేయండి."
     },
     "bn": {
+        "upgrade.singleAltPrefix": "শুধু এই মিটিংটি প্রয়োজন? আনলক করুন",
+        "export.graceUsed": "🎉 প্রশংসাসূচক পূর্ণ-রোস্টার রপ্তানি: আমরা আপনার প্রথম বড় ক্লাসের জন্য সমস্ত {count} অংশগ্রহণকারীকে আনলক করেছি! ভবিষ্যতে সীমাহীন ক্লাসের আকারের জন্য Educator ($4.99/বছর) এ আপग्रेड করুন।",
         "billing.lmsSyncPro": "সরাসরি Google Classroom এবং Canvas-এ গ্রেড সিঙ্ক করার জন্য একটি Educator ($4.99/বছর) বা Pro প্ল্যান প্রয়োজন।",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago এবং SPEI গৃহীত",
         "soloTest.clearBtn": "নমুনা ক্লাস মুছুন",
@@ -30105,6 +30149,8 @@
         "schoolLicense.error": "অনুরোধ জমা দেওয়া যায়নি। দয়া করে আবার চেষ্টা করুন বা সরাসরি আমাদের ইমেল করুন।"
     },
     "ur": {
+        "upgrade.singleAltPrefix": "صرف اس میٹنگ کی ضرورت ہے؟ انلاک کریں برائے",
+        "export.graceUsed": "🎉 اعزازی مکمل روسٹر ایکسپورٹ: ہم نے آپ کی پہلی بڑی کلاس کے لیے تمام {count} شرکاء کو انلاک کر دیا ہے! لامحدود کلاسوں کے لیے Educator ($4.99/سال) میں اپ گریڈ کریں۔",
         "billing.lmsSyncPro": "براہ راست Google Classroom اور Canvas میں گریڈز سنک کرنے کے لیے Educator ($4.99/سال) یا Pro پلان درکار ہے۔",
         "upgrade.badgesMX": "🇲🇽 OXXO، Mercado Pago اور SPEI قبول ہیں",
         "soloTest.clearBtn": "نمونہ کلاس صاف کریں",
@@ -31459,6 +31505,8 @@
         "schoolLicense.error": "درخواست جمع نہیں ہو سکی۔ براہ کرम دوبارہ کوشش کریں یا براہ راست ای میل کریں۔"
     },
     "zh-CN": {
+        "upgrade.singleAltPrefix": "Only need this single meeting? Unlock for",
+        "export.graceUsed": "🎉 Complimentary Full-Roster Export: We unlocked all {count} attendees for your first large class! Upgrade to Educator ($4.99/yr) for unlimited class sizes on future classes.",
         "billing.lmsSyncPro": "直接同步成绩至 Google Classroom 和 Canvas 需要 Educator（$4.99/年）或 Pro 方案。",
         "upgrade.badgesMX": "🇲🇽 支持 OXXO、Mercado Pago 与 SPEI",
         "soloTest.clearBtn": "清除样本班级",
@@ -32813,6 +32861,8 @@
         "schoolLicense.error": "无法发送申请。请重试或直接发邮件联系我们。"
     },
     "ru": {
+        "upgrade.singleAltPrefix": "Нужна только эта встреча? Разблокировать за",
+        "export.graceUsed": "🎉 Бесплатный полный экспорт: Мы разблокировали всех {count} участников для вашего первого большого занятия! Перейдите на Educator ($4.99/год) для неограниченных классов.",
         "billing.lmsSyncPro": "Для прямой синхронизации оценок с Google Classroom и Canvas требуется тариф Educator ($4.99/год) или Pro.",
         "upgrade.badgesMX": "🇲🇽 Поддерживаются OXXO, Mercado Pago и SPEI",
         "soloTest.clearBtn": "Очистить пример класса",
@@ -34167,6 +34217,8 @@
         "schoolLicense.error": "Не удалось отправить запрос. Повторите попытку или напишите нам."
     },
     "uk": {
+        "upgrade.singleAltPrefix": "Потрібна лише ця зустріч? Розблокувати за",
+        "export.graceUsed": "🎉 Безкоштовний повний експорт: Ми розблокували всіх {count} учасників для вашого першого великого заняття! Оновіть до Educator ($4.99/рік) для необмежених класів.",
         "billing.lmsSyncPro": "Для прямої синхронізації оцінок із Google Classroom та Canvas потрібен тариф Educator ($4.99/рік) або Pro.",
         "upgrade.badgesMX": "🇲🇽 Підтримуються OXXO, Mercado Pago та SPEI",
         "soloTest.clearBtn": "Очистити зразок класу",
@@ -35521,6 +35573,8 @@
         "schoolLicense.error": "Не вдалося надіслати запит. Спробуйте ще раз або напишіть нам."
     },
     "ro": {
+        "upgrade.singleAltPrefix": "Ai nevoie doar de această întâlnire? Deblochează pentru",
+        "export.graceUsed": "🎉 Export complet gratuit: Am deblocat toți cei {count} participanți pentru prima dvs. clasă mare! Faceți upgrade la Educator ($4.99/an) pentru clase nelimitate.",
         "billing.lmsSyncPro": "Sincronizarea directă a notelor în Google Classroom și Canvas necesită un plan Educator ($4.99/an) sau Pro.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago și SPEI acceptate",
         "soloTest.clearBtn": "Șterge clasa demonstrativă",
@@ -36875,6 +36929,8 @@
         "schoolLicense.error": "Nu s-a putut trimite cererea. Vă rugăm să încercați din nou sau să ne trimiteți un e-mail."
     },
     "he": {
+        "upgrade.singleAltPrefix": "צריך רק את הפגישה הזו? בטל נעילה עבור",
+        "export.graceUsed": "🎉 ייצוא רשימה מלאה בחינם: ביטלנו את הנעילה של כל {count} המשתתפים עבור הכיתה הגדולה הראשונה שלך! שדרג ל-Educator ($4.99/שנה) עבור כיתות ללא הגבלה.",
         "billing.lmsSyncPro": "סנכרון ציונים ישירות ל-Google Classroom ו-Canvas דורש תוכנית Educator ($4.99/שנה) או Pro.",
         "upgrade.badgesMX": "🇲🇽 מתקבלים OXXO, Mercado Pago ו-SPEI",
         "soloTest.clearBtn": "נקה כיתה לדוגמה",
@@ -38229,6 +38285,8 @@
         "schoolLicense.error": "לא ניתן היה לשלוח את הבקשה. נסה שוב או פנה אלינו ישירות באימייל."
     },
     "mr": {
+        "upgrade.singleAltPrefix": "फक्त या मीटिंगची गरज आहे? अनलॉक करा",
+        "export.graceUsed": "🎉 मानार्थ पूर्ण-रोस्टर निर्यात: आम्ही तुमच्या पहिल्या मोठ्या वर्गासाठी सर्व {count} उपस्थितांना अनलॉक केले आहे! भविष्यातील अमर्यादित वर्गांसाठी Educator ($4.99/वर्ष) वर अपग्रेड करा.",
         "billing.lmsSyncPro": "Google Classroom आणि Canvas वर थेट ग्रेड सिंक करण्यासाठी Educator ($4.99/वर्ष) किंवा Pro प्लॅन आवश्यक आहे.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago आणि SPEI स्वीकारले जातात",
         "soloTest.clearBtn": "नमुना वर्ग साफ करा",
@@ -39583,6 +39641,8 @@
         "schoolLicense.error": "विनंती सबमिट करता आली नाही. कृपया पुन्हा प्रयत्न करा किंवा आम्हाला थेट ईमेल करा."
     },
     "sv": {
+        "upgrade.singleAltPrefix": "Behöver du bara detta möte? Lås upp för",
+        "export.graceUsed": "🎉 Kostnadsfri fullständig export: Vi har låst upp alla {count} deltagare för din första stora klass! Uppgradera till Educator ($4.99/år) för obegränsade framtida klasser.",
         "billing.lmsSyncPro": "Direkt synkronisering av betyg till Google Classroom och Canvas kräver en Educator- ($4.99/år) eller Pro-plan.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago och SPEI accepteras",
         "soloTest.clearBtn": "Rensa exempelklass",
@@ -40937,6 +40997,8 @@
         "schoolLicense.error": "Kunde inte skicka förfrågan. Försök igen eller mejla oss direkt."
     },
     "cs": {
+        "upgrade.singleAltPrefix": "Potřebujete jen tuto schůzku? Odemknout za",
+        "export.graceUsed": "🎉 Bezplatný úplný export: Odemkli jsme všech {count} účastníků pro vaši první velkou třídu! Upgradujte na Educator ($4.99/rok) pro neomezené budoucí třídy.",
         "billing.lmsSyncPro": "Přímá synchronizace známek do Google Classroom a Canvas vyžaduje plán Educator ($4.99/rok) nebo Pro.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago a SPEI přijímány",
         "soloTest.clearBtn": "Vymazat ukázkovou třídu",
@@ -42291,6 +42353,8 @@
         "schoolLicense.error": "Žádost se nepodařilo odeslat. Zkuste to prosím znovu nebo nám napište e-mail."
     },
     "da": {
+        "upgrade.singleAltPrefix": "Har du kun brug for dette møde? Lås op for",
+        "export.graceUsed": "🎉 Gratis fuld eksport: Vi har låst op for alle {count} deltagare til din første store klasse! Opgrader til Educator ($4.99/år) for ubegrænsede klasser i fremtiden.",
         "billing.lmsSyncPro": "Direkte synkronisering af karakterer til Google Classroom og Canvas kræver en Educator- ($4.99/år) eller Pro-plan.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago & SPEI accepteres",
         "soloTest.clearBtn": "Ryd prøveklasse",
@@ -43645,6 +43709,8 @@
         "schoolLicense.error": "Kunne ikke sende anmodningen. Prøv venligst igen eller send os en e-mail."
     },
     "fi": {
+        "upgrade.singleAltPrefix": "Tarvitsetko vain tämän kokouksen? Avaa lukitus hintaan",
+        "export.graceUsed": "🎉 Ilmainen täysi vienti: Avasimme kaikki {count} osallistujaa ensimmäiselle suurelle luokallesi! Päivitä Educator-tilaukseen ($4.99/vuosi) rajattomia luokkakokoja varten.",
         "billing.lmsSyncPro": "Arvosanojen suora synkronointi Google Classroomiin ja Canvasiin vaatii Educator- ($4.99/vuosi) tai Pro-tilauksen.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago ja SPEI hyväksytään",
         "soloTest.clearBtn": "Tyhjennä esimerkkiluokka",
@@ -44999,6 +45065,8 @@
         "schoolLicense.error": "Pyyntöä ei voitu lähettää. Yritä uudelleen tai lähetä meille sähköpostia."
     },
     "hu": {
+        "upgrade.singleAltPrefix": "Csak erre a megbeszélésre van szüksége? Feloldás:",
+        "export.graceUsed": "🎉 Ingyenes teljes névsor-exportálás: Feloldottuk mind a(z) {count} résztvevőt az első nagy órájához! Váltson Educator csomagra ($4.99/év) a jövőbeli korlátlan méretekért.",
         "billing.lmsSyncPro": "A jegyek közvetlen szinkronizálása a Google Classroomba és a Canvasba Educator ($4.99/év) vagy Pro csomagot igényel.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago és SPEI elfogadva",
         "soloTest.clearBtn": "Mintatanterem törlése",
@@ -46353,6 +46421,8 @@
         "schoolLicense.error": "A kérést nem sikerült elküldeni. Kérjük, próbálja újra vagy írjon nekünk."
     },
     "so": {
+        "upgrade.singleAltPrefix": "Ma u baahan tahay kulankan kaliya? Ku fur",
+        "export.graceUsed": "🎉 Dhoofinta Liiska Buuxa oo Bilaash ah: Waxaan furnay dhammaan {count} kaqaybgalayaasha fasalkaaga weyn ee ugu horreeya! U cusboonaysii Educator ($4.99/sannad) fasallo aan xadidnayn.",
         "billing.lmsSyncPro": "Syncing grades directly to Google Classroom and Canvas requires an Educator ($4.99/yr) or Pro plan.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago & SPEI waa la aqbalaa",
         "soloTest.clearBtn": "Nadiifi Fasalka Tusaalaha ah",
@@ -47707,6 +47777,8 @@
         "schoolLicense.error": "Codsiga lama diri karin. Fadlan isku day mar kale ama si toos ah noo soo iimayl garee."
     },
     "sw": {
+        "upgrade.singleAltPrefix": "Unahitaji mkutano huu pekee? Fungua kwa",
+        "export.graceUsed": "🎉 Uhamishaji Kamili wa Orodha Bila Malipo: Tumefungua wahudhuriaji wote {count} kwa darasa lako kubwa la kwanza! Pata daraja la Educator ($4.99/mwaka) kwa madarasa yasiyo na kikomo.",
         "billing.lmsSyncPro": "Kulandanisha alama moja kwa moja kwenye Google Classroom na Canvas kunahitaji mpango wa Educator ($4.99/mwaka) au Pro.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago & SPEI Zinapokelewa",
         "soloTest.clearBtn": "Futa Darasa la Mfano",
@@ -49059,6 +49131,8 @@
         "schoolLicense.error": "Haikuweza kuwasilisha ombi. Tafadhali jaribu tena au tutumie barua pepe moja kwa moja."
     },
     "am": {
+        "upgrade.singleAltPrefix": "ይህ ስብሰባ ብቻ ይፈልጋሉ? ይክፈቱ በ",
+        "export.graceUsed": "🎉 ነፃ ሙሉ ዝርዝር ኤክስፖርት፡ ለመጀመሪያው ትልቅ ክፍልዎ ሁሉንም {count} ተሳታፊዎች ከፍተናል! ወደ Educator ($4.99/ዓመት) ያሻሽሉ።",
         "billing.lmsSyncPro": "Syncing grades directly to Google Classroom and Canvas requires an Educator ($4.99/yr) or Pro plan.",
         "upgrade.badgesMX": "🇲🇽 OXXO፣ Mercado Pago እና SPEI ተቀባይነት አላቸው",
         "soloTest.clearBtn": "የናሙና ክፍልን አጽዳ",
@@ -50411,6 +50485,8 @@
         "schoolLicense.error": "ጥያቄውን ማስገባት አልተቻለም። እባክዎ እንደገና ይሞክሩ ወይም በቀጥታ ኢሜይል ያድርጉልን።"
     },
     "si": {
+        "upgrade.singleAltPrefix": "මෙම රැස්වීම පමණක් අවශ්‍යද? අගුළු හරින්න",
+        "export.graceUsed": "🎉 නොමිලේ සම්පූර්ණ ලැයිස්තු අපනයනය: ඔබගේ පළමු විශාල පන්තිය සඳහා සහභාගී වූවන් {count} දෙනාම අපි අගුළු හැරියෙමු! අනාගත අසීමිත පන්ති සඳහා Educator ($4.99/වසර) වෙත උත්ශ්‍රේණි කරන්න.",
         "billing.lmsSyncPro": "Syncing grades directly to Google Classroom and Canvas requires an Educator ($4.99/yr) or Pro plan.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago සහ SPEI පිළිගනු ලැබේ",
         "soloTest.clearBtn": "ආදර්ශ පන්තිය හිස් කරන්න",
@@ -51763,6 +51839,8 @@
         "schoolLicense.error": "ඉල්ලීම ඉදිරිපත් කිරීමට නොහැකි විය. කරුණාකර නැවත උත්සාහ කරන්න හෝ අපට කෙලින්ම විද්‍යුත් තැපෑල එවන්න."
     },
     "el": {
+        "upgrade.singleAltPrefix": "Χρειάζεστε μόνο αυτή τη συνάντηση; Ξεκλείδωμα για",
+        "export.graceUsed": "🎉 Δωρεάν πλήρης εξαγωγή καταλόγου: Ξεκλειδώσαμε και τους {count} συμμετέχοντες για την πρώτη σας μεγάλη τάξη! Αναβαθμίστε σε Educator ($4.99/έτος) για απεριόριστες τάξεις.",
         "billing.lmsSyncPro": "Ο άμεσος συγχρονισμός βαθμών με το Google Classroom και το Canvas απαιτεί πρόγραμμα Educator ($4.99/έτος) ή Pro.",
         "upgrade.badgesMX": "🇲🇽 Γίνονται δεκτά OXXO, Mercado Pago & SPEI",
         "soloTest.clearBtn": "Εκκαθάριση δοκιμαστικής τάξης",
@@ -53115,6 +53193,8 @@
         "schoolLicense.error": "Δεν ήταν δυνατή η υποβολή του αιτήματος. Δοκιμάστε ξανά ή στείλτε μας email απευθείας."
     },
     "no": {
+        "upgrade.singleAltPrefix": "Trenger du bare dette møtet? Lås opp for",
+        "export.graceUsed": "🎉 Gratis fullstendig eksport: Vi har låst opp alle {count} deltakere for din første store klasse! Oppgrader til Educator ($4.99/år) for ubegrensede klasser i fremtiden.",
         "billing.lmsSyncPro": "Syncing grades directly to Google Classroom and Canvas requires an Educator ($4.99/yr) or Pro plan.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago og SPEI aksepteres",
         "soloTest.clearBtn": "Tøm eksempelklasse",
@@ -54467,6 +54547,8 @@
         "schoolLicense.error": "Kunne ikke sende forespørselen. Prøv igjen eller send oss en e-post direkte."
     },
     "ca": {
+        "upgrade.singleAltPrefix": "Només necessiteu aquesta reunió? Desbloqueja per",
+        "export.graceUsed": "🎉 Exportació completa gratuïta: Hem desbloquejat tots els {count} assistents per a la vostra primera classe gran! Actualitzeu a Educator ($4.99/any) per a classes il·limitades.",
         "billing.lmsSyncPro": "La sincronització directa de qualificacions amb Google Classroom i Canvas requereix un pla Educator ($4.99/any) o Pro.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago i SPEI acceptats",
         "soloTest.clearBtn": "Esborra classe de mostra",
@@ -55819,6 +55901,8 @@
         "schoolLicense.error": "No s'ha pogut enviar la sol·licitud. Torna-ho a provar o envia'ns un correu directament."
     },
     "ne": {
+        "upgrade.singleAltPrefix": "यो बैठक मात्र चाहिन्छ? को लागि अनलक गर्नुहोस्",
+        "export.graceUsed": "🎉 निःशुल्क पूर्ण-रोस्टर निर्यात: हामीले तपाईंको पहिलो ठूलो कक्षाका लागि सबै {count} सहभागीहरूलाई अनलक गरेका छौं! असीमित कक्षाहरूको लागि Educator ($4.99/वर्ष) मा अपग्रेड गर्नुहोस्।",
         "billing.lmsSyncPro": "Syncing grades directly to Google Classroom and Canvas requires an Educator ($4.99/yr) or Pro plan.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago र SPEI स्वीकार गरिन्छ",
         "soloTest.clearBtn": "नमूना कक्षा खाली गर्नुहोस्",
@@ -57169,6 +57253,8 @@
         "schoolLicense.error": "अनुरोध पेश गर्न सकिएन। कृपया फेरि प्रयास गर्नुहोस् वा सिधै हामीलाई इमेल गर्नुहोस्。"
     },
     "ml": {
+        "upgrade.singleAltPrefix": "ഈ മീറ്റിംഗ് മാത്രം മതിയോ? അൺലോക്ക് ചെയ്യുക",
+        "export.graceUsed": "🎉 സൗജന്യ ഫുൾ-റോസ്റ്റർ എക്‌സ്‌പോർട്ട്: നിങ്ങളുടെ ആദ്യത്തെ വലിയ ക്ലാസിനായി ഞങ്ങൾ എല്ലാ {count} പങ്കാളികളെയും അൺലോക്ക് ചെയ്‌തു! അൺലിമിറ്റഡ് ക്ലാസുകൾക്കായി Educator ($4.99/വർഷം) ലേക്ക് അപ്‌ഗ്രേഡ് ചെയ്യുക.",
         "billing.lmsSyncPro": "Google Classroom, Canvas എന്നിവയിലേക്ക് ഗ്രേഡുകൾ നേരിട്ട് സമന്വയിപ്പിക്കുന്നതിന് Educator ($4.99/വർഷം) അല്ലെങ്കിൽ Pro പ്ലാൻ ആവശ്യമാണ്.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago & SPEI സ്വീകരിക്കുന്നു",
         "soloTest.clearBtn": "സാമ്പിൾ ക്ലാസ് ഒഴിവാക്കുക",
@@ -58518,6 +58604,8 @@
         "schoolLicense.error": "അഭ്യർത്ഥന സമർപ്പിക്കാൻ കഴിഞ്ഞില്ല. ദയവായി വീണ്ടും ശ്രമിക്കുക അല്ലെങ്കിൽ നേരിട്ട് ഇമെയിൽ ചെയ്യുക."
     },
     "mn": {
+        "upgrade.singleAltPrefix": "Зөвхөн энэ уулзалт хэрэгтэй юу? Түгжээ тайлах:",
+        "export.graceUsed": "🎉 Үнэгүй бүрэн бүртгэл экспортлох: Бид таны анхны том ангид зориулж {count} оролцогчийн түгжээг тайллаа! Цаашид хязгааргүй анги танхимтай болохын тулд Educator ($4.99/жил) болгон шинэчилнэ үү.",
         "billing.lmsSyncPro": "Syncing grades directly to Google Classroom and Canvas requires an Educator ($4.99/yr) or Pro plan.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago ба SPEI зөвшөөрөгдсөн",
         "soloTest.clearBtn": "Жишээ ангийг цэвэрлэх",
@@ -59867,6 +59955,8 @@
         "schoolLicense.error": "Хүсэлтийг илгээж чадсангүй. Дахин оролдоно уу эсвэл бидэнд шууд имэйл илгээнэ үү."
     },
     "kn": {
+        "upgrade.singleAltPrefix": "ಈ ಸಭೆ ಮಾತ್ರ ಅಗತ್ಯವಿದೆಯೇ? ಅನ್‌ಲಾಕ್ ಮಾಡಿ",
+        "export.graceUsed": "🎉 ಪೂರಕ ಪೂರ್ಣ-ರೋಸ್ಟರ್ ರಫ್ತು: ನಿಮ್ಮ ಮೊದಲ ದೊಡ್ಡ ತರಗತಿಗಾಗಿ ನಾವು ಎಲ್ಲಾ {count} ಪಾಲ್ಗೊಳ್ಳುವವರನ್ನು ಅನ್‌ಲಾಕ್ ಮಾಡಿದ್ದೇವೆ! ಅನಿಯಮಿತ ತರಗತಿಗಳಿಗಾಗಿ Educator ($4.99/ವರ್ಷ) ಗೆ ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಿ.",
         "billing.lmsSyncPro": "Google Classroom ಮತ್ತು Canvas ಗೆ ನೇರವಾಗಿ ಗ್ರೇಡ್‌ಗಳನ್ನು ಸಿಂಕ್ ಮಾಡಲು Educator ($4.99/ವರ್ಷ) ಅಥವಾ Pro ಯೋಜನೆ ಅಗತ್ಯವಿದೆ.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago & SPEI ಸ್ವೀಕರಿಸಲಾಗಿದೆ",
         "soloTest.clearBtn": "ಮಾದರಿ ತರಗತಿಯನ್ನು ತೆರವುಗೊಳಿಸಿ",
@@ -61261,6 +61351,8 @@
         "lang.af": "Afrikaans"
     },
     "gu": {
+        "upgrade.singleAltPrefix": "માત્ર આ મીટિંગની જરૂર છે? અનલૉક કરો",
+        "export.graceUsed": "🎉 પ્રશંસનીય સંપૂર્ણ-રોસ્ટર નિકાસ: અમે તમારા પ્રથમ મોટા વર્ગ માટે તમામ {count} સહભાગીઓને અનલૉક કર્યા છે! અમર્યાદિત વર્ગો માટે Educator ($4.99/વર્ષ) માં અપગ્રેડ કરો.",
         "billing.lmsSyncPro": "Google Classroom અને Canvas માં સીધા ગ્રેડ સમન્વયિત કરવા માટે Educator ($4.99/વર્ષ) અથવા Pro પ્લાન જરૂરી છે.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago અને SPEI સ્વીકાર્ય",
         "soloTest.clearBtn": "નમૂના વર્ગ સાફ કરો",
@@ -62655,6 +62747,8 @@
         "lang.af": "Afrikaans"
     },
     "pa": {
+        "upgrade.singleAltPrefix": "ਸਿਰਫ਼ ਇਸ ਮੀਟਿੰਗ ਦੀ ਲੋੜ ਹੈ? ਅਨਲੌਕ ਕਰੋ",
+        "export.graceUsed": "🎉 ਮੁਫ਼ਤ ਪੂਰੀ-ਰੋਸਟਰ ਨਿਰਯਾਤ: ਅਸੀਂ ਤੁਹਾਡੀ ਪਹਿਲੀ ਵੱਡੀ ਕਲਾਸ ਲਈ ਸਾਰੇ {count} ਹਾਜ਼ਰੀਨ ਨੂੰ ਅਨਲੌਕ ਕਰ ਦਿੱਤਾ ਹੈ! ਅਸੀਮਤ ਕਲਾਸਾਂ ਲਈ Educator ($4.99/ਸਾਲ) ਵਿੱਚ ਅੱਪਗ੍ਰੇਡ ਕਰੋ।",
         "billing.lmsSyncPro": "Google Classroom ਅਤੇ Canvas ਵਿੱਚ ਸਿੱਧੇ ਗ੍ਰੇਡ ਸਿੰਕ ਕਰਨ ਲਈ ਇੱਕ Educator ($4.99/ਸਾਲ) ਜਾਂ Pro ਪਲਾਨ ਦੀ ਲੋੜ ਹੈ।",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago ਅਤੇ SPEI ਸਵੀਕਾਰ ਕੀਤੇ ਜਾਂਦੇ ਹਨ",
         "soloTest.clearBtn": "ਨਮੂਨਾ ਕਲਾਸ ਸਾਫ਼ ਕਰੋ",
@@ -64049,6 +64143,8 @@
         "lang.af": "Afrikaans"
     },
     "kk": {
+        "upgrade.singleAltPrefix": "Тек осы кездесу қажет пе? Құлпын ашыңыз:",
+        "export.graceUsed": "🎉 Тегін толық тізімді экспорттау: Біз сіздің алғашқы үлкен сыныбыңыз үшін барлық {count} қатысушының құлпын аштық! Шексіз сабақтар үшін Educator ($4.99/жыл) нұсқасына жаңартыңыз.",
         "billing.lmsSyncPro": "Бағаларды Google Classroom және Canvas жүйелеріне тікелей синхрондау үшін Educator ($4.99/жыл) немесе Pro жоспары қажет.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago және SPEI қабылданады",
         "soloTest.clearBtn": "Үлгі сыныпты тазалау",
@@ -65443,6 +65539,8 @@
         "lang.af": "Afrikaans"
     },
     "lv": {
+        "upgrade.singleAltPrefix": "Nepieciešama tikai šī sanāksme? Atbloķēt par",
+        "export.graceUsed": "🎉 Bezmaksas pilna saraksta eksports: Mēs esam atbloķējuši visus {count} dalībniekus jūsu pirmajai lielajai klasei! Jauniniet uz Educator ($4.99/gadā) neierobežotām klasēm.",
         "billing.lmsSyncPro": "Tiešai vērtējumu sinhronizēšanai ar Google Classroom un Canvas ir nepieciešams Educator ($4.99/gadā) vai Pro plāns.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago un SPEI tiek pieņemti",
         "soloTest.clearBtn": "Notīrīt parauga klasi",
@@ -66837,6 +66935,8 @@
         "lang.af": "Afrikaans"
     },
     "lt": {
+        "upgrade.singleAltPrefix": "Reikia tik šio susitikimo? Atrakinkite už",
+        "export.graceUsed": "🎉 Nemokamas viso sąrašo eksportavimas: Atrakinome visus {count} dalyvius jūsų pirmajai didelei klasei! Naujovinkite į „Educator“ ($4.99/metams) neribotoms klasėms.",
         "billing.lmsSyncPro": "Tiesioginiam pažymių sinchronizavimui su „Google Classroom“ ir „Canvas“ reikalingas „Educator“ ($4.99/metams) arba „Pro“ planas.",
         "upgrade.badgesMX": "🇲🇽 Priimami OXXO, Mercado Pago ir SPEI",
         "soloTest.clearBtn": "Išvalyti pavyzdinę klasę",
@@ -68231,6 +68331,8 @@
         "lang.af": "Afrikaans"
     },
     "lo": {
+        "upgrade.singleAltPrefix": "ຕ້ອງການພຽງແຕ່ກອງປະຊຸມນີ້ບໍ? ປົດລັອກສຳລັບ",
+        "export.graceUsed": "🎉 ການສົ່ງອອກລາຍຊື່ເຕັມຟຣີ: ພວກເຮົາໄດ້ປົດລັອກຜູ້ເຂົ້າຮ່ວມທັງໝົດ {count} ຄົນສຳລັບຫ້ອງຮຽນໃຫຍ່ທຳອິດຂອງທ່ານ! ອັບເກຣດເປັນ Educator ($4.99/ປີ) ສຳລັບຫ້ອງຮຽນບໍ່ຈຳກັດ.",
         "billing.lmsSyncPro": "ການຊິ້ງຄະແນນໂດຍກົງໃສ່ Google Classroom ແລະ Canvas ຕ້ອງການແຜນ Educator ($4.99/ປີ) ຫຼື Pro.",
         "upgrade.badgesMX": "🇲🇽 ຮອງຮັບ OXXO, Mercado Pago & SPEI",
         "soloTest.clearBtn": "ລຶບຫ້ອງຮຽນຕົວຢ່າງ",
@@ -69625,6 +69727,8 @@
         "lang.af": "Afrikaans"
     },
     "my": {
+        "upgrade.singleAltPrefix": "ဤအစည်းအဝေးတစ်ခုသာ လိုအပ်ပါသလား။ အတွက် ဖွင့်ပါ",
+        "export.graceUsed": "🎉 အခမဲ့စာရင်းအပြည့်အစုံ ထုတ်ယူခြင်း- သင်၏ ပထမဆုံး အတန်းကြီးအတွက် တက်ရောက်သူ {count} ဦးစလုံးကို လော့ခ်ဖွင့်ပေးထားပါသည်။ အကန့်အသတ်မရှိ အတန်းများအတွက် Educator ($4.99/တစ်နှစ်) သို့ အဆင့်မြှင့်ပါ။",
         "billing.lmsSyncPro": "အမှတ်များကို Google Classroom နှင့် Canvas သို့ တိုက်ရိုက်ချိတ်ဆက်ရန် Educator ($4.99/တစ်နှစ်) သို့မဟုတ် Pro အစီအစဉ် လိုအပ်ပါသည်။",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago နှင့် SPEI လက်ခံသည်",
         "soloTest.clearBtn": "နမူနာအတန်းကို ရှင်းလင်းပါ",
@@ -71019,6 +71123,8 @@
         "lang.af": "Afrikaans"
     },
     "km": {
+        "upgrade.singleAltPrefix": "ត្រូវការតែការប្រជុំនេះប៉ុណ្ណោះមែនទេ? ដោះសោសម្រាប់",
+        "export.graceUsed": "🎉 ការនាំចេញបញ្ជីឈ្មោះពេញដោយឥតគិតថ្លៃ៖ យើងបានដោះសោអ្នកចូលរួមទាំងអស់ {count} នាក់សម្រាប់ថ្នាក់ធំដំបូងរបស់អ្នក! ដំឡើងកំណែទៅ Educator ($4.99/ឆ្នាំ) សម្រាប់ថ្នាក់រៀນគ្មានដែនកំណត់។",
         "billing.lmsSyncPro": "ការធ្វើសមកាលកម្មពិន្ទុដោយផ្ទាល់ទៅ Google Classroom និង Canvas ទាមទារគម្រោង Educator ($4.99/ឆ្នាំ) ឬ Pro។",
         "upgrade.badgesMX": "🇲🇽 ទទួលយក OXXO, Mercado Pago & SPEI",
         "soloTest.clearBtn": "សម្អាតថ្នាក់គំរូ",
@@ -72413,6 +72519,8 @@
         "lang.af": "Afrikaans"
     },
     "ceb": {
+        "upgrade.singleAltPrefix": "Kinahanglan ra kini nga miting? I-unlock sa",
+        "export.graceUsed": "🎉 Libreng Tibuok Listahan sa Export: Giablihan namo ang tanang {count} nanambong para sa imong unang dakong klase! Pag-upgrade sa Educator ($4.99/tuig) para sa walay limitasyong mga klase.",
         "billing.lmsSyncPro": "Ang direktang pag-sync sa mga grado sa Google Classroom ug Canvas nagkinahanglan og Educator ($4.99/tuig) o Pro nga plano.",
         "upgrade.badgesMX": "🇲🇽 Gidawat ang OXXO, Mercado Pago & SPEI",
         "soloTest.clearBtn": "I-clear ang Sample Class",
@@ -73807,6 +73915,8 @@
         "lang.af": "Afrikaans"
     },
     "bg": {
+        "upgrade.singleAltPrefix": "Only need this single meeting? Unlock for",
+        "export.graceUsed": "🎉 Complimentary Full-Roster Export: We unlocked all {count} attendees for your first large class! Upgrade to Educator ($4.99/yr) for unlimited class sizes on future classes.",
         "billing.lmsSyncPro": "Директното синхронизиране на оценки с Google Classroom и Canvas изисква план Educator ($4.99/год.) или Pro.",
         "upgrade.badgesMX": "🇲🇽 Приемат се OXXO, Mercado Pago и SPEI",
         "soloTest.clearBtn": "Изчисти примерния клас",
@@ -75201,6 +75311,8 @@
         "lang.af": "Afrikaans"
     },
     "hr": {
+        "upgrade.singleAltPrefix": "Trebate samo ovaj sastanak? Otključajte za",
+        "export.graceUsed": "🎉 Besplatan potpuni izvoz popisa: Otključali smo svih {count} sudionika za vaš prvi veliki razred! Nadogradite na Educator ($4.99/god.) za neograničene razrede.",
         "billing.lmsSyncPro": "Izravna sinkronizacija ocjena s Google Classroomom i Canvasom zahtijeva plan Educator ($4.99/god.) ili Pro.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago i SPEI prihvaćeni",
         "soloTest.clearBtn": "Očisti ogledni razred",
@@ -76595,6 +76707,8 @@
         "lang.af": "Afrikaans"
     },
     "sr": {
+        "upgrade.singleAltPrefix": "Потребан вам је само овај састанак? Откључајте за",
+        "export.graceUsed": "🎉 Бесплатан потпуни извоз списка: Откључали смо свих {count} учесника за ваш први велики разред! Надоградите на Educator ($4.99/год) за неограничене разреде.",
         "billing.lmsSyncPro": "Директна синхронизација оцена са Google Classroom-ом и Canvas-ом захтева Educator ($4.99/год) или Pro план.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago и SPEI прихваћени",
         "soloTest.clearBtn": "Обриши узорак одељења",
@@ -77989,6 +78103,8 @@
         "lang.af": "Afrikaans"
     },
     "sk": {
+        "upgrade.singleAltPrefix": "Potrebujete len toto stretnutie? Odomknúť za",
+        "export.graceUsed": "🎉 Bezplatný úplný export zoznamu: Odomkli sme všetkých {count} účastníkov pre vašu prvú veľkú triedu! Inovujte na Educator ($4.99/rok) pre neobmedzené triedy.",
         "billing.lmsSyncPro": "Priama synchronizácia známok do Google Classroom a Canvas vyžaduje plán Educator ($4.99/rok) alebo Pro.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago a SPEI akceptované",
         "soloTest.clearBtn": "Vymazať vzorovú triedu",
@@ -79383,6 +79499,8 @@
         "lang.af": "Afrikaans"
     },
     "sl": {
+        "upgrade.singleAltPrefix": "Potrebujete samo ta sestanek? Odklenite za",
+        "export.graceUsed": "🎉 Brezplačen popoln izvoz seznama: Odklenili smo vseh {count} udeležencev za vaš prvi veliki razred! Nadgradite na Educator ($4.99/leto) za neomejene razrede.",
         "billing.lmsSyncPro": "Neposredna sinhronizacija ocen v Google Classroom in Canvas zahteva paket Educator ($4.99/leto) ali Pro.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago in SPEI sprejeti",
         "soloTest.clearBtn": "Počisti vzorčni razred",
@@ -80777,6 +80895,8 @@
         "lang.af": "Afrikaans"
     },
     "af": {
+        "upgrade.singleAltPrefix": "Only need this single meeting? Unlock for",
+        "export.graceUsed": "🎉 Complimentary Full-Roster Export: We unlocked all {count} attendees for your first large class! Upgrade to Educator ($4.99/yr) for unlimited class sizes on future classes.",
         "billing.lmsSyncPro": "Syncing grades directly to Google Classroom and Canvas requires an Educator ($4.99/yr) or Pro plan.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago & SPEI aanvaar",
         "soloTest.clearBtn": "Maak voorbeeldklas skoon",
