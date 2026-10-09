@@ -34,8 +34,10 @@ function seedMeeting(domain, conferenceId, opts) {
       displayName: p.displayName,
       email: p.email || '',
       present: p.present !== false,
-      joinTime: p.joinMs ? wrapTimestamp(new Date(p.joinMs)) : null,
-      leaveTime: p.leaveMs ? wrapTimestamp(new Date(p.leaveMs)) : null,
+      durationMin: p.durationMin,
+      durationMs: p.durationMs,
+      joinTime: p.joinTime !== undefined ? p.joinTime : (p.joinMs ? wrapTimestamp(new Date(p.joinMs)) : null),
+      leaveTime: p.leaveTime !== undefined ? p.leaveTime : (p.leaveMs ? wrapTimestamp(new Date(p.leaveMs)) : null),
       sessions: p.sessions || 1,
     });
   }
@@ -159,6 +161,75 @@ describe('getUserMeetingSeries — per-user', () => {
     const anon = result.series[0].people.find(p => p.displayName === 'Anonymous Person');
     expect(anon).toBeDefined();
     expect(anon.email).toBeNull();
+  });
+
+  test('aggregates total minutes prioritizing durationMin and durationMs over leave-join span', async () => {
+    const now = Date.now();
+    const domain = 'acme.com';
+    const email = 'admin@acme.com';
+
+    // Instance 0: uses durationMin (25m) even though leave-join is 60m
+    ctx.seed(`tenants/${domain}/events/ev-0`, { email, type: 'tracked', meta: { conferenceId: 'dur-0' }, createdAt: wrapTimestamp(new Date(now - 2 * DAY)) });
+    seedMeeting(domain, 'dur-0', {
+      title: 'Math Class', recurringEventId: 'series-math', startMs: now - 2 * DAY,
+      participants: [{
+        email: 'student@acme.com', displayName: 'Student',
+        durationMin: 25,
+        joinTime: wrapTimestamp(new Date('2026-09-01T10:00:00Z')),
+        leaveTime: wrapTimestamp(new Date('2026-09-01T11:00:00Z')),
+      }],
+    });
+
+    // Instance 1: uses durationMs (1800000 = 30m) even though leave-join is 60m
+    ctx.seed(`tenants/${domain}/events/ev-1`, { email, type: 'tracked', meta: { conferenceId: 'dur-1' }, createdAt: wrapTimestamp(new Date(now - DAY)) });
+    seedMeeting(domain, 'dur-1', {
+      title: 'Math Class', recurringEventId: 'series-math', startMs: now - DAY,
+      participants: [{
+        email: 'student@acme.com', displayName: 'Student',
+        durationMs: 1800000,
+        joinTime: wrapTimestamp(new Date('2026-09-02T10:00:00Z')),
+        leaveTime: wrapTimestamp(new Date('2026-09-02T11:00:00Z')),
+      }],
+    });
+
+    // Instance 2: fallback to leave-join (40m)
+    ctx.seed(`tenants/${domain}/events/ev-2`, { email, type: 'tracked', meta: { conferenceId: 'dur-2' }, createdAt: wrapTimestamp(new Date(now)) });
+    seedMeeting(domain, 'dur-2', {
+      title: 'Math Class', recurringEventId: 'series-math', startMs: now,
+      participants: [{
+        email: 'student@acme.com', displayName: 'Student',
+        joinTime: wrapTimestamp(new Date('2026-09-03T10:00:00Z')),
+        leaveTime: wrapTimestamp(new Date('2026-09-03T10:40:00Z')),
+      }],
+    });
+
+    const result = await firestore.getUserMeetingSeries(domain, email);
+    const series = result.series.find(s => s.recurringEventId === 'series-math');
+    expect(series).toBeDefined();
+    const student = series.people.find(p => p.email === 'student@acme.com');
+    expect(student.totalMinutes).toBe(25 + 30 + 40); // 95 minutes total
+  });
+
+  test('handles epoch 0 joinTime and ignores negative duration values', async () => {
+    const now = Date.now();
+    const domain = 'acme.com';
+    const email = 'admin@acme.com';
+
+    ctx.seed(`tenants/${domain}/events/ev-epoch`, { email, type: 'tracked', meta: { conferenceId: 'dur-epoch' }, createdAt: wrapTimestamp(new Date(now)) });
+    seedMeeting(domain, 'dur-epoch', {
+      title: 'Epoch Class', recurringEventId: 'series-epoch', startMs: now,
+      participants: [{
+        email: 'student@acme.com', displayName: 'Student',
+        joinTime: 0,
+        leaveTime: 3600000, // 60 minutes after epoch 0
+      }],
+    });
+
+    const result = await firestore.getUserMeetingSeries(domain, email);
+    const series = result.series.find(s => s.recurringEventId === 'series-epoch');
+    expect(series).toBeDefined();
+    const student = series.people.find(p => p.email === 'student@acme.com');
+    expect(student.totalMinutes).toBe(60);
   });
 });
 

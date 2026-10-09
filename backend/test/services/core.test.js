@@ -162,6 +162,43 @@ describe('lastSegment', () => {
   });
 });
 
+describe('tsMs', () => {
+  const ISO = '2026-03-01T10:00:00.000Z';
+  const EXPECTED_MS = Date.parse(ISO);
+
+  test('handles Firestore Timestamps (v.toDate())', () => {
+    const timestamp = { toDate: () => new Date(ISO) };
+    expect(core.tsMs(timestamp)).toBe(EXPECTED_MS);
+  });
+
+  test('handles JS Date objects', () => {
+    expect(core.tsMs(new Date(ISO))).toBe(EXPECTED_MS);
+  });
+
+  test('handles epoch millisecond numbers including 0', () => {
+    expect(core.tsMs(EXPECTED_MS)).toBe(EXPECTED_MS);
+    expect(core.tsMs(0)).toBe(0);
+    expect(core.tsMs(new Date(0))).toBe(0);
+  });
+
+  test('handles ISO date strings and date strings', () => {
+    expect(core.tsMs(ISO)).toBe(EXPECTED_MS);
+    expect(core.tsMs('2026-03-01T10:00:00Z')).toBe(EXPECTED_MS);
+  });
+
+  test('returns undefined for null, undefined, empty string, booleans, or invalid inputs', () => {
+    expect(core.tsMs(null)).toBeUndefined();
+    expect(core.tsMs(undefined)).toBeUndefined();
+    expect(core.tsMs('')).toBeUndefined();
+    expect(core.tsMs(false)).toBeUndefined();
+    expect(core.tsMs(true)).toBeUndefined();
+    expect(core.tsMs('not-a-date')).toBeUndefined();
+    expect(core.tsMs(new Date('invalid'))).toBeUndefined();
+    expect(core.tsMs(NaN)).toBeUndefined();
+    expect(core.tsMs({})).toBeUndefined();
+  });
+});
+
 describe('getDb', () => {
   test('passes projectId to Firestore when GCP_PROJECT_ID is set', () => {
     const saved = process.env.GCP_PROJECT_ID;

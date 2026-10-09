@@ -112,9 +112,26 @@ function memoizeTTL(fn, ttlMs, maxEntries = 200) {
 
 // Firestore Timestamp → epoch ms, or undefined when absent/not a Timestamp.
 // Callers keep their own `|| null` / `|| 0` fallback so behavior is unchanged;
-// this just centralizes the repeated `x?.toDate?.()?.getTime()` idiom.
+// this centralizes handling of Timestamps, JS Dates, numbers, and ISO date strings.
 function tsMs(v) {
-  return v?.toDate?.()?.getTime();
+  if (v === null || v === undefined || v === '') return undefined;
+  if (typeof v.toDate === 'function') {
+    const t = v.toDate();
+    const ms = t?.getTime?.();
+    return typeof ms === 'number' && !isNaN(ms) ? ms : undefined;
+  }
+  if (v instanceof Date || typeof v.getTime === 'function') {
+    const ms = v.getTime();
+    return typeof ms === 'number' && !isNaN(ms) ? ms : undefined;
+  }
+  if (typeof v === 'number') {
+    return isNaN(v) ? undefined : v;
+  }
+  if (typeof v === 'string') {
+    const ms = Date.parse(v);
+    return isNaN(ms) ? undefined : ms;
+  }
+  return undefined;
 }
 
 // Domain part of an email ("a@acme.com" → "acme.com"). Thin, but the single

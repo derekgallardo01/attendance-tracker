@@ -2,12 +2,12 @@ const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getRevenueFunnel, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, dismissSuggestion, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance, getTeamOverview, getRecentErrorSpike, getErrorAlertState, setErrorAlertState, getCancellationTelemetry, backfillAdminActivityIfSparse, checkAndRecordMilestones, getMilestoneProgress } = require('../services/firestore');
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getRevenueFunnel, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, dismissSuggestion, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance, getTeamOverview, getRecentErrorSpike, getErrorAlertState, setErrorAlertState, getCancellationTelemetry, backfillAdminActivityIfSparse, checkAndRecordMilestones, getMilestoneProgress, getTenantPlan } = require('../services/firestore');
 const { sendAdminEmail, sendErrorSpikeAlertEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendOrgWeeklyDigest, flushDeferredNotifications, verifyReviewApprovalToken, sendReviewRewardEmail } = require('../lib/notifications');
 const { escapeHtml } = require('../lib/html');
 const { requireSuperAdmin, requireSuperAdminOrScheduler, requireKhMetricsKey, safeEqual } = require('../middleware/adminAuth');
 const { requireAuth } = require('../middleware/auth');
-const { domainOf } = require('../services/firestore/_core'); // pure util; imported directly (test firestore-mocks needn't stub it)
+const { domainOf, lastSegment } = require('../services/firestore/_core'); // pure util; imported directly (test firestore-mocks needn't stub it)
 const { ACQUISITION_SOURCES } = require('../lib/constants');
 const { planIsPro } = require('./billing');
 const { refreshAccessToken, makeUserClient } = require('../services/googleAuth');
@@ -225,7 +225,11 @@ router.get('/admin/stats', requireAuth, async (req, res) => {
     let estimatedMrr = 0;
     let milestones = null;
     if (isSuper) {
-      const activeProList = (allUsers || []).filter(u => u.individualPlan === 'pro' && u.individualBillingStatus === 'active');
+      const activeProList = (allUsers || []).filter(u =>
+        u.individualPlan === 'pro' &&
+        u.individualBillingStatus === 'active' &&
+        (!u.individualPlanExpiresAt || new Date(u.individualPlanExpiresAt).getTime() > Date.now())
+      );
       activeProUsers = activeProList.length;
       const seatPrice = (Number(process.env.KH_MRR_SEAT_CENTS) > 0 ? Number(process.env.KH_MRR_SEAT_CENTS) / 100 : 9.99);
       estimatedMrr = Math.round(activeProUsers * seatPrice);
@@ -299,7 +303,11 @@ router.get('/admin/milestones', requireSuperAdmin, async (req, res) => {
     ]);
 
     const userList = Array.isArray(allUsers) ? allUsers : [];
-    const activeProUsers = userList.filter(u => u?.individualPlan === 'pro' && u?.individualBillingStatus === 'active').length;
+    const activeProUsers = userList.filter(u =>
+      u?.individualPlan === 'pro' &&
+      u?.individualBillingStatus === 'active' &&
+      (!u?.individualPlanExpiresAt || new Date(u.individualPlanExpiresAt).getTime() > Date.now())
+    ).length;
     const counts = {
       userCount: usersAgg?.data ? usersAgg.data().count : userList.length,
       proCount: activeProUsers,
@@ -330,7 +338,11 @@ router.post('/admin/check-milestones', requireSuperAdminOrScheduler, async (req,
     ]);
 
     const userList = Array.isArray(allUsers) ? allUsers : [];
-    const activeProUsers = userList.filter(u => u?.individualPlan === 'pro' && u?.individualBillingStatus === 'active').length;
+    const activeProUsers = userList.filter(u =>
+      u?.individualPlan === 'pro' &&
+      u?.individualBillingStatus === 'active' &&
+      (!u?.individualPlanExpiresAt || new Date(u.individualPlanExpiresAt).getTime() > Date.now())
+    ).length;
     const counts = {
       userCount: usersAgg?.data ? usersAgg.data().count : userList.length,
       proCount: activeProUsers,
@@ -1170,35 +1182,69 @@ router.post('/admin/verify-delegation', verifyDelegationLimiter, async (req, res
 // /attendance route's participant + session shaping), shaped for
 // buildAndSaveExport (…ISO field names). Best-effort per participant: a failed
 // session fetch still yields a present-only row rather than dropping the person.
-async function fetchConferenceParticipants(recordName, token) {
+async function fetchConferenceParticipants(recordName, token, meetingEndTime = null) {
   const raw = await meetGetAll(`${recordName}/participants`, token, 'participants');
   const out = [];
   const BATCH = 10;
+  const participantData = [];
   for (let i = 0; i < raw.length; i += BATCH) {
     const results = await Promise.all(raw.slice(i, i + BATCH).map(async (p) => {
       let sessions = [];
       let sessionsFetchFailed = false;
       try { sessions = await meetGetAll(`${p.name}/participantSessions`, token, 'participantSessions'); }
       catch (e) { sessionsFetchFailed = true; log.warn('auto-capture: sessions fetch failed', { participant: p.name, error: e.message }); }
-      const joins  = sessions.map(s => s.startTime).filter(Boolean).map(t => new Date(t));
-      const leaves = sessions.map(s => s.endTime).filter(Boolean).map(t => new Date(t));
-      const joinIso = joins.length ? new Date(Math.min(...joins)).toISOString() : null;
-      const leaveIso = leaves.length ? new Date(Math.max(...leaves)).toISOString() : null;
-      return {
-        participantId: p.name,
-        ...participantIdentity(p),
-        joinTimeISO:  joinIso,
-        leaveTimeISO: leaveIso,
-        joinTime:     joinIso,
-        leaveTime:    leaveIso,
-        // A FAILED fetch means "unknown", not "attended 0 minutes" — omitting
-        // the field lets the sheet render blanks instead of a hard 0%.
-        ...(sessionsFetchFailed ? {} : { durationMs: sessionsDurationMs(sessions) }),
-        present:      sessions.length > 0 || sessions.some(s => !s.endTime),
-        sessions:     sessions.length || 1,
-      };
+      return { p, sessions, sessionsFetchFailed };
     }));
-    out.push(...results);
+    participantData.push(...results);
+  }
+
+  let meetingEndMs = meetingEndTime ? (typeof meetingEndTime?.toDate === 'function' ? meetingEndTime.toDate().getTime() : new Date(meetingEndTime).getTime()) : NaN;
+  if (isNaN(meetingEndMs)) {
+    let maxMs = 0;
+    for (const { sessions } of participantData) {
+      for (const s of sessions) {
+        const end = s.endTime ? new Date(s.endTime).getTime() : (s.startTime ? new Date(s.startTime).getTime() : 0);
+        if (!isNaN(end) && end > maxMs) maxMs = end;
+      }
+    }
+    meetingEndMs = maxMs > 0 ? maxMs : null;
+  }
+
+  const PRESENCE_GRACE_MS = 3 * 60 * 1000; // 3 minutes grace window before meeting completion
+
+  for (const { p, sessions, sessionsFetchFailed } of participantData) {
+    const joins  = sessions.map(s => s.startTime).filter(Boolean).map(t => new Date(t)).filter(d => !isNaN(d.getTime()));
+    const leaves = sessions.map(s => s.endTime).filter(Boolean).map(t => new Date(t)).filter(d => !isNaN(d.getTime()));
+    const joinIso = joins.length ? new Date(Math.min(...joins)).toISOString() : null;
+    const leaveIso = leaves.length ? new Date(Math.max(...leaves)).toISOString() : null;
+
+    let present = false;
+    if (sessionsFetchFailed) {
+      present = true;
+    } else if (sessions.some(s => !s.endTime)) {
+      present = true;
+    } else if (leaves.length > 0) {
+      const lastLeaveMs = Math.max(...leaves.map(d => d.getTime()));
+      if (meetingEndMs) {
+        present = (meetingEndMs - lastLeaveMs) <= PRESENCE_GRACE_MS;
+      } else {
+        present = true;
+      }
+    }
+
+    out.push({
+      participantId: p.name,
+      ...participantIdentity(p),
+      joinTimeISO:  joinIso,
+      leaveTimeISO: leaveIso,
+      joinTime:     joinIso,
+      leaveTime:    leaveIso,
+      // A FAILED fetch means "unknown", not "attended 0 minutes" — omitting
+      // the field lets the sheet render blanks instead of a hard 0%.
+      ...(sessionsFetchFailed ? {} : { durationMs: sessionsDurationMs(sessions) }),
+      present,
+      sessions:     sessions.length || 1,
+    });
   }
   return out;
 }
@@ -1280,9 +1326,10 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
             }
           } catch (e) { log.warn('auto-capture: space fetch failed', { record: rec.name, error: e.message }); }
           if (!meetingCode) continue;
+          const instanceKey = `${meetingCode}__${lastSegment(rec.name)}`;
 
           try {
-            const participants = await fetchConferenceParticipants(rec.name, accessToken);
+            const participants = await fetchConferenceParticipants(rec.name, accessToken, rec.endTime);
             if (!participants.length) continue;
 
             // Persist full attendance to Firestore so History & dashboard reflect actual attendance
@@ -1294,9 +1341,9 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
             // (Cloud Scheduler is at-least-once) — getExportedConferenceIds is
             // read-once so two overlapping sweeps could otherwise both export,
             // producing a duplicate Sheet tab AND a duplicate "ready" email.
-            if (shouldAutoExport && !alreadyExported.has(meetingCode)) {
-              const claim = await claimReengagementSlot(u.domain, u.email, `autocap:${meetingCode}`);
-              if (!claim.claimed) { alreadyExported.add(meetingCode); continue; }
+            if (shouldAutoExport && !alreadyExported.has(instanceKey)) {
+              const claim = await claimReengagementSlot(u.domain, u.email, `autocap:${instanceKey}`);
+              if (!claim.claimed) { alreadyExported.add(instanceKey); continue; }
               try {
                 await buildAndSaveExport({
                   user: { domain: u.domain, email: u.email, displayName: u.displayName },
@@ -1308,7 +1355,7 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
                     calendarAttendees: [],
                     meetingStartTime: rec.startTime || null,
                     meetingType: 'scheduled',
-                    conferenceId: meetingCode,
+                    conferenceId: instanceKey,
                     timezone: settings.timezone || userDoc.timezone || userDoc.signupGeo?.timezone || 'America/New_York',
                   },
                   options: { sendEmail: true, autoExport: true, proAllowed: true },
@@ -1318,16 +1365,16 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
                 // Sheets 429/5xx used to leave the claim held forever, and the
                 // meeting was silently never exported (permanent data loss on
                 // the hands-free paid feature).
-                try { await claim.ref?.delete(); } catch (delErr) { log.warn('auto-capture: failed to release claim', { email: u.email, conferenceId: meetingCode, error: delErr.message }); }
+                try { await claim.ref?.delete(); } catch (delErr) { log.warn('auto-capture: failed to release claim', { email: u.email, conferenceId: instanceKey, error: delErr.message }); }
                 throw exportErr;
               }
-              alreadyExported.add(meetingCode);
+              alreadyExported.add(instanceKey);
               captured++;
             }
           } catch (e) {
             errored++;
-            errors.push({ email: u.email, conferenceId: meetingCode, error: e.message });
-            log.warn('auto-capture: process failed', { email: u.email, conferenceId: meetingCode, error: e.message });
+            errors.push({ email: u.email, conferenceId: instanceKey, error: e.message });
+            log.warn('auto-capture: process failed', { email: u.email, conferenceId: instanceKey, error: e.message });
           }
         }
       } catch (e) {
@@ -1378,6 +1425,8 @@ router.post('/admin/org-digest', requireSuperAdminOrScheduler, async (req, res) 
       const adminEmail = (doc.data()?.adminEmail || '').toLowerCase();
       try {
         if (!adminEmail) { skipped++; continue; }
+        const tenantPlan = await getTenantPlan(domain);
+        if (tenantPlan.plan !== 'pro') { skipped++; continue; }
         if (await isEmailSuppressed(adminEmail)) { skipped++; continue; }
         const slot = await claimReengagementSlot(domain, adminEmail, `orgdigest:${week}`);
         if (!slot.claimed) { skipped++; continue; }

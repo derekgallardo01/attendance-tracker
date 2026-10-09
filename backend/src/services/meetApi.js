@@ -133,35 +133,67 @@ function sessionsDurationMs(sessions, nowMs = Date.now()) {
 }
 
 // Fetch all participants and their sessions for a conferenceRecord.
-async function fetchConferenceParticipants(recordName, token) {
+async function fetchConferenceParticipants(recordName, token, meetingEndTime = null) {
   const raw = await meetGetAll(`${recordName}/participants`, token, 'participants');
-  const out = [];
   const BATCH = 10;
+  const participantData = [];
   for (let i = 0; i < raw.length; i += BATCH) {
     const results = await Promise.all(raw.slice(i, i + BATCH).map(async (p) => {
       let sessions = [];
       let sessionsFetchFailed = false;
       try { sessions = await meetGetAll(`${p.name}/participantSessions`, token, 'participantSessions'); }
       catch (e) { sessionsFetchFailed = true; log.warn('meetApi: sessions fetch failed', { participant: p.name, error: e.message }); }
-      const joins  = sessions.map(s => s.startTime).filter(Boolean).map(t => new Date(t));
-      const leaves = sessions.map(s => s.endTime).filter(Boolean).map(t => new Date(t));
-      const joinIso = joins.length ? new Date(Math.min(...joins)).toISOString() : null;
-      const leaveIso = leaves.length ? new Date(Math.max(...leaves)).toISOString() : null;
-      return {
-        participantId: p.name,
-        ...participantIdentity(p),
-        joinTimeISO:  joinIso,
-        leaveTimeISO: leaveIso,
-        joinTime:     joinIso,
-        leaveTime:    leaveIso,
-        ...(sessionsFetchFailed ? {} : { durationMs: sessionsDurationMs(sessions) }),
-        present:      sessions.length > 0 || sessions.some(s => !s.endTime),
-        sessions:     sessions.length || 1,
-      };
+      return { p, sessions, sessionsFetchFailed };
     }));
-    out.push(...results);
+    participantData.push(...results);
   }
-  return out;
+
+  let meetingEndMs = meetingEndTime ? (typeof meetingEndTime?.toDate === 'function' ? meetingEndTime.toDate().getTime() : new Date(meetingEndTime).getTime()) : NaN;
+  if (isNaN(meetingEndMs)) {
+    let maxMs = 0;
+    for (const { sessions } of participantData) {
+      for (const s of sessions) {
+        const end = s.endTime ? new Date(s.endTime).getTime() : (s.startTime ? new Date(s.startTime).getTime() : 0);
+        if (!isNaN(end) && end > maxMs) maxMs = end;
+      }
+    }
+    meetingEndMs = maxMs > 0 ? maxMs : null;
+  }
+
+  const PRESENCE_GRACE_MS = 3 * 60 * 1000; // 3 minutes grace window before meeting completion
+
+  return participantData.map(({ p, sessions, sessionsFetchFailed }) => {
+    const joins  = sessions.map(s => s.startTime).filter(Boolean).map(t => new Date(t)).filter(d => !isNaN(d.getTime()));
+    const leaves = sessions.map(s => s.endTime).filter(Boolean).map(t => new Date(t)).filter(d => !isNaN(d.getTime()));
+    const joinIso = joins.length ? new Date(Math.min(...joins)).toISOString() : null;
+    const leaveIso = leaves.length ? new Date(Math.max(...leaves)).toISOString() : null;
+
+    let present = false;
+    if (sessionsFetchFailed) {
+      present = true;
+    } else if (sessions.some(s => !s.endTime)) {
+      present = true;
+    } else if (leaves.length > 0) {
+      const lastLeaveMs = Math.max(...leaves.map(t => t.getTime()));
+      if (meetingEndMs) {
+        present = (meetingEndMs - lastLeaveMs) <= PRESENCE_GRACE_MS;
+      } else {
+        present = true;
+      }
+    }
+
+    return {
+      participantId: p.name,
+      ...participantIdentity(p),
+      joinTimeISO:  joinIso,
+      leaveTimeISO: leaveIso,
+      joinTime:     joinIso,
+      leaveTime:    leaveIso,
+      ...(sessionsFetchFailed ? {} : { durationMs: sessionsDurationMs(sessions) }),
+      present,
+      sessions:     sessions.length || 1,
+    };
+  });
 }
 
 module.exports = { meetGet, meetGetAll, participantIdentity, sessionsDurationMs, fetchConferenceParticipants };

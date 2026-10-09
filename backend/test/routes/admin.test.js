@@ -156,6 +156,7 @@ beforeEach(() => {
   sheetsMod.buildAndSaveExport.mockResolvedValue({ sheetUrl: 'https://sheet', isFirstExport: false });
   firestore.getUserSettings.mockResolvedValue({});
   firestore.getExportedConferenceIds.mockResolvedValue(new Set());
+  firestore.getTenantPlan.mockResolvedValue({ plan: 'pro' });
   firestore.getUserMeetingSeries.mockResolvedValue({ series: [] });
   notifications.sendUpcomingMeetingEmail.mockResolvedValue({ sent: true });
   mockCalEventsList.mockResolvedValue({ data: { items: [] } });
@@ -883,7 +884,7 @@ describe('POST /api/admin/auto-capture — server-side auto-capture sweep', () =
     ]);
     firestore.getUserSettings.mockResolvedValue({ autoExportOnEnd: true });
     firestore.getUser.mockResolvedValue({ email: 'pro@acme.com', domain: 'acme.com', refreshToken: 'rt', signupGeo: { timezone: 'Europe/Madrid' } });
-    firestore.getExportedConferenceIds.mockResolvedValue(new Set(['old-code'])); // one already exported
+    firestore.getExportedConferenceIds.mockResolvedValue(new Set(['old-code__r2'])); // one already exported
     const nowIso = new Date().toISOString();
     meetApi.meetGet.mockImplementation(async (path) => {
       if (path.startsWith('conferenceRecords?')) return { conferenceRecords: [
@@ -906,7 +907,7 @@ describe('POST /api/admin/auto-capture — server-side auto-capture sweep', () =
     expect(res.body.captured).toBe(1);
     expect(sheetsMod.buildAndSaveExport).toHaveBeenCalledTimes(1);
     const arg = sheetsMod.buildAndSaveExport.mock.calls[0][0];
-    expect(arg.data.conferenceId).toBe('new-code');
+    expect(arg.data.conferenceId).toBe('new-code__r1');
     expect(arg.data.timezone).toBe('Europe/Madrid');
     expect(arg.options).toMatchObject({ autoExport: true, sendEmail: true, proAllowed: true });
     expect(arg.data.participants[0]).toMatchObject({ displayName: 'Alex', email: 'alex@acme.com' });
@@ -1585,6 +1586,18 @@ describe('POST /admin/org-digest — weekly Pro-domain summary sweep', () => {
         : { totals: { users: 1, meetings: 3 }, meetings: [] });
     const res = await request(app).post('/api/admin/org-digest').set(scheduler());
     expect(res.body).toMatchObject({ scanned: 4, sent: 0, skipped: 4, errored: 0 });
+    expect(notifications.sendOrgWeeklyDigest).not.toHaveBeenCalled();
+  });
+
+  test('skips tenants whose pro plan has expired according to getTenantPlan', async () => {
+    firestore.getDb.mockReturnValue({
+      collection: () => ({ where: () => tenantsSnap([
+        tenantDoc('expired.com', { plan: 'pro', adminEmail: 'admin@expired.com' }),
+      ]) }),
+    });
+    firestore.getTenantPlan.mockResolvedValueOnce({ plan: 'free', billingStatus: 'expired' });
+    const res = await request(app).post('/api/admin/org-digest').set(scheduler());
+    expect(res.body).toMatchObject({ scanned: 1, sent: 0, skipped: 1, errored: 0 });
     expect(notifications.sendOrgWeeklyDigest).not.toHaveBeenCalled();
   });
 
@@ -2289,6 +2302,29 @@ describe('GET /api/admin/milestones & POST /api/admin/check-milestones', () => {
     expect(res.body.success).toBe(true);
     expect(res.body.newlyUnlockedCount).toBe(1);
     expect(res.body.newlyUnlocked[0].id).toBe('users_1000');
+  });
+
+  test('milestones active pro user check excludes expired pro users', async () => {
+    const future = new Date(Date.now() + 86400000).toISOString();
+    const past = new Date(Date.now() - 86400000).toISOString();
+    firestore.getAllUsersAcrossTenants.mockResolvedValueOnce([
+      { email: 'active@school.edu', individualPlan: 'pro', individualBillingStatus: 'active', individualPlanExpiresAt: future },
+      { email: 'expired@school.edu', individualPlan: 'pro', individualBillingStatus: 'active', individualPlanExpiresAt: past },
+      { email: 'lifetime@school.edu', individualPlan: 'pro', individualBillingStatus: 'active' },
+      { email: 'free@school.edu', individualPlan: 'free', individualBillingStatus: null },
+    ]);
+    firestore.getMilestoneProgress.mockImplementationOnce(async (counts) => ({
+      counts,
+      achieved: [],
+      upcoming: {},
+    }));
+
+    const res = await request(app)
+      .get('/api/admin/milestones')
+      .set(admin());
+
+    expect(res.status).toBe(200);
+    expect(res.body.counts.proCount).toBe(2);
   });
 });
 

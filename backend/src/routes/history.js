@@ -424,7 +424,7 @@ router.post('/history/import-conference', requireAuth, async (req, res) => {
   }
 
   try {
-    const participants = await fetchConferenceParticipants(conferenceRecordName, accessToken);
+    const participants = await fetchConferenceParticipants(conferenceRecordName, accessToken, rec.endTime);
     await persistAttendance(req.user.domain, meetingCode, conferenceRecordName, participants, req.user.email);
     if (rec.startTime || rec.endTime) {
       await updateMeetingTimes(req.user.domain, meetingCode, conferenceRecordName, rec.startTime, rec.endTime);

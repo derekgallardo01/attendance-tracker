@@ -883,7 +883,11 @@ async function getMeetingWithParticipants(domain, conferenceId, requesterEmail) 
       const evSnap = await tenantRef(domain).collection('events')
         .where('email', '==', requesterEmail.toLowerCase())
         .where('type', '==', 'tracked').get();
-      const tracked = evSnap.docs.some((d) => d.data().meta?.conferenceId === conferenceId);
+      const baseCode = conferenceId.includes('__') ? conferenceId.split('__')[0] : conferenceId;
+      const tracked = evSnap.docs.some((d) => {
+        const cid = d.data().meta?.conferenceId;
+        return cid === conferenceId || cid === baseCode || (cid && cid.split('__')[0] === baseCode);
+      });
       if (!tracked) return null;
     }
     // Per-instance model: prefer the LATEST instance of this code (each
@@ -2059,6 +2063,7 @@ async function getAllUsersAcrossTenants() {
         individualPlan: data.individualPlan || null,
         individualBillingStatus: data.individualBillingStatus || null,
         individualPlanType: data.individualPlanType || null,
+        individualPlanExpiresAt: (data.individualPlanExpiresAt?.toDate ? data.individualPlanExpiresAt.toDate().toISOString() : data.individualPlanExpiresAt) || null,
         reviewStatus: data.reviewStatus || null,
         reviewLinkClickedAt: data.reviewLinkClickedAt || null,
       };
@@ -2640,8 +2645,10 @@ async function getUserMeetingSeries(domain, email) {
         if (!series.lastAt || meetingStart > series.lastAt) series.lastAt = meetingStart;
       }
 
-      const meetingDurationMs = (data.startTime?.toDate && data.endTime?.toDate)
-        ? (data.endTime.toDate().getTime() - data.startTime.toDate().getTime())
+      const mEnd = tsMs(data.endTime);
+      const mStart = tsMs(data.startTime);
+      const meetingDurationMs = (typeof mEnd === 'number' && typeof mStart === 'number' && mEnd > mStart)
+        ? (mEnd - mStart)
         : null;
 
       // Per-person aggregation: count meetings attended + sum minutes.
@@ -2667,12 +2674,18 @@ async function getUserMeetingSeries(domain, email) {
         }
         person.attended++;
         if (pName && pName.length > (person.displayName || '').length) person.displayName = pName;
-        const join = tsMs(pdata.joinTime);
-        const leave = tsMs(pdata.leaveTime);
-        if (join && leave && leave > join) {
-          person.totalMinutes += Math.round((leave - join) / 60000);
-        } else if (meetingDurationMs && pdata.present) {
-          person.totalMinutes += Math.round(meetingDurationMs / 60000);
+        if (typeof pdata.durationMin === 'number' && !isNaN(pdata.durationMin) && pdata.durationMin >= 0) {
+          person.totalMinutes += Math.round(pdata.durationMin);
+        } else if (typeof pdata.durationMs === 'number' && !isNaN(pdata.durationMs) && pdata.durationMs >= 0) {
+          person.totalMinutes += Math.round(pdata.durationMs / 60000);
+        } else {
+          const join = tsMs(pdata.joinTime);
+          const leave = tsMs(pdata.leaveTime);
+          if (typeof join === 'number' && typeof leave === 'number' && leave > join) {
+            person.totalMinutes += Math.round((leave - join) / 60000);
+          } else if (meetingDurationMs && pdata.present) {
+            person.totalMinutes += Math.round(meetingDurationMs / 60000);
+          }
         }
       }
       series.totalParticipants += seenInThisMeeting.size;

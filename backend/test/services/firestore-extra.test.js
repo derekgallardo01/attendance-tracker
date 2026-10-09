@@ -474,6 +474,20 @@ describe('getMeetingWithParticipants', () => {
       const m = await firestore.getMeetingWithParticipants('acme.com', 'conf1', 'Host@Acme.com');
       expect(m).toMatchObject({ conferenceId: 'conf1' });
     });
+
+    test('authorizes an instance-scoped conferenceId when tracked event has baseCode', async () => {
+      ctx.seed('tenants/acme.com/meetings/conf1__inst1', { title: 'Bio 101 Session 2', participantCount: 0 });
+      ctx.seed('tenants/acme.com/events/e1', { email: 'host@acme.com', type: 'tracked', meta: { conferenceId: 'conf1' } });
+      const m = await firestore.getMeetingWithParticipants('acme.com', 'conf1__inst1', 'host@acme.com');
+      expect(m).toMatchObject({ conferenceId: 'conf1__inst1', title: 'Bio 101 Session 2' });
+    });
+
+    test('authorizes baseCode conferenceId when tracked event has instance-scoped conferenceId', async () => {
+      ctx.seed('tenants/acme.com/meetings/conf2', { title: 'Bio 101 Base', participantCount: 0 });
+      ctx.seed('tenants/acme.com/events/e2', { email: 'host@acme.com', type: 'tracked', meta: { conferenceId: 'conf2__inst99' } });
+      const m = await firestore.getMeetingWithParticipants('acme.com', 'conf2', 'host@acme.com');
+      expect(m).toMatchObject({ conferenceId: 'conf2', title: 'Bio 101 Base' });
+    });
   });
 
   describe('error-spike alert helpers', () => {
