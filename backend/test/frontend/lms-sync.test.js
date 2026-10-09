@@ -863,6 +863,47 @@ describe('AttLmsSync', () => {
     await AttLmsSync.pushGrades();
     expect(document.getElementById('lms-sync-modal').style.display).toBe('none');
   });
+
+  test('pushGrades displays status error without throwing or reporting to captureError when Classroom course is not selected', async () => {
+    global.captureError = jest.fn();
+    AttLmsSync.openModal({
+      records: [{ name: 'Test', email: 't@test.com', status: 'present' }],
+    });
+    const cSel = document.getElementById('lms-classroom-course-select');
+    cSel.innerHTML = '<option value="">Loading courses…</option>';
+    cSel.value = '';
+
+    await AttLmsSync.pushGrades();
+
+    const statusBox = document.getElementById('lms-sync-status-box');
+    expect(statusBox.textContent).toContain('Please select a Classroom course.');
+    expect(global.captureError).not.toHaveBeenCalled();
+
+    const pushBtn = document.getElementById('btn-lms-push-action');
+    expect(pushBtn.disabled).toBe(false);
+    delete global.captureError;
+  });
+
+  test('pushGrades displays status error without throwing or reporting to captureError when Canvas course is not selected', async () => {
+    global.captureError = jest.fn();
+    AttLmsSync.openModal({
+      tab: 'canvas',
+      records: [{ name: 'Test', email: 't@test.com', status: 'present' }],
+    });
+    const canSel = document.getElementById('lms-canvas-course-select');
+    canSel.innerHTML = '<option value="">—</option>';
+    canSel.value = '';
+
+    await AttLmsSync.pushGrades();
+
+    const statusBox = document.getElementById('lms-sync-status-box');
+    expect(statusBox.textContent).toContain('Please select a Canvas course.');
+    expect(global.captureError).not.toHaveBeenCalled();
+
+    const pushBtn = document.getElementById('btn-lms-push-action');
+    expect(pushBtn.disabled).toBe(false);
+    delete global.captureError;
+  });
 });
 
 

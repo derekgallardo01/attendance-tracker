@@ -532,7 +532,8 @@
           const title = newTitle.value.trim() || 'Meeting Attendance';
 
           if (!courseId) {
-            throw new Error(t('lms.selectClassroomCourse', 'Please select a Classroom course.'));
+            showStatus(t('lms.selectClassroomCourse', 'Please select a Classroom course.'), 'error');
+            return;
           }
 
           const res = await apiFetch('classroom/sync-grades', {
@@ -597,7 +598,8 @@
           const title = newTitle.value.trim() || 'Meeting Attendance';
 
           if (!courseId) {
-            throw new Error(t('lms.selectCanvasCourse', 'Please select a Canvas course.'));
+            showStatus(t('lms.selectCanvasCourse', 'Please select a Canvas course.'), 'error');
+            return;
           }
 
           const res = await apiFetch('canvas/sync-grades', {
