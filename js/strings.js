@@ -317,6 +317,7 @@
 
     const STRINGS = {
     "en": {
+        "billing.lmsSyncPro": "Syncing grades directly to Google Classroom and Canvas requires an Educator ($4.99/yr) or Pro plan.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago & SPEI Accepted",
         "soloTest.clearBtn": "Clear Sample Class",
         "soloTest.bannerActive": "Sample Class loaded (25 students) · Try exporting to Google Sheets!",
@@ -1670,6 +1671,7 @@
         "schoolLicense.error": "Could not submit request. Please try again or email us directly."
     },
     "es": {
+        "billing.lmsSyncPro": "La sincronización de calificaciones directamente con Google Classroom y Canvas requiere un plan Educador ($4.99/año) o Pro.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago y SPEI aceptados",
         "soloTest.clearBtn": "Borrar clase de muestra",
         "soloTest.bannerActive": "Clase de muestra cargada (25 estudiantes) · ¡Prueba exportar a Google Sheets!",
@@ -3023,6 +3025,7 @@
         "schoolLicense.error": "No se pudo enviar la solicitud. Inténtalo de nuevo o escríbenos directamente."
     },
     "pt": {
+        "billing.lmsSyncPro": "A sincronização de notas diretamente com o Google Classroom e o Canvas requer um plano Educador ($4.99/ano) ou Pro.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago e SPEI aceitos",
         "soloTest.clearBtn": "Limpar turma de exemplo",
         "soloTest.bannerActive": "Turma de exemplo carregada (25 alunos) · Experimente exportar para o Google Sheets!",
@@ -4376,6 +4379,7 @@
         "schoolLicense.error": "Não foi possível enviar a solicitação. Tente novamente ou envie um e-mail."
     },
     "hi": {
+        "billing.lmsSyncPro": "Google Classroom और Canvas में सीधे ग्रेड सिंक करने के लिए Educator ($4.99/वर्ष) या Pro प्लान आवश्यक है।",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago और SPEI स्वीकृत",
         "soloTest.clearBtn": "नमूना कक्षा साफ़ करें",
         "soloTest.bannerActive": "नमूना कक्षा लोड हो गई (25 छात्र) · Google Sheets में निर्यात का प्रयास करें!",
@@ -5729,6 +5733,7 @@
         "schoolLicense.error": "अनुरोध सबमिट नहीं हो सका। कृपया पुनः प्रयास करें या हमें ईमेल करें।"
     },
     "tl": {
+        "billing.lmsSyncPro": "Ang direktang pag-sync ng mga marka sa Google Classroom at Canvas ay nangangailangan ng Educator ($4.99/taon) o Pro plan.",
         "upgrade.badgesMX": "🇲🇽 Tinatanggap ang OXXO, Mercado Pago at SPEI",
         "soloTest.clearBtn": "I-clear ang Sample Class",
         "soloTest.bannerActive": "Na-load ang Sample Class (25 mag-aaral) · Subukang i-export sa Google Sheets!",
@@ -7082,6 +7087,7 @@
         "schoolLicense.error": "Hindi maisumite ang kahilingan. Pakisubukang muli o mag-email nang direkta."
     },
     "ms": {
+        "billing.lmsSyncPro": "Penyelarasan gred terus ke Google Classroom dan Canvas memerlukan pelan Educator ($4.99/thn) atau Pro.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago & SPEI Diterima",
         "soloTest.clearBtn": "Kosongkan Kelas Contoh",
         "soloTest.bannerActive": "Kelas contoh dimuatkan (25 pelajar) · Cuba eksport ke Google Sheets!",
@@ -8435,6 +8441,7 @@
         "schoolLicense.error": "Tidak dapat menghantar permintaan. Sila cuba lagi atau e-mel kepada kami."
     },
     "id": {
+        "billing.lmsSyncPro": "Sinkronisasi nilai langsung ke Google Classroom dan Canvas memerlukan paket Educator ($4.99/tahun) atau Pro.",
         "upgrade.badgesMX": "🇲🇽 Menerima OXXO, Mercado Pago & SPEI",
         "soloTest.clearBtn": "Hapus Kelas Contoh",
         "soloTest.bannerActive": "Kelas contoh dimuat (25 siswa) · Coba ekspor ke Google Sheets!",
@@ -9788,6 +9795,7 @@
         "schoolLicense.error": "Tidak dapat mengirim permintaan. Silakan coba lagi atau kirim email langsung."
     },
     "vi": {
+        "billing.lmsSyncPro": "Đồng bộ điểm trực tiếp với Google Classroom và Canvas yêu cầu gói Giáo viên ($4.99/năm) hoặc Pro.",
         "upgrade.badgesMX": "🇲🇽 Chấp nhận OXXO, Mercado Pago & SPEI",
         "soloTest.clearBtn": "Xóa lớp mẫu",
         "soloTest.bannerActive": "Đã tải lớp mẫu (25 học sinh) · Hãy thử xuất sang Google Sheets!",
@@ -11141,6 +11149,7 @@
         "schoolLicense.error": "Không thể gửi yêu cầu. Vui lòng thử lại hoặc gửi email trực tiếp."
     },
     "fr": {
+        "billing.lmsSyncPro": "La synchronisation des notes directement avec Google Classroom et Canvas nécessite un forfait Éducateur ($4.99/an) ou Pro.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago et SPEI acceptés",
         "soloTest.clearBtn": "Effacer la classe modèle",
         "soloTest.bannerActive": "Classe modèle chargée (25 élèves) · Essayez d'exporter vers Google Sheets !",
@@ -12494,6 +12503,7 @@
         "schoolLicense.error": "Impossible d'envoyer la demande. Réessayez ou contactez-nous par e-mail."
     },
     "de": {
+        "billing.lmsSyncPro": "Die direkte Synchronisierung von Noten mit Google Classroom und Canvas erfordert einen Educator- ($4.99/Jahr) oder Pro-Plan.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago & SPEI akzeptiert",
         "soloTest.clearBtn": "Beispielklasse leeren",
         "soloTest.bannerActive": "Beispielklasse geladen (25 Schüler) · Testen Sie den Google Sheets-Export!",
@@ -13847,6 +13857,7 @@
         "schoolLicense.error": "Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es erneut oder mailen Sie uns."
     },
     "it": {
+        "billing.lmsSyncPro": "La sincronizzazione dei voti direttamente su Google Classroom e Canvas richiede un piano Educator ($4.99/anno) o Pro.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago e SPEI accettati",
         "soloTest.clearBtn": "Cancella classe di prova",
         "soloTest.bannerActive": "Classe di prova caricata (25 studenti) · Prova a esportare su Google Sheets!",
@@ -15200,6 +15211,7 @@
         "schoolLicense.error": "Impossibile inviare la richiesta. Riprova o inviaci un'email direttamente."
     },
     "nl": {
+        "billing.lmsSyncPro": "Het rechtstreeks synchroniseren van cijfers naar Google Classroom en Canvas vereist een Educator- ($4.99/jaar) of Pro-abonnement.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago & SPEI geaccepteerd",
         "soloTest.clearBtn": "Voorbeeldklas wissen",
         "soloTest.bannerActive": "Voorbeeldklas geladen (25 studenten) · Probeer te exporteren naar Google Sheets!",
@@ -16553,6 +16565,7 @@
         "schoolLicense.error": "Kan aanvraag niet verzenden. Probeer opnieuw of stuur een e-mail."
     },
     "pl": {
+        "billing.lmsSyncPro": "Bezpośrednia synchronizacja ocen z Google Classroom i Canvas wymaga planu Educator ($4.99/rok) lub Pro.",
         "upgrade.badgesMX": "🇲🇽 Akceptowane OXXO, Mercado Pago i SPEI",
         "soloTest.clearBtn": "Wyczyść przykładową klasę",
         "soloTest.bannerActive": "Wczytano przykładową klasę (25 uczniów) · Spróbuj wyeksportować do Google Sheets!",
@@ -17906,6 +17919,7 @@
         "schoolLicense.error": "Nie udało się przesłać zapytania. Spróbuj ponownie lub napisz do nas."
     },
     "tr": {
+        "billing.lmsSyncPro": "Notları doğrudan Google Classroom ve Canvas ile senkronize etmek için Educator ($4.99/yıl) veya Pro planı gerekir.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago ve SPEI Kabul Edilir",
         "soloTest.clearBtn": "Örnek Sınıfı Temizle",
         "soloTest.bannerActive": "Örnek sınıf yüklendi (25 öğrenci) · Google Sheets'e aktarmayı deneyin!",
@@ -19259,6 +19273,7 @@
         "schoolLicense.error": "Talep gönderilemedi. Lütfen tekrar deneyin veya doğrudan bize e-posta gönderin."
     },
     "th": {
+        "billing.lmsSyncPro": "การซิงค์เกรดไปยัง Google Classroom และ Canvas โดยตรงต้องใช้แผน Educator ($4.99/ปี) หรือ Pro",
         "upgrade.badgesMX": "🇲🇽 รองรับ OXXO, Mercado Pago และ SPEI",
         "soloTest.clearBtn": "ล้างห้องเรียนตัวอย่าง",
         "soloTest.bannerActive": "โหลดห้องเรียนตัวอย่างเรียบร้อยแล้ว (25 คน) · ลองส่งออกไปยัง Google Sheets!",
@@ -20612,6 +20627,7 @@
         "schoolLicense.error": "ไม่สามารถส่งคำขอได้ โปรดลองอีกครั้งหรือส่งอีเมลถึงเราโดยตรง"
     },
     "ar": {
+        "billing.lmsSyncPro": "تتطلب مزامنة الدرجات مباشرة مع Google Classroom و Canvas خطة المعلم ($4.99/سنويًا) أو Pro.",
         "upgrade.badgesMX": "🇲🇽 يُقبل OXXO وMercado Pago وSPEI",
         "soloTest.clearBtn": "مسح الفصل النموذجي",
         "soloTest.bannerActive": "تم تحميل الفصل النموذجي (25 طالبًا) · جرب التصدير إلى Google Sheets!",
@@ -21965,6 +21981,7 @@
         "schoolLicense.error": "تعذر إرسال الطلب. يرجى المحاولة مرة أخرى أو مراسلتنا مباشرة."
     },
     "ko": {
+        "billing.lmsSyncPro": "Google 클래스룸 및 Canvas로 성적을 직접 동기화하려면 Educator($4.99/년) 또는 Pro 플랜이 필요합니다.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago, SPEI 지원",
         "soloTest.clearBtn": "샘플 학급 지우기",
         "soloTest.bannerActive": "샘플 학급 로드 완료(25명) · Google Sheets로 내보내기를 시도해보세요!",
@@ -23318,6 +23335,7 @@
         "schoolLicense.error": "요청을 제출할 수 없습니다. 다시 시도하거나 직접 이메일을 보내주세요."
     },
     "zh": {
+        "billing.lmsSyncPro": "直接同步成績至 Google Classroom 與 Canvas 需要 Educator（$4.99/年）或 Pro 方案。",
         "upgrade.badgesMX": "🇲🇽 支援 OXXO、Mercado Pago 與 SPEI",
         "soloTest.clearBtn": "清除示範班級",
         "soloTest.bannerActive": "已載入示範班級（25 位學生）· 快試試匯出至 Google Sheets！",
@@ -24671,6 +24689,7 @@
         "schoolLicense.error": "無法送出申請。請重試或直接寄信聯絡我們。"
     },
     "ja": {
+        "billing.lmsSyncPro": "Google ClassroomおよびCanvasへの成績の直接同期には、Educator（$4.99/年）またはProプランが必要です。",
         "upgrade.badgesMX": "🇲🇽 OXXO、Mercado Pago、SPEI 対応",
         "soloTest.clearBtn": "サンプルクラスをクリア",
         "soloTest.bannerActive": "サンプルクラスを読み込みました (25名) · Google Sheetsへのエクスポートをお試しください！",
@@ -26024,6 +26043,7 @@
         "schoolLicense.error": "リクエストを送信できませんでした。再試行するか、直接メールでお問い合わせください。"
     },
     "ta": {
+        "billing.lmsSyncPro": "Google Classroom மற்றும் Canvas-ல் நேரடியாக மதிப்பெண்களை ஒத்திசைக்க Educator ($4.99/ஆண்டு) அல்லது Pro திட்டம் தேவை.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago & SPEI ஏற்கப்படுகிறது",
         "soloTest.clearBtn": "மாதிரி வகுப்பை நீக்கு",
         "soloTest.bannerActive": "மாதிரி வகுப்பு ஏற்றப்பட்டது (25 மாணவர்கள்) · Google Sheets-க்கு ஏற்றுமதி செய்து பார்க்கவும்!",
@@ -27377,6 +27397,7 @@
         "schoolLicense.error": "கோரிக்கையை சமர்ப்பிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும் அல்லது எங்களுக்கு மின்னஞ்சல் அனுப்பவும்."
     },
     "te": {
+        "billing.lmsSyncPro": "Google Classroom మరియు Canvas కు నేరుగా గ్రేడ్‌లను సమకాలీకరించడానికి Educator ($4.99/సంవత్సరం) లేదా Pro ప్లాన్ అవసరం.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago & SPEI ఆమోదించబడతాయి",
         "soloTest.clearBtn": "నమూనా తరగతిని క్లియర్ చేయండి",
         "soloTest.bannerActive": "నమూనా తరగతి లోడ్ చేయబడింది (25 మంది) · Google Sheets కి ఎగుమతి చేసి చూడండి!",
@@ -28730,6 +28751,7 @@
         "schoolLicense.error": "అభ్యర్థనను సమర్పించడం సాధ్యం కాలేదు. దయచేసి మళ్లీ ప్రయత్నించండి లేదా నేరుగా ఇమెయిల్ చేయండి."
     },
     "bn": {
+        "billing.lmsSyncPro": "সরাসরি Google Classroom এবং Canvas-এ গ্রেড সিঙ্ক করার জন্য একটি Educator ($4.99/বছর) বা Pro প্ল্যান প্রয়োজন।",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago এবং SPEI গৃহীত",
         "soloTest.clearBtn": "নমুনা ক্লাস মুছুন",
         "soloTest.bannerActive": "নমুনা ক্লাস লোড হয়েছে (25 জন) · Google Sheets-এ এক্সপোর্ট করার চেষ্টা করুন!",
@@ -30083,6 +30105,7 @@
         "schoolLicense.error": "অনুরোধ জমা দেওয়া যায়নি। দয়া করে আবার চেষ্টা করুন বা সরাসরি আমাদের ইমেল করুন।"
     },
     "ur": {
+        "billing.lmsSyncPro": "براہ راست Google Classroom اور Canvas میں گریڈز سنک کرنے کے لیے Educator ($4.99/سال) یا Pro پلان درکار ہے۔",
         "upgrade.badgesMX": "🇲🇽 OXXO، Mercado Pago اور SPEI قبول ہیں",
         "soloTest.clearBtn": "نمونہ کلاس صاف کریں",
         "soloTest.bannerActive": "نمونہ کلاس لوڈ ہو گئی (25 طلباء) · Google Sheets پر برآمد آزمائیں!",
@@ -31436,6 +31459,7 @@
         "schoolLicense.error": "درخواست جمع نہیں ہو سکی۔ براہ کرम دوبارہ کوشش کریں یا براہ راست ای میل کریں۔"
     },
     "zh-CN": {
+        "billing.lmsSyncPro": "直接同步成绩至 Google Classroom 和 Canvas 需要 Educator（$4.99/年）或 Pro 方案。",
         "upgrade.badgesMX": "🇲🇽 支持 OXXO、Mercado Pago 与 SPEI",
         "soloTest.clearBtn": "清除样本班级",
         "soloTest.bannerActive": "已加载样本班级（25 位学生）· 快试试导出到 Google Sheets！",
@@ -32789,6 +32813,7 @@
         "schoolLicense.error": "无法发送申请。请重试或直接发邮件联系我们。"
     },
     "ru": {
+        "billing.lmsSyncPro": "Для прямой синхронизации оценок с Google Classroom и Canvas требуется тариф Educator ($4.99/год) или Pro.",
         "upgrade.badgesMX": "🇲🇽 Поддерживаются OXXO, Mercado Pago и SPEI",
         "soloTest.clearBtn": "Очистить пример класса",
         "soloTest.bannerActive": "Пример класса загружен (25 учеников) · Попробуйте экспорт в Google Sheets!",
@@ -34142,6 +34167,7 @@
         "schoolLicense.error": "Не удалось отправить запрос. Повторите попытку или напишите нам."
     },
     "uk": {
+        "billing.lmsSyncPro": "Для прямої синхронізації оцінок із Google Classroom та Canvas потрібен тариф Educator ($4.99/рік) або Pro.",
         "upgrade.badgesMX": "🇲🇽 Підтримуються OXXO, Mercado Pago та SPEI",
         "soloTest.clearBtn": "Очистити зразок класу",
         "soloTest.bannerActive": "Зразок класу завантажено (25 учнів) · Спробуйте експорт у Google Sheets!",
@@ -35495,6 +35521,7 @@
         "schoolLicense.error": "Не вдалося надіслати запит. Спробуйте ще раз або напишіть нам."
     },
     "ro": {
+        "billing.lmsSyncPro": "Sincronizarea directă a notelor în Google Classroom și Canvas necesită un plan Educator ($4.99/an) sau Pro.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago și SPEI acceptate",
         "soloTest.clearBtn": "Șterge clasa demonstrativă",
         "soloTest.bannerActive": "Clasă demonstrativă încărcată (25 elevi) · Încearcă exportul în Google Sheets!",
@@ -36848,6 +36875,7 @@
         "schoolLicense.error": "Nu s-a putut trimite cererea. Vă rugăm să încercați din nou sau să ne trimiteți un e-mail."
     },
     "he": {
+        "billing.lmsSyncPro": "סנכרון ציונים ישירות ל-Google Classroom ו-Canvas דורש תוכנית Educator ($4.99/שנה) או Pro.",
         "upgrade.badgesMX": "🇲🇽 מתקבלים OXXO, Mercado Pago ו-SPEI",
         "soloTest.clearBtn": "נקה כיתה לדוגמה",
         "soloTest.bannerActive": "כיתה לדוגמה נטענה (25 תלמידים) · נסה לייצא ל-Google Sheets!",
@@ -38201,6 +38229,7 @@
         "schoolLicense.error": "לא ניתן היה לשלוח את הבקשה. נסה שוב או פנה אלינו ישירות באימייל."
     },
     "mr": {
+        "billing.lmsSyncPro": "Google Classroom आणि Canvas वर थेट ग्रेड सिंक करण्यासाठी Educator ($4.99/वर्ष) किंवा Pro प्लॅन आवश्यक आहे.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago आणि SPEI स्वीकारले जातात",
         "soloTest.clearBtn": "नमुना वर्ग साफ करा",
         "soloTest.bannerActive": "नमुना वर्ग लोड झाला (25 विद्यार्थी) · Google Sheets वर निर्यात करून पहा!",
@@ -39554,6 +39583,7 @@
         "schoolLicense.error": "विनंती सबमिट करता आली नाही. कृपया पुन्हा प्रयत्न करा किंवा आम्हाला थेट ईमेल करा."
     },
     "sv": {
+        "billing.lmsSyncPro": "Direkt synkronisering av betyg till Google Classroom och Canvas kräver en Educator- ($4.99/år) eller Pro-plan.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago och SPEI accepteras",
         "soloTest.clearBtn": "Rensa exempelklass",
         "soloTest.bannerActive": "Exempelklass laddad (25 elever) · Testa att exportera till Google Sheets!",
@@ -40907,6 +40937,7 @@
         "schoolLicense.error": "Kunde inte skicka förfrågan. Försök igen eller mejla oss direkt."
     },
     "cs": {
+        "billing.lmsSyncPro": "Přímá synchronizace známek do Google Classroom a Canvas vyžaduje plán Educator ($4.99/rok) nebo Pro.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago a SPEI přijímány",
         "soloTest.clearBtn": "Vymazat ukázkovou třídu",
         "soloTest.bannerActive": "Ukázková třída načtena (25 studentů) · Vyzkoušejte export do Google Sheets!",
@@ -42260,6 +42291,7 @@
         "schoolLicense.error": "Žádost se nepodařilo odeslat. Zkuste to prosím znovu nebo nám napište e-mail."
     },
     "da": {
+        "billing.lmsSyncPro": "Direkte synkronisering af karakterer til Google Classroom og Canvas kræver en Educator- ($4.99/år) eller Pro-plan.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago & SPEI accepteres",
         "soloTest.clearBtn": "Ryd prøveklasse",
         "soloTest.bannerActive": "Prøveklasse indlæst (25 elever) · Prøv at eksportere til Google Sheets!",
@@ -43613,6 +43645,7 @@
         "schoolLicense.error": "Kunne ikke sende anmodningen. Prøv venligst igen eller send os en e-mail."
     },
     "fi": {
+        "billing.lmsSyncPro": "Arvosanojen suora synkronointi Google Classroomiin ja Canvasiin vaatii Educator- ($4.99/vuosi) tai Pro-tilauksen.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago ja SPEI hyväksytään",
         "soloTest.clearBtn": "Tyhjennä esimerkkiluokka",
         "soloTest.bannerActive": "Esimerkkiluokka ladattu (25 oppilasta) · Kokeile viedä Google Sheetsiin!",
@@ -44966,6 +44999,7 @@
         "schoolLicense.error": "Pyyntöä ei voitu lähettää. Yritä uudelleen tai lähetä meille sähköpostia."
     },
     "hu": {
+        "billing.lmsSyncPro": "A jegyek közvetlen szinkronizálása a Google Classroomba és a Canvasba Educator ($4.99/év) vagy Pro csomagot igényel.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago és SPEI elfogadva",
         "soloTest.clearBtn": "Mintatanterem törlése",
         "soloTest.bannerActive": "Mintatanterem betöltve (25 diák) · Próbáld ki az exportálást a Google Sheets-be!",
@@ -46319,6 +46353,7 @@
         "schoolLicense.error": "A kérést nem sikerült elküldeni. Kérjük, próbálja újra vagy írjon nekünk."
     },
     "so": {
+        "billing.lmsSyncPro": "Syncing grades directly to Google Classroom and Canvas requires an Educator ($4.99/yr) or Pro plan.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago & SPEI waa la aqbalaa",
         "soloTest.clearBtn": "Nadiifi Fasalka Tusaalaha ah",
         "soloTest.bannerActive": "Fasalka tusaalaha ah waa la soo raray (25 arday) · Isku day inaad u dhoofiso Google Sheets!",
@@ -47672,6 +47707,7 @@
         "schoolLicense.error": "Codsiga lama diri karin. Fadlan isku day mar kale ama si toos ah noo soo iimayl garee."
     },
     "sw": {
+        "billing.lmsSyncPro": "Kulandanisha alama moja kwa moja kwenye Google Classroom na Canvas kunahitaji mpango wa Educator ($4.99/mwaka) au Pro.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago & SPEI Zinapokelewa",
         "soloTest.clearBtn": "Futa Darasa la Mfano",
         "soloTest.bannerActive": "Darasa la mfano limepakiwa (wanafunzi 25) · Jaribu kusafirisha kwa Google Sheets!",
@@ -49023,6 +49059,7 @@
         "schoolLicense.error": "Haikuweza kuwasilisha ombi. Tafadhali jaribu tena au tutumie barua pepe moja kwa moja."
     },
     "am": {
+        "billing.lmsSyncPro": "Syncing grades directly to Google Classroom and Canvas requires an Educator ($4.99/yr) or Pro plan.",
         "upgrade.badgesMX": "🇲🇽 OXXO፣ Mercado Pago እና SPEI ተቀባይነት አላቸው",
         "soloTest.clearBtn": "የናሙና ክፍልን አጽዳ",
         "soloTest.bannerActive": "የናሙና ክፍል ተጭኗል (25 ተማሪዎች) · ወደ Google Sheets ለመላክ ይሞክሩ!",
@@ -50374,6 +50411,7 @@
         "schoolLicense.error": "ጥያቄውን ማስገባት አልተቻለም። እባክዎ እንደገና ይሞክሩ ወይም በቀጥታ ኢሜይል ያድርጉልን።"
     },
     "si": {
+        "billing.lmsSyncPro": "Syncing grades directly to Google Classroom and Canvas requires an Educator ($4.99/yr) or Pro plan.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago සහ SPEI පිළිගනු ලැබේ",
         "soloTest.clearBtn": "ආදර්ශ පන්තිය හිස් කරන්න",
         "soloTest.bannerActive": "ආදර්ශ පන්තිය පූරණය විය (සිසුන් 25) · Google Sheets වෙත අපනයනය කිරීමට උත්සාහ කරන්න!",
@@ -51725,6 +51763,7 @@
         "schoolLicense.error": "ඉල්ලීම ඉදිරිපත් කිරීමට නොහැකි විය. කරුණාකර නැවත උත්සාහ කරන්න හෝ අපට කෙලින්ම විද්‍යුත් තැපෑල එවන්න."
     },
     "el": {
+        "billing.lmsSyncPro": "Ο άμεσος συγχρονισμός βαθμών με το Google Classroom και το Canvas απαιτεί πρόγραμμα Educator ($4.99/έτος) ή Pro.",
         "upgrade.badgesMX": "🇲🇽 Γίνονται δεκτά OXXO, Mercado Pago & SPEI",
         "soloTest.clearBtn": "Εκκαθάριση δοκιμαστικής τάξης",
         "soloTest.bannerActive": "Η δοκιμαστική τάξη φορτώθηκε (25 μαθητές) · Δοκιμάστε την εξαγωγή στο Google Sheets!",
@@ -53076,6 +53115,7 @@
         "schoolLicense.error": "Δεν ήταν δυνατή η υποβολή του αιτήματος. Δοκιμάστε ξανά ή στείλτε μας email απευθείας."
     },
     "no": {
+        "billing.lmsSyncPro": "Syncing grades directly to Google Classroom and Canvas requires an Educator ($4.99/yr) or Pro plan.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago og SPEI aksepteres",
         "soloTest.clearBtn": "Tøm eksempelklasse",
         "soloTest.bannerActive": "Eksempelklasse lastet inn (25 elever) · Prøv å eksportere til Google Sheets!",
@@ -54427,6 +54467,7 @@
         "schoolLicense.error": "Kunne ikke sende forespørselen. Prøv igjen eller send oss en e-post direkte."
     },
     "ca": {
+        "billing.lmsSyncPro": "La sincronització directa de qualificacions amb Google Classroom i Canvas requereix un pla Educator ($4.99/any) o Pro.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago i SPEI acceptats",
         "soloTest.clearBtn": "Esborra classe de mostra",
         "soloTest.bannerActive": "Classe de mostra carregada (25 alumnes) · Prova d'exportar a Google Sheets!",
@@ -55778,6 +55819,7 @@
         "schoolLicense.error": "No s'ha pogut enviar la sol·licitud. Torna-ho a provar o envia'ns un correu directament."
     },
     "ne": {
+        "billing.lmsSyncPro": "Syncing grades directly to Google Classroom and Canvas requires an Educator ($4.99/yr) or Pro plan.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago र SPEI स्वीकार गरिन्छ",
         "soloTest.clearBtn": "नमूना कक्षा खाली गर्नुहोस्",
         "soloTest.bannerActive": "नमूना कक्षा लोड भयो (25 विद्यार्थी) · Google Sheets मा निर्यात गर्ने प्रयास गर्नुहोस्!",
@@ -57127,6 +57169,7 @@
         "schoolLicense.error": "अनुरोध पेश गर्न सकिएन। कृपया फेरि प्रयास गर्नुहोस् वा सिधै हामीलाई इमेल गर्नुहोस्。"
     },
     "ml": {
+        "billing.lmsSyncPro": "Google Classroom, Canvas എന്നിവയിലേക്ക് ഗ്രേഡുകൾ നേരിട്ട് സമന്വയിപ്പിക്കുന്നതിന് Educator ($4.99/വർഷം) അല്ലെങ്കിൽ Pro പ്ലാൻ ആവശ്യമാണ്.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago & SPEI സ്വീകരിക്കുന്നു",
         "soloTest.clearBtn": "സാമ്പിൾ ക്ലാസ് ഒഴിവാക്കുക",
         "soloTest.bannerActive": "സാമ്പിൾ ക്ലാസ് ലോഡ് ചെയ്തു (25 വിദ്യാർത്ഥികൾ) · Google Sheets-ലേക്ക് എക്സ്പോർട്ട് ചെയ്യാൻ ശ്രമിക്കുക!",
@@ -58475,6 +58518,7 @@
         "schoolLicense.error": "അഭ്യർത്ഥന സമർപ്പിക്കാൻ കഴിഞ്ഞില്ല. ദയവായി വീണ്ടും ശ്രമിക്കുക അല്ലെങ്കിൽ നേരിട്ട് ഇമെയിൽ ചെയ്യുക."
     },
     "mn": {
+        "billing.lmsSyncPro": "Syncing grades directly to Google Classroom and Canvas requires an Educator ($4.99/yr) or Pro plan.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago ба SPEI зөвшөөрөгдсөн",
         "soloTest.clearBtn": "Жишээ ангийг цэвэрлэх",
         "soloTest.bannerActive": "Жишээ анги ачаалагдлаа (25 сурагч) · Google Sheets рүү экспорт хийж үзээрэй!",
@@ -59823,6 +59867,7 @@
         "schoolLicense.error": "Хүсэлтийг илгээж чадсангүй. Дахин оролдоно уу эсвэл бидэнд шууд имэйл илгээнэ үү."
     },
     "kn": {
+        "billing.lmsSyncPro": "Google Classroom ಮತ್ತು Canvas ಗೆ ನೇರವಾಗಿ ಗ್ರೇಡ್‌ಗಳನ್ನು ಸಿಂಕ್ ಮಾಡಲು Educator ($4.99/ವರ್ಷ) ಅಥವಾ Pro ಯೋಜನೆ ಅಗತ್ಯವಿದೆ.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago & SPEI ಸ್ವೀಕರಿಸಲಾಗಿದೆ",
         "soloTest.clearBtn": "ಮಾದರಿ ತರಗತಿಯನ್ನು ತೆರವುಗೊಳಿಸಿ",
         "soloTest.bannerActive": "ಮಾದರಿ ತರಗತಿ ಲೋಡ್ ಆಗಿದೆ (25 ವಿದ್ಯಾರ್ಥಿಗಳು) · Google Sheets ಗೆ ರಫ್ತು ಮಾಡಲು ಪ್ರಯತ್ನಿಸಿ!",
@@ -61216,6 +61261,7 @@
         "lang.af": "Afrikaans"
     },
     "gu": {
+        "billing.lmsSyncPro": "Google Classroom અને Canvas માં સીધા ગ્રેડ સમન્વયિત કરવા માટે Educator ($4.99/વર્ષ) અથવા Pro પ્લાન જરૂરી છે.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago અને SPEI સ્વીકાર્ય",
         "soloTest.clearBtn": "નમૂના વર્ગ સાફ કરો",
         "soloTest.bannerActive": "નમૂના વર્ગ લોડ થયો (25 વિદ્યાર્થીઓ) · Google Sheets માં નિકાસ કરવાનો પ્રયાસ કરો!",
@@ -62609,6 +62655,7 @@
         "lang.af": "Afrikaans"
     },
     "pa": {
+        "billing.lmsSyncPro": "Google Classroom ਅਤੇ Canvas ਵਿੱਚ ਸਿੱਧੇ ਗ੍ਰੇਡ ਸਿੰਕ ਕਰਨ ਲਈ ਇੱਕ Educator ($4.99/ਸਾਲ) ਜਾਂ Pro ਪਲਾਨ ਦੀ ਲੋੜ ਹੈ।",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago ਅਤੇ SPEI ਸਵੀਕਾਰ ਕੀਤੇ ਜਾਂਦੇ ਹਨ",
         "soloTest.clearBtn": "ਨਮੂਨਾ ਕਲਾਸ ਸਾਫ਼ ਕਰੋ",
         "soloTest.bannerActive": "ਨਮੂਨਾ ਕਲਾਸ ਲੋਡ ਹੋ ਗਈ (25 ਵਿਦਿਆਰਥੀ) · Google Sheets 'ਤੇ ਨਿਰਯਾਤ ਕਰਨ ਦੀ ਕੋਸ਼ਿਸ਼ ਕਰੋ!",
@@ -64002,6 +64049,7 @@
         "lang.af": "Afrikaans"
     },
     "kk": {
+        "billing.lmsSyncPro": "Бағаларды Google Classroom және Canvas жүйелеріне тікелей синхрондау үшін Educator ($4.99/жыл) немесе Pro жоспары қажет.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago және SPEI қабылданады",
         "soloTest.clearBtn": "Үлгі сыныпты тазалау",
         "soloTest.bannerActive": "Үлгі сынып жүктелді (25 оқушы) · Google Sheets-ке экспорттап көріңіз!",
@@ -65395,6 +65443,7 @@
         "lang.af": "Afrikaans"
     },
     "lv": {
+        "billing.lmsSyncPro": "Tiešai vērtējumu sinhronizēšanai ar Google Classroom un Canvas ir nepieciešams Educator ($4.99/gadā) vai Pro plāns.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago un SPEI tiek pieņemti",
         "soloTest.clearBtn": "Notīrīt parauga klasi",
         "soloTest.bannerActive": "Parauga klase ielādēta (25 skolēni) · Izmēģiniet eksportu uz Google Sheets!",
@@ -66788,6 +66837,7 @@
         "lang.af": "Afrikaans"
     },
     "lt": {
+        "billing.lmsSyncPro": "Tiesioginiam pažymių sinchronizavimui su „Google Classroom“ ir „Canvas“ reikalingas „Educator“ ($4.99/metams) arba „Pro“ planas.",
         "upgrade.badgesMX": "🇲🇽 Priimami OXXO, Mercado Pago ir SPEI",
         "soloTest.clearBtn": "Išvalyti pavyzdinę klasę",
         "soloTest.bannerActive": "Pavyzdinė klasė įkelta (25 mokiniai) · Išbandykite eksportą į Google Sheets!",
@@ -68181,6 +68231,7 @@
         "lang.af": "Afrikaans"
     },
     "lo": {
+        "billing.lmsSyncPro": "ການຊິ້ງຄະແນນໂດຍກົງໃສ່ Google Classroom ແລະ Canvas ຕ້ອງການແຜນ Educator ($4.99/ປີ) ຫຼື Pro.",
         "upgrade.badgesMX": "🇲🇽 ຮອງຮັບ OXXO, Mercado Pago & SPEI",
         "soloTest.clearBtn": "ລຶບຫ້ອງຮຽນຕົວຢ່າງ",
         "soloTest.bannerActive": "ໂຫລດຫ້ອງຮຽນຕົວຢ່າງແລ້ວ (25 ຄົນ) · ລອງສົ່ງອອກໄປຍັງ Google Sheets!",
@@ -69574,6 +69625,7 @@
         "lang.af": "Afrikaans"
     },
     "my": {
+        "billing.lmsSyncPro": "အမှတ်များကို Google Classroom နှင့် Canvas သို့ တိုက်ရိုက်ချိတ်ဆက်ရန် Educator ($4.99/တစ်နှစ်) သို့မဟုတ် Pro အစီအစဉ် လိုအပ်ပါသည်။",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago နှင့် SPEI လက်ခံသည်",
         "soloTest.clearBtn": "နမူနာအတန်းကို ရှင်းလင်းပါ",
         "soloTest.bannerActive": "နမူနာအတန်း ဖွင့်ပြီးပါပြီ (၂၅ ဦး) · Google Sheets သို့ ထုတ်ယူကြည့်ပါ!",
@@ -70967,6 +71019,7 @@
         "lang.af": "Afrikaans"
     },
     "km": {
+        "billing.lmsSyncPro": "ការធ្វើសមកាលកម្មពិន្ទុដោយផ្ទាល់ទៅ Google Classroom និង Canvas ទាមទារគម្រោង Educator ($4.99/ឆ្នាំ) ឬ Pro។",
         "upgrade.badgesMX": "🇲🇽 ទទួលយក OXXO, Mercado Pago & SPEI",
         "soloTest.clearBtn": "សម្អាតថ្នាក់គំរូ",
         "soloTest.bannerActive": "បានផ្ទុកថ្នាក់គំរូ (សិស្ស 25 នាក់) · សាកល្បងនាំចេញទៅកាន់ Google Sheets!",
@@ -72360,6 +72413,7 @@
         "lang.af": "Afrikaans"
     },
     "ceb": {
+        "billing.lmsSyncPro": "Ang direktang pag-sync sa mga grado sa Google Classroom ug Canvas nagkinahanglan og Educator ($4.99/tuig) o Pro nga plano.",
         "upgrade.badgesMX": "🇲🇽 Gidawat ang OXXO, Mercado Pago & SPEI",
         "soloTest.clearBtn": "I-clear ang Sample Class",
         "soloTest.bannerActive": "Na-load ang Sample Class (25 ka estudyante) · Sulayi pag-export sa Google Sheets!",
@@ -73753,6 +73807,7 @@
         "lang.af": "Afrikaans"
     },
     "bg": {
+        "billing.lmsSyncPro": "Директното синхронизиране на оценки с Google Classroom и Canvas изисква план Educator ($4.99/год.) или Pro.",
         "upgrade.badgesMX": "🇲🇽 Приемат се OXXO, Mercado Pago и SPEI",
         "soloTest.clearBtn": "Изчисти примерния клас",
         "soloTest.bannerActive": "Примерен клас е зареден (25 ученици) · Опитайте експортиране в Google Sheets!",
@@ -75146,6 +75201,7 @@
         "lang.af": "Afrikaans"
     },
     "hr": {
+        "billing.lmsSyncPro": "Izravna sinkronizacija ocjena s Google Classroomom i Canvasom zahtijeva plan Educator ($4.99/god.) ili Pro.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago i SPEI prihvaćeni",
         "soloTest.clearBtn": "Očisti ogledni razred",
         "soloTest.bannerActive": "Ogledni razred učitan (25 učenika) · Isprobajte izvoz u Google Sheets!",
@@ -76539,6 +76595,7 @@
         "lang.af": "Afrikaans"
     },
     "sr": {
+        "billing.lmsSyncPro": "Директна синхронизација оцена са Google Classroom-ом и Canvas-ом захтева Educator ($4.99/год) или Pro план.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago и SPEI прихваћени",
         "soloTest.clearBtn": "Обриши узорак одељења",
         "soloTest.bannerActive": "Узорак одељења учитан (25 ученика) · Испробајте извоз у Google Sheets!",
@@ -77932,6 +77989,7 @@
         "lang.af": "Afrikaans"
     },
     "sk": {
+        "billing.lmsSyncPro": "Priama synchronizácia známok do Google Classroom a Canvas vyžaduje plán Educator ($4.99/rok) alebo Pro.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago a SPEI akceptované",
         "soloTest.clearBtn": "Vymazať vzorovú triedu",
         "soloTest.bannerActive": "Vzorová trieda načítaná (25 študentov) · Vyskúšajte export do Google Sheets!",
@@ -79325,6 +79383,7 @@
         "lang.af": "Afrikaans"
     },
     "sl": {
+        "billing.lmsSyncPro": "Neposredna sinhronizacija ocen v Google Classroom in Canvas zahteva paket Educator ($4.99/leto) ali Pro.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago in SPEI sprejeti",
         "soloTest.clearBtn": "Počisti vzorčni razred",
         "soloTest.bannerActive": "Vzorčni razred naložen (25 učencev) · Poskusite izvoziti v Google Sheets!",
@@ -80718,6 +80777,7 @@
         "lang.af": "Afrikaans"
     },
     "af": {
+        "billing.lmsSyncPro": "Syncing grades directly to Google Classroom and Canvas requires an Educator ($4.99/yr) or Pro plan.",
         "upgrade.badgesMX": "🇲🇽 OXXO, Mercado Pago & SPEI aanvaar",
         "soloTest.clearBtn": "Maak voorbeeldklas skoon",
         "soloTest.bannerActive": "Voorbeeldklas gelaai (25 studente) · Probeer om na Google Sheets uit te voer!",

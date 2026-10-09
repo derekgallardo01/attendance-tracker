@@ -18,6 +18,7 @@ const NEW_KEYS_EN = {
   "pricing.teacherMigrationBanner": "<strong>Switching from Attendance Taker for Classroom or a retired tool?</strong> <a href=\"attendance-taker-for-classroom-alternative.html\" style=\"color:var(--blue);font-weight:600;text-decoration:underline;margin-left:4px\">Use our free 5-second roster migration tool &rarr;</a>",
   "pricing.promoApplied": "🎁 Promo code box enabled for checkout",
   "pricing.havePromoCode": "Have a promo or referral code?",
+  "billing.lmsSyncPro": "Syncing grades directly to Google Classroom and Canvas requires an Educator ($4.99/yr) or Pro plan.",
   
   // Matrix Headers
   "pricing.matrixColFeature": "Feature / Capability",
@@ -528,6 +529,65 @@ const LOCALE_OVERRIDES = {
   }
 };
 
+const LMS_SYNC_PRO_TRANSLATIONS = {
+  es: "La sincronización de calificaciones directamente con Google Classroom y Canvas requiere un plan Educador ($4.99/año) o Pro.",
+  pt: "A sincronização de notas diretamente com o Google Classroom e o Canvas requer um plano Educador ($4.99/ano) ou Pro.",
+  fr: "La synchronisation des notes directement avec Google Classroom et Canvas nécessite un forfait Éducateur ($4.99/an) ou Pro.",
+  de: "Die direkte Synchronisierung von Noten mit Google Classroom und Canvas erfordert einen Educator- ($4.99/Jahr) oder Pro-Plan.",
+  it: "La sincronizzazione dei voti direttamente su Google Classroom e Canvas richiede un piano Educator ($4.99/anno) o Pro.",
+  nl: "Het rechtstreeks synchroniseren van cijfers naar Google Classroom en Canvas vereist een Educator- ($4.99/jaar) of Pro-abonnement.",
+  ja: "Google ClassroomおよびCanvasへの成績の直接同期には、Educator（$4.99/年）またはProプランが必要です。",
+  ko: "Google 클래스룸 및 Canvas로 성적을 직접 동기화하려면 Educator($4.99/년) 또는 Pro 플랜이 필요합니다.",
+  zh: "直接同步成績至 Google Classroom 與 Canvas 需要 Educator（$4.99/年）或 Pro 方案。",
+  "zh-TW": "直接同步成績至 Google Classroom 與 Canvas 需要 Educator（$4.99/年）或 Pro 方案。",
+  "zh-CN": "直接同步成绩至 Google Classroom 和 Canvas 需要 Educator（$4.99/年）或 Pro 方案。",
+  hi: "Google Classroom और Canvas में सीधे ग्रेड सिंक करने के लिए Educator ($4.99/वर्ष) या Pro प्लान आवश्यक है।",
+  ar: "تتطلب مزامنة الدرجات مباشرة مع Google Classroom و Canvas خطة المعلم ($4.99/سنويًا) أو Pro.",
+  ru: "Для прямой синхронизации оценок с Google Classroom и Canvas требуется тариф Educator ($4.99/год) или Pro.",
+  tr: "Notları doğrudan Google Classroom ve Canvas ile senkronize etmek için Educator ($4.99/yıl) veya Pro planı gerekir.",
+  id: "Sinkronisasi nilai langsung ke Google Classroom dan Canvas memerlukan paket Educator ($4.99/tahun) atau Pro.",
+  tl: "Ang direktang pag-sync ng mga marka sa Google Classroom at Canvas ay nangangailangan ng Educator ($4.99/taon) o Pro plan.",
+  vi: "Đồng bộ điểm trực tiếp với Google Classroom và Canvas yêu cầu gói Giáo viên ($4.99/năm) hoặc Pro.",
+  pl: "Bezpośrednia synchronizacja ocen z Google Classroom i Canvas wymaga planu Educator ($4.99/rok) lub Pro.",
+  uk: "Для прямої синхронізації оцінок із Google Classroom та Canvas потрібен тариф Educator ($4.99/рік) або Pro.",
+  th: "การซิงค์เกรดไปยัง Google Classroom และ Canvas โดยตรงต้องใช้แผน Educator ($4.99/ปี) หรือ Pro",
+  ms: "Penyelarasan gred terus ke Google Classroom dan Canvas memerlukan pelan Educator ($4.99/thn) atau Pro.",
+  sv: "Direkt synkronisering av betyg till Google Classroom och Canvas kräver en Educator- ($4.99/år) eller Pro-plan.",
+  da: "Direkte synkronisering af karakterer til Google Classroom og Canvas kræver en Educator- ($4.99/år) eller Pro-plan.",
+  fi: "Arvosanojen suora synkronointi Google Classroomiin ja Canvasiin vaatii Educator- ($4.99/vuosi) tai Pro-tilauksen.",
+  nb: "Direkte synkronisering av karakterer til Google Classroom og Canvas krever en Educator- ($4.99/år) eller Pro-plan.",
+  cs: "Přímá synchronizace známek do Google Classroom a Canvas vyžaduje plán Educator ($4.99/rok) nebo Pro.",
+  hu: "A jegyek közvetlen szinkronizálása a Google Classroomba és a Canvasba Educator ($4.99/év) vagy Pro csomagot igényel.",
+  el: "Ο άμεσος συγχρονισμός βαθμών με το Google Classroom και το Canvas απαιτεί πρόγραμμα Educator ($4.99/έτος) ή Pro.",
+  ro: "Sincronizarea directă a notelor în Google Classroom și Canvas necesită un plan Educator ($4.99/an) sau Pro.",
+  bg: "Директното синхронизиране на оценки с Google Classroom и Canvas изисква план Educator ($4.99/год.) или Pro.",
+  he: "סנכרון ציונים ישירות ל-Google Classroom ו-Canvas דורש תוכנית Educator ($4.99/שנה) או Pro.",
+  bn: "সরাসরি Google Classroom এবং Canvas-এ গ্রেড সিঙ্ক করার জন্য একটি Educator ($4.99/বছর) বা Pro প্ল্যান প্রয়োজন।",
+  ta: "Google Classroom மற்றும் Canvas-ல் நேரடியாக மதிப்பெண்களை ஒத்திசைக்க Educator ($4.99/ஆண்டு) அல்லது Pro திட்டம் தேவை.",
+  te: "Google Classroom మరియు Canvas కు నేరుగా గ్రేడ్‌లను సమకాలీకరించడానికి Educator ($4.99/సంవత్సరం) లేదా Pro ప్లాన్ అవసరం.",
+  mr: "Google Classroom आणि Canvas वर थेट ग्रेड सिंक करण्यासाठी Educator ($4.99/वर्ष) किंवा Pro प्लॅन आवश्यक आहे.",
+  ur: "براہ راست Google Classroom اور Canvas میں گریڈز سنک کرنے کے لیے Educator ($4.99/سال) یا Pro پلان درکار ہے۔",
+  fa: "همگام‌سازی مستقیم نمرات با Google Classroom و Canvas به طرح Educator ($4.99/سال) یا Pro نیاز دارد.",
+  sw: "Kulandanisha alama moja kwa moja kwenye Google Classroom na Canvas kunahitaji mpango wa Educator ($4.99/mwaka) au Pro.",
+  ca: "La sincronització directa de qualificacions amb Google Classroom i Canvas requereix un pla Educator ($4.99/any) o Pro.",
+  hr: "Izravna sinkronizacija ocjena s Google Classroomom i Canvasom zahtijeva plan Educator ($4.99/god.) ili Pro.",
+  sr: "Директна синхронизација оцена са Google Classroom-ом и Canvas-ом захтева Educator ($4.99/год) или Pro план.",
+  sk: "Priama synchronizácia známok do Google Classroom a Canvas vyžaduje plán Educator ($4.99/rok) alebo Pro.",
+  sl: "Neposredna sinhronizacija ocen v Google Classroom in Canvas zahteva paket Educator ($4.99/leto) ali Pro.",
+  lv: "Tiešai vērtējumu sinhronizēšanai ar Google Classroom un Canvas ir nepieciešams Educator ($4.99/gadā) vai Pro plāns.",
+  lt: "Tiesioginiam pažymių sinchronizavimui su „Google Classroom“ ir „Canvas“ reikalingas „Educator“ ($4.99/metams) arba „Pro“ planas.",
+  et: "Hinsete otse sünkroonimine Google Classroomi ja Canvasega nõuab Educator ($4.99/aastas) või Pro paketti.",
+  ceb: "Ang direktang pag-sync sa mga grado sa Google Classroom ug Canvas nagkinahanglan og Educator ($4.99/tuig) o Pro nga plano.",
+  kk: "Бағаларды Google Classroom және Canvas жүйелеріне тікелей синхрондау үшін Educator ($4.99/жыл) немесе Pro жоспары қажет.",
+  lo: "ການຊິ້ງຄະແນນໂດຍກົງໃສ່ Google Classroom ແລະ Canvas ຕ້ອງການແຜນ Educator ($4.99/ປີ) ຫຼື Pro.",
+  my: "အမှတ်များကို Google Classroom နှင့် Canvas သို့ တိုက်ရိုက်ချိတ်ဆက်ရန် Educator ($4.99/တစ်နှစ်) သို့မဟုတ် Pro အစီအစဉ် လိုအပ်ပါသည်။",
+  km: "ការធ្វើសមកាលកម្មពិន្ទុដោយផ្ទាល់ទៅ Google Classroom និង Canvas ទាមទារគម្រោង Educator ($4.99/ឆ្នាំ) ឬ Pro។",
+  kn: "Google Classroom ಮತ್ತು Canvas ಗೆ ನೇರವಾಗಿ ಗ್ರೇಡ್‌ಗಳನ್ನು ಸಿಂಕ್ ಮಾಡಲು Educator ($4.99/ವರ್ಷ) ಅಥವಾ Pro ಯೋಜನೆ ಅಗತ್ಯವಿದೆ.",
+  gu: "Google Classroom અને Canvas માં સીધા ગ્રેડ સમન્વયિત કરવા માટે Educator ($4.99/વર્ષ) અથવા Pro પ્લાન જરૂરી છે.",
+  pa: "Google Classroom ਅਤੇ Canvas ਵਿੱਚ ਸਿੱਧੇ ਗ੍ਰੇਡ ਸਿੰਕ ਕਰਨ ਲਈ ਇੱਕ Educator ($4.99/ਸਾਲ) ਜਾਂ Pro ਪਲਾਨ ਦੀ ਲੋੜ ਹੈ।",
+  ml: "Google Classroom, Canvas എന്നിവയിലേക്ക് ഗ്രേഡുകൾ നേരിട്ട് സമന്വയിപ്പിക്കുന്നതിന് Educator ($4.99/വർഷം) അല്ലെങ്കിൽ Pro പ്ലാൻ ആവശ്യമാണ്."
+};
+
 export function updateStringsFile() {
   const backendI18n = i18nBackend;
   const LOCALIZED_HEADERS = backendI18n.LOCALIZED_HEADERS || {};
@@ -540,7 +600,7 @@ export function updateStringsFile() {
     const locHeader = LOCALIZED_HEADERS[loc] || LOCALIZED_HEADERS['en'] || {};
     const checkedInWord = locHeader.checkedIn || (loc === 'es' || loc === 'pt' ? 'Registrado' : 'Checked in');
 
-    const overrides = { ...(EXTRA_LOCALE_OVERRIDES[loc] || {}), ...(LOCALE_OVERRIDES[loc] || {}), ...(GROWTH_LOCALE_MAPS[loc] || getGrowthTranslationsForLocale(loc)) };
+    const overrides = { ...(EXTRA_LOCALE_OVERRIDES[loc] || {}), ...(LOCALE_OVERRIDES[loc] || {}), ...(GROWTH_LOCALE_MAPS[loc] || getGrowthTranslationsForLocale(loc)), ...(LMS_SYNC_PRO_TRANSLATIONS[loc] ? { "billing.lmsSyncPro": LMS_SYNC_PRO_TRANSLATIONS[loc] } : {}) };
 
     const locPattern = `"${loc}": {`;
     const locIdx = code.indexOf(locPattern);
