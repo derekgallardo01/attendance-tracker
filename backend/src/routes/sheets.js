@@ -21,12 +21,16 @@ function sanitizeCell(val) {
 
 // Google Sheets tab names cannot contain these characters
 function sanitizeTabName(name) {
-  return name
-    .replace(/[\[\]*?/\\]/g, '-')  // Replace forbidden chars with dash
-    .replace(/^'+|'+$/g, '')       // Cannot start/end with apostrophes (strip RUNS — ''Quiz'' has two)
-    .slice(0, 100)                 // Google Sheets limit
-    .replace(/'+$/, '')            // the slice can land ON an apostrophe — re-strip
-    || 'Meeting';                  // Fallback if empty after sanitization
+  return (name || '')
+    .replace(/[\r\n\t]/g, ' ')
+    .replace(/[\[\]*?/\\:]/g, '-')
+    .trim()
+    .replace(/^'+|'+$/g, '')
+    .trim()
+    .slice(0, 100)
+    .replace(/^'+|'+$/g, '')
+    .trim()
+    || 'Meeting';
 }
 
 // A1-notation range for a tab. INTERNAL apostrophes are legal in tab titles
@@ -151,6 +155,27 @@ function buildClassSummaryTeaserValues(series) {
   ];
 }
 
+const FOLDER_NAME = 'Meet Attendance Tracker';
+
+async function getOrCreateFolder(drive) {
+  const folderSearch = await drive.files.list({
+    q: `name = '${FOLDER_NAME}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false and 'root' in parents and 'me' in owners`,
+    fields: 'files(id)',
+    spaces: 'drive',
+  });
+  if (folderSearch.data.files?.length > 0) {
+    return folderSearch.data.files[0].id;
+  }
+  const folderResp = await drive.files.create({
+    requestBody: {
+      name: FOLDER_NAME,
+      mimeType: 'application/vnd.google-apps.folder',
+    },
+    fields: 'id',
+  });
+  return folderResp.data.id;
+}
+
 // Build the attendance sheet + all its side effects (audit trail, excused
 // persist, Slack + email digests) for one export. Extracted from the
 // /save-to-sheets route so the auto-capture sweep can reuse the exact same
@@ -248,25 +273,12 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
         // First export: create folder + spreadsheet in user's Drive
         const drive = google.drive({ version: 'v3', auth: sheetsAuth });
 
-        // Find or create "Meet Attendance Tracker" folder
-        let folderId;
-        const folderSearch = await drive.files.list({
-          q: "name='Meet Attendance Tracker' and mimeType='application/vnd.google-apps.folder' and trashed=false",
-          fields: 'files(id)',
-          spaces: 'drive',
-        });
-        if (folderSearch.data.files?.length > 0) {
-          folderId = folderSearch.data.files[0].id;
-        } else {
-          const folderResp = await drive.files.create({
-            requestBody: {
-              name: 'Meet Attendance Tracker',
-              mimeType: 'application/vnd.google-apps.folder',
-            },
-            fields: 'id',
-          });
-          folderId = folderResp.data.id;
-          log.info('created Drive folder', { email: req.user.email, folderId });
+        // Find or create "Meet Attendance Tracker" folder (owned by user in root)
+        let folderId = null;
+        try {
+          folderId = await getOrCreateFolder(drive);
+        } catch (fErr) {
+          log.warn('sheets: failed to get or create Drive folder, falling back to root', { error: fErr.message, email: req.user.email });
         }
 
         // Create spreadsheet
@@ -278,14 +290,25 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
         });
         spreadsheetId = createResp.data.spreadsheetId;
 
-        // Move spreadsheet into the folder
-        const file = await drive.files.get({ fileId: spreadsheetId, fields: 'parents' });
-        await drive.files.update({
-          fileId: spreadsheetId,
-          addParents: folderId,
-          removeParents: (file.data.parents || []).join(','),
-          fields: 'id, parents',
-        });
+        // Move spreadsheet into the folder (gracefully fall back to root if folder is read-only)
+        if (folderId) {
+          try {
+            const file = await drive.files.get({ fileId: spreadsheetId, fields: 'parents' });
+            await drive.files.update({
+              fileId: spreadsheetId,
+              addParents: folderId,
+              removeParents: (file.data.parents || []).join(','),
+              fields: 'id, parents',
+            });
+          } catch (moveErr) {
+            log.warn('sheets: failed to move spreadsheet into folder, falling back to root', {
+              email: req.user.email,
+              spreadsheetId,
+              folderId,
+              error: moveErr.message,
+            });
+          }
+        }
 
         await setUserSheetId(req.user.domain, req.user.email, spreadsheetId);
         log.info('created user spreadsheet in folder', { email: req.user.email, spreadsheetId, folderId });
@@ -666,8 +689,8 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
         conferenceId: conferenceId || null,
         recurringEventId: recurringEventId || null,
         isPro: !!isProUser,
-        language: req.body?.language || req.user?.language || null,
-        country: req.body?.country || req.user?.country || null,
+        language: data?.language || req.body?.language || req.user?.language || 'en',
+        country: data?.country || req.body?.country || req.user?.country || null,
         domain: domain || null,
         durationMin: meetDurationMin,
       };
@@ -824,6 +847,8 @@ router.post('/save-to-sheets', async (req, res) => {
         calendarAttendees: b.calendarAttendees || [], meetingStartTime: b.meetingStartTime, meetingType: b.meetingType,
         eventStart: b.eventStart, eventEnd: b.eventEnd, conferenceId: b.conferenceId, timezone: b.timezone,
         locale: b.locale,
+        language: b.language,
+        country: b.country,
         recurringEventId: b.recurringEventId, excusedFromClient: b.excusedEmails || [],
         lateMinutes: b.lateMinutes, // panel's "Late after" threshold — drives the Late? column + digest
       },

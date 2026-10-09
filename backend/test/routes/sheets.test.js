@@ -210,6 +210,31 @@ describe('POST /api/save-to-sheets — cumulative Class Summary tab', () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
   });
+
+  test('Class Summary title with colons and control chars is sanitized into a valid tab name', async () => {
+    firestore.getUserMeetingSeries.mockResolvedValue({
+      series: [{
+        recurringEventId: 'series-colon',
+        title: 'CS 101: Intro to Python\r\n',
+        instanceCount: 2,
+        uniquePeople: 1,
+        firstAt: '2026-09-01T10:00:00.000Z',
+        lastAt: '2026-09-08T10:00:00.000Z',
+        people: [{ email: 'p@acme.com', displayName: 'P', attended: 2, attendanceRate: 1, totalMinutes: 60 }],
+      }],
+      totalSeries: 1,
+    });
+    const res = await request(app)
+      .post('/api/save-to-sheets')
+      .set(authedHeader('user@acme.com', 'acme.com'))
+      .set('Content-Type', 'application/json')
+      .send({ ...validPayload, recurringEventId: 'series-colon' });
+    expect(res.status).toBe(200);
+    const batchCall = mockSheetsBatchUpdate.mock.calls.find(c =>
+      (c[0].requestBody?.requests?.[0]?.addSheet?.properties?.title || '').includes('CS 101- Intro to Python')
+    );
+    expect(batchCall).toBeDefined();
+  });
 });
 
 describe('POST /api/save-to-sheets — happy path', () => {
@@ -258,6 +283,19 @@ describe('POST /api/save-to-sheets — happy path', () => {
       to: 'user@acme.com',
       meetingTitle: 'Sprint Planning',
       conferenceId: 'abc-defg-hij',
+    }));
+  });
+
+  test('passes language and country to sendExportNotification', async () => {
+    await request(app)
+      .post('/api/save-to-sheets')
+      .set(authedHeader('user@acme.com', 'acme.com'))
+      .set('Content-Type', 'application/json')
+      .send({ ...validPayload, sendEmail: true, autoExport: true, language: 'es', country: 'MX' });
+    expect(notifications.sendExportNotification).toHaveBeenCalledWith(expect.objectContaining({
+      to: 'user@acme.com',
+      language: 'es',
+      country: 'MX',
     }));
   });
 
@@ -417,6 +455,34 @@ describe('POST /api/save-to-sheets — spreadsheet resolution + edge branches', 
     const res = await post(validPayload);
     expect(res.status).toBe(200);
     expect(mockDriveCreate).not.toHaveBeenCalled(); // folder reused
+  });
+
+  test('first export: queries Drive for user-owned folders in root', async () => {
+    firestore.getUserSheetId.mockResolvedValue(null);
+    mockDriveList.mockResolvedValue({ data: { files: [] } });
+    await post(validPayload);
+    expect(mockDriveList).toHaveBeenCalledWith(expect.objectContaining({
+      q: expect.stringMatching(/'root' in parents and 'me' in owners/),
+    }));
+  });
+
+  test('first export: falls back to root when moving spreadsheet to folder fails (e.g. read-only)', async () => {
+    firestore.getUserSheetId.mockResolvedValue(null);
+    mockDriveList.mockResolvedValue({ data: { files: [{ id: 'readonly-folder' }] } });
+    mockDriveUpdate.mockRejectedValueOnce(Object.assign(new Error('The user does not have write access to this folder'), { code: 403 }));
+    const res = await post(validPayload);
+    expect(res.status).toBe(200);
+    expect(res.body.sheetUrl).toBeDefined();
+    expect(firestore.setUserSheetId).toHaveBeenCalledWith('acme.com', 'user@acme.com', 'new-sheet');
+  });
+
+  test('first export: falls back to root when getOrCreateFolder throws', async () => {
+    firestore.getUserSheetId.mockResolvedValue(null);
+    mockDriveList.mockRejectedValueOnce(new Error('Drive list error'));
+    const res = await post(validPayload);
+    expect(res.status).toBe(200);
+    expect(res.body.sheetUrl).toBeDefined();
+    expect(firestore.setUserSheetId).toHaveBeenCalledWith('acme.com', 'user@acme.com', 'new-sheet');
   });
 
   test('recreates the spreadsheet when the stored one is gone', async () => {
@@ -645,6 +711,29 @@ describe('POST /api/save-to-sheets — final edge branches', () => {
 
   test('tab name that sanitizes to empty falls back to "Meeting"', async () => {
     const res = await post({ ...validPayload, tabName: "'''" });
+    expect(res.status).toBe(200);
+  });
+
+  test('tab name with colons and control characters is sanitized with colons replaced by dashes', async () => {
+    const res = await post({ ...validPayload, tabName: 'Math: 101\r\n\tPeriod 2' });
+    expect(res.status).toBe(200);
+    const batchCall = mockSheetsBatchUpdate.mock.calls.find(c =>
+      c[0].requestBody?.requests?.[0]?.addSheet?.properties?.title === 'Math- 101   Period 2'
+    );
+    expect(batchCall).toBeDefined();
+  });
+
+  test('tab name with leading/trailing spaces and quotes is sanitized without leading quote', async () => {
+    const res = await post({ ...validPayload, tabName: "  'Biology 101'  " });
+    expect(res.status).toBe(200);
+    const batchCall = mockSheetsBatchUpdate.mock.calls.find(c =>
+      c[0].requestBody?.requests?.[0]?.addSheet?.properties?.title === 'Biology 101'
+    );
+    expect(batchCall).toBeDefined();
+  });
+
+  test('tab name with spaces and quotes only falls back to "Meeting"', async () => {
+    const res = await post({ ...validPayload, tabName: "   ''''   " });
     expect(res.status).toBe(200);
   });
 

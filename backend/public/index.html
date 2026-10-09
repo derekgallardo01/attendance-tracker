@@ -8387,9 +8387,23 @@ async function submitSurvey(useCase) {
   } catch (e) { /* silent — survey is best-effort */ }
 }
 
+function sanitizeTabName(name) {
+  return (name || '')
+    .replace(/[\r\n\t]/g, ' ')
+    .replace(/[\[\]*?/\\:]/g, '-')
+    .trim()
+    .replace(/^'+|'+$/g, '')
+    .trim()
+    .slice(0, 100)
+    .replace(/^'+|'+$/g, '')
+    .trim()
+    || 'Meeting';
+}
+
 async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
   const now = new Date();
-  const tabName = `${state.meetingTitle || 'Google Meet'} ${now.toLocaleDateString('en-US')} ${now.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', second:'2-digit'})}`;
+  const rawTabName = `${state.meetingTitle || 'Google Meet'} ${now.toLocaleDateString('en-US')} ${now.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', second:'2-digit'})}`;
+  const tabName = sanitizeTabName(rawTabName);
 
   // If no calendar attendees were provided, fallback to active class roster students if present
   let effectiveAttendees = calendarAttendees;
@@ -8432,6 +8446,8 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     // hardcoded 5 minutes and disagreed with the roster tab.
     lateMinutes: state.thresholds ? state.thresholds.lateMinutes : undefined,
     locale: (window.AttStrings && AttStrings.getLocale()) || 'en',
+    language: (window.AttStrings && AttStrings.getLocale()) || 'en',
+    country: localStorage.getItem('userCountry') || null,
     excusedEmails: mergedExcusedEmails,
     calendarAttendees: effectiveAttendees,
     participants: [...state.participants.values()].map(p => {

@@ -810,3 +810,98 @@ describe('getRevenueFunnel', () => {
     expect(r.planMix).toEqual({ individual: 1 }); // plan mix is all-time too
   });
 });
+
+describe('getCancellationTelemetry', () => {
+  test('returns all records ordered by createdAt descending when category is null', async () => {
+    ctx.seed('telemetry_cancellations/c1', {
+      category: 'subscription',
+      reason: 'too_expensive',
+      createdAt: wrapTimestamp(new Date('2026-01-01T10:00:00Z')),
+    });
+    ctx.seed('telemetry_cancellations/c2', {
+      category: 'feedback',
+      reason: 'missing_features',
+      createdAt: wrapTimestamp(new Date('2026-01-02T10:00:00Z')),
+    });
+
+    const results = await firestore.getCancellationTelemetry({ limit: 10 });
+    expect(results).toHaveLength(2);
+    expect(results[0].id).toBe('c2');
+    expect(results[1].id).toBe('c1');
+  });
+
+  test('filters by category without requiring composite index, sorting in memory', async () => {
+    ctx.seed('telemetry_cancellations/c1', {
+      category: 'subscription',
+      reason: 'too_expensive',
+      createdAt: wrapTimestamp(new Date('2026-01-01T10:00:00Z')),
+    });
+    ctx.seed('telemetry_cancellations/c2', {
+      category: 'feedback',
+      reason: 'other',
+      createdAt: wrapTimestamp(new Date('2026-01-03T10:00:00Z')),
+    });
+    ctx.seed('telemetry_cancellations/c3', {
+      category: 'subscription',
+      reason: 'no_longer_needed',
+      createdAt: wrapTimestamp(new Date('2026-01-02T10:00:00Z')),
+    });
+
+    const results = await firestore.getCancellationTelemetry({ category: 'subscription', limit: 1 });
+    expect(results).toHaveLength(1);
+    expect(results[0].id).toBe('c3');
+    expect(results[0].category).toBe('subscription');
+    expect(results[0].reason).toBe('no_longer_needed');
+  });
+
+  test('does not invoke orderBy on firestore query when category is specified', async () => {
+    const realCollection = firestore.getDb().collection.bind(firestore.getDb());
+    let lastWhereCall = null;
+    let orderByCalled = false;
+    const collectionSpy = jest.spyOn(firestore.getDb(), 'collection').mockImplementation((name) => {
+      const col = realCollection(name);
+      const originalWhere = col.where.bind(col);
+      col.where = (...args) => {
+        lastWhereCall = args;
+        const query = originalWhere(...args);
+        const originalOrderBy = query.orderBy?.bind(query);
+        if (originalOrderBy) {
+          query.orderBy = (...oArgs) => {
+            orderByCalled = true;
+            return originalOrderBy(...oArgs);
+          };
+        }
+        return query;
+      };
+      return col;
+    });
+    await firestore.getCancellationTelemetry({ category: 'subscription' });
+    expect(lastWhereCall).toEqual(['category', '==', 'subscription']);
+    expect(orderByCalled).toBe(false);
+    collectionSpy.mockRestore();
+  });
+
+  test('handles ISO string and Date createdAt values properly', async () => {
+    ctx.seed('telemetry_cancellations/date1', {
+      category: 'subscription',
+      createdAt: new Date('2026-05-01T12:00:00Z'),
+    });
+    ctx.seed('telemetry_cancellations/str1', {
+      category: 'subscription',
+      createdAt: '2026-05-02T12:00:00Z',
+    });
+    const results = await firestore.getCancellationTelemetry({ category: 'subscription', limit: 2 });
+    expect(results.length).toBeGreaterThanOrEqual(2);
+    expect(results[0].createdAt).toBe('2026-05-02T12:00:00.000Z');
+  });
+
+  test('handles errors gracefully by returning empty array', async () => {
+    // If db throws
+    const spy = jest.spyOn(firestore.getDb(), 'collection').mockImplementationOnce(() => {
+      throw new Error('Firestore connection failed');
+    });
+    const results = await firestore.getCancellationTelemetry();
+    expect(results).toEqual([]);
+    spy.mockRestore();
+  });
+});

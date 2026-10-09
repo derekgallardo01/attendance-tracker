@@ -474,27 +474,39 @@ async function recordCancellationTelemetry({ category, type, email, domain, meta
   }
 }
 
-async function getCancellationTelemetry({ limit = 50, category = null } = {}) {
+async function getCancellationTelemetry({ limit = 50, maxItems = limit, category = null } = {}) {
+  const cap = maxItems ?? limit ?? 50;
   try {
-    let query = getDb().collection('telemetry_cancellations');
-    if (category && typeof query.where === 'function') {
-      query = query.where('category', '==', category);
-    }
-    if (typeof query.orderBy === 'function') {
-      query = query.orderBy('createdAt', 'desc');
-    }
-    if (typeof query.limit === 'function') {
-      query = query.limit(limit);
+    const coll = getDb().collection('telemetry_cancellations');
+    let query = coll;
+    if (category && typeof coll.where === 'function') {
+      // Query without .orderBy('createdAt', 'desc') to avoid requiring a composite
+      // Firestore index (category + createdAt) which throws FAILED_PRECONDITION.
+      query = coll.where('category', '==', category);
+    } else {
+      if (typeof query.orderBy === 'function') {
+        query = query.orderBy('createdAt', 'desc');
+      }
+      if (typeof query.limit === 'function') {
+        query = query.limit(cap);
+      }
     }
     const snap = await query.get();
-    return (snap.docs || []).map(d => {
+    const records = (snap.docs || []).map(d => {
       const data = d.data();
+      const ms = tsMs(data.createdAt) || (data.createdAt instanceof Date ? data.createdAt.getTime() : (typeof data.createdAt === 'string' ? Date.parse(data.createdAt) : 0)) || 0;
       return {
         id: d.id,
         ...data,
-        createdAt: tsMs(data.createdAt) ? new Date(tsMs(data.createdAt)).toISOString() : null,
+        createdAt: ms ? new Date(ms).toISOString() : null,
       };
     });
+    records.sort((a, b) => {
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return timeB - timeA;
+    });
+    return records.slice(0, cap);
   } catch (err) {
     log.warn('firestore: getCancellationTelemetry failed', { error: err.message });
     return [];

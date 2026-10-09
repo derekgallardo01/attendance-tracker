@@ -115,6 +115,30 @@ describe('saveCheckin', () => {
     expect(Object.keys(written.people)).toEqual([key('new@b.com')]);
   });
 
+  test('CHECKIN_TTL_MS is 4 hours so daily standing classes <24h apart never collide', () => {
+    expect(CHECKIN_TTL_MS).toBe(4 * 60 * 60 * 1000);
+  });
+
+  test('next day recurring meeting on same code (20h later) starts fresh and unblocks student', async () => {
+    const twentyHoursAgo = Date.now() - 20 * 60 * 60 * 1000;
+    const { tx } = stubDb({
+      txGet: jest.fn().mockResolvedValue({
+        exists: true,
+        data: () => ({
+          meetingCode: 'abc-defg-hij',
+          people: { [key('student@school.edu')]: { email: 'student@school.edu', displayName: 'Student', checkedInAt: new Date(twentyHoursAgo).toISOString() } },
+          expiresAt: new Date(twentyHoursAgo + CHECKIN_TTL_MS),
+        }),
+      }),
+    });
+    const result = await saveCheckin('abc-defg-hij', { email: 'student@school.edu', displayName: 'Student' });
+    expect(result.already).toBe(false);
+    expect(tx.set).toHaveBeenCalled();
+    const written = tx.set.mock.calls[0][1];
+    expect(Object.keys(written.people)).toEqual([key('student@school.edu')]);
+    expect(new Date(written.people[key('student@school.edu')].checkedInAt).getTime()).toBeGreaterThan(twentyHoursAgo);
+  });
+
   test('caps the display name at 100 chars', async () => {
     const { tx } = stubDb();
     await saveCheckin('abc-defg-hij', { email: 'a@b.com', displayName: 'x'.repeat(300) });

@@ -15,7 +15,8 @@ const { getDb, FieldValue, log } = require('./_core');
 // check-in) is enforced on read, shareLinks-style. Enabling a Firestore TTL
 // policy on `expiresAt` for the `checkins` collection group makes Google
 // garbage-collect the docs too (console/gcloud step, optional).
-const CHECKIN_TTL_MS = 24 * 60 * 60 * 1000;
+// 4-hour TTL prevents cross-day collisions on recurring daily meetings.
+const CHECKIN_TTL_MS = 4 * 60 * 60 * 1000;
 
 // Meeting codes look like abc-defg-hij, but the SDK can also hand back other
 // id shapes — bound the doc-id space without being brittle about format.
