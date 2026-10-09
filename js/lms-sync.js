@@ -550,6 +550,11 @@
 
           const data = await res.json();
           if (!res.ok) {
+            if (res.status === 402 && data?.feature === 'lmsSync') {
+              if (typeof root.showUpgradeModal === 'function') root.showUpgradeModal('lmsSync');
+              this.closeModal();
+              return;
+            }
             throw new Error(data.error || t('lms.classroomSyncFailed', 'Classroom sync failed.'));
           }
 
@@ -612,6 +617,11 @@
 
           const data = await res.json();
           if (!res.ok) {
+            if (res.status === 402 && data?.feature === 'lmsSync') {
+              if (typeof root.showUpgradeModal === 'function') root.showUpgradeModal('lmsSync');
+              this.closeModal();
+              return;
+            }
             throw new Error(data.error || t('lms.canvasSyncFailed', 'Canvas sync failed.'));
           }
 

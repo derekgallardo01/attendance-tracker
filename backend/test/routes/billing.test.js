@@ -39,6 +39,8 @@ jest.mock('../../src/services/firestore', () => ({
   claimWebhookEvent: jest.fn(), // webhook idempotency — default re-armed in beforeEach
   releaseWebhookEvent: jest.fn(),
   isEmailSuppressed: jest.fn().mockResolvedValue(false),
+  persistExport: jest.fn().mockResolvedValue({ id: 'exp_123' }),
+  isMeetingUnlocked: jest.fn().mockResolvedValue(false),
 }));
 
 const firestore = require('../../src/services/firestore');
@@ -1291,7 +1293,7 @@ describe('billing/status pricing payload', () => {
     delete process.env.STRIPE_INDIVIDUAL_LIFETIME_INR_PRICE_ID;
   });
 
-  test('checkout for user in India (IN) requesting educator plan routes to educator price with PPP50 discount and dynamic payment methods', async () => {
+  test('checkout for user in India (IN) requesting educator plan routes to annual one-time payment in INR', async () => {
     process.env.STRIPE_SECRET_KEY = 'sk_test_x';
     process.env.STRIPE_EDUCATOR_PRICE_ID = 'price_edu_usd';
     process.env.STRIPE_INDIVIDUAL_LIFETIME_INR_PRICE_ID = 'price_inr_life_299';
@@ -1304,9 +1306,20 @@ describe('billing/status pricing payload', () => {
     expect(res.status).toBe(200);
     expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        mode: 'subscription',
-        line_items: [{ price: 'price_edu_usd', quantity: 1 }],
-        discounts: [{ coupon: 'PPP50' }],
+        mode: 'payment',
+        line_items: [{
+          price_data: {
+            currency: 'inr',
+            product_data: { name: 'Attendance Tracker Pro (Educator - 1 Year)' },
+            unit_amount: 19900,
+          },
+          quantity: 1,
+        }],
+        metadata: expect.objectContaining({
+          plan: 'educator',
+          isAnnualOneTime: '1',
+          individual: '1',
+        }),
       })
     );
     delete process.env.STRIPE_INDIVIDUAL_LIFETIME_INR_PRICE_ID;
@@ -1877,7 +1890,7 @@ describe('billing/status pricing payload', () => {
     test('/api/billing/checkout recovers seamlessly when PPP50 coupon fails in Stripe', async () => {
       process.env.STRIPE_SECRET_KEY = 'sk_test_123';
       process.env.STRIPE_PRICE_ID = 'price_default';
-      process.env.STRIPE_EDUCATOR_PRICE_ID = 'price_edu';
+      process.env.STRIPE_INDIVIDUAL_PRICE_ID = 'price_indiv';
       app = buildApp();
 
       mockStripeInstance.checkout.sessions.create
@@ -1888,7 +1901,7 @@ describe('billing/status pricing payload', () => {
         .post('/api/billing/checkout')
         .set(authedHeader('teacher@babcock.edu.ng', 'babcock.edu.ng'))
         .set('cf-ipcountry', 'NG')
-        .send({ plan: 'educator' });
+        .send({ plan: 'individual' });
 
       expect(res.status).toBe(200);
       expect(res.body.url).toBe('https://checkout.stripe.com/pay/cs_recovered');
@@ -1898,7 +1911,7 @@ describe('billing/status pricing payload', () => {
     test('/api/billing/public-checkout recovers seamlessly when coupon fails in Stripe', async () => {
       process.env.STRIPE_SECRET_KEY = 'sk_test_123';
       process.env.STRIPE_PRICE_ID = 'price_default';
-      process.env.STRIPE_EDUCATOR_PRICE_ID = 'price_edu';
+      process.env.STRIPE_INDIVIDUAL_PRICE_ID = 'price_indiv';
       app = buildApp();
 
       mockStripeInstance.checkout.sessions.create
@@ -1908,11 +1921,334 @@ describe('billing/status pricing payload', () => {
       const res = await request(app)
         .post('/api/billing/public-checkout')
         .set('cf-ipcountry', 'NG')
-        .send({ plan: 'educator', email: 'teacher@babcock.edu.ng' });
+        .send({ plan: 'individual', email: 'teacher@babcock.edu.ng' });
 
       expect(res.status).toBe(200);
       expect(res.body.url).toBe('https://checkout.stripe.com/pay/cs_public_recovered');
       expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('POST /api/billing/record-export', () => {
+    beforeEach(() => {
+      process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+      process.env.STRIPE_PRICE_ID = 'price_default';
+      process.env.STRIPE_INDIVIDUAL_PRICE_ID = 'price_indiv';
+      app = buildApp();
+    });
+
+    test('401 without auth', async () => {
+      const res = await request(app).post('/api/billing/record-export').send({});
+      expect(res.status).toBe(401);
+    });
+
+    test('returns { success: true, isPro: true } without counting for Pro users', async () => {
+      firestore.getUserPlan.mockResolvedValue({ plan: 'pro' });
+      const res = await request(app)
+        .post('/api/billing/record-export')
+        .set(authedHeader('pro@gmail.com', 'gmail.com'))
+        .send({ exportType: 'csv', participantCount: 50 });
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.isPro).toBe(true);
+      expect(firestore.persistExport).not.toHaveBeenCalled();
+    });
+
+    test('returns 402 largeClass if participantCount exceeds 25 on free tier', async () => {
+      firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+      const res = await request(app)
+        .post('/api/billing/record-export')
+        .set(authedHeader('free@gmail.com', 'gmail.com'))
+        .send({ exportType: 'csv', participantCount: 26 });
+      expect(res.status).toBe(402);
+      expect(res.body.feature).toBe('largeClass');
+      expect(firestore.persistExport).not.toHaveBeenCalled();
+    });
+
+    test('returns 402 exportQuota if free user has reached monthly export limit', async () => {
+      firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+      firestore.countUserMonthlyExports.mockResolvedValue(2);
+      const res = await request(app)
+        .post('/api/billing/record-export')
+        .set(authedHeader('free@gmail.com', 'gmail.com'))
+        .send({ exportType: 'excel', participantCount: 15 });
+      expect(res.status).toBe(402);
+      expect(res.body.feature).toBe('exportQuota');
+      expect(res.body.used).toBe(2);
+      expect(res.body.limit).toBe(2);
+      expect(firestore.persistExport).not.toHaveBeenCalled();
+    });
+
+    test('records export and returns updated quota for free user', async () => {
+      firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+      firestore.countUserMonthlyExports.mockResolvedValue(1);
+      const res = await request(app)
+        .post('/api/billing/record-export')
+        .set(authedHeader('free@gmail.com', 'gmail.com'))
+        .send({
+          exportType: 'csv',
+          participantCount: 20,
+          conferenceId: 'conf-123',
+          meetingTitle: 'Math 101',
+        });
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.quota).toEqual({ used: 2, limit: 2 });
+      expect(firestore.persistExport).toHaveBeenCalledWith('gmail.com', expect.objectContaining({
+        domain: 'gmail.com',
+        email: 'free@gmail.com',
+        conferenceId: 'conf-123',
+        meetingTitle: 'Math 101',
+        participantCount: 20,
+        exportType: 'csv',
+      }));
+    });
+
+    test('allows unlocked meeting through even if participantCount > 25 and used >= limit', async () => {
+      firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+      firestore.isMeetingUnlocked.mockResolvedValue(true);
+      const res = await request(app)
+        .post('/api/billing/record-export')
+        .set(authedHeader('free@gmail.com', 'gmail.com'))
+        .send({
+          exportType: 'csv',
+          participantCount: 150,
+          conferenceId: 'conf-unlocked-1',
+          meetingTitle: 'Mega Assembly',
+        });
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.meetingUnlocked).toBe(true);
+      expect(firestore.persistExport).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Regional & PPP educator annual one-time checkout', () => {
+    beforeEach(() => {
+      process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+      process.env.STRIPE_PRICE_ID = 'price_default';
+      process.env.STRIPE_EDUCATOR_PRICE_ID = 'price_edu_usd';
+      app = buildApp();
+    });
+
+    test('Philippines (PH) educator checkout creates mode: payment session with PHP price_data', async () => {
+      const res = await request(app)
+        .post('/api/billing/checkout')
+        .set(authedHeader('teacher@deped.gov.ph', 'deped.gov.ph'))
+        .set('cf-ipcountry', 'PH')
+        .send({ plan: 'educator' });
+      expect(res.status).toBe(200);
+      expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mode: 'payment',
+          line_items: [{
+            price_data: {
+              currency: 'php',
+              product_data: { name: 'Attendance Tracker Pro (Educator - 1 Year)' },
+              unit_amount: 14000,
+            },
+            quantity: 1,
+          }],
+          metadata: expect.objectContaining({
+            plan: 'educator',
+            isAnnualOneTime: '1',
+            individual: '1',
+            country: 'PH',
+            currency: 'php',
+          }),
+        })
+      );
+    });
+
+    test('Philippines (PH) educator checkout with configured price ID uses configured price', async () => {
+      process.env.STRIPE_EDUCATOR_PHP_PRICE_ID = 'price_edu_php_env';
+      const res = await request(app)
+        .post('/api/billing/checkout')
+        .set(authedHeader('teacher@deped.gov.ph', 'deped.gov.ph'))
+        .set('cf-ipcountry', 'PH')
+        .send({ plan: 'educator' });
+      expect(res.status).toBe(200);
+      expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mode: 'payment',
+          line_items: [{ price: 'price_edu_php_env', quantity: 1 }],
+        })
+      );
+      delete process.env.STRIPE_EDUCATOR_PHP_PRICE_ID;
+    });
+
+    test('Malaysia (MY) educator checkout creates mode: payment session with MYR price_data', async () => {
+      const res = await request(app)
+        .post('/api/billing/checkout')
+        .set(authedHeader('teacher@moe.edu.my', 'moe.edu.my'))
+        .set('cf-ipcountry', 'MY')
+        .send({ plan: 'educator' });
+      expect(res.status).toBe(200);
+      expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mode: 'payment',
+          line_items: [{
+            price_data: {
+              currency: 'myr',
+              product_data: { name: 'Attendance Tracker Pro (Educator - 1 Year)' },
+              unit_amount: 1200,
+            },
+            quantity: 1,
+          }],
+          metadata: expect.objectContaining({
+            plan: 'educator',
+            isAnnualOneTime: '1',
+            individual: '1',
+            country: 'MY',
+            currency: 'myr',
+          }),
+        })
+      );
+    });
+
+    test('Indonesia (ID) educator checkout creates mode: payment session with IDR price_data', async () => {
+      const res = await request(app)
+        .post('/api/billing/checkout')
+        .set(authedHeader('teacher@kemdikbud.go.id', 'kemdikbud.go.id'))
+        .set('cf-ipcountry', 'ID')
+        .send({ plan: 'educator' });
+      expect(res.status).toBe(200);
+      expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mode: 'payment',
+          line_items: [{
+            price_data: {
+              currency: 'idr',
+              product_data: { name: 'Attendance Tracker Pro (Educator - 1 Year)' },
+              unit_amount: 3900000,
+            },
+            quantity: 1,
+          }],
+          metadata: expect.objectContaining({
+            plan: 'educator',
+            isAnnualOneTime: '1',
+            individual: '1',
+            country: 'ID',
+            currency: 'idr',
+          }),
+        })
+      );
+    });
+
+    test('PPP-eligible country (e.g. Nigeria NG) educator checkout creates mode: payment session with $2.49 USD price_data', async () => {
+      const res = await request(app)
+        .post('/api/billing/checkout')
+        .set(authedHeader('teacher@babcock.edu.ng', 'babcock.edu.ng'))
+        .set('cf-ipcountry', 'NG')
+        .send({ plan: 'educator' });
+      expect(res.status).toBe(200);
+      expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mode: 'payment',
+          line_items: [{
+            price_data: {
+              currency: 'usd',
+              product_data: { name: 'Attendance Tracker Pro (Educator - 1 Year)' },
+              unit_amount: 249,
+            },
+            quantity: 1,
+          }],
+          metadata: expect.objectContaining({
+            plan: 'educator',
+            isAnnualOneTime: '1',
+            individual: '1',
+            country: 'NG',
+            currency: 'usd',
+          }),
+        })
+      );
+    });
+
+    test('public-checkout creates mode: payment session for regional educator even when STRIPE_EDUCATOR_PRICE_ID is unset', async () => {
+      delete process.env.STRIPE_EDUCATOR_PRICE_ID;
+      const res = await request(app)
+        .post('/api/billing/public-checkout')
+        .set('cf-ipcountry', 'PH')
+        .send({ plan: 'educator' });
+      expect(res.status).toBe(200);
+      expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mode: 'payment',
+          line_items: [{
+            price_data: {
+              currency: 'php',
+              product_data: { name: 'Attendance Tracker Pro (Educator - 1 Year)' },
+              unit_amount: 14000,
+            },
+            quantity: 1,
+          }],
+          metadata: expect.objectContaining({
+            plan: 'educator',
+            isAnnualOneTime: '1',
+            individual: '1',
+            country: 'PH',
+          }),
+        })
+      );
+    });
+  });
+
+  describe('Webhook: checkout.session.completed for educator annual one-time pass', () => {
+    beforeEach(() => {
+      process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+      process.env.STRIPE_PRICE_ID = 'price_x';
+      process.env.STRIPE_WEBHOOK_SECRET = 'whsec_x';
+      app = buildApp();
+    });
+
+    test('provisions individualPlanType educator_annual with 1 year expiration when non-subscription', async () => {
+      mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+        id: 'evt_edu_1',
+        type: 'checkout.session.completed',
+        data: {
+          object: {
+            id: 'cs_edu_annual_123',
+            client_reference_id: 'user:teacher@deped.gov.ph',
+            customer: 'cus_edu_1',
+            subscription: null,
+            metadata: {
+              individual: '1',
+              plan: 'educator',
+              isAnnualOneTime: '1',
+              domain: 'deped.gov.ph',
+              email: 'teacher@deped.gov.ph',
+            },
+            amount_total: 14000,
+            currency: 'php',
+          },
+        },
+      });
+
+      const res = await request(app)
+        .post('/api/billing/webhook')
+        .set('Content-Type', 'application/json')
+        .send(Buffer.from('{}'));
+
+      expect(res.status).toBe(200);
+      expect(firestore.setUserPlan).toHaveBeenCalledWith(
+        'deped.gov.ph',
+        'teacher@deped.gov.ph',
+        expect.objectContaining({
+          individualPlan: 'pro',
+          individualBillingStatus: 'active',
+          individualPlanType: 'educator_annual',
+          individualPlanExpiresAt: expect.any(String),
+          individualStripeCustomerId: 'cus_edu_1',
+          individualStripeSubscriptionId: null,
+        })
+      );
+
+      const callArgs = firestore.setUserPlan.mock.calls[0][2];
+      const expiry = new Date(callArgs.individualPlanExpiresAt).getTime();
+      const now = Date.now();
+      const diffDays = Math.round((expiry - now) / (1000 * 60 * 60 * 24));
+      expect(diffDays).toBeGreaterThanOrEqual(364);
+      expect(diffDays).toBeLessThanOrEqual(366);
     });
   });
 });

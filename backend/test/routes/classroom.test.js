@@ -42,6 +42,8 @@ jest.mock('../../src/services/googleAuth', () => ({
 jest.mock('../../src/services/firestore', () => ({
   getUser: jest.fn(),
   updateUserTokens: jest.fn(),
+  getTenantPlan: jest.fn(),
+  getUserPlan: jest.fn(),
 }));
 
 const { google } = require('googleapis');
@@ -52,6 +54,10 @@ let app;
 
 beforeEach(() => {
   jest.clearAllMocks();
+  delete process.env.STRIPE_SECRET_KEY;
+  delete process.env.STRIPE_PRICE_ID;
+  firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+  firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
   firestore.getUser.mockImplementation(async (domain, email) => ({
     email, domain, refreshToken: 'rt', accessToken: 'at',
     tokenExpiresAt: new Date(Date.now() + 3600000),
@@ -504,6 +510,56 @@ describe('POST /api/classroom/courses/:courseId/courseWork/:courseWorkId/sync-gr
     expect(res.body.success).toBe(false);
     expect(res.body.results[0].status).toBe('failed');
     expect(res.body.results[0].error).toBe('Quota exceeded');
+  });
+
+  describe('Classroom Pro gating (lmsSync)', () => {
+    beforeEach(() => {
+      process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+      process.env.STRIPE_PRICE_ID = 'price_123';
+      app = buildApp();
+    });
+
+    afterEach(() => {
+      delete process.env.STRIPE_SECRET_KEY;
+      delete process.env.STRIPE_PRICE_ID;
+    });
+
+    test('POST /classroom/courses/:courseId/courseWork returns 402 lmsSync when user is on free tier', async () => {
+      firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+      firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+      const res = await request(app)
+        .post('/api/classroom/courses/c1/courseWork')
+        .set(authedHeader('t@school.edu', 'school.edu'))
+        .send({ title: 'Attendance Assignment' });
+      expect(res.status).toBe(402);
+      expect(res.body.feature).toBe('lmsSync');
+      expect(res.body.error).toContain('Google Classroom grade sync is a Pro feature');
+    });
+
+    test('POST /classroom/courses/:courseId/courseWork allows Pro user through', async () => {
+      firestore.getTenantPlan.mockResolvedValue({ plan: 'pro' });
+      firestore.getUserPlan.mockResolvedValue({ plan: 'pro' });
+      mockCourseWorkCreate.mockResolvedValue({
+        data: { id: 'cw-new', title: 'Attendance Assignment', maxPoints: 100 },
+      });
+      const res = await request(app)
+        .post('/api/classroom/courses/c1/courseWork')
+        .set(authedHeader('t@school.edu', 'school.edu'))
+        .send({ title: 'Attendance Assignment' });
+      expect(res.status).toBe(200);
+      expect(res.body.courseWork.id).toBe('cw-new');
+    });
+
+    test('POST /classroom/sync-grades returns 402 lmsSync when user is on free tier', async () => {
+      firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+      firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+      const res = await request(app)
+        .post('/api/classroom/sync-grades')
+        .set(authedHeader('t@school.edu', 'school.edu'))
+        .send({ courseId: 'c1', records: [{ email: 's@school.edu', status: 'present' }] });
+      expect(res.status).toBe(402);
+      expect(res.body.feature).toBe('lmsSync');
+    });
   });
 });
 

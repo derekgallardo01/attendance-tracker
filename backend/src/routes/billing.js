@@ -3,7 +3,7 @@ const { requireAuth } = require('../middleware/auth');
 const express = require('express');
 const log = require('../lib/logger');
 const CONFIG = require('../config');
-const { getTenantPlan, setTenantPlan, getUserPlan, setUserPlan, logEvent, recordCancellationTelemetry, countUserMonthlyExports, countUserAutoExports, getUserSettings, getDomainTeacherCount, claimWebhookEvent, releaseWebhookEvent } = require('../services/firestore');
+const { getTenantPlan, setTenantPlan, getUserPlan, setUserPlan, logEvent, recordCancellationTelemetry, countUserMonthlyExports, countUserAutoExports, getUserSettings, getDomainTeacherCount, claimWebhookEvent, releaseWebhookEvent, persistExport, isMeetingUnlocked } = require('../services/firestore');
 const { PERSONAL_EMAIL_DOMAINS } = require('../services/firestore/_core');
 const PRICING = require('../config/pricing');
 
@@ -220,12 +220,34 @@ router.post(['/billing/checkout', '/billing/create-checkout-session'], requireAu
       : (userCountry === 'ID'
         ? process.env.STRIPE_INDIVIDUAL_LIFETIME_IDR_PRICE_ID
         : null));
+  const isRegionalEducator = isEducator && (isRegional || isIndia || isPppEligible) && !isDomainPlan;
   const isRegionalTarget = isRegional && !isEducator && (isLifetime || individual) && !isSingleMeeting && !isDomainPlan;
+
+  const configuredEduPrice = (userCountry === 'PH' && process.env.STRIPE_EDUCATOR_PHP_PRICE_ID)
+    || (userCountry === 'MY' && process.env.STRIPE_EDUCATOR_MYR_PRICE_ID)
+    || (userCountry === 'ID' && process.env.STRIPE_EDUCATOR_IDR_PRICE_ID)
+    || (isIndia && process.env.STRIPE_EDUCATOR_INR_PRICE_ID)
+    || process.env.STRIPE_EDUCATOR_ANNUAL_PRICE_ID;
+
+  let eduCurrency = 'usd';
+  let eduUnitAmount = 249; // $2.49 USD equivalent for PPP countries
+  if (isIndia) {
+    eduCurrency = 'inr';
+    eduUnitAmount = 19900;
+  } else if (regionalConfig) {
+    eduCurrency = regionalConfig.currency;
+    if (userCountry === 'PH') eduUnitAmount = 14000;
+    else if (userCountry === 'MY') eduUnitAmount = 1200;
+    else if (userCountry === 'ID') eduUnitAmount = 3900000;
+    else eduUnitAmount = Math.round(regionalConfig.amount / 2);
+  }
 
   const priceId = isSingleMeeting
     ? (process.env.STRIPE_SINGLE_MEETING_PRICE_ID || 'price_1ULk3CRPP93YBXrOlYO6xpWk')
     : (isEducator
-      ? process.env.STRIPE_EDUCATOR_PRICE_ID // no fallback: educator ($4.99/yr) and individual-annual are DIFFERENT products at different amounts
+      ? (isRegionalEducator
+        ? (configuredEduPrice || process.env.STRIPE_EDUCATOR_PRICE_ID || (individualBillingConfigured() ? 'price_regional_educator' : null))
+        : process.env.STRIPE_EDUCATOR_PRICE_ID) // no fallback: educator ($4.99/yr) and individual-annual are DIFFERENT products at different amounts
       : ((isIndia && (isLifetime || individual))
         ? getInrPrices().lifetime
         : (isRegionalTarget
@@ -249,10 +271,18 @@ router.post(['/billing/checkout', '/billing/create-checkout-session'], requireAu
     let planName = normalizedPlan || (individual ? 'individual' : 'team');
     if ((isIndia || isRegionalTarget) && isLifetime && !isSingleMeeting) {
       planName = 'lifetime';
+    } else if (isRegionalEducator) {
+      planName = 'educator';
     }
     const meta = individual
       ? { individual: '1', plan: planName, domain, email: email.toLowerCase() }
       : { individual: '0', plan: planName, domain, initiatedBy: email };
+
+    if (isRegionalEducator) {
+      meta.plan = 'educator';
+      meta.isAnnualOneTime = '1';
+      meta.individual = '1';
+    }
 
     const conferenceId = req.body?.conferenceId ? String(req.body.conferenceId).trim().toLowerCase() : null;
     if (isSingleMeeting && !conferenceId) {
@@ -268,9 +298,9 @@ router.post(['/billing/checkout', '/billing/create-checkout-session'], requireAu
     // hit banking friction / e-mandate blocks. Route all individual/lifetime checkouts
     // to the one-time Lifetime Pass with localized payment rails.
     let resolvedPriceId = sanitizePriceId(priceId);
-    let isRecurring = !isLifetime && !isSingleMeeting && !(isIndia && !isEducator && (isLifetime || individual)) && !isRegionalTarget;
+    let isRecurring = !isLifetime && !isSingleMeeting && !(isIndia && !isEducator && (isLifetime || individual)) && !isRegionalTarget && !isRegionalEducator;
 
-    if (isLifetime || isSingleMeeting || (isIndia && !isEducator && (isLifetime || individual)) || isRegionalTarget) {
+    if (isLifetime || isSingleMeeting || (isIndia && !isEducator && (isLifetime || individual)) || isRegionalTarget || isRegionalEducator) {
       isRecurring = false;
     } else if (stripe.prices && typeof stripe.prices.retrieve === 'function') {
       try {
@@ -285,19 +315,31 @@ router.post(['/billing/checkout', '/billing/create-checkout-session'], requireAu
       ...meta,
       ...(userCountry ? { country: userCountry } : {}),
       ...(isRegionalTarget ? { currency: regionalConfig.currency } : {}),
+      ...(isRegionalEducator ? { currency: eduCurrency } : {}),
       ...(isPppEligible ? { pppDiscount: '1' } : {}),
     };
 
-    const lineItems = (isRegionalTarget && !regionalPriceEnv)
-      ? [{
-          price_data: {
-            currency: regionalConfig.currency,
-            unit_amount: regionalConfig.amount,
-            product_data: { name: 'Attendance Tracker Pro (Lifetime)' },
-          },
-          quantity: 1,
-        }]
-      : [{ price: resolvedPriceId, quantity: 1 }];
+    const lineItems = isRegionalEducator
+      ? (configuredEduPrice
+          ? [{ price: sanitizePriceId(configuredEduPrice), quantity: 1 }]
+          : [{
+              price_data: {
+                currency: eduCurrency,
+                unit_amount: eduUnitAmount,
+                product_data: { name: 'Attendance Tracker Pro (Educator - 1 Year)' },
+              },
+              quantity: 1,
+            }])
+      : ((isRegionalTarget && !regionalPriceEnv)
+          ? [{
+              price_data: {
+                currency: regionalConfig.currency,
+                unit_amount: regionalConfig.amount,
+                product_data: { name: 'Attendance Tracker Pro (Lifetime)' },
+              },
+              quantity: 1,
+            }]
+          : [{ price: resolvedPriceId, quantity: 1 }]);
 
     const sessionParams = {
       mode: isRecurring ? 'subscription' : 'payment',
@@ -314,7 +356,7 @@ router.post(['/billing/checkout', '/billing/create-checkout-session'], requireAu
     };
     if (promo && promo !== 'LAUNCH50') {
       sessionParams.allow_promotion_codes = true;
-    } else if (!isDomainPlan && isPppEligible && (isEducator || (!isIndia && !isRegionalTarget && !isSingleMeeting))) {
+    } else if (!isDomainPlan && isPppEligible && !isRegionalEducator && (isEducator || (!isIndia && !isRegionalTarget && !isSingleMeeting))) {
       // For India and regional currencies, dedicated INR/PHP/MYR/IDR prices already reflect the subsidized PPP price.
       // Educator in PPP countries receives PPP50 discount coupon for $2.49/yr pricing.
       sessionParams.discounts = [{ coupon: 'PPP50' }];
@@ -328,7 +370,7 @@ router.post(['/billing/checkout', '/billing/create-checkout-session'], requireAu
       // payment history) 404s for one-time buyers. Always create one.
       sessionParams.customer_creation = 'always';
     }
-    if (isEducator && !isRecurring) {
+    if (isEducator && !isRecurring && meta.isAnnualOneTime !== '1') {
       // The educator plan is sold as an ANNUAL pass — a one-time price never
       // renews (and never emits subscription webhooks), so a misconfigured
       // STRIPE_EDUCATOR_PRICE_ID silently turns annual revenue into lifetime.
@@ -579,11 +621,48 @@ router.post('/billing/public-checkout', async (req, res) => {
       return res.status(400).json({ error: 'The domain license covers a Google Workspace domain. Personal Gmail accounts should pick the Lifetime or Educator pass instead.' });
     }
   }
+  const userCountry = detectCountry(req);
+  const isIndia = userCountry === 'IN';
+  const regionalConfig = PRICING.REGIONAL_PRICING ? PRICING.REGIONAL_PRICING[userCountry] : null;
+  const isRegional = !!(regionalConfig && !isIndia);
+  const promo = (req.body?.promo ?? '').trim().toUpperCase();
+  const isPppEligible = !promo && userCountry && PPP_COUNTRIES.has(userCountry);
+  const isRegionalEducator = isEducator && (isRegional || isIndia || isPppEligible) && !isDomain;
+  const regionalPriceEnv = userCountry === 'PH'
+    ? process.env.STRIPE_INDIVIDUAL_LIFETIME_PHP_PRICE_ID
+    : (userCountry === 'MY'
+      ? process.env.STRIPE_INDIVIDUAL_LIFETIME_MYR_PRICE_ID
+      : (userCountry === 'ID'
+        ? process.env.STRIPE_INDIVIDUAL_LIFETIME_IDR_PRICE_ID
+        : null));
+  const isRegionalTarget = !isDomain && isRegional && !isEducator;
+
+  const configuredEduPrice = (userCountry === 'PH' && process.env.STRIPE_EDUCATOR_PHP_PRICE_ID)
+    || (userCountry === 'MY' && process.env.STRIPE_EDUCATOR_MYR_PRICE_ID)
+    || (userCountry === 'ID' && process.env.STRIPE_EDUCATOR_IDR_PRICE_ID)
+    || (isIndia && process.env.STRIPE_EDUCATOR_INR_PRICE_ID)
+    || process.env.STRIPE_EDUCATOR_ANNUAL_PRICE_ID;
+
+  let eduCurrency = 'usd';
+  let eduUnitAmount = 249;
+  if (isIndia) {
+    eduCurrency = 'inr';
+    eduUnitAmount = 19900;
+  } else if (regionalConfig) {
+    eduCurrency = regionalConfig.currency;
+    if (userCountry === 'PH') eduUnitAmount = 14000;
+    else if (userCountry === 'MY') eduUnitAmount = 1200;
+    else if (userCountry === 'ID') eduUnitAmount = 3900000;
+    else eduUnitAmount = Math.round(regionalConfig.amount / 2);
+  }
+
   // Same fail-closed rule as the authed checkout: fallbacks never cross
   // product boundaries (a "$4.99/yr" button must never resolve to the
   // domain price). Missing price for the named plan → 503.
   const priceId = isEducator
-    ? process.env.STRIPE_EDUCATOR_PRICE_ID // no fallback: educator and individual-annual are DIFFERENT products
+    ? (isRegionalEducator
+        ? (configuredEduPrice || process.env.STRIPE_EDUCATOR_PRICE_ID || 'price_regional_educator')
+        : process.env.STRIPE_EDUCATOR_PRICE_ID) // no fallback: educator and individual-annual are DIFFERENT products
     : (isDepartment
         ? process.env.STRIPE_DEPARTMENT_PRICE_ID // recurring $59/yr domain mid-tier; NO fallback (never the team/institution price)
         : (isTeam
@@ -595,19 +674,6 @@ router.post('/billing/public-checkout', async (req, res) => {
   if (!priceId) {
     return res.status(503).json({ error: 'Selected plan price is not configured.' });
   }
-
-  const userCountry = detectCountry(req);
-  const isIndia = userCountry === 'IN';
-  const regionalConfig = PRICING.REGIONAL_PRICING ? PRICING.REGIONAL_PRICING[userCountry] : null;
-  const isRegional = !!(regionalConfig && !isIndia);
-  const regionalPriceEnv = userCountry === 'PH'
-    ? process.env.STRIPE_INDIVIDUAL_LIFETIME_PHP_PRICE_ID
-    : (userCountry === 'MY'
-      ? process.env.STRIPE_INDIVIDUAL_LIFETIME_MYR_PRICE_ID
-      : (userCountry === 'ID'
-        ? process.env.STRIPE_INDIVIDUAL_LIFETIME_IDR_PRICE_ID
-        : null));
-  const isRegionalTarget = !isDomain && isRegional && !isEducator;
 
   let resolvedPriceId = sanitizePriceId(priceId);
   if (!isDomain && !isEducator) {
@@ -622,8 +688,8 @@ router.post('/billing/public-checkout', async (req, res) => {
   }
 
   try {
-    let isRecurring = plan !== 'lifetime' && !(!isDomain && !isEducator && (isIndia || isRegionalTarget));
-    if (plan === 'lifetime' || (!isDomain && !isEducator && (isIndia || isRegionalTarget))) {
+    let isRecurring = plan !== 'lifetime' && !(!isDomain && !isEducator && (isIndia || isRegionalTarget)) && !isRegionalEducator;
+    if (plan === 'lifetime' || (!isDomain && !isEducator && (isIndia || isRegionalTarget)) || isRegionalEducator) {
       isRecurring = false;
     } else if (stripe.prices && typeof stripe.prices.retrieve === 'function') {
       try {
@@ -644,25 +710,30 @@ router.post('/billing/public-checkout', async (req, res) => {
       ...(isDomain && email ? { domain: email.split('@')[1] } : {}),
       ...(userCountry ? { country: userCountry } : {}),
       ...(isRegionalTarget ? { currency: regionalConfig.currency } : {}),
+      ...(isRegionalEducator ? { currency: eduCurrency, isAnnualOneTime: '1', individual: '1', plan: 'educator' } : {}),
     };
 
-    // Real selling prices now — LAUNCH50 retired. Clean session (no discounts,
-    // no promo box unless a real code is passed) so Stripe Adaptive Pricing can
-    // present local currency + rails to PPP buyers. See the authed checkout
-    // above for the full rationale. Ignore a stale LAUNCH50 from cached clients.
-    const promo = (req.body?.promo ?? '').trim().toUpperCase();
-    const isPppEligible = !promo && userCountry && PPP_COUNTRIES.has(userCountry);
-
-    const lineItems = (isRegionalTarget && !regionalPriceEnv)
-      ? [{
-          price_data: {
-            currency: regionalConfig.currency,
-            unit_amount: regionalConfig.amount,
-            product_data: { name: 'Attendance Tracker Pro (Lifetime)' },
-          },
-          quantity: 1,
-        }]
-      : [{ price: resolvedPriceId, quantity: 1 }];
+    const lineItems = isRegionalEducator
+      ? (configuredEduPrice
+          ? [{ price: sanitizePriceId(configuredEduPrice), quantity: 1 }]
+          : [{
+              price_data: {
+                currency: eduCurrency,
+                unit_amount: eduUnitAmount,
+                product_data: { name: 'Attendance Tracker Pro (Educator - 1 Year)' },
+              },
+              quantity: 1,
+            }])
+      : ((isRegionalTarget && !regionalPriceEnv)
+          ? [{
+              price_data: {
+                currency: regionalConfig.currency,
+                unit_amount: regionalConfig.amount,
+                product_data: { name: 'Attendance Tracker Pro (Lifetime)' },
+              },
+              quantity: 1,
+            }]
+          : [{ price: resolvedPriceId, quantity: 1 }]);
 
     const sessionParams = {
       mode: isRecurring ? 'subscription' : 'payment',
@@ -674,18 +745,11 @@ router.post('/billing/public-checkout', async (req, res) => {
       after_expiration: { recovery: { enabled: true } },
     };
     if (email) {
-      // Deliberately NOT prefilled as customer_email: this endpoint is
-      // unauthenticated, and prefilling a caller-supplied address combined with
-      // abandoned-checkout recovery would let anyone queue Stripe-branded
-      // "finish your purchase" emails to arbitrary victims (60/min/IP). The
-      // buyer types their email into Stripe's hosted page instead; recovery
-      // and receipts go to what THEY typed, while metadata/client_reference_id
-      // (harmless — never emailed) keep provisioning intact.
       sessionParams.client_reference_id = isDomain ? email.split('@')[1] : `user:${email}`;
     }
     if (promo && promo !== 'LAUNCH50') {
       sessionParams.allow_promotion_codes = true;
-    } else if (!isDomain && isPppEligible && (isEducator || (!isIndia && !isRegionalTarget))) {
+    } else if (!isDomain && isPppEligible && !isRegionalEducator && (isEducator || (!isIndia && !isRegionalTarget))) {
       sessionParams.discounts = [{ coupon: 'PPP50' }];
     }
     if (isRecurring) {
@@ -696,7 +760,7 @@ router.post('/billing/public-checkout', async (req, res) => {
       // customer so the buyer's portal (receipts) works post-purchase.
       sessionParams.customer_creation = 'always';
     }
-    if (isEducator && !isRecurring) {
+    if (isEducator && !isRecurring && meta.isAnnualOneTime !== '1') {
       // Same fail-closed rule as the authed checkout: a one-time educator price
       // silently converts annual revenue into a lifetime pass.
       log.error('billing: educator price is one-time, not recurring — refusing public checkout', { priceId: resolvedPriceId });
@@ -935,6 +999,68 @@ function isSuperAdminUser(email) {
   }
   return String(email).trim().toLowerCase() === (CONFIG.superAdminEmail || '').toLowerCase();
 }
+
+// POST /api/billing/record-export — counts CSV and Excel downloads toward monthly export quota
+router.post('/billing/record-export', requireAuth, async (req, res) => {
+  try {
+    const { exportType = 'csv', conferenceId = null, meetingTitle = null, participantCount = 0 } = req.body || {};
+    const isPro = await planIsPro(req.user.domain, req.user.email);
+    if (isPro) {
+      return res.json({ success: true, isPro: true });
+    }
+
+    const confId = conferenceId || null;
+    const meetingUnlocked = confId && typeof isMeetingUnlocked === 'function'
+      ? await isMeetingUnlocked(req.user.domain, req.user.email, confId)
+      : false;
+    if (meetingUnlocked) {
+      return res.json({ success: true, meetingUnlocked: true });
+    }
+
+    const count = typeof participantCount === 'number' ? participantCount : (parseInt(participantCount, 10) || 0);
+    const maxParticipants = PRICING.FREE_MAX_PARTICIPANTS_PER_EXPORT || 25;
+    if (count > maxParticipants) {
+      return res.status(402).json({
+        error: 'Free tier supports exporting up to 25 attendees per meeting. Upgrade to Pro for unlimited class sizes.',
+        feature: 'largeClass',
+        participantCount: count,
+      });
+    }
+
+    const used = await countUserMonthlyExports(req.user.domain, req.user.email);
+    const limit = PRICING.FREE_MONTHLY_EXPORT_LIMIT || 2;
+    if (used >= limit) {
+      return res.status(402).json({
+        error: 'Monthly export quota reached',
+        feature: 'exportQuota',
+        used,
+        limit,
+        quota: { used, limit },
+      });
+    }
+
+    await persistExport(req.user.domain, {
+      domain: req.user.domain,
+      email: req.user.email,
+      meetingTitle: meetingTitle || null,
+      conferenceId: conferenceId || null,
+      participantCount: count,
+      exportType,
+      exportedAt: new Date().toISOString(),
+    });
+
+    return res.json({
+      success: true,
+      quota: {
+        used: used + 1,
+        limit,
+      },
+    });
+  } catch (err) {
+    log.error('billing: record-export failed', { domain: req.user?.domain, email: req.user?.email, error: err.message });
+    return res.status(500).json({ error: 'Failed to record export' });
+  }
+});
 
 // GET /api/billing/status — current plan for the caller's domain (drives the
 // upgrade CTA in the UI).
@@ -1176,12 +1302,18 @@ async function webhookHandler(req, res) {
           const email = s.metadata?.email || (ref.startsWith('user:') ? ref.slice(5) : (s.customer_details?.email || s.customer_email));
           const domain = s.metadata?.domain || (email && email.includes('@') ? email.split('@')[1] : null);
           if (domain && email) {
-            const planType = s.metadata?.plan || (s.subscription ? 'subscription' : 'lifetime');
+            const isEducatorAnnualOneTime = s.metadata?.plan === 'educator' && !s.subscription;
+            const planType = isEducatorAnnualOneTime
+              ? 'educator_annual'
+              : (s.metadata?.plan || (s.subscription ? 'subscription' : 'lifetime'));
+            const individualPlanExpiresAt = isEducatorAnnualOneTime
+              ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+              : null;
             await setUserPlan(domain, email.toLowerCase(), {
               individualPlan: 'pro',
               individualBillingStatus: 'active',
               individualPlanType: planType,
-              individualPlanExpiresAt: null,
+              individualPlanExpiresAt,
               individualStripeCustomerId: s.customer || null,
               individualStripeSubscriptionId: s.subscription || null,
             });

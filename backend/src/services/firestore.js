@@ -1193,7 +1193,7 @@ async function persistCalendarData(domain, meetingCode, eventTitle, attendees, e
   }
 }
 
-async function persistExport(domain, { meetingTitle, tabName, exportedAt, participantCount, sheetUrl, email, autoExport, recurringEventId, conferenceId }) {
+async function persistExport(domain, { meetingTitle, tabName, exportedAt, participantCount, sheetUrl, email, autoExport, recurringEventId, conferenceId, exportType }) {
   try {
     const now = FieldValue.serverTimestamp();
 
@@ -1202,7 +1202,7 @@ async function persistExport(domain, { meetingTitle, tabName, exportedAt, partic
     // If two paths race, the second .set() is a no-op because the doc already
     // exists — preventing duplicate Sheets tabs AND duplicate notification emails.
     const safeEmail = (email || 'anon').toLowerCase().replace(/[^a-z0-9]/g, '_');
-    const safeConf  = (conferenceId || tabName || 'unknown').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const safeConf  = (conferenceId || tabName || (exportType ? `${exportType}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}` : 'unknown')).replace(/[^a-zA-Z0-9_-]/g, '_');
     const docId = `${safeEmail}__${safeConf}`;
 
     const ref = tenantRef(domain).collection('exports').doc(docId);
@@ -1242,6 +1242,7 @@ async function persistExport(domain, { meetingTitle, tabName, exportedAt, partic
       recurringEventId: recurringEventId || null,
       conferenceId: conferenceId || null,
       createdAt: now,
+      ...(exportType ? { exportType } : {}),
     });
 
     if (email) {

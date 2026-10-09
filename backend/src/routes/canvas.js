@@ -11,6 +11,7 @@
 
 const { Router } = require('express');
 const { requireAuth } = require('../middleware/auth');
+const { planIsPro } = require('./billing');
 const log = require('../lib/logger');
 const { getUserSettings, updateUserSettings } = require('../services/firestore');
 
@@ -227,6 +228,10 @@ router.get('/canvas/courses/:courseId/assignments', requireAuth, async (req, res
 // POST /api/canvas/courses/:courseId/assignments — create an assignment in Canvas
 router.post('/canvas/courses/:courseId/assignments', requireAuth, async (req, res) => {
   res.set('Cache-Control', 'no-store');
+  const isPro = await planIsPro(req.user?.domain, req.user?.email);
+  if (!isPro) {
+    return res.status(402).json({ error: 'Canvas LMS grade sync is a Pro feature.', feature: 'lmsSync' });
+  }
   const { courseId } = req.params;
   const { instanceUrl, token } = await resolveCanvasAuth(req);
   if (!instanceUrl || !token) {
@@ -282,6 +287,10 @@ router.post('/canvas/courses/:courseId/assignments', requireAuth, async (req, re
 // Sync handler implementation for Canvas
 async function handleCanvasGradeSync(req, res) {
   res.set('Cache-Control', 'no-store');
+  const isPro = await planIsPro(req.user?.domain, req.user?.email);
+  if (!isPro) {
+    return res.status(402).json({ error: 'Canvas LMS grade sync is a Pro feature.', feature: 'lmsSync' });
+  }
   const courseId = req.params.courseId || req.body?.courseId;
   let assignmentId = req.params.assignmentId || req.body?.assignmentId;
   const records = req.body?.records || [];

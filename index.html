@@ -190,7 +190,7 @@
             "name": "Free Tier",
             "price": "0",
             "priceCurrency": "USD",
-            "description": "2 free Google Sheets cloud exports/mo + unlimited direct CSV & binary Excel (.xlsx) exports for classes up to 25 attendees, real-time participant tracking, side panel attendance monitoring."
+            "description": "2 free exports/mo (Sheets, CSV, or Excel) for classes up to 25 attendees, real-time participant tracking, side panel attendance monitoring."
           },
           {
             "@type": "Offer",
@@ -294,7 +294,7 @@
             "name": "Is Attendance Tracker for Google Meet free?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes, Attendance Tracker offers a free forever tier with 2 free Google Sheets cloud exports per month (plus unlimited direct CSV & binary Excel downloads for classes up to 25 attendees) and real-time attendance monitoring. Pro plans start at $4.99/year for educators and $9.99 for lifetime individual access."
+              "text": "Yes, Attendance Tracker offers a free forever tier with 2 free exports per month (Sheets, CSV, or Excel for classes up to 25 attendees) and real-time attendance monitoring. Pro plans start at $4.99/year for educators and $9.99 for lifetime individual access."
             }
           },
           {
@@ -4385,7 +4385,7 @@ function csvExportContext() {
   };
 }
 
-function downloadAttendanceCsv() {
+async function downloadAttendanceCsv() {
   const ctx = csvExportContext();
   if (ctx.parts.length === 0 && (!state.calendarAttendees || state.calendarAttendees.length === 0)) {
     toast(t('toast.noAttendanceData', 'No attendance data to download yet.'));
@@ -4397,20 +4397,50 @@ function downloadAttendanceCsv() {
     return;
   }
 
-  const originalPartsCount = ctx.parts.length;
-  const isTruncated = !_isPro && originalPartsCount > 25;
-  if (isTruncated) {
-    ctx.parts = ctx.parts.slice(0, 25);
+  const count = ctx.parts.length;
+  if (!_isPro && count > 25) {
+    state._lastLargeClassCount = count;
+    showUpgradeModal('largeClass');
+    return;
   }
+
+  let quota = null;
+  try {
+    const res = await authFetch(`${state.backendUrl}/billing/record-export`, {
+      method: 'POST',
+      body: JSON.stringify({
+        exportType: 'csv',
+        conferenceId: state.conferenceId || state.meetingCode || (typeof currentMeetingCode !== 'undefined' ? currentMeetingCode : null) || null,
+        meetingTitle: ctx.meetingTitle || 'Attendance CSV',
+        participantCount: count,
+      }),
+    });
+    if (res.status === 402) {
+      let body = {};
+      try { body = await res.json(); } catch {}
+      const feature = body.feature || 'exportQuota';
+      if (body.participantCount) state._lastLargeClassCount = body.participantCount;
+      const quotaInfo = body.quota || (body.used != null ? { used: body.used, limit: body.limit } : null);
+      if (quotaInfo) {
+        if (!_billing) _billing = {};
+        if (!_billing.exportQuota) _billing.exportQuota = { used: quotaInfo.used, limit: quotaInfo.limit };
+        else _billing.exportQuota.used = quotaInfo.used;
+        updateQuotaIndicator(quotaInfo.used, quotaInfo.limit);
+      }
+      showUpgradeModal(feature);
+      return;
+    }
+    if (res.ok) {
+      const data = await res.json();
+      if (data.quota) quota = data.quota;
+    }
+  } catch (err) {}
 
   ctx.opts.isFreePlan = !_isPro;
   const csvContent = (typeof AttUtils !== 'undefined' && AttUtils.buildAttendanceCsv)
     ? AttUtils.buildAttendanceCsv(ctx.parts, ctx.activeRoster, ctx.opts)
     : '';
   if (!triggerCsvDownload(csvContent, `Attendance_${ctx.safeTitle}_${ctx.dateStr}.csv`)) return;
-  if (isTruncated) {
-    showExportTruncatedBanner(25, originalPartsCount);
-  }
 
   try {
     logUserEvent('export_csv_downloaded', {
@@ -4421,7 +4451,12 @@ function downloadAttendanceCsv() {
     });
   } catch (e) {}
 
-  if (!_isPro && _billing && _billing.exportQuota) {
+  if (quota) {
+    if (!_billing) _billing = {};
+    if (!_billing.exportQuota) _billing.exportQuota = { used: quota.used, limit: quota.limit };
+    else _billing.exportQuota.used = quota.used;
+    updateQuotaIndicator(quota.used, quota.limit);
+  } else if (!_isPro && _billing && _billing.exportQuota) {
     _billing.exportQuota.used++;
     updateQuotaIndicator(_billing.exportQuota.used, _billing.exportQuota.limit);
   }
@@ -4455,7 +4490,7 @@ function triggerExcelDownload(xmlContent, filename) {
   return true;
 }
 
-function downloadAttendanceExcel() {
+async function downloadAttendanceExcel() {
   const ctx = csvExportContext();
   if (ctx.parts.length === 0 && (!state.calendarAttendees || state.calendarAttendees.length === 0)) {
     toast(t('toast.noAttendanceData', 'No attendance data to download yet.'));
@@ -4467,20 +4502,50 @@ function downloadAttendanceExcel() {
     return;
   }
 
-  const originalPartsCount = ctx.parts.length;
-  const isTruncated = !_isPro && originalPartsCount > 25;
-  if (isTruncated) {
-    ctx.parts = ctx.parts.slice(0, 25);
+  const count = ctx.parts.length;
+  if (!_isPro && count > 25) {
+    state._lastLargeClassCount = count;
+    showUpgradeModal('largeClass');
+    return;
   }
+
+  let quota = null;
+  try {
+    const res = await authFetch(`${state.backendUrl}/billing/record-export`, {
+      method: 'POST',
+      body: JSON.stringify({
+        exportType: 'excel',
+        conferenceId: state.conferenceId || state.meetingCode || (typeof currentMeetingCode !== 'undefined' ? currentMeetingCode : null) || null,
+        meetingTitle: ctx.meetingTitle || 'Attendance Excel',
+        participantCount: count,
+      }),
+    });
+    if (res.status === 402) {
+      let body = {};
+      try { body = await res.json(); } catch {}
+      const feature = body.feature || 'exportQuota';
+      if (body.participantCount) state._lastLargeClassCount = body.participantCount;
+      const quotaInfo = body.quota || (body.used != null ? { used: body.used, limit: body.limit } : null);
+      if (quotaInfo) {
+        if (!_billing) _billing = {};
+        if (!_billing.exportQuota) _billing.exportQuota = { used: quotaInfo.used, limit: quotaInfo.limit };
+        else _billing.exportQuota.used = quotaInfo.used;
+        updateQuotaIndicator(quotaInfo.used, quotaInfo.limit);
+      }
+      showUpgradeModal(feature);
+      return;
+    }
+    if (res.ok) {
+      const data = await res.json();
+      if (data.quota) quota = data.quota;
+    }
+  } catch (err) {}
 
   ctx.opts.isFreePlan = !_isPro;
   const xmlContent = (typeof AttUtils !== 'undefined' && AttUtils.buildAttendanceExcelXml)
     ? AttUtils.buildAttendanceExcelXml(ctx.parts, ctx.activeRoster, ctx.opts)
     : '';
   if (!triggerExcelDownload(xmlContent, `Attendance_${ctx.safeTitle}_${ctx.dateStr}.xlsx`)) return;
-  if (isTruncated) {
-    showExportTruncatedBanner(25, originalPartsCount);
-  }
 
   try {
     logUserEvent('export_excel_downloaded', {
@@ -4491,7 +4556,12 @@ function downloadAttendanceExcel() {
     });
   } catch (e) {}
 
-  if (!_isPro && _billing && _billing.exportQuota) {
+  if (quota) {
+    if (!_billing) _billing = {};
+    if (!_billing.exportQuota) _billing.exportQuota = { used: quota.used, limit: quota.limit };
+    else _billing.exportQuota.used = quota.used;
+    updateQuotaIndicator(quota.used, quota.limit);
+  } else if (!_isPro && _billing && _billing.exportQuota) {
     _billing.exportQuota.used++;
     updateQuotaIndicator(_billing.exportQuota.used, _billing.exportQuota.limit);
   }
@@ -7458,6 +7528,9 @@ function showUpgradeModal(reason) {
     } else if (reason === 'lmsCsv') {
       note.textContent = t('billing.lmsCsvPro', 'Canvas & Moodle LMS gradebook export is a Pro feature.');
       note.style.display = 'block';
+    } else if (reason === 'lmsSync') {
+      note.textContent = t('billing.lmsSyncPro', 'Syncing grades directly to Google Classroom and Canvas requires an Educator ($4.99/yr) or Pro plan.');
+      note.style.display = 'block';
     } else if (reason === 'trial_ending') {
       note.textContent = t('billing.trialEndingPro', 'Your auto-export trial is ending soon. Upgrade to keep automatic attendance recording active.');
       note.style.display = 'block';
@@ -8419,9 +8492,10 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
   };
 
   const totalAttendeeCount = payload.participants.length;
-  const isTruncated = !_isPro && totalAttendeeCount > 25;
-  if (isTruncated) {
-    payload.participants = payload.participants.slice(0, 25);
+  if (!_isPro && totalAttendeeCount > 25) {
+    state._lastLargeClassCount = totalAttendeeCount;
+    showUpgradeModal('largeClass');
+    return;
   }
 
   // Stash the exact exported data so the "PDF report" button regenerates the
@@ -8462,7 +8536,13 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
       if (res.status === 402) {
         const feature = body.feature || 'pro_required';
         if (body.participantCount) state._lastLargeClassCount = body.participantCount;
-        if (body.quota) updateQuotaIndicator(body.quota.used, body.quota.limit);
+        const quotaInfo = body.quota || (body.used != null ? { used: body.used, limit: body.limit } : null);
+        if (quotaInfo) {
+          if (!_billing) _billing = {};
+          if (!_billing.exportQuota) _billing.exportQuota = { used: quotaInfo.used, limit: quotaInfo.limit };
+          else _billing.exportQuota.used = quotaInfo.used;
+          updateQuotaIndicator(quotaInfo.used, quotaInfo.limit);
+        }
         logUserEvent('export_skipped', { reason: feature, durationMs });
         // autoExport 402s fire from a BACKGROUND action (meeting-end auto
         // save) — popping a modal there was the product's worst-converting
@@ -8500,6 +8580,9 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     const exportResult = await res.json();
     const { sheetUrl, isFirstExport, quota } = exportResult;
     if (quota) {
+      if (!_billing) _billing = {};
+      if (!_billing.exportQuota) _billing.exportQuota = { used: quota.used, limit: quota.limit };
+      else _billing.exportQuota.used = quota.used;
       updateQuotaIndicator(quota.used, quota.limit);
       if (!_isPro && typeof quota.used === 'number' && quota.used >= 2) {
         try { logUserEvent('quota_warning_shown', { used: quota.used, limit: quota.limit, ...upgradeContext() }); } catch (e) {}
@@ -8563,9 +8646,6 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
       if (!opts.autoExport) window.open(sheetUrl, '_blank');
       document.getElementById('sheet-link').href = sheetUrl;
       document.getElementById('sheet-link-bar').style.display = 'block';
-    }
-    if (isTruncated) {
-      showExportTruncatedBanner(25, totalAttendeeCount);
     }
     const hasReviewed = !!localStorage.getItem('has_reviewed');
     const referralDismissed = !!localStorage.getItem('att_colleague_referral_dismissed');

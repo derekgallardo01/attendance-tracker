@@ -8,7 +8,7 @@ let content = fs.readFileSync(stringsFile, 'utf8');
 const initialContent = content;
 
 const feature3ExportsMap = {
-  en: "2 free Google Sheets cloud exports/mo + unlimited direct CSV & binary Excel (.xlsx) exports for classes up to 25 attendees",
+  en: "2 free exports/mo (Sheets, CSV, or Excel) for classes up to 25 attendees",
   es: "2 exportaciones gratuitas a Google Sheets/mes + descargas ilimitadas de CSV y Excel (.xlsx) (hasta 25 asistentes)",
   pt: "2 exportações gratuitas para o Google Sheets/mês + downloads ilimitados de CSV e Excel (.xlsx) (até 25 participantes)",
   hi: "प्रति माह 2 निःशुल्क Google Sheets निर्यात + असीमित प्रत्यक्ष CSV और Excel (.xlsx) निर्यात (25 उपस्थित लोगों तक)",

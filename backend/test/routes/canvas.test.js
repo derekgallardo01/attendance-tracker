@@ -9,6 +9,8 @@ jest.mock('../../src/services/firestore', () => ({
   getUserSettings: jest.fn(),
   updateUserSettings: jest.fn(),
   getUser: jest.fn(),
+  getTenantPlan: jest.fn(),
+  getUserPlan: jest.fn(),
 }));
 
 const firestore = require('../../src/services/firestore');
@@ -18,6 +20,10 @@ const originalFetch = global.fetch;
 
 beforeEach(() => {
   jest.clearAllMocks();
+  delete process.env.STRIPE_SECRET_KEY;
+  delete process.env.STRIPE_PRICE_ID;
+  firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+  firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
   firestore.getUser.mockResolvedValue({ email: 'teacher@school.edu', domain: 'school.edu' });
   firestore.getUserSettings.mockResolvedValue({});
   firestore.updateUserSettings.mockResolvedValue({ saved: true });
@@ -497,6 +503,64 @@ describe('POST /api/canvas/courses/:courseId/assignments/:assignmentId/sync-grad
     const updateCall = global.fetch.mock.calls[1];
     const updateBody = JSON.parse(updateCall[1].body);
     expect(updateBody.grade_data['701'].posted_grade).toBe('42');
+  });
+
+  describe('Canvas Pro gating (lmsSync)', () => {
+    beforeEach(() => {
+      process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+      process.env.STRIPE_PRICE_ID = 'price_123';
+      app = buildApp();
+    });
+
+    afterEach(() => {
+      delete process.env.STRIPE_SECRET_KEY;
+      delete process.env.STRIPE_PRICE_ID;
+    });
+
+    test('POST /canvas/courses/:courseId/assignments returns 402 lmsSync when user is on free tier', async () => {
+      firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+      firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+      const res = await request(app)
+        .post('/api/canvas/courses/101/assignments')
+        .set(authedHeader('teacher@school.edu', 'school.edu'))
+        .set('x-canvas-url', 'https://canvas.school.edu')
+        .set('x-canvas-token', 'tok')
+        .send({ name: 'Attendance Assignment' });
+      expect(res.status).toBe(402);
+      expect(res.body.feature).toBe('lmsSync');
+      expect(res.body.error).toContain('Canvas LMS grade sync is a Pro feature');
+    });
+
+    test('POST /canvas/courses/:courseId/assignments allows Pro user through', async () => {
+      firestore.getTenantPlan.mockResolvedValue({ plan: 'pro' });
+      firestore.getUserPlan.mockResolvedValue({ plan: 'pro' });
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ id: 555, name: 'Attendance Assignment', points_possible: 100 }),
+      });
+      const res = await request(app)
+        .post('/api/canvas/courses/101/assignments')
+        .set(authedHeader('teacher@school.edu', 'school.edu'))
+        .set('x-canvas-url', 'https://canvas.school.edu')
+        .set('x-canvas-token', 'tok')
+        .send({ name: 'Attendance Assignment' });
+      expect(res.status).toBe(200);
+      expect(res.body.assignment.id).toBe(555);
+    });
+
+    test('POST /canvas/sync-grades returns 402 lmsSync when user is on free tier', async () => {
+      firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+      firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+      const res = await request(app)
+        .post('/api/canvas/courses/101/assignments/201/sync-grades')
+        .set(authedHeader('teacher@school.edu', 'school.edu'))
+        .set('x-canvas-url', 'https://canvas.school.edu')
+        .set('x-canvas-token', 'tok')
+        .send({ records: [{ email: 'a@school.edu', points: '10' }] });
+      expect(res.status).toBe(402);
+      expect(res.body.feature).toBe('lmsSync');
+    });
   });
 });
 

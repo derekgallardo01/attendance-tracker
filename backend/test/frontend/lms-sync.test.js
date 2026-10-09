@@ -799,6 +799,70 @@ describe('AttLmsSync', () => {
     );
     delete global.captureError;
   });
+
+  test('pushGrades handles 402 lmsSync for Classroom by calling showUpgradeModal and closing modal', async () => {
+    global.showUpgradeModal = jest.fn();
+    AttLmsSync.openModal({
+      records: [{ name: 'Test', email: 't@test.com', status: 'present' }],
+    });
+    const cSel = document.getElementById('lms-classroom-course-select');
+    cSel.innerHTML = '<option value="c-402" selected>C-402</option>';
+    cSel.value = 'c-402';
+
+    global.fetch = jest.fn(async () => ({
+      ok: false,
+      status: 402,
+      json: async () => ({ error: 'Pro required', feature: 'lmsSync' }),
+    }));
+
+    await AttLmsSync.pushGrades();
+    expect(global.showUpgradeModal).toHaveBeenCalledWith('lmsSync');
+    expect(document.getElementById('lms-sync-modal').style.display).toBe('none');
+
+    // Without showUpgradeModal function
+    delete global.showUpgradeModal;
+    AttLmsSync.openModal({
+      records: [{ name: 'Test', email: 't@test.com', status: 'present' }],
+    });
+    const cSel2 = document.getElementById('lms-classroom-course-select');
+    cSel2.innerHTML = '<option value="c-402" selected>C-402</option>';
+    cSel2.value = 'c-402';
+    await AttLmsSync.pushGrades();
+    expect(document.getElementById('lms-sync-modal').style.display).toBe('none');
+  });
+
+  test('pushGrades handles 402 lmsSync for Canvas by calling showUpgradeModal and closing modal', async () => {
+    global.showUpgradeModal = jest.fn();
+    AttLmsSync.openModal({
+      tab: 'canvas',
+      records: [{ name: 'Test', email: 't@test.com', status: 'present' }],
+    });
+    const canSel = document.getElementById('lms-canvas-course-select');
+    canSel.innerHTML = '<option value="can-402" selected>Can-402</option>';
+    canSel.value = 'can-402';
+
+    global.fetch = jest.fn(async () => ({
+      ok: false,
+      status: 402,
+      json: async () => ({ error: 'Pro required', feature: 'lmsSync' }),
+    }));
+
+    await AttLmsSync.pushGrades();
+    expect(global.showUpgradeModal).toHaveBeenCalledWith('lmsSync');
+    expect(document.getElementById('lms-sync-modal').style.display).toBe('none');
+
+    // Without showUpgradeModal function
+    delete global.showUpgradeModal;
+    AttLmsSync.openModal({
+      tab: 'canvas',
+      records: [{ name: 'Test', email: 't@test.com', status: 'present' }],
+    });
+    const canSel2 = document.getElementById('lms-canvas-course-select');
+    canSel2.innerHTML = '<option value="can-402" selected>Can-402</option>';
+    canSel2.value = 'can-402';
+    await AttLmsSync.pushGrades();
+    expect(document.getElementById('lms-sync-modal').style.display).toBe('none');
+  });
 });
 
 
