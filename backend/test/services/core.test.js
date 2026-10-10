@@ -209,7 +209,7 @@ describe('getDb', () => {
     try {
       const isolated = require('../../src/services/firestore/_core');
       isolated.getDb();
-      expect(FirestoreMock).toHaveBeenCalledWith({ projectId: 'proj-123' });
+      expect(FirestoreMock).toHaveBeenCalledWith({ projectId: 'proj-123', ignoreUndefinedProperties: true });
     } finally {
       jest.dontMock('@google-cloud/firestore');
       if (saved === undefined) delete process.env.GCP_PROJECT_ID; else process.env.GCP_PROJECT_ID = saved;

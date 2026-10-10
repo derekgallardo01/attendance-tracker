@@ -95,6 +95,7 @@ describe('GET /api/attendance', () => {
       .get('/api/attendance?conferenceId=abc-defg-hij')
       .set(authedHeader('user@acme.com', 'acme.com'));
     expect(res.status).toBe(200);
+    expect(res.body.conferenceRecord).toBe('conferenceRecords/abc');
     expect(res.body.conferenceStartTime).toBe(startTime);
     expect(res.body.conferenceEndTime).toBe(endTime);
   });

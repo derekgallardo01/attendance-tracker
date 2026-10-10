@@ -460,6 +460,70 @@ describe('getSharedMeetingView', () => {
     expect(view.totalAttendees).toBe(1);
   });
 
+  test('resolves latest instance when anchor document has hasInstances: true', async () => {
+    ctx.seed('tenants/acme.com/meetings/anchor-123', {
+      meetingCode: 'anchor-123',
+      hasInstances: true,
+      title: 'Anchor Series Room',
+    });
+    ctx.seed('tenants/acme.com/meetings/anchor-123__inst1', {
+      meetingCode: 'anchor-123',
+      title: 'Anchor Room Session 1',
+      createdAt: wrapTimestamp(new Date('2026-03-01T10:00:00Z')),
+    });
+    ctx.seed('tenants/acme.com/meetings/anchor-123__inst1/participants/p1', {
+      displayName: 'Old Attendee',
+      present: true,
+      durationMin: 20,
+    });
+    ctx.seed('tenants/acme.com/meetings/anchor-123__inst2', {
+      meetingCode: 'anchor-123',
+      title: 'Anchor Room Session 2',
+      createdAt: wrapTimestamp(new Date('2026-03-02T10:00:00Z')),
+    });
+    ctx.seed('tenants/acme.com/meetings/anchor-123__inst2/participants/p2', {
+      displayName: 'Latest Attendee',
+      present: true,
+      durationMin: 45,
+    });
+
+    const view = await firestore.getSharedMeetingView('acme.com', 'anchor-123');
+    expect(view).not.toBeNull();
+    expect(view.title).toBe('Anchor Room Session 2');
+    expect(view.totalAttendees).toBe(1);
+    expect(view.people[0].displayName).toBe('Latest Attendee');
+  });
+
+  test('resolves latest instance with participants when newest instance is empty', async () => {
+    ctx.seed('tenants/acme.com/meetings/anchor-empty', {
+      meetingCode: 'anchor-empty',
+      hasInstances: true,
+      title: 'Anchor Series Room',
+    });
+    ctx.seed('tenants/acme.com/meetings/anchor-empty__inst1', {
+      meetingCode: 'anchor-empty',
+      title: 'Anchor Room Session 1',
+      createdAt: wrapTimestamp(new Date('2026-03-01T10:00:00Z')),
+    });
+    ctx.seed('tenants/acme.com/meetings/anchor-empty__inst1/participants/p1', {
+      displayName: 'Real Attendee',
+      present: true,
+      durationMin: 30,
+    });
+    // inst2 was created later but has 0 participants (aborted or empty session)
+    ctx.seed('tenants/acme.com/meetings/anchor-empty__inst2', {
+      meetingCode: 'anchor-empty',
+      title: 'Anchor Room Session 2',
+      createdAt: wrapTimestamp(new Date('2026-03-02T10:00:00Z')),
+    });
+
+    const view = await firestore.getSharedMeetingView('acme.com', 'anchor-empty');
+    expect(view).not.toBeNull();
+    expect(view.title).toBe('Anchor Room Session 1');
+    expect(view.totalAttendees).toBe(1);
+    expect(view.people[0].displayName).toBe('Real Attendee');
+  });
+
   test('creates meeting share link with conferenceId fallback and resolves correctly', async () => {
     // Only conferenceId provided
     const link1 = await firestore.createShareLink('acme.com', 'owner@acme.com', {

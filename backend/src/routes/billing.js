@@ -4,7 +4,7 @@ const express = require('express');
 const log = require('../lib/logger');
 const CONFIG = require('../config');
 const jwt = require('jsonwebtoken');
-const { getTenantPlan, setTenantPlan, getUserPlan, setUserPlan, logEvent, recordCancellationTelemetry, countUserMonthlyExports, countUserAutoExports, getUserSettings, getDomainTeacherCount, claimWebhookEvent, releaseWebhookEvent, persistExport, isMeetingUnlocked, getUser, markUserLargeClassGraceUsed, isUserDeleted } = require('../services/firestore');
+const { getTenantPlan, setTenantPlan, getUserPlan, setUserPlan, logEvent, recordCancellationTelemetry, countUserMonthlyExports, countUserAutoExports, getUserSettings, getDomainTeacherCount, claimWebhookEvent, releaseWebhookEvent, persistExport, isMeetingUnlocked, getUser, markUserLargeClassGraceUsed, isUserDeleted, getTeamAdminStatus } = require('../services/firestore');
 const { PERSONAL_EMAIL_DOMAINS, domainOf } = require('../services/firestore/_core');
 const PRICING = require('../config/pricing');
 
@@ -898,16 +898,42 @@ router.post('/billing/public-checkout', async (req, res) => {
 router.get('/billing/portal', requireAuth, async (req, res) => {
   const stripe = getStripe();
   if (!stripe) return res.status(503).json({ error: 'Billing is not configured yet.' });
-  let individual = isPersonalDomain(req.user.domain);
+  const domain = req.user.domain;
+  const email = (req.user.email || '').toLowerCase();
+  let individual = isPersonalDomain(domain);
   try {
-    let { stripeCustomerId } = individual
-      ? await getUserPlan(req.user.domain, req.user.email)
-      : await getTenantPlan(req.user.domain);
-    // Workspace-domain user managing an INDIVIDUAL pass they bought themselves
-    // (mirrors the planIsPro fallback).
-    if (!stripeCustomerId && !individual) {
-      ({ stripeCustomerId } = await getUserPlan(req.user.domain, req.user.email));
-      if (stripeCustomerId) individual = true;
+    let stripeCustomerId = null;
+    if (individual) {
+      const userPlan = await getUserPlan(domain, email);
+      stripeCustomerId = userPlan.stripeCustomerId;
+    } else {
+      const adminStatus = await getTeamAdminStatus(domain, email);
+      const isTeamAdmin = !!(adminStatus?.isTeamAdmin || adminStatus?.isAdmin);
+      if (isTeamAdmin) {
+        const tenantPlan = await getTenantPlan(domain);
+        stripeCustomerId = tenantPlan.stripeCustomerId;
+        // Workspace-domain admin managing an INDIVIDUAL pass they bought themselves
+        // (mirrors the planIsPro fallback).
+        if (!stripeCustomerId) {
+          const userPlan = await getUserPlan(domain, email);
+          if (userPlan.stripeCustomerId) {
+            stripeCustomerId = userPlan.stripeCustomerId;
+            individual = true;
+          }
+        }
+      } else {
+        // Non-admin workspace user: fall back to managing their own individual pass
+        const userPlan = await getUserPlan(domain, email);
+        if (userPlan.stripeCustomerId) {
+          stripeCustomerId = userPlan.stripeCustomerId;
+          individual = true;
+        } else {
+          const tenantPlan = await getTenantPlan(domain);
+          if (tenantPlan.stripeCustomerId || tenantPlan.plan === 'pro' || tenantPlan.stripeSubscriptionId) {
+            return res.status(403).json({ error: 'Only the domain team admin can manage institutional subscriptions.' });
+          }
+        }
+      }
     }
     if (!stripeCustomerId) return res.status(404).json({ error: 'No active subscription.' });
     const session = await stripe.billingPortal.sessions.create({
@@ -934,18 +960,38 @@ router.post('/billing/cancel-subscription', requireAuth, async (req, res) => {
   let individual = isPersonalDomain(domain);
 
   try {
-    let planInfo = individual
-      ? await getUserPlan(domain, email)
-      : await getTenantPlan(domain);
-    if (!planInfo.stripeSubscriptionId && !individual) {
-      const userPlan = await getUserPlan(domain, email);
-      if (userPlan.stripeSubscriptionId) {
-        planInfo = userPlan;
-        individual = true;
+    let planInfo;
+    if (individual) {
+      planInfo = await getUserPlan(domain, email);
+    } else {
+      const adminStatus = await getTeamAdminStatus(domain, email);
+      const isTeamAdmin = !!(adminStatus?.isTeamAdmin || adminStatus?.isAdmin);
+      if (isTeamAdmin) {
+        planInfo = await getTenantPlan(domain);
+        if (!planInfo?.stripeSubscriptionId) {
+          const userPlan = await getUserPlan(domain, email);
+          if (userPlan.stripeSubscriptionId) {
+            planInfo = userPlan;
+            individual = true;
+          }
+        }
+      } else {
+        // Non-admin workspace user: fall back to managing individual pass if owned
+        const userPlan = await getUserPlan(domain, email);
+        if (userPlan.stripeSubscriptionId) {
+          planInfo = userPlan;
+          individual = true;
+        } else {
+          const tenantPlan = await getTenantPlan(domain);
+          if (tenantPlan.stripeSubscriptionId || tenantPlan.plan === 'pro' || tenantPlan.stripeCustomerId) {
+            return res.status(403).json({ error: 'Only the domain team admin can manage institutional subscriptions.' });
+          }
+          planInfo = userPlan;
+        }
       }
     }
 
-    const subId = planInfo.stripeSubscriptionId;
+    const subId = planInfo?.stripeSubscriptionId;
     if (!subId) {
       return res.status(404).json({ error: 'No active recurring subscription found to cancel.' });
     }
@@ -1048,18 +1094,38 @@ router.post('/billing/resume-subscription', requireAuth, async (req, res) => {
   let individual = isPersonalDomain(domain);
 
   try {
-    let planInfo = individual
-      ? await getUserPlan(domain, email)
-      : await getTenantPlan(domain);
-    if (!planInfo.stripeSubscriptionId && !individual) {
-      const userPlan = await getUserPlan(domain, email);
-      if (userPlan.stripeSubscriptionId) {
-        planInfo = userPlan;
-        individual = true;
+    let planInfo;
+    if (individual) {
+      planInfo = await getUserPlan(domain, email);
+    } else {
+      const adminStatus = await getTeamAdminStatus(domain, email);
+      const isTeamAdmin = !!(adminStatus?.isTeamAdmin || adminStatus?.isAdmin);
+      if (isTeamAdmin) {
+        planInfo = await getTenantPlan(domain);
+        if (!planInfo?.stripeSubscriptionId) {
+          const userPlan = await getUserPlan(domain, email);
+          if (userPlan.stripeSubscriptionId) {
+            planInfo = userPlan;
+            individual = true;
+          }
+        }
+      } else {
+        // Non-admin workspace user: fall back to managing individual pass if owned
+        const userPlan = await getUserPlan(domain, email);
+        if (userPlan.stripeSubscriptionId) {
+          planInfo = userPlan;
+          individual = true;
+        } else {
+          const tenantPlan = await getTenantPlan(domain);
+          if (tenantPlan.stripeSubscriptionId || tenantPlan.plan === 'pro' || tenantPlan.stripeCustomerId) {
+            return res.status(403).json({ error: 'Only the domain team admin can manage institutional subscriptions.' });
+          }
+          planInfo = userPlan;
+        }
       }
     }
 
-    const subId = planInfo.stripeSubscriptionId;
+    const subId = planInfo?.stripeSubscriptionId;
     if (!subId) {
       return res.status(404).json({ error: 'No subscription found to resume.' });
     }
@@ -1166,6 +1232,8 @@ router.post('/billing/record-export', requireAuth, async (req, res) => {
       domain: req.user.domain,
       email: req.user.email,
       meetingTitle: meetingTitle || null,
+      tabName: exportType === 'excel' ? 'Excel Export' : 'CSV Export',
+      sheetUrl: null,
       conferenceId: conferenceId || null,
       participantCount: count,
       exportType,

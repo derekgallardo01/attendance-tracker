@@ -3634,6 +3634,7 @@ const state = {
   // Auto-export bookkeeping: remember which conference we've already auto-exported
   // for so the polling loop doesn't fire repeat exports, and survives panel reloads.
   autoExportedConferenceId: null,
+  conferenceRecord: null,
   // Conference we've already shown the solo-test nudge for (once per meeting).
   soloNudgeConferenceId: null,
   // Class Rosters & Thresholds
@@ -6009,6 +6010,20 @@ async function refreshAttendance() {
       data.participants = [...data.participants, ...getInjectedParticipants()];
     }
 
+    const incomingRecord = data.conferenceRecord || null;
+    if (incomingRecord && state.conferenceRecord && state.conferenceRecord !== incomingRecord) {
+      console.log('[Attendance] Continuous room detected: conference record changed from', state.conferenceRecord, 'to', incomingRecord);
+      state.participants.clear();
+      state.autoExportedConferenceId = null;
+      state._autoExportFired = false;
+      state.startTime = data.conferenceStartTime ? new Date(data.conferenceStartTime) : new Date();
+      state._lastChangeTime = Date.now();
+      _emptyPolls = 0;
+    }
+    if (incomingRecord) {
+      state.conferenceRecord = incomingRecord;
+    }
+
 
     const hadParticipantsBefore = state.participants.size > 0;
     // Remember conference timing so renderList() can explain "this meeting
@@ -6273,17 +6288,25 @@ function mergeParticipants(incoming = []) {
   // Check-in-only rows are invisible to the Meet API by definition — leaving
   // them out of `incoming` says nothing about whether they left.
   const incomingKeys = new Set(incoming.map(p => p.participantId || p.displayName));
+  const LEFT_STREAK_THRESHOLD = (typeof AttPanel !== 'undefined' && AttPanel.LEFT_STREAK_THRESHOLD) || 3;
   for (const [key, p] of state.participants) {
     if (p.checkinOnly) continue;
-    if (p.present && !incomingKeys.has(key)) {
-      // Bank the session before flipping present — this path bypasses the
-      // normal leave handling, and without banking, participantTotalMs (and
-      // the export's durationMs) read 0 for someone who was here all along.
-      const start = p.joinTime || p.trackedJoinTime;
-      if (start) {
-        p._accumulatedMs = (p._accumulatedMs || 0) + Math.max(0, Date.now() - new Date(start).getTime());
+    if (!incomingKeys.has(key)) {
+      if (p.present) {
+        p._missingPollStreak = (p._missingPollStreak || 0) + 1;
+        p._leftStreak = p._missingPollStreak;
+        if (p._missingPollStreak >= LEFT_STREAK_THRESHOLD) {
+          // Bank the session before flipping present — this path bypasses the
+          // normal leave handling, and without banking, participantTotalMs (and
+          // the export's durationMs) read 0 for someone who was here all along.
+          const start = p.joinTime || p.trackedJoinTime;
+          if (start) {
+            p._accumulatedMs = (p._accumulatedMs || 0) + Math.max(0, Date.now() - new Date(start).getTime());
+          }
+          p.present = false;
+          changed = true;
+        }
       }
-      p.present = false; changed = true;
     }
   }
 
@@ -6294,19 +6317,25 @@ function mergeParticipants(incoming = []) {
     if (!state.participants.has(key)) {
       changed = true;
       state.participants.set(key, {
-        participantId:  p.participantId || null,
-        displayName:    p.displayName,
-        email:          p.email || '',
-        joinTime:       p.joinTime ? new Date(p.joinTime) : null,
-        trackedJoinTime: new Date(), // always record when we first saw them
-        leaveTime:      p.leaveTime ? new Date(p.leaveTime) : null,
-        present:        apiPresent,
-        sessions:       1,
-        _accumulatedMs: 0,
+        participantId:      p.participantId || null,
+        displayName:        p.displayName,
+        email:              p.email || '',
+        joinTime:           p.joinTime ? new Date(p.joinTime) : null,
+        trackedJoinTime:    new Date(), // always record when we first saw them
+        leaveTime:          p.leaveTime ? new Date(p.leaveTime) : null,
+        present:            apiPresent,
+        sessions:           1,
+        _accumulatedMs:     0,
+        _missingPollStreak: 0,
+        _leftStreak:        0,
       });
       if (apiPresent) showActivityNote(p.displayName, 'joined');
     } else {
       const existing = state.participants.get(key);
+      if (apiPresent) {
+        existing._missingPollStreak = 0;
+        existing._leftStreak = 0;
+      }
       const newSessions = p.sessions || existing.sessions;
 
       // Self-user is ALWAYS present while viewing the side panel — skip all
@@ -6336,6 +6365,9 @@ function mergeParticipants(incoming = []) {
       if (decision.resetJoinTime) existing.joinTime = existing._accumulatedMs ? new Date() : (p.joinTime ? new Date(p.joinTime) : new Date()); // new session start
       existing.present    = decision.present;
       existing._leftStreak = decision.leftStreak;
+      if (!existing.present) {
+        existing._missingPollStreak = existing._leftStreak;
+      }
       if (decision.changed) changed = true;
 
       existing.leaveTime = p.leaveTime ? new Date(p.leaveTime) : null;

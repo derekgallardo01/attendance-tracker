@@ -331,6 +331,12 @@ describe('persistExport', () => {
     // record, { created: false } for a deduped re-export, { created: null }
     // when the write failed (caller treats null as "assume it counted").
     await expect(firestore.persistExport('acme.com', {})).resolves.toEqual({ created: true });
+    // Verify default values when tabName, sheetUrl, meetingTitle are omitted/undefined
+    const exp = ctx.list('tenants/acme.com/exports')[0].data;
+    expect(exp.tabName).toBeNull();
+    expect(exp.sheetUrl).toBeNull();
+    expect(exp.meetingTitle).toBeNull();
+    expect(exp.participantCount).toBe(0);
   });
 
   test('reports created:false when the same export is persisted twice (dedupe)', async () => {

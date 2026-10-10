@@ -299,7 +299,7 @@ async function getTeamAdminStatus(domain, email) {
   // Claimable when it's a real Workspace domain and the seat is vacant (or the
   // caller already holds it — idempotent).
   const canClaim = !isPersonalDomain && (!adminEmail || isTeamAdmin);
-  return { isTeamAdmin, adminEmail, isPersonalDomain, canClaim };
+  return { isTeamAdmin, isAdmin: isTeamAdmin, adminEmail, isPersonalDomain, canClaim };
 }
 
 async function claimTeamAdmin(domain, email) {
@@ -931,6 +931,23 @@ async function getMeetingWithParticipants(domain, conferenceId, requesterEmail) 
   }
 }
 
+async function isMeetingTrackedByActor(domain, conferenceId, actorEmail) {
+  if (!conferenceId || !actorEmail) return false;
+  try {
+    const evSnap = await tenantRef(domain).collection('events')
+      .where('email', '==', actorEmail.toLowerCase())
+      .where('type', '==', 'tracked').get();
+    const baseCode = conferenceId.includes('__') ? conferenceId.split('__')[0] : conferenceId;
+    return evSnap.docs.some((d) => {
+      const cid = d.data().meta?.conferenceId;
+      return cid === conferenceId || cid === baseCode || (cid && cid.split('__')[0] === baseCode);
+    });
+  } catch (err) {
+    log.warn('firestore: isMeetingTrackedByActor failed', { domain, conferenceId, actorEmail, error: err.message });
+    return false;
+  }
+}
+
 // Detailed single meeting drill-down view with merged Google Calendar invitees and status calculation.
 async function getMeetingDetail(domain, requesterEmail, meetingId) {
   if (!meetingId) return null;
@@ -1231,7 +1248,18 @@ async function persistCalendarData(domain, meetingCode, eventTitle, attendees, e
   }
 }
 
-async function persistExport(domain, { meetingTitle, tabName, exportedAt, participantCount, sheetUrl, email, autoExport, recurringEventId, conferenceId, exportType }) {
+async function persistExport(domain, {
+  meetingTitle = null,
+  tabName = null,
+  exportedAt = null,
+  participantCount = 0,
+  sheetUrl = null,
+  email = null,
+  autoExport = false,
+  recurringEventId = null,
+  conferenceId = null,
+  exportType = null,
+} = {}) {
   try {
     const now = FieldValue.serverTimestamp();
 
@@ -1273,12 +1301,14 @@ async function persistExport(domain, { meetingTitle, tabName, exportedAt, partic
       return dedupe;
     }
 
+    const safeParticipantCount = typeof participantCount === 'number' ? participantCount : (parseInt(participantCount, 10) || 0);
+
     await ref.set({
-      meetingTitle,
-      tabName,
-      exportedAt,
-      participantCount,
-      sheetUrl,
+      meetingTitle: meetingTitle || null,
+      tabName: tabName || null,
+      exportedAt: exportedAt || new Date().toISOString(),
+      participantCount: safeParticipantCount,
+      sheetUrl: sheetUrl || null,
       email: email ? email.toLowerCase() : null,
       autoExport: !!autoExport,
       recurringEventId: recurringEventId || null,
@@ -1291,14 +1321,14 @@ async function persistExport(domain, { meetingTitle, tabName, exportedAt, partic
       logEvent(domain, {
         email,
         type: 'exported',
-        meta: { tabName, participantCount, autoExport: !!autoExport },
+        meta: { tabName: tabName || null, participantCount: safeParticipantCount, autoExport: !!autoExport, ...(exportType ? { exportType } : {}) },
       });
     }
 
-    log.info('firestore: persisted export record', { domain, tabName, participantCount });
+    log.info('firestore: persisted export record', { domain, tabName: tabName || null, participantCount: safeParticipantCount });
     return { created: true };
   } catch (err) {
-    log.error('firestore: persistExport failed', { domain, tabName, error: err.message });
+    log.error('firestore: persistExport failed', { domain, tabName: tabName || null, error: err.message });
     return { created: null }; // unknown — caller treats as "assume it counted"
   }
 }
@@ -2344,7 +2374,13 @@ async function getTenantMeetings(domain) {
   try {
     const tenant = tenantRef(domain);
     const meetingsSnap = await tenant.collection('meetings').get();
-    const meetings = meetingsSnap.docs.map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
+    const meetings = meetingsSnap.docs
+      .filter(d => {
+        const data = d.data();
+        const isInstance = d.id !== (data.meetingCode || d.id);
+        return isInstance || !data.hasInstances;
+      })
+      .map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
     if (meetings.length === 0) return [];
     const partSnaps = await Promise.all(meetings.map(m => m.ref.collection('participants').get()));
     return meetings.map((m, i) => {
@@ -2378,7 +2414,12 @@ async function getTenantSeriesOverview(domain) {
     const tenant = tenantRef(domain);
     const meetingsSnap = await tenant.collection('meetings').get();
     const seriesMeetings = meetingsSnap.docs
-      .filter(d => !!d.data().recurringEventId)
+      .filter(d => {
+        const data = d.data();
+        if (!data.recurringEventId) return false;
+        const isInstance = d.id !== (data.meetingCode || d.id);
+        return isInstance || !data.hasInstances;
+      })
       .map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
     if (seriesMeetings.length === 0) return [];
     const participantSnaps = await Promise.all(seriesMeetings.map(m => m.ref.collection('participants').get()));
@@ -2466,7 +2507,14 @@ async function getTenantPeopleOverview(domain) {
     const tenant = tenantRef(domain);
     const meetingsSnap = await tenant.collection('meetings').get();
     if (meetingsSnap.empty) return [];
-    const meetings = meetingsSnap.docs.map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
+    const meetings = meetingsSnap.docs
+      .filter(d => {
+        const data = d.data();
+        const isInstance = d.id !== (data.meetingCode || d.id);
+        return isInstance || !data.hasInstances;
+      })
+      .map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
+    if (meetings.length === 0) return [];
     const partSnaps = await Promise.all(meetings.map(m => m.ref.collection('participants').get()));
     const totalMeetings = meetings.length;
     // Canonicalize name→email so one human isn't split across rows.
@@ -2872,7 +2920,7 @@ module.exports = {
   getTeamAdminStatus, claimTeamAdmin, transferTeamAdmin,
   countDistinctAttendees,
   persistAttendance, clearAttendanceDebounceCache, persistCalendarData, persistExport,
-  getMeetingExcusedEmails, addMeetingExcusedEmails, getMeetingWithParticipants,
+  getMeetingExcusedEmails, addMeetingExcusedEmails, getMeetingWithParticipants, isMeetingTrackedByActor,
   saveVerifications, getVerification,
   getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens,
   getUserSettings, updateUserSettings, isNotificationCategoryEnabled,

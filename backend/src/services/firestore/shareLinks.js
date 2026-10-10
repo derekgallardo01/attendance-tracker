@@ -184,23 +184,65 @@ async function getSharedMeetingView(domain, meetingId) {
     const tenant = tenantRef(domain);
     let mRef = tenant.collection('meetings').doc(meetingId);
     let mDoc = await mRef.get();
-    if (!mDoc.exists) {
-      // Try searching by meetingCode / conferenceId
+    const isAnchor = mDoc.exists && !!mDoc.data()?.hasInstances;
+
+    const ms = (v) => (v?.toDate ? v.toDate().getTime() : (v ? new Date(v).getTime() : 0));
+    const timeOf = (d) => {
+      const data = d.data() || {};
+      return ms(data.createdAt) || ms(data.lastFetchedAt) || ms(data.startTime) || 0;
+    };
+    const sortInstancesDesc = (docs) => {
+      docs.sort((a, b) => timeOf(b) - timeOf(a));
+    };
+
+    let pSnap = null;
+    if (mDoc.exists && !isAnchor) {
+      pSnap = await mRef.collection('participants').get();
+    }
+
+    // If anchor, missing doc, or empty roster, query latest instance with participants
+    if (!mDoc.exists || isAnchor || (pSnap && pSnap.empty)) {
       const codeSnap = await tenant.collection('meetings')
         .where('meetingCode', '==', meetingId).get();
+      let instances = [];
       if (!codeSnap.empty) {
-        const instances = codeSnap.docs.filter(d => d.id !== meetingId);
-        const docs = instances.length ? instances : codeSnap.docs;
-        const ms = (v) => (v?.toDate ? v.toDate().getTime() : (v ? new Date(v).getTime() : 0));
-        docs.sort((a, b) => ms(b.data().startTime) - ms(a.data().startTime));
-        mRef = docs[0].ref;
-        mDoc = docs[0];
+        instances = codeSnap.docs.filter(d => d.id !== meetingId);
+      }
+      if (instances.length === 0) {
+        const allSnap = await tenant.collection('meetings').get();
+        instances = allSnap.docs.filter(d => d.id !== meetingId && (d.id.startsWith(`${meetingId}__`) || d.data().meetingCode === meetingId));
+      }
+
+      if (instances.length > 0) {
+        sortInstancesDesc(instances);
+        let foundInstance = null;
+        let foundPSnap = null;
+        for (const inst of instances) {
+          const instPSnap = await inst.ref.collection('participants').get();
+          if (!instPSnap.empty) {
+            foundInstance = inst;
+            foundPSnap = instPSnap;
+            break;
+          }
+        }
+        if (foundInstance) {
+          mRef = foundInstance.ref;
+          mDoc = foundInstance;
+          pSnap = foundPSnap;
+        } else if (!mDoc.exists || isAnchor) {
+          mRef = instances[0].ref;
+          mDoc = instances[0];
+          pSnap = await mRef.collection('participants').get();
+        }
       }
     }
-    if (!mDoc.exists) return null;
-    const m = mDoc.data();
-    const pSnap = await mRef.collection('participants').get();
 
+    if (!mDoc.exists) return null;
+    if (!pSnap) {
+      pSnap = await mRef.collection('participants').get();
+    }
+
+    const m = mDoc.data();
     const iso = (v) => (v && typeof v.toDate === 'function' ? v.toDate().toISOString() : (v ? new Date(v).toISOString() : null));
 
     const people = pSnap.docs.map(d => {

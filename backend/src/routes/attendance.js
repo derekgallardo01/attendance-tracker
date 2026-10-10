@@ -213,7 +213,7 @@ router.get('/attendance', async (req, res) => {
     }
 
     if (records.length === 0) {
-      return res.json({ participants: [], message: 'No conference record yet — meeting may still be live.' });
+      return res.json({ participants: [], conferenceRecord: null, conferenceStartTime: null, message: 'No conference record yet — meeting may still be live.' });
     }
 
     // A REUSED meeting code (standing room link, recurring meeting) has one
@@ -355,9 +355,10 @@ router.get('/attendance', async (req, res) => {
 
     res.json({
       participants,
-      delegationConfigured: usingServiceAccount,
+      conferenceRecord: conferenceRecord?.name || null,
       conferenceStartTime,
       conferenceEndTime,
+      delegationConfigured: usingServiceAccount,
       totalParticipants, // raw Meet participant records (reconnection-inflated)
       distinctCount,     // distinct people (what "truncated" is measured against)
       truncated,

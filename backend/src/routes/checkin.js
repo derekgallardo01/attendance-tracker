@@ -2,7 +2,7 @@ const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
 const { requireAuth } = require('../middleware/auth');
 const log = require('../lib/logger');
-const { saveCheckin, getCheckins, isMeetingUnlocked } = require('../services/firestore');
+const { saveCheckin, getCheckins, isMeetingUnlocked, getMeetingWithParticipants, isMeetingTrackedByActor } = require('../services/firestore');
 
 const router = Router();
 
@@ -73,6 +73,11 @@ router.get('/checkin/export', requireAuth, async (req, res) => {
       || (typeof isMeetingUnlocked === 'function' && await isMeetingUnlocked(req.user.domain, req.user.email, meetingCode));
     if (!pro) {
       return res.status(402).json({ error: 'Check-in attestation exports are a Pro feature.', upgrade: true, feature: 'attestation' });
+    }
+    const isHost = (typeof isMeetingTrackedByActor === 'function' && await isMeetingTrackedByActor(req.user.domain, meetingCode, req.user.email))
+      || (await getMeetingWithParticipants(req.user.domain, meetingCode, req.user.email));
+    if (!isHost) {
+      return res.status(403).json({ error: 'You can only export attestation records for meetings you hosted.' });
     }
     // strict: a swallowed read error here would emit a plausible CSV
     // certifying zero check-ins — for a compliance artifact that must 500.

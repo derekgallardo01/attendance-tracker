@@ -73,7 +73,7 @@ function decryptToken(ciphertext) {
 let db = null;
 function getDb() {
   if (!db) {
-    const opts = {};
+    const opts = { ignoreUndefinedProperties: true };
     if (CONFIG.gcpProjectId) opts.projectId = CONFIG.gcpProjectId;
     db = new Firestore(opts);
   }

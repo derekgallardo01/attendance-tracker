@@ -15,6 +15,8 @@ jest.mock('../../src/services/firestore', () => ({
   getTenantPlan: jest.fn(),
   getUserPlan: jest.fn(),
   isMeetingUnlocked: jest.fn(),
+  getMeetingWithParticipants: jest.fn(),
+  isMeetingTrackedByActor: jest.fn(),
 }));
 
 const firestore = require('../../src/services/firestore');
@@ -29,6 +31,8 @@ beforeEach(() => {
   firestore.saveCheckin.mockResolvedValue({ checkedInAt: '2026-09-08T10:00:00.000Z', already: false });
   firestore.getCheckins.mockResolvedValue([]);
   firestore.isMeetingUnlocked.mockResolvedValue(false);
+  firestore.isMeetingTrackedByActor.mockResolvedValue(true);
+  firestore.getMeetingWithParticipants.mockResolvedValue({ conferenceId: 'abc-defg-hij', participants: [] });
   app = buildApp();
 });
 
@@ -157,6 +161,21 @@ describe('GET /api/checkin/export — attestation CSV (Pro)', () => {
     firestore.getCheckins.mockRejectedValue(new Error('boom'));
     const res = await request(app).get('/api/checkin/export?meetingCode=abc-defg-hij').set(authedHeader('host@a.com', 'a.com'));
     expect(res.status).toBe(500);
+  });
+
+  test('403 when user did not host or track the meeting', async () => {
+    firestore.isMeetingTrackedByActor.mockResolvedValue(false);
+    firestore.getMeetingWithParticipants.mockResolvedValue(null);
+    const res = await request(app).get('/api/checkin/export?meetingCode=abc-defg-hij').set(authedHeader('stranger@a.com', 'a.com'));
+    expect(res.status).toBe(403);
+    expect(res.body.error).toContain('You can only export attestation records for meetings you hosted.');
+  });
+
+  test('allows export when isMeetingTrackedByActor is true even if getMeetingWithParticipants is null', async () => {
+    firestore.isMeetingTrackedByActor.mockResolvedValue(true);
+    firestore.getMeetingWithParticipants.mockResolvedValue(null);
+    const res = await request(app).get('/api/checkin/export?meetingCode=abc-defg-hij').set(authedHeader('host@a.com', 'a.com'));
+    expect(res.status).toBe(200);
   });
 });
 

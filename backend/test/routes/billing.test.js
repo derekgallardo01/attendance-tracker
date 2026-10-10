@@ -58,6 +58,7 @@ beforeEach(() => {
   firestore.getUser.mockImplementation(async (domain, email) => ({ email, domain }));
   firestore.getTenantPlan.mockResolvedValue({ plan: 'free', billingStatus: null, stripeCustomerId: null });
   firestore.getUserPlan.mockResolvedValue({ plan: 'free', billingStatus: null, stripeCustomerId: null });
+  firestore.getTeamAdminStatus.mockResolvedValue({ isTeamAdmin: true, isAdmin: true });
   firestore.claimWebhookEvent.mockResolvedValue(true); // clearMocks wipes implementations' calls, not defaults set here
   delete process.env.STRIPE_SECRET_KEY;
   delete process.env.STRIPE_PRICE_ID;
@@ -627,6 +628,25 @@ describe('billing — additional configured paths', () => {
     mockStripeInstance.billingPortal.sessions.create.mockRejectedValue(new Error('stripe down'));
     const res = await request(app).get('/api/billing/portal').set(authedHeader('a@acme.com', 'acme.com'));
     expect(res.status).toBe(502);
+  });
+
+  test('GET /billing/portal 403 for non-admin when domain has institutional subscription and user has no personal pass', async () => {
+    firestore.getTeamAdminStatus.mockResolvedValue({ isTeamAdmin: false, isAdmin: false });
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'pro', stripeCustomerId: 'cus_tenant' });
+    firestore.getUserPlan.mockResolvedValue({ plan: 'free', stripeCustomerId: null });
+    const res = await request(app).get('/api/billing/portal').set(authedHeader('employee@acme.com', 'acme.com'));
+    expect(res.status).toBe(403);
+    expect(res.body.error).toContain('Only the domain team admin can manage institutional subscriptions.');
+  });
+
+  test('GET /billing/portal falls back to personal pass for non-admin workspace user even if domain has subscription', async () => {
+    firestore.getTeamAdminStatus.mockResolvedValue({ isTeamAdmin: false, isAdmin: false });
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'pro', stripeCustomerId: 'cus_tenant' });
+    firestore.getUserPlan.mockResolvedValue({ plan: 'pro', stripeCustomerId: 'cus_employee' });
+    mockStripeInstance.billingPortal.sessions.create.mockResolvedValue({ url: 'https://billing.stripe.com/p/employee' });
+    const res = await request(app).get('/api/billing/portal').set(authedHeader('employee@acme.com', 'acme.com'));
+    expect(res.status).toBe(200);
+    expect(res.body.url).toContain('employee');
   });
 
   test('webhook subscription.updated (active) upgrades to Pro', async () => {
@@ -1931,6 +1951,75 @@ describe('billing/status pricing payload', () => {
         })
       );
     });
+
+    test('cancel-subscription 403 for non-admin when domain has institutional subscription and user has no personal pass', async () => {
+      firestore.getTeamAdminStatus.mockResolvedValue({ isTeamAdmin: false, isAdmin: false });
+      firestore.getTenantPlan.mockResolvedValue({ plan: 'pro', stripeSubscriptionId: 'sub_inst' });
+      firestore.getUserPlan.mockResolvedValue({ plan: 'free', stripeSubscriptionId: null });
+
+      const res = await request(app)
+        .post('/api/billing/cancel-subscription')
+        .set(authedHeader('teacher@school.edu', 'school.edu'))
+        .send({});
+
+      expect(res.status).toBe(403);
+      expect(res.body.error).toContain('Only the domain team admin can manage institutional subscriptions.');
+      expect(mockStripeInstance.subscriptions.update).not.toHaveBeenCalled();
+    });
+
+    test('cancel-subscription falls back to user subscription for non-admin workspace user when they have personal pass', async () => {
+      firestore.getTeamAdminStatus.mockResolvedValue({ isTeamAdmin: false, isAdmin: false });
+      firestore.getTenantPlan.mockResolvedValue({ plan: 'pro', stripeSubscriptionId: 'sub_inst' });
+      firestore.getUserPlan.mockResolvedValue({ plan: 'pro', stripeSubscriptionId: 'sub_user_personal', stripeCustomerId: 'cus_u' });
+      mockStripeInstance.subscriptions.update.mockResolvedValue({
+        id: 'sub_user_personal',
+        cancel_at_period_end: true,
+        current_period_end: Math.floor(Date.now() / 1000) + 86400,
+        status: 'active',
+      });
+
+      const res = await request(app)
+        .post('/api/billing/cancel-subscription')
+        .set(authedHeader('teacher@school.edu', 'school.edu'))
+        .send({});
+
+      expect(res.status).toBe(200);
+      expect(mockStripeInstance.subscriptions.update).toHaveBeenCalledWith('sub_user_personal', { cancel_at_period_end: true });
+    });
+
+    test('resume-subscription 403 for non-admin when domain has institutional subscription and user has no personal pass', async () => {
+      firestore.getTeamAdminStatus.mockResolvedValue({ isTeamAdmin: false, isAdmin: false });
+      firestore.getTenantPlan.mockResolvedValue({ plan: 'pro', stripeSubscriptionId: 'sub_inst' });
+      firestore.getUserPlan.mockResolvedValue({ plan: 'free', stripeSubscriptionId: null });
+
+      const res = await request(app)
+        .post('/api/billing/resume-subscription')
+        .set(authedHeader('teacher@school.edu', 'school.edu'))
+        .send({});
+
+      expect(res.status).toBe(403);
+      expect(res.body.error).toContain('Only the domain team admin can manage institutional subscriptions.');
+      expect(mockStripeInstance.subscriptions.update).not.toHaveBeenCalled();
+    });
+
+    test('resume-subscription falls back to user subscription for non-admin workspace user when they have personal pass', async () => {
+      firestore.getTeamAdminStatus.mockResolvedValue({ isTeamAdmin: false, isAdmin: false });
+      firestore.getTenantPlan.mockResolvedValue({ plan: 'pro', stripeSubscriptionId: 'sub_inst' });
+      firestore.getUserPlan.mockResolvedValue({ plan: 'pro', stripeSubscriptionId: 'sub_user_personal' });
+      mockStripeInstance.subscriptions.update.mockResolvedValue({
+        id: 'sub_user_personal',
+        cancel_at_period_end: false,
+        status: 'active',
+      });
+
+      const res = await request(app)
+        .post('/api/billing/resume-subscription')
+        .set(authedHeader('teacher@school.edu', 'school.edu'))
+        .send({});
+
+      expect(res.status).toBe(200);
+      expect(mockStripeInstance.subscriptions.update).toHaveBeenCalledWith('sub_user_personal', { cancel_at_period_end: false });
+    });
   });
 
   describe('super-admin automatic Pro access and quota bypass', () => {
@@ -2172,6 +2261,8 @@ describe('billing/status pricing payload', () => {
         email: 'free@gmail.com',
         conferenceId: 'conf-123',
         meetingTitle: 'Math 101',
+        tabName: 'CSV Export',
+        sheetUrl: null,
         participantCount: 20,
         exportType: 'csv',
       }));

@@ -281,6 +281,39 @@ describe('aggregations over rich data', () => {
     const ph = await firestore.getParticipantHistory('acme.com', 'owner@acme.com', 'alex@acme.com');
     expect(ph === null || typeof ph === 'object').toBe(true);
   });
+
+  test('tenant overviews filter out code-level anchor documents with hasInstances: true', async () => {
+    ctx.seed('tenants/anchor.com/meetings/room-code', {
+      meetingCode: 'room-code',
+      hasInstances: true,
+      title: 'Anchor Room',
+      recurringEventId: 'rec-1',
+    });
+    ctx.seed('tenants/anchor.com/meetings/room-code__sess1', {
+      meetingCode: 'room-code',
+      title: 'Session 1',
+      recurringEventId: 'rec-1',
+      startTime: wrapTimestamp(new Date('2026-06-01T10:00:00Z')),
+    });
+    ctx.seed('tenants/anchor.com/meetings/room-code__sess1/participants/p1', {
+      displayName: 'Alice',
+      email: 'alice@anchor.com',
+      present: true,
+    });
+
+    const meetings = await firestore.getTenantMeetings('anchor.com');
+    expect(meetings).toHaveLength(1);
+    expect(meetings[0].conferenceId).toBe('room-code__sess1');
+
+    const series = await firestore.getTenantSeriesOverview('anchor.com');
+    expect(series).toHaveLength(1);
+    expect(series[0].instanceCount).toBe(1);
+
+    const people = await firestore.getTenantPeopleOverview('anchor.com');
+    expect(people).toHaveLength(1);
+    expect(people[0].meetingCount).toBe(1);
+    expect(people[0].attendanceRate).toBe(1); // 100%, not 50% cut in half
+  });
 });
 
 describe('firestore.js — remaining branch closure', () => {
