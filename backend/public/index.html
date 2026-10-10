@@ -369,8 +369,8 @@
     window.captureError = function (err, extra) {
       try {
         const msg = String(err?.message || err || '');
-        if (/failed to fetch|networkerror|load failed|failed to load|script error|net::err|offline|please select a classroom course|please select a canvas course/i.test(msg)) {
-          return; // Client network drop, ad-blocker, or form validation — not an actionable code defect
+        if (/failed to fetch|networkerror|load failed|failed to load|script error|net::err|offline|please select a classroom course|please select a canvas course|browser blocked download popup window|popup blocked/i.test(msg)) {
+          return; // Client network drop, ad-blocker, popup blocker, or form validation — not an actionable code defect
         }
         if (window.Sentry && typeof window.Sentry.captureException === 'function') {
           Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { extra: extra || {} });
@@ -4366,15 +4366,17 @@ function copyAbsenteeList() {
 // the user has been told; callers must NOT claim success or attempt the
 // direct download, which the iframe sandbox silently swallows), or 'direct'
 // (not in an iframe — caller should download directly).
-function relayDownload(payload) {
+function relayDownload(payload, targetWindow) {
   if (window === window.top) return 'direct';
   safeSetItem('attPendingDownload', JSON.stringify(payload));
-  let w = null;
-  try { w = window.open('download.html', '_blank'); } catch (e) { /* blocked */ }
+  let w = targetWindow;
+  if (!w || w.closed) {
+    try { w = window.open('download.html', '_blank'); } catch (e) { /* blocked */ }
+  }
   if (!w) {
     try { localStorage.removeItem('attPendingDownload'); } catch (e) {}
     toast(t('toast.popupBlocked', 'Your browser blocked the download tab. Allow pop-ups for meet.google.com and try again.'), 6000);
-    window.captureError(new Error('Browser blocked download popup window'), { where: 'relayDownload_popup_blocked', filename: payload?.filename });
+    try { logUserEvent('download_popup_blocked', { filename: payload?.filename }); } catch (e) {}
     return 'blocked';
   }
   const onMsg = (e) => {
@@ -4457,48 +4459,12 @@ async function downloadAttendanceCsv() {
     return;
   }
 
-  let quota = null;
-  try {
-    const res = await authFetch(`${state.backendUrl}/billing/record-export`, {
-      method: 'POST',
-      body: JSON.stringify({
-        exportType: 'csv',
-        conferenceId: state.conferenceId || state.meetingCode || (typeof currentMeetingCode !== 'undefined' ? currentMeetingCode : null) || null,
-        meetingTitle: ctx.meetingTitle || 'Attendance CSV',
-        participantCount: count,
-      }),
-    });
-    if (res.status === 402) {
-      let body = {};
-      try { body = await res.json(); } catch {}
-      const feature = body.feature || 'exportQuota';
-      if (body.participantCount) state._lastLargeClassCount = body.participantCount;
-      const quotaInfo = body.quota || (body.used != null ? { used: body.used, limit: body.limit } : null);
-      if (quotaInfo) {
-        if (!_billing) _billing = {};
-        if (!_billing.exportQuota) _billing.exportQuota = { used: quotaInfo.used, limit: quotaInfo.limit };
-        else _billing.exportQuota.used = quotaInfo.used;
-        updateQuotaIndicator(quotaInfo.used, quotaInfo.limit);
-      }
-      showUpgradeModal(feature);
-      return;
-    }
-    if (res.ok) {
-      const data = await res.json();
-      if (data.quota) quota = data.quota;
-      if (data.graceUsed) {
-        if (!_billing) _billing = {};
-        _billing.hasUsedLargeClassGrace = true;
-        toast(t('export.graceUsed', '🎉 Complimentary Full-Roster Export: We unlocked all {count} attendees for your first large class! Upgrade to Educator ($4.99/yr) for unlimited class sizes on future classes.').replace('{count}', data.participantCount || count), 7000);
-      }
-    }
-  } catch (err) {}
-
   ctx.opts.isFreePlan = !_isPro;
   const csvContent = (typeof AttUtils !== 'undefined' && AttUtils.buildAttendanceCsv)
     ? AttUtils.buildAttendanceCsv(ctx.parts, ctx.activeRoster, ctx.opts)
     : '';
-  if (!triggerCsvDownload(csvContent, `Attendance_${ctx.safeTitle}_${ctx.dateStr}.csv`)) return;
+  const filename = `Attendance_${ctx.safeTitle}_${ctx.dateStr}.csv`;
+  if (!triggerCsvDownload(csvContent, filename)) return;
 
   try {
     logUserEvent('export_csv_downloaded', {
@@ -4509,15 +4475,48 @@ async function downloadAttendanceCsv() {
     });
   } catch (e) {}
 
-  if (quota) {
-    if (!_billing) _billing = {};
-    if (!_billing.exportQuota) _billing.exportQuota = { used: quota.used, limit: quota.limit };
-    else _billing.exportQuota.used = quota.used;
-    updateQuotaIndicator(quota.used, quota.limit);
-  } else if (!_isPro && _billing && _billing.exportQuota) {
-    _billing.exportQuota.used++;
-    updateQuotaIndicator(_billing.exportQuota.used, _billing.exportQuota.limit);
-  }
+  // Record export quota on the backend asynchronously without delaying the user gesture
+  authFetch(`${state.backendUrl}/billing/record-export`, {
+    method: 'POST',
+    body: JSON.stringify({
+      exportType: 'csv',
+      conferenceId: state.conferenceId || state.meetingCode || (typeof currentMeetingCode !== 'undefined' ? currentMeetingCode : null) || null,
+      meetingTitle: ctx.meetingTitle || 'Attendance CSV',
+      participantCount: count,
+    }),
+  }).then(async (res) => {
+    if (res.status === 402) {
+      let body = {};
+      try { body = await res.json(); } catch {}
+      const quotaInfo = body.quota || (body.used != null ? { used: body.used, limit: body.limit } : null);
+      if (quotaInfo) {
+        if (!_billing) _billing = {};
+        if (!_billing.exportQuota) _billing.exportQuota = { used: quotaInfo.used, limit: quotaInfo.limit };
+        else _billing.exportQuota.used = quotaInfo.used;
+        updateQuotaIndicator(quotaInfo.used, quotaInfo.limit);
+      }
+      return;
+    }
+    if (res.ok) {
+      const data = await res.json();
+      if (data.graceUsed) {
+        if (!_billing) _billing = {};
+        _billing.hasUsedLargeClassGrace = true;
+        toast(t('export.graceUsed', '🎉 Complimentary Full-Roster Export: We unlocked all {count} attendees for your first large class! Upgrade to Educator ($4.99/yr) for unlimited class sizes on future classes.').replace('{count}', data.participantCount || count), 7000);
+      }
+      if (data.quota) {
+        if (!_billing) _billing = {};
+        if (!_billing.exportQuota) _billing.exportQuota = { used: data.quota.used, limit: data.quota.limit };
+        else _billing.exportQuota.used = data.quota.used;
+        updateQuotaIndicator(data.quota.used, data.quota.limit);
+      }
+    }
+  }).catch(() => {
+    if (!_isPro && _billing && _billing.exportQuota) {
+      _billing.exportQuota.used++;
+      updateQuotaIndicator(_billing.exportQuota.used, _billing.exportQuota.limit);
+    }
+  });
 
   // A CSV download is a real value moment with the user present — advance the
   // export counter and offer the review ask (previously only Sheets exports
@@ -4568,48 +4567,12 @@ async function downloadAttendanceExcel() {
     return;
   }
 
-  let quota = null;
-  try {
-    const res = await authFetch(`${state.backendUrl}/billing/record-export`, {
-      method: 'POST',
-      body: JSON.stringify({
-        exportType: 'excel',
-        conferenceId: state.conferenceId || state.meetingCode || (typeof currentMeetingCode !== 'undefined' ? currentMeetingCode : null) || null,
-        meetingTitle: ctx.meetingTitle || 'Attendance Excel',
-        participantCount: count,
-      }),
-    });
-    if (res.status === 402) {
-      let body = {};
-      try { body = await res.json(); } catch {}
-      const feature = body.feature || 'exportQuota';
-      if (body.participantCount) state._lastLargeClassCount = body.participantCount;
-      const quotaInfo = body.quota || (body.used != null ? { used: body.used, limit: body.limit } : null);
-      if (quotaInfo) {
-        if (!_billing) _billing = {};
-        if (!_billing.exportQuota) _billing.exportQuota = { used: quotaInfo.used, limit: quotaInfo.limit };
-        else _billing.exportQuota.used = quotaInfo.used;
-        updateQuotaIndicator(quotaInfo.used, quotaInfo.limit);
-      }
-      showUpgradeModal(feature);
-      return;
-    }
-    if (res.ok) {
-      const data = await res.json();
-      if (data.quota) quota = data.quota;
-      if (data.graceUsed) {
-        if (!_billing) _billing = {};
-        _billing.hasUsedLargeClassGrace = true;
-        toast(t('export.graceUsed', '🎉 Complimentary Full-Roster Export: We unlocked all {count} attendees for your first large class! Upgrade to Educator ($4.99/yr) for unlimited class sizes on future classes.').replace('{count}', data.participantCount || count), 7000);
-      }
-    }
-  } catch (err) {}
-
   ctx.opts.isFreePlan = !_isPro;
   const xmlContent = (typeof AttUtils !== 'undefined' && AttUtils.buildAttendanceExcelXml)
     ? AttUtils.buildAttendanceExcelXml(ctx.parts, ctx.activeRoster, ctx.opts)
     : '';
-  if (!triggerExcelDownload(xmlContent, `Attendance_${ctx.safeTitle}_${ctx.dateStr}.xls`)) return;
+  const filename = `Attendance_${ctx.safeTitle}_${ctx.dateStr}.xls`;
+  if (!triggerExcelDownload(xmlContent, filename)) return;
 
   try {
     logUserEvent('export_excel_downloaded', {
@@ -4620,15 +4583,48 @@ async function downloadAttendanceExcel() {
     });
   } catch (e) {}
 
-  if (quota) {
-    if (!_billing) _billing = {};
-    if (!_billing.exportQuota) _billing.exportQuota = { used: quota.used, limit: quota.limit };
-    else _billing.exportQuota.used = quota.used;
-    updateQuotaIndicator(quota.used, quota.limit);
-  } else if (!_isPro && _billing && _billing.exportQuota) {
-    _billing.exportQuota.used++;
-    updateQuotaIndicator(_billing.exportQuota.used, _billing.exportQuota.limit);
-  }
+  // Record export quota on the backend asynchronously without delaying the user gesture
+  authFetch(`${state.backendUrl}/billing/record-export`, {
+    method: 'POST',
+    body: JSON.stringify({
+      exportType: 'excel',
+      conferenceId: state.conferenceId || state.meetingCode || (typeof currentMeetingCode !== 'undefined' ? currentMeetingCode : null) || null,
+      meetingTitle: ctx.meetingTitle || 'Attendance Excel',
+      participantCount: count,
+    }),
+  }).then(async (res) => {
+    if (res.status === 402) {
+      let body = {};
+      try { body = await res.json(); } catch {}
+      const quotaInfo = body.quota || (body.used != null ? { used: body.used, limit: body.limit } : null);
+      if (quotaInfo) {
+        if (!_billing) _billing = {};
+        if (!_billing.exportQuota) _billing.exportQuota = { used: quotaInfo.used, limit: quotaInfo.limit };
+        else _billing.exportQuota.used = quotaInfo.used;
+        updateQuotaIndicator(quotaInfo.used, quotaInfo.limit);
+      }
+      return;
+    }
+    if (res.ok) {
+      const data = await res.json();
+      if (data.graceUsed) {
+        if (!_billing) _billing = {};
+        _billing.hasUsedLargeClassGrace = true;
+        toast(t('export.graceUsed', '🎉 Complimentary Full-Roster Export: We unlocked all {count} attendees for your first large class! Upgrade to Educator ($4.99/yr) for unlimited class sizes on future classes.').replace('{count}', data.participantCount || count), 7000);
+      }
+      if (data.quota) {
+        if (!_billing) _billing = {};
+        if (!_billing.exportQuota) _billing.exportQuota = { used: data.quota.used, limit: data.quota.limit };
+        else _billing.exportQuota.used = data.quota.used;
+        updateQuotaIndicator(data.quota.used, data.quota.limit);
+      }
+    }
+  }).catch(() => {
+    if (!_isPro && _billing && _billing.exportQuota) {
+      _billing.exportQuota.used++;
+      updateQuotaIndicator(_billing.exportQuota.used, _billing.exportQuota.limit);
+    }
+  });
 
   try {
     const n = (parseInt(localStorage.getItem('att_export_count') || '0', 10) || 0) + 1;
@@ -9400,6 +9396,10 @@ async function _downloadPdf({ type, filenameBase, event, options }) {
     toast(t('toast.pdfExportFirst', 'Export first, then download the PDF.'));
     return false;
   }
+  let targetWindow = null;
+  if (window !== window.top) {
+    try { targetWindow = window.open('download.html', '_blank'); } catch (e) {}
+  }
   try {
     toast(t('toast.pdfGenerating', 'Generating PDF…'));
     // Certificate/branding options the backend has ALWAYS accepted but no
@@ -9428,10 +9428,16 @@ async function _downloadPdf({ type, filenameBase, event, options }) {
       }),
     });
     if (res.status === 402) {
+      if (targetWindow && !targetWindow.closed) {
+        try { targetWindow.close(); } catch (e) {}
+      }
       showUpgradeModal('certificates');
       return false;
     }
     if (!res.ok) {
+      if (targetWindow && !targetWindow.closed) {
+        try { targetWindow.close(); } catch (e) {}
+      }
       let m = {};
       try { m = await res.json(); } catch (e) { /* non-JSON error body */ }
       toast(`${t('toast.pdfError', 'PDF error:')} ${m.error || res.status}`);
@@ -9450,8 +9456,11 @@ async function _downloadPdf({ type, filenameBase, event, options }) {
         let bin = '';
         const CHUNK = 0x8000;
         for (let i = 0; i < buf.length; i += CHUNK) bin += String.fromCharCode.apply(null, buf.subarray(i, i + CHUNK));
-        mode = relayDownload({ filename, mime: 'application/pdf', content: btoa(bin), encoding: 'base64' });
+        mode = relayDownload({ filename, mime: 'application/pdf', content: btoa(bin), encoding: 'base64' }, targetWindow);
       } catch (e) {
+        if (targetWindow && !targetWindow.closed) {
+          try { targetWindow.close(); } catch (e) {}
+        }
         // arrayBuffer/btoa failure — nothing to relay; the direct attempt is
         // the only remaining option even though the sandbox may swallow it.
         mode = 'direct';
@@ -9462,6 +9471,9 @@ async function _downloadPdf({ type, filenameBase, event, options }) {
     try { logUserEvent(event, {}); } catch (e) { /* best-effort */ }
     return true;
   } catch (e) {
+    if (targetWindow && !targetWindow.closed) {
+      try { targetWindow.close(); } catch (e) {}
+    }
     toast(t('toast.pdfFailed', 'Could not generate the PDF.'));
     return false;
   }
