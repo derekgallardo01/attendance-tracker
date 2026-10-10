@@ -275,6 +275,7 @@ describe('fetchConferenceParticipants', () => {
     expect(stayed.present).toBe(true);
     expect(early.present).toBe(false);
     expect(open.present).toBe(true);
+    expect(open.durationMs).toBe(3600000); // Capped at meetingEndTime (10:00 to 11:00) rather than Date.now()
   });
 
   test('falls back to latest participant activity when meetingEndTime is null', async () => {

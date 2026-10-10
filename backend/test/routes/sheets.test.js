@@ -11,6 +11,7 @@ const { authedHeader, buildApp } = require('../helpers/testApp');
 // Mock the Google Sheets + Drive APIs entirely so tests don't make network calls.
 // Each test sets the mockImplementation chain to whatever it needs.
 const mockSheetsUpdate = jest.fn().mockResolvedValue({ data: {} });
+const mockSheetsClear = jest.fn().mockResolvedValue({ data: {} });
 const mockSheetsBatchUpdate = jest.fn().mockResolvedValue({
   data: { replies: [{ addSheet: { properties: { sheetId: 999 } } }] },
 });
@@ -28,7 +29,7 @@ jest.mock('googleapis', () => ({
         get: (...a) => mockSheetsGet(...a),
         create: (...a) => mockSheetsCreate(...a),
         batchUpdate: (...a) => mockSheetsBatchUpdate(...a),
-        values: { update: (...a) => mockSheetsUpdate(...a) },
+        values: { update: (...a) => mockSheetsUpdate(...a), clear: (...a) => mockSheetsClear(...a) },
       },
     }),
     drive: jest.fn().mockReturnValue({
@@ -234,6 +235,29 @@ describe('POST /api/save-to-sheets — cumulative Class Summary tab', () => {
       (c[0].requestBody?.requests?.[0]?.addSheet?.properties?.title || '').includes('CS 101- Intro to Python')
     );
     expect(batchCall).toBeDefined();
+    expect(batchCall[0].requestBody.requests[0].addSheet.properties.gridProperties.rowCount).toBeGreaterThanOrEqual(1000);
+  });
+
+  test('clears stale rows when reusing an existing Class Summary tab', async () => {
+    firestore.getUserMeetingSeries.mockResolvedValue(recurringSeries);
+    // 1st batchUpdate: create main tab (succeeds)
+    // 2nd batchUpdate: create Class Summary tab (throws "already exists")
+    mockSheetsBatchUpdate
+      .mockResolvedValueOnce({ data: { replies: [{ addSheet: { properties: { sheetId: 101 } } }] } })
+      .mockRejectedValueOnce(new Error('A sheet with the name "Class Summary" already exists'));
+
+    const res = await request(app)
+      .post('/api/save-to-sheets')
+      .set(authedHeader('user@acme.com', 'acme.com'))
+      .set('Content-Type', 'application/json')
+      .send({ ...validPayload, recurringEventId: 'series-1' });
+
+    expect(res.status).toBe(200);
+    expect(mockSheetsClear).toHaveBeenCalledWith(
+      expect.objectContaining({
+        range: expect.stringContaining('Class Summary'),
+      })
+    );
   });
 });
 

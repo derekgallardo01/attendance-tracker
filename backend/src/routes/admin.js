@@ -1341,9 +1341,14 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
             // (Cloud Scheduler is at-least-once) — getExportedConferenceIds is
             // read-once so two overlapping sweeps could otherwise both export,
             // producing a duplicate Sheet tab AND a duplicate "ready" email.
-            if (shouldAutoExport && !alreadyExported.has(instanceKey)) {
+            const isAlreadyExported = alreadyExported.has(instanceKey) || alreadyExported.has(meetingCode);
+            if (shouldAutoExport && !isAlreadyExported) {
               const claim = await claimReengagementSlot(u.domain, u.email, `autocap:${instanceKey}`);
-              if (!claim.claimed) { alreadyExported.add(instanceKey); continue; }
+              if (!claim.claimed) {
+                alreadyExported.add(instanceKey);
+                alreadyExported.add(meetingCode);
+                continue;
+              }
               try {
                 await buildAndSaveExport({
                   user: { domain: u.domain, email: u.email, displayName: u.displayName },
@@ -1369,6 +1374,7 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
                 throw exportErr;
               }
               alreadyExported.add(instanceKey);
+              alreadyExported.add(meetingCode);
               captured++;
             }
           } catch (e) {

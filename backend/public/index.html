@@ -3641,6 +3641,7 @@ const state = {
   activeRosterName: null,
   thresholds: { minPercent: 0, lateMinutes: 10 },
   excusedStudents: {},
+  _isExportingSheets: false,
 };
 
 let _isPro = false;
@@ -3653,6 +3654,14 @@ const ROSTER_STORAGE_KEY = 'meetAttendanceRosters';
 const ACTIVE_ROSTER_KEY = 'meetAttendanceActiveRoster';
 const THRESHOLDS_STORAGE_KEY = 'meetAttendanceThresholds';
 const EXCUSED_STORAGE_KEY = 'meetAttendanceExcused';
+
+function safeSetItem(key, val) {
+  try {
+    localStorage.setItem(key, val);
+  } catch (_) {
+    // Partitioned iframe restriction / private browsing / QuotaExceededError
+  }
+}
 
 function loadStoredRosters() {
   try {
@@ -3672,10 +3681,10 @@ function loadStoredRosters() {
 
 function saveStoredRosters() {
   try {
-    localStorage.setItem(ROSTER_STORAGE_KEY, JSON.stringify(state.rosters || {}));
-    localStorage.setItem(ACTIVE_ROSTER_KEY, state.activeRosterName || '');
-    localStorage.setItem(THRESHOLDS_STORAGE_KEY, JSON.stringify(state.thresholds || { minPercent: 0, lateMinutes: 10 }));
-    localStorage.setItem(EXCUSED_STORAGE_KEY, JSON.stringify(state.excusedStudents || {}));
+    safeSetItem(ROSTER_STORAGE_KEY, JSON.stringify(state.rosters || {}));
+    safeSetItem(ACTIVE_ROSTER_KEY, state.activeRosterName || '');
+    safeSetItem(THRESHOLDS_STORAGE_KEY, JSON.stringify(state.thresholds || { minPercent: 0, lateMinutes: 10 }));
+    safeSetItem(EXCUSED_STORAGE_KEY, JSON.stringify(state.excusedStudents || {}));
   } catch (e) {
     console.warn('[Attendance] Failed to save stored rosters:', e);
   }
@@ -4358,7 +4367,7 @@ function copyAbsenteeList() {
 // (not in an iframe — caller should download directly).
 function relayDownload(payload) {
   if (window === window.top) return 'direct';
-  try { localStorage.setItem('attPendingDownload', JSON.stringify(payload)); } catch (e) { /* partitioned/blocked — postMessage covers it */ }
+  safeSetItem('attPendingDownload', JSON.stringify(payload));
   let w = null;
   try { w = window.open('download.html', '_blank'); } catch (e) { /* blocked */ }
   if (!w) {
@@ -4514,7 +4523,7 @@ async function downloadAttendanceCsv() {
   // counted, so CSV-only users were never asked).
   try {
     const n = (parseInt(localStorage.getItem('att_export_count') || '0', 10) || 0) + 1;
-    localStorage.setItem('att_export_count', String(n));
+    safeSetItem('att_export_count', String(n));
     const hasReviewed = !!localStorage.getItem('has_reviewed');
     const referralDismissed = !!localStorage.getItem('att_colleague_referral_dismissed');
     if (n === 2 && !referralDismissed && !_isPro && !(_billing && _billing.plan === 'pro')) {
@@ -4622,7 +4631,7 @@ async function downloadAttendanceExcel() {
 
   try {
     const n = (parseInt(localStorage.getItem('att_export_count') || '0', 10) || 0) + 1;
-    localStorage.setItem('att_export_count', String(n));
+    safeSetItem('att_export_count', String(n));
   } catch (e) {}
 
   toast(t('toast.excelDownloaded', 'Excel (.xlsx) report downloaded.'));
@@ -4793,7 +4802,7 @@ function captureAcquisitionFromUrl() {
       landingUrl: window.location.href || null,
       capturedAt: Date.now(),
     };
-    localStorage.setItem(ACQUISITION_STORAGE_KEY, JSON.stringify(payload));
+    safeSetItem(ACQUISITION_STORAGE_KEY, JSON.stringify(payload));
     // Cookie fallback: works across subdomains and survives longer than localStorage.
     const computedSource = utmSource || (ref ? 'referral' : null) || (inMeet ? 'marketplace' : null) || (referrer ? new URL(referrer).hostname : null) || 'direct';
     document.cookie = `att_first_touch=${encodeURIComponent(JSON.stringify({...payload, computedSource}))};path=/;max-age=7776000;SameSite=Lax`;
@@ -5145,7 +5154,7 @@ function onTeamSignpostClick() {
 function dismissTeamSignpost() {
   const box = document.getElementById('team-signpost');
   if (box) box.style.display = 'none';
-  try { localStorage.setItem('att_dismiss_cluster_promo_until', String(Date.now() + 14 * 24 * 3600 * 1000)); } catch (e) {}
+  safeSetItem('att_dismiss_cluster_promo_until', String(Date.now() + 14 * 24 * 3600 * 1000));
   try { logUserEvent('team_signpost_dismissed', {}); } catch (e) { /* best-effort */ }
   // Persist so it never returns for this user (fire-and-forget).
   try { fetch(`${state.backendUrl}/history/signpost-dismiss`, { method: 'POST', headers: authHeaders() }).catch(() => {}); } catch (e) { /* best-effort */ }
@@ -5174,7 +5183,7 @@ function maybeStartTour() {
 
 function runTour(stepIdx) {
   if (state.tracking || stepIdx >= TOUR_STEPS.length) {
-    try { localStorage.setItem(TOUR_STORAGE_KEY, '1'); } catch {}
+    safeSetItem(TOUR_STORAGE_KEY, '1');
     document.querySelectorAll('.tour-pulse').forEach(el => el.classList.remove('tour-pulse'));
     document.querySelectorAll('.tour-tooltip').forEach(el => el.remove());
     return;
@@ -5214,7 +5223,7 @@ function runTour(stepIdx) {
   tip.querySelector('[data-action="skip"]').addEventListener('click', () => {
     target.classList.remove('tour-pulse');
     tip.remove();
-    try { localStorage.setItem(TOUR_STORAGE_KEY, '1'); } catch {}
+    safeSetItem(TOUR_STORAGE_KEY, '1');
   });
 }
 
@@ -5837,7 +5846,7 @@ function startTracking() {
   }
 
   // Dismiss any tour cleanly
-  try { localStorage.setItem(TOUR_STORAGE_KEY, '1'); } catch {}
+  safeSetItem(TOUR_STORAGE_KEY, '1');
   document.querySelectorAll('.tour-pulse').forEach(el => el.classList.remove('tour-pulse'));
   document.querySelectorAll('.tour-tooltip').forEach(el => el.remove());
 
@@ -6063,7 +6072,7 @@ function getStoredCheckin() {
   } catch { return null; }
 }
 function rememberCheckin(email, checkedInAt) {
-  try { localStorage.setItem(_checkinStorageKey(), JSON.stringify({ email, checkedInAt, day: _todayKey() })); } catch { /* storage may be blocked */ }
+  safeSetItem(_checkinStorageKey(), JSON.stringify({ email, checkedInAt, day: _todayKey() }));
 }
 
 async function submitCheckin(token) {
@@ -6611,7 +6620,7 @@ async function saveProfileNote() {
 // across devices. The modal open/close + Slack handlers live in the SETTINGS
 // MODAL section further down.
 function toggleAutoExport(on) {
-  localStorage.setItem('autoExportOnEnd', on ? '1' : '0');
+  safeSetItem('autoExportOnEnd', on ? '1' : '0');
   persistSetting({ autoExportOnEnd: !!on }).then((ok) => {
     if (!ok) toast(t('toast.settingSaveFailed', "Couldn't save that setting — check your connection and toggle it again."), 6000);
   });
@@ -6942,10 +6951,8 @@ function closeExportTruncatedBanner() {
 function closeSoloTesterBanner() {
   const banner = document.getElementById('solo-tester-banner');
   if (banner) banner.style.display = 'none';
-  try {
-    localStorage.setItem('att_dismiss_solo_tester', String(Date.now() + 7 * 24 * 3600 * 1000));
-    logUserEvent('solo_tester_banner_dismissed', {});
-  } catch (e) {}
+  safeSetItem('att_dismiss_solo_tester', String(Date.now() + 7 * 24 * 3600 * 1000));
+  try { logUserEvent('solo_tester_banner_dismissed', {}); } catch (e) {}
 }
 
 function inferSchoolName(domain) {
@@ -7757,9 +7764,9 @@ function maybeAskPaywallWhy() {
   if (_isPro || (_billing && _billing.plan === 'pro')) return;
   try {
     const n = (Number(localStorage.getItem('attPaywallDismissals')) || 0) + 1;
-    localStorage.setItem('attPaywallDismissals', String(n));
+    safeSetItem('attPaywallDismissals', String(n));
     if (n < 2 || localStorage.getItem('attPaywallWhyAsked')) return;
-    localStorage.setItem('attPaywallWhyAsked', '1'); // asked = spent, even if closed
+    safeSetItem('attPaywallWhyAsked', '1'); // asked = spent, even if closed
     const m = document.getElementById('paywall-why-modal');
     if (m) {
       resetPaywallWhyModal();
@@ -8069,6 +8076,7 @@ function onExportCtaClick() {
 }
 
 async function saveToSheets() {
+  if (state._isExportingSheets) return;
   if (_exporting) return toast(t('toast.exportInProgress','Export already in progress…'));
   // saveToSheets's finally re-enables the button the moment the export
   // resolves — inside the 4s window where it still reads "Exported". A second
@@ -8084,6 +8092,7 @@ async function saveToSheets() {
     return;
   }
   logUserEvent('export_clicked', { participantCount: state.participants.size });
+  state._isExportingSheets = true;
   _exporting = true;
   const btn = document.getElementById('btn-sheets');
   btn.disabled = true;
@@ -8139,6 +8148,7 @@ async function saveToSheets() {
   } finally {
     // Release lock unless modal is open (modal callbacks will release it)
     if (!document.getElementById('match-modal').classList.contains('open')) {
+      state._isExportingSheets = false;
       _exporting = false;
       btn.disabled = false;
     }
@@ -8206,6 +8216,7 @@ document.addEventListener('visibilitychange', handlePanelLeave);
 // calendar attendees (best-effort), exports silently, and emails the organizer
 // the sheet link. Bookkept by conferenceId so it survives panel reloads.
 async function maybeAutoExportOnMeetingEnd() {
+  if (state._isExportingSheets) return;
   if (!state.tracking) return;
   if (!state.signedIn) return;
   if (_exporting) return;
@@ -8223,6 +8234,7 @@ async function maybeAutoExportOnMeetingEnd() {
 
   // Reserve immediately — both the in-memory flag and the persisted one — so a
   // concurrent poll tick or a panel reload can't fire the export a second time.
+  state._isExportingSheets = true;
   state.autoExportedConferenceId = state.conferenceId;
   saveState();
   _exporting = true;
@@ -8263,6 +8275,7 @@ async function maybeAutoExportOnMeetingEnd() {
     logUserEvent('export_failed', { reason: 'auto_export_error', message: String(err.message || err).slice(0, 200) });
     captureError(err, { where: 'maybeAutoExportOnMeetingEnd', reason: 'auto_export_error' });
   } finally {
+    state._isExportingSheets = false;
     _exporting = false;
     if (btn) btn.disabled = false;
   }
@@ -8340,6 +8353,7 @@ function openMatchModal(attendees, emailMap) {
 
 function closeMatchModal() {
   document.getElementById('match-modal').classList.remove('open');
+  state._isExportingSheets = false;
   _exporting = false;
   const btn = document.getElementById('btn-sheets');
   if (btn) btn.disabled = false;
@@ -8656,7 +8670,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     let n = 1;
     try {
       n = (parseInt(localStorage.getItem('att_export_count') || '0', 10) || 0) + 1;
-      localStorage.setItem('att_export_count', String(n));
+      safeSetItem('att_export_count', String(n));
     } catch { /* private mode — best effort */ }
     // Mark this conference as exported so the auto-export poll loop doesn't
     // re-fire after a manual export (and so a reload after auto-export stays quiet).
@@ -8845,12 +8859,12 @@ async function copyCurrentMeetingShareLink(btn) {
 
 function onCelebrateReviewClick(e) {
   try { logUserEvent('review_ask_clicked', { source: 'celebrate_modal' }); } catch {}
-  localStorage.setItem('has_reviewed', '1');
+  safeSetItem('has_reviewed', '1');
 }
 
 function onUpgradeReviewClick(e) {
   try { logUserEvent('review_ask_clicked', { source: 'upgrade_modal' }); } catch {}
-  try { localStorage.setItem('has_clicked_review', '1'); } catch {}
+  safeSetItem('has_clicked_review', '1');
   const box = document.getElementById('verify-review-box');
   if (box) box.style.display = 'block';
 }
@@ -8891,7 +8905,7 @@ async function triggerReviewVerification(e) {
       statusEl.textContent = t('upgrade.reviewVerifiedSuccess', '🎉 Review verified! 1 Month of Pro unlocked!');
       btn.textContent = t('upgrade.proUnlocked', '✓ Pro Unlocked');
       state.isPro = true;
-      try { localStorage.setItem('has_reviewed', '1'); } catch {}
+      safeSetItem('has_reviewed', '1');
       if (typeof updateProFeatures === 'function') updateProFeatures();
       setTimeout(() => {
         if (typeof closeUpgradeModal === 'function') closeUpgradeModal();
@@ -8982,7 +8996,7 @@ function showDepartmentReferralModal() {
 }
 
 function onDepartmentReferralWhatsAppClick(e) {
-  try { localStorage.setItem('att_colleague_referral_dismissed', '1'); } catch (e) {}
+  safeSetItem('att_colleague_referral_dismissed', '1');
   try { logUserEvent('colleague_referral_whatsapp_clicked', {}); } catch (e) {}
 }
 
@@ -8994,7 +9008,7 @@ function openSchoolColleaguePrompt() {
 function closeDepartmentReferralModal() {
   const modal = document.getElementById('department-referral-modal');
   if (modal) modal.style.display = 'none';
-  try { localStorage.setItem('att_colleague_referral_dismissed', '1'); } catch (e) {}
+  safeSetItem('att_colleague_referral_dismissed', '1');
   try { logUserEvent('colleague_referral_modal_dismissed', {}); } catch (e) {}
   setTimeout(() => maybeAskSourcePostExport(), 400);
 }
@@ -9002,7 +9016,7 @@ function closeDepartmentReferralModal() {
 function copyDepartmentReferralLink() {
   const link = buildReferralLink('colleague');
   const copyBtn = document.getElementById('department-referral-copy-btn');
-  try { localStorage.setItem('att_colleague_referral_dismissed', '1'); } catch (e) {}
+  safeSetItem('att_colleague_referral_dismissed', '1');
   try { logUserEvent('colleague_referral_link_copied', {}); } catch (e) {}
 
   const showCopied = () => {
@@ -9039,7 +9053,7 @@ function copyDepartmentReferralLink() {
 }
 
 function onDepartmentReferralEmailClick(e) {
-  try { localStorage.setItem('att_colleague_referral_dismissed', '1'); } catch (e) {}
+  safeSetItem('att_colleague_referral_dismissed', '1');
   try { logUserEvent('colleague_referral_email_clicked', {}); } catch (e) {}
 }
 
@@ -9055,7 +9069,7 @@ function maybeShowRecurringTip(title) {
   let seen = [], shown = false;
   try { seen = JSON.parse(localStorage.getItem('att_exported_titles') || '[]'); shown = !!localStorage.getItem('att_recurring_tip_shown'); } catch (e) { return; }
   if (!seen.includes(key)) {
-    try { localStorage.setItem('att_exported_titles', JSON.stringify([...new Set([...seen, key])].slice(-50))); } catch (e) { /* private mode */ }
+    safeSetItem('att_exported_titles', JSON.stringify([...new Set([...seen, key])].slice(-50)));
     return; // first time we've seen this title — just remember it
   }
   if (shown) return; // repeat title, but we've already shown the tip once
@@ -9064,7 +9078,7 @@ function maybeShowRecurringTip(title) {
   const bar = document.getElementById('recurring-tip');
   if (!bar) return;
   bar.style.display = 'flex';
-  try { localStorage.setItem('att_recurring_tip_shown', '1'); } catch (e) { /* best-effort */ }
+  safeSetItem('att_recurring_tip_shown', '1');
 }
 
 function closeRecurringTip() {
@@ -9088,7 +9102,7 @@ function maybeShowClassSummaryUpsell() {
   const rt = document.getElementById('recurring-tip');
   if (rt && rt.style.display === 'flex') rt.style.display = 'none';
   bar.style.display = 'flex';
-  try { localStorage.setItem('att_class_summary_tip_shown', '1'); } catch (e) { /* best-effort */ }
+  safeSetItem('att_class_summary_tip_shown', '1');
   try { logUserEvent('class_summary_tip_shown', {}); } catch (e) { /* best-effort */ }
 }
 function closeClassSummaryTip() {
@@ -9114,7 +9128,7 @@ function recordSeriesSession(seriesId, conferenceId) {
       map[seriesId] = arr.slice(-100);
       const keys = Object.keys(map);
       if (keys.length > 30) delete map[keys[0]]; // bound growth across many series
-      localStorage.setItem('att_series_sessions', JSON.stringify(map));
+      safeSetItem('att_series_sessions', JSON.stringify(map));
     }
     count = (map[seriesId] || []).length;
   } catch (e) { return; } // private mode → skip silently
@@ -9133,7 +9147,7 @@ function maybeShowTermReportNudge(seriesId, count) {
   if (!bar || !msgEl) return;
   msgEl.textContent = t('tip.termReport', 'This class has met {n} times — see the whole-term attendance report: every student’s % across all sessions.').replace('{n}', count);
   bar.style.display = 'flex';
-  try { shownFor.push(seriesId); localStorage.setItem('att_term_report_shown', JSON.stringify(shownFor.slice(-50))); } catch (e) { /* best-effort */ }
+  try { shownFor.push(seriesId); safeSetItem('att_term_report_shown', JSON.stringify(shownFor.slice(-50))); } catch (e) { /* best-effort */ }
   try { logUserEvent('term_report_tip_shown', { sessions: count, isPro: !!_isPro }); } catch (e) { /* best-effort */ }
 }
 function onTermReportTipClick() {
@@ -9162,7 +9176,7 @@ function recordRealMeetingTracked(conferenceId) {
     const list = JSON.parse(localStorage.getItem('att_tracked_meetings') || '[]') || [];
     if (list.includes(conferenceId)) return;                  // this meeting already counted
     list.push(conferenceId);
-    localStorage.setItem('att_tracked_meetings', JSON.stringify(list.slice(-50)));
+    safeSetItem('att_tracked_meetings', JSON.stringify(list.slice(-50)));
   } catch (e) { return; } // private mode → skip silently
   // Keep recording every distinct real meeting (the count still climbs after the
   // review ask has fired) — the auto-export upsell needs it to reach its higher
@@ -9175,7 +9189,7 @@ function getReviewExperimentVariant() {
     let variant = localStorage.getItem('att_review_variant');
     if (!variant) {
       variant = Math.random() < 0.5 ? 'stars' : 'banner';
-      localStorage.setItem('att_review_variant', variant);
+      safeSetItem('att_review_variant', variant);
       try { logUserEvent('review_experiment_assigned', { variant }); } catch (e) {}
     }
     return variant;
@@ -9218,7 +9232,7 @@ function maybeShowReviewAsk() {
   if (btnBanner) btnBanner.href = `${state.backendUrl}/public/review-click?email=${encodeURIComponent(email)}&source=inapp_banner`;
 
   bar.style.display = 'flex';
-  try { localStorage.setItem('att_review_ask_shown', '1'); } catch (e) { /* best-effort */ }
+  safeSetItem('att_review_ask_shown', '1');
   try { logUserEvent('review_experiment_shown', { variant, count, attendees }); } catch (e) { /* best-effort */ }
 }
 
@@ -9227,7 +9241,7 @@ function dismissReviewExperiment(variant) {
     ? document.getElementById('review-stars-widget')
     : document.getElementById('review-ask');
   if (el) el.style.display = 'none';
-  try { localStorage.setItem('has_reviewed', '1'); } catch (e) {}
+  safeSetItem('has_reviewed', '1');
   try { logUserEvent('review_experiment_dismissed', { variant }); } catch (e) {}
 }
 
@@ -9236,8 +9250,8 @@ function closeReviewAsk() {
 }
 
 function onReviewExperimentMarketplaceClick(variant) {
-  try { localStorage.setItem('has_reviewed', '1'); } catch (e) {}
-  try { localStorage.setItem('has_clicked_review', '1'); } catch (e) {}
+  safeSetItem('has_reviewed', '1');
+  safeSetItem('has_clicked_review', '1');
   try { logUserEvent('review_ask_clicked', { source: `inapp_${variant}` }); } catch (e) {}
   try { logUserEvent('review_experiment_clicked', { variant, action: 'marketplace_click' }); } catch (e) {}
 }
@@ -9300,7 +9314,7 @@ async function submitReviewExperimentFeedback(variant) {
       body: JSON.stringify({ body: text, feedback: text, fromEmail: email, email, source: `experiment_${variant}`, rating: _selectedStarRating })
     }).catch(() => {});
   } catch (e) {}
-  try { localStorage.setItem('has_reviewed', '1'); } catch (e) {}
+  safeSetItem('has_reviewed', '1');
   toast(t('feedback.sent', 'Thank you for your feedback!'));
   dismissReviewExperiment(variant);
 }
@@ -9330,7 +9344,7 @@ function maybeShowAutoExportUpsell() {
   const bar = document.getElementById('auto-export-tip');
   if (!bar) return;
   bar.style.display = 'flex';
-  try { localStorage.setItem('att_auto_export_tip_shown', '1'); } catch (e) { /* best-effort */ }
+  safeSetItem('att_auto_export_tip_shown', '1');
   try { logUserEvent('auto_export_tip_shown', { tracked, exportCount }); } catch (e) { /* best-effort */ }
 }
 function onAutoExportTipClick() {
@@ -9428,7 +9442,7 @@ function loadCertOptions() {
   try { return JSON.parse(localStorage.getItem(CERT_OPTIONS_KEY) || '{}') || {}; } catch { return {}; }
 }
 function saveCertOptions(opts) {
-  try { localStorage.setItem(CERT_OPTIONS_KEY, JSON.stringify(opts)); } catch { /* private mode */ }
+  safeSetItem(CERT_OPTIONS_KEY, JSON.stringify(opts));
 }
 
 // Free, shareable attendance report. The saved org name rides along as the
@@ -9621,7 +9635,7 @@ function populateTimezoneSelect(activeTz) {
 
 async function changeTimezone(tz) {
   if (!tz) return;
-  localStorage.setItem('userTimezone', tz);
+  safeSetItem('userTimezone', tz);
   try {
     const res = await authFetch(`${state.backendUrl}/settings`, {
       method: 'PUT',
@@ -9671,7 +9685,7 @@ async function openSettingsModal() {
       // Server is the source of truth — sync all controls + the localStorage
       // fast-path used by the auto-export poll loop.
       if (autoCheckbox) autoCheckbox.checked = data.autoExportOnEnd === true;
-      localStorage.setItem('autoExportOnEnd', data.autoExportOnEnd ? '1' : '0');
+      safeSetItem('autoExportOnEnd', data.autoExportOnEnd ? '1' : '0');
       if (emailCheckbox) emailCheckbox.checked = data.emailOptOut !== true;
       const notifPrefs = data.notificationPreferences || {};
       const exportPref = document.getElementById('setting-pref-exportSummary');
@@ -9685,7 +9699,7 @@ async function openSettingsModal() {
       const extraInput = document.getElementById('settings-extra-emails');
       if (extraInput) extraInput.value = (data.digestExtraEmails || []).join(', ');
       if (data.timezone) {
-        localStorage.setItem('userTimezone', data.timezone);
+        safeSetItem('userTimezone', data.timezone);
         populateTimezoneSelect(data.timezone);
       } else if (detectedTz) {
         authFetch(`${state.backendUrl}/settings`, {

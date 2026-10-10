@@ -375,9 +375,10 @@ async function handleCanvasGradeSync(req, res) {
     // 1. If no assignmentId, or client requested createAssignment, create a new assignment
     const title = typeof req.body?.title === 'string' ? req.body.title.trim() : '';
     const rawMax = req.body?.maxPoints;
-    const maxPoints = typeof rawMax === 'number' && rawMax > 0 ? rawMax : (parseInt(rawMax, 10) || 100);
+    let maxPoints = typeof rawMax === 'number' && rawMax > 0 ? rawMax : (parseInt(rawMax, 10) || null);
 
     if ((!assignmentId || assignmentId === '__new__') && title) {
+      if (!maxPoints) maxPoints = 100;
       const createRes = await fetch(`${instanceUrl}/api/v1/courses/${encodeURIComponent(courseId)}/assignments`, {
         method: 'POST',
         headers: {
@@ -405,6 +406,28 @@ async function handleCanvasGradeSync(req, res) {
 
     if (!assignmentId || assignmentId === '__new__') {
       return res.status(400).json({ error: 'assignmentId is required (or provide title to create a new assignment).' });
+    }
+
+    if (!maxPoints) {
+      try {
+        const assignRes = await fetch(`${instanceUrl}/api/v1/courses/${encodeURIComponent(courseId)}/assignments/${encodeURIComponent(assignmentId)}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+          },
+        });
+        if (assignRes.ok) {
+          const assignData = await assignRes.json();
+          if (assignData && typeof assignData.points_possible === 'number' && assignData.points_possible > 0) {
+            maxPoints = assignData.points_possible;
+          }
+        }
+      } catch (err) {
+        log.warn('canvas: failed to fetch assignment details for points_possible', { error: err.message });
+      }
+      if (!maxPoints) {
+        maxPoints = 100;
+      }
     }
 
     // 2. Fetch enrolled students to match records by email / login_id / name (with pagination support)

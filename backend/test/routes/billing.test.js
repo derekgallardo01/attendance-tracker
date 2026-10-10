@@ -21,6 +21,7 @@ jest.mock('stripe', () => jest.fn(() => mockStripeInstance));
 jest.mock('../../src/lib/notifications', () => ({
   sendUpgradeLinkEmail: jest.fn().mockResolvedValue({ sent: true }),
   sendSubscriptionCancelledEmail: jest.fn().mockResolvedValue({ sent: true }),
+  sendInvoiceActionRequiredEmail: jest.fn().mockResolvedValue({ sent: true }),
   sendAdminEmail: jest.fn().mockResolvedValue({ sent: true }),
 }));
 
@@ -727,6 +728,17 @@ describe('requireProPlan (direct)', () => {
     c = mk(); await requireProPlan(c.req, c.res, c.next);
     expect(c.next).toHaveBeenCalled();
   });
+
+  test('allows an individual Pro pass holder through even when domain is free', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x'; process.env.STRIPE_PRICE_ID = 'price_x';
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUserPlan.mockResolvedValue({ plan: 'pro' });
+    const req = { user: { domain: 'freedomain.com', email: 'teacher@freedomain.com' } };
+    const res = { status: jest.fn().mockReturnThis(), json: jest.fn().mockReturnThis() };
+    const next = jest.fn();
+    await requireProPlan(req, res, next);
+    expect(next).toHaveBeenCalled();
+  });
 });
 
 describe('billing status error', () => {
@@ -1216,6 +1228,48 @@ describe('webhook hygiene (dedupe + refunds + org-domain fallback)', () => {
     const res = await post();
     expect(res.status).toBe(500);
     expect(firestore.releaseWebhookEvent).toHaveBeenCalledWith('evt_retry');
+  });
+
+  test('invoice.payment_action_required sends hosted invoice link to customer', async () => {
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_act_req', type: 'invoice.payment_action_required',
+      data: {
+        object: {
+          id: 'in_123',
+          customer_email: 'buyer@school.edu',
+          hosted_invoice_url: 'https://invoice.stripe.com/i/acct_123/invst_456',
+          amount_due: 999,
+          currency: 'usd',
+        },
+      },
+    });
+    const res = await post();
+    expect(res.status).toBe(200);
+    expect(notifications.sendInvoiceActionRequiredEmail).toHaveBeenCalledWith({
+      to: 'buyer@school.edu',
+      hostedInvoiceUrl: 'https://invoice.stripe.com/i/acct_123/invst_456',
+      amountDue: 999,
+      currency: 'usd',
+    });
+  });
+
+  test('customer.subscription.deleted invalidates in-memory plan caches', async () => {
+    const { planCache, userPlanCache } = require('../../src/routes/billing');
+    planCache.set('school.edu', { plan: 'pro', at: Date.now() });
+    userPlanCache.set('school.edu:teacher@school.edu', { plan: 'pro', at: Date.now() });
+
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_del_sub', type: 'customer.subscription.deleted',
+      data: {
+        object: {
+          id: 'sub_del',
+          status: 'canceled',
+          metadata: { individual: '1', domain: 'school.edu', email: 'teacher@school.edu' },
+        },
+      },
+    });
+    await post();
+    expect(userPlanCache.has('school.edu:teacher@school.edu')).toBe(false);
   });
 
   test('invoice.payment_failed is acknowledged log-only (dunning handles the downgrade)', async () => {

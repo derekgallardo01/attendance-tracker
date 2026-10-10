@@ -200,6 +200,18 @@ describe('renderCertificatesPdf', () => {
     const buf = await renderCertificatesPdf([]);
     expect(buf.slice(0, 5).toString('latin1')).toBe('%PDF-');
   });
+
+  test('dynamically downscales font for long names (>35 chars) and long session titles (>45 chars)', async () => {
+    const longName = 'Dr. Bartholomew Maximillian Montgomery-Hetherington III';
+    const longSession = 'Advanced Interdisciplinary Seminar on Global Microeconomics, Quantitative Methods and Ethics in Public Policy';
+    const models = buildCertificateModels({
+      meeting: { title: longSession, conferenceId: 'long-conf' },
+      attendees: [{ displayName: longName, email: 'long@school.edu', present: true }],
+    });
+    const buf = await renderCertificatesPdf(models);
+    expect(buf.slice(0, 5).toString('latin1')).toBe('%PDF-');
+    expect(buf.length).toBeGreaterThan(1000);
+  });
 });
 
 describe('renderReportPdf', () => {

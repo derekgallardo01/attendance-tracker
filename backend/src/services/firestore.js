@@ -1261,7 +1261,11 @@ async function persistExport(domain, { meetingTitle, tabName, exportedAt, partic
       const monthKey = exportMonthKey();
       const prior = existing.data();
       const reexportCount = (prior.reexportMonth === monthKey ? (prior.reexportCount || 0) : 0) + 1;
-      tx.set(ref, { reexportCount, reexportMonth: monthKey, lastReexportAt: now }, { merge: true });
+      const updateData = { reexportCount, reexportMonth: monthKey, lastReexportAt: now };
+      if (!prior.sheetUrl && sheetUrl) {
+        updateData.sheetUrl = sheetUrl;
+      }
+      tx.set(ref, updateData, { merge: true });
       return { created: false, reexportCount };
     });
     if (dedupe) {
@@ -1937,6 +1941,10 @@ async function countUserMonthlyExports(domain, email) {
       if (createdMs >= startOfMonthMs) {
         // Solo self-tests (<= 1 attendee) do not consume the teacher's free monthly quota
         if (data.participantCount != null && Number(data.participantCount) <= 1) {
+          continue;
+        }
+        // Free CSV/Excel downloads do not burn monthly Sheets export quota
+        if (!data.sheetUrl && (data.exportType === 'csv' || data.exportType === 'excel')) {
           continue;
         }
         count++;

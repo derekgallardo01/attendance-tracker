@@ -326,16 +326,45 @@ function drawCertificate(doc, font, m) {
   const cx = w / 2;
   doc.font(font).fillColor('#1e3a8a').fontSize(30).text('Certificate of Attendance', 0, 90, { width: w, align: 'center' });
   doc.fillColor('#374151').fontSize(13).text('This certifies that', 0, 150, { width: w, align: 'center' });
-  doc.fillColor('#111827').fontSize(28).text(m.name, 0, 180, { width: w, align: 'center' });
-  doc.fillColor('#374151').fontSize(13).text('attended', 0, 232, { width: w, align: 'center' });
-  doc.fillColor('#111827').fontSize(18).text(m.session, 60, 258, { width: w - 120, align: 'center' });
+
+  // Dynamic font downscaling for long attendee names (>35 chars or width > w - 80)
+  let nameFontSize = 28;
+  const maxNameWidth = w - 80;
+  const nameStr = m.name || '';
+  if (nameStr.length > 35) {
+    nameFontSize = 22;
+  }
+  while (nameFontSize > 14 && doc.font(font).fontSize(nameFontSize).widthOfString(nameStr) > maxNameWidth) {
+    nameFontSize -= 1;
+  }
+  doc.fillColor('#111827').fontSize(nameFontSize).text(nameStr, 0, 180, { width: w, align: 'center' });
+
+  const attendedY = Math.max(232, doc.y + 12);
+  doc.fillColor('#374151').fontSize(13).text('attended', 0, attendedY, { width: w, align: 'center' });
+
+  // Dynamic font downscaling for long session titles (>45 chars or width > w - 120)
+  let sessionFontSize = 18;
+  const maxSessionWidth = w - 120;
+  const sessionStr = m.session || '';
+  if (sessionStr.length > 45) {
+    sessionFontSize = 15;
+  }
+  while (sessionFontSize > 11 && doc.font(font).fontSize(sessionFontSize).widthOfString(sessionStr) > maxSessionWidth) {
+    sessionFontSize -= 1;
+  }
+  const sessionY = Math.max(258, doc.y + 10);
+  doc.fillColor('#111827').fontSize(sessionFontSize).text(sessionStr, 60, sessionY, { width: maxSessionWidth, align: 'center' });
 
   const detail = [
     m.dateLabel && `on ${m.dateLabel}`,
     m.creditHoursLabel ? `for ${m.creditHoursLabel}` : `for ${m.durationLabel}`,
   ].filter(Boolean).join('   ·   ');
-  doc.fillColor('#374151').fontSize(13).text(detail, 0, 300, { width: w, align: 'center' });
-  if (m.courseCode) doc.fillColor('#6b7280').fontSize(11).text(`Reference: ${m.courseCode}`, 0, 326, { width: w, align: 'center' });
+  const detailY = Math.max(300, doc.y + 16);
+  doc.fillColor('#374151').fontSize(13).text(detail, 0, detailY, { width: w, align: 'center' });
+  if (m.courseCode) {
+    const refY = Math.max(326, doc.y + 8);
+    doc.fillColor('#6b7280').fontSize(11).text(`Reference: ${m.courseCode}`, 0, refY, { width: w, align: 'center' });
+  }
 
   // Signature + issuer
   const sigY = h - 130;

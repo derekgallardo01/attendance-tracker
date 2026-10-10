@@ -311,6 +311,7 @@ describe('POST /api/event — frontend event logging', () => {
       meetingTitle: 'Attendance CSV',
       participantCount: 0,
       conferenceId: expect.stringMatching(/^csv_\d+/),
+      exportType: 'csv',
     }));
   });
 
@@ -341,6 +342,7 @@ describe('POST /api/event — frontend event logging', () => {
       autoExport: false,
       sheetUrl: null,
       tabName: 'Excel Export',
+      exportType: 'excel',
     }));
   });
 

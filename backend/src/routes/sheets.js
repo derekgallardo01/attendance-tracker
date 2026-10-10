@@ -335,28 +335,6 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
 
     let tabName = sanitizeTabName(clientTabName || `${meetingTitle || 'Meeting'} ${new Date(exportedAt).toISOString()}`);
 
-    // Handle duplicate tab names by appending a counter
-    let sheetId = null;
-    for (let attempt = 0; attempt < 5; attempt++) {
-      try {
-        // The collision suffix must fit inside Sheets' 100-char title limit —
-        // appending past a 100-char base produced a non-"already exists" 400
-        // that aborted the whole export.
-        const suffix = ` (${attempt + 1})`;
-        const tryName = attempt === 0 ? tabName : `${tabName.slice(0, 100 - suffix.length)}${suffix}`;
-        const addResp = await sheets.spreadsheets.batchUpdate({
-          spreadsheetId,
-          requestBody: { requests: [{ addSheet: { properties: { title: tryName } } }] },
-        });
-        tabName = tryName;
-        sheetId = addResp.data.replies[0].addSheet.properties.sheetId;
-        break;
-      } catch (e) {
-        if (e.message?.includes('already exists') && attempt < 4) continue;
-        throw e;
-      }
-    }
-
     // Meeting duration for attendance % calculation
     const joinTimes = participants.map(p => p.joinTimeISO).filter(Boolean).map(t => new Date(t));
     const meetStart = meetingStartTime ? new Date(meetingStartTime) : (joinTimes.length ? new Date(Math.min(...joinTimes)) : null);
@@ -490,6 +468,40 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
     ];
 
     const allValues = [...summary, header, ...allRows, ...footer];
+
+    // Handle duplicate tab names by appending a counter
+    let sheetId = null;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        // The collision suffix must fit inside Sheets' 100-char title limit —
+        // appending past a 100-char base produced a non-"already exists" 400
+        // that aborted the whole export.
+        const suffix = ` (${attempt + 1})`;
+        const tryName = attempt === 0 ? tabName : `${tabName.slice(0, 100 - suffix.length)}${suffix}`;
+        const addResp = await sheets.spreadsheets.batchUpdate({
+          spreadsheetId,
+          requestBody: {
+            requests: [{
+              addSheet: {
+                properties: {
+                  title: tryName,
+                  gridProperties: {
+                    rowCount: Math.max(1000, allValues.length + 50),
+                  },
+                },
+              },
+            }],
+          },
+        });
+        tabName = tryName;
+        sheetId = addResp.data.replies[0].addSheet.properties.sheetId;
+        break;
+      } catch (e) {
+        if (e.message?.includes('already exists') && attempt < 4) continue;
+        throw e;
+      }
+    }
+
     await sheets.spreadsheets.values.update({
       spreadsheetId,
       range: a1Range(tabName),
@@ -517,20 +529,43 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
               ? `Class Summary — ${match.title || 'Recurring'}`
               : `Class Summary (Pro) — ${match.title || 'Recurring'}`
           );
+          const summaryValues = isPro
+            ? buildClassSummaryValues(match, new Date(exportedAt).toISOString())
+            : buildClassSummaryTeaserValues(match);
+          let summaryTabExisted = false;
           try {
             await sheets.spreadsheets.batchUpdate({
               spreadsheetId,
-              requestBody: { requests: [{ addSheet: { properties: { title: summaryTab } } }] },
+              requestBody: {
+                requests: [{
+                  addSheet: {
+                    properties: {
+                      title: summaryTab,
+                      gridProperties: {
+                        rowCount: Math.max(1000, summaryValues.length + 50),
+                      },
+                    },
+                  },
+                }],
+              },
             });
-          } catch (_) { /* tab already exists — reuse and overwrite it */ }
+          } catch (_) {
+            summaryTabExisted = true;
+          }
+          if (summaryTabExisted) {
+            try {
+              await sheets.spreadsheets.values.clear({
+                spreadsheetId,
+                range: a1Range(summaryTab),
+              });
+            } catch (_) { /* best-effort clear */ }
+          }
           await sheets.spreadsheets.values.update({
             spreadsheetId,
             range: a1Range(summaryTab),
             valueInputOption: 'RAW',
             requestBody: {
-              values: isPro
-                ? buildClassSummaryValues(match, new Date(exportedAt).toISOString())
-                : buildClassSummaryTeaserValues(match),
+              values: summaryValues,
             },
           });
         }

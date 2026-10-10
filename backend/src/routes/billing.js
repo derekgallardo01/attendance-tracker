@@ -1379,6 +1379,25 @@ router.post('/billing/school-license-request', requireAuth, async (req, res) => 
   }
 });
 
+// Short-lived cache of the last successfully-read plan per domain / user. Lets the gate
+// ride out a transient Firestore blip for a paying customer WITHOUT the old
+// fail-open behavior, which silently granted Pro to every domain on any read
+// error — the opposite of what a paywall should do once it's live.
+const planCache = new Map(); // domain -> { plan, at }
+const userPlanCache = new Map(); // `${domain}:${email}` -> { plan, at }
+const PLAN_CACHE_TTL_MS = 5 * 60 * 1000;
+
+function invalidatePlanCache(domain) {
+  if (domain && typeof domain === 'string') planCache.delete(domain.toLowerCase());
+}
+
+function invalidateUserPlanCache(domain, email) {
+  if (email && typeof email === 'string') {
+    const key = `${(domain || '').toLowerCase()}:${email.toLowerCase()}`;
+    userPlanCache.delete(key);
+  }
+}
+
 // The webhook handler is exported separately so app.js can mount it with a RAW
 // body parser BEFORE express.json() — Stripe signature verification needs the
 // exact bytes. Mounting it inside this (post-json) router would break the
@@ -1442,6 +1461,7 @@ async function webhookHandler(req, res) {
             const individualPlanExpiresAt = isEducatorAnnualOneTime
               ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
               : null;
+            invalidateUserPlanCache(domain, email.toLowerCase());
             await setUserPlan(domain, email.toLowerCase(), {
               individualPlan: 'pro',
               individualBillingStatus: 'active',
@@ -1505,6 +1525,7 @@ async function webhookHandler(req, res) {
             log.error('billing: team checkout completed with NO resolvable domain — manual provisioning needed', { sessionId: s.id, email: s.customer_details?.email || s.customer_email || null });
           }
           if (domain) {
+            invalidatePlanCache(domain);
             await setTenantPlan(domain, {
               plan: 'pro',
               billingStatus: 'active',
@@ -1564,9 +1585,10 @@ async function webhookHandler(req, res) {
           currentPeriodEnd: currentPeriodEnd || null,
         };
         if (sub.metadata?.individual === '1') {
-          const domain = sub.metadata?.domain;
           const email = sub.metadata?.email;
+          const domain = sub.metadata?.domain || (email && email.includes('@') ? email.split('@')[1] : null);
           if (domain && email) {
+            invalidateUserPlanCache(domain, email);
             if (event.type === 'customer.subscription.deleted') {
               const userPlan = await getUserPlan(domain, email);
               if (userPlan?.individualPlanType === 'lifetime' || (userPlan?.stripeSubscriptionId && userPlan.stripeSubscriptionId !== sub.id)) {
@@ -1587,6 +1609,7 @@ async function webhookHandler(req, res) {
         } else {
           const domain = sub.metadata?.domain;
           if (domain) {
+            invalidatePlanCache(domain);
             if (event.type === 'customer.subscription.deleted') {
               const tenant = await getTenantPlan(domain);
               if (tenant?.planType === 'lifetime' || (tenant?.stripeSubscriptionId && tenant.stripeSubscriptionId !== sub.id)) {
@@ -1721,9 +1744,11 @@ async function webhookHandler(req, res) {
         const planValue = regrant ? 'pro' : 'free';
         if (isIndividual && email.includes('@')) {
           const domain = meta?.domain || email.split('@')[1];
+          invalidateUserPlanCache(domain, email);
           await setUserPlan(domain, email, { individualPlan: planValue, individualBillingStatus: status });
           try { await logEvent(domain, { email, type: regrant ? 'dispute_won' : 'refunded', meta: { plan: planLabel, kind: event.type } }); } catch {}
         } else if (orgDomain && !isPersonalDomain(orgDomain)) {
+          invalidatePlanCache(orgDomain);
           await setTenantPlan(orgDomain, { plan: planValue, billingStatus: status });
           try { await logEvent(orgDomain, { email: meta?.email || meta?.initiatedBy || 'admin', type: regrant ? 'dispute_won' : 'refunded', meta: { plan: planLabel, kind: event.type } }); } catch {}
         } else {
@@ -1736,6 +1761,32 @@ async function webhookHandler(req, res) {
         // past_due/unpaid; this is observability only.
         log.warn('billing: invoice payment failed', { eventId: event.id, customer: event.data.object?.customer || null });
         break;
+      case 'invoice.payment_action_required': {
+        const inv = event.data.object;
+        const hostedInvoiceUrl = inv?.hosted_invoice_url;
+        const customerEmail = inv?.customer_email;
+        log.warn('billing: invoice payment action required (3DS/SCA)', {
+          eventId: event.id,
+          invoiceId: inv?.id,
+          customer: inv?.customer,
+          customerEmail,
+          hostedInvoiceUrl,
+        });
+        if (customerEmail && hostedInvoiceUrl) {
+          try {
+            const { sendInvoiceActionRequiredEmail } = require('../lib/notifications');
+            await sendInvoiceActionRequiredEmail({
+              to: customerEmail,
+              hostedInvoiceUrl,
+              amountDue: inv?.amount_due,
+              currency: inv?.currency,
+            });
+          } catch (notifErr) {
+            log.error('billing: failed to send invoice action required notification', { error: notifErr.message });
+          }
+        }
+        break;
+      }
       default:
         // Ignore other event types.
         break;
@@ -1750,15 +1801,7 @@ async function webhookHandler(req, res) {
   }
 }
 
-// Short-lived cache of the last successfully-read plan per domain. Lets the gate
-// ride out a transient Firestore blip for a paying customer WITHOUT the old
-// fail-open behavior, which silently granted Pro to every domain on any read
-// error — the opposite of what a paywall should do once it's live.
-const planCache = new Map(); // domain -> { plan, at }
-const userPlanCache = new Map(); // `${domain}:${email}` -> { plan, at }
-const PLAN_CACHE_TTL_MS = 5 * 60 * 1000;
-
-// Express middleware: gate a route behind the Pro plan (per-domain). While
+// Express middleware: gate a route behind the Pro plan (per-domain or per-user). While
 // billing is not configured the gate is OPEN, so paywalled features keep
 // working until monetization is switched on. Once configured, non-Pro domains
 // get 402 with an upgrade hint. On a read error we fall back to a recent known
@@ -1768,20 +1811,28 @@ async function requireProPlan(req, res, next) {
   if (isSuperAdminUser(req.user?.email)) return next();
   if (!billingConfigured()) return next(); // pre-launch: nothing is gated
   const domain = req.user?.domain;
+  const domainKey = (domain || '').toLowerCase();
   try {
     const { plan } = await getTenantPlan(domain);
-    planCache.set(domain, { plan, at: Date.now() });
+    planCache.set(domainKey, { plan, at: Date.now() });
     if (plan === 'pro') return next();
-    return res.status(402).json({ error: 'This is a Pro feature.', upgrade: true });
   } catch (err) {
-    const cached = planCache.get(domain);
+    const cached = planCache.get(domainKey);
     const fresh = cached && (Date.now() - cached.at) < PLAN_CACHE_TTL_MS;
     log.warn('billing: requireProPlan read failed', {
       domain, usedCache: !!fresh, cachedPlan: cached?.plan || null, error: err.message,
     });
     if (fresh && cached.plan === 'pro') return next();
+    if (req.user?.email && await userPlanIsPro(domain, req.user.email)) return next();
     return res.status(402).json({ error: 'This is a Pro feature.', upgrade: true, transient: !fresh });
   }
+
+  // Workspace user with an individual pass, or personal-domain user with user plan:
+  if (req.user?.email && await userPlanIsPro(domain, req.user.email)) {
+    return next();
+  }
+
+  return res.status(402).json({ error: 'This is a Pro feature.', upgrade: true });
 }
 
 // Boolean form of the gate, for features that DEGRADE gracefully rather than
@@ -1817,12 +1868,13 @@ async function planIsPro(domain, email) {
     if (!email || !individualBillingConfigured()) return true;
     return userPlanIsPro(domain, email);
   }
+  const domainKey = (domain || '').toLowerCase();
   try {
     const { plan } = await getTenantPlan(domain);
-    planCache.set(domain, { plan, at: Date.now() });
+    planCache.set(domainKey, { plan, at: Date.now() });
     if (plan === 'pro') return true;
   } catch (err) {
-    const cached = planCache.get(domain);
+    const cached = planCache.get(domainKey);
     const fresh = cached && (Date.now() - cached.at) < PLAN_CACHE_TTL_MS;
     log.warn('billing: planIsPro read failed', { domain, usedCache: !!fresh, error: err.message });
     if (fresh && cached.plan === 'pro') return true;
@@ -1861,6 +1913,11 @@ module.exports = {
   webhookHandler,
   requireProPlan,
   planIsPro,
+  userPlanIsPro,
+  planCache,
+  userPlanCache,
+  invalidatePlanCache,
+  invalidateUserPlanCache,
   createReferralPromoCode,
   sendUpgradeLinkForUser,
   upgradeLinkCooldown,

@@ -366,9 +366,15 @@ describe('POST /api/canvas/courses/:courseId/assignments/:assignmentId/sync-grad
   });
 
   test('matches students by email and posts batch grades', async () => {
-    // 1st call: fetch enrolled students
-    // 2nd call: post update_grades
+    // 1st call: fetch assignment details
+    // 2nd call: fetch enrolled students
+    // 3rd call: post update_grades
     global.fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ id: 201, points_possible: 100 }),
+      })
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
@@ -400,10 +406,10 @@ describe('POST /api/canvas/courses/:courseId/assignments/:assignmentId/sync-grad
     expect(res.body.success).toBe(true);
     expect(res.body.syncedCount).toBe(2);
 
-    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(global.fetch).toHaveBeenCalledTimes(3);
 
     // Verify batch update_grades body
-    const updateCall = global.fetch.mock.calls[1];
+    const updateCall = global.fetch.mock.calls[2];
     expect(updateCall[0]).toBe('https://canvas.school.edu/api/v1/courses/101/assignments/201/submissions/update_grades');
     const updateBody = JSON.parse(updateCall[1].body);
     expect(updateBody.grade_data['1001']).toEqual(expect.objectContaining({ posted_grade: '100' }));
@@ -411,6 +417,47 @@ describe('POST /api/canvas/courses/:courseId/assignments/:assignmentId/sync-grad
 
     const unmatched = res.body.results.find(r => r.email === 'snoopy@school.edu');
     expect(unmatched.status).toBe('unmatched');
+  });
+
+  test('fetches existing assignment points_possible to scale grades dynamically when maxPoints not specified', async () => {
+    global.fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ id: 201, points_possible: 50 }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => [
+          { id: 101, email: 'p@school.edu' },
+          { id: 102, email: 'l@school.edu' },
+        ],
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ id: 999 }),
+      });
+
+    const res = await request(app)
+      .post('/api/canvas/courses/101/assignments/201/sync-grades')
+      .set(authedHeader('teacher@school.edu', 'school.edu'))
+      .set('x-canvas-url', 'https://canvas.school.edu')
+      .set('x-canvas-token', 'tok')
+      .send({
+        records: [
+          { email: 'p@school.edu', status: 'present' },
+          { email: 'l@school.edu', status: 'late' },
+        ],
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    const updateCall = global.fetch.mock.calls[2];
+    const updateBody = JSON.parse(updateCall[1].body);
+    expect(updateBody.grade_data['101'].posted_grade).toBe('50');
+    expect(updateBody.grade_data['102'].posted_grade).toBe('40'); // 80% of 50
   });
 
   test('auto-creates assignment if assignmentId is __new__ with title', async () => {
@@ -504,10 +551,16 @@ describe('POST /api/canvas/courses/:courseId/assignments/:assignmentId/sync-grad
   });
 
   test('follows pagination Link headers to load full student roster (>100 students)', async () => {
-    // 1st call: page 1 of students with Link header pointing to page 2
-    // 2nd call: page 2 of students
-    // 3rd call: post update_grades
+    // 1st call: fetch assignment details
+    // 2nd call: page 1 of students with Link header pointing to page 2
+    // 3rd call: page 2 of students
+    // 4th call: post update_grades
     global.fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ id: 201, points_possible: 100 }),
+      })
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
@@ -542,11 +595,19 @@ describe('POST /api/canvas/courses/:courseId/assignments/:assignmentId/sync-grad
 
     expect(res.status).toBe(200);
     expect(res.body.syncedCount).toBe(2);
-    expect(global.fetch).toHaveBeenCalledTimes(3);
+    expect(global.fetch).toHaveBeenCalledTimes(4);
   });
 
   test('matches students by institutional username against login_id', async () => {
+    // 1st call: fetch assignment details
+    // 2nd call: fetch students
+    // 3rd call: post update_grades
     global.fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ id: 201, points_possible: 100 }),
+      })
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
@@ -571,6 +632,7 @@ describe('POST /api/canvas/courses/:courseId/assignments/:assignmentId/sync-grad
     expect(res.status).toBe(200);
     expect(res.body.syncedCount).toBe(1);
     expect(res.body.results[0].canvasUserId).toBe(501);
+    expect(global.fetch).toHaveBeenCalledTimes(3);
   });
 
   test('supports numeric strings and custom maxPoints', async () => {
@@ -687,6 +749,11 @@ describe('POST /api/canvas/courses/:courseId/assignments/:assignmentId/sync-grad
       firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
       firestore.isMeetingUnlocked.mockResolvedValue(true);
       global.fetch
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => ({ id: 201, points_possible: 100 }),
+        })
         .mockResolvedValueOnce({
           ok: true,
           status: 200,

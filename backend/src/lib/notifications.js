@@ -3597,9 +3597,70 @@ async function sendReviewRewardEmail(params) {
   }, 'review reward email', { to, lang: content.lang });
 }
 
+/**
+ * Send an email notification when 3D Secure / SCA payment action is required to authorize an invoice payment.
+ */
+async function sendInvoiceActionRequiredEmail({
+  to,
+  hostedInvoiceUrl,
+  amountDue,
+  currency = 'usd',
+} = {}) {
+  if (!getResend()) return { skipped: 'no resend' };
+  if (!to || !to.includes('@')) return { skipped: 'invalid email' };
+  if (!hostedInvoiceUrl) return { skipped: 'no invoice url' };
+
+  const formattedAmount = (amountDue != null && amountDue > 0)
+    ? `$${(amountDue / 100).toFixed(2)} ${currency ? currency.toUpperCase() : 'USD'}`
+    : null;
+
+  const subject = formattedAmount
+    ? `Action Required: Authorize your Attendance Tracker payment (${formattedAmount})`
+    : 'Action Required: Authorize your Attendance Tracker payment';
+
+  const contentHtml = `
+    <p style="margin:0 0 16px;color:#e6edf3;font-size:14px;line-height:1.6;">
+      Your bank requires additional authentication (3D Secure / SCA) to complete your Attendance Tracker payment${formattedAmount ? ` of <strong>${escape(formattedAmount)}</strong>` : ''}.
+    </p>
+    <p style="margin:0 0 20px;color:#e6edf3;font-size:14px;line-height:1.6;">
+      Please confirm the payment with your bank within 24 hours to prevent your Pro subscription from lapsing.
+    </p>
+  `;
+
+  const html = buildDesignSystemEmail({
+    badge: '⚠️ Action Required',
+    badgeType: 'warning',
+    title: 'Payment Authorization Needed',
+    subtitle: 'Your card issuer requires 3D Secure verification.',
+    contentHtml,
+    ctaText: 'Authorize Payment Now →',
+    ctaUrl: hostedInvoiceUrl,
+    ctaColor: 'blue',
+  });
+
+  const text = [
+    'Action Required: Authorize your Attendance Tracker payment',
+    '',
+    `Your bank requires additional authentication to complete your payment${formattedAmount ? ` of ${formattedAmount}` : ''}.`,
+    'Please complete the verification here:',
+    hostedInvoiceUrl,
+    '',
+    'Confirm within 24 hours to keep your Pro access uninterrupted.',
+  ].join('\n');
+
+  return dispatchEmail({
+    from: makeFrom('Attendance Tracker Billing'),
+    to,
+    subject,
+    text,
+    html,
+    tags: [{ name: 'type', value: 'payment_action_required' }],
+  }, 'payment action required notification', { to });
+}
+
 module.exports = {
   sendSignupWebhook, sendUpgradeNotification, sendAdminSubscriptionCancelledNotification, sendAdminEmailUnsubscribedNotification, sendAdminMilestoneEmail, maybeSendSignupNotification, sendWelcomeEmail, sendReferralNotification, maybeSendReferralNotification, flushDeferredNotifications, sendAdminEmail, sendErrorAlertEmail, sendErrorSpikeAlertEmail, sendWeeklySelfReport, sendExportNotification, sendOrgWeeklyDigest,
-  sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendUpgradeLinkEmail, sendSubscriptionCancelledEmail, sendReviewRewardEmail, buildReviewRewardEmailContent, sendReviewRewardDraftAlert, createReviewApprovalToken, verifyReviewApprovalToken, reviewApprovalUrl,
+  sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendUpgradeLinkEmail, sendSubscriptionCancelledEmail, sendInvoiceActionRequiredEmail, sendReviewRewardEmail, buildReviewRewardEmailContent, sendReviewRewardDraftAlert, createReviewApprovalToken, verifyReviewApprovalToken, reviewApprovalUrl,
   sendSlackDigest, sendSlackTestPing, buildSlackDigestBlocks, buildSlackFallbackText, maskSlackWebhook,
   sendChatDigest, sendChatTestPing, buildChatDigestCard, maskGoogleChatWebhook,
   sendDiscordDigest, sendDiscordTestPing, buildDiscordDigestEmbed, maskDiscordWebhook,

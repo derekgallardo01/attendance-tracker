@@ -189,7 +189,7 @@ async function fetchConferenceParticipants(recordName, token, meetingEndTime = n
       leaveTimeISO: leaveIso,
       joinTime:     joinIso,
       leaveTime:    leaveIso,
-      ...(sessionsFetchFailed ? {} : { durationMs: sessionsDurationMs(sessions) }),
+      ...(sessionsFetchFailed ? {} : { durationMs: sessionsDurationMs(sessions, meetingEndMs || Date.now()) }),
       present,
       sessions:     sessions.length || 1,
     };

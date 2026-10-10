@@ -178,6 +178,7 @@ router.post('/event', requireAuth, async (req, res) => {
           email: req.user.email,
           autoExport: false,
           conferenceId: confId,
+          exportType: isExcel ? 'excel' : 'csv',
         });
       } catch (err) {
         log.warn(`${type}: persistExport failed`, { error: err.message, email: req.user.email });
