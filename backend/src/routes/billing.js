@@ -111,19 +111,41 @@ function billingConfigured() {
   return !!process.env.STRIPE_SECRET_KEY && !!process.env.STRIPE_PRICE_ID;
 }
 
+const STRIPE_ALLOWED_PAYMENT_METHOD_TYPES = new Set([
+  'card', 'acss_debit', 'affirm', 'afterpay_clearpay', 'alipay', 'au_becs_debit',
+  'bacs_debit', 'bancontact', 'blik', 'boleto', 'cashapp', 'crypto',
+  'customer_balance', 'eps', 'fpx', 'giropay', 'grabpay', 'ideal', 'klarna',
+  'konbini', 'link', 'mb_way', 'multibanco', 'oxxo', 'p24', 'pay_by_bank',
+  'paynow', 'paypal', 'payto', 'pix', 'promptpay', 'sepa_debit', 'sofort',
+  'swish', 'upi', 'us_bank_account', 'wechat_pay', 'revolut_pay', 'mobilepay',
+  'zip', 'scalapay', 'amazon_pay', 'alma', 'twint', 'kr_card', 'naver_pay',
+  'kakao_pay', 'payco', 'nz_bank_account', 'samsung_pay', 'billie', 'bizum',
+  'paypay', 'satispay', 'sequra', 'sunbit',
+]);
+
 /**
  * Safely create a Stripe checkout session with defensive parameter sanitization and fallback:
  * 1. Sanitizes metadata (ensures values are strings <= 500 chars, eliminates undefined/null)
  * 2. Removes any unsupported properties (e.g. automatic_payment_methods is only valid on PaymentIntents, not Checkout Sessions)
- * 3. Catches coupon/discount rejection errors (e.g. invalid, inactive, or currency mismatch)
+ * 3. Sanitizes and validates payment_method_types against official Stripe supported types,
+ *    and falls back without explicit payment_method_types if Stripe reports any method invalid/inactive.
+ * 4. Catches coupon/discount rejection errors (e.g. invalid, inactive, or currency mismatch)
  *    and retries creation without discounts so the buyer never suffers a 502 checkout crash.
- * 4. Logs detailed context on any unhandled Stripe API errors.
+ * 5. Logs detailed context on any unhandled Stripe API errors.
  */
 async function createSafeCheckoutSession(stripe, sessionParams, context = {}) {
   const params = { ...sessionParams };
 
   // Never pass automatic_payment_methods to stripe.checkout.sessions.create
   delete params.automatic_payment_methods;
+
+  // Sanitize payment_method_types against allowed Stripe types
+  if (Array.isArray(params.payment_method_types)) {
+    params.payment_method_types = params.payment_method_types.filter(m => STRIPE_ALLOWED_PAYMENT_METHOD_TYPES.has(m));
+    if (params.payment_method_types.length === 0) {
+      delete params.payment_method_types;
+    }
+  }
 
   // Sanitize metadata objects
   const sanitizeMeta = (metaObj) => {
@@ -156,6 +178,25 @@ async function createSafeCheckoutSession(stripe, sessionParams, context = {}) {
   try {
     return await stripe.checkout.sessions.create(params);
   } catch (err) {
+    // If Stripe rejects payment_method_types (invalid method or not enabled on account),
+    // fall back without explicit payment_method_types so standard card/wallet checkout succeeds.
+    if (params.payment_method_types && /payment_method_types|payment method|not active|unsupported|invalid/i.test(err.message)) {
+      log.warn('billing: checkout payment_method_types error, falling back without explicit payment_method_types', {
+        error: err.message,
+        payment_method_types: params.payment_method_types,
+        context,
+      });
+      const { payment_method_types, ...paramsWithoutMethods } = params;
+      try {
+        return await stripe.checkout.sessions.create(paramsWithoutMethods);
+      } catch (fallbackErr) {
+        if (paramsWithoutMethods.discounts && /coupon|promo|discount/i.test(fallbackErr.message)) {
+          const { discounts, ...paramsClean } = paramsWithoutMethods;
+          return await stripe.checkout.sessions.create(paramsClean);
+        }
+        throw fallbackErr;
+      }
+    }
     if (params.discounts && /coupon|promo|discount/i.test(err.message)) {
       log.warn('billing: checkout coupon error, falling back without discount', {
         error: err.message,

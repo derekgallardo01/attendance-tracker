@@ -2587,7 +2587,7 @@ describe('billing/status pricing payload', () => {
       expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
         expect.objectContaining({
           mode: 'payment',
-          payment_method_types: ['card', 'gcash', 'grabpay'],
+          payment_method_types: ['card', 'grabpay'],
           success_url: expect.stringContaining('index.html?unlocked=conf-123&upgraded=1'),
           cancel_url: expect.stringContaining('index.html?unlocked=conf-123'),
           line_items: [{
@@ -2604,6 +2604,21 @@ describe('billing/status pricing payload', () => {
           }),
         })
       );
+    });
+
+    test('falls back without payment_method_types when Stripe rejects invalid or inactive payment method', async () => {
+      mockStripeInstance.checkout.sessions.create
+        .mockRejectedValueOnce(new Error('Invalid payment_method_types[1]: must be one of card...'))
+        .mockResolvedValueOnce({ id: 'cs_fallback_123', url: 'https://checkout.stripe.com/pay/cs_fallback_123' });
+
+      const token = makeJwt({ email: 'teacher@deped.gov.ph', domain: 'deped.gov.ph' });
+      const res = await request(app)
+        .get(`/api/billing/checkout-redirect?plan=single_meeting&conferenceId=conf-123&country=ph&token=${encodeURIComponent(token)}`);
+
+      expect(res.status).toBe(302);
+      expect(res.header.location).toBe('https://checkout.stripe.com/pay/cs_fallback_123');
+      expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledTimes(2);
+      expect(mockStripeInstance.checkout.sessions.create.mock.calls[1][0].payment_method_types).toBeUndefined();
     });
 
     test('single_meeting pass appends unlocked parameter to custom returnUrl', async () => {
