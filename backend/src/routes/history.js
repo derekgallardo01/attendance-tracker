@@ -2,7 +2,7 @@ const { Router } = require('express');
 const CONFIG = require('../config');
 const { requireAuth } = require('../middleware/auth');
 const log = require('../lib/logger');
-const { getUserMeetingHistory, getUserMeetingSeries, getParticipantHistory, setParticipantNote, getParticipantNote, logEvent, createShareLink, revokeShareLink, getUser, setTeamSignpostDismissed, persistExport, listUserShareLinks, getMeetingDetail, persistAttendance, getTrackedConferenceIds, updateMeetingTimes } = require('../services/firestore');
+const { getUserMeetingHistory, getUserMeetingSeries, getParticipantHistory, setParticipantNote, getParticipantNote, logEvent, createShareLink, revokeShareLink, getUser, setTeamSignpostDismissed, listUserShareLinks, getMeetingDetail, persistAttendance, getTrackedConferenceIds, updateMeetingTimes } = require('../services/firestore');
 const { domainOf } = require('../services/firestore/_core');
 const { meetGet, fetchConferenceParticipants } = require('../services/meetApi');
 const { refreshAccessToken } = require('../services/googleAuth');
@@ -145,6 +145,14 @@ const FRONTEND_EVENT_TYPES = new Set([
   // Migration tool interactions
   'migration_csv_dropped',
   'migration_roster_downloaded',
+  // Download popup & banners
+  'download_popup_blocked',
+  'export_truncated_banner_shown',
+  'export_truncated_banner_dismissed',
+  'solo_tester_banner_dismissed',
+  // Sample class demo interactions
+  'sample_class_loaded',
+  'sample_class_cleared',
 ]);
 
 // POST /api/event — let the frontend record activation/funnel events that only
@@ -165,25 +173,6 @@ router.post('/event', requireAuth, async (req, res) => {
   }
   try {
     await logEvent(req.user.domain, { email: req.user.email, type, meta: safeMeta });
-    if (type === 'export_csv_downloaded' || type === 'export_excel_downloaded') {
-      try {
-        const isExcel = type === 'export_excel_downloaded';
-        const confId = safeMeta?.conferenceId || ((isExcel ? 'excel_' : 'csv_') + Date.now() + '_' + Math.random().toString(36).slice(2, 6));
-        await persistExport(req.user.domain, {
-          meetingTitle: safeMeta?.meetingTitle || (isExcel ? 'Attendance Excel' : 'Attendance CSV'),
-          tabName: isExcel ? 'Excel Export' : 'CSV Export',
-          exportedAt: new Date(),
-          participantCount: safeMeta?.participantCount || 0,
-          sheetUrl: null,
-          email: req.user.email,
-          autoExport: false,
-          conferenceId: confId,
-          exportType: isExcel ? 'excel' : 'csv',
-        });
-      } catch (err) {
-        log.warn(`${type}: persistExport failed`, { error: err.message, email: req.user.email });
-      }
-    }
     const isClientNetworkError = /failed to fetch|networkerror|load failed|offline|err_internet_disconnected/i.test(String(safeMeta?.message || ''));
     if (type === 'export_failed' && safeMeta?.reason !== 'scope_blocked' && !isClientNetworkError) {
       try {

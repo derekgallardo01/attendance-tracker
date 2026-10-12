@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const { requireAuth } = require('../middleware/auth');
 const { planIsPro } = require('./billing');
-const { getMeetingWithParticipants, saveVerifications, getUserSettings, getUser } = require('../services/firestore');
+const { getMeetingWithParticipants, saveVerifications, getUserSettings, getUser, isMeetingUnlocked } = require('../services/firestore');
 const { buildReportModel, renderReportPdf, buildCertificateModels, renderCertificatesPdf } = require('../lib/certificate');
 const log = require('../lib/logger');
 
@@ -75,11 +75,15 @@ router.post('/export/pdf', requireAuth, async (req, res) => {
       };
     }
 
+    const meetingId = b.meetingId || b.meetingCode || b.conferenceId;
+    const confId = meeting.conferenceId || meeting.meetingCode || meetingId;
     const pro = await planIsPro(req.user.domain, req.user.email);
+    const unlocked = confId && typeof isMeetingUnlocked === 'function' ? await isMeetingUnlocked(req.user.domain, req.user.email, confId) : false;
+    const allowed = pro || unlocked;
     // Length-cap the free-text options: they're drawn into a fixed PDF layout
     // (an uncapped issuer/brand string overruns the certificate frame).
     const capStr = (v, n) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, n) : null);
-    const brand = pro && b.brand && typeof b.brand === 'object' && capStr(b.brand.name, 80)
+    const brand = allowed && b.brand && typeof b.brand === 'object' && capStr(b.brand.name, 80)
       ? { name: capStr(b.brand.name, 80) }
       : null;
     const issuer = capStr(b.issuer, 80);
@@ -89,7 +93,7 @@ router.post('/export/pdf', requireAuth, async (req, res) => {
     let filename;
     if (type === 'certificates') {
       // Per-attendee certificates are a Pro feature (the credit-granting artifact).
-      if (!pro) {
+      if (!allowed) {
         return res.status(402).json({ error: 'Attendance certificates are a Pro feature.', upgrade: true, feature: 'certificates' });
       }
       const models = buildCertificateModels({

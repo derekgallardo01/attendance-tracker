@@ -155,27 +155,33 @@ async function getUserPlan(domain, email) {
 async function unlockMeetingForUser(domain, email, conferenceId, meta = {}) {
   if (!conferenceId) return;
   const cid = String(conferenceId).trim().toLowerCase();
+  const baseCid = cid.includes('__') ? cid.split('__')[0] : cid;
   const emailLower = email ? String(email).trim().toLowerCase() : null;
   const dom = domain || (emailLower && emailLower.includes('@') ? emailLower.split('@')[1] : null);
 
   try {
     const db = getDb();
-    await db.collection('unlocked_meetings').doc(cid).set({
-      conferenceId: cid,
+    const data = {
+      conferenceId: baseCid,
       email: emailLower,
       domain: dom,
       unlockedAt: FieldValue.serverTimestamp(),
       source: 'single_meeting_pass',
       ...meta,
-    }, { merge: true });
+    };
+    await db.collection('unlocked_meetings').doc(baseCid).set(data, { merge: true });
+    if (baseCid !== cid) {
+      await db.collection('unlocked_meetings').doc(cid).set({ ...data, conferenceId: cid }, { merge: true });
+    }
 
     if (dom && emailLower) {
+      const meetingsToAdd = baseCid !== cid ? [baseCid, cid] : [cid];
       await tenantRef(dom).collection('users').doc(emailLower).set({
-        unlockedMeetings: FieldValue.arrayUnion(cid),
+        unlockedMeetings: FieldValue.arrayUnion(...meetingsToAdd),
         lastMeetingUnlockedAt: FieldValue.serverTimestamp(),
       }, { merge: true });
     }
-    log.info('firestore: unlocked meeting', { conferenceId: cid, email: emailLower, domain: dom });
+    log.info('firestore: unlocked meeting', { conferenceId: cid, baseConferenceId: baseCid, email: emailLower, domain: dom });
   } catch (err) {
     log.error('firestore: unlockMeetingForUser failed', { conferenceId: cid, email: emailLower, error: err.message });
     throw err;
@@ -185,20 +191,71 @@ async function unlockMeetingForUser(domain, email, conferenceId, meta = {}) {
 async function isMeetingUnlocked(domain, email, conferenceId) {
   if (!conferenceId) return false;
   const cid = String(conferenceId).trim().toLowerCase();
+  const baseCid = cid.includes('__') ? cid.split('__')[0] : cid;
   const emailLower = email ? String(email).trim().toLowerCase() : null;
   const dom = domain || (emailLower && emailLower.includes('@') ? emailLower.split('@')[1] : null);
+  const isPersonal = dom && PERSONAL_EMAIL_DOMAINS.has(dom.toLowerCase());
+  const UNLOCK_EXPIRATION_MS = 48 * 3600 * 1000;
+
+  const toMs = (val) => {
+    if (!val) return null;
+    if (typeof val.toMillis === 'function') return val.toMillis();
+    if (typeof val.toDate === 'function') return val.toDate().getTime();
+    if (val instanceof Date) return val.getTime();
+    if (typeof val === 'number') return val;
+    if (typeof val === 'string') {
+      const ms = new Date(val).getTime();
+      return Number.isFinite(ms) ? ms : null;
+    }
+    return null;
+  };
+
+  const matchesData = (data) => {
+    if (!data) return false;
+    const emailMatch = emailLower && (data.email || '').toLowerCase() === emailLower;
+    const domainMatch = !isPersonal && dom && (data.domain || '').toLowerCase() === dom.toLowerCase();
+    if (!emailMatch && !domainMatch) return false;
+    const unlockedAtMs = toMs(data.unlockedAt);
+    return Boolean(unlockedAtMs && (Date.now() - unlockedAtMs <= UNLOCK_EXPIRATION_MS));
+  };
 
   try {
     const db = getDb();
     const doc = await db.collection('unlocked_meetings').doc(cid).get();
-    if (doc.exists) return true;
+    if (doc.exists && matchesData(doc.data())) {
+      return true;
+    }
+    if (baseCid !== cid) {
+      const baseDoc = await db.collection('unlocked_meetings').doc(baseCid).get();
+      if (baseDoc.exists && matchesData(baseDoc.data())) {
+        return true;
+      }
+    }
+
+    // Check if any instance of this meeting was unlocked
+    const snap = await db.collection('unlocked_meetings')
+      .where('conferenceId', '>=', `${baseCid}__`)
+      .where('conferenceId', '<=', `${baseCid}__\uf8ff`)
+      .get();
+    for (const d of snap.docs) {
+      if (matchesData(d.data())) return true;
+    }
 
     if (dom && emailLower) {
       const uDoc = await tenantRef(dom).collection('users').doc(emailLower).get();
       if (uDoc.exists) {
         const data = uDoc.data() || {};
-        if (Array.isArray(data.unlockedMeetings) && data.unlockedMeetings.includes(cid)) {
-          return true;
+        const list = Array.isArray(data.unlockedMeetings) ? data.unlockedMeetings : [];
+        const hasMatch = list.some(item => {
+          if (!item) return false;
+          const s = String(item).toLowerCase();
+          return s === cid || s === baseCid || (s.includes('__') && s.split('__')[0] === baseCid);
+        });
+        if (hasMatch) {
+          const lastUnlockedMs = toMs(data.lastMeetingUnlockedAt);
+          if (lastUnlockedMs && (Date.now() - lastUnlockedMs <= UNLOCK_EXPIRATION_MS)) {
+            return true;
+          }
         }
       }
     }
@@ -958,10 +1015,17 @@ async function getMeetingDetail(domain, requesterEmail, meetingId) {
     // Locate meeting document
     let mRef = tenant.collection('meetings').doc(meetingId);
     let mDoc = await mRef.get();
-    if (!mDoc.exists) {
-      const snap = await tenant.collection('meetings').where('meetingCode', '==', meetingId).get();
+    const baseMeetingId = meetingId.includes('__') ? meetingId.split('__')[0] : meetingId;
+
+    if (!mDoc.exists && baseMeetingId !== meetingId) {
+      mRef = tenant.collection('meetings').doc(baseMeetingId);
+      mDoc = await mRef.get();
+    }
+
+    if (!mDoc.exists || mDoc.data()?.hasInstances) {
+      const snap = await tenant.collection('meetings').where('meetingCode', '==', baseMeetingId).get();
       if (!snap.empty) {
-        const instances = snap.docs.filter(d => d.id !== meetingId);
+        const instances = snap.docs.filter(d => d.id !== baseMeetingId);
         const docs = instances.length ? instances : snap.docs;
         const ms = (v) => (v?.toDate ? v.toDate().getTime() : (v ? new Date(v).getTime() : 0));
         docs.sort((a, b) => ms(b.data().startTime) - ms(a.data().startTime));
@@ -978,11 +1042,25 @@ async function getMeetingDetail(domain, requesterEmail, meetingId) {
       const evSnap = await tenant.collection('events')
         .where('email', '==', emailLower)
         .where('type', '==', 'tracked').get();
-      const trackedIds = new Set(evSnap.docs.map(d => d.data().meta?.conferenceId).filter(Boolean));
+      const trackedIds = new Set();
+      for (const d of evSnap.docs) {
+        const cid = d.data().meta?.conferenceId;
+        if (cid) {
+          trackedIds.add(cid);
+          if (cid.includes('__')) trackedIds.add(cid.split('__')[0]);
+        }
+      }
+      const baseDocId = mDoc.id.includes('__') ? mDoc.id.split('__')[0] : mDoc.id;
+      const baseCode = (code && code.includes('__')) ? code.split('__')[0] : code;
+      const baseConfId = (m.conferenceId && m.conferenceId.includes('__')) ? m.conferenceId.split('__')[0] : m.conferenceId;
+
       const owns = trackedIds.has(meetingId) ||
+        trackedIds.has(baseMeetingId) ||
         trackedIds.has(code) ||
+        trackedIds.has(baseCode) ||
         trackedIds.has(mDoc.id) ||
-        trackedIds.has(m.conferenceId);
+        trackedIds.has(baseDocId) ||
+        (m.conferenceId && (trackedIds.has(m.conferenceId) || trackedIds.has(baseConfId)));
       if (!owns) {
         const err = new Error('forbidden');
         throw err;
@@ -991,9 +1069,10 @@ async function getMeetingDetail(domain, requesterEmail, meetingId) {
 
     let calendarAttendees = m.calendarAttendees || [];
     let title = m.title || null;
-    if (code && (!calendarAttendees.length || !title)) {
+    const lookupCode = (code && code.includes('__')) ? code.split('__')[0] : (code || baseMeetingId);
+    if (lookupCode && (!calendarAttendees.length || !title)) {
       try {
-        const codeDoc = await tenant.collection('meetings').doc(code).get();
+        const codeDoc = await tenant.collection('meetings').doc(lookupCode).get();
         if (codeDoc.exists) {
           const cd = codeDoc.data();
           if (!calendarAttendees.length && cd.calendarAttendees) calendarAttendees = cd.calendarAttendees;
@@ -1122,6 +1201,7 @@ async function getMeetingDetail(domain, requesterEmail, meetingId) {
       lateCount,
       absentCount,
       attendanceRate,
+      calendarAttendees: calendarAttendees || [],
       attendees,
     };
   } catch (err) {
@@ -1271,6 +1351,8 @@ async function persistExport(domain, {
     const safeConf  = (conferenceId || tabName || (exportType ? `${exportType}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}` : 'unknown')).replace(/[^a-zA-Z0-9_-]/g, '_');
     const docId = `${safeEmail}__${safeConf}`;
 
+    const safeParticipantCount = typeof participantCount === 'number' ? participantCount : (parseInt(participantCount, 10) || 0);
+
     const ref = tenantRef(domain).collection('exports').doc(docId);
     // TRANSACTIONAL meter bump: a manual save racing the meeting-end auto-save
     // (or the auto-capture sweep) with a plain read-modify-write both read N
@@ -1288,7 +1370,26 @@ async function persistExport(domain, {
       // teacher's standing class after 10 sessions. New month → fresh cap.
       const monthKey = exportMonthKey();
       const prior = existing.data();
-      const reexportCount = (prior.reexportMonth === monthKey ? (prior.reexportCount || 0) : 0) + 1;
+      const priorMonth = prior.reexportMonth || (prior.createdAt ? exportMonthKey(prior.createdAt.toDate ? prior.createdAt.toDate().getTime() : new Date(prior.createdAt).getTime()) : null);
+      if (priorMonth !== monthKey) {
+        const updateData = {
+          reexportCount: 0,
+          reexportMonth: monthKey,
+          createdAt: now,
+          lastReexportAt: now,
+          participantCount: safeParticipantCount,
+          exportedAt: exportedAt || new Date().toISOString(),
+          ...(meetingTitle ? { meetingTitle } : {}),
+          ...(tabName ? { tabName } : {}),
+          ...(exportType ? { exportType } : {}),
+        };
+        if (!prior.sheetUrl && sheetUrl) {
+          updateData.sheetUrl = sheetUrl;
+        }
+        tx.set(ref, updateData, { merge: true });
+        return { created: true, reexportCount: 0 };
+      }
+      const reexportCount = (prior.reexportCount || 0) + 1;
       const updateData = { reexportCount, reexportMonth: monthKey, lastReexportAt: now };
       if (!prior.sheetUrl && sheetUrl) {
         updateData.sheetUrl = sheetUrl;
@@ -1297,11 +1398,16 @@ async function persistExport(domain, {
       return { created: false, reexportCount };
     });
     if (dedupe) {
-      log.info('firestore: export already persisted, skipping duplicate', { domain, docId });
+      if (dedupe.created && email) {
+        logEvent(domain, {
+          email,
+          type: 'exported',
+          meta: { tabName: tabName || null, participantCount: safeParticipantCount, autoExport: !!autoExport, ...(exportType ? { exportType } : {}) },
+        }).catch(err => log.warn('firestore: logEvent failed on export rollover', { error: err.message }));
+      }
+      log.info(dedupe.created ? 'firestore: export rollover persisted as new monthly export' : 'firestore: export already persisted, skipping duplicate', { domain, docId });
       return dedupe;
     }
-
-    const safeParticipantCount = typeof participantCount === 'number' ? participantCount : (parseInt(participantCount, 10) || 0);
 
     await ref.set({
       meetingTitle: meetingTitle || null,
@@ -1314,6 +1420,8 @@ async function persistExport(domain, {
       recurringEventId: recurringEventId || null,
       conferenceId: conferenceId || null,
       createdAt: now,
+      reexportMonth: exportMonthKey(),
+      reexportCount: 0,
       ...(exportType ? { exportType } : {}),
     });
 
@@ -1973,10 +2081,6 @@ async function countUserMonthlyExports(domain, email) {
         if (data.participantCount != null && Number(data.participantCount) <= 1) {
           continue;
         }
-        // Free CSV/Excel downloads do not burn monthly Sheets export quota
-        if (!data.sheetUrl && (data.exportType === 'csv' || data.exportType === 'excel')) {
-          continue;
-        }
         count++;
       }
     }
@@ -2139,7 +2243,10 @@ async function getUserMeetingHistory(domain, email, { limit } = {}) {
     const trackedConferenceIds = new Set();
     for (const d of eventsSnap.docs) {
       const cid = d.data().meta?.conferenceId;
-      if (cid) trackedConferenceIds.add(cid);
+      if (cid) {
+        trackedConferenceIds.add(cid);
+        if (cid.includes('__')) trackedConferenceIds.add(cid.split('__')[0]);
+      }
     }
 
     // Per-instance model: instance docs (id `code__recordId`) match the
@@ -2158,7 +2265,9 @@ async function getUserMeetingHistory(domain, email, { limit } = {}) {
       .filter(d => {
         const data = d.data();
         const code = data.meetingCode || d.id;
-        if (!trackedConferenceIds.has(code)) return false;
+        const baseCode = code.includes('__') ? code.split('__')[0] : code;
+        const baseId = d.id.includes('__') ? d.id.split('__')[0] : d.id;
+        if (!trackedConferenceIds.has(code) && !trackedConferenceIds.has(baseCode) && !trackedConferenceIds.has(d.id) && !trackedConferenceIds.has(baseId)) return false;
         const isInstance = d.id !== code;
         return isInstance || !data.hasInstances; // hasInstances = metadata-only series anchor (post-migration code doc)
       })
@@ -2624,7 +2733,10 @@ async function getUserMeetingSeries(domain, email) {
     const trackedIds = new Set();
     for (const d of eventsSnap.docs) {
       const cid = d.data().meta?.conferenceId;
-      if (cid) trackedIds.add(cid);
+      if (cid) {
+        trackedIds.add(cid);
+        if (cid.includes('__')) trackedIds.add(cid.split('__')[0]);
+      }
     }
 
     // Per-instance model: every session is its own doc (id `code__recordId`,
@@ -2637,7 +2749,9 @@ async function getUserMeetingSeries(domain, email) {
         const data = d.data();
         if (!data.recurringEventId) return false; // skip non-recurring meetings
         const code = data.meetingCode || d.id;
-        if (!trackedIds.has(code)) return false;
+        const baseCode = code.includes('__') ? code.split('__')[0] : code;
+        const baseId = d.id.includes('__') ? d.id.split('__')[0] : d.id;
+        if (!trackedIds.has(code) && !trackedIds.has(baseCode) && !trackedIds.has(d.id) && !trackedIds.has(baseId)) return false;
         const isInstance = d.id !== code;
         return isInstance || !data.hasInstances; // hasInstances = metadata-only series anchor (post-migration code doc)
       })

@@ -70,13 +70,80 @@ jest.mock('../../src/services/googleAuth', () => ({
   makeUserClient: jest.fn(),
   getMeetToken: jest.fn(),
 }));
-jest.mock('../../src/services/meetApi', () => ({
-  meetGet: jest.fn(),
-  meetGetAll: jest.fn(),
-  // Pure helpers — pass the real implementations through.
-  participantIdentity: jest.requireActual('../../src/services/meetApi').participantIdentity,
-  sessionsDurationMs: jest.requireActual('../../src/services/meetApi').sessionsDurationMs,
-}));
+jest.mock('../../src/services/meetApi', () => {
+  const actual = jest.requireActual('../../src/services/meetApi');
+  const meetGetAll = jest.fn();
+  const fetchConferenceParticipants = jest.fn(async (recordName, token, meetingEndTime = null) => {
+    const raw = await meetGetAll(`${recordName}/participants`, token, 'participants');
+    const BATCH = 10;
+    const participantData = [];
+    for (let i = 0; i < raw.length; i += BATCH) {
+      const results = await Promise.all(raw.slice(i, i + BATCH).map(async (p) => {
+        let sessions = [];
+        let sessionsFetchFailed = false;
+        try { sessions = await meetGetAll(`${p.name}/participantSessions`, token, 'participantSessions'); }
+        catch (e) { sessionsFetchFailed = true; }
+        return { p, sessions, sessionsFetchFailed };
+      }));
+      participantData.push(...results);
+    }
+
+    let meetingEndMs = meetingEndTime ? (typeof meetingEndTime?.toDate === 'function' ? meetingEndTime.toDate().getTime() : new Date(meetingEndTime).getTime()) : NaN;
+    if (isNaN(meetingEndMs)) {
+      let maxMs = 0;
+      for (const { sessions } of participantData) {
+        for (const s of sessions) {
+          const end = s.endTime ? new Date(s.endTime).getTime() : (s.startTime ? new Date(s.startTime).getTime() : 0);
+          if (!isNaN(end) && end > maxMs) maxMs = end;
+        }
+      }
+      meetingEndMs = maxMs > 0 ? maxMs : null;
+    }
+
+    const PRESENCE_GRACE_MS = 3 * 60 * 1000;
+
+    return participantData.map(({ p, sessions, sessionsFetchFailed }) => {
+      const joins  = sessions.map(s => s.startTime).filter(Boolean).map(t => new Date(t)).filter(d => !isNaN(d.getTime()));
+      const leaves = sessions.map(s => s.endTime).filter(Boolean).map(t => new Date(t)).filter(d => !isNaN(d.getTime()));
+      const joinIso = joins.length ? new Date(Math.min(...joins)).toISOString() : null;
+      const leaveIso = leaves.length ? new Date(Math.max(...leaves)).toISOString() : null;
+
+      let present = false;
+      if (sessionsFetchFailed) {
+        present = true;
+      } else if (sessions.some(s => !s.endTime)) {
+        present = true;
+      } else if (leaves.length > 0) {
+        const lastLeaveMs = Math.max(...leaves.map(t => t.getTime()));
+        if (meetingEndMs) {
+          present = (meetingEndMs - lastLeaveMs) <= PRESENCE_GRACE_MS;
+        } else {
+          present = true;
+        }
+      }
+
+      return {
+        participantId: p.name,
+        ...actual.participantIdentity(p),
+        joinTimeISO:  joinIso,
+        leaveTimeISO: leaveIso,
+        joinTime:     joinIso,
+        leaveTime:    leaveIso,
+        ...(sessionsFetchFailed ? {} : { durationMs: actual.sessionsDurationMs(sessions, meetingEndMs || Date.now()) }),
+        present,
+        sessions:     sessions.length || 1,
+      };
+    });
+  });
+
+  return {
+    meetGet: jest.fn(),
+    meetGetAll,
+    participantIdentity: actual.participantIdentity,
+    sessionsDurationMs: actual.sessionsDurationMs,
+    fetchConferenceParticipants,
+  };
+});
 // Mock the sheets router with an empty Router that still carries a mocked
 // buildAndSaveExport (the export the auto-capture sweep imports). Keeps buildApp
 // mounting happy without pulling the real 390-line export pipeline into the test.
@@ -912,6 +979,38 @@ describe('POST /api/admin/auto-capture — server-side auto-capture sweep', () =
     expect(arg.options).toMatchObject({ autoExport: true, sendEmail: true, proAllowed: true });
     expect(arg.data.participants[0]).toMatchObject({ displayName: 'Alex', email: 'alex@acme.com' });
     expect(arg.data.participants[0].joinTimeISO).toBeTruthy();
+    expect(meetApi.fetchConferenceParticipants).toHaveBeenCalledWith('conferenceRecords/r1', 'at', nowIso);
+  });
+
+  test('exports multiple instances of recurring meeting with same meetingCode deduplicated strictly by instanceKey', async () => {
+    firestore.getAllUsersAcrossTenants.mockResolvedValue([
+      { email: 'pro@acme.com', domain: 'acme.com', displayName: 'Pro' },
+    ]);
+    firestore.getUserSettings.mockResolvedValue({ autoExportOnEnd: true });
+    firestore.getUser.mockResolvedValue({ email: 'pro@acme.com', domain: 'acme.com', refreshToken: 'rt', signupGeo: { timezone: 'Europe/Madrid' } });
+    firestore.getExportedConferenceIds.mockResolvedValue(new Set());
+    const nowIso = new Date().toISOString();
+    meetApi.meetGet.mockImplementation(async (path) => {
+      if (path.startsWith('conferenceRecords?')) return { conferenceRecords: [
+        { name: 'conferenceRecords/rec1', space: 'spaces/s1', startTime: nowIso, endTime: nowIso },
+        { name: 'conferenceRecords/rec2', space: 'spaces/s1', startTime: nowIso, endTime: nowIso },
+      ] };
+      if (path === 'spaces/s1') return { meetingCode: 'recurring-code' };
+      return {};
+    });
+    meetApi.meetGetAll.mockImplementation(async (path, token, key) => {
+      if (key === 'participants') return [{ name: 'conferenceRecords/p1', signedinUser: { displayName: 'Alex', email: 'alex@acme.com' } }];
+      if (key === 'participantSessions') return [{ startTime: nowIso, endTime: nowIso }];
+      return [];
+    });
+
+    const res = await request(app).post('/api/admin/auto-capture')
+      .set('x-scheduler-secret', SCHEDULER_SECRET).set('Content-Type', 'application/json').send({});
+    expect(res.status).toBe(200);
+    expect(res.body.captured).toBe(2);
+    expect(sheetsMod.buildAndSaveExport).toHaveBeenCalledTimes(2);
+    expect(sheetsMod.buildAndSaveExport.mock.calls[0][0].data.conferenceId).toBe('recurring-code__rec1');
+    expect(sheetsMod.buildAndSaveExport.mock.calls[1][0].data.conferenceId).toBe('recurring-code__rec2');
   });
 
   test('skips FREE users entirely once billing is configured — auto-capture is Pro-only', async () => {

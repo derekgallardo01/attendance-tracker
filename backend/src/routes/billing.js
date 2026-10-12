@@ -2005,11 +2005,24 @@ async function createReferralPromoCode(inviterEmail) {
   const stripe = getStripe();
   if (!stripe || !couponId) return null;
   try {
-    const pc = await stripe.promotionCodes.create({
-      coupon: couponId,
-      max_redemptions: 1,
-      metadata: { referrer: inviterEmail, kind: 'referral_reward' },
-    });
+    let pc;
+    try {
+      pc = await stripe.promotionCodes.create({
+        coupon: couponId,
+        max_redemptions: 1,
+        metadata: { referrer: inviterEmail, kind: 'referral_reward' },
+      });
+    } catch (createErr) {
+      if (/unknown parameter: coupon/i.test(createErr.message)) {
+        pc = await stripe.promotionCodes.create({
+          promotion: { type: 'coupon', coupon: couponId },
+          max_redemptions: 1,
+          metadata: { referrer: inviterEmail, kind: 'referral_reward' },
+        });
+      } else {
+        throw createErr;
+      }
+    }
     return pc.code;
   } catch (err) {
     log.error('billing: createReferralPromoCode failed', { inviterEmail, error: err.message });

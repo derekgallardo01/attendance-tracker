@@ -264,9 +264,9 @@ describe('POST /api/event — frontend event logging', () => {
     }
   );
 
-  test('POST /api/event with export_csv_downloaded triggers persistExport', async () => {
+  test('POST /api/event with export_csv_downloaded logs event and does NOT call persistExport (handled solely by /api/billing/record-export)', async () => {
     firestore.logEvent.mockResolvedValue(undefined);
-    firestore.persistExport.mockResolvedValue({ created: true });
+    firestore.persistExport.mockClear();
 
     const res = await request(app)
       .post('/api/event')
@@ -283,41 +283,17 @@ describe('POST /api/event — frontend event logging', () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ ok: true });
-    expect(firestore.persistExport).toHaveBeenCalledWith('school.edu', expect.objectContaining({
-      conferenceId: 'conf-123',
-      meetingTitle: 'Physics 101',
-      participantCount: 22,
+    expect(firestore.logEvent).toHaveBeenCalledWith('school.edu', expect.objectContaining({
       email: 'teacher@school.edu',
-      autoExport: false,
-      sheetUrl: null,
-      tabName: 'CSV Export',
+      type: 'export_csv_downloaded',
+      meta: expect.objectContaining({ conferenceId: 'conf-123' }),
     }));
+    expect(firestore.persistExport).not.toHaveBeenCalled();
   });
 
-  test('POST /api/event with export_csv_downloaded generates conferenceId and fallback title if omitted', async () => {
+  test('POST /api/event with export_excel_downloaded logs event and does NOT call persistExport (handled solely by /api/billing/record-export)', async () => {
     firestore.logEvent.mockResolvedValue(undefined);
-    firestore.persistExport.mockResolvedValue({ created: true });
-
-    const res = await request(app)
-      .post('/api/event')
-      .set(authedHeader('teacher@school.edu', 'school.edu'))
-      .set('Content-Type', 'application/json')
-      .send({
-        type: 'export_csv_downloaded',
-      });
-
-    expect(res.status).toBe(200);
-    expect(firestore.persistExport).toHaveBeenCalledWith('school.edu', expect.objectContaining({
-      meetingTitle: 'Attendance CSV',
-      participantCount: 0,
-      conferenceId: expect.stringMatching(/^csv_\d+/),
-      exportType: 'csv',
-    }));
-  });
-
-  test('POST /api/event with export_excel_downloaded triggers persistExport', async () => {
-    firestore.logEvent.mockResolvedValue(undefined);
-    firestore.persistExport.mockResolvedValue({ created: true });
+    firestore.persistExport.mockClear();
 
     const res = await request(app)
       .post('/api/event')
@@ -334,16 +310,12 @@ describe('POST /api/event — frontend event logging', () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ ok: true });
-    expect(firestore.persistExport).toHaveBeenCalledWith('school.edu', expect.objectContaining({
-      conferenceId: 'conf-excel-456',
-      meetingTitle: 'Biology 202',
-      participantCount: 30,
+    expect(firestore.logEvent).toHaveBeenCalledWith('school.edu', expect.objectContaining({
       email: 'teacher@school.edu',
-      autoExport: false,
-      sheetUrl: null,
-      tabName: 'Excel Export',
-      exportType: 'excel',
+      type: 'export_excel_downloaded',
+      meta: expect.objectContaining({ conferenceId: 'conf-excel-456' }),
     }));
+    expect(firestore.persistExport).not.toHaveBeenCalled();
   });
 
   test('POST /api/event allows large_class_banner_clicked, school_quote_generated, paywall_quote_requested, and paywall_feedback_submitted', async () => {
@@ -355,6 +327,30 @@ describe('POST /api/event — frontend event logging', () => {
         .set(authedHeader('teacher@school.edu', 'school.edu'))
         .set('Content-Type', 'application/json')
         .send({ type, meta: { test: true } });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ ok: true });
+    }
+  });
+
+  test('POST /api/event allows banner, popup, and sample class event types', async () => {
+    firestore.logEvent.mockResolvedValue(undefined);
+
+    const eventTypes = [
+      'download_popup_blocked',
+      'export_truncated_banner_shown',
+      'export_truncated_banner_dismissed',
+      'solo_tester_banner_dismissed',
+      'sample_class_loaded',
+      'sample_class_cleared',
+    ];
+
+    for (const type of eventTypes) {
+      const res = await request(app)
+        .post('/api/event')
+        .set(authedHeader('teacher@school.edu', 'school.edu'))
+        .set('Content-Type', 'application/json')
+        .send({ type, meta: { info: 'test' } });
 
       expect(res.status).toBe(200);
       expect(res.body).toEqual({ ok: true });

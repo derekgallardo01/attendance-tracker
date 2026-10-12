@@ -11,7 +11,7 @@ const { domainOf, lastSegment } = require('../services/firestore/_core'); // pur
 const { ACQUISITION_SOURCES } = require('../lib/constants');
 const { planIsPro } = require('./billing');
 const { refreshAccessToken, makeUserClient } = require('../services/googleAuth');
-const { meetGet, meetGetAll, participantIdentity, sessionsDurationMs } = require('../services/meetApi');
+const { meetGet, fetchConferenceParticipants } = require('../services/meetApi');
 const { google } = require('googleapis');
 const { buildAndSaveExport } = require('./sheets');
 const { reconcilePendingReviews } = require('../services/review-verifier');
@@ -1178,77 +1178,6 @@ router.post('/admin/verify-delegation', verifyDelegationLimiter, async (req, res
 
 // ── Server-side auto-capture (WS3b) ──
 
-// Fetch a completed conference's participants server-side (mirrors the
-// /attendance route's participant + session shaping), shaped for
-// buildAndSaveExport (…ISO field names). Best-effort per participant: a failed
-// session fetch still yields a present-only row rather than dropping the person.
-async function fetchConferenceParticipants(recordName, token, meetingEndTime = null) {
-  const raw = await meetGetAll(`${recordName}/participants`, token, 'participants');
-  const out = [];
-  const BATCH = 10;
-  const participantData = [];
-  for (let i = 0; i < raw.length; i += BATCH) {
-    const results = await Promise.all(raw.slice(i, i + BATCH).map(async (p) => {
-      let sessions = [];
-      let sessionsFetchFailed = false;
-      try { sessions = await meetGetAll(`${p.name}/participantSessions`, token, 'participantSessions'); }
-      catch (e) { sessionsFetchFailed = true; log.warn('auto-capture: sessions fetch failed', { participant: p.name, error: e.message }); }
-      return { p, sessions, sessionsFetchFailed };
-    }));
-    participantData.push(...results);
-  }
-
-  let meetingEndMs = meetingEndTime ? (typeof meetingEndTime?.toDate === 'function' ? meetingEndTime.toDate().getTime() : new Date(meetingEndTime).getTime()) : NaN;
-  if (isNaN(meetingEndMs)) {
-    let maxMs = 0;
-    for (const { sessions } of participantData) {
-      for (const s of sessions) {
-        const end = s.endTime ? new Date(s.endTime).getTime() : (s.startTime ? new Date(s.startTime).getTime() : 0);
-        if (!isNaN(end) && end > maxMs) maxMs = end;
-      }
-    }
-    meetingEndMs = maxMs > 0 ? maxMs : null;
-  }
-
-  const PRESENCE_GRACE_MS = 3 * 60 * 1000; // 3 minutes grace window before meeting completion
-
-  for (const { p, sessions, sessionsFetchFailed } of participantData) {
-    const joins  = sessions.map(s => s.startTime).filter(Boolean).map(t => new Date(t)).filter(d => !isNaN(d.getTime()));
-    const leaves = sessions.map(s => s.endTime).filter(Boolean).map(t => new Date(t)).filter(d => !isNaN(d.getTime()));
-    const joinIso = joins.length ? new Date(Math.min(...joins)).toISOString() : null;
-    const leaveIso = leaves.length ? new Date(Math.max(...leaves)).toISOString() : null;
-
-    let present = false;
-    if (sessionsFetchFailed) {
-      present = true;
-    } else if (sessions.some(s => !s.endTime)) {
-      present = true;
-    } else if (leaves.length > 0) {
-      const lastLeaveMs = Math.max(...leaves.map(d => d.getTime()));
-      if (meetingEndMs) {
-        present = (meetingEndMs - lastLeaveMs) <= PRESENCE_GRACE_MS;
-      } else {
-        present = true;
-      }
-    }
-
-    out.push({
-      participantId: p.name,
-      ...participantIdentity(p),
-      joinTimeISO:  joinIso,
-      leaveTimeISO: leaveIso,
-      joinTime:     joinIso,
-      leaveTime:    leaveIso,
-      // A FAILED fetch means "unknown", not "attended 0 minutes" — omitting
-      // the field lets the sheet render blanks instead of a hard 0%.
-      ...(sessionsFetchFailed ? {} : { durationMs: sessionsDurationMs(sessions) }),
-      present,
-      sessions:     sessions.length || 1,
-    });
-  }
-  return out;
-}
-
 // POST /api/admin/auto-capture — server-side attendance capture. Lists each
 
 // active user's recent COMPLETED Meet conferences server-side and persists the
@@ -1341,12 +1270,11 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
             // (Cloud Scheduler is at-least-once) — getExportedConferenceIds is
             // read-once so two overlapping sweeps could otherwise both export,
             // producing a duplicate Sheet tab AND a duplicate "ready" email.
-            const isAlreadyExported = alreadyExported.has(instanceKey) || alreadyExported.has(meetingCode);
+            const isAlreadyExported = alreadyExported.has(instanceKey);
             if (shouldAutoExport && !isAlreadyExported) {
               const claim = await claimReengagementSlot(u.domain, u.email, `autocap:${instanceKey}`);
               if (!claim.claimed) {
                 alreadyExported.add(instanceKey);
-                alreadyExported.add(meetingCode);
                 continue;
               }
               try {
@@ -1374,7 +1302,6 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
                 throw exportErr;
               }
               alreadyExported.add(instanceKey);
-              alreadyExported.add(meetingCode);
               captured++;
             }
           } catch (e) {

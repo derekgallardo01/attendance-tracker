@@ -28,8 +28,8 @@ module.exports = {
     institution: { label: '$149',   full: null, period: '/yr' },
   },
   REGIONAL_PRICING: {
-    PH: { currency: 'php', amount: 28000, symbol: '₱280', label: '₱280', eduLabel: '₱140/yr', methods: ['card', 'grabpay'] },
-    MY: { currency: 'myr', amount: 2200, symbol: 'RM 22', label: 'RM 22', eduLabel: 'RM 12/yr', methods: ['card', 'fpx', 'grabpay'] },
+    PH: { currency: 'php', amount: 28000, symbol: '₱280', label: '₱280', eduLabel: '₱140/yr', methods: ['card'] },
+    MY: { currency: 'myr', amount: 2200, symbol: 'RM 22', label: 'RM 22', eduLabel: 'RM 12/yr', methods: ['card'] },
     ID: { currency: 'idr', amount: 7800000, symbol: 'Rp 78.000', label: 'Rp 78.000', eduLabel: 'Rp 39.000/yr', methods: ['card'] },
     IN: { currency: 'inr', amount: 29900, symbol: '₹299', label: '₹299', eduLabel: '₹199/yr', methods: ['card', 'upi'] },
   },

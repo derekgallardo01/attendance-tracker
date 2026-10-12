@@ -4447,19 +4447,19 @@ async function downloadAttendanceCsv() {
     return;
   }
 
-  if (!_isPro && _billing && _billing.exportQuota && _billing.exportQuota.used >= _billing.exportQuota.limit) {
+  if (!_isPro && !state.meetingUnlocked && _billing && _billing.exportQuota && _billing.exportQuota.used >= _billing.exportQuota.limit) {
     showUpgradeModal('exportQuota');
     return;
   }
 
   const count = ctx.parts.length;
-  if (!_isPro && count > 25 && _billing?.hasUsedLargeClassGrace === true) {
+  if (!_isPro && !state.meetingUnlocked && count > 25 && _billing?.hasUsedLargeClassGrace === true) {
     state._lastLargeClassCount = count;
     showUpgradeModal('largeClass');
     return;
   }
 
-  ctx.opts.isFreePlan = !_isPro;
+  ctx.opts.isFreePlan = !_isPro && !state.meetingUnlocked;
   const csvContent = (typeof AttUtils !== 'undefined' && AttUtils.buildAttendanceCsv)
     ? AttUtils.buildAttendanceCsv(ctx.parts, ctx.activeRoster, ctx.opts)
     : '';
@@ -4512,7 +4512,7 @@ async function downloadAttendanceCsv() {
       }
     }
   }).catch(() => {
-    if (!_isPro && _billing && _billing.exportQuota) {
+    if (!_isPro && !state.meetingUnlocked && _billing && _billing.exportQuota) {
       _billing.exportQuota.used++;
       updateQuotaIndicator(_billing.exportQuota.used, _billing.exportQuota.limit);
     }
@@ -4555,19 +4555,19 @@ async function downloadAttendanceExcel() {
     return;
   }
 
-  if (!_isPro && _billing && _billing.exportQuota && _billing.exportQuota.used >= _billing.exportQuota.limit) {
+  if (!_isPro && !state.meetingUnlocked && _billing && _billing.exportQuota && _billing.exportQuota.used >= _billing.exportQuota.limit) {
     showUpgradeModal('exportQuota');
     return;
   }
 
   const count = ctx.parts.length;
-  if (!_isPro && count > 25 && _billing?.hasUsedLargeClassGrace === true) {
+  if (!_isPro && !state.meetingUnlocked && count > 25 && _billing?.hasUsedLargeClassGrace === true) {
     state._lastLargeClassCount = count;
     showUpgradeModal('largeClass');
     return;
   }
 
-  ctx.opts.isFreePlan = !_isPro;
+  ctx.opts.isFreePlan = !_isPro && !state.meetingUnlocked;
   const xmlContent = (typeof AttUtils !== 'undefined' && AttUtils.buildAttendanceExcelXml)
     ? AttUtils.buildAttendanceExcelXml(ctx.parts, ctx.activeRoster, ctx.opts)
     : '';
@@ -4638,7 +4638,7 @@ async function downloadAttendanceExcel() {
 // (gradebooks carry enrolled students, matched by email) — nudge toward the
 // roster tab when there isn't one. LMS exports are Pro-only.
 function downloadLmsCsv(format) {
-  if (!_isPro) {
+  if (!_isPro && !state.meetingUnlocked) {
     showUpgradeModal('lmsCsv');
     return;
   }
@@ -4676,6 +4676,7 @@ function openLmsSyncModal() {
   AttLmsSync.openModal({
     meetingTitle: (ctx && ctx.meetingTitle) || state.meetingTitle || 'Google Meet',
     meetingDate: (ctx && ctx.dateStr) || (typeof AttUtils !== 'undefined' ? AttUtils.datestamp(state.startTime || new Date()) : ''),
+    conferenceId: state.conferenceId || state.meetingCode || (typeof currentMeetingCode !== 'undefined' ? currentMeetingCode : null) || null,
     getRecords: () => {
       try {
         const parts = Array.from(state.participants?.values() || []);
@@ -4685,6 +4686,7 @@ function openLmsSyncModal() {
             meetingTitle: state.meetingTitle || 'Google Meet',
             startTime: state.startTime,
             now: new Date(),
+            ...(ctx?.opts || {}),
           });
           return rows.map(r => ({
             name: r.name,
@@ -4695,7 +4697,7 @@ function openLmsSyncModal() {
         }
         return parts.map(p => {
           const durMin = Math.round(((p._accumulatedMs || 0) + (p.present && p.joinTime ? (Date.now() - new Date(p.joinTime).getTime()) : 0)) / 60000);
-          const isLate = p.isLate || (p.joinTime && typeof AttUtils !== 'undefined' && AttUtils.latenessMin(state.startTime, p.joinTime) >= 5);
+          const isLate = p.isLate || (p.joinTime && typeof AttUtils !== 'undefined' && AttUtils.latenessMin(p.joinTime, state._eventStart || state.startTime, state.conferenceStartTime) >= 5);
           return {
             name: p.displayName || p.name || '',
             email: (p.email || '').toLowerCase(),
@@ -6730,10 +6732,15 @@ function emailAdminForSetup() {
 async function ensureBilling() {
   if (_billing) return _billing;
   try {
-    const res = await authFetch(`${state.backendUrl}/billing/status`);
+    const confId = (typeof state !== 'undefined' && (state.conferenceId || state.meetingCode || (typeof currentMeetingCode !== 'undefined' ? currentMeetingCode : null))) || '';
+    const confParam = confId ? `?conferenceId=${encodeURIComponent(confId)}` : '';
+    const res = await authFetch(`${state.backendUrl}/billing/status${confParam}`);
     if (res.ok) {
       _billing = await res.json();
       if (_billing && _billing.plan === 'pro') _isPro = true;
+      if (typeof state !== 'undefined' && _billing) {
+        state.meetingUnlocked = !!_billing.meetingUnlocked;
+      }
     }
   } catch { /* leave null → upsell just won't show */ }
   return _billing;
@@ -6764,11 +6771,16 @@ function paintPrices() {
 async function loadBillingStatus() {
   const box = document.getElementById('settings-billing');
   try {
-    const res = await authFetch(`${state.backendUrl}/billing/status`);
+    const confId = (typeof state !== 'undefined' && (state.conferenceId || state.meetingCode || (typeof currentMeetingCode !== 'undefined' ? currentMeetingCode : null))) || '';
+    const confParam = confId ? `?conferenceId=${encodeURIComponent(confId)}` : '';
+    const res = await authFetch(`${state.backendUrl}/billing/status${confParam}`);
     if (!res.ok) return;
     const data = await res.json();
     _billing = data;
     _isPro = data.plan === 'pro';
+    if (typeof state !== 'undefined') {
+      state.meetingUnlocked = !!data.meetingUnlocked;
+    }
     // Server-advertised display prices win over the static js/pricing.js
     // fallback; repaint every price span in one pass.
     AttPricing.fromStatus(data);
@@ -7277,7 +7289,8 @@ function watchForUpgradeCompletion() {
       return;
     }
     try {
-      const confParam = (typeof state !== 'undefined' && state.conferenceId) ? `?conferenceId=${encodeURIComponent(state.conferenceId)}` : '';
+      const confId = (typeof state !== 'undefined' && (state.conferenceId || state.meetingCode || (typeof currentMeetingCode !== 'undefined' ? currentMeetingCode : null))) || '';
+      const confParam = confId ? `?conferenceId=${encodeURIComponent(confId)}` : '';
       const res = await authFetch(`${state.backendUrl}/billing/status${confParam}`);
       if (!res.ok) return;
       const data = await res.json();
@@ -8537,18 +8550,39 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     calendarAttendees: effectiveAttendees,
     participants: [...state.participants.values()].map(p => {
       // Use earliest known join time (API or frontend-tracked)
-      const apiJoin = p.joinTime ? p.joinTime.getTime() : Infinity;
-      const trackedJoin = p.trackedJoinTime ? p.trackedJoinTime.getTime() : Infinity;
-      const joinTime = new Date(Math.min(apiJoin, trackedJoin));
+      const getMs = (d) => {
+        if (!d) return Infinity;
+        const ms = d instanceof Date ? d.getTime() : new Date(d).getTime();
+        return Number.isFinite(ms) ? ms : Infinity;
+      };
+      const apiJoin = getMs(p.joinTime);
+      const trackedJoin = getMs(p.trackedJoinTime);
+      const minJoin = Math.min(apiJoin, trackedJoin);
+      const joinTime = Number.isFinite(minJoin) ? new Date(minJoin) : null;
 
       // If currently present, don't send a stale leave time from a previous session
       const leaveTime = p.present ? null : (p.leaveTime || null);
 
+      const toIsoSafe = (d) => {
+        if (!d) return null;
+        if (typeof d === 'string') {
+          const ms = new Date(d).getTime();
+          return Number.isFinite(ms) ? new Date(ms).toISOString() : null;
+        }
+        if (d instanceof Date) {
+          return Number.isFinite(d.getTime()) ? d.toISOString() : null;
+        }
+        if (typeof d === 'number') {
+          return Number.isFinite(d) ? new Date(d).toISOString() : null;
+        }
+        return null;
+      };
+
       return {
         displayName:  p.displayName,
         email:        emailMap[p.displayName] || p.email || '',
-        joinTimeISO:  joinTime.toISOString(),
-        leaveTimeISO: leaveTime ? leaveTime.toISOString() : null,
+        joinTimeISO:  joinTime ? joinTime.toISOString() : null,
+        leaveTimeISO: toIsoSafe(leaveTime),
         // Actual accumulated in-meeting time — the backend prefers this over
         // the join→leave span, which over-credits leave-and-return attendees.
         // Omit a ZERO: it means "we have no basis" (no accumulated time, no
@@ -8563,7 +8597,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
   };
 
   const totalAttendeeCount = payload.participants.length;
-  if (!_isPro && totalAttendeeCount > 25 && _billing?.hasUsedLargeClassGrace === true) {
+  if (!_isPro && !state.meetingUnlocked && totalAttendeeCount > 25 && _billing?.hasUsedLargeClassGrace === true) {
     state._lastLargeClassCount = totalAttendeeCount;
     showUpgradeModal('largeClass');
     return;

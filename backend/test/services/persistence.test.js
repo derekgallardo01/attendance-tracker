@@ -365,7 +365,9 @@ describe('persistExport', () => {
     const stored = ctx.read(`tenants/acme.com/exports/${docId}`);
     ctx.seed(`tenants/acme.com/exports/${docId}`, { ...stored, reexportMonth: '1999-01' });
     await expect(firestore.getExportReexportCount('acme.com', 'me@acme.com', 'conf-roll')).resolves.toBe(0);
-    // And the next dedupe hit RESTARTS the counter at 1 for the new month.
+    // And the first dedupe hit in the new month counts as a new monthly export (created: true, reexportCount: 0).
+    await expect(firestore.persistExport('acme.com', payload)).resolves.toEqual({ created: true, reexportCount: 0 });
+    // And the subsequent dedupe hit in the same month increments reexportCount to 1.
     await expect(firestore.persistExport('acme.com', payload)).resolves.toEqual({ created: false, reexportCount: 1 });
   });
 

@@ -11,6 +11,7 @@ jest.mock('../../src/services/firestore', () => ({
   saveVerifications: jest.fn(),
   getTenantPlan: jest.fn(),
   getUserPlan: jest.fn(),
+  isMeetingUnlocked: jest.fn(),
 }));
 
 const firestore = require('../../src/services/firestore');
@@ -34,6 +35,7 @@ beforeEach(() => {
   firestore.getUser.mockImplementation(async (domain, email) => ({ email, domain }));
   firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
   firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+  firestore.isMeetingUnlocked.mockResolvedValue(false);
   app = buildApp();
 });
 
@@ -162,5 +164,32 @@ describe('certificates (Pro-gated)', () => {
       .send({ type: 'report', meetingTitle: 'CLE', participants: PARTS, brand: { name: 'Fancy Org' } })
       .buffer(true).parse(binaryParser);
     expect(res.status).toBe(200); // gentle: report succeeds, brand just ignored
+  });
+
+  test('200 multi-page PDF for a free user with unlocked meeting pass', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+    firestore.isMeetingUnlocked.mockResolvedValue(true);
+    const res = await request(app).post('/api/export/pdf').set(H())
+      .send({ type: 'certificates', meetingTitle: 'CLE', conferenceId: 'c1', participants: PARTS })
+      .buffer(true).parse(binaryParser);
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toBe('application/pdf');
+    expect(res.headers['content-disposition']).toContain('certificates-cle.pdf');
+    expect(res.body.slice(0, 5).toString('latin1')).toBe('%PDF-');
+    expect(firestore.isMeetingUnlocked).toHaveBeenCalledWith('acme.com', 'user@acme.com', 'c1');
+    expect(firestore.saveVerifications).toHaveBeenCalledTimes(1);
+  });
+
+  test('free user with unlocked meeting: brand is preserved in report', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+    firestore.isMeetingUnlocked.mockResolvedValue(true);
+    const res = await request(app).post('/api/export/pdf').set(H())
+      .send({ type: 'report', meetingTitle: 'CLE', conferenceId: 'c1', participants: PARTS, brand: { name: 'Fancy Org' } })
+      .buffer(true).parse(binaryParser);
+    expect(res.status).toBe(200);
+    expect(firestore.isMeetingUnlocked).toHaveBeenCalledWith('acme.com', 'user@acme.com', 'c1');
+    expect(res.body.slice(0, 5).toString('latin1')).toBe('%PDF-');
   });
 });

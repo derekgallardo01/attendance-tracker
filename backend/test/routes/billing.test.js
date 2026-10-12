@@ -2587,7 +2587,7 @@ describe('billing/status pricing payload', () => {
       expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
         expect.objectContaining({
           mode: 'payment',
-          payment_method_types: ['card', 'grabpay'],
+          payment_method_types: ['card'],
           success_url: expect.stringContaining('index.html?unlocked=conf-123&upgraded=1'),
           cancel_url: expect.stringContaining('index.html?unlocked=conf-123'),
           line_items: [{

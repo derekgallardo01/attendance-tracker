@@ -604,6 +604,40 @@ describe('utils — fallback branches', () => {
     expect(snap.soloNudgeConferenceId).toBeNull();
   });
 
+  test('serializeSession defensively serializes Date instances, strings, numbers, and invalid values', () => {
+    const validDate = new Date('2026-07-20T10:00:00.000Z');
+    const validStr = '2026-07-20T10:05:00.000Z';
+    const validNum = 1770000000000;
+    const invalidDate = new Date('invalid');
+    const invalidStr = 'not-a-date';
+    const invalidNum = Infinity;
+    const invalidObj = { some: 'thing' };
+
+    const state1 = {
+      conferenceId: 'c1', meetingTitle: 'M1', startTime: validStr, tracking: true,
+      participants: new Map([
+        ['p1', { joinTime: validNum, trackedJoinTime: validDate, leaveTime: null }],
+      ]),
+    };
+    const snap1 = U.serializeSession(state1, 1000);
+    expect(snap1.startTime).toBe('2026-07-20T10:05:00.000Z');
+    expect(snap1.participants[0][1].joinTime).toBe(new Date(validNum).toISOString());
+    expect(snap1.participants[0][1].trackedJoinTime).toBe('2026-07-20T10:00:00.000Z');
+    expect(snap1.participants[0][1].leaveTime).toBeNull();
+
+    const state2 = {
+      conferenceId: 'c2', meetingTitle: 'M2', startTime: invalidDate, tracking: true,
+      participants: new Map([
+        ['p2', { joinTime: invalidStr, trackedJoinTime: invalidNum, leaveTime: invalidObj }],
+      ]),
+    };
+    const snap2 = U.serializeSession(state2, 2000);
+    expect(snap2.startTime).toBeNull();
+    expect(snap2.participants[0][1].joinTime).toBeNull();
+    expect(snap2.participants[0][1].trackedJoinTime).toBeNull();
+    expect(snap2.participants[0][1].leaveTime).toBeNull();
+  });
+
   test('parseSession: fresh minimal snapshot fills defaults; stale/invalid → null', () => {
     expect(U.parseSession(null, 1000, 5000)).toBeNull();
     expect(U.parseSession('nope', 1000, 5000)).toBeNull();

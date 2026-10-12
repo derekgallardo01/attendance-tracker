@@ -216,7 +216,7 @@ describe('fetchConferenceParticipants', () => {
   beforeEach(() => { global.fetch = jest.fn(); });
   afterEach(() => { delete global.fetch; });
 
-  test('marks participants within 2-3 minutes of meetingEndTime as present, earlier leavers as absent', async () => {
+  test('marks participants with active sessions or duration as present, even if left before meeting end', async () => {
     const meetingEnd = '2026-03-01T11:00:00Z';
     // Mock participants listing
     global.fetch.mockImplementation(async (url) => {
@@ -250,6 +250,14 @@ describe('fetchConferenceParticipants', () => {
           }),
         };
       }
+      if (url.includes('p-no-sessions/participantSessions')) {
+        return {
+          ok: true,
+          json: async () => ({
+            participantSessions: [],
+          }),
+        };
+      }
       if (url.includes('/participants')) {
         return {
           ok: true,
@@ -258,6 +266,7 @@ describe('fetchConferenceParticipants', () => {
               { name: 'rec1/participants/p-stayed', signedinUser: { displayName: 'Stayed', email: 'stayed@x.com' } },
               { name: 'rec1/participants/p-left-early', signedinUser: { displayName: 'Left Early', email: 'early@x.com' } },
               { name: 'rec1/participants/p-still-in', signedinUser: { displayName: 'Open Session', email: 'open@x.com' } },
+              { name: 'rec1/participants/p-no-sessions', signedinUser: { displayName: 'No Sessions', email: 'none@x.com' } },
             ],
           }),
         };
@@ -266,16 +275,77 @@ describe('fetchConferenceParticipants', () => {
     });
 
     const res = await fetchConferenceParticipants('rec1', 'tok', meetingEnd);
-    expect(res).toHaveLength(3);
+    expect(res).toHaveLength(4);
 
     const stayed = res.find(p => p.email === 'stayed@x.com');
     const early = res.find(p => p.email === 'early@x.com');
     const open = res.find(p => p.email === 'open@x.com');
+    const none = res.find(p => p.email === 'none@x.com');
 
     expect(stayed.present).toBe(true);
-    expect(early.present).toBe(false);
+    expect(early.present).toBe(true); // Attended 30 min — must NOT be marked absent
     expect(open.present).toBe(true);
+    expect(none.present).toBe(false); // 0 sessions and 0 duration
     expect(open.durationMs).toBe(3600000); // Capped at meetingEndTime (10:00 to 11:00) rather than Date.now()
+  });
+
+  test('merges reconnecting attendees into a single participant entry with combined sessions', async () => {
+    global.fetch.mockImplementation(async (url) => {
+      if (url.includes('p1-part1/participantSessions')) {
+        return {
+          ok: true,
+          json: async () => ({
+            participantSessions: [
+              { startTime: '2026-03-01T10:00:00Z', endTime: '2026-03-01T10:20:00Z' }, // 20m
+            ],
+          }),
+        };
+      }
+      if (url.includes('p1-part2/participantSessions')) {
+        return {
+          ok: true,
+          json: async () => ({
+            participantSessions: [
+              { startTime: '2026-03-01T10:25:00Z', endTime: '2026-03-01T10:55:00Z' }, // 30m
+            ],
+          }),
+        };
+      }
+      if (url.includes('p2/participantSessions')) {
+        return {
+          ok: true,
+          json: async () => ({
+            participantSessions: [
+              { startTime: '2026-03-01T10:00:00Z', endTime: '2026-03-01T10:30:00Z' },
+            ],
+          }),
+        };
+      }
+      if (url.includes('/participants')) {
+        return {
+          ok: true,
+          json: async () => ({
+            participants: [
+              { name: 'rec1/participants/p1-part1', signedinUser: { displayName: 'Alice Brown', email: 'alice@x.com' } },
+              { name: 'rec1/participants/p2', signedinUser: { displayName: 'Bob Green', email: 'bob@x.com' } },
+              { name: 'rec1/participants/p1-part2', signedinUser: { displayName: 'Alice Brown', email: 'alice@x.com' } }, // Reconnect!
+            ],
+          }),
+        };
+      }
+      return { ok: true, json: async () => ({}) };
+    });
+
+    const res = await fetchConferenceParticipants('rec1', 'tok', '2026-03-01T11:00:00Z');
+    expect(res).toHaveLength(2); // Alice was deduplicated from 2 raw records down to 1
+
+    const alice = res.find(p => p.email === 'alice@x.com');
+    expect(alice).toBeDefined();
+    expect(alice.present).toBe(true);
+    expect(alice.sessions).toBe(2);
+    expect(alice.durationMs).toBe(50 * 60 * 1000); // 20m + 30m = 50m
+    expect(alice.joinTimeISO).toBe('2026-03-01T10:00:00.000Z');
+    expect(alice.leaveTimeISO).toBe('2026-03-01T10:55:00.000Z');
   });
 
   test('falls back to latest participant activity when meetingEndTime is null', async () => {
@@ -319,6 +389,71 @@ describe('fetchConferenceParticipants', () => {
     const p2 = res.find(p => p.email === 'p2@x.com');
 
     expect(p1.present).toBe(true);
-    expect(p2.present).toBe(false);
+    expect(p2.present).toBe(true); // Both participants participated and had valid durations
+  });
+
+  test('marks attendee with an open session present and leaves leaveTimeISO null', async () => {
+    global.fetch.mockImplementation(async (url) => {
+      if (url.includes('p1/participantSessions')) {
+        return {
+          ok: true,
+          json: async () => ({
+            participantSessions: [
+              { startTime: '2026-03-01T10:00:00Z', endTime: '2026-03-01T10:15:00Z' },
+              { startTime: '2026-03-01T10:20:00Z' }, // open session (no endTime)
+            ],
+          }),
+        };
+      }
+      if (url.includes('/participants')) {
+        return {
+          ok: true,
+          json: async () => ({
+            participants: [
+              { name: 'rec1/participants/p1', signedinUser: { displayName: 'Active User', email: 'active@x.com' } },
+            ],
+          }),
+        };
+      }
+      return { ok: true, json: async () => ({}) };
+    });
+
+    const res = await fetchConferenceParticipants('rec1', 'tok', '2026-03-01T11:00:00Z');
+    expect(res).toHaveLength(1);
+    const p1 = res[0];
+    expect(p1.present).toBe(true);
+    expect(p1.leaveTimeISO).toBeNull();
+  });
+
+  test('merges email and display name across multiple reconnect records for the same attendee', async () => {
+    global.fetch.mockImplementation(async (url) => {
+      if (url.includes('part1/participantSessions') || url.includes('part2/participantSessions')) {
+        return {
+          ok: true,
+          json: async () => ({
+            participantSessions: [
+              { startTime: '2026-03-01T10:00:00Z', endTime: '2026-03-01T10:20:00Z' },
+            ],
+          }),
+        };
+      }
+      if (url.includes('/participants')) {
+        return {
+          ok: true,
+          json: async () => ({
+            participants: [
+              { name: 'rec1/participants/part1', signedinUser: { email: 'merged@x.com' } }, // email only
+              { name: 'rec1/participants/part2', signedinUser: { displayName: 'Merged Person', email: 'merged@x.com' } }, // has displayName
+            ],
+          }),
+        };
+      }
+      return { ok: true, json: async () => ({}) };
+    });
+
+    const res = await fetchConferenceParticipants('rec1', 'tok', '2026-03-01T11:00:00Z');
+    expect(res).toHaveLength(1);
+    expect(res[0].email).toBe('merged@x.com');
+    expect(res[0].displayName).toBe('Merged Person');
   });
 });

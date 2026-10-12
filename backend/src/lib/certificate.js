@@ -96,9 +96,27 @@ function fmtDate(v, tz, locale) {
 
 function statusOf(p, locale) {
   let raw = 'Present';
-  if (p.present) raw = 'Present';
-  else if (p.status) raw = String(p.status);
-  else raw = toDate(p.leaveTime ?? p.leaveTimeISO) ? 'Left' : 'Present';
+  if (p.present) {
+    raw = 'Present';
+  } else if (p.present === false) {
+    if (p.status && !/^(present|true)$/i.test(String(p.status).trim())) {
+      const s = String(p.status).trim();
+      if (/^absent$/i.test(s)) raw = 'Absent';
+      else if (/^excused$/i.test(s)) raw = 'Excused';
+      else raw = s;
+    } else if (toDate(p.leaveTime ?? p.leaveTimeISO)) {
+      raw = 'Left';
+    } else {
+      raw = 'Absent';
+    }
+  } else if (p.status) {
+    const s = String(p.status).trim();
+    if (/^absent$/i.test(s)) raw = 'Absent';
+    else if (/^excused$/i.test(s)) raw = 'Excused';
+    else raw = s;
+  } else {
+    raw = toDate(p.leaveTime ?? p.leaveTimeISO) ? 'Left' : 'Present';
+  }
   return localizeStatus(raw, locale);
 }
 
@@ -148,7 +166,13 @@ function buildReportModel({ meeting = {}, attendees = [], options = {} } = {}) {
     };
   });
 
-  const presentCount = (attendees || []).filter((p) => p.present || (!String(p.status || '').includes('Absent') && !String(p.status || '').includes('Excused'))).length;
+  const presentCount = (attendees || []).filter((p) => {
+    if (p.present === false && !toDate(p.leaveTime ?? p.leaveTimeISO)) return false;
+    const st = String(p.status || '');
+    if (/absent|excused|ausente|faltou/i.test(st)) return false;
+    const s = statusOf(p);
+    return s !== 'Absent' && s !== 'Excused' && !/absent|excused|ausente|faltou/i.test(s);
+  }).length;
   const brandName = options.brand && options.brand.name ? String(options.brand.name) : null;
   const tzAbbr = getTzAbbr(tz, locale, toDate(meeting.startTime || meeting.date) || new Date());
   const cols = [labels.columns.name, labels.columns.email, labels.columns.joined, labels.columns.left, labels.columns.active, labels.columns.status];
@@ -287,8 +311,11 @@ function buildCertificateModels({ meeting = {}, attendees = [], options = {} } =
 
   return (attendees || [])
     .filter((p) => {
+      if (p.present === false && !toDate(p.leaveTime ?? p.leaveTimeISO)) return false;
+      const st = String(p.status || '');
+      if (/absent|excused|ausente|faltou/i.test(st)) return false;
       const s = statusOf(p);
-      return s !== 'Absent' && s !== 'Excused';
+      return s !== 'Absent' && s !== 'Excused' && !/absent|excused|ausente|faltou/i.test(s);
     })
     .map((p) => {
       const join = p.joinTime ?? p.joinTimeISO ?? null;

@@ -904,6 +904,54 @@ describe('AttLmsSync', () => {
     expect(pushBtn.disabled).toBe(false);
     delete global.captureError;
   });
+
+  test('includes conferenceId in payload for classroom and canvas sync', async () => {
+    let classroomPayload = null;
+    let canvasPayload = null;
+
+    global.fetch = jest.fn(async (url, opts) => {
+      const u = String(url);
+      if (u.includes('/classroom/sync-grades')) {
+        classroomPayload = JSON.parse(opts.body);
+        return { ok: true, status: 200, json: async () => ({ success: true, syncedCount: 1 }) };
+      }
+      if (u.includes('/canvas/sync-grades')) {
+        canvasPayload = JSON.parse(opts.body);
+        return { ok: true, status: 200, json: async () => ({ success: true, syncedCount: 1 }) };
+      }
+      return { ok: true, status: 200, json: async () => ({ courses: [] }) };
+    });
+
+    // Test Classroom with conferenceId
+    AttLmsSync.openModal({
+      conferenceId: 'conf-meet-999',
+      records: [{ name: 'Alice', email: 'alice@school.edu', status: 'present' }],
+      getAuthToken: () => 'tok',
+      getBackendUrl: () => 'https://api.test',
+    });
+    const classCourse = document.getElementById('lms-classroom-course-select');
+    classCourse.innerHTML = '<option value="c-1" selected>Class</option>';
+    classCourse.value = 'c-1';
+    await AttLmsSync.pushGrades();
+    expect(classroomPayload).toBeDefined();
+    expect(classroomPayload.conferenceId).toBe('conf-meet-999');
+
+    // Test Canvas with conferenceId
+    AttLmsSync.openModal({
+      tab: 'canvas',
+      conferenceId: 'conf-canvas-888',
+      records: [{ name: 'Bob', email: 'bob@school.edu', status: 'present' }],
+      getAuthToken: () => 'tok',
+      getBackendUrl: () => 'https://api.test',
+    });
+    AttLmsSync.setTab('canvas');
+    const canvasCourse = document.getElementById('lms-canvas-course-select');
+    canvasCourse.innerHTML = '<option value="can-1" selected>Canvas 1</option>';
+    canvasCourse.value = 'can-1';
+    await AttLmsSync.pushGrades();
+    expect(canvasPayload).toBeDefined();
+    expect(canvasPayload.conferenceId).toBe('conf-canvas-888');
+  });
 });
 
 

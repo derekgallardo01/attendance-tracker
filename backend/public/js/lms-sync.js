@@ -546,6 +546,7 @@
               title,
               maxPoints,
               records,
+              conferenceId: _activeContext?.conferenceId || null,
             }),
           });
 
@@ -614,6 +615,7 @@
               title,
               maxPoints,
               records,
+              conferenceId: _activeContext?.conferenceId || null,
             }),
           });
 

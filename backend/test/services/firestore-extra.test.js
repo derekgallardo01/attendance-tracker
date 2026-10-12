@@ -598,4 +598,394 @@ describe('getMeetingWithParticipants', () => {
       expect(count).toBe(0);
     });
   });
+
+  describe('countUserMonthlyExports', () => {
+    test('counts Sheets, CSV, and Excel exports in the current calendar month toward quota', async () => {
+      const now = new Date();
+      const currentMonthDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 5)).toISOString();
+      const priorMonthDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 15)).toISOString();
+
+      // Sheets export this month (>1 participant) -> counts
+      ctx.seed('tenants/acme.com/exports/e1', {
+        email: 'teacher@acme.com',
+        sheetUrl: 'https://docs.google.com/spreadsheets/d/123',
+        participantCount: 15,
+        createdAt: currentMonthDate,
+      });
+
+      // CSV export this month without sheetUrl (>1 participant) -> MUST count toward monthly quota
+      ctx.seed('tenants/acme.com/exports/e2', {
+        email: 'teacher@acme.com',
+        sheetUrl: null,
+        exportType: 'csv',
+        participantCount: 20,
+        createdAt: currentMonthDate,
+      });
+
+      // Excel export this month without sheetUrl (>1 participant) -> MUST count toward monthly quota
+      ctx.seed('tenants/acme.com/exports/e3', {
+        email: 'teacher@acme.com',
+        sheetUrl: null,
+        exportType: 'excel',
+        participantCount: 25,
+        createdAt: currentMonthDate,
+      });
+
+      // Solo test export (<= 1 participant) -> does NOT count
+      ctx.seed('tenants/acme.com/exports/e4', {
+        email: 'teacher@acme.com',
+        sheetUrl: 'https://docs.google.com/spreadsheets/d/solo',
+        participantCount: 1,
+        createdAt: currentMonthDate,
+      });
+
+      // Prior month export -> does NOT count
+      ctx.seed('tenants/acme.com/exports/e5', {
+        email: 'teacher@acme.com',
+        sheetUrl: 'https://docs.google.com/spreadsheets/d/old',
+        participantCount: 10,
+        createdAt: priorMonthDate,
+      });
+
+      const count = await firestore.countUserMonthlyExports('acme.com', 'teacher@acme.com');
+      expect(count).toBe(3); // Sheets + CSV + Excel
+    });
+
+    test('returns 0 when error occurs or user has no exports', async () => {
+      expect(await firestore.countUserMonthlyExports('acme.com', 'nobody@acme.com')).toBe(0);
+    });
+  });
+
+  describe('persistExport month rollover', () => {
+    test('handles first export of a new month as a new monthly export, updating createdAt and resetting reexportCount', async () => {
+      const email = 'teacher@acme.com';
+      const conferenceId = 'class-101';
+      const payload = {
+        meetingTitle: 'Math 101',
+        tabName: 'Math 101',
+        exportedAt: new Date().toISOString(),
+        participantCount: 10,
+        sheetUrl: 'https://docs.google.com/sheet1',
+        email,
+        conferenceId,
+      };
+
+      // 1. Initial export in current month
+      const first = await firestore.persistExport('acme.com', payload);
+      expect(first).toEqual({ created: true });
+
+      // 2. Second export in current month -> re-export ordinal 1
+      const second = await firestore.persistExport('acme.com', payload);
+      expect(second).toEqual({ created: false, reexportCount: 1 });
+
+      // 3. Simulate rolling over into a new month by setting doc's reexportMonth and createdAt to prior month
+      const docId = `${email.replace(/[^a-z0-9]/g, '_')}__${conferenceId}`;
+      const priorMonthKey = '2025-01';
+      const priorCreatedAt = new Date('2025-01-15T12:00:00Z');
+      const stored = ctx.read(`tenants/acme.com/exports/${docId}`);
+      ctx.seed(`tenants/acme.com/exports/${docId}`, {
+        ...stored,
+        reexportMonth: priorMonthKey,
+        reexportCount: 5,
+        createdAt: priorCreatedAt,
+      });
+
+      // 4. First export in the new month with updated participantCount (e.g. 20)
+      const newMonthFirst = await firestore.persistExport('acme.com', { ...payload, participantCount: 20 });
+      expect(newMonthFirst).toEqual({ created: true, reexportCount: 0 });
+
+      // Check stored doc: createdAt is updated, reexportCount reset to 0, participantCount updated to 20
+      const updated = ctx.read(`tenants/acme.com/exports/${docId}`);
+      expect(updated.reexportCount).toBe(0);
+      expect(updated.participantCount).toBe(20);
+      expect(updated.createdAt.toDate().getTime()).toBeGreaterThan(priorCreatedAt.getTime());
+
+      // 5. Second export in the new month must return { created: false, reexportCount: 1 }
+      const newMonthSecond = await firestore.persistExport('acme.com', payload);
+      expect(newMonthSecond).toEqual({ created: false, reexportCount: 1 });
+    });
+
+    test('handles legacy export docs missing reexportMonth and createdAt as a new month export', async () => {
+      const email = 'legacy@acme.com';
+      const conferenceId = 'legacy-conf';
+      const docId = `${email.replace(/[^a-z0-9]/g, '_')}__${conferenceId}`;
+      ctx.seed(`tenants/acme.com/exports/${docId}`, {
+        meetingTitle: 'Old Class',
+        participantCount: 15,
+        email,
+        conferenceId,
+      });
+
+      const res = await firestore.persistExport('acme.com', {
+        meetingTitle: 'Old Class New Session',
+        tabName: 'Session 2',
+        exportedAt: new Date().toISOString(),
+        participantCount: 18,
+        email,
+        conferenceId,
+      });
+
+      expect(res).toEqual({ created: true, reexportCount: 0 });
+      const doc = ctx.read(`tenants/acme.com/exports/${docId}`);
+      expect(doc.reexportCount).toBe(0);
+      expect(doc.reexportMonth).toBeDefined();
+      expect(doc.participantCount).toBe(18);
+    });
+
+    test('records exported event via logEvent on month rollover', async () => {
+      const email = 'rollover@acme.com';
+      const conferenceId = 'roll-conf';
+      const docId = `${email.replace(/[^a-z0-9]/g, '_')}__${conferenceId}`;
+      ctx.seed(`tenants/acme.com/exports/${docId}`, {
+        email,
+        conferenceId,
+        reexportMonth: '2024-01',
+        createdAt: new Date('2024-01-01T00:00:00Z'),
+        reexportCount: 2,
+      });
+
+      await firestore.persistExport('acme.com', {
+        email,
+        conferenceId,
+        participantCount: 12,
+        tabName: 'Attendance',
+      });
+
+      const events = ctx.list('tenants/acme.com/events');
+      expect(events.some(e => e.data.email === email && e.data.type === 'exported' && e.data.meta?.participantCount === 12)).toBe(true);
+    });
+  });
+
+  describe('isMeetingUnlocked authorization & expiration', () => {
+    test('authorizes user by matching email or domain', async () => {
+      ctx.seed('unlocked_meetings/conf-valid', {
+        conferenceId: 'conf-valid',
+        email: 'teacher@acme.com',
+        domain: 'acme.com',
+        unlockedAt: wrapTimestamp(new Date(Date.now() - 3600 * 1000)), // 1 hour ago
+      });
+
+      // Matches by email
+      expect(await firestore.isMeetingUnlocked('acme.com', 'teacher@acme.com', 'conf-valid')).toBe(true);
+      // Case-insensitive email match
+      expect(await firestore.isMeetingUnlocked('acme.com', 'Teacher@Acme.COM', 'conf-valid')).toBe(true);
+      // Matches by domain
+      expect(await firestore.isMeetingUnlocked('acme.com', 'colleague@acme.com', 'conf-valid')).toBe(true);
+    });
+
+    test('prevents multi-tenant authorization leak (blocks foreign domain and email)', async () => {
+      ctx.seed('unlocked_meetings/conf-private', {
+        conferenceId: 'conf-private',
+        email: 'teacher@school-a.edu',
+        domain: 'school-a.edu',
+        unlockedAt: wrapTimestamp(new Date(Date.now() - 3600 * 1000)),
+      });
+
+      // Attacker from school-b.edu cannot access single meeting pass of school-a.edu
+      expect(await firestore.isMeetingUnlocked('school-b.edu', 'attacker@school-b.edu', 'conf-private')).toBe(false);
+    });
+
+    test('enforces 48-hour expiration window on single-meeting passes', async () => {
+      // 47 hours ago -> valid
+      ctx.seed('unlocked_meetings/conf-47h', {
+        conferenceId: 'conf-47h',
+        email: 'teacher@acme.com',
+        domain: 'acme.com',
+        unlockedAt: wrapTimestamp(new Date(Date.now() - 47 * 3600 * 1000)),
+      });
+      expect(await firestore.isMeetingUnlocked('acme.com', 'teacher@acme.com', 'conf-47h')).toBe(true);
+
+      // 49 hours ago -> expired
+      ctx.seed('unlocked_meetings/conf-49h', {
+        conferenceId: 'conf-49h',
+        email: 'teacher@acme.com',
+        domain: 'acme.com',
+        unlockedAt: wrapTimestamp(new Date(Date.now() - 49 * 3600 * 1000)),
+      });
+      expect(await firestore.isMeetingUnlocked('acme.com', 'teacher@acme.com', 'conf-49h')).toBe(false);
+    });
+
+    test('checks user document fallback with 48-hour expiration window', async () => {
+      ctx.seed('tenants/acme.com/users/teacher@acme.com', {
+        email: 'teacher@acme.com',
+        unlockedMeetings: ['conf-user-active', 'conf-user-expired'],
+        lastMeetingUnlockedAt: wrapTimestamp(new Date(Date.now() - 2 * 3600 * 1000)),
+      });
+
+      expect(await firestore.isMeetingUnlocked('acme.com', 'teacher@acme.com', 'conf-user-active')).toBe(true);
+
+      // User doc expired
+      ctx.seed('tenants/acme.com/users/expired@acme.com', {
+        email: 'expired@acme.com',
+        unlockedMeetings: ['conf-user-expired'],
+        lastMeetingUnlockedAt: wrapTimestamp(new Date(Date.now() - 50 * 3600 * 1000)),
+      });
+      expect(await firestore.isMeetingUnlocked('acme.com', 'expired@acme.com', 'conf-user-expired')).toBe(false);
+    });
+
+    test('enforces personal domain isolation (prevents gmail.com strangers from sharing passes)', async () => {
+      ctx.seed('unlocked_meetings/conf-gmail', {
+        conferenceId: 'conf-gmail',
+        email: 'alice@gmail.com',
+        domain: 'gmail.com',
+        unlockedAt: wrapTimestamp(new Date(Date.now() - 3600 * 1000)),
+      });
+
+      // Bob on gmail.com CANNOT access Alice's unlocked meeting pass
+      expect(await firestore.isMeetingUnlocked('gmail.com', 'bob@gmail.com', 'conf-gmail')).toBe(false);
+      // Alice CAN access her own unlocked meeting pass
+      expect(await firestore.isMeetingUnlocked('gmail.com', 'alice@gmail.com', 'conf-gmail')).toBe(true);
+    });
+
+    test('supports instance-keyed conference IDs bidirectionally', async () => {
+      // Unlocked with base code
+      ctx.seed('unlocked_meetings/conf-base', {
+        conferenceId: 'conf-base',
+        email: 'teacher@acme.com',
+        domain: 'acme.com',
+        unlockedAt: wrapTimestamp(new Date(Date.now() - 3600 * 1000)),
+      });
+      // Query with instance ID
+      expect(await firestore.isMeetingUnlocked('acme.com', 'teacher@acme.com', 'conf-base__session_01')).toBe(true);
+
+      // Unlocked with instance ID
+      ctx.seed('unlocked_meetings/conf-base2__session_02', {
+        conferenceId: 'conf-base2__session_02',
+        email: 'teacher@acme.com',
+        domain: 'acme.com',
+        unlockedAt: wrapTimestamp(new Date(Date.now() - 3600 * 1000)),
+      });
+      // Query with base code
+      expect(await firestore.isMeetingUnlocked('acme.com', 'teacher@acme.com', 'conf-base2')).toBe(true);
+    });
+
+    test('returns false when unlockedAt is missing or invalid', async () => {
+      ctx.seed('unlocked_meetings/conf-no-ts', {
+        conferenceId: 'conf-no-ts',
+        email: 'teacher@acme.com',
+        domain: 'acme.com',
+      });
+      expect(await firestore.isMeetingUnlocked('acme.com', 'teacher@acme.com', 'conf-no-ts')).toBe(false);
+    });
+
+    test('returns false for missing conferenceId or missing doc', async () => {
+      expect(await firestore.isMeetingUnlocked('acme.com', 'teacher@acme.com', null)).toBe(false);
+      expect(await firestore.isMeetingUnlocked('acme.com', 'teacher@acme.com', 'does-not-exist')).toBe(false);
+    });
+  });
+
+  describe('instance ID normalization in history, series, and detail', () => {
+    test('getMeetingDetail allows access when event has baseCode and meeting has instance id', async () => {
+      // Event tracked with baseCode
+      ctx.seed('tenants/acme.com/events/ev1', {
+        email: 'teacher@acme.com',
+        type: 'tracked',
+        meta: { conferenceId: 'math-101' },
+      });
+
+      // Meeting doc has instance ID `math-101__rec_001`
+      ctx.seed('tenants/acme.com/meetings/math-101__rec_001', {
+        title: 'Math 101 Session 1',
+        meetingCode: 'math-101',
+        conferenceId: 'math-101__rec_001',
+        participantCount: 15,
+        startTime: wrapTimestamp(new Date()),
+      });
+
+      const detail = await firestore.getMeetingDetail('acme.com', 'teacher@acme.com', 'math-101__rec_001');
+      expect(detail).toBeDefined();
+      expect(detail.title).toBe('Math 101 Session 1');
+    });
+
+    test('getMeetingDetail allows access when event has instance id and query uses baseCode', async () => {
+      ctx.seed('tenants/acme.com/events/ev2', {
+        email: 'teacher@acme.com',
+        type: 'tracked',
+        meta: { conferenceId: 'physics-201__spaces_xyz' },
+      });
+
+      ctx.seed('tenants/acme.com/meetings/physics-201', {
+        title: 'Physics 201',
+        meetingCode: 'physics-201',
+        conferenceId: 'physics-201',
+        participantCount: 20,
+        startTime: wrapTimestamp(new Date()),
+      });
+
+      const detail = await firestore.getMeetingDetail('acme.com', 'teacher@acme.com', 'physics-201');
+      expect(detail).toBeDefined();
+      expect(detail.title).toBe('Physics 201');
+    });
+
+    test('getUserMeetingHistory returns instance meetings when user tracked base code', async () => {
+      ctx.seed('tenants/acme.com/events/ev3', {
+        email: 'teacher@acme.com',
+        type: 'tracked',
+        meta: { conferenceId: 'history-301' },
+      });
+
+      ctx.seed('tenants/acme.com/meetings/history-301__inst_1', {
+        title: 'History 301',
+        meetingCode: 'history-301',
+        participantCount: 12,
+        createdAt: wrapTimestamp(new Date()),
+      });
+
+      const res = await firestore.getUserMeetingHistory('acme.com', 'teacher@acme.com');
+      expect(res.meetings.some(m => m.id === 'history-301__inst_1')).toBe(true);
+    });
+
+    test('getUserMeetingSeries groups instance meetings when user tracked base code', async () => {
+      ctx.seed('tenants/acme.com/events/ev4', {
+        email: 'teacher@acme.com',
+        type: 'tracked',
+        meta: { conferenceId: 'series-401' },
+      });
+
+      ctx.seed('tenants/acme.com/meetings/series-401__rec_1', {
+        title: 'Weekly Seminar',
+        meetingCode: 'series-401',
+        recurringEventId: 'weekly-series-id',
+        participantCount: 8,
+        createdAt: wrapTimestamp(new Date()),
+      });
+
+      const res = await firestore.getUserMeetingSeries('acme.com', 'teacher@acme.com');
+      expect(res.series.length).toBe(1);
+      expect(res.series[0].recurringEventId).toBe('weekly-series-id');
+      expect(res.series[0].instanceCount).toBe(1);
+    });
+
+    test('getMeetingDetail resolves anchor doc with hasInstances to latest instance and inherits series title/calendarAttendees', async () => {
+      ctx.seed('tenants/acme.com/events/ev5', {
+        email: 'teacher@acme.com',
+        type: 'tracked',
+        meta: { conferenceId: 'anchor-501' },
+      });
+
+      // Series anchor doc with metadata but hasInstances = true
+      ctx.seed('tenants/acme.com/meetings/anchor-501', {
+        title: 'Inherited Series Title',
+        meetingCode: 'anchor-501',
+        hasInstances: true,
+        calendarAttendees: [{ email: 'student1@acme.com', displayName: 'Student One', responseStatus: 'accepted' }],
+        startTime: wrapTimestamp(new Date(Date.now() - 7 * 86400 * 1000)),
+      });
+
+      // Instance doc for this meeting code
+      ctx.seed('tenants/acme.com/meetings/anchor-501__session_99', {
+        meetingCode: 'anchor-501',
+        conferenceId: 'anchor-501',
+        startTime: wrapTimestamp(new Date()),
+        participantCount: 1,
+      });
+
+      // Query by base code
+      const detail = await firestore.getMeetingDetail('acme.com', 'teacher@acme.com', 'anchor-501');
+      expect(detail).toBeDefined();
+      expect(detail.title).toBe('Inherited Series Title');
+      expect(detail.calendarAttendees).toHaveLength(1);
+      expect(detail.calendarAttendees[0].email).toBe('student1@acme.com');
+    });
+  });
 });

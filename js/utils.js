@@ -322,7 +322,18 @@
   // parts; keeping them here makes them unit-testable. saveState/restoreState in
   // index.html stay thin wrappers over sessionStorage + applying to `state`.
   function serializeSession(state, savedAtMs) {
-    const iso = (d) => (d ? d.toISOString() : null);
+    const iso = (d) => {
+      if (!d) return null;
+      if (d instanceof Date) return Number.isFinite(d.getTime()) ? d.toISOString() : null;
+      if (typeof d === 'string') {
+        const ms = new Date(d).getTime();
+        return Number.isFinite(ms) ? new Date(ms).toISOString() : null;
+      }
+      if (typeof d === 'number') {
+        return Number.isFinite(d) ? new Date(d).toISOString() : null;
+      }
+      return null;
+    };
     return {
       conferenceId: state.conferenceId,
       meetingTitle: state.meetingTitle,

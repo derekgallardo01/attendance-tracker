@@ -135,15 +135,46 @@ function sessionsDurationMs(sessions, nowMs = Date.now()) {
 // Fetch all participants and their sessions for a conferenceRecord.
 async function fetchConferenceParticipants(recordName, token, meetingEndTime = null) {
   const raw = await meetGetAll(`${recordName}/participants`, token, 'participants');
+
+  // Group raw participant objects by email / identity (matching attendance.js logic)
+  // so reconnects or multi-device joins don't produce duplicate rows or duplicate documents.
+  const seen = new Map();
+  let anonSeq = 0;
+  for (const p of raw) {
+    const idy = participantIdentity(p);
+    const email = (idy.email || '').trim().toLowerCase();
+    const rawName = (idy.displayName || '').trim().toLowerCase();
+    const name = rawName && rawName !== 'unknown' ? rawName : '';
+    const key = email || (name ? `name:${name}` : `__anon_${anonSeq++}`);
+    if (!seen.has(key)) {
+      seen.set(key, [p]);
+    } else {
+      seen.get(key).push(p);
+    }
+  }
+  const distinctGroups = [...seen.values()];
+
   const BATCH = 10;
   const participantData = [];
-  for (let i = 0; i < raw.length; i += BATCH) {
-    const results = await Promise.all(raw.slice(i, i + BATCH).map(async (p) => {
-      let sessions = [];
+  for (let i = 0; i < distinctGroups.length; i += BATCH) {
+    const results = await Promise.all(distinctGroups.slice(i, i + BATCH).map(async (group) => {
+      const primary = group.find(p => p.signedinUser?.email && p.signedinUser?.displayName)
+        || group.find(p => p.signedinUser?.email)
+        || group.find(p => p.signedinUser?.displayName || p.anonymousUser?.displayName || p.phoneUser?.displayName)
+        || group[0];
+
       let sessionsFetchFailed = false;
-      try { sessions = await meetGetAll(`${p.name}/participantSessions`, token, 'participantSessions'); }
-      catch (e) { sessionsFetchFailed = true; log.warn('meetApi: sessions fetch failed', { participant: p.name, error: e.message }); }
-      return { p, sessions, sessionsFetchFailed };
+      const sessionArrays = await Promise.all(group.map(async (p) => {
+        try {
+          return await meetGetAll(`${p.name}/participantSessions`, token, 'participantSessions');
+        } catch (e) {
+          sessionsFetchFailed = true;
+          log.warn('meetApi: sessions fetch failed', { participant: p.name, error: e.message });
+          return [];
+        }
+      }));
+      const sessions = sessionArrays.flat();
+      return { p: primary, group, sessions, sessionsFetchFailed, groupSize: group.length };
     }));
     participantData.push(...results);
   }
@@ -160,38 +191,52 @@ async function fetchConferenceParticipants(recordName, token, meetingEndTime = n
     meetingEndMs = maxMs > 0 ? maxMs : null;
   }
 
-  const PRESENCE_GRACE_MS = 3 * 60 * 1000; // 3 minutes grace window before meeting completion
+  const groupIdentity = (group) => {
+    let displayName = '';
+    let email = '';
+    for (const p of group || []) {
+      const idy = participantIdentity(p);
+      if (!email && idy.email) email = idy.email;
+      if ((!displayName || displayName === 'Unknown') && idy.displayName && idy.displayName !== 'Unknown') {
+        displayName = idy.displayName;
+      }
+    }
+    return {
+      displayName: displayName || 'Unknown',
+      email: email || '',
+    };
+  };
 
-  return participantData.map(({ p, sessions, sessionsFetchFailed }) => {
+  return participantData.map(({ p, group, sessions, sessionsFetchFailed, groupSize }) => {
     const joins  = sessions.map(s => s.startTime).filter(Boolean).map(t => new Date(t)).filter(d => !isNaN(d.getTime()));
     const leaves = sessions.map(s => s.endTime).filter(Boolean).map(t => new Date(t)).filter(d => !isNaN(d.getTime()));
     const joinIso = joins.length ? new Date(Math.min(...joins)).toISOString() : null;
-    const leaveIso = leaves.length ? new Date(Math.max(...leaves)).toISOString() : null;
+    const hasOpenSession = sessions.some(s => !s.endTime);
+    const leaveIso = (!hasOpenSession && leaves.length) ? new Date(Math.max(...leaves)).toISOString() : null;
+    const durationMs = sessionsFetchFailed ? undefined : sessionsDurationMs(sessions, meetingEndMs || Date.now());
 
     let present = false;
     if (sessionsFetchFailed) {
       present = true;
-    } else if (sessions.some(s => !s.endTime)) {
+    } else if (hasOpenSession) {
       present = true;
-    } else if (leaves.length > 0) {
-      const lastLeaveMs = Math.max(...leaves.map(t => t.getTime()));
-      if (meetingEndMs) {
-        present = (meetingEndMs - lastLeaveMs) <= PRESENCE_GRACE_MS;
-      } else {
-        present = true;
-      }
+    } else if ((durationMs != null && durationMs > 0) || sessions.length > 0) {
+      present = true;
     }
+
+    const idy = groupIdentity(group);
 
     return {
       participantId: p.name,
-      ...participantIdentity(p),
+      displayName:  idy.displayName,
+      email:        idy.email,
       joinTimeISO:  joinIso,
       leaveTimeISO: leaveIso,
       joinTime:     joinIso,
       leaveTime:    leaveIso,
-      ...(sessionsFetchFailed ? {} : { durationMs: sessionsDurationMs(sessions, meetingEndMs || Date.now()) }),
+      ...(durationMs != null ? { durationMs } : {}),
       present,
-      sessions:     sessions.length || 1,
+      sessions:     sessions.length || groupSize || 1,
     };
   });
 }
