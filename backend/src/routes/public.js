@@ -284,6 +284,21 @@ router.post('/public/error', errorLimiter, expressText({ type: ['text/plain', 'a
     : (body.reason != null ? scrubPii(typeof body.reason === 'object' ? JSON.stringify(body.reason) : String(body.reason)).slice(0, 1000) : null);
   const release = cap(body.release, 100);
 
+  // Demote benign client-side handoff timeouts and popup blocker notices to warnings so they don't trigger Sentry alerts
+  if (/postMessage handshake timed out|browser blocked download popup window|popup blocked/i.test(message)) {
+    log.warn('client_fallback_warning', {
+      message,
+      stack: stack || undefined,
+      path: path || undefined,
+      where: where || undefined,
+      reason: reason || undefined,
+      release: release || undefined,
+      userAgent: cap(req.headers['user-agent'], 500),
+      ip: cap(req.ip, 100),
+    });
+    return res.json({ success: true });
+  }
+
   const clientErr = new Error(message);
   if (stack) {
     clientErr.stack = stack;

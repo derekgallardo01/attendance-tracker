@@ -639,11 +639,14 @@ describe('GET /api/public/billing-config — Institution card gate', () => {
 
 describe('POST /api/public/error', () => {
   let errorSpy;
+  let warnSpy;
   beforeEach(() => {
     errorSpy = jest.spyOn(require('../../src/lib/logger'), 'error').mockImplementation(() => {});
+    warnSpy = jest.spyOn(require('../../src/lib/logger'), 'warn').mockImplementation(() => {});
   });
   afterEach(() => {
     errorSpy.mockRestore();
+    warnSpy.mockRestore();
   });
 
   test('400 when body is missing or empty', async () => {
@@ -815,6 +818,44 @@ describe('POST /api/public/error', () => {
     expect(res.status).toBe(200);
     const errPassed = errorSpy.mock.calls[0][1].err;
     expect(errPassed.stack).toContain('at checkout_timeout (/pricing.html)');
+  });
+
+  test('demotes postMessage handshake timeout to warning instead of error', async () => {
+    const res = await request(app)
+      .post('/api/public/error')
+      .set('Content-Type', 'application/json')
+      .send({
+        message: 'Error: postMessage handshake timed out waiting for payload',
+        path: '/download.html',
+        where: 'postMessage_handshake_timeout',
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(errorSpy).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith('client_fallback_warning', expect.objectContaining({
+      message: 'Error: postMessage handshake timed out waiting for payload',
+      path: '/download.html',
+      where: 'postMessage_handshake_timeout',
+    }));
+  });
+
+  test('demotes browser blocked popup window to warning instead of error', async () => {
+    const res = await request(app)
+      .post('/api/public/error')
+      .set('Content-Type', 'application/json')
+      .send({
+        message: 'Error: Browser blocked download popup window',
+        path: '/index.html',
+        where: 'relayDownload',
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(errorSpy).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith('client_fallback_warning', expect.objectContaining({
+      message: 'Error: Browser blocked download popup window',
+      path: '/index.html',
+      where: 'relayDownload',
+    }));
   });
 
   test('errorLimiter is configured with 30 requests per 1 minute window', () => {

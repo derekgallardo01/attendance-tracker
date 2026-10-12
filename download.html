@@ -99,6 +99,17 @@
         }
       }
 
+      function isAllowedOrigin(origin) {
+        if (!origin) return false;
+        if (origin === window.location.origin) return true;
+        if (origin === 'https://attendancetracker.dev') return true;
+        if (origin === 'https://attendance-tracker-backend-829771833968.us-central1.run.app') return true;
+        if (origin === 'https://derekgallardo01.github.io') return true;
+        if (origin.indexOf('https://attendance-tracker-') === 0 && (origin.indexOf('.web.app') !== -1 || origin.indexOf('.firebaseapp.com') !== -1)) return true;
+        if (window.location.hostname === 'localhost' && origin.indexOf('http://localhost') === 0) return true;
+        return false;
+      }
+
       // Path 1: localStorage handoff. Works when the opener shares this
       // origin's storage (panel opened from a top-level page). Inside Meet,
       // Chrome's third-party storage partitioning gives the panel iframe a
@@ -110,27 +121,80 @@
       } catch (e) { /* storage blocked */ }
 
       // Path 2: postMessage handshake with the opener (the Meet panel).
-      // Storage partitioning doesn't apply to postMessage. Only accept
-      // payloads from our own origin.
+      // Storage partitioning doesn't apply to postMessage.
       if (window.opener) {
-        window.addEventListener('message', function (e) {
-          if (e.origin !== window.location.origin) return;
-          if (e.data && e.data.type === 'att-download') deliver(e.data);
-        });
-        try {
-          window.opener.postMessage('att-download-ready', '*');
-        } catch (e) {
-          reportDownloadError((e && e.message) || 'postMessage to opener failed', { where: 'postMessage_opener_error' });
+        var handshakeInterval = null;
+        var attempts = 0;
+        var maxAttempts = 60; // 60 * 500ms = 30 seconds
+
+        function stopHandshake() {
+          if (handshakeInterval) {
+            clearInterval(handshakeInterval);
+            handshakeInterval = null;
+          }
         }
-        // Reset any Path-1 failure text — the postMessage retry is in flight.
+
+        window.addEventListener('message', function (e) {
+          if (e.origin && !isAllowedOrigin(e.origin)) return;
+          if (e.data && e.data.type === 'att-download') {
+            stopHandshake();
+            deliver(e.data);
+          }
+        });
+
+        function sendPing() {
+          if (done) {
+            stopHandshake();
+            return;
+          }
+          attempts++;
+
+          // Periodic localStorage check fallback
+          try {
+            var r = localStorage.getItem('attPendingDownload');
+            if (r) {
+              localStorage.removeItem('attPendingDownload');
+              deliver(JSON.parse(r));
+              if (done) {
+                stopHandshake();
+                return;
+              }
+            }
+          } catch (e) {}
+
+          if (attempts > maxAttempts) {
+            stopHandshake();
+            if (!done) {
+              if (window.opener && !window.opener.closed) {
+                reportDownloadError('postMessage handshake timed out waiting for payload', { where: 'postMessage_handshake_timeout' });
+              }
+              fail(T('dl.nothing', 'Nothing to download'), T('dl.nothingDetail', 'This page only works right after clicking a download button in the Meet panel. Go back and try again.'));
+            }
+            return;
+          }
+
+          if (window.opener && !window.opener.closed) {
+            try {
+              window.opener.postMessage('att-download-ready', '*');
+            } catch (e) {
+              // Ignore cross-origin / navigation errors during handshake
+            }
+          } else {
+            // Opener closed or missing
+            stopHandshake();
+            if (!done) {
+              fail(T('dl.nothing', 'Nothing to download'), T('dl.nothingDetail', 'This page only works right after clicking a download button in the Meet panel. Go back and try again.'));
+            }
+          }
+        }
+
         headline.textContent = T('dl.starting', 'Starting your download…');
         detail.textContent = T('dl.fetching', 'Fetching the file from the Meet panel…');
-        setTimeout(function () {
-          if (!done) {
-            reportDownloadError('postMessage handshake timed out waiting for payload', { where: 'postMessage_handshake_timeout' });
-            fail(T('dl.nothing', 'Nothing to download'), T('dl.nothingDetail', 'This page only works right after clicking a download button in the Meet panel. Go back and try again.'));
-          }
-        }, 10000);
+
+        sendPing();
+        if (!done) {
+          handshakeInterval = setInterval(sendPing, 500);
+        }
       } else {
         fail(T('dl.nothing', 'Nothing to download'), T('dl.nothingDetail', 'This page only works right after clicking a download button in the Meet panel. Go back and try again.'));
       }

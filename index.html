@@ -4379,19 +4379,56 @@ function relayDownload(payload, targetWindow) {
     try { logUserEvent('download_popup_blocked', { filename: payload?.filename }); } catch (e) {}
     return 'blocked';
   }
+
+  let sent = false;
+  let retryInterval = null;
+
+  const doSend = () => {
+    try {
+      if (w && !w.closed) {
+        w.postMessage({ type: 'att-download', ...payload }, '*');
+      }
+    } catch (e) {}
+  };
+
   const onMsg = (e) => {
     if (e.source !== w || e.data !== 'att-download-ready') return;
-    w.postMessage({ type: 'att-download', ...payload }, window.location.origin);
+    sent = true;
+    doSend();
+    if (retryInterval) {
+      clearInterval(retryInterval);
+      retryInterval = null;
+    }
     window.removeEventListener('message', onMsg);
   };
   window.addEventListener('message', onMsg);
+
+  // Proactively send immediately in case download.html is already loaded and ready
+  doSend();
+
+  // Retry sending every 400ms up to 6 times to bridge any brief navigation/DOM initialization window
+  let retries = 0;
+  retryInterval = setInterval(() => {
+    retries++;
+    if (retries >= 6 || sent || !w || w.closed) {
+      clearInterval(retryInterval);
+      retryInterval = null;
+      return;
+    }
+    doSend();
+  }, 400);
+
   setTimeout(() => {
+    if (retryInterval) {
+      clearInterval(retryInterval);
+      retryInterval = null;
+    }
     window.removeEventListener('message', onMsg);
     // The tab reads a DIFFERENT (unpartitioned) localStorage inside Meet, so
     // the panel's copy is never consumed there — clean it up once the handoff
     // window has passed so megabytes of base64 don't sit in storage forever.
     try { localStorage.removeItem('attPendingDownload'); } catch (e) {}
-  }, 20000);
+  }, 35000);
   return 'relayed';
 }
 
