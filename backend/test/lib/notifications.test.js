@@ -675,6 +675,47 @@ describe('notifications — email template branches (Resend mocked)', () => {
     expect(mockSend).toHaveBeenCalled();
   });
 
+  test('sendExportNotification includes Educator Pass upgrade CTA card for free tier and omits for pro tier', async () => {
+    const n = require('../../src/lib/notifications');
+    // Free user via plan: 'free'
+    await n.sendExportNotification({
+      to: 'free@x.com', sheetUrl: 'https://s', meetingTitle: 'Math 101',
+      totalAttended: 10, plan: 'free',
+    });
+    let sent = mockSend.mock.calls[0][0];
+    expect(sent.html).toContain('Unlock Unlimited Classes for $4.99/year (~41¢/month)');
+    expect(sent.html).toContain('Unlimited Google Sheets exports, classes &gt;25 students, attendance certificates &amp; LMS grade sync.');
+    expect(sent.html).toContain('ref=export_email&amp;utm_source=export_digest');
+    expect(sent.text).toContain('Unlock Unlimited Classes for $4.99/year (~41¢/month)');
+    expect(sent.text).toContain('Unlimited Google Sheets exports, classes >25 students, attendance certificates & LMS grade sync.');
+    expect(sent.text).toContain('ref=export_email&utm_source=export_digest');
+
+    // Free user via isPro: false (legacy)
+    await n.sendExportNotification({
+      to: 'legacyfree@x.com', sheetUrl: 'https://s', meetingTitle: 'Math 101',
+      totalAttended: 10, isPro: false,
+    });
+    sent = mockSend.mock.calls[1][0];
+    expect(sent.html).toContain('Unlock Unlimited Classes for $4.99/year (~41¢/month)');
+
+    // Pro user via plan: 'pro'
+    await n.sendExportNotification({
+      to: 'pro@x.com', sheetUrl: 'https://s', meetingTitle: 'Math 101',
+      totalAttended: 10, plan: 'pro',
+    });
+    sent = mockSend.mock.calls[2][0];
+    expect(sent.html).not.toContain('Unlock Unlimited Classes for $4.99/year (~41¢/month)');
+    expect(sent.text).not.toContain('Unlock Unlimited Classes for $4.99/year (~41¢/month)');
+
+    // Pro user via isPro: true
+    await n.sendExportNotification({
+      to: 'pro2@x.com', sheetUrl: 'https://s', meetingTitle: 'Math 101',
+      totalAttended: 10, isPro: true,
+    });
+    sent = mockSend.mock.calls[3][0];
+    expect(sent.html).not.toContain('Unlock Unlimited Classes for $4.99/year (~41¢/month)');
+  });
+
   test('sendSeriesAlertEmail single alert vs multiple', async () => {
     const n = require('../../src/lib/notifications');
     await n.sendSeriesAlertEmail({ to: 'u@x.com', displayName: 'Jane', alerts: [{ type: 'streak', personName: 'A', detail: 'missed 3', attended: 5, instanceCount: 8 }] });

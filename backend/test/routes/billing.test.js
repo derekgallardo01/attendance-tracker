@@ -2460,6 +2460,234 @@ describe('billing/status pricing payload', () => {
       );
     });
 
+    test('Mexico (MX) educator checkout creates mode: payment session with MXN price_data and configured price', async () => {
+      const res = await request(app)
+        .post('/api/billing/checkout')
+        .set(authedHeader('profesor@unam.mx', 'unam.mx'))
+        .set('cf-ipcountry', 'MX')
+        .send({ plan: 'educator' });
+      expect(res.status).toBe(200);
+      expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mode: 'payment',
+          line_items: [{
+            price_data: {
+              currency: 'mxn',
+              product_data: { name: 'Attendance Tracker Pro (Educator - 1 Year)' },
+              unit_amount: 4900,
+            },
+            quantity: 1,
+          }],
+          metadata: expect.objectContaining({
+            plan: 'educator',
+            isAnnualOneTime: '1',
+            individual: '1',
+            country: 'MX',
+            currency: 'mxn',
+          }),
+        })
+      );
+
+      process.env.STRIPE_EDUCATOR_MXN_PRICE_ID = 'price_edu_mxn_env';
+      const resEnv = await request(app)
+        .post('/api/billing/checkout')
+        .set(authedHeader('profesor@unam.mx', 'unam.mx'))
+        .set('cf-ipcountry', 'MX')
+        .send({ plan: 'educator' });
+      expect(resEnv.status).toBe(200);
+      expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mode: 'payment',
+          line_items: [{ price: 'price_edu_mxn_env', quantity: 1 }],
+        })
+      );
+      delete process.env.STRIPE_EDUCATOR_MXN_PRICE_ID;
+    });
+
+    test('Brazil (BR) educator checkout creates mode: payment session with BRL price_data and configured price', async () => {
+      const res = await request(app)
+        .post('/api/billing/checkout')
+        .set(authedHeader('prof@usp.br', 'usp.br'))
+        .set('cf-ipcountry', 'BR')
+        .send({ plan: 'educator' });
+      expect(res.status).toBe(200);
+      expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mode: 'payment',
+          line_items: [{
+            price_data: {
+              currency: 'brl',
+              product_data: { name: 'Attendance Tracker Pro (Educator - 1 Year)' },
+              unit_amount: 2700,
+            },
+            quantity: 1,
+          }],
+          metadata: expect.objectContaining({
+            plan: 'educator',
+            isAnnualOneTime: '1',
+            individual: '1',
+            country: 'BR',
+            currency: 'brl',
+          }),
+        })
+      );
+
+      process.env.STRIPE_EDUCATOR_BRL_PRICE_ID = 'price_edu_brl_env';
+      const resEnv = await request(app)
+        .post('/api/billing/checkout')
+        .set(authedHeader('prof@usp.br', 'usp.br'))
+        .set('cf-ipcountry', 'BR')
+        .send({ plan: 'educator' });
+      expect(resEnv.status).toBe(200);
+      expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mode: 'payment',
+          line_items: [{ price: 'price_edu_brl_env', quantity: 1 }],
+        })
+      );
+      delete process.env.STRIPE_EDUCATOR_BRL_PRICE_ID;
+    });
+
+    test('Mexico (MX) and Brazil (BR) lifetime checkout creates mode: payment session with native currency and env override', async () => {
+      // MX lifetime
+      const resMx = await request(app)
+        .post('/api/billing/checkout')
+        .set(authedHeader('profesor@unam.mx', 'unam.mx'))
+        .set('cf-ipcountry', 'MX')
+        .send({ plan: 'lifetime' });
+      expect(resMx.status).toBe(200);
+      expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mode: 'payment',
+          line_items: [{
+            price_data: {
+              currency: 'mxn',
+              product_data: { name: 'Attendance Tracker Pro (Lifetime)' },
+              unit_amount: 9900,
+            },
+            quantity: 1,
+          }],
+          metadata: expect.objectContaining({
+            plan: 'lifetime',
+            country: 'MX',
+            currency: 'mxn',
+          }),
+        })
+      );
+
+      // BR lifetime
+      const resBr = await request(app)
+        .post('/api/billing/checkout')
+        .set(authedHeader('prof@usp.br', 'usp.br'))
+        .set('cf-ipcountry', 'BR')
+        .send({ plan: 'lifetime' });
+      expect(resBr.status).toBe(200);
+      expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mode: 'payment',
+          line_items: [{
+            price_data: {
+              currency: 'brl',
+              product_data: { name: 'Attendance Tracker Pro (Lifetime)' },
+              unit_amount: 4900,
+            },
+            quantity: 1,
+          }],
+          metadata: expect.objectContaining({
+            plan: 'lifetime',
+            country: 'BR',
+            currency: 'brl',
+          }),
+        })
+      );
+
+      // MX configured lifetime price ID
+      process.env.STRIPE_INDIVIDUAL_LIFETIME_MXN_PRICE_ID = 'price_life_mxn_env';
+      const resMxEnv = await request(app)
+        .post('/api/billing/checkout')
+        .set(authedHeader('profesor@unam.mx', 'unam.mx'))
+        .set('cf-ipcountry', 'MX')
+        .send({ plan: 'lifetime' });
+      expect(resMxEnv.status).toBe(200);
+      expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          line_items: [{ price: 'price_life_mxn_env', quantity: 1 }],
+        })
+      );
+      delete process.env.STRIPE_INDIVIDUAL_LIFETIME_MXN_PRICE_ID;
+
+      // BR configured lifetime price ID
+      process.env.STRIPE_INDIVIDUAL_LIFETIME_BRL_PRICE_ID = 'price_life_brl_env';
+      const resBrEnv = await request(app)
+        .post('/api/billing/checkout')
+        .set(authedHeader('prof@usp.br', 'usp.br'))
+        .set('cf-ipcountry', 'BR')
+        .send({ plan: 'lifetime' });
+      expect(resBrEnv.status).toBe(200);
+      expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          line_items: [{ price: 'price_life_brl_env', quantity: 1 }],
+        })
+      );
+      delete process.env.STRIPE_INDIVIDUAL_LIFETIME_BRL_PRICE_ID;
+    });
+
+    test('Mexico (MX) and Brazil (BR) single meeting pass checkout creates session with native currency', async () => {
+      // MX single meeting
+      const resMx = await request(app)
+        .post('/api/billing/checkout')
+        .set(authedHeader('profesor@unam.mx', 'unam.mx'))
+        .set('cf-ipcountry', 'MX')
+        .send({ plan: 'single_meeting', conferenceId: 'conf-mx-1' });
+      expect(resMx.status).toBe(200);
+      expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mode: 'payment',
+          line_items: [{
+            price_data: {
+              currency: 'mxn',
+              product_data: { name: 'Attendance Tracker Pro (Single Meeting Pass)' },
+              unit_amount: 2900,
+            },
+            quantity: 1,
+          }],
+          metadata: expect.objectContaining({
+            plan: 'single_meeting',
+            conferenceId: 'conf-mx-1',
+            country: 'MX',
+            currency: 'mxn',
+          }),
+        })
+      );
+
+      // BR single meeting
+      const resBr = await request(app)
+        .post('/api/billing/checkout')
+        .set(authedHeader('prof@usp.br', 'usp.br'))
+        .set('cf-ipcountry', 'BR')
+        .send({ plan: 'single_meeting', conferenceId: 'conf-br-1' });
+      expect(resBr.status).toBe(200);
+      expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mode: 'payment',
+          line_items: [{
+            price_data: {
+              currency: 'brl',
+              product_data: { name: 'Attendance Tracker Pro (Single Meeting Pass)' },
+              unit_amount: 1400,
+            },
+            quantity: 1,
+          }],
+          metadata: expect.objectContaining({
+            plan: 'single_meeting',
+            conferenceId: 'conf-br-1',
+            country: 'BR',
+            currency: 'brl',
+          }),
+        })
+      );
+    });
+
     test('PPP-eligible country (e.g. Nigeria NG) educator checkout creates mode: payment session with $2.49 USD price_data', async () => {
       const res = await request(app)
         .post('/api/billing/checkout')
@@ -2648,7 +2876,6 @@ describe('billing/status pricing payload', () => {
       expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
         expect.objectContaining({
           mode: 'payment',
-          payment_method_types: ['card'],
           success_url: expect.stringContaining('index.html?unlocked=conf-123&upgraded=1'),
           cancel_url: expect.stringContaining('index.html?unlocked=conf-123'),
           line_items: [{
@@ -2665,6 +2892,7 @@ describe('billing/status pricing payload', () => {
           }),
         })
       );
+      expect(mockStripeInstance.checkout.sessions.create.mock.calls[0][0].payment_method_types).toBeUndefined();
     });
 
     test('falls back without payment_method_types when Stripe rejects invalid or inactive payment method', async () => {
@@ -2672,13 +2900,14 @@ describe('billing/status pricing payload', () => {
         .mockRejectedValueOnce(new Error('Invalid payment_method_types[1]: must be one of card...'))
         .mockResolvedValueOnce({ id: 'cs_fallback_123', url: 'https://checkout.stripe.com/pay/cs_fallback_123' });
 
-      const token = makeJwt({ email: 'teacher@deped.gov.ph', domain: 'deped.gov.ph' });
+      const token = makeJwt({ email: 'teacher@school.edu.in', domain: 'school.edu.in' });
       const res = await request(app)
-        .get(`/api/billing/checkout-redirect?plan=single_meeting&conferenceId=conf-123&country=ph&token=${encodeURIComponent(token)}`);
+        .get(`/api/billing/checkout-redirect?plan=single_meeting&conferenceId=conf-123&country=in&token=${encodeURIComponent(token)}`);
 
       expect(res.status).toBe(302);
       expect(res.header.location).toBe('https://checkout.stripe.com/pay/cs_fallback_123');
       expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledTimes(2);
+      expect(mockStripeInstance.checkout.sessions.create.mock.calls[0][0].payment_method_types).toEqual(['card', 'upi']);
       expect(mockStripeInstance.checkout.sessions.create.mock.calls[1][0].payment_method_types).toBeUndefined();
     });
 

@@ -1384,7 +1384,7 @@ async function sendWeeklySelfReport(report) {
 // link, even if they close the side panel and never look at it again. Now
 // includes an inline attendance table so the email is actionable on its own
 // — the user doesn't have to open the sheet to see what happened.
-async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle, totalAttended, totalInvited, exportedAt, participants, overflow, conferenceId, recurringEventId, isPro = false, language, country, domain, durationMin }) {
+async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle, totalAttended, totalInvited, exportedAt, participants, overflow, conferenceId, recurringEventId, isPro = false, plan, language, country, domain, durationMin }) {
   if (!getResend()) return;
   const resolvedDomain = domain || (to && to.includes('@') ? to.split('@')[1] : null);
   try {
@@ -1611,6 +1611,7 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
       </div>
   `;
 
+  const isFree = plan ? plan !== 'pro' : !isPro;
   let clusterBoxHtml = '';
   let clusterBoxText = '';
   if (!isPro && resolvedDomain) {
@@ -1675,6 +1676,11 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
     </div>
     ${seriesLink ? `<p style="margin:4px 0 16px;font-size:13px;color:#8b949e">${seriesTrendHtml(seriesLink)}</p>` : ''}
     ${clusterBoxHtml}
+    ${isFree ? `<div style="background:#161b22;border:1px solid rgba(88,166,255,.4);border-radius:8px;padding:14px 16px;margin:16px 0;text-align:left">
+      <div style="font-weight:700;color:#e6edf3;font-size:14px;margin-bottom:6px">Unlock Unlimited Classes for $4.99/year (~41¢/month)</div>
+      <div style="font-size:12px;color:#8b949e;margin-bottom:12px;line-height:1.45">Unlimited Google Sheets exports, classes &gt;25 students, attendance certificates &amp; LMS grade sync.</div>
+      <a href="${CONFIG.publicSiteUrl}/pricing.html?ref=export_email&amp;utm_source=export_digest" class="touch-btn-sm" style="display:inline-block;background:#238636;color:#ffffff;font-size:12px;font-weight:700;padding:8px 16px;border-radius:6px;text-decoration:none;line-height:1.35">Upgrade to Educator Pass ($4.99/yr) →</a>
+    </div>` : ''}
     ${isPro ? '' : `<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:12px 14px;margin:16px 0;text-align:left">
       <div style="font-weight:600;color:#e6edf3;font-size:13px;margin-bottom:4px">${escape(reviewBoxTitle)}</div>
       <div style="font-size:12px;color:#8b949e;margin-bottom:10px;line-height:1.4">${escape(reviewBoxBody)}</div>
@@ -1721,6 +1727,12 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
     seriesLink ? seriesTrendPlain(seriesLink) : '',
     clusterBoxText ? clusterBoxText.trim() : '',
     ``,
+    ...(isFree ? [
+      `Unlock Unlimited Classes for $4.99/year (~41¢/month)`,
+      `Unlimited Google Sheets exports, classes >25 students, attendance certificates & LMS grade sync.`,
+      `${CONFIG.publicSiteUrl}/pricing.html?ref=export_email&utm_source=export_digest`,
+      ``,
+    ] : []),
     ...(isPro ? [] : [
       reviewBoxPlainPrompt,
       reviewUrl,

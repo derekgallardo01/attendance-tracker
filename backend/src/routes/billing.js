@@ -252,7 +252,11 @@ async function createCheckoutSessionForUser({ user, plan, interval, conferenceId
       ? process.env.STRIPE_INDIVIDUAL_LIFETIME_MYR_PRICE_ID
       : (userCountry === 'ID'
         ? process.env.STRIPE_INDIVIDUAL_LIFETIME_IDR_PRICE_ID
-        : null));
+        : (userCountry === 'MX'
+          ? process.env.STRIPE_INDIVIDUAL_LIFETIME_MXN_PRICE_ID
+          : (userCountry === 'BR'
+            ? process.env.STRIPE_INDIVIDUAL_LIFETIME_BRL_PRICE_ID
+            : null))));
   const isRegionalEducator = isEducator && (isRegional || isIndia || isPppEligible) && !isDomainPlan;
   const isRegionalTarget = isRegional && !isEducator && (isLifetime || individual) && !isSingleMeeting && !isDomainPlan;
   const isRegionalMeetingPass = isSingleMeeting && (isRegional || isIndia || isPppEligible);
@@ -260,6 +264,8 @@ async function createCheckoutSessionForUser({ user, plan, interval, conferenceId
   const configuredEduPrice = (userCountry === 'PH' && process.env.STRIPE_EDUCATOR_PHP_PRICE_ID)
     || (userCountry === 'MY' && process.env.STRIPE_EDUCATOR_MYR_PRICE_ID)
     || (userCountry === 'ID' && process.env.STRIPE_EDUCATOR_IDR_PRICE_ID)
+    || (userCountry === 'MX' && process.env.STRIPE_EDUCATOR_MXN_PRICE_ID)
+    || (userCountry === 'BR' && process.env.STRIPE_EDUCATOR_BRL_PRICE_ID)
     || (isIndia && process.env.STRIPE_EDUCATOR_INR_PRICE_ID)
     || (!isPppEligible && process.env.STRIPE_EDUCATOR_ANNUAL_PRICE_ID);
 
@@ -273,6 +279,8 @@ async function createCheckoutSessionForUser({ user, plan, interval, conferenceId
     if (userCountry === 'PH') eduUnitAmount = 14000;
     else if (userCountry === 'MY') eduUnitAmount = 1200;
     else if (userCountry === 'ID') eduUnitAmount = 3900000;
+    else if (userCountry === 'MX') eduUnitAmount = 4900;
+    else if (userCountry === 'BR') eduUnitAmount = 2700;
     else eduUnitAmount = Math.round(regionalConfig.amount / 2);
   }
 
@@ -294,6 +302,12 @@ async function createCheckoutSessionForUser({ user, plan, interval, conferenceId
   } else if (userCountry === 'MX') {
     smCurrency = 'mxn';
     smUnitAmount = 2900;
+  } else if (userCountry === 'BR') {
+    smCurrency = 'brl';
+    smUnitAmount = 1400;
+  } else if (regionalConfig?.singleMeetingAmount) {
+    smCurrency = regionalConfig.currency;
+    smUnitAmount = regionalConfig.singleMeetingAmount;
   } else {
     smCurrency = 'usd';
     smUnitAmount = 299;
@@ -627,7 +641,11 @@ async function sendUpgradeLinkForUser({
           ? process.env.STRIPE_INDIVIDUAL_LIFETIME_MYR_PRICE_ID
           : (userCountry === 'ID'
             ? process.env.STRIPE_INDIVIDUAL_LIFETIME_IDR_PRICE_ID
-            : null));
+            : (userCountry === 'MX'
+              ? process.env.STRIPE_INDIVIDUAL_LIFETIME_MXN_PRICE_ID
+              : (userCountry === 'BR'
+                ? process.env.STRIPE_INDIVIDUAL_LIFETIME_BRL_PRICE_ID
+                : null))));
       const lifetimePriceId = isIndia
         ? sanitizePriceId(inrPrices.lifetime)
         : (isRegional
@@ -635,7 +653,7 @@ async function sendUpgradeLinkForUser({
           : sanitizePriceId(process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID));
       const inPaymentMethods = isIndia
         ? { payment_method_types: ['card', 'upi'] }
-        : (isRegional ? { payment_method_types: regionalConfig.methods } : {});
+        : (regionalConfig?.methods && regionalConfig.methods.length > 0 ? { payment_method_types: regionalConfig.methods } : {});
 
       const lifetimeLineItems = (isRegional && !regionalPriceEnv)
         ? [{
@@ -786,12 +804,18 @@ router.post('/billing/public-checkout', async (req, res) => {
       ? process.env.STRIPE_INDIVIDUAL_LIFETIME_MYR_PRICE_ID
       : (userCountry === 'ID'
         ? process.env.STRIPE_INDIVIDUAL_LIFETIME_IDR_PRICE_ID
-        : null));
+        : (userCountry === 'MX'
+          ? process.env.STRIPE_INDIVIDUAL_LIFETIME_MXN_PRICE_ID
+          : (userCountry === 'BR'
+            ? process.env.STRIPE_INDIVIDUAL_LIFETIME_BRL_PRICE_ID
+            : null))));
   const isRegionalTarget = !isDomain && isRegional && !isEducator;
 
   const configuredEduPrice = (userCountry === 'PH' && process.env.STRIPE_EDUCATOR_PHP_PRICE_ID)
     || (userCountry === 'MY' && process.env.STRIPE_EDUCATOR_MYR_PRICE_ID)
     || (userCountry === 'ID' && process.env.STRIPE_EDUCATOR_IDR_PRICE_ID)
+    || (userCountry === 'MX' && process.env.STRIPE_EDUCATOR_MXN_PRICE_ID)
+    || (userCountry === 'BR' && process.env.STRIPE_EDUCATOR_BRL_PRICE_ID)
     || (isIndia && process.env.STRIPE_EDUCATOR_INR_PRICE_ID)
     || (!isPppEligible && process.env.STRIPE_EDUCATOR_ANNUAL_PRICE_ID);
 
@@ -805,6 +829,8 @@ router.post('/billing/public-checkout', async (req, res) => {
     if (userCountry === 'PH') eduUnitAmount = 14000;
     else if (userCountry === 'MY') eduUnitAmount = 1200;
     else if (userCountry === 'ID') eduUnitAmount = 3900000;
+    else if (userCountry === 'MX') eduUnitAmount = 4900;
+    else if (userCountry === 'BR') eduUnitAmount = 2700;
     else eduUnitAmount = Math.round(regionalConfig.amount / 2);
   }
 
@@ -820,7 +846,9 @@ router.post('/billing/public-checkout', async (req, res) => {
         : (isTeam
             ? ((annual && process.env.STRIPE_ANNUAL_PRICE_ID) || process.env.STRIPE_PRICE_ID)
             : (plan === 'lifetime'
-                ? process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID
+                ? (isRegionalTarget
+                    ? (regionalPriceEnv || process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID || 'price_regional_lifetime')
+                    : process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID)
                 : ((annual && process.env.STRIPE_INDIVIDUAL_ANNUAL_PRICE_ID) || process.env.STRIPE_INDIVIDUAL_PRICE_ID))));
 
   if (!priceId) {
@@ -1429,9 +1457,11 @@ router.get('/billing/status', requireAuth, async (req, res) => {
         ...(userCountry === 'IN' ? {
           lifetime: { label: '₹299', full: null, period: 'one-time' },
           educator: { label: PRICING.REGIONAL_PRICING?.IN?.eduLabel || '₹199/yr', full: null, period: '/yr' },
+          single_meeting: { label: '₹99', full: null, period: 'one-time' },
         } : ((PRICING.REGIONAL_PRICING && PRICING.REGIONAL_PRICING[userCountry]) ? {
           lifetime: { label: PRICING.REGIONAL_PRICING[userCountry].label, full: null, period: 'one-time' },
           educator: { label: PRICING.REGIONAL_PRICING[userCountry].eduLabel || '$2.49/yr', full: null, period: '/yr' },
+          ...(PRICING.REGIONAL_PRICING[userCountry].singleMeetingLabel ? { single_meeting: { label: PRICING.REGIONAL_PRICING[userCountry].singleMeetingLabel, full: null, period: 'one-time' } } : {}),
         } : {})),
         quotaLimit: PRICING.FREE_MONTHLY_EXPORT_LIMIT,
       },

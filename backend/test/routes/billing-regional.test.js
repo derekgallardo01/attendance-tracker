@@ -83,6 +83,7 @@ describe('Regional payment rails — PHP, MYR, IDR, IN', () => {
         }),
       })
     );
+    expect(mockStripeInstance.checkout.sessions.create.mock.calls[0][0].payment_method_types).toBeUndefined();
   });
 
   test('MY user checkouts in MYR (RM 22) with FPX and GrabPay rails', async () => {
@@ -181,6 +182,24 @@ describe('Regional payment rails — PHP, MYR, IDR, IN', () => {
     expect(resID.body.pricing.lifetime.label).toBe('Rp 78.000');
     expect(resID.body.pricing.educator.label).toBe('Rp 39.000/yr');
     expect(resID.body.educatorAvailable).toBe(true);
+
+    const resMX = await request(app)
+      .get('/api/billing/status')
+      .set(authedHeader('user@unam.mx', 'unam.mx'))
+      .set('cf-ipcountry', 'MX');
+    expect(resMX.body.pricing.lifetime.label).toBe('$99 MXN');
+    expect(resMX.body.pricing.educator.label).toBe('$49 MXN/año');
+    expect(resMX.body.pricing.single_meeting.label).toBe('$29 MXN');
+    expect(resMX.body.educatorAvailable).toBe(true);
+
+    const resBR = await request(app)
+      .get('/api/billing/status')
+      .set(authedHeader('user@usp.br', 'usp.br'))
+      .set('cf-ipcountry', 'BR');
+    expect(resBR.body.pricing.lifetime.label).toBe('R$ 49');
+    expect(resBR.body.pricing.educator.label).toBe('R$ 27/ano');
+    expect(resBR.body.pricing.single_meeting.label).toBe('R$ 14');
+    expect(resBR.body.educatorAvailable).toBe(true);
   });
 
   test('POST /billing/create-checkout-session alias routes successfully', async () => {

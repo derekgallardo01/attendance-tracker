@@ -7378,14 +7378,53 @@ function startStripeCheckout(plan) {
   if (confId) params.set('conferenceId', confId);
   if (country) params.set('country', country);
   const url = `${state.backendUrl}/billing/checkout-redirect?${params.toString()}`;
-  const win = window.open(url, '_blank');
-  if (!win) {
+
+  const banner = document.getElementById('checkout-popup-fallback-banner');
+  if (banner) {
+    banner.style.display = 'block';
+    banner.style.background = 'rgba(56,139,253,.15)';
+    banner.style.borderColor = 'rgba(56,139,253,.35)';
+    banner.innerHTML = `<span>Opening checkout in a new tab... If blocked, <a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer" style="color:#58a6ff;text-decoration:underline;font-weight:600">Click here to complete payment</a></span>`;
+  }
+
+  let win = null;
+  let blocked = false;
+  try {
+    win = window.open(url, '_blank');
+    if (!win || win.closed || typeof win.closed === 'undefined') {
+      blocked = true;
+    }
+  } catch (err) {
+    blocked = true;
+  }
+
+  if (blocked) {
     if (window.self === window.top) {
       window.location.href = url;
     } else {
       try { logUserEvent('checkout_open_blocked', {}); } catch {}
+      if (banner) {
+        banner.style.display = 'block';
+        banner.style.background = 'rgba(248,81,73,.15)';
+        banner.style.borderColor = 'rgba(248,81,73,.4)';
+        banner.innerHTML = `<span>⚠️ Checkout window was blocked. <a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer" style="color:#58a6ff;text-decoration:underline;font-weight:700;margin-left:2px">Click here to complete payment</a></span>`;
+      }
       toast(t('toast.popupBlocked', 'Your browser blocked the checkout tab. Please allow pop-ups for Meet and try again.'));
     }
+  } else if (win) {
+    setTimeout(() => {
+      try {
+        if (win.closed) {
+          try { logUserEvent('checkout_open_blocked', {}); } catch {}
+          if (banner) {
+            banner.style.display = 'block';
+            banner.style.background = 'rgba(248,81,73,.15)';
+            banner.style.borderColor = 'rgba(248,81,73,.4)';
+            banner.innerHTML = `<span>⚠️ Checkout window was blocked. <a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer" style="color:#58a6ff;text-decoration:underline;font-weight:700;margin-left:2px">Click here to complete payment</a></span>`;
+          }
+        }
+      } catch {}
+    }, 500);
   }
   watchForUpgradeCompletion();
 }
@@ -7479,7 +7518,7 @@ function updateUpgradeModalPricing() {
   const lifetimeCard = document.getElementById('plan-card-lifetime');
   const lifetimePriceEl = document.querySelector('#plan-card-lifetime .price-lifetime');
   const educatorPriceEl = document.querySelector('#plan-card-educator .price-educator');
-  const eduPerMoBadge = document.querySelector('#plan-card-educator [data-i18n="upgrade.perMo"]');
+  const eduPerMoBadge = document.getElementById('edu-hero-badge') || document.querySelector('#plan-card-educator [data-i18n="upgrade.perMo"]');
   const btnLifetime = document.getElementById('btn-upgrade-lifetime');
   const btnEdu = document.getElementById('btn-upgrade-individual');
 
@@ -7509,7 +7548,7 @@ function updateUpgradeModalPricing() {
       educatorPriceEl.innerHTML = `<s style="color:#9aa0a6;font-size:.82rem;font-weight:400;margin-right:4px">$4.99</s><span style="color:#8ab4f8;font-weight:700">$2.49</span>${localTag}`;
     }
     if (eduPerMoBadge) {
-      eduPerMoBadge.textContent = t('upgrade.perMoPpp', '~$0.20/mo');
+      eduPerMoBadge.textContent = 'BEST VALUE · ~20¢/mo';
     }
     if (btnLifetime) {
       btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime" style="color:#ffffff;font-weight:700">$4.99</span> <span style="background:rgba(255,255,255,0.22);color:#fff;font-size:0.68rem;padding:2px 7px;border-radius:10px;margin-left:4px;font-weight:600">${escHtml(t('upgrade.off50PayOnce', '50% Off · Pay Once'))}</span>`;
@@ -7539,7 +7578,7 @@ function updateUpgradeModalPricing() {
       const localTag = localEduAnchor ? ` <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(${escHtml(localEduAnchor)})</span>` : '';
       educatorPriceEl.innerHTML = `<span>$4.99</span>${localTag}`;
     }
-    if (eduPerMoBadge) eduPerMoBadge.textContent = t('upgrade.perMo', 'Under 42¢/month');
+    if (eduPerMoBadge) eduPerMoBadge.textContent = 'BEST VALUE · 41¢/mo';
     if (btnLifetime) {
       btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime">$9.99</span>`;
     }
@@ -7565,7 +7604,7 @@ function updateUpgradeModalPricing() {
       educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">₹199</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-left:4px">₹399</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.40)</span>`;
     }
     if (eduPerMoBadge) {
-      eduPerMoBadge.textContent = '~₹16/mo';
+      eduPerMoBadge.textContent = 'BEST VALUE · ~₹16/mo';
     }
     if (btnEdu) {
       btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#ffffff;font-weight:700">₹199</span>/yr`;
@@ -7588,7 +7627,7 @@ function updateUpgradeModalPricing() {
       educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">₱140</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-left:4px">₱280</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.49)</span>`;
     }
     if (eduPerMoBadge) {
-      eduPerMoBadge.textContent = '~₱12/mo';
+      eduPerMoBadge.textContent = 'BEST VALUE · ~₱12/mo';
     }
     if (btnEdu) {
       btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#ffffff;font-weight:700">₱140</span>/yr`;
@@ -7611,7 +7650,7 @@ function updateUpgradeModalPricing() {
       educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">RM 12</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-left:4px">RM 24</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.49)</span>`;
     }
     if (eduPerMoBadge) {
-      eduPerMoBadge.textContent = '~RM 1/mo';
+      eduPerMoBadge.textContent = 'BEST VALUE · ~RM 1/mo';
     }
     if (btnEdu) {
       btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#ffffff;font-weight:700">RM 12</span>/yr`;
@@ -7634,7 +7673,7 @@ function updateUpgradeModalPricing() {
       educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">Rp 39.000</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-left:4px">Rp 78.000</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.49)</span>`;
     }
     if (eduPerMoBadge) {
-      eduPerMoBadge.textContent = '~Rp 3.250/mo';
+      eduPerMoBadge.textContent = 'BEST VALUE · ~Rp 3.250/mo';
     }
     if (btnEdu) {
       btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#ffffff;font-weight:700">Rp 39.000</span>/yr`;
@@ -7657,10 +7696,33 @@ function updateUpgradeModalPricing() {
       educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">$49 MXN</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-left:4px">$99</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.49)</span>`;
     }
     if (eduPerMoBadge) {
-      eduPerMoBadge.textContent = '~$4 MXN/mes';
+      eduPerMoBadge.textContent = 'BEST VALUE · ~$4 MXN/mes';
     }
     if (btnEdu) {
       btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#ffffff;font-weight:700">$49 MXN</span>/año`;
+    }
+    if (eduCard) eduCard.style.display = (_billing && _billing.educatorAvailable === false) ? 'none' : '';
+  } else if (country === 'BR') {
+    if (dealPill) {
+      dealPill.innerHTML = `<span>🇧🇷 Brasil Especial: R$ 49 Vitalício · R$ 27/ano Educador</span>`;
+      dealPill.style.background = 'rgba(74,222,128,.16)';
+      dealPill.style.borderColor = 'rgba(74,222,128,.4)';
+      dealPill.style.color = '#4ade80';
+    }
+    if (lifetimePriceEl) {
+      lifetimePriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">R$ 49</span>`;
+    }
+    if (btnLifetime) {
+      btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime" style="color:#ffffff;font-weight:700">R$ 49</span>`;
+    }
+    if (educatorPriceEl) {
+      educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">R$ 27</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-left:4px">R$ 54</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.49)</span>`;
+    }
+    if (eduPerMoBadge) {
+      eduPerMoBadge.textContent = 'BEST VALUE · ~R$ 2.25/mês';
+    }
+    if (btnEdu) {
+      btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#ffffff;font-weight:700">R$ 27</span>/ano`;
     }
     if (eduCard) eduCard.style.display = (_billing && _billing.educatorAvailable === false) ? 'none' : '';
   } else {
@@ -7671,22 +7733,34 @@ function updateUpgradeModalPricing() {
   const btnSingleMeeting = document.getElementById('btn-upgrade-single-meeting');
   let singlePriceStr = '$2.99';
   let singleCardHeaderPrice = '$2.99';
+  let eduAnnualStr = '$4.99 (41¢/mo)';
 
   if (country === 'IN') {
     singlePriceStr = '₹99';
     singleCardHeaderPrice = '₹99 INR';
+    eduAnnualStr = '₹199 (~₹16/mo)';
   } else if (country === 'PH') {
     singlePriceStr = '₱99';
     singleCardHeaderPrice = '₱99 PHP';
+    eduAnnualStr = '₱140 (~₱12/mo)';
   } else if (country === 'MY') {
     singlePriceStr = 'RM 12';
     singleCardHeaderPrice = 'RM 12 MYR';
+    eduAnnualStr = 'RM 12 (~RM 1/mo)';
   } else if (country === 'ID') {
     singlePriceStr = 'Rp 29.000';
     singleCardHeaderPrice = 'Rp 29.000 IDR';
+    eduAnnualStr = 'Rp 39.000 (~Rp 3.250/mo)';
   } else if (country === 'MX') {
     singlePriceStr = '$29 MXN';
     singleCardHeaderPrice = '$29 MXN';
+    eduAnnualStr = '$49 MXN (~$4 MXN/mes)';
+  } else if (country === 'BR') {
+    singlePriceStr = 'R$ 14';
+    singleCardHeaderPrice = 'R$ 14 BRL';
+    eduAnnualStr = 'R$ 27 (~R$ 2.25/mês)';
+  } else if (isPpp) {
+    eduAnnualStr = '$2.49 (~20¢/mo)';
   }
 
   if (singlePriceEl) {
@@ -7694,7 +7768,7 @@ function updateUpgradeModalPricing() {
   }
 
   if (btnSingleMeeting) {
-    btnSingleMeeting.innerHTML = `<span data-i18n="upgrade.singleAltPrefix">${escHtml(t('upgrade.singleAltPrefix', 'Only need this single meeting? Unlock for'))}</span> <span class="price-single-meeting" style="font-weight:700;color:#e3e3e3">${escHtml(singlePriceStr)}</span> →`;
+    btnSingleMeeting.innerHTML = `<span>Need just today's class? Unlock for <strong class="price-single-meeting" style="font-weight:700;color:#e3e3e3">${escHtml(singlePriceStr)}</strong> — or get an entire year of unlimited classes for just <strong>${escHtml(eduAnnualStr)}</strong></span> →`;
   }
 
   const badgeText = document.getElementById('upgrade-payment-badge-text');
@@ -7714,6 +7788,8 @@ function updateUpgradeModalPricing() {
     } else if (country === 'MX') {
       badgeText.textContent = t('upgrade.badgesMX', '🇲🇽 OXXO, Mercado Pago & SPEI Accepted');
       badgeText.setAttribute('data-i18n', 'upgrade.badgesMX');
+    } else if (country === 'BR') {
+      badgeText.textContent = '🇧🇷 Pix, Cartões & Apple Pay Aceitos';
     } else {
       badgeText.textContent = t('upgrade.badgesDefault', '💳 Credit / Debit Cards, Apple Pay & Google Pay Accepted');
       badgeText.setAttribute('data-i18n', 'upgrade.badgesDefault');
@@ -7726,6 +7802,8 @@ function showUpgradeModal(reason) {
   state._lastUpgradeReason = reason || 'manual';
   const modal = document.getElementById('upgrade-modal');
   if (!modal) return;
+  const popupBanner = document.getElementById('checkout-popup-fallback-banner');
+  if (popupBanner) popupBanner.style.display = 'none';
   const note = document.getElementById('upgrade-modal-note');
   if (note) {
     if (reason === 'exportQuota') {
@@ -7772,7 +7850,8 @@ function showUpgradeModal(reason) {
 
   if (singleCard && lifetimeCard && eduCard && singleCard.parentNode) {
     const parent = singleCard.parentNode;
-    parent.insertBefore(lifetimeCard, eduCard);
+    parent.insertBefore(eduCard, lifetimeCard);
+    parent.insertBefore(lifetimeCard, singleCard);
     if (teamCard) {
       parent.insertBefore(singleCard, teamCard);
     } else {
@@ -7895,6 +7974,8 @@ function dismissAutoExportNudge() {
 function closeUpgradeModal() {
   const modal = document.getElementById('upgrade-modal');
   if (modal) modal.style.display = 'none';
+  const popupBanner = document.getElementById('checkout-popup-fallback-banner');
+  if (popupBanner) popupBanner.style.display = 'none';
   try { logUserEvent('upgrade_modal_dismissed', { ...upgradeContext() }); } catch {}
   maybeAskPaywallWhy();
 }
@@ -11440,66 +11521,69 @@ window.addEventListener('DOMContentLoaded', () => {
       <!-- Contextual trigger reason (e.g. autoExport or quota) -->
       <div id="upgrade-modal-note" style="display:none;background:rgba(253,214,99,.1);border:1px solid rgba(253,214,99,.25);color:#fdd663;padding:7px 11px;border-radius:10px;font-size:.76rem;margin-bottom:10px;line-height:1.4"></div>
 
-      <!-- Plan 1: Featured Lifetime Pro Pass (Crown Jewel / Best Value) -->
-      <div id="plan-card-lifetime" style="background:linear-gradient(180deg, rgba(52,168,83,.08), rgba(255,255,255,.02));border:1.5px solid rgba(129,201,149,.4);border-radius:12px;padding:13px 14px 12px;margin-bottom:10px;position:relative">
+      <!-- Popup blocker in-modal fallback banner -->
+      <div id="checkout-popup-fallback-banner" style="display:none;background:rgba(56,139,253,.15);border:1px solid rgba(56,139,253,.35);color:#e6edf3;padding:8px 12px;border-radius:10px;font-size:.76rem;margin-bottom:10px;line-height:1.4;text-align:center"></div>
+
+      <!-- Plan 1 (Hero Card): Educator Annual Pass -->
+      <div id="plan-card-educator" style="background:linear-gradient(180deg, rgba(52,168,83,.08), rgba(255,255,255,.02));border:1.5px solid rgba(129,201,149,.4);border-radius:12px;padding:13px 14px 12px;margin-bottom:10px;position:relative">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <div style="display:flex;align-items:center;gap:6px">
-            <span style="font-weight:600;font-size:.92rem;color:#e3e3e3" data-i18n="upgrade.lifetimeName">Lifetime Pass</span>
-            <span style="background:#34a853;color:#ffffff;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:12px;letter-spacing:.04em;text-transform:uppercase" data-i18n="upgrade.bestValue">Best Value</span>
+            <span style="font-weight:600;font-size:.92rem;color:#e3e3e3" data-i18n="pricing.planEduName">Educator Annual Pass</span>
+            <span id="edu-hero-badge" style="background:#34a853;color:#ffffff;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:12px;letter-spacing:.04em;text-transform:uppercase">BEST VALUE · 41¢/mo</span>
           </div>
           <div style="text-align:right">
-            <span class="price-lifetime" style="font-weight:700;font-size:1.1rem;color:#81c995">$9.99</span>
+            <span class="price-educator" style="font-weight:700;font-size:1.1rem;color:#81c995">$4.99</span>
+            <span style="font-size:.7rem;color:#9aa0a6;font-weight:400;display:block" data-i18n="upgrade.eduPeriod">/ yr</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;font-size:.76rem;color:#c4c7c5;margin-bottom:11px">
+          <div style="display:flex;align-items:center;gap:7px">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#81c995" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
+            <span data-i18n="upgrade.featEduExport">Unlimited classes &amp; automated Sheets export</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#81c995" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
+            <span data-i18n="upgrade.featEduCerts">Student attendance certificates &amp; LMS grade sync</span>
+          </div>
+        </div>
+        <button type="button" id="btn-upgrade-individual" onclick="startUpgradeCheckout('educator', 'btn-upgrade-individual')" style="width:100%;background:#34a853;color:#ffffff;border:none;padding:9.5px 16px;border-radius:20px;font-weight:600;font-size:.83rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 2px 8px rgba(52,168,83,.3);transition:all .15s ease">
+          <span data-i18n="upgrade.ctaEdu">Get Educator Annual Pass —</span> <span class="price-educator">$4.99</span>/yr
+        </button>
+      </div>
+
+      <!-- Plan 2 (Secondary Card): Individual Lifetime Pass -->
+      <div id="plan-card-lifetime" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px 11px;margin-bottom:10px;position:relative">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-weight:600;font-size:.88rem;color:#e3e3e3" data-i18n="upgrade.lifetimeName">Lifetime Pass</span>
+            <span id="lifetime-secondary-badge" style="background:rgba(253,214,99,.15);color:#fdd663;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:12px;letter-spacing:.04em;text-transform:uppercase">ONE-TIME · Own Forever</span>
+          </div>
+          <div style="text-align:right">
+            <span class="price-lifetime" style="font-weight:700;font-size:1rem;color:#8ab4f8">$9.99</span>
             <span style="font-size:.7rem;color:#9aa0a6;font-weight:400;display:block" data-i18n="upgrade.oneTime">one-time</span>
           </div>
         </div>
 
-        <div style="display:flex;flex-direction:column;gap:5px;font-size:.76rem;color:#c4c7c5;margin-bottom:11px">
+        <div style="display:flex;flex-direction:column;gap:5px;font-size:.75rem;color:#9aa0a6;margin-bottom:10px">
           <div style="display:flex;align-items:center;gap:7px">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#81c995" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8ab4f8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
             <span><strong data-i18n="upgrade.payOnce">Pay once, own forever</strong> — <span data-i18n="upgrade.noRenewal">no recurring renewal</span></span>
           </div>
           <div style="display:flex;align-items:center;gap:7px">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#81c995" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8ab4f8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
             <span data-i18n="upgrade.featLifetime">Unlimited Sheets exports &amp; auto-capture</span>
           </div>
         </div>
 
-        <button type="button" id="btn-upgrade-lifetime" onclick="startUpgradeCheckout('lifetime', 'btn-upgrade-lifetime')" style="width:100%;background:#34a853;color:#ffffff;border:none;padding:9.5px 16px;border-radius:20px;font-weight:600;font-size:.83rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 2px 8px rgba(52,168,83,.3);transition:all .15s ease">
+        <button type="button" id="btn-upgrade-lifetime" onclick="startUpgradeCheckout('lifetime', 'btn-upgrade-lifetime')" style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#e3e3e3;padding:9px 16px;border-radius:20px;font-weight:600;font-size:.81rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s ease">
           <span data-i18n="upgrade.ctaLifetime">Get Lifetime Access —</span> <span class="price-lifetime">$9.99</span>
-        </button>
-      </div>
-
-      <!-- Plan 2: Annual (Educator / Classroom Pass) -->
-      <div id="plan-card-educator" style="background:rgba(255,255,255,.03);border:1px solid rgba(88,166,255,.2);border-radius:12px;padding:12px 14px 11px;margin-bottom:10px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <div style="display:flex;align-items:center;gap:6px">
-            <span style="font-weight:600;font-size:.88rem;color:#e3e3e3" data-i18n="pricing.planEduName">Educator Annual Pass</span>
-            <span style="background:rgba(88,166,255,.15);color:#58a6ff;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:12px;letter-spacing:.04em;text-transform:uppercase" data-i18n="upgrade.perMo">Under 42¢/month</span>
-          </div>
-          <div style="text-align:right">
-            <span class="price-educator" style="font-weight:700;font-size:1rem;color:#8ab4f8">$4.99</span>
-            <span style="font-size:.7rem;color:#9aa0a6;font-weight:400" data-i18n="upgrade.eduPeriod">/ yr</span>
-          </div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:5px;font-size:.75rem;color:#9aa0a6;margin-bottom:10px">
-          <div style="display:flex;align-items:center;gap:7px">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8ab4f8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
-            <span data-i18n="upgrade.featEduExport">Unlimited classes &amp; automated Sheets export</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:7px">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8ab4f8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
-            <span data-i18n="upgrade.featEduCerts">Student attendance certificates &amp; multi-session reports</span>
-          </div>
-        </div>
-        <button type="button" id="btn-upgrade-individual" onclick="startUpgradeCheckout('educator', 'btn-upgrade-individual')" style="width:100%;background:rgba(88,166,255,.14);border:1px solid rgba(88,166,255,.3);color:#79c0ff;padding:9px 16px;border-radius:20px;font-weight:600;font-size:.81rem;cursor:pointer;transition:all .15s ease;margin-top:2px">
-          <span data-i18n="upgrade.ctaEdu">Get Educator Annual Pass —</span> <span class="price-educator">$4.99</span>/yr
         </button>
       </div>
 
       <!-- Plan: Single-Meeting Pass as subordinate alternative link/option below main cards -->
       <div id="plan-card-single-meeting" style="text-align:center;padding:8px 10px 4px;margin-bottom:8px">
         <a href="#" id="btn-upgrade-single-meeting" onclick="startUpgradeCheckout('single_meeting', 'btn-upgrade-single-meeting');return false;" style="color:#9aa0a6;font-size:.76rem;text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:color .15s ease" onmouseover="this.style.color='#e3e3e3'" onmouseout="this.style.color='#9aa0a6'">
-          <span data-i18n="upgrade.singleAltPrefix">Only need this single meeting? Unlock for</span> <span class="price-single-meeting" style="font-weight:700;color:#e3e3e3">$2.99</span> →
+          <span>Need just today's class? Unlock for <strong class="price-single-meeting" style="font-weight:700;color:#e3e3e3">$2.99</strong> — or get an entire year of unlimited classes for just <strong>$4.99 (41¢/mo)</strong></span> →
         </a>
       </div>
 

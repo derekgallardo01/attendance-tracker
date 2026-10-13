@@ -725,6 +725,7 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
         conferenceId: conferenceId || null,
         recurringEventId: recurringEventId || null,
         isPro: !!isProUser,
+        plan: isProUser ? 'pro' : 'free',
         language: data?.language || req.body?.language || req.user?.language || 'en',
         country: data?.country || req.body?.country || req.user?.country || null,
         domain: domain || null,

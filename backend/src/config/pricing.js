@@ -28,10 +28,12 @@ module.exports = {
     institution: { label: '$149',   full: null, period: '/yr' },
   },
   REGIONAL_PRICING: {
-    PH: { currency: 'php', amount: 28000, symbol: '₱280', label: '₱280', eduLabel: '₱140/yr', methods: ['card'] },
-    MY: { currency: 'myr', amount: 2200, symbol: 'RM 22', label: 'RM 22', eduLabel: 'RM 12/yr', methods: ['card'] },
-    ID: { currency: 'idr', amount: 7800000, symbol: 'Rp 78.000', label: 'Rp 78.000', eduLabel: 'Rp 39.000/yr', methods: ['card'] },
+    PH: { currency: 'php', amount: 28000, symbol: '₱280', label: '₱280', eduLabel: '₱140/yr' },
+    MY: { currency: 'myr', amount: 2200, symbol: 'RM 22', label: 'RM 22', eduLabel: 'RM 12/yr' },
+    ID: { currency: 'idr', amount: 7800000, symbol: 'Rp 78.000', label: 'Rp 78.000', eduLabel: 'Rp 39.000/yr' },
     IN: { currency: 'inr', amount: 29900, symbol: '₹299', label: '₹299', eduLabel: '₹199/yr', methods: ['card', 'upi'] },
+    MX: { currency: 'mxn', amount: 9900, symbol: '$99 MXN', label: '$99 MXN', eduLabel: '$49 MXN/año', singleMeetingAmount: 2900, singleMeetingLabel: '$29 MXN' },
+    BR: { currency: 'brl', amount: 4900, symbol: 'R$ 49', label: 'R$ 49', eduLabel: 'R$ 27/ano', singleMeetingAmount: 1400, singleMeetingLabel: 'R$ 14' },
   },
 };
 
