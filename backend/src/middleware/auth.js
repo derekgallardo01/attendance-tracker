@@ -104,7 +104,7 @@ async function auth(req, res, next) {
     // Google account after identity-only consent.
     // POST /checkin only. GET /checkins is the HOST's poll companion (full
     // roster with emails) — an attendee token must not enumerate classmates.
-    if (req.user.role === 'attendee' && req.path !== '/checkin') {
+    if (req.user.role === 'attendee' && req.path.replace(/\/+$/, '') !== '/checkin') {
       return res.status(403).json({ error: 'This session only supports meeting check-in.' });
     }
 

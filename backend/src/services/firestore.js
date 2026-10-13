@@ -1348,7 +1348,9 @@ async function persistExport(domain, {
     // If two paths race, the second .set() is a no-op because the doc already
     // exists — preventing duplicate Sheets tabs AND duplicate notification emails.
     const safeEmail = (email || 'anon').toLowerCase().replace(/[^a-z0-9]/g, '_');
-    const safeConf  = (conferenceId || tabName || (exportType ? `${exportType}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}` : 'unknown')).replace(/[^a-zA-Z0-9_-]/g, '_');
+    const isGenericTab = tabName === 'CSV Export' || tabName === 'Excel Export' || tabName === 'PDF Export';
+    const effectiveTabName = isGenericTab ? null : tabName;
+    const safeConf  = (conferenceId || effectiveTabName || (exportType ? `${exportType}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}` : 'unknown')).replace(/[^a-zA-Z0-9_-]/g, '_');
     const docId = `${safeEmail}__${safeConf}`;
 
     const safeParticipantCount = typeof participantCount === 'number' ? participantCount : (parseInt(participantCount, 10) || 0);

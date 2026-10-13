@@ -17,6 +17,7 @@ const { getDb, FieldValue, log } = require('./_core');
 // garbage-collect the docs too (console/gcloud step, optional).
 // 4-hour TTL prevents cross-day collisions on recurring daily meetings.
 const CHECKIN_TTL_MS = 4 * 60 * 60 * 1000;
+const CHECKIN_SESSION_WINDOW_MS = 2 * 60 * 60 * 1000;
 
 // Meeting codes look like abc-defg-hij, but the SDK can also hand back other
 // id shapes — bound the doc-id space without being brittle about format.
@@ -48,7 +49,10 @@ async function saveCheckin(meetingCode, { email, displayName }) {
     const existing = data.people?.[key];
     const expiresAtMs = data.expiresAt?.toDate?.()?.getTime?.() || (data.expiresAt ? new Date(data.expiresAt).getTime() : 0);
     const stale = !snap.exists || (expiresAtMs && expiresAtMs < Date.now());
-    if (!stale && existing) {
+    const isPreviousSession = existing && existing.checkedInAt
+      && (Date.now() - new Date(existing.checkedInAt).getTime() > CHECKIN_SESSION_WINDOW_MS)
+      && (!expiresAtMs || (expiresAtMs - new Date(existing.checkedInAt).getTime() <= 24 * 60 * 60 * 1000));
+    if (!stale && existing && !isPreviousSession) {
       return { checkedInAt: existing.checkedInAt, already: true };
     }
     const checkedInAt = new Date().toISOString();

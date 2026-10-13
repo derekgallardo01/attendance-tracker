@@ -4021,16 +4021,28 @@ function onThresholdChange() {
   renderRosterView();
 }
 
-function findParticipantForStudent(student, participants) {
+function findParticipantForStudent(student, participants, consumedParticipants) {
   if (typeof AttUtils !== 'undefined' && AttUtils.findParticipantForStudent) {
-    return AttUtils.findParticipantForStudent(student, participants);
+    return AttUtils.findParticipantForStudent(student, participants, consumedParticipants);
   }
-  if (!student) return null;
+  if (!student || !participants) return null;
   const sEmail = (student.email || '').trim().toLowerCase();
   const sName = (student.name || '').trim().toLowerCase();
 
+  const isConsumed = (p) => {
+    if (!consumedParticipants || !p) return false;
+    if (typeof consumedParticipants.has === 'function') {
+      if (consumedParticipants.has(p)) return true;
+      if (p.id && consumedParticipants.has(p.id)) return true;
+      if (p.displayName && consumedParticipants.has(p.displayName)) return true;
+      if (p.email && consumedParticipants.has(p.email)) return true;
+    }
+    return false;
+  };
+
   if (sEmail) {
     for (const p of participants) {
+      if (!p || isConsumed(p)) continue;
       if (p.email && p.email.trim().toLowerCase() === sEmail) return p;
     }
   }
@@ -4038,12 +4050,22 @@ function findParticipantForStudent(student, participants) {
   if (sName) {
     const sNorm = sName.replace(/[^a-z0-9]/g, '');
     for (const p of participants) {
+      if (!p || isConsumed(p)) continue;
       const pNorm = (p.displayName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
       if (sNorm && pNorm && sNorm === pNorm) return p;
     }
-    for (const p of participants) {
-      const pLower = (p.displayName || '').toLowerCase();
-      if (pLower && (pLower.includes(sName) || sName.includes(pLower))) return p;
+    const sTokens = sName.split(/[^a-z0-9]+/).filter(Boolean);
+    if (sTokens.length > 0) {
+      for (const p of participants) {
+        if (!p || isConsumed(p)) continue;
+        const pLower = (p.displayName || '').toLowerCase();
+        if (!pLower) continue;
+        const pTokens = pLower.split(/[^a-z0-9]+/).filter(Boolean);
+        if (pTokens.length === 0) continue;
+        const sInP = sTokens.every(t => pTokens.includes(t));
+        const pInS = pTokens.every(t => sTokens.includes(t));
+        if (sInP || pInS) return p;
+      }
     }
   }
   return null;
@@ -4175,7 +4197,7 @@ function renderRosterView() {
   const absentStudents = [];
 
   for (const student of students) {
-    const p = findParticipantForStudent(student, parts);
+    const p = findParticipantForStudent(student, parts, matchedParts);
     const studentKey = (student.email || student.name || '').toLowerCase();
     const excuse = (state.excusedStudents && state.excusedStudents[studentKey]) || null;
     const isExcused = !!(excuse && excuse.excused);
@@ -4367,7 +4389,10 @@ function copyAbsenteeList() {
 // direct download, which the iframe sandbox silently swallows), or 'direct'
 // (not in an iframe — caller should download directly).
 function relayDownload(payload, targetWindow) {
-  if (window === window.top) return 'direct';
+  if (window === window.top) {
+    if (targetWindow && !targetWindow.closed) { try { targetWindow.close(); } catch (e) {} }
+    return 'direct';
+  }
   safeSetItem('attPendingDownload', JSON.stringify(payload));
   let w = targetWindow;
   if (!w || w.closed) {
@@ -4445,8 +4470,8 @@ function directBlobDownload(blob, filename) {
 
 // Returns false when the download could not be handed off (popup blocked in
 // the iframe) so callers can skip their success toast/telemetry.
-function triggerCsvDownload(csvContent, filename) {
-  const mode = relayDownload({ filename, mime: 'text/csv;charset=utf-8;', content: csvContent, encoding: 'text' });
+function triggerCsvDownload(csvContent, filename, targetWindow) {
+  const mode = relayDownload({ filename, mime: 'text/csv;charset=utf-8;', content: csvContent, encoding: 'text' }, targetWindow);
   if (mode === 'blocked') return false;
   if (mode === 'direct') directBlobDownload(new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }), filename);
   return true;
@@ -4484,6 +4509,12 @@ async function downloadAttendanceCsv() {
     return;
   }
 
+  if (!state.signedIn) {
+    toast(t('toast.sessionExpiredExport', 'Your session expired — sign in again to export'), 6000);
+    triggerSignIn();
+    return;
+  }
+
   if (!_isPro && !state.meetingUnlocked && _billing && _billing.exportQuota && _billing.exportQuota.used >= _billing.exportQuota.limit) {
     showUpgradeModal('exportQuota');
     return;
@@ -4496,7 +4527,70 @@ async function downloadAttendanceCsv() {
     return;
   }
 
+  let graceUsed = false;
+  try {
+    const res = await authFetch(`${state.backendUrl}/billing/record-export`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        exportType: 'csv',
+        conferenceId: state.conferenceId || state.meetingCode || (typeof currentMeetingCode !== 'undefined' ? currentMeetingCode : null) || null,
+        meetingTitle: ctx.meetingTitle || 'Attendance CSV',
+        participantCount: count,
+      }),
+    });
+    if (res.status === 402) {
+      let body = {};
+      try { body = await res.json(); } catch {}
+      const quotaInfo = body.quota || (body.used != null ? { used: body.used, limit: body.limit } : null);
+      if (quotaInfo) {
+        if (!_billing) _billing = {};
+        if (!_billing.exportQuota) _billing.exportQuota = { used: quotaInfo.used, limit: quotaInfo.limit };
+        else _billing.exportQuota.used = quotaInfo.used;
+        updateQuotaIndicator(quotaInfo.used, quotaInfo.limit);
+      }
+      const feature = body.feature || (count > 25 ? 'largeClass' : 'exportQuota');
+      if (feature === 'largeClass') {
+        state._lastLargeClassCount = count;
+        if (!_billing) _billing = {};
+        _billing.hasUsedLargeClassGrace = true;
+      }
+      showUpgradeModal(feature);
+      return;
+    }
+    if (res.status === 401) {
+      toast(t('toast.sessionExpiredExport', 'Your session expired — sign in again to export'), 6000);
+      triggerSignIn();
+      return;
+    }
+    if (!res.ok) {
+      toast(t('common.couldNotReach', 'Could not reach backend'));
+      return;
+    }
+    const data = await res.json();
+    if (data.graceUsed) {
+      graceUsed = true;
+      if (!_billing) _billing = {};
+      _billing.hasUsedLargeClassGrace = true;
+      toast(t('export.graceUsed', '🎉 Complimentary Full-Roster Export: We unlocked all {count} attendees for your first large class! Upgrade to Educator ($4.99/yr) for unlimited class sizes on future classes.').replace('{count}', data.participantCount || count), 7000);
+    }
+    if (data.quota) {
+      if (!_billing) _billing = {};
+      if (!_billing.exportQuota) _billing.exportQuota = { used: data.quota.used, limit: data.quota.limit };
+      else _billing.exportQuota.used = data.quota.used;
+      updateQuotaIndicator(data.quota.used, data.quota.limit);
+    }
+  } catch (err) {
+    if (err && err.message === 'Session expired') {
+      triggerSignIn();
+      return;
+    }
+    toast(t('common.couldNotReach', 'Could not reach backend'));
+    return;
+  }
+
   ctx.opts.isFreePlan = !_isPro && !state.meetingUnlocked;
+  ctx.opts.graceUsed = !!graceUsed;
   const csvContent = (typeof AttUtils !== 'undefined' && AttUtils.buildAttendanceCsv)
     ? AttUtils.buildAttendanceCsv(ctx.parts, ctx.activeRoster, ctx.opts)
     : '';
@@ -4511,49 +4605,6 @@ async function downloadAttendanceCsv() {
       conferenceId: state.conferenceId || state.meetingCode || (typeof currentMeetingCode !== 'undefined' ? currentMeetingCode : null) || null,
     });
   } catch (e) {}
-
-  // Record export quota on the backend asynchronously without delaying the user gesture
-  authFetch(`${state.backendUrl}/billing/record-export`, {
-    method: 'POST',
-    body: JSON.stringify({
-      exportType: 'csv',
-      conferenceId: state.conferenceId || state.meetingCode || (typeof currentMeetingCode !== 'undefined' ? currentMeetingCode : null) || null,
-      meetingTitle: ctx.meetingTitle || 'Attendance CSV',
-      participantCount: count,
-    }),
-  }).then(async (res) => {
-    if (res.status === 402) {
-      let body = {};
-      try { body = await res.json(); } catch {}
-      const quotaInfo = body.quota || (body.used != null ? { used: body.used, limit: body.limit } : null);
-      if (quotaInfo) {
-        if (!_billing) _billing = {};
-        if (!_billing.exportQuota) _billing.exportQuota = { used: quotaInfo.used, limit: quotaInfo.limit };
-        else _billing.exportQuota.used = quotaInfo.used;
-        updateQuotaIndicator(quotaInfo.used, quotaInfo.limit);
-      }
-      return;
-    }
-    if (res.ok) {
-      const data = await res.json();
-      if (data.graceUsed) {
-        if (!_billing) _billing = {};
-        _billing.hasUsedLargeClassGrace = true;
-        toast(t('export.graceUsed', '🎉 Complimentary Full-Roster Export: We unlocked all {count} attendees for your first large class! Upgrade to Educator ($4.99/yr) for unlimited class sizes on future classes.').replace('{count}', data.participantCount || count), 7000);
-      }
-      if (data.quota) {
-        if (!_billing) _billing = {};
-        if (!_billing.exportQuota) _billing.exportQuota = { used: data.quota.used, limit: data.quota.limit };
-        else _billing.exportQuota.used = data.quota.used;
-        updateQuotaIndicator(data.quota.used, data.quota.limit);
-      }
-    }
-  }).catch(() => {
-    if (!_isPro && !state.meetingUnlocked && _billing && _billing.exportQuota) {
-      _billing.exportQuota.used++;
-      updateQuotaIndicator(_billing.exportQuota.used, _billing.exportQuota.limit);
-    }
-  });
 
   // A CSV download is a real value moment with the user present — advance the
   // export counter and offer the review ask (previously only Sheets exports
@@ -4592,6 +4643,12 @@ async function downloadAttendanceExcel() {
     return;
   }
 
+  if (!state.signedIn) {
+    toast(t('toast.sessionExpiredExport', 'Your session expired — sign in again to export'), 6000);
+    triggerSignIn();
+    return;
+  }
+
   if (!_isPro && !state.meetingUnlocked && _billing && _billing.exportQuota && _billing.exportQuota.used >= _billing.exportQuota.limit) {
     showUpgradeModal('exportQuota');
     return;
@@ -4604,7 +4661,70 @@ async function downloadAttendanceExcel() {
     return;
   }
 
+  let graceUsed = false;
+  try {
+    const res = await authFetch(`${state.backendUrl}/billing/record-export`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        exportType: 'excel',
+        conferenceId: state.conferenceId || state.meetingCode || (typeof currentMeetingCode !== 'undefined' ? currentMeetingCode : null) || null,
+        meetingTitle: ctx.meetingTitle || 'Attendance Excel',
+        participantCount: count,
+      }),
+    });
+    if (res.status === 402) {
+      let body = {};
+      try { body = await res.json(); } catch {}
+      const quotaInfo = body.quota || (body.used != null ? { used: body.used, limit: body.limit } : null);
+      if (quotaInfo) {
+        if (!_billing) _billing = {};
+        if (!_billing.exportQuota) _billing.exportQuota = { used: quotaInfo.used, limit: quotaInfo.limit };
+        else _billing.exportQuota.used = quotaInfo.used;
+        updateQuotaIndicator(quotaInfo.used, quotaInfo.limit);
+      }
+      const feature = body.feature || (count > 25 ? 'largeClass' : 'exportQuota');
+      if (feature === 'largeClass') {
+        state._lastLargeClassCount = count;
+        if (!_billing) _billing = {};
+        _billing.hasUsedLargeClassGrace = true;
+      }
+      showUpgradeModal(feature);
+      return;
+    }
+    if (res.status === 401) {
+      toast(t('toast.sessionExpiredExport', 'Your session expired — sign in again to export'), 6000);
+      triggerSignIn();
+      return;
+    }
+    if (!res.ok) {
+      toast(t('common.couldNotReach', 'Could not reach backend'));
+      return;
+    }
+    const data = await res.json();
+    if (data.graceUsed) {
+      graceUsed = true;
+      if (!_billing) _billing = {};
+      _billing.hasUsedLargeClassGrace = true;
+      toast(t('export.graceUsed', '🎉 Complimentary Full-Roster Export: We unlocked all {count} attendees for your first large class! Upgrade to Educator ($4.99/yr) for unlimited class sizes on future classes.').replace('{count}', data.participantCount || count), 7000);
+    }
+    if (data.quota) {
+      if (!_billing) _billing = {};
+      if (!_billing.exportQuota) _billing.exportQuota = { used: data.quota.used, limit: data.quota.limit };
+      else _billing.exportQuota.used = data.quota.used;
+      updateQuotaIndicator(data.quota.used, data.quota.limit);
+    }
+  } catch (err) {
+    if (err && err.message === 'Session expired') {
+      triggerSignIn();
+      return;
+    }
+    toast(t('common.couldNotReach', 'Could not reach backend'));
+    return;
+  }
+
   ctx.opts.isFreePlan = !_isPro && !state.meetingUnlocked;
+  ctx.opts.graceUsed = !!graceUsed;
   const xmlContent = (typeof AttUtils !== 'undefined' && AttUtils.buildAttendanceExcelXml)
     ? AttUtils.buildAttendanceExcelXml(ctx.parts, ctx.activeRoster, ctx.opts)
     : '';
@@ -4620,49 +4740,6 @@ async function downloadAttendanceExcel() {
     });
   } catch (e) {}
 
-  // Record export quota on the backend asynchronously without delaying the user gesture
-  authFetch(`${state.backendUrl}/billing/record-export`, {
-    method: 'POST',
-    body: JSON.stringify({
-      exportType: 'excel',
-      conferenceId: state.conferenceId || state.meetingCode || (typeof currentMeetingCode !== 'undefined' ? currentMeetingCode : null) || null,
-      meetingTitle: ctx.meetingTitle || 'Attendance Excel',
-      participantCount: count,
-    }),
-  }).then(async (res) => {
-    if (res.status === 402) {
-      let body = {};
-      try { body = await res.json(); } catch {}
-      const quotaInfo = body.quota || (body.used != null ? { used: body.used, limit: body.limit } : null);
-      if (quotaInfo) {
-        if (!_billing) _billing = {};
-        if (!_billing.exportQuota) _billing.exportQuota = { used: quotaInfo.used, limit: quotaInfo.limit };
-        else _billing.exportQuota.used = quotaInfo.used;
-        updateQuotaIndicator(quotaInfo.used, quotaInfo.limit);
-      }
-      return;
-    }
-    if (res.ok) {
-      const data = await res.json();
-      if (data.graceUsed) {
-        if (!_billing) _billing = {};
-        _billing.hasUsedLargeClassGrace = true;
-        toast(t('export.graceUsed', '🎉 Complimentary Full-Roster Export: We unlocked all {count} attendees for your first large class! Upgrade to Educator ($4.99/yr) for unlimited class sizes on future classes.').replace('{count}', data.participantCount || count), 7000);
-      }
-      if (data.quota) {
-        if (!_billing) _billing = {};
-        if (!_billing.exportQuota) _billing.exportQuota = { used: data.quota.used, limit: data.quota.limit };
-        else _billing.exportQuota.used = data.quota.used;
-        updateQuotaIndicator(data.quota.used, data.quota.limit);
-      }
-    }
-  }).catch(() => {
-    if (!_isPro && _billing && _billing.exportQuota) {
-      _billing.exportQuota.used++;
-      updateQuotaIndicator(_billing.exportQuota.used, _billing.exportQuota.limit);
-    }
-  });
-
   try {
     const n = (parseInt(localStorage.getItem('att_export_count') || '0', 10) || 0) + 1;
     safeSetItem('att_export_count', String(n));
@@ -4676,7 +4753,7 @@ async function downloadAttendanceExcel() {
 // roster tab when there isn't one. LMS exports are Pro-only.
 function downloadLmsCsv(format) {
   if (!_isPro && !state.meetingUnlocked) {
-    showUpgradeModal('lmsCsv');
+    showUpgradeModal('lmsSync');
     return;
   }
   const ctx = csvExportContext();
@@ -6229,14 +6306,21 @@ async function handleAttendeeAuthCode(response) {
 // a deliberate click, so the modal is the right surface.
 async function downloadAttestationCsv(btn) {
   if (!state.conferenceId || !state.sessionToken) return;
+  let w = null;
+  try { w = window.open('download.html', '_blank'); } catch (e) { /* blocked */ }
   if (btn) btn.disabled = true;
   try {
     const res = await authFetch(`${state.backendUrl}/checkin/export?meetingCode=${encodeURIComponent(state.conferenceId)}`);
-    if (res.status === 402) { showUpgradeModal('attestation'); return; }
+    if (res.status === 402) {
+      if (w && !w.closed) { try { w.close(); } catch (e) {} }
+      showUpgradeModal('attestation');
+      return;
+    }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    triggerCsvDownload(data.csv, `checkins_${state.conferenceId}_${new Date().toISOString().slice(0, 10)}.csv`);
+    triggerCsvDownload(data.csv, `checkins_${state.conferenceId}_${new Date().toISOString().slice(0, 10)}.csv`, w);
   } catch (err) {
+    if (w && !w.closed) { try { w.close(); } catch (e) {} }
     toast(t('checkin.exportError', 'Could not export check-ins.'));
   } finally {
     if (btn) btn.disabled = false;

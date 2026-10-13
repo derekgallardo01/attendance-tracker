@@ -1004,7 +1004,9 @@
     // so this is an upsell prompt, not enforcement.
     function seriesCsvGated() {
       const b = window._lastBillingStatus;
-      return !!(b && b.billingConfigured && b.plan !== 'pro');
+      if (b && b.billingConfigured === false) return false;
+      const isPro = Boolean((typeof data !== 'undefined' && data && data.isPro) || (b && b.plan === 'pro'));
+      return !isPro;
     }
 
     // Gentle upsell: no popup — scroll to the existing Series-tab Pro CTA and

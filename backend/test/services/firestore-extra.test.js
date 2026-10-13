@@ -989,3 +989,78 @@ describe('getMeetingWithParticipants', () => {
     });
   });
 });
+
+
+describe('listUserShareLinks targeted doc fetch', () => {
+  test('fetches only targeted meeting documents without scanning the entire collection', async () => {
+    ctx.seed('tenants/acme.com/meetings/m1', {
+      title: 'Biology 101',
+      meetingCode: 'm1',
+    });
+    ctx.seed('tenants/acme.com/meetings/unrelated', {
+      title: 'Unrelated Meeting',
+      meetingCode: 'unrelated',
+    });
+
+    ctx.seed('shareLinks/token-abc', {
+      token: 'token-abc',
+      ownerEmail: 'teacher@acme.com',
+      targetId: 'm1',
+      type: 'meeting',
+      createdAt: wrapTimestamp(new Date()),
+      expiresAt: wrapTimestamp(new Date(Date.now() + 86400000)),
+    });
+
+    const meetingsCol = firestore.getDb().collection('tenants').doc('acme.com').collection('meetings');
+    const colProto = Object.getPrototypeOf(meetingsCol);
+    const colGetSpy = jest.spyOn(colProto, 'get');
+
+    const docProto = Object.getPrototypeOf(meetingsCol.doc('m1'));
+    const docGetSpy = jest.spyOn(docProto, 'get');
+
+    const links = await firestore.listUserShareLinks('acme.com', 'teacher@acme.com');
+
+    expect(colGetSpy).not.toHaveBeenCalled();
+    expect(docGetSpy).toHaveBeenCalled();
+    expect(links).toHaveLength(1);
+    expect(links[0].targetTitle).toBe('Biology 101');
+
+    colGetSpy.mockRestore();
+    docGetSpy.mockRestore();
+  });
+});
+
+describe('check-in session window for recurring meeting links', () => {
+  test('returns already: true for check-ins within the 2-hour session window', async () => {
+    const meetingCode = 'rec-meet-123';
+    const first = await firestore.saveCheckin(meetingCode, { email: 'student@school.edu', displayName: 'Student' });
+    expect(first.already).toBe(false);
+
+    const second = await firestore.saveCheckin(meetingCode, { email: 'student@school.edu', displayName: 'Student' });
+    expect(second.already).toBe(true);
+    expect(second.checkedInAt).toBe(first.checkedInAt);
+  });
+
+  test('allows attendee to check in anew after the 2-hour session window expires', async () => {
+    const meetingCode = 'rec-meet-456';
+    const priorTimestamp = new Date(Date.now() - 2.5 * 60 * 60 * 1000).toISOString();
+    const email = 'student@school.edu';
+    const key = Buffer.from(email).toString('base64url');
+    ctx.seed(`checkins/${meetingCode}`, {
+      meetingCode,
+      people: {
+        [key]: {
+          email,
+          displayName: 'Student',
+          checkedInAt: priorTimestamp,
+        },
+      },
+      expiresAt: wrapTimestamp(new Date(Date.now() + 2 * 60 * 60 * 1000)),
+    });
+
+    const anew = await firestore.saveCheckin(meetingCode, { email, displayName: 'Student' });
+    expect(anew.already).toBe(false);
+    expect(anew.checkedInAt).not.toBe(priorTimestamp);
+    expect(new Date(anew.checkedInAt).getTime()).toBeGreaterThan(new Date(priorTimestamp).getTime());
+  });
+});

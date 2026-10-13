@@ -1,7 +1,8 @@
 const { Router } = require('express');
 const { requireAuth } = require('../middleware/auth');
 const { planIsPro } = require('./billing');
-const { getMeetingWithParticipants, saveVerifications, getUserSettings, getUser, isMeetingUnlocked } = require('../services/firestore');
+const { getMeetingWithParticipants, saveVerifications, getUserSettings, getUser, isMeetingUnlocked, countUserMonthlyExports, persistExport, markUserLargeClassGraceUsed, getExportReexportCount } = require('../services/firestore');
+const PRICING = require('../config/pricing');
 const { buildReportModel, renderReportPdf, buildCertificateModels, renderCertificatesPdf } = require('../lib/certificate');
 const log = require('../lib/logger');
 
@@ -112,7 +113,61 @@ router.post('/export/pdf', requireAuth, async (req, res) => {
         issuer: m.issuer, domain: req.user.domain, conferenceId: meeting.conferenceId || null,
       })));
     } else {
-      // Base report: free. Branding is the only Pro lever (default footer otherwise).
+      if (!allowed) {
+        const finalConfId = confId || `${meeting.title || 'export'}_${new Date().toISOString().slice(0, 13)}`;
+        const maxParticipants = PRICING.FREE_MAX_PARTICIPANTS_PER_EXPORT || 25;
+        if (attendees.length > maxParticipants) {
+          const userDoc = await getUser(req.user.domain, req.user.email);
+          if (userDoc?.hasUsedLargeClassGrace === true) {
+            return res.status(402).json({
+              error: 'Free tier supports exporting up to 25 attendees per meeting. Upgrade to Pro for unlimited class sizes.',
+              feature: 'largeClass',
+              participantCount: attendees.length,
+            });
+          }
+        }
+
+        const limit = PRICING.FREE_MONTHLY_EXPORT_LIMIT || 2;
+        const used = await countUserMonthlyExports(req.user.domain, req.user.email);
+        if (used >= limit) {
+          return res.status(402).json({
+            error: 'Monthly export quota reached',
+            feature: 'exportQuota',
+            used,
+            limit,
+          });
+        }
+
+        const reexports = typeof getExportReexportCount === 'function'
+          ? await getExportReexportCount(req.user.domain, req.user.email, finalConfId)
+          : null;
+        if (reexports != null && reexports >= (PRICING.FREE_REEXPORTS_PER_MEETING || 10)) {
+          return res.status(402).json({
+            error: 'You have re-exported this meeting the maximum number of times on the free plan. Upgrade to Pro for unlimited exports.',
+            feature: 'exportQuota',
+            used,
+            limit,
+          });
+        }
+
+        if (attendees.length > maxParticipants) {
+          await markUserLargeClassGraceUsed(req.user.domain, req.user.email);
+        }
+
+        await persistExport(req.user.domain, {
+          domain: req.user.domain,
+          email: req.user.email,
+          meetingTitle: meeting.title || null,
+          tabName: 'PDF Export',
+          sheetUrl: null,
+          conferenceId: finalConfId,
+          participantCount: attendees.length,
+          exportType: 'pdf',
+          exportedAt: new Date().toISOString(),
+        });
+      }
+
+      // Base report: branding is the only Pro lever (default footer otherwise).
       const model = buildReportModel({ meeting, attendees, options: { brand, locale, timezone: tz } });
       pdf = await renderReportPdf(model);
       filename = `attendance-${slugify(meeting.title)}.pdf`;

@@ -2169,4 +2169,29 @@ describe('notifications — buildDesignSystemEmail & upgrade link sender', () =>
   });
 });
 
+describe('buildDesignSystemEmail — HTML escaping', () => {
+  test('escapes HTML tags and special characters in title and subtitle', () => {
+    const { buildDesignSystemEmail } = require('../../src/lib/notifications');
+    const html = buildDesignSystemEmail({
+      title: '<script>alert("xss")</script> & "Danger"',
+      subtitle: '<img src=x onerror=alert(1)> & \'Warning\'',
+      contentHtml: '<p>Content</p>',
+    });
+    expect(html).not.toContain('<script>');
+    expect(html).not.toContain('<img src=x onerror=alert(1)>');
+    expect(html).toContain('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; &amp; &quot;Danger&quot;');
+    expect(html).toContain('&lt;img src=x onerror=alert(1)&gt; &amp; &#39;Warning&#39;');
+    expect(html).toContain('<p>Content</p>');
+  });
+
+  test('renders safely without title or subtitle', () => {
+    const { buildDesignSystemEmail } = require('../../src/lib/notifications');
+    const html = buildDesignSystemEmail({
+      contentHtml: '<p>Content</p>',
+    });
+    expect(html).toContain('<p>Content</p>');
+    expect(html).not.toContain('<h2');
+  });
+});
+
 

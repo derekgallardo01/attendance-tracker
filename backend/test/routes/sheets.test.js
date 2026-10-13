@@ -1044,6 +1044,65 @@ describe('POST /api/save-to-sheets — Pro gating', () => {
     expect(firestore.persistExport).toHaveBeenCalled();
   });
 
+  test('free tier export blocks when exactly 25 participants and 1 calendar attendee (total 26) exceed limit after grace used', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUser.mockImplementation(async (domain, email) => ({
+      email, domain, refreshToken: 'rt', accessToken: 'at',
+      tokenExpiresAt: new Date(Date.now() + 3600000),
+      hasUsedLargeClassGrace: true,
+    }));
+    firestore.countUserMonthlyExports.mockResolvedValue(0);
+    const p25 = Array.from({ length: 25 }, (_, i) => ({
+      displayName: `Student ${i + 1}`,
+      email: `student${i + 1}@school.edu`,
+      joinTimeISO: new Date().toISOString(),
+      leaveTimeISO: null,
+      present: true,
+      sessions: 1,
+    }));
+    const res = await request(app).post('/api/save-to-sheets')
+      .set(authedHeader('u@exact25.com', 'exact25.com')).set('Content-Type', 'application/json')
+      .send({
+        ...validPayload,
+        participants: p25,
+        calendarAttendees: [{ email: 'extra@school.edu', displayName: 'Extra Student', status: 'accepted' }],
+        autoExport: false,
+      });
+    expect(res.status).toBe(402);
+    expect(res.body).toMatchObject({ upgrade: true, feature: 'largeClass', participantCount: 26, limit: 25 });
+    expect(firestore.persistExport).not.toHaveBeenCalled();
+  });
+
+  test('free tier export grants grace when exactly 25 participants and 1 calendar attendee (total 26) exceed limit on first large class', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUser.mockImplementation(async (domain, email) => ({
+      email, domain, refreshToken: 'rt', accessToken: 'at',
+      tokenExpiresAt: new Date(Date.now() + 3600000),
+      hasUsedLargeClassGrace: false,
+    }));
+    firestore.countUserMonthlyExports.mockResolvedValue(0);
+    const p25 = Array.from({ length: 25 }, (_, i) => ({
+      displayName: `Student ${i + 1}`,
+      email: `student${i + 1}@school.edu`,
+      joinTimeISO: new Date().toISOString(),
+      leaveTimeISO: null,
+      present: true,
+      sessions: 1,
+    }));
+    const res = await request(app).post('/api/save-to-sheets')
+      .set(authedHeader('u@exact25.com', 'exact25.com')).set('Content-Type', 'application/json')
+      .send({
+        ...validPayload,
+        participants: p25,
+        calendarAttendees: [{ email: 'extra@school.edu', displayName: 'Extra Student', status: 'accepted' }],
+        autoExport: false,
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.graceUsed).toBe(true);
+    expect(res.body.participantCount).toBe(26);
+    expect(firestore.markUserLargeClassGraceUsed).toHaveBeenCalledWith('exact25.com', 'u@exact25.com');
+  });
+
   test('pro user can export beyond 2 exports without quota block', async () => {
     firestore.getTenantPlan.mockResolvedValue({ plan: 'pro' });
     firestore.countUserMonthlyExports.mockResolvedValue(10);

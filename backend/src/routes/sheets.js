@@ -828,9 +828,11 @@ router.post('/save-to-sheets', async (req, res) => {
         });
       }
 
-      const participants = Array.isArray(b.participants) ? b.participants : [];
-      const participantCount = participants.length || (typeof b.participantCount === 'number' ? b.participantCount : 0);
-      if (participantCount > FREE_MAX_PARTICIPANTS_PER_EXPORT && !meetingUnlocked) {
+      const totalAttendees = (Array.isArray(b.participants) ? b.participants.length : 0) + (Array.isArray(b.calendarAttendees) ? b.calendarAttendees.length : 0);
+      const participantCount = (Array.isArray(b.participants) && b.participants.length > FREE_MAX_PARTICIPANTS_PER_EXPORT)
+        ? b.participants.length
+        : totalAttendees || (typeof b.participantCount === 'number' ? b.participantCount : 0);
+      if (totalAttendees > FREE_MAX_PARTICIPANTS_PER_EXPORT && !meetingUnlocked) {
         const userDoc = await getUser(req.user.domain, req.user.email);
         if (userDoc?.hasUsedLargeClassGrace === true) {
           log.info('sheets: free tier large class capacity reached', {

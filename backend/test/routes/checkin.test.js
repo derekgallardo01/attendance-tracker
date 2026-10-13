@@ -177,6 +177,20 @@ describe('GET /api/checkin/export — attestation CSV (Pro)', () => {
     const res = await request(app).get('/api/checkin/export?meetingCode=abc-defg-hij').set(authedHeader('host@a.com', 'a.com'));
     expect(res.status).toBe(200);
   });
+
+  test('normalizes uppercase and formatted meeting codes on export', async () => {
+    firestore.isMeetingTrackedByActor.mockResolvedValue(true);
+    firestore.getCheckins.mockResolvedValue([
+      { email: 's@x.com', displayName: 'Sam', checkedInAt: '2026-09-08T14:03:00.000Z' },
+    ]);
+    const res = await request(app)
+      .get('/api/checkin/export?meetingCode=ABC-DEFG-HIJ')
+      .set(authedHeader('host@a.com', 'a.com'));
+    expect(res.status).toBe(200);
+    expect(firestore.isMeetingTrackedByActor).toHaveBeenCalledWith('a.com', 'abc-defg-hij', 'host@a.com');
+    expect(firestore.getCheckins).toHaveBeenCalledWith('abc-defg-hij', { strict: true });
+    expect(res.body.csv).toContain('abc-defg-hij');
+  });
 });
 
 describe('GET /api/checkins', () => {

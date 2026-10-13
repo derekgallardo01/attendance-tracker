@@ -4,7 +4,7 @@ const express = require('express');
 const log = require('../lib/logger');
 const CONFIG = require('../config');
 const jwt = require('jsonwebtoken');
-const { getTenantPlan, setTenantPlan, getUserPlan, setUserPlan, logEvent, recordCancellationTelemetry, countUserMonthlyExports, countUserAutoExports, getUserSettings, getDomainTeacherCount, claimWebhookEvent, releaseWebhookEvent, persistExport, isMeetingUnlocked, getUser, markUserLargeClassGraceUsed, isUserDeleted, getTeamAdminStatus } = require('../services/firestore');
+const { getTenantPlan, setTenantPlan, getUserPlan, setUserPlan, logEvent, recordCancellationTelemetry, countUserMonthlyExports, countUserAutoExports, getUserSettings, getDomainTeacherCount, claimWebhookEvent, releaseWebhookEvent, persistExport, isMeetingUnlocked, getUser, markUserLargeClassGraceUsed, isUserDeleted, getTeamAdminStatus, getExportReexportCount } = require('../services/firestore');
 const { PERSONAL_EMAIL_DOMAINS, domainOf } = require('../services/firestore/_core');
 const PRICING = require('../config/pricing');
 
@@ -1233,19 +1233,33 @@ router.post('/billing/record-export', requireAuth, async (req, res) => {
       return res.json({ success: true, isPro: true });
     }
 
-    const confId = conferenceId || null;
-    const meetingUnlocked = confId && typeof isMeetingUnlocked === 'function'
-      ? await isMeetingUnlocked(req.user.domain, req.user.email, confId)
+    const meetingUnlocked = conferenceId && typeof isMeetingUnlocked === 'function'
+      ? await isMeetingUnlocked(req.user.domain, req.user.email, conferenceId)
       : false;
     if (meetingUnlocked) {
       return res.json({ success: true, meetingUnlocked: true });
     }
+
+    const confId = conferenceId || `${meetingTitle || 'export'}_${new Date().toISOString().slice(0, 13)}`;
 
     const used = await countUserMonthlyExports(req.user.domain, req.user.email);
     const limit = PRICING.FREE_MONTHLY_EXPORT_LIMIT || 2;
     if (used >= limit) {
       return res.status(402).json({
         error: 'Monthly export quota reached',
+        feature: 'exportQuota',
+        used,
+        limit,
+        quota: { used, limit },
+      });
+    }
+
+    const reexports = typeof getExportReexportCount === 'function'
+      ? await getExportReexportCount(req.user.domain, req.user.email, confId)
+      : null;
+    if (reexports != null && reexports >= (PRICING.FREE_REEXPORTS_PER_MEETING || 10)) {
+      return res.status(402).json({
+        error: 'You have re-exported this meeting the maximum number of times on the free plan. Upgrade to Pro for unlimited exports.',
         feature: 'exportQuota',
         used,
         limit,
@@ -1269,22 +1283,25 @@ router.post('/billing/record-export', requireAuth, async (req, res) => {
       graceUsed = true;
     }
 
-    await persistExport(req.user.domain, {
+    const persistResult = await persistExport(req.user.domain, {
       domain: req.user.domain,
       email: req.user.email,
       meetingTitle: meetingTitle || null,
       tabName: exportType === 'excel' ? 'Excel Export' : 'CSV Export',
       sheetUrl: null,
-      conferenceId: conferenceId || null,
+      conferenceId: confId,
       participantCount: count,
       exportType,
       exportedAt: new Date().toISOString(),
     });
 
+    const isSolo = count <= 1;
+    const newUsed = used + ((persistResult?.created === false || isSolo) ? 0 : 1);
+
     return res.json({
       success: true,
       quota: {
-        used: used + 1,
+        used: newUsed,
         limit,
       },
       ...(graceUsed ? { graceUsed: true, participantCount: count } : {}),
@@ -1919,7 +1936,11 @@ async function webhookHandler(req, res) {
 async function requireProPlan(req, res, next) {
   if (isSuperAdminUser(req.user?.email)) return next();
   if (!billingConfigured()) return next(); // pre-launch: nothing is gated
-  const domain = req.user?.domain;
+  const domain = req.user?.domain || (req.user?.email ? domainOf(req.user.email) : '');
+  if (isPersonalDomain(domain)) {
+    if (req.user?.email && await userPlanIsPro(domain, req.user.email)) return next();
+    return res.status(402).json({ error: 'This is a Pro feature.', upgrade: true });
+  }
   const domainKey = (domain || '').toLowerCase();
   try {
     const { plan } = await getTenantPlan(domain);
@@ -1936,7 +1957,7 @@ async function requireProPlan(req, res, next) {
     return res.status(402).json({ error: 'This is a Pro feature.', upgrade: true, transient: !fresh });
   }
 
-  // Workspace user with an individual pass, or personal-domain user with user plan:
+  // Workspace user with an individual pass:
   if (req.user?.email && await userPlanIsPro(domain, req.user.email)) {
     return next();
   }

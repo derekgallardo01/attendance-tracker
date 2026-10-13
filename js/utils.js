@@ -433,28 +433,48 @@
     return students;
   }
 
-  function findParticipantForStudent(student, participants) {
+  function findParticipantForStudent(student, participants, consumedParticipants) {
     if (!student || !participants) return null;
     const sEmail = (student.email || '').trim().toLowerCase();
     const sName = (student.name || '').trim().toLowerCase();
 
+    const isConsumed = (p) => {
+      if (!consumedParticipants || !p) return false;
+      if (typeof consumedParticipants.has === 'function') {
+        if (consumedParticipants.has(p)) return true;
+        if (p.id && consumedParticipants.has(p.id)) return true;
+        if (p.displayName && consumedParticipants.has(p.displayName)) return true;
+        if (p.email && consumedParticipants.has(p.email)) return true;
+      }
+      return false;
+    };
+
     if (sEmail) {
       for (const p of participants) {
-        if (p && p.email && p.email.trim().toLowerCase() === sEmail) return p;
+        if (!p || isConsumed(p)) continue;
+        if (p.email && p.email.trim().toLowerCase() === sEmail) return p;
       }
     }
 
     if (sName) {
       const sNorm = sName.replace(/[^a-z0-9]/g, '');
       for (const p of participants) {
-        if (!p) continue;
+        if (!p || isConsumed(p)) continue;
         const pNorm = (p.displayName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
         if (sNorm && pNorm && sNorm === pNorm) return p;
       }
-      for (const p of participants) {
-        if (!p) continue;
-        const pLower = (p.displayName || '').toLowerCase();
-        if (pLower && (pLower.includes(sName) || sName.includes(pLower))) return p;
+      const sTokens = sName.split(/[^a-z0-9]+/).filter(Boolean);
+      if (sTokens.length > 0) {
+        for (const p of participants) {
+          if (!p || isConsumed(p)) continue;
+          const pLower = (p.displayName || '').toLowerCase();
+          if (!pLower) continue;
+          const pTokens = pLower.split(/[^a-z0-9]+/).filter(Boolean);
+          if (pTokens.length === 0) continue;
+          const sInP = sTokens.every(t => pTokens.includes(t));
+          const pInS = pTokens.every(t => sTokens.includes(t));
+          if (sInP || pInS) return p;
+        }
       }
     }
     return null;
@@ -1293,6 +1313,12 @@
   };
 
   function buildAttendanceCsv(parts, activeRoster, opts = {}) {
+    parts = parts || [];
+    let truncatedNotice = null;
+    if (opts.isFreePlan && !opts.graceUsed && parts.length > 25) {
+      truncatedNotice = `# ... 25 of ${parts.length} attendees shown. Upgrade to Educator ($4.99/yr) or Pro for unlimited rosters.`;
+      parts = parts.slice(0, 25);
+    }
     const meetingTitle = opts.meetingTitle || 'Meeting';
     const totalMeetingMs = opts.totalMeetingMs || 0;
     const meetingMinutes = totalMeetingMs > 0 ? Math.max(1, Math.round(totalMeetingMs / 60000)) : (opts.meetingMinutes || 1);
@@ -1344,7 +1370,7 @@
       const matchedParticipants = new Set();
 
       for (const student of activeRoster) {
-        const p = findParticipantForStudent(student, parts);
+        const p = findParticipantForStudent(student, parts, matchedParticipants);
         const studentKey = (student.email || student.name || '').toLowerCase();
         const excuse = excusedStudents[studentKey] || null;
         const isExcused = !!(excuse && excuse.excused);
@@ -1435,6 +1461,10 @@
       }
     }
 
+    if (truncatedNotice) {
+      rows.push(truncatedNotice);
+    }
+
     if (opts.isFreePlan) {
       rows.push('# Generated with Attendance Tracker Free Plan. Upgrade to Pro for automated Google Sheets sync, LMS gradebooks, and unlimited exports: https://attendancetracker.dev/pricing.html');
     }
@@ -1455,6 +1485,11 @@
 
   function buildAttendanceExcelXml(parts, activeRoster, opts = {}) {
     parts = parts || [];
+    let truncatedNotice = null;
+    if (opts.isFreePlan && !opts.graceUsed && parts.length > 25) {
+      truncatedNotice = `# ... 25 of ${parts.length} attendees shown. Upgrade to Educator ($4.99/yr) or Pro for unlimited rosters.`;
+      parts = parts.slice(0, 25);
+    }
     const meetingTitle = opts.meetingTitle || 'Meeting';
     const totalMeetingMs = opts.totalMeetingMs || 0;
     const meetingMinutes = totalMeetingMs > 0 ? Math.max(1, Math.round(totalMeetingMs / 60000)) : (opts.meetingMinutes || 1);
@@ -1504,7 +1539,7 @@
       const matchedParticipants = new Set();
 
       for (const student of activeRoster) {
-        const p = findParticipantForStudent(student, parts);
+        const p = findParticipantForStudent(student, parts, matchedParticipants);
         const studentKey = (student.email || student.name || '').toLowerCase();
         const excuse = excusedStudents[studentKey] || null;
         const isExcused = !!(excuse && excuse.excused);
@@ -1674,6 +1709,12 @@
         '   </Row>\r\n';
     }
 
+    if (truncatedNotice) {
+      xml += '   <Row ss:Height="18">\r\n' +
+        `    <Cell ss:StyleID="FooterNotice"><Data ss:Type="String">${escapeXml(truncatedNotice)}</Data></Cell>\r\n` +
+        '   </Row>\r\n';
+    }
+
     if (opts.isFreePlan) {
       xml += '   <Row ss:Height="18">\r\n' +
         '    <Cell ss:StyleID="FooterNotice"><Data ss:Type="String">Generated with Attendance Tracker Free Plan. Upgrade to Pro for automated Google Sheets sync, LMS gradebooks, and unlimited exports: https://attendancetracker.dev/pricing.html</Data></Cell>\r\n' +
@@ -1708,13 +1749,15 @@
     const excusedStudents = opts.excusedStudents || {};
     const now = opts.now ? new Date(opts.now) : new Date();
 
+    const matchedParticipants = new Set();
     const rows = [];
     for (const student of (activeRoster || [])) {
-      const p = findParticipantForStudent(student, parts);
+      const p = findParticipantForStudent(student, parts, matchedParticipants);
       const studentKey = (student.email || student.name || '').toLowerCase();
       const isExcused = !!(excusedStudents[studentKey] && excusedStudents[studentKey].excused);
       let grade;
       if (p) {
+        matchedParticipants.add(p);
         const durMs = (p._accumulatedMs || 0) + (p.present && p.joinTime ? (now.getTime() - new Date(p.joinTime).getTime()) : 0);
         const durMin = Math.round(durMs / 60000);
         grade = Math.min(100, Math.round((durMin / meetingMinutes) * 100));

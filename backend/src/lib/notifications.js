@@ -336,8 +336,8 @@ function buildDesignSystemEmail({
             </td>` : ''}
           </tr>
         </table>
-        ${title ? `<h2 style="margin:6px 0 4px;font-size:17px;font-weight:700;color:#e6edf3;word-break:break-word;">${title}</h2>` : ''}
-        ${subtitle ? `<p style="margin:0;font-size:13px;color:#8b949e;line-height:1.4;word-break:break-word;">${subtitle}</p>` : ''}
+        ${title ? `<h2 style="margin:6px 0 4px;font-size:17px;font-weight:700;color:#e6edf3;word-break:break-word;">${escape(title)}</h2>` : ''}
+        ${subtitle ? `<p style="margin:0;font-size:13px;color:#8b949e;line-height:1.4;word-break:break-word;">${escape(subtitle)}</p>` : ''}
       </div>
 
       <!-- Content -->

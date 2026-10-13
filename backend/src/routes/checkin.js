@@ -67,21 +67,22 @@ router.get('/checkin/export', requireAuth, async (req, res) => {
   res.set('Cache-Control', 'no-store');
   try {
     const { meetingCode } = req.query;
-    if (!meetingCode) return res.status(400).json({ error: 'meetingCode is required' });
+    const code = String(meetingCode || '').trim().toLowerCase();
+    if (!code) return res.status(400).json({ error: 'meetingCode is required' });
     const { planIsPro } = require('./billing');
     const pro = (await planIsPro(req.user.domain, req.user.email))
-      || (typeof isMeetingUnlocked === 'function' && await isMeetingUnlocked(req.user.domain, req.user.email, meetingCode));
+      || (typeof isMeetingUnlocked === 'function' && await isMeetingUnlocked(req.user.domain, req.user.email, code));
     if (!pro) {
       return res.status(402).json({ error: 'Check-in attestation exports are a Pro feature.', upgrade: true, feature: 'attestation' });
     }
-    const isHost = (typeof isMeetingTrackedByActor === 'function' && await isMeetingTrackedByActor(req.user.domain, meetingCode, req.user.email))
-      || (await getMeetingWithParticipants(req.user.domain, meetingCode, req.user.email));
+    const isHost = (typeof isMeetingTrackedByActor === 'function' && await isMeetingTrackedByActor(req.user.domain, code, req.user.email))
+      || (await getMeetingWithParticipants(req.user.domain, code, req.user.email));
     if (!isHost) {
       return res.status(403).json({ error: 'You can only export attestation records for meetings you hosted.' });
     }
     // strict: a swallowed read error here would emit a plausible CSV
     // certifying zero check-ins — for a compliance artifact that must 500.
-    const checkins = await getCheckins(meetingCode, { strict: true });
+    const checkins = await getCheckins(code, { strict: true });
     const esc = (v) => {
       let s = String(v ?? '');
       // Formula-injection guard (sheets.js relies on RAW input mode instead;
@@ -93,7 +94,7 @@ router.get('/checkin/export', requireAuth, async (req, res) => {
     };
     const rows = [
       ['Name', 'Email', 'Checked in at (UTC)', 'Meeting code'].map(esc).join(','),
-      ...checkins.map(c => [c.displayName, c.email, c.checkedInAt, String(meetingCode).toLowerCase()].map(esc).join(',')),
+      ...checkins.map(c => [c.displayName, c.email, c.checkedInAt, code].map(esc).join(',')),
       '',
       esc(`Self-reported check-ins collected in-meeting via Attendance Tracker (attendancetracker.dev) · generated ${new Date().toISOString()} by ${req.user.email}`),
     ];

@@ -44,6 +44,7 @@ jest.mock('../../src/services/firestore', () => ({
   isMeetingUnlocked: jest.fn().mockResolvedValue(false),
   markUserLargeClassGraceUsed: jest.fn().mockResolvedValue(true),
   isUserDeleted: jest.fn().mockResolvedValue(false),
+  getExportReexportCount: jest.fn().mockResolvedValue(null),
 }));
 
 const firestore = require('../../src/services/firestore');
@@ -758,6 +759,29 @@ describe('requireProPlan (direct)', () => {
     const next = jest.fn();
     await requireProPlan(req, res, next);
     expect(next).toHaveBeenCalled();
+  });
+
+  test('personal domain user with pro user plan passes without calling getTenantPlan', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x'; process.env.STRIPE_PRICE_ID = 'price_x';
+    firestore.getUserPlan.mockResolvedValue({ plan: 'pro' });
+    const req = { user: { domain: 'gmail.com', email: 'user@gmail.com' } };
+    const res = { status: jest.fn().mockReturnThis(), json: jest.fn().mockReturnThis() };
+    const next = jest.fn();
+    await requireProPlan(req, res, next);
+    expect(next).toHaveBeenCalled();
+    expect(firestore.getTenantPlan).not.toHaveBeenCalled();
+  });
+
+  test('personal domain user with free user plan gets 402 without calling getTenantPlan', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x'; process.env.STRIPE_PRICE_ID = 'price_x';
+    firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+    const req = { user: { domain: 'gmail.com', email: 'freeuser@gmail.com' } };
+    const res = { status: jest.fn().mockReturnThis(), json: jest.fn().mockReturnThis() };
+    const next = jest.fn();
+    await requireProPlan(req, res, next);
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(402);
+    expect(firestore.getTenantPlan).not.toHaveBeenCalled();
   });
 });
 
@@ -2283,6 +2307,43 @@ describe('billing/status pricing payload', () => {
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.meetingUnlocked).toBe(true);
+      expect(firestore.persistExport).not.toHaveBeenCalled();
+    });
+
+    test('derives a meeting-specific token when conferenceId is missing', async () => {
+      firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+      firestore.countUserMonthlyExports.mockResolvedValue(0);
+      const res = await request(app)
+        .post('/api/billing/record-export')
+        .set(authedHeader('free@gmail.com', 'gmail.com'))
+        .send({
+          exportType: 'csv',
+          participantCount: 15,
+          meetingTitle: 'Algebra 101',
+        });
+      expect(res.status).toBe(200);
+      expect(firestore.persistExport).toHaveBeenCalledWith('gmail.com', expect.objectContaining({
+        conferenceId: expect.stringMatching(/^Algebra 101_\d{4}-\d{2}-\d{2}T\d{2}$/),
+        meetingTitle: 'Algebra 101',
+      }));
+    });
+
+    test('returns 402 when free user hits re-export limit for the same meeting', async () => {
+      firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+      firestore.isMeetingUnlocked.mockResolvedValue(false);
+      firestore.countUserMonthlyExports.mockResolvedValue(1);
+      firestore.getExportReexportCount.mockResolvedValue(10);
+      const res = await request(app)
+        .post('/api/billing/record-export')
+        .set(authedHeader('free@gmail.com', 'gmail.com'))
+        .send({
+          exportType: 'csv',
+          participantCount: 15,
+          conferenceId: 'conf-repeat',
+        });
+      expect(res.status).toBe(402);
+      expect(res.body.feature).toBe('exportQuota');
+      expect(res.body.error).toContain('maximum number of times');
       expect(firestore.persistExport).not.toHaveBeenCalled();
     });
   });

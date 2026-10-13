@@ -847,3 +847,172 @@ describe('buildAttendanceExcelXml and escapeXml', () => {
     expect(xmlNoRoster).toContain('Checked in');
   });
 });
+
+
+describe('findParticipantForStudent — token boundaries and anti-theft', () => {
+  test('handles falsy guard cases', () => {
+    expect(utils.findParticipantForStudent(null, [])).toBeNull();
+    expect(utils.findParticipantForStudent({ name: 'A' }, null)).toBeNull();
+    expect(utils.findParticipantForStudent({}, [])).toBeNull();
+    expect(utils.findParticipantForStudent({ name: '', email: '' }, [{ displayName: 'A' }])).toBeNull();
+  });
+
+  test('matches by exact email first and handles null participants or empty emails', () => {
+    const p1 = { displayName: 'P1', email: 'alice@school.edu' };
+    const p2 = { displayName: 'P2', email: '' };
+    expect(utils.findParticipantForStudent({ email: 'alice@school.edu' }, [null, p2, p1])).toBe(p1);
+    expect(utils.findParticipantForStudent({ email: 'other@school.edu' }, [null, p2])).toBeNull();
+  });
+
+  test('matches by exact normalized name and tolerates null entries', () => {
+    const p1 = { displayName: 'Bob Jones' };
+    expect(utils.findParticipantForStudent({ name: 'bob jones' }, [null, p1])).toBe(p1);
+    expect(utils.findParticipantForStudent({ name: 'b-o-b jones' }, [p1])).toBe(p1);
+  });
+
+  test('prevents loose substring credit theft on short distinct names', () => {
+    const pDaniel = { displayName: 'Daniel Smith' };
+    const pAlexander = { displayName: 'Alexander Hamilton' };
+    const pEdward = { displayName: 'Edward Norton' };
+    const pSamantha = { displayName: 'Samantha Reed' };
+    const pJonathan = { displayName: 'Jonathan Davis' };
+    const participants = [pDaniel, pAlexander, pEdward, pSamantha, pJonathan];
+
+    expect(utils.findParticipantForStudent({ name: 'Dan' }, participants)).toBeNull();
+    expect(utils.findParticipantForStudent({ name: 'Al' }, participants)).toBeNull();
+    expect(utils.findParticipantForStudent({ name: 'Ed' }, participants)).toBeNull();
+    expect(utils.findParticipantForStudent({ name: 'Sam' }, participants)).toBeNull();
+    expect(utils.findParticipantForStudent({ name: 'Jo' }, participants)).toBeNull();
+
+    // Reverse: longer student name should not match shorter participant substring
+    expect(utils.findParticipantForStudent({ name: 'Daniel' }, [{ displayName: 'Dan' }])).toBeNull();
+    expect(utils.findParticipantForStudent({ name: 'Alexander' }, [{ displayName: 'Al' }])).toBeNull();
+  });
+
+  test('matches full tokens and word boundaries in both directions', () => {
+    const pCharlieBrown = { displayName: 'Charlie Brown' };
+    const pDan = { displayName: 'Dan' };
+
+    // Student token in participant tokens
+    expect(utils.findParticipantForStudent({ name: 'Charlie' }, [pCharlieBrown])).toBe(pCharlieBrown);
+    // Participant token in student tokens
+    expect(utils.findParticipantForStudent({ name: 'Dan Miller' }, [pDan])).toBe(pDan);
+    // Token reordering / name formatting (Last, First)
+    expect(utils.findParticipantForStudent({ name: 'Brown, Charlie' }, [pCharlieBrown])).toBe(pCharlieBrown);
+  });
+
+  test('handles empty or punctuation-only strings safely', () => {
+    expect(utils.findParticipantForStudent({ name: '---' }, [{ displayName: 'Charlie' }])).toBeNull();
+    expect(utils.findParticipantForStudent({ name: 'Charlie' }, [
+      null,
+      { displayName: '' },
+      { displayName: '***' },
+    ])).toBeNull();
+  });
+
+  test('respects consumedParticipants Set across object, id, and displayName checks', () => {
+    const pDan = { id: 'p-1', displayName: 'Dan Smith' };
+    const pDanObj = { displayName: 'Dan' };
+
+    // Consumed by reference
+    const consumedObj = new Set([pDanObj]);
+    expect(utils.findParticipantForStudent({ name: 'Dan' }, [pDanObj], consumedObj)).toBeNull();
+
+    // Consumed by id
+    const consumedId = new Set(['p-1']);
+    expect(utils.findParticipantForStudent({ name: 'Dan Smith' }, [pDan], consumedId)).toBeNull();
+
+    // Consumed by displayName
+    const consumedName = new Set(['Dan Smith']);
+    expect(utils.findParticipantForStudent({ name: 'Dan Smith' }, [pDan], consumedName)).toBeNull();
+
+    // Consumed in email loop
+    const pAlice = { id: 'p-2', displayName: 'Alice', email: 'alice@school.edu' };
+    expect(utils.findParticipantForStudent({ email: 'alice@school.edu' }, [pAlice], new Set([pAlice]))).toBeNull();
+    expect(utils.findParticipantForStudent({ email: 'alice@school.edu' }, [pAlice], new Set(['alice@school.edu']))).toBeNull();
+
+    // Non-set consumed argument is safely ignored
+    expect(utils.findParticipantForStudent({ name: 'Dan' }, [pDanObj], {})).toBe(pDanObj);
+  });
+
+  test('prevents multiple roster students from claiming the same attendee', () => {
+    const attendee = { displayName: 'John' };
+    const roster = [
+      { name: 'John Doe', email: '' },
+      { name: 'John Smith', email: '' },
+    ];
+    const consumed = new Set();
+    const firstMatch = utils.findParticipantForStudent(roster[0], [attendee], consumed);
+    expect(firstMatch).toBe(attendee);
+    consumed.add(firstMatch);
+
+    const secondMatch = utils.findParticipantForStudent(roster[1], [attendee], consumed);
+    expect(secondMatch).toBeNull();
+  });
+});
+
+describe('buildAttendanceCsv & buildAttendanceExcelXml — free plan truncation', () => {
+  const parts30 = Array.from({ length: 30 }, (_, i) => ({
+    displayName: `Student ${i + 1}`,
+    email: `s${i + 1}@school.edu`,
+    joinTime: '2026-10-13T10:00:00Z',
+    present: true,
+  }));
+
+  test('buildAttendanceCsv truncates attendees to 25 on free plan without grace', () => {
+    const csv = utils.buildAttendanceCsv(parts30, null, { isFreePlan: true });
+    expect(csv).toContain('# ... 25 of 30 attendees shown. Upgrade to Educator ($4.99/yr) or Pro for unlimited rosters.');
+    expect(csv).toContain('Student 25');
+    expect(csv).not.toContain('Student 26');
+  });
+
+  test('buildAttendanceCsv does not truncate on free plan if grace was used', () => {
+    const csv = utils.buildAttendanceCsv(parts30, null, { isFreePlan: true, graceUsed: true });
+    expect(csv).not.toContain('# ... 25 of 30 attendees shown');
+    expect(csv).toContain('Student 30');
+  });
+
+  test('buildAttendanceCsv does not truncate for <= 25 attendees on free plan', () => {
+    const parts20 = parts30.slice(0, 20);
+    const csv = utils.buildAttendanceCsv(parts20, null, { isFreePlan: true });
+    expect(csv).not.toContain('# ... 25 of');
+    expect(csv).toContain('Student 20');
+  });
+
+  test('buildAttendanceCsv does not truncate on pro plan even with >25 attendees', () => {
+    const csv = utils.buildAttendanceCsv(parts30, null, { isFreePlan: false });
+    expect(csv).not.toContain('# ... 25 of 30 attendees shown');
+    expect(csv).toContain('Student 30');
+  });
+
+  test('buildAttendanceExcelXml truncates attendees to 25 on free plan without grace', () => {
+    const xml = utils.buildAttendanceExcelXml(parts30, null, { isFreePlan: true });
+    expect(xml).toContain('# ... 25 of 30 attendees shown. Upgrade to Educator ($4.99/yr) or Pro for unlimited rosters.');
+    expect(xml).toContain('Student 25');
+    expect(xml).not.toContain('Student 26');
+  });
+
+  test('buildAttendanceExcelXml does not truncate on free plan if grace was used', () => {
+    const xml = utils.buildAttendanceExcelXml(parts30, null, { isFreePlan: true, graceUsed: true });
+    expect(xml).not.toContain('# ... 25 of 30 attendees shown');
+    expect(xml).toContain('Student 30');
+  });
+
+  test('buildAttendanceExcelXml does not truncate for <= 25 attendees on free plan', () => {
+    const parts20 = parts30.slice(0, 20);
+    const xml = utils.buildAttendanceExcelXml(parts20, null, { isFreePlan: true });
+    expect(xml).not.toContain('# ... 25 of');
+    expect(xml).toContain('Student 20');
+  });
+
+  test('buildAttendanceExcelXml does not truncate on pro plan even with >25 attendees', () => {
+    const xml = utils.buildAttendanceExcelXml(parts30, null, { isFreePlan: false });
+    expect(xml).not.toContain('# ... 25 of 30 attendees shown');
+    expect(xml).toContain('Student 30');
+  });
+
+  test('buildAttendanceCsv handles null or undefined parts', () => {
+    const csv = utils.buildAttendanceCsv(null, null, {});
+    expect(csv).toBeDefined();
+  });
+});

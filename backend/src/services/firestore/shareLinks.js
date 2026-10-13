@@ -291,7 +291,18 @@ async function listUserShareLinks(domain, ownerEmail) {
     const seriesTitleMap = new Map();
     if (domain) {
       try {
-        const meetingsSnap = await tenantRef(domain).collection('meetings').get();
+        const targetIds = [...new Set(snap.docs.map(d => {
+          const data = d.data();
+          return data.targetId || data.meetingId || data.conferenceId;
+        }).filter(Boolean))];
+        const seriesIds = [...new Set(snap.docs.map(d => {
+          const data = d.data();
+          return data.type === 'series' ? (data.recurringEventId || data.targetId) : null;
+        }).filter(Boolean))];
+        const meetingSnaps = await Promise.all(
+          targetIds.map(id => tenantRef(domain).collection('meetings').doc(id).get())
+        );
+        const meetingsSnap = { docs: meetingSnaps.filter(d => d.exists) };
         for (const d of meetingsSnap.docs) {
           const data = d.data();
           const code = data.meetingCode || d.id;
@@ -300,6 +311,22 @@ async function listUserShareLinks(domain, ownerEmail) {
             if (code) meetingTitleMap.set(code, data.title);
             if (data.recurringEventId && !seriesTitleMap.has(data.recurringEventId)) {
               seriesTitleMap.set(data.recurringEventId, data.title);
+            }
+          }
+        }
+        if (seriesIds.length > 0) {
+          const missingSeriesIds = seriesIds.filter(id => !seriesTitleMap.has(id));
+          if (missingSeriesIds.length > 0) {
+            const seriesSnaps = await Promise.all(
+              missingSeriesIds.map(id => tenantRef(domain).collection('meetings').where('recurringEventId', '==', id).limit(1).get())
+            );
+            for (const sSnap of seriesSnaps) {
+              if (sSnap && !sSnap.empty) {
+                const data = sSnap.docs[0].data() || {};
+                if (data.title && data.recurringEventId) {
+                  seriesTitleMap.set(data.recurringEventId, data.title);
+                }
+              }
             }
           }
         }
@@ -314,9 +341,9 @@ async function listUserShareLinks(domain, ownerEmail) {
       const d = doc.data();
       let targetTitle = 'Untitled';
       if (d.type === 'series') {
-        targetTitle = seriesTitleMap.get(d.recurringEventId) || 'Recurring Series';
+        targetTitle = seriesTitleMap.get(d.recurringEventId || d.targetId) || 'Recurring Series';
       } else {
-        const mid = d.meetingId || d.conferenceId;
+        const mid = d.meetingId || d.conferenceId || d.targetId;
         targetTitle = meetingTitleMap.get(mid) || (mid ? `Meeting ${mid}` : 'Single Meeting');
       }
       return {

@@ -12,6 +12,10 @@ jest.mock('../../src/services/firestore', () => ({
   getTenantPlan: jest.fn(),
   getUserPlan: jest.fn(),
   isMeetingUnlocked: jest.fn(),
+  countUserMonthlyExports: jest.fn(),
+  persistExport: jest.fn(),
+  markUserLargeClassGraceUsed: jest.fn(),
+  getExportReexportCount: jest.fn(),
 }));
 
 const firestore = require('../../src/services/firestore');
@@ -32,10 +36,14 @@ const PARTS = [
 let app;
 beforeEach(() => {
   jest.clearAllMocks();
-  firestore.getUser.mockImplementation(async (domain, email) => ({ email, domain }));
+  firestore.getUser.mockImplementation(async (domain, email) => ({ email, domain, hasUsedLargeClassGrace: false }));
   firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
   firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
   firestore.isMeetingUnlocked.mockResolvedValue(false);
+  firestore.countUserMonthlyExports.mockResolvedValue(0);
+  firestore.persistExport.mockResolvedValue({ created: true });
+  firestore.markUserLargeClassGraceUsed.mockResolvedValue(true);
+  firestore.getExportReexportCount.mockResolvedValue(0);
   app = buildApp();
 });
 
@@ -191,5 +199,103 @@ describe('certificates (Pro-gated)', () => {
     expect(res.status).toBe(200);
     expect(firestore.isMeetingUnlocked).toHaveBeenCalledWith('acme.com', 'user@acme.com', 'c1');
     expect(res.body.slice(0, 5).toString('latin1')).toBe('%PDF-');
+  });
+
+  test('free user report: returns 402 largeClass if participants > 25 and grace used', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUser.mockResolvedValue({ hasUsedLargeClassGrace: true });
+    const parts26 = Array.from({ length: 26 }, (_, i) => ({ displayName: `Student ${i}`, email: `s${i}@x.com`, present: true }));
+    const res = await request(app).post('/api/export/pdf').set(H())
+      .send({ type: 'report', meetingTitle: 'Big Class', participants: parts26 });
+    expect(res.status).toBe(402);
+    expect(res.body.feature).toBe('largeClass');
+    expect(res.body.participantCount).toBe(26);
+    expect(firestore.persistExport).not.toHaveBeenCalled();
+  });
+
+  test('free user report: grants grace on first large class (>25 attendees)', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUser.mockResolvedValue({ hasUsedLargeClassGrace: false });
+    const parts26 = Array.from({ length: 26 }, (_, i) => ({ displayName: `Student ${i}`, email: `s${i}@x.com`, present: true }));
+    const res = await request(app).post('/api/export/pdf').set(H())
+      .send({ type: 'report', meetingTitle: 'Big Class', participants: parts26 })
+      .buffer(true).parse(binaryParser);
+    expect(res.status).toBe(200);
+    expect(firestore.markUserLargeClassGraceUsed).toHaveBeenCalledWith('acme.com', 'user@acme.com');
+    expect(firestore.persistExport).toHaveBeenCalledWith('acme.com', expect.objectContaining({
+      participantCount: 26,
+      exportType: 'pdf',
+    }));
+  });
+
+  test('free user report: returns 402 exportQuota if monthly limit reached', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+    firestore.countUserMonthlyExports.mockResolvedValue(2);
+    const res = await request(app).post('/api/export/pdf').set(H())
+      .send({ type: 'report', meetingTitle: 'Class 3', participants: PARTS });
+    expect(res.status).toBe(402);
+    expect(res.body.feature).toBe('exportQuota');
+    expect(res.body.used).toBe(2);
+    expect(res.body.limit).toBe(2);
+    expect(firestore.persistExport).not.toHaveBeenCalled();
+  });
+
+  test('free user report: records export via persistExport on success', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+    firestore.countUserMonthlyExports.mockResolvedValue(0);
+    const res = await request(app).post('/api/export/pdf').set(H())
+      .send({ type: 'report', meetingTitle: 'History Class', conferenceId: 'hist-1', participants: PARTS })
+      .buffer(true).parse(binaryParser);
+    expect(res.status).toBe(200);
+    expect(firestore.persistExport).toHaveBeenCalledWith('acme.com', expect.objectContaining({
+      domain: 'acme.com',
+      email: 'user@acme.com',
+      meetingTitle: 'History Class',
+      tabName: 'PDF Export',
+      conferenceId: 'hist-1',
+      participantCount: 2,
+      exportType: 'pdf',
+    }));
+  });
+
+  test('pro user report: does not invoke persistExport or quota check', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'pro' });
+    const res = await request(app).post('/api/export/pdf').set(H())
+      .send({ type: 'report', meetingTitle: 'Pro Class', participants: PARTS })
+      .buffer(true).parse(binaryParser);
+    expect(res.status).toBe(200);
+    expect(firestore.countUserMonthlyExports).not.toHaveBeenCalled();
+    expect(firestore.persistExport).not.toHaveBeenCalled();
+  });
+
+  test('free user report: returns 402 exportQuota when re-export limit is reached for the meeting', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+    firestore.countUserMonthlyExports.mockResolvedValue(1);
+    firestore.getExportReexportCount.mockResolvedValue(10);
+    const res = await request(app).post('/api/export/pdf').set(H())
+      .send({ type: 'report', meetingTitle: 'History Class', conferenceId: 'hist-1', participants: PARTS });
+    expect(res.status).toBe(402);
+    expect(res.body.feature).toBe('exportQuota');
+    expect(res.body.error).toContain('maximum number of times');
+    expect(firestore.persistExport).not.toHaveBeenCalled();
+  });
+
+  test('free user report: derives deterministic fallback token when conferenceId is omitted', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+    firestore.countUserMonthlyExports.mockResolvedValue(0);
+    const res = await request(app).post('/api/export/pdf').set(H())
+      .send({ type: 'report', meetingTitle: 'Adhoc Session', participants: PARTS })
+      .buffer(true).parse(binaryParser);
+    expect(res.status).toBe(200);
+    expect(firestore.persistExport).toHaveBeenCalledWith('acme.com', expect.objectContaining({
+      conferenceId: expect.stringMatching(/^Adhoc Session_\d{4}-\d{2}-\d{2}T\d{2}$/),
+      exportType: 'pdf',
+    }));
   });
 });
