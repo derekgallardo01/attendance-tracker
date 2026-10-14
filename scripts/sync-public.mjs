@@ -82,6 +82,8 @@ const MIRRORED = [
   'google-meet-attendance-nigeria-teachers.html',
   'google-meet-attendance-vietnam-teachers.html',
   'asistencia-google-meet.html',
+  'lista-de-presenca-google-meet.html',
+  'diem-danh-google-meet.html',
   'google-meet-attendance-for-language-schools.html',
   'google-meet-attendance-corporate-training.html',
   'google-meet-attendance-for-homeschool.html',

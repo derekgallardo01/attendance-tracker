@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cách Điểm Danh Google Meet Tự Động (Hướng Dẫn 2026) — Attendance Tracker</title>
+  <meta name="description" content="Hướng dẫn chi tiết cách điểm danh trên Google Meet tự động bằng tiện ích chính thức trên Google Workspace Marketplace: đồng bộ Google Classroom và xuất file Google Trang tính (Sheets), Excel, Moodle, Canvas." />
+  <link rel="canonical" href="https://attendancetracker.dev/diem-danh-google-meet.html" />
+  <link rel="alternate" hreflang="x-default" href="https://attendancetracker.dev/how-to-track-attendance-in-google-meet.html" />
+  <link rel="alternate" hreflang="en" href="https://attendancetracker.dev/how-to-track-attendance-in-google-meet.html" />
+  <link rel="alternate" hreflang="es" href="https://attendancetracker.dev/asistencia-google-meet.html" />
+  <link rel="alternate" hreflang="pt" href="https://attendancetracker.dev/lista-de-presenca-google-meet.html" />
+  <link rel="alternate" hreflang="vi" href="https://attendancetracker.dev/diem-danh-google-meet.html" />
+  <meta property="og:title" content="Cách Điểm Danh Google Meet Tự Động (Hướng Dẫn 2026)" />
+  <meta property="og:description" content="Điểm danh Google Meet tự động theo thời gian thực qua Google Meet REST API v2: ghi nhận giờ vào/ra, tự động gộp lần kết nối lại và xuất Google Sheets trong 1 cú nhấp chuột." />
+  <meta property="og:image" content="https://attendancetracker.dev/screenshots/01-live-roster.jpg" />
+  <meta property="og:image:width" content="1920" />
+  <meta property="og:image:height" content="1200" />
+  <meta property="og:url" content="https://attendancetracker.dev/diem-danh-google-meet.html" />
+  <meta property="og:type" content="article" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Cách Điểm Danh Google Meet Tự Động (Hướng Dẫn 2026)" />
+  <meta name="twitter:description" content="Tiện ích điểm danh Google Meet chính thức trên Google Workspace Marketplace, hỗ trợ tiếng Việt và xuất báo cáo sang Google Sheets, Excel, Moodle, Canvas." />
+  <meta name="twitter:image" content="https://attendancetracker.dev/screenshots/01-live-roster.jpg" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        "name": "Cách điểm danh Google Meet tự động",
+        "description": "Hướng dẫn từng bước để điểm danh lớp học và cuộc họp trên Google Meet bằng tiện ích chính thức Attendance Tracker.",
+        "inLanguage": "vi",
+        "step": [
+          {
+            "@type": "HowToStep",
+            "name": "Cài đặt tiện ích chính thức",
+            "text": "Cài đặt Attendance Tracker từ Google Workspace Marketplace và mở trực tiếp trong mục Hoạt động (Activities) của Google Meet."
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Đồng bộ danh sách lớp từ Google Classroom",
+            "text": "Nhập danh sách học sinh, sinh viên từ Google Classroom chỉ với 1 cú nhấp chuột hoặc dán danh sách lớp vào bảng Class Roster."
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Theo dõi điểm danh trực tiếp",
+            "text": "Nhấn Bắt đầu khi buổi học diễn ra; hệ thống tự động phân loại Có mặt (Present), Đi muộn (Late) và Vắng mặt (Absent)."
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Xuất báo cáo sang Google Sheets hoặc CSV",
+            "text": "Xuất bảng điểm danh trực tiếp vào Google Drive (Google Sheets) hoặc tải file CSV/PDF chuẩn cho Excel, Moodle và Canvas."
+          }
+        ],
+        "image": "https://attendancetracker.dev/screenshots/01-live-roster.jpg"
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://attendancetracker.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Cách Điểm Danh Google Meet Tự Động",
+            "item": "https://attendancetracker.dev/diem-danh-google-meet.html"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #4ade80; --blue: #58a6ff; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 40px 20px; }
+    .container { max-width: 720px; margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+    .brand img { width: 28px; height: 28px; border-radius: 6px; }
+    .brand a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    h1 { font-size: 2rem; line-height: 1.2; margin-bottom: 14px; }
+    .lead { color: var(--muted); font-size: 1.05rem; margin-bottom: 32px; }
+    h2 { font-size: 1.35rem; margin-top: 36px; margin-bottom: 14px; color: var(--text); }
+    h3 { font-size: 1.05rem; margin-top: 22px; margin-bottom: 8px; color: var(--text); }
+    p { margin-bottom: 14px; color: #c9d1d9; }
+    ul, ol { padding-left: 22px; margin-bottom: 14px; color: #c9d1d9; }
+    li { margin-bottom: 6px; }
+    a { color: var(--blue); }
+    code { background: var(--surface); padding: 2px 6px; border-radius: 4px; font-size: .9em; font-family: 'DM Mono', ui-monospace, monospace; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: .85rem; }
+    th, td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; color: #c9d1d9; }
+    th { background: var(--surface); color: var(--text); }
+    .callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 16px 18px; margin: 22px 0; }
+    .callout strong { color: var(--accent); }
+    .cta { background: linear-gradient(135deg, rgba(74,222,128,.08), rgba(88,166,255,.08)); border: 1px solid rgba(74,222,128,.25); border-radius: 14px; padding: 26px; text-align: center; margin: 36px 0; }
+    .cta h3 { font-size: 1.1rem; margin-top: 0; margin-bottom: 6px; }
+    .cta p { color: var(--muted); font-size: .9rem; margin-bottom: 16px; }
+    .btn { display: inline-block; background: #34A853; color: #fff; text-decoration: none; padding: 11px 24px; border-radius: 8px; font-weight: 600; font-size: .92rem; }
+    .footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border); }
+    .footer a { color: var(--muted); text-decoration: none; margin: 0 6px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <img src="icons/icon-96.png" alt="" />
+      <a href="/">Attendance Tracker</a>
+    </div>
+
+    <h1>Cách điểm danh Google Meet tự động (Hướng dẫn 2026)</h1>
+    <p class="lead">Các tiện ích mở rộng (Chrome extensions) điểm danh Google Meet cũ từ giai đoạn 2020–2023 thường xuyên bị lỗi khi Google cập nhật giao diện. Dưới đây là cách điểm danh tự động trực tiếp trong bảng điều khiển của Google Meet bằng tiện ích chính thức trên Google Workspace Marketplace.</p>
+
+    <div class="callout">
+      <strong>Tiện ích chính thức trên Google Meet REST API v2:</strong> Attendance Tracker hoạt động ngay trong thanh bên <strong>Hoạt động (Activities)</strong> của Google Meet, không cần cài đặt tiện ích mở rộng Chrome và không bị lỗi khi Google thay đổi cấu trúc HTML.
+    </div>
+
+    <h2>Vì sao nên chuyển từ Chrome Extension sang Google Workspace Add-on?</h2>
+    <ul>
+      <li><strong>Không bao giờ bị lỗi giao diện:</strong> Kết nối trực tiếp với Google Meet REST API v2 thay vì quét mã HTML trên trình duyệt.</li>
+      <li><strong>Tự động gộp các lần rớt mạng / vào lại:</strong> Khi học sinh hoặc nhân viên bị mất kết nối và tham gia lại nhiều lần, hệ thống tự động cộng dồn tổng thời gian tham dự chính xác trên một dòng duy nhất.</li>
+      <li><strong>Đồng bộ Google Classroom trong 1 cú nhấp chuột:</strong> Tự động đối chiếu danh sách lớp để phát hiện ai Có mặt, Đi muộn hoặc Vắng mặt.</li>
+      <li><strong>Xuất báo cáo trực tiếp sang Google Trang tính (Sheets), Excel, Moodle &amp; Canvas:</strong> Lưu thẳng vào Google Drive của giáo viên hoặc người tổ chức.</li>
+    </ul>
+
+    <h2>Bảng giá</h2>
+    <table>
+      <tr><th>Gói</th><th>Giá</th><th>Tính năng</th></tr>
+      <tr><td><strong>Miễn phí (Free)</strong></td><td>$0</td><td>5 lượt xuất báo cáo/tháng (Google Sheets hoặc CSV), theo dõi danh sách trực tiếp, đồng bộ Google Classroom.</td></tr>
+      <tr><td><strong>Gói Cá Nhân Trọn Đời</strong></td><td>$9.99 (thanh toán 1 lần)</td><td>Xuất Google Sheets và CSV không giới hạn, tự động ghi nhận, báo cáo tổng hợp học kỳ, chứng chỉ PDF và tích hợp Slack/Discord/Google Chat.</td></tr>
+      <tr><td><strong>Gói Giáo Viên (Educator Pass)</strong></td><td>$4.99/năm</td><td>Đầy đủ tính năng Pro với mức giá ưu đãi dành riêng cho giáo viên và giảng viên.</td></tr>
+      <tr><td><strong>Gói Khoa / Trường Học</strong></td><td>$59/năm hoặc $149/năm</td><td>Triển khai cho khoa/bộ môn ($59/năm) hoặc toàn bộ tên miền Google Workspace của trường ($149/năm).</td></tr>
+    </table>
+
+    <div class="cta">
+      <h3>Điểm danh Google Meet tự động ngay hôm nay</h3>
+      <p>Hỗ trợ 44 ngôn ngữ (bao gồm tiếng Việt), hoạt động trên cả Gmail cá nhân và Google Workspace.</p>
+      <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_vi" target="_blank">Cài đặt từ Google Workspace Marketplace</a>
+    </div>
+
+    <div class="footer-hub" style="margin-top: 50px; padding-top: 30px; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--muted); line-height: 1.8;">
+      <div style="text-align: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06);">
+        <a href="/" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Home</a> ·
+        <a href="google-meet-attendance-vietnam-teachers.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Dành cho Giáo viên Việt Nam</a> ·
+        <a href="how-to-track-attendance-in-google-meet.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">English Guide</a> ·
+        <a href="pricing.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Pricing</a> ·
+        <a href="privacy.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Privacy Policy</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

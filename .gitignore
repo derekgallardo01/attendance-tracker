@@ -9,5 +9,6 @@ backend/coverage-frontend/
 test-results/
 scripts/send-*.cjs
 docs/*-dispatch-log.json
+docs/ahrefs-exports/
 dist/
 screenshots/

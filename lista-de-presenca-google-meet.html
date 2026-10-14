@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lista de Presença no Google Meet Automática (Guia 2026) — Attendance Tracker</title>
+  <meta name="description" content="Guia completo em português para gerar lista de presença automática no Google Meet: chamada em tempo real, sincronização com Google Sala de Aula (Classroom) e exportação para Google Planilhas, Excel, Moodle e Canvas." />
+  <link rel="canonical" href="https://attendancetracker.dev/lista-de-presenca-google-meet.html" />
+  <link rel="alternate" hreflang="x-default" href="https://attendancetracker.dev/how-to-track-attendance-in-google-meet.html" />
+  <link rel="alternate" hreflang="en" href="https://attendancetracker.dev/how-to-track-attendance-in-google-meet.html" />
+  <link rel="alternate" hreflang="es" href="https://attendancetracker.dev/asistencia-google-meet.html" />
+  <link rel="alternate" hreflang="pt" href="https://attendancetracker.dev/lista-de-presenca-google-meet.html" />
+  <link rel="alternate" hreflang="pt-BR" href="https://attendancetracker.dev/lista-de-presenca-google-meet.html" />
+  <link rel="alternate" hreflang="vi" href="https://attendancetracker.dev/diem-danh-google-meet.html" />
+  <meta property="og:title" content="Lista de Presença no Google Meet Automática (Guia 2026)" />
+  <meta property="og:description" content="Registre frequência automaticamente no Google Meet: presentes, atrasos e faltas em tempo real, com exportação em 1 clique para Google Planilhas, Excel, Moodle e Canvas. Compatível com a LGPD." />
+  <meta property="og:image" content="https://attendancetracker.dev/screenshots/01-live-roster.jpg" />
+  <meta property="og:image:width" content="1920" />
+  <meta property="og:image:height" content="1200" />
+  <meta property="og:url" content="https://attendancetracker.dev/lista-de-presenca-google-meet.html" />
+  <meta property="og:type" content="article" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Lista de Presença no Google Meet Automática (Guia 2026)" />
+  <meta name="twitter:description" content="Lista de presença automática para Google Meet na API oficial REST v2: presentes, atrasos e ausências em tempo real com exportação para Google Planilhas e Moodle." />
+  <meta name="twitter:image" content="https://attendancetracker.dev/screenshots/01-live-roster.jpg" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        "name": "Como fazer lista de presença automática no Google Meet",
+        "description": "Passo a passo para registrar a presença de alunos e participantes no Google Meet usando o complemento oficial Attendance Tracker.",
+        "inLanguage": "pt-BR",
+        "step": [
+          {
+            "@type": "HowToStep",
+            "name": "Instale o complemento oficial",
+            "text": "Instale o Attendance Tracker pelo Google Workspace Marketplace e abra-o no menu Atividades dentro do Google Meet."
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Importe sua turma",
+            "text": "Adicione sua lista de alunos na aba Class Roster ou importe diretamente do Google Sala de Aula (Google Classroom) com um clique."
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Acompanhe a presença em tempo real",
+            "text": "Clique em Iniciar quando a aula ou reunião começar; o painel classifica automaticamente os participantes como Presentes, Atrasados ou Ausentes."
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Exporte a lista de presença",
+            "text": "Ao final da sessão, baixe a lista em CSV ou PDF, ou exporte com 1 clique para o Google Planilhas (Google Sheets), Moodle ou Canvas."
+          }
+        ],
+        "image": "https://attendancetracker.dev/screenshots/01-live-roster.jpg"
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://attendancetracker.dev/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Lista de Presença no Google Meet Automática",
+            "item": "https://attendancetracker.dev/lista-de-presenca-google-meet.html"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #4ade80; --blue: #58a6ff; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 40px 20px; }
+    .container { max-width: 720px; margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+    .brand img { width: 28px; height: 28px; border-radius: 6px; }
+    .brand a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    h1 { font-size: 2rem; line-height: 1.2; margin-bottom: 14px; }
+    .lead { color: var(--muted); font-size: 1.05rem; margin-bottom: 32px; }
+    h2 { font-size: 1.35rem; margin-top: 36px; margin-bottom: 14px; color: var(--text); }
+    h3 { font-size: 1.05rem; margin-top: 22px; margin-bottom: 8px; color: var(--text); }
+    p { margin-bottom: 14px; color: #c9d1d9; }
+    ul, ol { padding-left: 22px; margin-bottom: 14px; color: #c9d1d9; }
+    li { margin-bottom: 6px; }
+    a { color: var(--blue); }
+    code { background: var(--surface); padding: 2px 6px; border-radius: 4px; font-size: .9em; font-family: 'DM Mono', ui-monospace, monospace; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: .85rem; }
+    th, td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; color: #c9d1d9; }
+    th { background: var(--surface); color: var(--text); }
+    .callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 16px 18px; margin: 22px 0; }
+    .callout strong { color: var(--accent); }
+    .cta { background: linear-gradient(135deg, rgba(74,222,128,.08), rgba(88,166,255,.08)); border: 1px solid rgba(74,222,128,.25); border-radius: 14px; padding: 26px; text-align: center; margin: 36px 0; }
+    .cta h3 { font-size: 1.1rem; margin-top: 0; margin-bottom: 6px; }
+    .cta p { color: var(--muted); font-size: .9rem; margin-bottom: 16px; }
+    .btn { display: inline-block; background: #34A853; color: #fff; text-decoration: none; padding: 11px 24px; border-radius: 8px; font-weight: 600; font-size: .92rem; }
+    .footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border); }
+    .footer a { color: var(--muted); text-decoration: none; margin: 0 6px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <img src="icons/icon-96.png" alt="" />
+      <a href="/">Attendance Tracker</a>
+    </div>
+
+    <h1>Como fazer lista de presença no Google Meet automaticamente</h1>
+    <p class="lead">O Google Meet não inclui relatório de presença na maioria das contas gratuitas ou Google Workspace Education Fundamentals, fazendo com que professores e coordenadores percam tempo com chamadas manuais ou formulários no chat. Veja como automatizar a lista de presença diretamente dentro do Google Meet, em português e em conformidade com a LGPD.</p>
+
+    <div class="callout">
+      <strong>Complemento oficial (sem extensões de Chrome quebradas):</strong> O Attendance Tracker é um complemento oficial do Google Workspace Marketplace construído na API REST v2 nativa do Google Meet. Ele funciona dentro do painel lateral <strong>Atividades</strong> do próprio Meet — sem precisar instalar extensões de navegador que param de funcionar quando o Google atualiza o layout.
+    </div>
+
+    <h2>Por que as extensões antigas de chamada pararam de funcionar?</h2>
+    <p>Se você já usou extensões do Chrome para fazer chamada no Google Meet entre 2020 e 2024, provavelmente enfrentou algum destes problemas:</p>
+    <ul>
+      <li>Extensões que liam o HTML da página e travam no erro <em>"First join a meeting"</em> após as atualizações visuais (Material 3) do Google Meet.</li>
+      <li>Links de formulários no chat que interrompem a aula e prejudicam a acessibilidade para estudantes.</li>
+      <li>Relatórios nativos do Google restritos apenas a planos pagos (Education Plus / Enterprise) e que exigem no mínimo 5 participantes.</li>
+      <li>Linhas duplicadas na planilha sempre que a internet de um aluno cai e ele reconecta na chamada.</li>
+    </ul>
+    <p>O Attendance Tracker resolve tudo isso consultando diretamente a <strong>API REST v2 do Google Meet</strong>: ele registra o horário exato de entrada, saída e tempo total de permanência, unificando reconexões automaticamente em uma única linha limpa.</p>
+
+    <h2>Como funciona em 3 passos</h2>
+    <ol>
+      <li><strong>Instale uma única vez.</strong> Adicione o Attendance Tracker pelo Google Workspace Marketplace. Na sua próxima aula ou reunião, abra o menu <strong>Atividades</strong> no canto inferior direito do Google Meet.</li>
+      <li><strong>Inicie o acompanhamento.</strong> O painel identifica automaticamente cada participante e classifica em <strong>Presente</strong>, <strong>Atrasado</strong> ou <strong>Ausente</strong> (com tolerância de atraso configurável).</li>
+      <li><strong>Exporte sua lista de presença.</strong> Ao terminar a chamada, exporte com 1 clique para o <strong>Google Planilhas (Google Sheets)</strong> no seu Google Drive, ou baixe em CSV/PDF formatado para Excel, Moodle ou Canvas.</li>
+    </ol>
+
+    <h2>Integração com Google Sala de Aula, Moodle e Canvas</h2>
+    <ul>
+      <li><strong>Sincronização com Google Sala de Aula (Classroom):</strong> Importe a lista oficial de alunos da sua turma com um clique para visualizar imediatamente quem faltou, sem precisar comparar planilhas manualmente.</li>
+      <li><strong>Exportação para Moodle e Canvas:</strong> Gere arquivos CSV pré-formatados para o módulo de Presença do Moodle (<code>mod_attendance</code>) e para o boletim (Gradebook) do Canvas LMS.</li>
+      <li><strong>Compatível com a LGPD e FERPA:</strong> As planilhas de frequência são salvas diretamente no Google Drive do professor ou organizador, sem bots invasivos entrando na gravação da chamada.</li>
+    </ul>
+
+    <h2>Planos e Preços</h2>
+    <table>
+      <tr><th>Plano</th><th>Preço</th><th>O que inclui</th></tr>
+      <tr><td><strong>Gratuito</strong></td><td>US$ 0</td><td> até 5 exportações por mês (Google Planilhas ou CSV combinados), painel ao vivo no Meet, importação do Google Classroom e relatórios em PDF.</td></tr>
+      <tr><td><strong>Passe Individual Vitalício</strong></td><td>US$ 9,99 (pagamento único)</td><td>Exportações ilimitadas para Google Planilhas e CSV, captura automática, histórico completo do semestre, certificados em PDF e webhooks (Slack, Google Chat e Discord).</td></tr>
+      <tr><td><strong>Passe Educador</strong></td><td>US$ 4,99/ano</td><td>Todos os recursos Pro com desconto dedicado para professores e pesquisadores.</td></tr>
+      <tr><td><strong>Licença Departamental / Institucional</strong></td><td>US$ 59/ano ou US$ 149/ano</td><td>Implantação para escolas, departamentos acadêmicos (US$ 59/ano) ou todo o domínio institucional Google Workspace (US$ 149/ano).</td></tr>
+    </table>
+
+    <div class="cta">
+      <h3>Automatize sua lista de presença no Google Meet</h3>
+      <p>Interface traduzida em 44 idiomas (incluindo português), compatível com contas Gmail pessoais e Google Workspace.</p>
+      <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_pt" target="_blank">Instalar pelo Google Workspace Marketplace</a>
+    </div>
+
+    <div class="footer-hub" style="margin-top: 50px; padding-top: 30px; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--muted); line-height: 1.8;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; text-align: left; margin-bottom: 24px;">
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Education</strong>
+          <a href="attendance-tracker-for-teachers.html" style="color: var(--muted); text-decoration: none; display: block;">For K-12 Teachers</a>
+          <a href="google-meet-attendance-google-classroom.html" style="color: var(--muted); text-decoration: none; display: block;">Google Classroom</a>
+          <a href="import-google-classroom-roster-to-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">Import Classroom Rosters</a>
+          <a href="google-meet-attendance-for-universities.html" style="color: var(--muted); text-decoration: none; display: block;">Universities &amp; Colleges</a>
+          <a href="google-meet-attendance-for-tutors.html" style="color: var(--muted); text-decoration: none; display: block;">Tutors &amp; Bootcamps</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Integrations</strong>
+          <a href="export-google-meet-attendance-to-moodle.html" style="color: var(--muted); text-decoration: none; display: block;">Moodle Gradebook Export</a>
+          <a href="export-google-meet-attendance-to-canvas.html" style="color: var(--muted); text-decoration: none; display: block;">Canvas Gradebook Export</a>
+          <a href="export-google-meet-attendance-to-sheets.html" style="color: var(--muted); text-decoration: none; display: block;">Export to Google Sheets</a>
+          <a href="how-to-send-google-meet-attendance-to-slack.html" style="color: var(--muted); text-decoration: none; display: block;">Slack Integration</a>
+          <a href="send-google-meet-attendance-to-google-chat.html" style="color: var(--muted); text-decoration: none; display: block;">Google Chat &amp; Discord</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Teams &amp; Business</strong>
+          <a href="google-meet-attendance-for-remote-teams.html" style="color: var(--muted); text-decoration: none; display: block;">Remote Teams &amp; Standups</a>
+          <a href="track-attendance-for-webinars-and-training-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">Webinars &amp; Training</a>
+          <a href="google-meet-attendance-for-cpe-and-cle-credits.html" style="color: var(--muted); text-decoration: none; display: block;">CPE &amp; CLE Credits</a>
+          <a href="google-meet-attendance-for-volunteer-hours.html" style="color: var(--muted); text-decoration: none; display: block;">Volunteer Hours</a>
+        </div>
+        <div>
+          <strong style="color: var(--text); display: block; margin-bottom: 6px;">Guides &amp; Comparisons</strong>
+          <a href="how-to-track-attendance-in-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">How to Track Attendance</a>
+          <a href="google-meet-attendance-template.html" style="color: var(--muted); text-decoration: none; display: block;">Google Sheets Template</a>
+          <a href="google-meet-attendance-extension-broken.html" style="color: var(--muted); text-decoration: none; display: block;">Extension Broken?</a>
+          <a href="best-google-meet-attendance-extensions.html" style="color: var(--muted); text-decoration: none; display: block;">Extension Comparison</a>
+          <a href="asistencia-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">Guía en Español</a>
+        </div>
+      </div>
+      <div style="text-align: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06);">
+        <a href="/" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Home</a> ·
+        <a href="pricing.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Pricing</a> ·
+        <a href="support.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Support</a> ·
+        <a href="privacy.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Privacy Policy</a> ·
+        <a href="terms.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Terms of Service</a> ·
+        <a href="refunds.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">Refund Policy</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

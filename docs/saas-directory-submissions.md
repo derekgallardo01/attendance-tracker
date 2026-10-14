@@ -65,9 +65,12 @@ google-meet, attendance-tracker, google-classroom, canvas-lms, moodle, edtech, c
 
 **Pricing Information:**
 * **Pricing Model:** Freemium
-* **Free Tier:** 15 meetings per month, live roster view, manual CSV download.
-* **Individual Pro:** $4.99/month or $39.00/year (billed annually).
-* **School / District Licensing:** Volume seat licensing with domain-wide Google Workspace deployment.
+* **Free Tier:** 5 exports/month (Google Sheets or CSV combined), live roster view, manual CSV/Sheets export.
+* **Individual Lifetime Pass:** $9.99 one-time.
+* **Educator Pass:** $4.99/year.
+* **Department License:** $59/year (small-school domain plan).
+* **Institution License:** $149/year (whole-domain Google Workspace deployment).
+* **Languages Supported:** 44 languages.
 
 **Contact & Support:**
 * **Developer / Founder:** Derek Gallardo
@@ -90,7 +93,7 @@ google-meet, attendance-tracker, google-classroom, canvas-lms, moodle, edtech, c
 * Direct pre-formatted CSV exports for Canvas, Moodle, and Blackboard
 * One-click Google Sheets export saved straight to instructor's Google Drive
 * Zero-extension architecture compatible with locked-down Chromebooks
-* FERPA and COPPA compliant data storage
+* Localized in 44 languages with FERPA and COPPA compliant data storage
 
 ---
 
@@ -142,9 +145,12 @@ Pedagogical and Institutional Value:
 * **Permissions:** Minimal Google Workspace OAuth scopes (Meet REST API v2, Drive appData, Classroom read-only rosters).
 
 **Pricing Information:**
-* **Free Plan:** Free for educators with basic attendance needs.
-* **Pro Plan:** $39/year per teacher (Complimentary lifetime passes provided for evaluators and curriculum coordinators).
-* **District Pricing:** Available for school-wide deployment.
+* **Free Tier:** 5 exports/month (Google Sheets or CSV combined).
+* **Individual Lifetime Pass:** $9.99 one-time.
+* **Educator Pass:** $4.99/year per teacher (Complimentary lifetime passes provided for evaluators and curriculum coordinators).
+* **Department License:** $59/year (small-school domain plan).
+* **Institution License:** $149/year (whole-domain Google Workspace deployment).
+* **Languages Supported:** 44 languages.
 
 **Contact:**
 * **Support Email:** `support@attendancetracker.dev`
@@ -165,7 +171,7 @@ Pedagogical and Institutional Value:
 * Zero-extension cloud architecture (runs on school-managed Chromebooks)
 * Automated calculation of join times, leaves, and total duration
 * 1-Click export to Google Sheets and Canvas-ready CSVs
-* FERPA and COPPA student data privacy compliance
+* Localized in 44 languages with FERPA and COPPA student data privacy compliance
 
 ---
 
@@ -214,8 +220,13 @@ Key Highlights:
 * macOS
 
 **License / Pricing Model:**
-* **License:** Freemium (Free tier with Pro upgrade)
-* **Free Version Available:** Yes
+* **License:** Freemium
+* **Free Tier:** 5 exports/month (Google Sheets or CSV combined)
+* **Individual Lifetime Pass:** $9.99 one-time
+* **Educator Pass:** $4.99/year
+* **Department License:** $59/year (small-school domain plan)
+* **Institution License:** $149/year (whole-domain Google Workspace deployment)
+* **Languages Supported:** 44 languages
 
 **Tags:**
 ```text
@@ -241,7 +252,7 @@ google-meet, google-meet-attendance, google-classroom, canvas-lms, moodle, alter
 * Canvas, Moodle, and Blackboard formatted CSV exports
 * Direct Google Drive / Google Sheets storage
 * Works on standard Google Workspace accounts without Enterprise upgrade
-* Fully FERPA / COPPA compliant
+* Localized in 44 languages and fully FERPA / COPPA compliant
 
 ---
 
@@ -294,9 +305,12 @@ google-meet, attendance-software, google-classroom, canvas-lms, moodle, edtech, 
 * Google Workspace Enterprise Attendance
 
 **Pricing:**
-* **Free Plan:** Free for up to 15 meetings/month.
-* **Pro Plan:** $4.99/mo or $39.00/yr.
-* **District / Campus License:** Custom quote.
+* **Free Tier:** Free for up to 5 exports/month (Google Sheets or CSV combined).
+* **Individual Lifetime Pass:** $9.99 one-time.
+* **Educator Pass:** $4.99/yr.
+* **Department License:** $59/yr (small-school domain plan).
+* **Institution License:** $149/yr (whole-domain Google Workspace deployment).
+* **Languages Supported:** 44 languages.
 
 **Contact & Official Links:**
 * **Official Website:** `https://attendancetracker.dev`
@@ -316,7 +330,7 @@ google-meet, attendance-software, google-classroom, canvas-lms, moodle, edtech, 
 * 1-Click Google Classroom roster sync
 * Direct CSV export for Canvas, Moodle, and Blackboard
 * Automated Google Sheets export saved directly to Google Drive
-* Works on standard Google Workspace accounts
+* Works on standard Google Workspace accounts in 44 languages
 * Safe for locked-down Chromebooks and district IT environments
 
 ---
@@ -362,10 +376,13 @@ Enterprise & Educational Capabilities:
 * Enterprise / Major Universities & Organizations (1,001+ employees)
 
 **Pricing Model & Tiers:**
-* **Model:** Freemium / Tiered SaaS
-* **Free:** 15 sessions/month, live panel tracking, basic CSV download.
-* **Individual Pro:** $4.99/month or $39.00/year (billed annually). Includes unlimited meetings, Google Classroom roster sync, Canvas/Moodle exports, multi-session tracking.
-* **School & District License:** Annual domain license with centralized Google Workspace Admin deployment and priority support.
+* **Model:** Freemium / Tiered Licensing
+* **Free Tier:** 5 exports/month (Google Sheets or CSV combined), live panel tracking.
+* **Individual Lifetime Pass:** $9.99 one-time (unlimited exports, Google Classroom roster sync, Canvas/Moodle exports, multi-session tracking).
+* **Educator Pass:** $4.99/year.
+* **Department License:** $59/year (small-school domain plan).
+* **Institution License:** $149/year (whole-domain Google Workspace deployment with centralized admin setup and priority support).
+* **Languages Supported:** 44 languages.
 
 **Company & Support Information:**
 * **Company Name:** Attendance Tracker
@@ -391,7 +408,7 @@ Enterprise & Educational Capabilities:
 * Direct CSV export for Canvas, Moodle, and Blackboard gradebooks
 * Automated Google Sheets export directly to user's Google Drive
 * Multi-session meeting history and semester trend reporting
-* FERPA and COPPA privacy compliance with zero third-party telemetry
+* Localized in 44 languages with FERPA and COPPA privacy compliance
 
 ---
 
