@@ -12,7 +12,7 @@ const { domainOf } = require('../services/firestore/_core'); // pure util; impor
 const { flushDeferredNotifications } = require('../lib/notifications');
 
 const { ACQUISITION_SOURCES } = require('../lib/constants');
-const { getClientIp, lookupGeo } = require('../lib/geoip');
+const { getClientIp, lookupGeo, resolveGeo } = require('../lib/geoip');
 
 const router = Router();
 
@@ -162,7 +162,9 @@ router.post('/exchange', async (req, res) => {
 
     // Capture IP + country at signup for the owner notification email.
     const clientIp = getClientIp(req);
-    const geo = clientIp ? lookupGeo(clientIp) : null;
+    const geo = clientIp
+      ? (typeof resolveGeo === 'function' ? await resolveGeo(clientIp, { clientTz, domain, email }) : lookupGeo(clientIp))
+      : null;
 
     // Store user + tokens in tenant-scoped Firestore
     await upsertUser(domain, {

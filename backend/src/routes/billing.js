@@ -25,7 +25,7 @@ const PPP_FLAGS = {
 };
 
 
-const { getClientIp, lookupGeo } = require('../lib/geoip');
+const { getClientIp, lookupGeo, isGenericUsPlaceholder, countryFromDomain } = require('../lib/geoip');
 
 function detectCountry(req) {
   const queryCountry = (typeof req?.query?.country === 'string' ? req.query.country : (typeof req?.body?.country === 'string' ? req.body.country : '')).trim().toUpperCase();
@@ -39,7 +39,15 @@ function detectCountry(req) {
     try {
       const ip = getClientIp(req);
       const geo = lookupGeo(ip);
-      if (geo?.country) return geo.country.trim().toUpperCase();
+      if (geo?.country) {
+        if (typeof isGenericUsPlaceholder === 'function' && isGenericUsPlaceholder(geo)) {
+          const dCountry = typeof countryFromDomain === 'function'
+            ? countryFromDomain(req.user?.email || req.query?.domain || req.body?.domain)
+            : null;
+          if (dCountry) return dCountry;
+        }
+        return geo.country.trim().toUpperCase();
+      }
     } catch (_) {}
   }
   return null;

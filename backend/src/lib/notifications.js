@@ -6,6 +6,7 @@ const { maskSlackWebhook } = require('./slack');
 const { maskGoogleChatWebhook } = require('./googleChat');
 const { maskDiscordWebhook } = require('./discord');
 const { escapeHtml: escape } = require('./html');
+const { resolveGeo, isGenericUsPlaceholder } = require('./geoip');
 
 // Resend transactional email — better deliverability + open/click tracking
 // than Gmail SMTP, and the API doesn't have Gmail's 500/day cap.
@@ -390,7 +391,15 @@ async function sendSignupWebhook({ email, displayName, domain, reportedSource, r
     : 'Not reported';
   const detectedText = detected || 'Unknown';
 
-  const country = signupGeo?.country || null;
+  let country = signupGeo?.country || null;
+  if (signupIp && (!country || (typeof isGenericUsPlaceholder === 'function' && isGenericUsPlaceholder(signupGeo)))) {
+    try {
+      const resolved = typeof resolveGeo === 'function' ? await resolveGeo(signupIp, { domain, email }) : null;
+      if (resolved?.country) {
+        country = resolved.country;
+      }
+    } catch (_) {}
+  }
   const flag = country ? String.fromCodePoint(0x1F1E6 + country.toUpperCase().charCodeAt(0) - 65, 0x1F1E6 + country.toUpperCase().charCodeAt(1) - 65) + ' ' : '';
   const ipLine = signupIp
     ? `${flag}${signupIp}${country ? ` (${country})` : ''}`
