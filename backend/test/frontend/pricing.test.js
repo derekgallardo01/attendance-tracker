@@ -76,6 +76,8 @@ describe('localCurrencyAnchor()', () => {
     expect(pricing.localCurrencyAnchor('IL', 'educator')).toBe('~₪18.50/yr');
     expect(pricing.localCurrencyAnchor('KZ', 'educator')).toBe('~2,500 ₸/yr');
     expect(pricing.localCurrencyAnchor('KZ', 'lifetime')).toBe('~5,000 ₸');
+    expect(pricing.localCurrencyAnchor('KE', 'educator')).toBe('~KSh 650/yr');
+    expect(pricing.localCurrencyAnchor('KE', 'lifetime')).toBe('~KSh 1,300');
   });
 
   test('normalizes lowercase and whitespace in country code', () => {

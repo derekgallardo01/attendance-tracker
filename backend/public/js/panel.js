@@ -76,8 +76,13 @@
     return { present: false, leftStreak: existing.leftStreak || 0, changed: false, note: null, resetJoinTime: false, accumulateMs: 0 };
   }
 
+  // Pure helper to determine if current session operates under free tier constraints
+  function isFreePlan(opts = {}) {
+    return !opts.isPro && !opts.meetingUnlocked;
+  }
+
   const api = {
-    computePollInterval, resolvePresence,
+    computePollInterval, resolvePresence, isFreePlan,
     POLL_FAST, POLL_SLOW, FAST_PHASE_DURATION, RECENT_CHANGE_MS, LEFT_STREAK_THRESHOLD,
   };
   root.AttPanel = api;

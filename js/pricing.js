@@ -60,6 +60,7 @@
     GB: { educator: '~£3.95/yr', lifetime: '~£7.90', educatorPpp: '~£1.95/yr', lifetimePpp: '~£3.95', department: '~£47/yr' },
     IL: { educator: '~₪18.50/yr', lifetime: '~₪37', educatorPpp: '~₪9.25/yr', lifetimePpp: '~₪18.50', department: '~₪220/yr' },
     KZ: { educator: '~2,500 ₸/yr', lifetime: '~5,000 ₸', educatorPpp: '~1,250 ₸/yr', lifetimePpp: '~2,500 ₸', department: '~29,500 ₸/yr' },
+    KE: { educator: '~KSh 650/yr', lifetime: '~KSh 1,300', educatorPpp: '~KSh 325/yr', lifetimePpp: '~KSh 650', department: '~KSh 7,700/yr' },
   };
 
   function localCurrencyAnchor(countryCode, plan) {

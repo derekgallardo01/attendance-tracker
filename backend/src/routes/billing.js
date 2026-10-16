@@ -14,6 +14,7 @@ const PPP_COUNTRIES = new Set([
   'UA', 'GH', 'EG', 'TH', 'TR', 'AR', 'LK',
   'MX', 'CL', 'TN', 'SO', 'EC', 'BO', 'GT', 'MA', 'DZ', 'ZM', 'KZ',
   'RO', 'HN', 'SV', 'NI', 'BG', 'PY',
+  'TZ', 'UG', 'RW', 'ET', 'BI',
 ]);
 
 const PPP_FLAGS = {
@@ -22,7 +23,11 @@ const PPP_FLAGS = {
   TH: '🇹🇭', TR: '🇹🇷', AR: '🇦🇷', LK: '🇱🇰', MX: '🇲🇽', CL: '🇨🇱', TN: '🇹🇳', SO: '🇸🇴',
   EC: '🇪🇨', BO: '🇧🇴', GT: '🇬🇹', MA: '🇲🇦', DZ: '🇩🇿', ZM: '🇿🇲', KZ: '🇰🇿',
   RO: '🇷🇴', HN: '🇭🇳', SV: '🇸🇻', NI: '🇳🇮', BG: '🇧🇬', PY: '🇵🇾',
+  TZ: '🇹🇿', UG: '🇺🇬', RW: '🇷🇼', ET: '🇪🇹', BI: '🇧🇮',
 };
+
+// East African economies supporting dynamic mobile money (M-Pesa, Airtel Money, local debits)
+const EAST_AFRICA_COUNTRIES = new Set(['KE', 'TZ', 'UG', 'RW', 'ET', 'BI']);
 
 
 const { getClientIp, lookupGeo, isGenericUsPlaceholder, countryFromDomain } = require('../lib/geoip');
@@ -155,6 +160,11 @@ async function createSafeCheckoutSession(stripe, sessionParams, context = {}) {
     }
   }
 
+  // East Africa / Kenya: dynamic payment methods (M-Pesa, mobile money) — avoid locking payment methods
+  if (context.isEastAfrica || context.country === 'KE' || (context.country && EAST_AFRICA_COUNTRIES.has(context.country))) {
+    delete params.payment_method_types;
+  }
+
   // Sanitize metadata objects
   const sanitizeMeta = (metaObj) => {
     if (!metaObj || typeof metaObj !== 'object') return metaObj;
@@ -251,6 +261,7 @@ async function createCheckoutSessionForUser({ user, plan, interval, conferenceId
   const promoCode = (promo ?? '').trim().toUpperCase();
   const userCountry = (country && typeof country === 'string' ? country.trim().toUpperCase() : null) || detectCountry(req) || (typeof user?.signupGeo?.country === 'string' ? user.signupGeo.country.trim().toUpperCase() : null);
   const isIndia = userCountry === 'IN';
+  const isEastAfrica = !!(userCountry && EAST_AFRICA_COUNTRIES.has(userCountry));
   const isPppEligible = !promoCode && userCountry && PPP_COUNTRIES.has(userCountry);
   const regionalConfig = PRICING.REGIONAL_PRICING ? PRICING.REGIONAL_PRICING[userCountry] : null;
   const isRegional = !!(regionalConfig && !isIndia);
@@ -264,7 +275,9 @@ async function createCheckoutSessionForUser({ user, plan, interval, conferenceId
           ? process.env.STRIPE_INDIVIDUAL_LIFETIME_MXN_PRICE_ID
           : (userCountry === 'BR'
             ? process.env.STRIPE_INDIVIDUAL_LIFETIME_BRL_PRICE_ID
-            : null))));
+            : (userCountry === 'KE'
+              ? process.env.STRIPE_INDIVIDUAL_LIFETIME_KES_PRICE_ID
+              : null)))));
   const isRegionalEducator = isEducator && (isRegional || isIndia || isPppEligible) && !isDomainPlan;
   const isRegionalTarget = isRegional && !isEducator && (isLifetime || individual) && !isSingleMeeting && !isDomainPlan;
   const isRegionalMeetingPass = isSingleMeeting && (isRegional || isIndia || isPppEligible);
@@ -274,6 +287,7 @@ async function createCheckoutSessionForUser({ user, plan, interval, conferenceId
     || (userCountry === 'ID' && process.env.STRIPE_EDUCATOR_IDR_PRICE_ID)
     || (userCountry === 'MX' && process.env.STRIPE_EDUCATOR_MXN_PRICE_ID)
     || (userCountry === 'BR' && process.env.STRIPE_EDUCATOR_BRL_PRICE_ID)
+    || (userCountry === 'KE' && process.env.STRIPE_EDUCATOR_KES_PRICE_ID)
     || (isIndia && process.env.STRIPE_EDUCATOR_INR_PRICE_ID)
     || (!isPppEligible && process.env.STRIPE_EDUCATOR_ANNUAL_PRICE_ID);
 
@@ -289,6 +303,7 @@ async function createCheckoutSessionForUser({ user, plan, interval, conferenceId
     else if (userCountry === 'ID') eduUnitAmount = 3900000;
     else if (userCountry === 'MX') eduUnitAmount = 4900;
     else if (userCountry === 'BR') eduUnitAmount = 2700;
+    else if (userCountry === 'KE') eduUnitAmount = 32500;
     else eduUnitAmount = Math.round(regionalConfig.amount / 2);
   }
 
@@ -313,9 +328,15 @@ async function createCheckoutSessionForUser({ user, plan, interval, conferenceId
   } else if (userCountry === 'BR') {
     smCurrency = 'brl';
     smUnitAmount = 1400;
+  } else if (userCountry === 'KE') {
+    smCurrency = 'kes';
+    smUnitAmount = 19500;
   } else if (regionalConfig?.singleMeetingAmount) {
     smCurrency = regionalConfig.currency;
     smUnitAmount = regionalConfig.singleMeetingAmount;
+  } else if (isPppEligible) {
+    smCurrency = 'usd';
+    smUnitAmount = 149;
   } else {
     smCurrency = 'usd';
     smUnitAmount = 299;
@@ -379,13 +400,26 @@ async function createCheckoutSessionForUser({ user, plan, interval, conferenceId
     const bSep = backTo.includes('?') ? '&' : '?';
     backTo = `${backTo}${bSep}unlocked=${encodeURIComponent(confId)}`;
   }
+
+  const isAllowedAbsolute = (urlStr) => {
+    try {
+      const u = new URL(urlStr);
+      return (CONFIG.allowedOrigins && CONFIG.allowedOrigins.some(o => {
+        try { return new URL(o).origin === u.origin; } catch (_) { return false; }
+      })) || (CONFIG.publicSiteUrl && new URL(CONFIG.publicSiteUrl).origin === u.origin);
+    } catch (_) {
+      return false;
+    }
+  };
+
+  const isAbs = (backTo.startsWith('http://') || backTo.startsWith('https://')) && isAllowedAbsolute(backTo);
   const sep = backTo.includes('?') ? '&' : '?';
-  const successUrl = backTo.startsWith('http://') || backTo.startsWith('https://')
+  const successUrl = isAbs
     ? `${backTo}${sep}upgraded=1`
-    : `${CONFIG.publicSiteUrl}/${backTo.replace(/^\//, '')}${sep}upgraded=1`;
-  const cancelUrl = backTo.startsWith('http://') || backTo.startsWith('https://')
+    : `${CONFIG.publicSiteUrl}/${backTo.replace(/^https?:\/\/[^/]+\/?/, '').replace(/^\//, '')}${sep}upgraded=1`;
+  const cancelUrl = isAbs
     ? backTo
-    : `${CONFIG.publicSiteUrl}/${backTo.replace(/^\//, '')}`;
+    : `${CONFIG.publicSiteUrl}/${backTo.replace(/^https?:\/\/[^/]+\/?/, '').replace(/^\//, '')}`;
 
   let resolvedPriceId = sanitizePriceId(priceId);
   let isRecurring = !isLifetime && !isSingleMeeting && !(isIndia && !isEducator && (isLifetime || individual)) && !isRegionalTarget && !isRegionalEducator;
@@ -453,13 +487,20 @@ async function createCheckoutSessionForUser({ user, plan, interval, conferenceId
   };
 
   // Payment methods: India card+upi; regionalConfig methods for regional markets (e.g. PH, MY, ID)
+  // East Africa / Kenya: dynamic payment methods (M-Pesa, mobile money, cards) — never lock to cards
   if (isIndia) {
     sessionParams.payment_method_types = ['card', 'upi'];
-  } else if (regionalConfig?.methods && regionalConfig.methods.length > 0) {
+  } else if (!isEastAfrica && regionalConfig?.methods && regionalConfig.methods.length > 0) {
     sessionParams.payment_method_types = regionalConfig.methods;
   }
 
-  if (promoCode && promoCode !== 'LAUNCH50') {
+  if (promoCode === 'SAVE20' && !isIndia && !isRegional) {
+    sessionParams.discounts = [{ coupon: 'SAVE20' }];
+    sessionParams.metadata.promoDiscount = 'SAVE20';
+  } else if (promoCode === 'PPP50' && !isDomainPlan && !isRegionalEducator) {
+    sessionParams.discounts = [{ coupon: 'PPP50' }];
+    sessionParams.metadata.pppDiscount = '1';
+  } else if (promoCode && promoCode !== 'LAUNCH50') {
     sessionParams.allow_promotion_codes = true;
   } else if (!isDomainPlan && isPppEligible && !isRegionalEducator && (isEducator || (!isIndia && !isRegionalTarget && !isSingleMeeting))) {
     sessionParams.discounts = [{ coupon: 'PPP50' }];
@@ -477,7 +518,7 @@ async function createCheckoutSessionForUser({ user, plan, interval, conferenceId
     throw err;
   }
 
-  return await createSafeCheckoutSession(stripe, sessionParams, { domain, email, plan: normalizedPlan });
+  return await createSafeCheckoutSession(stripe, sessionParams, { domain, email, plan: normalizedPlan, country: userCountry, isEastAfrica });
 }
 
 // POST /api/billing/checkout (and /api/billing/create-checkout-session) — start a Checkout Session for the caller's
@@ -621,7 +662,6 @@ async function sendUpgradeLinkForUser({
     return { success: true, alreadySent: true, email: normalizedEmail };
   }
 
-  const stripe = getStripe();
   const userCountry = country || (req ? detectCountry(req) : null);
   const isIndia = userCountry === 'IN';
   const regionalConfig = PRICING.REGIONAL_PRICING ? PRICING.REGIONAL_PRICING[userCountry] : null;
@@ -629,84 +669,31 @@ async function sendUpgradeLinkForUser({
   const isPppEligible = userCountry && PPP_COUNTRIES.has(userCountry);
   const flag = userCountry ? (PPP_FLAGS[userCountry] || '') : '';
 
-  let educatorUrl = `${CONFIG.publicSiteUrl}/history.html?upgrade=educator`;
-  let lifetimeUrl = `${CONFIG.publicSiteUrl}/history.html?upgrade=lifetime`;
+  // Just-In-Time (JIT) dynamic checkout links to eliminate pre-creating abandoned Stripe sessions
+  const token = jwt.sign(
+    {
+      email: normalizedEmail,
+      domain,
+      displayName,
+      role: 'user',
+    },
+    CONFIG.sessionSecret,
+    { expiresIn: '7d' }
+  );
 
-  if (stripe) {
-    try {
-      const meta = { individual: '1', domain, email: normalizedEmail, source: 'upgrade_link_email', reason };
-      const commonDiscounts = (isIndia || isRegional) ? null : (isPppEligible ? [{ coupon: 'PPP50' }] : [{ coupon: 'SAVE20' }]);
+  const promoParam = isPppEligible ? '&promo=PPP50' : '&promo=SAVE20';
+  const countryParam = userCountry ? `&country=${encodeURIComponent(userCountry)}` : '';
+  const tokenParam = `&token=${encodeURIComponent(token)}`;
 
-      const createSession = (params) => createSafeCheckoutSession(stripe, params, { email: normalizedEmail, source: 'upgrade_link_email' });
+  const redirectBase = CONFIG.publicApiUrl
+    ? `${CONFIG.publicApiUrl.replace(/\/$/, '')}/billing/checkout-redirect`
+    : `${CONFIG.publicSiteUrl}/api/billing/checkout-redirect`;
 
-      const inrPrices = isIndia ? getInrPrices() : null;
-      const educatorPriceId = (isIndia || isRegional)
-        ? null // In India / regional markets, kill recurring subscriptions — Lifetime Pass is the ONLY option
-        : sanitizePriceId(process.env.STRIPE_EDUCATOR_PRICE_ID);
-      const regionalPriceEnv = userCountry === 'PH'
-        ? process.env.STRIPE_INDIVIDUAL_LIFETIME_PHP_PRICE_ID
-        : (userCountry === 'MY'
-          ? process.env.STRIPE_INDIVIDUAL_LIFETIME_MYR_PRICE_ID
-          : (userCountry === 'ID'
-            ? process.env.STRIPE_INDIVIDUAL_LIFETIME_IDR_PRICE_ID
-            : (userCountry === 'MX'
-              ? process.env.STRIPE_INDIVIDUAL_LIFETIME_MXN_PRICE_ID
-              : (userCountry === 'BR'
-                ? process.env.STRIPE_INDIVIDUAL_LIFETIME_BRL_PRICE_ID
-                : null))));
-      const lifetimePriceId = isIndia
-        ? sanitizePriceId(inrPrices.lifetime)
-        : (isRegional
-          ? sanitizePriceId(regionalPriceEnv)
-          : sanitizePriceId(process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID));
-      const inPaymentMethods = isIndia
-        ? { payment_method_types: ['card', 'upi'] }
-        : (regionalConfig?.methods && regionalConfig.methods.length > 0 ? { payment_method_types: regionalConfig.methods } : {});
+  const educatorUrl = (isIndia || isRegional)
+    ? null
+    : `${redirectBase}?plan=educator${tokenParam}${promoParam}${countryParam}`;
 
-      const lifetimeLineItems = (isRegional && !regionalPriceEnv)
-        ? [{
-            price_data: {
-              currency: regionalConfig.currency,
-              unit_amount: regionalConfig.amount,
-              product_data: { name: 'Attendance Tracker Pro (Lifetime)' },
-            },
-            quantity: 1,
-          }]
-        : (lifetimePriceId ? [{ price: lifetimePriceId, quantity: 1 }] : null);
-
-      const [educatorSession, lifetimeSession] = await Promise.all([
-        educatorPriceId ? createSession({
-          mode: 'subscription',
-          line_items: [{ price: educatorPriceId, quantity: 1 }],
-          client_reference_id: `user:${normalizedEmail}`,
-          customer_email: normalizedEmail,
-          success_url: `${CONFIG.publicSiteUrl}/history.html?upgraded=1`,
-          cancel_url: `${CONFIG.publicSiteUrl}/history.html`,
-          metadata: { ...meta, plan: 'educator', ...(isPppEligible ? { pppDiscount: '1' } : { promoDiscount: 'SAVE20' }) },
-          ...(commonDiscounts ? { discounts: commonDiscounts } : {}),
-          ...inPaymentMethods,
-        }) : null,
-        lifetimeLineItems ? createSession({
-          mode: 'payment',
-          customer_creation: 'always',
-          line_items: lifetimeLineItems,
-          client_reference_id: `user:${normalizedEmail}`,
-          customer_email: normalizedEmail,
-          success_url: `${CONFIG.publicSiteUrl}/history.html?upgraded=1`,
-          cancel_url: `${CONFIG.publicSiteUrl}/history.html`,
-          metadata: { ...meta, plan: 'lifetime', ...(isPppEligible ? { pppDiscount: '1' } : { promoDiscount: 'SAVE20' }), ...(isRegional ? { currency: regionalConfig.currency } : {}) },
-          ...(commonDiscounts ? { discounts: commonDiscounts } : {}),
-          ...inPaymentMethods,
-        }) : null,
-      ]);
-
-      if (educatorSession?.url) educatorUrl = educatorSession.url;
-      else if (isIndia || isRegional) educatorUrl = null;
-      if (lifetimeSession?.url) lifetimeUrl = lifetimeSession.url;
-    } catch (e) {
-      log.warn('billing: could not pre-create Stripe checkout sessions for upgrade email', { error: e.message });
-    }
-  }
+  const lifetimeUrl = `${redirectBase}?plan=lifetime${tokenParam}${promoParam}${countryParam}`;
 
   // 24-hour special offer: 20% discount ($3.99/yr, $7.99) or 50% PPP subsidy ($2.49/yr, $4.99; ₹299 lifetime in India; localized regional pricing)
   const educatorPrice = (isIndia || isRegional) ? null : (isPppEligible ? '$2.49' : '$3.99');
@@ -936,9 +923,11 @@ router.post('/billing/public-checkout', async (req, res) => {
       sessionParams.client_reference_id = isDomain ? email.split('@')[1] : `user:${email}`;
     }
     // Payment methods: India card+upi; regionalConfig methods for regional markets (e.g. PH, MY, ID)
+    // East Africa / Kenya: dynamic payment methods (M-Pesa, mobile money, cards) — never lock to cards
+    const isEastAfrica = !!(userCountry && EAST_AFRICA_COUNTRIES.has(userCountry));
     if (isIndia) {
       sessionParams.payment_method_types = ['card', 'upi'];
-    } else if (regionalConfig?.methods && regionalConfig.methods.length > 0) {
+    } else if (!isEastAfrica && regionalConfig?.methods && regionalConfig.methods.length > 0) {
       sessionParams.payment_method_types = regionalConfig.methods;
     }
     if (promo && promo !== 'LAUNCH50') {
@@ -961,7 +950,7 @@ router.post('/billing/public-checkout', async (req, res) => {
       return res.status(503).json({ error: 'The educator plan is temporarily unavailable.' });
     }
 
-    const session = await createSafeCheckoutSession(stripe, sessionParams, { email, plan, source: 'public_checkout' });
+    const session = await createSafeCheckoutSession(stripe, sessionParams, { email, plan, source: 'public_checkout', country: userCountry, isEastAfrica });
     res.json({ url: session.url });
   } catch (err) {
     log.error('billing: public checkout failed', { plan, email, error: err.message, code: err.code });
@@ -1470,7 +1459,11 @@ router.get('/billing/status', requireAuth, async (req, res) => {
           lifetime: { label: PRICING.REGIONAL_PRICING[userCountry].label, full: null, period: 'one-time' },
           educator: { label: PRICING.REGIONAL_PRICING[userCountry].eduLabel || '$2.49/yr', full: null, period: '/yr' },
           ...(PRICING.REGIONAL_PRICING[userCountry].singleMeetingLabel ? { single_meeting: { label: PRICING.REGIONAL_PRICING[userCountry].singleMeetingLabel, full: null, period: 'one-time' } } : {}),
-        } : {})),
+        } : (pppDiscount ? {
+          lifetime: { label: '$4.99', full: null, period: 'one-time' },
+          educator: { label: '$2.49/yr', full: null, period: '/yr' },
+          single_meeting: { label: '$1.49', full: null, period: 'one-time' },
+        } : {}))),
         quotaLimit: PRICING.FREE_MONTHLY_EXPORT_LIMIT,
       },
     });

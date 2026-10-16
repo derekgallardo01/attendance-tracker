@@ -127,3 +127,28 @@ describe('resolvePresence (attendance-accuracy core)', () => {
       .toMatchObject({ leftStreak: 1, note: 'may have left', present: true });
   });
 });
+
+describe('isFreePlan', () => {
+  const { isFreePlan } = panel;
+
+  test('returns true when not pro and meeting not unlocked', () => {
+    expect(isFreePlan()).toBe(true);
+    expect(isFreePlan({})).toBe(true);
+    expect(isFreePlan({ isPro: false, meetingUnlocked: false })).toBe(true);
+  });
+
+  test('returns false when isPro is true', () => {
+    expect(isFreePlan({ isPro: true, meetingUnlocked: false })).toBe(false);
+    expect(isFreePlan({ isPro: true })).toBe(false);
+  });
+
+  test('returns false when meetingUnlocked is true', () => {
+    expect(isFreePlan({ isPro: false, meetingUnlocked: true })).toBe(false);
+    expect(isFreePlan({ meetingUnlocked: true })).toBe(false);
+  });
+
+  test('returns false when both isPro and meetingUnlocked are true', () => {
+    expect(isFreePlan({ isPro: true, meetingUnlocked: true })).toBe(false);
+  });
+});
+

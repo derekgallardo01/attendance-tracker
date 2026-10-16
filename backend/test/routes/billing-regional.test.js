@@ -234,4 +234,137 @@ describe('Regional payment rails — PHP, MYR, IDR, IN', () => {
       })
     );
   });
+
+  test('KE user checkouts in KES (KSh 650) with dynamic payment rails (no locked payment_method_types)', async () => {
+    const res = await request(app)
+      .post('/api/billing/checkout')
+      .set(authedHeader('teacher@uonbi.ac.ke', 'uonbi.ac.ke'))
+      .set('cf-ipcountry', 'KE')
+      .send({ plan: 'lifetime' });
+
+    expect(res.status).toBe(200);
+    expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: 'payment',
+        line_items: [{
+          price_data: {
+            currency: 'kes',
+            unit_amount: 65000,
+            product_data: { name: 'Attendance Tracker Pro (Lifetime)' },
+          },
+          quantity: 1,
+        }],
+        metadata: expect.objectContaining({
+          country: 'KE',
+          currency: 'kes',
+        }),
+      })
+    );
+    expect(mockStripeInstance.checkout.sessions.create.mock.calls[0][0].payment_method_types).toBeUndefined();
+  });
+
+  test('KE single_meeting pass checkouts in KES (KSh 195) with conferenceId', async () => {
+    const res = await request(app)
+      .post('/api/billing/checkout')
+      .set(authedHeader('teacher@ku.ac.ke', 'ku.ac.ke'))
+      .set('cf-ipcountry', 'KE')
+      .send({ plan: 'single_meeting', conferenceId: 'conf-ke-123' });
+
+    expect(res.status).toBe(200);
+    expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: 'payment',
+        line_items: [{
+          price_data: {
+            currency: 'kes',
+            unit_amount: 19500,
+            product_data: expect.objectContaining({ name: expect.stringContaining('Single Meeting Pass') }),
+          },
+          quantity: 1,
+        }],
+      })
+    );
+    expect(mockStripeInstance.checkout.sessions.create.mock.calls[0][0].payment_method_types).toBeUndefined();
+  });
+
+  test('KE educator plan checkouts in KES (KSh 325) with dynamic payment rails', async () => {
+    const res = await request(app)
+      .post('/api/billing/checkout')
+      .set(authedHeader('teacher@uonbi.ac.ke', 'uonbi.ac.ke'))
+      .set('cf-ipcountry', 'KE')
+      .send({ plan: 'educator' });
+
+    expect(res.status).toBe(200);
+    expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: 'payment',
+        line_items: [{
+          price_data: {
+            currency: 'kes',
+            unit_amount: 32500,
+            product_data: { name: 'Attendance Tracker Pro (Educator - 1 Year)' },
+          },
+          quantity: 1,
+        }],
+        metadata: expect.objectContaining({
+          country: 'KE',
+          currency: 'kes',
+          plan: 'educator',
+        }),
+      })
+    );
+    expect(mockStripeInstance.checkout.sessions.create.mock.calls[0][0].payment_method_types).toBeUndefined();
+  });
+
+  test('East Africa (UG/TZ) checkouts support dynamic payment rails and PPP rates', async () => {
+    const res = await request(app)
+      .post('/api/billing/checkout')
+      .set(authedHeader('teacher@mak.ac.ug', 'mak.ac.ug'))
+      .set('cf-ipcountry', 'UG')
+      .send({ plan: 'single_meeting', conferenceId: 'conf-ug-456' });
+
+    expect(res.status).toBe(200);
+    expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: 'payment',
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            unit_amount: 149,
+            product_data: expect.objectContaining({ name: expect.stringContaining('Single Meeting Pass') }),
+          },
+          quantity: 1,
+        }],
+        metadata: expect.objectContaining({
+          country: 'UG',
+          pppDiscount: '1',
+        }),
+      })
+    );
+    expect(mockStripeInstance.checkout.sessions.create.mock.calls[0][0].payment_method_types).toBeUndefined();
+  });
+
+  test('createCheckoutSession sanitizes malicious external returnUrl against open redirect', async () => {
+    const res = await request(app)
+      .post('/api/billing/checkout')
+      .set(authedHeader('teacher@uonbi.ac.ke', 'uonbi.ac.ke'))
+      .send({ plan: 'lifetime', returnUrl: 'https://attacker.evil.com/steal-creds' });
+
+    expect(res.status).toBe(200);
+    const sessionCall = mockStripeInstance.checkout.sessions.create.mock.calls[0][0];
+    expect(sessionCall.success_url).not.toContain('attacker.evil.com');
+    expect(sessionCall.cancel_url).not.toContain('attacker.evil.com');
+    expect(sessionCall.success_url).toContain('attendancetracker.dev');
+  });
+
+  test('GET /billing/status returns localized prices for KE', async () => {
+    const resKE = await request(app)
+      .get('/api/billing/status')
+      .set(authedHeader('user@uonbi.ac.ke', 'uonbi.ac.ke'))
+      .set('cf-ipcountry', 'KE');
+    expect(resKE.body.pricing.lifetime.label).toBe('KSh 650');
+    expect(resKE.body.pricing.educator.label).toBe('KSh 325/yr');
+    expect(resKE.body.pricing.single_meeting.label).toBe('KSh 195');
+    expect(resKE.body.educatorAvailable).toBe(true);
+  });
 });

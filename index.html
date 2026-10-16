@@ -6521,6 +6521,25 @@ function participantKey(p) {
   return 'name:' + (p?.displayName || 'Unknown');
 }
 
+function isFreePlan(opts) {
+  if (opts && typeof opts === 'object') {
+    if (typeof opts.isPro !== 'undefined' || typeof opts.meetingUnlocked !== 'undefined') {
+      return !opts.isPro && !opts.meetingUnlocked;
+    }
+  }
+  const isPro = !!(_isPro || (_billing && _billing.plan === 'pro'));
+  const meetingUnlocked = !!(typeof state !== 'undefined' && state.meetingUnlocked);
+  if (typeof AttPanel !== 'undefined' && typeof AttPanel.isFreePlan === 'function') {
+    return AttPanel.isFreePlan({ isPro, meetingUnlocked });
+  }
+  return !isPro && !meetingUnlocked;
+}
+function renderParticipants() {
+  return renderList();
+}
+window.isFreePlan = isFreePlan;
+window.renderParticipants = renderParticipants;
+
 function renderList() {
   const container = document.getElementById('participant-list');
   const toolbar = document.getElementById('list-toolbar');
@@ -6651,7 +6670,8 @@ function renderList() {
     groups.set('', sorted);
   }
 
-  const MAX_VISIBLE = 100;
+  const isGated = isFreePlan() && filtered.length > 25;
+  const MAX_VISIBLE = isGated ? 25 : 100;
   let totalShown = 0;
   let html = '';
 
@@ -6659,8 +6679,8 @@ function renderList() {
     if (groupLabel) {
       html += `<div style="font-size:.65rem;color:#6e7681;text-transform:uppercase;letter-spacing:.05em;padding:8px 16px 4px">${escHtml(groupLabel)} <span style="color:#484f58">· ${items.length}</span></div>`;
     }
-    const room = MAX_VISIBLE - totalShown;
-    const slice = state._showAll ? items : items.slice(0, Math.max(0, room));
+    const room = isGated ? Math.max(0, 25 - totalShown) : (state._showAll ? items.length : Math.max(0, MAX_VISIBLE - totalShown));
+    const slice = items.slice(0, room);
     totalShown += slice.length;
     html += slice.map(p => {
       const initials = (p.displayName || '?').split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
@@ -6688,12 +6708,23 @@ function renderList() {
           <span class="badge ${p.present ? 'present' : 'left'}">${badgeText}</span>
         </div>`;
     }).join('');
+    if (isGated && totalShown >= 25) {
+      break;
+    }
   }
 
-  const totalAvailable = [...groups.values()].reduce((s, l) => s + l.length, 0);
-  const hiddenCount = totalAvailable - totalShown;
-  if (hiddenCount > 0 && !state._showAll) {
-    html += `<button onclick="state._showAll=true;renderList()" style="width:100%;padding:8px;margin-top:8px;background:var(--surface);border:1px solid var(--border);color:var(--accent);border-radius:6px;cursor:pointer;font-size:.8rem">${t('list.showMore', 'Show {n} more participants').replace('{n}', hiddenCount)}</button>`;
+  if (isGated) {
+    html += `
+      <div id="roster-large-class-card" style="margin:10px 4px;padding:12px 14px;background:rgba(245,158,11,.08);border:1px dashed rgba(245,158,11,.35);border-radius:8px;text-align:center;font-size:.78rem;color:#e6edf3;line-height:1.5">
+        <span>Showing 25 of ${filtered.length} attendees. </span>
+        <button type="button" onclick="showUpgradeModal('largeClass')" style="background:none;border:none;color:#fbbf24;font-weight:600;cursor:pointer;text-decoration:underline;padding:0;font-size:.78rem">Unlock all ${filtered.length} attendees →</button>
+      </div>`;
+  } else {
+    const totalAvailable = [...groups.values()].reduce((s, l) => s + l.length, 0);
+    const hiddenCount = totalAvailable - totalShown;
+    if (hiddenCount > 0 && !state._showAll) {
+      html += `<button onclick="state._showAll=true;renderList()" style="width:100%;padding:8px;margin-top:8px;background:var(--surface);border:1px solid var(--border);color:var(--accent);border-radius:6px;cursor:pointer;font-size:.8rem">${t('list.showMore', 'Show {n} more participants').replace('{n}', hiddenCount)}</button>`;
+    }
   }
   container.innerHTML = html;
 }
@@ -7759,13 +7790,28 @@ function updateUpgradeModalPricing() {
     singlePriceStr = 'R$ 14';
     singleCardHeaderPrice = 'R$ 14 BRL';
     eduAnnualStr = 'R$ 27 (~R$ 2.25/mês)';
+  } else if (country === 'KE') {
+    singlePriceStr = 'KSh 195';
+    singleCardHeaderPrice = 'KSh 195 KES';
+    eduAnnualStr = 'KSh 325 (~KSh 27/mo)';
   } else if (isPpp) {
+    singlePriceStr = '$1.49';
+    singleCardHeaderPrice = '$1.49';
     eduAnnualStr = '$2.49 (~20¢/mo)';
   }
 
   if (singlePriceEl) {
     singlePriceEl.innerHTML = `<span style="font-weight:700">${escHtml(singleCardHeaderPrice)}</span>`;
   }
+
+  const allSinglePriceEls = document.querySelectorAll('.price-single-meeting');
+  allSinglePriceEls.forEach(el => {
+    el.textContent = singlePriceStr;
+  });
+
+  const eduPriceSimple = country === 'IN' ? '₹199' : (country === 'PH' ? '₱140' : (country === 'MY' ? 'RM 12' : (country === 'ID' ? 'Rp 39.000' : (country === 'MX' ? '$49 MXN' : (country === 'BR' ? 'R$ 27' : (country === 'KE' ? 'KSh 325' : (isPpp ? '$2.49' : '$4.99')))))));
+  const lcEduPriceEl = document.getElementById('large-class-edu-price');
+  if (lcEduPriceEl) lcEduPriceEl.textContent = eduPriceSimple;
 
   if (btnSingleMeeting) {
     btnSingleMeeting.innerHTML = `<span>Need just today's class? Unlock for <strong class="price-single-meeting" style="font-weight:700;color:#e3e3e3">${escHtml(singlePriceStr)}</strong> — or get an entire year of unlimited classes for just <strong>${escHtml(eduAnnualStr)}</strong></span> →`;
@@ -7790,6 +7836,9 @@ function updateUpgradeModalPricing() {
       badgeText.setAttribute('data-i18n', 'upgrade.badgesMX');
     } else if (country === 'BR') {
       badgeText.textContent = '🇧🇷 Pix, Cartões & Apple Pay Aceitos';
+    } else if (country === 'KE' || (country && ['TZ', 'UG', 'RW', 'ET', 'BI'].includes(country))) {
+      const eaFlags = { KE: '🇰🇪', TZ: '🇹🇿', UG: '🇺🇬', RW: '🇷🇼', ET: '🇪🇹', BI: '🇧🇮' };
+      badgeText.textContent = `${eaFlags[country] || '🇰🇪'} M-Pesa, Mobile Money & Cards Accepted`;
     } else {
       badgeText.textContent = t('upgrade.badgesDefault', '💳 Credit / Debit Cards, Apple Pay & Google Pay Accepted');
       badgeText.setAttribute('data-i18n', 'upgrade.badgesDefault');
@@ -7804,6 +7853,10 @@ function showUpgradeModal(reason) {
   if (!modal) return;
   const popupBanner = document.getElementById('checkout-popup-fallback-banner');
   if (popupBanner) popupBanner.style.display = 'none';
+  const lcCallout = document.getElementById('large-class-single-meeting-callout');
+  if (lcCallout) {
+    lcCallout.style.display = (reason === 'largeClass' && !(state && state.meetingUnlocked)) ? 'block' : 'none';
+  }
   const note = document.getElementById('upgrade-modal-note');
   if (note) {
     if (reason === 'exportQuota') {
@@ -11523,6 +11576,16 @@ window.addEventListener('DOMContentLoaded', () => {
 
       <!-- Popup blocker in-modal fallback banner -->
       <div id="checkout-popup-fallback-banner" style="display:none;background:rgba(56,139,253,.15);border:1px solid rgba(56,139,253,.35);color:#e6edf3;padding:8px 12px;border-radius:10px;font-size:.76rem;margin-bottom:10px;line-height:1.4;text-align:center"></div>
+
+      <!-- Prominent Single-Meeting Pass Option for largeClass intercept -->
+      <div id="large-class-single-meeting-callout" style="display:none;background:rgba(52,168,83,.08);border:1.5px solid rgba(52,168,83,.4);border-radius:12px;padding:12px 14px;margin-bottom:12px">
+        <div style="font-size:.82rem;color:#e6edf3;line-height:1.45;margin-bottom:10px" id="large-class-single-meeting-text">
+          Need just today's class? Unlock this meeting for <strong class="price-single-meeting" style="color:#4ade80">$2.99</strong> — or get an entire year of unlimited classes for <strong id="large-class-edu-price" style="color:#58a6ff">$4.99</strong>
+        </div>
+        <button type="button" id="btn-unlock-single-meeting-prominent" onclick="startUpgradeCheckout('single_meeting', 'btn-unlock-single-meeting-prominent')" style="width:100%;background:#34a853;color:#ffffff;border:none;padding:9.5px 16px;border-radius:20px;font-weight:700;font-size:.83rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 2px 8px rgba(52,168,83,.3);transition:all .15s ease">
+          <span>Unlock This Meeting (<span class="price-single-meeting">$2.99</span>) →</span>
+        </button>
+      </div>
 
       <!-- Plan 1 (Hero Card): Educator Annual Pass -->
       <div id="plan-card-educator" style="background:linear-gradient(180deg, rgba(52,168,83,.08), rgba(255,255,255,.02));border:1.5px solid rgba(129,201,149,.4);border-radius:12px;padding:13px 14px 12px;margin-bottom:10px;position:relative">

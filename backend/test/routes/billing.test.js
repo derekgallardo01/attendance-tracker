@@ -1760,13 +1760,13 @@ describe('billing/status pricing payload', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
+      expect(mockStripeInstance.checkout.sessions.create).not.toHaveBeenCalled();
       expect(sendUpgradeLinkEmail).toHaveBeenCalledWith(expect.objectContaining({
         to: uniqueEmail,
         educatorPrice: '$3.99',
         lifetimePrice: '$7.99',
-      }));
-      expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(expect.objectContaining({
-        discounts: [{ coupon: 'SAVE20' }],
+        educatorUrl: expect.stringContaining('/api/billing/checkout-redirect?plan=educator'),
+        lifetimeUrl: expect.stringContaining('/api/billing/checkout-redirect?plan=lifetime'),
       }));
 
       // Immediate second call triggers cooldown / alreadySent: true without re-sending email
@@ -1795,43 +1795,36 @@ describe('billing/status pricing payload', () => {
         .send({});
 
       expect(res.status).toBe(200);
+      expect(mockStripeInstance.checkout.sessions.create).not.toHaveBeenCalled();
       expect(sendUpgradeLinkEmail).toHaveBeenCalledWith(expect.objectContaining({
         to: uniqueEmail,
         educatorPrice: '$2.49',
         lifetimePrice: '$4.99',
         isPpp: true,
-      }));
-      expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(expect.objectContaining({
-        discounts: [{ coupon: 'PPP50' }],
+        educatorUrl: expect.stringContaining('/api/billing/checkout-redirect?plan=educator'),
+        lifetimeUrl: expect.stringContaining('/api/billing/checkout-redirect?plan=lifetime'),
       }));
     });
 
-    test('falls back without discount when coupon fails during checkout session creation', async () => {
+    test('generates dynamic JIT checkout-redirect links containing signed user tokens', async () => {
       process.env.STRIPE_SECRET_KEY = 'sk_test_123';
       process.env.STRIPE_PRICE_ID = 'price_default';
       process.env.STRIPE_EDUCATOR_PRICE_ID = 'price_edu';
       process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID = 'price_life';
       app = buildApp();
 
-      let callCount = 0;
-      mockStripeInstance.checkout.sessions.create.mockImplementation(async (params) => {
-        if (params.discounts) {
-          throw new Error("No such coupon: 'SAVE20'");
-        }
-        return { id: 'cs_fallback', url: 'https://checkout.stripe.com/pay/cs_fallback' };
-      });
-
-      const uniqueEmail = `teacher_fallback_${Date.now()}@school.edu`;
+      const uniqueEmail = `teacher_jit_${Date.now()}@school.edu`;
       const res = await request(app)
         .post('/api/billing/send-upgrade-link')
         .set(authedHeader(uniqueEmail, 'school.edu'))
         .send({});
 
       expect(res.status).toBe(200);
+      expect(mockStripeInstance.checkout.sessions.create).not.toHaveBeenCalled();
       expect(sendUpgradeLinkEmail).toHaveBeenCalledWith(expect.objectContaining({
         to: uniqueEmail,
-        educatorUrl: 'https://checkout.stripe.com/pay/cs_fallback',
-        lifetimeUrl: 'https://checkout.stripe.com/pay/cs_fallback',
+        educatorUrl: expect.stringContaining('&token='),
+        lifetimeUrl: expect.stringContaining('&token='),
       }));
     });
 
