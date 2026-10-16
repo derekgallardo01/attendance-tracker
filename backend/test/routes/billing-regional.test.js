@@ -357,6 +357,58 @@ describe('Regional payment rails — PHP, MYR, IDR, IN', () => {
     expect(sessionCall.success_url).toContain('attendancetracker.dev');
   });
 
+  test('IN educator plan checkouts in INR (₹199) with card+upi in payment mode even with STRIPE_EDUCATOR_INR_PRICE_ID set', async () => {
+    process.env.STRIPE_EDUCATOR_INR_PRICE_ID = 'price_1UKHrjRPP93YBXrOYKcp9Ft9';
+    const res = await request(app)
+      .post('/api/billing/checkout')
+      .set(authedHeader('teacher@school.edu.in', 'school.edu.in'))
+      .set('cf-ipcountry', 'IN')
+      .send({ plan: 'educator' });
+
+    expect(res.status).toBe(200);
+    expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: 'payment',
+        payment_method_types: ['card', 'upi'],
+        line_items: [{
+          price_data: {
+            currency: 'inr',
+            unit_amount: 19900,
+            product_data: { name: 'Attendance Tracker Pro (Educator - 1 Year)' },
+          },
+          quantity: 1,
+        }],
+        metadata: expect.objectContaining({
+          country: 'IN',
+          currency: 'inr',
+          plan: 'educator',
+          isAnnualOneTime: '1',
+        }),
+      })
+    );
+  });
+
+  test('checkout-redirect falls back to subscription mode if recurring price in payment mode error occurs', async () => {
+    // First call rejects with Stripe recurring price in payment mode error
+    mockStripeInstance.checkout.sessions.create
+      .mockRejectedValueOnce(new Error('You specified payment mode but passed a recurring price. Either switch to subscription mode or use only one-time prices.'))
+      .mockResolvedValueOnce({ url: 'https://checkout.stripe.com/fallback_subscription' });
+
+    const res = await request(app)
+      .get('/api/billing/checkout-redirect?plan=educator')
+      .set(authedHeader('teacher@school.edu.in', 'school.edu.in'))
+      .set('cf-ipcountry', 'IN');
+
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toBe('https://checkout.stripe.com/fallback_subscription');
+    expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledTimes(2);
+    expect(mockStripeInstance.checkout.sessions.create.mock.calls[1][0]).toEqual(
+      expect.objectContaining({
+        mode: 'subscription',
+      })
+    );
+  });
+
   test('GET /billing/status returns localized prices for KE', async () => {
     const resKE = await request(app)
       .get('/api/billing/status')

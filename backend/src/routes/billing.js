@@ -212,7 +212,43 @@ async function createSafeCheckoutSession(stripe, sessionParams, context = {}) {
           const { discounts, ...paramsClean } = paramsWithoutMethods;
           return await stripe.checkout.sessions.create(paramsClean);
         }
+        if (paramsWithoutMethods.mode === 'payment' && /recurring price|payment mode/i.test(fallbackErr.message)) {
+          log.warn('billing: recurring price in payment mode fallback, switching to subscription mode', {
+            error: fallbackErr.message,
+            context,
+          });
+          const { payment_intent_data, discounts, ...paramsSub } = paramsWithoutMethods;
+          return await stripe.checkout.sessions.create({
+            ...paramsSub,
+            mode: 'subscription',
+            subscription_data: { metadata: params.metadata },
+          });
+        }
         throw fallbackErr;
+      }
+    }
+    if (params.mode === 'payment' && /recurring price|payment mode/i.test(err.message)) {
+      log.warn('billing: recurring price in payment mode, falling back to subscription mode', {
+        error: err.message,
+        context,
+      });
+      const { payment_intent_data, ...paramsSubscription } = params;
+      try {
+        return await stripe.checkout.sessions.create({
+          ...paramsSubscription,
+          mode: 'subscription',
+          subscription_data: { metadata: params.metadata },
+        });
+      } catch (subErr) {
+        if (paramsSubscription.discounts && /coupon|promo|discount/i.test(subErr.message)) {
+          const { discounts, ...paramsClean } = paramsSubscription;
+          return await stripe.checkout.sessions.create({
+            ...paramsClean,
+            mode: 'subscription',
+            subscription_data: { metadata: params.metadata },
+          });
+        }
+        throw subErr;
       }
     }
     if (params.discounts && /coupon|promo|discount/i.test(err.message)) {
@@ -454,7 +490,7 @@ async function createCheckoutSessionForUser({ user, plan, interval, conferenceId
         quantity: 1,
       }]
     : (isRegionalEducator
-      ? (configuredEduPrice
+      ? ((configuredEduPrice && !isIndia)
           ? [{ price: sanitizePriceId(configuredEduPrice), quantity: 1 }]
           : [{
               price_data: {
@@ -889,7 +925,7 @@ router.post('/billing/public-checkout', async (req, res) => {
     };
 
     const lineItems = isRegionalEducator
-      ? (configuredEduPrice
+      ? ((configuredEduPrice && !isIndia)
           ? [{ price: sanitizePriceId(configuredEduPrice), quantity: 1 }]
           : [{
               price_data: {
