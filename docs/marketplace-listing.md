@@ -26,7 +26,7 @@ Attendance Tracker — take attendance in Google Meet™ automatically
 
 A live roster in your Meet™ side panel: who joined, who's late, who left, and for how long. One click sends a clean report to Google Sheets™ or CSV. Works on any Google account, including personal Gmail™.
 
-Free to start. $9.99 once for unlimited. Nothing to cancel.
+Free to start. $49 once for unlimited. Nothing to cancel.
 
 ⏱️ HOW IT WORKS
 1. Open Attendance Tracker from Activities in any Google Meet™ call.
@@ -61,8 +61,8 @@ Free to start. $9.99 once for unlimited. Nothing to cancel.
 
 💳 HONEST PRICING
 • Free — live roster and 5 exports a month. No credit card.
-• Lifetime — $9.99 once. Unlimited exports, auto-capture, auto-export, trends, gradebook files, certificates, digests. Nothing to cancel.
-• Educator — $4.99/year.
+• Lifetime — $49 once. Unlimited exports, auto-capture, auto-export, trends, gradebook files, certificates, digests. Nothing to cancel.
+• Educator — $19/year.
 • Whole school — Department $59/year or Institution $149/year (DPA, priority support, invoice/PO).
 • 50% regional discount applied automatically at checkout in eligible markets.
 

@@ -2,7 +2,7 @@ Fremmøderegistrering til Google Meet™ — registrér fremmøde i Google Meet�
 
 En liveliste i sidepanelet i Meet™: hvem der kom ind, hvem der kom for sent, hvem der gik, og hvor længe de var med. Med ét klik sender du en overskuelig rapport til Google Sheets™ eller CSV. Virker med alle Google-konti, også personlig Gmail™.
 
-Gratis at komme i gang. 9,99 $ én gang for ubegrænset brug. Intet abonnement at opsige.
+Gratis at komme i gang. 49 $ én gang for ubegrænset brug. Intet abonnement at opsige.
 
 ⏱️ SÅDAN VIRKER DET
 1. Åbn Attendance Tracker fra Aktiviteter i et hvilket som helst Google Meet™-opkald.
@@ -37,8 +37,8 @@ Gratis at komme i gang. 9,99 $ én gang for ubegrænset brug. Intet abonnement a
 
 💳 ÆRLIGE PRISER
 • Gratis — liveliste og 5 eksporter om måneden. Intet betalingskort.
-• Livstid — 9,99 $ én gang. Ubegrænsede eksporter, automatisk registrering og eksport, udvikling, karakterbogsfiler, beviser og opsummeringer. Intet at opsige.
-• Underviser — 4,99 $ om året.
+• Livstid — 49 $ én gang. Ubegrænsede eksporter, automatisk registrering og eksport, udvikling, karakterbogsfiler, beviser og opsummeringer. Intet at opsige.
+• Underviser — 19 $ om året.
 • Hele skolen — Afdeling 59 $ om året eller Institution 149 $ om året (databehandleraftale, prioriteret support, faktura/indkøbsordre).
 • 50 % regional rabat anvendes automatisk i berettigede lande.
 

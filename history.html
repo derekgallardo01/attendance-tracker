@@ -1049,7 +1049,7 @@
       if (seriesCsvGated()) {
         logHistoryEvent('series_csv_gate_shown', { format });
         flashProCta();
-        alert(t('upgrade.certsEdu', 'Student attendance certificates & multi-session reports require an Educator ($4.99/yr) or Lifetime plan.'));
+        alert(t('upgrade.certsEdu', 'Student attendance certificates & multi-session reports require an Educator or Lifetime plan.'));
         return;
       }
       logHistoryEvent('series_csv_downloaded', { format, people: (s.people || []).length });

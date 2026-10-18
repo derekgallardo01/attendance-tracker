@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" sizes="128x128" href="icons/icon-128.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pricing — Attendance Tracker for Google Meet™</title>
-  <meta name="description" content="Attendance Tracker pricing: Free to start (2 exports/mo across Google Sheets, CSV & Excel). Upgrade to Educator ($4.99/yr) or Lifetime ($9.99) for unlimited exports and class sizes." />
+  <meta name="description" content="Attendance Tracker pricing: Free to start (2 exports/mo across Google Sheets, CSV & Excel). Upgrade to Educator ($19/yr), Pro Annual ($29/yr), or Lifetime ($49) with automatic regional pricing." />
   <link rel="canonical" href="https://attendancetracker.dev/pricing.html" />
 
   <!-- Localized alternate hreflang tags for 60 languages -->
@@ -57,7 +57,7 @@
   <link rel="alternate" hreflang="ml" href="https://attendancetracker.dev/pricing.html?lang=ml" />
   <link rel="alternate" hreflang="mn" href="https://attendancetracker.dev/pricing.html?lang=mn" />
   <meta property="og:title" content="Attendance Tracker Pricing — Google Meet Attendance Plans" />
-  <meta property="og:description" content="Attendance Tracker pricing: Free to start (2 exports/mo across Google Sheets, CSV & Excel). Upgrade to Educator ($4.99/yr) or Lifetime ($9.99) for unlimited exports and class sizes." />
+  <meta property="og:description" content="Attendance Tracker pricing: Free to start (2 exports/mo across Google Sheets, CSV & Excel). Upgrade to Educator ($19/yr), Pro Annual ($29/yr), or Lifetime ($49) with automatic regional pricing." />
   <meta property="og:image" content="https://attendancetracker.dev/screenshots/01-live-roster.jpg" />
   <meta property="og:image:width" content="1920" />
   <meta property="og:image:height" content="1200" />
@@ -65,7 +65,7 @@
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Attendance Tracker Pricing — Google Meet Attendance Plans" />
-  <meta name="twitter:description" content="Attendance Tracker pricing: Free to start (2 exports/mo across Google Sheets, CSV & Excel). Upgrade to Educator ($4.99/yr) or Lifetime ($9.99) for unlimited exports and class sizes." />
+  <meta name="twitter:description" content="Attendance Tracker pricing: Free to start (2 exports/mo across Google Sheets, CSV & Excel). Upgrade to Educator ($19/yr), Pro Annual ($29/yr), or Lifetime ($49) with automatic regional pricing." />
   <meta name="twitter:image" content="https://attendancetracker.dev/screenshots/01-live-roster.jpg" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -110,14 +110,21 @@
       {
         "@type": "Offer",
         "name": "Educator Annual Pass",
-        "price": "4.99",
+        "price": "19",
+        "priceCurrency": "USD",
+        "category": "Subscription"
+      },
+      {
+        "@type": "Offer",
+        "name": "Pro Annual",
+        "price": "29",
         "priceCurrency": "USD",
         "category": "Subscription"
       },
       {
         "@type": "Offer",
         "name": "Individual Lifetime Pro",
-        "price": "9.99",
+        "price": "49",
         "priceCurrency": "USD",
         "category": "OneTime"
       },
@@ -1433,6 +1440,31 @@
           lbtn.className = 'btn-plan btn-plan-secondary';
           setText(lbtn, 'span', tr('upgrade.ctaLifetime', 'Get Lifetime Access —') + ' ' + label('lifetime'));
         }
+      }
+
+      var re999 = /(?:\u200f)?(?:US)?\$\s*(?:9[.,]99|৯[.,]৯৯)|(?:\b9[.,]99|৯[.,]৯৯)\s*(?:\$|USD|דולר|دولار|dollaria|dollárért|dollár)/;
+      var re499 = /(?:\u200f)?(?:US)?\$\s*(?:4[.,]99|৪[.,]৯৯)|(?:\b4[.,]99|৪[.,]৯৯)\s*(?:\$|USD|דולר|دولار)/;
+      var re42 = /<\s*(?:42|৪২)\s*¢|\b0[.,]42\s*\$|\$\s*0[.,]42|\b(?:42|৪২)\s*(?:¢|센트|美分|セント|цента|центів|אגורות|سنت)/i;
+      var lifeLbl = label('lifetime');
+      var eduLbl = label('educator');
+      var eduPerMo = (offer.pricing.educator && offer.pricing.educator.perMonth) || eduLbl;
+      if (lifeLbl && eduLbl) {
+        document.querySelectorAll('[data-i18n="pricing.matrixIndivOurs"]').forEach(function (el) {
+          var base = tr('pricing.matrixIndivOurs', el.textContent);
+          el.textContent = base.replace(re999, lifeLbl).replace(re499, eduLbl);
+        });
+      }
+      if (eduPerMo) {
+        document.querySelectorAll('[data-i18n="pricing.matrixIndivOursSub"]').forEach(function (el) {
+          var base = tr('pricing.matrixIndivOursSub', el.textContent);
+          el.textContent = base.replace(re42, eduPerMo);
+        });
+      }
+      if (lifeLbl) {
+        document.querySelectorAll('[data-i18n="pricing.cmp6Body"]').forEach(function (el) {
+          var base = tr('pricing.cmp6Body', el.textContent);
+          el.textContent = base.replace(re999, lifeLbl);
+        });
       }
     }
 

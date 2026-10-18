@@ -88,14 +88,14 @@ D. Slack & Google Chat Automated Webhooks:
   * 2 free Google Sheets cloud exports/mo + unlimited direct CSV & binary Excel (.xlsx) exports for classes up to 25 attendees.
   * Real-time side-panel presence tracking.
   * No credit card required.
-- Educator Annual Pass ($4.99/year):
+- Educator Annual Pass ($19/year):
   * Unlimited monthly exports.
   * Google Classroom roster sync.
   * Late arrival highlighting (+5m, +10m, +15m).
   * Canvas & Moodle LMS gradebook CSV downloads.
   * Attendance certificates with public verification codes.
   * Multi-session attendance percentages across a semester.
-- Individual Lifetime Pro ($9.99 one-time):
+- Individual Lifetime Pro ($49 one-time):
   * All Educator Pro features forever with zero recurring subscriptions for a single organizer Google account.
 - Department School Domain Plan ($59/year):
   * Covers every teacher on an academic department or small-school Google Workspace domain.

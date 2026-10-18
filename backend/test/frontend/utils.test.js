@@ -961,7 +961,7 @@ describe('buildAttendanceCsv & buildAttendanceExcelXml — free plan truncation'
 
   test('buildAttendanceCsv truncates attendees to 25 on free plan without grace', () => {
     const csv = utils.buildAttendanceCsv(parts30, null, { isFreePlan: true });
-    expect(csv).toContain('# ... 25 of 30 attendees shown. Upgrade to Educator ($4.99/yr) or Pro for unlimited rosters.');
+    expect(csv).toContain('# ... 25 of 30 attendees shown. Upgrade to Educator or Pro for unlimited rosters.');
     expect(csv).toContain('Student 25');
     expect(csv).not.toContain('Student 26');
   });
@@ -987,7 +987,7 @@ describe('buildAttendanceCsv & buildAttendanceExcelXml — free plan truncation'
 
   test('buildAttendanceExcelXml truncates attendees to 25 on free plan without grace', () => {
     const xml = utils.buildAttendanceExcelXml(parts30, null, { isFreePlan: true });
-    expect(xml).toContain('# ... 25 of 30 attendees shown. Upgrade to Educator ($4.99/yr) or Pro for unlimited rosters.');
+    expect(xml).toContain('# ... 25 of 30 attendees shown. Upgrade to Educator or Pro for unlimited rosters.');
     expect(xml).toContain('Student 25');
     expect(xml).not.toContain('Student 26');
   });

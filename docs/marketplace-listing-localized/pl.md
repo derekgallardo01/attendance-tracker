@@ -2,7 +2,7 @@ Lista obecności dla Google Meet™ — automatyczne sprawdzanie obecności w Go
 
 Lista na żywo w panelu bocznym Meet™: kto dołączył, kto się spóźnił, kto wyszedł i jak długo był. Jednym kliknięciem wysyłasz czytelny raport do Arkuszy Google™ (Sheets™) lub CSV. Działa z każdym kontem Google, także z prywatnym Gmailem™.
 
-Zacznij za darmo. 9,99 $ jednorazowo za pełną wersję bez limitów. Bez subskrypcji do anulowania.
+Zacznij za darmo. 49 $ jednorazowo za pełną wersję bez limitów. Bez subskrypcji do anulowania.
 
 ⏱️ JAK TO DZIAŁA
 1. Otwórz Attendance Tracker w sekcji Aktywności podczas dowolnego spotkania Google Meet™.
@@ -37,8 +37,8 @@ Zacznij za darmo. 9,99 $ jednorazowo za pełną wersję bez limitów. Bez subskr
 
 💳 UCZCIWE CENY
 • Za darmo — lista na żywo i 5 eksportów miesięcznie. Bez karty kredytowej.
-• Dożywotnio — 9,99 $ jednorazowo. Nielimitowane eksporty, automatyczne śledzenie i eksport, trendy, pliki do dziennika, certyfikaty i podsumowania. Nic do anulowania.
-• Nauczyciel — 4,99 $ rocznie.
+• Dożywotnio — 49 $ jednorazowo. Nielimitowane eksporty, automatyczne śledzenie i eksport, trendy, pliki do dziennika, certyfikaty i podsumowania. Nic do anulowania.
+• Nauczyciel — 19 $ rocznie.
 • Cała szkoła — Wydział 59 $ rocznie lub Instytucja 149 $ rocznie (DPA, priorytetowe wsparcie, faktura/zamówienie).
 • Rabat regionalny 50% naliczany automatycznie w uprawnionych krajach.
 

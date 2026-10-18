@@ -2,7 +2,7 @@ Google Meet™ için Yoklama Takibi — Google Meet™'te yoklamayı otomatik al
 
 Meet™ yan panelinde canlı liste: kim katıldı, kim geç kaldı, kim ayrıldı ve ne kadar kaldı. Tek tıkla Google E-Tablolar™'a (Sheets™) veya CSV'ye düzenli bir rapor gönderin. Kişisel Gmail™ dahil her Google hesabıyla çalışır.
 
-Ücretsiz başlayın. Sınırsız kullanım için tek seferlik 9,99 $. İptal edilecek abonelik yok.
+Ücretsiz başlayın. Sınırsız kullanım için tek seferlik 49 $. İptal edilecek abonelik yok.
 
 ⏱️ NASIL ÇALIŞIR
 1. Herhangi bir Google Meet™ görüşmesinde Etkinlikler'den Attendance Tracker'ı açın.
@@ -37,8 +37,8 @@ Meet™ yan panelinde canlı liste: kim katıldı, kim geç kaldı, kim ayrıld�
 
 💳 ŞEFFAF FİYATLAR
 • Ücretsiz — canlı liste ve ayda 5 aktarma. Kredi kartı gerekmez.
-• Ömür boyu — tek seferlik 9,99 $. Sınırsız aktarma, otomatik takip ve aktarma, eğilimler, not defteri dosyaları, sertifikalar ve özetler. İptal edilecek bir şey yok.
-• Eğitimci — yılda 4,99 $.
+• Ömür boyu — tek seferlik 49 $. Sınırsız aktarma, otomatik takip ve aktarma, eğilimler, not defteri dosyaları, sertifikalar ve özetler. İptal edilecek bir şey yok.
+• Eğitimci — yılda 19 $.
 • Tüm okul — Bölüm yılda 59 $ veya Kurum yılda 149 $ (DPA, öncelikli destek, fatura/satın alma siparişi).
 • Uygun ülkelerde ödeme sırasında %50 bölgesel indirim otomatik uygulanır.
 

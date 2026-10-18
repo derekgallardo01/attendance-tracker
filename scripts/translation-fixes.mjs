@@ -3,8 +3,8 @@
 // can never reset these back to English. Format: { locale: { key: text } }.
 export const TRANSLATION_FIXES = {
   "af": {
-    "billing.lmsSyncPro": "Om punte direk na Google Classroom en Canvas te sinkroniseer vereis ’n Educator- ($4.99/jaar) of Pro-plan.",
-    "export.graceUsed": "🎉 Gratis volledige roosteruitvoer: Ons het al {count} deelnemers vir jou eerste groot klas ontsluit! Gradeer op na Educator ($4.99/jaar) vir onbeperkte klasgroottes in toekomstige klasse.",
+    "billing.lmsSyncPro": "Om punte direk na Google Classroom en Canvas te sinkroniseer vereis ’n Educator- of Pro-plan.",
+    "export.graceUsed": "🎉 Gratis volledige roosteruitvoer: Ons het al {count} deelnemers vir jou eerste groot klas ontsluit! Gradeer op na Educator vir onbeperkte klasgroottes in toekomstige klasse.",
     "footer.builtBy": "Gebou deur Kinetic Helix",
     "footer.colGlobal": "Wêreldwyd & Streeks",
     "footer.colGuides": "Gidse & Hoe-om",
@@ -17,7 +17,7 @@ export const TRANSLATION_FIXES = {
     "upgrade.singleAltPrefix": "Benodig net hierdie een vergadering? Ontsluit vir"
   },
   "am": {
-    "billing.lmsSyncPro": "ውጤቶችን በቀጥታ ወደ Google Classroom እና Canvas ማመሳሰል የ Educator ($4.99/ዓመት) ወይም Pro ዕቅድ ይጠይቃል።",
+    "billing.lmsSyncPro": "ውጤቶችን በቀጥታ ወደ Google Classroom እና Canvas ማመሳሰል የ Educator ወይም Pro ዕቅድ ይጠይቃል።",
     "btn.sheet": "ሉህ",
     "footer.builtBy": "በ Kinetic Helix የተሰራ",
     "footer.colGlobal": "ዓለም አቀፍ እና ክልላዊ",
@@ -182,6 +182,8 @@ export const TRANSLATION_FIXES = {
   },
   "ar": {
     "lp2_plan_school_price": "ابتداءً من $59",
+    "lp2_price_line_2": "‏9.99 دولار مرة واحدة للاستخدام غير المحدود",
+    "lp2_price_line_3": "لا يوجد اشتراك لإلغائه",
     "lp2_roster_p1_detail": "انضم 10:00 · 42 د",
     "lp2_roster_p2_detail": "انضم 10:01 · 41 د",
     "lp2_roster_p3_detail": "انضم 10:12 · 30 د",
@@ -190,7 +192,7 @@ export const TRANSLATION_FIXES = {
     "lp2_sheet_th_min": "دقيقة"
   },
   "bg": {
-    "export.graceUsed": "🎉 Безплатен пълен експорт на списъка: Отключихме всички {count} участници за първия ви голям клас! Надградете до Educator ($4.99/год.) за неограничен брой участници в бъдещите класове.",
+    "export.graceUsed": "🎉 Безплатен пълен експорт на списъка: Отключихме всички {count} участници за първия ви голям клас! Надградете до Educator за неограничен брой участници в бъдещите класове.",
     "footer.builtBy": "Създадено от Kinetic Helix",
     "footer.colGlobal": "Глобални и регионални",
     "footer.colGuides": "Ръководства и инструкции",
@@ -417,7 +419,11 @@ export const TRANSLATION_FIXES = {
     "footer.colGuides": "Guies i tutorials",
     "footer.colIntegrations": "Integracions i LMS",
     "footer.colRoles": "Rols i sectors",
+    "lp2_final_fine": "Gratuït per començar · $9.99 un sol pagament per a ús il·limitat · Sense subscripció per cancel·lar",
     "lp2_plan_school_price": "Des de $59",
+    "lp2_price_line_1": "Gratuït per començar",
+    "lp2_price_line_2": "$9.99 un sol pagament per a ús il·limitat",
+    "lp2_price_line_3": "Sense subscripció per cancel·lar",
     "lp2_roster_p1_detail": "Entrat 10:00 · 42 min",
     "lp2_roster_p2_detail": "Entrat 10:01 · 41 min",
     "lp2_roster_p3_detail": "Entrat 10:12 · 30 min",
@@ -814,6 +820,8 @@ export const TRANSLATION_FIXES = {
   },
   "he": {
     "lp2_plan_school_price": "החל מ-$59",
+    "lp2_price_line_2": "‏9.99 דולר בתשלום חד-פעמי לשימוש ללא הגבלה",
+    "lp2_price_line_3": "אין מנוי שצריך לבטל",
     "lp2_roster_p1_detail": "הצטרף 10:00 · 42 דק׳",
     "lp2_roster_p2_detail": "הצטרף 10:01 · 41 דק׳",
     "lp2_roster_p3_detail": "הצטרף 10:12 · 30 דק׳",
@@ -912,6 +920,8 @@ export const TRANSLATION_FIXES = {
     "history.upgradePro": "Tingkatkan ke Pro ($9.99)",
     "history.upgradeToPro": "Tingkatkan ke Pro",
     "lp2_plan_school_price": "Mulai $59",
+    "lp2_price_line_2": "$9.99 sekali bayar untuk tanpa batas",
+    "lp2_price_line_3": "Tanpa langganan yang harus dibatalkan",
     "lp2_roster_p1_detail": "Bergabung 10:00 · 42 mnt",
     "lp2_roster_p2_detail": "Bergabung 10:01 · 41 mnt",
     "lp2_roster_p3_detail": "Bergabung 10:12 · 30 mnt",
@@ -1004,6 +1014,8 @@ export const TRANSLATION_FIXES = {
   },
   "ko": {
     "lp2_plan_school_price": "$59부터",
+    "lp2_price_line_2": "무제한은 $9.99 1회 결제",
+    "lp2_price_line_3": "해지할 구독이 없습니다",
     "lp2_roster_p1_detail": "10:00 참여 · 42분",
     "lp2_roster_p2_detail": "10:01 참여 · 41분",
     "lp2_roster_p3_detail": "10:12 참여 · 30분",
@@ -1064,7 +1076,7 @@ export const TRANSLATION_FIXES = {
     "team.adminBadge": "അഡ്മിൻ"
   },
   "mn": {
-    "billing.lmsSyncPro": "Дүнг Google Classroom болон Canvas руу шууд синк хийхэд Educator ($4.99/жил) эсвэл Pro багц шаардлагатай.",
+    "billing.lmsSyncPro": "Дүнг Google Classroom болон Canvas руу шууд синк хийхэд Educator эсвэл Pro багц шаардлагатай.",
     "footer.builtBy": "Kinetic Helix бүтээв",
     "footer.colGlobal": "Дэлхийн болон бүс нутгийн",
     "footer.colGuides": "Гарын авлага ба зааварчилгаа",
@@ -1325,7 +1337,11 @@ export const TRANSLATION_FIXES = {
     "history.title": "Sejarah Mesyuarat",
     "history.upgradePro": "Naik taraf ke Pro ($9.99)",
     "history.upgradeToPro": "Naik taraf ke Pro",
+    "lp2_final_fine": "Percuma untuk bermula · $9.99 sekali bayar untuk tanpa had · Tiada langganan untuk dibatalkan",
     "lp2_plan_school_price": "Dari $59",
+    "lp2_price_line_1": "Percuma untuk bermula",
+    "lp2_price_line_2": "$9.99 sekali bayar untuk tanpa had",
+    "lp2_price_line_3": "Tiada langganan untuk dibatalkan",
     "lp2_roster_p1_detail": "Menyertai 10:00 · 42 min",
     "lp2_roster_p2_detail": "Menyertai 10:01 · 41 min",
     "lp2_roster_p3_detail": "Menyertai 10:12 · 30 min",
@@ -1373,7 +1389,7 @@ export const TRANSLATION_FIXES = {
     "upgrade.lifetimeName": "တစ်သက်တာ ပတ်စ်"
   },
   "ne": {
-    "billing.lmsSyncPro": "Google Classroom र Canvas मा ग्रेड सीधै सिंक गर्न Educator ($4.99/वर्ष) वा Pro योजना चाहिन्छ।",
+    "billing.lmsSyncPro": "Google Classroom र Canvas मा ग्रेड सीधै सिंक गर्न Educator वा Pro योजना चाहिन्छ।",
     "footer.builtBy": "Kinetic Helix द्वारा निर्मित",
     "footer.colGlobal": "विश्वव्यापी र क्षेत्रीय",
     "footer.colGuides": "गाइड र कसरी गर्ने",
@@ -1405,7 +1421,7 @@ export const TRANSLATION_FIXES = {
     "pricing.navHome": "Startpagina"
   },
   "no": {
-    "billing.lmsSyncPro": "Synkronisering av karakterer direkte til Google Classroom og Canvas krever en Educator- ($4.99/år) eller Pro-plan.",
+    "billing.lmsSyncPro": "Synkronisering av karakterer direkte til Google Classroom og Canvas krever en Educator- eller Pro-plan.",
     "btn.filter": "Filtrer",
     "footer.builtBy": "Laget av Kinetic Helix",
     "footer.colGlobal": "Globalt og regionalt",
@@ -1661,6 +1677,8 @@ export const TRANSLATION_FIXES = {
   },
   "ru": {
     "lp2_plan_school_price": "От $59",
+    "lp2_price_line_2": "$9.99 один раз — без ограничений",
+    "lp2_price_line_3": "Никакой подписки, которую нужно отменять",
     "lp2_roster_p1_detail": "Вошёл в 10:00 · 42 мин",
     "lp2_roster_p2_detail": "Вошёл в 10:01 · 41 мин",
     "lp2_roster_p3_detail": "Вошёл в 10:12 · 30 мин",
@@ -1669,7 +1687,7 @@ export const TRANSLATION_FIXES = {
     "lp2_sheet_th_min": "Мин"
   },
   "si": {
-    "billing.lmsSyncPro": "Google Classroom සහ Canvas වෙත ලකුණු සෘජුවම සමමුහුර්ත කිරීමට Educator ($4.99/වසර) හෝ Pro සැලැස්මක් අවශ්‍යයි.",
+    "billing.lmsSyncPro": "Google Classroom සහ Canvas වෙත ලකුණු සෘජුවම සමමුහුර්ත කිරීමට Educator හෝ Pro සැලැස්මක් අවශ්‍යයි.",
     "btn.sheet": "පත්‍රය",
     "checkin.attestCsv": "පැමිණීම් තහවුරු CSV",
     "footer.builtBy": "Kinetic Helix විසින් නිර්මාණය කරන ලදී",
@@ -1856,7 +1874,7 @@ export const TRANSLATION_FIXES = {
     "lp2_stat_orgs": "organizacij"
   },
   "so": {
-    "billing.lmsSyncPro": "Isku-dubbaridka buundooyinka si toos ah ugu gudbinta Google Classroom iyo Canvas waxay u baahan tahay qorshe Educator ($4.99/sanadkii) ama Pro.",
+    "billing.lmsSyncPro": "Isku-dubbaridka buundooyinka si toos ah ugu gudbinta Google Classroom iyo Canvas waxay u baahan tahay qorshe Educator ama Pro.",
     "footer.builtBy": "Waxaa dhisay Kinetic Helix",
     "footer.colGlobal": "Caalami & Gobol",
     "footer.colGuides": "Hagayaal & Tilmaamo",
@@ -2727,6 +2745,8 @@ export const TRANSLATION_FIXES = {
     "history.upgradePro": "Mag-upgrade sa Pro ($9.99)",
     "history.upgradeToPro": "Mag-upgrade sa Pro",
     "lp2_plan_school_price": "Mula $59",
+    "lp2_price_line_2": "$9.99 isang bayad lang para sa walang limitasyon",
+    "lp2_price_line_3": "Walang suskripsyon na kakanselahin",
     "lp2_roster_p1_detail": "Sumali 10:00 · 42 min",
     "lp2_roster_p2_detail": "Sumali 10:01 · 41 min",
     "lp2_roster_p3_detail": "Sumali 10:12 · 30 min",
@@ -2869,6 +2889,8 @@ export const TRANSLATION_FIXES = {
     "lp2_plan_school_name": "Уся школа",
     "lp2_plan_school_price": "Від $59",
     "lp2_plan_school_unit": "на рік",
+    "lp2_price_line_2": "$9.99 одноразово — без обмежень",
+    "lp2_price_line_3": "Жодної підписки, яку треба скасовувати",
     "lp2_pricing_sub": "Почніть безкоштовно, без кредитної картки. На відповідних ринках автоматично застосовується регіональна знижка 50%.",
     "lp2_pricing_title": "Платіть один раз. Нічого скасовувати.",
     "lp2_priv_sub": "Дані потрапляють у ваш власний обліковий запис Google. Ми ніколи не продаємо, не поширюємо і не навчаємо моделі на ваших зустрічах.",
@@ -3168,6 +3190,8 @@ export const TRANSLATION_FIXES = {
     "history.upgradePro": "Nâng cấp lên Pro ($9.99)",
     "history.upgradeToPro": "Nâng cấp lên Pro",
     "lp2_plan_school_price": "Từ $59",
+    "lp2_price_line_2": "$9.99 trả một lần để dùng không giới hạn",
+    "lp2_price_line_3": "Không có gói đăng ký nào phải hủy",
     "lp2_roster_p1_detail": "Tham gia 10:00 · 42 phút",
     "lp2_roster_p2_detail": "Tham gia 10:01 · 41 phút",
     "lp2_roster_p3_detail": "Tham gia 10:12 · 30 phút",
@@ -3188,7 +3212,7 @@ export const TRANSLATION_FIXES = {
   },
   "zh": {
     "empty.qs2Link": "班級名單",
-    "export.graceUsed": "🎉 免費完整名單匯出:我們已為您的第一堂大型課程解鎖全部 {count} 位與會者!升級至 Educator($4.99/年),未來課程人數不受限制。",
+    "export.graceUsed": "🎉 免費完整名單匯出:我們已為您的第一堂大型課程解鎖全部 {count} 位與會者!升級至 Educator,未來課程人數不受限制。",
     "lp2_final_fine": "免費開始 · 一次付清 $9.99 無限使用 · 無需取消任何訂閱",
     "lp2_plan_school_price": "$59 起",
     "lp2_price_line_1": "免費開始",
@@ -3207,7 +3231,7 @@ export const TRANSLATION_FIXES = {
   },
   "zh-CN": {
     "empty.qs2Link": "班级名单",
-    "export.graceUsed": "🎉 免费完整名单导出:我们已为您的第一堂大型课程解锁全部 {count} 位参会者!升级到 Educator($4.99/年),以后的课程人数不受限制。",
+    "export.graceUsed": "🎉 免费完整名单导出:我们已为您的第一堂大型课程解锁全部 {count} 位参会者!升级到 Educator,以后的课程人数不受限制。",
     "lp2_final_fine": "免费开始 · 一次付清 $9.99 无限使用 · 无需取消任何订阅",
     "lp2_plan_school_price": "$59 起",
     "lp2_price_line_1": "免费开始",

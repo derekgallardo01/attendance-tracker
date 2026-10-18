@@ -2,7 +2,7 @@ Aanwezigheidsregistratie voor Google Meet™ — automatisch aanwezigheid bijhou
 
 Een live lijst in het zijpaneel van Meet™: wie er binnenkwam, wie te laat was, wie wegging en hoe lang iemand bleef. Met één klik stuur je een overzichtelijk rapport naar Google Spreadsheets™ (Sheets™) of CSV. Werkt met elk Google-account, ook met een persoonlijk Gmail™-account.
 
-Gratis beginnen. Eenmalig $ 9,99 voor onbeperkt gebruik. Geen abonnement om op te zeggen.
+Gratis beginnen. Eenmalig $ 49 voor onbeperkt gebruik. Geen abonnement om op te zeggen.
 
 ⏱️ ZO WERKT HET
 1. Open Attendance Tracker via Activiteiten in elk Google Meet™-gesprek.
@@ -37,8 +37,8 @@ Gratis beginnen. Eenmalig $ 9,99 voor onbeperkt gebruik. Geen abonnement om op t
 
 💳 EERLIJKE PRIJZEN
 • Gratis — live lijst en 5 exports per maand. Geen creditcard.
-• Levenslang — eenmalig $ 9,99. Onbeperkt exporteren, automatisch bijhouden en exporteren, trends, cijferboekbestanden, certificaten en samenvattingen. Niets om op te zeggen.
-• Docent — $ 4,99 per jaar.
+• Levenslang — eenmalig $ 49. Onbeperkt exporteren, automatisch bijhouden en exporteren, trends, cijferboekbestanden, certificaten en samenvattingen. Niets om op te zeggen.
+• Docent — $ 19 per jaar.
 • Hele school — Afdeling $ 59 per jaar of Instelling $ 149 per jaar (verwerkersovereenkomst, voorrang bij support, factuur/inkooporder).
 • 50% regionale korting wordt in aanmerking komende landen automatisch toegepast.
 

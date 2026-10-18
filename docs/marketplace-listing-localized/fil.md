@@ -2,7 +2,7 @@ Attendance Tracker para sa Google Meet™ — awtomatikong attendance sa Google 
 
 Live na listahan sa side panel ng Meet™: sino ang pumasok, sino ang late, sino ang umalis, at gaano katagal sila nanatili. Isang click lang, may malinis na report ka na sa Google Sheets™ o CSV. Gumagana sa kahit anong Google account, kasama ang personal na Gmail™.
 
-Libreng simulan. $9.99 isang bayad lang para sa walang limitasyon. Walang subscription na kailangang i-cancel.
+Libreng simulan. $49 isang bayad lang para sa walang limitasyon. Walang subscription na kailangang i-cancel.
 
 ⏱️ PAANO ITO GUMAGANA
 1. Buksan ang Attendance Tracker mula sa Activities sa kahit anong Google Meet™ call.
@@ -37,8 +37,8 @@ Libreng simulan. $9.99 isang bayad lang para sa walang limitasyon. Walang subscr
 
 💳 MALINAW NA PRESYO
 • Libre — live na listahan at 5 export kada buwan. Walang credit card.
-• Lifetime — $9.99 isang bayad lang. Walang limitasyong export, awtomatikong pag-track at export, trends, gradebook files, certificates, at summaries. Walang kailangang i-cancel.
-• Educator — $4.99 kada taon.
+• Lifetime — $49 isang bayad lang. Walang limitasyong export, awtomatikong pag-track at export, trends, gradebook files, certificates, at summaries. Walang kailangang i-cancel.
+• Educator — $19 kada taon.
 • Buong paaralan — Department $59 kada taon o Institution $149 kada taon (DPA, priority support, invoice/PO).
 • 50% regional discount na awtomatikong ina-apply sa checkout sa mga kwalipikadong bansa.
 

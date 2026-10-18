@@ -94,6 +94,13 @@ test('malformed token → 401 Authentication failed', async () => {
   expect(res.json).toHaveBeenCalledWith({ error: 'Authentication failed' });
 });
 
+test('unexpected error during auth lookup → 401 Authentication failed and logs error', async () => {
+  firestore.getUser.mockRejectedValueOnce(new Error('firestore transient error'));
+  const { res } = await runAuth(tokenFor({ email: 'u@acme.com', domain: 'acme.com' }));
+  expect(res.status).toHaveBeenCalledWith(401);
+  expect(res.json).toHaveBeenCalledWith({ error: 'Authentication failed' });
+});
+
 // Kinetic Helix presence ping — throttled, hashed, memory-bounded.
 describe('reportPresence (KH command center)', () => {
   const { reportPresence, _khPresenceLast } = auth;

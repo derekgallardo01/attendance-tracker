@@ -2,7 +2,7 @@ Närvarokoll för Google Meet™ — automatisk närvaro i Google Meet™
 
 En livelista i sidopanelen i Meet™: vem som anslöt, vem som kom sent, vem som gick och hur länge var och en stannade. Med ett klick skickar du en tydlig rapport till Google Kalkylark™ (Sheets™) eller CSV. Fungerar med alla Google-konton, även personlig Gmail™.
 
-Kom igång gratis. 9,99 $ en gång för obegränsad användning. Ingen prenumeration att säga upp.
+Kom igång gratis. 49 $ en gång för obegränsad användning. Ingen prenumeration att säga upp.
 
 ⏱️ SÅ FUNGERAR DET
 1. Öppna Attendance Tracker från Aktiviteter i valfritt Google Meet™-samtal.
@@ -37,8 +37,8 @@ Kom igång gratis. 9,99 $ en gång för obegränsad användning. Ingen prenumera
 
 💳 ÄRLIGA PRISER
 • Gratis — livelista och 5 exporter per månad. Inget kort.
-• Livstid — 9,99 $ en gång. Obegränsade exporter, automatisk spårning och export, trender, betygsboksfiler, intyg och sammanfattningar. Inget att säga upp.
-• Lärare — 4,99 $ per år.
+• Livstid — 49 $ en gång. Obegränsade exporter, automatisk spårning och export, trender, betygsboksfiler, intyg och sammanfattningar. Inget att säga upp.
+• Lärare — 19 $ per år.
 • Hela skolan — Avdelning 59 $ per år eller Institution 149 $ per år (personuppgiftsbiträdesavtal, prioriterad support, faktura/inköpsorder).
 • 50 % regional rabatt tillämpas automatiskt i berättigade länder.
 

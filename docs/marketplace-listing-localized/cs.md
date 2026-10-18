@@ -2,7 +2,7 @@ Docházka pro Google Meet™ — automatická docházka v Google Meet™
 
 Živý seznam v postranním panelu Meet™: kdo se připojil, kdo přišel pozdě, kdo odešel a jak dlouho byl přítomen. Jedním kliknutím pošlete přehledný report do Tabulek Google™ (Sheets™) nebo CSV. Funguje s jakýmkoli účtem Google, včetně osobního Gmailu™.
 
-Začněte zdarma. 9,99 $ jednorázově za neomezené používání. Žádné předplatné, které byste museli rušit.
+Začněte zdarma. 49 $ jednorázově za neomezené používání. Žádné předplatné, které byste museli rušit.
 
 ⏱️ JAK TO FUNGUJE
 1. Otevřete Attendance Tracker v nabídce Aktivity během jakéhokoli hovoru Google Meet™.
@@ -37,8 +37,8 @@ Začněte zdarma. 9,99 $ jednorázově za neomezené používání. Žádné př
 
 💳 FÉROVÉ CENY
 • Zdarma — živý seznam a 5 exportů měsíčně. Bez platební karty.
-• Doživotně — 9,99 $ jednorázově. Neomezené exporty, automatické sledování a export, vývoj, soubory pro klasifikaci, certifikáty a shrnutí. Nic k rušení.
-• Pedagog — 4,99 $ ročně.
+• Doživotně — 49 $ jednorázově. Neomezené exporty, automatické sledování a export, vývoj, soubory pro klasifikaci, certifikáty a shrnutí. Nic k rušení.
+• Pedagog — 19 $ ročně.
 • Celá škola — Katedra 59 $ ročně nebo Instituce 149 $ ročně (DPA, prioritní podpora, faktura/objednávka).
 • Regionální sleva 50 % se v oprávněných zemích uplatní automaticky.
 

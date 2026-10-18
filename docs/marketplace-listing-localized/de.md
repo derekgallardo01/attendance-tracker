@@ -2,7 +2,7 @@ Anwesenheitsliste für Google Meet™ — Anwesenheit in Google Meet™ automati
 
 Eine Live-Liste in der Seitenleiste von Meet™: wer beigetreten ist, wer zu spät kam, wer gegangen ist und wie lange jemand dabei war. Mit einem Klick landet ein sauberer Bericht in Google Tabellen™ (Sheets™) oder als CSV. Funktioniert mit jedem Google-Konto, auch mit privatem Gmail™.
 
-Kostenlos starten. 9,99 $ einmalig für unbegrenzte Nutzung. Kein Abo, das Sie kündigen müssen.
+Kostenlos starten. 49 $ einmalig für unbegrenzte Nutzung. Kein Abo, das Sie kündigen müssen.
 
 ⏱️ SO FUNKTIONIERT'S
 1. Öffnen Sie Attendance Tracker über „Aktivitäten“ in einem beliebigen Google Meet™-Anruf.
@@ -37,8 +37,8 @@ Kostenlos starten. 9,99 $ einmalig für unbegrenzte Nutzung. Kein Abo, das Sie k
 
 💳 FAIRE PREISE
 • Kostenlos — Live-Liste und 5 Exporte pro Monat. Keine Kreditkarte.
-• Lebenslang — 9,99 $ einmalig. Unbegrenzte Exporte, automatische Erfassung und Export, Verläufe, Notenbuch-Dateien, Zertifikate und Zusammenfassungen. Nichts zu kündigen.
-• Lehrkraft — 4,99 $ pro Jahr.
+• Lebenslang — 49 $ einmalig. Unbegrenzte Exporte, automatische Erfassung und Export, Verläufe, Notenbuch-Dateien, Zertifikate und Zusammenfassungen. Nichts zu kündigen.
+• Lehrkraft — 19 $ pro Jahr.
 • Ganze Schule — Fachbereich 59 $ pro Jahr oder Einrichtung 149 $ pro Jahr (AVV/DPA, bevorzugter Support, Rechnung/Bestellung).
 • 50 % regionaler Rabatt wird in berechtigten Ländern automatisch angewendet.
 

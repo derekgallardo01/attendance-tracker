@@ -121,6 +121,10 @@ async function auth(req, res, next) {
     if (err.name === 'TokenExpiredError') {
       return res.status(401).json({ error: 'Session expired' });
     }
+    if (err.name === 'JsonWebTokenError' || err.name === 'NotBeforeError') {
+      log.warn('auth middleware: invalid token', { error: err.message });
+      return res.status(401).json({ error: 'Authentication failed' });
+    }
     log.error('auth middleware error', { error: err.message });
     return res.status(401).json({ error: 'Authentication failed' });
   }

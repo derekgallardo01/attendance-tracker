@@ -195,11 +195,11 @@
           {
             "@type": "Offer",
             "name": "Educator Annual",
-            "price": "4.99",
+            "price": "19",
             "priceCurrency": "USD",
             "priceSpecification": {
               "@type": "UnitPriceSpecification",
-              "price": "4.99",
+              "price": "19",
               "priceCurrency": "USD",
               "unitCode": "ANN"
             },
@@ -207,8 +207,21 @@
           },
           {
             "@type": "Offer",
+            "name": "Pro Annual",
+            "price": "29",
+            "priceCurrency": "USD",
+            "priceSpecification": {
+              "@type": "UnitPriceSpecification",
+              "price": "29",
+              "priceCurrency": "USD",
+              "unitCode": "ANN"
+            },
+            "description": "Unlimited exports, auto-export, trends, LMS gradebooks, certificates, and digests for individual organizers."
+          },
+          {
+            "@type": "Offer",
             "name": "Individual Lifetime",
-            "price": "9.99",
+            "price": "49",
             "priceCurrency": "USD",
             "description": "One-time purchase with lifetime Pro access for a single organizer account."
           }
@@ -294,7 +307,7 @@
             "name": "Is Attendance Tracker for Google Meet free?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes, Attendance Tracker offers a free forever tier with 2 free exports per month (Sheets, CSV, or Excel for classes up to 25 attendees) and real-time attendance monitoring. Pro plans start at $4.99/year for educators and $9.99 for lifetime individual access."
+              "text": "Yes, Attendance Tracker offers a free forever tier with 2 free exports per month (Sheets, CSV, or Excel for classes up to 25 attendees) and real-time attendance monitoring. Paid plans include Educator Annual ($19/yr), Pro Annual ($29/yr), and Individual Lifetime ($49), with automatic regional pricing in eligible countries."
             }
           },
           {
@@ -3062,6 +3075,36 @@
         window.addEventListener('scroll', handleScroll, { passive: true });
         window.addEventListener('resize', handleScroll, { passive: true });
 
+        var re999 = /(?:\u200f)?(?:US)?\$\s*(?:9[.,]99|৯[.,]৯৯)|(?:\b9[.,]99|৯[.,]৯৯)\s*(?:\$|USD|דולר|دولار|dollaria|dollárért|dollár)/;
+
+        window.paintLandingOffer = function () {
+          var offer = window._landingOffer;
+          if (!offer || !offer.tiered || !offer.pricing) return;
+          var p = offer.pricing;
+          var lifePrice = p.lifetime && p.lifetime.label;
+          var eduPrice = p.educator && p.educator.label;
+          var elLife = document.getElementById('lp2-price-lifetime');
+          if (elLife && lifePrice) {
+            elLife.removeAttribute('data-i18n');
+            elLife.textContent = lifePrice;
+          }
+          var elEdu = document.getElementById('lp2-price-educator');
+          if (elEdu && eduPrice) {
+            elEdu.removeAttribute('data-i18n');
+            elEdu.textContent = eduPrice;
+          }
+          if (lifePrice) {
+            ['lp2_price_line_2', 'lp2_cmp_r7_us', 'lp2_final_fine'].forEach(function (key) {
+              document.querySelectorAll('[data-i18n="' + key + '"]').forEach(function (el) {
+                var base = (typeof window.t === 'function') ? window.t(key, el.textContent) : el.textContent;
+                if (base && re999.test(base)) {
+                  el.textContent = base.replace(re999, lifePrice);
+                }
+              });
+            });
+          }
+        };
+
         if (typeof window.AttPricing !== 'undefined' && window.AttPricing.price) {
           var elLife = document.getElementById('lp2-price-lifetime');
           if (elLife && window.AttPricing.price('lifetime')) elLife.textContent = window.AttPricing.price('lifetime');
@@ -3069,6 +3112,21 @@
           if (elEdu && window.AttPricing.price('educator')) elEdu.textContent = window.AttPricing.price('educator');
           var elSch = document.getElementById('lp2-price-school');
           if (elSch && window.AttPricing.price('department')) elSch.textContent = 'From ' + window.AttPricing.price('department');
+        }
+
+        if (window._isLandingMode && typeof fetch === 'function') {
+          var backendUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+            ? 'http://localhost:8080/api'
+            : 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
+          fetch(backendUrl + '/billing/offer')
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (offer) {
+              if (offer && offer.tiered && offer.pricing) {
+                window._landingOffer = offer;
+                window.paintLandingOffer();
+              }
+            })
+            .catch(function () {});
         }
       })();
     </script>
@@ -4572,7 +4630,7 @@ async function downloadAttendanceCsv() {
       graceUsed = true;
       if (!_billing) _billing = {};
       _billing.hasUsedLargeClassGrace = true;
-      toast(t('export.graceUsed', '🎉 Complimentary Full-Roster Export: We unlocked all {count} attendees for your first large class! Upgrade to Educator ($4.99/yr) for unlimited class sizes on future classes.').replace('{count}', data.participantCount || count), 7000);
+      toast(t('export.graceUsed', '🎉 Complimentary Full-Roster Export: We unlocked all {count} attendees for your first large class! Upgrade to Educator for unlimited class sizes on future classes.').replace('{count}', data.participantCount || count), 7000);
     }
     if (data.quota) {
       if (!_billing) _billing = {};
@@ -4706,7 +4764,7 @@ async function downloadAttendanceExcel() {
       graceUsed = true;
       if (!_billing) _billing = {};
       _billing.hasUsedLargeClassGrace = true;
-      toast(t('export.graceUsed', '🎉 Complimentary Full-Roster Export: We unlocked all {count} attendees for your first large class! Upgrade to Educator ($4.99/yr) for unlimited class sizes on future classes.').replace('{count}', data.participantCount || count), 7000);
+      toast(t('export.graceUsed', '🎉 Complimentary Full-Roster Export: We unlocked all {count} attendees for your first large class! Upgrade to Educator for unlimited class sizes on future classes.').replace('{count}', data.participantCount || count), 7000);
     }
     if (data.quota) {
       if (!_billing) _billing = {};
@@ -7130,7 +7188,7 @@ function showExportTruncatedBanner(count, total) {
   const banner = document.getElementById('export-truncated-banner');
   const textEl = document.getElementById('export-truncated-text');
   if (!banner || !textEl) return;
-  const msg = t('exportTruncated.banner', 'Exporting 25 of {total} students. Upgrade to Educator Pass ($4.99/yr) for unlimited students.')
+  const msg = t('exportTruncated.banner', 'Exporting 25 of {total} students. Upgrade to Educator Pass for unlimited students.')
     .replace('{total}', String(total));
   textEl.textContent = msg;
   banner.style.display = 'flex';
@@ -7995,13 +8053,13 @@ function showUpgradeModal(reason) {
       note.textContent = t('billing.lmsCsvPro', 'Canvas & Moodle LMS gradebook export is a Pro feature.');
       note.style.display = 'block';
     } else if (reason === 'lmsSync') {
-      note.textContent = t('billing.lmsSyncPro', 'Syncing grades directly to Google Classroom and Canvas requires an Educator ($4.99/yr) or Pro plan.');
+      note.textContent = t('billing.lmsSyncPro', 'Syncing grades directly to Google Classroom and Canvas requires an Educator or Pro plan.');
       note.style.display = 'block';
     } else if (reason === 'trial_ending') {
       note.textContent = t('billing.trialEndingPro', 'Your auto-export trial is ending soon. Upgrade to keep automatic attendance recording active.');
       note.style.display = 'block';
     } else if (reason === 'certificates' || reason === 'classSummary') {
-      note.textContent = t('upgrade.certsEdu', 'Student attendance certificates & multi-session reports require an Educator ($4.99/yr) or Lifetime plan.');
+      note.textContent = t('upgrade.certsEdu', 'Student attendance certificates & multi-session reports require an Educator or Lifetime plan.');
       note.style.display = 'block';
     } else if (reason === 'attestation') {
       note.textContent = t('billing.attestPro', 'Exporting verified check-in attestations is a Pro feature.');
@@ -9063,7 +9121,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     if (graceUsed) {
       if (!_billing) _billing = {};
       _billing.hasUsedLargeClassGrace = true;
-      toast(t('export.graceUsed', '🎉 Complimentary Full-Roster Export: We unlocked all {count} attendees for your first large class! Upgrade to Educator ($4.99/yr) for unlimited class sizes on future classes.').replace('{count}', participantCount || totalAttendeeCount), 7000);
+      toast(t('export.graceUsed', '🎉 Complimentary Full-Roster Export: We unlocked all {count} attendees for your first large class! Upgrade to Educator for unlimited class sizes on future classes.').replace('{count}', participantCount || totalAttendeeCount), 7000);
     }
     if (quota) {
       if (!_billing) _billing = {};
@@ -9983,6 +10041,9 @@ function updateUiLanguage() {
 
   if (typeof AttStrings.applyTranslations === 'function') {
     AttStrings.applyTranslations(document.body);
+  }
+  if (typeof window.paintLandingOffer === 'function' && window._landingOffer) {
+    window.paintLandingOffer();
   }
 
   const btnStartLabel = document.getElementById('btn-start-label');
@@ -12068,7 +12129,7 @@ window.addEventListener('DOMContentLoaded', () => {
       <div style="font-size:1.05rem;font-weight:700;margin-bottom:4px" data-i18n="cert.title">Certificate details</div>
       <div style="color:#8b949e;font-size:.8rem;margin-bottom:14px" data-i18n="cert.subtitle">Printed on every attendee's certificate. Saved for next time.</div>
       <div id="cert-pro-notice" style="display:none;padding:8px 12px;margin-bottom:12px;background:rgba(253,214,99,.1);border:1px solid rgba(253,214,99,.35);border-radius:6px;font-size:.78rem;color:#fde68a;">
-        <span data-i18n="upgrade.certsEdu">Student attendance certificates &amp; multi-session reports require an Educator ($4.99/yr) or Lifetime plan.</span>
+        <span data-i18n="upgrade.certsEdu">Student attendance certificates &amp; multi-session reports require an Educator or Lifetime plan.</span>
         <a href="#" onclick="closeCertModal();showUpgradeModal('certificates');return false;" style="color:#60a5fa;font-weight:600;margin-left:6px;text-decoration:underline" data-i18n="common.upgrade">Upgrade</a>
       </div>
       <label style="display:block;font-size:.75rem;color:#8b949e;margin-bottom:4px" data-i18n="cert.issuer">Issuer / organization name</label>

@@ -2,7 +2,7 @@
 
 Danh sách trực tiếp trong bảng điều khiển bên của Meet™: ai đã vào, ai đến muộn, ai đã rời đi và ở lại bao lâu. Chỉ một cú nhấp để gửi báo cáo gọn gàng sang Google Trang tính™ (Sheets™) hoặc CSV. Hoạt động với mọi tài khoản Google, kể cả Gmail™ cá nhân.
 
-Bắt đầu miễn phí. $9.99 trả một lần để dùng không giới hạn. Không có gói đăng ký nào phải hủy.
+Bắt đầu miễn phí. $49 trả một lần để dùng không giới hạn. Không có gói đăng ký nào phải hủy.
 
 ⏱️ CÁCH HOẠT ĐỘNG
 1. Mở Attendance Tracker từ mục Hoạt động trong bất kỳ cuộc gọi Google Meet™ nào.
@@ -37,8 +37,8 @@ Bắt đầu miễn phí. $9.99 trả một lần để dùng không giới hạ
 
 💳 GIÁ RÕ RÀNG
 • Miễn phí — danh sách trực tiếp và 5 lần xuất mỗi tháng. Không cần thẻ tín dụng.
-• Trọn đời — $9.99 trả một lần. Xuất không giới hạn, tự động theo dõi và xuất, xu hướng, file sổ điểm, chứng nhận và tóm tắt. Không có gì phải hủy.
-• Nhà giáo — $4.99 mỗi năm.
+• Trọn đời — $49 trả một lần. Xuất không giới hạn, tự động theo dõi và xuất, xu hướng, file sổ điểm, chứng nhận và tóm tắt. Không có gì phải hủy.
+• Nhà giáo — $19 mỗi năm.
 • Cả trường — Khoa $59 mỗi năm hoặc Cơ sở $149 mỗi năm (DPA, hỗ trợ ưu tiên, hóa đơn/đơn đặt hàng).
 • Giảm giá khu vực 50% tự động áp dụng khi thanh toán tại các quốc gia đủ điều kiện.
 

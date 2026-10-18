@@ -1316,7 +1316,7 @@
     parts = parts || [];
     let truncatedNotice = null;
     if (opts.isFreePlan && !opts.graceUsed && parts.length > 25) {
-      truncatedNotice = `# ... 25 of ${parts.length} attendees shown. Upgrade to Educator ($4.99/yr) or Pro for unlimited rosters.`;
+      truncatedNotice = `# ... 25 of ${parts.length} attendees shown. Upgrade to Educator or Pro for unlimited rosters.`;
       parts = parts.slice(0, 25);
     }
     const meetingTitle = opts.meetingTitle || 'Meeting';
@@ -1487,7 +1487,7 @@
     parts = parts || [];
     let truncatedNotice = null;
     if (opts.isFreePlan && !opts.graceUsed && parts.length > 25) {
-      truncatedNotice = `# ... 25 of ${parts.length} attendees shown. Upgrade to Educator ($4.99/yr) or Pro for unlimited rosters.`;
+      truncatedNotice = `# ... 25 of ${parts.length} attendees shown. Upgrade to Educator or Pro for unlimited rosters.`;
       parts = parts.slice(0, 25);
     }
     const meetingTitle = opts.meetingTitle || 'Meeting';

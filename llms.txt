@@ -59,8 +59,8 @@ English (`en`), Spanish / Español (`es`), Portuguese / Português (`pt`), Hindi
 ## 5. Pricing & Plans (Current Truth)
 
 * **Free Forever Tier**: 2 free Google Sheets cloud exports/mo + unlimited direct CSV & binary Excel (.xlsx) exports for classes up to 25 attendees, real-time live side-panel presence tracking, duration logging. No credit card required.
-* **Educator Annual Pass ($4.99/year)**: Unlimited exports, Google Classroom roster sync, attendance certificates, LMS gradebook exports, late arrival tagging.
-* **Individual Lifetime Pro ($9.99 one-time)**: Lifetime unlimited Pro access for a single organizer Google account.
+* **Educator Annual Pass ($19/year)**: Unlimited exports, Google Classroom roster sync, attendance certificates, LMS gradebook exports, late arrival tagging.
+* **Individual Lifetime Pro ($49 one-time)**: Lifetime unlimited Pro access for a single organizer Google account.
 * **Department School Plan ($59/year)**: Covers an entire academic department or small-school Google Workspace domain.
 * **Institution School Plan ($149/year)**: Whole-domain coverage for unlimited teachers and staff across a university or school district.
 

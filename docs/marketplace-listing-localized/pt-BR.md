@@ -2,7 +2,7 @@ Controle de Presença para Google Meet™ — faça a chamada automaticamente
 
 Uma lista ao vivo no painel lateral do Meet™: quem entrou, quem chegou atrasado, quem saiu e por quanto tempo ficou. Com um clique, você envia um relatório limpo para o Planilhas Google™ (Sheets™) ou CSV. Funciona com qualquer conta Google, inclusive Gmail™ pessoal.
 
-Grátis para começar. US$ 9,99 em pagamento único para uso ilimitado. Nada para cancelar.
+Grátis para começar. US$ 49 em pagamento único para uso ilimitado. Nada para cancelar.
 
 ⏱️ COMO FUNCIONA
 1. Abra o Attendance Tracker em Atividades em qualquer chamada do Google Meet™.
@@ -37,8 +37,8 @@ Grátis para começar. US$ 9,99 em pagamento único para uso ilimitado. Nada par
 
 💳 PREÇOS TRANSPARENTES
 • Grátis — lista ao vivo e 5 exportações por mês. Sem cartão.
-• Vitalício — US$ 9,99 em pagamento único. Exportações ilimitadas, captura e exportação automáticas, tendências, arquivos de notas, certificados e resumos. Nada para cancelar.
-• Educador — US$ 4,99 por ano.
+• Vitalício — US$ 49 em pagamento único. Exportações ilimitadas, captura e exportação automáticas, tendências, arquivos de notas, certificados e resumos. Nada para cancelar.
+• Educador — US$ 19 por ano.
 • Escola inteira — Departamento US$ 59 por ano ou Instituição US$ 149 por ano (DPA, suporte prioritário, nota fiscal/ordem de compra).
 • Desconto regional de 50% aplicado automaticamente em mercados elegíveis.
 

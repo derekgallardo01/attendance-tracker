@@ -34,14 +34,15 @@ render inside the modal (see `#roster-modal-error`).
 
 ## i18n (breaks tests if forgotten)
 
-- `js/strings.js` holds 44 locales; a parity test requires EVERY `en` key to
-  exist in all 44. Adding a key = adding 44 translations (use the generator
-  pattern: script that inserts after each `"xx": {` line — see memory /
-  scratchpad `add-i18n-keys*.js`). `zh` = Traditional, `zh-CN` = Simplified.
+- `js/strings.js` holds 60 locales; a parity test requires EVERY `en` key to
+  exist in all 60. Adding a key = adding 60 translations (use the generator
+  pattern: `scripts/add-i18n-keys.mjs` + `scripts/translation-fixes.mjs`).
+  `zh` = Traditional, `zh-CN` = Simplified.
 - User-facing strings in index.html go through `t('key', 'English fallback')`
   or `data-i18n`; missing keys fall back to the English text (never blank).
 - JS-set text is NOT re-translated by `applyTranslations` on language change —
-  re-run the painter (see `updateUiLanguage`'s `selectWebhookProvider` hook).
+  re-run the painter (see `updateUiLanguage`'s `selectWebhookProvider` and
+  `paintLandingOffer` hooks).
 
 ## Coverage gates (CI runs them on every push)
 
@@ -62,8 +63,9 @@ render inside the modal (see `#roster-modal-error`).
 - Pro gating: `planIsPro(domain, email)` — individual passes live on the USER
   doc and are honored for personal AND workspace domains; domain plans on the
   tenant doc. Auto-capture, digests, email summaries, certificates, semester
-  exports are Pro. `/save-to-sheets` enforces the 3/month free quota; nothing
-  else is quota'd. Upsells stay GENTLE (no popup spam — flash existing CTAs).
+  exports are Pro. `/save-to-sheets` and `/billing/record-export` enforce the
+  2/month free quota; classes >25 attendees get one lifetime grace export before
+  truncation/paywall. Upsells stay GENTLE (no popup spam — flash existing CTAs).
 - Classroom routes use the user's token ONLY (`makeUserClient`) — the
   `getGoogleClient` service-account fallback must never be reachable there.
 - Attendee check-in: `/oauth/exchange` with `mode:'attendee'` mints a session
@@ -92,14 +94,16 @@ render inside the modal (see `#roster-modal-error`).
 
 - Pricing appears in: pricing.html, terms, refunds, FAQ/help, the Marketplace
   listing (`docs/marketplace-listing.md` → pasted manually into the console),
-  and SEO pages. Current truth: Free (5 exports/mo: Sheets or CSV combined) · $9.99 lifetime
-  individual (on-ramp) · $4.99/yr educator · $59/yr Department (small-school
-  domain plan, card shown when STRIPE_DEPARTMENT_PRICE_ID is set + verified
-  $59/yr) · $149/yr Institution (whole-domain, STRIPE_ANNUAL_PRICE_ID). The
-  $19.99 one-time domain lifetime is RETIRED (card hidden; `team` plan still
-  works server-side). If pricing changes, grep all of them — AND update the runtime
-  single source of truth: `backend/src/config/pricing.js` (+ mirror constants
-  in `js/pricing.js`); panel/history surfaces render prices from it.
+  and SEO pages. Current truth (`TIERED_PRICING=1`, `backend/src/config/priceTiers.js`):
+  Free (2 exports/mo across Sheets, CSV & Excel, up to 25 attendees + 1 large-class
+  grace export) · Tier 1 ($29/yr Pro Annual, $4.99/mo Pro Monthly, $19/yr Educator,
+  $49 Lifetime, $2.99 Single Meeting) · Tier 2 ($15/yr Pro Annual, $10/yr Educator,
+  $29 Lifetime; localized in MXN/BRL/MYR) · Tier 3 ($9/yr Pro Annual, $6/yr Educator,
+  $19 Lifetime; localized in INR/PHP/IDR/KES; 50/50 split test vs legacy control arm
+  in `backend/src/config/pricing.js` when `TIER3_TEST=split`) · $59/yr Department
+  (small-school domain plan, `STRIPE_DEPARTMENT_PRICE_ID`) · $149/yr Institution
+  (whole-domain, `STRIPE_ANNUAL_PRICE_ID`). The $19.99 one-time domain lifetime is
+  RETIRED (card hidden; `team` plan still works server-side).
 - Checkout buttons must pass an explicit `plan` to /billing/checkout — a
   plan-less request lets the backend infer team-vs-individual from the
   caller's domain and once mispriced a "$9.99" button. `plan:'team'` +
@@ -118,4 +122,4 @@ render inside the modal (see `#roster-modal-error`).
 - Use `confirm()`/`alert()` in index.html.
 - Add a frontend event type without allowlisting it.
 - Edit `backend/public/*` directly.
-- Ship a `js/strings.js` key to fewer than 44 locales.
+- Ship a `js/strings.js` key to fewer than 60 locales.

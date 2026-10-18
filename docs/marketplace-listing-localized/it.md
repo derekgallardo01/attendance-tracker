@@ -2,7 +2,7 @@ Registro presenze per Google Meet™ — l'appello in Google Meet™, in automat
 
 Un elenco in tempo reale nel pannello laterale di Meet™: chi è entrato, chi è arrivato in ritardo, chi è uscito e per quanto tempo è rimasto. Con un clic invii un report ordinato a Fogli Google™ (Sheets™) o in CSV. Funziona con qualsiasi account Google, anche con Gmail™ personale.
 
-Gratis per iniziare. 9,99 $ una tantum per l'uso illimitato. Nessun abbonamento da disdire.
+Gratis per iniziare. 49 $ una tantum per l'uso illimitato. Nessun abbonamento da disdire.
 
 ⏱️ COME FUNZIONA
 1. Apri Attendance Tracker da Attività in qualsiasi chiamata Google Meet™.
@@ -37,8 +37,8 @@ Gratis per iniziare. 9,99 $ una tantum per l'uso illimitato. Nessun abbonamento 
 
 💳 PREZZI CHIARI
 • Gratis — elenco in tempo reale e 5 esportazioni al mese. Nessuna carta di credito.
-• A vita — 9,99 $ una tantum. Esportazioni illimitate, rilevamento ed esportazione automatici, andamenti, file per il registro, attestati e riepiloghi. Niente da disdire.
-• Docente — 4,99 $ all'anno.
+• A vita — 49 $ una tantum. Esportazioni illimitate, rilevamento ed esportazione automatici, andamenti, file per il registro, attestati e riepiloghi. Niente da disdire.
+• Docente — 19 $ all'anno.
 • Tutta la scuola — Dipartimento 59 $ all'anno o Istituto 149 $ all'anno (DPA, assistenza prioritaria, fattura/ordine d'acquisto).
 • Sconto regionale del 50% applicato automaticamente nei paesi idonei.
 

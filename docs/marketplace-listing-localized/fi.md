@@ -2,7 +2,7 @@ Läsnäolon seuranta Google Meet™ -palveluun — nimenhuuto Google Meetissä�
 
 Reaaliaikainen lista Meetin™ sivupaneelissa: kuka liittyi, kuka myöhästyi, kuka poistui ja kuinka kauan kukin oli paikalla. Yhdellä klikkauksella siisti raportti Google Sheetsiin™ tai CSV-tiedostoon. Toimii kaikilla Google-tileillä, myös henkilökohtaisella Gmailillä™.
 
-Aloita ilmaiseksi. 9,99 $ kertamaksu rajattomaan käyttöön. Ei tilausta, jota pitäisi perua.
+Aloita ilmaiseksi. 49 $ kertamaksu rajattomaan käyttöön. Ei tilausta, jota pitäisi perua.
 
 ⏱️ NÄIN SE TOIMII
 1. Avaa Attendance Tracker Toiminnot-valikosta missä tahansa Google Meet™ -puhelussa.
@@ -37,8 +37,8 @@ Aloita ilmaiseksi. 9,99 $ kertamaksu rajattomaan käyttöön. Ei tilausta, jota 
 
 💳 REILUT HINNAT
 • Ilmainen — reaaliaikainen lista ja 5 vientiä kuukaudessa. Ei luottokorttia.
-• Elinikäinen — 9,99 $ kertamaksu. Rajattomat viennit, automaattinen seuranta ja vienti, kehitys, arviointikirjatiedostot, todistukset ja yhteenvedot. Ei mitään peruttavaa.
-• Opettaja — 4,99 $ vuodessa.
+• Elinikäinen — 49 $ kertamaksu. Rajattomat viennit, automaattinen seuranta ja vienti, kehitys, arviointikirjatiedostot, todistukset ja yhteenvedot. Ei mitään peruttavaa.
+• Opettaja — 19 $ vuodessa.
 • Koko koulu — Laitos 59 $ vuodessa tai Oppilaitos 149 $ vuodessa (DPA, ensisijainen tuki, lasku/ostotilaus).
 • 50 %:n alueellinen alennus lisätään automaattisesti oikeutetuissa maissa.
 

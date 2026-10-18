@@ -2,7 +2,7 @@ Absensi untuk Google Meet™ — absen otomatis tanpa repot
 
 Daftar hadir langsung di panel samping Meet™: siapa yang masuk, siapa yang terlambat, siapa yang keluar, dan berapa lama mereka ikut. Satu klik mengirim laporan rapi ke Google Spreadsheet™ (Sheets™) atau CSV. Berfungsi di akun Google mana pun, termasuk Gmail™ pribadi.
 
-Gratis untuk memulai. $9.99 sekali bayar untuk tanpa batas. Tanpa langganan yang harus dibatalkan.
+Gratis untuk memulai. $49 sekali bayar untuk tanpa batas. Tanpa langganan yang harus dibatalkan.
 
 ⏱️ CARA KERJA
 1. Buka Attendance Tracker dari menu Aktivitas di panggilan Google Meet™ mana pun.
@@ -37,8 +37,8 @@ Gratis untuk memulai. $9.99 sekali bayar untuk tanpa batas. Tanpa langganan yang
 
 💳 HARGA YANG JELAS
 • Gratis — daftar hadir langsung dan 5 ekspor per bulan. Tanpa kartu kredit.
-• Seumur hidup — $9.99 sekali bayar. Ekspor tanpa batas, perekaman dan ekspor otomatis, tren, file nilai, sertifikat, dan ringkasan. Tidak ada yang perlu dibatalkan.
-• Pendidik — $4.99 per tahun.
+• Seumur hidup — $49 sekali bayar. Ekspor tanpa batas, perekaman dan ekspor otomatis, tren, file nilai, sertifikat, dan ringkasan. Tidak ada yang perlu dibatalkan.
+• Pendidik — $19 per tahun.
 • Seluruh sekolah — Departemen $59 per tahun atau Institusi $149 per tahun (DPA, dukungan prioritas, faktur/PO).
 • Diskon regional 50% otomatis diterapkan di pasar yang memenuhi syarat.
 

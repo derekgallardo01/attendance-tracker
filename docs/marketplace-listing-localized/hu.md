@@ -2,7 +2,7 @@ Jelenléti ív Google Meet™-hez — automatikus névsorolvasás a Google Meetb
 
 Élő lista a Meet™ oldalpaneljén: ki csatlakozott, ki késett, ki lépett ki, és ki mennyi ideig volt jelen. Egy kattintással rendezett jelentést küldhet a Google Táblázatokba™ (Sheets™) vagy CSV-be. Bármilyen Google-fiókkal működik, személyes Gmaillel™ is.
 
-Kezdje ingyen. Egyszeri 9,99 $ a korlátlan használatért. Nincs lemondandó előfizetés.
+Kezdje ingyen. Egyszeri 49 $ a korlátlan használatért. Nincs lemondandó előfizetés.
 
 ⏱️ HOGYAN MŰKÖDIK
 1. Nyissa meg az Attendance Trackert a Tevékenységek menüből bármely Google Meet™-hívásban.
@@ -37,8 +37,8 @@ Kezdje ingyen. Egyszeri 9,99 $ a korlátlan használatért. Nincs lemondandó el
 
 💳 TISZTA ÁRAK
 • Ingyenes — élő lista és havi 5 exportálás. Bankkártya nélkül.
-• Élethosszig — egyszeri 9,99 $. Korlátlan exportálás, automatikus követés és exportálás, trendek, naplófájlok, tanúsítványok és összefoglalók. Nincs mit lemondani.
-• Pedagógus — évi 4,99 $.
+• Élethosszig — egyszeri 49 $. Korlátlan exportálás, automatikus követés és exportálás, trendek, naplófájlok, tanúsítványok és összefoglalók. Nincs mit lemondani.
+• Pedagógus — évi 19 $.
 • Egész iskola — Tanszék évi 59 $ vagy Intézmény évi 149 $ (adatfeldolgozási szerződés, kiemelt támogatás, számla/megrendelő).
 • 50%-os regionális kedvezmény automatikusan érvényesül a jogosult országokban.
 

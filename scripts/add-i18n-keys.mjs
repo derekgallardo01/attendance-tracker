@@ -19,8 +19,8 @@ const NEW_KEYS_EN = {
   "pricing.teacherMigrationBanner": "<strong>Switching from Attendance Taker for Classroom or a retired tool?</strong> <a href=\"attendance-taker-for-classroom-alternative.html\" style=\"color:var(--blue);font-weight:600;text-decoration:underline;margin-left:4px\">Use our free 5-second roster migration tool &rarr;</a>",
   "pricing.promoApplied": "🎁 Promo code box enabled for checkout",
   "pricing.havePromoCode": "Have a promo or referral code?",
-  "billing.lmsSyncPro": "Syncing grades directly to Google Classroom and Canvas requires an Educator ($4.99/yr) or Pro plan.",
-  "export.graceUsed": "🎉 Complimentary Full-Roster Export: We unlocked all {count} attendees for your first large class! Upgrade to Educator ($4.99/yr) for unlimited class sizes on future classes.",
+  "billing.lmsSyncPro": "Syncing grades directly to Google Classroom and Canvas requires an Educator or Pro plan.",
+  "export.graceUsed": "🎉 Complimentary Full-Roster Export: We unlocked all {count} attendees for your first large class! Upgrade to Educator for unlimited class sizes on future classes.",
   "upgrade.singleAltPrefix": "Only need this single meeting? Unlock for",
   
   // Matrix Headers
