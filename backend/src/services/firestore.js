@@ -1696,6 +1696,44 @@ async function getDomainTeacherCount(domain) {
   }
 }
 
+// Aggregate domain-level social proof for the team signpost (how many teachers
+// on this domain hold an active individual Pro pass, and how many large classes
+// >25 students have been tracked across the domain).
+async function getDomainClusterStats(domain) {
+  try {
+    const domainLower = (domain || '').toLowerCase();
+    if (!domainLower || PERSONAL_EMAIL_DOMAINS.has(domainLower)) {
+      return { payingColleagues: 0, largeClassCount: 0 };
+    }
+    const tenant = tenantRef(domain);
+    const [usersSnap, meetingsSnap] = await Promise.all([
+      tenant.collection('users').limit(200).get().catch(() => ({ docs: [] })),
+      tenant.collection('meetings').limit(200).get().catch(() => ({ docs: [] })),
+    ]);
+    const now = Date.now();
+    let payingColleagues = 0;
+    for (const d of (usersSnap.docs || [])) {
+      const u = d.data() || {};
+      if (u.individualPlan === 'pro') {
+        const expMs = u.individualPlanExpiresAt ? Date.parse(u.individualPlanExpiresAt) : null;
+        if (!expMs || isNaN(expMs) || expMs > now || u.individualStripeSubscriptionId) {
+          payingColleagues++;
+        }
+      }
+    }
+    let largeClassCount = 0;
+    for (const d of (meetingsSnap.docs || [])) {
+      const m = d.data() || {};
+      const cnt = m.distinctAttendees != null ? m.distinctAttendees : (m.participantCount || 0);
+      if (cnt > 25) largeClassCount++;
+    }
+    return { payingColleagues, largeClassCount };
+  } catch (err) {
+    log.warn('firestore: getDomainClusterStats failed', { domain, error: err.message });
+    return { payingColleagues: 0, largeClassCount: 0 };
+  }
+}
+
 // The user dismissed the team signpost — remember it forever (per the spec:
 // one tap, never shown again). Stamped on the user doc.
 async function setTeamSignpostDismissed(domain, email) {
@@ -3044,7 +3082,7 @@ module.exports = {
   getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens,
   getUserSettings, updateUserSettings, isNotificationCategoryEnabled,
   setUserAcquisitionSource, setUserAcquisitionDismissed, setPostExportSurvey, claimSignupNotification, releaseSignupNotification, getTenantAdminEmailStrict,
-  getDomainTeacherCount, setTeamSignpostDismissed,
+  getDomainTeacherCount, getDomainClusterStats, setTeamSignpostDismissed,
   claimReferral, releaseReferral, recordReferralForInviter, recordReferralPromoCode, getUserTrackingStreak,
   claimWebhookEvent, releaseWebhookEvent,
   paymentFromSession, paymentFromInvoice, recordPayment, updateSubscriptionStatus, markPaymentStatus,

@@ -1,13 +1,16 @@
 const { installFirestoreMock } = require('../helpers/firestoreMock');
 
-let ctx, reviewVerifier;
+let ctx, reviewVerifier, origFetch;
 
 beforeEach(() => {
   ctx = installFirestoreMock();
+  origFetch = global.fetch;
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, text: async () => '' });
   reviewVerifier = require('../../src/services/review-verifier');
 });
 
 afterEach(() => {
+  global.fetch = origFetch;
   ctx.uninstall();
 });
 
@@ -124,4 +127,115 @@ describe('grantReviewReward & verifyUserReview', () => {
     spyUserEmail.mockRestore();
     spyDraftAlert.mockRestore();
   });
+
+  test('grantReviewReward handles non-existent user doc, missing domain, and alert email error gracefully', async () => {
+    const notifications = require('../../src/lib/notifications');
+    const spyDraftAlert = jest.spyOn(notifications, 'sendReviewRewardDraftAlert').mockRejectedValue(new Error('smtp down'));
+
+    const res = await reviewVerifier.grantReviewReward('', 'newreviewer@gmail.com', {
+      reviewId: 'rev-err-1',
+      rating: 5,
+      authorName: 'New Reviewer',
+    });
+    expect(res.success).toBe(true);
+    expect(ctx.read('tenants/gmail.com/users/newreviewer@gmail.com').individualPlan).toBe('pro');
+    spyDraftAlert.mockRestore();
+  });
+
+  test('reconcilePendingReviews returns 0 when no unredeemed reviews exist', async () => {
+    const marketplace = require('../../src/services/marketplace-reviews');
+    const syncSpy = jest.spyOn(marketplace, 'syncMarketplaceReviews').mockResolvedValue({ total: 0, newlyDiscovered: 0, reviews: [] });
+
+    const res = await reviewVerifier.reconcilePendingReviews();
+    expect(res).toEqual({ reconciled: 0, candidatesChecked: 0 });
+    syncSpy.mockRestore();
+  });
+
+  test('reconcilePendingReviews matches candidate users within 72h window and skips already-verified or out-of-window users', async () => {
+    const marketplace = require('../../src/services/marketplace-reviews');
+    const syncSpy = jest.spyOn(marketplace, 'syncMarketplaceReviews').mockResolvedValue({ total: 2, newlyDiscovered: 2, reviews: [] });
+    const now = Date.now();
+
+    ctx.seed('marketplace_reviews/rev-match-1', {
+      reviewId: 'rev-match-1',
+      rating: 5,
+      comment: 'Awesome',
+      authorName: 'Maria Lopez',
+      timestampMs: now,
+      redeemed: false,
+    });
+    ctx.seed('marketplace_reviews/rev-date-only', {
+      reviewId: 'rev-date-only',
+      rating: 5,
+      comment: 'Great',
+      authorName: 'Out OfWindow',
+      date: new Date(now).toISOString(),
+      redeemed: false,
+    });
+
+    // Already verified user (should enter candidateUsers via reviewLinkClickedAt and be skipped)
+    ctx.seed('tenants/school.edu/users/already@school.edu', {
+      displayName: 'Maria Lopez',
+      individualPlan: 'pro',
+      reviewStatus: 'verified_reviewed',
+      reviewLinkClickedAt: new Date(now).toISOString(),
+    });
+    // Out-of-window user (>72h ago)
+    ctx.seed('tenants/school.edu/users/out@school.edu', {
+      displayName: 'Out OfWindow',
+      reviewStatus: 'clicked',
+      reviewLinkClickedAt: new Date(now - 100 * 3600 * 1000).toISOString(),
+    });
+    // Matching user within 72h window
+    ctx.seed('tenants/school.edu/users/maria@school.edu', {
+      displayName: 'Maria Lopez',
+      reviewLinkClickedAt: new Date(now - 2 * 3600 * 1000).toISOString(),
+    });
+
+    const res = await reviewVerifier.reconcilePendingReviews();
+    expect(res.reconciled).toBe(1);
+    expect(res.totalPendingReviews).toBe(2);
+    expect(res.candidatesChecked).toBe(3);
+    expect(ctx.read('tenants/school.edu/users/maria@school.edu').individualPlan).toBe('pro');
+    syncSpy.mockRestore();
+  });
+
+  test('verifyUserReview grants reward on match, returns alreadyVerified when already active, or no_matching_review_found', async () => {
+    const marketplace = require('../../src/services/marketplace-reviews');
+    const syncSpy = jest.spyOn(marketplace, 'syncMarketplaceReviews').mockResolvedValue({ total: 1, newlyDiscovered: 1, reviews: [] });
+
+    ctx.seed('marketplace_reviews/rev-v-1', {
+      reviewId: 'rev-v-1',
+      rating: 5,
+      comment: 'Nice!',
+      authorName: 'Prof Kim',
+      redeemed: false,
+    });
+    ctx.seed('tenants/uni.edu/users/kim@uni.edu', {
+      displayName: 'Prof Kim',
+    });
+
+    // 1. Matches and grants
+    const granted = await reviewVerifier.verifyUserReview('uni.edu', 'kim@uni.edu', 'Prof Kim');
+    expect(granted.success).toBe(true);
+    expect(granted.reviewId).toBe('rev-v-1');
+
+    // 2. Subsequent call sees alreadyVerified
+    const already = await reviewVerifier.verifyUserReview('uni.edu', 'kim@uni.edu');
+    expect(already.success).toBe(true);
+    expect(already.alreadyVerified).toBe(true);
+
+    // 3. Unknown user with no matching review
+    const miss = await reviewVerifier.verifyUserReview('', 'nobody@gmail.com');
+    expect(miss.success).toBe(false);
+    expect(miss.reason).toBe('no_matching_review_found');
+
+    syncSpy.mockRestore();
+  });
+
+  test('isNameMatch handles empty/non-string inputs', () => {
+    expect(reviewVerifier.isNameMatch(null, 'Test', 'a@b.com')).toBe(false);
+    expect(reviewVerifier.isNameMatch('!!!', 'Test', 'a@b.com')).toBe(false);
+  });
 });
+

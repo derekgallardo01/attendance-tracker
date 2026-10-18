@@ -827,7 +827,8 @@ async function sendUpgradeLinkForUser({
     { expiresIn: '7d' }
   );
 
-  const promoParam = isPppEligible ? '&promo=PPP50' : '&promo=SAVE20';
+  const offer = getOffer({ country: userCountry, email: normalizedEmail });
+  const promoParam = offer.tiered ? '' : (isPppEligible ? '&promo=PPP50' : '&promo=SAVE20');
   const countryParam = userCountry ? `&country=${encodeURIComponent(userCountry)}` : '';
   const tokenParam = `&token=${encodeURIComponent(token)}`;
 
@@ -835,19 +836,25 @@ async function sendUpgradeLinkForUser({
     ? `${CONFIG.publicApiUrl.replace(/\/$/, '')}/billing/checkout-redirect`
     : `${CONFIG.publicSiteUrl}/api/billing/checkout-redirect`;
 
-  const educatorUrl = (isIndia || isRegional)
-    ? null
-    : `${redirectBase}?plan=educator${tokenParam}${promoParam}${countryParam}`;
+  const educatorUrl = offer.tiered
+    ? `${redirectBase}?plan=educator${tokenParam}${countryParam}`
+    : ((isIndia || isRegional)
+      ? null
+      : `${redirectBase}?plan=educator${tokenParam}${promoParam}${countryParam}`);
 
   const lifetimeUrl = `${redirectBase}?plan=lifetime${tokenParam}${promoParam}${countryParam}`;
 
-  // 24-hour special offer: 20% discount ($3.99/yr, $7.99) or 50% PPP subsidy ($2.49/yr, $4.99; ₹299 lifetime in India; localized regional pricing)
-  const educatorPrice = (isIndia || isRegional) ? null : (isPppEligible ? '$2.49' : '$3.99');
-  const lifetimePrice = isIndia
-    ? '₹299'
-    : (isRegional
-      ? regionalConfig.label
-      : (isPppEligible ? '$4.99' : '$7.99'));
+  // Tiered pricing uses the user's resolved tier labels; legacy uses the 20% / 50% PPP offer.
+  const educatorPrice = offer.tiered
+    ? (offer.plans?.educator?.label || offer.plans?.pro_annual?.label || null)
+    : ((isIndia || isRegional) ? null : (isPppEligible ? '$2.49' : '$3.99'));
+  const lifetimePrice = offer.tiered
+    ? (offer.plans?.lifetime?.label || null)
+    : (isIndia
+      ? '₹299'
+      : (isRegional
+        ? regionalConfig.label
+        : (isPppEligible ? '$4.99' : '$7.99')));
 
   const { sendUpgradeLinkEmail } = require('../lib/notifications');
   await sendUpgradeLinkEmail({
@@ -972,7 +979,9 @@ router.post('/billing/public-checkout', async (req, res) => {
           ? process.env.STRIPE_INDIVIDUAL_LIFETIME_MXN_PRICE_ID
           : (userCountry === 'BR'
             ? process.env.STRIPE_INDIVIDUAL_LIFETIME_BRL_PRICE_ID
-            : null))));
+            : (userCountry === 'KE'
+              ? process.env.STRIPE_INDIVIDUAL_LIFETIME_KES_PRICE_ID
+              : null)))));
   const isRegionalTarget = !isDomain && isRegional && !isEducator;
 
   const configuredEduPrice = (userCountry === 'PH' && process.env.STRIPE_EDUCATOR_PHP_PRICE_ID)
@@ -980,6 +989,7 @@ router.post('/billing/public-checkout', async (req, res) => {
     || (userCountry === 'ID' && process.env.STRIPE_EDUCATOR_IDR_PRICE_ID)
     || (userCountry === 'MX' && process.env.STRIPE_EDUCATOR_MXN_PRICE_ID)
     || (userCountry === 'BR' && process.env.STRIPE_EDUCATOR_BRL_PRICE_ID)
+    || (userCountry === 'KE' && process.env.STRIPE_EDUCATOR_KES_PRICE_ID)
     || (isIndia && process.env.STRIPE_EDUCATOR_INR_PRICE_ID)
     || (!isPppEligible && process.env.STRIPE_EDUCATOR_ANNUAL_PRICE_ID);
 
@@ -995,6 +1005,7 @@ router.post('/billing/public-checkout', async (req, res) => {
     else if (userCountry === 'ID') eduUnitAmount = 3900000;
     else if (userCountry === 'MX') eduUnitAmount = 4900;
     else if (userCountry === 'BR') eduUnitAmount = 2700;
+    else if (userCountry === 'KE') eduUnitAmount = 32000;
     else eduUnitAmount = Math.round(regionalConfig.amount / 2);
   }
 
@@ -1539,7 +1550,17 @@ router.get('/billing/status', requireAuth, async (req, res) => {
       // Manage billing instead of an upgrade CTA for something already bought.
       if (!individual && plan.plan !== 'pro' && individualBillingConfigured()) {
         const userPlan = await getUserPlan(req.user.domain, req.user.email);
-        if (userPlan.plan === 'pro') { plan = userPlan; individual = true; }
+        if (userPlan?.plan === 'pro') {
+          plan = userPlan;
+          individual = true;
+        } else if (userPlan?.billingStatus === 'expired') {
+          plan = {
+            ...plan,
+            billingStatus: 'expired',
+            ...(userPlan.individualPlanExpiresAt !== undefined ? { individualPlanExpiresAt: userPlan.individualPlanExpiresAt } : {}),
+            ...(userPlan.individualPlanType !== undefined ? { individualPlanType: userPlan.individualPlanType } : {}),
+          };
+        }
       }
     }
     // annualAvailable tells the frontend whether to offer the monthly/annual

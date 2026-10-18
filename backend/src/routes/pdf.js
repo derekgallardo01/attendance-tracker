@@ -1,9 +1,10 @@
 const { Router } = require('express');
 const { requireAuth } = require('../middleware/auth');
 const { planIsPro } = require('./billing');
-const { getMeetingWithParticipants, saveVerifications, getUserSettings, getUser, isMeetingUnlocked, countUserMonthlyExports, persistExport, markUserLargeClassGraceUsed, getExportReexportCount } = require('../services/firestore');
+const { getMeetingWithParticipants, saveVerifications, getUserSettings, getUser, isMeetingUnlocked, countUserMonthlyExports, persistExport, markUserLargeClassGraceUsed, getExportReexportCount, getUserMeetingHistory, getDomainTeacherCount, logEvent, getDb } = require('../services/firestore');
 const PRICING = require('../config/pricing');
-const { buildReportModel, renderReportPdf, buildCertificateModels, renderCertificatesPdf } = require('../lib/certificate');
+const { buildReportModel, renderReportPdf, buildCertificateModels, renderCertificatesPdf, buildQuoteModel, renderQuotePdf } = require('../lib/certificate');
+const { sendAdminEmail } = require('../lib/notifications');
 const log = require('../lib/logger');
 
 const router = Router();
@@ -184,4 +185,112 @@ router.post('/export/pdf', requireAuth, async (req, res) => {
   }
 });
 
+// POST /api/export/quote-pdf — generate a forwardable school/department quote PDF
+// ("Ask my school to pay"), persist a quoteRequests record, and notify Derek.
+router.post('/export/quote-pdf', requireAuth, async (req, res) => {
+  const b = req.body || {};
+  try {
+    const email = req.user.email;
+    const domain = req.user.domain || (email.includes('@') ? email.split('@')[1] : '');
+    let classesTracked = Number(b.classesTracked) || 0;
+    let totalStudents = Number(b.totalStudents) || 0;
+    let domainTeachers = Number(b.domainTeachers) || 1;
+
+    if (!classesTracked && typeof getUserMeetingHistory === 'function') {
+      try {
+        const hist = await getUserMeetingHistory(domain, email, { limit: 100 });
+        classesTracked = Number(hist?.totalMeetings || hist?.meetings?.length || 0);
+        if (!totalStudents && Array.isArray(hist?.people)) {
+          totalStudents = hist.people.length;
+        }
+      } catch (_) {}
+    }
+    if (domainTeachers <= 1 && typeof getDomainTeacherCount === 'function') {
+      try {
+        const cnt = await getDomainTeacherCount(domain);
+        if (cnt > 1) domainTeachers = cnt;
+      } catch (_) {}
+    }
+
+    const cap = (v, n) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, n) : null);
+    const schoolName = cap(b.schoolName, 120);
+    const department = cap(b.department, 80);
+    const recommendedPlan = cap(b.plan, 40);
+    const notes = cap(b.notes, 500);
+
+    const model = buildQuoteModel({
+      teacherName: req.user.displayName || null,
+      teacherEmail: email,
+      domain,
+      schoolName,
+      department,
+      recommendedPlan,
+      usage: { classesTracked, totalStudents, domainTeachers },
+    });
+    const pdf = await renderQuotePdf(model);
+    const filename = `quote-${slugify(model.schoolName || domain || 'school')}-${model.quoteNumber.toLowerCase()}.pdf`;
+
+    try {
+      if (typeof getDb === 'function') {
+        const db = getDb();
+        if (db && typeof db.collection === 'function') {
+          await db.collection('quoteRequests').add({
+            quoteNumber: model.quoteNumber,
+            email,
+            domain,
+            displayName: req.user.displayName || null,
+            schoolName: model.schoolName,
+            department: model.department,
+            recommendedPlan: model.recommendedPlan,
+            usage: model.usage,
+            notes,
+            createdAt: new Date(),
+          });
+        }
+      }
+    } catch (_) {}
+
+    try {
+      if (typeof logEvent === 'function') {
+        await logEvent(domain, {
+          email,
+          type: 'school_quote_generated',
+          meta: {
+            quoteNumber: model.quoteNumber,
+            schoolName: model.schoolName,
+            recommendedPlan: model.recommendedPlan,
+            domainTeachers: model.usage.domainTeachers,
+          },
+        });
+      }
+    } catch (_) {}
+
+    if (typeof sendAdminEmail === 'function') {
+      Promise.resolve(sendAdminEmail({
+        to: 'derek@attendancetracker.dev',
+        subject: `📄 School Quote Generated (${model.quoteNumber}): ${email} (${domain})`,
+        body: [
+          `Teacher: ${req.user.displayName || email} <${email}>`,
+          `Domain: ${domain} (${model.usage.domainTeachers} teacher(s) active)`,
+          `School: ${model.schoolName}${model.department ? ` — ${model.department}` : ''}`,
+          `Quote #: ${model.quoteNumber}`,
+          `Recommended Plan: ${model.recommendedPlan}`,
+          `Usage: ${model.usage.classesTracked} classes tracked, ${model.usage.totalStudents} students`,
+          notes ? `Notes: ${notes}` : '',
+        ].filter(Boolean).join('\n'),
+      })).catch(() => {});
+    }
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', pdf.length);
+    res.setHeader('Cache-Control', 'no-store');
+    return res.send(pdf);
+  } catch (err) {
+    log.error('export/quote-pdf failed', { email: req.user?.email, error: err.message });
+    return res.status(500).json({ error: 'Could not generate the quote PDF.' });
+  }
+});
+
 module.exports = router;
+

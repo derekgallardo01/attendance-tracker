@@ -3265,6 +3265,14 @@
       <button type="button" onclick="closeTrialEndingBanner()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px">×</button>
     </div>
   </div>
+  <!-- ── Pass / Pro Grant Expired Banner (Dismissible) ── -->
+  <div id="renewal-notice-banner" style="display:none;align-items:center;justify-content:space-between;gap:8px;padding:6px 16px;font-size:11px;color:#fdd663;background:rgba(253,214,99,.08);border-top:1px solid rgba(253,214,99,.2)">
+    <span id="renewal-notice-text" style="line-height:1.4">Your Pro ended — renew</span>
+    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+      <button type="button" id="btn-renewal-notice" onclick="onRenewalNoticeClick()" style="background:rgba(253,214,99,.2);border:1px solid rgba(253,214,99,.4);color:#fdd663;border-radius:12px;padding:3px 8px;font-size:10px;font-weight:600;cursor:pointer" data-i18n="common.upgrade">Renew</button>
+      <button type="button" onclick="closeRenewalNoticeBanner()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px">×</button>
+    </div>
+  </div>
   <!-- ── 25-Student Truncation Banner (Free Tier Cutoff) ── -->
   <div id="export-truncated-banner" style="display:none;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;margin:6px 12px;background:rgba(251,191,36,.09);border:1px solid rgba(251,191,36,.3);border-radius:10px;font-size:11px;color:#fde68a">
     <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1 1 auto">
@@ -5243,6 +5251,9 @@ async function refreshActivationStatus() {
       if (status.detectedSource) state._detectedSource = status.detectedSource;
     }
     renderTeamAdminLink();
+    if (status.billingStatus === 'expired' && !_isPro) {
+      showRenewalNoticeBanner();
+    }
     renderTeamSignpost(status.teamSignpost);
   } catch (e) {
     // Best-effort; nudges are a nice-to-have
@@ -5267,6 +5278,7 @@ const CONTEXTUAL_BANNERS = [
   'export-cta',
   'auto-export-nudge',
   'trial-ending-banner',
+  'renewal-notice-banner',
   'team-signpost',
   'class-summary-tip',
   'term-report-tip',
@@ -5309,13 +5321,27 @@ function renderTeamSignpost(sp) {
   const link = document.getElementById('team-signpost-link');
   if (!msg || !link) return;
   const n = sp.teacherCount;
-  msg.innerHTML = t('history.clusterPromoMsg', '{n} teachers from your school are using Attendance Tracker. Upgrade to a Department Pass ($59/yr) to cover all colleagues.')
+  const plan = sp.recommendedPlan || (n >= 50 ? 'quote' : n >= 10 ? 'institution' : 'department');
+  let baseMsg = t('history.clusterPromoMsg', '{n} teachers from your school are using Attendance Tracker. Upgrade to a Department Pass ($59/yr) to cover all colleagues.')
     .replace('{n}', '<b>' + n + '</b>');
-  link.textContent = t('history.clusterPromoCta', 'Upgrade to Department Pass ($59/yr) →');
-  link.href = 'https://attendancetracker.dev/pricing.html?plan=department&domain=' + encodeURIComponent(sp.domain || '');
+  const proofParts = [];
+  if (sp.payingColleagues > 0) proofParts.push(`${sp.payingColleagues} on Pro`);
+  if (sp.largeClassCount > 0) proofParts.push(`${sp.largeClassCount} with 25+ student classes`);
+  if (proofParts.length > 0) {
+    baseMsg += ` <span style="opacity:.85">(${escHtml(proofParts.join(' · '))})</span>`;
+  }
+  msg.innerHTML = baseMsg;
+  if (plan === 'institution') {
+    link.textContent = t('history.clusterPromoCtaInst', 'Upgrade to Institution Plan ($149/yr) →');
+  } else if (plan === 'quote') {
+    link.textContent = t('history.clusterPromoCtaQuote', 'Request Custom School Quote →');
+  } else {
+    link.textContent = t('history.clusterPromoCta', 'Upgrade to Department Pass ($59/yr) →');
+  }
+  link.href = 'https://attendancetracker.dev/pricing.html?plan=' + encodeURIComponent(plan) + '&domain=' + encodeURIComponent(sp.domain || '');
   link.target = '_blank';
   link.onclick = (e) => { onTeamSignpostClick(e); };
-  try { logUserEvent('team_signpost_shown', { teacherCount: n, isTeamAdmin: !!sp.isTeamAdmin, surface: 'panel' }); } catch (e) { /* best-effort */ }
+  try { logUserEvent('team_signpost_shown', { teacherCount: n, isTeamAdmin: !!sp.isTeamAdmin, recommendedPlan: plan, payingColleagues: sp.payingColleagues || 0, largeClassCount: sp.largeClassCount || 0, surface: 'panel' }); } catch (e) { /* best-effort */ }
   box.style.display = 'flex';
 }
 function onTeamSignpostClick() {
@@ -6776,6 +6802,9 @@ function renderList() {
       <div id="roster-large-class-card" style="margin:10px 4px;padding:12px 14px;background:rgba(245,158,11,.08);border:1px dashed rgba(245,158,11,.35);border-radius:8px;text-align:center;font-size:.78rem;color:#e6edf3;line-height:1.5">
         <span>Showing 25 of ${filtered.length} attendees. </span>
         <button type="button" onclick="showUpgradeModal('largeClass')" style="background:none;border:none;color:#fbbf24;font-weight:600;cursor:pointer;text-decoration:underline;padding:0;font-size:.78rem">Unlock all ${filtered.length} attendees →</button>
+        <div style="margin-top:6px">
+          <button type="button" onclick="downloadSchoolQuotePdf(this)" style="background:none;border:none;color:#8ab4f8;font-weight:500;cursor:pointer;text-decoration:underline;padding:0;font-size:.72rem">📄 ${escHtml(t('quote.askSchoolBtn', 'Ask my school to pay (Download Quote PDF)'))}</button>
+        </div>
       </div>`;
   } else {
     const totalAvailable = [...groups.values()].reduce((s, l) => s + l.length, 0);
@@ -7030,6 +7059,13 @@ async function loadBillingStatus() {
       if (trialB) trialB.style.display = 'none';
     }
 
+    if (data.billingStatus === 'expired' && !_isPro) {
+      showRenewalNoticeBanner();
+    } else {
+      const renB = document.getElementById('renewal-notice-banner');
+      if (renB) renB.style.display = 'none';
+    }
+
     const email = (state.userEmail || '').toLowerCase();
     const isEdu = !!(data && data.isEdu) || isEduDomain(email, data.domain);
     const settingsSchoolBtn = document.getElementById('settings-school-license-btn');
@@ -7182,6 +7218,36 @@ function closeTrialEndingBanner() {
     sessionStorage.setItem('att_trial_banner_dismissed', 'true');
     logUserEvent('trial_banner_dismissed', {});
   } catch (e) {}
+}
+
+function showRenewalNoticeBanner() {
+  try {
+    const dismissedUntil = localStorage.getItem('att_dismiss_renewal_notice');
+    if (dismissedUntil && Date.now() < parseInt(dismissedUntil, 10)) return;
+  } catch (e) {}
+  if (isAnyContextualBannerVisible('renewal-notice-banner')) return;
+  const banner = document.getElementById('renewal-notice-banner');
+  const textEl = document.getElementById('renewal-notice-text');
+  if (!banner) return;
+  if (textEl) {
+    textEl.textContent = t('renewal.noticeText', 'Your Pro ended — renew to keep unlimited classes & auto-export');
+  }
+  if (banner.style.display !== 'flex') {
+    banner.style.display = 'flex';
+    try { logUserEvent('renewal_notice_shown', {}); } catch (e) {}
+  }
+}
+
+function onRenewalNoticeClick() {
+  try { logUserEvent('renewal_notice_clicked', {}); } catch (e) {}
+  showUpgradeModal('renewal');
+}
+
+function closeRenewalNoticeBanner() {
+  const banner = document.getElementById('renewal-notice-banner');
+  if (banner) banner.style.display = 'none';
+  safeSetItem('att_dismiss_renewal_notice', String(Date.now() + 30 * 24 * 3600 * 1000));
+  try { logUserEvent('renewal_notice_dismissed', {}); } catch (e) {}
 }
 
 function showExportTruncatedBanner(count, total) {
@@ -9967,6 +10033,72 @@ function downloadPdfReport() {
   });
 }
 
+// Forwardable 1-page school quote PDF ("Ask my school to pay") generated by
+// POST /api/export/quote-pdf. Also records the quote request and alerts Derek.
+async function downloadSchoolQuotePdf(btn, customOpts = {}) {
+  if (!state.sessionToken) {
+    toast(t('toast.signInFirst', 'Please sign in with Google first.'));
+    return false;
+  }
+  let targetWindow = null;
+  if (window !== window.top) {
+    try { targetWindow = window.open('download.html', '_blank'); } catch (e) {}
+  }
+  const origText = btn ? btn.textContent : '';
+  if (btn) btn.disabled = true;
+  try {
+    toast(t('toast.pdfGenerating', 'Generating PDF…'));
+    const email = (state.userEmail || '').toLowerCase();
+    const domain = (_billing && _billing.domain) || (email.includes('@') ? email.split('@')[1] : '');
+    const schoolName = customOpts.schoolName || (document.getElementById('paywall-school-name')?.value || '').trim() || (document.getElementById('school-license-org-name')?.value || '').trim() || inferSchoolName(domain);
+    const plan = customOpts.plan || (document.getElementById('school-license-tier')?.value) || 'department';
+    const res = await fetch(`${state.backendUrl}/export/quote-pdf`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({
+        schoolName,
+        domain,
+        plan,
+        teacherName: customOpts.teacherName || state.userName || state.userDisplayName || state._selfDisplayName || '',
+      }),
+    });
+    if (!res.ok) {
+      if (targetWindow && !targetWindow.closed) { try { targetWindow.close(); } catch (e) {} }
+      toast(t('toast.pdfFailed', 'Could not generate the PDF.'));
+      return false;
+    }
+    const blob = await res.blob();
+    const safeDomain = String(domain || 'school').replace(/[^a-z0-9.-]+/gi, '-').toLowerCase().slice(0, 40) || 'school';
+    const filename = `Attendance-Tracker-School-Quote-${safeDomain}.pdf`;
+    let mode = 'direct';
+    if (window !== window.top) {
+      try {
+        const buf = new Uint8Array(await blob.arrayBuffer());
+        let bin = '';
+        const CHUNK = 0x8000;
+        for (let i = 0; i < buf.length; i += CHUNK) bin += String.fromCharCode.apply(null, buf.subarray(i, i + CHUNK));
+        mode = relayDownload({ filename, mime: 'application/pdf', content: btoa(bin), encoding: 'base64' }, targetWindow);
+      } catch (e) {
+        if (targetWindow && !targetWindow.closed) { try { targetWindow.close(); } catch (e) {} }
+        mode = 'direct';
+      }
+    }
+    if (mode === 'blocked') return false;
+    if (mode === 'direct') directBlobDownload(blob, filename);
+    try { logUserEvent('school_quote_pdf_downloaded', { domain, plan }); } catch (e) {}
+    return true;
+  } catch (e) {
+    if (targetWindow && !targetWindow.closed) { try { targetWindow.close(); } catch (e) {} }
+    toast(t('toast.pdfFailed', 'Could not generate the PDF.'));
+    return false;
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      if (origText) btn.textContent = origText;
+    }
+  }
+}
+
 // Per-attendee certificates (Pro) — the credit-granting artifact. Opens a
 // small options form (issuer/course/credit) instead of firing blind: the
 // backend accepted these fields all along, but with nothing sending them
@@ -11715,6 +11847,7 @@ window.addEventListener('DOMContentLoaded', () => {
         </div>
         <div id="paywall-school-status" style="display:none;font-size:.74rem;color:#81c995"></div>
         <button type="button" id="btn-paywall-school-submit" onclick="submitPaywallSchoolQuote()" style="width:100%;background:#58a6ff;color:#0d1117;border:none;border-radius:8px;padding:8px 12px;font-weight:700;font-size:.8rem;cursor:pointer" data-i18n="paywall.schoolSubmit">Request Official School Quote</button>
+        <button type="button" id="btn-paywall-quote-pdf" onclick="downloadSchoolQuotePdf(this)" style="width:100%;background:rgba(255,255,255,.06);color:#e6edf3;border:1px solid #30363d;border-radius:8px;padding:7px 12px;font-weight:600;font-size:.76rem;cursor:pointer">📄 Download Instant Quote PDF for Principal / IT</button>
         <div style="text-align:center">
           <button type="button" onclick="resetPaywallWhyModal()" style="background:none;border:none;color:#9aa0a6;font-size:.75rem;cursor:pointer;text-decoration:underline" data-i18n="common.back">← Back</button>
         </div>
@@ -11886,8 +12019,9 @@ window.addEventListener('DOMContentLoaded', () => {
         <div id="upgrade-email-link-status" style="display:none;font-size:.75rem;color:#81c995;font-weight:500;padding:3px 0"></div>
       </div>
 
-      <!-- School Invoicing / Purchase Order Request -->
-      <div style="text-align:center;margin-bottom:8px">
+      <!-- School Invoicing / Purchase Order Request ("Ask my school to pay") -->
+      <div style="text-align:center;margin-bottom:8px;display:flex;flex-direction:column;gap:4px;align-items:center">
+        <button type="button" id="btn-ask-school-quote-pdf" onclick="downloadSchoolQuotePdf(this)" style="background:none;border:none;color:#8ab4f8;font-size:.74rem;font-weight:600;text-decoration:underline;cursor:pointer;padding:2px 6px">📄 Ask my school to pay (Download Quote PDF)</button>
         <a href="mailto:derekgallardo01@gmail.com?subject=Attendance%20Tracker%20School%20Quote%20%2F%20Purchase%20Order%20Request&amp;body=Hello%20Derek,%0A%0AWe%20would%20like%20to%20request%20an%20official%20school%20invoice%2Fquote%20for%20Attendance%20Tracker.%0A%0ASchool%20Name:%0ACountry%20%2F%20State:%0AContact%20Person:%0ANumber%20of%20Teachers:%0A%0AThank%20you!" style="color:#9aa0a6;font-size:.72rem;text-decoration:underline" data-i18n="upgrade.schoolQuoteLink">Need a School Quote or Purchase Order? Request an invoice</a>
       </div>
 

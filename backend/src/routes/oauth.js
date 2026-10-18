@@ -277,10 +277,20 @@ router.get('/me', async (req, res) => {
       getUserTrackingStreak(domain, decoded.email),
       buildTeamSignpost(domain, decoded.email),
     ]);
+    let billingStatus = user?.individualBillingStatus || null;
+    if (user?.individualPlan === 'pro' && user?.individualPlanExpiresAt) {
+      const expiresMs = Date.parse(user.individualPlanExpiresAt);
+      const hasActiveSubscription = !!user?.individualStripeSubscriptionId;
+      const isLifetime = user?.individualPlanType === 'lifetime';
+      if (!isNaN(expiresMs) && expiresMs <= Date.now() && !hasActiveSubscription && !isLifetime) {
+        billingStatus = 'expired';
+      }
+    }
     res.json({
       email: decoded.email,
       domain,
       teamAdmin: !!user?.teamAdmin,
+      billingStatus,
       weeklyStreak,
       teamSignpost, // null unless this domain is a genuine multi-teacher cluster
       needsAcquisitionSource: !user?.acquisitionSource && !user?.acquisitionDismissed,

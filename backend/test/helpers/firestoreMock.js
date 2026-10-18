@@ -135,7 +135,7 @@ class MockQuery {
       docs.push(new MockSnapshot(id, ref, { ...data }));
       if (this._limit && docs.length >= this._limit) break;
     }
-    return { empty: docs.length === 0, size: docs.length, docs };
+    return { empty: docs.length === 0, size: docs.length, docs, forEach: (fn) => docs.forEach(fn) };
   }
 }
 
@@ -176,7 +176,7 @@ class MockCollectionGroupQuery {
       docs.push(new MockSnapshot(segs[segs.length - 1], ref, { ...data }));
       if (this._limit && docs.length >= this._limit) break;
     }
-    return { empty: docs.length === 0, size: docs.length, docs };
+    return { empty: docs.length === 0, size: docs.length, docs, forEach: (fn) => docs.forEach(fn) };
   }
 }
 

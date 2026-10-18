@@ -126,9 +126,12 @@ const FRONTEND_EVENT_TYPES = new Set([
   'school_license_requested',
   'school_quote_generated',
   'paywall_quote_requested',
-  // Subtle trial ending banner interaction
+  // Subtle trial ending & renewal banner interaction
   'trial_banner_upgrade_clicked',
   'trial_banner_dismissed',
+  'renewal_notice_shown',
+  'renewal_notice_clicked',
+  'renewal_notice_dismissed',
   // Email upgrade link requested from paywall modal
   'upgrade_link_requested',
   // Colleague referral modal interactions
@@ -440,11 +443,65 @@ router.post('/history/import-conference', requireAuth, async (req, res) => {
 router.get('/series', requireAuth, async (req, res) => {
   res.set('Cache-Control', 'no-store');
   try {
+    const pro = await planIsPro(req.user.domain, req.user.email);
     const data = await getUserMeetingSeries(req.user.domain, req.user.email);
-    res.json(data);
+    const seriesList = Array.isArray(data?.series) ? data.series.map(s => {
+      if (!pro && Array.isArray(s.people) && s.people.length > 12) {
+        return { ...s, people: s.people.slice(0, 12), peopleCapped: true, totalPeopleCount: s.people.length };
+      }
+      return s;
+    }) : (data?.series || []);
+    res.json({ ...data, series: seriesList, isPro: !!pro, seriesCsvGated: !pro });
   } catch (err) {
     log.error('series: fetch failed', { error: err.message, email: req.user.email });
     res.status(500).json({ error: 'Failed to fetch series' });
+  }
+});
+
+// GET /api/series/:recurringEventId/csv — server-gated gradebook CSV export for a recurring series.
+router.get('/series/:recurringEventId/csv', requireAuth, async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  try {
+    const pro = await planIsPro(req.user.domain, req.user.email);
+    if (!pro) {
+      return res.status(402).json({ error: 'Semester gradebook CSV exports require Pro.', code: 'PRO_REQUIRED', upgrade: true });
+    }
+    const data = await getUserMeetingSeries(req.user.domain, req.user.email);
+    const s = (data?.series || []).find(x => x.recurringEventId === req.params.recurringEventId);
+    if (!s) return res.status(404).json({ error: 'Series not found' });
+    const format = String(req.query.format || 'generic').toLowerCase();
+    const escCsv = (val) => {
+      const str = String(val ?? '');
+      return /[",\n\r]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+    };
+    const people = s.people || [];
+    const lines = [];
+    if (format === 'moodle') {
+      lines.push(['Email address', 'First name', 'Last name', 'Attendance (%)', 'Sessions Attended', 'Total Minutes'].join(','));
+      for (const p of people) {
+        const parts = String(p.displayName || '').trim().split(/\s+/);
+        const first = parts[0] || '';
+        const last = parts.slice(1).join(' ') || '';
+        lines.push([escCsv(p.email || ''), escCsv(first), escCsv(last), Math.round((p.attendanceRate || 0) * 100), p.attended || 0, p.totalMinutes || 0].join(','));
+      }
+    } else if (format === 'canvas') {
+      lines.push(['Student', 'SIS Login ID', 'Attendance (%)', 'Sessions Attended', 'Total Minutes'].join(','));
+      for (const p of people) {
+        lines.push([escCsv(p.displayName || p.email || ''), escCsv(p.email || ''), Math.round((p.attendanceRate || 0) * 100), p.attended || 0, p.totalMinutes || 0].join(','));
+      }
+    } else {
+      lines.push(['Name', 'Email', 'Sessions Attended', 'Total Sessions', 'Attendance Rate (%)', 'Total Minutes'].join(','));
+      for (const p of people) {
+        lines.push([escCsv(p.displayName || ''), escCsv(p.email || ''), p.attended || 0, s.instanceCount || 0, Math.round((p.attendanceRate || 0) * 100), p.totalMinutes || 0].join(','));
+      }
+    }
+    const safeTitle = String(s.title || 'series').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40) || 'series';
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="ClassSummary_${format}_${safeTitle}.csv"`);
+    res.send(lines.join('\r\n'));
+  } catch (err) {
+    log.error('series: csv export failed', { error: err.message, email: req.user.email });
+    res.status(500).json({ error: 'Failed to export series CSV' });
   }
 });
 

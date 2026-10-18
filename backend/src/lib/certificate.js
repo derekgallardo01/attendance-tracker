@@ -428,11 +428,168 @@ function renderCertificatesPdf(models) {
   });
 }
 
+// ─────────────── Institutional / School Quote PDF ("Ask my school to pay") ───────────────
+// PURE: builds a structured quote model a teacher can forward to their principal,
+// department chair, or business office for P-card checkout or PO approval.
+function buildQuoteModel({
+  teacherName = null,
+  teacherEmail = '',
+  domain = '',
+  schoolName = null,
+  department = null,
+  recommendedPlan = null,
+  usage = {},
+  issuedAt = new Date(),
+} = {}) {
+  const issuedDate = toDate(issuedAt) || new Date();
+  const validUntilDate = new Date(issuedDate.getTime() + 30 * 86400000);
+  const emailClean = String(teacherEmail || '').trim();
+  const domainClean = String(domain || (emailClean.includes('@') ? emailClean.split('@')[1] : '') || '').trim().toLowerCase();
+  const resolvedSchool = (schoolName && String(schoolName).trim())
+    || (domainClean && domainClean !== 'gmail.com' ? domainClean : 'School / Department');
+  const domainTeachers = Math.max(1, Number(usage.domainTeachers) || 1);
+  const classesTracked = Math.max(0, Number(usage.classesTracked) || 0);
+  const totalStudents = Math.max(0, Number(usage.totalStudents) || 0);
+
+  const planKey = recommendedPlan
+    || (domainTeachers >= 50 ? 'quote' : (domainTeachers >= 10 ? 'institution' : 'department'));
+  const quoteNumber = verificationCode(`${emailClean}|${domainClean}|${issuedDate.toISOString().slice(0, 10)}`).replace(/^AT-/, 'QT-');
+
+  const plans = [
+    {
+      key: 'individual_annual',
+      name: 'Educator Annual Pass (1 Teacher)',
+      price: '$19 / year',
+      amountUsd: 19,
+      description: 'Unlimited class size, automatic Google Sheets export, multi-session gradebooks, and student attendance certificates for 1 educator.',
+      recommended: planKey === 'individual_annual',
+    },
+    {
+      key: 'department',
+      name: 'Department Plan (Up to 10 Teachers)',
+      price: '$79 / year',
+      amountUsd: 79,
+      description: `Covers up to 10 educators on ${domainClean || 'your school domain'} (~$7.90/teacher/year). Includes shared attendance history and LMS gradebook exports.`,
+      recommended: planKey === 'department',
+    },
+    {
+      key: 'institution',
+      name: 'School / Institution Site License (Unlimited Teachers)',
+      price: '$149 / year',
+      amountUsd: 149,
+      description: `Site-wide Pro access for every educator on @${domainClean || 'school.edu'}. Includes W-9 / vendor onboarding and PO / invoice support.`,
+      recommended: planKey === 'institution' || planKey === 'quote',
+    },
+  ];
+
+  return {
+    quoteNumber,
+    issuedDate: fmtDate(issuedDate, 'UTC', 'en-US'),
+    validUntilDate: fmtDate(validUntilDate, 'UTC', 'en-US'),
+    teacherName: teacherName ? String(teacherName).trim() : null,
+    teacherEmail: emailClean,
+    domain: domainClean,
+    schoolName: resolvedSchool,
+    department: department ? String(department).trim() : null,
+    recommendedPlan: planKey,
+    usage: {
+      classesTracked,
+      totalStudents,
+      domainTeachers,
+    },
+    plans,
+    checkoutUrl: `https://attendancetracker.dev/pricing.html?domain=${encodeURIComponent(domainClean)}&quote=${encodeURIComponent(quoteNumber)}`,
+    contactEmail: 'derek@attendancetracker.dev',
+  };
+}
+
+/* istanbul ignore next: pdfkit layout pass — verified via %PDF header in unit tests. */
+function renderQuotePdf(model) {
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({ size: 'A4', margin: 50, info: { Title: `Quote ${model.quoteNumber} — Google Meet Attendance Tracker` } });
+      if (UNICODE_FONT) doc.registerFont('body', UNICODE_FONT);
+      const font = UNICODE_FONT ? 'body' : 'Helvetica';
+      const chunks = [];
+      doc.on('data', (c) => chunks.push(c));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+
+      const left = doc.page.margins.left;
+      const right = doc.page.width - doc.page.margins.right;
+      const width = right - left;
+
+      doc.font(font).fontSize(20).fillColor('#111827').text('Official Price Quote', left, 50);
+      doc.moveDown(0.2);
+      doc.fontSize(12).fillColor('#1d4ed8').text('Google Meet Attendance Tracker (Workspace Add-on)', { width });
+      doc.moveDown(0.5);
+
+      doc.fontSize(10).fillColor('#374151');
+      doc.text(`Quote #: ${model.quoteNumber}     Issued: ${model.issuedDate}     Valid Until: ${model.validUntilDate}`, { width });
+      doc.text(`Prepared for: ${model.schoolName}${model.department ? ` (${model.department})` : ''}`, { width });
+      if (model.teacherEmail) {
+        doc.text(`Requested by: ${model.teacherName ? `${model.teacherName} <${model.teacherEmail}>` : model.teacherEmail}`, { width });
+      }
+      doc.moveDown(0.6);
+
+      if (model.usage && (model.usage.classesTracked > 0 || model.usage.domainTeachers > 1)) {
+        doc.fontSize(11).fillColor('#111827').text('Current Usage Summary', { width });
+        doc.moveDown(0.2);
+        doc.fontSize(10).fillColor('#374151');
+        const bits = [];
+        if (model.usage.classesTracked > 0) bits.push(`${model.usage.classesTracked} class session(s) tracked`);
+        if (model.usage.totalStudents > 0) bits.push(`${model.usage.totalStudents} student attendance records captured`);
+        if (model.usage.domainTeachers > 1) bits.push(`${model.usage.domainTeachers} educators active on @${model.domain}`);
+        doc.text(`• ${bits.join('   ·   ')}`, { width });
+        doc.moveDown(0.6);
+      }
+
+      doc.fontSize(11).fillColor('#111827').text('Annual Licensing Options (USD)', { width });
+      doc.moveDown(0.3);
+
+      for (const p of model.plans || []) {
+        const y0 = doc.y;
+        doc.lineWidth(p.recommended ? 1.5 : 0.75)
+          .strokeColor(p.recommended ? '#2563eb' : '#d1d5db')
+          .rect(left, y0, width, 58)
+          .stroke();
+        const badge = p.recommended ? '  [RECOMMENDED]' : '';
+        doc.font(font).fontSize(11).fillColor('#111827')
+          .text(`${p.name}${badge}`, left + 10, y0 + 8, { width: width - 130 });
+        doc.font(font).fontSize(12).fillColor('#1d4ed8')
+          .text(p.price, left + width - 120, y0 + 8, { width: 110, align: 'right' });
+        doc.font(font).fontSize(9).fillColor('#4b5563')
+          .text(p.description, left + 10, y0 + 26, { width: width - 20 });
+        doc.y = y0 + 66;
+      }
+
+      doc.moveDown(0.5);
+      doc.fontSize(11).fillColor('#111827').text('How to Approve & Activate', left, doc.y, { width });
+      doc.moveDown(0.2);
+      doc.fontSize(9.5).fillColor('#374151');
+      doc.text(`1. Instant Card / P-Card Checkout: Visit ${model.checkoutUrl} to pay online and receive an instant tax receipt.`, { width });
+      doc.moveDown(0.15);
+      doc.text(`2. Purchase Order / Invoice: Email your PO or billing request referencing Quote #${model.quoteNumber} to ${model.contactEmail}. We return a countersigned invoice and W-9 within 1 business day.`, { width });
+
+      const fy = doc.page.height - doc.page.margins.bottom - 20;
+      doc.font(font).fontSize(8).fillColor('#9ca3af')
+        .text(`Google Meet Attendance Tracker · https://attendancetracker.dev · Questions: ${model.contactEmail} · Quote ${model.quoteNumber}`, left, fy, { width, align: 'center' });
+
+      doc.end();
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
 module.exports = {
   buildReportModel,
   renderReportPdf,
   buildCertificateModels,
   renderCertificatesPdf,
+  buildQuoteModel,
+  renderQuotePdf,
   // exported for unit tests
   _internals: { durationMin, calcActiveMins, getTzAbbr, fmtDuration, fmtTime, fmtDate, statusOf, verificationCode, UNICODE_FONT },
 };
+

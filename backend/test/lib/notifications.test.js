@@ -705,10 +705,10 @@ describe('notifications — email template branches (Resend mocked)', () => {
       totalAttended: 10, plan: 'free',
     });
     let sent = mockSend.mock.calls[0][0];
-    expect(sent.html).toContain('Unlock Unlimited Classes for $4.99/year (~41¢/month)');
+    expect(sent.html).toContain('Unlock Unlimited Classes for $19/year (~$1.58/month)');
     expect(sent.html).toContain('Unlimited Google Sheets exports, classes &gt;25 students, attendance certificates &amp; LMS grade sync.');
     expect(sent.html).toContain('ref=export_email&amp;utm_source=export_digest');
-    expect(sent.text).toContain('Unlock Unlimited Classes for $4.99/year (~41¢/month)');
+    expect(sent.text).toContain('Unlock Unlimited Classes for $19/year (~$1.58/month)');
     expect(sent.text).toContain('Unlimited Google Sheets exports, classes >25 students, attendance certificates & LMS grade sync.');
     expect(sent.text).toContain('ref=export_email&utm_source=export_digest');
 
@@ -718,7 +718,7 @@ describe('notifications — email template branches (Resend mocked)', () => {
       totalAttended: 10, isPro: false,
     });
     sent = mockSend.mock.calls[1][0];
-    expect(sent.html).toContain('Unlock Unlimited Classes for $4.99/year (~41¢/month)');
+    expect(sent.html).toContain('Unlock Unlimited Classes for $19/year (~$1.58/month)');
 
     // Pro user via plan: 'pro'
     await n.sendExportNotification({
@@ -726,8 +726,8 @@ describe('notifications — email template branches (Resend mocked)', () => {
       totalAttended: 10, plan: 'pro',
     });
     sent = mockSend.mock.calls[2][0];
-    expect(sent.html).not.toContain('Unlock Unlimited Classes for $4.99/year (~41¢/month)');
-    expect(sent.text).not.toContain('Unlock Unlimited Classes for $4.99/year (~41¢/month)');
+    expect(sent.html).not.toContain('Unlock Unlimited Classes for $19/year (~$1.58/month)');
+    expect(sent.text).not.toContain('Unlock Unlimited Classes for $19/year (~$1.58/month)');
 
     // Pro user via isPro: true
     await n.sendExportNotification({
@@ -735,7 +735,7 @@ describe('notifications — email template branches (Resend mocked)', () => {
       totalAttended: 10, isPro: true,
     });
     sent = mockSend.mock.calls[3][0];
-    expect(sent.html).not.toContain('Unlock Unlimited Classes for $4.99/year (~41¢/month)');
+    expect(sent.html).not.toContain('Unlock Unlimited Classes for $19/year (~$1.58/month)');
   });
 
   test('sendSeriesAlertEmail single alert vs multiple', async () => {
@@ -2230,6 +2230,109 @@ describe('notifications — buildDesignSystemEmail & upgrade link sender', () =>
     expect(call.html).toContain('1,000 Users');
     expect(call.tags).toEqual([{ name: 'type', value: 'admin_milestone' }]);
   });
+
+  test('sendPassExpiryReminderEmail and sendInvoiceActionRequiredEmail + localized personal senders', async () => {
+    const n = require('../../src/lib/notifications');
+    mockSend.mockClear();
+
+    expect(await n.sendPassExpiryReminderEmail({})).toEqual({ skipped: 'invalid email' });
+    expect(await n.sendInvoiceActionRequiredEmail({})).toEqual({ skipped: 'invalid email' });
+    expect(await n.sendInvoiceActionRequiredEmail({ to: 'a@b.com' })).toEqual({ skipped: 'no invoice url' });
+
+    await n.sendInvoiceActionRequiredEmail({
+      to: 'teacher@school.edu',
+      hostedInvoiceUrl: 'https://invoice.stripe.com/i/acct_123',
+      amountDue: 1900,
+      currency: 'usd',
+    });
+    await n.sendInvoiceActionRequiredEmail({
+      to: 'teacher@school.edu',
+      hostedInvoiceUrl: 'https://invoice.stripe.com/i/acct_124',
+    });
+
+    for (const reminderType of ['expiry_t14', 'expiry_t3', 'expiry_t_plus_1', 'grant_expiry_t3', 'grant_expiry_t_plus_1', 'trial_t3']) {
+      await n.sendPassExpiryReminderEmail({
+        to: 'teacher@school.edu',
+        displayName: 'Prof. Lee',
+        reminderType,
+        planType: reminderType.startsWith('grant_') ? 'review_reward' : (reminderType.startsWith('trial_') ? 'auto_export_trial' : 'educator'),
+        daysUntilExpiry: reminderType.endsWith('t_plus_1') ? -1 : (reminderType.endsWith('t14') ? 14 : 3),
+        expiresAt: '2026-11-01T00:00:00.000Z',
+        stats: { exportsCount: 14, largeClassesCount: 4, certificatesCount: 22 },
+        checkoutUrl: 'https://attendancetracker.dev/api/billing/checkout-redirect?token=abc',
+      });
+    }
+
+    // Exercise es / pt / bn branches across personal email senders
+    for (const lang of ['es', 'pt', 'bn', 'en']) {
+      await n.sendWelcomeEmail({ to: `u_${lang}@x.com`, displayName: 'Ana', language: lang });
+      await n.sendReactivationEmail({ to: `u_${lang}@x.com`, displayName: 'Ana', daysSinceLogin: 7, variant: '7d', language: lang });
+      await n.sendReactivationEmail({ to: `u_${lang}@x.com`, displayName: 'Ana', daysSinceLogin: 30, variant: '30d', language: lang });
+      await n.sendActivationNudgeEmail({ to: `u_${lang}@x.com`, displayName: 'Ana', daysSinceLogin: 7, language: lang });
+      await n.sendSoloNudgeEmail({ to: `u_${lang}@x.com`, displayName: 'Ana', daysSinceLogin: 7, language: lang });
+      await n.sendForgottenMeetingEmail({ to: `u_${lang}@x.com`, displayName: 'Ana', seriesTitle: 'Bio 101', recurringEventId: 'r1', trackedInWindow: 4, daysSinceLast: 8, language: lang });
+      await n.sendComebackEmail({ to: `u_${lang}@x.com`, displayName: 'Ana', meetingTitle: 'Bio 101', daysSinceLogin: 8, language: lang });
+      await n.sendExportGapEmail({ to: `u_${lang}@x.com`, displayName: 'Ana', meetingTitle: 'Bio 101', daysSinceLogin: 8, language: lang });
+      await n.sendUpcomingMeetingEmail({ to: `u_${lang}@x.com`, displayName: 'Ana', meetingTitle: 'Bio 101', minutesUntil: 1, language: lang });
+      await n.sendUpcomingMeetingEmail({ to: `u_${lang}@x.com`, displayName: 'Ana', meetingTitle: 'Bio 101', minutesUntil: 5, language: lang });
+    }
+
+    expect(mockSend).toHaveBeenCalled();
+  });
+
+  test('covers remaining branches in sendUpgradeNotification, sendAdminSubscriptionCancelledNotification, sendAdminMilestoneEmail, and sendUpgradeLinkEmail', async () => {
+    const n = require('../../src/lib/notifications');
+    mockSend.mockClear();
+
+    for (const plan of ['educator', 'lifetime', 'team', 'department', 'individual', 'other']) {
+      await n.sendUpgradeNotification({
+        email: 'u@school.edu',
+        displayName: 'Prof',
+        domain: 'school.edu',
+        plan,
+        amountTotal: plan === 'other' ? 0 : 1900,
+        country: plan === 'educator' ? 'US' : null,
+        customerId: plan === 'department' ? 'cus_1' : null,
+        subscriptionId: plan === 'team' ? 'sub_1' : null,
+      });
+    }
+
+    for (const plan of ['educator', 'team', 'department', 'individual', 'other']) {
+      await n.sendAdminSubscriptionCancelledNotification({
+        email: 'u@school.edu',
+        displayName: 'Prof',
+        domain: 'school.edu',
+        plan,
+        subscriptionId: plan === 'team' ? 'sub_1' : null,
+        customerId: plan === 'department' ? 'cus_1' : null,
+        currentPeriodEnd: plan === 'educator' ? '2026-12-31' : null,
+      });
+    }
+
+    for (const metric of ['users', 'pro', 'meetings']) {
+      await n.sendAdminMilestoneEmail({
+        milestone: { metric, threshold: 100, label: `100 ${metric}` },
+        currentStats: { userCount: 100, proCount: metric === 'pro' ? 25 : 0, meetingCount: metric === 'meetings' ? 500 : 0 },
+      });
+    }
+
+    for (const lang of ['en', 'es', 'pt', 'bn']) {
+      await n.sendUpgradeLinkEmail({
+        to: `u_${lang}@school.edu`,
+        displayName: lang === 'bn' ? '' : 'Maria Garcia',
+        lifetimeUrl: 'https://checkout.stripe.com/pay/lt',
+        educatorUrl: 'https://checkout.stripe.com/pay/ed',
+        lifetimePrice: '$22.50',
+        educatorPrice: '$9.50',
+        isPpp: lang !== 'en',
+        flag: '🇧🇷',
+        language: lang,
+        country: lang === 'en' ? 'IN' : 'BR',
+      });
+    }
+
+    expect(mockSend).toHaveBeenCalled();
+  });
 });
 
 describe('buildDesignSystemEmail — HTML escaping', () => {
@@ -2256,5 +2359,7 @@ describe('buildDesignSystemEmail — HTML escaping', () => {
     expect(html).not.toContain('<h2');
   });
 });
+
+
 
 

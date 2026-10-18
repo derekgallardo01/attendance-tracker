@@ -1064,3 +1064,29 @@ describe('check-in session window for recurring meeting links', () => {
     expect(new Date(anew.checkedInAt).getTime()).toBeGreaterThan(new Date(priorTimestamp).getTime());
   });
 });
+
+describe('getDomainClusterStats', () => {
+  test('returns zeros for empty or personal email domains', async () => {
+    expect(await firestore.getDomainClusterStats('')).toEqual({ payingColleagues: 0, largeClassCount: 0 });
+    expect(await firestore.getDomainClusterStats('gmail.com')).toEqual({ payingColleagues: 0, largeClassCount: 0 });
+  });
+
+  test('counts active Pro users (non-expired or with stripe subscription) and large classes (>25 students)', async () => {
+    const futureIso = new Date(Date.now() + 10 * 86400000).toISOString();
+    const pastIso = new Date(Date.now() - 10 * 86400000).toISOString();
+
+    ctx.seed('tenants/school.edu/users/u1@school.edu', { individualPlan: 'pro', individualPlanExpiresAt: futureIso });
+    ctx.seed('tenants/school.edu/users/u2@school.edu', { individualPlan: 'pro', individualPlanExpiresAt: pastIso });
+    ctx.seed('tenants/school.edu/users/u3@school.edu', { individualPlan: 'pro', individualPlanExpiresAt: pastIso, individualStripeSubscriptionId: 'sub_123' });
+    ctx.seed('tenants/school.edu/users/u4@school.edu', { individualPlan: 'pro' });
+    ctx.seed('tenants/school.edu/users/u5@school.edu', { individualPlan: 'free' });
+
+    ctx.seed('tenants/school.edu/meetings/m1', { distinctAttendees: 32 });
+    ctx.seed('tenants/school.edu/meetings/m2', { participantCount: 28 });
+    ctx.seed('tenants/school.edu/meetings/m3', { participantCount: 15 });
+
+    const stats = await firestore.getDomainClusterStats('school.edu');
+    expect(stats).toEqual({ payingColleagues: 3, largeClassCount: 2 });
+  });
+});
+

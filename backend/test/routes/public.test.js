@@ -16,6 +16,11 @@ jest.mock('../../src/services/firestore', () => ({
   getSharedSeriesView: jest.fn(),
   getSharedMeetingView: jest.fn(),
   suppressEmail: jest.fn(),
+  unsuppressEmail: jest.fn(),
+  isEmailSuppressed: jest.fn(),
+  getUserSettings: jest.fn(),
+  updateUserSettings: jest.fn(),
+  recordCancellationTelemetry: jest.fn(),
   getVerification: jest.fn(),
   logEvent: jest.fn(),
   recordPublicPageview: jest.fn(),
@@ -27,6 +32,10 @@ jest.mock('../../src/lib/notifications', () => ({
   sendFeedbackEmail: jest.fn(),
   verifyUnsubscribeToken: jest.fn(),
   sendAdminEmail: jest.fn(),
+  sendAdminEmailUnsubscribedNotification: jest.fn(() => Promise.resolve({ sent: true })),
+}));
+jest.mock('../../src/services/review-verifier', () => ({
+  verifyUserReview: jest.fn(),
 }));
 
 const firestore = require('../../src/services/firestore');
@@ -863,5 +872,103 @@ describe('POST /api/public/error', () => {
     expect(publicRouter._errorLimiter).toBeDefined();
   });
 });
+
+describe('POST /api/public/unsubscribe granular preferences & unsubscribe-direct & clicks', () => {
+  test('granular preferences: all 4 unchecked performs full unsubscribe', async () => {
+    notifications.verifyUnsubscribeToken.mockReturnValue(true);
+    firestore.suppressEmail.mockResolvedValue(undefined);
+    firestore.updateUserSettings.mockResolvedValue(undefined);
+    firestore.recordCancellationTelemetry.mockResolvedValue(undefined);
+
+    const res = await request(app)
+      .post('/api/public/unsubscribe?e=u%40school.edu&t=valid-token')
+      .type('form')
+      .send({ action: 'preferences' });
+    expect(res.status).toBe(200);
+    expect(res.text).toContain("You're unsubscribed");
+    expect(firestore.suppressEmail).toHaveBeenCalledWith('u@school.edu', { source: 'granular_unsubscribe_all' });
+  });
+
+  test('granular preferences: partial categories enabled unsuppresses and saves preferences', async () => {
+    notifications.verifyUnsubscribeToken.mockReturnValue(true);
+    firestore.unsuppressEmail.mockResolvedValue(undefined);
+    firestore.updateUserSettings.mockResolvedValue(undefined);
+    firestore.recordCancellationTelemetry.mockResolvedValue(undefined);
+
+    const res = await request(app)
+      .post('/api/public/unsubscribe?e=u%40school.edu&t=valid-token')
+      .type('form')
+      .send({ exportSummary: 'on', seriesAlerts: 'true' });
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('Preferences updated');
+    expect(firestore.unsuppressEmail).toHaveBeenCalledWith('u@school.edu');
+    expect(firestore.updateUserSettings).toHaveBeenCalledWith('school.edu', 'u@school.edu', {
+      notificationPreferences: {
+        exportSummary: true,
+        seriesAlerts: true,
+        weeklyDigest: false,
+        tipsAndUpdates: false,
+      },
+    });
+  });
+
+  test('POST /api/public/unsubscribe-direct validates email and suppresses on valid email', async () => {
+    const bad = await request(app)
+      .post('/api/public/unsubscribe-direct')
+      .send({ email: 'not-an-email' });
+    expect(bad.status).toBe(400);
+
+    firestore.suppressEmail.mockResolvedValue(undefined);
+    const ok = await request(app)
+      .post('/api/public/unsubscribe-direct')
+      .send({ email: 'Teacher@School.edu' });
+    expect(ok.status).toBe(200);
+    expect(ok.body.success).toBe(true);
+    expect(firestore.suppressEmail).toHaveBeenCalledWith('teacher@school.edu', { source: 'public_direct_form' });
+
+    firestore.suppressEmail.mockRejectedValueOnce(new Error('db fail'));
+    const fail = await request(app)
+      .post('/api/public/unsubscribe-direct')
+      .send({ email: 'teacher@school.edu' });
+    expect(fail.status).toBe(500);
+  });
+
+  test('GET /api/public/review-click and /api/public/offer-click update user doc and redirect', async () => {
+    const updateSpy = jest.fn().mockResolvedValue(undefined);
+    firestore.getDb.mockReturnValue({
+      collection: () => ({
+        doc: () => ({
+          collection: () => ({
+            doc: () => ({ update: updateSpy }),
+          }),
+        }),
+      }),
+    });
+
+    const revRes = await request(app).get('/api/public/review-click?email=t%40school.edu&source=email');
+    expect(revRes.status).toBe(302);
+    expect(updateSpy).toHaveBeenCalled();
+
+    const offerRes = await request(app).get('/api/public/offer-click?email=t%40school.edu&campaign=spring&plan=department');
+    expect(offerRes.status).toBe(302);
+    expect(offerRes.headers.location).toContain('plan=department');
+  });
+
+  test('POST /api/public/verify-review validates email and delegates to verifyUserReview', async () => {
+    const { verifyUserReview } = require('../../src/services/review-verifier');
+    const bad = await request(app).post('/api/public/verify-review').send({ email: 'bad' });
+    expect(bad.status).toBe(400);
+
+    verifyUserReview.mockResolvedValueOnce({ success: true, reviewId: 'r1' });
+    const ok = await request(app).post('/api/public/verify-review').send({ email: 't@school.edu', declaredName: 'T' });
+    expect(ok.status).toBe(200);
+    expect(ok.body.success).toBe(true);
+
+    verifyUserReview.mockRejectedValueOnce(new Error('boom'));
+    const err = await request(app).post('/api/public/verify-review').send({ email: 't@school.edu' });
+    expect(err.status).toBe(500);
+  });
+});
+
 
 

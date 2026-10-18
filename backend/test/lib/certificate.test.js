@@ -1,7 +1,7 @@
 // Unit tests for the attendance PDF builder. The pure model is asserted in
 // detail; the pdfkit render is checked structurally (valid %PDF, non-trivial
 // size, survives many rows + non-Latin names).
-const { buildReportModel, renderReportPdf, buildCertificateModels, renderCertificatesPdf, _internals } = require('../../src/lib/certificate');
+const { buildReportModel, renderReportPdf, buildCertificateModels, renderCertificatesPdf, buildQuoteModel, renderQuotePdf, _internals } = require('../../src/lib/certificate');
 
 const BASE = {
   meeting: {
@@ -239,5 +239,51 @@ describe('renderReportPdf', () => {
     }));
     const buf = await renderReportPdf(buildReportModel({ meeting: { title: 'Big' }, attendees }));
     expect(buf.slice(0, 5).toString('latin1')).toBe('%PDF-');
+  });
+});
+
+describe('buildQuoteModel and renderQuotePdf', () => {
+  test('recommends department (<10 teachers), institution (10-49), and quote (50+)', () => {
+    const dept = buildQuoteModel({
+      teacherName: 'Dr. Smith',
+      teacherEmail: 'smith@oxford.edu',
+      domain: 'oxford.edu',
+      usage: { classesTracked: 12, totalStudents: 180, domainTeachers: 4 },
+    });
+    expect(dept.recommendedPlan).toBe('department');
+    expect(dept.quoteNumber).toMatch(/^QT-[0-9A-F]{8}$/);
+    expect(dept.schoolName).toBe('oxford.edu');
+
+    const inst = buildQuoteModel({
+      teacherEmail: 'smith@oxford.edu',
+      domain: 'oxford.edu',
+      usage: { classesTracked: 40, totalStudents: 600, domainTeachers: 18 },
+    });
+    expect(inst.recommendedPlan).toBe('institution');
+
+    const custom = buildQuoteModel({
+      teacherEmail: 'smith@oxford.edu',
+      domain: 'oxford.edu',
+      usage: { classesTracked: 100, totalStudents: 2000, domainTeachers: 60 },
+    });
+    expect(custom.recommendedPlan).toBe('quote');
+  });
+
+  test('renderQuotePdf produces a valid PDF buffer across tiers', async () => {
+    for (const plan of ['department', 'institution', 'quote']) {
+      const m = buildQuoteModel({
+        teacherName: 'Prof. Jane Doe',
+        teacherEmail: 'jane@stanford.edu',
+        domain: 'stanford.edu',
+        schoolName: 'Stanford University',
+        department: 'Computer Science',
+        recommendedPlan: plan,
+        usage: { classesTracked: 24, totalStudents: 410, domainTeachers: 8 },
+      });
+      const buf = await renderQuotePdf(m);
+      expect(Buffer.isBuffer(buf)).toBe(true);
+      expect(buf.slice(0, 5).toString('latin1')).toBe('%PDF-');
+      expect(buf.length).toBeGreaterThan(1000);
+    }
   });
 });

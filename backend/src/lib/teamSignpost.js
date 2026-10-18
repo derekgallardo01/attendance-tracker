@@ -14,7 +14,7 @@
 //     a coincidence)
 const log = require('./logger');
 const { PERSONAL_EMAIL_DOMAINS } = require('../services/firestore/_core');
-const { getUser, getTenantPlan, getTenantConfig, getDomainTeacherCount } = require('../services/firestore');
+const firestore = require('../services/firestore');
 
 const TEAM_SIGNPOST_MIN = 2; // a cluster, not a coincidence
 
@@ -23,9 +23,9 @@ async function buildTeamSignpost(domain, email) {
     const domainLower = (domain || '').toLowerCase();
     if (PERSONAL_EMAIL_DOMAINS.has(domainLower)) return null; // shared tenant — count is meaningless
     const [user, tenantPlan, count] = await Promise.all([
-      getUser(domain, email),
-      getTenantPlan(domain).catch(() => ({ plan: 'free' })),
-      getDomainTeacherCount(domain),
+      firestore.getUser(domain, email),
+      firestore.getTenantPlan(domain).catch(() => ({ plan: 'free' })),
+      firestore.getDomainTeacherCount(domain),
     ]);
     if (user?.teamSignpostDismissedAt) return null;   // dismissed → gone for good
     if (tenantPlan?.plan === 'pro') return null;       // domain already on the plan
@@ -33,10 +33,29 @@ async function buildTeamSignpost(domain, email) {
     // teamAdmin flag drives the "your school / set up" phrasing vs "N teachers / see".
     let isTeamAdmin = false;
     try {
-      const cfg = await getTenantConfig(domain);
+      const cfg = await firestore.getTenantConfig(domain);
       isTeamAdmin = (cfg?.adminEmail || '').toLowerCase() === email.toLowerCase();
     } catch { /* default: non-admin phrasing */ }
-    return { domain: domainLower, teacherCount: count, isTeamAdmin };
+
+    let payingColleagues = 0;
+    let largeClassCount = 0;
+    if (typeof firestore.getDomainClusterStats === 'function') {
+      try {
+        const stats = await firestore.getDomainClusterStats(domain);
+        payingColleagues = Number(stats?.payingColleagues) || 0;
+        largeClassCount = Number(stats?.largeClassCount) || 0;
+      } catch { /* fallback to 0 */ }
+    }
+
+    const recommendedPlan = count >= 50 ? 'quote' : (count >= 10 ? 'institution' : 'department');
+    return {
+      domain: domainLower,
+      teacherCount: count,
+      isTeamAdmin,
+      payingColleagues,
+      largeClassCount,
+      recommendedPlan,
+    };
   } catch (err) {
     log.warn('teamSignpost: build failed', { domain, error: err.message });
     return null;
@@ -44,3 +63,4 @@ async function buildTeamSignpost(domain, email) {
 }
 
 module.exports = { buildTeamSignpost, TEAM_SIGNPOST_MIN };
+

@@ -1,9 +1,10 @@
 const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
+const jwt = require('jsonwebtoken');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getRevenueFunnel, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, dismissSuggestion, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance, getTeamOverview, getRecentErrorSpike, getErrorAlertState, setErrorAlertState, getCancellationTelemetry, backfillAdminActivityIfSparse, checkAndRecordMilestones, getMilestoneProgress, getTenantPlan, getRevenueSummary } = require('../services/firestore');
-const { sendAdminEmail, sendErrorSpikeAlertEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendOrgWeeklyDigest, flushDeferredNotifications, verifyReviewApprovalToken, sendReviewRewardEmail } = require('../lib/notifications');
+const { sendAdminEmail, sendErrorSpikeAlertEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendOrgWeeklyDigest, flushDeferredNotifications, verifyReviewApprovalToken, sendReviewRewardEmail, sendPassExpiryReminderEmail } = require('../lib/notifications');
 const { escapeHtml } = require('../lib/html');
 const { requireSuperAdmin, requireSuperAdminOrScheduler, requireKhMetricsKey, safeEqual } = require('../middleware/adminAuth');
 const { requireAuth } = require('../middleware/auth');
@@ -637,11 +638,11 @@ router.post('/admin/check-reengagement', requireSuperAdminOrScheduler, async (re
         let fired = 0;
 
         for (const r of reminders) {
-          // Dedup key shape: type or type:recurringEventId. Persistent (no day
-          // suffix) so each kind of reminder fires once per user forever.
-          const dedupKey = r.type === 'forgotten_meeting'
+          // Dedup key shape: type, type:recurringEventId, or type:YYYY-MM-DD.
+          // Persistent so each kind of reminder fires once per user/window.
+          const dedupKey = r.dedupKey || (r.type === 'forgotten_meeting'
             ? `forgotten_meeting:${r.recurringEventId}`
-            : r.type;
+            : r.type);
           const claim = await claimReengagementSlot(user.domain, user.email, dedupKey);
           if (!claim.claimed) { totalSkipped++; continue; }
 
@@ -706,6 +707,30 @@ router.post('/admin/check-reengagement', requireSuperAdminOrScheduler, async (re
               displayName: user.displayName || null,
               meetingTitle: r.meetingTitle,
               daysSinceLogin: r.daysSinceLogin,
+              domain: user.domain,
+              country: user.signupGeo?.country,
+              language: user.language,
+            });
+          } else if (r.type && (r.type.startsWith('expiry_') || r.type.startsWith('grant_expiry_') || r.type.startsWith('trial_expiry_'))) {
+            let checkoutUrl = null;
+            if (CONFIG.jwtSecret) {
+              const token = jwt.sign(
+                { email: user.email.toLowerCase(), domain: user.domain, purpose: 'checkout_redirect', country: user.signupGeo?.country || null },
+                CONFIG.jwtSecret,
+                { expiresIn: '7d' }
+              );
+              const baseUrl = (CONFIG.appUrl || 'https://attendance-tracker-backend-829771833968.us-central1.run.app').replace(/\/$/, '');
+              checkoutUrl = `${baseUrl}/api/billing/checkout-redirect?t=${encodeURIComponent(token)}&plan=individual_annual`;
+            }
+            result = await sendPassExpiryReminderEmail({
+              to: user.email,
+              displayName: user.displayName || null,
+              reminderType: r.type,
+              planType: r.planType || user.individualPlanType || 'annual',
+              expiresAt: r.expiresAt || user.individualPlanExpiresAt,
+              daysUntilExpiry: r.daysUntilExpiry,
+              stats: r.stats || {},
+              checkoutUrl,
               domain: user.domain,
               country: user.signupGeo?.country,
               language: user.language,
@@ -1790,12 +1815,15 @@ router.get('/admin/school-clusters', requireSuperAdmin, async (req, res) => {
     const clusters = await Promise.all(clusterEntries.map(async ([domain, teachers]) => {
       let totalExports = 0;
       let totalParticipants = 0;
+      let largeClassHits = 0;
+      let objections = 0;
       let tenantData = {};
 
       try {
+        const tenantDocRef = getDb().collection('tenants').doc(domain);
         const [tenantDoc, exportsSnap] = await Promise.all([
-          getDb().collection('tenants').doc(domain).get(),
-          getDb().collection('tenants').doc(domain).collection('exports').get(),
+          tenantDocRef.get(),
+          tenantDocRef.collection('exports').get(),
         ]);
         if (tenantDoc && tenantDoc.exists) {
           tenantData = tenantDoc.data() || {};
@@ -1804,34 +1832,69 @@ router.get('/admin/school-clusters', requireSuperAdmin, async (req, res) => {
           totalExports = exportsSnap.size;
           exportsSnap.forEach(expDoc => {
             const exp = expDoc.data();
-            totalParticipants += (Number(exp.participantCount) || 0);
+            const pCount = Number(exp.participantCount) || 0;
+            totalParticipants += pCount;
+            if (pCount > 12) largeClassHits++;
           });
         }
+        try {
+          const eventsCol = tenantDocRef.collection('events');
+          if (eventsCol && typeof eventsCol.get === 'function') {
+            const evSnap = await eventsCol.get();
+            if (evSnap && typeof evSnap.forEach === 'function') {
+              evSnap.forEach(evDoc => {
+                const ev = evDoc.data() || {};
+                if (ev.type === 'large_class_banner_clicked') largeClassHits++;
+                if (ev.type === 'paywall_objection' || ev.type === 'school_quote_generated' || ev.type === 'school_license_requested') objections++;
+              });
+            }
+          }
+        } catch (_) {}
       } catch (err) {
         log.warn('admin: failed fetching tenant details for cluster', { domain, error: err.message });
       }
 
       const country = teachers.find(t => t.country)?.country || 'Unknown';
       const primaryContact = tenantData.adminEmail || teachers[0]?.email;
+      const teacherCount = teachers.length;
+      const outreachScore = teacherCount * (1 + largeClassHits) * (1 + objections);
+      const recommendedPlan = teacherCount >= 10 ? 'institution' : 'department';
+      const priceLabel = recommendedPlan === 'institution' ? '$149/year (unlimited educators)' : '$79/year (up to 10 educators)';
 
       return {
         domain,
-        teacherCount: teachers.length,
+        teacherCount,
         teachers,
         totalExports,
         totalParticipants,
+        largeClassHits,
+        objections,
+        outreachScore,
+        recommendedPlan,
         country,
         primaryContact,
         planStatus: tenantData.plan || (teachers.some(t => t.plan === 'pro') ? 'pro' : 'free'),
         installedAt: tenantData.installedAt?.toDate ? tenantData.installedAt.toDate().toISOString() : (tenantData.installedAt || teachers[teachers.length - 1]?.createdAt),
+        draftedEmail: {
+          to: primaryContact,
+          subject: `${teacherCount} educators at ${domain} are using Google Meet Attendance Tracker`,
+          body: `Hi ${teachers[0]?.displayName ? teachers[0].displayName.split(' ')[0] : 'there'},\n\nI noticed ${teacherCount} educators at ${domain} are using Google Meet Attendance Tracker. Rather than having each teacher pay individually ($19/yr), we can cover your whole ${recommendedPlan === 'institution' ? 'school' : 'department'} for ${priceLabel}.\n\nWould you like me to send over a 1-page PDF quote for your department chair or business office?\n\nBest,\nDerek`,
+        },
       };
     }));
+
+    const topOutreachClusters = clusters
+      .filter(c => c.planStatus !== 'pro')
+      .slice()
+      .sort((a, b) => b.outreachScore - a.outreachScore || b.teacherCount - a.teacherCount)
+      .slice(0, 10);
 
     res.json({
       success: true,
       totalClusters: clusters.length,
       totalClusterTeachers: clusters.reduce((sum, c) => sum + c.teacherCount, 0),
       clusters,
+      topOutreachClusters,
     });
   } catch (err) {
     log.error('admin: failed to get school clusters', { error: err.message });

@@ -641,19 +641,25 @@
       const msg = document.getElementById('team-signpost-msg');
       const link = document.getElementById('team-signpost-link');
       const n = sp.teacherCount;
-      const dom = esc(sp.domain || '');
-      if (sp.isTeamAdmin) {
-        msg.innerHTML = t('history.clusterPromoMsg', '{n} teachers from your school are using Attendance Tracker. Upgrade to a Department Pass ($59/yr) to cover all colleagues.')
-          .replace('{n}', '<b>' + n + '</b>');
-        link.textContent = t('history.clusterPromoCta', 'Upgrade to Department Pass ($59/yr) →');
-        link.href = '/pricing.html?plan=department&domain=' + encodeURIComponent(sp.domain || '');
-      } else {
-        msg.innerHTML = t('history.clusterPromoMsg', '{n} teachers from your school are using Attendance Tracker. Upgrade to a Department Pass ($59/yr) to cover all colleagues.')
-          .replace('{n}', '<b>' + n + '</b>');
-        link.textContent = t('history.clusterPromoCta', 'Upgrade to Department Pass ($59/yr) →');
-        link.href = '/pricing.html?plan=department&domain=' + encodeURIComponent(sp.domain || '');
+      const plan = sp.recommendedPlan || (n >= 50 ? 'quote' : n >= 10 ? 'institution' : 'department');
+      let baseMsg = t('history.clusterPromoMsg', '{n} teachers from your school are using Attendance Tracker. Upgrade to a Department Pass ($59/yr) to cover all colleagues.')
+        .replace('{n}', '<b>' + n + '</b>');
+      const proofParts = [];
+      if (sp.payingColleagues > 0) proofParts.push(`${sp.payingColleagues} on Pro`);
+      if (sp.largeClassCount > 0) proofParts.push(`${sp.largeClassCount} with 25+ student classes`);
+      if (proofParts.length > 0) {
+        baseMsg += ` <span style="opacity:.85">(${esc(proofParts.join(' · '))})</span>`;
       }
-      try { logHistoryEvent('team_signpost_shown', { teacherCount: n, isTeamAdmin: !!sp.isTeamAdmin }); } catch (e) {}
+      msg.innerHTML = baseMsg;
+      if (plan === 'institution') {
+        link.textContent = t('history.clusterPromoCtaInst', 'Upgrade to Institution Plan ($149/yr) →');
+      } else if (plan === 'quote') {
+        link.textContent = t('history.clusterPromoCtaQuote', 'Request Custom School Quote →');
+      } else {
+        link.textContent = t('history.clusterPromoCta', 'Upgrade to Department Pass ($59/yr) →');
+      }
+      link.href = '/pricing.html?plan=' + encodeURIComponent(plan) + '&domain=' + encodeURIComponent(sp.domain || '');
+      try { logHistoryEvent('team_signpost_shown', { teacherCount: n, isTeamAdmin: !!sp.isTeamAdmin, recommendedPlan: plan, payingColleagues: sp.payingColleagues || 0, largeClassCount: sp.largeClassCount || 0 }); } catch (e) {}
       box.style.display = 'flex';
     }
 

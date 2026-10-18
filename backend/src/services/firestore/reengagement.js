@@ -288,6 +288,48 @@ async function evaluateReengagementForUser(domain, email) {
       }
     }
 
+    // ── Pass & Pro-grant expiry reminders (T-14, T-3, T+1) ──
+    // One-time annual passes and 35-day review/referral grants don't auto-renew
+    // via Stripe subscription webhooks, so we nudge before and just after expiry
+    // with realized value stats and a 1-click renewal link.
+    if (user.individualPlan === 'pro' && user.individualPlanExpiresAt && !user.individualStripeSubscriptionId && user.individualPlanType !== 'lifetime') {
+      const expMs = tsMs(user.individualPlanExpiresAt) || Date.parse(user.individualPlanExpiresAt);
+      if (Number.isFinite(expMs) && expMs > 0) {
+        const daysUntilExpiry = (expMs - now) / 86400000;
+        const isGrant = user.individualPlanType === 'review_reward' || user.individualPlanType === 'referral_reward';
+        let expiryType = null;
+        if (!isGrant && daysUntilExpiry > 11 && daysUntilExpiry <= 14.5) {
+          expiryType = 'expiry_t14';
+        } else if (daysUntilExpiry > 0 && daysUntilExpiry <= 3.5) {
+          expiryType = isGrant ? 'grant_expiry_t3' : 'expiry_t3';
+        } else if (daysUntilExpiry <= 0 && daysUntilExpiry >= -4) {
+          expiryType = isGrant ? 'grant_expiry_t_plus_1' : 'expiry_t_plus_1';
+        }
+        if (expiryType) {
+          const certificatesCount = eventsSnap.docs.filter(d => d.data().type === 'certificate_generated').length;
+          const largeClassCids = new Set();
+          for (const d of trackedDocs) {
+            const m = d.data().meta || {};
+            const count = m.distinctAttendees != null ? m.distinctAttendees : (m.participantCount || 0);
+            if (count > 12 && m.conferenceId) largeClassCids.add(m.conferenceId);
+          }
+          const expDateTag = new Date(expMs).toISOString().slice(0, 10);
+          reminders.push({
+            type: expiryType,
+            dedupKey: `${expiryType}:${expDateTag}`,
+            planType: user.individualPlanType || 'annual',
+            expiresAt: new Date(expMs).toISOString(),
+            daysUntilExpiry: Math.round(daysUntilExpiry),
+            stats: {
+              exportsCount: exportedCount,
+              certificatesCount,
+              largeClassesCount: largeClassCids.size,
+            },
+          });
+        }
+      }
+    }
+
     // Forgotten recurring meeting: user tracked a series 3+ times in past 30d,
     // but hasn't tracked it in 7+ days. Catches lapsed habits before they die.
     const trackedEvents = eventsSnap.docs

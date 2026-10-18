@@ -491,15 +491,24 @@ async function getWeeklySelfReport() {
       getDb().collectionGroup('meetings').count().get(),
     ]);
 
-    const users = usersSnap.docs.map(d => ({
-      email: d.id,
-      domain: (d.ref.parent.parent?.id ?? null),
-      displayName: d.data().displayName || '',
-      createdAt: tsMs(d.data().createdAt) || 0,
-      lastLoginAt: tsMs(d.data().lastLoginAt) || 0,
-      acquisitionSource: d.data().acquisitionSource || null,
-      postExportSurvey: d.data().postExportSurvey || null,
-    }));
+    const users = usersSnap.docs.map(d => {
+      const uData = d.data() || {};
+      const email = d.id || uData.email || '';
+      const domain = d.ref?.parent?.parent?.id || uData.domain || (email.includes('@') ? email.split('@')[1] : null);
+      return {
+        email,
+        domain: domain ? String(domain).toLowerCase() : null,
+        displayName: uData.displayName || '',
+        createdAt: tsMs(uData.createdAt) || 0,
+        lastLoginAt: tsMs(uData.lastLoginAt) || 0,
+        acquisitionSource: uData.acquisitionSource || null,
+        postExportSurvey: uData.postExportSurvey || null,
+        individualPlan: uData.individualPlan || null,
+        individualPlanType: uData.individualPlanType || null,
+        individualPlanExpiresAt: uData.individualPlanExpiresAt || null,
+        individualStripeSubscriptionId: uData.individualStripeSubscriptionId || null,
+      };
+    });
 
     const events = eventsSnap.docs.map(d => {
       const data = d.data();
@@ -588,6 +597,75 @@ async function getWeeklySelfReport() {
     }
     const deadEnds = Object.values(perUser).filter(b => b.polls >= 5 && b.maxPart === 0).length;
 
+    // Passes & grants expiring in the next 14 days (or expired in the past 7 days)
+    const expiringPasses = users
+      .filter(u => {
+        if (u.individualPlan !== 'pro' || !u.individualPlanExpiresAt || u.individualStripeSubscriptionId || u.individualPlanType === 'lifetime') return false;
+        const expMs = tsMs(u.individualPlanExpiresAt) || Date.parse(u.individualPlanExpiresAt);
+        if (!Number.isFinite(expMs)) return false;
+        const days = (expMs - now) / DAY;
+        return days >= -7 && days <= 14;
+      })
+      .map(u => {
+        const expMs = tsMs(u.individualPlanExpiresAt) || Date.parse(u.individualPlanExpiresAt);
+        return {
+          email: u.email,
+          domain: u.domain,
+          planType: u.individualPlanType || 'annual',
+          expiresAt: new Date(expMs).toISOString(),
+          daysUntilExpiry: Math.round((expMs - now) / DAY),
+        };
+      })
+      .sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry);
+
+    // Top 10 institutional clusters ranked by active teachers × large-class hits × objections
+    const clusterByDomain = new Map();
+    for (const u of users) {
+      if (!u.domain || PERSONAL_EMAIL_DOMAINS.has(u.domain)) continue;
+      if (!clusterByDomain.has(u.domain)) clusterByDomain.set(u.domain, []);
+      clusterByDomain.get(u.domain).push(u);
+    }
+    const eventsByEmailMap = new Map();
+    for (const e of events) {
+      const k = String(e.email || '').toLowerCase();
+      if (!eventsByEmailMap.has(k)) eventsByEmailMap.set(k, []);
+      eventsByEmailMap.get(k).push(e);
+    }
+    const topClusters = Array.from(clusterByDomain.entries())
+      .filter(([, teachers]) => teachers.length >= 2)
+      .map(([domain, teachers]) => {
+        let largeClassHits = 0;
+        let objections = 0;
+        for (const t of teachers) {
+          const evs = eventsByEmailMap.get(String(t.email || '').toLowerCase()) || [];
+          for (const ev of evs) {
+            if ((ev.type === 'tracked' && ev.part > 12) || ev.type === 'large_class_banner_clicked') largeClassHits++;
+            if (ev.type === 'paywall_objection' || ev.type === 'school_quote_generated' || ev.type === 'school_license_requested') objections++;
+          }
+        }
+        const teacherCount = teachers.length;
+        const outreachScore = teacherCount * (1 + largeClassHits) * (1 + objections);
+        const recommendedPlan = teacherCount >= 10 ? 'institution' : 'department';
+        const priceLabel = recommendedPlan === 'institution' ? '$149/year (unlimited educators)' : '$79/year (up to 10 educators)';
+        const primaryContact = teachers[0]?.email || '';
+        return {
+          domain,
+          teacherCount,
+          largeClassHits,
+          objections,
+          outreachScore,
+          recommendedPlan,
+          primaryContact,
+          draftedEmail: {
+            to: primaryContact,
+            subject: `${teacherCount} educators at ${domain} are using Google Meet Attendance Tracker`,
+            body: `Hi ${teachers[0]?.displayName ? teachers[0].displayName.split(' ')[0] : 'there'},\n\nI noticed ${teacherCount} educators at ${domain} are using Google Meet Attendance Tracker. Rather than having each teacher pay individually ($19/yr), we can cover your whole ${recommendedPlan === 'institution' ? 'school' : 'department'} for ${priceLabel}.\n\nWould you like me to send over a 1-page PDF quote for your department chair or business office?\n\nBest,\nDerek`,
+          },
+        };
+      })
+      .sort((a, b) => b.outreachScore - a.outreachScore || b.teacherCount - a.teacherCount)
+      .slice(0, 10);
+
     // Revenue block from the payments ledger — optional, never fails the report.
     let revenue = null;
     try { revenue = await getRevenueSummary({ now }); } catch (e) {
@@ -617,6 +695,8 @@ async function getWeeklySelfReport() {
         remindersThis, remindersThisTotal, remindersDelta: pctChange(remindersThisTotal, remindersLastTotal),
         deadEnds,
       },
+      expiringPasses,
+      topClusters,
     };
   } catch (err) {
     log.error('firestore: getWeeklySelfReport failed', { error: err.message });

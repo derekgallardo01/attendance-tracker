@@ -41,3 +41,72 @@ describe('parseMarketplaceReviews', () => {
     expect(reviews[0].reviewId).toBe('111111');
   });
 });
+
+describe('fetchLiveMarketplaceReviews & syncMarketplaceReviews', () => {
+  const { installFirestoreMock } = require('../helpers/firestoreMock');
+  let ctx, mp;
+  let origFetch;
+
+  beforeEach(() => {
+    ctx = installFirestoreMock();
+    origFetch = global.fetch;
+    mp = require('../../src/services/marketplace-reviews');
+  });
+
+  afterEach(() => {
+    global.fetch = origFetch;
+    ctx.uninstall();
+  });
+
+  test('fetchLiveMarketplaceReviews deduplicates across locales and handles non-ok and thrown fetch errors', async () => {
+    let callCount = 0;
+    global.fetch = jest.fn(async (url) => {
+      callCount++;
+      if (callCount === 1) {
+        return {
+          ok: true,
+          text: async () => '[[["829771833968","999111"],5,"Great add-on",1789616505461,1,null,["Alice","//lh3/a"]]]',
+        };
+      }
+      if (callCount === 2) {
+        return { ok: false, status: 503 };
+      }
+      if (callCount === 3) {
+        throw new Error('network timeout');
+      }
+      return {
+        ok: true,
+        text: async () => '[[["829771833968","999111"],5,"Great add-on",1789616505461,1,null,["Alice","//lh3/a"]]]',
+      };
+    });
+
+    const reviews = await mp.fetchLiveMarketplaceReviews('https://example.com/app?foo=1');
+    expect(reviews).toHaveLength(1);
+    expect(reviews[0].reviewId).toBe('999111');
+  });
+
+  test('syncMarketplaceReviews returns empty when no reviews and inserts/updates when reviews exist', async () => {
+    const emptyRes = await mp.syncMarketplaceReviews([]);
+    expect(emptyRes).toEqual({ total: 0, newlyDiscovered: 0, reviews: [] });
+
+    const sample = [
+      { reviewId: 'r1', rating: 5, comment: 'Initial', authorName: 'Bob', avatarUrl: '//a', timestampMs: 1000 },
+    ];
+    const firstSync = await mp.syncMarketplaceReviews(sample);
+    expect(firstSync.total).toBe(1);
+    expect(firstSync.newlyDiscovered).toBe(1);
+    expect(ctx.read('marketplace_reviews/r1').redeemed).toBe(false);
+
+    // Update existing review without touching redeemed status
+    ctx.seed('marketplace_reviews/r1', { ...ctx.read('marketplace_reviews/r1'), redeemed: true });
+    const updatedSample = [
+      { reviewId: 'r1', rating: 4, comment: 'Updated comment', authorName: 'Bob B', avatarUrl: '//b', timestampMs: 1000 },
+    ];
+    const secondSync = await mp.syncMarketplaceReviews(updatedSample);
+    expect(secondSync.total).toBe(1);
+    expect(secondSync.newlyDiscovered).toBe(0);
+    expect(ctx.read('marketplace_reviews/r1').comment).toBe('Updated comment');
+    expect(ctx.read('marketplace_reviews/r1').redeemed).toBe(true);
+  });
+});
+

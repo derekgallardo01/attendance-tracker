@@ -62,7 +62,14 @@ describe('GET /api/history', () => {
     firestore.getTenantConfig.mockResolvedValue({ adminEmail: 'boss@acme.com' });
     const res = await request(app).get('/api/history').set(authedHeader('user@acme.com', 'acme.com'));
     expect(res.status).toBe(200);
-    expect(res.body.teamSignpost).toEqual({ domain: 'acme.com', teacherCount: 4, isTeamAdmin: false });
+    expect(res.body.teamSignpost).toEqual({
+      domain: 'acme.com',
+      teacherCount: 4,
+      isTeamAdmin: false,
+      payingColleagues: 0,
+      largeClassCount: 0,
+      recommendedPlan: 'department',
+    });
   });
 
   test('team signpost: null below the 2-teacher threshold', async () => {
@@ -147,7 +154,7 @@ describe('GET /api/history', () => {
   });
 });
 
-describe('GET /api/series', () => {
+describe('GET /api/series and GET /api/series/:recurringEventId/csv', () => {
   test('401 without auth', async () => {
     const res = await request(app).get('/api/series');
     expect(res.status).toBe(401);
@@ -160,6 +167,73 @@ describe('GET /api/series', () => {
       .set(authedHeader('u@a.com', 'a.com'));
     expect(res.status).toBe(200);
     expect(firestore.getUserMeetingSeries).toHaveBeenCalledWith('a.com', 'u@a.com');
+  });
+
+  test('caps people list at 12 and marks seriesCsvGated for free users when billing is configured', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_PRICE_ID = 'price_x';
+    try {
+      firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+      const people15 = Array.from({ length: 15 }, (_, i) => ({ displayName: `P${i}`, email: `p${i}@a.com`, attended: 3, rate: 100 }));
+      firestore.getUserMeetingSeries.mockResolvedValue({
+        series: [{ recurringEventId: 'r1', title: 'Bio 101', instanceCount: 3, people: people15 }],
+        totalSeries: 1,
+      });
+      const res = await request(app).get('/api/series').set(authedHeader('u@a.com', 'a.com'));
+      expect(res.status).toBe(200);
+      expect(res.body.seriesCsvGated).toBe(true);
+      expect(res.body.series[0].people).toHaveLength(12);
+      expect(res.body.series[0].totalPeopleCount).toBe(15);
+      expect(res.body.series[0].peopleCapped).toBe(true);
+    } finally {
+      delete process.env.STRIPE_SECRET_KEY;
+      delete process.env.STRIPE_PRICE_ID;
+    }
+  });
+
+  test('GET /api/series/:recurringEventId/csv returns 402 for free user and 200 CSV for Pro user', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_PRICE_ID = 'price_x';
+    try {
+      const mockSeries = {
+        series: [{
+          recurringEventId: 'r1',
+          title: 'Bio 101',
+          instanceCount: 4,
+          instances: [{ startTime: '2026-09-01T10:00:00Z' }, { startTime: '2026-09-08T10:00:00Z' }],
+          people: [
+            { displayName: 'Ada Lovelace', email: 'ada@a.com', attended: 4, rate: 100, streak: 0, totalDurationMin: 180, cells: [true, false] },
+          ],
+        }],
+      };
+      firestore.getUserMeetingSeries.mockResolvedValue(mockSeries);
+
+      firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+      const freeRes = await request(app).get('/api/series/r1/csv').set(authedHeader('u@a.com', 'a.com'));
+      expect(freeRes.status).toBe(402);
+      expect(freeRes.body.code).toBe('PRO_REQUIRED');
+
+      firestore.getTenantPlan.mockResolvedValue({ plan: 'pro' });
+      const genericRes = await request(app).get('/api/series/r1/csv?format=generic').set(authedHeader('u@a.com', 'a.com'));
+      expect(genericRes.status).toBe(200);
+      expect(genericRes.headers['content-type']).toContain('text/csv');
+      expect(genericRes.text).toContain('Name,Email,Sessions Attended,Total Sessions,Attendance Rate (%),Total Minutes');
+      expect(genericRes.text).toContain('Ada Lovelace,ada@a.com,4,4,');
+
+      const moodleRes = await request(app).get('/api/series/r1/csv?format=moodle').set(authedHeader('u@a.com', 'a.com'));
+      expect(moodleRes.status).toBe(200);
+      expect(moodleRes.text).toContain('Email address,First name,Last name,Attendance (%),Sessions Attended,Total Minutes');
+
+      const canvasRes = await request(app).get('/api/series/r1/csv?format=canvas').set(authedHeader('u@a.com', 'a.com'));
+      expect(canvasRes.status).toBe(200);
+      expect(canvasRes.text).toContain('Student,SIS Login ID,Attendance (%),Sessions Attended,Total Minutes');
+
+      const missingRes = await request(app).get('/api/series/nonexistent/csv').set(authedHeader('u@a.com', 'a.com'));
+      expect(missingRes.status).toBe(404);
+    } finally {
+      delete process.env.STRIPE_SECRET_KEY;
+      delete process.env.STRIPE_PRICE_ID;
+    }
   });
 });
 

@@ -16,6 +16,10 @@ jest.mock('../../src/services/firestore', () => ({
   persistExport: jest.fn(),
   markUserLargeClassGraceUsed: jest.fn(),
   getExportReexportCount: jest.fn(),
+  getUserMeetingHistory: jest.fn(),
+  getDomainTeacherCount: jest.fn(),
+  getDb: jest.fn(),
+  logEvent: jest.fn(),
 }));
 
 const firestore = require('../../src/services/firestore');
@@ -296,6 +300,46 @@ describe('certificates (Pro-gated)', () => {
     expect(firestore.persistExport).toHaveBeenCalledWith('acme.com', expect.objectContaining({
       conferenceId: expect.stringMatching(/^Adhoc Session_\d{4}-\d{2}-\d{2}T\d{2}$/),
       exportType: 'pdf',
+    }));
+  });
+});
+
+describe('POST /api/export/quote-pdf', () => {
+  test('401 without auth', async () => {
+    const res = await request(app).post('/api/export/quote-pdf').send({});
+    expect(res.status).toBe(401);
+  });
+
+  test('200 generates forwardable school quote PDF, persists quoteRequests, and logs event', async () => {
+    const mockAdd = jest.fn().mockResolvedValue({ id: 'q1' });
+    firestore.getDb.mockReturnValue({ collection: jest.fn(() => ({ add: mockAdd })) });
+    firestore.getUserMeetingHistory.mockResolvedValue({
+      totalMeetings: 18,
+      people: [{ email: 's1@acme.com' }, { email: 's2@acme.com' }],
+    });
+    firestore.getDomainTeacherCount.mockResolvedValue(6);
+    firestore.logEvent.mockResolvedValue(undefined);
+
+    const res = await request(app)
+      .post('/api/export/quote-pdf')
+      .set(H())
+      .send({ schoolName: 'Acme Academy', department: 'Biology', notes: 'Need PO for Fall semester' })
+      .buffer(true).parse(binaryParser);
+
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toBe('application/pdf');
+    expect(res.headers['content-disposition']).toContain('quote-acme-academy-qt-');
+    expect(res.body.slice(0, 5).toString('latin1')).toBe('%PDF-');
+    expect(mockAdd).toHaveBeenCalledWith(expect.objectContaining({
+      email: 'user@acme.com',
+      domain: 'acme.com',
+      schoolName: 'Acme Academy',
+      department: 'Biology',
+      recommendedPlan: 'department',
+    }));
+    expect(firestore.logEvent).toHaveBeenCalledWith('acme.com', expect.objectContaining({
+      email: 'user@acme.com',
+      type: 'school_quote_generated',
     }));
   });
 });

@@ -410,4 +410,34 @@ describe('backend i18n', () => {
       expect(s1).toBe(s2);
     });
   });
+
+  describe('all supported locales coverage', () => {
+    test('getPdfLabels summaryFormat, getSheetHeaders, getSheetSummaryLabels, localizeStatus, and localizeRsvp work across all 60 locales', () => {
+      const locales = Object.keys(i18n.getStrings().STRINGS || {});
+      expect(locales.length).toBeGreaterThanOrEqual(48);
+      for (const loc of locales) {
+        const pdf = i18n.getPdfLabels(loc);
+        expect(typeof pdf.reportTitle).toBe('string');
+        expect(typeof pdf.summaryFormat(5, 10)).toBe('string');
+        expect(pdf.summaryFormat(5, 10)).toContain('5');
+        expect(pdf.summaryFormat(5, 10)).toContain('10');
+
+        const headers = i18n.getSheetHeaders(loc, 'UTC');
+        expect(Array.isArray(headers)).toBe(true);
+        expect(headers.length).toBeGreaterThanOrEqual(6);
+        const headersNoTz = i18n.getSheetHeaders(loc);
+        expect(Array.isArray(headersNoTz)).toBe(true);
+
+        const summary = i18n.getSheetSummaryLabels(loc);
+        expect(typeof summary.meeting).toBe('string');
+
+        for (const st of ['Present', 'Left', 'Absent', 'Excused', 'Absent (excused)', 'Left Early / Incomplete']) {
+          expect(typeof i18n.localizeStatus(st, loc)).toBe('string');
+        }
+        for (const rv of ['accepted', 'declined', 'tentative', 'needsAction']) {
+          expect(typeof i18n.localizeRsvp(rv, loc)).toBe('string');
+        }
+      }
+    });
+  });
 });

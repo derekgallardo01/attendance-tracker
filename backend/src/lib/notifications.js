@@ -1700,9 +1700,9 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
     ${seriesLink ? `<p style="margin:4px 0 16px;font-size:13px;color:#8b949e">${seriesTrendHtml(seriesLink)}</p>` : ''}
     ${clusterBoxHtml}
     ${isFree ? `<div style="background:#161b22;border:1px solid rgba(88,166,255,.4);border-radius:8px;padding:14px 16px;margin:16px 0;text-align:left">
-      <div style="font-weight:700;color:#e6edf3;font-size:14px;margin-bottom:6px">Unlock Unlimited Classes for $4.99/year (~41¢/month)</div>
+      <div style="font-weight:700;color:#e6edf3;font-size:14px;margin-bottom:6px">Unlock Unlimited Classes for $19/year (~$1.58/month)</div>
       <div style="font-size:12px;color:#8b949e;margin-bottom:12px;line-height:1.45">Unlimited Google Sheets exports, classes &gt;25 students, attendance certificates &amp; LMS grade sync.</div>
-      <a href="${CONFIG.publicSiteUrl}/pricing.html?ref=export_email&amp;utm_source=export_digest" class="touch-btn-sm" style="display:inline-block;background:#238636;color:#ffffff;font-size:12px;font-weight:700;padding:8px 16px;border-radius:6px;text-decoration:none;line-height:1.35">Upgrade to Educator Pass ($4.99/yr) →</a>
+      <a href="${CONFIG.publicSiteUrl}/pricing.html?ref=export_email&amp;utm_source=export_digest" class="touch-btn-sm" style="display:inline-block;background:#238636;color:#ffffff;font-size:12px;font-weight:700;padding:8px 16px;border-radius:6px;text-decoration:none;line-height:1.35">Upgrade to Educator Pass ($19/yr) →</a>
     </div>` : ''}
     ${isPro ? '' : `<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:12px 14px;margin:16px 0;text-align:left">
       <div style="font-weight:600;color:#e6edf3;font-size:13px;margin-bottom:4px">${escape(reviewBoxTitle)}</div>
@@ -1751,7 +1751,7 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
     clusterBoxText ? clusterBoxText.trim() : '',
     ``,
     ...(isFree ? [
-      `Unlock Unlimited Classes for $4.99/year (~41¢/month)`,
+      `Unlock Unlimited Classes for $19/year (~$1.58/month)`,
       `Unlimited Google Sheets exports, classes >25 students, attendance certificates & LMS grade sync.`,
       `${CONFIG.publicSiteUrl}/pricing.html?ref=export_email&utm_source=export_digest`,
       ``,
@@ -3693,9 +3693,123 @@ async function sendInvoiceActionRequiredEmail({
   }, 'payment action required notification', { to });
 }
 
+/**
+ * Send a renewal / trial-expiry reminder email (T-14, T-3, or T+1) with realized
+ * value stats and a one-click JIT checkout link.
+ */
+async function sendPassExpiryReminderEmail({
+  to,
+  displayName,
+  reminderType,
+  planType = 'educator',
+  expiresAt,
+  daysUntilExpiry,
+  stats = {},
+  checkoutUrl,
+  domain,
+  country,
+  language,
+} = {}) {
+  if (!getResend()) return { skipped: 'no resend' };
+  if (!to || !to.includes('@')) return { skipped: 'invalid email' };
+
+  const lang = resolveLanguage({ language, email: to, domain, country });
+  const firstName = displayName ? String(displayName).trim().split(/\s+/)[0] : '';
+  const greeting = firstName ? `Hi ${firstName},` : 'Hi there,';
+  const isGrant = planType === 'review_reward' || planType === 'referral_reward' || String(reminderType || '').startsWith('grant_');
+  const isTrial = planType === 'auto_export_trial' || String(reminderType || '').startsWith('trial_');
+  const isExpired = reminderType?.endsWith('t_plus_1') || (typeof daysUntilExpiry === 'number' && daysUntilExpiry <= 0);
+  const daysLeft = Math.max(1, Math.ceil(Number(daysUntilExpiry) || 3));
+
+  const passLabel = isGrant
+    ? 'complimentary Pro month'
+    : (isTrial ? 'Auto-Export Pro trial' : (planType === 'educator' ? 'Educator Annual Pass' : 'Pro Annual Pass'));
+
+  const subject = isExpired
+    ? `Your Attendance Tracker ${passLabel} has ended — renew to keep Pro`
+    : `Your Attendance Tracker ${passLabel} ends in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`;
+
+  const exportsCount = Number(stats?.exportsCount) || 0;
+  const certificatesCount = Number(stats?.certificatesCount) || 0;
+  const largeClassesCount = Number(stats?.largeClassesCount) || 0;
+  const valueBullets = [];
+  if (exportsCount > 0) valueBullets.push(`<strong>${exportsCount}</strong> attendance sheet${exportsCount === 1 ? '' : 's'} exported to Google Drive`);
+  if (largeClassesCount > 0) valueBullets.push(`<strong>${largeClassesCount}</strong> large class${largeClassesCount === 1 ? '' : 'es'} (&gt;25 students) tracked in full`);
+  if (certificatesCount > 0) valueBullets.push(`<strong>${certificatesCount}</strong> attendance certificate batch${certificatesCount === 1 ? '' : 'es'} generated`);
+
+  const targetUrl = checkoutUrl || `${CONFIG.publicSiteUrl}/pricing.html?utm_source=expiry_reminder&utm_campaign=${encodeURIComponent(reminderType || 'expiry')}`;
+
+  const valueBoxHtml = valueBullets.length > 0 ? `
+    <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:12px 16px;margin:16px 0">
+      <div style="font-size:12px;font-weight:700;color:#8b949e;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">What you've unlocked with Pro</div>
+      <ul style="margin:0;padding-left:18px;color:#e6edf3;font-size:13px;line-height:1.6">
+        ${valueBullets.map(b => `<li>${b}</li>`).join('')}
+      </ul>
+    </div>
+  ` : '';
+
+  const contentHtml = `
+    <p style="margin:0 0 14px;color:#e6edf3;font-size:14px;line-height:1.6">${escape(greeting)}</p>
+    <p style="margin:0 0 14px;color:#e6edf3;font-size:14px;line-height:1.6">
+      ${isExpired
+        ? `Your <strong>${escape(passLabel)}</strong> has ended and your account is back on the Free plan (2 Google Sheets exports/month, up to 25 students per class).`
+        : `Just a heads-up — your <strong>${escape(passLabel)}</strong> ends in <strong>${daysLeft} day${daysLeft === 1 ? '' : 's'}</strong>${expiresAt ? ` (${escape(String(expiresAt).slice(0, 10))})` : ''}.`}
+    </p>
+    ${valueBoxHtml}
+    <p style="margin:0 0 18px;color:#c9d1d9;font-size:13.5px;line-height:1.6">
+      Renew in one click below to keep unlimited Google Sheets exports, classes over 25 students, attendance certificates, and cumulative semester gradebooks active without interruption. All your existing attendance sheets in Google Drive stay yours either way.
+    </p>
+  `;
+
+  const foot = unsubscribeFooter(to);
+  const html = buildDesignSystemEmail({
+    badge: isExpired ? 'Pro Pass Ended' : 'Renewal Reminder',
+    badgeType: isExpired ? 'warning' : 'info',
+    title: isExpired ? 'Your Pro Pass Has Ended' : `Your Pro Pass Ends in ${daysLeft} Day${daysLeft === 1 ? '' : 's'}`,
+    subtitle: 'Keep unlimited classes, auto-exports, and certificates active.',
+    contentHtml,
+    ctaText: isExpired ? 'Renew Pro Access →' : 'Renew Now →',
+    ctaUrl: targetUrl,
+    ctaColor: 'green',
+    footerHtml: foot.html,
+  });
+
+  const textValueLines = [];
+  if (exportsCount > 0) textValueLines.push(`- ${exportsCount} attendance sheet(s) exported`);
+  if (largeClassesCount > 0) textValueLines.push(`- ${largeClassesCount} large class(es) (>25 students) tracked`);
+  if (certificatesCount > 0) textValueLines.push(`- ${certificatesCount} certificate batch(es) generated`);
+
+  const text = [
+    greeting,
+    '',
+    isExpired
+      ? `Your Attendance Tracker ${passLabel} has ended and your account has moved back to the Free plan.`
+      : `Your Attendance Tracker ${passLabel} ends in ${daysLeft} day${daysLeft === 1 ? '' : 's'}${expiresAt ? ` (${String(expiresAt).slice(0, 10)})` : ''}.`,
+    ...(textValueLines.length ? ['', 'What you unlocked with Pro:', ...textValueLines] : []),
+    '',
+    'Renew in one click to keep unlimited exports, classes >25 students, and certificates active:',
+    targetUrl,
+    '',
+    foot.text,
+  ].join('\n');
+
+  return dispatchEmail({
+    from: makeFrom('Attendance Tracker'),
+    to,
+    subject,
+    text,
+    html,
+    tags: [
+      { name: 'type', value: String(reminderType || 'expiry_reminder').replace(/[^a-zA-Z0-9_-]/g, '_') },
+      { name: 'lang', value: lang },
+    ],
+    headers: unsubscribeHeaders(to),
+  }, 'pass expiry reminder email', { to, reminderType, lang });
+}
+
 module.exports = {
   sendSignupWebhook, sendUpgradeNotification, sendAdminSubscriptionCancelledNotification, sendAdminEmailUnsubscribedNotification, sendAdminMilestoneEmail, maybeSendSignupNotification, sendWelcomeEmail, sendReferralNotification, maybeSendReferralNotification, flushDeferredNotifications, sendAdminEmail, sendErrorAlertEmail, sendErrorSpikeAlertEmail, sendWeeklySelfReport, sendExportNotification, sendOrgWeeklyDigest,
-  sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendUpgradeLinkEmail, sendSubscriptionCancelledEmail, sendInvoiceActionRequiredEmail, sendReviewRewardEmail, buildReviewRewardEmailContent, sendReviewRewardDraftAlert, createReviewApprovalToken, verifyReviewApprovalToken, reviewApprovalUrl,
+  sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendUpgradeLinkEmail, sendSubscriptionCancelledEmail, sendInvoiceActionRequiredEmail, sendReviewRewardEmail, buildReviewRewardEmailContent, sendReviewRewardDraftAlert, createReviewApprovalToken, verifyReviewApprovalToken, reviewApprovalUrl, sendPassExpiryReminderEmail,
   sendSlackDigest, sendSlackTestPing, buildSlackDigestBlocks, buildSlackFallbackText, maskSlackWebhook,
   sendChatDigest, sendChatTestPing, buildChatDigestCard, maskGoogleChatWebhook,
   sendDiscordDigest, sendDiscordTestPing, buildDiscordDigestEmbed, maskDiscordWebhook,

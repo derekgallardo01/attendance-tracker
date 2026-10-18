@@ -415,3 +415,40 @@ describe('evaluateReengagementForUser — missing meta', () => {
     expect(Array.isArray(reminders)).toBe(true);
   });
 });
+
+describe('evaluateReengagementForUser — pass and Pro-grant expiry reminders', () => {
+  const D = 'gmail.com';
+
+  test.each([
+    [14, 'one_time_annual', 'expiry_t14'],
+    [3, 'one_time_annual', 'expiry_t3'],
+    [-1, 'one_time_annual', 'expiry_t_plus_1'],
+    [3, 'review_reward', 'grant_expiry_t3'],
+    [-1, 'referral_reward', 'grant_expiry_t_plus_1'],
+  ])('daysLeft=%i with planType=%s emits %s with realized-value stats', async (daysLeft, planType, expectedType) => {
+    const email = `exp_${daysLeft}_${planType}@gmail.com`;
+    const now = Date.now();
+    const expDate = new Date(now + daysLeft * DAY);
+    ctx.seed(`tenants/${D}/users/${email}`, {
+      email,
+      domain: D,
+      displayName: 'Teacher',
+      lastLoginAt: wrapTimestamp(new Date(now - 2 * DAY)),
+      individualPlan: 'pro',
+      individualPlanType: planType,
+      individualPlanExpiresAt: wrapTimestamp(expDate),
+    });
+    seedExport(D, email, now - 5 * DAY);
+    seedTracked(D, email, 'c-big', now - 5 * DAY, 32, 32);
+
+    const reminders = await firestore.evaluateReengagementForUser(D, email);
+    const match = reminders.find(r => r.type === expectedType);
+    expect(match).toBeDefined();
+    expect(match.dedupKey).toBe(`${expectedType}:${expDate.toISOString().slice(0, 10)}`);
+    expect(match.stats).toEqual({
+      exportsCount: 1,
+      certificatesCount: 0,
+      largeClassesCount: 1,
+    });
+  });
+});
