@@ -8,7 +8,7 @@ test.describe('Landing page (attendancetracker.dev)', () => {
     await page.goto('/');
     // SDK detection bails after a short timeout when not in Meet; landing
     // page renders. Wait for the headline.
-    await expect(page.locator('h1, h2', { hasText: /Track Google Meet attendance/i })).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('h1, h2', { hasText: /Take attendance in Google Meet|Track Google Meet attendance/i })).toBeVisible({ timeout: 15_000 });
     const installButton = page.locator('a:has-text("Install from Marketplace")').first();
     await expect(installButton).toBeVisible();
     await expect(installButton).toHaveAttribute('href', /workspace\.google\.com\/marketplace/);
@@ -45,7 +45,7 @@ test.describe('SEO content pages', () => {
     { path: '/how-to-track-attendance-in-google-meet.html', h1: /How to track attendance/i },
     { path: '/attendance-tracker-for-teachers.html', h1: /attendance tracker for teachers/i },
     { path: '/export-google-meet-attendance-to-sheets.html', h1: /Export Google Meet attendance to Google Sheets/i },
-    { path: '/attendance-taker-for-classroom-alternative.html', h1: /Attendance Taker for Classroom is shutting down/i },
+    { path: '/attendance-taker-for-classroom-alternative.html', h1: /Attendance Taker for Classroom (is shutting|has shut) down/i },
     { path: '/google-meet-attendance-extension-broken.html', h1: /Google Meet Attendance Extension Broken/i },
     { path: '/deploy-google-workspace-admin-attendance-tracker.html', h1: /Deploy Attendance Tracker Across Your School/i },
   ];
