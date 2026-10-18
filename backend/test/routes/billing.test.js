@@ -45,6 +45,10 @@ jest.mock('../../src/services/firestore', () => ({
   markUserLargeClassGraceUsed: jest.fn().mockResolvedValue(true),
   isUserDeleted: jest.fn().mockResolvedValue(false),
   getExportReexportCount: jest.fn().mockResolvedValue(null),
+  // Revenue ledger (best-effort writes)
+  recordPayment: jest.fn().mockResolvedValue(true),
+  updateSubscriptionStatus: jest.fn().mockResolvedValue(true),
+  markPaymentStatus: jest.fn().mockResolvedValue(true),
 }));
 
 const firestore = require('../../src/services/firestore');
@@ -2963,3 +2967,318 @@ describe('billing/status pricing payload', () => {
 
 
 
+describe('billing — revenue ledger + funnel telemetry', () => {
+  const postWebhook = () => request(app)
+    .post('/api/billing/webhook')
+    .set('Content-Type', 'application/json')
+    .set('stripe-signature', 'good')
+    .send({});
+
+  beforeEach(() => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_PRICE_ID = 'price_x';
+    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_x';
+    // An earlier suite leaves setTenantPlan permanently rejecting (clearMocks
+    // keeps implementations) — reset the provisioning writes we depend on.
+    firestore.setTenantPlan.mockReset();
+    firestore.setUserPlan.mockReset();
+    app = buildApp();
+  });
+
+  test('checkout_started is logged server-side when a session opens', async () => {
+    process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID = 'price_life_999';
+    const res = await request(app)
+      .post('/api/billing/checkout')
+      .set(authedHeader('teacher@gmail.com', 'gmail.com'))
+      .send({ plan: 'lifetime' });
+    delete process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID;
+    expect(res.status).toBe(200);
+    expect(firestore.logEvent).toHaveBeenCalledWith('gmail.com', expect.objectContaining({
+      email: 'teacher@gmail.com',
+      type: 'checkout_started',
+      meta: expect.objectContaining({ plan: 'lifetime', recurring: false }),
+    }));
+  });
+
+  test('individual checkout ledgers the payment and logs the EXACT plan on upgraded', async () => {
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_l1', type: 'checkout.session.completed',
+      data: { object: {
+        id: 'cs_1', payment_intent: 'pi_1', client_reference_id: 'user:t@gmail.com',
+        amount_total: 999, currency: 'usd', metadata: { plan: 'lifetime', individual: '1', email: 't@gmail.com', domain: 'gmail.com' },
+      } },
+    });
+    const res = await postWebhook();
+    expect(res.status).toBe(200);
+    expect(firestore.recordPayment).toHaveBeenCalledWith(expect.objectContaining({ id: 'pi_1', plan: 'lifetime', amount: 999, recurring: false }));
+    expect(firestore.logEvent).toHaveBeenCalledWith('gmail.com', expect.objectContaining({
+      type: 'upgraded', meta: expect.objectContaining({ plan: 'lifetime', interval: null }),
+    }));
+  });
+
+  test('domain Institution checkout logs plan institution + yearly interval', async () => {
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_l2', type: 'checkout.session.completed',
+      data: { object: {
+        id: 'cs_2', invoice: 'in_2', subscription: 'sub_2', client_reference_id: 'school.edu',
+        amount_total: 14900, currency: 'usd', metadata: { plan: 'team', domain: 'school.edu' }, customer_email: 'admin@school.edu',
+      } },
+    });
+    await postWebhook();
+    expect(firestore.recordPayment).toHaveBeenCalledWith(expect.objectContaining({ id: 'in_2', plan: 'institution', recurring: true, interval: 'year' }));
+    expect(firestore.logEvent).toHaveBeenCalledWith('school.edu', expect.objectContaining({
+      type: 'upgraded', meta: expect.objectContaining({ plan: 'institution', interval: 'year' }),
+    }));
+  });
+
+  test('a ledger failure never blocks provisioning', async () => {
+    firestore.recordPayment.mockRejectedValueOnce(new Error('ledger down'));
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_l3', type: 'checkout.session.completed',
+      data: { object: { id: 'cs_3', client_reference_id: 'acme.com', customer: 'cus_1', subscription: 'sub_1' } },
+    });
+    const res = await postWebhook();
+    expect(res.status).toBe(200);
+    expect(firestore.setTenantPlan).toHaveBeenCalledWith('acme.com', expect.objectContaining({ plan: 'pro' }));
+  });
+
+  test('subscription events mirror status onto the MRR row (deleted → canceled)', async () => {
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_l4', type: 'customer.subscription.deleted',
+      data: { object: { id: 'sub_9', status: 'canceled', metadata: { domain: 'acme.com' } } },
+    });
+    await postWebhook();
+    expect(firestore.updateSubscriptionStatus).toHaveBeenCalledWith('sub_9', 'canceled', { cancelAtPeriodEnd: false });
+
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_l5', type: 'customer.subscription.updated',
+      data: { object: { id: 'sub_9', status: 'past_due', cancel_at_period_end: true, metadata: { domain: 'acme.com' } } },
+    });
+    await postWebhook();
+    expect(firestore.updateSubscriptionStatus).toHaveBeenCalledWith('sub_9', 'past_due', { cancelAtPeriodEnd: true });
+  });
+
+  test('refunds mark the ledgered payment refunded', async () => {
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_l6', type: 'charge.refunded',
+      data: { object: { refunded: true, payment_intent: 'pi_7', metadata: { email: 'r@gmail.com', individual: '1' } } },
+    });
+    await postWebhook();
+    expect(firestore.markPaymentStatus).toHaveBeenCalledWith({ paymentIntentId: 'pi_7', invoiceId: null }, 'refunded');
+  });
+
+  test('invoice.paid ledgers renewals with subscription metadata; skips the first invoice', async () => {
+    mockStripeInstance.subscriptions.retrieve.mockResolvedValueOnce({ metadata: { individual: '0', plan: 'department', domain: 's.edu' } });
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_l7', type: 'invoice.paid',
+      data: { object: { id: 'in_r1', subscription: 'sub_d', amount_paid: 5900, currency: 'usd', billing_reason: 'subscription_cycle' } },
+    });
+    await postWebhook();
+    expect(firestore.recordPayment).toHaveBeenCalledWith(expect.objectContaining({ id: 'in_r1', plan: 'department', domain: 's.edu', recurring: true }));
+
+    firestore.recordPayment.mockClear();
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_l8', type: 'invoice.paid',
+      data: { object: { id: 'in_first', subscription: 'sub_d', amount_paid: 5900, currency: 'usd', billing_reason: 'subscription_create' } },
+    });
+    await postWebhook();
+    expect(firestore.recordPayment).not.toHaveBeenCalled();
+  });
+
+  test('invoice.paid still ledgers when the subscription lookup fails', async () => {
+    mockStripeInstance.subscriptions.retrieve.mockRejectedValueOnce(new Error('stripe down'));
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_l9', type: 'invoice.paid',
+      data: { object: { id: 'in_r2', subscription: { id: 'sub_e' }, amount_paid: 499, currency: 'usd', billing_reason: 'subscription_cycle', customer_email: 'm@x.com' } },
+    });
+    const res = await postWebhook();
+    expect(res.status).toBe(200);
+    expect(firestore.recordPayment).toHaveBeenCalledWith(expect.objectContaining({ id: 'in_r2', email: 'm@x.com' }));
+  });
+});
+
+describe('billing — tiered regional pricing (TIERED_PRICING=1)', () => {
+  const crypto = require('crypto');
+  // A tier-3 email in the requested experiment arm (sha256 first-byte parity).
+  const emailInArm = (want, domain = 'gmail.com') => {
+    for (let i = 0; i < 100; i++) {
+      const e = 't' + i + '@' + domain;
+      const even = crypto.createHash('sha256').update(e).digest()[0] % 2 === 0;
+      if ((want === 'tiered') === even) return e;
+    }
+    throw new Error('unreachable');
+  };
+  const checkout = (email, body) => request(app)
+    .post('/api/billing/checkout')
+    .set(authedHeader(email, email.split('@')[1]))
+    .send(body);
+  const lastSession = () => mockStripeInstance.checkout.sessions.create.mock.calls.at(-1)[0];
+  const postWebhook = () => request(app)
+    .post('/api/billing/webhook')
+    .set('Content-Type', 'application/json')
+    .set('stripe-signature', 'good')
+    .send({});
+
+  beforeEach(() => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_PRICE_ID = 'price_x';
+    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_x';
+    process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID = 'price_life_legacy';
+    process.env.TIERED_PRICING = '1';
+    delete process.env.TIER3_TEST;
+    firestore.setUserPlan.mockReset();
+    app = buildApp();
+  });
+  afterEach(() => {
+    delete process.env.TIERED_PRICING;
+    delete process.env.TIER3_TEST;
+    delete process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID;
+  });
+
+  test('US pro_annual → $29/yr subscription via price_data, no coupon, checkout_started logged', async () => {
+    const res = await checkout('teacher@gmail.com', { plan: 'pro_annual', country: 'US' });
+    expect(res.status).toBe(200);
+    const s = lastSession();
+    expect(s.mode).toBe('subscription');
+    expect(s.line_items[0].price_data).toMatchObject({ currency: 'usd', unit_amount: 2900, recurring: { interval: 'year' } });
+    expect(s.discounts).toBeUndefined();
+    expect(s.metadata).toMatchObject({ plan: 'pro_annual', individual: '1', tier: '1', pricing: 'tiered', email: 'teacher@gmail.com' });
+    expect(s.subscription_data.metadata.plan).toBe('pro_annual');
+    expect(firestore.logEvent).toHaveBeenCalledWith('gmail.com', expect.objectContaining({
+      type: 'checkout_started', meta: expect.objectContaining({ plan: 'pro_annual', recurring: true, tier: 1 }),
+    }));
+  });
+
+  test('US pro_monthly → monthly subscription; lifetime → $49 one-time', async () => {
+    await checkout('teacher@gmail.com', { plan: 'pro_monthly', country: 'US' });
+    expect(lastSession().line_items[0].price_data).toMatchObject({ unit_amount: 499, recurring: { interval: 'month' } });
+    await checkout('teacher@gmail.com', { plan: 'lifetime', country: 'US' });
+    const s = lastSession();
+    expect(s.mode).toBe('payment');
+    expect(s.customer_creation).toBe('always');
+    expect(s.line_items[0].price_data).toMatchObject({ unit_amount: 4900 });
+  });
+
+  test('Brazil pro_annual → BRL prepaid year (one-time, flagged isAnnualOneTime); monthly refused', async () => {
+    await checkout('prof@gmail.com', { plan: 'pro_annual', country: 'BR' });
+    const s = lastSession();
+    expect(s.mode).toBe('payment');
+    expect(s.line_items[0].price_data).toMatchObject({ currency: 'brl', unit_amount: 7900 });
+    expect(s.metadata).toMatchObject({ isAnnualOneTime: '1', tier: '2', currency: 'brl' });
+    const res = await checkout('prof@gmail.com', { plan: 'pro_monthly', country: 'BR' });
+    expect(res.status).toBe(400);
+  });
+
+  test('India tiered arm → INR with card+UPI; Kenya keeps dynamic methods', async () => {
+    await checkout(emailInArm('tiered'), { plan: 'educator', country: 'IN' });
+    let s = lastSession();
+    expect(s.line_items[0].price_data).toMatchObject({ currency: 'inr', unit_amount: 49900 });
+    expect(s.payment_method_types).toEqual(['card', 'upi']);
+    process.env.TIER3_TEST = 'all';
+    await checkout('m@gmail.com', { plan: 'lifetime', country: 'KE' });
+    s = lastSession();
+    expect(s.line_items[0].price_data).toMatchObject({ currency: 'kes' });
+    expect(s.payment_method_types).toBeUndefined();
+  });
+
+  test('India legacy arm: pro plans unavailable, legacy plans take the legacy path', async () => {
+    const email = emailInArm('legacy');
+    const res = await checkout(email, { plan: 'pro_annual', country: 'IN' });
+    expect(res.status).toBe(400);
+    expect(mockStripeInstance.checkout.sessions.create).not.toHaveBeenCalled();
+    const life = await checkout(email, { plan: 'lifetime', country: 'IN' });
+    expect(life.status).toBe(200);
+    expect(lastSession().metadata.pricing).toBeUndefined();
+  });
+
+  test('single_meeting tiered requires a conference id and returns to the unlocked meeting', async () => {
+    const bad = await checkout('teacher@gmail.com', { plan: 'single_meeting', country: 'US' });
+    expect(bad.status).toBe(400);
+    await checkout('teacher@gmail.com', { plan: 'single_meeting', country: 'US', conferenceId: 'ABC-defg-hij' });
+    const s = lastSession();
+    expect(s.metadata).toMatchObject({ conferenceId: 'abc-defg-hij', meetingPass: '1' });
+    expect(s.success_url).toContain('unlocked=abc-defg-hij');
+  });
+
+  test('referral promo opens the code box; LAUNCH50 is ignored', async () => {
+    await checkout('teacher@gmail.com', { plan: 'pro_annual', country: 'US', promo: 'friend-75' });
+    expect(lastSession().allow_promotion_codes).toBe(true);
+    await checkout('teacher@gmail.com', { plan: 'pro_annual', country: 'US', promo: 'LAUNCH50' });
+    expect(lastSession().allow_promotion_codes).toBeUndefined();
+  });
+
+  test('pro plans 400 with the flag off (never fall through to a legacy price)', async () => {
+    delete process.env.TIERED_PRICING;
+    expect((await checkout('teacher@gmail.com', { plan: 'pro_monthly', country: 'US' })).status).toBe(400);
+    expect((await checkout('teacher@gmail.com', { plan: 'pro_annual', country: 'US' })).status).toBe(400);
+    expect(mockStripeInstance.checkout.sessions.create).not.toHaveBeenCalled();
+  });
+
+  test('public-checkout: tiered pro_annual for a signed-out US visitor (email optional)', async () => {
+    const res = await request(app).post('/api/billing/public-checkout').set('cf-ipcountry', 'US').send({ plan: 'pro_annual' });
+    expect(res.status).toBe(200);
+    const s = lastSession();
+    expect(s.metadata).toMatchObject({ plan: 'pro_annual', source: 'public_pricing' });
+    expect(s.client_reference_id).toBeUndefined();
+    expect(s.cancel_url).toContain('pricing.html');
+    await request(app).post('/api/billing/public-checkout').set('cf-ipcountry', 'US').send({ plan: 'lifetime', email: 'Buyer@Gmail.com' });
+    expect(lastSession().client_reference_id).toBe('user:buyer@gmail.com');
+  });
+
+  test('public-checkout: monthly refused in prepaid markets, Stripe failure → 502, signed-out tier 3 → 400 for pro', async () => {
+    expect((await request(app).post('/api/billing/public-checkout').set('cf-ipcountry', 'MX').send({ plan: 'pro_monthly' })).status).toBe(400);
+    mockStripeInstance.checkout.sessions.create.mockRejectedValueOnce(Object.assign(new Error('boom'), { code: 'api_error' }));
+    expect((await request(app).post('/api/billing/public-checkout').set('cf-ipcountry', 'US').send({ plan: 'pro_annual' })).status).toBe(502);
+    expect((await request(app).post('/api/billing/public-checkout').set('cf-ipcountry', 'IN').send({ plan: 'pro_annual' })).status).toBe(400);
+  });
+
+  test('GET /billing/offer: tiered table for US, legacy (null pricing) for signed-out tier 3, never cached', async () => {
+    const us = await request(app).get('/api/billing/offer').set('cf-ipcountry', 'US');
+    expect(us.headers['cache-control']).toBe('private, no-store');
+    expect(us.body).toMatchObject({ tiered: true, tier: 1, prepaid: false, monthlyAvailable: true, country: 'US' });
+    expect(us.body.pricing.pro_annual).toEqual({ label: '$29', full: null, period: '/yr', perMonth: '$2.42' });
+    expect(us.body.pricing.lifetime).toEqual({ label: '$49', full: null, period: 'one-time' });
+    expect(us.body.pricing.department.label).toBe('$59'); // domain plans unchanged
+    const inn = await request(app).get('/api/billing/offer').set('cf-ipcountry', 'IN');
+    expect(inn.body).toMatchObject({ tiered: false, tier: 3, arm: 'legacy', pricing: null });
+  });
+
+  test('GET /billing/status carries the offer + tiered labels', async () => {
+    const res = await request(app).get('/api/billing/status?country=MX').set(authedHeader('prof@gmail.com', 'gmail.com'));
+    expect(res.status).toBe(200);
+    expect(res.body.offer).toMatchObject({ tiered: true, tier: 2, prepaid: true, monthlyAvailable: false, currency: 'mxn' });
+    expect(res.body.pricing.pro_annual.label).toBe('MX$279');
+    expect(res.body.pricing.pro_monthly).toBeUndefined();
+  });
+
+  test('webhook: prepaid pro_annual grants a year, stacking onto an unexpired pass', async () => {
+    const inSixMonths = new Date(Date.now() + 180 * 86400000).toISOString();
+    firestore.getUserPlan.mockResolvedValueOnce({ plan: 'pro', individualPlanExpiresAt: inSixMonths });
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_t1', type: 'checkout.session.completed',
+      data: { object: { id: 'cs_t1', client_reference_id: 'user:prof@gmail.com', amount_total: 7900, currency: 'brl',
+        metadata: { plan: 'pro_annual', individual: '1', email: 'prof@gmail.com', domain: 'gmail.com', isAnnualOneTime: '1' } } },
+    });
+    const res = await postWebhook();
+    expect(res.status).toBe(200);
+    const patch = firestore.setUserPlan.mock.calls[0][2];
+    expect(patch.individualPlanType).toBe('pro_annual_prepaid');
+    expect(Date.parse(patch.individualPlanExpiresAt) - Date.parse(inSixMonths)).toBeGreaterThan(364 * 86400000);
+    expect(firestore.recordPayment).toHaveBeenCalledWith(expect.objectContaining({ plan: 'pro_annual_prepaid', currency: 'brl' }));
+  });
+
+  test('webhook: prepaid grant counts from today when the plan lookup fails', async () => {
+    firestore.getUserPlan.mockRejectedValueOnce(new Error('read failed'));
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_t2', type: 'checkout.session.completed',
+      data: { object: { id: 'cs_t2', client_reference_id: 'user:p@gmail.com', amount_total: 49900, currency: 'inr',
+        metadata: { plan: 'educator', individual: '1', email: 'p@gmail.com', domain: 'gmail.com', isAnnualOneTime: '1' } } },
+    });
+    await postWebhook();
+    const patch = firestore.setUserPlan.mock.calls[0][2];
+    expect(patch.individualPlanType).toBe('educator_annual');
+    const days = (Date.parse(patch.individualPlanExpiresAt) - Date.now()) / 86400000;
+    expect(days).toBeGreaterThan(364);
+    expect(days).toBeLessThan(366);
+  });
+});

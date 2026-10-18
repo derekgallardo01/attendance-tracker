@@ -2,7 +2,7 @@ const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getRevenueFunnel, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, dismissSuggestion, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance, getTeamOverview, getRecentErrorSpike, getErrorAlertState, setErrorAlertState, getCancellationTelemetry, backfillAdminActivityIfSparse, checkAndRecordMilestones, getMilestoneProgress, getTenantPlan } = require('../services/firestore');
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getRevenueFunnel, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, dismissSuggestion, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance, getTeamOverview, getRecentErrorSpike, getErrorAlertState, setErrorAlertState, getCancellationTelemetry, backfillAdminActivityIfSparse, checkAndRecordMilestones, getMilestoneProgress, getTenantPlan, getRevenueSummary } = require('../services/firestore');
 const { sendAdminEmail, sendErrorSpikeAlertEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendOrgWeeklyDigest, flushDeferredNotifications, verifyReviewApprovalToken, sendReviewRewardEmail } = require('../lib/notifications');
 const { escapeHtml } = require('../lib/html');
 const { requireSuperAdmin, requireSuperAdminOrScheduler, requireKhMetricsKey, safeEqual } = require('../middleware/adminAuth');
@@ -25,6 +25,8 @@ function isSuperAdminUser(email) {
   }
   return String(email).trim().toLowerCase() === (CONFIG.superAdminEmail || '').toLowerCase();
 }
+// Pro grants that were given away, not bought (35-day review/referral rewards).
+const FREE_GRANT_PLAN_TYPES = new Set(['review_reward', 'referral_reward']);
 const MARKETPLACE_REVIEW_URL = 'https://workspace.google.com/marketplace/app/attendance_tracker/829771833968';
 
 // Quote a CSV field per RFC 4180: wrap in double quotes and double any
@@ -224,15 +226,27 @@ router.get('/admin/stats', requireAuth, async (req, res) => {
     let activeProUsers = 0;
     let estimatedMrr = 0;
     let milestones = null;
+    let revenue = null;
     if (isSuper) {
+      // Paying customers only: the owner's own account and the free 35-day
+      // review/referral reward grants are Pro but never paid anything.
       const activeProList = (allUsers || []).filter(u =>
         u.individualPlan === 'pro' &&
         u.individualBillingStatus === 'active' &&
+        !isSuperAdminUser(u.email) &&
+        !FREE_GRANT_PLAN_TYPES.has(u.individualPlanType) &&
         (!u.individualPlanExpiresAt || new Date(u.individualPlanExpiresAt).getTime() > Date.now())
       );
       activeProUsers = activeProList.length;
-      const seatPrice = (Number(process.env.KH_MRR_SEAT_CENTS) > 0 ? Number(process.env.KH_MRR_SEAT_CENTS) / 100 : 9.99);
-      estimatedMrr = Math.round(activeProUsers * seatPrice);
+      // MRR comes from the revenue ledger (active recurring subscriptions,
+      // normalized to monthly). One-time Lifetime/meeting passes are cash, not
+      // MRR — the old pro-users × $9.99 figure counted them as monthly revenue.
+      try {
+        revenue = await getRevenueSummary();
+      } catch (rErr) {
+        log.warn('admin: revenue summary failed', { error: rErr.message });
+      }
+      estimatedMrr = revenue ? Math.round((revenue.mrrApproxUsd || 0) / 100) : 0;
 
       const [usersAgg, meetingsAgg, exportsAgg] = await Promise.all([
         db.collectionGroup('users').count().get().catch(() => null),
@@ -264,6 +278,7 @@ router.get('/admin/stats', requireAuth, async (req, res) => {
       totalTenants: isSuper ? tenants.length : null,
       activeProUsers: isSuper ? activeProUsers : null,
       estimatedMrr: isSuper ? estimatedMrr : null,
+      revenue: isSuper ? revenue : null,
       globalStats,
       milestones: isSuper ? milestones : null,
       tenants: isSuper ? tenants.map(t => ({
@@ -1024,12 +1039,21 @@ router.get('/kh/metrics', requireKhMetricsKey, async (req, res) => {
     }
 
     const insights = await getAggregatedInsights({ force });
-    // MRR = pro tenants × seat price (KH_MRR_SEAT_CENTS, set to match Stripe).
+    // MRR from the payments ledger (active recurring subscriptions). The old
+    // pro-tenants × KH_MRR_SEAT_CENTS guess counted one-time domain passes as
+    // monthly revenue.
     let revenue = { mrrCents: 0, proTenants: 0 };
     try {
-      const seatCents = Number(process.env.KH_MRR_SEAT_CENTS || 0) || 0;
-      const proSnap = await getDb().collection('tenants').where('plan', '==', 'pro').get();
-      revenue = { mrrCents: proSnap.size * seatCents, proTenants: proSnap.size };
+      const [proSnap, summary] = await Promise.all([
+        getDb().collection('tenants').where('plan', '==', 'pro').get(),
+        getRevenueSummary(),
+      ]);
+      revenue = {
+        mrrCents: summary?.mrrApproxUsd || 0,
+        proTenants: proSnap.size,
+        activeSubscriptions: summary?.activeSubscriptions || 0,
+        cash30dCents: summary?.approxUsd?.last30d || 0,
+      };
     } catch (e) {
       log.warn('admin: kh revenue failed', { error: e.message });
     }

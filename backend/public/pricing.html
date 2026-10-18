@@ -841,8 +841,9 @@
         </a>
       </div>
 
-      <!-- Plan 2: Educator Annual Pass -->
-      <div class="plan-card">
+      <!-- Plan 2: Educator Annual Pass (becomes "Pro Annual" under tiered
+           pricing — see paintTieredPricing) -->
+      <div class="plan-card" id="plan-card-educator">
         <div class="card-top">
           <div class="plan-name" data-i18n="pricing.planEduName">Educator Annual Pass</div>
           <div class="plan-description" data-i18n="pricing.planEduDesc">Affordable full power designed specifically for teachers, tutors, and solo educators.</div>
@@ -1361,7 +1362,78 @@
       document.documentElement.dir = (code === 'ar' || code === 'he' || code === 'ur') ? 'rtl' : 'ltr';
       document.documentElement.lang = code;
       AttStrings.applyTranslations();
+      // JS-painted tiered prices aren't re-translated by applyTranslations.
+      if (window._tieredOffer) paintTieredPricing();
       sendPricingEvent('pricing_lang_change', code);
+    }
+
+    // Tiered regional pricing (/billing/offer): card 2 becomes the featured
+    // "Pro Annual" (with Educator + monthly links), Lifetime becomes the
+    // secondary anchor. All prices come from the server table.
+    function paintTieredPricing() {
+      var offer = window._tieredOffer;
+      if (!offer || !offer.pricing) return;
+      var tr = function (key, fallback) { return (typeof window.t === 'function') ? window.t(key, fallback) : fallback; };
+      var label = function (plan) { return (offer.pricing[plan] && offer.pricing[plan].label) || ''; };
+      var setText = function (root, sel, text) {
+        var el = root && root.querySelector(sel);
+        if (el) { el.removeAttribute('data-i18n'); el.textContent = text; }
+        return el;
+      };
+
+      var pro = document.getElementById('plan-card-educator');
+      if (pro) {
+        pro.classList.add('featured');
+        setText(pro, '.plan-name', tr('upgrade.proAnnualName', 'Pro Annual'));
+        setText(pro, '.price-num', label('pro_annual'));
+        setText(pro, '.price-period', tr('upgrade.perYear', '/yr'));
+        var pm = offer.pricing.pro_annual && offer.pricing.pro_annual.perMonth;
+        var note = offer.prepaid
+          ? tr('upgrade.dealPrepaid', '1 year of Pro · pay with local methods · no auto-renewal')
+          : tr('upgrade.dealRenews', 'Renews yearly · cancel anytime');
+        setText(pro, '.price-note', pm ? note + ' · ' + tr('upgrade.bestValuePerMo', 'Best value · {price}/mo').replace('{price}', pm) : note);
+        var btn = document.getElementById('btn-buy-educator');
+        if (btn) {
+          btn.className = 'btn-plan btn-plan-primary';
+          btn.onclick = function () { startPricingCheckout('pro_annual', btn); };
+          setText(btn, 'span', tr('upgrade.ctaProAnnual', 'Get Pro Annual —') + ' ' + label('pro_annual'));
+        }
+        var links = document.getElementById('tiered-alt-links');
+        if (!links && btn) {
+          links = document.createElement('div');
+          links.id = 'tiered-alt-links';
+          links.style.cssText = 'display:flex;flex-direction:column;gap:6px;margin-top:10px;text-align:center;font-size:.85rem';
+          btn.insertAdjacentElement('afterend', links);
+        }
+        if (links) {
+          links.innerHTML = '';
+          var addLink = function (text, plan) {
+            var a = document.createElement('a');
+            a.href = '#';
+            a.textContent = text;
+            a.style.color = 'var(--text-muted, #9aa0a6)';
+            a.onclick = function (e) { e.preventDefault(); startPricingCheckout(plan, a); };
+            links.appendChild(a);
+          };
+          if (offer.monthlyAvailable && label('pro_monthly')) {
+            addLink(tr('upgrade.orMonthly', 'or {price} / month').replace('{price}', label('pro_monthly')), 'pro_monthly');
+          }
+          addLink(tr('upgrade.eduLink', 'Teacher or student? Educator pass {price}/yr').replace('{price}', label('educator')), 'educator');
+        }
+      }
+
+      var life = document.getElementById('plan-card-lifetime');
+      if (life) {
+        life.classList.remove('featured');
+        var ribbon = life.querySelector('.card-ribbon');
+        if (ribbon) ribbon.style.display = 'none';
+        setText(life, '.price-num', label('lifetime'));
+        var lbtn = document.getElementById('btn-buy-lifetime');
+        if (lbtn) {
+          lbtn.className = 'btn-plan btn-plan-secondary';
+          setText(lbtn, 'span', tr('upgrade.ctaLifetime', 'Get Lifetime Access —') + ' ' + label('lifetime'));
+        }
+      }
     }
 
     window.addEventListener('DOMContentLoaded', function() {
@@ -1417,6 +1489,19 @@
           }
         })
         .catch(function () { /* card stays hidden */ })
+        .then(function () {
+          // Tiered regional pricing: country-specific prices from the backend
+          // (never cached). Legacy markup stays untouched when not tiered.
+          return fetch(BACKEND_URL + '/billing/offer')
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (offer) {
+              if (offer && offer.tiered && offer.pricing) {
+                window._tieredOffer = offer;
+                paintTieredPricing();
+              }
+            })
+            .catch(function () { /* legacy cards remain */ });
+        })
         .then(function () {
           try {
             var qp2 = new URLSearchParams(location.search);

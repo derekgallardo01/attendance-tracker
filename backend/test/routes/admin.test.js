@@ -64,6 +64,7 @@ jest.mock('../../src/services/firestore', () => ({
   getCancellationTelemetry: jest.fn(),
   checkAndRecordMilestones: jest.fn().mockResolvedValue([]),
   getMilestoneProgress: jest.fn().mockResolvedValue({ achieved: [], upcoming: {} }),
+  getRevenueSummary: jest.fn().mockResolvedValue(null),
 }));
 jest.mock('../../src/services/googleAuth', () => ({
   refreshAccessToken: jest.fn(),
@@ -1373,17 +1374,29 @@ describe('GET /api/kh/metrics — durable command-center pull (static x-kh-key)'
   const KH_KEY = 'kh-metrics-secret';
   afterEach(() => { delete process.env.KH_METRICS_KEY; delete process.env.KH_MRR_SEAT_CENTS; });
 
-  test('200 returns insights + revenue (MRR = pro tenants × seat cents) for a matching key', async () => {
+  test('200 returns insights + revenue (MRR from the payments ledger) for a matching key', async () => {
     process.env.KH_METRICS_KEY = KH_KEY;
-    process.env.KH_MRR_SEAT_CENTS = '1900';
+    process.env.KH_MRR_SEAT_CENTS = '1900'; // ignored now — MRR is ledger-derived
     firestore.getAggregatedInsights.mockResolvedValue({ totalUsers: 22, activeOrgs: 3 });
     firestore.getDb.mockReturnValue({
       collection: () => ({ where: () => ({ get: async () => ({ size: 3 }) }) }),
     });
+    firestore.getRevenueSummary.mockResolvedValueOnce({ mrrApproxUsd: 1242, activeSubscriptions: 2, approxUsd: { last30d: 4990 } });
     const res = await request(app).get('/api/kh/metrics').set('x-kh-key', KH_KEY);
     expect(res.status).toBe(200);
     expect(res.body.totalUsers).toBe(22);
-    expect(res.body.revenue).toEqual({ mrrCents: 5700, proTenants: 3 }); // 3 × 1900
+    expect(res.body.revenue).toEqual({ mrrCents: 1242, proTenants: 3, activeSubscriptions: 2, cash30dCents: 4990 });
+  });
+
+  test('revenue fields default to zero when the ledger summary is empty', async () => {
+    process.env.KH_METRICS_KEY = KH_KEY;
+    firestore.getAggregatedInsights.mockResolvedValue({ totalUsers: 1 });
+    firestore.getDb.mockReturnValue({
+      collection: () => ({ where: () => ({ get: async () => ({ size: 0 }) }) }),
+    });
+    firestore.getRevenueSummary.mockResolvedValueOnce(null);
+    const res = await request(app).get('/api/kh/metrics').set('x-kh-key', KH_KEY);
+    expect(res.body.revenue).toEqual({ mrrCents: 0, proTenants: 0, activeSubscriptions: 0, cash30dCents: 0 });
   });
 
   test('revenue falls back to zero when the tenants query throws (insights still returned)', async () => {
@@ -2259,14 +2272,20 @@ describe('GET /api/admin/stats — activeProUsers & estimatedMrr', () => {
   const admin = () => authedHeader(SUPER_ADMIN, 'gmail.com');
   const nonAdmin = () => authedHeader('user@school.edu', 'school.edu');
 
-  test('returns activeProUsers and estimatedMrr for super admin', async () => {
+  test('returns activeProUsers (paying only) and ledger-derived estimatedMrr for super admin', async () => {
     const mockUsers = [
       { email: 'pro1@school.edu', domain: 'school.edu', individualPlan: 'pro', individualBillingStatus: 'active' },
-      { email: 'pro2@school.edu', domain: 'school.edu', individualPlan: 'pro', individualBillingStatus: 'active' },
+      { email: 'pro2@school.edu', domain: 'school.edu', individualPlan: 'pro', individualBillingStatus: 'active', individualPlanType: 'lifetime' },
       { email: 'free1@school.edu', domain: 'school.edu', individualPlan: 'free', individualBillingStatus: null },
       { email: 'pro_pastdue@school.edu', domain: 'school.edu', individualPlan: 'pro', individualBillingStatus: 'past_due' },
+      // Not paying customers: the owner and free reward grants.
+      { email: SUPER_ADMIN, domain: 'gmail.com', individualPlan: 'pro', individualBillingStatus: 'active' },
+      { email: 'rev@school.edu', domain: 'school.edu', individualPlan: 'pro', individualBillingStatus: 'active', individualPlanType: 'review_reward' },
+      { email: 'ref@school.edu', domain: 'school.edu', individualPlan: 'pro', individualBillingStatus: 'active', individualPlanType: 'referral_reward' },
     ];
     firestore.getAllUsersAcrossTenants.mockResolvedValue(mockUsers);
+    const summary = { mrrApproxUsd: 2049, activeSubscriptions: 1 };
+    firestore.getRevenueSummary.mockResolvedValueOnce(summary);
 
     const mockTenantsSnap = {
       docs: [
@@ -2310,9 +2329,27 @@ describe('GET /api/admin/stats — activeProUsers & estimatedMrr', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.activeProUsers).toBe(2);
-    expect(res.body.estimatedMrr).toBe(20);
+    expect(res.body.estimatedMrr).toBe(20); // 2049 cents → $20
+    expect(res.body.revenue).toEqual(summary);
     expect(res.body.globalStats.activeProUsers).toBe(2);
     expect(res.body.globalStats.estimatedMrr).toBe(20);
+  });
+
+  test('estimatedMrr is 0 (stats still served) when the revenue summary throws', async () => {
+    firestore.getAllUsersAcrossTenants.mockResolvedValue([]);
+    firestore.getRevenueSummary.mockRejectedValueOnce(new Error('ledger down'));
+    const empty = {
+      get: jest.fn().mockResolvedValue({ docs: [], size: 0 }),
+      count: jest.fn().mockReturnValue({ get: jest.fn().mockResolvedValue({ data: () => ({ count: 0 }) }) }),
+    };
+    firestore.getDb.mockReturnValue({
+      collection: jest.fn(() => ({ get: jest.fn().mockResolvedValue({ docs: [] }), doc: jest.fn().mockReturnValue({ collection: jest.fn().mockReturnValue(empty) }) })),
+      collectionGroup: jest.fn().mockReturnValue(empty),
+    });
+    const res = await request(app).get('/api/admin/stats?nocache=1').set(admin());
+    expect(res.status).toBe(200);
+    expect(res.body.estimatedMrr).toBe(0);
+    expect(res.body.revenue).toBeNull();
   });
 
   test('returns null for activeProUsers and estimatedMrr for non-superadmin', async () => {

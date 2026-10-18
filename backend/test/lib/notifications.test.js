@@ -586,6 +586,28 @@ describe('notifications — additional senders (Resend mocked)', () => {
     expect(html).toContain('▲'); expect(html).toContain('▼'); // +2 and -3 arrows
   });
 
+  test('sendWeeklySelfReport renders the ledger revenue block (and omits it without data)', async () => {
+    const n = require('../../src/lib/notifications');
+    await n.sendWeeklySelfReport({
+      ...fullReport,
+      revenue: {
+        approxUsd: { last7d: 999, last30d: 6899, allTime: 41958, oneTime: 36058, recurring: 5900 },
+        mrrApproxUsd: 492, activeSubscriptions: 1,
+      },
+    });
+    const html = mockSend.mock.calls[0][0].html;
+    expect(html).toContain('💰 Revenue');
+    expect(html).toContain('$9.99');
+    expect(html).toContain('$4.92');
+    expect(html).toContain('1 active subscription<');
+    await n.sendWeeklySelfReport({ ...fullReport, revenue: { mrrApproxUsd: 0, activeSubscriptions: 2 } });
+    const html2 = mockSend.mock.calls[1][0].html;
+    expect(html2).toContain('$0.00');
+    expect(html2).toContain('2 active subscriptions');
+    await n.sendWeeklySelfReport(fullReport);
+    expect(mockSend.mock.calls[2][0].html).not.toContain('💰 Revenue');
+  });
+
   test('sendWeeklySelfReport uses fallback copy when everything is empty', async () => {
     const n = require('../../src/lib/notifications');
     await n.sendWeeklySelfReport({

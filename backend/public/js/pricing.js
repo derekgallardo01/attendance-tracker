@@ -35,6 +35,12 @@
     return (current[plan] && current[plan].label) || '';
   }
 
+  // Monthly equivalent of an annual plan ("$2.42"), set by tiered pricing
+  // (/billing/status.pricing[plan].perMonth); '' when not advertised.
+  function perMonth(plan) {
+    return (current[plan] && current[plan].perMonth) || '';
+  }
+
   // The free tier's monthly Sheets-export allowance.
   function quotaLimit() {
     return current.quotaLimit || DEFAULTS.quotaLimit;
@@ -71,7 +77,7 @@
     return rates[plan] || '';
   }
 
-  const api = { DEFAULTS, LOCAL_CURRENCY_ESTIMATES, fromStatus, price, quotaLimit, localCurrencyAnchor, _reset: function () { current = DEFAULTS; } };
+  const api = { DEFAULTS, LOCAL_CURRENCY_ESTIMATES, fromStatus, price, perMonth, quotaLimit, localCurrencyAnchor, _reset: function () { current = DEFAULTS; } };
   root.AttPricing = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

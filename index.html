@@ -6893,6 +6893,9 @@ async function ensureBilling() {
       if (typeof state !== 'undefined' && _billing) {
         state.meetingUnlocked = !!_billing.meetingUnlocked;
       }
+      // Server prices (incl. tiered regional labels) must be live before any
+      // upgrade surface paints.
+      if (typeof AttPricing !== 'undefined') AttPricing.fromStatus(_billing);
     }
   } catch { /* leave null → upsell just won't show */ }
   return _billing;
@@ -7410,12 +7413,15 @@ function startStripeCheckout(plan) {
   if (country) params.set('country', country);
   const url = `${state.backendUrl}/billing/checkout-redirect?${params.toString()}`;
 
+  // "Checkout was blocked — click here" fallback, shared by both blocked paths.
+  const checkoutBlockedBannerHtml = (href) =>
+    `<span>${escHtml(t('upgrade.checkoutBlocked', '⚠️ Checkout window was blocked.'))} <a href="${escHtml(href)}" target="_blank" rel="noopener noreferrer" style="color:#58a6ff;text-decoration:underline;font-weight:700;margin-left:2px">${escHtml(t('upgrade.checkoutClickHere', 'Click here to complete payment'))}</a></span>`;
   const banner = document.getElementById('checkout-popup-fallback-banner');
   if (banner) {
     banner.style.display = 'block';
     banner.style.background = 'rgba(56,139,253,.15)';
     banner.style.borderColor = 'rgba(56,139,253,.35)';
-    banner.innerHTML = `<span>Opening checkout in a new tab... If blocked, <a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer" style="color:#58a6ff;text-decoration:underline;font-weight:600">Click here to complete payment</a></span>`;
+    banner.innerHTML = `<span>${escHtml(t('upgrade.checkoutOpening', 'Opening checkout in a new tab… If blocked,'))} <a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer" style="color:#58a6ff;text-decoration:underline;font-weight:600">${escHtml(t('upgrade.checkoutClickHere', 'Click here to complete payment'))}</a></span>`;
   }
 
   let win = null;
@@ -7438,7 +7444,7 @@ function startStripeCheckout(plan) {
         banner.style.display = 'block';
         banner.style.background = 'rgba(248,81,73,.15)';
         banner.style.borderColor = 'rgba(248,81,73,.4)';
-        banner.innerHTML = `<span>⚠️ Checkout window was blocked. <a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer" style="color:#58a6ff;text-decoration:underline;font-weight:700;margin-left:2px">Click here to complete payment</a></span>`;
+        banner.innerHTML = checkoutBlockedBannerHtml(url);
       }
       toast(t('toast.popupBlocked', 'Your browser blocked the checkout tab. Please allow pop-ups for Meet and try again.'));
     }
@@ -7451,7 +7457,7 @@ function startStripeCheckout(plan) {
             banner.style.display = 'block';
             banner.style.background = 'rgba(248,81,73,.15)';
             banner.style.borderColor = 'rgba(248,81,73,.4)';
-            banner.innerHTML = `<span>⚠️ Checkout window was blocked. <a href="${escHtml(url)}" target="_blank" rel="noopener noreferrer" style="color:#58a6ff;text-decoration:underline;font-weight:700;margin-left:2px">Click here to complete payment</a></span>`;
+            banner.innerHTML = checkoutBlockedBannerHtml(url);
           }
         }
       } catch {}
@@ -7536,7 +7542,114 @@ function countryFlagEmoji(code) {
   return String.fromCodePoint(...codePoints);
 }
 
+// Tiered regional pricing (backend priceTiers.js, /billing/status.offer): every
+// price comes from the server table, so nothing here is per-country. Hero card
+// = the annual plan (Educator for edu accounts, Pro Annual otherwise), with an
+// optional monthly link; Lifetime is the secondary anchor.
+function paintTieredUpgradeModal(offer, country) {
+  const price = (plan) => (typeof AttPricing !== 'undefined' ? AttPricing.price(plan) : '');
+  const perMonth = (plan) => (typeof AttPricing !== 'undefined' && AttPricing.perMonth ? AttPricing.perMonth(plan) : '');
+  const email = (state.userEmail || '').toLowerCase();
+  const isEdu = !!(_billing && _billing.isEdu) || isEduDomain(email, (_billing && _billing.domain) || email.split('@')[1]);
+  const heroPlan = isEdu ? 'educator' : 'pro_annual';
+
+  const dealPill = document.getElementById('upgrade-deal-pill');
+  if (dealPill) {
+    const flag = countryFlagEmoji(country);
+    const text = offer.prepaid
+      ? t('upgrade.dealPrepaid', '1 year of Pro · pay with local methods · no auto-renewal')
+      : (offer.tier > 1
+        ? `${flag ? flag + ' ' : ''}${t('upgrade.dealTiered', 'Prices adjusted for your country')}`
+        : t('upgrade.dealRenews', 'Renews yearly · cancel anytime'));
+    dealPill.innerHTML = `<span>${escHtml(text)}</span>`;
+    dealPill.style.background = 'rgba(74,222,128,.14)';
+    dealPill.style.borderColor = 'rgba(74,222,128,.35)';
+    dealPill.style.color = '#4ade80';
+  }
+
+  const heroName = document.querySelector('#plan-card-educator [data-i18n="pricing.planEduName"], #plan-card-educator [data-i18n="upgrade.proAnnualName"]');
+  if (heroName) {
+    const key = isEdu ? 'pricing.planEduName' : 'upgrade.proAnnualName';
+    heroName.setAttribute('data-i18n', key);
+    heroName.textContent = isEdu ? t(key, 'Educator Annual Pass') : t(key, 'Pro Annual');
+  }
+  const heroPrice = document.querySelector('#plan-card-educator .price-educator');
+  if (heroPrice) heroPrice.textContent = price(heroPlan);
+  const heroBadge = document.getElementById('edu-hero-badge');
+  if (heroBadge) {
+    const pm = perMonth(heroPlan);
+    heroBadge.textContent = pm ? t('upgrade.bestValuePerMo', 'Best value · {price}/mo').replace('{price}', pm) : '';
+    heroBadge.style.display = pm ? '' : 'none';
+  }
+  const heroBtn = document.getElementById('btn-upgrade-individual');
+  if (heroBtn) {
+    const cta = isEdu ? t('upgrade.ctaEdu', 'Get Educator Annual Pass —') : t('upgrade.ctaProAnnual', 'Get Pro Annual —');
+    heroBtn.innerHTML = `<span>${escHtml(cta)}</span> <span class="price-educator">${escHtml(price(heroPlan))}</span>${escHtml(t('upgrade.perYear', '/yr'))}`;
+    heroBtn.onclick = () => startUpgradeCheckout(heroPlan, 'btn-upgrade-individual');
+  }
+
+  // "or $4.99 / month" — subscription markets only, never for edu (their
+  // annual price is already the discounted one).
+  let monthly = document.getElementById('btn-upgrade-monthly');
+  if (!monthly && heroBtn) {
+    monthly = document.createElement('a');
+    monthly.id = 'btn-upgrade-monthly';
+    monthly.href = '#';
+    monthly.style.cssText = 'display:block;text-align:center;margin-top:8px;color:#9aa0a6;font-size:.76rem;text-decoration:underline';
+    monthly.onclick = (e) => { e.preventDefault(); startUpgradeCheckout('pro_monthly', 'btn-upgrade-monthly'); };
+    heroBtn.insertAdjacentElement('afterend', monthly);
+  }
+  if (monthly) {
+    const showMonthly = offer.monthlyAvailable && !isEdu && !!price('pro_monthly');
+    monthly.style.display = showMonthly ? 'block' : 'none';
+    monthly.textContent = t('upgrade.orMonthly', 'or {price} / month').replace('{price}', price('pro_monthly'));
+  }
+
+  document.querySelectorAll('#plan-card-lifetime .price-lifetime').forEach((el) => { el.textContent = price('lifetime'); });
+  const btnLifetime = document.getElementById('btn-upgrade-lifetime');
+  if (btnLifetime) {
+    btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime">${escHtml(price('lifetime'))}</span>`;
+  }
+
+  const single = price('single_meeting');
+  document.querySelectorAll('.price-single-meeting').forEach((el) => { el.textContent = single; });
+  const singleLine = `${escHtml(t('upgrade.singleAltPrefix', 'Only need this single meeting? Unlock for'))} <strong class="price-single-meeting" style="font-weight:700;color:#e3e3e3">${escHtml(single)}</strong>`;
+  const btnSingleMeeting = document.getElementById('btn-upgrade-single-meeting');
+  if (btnSingleMeeting) btnSingleMeeting.innerHTML = `<span>${singleLine}</span> →`;
+  const lcText = document.getElementById('large-class-single-meeting-text');
+  if (lcText) lcText.innerHTML = singleLine;
+
+  paintUpgradePaymentBadges(country);
+}
+
+// Legacy-offer copy helpers (translated; prices stay literal).
+function bestValueBadge(perMonth) {
+  return t('upgrade.bestValuePerMo', 'Best value · {price}/mo').replace('{price}', perMonth);
+}
+function regionalSpecialPill(flag, lifetime, eduPerYear) {
+  return t('upgrade.dealRegionalSpecial', '{flag} Special price: {lifetime} Lifetime · {edu}/yr Educator')
+    .replace('{flag}', flag).replace('{lifetime}', lifetime).replace('{edu}', eduPerYear);
+}
+
 function updateUpgradeModalPricing() {
+  const tieredOffer = _billing && _billing.offer && _billing.offer.tiered ? _billing.offer : null;
+  if (tieredOffer) {
+    const c = _billing.country || state.signupCountry || '';
+    paintTieredUpgradeModal(tieredOffer, typeof c === 'string' ? c.trim().toUpperCase() : '');
+    return;
+  }
+  // Undo tiered-only changes if this modal was painted tiered earlier.
+  const tieredHeroName = document.querySelector('#plan-card-educator [data-i18n="upgrade.proAnnualName"]');
+  if (tieredHeroName) {
+    tieredHeroName.setAttribute('data-i18n', 'pricing.planEduName');
+    tieredHeroName.textContent = t('pricing.planEduName', 'Educator Annual Pass');
+  }
+  const legacyHeroBtn = document.getElementById('btn-upgrade-individual');
+  if (legacyHeroBtn) legacyHeroBtn.onclick = () => startUpgradeCheckout('educator', 'btn-upgrade-individual');
+  const legacyMonthly = document.getElementById('btn-upgrade-monthly');
+  if (legacyMonthly) legacyMonthly.style.display = 'none';
+  const legacyHeroBadge = document.getElementById('edu-hero-badge');
+  if (legacyHeroBadge) legacyHeroBadge.style.display = '';
   const isPpp = !!(_billing && _billing.pppDiscount && _billing.pppDiscount.eligible);
   const rawCountry = _billing?.country || _billing?.pppDiscount?.country || state.signupCountry || (typeof window !== 'undefined' && window._attCountry) || '';
   const country = typeof rawCountry === 'string' ? rawCountry.trim().toUpperCase() : '';
@@ -7579,13 +7692,13 @@ function updateUpgradeModalPricing() {
       educatorPriceEl.innerHTML = `<s style="color:#9aa0a6;font-size:.82rem;font-weight:400;margin-right:4px">$4.99</s><span style="color:#8ab4f8;font-weight:700">$2.49</span>${localTag}`;
     }
     if (eduPerMoBadge) {
-      eduPerMoBadge.textContent = 'BEST VALUE · ~20¢/mo';
+      eduPerMoBadge.textContent = bestValueBadge('~20¢');
     }
     if (btnLifetime) {
       btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime" style="color:#ffffff;font-weight:700">$4.99</span> <span style="background:rgba(255,255,255,0.22);color:#fff;font-size:0.68rem;padding:2px 7px;border-radius:10px;margin-left:4px;font-weight:600">${escHtml(t('upgrade.off50PayOnce', '50% Off · Pay Once'))}</span>`;
     }
     if (btnEdu) {
-      btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#79c0ff;font-weight:700">$2.49</span>/yr <span style="background:rgba(88,166,255,0.25);color:#79c0ff;font-size:0.68rem;padding:2px 7px;border-radius:10px;margin-left:4px;font-weight:600">${escHtml(t('upgrade.off50', '50% Off'))}</span>`;
+      btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#79c0ff;font-weight:700">$2.49</span>${escHtml(t('upgrade.perYear', '/yr'))} <span style="background:rgba(88,166,255,0.25);color:#79c0ff;font-size:0.68rem;padding:2px 7px;border-radius:10px;margin-left:4px;font-weight:600">${escHtml(t('upgrade.off50', '50% Off'))}</span>`;
     }
   } else {
     if (dealPill) {
@@ -7609,18 +7722,18 @@ function updateUpgradeModalPricing() {
       const localTag = localEduAnchor ? ` <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(${escHtml(localEduAnchor)})</span>` : '';
       educatorPriceEl.innerHTML = `<span>$4.99</span>${localTag}`;
     }
-    if (eduPerMoBadge) eduPerMoBadge.textContent = 'BEST VALUE · 41¢/mo';
+    if (eduPerMoBadge) eduPerMoBadge.textContent = bestValueBadge('41¢');
     if (btnLifetime) {
       btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime">$9.99</span>`;
     }
     if (btnEdu) {
-      btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator">$4.99</span>/yr`;
+      btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator">$4.99</span>${escHtml(t('upgrade.perYear', '/yr'))}`;
     }
   }
 
   if (country === 'IN') {
     if (dealPill) {
-      dealPill.innerHTML = `<span>🇮🇳 India Special: ₹299 INR Lifetime · ₹199/yr Educator</span>`;
+      dealPill.innerHTML = `<span>${escHtml(regionalSpecialPill('🇮🇳', '₹299 INR', '₹199'))}</span>`;
       dealPill.style.background = 'rgba(74,222,128,.16)';
       dealPill.style.borderColor = 'rgba(74,222,128,.4)';
       dealPill.style.color = '#4ade80';
@@ -7635,15 +7748,15 @@ function updateUpgradeModalPricing() {
       educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">₹199</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-left:4px">₹399</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.40)</span>`;
     }
     if (eduPerMoBadge) {
-      eduPerMoBadge.textContent = 'BEST VALUE · ~₹16/mo';
+      eduPerMoBadge.textContent = bestValueBadge('~₹16');
     }
     if (btnEdu) {
-      btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#ffffff;font-weight:700">₹199</span>/yr`;
+      btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#ffffff;font-weight:700">₹199</span>${escHtml(t('upgrade.perYear', '/yr'))}`;
     }
     if (eduCard) eduCard.style.display = (_billing && _billing.educatorAvailable === false) ? 'none' : '';
   } else if (country === 'PH') {
     if (dealPill) {
-      dealPill.innerHTML = `<span>🇵🇭 Philippines Special: ₱280 PHP Lifetime · ₱140/yr Educator</span>`;
+      dealPill.innerHTML = `<span>${escHtml(regionalSpecialPill('🇵🇭', '₱280 PHP', '₱140'))}</span>`;
       dealPill.style.background = 'rgba(74,222,128,.16)';
       dealPill.style.borderColor = 'rgba(74,222,128,.4)';
       dealPill.style.color = '#4ade80';
@@ -7658,15 +7771,15 @@ function updateUpgradeModalPricing() {
       educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">₱140</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-left:4px">₱280</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.49)</span>`;
     }
     if (eduPerMoBadge) {
-      eduPerMoBadge.textContent = 'BEST VALUE · ~₱12/mo';
+      eduPerMoBadge.textContent = bestValueBadge('~₱12');
     }
     if (btnEdu) {
-      btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#ffffff;font-weight:700">₱140</span>/yr`;
+      btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#ffffff;font-weight:700">₱140</span>${escHtml(t('upgrade.perYear', '/yr'))}`;
     }
     if (eduCard) eduCard.style.display = (_billing && _billing.educatorAvailable === false) ? 'none' : '';
   } else if (country === 'MY') {
     if (dealPill) {
-      dealPill.innerHTML = `<span>🇲🇾 Malaysia Special: RM 22 MYR Lifetime · RM 12/yr Educator</span>`;
+      dealPill.innerHTML = `<span>${escHtml(regionalSpecialPill('🇲🇾', 'RM 22 MYR', 'RM 12'))}</span>`;
       dealPill.style.background = 'rgba(74,222,128,.16)';
       dealPill.style.borderColor = 'rgba(74,222,128,.4)';
       dealPill.style.color = '#4ade80';
@@ -7681,15 +7794,15 @@ function updateUpgradeModalPricing() {
       educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">RM 12</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-left:4px">RM 24</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.49)</span>`;
     }
     if (eduPerMoBadge) {
-      eduPerMoBadge.textContent = 'BEST VALUE · ~RM 1/mo';
+      eduPerMoBadge.textContent = bestValueBadge('~RM 1');
     }
     if (btnEdu) {
-      btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#ffffff;font-weight:700">RM 12</span>/yr`;
+      btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#ffffff;font-weight:700">RM 12</span>${escHtml(t('upgrade.perYear', '/yr'))}`;
     }
     if (eduCard) eduCard.style.display = (_billing && _billing.educatorAvailable === false) ? 'none' : '';
   } else if (country === 'ID') {
     if (dealPill) {
-      dealPill.innerHTML = `<span>🇮🇩 Indonesia Special: Rp 78.000 IDR Lifetime · Rp 39.000/yr Educator</span>`;
+      dealPill.innerHTML = `<span>${escHtml(regionalSpecialPill('🇮🇩', 'Rp 78.000 IDR', 'Rp 39.000'))}</span>`;
       dealPill.style.background = 'rgba(74,222,128,.16)';
       dealPill.style.borderColor = 'rgba(74,222,128,.4)';
       dealPill.style.color = '#4ade80';
@@ -7704,15 +7817,15 @@ function updateUpgradeModalPricing() {
       educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">Rp 39.000</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-left:4px">Rp 78.000</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.49)</span>`;
     }
     if (eduPerMoBadge) {
-      eduPerMoBadge.textContent = 'BEST VALUE · ~Rp 3.250/mo';
+      eduPerMoBadge.textContent = bestValueBadge('~Rp 3.250');
     }
     if (btnEdu) {
-      btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#ffffff;font-weight:700">Rp 39.000</span>/yr`;
+      btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#ffffff;font-weight:700">Rp 39.000</span>${escHtml(t('upgrade.perYear', '/yr'))}`;
     }
     if (eduCard) eduCard.style.display = (_billing && _billing.educatorAvailable === false) ? 'none' : '';
   } else if (country === 'MX') {
     if (dealPill) {
-      dealPill.innerHTML = `<span>🇲🇽 México Especial: $99 MXN De por vida · $49/año Educador</span>`;
+      dealPill.innerHTML = `<span>${escHtml(regionalSpecialPill('🇲🇽', '$99 MXN', '$49'))}</span>`;
       dealPill.style.background = 'rgba(74,222,128,.16)';
       dealPill.style.borderColor = 'rgba(74,222,128,.4)';
       dealPill.style.color = '#4ade80';
@@ -7727,15 +7840,15 @@ function updateUpgradeModalPricing() {
       educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">$49 MXN</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-left:4px">$99</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.49)</span>`;
     }
     if (eduPerMoBadge) {
-      eduPerMoBadge.textContent = 'BEST VALUE · ~$4 MXN/mes';
+      eduPerMoBadge.textContent = bestValueBadge('~$4 MXN');
     }
     if (btnEdu) {
-      btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#ffffff;font-weight:700">$49 MXN</span>/año`;
+      btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#ffffff;font-weight:700">$49 MXN</span>${escHtml(t('upgrade.perYear', '/yr'))}`;
     }
     if (eduCard) eduCard.style.display = (_billing && _billing.educatorAvailable === false) ? 'none' : '';
   } else if (country === 'BR') {
     if (dealPill) {
-      dealPill.innerHTML = `<span>🇧🇷 Brasil Especial: R$ 49 Vitalício · R$ 27/ano Educador</span>`;
+      dealPill.innerHTML = `<span>${escHtml(regionalSpecialPill('🇧🇷', 'R$ 49', 'R$ 27'))}</span>`;
       dealPill.style.background = 'rgba(74,222,128,.16)';
       dealPill.style.borderColor = 'rgba(74,222,128,.4)';
       dealPill.style.color = '#4ade80';
@@ -7750,10 +7863,10 @@ function updateUpgradeModalPricing() {
       educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">R$ 27</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-left:4px">R$ 54</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.49)</span>`;
     }
     if (eduPerMoBadge) {
-      eduPerMoBadge.textContent = 'BEST VALUE · ~R$ 2.25/mês';
+      eduPerMoBadge.textContent = bestValueBadge('~R$ 2.25');
     }
     if (btnEdu) {
-      btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#ffffff;font-weight:700">R$ 27</span>/ano`;
+      btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#ffffff;font-weight:700">R$ 27</span>${escHtml(t('upgrade.perYear', '/yr'))}`;
     }
     if (eduCard) eduCard.style.display = (_billing && _billing.educatorAvailable === false) ? 'none' : '';
   } else {
@@ -7764,40 +7877,40 @@ function updateUpgradeModalPricing() {
   const btnSingleMeeting = document.getElementById('btn-upgrade-single-meeting');
   let singlePriceStr = '$2.99';
   let singleCardHeaderPrice = '$2.99';
-  let eduAnnualStr = '$4.99 (41¢/mo)';
+  let eduAnnualStr = '$4.99';
 
   if (country === 'IN') {
     singlePriceStr = '₹99';
     singleCardHeaderPrice = '₹99 INR';
-    eduAnnualStr = '₹199 (~₹16/mo)';
+    eduAnnualStr = '₹199';
   } else if (country === 'PH') {
     singlePriceStr = '₱99';
     singleCardHeaderPrice = '₱99 PHP';
-    eduAnnualStr = '₱140 (~₱12/mo)';
+    eduAnnualStr = '₱140';
   } else if (country === 'MY') {
     singlePriceStr = 'RM 12';
     singleCardHeaderPrice = 'RM 12 MYR';
-    eduAnnualStr = 'RM 12 (~RM 1/mo)';
+    eduAnnualStr = 'RM 12';
   } else if (country === 'ID') {
     singlePriceStr = 'Rp 29.000';
     singleCardHeaderPrice = 'Rp 29.000 IDR';
-    eduAnnualStr = 'Rp 39.000 (~Rp 3.250/mo)';
+    eduAnnualStr = 'Rp 39.000';
   } else if (country === 'MX') {
     singlePriceStr = '$29 MXN';
     singleCardHeaderPrice = '$29 MXN';
-    eduAnnualStr = '$49 MXN (~$4 MXN/mes)';
+    eduAnnualStr = '$49 MXN';
   } else if (country === 'BR') {
     singlePriceStr = 'R$ 14';
     singleCardHeaderPrice = 'R$ 14 BRL';
-    eduAnnualStr = 'R$ 27 (~R$ 2.25/mês)';
+    eduAnnualStr = 'R$ 27';
   } else if (country === 'KE') {
     singlePriceStr = 'KSh 195';
     singleCardHeaderPrice = 'KSh 195 KES';
-    eduAnnualStr = 'KSh 325 (~KSh 27/mo)';
+    eduAnnualStr = 'KSh 325';
   } else if (isPpp) {
     singlePriceStr = '$1.49';
     singleCardHeaderPrice = '$1.49';
-    eduAnnualStr = '$2.49 (~20¢/mo)';
+    eduAnnualStr = '$2.49';
   }
 
   if (singlePriceEl) {
@@ -7814,9 +7927,14 @@ function updateUpgradeModalPricing() {
   if (lcEduPriceEl) lcEduPriceEl.textContent = eduPriceSimple;
 
   if (btnSingleMeeting) {
-    btnSingleMeeting.innerHTML = `<span>Need just today's class? Unlock for <strong class="price-single-meeting" style="font-weight:700;color:#e3e3e3">${escHtml(singlePriceStr)}</strong> — or get an entire year of unlimited classes for just <strong>${escHtml(eduAnnualStr)}</strong></span> →`;
+    btnSingleMeeting.innerHTML = `<span>${escHtml(t('upgrade.singleAltPrefix', 'Only need this single meeting? Unlock for'))} <strong class="price-single-meeting" style="font-weight:700;color:#e3e3e3">${escHtml(singlePriceStr)}</strong> ${escHtml(t('upgrade.orFullYear', '— or a full year of unlimited classes for {price}')).replace('{price}', '<strong>' + escHtml(eduAnnualStr) + '</strong>')}</span> →`;
   }
 
+  paintUpgradePaymentBadges(country);
+}
+
+// Localized "which payment methods work here" pill under the plan cards.
+function paintUpgradePaymentBadges(country) {
   const badgeText = document.getElementById('upgrade-payment-badge-text');
   if (badgeText) {
     if (country === 'PH') {
@@ -7835,10 +7953,13 @@ function updateUpgradeModalPricing() {
       badgeText.textContent = t('upgrade.badgesMX', '🇲🇽 OXXO, Mercado Pago & SPEI Accepted');
       badgeText.setAttribute('data-i18n', 'upgrade.badgesMX');
     } else if (country === 'BR') {
-      badgeText.textContent = '🇧🇷 Pix, Cartões & Apple Pay Aceitos';
+      badgeText.textContent = t('upgrade.badgesBR', '🇧🇷 Pix, cards & Apple Pay accepted');
+      badgeText.setAttribute('data-i18n', 'upgrade.badgesBR');
     } else if (country === 'KE' || (country && ['TZ', 'UG', 'RW', 'ET', 'BI'].includes(country))) {
       const eaFlags = { KE: '🇰🇪', TZ: '🇹🇿', UG: '🇺🇬', RW: '🇷🇼', ET: '🇪🇹', BI: '🇧🇮' };
-      badgeText.textContent = `${eaFlags[country] || '🇰🇪'} M-Pesa, Mobile Money & Cards Accepted`;
+      // {flag} varies per country, so this one can't carry a data-i18n hook.
+      badgeText.removeAttribute('data-i18n');
+      badgeText.textContent = t('upgrade.badgesEA', '{flag} M-Pesa, mobile money & cards accepted').replace('{flag}', eaFlags[country] || '🇰🇪');
     } else {
       badgeText.textContent = t('upgrade.badgesDefault', '💳 Credit / Debit Cards, Apple Pay & Google Pay Accepted');
       badgeText.setAttribute('data-i18n', 'upgrade.badgesDefault');
@@ -9885,6 +10006,10 @@ function updateUiLanguage() {
   if (_activeTab === 'roster') renderRosterView();
   if (_activeTab === 'invited') renderInvitedList();
 
+  // The upgrade modal's price lines/badges are JS-painted (tiered pricing paints
+  // every one) — repaint so a language switch doesn't leave stale English.
+  if (_billing) updateUpgradeModalPricing();
+
   // #meeting-title holds the live meeting NAME (user data) while tracking, so it
   // can't carry data-i18n — only localize its idle "Not in a meeting" state.
   const meetingTitleEl = document.getElementById('meeting-title');
@@ -11583,7 +11708,7 @@ window.addEventListener('DOMContentLoaded', () => {
           Need just today's class? Unlock this meeting for <strong class="price-single-meeting" style="color:#4ade80">$2.99</strong> — or get an entire year of unlimited classes for <strong id="large-class-edu-price" style="color:#58a6ff">$4.99</strong>
         </div>
         <button type="button" id="btn-unlock-single-meeting-prominent" onclick="startUpgradeCheckout('single_meeting', 'btn-unlock-single-meeting-prominent')" style="width:100%;background:#34a853;color:#ffffff;border:none;padding:9.5px 16px;border-radius:20px;font-weight:700;font-size:.83rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 2px 8px rgba(52,168,83,.3);transition:all .15s ease">
-          <span>Unlock This Meeting (<span class="price-single-meeting">$2.99</span>) →</span>
+          <span><span data-i18n="upgrade.unlockMeetingPrefix">Unlock This Meeting</span> (<span class="price-single-meeting">$2.99</span>) →</span>
         </button>
       </div>
 
@@ -11619,7 +11744,7 @@ window.addEventListener('DOMContentLoaded', () => {
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <div style="display:flex;align-items:center;gap:6px">
             <span style="font-weight:600;font-size:.88rem;color:#e3e3e3" data-i18n="upgrade.lifetimeName">Lifetime Pass</span>
-            <span id="lifetime-secondary-badge" style="background:rgba(253,214,99,.15);color:#fdd663;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:12px;letter-spacing:.04em;text-transform:uppercase">ONE-TIME · Own Forever</span>
+            <span id="lifetime-secondary-badge" style="background:rgba(253,214,99,.15);color:#fdd663;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:12px;letter-spacing:.04em;text-transform:uppercase" data-i18n="upgrade.lifetimeBadge">One-time · own forever</span>
           </div>
           <div style="text-align:right">
             <span class="price-lifetime" style="font-weight:700;font-size:1rem;color:#8ab4f8">$9.99</span>

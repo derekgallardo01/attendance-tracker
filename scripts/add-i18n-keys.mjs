@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { EXTRA_LOCALE_OVERRIDES } from './build-locale-overrides.mjs';
 import { GROWTH_KEYS_EN, GROWTH_LOCALE_MAPS, getGrowthTranslationsForLocale } from './add-growth-keys.mjs';
+import { TRANSLATION_FIXES } from './translation-fixes.mjs';
 const require = createRequire(import.meta.url);
 const i18nBackend = require('../backend/src/lib/i18n.js');
 
@@ -733,6 +734,8 @@ export function updateStringsFile() {
       ...(LMS_SYNC_PRO_TRANSLATIONS[loc] ? { "billing.lmsSyncPro": LMS_SYNC_PRO_TRANSLATIONS[loc] } : {}),
       ...(SINGLE_ALT_PREFIX_TRANSLATIONS[loc] ? { "upgrade.singleAltPrefix": SINGLE_ALT_PREFIX_TRANSLATIONS[loc] } : {}),
       ...(GRACE_USED_TRANSLATIONS[loc] ? { "export.graceUsed": GRACE_USED_TRANSLATIONS[loc] } : {}),
+      // Audited fixes for values that were still English — applied last.
+      ...(TRANSLATION_FIXES[loc] || {}),
     };
 
     const locPattern = `"${loc}": {`;

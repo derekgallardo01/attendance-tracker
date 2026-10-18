@@ -748,9 +748,32 @@ describe('claimWebhookEvent', () => {
 describe('getRevenueFunnel', () => {
   test('returns an empty-but-shaped payload for an empty store', async () => {
     const r = await firestore.getRevenueFunnel({ days: 30 });
-    expect(r.funnel).toEqual({ activated: 0, sawGate: 0, clickedCheckout: 0, paid30d: 0, paidEver: 0 });
+    expect(r.funnel).toEqual({ activated: 0, sawGate: 0, clickedCheckout: 0, checkoutStarted: 0, paid30d: 0, clickedAndPaid: 0, paidEver: 0 });
     expect(r.triggers).toEqual([]);
     expect(r.warmStuck).toEqual([]);
+    expect(r.recurringShare).toBeNull();
+  });
+
+  test('free reward grants are not "paid"; checkout_started, window plan mix and recurring share are tracked', async () => {
+    const now = Date.now();
+    const HOUR = 3600 * 1000;
+    // Review-reward Pro grant: saw a gate, never bought → still a stuck lead, not a buyer.
+    seedUser('a.com', 'comp@a.com', { individualPlan: 'pro', individualPlanType: 'review_reward' });
+    seedEvent('a.com', 'comp@a.com', 'upgrade_modal_shown', now - HOUR, { reason: 'largeClass' });
+    // Recurring buyer (no gate) and one-time buyer, both in the window.
+    seedUser('b.com', 'sub@b.com', { individualPlan: 'pro', individualPlanType: 'educator' });
+    seedEvent('b.com', 'sub@b.com', 'checkout_started', now - 2 * HOUR, { plan: 'educator' });
+    seedEvent('b.com', 'sub@b.com', 'upgraded', now - HOUR, { plan: 'educator', interval: 'year' });
+    seedUser('c.com', 'once@c.com', { individualPlan: 'pro', individualPlanType: 'lifetime' });
+    seedEvent('c.com', 'once@c.com', 'upgraded', now - HOUR, { plan: 'lifetime', interval: null });
+
+    const r = await firestore.getRevenueFunnel({ days: 30 });
+    expect(r.funnel.paidEver).toBe(2);
+    expect(r.funnel.paid30d).toBe(2);
+    expect(r.funnel.checkoutStarted).toBe(1);
+    expect(r.triggers.find(t => t.trigger === 'largeClass')).toEqual({ trigger: 'largeClass', shown: 1, clicked: 0, paid: 0 });
+    expect(r.planMixWindow).toEqual({ educator: 1, lifetime: 1 });
+    expect(r.recurringShare).toBe(0.5);
   });
 
   test('assembles the full story: funnel, triggers, countries, leak, stuck, objections, plan mix', async () => {
@@ -779,7 +802,7 @@ describe('getRevenueFunnel', () => {
     seedEvent('theyachtgroup.com', 'legacy@theyachtgroup.com', 'upgrade_modal_shown', now - HOUR, { reason: 'auto_export' });
 
     const r = await firestore.getRevenueFunnel({ days: 30 });
-    expect(r.funnel).toEqual({ activated: 3, sawGate: 2, clickedCheckout: 1, paid30d: 1, paidEver: 1 });
+    expect(r.funnel).toEqual({ activated: 3, sawGate: 2, clickedCheckout: 1, checkoutStarted: 0, paid30d: 1, clickedAndPaid: 1, paidEver: 1 });
 
     const autoExport = r.triggers.find(t => t.trigger === 'auto_export');
     expect(autoExport).toEqual({ trigger: 'auto_export', shown: 1, clicked: 1, paid: 1 });
@@ -807,7 +830,9 @@ describe('getRevenueFunnel', () => {
     const r = await firestore.getRevenueFunnel({ days: 30 });
     expect(r.funnel.sawGate).toBe(0);
     expect(r.funnel.paidEver).toBe(1);
+    expect(r.funnel.paid30d).toBe(0); // bought 60 days ago — outside the window
     expect(r.planMix).toEqual({ individual: 1 }); // plan mix is all-time too
+    expect(r.planMixWindow).toEqual({});
   });
 });
 

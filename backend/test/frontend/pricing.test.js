@@ -49,6 +49,18 @@ describe('fromStatus()', () => {
   });
 });
 
+describe('perMonth()', () => {
+  test('returns the tiered monthly equivalent when the server advertises one', () => {
+    pricing.fromStatus({ pricing: { pro_annual: { label: '$29', period: '/yr', perMonth: '$2.42' } } });
+    expect(pricing.perMonth('pro_annual')).toBe('$2.42');
+  });
+
+  test('empty for plans without one and for unknown plans', () => {
+    expect(pricing.perMonth('lifetime')).toBe('');
+    expect(pricing.perMonth('yacht')).toBe('');
+  });
+});
+
 describe('quotaLimit()', () => {
   test('defaults to 2', () => {
     expect(pricing.quotaLimit()).toBe(2);

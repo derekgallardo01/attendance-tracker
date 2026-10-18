@@ -10,6 +10,9 @@ const { suppressEmail, isEmailSuppressed, unsuppressEmail } = require('./firesto
 const { deleteUser, isUserDeleted, clearDeletedTombstone } = require('./firestore/deletion');
 const { saveCheckin, getCheckins } = require('./firestore/checkins');
 const {
+  paymentFromSession, paymentFromInvoice, recordPayment, updateSubscriptionStatus, markPaymentStatus, getRevenueSummary,
+} = require('./firestore/payments');
+const {
   getActivationFunnel, getAggregatedInsights, clearInsightsCache, getWeeklySelfReport, getAdvancedAnalytics, getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, markUserContacted, dismissSuggestion, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, getOutreachList, getActivityPulse, getRevenueFunnel,
   getRecentErrorSpike, getErrorAlertState, setErrorAlertState,
 } = require('./firestore/analytics');
@@ -3044,6 +3047,8 @@ module.exports = {
   getDomainTeacherCount, setTeamSignpostDismissed,
   claimReferral, releaseReferral, recordReferralForInviter, recordReferralPromoCode, getUserTrackingStreak,
   claimWebhookEvent, releaseWebhookEvent,
+  paymentFromSession, paymentFromInvoice, recordPayment, updateSubscriptionStatus, markPaymentStatus,
+  getRevenueSummary: memoizeTTL(getRevenueSummary, 120000),
   logEvent, recordCancellationTelemetry, getCancellationTelemetry,
   recordPublicPageview, recordNotificationLog, updateNotificationWebhook,
   getUserActivationStatus, countUserExports, countUserMonthlyExports, countUserAutoExports, getExportReexportCount, countAllUsers, getExportedConferenceIds, getTrackedConferenceIds, updateMeetingTimes,

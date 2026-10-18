@@ -1252,6 +1252,19 @@ async function sendWeeklySelfReport(report) {
         </div>
       </div>` : '';
 
+  // Revenue from the payments ledger (USD; regional currencies FX-estimated).
+  const rv = report.revenue;
+  const usd = (cents) => `$${((cents || 0) / 100).toFixed(2)}`;
+  const revenueHtml = rv ? `
+      <div style="padding:20px 24px;border-bottom:1px solid #30363d;">
+        <h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:0.05em;color:#4ade80;">💰 Revenue</h3>
+        <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:12px 16px;font-size:13px;line-height:1.6;color:#e6edf3;">
+          <div><b>This week:</b> <strong style="color:#4ade80;">${usd(rv.approxUsd?.last7d)}</strong> <span style="color:#8b949e;">· 30d ${usd(rv.approxUsd?.last30d)} · all-time ${usd(rv.approxUsd?.allTime)}</span></div>
+          <div><b>MRR:</b> <strong style="color:#4ade80;">${usd(rv.mrrApproxUsd)}</strong> <span style="color:#8b949e;">from ${rv.activeSubscriptions || 0} active subscription${rv.activeSubscriptions === 1 ? '' : 's'}</span></div>
+          <div><b>Mix (all-time):</b> <span style="color:#8b949e;">one-time ${usd(rv.approxUsd?.oneTime)} · recurring ${usd(rv.approxUsd?.recurring)}</span></div>
+        </div>
+      </div>` : '';
+
   const subject = `📊 Weekly Attendance Tracker report — ${report.signups.thisWeek} new signup${report.signups.thisWeek === 1 ? '' : 's'}, ${report.tracks.thisWeek} track${report.tracks.thisWeek === 1 ? '' : 's'}`;
 
   const html = `
@@ -1308,6 +1321,7 @@ async function sendWeeklySelfReport(report) {
             </table>
           </div>
 
+          ${revenueHtml}
           ${retentionHtml}
 
           <!-- Top User -->

@@ -4,9 +4,11 @@ const express = require('express');
 const log = require('../lib/logger');
 const CONFIG = require('../config');
 const jwt = require('jsonwebtoken');
-const { getTenantPlan, setTenantPlan, getUserPlan, setUserPlan, logEvent, recordCancellationTelemetry, countUserMonthlyExports, countUserAutoExports, getUserSettings, getDomainTeacherCount, claimWebhookEvent, releaseWebhookEvent, persistExport, isMeetingUnlocked, getUser, markUserLargeClassGraceUsed, isUserDeleted, getTeamAdminStatus, getExportReexportCount } = require('../services/firestore');
+const { getTenantPlan, setTenantPlan, getUserPlan, setUserPlan, logEvent, recordCancellationTelemetry, countUserMonthlyExports, countUserAutoExports, getUserSettings, getDomainTeacherCount, claimWebhookEvent, releaseWebhookEvent, persistExport, isMeetingUnlocked, getUser, markUserLargeClassGraceUsed, isUserDeleted, getTeamAdminStatus, getExportReexportCount, recordPayment, updateSubscriptionStatus, markPaymentStatus } = require('../services/firestore');
+const { paymentFromSession, paymentFromInvoice } = require('../services/firestore/payments');
 const { PERSONAL_EMAIL_DOMAINS, domainOf } = require('../services/firestore/_core');
 const PRICING = require('../config/pricing');
+const { TIERED_PLANS, getOffer, lineItemFor } = require('../config/priceTiers');
 
 // High-volume education & developing markets eligible for Purchasing Power Parity (PPP) subsidy
 const PPP_COUNTRIES = new Set([
@@ -79,7 +81,7 @@ function individualBillingConfigured() {
 // the fallthrough cascade once let an unknown/misspelled plan resolve to a
 // DIFFERENT product's price (the documented "$9.99 button charged team price"
 // class of bug).
-const KNOWN_PLANS = new Set(['team', 'department', 'educator', 'lifetime', 'individual', 'single_meeting']);
+const KNOWN_PLANS = new Set(['team', 'department', 'educator', 'lifetime', 'individual', 'single_meeting', 'pro_annual', 'pro_monthly']);
 function normalizePlan(raw) {
   if (raw == null || raw === '') return { plan: null };            // caller omitted it — legacy inference
   if (typeof raw !== 'string') return { invalid: true };
@@ -266,6 +268,107 @@ async function createSafeCheckoutSession(stripe, sessionParams, context = {}) {
 
 const router = Router();
 
+// Stripe success/cancel URLs. A caller-supplied absolute returnUrl is honored
+// only on an allowed origin; anything else is resolved against the public site.
+function checkoutReturnUrls({ returnUrl, isSingleMeeting, confId, individual }) {
+  const defaultBackTo = isSingleMeeting
+    ? (confId ? `index.html?unlocked=${encodeURIComponent(confId)}` : 'index.html')
+    : (individual ? 'history.html' : 'team.html');
+  let backTo = returnUrl || defaultBackTo;
+  if (isSingleMeeting && confId && !backTo.includes('unlocked=')) {
+    const bSep = backTo.includes('?') ? '&' : '?';
+    backTo = `${backTo}${bSep}unlocked=${encodeURIComponent(confId)}`;
+  }
+
+  const isAllowedAbsolute = (urlStr) => {
+    try {
+      const u = new URL(urlStr);
+      return (CONFIG.allowedOrigins && CONFIG.allowedOrigins.some(o => {
+        try { return new URL(o).origin === u.origin; } catch (_) { return false; }
+      })) || (CONFIG.publicSiteUrl && new URL(CONFIG.publicSiteUrl).origin === u.origin);
+    } catch (_) {
+      return false;
+    }
+  };
+
+  const isAbs = (backTo.startsWith('http://') || backTo.startsWith('https://')) && isAllowedAbsolute(backTo);
+  const sep = backTo.includes('?') ? '&' : '?';
+  const successUrl = isAbs
+    ? `${backTo}${sep}upgraded=1`
+    : `${CONFIG.publicSiteUrl}/${backTo.replace(/^https?:\/\/[^/]+\/?/, '').replace(/^\//, '')}${sep}upgraded=1`;
+  const cancelUrl = isAbs
+    ? backTo
+    : `${CONFIG.publicSiteUrl}/${backTo.replace(/^https?:\/\/[^/]+\/?/, '').replace(/^\//, '')}`;
+  return { successUrl, cancelUrl };
+}
+
+// Tiered-pricing checkout for individual plans (TIERED_PRICING=1). Prices come
+// from config/priceTiers.js as inline price_data — no per-country Stripe price
+// objects, and never a coupon (coupons disable Adaptive Pricing).
+// `email` may be absent for a signed-out pricing-page buyer — Stripe collects
+// it and the webhook falls back to customer_details.email.
+async function createTieredCheckout({ stripe, offer, plan, email: rawEmail, domain: rawDomain, conferenceId, promoCode, returnUrl, urls, userCountry, source }) {
+  const email = rawEmail ? String(rawEmail).trim().toLowerCase() : null;
+  const domain = rawDomain || (email && email.includes('@') ? email.split('@')[1] : null);
+  const item = lineItemFor(offer, plan);
+  if (!item) {
+    const err = new Error('That plan isn\'t available in your region.');
+    err.statusCode = 400;
+    throw err;
+  }
+  const isSingleMeeting = plan === 'single_meeting';
+  const confId = conferenceId ? String(conferenceId).trim().toLowerCase() : null;
+  if (isSingleMeeting && !confId) {
+    const err = new Error('Conference ID is required for a single-meeting pass.');
+    err.statusCode = 400;
+    throw err;
+  }
+  const meta = {
+    individual: '1',
+    plan,
+    ...(domain ? { domain } : {}),
+    ...(email ? { email } : {}),
+    tier: String(offer.tier),
+    pricing: 'tiered',
+    currency: offer.currency,
+    ...(source ? { source } : {}),
+    ...(userCountry ? { country: userCountry } : {}),
+    ...(offer.arm ? { arm: offer.arm } : {}),
+    ...(item.prepaidYear ? { isAnnualOneTime: '1' } : {}),
+    ...(isSingleMeeting ? { conferenceId: confId, meetingPass: '1' } : {}),
+  };
+  const { successUrl, cancelUrl } = urls || checkoutReturnUrls({ returnUrl, isSingleMeeting, confId, individual: true });
+  const isEastAfrica = !!(userCountry && EAST_AFRICA_COUNTRIES.has(userCountry));
+  const sessionParams = {
+    mode: item.mode,
+    line_items: [item.lineItem],
+    ...(email ? { client_reference_id: `user:${email}`, customer_email: email } : {}),
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+    metadata: meta,
+    after_expiration: { recovery: { enabled: true } },
+    ...(offer.methods && !isEastAfrica ? { payment_method_types: offer.methods } : {}),
+    ...(promoCode && promoCode !== 'LAUNCH50' ? { allow_promotion_codes: true } : {}),
+  };
+  if (item.recurring) {
+    sessionParams.subscription_data = { metadata: meta };
+  } else {
+    sessionParams.payment_intent_data = { metadata: meta };
+    sessionParams.customer_creation = 'always';
+  }
+  const session = await createSafeCheckoutSession(stripe, sessionParams, { domain, email, plan, country: userCountry, isEastAfrica, ...(source ? { source } : {}) });
+  if (email && domain) {
+    try {
+      await logEvent(domain, {
+        email,
+        type: 'checkout_started',
+        meta: { plan, recurring: item.recurring, regional: offer.tier > 1, country: userCountry || null, tier: offer.tier, arm: offer.arm || null },
+      });
+    } catch {}
+  }
+  return session;
+}
+
 async function createCheckoutSessionForUser({ user, plan, interval, conferenceId, country, promo, req, returnUrl }) {
   const stripe = getStripe();
   const domain = user.domain;
@@ -275,6 +378,29 @@ async function createCheckoutSessionForUser({ user, plan, interval, conferenceId
     const err = new Error('Unknown plan.');
     err.statusCode = 400;
     throw err;
+  }
+
+  // Tiered pricing owns every individual plan when enabled for this buyer;
+  // the new recurring plans exist ONLY there.
+  if (normalizedPlan && TIERED_PLANS.includes(normalizedPlan)) {
+    const tierCountry = (country && typeof country === 'string' ? country.trim().toUpperCase() : null) || detectCountry(req) || (typeof user?.signupGeo?.country === 'string' ? user.signupGeo.country.trim().toUpperCase() : null);
+    const offer = getOffer({ country: tierCountry, email });
+    if (offer.tiered) {
+      if (!stripe) {
+        const err = new Error('Billing is not configured yet.');
+        err.statusCode = 503;
+        throw err;
+      }
+      return createTieredCheckout({
+        stripe, offer, plan: normalizedPlan, email, domain, conferenceId,
+        promoCode: (promo ?? '').trim().toUpperCase(), returnUrl, userCountry: tierCountry,
+      });
+    }
+    if (normalizedPlan === 'pro_annual' || normalizedPlan === 'pro_monthly') {
+      const err = new Error('That plan isn\'t available yet.');
+      err.statusCode = 400;
+      throw err;
+    }
   }
   const isSingleMeeting = normalizedPlan === 'single_meeting';
   const isEducator = normalizedPlan === 'educator';
@@ -428,34 +554,7 @@ async function createCheckoutSessionForUser({ user, plan, interval, conferenceId
     meta.conferenceId = confId;
     meta.meetingPass = '1';
   }
-  const defaultBackTo = isSingleMeeting
-    ? (confId ? `index.html?unlocked=${encodeURIComponent(confId)}` : 'index.html')
-    : (individual ? 'history.html' : 'team.html');
-  let backTo = returnUrl || defaultBackTo;
-  if (isSingleMeeting && confId && !backTo.includes('unlocked=')) {
-    const bSep = backTo.includes('?') ? '&' : '?';
-    backTo = `${backTo}${bSep}unlocked=${encodeURIComponent(confId)}`;
-  }
-
-  const isAllowedAbsolute = (urlStr) => {
-    try {
-      const u = new URL(urlStr);
-      return (CONFIG.allowedOrigins && CONFIG.allowedOrigins.some(o => {
-        try { return new URL(o).origin === u.origin; } catch (_) { return false; }
-      })) || (CONFIG.publicSiteUrl && new URL(CONFIG.publicSiteUrl).origin === u.origin);
-    } catch (_) {
-      return false;
-    }
-  };
-
-  const isAbs = (backTo.startsWith('http://') || backTo.startsWith('https://')) && isAllowedAbsolute(backTo);
-  const sep = backTo.includes('?') ? '&' : '?';
-  const successUrl = isAbs
-    ? `${backTo}${sep}upgraded=1`
-    : `${CONFIG.publicSiteUrl}/${backTo.replace(/^https?:\/\/[^/]+\/?/, '').replace(/^\//, '')}${sep}upgraded=1`;
-  const cancelUrl = isAbs
-    ? backTo
-    : `${CONFIG.publicSiteUrl}/${backTo.replace(/^https?:\/\/[^/]+\/?/, '').replace(/^\//, '')}`;
+  const { successUrl, cancelUrl } = checkoutReturnUrls({ returnUrl, isSingleMeeting, confId, individual });
 
   let resolvedPriceId = sanitizePriceId(priceId);
   let isRecurring = !isLifetime && !isSingleMeeting && !(isIndia && !isEducator && (isLifetime || individual)) && !isRegionalTarget && !isRegionalEducator;
@@ -554,7 +653,18 @@ async function createCheckoutSessionForUser({ user, plan, interval, conferenceId
     throw err;
   }
 
-  return await createSafeCheckoutSession(stripe, sessionParams, { domain, email, plan: normalizedPlan, country: userCountry, isEastAfrica });
+  const session = await createSafeCheckoutSession(stripe, sessionParams, { domain, email, plan: normalizedPlan, country: userCountry, isEastAfrica });
+  // Server-side funnel stage between "clicked a checkout button" and "paid":
+  // a Stripe session actually opened. Allowlisted for the frontend too, but
+  // only this call is authoritative.
+  try {
+    await logEvent(domain, {
+      email,
+      type: 'checkout_started',
+      meta: { plan: normalizedPlan, recurring: isRecurring, regional: isRegionalTarget || isRegionalEducator, country: userCountry || null },
+    });
+  } catch {}
+  return session;
 }
 
 // POST /api/billing/checkout (and /api/billing/create-checkout-session) — start a Checkout Session for the caller's
@@ -800,6 +910,29 @@ router.post('/billing/public-checkout', async (req, res) => {
   if (plan === 'single_meeting') {
     return res.status(400).json({ error: 'Single-meeting pass must be purchased from within an active meeting session.' });
   }
+  if (TIERED_PLANS.includes(plan)) {
+    const tierCountry = detectCountry(req);
+    const tierEmail = (req.body?.email || '').trim().toLowerCase() || null;
+    const offer = getOffer({ country: tierCountry, email: tierEmail });
+    if (offer.tiered) {
+      try {
+        const session = await createTieredCheckout({
+          stripe, offer, plan, email: tierEmail, userCountry: tierCountry,
+          promoCode: (req.body?.promo ?? '').trim().toUpperCase(),
+          source: 'public_pricing',
+          urls: { successUrl: `${CONFIG.publicSiteUrl}/history.html?upgraded=1`, cancelUrl: `${CONFIG.publicSiteUrl}/pricing.html` },
+        });
+        return res.json({ url: session.url });
+      } catch (err) {
+        if (err.statusCode === 400) return res.status(400).json({ error: err.message });
+        log.error('billing: tiered public checkout failed', { plan, error: err.message, code: err.code });
+        return res.status(502).json({ error: 'Could not start checkout.' });
+      }
+    }
+    if (plan === 'pro_annual' || plan === 'pro_monthly') {
+      return res.status(400).json({ error: 'That plan isn\'t available yet.' });
+    }
+  }
   // Annual is opt-IN only (mirrors the authed checkout at :66). Defaulting to
   // 'annual' was a trap: a bare {plan:'team'} would resolve to the $149/yr
   // Institution price AND auto-apply LAUNCH50 — wrong tier + a discount
@@ -992,6 +1125,21 @@ router.post('/billing/public-checkout', async (req, res) => {
     log.error('billing: public checkout failed', { plan, email, error: err.message, code: err.code });
     res.status(502).json({ error: 'Could not start checkout.' });
   }
+});
+
+// GET /api/billing/offer — signed-out tiered offer for pricing.html. Country
+// comes from the request (Cloudflare header / geo), so the response must
+// never be shared-cached across visitors. Signed-out tier-3 visitors get the
+// legacy offer (the experiment arm needs an email; see priceTiers.tier3Arm).
+router.get('/billing/offer', (req, res) => {
+  res.set('Cache-Control', 'private, no-store');
+  const country = detectCountry(req);
+  const offer = getOffer({ country, email: null });
+  res.json({
+    ...publicOffer(offer),
+    country: offer.country || null,
+    pricing: offer.tiered ? tieredPricingTable(offer) : null,
+  });
 });
 
 // GET /api/billing/portal — Stripe Customer Portal link so the org admin can
@@ -1447,6 +1595,7 @@ router.get('/billing/status', requireAuth, async (req, res) => {
     }
 
     const isEdu = isEduDomain(req.user?.email, req.user?.domain);
+    const tieredOffer = getOffer({ country: userCountry, email: req.user?.email });
 
     let hasUsedLargeClassGrace = false;
     if (plan.plan !== 'pro' && req.user) {
@@ -1484,8 +1633,11 @@ router.get('/billing/status', requireAuth, async (req, res) => {
       currentPeriodEnd: plan.currentPeriodEnd || plan.cancelAt || null,
       isRecurring: !!plan.stripeSubscriptionId,
       subscriptionId: plan.stripeSubscriptionId || null,
+      // Tiered pricing (config/priceTiers.js): when `offer.tiered`, the panel
+      // renders the tiered modal and `pricing` carries the tier's labels.
+      offer: publicOffer(tieredOffer),
       // Display-price truth for every frontend surface (see config/pricing.js).
-      pricing: {
+      pricing: tieredOffer.tiered ? tieredPricingTable(tieredOffer) : {
         ...PRICING.PRICES,
         ...(userCountry === 'IN' ? {
           lifetime: { label: '₹299', full: null, period: 'one-time' },
@@ -1508,6 +1660,28 @@ router.get('/billing/status', requireAuth, async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch plan.' });
   }
 });
+
+// The client-safe slice of a tiered offer (no internal method lists).
+function publicOffer(offer) {
+  return {
+    tiered: !!offer.tiered,
+    tier: offer.tier,
+    arm: offer.arm || null,
+    prepaid: !!offer.prepaid,
+    monthlyAvailable: !!offer.monthlyAvailable,
+    currency: offer.currency || 'usd',
+  };
+}
+
+// /billing/status `pricing` table for a tiered offer: the tier's individual
+// labels over the fixed domain-plan labels.
+function tieredPricingTable(offer) {
+  const table = { ...PRICING.PRICES, quotaLimit: PRICING.FREE_MONTHLY_EXPORT_LIMIT };
+  for (const [plan, p] of Object.entries(offer.prices)) {
+    table[plan] = { label: p.label, full: null, period: p.period, ...(p.perMonth ? { perMonth: p.perMonth } : {}) };
+  }
+  return table;
+}
 
 function isEduDomain(email, domain) {
   const e = (email || '').toLowerCase().trim();
@@ -1595,6 +1769,12 @@ function invalidateUserPlanCache(domain, email) {
 // body parser BEFORE express.json() — Stripe signature verification needs the
 // exact bytes. Mounting it inside this (post-json) router would break the
 // signature check.
+// Revenue-ledger writes are best-effort: a ledger failure must never block or
+// fail plan provisioning (the webhook would 500 and Stripe would retry).
+async function ledgerWrite(fn) {
+  try { await fn(); } catch (err) { log.warn('billing: ledger write failed', { error: err.message }); }
+}
+
 async function webhookHandler(req, res) {
   const stripe = getStripe();
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -1632,6 +1812,11 @@ async function webhookHandler(req, res) {
           log.info('billing: checkout completed but unpaid (delayed method) — waiting for async_payment_succeeded', { sessionId: s.id });
           break;
         }
+        // Money was collected — ledger it before provisioning, so a session
+        // that can't be provisioned (no resolvable domain) is still counted.
+        // Idempotent on the payment id, so a retried delivery is harmless.
+        const payment = paymentFromSession(s);
+        await ledgerWrite(() => recordPayment(payment));
         const ref = s.client_reference_id || '';
         const { handleSingleMeetingCheckout } = require('./webhooks');
         if (await handleSingleMeetingCheckout(s)) {
@@ -1647,13 +1832,23 @@ async function webhookHandler(req, res) {
           const email = s.metadata?.email || (ref.startsWith('user:') ? ref.slice(5) : (s.customer_details?.email || s.customer_email));
           const domain = s.metadata?.domain || (email && email.includes('@') ? email.split('@')[1] : null);
           if (domain && email) {
-            const isEducatorAnnualOneTime = s.metadata?.plan === 'educator' && !s.subscription;
-            const planType = isEducatorAnnualOneTime
-              ? 'educator_annual'
+            // Prepaid year: an annual plan bought one-time (local payment rails
+            // that can't auto-renew). Educator keeps its historical planType.
+            const isPrepaidYear = (s.metadata?.plan === 'educator' || s.metadata?.plan === 'pro_annual') && !s.subscription;
+            const planType = isPrepaidYear
+              ? (s.metadata.plan === 'educator' ? 'educator_annual' : 'pro_annual_prepaid')
               : (s.metadata?.plan || (s.subscription ? 'subscription' : 'lifetime'));
-            const individualPlanExpiresAt = isEducatorAnnualOneTime
-              ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
-              : null;
+            let individualPlanExpiresAt = null;
+            if (isPrepaidYear) {
+              // An early renewal stacks onto the time still left, not from today.
+              let baseMs = Date.now();
+              try {
+                const current = await getUserPlan(domain, email.toLowerCase());
+                const currentExpiry = Date.parse(current?.individualPlanExpiresAt || '');
+                if (current?.plan === 'pro' && currentExpiry > baseMs) baseMs = currentExpiry;
+              } catch (_) {}
+              individualPlanExpiresAt = new Date(baseMs + 365 * 24 * 60 * 60 * 1000).toISOString();
+            }
             invalidateUserPlanCache(domain, email.toLowerCase());
             await setUserPlan(domain, email.toLowerCase(), {
               individualPlan: 'pro',
@@ -1663,7 +1858,7 @@ async function webhookHandler(req, res) {
               individualStripeCustomerId: s.customer || null,
               individualStripeSubscriptionId: s.subscription || null,
             });
-            try { await logEvent(domain, { email, type: 'upgraded', meta: { plan: 'individual', amount: s.amount_total, currency: s.currency } }); } catch {}
+            try { await logEvent(domain, { email, type: 'upgraded', meta: { plan: payment.plan, interval: payment.interval, regional: payment.regional, amount: s.amount_total, currency: s.currency } }); } catch {}
             try {
               const { sendUpgradeNotification } = require('../lib/notifications');
               const { getUser } = require('../services/firestore');
@@ -1725,7 +1920,7 @@ async function webhookHandler(req, res) {
               stripeCustomerId: s.customer || null,
               stripeSubscriptionId: s.subscription || null,
             });
-            try { await logEvent(domain, { email: s.customer_email || s.metadata?.initiatedBy || 'admin', type: 'upgraded', meta: { plan: 'team', amount: s.amount_total, currency: s.currency } }); } catch {}
+            try { await logEvent(domain, { email: s.customer_email || s.metadata?.initiatedBy || 'admin', type: 'upgraded', meta: { plan: payment.plan, interval: payment.interval, regional: payment.regional, amount: s.amount_total, currency: s.currency } }); } catch {}
             try {
               const { sendUpgradeNotification } = require('../lib/notifications');
               const buyerEmail = s.customer_details?.email || s.customer_email || s.metadata?.initiatedBy || 'admin';
@@ -1777,6 +1972,7 @@ async function webhookHandler(req, res) {
           cancelAt: cancelAtPeriodEnd ? currentPeriodEnd : null,
           currentPeriodEnd: currentPeriodEnd || null,
         };
+        await ledgerWrite(() => updateSubscriptionStatus(sub.id, event.type === 'customer.subscription.deleted' ? 'canceled' : sub.status, { cancelAtPeriodEnd }));
         if (sub.metadata?.individual === '1') {
           const email = sub.metadata?.email;
           const domain = sub.metadata?.domain || (email && email.includes('@') ? email.split('@')[1] : null);
@@ -1935,6 +2131,10 @@ async function webhookHandler(req, res) {
         const planLabel = meta?.plan || (isIndividual ? 'individual' : 'team');
         const status = regrant ? 'active' : (event.type === 'charge.refunded' ? 'refunded' : 'disputed');
         const planValue = regrant ? 'pro' : 'free';
+        await ledgerWrite(() => markPaymentStatus(
+          { paymentIntentId: asId(obj.payment_intent), invoiceId: asId(obj.invoice) },
+          regrant ? 'paid' : status,
+        ));
         if (isIndividual && email.includes('@')) {
           const domain = meta?.domain || email.split('@')[1];
           invalidateUserPlanCache(domain, email);
@@ -1947,6 +2147,22 @@ async function webhookHandler(req, res) {
         } else {
           log.error('billing: refund/dispute with no resolvable owner — manual review needed', { eventId: event.id, type: event.type });
         }
+        break;
+      }
+      case 'invoice.paid': {
+        // Subscription renewals. The first invoice is already ledgered via its
+        // Checkout Session, so only later cycles are recorded here. Plan
+        // routing lives on the subscription's metadata (invoices don't inherit it).
+        const inv = event.data.object;
+        const subId = typeof inv?.subscription === 'string' ? inv.subscription : inv?.subscription?.id;
+        if (!subId || inv.billing_reason === 'subscription_create' || !inv.amount_paid) break;
+        let subMeta = {};
+        try {
+          subMeta = (await stripe.subscriptions.retrieve(subId))?.metadata || {};
+        } catch (e) {
+          log.warn('billing: invoice.paid subscription lookup failed', { subId, error: e.message });
+        }
+        await ledgerWrite(() => recordPayment(paymentFromInvoice(inv, subMeta)));
         break;
       }
       case 'invoice.payment_failed':

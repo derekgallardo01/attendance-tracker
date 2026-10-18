@@ -2,6 +2,7 @@
 // Self-contained on _core (no calls into operational firestore functions).
 // The heavy read functions are memoize-wrapped at the services/firestore.js
 const { getDb, tenantRef, FieldValue, log, SUPER_ADMIN_EMAIL, isSuperAdmin, PERSONAL_EMAIL_DOMAINS, countDistinctAttendees, tsMs, domainOf } = require('./_core');
+const { getRevenueSummary } = require('./payments');
 
 // Module-level cache for getActivationFunnel (scans all users + events).
 let _funnelCache = null;
@@ -27,6 +28,8 @@ const DISMISSED_SUGGESTIONS_DOC = () => getDb().collection('admin').doc('dismiss
 //      internal Yacht Group tenant.
 const ANALYTICS_START_MS = Date.parse('2026-05-28T00:00:00Z');
 const FUNNEL_EXCLUDED_DOMAINS = new Set(['marketplacetest.net', 'theyachtgroup.com']);
+// Pro grants that were given away, not bought (35-day review/referral rewards).
+const FREE_GRANT_PLAN_TYPES = new Set(['review_reward', 'referral_reward']);
 
 // Non-customer accounts that must never count as real users: the owner's own
 // account, Google's Marketplace review bots + the internal Yacht Group tenant,
@@ -585,7 +588,14 @@ async function getWeeklySelfReport() {
     }
     const deadEnds = Object.values(perUser).filter(b => b.polls >= 5 && b.maxPart === 0).length;
 
+    // Revenue block from the payments ledger — optional, never fails the report.
+    let revenue = null;
+    try { revenue = await getRevenueSummary({ now }); } catch (e) {
+      log.warn('firestore: weekly report revenue summary failed', { error: e.message });
+    }
+
     return {
+      revenue,
       windowStart: new Date(weekAgo).toISOString(),
       windowEnd: new Date(now).toISOString(),
       signups: {
@@ -1597,19 +1607,24 @@ async function getRevenueFunnel({ days = 30 } = {}) {
         email, domain,
         displayName: u.displayName || '',
         country: u.signupGeo?.country || null,
-        paid: u.individualPlan === 'pro',
+        // Free 35-day review/referral reward grants are Pro, not paid.
+        paid: u.individualPlan === 'pro' && !FREE_GRANT_PLAN_TYPES.has(u.individualPlanType),
       };
     }
 
     const per = {}; // email → per-user rollup
     const row = (email) => (per[email] ||= {
-      activated: false, gateViews: 0, gateTypes: {}, clicked: false, paidEvent: false,
+      activated: false, gateViews: 0, gateTypes: {}, clicked: false, checkoutStarted: false,
+      paidEvent: false, paidInWindow: false,
       lastGateAt: 0, lastQuotaAt: 0, quotaLeak: false,
     });
     const triggers = {}; // trigger label → { shown:Set, clicked:Set, paid:Set }
     const trig = (t) => (triggers[t] ||= { shown: new Set(), clicked: new Set(), paid: new Set() });
     const objections = {};
     const planMix = {};
+    const planMixWindow = {};
+    let upgradesInWindow = 0;
+    let recurringUpgradesInWindow = 0;
 
     for (const d of eventsSnap.docs) {
       const e = d.data();
@@ -1622,10 +1637,18 @@ async function getRevenueFunnel({ days = 30 } = {}) {
         r.paidEvent = true;
         const plan = e.meta?.plan || 'unknown';
         planMix[plan] = (planMix[plan] || 0) + 1;
+        if (ts >= cutoff) {
+          r.paidInWindow = true;
+          planMixWindow[plan] = (planMixWindow[plan] || 0) + 1;
+          upgradesInWindow++;
+          // `interval` is only set on upgraded events for recurring plans.
+          if (e.meta?.interval) recurringUpgradesInWindow++;
+        }
       }
       if (ts < cutoff) continue;
 
       if (e.type === 'tracked') r.activated = true;
+      if (e.type === 'checkout_started') r.checkoutStarted = true;
       if (GATE_VIEW_TYPES.has(e.type)) {
         r.gateViews++;
         if (ts > r.lastGateAt) r.lastGateAt = ts;
@@ -1653,7 +1676,9 @@ async function getRevenueFunnel({ days = 30 } = {}) {
       }
     }
 
-    const funnel = { activated: 0, sawGate: 0, clickedCheckout: 0, paid30d: 0, paidEver: 0 };
+    // paid30d = bought within the window (any surface); clickedAndPaid = the
+    // old meaning (clicked checkout in the window AND has ever paid).
+    const funnel = { activated: 0, sawGate: 0, clickedCheckout: 0, checkoutStarted: 0, paid30d: 0, clickedAndPaid: 0, paidEver: 0 };
     const byCountry = {};
     const warmStuck = [];
     let quotaLeakUsers = 0;
@@ -1662,12 +1687,14 @@ async function getRevenueFunnel({ days = 30 } = {}) {
       const u = usersByEmail[email];
       const paidEver = u.paid || r.paidEvent || proTenantDomains.has(u.domain);
       if (paidEver) funnel.paidEver++;
+      if (r.paidInWindow) funnel.paid30d++;
+      if (r.checkoutStarted) funnel.checkoutStarted++;
       if (r.activated) funnel.activated++;
       if (r.quotaLeak) quotaLeakUsers++;
       if (r.gateViews > 0) {
         funnel.sawGate++;
         if (r.clicked) funnel.clickedCheckout++;
-        if (r.clicked && paidEver) funnel.paid30d++;
+        if (r.clicked && paidEver) funnel.clickedAndPaid++;
         const c = u.country || 'Unknown';
         const cr = (byCountry[c] ||= { country: c, sawGate: 0, clicked: 0, paid: 0 });
         cr.sawGate++;
@@ -1701,6 +1728,10 @@ async function getRevenueFunnel({ days = 30 } = {}) {
       warmStuck: warmStuck.slice(0, 50),
       objections,
       planMix,
+      planMixWindow,
+      // Share of in-window purchases that were recurring plans — the number
+      // the monetization engine is trying to move off ~0.
+      recurringShare: upgradesInWindow ? recurringUpgradesInWindow / upgradesInWindow : null,
     };
   } catch (err) {
     log.error('firestore: getRevenueFunnel failed', { error: err.message });

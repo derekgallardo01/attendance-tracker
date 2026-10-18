@@ -743,4 +743,42 @@ describe('no "wired but English-valued" keys (translation-content guard)', () =>
   });
 });
 
+describe('no English-identical value in ANY locale unless reviewed (strict guard)', () => {
+  // The 60% threshold above let ~3,000 untranslated (key, locale) pairs slip
+  // through (whole landing/history pages English in a dozen locales). This
+  // guard is per pair: a value identical to English must be a language
+  // endonym or listed in i18n-identical-allowlist.json (reviewed brand names,
+  // example emails, and words that really are the same in that language).
+  const allow = require('./i18n-identical-allowlist.json');
+  const en = strings.STRINGS.en;
+  const locales = strings.getAvailableLocales().map(l => l.code).filter(l => l !== 'en');
+  const hasWords = (v) => /[A-Za-z]{3,}/.test(String(v).replace(/\{[^}]+\}/g, ''));
+
+  test('every English-identical value is allowlisted', () => {
+    const offenders = [];
+    for (const key of Object.keys(en)) {
+      if (key.startsWith('lang.') || !hasWords(en[key])) continue;
+      for (const loc of locales) {
+        if (strings.STRINGS[loc][key] === en[key] && !(allow[key] || []).includes(loc)) {
+          offenders.push(`${loc}/${key}: "${en[key]}"`);
+        }
+      }
+    }
+    // Translate the value — or, if it is genuinely identical in that language,
+    // add the locale under the key in i18n-identical-allowlist.json.
+    expect(offenders).toEqual([]);
+  });
+
+  test('the allowlist has no stale entries (each pair is still identical)', () => {
+    const stale = [];
+    for (const [key, locs] of Object.entries(allow)) {
+      if (key.startsWith('_')) continue;
+      for (const loc of locs) {
+        if (!strings.STRINGS[loc] || strings.STRINGS[loc][key] !== en[key]) stale.push(`${loc}/${key}`);
+      }
+    }
+    expect(stale).toEqual([]);
+  });
+});
+
 

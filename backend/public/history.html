@@ -522,6 +522,15 @@
       }
     }
     initI18n();
+    // This script runs mid-parse: the meeting drawer and the modals are
+    // declared AFTER it, so the first applyTranslations() never saw them and
+    // they rendered English in every locale. Translate again once parsed.
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        AttStrings.applyTranslations();
+        paintHistoryPrices();
+      });
+    }
     // Show the purchase confirmation IMMEDIATELY (not inside loadHistory) —
     // a signed-out buyer never reaches loadHistory, and they just paid.
     try {
@@ -667,17 +676,25 @@
     // before this, the plan-less request let the backend infer team-vs-individual
     // from the caller's domain, charging something other than what the button
     // said (a subscription for gmail users, the $19.99 domain plan for others).
+    // The plan history CTAs sell: Pro Annual under tiered regional pricing
+    // (billing/status.offer.tiered), otherwise the Lifetime pass.
+    function historyUpgradePlan() {
+      const s = window._lastBillingStatus;
+      return s && s.offer && s.offer.tiered ? 'pro_annual' : 'lifetime';
+    }
+
     async function upgradeFromHistory(btn, plan) {
+      plan = plan || historyUpgradePlan();
       // Conversion telemetry parity with the panel's startUpgradeCheckout —
       // without this, history-page upgrade intent was invisible in the funnel.
-      try { logHistoryEvent('upgrade_checkout_clicked', { plan: plan || 'lifetime', reason: 'history_page' }); } catch (e) {}
+      try { logHistoryEvent('upgrade_checkout_clicked', { plan, reason: 'history_page' }); } catch (e) {}
       // Preserve innerHTML (the banner button holds a .price-lifetime span);
       // a failed checkout previously restored a hardcoded English literal,
       // wiping the price and any translation.
       const originalHtml = btn ? btn.innerHTML : '';
       if (btn) { btn.disabled = true; btn.textContent = t('common.loading', 'Loading…'); }
       try {
-        window.location.href = await AttApi.startCheckout(sessionToken, { plan: plan || 'lifetime', interval: proInterval }); // shared js/api.js
+        window.location.href = await AttApi.startCheckout(sessionToken, { plan, interval: proInterval }); // shared js/api.js
         return;
       } catch (e) {
         alert(e.message);
@@ -747,7 +764,7 @@
       // product. It previously sent plan:'individual' + the annual toggle,
       // which resolved to the retired individual-subscription price ids: an
       // off-price-list charge at whatever amount those legacy prices held.
-      return upgradeFromHistory(btn, 'lifetime');
+      return upgradeFromHistory(btn, historyUpgradePlan());
     }
 
     // Hash deep links: #meeting=<conferenceId> jumps to and filters the
@@ -832,8 +849,12 @@
 
     // Paint every .price-lifetime span from the single source of truth. Safe
     // to call repeatedly (load + after each applyTranslations).
+    // Under tiered pricing these spans advertise the plan the CTAs sell
+    // (Pro Annual, e.g. "$29/yr") instead of Lifetime.
     function paintHistoryPrices() {
-      const p = (typeof AttPricing !== 'undefined') ? AttPricing.price('lifetime') : '';
+      const plan = historyUpgradePlan();
+      const base = (typeof AttPricing !== 'undefined') ? AttPricing.price(plan) : '';
+      const p = base && plan === 'pro_annual' ? base + t('upgrade.perYear', '/yr') : base;
       if (!p) return;
       document.querySelectorAll('.price-lifetime').forEach(el => { el.textContent = p; });
     }
@@ -1167,7 +1188,10 @@
           const date = el.dataset.date;
           const count = +el.dataset.count;
           const day = byDate[date];
-          detail.innerHTML = `<strong style="color:var(--text)">${esc(date)}</strong> — ${count} meeting${count === 1 ? '' : 's'}: ${(day.titles || []).map(esc).join(', ')}`;
+          const countLabel = (count === 1
+            ? t('history.seriesMeetingOne', '{n} meeting')
+            : t('history.seriesMeetingOther', '{n} meetings')).replace('{n}', count);
+          detail.innerHTML = `<strong style="color:var(--text)">${esc(date)}</strong> — ${esc(countLabel)}: ${(day.titles || []).map(esc).join(', ')}`;
         });
       });
     }
