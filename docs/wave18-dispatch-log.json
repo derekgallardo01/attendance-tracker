@@ -1,0 +1,392 @@
+{
+  "target_1": {
+    "targetId": 1,
+    "name": "SwiftNet WiFi",
+    "to": [
+      "support@swiftnetwifi.com"
+    ],
+    "subject": "Automatic WiFi-reconnect attendance merging for your Remote Work Apps guide",
+    "dispatchedAt": "2026-10-18T20:27:25.579Z",
+    "resendId": "01a150b2-9738-7309-b958-567e99178069",
+    "cc": [
+      "info@swiftnetwifi.com"
+    ]
+  },
+  "target_2": {
+    "targetId": 2,
+    "name": "Statisfy",
+    "to": [
+      "hello@statisfy.com"
+    ],
+    "subject": "Zero-bot Google Meet attendance add-on for Statisfy’s Customer Engagement guide",
+    "dispatchedAt": "2026-10-18T20:27:27.702Z",
+    "resendId": "01a150b2-9f7d-7f2f-be66-0d7bdcfd5a77",
+    "cc": [
+      "support@statisfy.com"
+    ]
+  },
+  "target_3": {
+    "targetId": 3,
+    "name": "Make It Simple UK",
+    "to": [
+      "info@makeitsimple.co.uk"
+    ],
+    "subject": "Google Meet to Google Sheets automation for your Business Growth guide",
+    "dispatchedAt": "2026-10-18T20:27:29.845Z",
+    "resendId": "01a150b2-a7d9-7db1-a579-3e95b99bbf77",
+    "cc": [
+      "hello@makeitsimple.co.uk"
+    ]
+  },
+  "target_4": {
+    "targetId": 4,
+    "name": "SpeakNotes",
+    "to": [
+      "hello@speaknotes.io"
+    ],
+    "subject": "Non-competing Google Meet attendance template link for SpeakNotes’ blog",
+    "dispatchedAt": "2026-10-18T20:27:31.958Z",
+    "resendId": "01a150b2-b022-72de-8d64-8e84f22e76c7",
+    "cc": [
+      "support@speaknotes.io"
+    ]
+  },
+  "target_5": {
+    "targetId": 5,
+    "name": "MinutesLink",
+    "to": [
+      "support@minuteslink.com"
+    ],
+    "subject": "Non-competing Google Meet attendance companion for MinutesLink’s blog",
+    "dispatchedAt": "2026-10-18T20:27:34.076Z",
+    "resendId": "01a150b2-b859-76b0-8273-f8a05e950c57",
+    "cc": [
+      "hello@minuteslink.com"
+    ]
+  },
+  "target_6": {
+    "targetId": 6,
+    "name": "SmartBizTools",
+    "to": [
+      "support@smartbiztools.io"
+    ],
+    "subject": "Native Google Meet REST API v2 add-on for SmartBizTools’ directory",
+    "dispatchedAt": "2026-10-18T20:27:36.197Z",
+    "resendId": "01a150b2-c0ae-7b70-99a5-7d3a6a99cad6",
+    "cc": [
+      "hello@smartbiztools.io"
+    ]
+  },
+  "target_7": {
+    "targetId": 7,
+    "name": "AllAIWebsite",
+    "to": [
+      "hi@allaiwebsite.com"
+    ],
+    "subject": "Zero-bot Google Meet attendance add-on for AllAIWebsite’s Top 50 Free Tools guide",
+    "dispatchedAt": "2026-10-18T20:27:38.316Z",
+    "resendId": "01a150b2-c8f7-74a5-843b-7051561e0568",
+    "cc": [
+      "support@allaiwebsite.com"
+    ]
+  },
+  "target_8": {
+    "targetId": 8,
+    "name": "AICavo",
+    "to": [
+      "hello@aicavo.com"
+    ],
+    "subject": "Adding Attendance Tracker (Google Meet REST API v2) to AICavo’s directory",
+    "dispatchedAt": "2026-10-18T20:27:40.449Z",
+    "resendId": "01a150b2-d13f-7a8a-9711-35025846fc07",
+    "cc": [
+      "support@aicavo.com"
+    ]
+  },
+  "target_9": {
+    "targetId": 9,
+    "name": "Subanana Japan",
+    "to": [
+      "editor@subanana.com"
+    ],
+    "subject": "【Subanana様】記事内の競合リンク（Tactiq）に代わる非競合Google Meet出席管理アドオンのご案内",
+    "dispatchedAt": "2026-10-18T20:27:42.588Z",
+    "resendId": "01a150b2-d998-7b85-8fd8-1b421ec17c36",
+    "cc": [
+      "hello@subanana.com"
+    ]
+  },
+  "target_10": {
+    "targetId": 10,
+    "name": "Honeybear AI",
+    "to": [
+      "support@honeybear.ai"
+    ],
+    "subject": "Zero-bot Google Meet attendance add-on for Honeybear AI’s Stakeholder Analysis guide",
+    "dispatchedAt": "2026-10-18T20:27:44.713Z",
+    "resendId": "01a150b2-e1f2-7756-b665-3de0946cf000",
+    "cc": [
+      "hello@honeybear.ai"
+    ]
+  },
+  "target_11": {
+    "targetId": 11,
+    "name": "DraftBot Pro",
+    "to": [
+      "support@draftbotpro.com"
+    ],
+    "subject": "Legal deposition & CLE attendance tracking on Google Meet for DraftBot Pro’s blog",
+    "dispatchedAt": "2026-10-18T20:27:46.843Z",
+    "resendId": "01a150b2-ea3e-78cd-8998-3182c674f8ce",
+    "cc": [
+      "hello@draftbotpro.com"
+    ]
+  },
+  "target_12": {
+    "targetId": 12,
+    "name": "Unreal Speech",
+    "to": [
+      "contact@unrealspeech.com"
+    ],
+    "subject": "Zero-bot Google Meet REST API v2 add-on for Unreal Speech’s AI Apps directory",
+    "dispatchedAt": "2026-10-18T20:27:49.035Z",
+    "resendId": "01a150b2-f293-75b1-a350-65b97b31f921",
+    "cc": [
+      "support@unrealspeech.com"
+    ]
+  },
+  "target_13": {
+    "targetId": 13,
+    "name": "Greensighter",
+    "to": [
+      "hello@greensighter.com"
+    ],
+    "subject": "Native Google Meet side-panel add-on for Greensighter’s SaaS UX Design guide",
+    "dispatchedAt": "2026-10-18T20:27:51.166Z",
+    "resendId": "01a150b2-fb25-7aaa-aa29-2795ce8c248b",
+    "cc": [
+      "info@greensighter.com"
+    ]
+  },
+  "target_14": {
+    "targetId": 14,
+    "name": "Optimational",
+    "to": [
+      "solutions@optimational.com"
+    ],
+    "subject": "Complemento multilingüe (44 idiomas) de asistencia en Google Meet para el blog de Optimational",
+    "dispatchedAt": "2026-10-18T20:27:53.283Z",
+    "resendId": "01a150b3-0368-75c6-92bd-10629b00b521",
+    "cc": [
+      "info@optimational.com"
+    ]
+  },
+  "target_15": {
+    "targetId": 15,
+    "name": "XALT Germany",
+    "to": [
+      "hallo@xalt.de"
+    ],
+    "subject": "Zero-bot Google Meet REST API v2 add-on (with German UI) for XALT’s Meeting Productivity guide",
+    "dispatchedAt": "2026-10-18T20:27:55.414Z",
+    "resendId": "01a150b3-0bc0-7b9a-be74-77e3f2f54466",
+    "cc": [
+      "hello@xalt.de"
+    ]
+  },
+  "target_16": {
+    "targetId": 16,
+    "name": "Marketing Examined — Alex Garcia",
+    "to": [
+      "alex@marketingexamined.com"
+    ],
+    "subject": "Quick note on your Marketing Examined post + zero-bot Google Meet add-on",
+    "dispatchedAt": "2026-10-18T20:27:57.538Z",
+    "resendId": "01a150b3-1406-78e4-b9ab-62ec3f7c1a57",
+    "cc": [
+      "hello@marketingexamined.com"
+    ]
+  },
+  "target_17": {
+    "targetId": 17,
+    "name": "MOUSHI",
+    "to": [
+      "hello@moushi.co"
+    ],
+    "subject": "Adding Attendance Tracker (Google Meet REST API v2) to MOUSHI’s Essential Business Tools",
+    "dispatchedAt": "2026-10-18T20:27:59.650Z",
+    "resendId": "01a150b3-1c4f-74b8-a02d-e90d45be4a12",
+    "cc": [
+      "info@moushi.co"
+    ]
+  },
+  "target_18": {
+    "targetId": 18,
+    "name": "AISecret",
+    "to": [
+      "hello@aisecret.us"
+    ],
+    "subject": "Zero-bot Google Meet REST API v2 add-on for AISecret readers",
+    "dispatchedAt": "2026-10-18T20:28:01.788Z",
+    "resendId": "01a150b3-24a6-748f-a3bd-40c529b77f66",
+    "cc": [
+      "contact@aisecret.us"
+    ]
+  },
+  "target_19": {
+    "targetId": 19,
+    "name": "Women Make",
+    "to": [
+      "hello@womenmake.com"
+    ],
+    "subject": "Zero-bot Google Meet attendance add-on for Women Make’s meeting kits post",
+    "dispatchedAt": "2026-10-18T20:28:03.911Z",
+    "resendId": "01a150b3-2cf2-7a69-a9bd-6127be7f4d49",
+    "cc": [
+      "info@womenmake.com"
+    ]
+  },
+  "target_20": {
+    "targetId": 20,
+    "name": "Steal AI Tools",
+    "to": [
+      "hello@stealaitools.com"
+    ],
+    "subject": "Google Meet to Google Sheets workflow add-on for Steal AI Tools",
+    "dispatchedAt": "2026-10-18T20:28:06.050Z",
+    "resendId": "01a150b3-3548-7b39-94a4-c7bf1b883e87",
+    "cc": [
+      "contact@stealaitools.com"
+    ]
+  },
+  "target_21": {
+    "targetId": 21,
+    "name": "SoftRiver",
+    "to": [
+      "hello@softriver.co"
+    ],
+    "subject": "Zero-bot Google Meet attendance add-on for SoftRiver’s agency blog",
+    "dispatchedAt": "2026-10-18T20:28:08.194Z",
+    "resendId": "01a150b3-3da9-7593-b12e-f598822392fb",
+    "cc": [
+      "support@softriver.co"
+    ]
+  },
+  "target_22": {
+    "targetId": 22,
+    "name": "Hakky Handbook Japan",
+    "to": [
+      "info@st-hakky.com"
+    ],
+    "subject": "【Hakky Handbook様】Google Meet REST API v2対応・日本語版出席管理アドオンのご紹介",
+    "dispatchedAt": "2026-10-18T20:28:10.317Z",
+    "resendId": "01a150b3-45f5-7d0c-b446-1ee010c05487",
+    "cc": [
+      "contact@st-hakky.com"
+    ]
+  },
+  "target_23": {
+    "targetId": 23,
+    "name": "Timewitch Japan",
+    "to": [
+      "info@timewitch.jp"
+    ],
+    "subject": "【Timewitch様】会議効率化記事へのGoogle Meet公式出席管理アドオン（日本語対応）のご提案",
+    "dispatchedAt": "2026-10-18T20:28:12.443Z",
+    "resendId": "01a150b3-4e43-7b75-b24f-b7a261edadc6",
+    "cc": [
+      "contact@timewitch.jp"
+    ]
+  },
+  "target_24": {
+    "targetId": 24,
+    "name": "Bytemarks Cafe — Burt Lum & Ryan Ozawa",
+    "to": [
+      "burt@bytemarkscafe.org"
+    ],
+    "subject": "Aloha Burt & Ryan — zero-bot Google Meet add-on for Bytemarks Cafe listeners",
+    "dispatchedAt": "2026-10-18T20:28:14.564Z",
+    "resendId": "01a150b3-5690-7a72-bab7-89792e439c74",
+    "cc": [
+      "info@bytemarkscafe.org"
+    ]
+  },
+  "target_25": {
+    "targetId": 25,
+    "name": "Aidar Solutions",
+    "to": [
+      "info@aidarsolutions.com"
+    ],
+    "subject": "Corporate training attendance tracking on Google Meet for Aidar Solutions’ blog",
+    "dispatchedAt": "2026-10-18T20:28:16.700Z",
+    "resendId": "01a150b3-5ee4-7679-9288-be6de52a867f",
+    "cc": [
+      "hello@aidarsolutions.com"
+    ]
+  },
+  "target_26": {
+    "targetId": 26,
+    "name": "CPO Creativity Bulgaria",
+    "to": [
+      "info@cpocreativity.com"
+    ],
+    "subject": "Native Google Meet REST API v2 add-on (with Bulgarian UI) for CPO Creativity",
+    "dispatchedAt": "2026-10-18T20:28:18.815Z",
+    "resendId": "01a150b3-6729-71d8-b11c-c7edc932a2d9",
+    "cc": [
+      "cpocreativity@gmail.com"
+    ]
+  },
+  "target_27": {
+    "targetId": 27,
+    "name": "IZA Business Centers Mexico",
+    "to": [
+      "contacto@izabc.com.mx"
+    ],
+    "subject": "Control de asistencia y quórum en Google Meet para el blog de IZA Business Centers",
+    "dispatchedAt": "2026-10-18T20:28:20.933Z",
+    "resendId": "01a150b3-6f6e-793d-9a4e-226670925d2b",
+    "cc": [
+      "info@izabc.com.mx"
+    ]
+  },
+  "target_28": {
+    "targetId": 28,
+    "name": "Persona Institut Germany",
+    "to": [
+      "info@persona-institut.de"
+    ],
+    "subject": "Zero-bot Google Meet attendance add-on (German UI) for Persona Institut’s Recruiting guide",
+    "dispatchedAt": "2026-10-18T20:28:23.052Z",
+    "resendId": "01a150b3-77b6-782f-9cb6-6ef28fbd8da1",
+    "cc": [
+      "kontakt@persona-institut.de"
+    ]
+  },
+  "target_29": {
+    "targetId": 29,
+    "name": "The Hero Camp Spain",
+    "to": [
+      "hola@theherocamp.com"
+    ],
+    "subject": "Control de asistencia en Google Meet (sin bots) para el blog de The Hero Camp",
+    "dispatchedAt": "2026-10-18T20:28:25.180Z",
+    "resendId": "01a150b3-8008-7441-b83c-b35543301ca3",
+    "cc": [
+      "info@theherocamp.com"
+    ]
+  },
+  "target_30": {
+    "targetId": 30,
+    "name": "Prof. Erkan Saka — Istanbul Bilgi University",
+    "to": [
+      "erkan@erkansaka.net"
+    ],
+    "subject": "Zero-bot Google Meet attendance add-on (Turkish & English UI) + free faculty pass",
+    "dispatchedAt": "2026-10-18T20:28:27.304Z",
+    "resendId": "01a150b3-884e-781a-886c-752f82a82f68",
+    "cc": [
+      "sakaerka@gmail.com"
+    ]
+  }
+}
