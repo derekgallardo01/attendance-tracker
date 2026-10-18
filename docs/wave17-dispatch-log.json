@@ -1,0 +1,392 @@
+{
+  "target_1": {
+    "targetId": 1,
+    "name": "Remote First Jobs",
+    "to": [
+      "support@remotefirstjobs.com"
+    ],
+    "subject": "Zero-bot Google Meet attendance add-on for your Remote-First guide",
+    "dispatchedAt": "2026-10-18T17:08:41.439Z",
+    "resendId": "01a14ffc-a6e0-77f6-9971-3e11ed178ddb",
+    "cc": [
+      "hello@remotefirstjobs.com"
+    ]
+  },
+  "target_2": {
+    "targetId": 2,
+    "name": "Elite Asia Singapore",
+    "to": [
+      "enquiry-sg@eliteasia.co"
+    ],
+    "subject": "Multilingual (44-locale) Google Meet attendance add-on for Elite Asia’s blog",
+    "dispatchedAt": "2026-10-18T17:08:43.574Z",
+    "resendId": "01a14ffc-af38-762a-8e00-082b0c419426",
+    "cc": [
+      "enquiry-hk@eliteasia.co"
+    ]
+  },
+  "target_3": {
+    "targetId": 3,
+    "name": "ScreenSnap Pro",
+    "to": [
+      "support@screensnap.pro"
+    ],
+    "subject": "Native Google Meet REST API v2 companion for ScreenSnap Pro’s video tools blog",
+    "dispatchedAt": "2026-10-18T17:08:45.700Z",
+    "resendId": "01a14ffc-b78b-7716-b941-9e8204ae7d88",
+    "cc": [
+      "hello@screensnap.pro"
+    ]
+  },
+  "target_4": {
+    "targetId": 4,
+    "name": "AI Parabellum",
+    "to": [
+      "hello@aiparabellum.com"
+    ],
+    "subject": "Zero-bot Google Meet REST API v2 add-on for AI Parabellum’s Tactiq review",
+    "dispatchedAt": "2026-10-18T17:08:47.821Z",
+    "resendId": "01a14ffc-bfd2-78fb-95d1-f394cc1d2f6a",
+    "cc": [
+      "contact@aiparabellum.com"
+    ]
+  },
+  "target_5": {
+    "targetId": 5,
+    "name": "HoverNotes",
+    "to": [
+      "support@hovernotes.io"
+    ],
+    "subject": "Non-competing Google Meet REST API v2 link idea for HoverNotes’ Obsidian blog",
+    "dispatchedAt": "2026-10-18T17:08:49.973Z",
+    "resendId": "01a14ffc-c817-75be-b593-c4a36f162aac",
+    "cc": [
+      "hello@hovernotes.io"
+    ]
+  },
+  "target_6": {
+    "targetId": 6,
+    "name": "Toolfolio — Dudu",
+    "to": [
+      "dudu@toolfolio.com"
+    ],
+    "subject": "Adding Attendance Tracker (Google Meet REST API v2) to Toolfolio’s Meeting collection",
+    "dispatchedAt": "2026-10-18T17:08:52.094Z",
+    "resendId": "01a14ffc-d084-7005-b906-aa0012b66f06",
+    "cc": [
+      "hello@toolfolio.com"
+    ]
+  },
+  "target_7": {
+    "targetId": 7,
+    "name": "GetElyxAI",
+    "to": [
+      "help@getelyxai.com"
+    ],
+    "subject": "Export automatique Google Meet vers Google Sheets & Excel pour le blog ElyxAI",
+    "dispatchedAt": "2026-10-18T17:08:54.217Z",
+    "resendId": "01a14ffc-d8cf-7b03-90df-dd4538a4575d",
+    "cc": [
+      "hello@getelyxai.com"
+    ]
+  },
+  "target_8": {
+    "targetId": 8,
+    "name": "Superdocu",
+    "to": [
+      "hello@superdocu.com"
+    ],
+    "subject": "Google Meet client onboarding attendance logs for Superdocu’s 2026 Playbook",
+    "dispatchedAt": "2026-10-18T17:08:56.368Z",
+    "resendId": "01a14ffc-e134-7ac2-9b44-9274d67e2b34",
+    "cc": [
+      "team@superdocu.com"
+    ]
+  },
+  "target_9": {
+    "targetId": 9,
+    "name": "Keywordme",
+    "to": [
+      "hello@keywordme.io"
+    ],
+    "subject": "Google Meet agency call duration & Sheets logging for Keywordme’s PPC blog",
+    "dispatchedAt": "2026-10-18T17:08:58.518Z",
+    "resendId": "01a14ffc-e999-7ade-b141-eee395a6b308",
+    "cc": [
+      "support@keywordme.io"
+    ]
+  },
+  "target_10": {
+    "targetId": 10,
+    "name": "Sotion",
+    "to": [
+      "support@sotion.so"
+    ],
+    "subject": "Google Meet client call attendance automation for Sotion’s Notion Client Portal guide",
+    "dispatchedAt": "2026-10-18T17:09:00.683Z",
+    "resendId": "01a14ffc-f201-7628-bee9-91fc8a4d91b5",
+    "cc": [
+      "hello@sotion.so"
+    ]
+  },
+  "target_11": {
+    "targetId": 11,
+    "name": "Agidesk Brazil",
+    "to": [
+      "contato@agidesk.com.br"
+    ],
+    "subject": "Complemento oficial do Google Meet (API REST v2) para o blog da Agidesk",
+    "dispatchedAt": "2026-10-18T17:09:02.802Z",
+    "resendId": "01a14ffc-fa56-775c-acb4-3716ccda7e52",
+    "cc": [
+      "suporte@agidesk.com.br"
+    ]
+  },
+  "target_12": {
+    "targetId": 12,
+    "name": "Sincomavi Brazil",
+    "to": [
+      "sincomavi@sincomavi.org.br"
+    ],
+    "subject": "Controle oficial de presença e quórum no Google Meet (API REST v2) para o Sincomavi",
+    "dispatchedAt": "2026-10-18T17:09:04.928Z",
+    "resendId": "01a14ffd-029e-7c19-b3e9-3836d8cf5005",
+    "cc": [
+      "contato@sincomavi.org.br"
+    ]
+  },
+  "target_13": {
+    "targetId": 13,
+    "name": "ChurchSpring",
+    "to": [
+      "support@churchspring.com"
+    ],
+    "subject": "Dedicated church & volunteer Google Meet attendance guide for ChurchSpring’s blog",
+    "dispatchedAt": "2026-10-18T17:09:07.054Z",
+    "resendId": "01a14ffd-0af7-7289-b891-3834eaf558ce",
+    "cc": [
+      "hello@churchspring.com"
+    ]
+  },
+  "target_14": {
+    "targetId": 14,
+    "name": "GET THE POINT Germany — Wieland Schmoll",
+    "to": [
+      "kontakt@getthepoint.de"
+    ],
+    "subject": "Offizielles Google Meet Add-on (REST API v2, auf Deutsch) für eure Werkzeug-Empfehlungen",
+    "dispatchedAt": "2026-10-18T17:09:09.288Z",
+    "resendId": "01a14ffd-136b-73b0-b2eb-29a428f158d5",
+    "cc": [
+      "wieland.schmoll@getthepoint.de"
+    ]
+  },
+  "target_15": {
+    "targetId": 15,
+    "name": "Postline AI",
+    "to": [
+      "support@postline.ai"
+    ],
+    "subject": "Google Meet webinar & lead attendance automation for Postline.ai’s LinkedIn growth guide",
+    "dispatchedAt": "2026-10-18T17:09:11.428Z",
+    "resendId": "01a14ffd-1be6-79cf-9e5b-d2f91c5b5291",
+    "cc": [
+      "legal@postline.ai"
+    ]
+  },
+  "target_16": {
+    "targetId": 16,
+    "name": "Around The Bonfire",
+    "to": [
+      "hello@aroundthebonfire.com"
+    ],
+    "subject": "Zero-bot Google Meet REST API v2 companion for Around The Bonfire #611",
+    "dispatchedAt": "2026-10-18T17:09:13.584Z",
+    "resendId": "01a14ffd-2462-7f28-ba90-2a200c4bc0dc",
+    "cc": [
+      "info@aroundthebonfire.com"
+    ]
+  },
+  "target_17": {
+    "targetId": 17,
+    "name": "ToolQuestor",
+    "to": [
+      "support@toolquestor.com"
+    ],
+    "subject": "Listing Attendance Tracker (Google Meet REST API v2, 44 locales incl. Vietnamese) on ToolQuestor",
+    "dispatchedAt": "2026-10-18T17:09:15.716Z",
+    "resendId": "01a14ffd-2ccc-77a6-b3e2-4f32057a370d",
+    "cc": [
+      "hello@toolquestor.com"
+    ]
+  },
+  "target_18": {
+    "targetId": 18,
+    "name": "Una Vida Online Spain — Pau Navarro",
+    "to": [
+      "contacto@unavidaonline.com"
+    ],
+    "subject": "Complemento oficial de Google Meet (API REST v2) para tu Newsletter #73",
+    "dispatchedAt": "2026-10-18T17:09:17.851Z",
+    "resendId": "01a14ffd-3514-79c3-964f-b0f2b9a2863e",
+    "cc": [
+      "info@unavidaonline.com"
+    ]
+  },
+  "target_19": {
+    "targetId": 19,
+    "name": "Anarlog",
+    "to": [
+      "hello@anarlog.so"
+    ],
+    "subject": "Non-competing Google Meet vs. Zoom attendance comparison for Anarlog’s blog",
+    "dispatchedAt": "2026-10-18T17:09:19.994Z",
+    "resendId": "01a14ffd-3d63-7769-9f45-4f78f62e2dfe",
+    "cc": [
+      "support@anarlog.so"
+    ]
+  },
+  "target_20": {
+    "targetId": 20,
+    "name": "Matt Rutherford UK",
+    "to": [
+      "matt@mattrutherford.co.uk"
+    ],
+    "subject": "Zero-bot Google Meet REST API v2 tool for \"Stuff\" (note on Stuff #188)",
+    "dispatchedAt": "2026-10-18T17:09:22.119Z",
+    "resendId": "01a14ffd-45ca-7e90-a130-5cedec87a7e9",
+    "cc": [
+      "hello@mattrutherford.co.uk"
+    ]
+  },
+  "target_21": {
+    "targetId": 21,
+    "name": "ITzen Hungary — Sándor Horváth",
+    "to": [
+      "kozpont@itzen.hu"
+    ],
+    "subject": "Zero-bot Google Meet REST API v2 add-on (with Hungarian UI) for ITzen.hu",
+    "dispatchedAt": "2026-10-18T17:09:24.242Z",
+    "resendId": "01a14ffd-4e18-7881-86fc-b4489ef9542a",
+    "cc": [
+      "horvath.sandor@itzen.hu"
+    ]
+  },
+  "target_22": {
+    "targetId": 22,
+    "name": "VoicePing",
+    "to": [
+      "support@voice-ping.com"
+    ],
+    "subject": "VoicePing様の文字起こし比較記事へ：競合しないGoogle Meet公式出席管理アドオンのご紹介",
+    "dispatchedAt": "2026-10-18T17:09:26.353Z",
+    "resendId": "01a14ffd-5655-712f-be64-25198baf88d7",
+    "cc": [
+      "info@voice-ping.com"
+    ]
+  },
+  "target_23": {
+    "targetId": 23,
+    "name": "Superpower Daily",
+    "to": [
+      "tips@superpowerdaily.com"
+    ],
+    "subject": "Tool submission for Superpower Daily: Official Google Meet REST API v2 Add-on",
+    "dispatchedAt": "2026-10-18T17:09:28.469Z",
+    "resendId": "01a14ffd-5e95-78cd-b58b-9cdb73d6d372",
+    "cc": [
+      "partnership@superpowerdaily.com"
+    ]
+  },
+  "target_24": {
+    "targetId": 24,
+    "name": "Psycray",
+    "to": [
+      "contact@psycray.com"
+    ],
+    "subject": "Native Google Meet REST API v2 add-on for Psycray’s Google Workspace productivity guide",
+    "dispatchedAt": "2026-10-18T17:09:30.589Z",
+    "resendId": "01a14ffd-66e4-7494-8bc7-8d158ca50249",
+    "cc": [
+      "atcontact@psycray.com"
+    ]
+  },
+  "target_25": {
+    "targetId": 25,
+    "name": "Lead with AI",
+    "to": [
+      "hello@leadwithai.co"
+    ],
+    "subject": "Zero-bot Google Meet executive & board attendance add-on for Lead with AI’s guide",
+    "dispatchedAt": "2026-10-18T17:09:32.705Z",
+    "resendId": "01a14ffd-6f2c-794d-a412-9af42b239064",
+    "cc": [
+      "info@leadwithai.co"
+    ]
+  },
+  "target_26": {
+    "targetId": 26,
+    "name": "ByWorking",
+    "to": [
+      "hello@byworking.net"
+    ],
+    "subject": "Google Meet to Sheets & Slack automation for ByWorking’s 10 automation practices guide",
+    "dispatchedAt": "2026-10-18T17:09:34.879Z",
+    "resendId": "01a14ffd-776e-7480-94ed-bb7ea6070604",
+    "cc": [
+      "info@byworking.net"
+    ]
+  },
+  "target_27": {
+    "targetId": 27,
+    "name": "WhatTheAI",
+    "to": [
+      "hello@whattheai.tech"
+    ],
+    "subject": "Adding Attendance Tracker (Google Meet REST API v2) to WhatTheAI’s Google Meet tools",
+    "dispatchedAt": "2026-10-18T17:09:37.010Z",
+    "resendId": "01a14ffd-7fee-7691-914e-ee4617719560",
+    "cc": [
+      "support@whattheai.tech"
+    ]
+  },
+  "target_28": {
+    "targetId": 28,
+    "name": "PoweredByAI",
+    "to": [
+      "support@poweredbyai.app"
+    ],
+    "subject": "Listing Attendance Tracker (Google Meet REST API v2, 44 locales) on PoweredByAI",
+    "dispatchedAt": "2026-10-18T17:09:39.145Z",
+    "resendId": "01a14ffd-883d-7230-a6e4-c1aa821afadf",
+    "cc": [
+      "hello@poweredbyai.app"
+    ]
+  },
+  "target_29": {
+    "targetId": 29,
+    "name": "NaturalWrite",
+    "to": [
+      "support@naturalwrite.com"
+    ],
+    "subject": "Non-competing Google Meet attendance guide for NaturalWrite’s NLP blog post",
+    "dispatchedAt": "2026-10-18T17:09:41.256Z",
+    "resendId": "01a14ffd-9089-7d5a-b6e6-9916c0aa7926",
+    "cc": [
+      "hello@naturalwrite.com"
+    ]
+  },
+  "target_30": {
+    "targetId": 30,
+    "name": "Barker Books",
+    "to": [
+      "sales@barkerbooks.com"
+    ],
+    "subject": "Google Meet client call attendance logs for Barker Books’ scope creep section",
+    "dispatchedAt": "2026-10-18T17:09:43.399Z",
+    "resendId": "01a14ffd-98eb-7112-b808-803ae64a0677",
+    "cc": [
+      "info@barkerbooks.com"
+    ]
+  }
+}
