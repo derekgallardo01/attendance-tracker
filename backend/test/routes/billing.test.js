@@ -3181,14 +3181,25 @@ describe('billing — tiered regional pricing (TIERED_PRICING=1)', () => {
     expect(s.payment_method_types).toBeUndefined();
   });
 
-  test('India legacy arm: pro plans unavailable, legacy plans take the legacy path', async () => {
+  test('India legacy arm: pro_monthly unavailable, pro_annual renewal falls back to educator pass', async () => {
     const email = emailInArm('legacy');
+    const monthlyRes = await checkout(email, { plan: 'pro_monthly', country: 'IN' });
+    expect(monthlyRes.status).toBe(400);
+
     const res = await checkout(email, { plan: 'pro_annual', country: 'IN' });
-    expect(res.status).toBe(400);
-    expect(mockStripeInstance.checkout.sessions.create).not.toHaveBeenCalled();
+    expect(res.status).toBe(200);
+    expect(lastSession().metadata.plan).toBe('educator');
+
     const life = await checkout(email, { plan: 'lifetime', country: 'IN' });
     expect(life.status).toBe(200);
     expect(lastSession().metadata.pricing).toBeUndefined();
+  });
+
+  test('Kenya legacy arm: pro_annual renewal falls back to educator pass', async () => {
+    const email = emailInArm('legacy');
+    const res = await checkout(email, { plan: 'pro_annual', country: 'KE' });
+    expect(res.status).toBe(200);
+    expect(lastSession().metadata.plan).toBe('educator');
   });
 
   test('single_meeting tiered requires a conference id and returns to the unlocked meeting', async () => {
@@ -3207,11 +3218,12 @@ describe('billing — tiered regional pricing (TIERED_PRICING=1)', () => {
     expect(lastSession().allow_promotion_codes).toBeUndefined();
   });
 
-  test('pro plans 400 with the flag off (never fall through to a legacy price)', async () => {
+  test('pro plans with flag off: monthly 400, annual renewal falls back to educator', async () => {
     delete process.env.TIERED_PRICING;
     expect((await checkout('teacher@gmail.com', { plan: 'pro_monthly', country: 'US' })).status).toBe(400);
-    expect((await checkout('teacher@gmail.com', { plan: 'pro_annual', country: 'US' })).status).toBe(400);
-    expect(mockStripeInstance.checkout.sessions.create).not.toHaveBeenCalled();
+    const annualRes = await checkout('teacher@gmail.com', { plan: 'pro_annual', country: 'US' });
+    expect(annualRes.status).toBe(200);
+    expect(lastSession().metadata.plan).toBe('educator');
   });
 
   test('public-checkout: tiered pro_annual for a signed-out US visitor (email optional)', async () => {

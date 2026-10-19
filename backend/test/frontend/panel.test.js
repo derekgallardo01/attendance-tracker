@@ -107,6 +107,20 @@ describe('resolvePresence (attendance-accuracy core)', () => {
     expect(r).toMatchObject({ present: false, leftStreak: 3, accumulateMs: 0, changed: true });
   });
 
+  test('3rd miss with joinTimeMs from trackedJoinTime fallback banks duration', () => {
+    const toMs = (d) => d instanceof Date ? d.getTime() : (d ? new Date(d).getTime() || null : null);
+    const existing = {
+      present: true,
+      leftStreak: 2,
+      joinTime: null,
+      trackedJoinTime: new Date(NOW - 45_000),
+    };
+    const joinTimeMs = toMs(existing.joinTime) ?? toMs(existing.trackedJoinTime);
+    const r = call({ ...existing, joinTimeMs }, { apiPresent: false });
+    expect(r).toMatchObject({ present: false, leftStreak: 3, changed: true });
+    expect(r.accumulateMs).toBe(45_000);
+  });
+
   test('already absent and still absent → no change at all', () => {
     expect(call({ present: false, leftStreak: 5 }, { apiPresent: false }))
       .toEqual({ present: false, leftStreak: 5, changed: false, note: null, resetJoinTime: false, accumulateMs: 0 });

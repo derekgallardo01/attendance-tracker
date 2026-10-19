@@ -2027,9 +2027,8 @@ describe('GET /api/admin/reviews/approve-reward', () => {
     expect(res.text).toContain('Reward Email Already Sent');
   });
 
-  test('200 and dispatches reward email when valid', async () => {
+  test('GET renders confirmation page with POST form consistently', async () => {
     notifications.verifyReviewApprovalToken.mockReturnValue(true);
-    notifications.sendReviewRewardEmail.mockResolvedValue({ sent: true, lang: 'es', id: 'res-999' });
 
     const mockSet = jest.fn().mockResolvedValue({});
     const mockUserDocRef = {
@@ -2056,29 +2055,28 @@ describe('GET /api/admin/reviews/approve-reward', () => {
 
     const res = await request(app).get('/api/admin/reviews/approve-reward?reviewId=rev-1&email=carlos@escuela.mx&t=validtoken');
     expect(res.status).toBe(200);
-    expect(res.text).toContain('Review Reward Email Dispatched');
-    expect(notifications.sendReviewRewardEmail).toHaveBeenCalledWith(expect.objectContaining({
-      to: 'carlos@escuela.mx',
-      displayName: 'Carlos Sanchez',
-      reviewId: 'rev-1',
-    }));
-    expect(mockSet).toHaveBeenCalledWith(expect.objectContaining({
-      reviewRewardEmailSent: true,
-      reviewRewardEmailPendingApproval: false,
-    }), { merge: true });
+    expect(res.text).toContain('Confirm &amp; Send Reward Email');
+    expect(res.text).toContain('method="POST"');
+    expect(notifications.sendReviewRewardEmail).not.toHaveBeenCalled();
+    expect(mockSet).not.toHaveBeenCalled();
   });
 
-  test('GET with confirm=1 renders confirmation page with POST form', async () => {
+  test('GET with auto=1 dispatches reward email immediately', async () => {
     notifications.verifyReviewApprovalToken.mockReturnValue(true);
+    notifications.sendReviewRewardEmail.mockResolvedValue({ sent: true, lang: 'es', id: 'res-999' });
+
+    const mockSet = jest.fn().mockResolvedValue({});
     const mockUserDocRef = {
       get: jest.fn().mockResolvedValue({
         exists: true,
         data: () => ({
           displayName: 'Carlos Sanchez',
+          individualPlanExpiresAt: '2026-10-30T00:00:00.000Z',
           reviewRating: 5,
           language: 'es',
         }),
       }),
+      set: mockSet,
     };
     firestore.getDb.mockReturnValue({
       collection: jest.fn().mockReturnValue({
@@ -2090,11 +2088,18 @@ describe('GET /api/admin/reviews/approve-reward', () => {
       }),
     });
 
-    const res = await request(app).get('/api/admin/reviews/approve-reward?reviewId=rev-1&email=carlos@escuela.mx&t=validtoken&confirm=1');
+    const res = await request(app).get('/api/admin/reviews/approve-reward?reviewId=rev-1&email=carlos@escuela.mx&t=validtoken&auto=1');
     expect(res.status).toBe(200);
-    expect(res.text).toContain('Confirm &amp; Send Reward Email');
-    expect(res.text).toContain('method="POST"');
-    expect(notifications.sendReviewRewardEmail).not.toHaveBeenCalled();
+    expect(res.text).toContain('Review Reward Email Dispatched');
+    expect(notifications.sendReviewRewardEmail).toHaveBeenCalledWith(expect.objectContaining({
+      to: 'carlos@escuela.mx',
+      displayName: 'Carlos Sanchez',
+      reviewId: 'rev-1',
+    }));
+    expect(mockSet).toHaveBeenCalledWith(expect.objectContaining({
+      reviewRewardEmailSent: true,
+      reviewRewardEmailPendingApproval: false,
+    }), { merge: true });
   });
 
   test('POST with body parameters dispatches reward email', async () => {

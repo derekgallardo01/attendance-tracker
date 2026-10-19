@@ -161,6 +161,17 @@ describe('participantTotalMs', () => {
     expect(utils.participantTotalMs(p)).toBe(10 * 60_000);
     jest.useRealTimers();
   });
+
+  test('uses trackedJoinTime for active session when joinTime is null', () => {
+    const now = new Date('2026-06-28T10:10:00Z').getTime();
+    const p = {
+      _accumulatedMs: 0,
+      joinTime: null,
+      trackedJoinTime: new Date('2026-06-28T10:02:00Z'),
+      present: true,
+    };
+    expect(utils.participantTotalMs(p, now)).toBe(8 * 60_000);
+  });
 });
 
 // ════════════════════════════════════════════════════════════════════

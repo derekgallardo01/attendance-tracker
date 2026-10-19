@@ -2216,6 +2216,7 @@ describe('notifications — buildDesignSystemEmail & upgrade link sender', () =>
     expect(alertCall.text).toContain('A Google Workspace Marketplace review has been verified, and 1 Month Educator Pro has been ACTIVATED in Firestore!');
     expect(alertCall.text).toContain('Tu mes de Pro gratuito ya está activo');
     expect(alertCall.text).toContain('/admin/reviews/approve-reward');
+    expect(alertCall.text).toContain('1. Review & Approve Reward Dispatch via Resend:');
   });
 
   test('sendAdminMilestoneEmail sends celebratory alert with stats and social copy', async () => {

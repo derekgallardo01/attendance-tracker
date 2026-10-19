@@ -1719,7 +1719,7 @@ router.all('/admin/reviews/approve-reward', async (req, res) => {
       `);
     }
 
-    const isAuto = req.query.auto === '1' || (process.env.NODE_ENV === 'test' && req.query.confirm !== '1');
+    const isAuto = req.query.auto === '1';
     if (req.method === 'GET' && !isAuto) {
       return res.status(200).send(`
         <div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:40px auto;padding:28px;border:1px solid #d0d7de;border-radius:10px;background:#ffffff;">

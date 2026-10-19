@@ -324,5 +324,100 @@ describe('grantReviewReward & verifyUserReview', () => {
     expect(reviewVerifier.isNameMatch(null, 'Test', 'a@b.com')).toBe(false);
     expect(reviewVerifier.isNameMatch('!!!', 'Test', 'a@b.com')).toBe(false);
   });
+
+  test('verifyUserReview for already verified user returns alreadyVerified without claiming pending matching reviews', async () => {
+    const marketplace = require('../../src/services/marketplace-reviews');
+    const syncSpy = jest.spyOn(marketplace, 'syncMarketplaceReviews').mockResolvedValue({ total: 1, newlyDiscovered: 0, reviews: [] });
+
+    ctx.seed('marketplace_reviews/rev-unclaimed', {
+      reviewId: 'rev-unclaimed',
+      rating: 5,
+      comment: 'Awesome tool!',
+      authorName: 'Alex Reviewer',
+      redeemed: false,
+    });
+    ctx.seed('tenants/school.edu/users/alex@school.edu', {
+      displayName: 'Alex Reviewer',
+      individualPlan: 'pro',
+      reviewStatus: 'verified_reviewed',
+      individualPlanExpiresAt: '2026-11-01T00:00:00.000Z',
+    });
+
+    const res = await reviewVerifier.verifyUserReview('school.edu', 'alex@school.edu', 'Alex Reviewer');
+    expect(res.success).toBe(true);
+    expect(res.alreadyVerified).toBe(true);
+    expect(res.planExpiresAt).toBe('2026-11-01T00:00:00.000Z');
+
+    // Ensure the review was NOT redeemed
+    const revDoc = ctx.read('marketplace_reviews/rev-unclaimed');
+    expect(revDoc.redeemed).toBe(false);
+
+    syncSpy.mockRestore();
+  });
+
+  test('grantReviewReward transaction aborts when user already has verified_reviewed status', async () => {
+    ctx.seed('marketplace_reviews/rev-second', {
+      reviewId: 'rev-second',
+      rating: 5,
+      authorName: 'Jane Smith',
+      redeemed: false,
+    });
+    ctx.seed('tenants/school.edu/users/jane@school.edu', {
+      displayName: 'Jane Smith',
+      individualPlan: 'pro',
+      reviewStatus: 'verified_reviewed',
+    });
+
+    const res = await reviewVerifier.grantReviewReward('school.edu', 'jane@school.edu', {
+      reviewId: 'rev-second',
+      authorName: 'Jane Smith',
+      rating: 5,
+    });
+    expect(res.success).toBe(false);
+    expect(res.reason).toBe('already_redeemed');
+
+    const revDoc = ctx.read('marketplace_reviews/rev-second');
+    expect(revDoc.redeemed).toBe(false);
+  });
+
+  test('concurrent verifyUserReview for the same review grants to first user and rejects second with already_redeemed', async () => {
+    const marketplace = require('../../src/services/marketplace-reviews');
+    const syncSpy = jest.spyOn(marketplace, 'syncMarketplaceReviews').mockResolvedValue({ total: 1, newlyDiscovered: 0, reviews: [] });
+
+    ctx.seed('marketplace_reviews/rev-shared-race', {
+      reviewId: 'rev-shared-race',
+      rating: 5,
+      comment: 'Excellent!',
+      authorName: 'Chris Taylor',
+      redeemed: false,
+    });
+    ctx.seed('tenants/school.edu/users/chris1@school.edu', {
+      displayName: 'Chris Taylor',
+      reviewStatus: 'clicked',
+    });
+    ctx.seed('tenants/school.edu/users/chris2@school.edu', {
+      displayName: 'Chris Taylor',
+      reviewStatus: 'clicked',
+    });
+
+    const [res1, res2] = await Promise.all([
+      reviewVerifier.verifyUserReview('school.edu', 'chris1@school.edu', 'Chris Taylor'),
+      reviewVerifier.verifyUserReview('school.edu', 'chris2@school.edu', 'Chris Taylor'),
+    ]);
+
+    const successful = [res1, res2].filter(r => r.success);
+    const failed = [res1, res2].filter(r => !r.success);
+
+    expect(successful).toHaveLength(1);
+    expect(successful[0].reviewId).toBe('rev-shared-race');
+    expect(failed).toHaveLength(1);
+    expect(failed[0].reason).toBe('already_redeemed');
+
+    const revDoc = ctx.read('marketplace_reviews/rev-shared-race');
+    expect(revDoc.redeemed).toBe(true);
+    expect(['chris1@school.edu', 'chris2@school.edu']).toContain(revDoc.redeemedByEmail);
+
+    syncSpy.mockRestore();
+  });
 });
 

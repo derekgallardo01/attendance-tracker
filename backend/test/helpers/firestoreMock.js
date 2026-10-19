@@ -267,18 +267,25 @@ class MockFirestore {
   collection(name) { return new MockCollectionRef(this._store, [name]); }
   collectionGroup(name) { return new MockCollectionGroupQuery(this._store, name); }
   batch() { return new MockBatch(this._store); }
-  // The in-memory store is single-threaded, so a transaction is just the
-  // callback run against the same doc refs. `tx.get/set/update/delete` delegate
-  // straight to the ref — no isolation needed for our unit tests, which only
-  // exercise the read-then-conditional-write shape.
+  // In real Firestore, transactions provide atomic serializable isolation.
+  // We serialize transactions against the store so concurrent callers properly
+  // observe writes from prior transactions.
   async runTransaction(fn) {
-    const tx = {
-      get: (ref) => ref.get(),
-      set: (ref, data, opts) => { ref.set(data, opts); return tx; },
-      update: (ref, data) => { ref.update(data); return tx; },
-      delete: (ref) => { ref.delete(); return tx; },
-    };
-    return fn(tx);
+    const prev = this._store._txPromise || Promise.resolve();
+    let release;
+    this._store._txPromise = new Promise(resolve => { release = resolve; });
+    await prev;
+    try {
+      const tx = {
+        get: (ref) => ref.get(),
+        set: (ref, data, opts) => { ref.set(data, opts); return tx; },
+        update: (ref, data) => { ref.update(data); return tx; },
+        delete: (ref) => { ref.delete(); return tx; },
+      };
+      return await fn(tx);
+    } finally {
+      release();
+    }
   }
 }
 

@@ -3620,7 +3620,7 @@ ${draft.text}
 
 --------------------------------------------------
 [ACTIONS FOR DEREK]:
-1. One-Click Approve & Dispatch Email via Resend:
+1. Review & Approve Reward Dispatch via Resend:
 ${approvalUrl}
 
 2. Or Send via your Email Client (from derek@attendancetracker.dev):

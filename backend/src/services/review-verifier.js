@@ -78,6 +78,7 @@ async function grantReviewReward(domain, email, review) {
     }
 
     const existingDoc = await tx.get(userRef);
+    if (existingDoc.exists && existingDoc.data()?.reviewStatus === 'verified_reviewed') return false;
     userData = existingDoc.exists ? existingDoc.data() : {};
 
     draft = notifications.buildReviewRewardEmailContent({
@@ -263,6 +264,17 @@ async function verifyUserReview(domain, email, declaredName = null, options = {}
   // Get user doc
   const userDoc = await db.collection('tenants').doc(domainLower).collection('users').doc(emailLower).get();
   const userData = userDoc.exists ? userDoc.data() : {};
+
+  // Check if this user already had a verified review
+  if (userData.reviewStatus === 'verified_reviewed' && userData.individualPlan === 'pro') {
+    return {
+      success: true,
+      alreadyVerified: true,
+      email: emailLower,
+      planExpiresAt: userData.individualPlanExpiresAt,
+    };
+  }
+
   const searchName = declaredName || userData.displayName || emailLower.split('@')[0];
 
   // Validate reviewLinkClickedAt within the last 72 hours, or require authenticated request
@@ -297,16 +309,6 @@ async function verifyUserReview(domain, email, declaredName = null, options = {}
     if (isNameMatch(review.authorName, searchName, emailLower)) {
       return await grantReviewReward(domainLower, emailLower, review);
     }
-  }
-
-  // Also check if this user already had a verified review
-  if (userData.reviewStatus === 'verified_reviewed' && userData.individualPlan === 'pro') {
-    return {
-      success: true,
-      alreadyVerified: true,
-      email: emailLower,
-      planExpiresAt: userData.individualPlanExpiresAt,
-    };
   }
 
   return {

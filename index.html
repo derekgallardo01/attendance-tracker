@@ -4271,7 +4271,7 @@ function renderRosterView() {
 
     if (p) {
       matchedParts.add(p);
-      const durMs = (p._accumulatedMs || 0) + (p.present && p.joinTime ? (now - p.joinTime.getTime()) : 0);
+      const durMs = AttUtils.participantTotalMs(p, now);
       const durMin = Math.round(durMs / 60000);
       const pct = meetingMinutes > 0 ? Math.min(100, Math.round((durMin / meetingMinutes) * 100)) : 100;
 
@@ -4361,7 +4361,7 @@ function renderRosterView() {
   if (unregisteredGuests.length > 0) {
     html += `<div style="font-size:.68rem;font-weight:700;color:#58a6ff;text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px">${t('roster.sectionGuests', 'Unregistered Guests ({n})').replace('{n}', unregisteredGuests.length)}</div>`;
     for (const p of unregisteredGuests) {
-      const durMs = (p._accumulatedMs || 0) + (p.present && p.joinTime ? (now - p.joinTime.getTime()) : 0);
+      const durMs = AttUtils.participantTotalMs(p, now);
       const durMin = Math.round(durMs / 60000);
       html += `
         <div class="roster-card guest">
@@ -4876,7 +4876,7 @@ function openLmsSyncModal() {
           }));
         }
         return parts.map(p => {
-          const durMin = Math.round(((p._accumulatedMs || 0) + (p.present && p.joinTime ? (Date.now() - new Date(p.joinTime).getTime()) : 0)) / 60000);
+          const durMin = Math.round(AttUtils.participantTotalMs(p, Date.now()) / 60000);
           const isLate = p.isLate || (p.joinTime && typeof AttUtils !== 'undefined' && AttUtils.latenessMin(p.joinTime, state._eventStart || state.startTime, state.conferenceStartTime) >= 5);
           return {
             name: p.displayName || p.name || '',
@@ -6558,8 +6558,9 @@ function mergeParticipants(incoming = []) {
 
       // The presence/left-streak/rejoin decision is a pure function in
       // AttPanel.resolvePresence (unit-tested); we apply its result here.
+      const toMs = (d) => d instanceof Date ? d.getTime() : (d ? new Date(d).getTime() || null : null);
       const decision = AttPanel.resolvePresence(
-        { present: existing.present, leftStreak: existing._leftStreak, sessions: existing.sessions, joinTimeMs: existing.joinTime ? existing.joinTime.getTime() : null },
+        { present: existing.present, leftStreak: existing._leftStreak, sessions: existing.sessions, joinTimeMs: toMs(existing.joinTime) ?? toMs(existing.trackedJoinTime) },
         { apiPresent, sessions: newSessions },
         { isSelf, now: Date.now() }
       );
@@ -6573,6 +6574,9 @@ function mergeParticipants(incoming = []) {
       }
       if (decision.changed) changed = true;
 
+      if (!existing.joinTime && p.joinTime) {
+        existing.joinTime = new Date(p.joinTime);
+      }
       existing.leaveTime = p.leaveTime ? new Date(p.leaveTime) : null;
       existing.email     = p.email || existing.email;
       existing.sessions  = newSessions;
@@ -11387,7 +11391,7 @@ function formatRelative(d) { return (AttUtils && AttUtils.formatRelative) ? AttU
 const LATE_THRESHOLD_MIN = (AttUtils && AttUtils.LATE_THRESHOLD_MIN) || 5;
 function latenessMin(p) {
   return (AttUtils && AttUtils.latenessMin)
-    ? AttUtils.latenessMin(p?.joinTime, state._eventStart, state.conferenceStartTime)
+    ? AttUtils.latenessMin(p?.joinTime || p?.trackedJoinTime, state._eventStart, state.conferenceStartTime)
     : 0;
 }
 

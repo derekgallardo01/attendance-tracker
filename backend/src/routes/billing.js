@@ -373,7 +373,7 @@ async function createCheckoutSessionForUser({ user, plan, interval, conferenceId
   const stripe = getStripe();
   const domain = user.domain;
   const email = user.email;
-  const { plan: normalizedPlan, invalid: planInvalid } = normalizePlan(plan);
+  let { plan: normalizedPlan, invalid: planInvalid } = normalizePlan(plan);
   if (planInvalid) {
     const err = new Error('Unknown plan.');
     err.statusCode = 400;
@@ -396,7 +396,10 @@ async function createCheckoutSessionForUser({ user, plan, interval, conferenceId
         promoCode: (promo ?? '').trim().toUpperCase(), returnUrl, userCountry: tierCountry,
       });
     }
-    if (normalizedPlan === 'pro_annual' || normalizedPlan === 'pro_monthly') {
+    if (normalizedPlan === 'pro_annual') {
+      normalizedPlan = 'educator';
+      interval = 'annual';
+    } else if (normalizedPlan === 'pro_monthly') {
       const err = new Error('That plan isn\'t available yet.');
       err.statusCode = 400;
       throw err;

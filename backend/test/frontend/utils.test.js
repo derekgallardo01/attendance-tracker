@@ -252,6 +252,12 @@ describe('latenessMin', () => {
     const base = new Date('2026-06-28T10:00:00Z').toISOString();
     expect(utils.latenessMin('not-a-date', base, null)).toBe(0);
   });
+
+  test('calculates lateness using trackedJoinTime Date when joinTime is absent', () => {
+    const base = new Date('2026-06-28T10:00:00Z').toISOString();
+    const tracked = new Date('2026-06-28T10:12:00Z');
+    expect(utils.latenessMin(tracked, base, null)).toBe(12);
+  });
 });
 
 describe('avatarColor', () => {
