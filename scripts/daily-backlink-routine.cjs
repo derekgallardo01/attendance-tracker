@@ -65,7 +65,8 @@ const DO_NOT_FOLLOW_UP_DOMAINS = new Set([
   'usf.edu.br', 'hypescribe.com', 'whisperbot.ai', 'plaud.ai', 'screenapp.io',
   'govisually.com', 'dupple.com', 'rottenwifi.com', 'itechguides.com',
   'sprintzeal.com', 'autogpt.net', 'univasf.edu.br', 'cultofpedagogy.com',
-  'shakeuplearning.com', 'controlaltachieve.com', 'ditchthattextbook.com'
+  'shakeuplearning.com', 'controlaltachieve.com', 'ditchthattextbook.com',
+  'coworker.ai'
 ]);
 
 function extractRootDomain(input) {
