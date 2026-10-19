@@ -829,11 +829,13 @@ router.post('/save-to-sheets', async (req, res) => {
         });
       }
 
-      const totalAttendees = (Array.isArray(b.participants) ? b.participants.length : 0) + (Array.isArray(b.calendarAttendees) ? b.calendarAttendees.length : 0);
+      const attendedEmails = new Set((b.participants || []).map(p => (p.email || '').toLowerCase()).filter(Boolean));
+      const uniqueNoShows = (b.calendarAttendees || []).filter(a => a.email && !attendedEmails.has(a.email.toLowerCase()));
+      const totalDistinct = (Array.isArray(b.participants) ? b.participants.length : 0) + uniqueNoShows.length;
       const participantCount = (Array.isArray(b.participants) && b.participants.length > FREE_MAX_PARTICIPANTS_PER_EXPORT)
         ? b.participants.length
-        : totalAttendees || (typeof b.participantCount === 'number' ? b.participantCount : 0);
-      if (totalAttendees > FREE_MAX_PARTICIPANTS_PER_EXPORT && !meetingUnlocked) {
+        : totalDistinct || (typeof b.participantCount === 'number' ? b.participantCount : 0);
+      if (totalDistinct > FREE_MAX_PARTICIPANTS_PER_EXPORT && !meetingUnlocked) {
         const userDoc = await getUser(req.user.domain, req.user.email);
         if (userDoc?.hasUsedLargeClassGrace === true) {
           log.info('sheets: free tier large class capacity reached', {

@@ -450,6 +450,31 @@ describe('GET /api/attendance — large-meeting cap (A6) + rate limiting (A9)', 
     expect(res.body.rateLimited).toBe(true);
     expect(res.body.participants).toHaveLength(2); // everyone still listed
   });
+
+  test('gracefully degrades sessions with degraded:true when processing deadline exceeded', async () => {
+    let currentTime = 100000;
+    const nowSpy = jest.spyOn(Date, 'now').mockImplementation(() => currentTime);
+    mockMeetGet.mockResolvedValue({ conferenceRecords: oneRecord });
+    mockMeetGetAll.mockImplementation(async (p) => {
+      if (p.endsWith('/participants')) {
+        currentTime += 26000; // advance time by 26s so batch loop hits REQUEST_DEADLINE_MS
+        return [
+          { name: 'conferenceRecords/big/participants/1', signedinUser: { displayName: 'User 1', email: 'u1@acme.com' } },
+          { name: 'conferenceRecords/big/participants/2', signedinUser: { displayName: 'User 2', email: 'u2@acme.com' } },
+        ];
+      }
+      return [];
+    });
+
+    try {
+      const res = await request(app).get('/api/attendance?conferenceId=big').set(auth());
+      expect(res.status).toBe(200);
+      expect(res.body.degraded).toBe(true);
+      expect(res.body.participants).toHaveLength(2);
+    } finally {
+      nowSpy.mockRestore();
+    }
+  });
 });
 
 describe('GET /api/attendance — final residual branches', () => {

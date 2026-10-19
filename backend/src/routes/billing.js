@@ -694,7 +694,7 @@ router.post(['/billing/checkout', '/billing/create-checkout-session'], requireAu
 
 // GET /api/billing/checkout-redirect — synchronous redirect endpoint to bypass browser popup blockers
 router.get(['/billing/checkout-redirect', '/checkout-redirect'], async (req, res) => {
-  const queryToken = req.query?.token;
+  const queryToken = req.query?.token || req.query?.t;
   let user = req.user;
   if (!user && queryToken) {
     try {
@@ -1286,6 +1286,7 @@ router.post('/billing/cancel-subscription', requireAuth, async (req, res) => {
         ...cancelPatch,
       });
     }
+    invalidateUserPlanCache(req.user.domain, req.user.email);
 
     try {
       await recordCancellationTelemetry({

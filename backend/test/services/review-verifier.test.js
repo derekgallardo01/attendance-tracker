@@ -233,6 +233,93 @@ describe('grantReviewReward & verifyUserReview', () => {
     syncSpy.mockRestore();
   });
 
+  test('grantReviewReward returns already_redeemed when review was claimed in concurrent transaction', async () => {
+    ctx.seed('marketplace_reviews/rev-concurrent', {
+      reviewId: 'rev-concurrent',
+      redeemed: true,
+      redeemedByEmail: 'prior@school.edu',
+    });
+    ctx.seed('tenants/school.edu/users/racer@school.edu', {
+      displayName: 'Racer Student',
+    });
+
+    const res = await reviewVerifier.grantReviewReward('school.edu', 'racer@school.edu', {
+      reviewId: 'rev-concurrent',
+      authorName: 'Racer Student',
+      rating: 5,
+    });
+    expect(res.success).toBe(false);
+    expect(res.reason).toBe('already_redeemed');
+  });
+
+  test('verifyUserReview with checkClickWindow enforces 72h window or authentication', async () => {
+    const marketplace = require('../../src/services/marketplace-reviews');
+    const syncSpy = jest.spyOn(marketplace, 'syncMarketplaceReviews').mockResolvedValue({ total: 1, newlyDiscovered: 0, reviews: [] });
+    const now = Date.now();
+
+    ctx.seed('marketplace_reviews/rev-window-1', {
+      reviewId: 'rev-window-1',
+      rating: 5,
+      comment: 'Super!',
+      authorName: 'Window User',
+      redeemed: false,
+    });
+
+    // Case 1: No click and unauthenticated -> click_required
+    ctx.seed('tenants/school.edu/users/noclick@school.edu', {
+      displayName: 'Window User',
+    });
+    const resNoClick = await reviewVerifier.verifyUserReview('school.edu', 'noclick@school.edu', 'Window User', {
+      checkClickWindow: true,
+      isAuthenticated: false,
+    });
+    expect(resNoClick.success).toBe(false);
+    expect(resNoClick.reason).toBe('click_required');
+
+    // Case 2: Click older than 72 hours -> click_required
+    ctx.seed('tenants/school.edu/users/oldclick@school.edu', {
+      displayName: 'Window User',
+      reviewLinkClickedAt: new Date(now - 80 * 3600 * 1000).toISOString(),
+    });
+    const resOldClick = await reviewVerifier.verifyUserReview('school.edu', 'oldclick@school.edu', 'Window User', {
+      checkClickWindow: true,
+      isAuthenticated: false,
+    });
+    expect(resOldClick.success).toBe(false);
+    expect(resOldClick.reason).toBe('click_required');
+
+    // Case 3: Click within 72 hours -> succeeds
+    ctx.seed('tenants/school.edu/users/recentclick@school.edu', {
+      displayName: 'Window User',
+      reviewLinkClickedAt: new Date(now - 12 * 3600 * 1000).toISOString(),
+    });
+    const resRecent = await reviewVerifier.verifyUserReview('school.edu', 'recentclick@school.edu', 'Window User', {
+      checkClickWindow: true,
+      isAuthenticated: false,
+    });
+    expect(resRecent.success).toBe(true);
+    expect(resRecent.reviewId).toBe('rev-window-1');
+
+    // Case 4: Authenticated user without click -> succeeds
+    ctx.seed('marketplace_reviews/rev-window-2', {
+      reviewId: 'rev-window-2',
+      rating: 5,
+      authorName: 'Authed User',
+      redeemed: false,
+    });
+    ctx.seed('tenants/school.edu/users/authed@school.edu', {
+      displayName: 'Authed User',
+    });
+    const resAuthed = await reviewVerifier.verifyUserReview('school.edu', 'authed@school.edu', 'Authed User', {
+      checkClickWindow: true,
+      isAuthenticated: true,
+    });
+    expect(resAuthed.success).toBe(true);
+    expect(resAuthed.reviewId).toBe('rev-window-2');
+
+    syncSpy.mockRestore();
+  });
+
   test('isNameMatch handles empty/non-string inputs', () => {
     expect(reviewVerifier.isNameMatch(null, 'Test', 'a@b.com')).toBe(false);
     expect(reviewVerifier.isNameMatch('!!!', 'Test', 'a@b.com')).toBe(false);

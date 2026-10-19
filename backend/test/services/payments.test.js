@@ -91,6 +91,37 @@ describe('paymentFromSession', () => {
     });
     expect(p).toMatchObject({ id: 'cs_3', plan: 'educator_annual', regional: true, amountUsd: null, domain: 'deped.gov.ph' });
   });
+  test('tiered pricing in tier 2/3 with USD is flagged regional on session', () => {
+    const p = payments.paymentFromSession({
+      id: 'cs_tier2', amount_total: 2500, currency: 'usd',
+      metadata: { plan: 'individual_annual', individual: '1', email: 'user@school.in', pricing: 'tiered', tier: '2' },
+    });
+    expect(p).toMatchObject({ id: 'cs_tier2', regional: true, amountUsd: 2500 });
+  });
+  test('tiered pricing in tier 1 with USD is not flagged regional on session', () => {
+    const p = payments.paymentFromSession({
+      id: 'cs_tier1', amount_total: 4900, currency: 'usd',
+      metadata: { plan: 'individual_annual', individual: '1', email: 'user@school.us', pricing: 'tiered', tier: '1' },
+    });
+    expect(p).toMatchObject({ id: 'cs_tier1', regional: false, amountUsd: 4900 });
+  });
+  test('tiered pricing with numeric tier values handles string vs number correctly', () => {
+    const p1 = payments.paymentFromSession({
+      id: 'cs_tier1_num', amount_total: 4900, currency: 'usd',
+      metadata: { plan: 'individual_annual', individual: '1', email: 'user@school.us', pricing: 'tiered', tier: 1 },
+    });
+    expect(p1.regional).toBe(false);
+    const p2 = payments.paymentFromSession({
+      id: 'cs_tier2_num', amount_total: 2500, currency: 'usd',
+      metadata: { plan: 'individual_annual', individual: '1', email: 'user@school.in', pricing: 'tiered', tier: 2 },
+    });
+    expect(p2.regional).toBe(true);
+    const pNone = payments.paymentFromSession({
+      id: 'cs_tier_none', amount_total: 4900, currency: 'usd',
+      metadata: { plan: 'individual_annual', individual: '1', email: 'user@school.us', pricing: 'tiered' },
+    });
+    expect(pNone.regional).toBe(false);
+  });
   test('missing identity yields nulls rather than throwing', () => {
     const p = payments.paymentFromSession({ id: 'cs_4', client_reference_id: 'meet:abc' });
     expect(p).toMatchObject({ id: 'cs_4', email: null, domain: null, amount: null, currency: null });
@@ -106,6 +137,15 @@ describe('paymentFromInvoice', () => {
     expect(p).toMatchObject({
       id: 'pi_9', source: 'invoice', plan: 'pro_monthly', interval: 'month', recurring: true,
       email: 'a@b.com', domain: 'b.com', amountUsd: 499, billingReason: 'subscription_cycle',
+    });
+  });
+  test('renewal invoice with tiered tier 3 USD is flagged regional', () => {
+    const p = payments.paymentFromInvoice({
+      id: 'in_tier3', payment_intent: 'pi_t3', subscription: 'sub_t3', amount_paid: 199, currency: 'usd',
+      billing_reason: 'subscription_cycle', lines: { data: [{ price: { recurring: { interval: 'month' } } }] },
+    }, { individual: '1', plan: 'pro_monthly', email: 'b@school.pk', pricing: 'tiered', tier: '3' });
+    expect(p).toMatchObject({
+      id: 'pi_t3', regional: true,
     });
   });
   test('falls back to the plan default interval and the invoice email', () => {

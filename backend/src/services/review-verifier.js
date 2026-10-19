@@ -66,53 +66,79 @@ async function grantReviewReward(domain, email, review) {
   const now = new Date();
   const expiresAt = new Date(now.getTime() + REWARD_DURATION_DAYS * 24 * 60 * 60 * 1000);
 
-  // Fetch existing user doc for personalization & localization metadata
-  const existingDoc = await userRef.get();
-  const userData = existingDoc.exists ? existingDoc.data() : {};
+  const reviewRef = db.collection('marketplace_reviews').doc(review.reviewId);
+  let userData = {};
+  let draft;
 
-  // Build localized draft confirmation email
-  const draft = notifications.buildReviewRewardEmailContent({
-    to: emailLower,
-    displayName: userData.displayName || review.authorName,
-    domain: domainLower,
-    country: userData.signupGeo?.country,
-    language: userData.language,
-    expiresAt: expiresAt.toISOString(),
-    reviewId: review.reviewId,
-    rating: review.rating,
+  const claimed = await db.runTransaction(async (tx) => {
+    const reviewSnap = await tx.get(reviewRef);
+    if (reviewSnap.exists && reviewSnap.data()?.redeemed) {
+      log.warn('review-verifier: review already redeemed in transaction', { reviewId: review.reviewId });
+      return false;
+    }
+
+    const existingDoc = await tx.get(userRef);
+    userData = existingDoc.exists ? existingDoc.data() : {};
+
+    draft = notifications.buildReviewRewardEmailContent({
+      to: emailLower,
+      displayName: userData.displayName || review.authorName,
+      domain: domainLower,
+      country: userData.signupGeo?.country,
+      language: userData.language,
+      expiresAt: expiresAt.toISOString(),
+      reviewId: review.reviewId,
+      rating: review.rating,
+    });
+
+    tx.set(userRef, {
+      individualPlan: 'pro',
+      individualBillingStatus: 'active',
+      individualPlanType: 'review_reward',
+      individualPlanGrantedAt: now.toISOString(),
+      individualPlanExpiresAt: expiresAt.toISOString(),
+      reviewStatus: 'verified_reviewed',
+      reviewVerifiedAt: now.toISOString(),
+      reviewId: review.reviewId,
+      reviewRating: review.rating,
+      reviewText: review.comment || '',
+      reviewRewardEmailSent: false,
+      reviewRewardEmailPendingApproval: true,
+      reviewRewardDraft: {
+        subject: draft.subject,
+        text: draft.text,
+        lang: draft.lang,
+        from: draft.from,
+        replyTo: draft.replyTo,
+      },
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    tx.set(reviewRef, {
+      redeemed: true,
+      redeemedByEmail: emailLower,
+      redeemedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    return true;
   });
 
-  // Update user document: activate Pro immediately, mark email pending Derek's approval
-  await userRef.set({
-    individualPlan: 'pro',
-    individualBillingStatus: 'active',
-    individualPlanType: 'review_reward',
-    individualPlanGrantedAt: now.toISOString(),
-    individualPlanExpiresAt: expiresAt.toISOString(),
-    reviewStatus: 'verified_reviewed',
-    reviewVerifiedAt: now.toISOString(),
-    reviewId: review.reviewId,
-    reviewRating: review.rating,
-    reviewText: review.comment || '',
-    reviewRewardEmailSent: false,
-    reviewRewardEmailPendingApproval: true,
-    reviewRewardDraft: {
-      subject: draft.subject,
-      text: draft.text,
-      lang: draft.lang,
-      from: draft.from,
-      replyTo: draft.replyTo,
-    },
-    updatedAt: FieldValue.serverTimestamp(),
-  }, { merge: true });
+  if (!claimed) {
+    return {
+      success: false,
+      reason: 'already_redeemed',
+      message: 'This review has already been claimed.',
+    };
+  }
 
-  // Mark review as redeemed in marketplace_reviews
-  const reviewRef = db.collection('marketplace_reviews').doc(review.reviewId);
-  await reviewRef.set({
-    redeemed: true,
-    redeemedByEmail: emailLower,
-    redeemedAt: FieldValue.serverTimestamp(),
-  }, { merge: true });
+  try {
+    const { invalidateUserPlanCache } = require('../routes/billing');
+    if (typeof invalidateUserPlanCache === 'function') {
+      invalidateUserPlanCache(domainLower, emailLower);
+    }
+  } catch (err) {
+    log.warn('review-verifier: failed to invalidate user plan cache', { error: err.message });
+  }
 
   log.info('review-verifier: granted review reward (Pro active, email pending admin review)', {
     email: emailLower,
@@ -229,7 +255,7 @@ async function reconcilePendingReviews() {
 /**
  * Immediate verification for user clicking "I left a review" in-app
  */
-async function verifyUserReview(domain, email, declaredName = null) {
+async function verifyUserReview(domain, email, declaredName = null, options = {}) {
   const db = getDb();
   const emailLower = email.toLowerCase();
   const domainLower = (domain || emailLower.split('@')[1] || 'gmail.com').toLowerCase();
@@ -238,6 +264,25 @@ async function verifyUserReview(domain, email, declaredName = null) {
   const userDoc = await db.collection('tenants').doc(domainLower).collection('users').doc(emailLower).get();
   const userData = userDoc.exists ? userDoc.data() : {};
   const searchName = declaredName || userData.displayName || emailLower.split('@')[0];
+
+  // Validate reviewLinkClickedAt within the last 72 hours, or require authenticated request
+  if (options.checkClickWindow) {
+    const isAuthenticated = options.isAuthenticated === true;
+    const clickTime = userData.reviewLinkClickedAt ? new Date(userData.reviewLinkClickedAt).getTime() : 0;
+    const isRecentClick = clickTime > 0 && (Date.now() - clickTime) <= 72 * 60 * 60 * 1000;
+    if (!isAuthenticated && !isRecentClick) {
+      log.info('review-verifier: click verification required or expired', {
+        email: emailLower,
+        hasClick: !!userData.reviewLinkClickedAt,
+        clickTime,
+      });
+      return {
+        success: false,
+        reason: 'click_required',
+        message: 'Please click the "Leave a review" link first before verifying your review.',
+      };
+    }
+  }
 
   // Sync latest reviews from Marketplace
   await syncMarketplaceReviews();

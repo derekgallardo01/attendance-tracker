@@ -2160,6 +2160,21 @@ describe('notifications — buildDesignSystemEmail & upgrade link sender', () =>
     expect(approvalUrl).toContain('teacher%40school.edu');
     expect(approvalUrl).toContain(`t=${token}`);
 
+    // Expired token test (30-day window)
+    const expiredToken = n.createReviewApprovalToken('rev-123', 'teacher@school.edu', new Date(Date.now() - 1000));
+    expect(n.verifyReviewApprovalToken('rev-123', 'teacher@school.edu', expiredToken)).toBe(false);
+
+    // Legacy token test (32-char HMAC without timestamp)
+    const crypto = require('crypto');
+    const CONFIG = require('../../src/config');
+    const legacyToken = crypto
+      .createHmac('sha256', CONFIG.deriveSecret('review_approval:v1'))
+      .update('rev-123:teacher@school.edu')
+      .digest('hex')
+      .slice(0, 32);
+    expect(n.verifyReviewApprovalToken('rev-123', 'teacher@school.edu', legacyToken)).toBe(true);
+    expect(n.verifyReviewApprovalToken('rev-123', 'wrong@school.edu', legacyToken)).toBe(false);
+
     // 2. buildReviewRewardEmailContent
     const draft = n.buildReviewRewardEmailContent({
       to: 'profesor@colegio.edu.mx',

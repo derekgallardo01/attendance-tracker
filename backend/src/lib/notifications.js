@@ -3524,20 +3524,50 @@ function buildReviewRewardEmailContent({ to, displayName, domain, country, langu
 }
 
 const REVIEW_APPROVAL_KEY_LABEL = 'review_approval:v1';
-function createReviewApprovalToken(reviewId, email) {
-  return crypto
+const REVIEW_APPROVAL_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+function createReviewApprovalToken(reviewId, email, expiresAt = null) {
+  const expSec = expiresAt ? Math.floor(new Date(expiresAt).getTime() / 1000) : Math.floor((Date.now() + REVIEW_APPROVAL_EXPIRY_MS) / 1000);
+  const expHex = expSec.toString(16).padStart(8, '0');
+  const sig = crypto
+    .createHmac('sha256', CONFIG.deriveSecret(REVIEW_APPROVAL_KEY_LABEL))
+    .update(`${String(reviewId)}:${String(email).toLowerCase()}:${expHex}`)
+    .digest('hex')
+    .slice(0, 24);
+  return `${expHex}${sig}`;
+}
+
+function verifyReviewApprovalToken(reviewId, email, token) {
+  if (!reviewId || !email || !token || typeof token !== 'string') return false;
+  if (token.length !== 32) return false;
+
+  const expHex = token.slice(0, 8);
+  const expSec = parseInt(expHex, 16);
+  if (Number.isFinite(expSec) && expSec > 1600000000 && expSec < 4000000000) {
+    const expectedSig = crypto
+      .createHmac('sha256', CONFIG.deriveSecret(REVIEW_APPROVAL_KEY_LABEL))
+      .update(`${String(reviewId)}:${String(email).toLowerCase()}:${expHex}`)
+      .digest('hex')
+      .slice(0, 24);
+    const a = Buffer.from(token.slice(8));
+    const b = Buffer.from(expectedSig);
+    if (a.length === b.length && crypto.timingSafeEqual(a, b)) {
+      if (Math.floor(Date.now() / 1000) > expSec) {
+        return false; // Expired
+      }
+      return true;
+    }
+  }
+
+  // Backwards compatibility with legacy 32-char tokens without embedded timestamp
+  const legacyExpected = crypto
     .createHmac('sha256', CONFIG.deriveSecret(REVIEW_APPROVAL_KEY_LABEL))
     .update(`${String(reviewId)}:${String(email).toLowerCase()}`)
     .digest('hex')
     .slice(0, 32);
-}
-
-function verifyReviewApprovalToken(reviewId, email, token) {
-  if (!reviewId || !email || !token) return false;
-  const expected = createReviewApprovalToken(reviewId, email);
-  const a = Buffer.from(expected);
-  const b = Buffer.from(String(token));
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
+  const legA = Buffer.from(token);
+  const legB = Buffer.from(legacyExpected);
+  return legA.length === legB.length && crypto.timingSafeEqual(legA, legB);
 }
 
 function reviewApprovalUrl(reviewId, email) {

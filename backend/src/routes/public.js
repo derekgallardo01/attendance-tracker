@@ -5,6 +5,8 @@ const log = require('../lib/logger');
 const geoip = require('geoip-lite');
 const { getDb, resolveShareLink, getSharedSeriesView, getSharedMeetingView, suppressEmail, unsuppressEmail, isEmailSuppressed, getUserSettings, updateUserSettings, getVerification, logEvent, recordCancellationTelemetry, recordPublicPageview } = require('../services/firestore');
 const { sendFeedbackEmail, verifyUnsubscribeToken, sendAdminEmail, sendAdminEmailUnsubscribedNotification } = require('../lib/notifications');
+const jwt = require('jsonwebtoken');
+const CONFIG = require('../config');
 const { escapeHtml } = require('../lib/html');
 const { verifyUserReview } = require('../services/review-verifier');
 
@@ -807,16 +809,63 @@ router.get('/public/offer-click', async (req, res) => {
   res.redirect(302, target);
 });
 
+const verifyReviewLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many verification attempts. Please try again later.' },
+  skip: () => process.env.NODE_ENV === 'test',
+});
+
+const verifyEmailAttempts = new Map();
+function checkReviewEmailRateLimit(email) {
+  if (process.env.NODE_ENV === 'test') return true;
+  const now = Date.now();
+  const windowMs = 15 * 60 * 1000;
+  const maxAttempts = 5;
+  const attempts = (verifyEmailAttempts.get(email) || []).filter(t => now - t < windowMs);
+  if (attempts.length >= maxAttempts) return false;
+  attempts.push(now);
+  verifyEmailAttempts.set(email, attempts);
+  if (verifyEmailAttempts.size > 2000) {
+    for (const [k, v] of verifyEmailAttempts.entries()) {
+      if (v.every(t => now - t >= windowMs)) verifyEmailAttempts.delete(k);
+    }
+  }
+  return true;
+}
+
 // POST /api/public/verify-review — Verify a submitted review and unlock 1 month of Pro
-router.post('/public/verify-review', async (req, res) => {
+router.post('/public/verify-review', verifyReviewLimiter, async (req, res) => {
   const { email, declaredName } = req.body || {};
   if (!email || typeof email !== 'string' || !email.includes('@')) {
     return res.status(400).json({ error: 'Valid email is required.' });
   }
   const cleanEmail = email.trim().toLowerCase();
   const domain = cleanEmail.split('@')[1];
+
+  if (!checkReviewEmailRateLimit(cleanEmail)) {
+    return res.status(429).json({ error: 'Too many verification attempts for this email. Please try again later.' });
+  }
+
+  let isAuthenticated = false;
+  if (req.user?.email && req.user.email.toLowerCase() === cleanEmail) {
+    isAuthenticated = true;
+  } else if (req.headers?.authorization?.startsWith('Bearer ')) {
+    try {
+      const decoded = jwt.verify(req.headers.authorization.slice(7), CONFIG.sessionSecret);
+      if (decoded?.email && decoded.email.toLowerCase() === cleanEmail) {
+        isAuthenticated = true;
+      }
+    } catch {}
+  }
+
   try {
-    const result = await verifyUserReview(domain, cleanEmail, declaredName);
+    const result = await verifyUserReview(domain, cleanEmail, declaredName, {
+      isAuthenticated,
+      checkClickWindow: true,
+    });
     res.json(result);
   } catch (err) {
     log.error('public: verify-review failed', { email: cleanEmail, error: err.message });

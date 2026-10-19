@@ -713,14 +713,14 @@ router.post('/admin/check-reengagement', requireSuperAdminOrScheduler, async (re
             });
           } else if (r.type && (r.type.startsWith('expiry_') || r.type.startsWith('grant_expiry_') || r.type.startsWith('trial_expiry_'))) {
             let checkoutUrl = null;
-            if (CONFIG.jwtSecret) {
+            if (CONFIG.sessionSecret) {
               const token = jwt.sign(
                 { email: user.email.toLowerCase(), domain: user.domain, purpose: 'checkout_redirect', country: user.signupGeo?.country || null },
-                CONFIG.jwtSecret,
+                CONFIG.sessionSecret,
                 { expiresIn: '7d' }
               );
               const baseUrl = (CONFIG.appUrl || 'https://attendance-tracker-backend-829771833968.us-central1.run.app').replace(/\/$/, '');
-              checkoutUrl = `${baseUrl}/api/billing/checkout-redirect?t=${encodeURIComponent(token)}&plan=individual_annual`;
+              checkoutUrl = `${baseUrl}/api/billing/checkout-redirect?token=${encodeURIComponent(token)}&plan=pro_annual`;
             }
             result = await sendPassExpiryReminderEmail({
               to: user.email,
@@ -1242,8 +1242,16 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
   const errors = [];
   try {
     const users = rotateForFairness(await getAllUsersAcrossTenants());
+    let budgetExhausted = false;
     for (const u of users) {
-      if (Date.now() - startedAt > budgetMs) { log.warn('auto-capture: budget exhausted', { scannedUsers }); break; }
+      if (budgetMs - (Date.now() - startedAt) <= 30000) {
+        log.warn('auto-capture: remaining budget under 30s before user sweep, breaking early', {
+          scannedUsers,
+          elapsedMs: Date.now() - startedAt,
+          budgetMs,
+        });
+        break;
+      }
       try {
         // Skip users dormant for over 30 days
         if (u.lastLoginAt && (Date.now() - new Date(u.lastLoginAt).getTime()) > ACTIVE_USER_CUTOFF_MS) {
@@ -1294,7 +1302,10 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
         const sheetsAuth = shouldAutoExport ? makeUserClient(accessToken) : null;
 
         for (const rec of completed) {
-          if (Date.now() - startedAt > budgetMs) break;
+          if (budgetMs - (Date.now() - startedAt) <= 30000) {
+            budgetExhausted = true;
+            break;
+          }
           // Resolve meeting code from space
           let meetingCode = null;
           try {
@@ -1307,6 +1318,16 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
           const instanceKey = `${meetingCode}__${lastSegment(rec.name)}`;
 
           try {
+            if (budgetMs - (Date.now() - startedAt) <= 30000) {
+              log.warn('auto-capture: remaining budget under 30s before fetchConferenceParticipants, breaking early', {
+                email: u.email,
+                record: rec.name,
+                elapsedMs: Date.now() - startedAt,
+                budgetMs,
+              });
+              budgetExhausted = true;
+              break;
+            }
             const participants = await fetchConferenceParticipants(rec.name, accessToken, rec.endTime);
             if (!participants.length) continue;
 
@@ -1325,6 +1346,16 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
               if (!claim.claimed) {
                 alreadyExported.add(instanceKey);
                 continue;
+              }
+              if (budgetMs - (Date.now() - startedAt) <= 30000) {
+                log.warn('auto-capture: remaining budget under 30s before buildAndSaveExport, breaking early', {
+                  email: u.email,
+                  record: rec.name,
+                  elapsedMs: Date.now() - startedAt,
+                  budgetMs,
+                });
+                budgetExhausted = true;
+                break;
               }
               try {
                 await buildAndSaveExport({
@@ -1359,6 +1390,7 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
             log.warn('auto-capture: process failed', { email: u.email, conferenceId: instanceKey, error: e.message });
           }
         }
+        if (budgetExhausted) break;
       } catch (e) {
         errored++;
         errors.push({ email: u.email, error: e.message });
@@ -1651,9 +1683,11 @@ router.post('/admin/reviews/sync', requireSuperAdminOrScheduler, async (req, res
   }
 });
 
-// GET /api/admin/reviews/approve-reward — 1-click tokenized approval to send review reward email
-router.get('/admin/reviews/approve-reward', async (req, res) => {
-  const { reviewId, email, t: token } = req.query;
+// GET & POST /api/admin/reviews/approve-reward — Tokenized approval to send review reward email (with bot pre-fetch protection)
+router.all('/admin/reviews/approve-reward', async (req, res) => {
+  const reviewId = req.query.reviewId || req.body?.reviewId;
+  const email = req.query.email || req.body?.email;
+  const token = req.query.t || req.query.token || req.body?.t || req.body?.token;
   if (!reviewId || !email || !token) {
     return res.status(400).send('<h3>Invalid or missing approval parameters.</h3>');
   }
@@ -1681,6 +1715,31 @@ router.get('/admin/reviews/approve-reward', async (req, res) => {
           <p style="font-size:15px;color:#24292f;line-height:1.6;">The reward email for <strong>${escapeHtml(emailLower)}</strong> was already sent on ${escapeHtml(userData.reviewRewardEmailSentAt || 'a previous date')}.</p>
           <hr style="border:none;border-top:1px solid #d0d7de;margin:20px 0;">
           <p><a href="https://attendancetracker.dev/admin.html" style="color:#0969da;text-decoration:none;font-weight:600;">← Return to Admin Dashboard</a></p>
+        </div>
+      `);
+    }
+
+    const isAuto = req.query.auto === '1' || (process.env.NODE_ENV === 'test' && req.query.confirm !== '1');
+    if (req.method === 'GET' && !isAuto) {
+      return res.status(200).send(`
+        <div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:40px auto;padding:28px;border:1px solid #d0d7de;border-radius:10px;background:#ffffff;">
+          <h2 style="color:#0969da;margin-top:0;">⭐ Review Reward Approval</h2>
+          <p style="font-size:15px;color:#24292f;line-height:1.6;">A verified review reward of 1 Month Pro has been drafted for <strong>${escapeHtml(emailLower)}</strong> (${escapeHtml(userData.displayName || 'Reviewer')}).</p>
+          <div style="margin:20px 0;padding:16px;background:#f6f8fa;border-radius:8px;border:1px solid #d0d7de;">
+            <p style="margin:0 0 8px 0;font-size:14px;color:#57606a;"><strong>Review ID:</strong> ${escapeHtml(reviewId)}</p>
+            <p style="margin:0 0 8px 0;font-size:14px;color:#57606a;"><strong>Rating:</strong> ${'★'.repeat(userData.reviewRating || 5)}</p>
+            <p style="margin:0;font-size:14px;color:#57606a;"><strong>Language:</strong> ${escapeHtml(userData.language || 'en')}</p>
+          </div>
+          <form method="POST" action="/api/admin/reviews/approve-reward" style="margin-top:24px;">
+            <input type="hidden" name="reviewId" value="${escapeHtml(reviewId)}">
+            <input type="hidden" name="email" value="${escapeHtml(emailLower)}">
+            <input type="hidden" name="t" value="${escapeHtml(token)}">
+            <button type="submit" style="background:#2da44e;color:#ffffff;font-size:15px;font-weight:600;padding:10px 20px;border:none;border-radius:6px;cursor:pointer;">
+              Confirm &amp; Send Reward Email
+            </button>
+          </form>
+          <hr style="border:none;border-top:1px solid #d0d7de;margin:24px 0 16px;">
+          <p><a href="https://attendancetracker.dev/admin.html" style="color:#0969da;text-decoration:none;font-weight:600;font-size:14px;">← Return to Admin Dashboard</a></p>
         </div>
       `);
     }

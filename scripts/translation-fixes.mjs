@@ -3,6 +3,10 @@
 // can never reset these back to English. Format: { locale: { key: text } }.
 export const TRANSLATION_FIXES = {
   "af": {
+    "history.clusterPromoCtaInst": "Gradeer op na Instellingsplan ($149/jr) →",
+    "history.clusterPromoCtaQuote": "Versoek pasgemaakte skoolkwotasie →",
+    "quote.askSchoolBtn": "Vra my skool om te betaal (Laai kwotasie-PDF af)",
+    "renewal.noticeText": "Jou Pro het geëindig — hernu om onbeperkte klasse en outo-uitvoer te behou",
     "billing.lmsSyncPro": "Om punte direk na Google Classroom en Canvas te sinkroniseer vereis ’n Educator- of Pro-plan.",
     "export.graceUsed": "🎉 Gratis volledige roosteruitvoer: Ons het al {count} deelnemers vir jou eerste groot klas ontsluit! Gradeer op na Educator vir onbeperkte klasgroottes in toekomstige klasse.",
     "footer.builtBy": "Gebou deur Kinetic Helix",
@@ -17,6 +21,10 @@ export const TRANSLATION_FIXES = {
     "upgrade.singleAltPrefix": "Benodig net hierdie een vergadering? Ontsluit vir"
   },
   "am": {
+    "history.clusterPromoCtaInst": "ወደ ተቋም ዕቅድ ያሻሽሉ ($149/በዓመት) →",
+    "history.clusterPromoCtaQuote": "የትምህርት ቤት ብጁ የዋጋ ማቅረቢያ ይጠይቁ →",
+    "quote.askSchoolBtn": "ትምህርት ቤቴ እንዲከፍል ይጠይቁ (የዋጋ ማቅረቢያ PDF ያውርዱ)",
+    "renewal.noticeText": "የእርስዎ Pro አብቅቷል — ያልተገደቡ ክፍሎችን እና ራስ-ሰር መላክን ለመጠበቅ ያድሱ",
     "billing.lmsSyncPro": "ውጤቶችን በቀጥታ ወደ Google Classroom እና Canvas ማመሳሰል የ Educator ወይም Pro ዕቅድ ይጠይቃል።",
     "btn.sheet": "ሉህ",
     "footer.builtBy": "በ Kinetic Helix የተሰራ",
@@ -181,6 +189,10 @@ export const TRANSLATION_FIXES = {
     "scopeModal.boxQuote": "\"ከዚህ መተግበሪያ ጋር የሚጠቀሙባቸውን የተወሰኑ የ Google Drive ፋይሎች ብቻ ማየት፣ ማርትዕ፣ መፍጠር እና መሰረዝ\""
   },
   "ar": {
+    "history.clusterPromoCtaInst": "الترقية إلى خطة المؤسسة (149$/سنة) →",
+    "history.clusterPromoCtaQuote": "طلب عرض أسعار مخصص للمدرسة →",
+    "quote.askSchoolBtn": "اطلب من مدرستي الدفع (تنزيل عرض الأسعار كـ PDF)",
+    "renewal.noticeText": "انتهت فترة Pro — قم بالتجديد للاحتفاظ بعدد غير محدود من الفصول والتصدير التلقائي",
     "lp2_plan_school_price": "ابتداءً من $59",
     "lp2_price_line_2": "‏9.99 دولار مرة واحدة للاستخدام غير المحدود",
     "lp2_price_line_3": "لا يوجد اشتراك لإلغائه",
@@ -192,6 +204,10 @@ export const TRANSLATION_FIXES = {
     "lp2_sheet_th_min": "دقيقة"
   },
   "bg": {
+    "history.clusterPromoCtaInst": "Надстройка до Институционален план ($149/год.) →",
+    "history.clusterPromoCtaQuote": "Поискайте персонализирана оферта за училището →",
+    "quote.askSchoolBtn": "Поискайте училището да плати (Изтеглете офертата в PDF)",
+    "renewal.noticeText": "Вашият Pro изтече — подновете за неограничени класове и автоматично експортиране",
     "export.graceUsed": "🎉 Безплатен пълен експорт на списъка: Отключихме всички {count} участници за първия ви голям клас! Надградете до Educator за неограничен брой участници в бъдещите класове.",
     "footer.builtBy": "Създадено от Kinetic Helix",
     "footer.colGlobal": "Глобални и регионални",
@@ -210,6 +226,10 @@ export const TRANSLATION_FIXES = {
     "upgrade.singleAltPrefix": "Нужна ви е само тази среща? Отключете за"
   },
   "bn": {
+    "history.clusterPromoCtaInst": "প্রতিষ্ঠান প্ল্যানে আপগ্রেড করুন ($149/বছর) →",
+    "history.clusterPromoCtaQuote": "কাস্টম স্কুল কোটেশনের জন্য অনুরোধ করুন →",
+    "quote.askSchoolBtn": "আমার স্কুলকে পেমেন্ট করতে বলুন (কোটেশন PDF ডাউনলোড করুন)",
+    "renewal.noticeText": "আপনার প্রো শেষ হয়ে গেছে — সীমাহীন ক্লাস এবং স্বয়ংক্রিয় এক্সপোর্ট রাখতে রিনিউ করুন",
     "history.autoCaptureBanner": "হ্যান্ডস-ফ্রি অটো-ক্যাপচার: Pro প্রতিটি Google Meet ব্যাকগ্রাউন্ডে স্বয়ংক্রিয়ভাবে রেকর্ড করে Sheets-এ এক্সপোর্ট করে — সাইড প্যানেল বন্ধ করলেও।",
     "history.backToAddon": "← add-on-এ ফিরে যান",
     "history.calIntro": "প্রতিটি ঘর গত ৯০ দিনের একটি দিন। উজ্জ্বল = বেশি মিটিং ট্র্যাক হয়েছে।",
@@ -412,6 +432,10 @@ export const TRANSLATION_FIXES = {
     "team.adminBadge": "অ্যাডমিন"
   },
   "ca": {
+    "history.clusterPromoCtaInst": "Millora a Pla Institucional ($149/any) →",
+    "history.clusterPromoCtaQuote": "Sol·licitar pressupost personalitzat per a l'escola →",
+    "quote.askSchoolBtn": "Demanar a la meva escola que pagui (Descarregar pressupost PDF)",
+    "renewal.noticeText": "El teu Pro ha finalitzat — renova per mantenir classes il·limitades i exportació automàtica",
     "filter.absent": "Absents",
     "filter.present": "Presents",
     "footer.builtBy": "Creat per Kinetic Helix",
@@ -435,6 +459,10 @@ export const TRANSLATION_FIXES = {
     "team.thPresent": "Presents"
   },
   "ceb": {
+    "history.clusterPromoCtaInst": "Pag-upgrade sa Institution Plan ($149/tuig) →",
+    "history.clusterPromoCtaQuote": "Pangayo og Custom nga Quote alang sa Eskwelahan →",
+    "quote.askSchoolBtn": "Hangyoa ang akong eskwelahan sa pagbayad (I-download ang Quote PDF)",
+    "renewal.noticeText": "Nahuman na ang imong Pro — i-renew aron mapabilin ang walay kinutuban nga mga klase ug auto-export",
     "attendee.absent": "Wala",
     "attendee.excused": "Gitugotan",
     "btn.start": "Sugdi",
@@ -473,6 +501,10 @@ export const TRANSLATION_FIXES = {
     "upgrade.singleMeetingName": "Pass alang sa Usa ka Miting"
   },
   "cs": {
+    "history.clusterPromoCtaInst": "Přejít na Institucionální plán ($149/rok) →",
+    "history.clusterPromoCtaQuote": "Vyžádat cenovou nabídku pro školu →",
+    "quote.askSchoolBtn": "Požádat školu o proplacení (Stáhnout nabídku v PDF)",
+    "renewal.noticeText": "Vaše Pro vypršelo — obnovte pro neomezené třídy a automatický export",
     "attendee.activeCount": "V hovoru",
     "attendee.duration": "Doba trvání",
     "attendee.joinedAt": "Připojen v",
@@ -557,6 +589,10 @@ export const TRANSLATION_FIXES = {
     "toast.syncSuccess": "Synchronizováno s Google Meet"
   },
   "da": {
+    "history.clusterPromoCtaInst": "Opgrader til Institutionsplan ($149/år) →",
+    "history.clusterPromoCtaQuote": "Anmod om tilpasset skoletilbud →",
+    "quote.askSchoolBtn": "Bed min skole om at betale (Download tilbuds-PDF)",
+    "renewal.noticeText": "Dit Pro er udløbet — forny for at beholde ubegrænsede klasser og automatisk eksport",
     "btn.filter": "Filtrér",
     "checkin.attestCsv": "Check-in-CSV",
     "footer.builtBy": "Udviklet af Kinetic Helix",
@@ -578,6 +614,10 @@ export const TRANSLATION_FIXES = {
     "team.title": "Teamadministrator"
   },
   "de": {
+    "history.clusterPromoCtaInst": "Auf Institution-Pass upgraden (149 $/Jahr) →",
+    "history.clusterPromoCtaQuote": "Individuelles Schulangebot anfordern →",
+    "quote.askSchoolBtn": "Schule um Übernahme bitten (Angebots-PDF herunterladen)",
+    "renewal.noticeText": "Ihr Pro ist abgelaufen — verlängern für unbegrenzte Klassen & Auto-Export",
     "footer.colGlobal": "Weltweit & regional",
     "history.tabMeetings": "Besprechungen",
     "history.thMeetings": "Besprechungen",
@@ -596,6 +636,10 @@ export const TRANSLATION_FIXES = {
     "team.thMeetings": "Besprechungen"
   },
   "el": {
+    "history.clusterPromoCtaInst": "Αναβάθμιση σε Πρόγραμμα Ιδρύματος ($149/έτος) →",
+    "history.clusterPromoCtaQuote": "Ζητήστε προσαρμοσμένη προσφορά για το σχολείο →",
+    "quote.askSchoolBtn": "Ζητήστε από το σχολείο να πληρώσει (Λήψη προσφοράς PDF)",
+    "renewal.noticeText": "Το Pro έληξε — ανανεώστε για να διατηρήσετε απεριόριστες τάξεις και αυτόματη εξαγωγή",
     "footer.builtBy": "Δημιουργήθηκε από την Kinetic Helix",
     "footer.colGlobal": "Παγκόσμια & Περιφερειακά",
     "footer.colGuides": "Οδηγοί & Πρακτικές οδηγίες",
@@ -759,6 +803,10 @@ export const TRANSLATION_FIXES = {
     "team.thEmail": "Ηλ. ταχυδρομείο"
   },
   "es": {
+    "history.clusterPromoCtaInst": "Mejorar a Plan Institucional ($149/año) →",
+    "history.clusterPromoCtaQuote": "Solicitar cotización personalizada para la escuela →",
+    "quote.askSchoolBtn": "Pedir a mi escuela que pague (Descargar cotización en PDF)",
+    "renewal.noticeText": "Tu Pro terminó — renueva para mantener clases ilimitadas y exportación automática",
     "lp2_plan_school_price": "Desde $59",
     "lp2_roster_p1_detail": "Entró 10:00 · 42 min",
     "lp2_roster_p2_detail": "Entró 10:01 · 41 min",
@@ -767,6 +815,10 @@ export const TRANSLATION_FIXES = {
     "lp2_roster_p4_detail": "Invitado · no se unió"
   },
   "fi": {
+    "history.clusterPromoCtaInst": "Päivitä Oppilaitossopimukseen ($149/vuosi) →",
+    "history.clusterPromoCtaQuote": "Pyydä räätälöity koulutarjous →",
+    "quote.askSchoolBtn": "Pyydä koulua maksamaan (Lataa tarjous-PDF)",
+    "renewal.noticeText": "Pro-tilauksesi päättyi — uusi pitääksesi rajattomat luokat ja automaattisen viennin",
     "footer.builtBy": "Tehnyt Kinetic Helix",
     "footer.colGlobal": "Maailmanlaajuinen ja alueellinen",
     "footer.colGuides": "Oppaat ja ohjeet",
@@ -787,6 +839,10 @@ export const TRANSLATION_FIXES = {
     "team.adminBadge": "YLLÄPITÄJÄ"
   },
   "fr": {
+    "history.clusterPromoCtaInst": "Passer au Plan Établissement (149 $/an) →",
+    "history.clusterPromoCtaQuote": "Demander un devis scolaire personnalisé →",
+    "quote.askSchoolBtn": "Demander à mon école de payer (Télécharger le devis en PDF)",
+    "renewal.noticeText": "Votre Pro a expiré — renouvelez pour garder des classes illimitées et l'export auto",
     "lp2_plan_school_price": "À partir de $59",
     "lp2_roster_p1_detail": "Arrivé 10:00 · 42 min",
     "lp2_roster_p2_detail": "Arrivé 10:01 · 41 min",
@@ -799,6 +855,10 @@ export const TRANSLATION_FIXES = {
     "roster.noteBtn": "Remarque"
   },
   "gu": {
+    "history.clusterPromoCtaInst": "સંસ્થા પ્લાનમાં અપગ્રેડ કરો ($149/વર્ષ) →",
+    "history.clusterPromoCtaQuote": "શાળા માટે કસ્ટમ ક્વોટેશનની વિનંતી કરો →",
+    "quote.askSchoolBtn": "મારી શાળાને ચૂકવણી કરવા કહો (ક્વોટેશન PDF ડાઉનલોડ કરો)",
+    "renewal.noticeText": "તમારું પ્રો સમાપ્ત થઈ ગયું — અમર્યાદિત વર્ગો અને ઓટો-એક્સપોર્ટ રાખવા માટે નવીકરણ કરો",
     "btn.sheet": "શીટ",
     "btn.start": "શરૂ કરો",
     "btn.stop": "બંધ કરો",
@@ -819,6 +879,10 @@ export const TRANSLATION_FIXES = {
     "settings.planFree": "મફત"
   },
   "he": {
+    "history.clusterPromoCtaInst": "שדרג למסלול מוסדי ($149/שנה) ←",
+    "history.clusterPromoCtaQuote": "בקש הצעת מחיר מותאמת לבית הספר ←",
+    "quote.askSchoolBtn": "בקש מבית הספר לשלם (הורד הצעת מחיר כ-PDF)",
+    "renewal.noticeText": "תקופת ה-Pro הסתיימה — חדש כדי לשמור על כיתות ללא הגבלה וייצוא אוטומטי",
     "lp2_plan_school_price": "החל מ-$59",
     "lp2_price_line_2": "‏9.99 דולר בתשלום חד-פעמי לשימוש ללא הגבלה",
     "lp2_price_line_3": "אין מנוי שצריך לבטל",
@@ -830,6 +894,10 @@ export const TRANSLATION_FIXES = {
     "lp2_sheet_th_min": "דק׳"
   },
   "hi": {
+    "history.clusterPromoCtaInst": "संस्थान योजना में अपग्रेड करें ($149/वर्ष) →",
+    "history.clusterPromoCtaQuote": "कस्टम स्कूल कोटेशन का अनुरोध करें →",
+    "quote.askSchoolBtn": "मेरे स्कूल को भुगतान करने के लिए कहें (कोटेशन PDF डाउनलोड करें)",
+    "renewal.noticeText": "आपका प्रो समाप्त हो गया — असीमित कक्षाओं और ऑटो-निर्यात को जारी रखने के लिए नवीनीकृत करें",
     "lp2_final_fine": "मुफ़्त में शुरू करें · असीमित उपयोग के लिए एक बार $9.99 · रद्द करने के लिए कुछ नहीं",
     "lp2_plan_school_price": "$59 से शुरू",
     "lp2_price_line_1": "मुफ़्त में शुरू करें",
@@ -844,6 +912,10 @@ export const TRANSLATION_FIXES = {
     "team.adminBadge": "एडमिन"
   },
   "hr": {
+    "history.clusterPromoCtaInst": "Nadogradite na Institucionalni plan ($149/god.) →",
+    "history.clusterPromoCtaQuote": "Zatražite prilagođenu ponudu za školu →",
+    "quote.askSchoolBtn": "Zatražite od škole plaćanje (Preuzmite ponudu u PDF-u)",
+    "renewal.noticeText": "Vaš Pro je istekao — obnovite kako biste zadržali neograničene razrede i automatski izvoz",
     "footer.builtBy": "Izradio Kinetic Helix",
     "footer.colGlobal": "Globalno i regionalno",
     "footer.colGuides": "Vodiči i upute",
@@ -858,6 +930,10 @@ export const TRANSLATION_FIXES = {
     "upgrade.lifetimeName": "Doživotna propusnica"
   },
   "hu": {
+    "history.clusterPromoCtaInst": "Váltás Intézményi Csomagra ($149/év) →",
+    "history.clusterPromoCtaQuote": "Egyedi iskolai árajánlat kérése →",
+    "quote.askSchoolBtn": "Iskolai kifizetés kérése (Árajánlat PDF letöltése)",
+    "renewal.noticeText": "A Pro lejárt — újítsa meg a korlátlan órák és automatikus export megőrzéséhez",
     "footer.builtBy": "Készítette: Kinetic Helix",
     "footer.colGlobal": "Globális és regionális",
     "footer.colGuides": "Útmutatók és leírások",
@@ -878,6 +954,10 @@ export const TRANSLATION_FIXES = {
     "team.thEmail": "E-mail"
   },
   "id": {
+    "history.clusterPromoCtaInst": "Tingkatkan ke Paket Institusi ($149/thn) →",
+    "history.clusterPromoCtaQuote": "Minta Penawaran Kustom untuk Sekolah →",
+    "quote.askSchoolBtn": "Minta sekolah saya untuk membayar (Unduh Penawaran PDF)",
+    "renewal.noticeText": "Pro Anda telah berakhir — perbarui untuk mempertahankan kelas tanpa batas & ekspor otomatis",
     "btn.filter": "Saring",
     "common.edit": "Ubah",
     "empty.qs2Label": "2. Daftar Kelas:",
@@ -944,6 +1024,10 @@ export const TRANSLATION_FIXES = {
     "team.title": "Admin tim"
   },
   "it": {
+    "history.clusterPromoCtaInst": "Passa al Piano Istituzionale ($149/anno) →",
+    "history.clusterPromoCtaQuote": "Richiedi un preventivo personalizzato per la scuola →",
+    "quote.askSchoolBtn": "Chiedi alla mia scuola di pagare (Scarica PDF preventivo)",
+    "renewal.noticeText": "Il tuo Pro è terminato — rinnova per mantenere classi illimitate ed esportazione automatica",
     "lp2_plan_school_price": "Da $59",
     "lp2_roster_p1_detail": "Entrato 10:00 · 42 min",
     "lp2_roster_p2_detail": "Entrato 10:01 · 41 min",
@@ -953,6 +1037,10 @@ export const TRANSLATION_FIXES = {
     "pricing.navHome": "Pagina iniziale"
   },
   "ja": {
+    "history.clusterPromoCtaInst": "学校・機関プランにアップグレード（$149/年）→",
+    "history.clusterPromoCtaQuote": "学校向けカスタム見積もりを依頼 →",
+    "quote.askSchoolBtn": "学校に支払いを依頼（見積書PDFをダウンロード）",
+    "renewal.noticeText": "Proが終了しました — 無制限のクラスと自動エクスポートを継続するには更新してください",
     "lp2_final_fine": "無料で始められる · $9.99 の一回払いで無制限 · 解約の手続きは不要",
     "lp2_plan_school_price": "$59から",
     "lp2_price_line_1": "無料で始められる",
@@ -967,6 +1055,10 @@ export const TRANSLATION_FIXES = {
     "pricing.copyright": "© 2026 Kinetic Helix LLC. Attendance Tracker for Google Meet™. 無断複写・転載を禁じます。"
   },
   "kk": {
+    "history.clusterPromoCtaInst": "Мекеме жоспарына өту ($149/жыл) →",
+    "history.clusterPromoCtaQuote": "Мектеп үшін арнайы баға ұсынысын сұрау →",
+    "quote.askSchoolBtn": "Мектептен төлеуді сұрау (Баға ұсынысының PDF жүктеп алу)",
+    "renewal.noticeText": "Pro мерзімі аяқталды — шексіз сыныптар мен автоэкспортты сақтау үшін жаңартыңыз",
     "footer.builtBy": "Kinetic Helix жасаған",
     "footer.colGlobal": "Жаһандық және аймақтық",
     "footer.colGuides": "Нұсқаулықтар",
@@ -977,6 +1069,10 @@ export const TRANSLATION_FIXES = {
     "lp2_stat_orgs": "ұйым"
   },
   "km": {
+    "history.clusterPromoCtaInst": "ធ្វើបច្ចុប្បន្នភាពទៅគម្រោងស្ថាប័ន ($149/ឆ្នាំ) →",
+    "history.clusterPromoCtaQuote": "ស្នើសុំការផ្តល់តម្លៃពិសេសសម្រាប់សាលា →",
+    "quote.askSchoolBtn": "ស្នើឱ្យសាលារបស់ខ្ញុំបង់ប្រាក់ (ទាញយកការផ្តល់តម្លៃជា PDF)",
+    "renewal.noticeText": "Pro របស់អ្នកបានផុតកំណត់ — បន្តសុពលភាពដើម្បីរក្សាថ្នាក់រៀនគ្មានដែនកំណត់ និងការនាំចេញដោយស្វ័យប្រវត្តិ",
     "btn.sheet": "សន្លឹក",
     "footer.builtBy": "បង្កើតដោយ Kinetic Helix",
     "footer.colGlobal": "សកល និងតំបន់",
@@ -991,6 +1087,10 @@ export const TRANSLATION_FIXES = {
     "settings.slackLabel": "Webhook សង្ខេប Slack"
   },
   "kn": {
+    "history.clusterPromoCtaInst": "ಸಂಸ್ಥೆ ಯೋಜನೆಗೆ ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಿ ($149/ವರ್ಷ) →",
+    "history.clusterPromoCtaQuote": "ಶಾಲೆಗಾಗಿ ಕಸ್ಟಮ್ ಕೊಟೇಶನ್ ವಿನಂತಿಸಿ →",
+    "quote.askSchoolBtn": "ನನ್ನ ಶಾಲೆಗೆ ಪಾವತಿಸಲು ಕೇಳಿ (ಕೊಟೇಶನ್ PDF ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ)",
+    "renewal.noticeText": "ನಿಮ್ಮ ಪ್ರೊ ಮುಕ್ತಾಯಗೊಂಡಿದೆ — ಅನಿಯಮಿತ ತರಗತಿಗಳು ಮತ್ತು ಸ್ವಯಂ ರಫ್ತು ಉಳಿಸಿಕೊಳ್ಳಲು ನವೀಕರಿಸಿ",
     "footer.builtBy": "Kinetic Helix ನಿರ್ಮಿಸಿದೆ",
     "footer.colGlobal": "ಜಾಗತಿಕ ಮತ್ತು ಪ್ರಾದೇಶಿಕ",
     "footer.colGuides": "ಮಾರ್ಗದರ್ಶಿಗಳು ಮತ್ತು ಹೇಗೆ ಮಾಡುವುದು",
@@ -1013,6 +1113,10 @@ export const TRANSLATION_FIXES = {
     "upgrade.lifetimeName": "ಜೀವಮಾನ ಪಾಸ್"
   },
   "ko": {
+    "history.clusterPromoCtaInst": "교육기관 플랜으로 업그레이드 ($149/년) →",
+    "history.clusterPromoCtaQuote": "맞춤형 학교 견적 요청 →",
+    "quote.askSchoolBtn": "학교에 결제 요청 (견적서 PDF 다운로드)",
+    "renewal.noticeText": "Pro가 만료되었습니다 — 무제한 수업 및 자동 내보내기를 계속하려면 갱신하세요",
     "lp2_plan_school_price": "$59부터",
     "lp2_price_line_2": "무제한은 $9.99 1회 결제",
     "lp2_price_line_3": "해지할 구독이 없습니다",
@@ -1025,6 +1129,10 @@ export const TRANSLATION_FIXES = {
     "pricing.copyright": "© 2026 Kinetic Helix LLC. Attendance Tracker for Google Meet™. 모든 권리 보유."
   },
   "lo": {
+    "history.clusterPromoCtaInst": "ອັບເກຣດເປັນແຜນສະຖາບັນ ($149/ປີ) →",
+    "history.clusterPromoCtaQuote": "ຂໍໃບສະເໜີລາຄາສະເພາະສຳລັບໂຮງຮຽນ →",
+    "quote.askSchoolBtn": "ຂໍໃຫ້ໂຮງຮຽນຈ່າຍເງິນ (ດາວໂຫຼດໃບສະເໜີລາຄາ PDF)",
+    "renewal.noticeText": "Pro ຂອງທ່ານໝົດອາຍຸແລ້ວ — ຕໍ່ອາຍຸເພື່ອຮັກສາຫ້ອງຮຽນບໍ່ຈຳກັດ ແລະ ສົ່ງອອກອັດຕະໂນມັດ",
     "btn.sheet": "ແຜ່ນງານ",
     "footer.builtBy": "ສ້າງໂດຍ Kinetic Helix",
     "footer.colGlobal": "ທົ່ວໂລກ ແລະ ພາກພື້ນ",
@@ -1039,6 +1147,10 @@ export const TRANSLATION_FIXES = {
     "settings.planFree": "ຟຣີ"
   },
   "lt": {
+    "history.clusterPromoCtaInst": "Naujovinti į Įstaigos planą ($149/metams) →",
+    "history.clusterPromoCtaQuote": "Užklausti individualaus pasiūlymo mokyklai →",
+    "quote.askSchoolBtn": "Paprašyti mokyklos apmokėti (Atsisiųsti pasiūlymo PDF)",
+    "renewal.noticeText": "Jūsų Pro baigėsi — atnaujinkite, kad išsaugotumėte neribotas klases ir automatinį eksportą",
     "footer.builtBy": "Sukūrė Kinetic Helix",
     "footer.colGlobal": "Pasaulinis ir regioninis",
     "footer.colGuides": "Vadovai ir instrukcijos",
@@ -1049,6 +1161,10 @@ export const TRANSLATION_FIXES = {
     "lp2_stat_orgs": "organizacijos"
   },
   "lv": {
+    "history.clusterPromoCtaInst": "Jaunināt uz Iestādes plānu ($149/gadā) →",
+    "history.clusterPromoCtaQuote": "Pieprasīt pielāgotu skolas piedāvājumu →",
+    "quote.askSchoolBtn": "Lūgt manai skolai apmaksāt (Lejupielādēt piedāvājuma PDF)",
+    "renewal.noticeText": "Jūsu Pro ir beidzies — atjaunojiet, lai saglabātu neierobežotas klases un automātisko eksportu",
     "btn.sheet": "Lapa",
     "footer.builtBy": "Izveidoja Kinetic Helix",
     "footer.colGlobal": "Globāli un reģionāli",
@@ -1065,6 +1181,10 @@ export const TRANSLATION_FIXES = {
     "settings.planFree": "Bezmaksas"
   },
   "ml": {
+    "history.clusterPromoCtaInst": "ഇൻസ്റ്റിറ്റ്യൂഷൻ പ്ലാനിലേക്ക് അപ്‌ഗ്രേഡ് ചെയ്യുക ($149/വർഷം) →",
+    "history.clusterPromoCtaQuote": "സ്കൂളിനായി പ്രത്യേക കൊട്ടേഷൻ അഭ്യർത്ഥിക്കുക →",
+    "quote.askSchoolBtn": "എന്റെ സ്കൂളിനോട് പണമടയ്ക്കാൻ ആവശ്യപ്പെടുക (കൊട്ടേഷൻ PDF ഡൗൺലോഡ് ചെയ്യുക)",
+    "renewal.noticeText": "നിങ്ങളുടെ പ്രോ അവസാനിച്ചു — പരിധിയില്ലാത്ത ക്ലാസുകളും ഓട്ടോ എക്‌സ്‌പോർട്ടും നിലനിർത്താൻ പുതുക്കുക",
     "footer.builtBy": "Kinetic Helix നിർമ്മിച്ചത്",
     "footer.colGlobal": "ആഗോളവും പ്രാദേശികവും",
     "footer.colGuides": "ഗൈഡുകളും എങ്ങനെ ചെയ്യാമെന്നും",
@@ -1076,6 +1196,10 @@ export const TRANSLATION_FIXES = {
     "team.adminBadge": "അഡ്മിൻ"
   },
   "mn": {
+    "history.clusterPromoCtaInst": "Байгууллагын багц руу шинэчлэх ($149/жил) →",
+    "history.clusterPromoCtaQuote": "Сургуулийн захиалгат үнийн санал авах →",
+    "quote.askSchoolBtn": "Сургуулиасаа төлбөр шаардах (Үнийн саналын PDF татах)",
+    "renewal.noticeText": "Таны Pro дууссан — хязгааргүй анги болон автомат экспортыг хадгалахын тулд сунгана уу",
     "billing.lmsSyncPro": "Дүнг Google Classroom болон Canvas руу шууд синк хийхэд Educator эсвэл Pro багц шаардлагатай.",
     "footer.builtBy": "Kinetic Helix бүтээв",
     "footer.colGlobal": "Дэлхийн болон бүс нутгийн",
@@ -1087,6 +1211,10 @@ export const TRANSLATION_FIXES = {
     "lp2_stat_orgs": "байгууллага"
   },
   "mr": {
+    "history.clusterPromoCtaInst": "इन्स्टिट्यूट प्लॅनवर अपग्रेड करा ($149/वर्ष) →",
+    "history.clusterPromoCtaQuote": "शाळेसाठी कस्टम कोटेशनची विनंती करा →",
+    "quote.askSchoolBtn": "माझ्या शाळेला पैसे भरण्यास सांगा (कोटेशन PDF डाउनलोड करा)",
+    "renewal.noticeText": "तुमचा प्रो समाप्त झाला — अमर्यादित वर्ग आणि ऑटो-निर्यात ठेवण्यासाठी नूतनीकरण करा",
     "footer.builtBy": "Kinetic Helix ने तयार केले",
     "footer.colGlobal": "जागतिक आणि प्रादेशिक",
     "footer.colGuides": "मार्गदर्शक आणि कसे करावे",
@@ -1297,6 +1425,10 @@ export const TRANSLATION_FIXES = {
     "team.adminBadge": "अॅडमिन"
   },
   "ms": {
+    "history.clusterPromoCtaInst": "Naik taraf ke Pelan Institusi ($149/thn) →",
+    "history.clusterPromoCtaQuote": "Minta Sebut Harga Tersuai untuk Sekolah →",
+    "quote.askSchoolBtn": "Minta sekolah saya bayar (Muat turun Sebut Harga PDF)",
+    "renewal.noticeText": "Pro anda telah tamat — perbaharui untuk mengekalkan kelas tanpa had & eksport automatik",
     "common.edit": "Sunting",
     "empty.qs2Label": "2. Senarai Kelas:",
     "empty.qs2Link": "Senarai Kelas",
@@ -1363,6 +1495,10 @@ export const TRANSLATION_FIXES = {
     "team.title": "Pentadbir pasukan"
   },
   "my": {
+    "history.clusterPromoCtaInst": "အဖွဲ့အစည်းအစီအစဉ်သို့ အဆင့်မြှင့်ပါ ($149/နှစ်) →",
+    "history.clusterPromoCtaQuote": "ကျောင်းအတွက် စိတ်ကြိုက်ဈေးနှုန်းကမ်းလှမ်းလွှာ တောင်းဆိုပါ →",
+    "quote.askSchoolBtn": "ကျောင်းကို ပေးချေခိုင်းပါ (ဈေးနှုန်းကမ်းလှမ်းလွှာ PDF ဒေါင်းလုဒ်လုပ်ပါ)",
+    "renewal.noticeText": "သင်၏ Pro သက်တမ်းကုန်ဆုံးသွားပါပြီ — အကန့်အသတ်မဲ့အတန်းများနှင့် အလိုအလျောက်ထုတ်ယူမှုကို ဆက်လက်သုံးရန် သက်တမ်းတိုးပါ",
     "btn.sheet": "စာရွက်",
     "footer.builtBy": "Kinetic Helix မှ တည်ဆောက်သည်",
     "footer.colGlobal": "ကမ္ဘာလုံးဆိုင်ရာ နှင့် ဒေသဆိုင်ရာ",
@@ -1389,6 +1525,10 @@ export const TRANSLATION_FIXES = {
     "upgrade.lifetimeName": "တစ်သက်တာ ပတ်စ်"
   },
   "ne": {
+    "history.clusterPromoCtaInst": "संस्था योजनामा स्तरवृद्धि गर्नुहोस् ($149/वर्ष) →",
+    "history.clusterPromoCtaQuote": "विद्यालयको लागि अनुकूलित कोटेशन अनुरोध गर्नुहोस् →",
+    "quote.askSchoolBtn": "मेरो विद्यालयलाई भुक्तान गर्न भन्नुहोस् (कोटेशन PDF डाउनलोड गर्नुहोस्)",
+    "renewal.noticeText": "तपाईंको प्रो समाप्त भयो — असीमित कक्षाहरू र स्वतः निर्यात राख्न नवीकरण गर्नुहोस्",
     "billing.lmsSyncPro": "Google Classroom र Canvas मा ग्रेड सीधै सिंक गर्न Educator वा Pro योजना चाहिन्छ।",
     "footer.builtBy": "Kinetic Helix द्वारा निर्मित",
     "footer.colGlobal": "विश्वव्यापी र क्षेत्रीय",
@@ -1410,6 +1550,10 @@ export const TRANSLATION_FIXES = {
     "upgrade.lifetimeName": "आजीवन पास"
   },
   "nl": {
+    "history.clusterPromoCtaInst": "Upgrade naar Instellingsplan ($149/jaar) →",
+    "history.clusterPromoCtaQuote": "Vraag een offerte op maat aan voor uw school →",
+    "quote.askSchoolBtn": "Vraag mijn school om te betalen (Download offerte-pdf)",
+    "renewal.noticeText": "Je Pro is verlopen — vernieuw om onbeperkte klassen & auto-export te behouden",
     "ext.openMeet": "Google Meet openen",
     "lp2_how_s1_title": "Openen in Meet",
     "lp2_plan_school_price": "Vanaf $59",
@@ -1421,6 +1565,10 @@ export const TRANSLATION_FIXES = {
     "pricing.navHome": "Startpagina"
   },
   "no": {
+    "history.clusterPromoCtaInst": "Oppgrader til Institusjonsplan ($149/år) →",
+    "history.clusterPromoCtaQuote": "Be om tilpasset skoletilbud →",
+    "quote.askSchoolBtn": "Be skolen min betale (Last ned tilbuds-PDF)",
+    "renewal.noticeText": "Ditt Pro er utløpt — forny for å beholde ubegrensede klasser og automatisk eksport",
     "billing.lmsSyncPro": "Synkronisering av karakterer direkte til Google Classroom og Canvas krever en Educator- eller Pro-plan.",
     "btn.filter": "Filtrer",
     "footer.builtBy": "Laget av Kinetic Helix",
@@ -1440,6 +1588,10 @@ export const TRANSLATION_FIXES = {
     "upgrade.lifetimeName": "Livstidspass"
   },
   "pa": {
+    "history.clusterPromoCtaInst": "ਸੰਸਥਾ ਯੋਜਨਾ ਵਿੱਚ ਅੱਪਗ੍ਰੇਡ ਕਰੋ ($149/ਸਾਲ) →",
+    "history.clusterPromoCtaQuote": "ਸਕੂਲ ਲਈ ਕਸਟਮ ਕੋਟੇਸ਼ਨ ਦੀ ਬੇਨਤੀ ਕਰੋ →",
+    "quote.askSchoolBtn": "ਮੇਰੇ ਸਕੂਲ ਨੂੰ ਭੁਗਤਾਨ ਕਰਨ ਲਈ ਕਹੋ (ਕੋਟੇਸ਼ਨ PDF ਡਾਊਨਲੋਡ ਕਰੋ)",
+    "renewal.noticeText": "ਤੁਹਾਡਾ ਪ੍ਰੋ ਖਤਮ ਹੋ ਗਿਆ — ਅਸੀਮਤ ਕਲਾਸਾਂ ਅਤੇ ਆਟੋ-ਐਕਸਪੋਰਟ ਰੱਖਣ ਲਈ ਨਵਿਆਓ",
     "btn.export": "ਨਿਰਯਾਤ ਕਰੋ",
     "btn.sheet": "ਸ਼ੀਟ",
     "btn.start": "ਸ਼ੁਰੂ ਕਰੋ",
@@ -1456,6 +1608,10 @@ export const TRANSLATION_FIXES = {
     "setup.step2Add": "\"Add new\" 'ਤੇ ਕਲਿੱਕ ਕਰੋ ਅਤੇ ਪੜਾਅ 1 ਵਾਲਾ Client ID ਪੇਸਟ ਕਰੋ।"
   },
   "pl": {
+    "history.clusterPromoCtaInst": "Przejdź na Plan Instytucjonalny (149 $/rok) →",
+    "history.clusterPromoCtaQuote": "Poproś o indywidualną wycenę dla szkoły →",
+    "quote.askSchoolBtn": "Poproś szkołę o płatność (Pobierz ofertę PDF)",
+    "renewal.noticeText": "Twój Pro wygasł — odnów, aby zachować nieograniczone klasy i automatyczny eksport",
     "lp2_plan_school_price": "Od $59",
     "lp2_roster_p1_detail": "Dołączył 10:00 · 42 min",
     "lp2_roster_p2_detail": "Dołączył 10:01 · 41 min",
@@ -1464,6 +1620,10 @@ export const TRANSLATION_FIXES = {
     "lp2_roster_p4_detail": "Zaproszony · nie dołączył"
   },
   "pt": {
+    "history.clusterPromoCtaInst": "Fazer upgrade para o Plano Institucional ($149/ano) →",
+    "history.clusterPromoCtaQuote": "Solicitar cotação personalizada para a escola →",
+    "quote.askSchoolBtn": "Pedir para a minha escola pagar (Baixar cotação em PDF)",
+    "renewal.noticeText": "Seu Pro expirou — renove para manter turmas ilimitadas e exportação automática",
     "lp2_plan_school_price": "A partir de $59",
     "lp2_roster_p1_detail": "Entrou 10:00 · 42 min",
     "lp2_roster_p2_detail": "Entrou 10:01 · 41 min",
@@ -1472,6 +1632,10 @@ export const TRANSLATION_FIXES = {
     "lp2_roster_p4_detail": "Convidado · não entrou"
   },
   "ro": {
+    "history.clusterPromoCtaInst": "Treci la Planul Instituțional ($149/an) →",
+    "history.clusterPromoCtaQuote": "Solicită o ofertă personalizată pentru școală →",
+    "quote.askSchoolBtn": "Cere școlii să plătească (Descarcă oferta PDF)",
+    "renewal.noticeText": "Pro-ul tău a expirat — reînnoiește pentru a păstra clase nelimitate și exportul automat",
     "empty.qs3Label": "3. Exportă:",
     "history.autoCaptureBanner": "Captură automată fără efort: Pro înregistrează și exportă automat în fundal fiecare Google Meet în Sheets — chiar dacă închizi panoul lateral.",
     "history.backToAddon": "← Înapoi la add-on",
@@ -1676,6 +1840,10 @@ export const TRANSLATION_FIXES = {
     "share.title": "Panou de prezență partajat"
   },
   "ru": {
+    "history.clusterPromoCtaInst": "Перейти на тариф заведения ($149/год) →",
+    "history.clusterPromoCtaQuote": "Запросить индивидуальное предложение для школы →",
+    "quote.askSchoolBtn": "Попросить школу оплатить (Скачать КП в PDF)",
+    "renewal.noticeText": "Срок Pro истек — продлите, чтобы сохранить безлимитные классы и автоэкспорт",
     "lp2_plan_school_price": "От $59",
     "lp2_price_line_2": "$9.99 один раз — без ограничений",
     "lp2_price_line_3": "Никакой подписки, которую нужно отменять",
@@ -1687,6 +1855,10 @@ export const TRANSLATION_FIXES = {
     "lp2_sheet_th_min": "Мин"
   },
   "si": {
+    "history.clusterPromoCtaInst": "ආයතන සැලසුමට උත්ශ්‍රේණි කරන්න ($149/වසර) →",
+    "history.clusterPromoCtaQuote": "පාසල සඳහා විශේෂ මිල ගණන් ඉල්ලන්න →",
+    "quote.askSchoolBtn": "මගේ පාසලෙන් ගෙවීමට ඉල්ලන්න (මිල ගණන් PDF බාගන්න)",
+    "renewal.noticeText": "ඔබගේ Pro කාලය අවසන් විය — අසීමිත පන්ති සහ ස්වයංක්‍රීය අපනයනය තබා ගැනීමට අලුත් කරන්න",
     "billing.lmsSyncPro": "Google Classroom සහ Canvas වෙත ලකුණු සෘජුවම සමමුහුර්ත කිරීමට Educator හෝ Pro සැලැස්මක් අවශ්‍යයි.",
     "btn.sheet": "පත්‍රය",
     "checkin.attestCsv": "පැමිණීම් තහවුරු CSV",
@@ -1851,6 +2023,10 @@ export const TRANSLATION_FIXES = {
     "lp2_who_title": "එක් මෙවලමක්, පැමිණීම් සටහන් වර්ග හතරක්"
   },
   "sk": {
+    "history.clusterPromoCtaInst": "Prejsť na Inštitucionálny plán ($149/rok) →",
+    "history.clusterPromoCtaQuote": "Vyžiadať cenovú ponuku pre školu →",
+    "quote.askSchoolBtn": "Požiadať školu o úhradu (Stiahnuť ponuku v PDF)",
+    "renewal.noticeText": "Váš Pro vypršal — obnovte pre neobmedzené triedy a automatický export",
     "btn.stop": "Zastaviť",
     "empty.qs3Label": "3. Exportovať:",
     "footer.builtBy": "Vytvorila spoločnosť Kinetic Helix",
@@ -1863,6 +2039,10 @@ export const TRANSLATION_FIXES = {
     "lp2_stat_orgs": "organizácií"
   },
   "sl": {
+    "history.clusterPromoCtaInst": "Nadgradi na Institucionalni načrt ($149/leto) →",
+    "history.clusterPromoCtaQuote": "Zahtevaj ponudbo po meri za šolo →",
+    "quote.askSchoolBtn": "Prosite šolo za plačilo (Prenesite ponudbo v PDF)",
+    "renewal.noticeText": "Vaš Pro je potekel — podaljšajte za neomejene razrede in samodejni izvoz",
     "btn.filter": "Filtriraj",
     "footer.builtBy": "Izdelal Kinetic Helix",
     "footer.colGlobal": "Globalno in regionalno",
@@ -1874,6 +2054,10 @@ export const TRANSLATION_FIXES = {
     "lp2_stat_orgs": "organizacij"
   },
   "so": {
+    "history.clusterPromoCtaInst": "U cusboonaysii Qorshaha Machadka ($149/sanadkiiba) →",
+    "history.clusterPromoCtaQuote": "Codso Qiimo Gooni ah oo Iskuulka ah →",
+    "quote.askSchoolBtn": "Weydiiso iskuulkayga inuu bixiyo (Soo deji Qiimaynta PDF)",
+    "renewal.noticeText": "Pro-gaagii wuu dhacay — cusboonaysii si aad u haysato fasallo aan xadidnayn iyo dhoofin toos ah",
     "billing.lmsSyncPro": "Isku-dubbaridka buundooyinka si toos ah ugu gudbinta Google Classroom iyo Canvas waxay u baahan tahay qorshe Educator ama Pro.",
     "footer.builtBy": "Waxaa dhisay Kinetic Helix",
     "footer.colGlobal": "Caalami & Gobol",
@@ -2039,6 +2223,10 @@ export const TRANSLATION_FIXES = {
     "team.adminBadge": "MAAMULE"
   },
   "sr": {
+    "history.clusterPromoCtaInst": "Надоградите на Институционални план ($149/год.) →",
+    "history.clusterPromoCtaQuote": "Затражите прилагођену понуду за школу →",
+    "quote.askSchoolBtn": "Затражите од школе плаћање (Преузмите понуду у ПДФ-у)",
+    "renewal.noticeText": "Ваш Pro је истекао — обновите да задржите неограничена одељења и аутоматски извоз",
     "footer.builtBy": "Израдио Kinetic Helix",
     "footer.colGlobal": "Глобално и регионално",
     "footer.colGuides": "Водичи и упутства",
@@ -2054,6 +2242,10 @@ export const TRANSLATION_FIXES = {
     "settings.planFree": "Бесплатно"
   },
   "sv": {
+    "history.clusterPromoCtaInst": "Uppgradera till Institutionsplan ($149/år) →",
+    "history.clusterPromoCtaQuote": "Begär anpassad offert för skolan →",
+    "quote.askSchoolBtn": "Be skolan betala (Ladda ner offert-PDF)",
+    "renewal.noticeText": "Ditt Pro har upphört — förnya för att behålla obegränsade klasser och autoexport",
     "empty.qs3Label": "3. Exportera:",
     "footer.builtBy": "Skapad av Kinetic Helix",
     "footer.colGlobal": "Globalt och regionalt",
@@ -2072,6 +2264,10 @@ export const TRANSLATION_FIXES = {
     "nav.admin": "Administration"
   },
   "sw": {
+    "history.clusterPromoCtaInst": "Boresha hadi Mpango wa Taasisi ($149/mwaka) →",
+    "history.clusterPromoCtaQuote": "Omba Nukuu Maalum ya Shule →",
+    "quote.askSchoolBtn": "Omba shule yangu ilipe (Pakua Nukuu ya PDF)",
+    "renewal.noticeText": "Pro yako imeisha — sasisha ili uendelee na madarasa yasiyo na kikomo na usafirishaji otomatiki",
     "footer.builtBy": "Imetengenezwa na Kinetic Helix",
     "footer.colGlobal": "Kimataifa na Kikanda",
     "footer.colGuides": "Miongozo na Maelekezo",
@@ -2236,6 +2432,10 @@ export const TRANSLATION_FIXES = {
     "pricing.planInstName": "Taasisi"
   },
   "ta": {
+    "history.clusterPromoCtaInst": "நிறுவன திட்டத்திற்கு மேம்படுத்து ($149/ஆண்டு) →",
+    "history.clusterPromoCtaQuote": "பள்ளிக்கான தனிப்பயன் மேற்கோளைக் கோருங்கள் →",
+    "quote.askSchoolBtn": "எனது பள்ளியை செலுத்தக் கேளுங்கள் (மேற்கோள் PDF-ஐ பதிவிறக்குக)",
+    "renewal.noticeText": "உங்கள் புரோ முடிந்தது — வரம்பற்ற வகுப்புகள் மற்றும் தானியங்கி ஏற்றுமதியைத் தொடர புதுப்பிக்கவும்",
     "history.autoCaptureBanner": "கைகளின்றி தானியங்கு பதிவு: Pro ஒவ்வொரு Google Meet-ஐயும் பின்னணியில் தானாகப் பதிவுசெய்து Sheets-க்கு ஏற்றுமதி செய்கிறது — பக்கப் பலகத்தை மூடினாலும் கூட.",
     "history.backToAddon": "← add-on-க்குத் திரும்பு",
     "history.calIntro": "ஒவ்வொரு கட்டமும் கடைசி 90 நாட்களில் ஒரு நாள். பிரகாசமானது = அதிக கூட்டங்கள் கண்காணிக்கப்பட்டன.",
@@ -2438,6 +2638,10 @@ export const TRANSLATION_FIXES = {
     "team.adminBadge": "நிர்வாகி"
   },
   "te": {
+    "history.clusterPromoCtaInst": "ఇన్‌స్టిట్యూషన్ ప్లాన్‌కి అప్‌గ్రేడ్ చేయండి ($149/సం.) →",
+    "history.clusterPromoCtaQuote": "పాఠశాల కోసం ప్రత్యేక కొటేషన్ అడగండి →",
+    "quote.askSchoolBtn": "నా పాఠశాలను చెల్లించమని అడగండి (కొటేషన్ PDFని డౌన్‌లోడ్ చేయండి)",
+    "renewal.noticeText": "మీ ప్రో ముగిసింది — అపరిమిత తరగతులు & ఆటో ఎగుమతిని ఉంచడానికి పునరుద్ధరించండి",
     "history.autoCaptureBanner": "హ్యాండ్స్-ఫ్రీ ఆటో-క్యాప్చర్: Pro ప్రతి Google Meet-ను బ్యాక్‌గ్రౌండ్‌లో స్వయంచాలకంగా రికార్డ్ చేసి Sheets-కు ఎగుమతి చేస్తుంది — మీరు సైడ్ ప్యానెల్ మూసివేసినా కూడా.",
     "history.backToAddon": "← add-on కు తిరిగి వెళ్లండి",
     "history.calIntro": "ప్రతి గడి గత 90 రోజుల్లో ఒక రోజు. ప్రకాశవంతం = ఎక్కువ సమావేశాలు ట్రాక్ అయ్యాయి.",
@@ -2640,6 +2844,10 @@ export const TRANSLATION_FIXES = {
     "team.adminBadge": "అడ్మిన్"
   },
   "th": {
+    "history.clusterPromoCtaInst": "อัปเกรดเป็นแพ็กเกจสถาบัน ($149/ปี) →",
+    "history.clusterPromoCtaQuote": "ขอใบเสนอราคาสำหรับโรงเรียน →",
+    "quote.askSchoolBtn": "ขอให้โรงเรียนจ่ายเงิน (ดาวน์โหลดใบเสนอราคา PDF)",
+    "renewal.noticeText": "Pro ของคุณสิ้นสุดแล้ว — ต่ออายุเพื่อใช้ชั้นเรียนไม่จำกัดและส่งออกอัตโนมัติ",
     "history.autoCaptureBanner": "บันทึกอัตโนมัติแบบไม่ต้องทำอะไร: Pro บันทึกและส่งออกทุก Google Meet ไปยัง Sheets ในเบื้องหลังโดยอัตโนมัติ — แม้คุณจะปิดแผงด้านข้าง",
     "history.backToAddon": "← กลับไปที่ add-on",
     "history.calIntro": "แต่ละช่องคือหนึ่งวันใน 90 วันล่าสุด สว่างกว่า = มีการประชุมที่ติดตามมากกว่า",
@@ -2701,6 +2909,10 @@ export const TRANSLATION_FIXES = {
     "share.title": "แดชบอร์ดการเข้าร่วมที่แชร์"
   },
   "tl": {
+    "history.clusterPromoCtaInst": "Mag-upgrade sa Institution Plan ($149/taon) →",
+    "history.clusterPromoCtaQuote": "Humiling ng Custom na Presyo para sa Paaralan →",
+    "quote.askSchoolBtn": "Hilingin sa paaralan na magbayad (I-download ang Quote PDF)",
+    "renewal.noticeText": "Natapos na ang iyong Pro — mag-renew para mapanatili ang walang limitasyong mga klase at auto-export",
     "bar.pdfReport": "Ulat na PDF",
     "checkin.attestCsv": "CSV ng Check-in",
     "empty.qs2Label": "2. Mga Listahan ng Klase:",
@@ -2790,6 +3002,10 @@ export const TRANSLATION_FIXES = {
     "verify.rowSession": "Sesyon"
   },
   "tr": {
+    "history.clusterPromoCtaInst": "Kurum Planına Yükselt ($149/yıl) →",
+    "history.clusterPromoCtaQuote": "Okul İçin Özel Teklif İste →",
+    "quote.askSchoolBtn": "Okulun ödemesini iste (Teklif PDF'ini indir)",
+    "renewal.noticeText": "Pro süreniz bitti — sınırsız dersler ve otomatik dışa aktarma için yenileyin",
     "lp2_plan_school_price": "$59'dan başlayan",
     "lp2_roster_p1_detail": "Katıldı 10:00 · 42 dk",
     "lp2_roster_p2_detail": "Katıldı 10:01 · 41 dk",
@@ -2800,6 +3016,10 @@ export const TRANSLATION_FIXES = {
     "team.adminBadge": "YÖNETİCİ"
   },
   "uk": {
+    "history.clusterPromoCtaInst": "Оновити до тарифу закладу ($149/рік) →",
+    "history.clusterPromoCtaQuote": "Запросити індивідуальну пропозицію для школи →",
+    "quote.askSchoolBtn": "Попросити школу оплатити (Завантажити КП у PDF)",
+    "renewal.noticeText": "Термін Pro закінчився — продовжіть для безлімітних класів та автоекспорту",
     "history.autoCaptureBanner": "Автозахоплення без зусиль: Pro автоматично записує й експортує кожну зустріч Google Meet у Sheets у фоні — навіть якщо ви закриєте бічну панель.",
     "history.backToAddon": "← Назад до add-on",
     "history.calIntro": "Кожна клітинка — це день за останні 90 днів. Яскравіше = більше відстежених зустрічей.",
@@ -2950,6 +3170,10 @@ export const TRANSLATION_FIXES = {
     "share.title": "Спільна панель відвідуваності"
   },
   "ur": {
+    "history.clusterPromoCtaInst": "انسٹیٹیوشن پلان پر اپ گریڈ کریں ($149/سال) →",
+    "history.clusterPromoCtaQuote": "अपनी اسکول کے لیے کسٹم کوٹیشن کی درخواست کریں →",
+    "quote.askSchoolBtn": "میرے اسکول کو ادائیگی کرنے کو کہیں (کوٹیشن PDF ڈاؤن لوڈ کریں)",
+    "renewal.noticeText": "آپ کا پرو ختم ہو گیا — لامحدود کلاسز اور آٹو ایکسپورٹ جاری رکھنے کے لیے تجدید کریں",
     "history.autoCaptureBanner": "ہینڈز فری آٹو کیپچر: Pro ہر Google Meet کو پس منظر میں خود بخود ریکارڈ کر کے Sheets میں ایکسپورٹ کرتا ہے — چاہے آپ سائیڈ پینل بند کر دیں۔",
     "history.backToAddon": "← add-on پر واپس جائیں",
     "history.calIntro": "ہر خانہ پچھلے 90 دنوں میں سے ایک دن ہے۔ زیادہ روشن = زیادہ میٹنگز ٹریک ہوئیں۔",
@@ -3152,6 +3376,10 @@ export const TRANSLATION_FIXES = {
     "team.adminBadge": "ایڈمن"
   },
   "vi": {
+    "history.clusterPromoCtaInst": "Nâng cấp lên Gói Học viện ($149/năm) →",
+    "history.clusterPromoCtaQuote": "Yêu cầu báo giá tùy chỉnh cho trường học →",
+    "quote.askSchoolBtn": "Yêu cầu trường của tôi thanh toán (Tải báo giá PDF)",
+    "renewal.noticeText": "Gói Pro của bạn đã hết hạn — gia hạn để giữ các lớp học không giới hạn & tự động xuất",
     "history.autoCaptureBanner": "Tự động ghi rảnh tay: Pro tự động ghi lại và xuất mọi Google Meet sang Sheets trong nền — ngay cả khi bạn đóng bảng bên.",
     "history.backToAddon": "← Quay lại add-on",
     "history.calIntro": "Mỗi ô là một ngày trong 90 ngày qua. Sáng hơn = nhiều cuộc họp được theo dõi hơn.",
@@ -3211,6 +3439,10 @@ export const TRANSLATION_FIXES = {
     "share.title": "Bảng điều khiển điểm danh được chia sẻ"
   },
   "zh": {
+    "history.clusterPromoCtaInst": "升級至教育機構方案（$149/年）→",
+    "history.clusterPromoCtaQuote": "索取學校專屬報價 →",
+    "quote.askSchoolBtn": "請學校付款（下載報價單 PDF）",
+    "renewal.noticeText": "您的 Pro 已到期 — 立即續訂以保留無限班級與自動匯出功能",
     "empty.qs2Link": "班級名單",
     "export.graceUsed": "🎉 免費完整名單匯出:我們已為您的第一堂大型課程解鎖全部 {count} 位與會者!升級至 Educator,未來課程人數不受限制。",
     "lp2_final_fine": "免費開始 · 一次付清 $9.99 無限使用 · 無需取消任何訂閱",
@@ -3230,6 +3462,10 @@ export const TRANSLATION_FIXES = {
     "upgrade.singleAltPrefix": "只需要這一場會議?解鎖價格"
   },
   "zh-CN": {
+    "history.clusterPromoCtaInst": "升级至机构计划（$149/年）→",
+    "history.clusterPromoCtaQuote": "索取学校定制报价 →",
+    "quote.askSchoolBtn": "申请学校付款（下载报价单 PDF）",
+    "renewal.noticeText": "您的 Pro 已到期 — 立即续订以保留无限班级与自动导出功能",
     "empty.qs2Link": "班级名单",
     "export.graceUsed": "🎉 免费完整名单导出:我们已为您的第一堂大型课程解锁全部 {count} 位参会者!升级到 Educator,以后的课程人数不受限制。",
     "lp2_final_fine": "免费开始 · 一次付清 $9.99 无限使用 · 无需取消任何订阅",

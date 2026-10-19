@@ -103,6 +103,8 @@ async function enrichEmails(participants, adminEmail) {
 
 router.get('/attendance', async (req, res) => {
   res.set('Cache-Control', 'no-store');
+  const requestStartedAt = Date.now();
+  const REQUEST_DEADLINE_MS = 25000;
   const { conferenceId } = req.query;
   if (!conferenceId) return res.status(400).json({ error: 'conferenceId is required' });
 
@@ -275,7 +277,25 @@ router.get('/attendance', async (req, res) => {
     const BATCH_SIZE = 10;
     const participants = [];
     let rateLimited = false;
+    let degraded = false;
     for (let i = 0; i < toProcess.length; i += BATCH_SIZE) {
+      if (Date.now() - requestStartedAt > REQUEST_DEADLINE_MS) {
+        degraded = true;
+        log.warn('attendance: processing deadline exceeded, returning degraded sessions', {
+          conferenceId,
+          processed: participants.length,
+          total: toProcess.length,
+          elapsedMs: Date.now() - requestStartedAt,
+        });
+        for (const group of toProcess.slice(participants.length)) {
+          const primary = group.find(p => p.signedinUser?.email && p.signedinUser?.displayName)
+            || group.find(p => p.signedinUser?.email)
+            || group.find(p => p.signedinUser?.displayName || p.anonymousUser?.displayName || p.phoneUser?.displayName)
+            || group[0];
+          participants.push({ participantId: primary.name, ...participantIdentity(primary), joinTime: null, leaveTime: null, present: true, sessions: group.length || 1 });
+        }
+        break;
+      }
       const batch = toProcess.slice(i, i + BATCH_SIZE);
       const batchResults = await Promise.all(
         batch.map(async (group) => {
@@ -351,7 +371,9 @@ router.get('/attendance', async (req, res) => {
     }
 
     // Enrich missing emails via Workspace Directory API (bounded by the cap above)
-    await enrichEmails(participants, tenantConfig?.adminEmail);
+    if (!degraded && (Date.now() - requestStartedAt < REQUEST_DEADLINE_MS)) {
+      await enrichEmails(participants, tenantConfig?.adminEmail);
+    }
 
     res.json({
       participants,
@@ -363,6 +385,7 @@ router.get('/attendance', async (req, res) => {
       distinctCount,     // distinct people (what "truncated" is measured against)
       truncated,
       rateLimited,
+      degraded,
     });
 
     // Fire-and-forget: persist to Firestore for analytics

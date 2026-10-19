@@ -6725,13 +6725,12 @@ function renderList() {
   // Sort by user-selected field, keeping present-first as the tiebreaker
   const sortMode = document.getElementById('sort-select')?.value || 'join';
   const cmp = {
-    join:     (a, b) => (a.joinTime?.getTime() || 0) - (b.joinTime?.getTime() || 0),
-    name:     (a, b) => (a.displayName || '').localeCompare(b.displayName || ''),
-    duration: (a, b) => {
-      const aD = (a._accumulatedMs || 0) + (a.present && a.joinTime ? Date.now() - a.joinTime.getTime() : 0);
-      const bD = (b._accumulatedMs || 0) + (b.present && b.joinTime ? Date.now() - b.joinTime.getTime() : 0);
-      return bD - aD;
+    join:     (a, b) => {
+      const toTime = (v) => v instanceof Date ? v.getTime() : (v ? new Date(v).getTime() || 0 : 0);
+      return toTime(a.joinTime || a.trackedJoinTime) - toTime(b.joinTime || b.trackedJoinTime);
     },
+    name:     (a, b) => (a.displayName || '').localeCompare(b.displayName || ''),
+    duration: (a, b) => AttUtils.participantTotalMs(b) - AttUtils.participantTotalMs(a),
   }[sortMode] || cmp.join;
   const sorted = filtered.sort((a, b) => {
     if (a.present !== b.present) return b.present - a.present;

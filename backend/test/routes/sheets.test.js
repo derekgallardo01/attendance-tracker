@@ -1103,6 +1103,36 @@ describe('POST /api/save-to-sheets — Pro gating', () => {
     expect(firestore.markUserLargeClassGraceUsed).toHaveBeenCalledWith('exact25.com', 'u@exact25.com');
   });
 
+  test('free tier export does not block when 25 participants overlap with calendar attendees (deduplicated total is 25)', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUser.mockImplementation(async (domain, email) => ({
+      email, domain, refreshToken: 'rt', accessToken: 'at',
+      tokenExpiresAt: new Date(Date.now() + 3600000),
+      hasUsedLargeClassGrace: true,
+    }));
+    firestore.countUserMonthlyExports.mockResolvedValue(0);
+    const p25 = Array.from({ length: 25 }, (_, i) => ({
+      displayName: `Student ${i + 1}`,
+      email: `student${i + 1}@school.edu`,
+      joinTimeISO: new Date().toISOString(),
+      leaveTimeISO: null,
+      present: true,
+      sessions: 1,
+    }));
+    // All 25 calendar attendees have the same email as the participants
+    const cal25 = p25.map(p => ({ email: p.email, displayName: p.displayName, status: 'accepted' }));
+    const res = await request(app).post('/api/save-to-sheets')
+      .set(authedHeader('u@overlap25.com', 'overlap25.com')).set('Content-Type', 'application/json')
+      .send({
+        ...validPayload,
+        participants: p25,
+        calendarAttendees: cal25,
+        autoExport: false,
+      });
+    expect(res.status).toBe(200);
+    expect(firestore.persistExport).toHaveBeenCalled();
+  });
+
   test('pro user can export beyond 2 exports without quota block', async () => {
     firestore.getTenantPlan.mockResolvedValue({ plan: 'pro' });
     firestore.countUserMonthlyExports.mockResolvedValue(10);

@@ -96,7 +96,7 @@ function paymentFromSession(s) {
     email,
     domain,
     country: s.customer_details?.address?.country || null,
-    regional: meta.isAnnualOneTime === '1' || (!!meta.currency && meta.currency !== 'usd'),
+    regional: meta.isAnnualOneTime === '1' || (!!meta.currency && meta.currency !== 'usd') || (meta.pricing === 'tiered' && meta.tier != null && String(meta.tier) !== '1'),
     status: 'paid',
   };
 }
@@ -105,11 +105,12 @@ function paymentFromSession(s) {
 // subscription is already recorded via its Checkout Session, so callers skip
 // billing_reason 'subscription_create'.
 function paymentFromInvoice(inv, subMeta = {}) {
+  const meta = subMeta || {};
   const line = inv.lines?.data?.[0];
   const interval = line?.price?.recurring?.interval || line?.plan?.interval || null;
-  const individual = subMeta.individual === '1';
-  const plan = resolvePaymentPlan({ plan: subMeta.plan, individual, recurring: true });
-  const email = (subMeta.email || inv.customer_email || '').toLowerCase() || null;
+  const individual = meta.individual === '1';
+  const plan = resolvePaymentPlan({ plan: meta.plan, individual, recurring: true });
+  const email = (meta.email || inv.customer_email || '').toLowerCase() || null;
   return {
     id: asId(inv.payment_intent) || inv.id,
     source: 'invoice',
@@ -125,9 +126,9 @@ function paymentFromInvoice(inv, subMeta = {}) {
     interval: interval || PLAN_INTERVAL[plan] || 'year',
     individual,
     email,
-    domain: (subMeta.domain || (email && email.includes('@') ? email.split('@')[1] : null) || '').toLowerCase() || null,
+    domain: (meta.domain || (email && email.includes('@') ? email.split('@')[1] : null) || '').toLowerCase() || null,
     country: inv.customer_address?.country || null,
-    regional: String(inv.currency || '').toLowerCase() !== 'usd',
+    regional: meta.isAnnualOneTime === '1' || (!!meta.currency && meta.currency !== 'usd') || (meta.pricing === 'tiered' && meta.tier != null && String(meta.tier) !== '1') || (String(inv.currency || '').toLowerCase() !== 'usd'),
     status: 'paid',
     billingReason: inv.billing_reason || null,
   };

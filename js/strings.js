@@ -317,6 +317,10 @@
 
     const STRINGS = {
     "en": {
+        "renewal.noticeText": "Your Pro ended — renew to keep unlimited classes & auto-export",
+        "quote.askSchoolBtn": "Ask my school to pay (Download Quote PDF)",
+        "history.clusterPromoCtaQuote": "Request Custom School Quote →",
+        "history.clusterPromoCtaInst": "Upgrade to Institution Plan ($149/yr) →",
         "upgrade.checkoutOpening": "Opening checkout in a new tab… If blocked,",
         "upgrade.checkoutBlocked": "⚠️ Checkout window was blocked.",
         "upgrade.checkoutClickHere": "Click here to complete payment",
@@ -1690,6 +1694,10 @@
         "schoolLicense.error": "Could not submit request. Please try again or email us directly."
     },
     "es": {
+        "renewal.noticeText": "Tu Pro terminó — renueva para mantener clases ilimitadas y exportación automática",
+        "quote.askSchoolBtn": "Pedir a mi escuela que pague (Descargar cotización en PDF)",
+        "history.clusterPromoCtaQuote": "Solicitar cotización personalizada para la escuela →",
+        "history.clusterPromoCtaInst": "Mejorar a Plan Institucional ($149/año) →",
         "upgrade.checkoutOpening": "Abriendo el pago en una pestaña nueva… Si se bloquea,",
         "upgrade.checkoutBlocked": "⚠️ Se bloqueó la ventana de pago.",
         "upgrade.checkoutClickHere": "Haz clic aquí para completar el pago",
@@ -3063,6 +3071,10 @@
         "schoolLicense.error": "No se pudo enviar la solicitud. Inténtalo de nuevo o escríbenos directamente."
     },
     "pt": {
+        "renewal.noticeText": "Seu Pro expirou — renove para manter turmas ilimitadas e exportação automática",
+        "quote.askSchoolBtn": "Pedir para a minha escola pagar (Baixar cotação em PDF)",
+        "history.clusterPromoCtaQuote": "Solicitar cotação personalizada para a escola →",
+        "history.clusterPromoCtaInst": "Fazer upgrade para o Plano Institucional ($149/ano) →",
         "upgrade.checkoutOpening": "Abrindo o pagamento em uma nova aba… Se for bloqueado,",
         "upgrade.checkoutBlocked": "⚠️ A janela de pagamento foi bloqueada.",
         "upgrade.checkoutClickHere": "Clique aqui para concluir o pagamento",
@@ -4436,6 +4448,10 @@
         "schoolLicense.error": "Não foi possível enviar a solicitação. Tente novamente ou envie um e-mail."
     },
     "hi": {
+        "renewal.noticeText": "आपका प्रो समाप्त हो गया — असीमित कक्षाओं और ऑटो-निर्यात को जारी रखने के लिए नवीनीकृत करें",
+        "quote.askSchoolBtn": "मेरे स्कूल को भुगतान करने के लिए कहें (कोटेशन PDF डाउनलोड करें)",
+        "history.clusterPromoCtaQuote": "कस्टम स्कूल कोटेशन का अनुरोध करें →",
+        "history.clusterPromoCtaInst": "संस्थान योजना में अपग्रेड करें ($149/वर्ष) →",
         "upgrade.checkoutOpening": "चेकआउट नए टैब में खुल रहा है… अगर ब्लॉक हो,",
         "upgrade.checkoutBlocked": "⚠️ चेकआउट विंडो ब्लॉक हो गई।",
         "upgrade.checkoutClickHere": "भुगतान पूरा करने के लिए यहाँ क्लिक करें",
@@ -5809,6 +5825,10 @@
         "schoolLicense.error": "अनुरोध सबमिट नहीं हो सका। कृपया पुनः प्रयास करें या हमें ईमेल करें।"
     },
     "tl": {
+        "renewal.noticeText": "Natapos na ang iyong Pro — mag-renew para mapanatili ang walang limitasyong mga klase at auto-export",
+        "quote.askSchoolBtn": "Hilingin sa paaralan na magbayad (I-download ang Quote PDF)",
+        "history.clusterPromoCtaQuote": "Humiling ng Custom na Presyo para sa Paaralan →",
+        "history.clusterPromoCtaInst": "Mag-upgrade sa Institution Plan ($149/taon) →",
         "upgrade.checkoutOpening": "Binubuksan ang checkout sa bagong tab… Kung na-block,",
         "upgrade.checkoutBlocked": "⚠️ Na-block ang window ng checkout.",
         "upgrade.checkoutClickHere": "I-click dito para tapusin ang bayad",
@@ -7182,6 +7202,10 @@
         "schoolLicense.error": "Hindi maisumite ang kahilingan. Pakisubukang muli o mag-email nang direkta."
     },
     "ms": {
+        "renewal.noticeText": "Pro anda telah tamat — perbaharui untuk mengekalkan kelas tanpa had & eksport automatik",
+        "quote.askSchoolBtn": "Minta sekolah saya bayar (Muat turun Sebut Harga PDF)",
+        "history.clusterPromoCtaQuote": "Minta Sebut Harga Tersuai untuk Sekolah →",
+        "history.clusterPromoCtaInst": "Naik taraf ke Pelan Institusi ($149/thn) →",
         "upgrade.checkoutOpening": "Membuka pembayaran dalam tab baharu… Jika disekat,",
         "upgrade.checkoutBlocked": "⚠️ Tetingkap pembayaran telah disekat.",
         "upgrade.checkoutClickHere": "Klik di sini untuk melengkapkan pembayaran",
@@ -8555,6 +8579,10 @@
         "schoolLicense.error": "Tidak dapat menghantar permintaan. Sila cuba lagi atau e-mel kepada kami."
     },
     "id": {
+        "renewal.noticeText": "Pro Anda telah berakhir — perbarui untuk mempertahankan kelas tanpa batas & ekspor otomatis",
+        "quote.askSchoolBtn": "Minta sekolah saya untuk membayar (Unduh Penawaran PDF)",
+        "history.clusterPromoCtaQuote": "Minta Penawaran Kustom untuk Sekolah →",
+        "history.clusterPromoCtaInst": "Tingkatkan ke Paket Institusi ($149/thn) →",
         "upgrade.checkoutOpening": "Membuka pembayaran di tab baru… Jika diblokir,",
         "upgrade.checkoutBlocked": "⚠️ Jendela pembayaran diblokir.",
         "upgrade.checkoutClickHere": "Klik di sini untuk menyelesaikan pembayaran",
@@ -9928,6 +9956,10 @@
         "schoolLicense.error": "Tidak dapat mengirim permintaan. Silakan coba lagi atau kirim email langsung."
     },
     "vi": {
+        "renewal.noticeText": "Gói Pro của bạn đã hết hạn — gia hạn để giữ các lớp học không giới hạn & tự động xuất",
+        "quote.askSchoolBtn": "Yêu cầu trường của tôi thanh toán (Tải báo giá PDF)",
+        "history.clusterPromoCtaQuote": "Yêu cầu báo giá tùy chỉnh cho trường học →",
+        "history.clusterPromoCtaInst": "Nâng cấp lên Gói Học viện ($149/năm) →",
         "upgrade.checkoutOpening": "Đang mở trang thanh toán trong thẻ mới… Nếu bị chặn,",
         "upgrade.checkoutBlocked": "⚠️ Cửa sổ thanh toán đã bị chặn.",
         "upgrade.checkoutClickHere": "Nhấn vào đây để hoàn tất thanh toán",
@@ -11301,6 +11333,10 @@
         "schoolLicense.error": "Không thể gửi yêu cầu. Vui lòng thử lại hoặc gửi email trực tiếp."
     },
     "fr": {
+        "renewal.noticeText": "Votre Pro a expiré — renouvelez pour garder des classes illimitées et l'export auto",
+        "quote.askSchoolBtn": "Demander à mon école de payer (Télécharger le devis en PDF)",
+        "history.clusterPromoCtaQuote": "Demander un devis scolaire personnalisé →",
+        "history.clusterPromoCtaInst": "Passer au Plan Établissement (149 $/an) →",
         "upgrade.checkoutOpening": "Ouverture du paiement dans un nouvel onglet… S’il est bloqué,",
         "upgrade.checkoutBlocked": "⚠️ La fenêtre de paiement a été bloquée.",
         "upgrade.checkoutClickHere": "Cliquez ici pour finaliser le paiement",
@@ -12674,6 +12710,10 @@
         "schoolLicense.error": "Impossible d'envoyer la demande. Réessayez ou contactez-nous par e-mail."
     },
     "de": {
+        "renewal.noticeText": "Ihr Pro ist abgelaufen — verlängern für unbegrenzte Klassen & Auto-Export",
+        "quote.askSchoolBtn": "Schule um Übernahme bitten (Angebots-PDF herunterladen)",
+        "history.clusterPromoCtaQuote": "Individuelles Schulangebot anfordern →",
+        "history.clusterPromoCtaInst": "Auf Institution-Pass upgraden (149 $/Jahr) →",
         "upgrade.checkoutOpening": "Die Kasse wird in einem neuen Tab geöffnet… Falls blockiert,",
         "upgrade.checkoutBlocked": "⚠️ Das Kassenfenster wurde blockiert.",
         "upgrade.checkoutClickHere": "Hier klicken, um die Zahlung abzuschließen",
@@ -14047,6 +14087,10 @@
         "schoolLicense.error": "Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es erneut oder mailen Sie uns."
     },
     "it": {
+        "renewal.noticeText": "Il tuo Pro è terminato — rinnova per mantenere classi illimitate ed esportazione automatica",
+        "quote.askSchoolBtn": "Chiedi alla mia scuola di pagare (Scarica PDF preventivo)",
+        "history.clusterPromoCtaQuote": "Richiedi un preventivo personalizzato per la scuola →",
+        "history.clusterPromoCtaInst": "Passa al Piano Istituzionale ($149/anno) →",
         "upgrade.checkoutOpening": "Apertura del pagamento in una nuova scheda… Se è bloccata,",
         "upgrade.checkoutBlocked": "⚠️ La finestra di pagamento è stata bloccata.",
         "upgrade.checkoutClickHere": "Clicca qui per completare il pagamento",
@@ -15420,6 +15464,10 @@
         "schoolLicense.error": "Impossibile inviare la richiesta. Riprova o inviaci un'email direttamente."
     },
     "nl": {
+        "renewal.noticeText": "Je Pro is verlopen — vernieuw om onbeperkte klassen & auto-export te behouden",
+        "quote.askSchoolBtn": "Vraag mijn school om te betalen (Download offerte-pdf)",
+        "history.clusterPromoCtaQuote": "Vraag een offerte op maat aan voor uw school →",
+        "history.clusterPromoCtaInst": "Upgrade naar Instellingsplan ($149/jaar) →",
         "upgrade.checkoutOpening": "Afrekenen wordt geopend in een nieuw tabblad… Als het wordt geblokkeerd,",
         "upgrade.checkoutBlocked": "⚠️ Het afrekenvenster is geblokkeerd.",
         "upgrade.checkoutClickHere": "Klik hier om de betaling te voltooien",
@@ -16793,6 +16841,10 @@
         "schoolLicense.error": "Kan aanvraag niet verzenden. Probeer opnieuw of stuur een e-mail."
     },
     "pl": {
+        "renewal.noticeText": "Twój Pro wygasł — odnów, aby zachować nieograniczone klasy i automatyczny eksport",
+        "quote.askSchoolBtn": "Poproś szkołę o płatność (Pobierz ofertę PDF)",
+        "history.clusterPromoCtaQuote": "Poproś o indywidualną wycenę dla szkoły →",
+        "history.clusterPromoCtaInst": "Przejdź na Plan Instytucjonalny (149 $/rok) →",
         "upgrade.checkoutOpening": "Otwieranie płatności w nowej karcie… Jeśli zostanie zablokowana,",
         "upgrade.checkoutBlocked": "⚠️ Okno płatności zostało zablokowane.",
         "upgrade.checkoutClickHere": "Kliknij tutaj, aby dokończyć płatność",
@@ -18166,6 +18218,10 @@
         "schoolLicense.error": "Nie udało się przesłać zapytania. Spróbuj ponownie lub napisz do nas."
     },
     "tr": {
+        "renewal.noticeText": "Pro süreniz bitti — sınırsız dersler ve otomatik dışa aktarma için yenileyin",
+        "quote.askSchoolBtn": "Okulun ödemesini iste (Teklif PDF'ini indir)",
+        "history.clusterPromoCtaQuote": "Okul İçin Özel Teklif İste →",
+        "history.clusterPromoCtaInst": "Kurum Planına Yükselt ($149/yıl) →",
         "upgrade.checkoutOpening": "Ödeme yeni sekmede açılıyor… Engellenirse,",
         "upgrade.checkoutBlocked": "⚠️ Ödeme penceresi engellendi.",
         "upgrade.checkoutClickHere": "Ödemeyi tamamlamak için buraya tıklayın",
@@ -19539,6 +19595,10 @@
         "schoolLicense.error": "Talep gönderilemedi. Lütfen tekrar deneyin veya doğrudan bize e-posta gönderin."
     },
     "th": {
+        "renewal.noticeText": "Pro ของคุณสิ้นสุดแล้ว — ต่ออายุเพื่อใช้ชั้นเรียนไม่จำกัดและส่งออกอัตโนมัติ",
+        "quote.askSchoolBtn": "ขอให้โรงเรียนจ่ายเงิน (ดาวน์โหลดใบเสนอราคา PDF)",
+        "history.clusterPromoCtaQuote": "ขอใบเสนอราคาสำหรับโรงเรียน →",
+        "history.clusterPromoCtaInst": "อัปเกรดเป็นแพ็กเกจสถาบัน ($149/ปี) →",
         "upgrade.checkoutOpening": "กำลังเปิดหน้าชำระเงินในแท็บใหม่… หากถูกบล็อก",
         "upgrade.checkoutBlocked": "⚠️ หน้าต่างชำระเงินถูกบล็อก",
         "upgrade.checkoutClickHere": "คลิกที่นี่เพื่อชำระเงินให้เสร็จสิ้น",
@@ -20912,6 +20972,10 @@
         "schoolLicense.error": "ไม่สามารถส่งคำขอได้ โปรดลองอีกครั้งหรือส่งอีเมลถึงเราโดยตรง"
     },
     "ar": {
+        "renewal.noticeText": "انتهت فترة Pro — قم بالتجديد للاحتفاظ بعدد غير محدود من الفصول والتصدير التلقائي",
+        "quote.askSchoolBtn": "اطلب من مدرستي الدفع (تنزيل عرض الأسعار كـ PDF)",
+        "history.clusterPromoCtaQuote": "طلب عرض أسعار مخصص للمدرسة →",
+        "history.clusterPromoCtaInst": "الترقية إلى خطة المؤسسة (149$/سنة) →",
         "upgrade.checkoutOpening": "جارٍ فتح صفحة الدفع في علامة تبويب جديدة… إذا تم حظرها،",
         "upgrade.checkoutBlocked": "⚠️ تم حظر نافذة الدفع.",
         "upgrade.checkoutClickHere": "انقر هنا لإكمال الدفع",
@@ -22285,6 +22349,10 @@
         "schoolLicense.error": "تعذر إرسال الطلب. يرجى المحاولة مرة أخرى أو مراسلتنا مباشرة."
     },
     "ko": {
+        "renewal.noticeText": "Pro가 만료되었습니다 — 무제한 수업 및 자동 내보내기를 계속하려면 갱신하세요",
+        "quote.askSchoolBtn": "학교에 결제 요청 (견적서 PDF 다운로드)",
+        "history.clusterPromoCtaQuote": "맞춤형 학교 견적 요청 →",
+        "history.clusterPromoCtaInst": "교육기관 플랜으로 업그레이드 ($149/년) →",
         "upgrade.checkoutOpening": "새 탭에서 결제 페이지를 여는 중… 차단된 경우",
         "upgrade.checkoutBlocked": "⚠️ 결제 창이 차단되었습니다.",
         "upgrade.checkoutClickHere": "여기를 클릭하여 결제를 완료하세요",
@@ -23658,6 +23726,10 @@
         "schoolLicense.error": "요청을 제출할 수 없습니다. 다시 시도하거나 직접 이메일을 보내주세요."
     },
     "zh": {
+        "renewal.noticeText": "您的 Pro 已到期 — 立即續訂以保留無限班級與自動匯出功能",
+        "quote.askSchoolBtn": "請學校付款（下載報價單 PDF）",
+        "history.clusterPromoCtaQuote": "索取學校專屬報價 →",
+        "history.clusterPromoCtaInst": "升級至教育機構方案（$149/年）→",
         "upgrade.checkoutOpening": "正在新分頁開啟結帳頁面… 若被封鎖,",
         "upgrade.checkoutBlocked": "⚠️ 結帳視窗已被封鎖。",
         "upgrade.checkoutClickHere": "按此完成付款",
@@ -25031,6 +25103,10 @@
         "schoolLicense.error": "無法送出申請。請重試或直接寄信聯絡我們。"
     },
     "ja": {
+        "renewal.noticeText": "Proが終了しました — 無制限のクラスと自動エクスポートを継続するには更新してください",
+        "quote.askSchoolBtn": "学校に支払いを依頼（見積書PDFをダウンロード）",
+        "history.clusterPromoCtaQuote": "学校向けカスタム見積もりを依頼 →",
+        "history.clusterPromoCtaInst": "学校・機関プランにアップグレード（$149/年）→",
         "upgrade.checkoutOpening": "新しいタブで決済ページを開いています… ブロックされた場合は、",
         "upgrade.checkoutBlocked": "⚠️ 決済ウィンドウがブロックされました。",
         "upgrade.checkoutClickHere": "ここをクリックして支払いを完了",
@@ -26404,6 +26480,10 @@
         "schoolLicense.error": "リクエストを送信できませんでした。再試行するか、直接メールでお問い合わせください。"
     },
     "ta": {
+        "renewal.noticeText": "உங்கள் புரோ முடிந்தது — வரம்பற்ற வகுப்புகள் மற்றும் தானியங்கி ஏற்றுமதியைத் தொடர புதுப்பிக்கவும்",
+        "quote.askSchoolBtn": "எனது பள்ளியை செலுத்தக் கேளுங்கள் (மேற்கோள் PDF-ஐ பதிவிறக்குக)",
+        "history.clusterPromoCtaQuote": "பள்ளிக்கான தனிப்பயன் மேற்கோளைக் கோருங்கள் →",
+        "history.clusterPromoCtaInst": "நிறுவன திட்டத்திற்கு மேம்படுத்து ($149/ஆண்டு) →",
         "upgrade.checkoutOpening": "புதிய தாவலில் செக்அவுட் திறக்கிறது… தடுக்கப்பட்டால்,",
         "upgrade.checkoutBlocked": "⚠️ செக்அவுட் சாளரம் தடுக்கப்பட்டது.",
         "upgrade.checkoutClickHere": "கட்டணத்தை முடிக்க இங்கே கிளிக் செய்யவும்",
@@ -27777,6 +27857,10 @@
         "schoolLicense.error": "கோரிக்கையை சமர்ப்பிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும் அல்லது எங்களுக்கு மின்னஞ்சல் அனுப்பவும்."
     },
     "te": {
+        "renewal.noticeText": "మీ ప్రో ముగిసింది — అపరిమిత తరగతులు & ఆటో ఎగుమతిని ఉంచడానికి పునరుద్ధరించండి",
+        "quote.askSchoolBtn": "నా పాఠశాలను చెల్లించమని అడగండి (కొటేషన్ PDFని డౌన్‌లోడ్ చేయండి)",
+        "history.clusterPromoCtaQuote": "పాఠశాల కోసం ప్రత్యేక కొటేషన్ అడగండి →",
+        "history.clusterPromoCtaInst": "ఇన్‌స్టిట్యూషన్ ప్లాన్‌కి అప్‌గ్రేడ్ చేయండి ($149/సం.) →",
         "upgrade.checkoutOpening": "కొత్త ట్యాబ్‌లో చెక్‌అవుట్ తెరుస్తోంది… బ్లాక్ అయితే,",
         "upgrade.checkoutBlocked": "⚠️ చెక్‌అవుట్ విండో బ్లాక్ చేయబడింది.",
         "upgrade.checkoutClickHere": "చెల్లింపు పూర్తి చేయడానికి ఇక్కడ క్లిక్ చేయండి",
@@ -29150,6 +29234,10 @@
         "schoolLicense.error": "అభ్యర్థనను సమర్పించడం సాధ్యం కాలేదు. దయచేసి మళ్లీ ప్రయత్నించండి లేదా నేరుగా ఇమెయిల్ చేయండి."
     },
     "bn": {
+        "renewal.noticeText": "আপনার প্রো শেষ হয়ে গেছে — সীমাহীন ক্লাস এবং স্বয়ংক্রিয় এক্সপোর্ট রাখতে রিনিউ করুন",
+        "quote.askSchoolBtn": "আমার স্কুলকে পেমেন্ট করতে বলুন (কোটেশন PDF ডাউনলোড করুন)",
+        "history.clusterPromoCtaQuote": "কাস্টম স্কুল কোটেশনের জন্য অনুরোধ করুন →",
+        "history.clusterPromoCtaInst": "প্রতিষ্ঠান প্ল্যানে আপগ্রেড করুন ($149/বছর) →",
         "upgrade.checkoutOpening": "নতুন ট্যাবে চেকআউট খুলছে… ব্লক হলে,",
         "upgrade.checkoutBlocked": "⚠️ চেকআউট উইন্ডো ব্লক করা হয়েছে।",
         "upgrade.checkoutClickHere": "পেমেন্ট সম্পন্ন করতে এখানে ক্লিক করুন",
@@ -30523,6 +30611,10 @@
         "schoolLicense.error": "অনুরোধ জমা দেওয়া যায়নি। দয়া করে আবার চেষ্টা করুন বা সরাসরি আমাদের ইমেল করুন।"
     },
     "ur": {
+        "renewal.noticeText": "آپ کا پرو ختم ہو گیا — لامحدود کلاسز اور آٹو ایکسپورٹ جاری رکھنے کے لیے تجدید کریں",
+        "quote.askSchoolBtn": "میرے اسکول کو ادائیگی کرنے کو کہیں (کوٹیشن PDF ڈاؤن لوڈ کریں)",
+        "history.clusterPromoCtaQuote": "अपनी اسکول کے لیے کسٹم کوٹیشن کی درخواست کریں →",
+        "history.clusterPromoCtaInst": "انسٹیٹیوشن پلان پر اپ گریڈ کریں ($149/سال) →",
         "upgrade.checkoutOpening": "چیک آؤٹ نئے ٹیب میں کھل رہا ہے… اگر بلاک ہو جائے تو",
         "upgrade.checkoutBlocked": "⚠️ چیک آؤٹ ونڈو بلاک ہو گئی۔",
         "upgrade.checkoutClickHere": "ادائیگی مکمل کرنے کے لیے یہاں کلک کریں",
@@ -31896,6 +31988,10 @@
         "schoolLicense.error": "درخواست جمع نہیں ہو سکی۔ براہ کرम دوبارہ کوشش کریں یا براہ راست ای میل کریں۔"
     },
     "zh-CN": {
+        "renewal.noticeText": "您的 Pro 已到期 — 立即续订以保留无限班级与自动导出功能",
+        "quote.askSchoolBtn": "申请学校付款（下载报价单 PDF）",
+        "history.clusterPromoCtaQuote": "索取学校定制报价 →",
+        "history.clusterPromoCtaInst": "升级至机构计划（$149/年）→",
         "upgrade.checkoutOpening": "正在新标签页中打开结账页面… 如果被拦截,",
         "upgrade.checkoutBlocked": "⚠️ 结账窗口已被拦截。",
         "upgrade.checkoutClickHere": "点击此处完成付款",
@@ -33269,6 +33365,10 @@
         "schoolLicense.error": "无法发送申请。请重试或直接发邮件联系我们。"
     },
     "ru": {
+        "renewal.noticeText": "Срок Pro истек — продлите, чтобы сохранить безлимитные классы и автоэкспорт",
+        "quote.askSchoolBtn": "Попросить школу оплатить (Скачать КП в PDF)",
+        "history.clusterPromoCtaQuote": "Запросить индивидуальное предложение для школы →",
+        "history.clusterPromoCtaInst": "Перейти на тариф заведения ($149/год) →",
         "upgrade.checkoutOpening": "Открываем оплату в новой вкладке… Если она заблокирована,",
         "upgrade.checkoutBlocked": "⚠️ Окно оплаты было заблокировано.",
         "upgrade.checkoutClickHere": "Нажмите здесь, чтобы завершить оплату",
@@ -34642,6 +34742,10 @@
         "schoolLicense.error": "Не удалось отправить запрос. Повторите попытку или напишите нам."
     },
     "uk": {
+        "renewal.noticeText": "Термін Pro закінчився — продовжіть для безлімітних класів та автоекспорту",
+        "quote.askSchoolBtn": "Попросити школу оплатити (Завантажити КП у PDF)",
+        "history.clusterPromoCtaQuote": "Запросити індивідуальну пропозицію для школи →",
+        "history.clusterPromoCtaInst": "Оновити до тарифу закладу ($149/рік) →",
         "upgrade.checkoutOpening": "Відкриваємо оплату в новій вкладці… Якщо її заблоковано,",
         "upgrade.checkoutBlocked": "⚠️ Вікно оплати заблоковано.",
         "upgrade.checkoutClickHere": "Натисніть тут, щоб завершити оплату",
@@ -36015,6 +36119,10 @@
         "schoolLicense.error": "Не вдалося надіслати запит. Спробуйте ще раз або напишіть нам."
     },
     "ro": {
+        "renewal.noticeText": "Pro-ul tău a expirat — reînnoiește pentru a păstra clase nelimitate și exportul automat",
+        "quote.askSchoolBtn": "Cere școlii să plătească (Descarcă oferta PDF)",
+        "history.clusterPromoCtaQuote": "Solicită o ofertă personalizată pentru școală →",
+        "history.clusterPromoCtaInst": "Treci la Planul Instituțional ($149/an) →",
         "upgrade.checkoutOpening": "Se deschide plata într-o filă nouă… Dacă este blocată,",
         "upgrade.checkoutBlocked": "⚠️ Fereastra de plată a fost blocată.",
         "upgrade.checkoutClickHere": "Apasă aici pentru a finaliza plata",
@@ -37388,6 +37496,10 @@
         "schoolLicense.error": "Nu s-a putut trimite cererea. Vă rugăm să încercați din nou sau să ne trimiteți un e-mail."
     },
     "he": {
+        "renewal.noticeText": "תקופת ה-Pro הסתיימה — חדש כדי לשמור על כיתות ללא הגבלה וייצוא אוטומטי",
+        "quote.askSchoolBtn": "בקש מבית הספר לשלם (הורד הצעת מחיר כ-PDF)",
+        "history.clusterPromoCtaQuote": "בקש הצעת מחיר מותאמת לבית הספר ←",
+        "history.clusterPromoCtaInst": "שדרג למסלול מוסדי ($149/שנה) ←",
         "upgrade.checkoutOpening": "פותחים את התשלום בלשונית חדשה… אם היא נחסמה,",
         "upgrade.checkoutBlocked": "⚠️ חלון התשלום נחסם.",
         "upgrade.checkoutClickHere": "לחצו כאן כדי להשלים את התשלום",
@@ -38761,6 +38873,10 @@
         "schoolLicense.error": "לא ניתן היה לשלוח את הבקשה. נסה שוב או פנה אלינו ישירות באימייל."
     },
     "mr": {
+        "renewal.noticeText": "तुमचा प्रो समाप्त झाला — अमर्यादित वर्ग आणि ऑटो-निर्यात ठेवण्यासाठी नूतनीकरण करा",
+        "quote.askSchoolBtn": "माझ्या शाळेला पैसे भरण्यास सांगा (कोटेशन PDF डाउनलोड करा)",
+        "history.clusterPromoCtaQuote": "शाळेसाठी कस्टम कोटेशनची विनंती करा →",
+        "history.clusterPromoCtaInst": "इन्स्टिट्यूट प्लॅनवर अपग्रेड करा ($149/वर्ष) →",
         "upgrade.checkoutOpening": "नवीन टॅबमध्ये चेकआउट उघडत आहे… ब्लॉक झाल्यास,",
         "upgrade.checkoutBlocked": "⚠️ चेकआउट विंडो ब्लॉक झाली.",
         "upgrade.checkoutClickHere": "पेमेंट पूर्ण करण्यासाठी येथे क्लिक करा",
@@ -40134,6 +40250,10 @@
         "schoolLicense.error": "विनंती सबमिट करता आली नाही. कृपया पुन्हा प्रयत्न करा किंवा आम्हाला थेट ईमेल करा."
     },
     "sv": {
+        "renewal.noticeText": "Ditt Pro har upphört — förnya för att behålla obegränsade klasser och autoexport",
+        "quote.askSchoolBtn": "Be skolan betala (Ladda ner offert-PDF)",
+        "history.clusterPromoCtaQuote": "Begär anpassad offert för skolan →",
+        "history.clusterPromoCtaInst": "Uppgradera till Institutionsplan ($149/år) →",
         "upgrade.checkoutOpening": "Öppnar kassan i en ny flik… Om den blockeras,",
         "upgrade.checkoutBlocked": "⚠️ Kassafönstret blockerades.",
         "upgrade.checkoutClickHere": "Klicka här för att slutföra betalningen",
@@ -41507,6 +41627,10 @@
         "schoolLicense.error": "Kunde inte skicka förfrågan. Försök igen eller mejla oss direkt."
     },
     "cs": {
+        "renewal.noticeText": "Vaše Pro vypršelo — obnovte pro neomezené třídy a automatický export",
+        "quote.askSchoolBtn": "Požádat školu o proplacení (Stáhnout nabídku v PDF)",
+        "history.clusterPromoCtaQuote": "Vyžádat cenovou nabídku pro školu →",
+        "history.clusterPromoCtaInst": "Přejít na Institucionální plán ($149/rok) →",
         "upgrade.checkoutOpening": "Otevírám platbu na nové kartě… Pokud je zablokována,",
         "upgrade.checkoutBlocked": "⚠️ Okno platby bylo zablokováno.",
         "upgrade.checkoutClickHere": "Klikněte sem a dokončete platbu",
@@ -42880,6 +43004,10 @@
         "schoolLicense.error": "Žádost se nepodařilo odeslat. Zkuste to prosím znovu nebo nám napište e-mail."
     },
     "da": {
+        "renewal.noticeText": "Dit Pro er udløbet — forny for at beholde ubegrænsede klasser og automatisk eksport",
+        "quote.askSchoolBtn": "Bed min skole om at betale (Download tilbuds-PDF)",
+        "history.clusterPromoCtaQuote": "Anmod om tilpasset skoletilbud →",
+        "history.clusterPromoCtaInst": "Opgrader til Institutionsplan ($149/år) →",
         "upgrade.checkoutOpening": "Åbner betalingen i en ny fane… Hvis den blokeres,",
         "upgrade.checkoutBlocked": "⚠️ Betalingsvinduet blev blokeret.",
         "upgrade.checkoutClickHere": "Klik her for at gennemføre betalingen",
@@ -44253,6 +44381,10 @@
         "schoolLicense.error": "Kunne ikke sende anmodningen. Prøv venligst igen eller send os en e-mail."
     },
     "fi": {
+        "renewal.noticeText": "Pro-tilauksesi päättyi — uusi pitääksesi rajattomat luokat ja automaattisen viennin",
+        "quote.askSchoolBtn": "Pyydä koulua maksamaan (Lataa tarjous-PDF)",
+        "history.clusterPromoCtaQuote": "Pyydä räätälöity koulutarjous →",
+        "history.clusterPromoCtaInst": "Päivitä Oppilaitossopimukseen ($149/vuosi) →",
         "upgrade.checkoutOpening": "Avataan kassa uudessa välilehdessä… Jos se estetään,",
         "upgrade.checkoutBlocked": "⚠️ Kassaikkuna estettiin.",
         "upgrade.checkoutClickHere": "Viimeistele maksu napsauttamalla tästä",
@@ -45626,6 +45758,10 @@
         "schoolLicense.error": "Pyyntöä ei voitu lähettää. Yritä uudelleen tai lähetä meille sähköpostia."
     },
     "hu": {
+        "renewal.noticeText": "A Pro lejárt — újítsa meg a korlátlan órák és automatikus export megőrzéséhez",
+        "quote.askSchoolBtn": "Iskolai kifizetés kérése (Árajánlat PDF letöltése)",
+        "history.clusterPromoCtaQuote": "Egyedi iskolai árajánlat kérése →",
+        "history.clusterPromoCtaInst": "Váltás Intézményi Csomagra ($149/év) →",
         "upgrade.checkoutOpening": "A fizetés új lapon nyílik meg… Ha le van tiltva,",
         "upgrade.checkoutBlocked": "⚠️ A fizetési ablak le lett tiltva.",
         "upgrade.checkoutClickHere": "Kattints ide a fizetés befejezéséhez",
@@ -46999,6 +47135,10 @@
         "schoolLicense.error": "A kérést nem sikerült elküldeni. Kérjük, próbálja újra vagy írjon nekünk."
     },
     "so": {
+        "renewal.noticeText": "Pro-gaagii wuu dhacay — cusboonaysii si aad u haysato fasallo aan xadidnayn iyo dhoofin toos ah",
+        "quote.askSchoolBtn": "Weydiiso iskuulkayga inuu bixiyo (Soo deji Qiimaynta PDF)",
+        "history.clusterPromoCtaQuote": "Codso Qiimo Gooni ah oo Iskuulka ah →",
+        "history.clusterPromoCtaInst": "U cusboonaysii Qorshaha Machadka ($149/sanadkiiba) →",
         "upgrade.checkoutOpening": "Lacag-bixinta waxaa lagu furayaa tab cusub… Haddii la xannibo,",
         "upgrade.checkoutBlocked": "⚠️ Daaqadda lacag-bixinta waa la xannibay.",
         "upgrade.checkoutClickHere": "Halkan guji si aad u dhammaystirto lacag-bixinta",
@@ -48372,6 +48512,10 @@
         "schoolLicense.error": "Codsiga lama diri karin. Fadlan isku day mar kale ama si toos ah noo soo iimayl garee."
     },
     "sw": {
+        "renewal.noticeText": "Pro yako imeisha — sasisha ili uendelee na madarasa yasiyo na kikomo na usafirishaji otomatiki",
+        "quote.askSchoolBtn": "Omba shule yangu ilipe (Pakua Nukuu ya PDF)",
+        "history.clusterPromoCtaQuote": "Omba Nukuu Maalum ya Shule →",
+        "history.clusterPromoCtaInst": "Boresha hadi Mpango wa Taasisi ($149/mwaka) →",
         "upgrade.checkoutOpening": "Inafungua malipo kwenye kichupo kipya… Ikizuiwa,",
         "upgrade.checkoutBlocked": "⚠️ Dirisha la malipo limezuiwa.",
         "upgrade.checkoutClickHere": "Bofya hapa kukamilisha malipo",
@@ -49743,6 +49887,10 @@
         "schoolLicense.error": "Haikuweza kuwasilisha ombi. Tafadhali jaribu tena au tutumie barua pepe moja kwa moja."
     },
     "am": {
+        "renewal.noticeText": "የእርስዎ Pro አብቅቷል — ያልተገደቡ ክፍሎችን እና ራስ-ሰር መላክን ለመጠበቅ ያድሱ",
+        "quote.askSchoolBtn": "ትምህርት ቤቴ እንዲከፍል ይጠይቁ (የዋጋ ማቅረቢያ PDF ያውርዱ)",
+        "history.clusterPromoCtaQuote": "የትምህርት ቤት ብጁ የዋጋ ማቅረቢያ ይጠይቁ →",
+        "history.clusterPromoCtaInst": "ወደ ተቋም ዕቅድ ያሻሽሉ ($149/በዓመት) →",
         "upgrade.checkoutOpening": "ክፍያው በአዲስ ትር እየተከፈተ ነው… ከታገደ፣",
         "upgrade.checkoutBlocked": "⚠️ የክፍያ መስኮቱ ታግዷል።",
         "upgrade.checkoutClickHere": "ክፍያውን ለማጠናቀቅ እዚህ ይጫኑ",
@@ -51114,6 +51262,10 @@
         "schoolLicense.error": "ጥያቄውን ማስገባት አልተቻለም። እባክዎ እንደገና ይሞክሩ ወይም በቀጥታ ኢሜይል ያድርጉልን።"
     },
     "si": {
+        "renewal.noticeText": "ඔබගේ Pro කාලය අවසන් විය — අසීමිත පන්ති සහ ස්වයංක්‍රීය අපනයනය තබා ගැනීමට අලුත් කරන්න",
+        "quote.askSchoolBtn": "මගේ පාසලෙන් ගෙවීමට ඉල්ලන්න (මිල ගණන් PDF බාගන්න)",
+        "history.clusterPromoCtaQuote": "පාසල සඳහා විශේෂ මිල ගණන් ඉල්ලන්න →",
+        "history.clusterPromoCtaInst": "ආයතන සැලසුමට උත්ශ්‍රේණි කරන්න ($149/වසර) →",
         "upgrade.checkoutOpening": "නව ටැබයක ගෙවීම විවෘත කරමින්… අවහිර වුවහොත්,",
         "upgrade.checkoutBlocked": "⚠️ ගෙවීම් කවුළුව අවහිර විය.",
         "upgrade.checkoutClickHere": "ගෙවීම සම්පූර්ණ කිරීමට මෙතන ක්ලික් කරන්න",
@@ -52485,6 +52637,10 @@
         "schoolLicense.error": "ඉල්ලීම ඉදිරිපත් කිරීමට නොහැකි විය. කරුණාකර නැවත උත්සාහ කරන්න හෝ අපට කෙලින්ම විද්‍යුත් තැපෑල එවන්න."
     },
     "el": {
+        "renewal.noticeText": "Το Pro έληξε — ανανεώστε για να διατηρήσετε απεριόριστες τάξεις και αυτόματη εξαγωγή",
+        "quote.askSchoolBtn": "Ζητήστε από το σχολείο να πληρώσει (Λήψη προσφοράς PDF)",
+        "history.clusterPromoCtaQuote": "Ζητήστε προσαρμοσμένη προσφορά για το σχολείο →",
+        "history.clusterPromoCtaInst": "Αναβάθμιση σε Πρόγραμμα Ιδρύματος ($149/έτος) →",
         "upgrade.checkoutOpening": "Άνοιγμα πληρωμής σε νέα καρτέλα… Αν μπλοκαριστεί,",
         "upgrade.checkoutBlocked": "⚠️ Το παράθυρο πληρωμής μπλοκαρίστηκε.",
         "upgrade.checkoutClickHere": "Κάντε κλικ εδώ για να ολοκληρώσετε την πληρωμή",
@@ -53856,6 +54012,10 @@
         "schoolLicense.error": "Δεν ήταν δυνατή η υποβολή του αιτήματος. Δοκιμάστε ξανά ή στείλτε μας email απευθείας."
     },
     "no": {
+        "renewal.noticeText": "Ditt Pro er utløpt — forny for å beholde ubegrensede klasser og automatisk eksport",
+        "quote.askSchoolBtn": "Be skolen min betale (Last ned tilbuds-PDF)",
+        "history.clusterPromoCtaQuote": "Be om tilpasset skoletilbud →",
+        "history.clusterPromoCtaInst": "Oppgrader til Institusjonsplan ($149/år) →",
         "upgrade.checkoutOpening": "Åpner betalingen i en ny fane… Hvis den blokkeres,",
         "upgrade.checkoutBlocked": "⚠️ Betalingsvinduet ble blokkert.",
         "upgrade.checkoutClickHere": "Klikk her for å fullføre betalingen",
@@ -55227,6 +55387,10 @@
         "schoolLicense.error": "Kunne ikke sende forespørselen. Prøv igjen eller send oss en e-post direkte."
     },
     "ca": {
+        "renewal.noticeText": "El teu Pro ha finalitzat — renova per mantenir classes il·limitades i exportació automàtica",
+        "quote.askSchoolBtn": "Demanar a la meva escola que pagui (Descarregar pressupost PDF)",
+        "history.clusterPromoCtaQuote": "Sol·licitar pressupost personalitzat per a l'escola →",
+        "history.clusterPromoCtaInst": "Millora a Pla Institucional ($149/any) →",
         "upgrade.checkoutOpening": "S’està obrint el pagament en una pestanya nova… Si es bloqueja,",
         "upgrade.checkoutBlocked": "⚠️ S’ha bloquejat la finestra de pagament.",
         "upgrade.checkoutClickHere": "Fes clic aquí per completar el pagament",
@@ -56598,6 +56762,10 @@
         "schoolLicense.error": "No s'ha pogut enviar la sol·licitud. Torna-ho a provar o envia'ns un correu directament."
     },
     "ne": {
+        "renewal.noticeText": "तपाईंको प्रो समाप्त भयो — असीमित कक्षाहरू र स्वतः निर्यात राख्न नवीकरण गर्नुहोस्",
+        "quote.askSchoolBtn": "मेरो विद्यालयलाई भुक्तान गर्न भन्नुहोस् (कोटेशन PDF डाउनलोड गर्नुहोस्)",
+        "history.clusterPromoCtaQuote": "विद्यालयको लागि अनुकूलित कोटेशन अनुरोध गर्नुहोस् →",
+        "history.clusterPromoCtaInst": "संस्था योजनामा स्तरवृद्धि गर्नुहोस् ($149/वर्ष) →",
         "upgrade.checkoutOpening": "नयाँ ट्याबमा चेकआउट खुल्दैछ… ब्लक भएमा,",
         "upgrade.checkoutBlocked": "⚠️ चेकआउट विन्डो ब्लक भयो।",
         "upgrade.checkoutClickHere": "भुक्तानी पूरा गर्न यहाँ क्लिक गर्नुहोस्",
@@ -57967,6 +58135,10 @@
         "schoolLicense.error": "अनुरोध पेश गर्न सकिएन। कृपया फेरि प्रयास गर्नुहोस् वा सिधै हामीलाई इमेल गर्नुहोस्。"
     },
     "ml": {
+        "renewal.noticeText": "നിങ്ങളുടെ പ്രോ അവസാനിച്ചു — പരിധിയില്ലാത്ത ക്ലാസുകളും ഓട്ടോ എക്‌സ്‌പോർട്ടും നിലനിർത്താൻ പുതുക്കുക",
+        "quote.askSchoolBtn": "എന്റെ സ്കൂളിനോട് പണമടയ്ക്കാൻ ആവശ്യപ്പെടുക (കൊട്ടേഷൻ PDF ഡൗൺലോഡ് ചെയ്യുക)",
+        "history.clusterPromoCtaQuote": "സ്കൂളിനായി പ്രത്യേക കൊട്ടേഷൻ അഭ്യർത്ഥിക്കുക →",
+        "history.clusterPromoCtaInst": "ഇൻസ്റ്റിറ്റ്യൂഷൻ പ്ലാനിലേക്ക് അപ്‌ഗ്രേഡ് ചെയ്യുക ($149/വർഷം) →",
         "upgrade.checkoutOpening": "പുതിയ ടാബിൽ ചെക്ക്ഔട്ട് തുറക്കുന്നു… ബ്ലോക്ക് ചെയ്താൽ,",
         "upgrade.checkoutBlocked": "⚠️ ചെക്ക്ഔട്ട് വിൻഡോ ബ്ലോക്ക് ചെയ്തു.",
         "upgrade.checkoutClickHere": "പേയ്‌മെന്റ് പൂർത്തിയാക്കാൻ ഇവിടെ ക്ലിക്ക് ചെയ്യൂ",
@@ -59335,6 +59507,10 @@
         "schoolLicense.error": "അഭ്യർത്ഥന സമർപ്പിക്കാൻ കഴിഞ്ഞില്ല. ദയവായി വീണ്ടും ശ്രമിക്കുക അല്ലെങ്കിൽ നേരിട്ട് ഇമെയിൽ ചെയ്യുക."
     },
     "mn": {
+        "renewal.noticeText": "Таны Pro дууссан — хязгааргүй анги болон автомат экспортыг хадгалахын тулд сунгана уу",
+        "quote.askSchoolBtn": "Сургуулиасаа төлбөр шаардах (Үнийн саналын PDF татах)",
+        "history.clusterPromoCtaQuote": "Сургуулийн захиалгат үнийн санал авах →",
+        "history.clusterPromoCtaInst": "Байгууллагын багц руу шинэчлэх ($149/жил) →",
         "upgrade.checkoutOpening": "Төлбөрийг шинэ табд нээж байна… Хаагдсан бол",
         "upgrade.checkoutBlocked": "⚠️ Төлбөрийн цонх хаагдсан.",
         "upgrade.checkoutClickHere": "Төлбөрөө дуусгахын тулд энд дарна уу",
@@ -60703,6 +60879,10 @@
         "schoolLicense.error": "Хүсэлтийг илгээж чадсангүй. Дахин оролдоно уу эсвэл бидэнд шууд имэйл илгээнэ үү."
     },
     "kn": {
+        "renewal.noticeText": "ನಿಮ್ಮ ಪ್ರೊ ಮುಕ್ತಾಯಗೊಂಡಿದೆ — ಅನಿಯಮಿತ ತರಗತಿಗಳು ಮತ್ತು ಸ್ವಯಂ ರಫ್ತು ಉಳಿಸಿಕೊಳ್ಳಲು ನವೀಕರಿಸಿ",
+        "quote.askSchoolBtn": "ನನ್ನ ಶಾಲೆಗೆ ಪಾವತಿಸಲು ಕೇಳಿ (ಕೊಟೇಶನ್ PDF ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ)",
+        "history.clusterPromoCtaQuote": "ಶಾಲೆಗಾಗಿ ಕಸ್ಟಮ್ ಕೊಟೇಶನ್ ವಿನಂತಿಸಿ →",
+        "history.clusterPromoCtaInst": "ಸಂಸ್ಥೆ ಯೋಜನೆಗೆ ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಿ ($149/ವರ್ಷ) →",
         "upgrade.checkoutOpening": "ಹೊಸ ಟ್ಯಾಬ್‌ನಲ್ಲಿ ಚೆಕ್‌ಔಟ್ ತೆರೆಯುತ್ತಿದೆ… ನಿರ್ಬಂಧಿಸಿದರೆ,",
         "upgrade.checkoutBlocked": "⚠️ ಚೆಕ್‌ಔಟ್ ವಿಂಡೋ ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ.",
         "upgrade.checkoutClickHere": "ಪಾವತಿ ಪೂರ್ಣಗೊಳಿಸಲು ಇಲ್ಲಿ ಕ್ಲಿಕ್ ಮಾಡಿ",
@@ -62116,6 +62296,10 @@
         "lang.af": "Afrikaans"
     },
     "gu": {
+        "renewal.noticeText": "તમારું પ્રો સમાપ્ત થઈ ગયું — અમર્યાદિત વર્ગો અને ઓટો-એક્સપોર્ટ રાખવા માટે નવીકરણ કરો",
+        "quote.askSchoolBtn": "મારી શાળાને ચૂકવણી કરવા કહો (ક્વોટેશન PDF ડાઉનલોડ કરો)",
+        "history.clusterPromoCtaQuote": "શાળા માટે કસ્ટમ ક્વોટેશનની વિનંતી કરો →",
+        "history.clusterPromoCtaInst": "સંસ્થા પ્લાનમાં અપગ્રેડ કરો ($149/વર્ષ) →",
         "upgrade.checkoutOpening": "નવા ટેબમાં ચેકઆઉટ ખુલી રહ્યું છે… બ્લોક થાય તો,",
         "upgrade.checkoutBlocked": "⚠️ ચેકઆઉટ વિન્ડો બ્લોક થઈ.",
         "upgrade.checkoutClickHere": "ચુકવણી પૂર્ણ કરવા અહીં ક્લિક કરો",
@@ -63529,6 +63713,10 @@
         "lang.af": "Afrikaans"
     },
     "pa": {
+        "renewal.noticeText": "ਤੁਹਾਡਾ ਪ੍ਰੋ ਖਤਮ ਹੋ ਗਿਆ — ਅਸੀਮਤ ਕਲਾਸਾਂ ਅਤੇ ਆਟੋ-ਐਕਸਪੋਰਟ ਰੱਖਣ ਲਈ ਨਵਿਆਓ",
+        "quote.askSchoolBtn": "ਮੇਰੇ ਸਕੂਲ ਨੂੰ ਭੁਗਤਾਨ ਕਰਨ ਲਈ ਕਹੋ (ਕੋਟੇਸ਼ਨ PDF ਡਾਊਨਲੋਡ ਕਰੋ)",
+        "history.clusterPromoCtaQuote": "ਸਕੂਲ ਲਈ ਕਸਟਮ ਕੋਟੇਸ਼ਨ ਦੀ ਬੇਨਤੀ ਕਰੋ →",
+        "history.clusterPromoCtaInst": "ਸੰਸਥਾ ਯੋਜਨਾ ਵਿੱਚ ਅੱਪਗ੍ਰੇਡ ਕਰੋ ($149/ਸਾਲ) →",
         "upgrade.checkoutOpening": "ਨਵੀਂ ਟੈਬ ਵਿੱਚ ਚੈੱਕਆਊਟ ਖੁੱਲ੍ਹ ਰਿਹਾ ਹੈ… ਜੇ ਬਲਾਕ ਹੋਵੇ ਤਾਂ",
         "upgrade.checkoutBlocked": "⚠️ ਚੈੱਕਆਊਟ ਵਿੰਡੋ ਬਲਾਕ ਹੋ ਗਈ।",
         "upgrade.checkoutClickHere": "ਭੁਗਤਾਨ ਪੂਰਾ ਕਰਨ ਲਈ ਇੱਥੇ ਕਲਿੱਕ ਕਰੋ",
@@ -64942,6 +65130,10 @@
         "lang.af": "Afrikaans"
     },
     "kk": {
+        "renewal.noticeText": "Pro мерзімі аяқталды — шексіз сыныптар мен автоэкспортты сақтау үшін жаңартыңыз",
+        "quote.askSchoolBtn": "Мектептен төлеуді сұрау (Баға ұсынысының PDF жүктеп алу)",
+        "history.clusterPromoCtaQuote": "Мектеп үшін арнайы баға ұсынысын сұрау →",
+        "history.clusterPromoCtaInst": "Мекеме жоспарына өту ($149/жыл) →",
         "upgrade.checkoutOpening": "Төлем жаңа қойындыда ашылуда… Бұғатталса,",
         "upgrade.checkoutBlocked": "⚠️ Төлем терезесі бұғатталды.",
         "upgrade.checkoutClickHere": "Төлемді аяқтау үшін осы жерді басыңыз",
@@ -66355,6 +66547,10 @@
         "lang.af": "Afrikaans"
     },
     "lv": {
+        "renewal.noticeText": "Jūsu Pro ir beidzies — atjaunojiet, lai saglabātu neierobežotas klases un automātisko eksportu",
+        "quote.askSchoolBtn": "Lūgt manai skolai apmaksāt (Lejupielādēt piedāvājuma PDF)",
+        "history.clusterPromoCtaQuote": "Pieprasīt pielāgotu skolas piedāvājumu →",
+        "history.clusterPromoCtaInst": "Jaunināt uz Iestādes plānu ($149/gadā) →",
         "upgrade.checkoutOpening": "Maksājums tiek atvērts jaunā cilnē… Ja tas ir bloķēts,",
         "upgrade.checkoutBlocked": "⚠️ Maksājuma logs tika bloķēts.",
         "upgrade.checkoutClickHere": "Noklikšķiniet šeit, lai pabeigtu maksājumu",
@@ -67768,6 +67964,10 @@
         "lang.af": "Afrikaans"
     },
     "lt": {
+        "renewal.noticeText": "Jūsų Pro baigėsi — atnaujinkite, kad išsaugotumėte neribotas klases ir automatinį eksportą",
+        "quote.askSchoolBtn": "Paprašyti mokyklos apmokėti (Atsisiųsti pasiūlymo PDF)",
+        "history.clusterPromoCtaQuote": "Užklausti individualaus pasiūlymo mokyklai →",
+        "history.clusterPromoCtaInst": "Naujovinti į Įstaigos planą ($149/metams) →",
         "upgrade.checkoutOpening": "Mokėjimas atidaromas naujame skirtuke… Jei jis užblokuotas,",
         "upgrade.checkoutBlocked": "⚠️ Mokėjimo langas buvo užblokuotas.",
         "upgrade.checkoutClickHere": "Spustelėkite čia, kad užbaigtumėte mokėjimą",
@@ -69181,6 +69381,10 @@
         "lang.af": "Afrikaans"
     },
     "lo": {
+        "renewal.noticeText": "Pro ຂອງທ່ານໝົດອາຍຸແລ້ວ — ຕໍ່ອາຍຸເພື່ອຮັກສາຫ້ອງຮຽນບໍ່ຈຳກັດ ແລະ ສົ່ງອອກອັດຕະໂນມັດ",
+        "quote.askSchoolBtn": "ຂໍໃຫ້ໂຮງຮຽນຈ່າຍເງິນ (ດາວໂຫຼດໃບສະເໜີລາຄາ PDF)",
+        "history.clusterPromoCtaQuote": "ຂໍໃບສະເໜີລາຄາສະເພາະສຳລັບໂຮງຮຽນ →",
+        "history.clusterPromoCtaInst": "ອັບເກຣດເປັນແຜນສະຖາບັນ ($149/ປີ) →",
         "upgrade.checkoutOpening": "ກຳລັງເປີດໜ້າຊຳລະເງິນໃນແຖບໃໝ່… ຖ້າຖືກບລັອກ",
         "upgrade.checkoutBlocked": "⚠️ ປ່ອງຢ້ຽມຊຳລະເງິນຖືກບລັອກ.",
         "upgrade.checkoutClickHere": "ຄລິກທີ່ນີ້ເພື່ອຊຳລະເງິນໃຫ້ສຳເລັດ",
@@ -70594,6 +70798,10 @@
         "lang.af": "Afrikaans"
     },
     "my": {
+        "renewal.noticeText": "သင်၏ Pro သက်တမ်းကုန်ဆုံးသွားပါပြီ — အကန့်အသတ်မဲ့အတန်းများနှင့် အလိုအလျောက်ထုတ်ယူမှုကို ဆက်လက်သုံးရန် သက်တမ်းတိုးပါ",
+        "quote.askSchoolBtn": "ကျောင်းကို ပေးချေခိုင်းပါ (ဈေးနှုန်းကမ်းလှမ်းလွှာ PDF ဒေါင်းလုဒ်လုပ်ပါ)",
+        "history.clusterPromoCtaQuote": "ကျောင်းအတွက် စိတ်ကြိုက်ဈေးနှုန်းကမ်းလှမ်းလွှာ တောင်းဆိုပါ →",
+        "history.clusterPromoCtaInst": "အဖွဲ့အစည်းအစီအစဉ်သို့ အဆင့်မြှင့်ပါ ($149/နှစ်) →",
         "upgrade.checkoutOpening": "ငွေပေးချေမှုကို တဘ်အသစ်တွင် ဖွင့်နေသည်… ပိတ်ဆို့ခံရပါက",
         "upgrade.checkoutBlocked": "⚠️ ငွေပေးချေမှု ဝင်းဒိုး ပိတ်ဆို့ခံရသည်။",
         "upgrade.checkoutClickHere": "ငွေပေးချေမှု ပြီးမြောက်ရန် ဤနေရာကို နှိပ်ပါ",
@@ -72007,6 +72215,10 @@
         "lang.af": "Afrikaans"
     },
     "km": {
+        "renewal.noticeText": "Pro របស់អ្នកបានផុតកំណត់ — បន្តសុពលភាពដើម្បីរក្សាថ្នាក់រៀនគ្មានដែនកំណត់ និងការនាំចេញដោយស្វ័យប្រវត្តិ",
+        "quote.askSchoolBtn": "ស្នើឱ្យសាលារបស់ខ្ញុំបង់ប្រាក់ (ទាញយកការផ្តល់តម្លៃជា PDF)",
+        "history.clusterPromoCtaQuote": "ស្នើសុំការផ្តល់តម្លៃពិសេសសម្រាប់សាលា →",
+        "history.clusterPromoCtaInst": "ធ្វើបច្ចុប្បន្នភាពទៅគម្រោងស្ថាប័ន ($149/ឆ្នាំ) →",
         "upgrade.checkoutOpening": "កំពុងបើកការទូទាត់ក្នុងផ្ទាំងថ្មី… ប្រសិនបើត្រូវបានរារាំង",
         "upgrade.checkoutBlocked": "⚠️ ផ្ទាំងទូទាត់ត្រូវបានរារាំង។",
         "upgrade.checkoutClickHere": "ចុចទីនេះដើម្បីបញ្ចប់ការទូទាត់",
@@ -73420,6 +73632,10 @@
         "lang.af": "Afrikaans"
     },
     "ceb": {
+        "renewal.noticeText": "Nahuman na ang imong Pro — i-renew aron mapabilin ang walay kinutuban nga mga klase ug auto-export",
+        "quote.askSchoolBtn": "Hangyoa ang akong eskwelahan sa pagbayad (I-download ang Quote PDF)",
+        "history.clusterPromoCtaQuote": "Pangayo og Custom nga Quote alang sa Eskwelahan →",
+        "history.clusterPromoCtaInst": "Pag-upgrade sa Institution Plan ($149/tuig) →",
         "upgrade.checkoutOpening": "Gibuksan ang checkout sa bag-ong tab… Kung na-block,",
         "upgrade.checkoutBlocked": "⚠️ Na-block ang window sa checkout.",
         "upgrade.checkoutClickHere": "I-klik dinhi aron mahuman ang bayad",
@@ -74833,6 +75049,10 @@
         "lang.af": "Afrikaans"
     },
     "bg": {
+        "renewal.noticeText": "Вашият Pro изтече — подновете за неограничени класове и автоматично експортиране",
+        "quote.askSchoolBtn": "Поискайте училището да плати (Изтеглете офертата в PDF)",
+        "history.clusterPromoCtaQuote": "Поискайте персонализирана оферта за училището →",
+        "history.clusterPromoCtaInst": "Надстройка до Институционален план ($149/год.) →",
         "upgrade.checkoutOpening": "Плащането се отваря в нов раздел… Ако е блокирано,",
         "upgrade.checkoutBlocked": "⚠️ Прозорецът за плащане беше блокиран.",
         "upgrade.checkoutClickHere": "Кликнете тук, за да завършите плащането",
@@ -76246,6 +76466,10 @@
         "lang.af": "Afrikaans"
     },
     "hr": {
+        "renewal.noticeText": "Vaš Pro je istekao — obnovite kako biste zadržali neograničene razrede i automatski izvoz",
+        "quote.askSchoolBtn": "Zatražite od škole plaćanje (Preuzmite ponudu u PDF-u)",
+        "history.clusterPromoCtaQuote": "Zatražite prilagođenu ponudu za školu →",
+        "history.clusterPromoCtaInst": "Nadogradite na Institucionalni plan ($149/god.) →",
         "upgrade.checkoutOpening": "Otvaranje plaćanja u novoj kartici… Ako je blokirano,",
         "upgrade.checkoutBlocked": "⚠️ Prozor za plaćanje je blokiran.",
         "upgrade.checkoutClickHere": "Kliknite ovdje za dovršetak plaćanja",
@@ -77659,6 +77883,10 @@
         "lang.af": "Afrikaans"
     },
     "sr": {
+        "renewal.noticeText": "Ваш Pro је истекао — обновите да задржите неограничена одељења и аутоматски извоз",
+        "quote.askSchoolBtn": "Затражите од школе плаћање (Преузмите понуду у ПДФ-у)",
+        "history.clusterPromoCtaQuote": "Затражите прилагођену понуду за школу →",
+        "history.clusterPromoCtaInst": "Надоградите на Институционални план ($149/год.) →",
         "upgrade.checkoutOpening": "Отварање плаћања у новој картици… Ако је блокирано,",
         "upgrade.checkoutBlocked": "⚠️ Прозор за плаћање је блокиран.",
         "upgrade.checkoutClickHere": "Кликните овде да завршите плаћање",
@@ -79072,6 +79300,10 @@
         "lang.af": "Afrikaans"
     },
     "sk": {
+        "renewal.noticeText": "Váš Pro vypršal — obnovte pre neobmedzené triedy a automatický export",
+        "quote.askSchoolBtn": "Požiadať školu o úhradu (Stiahnuť ponuku v PDF)",
+        "history.clusterPromoCtaQuote": "Vyžiadať cenovú ponuku pre školu →",
+        "history.clusterPromoCtaInst": "Prejsť na Inštitucionálny plán ($149/rok) →",
         "upgrade.checkoutOpening": "Otvára sa platba na novej karte… Ak je zablokovaná,",
         "upgrade.checkoutBlocked": "⚠️ Okno platby bolo zablokované.",
         "upgrade.checkoutClickHere": "Kliknutím sem dokončíte platbu",
@@ -80485,6 +80717,10 @@
         "lang.af": "Afrikaans"
     },
     "sl": {
+        "renewal.noticeText": "Vaš Pro je potekel — podaljšajte za neomejene razrede in samodejni izvoz",
+        "quote.askSchoolBtn": "Prosite šolo za plačilo (Prenesite ponudbo v PDF)",
+        "history.clusterPromoCtaQuote": "Zahtevaj ponudbo po meri za šolo →",
+        "history.clusterPromoCtaInst": "Nadgradi na Institucionalni načrt ($149/leto) →",
         "upgrade.checkoutOpening": "Plačilo se odpira v novem zavihku… Če je blokirano,",
         "upgrade.checkoutBlocked": "⚠️ Okno za plačilo je bilo blokirano.",
         "upgrade.checkoutClickHere": "Kliknite tukaj za dokončanje plačila",
@@ -81898,6 +82134,10 @@
         "lang.af": "Afrikaans"
     },
     "af": {
+        "renewal.noticeText": "Jou Pro het geëindig — hernu om onbeperkte klasse en outo-uitvoer te behou",
+        "quote.askSchoolBtn": "Vra my skool om te betaal (Laai kwotasie-PDF af)",
+        "history.clusterPromoCtaQuote": "Versoek pasgemaakte skoolkwotasie →",
+        "history.clusterPromoCtaInst": "Gradeer op na Instellingsplan ($149/jr) →",
         "upgrade.checkoutOpening": "Betaling word in ’n nuwe oortjie oopgemaak… As dit geblokkeer is,",
         "upgrade.checkoutBlocked": "⚠️ Die betalingsvenster is geblokkeer.",
         "upgrade.checkoutClickHere": "Klik hier om die betaling te voltooi",
