@@ -1,0 +1,392 @@
+{
+  "target_1": {
+    "targetId": 1,
+    "name": "AionX",
+    "to": [
+      "support@aionx.co"
+    ],
+    "subject": "Zero-bot Google Meet attendance add-on for AionX’s Team Collaboration guide",
+    "dispatchedAt": "2026-10-19T17:26:35.520Z",
+    "resendId": "01a15533-62d4-74c3-b8f1-dbe838c6bc60",
+    "cc": [
+      "hello@aionx.co"
+    ]
+  },
+  "target_2": {
+    "targetId": 2,
+    "name": "FVivas Spain",
+    "to": [
+      "hola@fvivas.com"
+    ],
+    "subject": "Complemento oficial de asistencia en Google Meet (REST API v2, sin bots) para el directorio de FVivas",
+    "dispatchedAt": "2026-10-19T17:26:37.643Z",
+    "resendId": "01a15533-6b52-73d0-8c72-9977909ace10",
+    "cc": [
+      "info@fvivas.com"
+    ]
+  },
+  "target_3": {
+    "targetId": 3,
+    "name": "Do Ngoc Hoan Vietnam",
+    "to": [
+      "contact@dongochoan.com"
+    ],
+    "subject": "Tiện ích điểm danh Google Meet chính thức (REST API v2, Tiếng Việt) cho bài viết trên dongochoan.com",
+    "dispatchedAt": "2026-10-19T17:26:39.779Z",
+    "resendId": "01a15533-73af-7081-b44a-3e16efa0afe9",
+    "cc": [
+      "hello@dongochoan.com"
+    ]
+  },
+  "target_4": {
+    "targetId": 4,
+    "name": "AINOW Japan",
+    "to": [
+      "info@ainow.jp"
+    ],
+    "subject": "【AINOW様】Google Meet REST API v2対応・日本語版出席管理アドオンのご紹介",
+    "dispatchedAt": "2026-10-19T17:26:41.916Z",
+    "resendId": "01a15533-7c01-7690-8532-76b08d0ec173",
+    "cc": [
+      "contact@ainow.jp"
+    ]
+  },
+  "target_5": {
+    "targetId": 5,
+    "name": "Aguacatec Spain",
+    "to": [
+      "hola@aguacatec.es"
+    ],
+    "subject": "Control de asistencia en Google Meet (REST API v2, sin bots) para la guía de Aguacatec",
+    "dispatchedAt": "2026-10-19T17:26:44.049Z",
+    "resendId": "01a15533-8459-780b-838c-8813c6c521a4",
+    "cc": [
+      "contacto@aguacatec.es"
+    ]
+  },
+  "target_6": {
+    "targetId": 6,
+    "name": "Gest24 Italy",
+    "to": [
+      "info@gest24.com"
+    ],
+    "subject": "Add-on ufficiale Google Meet (REST API v2, senza bot) per la guida di Gest24",
+    "dispatchedAt": "2026-10-19T17:26:46.188Z",
+    "resendId": "01a15533-8cae-7e19-8165-3074a7b63dcc",
+    "cc": [
+      "redazione@gest24.com"
+    ]
+  },
+  "target_7": {
+    "targetId": 7,
+    "name": "Furlan Webdesigner France",
+    "to": [
+      "contact@furlan-webdesigner.fr"
+    ],
+    "subject": "Module officiel de présence Google Meet (API REST v2, sans bot) pour votre guide webdesigner",
+    "dispatchedAt": "2026-10-19T17:26:48.324Z",
+    "resendId": "01a15533-9512-78d7-a73b-ed0e9d9b7d42",
+    "cc": [
+      "bonjour@furlan-webdesigner.fr"
+    ]
+  },
+  "target_8": {
+    "targetId": 8,
+    "name": "NexTool AI",
+    "to": [
+      "hello@nextool.ai"
+    ],
+    "subject": "Zero-bot Google Meet REST API v2 add-on for NexTool AI",
+    "dispatchedAt": "2026-10-19T17:26:50.453Z",
+    "resendId": "01a15533-9d51-78dd-a0b0-a779358be96c",
+    "cc": [
+      "support@nextool.ai"
+    ]
+  },
+  "target_9": {
+    "targetId": 9,
+    "name": "TheWearify",
+    "to": [
+      "admin@thewearify.com"
+    ],
+    "subject": "Native Google Meet REST API v2 add-on for TheWearify’s Meeting Agents roundup",
+    "dispatchedAt": "2026-10-19T17:26:52.588Z",
+    "resendId": "01a15533-a5b2-7945-9012-e7301ffe0af0",
+    "cc": [
+      "hello@thewearify.com"
+    ]
+  },
+  "target_10": {
+    "targetId": 10,
+    "name": "FindMyAITool",
+    "to": [
+      "hello@findmyaitool.io"
+    ],
+    "subject": "Adding Attendance Tracker (Google Meet REST API v2) to FindMyAITool’s Meeting Assistant category",
+    "dispatchedAt": "2026-10-19T17:26:54.717Z",
+    "resendId": "01a15533-ae10-7eb1-8e1c-1b4f9a39eb41",
+    "cc": [
+      "support@findmyaitool.io"
+    ]
+  },
+  "target_11": {
+    "targetId": 11,
+    "name": "The Xperts Pakistan",
+    "to": [
+      "info@thexperts.pk"
+    ],
+    "subject": "Zero-bot Google Meet attendance add-on for The Xperts Pakistan’s productivity guide",
+    "dispatchedAt": "2026-10-19T17:26:56.846Z",
+    "resendId": "01a15533-b662-7c7b-aa68-0c9723603aac",
+    "cc": [
+      "thexpert.services@gmail.com"
+    ]
+  },
+  "target_12": {
+    "targetId": 12,
+    "name": "JNG Web France",
+    "to": [
+      "contact@jng-web.com"
+    ],
+    "subject": "Module officiel Google Meet (API REST v2, sans bot) pour le labo JNG Web",
+    "dispatchedAt": "2026-10-19T17:26:58.967Z",
+    "resendId": "01a15533-bea8-75f4-8f93-a5daa0aecb29",
+    "cc": [
+      "info@jng-web.com"
+    ]
+  },
+  "target_13": {
+    "targetId": 13,
+    "name": "Rizal Consulting Indonesia",
+    "to": [
+      "info@rizalconsulting.id"
+    ],
+    "subject": "Add-on absensi Google Meet resmi (REST API v2, Bahasa Indonesia) untuk blog Rizal Consulting",
+    "dispatchedAt": "2026-10-19T17:27:01.167Z",
+    "resendId": "01a15533-c714-7e60-86d6-31d6d6ee97ff",
+    "cc": [
+      "rizalconsultingid@gmail.com"
+    ]
+  },
+  "target_14": {
+    "targetId": 14,
+    "name": "BrassTranscripts",
+    "to": [
+      "support@brasstranscripts.com"
+    ],
+    "subject": "Non-competing Google Meet attendance link for your BrassTranscripts vs Tactiq post",
+    "dispatchedAt": "2026-10-19T17:27:03.285Z",
+    "resendId": "01a15533-cf83-7d62-823f-723c0459c694",
+    "cc": [
+      "hello@brasstranscripts.com"
+    ]
+  },
+  "target_15": {
+    "targetId": 15,
+    "name": "EONSR Vietnam — Smith & Howard",
+    "to": [
+      "smith@eonsr.com"
+    ],
+    "subject": "Zero-bot Google Meet REST API v2 add-on (with Vietnamese UI) for EONSR’s PM guide",
+    "dispatchedAt": "2026-10-19T17:27:05.419Z",
+    "resendId": "01a15533-d7de-7f1c-a7f6-849d4d64bdf2",
+    "cc": [
+      "howard@eonsr.com"
+    ]
+  },
+  "target_16": {
+    "targetId": 16,
+    "name": "Signalbase",
+    "to": [
+      "hello@trysignalbase.com"
+    ],
+    "subject": "Native Google Meet REST API v2 add-on for Signalbase’s meeting intelligence coverage",
+    "dispatchedAt": "2026-10-19T17:27:07.560Z",
+    "resendId": "01a15533-e02e-7144-8af8-1bc7007fba48",
+    "cc": [
+      "contact@trysignalbase.com"
+    ]
+  },
+  "target_17": {
+    "targetId": 17,
+    "name": "AI PICKS Magazine Japan",
+    "to": [
+      "info@aipicks.jp"
+    ],
+    "subject": "【AI PICKSマガジン様】Google Meet REST API v2対応・日本語版出席管理アドオンのご紹介",
+    "dispatchedAt": "2026-10-19T17:27:09.682Z",
+    "resendId": "01a15533-e87b-70f4-bf05-05c63bd2d0c2",
+    "cc": [
+      "contact@aipicks.jp"
+    ]
+  },
+  "target_18": {
+    "targetId": 18,
+    "name": "ProgrammiFree Italy",
+    "to": [
+      "info@programmifree.com"
+    ],
+    "subject": "Add-on ufficiale Google Meet (REST API v2, con piano gratuito) per ProgrammiFree",
+    "dispatchedAt": "2026-10-19T17:27:11.786Z",
+    "resendId": "01a15533-f0b7-73d4-ae61-c021163fd8de",
+    "cc": [
+      "redazione@programmifree.com"
+    ]
+  },
+  "target_19": {
+    "targetId": 19,
+    "name": "Choge Blog Japan (ちょげぶろぐ)",
+    "to": [
+      "info@choge-blog.com"
+    ],
+    "subject": "【ちょげぶろぐ様】Web会議記事へのGoogle Meet公式出席管理アドオン（日本語対応）のご提案",
+    "dispatchedAt": "2026-10-19T17:27:13.928Z",
+    "resendId": "01a15533-f90e-7560-99e7-3d5b5b302b70",
+    "cc": [
+      "contact@choge-blog.com"
+    ]
+  },
+  "target_20": {
+    "targetId": 20,
+    "name": "AI Kaptan",
+    "to": [
+      "contact@aikaptan.com"
+    ],
+    "subject": "Zero-bot Google Meet REST API v2 add-on for AI Kaptan’s directory",
+    "dispatchedAt": "2026-10-19T17:27:16.054Z",
+    "resendId": "01a15534-0168-7caa-b08f-eb577d6838d9",
+    "cc": [
+      "hello@aikaptan.com"
+    ]
+  },
+  "target_21": {
+    "targetId": 21,
+    "name": "AI Journey",
+    "to": [
+      "admin@aijourney.so"
+    ],
+    "subject": "Non-competing Google Meet REST API v2 add-on for AI Journey’s AI Academy",
+    "dispatchedAt": "2026-10-19T17:27:18.189Z",
+    "resendId": "01a15534-09b4-7b24-9390-fa8719327773",
+    "cc": [
+      "ceo@aijourney.so"
+    ]
+  },
+  "target_22": {
+    "targetId": 22,
+    "name": "VozToVoice",
+    "to": [
+      "info@voztovoice.org"
+    ],
+    "subject": "Complemento oficial de asistencia en Google Meet (sin bots) para los lectores de VozToVoice",
+    "dispatchedAt": "2026-10-19T17:27:20.324Z",
+    "resendId": "01a15534-120b-73d3-b35f-7a79741faf2d",
+    "cc": [
+      "contacto@voztovoice.org"
+    ]
+  },
+  "target_23": {
+    "targetId": 23,
+    "name": "What AI Do I Need",
+    "to": [
+      "info@whataidoineed.com"
+    ],
+    "subject": "Bot-free Google Meet REST API v2 add-on for WhatAIDoINeed.com",
+    "dispatchedAt": "2026-10-19T17:27:22.448Z",
+    "resendId": "01a15534-1a59-7d16-9732-81d93db21fec",
+    "cc": [
+      "hello@whataidoineed.com"
+    ]
+  },
+  "target_24": {
+    "targetId": 24,
+    "name": "Kylon",
+    "to": [
+      "hello@kylon.io"
+    ],
+    "subject": "Privacy-first Google Meet REST API v2 add-on for Kylon’s Team Collaboration guide",
+    "dispatchedAt": "2026-10-19T17:27:24.598Z",
+    "resendId": "01a15534-22b7-7962-adaf-808037ccb5eb",
+    "cc": [
+      "privacy@kylon.io"
+    ]
+  },
+  "target_25": {
+    "targetId": 25,
+    "name": "Meeting Reminders",
+    "to": [
+      "support@meeting-reminders.com"
+    ],
+    "subject": "Complementary Google Meet REST API v2 add-on for Meeting Reminders’ blog",
+    "dispatchedAt": "2026-10-19T17:27:26.727Z",
+    "resendId": "01a15534-2b19-7996-9978-9a651ac5bbef",
+    "cc": [
+      "hello@meeting-reminders.com"
+    ]
+  },
+  "target_26": {
+    "targetId": 26,
+    "name": "Office no Mori Japan (officeの杜)",
+    "to": [
+      "info@officeforest.org"
+    ],
+    "subject": "【officeの杜様】Google Workspace記事へのGoogle Meet公式出席管理アドオン（日本語対応）のご提案",
+    "dispatchedAt": "2026-10-19T17:27:28.850Z",
+    "resendId": "01a15534-335a-7d84-be1a-c3f8ad1addde",
+    "cc": [
+      "contact@officeforest.org"
+    ]
+  },
+  "target_27": {
+    "targetId": 27,
+    "name": "FreeShiuan Taiwan (Shiuan)",
+    "to": [
+      "shiuan@freeshiuan.com"
+    ],
+    "subject": "推薦給 Shiuan 讀者的 Google Meet 官方免機器人出席紀錄外掛（支援繁體中文）",
+    "dispatchedAt": "2026-10-19T17:27:30.997Z",
+    "resendId": "01a15534-3bab-70fe-8130-9a6d1d5b4491",
+    "cc": [
+      "hello@freeshiuan.com"
+    ]
+  },
+  "target_28": {
+    "targetId": 28,
+    "name": "Nerdin Brazil",
+    "to": [
+      "contato@nerdin.com.br"
+    ],
+    "subject": "Add-on oficial de presença no Google Meet (REST API v2) para o Guia de Ferramentas do Nerdin",
+    "dispatchedAt": "2026-10-19T17:27:33.132Z",
+    "resendId": "01a15534-4419-7cf8-8218-b667cdfeeab0",
+    "cc": [
+      "comercial@nerdin.com.br"
+    ]
+  },
+  "target_29": {
+    "targetId": 29,
+    "name": "Ninja do Excel Brazil",
+    "to": [
+      "contato@ninjadoexcel.com.br"
+    ],
+    "subject": "Exportar lista de presença do Google Meet para Google Sheets e Excel (para o Ninja do Excel)",
+    "dispatchedAt": "2026-10-19T17:27:35.338Z",
+    "resendId": "01a15534-4c75-7aa7-95c7-05e59b3b2710",
+    "cc": [
+      "atendimento@ninjadoexcel.com.br"
+    ]
+  },
+  "target_30": {
+    "targetId": 30,
+    "name": "AI Hunt",
+    "to": [
+      "hello@aihunt.app"
+    ],
+    "subject": "Zero-bot Google Meet REST API v2 add-on for AI Hunt’s Tactiq Alternatives page",
+    "dispatchedAt": "2026-10-19T17:27:37.497Z",
+    "resendId": "01a15534-551b-702d-ae5d-373e0cb6680f",
+    "cc": [
+      "support@aihunt.app"
+    ]
+  }
+}
