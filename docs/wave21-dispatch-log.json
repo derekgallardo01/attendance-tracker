@@ -1,0 +1,392 @@
+{
+  "target_1": {
+    "targetId": 1,
+    "name": "Freed Tools",
+    "to": [
+      "hola@freed.tools"
+    ],
+    "subject": "Control de asistencia en Google Meet (sin bots) para vuestra guía de entrevistas UX/CX en Freed Tools",
+    "dispatchedAt": "2026-10-19T20:18:51.965Z",
+    "resendId": "01a155d1-1b8d-7da4-8e8f-5faa5305dac7",
+    "cc": [
+      "info@freed.tools"
+    ]
+  },
+  "target_2": {
+    "targetId": 2,
+    "name": "Gianluigi Bonanomi Italy",
+    "to": [
+      "info@gianluigibonanomi.com"
+    ],
+    "subject": "Add-on ufficiale Google Meet (REST API v2, senza bot) per i tuoi corsi + pass formatore gratuito",
+    "dispatchedAt": "2026-10-19T20:18:54.089Z",
+    "resendId": "01a155d1-23d8-7b70-ad2d-460380a3f333",
+    "cc": [
+      "contatti@gianluigibonanomi.com"
+    ]
+  },
+  "target_3": {
+    "targetId": 3,
+    "name": "Thalion Design & AI",
+    "to": [
+      "hello@thalion.pro"
+    ],
+    "subject": "Zero-bot Google Meet side-panel add-on for your UX/UI & AI Trends guide",
+    "dispatchedAt": "2026-10-19T20:18:56.239Z",
+    "resendId": "01a155d1-2c37-7850-9887-93ee4d53dd14",
+    "cc": [
+      "contact@thalion.pro"
+    ]
+  },
+  "target_4": {
+    "targetId": 4,
+    "name": "Schleifenquadrat Podcast Germany",
+    "to": [
+      "moin@schleifenquadrat.fm"
+    ],
+    "subject": "Kurzer Hinweis zu Episode SQ234 + botfreies Google Meet REST API v2 Add-on (auf Deutsch)",
+    "dispatchedAt": "2026-10-19T20:18:58.375Z",
+    "resendId": "01a155d1-3499-7567-8915-23a75082d67b",
+    "cc": [
+      "info@schleifenquadrat.fm"
+    ]
+  },
+  "target_5": {
+    "targetId": 5,
+    "name": "Yanai-Ke Japan",
+    "to": [
+      "info@yanai-ke.com"
+    ],
+    "subject": "【yanai-ke.com様】Google Workspace記事へのGoogle Meet公式出席管理アドオン（日本語対応）のご提案",
+    "dispatchedAt": "2026-10-19T20:19:00.502Z",
+    "resendId": "01a155d1-3ce8-7b29-8d5f-717cf10cbfb2",
+    "cc": [
+      "contact@yanai-ke.com"
+    ]
+  },
+  "target_6": {
+    "targetId": 6,
+    "name": "Trending AI Tools",
+    "to": [
+      "hello@trendingaitools.com"
+    ],
+    "subject": "Zero-bot Google Meet REST API v2 add-on for TrendingAITools.com’s directory",
+    "dispatchedAt": "2026-10-19T20:19:02.635Z",
+    "resendId": "01a155d1-4539-711c-a585-5740c8e4ed13",
+    "cc": [
+      "support@trendingaitools.com"
+    ]
+  },
+  "target_7": {
+    "targetId": 7,
+    "name": "TecnoloBlog Spain",
+    "to": [
+      "contacto@tecnoloblog.com"
+    ],
+    "subject": "Complemento oficial de asistencia en Google Meet a Google Sheets (sin bots) para TecnoloBlog",
+    "dispatchedAt": "2026-10-19T20:19:04.793Z",
+    "resendId": "01a155d1-4d91-7803-ad3e-e19f4597c7ad",
+    "cc": [
+      "info@tecnoloblog.com"
+    ]
+  },
+  "target_8": {
+    "targetId": 8,
+    "name": "Somi AI",
+    "to": [
+      "support@somi.ai"
+    ],
+    "subject": "Adding Attendance Tracker (Google Meet REST API v2) to Somi AI’s directory",
+    "dispatchedAt": "2026-10-19T20:19:06.949Z",
+    "resendId": "01a155d1-55f8-7e76-87fa-8a920e5cb40b",
+    "cc": [
+      "hello@somi.ai"
+    ]
+  },
+  "target_9": {
+    "targetId": 9,
+    "name": "Vaultr AI",
+    "to": [
+      "hello@vaultrai.com"
+    ],
+    "subject": "Native Google Meet REST API v2 add-on for Vaultr AI’s Meeting Tools category",
+    "dispatchedAt": "2026-10-19T20:19:09.078Z",
+    "resendId": "01a155d1-5e6e-7756-9c5d-a79940a5fddd",
+    "cc": [
+      "support@vaultrai.com"
+    ]
+  },
+  "target_10": {
+    "targetId": 10,
+    "name": "PPC Cast Spain",
+    "to": [
+      "hola@ppccast.com"
+    ],
+    "subject": "Nota sobre el episodio #160 de PPC Cast + control de asistencia en webinars por Google Meet",
+    "dispatchedAt": "2026-10-19T20:19:11.203Z",
+    "resendId": "01a155d1-66b3-791f-b6ce-b700ff057d9e",
+    "cc": [
+      "info@ppccast.com"
+    ]
+  },
+  "target_11": {
+    "targetId": 11,
+    "name": "Jamy AI",
+    "to": [
+      "hello@jamy.ai"
+    ],
+    "subject": "Non-competing Google Meet attendance link for Jamy AI’s blog",
+    "dispatchedAt": "2026-10-19T20:19:13.337Z",
+    "resendId": "01a155d1-6f01-72b4-83a5-fef3a721313d",
+    "cc": [
+      "support@jamy.ai"
+    ]
+  },
+  "target_12": {
+    "targetId": 12,
+    "name": "Callabo AI Korea",
+    "to": [
+      "contact@callabo.ai"
+    ],
+    "subject": "Non-competing Google Meet attendance add-on (with Korean UI) for Callabo AI’s blog",
+    "dispatchedAt": "2026-10-19T20:19:15.455Z",
+    "resendId": "01a155d1-7755-7692-b9c8-0c461a29e12f",
+    "cc": [
+      "support@callabo.ai"
+    ]
+  },
+  "target_13": {
+    "targetId": 13,
+    "name": "Productivity Shift",
+    "to": [
+      "hi@productivityshift.com"
+    ],
+    "subject": "Zero-bot Google Meet REST API v2 add-on for Productivity Shift’s Meeting Software guide",
+    "dispatchedAt": "2026-10-19T20:19:17.590Z",
+    "resendId": "01a155d1-7fa6-79b3-b06e-d1bbd59bc7b7",
+    "cc": [
+      "hello@productivityshift.com"
+    ]
+  },
+  "target_14": {
+    "targetId": 14,
+    "name": "HeyBRB UK",
+    "to": [
+      "hello@heybrb.ai"
+    ],
+    "subject": "Non-competing Google Meet CPD/CPE attendance companion for HeyBRB’s Accountants guide",
+    "dispatchedAt": "2026-10-19T20:19:19.770Z",
+    "resendId": "01a155d1-87f9-7a1f-93eb-4fde690b8dbf",
+    "cc": [
+      "support@heybrb.ai"
+    ]
+  },
+  "target_15": {
+    "targetId": 15,
+    "name": "Tooliverse AI",
+    "to": [
+      "hello@tooliverse.ai"
+    ],
+    "subject": "Bot-free Google Meet REST API v2 add-on for Tooliverse AI’s directory",
+    "dispatchedAt": "2026-10-19T20:19:21.897Z",
+    "resendId": "01a155d1-9078-7822-9461-53d6ba41d573",
+    "cc": [
+      "partnerships@tooliverse.ai"
+    ]
+  },
+  "target_16": {
+    "targetId": 16,
+    "name": "Madrasah UK Education",
+    "to": [
+      "info@madrasah.co.uk"
+    ],
+    "subject": "Zero-bot Google Meet classroom attendance add-on for Madrasah UK + free educator pass",
+    "dispatchedAt": "2026-10-19T20:19:24.017Z",
+    "resendId": "01a155d1-98c4-796a-ae09-f412901f4bce",
+    "cc": [
+      "admin@madrasah.co.uk"
+    ]
+  },
+  "target_17": {
+    "targetId": 17,
+    "name": "PromptPanda — Bram Billiet",
+    "to": [
+      "hello@promptpanda.io"
+    ],
+    "subject": "Quick note on your PromptPanda post + zero-bot Google Meet add-on for teams",
+    "dispatchedAt": "2026-10-19T20:19:26.155Z",
+    "resendId": "01a155d1-a11e-76d7-98da-3d5ae9301c3e",
+    "cc": [
+      "bram.billiet@usewhale.io"
+    ]
+  },
+  "target_18": {
+    "targetId": 18,
+    "name": "Journaling Insights / IndiePenPress",
+    "to": [
+      "contact@indiepenpress.com"
+    ],
+    "subject": "Zero-bot Google Meet seminar attendance add-on for your Academic Journaling guide",
+    "dispatchedAt": "2026-10-19T20:19:28.275Z",
+    "resendId": "01a155d1-a96f-740b-a54b-bea61c7246a8",
+    "cc": [
+      "hello@journalinginsights.com"
+    ]
+  },
+  "target_19": {
+    "targetId": 19,
+    "name": "Social Lady",
+    "to": [
+      "support@social-lady.com"
+    ],
+    "subject": "Zero-bot Google Meet REST API v2 add-on for Social Lady’s workflow guide",
+    "dispatchedAt": "2026-10-19T20:19:30.391Z",
+    "resendId": "01a155d1-b1a3-7f0c-af55-7845de711b0d",
+    "cc": [
+      "hello@social-lady.com"
+    ]
+  },
+  "target_20": {
+    "targetId": 20,
+    "name": "BE Formazione Italy",
+    "to": [
+      "info@beformazione.com"
+    ],
+    "subject": "Add-on ufficiale Google Meet per registro presenze e attestati PDF (per BE Formazione)",
+    "dispatchedAt": "2026-10-19T20:19:32.511Z",
+    "resendId": "01a155d1-b9fc-73f6-a68f-02ef587fcf35",
+    "cc": [
+      "segreteria@beformazione.com"
+    ]
+  },
+  "target_21": {
+    "targetId": 21,
+    "name": "RevOps Tools",
+    "to": [
+      "hello@revops.tools"
+    ],
+    "subject": "Native Google Meet REST API v2 add-on for RevOps Tools’ directory",
+    "dispatchedAt": "2026-10-19T20:19:34.672Z",
+    "resendId": "01a155d1-c24c-7bcb-b89b-ba3bf0bad880",
+    "cc": [
+      "support@revops.tools"
+    ]
+  },
+  "target_22": {
+    "targetId": 22,
+    "name": "Best of AI",
+    "to": [
+      "hello@bestofai.io"
+    ],
+    "subject": "Adding Attendance Tracker (Google Meet REST API v2) to BestofAI.io",
+    "dispatchedAt": "2026-10-19T20:19:36.814Z",
+    "resendId": "01a155d1-cabf-70de-aa72-a99b6a5e45d3",
+    "cc": [
+      "support@bestofai.io"
+    ]
+  },
+  "target_23": {
+    "targetId": 23,
+    "name": "IABOXTOOL Spain",
+    "to": [
+      "hola@iaboxtool.es"
+    ],
+    "subject": "Complemento oficial de asistencia en Google Meet (REST API v2, sin bots) para IABOXTOOL",
+    "dispatchedAt": "2026-10-19T20:19:38.938Z",
+    "resendId": "01a155d1-d30b-7563-bb97-7ce370378332",
+    "cc": [
+      "info@iaboxtool.es"
+    ]
+  },
+  "target_24": {
+    "targetId": 24,
+    "name": "Bianca Lincks",
+    "to": [
+      "bianca@globallincks.com"
+    ],
+    "subject": "Quick note on your 10 AI Tools post + Google Meet webinar attendance tracking",
+    "dispatchedAt": "2026-10-19T20:19:41.062Z",
+    "resendId": "01a155d1-db5a-72c4-bffb-5edf73a6dcb5",
+    "cc": [
+      "info@biancalincks.com"
+    ]
+  },
+  "target_25": {
+    "targetId": 25,
+    "name": "AITDL Directory",
+    "to": [
+      "hello@aitdl.com"
+    ],
+    "subject": "Zero-bot Google Meet REST API v2 add-on for AITDL’s directory",
+    "dispatchedAt": "2026-10-19T20:19:43.195Z",
+    "resendId": "01a155d1-e3af-7b1c-ab14-0600b96a81be",
+    "cc": [
+      "support@aitdl.com"
+    ]
+  },
+  "target_26": {
+    "targetId": 26,
+    "name": "Smatchu Japan",
+    "to": [
+      "info@smatchu.com"
+    ],
+    "subject": "【Smatchu様】業務効率化コラムへのGoogle Meet公式出席管理アドオン（日本語対応）のご提案",
+    "dispatchedAt": "2026-10-19T20:19:45.358Z",
+    "resendId": "01a155d1-ec1f-744e-a123-669885d2deb6",
+    "cc": [
+      "contact@smatchu.com"
+    ]
+  },
+  "target_27": {
+    "targetId": 27,
+    "name": "Clarity Treinamentos Brazil — Marcelo",
+    "to": [
+      "marcelo@claritytreinamentos.com.br"
+    ],
+    "subject": "Add-on oficial de lista de presença e certificados no Google Meet para a Clarity Treinamentos, Marcelo",
+    "dispatchedAt": "2026-10-19T20:19:47.478Z",
+    "resendId": "01a155d1-f46a-7250-9ae9-c8591dea3a9c",
+    "cc": [
+      "contato@claritytreinamentos.com.br"
+    ]
+  },
+  "target_28": {
+    "targetId": 28,
+    "name": "Martin Kaessler Germany",
+    "to": [
+      "info@martinkaessler.com"
+    ],
+    "subject": "Kurzer Hinweis zu Ihrem Blogartikel + botfreies Google Meet REST API v2 Add-on (auf Deutsch)",
+    "dispatchedAt": "2026-10-19T20:19:49.604Z",
+    "resendId": "01a155d1-fcba-72f7-92ca-d2dc4942846b",
+    "cc": [
+      "kontakt@martinkaessler.com"
+    ]
+  },
+  "target_29": {
+    "targetId": 29,
+    "name": "Pocho Costa Podcast Spain",
+    "to": [
+      "hola@pochocosta.com"
+    ],
+    "subject": "Nota sobre tu episodio de reuniones en Google Meet + control de asistencia sin bots, Pocho",
+    "dispatchedAt": "2026-10-19T20:19:51.733Z",
+    "resendId": "01a155d2-0509-7dff-ab6e-ca8277a5566f",
+    "cc": [
+      "info@pochocosta.com"
+    ]
+  },
+  "target_30": {
+    "targetId": 30,
+    "name": "José David G-Suite Education Spain",
+    "to": [
+      "hola@jose-david.com"
+    ],
+    "subject": "Enlace roto de Chrome Web Store en tu guía \"Cómo pasar lista en Hangouts Meet\", José David",
+    "dispatchedAt": "2026-10-19T20:19:53.847Z",
+    "resendId": "01a155d2-0d42-74d3-9ee0-066749cc8309",
+    "cc": [
+      "contacto@jose-david.com"
+    ]
+  }
+}
