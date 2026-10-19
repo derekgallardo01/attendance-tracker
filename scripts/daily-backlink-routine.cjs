@@ -66,7 +66,13 @@ const DO_NOT_FOLLOW_UP_DOMAINS = new Set([
   'govisually.com', 'dupple.com', 'rottenwifi.com', 'itechguides.com',
   'sprintzeal.com', 'autogpt.net', 'univasf.edu.br', 'cultofpedagogy.com',
   'shakeuplearning.com', 'controlaltachieve.com', 'ditchthattextbook.com',
-  'coworker.ai'
+  'coworker.ai', 'keepproductive.com', 'toolfinder.com', 'toolfolio.com',
+  'pgconcept.com', 'remote.tools', 'fathom.video', 'getmarlee.com',
+  'klap.app', 'ringy.com', 'capsulink.com', 'gentrop.com', 'marketinglad.io',
+  'themarketingagency.ca', 'companionlink.com', 'aitoptools.com', 'outofbit.it',
+  'borjagiron.com', 'talentedladiesclub.com', 'wallstreetmojo.com',
+  'superpowerdaily.com', 'zerodevice.net', 'clepher.com', 'amitsarda.xyz',
+  'insightpartners.com'
 ]);
 
 function extractRootDomain(input) {
