@@ -333,6 +333,43 @@ describe('deferred signup notification — pending flag + claim', () => {
     ctx.seed('tenants/acme.com/users/u@acme.com', { email: 'u@acme.com', displayName: 'U' });
     expect(await firestore.claimSignupNotification('acme.com', 'u@acme.com')).toBeNull();
   });
+
+  test('claimSignupNotification retries once with a fresh transaction on transient expired-transaction error and warns if still failing', async () => {
+    await firestore.upsertUser('acme.com', {
+      email: 'retry@acme.com',
+      displayName: 'Retry User',
+      signupDetectedSource: 'direct',
+    });
+
+    const db = firestore.getDb();
+    const origRunTx = db.runTransaction.bind(db);
+    let attempts = 0;
+    const txSpy = jest.spyOn(db, 'runTransaction').mockImplementation(async (fn) => {
+      attempts++;
+      if (attempts === 1) {
+        throw new Error('3 INVALID_ARGUMENT: The referenced transaction has expired or is no longer valid.');
+      }
+      return origRunTx(fn);
+    });
+
+    const claimed = await firestore.claimSignupNotification('acme.com', 'retry@acme.com');
+    expect(attempts).toBe(2);
+    expect(claimed).toMatchObject({ email: 'retry@acme.com', domain: 'acme.com' });
+    expect(ctx.read('tenants/acme.com/users/retry@acme.com').signupNotifyPending).toBe(false);
+
+    // If both attempts fail with a transient transaction error, returns null and leaves signupNotifyPending: true
+    await firestore.upsertUser('acme.com', {
+      email: 'retry2@acme.com',
+      displayName: 'Retry Two',
+      signupDetectedSource: 'direct',
+    });
+    txSpy.mockRejectedValue(new Error('3 INVALID_ARGUMENT: The referenced transaction has expired or is no longer valid.'));
+    const failedClaim = await firestore.claimSignupNotification('acme.com', 'retry2@acme.com');
+    expect(failedClaim).toBeNull();
+    expect(ctx.read('tenants/acme.com/users/retry2@acme.com').signupNotifyPending).toBe(true);
+
+    txSpy.mockRestore();
+  });
 });
 
 describe('referral loop — pending flag + claim + inviter credit', () => {

@@ -1798,6 +1798,22 @@ async function setPostExportSurvey(domain, email, { useCase, detail }) {
   }
 }
 
+function isTransientTransactionError(err) {
+  const msg = String(err?.message || '');
+  return /transaction has expired|no longer valid|ABORTED|DEADLINE_EXCEEDED|UNAVAILABLE/i.test(msg);
+}
+
+async function runClaimTransaction(fn) {
+  try {
+    return await getDb().runTransaction(fn);
+  } catch (err) {
+    if (isTransientTransactionError(err)) {
+      return await getDb().runTransaction(fn);
+    }
+    throw err;
+  }
+}
+
 // Atomically claim a brand-new user's deferred signup notification. Returns the
 // email payload (self-reported + auto-detected source) exactly once, then flips
 // signupNotifyPending off so concurrent triggers (modal answer, grace timer,
@@ -1806,7 +1822,9 @@ async function setPostExportSurvey(domain, email, { useCase, detail }) {
 async function claimSignupNotification(domain, email) {
   try {
     const ref = tenantRef(domain).collection('users').doc(email.toLowerCase());
-    return await getDb().runTransaction(async (tx) => {
+    const pre = await ref.get();
+    if (!pre.exists || pre.data()?.signupNotifyPending !== true) return null;
+    return await runClaimTransaction(async (tx) => {
       const doc = await tx.get(ref);
       if (!doc.exists) return null;
       const d = doc.data();
@@ -1827,7 +1845,11 @@ async function claimSignupNotification(domain, email) {
       };
     });
   } catch (err) {
-    log.error('firestore: claimSignupNotification failed', { domain, email, error: err.message });
+    if (isTransientTransactionError(err)) {
+      log.warn('firestore: claimSignupNotification deferred (transient transaction expiry)', { domain, email, error: err.message });
+    } else {
+      log.error('firestore: claimSignupNotification failed', { domain, email, error: err.message });
+    }
     return null;
   }
 }
@@ -1889,7 +1911,9 @@ async function releaseWebhookEvent(eventId) {
 async function claimReferral(domain, email) {
   try {
     const ref = tenantRef(domain).collection('users').doc(email.toLowerCase());
-    return await getDb().runTransaction(async (tx) => {
+    const pre = await ref.get();
+    if (!pre.exists || pre.data()?.referralNotifyPending !== true) return null;
+    return await runClaimTransaction(async (tx) => {
       const doc = await tx.get(ref);
       if (!doc.exists) return null;
       const d = doc.data();
@@ -1904,7 +1928,11 @@ async function claimReferral(domain, email) {
       };
     });
   } catch (err) {
-    log.error('firestore: claimReferral failed', { domain, email, error: err.message });
+    if (isTransientTransactionError(err)) {
+      log.warn('firestore: claimReferral deferred (transient transaction expiry)', { domain, email, error: err.message });
+    } else {
+      log.error('firestore: claimReferral failed', { domain, email, error: err.message });
+    }
     return null;
   }
 }
