@@ -448,7 +448,10 @@
         onSuccess: (body) => {
           sessionToken = body.sessionToken;
           userEmail = body.email;
-          try { localStorage.setItem('att_session_token', sessionToken); } catch (e) {}
+          try {
+            localStorage.setItem('att_session_token', sessionToken);
+            if (userEmail) localStorage.setItem('att_user_email', userEmail);
+          } catch (e) {}
           document.getElementById('user-email').textContent = body.email;
           document.getElementById('login-screen').style.display = 'none';
           document.getElementById('dashboard').style.display = 'block';
@@ -461,7 +464,10 @@
     function signOut() {
       sessionToken = null;
       userEmail = null;
-      try { localStorage.removeItem('att_session_token'); } catch (e) {}
+      try {
+        localStorage.removeItem('att_session_token');
+        localStorage.removeItem('att_user_email');
+      } catch (e) {}
       document.getElementById('login-screen').style.display = '';
       document.getElementById('dashboard').style.display = 'none';
     }
@@ -493,7 +499,10 @@
           const me = await res.json();
           sessionToken = token;
           userEmail = me.email;
-          try { localStorage.setItem('att_session_token', token); } catch (e) {}
+          try {
+            localStorage.setItem('att_session_token', token);
+            if (userEmail) localStorage.setItem('att_user_email', userEmail);
+          } catch (e) {}
           // Strip the bearer from the URL — BOTH forms. ?token= previously
           // survived (replaceState kept the query), so the session token sat
           // in the URL bar, browser history, and the service worker's Cache
@@ -541,6 +550,17 @@
     } catch (e) { /* cosmetic */ }
     initSession();
 
+    function isEduDomain(email, domain) {
+      const e = (email || '').toLowerCase().trim();
+      const d = (domain || (e.includes('@') ? e.split('@')[1] : '')).toLowerCase().trim();
+      const target = d || e;
+      if (!target) return false;
+      return /\.(edu(\.[a-z]{2,})?|ac\.[a-z0-9.-]+|gov\.[a-z]{2,}|k12\.[a-z0-9.-]+|sch\.[a-z0-9.-]+|education)$/i.test(target) ||
+             /\.(edu|ac|education)\b/i.test(target) ||
+             /@.*(school|academy|college|university|deped|alokitohridoy|education|gymnasium|lyceum|instituto|colegio|escola|universidad|universidade)/i.test(e) ||
+             /(school|academy|college|university|deped|alokitohridoy|education|gymnasium|lyceum|instituto|colegio|escola|universidad|universidade)/i.test(d);
+    }
+
     async function loadHistory() {
       document.getElementById('loading').style.display = 'block';
       try {
@@ -572,7 +592,13 @@
         if (bRes.ok) {
           const bStatus = await bRes.json();
           window._lastBillingStatus = bStatus;
-          AttPricing.fromStatus(bStatus);
+          const isEdu = !!bStatus.isEdu || isEduDomain(userEmail || bStatus.email, bStatus.domain);
+          bStatus.isEdu = isEdu;
+          if (window.AttPricing && window.AttPricing.applyBillingStatus) {
+            window.AttPricing.applyBillingStatus(bStatus, { isEdu });
+          } else {
+            AttPricing.fromStatus(bStatus);
+          }
           // Paint the .price-lifetime span from the single source of truth —
           // robust across locales and re-runnable after a language switch
           // (the old string-replace failed on "9,99 $" in fr/de).
@@ -686,7 +712,11 @@
     // (billing/status.offer.tiered), otherwise the Lifetime pass.
     function historyUpgradePlan() {
       const s = window._lastBillingStatus;
-      return s && s.offer && s.offer.tiered ? 'pro_annual' : 'lifetime';
+      const isEdu = !!(s && (s.isEdu || s._isEdu)) || isEduDomain(userEmail || (s && s.email), s && s.domain);
+      if (s && s.offer && s.offer.tiered) {
+        return isEdu ? 'educator' : 'pro_annual';
+      }
+      return 'lifetime';
     }
 
     async function upgradeFromHistory(btn, plan) {
@@ -860,7 +890,7 @@
     function paintHistoryPrices() {
       const plan = historyUpgradePlan();
       const base = (typeof AttPricing !== 'undefined') ? AttPricing.price(plan) : '';
-      const p = base && plan === 'pro_annual' ? base + t('upgrade.perYear', '/yr') : base;
+      const p = base && (plan === 'pro_annual' || plan === 'educator') ? base + t('upgrade.perYear', '/yr') : base;
       if (!p) return;
       document.querySelectorAll('.price-lifetime').forEach(el => { el.textContent = p; });
     }

@@ -49,6 +49,26 @@ describe('fromStatus()', () => {
   });
 });
 
+describe('applyBillingStatus()', () => {
+  test('updates pricing and records isEdu from options or status', () => {
+    const s1 = { pricing: { educator: { label: '$19', period: '/yr' } }, isEdu: true };
+    const t1 = pricing.applyBillingStatus(s1, { isEdu: true });
+    expect(pricing.price('educator')).toBe('$19');
+    expect(t1._isEdu).toBe(true);
+
+    const s2 = { isEdu: true };
+    const t2 = pricing.applyBillingStatus(s2);
+    expect(t2._isEdu).toBe(true);
+
+    const t3 = pricing.applyBillingStatus(null, { isEdu: false });
+    expect(t3._isEdu).toBe(false);
+
+    const s4 = { isEdu: false };
+    const t4 = pricing.applyBillingStatus(s4);
+    expect(t4._isEdu).toBe(false);
+  });
+});
+
 describe('perMonth()', () => {
   test('returns the tiered monthly equivalent when the server advertises one', () => {
     pricing.fromStatus({ pricing: { pro_annual: { label: '$29', period: '/yr', perMonth: '$2.42' } } });

@@ -7048,6 +7048,29 @@ async function loadBillingStatus() {
     });
     const proBtn = document.getElementById('btn-header-pro');
     if (proBtn) proBtn.style.display = (state.signedIn && !_isPro) ? 'inline-flex' : 'none';
+    const proBtnPrice = document.querySelector('#btn-header-pro .price-educator');
+    if (proBtnPrice) {
+      const email = (state.userEmail || '').toLowerCase();
+      const domain = data?.domain || email.split('@')[1] || '';
+      const isCorporate = domain && data?.individual === false && !isEduDomain(email, domain);
+      const isEduUser = !!(data && data.isEdu) || !isCorporate || isEduDomain(email, domain);
+      const annualPrice = isEduUser ? AttPricing.price('educator') : (AttPricing.price('pro_annual') || AttPricing.price('educator'));
+      if (annualPrice) proBtnPrice.textContent = annualPrice;
+    }
+    try {
+      if (state && state.userEmail) localStorage.setItem('att_user_email', state.userEmail);
+    } catch (_) {}
+    const pricingLinks = document.querySelectorAll('.quota-pricing-link, a[href*="pricing.html"]');
+    const arm = (data && data.offer && data.offer.arm) || '';
+    const emailStr = (state && state.userEmail) || '';
+    pricingLinks.forEach(link => {
+      try {
+        const u = new URL(link.href, window.location.href);
+        if (emailStr) u.searchParams.set('email', emailStr);
+        if (arm) u.searchParams.set('arm', arm);
+        link.href = u.toString();
+      } catch (_) {}
+    });
     if (data.exportQuota && !_isPro) {
       updateQuotaIndicator(data.exportQuota.used, data.exportQuota.limit);
     } else if (_isPro) {
@@ -7642,9 +7665,9 @@ function isEduDomain(email, domain) {
   const target = d || e;
   if (!target) return false;
   return /\.(edu(\.[a-z]{2,})?|ac\.[a-z0-9.-]+|gov\.[a-z]{2,}|k12\.[a-z0-9.-]+|sch\.[a-z0-9.-]+|education)$/i.test(target) ||
-         /\.education\b/i.test(target) ||
-         /@(.*\.)?(school|academy|college|university|deped|alokitohridoy|education|gymnasium|lyceum)/i.test(e) ||
-         /\.(edu|ac|education)\b/i.test(target);
+         /\.(edu|ac|education)\b/i.test(target) ||
+         /@.*(school|academy|college|university|deped|alokitohridoy|education|gymnasium|lyceum|instituto|colegio|escola|universidad|universidade)/i.test(e) ||
+         /(school|academy|college|university|deped|alokitohridoy|education|gymnasium|lyceum|instituto|colegio|escola|universidad|universidade)/i.test(d);
 }
 
 // Shared context stamped on EVERY paywall/upgrade event so the revenue funnel
@@ -7653,7 +7676,9 @@ function isEduDomain(email, domain) {
 // so the "who bounces at the paywall, and where" analysis was 20%-visible.)
 function upgradeContext() {
   const email = (state.userEmail || '').toLowerCase();
-  const isEdu = !!(_billing && _billing.isEdu) || isEduDomain(email, (_billing && _billing.domain) || email.split('@')[1]);
+  const domain = (_billing && _billing.domain) || email.split('@')[1] || '';
+  const isCorporate = domain && _billing?.individual === false && !isEduDomain(email, domain);
+  const isEdu = !!(_billing && _billing.isEdu) || !isCorporate || isEduDomain(email, domain);
   return {
     isEdu,
     language: navigator.language || '',
@@ -7677,7 +7702,9 @@ function paintTieredUpgradeModal(offer, country) {
   const price = (plan) => (typeof AttPricing !== 'undefined' ? AttPricing.price(plan) : '');
   const perMonth = (plan) => (typeof AttPricing !== 'undefined' && AttPricing.perMonth ? AttPricing.perMonth(plan) : '');
   const email = (state.userEmail || '').toLowerCase();
-  const isEdu = !!(_billing && _billing.isEdu) || isEduDomain(email, (_billing && _billing.domain) || email.split('@')[1]);
+  const domain = (_billing && _billing.domain) || email.split('@')[1] || '';
+  const isCorporate = domain && _billing?.individual === false && !isEduDomain(email, domain);
+  const isEdu = !!(_billing && _billing.isEdu) || !isCorporate || isEduDomain(email, domain);
   const heroPlan = isEdu ? 'educator' : 'pro_annual';
 
   const dealPill = document.getElementById('upgrade-deal-pill');
@@ -7761,10 +7788,12 @@ function regionalSpecialPill(flag, lifetime, eduPerYear) {
 function updateUpgradeModalPricing() {
   const tieredOffer = _billing && _billing.offer && _billing.offer.tiered ? _billing.offer : null;
   if (tieredOffer) {
+    orderUpgradeModalCards(true);
     const c = _billing.country || state.signupCountry || '';
     paintTieredUpgradeModal(tieredOffer, typeof c === 'string' ? c.trim().toUpperCase() : '');
     return;
   }
+  orderUpgradeModalCards(false);
   // Undo tiered-only changes if this modal was painted tiered earlier.
   const tieredHeroName = document.querySelector('#plan-card-educator [data-i18n="upgrade.proAnnualName"]');
   if (tieredHeroName) {
@@ -8094,6 +8123,29 @@ function paintUpgradePaymentBadges(country) {
   }
 }
 
+function orderUpgradeModalCards(isTiered) {
+  const singleCard = document.getElementById('plan-card-single-meeting');
+  const lifetimeCard = document.getElementById('plan-card-lifetime');
+  const eduCard = document.getElementById('plan-card-educator');
+  const teamCard = document.getElementById('plan-card-team');
+
+  if (singleCard && lifetimeCard && eduCard && singleCard.parentNode) {
+    const parent = singleCard.parentNode;
+    if (isTiered) {
+      parent.insertBefore(eduCard, lifetimeCard);
+      parent.insertBefore(lifetimeCard, singleCard);
+    } else {
+      parent.insertBefore(lifetimeCard, eduCard);
+      parent.insertBefore(eduCard, singleCard);
+    }
+    if (teamCard) {
+      parent.insertBefore(singleCard, teamCard);
+    } else {
+      parent.appendChild(singleCard);
+    }
+  }
+}
+
 function showUpgradeModal(reason) {
   if (_isPro || (_billing && _billing.plan === 'pro')) return;
   state._lastUpgradeReason = reason || 'manual';
@@ -8144,25 +8196,17 @@ function showUpgradeModal(reason) {
     schoolLicenseBtn.style.display = isEdu ? 'block' : 'none';
   }
 
-  const singleCard = document.getElementById('plan-card-single-meeting');
-  const lifetimeCard = document.getElementById('plan-card-lifetime');
-  const eduCard = document.getElementById('plan-card-educator');
-  const teamCard = document.getElementById('plan-card-team');
-
-  if (singleCard && lifetimeCard && eduCard && singleCard.parentNode) {
-    const parent = singleCard.parentNode;
-    parent.insertBefore(eduCard, lifetimeCard);
-    parent.insertBefore(lifetimeCard, singleCard);
-    if (teamCard) {
-      parent.insertBefore(singleCard, teamCard);
-    } else {
-      parent.appendChild(singleCard);
-    }
-  }
+  const isTiered = !!(_billing && _billing.offer && _billing.offer.tiered);
+  orderUpgradeModalCards(isTiered);
 
   updateUpgradeModalPricing();
   if (!_billing) {
     ensureBilling().then(() => updateUpgradeModalPricing());
+  }
+  const reviewReward = document.getElementById('review-reward');
+  if (reviewReward) {
+    const isHardPaywall = reason === 'largeClass' || reason === 'exportQuota';
+    reviewReward.style.display = isHardPaywall ? 'none' : 'block';
   }
   const upgradeReviewLink = document.getElementById('upgrade-review-link');
   if (upgradeReviewLink) {
@@ -11960,7 +12004,7 @@ window.addEventListener('DOMContentLoaded', () => {
           </div>
         </div>
 
-        <button type="button" id="btn-upgrade-lifetime" onclick="startUpgradeCheckout('lifetime', 'btn-upgrade-lifetime')" style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#e3e3e3;padding:9px 16px;border-radius:20px;font-weight:600;font-size:.81rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s ease">
+        <button type="button" id="btn-upgrade-lifetime" onclick="startUpgradeCheckout('lifetime', 'btn-upgrade-lifetime')" style="width:100%;background:#1a73e8;border:none;color:#ffffff;padding:9.5px 16px;border-radius:20px;font-weight:600;font-size:.83rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 2px 8px rgba(26,115,232,.3);transition:all .15s ease">
           <span data-i18n="upgrade.ctaLifetime">Get Lifetime Access —</span> <span class="price-lifetime">$9.99</span>
         </button>
       </div>
@@ -12000,7 +12044,7 @@ window.addEventListener('DOMContentLoaded', () => {
       </div>
 
       <!-- Review for Pro exchange -->
-      <div style="background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.2);border-radius:8px;padding:9px 12px;margin-bottom:10px;font-size:.76rem;color:#94a3b8;line-height:1.45;text-align:center">
+      <div id="review-reward" style="background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.2);border-radius:8px;padding:9px 12px;margin-bottom:10px;font-size:.76rem;color:#94a3b8;line-height:1.45;text-align:center">
         🎓 <strong data-i18n="upgrade.reviewOffer1">School budget tight?</strong> <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" id="upgrade-review-link" target="_blank" onclick="onUpgradeReviewClick(event)" style="color:#38bdf8;font-weight:600;text-decoration:underline" data-i18n="upgrade.reviewOfferLink">Leave an honest review</a> <span data-i18n="upgrade.reviewOffer2">for 1 month free.</span>
         <div id="verify-review-box" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed rgba(56,189,248,.3)">
           <button type="button" id="verify-review-btn" onclick="triggerReviewVerification(event)" style="background:#0284c7;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:.75rem;font-weight:600;cursor:pointer" data-i18n="upgrade.verifyReviewBtn">Verify Review &amp; Unlock 1 Month Free</button>

@@ -841,18 +841,24 @@ async function sendUpgradeLinkForUser({
 
   const educatorUrl = offer.tiered
     ? `${redirectBase}?plan=educator${tokenParam}${countryParam}`
-    : ((isIndia || isRegional)
-      ? null
-      : `${redirectBase}?plan=educator${tokenParam}${promoParam}${countryParam}`);
+    : (isRegional
+      ? `${redirectBase}?plan=educator${tokenParam}${countryParam}`
+      : (isIndia
+        ? null
+        : `${redirectBase}?plan=educator${tokenParam}${promoParam}${countryParam}`));
 
   const lifetimeUrl = `${redirectBase}?plan=lifetime${tokenParam}${promoParam}${countryParam}`;
 
-  // Tiered pricing uses the user's resolved tier labels; legacy uses the 20% / 50% PPP offer.
+  const tieredTable = offer.tiered ? tieredPricingTable(offer) : null;
+
+  // Tiered pricing uses the user's resolved tier labels; legacy uses the regional or 20% / 50% PPP offer.
   const educatorPrice = offer.tiered
-    ? (offer.plans?.educator?.label || offer.plans?.pro_annual?.label || null)
-    : ((isIndia || isRegional) ? null : (isPppEligible ? '$2.49' : '$3.99'));
+    ? (tieredTable?.educator?.label || tieredTable?.pro_annual?.label || offer.prices?.educator?.label || offer.prices?.pro_annual?.label || null)
+    : (isRegional
+      ? (regionalConfig?.eduLabel || null)
+      : (isIndia ? null : (isPppEligible ? '$2.49' : '$3.99')));
   const lifetimePrice = offer.tiered
-    ? (offer.plans?.lifetime?.label || null)
+    ? (tieredTable?.lifetime?.label || offer.prices?.lifetime?.label || null)
     : (isIndia
       ? '₹299'
       : (isRegional
@@ -1141,14 +1147,23 @@ router.post('/billing/public-checkout', async (req, res) => {
   }
 });
 
-// GET /api/billing/offer — signed-out tiered offer for pricing.html. Country
-// comes from the request (Cloudflare header / geo), so the response must
+// GET /api/billing/offer — signed-out or authenticated tiered offer for pricing.html.
+// Country comes from the request (Cloudflare header / geo), so the response must
 // never be shared-cached across visitors. Signed-out tier-3 visitors get the
-// legacy offer (the experiment arm needs an email; see priceTiers.tier3Arm).
+// legacy offer unless an email or arm is provided.
 router.get('/billing/offer', (req, res) => {
   res.set('Cache-Control', 'private, no-store');
+  let email = typeof req.query?.email === 'string' ? req.query.email.trim() : null;
+  const arm = typeof req.query?.arm === 'string' ? req.query.arm.trim() : null;
+  if (!email && req.headers?.authorization?.startsWith('Bearer ')) {
+    try {
+      const token = req.headers.authorization.slice(7);
+      const decoded = jwt.verify(token, CONFIG.sessionSecret);
+      if (decoded && decoded.email) email = decoded.email;
+    } catch (_) {}
+  }
   const country = detectCountry(req);
-  const offer = getOffer({ country, email: null });
+  const offer = getOffer({ country, email, arm });
   res.json({
     ...publicOffer(offer),
     country: offer.country || null,
@@ -1714,9 +1729,9 @@ function isEduDomain(email, domain) {
   const target = d || e;
   if (!target) return false;
   return /\.(edu(\.[a-z]{2,})?|ac\.[a-z0-9.-]+|gov\.[a-z]{2,}|k12\.[a-z0-9.-]+|sch\.[a-z0-9.-]+|education)$/i.test(target) ||
-         /\.education\b/i.test(target) ||
-         /@(.*\.)?(school|academy|college|university|deped|alokitohridoy|education|gymnasium|lyceum)/i.test(e) ||
-         /\.(edu|ac|education)\b/i.test(target);
+         /\.(edu|ac|education)\b/i.test(target) ||
+         /@.*(school|academy|college|university|deped|alokitohridoy|education|gymnasium|lyceum|instituto|colegio|escola|universidad|universidade)/i.test(e) ||
+         /(school|academy|college|university|deped|alokitohridoy|education|gymnasium|lyceum|instituto|colegio|escola|universidad|universidade)/i.test(d);
 }
 
 // POST /api/billing/school-license-request — 1-click inquiry from institutional / .edu / .ac users
@@ -1846,6 +1861,27 @@ async function webhookHandler(req, res) {
         const { handleSingleMeetingCheckout } = require('./webhooks');
         if (await handleSingleMeetingCheckout(s)) {
           log.info('billing: handled single_meeting checkout in webhook', { sessionId: s.id });
+          try {
+            const { sendUpgradeNotification } = require('../lib/notifications');
+            const { getUser } = require('../services/firestore');
+            const email = s.metadata?.email || (ref.startsWith('user:') ? ref.slice(5) : (s.customer_details?.email || s.customer_email));
+            const domain = s.metadata?.domain || (email && email.includes('@') ? email.split('@')[1] : null);
+            const userDoc = (domain && email) ? await getUser(domain, email.toLowerCase()).catch(() => null) : null;
+            sendUpgradeNotification({
+              email: (email || '').toLowerCase(),
+              displayName: userDoc?.displayName || s.customer_details?.name || '',
+              domain,
+              plan: 'single_meeting',
+              amountTotal: s.amount_total,
+              currency: s.currency,
+              customerId: s.customer || null,
+              subscriptionId: s.subscription || null,
+              country: s.customer_details?.address?.country || userDoc?.signupGeo?.country || null,
+              isTeam: false,
+            }).catch(err => log.warn('billing: sendUpgradeNotification failed (single_meeting)', { email, error: err.message }));
+          } catch (e) {
+            log.warn('billing: error dispatching upgrade notification (single_meeting)', { sessionId: s.id, error: e.message });
+          }
           break;
         }
         if (s.metadata?.plan === 'single_meeting') {

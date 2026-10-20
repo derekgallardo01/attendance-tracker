@@ -1507,10 +1507,36 @@
         if (planParam && planParam !== 'institution') highlightPlanCard();
       } catch (e) { /* deep link is best-effort */ }
 
-      // ── Institution card: render only when the backend can charge it ──
-      fetch(BACKEND_URL + '/public/billing-config')
-        .then(function (r) { return r.ok ? r.json() : {}; })
-        .then(function (cfg) {
+      // ── Institution card & Tiered regional pricing: fetch in parallel to eliminate price flash ──
+      var qpOffer = new URLSearchParams(location.search);
+      var offerEmail = qpOffer.get('email');
+      if (!offerEmail) {
+        try { offerEmail = localStorage.getItem('att_user_email') || localStorage.getItem('last_user_email') || ''; } catch (e) {}
+      }
+      var offerArm = qpOffer.get('arm') || '';
+      var offerUrlParams = new URLSearchParams();
+      if (offerEmail) offerUrlParams.set('email', offerEmail);
+      if (offerArm) offerUrlParams.set('arm', offerArm);
+      var offerQueryStr = offerUrlParams.toString();
+      var offerFetchUrl = BACKEND_URL + '/billing/offer' + (offerQueryStr ? '?' + offerQueryStr : '');
+
+      var fetchHeaders = {};
+      try {
+        var token = localStorage.getItem('att_session_token');
+        if (token) fetchHeaders['Authorization'] = 'Bearer ' + token;
+      } catch (e) {}
+
+      Promise.all([
+        fetch(BACKEND_URL + '/public/billing-config')
+          .then(function (r) { return r.ok ? r.json() : {}; })
+          .catch(function () { return {}; }),
+        fetch(offerFetchUrl, { headers: fetchHeaders })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .catch(function () { return null; })
+      ])
+        .then(function (results) {
+          var cfg = results[0];
+          var offer = results[1];
           if (cfg && cfg.institutionAvailable) {
             var card = document.getElementById('plan-card-institution');
             if (card) card.style.display = '';
@@ -1519,20 +1545,10 @@
             var deptCard = document.getElementById('plan-card-department');
             if (deptCard) deptCard.style.display = '';
           }
-        })
-        .catch(function () { /* card stays hidden */ })
-        .then(function () {
-          // Tiered regional pricing: country-specific prices from the backend
-          // (never cached). Legacy markup stays untouched when not tiered.
-          return fetch(BACKEND_URL + '/billing/offer')
-            .then(function (r) { return r.ok ? r.json() : null; })
-            .then(function (offer) {
-              if (offer && offer.tiered && offer.pricing) {
-                window._tieredOffer = offer;
-                paintTieredPricing();
-              }
-            })
-            .catch(function () { /* legacy cards remain */ });
+          if (offer && offer.tiered && offer.pricing) {
+            window._tieredOffer = offer;
+            paintTieredPricing();
+          }
         })
         .then(function () {
           try {

@@ -165,4 +165,40 @@ describe('Resend Webhook & Svix Verification', () => {
       expect(res.body.error).toContain('Failed to process webhook');
     });
   });
+
+  describe('handleSingleMeetingCheckout', () => {
+    test('returns false if session is null or not single_meeting', async () => {
+      expect(await handleSingleMeetingCheckout(null)).toBe(false);
+      expect(await handleSingleMeetingCheckout({ metadata: { plan: 'lifetime' } })).toBe(false);
+    });
+
+    test('unlocks meeting and logs event when single_meeting with conferenceId', async () => {
+      const session = {
+        id: 'cs_test_sm',
+        amount_total: 149,
+        currency: 'usd',
+        metadata: { plan: 'single_meeting', conferenceId: 'meet-123', email: 'teacher@school.edu', domain: 'school.edu' },
+      };
+      const result = await handleSingleMeetingCheckout(session);
+      expect(result).toBe(true);
+      expect(firestore.unlockMeetingForUser).toHaveBeenCalledWith('school.edu', 'teacher@school.edu', 'meet-123', expect.objectContaining({
+        stripeSessionId: 'cs_test_sm',
+        amountTotal: 149,
+        currency: 'usd',
+      }));
+      expect(firestore.logEvent).toHaveBeenCalledWith('school.edu', expect.objectContaining({
+        type: 'upgraded',
+        meta: expect.objectContaining({ plan: 'single_meeting', amount: 149 }),
+      }));
+    });
+
+    test('returns false and warns if single_meeting without conferenceId', async () => {
+      const session = {
+        id: 'cs_test_sm_noconf',
+        metadata: { plan: 'single_meeting', email: 'teacher@school.edu' },
+      };
+      const result = await handleSingleMeetingCheckout(session);
+      expect(result).toBe(false);
+    });
+  });
 });

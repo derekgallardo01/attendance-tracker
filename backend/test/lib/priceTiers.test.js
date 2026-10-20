@@ -48,8 +48,10 @@ describe('tier3Arm', () => {
     expect(tiers.tier3Arm(` ${a.toUpperCase()} `)).toBe('tiered'); // normalized
     expect(tiers.tier3Arm(b)).toBe('legacy');
   });
-  test('no email → legacy; all / off overrides', () => {
+  test('no email → legacy; all / off overrides; armOverride wins', () => {
     expect(tiers.tier3Arm(null)).toBe('legacy');
+    expect(tiers.tier3Arm(null, 'tiered')).toBe('tiered');
+    expect(tiers.tier3Arm(emailInArm('tiered'), 'legacy')).toBe('legacy');
     process.env.TIER3_TEST = 'all';
     expect(tiers.tier3Arm(null)).toBe('tiered');
     process.env.TIER3_TEST = 'off';
@@ -96,19 +98,44 @@ describe('getOffer', () => {
     expect(o.prices.pro_annual.label).toBe('MX$279');
     expect(o.prices.pro_annual.perMonth).toBe('MX$23'); // whole units outside USD
     process.env.TIER3_TEST = 'all';
-    expect(tiers.getOffer({ country: 'ID', email: 'a@b.com' }).prices.pro_annual.perMonth).toBe('Rp 11.583');
+    expect(tiers.getOffer({ country: 'ID', email: 'a@b.com' }).prices.pro_annual.perMonth).toBe('Rp 8.250');
   });
 
   test('tier 3: legacy arm falls back; tiered arm gets local prices + methods', () => {
     expect(tiers.getOffer({ country: 'IN', email: emailInArm('legacy') })).toMatchObject({ tiered: false, tier: 3, arm: 'legacy' });
     const o = tiers.getOffer({ country: 'IN', email: emailInArm('tiered') });
     expect(o).toMatchObject({ tiered: true, tier: 3, arm: 'tiered', currency: 'inr', methods: ['card', 'upi'] });
+    expect(o.prices.educator.label).toBe('₹349');
+    expect(o.prices.pro_annual.label).toBe('₹499');
+    expect(o.prices.lifetime.label).toBe('₹799');
+    expect(o.prices.single_meeting.label).toBe('₹99');
+
+    // PH
+    const ph = tiers.getOffer({ country: 'PH', arm: 'tiered' });
+    expect(ph.prices.educator.label).toBe('₱249');
+    expect(ph.prices.pro_annual.label).toBe('₱399');
+    expect(ph.prices.lifetime.label).toBe('₱599');
+
+    // ID
+    const id = tiers.getOffer({ country: 'ID', arm: 'tiered' });
+    expect(id.prices.educator.label).toBe('Rp 69.000');
+    expect(id.prices.pro_annual.label).toBe('Rp 99.000');
+    expect(id.prices.lifetime.label).toBe('Rp 149.000');
+
+    // KE
+    const ke = tiers.getOffer({ country: 'KE', arm: 'tiered' });
+    expect(ke.prices.educator.label).toBe('KSh 490');
+    expect(ke.prices.pro_annual.label).toBe('KSh 790');
+    expect(ke.prices.lifetime.label).toBe('KSh 1,290');
   });
 
-  test('tier 3 USD market (no local table) sells subscriptions', () => {
+  test('tier 3 USD market (no local table) sells subscriptions with recalibrated sweet spot', () => {
     const o = tiers.getOffer({ country: 'VN', email: emailInArm('tiered') });
     expect(o).toMatchObject({ tiered: true, currency: 'usd', prepaid: false, monthlyAvailable: true });
     expect(o.prices.pro_annual.label).toBe('$9');
+    expect(o.prices.educator.label).toBe('$5');
+    expect(o.prices.lifetime.label).toBe('$12');
+    expect(o.prices.single_meeting.label).toBe('$1.49');
   });
 });
 

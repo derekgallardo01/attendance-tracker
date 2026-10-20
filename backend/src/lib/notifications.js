@@ -474,6 +474,7 @@ async function sendUpgradeNotification({
   let planLabel = 'Pro Plan';
   if (plan === 'educator') planLabel = 'Educator Pro';
   else if (plan === 'lifetime') planLabel = 'Lifetime Pass';
+  else if (plan === 'single_meeting') planLabel = 'Single Meeting Pass';
   else if (isTeam || plan === 'team') planLabel = 'Team Pro';
   else if (plan === 'department') planLabel = 'Department Pro';
   else if (plan === 'individual') planLabel = 'Individual Pro';
@@ -3115,17 +3116,21 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
 
   const lang = resolveLanguage({ language, country, domain: domain || (to && to.includes('@') ? to.split('@')[1] : null), email: to });
 
+  const cleanEduPrice = educatorPrice ? String(educatorPrice).replace(/\/(yr|ano|año|year|mês|mes|mo|month|বছর)$/i, '').trim() : '';
+  const displayEduPrice = cleanEduPrice || educatorPrice || '$4.99';
+  const displayLifetimePrice = lifetimePrice || '$9.99';
+
   let greeting = displayName ? `Hi ${displayName.split(' ')[0]},` : 'Hi there,';
   let pppNote = isPpp ? ` (50% Regional Subsidy applied ${flag || ''})` : ' (20% 24-Hour Discount applied ⚡)';
   let subject = 'Your Attendance Tracker 24-hour discount & upgrade link';
   let bodyIntro = "Here is your direct 1-click link to unlock unlimited classes and exports with a special 24-hour discount. Whenever your class wraps up and you're back at your desk, you can complete your upgrade below:";
   let bestValueTag = 'Best Value';
-  let lifetimeTitle = `Lifetime Pro — ${escape(lifetimePrice)} one-time${escape(pppNote)}`;
+  let lifetimeTitle = `Lifetime Pro — ${escape(displayLifetimePrice)} one-time${escape(pppNote)}`;
   let lifetimeDesc = 'Pay once, own forever — no recurring subscription. Unlimited Sheets exports & auto-capture.';
-  let lifetimeBtn = `Get Lifetime Pro (${escape(lifetimePrice)}) →`;
-  let educatorTitle = `Educator Pass — ${escape(educatorPrice)}/yr${escape(pppNote)}`;
+  let lifetimeBtn = `Get Lifetime Pro (${escape(displayLifetimePrice)}) →`;
+  let educatorTitle = `Educator Pass — ${escape(displayEduPrice)}/yr${escape(pppNote)}`;
   let educatorDesc = 'Unlimited Google Sheets exports & attendance records for 1 full year.';
-  let educatorBtn = `Unlock Educator Pass (${escape(educatorPrice)}/yr) →`;
+  let educatorBtn = `Unlock Educator Pass (${escape(displayEduPrice)}/yr) →`;
   let dashboardNote = 'Or view your previous attendance history anytime in your';
   let dashboardLinkText = 'Web Dashboard';
   let thankYouNote = 'Thank you for teaching with Attendance Tracker!';
@@ -3138,12 +3143,12 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
     subject = 'Tu enlace para actualizar Attendance Tracker (descuento especial de 24 horas)';
     bodyIntro = 'Aquí tienes tu enlace directo para desbloquear clases y exportaciones ilimitadas con un descuento especial de 24 horas. Cuando tu clase termine y vuelvas a tu escritorio, puedes completar tu actualización aquí:';
     bestValueTag = 'Mejor valor';
-    lifetimeTitle = `Pro de por vida — ${escape(lifetimePrice)} pago único${escape(pppNote)}`;
+    lifetimeTitle = `Pro de por vida — ${escape(displayLifetimePrice)} pago único${escape(pppNote)}`;
     lifetimeDesc = 'Pago único · Para siempre · Sin renovaciones ni sorpresas. Exportaciones automáticas y registros ilimitados.';
-    lifetimeBtn = `Obtener Pro de por vida (${escape(lifetimePrice)}) →`;
-    educatorTitle = `Pase Educador — ${escape(educatorPrice)}/año${escape(pppNote)}`;
+    lifetimeBtn = `Obtener Pro de por vida (${escape(displayLifetimePrice)}) →`;
+    educatorTitle = `Pase Educador — ${escape(displayEduPrice)}/año${escape(pppNote)}`;
     educatorDesc = 'Exportaciones ilimitadas a Google Sheets y registros de asistencia por 1 año completo.';
-    educatorBtn = `Desbloquear Pase Educador (${escape(educatorPrice)}/año) →`;
+    educatorBtn = `Desbloquear Pase Educador (${escape(displayEduPrice)}/año) →`;
     dashboardNote = 'O consulta tu historial de asistencia en cualquier momento en tu';
     dashboardLinkText = 'Panel Web';
     thankYouNote = '¡Gracias por enseñar con Attendance Tracker!';
@@ -3155,12 +3160,12 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
     subject = 'Seu link para atualizar o Attendance Tracker (desconto especial de 24 horas)';
     bodyIntro = 'Aqui está o seu link direto para desbloquear turmas e exportações ilimitadas com um desconto especial de 24 horas. Quando sua aula terminar e você estiver de volta à sua mesa, você pode concluir seu upgrade abaixo:';
     bestValueTag = 'Melhor valor';
-    lifetimeTitle = `Pro Vitalício — ${escape(lifetimePrice)} pagamento único${escape(pppNote)}`;
+    lifetimeTitle = `Pro Vitalício — ${escape(displayLifetimePrice)} pagamento único${escape(pppNote)}`;
     lifetimeDesc = 'Pagamento único · Para sempre · Sem renovações nem surpresas. Exportações automáticas e registros ilimitados.';
-    lifetimeBtn = `Obter Pro Vitalício (${escape(lifetimePrice)}) →`;
-    educatorTitle = `Passe Educador — ${escape(educatorPrice)}/ano${escape(pppNote)}`;
+    lifetimeBtn = `Obter Pro Vitalício (${escape(displayLifetimePrice)}) →`;
+    educatorTitle = `Passe Educador — ${escape(displayEduPrice)}/ano${escape(pppNote)}`;
     educatorDesc = 'Exportações ilimitadas para o Google Sheets e registros de presença por 1 ano completo.';
-    educatorBtn = `Desbloquear Passe Educador (${escape(educatorPrice)}/ano) →`;
+    educatorBtn = `Desbloquear Passe Educador (${escape(displayEduPrice)}/ano) →`;
     dashboardNote = 'Ou visualize seu histórico de presença a qualquer momento no seu';
     dashboardLinkText = 'Painel Web';
     thankYouNote = 'Obrigado por ensinar com o Attendance Tracker!';
@@ -3172,17 +3177,16 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
     subject = 'আপনার Attendance Tracker আপগ্রেড লিংক (২৪ ঘণ্টার বিশেষ অফার)';
     bodyIntro = '২৪ ঘণ্টার বিশেষ ডিসকাউন্টে আনলিমিটেড ক্লাস ও এক্সপোর্ট আনলক করার জন্য সরাসরি লিংক এখানে দেওয়া হলো। ক্লাস শেষ করে যখনই টেবিলে ফিরবেন, নিচের লিংক থেকে আপগ্রেড সম্পন্ন করতে পারবেন:';
     bestValueTag = 'সেরা অফার';
-    lifetimeTitle = `লাইফটাইম প্রো — ${escape(lifetimePrice)} এককালীন${escape(pppNote)}`;
+    lifetimeTitle = `লাইফটাইম প্রো — ${escape(displayLifetimePrice)} এককালীন${escape(pppNote)}`;
     lifetimeDesc = 'একবার পেমেন্ট করুন, আজীবন আনলিমিটেড ব্যবহার করুন। কোনো মাসিক বা বাৎসরিক ফি নেই।';
-    lifetimeBtn = `লাইফটাইম প্রো নিন (${escape(lifetimePrice)}) →`;
-    educatorTitle = `এডুকেটর পাস — ${escape(educatorPrice)}/বছর${escape(pppNote)}`;
+    lifetimeBtn = `লাইফটাইম প্রো নিন (${escape(displayLifetimePrice)}) →`;
+    educatorTitle = `এডুকেটর পাস — ${escape(displayEduPrice)}/বছর${escape(pppNote)}`;
     educatorDesc = 'পুরো ১ বছরের জন্য আনলিমিটেড গুগল শিট এক্সপোর্ট ও উপস্থিতি রেকর্ড।';
-    educatorBtn = `এডুকেটর পাস আনলক করুন (${escape(educatorPrice)}/বছর) →`;
+    educatorBtn = `এডুকেটর পাস আনলক করুন (${escape(displayEduPrice)}/বছর) →`;
     dashboardNote = 'অথবা যেকোনো সময় আপনার পূর্বের হিস্ট্রি দেখতে ভিজিট করুন';
     dashboardLinkText = 'ওয়েব ড্যাশবোর্ড';
     thankYouNote = 'Attendance Tracker ব্যবহার করার জন্য ধন্যবাদ!';
     badgeText = '⚡ ২৪ ঘণ্টার বিশেষ অফার';
-    badgeSubtitle = 'আনলিমিটেড উপস্থিতি ও এক্সপোর্টে বিশেষ ডিসকাউন্ট';
   }
 
   const isIndia = (country || '').toUpperCase() === 'IN';
@@ -3190,9 +3194,9 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
     subject = 'Unlock Attendance Tracker Lifetime Pro (₹299 Special Offer 🇮🇳)';
     bodyIntro = "Here is your direct 1-click link to unlock unlimited classes and exports with the India Lifetime Pass. No recurring auto-debit, zero subscription fees — pay once via UPI or Card and own forever:";
     bestValueTag = 'Special Offer (No Subscriptions)';
-    lifetimeTitle = `Lifetime Pro — ${escape(lifetimePrice)} one-time (Special Offer 🇮🇳)`;
+    lifetimeTitle = `Lifetime Pro — ${escape(displayLifetimePrice)} one-time (Special Offer 🇮🇳)`;
     lifetimeDesc = 'Pay once, own forever — zero recurring subscriptions or bank auto-debits. Unlimited Sheets exports & auto-capture.';
-    lifetimeBtn = `Unlock Lifetime Pro with UPI or Card (${escape(lifetimePrice)}) →`;
+    lifetimeBtn = `Unlock Lifetime Pro with UPI or Card (${escape(displayLifetimePrice)}) →`;
   }
   const upiBadgeHtml = isIndia ? '<p style="margin:8px 0 0;font-size:11.5px;color:#7ee787;text-align:center;line-height:1.4;">⚡ Supports UPI (Google Pay, PhonePe, Paytm, BHIM) & Cards</p>' : '';
 

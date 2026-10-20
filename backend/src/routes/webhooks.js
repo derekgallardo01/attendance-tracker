@@ -120,7 +120,11 @@ async function handleSingleMeetingCheckout(session) {
         currency: session.currency,
         stripeCustomerId: session.customer || null,
       });
-      await logEvent(domain, { email, type: 'upgraded', meta: { plan: 'single_meeting', amount: session.amount_total, currency: session.currency } });
+      try {
+        await logEvent(domain, { email, type: 'upgraded', meta: { plan: 'single_meeting', amount: session.amount_total, currency: session.currency } });
+      } catch (err) {
+        log.warn('webhooks: logEvent failed for single_meeting', { error: err.message });
+      }
       log.info('webhooks: single meeting unlocked via checkout', { conferenceId, email, domain, sessionId: session.id });
       return true;
     } else {

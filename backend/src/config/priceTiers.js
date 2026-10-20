@@ -31,16 +31,16 @@ const TIER_3 = new Set([
 const USD_PRICES = {
   1: { pro_annual: 2900, pro_monthly: 499, educator: 1900, lifetime: 4900, single_meeting: 299 },
   2: { pro_annual: 1500, pro_monthly: 299, educator: 1000, lifetime: 2900, single_meeting: 199 },
-  3: { pro_annual: 900, pro_monthly: 199, educator: 600, lifetime: 1900, single_meeting: 149 },
+  3: { pro_annual: 900, pro_monthly: 199, educator: 500, lifetime: 1200, single_meeting: 149 },
 };
 
 // Local-currency markets (minor units). Each ≈ its tier's USD price, rounded
 // to a clean local number. All are prepaid-year markets.
 const LOCAL_PRICES = {
-  IN: { currency: 'inr', methods: ['card', 'upi'], prices: { pro_annual: 74900, educator: 49900, lifetime: 159900, single_meeting: 9900 } },
-  PH: { currency: 'php', prices: { pro_annual: 49900, educator: 34900, lifetime: 109900, single_meeting: 9900 } },
-  ID: { currency: 'idr', prices: { pro_annual: 13900000, educator: 9900000, lifetime: 29900000, single_meeting: 2900000 } },
-  KE: { currency: 'kes', prices: { pro_annual: 119000, educator: 79000, lifetime: 249000, single_meeting: 19500 } },
+  IN: { currency: 'inr', methods: ['card', 'upi'], prices: { pro_annual: 49900, educator: 34900, lifetime: 79900, single_meeting: 9900 } },
+  PH: { currency: 'php', prices: { pro_annual: 39900, educator: 24900, lifetime: 59900, single_meeting: 9900 } },
+  ID: { currency: 'idr', prices: { pro_annual: 9900000, educator: 6900000, lifetime: 14900000, single_meeting: 2900000 } },
+  KE: { currency: 'kes', prices: { pro_annual: 79000, educator: 49000, lifetime: 129000, single_meeting: 19500 } },
   MX: { currency: 'mxn', prices: { pro_annual: 27900, educator: 18900, lifetime: 54900, single_meeting: 3900 } },
   BR: { currency: 'brl', prices: { pro_annual: 7900, educator: 5400, lifetime: 15900, single_meeting: 1400 } },
   MY: { currency: 'myr', prices: { pro_annual: 6500, educator: 4500, lifetime: 12900, single_meeting: 1200 } },
@@ -84,10 +84,12 @@ function tierFor(country) {
 }
 
 // Stable 50/50 experiment arm for tier-3 users. Signed-out visitors (no
-// email) get the legacy offer so a later signed-in view can't contradict it.
-function tier3Arm(email) {
+// email) get the legacy offer so a later signed-in view can't contradict it,
+// unless an explicit arm override is provided (e.g. public offer check with arm=tiered).
+function tier3Arm(email, armOverride = null) {
   const mode = process.env.TIER3_TEST || 'split';
   if (mode === 'all') return 'tiered';
+  if (armOverride === 'tiered' || armOverride === 'legacy') return armOverride;
   if (mode === 'off' || !email) return 'legacy';
   const byte = crypto.createHash('sha256').update(String(email).trim().toLowerCase()).digest()[0];
   return byte % 2 === 0 ? 'tiered' : 'legacy';
@@ -111,10 +113,10 @@ function monthlyEquivalent(amount, currency) {
 
 // The full individual offer for a buyer. `tiered:false` means the caller must
 // use the legacy pricing path (flag off, or a tier-3 legacy-arm user).
-function getOffer({ country, email } = {}) {
+function getOffer({ country, email, arm: armOverride } = {}) {
   const c = normalizeCountry(country);
   const tier = tierFor(c);
-  const arm = tier === 3 ? tier3Arm(email) : 'tiered';
+  const arm = tier === 3 ? tier3Arm(email, armOverride) : 'tiered';
   if (!tieredPricingEnabled() || arm === 'legacy') {
     return { tiered: false, tier, arm: tieredPricingEnabled() ? arm : null, country: c };
   }

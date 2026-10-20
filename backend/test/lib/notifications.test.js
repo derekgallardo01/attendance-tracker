@@ -835,13 +835,23 @@ describe('notifications — remaining sender branches (Resend mocked)', () => {
       currency: 'usd',
       isTeam: true,
     });
-    expect(mockSend).toHaveBeenCalledTimes(2);
+    await n.sendUpgradeNotification({
+      email: 'pass@school.org',
+      domain: 'school.org',
+      plan: 'single_meeting',
+      amountTotal: 149,
+      currency: 'usd',
+    });
+    expect(mockSend).toHaveBeenCalledTimes(3);
     const call1 = mockSend.mock.calls[0][0];
     expect(call1.subject).toContain('Lifetime Pass');
     expect(call1.html).toContain('Active');
     const call2 = mockSend.mock.calls[1][0];
     expect(call2.subject).toContain('Team Pro');
     expect(call2.html).toContain('$19.99 USD');
+    const call3 = mockSend.mock.calls[2][0];
+    expect(call3.subject).toContain('Single Meeting Pass');
+    expect(call3.html).toContain('$1.49 USD');
   });
 
   test('sendAdminSubscriptionCancelledNotification formats plan, dates, Stripe links, and source', async () => {
@@ -1734,6 +1744,63 @@ describe('notifications — buildDesignSystemEmail & upgrade link sender', () =>
     expect(call.html).toContain('এডুকেটর পাস');
     expect(call.html).toContain('লাইফটাইম প্রো');
     expect(call.tags).toEqual([{ name: 'type', value: 'upgrade_link_requested' }, { name: 'lang', value: 'bn' }]);
+  });
+
+  test('sendUpgradeLinkEmail cleans regional prices and avoids duplicate /yr/yr or blank ()', async () => {
+    const n = require('../../src/lib/notifications');
+
+    // Regional PH price with /yr suffix
+    mockSend.mockClear();
+    await n.sendUpgradeLinkEmail({
+      to: 'teacher@school.edu.ph',
+      displayName: 'Maria Santos',
+      educatorUrl: 'https://buy.stripe.com/edu_ph',
+      lifetimeUrl: 'https://buy.stripe.com/life_ph',
+      educatorPrice: '₱140/yr',
+      lifetimePrice: '₱280',
+      country: 'PH',
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    let call = mockSend.mock.calls[0][0];
+    expect(call.html).toContain('₱140/yr');
+    expect(call.html).not.toContain('₱140/yr/yr');
+    expect(call.text).toContain('₱140/yr');
+    expect(call.text).not.toContain('₱140/yr/yr');
+
+    // Regional MX price with /año suffix in Spanish
+    mockSend.mockClear();
+    await n.sendUpgradeLinkEmail({
+      to: 'maestro@colegio.edu.mx',
+      displayName: 'Alejandro Morales',
+      educatorUrl: 'https://buy.stripe.com/edu_mx',
+      lifetimeUrl: 'https://buy.stripe.com/life_mx',
+      educatorPrice: '$49 MXN/año',
+      lifetimePrice: '$99 MXN',
+      country: 'MX',
+      language: 'es',
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    call = mockSend.mock.calls[0][0];
+    expect(call.html).toContain('$49 MXN/año');
+    expect(call.html).not.toContain('$49 MXN/año/año');
+    expect(call.text).toContain('$49 MXN/año');
+    expect(call.text).not.toContain('$49 MXN/año/año');
+
+    // Safe fallbacks when prices are missing/empty
+    mockSend.mockClear();
+    await n.sendUpgradeLinkEmail({
+      to: 'fallback@school.edu',
+      educatorUrl: 'https://buy.stripe.com/edu',
+      lifetimeUrl: 'https://buy.stripe.com/life',
+      educatorPrice: null,
+      lifetimePrice: null,
+    });
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    call = mockSend.mock.calls[0][0];
+    expect(call.html).not.toContain('()');
+    expect(call.html).not.toContain('(/yr)');
+    expect(call.html).toContain('Get Lifetime Pro ($9.99)');
+    expect(call.html).toContain('Unlock Educator Pass ($4.99/yr)');
   });
 
   test('multilingual lifecycle emails render localized content for es, pt, bn', async () => {

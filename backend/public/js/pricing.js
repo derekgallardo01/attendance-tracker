@@ -30,6 +30,14 @@
     return current;
   }
 
+  function applyBillingStatus(status, opts) {
+    const table = fromStatus(status);
+    const isEdu = (opts && typeof opts.isEdu === 'boolean') ? opts.isEdu : !!(status && status.isEdu);
+    if (status) status.isEdu = isEdu;
+    table._isEdu = isEdu;
+    return table;
+  }
+
   // "$9.99" for a known plan, '' for an unknown one (render-safe).
   function price(plan) {
     return (current[plan] && current[plan].label) || '';
@@ -77,7 +85,7 @@
     return rates[plan] || '';
   }
 
-  const api = { DEFAULTS, LOCAL_CURRENCY_ESTIMATES, fromStatus, price, perMonth, quotaLimit, localCurrencyAnchor, _reset: function () { current = DEFAULTS; } };
+  const api = { DEFAULTS, LOCAL_CURRENCY_ESTIMATES, fromStatus, applyBillingStatus, price, perMonth, quotaLimit, localCurrencyAnchor, _reset: function () { current = DEFAULTS; } };
   root.AttPricing = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

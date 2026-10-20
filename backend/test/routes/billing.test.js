@@ -20,6 +20,7 @@ jest.mock('stripe', () => jest.fn(() => mockStripeInstance));
 
 jest.mock('../../src/lib/notifications', () => ({
   sendUpgradeLinkEmail: jest.fn().mockResolvedValue({ sent: true }),
+  sendUpgradeNotification: jest.fn().mockResolvedValue({ sent: true }),
   sendSubscriptionCancelledEmail: jest.fn().mockResolvedValue({ sent: true }),
   sendInvoiceActionRequiredEmail: jest.fn().mockResolvedValue({ sent: true }),
   sendAdminEmail: jest.fn().mockResolvedValue({ sent: true }),
@@ -42,6 +43,7 @@ jest.mock('../../src/services/firestore', () => ({
   isEmailSuppressed: jest.fn().mockResolvedValue(false),
   persistExport: jest.fn().mockResolvedValue({ id: 'exp_123' }),
   isMeetingUnlocked: jest.fn().mockResolvedValue(false),
+  unlockMeetingForUser: jest.fn().mockResolvedValue(true),
   markUserLargeClassGraceUsed: jest.fn().mockResolvedValue(true),
   isUserDeleted: jest.fn().mockResolvedValue(false),
   getExportReexportCount: jest.fn().mockResolvedValue(null),
@@ -65,10 +67,15 @@ beforeEach(() => {
   firestore.getUserPlan.mockResolvedValue({ plan: 'free', billingStatus: null, stripeCustomerId: null });
   firestore.getTeamAdminStatus.mockResolvedValue({ isTeamAdmin: true, isAdmin: true });
   firestore.claimWebhookEvent.mockResolvedValue(true); // clearMocks wipes implementations' calls, not defaults set here
+  firestore.isEmailSuppressed.mockResolvedValue(false);
+  firestore.unlockMeetingForUser.mockResolvedValue(true);
+  firestore.recordPayment.mockResolvedValue(true);
+  firestore.logEvent.mockResolvedValue(true);
   delete process.env.STRIPE_SECRET_KEY;
   delete process.env.STRIPE_PRICE_ID;
   delete process.env.STRIPE_WEBHOOK_SECRET;
   delete process.env.STRIPE_INDIVIDUAL_PRICE_ID;
+  delete process.env.TIERED_PRICING;
   app = buildApp();
 });
 
@@ -1623,6 +1630,10 @@ describe('billing/status pricing payload', () => {
       { email: 'admin@district.k12.org', domain: 'district.k12.org' },
       { email: 'fellow@oxford.ac.uk', domain: 'oxford.ac.uk' },
       { email: 'teacher@learn.education', domain: 'learn.education' },
+      { email: 'coach@imgacademy.com.my', domain: 'imgacademy.com.my' },
+      { email: 'teacher@alaliaschool.com', domain: 'alaliaschool.com' },
+      { email: 'prof@colegio-madrid.es', domain: 'colegio-madrid.es' },
+      { email: 'maestro@instituto-nacional.mx', domain: 'instituto-nacional.mx' },
     ];
 
     for (const { email, domain } of testCases) {
@@ -1694,7 +1705,7 @@ describe('billing/status pricing payload', () => {
   });
 
   test('POST /billing/school-license-request returns 500 when logEvent fails', async () => {
-    firestore.logEvent.mockRejectedValue(new Error('firestore failure'));
+    firestore.logEvent.mockRejectedValueOnce(new Error('firestore failure'));
 
     const res = await request(app)
       .post('/api/billing/school-license-request')
@@ -1854,6 +1865,58 @@ describe('billing/status pricing payload', () => {
         reason: 'large_class',
       });
       expect(resSupp.skipped).toBe('suppressed');
+    });
+
+    test('sendUpgradeLinkForUser sends regional educator url and eduLabel for regional legacy users', async () => {
+      process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+      process.env.STRIPE_PRICE_ID = 'price_default';
+      process.env.STRIPE_EDUCATOR_PRICE_ID = 'price_edu';
+      process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID = 'price_life';
+      delete process.env.TIERED_PRICING;
+      app = buildApp();
+
+      const uniqueEmail = `teacher_ph_${Date.now()}@school.edu.ph`;
+      const res = await request(app)
+        .post('/api/billing/send-upgrade-link')
+        .set(authedHeader(uniqueEmail, 'school.edu.ph'))
+        .set('cf-ipcountry', 'PH')
+        .send({});
+
+      expect(res.status).toBe(200);
+      const { sendUpgradeLinkEmail } = require('../../src/lib/notifications');
+      expect(sendUpgradeLinkEmail).toHaveBeenCalledWith(expect.objectContaining({
+        to: uniqueEmail,
+        educatorPrice: '₱140/yr',
+        educatorUrl: expect.stringContaining('/api/billing/checkout-redirect?plan=educator'),
+      }));
+    });
+
+    test('sendUpgradeLinkForUser resolves prices from tiered pricing table so labels are not empty', async () => {
+      try {
+        process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+        process.env.TIERED_PRICING = '1';
+        app = buildApp();
+
+        const uniqueEmail = `teacher_us_${Date.now()}@school.edu`;
+        const res = await request(app)
+          .post('/api/billing/send-upgrade-link')
+          .set(authedHeader(uniqueEmail, 'school.edu'))
+          .set('cf-ipcountry', 'US')
+          .send({});
+
+        expect(res.status).toBe(200);
+        const { sendUpgradeLinkEmail } = require('../../src/lib/notifications');
+        expect(sendUpgradeLinkEmail).toHaveBeenCalledWith(expect.objectContaining({
+          to: uniqueEmail,
+          educatorPrice: '$19',
+          lifetimePrice: '$49',
+          educatorUrl: expect.stringContaining('/api/billing/checkout-redirect?plan=educator'),
+          lifetimeUrl: expect.stringContaining('/api/billing/checkout-redirect?plan=lifetime'),
+        }));
+      } finally {
+        delete process.env.TIERED_PRICING;
+        app = buildApp();
+      }
     });
   });
 
@@ -3122,6 +3185,7 @@ describe('billing — tiered regional pricing (TIERED_PRICING=1)', () => {
   beforeEach(() => {
     process.env.STRIPE_SECRET_KEY = 'sk_test_x';
     process.env.STRIPE_PRICE_ID = 'price_x';
+    process.env.STRIPE_EDUCATOR_PRICE_ID = 'price_edu_x';
     process.env.STRIPE_WEBHOOK_SECRET = 'whsec_x';
     process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID = 'price_life_legacy';
     process.env.TIERED_PRICING = '1';
@@ -3133,6 +3197,7 @@ describe('billing — tiered regional pricing (TIERED_PRICING=1)', () => {
     delete process.env.TIERED_PRICING;
     delete process.env.TIER3_TEST;
     delete process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID;
+    delete process.env.STRIPE_EDUCATOR_PRICE_ID;
   });
 
   test('US pro_annual → $29/yr subscription via price_data, no coupon, checkout_started logged', async () => {
@@ -3172,7 +3237,7 @@ describe('billing — tiered regional pricing (TIERED_PRICING=1)', () => {
   test('India tiered arm → INR with card+UPI; Kenya keeps dynamic methods', async () => {
     await checkout(emailInArm('tiered'), { plan: 'educator', country: 'IN' });
     let s = lastSession();
-    expect(s.line_items[0].price_data).toMatchObject({ currency: 'inr', unit_amount: 49900 });
+    expect(s.line_items[0].price_data).toMatchObject({ currency: 'inr', unit_amount: 34900 });
     expect(s.payment_method_types).toEqual(['card', 'upi']);
     process.env.TIER3_TEST = 'all';
     await checkout('m@gmail.com', { plan: 'lifetime', country: 'KE' });
@@ -3255,12 +3320,51 @@ describe('billing — tiered regional pricing (TIERED_PRICING=1)', () => {
     expect(inn.body).toMatchObject({ tiered: false, tier: 3, arm: 'legacy', pricing: null });
   });
 
+  test('GET /billing/offer accepts ?email=, ?arm=, or bearer token to resolve tiered arm for tier 3', async () => {
+    const withArm = await request(app).get('/api/billing/offer?arm=tiered').set('cf-ipcountry', 'IN');
+    expect(withArm.body).toMatchObject({ tiered: true, tier: 3, arm: 'tiered' });
+    expect(withArm.body.pricing.pro_annual.label).toBe('₹499');
+
+    const withBearer = await request(app).get('/api/billing/offer').set('cf-ipcountry', 'IN').set(authedHeader('prof@gmail.com', 'gmail.com'));
+    expect(withBearer.body.tier).toBe(3);
+    expect(withBearer.body.arm).toBeDefined();
+  });
+
   test('GET /billing/status carries the offer + tiered labels', async () => {
     const res = await request(app).get('/api/billing/status?country=MX').set(authedHeader('prof@gmail.com', 'gmail.com'));
     expect(res.status).toBe(200);
     expect(res.body.offer).toMatchObject({ tiered: true, tier: 2, prepaid: true, monthlyAvailable: false, currency: 'mxn' });
     expect(res.body.pricing.pro_annual.label).toBe('MX$279');
     expect(res.body.pricing.pro_monthly).toBeUndefined();
+  });
+
+  test('webhook: checkout.session.completed for single_meeting calls sendUpgradeNotification', async () => {
+    const { sendUpgradeNotification } = require('../../src/lib/notifications');
+    sendUpgradeNotification.mockClear();
+    firestore.unlockMeetingForUser = jest.fn().mockResolvedValue(true);
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_sm1',
+      type: 'checkout.session.completed',
+      data: {
+        object: {
+          id: 'cs_sm1',
+          client_reference_id: 'user:teacher@school.edu',
+          amount_total: 149,
+          currency: 'usd',
+          customer: 'cus_123',
+          customer_details: { email: 'teacher@school.edu', name: 'Teacher' },
+          metadata: { plan: 'single_meeting', conferenceId: 'meet-abc-xyz', email: 'teacher@school.edu', domain: 'school.edu' },
+        },
+      },
+    });
+    const res = await postWebhook();
+    expect(res.status).toBe(200);
+    expect(sendUpgradeNotification).toHaveBeenCalledWith(expect.objectContaining({
+      email: 'teacher@school.edu',
+      plan: 'single_meeting',
+      amountTotal: 149,
+      currency: 'usd',
+    }));
   });
 
   test('webhook: prepaid pro_annual grants a year, stacking onto an unexpired pass', async () => {
