@@ -4,7 +4,8 @@ const jwt = require('jsonwebtoken');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
 const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getRevenueFunnel, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, dismissSuggestion, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance, getTeamOverview, getRecentErrorSpike, getErrorAlertState, setErrorAlertState, getCancellationTelemetry, backfillAdminActivityIfSparse, checkAndRecordMilestones, getMilestoneProgress, getTenantPlan, getRevenueSummary } = require('../services/firestore');
-const { sendAdminEmail, sendErrorSpikeAlertEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendOrgWeeklyDigest, flushDeferredNotifications, verifyReviewApprovalToken, sendReviewRewardEmail, sendPassExpiryReminderEmail } = require('../lib/notifications');
+const { sendAdminEmail, sendErrorSpikeAlertEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendOrgWeeklyDigest, flushDeferredNotifications,
+  sendSourceReportedNotification, verifyReviewApprovalToken, sendReviewRewardEmail, sendPassExpiryReminderEmail } = require('../lib/notifications');
 const { escapeHtml } = require('../lib/html');
 const { requireSuperAdmin, requireSuperAdminOrScheduler, requireKhMetricsKey, safeEqual } = require('../middleware/adminAuth');
 const { requireAuth } = require('../middleware/auth');
@@ -1134,6 +1135,7 @@ router.post('/admin/source', requireAuth, async (req, res) => {
     if (dismissed === true && !source) {
       const { setUserAcquisitionDismissed } = require('../services/firestore');
       await setUserAcquisitionDismissed(req.user.domain, req.user.email);
+      await Promise.resolve(flushDeferredNotifications(req.user.domain, req.user.email)).catch(() => {});
       return res.json({ success: true, dismissed: true });
     }
     if (!ACQUISITION_SOURCES.has(source)) {
@@ -1141,11 +1143,19 @@ router.post('/admin/source', requireAuth, async (req, res) => {
     }
     const cleanDetail = typeof detail === 'string' ? detail.slice(0, 200) : null;
     await setUserAcquisitionSource(req.user.domain, req.user.email, { source, detail: cleanDetail });
-    // Flush the deferred signup notification now that we have the self-reported
-    // source. Usually this is the trigger that actually sends the email (the
-    // modal is answered seconds after signup). Fire-and-forget — a pending
-    // signup, if any, is claimed transactionally so this can't double-send.
-    flushDeferredNotifications(req.user.domain, req.user.email);
+    const flushed = await Promise.resolve(flushDeferredNotifications(req.user.domain, req.user.email)).catch(() => null);
+    const signupJustFlushed = Array.isArray(flushed) && flushed[0]?.value && flushed[0].value.sent !== false;
+    if (!signupJustFlushed && typeof sendSourceReportedNotification === 'function') {
+      const u = await getUser(req.user.domain, req.user.email).catch(() => null);
+      await Promise.resolve(sendSourceReportedNotification({
+        email: req.user.email,
+        displayName: u?.displayName || req.user.displayName || null,
+        domain: req.user.domain,
+        reportedSource: source,
+        reportedDetail: cleanDetail,
+        detectedSource: u?.signupDetectedSource || u?.acquisitionDetected || null,
+      })).catch(() => {});
+    }
     res.json({ success: true });
   } catch (err) {
     log.error('admin: source failed', { error: err.message });

@@ -172,6 +172,7 @@ jest.mock('../../src/lib/notifications', () => ({
   sendUpcomingMeetingEmail: jest.fn(),
   sendOrgWeeklyDigest: jest.fn(), // org weekly digest sweep
   flushDeferredNotifications: jest.fn(), // single flush point (signup + referral)
+  sendSourceReportedNotification: jest.fn(),
   verifyReviewApprovalToken: jest.fn(),
   sendReviewRewardEmail: jest.fn(),
 }));
@@ -247,6 +248,14 @@ describe('POST /api/admin/source — self-reported source + deferred signup flus
     expect(firestore.setUserAcquisitionSource).toHaveBeenCalledWith(
       'acme.com', 'u@acme.com', { source: 'google_search', detail: 'found via search' });
     expect(notifications.flushDeferredNotifications).toHaveBeenCalledWith('acme.com', 'u@acme.com');
+    expect(notifications.sendSourceReportedNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: 'u@acme.com',
+        domain: 'acme.com',
+        reportedSource: 'google_search',
+        reportedDetail: 'found via search',
+      })
+    );
   });
 
   test('rejects an invalid source and does not flush', async () => {

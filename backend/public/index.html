@@ -4948,6 +4948,7 @@ function restoreState() {
     state._scopeRetryFailed = s._scopeRetryFailed || false;
     state._attendeeToken = s._attendeeToken || null;
     state._attendeeEmail = s._attendeeEmail || null;
+    state._surveyShown = !!(s._surveyShown || (typeof localStorage !== 'undefined' && localStorage.getItem('att_survey_shown') === '1'));
     state._selfDisplayName = s.userDisplayName;
     if (s.userEmail) state._selfEmail = s.userEmail.toLowerCase();
 
@@ -5140,21 +5141,26 @@ async function handleAuthCode(response) {
       })();
     }
 
-    // First sign-in & no source captured → remember it, but DON'T ask yet.
-    // Sign-in almost always happens mid-meeting (the panel lives inside Meet)
-    // and users swat the modal away to get back to their class. The ask fires
-    // at the post-export moment instead (maybeAskSourcePostExport) — after
-    // they've felt the payoff, when answer rates are far higher. Attribution
-    // is never lost meanwhile: the detected source is already stamped
-    // server-side, and the signup email flushes on a grace timer regardless.
     state._needsSource = !!data.needsAcquisitionSource;
     state._detectedSource = data.detectedSource || null;
 
     // Pull activation status so the nudge banner knows whether to render.
     refreshActivationStatus();
 
-    // First-time signed-in users get a 3-step tour of the buttons.
-    maybeStartTour();
+    // First sign-in & no source captured → ask right away with 1-tap buttons
+    // (where 83%+ of new signups see it, instead of burying it after export
+    // where 89% of signups never reach it). The 3-step button tour runs once
+    // the source modal closes so they never overlap.
+    if (state._needsSource && !state._needsSourceDismissed) {
+      setTimeout(() => {
+        if (state._needsSource && !state._needsSourceDismissed) {
+          showSourceModal(state._detectedSource);
+        }
+      }, 450);
+    } else {
+      // First-time signed-in users get a 3-step tour of the buttons.
+      maybeStartTour();
+    }
 
     // Auto-start tracking if sign-in was triggered by Start button
     if (state._startAfterSignIn) {
@@ -5386,10 +5392,11 @@ const TOUR_STEPS = [
 function maybeStartTour() {
   // Only after sign-in, only in real Meet (not landing/demo), only once, and never while already tracking.
   if (!state.signedIn || !state.conferenceId || state.tracking) return;
+  if (document.getElementById('source-modal')?.classList.contains('open')) return;
   try { if (localStorage.getItem(TOUR_STORAGE_KEY)) return; } catch { return; }
   // Stagger so it doesn't fight with the sign-in toast.
   setTimeout(() => {
-    if (state.tracking) return;
+    if (state.tracking || document.getElementById('source-modal')?.classList.contains('open')) return;
     runTour(0);
   }, 800);
 }
@@ -5520,6 +5527,11 @@ function showSourceModal(detectedSource) {
   document.getElementById('source-modal-other').value = '';
   state._selectedSourceChip = null;
   document.querySelectorAll('#source-modal-chips .source-chip').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('#source-modal-quick-btns .source-quick-btn').forEach(b => {
+    const isDetected = detectedSource && b.getAttribute('data-source') === detectedSource;
+    b.style.borderColor = isDetected ? 'rgba(74,222,128,.55)' : '#30363d';
+    b.style.background = isDetected ? 'rgba(74,222,128,.08)' : '#0d1117';
+  });
   const sel = document.getElementById('source-modal-select');
   if (sel) {
     // Pre-select the detected option when we have one — saves them a click.
@@ -5527,6 +5539,27 @@ function showSourceModal(detectedSource) {
       ? detectedSource : '';
     onSourceSelectChange();
   }
+}
+
+function quickSelectSource(value) {
+  const sel = document.getElementById('source-modal-select');
+  if (sel) sel.value = value;
+  document.querySelectorAll('#source-modal-quick-btns .source-quick-btn').forEach(b => {
+    const active = b.getAttribute('data-source') === value;
+    b.style.borderColor = active ? '#4ade80' : '#30363d';
+    b.style.background = active ? 'rgba(74,222,128,.14)' : '#0d1117';
+  });
+  if (value === 'other') {
+    onSourceSelectChange();
+    const otherWrap = document.getElementById('source-modal-other-wrap');
+    const otherInput = document.getElementById('source-modal-other');
+    const submitBtn = document.getElementById('source-modal-submit-btn');
+    if (otherWrap) otherWrap.style.display = 'block';
+    if (submitBtn) submitBtn.style.display = 'inline-block';
+    if (otherInput) otherInput.focus();
+    return;
+  }
+  submitSource();
 }
 
 function closeSourceModal(answered) {
@@ -5546,6 +5579,7 @@ function closeSourceModal(answered) {
       }).catch(() => {});
     } catch { /* best-effort */ }
   }
+  maybeStartTour();
 }
 
 function selectSourceChip(el, value) {
@@ -9023,10 +9057,6 @@ function showSurveyModal() {
 function closeSurveyModal() {
   const modal = document.getElementById('survey-modal');
   if (modal) modal.style.display = 'none';
-  // Last car of the first-export train: celebrate → survey → source ask.
-  // One modal at a time; maybeAskSourcePostExport no-ops once answered or
-  // dismissed, so repeat closes never re-summon it.
-  setTimeout(() => maybeAskSourcePostExport(), 400);
 }
 
 // Ask "how did you find us?" at a post-export moment — one of two places it is
@@ -9569,9 +9599,14 @@ function closeCelebrateModal() {
   const modal = document.getElementById('celebrate-modal');
   if (modal) modal.style.display = 'none';
   try { logUserEvent('celebrate_modal_dismissed', {}); } catch (e) {}
-  // Show micro-survey after celebrate modal closes (only once)
-  if (!state._surveyShown) {
+  let surveyDone = !!state._surveyShown;
+  if (!surveyDone) {
+    try { surveyDone = localStorage.getItem('att_survey_shown') === '1'; } catch (e) {}
+  }
+  // Show micro-survey after celebrate modal closes (only once ever)
+  if (!surveyDone) {
     state._surveyShown = true;
+    safeSetItem('att_survey_shown', '1');
     saveState();
     setTimeout(() => showSurveyModal(), 400);
   } else {
@@ -12247,7 +12282,27 @@ window.addEventListener('DOMContentLoaded', () => {
     <div class="modal-box" style="max-width:380px">
       <div class="modal-title" id="source-modal-title" data-i18n="source.qTitle">Quick question</div>
       <div class="modal-subtitle" id="source-modal-subtitle" data-i18n="source.qSub">How did you find Attendance Tracker? Helps me figure out where to focus.</div>
-      <select id="source-modal-select" class="match-select" onchange="onSourceSelectChange()" style="margin-bottom:10px">
+      <div id="source-modal-quick-btns" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <button type="button" class="source-quick-btn" data-source="marketplace" onclick="quickSelectSource('marketplace')" style="display:flex;align-items:center;gap:7px;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:10px 11px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;text-align:left">
+          <span>🧩</span><span data-i18n="source.marketplace">Workspace Marketplace</span>
+        </button>
+        <button type="button" class="source-quick-btn" data-source="google_search" onclick="quickSelectSource('google_search')" style="display:flex;align-items:center;gap:7px;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:10px 11px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;text-align:left">
+          <span>🔍</span><span data-i18n="source.google">Google search</span>
+        </button>
+        <button type="button" class="source-quick-btn" data-source="friend" onclick="quickSelectSource('friend')" style="display:flex;align-items:center;gap:7px;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:10px 11px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;text-align:left">
+          <span>👥</span><span data-i18n="source.friend">Friend / colleague</span>
+        </button>
+        <button type="button" class="source-quick-btn" data-source="youtube" onclick="quickSelectSource('youtube')" style="display:flex;align-items:center;gap:7px;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:10px 11px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;text-align:left">
+          <span>▶️</span><span>YouTube</span>
+        </button>
+        <button type="button" class="source-quick-btn" data-source="reddit" onclick="quickSelectSource('reddit')" style="display:flex;align-items:center;gap:7px;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:10px 11px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;text-align:left">
+          <span>💬</span><span>Reddit</span>
+        </button>
+        <button type="button" class="source-quick-btn" data-source="other" onclick="quickSelectSource('other')" style="display:flex;align-items:center;gap:7px;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:10px 11px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;text-align:left">
+          <span>✨</span><span data-i18n="common.other">Other</span>
+        </button>
+      </div>
+      <select id="source-modal-select" class="match-select" onchange="onSourceSelectChange()" style="display:none;margin-bottom:10px">
         <option value="" disabled selected data-i18n="source.pickOne">Pick one…</option>
         <option value="google_search" data-i18n="source.google">Google search</option>
         <option value="marketplace" data-i18n="source.marketplace">Workspace Marketplace</option>
@@ -12263,11 +12318,11 @@ window.addEventListener('DOMContentLoaded', () => {
         <button type="button" class="source-chip" onclick="selectSourceChip(this, 'other')" data-i18n="source.chipOther">Other…</button>
       </div>
       <div id="source-modal-other-wrap" style="display:none;margin-bottom:10px">
-        <input id="source-modal-other" type="text" class="match-override" data-i18n-placeholder="source.phStatic" placeholder="Where did you hear about it?" maxlength="200" />
+        <input id="source-modal-other" type="text" class="match-override" onkeydown="if(event.key==='Enter')submitSource()" data-i18n-placeholder="source.phStatic" placeholder="Where did you hear about it?" maxlength="200" />
       </div>
       <div class="modal-actions">
         <button class="btn-secondary" onclick="closeSourceModal()" data-i18n="common.skip">Skip</button>
-        <button class="btn-primary" onclick="submitSource()" data-i18n="source.submit">Submit</button>
+        <button class="btn-primary" id="source-modal-submit-btn" onclick="submitSource()" data-i18n="source.submit">Submit</button>
       </div>
     </div>
   </div>

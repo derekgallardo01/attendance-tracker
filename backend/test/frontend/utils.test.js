@@ -489,6 +489,7 @@ describe('serializeSession / parseSession', () => {
     const wire = JSON.parse(JSON.stringify(snap)); // survives sessionStorage
     const s = utils.parseSession(wire, 2000, 8 * 3600 * 1000);
     expect(s.tracking).toBe(true);
+    expect(s._surveyShown).toBe(false);
     expect(s.conferenceId).toBe('abc-def-ghi');
     expect(s.startTime).toBeInstanceOf(Date);
     expect(s.startTime.toISOString()).toBe('2026-07-20T10:00:00.000Z');
@@ -511,10 +512,11 @@ describe('serializeSession / parseSession', () => {
   });
 
   test('null startTime + empty participants survive the round trip', () => {
-    const st = makeState(); st.startTime = null; st.participants = new Map();
+    const st = makeState(); st.startTime = null; st.participants = new Map(); st._surveyShown = true;
     const s = utils.parseSession(JSON.parse(JSON.stringify(utils.serializeSession(st, 0))), 1, 1000);
     expect(s.startTime).toBeNull();
     expect(s.participants).toEqual([]);
+    expect(s._surveyShown).toBe(true);
   });
 });
 

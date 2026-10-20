@@ -471,6 +471,55 @@ async function sendSignupWebhook({ email, displayName, domain, reportedSource, r
   }, 'signup notification', { email, domain });
 }
 
+// Follow-up notification when a user answers the "How did you find us?" modal
+// after the initial signup notification was already sent at sign-in.
+async function sendSourceReportedNotification({ email, displayName, domain, reportedSource, reportedDetail, detectedSource }) {
+  if (!getResend()) return { skipped: "no resend" };
+  const to = process.env.NOTIFY_EMAIL || ownerEmail();
+  if (!to || !reportedSource) return { skipped: "missing target or source" };
+
+  const reportedText = `${reportedSource}${reportedDetail ? ` — ${reportedDetail}` : ""}`;
+  const detectedText = detectedSource || "Unknown";
+  const subject = `🔎 Source reported: ${displayName || email} (via ${reportedText})`;
+
+  const contentHtml = `
+    <table class="responsive-table" style="table-layout:fixed;border-collapse:collapse;width:100%;font-size:13px;background:#0d1117;border:1px solid #30363d;border-radius:8px;overflow:hidden;margin-bottom:8px;box-sizing:border-box;">
+      <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;width:34%;max-width:120px;vertical-align:top;word-break:break-word;">Name</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;color:#e6edf3;word-break:break-word;overflow-wrap:anywhere;">${escape(displayName) || "—"}</td></tr>
+      <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;width:34%;max-width:120px;vertical-align:top;word-break:break-word;">Email</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;word-break:break-word;overflow-wrap:anywhere;"><a href="mailto:${escape(email)}" style="color:#58a6ff;text-decoration:none;word-break:break-word;overflow-wrap:anywhere;">${escape(email)}</a></td></tr>
+      <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;vertical-align:top;word-break:break-word;">Domain</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;color:#e6edf3;word-break:break-word;overflow-wrap:anywhere;">${escape(domain)}</td></tr>
+      <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;vertical-align:top;word-break:break-word;">Source (self-reported)</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;color:#4ade80;font-weight:700;word-break:break-word;overflow-wrap:anywhere;">${escape(reportedText)}</td></tr>
+      <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;vertical-align:top;word-break:break-word;">Source (detected)</td><td style="padding:8px 10px;color:#e6edf3;word-break:break-word;overflow-wrap:anywhere;">${escape(detectedText)}</td></tr>
+    </table>
+  `;
+
+  const html = buildDesignSystemEmail({
+    badge: "🔎 Attribution",
+    badgeType: "info",
+    title: `🔎 ${displayName || email}`,
+    subtitle: "User answered the \"How did you find us?\" prompt.",
+    contentHtml,
+    ctaText: "Open admin dashboard →",
+    ctaUrl: "https://attendancetracker.dev/admin.html",
+    ctaColor: "green",
+  });
+
+  const text = [
+    `Source reported by: ${displayName || email}`,
+    `Email: ${email}`,
+    `Domain: ${domain}`,
+    `Source (self-reported): ${reportedText}`,
+    `Source (detected): ${detectedText}`,
+    "",
+    "Open admin dashboard: https://attendancetracker.dev/admin.html",
+  ].join("\n");
+
+  return dispatchEmail({
+    from: makeFrom("Attendance Tracker"),
+    to, subject, text, html,
+    tags: [{ name: "type", value: "source_reported" }],
+  }, "source reported notification", { email, domain, reportedSource });
+}
+
 // Fire-and-forget upgrade / payment notification email. Sends to NOTIFY_EMAIL
 // (or the owner's inbox). Surfaces instant monetization events with direct
 // links to the customer/subscription in the Stripe dashboard.
@@ -3869,7 +3918,7 @@ async function sendPassExpiryReminderEmail({
 }
 
 module.exports = {
-  sendSignupWebhook, sendUpgradeNotification, sendAdminSubscriptionCancelledNotification, sendAdminEmailUnsubscribedNotification, sendAdminMilestoneEmail, maybeSendSignupNotification, sendWelcomeEmail, sendReferralNotification, maybeSendReferralNotification, flushDeferredNotifications, sendAdminEmail, sendErrorAlertEmail, sendErrorSpikeAlertEmail, sendWeeklySelfReport, sendExportNotification, sendOrgWeeklyDigest,
+  sendSignupWebhook, sendSourceReportedNotification, sendUpgradeNotification, sendAdminSubscriptionCancelledNotification, sendAdminEmailUnsubscribedNotification, sendAdminMilestoneEmail, maybeSendSignupNotification, sendWelcomeEmail, sendReferralNotification, maybeSendReferralNotification, flushDeferredNotifications, sendAdminEmail, sendErrorAlertEmail, sendErrorSpikeAlertEmail, sendWeeklySelfReport, sendExportNotification, sendOrgWeeklyDigest,
   sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendUpgradeLinkEmail, sendSubscriptionCancelledEmail, sendInvoiceActionRequiredEmail, sendReviewRewardEmail, buildReviewRewardEmailContent, sendReviewRewardDraftAlert, createReviewApprovalToken, verifyReviewApprovalToken, reviewApprovalUrl, sendPassExpiryReminderEmail,
   sendSlackDigest, sendSlackTestPing, buildSlackDigestBlocks, buildSlackFallbackText, maskSlackWebhook,
   sendChatDigest, sendChatTestPing, buildChatDigestCard, maskGoogleChatWebhook,

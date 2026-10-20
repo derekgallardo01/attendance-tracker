@@ -365,6 +365,7 @@
       // the student through the Google popup again.
       _attendeeToken: state._attendeeToken || null,
       _attendeeEmail: state._attendeeEmail || null,
+      _surveyShown: !!state._surveyShown,
       savedAt: savedAtMs,
     };
   }
@@ -393,6 +394,7 @@
       _scopeRetryFailed: !!snap._scopeRetryFailed,
       _attendeeToken: snap._attendeeToken || null,
       _attendeeEmail: snap._attendeeEmail || null,
+      _surveyShown: !!snap._surveyShown,
       participants: (snap.participants || []).map(([k, v]) => [k, {
         ...v,
         joinTime: date(v.joinTime),
