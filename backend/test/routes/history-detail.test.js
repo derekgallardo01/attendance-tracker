@@ -11,6 +11,9 @@ jest.mock('../../src/services/firestore', () => ({
   persistAttendance: jest.fn(),
   getTrackedConferenceIds: jest.fn(),
   updateMeetingTimes: jest.fn(),
+  isMeetingUnlocked: jest.fn().mockResolvedValue(false),
+  countUserMonthlyExports: jest.fn().mockResolvedValue(0),
+  persistExport: jest.fn().mockResolvedValue({ created: true, reexportCount: 0 }),
 }));
 
 jest.mock('../../src/services/meetApi', () => ({
@@ -30,11 +33,20 @@ let app;
 
 beforeEach(() => {
   jest.clearAllMocks();
+  process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+  process.env.STRIPE_PRICE_ID = 'price_x';
   firestore.getUser.mockResolvedValue({ email: 'user@acme.com', domain: 'acme.com', refreshToken: 'rt-123' });
   firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
   firestore.getTrackedConferenceIds.mockResolvedValue(new Set());
+  firestore.isMeetingUnlocked.mockResolvedValue(false);
+  firestore.countUserMonthlyExports.mockResolvedValue(0);
   googleAuth.refreshAccessToken.mockResolvedValue({ access_token: 'fresh-tok', expiry_date: Date.now() + 3600000 });
   app = buildApp();
+});
+
+afterEach(() => {
+  delete process.env.STRIPE_SECRET_KEY;
+  delete process.env.STRIPE_PRICE_ID;
 });
 
 
@@ -125,6 +137,39 @@ describe('GET /api/history/meeting/:id', () => {
     expect(res.body.attendanceRate).toBe(0.75);
     expect(typeof res.body.isPro).toBe('boolean');
   });
+
+  test('caps attendees at 25 for free user when > 25 unless meeting is unlocked', async () => {
+    firestore.getUser.mockResolvedValue({ email: 'user@cap1.com', domain: 'cap1.com', refreshToken: 'rt-123' });
+    const attendees30 = Array.from({ length: 30 }, (_, i) => ({
+      displayName: `Student ${i + 1}`,
+      email: `s${i + 1}@cap1.com`,
+      status: 'present',
+      durationMin: 50,
+    }));
+    firestore.getMeetingDetail.mockResolvedValue({
+      id: 'm-large',
+      title: 'Large Lecture',
+      conferenceId: 'conf-large',
+      attendees: attendees30,
+    });
+
+    const cappedRes = await request(app)
+      .get('/api/history/meeting/m-large')
+      .set(authedHeader('user@cap1.com', 'cap1.com'));
+    expect(cappedRes.status).toBe(200);
+    expect(cappedRes.body.attendees).toHaveLength(25);
+    expect(cappedRes.body.attendeesCapped).toBe(true);
+    expect(cappedRes.body.totalAttendeeCount).toBe(30);
+
+    firestore.isMeetingUnlocked.mockResolvedValue(true);
+    const unlockedRes = await request(app)
+      .get('/api/history/meeting/m-large')
+      .set(authedHeader('user@cap1.com', 'cap1.com'));
+    expect(unlockedRes.status).toBe(200);
+    expect(unlockedRes.body.attendees).toHaveLength(30);
+    expect(unlockedRes.body.attendeesCapped).toBe(false);
+    expect(unlockedRes.body.meetingUnlocked).toBe(true);
+  });
 });
 
 
@@ -211,5 +256,44 @@ describe('POST /api/history/import-conference', () => {
       expect.any(Array),
       'user@acme.com'
     );
+    expect(firestore.persistExport).toHaveBeenCalledWith(
+      'acme.com',
+      expect.objectContaining({
+        email: 'user@acme.com',
+        conferenceId: 'abc-defg-hij',
+        participantCount: 1,
+        exportType: 'import',
+      })
+    );
+  });
+
+  test('402 exportQuota when free user has exhausted monthly exports', async () => {
+    firestore.getUser.mockResolvedValue({ email: 'user@quota1.com', domain: 'quota1.com', refreshToken: 'rt-123' });
+    firestore.countUserMonthlyExports.mockResolvedValue(2);
+    const res = await request(app)
+      .post('/api/history/import-conference')
+      .set(authedHeader('user@quota1.com', 'quota1.com'))
+      .send({ conferenceRecordName: 'conferenceRecords/c1' });
+    expect(res.status).toBe(402);
+    expect(res.body.feature).toBe('exportQuota');
+  });
+
+  test('402 largeClass when free user imports conference with > 25 participants', async () => {
+    firestore.getUser.mockResolvedValue({ email: 'user@large1.com', domain: 'large1.com', refreshToken: 'rt-123' });
+    const nowIso = new Date().toISOString();
+    meetApi.meetGet.mockResolvedValue({ name: 'conferenceRecords/c-big', space: 'spaces/s1', startTime: nowIso, endTime: nowIso });
+    const parts26 = Array.from({ length: 26 }, (_, i) => ({
+      participantId: `p${i}`, displayName: `Student ${i}`, email: `s${i}@large1.com`, present: true, sessions: 1,
+    }));
+    meetApi.fetchConferenceParticipants.mockResolvedValue(parts26);
+
+    const res = await request(app)
+      .post('/api/history/import-conference')
+      .set(authedHeader('user@large1.com', 'large1.com'))
+      .send({ conferenceRecordName: 'conferenceRecords/c-big' });
+    expect(res.status).toBe(402);
+    expect(res.body.feature).toBe('largeClass');
+    expect(res.body.participantCount).toBe(26);
+    expect(firestore.persistAttendance).not.toHaveBeenCalled();
   });
 });

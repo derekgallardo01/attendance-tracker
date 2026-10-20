@@ -4262,7 +4262,10 @@ function renderRosterView() {
   const lateStudents = [];
   const absentStudents = [];
 
-  for (const student of students) {
+  const isRosterGated = isFreePlan() && students.length > 25;
+  const visibleStudents = isRosterGated ? students.slice(0, 25) : students;
+
+  for (const student of visibleStudents) {
     const p = findParticipantForStudent(student, parts, matchedParts);
     const studentKey = (student.email || student.name || '').toLowerCase();
     const excuse = (state.excusedStudents && state.excusedStudents[studentKey]) || null;
@@ -4374,6 +4377,14 @@ function renderRosterView() {
     }
   }
 
+  if (isRosterGated) {
+    html += `
+      <div class="roster-large-class-card" style="margin:10px 4px;padding:12px 14px;background:rgba(245,158,11,.08);border:1px dashed rgba(245,158,11,.35);border-radius:8px;text-align:center;font-size:.78rem;color:#e6edf3;line-height:1.5">
+        <span>Showing 25 of ${students.length} roster students · </span>
+        <button type="button" onclick="showUpgradeModal('largeClass')" style="background:none;border:none;color:#fbbf24;font-weight:600;cursor:pointer;text-decoration:underline;padding:0;font-size:.78rem">Unlock all ${students.length} students →</button>
+      </div>`;
+  }
+
   container.innerHTML = html;
 }
 
@@ -4421,6 +4432,10 @@ function copyAbsenteeModalText() {
 }
 
 function copyAbsenteeList() {
+  if (isFreePlan() && ((state.activeRosterName && (state.rosters?.[state.activeRosterName]?.length || 0) > 25) || state.participants.size > 25)) {
+    showUpgradeModal('largeClass');
+    return;
+  }
   const absents = state._lastAbsentStudents || [];
   if (!absents.length) return toast(t('roster.noAbsents', 'No absent students'));
   const names = absents.map(a => (a.student?.name || 'Unknown') + (a.isExcused ? ' (' + t('attendee.excused', 'Excused') + ')' : '')).join(', ');
@@ -4563,6 +4578,7 @@ function csvExportContext() {
       startTime: state.startTime,
       timezone: localStorage.getItem('userTimezone') || ((typeof Intl !== 'undefined' && Intl.DateTimeFormat) ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'America/New_York'),
       locale: (window.AttStrings && AttStrings.getLocale()) || 'en',
+      calendarAttendees: state.calendarAttendees || null,
       now
     },
   };
@@ -4586,7 +4602,7 @@ async function downloadAttendanceCsv() {
     return;
   }
 
-  const count = ctx.parts.length;
+  const count = Math.max(ctx.parts.length, (ctx.activeRoster || []).length, (state.calendarAttendees || []).length);
   if (!_isPro && !state.meetingUnlocked && count > 25 && _billing?.hasUsedLargeClassGrace === true) {
     state._lastLargeClassCount = count;
     showUpgradeModal('largeClass');
@@ -4720,7 +4736,7 @@ async function downloadAttendanceExcel() {
     return;
   }
 
-  const count = ctx.parts.length;
+  const count = Math.max(ctx.parts.length, (ctx.activeRoster || []).length, (state.calendarAttendees || []).length);
   if (!_isPro && !state.meetingUnlocked && count > 25 && _billing?.hasUsedLargeClassGrace === true) {
     state._lastLargeClassCount = count;
     showUpgradeModal('largeClass');
@@ -6703,8 +6719,25 @@ function renderList() {
     }
   }
 
-  // Filter by search query first
-  let filtered = [...state.participants.values()];
+  // Sort by user-selected field first, keeping present-first as the tiebreaker
+  const sortMode = document.getElementById('sort-select')?.value || 'join';
+  const cmp = {
+    join:     (a, b) => {
+      const toTime = (v) => v instanceof Date ? v.getTime() : (v ? new Date(v).getTime() || 0 : 0);
+      return toTime(a.joinTime || a.trackedJoinTime) - toTime(b.joinTime || b.trackedJoinTime);
+    },
+    name:     (a, b) => (a.displayName || '').localeCompare(b.displayName || ''),
+    duration: (a, b) => AttUtils.participantTotalMs(b) - AttUtils.participantTotalMs(a),
+  }[sortMode] || cmp.join;
+  const allSorted = [...state.participants.values()].sort((a, b) => {
+    if (a.present !== b.present) return b.present - a.present;
+    return cmp(a, b);
+  });
+
+  const isGated = isFreePlan() && state.participants.size > 25;
+  let filtered = isGated ? allSorted.slice(0, 25) : allSorted;
+
+  // Filter by search query (applied only to the visible 25 when gated)
   if (_searchQuery) {
     filtered = filtered.filter(p =>
       p.displayName.toLowerCase().includes(_searchQuery) ||
@@ -6717,29 +6750,25 @@ function renderList() {
   if (filterMode === 'present') filtered = filtered.filter(p => p.present);
   else if (filterMode === 'left') filtered = filtered.filter(p => !p.present);
 
+  const largeClassCardHtml = isGated ? `
+      <div id="roster-large-class-card" style="margin:10px 4px;padding:12px 14px;background:rgba(245,158,11,.08);border:1px dashed rgba(245,158,11,.35);border-radius:8px;text-align:center;font-size:.78rem;color:#e6edf3;line-height:1.5">
+        <span>Showing 25 of ${state.participants.size} attendees. </span>
+        <button type="button" onclick="showUpgradeModal('largeClass')" style="background:none;border:none;color:#fbbf24;font-weight:600;cursor:pointer;text-decoration:underline;padding:0;font-size:.78rem">Unlock all ${state.participants.size} attendees →</button>
+        <div style="margin-top:6px">
+          <button type="button" onclick="downloadSchoolQuotePdf(this)" style="background:none;border:none;color:#8ab4f8;font-weight:500;cursor:pointer;text-decoration:underline;padding:0;font-size:.72rem">📄 ${escHtml(t('quote.askSchoolBtn', 'Ask my school to pay (Download Quote PDF)'))}</button>
+        </div>
+      </div>` : '';
+
   if (filtered.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <span>${_searchQuery ? escHtml(t('list.noMatchQuery', 'No matches for "{q}"').replace('{q}', _searchQuery)) : t('list.noMatch', 'No participants match')}</span>
-      </div>`;
+      </div>${largeClassCardHtml}`;
     return;
   }
 
-  // Sort by user-selected field, keeping present-first as the tiebreaker
-  const sortMode = document.getElementById('sort-select')?.value || 'join';
-  const cmp = {
-    join:     (a, b) => {
-      const toTime = (v) => v instanceof Date ? v.getTime() : (v ? new Date(v).getTime() || 0 : 0);
-      return toTime(a.joinTime || a.trackedJoinTime) - toTime(b.joinTime || b.trackedJoinTime);
-    },
-    name:     (a, b) => (a.displayName || '').localeCompare(b.displayName || ''),
-    duration: (a, b) => AttUtils.participantTotalMs(b) - AttUtils.participantTotalMs(a),
-  }[sortMode] || cmp.join;
-  const sorted = filtered.sort((a, b) => {
-    if (a.present !== b.present) return b.present - a.present;
-    return cmp(a, b);
-  });
+  const sorted = filtered;
 
   // Group by domain (internal vs external) when selected
   const groupMode = document.getElementById('group-select')?.value || 'none';
@@ -6757,7 +6786,6 @@ function renderList() {
     groups.set('', sorted);
   }
 
-  const isGated = isFreePlan() && filtered.length > 25;
   const MAX_VISIBLE = isGated ? 25 : 100;
   let totalShown = 0;
   let html = '';
@@ -6801,14 +6829,7 @@ function renderList() {
   }
 
   if (isGated) {
-    html += `
-      <div id="roster-large-class-card" style="margin:10px 4px;padding:12px 14px;background:rgba(245,158,11,.08);border:1px dashed rgba(245,158,11,.35);border-radius:8px;text-align:center;font-size:.78rem;color:#e6edf3;line-height:1.5">
-        <span>Showing 25 of ${filtered.length} attendees. </span>
-        <button type="button" onclick="showUpgradeModal('largeClass')" style="background:none;border:none;color:#fbbf24;font-weight:600;cursor:pointer;text-decoration:underline;padding:0;font-size:.78rem">Unlock all ${filtered.length} attendees →</button>
-        <div style="margin-top:6px">
-          <button type="button" onclick="downloadSchoolQuotePdf(this)" style="background:none;border:none;color:#8ab4f8;font-weight:500;cursor:pointer;text-decoration:underline;padding:0;font-size:.72rem">📄 ${escHtml(t('quote.askSchoolBtn', 'Ask my school to pay (Download Quote PDF)'))}</button>
-        </div>
-      </div>`;
+    html += largeClassCardHtml;
   } else {
     const totalAvailable = [...groups.values()].reduce((s, l) => s + l.length, 0);
     const hiddenCount = totalAvailable - totalShown;
@@ -9051,9 +9072,12 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
   const tabName = sanitizeTabName(rawTabName);
 
   // If no calendar attendees were provided, fallback to active class roster students if present
+  const activeRosterList = (state.activeRosterName && state.rosters && Array.isArray(state.rosters[state.activeRosterName]))
+    ? state.rosters[state.activeRosterName]
+    : null;
   let effectiveAttendees = calendarAttendees;
-  if ((!effectiveAttendees || effectiveAttendees.length === 0) && state.activeRosterName && state.rosters && state.rosters[state.activeRosterName]) {
-    effectiveAttendees = state.rosters[state.activeRosterName].map(s => ({
+  if ((!effectiveAttendees || effectiveAttendees.length === 0) && activeRosterList) {
+    effectiveAttendees = activeRosterList.map(s => ({
       email: s.email || '',
       displayName: s.name,
       status: 'needsAction'
@@ -9095,6 +9119,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     country: localStorage.getItem('userCountry') || null,
     excusedEmails: mergedExcusedEmails,
     calendarAttendees: effectiveAttendees,
+    ...(activeRosterList && activeRosterList.length ? { roster: activeRosterList } : {}),
     participants: [...state.participants.values()].map(p => {
       // Use earliest known join time (API or frontend-tracked)
       const getMs = (d) => {
@@ -9143,7 +9168,11 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     }),
   };
 
-  const totalAttendeeCount = payload.participants.length;
+  const totalAttendeeCount = Math.max(
+    payload.participants.length,
+    activeRosterList ? activeRosterList.length : 0,
+    Array.isArray(effectiveAttendees) ? effectiveAttendees.length : 0
+  );
   if (!_isPro && !state.meetingUnlocked && totalAttendeeCount > 25 && _billing?.hasUsedLargeClassGrace === true) {
     state._lastLargeClassCount = totalAttendeeCount;
     showUpgradeModal('largeClass');
@@ -9156,6 +9185,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     meetingTitle: payload.meetingTitle, conferenceId: payload.conferenceId,
     meetingStartTime: payload.meetingStartTime, eventStart: payload.eventStart,
     eventEnd: payload.eventEnd, timezone: payload.timezone, participants: payload.participants,
+    calendarAttendees: payload.calendarAttendees,
     exportedAt: payload.exportedAt,
   };
 
@@ -10000,6 +10030,7 @@ async function _downloadPdf({ type, filenameBase, event, options }) {
         exportedAt: ex.exportedAt || null,
         locale: (window.AttStrings && AttStrings.getLocale()) || 'en',
         participants: ex.participants,
+        ...(Array.isArray(ex.calendarAttendees) && ex.calendarAttendees.length ? { calendarAttendees: ex.calendarAttendees } : {}),
         ...(o.issuer ? { issuer: o.issuer } : {}),
         ...(o.courseCode ? { courseCode: o.courseCode } : {}),
         ...(o.creditHours ? { creditHours: o.creditHours } : {}),
@@ -10012,7 +10043,10 @@ async function _downloadPdf({ type, filenameBase, event, options }) {
       if (targetWindow && !targetWindow.closed) {
         try { targetWindow.close(); } catch (e) {}
       }
-      showUpgradeModal('certificates');
+      let errBody = {};
+      try { errBody = await res.json(); } catch (e) {}
+      const feature = errBody.feature || (type === 'certificates' ? 'certificates' : 'exportQuota');
+      showUpgradeModal(feature);
       return false;
     }
     if (!res.ok) {

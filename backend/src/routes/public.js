@@ -422,12 +422,12 @@ router.get('/public/share/:token', async (req, res) => {
     const link = await resolveShareLink(req.params.token);
     if (!link) return res.status(404).json({ error: 'Link not found, expired, or revoked' });
     if (link.type === 'series') {
-      const view = await getSharedSeriesView(link.domain, link.recurringEventId);
+      const view = await getSharedSeriesView(link.domain, link.recurringEventId, link.ownerEmail);
       if (!view) return res.status(404).json({ error: 'Series no longer available' });
       return res.json({ type: link.type, ...view });
     }
     if (link.type === 'meeting') {
-      const view = await getSharedMeetingView(link.domain, link.meetingId || link.conferenceId);
+      const view = await getSharedMeetingView(link.domain, link.meetingId || link.conferenceId, link.ownerEmail);
       if (!view) return res.status(404).json({ error: 'Meeting no longer available' });
       return res.json({ type: link.type, ...view });
     }

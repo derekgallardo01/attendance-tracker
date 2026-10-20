@@ -967,6 +967,16 @@ async function getMeetingWithParticipants(domain, conferenceId, requesterEmail) 
     const [mDoc, pSnap] = await Promise.all([mRef.get(), mRef.collection('participants').get()]);
     if (!mDoc.exists) return null;
     const m = mDoc.data();
+    let calendarAttendees = Array.isArray(m.calendarAttendees) ? m.calendarAttendees : [];
+    const baseCode = m.meetingCode || (conferenceId.includes('__') ? conferenceId.split('__')[0] : conferenceId);
+    if (!calendarAttendees.length && baseCode && mDoc.id !== baseCode) {
+      try {
+        const codeDoc = await tenantRef(domain).collection('meetings').doc(baseCode).get();
+        if (codeDoc.exists && Array.isArray(codeDoc.data().calendarAttendees)) {
+          calendarAttendees = codeDoc.data().calendarAttendees;
+        }
+      } catch { /* ignore */ }
+    }
     const iso = (v) => (v && typeof v.toDate === 'function' ? v.toDate().toISOString() : v || null);
     return {
       conferenceId,
@@ -974,6 +984,7 @@ async function getMeetingWithParticipants(domain, conferenceId, requesterEmail) 
       startTime: iso(m.startTime),
       endTime: iso(m.endTime),
       participantCount: m.participantCount || 0,
+      ...(calendarAttendees.length ? { calendarAttendees } : {}),
       participants: pSnap.docs.map((d) => {
         const p = d.data();
         return {
@@ -1395,12 +1406,19 @@ async function persistExport(domain, {
         return { created: true, reexportCount: 0 };
       }
       const reexportCount = (prior.reexportCount || 0) + 1;
-      const updateData = { reexportCount, reexportMonth: monthKey, lastReexportAt: now };
+      const priorCount = Number(prior.participantCount) || 0;
+      const promotedFromSolo = priorCount <= 1 && safeParticipantCount > 1;
+      const updateData = {
+        reexportCount,
+        reexportMonth: monthKey,
+        lastReexportAt: now,
+        participantCount: Math.max(priorCount, safeParticipantCount),
+      };
       if (!prior.sheetUrl && sheetUrl) {
         updateData.sheetUrl = sheetUrl;
       }
       tx.set(ref, updateData, { merge: true });
-      return { created: false, reexportCount };
+      return { created: false, reexportCount, ...(promotedFromSolo ? { promotedFromSolo: true } : {}) };
     });
     if (dedupe) {
       if (dedupe.created && email) {
@@ -2140,6 +2158,7 @@ async function countUserMonthlyExports(domain, email) {
     // is deterministic rather than server-local.
     const now = new Date();
     const startOfMonthMs = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1);
+    const currentMonthKey = exportMonthKey(now.getTime());
     const snap = await tenantRef(domain).collection('exports')
       .where('email', '==', email.toLowerCase())
       .get();
@@ -2147,7 +2166,7 @@ async function countUserMonthlyExports(domain, email) {
     for (const d of snap.docs) {
       const data = d.data();
       const createdMs = data.createdAt?.toDate ? data.createdAt.toDate().getTime() : (data.createdAt ? new Date(data.createdAt).getTime() : 0);
-      if (createdMs >= startOfMonthMs) {
+      if (createdMs >= startOfMonthMs || data.reexportMonth === currentMonthKey) {
         // Solo self-tests (<= 1 attendee) do not consume the teacher's free monthly quota
         if (data.participantCount != null && Number(data.participantCount) <= 1) {
           continue;

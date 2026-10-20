@@ -41,17 +41,22 @@ describe('tierFor', () => {
 });
 
 describe('tier3Arm', () => {
-  test('split is stable per email and covers both arms', () => {
+  test('defaults to all (tiered) when TIER3_TEST is unset; split is stable per email and covers both arms', () => {
     const a = emailInArm('tiered');
     const b = emailInArm('legacy');
+    expect(tiers.tier3Arm(a)).toBe('tiered');
+    expect(tiers.tier3Arm(b)).toBe('tiered');
+    expect(tiers.tier3Arm(null)).toBe('tiered');
+    process.env.TIER3_TEST = 'split';
     expect(tiers.tier3Arm(a)).toBe('tiered');
     expect(tiers.tier3Arm(` ${a.toUpperCase()} `)).toBe('tiered'); // normalized
     expect(tiers.tier3Arm(b)).toBe('legacy');
   });
-  test('no email → legacy; all / off overrides; armOverride wins', () => {
-    expect(tiers.tier3Arm(null)).toBe('legacy');
+  test('no email → legacy in split mode; all / off overrides; armOverride wins', () => {
     expect(tiers.tier3Arm(null, 'tiered')).toBe('tiered');
     expect(tiers.tier3Arm(emailInArm('tiered'), 'legacy')).toBe('legacy');
+    process.env.TIER3_TEST = 'split';
+    expect(tiers.tier3Arm(null)).toBe('legacy');
     process.env.TIER3_TEST = 'all';
     expect(tiers.tier3Arm(null)).toBe('tiered');
     process.env.TIER3_TEST = 'off';
@@ -101,7 +106,9 @@ describe('getOffer', () => {
     expect(tiers.getOffer({ country: 'ID', email: 'a@b.com' }).prices.pro_annual.perMonth).toBe('Rp 8.250');
   });
 
-  test('tier 3: legacy arm falls back; tiered arm gets local prices + methods', () => {
+  test('tier 3: legacy arm falls back in split mode; default/tiered arm gets local prices + methods', () => {
+    expect(tiers.getOffer({ country: 'IN', email: emailInArm('legacy') })).toMatchObject({ tiered: true, tier: 3, arm: 'tiered' });
+    process.env.TIER3_TEST = 'split';
     expect(tiers.getOffer({ country: 'IN', email: emailInArm('legacy') })).toMatchObject({ tiered: false, tier: 3, arm: 'legacy' });
     const o = tiers.getOffer({ country: 'IN', email: emailInArm('tiered') });
     expect(o).toMatchObject({ tiered: true, tier: 3, arm: 'tiered', currency: 'inr', methods: ['card', 'upi'] });

@@ -1184,7 +1184,7 @@ describe('POST /api/save-to-sheets — Pro gating', () => {
     // write unlimited fresh sheet tabs while the meter stayed at 1.
     firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
     firestore.countUserMonthlyExports.mockResolvedValue(1);
-    firestore.getExportReexportCount.mockResolvedValue(10); // at the cap
+    firestore.getExportReexportCount.mockResolvedValue(2); // at the cap (2)
     const res = await request(app).post('/api/save-to-sheets')
       .set(authedHeader('u@replay.com', 'replay.com')).set('Content-Type', 'application/json')
       .send({ ...validPayload, autoExport: false });
@@ -1196,12 +1196,31 @@ describe('POST /api/save-to-sheets — Pro gating', () => {
   test('re-export below the cap still succeeds for a free user', async () => {
     firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
     firestore.countUserMonthlyExports.mockResolvedValue(1);
-    firestore.getExportReexportCount.mockResolvedValue(2);
-    firestore.persistExport.mockResolvedValue({ created: false, reexportCount: 3 });
+    firestore.getExportReexportCount.mockResolvedValue(1);
+    firestore.persistExport.mockResolvedValue({ created: false, reexportCount: 2 });
     const res = await request(app).post('/api/save-to-sheets')
       .set(authedHeader('u@replay2.com', 'replay2.com')).set('Content-Type', 'application/json')
       .send({ ...validPayload, autoExport: false });
     expect(res.status).toBe(200);
+    firestore.getExportReexportCount.mockResolvedValue(0);
+  });
+
+  test('402 largeClass when b.roster exceeds 25 students even if participants <= 25 and grace already used', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.countUserMonthlyExports.mockResolvedValue(0);
+    firestore.getExportReexportCount.mockResolvedValue(0);
+    firestore.getUser.mockResolvedValue({
+      email: 'u@roster26.com', domain: 'roster26.com', refreshToken: 'rt', accessToken: 'at',
+      tokenExpiresAt: new Date(Date.now() + 3600000),
+      hasUsedLargeClassGrace: true,
+    });
+    const roster30 = Array.from({ length: 30 }, (_, i) => ({ name: `Student ${i + 1}`, email: `s${i + 1}@roster26.com` }));
+    const res = await request(app).post('/api/save-to-sheets')
+      .set(authedHeader('u@roster26.com', 'roster26.com')).set('Content-Type', 'application/json')
+      .send({ ...validPayload, roster: roster30, autoExport: false });
+    expect(res.status).toBe(402);
+    expect(res.body.feature).toBe('largeClass');
+    expect(res.body.participantCount).toBeGreaterThan(25);
   });
 
   test('manual export for a free domain sends email digest with isPro: false', async () => {

@@ -3246,7 +3246,8 @@ describe('billing — tiered regional pricing (TIERED_PRICING=1)', () => {
     expect(s.payment_method_types).toBeUndefined();
   });
 
-  test('India legacy arm: pro_monthly unavailable, pro_annual renewal falls back to educator pass', async () => {
+  test('India legacy arm (when TIER3_TEST=split): pro_monthly unavailable, pro_annual renewal falls back to educator pass', async () => {
+    process.env.TIER3_TEST = 'split';
     const email = emailInArm('legacy');
     const monthlyRes = await checkout(email, { plan: 'pro_monthly', country: 'IN' });
     expect(monthlyRes.status).toBe(400);
@@ -3260,7 +3261,8 @@ describe('billing — tiered regional pricing (TIERED_PRICING=1)', () => {
     expect(lastSession().metadata.pricing).toBeUndefined();
   });
 
-  test('Kenya legacy arm: pro_annual renewal falls back to educator pass', async () => {
+  test('Kenya legacy arm (when TIER3_TEST=split): pro_annual renewal falls back to educator pass', async () => {
+    process.env.TIER3_TEST = 'split';
     const email = emailInArm('legacy');
     const res = await checkout(email, { plan: 'pro_annual', country: 'KE' });
     expect(res.status).toBe(200);
@@ -3302,20 +3304,24 @@ describe('billing — tiered regional pricing (TIERED_PRICING=1)', () => {
     expect(lastSession().client_reference_id).toBe('user:buyer@gmail.com');
   });
 
-  test('public-checkout: monthly refused in prepaid markets, Stripe failure → 502, signed-out tier 3 → 400 for pro', async () => {
+  test('public-checkout: monthly refused in prepaid markets, Stripe failure → 502, signed-out tier 3 → 400 for pro in split mode', async () => {
     expect((await request(app).post('/api/billing/public-checkout').set('cf-ipcountry', 'MX').send({ plan: 'pro_monthly' })).status).toBe(400);
     mockStripeInstance.checkout.sessions.create.mockRejectedValueOnce(Object.assign(new Error('boom'), { code: 'api_error' }));
     expect((await request(app).post('/api/billing/public-checkout').set('cf-ipcountry', 'US').send({ plan: 'pro_annual' })).status).toBe(502);
+    process.env.TIER3_TEST = 'split';
     expect((await request(app).post('/api/billing/public-checkout').set('cf-ipcountry', 'IN').send({ plan: 'pro_annual' })).status).toBe(400);
   });
 
-  test('GET /billing/offer: tiered table for US, legacy (null pricing) for signed-out tier 3, never cached', async () => {
+  test('GET /billing/offer: tiered table for US and default tier 3, legacy (null pricing) for signed-out tier 3 in split mode, never cached', async () => {
     const us = await request(app).get('/api/billing/offer').set('cf-ipcountry', 'US');
     expect(us.headers['cache-control']).toBe('private, no-store');
     expect(us.body).toMatchObject({ tiered: true, tier: 1, prepaid: false, monthlyAvailable: true, country: 'US' });
     expect(us.body.pricing.pro_annual).toEqual({ label: '$29', full: null, period: '/yr', perMonth: '$2.42' });
     expect(us.body.pricing.lifetime).toEqual({ label: '$49', full: null, period: 'one-time' });
     expect(us.body.pricing.department.label).toBe('$59'); // domain plans unchanged
+    const inDefault = await request(app).get('/api/billing/offer').set('cf-ipcountry', 'IN');
+    expect(inDefault.body).toMatchObject({ tiered: true, tier: 3, arm: 'tiered' });
+    process.env.TIER3_TEST = 'split';
     const inn = await request(app).get('/api/billing/offer').set('cf-ipcountry', 'IN');
     expect(inn.body).toMatchObject({ tiered: false, tier: 3, arm: 'legacy', pricing: null });
   });

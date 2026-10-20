@@ -276,17 +276,34 @@ describe('certificates (Pro-gated)', () => {
     expect(firestore.persistExport).not.toHaveBeenCalled();
   });
 
-  test('free user report: returns 402 exportQuota when re-export limit is reached for the meeting', async () => {
+  test('free user report: returns 402 exportQuota when re-export limit (2) is reached for the meeting', async () => {
     firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
     firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
     firestore.countUserMonthlyExports.mockResolvedValue(1);
-    firestore.getExportReexportCount.mockResolvedValue(10);
+    firestore.getExportReexportCount.mockResolvedValue(2);
     const res = await request(app).post('/api/export/pdf').set(H())
       .send({ type: 'report', meetingTitle: 'History Class', conferenceId: 'hist-1', participants: PARTS });
     expect(res.status).toBe(402);
     expect(res.body.feature).toBe('exportQuota');
     expect(res.body.error).toContain('maximum number of times');
     expect(firestore.persistExport).not.toHaveBeenCalled();
+  });
+
+  test('free user report: counts calendarAttendees no-shows toward >25 largeClass check', async () => {
+    firestore.getTenantPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUserPlan.mockResolvedValue({ plan: 'free' });
+    firestore.getUser.mockResolvedValue({ email: 'user@acme.com', domain: 'acme.com', hasUsedLargeClassGrace: true });
+    firestore.countUserMonthlyExports.mockResolvedValue(0);
+    const calInvitees = Array.from({ length: 25 }, (_, i) => ({
+      email: `invitee${i + 1}@acme.com`,
+      displayName: `Invitee ${i + 1}`,
+      responseStatus: 'accepted',
+    }));
+    const res = await request(app).post('/api/export/pdf').set(H())
+      .send({ type: 'report', meetingTitle: 'Large Calendar Class', participants: PARTS, calendarAttendees: calInvitees });
+    expect(res.status).toBe(402);
+    expect(res.body.feature).toBe('largeClass');
+    expect(res.body.participantCount).toBe(27);
   });
 
   test('free user report: derives deterministic fallback token when conferenceId is omitted', async () => {

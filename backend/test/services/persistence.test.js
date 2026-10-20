@@ -383,4 +383,43 @@ describe('persistExport', () => {
     await expect(firestore.getExportReexportCount('acme.com', 'me@acme.com', 'conf-m')).resolves.toBe(1);
     await expect(firestore.getExportReexportCount('acme.com', 'me@acme.com', null)).resolves.toBeNull();
   });
+
+  test('Solo-First Poisoning fix: same-month re-export updates participantCount to Math.max(prior, current) so solo -> class is counted in countUserMonthlyExports', async () => {
+    const soloPayload = {
+      meetingTitle: 'Lecture', tabName: 'Lecture', exportedAt: '', participantCount: 1,
+      sheetUrl: '', email: 'me@acme.com', autoExport: false, conferenceId: 'conf-solo-first',
+    };
+    await firestore.persistExport('acme.com', soloPayload);
+    // Solo export (participantCount=1) does not consume monthly quota
+    await expect(firestore.countUserMonthlyExports('acme.com', 'me@acme.com')).resolves.toBe(0);
+
+    // Re-export same meeting after 20 students join -> participantCount becomes 20
+    const classPayload = { ...soloPayload, participantCount: 20 };
+    await firestore.persistExport('acme.com', classPayload);
+    const stored = ctx.read('tenants/acme.com/exports/me_acme_com__conf-solo-first');
+    expect(stored.participantCount).toBe(20);
+    await expect(firestore.countUserMonthlyExports('acme.com', 'me@acme.com')).resolves.toBe(1);
+  });
+
+  test('countUserMonthlyExports counts recurring-meeting dedupe docs rolled over into current month even when createdAt is from a prior month', async () => {
+    const payload = {
+      meetingTitle: 'Weekly Class', tabName: 'Weekly', exportedAt: '', participantCount: 15,
+      sheetUrl: '', email: 'me@acme.com', autoExport: false, conferenceId: 'conf-recurring',
+    };
+    await firestore.persistExport('acme.com', payload);
+    // Simulate doc originally created in 2025-01, then re-exported in the current month
+    const docId = 'me_acme_com__conf-recurring';
+    const stored = ctx.read(`tenants/acme.com/exports/${docId}`);
+    ctx.seed(`tenants/acme.com/exports/${docId}`, {
+      ...stored,
+      createdAt: wrapTimestamp(new Date('2025-01-15T10:00:00Z')),
+      reexportMonth: '2025-01',
+    });
+    // Before re-export in current month, monthly count is 0
+    await expect(firestore.countUserMonthlyExports('acme.com', 'me@acme.com')).resolves.toBe(0);
+
+    // Re-export in current month updates reexportMonth to current month while createdAt stays in 2025-01
+    await firestore.persistExport('acme.com', payload);
+    await expect(firestore.countUserMonthlyExports('acme.com', 'me@acme.com')).resolves.toBe(1);
+  });
 });

@@ -15,10 +15,10 @@ afterEach(() => {
 });
 
 describe('isNameMatch', () => {
-  test('matches exact and normalized names', () => {
+  test('matches exact, normalized, and email-username names, but rejects 2-letter initials', () => {
     expect(reviewVerifier.isNameMatch('Jacob Swag', 'Jacob Swag', 'jacob@gmail.com')).toBe(true);
     expect(reviewVerifier.isNameMatch('jacob swag', 'Jacob Swag', 'jacob@gmail.com')).toBe(true);
-    expect(reviewVerifier.isNameMatch('J S', 'Jacob Swag', 'jacob@gmail.com')).toBe(true);
+    expect(reviewVerifier.isNameMatch('J S', 'Jacob Swag', 'jacob@gmail.com')).toBe(false);
     expect(reviewVerifier.isNameMatch('jacobswag', 'J', 'jacobswag93@gmail.com')).toBe(true);
   });
 
@@ -416,6 +416,30 @@ describe('grantReviewReward & verifyUserReview', () => {
     const revDoc = ctx.read('marketplace_reviews/rev-shared-race');
     expect(revDoc.redeemed).toBe(true);
     expect(['chris1@school.edu', 'chris2@school.edu']).toContain(revDoc.redeemedByEmail);
+
+    syncSpy.mockRestore();
+  });
+
+  test('verifyUserReview skips unredeemed reviews older than 14 days', async () => {
+    const marketplace = require('../../src/services/marketplace-reviews');
+    const syncSpy = jest.spyOn(marketplace, 'syncMarketplaceReviews').mockResolvedValue({ total: 1, newlyDiscovered: 0, reviews: [] });
+
+    ctx.seed('marketplace_reviews/rev-old', {
+      reviewId: 'rev-old',
+      rating: 5,
+      comment: 'Old review from a month ago',
+      authorName: 'Stale Reviewer',
+      timestampMs: Date.now() - 20 * 24 * 60 * 60 * 1000, // 20 days ago
+      redeemed: false,
+    });
+    ctx.seed('tenants/school.edu/users/stale@school.edu', {
+      displayName: 'Stale Reviewer',
+      reviewStatus: 'clicked',
+    });
+
+    const res = await reviewVerifier.verifyUserReview('school.edu', 'stale@school.edu', 'Stale Reviewer');
+    expect(res.success).toBe(false);
+    expect(res.reason).toBe('no_matching_review_found');
 
     syncSpy.mockRestore();
   });

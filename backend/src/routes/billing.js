@@ -1496,7 +1496,8 @@ router.post('/billing/record-export', requireAuth, async (req, res) => {
     const reexports = typeof getExportReexportCount === 'function'
       ? await getExportReexportCount(req.user.domain, req.user.email, confId)
       : null;
-    if (reexports != null && reexports >= (PRICING.FREE_REEXPORTS_PER_MEETING || 10)) {
+    const maxReexports = Number(process.env.FREE_REEXPORTS_PER_MEETING) || PRICING.FREE_REEXPORTS_PER_MEETING || 2;
+    if (reexports != null && reexports >= maxReexports) {
       return res.status(402).json({
         error: 'You have re-exported this meeting the maximum number of times on the free plan. Upgrade to Pro for unlimited exports.',
         feature: 'exportQuota',
@@ -1535,7 +1536,8 @@ router.post('/billing/record-export', requireAuth, async (req, res) => {
     });
 
     const isSolo = count <= 1;
-    const newUsed = used + ((persistResult?.created === false || isSolo) ? 0 : 1);
+    const countedAsNew = persistResult?.created !== false || !!persistResult?.promotedFromSolo;
+    const newUsed = used + ((!countedAsNew || isSolo) ? 0 : 1);
 
     return res.json({
       success: true,

@@ -15,15 +15,6 @@ function normalize(str) {
 }
 
 /**
- * Compute initials from a name (e.g. "Jacob Swag" -> "js", "John" -> "j")
- */
-function getInitials(str) {
-  if (!str || typeof str !== 'string') return '';
-  const parts = str.trim().split(/\s+/).filter(Boolean);
-  return parts.map(p => p[0].toLowerCase()).join('');
-}
-
-/**
  * Check if a review author name plausibly matches a user identity
  */
 function isNameMatch(authorName, userDisplayName, userEmail) {
@@ -42,13 +33,6 @@ function isNameMatch(authorName, userDisplayName, userEmail) {
   // 2. Email username match (e.g. author "jacobswag" matches user "jacobswag93@gmail.com")
   if (emailUsername && (emailUsername.includes(normAuthor) || normAuthor.includes(emailUsername))) {
     return true;
-  }
-
-  // 3. Initials match (e.g. author "J S" matches displayName "Jacob Smith" or email username initials)
-  const authorInitials = normAuthor.replace(/\s+/g, '');
-  if (authorInitials.length >= 2 && normDisplay) {
-    const userInitials = getInitials(userDisplayName);
-    if (authorInitials === userInitials) return true;
   }
 
   return false;
@@ -304,8 +288,19 @@ async function verifyUserReview(domain, email, declaredName = null, options = {}
   const unredeemed = [];
   reviewsSnap.forEach(d => unredeemed.push(d.data()));
 
-  // Look for match
+  // Look for match (review must be within the last 14 days when date/timestamp is present)
+  const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
+  const nowMs = Date.now();
   for (const review of unredeemed) {
+    const rawDate = review.timestampMs || review.createdAt || review.date;
+    if (rawDate) {
+      const reviewMs = typeof rawDate === 'number'
+        ? rawDate
+        : (typeof rawDate?.toDate === 'function' ? rawDate.toDate().getTime() : new Date(rawDate).getTime());
+      if (Number.isFinite(reviewMs) && reviewMs > 0 && (nowMs - reviewMs) > FOURTEEN_DAYS_MS) {
+        continue;
+      }
+    }
     if (isNameMatch(review.authorName, searchName, emailLower)) {
       return await grantReviewReward(domainLower, emailLower, review);
     }

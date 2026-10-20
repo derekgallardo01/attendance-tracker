@@ -87,9 +87,9 @@ function tierFor(country) {
 // email) get the legacy offer so a later signed-in view can't contradict it,
 // unless an explicit arm override is provided (e.g. public offer check with arm=tiered).
 function tier3Arm(email, armOverride = null) {
-  const mode = process.env.TIER3_TEST || 'split';
-  if (mode === 'all') return 'tiered';
   if (armOverride === 'tiered' || armOverride === 'legacy') return armOverride;
+  const mode = process.env.TIER3_TEST || 'all';
+  if (mode === 'all') return 'tiered';
   if (mode === 'off' || !email) return 'legacy';
   const byte = crypto.createHash('sha256').update(String(email).trim().toLowerCase()).digest()[0];
   return byte % 2 === 0 ? 'tiered' : 'legacy';

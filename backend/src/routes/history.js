@@ -2,11 +2,12 @@ const { Router } = require('express');
 const CONFIG = require('../config');
 const { requireAuth } = require('../middleware/auth');
 const log = require('../lib/logger');
-const { getUserMeetingHistory, getUserMeetingSeries, getParticipantHistory, setParticipantNote, getParticipantNote, logEvent, createShareLink, revokeShareLink, getUser, setTeamSignpostDismissed, listUserShareLinks, getMeetingDetail, persistAttendance, getTrackedConferenceIds, updateMeetingTimes } = require('../services/firestore');
+const { getUserMeetingHistory, getUserMeetingSeries, getParticipantHistory, setParticipantNote, getParticipantNote, logEvent, createShareLink, revokeShareLink, getUser, setTeamSignpostDismissed, listUserShareLinks, getMeetingDetail, persistAttendance, getTrackedConferenceIds, updateMeetingTimes, isMeetingUnlocked, countUserMonthlyExports, persistExport } = require('../services/firestore');
 const { domainOf } = require('../services/firestore/_core');
 const { meetGet, fetchConferenceParticipants } = require('../services/meetApi');
 const { refreshAccessToken } = require('../services/googleAuth');
 const { planIsPro } = require('./billing');
+const PRICING = require('../config/pricing');
 // The team-signpost (institutional wedge) lives in one shared lib so the history
 // page and the in-Meet panel (/oauth/me) render the same gated payload.
 const { buildTeamSignpost } = require('../lib/teamSignpost');
@@ -291,7 +292,27 @@ router.get('/history/meeting/:id', requireAuth, async (req, res) => {
     const detail = await getMeetingDetail(req.user.domain, req.user.email, meetingId);
     if (!detail) return res.status(404).json({ error: 'Meeting not found' });
     const isPro = await planIsPro(req.user.domain, req.user.email);
-    res.json({ ...detail, isPro: !!isPro });
+    const unlocked = !isPro && typeof isMeetingUnlocked === 'function'
+      ? await isMeetingUnlocked(req.user.domain, req.user.email, detail.conferenceId || meetingId)
+      : false;
+    const totalAttendeeCount = Array.isArray(detail.attendees) ? detail.attendees.length : 0;
+    if (!isPro && !unlocked && Array.isArray(detail.attendees) && detail.attendees.length > 25) {
+      return res.json({
+        ...detail,
+        attendees: detail.attendees.slice(0, 25),
+        attendeesCapped: true,
+        totalAttendeeCount,
+        isPro: false,
+        meetingUnlocked: false,
+      });
+    }
+    res.json({
+      ...detail,
+      attendeesCapped: false,
+      totalAttendeeCount,
+      isPro: !!isPro,
+      meetingUnlocked: !!unlocked,
+    });
   } catch (err) {
     if (err.message === 'forbidden') {
       return res.status(403).json({ error: 'You do not have access to this meeting' });
@@ -379,6 +400,22 @@ router.post('/history/import-conference', requireAuth, async (req, res) => {
   const { conferenceRecordName } = req.body || {};
   if (!conferenceRecordName) return res.status(400).json({ error: 'conferenceRecordName is required' });
 
+  const isPro = await planIsPro(req.user.domain, req.user.email);
+  if (!isPro) {
+    const used = typeof countUserMonthlyExports === 'function'
+      ? await countUserMonthlyExports(req.user.domain, req.user.email)
+      : 0;
+    const limit = PRICING.FREE_MONTHLY_EXPORT_LIMIT || 2;
+    if (used >= limit) {
+      return res.status(402).json({
+        error: 'Monthly export quota reached. Upgrade to Educator Pro to import past meetings.',
+        feature: 'exportQuota',
+        used,
+        limit,
+      });
+    }
+  }
+
   let accessToken = req.user.accessToken;
   if (!accessToken) {
     try {
@@ -418,9 +455,29 @@ router.post('/history/import-conference', requireAuth, async (req, res) => {
 
   try {
     const participants = await fetchConferenceParticipants(conferenceRecordName, accessToken, rec.endTime);
+    if (!isPro && participants.length > 25) {
+      return res.status(402).json({
+        error: 'Free tier supports up to 25 attendees per meeting. Upgrade to Pro to import large classes.',
+        feature: 'largeClass',
+        participantCount: participants.length,
+      });
+    }
     await persistAttendance(req.user.domain, meetingCode, conferenceRecordName, participants, req.user.email);
     if (rec.startTime || rec.endTime) {
       await updateMeetingTimes(req.user.domain, meetingCode, conferenceRecordName, rec.startTime, rec.endTime);
+    }
+    if (!isPro && typeof persistExport === 'function') {
+      await persistExport(req.user.domain, {
+        domain: req.user.domain,
+        email: req.user.email,
+        meetingTitle: meetingCode,
+        tabName: 'Retroactive Import',
+        sheetUrl: null,
+        conferenceId: meetingCode,
+        participantCount: participants.length,
+        exportType: 'import',
+        exportedAt: new Date().toISOString(),
+      });
     }
 
     res.json({

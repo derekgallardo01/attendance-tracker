@@ -73,10 +73,65 @@ async function resolveShareLink(token) {
   }
 }
 
+async function isShareOwnerPro(domain, ownerEmail, meetingIds = []) {
+  try {
+    const tenant = tenantRef(domain);
+    if (typeof tenant.get === 'function') {
+      const tDoc = await tenant.get();
+      if (tDoc && tDoc.exists) {
+        const tData = tDoc.data() || {};
+        if (tData.plan === 'pro') {
+          const expMs = tsMs(tData.expiresAt);
+          if (!expMs || expMs > Date.now()) return true;
+        }
+      }
+    }
+    if (ownerEmail && typeof tenant.collection === 'function') {
+      const usersCol = tenant.collection('users');
+      if (usersCol && typeof usersCol.doc === 'function') {
+        const uDoc = await usersCol.doc(String(ownerEmail).toLowerCase()).get();
+        if (uDoc && uDoc.exists) {
+          const uData = uDoc.data() || {};
+          if (uData.individualPlan === 'pro') {
+            const rawExp = uData.individualPlanExpiresAt ?? uData.individualExpiresAt;
+            const expMs = tsMs(rawExp);
+            const hasActiveSub = !!uData.individualStripeSubscriptionId;
+            const isLifetime = uData.individualPlanType === 'lifetime';
+            if (!expMs || expMs > Date.now() || hasActiveSub || isLifetime) return true;
+          }
+          if (meetingIds.length && uData.unlockedMeetings) {
+            if (Array.isArray(uData.unlockedMeetings)) {
+              const unlockedSet = new Set(
+                uData.unlockedMeetings.map((x) => String(x || '').trim().toLowerCase()).filter(Boolean)
+              );
+              for (const mid of meetingIds) {
+                if (!mid) continue;
+                const clean = String(mid).trim().toLowerCase();
+                const base = clean.includes('__') ? clean.split('__')[0] : clean;
+                if (unlockedSet.has(clean) || unlockedSet.has(base)) return true;
+              }
+            } else if (typeof uData.unlockedMeetings === 'object') {
+              for (const mid of meetingIds) {
+                if (!mid) continue;
+                const clean = String(mid).trim().toLowerCase();
+                const base = clean.includes('__') ? clean.split('__')[0] : clean;
+                if (uData.unlockedMeetings[mid] || uData.unlockedMeetings[clean] || uData.unlockedMeetings[base]) return true;
+              }
+            }
+          }
+        }
+      }
+    }
+  } catch (e) {
+    // Fall through to false on lookup error
+  }
+  return false;
+}
+
 // Build a public-safe view of a single series. Same aggregation as
 // getUserMeetingSeries but scoped to one recurringEventId and with personal
 // emails stripped so the link recipient doesn't see contact info.
-async function getSharedSeriesView(domain, recurringEventId) {
+async function getSharedSeriesView(domain, recurringEventId, ownerEmail = null) {
   try {
     const tenant = tenantRef(domain);
     const meetingsSnap = await tenant.collection('meetings').where('recurringEventId', '==', recurringEventId).get();
@@ -146,11 +201,22 @@ async function getSharedSeriesView(domain, recurringEventId) {
     const people = [...peopleMap.values()]
       .map(p => ({ displayName: p.displayName, attended: p.attended, attendanceRate: p.attended / instanceCount }))
       .sort((a, b) => b.attended - a.attended || a.displayName.localeCompare(b.displayName));
+    const totalPeopleCount = people.length;
+    let peopleCapped = false;
+    let returnedPeople = people;
+    if (people.length > 12) {
+      const isPro = await isShareOwnerPro(domain, ownerEmail);
+      if (!isPro) {
+        returnedPeople = people.slice(0, 12);
+        peopleCapped = true;
+      }
+    }
     return {
-      title, instanceCount, uniquePeople: people.length,
+      title, instanceCount, uniquePeople: totalPeopleCount,
       firstAt: firstAt ? new Date(firstAt).toISOString() : null,
       lastAt: lastAt ? new Date(lastAt).toISOString() : null,
-      people,
+      people: returnedPeople,
+      ...(peopleCapped ? { peopleCapped: true, totalPeopleCount } : {}),
     };
   } catch (err) {
     log.error('firestore: getSharedSeriesView failed', { domain, recurringEventId, error: err.message });
@@ -179,7 +245,7 @@ async function revokeShareLink(token, ownerEmail) {
 
 // Build a public-safe view of a single meeting. Personal emails are stripped
 // so recipient only sees names, dwell time, and attendance status.
-async function getSharedMeetingView(domain, meetingId) {
+async function getSharedMeetingView(domain, meetingId, ownerEmail = null) {
   try {
     const tenant = tenantRef(domain);
     let mRef = tenant.collection('meetings').doc(meetingId);
@@ -260,6 +326,16 @@ async function getSharedMeetingView(domain, meetingId) {
     const presentCount = people.filter(p => p.present).length;
     const attendanceRate = totalAttendees > 0 ? (presentCount / totalAttendees) : 1;
 
+    let returnedPeople = people;
+    let participantsCapped = false;
+    if (people.length > 25) {
+      const isPro = await isShareOwnerPro(domain, ownerEmail, [meetingId, mDoc.id, m.meetingCode, m.conferenceId]);
+      if (!isPro) {
+        returnedPeople = people.slice(0, 25);
+        participantsCapped = true;
+      }
+    }
+
     return {
       title: m.title || 'Google Meet',
       meetingCode: m.meetingCode || m.conferenceId || null,
@@ -268,7 +344,8 @@ async function getSharedMeetingView(domain, meetingId) {
       totalAttendees,
       presentCount,
       attendanceRate,
-      people,
+      people: returnedPeople,
+      ...(participantsCapped ? { peopleCapped: true, participantsCapped: true, totalParticipantCount: totalAttendees } : {}),
     };
   } catch (err) {
     log.error('firestore: getSharedMeetingView failed', { domain, meetingId, error: err.message });

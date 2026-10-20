@@ -713,6 +713,69 @@ describe('getMeetingDetail', () => {
     expect(s2.status).toBe('absent');
     expect(s2.rsvpStatus).toBe('declined');
   });
+
+  test('getSharedSeriesView caps people at 12 for free owner and returns all for Pro owner', async () => {
+    ctx.seed('tenants/acme.com/meetings/m-series-big', {
+      recurringEventId: 'series-big',
+      title: 'Big Series',
+      startTime: wrapTimestamp(new Date('2026-06-01T10:00:00Z')),
+    });
+    for (let i = 1; i <= 15; i++) {
+      ctx.seed(`tenants/acme.com/meetings/m-series-big/participants/p${i}`, {
+        email: `s${i}@acme.com`,
+        displayName: `Student ${i}`,
+      });
+    }
+
+    const freeView = await firestore.getSharedSeriesView('acme.com', 'series-big', 'free@acme.com');
+    expect(freeView.people).toHaveLength(12);
+    expect(freeView.peopleCapped).toBe(true);
+    expect(freeView.totalPeopleCount).toBe(15);
+
+    ctx.seed('tenants/acme.com/users/pro@acme.com', { individualPlan: 'pro' });
+    const proView = await firestore.getSharedSeriesView('acme.com', 'series-big', 'pro@acme.com');
+    expect(proView.people).toHaveLength(15);
+    expect(proView.peopleCapped).toBeUndefined();
+  });
+
+  test('getSharedMeetingView caps people at 25 for free owner and returns all for Pro or unlocked-meeting owner', async () => {
+    ctx.seed('tenants/acme.com/meetings/m-big', {
+      title: 'Big Meeting',
+      meetingCode: 'm-big',
+      conferenceId: 'm-big',
+      startTime: wrapTimestamp(new Date('2026-06-01T10:00:00Z')),
+    });
+    for (let i = 1; i <= 30; i++) {
+      ctx.seed(`tenants/acme.com/meetings/m-big/participants/p${i}`, {
+        email: `s${i}@acme.com`,
+        displayName: `Student ${i}`,
+        present: true,
+        durationMin: 45,
+      });
+    }
+
+    const freeView = await firestore.getSharedMeetingView('acme.com', 'm-big', 'free@acme.com');
+    expect(freeView.people).toHaveLength(25);
+    expect(freeView.peopleCapped).toBe(true);
+    expect(freeView.participantsCapped).toBe(true);
+    expect(freeView.totalParticipantCount).toBe(30);
+
+    ctx.seed('tenants/acme.com/users/unlocked@acme.com', {
+      unlockedMeetings: ['m-big'],
+    });
+    const unlockedView = await firestore.getSharedMeetingView('acme.com', 'm-big', 'unlocked@acme.com');
+    expect(unlockedView.people).toHaveLength(30);
+    expect(unlockedView.participantsCapped).toBeUndefined();
+
+    // Expired individualPlanExpiresAt without active subscription must fall back to Free cap
+    ctx.seed('tenants/acme.com/users/expired@acme.com', {
+      individualPlan: 'pro',
+      individualPlanExpiresAt: new Date(Date.now() - 86400000).toISOString(),
+    });
+    const expiredView = await firestore.getSharedMeetingView('acme.com', 'm-big', 'expired@acme.com');
+    expect(expiredView.people).toHaveLength(25);
+    expect(expiredView.participantsCapped).toBe(true);
+  });
 });
 
 

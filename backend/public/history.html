@@ -719,6 +719,44 @@
       return 'lifetime';
     }
 
+    function isProUser() {
+      return !!(data && data.isPro) ||
+        !!(window._lastBillingStatus && window._lastBillingStatus.plan === 'pro') ||
+        !!(activeMeetingDetail && activeMeetingDetail.isPro);
+    }
+
+    function openUpgradeModal(feature) {
+      try { logHistoryEvent('upgrade_modal_shown', { feature: feature || 'history_page' }); } catch (e) {}
+      const modal = document.getElementById('history-upgrade-modal');
+      const titleEl = document.getElementById('history-upgrade-title');
+      const descEl = document.getElementById('history-upgrade-desc');
+      if (titleEl && descEl) {
+        if (feature === 'largeClass') {
+          titleEl.textContent = 'Unlock Full Class Roster (25+ Attendees)';
+          descEl.textContent = 'The Free tier displays and exports up to 25 attendees per session. Upgrade to Educator Pro to view and export unlimited class sizes across all your meetings.';
+        } else if (feature === 'certificates') {
+          titleEl.textContent = 'Attendance Certificates (Pro)';
+          descEl.textContent = 'Generate verifiable PDF attendance certificates for every participant in one click with Educator Pro.';
+        } else if (feature === 'reexportCap') {
+          titleEl.textContent = 'Re-export Limit Reached';
+          descEl.textContent = 'Free accounts include up to 2 re-exports per meeting. Upgrade to Educator Pro for unlimited exports and automatic Google Sheets sync.';
+        } else {
+          titleEl.textContent = 'Monthly Export Quota Reached';
+          descEl.textContent = 'You have used your 2 free monthly exports. Upgrade to Educator Pro for unlimited CSV, Excel, PDF, and Google Sheets exports.';
+        }
+      }
+      if (modal) {
+        modal.classList.add('open');
+      } else {
+        upgradeFromHistory(null, historyUpgradePlan());
+      }
+    }
+
+    function closeUpgradeModal() {
+      const modal = document.getElementById('history-upgrade-modal');
+      if (modal) modal.classList.remove('open');
+    }
+
     async function upgradeFromHistory(btn, plan) {
       plan = plan || historyUpgradePlan();
       // Conversion telemetry parity with the panel's startUpgradeCheckout —
@@ -931,7 +969,12 @@
             locale: (window.AttStrings && AttStrings.getLocale()) || 'en',
           }),
         });
-        if (res.status === 402) { alert(t('history.certsPro', 'Certificates are a Pro feature — upgrade on this page to issue them.')); return; }
+        if (res.status === 402) {
+          let errBody = {};
+          try { errBody = await res.json(); } catch (e) {}
+          openUpgradeModal(errBody.feature || (type === 'certificates' ? 'certificates' : 'exportQuota'));
+          return;
+        }
         if (!res.ok) { let b = {}; try { b = await res.json(); } catch (e) {} alert(t('history.pdfError', "Couldn't generate the PDF: {err}").replace('{err}', b.error || res.status)); return; }
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
@@ -1297,12 +1340,15 @@
 
         // Attendees table with calendar RSVP juxtaposition
         const attendees = detail.attendees || [];
-        document.getElementById('meeting-attendee-count').textContent = `${attendees.length} ${t('history.total', 'total')}`;
+        const totalAttendees = detail.totalAttendeeCount || attendees.length;
+        document.getElementById('meeting-attendee-count').textContent = detail.attendeesCapped
+          ? `25 / ${totalAttendees} ${t('history.total', 'total')}`
+          : `${attendees.length} ${t('history.total', 'total')}`;
         const tbody = document.getElementById('meeting-attendees-tbody');
         if (!attendees.length) {
           tbody.innerHTML = `<tr><td colspan="4" class="muted">${esc(t('history.noAttendeeRecords', 'No attendee records found.'))}</td></tr>`;
         } else {
-          tbody.innerHTML = attendees.map(a => {
+          let rowsHtml = attendees.map(a => {
             let rBadge = '<span class="badge badge-absent">—</span>';
             if (a.rsvpStatus === 'accepted') rBadge = `<span class="badge badge-present">${esc(t('rsvp.accepted', 'Accepted'))}</span>`;
             else if (a.rsvpStatus === 'declined') rBadge = `<span class="badge badge-revoked">${esc(t('rsvp.declined', 'Declined'))}</span>`;
@@ -1323,6 +1369,16 @@
               </tr>
             `;
           }).join('');
+          if (detail.attendeesCapped) {
+            rowsHtml += `
+              <tr>
+                <td colspan="4" style="text-align:center;padding:12px;background:rgba(245,158,11,.08);color:#fbbf24;font-size:.8rem">
+                  Showing 25 of ${totalAttendees} attendees — <a href="#" onclick="openUpgradeModal('largeClass');return false" style="color:#fbbf24;font-weight:600;text-decoration:underline">Upgrade to Pro to view &amp; export full class roster →</a>
+                </td>
+              </tr>
+            `;
+          }
+          tbody.innerHTML = rowsHtml;
         }
 
         loading.style.display = 'none';
@@ -1338,8 +1394,36 @@
       activeMeetingDetail = null;
     }
 
-    function exportMeetingCsvCurrent() {
+    async function exportMeetingCsvCurrent() {
       if (!activeMeetingDetail || typeof AttHistory === 'undefined' || !AttHistory.buildMeetingCsv) return;
+      if (!isProUser() && !activeMeetingDetail.meetingUnlocked) {
+        const participantCount = activeMeetingDetail.totalAttendeeCount || (activeMeetingDetail.attendees || []).length;
+        try {
+          const res = await fetch(`${BACKEND_URL}/billing/record-export`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}` },
+            body: JSON.stringify({
+              exportType: 'csv',
+              conferenceId: activeMeetingDetail.conferenceId || activeMeetingDetail.id,
+              meetingTitle: activeMeetingDetail.title || 'Meeting CSV',
+              participantCount,
+            }),
+          });
+          if (res.status === 402) {
+            let body = {};
+            try { body = await res.json(); } catch (e) {}
+            openUpgradeModal(body.feature || (participantCount > 25 ? 'largeClass' : 'exportQuota'));
+            return;
+          }
+          if (!res.ok) {
+            alert(t('common.couldNotReach', 'Could not reach backend'));
+            return;
+          }
+        } catch (err) {
+          alert(t('common.couldNotReach', 'Could not reach backend'));
+          return;
+        }
+      }
       const loc = (typeof AttStrings !== 'undefined' && AttStrings.getLocale) ? AttStrings.getLocale() : 'en';
       const locHeaders = (typeof AttUtils !== 'undefined' && AttUtils.CSV_HEADER_LOCALIZATIONS) ? AttUtils.CSV_HEADER_LOCALIZATIONS[loc] : null;
       const csv = AttHistory.buildMeetingCsv(activeMeetingDetail, locHeaders);
@@ -1485,6 +1569,12 @@
           body: JSON.stringify({ conferenceRecordName: recordName }),
         });
         const body = await res.json();
+        if (res.status === 402) {
+          btn.disabled = false;
+          btn.textContent = original;
+          openUpgradeModal(body.feature || 'exportQuota');
+          return;
+        }
         if (!res.ok) throw new Error(body.error || 'Import failed');
         btn.textContent = t('history.imported', 'Imported ✓');
         btn.classList.remove('btn-primary');
@@ -1674,6 +1764,10 @@
     // Keyboard navigation: Escape key closes active drawer or modal
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        if (document.getElementById('history-upgrade-modal')?.classList.contains('open')) {
+          closeHistoryUpgradeModal();
+          return;
+        }
         if (document.getElementById('meeting-detail-drawer')?.classList.contains('open')) closeMeetingDetail();
         if (document.getElementById('participant-drawer')?.classList.contains('open')) closeParticipantDrawer();
         if (document.getElementById('past-meetings-modal')?.classList.contains('open')) closePastMeetingsModal();
@@ -1779,6 +1873,25 @@
         <div id="past-meetings-loading" style="text-align:center;padding:30px;color:var(--muted)" data-i18n="history.pastMeetingsLoading">Checking Google Meet API for past conferences…</div>
         <div id="past-meetings-error" style="display:none;background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);border-radius:8px;padding:12px;color:var(--text);font-size:.82rem"></div>
         <div id="past-meetings-list" style="display:flex;flex-direction:column;gap:10px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upgrade Modal -->
+  <div id="history-upgrade-modal" class="modal-overlay" onclick="if(event.target===this)closeUpgradeModal()">
+    <div class="modal-box" style="max-width:440px">
+      <div class="modal-header">
+        <div>
+          <h3 id="history-upgrade-title" style="font-size:1.05rem;font-weight:600;color:var(--text)">Upgrade to Educator Pro</h3>
+        </div>
+        <button class="drawer-close" onclick="closeUpgradeModal()" aria-label="Close modal">×</button>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:16px">
+        <p id="history-upgrade-desc" class="muted" style="font-size:.88rem;line-height:1.5;color:var(--text)">Unlock unlimited class sizes, unlimited exports, automated Google Sheets sync, and verifiable attendance certificates.</p>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button class="btn btn-secondary" onclick="closeUpgradeModal()">Not now</button>
+          <button class="btn btn-primary" onclick="upgradeFromHistory(this, historyUpgradePlan())">Upgrade to Pro — <span class="price-lifetime">$29/yr</span></button>
+        </div>
       </div>
     </div>
   </div>

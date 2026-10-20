@@ -56,6 +56,7 @@ router.post('/export/pdf', requireAuth, async (req, res) => {
     }
     locale = locale || 'en';
 
+    let calendarAttendees = [];
     if (b.conferenceId && !Array.isArray(b.participants)) {
       // History path — pull the persisted attendance for this meeting.
       const m = await getMeetingWithParticipants(req.user.domain, b.conferenceId, req.user.email);
@@ -65,6 +66,7 @@ router.post('/export/pdf', requireAuth, async (req, res) => {
         endTime: m.endTime, host: req.user.displayName || null, timezone: tz, locale,
       };
       attendees = m.participants;
+      calendarAttendees = Array.isArray(m.calendarAttendees) ? m.calendarAttendees : [];
     } else {
       // Live path — the panel hands us the same participant array it exports.
       attendees = Array.isArray(b.participants) ? b.participants : [];
@@ -75,6 +77,7 @@ router.post('/export/pdf', requireAuth, async (req, res) => {
         exportedAt: b.exportedAt || null,
         host: req.user.displayName || null, timezone: tz, locale,
       };
+      calendarAttendees = Array.isArray(b.calendarAttendees) ? b.calendarAttendees : [];
     }
 
     const meetingId = b.meetingId || b.meetingCode || b.conferenceId;
@@ -117,13 +120,16 @@ router.post('/export/pdf', requireAuth, async (req, res) => {
       if (!allowed) {
         const finalConfId = confId || `${meeting.title || 'export'}_${new Date().toISOString().slice(0, 13)}`;
         const maxParticipants = PRICING.FREE_MAX_PARTICIPANTS_PER_EXPORT || 25;
-        if (attendees.length > maxParticipants) {
+        const attendedEmails = new Set((attendees || []).map(p => (p?.email || '').toLowerCase()).filter(Boolean));
+        const uniqueNoShows = (calendarAttendees || []).filter(a => a && a.email && !attendedEmails.has(a.email.toLowerCase()));
+        const totalAttendeeCount = attendees.length + uniqueNoShows.length;
+        if (totalAttendeeCount > maxParticipants) {
           const userDoc = await getUser(req.user.domain, req.user.email);
           if (userDoc?.hasUsedLargeClassGrace === true) {
             return res.status(402).json({
               error: 'Free tier supports exporting up to 25 attendees per meeting. Upgrade to Pro for unlimited class sizes.',
               feature: 'largeClass',
-              participantCount: attendees.length,
+              participantCount: totalAttendeeCount,
             });
           }
         }
@@ -142,7 +148,8 @@ router.post('/export/pdf', requireAuth, async (req, res) => {
         const reexports = typeof getExportReexportCount === 'function'
           ? await getExportReexportCount(req.user.domain, req.user.email, finalConfId)
           : null;
-        if (reexports != null && reexports >= (PRICING.FREE_REEXPORTS_PER_MEETING || 10)) {
+        const maxReexports = Number(process.env.FREE_REEXPORTS_PER_MEETING) || PRICING.FREE_REEXPORTS_PER_MEETING || 2;
+        if (reexports != null && reexports >= maxReexports) {
           return res.status(402).json({
             error: 'You have re-exported this meeting the maximum number of times on the free plan. Upgrade to Pro for unlimited exports.',
             feature: 'exportQuota',
@@ -151,7 +158,7 @@ router.post('/export/pdf', requireAuth, async (req, res) => {
           });
         }
 
-        if (attendees.length > maxParticipants) {
+        if (totalAttendeeCount > maxParticipants) {
           await markUserLargeClassGraceUsed(req.user.domain, req.user.email);
         }
 
@@ -162,7 +169,7 @@ router.post('/export/pdf', requireAuth, async (req, res) => {
           tabName: 'PDF Export',
           sheetUrl: null,
           conferenceId: finalConfId,
-          participantCount: attendees.length,
+          participantCount: totalAttendeeCount,
           exportType: 'pdf',
           exportedAt: new Date().toISOString(),
         });

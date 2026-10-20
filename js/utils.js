@@ -1314,11 +1314,6 @@
 
   function buildAttendanceCsv(parts, activeRoster, opts = {}) {
     parts = parts || [];
-    let truncatedNotice = null;
-    if (opts.isFreePlan && !opts.graceUsed && parts.length > 25) {
-      truncatedNotice = `# ... 25 of ${parts.length} attendees shown. Upgrade to Educator or Pro for unlimited rosters.`;
-      parts = parts.slice(0, 25);
-    }
     const meetingTitle = opts.meetingTitle || 'Meeting';
     const totalMeetingMs = opts.totalMeetingMs || 0;
     const meetingMinutes = totalMeetingMs > 0 ? Math.max(1, Math.round(totalMeetingMs / 60000)) : (opts.meetingMinutes || 1);
@@ -1461,8 +1456,34 @@
       }
     }
 
-    if (truncatedNotice) {
-      rows.push(truncatedNotice);
+    if (Array.isArray(opts.calendarAttendees)) {
+      const existingEmails = new Set([
+        ...parts.map(p => (p.email || '').toLowerCase()),
+        ...(Array.isArray(activeRoster) ? activeRoster.map(s => (s.email || '').toLowerCase()) : []),
+      ].filter(Boolean));
+      for (const ca of opts.calendarAttendees) {
+        const email = (ca.email || '').toLowerCase();
+        if (email && !existingEmails.has(email)) {
+          existingEmails.add(email);
+          rows.push([
+            ca.displayName || ca.email,
+            ca.email,
+            locStatus('Absent'),
+            '0%',
+            0,
+            '',
+            '',
+            0,
+            ''
+          ].map(escapeCsv).join(','));
+        }
+      }
+    }
+
+    const totalCsvAttendees = rows.length - 1;
+    if (opts.isFreePlan && !opts.graceUsed && totalCsvAttendees > 25) {
+      rows.length = 26;
+      rows.push(`# ... 25 of ${totalCsvAttendees} attendees shown. Upgrade to Educator or Pro for unlimited rosters.`);
     }
 
     if (opts.isFreePlan) {
@@ -1486,10 +1507,6 @@
   function buildAttendanceExcelXml(parts, activeRoster, opts = {}) {
     parts = parts || [];
     let truncatedNotice = null;
-    if (opts.isFreePlan && !opts.graceUsed && parts.length > 25) {
-      truncatedNotice = `# ... 25 of ${parts.length} attendees shown. Upgrade to Educator or Pro for unlimited rosters.`;
-      parts = parts.slice(0, 25);
-    }
     const meetingTitle = opts.meetingTitle || 'Meeting';
     const totalMeetingMs = opts.totalMeetingMs || 0;
     const meetingMinutes = totalMeetingMs > 0 ? Math.max(1, Math.round(totalMeetingMs / 60000)) : (opts.meetingMinutes || 1);
@@ -1628,6 +1645,35 @@
           notes: withCheckinNote('', p),
         });
       }
+    }
+
+    if (Array.isArray(opts.calendarAttendees)) {
+      const existingEmails = new Set([
+        ...parts.map(p => (p.email || '').toLowerCase()),
+        ...(Array.isArray(activeRoster) ? activeRoster.map(s => (s.email || '').toLowerCase()) : []),
+      ].filter(Boolean));
+      for (const ca of opts.calendarAttendees) {
+        const email = (ca.email || '').toLowerCase();
+        if (email && !existingEmails.has(email)) {
+          existingEmails.add(email);
+          dataRows.push({
+            name: ca.displayName || ca.email,
+            email: ca.email,
+            status: locStatus('Absent'),
+            pct: '0%',
+            durMin: 0,
+            joinTime: '',
+            leaveTime: '',
+            rejoins: 0,
+            notes: '',
+          });
+        }
+      }
+    }
+
+    if (opts.isFreePlan && !opts.graceUsed && dataRows.length > 25) {
+      truncatedNotice = `# ... 25 of ${dataRows.length} attendees shown. Upgrade to Educator or Pro for unlimited rosters.`;
+      dataRows.length = 25;
     }
 
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\r\n' +

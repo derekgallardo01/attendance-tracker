@@ -624,14 +624,14 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
       meetingTitle: meetingTitle || 'Unknown',
       tabName,
       exportedAt,
-      participantCount: allRows.length,
+      participantCount: (Array.isArray(participants) && participants.length <= 1) ? participants.length : allRows.length,
       sheetUrl,
       email: req.user?.email || null,
       autoExport: !!autoExport,
       recurringEventId: recurringEventId || null,
       conferenceId: conferenceId || null,
     });
-    const exportCreated = persistResult ? persistResult.created : null;
+    const exportCreated = persistResult ? (persistResult.created || !!persistResult.promotedFromSolo) : null;
 
     // Fire-and-forget: if this is the user's first export and they joined via
     // a colleague referral, unlock mutual +35 days Pro for both teachers.
@@ -830,8 +830,23 @@ router.post('/save-to-sheets', async (req, res) => {
       }
 
       const attendedEmails = new Set((b.participants || []).map(p => (p.email || '').toLowerCase()).filter(Boolean));
+      const attendedNames = new Set((b.participants || []).map(p => (p.displayName || p.name || '').toLowerCase()).filter(Boolean));
       const uniqueNoShows = (b.calendarAttendees || []).filter(a => a.email && !attendedEmails.has(a.email.toLowerCase()));
-      const totalDistinct = (Array.isArray(b.participants) ? b.participants.length : 0) + uniqueNoShows.length;
+      for (const a of uniqueNoShows) {
+        if (a.email) attendedEmails.add(a.email.toLowerCase());
+        if (a.displayName || a.name) attendedNames.add((a.displayName || a.name).toLowerCase());
+      }
+      const uniqueRosterAbsents = (Array.isArray(b.roster) ? b.roster : []).filter(r => {
+        if (!r || typeof r !== 'object') return false;
+        const e = (r.email || '').toLowerCase();
+        const n = (r.name || r.displayName || '').toLowerCase();
+        if (e && attendedEmails.has(e)) return false;
+        if (n && attendedNames.has(n)) return false;
+        if (e) attendedEmails.add(e);
+        if (n) attendedNames.add(n);
+        return Boolean(e || n);
+      });
+      const totalDistinct = (Array.isArray(b.participants) ? b.participants.length : 0) + uniqueNoShows.length + uniqueRosterAbsents.length;
       const participantCount = (Array.isArray(b.participants) && b.participants.length > FREE_MAX_PARTICIPANTS_PER_EXPORT)
         ? b.participants.length
         : totalDistinct || (typeof b.participantCount === 'number' ? b.participantCount : 0);
@@ -861,8 +876,9 @@ router.post('/save-to-sheets', async (req, res) => {
       // was an unlimited-exports exploit: a constant conferenceId wrote a
       // fresh sheet tab on every call while the meter stayed at 1. Cap the
       // free ride BEFORE any sheet work happens.
+      const maxReexports = Number(process.env.FREE_REEXPORTS_PER_MEETING) || FREE_REEXPORTS_PER_MEETING || 2;
       const reexports = await getExportReexportCount(req.user.domain, req.user.email, b.conferenceId);
-      if (reexports != null && reexports >= FREE_REEXPORTS_PER_MEETING && !meetingUnlocked) {
+      if (reexports != null && reexports >= maxReexports && !meetingUnlocked) {
         log.info('sheets: free tier re-export cap reached', { domain: req.user.domain, email: req.user.email, conferenceId: b.conferenceId, reexports });
         return res.status(402).json({
           error: 'You have re-exported this meeting the maximum number of times on the free plan. Upgrade to Pro for unlimited exports.',

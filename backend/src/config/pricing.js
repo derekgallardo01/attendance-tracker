@@ -13,7 +13,7 @@ module.exports = {
   // mid-meeting save + end-of-meeting save). This caps how many times a free
   // user can ride that dedupe — beyond it, a constant conferenceId was an
   // unlimited-free-exports exploit. Generous for humans, fatal for scripts.
-  FREE_REEXPORTS_PER_MEETING: 10,
+  FREE_REEXPORTS_PER_MEETING: Number(process.env.FREE_REEXPORTS_PER_MEETING) || 2,
   // Free trial of auto-export (a Pro feature). The clock starts on a free user's
   // FIRST auto-export attempt (not the toggle) and grants ~2 weeks of hands-free
   // exports so they feel the value before the paywall — targets the users who

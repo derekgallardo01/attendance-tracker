@@ -1021,4 +1021,38 @@ describe('buildAttendanceCsv & buildAttendanceExcelXml — free plan truncation'
     const csv = utils.buildAttendanceCsv(null, null, {});
     expect(csv).toBeDefined();
   });
+
+  test('buildAttendanceCsv & buildAttendanceExcelXml enforce 25-row total cap across activeRoster absentees and calendarAttendees no-shows', () => {
+    const parts2 = [
+      { displayName: 'Student 1', email: 's1@school.edu', present: true, joinTime: '2026-10-13T10:00:00Z' },
+      { displayName: 'Guest NoEmail', present: true, joinTime: '2026-10-13T10:00:00Z' },
+    ];
+    const roster20 = Array.from({ length: 20 }, (_, i) => (
+      i === 19 ? { name: 'No Email Roster' } : { name: `Student ${i + 1}`, email: `s${i + 1}@school.edu` }
+    ));
+    const cal10 = [
+      { email: 's1@school.edu', displayName: 'Student 1' }, // duplicate of parts/roster
+      { email: '' }, // empty email
+      ...Array.from({ length: 10 }, (_, i) => ({
+        email: `cal${i + 1}@school.edu`,
+        displayName: i === 0 ? '' : `Cal Invitee ${i + 1}`,
+      })),
+    ];
+
+    const csv = utils.buildAttendanceCsv(parts2, roster20, { isFreePlan: true, calendarAttendees: cal10 });
+    expect(csv).toContain('# ... 25 of 31 attendees shown. Upgrade to Educator or Pro for unlimited rosters.');
+    expect(csv).toContain('cal1@school.edu');
+    expect(csv).not.toContain('cal10@school.edu');
+
+    const xml = utils.buildAttendanceExcelXml(parts2, roster20, { isFreePlan: true, calendarAttendees: cal10 });
+    expect(xml).toContain('# ... 25 of 31 attendees shown. Upgrade to Educator or Pro for unlimited rosters.');
+    expect(xml).toContain('cal1@school.edu');
+    expect(xml).not.toContain('cal10@school.edu');
+
+    // Also test calendarAttendees without activeRoster
+    const csvNoRoster = utils.buildAttendanceCsv(parts2, null, { isFreePlan: true, calendarAttendees: cal10 });
+    expect(csvNoRoster).toContain('cal1@school.edu');
+    const xmlNoRoster = utils.buildAttendanceExcelXml(parts2, null, { isFreePlan: true, calendarAttendees: cal10 });
+    expect(xmlNoRoster).toContain('cal1@school.edu');
+  });
 });
