@@ -1,0 +1,392 @@
+{
+  "target_1": {
+    "targetId": 1,
+    "name": "HyScaler",
+    "to": [
+      "info@hyscaler.com"
+    ],
+    "cc": [
+      "sales@hyscaler.com"
+    ],
+    "subject": "Zero-bot Google Meet REST API v2 add-on for HyScaler’s AI & productivity insights",
+    "dispatchedAt": "2026-10-21T18:11:04.796Z",
+    "resendId": "01a15fa8-dad3-72a5-82a8-8e5fd9c0d7cf"
+  },
+  "target_2": {
+    "targetId": 2,
+    "name": "GUVI India EdTech",
+    "to": [
+      "cs@guvi.in"
+    ],
+    "cc": [
+      "info@guvi.in"
+    ],
+    "subject": "Zero-bot Google Meet REST API v2 attendance add-on for GUVI’s blog + educator access",
+    "dispatchedAt": "2026-10-21T18:11:06.923Z",
+    "resendId": "01a15fa8-e31f-7a6c-82f9-01a540af9505"
+  },
+  "target_3": {
+    "targetId": 3,
+    "name": "Nimdzi Insights",
+    "to": [
+      "info@nimdzi.com"
+    ],
+    "cc": [
+      "research@nimdzi.com"
+    ],
+    "subject": "Multilingual (44-language) Google Meet REST API v2 add-on for Nimdzi Insights",
+    "dispatchedAt": "2026-10-21T18:11:09.055Z",
+    "resendId": "01a15fa8-eb7a-7e05-b0c3-7d0d7c6fdeed"
+  },
+  "target_4": {
+    "targetId": 4,
+    "name": "MeetJamie AI",
+    "to": [
+      "hey@meetjamie.ai"
+    ],
+    "cc": [
+      "support@meetjamie.ai"
+    ],
+    "subject": "Non-competing Google Meet attendance link for MeetJamie’s blog",
+    "dispatchedAt": "2026-10-21T18:11:11.173Z",
+    "resendId": "01a15fa8-f3c0-78a2-98ac-6cd3787cb973"
+  },
+  "target_5": {
+    "targetId": 5,
+    "name": "Fast.io",
+    "to": [
+      "help@fast.io"
+    ],
+    "cc": [
+      "privacy@fast.io"
+    ],
+    "subject": "Google Meet to Google Drive/Sheets REST API v2 add-on for Fast.io’s resources",
+    "dispatchedAt": "2026-10-21T18:11:13.305Z",
+    "resendId": "01a15fa8-fc0c-7147-bcf5-ea6116dc57a4"
+  },
+  "target_6": {
+    "targetId": 6,
+    "name": "Mapify",
+    "to": [
+      "hi@mapify.so"
+    ],
+    "cc": [
+      "support@mapify.so"
+    ],
+    "subject": "Non-competing Google Meet REST API v2 companion for Mapify’s productivity blog",
+    "dispatchedAt": "2026-10-21T18:11:15.417Z",
+    "resendId": "01a15fa9-0455-71fa-9421-581a690881d6"
+  },
+  "target_7": {
+    "targetId": 7,
+    "name": "Wellows",
+    "to": [
+      "contact@wellows.com"
+    ],
+    "cc": [
+      "media@wellows.com"
+    ],
+    "subject": "Native Google Meet REST API v2 add-on for Wellows’ SaaS & startup roundups",
+    "dispatchedAt": "2026-10-21T18:11:17.568Z",
+    "resendId": "01a15fa9-0c9b-7604-9897-73b7481f1adb"
+  },
+  "target_8": {
+    "targetId": 8,
+    "name": "Kripesh Adwani",
+    "to": [
+      "contact@kripeshadwani.com"
+    ],
+    "cc": [
+      "hello@kripeshadwani.com"
+    ],
+    "subject": "Quick note on your meeting tools guide + zero-bot Google Meet REST API v2 add-on, Kripesh",
+    "dispatchedAt": "2026-10-21T18:11:19.734Z",
+    "resendId": "01a15fa9-14f2-7b46-a7bb-0ce5de11efe8"
+  },
+  "target_9": {
+    "targetId": 9,
+    "name": "Peoplebox AI",
+    "to": [
+      "hello@peoplebox.ai"
+    ],
+    "cc": [
+      "support@peoplebox.ai"
+    ],
+    "subject": "Zero-bot Google Meet attendance add-on for Peoplebox AI’s management guides",
+    "dispatchedAt": "2026-10-21T18:11:21.872Z",
+    "resendId": "01a15fa9-1d78-72c9-b15c-6927de910d7b"
+  },
+  "target_10": {
+    "targetId": 10,
+    "name": "Universo Abierto — University of Salamanca Library Blog",
+    "to": [
+      "contacto@universoabierto.org"
+    ],
+    "cc": [
+      "info@universoabierto.org"
+    ],
+    "subject": "Complemento oficial de asistencia en Google Meet (REST API v2, sin bots) para Universo Abierto",
+    "dispatchedAt": "2026-10-21T18:11:23.992Z",
+    "resendId": "01a15fa9-25d8-7c7b-bb16-0b29a53a26f5"
+  },
+  "target_11": {
+    "targetId": 11,
+    "name": "CIEC Education Colombia",
+    "to": [
+      "info@ciec.edu.co"
+    ],
+    "cc": [
+      "comunicaciones@ciec.edu.co"
+    ],
+    "subject": "Complemento oficial de asistencia en Google Meet (sin bots) para los colegios de la CIEC",
+    "dispatchedAt": "2026-10-21T18:11:26.120Z",
+    "resendId": "01a15fa9-2e1f-7c9f-9743-44a7e4ed17b9"
+  },
+  "target_12": {
+    "targetId": 12,
+    "name": "Teclab Instituto Técnico Superior Argentina",
+    "to": [
+      "info@teclab.edu.ar"
+    ],
+    "cc": [
+      "alumnos@teclab.edu.ar"
+    ],
+    "subject": "Complemento oficial de asistencia en Google Meet (REST API v2) para el blog de Teclab",
+    "dispatchedAt": "2026-10-21T18:11:28.235Z",
+    "resendId": "01a15fa9-365f-72fa-91b4-3836d0120420"
+  },
+  "target_13": {
+    "targetId": 13,
+    "name": "The Wild RX Remote Work",
+    "to": [
+      "hello@thewildrx.com"
+    ],
+    "cc": [
+      "contact@thewildrx.com"
+    ],
+    "subject": "Google Meet reconnect-merging attendance add-on for The Wild RX’s remote work guide",
+    "dispatchedAt": "2026-10-21T18:11:30.349Z",
+    "resendId": "01a15fa9-3eac-7735-932a-14e9bcd4bc28"
+  },
+  "target_14": {
+    "targetId": 14,
+    "name": "Crawlora",
+    "to": [
+      "hello@crawlora.net"
+    ],
+    "cc": [
+      "support@crawlora.net"
+    ],
+    "subject": "Native Google Meet REST API v2 add-on for Crawlora’s tools & workflow directory",
+    "dispatchedAt": "2026-10-21T18:11:32.638Z",
+    "resendId": "01a15fa9-46ec-7754-b0db-3ab3df4a6c13"
+  },
+  "target_15": {
+    "targetId": 15,
+    "name": "AI News Base",
+    "to": [
+      "contact@ainewsbase.com"
+    ],
+    "cc": [
+      "hello@ainewsbase.com"
+    ],
+    "subject": "Zero-bot Google Meet REST API v2 add-on for AI News Base’s Best Tools guide",
+    "dispatchedAt": "2026-10-21T18:11:34.765Z",
+    "resendId": "01a15fa9-4fe2-75af-a828-c2fe12c0f717"
+  },
+  "target_16": {
+    "targetId": 16,
+    "name": "AITNews",
+    "to": [
+      "info@aitnews.com"
+    ],
+    "cc": [
+      "contact@aitnews.com"
+    ],
+    "subject": "Official Google Meet REST API v2 add-on (with full Arabic UI) for AITNews’s Google Meet coverage",
+    "dispatchedAt": "2026-10-21T18:11:36.881Z",
+    "resendId": "01a15fa9-582c-73e3-93d8-d3a65367c549"
+  },
+  "target_17": {
+    "targetId": 17,
+    "name": "AIR Creators Ecosystem",
+    "to": [
+      "support@air.io"
+    ],
+    "cc": [
+      "hello@air.io"
+    ],
+    "subject": "Zero-bot Google Meet webinar & workshop attendance add-on for AIR.io’s blog",
+    "dispatchedAt": "2026-10-21T18:11:39.002Z",
+    "resendId": "01a15fa9-607a-782c-9853-78e8df9358fc"
+  },
+  "target_18": {
+    "targetId": 18,
+    "name": "AI For Everyone",
+    "to": [
+      "hello@aiforeveryone.org"
+    ],
+    "cc": [
+      "info@aiforeveryone.org"
+    ],
+    "subject": "Zero-bot Google Meet REST API v2 add-on for AI For Everyone’s directory",
+    "dispatchedAt": "2026-10-21T18:11:41.145Z",
+    "resendId": "01a15fa9-68c6-7944-b053-2780ca4c3d32"
+  },
+  "target_19": {
+    "targetId": 19,
+    "name": "Aiarty",
+    "to": [
+      "support@aiarty.com"
+    ],
+    "cc": [
+      "marketing@aiarty.com"
+    ],
+    "subject": "Zero-bot Google Meet REST API v2 add-on for Aiarty’s Knowledge Base",
+    "dispatchedAt": "2026-10-21T18:11:43.249Z",
+    "resendId": "01a15fa9-710c-7162-8dcd-72e2820887b4"
+  },
+  "target_20": {
+    "targetId": 20,
+    "name": "RecCloud Japan",
+    "to": [
+      "support@reccloud.com"
+    ],
+    "cc": [
+      "marketing@reccloud.com"
+    ],
+    "subject": "RecCloudブログ記事へのご提案：ボット不要の公式Google Meet出席管理アドオン（日本語完全対応）",
+    "dispatchedAt": "2026-10-21T18:11:45.366Z",
+    "resendId": "01a15fa9-7950-7414-b138-264254a0a81f"
+  },
+  "target_21": {
+    "targetId": 21,
+    "name": "WebCatalog",
+    "to": [
+      "support@webcatalog.io"
+    ],
+    "cc": [
+      "hello@webcatalog.io"
+    ],
+    "subject": "Adding Attendance Tracker (Google Meet REST API v2) to WebCatalog’s app directory",
+    "dispatchedAt": "2026-10-21T18:11:47.488Z",
+    "resendId": "01a15fa9-8196-7ac6-965f-08368a5ca0d6"
+  },
+  "target_22": {
+    "targetId": 22,
+    "name": "MyEssayWriter AI",
+    "to": [
+      "support@myessaywriter.ai"
+    ],
+    "cc": [
+      "hello@myessaywriter.ai"
+    ],
+    "subject": "Zero-bot Google Meet attendance add-on for MyEssayWriter.ai’s 100+ Tools Directory",
+    "dispatchedAt": "2026-10-21T18:11:49.614Z",
+    "resendId": "01a15fa9-89e7-7c65-9c36-227b32a9402d"
+  },
+  "target_23": {
+    "targetId": 23,
+    "name": "AppsInsight",
+    "to": [
+      "hello@appsinsight.co"
+    ],
+    "cc": [
+      "appsinsightofficial@gmail.com"
+    ],
+    "subject": "Native Google Meet REST API v2 add-on for AppsInsight’s productivity coverage",
+    "dispatchedAt": "2026-10-21T18:11:51.751Z",
+    "resendId": "01a15fa9-9235-71fc-bbcb-0568084e23ce"
+  },
+  "target_24": {
+    "targetId": 24,
+    "name": "Inc. Arabia",
+    "to": [
+      "editorial@incarabia.com"
+    ],
+    "cc": [
+      "info@incarabia.com"
+    ],
+    "subject": "Zero-bot Google Meet REST API v2 add-on (with Arabic & English UI) for Inc. Arabia",
+    "dispatchedAt": "2026-10-21T18:11:53.858Z",
+    "resendId": "01a15fa9-9a7b-7af3-9d4d-0e4a40a767ad"
+  },
+  "target_25": {
+    "targetId": 25,
+    "name": "VCGamers Indonesia",
+    "to": [
+      "support@vcgamers.com"
+    ],
+    "cc": [
+      "media@vcgamers.com"
+    ],
+    "subject": "Add-on Absensi Google Meet Resmi (REST API v2, Bahasa Indonesia) untuk Artikel VCGamers",
+    "dispatchedAt": "2026-10-21T18:11:55.978Z",
+    "resendId": "01a15fa9-a2c3-7649-9276-23e3d1ac91a4"
+  },
+  "target_26": {
+    "targetId": 26,
+    "name": "Toolbit AI",
+    "to": [
+      "contact@toolbit.ai"
+    ],
+    "cc": [
+      "hello@toolbit.ai"
+    ],
+    "subject": "Adding Attendance Tracker (Google Meet REST API v2) to Toolbit AI’s directory",
+    "dispatchedAt": "2026-10-21T18:11:58.176Z",
+    "resendId": "01a15fa9-ab18-7840-9532-71bd0d568763"
+  },
+  "target_27": {
+    "targetId": 27,
+    "name": "BibiGPT",
+    "to": [
+      "hi@bibigpt.co"
+    ],
+    "cc": [
+      "support@bibigpt.co"
+    ],
+    "subject": "Non-competing Google Meet attendance link for BibiGPT’s lecture guide",
+    "dispatchedAt": "2026-10-21T18:12:00.299Z",
+    "resendId": "01a15fa9-b39b-7ddb-92dc-ecad67e1baeb"
+  },
+  "target_28": {
+    "targetId": 28,
+    "name": "Gadgets To Use India",
+    "to": [
+      "admin@gadgetstouse.com"
+    ],
+    "cc": [
+      "support@gadgetstouse.com"
+    ],
+    "subject": "Zero-bot Google Meet REST API v2 add-on for Gadgets To Use’s Google Meet tutorials",
+    "dispatchedAt": "2026-10-21T18:12:02.453Z",
+    "resendId": "01a15fa9-bbf6-75db-a8c7-c4a261eb5409"
+  },
+  "target_29": {
+    "targetId": 29,
+    "name": "Ringover Spain",
+    "to": [
+      "contacto@ringover.es"
+    ],
+    "cc": [
+      "marketing@ringover.es"
+    ],
+    "subject": "Complemento oficial de asistencia en Google Meet (REST API v2, sin bots) para el blog de Ringover",
+    "dispatchedAt": "2026-10-21T18:12:04.570Z",
+    "resendId": "01a15fa9-c44c-7d73-ae6f-48fba86a41fd"
+  },
+  "target_30": {
+    "targetId": 30,
+    "name": "Futuramo",
+    "to": [
+      "hello@futuramo.com"
+    ],
+    "cc": [
+      "partnerships@futuramo.com"
+    ],
+    "subject": "Native Google Meet REST API v2 add-on for Futuramo’s 2026 Team Collaboration guide",
+    "dispatchedAt": "2026-10-21T18:12:06.702Z",
+    "resendId": "01a15fa9-cc93-7094-809c-4e18be0b4776"
+  }
+}

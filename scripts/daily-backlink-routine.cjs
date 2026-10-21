@@ -72,7 +72,9 @@ const DO_NOT_FOLLOW_UP_DOMAINS = new Set([
   'themarketingagency.ca', 'companionlink.com', 'aitoptools.com', 'outofbit.it',
   'borjagiron.com', 'talentedladiesclub.com', 'wallstreetmojo.com',
   'superpowerdaily.com', 'zerodevice.net', 'clepher.com', 'amitsarda.xyz',
-  'insightpartners.com'
+  'insightpartners.com', 'ultimatetools.eu', 'cloudo3.com',
+  'productivityshift.com', 'findmyaitool.io', 'chiarasangels.net',
+  'calbizjournal.com'
 ]);
 
 function extractRootDomain(input) {
@@ -274,43 +276,90 @@ function parseTsvOrCsvLine(line, delimiter) {
 
 function computeOpportunityScore(row) {
   const dr = parseFloat(row.dr) || 0;
-  let score = Math.min(55, dr * 0.55);
+  let score = Math.min(45, dr * 0.45);
 
-  if (!row.isNofollow) score += 15;
+  if (!row.isNofollow) score += 10;
 
   const targetLower = (row.targetUrl || '').toLowerCase();
-  if (
+  const isDeadExtension =
     targetLower.includes('nenibigflkdikhamlnekfppbganmojlg') ||
-    targetLower.includes('appcnhiefcidclcdjeahgklghghihfok') ||
-    targetLower.includes('claycodes.org') ||
-    targetLower.includes('meetlist.io')
-  ) {
+    targetLower.includes('appcnhiefcidclcdjeahgklghghihfok');
+
+  if (isDeadExtension) {
+    score += 35;
+  } else if (targetLower.includes('claycodes.org') || targetLower.includes('meetlist.io')) {
     score += 20;
   }
 
   const dom = row.rootDomain;
-  if (
+  const isEduOrGov =
     dom.endsWith('.edu') ||
     dom.includes('.edu.') ||
     dom.includes('.ac.') ||
     dom.endsWith('.gov') ||
-    dom.endsWith('.org')
-  ) {
-    score += 15;
-  }
+    dom.endsWith('.org');
 
   const contextText = `${row.pageTitle || ''} ${row.anchor || ''} ${row.refPageUrl || ''}`.toLowerCase();
-  if (
+
+  // Specific attendance & roster tracking keywords
+  const isDirectMeetingAttendance =
     contextText.includes('attendance') ||
-    contextText.includes('google meet') ||
-    contextText.includes('extension') ||
     contextText.includes('presença') ||
     contextText.includes('asistencia') ||
     contextText.includes('điểm danh') ||
-    contextText.includes('點名')
-  ) {
-    score += 10;
+    contextText.includes('點名') ||
+    contextText.includes('anwesenheit') ||
+    contextText.includes('presenze') ||
+    contextText.includes('roster');
+
+  // Video conferencing, remote work & online teaching keywords
+  const isMeetOrVideo =
+    contextText.includes('google meet') ||
+    contextText.includes('google classroom') ||
+    contextText.includes('hangouts meet') ||
+    contextText.includes('video conferenc') ||
+    contextText.includes('videoconferenc') ||
+    contextText.includes('reunión') ||
+    contextText.includes('reuni') ||
+    contextText.includes('meeting') ||
+    contextText.includes('remote work') ||
+    contextText.includes('online teaching') ||
+    contextText.includes('online class') ||
+    contextText.includes('course development') ||
+    contextText.includes('virtual classroom') ||
+    contextText.includes('remote teach') ||
+    contextText.includes('zoom') ||
+    contextText.includes('microsoft teams');
+
+  // Extension / Add-on keywords (must be in software context, not university extension service)
+  const isExtensionContext =
+    contextText.includes('chrome extension') ||
+    contextText.includes('browser extension') ||
+    contextText.includes('add-on') ||
+    contextText.includes('addon') ||
+    contextText.includes('web store');
+
+  // Exclude false positives: agricultural cooperative extension subdomains unless meeting-related
+  if (dom.includes('extension.') && !isDirectMeetingAttendance && !isMeetOrVideo) {
+    return 0;
   }
+  // Exclude government registers and mailing list archives
+  if ((dom.includes('federalregister.gov') || dom.includes('govinfo.gov') || row.refPageUrl.includes('hyperkitty')) && !isDirectMeetingAttendance) {
+    return 0;
+  }
+
+  let relevanceBonus = 0;
+  if (isDirectMeetingAttendance) relevanceBonus += 25;
+  if (isMeetOrVideo) relevanceBonus += 15;
+  if (isExtensionContext) relevanceBonus += 10;
+
+  // Strict guard: if there is ZERO meeting/attendance context and it is NOT a dead extension link, reject
+  if (relevanceBonus === 0 && !isDeadExtension) {
+    return 0;
+  }
+
+  score += relevanceBonus;
+  if (isEduOrGov) score += 10;
 
   return Math.min(100, Math.round(score * 10) / 10);
 }
@@ -343,6 +392,8 @@ function buildDailyOutreachQueue(limit = 30) {
       const cols = parseTsvOrCsvLine(lines[i], delimiter);
       const refPageUrl = (cols[idxRefUrl] || '').trim();
       if (!refPageUrl.startsWith('http')) continue;
+      const lowerRefUrl = refPageUrl.toLowerCase();
+      if (lowerRefUrl.endsWith('.pdf') || lowerRefUrl.endsWith('.xml') || lowerRefUrl.endsWith('.rss')) continue;
 
       const rootDomain = extractRootDomain(refPageUrl);
       if (!rootDomain || EXCLUDED_DOMAINS.has(rootDomain) || contactedDomains.has(rootDomain)) {
@@ -354,6 +405,7 @@ function buildDailyOutreachQueue(limit = 30) {
       const targetUrl = (cols[idxTargetUrl] || '').trim();
       const anchor = (cols[idxAnchor] || '').trim();
       const isNofollow = String(cols[idxNofollow] || '').toLowerCase() === 'true';
+      if (isNofollow) continue;
 
       const candidate = {
         rootDomain,
