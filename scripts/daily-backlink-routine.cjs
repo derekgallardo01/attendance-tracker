@@ -74,7 +74,8 @@ const DO_NOT_FOLLOW_UP_DOMAINS = new Set([
   'superpowerdaily.com', 'zerodevice.net', 'clepher.com', 'amitsarda.xyz',
   'insightpartners.com', 'ultimatetools.eu', 'cloudo3.com',
   'productivityshift.com', 'findmyaitool.io', 'chiarasangels.net',
-  'calbizjournal.com'
+  'calbizjournal.com', 'nealschaffer.com', 'techbullion.com', 'fast.io',
+  'zipdo.co', 'isenacode.com', 'isenacode.net', 'skrapp.io', 'assemblyai.com'
 ]);
 
 function extractRootDomain(input) {
