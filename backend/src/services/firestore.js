@@ -15,6 +15,7 @@ const {
 const {
   getActivationFunnel, getAggregatedInsights, clearInsightsCache, getWeeklySelfReport, getAdvancedAnalytics, getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, markUserContacted, dismissSuggestion, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, getOutreachList, getActivityPulse, getRevenueFunnel,
   getRecentErrorSpike, getErrorAlertState, setErrorAlertState,
+  getBillingAlertState, setBillingAlertState,
 } = require('./firestore/analytics');
 const {
   checkAndRecordMilestones, getMilestoneProgress, USER_MILESTONES, PRO_MILESTONES, MEETING_MILESTONES,
@@ -3282,8 +3283,9 @@ module.exports = {
   // Full events+users scan, measured 13-18s in prod — cache it like the rest.
   getActivationFunnel: memoizeTTL(getActivationFunnel, 120000),
   getRevenueFunnel: memoizeTTL(getRevenueFunnel, 120000),
-  // Error-spike alert reads — NOT cached (the hourly cron needs fresh counts).
+  // Error-spike & billing alert reads — NOT cached (the hourly cron needs fresh counts).
   getRecentErrorSpike, getErrorAlertState, setErrorAlertState,
+  getBillingAlertState, setBillingAlertState,
   backfillAdminActivityIfSparse,
   // Growth Milestones engine
   checkAndRecordMilestones, getMilestoneProgress, USER_MILESTONES, PRO_MILESTONES, MEETING_MILESTONES,

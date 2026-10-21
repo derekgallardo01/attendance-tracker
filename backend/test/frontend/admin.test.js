@@ -112,3 +112,16 @@ describe('schoolClusterBadge', () => {
     expect(a.schoolClusterBadge(null)).toBe('');
   });
 });
+
+describe('billingStatusBadge', () => {
+  test('renders Healthy, Warning, and Critical badges with matching colours', () => {
+    expect(a.billingStatusBadge('healthy')).toContain('Healthy');
+    expect(a.billingStatusBadge('healthy')).toContain('#4ade80');
+    expect(a.billingStatusBadge('warning')).toContain('Warning');
+    expect(a.billingStatusBadge('warning')).toContain('#fbbf24');
+    expect(a.billingStatusBadge('critical')).toContain('Critical');
+    expect(a.billingStatusBadge('critical')).toContain('#ff7b72');
+    expect(a.billingStatusBadge(null)).toContain('Healthy');
+  });
+});
+

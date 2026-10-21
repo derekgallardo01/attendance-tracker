@@ -2416,6 +2416,61 @@ describe('notifications — buildDesignSystemEmail & upgrade link sender', () =>
 
     expect(mockSend).toHaveBeenCalled();
   });
+
+  test('sendBillingSpikeAlertEmail and sendDailySummaryEmail format and dispatch ops & billing emails', async () => {
+    const n = require('../../src/lib/notifications');
+    mockSend.mockClear();
+
+    const spikeRes = await n.sendBillingSpikeAlertEmail({
+      to: ['derek@attendancetracker.dev', 'derekgallardo01@gmail.com'],
+      telemetry: {
+        projectId: 'attendance-tracker-490319',
+        generatedAt: '2026-04-19T14:00:00Z',
+        currentHour: { reads: 650000, writes: 400 },
+        last24h: { reads: 9500000, writes: 8000, cost: { totalCostUsd: 2.84 } },
+        monthToDate: { cost: { totalCostUsd: 12.50 } },
+        projections: { monthTotalFrom24hRateUsd: 43.74 },
+      },
+      evaluation: {
+        reasons: ['Trailing 1h Firestore reads (650,000/hr) exceeded threshold (500,000/hr)'],
+      },
+    });
+    expect(spikeRes.sent).toBe(true);
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const spikeCall = mockSend.mock.calls[0][0];
+    expect(spikeCall.subject).toContain('[BILLING ALERT]');
+    expect(spikeCall.subject).toContain('$2.84/24h');
+    expect(spikeCall.html).toContain('650,000 reads');
+    expect(spikeCall.tags).toEqual([{ name: 'type', value: 'billing_spike_alert' }]);
+
+    mockSend.mockClear();
+    const dailyRes = await n.sendDailySummaryEmail({
+      to: 'derek@attendancetracker.dev',
+      pulse: {
+        signups24h: 6,
+        tracks24h: 22,
+        exports24h: 14,
+        active24h: 19,
+      },
+      billing: {
+        currentHour: { reads: 136938, status: { label: 'Healthy' } },
+        last24h: { reads: 3200000, writes: 3100, deletes: 45, cost: { totalCostUsd: 0.95 } },
+        monthToDate: { reads: 28500000, writes: 41200, cost: { totalCostUsd: 8.40 } },
+        projections: { monthTotalFrom24hRateUsd: 18.85 },
+      },
+    });
+    expect(dailyRes.sent).toBe(true);
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const dailyCall = mockSend.mock.calls[0][0];
+    expect(dailyCall.subject).toContain('Daily Ops & Billing Digest');
+    expect(dailyCall.subject).toContain('$0.95/24h · 6 signups · 22 meetings');
+    expect(dailyCall.html).toContain('136,938 reads/hr');
+    expect(dailyCall.html).toContain('6 signups · 19 active');
+    expect(dailyCall.html).toContain('22 meetings · 14 exports');
+    expect(dailyCall.html).toContain('28,500,000 reads · 41,200 writes');
+    expect(dailyCall.text).toContain('Month-to-Date Reads/Writes: 28,500,000 reads / 41,200 writes');
+    expect(dailyCall.tags).toEqual([{ name: 'type', value: 'daily_ops_summary' }]);
+  });
 });
 
 describe('buildDesignSystemEmail — HTML escaping', () => {

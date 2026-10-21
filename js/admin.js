@@ -76,9 +76,21 @@
     return `<span class="badge" style="background:rgba(88,166,255,.18);color:#58a6ff;font-size:.7rem;font-weight:600;vertical-align:middle" title="${teacherCount} teachers registered">🏫 School Cluster (${teacherCount} teachers)</span>`;
   }
 
+  // Cloud Billing & Firestore status badge ('healthy' | 'warning' | 'critical').
+  function billingStatusBadge(level) {
+    const norm = String(level || 'healthy').toLowerCase();
+    if (norm === 'critical') {
+      return '<span class="badge" style="background:rgba(248,81,73,.18);color:#ff7b72;border:1px solid rgba(248,81,73,.35)">🚨 Critical</span>';
+    }
+    if (norm === 'warning') {
+      return '<span class="badge" style="background:rgba(251,191,36,.18);color:#fbbf24;border:1px solid rgba(251,191,36,.35)">⚠️ Warning</span>';
+    }
+    return '<span class="badge" style="background:rgba(74,222,128,.16);color:#4ade80;border:1px solid rgba(74,222,128,.35)">✅ Healthy</span>';
+  }
+
   const api = {
     pct, fmtMs, fmtDate, fmtDateTime, timeAgo, ageDaysCalc,
-    priorityBadge, healthBadge, schoolClusterBadge, templateSubs, fillTemplate,
+    priorityBadge, healthBadge, schoolClusterBadge, billingStatusBadge, templateSubs, fillTemplate,
   };
   root.AttAdmin = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

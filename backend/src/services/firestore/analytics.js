@@ -1620,7 +1620,7 @@ async function getActivityPulse() {
     ]);
 
     const activeNow = new Set(), active24 = new Set(), active7 = new Set();
-    let signins24 = 0, exports24 = 0, upgrades24 = 0, quotaHits24 = 0;
+    let signins24 = 0, tracks24 = 0, exports24 = 0, upgrades24 = 0, quotaHits24 = 0;
     const trackingUsersNow = new Set();
     for (const e of rawEvents) {
       const at = tsMs(e.createdAt) || (e.createdAt instanceof Date ? e.createdAt.getTime() : (typeof e.createdAt === 'string' ? Date.parse(e.createdAt) : 0)) || 0;
@@ -1630,6 +1630,7 @@ async function getActivityPulse() {
       if (age <= H24) {
         if (e.email) active24.add(e.email);
         if (e.type === 'signin') signins24++;
+        if (e.type === 'tracked' || e.type === 'first_tracked' || e.type === 'meeting') tracks24++;
         // 'exported' only: the panel also fires 'export_success' for the SAME
         // export, so counting both doubled the pulse tile vs every other surface.
         if (e.type === 'exported') exports24++;
@@ -1670,6 +1671,7 @@ async function getActivityPulse() {
       signups24h: signups24,
       signups7d: signups7,
       signins24h: signins24,
+      tracks24h: tracks24,
       exports24h: exports24,
       upgrades24h: upgrades24,
       quotaHits24h: quotaHits24,
@@ -1897,6 +1899,16 @@ async function setErrorAlertState(data) {
   catch (err) { log.error('firestore: setErrorAlertState failed', { error: err.message }); }
 }
 
+const BILLING_ALERT_DOC = () => getDb().collection('ops').doc('billingAlertState');
+async function getBillingAlertState() {
+  try { const s = await BILLING_ALERT_DOC().get(); return s.exists ? s.data() : null; }
+  catch (err) { log.error('firestore: getBillingAlertState failed', { error: err.message }); return null; }
+}
+async function setBillingAlertState(data) {
+  try { await BILLING_ALERT_DOC().set(data, { merge: true }); }
+  catch (err) { log.error('firestore: setBillingAlertState failed', { error: err.message }); }
+}
+
 function clearInsightsCache() {
   _insightsCache = null;
   _insightsCachedAt = 0;
@@ -1910,4 +1922,6 @@ function clearInsightsCache() {
 module.exports = {
   getActivationFunnel, getAggregatedInsights, clearInsightsCache, getWeeklySelfReport, getAdvancedAnalytics, getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, markUserContacted, dismissSuggestion, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getRecentActivity, getReachOutSuggestions, getPowerUserPipeline, getOutreachList, getActivityPulse, getRevenueFunnel,
   getRecentErrorSpike, getErrorAlertState, setErrorAlertState,
+  getBillingAlertState, setBillingAlertState,
 };
+

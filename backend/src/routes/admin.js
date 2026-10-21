@@ -3,9 +3,10 @@ const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getRevenueFunnel, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, dismissSuggestion, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getSuppressedEmailSet, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance, getTeamOverview, getRecentErrorSpike, getErrorAlertState, setErrorAlertState, getCancellationTelemetry, backfillAdminActivityIfSparse, checkAndRecordMilestones, getMilestoneProgress, getTenantPlan, getRevenueSummary } = require('../services/firestore');
-const { sendAdminEmail, sendErrorSpikeAlertEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendOrgWeeklyDigest, flushDeferredNotifications,
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getRevenueFunnel, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, dismissSuggestion, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getSuppressedEmailSet, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance, getTeamOverview, getRecentErrorSpike, getErrorAlertState, setErrorAlertState, getBillingAlertState, setBillingAlertState, getCancellationTelemetry, backfillAdminActivityIfSparse, checkAndRecordMilestones, getMilestoneProgress, getTenantPlan, getRevenueSummary } = require('../services/firestore');
+const { sendAdminEmail, sendErrorSpikeAlertEmail, sendBillingSpikeAlertEmail, sendDailySummaryEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendOrgWeeklyDigest, flushDeferredNotifications,
   sendSourceReportedNotification, verifyReviewApprovalToken, sendReviewRewardEmail, sendPassExpiryReminderEmail } = require('../lib/notifications');
+const { getBillingTelemetry, evaluateBillingWatchdog } = require('../services/billing-telemetry');
 const { escapeHtml } = require('../lib/html');
 const { requireSuperAdmin, requireSuperAdminOrScheduler, requireKhMetricsKey, safeEqual } = require('../middleware/adminAuth');
 const { requireAuth } = require('../middleware/auth');
@@ -568,6 +569,12 @@ router.post('/admin/dismiss-suggestion', requireSuperAdmin, async (req, res) => 
 router.get('/admin/weekly-report', requireSuperAdmin, async (req, res) => {
   try {
     const report = await getWeeklySelfReport();
+    if (report && req.query.includeBilling !== '0' && (process.env.NODE_ENV !== 'test' || req.query.includeBilling === '1')) {
+      try {
+        const billing = await getBillingTelemetry({ useCache: process.env.NODE_ENV !== 'test' });
+        if (billing) report.billing = billing;
+      } catch (_) {}
+    }
     res.json(report || { error: 'failed' });
   } catch (err) {
     log.error('admin: weekly-report get failed', { error: err.message });
@@ -582,6 +589,12 @@ router.post('/admin/weekly-report', requireSuperAdminOrScheduler, async (req, re
   try {
     const report = await getWeeklySelfReport();
     if (!report) return res.status(500).json({ error: 'Could not generate report' });
+    if (req.query.includeBilling !== '0' && req.body?.includeBilling !== false && (process.env.NODE_ENV !== 'test' || req.query.includeBilling === '1' || req.body?.includeBilling === true)) {
+      try {
+        const billing = await getBillingTelemetry({ useCache: process.env.NODE_ENV !== 'test' });
+        if (billing) report.billing = billing;
+      } catch (_) {}
+    }
     const result = await sendWeeklySelfReport(report);
     res.json(result);
   } catch (err) {
@@ -630,6 +643,174 @@ router.post('/admin/check-errors', requireSuperAdminOrScheduler, async (req, res
   } catch (err) {
     log.error('admin: check-errors failed', { err, error: err.message });
     res.status(500).json({ error: err.message || 'Failed' });
+  }
+});
+
+// GET /api/admin/billing-telemetry — Live Cloud Monitoring Firestore & Cloud Run
+// usage + estimated USD cost (memoized for 12 minutes so polling costs zero
+// Firestore reads).
+router.get('/admin/billing-telemetry', requireSuperAdmin, async (req, res) => {
+  try {
+    const force = req.query.refresh === '1' || req.query.force === '1';
+    const useCache = process.env.NODE_ENV !== 'test' || req.query.useCache === '1';
+    const telemetry = await getBillingTelemetry({ force, useCache });
+    const watchdog = evaluateBillingWatchdog(telemetry);
+    res.json({ ...telemetry, watchdog });
+  } catch (err) {
+    log.error('admin: billing-telemetry failed', { error: err.message });
+    res.status(500).json({ error: err.message || 'Failed to load billing telemetry' });
+  }
+});
+
+// POST /api/admin/check-billing — Automated Cloud Billing & Firestore spike
+// watchdog. Evaluates trailing 1h read/write rates and 24h estimated USD cost
+// against safe thresholds ($2.00/day or 500k reads/hr or 25k writes/hr) and
+// sends a deduplicated high-priority alert email (max 1 alert per 24h cooldown
+// unless force=true or a new 1h read/write spike escalates).
+router.post('/admin/check-billing', requireSuperAdminOrScheduler, async (req, res) => {
+  try {
+    const force = req.query.force === '1' || req.body?.force === true;
+    const dryRun = req.query.dryRun === '1' || req.body?.dryRun === true;
+    const cooldownHours = Number(process.env.BILLING_ALERT_COOLDOWN_H) || 24;
+    const dailyCostUsdThreshold = Number(req.body?.dailyCostUsdThreshold || process.env.BILLING_ALERT_DAILY_USD) || 2.0;
+    const hourlyReadThreshold = Number(req.body?.hourlyReadThreshold || process.env.BILLING_ALERT_HOURLY_READS) || 500_000;
+    const hourlyWriteThreshold = Number(req.body?.hourlyWriteThreshold || process.env.BILLING_ALERT_HOURLY_WRITES) || 25_000;
+
+    const telemetry = await getBillingTelemetry({
+      force: true,
+      useCache: false,
+    });
+    const evaluation = evaluateBillingWatchdog(telemetry, {
+      dailyCostUsdThreshold,
+      hourlyReadThreshold,
+      hourlyWriteThreshold,
+    });
+    const summary = {
+      currentHourReads: telemetry.currentHour?.reads || 0,
+      currentHourWrites: telemetry.currentHour?.writes || 0,
+      last24hReads: telemetry.last24h?.reads || 0,
+      last24hWrites: telemetry.last24h?.writes || 0,
+      last24hDeletes: telemetry.last24h?.deletes || 0,
+      last24hCostUsd: telemetry.last24h?.cost?.totalCostUsd || 0,
+      monthToDateReads: telemetry.monthToDate?.reads || 0,
+      monthToDateWrites: telemetry.monthToDate?.writes || 0,
+      monthToDateCostUsd: telemetry.monthToDate?.cost?.totalCostUsd || 0,
+      projectedMonthCostUsd: telemetry.projections?.monthTotalFrom24hRateUsd || 0,
+    };
+
+    if (!evaluation.breached) {
+      return res.json({
+        ok: true,
+        alerted: false,
+        reason: 'healthy',
+        evaluation,
+        summary,
+      });
+    }
+
+    if (!force && typeof getBillingAlertState === 'function') {
+      const state = await getBillingAlertState();
+      const lastMs = state && state.lastAlertedAt ? Date.parse(state.lastAlertedAt) : 0;
+      const isEscalation = Boolean(
+        state &&
+        ((state.readSpike1h === false && evaluation.readSpike1h) ||
+         (state.writeSpike1h === false && evaluation.writeSpike1h))
+      );
+      if (lastMs && !isEscalation && (Date.now() - lastMs) < cooldownHours * 3600 * 1000) {
+        return res.json({
+          ok: true,
+          alerted: false,
+          reason: 'cooldown',
+          lastAlertedAt: state.lastAlertedAt,
+          evaluation,
+          summary,
+        });
+      }
+    }
+
+    if (dryRun) {
+      return res.json({
+        ok: true,
+        alerted: false,
+        reason: 'dry_run',
+        evaluation,
+        summary,
+      });
+    }
+
+    const recipients = [
+      process.env.NOTIFY_EMAIL || CONFIG.superAdminEmail || 'derek@attendancetracker.dev',
+      'derekgallardo01@gmail.com',
+    ].filter(Boolean);
+
+    const emailResult = await sendBillingSpikeAlertEmail({
+      to: recipients,
+      telemetry,
+      evaluation,
+      projectId: telemetry.projectId,
+    });
+
+    if (typeof setBillingAlertState === 'function') {
+      await setBillingAlertState({
+        lastAlertedAt: new Date().toISOString(),
+        last24hCostUsd: telemetry.last24h?.cost?.totalCostUsd || 0,
+        currentHourReads: telemetry.currentHour?.reads || 0,
+        readSpike1h: evaluation.readSpike1h,
+        writeSpike1h: evaluation.writeSpike1h,
+        costSpike24h: evaluation.costSpike24h,
+        reasons: evaluation.reasons,
+      });
+    }
+
+    res.json({
+      ok: true,
+      alerted: true,
+      evaluation,
+      summary,
+      emailResult,
+    });
+  } catch (err) {
+    log.error('admin: check-billing failed', { error: err.message });
+    res.status(500).json({ error: err.message || 'Failed to check billing' });
+  }
+});
+
+// GET /api/admin/daily-summary — Preview daily ops + cloud billing summary JSON
+router.get('/admin/daily-summary', requireSuperAdmin, async (req, res) => {
+  try {
+    const [pulse, billing] = await Promise.all([
+      getActivityPulse(),
+      getBillingTelemetry({ useCache: process.env.NODE_ENV !== 'test' }),
+    ]);
+    res.json({ ok: true, pulse, billing });
+  } catch (err) {
+    log.error('admin: daily-summary get failed', { error: err.message });
+    res.status(500).json({ error: err.message || 'Failed to build daily summary' });
+  }
+});
+
+// POST /api/admin/daily-summary — Send daily ops + cloud billing digest email
+router.post('/admin/daily-summary', requireSuperAdminOrScheduler, async (req, res) => {
+  try {
+    const [pulse, billing] = await Promise.all([
+      getActivityPulse(),
+      getBillingTelemetry({ useCache: process.env.NODE_ENV !== 'test' }),
+    ]);
+    const to = req.body?.to || process.env.NOTIFY_EMAIL || CONFIG.superAdminEmail;
+    const result = await sendDailySummaryEmail({ to, pulse, billing });
+    res.json({
+      ok: true,
+      result,
+      summary: {
+        last24hCostUsd: billing?.last24h?.cost?.totalCostUsd || 0,
+        last24hReads: billing?.last24h?.reads || 0,
+        monthToDateCostUsd: billing?.monthToDate?.cost?.totalCostUsd || 0,
+        monthToDateReads: billing?.monthToDate?.reads || 0,
+      },
+    });
+  } catch (err) {
+    log.error('admin: daily-summary send failed', { error: err.message });
+    res.status(500).json({ error: err.message || 'Failed to send daily summary' });
   }
 });
 
@@ -1146,7 +1327,13 @@ router.get('/kh/metrics', requireKhMetricsKey, async (req, res) => {
         } catch (e) {
           log.warn('admin: kh revenue failed', { error: e.message });
         }
-        _khMetricsCache = { ...insights, revenue, cachedAt: new Date().toISOString() };
+        let billing = null;
+        if (process.env.NODE_ENV !== 'test' || req.query.includeBilling === '1') {
+          try {
+            billing = await getBillingTelemetry({ force, useCache: process.env.NODE_ENV !== 'test' }) || null;
+          } catch (_) {}
+        }
+        _khMetricsCache = { ...insights, revenue, ...(billing ? { billing } : {}), cachedAt: new Date().toISOString() };
         _khMetricsCachedAt = Date.now();
         return _khMetricsCache;
       } finally {

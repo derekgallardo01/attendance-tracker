@@ -61,6 +61,8 @@ jest.mock('../../src/services/firestore', () => ({
   getRecentErrorSpike: jest.fn(),
   getErrorAlertState: jest.fn(),
   setErrorAlertState: jest.fn(),
+  getBillingAlertState: jest.fn(),
+  setBillingAlertState: jest.fn(),
   getCancellationTelemetry: jest.fn(),
   checkAndRecordMilestones: jest.fn().mockResolvedValue([]),
   getMilestoneProgress: jest.fn().mockResolvedValue({ achieved: [], upcoming: {} }),
@@ -161,6 +163,8 @@ jest.mock('googleapis', () => ({
 jest.mock('../../src/lib/notifications', () => ({
   sendAdminEmail: jest.fn(),
   sendErrorSpikeAlertEmail: jest.fn(),
+  sendBillingSpikeAlertEmail: jest.fn(),
+  sendDailySummaryEmail: jest.fn(),
   sendWeeklySelfReport: jest.fn(),
   sendSeriesAlertEmail: jest.fn(),
   sendReactivationEmail: jest.fn(),
@@ -176,6 +180,13 @@ jest.mock('../../src/lib/notifications', () => ({
   verifyReviewApprovalToken: jest.fn(),
   sendReviewRewardEmail: jest.fn(),
 }));
+jest.mock('../../src/services/billing-telemetry', () => {
+  const actual = jest.requireActual('../../src/services/billing-telemetry');
+  return {
+    ...actual,
+    getBillingTelemetry: jest.fn(),
+  };
+});
 jest.mock('../../src/services/review-verifier', () => ({
   reconcilePendingReviews: jest.fn(),
   verifyUserReview: jest.fn(),
@@ -188,6 +199,7 @@ jest.mock('../../src/services/marketplace-reviews', () => ({
 
 const firestore = require('../../src/services/firestore');
 const notifications = require('../../src/lib/notifications');
+const billingTelemetry = require('../../src/services/billing-telemetry');
 const googleAuth = require('../../src/services/googleAuth');
 const meetApi = require('../../src/services/meetApi');
 const sheetsMod = require('../../src/routes/sheets');
@@ -2667,3 +2679,155 @@ describe('Admin error paths and logging', () => {
     expect(collectionGroupGet).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('Cloud Billing & Firestore Usage Monitor routes', () => {
+  const admin = () => authedHeader(SUPER_ADMIN, 'gmail.com');
+  const sampleHealthyTelemetry = {
+    projectId: 'attendance-tracker-490319',
+    generatedAt: '2026-04-19T14:00:00Z',
+    source: 'cloud_monitoring',
+    currentHour: {
+      reads: 136938,
+      writes: 150,
+      deletes: 0,
+      status: { level: 'healthy', label: 'Healthy' },
+    },
+    last24h: {
+      reads: 3200000,
+      writes: 3500,
+      deletes: 10,
+      cost: { totalCostUsd: 0.94 },
+      hourlyBuckets: [{ hour: '2026-04-19T14:00:00Z', reads: 136938, writes: 150, deletes: 0 }],
+    },
+    monthToDate: {
+      daysElapsed: 19,
+      reads: 25000000,
+      writes: 40000,
+      deletes: 100,
+      cost: { totalCostUsd: 7.21 },
+    },
+    projections: {
+      daysInMonth: 30,
+      daysRemainingInMonth: 11,
+      monthTotalFrom24hRateUsd: 17.55,
+      monthTotalFromCurrentHourRateUsd: 17.90,
+    },
+  };
+
+  test('GET /api/admin/billing-telemetry returns live telemetry + watchdog status for super-admin', async () => {
+    billingTelemetry.getBillingTelemetry.mockResolvedValueOnce(sampleHealthyTelemetry);
+    const res = await request(app).get('/api/admin/billing-telemetry').set(admin());
+    expect(res.status).toBe(200);
+    expect(res.body.currentHour.reads).toBe(136938);
+    expect(res.body.watchdog.breached).toBe(false);
+  });
+
+  test('POST /api/admin/check-billing returns healthy and does not send alert email when below thresholds', async () => {
+    billingTelemetry.getBillingTelemetry.mockResolvedValueOnce(sampleHealthyTelemetry);
+    const res = await request(app)
+      .post('/api/admin/check-billing')
+      .set('x-scheduler-secret', SCHEDULER_SECRET)
+      .send({});
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+    expect(res.body.alerted).toBe(false);
+    expect(res.body.reason).toBe('healthy');
+    expect(notifications.sendBillingSpikeAlertEmail).not.toHaveBeenCalled();
+  });
+
+  test('POST /api/admin/check-billing sends alert email and records cooldown state when threshold is breached', async () => {
+    const spikedTelemetry = {
+      ...sampleHealthyTelemetry,
+      currentHour: { reads: 650000, writes: 400, deletes: 0, status: { level: 'critical', label: 'Critical' } },
+      last24h: { ...sampleHealthyTelemetry.last24h, reads: 9500000, cost: { totalCostUsd: 2.83 } },
+    };
+    billingTelemetry.getBillingTelemetry.mockResolvedValueOnce(spikedTelemetry);
+    firestore.getBillingAlertState.mockResolvedValueOnce(null);
+    notifications.sendBillingSpikeAlertEmail.mockResolvedValueOnce({ sent: true });
+
+    const res = await request(app)
+      .post('/api/admin/check-billing')
+      .set('x-scheduler-secret', SCHEDULER_SECRET)
+      .send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.alerted).toBe(true);
+    expect(notifications.sendBillingSpikeAlertEmail).toHaveBeenCalledTimes(1);
+    expect(firestore.setBillingAlertState).toHaveBeenCalledWith(expect.objectContaining({
+      currentHourReads: 650000,
+      last24hCostUsd: 2.83,
+    }));
+  });
+
+  test('POST /api/admin/check-billing suppresses duplicate alert during 24h cooldown unless force=true', async () => {
+    const spikedTelemetry = {
+      ...sampleHealthyTelemetry,
+      currentHour: { reads: 650000, writes: 400, deletes: 0, status: { level: 'critical', label: 'Critical' } },
+    };
+    billingTelemetry.getBillingTelemetry.mockResolvedValue(spikedTelemetry);
+    firestore.getBillingAlertState.mockResolvedValue({
+      lastAlertedAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(), // 2h ago
+    });
+
+    const suppressed = await request(app)
+      .post('/api/admin/check-billing')
+      .set('x-scheduler-secret', SCHEDULER_SECRET)
+      .send({});
+    expect(suppressed.status).toBe(200);
+    expect(suppressed.body.alerted).toBe(false);
+    expect(suppressed.body.reason).toBe('cooldown');
+    expect(suppressed.body.summary.currentHourReads).toBe(650000);
+    expect(notifications.sendBillingSpikeAlertEmail).not.toHaveBeenCalled();
+
+    // Escalation: if previous cooldown state had readSpike1h: false (e.g. 24h cost-only alert)
+    // and now a new 1h read spike occurs, it bypasses cooldown and dispatches the alert:
+    firestore.getBillingAlertState.mockResolvedValueOnce({
+      lastAlertedAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+      readSpike1h: false,
+      writeSpike1h: false,
+    });
+    notifications.sendBillingSpikeAlertEmail.mockResolvedValueOnce({ sent: true });
+    const escalated = await request(app)
+      .post('/api/admin/check-billing')
+      .set('x-scheduler-secret', SCHEDULER_SECRET)
+      .send({});
+    expect(escalated.status).toBe(200);
+    expect(escalated.body.alerted).toBe(true);
+    expect(notifications.sendBillingSpikeAlertEmail).toHaveBeenCalledTimes(1);
+
+    notifications.sendBillingSpikeAlertEmail.mockClear();
+    const forced = await request(app)
+      .post('/api/admin/check-billing')
+      .set('x-scheduler-secret', SCHEDULER_SECRET)
+      .send({ force: true });
+    expect(forced.status).toBe(200);
+    expect(forced.body.alerted).toBe(true);
+    expect(notifications.sendBillingSpikeAlertEmail).toHaveBeenCalledTimes(1);
+  });
+
+  test('GET & POST /api/admin/daily-summary preview and dispatch the daily ops + billing digest', async () => {
+    firestore.getActivityPulse.mockResolvedValue({
+      signups24h: 4,
+      tracks24h: 18,
+      exports24h: 12,
+      active24h: 15,
+    });
+    billingTelemetry.getBillingTelemetry.mockResolvedValue(sampleHealthyTelemetry);
+    notifications.sendDailySummaryEmail.mockResolvedValueOnce({ sent: true });
+
+    const preview = await request(app).get('/api/admin/daily-summary').set(admin());
+    expect(preview.status).toBe(200);
+    expect(preview.body.ok).toBe(true);
+    expect(preview.body.billing.currentHour.reads).toBe(136938);
+
+    const sent = await request(app)
+      .post('/api/admin/daily-summary')
+      .set('x-scheduler-secret', SCHEDULER_SECRET)
+      .send({});
+    expect(sent.status).toBe(200);
+    expect(sent.body.ok).toBe(true);
+    expect(sent.body.summary.monthToDateReads).toBe(25000000);
+    expect(notifications.sendDailySummaryEmail).toHaveBeenCalledTimes(1);
+  });
+});
+

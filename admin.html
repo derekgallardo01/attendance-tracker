@@ -399,7 +399,8 @@
       <div id="reminders-bar" style="display:none;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.35);border-radius:8px;padding:12px 14px;margin-bottom:16px"></div>
 
       <!-- Super admin: founder tools bar -->
-      <div id="founder-tools" style="display:none;justify-content:flex-end;gap:8px;margin-bottom:16px">
+      <div id="founder-tools" style="display:none;justify-content:flex-end;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+        <button class="btn btn-secondary" onclick="sendDailySummaryNow()" id="btn-daily-summary" style="font-size:.78rem">📊 Send daily ops &amp; billing digest</button>
         <button class="btn btn-secondary" onclick="sendWeeklyReport()" id="btn-weekly" style="font-size:.78rem">Send weekly report to my inbox</button>
         <button class="btn btn-secondary" onclick="openTemplatesModal()" style="font-size:.78rem">Email templates</button>
       </div>
@@ -442,6 +443,111 @@
               <div class="stat-label">Check-ins 24h</div>
               <div class="stat-value green" id="pulse-checkins24h" style="font-size:1.5rem">—</div>
               <div class="stat-label">attendee self-check-ins</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cloud Billing & Firestore Usage Monitor (Layer 3) -->
+        <div class="section" id="billing-monitor-section" style="margin-bottom:16px;border-color:rgba(88,166,255,.35)">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+            <h2 style="margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span>☁️ Cloud Billing &amp; Firestore Usage Monitor</span>
+              <span id="billing-status-badge"><span class="badge" style="background:rgba(255,255,255,.06);color:var(--muted)">Loading…</span></span>
+            </h2>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="font-size:.72rem;color:var(--muted)" id="billing-stamp">Zero-Firestore-read Cloud Monitoring feed (12m cache)</span>
+              <button class="btn btn-secondary" onclick="checkBillingNow()" id="btn-check-billing" style="padding:4px 10px;font-size:.74rem" title="Evaluate watchdog thresholds now (dry-run)">🛡️ Check Watchdog</button>
+              <button class="btn btn-secondary" onclick="sendDailySummaryNow()" id="btn-daily-summary" style="padding:4px 10px;font-size:.74rem" title="Send the Daily Ops &amp; Cloud Billing Digest email now">📧 Email Daily Digest</button>
+              <button class="btn btn-secondary" onclick="loadBillingTelemetry(true)" id="btn-refresh-billing" style="padding:4px 10px;font-size:.74rem" title="Bypass 12m cache and pull fresh Cloud Monitoring metrics">↻ Refresh</button>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:14px">
+            <div class="stat-card" style="padding:12px 14px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                <span class="stat-label" style="margin:0">Current 1h Read Rate</span>
+                <span style="font-size:.7rem;color:var(--muted)">Alert &gt; 500k/hr</span>
+              </div>
+              <div class="stat-value green" id="billing-current-reads" style="font-size:1.45rem">—</div>
+              <div style="background:#21262d;border-radius:999px;height:6px;overflow:hidden;margin:6px 0">
+                <div id="billing-current-reads-bar" style="background:var(--accent);width:0%;height:100%;transition:width .35s ease"></div>
+              </div>
+              <div class="stat-label" id="billing-current-writes" style="font-size:.72rem;color:var(--muted)">— writes/hr · — deletes/hr</div>
+            </div>
+
+            <div class="stat-card" style="padding:12px 14px">
+              <div class="stat-label">Last 24h Usage &amp; Est. Cost</div>
+              <div class="stat-value blue" id="billing-24h-cost" style="font-size:1.45rem">—</div>
+              <div class="stat-label" id="billing-24h-reads" style="font-size:.75rem;color:var(--text);margin-top:4px">— reads</div>
+              <div class="stat-label" id="billing-24h-writes" style="font-size:.72rem;color:var(--muted)">— writes · — deletes</div>
+            </div>
+
+            <div class="stat-card" style="padding:12px 14px">
+              <div class="stat-label">Month-to-Date Firestore Cost</div>
+              <div class="stat-value green" id="billing-mtd-cost" style="font-size:1.45rem">—</div>
+              <div class="stat-label" id="billing-mtd-reads" style="font-size:.75rem;color:var(--text);margin-top:4px">— reads MTD</div>
+              <div class="stat-label" id="billing-mtd-writes" style="font-size:.72rem;color:var(--muted)">— writes · — deletes MTD</div>
+            </div>
+
+            <div class="stat-card" style="padding:12px 14px">
+              <div class="stat-label">Projected Full-Month Cost</div>
+              <div class="stat-value" id="billing-projected-cost" style="font-size:1.45rem;color:#fbbf24">—</div>
+              <div class="stat-label" id="billing-projected-sub" style="font-size:.75rem;color:var(--text);margin-top:4px">Based on last 24h run-rate</div>
+              <div class="stat-label" id="billing-projected-1h" style="font-size:.72rem;color:var(--muted)">At current 1h rate: —</div>
+            </div>
+          </div>
+
+          <div style="background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:12px 14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+              <span style="font-size:.78rem;font-weight:600;color:var(--text)">Last 24 Hours — Hourly Firestore Reads &amp; Writes</span>
+              <span style="font-size:.72rem;color:var(--muted)" id="billing-chart-legend">
+                <span style="color:#4ade80">■</span> Healthy (&lt;150k/hr) &nbsp;
+                <span style="color:#fbbf24">■</span> Elevated (150k–500k/hr) &nbsp;
+                <span style="color:#f85149">■</span> Spike (&ge;500k/hr)
+              </span>
+            </div>
+            <div id="billing-hourly-chart" style="display:flex;align-items:flex-end;gap:4px;height:76px;padding-top:8px;border-bottom:1px solid #21262d">
+              <div style="color:var(--muted);font-size:.8rem">Loading hourly telemetry…</div>
+            </div>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px">
+              <details style="flex:1;min-width:280px">
+                <summary style="cursor:pointer;font-size:.75rem;color:#58a6ff;user-select:none">View hourly breakdown table (last 24h)</summary>
+                <div class="table-scroll" style="max-height:260px;margin-top:8px">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Hour (Local)</th>
+                        <th>Firestore Reads</th>
+                        <th>Firestore Writes</th>
+                        <th>Deletes</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody id="billing-hourly-rows">
+                      <tr><td colspan="5" style="color:var(--muted)">Loading…</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+              <details style="flex:1;min-width:280px">
+                <summary style="cursor:pointer;font-size:.75rem;color:#58a6ff;user-select:none">View cost breakdown (Last 24h vs Month-to-Date)</summary>
+                <div class="table-scroll" style="max-height:260px;margin-top:8px">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Resource</th>
+                        <th>Last 24h Usage</th>
+                        <th>Last 24h Cost</th>
+                        <th>MTD Usage</th>
+                        <th>MTD Cost</th>
+                      </tr>
+                    </thead>
+                    <tbody id="billing-cost-breakdown-rows">
+                      <tr><td colspan="5" style="color:var(--muted)">Loading…</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </details>
             </div>
           </div>
         </div>
@@ -1430,6 +1536,7 @@
         case 'overview':
           loadSuggestions();
           loadPulse();
+          loadBillingTelemetry(force);
           loadActivity();
           loadPowerUsers();
           loadMarketplaceReviews();
@@ -2199,6 +2306,260 @@
       } catch (err) {
         console.error('pulse load failed:', err);
         if (stamp) stamp.innerHTML = `<span style="color:var(--error,#f85149)">Failed to load</span> · <a href="javascript:void(0)" onclick="loadPulse()" style="color:var(--accent);text-decoration:underline">Retry</a>`;
+      }
+    }
+
+    function billingStatusBadge(level) {
+      if (typeof AttAdmin !== 'undefined' && typeof AttAdmin.billingStatusBadge === 'function') {
+        return AttAdmin.billingStatusBadge(level);
+      }
+      return '<span class="badge">Healthy</span>';
+    }
+
+    function renderBillingTelemetry(data) {
+      if (!data) return;
+      const badgeEl = document.getElementById('billing-status-badge');
+      const statusLevel = (data.watchdog?.readSpike1h || data.watchdog?.writeSpike1h)
+        ? 'critical'
+        : (data.currentHour?.status?.level || data.status?.level || 'healthy');
+      if (badgeEl) {
+        badgeEl.innerHTML = billingStatusBadge(statusLevel);
+      }
+
+      const curReads = Number(data.currentHour?.reads) || 0;
+      const curWrites = Number(data.currentHour?.writes) || 0;
+      const curDeletes = Number(data.currentHour?.deletes) || 0;
+      const curReadsEl = document.getElementById('billing-current-reads');
+      if (curReadsEl) {
+        curReadsEl.textContent = `${curReads.toLocaleString()} / hr`;
+        curReadsEl.style.color = curReads >= 500000 ? 'var(--error,#f85149)' : (curReads >= 150000 ? '#fbbf24' : 'var(--accent,#4ade80)');
+      }
+      const curBar = document.getElementById('billing-current-reads-bar');
+      if (curBar) {
+        const pctWidth = Math.min(100, Math.max(2, Math.round((curReads / 500000) * 100)));
+        curBar.style.width = `${pctWidth}%`;
+        curBar.style.background = curReads >= 500000 ? '#f85149' : (curReads >= 150000 ? '#fbbf24' : 'var(--accent,#4ade80)');
+      }
+      const curWritesEl = document.getElementById('billing-current-writes');
+      if (curWritesEl) {
+        curWritesEl.textContent = `${curWrites.toLocaleString()} writes/hr · ${curDeletes.toLocaleString()} deletes/hr`;
+      }
+
+      const d24 = data.last24h || {};
+      const c24 = d24.cost || d24;
+      const reads24h = Number(d24.reads) || 0;
+      const writes24h = Number(d24.writes) || 0;
+      const deletes24h = Number(d24.deletes) || 0;
+      const cost24h = Number(c24.totalCostUsd ?? c24.costUsd) || 0;
+      const cost24hEl = document.getElementById('billing-24h-cost');
+      if (cost24hEl) {
+        cost24hEl.textContent = `$${cost24h.toFixed(2)}`;
+        cost24hEl.style.color = cost24h >= 2.0 ? '#f85149' : (cost24h >= 0.75 ? '#fbbf24' : 'var(--blue,#58a6ff)');
+      }
+      const reads24hEl = document.getElementById('billing-24h-reads');
+      if (reads24hEl) reads24hEl.textContent = `${reads24h.toLocaleString()} reads (24h)`;
+      const writes24hEl = document.getElementById('billing-24h-writes');
+      if (writes24hEl) writes24hEl.textContent = `${writes24h.toLocaleString()} writes · ${deletes24h.toLocaleString()} deletes`;
+
+      const mtdObj = data.monthToDate || data.mtd || {};
+      const cMtd = mtdObj.cost || mtdObj;
+      const mtdReads = Number(mtdObj.reads) || 0;
+      const mtdWrites = Number(mtdObj.writes) || 0;
+      const mtdDeletes = Number(mtdObj.deletes) || 0;
+      const mtdDays = Number(mtdObj.daysElapsed) || 1;
+      const mtdCost = Number(cMtd.totalCostUsd ?? cMtd.costUsd) || 0;
+      const mtdCostEl = document.getElementById('billing-mtd-cost');
+      if (mtdCostEl) mtdCostEl.textContent = `$${mtdCost.toFixed(2)}`;
+      const mtdReadsEl = document.getElementById('billing-mtd-reads');
+      if (mtdReadsEl) mtdReadsEl.textContent = `${mtdReads.toLocaleString()} reads (${mtdDays}d MTD)`;
+      const mtdWritesEl = document.getElementById('billing-mtd-writes');
+      if (mtdWritesEl) mtdWritesEl.textContent = `${mtdWrites.toLocaleString()} writes · ${mtdDeletes.toLocaleString()} deletes MTD`;
+
+      const proj24h = Number(data.projections?.monthTotalFrom24hRateUsd ?? mtdObj.projectedFullMonthTotalCostUsd) || 0;
+      const proj1h = Number(data.projections?.monthTotalFromCurrentHourRateUsd ?? mtdObj.projectedFullMonthFrom1hCostUsd) || 0;
+      const daysRemaining = Number(data.projections?.daysRemainingInMonth ?? mtdObj.remainingDays) || 0;
+      const projEl = document.getElementById('billing-projected-cost');
+      if (projEl) {
+        projEl.textContent = `$${projEl.dataset.override || proj24h.toFixed(2)}`;
+        projEl.style.color = proj24h >= 30 ? '#f85149' : (proj24h >= 10 ? '#fbbf24' : 'var(--accent,#4ade80)');
+      }
+      const projSubEl = document.getElementById('billing-projected-sub');
+      if (projSubEl) projSubEl.textContent = `At 24h rate (${Math.round(daysRemaining)}d left in month)`;
+      const proj1hEl = document.getElementById('billing-projected-1h');
+      if (proj1hEl) proj1hEl.textContent = `At current 1h rate: $${proj1h.toFixed(2)}/mo`;
+
+      const buckets = Array.isArray(d24.hourlyBuckets) ? d24.hourlyBuckets : (Array.isArray(data.hourlyBuckets) ? data.hourlyBuckets : []);
+      const chartEl = document.getElementById('billing-hourly-chart');
+      if (chartEl) {
+        if (!buckets.length) {
+          chartEl.innerHTML = '<div style="color:var(--muted);font-size:.8rem">No hourly Cloud Monitoring data points in window.</div>';
+        } else {
+          const maxReads = Math.max(10000, ...buckets.map(b => Number(b.reads) || 0));
+          chartEl.innerHTML = buckets.map(b => {
+            const r = Number(b.reads) || 0;
+            const w = Number(b.writes) || 0;
+            const hPct = Math.max(4, Math.round((r / maxReads) * 100));
+            const color = r >= 500000 ? '#f85149' : (r >= 150000 ? '#fbbf24' : '#4ade80');
+            const hourLabel = b.hour ? new Date(b.hour).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+            const tip = `${hourLabel}: ${r.toLocaleString()} reads, ${w.toLocaleString()} writes`;
+            return `<div title="${esc(tip)}" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;min-width:6px">
+              <div style="width:100%;height:${hPct}%;background:${color};border-radius:2px 2px 0 0;opacity:0.9"></div>
+            </div>`;
+          }).join('');
+        }
+      }
+
+      const rowsEl = document.getElementById('billing-hourly-rows');
+      if (rowsEl) {
+        if (!buckets.length) {
+          rowsEl.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">No hourly buckets available</td></tr>';
+        } else {
+          rowsEl.innerHTML = [...buckets].reverse().map(b => {
+            const r = Number(b.reads) || 0;
+            const w = Number(b.writes) || 0;
+            const d = Number(b.deletes) || 0;
+            const lvl = r >= 500000 || w >= 25000 ? 'critical' : (r >= 150000 || w >= 10000 ? 'warning' : 'healthy');
+            const timeStr = b.hour ? new Date(b.hour).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+            return `<tr>
+              <td style="color:var(--muted)">${esc(timeStr)}</td>
+              <td style="font-weight:600">${r.toLocaleString()}</td>
+              <td>${w.toLocaleString()}</td>
+              <td style="color:var(--muted)">${d.toLocaleString()}</td>
+              <td>${billingStatusBadge(lvl)}</td>
+            </tr>`;
+          }).join('');
+        }
+      }
+
+      const breakdownEl = document.getElementById('billing-cost-breakdown-rows');
+      if (breakdownEl) {
+        const rCost24 = Number(c24.readCostUsd) || 0;
+        const wCost24 = Number(c24.writeCostUsd) || 0;
+        const dCost24 = Number(c24.deleteCostUsd) || 0;
+        const crSec24 = Number(c24.cloudRunBillableSeconds) || 0;
+        const crCost24 = Number(c24.cloudRunCostUsd) || 0;
+
+        const rCostMtd = Number(cMtd.readCostUsd) || 0;
+        const wCostMtd = Number(cMtd.writeCostUsd) || 0;
+        const dCostMtd = Number(cMtd.deleteCostUsd) || 0;
+        const crSecMtd = Number(cMtd.cloudRunBillableSeconds) || 0;
+        const crCostMtd = Number(cMtd.cloudRunCostUsd) || 0;
+
+        breakdownEl.innerHTML = `
+          <tr>
+            <td>Firestore Reads <span style="color:var(--muted);font-size:.7rem">(50k/d free)</span></td>
+            <td>${reads24h.toLocaleString()}</td>
+            <td>$${rCost24.toFixed(4)}</td>
+            <td>${mtdReads.toLocaleString()}</td>
+            <td>$${rCostMtd.toFixed(2)}</td>
+          </tr>
+          <tr>
+            <td>Firestore Writes <span style="color:var(--muted);font-size:.7rem">(20k/d free)</span></td>
+            <td>${writes24h.toLocaleString()}</td>
+            <td>$${wCost24.toFixed(4)}</td>
+            <td>${mtdWrites.toLocaleString()}</td>
+            <td>$${wCostMtd.toFixed(2)}</td>
+          </tr>
+          <tr>
+            <td>Firestore Deletes <span style="color:var(--muted);font-size:.7rem">(20k/d free)</span></td>
+            <td>${deletes24h.toLocaleString()}</td>
+            <td>$${dCost24.toFixed(4)}</td>
+            <td>${mtdDeletes.toLocaleString()}</td>
+            <td>$${dCostMtd.toFixed(2)}</td>
+          </tr>
+          <tr>
+            <td>Cloud Run Instance Time</td>
+            <td>${(crSec24 / 3600).toFixed(2)}h</td>
+            <td>$${crCost24.toFixed(4)}</td>
+            <td>${(crSecMtd / 3600).toFixed(2)}h</td>
+            <td>$${crCostMtd.toFixed(2)}</td>
+          </tr>
+          <tr style="font-weight:700;border-top:1px solid var(--border)">
+            <td>Total Estimated Cost</td>
+            <td>—</td>
+            <td>$${cost24h.toFixed(2)}</td>
+            <td>—</td>
+            <td>$${mtdCost.toFixed(2)}</td>
+          </tr>
+        `;
+      }
+    }
+
+    async function loadBillingTelemetry(force = false) {
+      const stamp = document.getElementById('billing-stamp');
+      const btn = document.getElementById('btn-refresh-billing');
+      if (btn && force) btn.disabled = true;
+      try {
+        const res = await fetch(`${BACKEND_URL}/admin/billing-telemetry${force ? '?refresh=1' : ''}`, {
+          headers: { Authorization: `Bearer ${sessionToken}` },
+        });
+        if (!res.ok) {
+          if (stamp) stamp.innerHTML = `<span style="color:var(--error,#f85149)">Failed to load billing telemetry (HTTP ${res.status})</span>`;
+          return;
+        }
+        const data = await res.json();
+        renderBillingTelemetry(data);
+        if (stamp) {
+          const genTime = data.generatedAt ? new Date(data.generatedAt).toLocaleTimeString() : new Date().toLocaleTimeString();
+          stamp.textContent = `Updated ${genTime} · 0 Firestore reads (Cloud Monitoring API)`;
+        }
+      } catch (err) {
+        console.error('billing telemetry load failed:', err);
+        if (stamp) stamp.innerHTML = `<span style="color:var(--error,#f85149)">Billing telemetry unavailable</span>`;
+      } finally {
+        if (btn && force) btn.disabled = false;
+      }
+    }
+
+    async function checkBillingNow() {
+      const btn = document.getElementById('btn-check-billing');
+      if (btn) btn.disabled = true;
+      try {
+        const res = await fetch(`${BACKEND_URL}/admin/check-billing?dryRun=1`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${sessionToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        });
+        const data = await res.json();
+        await loadBillingTelemetry(true);
+        const curReads = Number(data.summary?.currentHourReads ?? data.evaluation?.metrics?.currentHourReads) || 0;
+        const cost24h = Number(data.summary?.last24hCostUsd ?? data.evaluation?.metrics?.last24hCostUsd) || 0;
+        if (data.alerted) {
+          alert('🚨 Billing threshold breached! Spike alert email dispatched.');
+        } else if (data.reason === 'cooldown') {
+          alert(`⚠️ Threshold breached (${(data.evaluation?.reasons || []).join('; ')}), in 24h alert cooldown (last sent: ${data.lastAlertedAt}).\nCurrent 1h reads: ${curReads.toLocaleString()}/hr · 24h Est. Cost: $${cost24h.toFixed(2)}`);
+        } else if (data.evaluation?.breached) {
+          alert(`⚠️ Watchdog threshold notice: ${(data.evaluation.reasons || []).join('; ')}\nCurrent 1h reads: ${curReads.toLocaleString()}/hr · 24h Est. Cost: $${cost24h.toFixed(2)}`);
+        } else {
+          alert(`✅ Watchdog healthy! Current 1h reads: ${curReads.toLocaleString()}/hr · 24h Est. Cost: $${cost24h.toFixed(2)}`);
+        }
+      } catch (err) {
+        alert('Watchdog check failed: ' + err.message);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function sendDailySummaryNow() {
+      const btn = document.getElementById('btn-daily-summary');
+      const orig = btn ? btn.textContent : '';
+      if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+      try {
+        const res = await fetch(`${BACKEND_URL}/admin/daily-summary`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${sessionToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+          alert(`📊 Daily Ops & Billing Digest sent! (24h Est. Cost: $${Number(data.summary?.last24hCostUsd || 0).toFixed(2)})`);
+        } else {
+          alert('Failed to send daily digest: ' + (data.error || res.statusText));
+        }
+      } catch (err) {
+        alert('Error sending daily digest: ' + err.message);
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = orig; }
       }
     }
 

@@ -131,7 +131,7 @@ async function dispatchEmail(params, label, logMeta = {}) {
       try {
         const { recordNotificationLog } = require('../services/firestore');
         recordNotificationLog(info.id, {
-          to: params.to,
+          to: Array.isArray(params.to) ? params.to[0] : params.to,
           subject: params.subject,
           template: label,
           lang: logMeta.lang || 'en',
@@ -1400,6 +1400,13 @@ async function sendWeeklySelfReport(report) {
 
           ${revenueHtml}
           ${retentionHtml}
+          ${report.billing ? `
+          <div style="padding:16px 20px;border-bottom:1px solid #30363d;background:#0d1117;">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:#58a6ff;margin-bottom:6px;font-weight:700;">☁️ Cloud Billing &amp; Firestore Usage</div>
+            <div style="font-size:13px;color:#e6edf3;line-height:1.6;">
+              24h Reads: <strong>${Number(report.billing.last24h?.reads || 0).toLocaleString()}</strong> · 24h Est: <strong>$${Number(report.billing.last24h?.cost?.totalCostUsd || 0).toFixed(2)}</strong> · MTD Est: <strong>$${Number(report.billing.monthToDate?.cost?.totalCostUsd || 0).toFixed(2)}</strong> · Projected Month: <strong>$${Number(report.billing.projections?.monthTotalFrom24hRateUsd || 0).toFixed(2)}</strong>
+            </div>
+          </div>` : ''}
 
           <!-- Top User -->
           <div style="padding:16px 20px;border-bottom:1px solid #30363d;background:rgba(74,222,128,0.02);">
@@ -1459,6 +1466,12 @@ async function sendWeeklySelfReport(report) {
       `  Return rate: ${rt.returnRate}% (${rt.returned}/${rt.eligible} came back)`,
       `  Nudges sent: ${rt.remindersThisTotal} (${rt.remindersDelta})`,
       `  Dead-ends:   ${rt.deadEnds}`,
+    ] : []),
+    ...(report.billing ? [
+      ``,
+      `Cloud Billing & Firestore:`,
+      `  24h Reads: ${Number(report.billing.last24h?.reads || 0).toLocaleString()} ($${Number(report.billing.last24h?.cost?.totalCostUsd || 0).toFixed(2)})`,
+      `  MTD Cost:  $${Number(report.billing.monthToDate?.cost?.totalCostUsd || 0).toFixed(2)} (Projected month: $${Number(report.billing.projections?.monthTotalFrom24hRateUsd || 0).toFixed(2)})`,
     ] : []),
     ``,
     `Top user: ${topUserLine.replace(/<[^>]+>/g, '')}`,
@@ -3917,8 +3930,219 @@ async function sendPassExpiryReminderEmail({
   }, 'pass expiry reminder email', { to, reminderType, lang });
 }
 
+async function sendBillingSpikeAlertEmail({
+  to,
+  telemetry,
+  evaluation,
+  projectId,
+} = {}) {
+  const recipients = Array.isArray(to)
+    ? to.filter(Boolean)
+    : [to || CONFIG.superAdminEmail, 'derekgallardo01@gmail.com'].filter(Boolean);
+  const uniqueRecipients = [...new Set(recipients.map(r => String(r).trim()).filter(r => r.includes('@')))];
+  if (!getResend()) return { skipped: 'no resend' };
+  if (uniqueRecipients.length === 0) return { skipped: 'no recipients' };
+
+  const currentHourReads = Number(telemetry?.currentHour?.reads) || 0;
+  const currentHourWrites = Number(telemetry?.currentHour?.writes) || 0;
+  const last24hReads = Number(telemetry?.last24h?.reads) || 0;
+  const last24hWrites = Number(telemetry?.last24h?.writes) || 0;
+  const last24hCost = Number(telemetry?.last24h?.cost?.totalCostUsd) || 0;
+  const mtdCost = Number(telemetry?.monthToDate?.cost?.totalCostUsd) || 0;
+  const projectedMonth = Number(telemetry?.projections?.monthTotalFrom24hRateUsd) || 0;
+  const reasons = Array.isArray(evaluation?.reasons) && evaluation.reasons.length > 0
+    ? evaluation.reasons
+    : ['Firestore read/write threshold exceeded'];
+
+  const subject = `🚨 [BILLING ALERT] Firestore Usage Spike — $${last24hCost.toFixed(2)}/24h (${currentHourReads.toLocaleString()} reads/hr)`;
+
+  const contentHtml = `
+    <div style="background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.4);border-radius:8px;padding:14px 16px;margin:0 0 16px">
+      <div style="font-size:12px;font-weight:700;color:#f85149;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Triggered Thresholds</div>
+      <ul style="margin:0;padding-left:18px;color:#e6edf3;font-size:13px;line-height:1.6">
+        ${reasons.map(r => `<li>${escape(r)}</li>`).join('')}
+      </ul>
+    </div>
+    <table role="presentation" style="width:100%;border-collapse:collapse;background:#0d1117;border:1px solid #30363d;border-radius:8px;overflow:hidden;margin:0 0 16px">
+      <tbody>
+        <tr>
+          <td style="padding:10px 12px;border-bottom:1px solid #21262d;color:#8b949e;font-size:12px">Trailing 1h Reads / Writes</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #21262d;color:#e6edf3;font-size:13px;font-weight:700;text-align:right">${currentHourReads.toLocaleString()} reads · ${currentHourWrites.toLocaleString()} writes</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 12px;border-bottom:1px solid #21262d;color:#8b949e;font-size:12px">Last 24h Reads / Writes</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #21262d;color:#e6edf3;font-size:13px;font-weight:700;text-align:right">${last24hReads.toLocaleString()} reads · ${last24hWrites.toLocaleString()} writes</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 12px;border-bottom:1px solid #21262d;color:#8b949e;font-size:12px">Estimated 24h Firestore Cost</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #21262d;color:#f85149;font-size:14px;font-weight:700;text-align:right">$${last24hCost.toFixed(2)}</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 12px;border-bottom:1px solid #21262d;color:#8b949e;font-size:12px">Month-to-Date Firestore Cost</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #21262d;color:#e6edf3;font-size:13px;font-weight:700;text-align:right">$${mtdCost.toFixed(2)}</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 12px;color:#8b949e;font-size:12px">Projected Full-Month Cost (at 24h rate)</td>
+          <td style="padding:10px 12px;color:#e3b341;font-size:13px;font-weight:700;text-align:right">$${projectedMonth.toFixed(2)}</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="margin:0;color:#8b949e;font-size:12px;line-height:1.5">
+      Project: <code style="color:#c9d1d9">${escape(projectId || telemetry?.projectId || 'attendance-tracker-490319')}</code> · Checked at ${escape(telemetry?.generatedAt || new Date().toISOString())}
+    </p>
+  `;
+
+  const html = buildDesignSystemEmail({
+    badge: 'Billing & Usage Alert',
+    badgeType: 'danger',
+    title: 'Firestore Usage Spike Detected',
+    subtitle: 'Automated Cloud Monitoring & Billing Watchdog',
+    contentHtml,
+    ctaText: 'Open Billing & Usage Monitor →',
+    ctaUrl: 'https://attendancetracker.dev/admin.html',
+    ctaColor: 'green',
+  });
+
+  const text = [
+    '🚨 [BILLING ALERT] Firestore Usage Spike Detected',
+    '',
+    'Triggered thresholds:',
+    ...reasons.map(r => `- ${r}`),
+    '',
+    `Trailing 1h: ${currentHourReads.toLocaleString()} reads / ${currentHourWrites.toLocaleString()} writes`,
+    `Last 24h:    ${last24hReads.toLocaleString()} reads / ${last24hWrites.toLocaleString()} writes`,
+    `Est 24h Cost: $${last24hCost.toFixed(2)}`,
+    `MTD Cost:     $${mtdCost.toFixed(2)}`,
+    `Projected Month Cost (at 24h rate): $${projectedMonth.toFixed(2)}`,
+    '',
+    'Admin Dashboard: https://attendancetracker.dev/admin.html',
+  ].join('\n');
+
+  return dispatchEmail({
+    from: makeFrom('Attendance Tracker Ops'),
+    to: uniqueRecipients,
+    subject,
+    text,
+    html,
+    tags: [{ name: 'type', value: 'billing_spike_alert' }],
+  }, 'billing spike alert email', { to: uniqueRecipients, last24hCost, currentHourReads });
+}
+
+async function sendDailySummaryEmail({
+  to,
+  pulse,
+  billing,
+} = {}) {
+  const recipients = Array.isArray(to)
+    ? to.filter(Boolean)
+    : [to || CONFIG.superAdminEmail].filter(Boolean);
+  const uniqueRecipients = [...new Set(recipients.map(r => String(r).trim()).filter(r => r.includes('@')))];
+  if (!getResend()) return { skipped: 'no resend' };
+  if (uniqueRecipients.length === 0) return { skipped: 'no recipients' };
+
+  const signups24h = Number(pulse?.signups24h ?? pulse?.last24h?.signups) || 0;
+  const tracks24h = Number(pulse?.tracks24h ?? pulse?.last24h?.tracks ?? pulse?.checkins24h) || 0;
+  const exports24h = Number(pulse?.exports24h ?? pulse?.last24h?.exports) || 0;
+  const activeUsers24h = Number(pulse?.active24h ?? pulse?.last24h?.activeUsers) || 0;
+
+  const reads1h = Number(billing?.currentHour?.reads) || 0;
+  const reads24h = Number(billing?.last24h?.reads) || 0;
+  const writes24h = Number(billing?.last24h?.writes) || 0;
+  const deletes24h = Number(billing?.last24h?.deletes) || 0;
+  const cost24h = Number(billing?.last24h?.cost?.totalCostUsd ?? billing?.last24h?.totalCostUsd) || 0;
+  const mtdObj = billing?.monthToDate || billing?.mtd || {};
+  const readsMtd = Number(mtdObj.reads) || 0;
+  const writesMtd = Number(mtdObj.writes) || 0;
+  const costMtd = Number(mtdObj.cost?.totalCostUsd ?? mtdObj.totalCostUsd) || 0;
+  const projectedMonth = Number(billing?.projections?.monthTotalFrom24hRateUsd ?? mtdObj.projectedFullMonthTotalCostUsd) || 0;
+  const statusLabel = billing?.currentHour?.status?.label || 'Healthy';
+
+  const subject = `📊 Daily Ops & Billing Digest — $${cost24h.toFixed(2)}/24h · ${signups24h} signups · ${tracks24h} meetings`;
+
+  const contentHtml = `
+    <p style="margin:0 0 14px;color:#e6edf3;font-size:14px;line-height:1.6">
+      Here is your 24-hour Attendance Tracker activity &amp; Cloud Billing summary:
+    </p>
+    <table role="presentation" style="width:100%;border-collapse:collapse;background:#0d1117;border:1px solid #30363d;border-radius:8px;overflow:hidden;margin:0 0 16px">
+      <tbody>
+        <tr style="background:#161b22">
+          <td colspan="2" style="padding:8px 12px;font-size:11px;font-weight:700;color:#4ade80;text-transform:uppercase;letter-spacing:.05em">Product Activity (Last 24h)</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 12px;border-top:1px solid #21262d;color:#8b949e;font-size:12px">New Signups / Active Educators</td>
+          <td style="padding:8px 12px;border-top:1px solid #21262d;color:#e6edf3;font-size:13px;font-weight:600;text-align:right">${signups24h} signups · ${activeUsers24h} active</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 12px;border-top:1px solid #21262d;color:#8b949e;font-size:12px">Meetings Tracked / Sheet Exports</td>
+          <td style="padding:8px 12px;border-top:1px solid #21262d;color:#e6edf3;font-size:13px;font-weight:600;text-align:right">${tracks24h} meetings · ${exports24h} exports</td>
+        </tr>
+        <tr style="background:#161b22">
+          <td colspan="2" style="padding:8px 12px;border-top:1px solid #30363d;font-size:11px;font-weight:700;color:#58a6ff;text-transform:uppercase;letter-spacing:.05em">Cloud Billing &amp; Firestore Usage</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 12px;border-top:1px solid #21262d;color:#8b949e;font-size:12px">Current 1h Read Rate</td>
+          <td style="padding:8px 12px;border-top:1px solid #21262d;color:#e6edf3;font-size:13px;font-weight:600;text-align:right">${reads1h.toLocaleString()} reads/hr (${escape(statusLabel)})</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 12px;border-top:1px solid #21262d;color:#8b949e;font-size:12px">Last 24h Reads / Writes / Deletes</td>
+          <td style="padding:8px 12px;border-top:1px solid #21262d;color:#e6edf3;font-size:13px;font-weight:600;text-align:right">${reads24h.toLocaleString()} reads · ${writes24h.toLocaleString()} writes · ${deletes24h.toLocaleString()} deletes</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 12px;border-top:1px solid #21262d;color:#8b949e;font-size:12px">Estimated 24h Firestore Cost</td>
+          <td style="padding:8px 12px;border-top:1px solid #21262d;color:#4ade80;font-size:13px;font-weight:700;text-align:right">$${cost24h.toFixed(2)}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 12px;border-top:1px solid #21262d;color:#8b949e;font-size:12px">Month-to-Date Reads / Writes</td>
+          <td style="padding:8px 12px;border-top:1px solid #21262d;color:#e6edf3;font-size:13px;font-weight:600;text-align:right">${readsMtd.toLocaleString()} reads · ${writesMtd.toLocaleString()} writes</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 12px;border-top:1px solid #21262d;color:#8b949e;font-size:12px">Month-to-Date Cost / Projected Full Month</td>
+          <td style="padding:8px 12px;border-top:1px solid #21262d;color:#e6edf3;font-size:13px;font-weight:700;text-align:right">$${costMtd.toFixed(2)} MTD · $${projectedMonth.toFixed(2)} proj</td>
+        </tr>
+      </tbody>
+    </table>
+  `;
+
+  const html = buildDesignSystemEmail({
+    badge: 'Daily Ops & Billing',
+    badgeType: statusLabel === 'Critical' ? 'danger' : (statusLabel === 'Warning' ? 'warning' : 'success'),
+    title: 'Daily Activity & Cloud Cost Digest',
+    subtitle: `${new Date().toLocaleDateString('en-US', { dateStyle: 'medium' })} · Status: ${statusLabel}`,
+    contentHtml,
+    ctaText: 'Open Admin Dashboard →',
+    ctaUrl: 'https://attendancetracker.dev/admin.html',
+    ctaColor: 'green',
+  });
+
+  const text = [
+    'Daily Ops & Billing Digest',
+    '',
+    `Signups (24h): ${signups24h}`,
+    `Active Educators (24h): ${activeUsers24h}`,
+    `Meetings Tracked (24h): ${tracks24h}`,
+    `Exports (24h): ${exports24h}`,
+    '',
+    `Current 1h Read Rate: ${reads1h.toLocaleString()} reads/hr (${statusLabel})`,
+    `Last 24h Reads/Writes/Deletes: ${reads24h.toLocaleString()} reads / ${writes24h.toLocaleString()} writes / ${deletes24h.toLocaleString()} deletes`,
+    `Estimated 24h Cost: $${cost24h.toFixed(2)}`,
+    `Month-to-Date Reads/Writes: ${readsMtd.toLocaleString()} reads / ${writesMtd.toLocaleString()} writes`,
+    `Month-to-Date Cost: $${costMtd.toFixed(2)} (Projected Month: $${projectedMonth.toFixed(2)})`,
+    '',
+    'Admin: https://attendancetracker.dev/admin.html',
+  ].join('\n');
+
+  return dispatchEmail({
+    from: makeFrom('Attendance Tracker Ops'),
+    to: uniqueRecipients,
+    subject,
+    text,
+    html,
+    tags: [{ name: 'type', value: 'daily_ops_summary' }],
+  }, 'daily ops summary email', { to: uniqueRecipients, cost24h, signups24h });
+}
+
 module.exports = {
-  sendSignupWebhook, sendSourceReportedNotification, sendUpgradeNotification, sendAdminSubscriptionCancelledNotification, sendAdminEmailUnsubscribedNotification, sendAdminMilestoneEmail, maybeSendSignupNotification, sendWelcomeEmail, sendReferralNotification, maybeSendReferralNotification, flushDeferredNotifications, sendAdminEmail, sendErrorAlertEmail, sendErrorSpikeAlertEmail, sendWeeklySelfReport, sendExportNotification, sendOrgWeeklyDigest,
+  sendSignupWebhook, sendSourceReportedNotification, sendUpgradeNotification, sendAdminSubscriptionCancelledNotification, sendAdminEmailUnsubscribedNotification, sendAdminMilestoneEmail, maybeSendSignupNotification, sendWelcomeEmail, sendReferralNotification, maybeSendReferralNotification, flushDeferredNotifications, sendAdminEmail, sendErrorAlertEmail, sendErrorSpikeAlertEmail, sendBillingSpikeAlertEmail, sendDailySummaryEmail, sendWeeklySelfReport, sendExportNotification, sendOrgWeeklyDigest,
   sendSeriesAlertEmail, sendFeedbackEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendUpgradeLinkEmail, sendSubscriptionCancelledEmail, sendInvoiceActionRequiredEmail, sendReviewRewardEmail, buildReviewRewardEmailContent, sendReviewRewardDraftAlert, createReviewApprovalToken, verifyReviewApprovalToken, reviewApprovalUrl, sendPassExpiryReminderEmail,
   sendSlackDigest, sendSlackTestPing, buildSlackDigestBlocks, buildSlackFallbackText, maskSlackWebhook,
   sendChatDigest, sendChatTestPing, buildChatDigestCard, maskGoogleChatWebhook,

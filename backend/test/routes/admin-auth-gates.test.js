@@ -47,12 +47,16 @@ jest.mock('../../src/services/firestore', () => ({
   recordAlertsSent: jest.fn(),
   evaluateReengagementForUser: jest.fn(),
   claimReengagementSlot: jest.fn(),
+  getBillingAlertState: jest.fn(),
+  setBillingAlertState: jest.fn(),
   logEvent: jest.fn(),
   getUser: jest.fn(),
   updateUserTokens: jest.fn(),
 }));
 jest.mock('../../src/lib/notifications', () => ({
   sendAdminEmail: jest.fn(),
+  sendBillingSpikeAlertEmail: jest.fn(),
+  sendDailySummaryEmail: jest.fn(),
   sendWeeklySelfReport: jest.fn(),
   sendSeriesAlertEmail: jest.fn(),
   sendReactivationEmail: jest.fn(),
@@ -74,6 +78,8 @@ const SUPER_ADMIN_ONLY = [
   { method: 'get', path: '/api/admin/all-users' },
   { method: 'get', path: '/api/admin/activity' },
   { method: 'get', path: '/api/admin/pulse' },
+  { method: 'get', path: '/api/admin/billing-telemetry' },
+  { method: 'get', path: '/api/admin/daily-summary' },
   { method: 'get', path: '/api/admin/revenue-funnel' },
   { method: 'get', path: '/api/admin/suggestions' },
   { method: 'get', path: '/api/admin/power-users' },
@@ -101,6 +107,8 @@ const SUPER_ADMIN_ONLY = [
 const DUAL_AUTH = [
   { method: 'post', path: '/api/admin/check-alerts', body: {} },
   { method: 'post', path: '/api/admin/check-reengagement', body: {} },
+  { method: 'post', path: '/api/admin/check-billing', body: {} },
+  { method: 'post', path: '/api/admin/daily-summary', body: {} },
 ];
 
 // Authed (any user) — reject 401 when no JWT at all.
