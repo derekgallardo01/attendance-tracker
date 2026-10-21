@@ -986,4 +986,77 @@ describe('getSuppressedEmailSet, getUserMeetingSeries, evaluateSeriesAlerts & ge
     const r5 = await firestore.getAggregatedInsights();
     expect(r5).toBe(r4);
   });
+
+  test('getAggregatedInsights persists and hydrates from ops/insightsCache when useFirestoreCache is enabled', async () => {
+    seedUser('acme.edu', 'u1@acme.edu');
+    const fresh = await firestore.getAggregatedInsights({ force: true, useFirestoreCache: true });
+    const cachedDoc = ctx.read('ops/insightsCache');
+    expect(cachedDoc).toBeDefined();
+    expect(cachedDoc.data.funnel.signedIn).toBe(fresh.funnel.signedIn);
+    expect(typeof cachedDoc.cachedAtMs).toBe('number');
+
+    // Clear in-memory cache and seed a custom snapshot in ops/insightsCache to verify hydration
+    firestore.clearInsightsCache();
+    ctx.seed('ops/insightsCache', {
+      data: { ...fresh, sentinelFromOpsCache: true },
+      cachedAtMs: Date.now(),
+    });
+    const hydrated = await firestore.getAggregatedInsights({ force: true, useFirestoreCache: false });
+    expect(hydrated.sentinelFromOpsCache).toBeUndefined();
+
+    firestore.clearInsightsCache();
+    const { getAggregatedInsights: rawGetInsights } = require('../../src/services/firestore/analytics');
+    const fromOps = await rawGetInsights({ force: false, useFirestoreCache: true });
+    expect(fromOps.sentinelFromOpsCache).toBe(true);
+  });
+
+  test('getAllUsersAcrossTenants includes decrypted refreshToken, hasRefreshToken, and timezone and caches across calls', async () => {
+    await firestore.upsertUser('acme.edu', {
+      email: 'teacher@acme.edu',
+      displayName: 'Teacher',
+      refreshToken: 'secret-rt-123',
+    });
+    ctx.seed('tenants/acme.edu/users/notoken@acme.edu', {
+      email: 'notoken@acme.edu',
+      domain: 'acme.edu',
+      timezone: 'Asia/Manila',
+    });
+
+    const list1 = await firestore.getAllUsersAcrossTenants({ force: true });
+    const withToken = list1.find(u => u.email === 'teacher@acme.edu');
+    const noToken = list1.find(u => u.email === 'notoken@acme.edu');
+    expect(withToken.hasRefreshToken).toBe(true);
+    expect(withToken.refreshToken).toBe('secret-rt-123');
+    expect(noToken.hasRefreshToken).toBe(false);
+    expect(noToken.refreshToken).toBeNull();
+    expect(noToken.timezone).toBe('Asia/Manila');
+
+    // Subsequent call without force returns the cached list
+    seedUser('acme.edu', 'later@acme.edu');
+    const list2 = await firestore.getAllUsersAcrossTenants();
+    expect(list2).toBe(list1);
+  });
+
+  test('getUserMeetingSeries caches lightweight (includeParticipants: false) results when useCache is true', async () => {
+    seedEvent('acme.edu', 'cached@acme.edu', 'tracked', Date.now(), { conferenceId: 'm1' });
+    const loader = jest.fn(async () => [{
+      id: 'm1',
+      data: { conferenceId: 'm1', recurringEventId: 'r-1', title: 'Math', startTime: new Date().toISOString() },
+    }]);
+
+    const r1 = await firestore.getUserMeetingSeries('acme.edu', 'cached@acme.edu', {
+      includeParticipants: false,
+      useCache: true,
+      domainMeetings: loader,
+    });
+    const r2 = await firestore.getUserMeetingSeries('acme.edu', 'cached@acme.edu', {
+      includeParticipants: false,
+      useCache: true,
+      domainMeetings: loader,
+    });
+    expect(r1.totalSeries).toBe(1);
+    expect(r2).toBe(r1);
+    expect(loader).toHaveBeenCalledTimes(1);
+  });
 });
+

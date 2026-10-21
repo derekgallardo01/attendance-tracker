@@ -10,7 +10,7 @@ const { getBillingTelemetry, evaluateBillingWatchdog } = require('../services/bi
 const { escapeHtml } = require('../lib/html');
 const { requireSuperAdmin, requireSuperAdminOrScheduler, requireKhMetricsKey, safeEqual } = require('../middleware/adminAuth');
 const { requireAuth } = require('../middleware/auth');
-const { domainOf, lastSegment } = require('../services/firestore/_core'); // pure util; imported directly (test firestore-mocks needn't stub it)
+const { domainOf, lastSegment, PERSONAL_EMAIL_DOMAINS, FieldValue, tsMs } = require('../services/firestore/_core'); // pure util; imported directly (test firestore-mocks needn't stub it)
 const { ACQUISITION_SOURCES } = require('../lib/constants');
 const { planIsPro } = require('./billing');
 const { refreshAccessToken, makeUserClient } = require('../services/googleAuth');
@@ -425,7 +425,8 @@ router.post('/admin/check-milestones', requireSuperAdminOrScheduler, async (req,
 // GET /api/admin/all-users — List every user across every tenant (super admin only)
 router.get('/admin/all-users', requireSuperAdmin, async (req, res) => {
   try {
-    const users = await getAllUsersAcrossTenants();
+    const rawUsers = await getAllUsersAcrossTenants();
+    const users = (Array.isArray(rawUsers) ? rawUsers : []).map(({ refreshToken, ...rest }) => rest);
     users.sort((a, b) => {
       const aTime = a.lastLoginAt ? new Date(a.lastLoginAt).getTime() : 0;
       const bTime = b.lastLoginAt ? new Date(b.lastLoginAt).getTime() : 0;
@@ -1290,7 +1291,7 @@ router.get('/admin/insights', requireSuperAdmin, async (req, res) => {
 let _khMetricsCache = null;
 let _khMetricsCachedAt = 0;
 let _khMetricsInFlight = null;
-const KH_METRICS_CACHE_MS = 15 * 60 * 1000; // 15 minutes
+const KH_METRICS_CACHE_MS = 2 * 60 * 60 * 1000; // 2 hours
 
 // GET /api/kh/metrics — durable metrics pull for the Kinetic Helix command
 // center. Same aggregate as /admin/insights (plus revenue), gated by a static
@@ -1501,6 +1502,17 @@ router.post('/admin/verify-delegation', verifyDelegationLimiter, async (req, res
 // final attendance roster to Firestore so meeting history is never lost even if
 // the side panel was closed early. For Pro users, automatically exports to Google
 // Sheets (unless explicitly disabled in settings). Dual auth: Scheduler or SuperAdmin.
+function hasActiveIndividualProOnUser(u, nowMs = Date.now()) {
+  if (u?.individualPlan !== 'pro') return false;
+  if (u.individualPlanExpiresAt) {
+    const expMs = Date.parse(u.individualPlanExpiresAt);
+    const hasSub = !!u.individualStripeSubscriptionId;
+    const isLifetime = u.individualPlanType === 'lifetime';
+    if (!isNaN(expMs) && expMs <= nowMs && !hasSub && !isLifetime) return false;
+  }
+  return true;
+}
+
 router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res) => {
   const startedAt = Date.now();
   const budgetMs = sweepBudgetMs();
@@ -1510,6 +1522,35 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
   const errors = [];
   try {
     const users = rotateForFairness(await getAllUsersAcrossTenants());
+    const isBillingLive = !!process.env.STRIPE_SECRET_KEY && !!process.env.STRIPE_PRICE_ID;
+    const isIndividualBillingLive = !!process.env.STRIPE_SECRET_KEY && !!(
+      process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID
+      || process.env.STRIPE_EDUCATOR_PRICE_ID
+      || process.env.STRIPE_INDIVIDUAL_PRICE_ID
+    );
+    let proTenantDomains = null;
+    if (isBillingLive) {
+      try {
+        const db = typeof getDb === 'function' ? getDb() : null;
+        const snap = await db?.collection?.('tenants')?.where?.('plan', '==', 'pro')?.get?.();
+        if (snap && Array.isArray(snap.docs)) {
+          proTenantDomains = new Set();
+          const nowMs = Date.now();
+          for (const doc of snap.docs) {
+            const cfg = typeof doc.data === 'function' ? doc.data() : (doc.data || {});
+            if (cfg?.plan !== 'pro') continue;
+            if (cfg.planExpiresAt) {
+              const expMs = Date.parse(cfg.planExpiresAt);
+              if (!isNaN(expMs) && expMs <= nowMs && !cfg.stripeSubscriptionId) continue;
+            }
+            proTenantDomains.add(String(doc.id).toLowerCase());
+          }
+        }
+      } catch (_) {
+        proTenantDomains = null;
+      }
+    }
+
     let budgetExhausted = false;
     for (const u of users) {
       if (budgetMs - (Date.now() - startedAt) <= 30000) {
@@ -1528,16 +1569,41 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
           continue;
         }
 
-        const userDoc = await getUser(u.domain, u.email);
-        if (!userDoc || !userDoc.refreshToken) { skippedUsers++; continue; }
+        // Fast-path skip before any Firestore point reads when getAllUsersAcrossTenants()
+        // already tells us this user has no stored OAuth refreshToken.
+        if (u.hasRefreshToken === false || u.refreshToken === null || u.refreshToken === '') {
+          skippedUsers++;
+          continue;
+        }
 
-        const isPro = await planIsPro(u.domain, u.email);
+        // Zero-read Pro check using pre-loaded Pro tenant set + u's individual Pro fields
+        // (falls back to planIsPro only when proTenantDomains could not be pre-loaded, e.g. in unit tests).
+        let isPro = false;
+        if (isSuperAdminUser(u.email) || !isBillingLive) {
+          isPro = true;
+        } else if (proTenantDomains instanceof Set) {
+          const domainLower = String(u.domain || '').toLowerCase();
+          const isPersonal = PERSONAL_EMAIL_DOMAINS.has(domainLower);
+          if (isPersonal) {
+            isPro = (!u.email || !isIndividualBillingLive) ? true : hasActiveIndividualProOnUser(u);
+          } else {
+            isPro = proTenantDomains.has(domainLower) || (isIndividualBillingLive && hasActiveIndividualProOnUser(u));
+          }
+        } else if (hasActiveIndividualProOnUser(u)) {
+          isPro = true;
+        } else {
+          isPro = await planIsPro(u.domain, u.email);
+        }
+
         // Auto-capture is a paid feature (pricing sells "Hands-Free Auto-Capture"
         // on paid tiers only). Skipping free users entirely both enforces that —
         // the old `!!settings.autoExportOnEnd` branch let a free user opt into
         // unlimited server-side exports + Pro digests, bypassing the monthly
         // quota — and saves Meet API quota on accounts that can't export anyway.
         if (!isPro) { skippedUsers++; continue; }
+
+        const userDoc = u.refreshToken ? u : await getUser(u.domain, u.email);
+        if (!userDoc || !userDoc.refreshToken) { skippedUsers++; continue; }
 
         const settings = await getUserSettings(u.domain, u.email);
         // Pro users get automated exports by default unless explicitly disabled.
@@ -1751,6 +1817,10 @@ router.post('/admin/org-digest', requireSuperAdminOrScheduler, async (req, res) 
   }
 });
 
+const UPCOMING_SERIES_CACHE_MS = 6 * 60 * 60 * 1000; // 6 hours (LAPSE_MS is 6 days)
+const _upcomingSeriesCache = new Map(); // emailLower -> { at, series }
+let _upcomingSeriesSnapLoadedAt = 0;
+
 router.post('/admin/check-upcoming', requireSuperAdminOrScheduler, async (req, res) => {
   const startedAt = Date.now();
   const budgetMs = sweepBudgetMs();
@@ -1758,12 +1828,39 @@ router.post('/admin/check-upcoming', requireSuperAdminOrScheduler, async (req, r
   const LAPSE_MS = 6 * 24 * 60 * 60 * 1000;        // only remind about series untracked 6+ days
   const DORMANT_MS = 45 * 24 * 60 * 60 * 1000;     // skip long-dormant accounts
   const WIN_FROM = 25 * 60000, WIN_TO = 40 * 60000; // remind ~30 min out (email-checkable lead)
+  const useSeriesCache = process.env.NODE_ENV !== 'test' || req.query?.useCache === '1';
+  if (req.query?.refresh === '1') {
+    _upcomingSeriesCache.clear();
+    _upcomingSeriesSnapLoadedAt = 0;
+  }
   let scanned = 0, reminded = 0, skipped = 0, errored = 0;
   const errors = [];
   try {
     const users = rotateForFairness(await getAllUsersAcrossTenants());
     const isSuppressed = await createSuppressedChecker();
     const getDomainMeetings = createDomainMeetingsLoader();
+
+    // Hydrate the 6-hour series cache from Firestore on cold start / new instance (1 doc read).
+    if (useSeriesCache && req.query?.refresh !== '1' && ((now - _upcomingSeriesSnapLoadedAt) >= UPCOMING_SERIES_CACHE_MS || _upcomingSeriesCache.size === 0)) {
+      try {
+        const db = typeof getDb === 'function' ? getDb() : null;
+        const snap = await db?.collection?.('ops')?.doc?.('upcomingSeriesCache')?.get?.();
+        if (snap && snap.exists) {
+          const cached = (typeof snap.data === 'function' ? snap.data() : snap.data) || {};
+          const cachedAtMs = tsMs(cached.cachedAtMs) || Number(cached.cachedAtMs) || 0;
+          if (cachedAtMs > 0 && (now - cachedAtMs) < UPCOMING_SERIES_CACHE_MS && cached.users && typeof cached.users === 'object') {
+            for (const [k, v] of Object.entries(cached.users)) {
+              if (v && Array.isArray(v.series) && (now - (Number(v.at) || cachedAtMs)) < UPCOMING_SERIES_CACHE_MS) {
+                _upcomingSeriesCache.set(k, { at: Number(v.at) || cachedAtMs, series: v.series });
+              }
+            }
+            _upcomingSeriesSnapLoadedAt = cachedAtMs;
+          }
+        }
+      } catch (_) { /* best-effort snapshot load */ }
+    }
+
+    let seriesCacheDirty = false;
     for (const u of users) {
       if (Date.now() - startedAt > budgetMs) { log.warn('check-upcoming: budget exhausted', { scanned }); break; }
       try {
@@ -1771,12 +1868,39 @@ router.post('/admin/check-upcoming', requireSuperAdminOrScheduler, async (req, r
         if (!lastActive || (now - new Date(lastActive).getTime()) > DORMANT_MS) { skipped++; continue; }
         if (await isSuppressed(u.email)) { skipped++; continue; }
 
+        // Pre-filter on refreshToken BEFORE calling getUserMeetingSeries: a user
+        // without a stored OAuth refreshToken cannot have their Google Calendar
+        // queried below anyway, so reading their events + meetings docs was pure waste.
+        if (u.hasRefreshToken === false || u.refreshToken === null || u.refreshToken === '') {
+          skipped++;
+          continue;
+        }
+
         // Which recurring series does this user track — and which are LAPSING?
-        // Lazy-load domain meetings once per domain (only when user has tracked events) and skip participant subcollections.
-        const { series } = await getUserMeetingSeries(u.domain, u.email, {
-          includeParticipants: false,
-          domainMeetings: () => getDomainMeetings(u.domain),
-        });
+        // Use the 6-hour series cache (since LAPSE_MS is 6 days) and lazy-load domain meetings on cache miss.
+        const emailKey = String(u.email || '').toLowerCase();
+        let series = null;
+        if (useSeriesCache && emailKey) {
+          const hit = _upcomingSeriesCache.get(emailKey);
+          if (hit && (now - hit.at) < UPCOMING_SERIES_CACHE_MS) {
+            series = hit.series;
+          }
+        }
+        if (!Array.isArray(series)) {
+          const resSeries = await getUserMeetingSeries(u.domain, u.email, {
+            includeParticipants: false,
+            domainMeetings: () => getDomainMeetings(u.domain),
+          });
+          series = (resSeries && Array.isArray(resSeries.series)) ? resSeries.series : [];
+          if (useSeriesCache && emailKey) {
+            const compactSeries = series
+              .filter(s => s && s.recurringEventId)
+              .map(s => ({ recurringEventId: s.recurringEventId, title: s.title || null, lastAt: s.lastAt || null }));
+            _upcomingSeriesCache.set(emailKey, { at: now, series: compactSeries });
+            seriesCacheDirty = true;
+          }
+        }
+
         const lapsing = new Map();
         for (const s of (series || [])) {
           if (!s.recurringEventId) continue;
@@ -1785,7 +1909,7 @@ router.post('/admin/check-upcoming', requireSuperAdminOrScheduler, async (req, r
         }
         if (!lapsing.size) { skipped++; continue; }
 
-        const userDoc = await getUser(u.domain, u.email);
+        const userDoc = u.refreshToken ? u : await getUser(u.domain, u.email);
         if (!userDoc || !userDoc.refreshToken) { skipped++; continue; }
         let accessToken;
         try { accessToken = (await refreshAccessToken(userDoc.refreshToken)).access_token; }
@@ -1838,6 +1962,23 @@ router.post('/admin/check-upcoming', requireSuperAdminOrScheduler, async (req, r
         log.warn('check-upcoming: user failed', { email: u.email, error: e.message });
       }
     }
+
+    if (useSeriesCache && seriesCacheDirty) {
+      try {
+        const db = typeof getDb === 'function' ? getDb() : null;
+        const usersObj = {};
+        for (const [k, v] of _upcomingSeriesCache.entries()) {
+          if (v && (now - v.at) < UPCOMING_SERIES_CACHE_MS) usersObj[k] = v;
+        }
+        _upcomingSeriesSnapLoadedAt = now;
+        db?.collection?.('ops')?.doc?.('upcomingSeriesCache')?.set?.({
+          cachedAtMs: now,
+          updatedAt: FieldValue.serverTimestamp(),
+          users: usersObj,
+        }, { merge: true })?.catch?.(() => {});
+      } catch (_) { /* best-effort snapshot save */ }
+    }
+
     log.info('check-upcoming sweep done', { scanned, reminded, skipped, errored });
     res.json({ scanned, reminded, skipped, errored, errors: errors.slice(0, 20), tookMs: Date.now() - startedAt });
   } catch (err) {
@@ -2225,7 +2366,7 @@ router.get('/admin/school-clusters', requireSuperAdmin, async (req, res) => {
           const teacherCount = teachers.length;
           const outreachScore = teacherCount * (1 + largeClassHits) * (1 + objections);
           const recommendedPlan = teacherCount >= 10 ? 'institution' : 'department';
-          const priceLabel = recommendedPlan === 'institution' ? '$149/year (unlimited educators)' : '$79/year (up to 10 educators)';
+          const priceLabel = recommendedPlan === 'institution' ? '$149/year (unlimited educators)' : '$59/year (up to 10 educators)';
 
           return {
             domain,

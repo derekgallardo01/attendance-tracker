@@ -2829,5 +2829,113 @@ describe('Cloud Billing & Firestore Usage Monitor routes', () => {
     expect(sent.body.summary.monthToDateReads).toBe(25000000);
     expect(notifications.sendDailySummaryEmail).toHaveBeenCalledTimes(1);
   });
+
+  test('POST /api/admin/auto-capture pre-filters missing refreshToken, pre-loads Pro tenants once, and reuses u.refreshToken without getUser point reads', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_x';
+    process.env.STRIPE_PRICE_ID = 'price_x';
+    process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID = 'price_lt_x';
+    try {
+      const nowIso = new Date().toISOString();
+      firestore.getAllUsersAcrossTenants.mockResolvedValueOnce([
+        { email: 'notoken@pro-org.edu', domain: 'pro-org.edu', hasRefreshToken: false, refreshToken: null, lastLoginAt: nowIso },
+        { email: 'free@free-org.edu', domain: 'free-org.edu', hasRefreshToken: true, refreshToken: 'rt-free', lastLoginAt: nowIso },
+        { email: 'pro-org@pro-org.edu', domain: 'pro-org.edu', displayName: 'Org Pro', hasRefreshToken: true, refreshToken: 'rt-org-pro', timezone: 'America/Chicago', lastLoginAt: nowIso },
+        { email: 'ind-pro@gmail.com', domain: 'gmail.com', displayName: 'Ind Pro', hasRefreshToken: true, refreshToken: 'rt-ind-pro', individualPlan: 'pro', individualPlanType: 'lifetime', lastLoginAt: nowIso },
+      ]);
+      const tenantsWhereGet = jest.fn().mockResolvedValue({
+        docs: [{ id: 'pro-org.edu', data: () => ({ plan: 'pro', billingStatus: 'active' }) }],
+      });
+      firestore.getDb.mockReturnValue({
+        collection: jest.fn(() => ({
+          where: jest.fn(() => ({ get: tenantsWhereGet })),
+        })),
+      });
+      firestore.getUserSettings.mockResolvedValue({ autoExportOnEnd: true });
+      firestore.getExportedConferenceIds.mockResolvedValue(new Set());
+      meetApi.meetGet.mockResolvedValue({ conferenceRecords: [] });
+
+      const res = await request(app)
+        .post('/api/admin/auto-capture')
+        .set('x-scheduler-secret', SCHEDULER_SECRET)
+        .send({});
+
+      expect(res.status).toBe(200);
+      // Pre-loaded Pro tenants once; zero per-user getUser or getTenantPlan point reads!
+      expect(tenantsWhereGet).toHaveBeenCalledTimes(1);
+      expect(firestore.getUser).not.toHaveBeenCalled();
+      expect(firestore.getTenantPlan).not.toHaveBeenCalled();
+      // Only the 2 Pro users with refreshTokens had their tokens refreshed & settings fetched
+      expect(googleAuth.refreshAccessToken).toHaveBeenCalledTimes(2);
+      expect(googleAuth.refreshAccessToken).toHaveBeenCalledWith('rt-org-pro');
+      expect(googleAuth.refreshAccessToken).toHaveBeenCalledWith('rt-ind-pro');
+    } finally {
+      delete process.env.STRIPE_SECRET_KEY;
+      delete process.env.STRIPE_PRICE_ID;
+      delete process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID;
+    }
+  });
+
+  test('POST /api/admin/check-upcoming skips users without refreshToken before getUserMeetingSeries, reuses u.refreshToken, and caches series for 6h', async () => {
+    const nowIso = new Date().toISOString();
+    const soonIso = new Date(Date.now() + 30 * 60000).toISOString();
+    const users = [
+      { email: 'notoken@acme.com', domain: 'acme.com', hasRefreshToken: false, refreshToken: null, lastLoginAt: nowIso },
+      { email: 'with-token@acme.com', domain: 'acme.com', hasRefreshToken: true, refreshToken: 'rt-123', lastLoginAt: nowIso },
+    ];
+    firestore.getAllUsersAcrossTenants.mockResolvedValue(users);
+    firestore.getUserMeetingSeries.mockResolvedValue({
+      series: [{ recurringEventId: 'series-1', title: 'Physics', lastAt: Date.now() - 8 * 86400000 }],
+    });
+    firestore.claimReengagementSlot.mockResolvedValue({ claimed: true, ref: { delete: jest.fn() } });
+    mockCalEventsList.mockResolvedValue({
+      data: {
+        items: [{ id: 'ev-1', recurringEventId: 'series-1', summary: 'Physics', hangoutLink: 'https://meet.google.com/abc', start: { dateTime: soonIso } }],
+      },
+    });
+    const opsDocSet = jest.fn().mockResolvedValue(undefined);
+    const opsDocGet = jest.fn().mockResolvedValue({ exists: false });
+    firestore.getDb.mockReturnValue({
+      collection: jest.fn((name) => {
+        if (name === 'ops') {
+          return { doc: jest.fn(() => ({ get: opsDocGet, set: opsDocSet })) };
+        }
+        return { doc: jest.fn(() => ({ collection: jest.fn(() => ({ get: jest.fn().mockResolvedValue({ docs: [] }) })) })) };
+      }),
+    });
+
+    // First sweep (refresh=1&useCache=1): skips notoken@acme.com before getUserMeetingSeries, calls getUserMeetingSeries once for with-token@acme.com, never calls getUser
+    const r1 = await request(app)
+      .post('/api/admin/check-upcoming?useCache=1&refresh=1')
+      .set('x-scheduler-secret', SCHEDULER_SECRET)
+      .send({});
+    expect(r1.status).toBe(200);
+    expect(r1.body.reminded).toBe(1);
+    expect(firestore.getUserMeetingSeries).toHaveBeenCalledTimes(1);
+    expect(firestore.getUserMeetingSeries).toHaveBeenCalledWith('acme.com', 'with-token@acme.com', expect.any(Object));
+    expect(firestore.getUser).not.toHaveBeenCalled();
+    expect(opsDocSet).toHaveBeenCalledTimes(1);
+
+    // Second sweep within 6h (useCache=1): reuses cached series without calling getUserMeetingSeries again!
+    firestore.getUserMeetingSeries.mockClear();
+    const r2 = await request(app)
+      .post('/api/admin/check-upcoming?useCache=1')
+      .set('x-scheduler-secret', SCHEDULER_SECRET)
+      .send({});
+    expect(r2.status).toBe(200);
+    expect(firestore.getUserMeetingSeries).not.toHaveBeenCalled();
+    expect(firestore.getUser).not.toHaveBeenCalled();
+  });
+
+  test('GET /api/admin/all-users strips refreshToken from returned user objects', async () => {
+    firestore.getAllUsersAcrossTenants.mockResolvedValueOnce([
+      { email: 'u@acme.com', domain: 'acme.com', hasRefreshToken: true, refreshToken: 'super-secret-rt' },
+    ]);
+    const res = await request(app).get('/api/admin/all-users').set(admin());
+    expect(res.status).toBe(200);
+    expect(res.body.users[0].email).toBe('u@acme.com');
+    expect(res.body.users[0].hasRefreshToken).toBe(true);
+    expect(res.body.users[0].refreshToken).toBeUndefined();
+  });
 });
+
 

@@ -2352,12 +2352,19 @@ async function countAllUsers() {
 
 // ── Cross-tenant queries (super admin) ──
 
-async function getAllUsersAcrossTenants() {
+let _allUsersCache = null;
+let _allUsersCachedAt = 0;
+const ALL_USERS_CACHE_MS = 10 * 60 * 1000; // 10 minutes
+
+async function getAllUsersAcrossTenants({ force = false } = {}) {
+  if (!force && process.env.NODE_ENV !== 'test' && _allUsersCache && (Date.now() - _allUsersCachedAt) < ALL_USERS_CACHE_MS) {
+    return _allUsersCache;
+  }
   try {
     const snap = await getDb().collectionGroup('users').get();
     // Filter out legacy root-level `users/{email}` docs (no tenant parent) —
     // one such doc used to throw here, silently zeroing out EVERY cron sweep.
-    return snap.docs.filter(d => d.ref.parent.parent).map(d => {
+    const result = snap.docs.filter(d => d.ref.parent.parent).map(d => {
       const data = d.data();
       return {
         email: d.id,
@@ -2367,7 +2374,10 @@ async function getAllUsersAcrossTenants() {
         createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
         signupIp: data.signupIp || null,
         signupGeo: data.signupGeo || null,
+        timezone: data.timezone || null,
         language: data.language || null,
+        hasRefreshToken: Boolean(data.refreshToken),
+        refreshToken: data.refreshToken ? decryptToken(data.refreshToken) : null,
         acquisitionSource: data.acquisitionSource || null,
         signupDetectedSource: data.signupDetectedSource || null,
         postExportSurvey: data.postExportSurvey || null,
@@ -2382,6 +2392,11 @@ async function getAllUsersAcrossTenants() {
         referralNotifyPending: Boolean(data.referralNotifyPending),
       };
     });
+    if (process.env.NODE_ENV !== 'test') {
+      _allUsersCache = result;
+      _allUsersCachedAt = Date.now();
+    }
+    return result;
   } catch (err) {
     log.error('firestore: getAllUsersAcrossTenants failed', { error: err.message });
     return [];
@@ -2890,11 +2905,22 @@ async function getTeamOverview(domain) {
 // see "Daily Standup: Alex attended 12/15, avg arrival +4 min late". Only
 // meetings with a recurringEventId roll up — instant meetings stay out of this
 // view (grouping by title alone produces too many false matches).
+const _lightweightSeriesCache = new Map(); // `${domain}:${email}` -> { at, value }
+const SERIES_LIGHT_CACHE_MS = 6 * 60 * 60 * 1000; // 6 hours
+
 async function getUserMeetingSeries(domain, email, options = {}) {
   try {
     const includeParticipants = options?.includeParticipants !== false;
     const tenant = tenantRef(domain);
     const emailLower = email.toLowerCase();
+    const cacheKey = `${String(domain || '').toLowerCase()}:${emailLower}`;
+    const useLightCache = !includeParticipants && !options?.force && (process.env.NODE_ENV !== 'test' || options?.useCache === true);
+    if (useLightCache) {
+      const hit = _lightweightSeriesCache.get(cacheKey);
+      if (hit && (Date.now() - hit.at) < SERIES_LIGHT_CACHE_MS) {
+        return hit.value;
+      }
+    }
 
     const eventsSnap = await tenant.collection('events')
       .where('email', '==', emailLower)
@@ -2914,7 +2940,9 @@ async function getUserMeetingSeries(domain, email, options = {}) {
     }
 
     if (trackedIds.size === 0) {
-      return { series: [], totalSeries: 0 };
+      const empty = { series: [], totalSeries: 0 };
+      if (useLightCache) _lightweightSeriesCache.set(cacheKey, { at: Date.now(), value: empty });
+      return empty;
     }
 
     let preloadedMeetings = null;
@@ -2952,7 +2980,9 @@ async function getUserMeetingSeries(domain, email, options = {}) {
       }));
 
     if (seriesMeetings.length === 0) {
-      return { series: [], totalSeries: 0 };
+      const empty = { series: [], totalSeries: 0 };
+      if (useLightCache) _lightweightSeriesCache.set(cacheKey, { at: Date.now(), value: empty });
+      return empty;
     }
 
     // Pull participants in parallel for every series meeting (unless caller
@@ -3086,7 +3116,9 @@ async function getUserMeetingSeries(domain, email, options = {}) {
       })
       .sort((a, b) => (new Date(b.lastAt || 0)) - (new Date(a.lastAt || 0)));
 
-    return { series, totalSeries: series.length };
+    const out = { series, totalSeries: series.length };
+    if (useLightCache) _lightweightSeriesCache.set(cacheKey, { at: Date.now(), value: out });
+    return out;
   } catch (err) {
     log.error('firestore: getUserMeetingSeries failed', { domain, email, error: err.message });
     return { series: [], totalSeries: 0 };
@@ -3264,13 +3296,13 @@ module.exports = {
   getSuppressedEmailSet: memoizeTTL(getSuppressedEmailSet, 120000),
   createReminder, markReminderDone, getDueReminders,
   getEmailTemplates, setEmailTemplates,
-  getAllUsersAcrossTenants: memoizeTTL(getAllUsersAcrossTenants, 120000),
+  getAllUsersAcrossTenants: memoizeTTL(getAllUsersAcrossTenants, 600000), // 10 min TTL
   deleteUser, isUserDeleted,
   saveCheckin, getCheckins,
   unlockMeetingForUser, isMeetingUnlocked, markUserLargeClassGraceUsed,
   // ── Heavy full-DB admin reads: TTL-cached so a dashboard reload doesn't
   //    re-scan the whole users+events+meetings tree for each one. ──
-  getAggregatedInsights: memoizeTTL(getAggregatedInsights, 900000), // 15 min TTL
+  getAggregatedInsights: memoizeTTL(getAggregatedInsights, 7200000), // 2 hour TTL
   clearInsightsCache,
   getAdvancedAnalytics: memoizeTTL(getAdvancedAnalytics, 120000),
   getWeeklySelfReport: memoizeTTL(getWeeklySelfReport, 120000),

@@ -129,11 +129,11 @@ async function getActivationFunnel() {
 let _insightsCache = null;
 let _insightsCachedAt = 0;
 let _insightsInFlight = null;
-const INSIGHTS_CACHE_MS = 15 * 60 * 1000; // 15 minutes
-const INSIGHTS_CACHE_DOC = () => getDb().collection('_cache').doc('aggregated_insights');
+const INSIGHTS_CACHE_MS = 2 * 60 * 60 * 1000; // 2 hours
+const INSIGHTS_CACHE_DOC = () => getDb().collection('ops').doc('insightsCache');
 
-async function getAggregatedInsights({ force = false } = {}) {
-  if (!force && process.env.NODE_ENV !== 'test' && _insightsCache && (Date.now() - _insightsCachedAt) < INSIGHTS_CACHE_MS) {
+async function getAggregatedInsights({ force = false, useFirestoreCache = false } = {}) {
+  if (!force && (process.env.NODE_ENV !== 'test' || useFirestoreCache) && _insightsCache && (Date.now() - _insightsCachedAt) < INSIGHTS_CACHE_MS) {
     return _insightsCache;
   }
   if (!force && _insightsInFlight) {
@@ -143,14 +143,15 @@ async function getAggregatedInsights({ force = false } = {}) {
   try {
     const db = getDb();
     const now = Date.now();
-    if (!force && process.env.NODE_ENV !== 'test') {
+    if (!force && (process.env.NODE_ENV !== 'test' || useFirestoreCache)) {
       try {
         const cacheSnap = await INSIGHTS_CACHE_DOC().get();
         if (cacheSnap && cacheSnap.exists) {
           const cached = cacheSnap.data() || {};
-          const cachedAtMs = tsMs(cached.cachedAt) || Number(cached.cachedAt) || 0;
-          if (cached.payload && cachedAtMs > 0 && (now - cachedAtMs) < INSIGHTS_CACHE_MS) {
-            _insightsCache = cached.payload;
+          const cachedAtMs = tsMs(cached.cachedAtMs ?? cached.cachedAt) || Number(cached.cachedAtMs ?? cached.cachedAt) || 0;
+          const payload = cached.data || cached.payload;
+          if (payload && cachedAtMs > 0 && (now - cachedAtMs) < INSIGHTS_CACHE_MS) {
+            _insightsCache = payload;
             _insightsCachedAt = cachedAtMs;
             return _insightsCache;
           }
@@ -485,10 +486,10 @@ async function getAggregatedInsights({ force = false } = {}) {
       totalProSubscribers,
     };
     _insightsCachedAt = Date.now();
-    if (process.env.NODE_ENV !== 'test') {
+    if (process.env.NODE_ENV !== 'test' || useFirestoreCache) {
       INSIGHTS_CACHE_DOC().set({
-        payload: _insightsCache,
-        cachedAt: _insightsCachedAt,
+        data: _insightsCache,
+        cachedAtMs: _insightsCachedAt,
         updatedAt: FieldValue.serverTimestamp(),
       }, { merge: true }).catch(() => {});
     }
