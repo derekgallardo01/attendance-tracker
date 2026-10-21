@@ -3,7 +3,7 @@ const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getRevenueFunnel, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, dismissSuggestion, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getSuppressedEmailSet, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance, getTeamOverview, getRecentErrorSpike, getErrorAlertState, setErrorAlertState, getBillingAlertState, setBillingAlertState, getCancellationTelemetry, backfillAdminActivityIfSparse, checkAndRecordMilestones, getMilestoneProgress, getTenantPlan, getRevenueSummary } = require('../services/firestore');
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getRevenueFunnel, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, dismissSuggestion, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getSuppressedEmailSet, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, clearUserSeriesCache, getUserSeriesInvalidatedAt, persistAttendance, getTeamOverview, getRecentErrorSpike, getErrorAlertState, setErrorAlertState, getBillingAlertState, setBillingAlertState, getCancellationTelemetry, backfillAdminActivityIfSparse, checkAndRecordMilestones, getMilestoneProgress, getTenantPlan, getRevenueSummary } = require('../services/firestore');
 const { sendAdminEmail, sendErrorSpikeAlertEmail, sendBillingSpikeAlertEmail, sendDailySummaryEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendOrgWeeklyDigest, flushDeferredNotifications,
   sendSourceReportedNotification, verifyReviewApprovalToken, sendReviewRewardEmail, sendPassExpiryReminderEmail } = require('../lib/notifications');
 const { getBillingTelemetry, evaluateBillingWatchdog } = require('../services/billing-telemetry');
@@ -1505,10 +1505,10 @@ router.post('/admin/verify-delegation', verifyDelegationLimiter, async (req, res
 function hasActiveIndividualProOnUser(u, nowMs = Date.now()) {
   if (u?.individualPlan !== 'pro') return false;
   if (u.individualPlanExpiresAt) {
-    const expMs = Date.parse(u.individualPlanExpiresAt);
+    const expMs = tsMs(u.individualPlanExpiresAt);
     const hasSub = !!u.individualStripeSubscriptionId;
     const isLifetime = u.individualPlanType === 'lifetime';
-    if (!isNaN(expMs) && expMs <= nowMs && !hasSub && !isLifetime) return false;
+    if (typeof expMs === 'number' && expMs <= nowMs && !hasSub && !isLifetime) return false;
   }
   return true;
 }
@@ -1540,8 +1540,8 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
             const cfg = typeof doc.data === 'function' ? doc.data() : (doc.data || {});
             if (cfg?.plan !== 'pro') continue;
             if (cfg.planExpiresAt) {
-              const expMs = Date.parse(cfg.planExpiresAt);
-              if (!isNaN(expMs) && expMs <= nowMs && !cfg.stripeSubscriptionId) continue;
+              const expMs = tsMs(cfg.planExpiresAt);
+              if (typeof expMs === 'number' && expMs <= nowMs && !cfg.stripeSubscriptionId) continue;
             }
             proTenantDomains.add(String(doc.id).toLowerCase());
           }
@@ -1829,9 +1829,11 @@ router.post('/admin/check-upcoming', requireSuperAdminOrScheduler, async (req, r
   const DORMANT_MS = 45 * 24 * 60 * 60 * 1000;     // skip long-dormant accounts
   const WIN_FROM = 25 * 60000, WIN_TO = 40 * 60000; // remind ~30 min out (email-checkable lead)
   const useSeriesCache = process.env.NODE_ENV !== 'test' || req.query?.useCache === '1';
-  if (req.query?.refresh === '1') {
+  const forceRefreshSeries = req.query?.refresh === '1';
+  if (forceRefreshSeries) {
     _upcomingSeriesCache.clear();
     _upcomingSeriesSnapLoadedAt = 0;
+    if (typeof clearUserSeriesCache === 'function') clearUserSeriesCache();
   }
   let scanned = 0, reminded = 0, skipped = 0, errored = 0;
   const errors = [];
@@ -1841,7 +1843,8 @@ router.post('/admin/check-upcoming', requireSuperAdminOrScheduler, async (req, r
     const getDomainMeetings = createDomainMeetingsLoader();
 
     // Hydrate the 6-hour series cache from Firestore on cold start / new instance (1 doc read).
-    if (useSeriesCache && req.query?.refresh !== '1' && ((now - _upcomingSeriesSnapLoadedAt) >= UPCOMING_SERIES_CACHE_MS || _upcomingSeriesCache.size === 0)) {
+    if (useSeriesCache && !forceRefreshSeries && _upcomingSeriesCache.size === 0 && (now - _upcomingSeriesSnapLoadedAt) >= UPCOMING_SERIES_CACHE_MS) {
+      _upcomingSeriesSnapLoadedAt = now;
       try {
         const db = typeof getDb === 'function' ? getDb() : null;
         const snap = await db?.collection?.('ops')?.doc?.('upcomingSeriesCache')?.get?.();
@@ -1879,16 +1882,18 @@ router.post('/admin/check-upcoming', requireSuperAdminOrScheduler, async (req, r
         // Which recurring series does this user track — and which are LAPSING?
         // Use the 6-hour series cache (since LAPSE_MS is 6 days) and lazy-load domain meetings on cache miss.
         const emailKey = String(u.email || '').toLowerCase();
+        const invalidatedAt = typeof getUserSeriesInvalidatedAt === 'function' ? getUserSeriesInvalidatedAt(emailKey) : 0;
         let series = null;
         if (useSeriesCache && emailKey) {
           const hit = _upcomingSeriesCache.get(emailKey);
-          if (hit && (now - hit.at) < UPCOMING_SERIES_CACHE_MS) {
+          if (hit && hit.at > invalidatedAt && (now - hit.at) < UPCOMING_SERIES_CACHE_MS) {
             series = hit.series;
           }
         }
         if (!Array.isArray(series)) {
           const resSeries = await getUserMeetingSeries(u.domain, u.email, {
             includeParticipants: false,
+            force: forceRefreshSeries || invalidatedAt > 0,
             domainMeetings: () => getDomainMeetings(u.domain),
           });
           series = (resSeries && Array.isArray(resSeries.series)) ? resSeries.series : [];

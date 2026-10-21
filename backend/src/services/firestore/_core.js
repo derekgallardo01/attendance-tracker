@@ -87,7 +87,7 @@ function getDb() {
 // staleness is fine. (Does NOT bound a single cold call's memory.)
 function memoizeTTL(fn, ttlMs, maxEntries = 200) {
   const cache = new Map(); // argsKey -> { at, value, promise }
-  return async function (...args) {
+  const wrapped = async function (...args) {
     let forceRefresh = false;
     const normalizedArgs = args.slice();
     if (normalizedArgs.length > 0) {
@@ -126,6 +126,8 @@ function memoizeTTL(fn, ttlMs, maxEntries = 200) {
     cache.set(key, { at: Date.now(), value: undefined, promise });
     return promise;
   };
+  wrapped.clear = () => cache.clear();
+  return wrapped;
 }
 
 // Firestore Timestamp → epoch ms, or undefined when absent/not a Timestamp.

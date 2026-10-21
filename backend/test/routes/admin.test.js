@@ -2911,7 +2911,10 @@ describe('Cloud Billing & Firestore Usage Monitor routes', () => {
     expect(r1.status).toBe(200);
     expect(r1.body.reminded).toBe(1);
     expect(firestore.getUserMeetingSeries).toHaveBeenCalledTimes(1);
-    expect(firestore.getUserMeetingSeries).toHaveBeenCalledWith('acme.com', 'with-token@acme.com', expect.any(Object));
+    expect(firestore.getUserMeetingSeries).toHaveBeenCalledWith('acme.com', 'with-token@acme.com', expect.objectContaining({
+      includeParticipants: false,
+      force: true,
+    }));
     expect(firestore.getUser).not.toHaveBeenCalled();
     expect(opsDocSet).toHaveBeenCalledTimes(1);
 

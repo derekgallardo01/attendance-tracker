@@ -1005,12 +1005,11 @@ describe('getSuppressedEmailSet, getUserMeetingSeries, evaluateSeriesAlerts & ge
     expect(hydrated.sentinelFromOpsCache).toBeUndefined();
 
     firestore.clearInsightsCache();
-    const { getAggregatedInsights: rawGetInsights } = require('../../src/services/firestore/analytics');
-    const fromOps = await rawGetInsights({ force: false, useFirestoreCache: true });
+    const fromOps = await firestore.getAggregatedInsights({ force: false, useFirestoreCache: true });
     expect(fromOps.sentinelFromOpsCache).toBe(true);
   });
 
-  test('getAllUsersAcrossTenants includes decrypted refreshToken, hasRefreshToken, and timezone and caches across calls', async () => {
+  test('getAllUsersAcrossTenants includes decrypted refreshToken, hasRefreshToken, and timezone, caches across calls, and invalidates on upsertUser / setUserPlan', async () => {
     await firestore.upsertUser('acme.edu', {
       email: 'teacher@acme.edu',
       displayName: 'Teacher',
@@ -1031,13 +1030,20 @@ describe('getSuppressedEmailSet, getUserMeetingSeries, evaluateSeriesAlerts & ge
     expect(noToken.refreshToken).toBeNull();
     expect(noToken.timezone).toBe('Asia/Manila');
 
-    // Subsequent call without force returns the cached list
+    // Subsequent call without force returns the cached list when no user mutation helper ran
     seedUser('acme.edu', 'later@acme.edu');
     const list2 = await firestore.getAllUsersAcrossTenants();
     expect(list2).toBe(list1);
+
+    // Calling setUserPlan or upsertUser invalidates the cache so fresh data is returned
+    await firestore.setUserPlan('acme.edu', 'notoken@acme.edu', { individualPlan: 'pro', individualBillingStatus: 'active' });
+    const list3 = await firestore.getAllUsersAcrossTenants();
+    expect(list3).not.toBe(list1);
+    expect(list3.find(u => u.email === 'notoken@acme.edu').individualPlan).toBe('pro');
+    expect(list3.some(u => u.email === 'later@acme.edu')).toBe(true);
   });
 
-  test('getUserMeetingSeries caches lightweight (includeParticipants: false) results when useCache is true', async () => {
+  test('getUserMeetingSeries caches lightweight (includeParticipants: false) results and invalidates when persistAttendance tracks a meeting', async () => {
     seedEvent('acme.edu', 'cached@acme.edu', 'tracked', Date.now(), { conferenceId: 'm1' });
     const loader = jest.fn(async () => [{
       id: 'm1',
@@ -1057,6 +1063,20 @@ describe('getSuppressedEmailSet, getUserMeetingSeries, evaluateSeriesAlerts & ge
     expect(r1.totalSeries).toBe(1);
     expect(r2).toBe(r1);
     expect(loader).toHaveBeenCalledTimes(1);
+
+    // Tracking a meeting via persistAttendance invalidates the user's lightweight series cache
+    await firestore.persistAttendance('acme.edu', 'm1', 'rec-new', [
+      { participantId: 'p1', email: 'student@acme.edu', displayName: 'Student', present: true },
+    ], 'cached@acme.edu');
+    expect(firestore.getUserSeriesInvalidatedAt('cached@acme.edu')).toBeGreaterThan(0);
+
+    const r3 = await firestore.getUserMeetingSeries('acme.edu', 'cached@acme.edu', {
+      includeParticipants: false,
+      useCache: true,
+      domainMeetings: loader,
+    });
+    expect(loader).toHaveBeenCalledTimes(2);
+    expect(r3.totalSeries).toBe(1);
   });
 });
 

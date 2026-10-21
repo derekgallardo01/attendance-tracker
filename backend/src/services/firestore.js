@@ -116,6 +116,7 @@ async function setUserPlan(domain, email, patch) {
       ...patch, // { individualPlan, individualBillingStatus, individualStripeCustomerId, individualStripeSubscriptionId, cancelAtPeriodEnd, cancelAt, currentPeriodEnd }
       individualPlanUpdatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
+    clearAllUsersCache();
     log.info('firestore: set user plan', { domain, email: email.toLowerCase(), plan: patch.individualPlan, status: patch.individualBillingStatus });
   } catch (err) {
     // Rethrow like setTenantPlan — the Stripe webhook must see failures and 500
@@ -929,6 +930,7 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
 
       if (actorEmail) {
         const actorLower = actorEmail.toLowerCase();
+        clearUserSeriesCache(domain, actorLower);
         const maxParticipantCount = mergedMeetingMeta.participantCount;
         const maxDistinctAttendees = mergedMeetingMeta.distinctAttendeeCount;
         const prevActor = entry.trackedActors.get(actorLower);
@@ -1724,6 +1726,7 @@ async function upsertUser(domain, { email, displayName, refreshToken, sheetId, a
     }
 
     await userRef.set(data, { merge: true });
+    clearAllUsersCache();
     log.info('firestore: upserted user', { domain, email, isFirstSignin, teamAdmin: !!data.teamAdmin });
   } catch (err) {
     log.error('firestore: upsertUser failed', { domain, email, error: err.message });
@@ -2906,7 +2909,30 @@ async function getTeamOverview(domain) {
 // meetings with a recurringEventId roll up — instant meetings stay out of this
 // view (grouping by title alone produces too many false matches).
 const _lightweightSeriesCache = new Map(); // `${domain}:${email}` -> { at, value }
+const _userSeriesInvalidatedAt = new Map(); // emailLower -> tsMs
 const SERIES_LIGHT_CACHE_MS = 6 * 60 * 60 * 1000; // 6 hours
+
+function clearUserSeriesCache(domain, email) {
+  if (!email) {
+    _lightweightSeriesCache.clear();
+    _userSeriesInvalidatedAt.clear();
+    return;
+  }
+  const emailLower = String(email).toLowerCase();
+  _userSeriesInvalidatedAt.set(emailLower, Date.now());
+  if (domain) {
+    _lightweightSeriesCache.delete(`${String(domain).toLowerCase()}:${emailLower}`);
+  } else {
+    for (const k of _lightweightSeriesCache.keys()) {
+      if (k.endsWith(`:${emailLower}`)) _lightweightSeriesCache.delete(k);
+    }
+  }
+}
+
+function getUserSeriesInvalidatedAt(email) {
+  if (!email) return 0;
+  return _userSeriesInvalidatedAt.get(String(email).toLowerCase()) || 0;
+}
 
 async function getUserMeetingSeries(domain, email, options = {}) {
   try {
@@ -3259,6 +3285,25 @@ function encodeNoteKey(key) {
 
 // ── Delete user data (Marketplace compliance) ──
 
+const memoizedGetAllUsersAcrossTenants = memoizeTTL(getAllUsersAcrossTenants, 600000); // 10 min TTL
+function clearAllUsersCache() {
+  _allUsersCache = null;
+  _allUsersCachedAt = 0;
+  memoizedGetAllUsersAcrossTenants.clear?.();
+}
+
+const memoizedGetAggregatedInsights = memoizeTTL(getAggregatedInsights, 7200000); // 2 hour TTL
+function clearAllInsightsCache() {
+  memoizedGetAggregatedInsights.clear?.();
+  clearInsightsCache();
+}
+
+async function deleteUserAndClearCache(...args) {
+  const res = await deleteUser(...args);
+  clearAllUsersCache();
+  return res;
+}
+
 module.exports = {
   getDb,
   getTenantConfig, upsertTenantConfig,
@@ -3281,7 +3326,7 @@ module.exports = {
   recordPublicPageview, recordNotificationLog, updateNotificationWebhook,
   getUserActivationStatus, countUserExports, countUserMonthlyExports, countUserAutoExports, getExportReexportCount, countAllUsers, getExportedConferenceIds, getTrackedConferenceIds, updateMeetingTimes,
   getUserMeetingHistory, getExistingDomainPeer,
-  getUserMeetingSeries,
+  getUserMeetingSeries, clearUserSeriesCache, getUserSeriesInvalidatedAt,
   getTenantUsers, getTenantMeetings, getTenantSeriesOverview, getTenantPeopleOverview, getTeamOverview,
   evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition,
   evaluateReengagementForUser, claimReengagementSlot,
@@ -3296,14 +3341,15 @@ module.exports = {
   getSuppressedEmailSet: memoizeTTL(getSuppressedEmailSet, 120000),
   createReminder, markReminderDone, getDueReminders,
   getEmailTemplates, setEmailTemplates,
-  getAllUsersAcrossTenants: memoizeTTL(getAllUsersAcrossTenants, 600000), // 10 min TTL
-  deleteUser, isUserDeleted,
+  getAllUsersAcrossTenants: memoizedGetAllUsersAcrossTenants,
+  clearAllUsersCache,
+  deleteUser: deleteUserAndClearCache, isUserDeleted,
   saveCheckin, getCheckins,
   unlockMeetingForUser, isMeetingUnlocked, markUserLargeClassGraceUsed,
   // ── Heavy full-DB admin reads: TTL-cached so a dashboard reload doesn't
   //    re-scan the whole users+events+meetings tree for each one. ──
-  getAggregatedInsights: memoizeTTL(getAggregatedInsights, 7200000), // 2 hour TTL
-  clearInsightsCache,
+  getAggregatedInsights: memoizedGetAggregatedInsights,
+  clearInsightsCache: clearAllInsightsCache,
   getAdvancedAnalytics: memoizeTTL(getAdvancedAnalytics, 120000),
   getWeeklySelfReport: memoizeTTL(getWeeklySelfReport, 120000),
   getReachOutSuggestions,
