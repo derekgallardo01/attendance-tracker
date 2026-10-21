@@ -75,7 +75,8 @@ const DO_NOT_FOLLOW_UP_DOMAINS = new Set([
   'insightpartners.com', 'ultimatetools.eu', 'cloudo3.com',
   'productivityshift.com', 'findmyaitool.io', 'chiarasangels.net',
   'calbizjournal.com', 'nealschaffer.com', 'techbullion.com', 'fast.io',
-  'zipdo.co', 'isenacode.com', 'isenacode.net', 'skrapp.io', 'assemblyai.com'
+  'zipdo.co', 'isenacode.com', 'isenacode.net', 'skrapp.io', 'assemblyai.com',
+  'nimdzi.com'
 ]);
 
 function extractRootDomain(input) {
