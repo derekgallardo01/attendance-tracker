@@ -2,6 +2,9 @@
 // 2026-10-18). Applied LAST by add-i18n-keys.mjs on every sync, so a sync
 // can never reset these back to English. Format: { locale: { key: text } }.
 export const TRANSLATION_FIXES = {
+  "nl": {
+    "referral.bodyDomain": "Bespaar collega's op @{domain} tijd bij aanwezigheid in Google Meet. Ontvang allebei 1 maand gratis Pro!"
+  },
   "af": {
     "history.clusterPromoCtaInst": "Gradeer op na Instellingsplan ($149/jr) →",
     "history.clusterPromoCtaQuote": "Versoek pasgemaakte skoolkwotasie →",

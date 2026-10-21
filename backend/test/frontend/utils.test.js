@@ -1056,5 +1056,19 @@ describe('buildAttendanceCsv & buildAttendanceExcelXml — free plan truncation'
     expect(csvNoRoster).toContain('cal1@school.edu');
     const xmlNoRoster = utils.buildAttendanceExcelXml(parts2, null, { isFreePlan: true, calendarAttendees: cal10 });
     expect(xmlNoRoster).toContain('cal1@school.edu');
+
+    // Simplified Chinese (zh-CN and zh-Hans) locale resolution
+    const csvZhCn = utils.buildAttendanceCsv(parts2, null, { locale: 'zh-CN' });
+    expect(csvZhCn).toContain('备注');
+    const csvZhHans = utils.buildAttendanceCsv(parts2, null, { locale: 'zh-Hans' });
+    expect(csvZhHans).toContain('备注');
+
+    // Localized check-in note prefix in Excel XML when opts.locale is provided without window.t
+    const xmlEsCheckin = utils.buildAttendanceExcelXml(
+      [{ displayName: 'Student 1', email: 's1@school.edu', present: true, joinTime: '2026-10-13T10:00:00Z', checkedInAt: '2026-10-13T10:01:00Z' }],
+      null,
+      { locale: 'es' }
+    );
+    expect(xmlEsCheckin).toContain('Registrado ');
   });
 });

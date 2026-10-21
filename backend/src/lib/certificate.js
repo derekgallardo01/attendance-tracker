@@ -13,7 +13,7 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const PDFDocument = require('pdfkit');
-const { getPdfLabels, localizeStatus } = require('./i18n');
+const { getPdfLabels, getCertLabels, localizeStatus } = require('./i18n');
 
 const FONT_PATH = path.join(__dirname, '..', '..', 'assets', 'fonts', 'NotoSans-Regular.ttf');
 // Resolve once at load; if the font is somehow missing we fall back to pdfkit's
@@ -150,6 +150,7 @@ function buildReportModel({ meeting = {}, attendees = [], options = {} } = {}) {
   const locale = meeting.locale || options.locale || 'en';
   const fallbackEnd = meeting.endTime || null;
   const labels = getPdfLabels(locale);
+  const certLabels = getCertLabels(locale);
 
   const rows = (attendees || []).map((p) => {
     const join = p.joinTime ?? p.joinTimeISO ?? null;
@@ -204,6 +205,7 @@ function buildReportModel({ meeting = {}, attendees = [], options = {} } = {}) {
       text: labels.summaryFormat(presentCount, rows.length),
     },
     footer: brandName ? `${brandName} · via attendancetracker.dev` : DEFAULT_FOOTER,
+    verificationLabel: certLabels.verification,
     verificationCode: verificationCode(
       options.verifySeed || `${meeting.conferenceId || ''}|${meeting.title || ''}|${meeting.startTime || ''}`,
     ),
@@ -277,11 +279,12 @@ function renderReportPdf(model) {
 
       // Footer band on every page
       const range = doc.bufferedPageRange();
+      const verLabel = model.verificationLabel || 'Verification';
       for (let i = range.start; i < range.start + range.count; i++) {
         doc.switchToPage(i);
         const fy = doc.page.height - doc.page.margins.bottom + 8;
         doc.font(font).fontSize(8).fillColor('#9ca3af')
-          .text(`${model.footer}   ·   Verification: ${model.verificationCode}`,
+          .text(`${model.footer}   ·   ${verLabel}: ${model.verificationCode}`,
             left, fy, { width, align: 'center', lineBreak: false });
       }
 
@@ -300,6 +303,7 @@ function renderReportPdf(model) {
 function buildCertificateModels({ meeting = {}, attendees = [], options = {} } = {}) {
   const tz = meeting.timezone || null;
   const locale = meeting.locale || options.locale || 'en';
+  const certLabels = getCertLabels(locale);
   const fallbackEnd = meeting.endTime || null;
   const session = (meeting.title || 'Google Meet').toString();
   const dateLabel = fmtDate(meeting.startTime || meeting.date, tz, locale);
@@ -327,11 +331,12 @@ function buildCertificateModels({ meeting = {}, attendees = [], options = {} } =
         dateLabel,
         durationLabel: fmtDuration(mins),
         creditHoursLabel: Number.isFinite(fixedCredit) && fixedCredit > 0
-          ? `${fixedCredit} credit hour${fixedCredit === 1 ? '' : 's'}`
+          ? certLabels.creditHours(fixedCredit)
           : null,
         courseCode,
         issuer,
         footer,
+        labels: certLabels,
         verificationCode: verificationCode(
           options.verifySeed
             ? `${options.verifySeed}|${p.email || p.displayName || ''}`
@@ -346,13 +351,14 @@ function buildCertificateModels({ meeting = {}, attendees = [], options = {} } =
 function drawCertificate(doc, font, m) {
   const w = doc.page.width;
   const h = doc.page.height;
+  const lbl = m.labels || getCertLabels('en');
   // Double border
   doc.lineWidth(3).strokeColor('#1d4ed8').rect(24, 24, w - 48, h - 48).stroke();
   doc.lineWidth(0.75).strokeColor('#93c5fd').rect(34, 34, w - 68, h - 68).stroke();
 
   const cx = w / 2;
-  doc.font(font).fillColor('#1e3a8a').fontSize(30).text('Certificate of Attendance', 0, 90, { width: w, align: 'center' });
-  doc.fillColor('#374151').fontSize(13).text('This certifies that', 0, 150, { width: w, align: 'center' });
+  doc.font(font).fillColor('#1e3a8a').fontSize(30).text(lbl.certTitle || 'Certificate of Attendance', 0, 90, { width: w, align: 'center' });
+  doc.fillColor('#374151').fontSize(13).text(lbl.certifiesThat || 'This certifies that', 0, 150, { width: w, align: 'center' });
 
   // Dynamic font downscaling for long attendee names (>35 chars or width > w - 80)
   let nameFontSize = 28;
@@ -367,7 +373,7 @@ function drawCertificate(doc, font, m) {
   doc.fillColor('#111827').fontSize(nameFontSize).text(nameStr, 0, 180, { width: w, align: 'center' });
 
   const attendedY = Math.max(232, doc.y + 12);
-  doc.fillColor('#374151').fontSize(13).text('attended', 0, attendedY, { width: w, align: 'center' });
+  doc.fillColor('#374151').fontSize(13).text(lbl.attended || 'attended', 0, attendedY, { width: w, align: 'center' });
 
   // Dynamic font downscaling for long session titles (>45 chars or width > w - 120)
   let sessionFontSize = 18;
@@ -383,24 +389,26 @@ function drawCertificate(doc, font, m) {
   doc.fillColor('#111827').fontSize(sessionFontSize).text(sessionStr, 60, sessionY, { width: maxSessionWidth, align: 'center' });
 
   const detail = [
-    m.dateLabel && `on ${m.dateLabel}`,
-    m.creditHoursLabel ? `for ${m.creditHoursLabel}` : `for ${m.durationLabel}`,
+    m.dateLabel && (lbl.onDate ? lbl.onDate(m.dateLabel) : `on ${m.dateLabel}`),
+    m.creditHoursLabel
+      ? (lbl.forDuration ? lbl.forDuration(m.creditHoursLabel) : `for ${m.creditHoursLabel}`)
+      : (lbl.forDuration ? lbl.forDuration(m.durationLabel) : `for ${m.durationLabel}`),
   ].filter(Boolean).join('   ·   ');
   const detailY = Math.max(300, doc.y + 16);
   doc.fillColor('#374151').fontSize(13).text(detail, 0, detailY, { width: w, align: 'center' });
   if (m.courseCode) {
     const refY = Math.max(326, doc.y + 8);
-    doc.fillColor('#6b7280').fontSize(11).text(`Reference: ${m.courseCode}`, 0, refY, { width: w, align: 'center' });
+    doc.fillColor('#6b7280').fontSize(11).text(`${lbl.reference || 'Reference'}: ${m.courseCode}`, 0, refY, { width: w, align: 'center' });
   }
 
   // Signature + issuer
   const sigY = h - 130;
   doc.lineWidth(0.75).strokeColor('#9ca3af').moveTo(cx - 130, sigY).lineTo(cx + 130, sigY).stroke();
-  doc.fillColor('#374151').fontSize(11).text(m.issuer || 'Issued by the meeting host', 0, sigY + 6, { width: w, align: 'center' });
+  doc.fillColor('#374151').fontSize(11).text(m.issuer || lbl.issuedByHost || 'Issued by the meeting host', 0, sigY + 6, { width: w, align: 'center' });
 
   // Footer band — includes the public verification URL so a registrar can confirm.
   doc.fillColor('#9ca3af').fontSize(8)
-    .text(`${m.footer}   ·   Verify at attendancetracker.dev/verify.html?c=${m.verificationCode}`, 0, h - 60, { width: w, align: 'center' });
+    .text(`${m.footer}   ·   ${lbl.verifyAt || 'Verify at'} attendancetracker.dev/verify.html?c=${m.verificationCode}`, 0, h - 60, { width: w, align: 'center' });
 }
 
 /* istanbul ignore next: thin pdfkit shell, asserted structurally in tests. */

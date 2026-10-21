@@ -11,4 +11,6 @@ process.env.ALLOWED_DOMAINS = '*';
 process.env.GMAIL_USER = 'derekgallardo01@gmail.com';
 process.env.NOTIFY_EMAIL = 'derekgallardo01@gmail.com';
 // RESEND_API_KEY deliberately unset — tests that exercise email paths
-// either mock Resend or assert the "skipped" branch.
+// either mock Resend or assert the "skipped" branch. Explicitly delete it
+// in case the parent shell exported RESEND_API_KEY (e.g. from outreach scripts).
+delete process.env.RESEND_API_KEY;

@@ -86,6 +86,70 @@ export function expandUtilsLocales() {
     },
   };
 
+  const extraColsMap = {
+    es: { notes: 'Notas', attended: 'Asistió', missed: 'Ausente', totalMinutes: 'Minutos totales' },
+    pt: { notes: 'Notas', attended: 'Compareceu', missed: 'Ausente', totalMinutes: 'Minutos totais' },
+    hi: { notes: 'नोट्स', attended: 'उपस्थित', missed: 'अनुपस्थित', totalMinutes: 'कुल मिनट' },
+    tl: { notes: 'Mga Tala', attended: 'Dumalo', missed: 'Lumiban', totalMinutes: 'Kabuuang minuto' },
+    ms: { notes: 'Nota', attended: 'Hadir', missed: 'Tidak hadir', totalMinutes: 'Jumlah minit' },
+    id: { notes: 'Catatan', attended: 'Hadir', missed: 'Tidak hadir', totalMinutes: 'Total menit' },
+    vi: { notes: 'Ghi chú', attended: 'Đã tham dự', missed: 'Vắng mặt', totalMinutes: 'Tổng số phút' },
+    fr: { notes: 'Remarques', attended: 'Présent', missed: 'Absent', totalMinutes: 'Minutes totales' },
+    de: { notes: 'Notizen', attended: 'Anwesend', missed: 'Abwesend', totalMinutes: 'Gesamtminuten' },
+    it: { notes: 'Note', attended: 'Presente', missed: 'Assente', totalMinutes: 'Minuti totali' },
+    nl: { notes: 'Notities', attended: 'Aanwezig', missed: 'Gemist', totalMinutes: 'Totale minuten' },
+    pl: { notes: 'Notatki', attended: 'Obecny', missed: 'Nieobecny', totalMinutes: 'Łączna liczba minut' },
+    ro: { notes: 'Note', attended: 'Prezent', missed: 'Absent', totalMinutes: 'Total minute' },
+    ru: { notes: 'Заметки', attended: 'Присутствовал', missed: 'Пропущено', totalMinutes: 'Всего минут' },
+    uk: { notes: 'Нотатки', attended: 'Присутній', missed: 'Пропущено', totalMinutes: 'Усього хвилин' },
+    tr: { notes: 'Notlar', attended: 'Katıldı', missed: 'Katılmadı', totalMinutes: 'Toplam dakika' },
+    th: { notes: 'หมายเหตุ', attended: 'เข้าร่วม', missed: 'ขาด', totalMinutes: 'นาทีทั้งหมด' },
+    ar: { notes: 'ملاحظات', attended: 'حضر', missed: 'غاب', totalMinutes: 'إجمالي الدقائق' },
+    ko: { notes: '메모', attended: '참석', missed: '결석', totalMinutes: '총 시간(분)' },
+    zh: { notes: '備註', attended: '已出席', missed: '缺席', totalMinutes: '總分鐘數' },
+    'zh-CN': { notes: '备注', attended: '已出席', missed: '缺席', totalMinutes: '总分钟数' },
+    ja: { notes: 'メモ', attended: '出席', missed: '欠席', totalMinutes: '合計時間（分）' },
+    he: { notes: 'הערות', attended: 'נכח', missed: 'נעדר', totalMinutes: 'סה"כ דקות' },
+    mr: { notes: 'नोंदी', attended: 'उपस्थित', missed: 'अनुपस्थित', totalMinutes: 'एकूण मिनिटे' },
+    sv: { notes: 'Anteckningar', attended: 'Närvarande', missed: 'Frånvarande', totalMinutes: 'Totalt antal minuter' },
+    cs: { notes: 'Poznámky', attended: 'Přítomen', missed: 'Zmeškáno', totalMinutes: 'Celkem minut' },
+    da: { notes: 'Noter', attended: 'Deltog', missed: 'Fraværende', totalMinutes: 'Minutter i alt' },
+    fi: { notes: 'Muistiinpanot', attended: 'Osallistui', missed: 'Poissa', totalMinutes: 'Kokonaisminuutit' },
+    hu: { notes: 'Jegyzetek', attended: 'Részt vett', missed: 'Hiányzott', totalMinutes: 'Összes perc' },
+    so: { notes: 'Qoraallo', attended: 'Ka qaybgalay', missed: 'Maqnaa', totalMinutes: 'Wadarta daqiiqadaha' },
+    sw: { notes: 'Maelezo', attended: 'Alihudhuria', missed: 'Alikosa', totalMinutes: 'Jumla ya dakika' },
+    am: { notes: 'ማስታወሻዎች', attended: 'ተገኝቷል', missed: 'ቀርቷል', totalMinutes: 'ጠቅላላ ደቂቃዎች' },
+    si: { notes: 'සටහන්', attended: 'සහභාගී විය', missed: 'මඟ හැරුණි', totalMinutes: 'මුළු මිනිත්තු' },
+    el: { notes: 'Σημειώσεις', attended: 'Παρακολούθησε', missed: 'Απουσίασε', totalMinutes: 'Συνολικά λεπτά' },
+    no: { notes: 'Notater', attended: 'Deltok', missed: 'Fravær', totalMinutes: 'Totalt antall minutter' },
+    ca: { notes: 'Notes', attended: 'Ha assistit', missed: 'Absent', totalMinutes: 'Minuts totals' },
+    ne: { notes: 'टिप्पणीहरू', attended: 'उपस्थित', missed: 'अनुपस्थित', totalMinutes: 'कुल मिनेट' },
+    ml: { notes: 'കുറിപ്പുകൾ', attended: 'പങ്കെടുത്തു', missed: 'ഹാജരായില്ല', totalMinutes: 'ആകെ മിനിറ്റുകൾ' },
+    mn: { notes: 'Тэмдэглэл', attended: 'Оролцсон', missed: 'Тасалсан', totalMinutes: 'Нийт минут' },
+    bn: { notes: 'নোট', attended: 'উপস্থিত', missed: 'অনুপস্থিত', totalMinutes: 'মোট মিনিট' },
+    ta: { notes: 'குறிப்புகள்', attended: 'கலந்துகொண்டது', missed: 'தவறியது', totalMinutes: 'மொத்த நிமிடங்கள்' },
+    te: { notes: 'గమనికలు', attended: 'హాజరైనవి', missed: 'హాజరుకానివి', totalMinutes: 'మొత్తం నిమిషాలు' },
+    ur: { notes: 'نوٹس', attended: 'حاضر', missed: 'غیر حاضر', totalMinutes: 'کل منٹ' },
+    fa: { notes: 'یادداشت‌ها', attended: 'حاضر', missed: 'غایب', totalMinutes: 'مجموع دقایق' },
+    af: { notes: 'Notas', attended: 'Bygewoon', missed: 'Gemis', totalMinutes: 'Totale minute' },
+    bg: { notes: 'Бележки', attended: 'Присъствал', missed: 'Пропуснал', totalMinutes: 'Общо минути' },
+    hr: { notes: 'Bilješke', attended: 'Prisustvovao', missed: 'Izostao', totalMinutes: 'Ukupno minuta' },
+    sr: { notes: 'Белешке', attended: 'Присуствовао', missed: 'Изостао', totalMinutes: 'Укупно минута' },
+    sk: { notes: 'Poznámky', attended: 'Zúčastnil sa', missed: 'Vynechal', totalMinutes: 'Celkovo minút' },
+    sl: { notes: 'Opombe', attended: 'Prisoten', missed: 'Odsoten', totalMinutes: 'Skupaj minut' },
+    lv: { notes: 'Piezīmes', attended: 'Apmeklēja', missed: 'Neapmeklēja', totalMinutes: 'Kopā minūtes' },
+    lt: { notes: 'Pastabos', attended: 'Dalyvavo', missed: 'Praleido', totalMinutes: 'Iš viso minučių' },
+    et: { notes: 'Märkmed', attended: 'Osales', missed: 'Puudus', totalMinutes: 'Kokku minuteid' },
+    ceb: { notes: 'Mga Nota', attended: 'Mitambong', missed: 'Palta', totalMinutes: 'Kinatibuk-ang minuto' },
+    kk: { notes: 'Ескертпелер', attended: 'Қатысты', missed: 'Қатыспады', totalMinutes: 'Барлық минуттар' },
+    lo: { notes: 'ໝາຍເຫດ', attended: 'ເຂົ້າຮ່ວມ', missed: 'ຂາດ', totalMinutes: 'ນາທີທັງໝົດ' },
+    my: { notes: 'မှတ်စုများ', attended: 'တက်ရောက်ခဲ့သည်', missed: 'ပျက်ကွက်ခဲ့သည်', totalMinutes: 'စုစုပေါင်း မိနစ်' },
+    km: { notes: 'កំណត់សម្គាល់', attended: 'បានចូលរួម', missed: 'អវត្តមាន', totalMinutes: 'នាទីសរុប' },
+    kn: { notes: 'ಟಿಪ್ಪಣಿಗಳು', attended: 'ಹಾಜರಾಗಿದ್ದಾರೆ', missed: 'ಗೈರುಹಾಜರಾಗಿದ್ದಾರೆ', totalMinutes: 'ಒಟ್ಟು ನಿಮಿಷಗಳು' },
+    gu: { notes: 'નોંધો', attended: 'હાજર', missed: 'ગેરહાજર', totalMinutes: 'કુલ મિનિટ' },
+    pa: { notes: 'ਨੋਟਸ', attended: 'ਹਾਜ਼ਰ', missed: 'ਗੈਰ-ਹਾਜ਼ਰ', totalMinutes: 'ਕੁੱਲ ਮਿੰਟ' },
+  };
+
   const headerDict = {};
   const statusDict = {};
 
@@ -94,6 +158,7 @@ export function expandUtilsLocales() {
     if (loc === 'en') continue;
     const h = LOCALIZED_HEADERS[loc] || LOCALIZED_HEADERS['en'] || {};
     const s = STATUS_TRANSLATIONS[loc] || STATUS_TRANSLATIONS['en'] || {};
+    const ex = extraColsMap[loc] || {};
 
     // 1. Build header list
     let cols;
@@ -109,15 +174,15 @@ export function expandUtilsLocales() {
         h.joinTime || 'Join Time',
         h.leaveTime || 'Leave Time',
         h.sessions || 'Rejoins',
-        loc === 'es' || loc === 'pt' ? 'Notas' : (loc === 'fr' ? 'Remarques' : (loc === 'de' ? 'Notizen' : (loc === 'it' ? 'Note' : 'Notes')))
+        ex.notes || 'Notes'
       ];
     }
 
     // Attach meeting & series sub-headers
     const rsvp = h.rsvp || 'Calendar RSVP';
-    const attended = loc === 'es' ? 'Asistió' : (loc === 'pt' ? 'Compareceu' : (loc === 'fr' ? 'Présent' : (loc === 'de' ? 'Anwesend' : (loc === 'it' ? 'Presente' : 'Attended'))));
-    const missed = loc === 'es' ? 'Ausente' : (loc === 'pt' ? 'Ausente' : (loc === 'fr' ? 'Absent' : (loc === 'de' ? 'Abwesend' : (loc === 'it' ? 'Assente' : 'Missed'))));
-    const totalMinutes = loc === 'es' ? 'Minutos totales' : (loc === 'pt' ? 'Minutos totais' : (loc === 'fr' ? 'Minutes totales' : (loc === 'de' ? 'Gesamtminuten' : (loc === 'it' ? 'Minuti totali' : 'Total minutes'))));
+    const attended = ex.attended || 'Attended';
+    const missed = ex.missed || 'Missed';
+    const totalMinutes = ex.totalMinutes || 'Total minutes';
 
     const meetingHeaders = [
       h.name || cols[0],
@@ -142,6 +207,7 @@ export function expandUtilsLocales() {
       cols,
       meeting: meetingHeaders,
       series: seriesHeaders,
+      checkedIn: `${h.checkedIn} `,
     };
 
     if (existingStatuses[loc]) {
@@ -184,7 +250,8 @@ export function expandUtilsLocales() {
     const colsJson = JSON.stringify(data.cols);
     const meetingJson = JSON.stringify(data.meeting);
     const seriesJson = JSON.stringify(data.series);
-    headerCodeLines.push(`    ${JSON.stringify(loc)}: Object.assign(${colsJson}, { meeting: ${meetingJson}, series: ${seriesJson} }),`);
+    const checkedInJson = JSON.stringify(data.checkedIn);
+    headerCodeLines.push(`    ${JSON.stringify(loc)}: Object.assign(${colsJson}, { meeting: ${meetingJson}, series: ${seriesJson}, checkedIn: ${checkedInJson} }),`);
   }
   headerCodeLines.push('  };');
   const newHeaderCode = headerCodeLines.join('\n');
@@ -224,14 +291,37 @@ export function expandUtilsLocales() {
     );
   }
 
-  // Ensure check-in prefix is localized
+  // Ensure resolveCsvLocale() helper is present for zh-CN vs zh resolution
+  if (!content.includes('function resolveCsvLocale(raw) {')) {
+    content = content.replace(
+      /function t\(key, fallback\) \{[\s\S]*?return fallback;\r?\n  \}/,
+      (m) => m + "\r\n\r\n  function resolveCsvLocale(raw) {\r\n    const s = String(raw || 'en');\r\n    if (CSV_HEADER_LOCALIZATIONS[s]) return s;\r\n    if (/^zh[-_](?:cn|hans|sg)\\b/i.test(s)) return 'zh-CN';\r\n    return s.split(/[-_]/)[0].toLowerCase();\r\n  }"
+    );
+  }
+
   content = content.replace(
-    "const chk = p && p.checkedInAt ? 'Checked in ' + fmtTime(p.checkedInAt) : '';",
-    "const chk = p && p.checkedInAt ? t('export.checkedInPrefix', 'Checked in ') + fmtTime(p.checkedInAt) : '';"
+    /const loc = \(opts\.locale \|\| 'en'\)\.split\(\/\[\-_\]\/\)\[0\]\.toLowerCase\(\);/g,
+    'const loc = resolveCsvLocale(opts.locale);'
+  );
+
+  // Ensure truncation notice is localized and always starts with '# ... '
+  content = content.replace(
+    /rows\.push\((?:`# \.\.\. 25 of \$\{totalCsvAttendees\} attendees shown\. Upgrade to Educator or Pro for unlimited rosters\.`|(?:['"]# \.\.\. ['"] \+ )?t\('exportTruncated\.banner'[^)]*\)\.replace\('\{total\}', totalCsvAttendees\))\);/,
+    "rows.push('# ... ' + t('exportTruncated.banner', '25 of {total} attendees shown. Upgrade to Educator or Pro for unlimited rosters.').replace('{total}', totalCsvAttendees));"
   );
   content = content.replace(
-    "const chk = p && p.checkedInAt ? 'Checked in ' + fmtTimeVal(p.checkedInAt) : '';",
-    "const chk = p && p.checkedInAt ? t('export.checkedInPrefix', 'Checked in ') + fmtTimeVal(p.checkedInAt) : '';"
+    /truncatedNotice = (?:`# \.\.\. 25 of \$\{dataRows\.length\} attendees shown\. Upgrade to Educator or Pro for unlimited rosters\.`|(?:['"]# \.\.\. ['"] \+ )?t\('exportTruncated\.banner'[^)]*\)\.replace\('\{total\}', dataRows\.length\));/,
+    "truncatedNotice = '# ... ' + t('exportTruncated.banner', '25 of {total} attendees shown. Upgrade to Educator or Pro for unlimited rosters.').replace('{total}', dataRows.length);"
+  );
+
+  // Ensure check-in prefix is localized via opts.locale (headerCols.checkedIn) or t()
+  content = content.replace(
+    /const chk = p && p\.checkedInAt \? [^+]+ \+ fmtTime\(p\.checkedInAt\) : '';/,
+    "const chk = p && p.checkedInAt ? (headerCols.checkedIn || t('export.checkedInPrefix', 'Checked in ')) + fmtTime(p.checkedInAt) : '';"
+  );
+  content = content.replace(
+    /const chk = p && p\.checkedInAt \? [^+]+ \+ fmtTimeVal\(p\.checkedInAt\) : '';/,
+    "const chk = p && p.checkedInAt ? (headerCols.checkedIn || t('export.checkedInPrefix', 'Checked in ')) + fmtTimeVal(p.checkedInAt) : '';"
   );
 
   fs.writeFileSync(utilsFile, content, 'utf8');

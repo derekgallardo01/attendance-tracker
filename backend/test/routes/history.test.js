@@ -23,6 +23,9 @@ jest.mock('../../src/services/firestore', () => ({
 }));
 
 const firestore = require('../../src/services/firestore');
+jest.mock('../../src/lib/notifications', () => ({
+  sendErrorAlertEmail: jest.fn().mockResolvedValue({ sent: true }),
+}));
 
 let app;
 

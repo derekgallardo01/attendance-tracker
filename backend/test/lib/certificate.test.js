@@ -158,6 +158,17 @@ describe('buildCertificateModels (pure)', () => {
     expect(models[0].verificationCode).toMatch(/^AT-[0-9A-F]{8}$/);
   });
 
+  test('localizes certificate labels and creditHours when locale is provided', () => {
+    const models = buildCertificateModels({
+      meeting: { title: 'Bio 101', locale: 'es', startTime: '2026-08-20T14:00:00Z', endTime: '2026-08-20T15:00:00Z', timezone: 'UTC' },
+      attendees: [{ displayName: 'Ada', email: 'a@x.com', joinTimeISO: '2026-08-20T14:00:00Z', present: true }],
+      options: { creditHours: 2 },
+    });
+    expect(models).toHaveLength(1);
+    expect(models[0].labels.certTitle).toBe('Certificado de Asistencia');
+    expect(models[0].creditHoursLabel).toBe('2 horas de crédito');
+  });
+
   test('fixed creditHours labels all certificates; else falls back to duration', () => {
     const common = {
       meeting: { title: 'T', startTime: '2026-08-20T14:00:00Z', endTime: '2026-08-20T15:00:00Z' },

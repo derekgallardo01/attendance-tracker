@@ -468,7 +468,7 @@ describe('buildAttendanceCsv — localization & timezone', () => {
       locale: 'pt',
       timezone: 'America/Sao_Paulo',
     });
-    expect(csv).toContain('Checked in');
+    expect(csv).toContain('Confirmado');
   });
 
   test('localizes all statuses across roster, late, excused, short stay, and guests in Portuguese', () => {

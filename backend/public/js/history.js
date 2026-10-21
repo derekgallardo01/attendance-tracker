@@ -104,7 +104,10 @@
     if (typeof AttUtils === 'undefined') return null;
     const map = AttUtils.CSV_HEADER_LOCALIZATIONS;
     if (!map) return null;
-    return map[locHeaders] || null;
+    const code = map[locHeaders]
+      ? locHeaders
+      : (/^zh[-_](?:cn|hans|sg)\b/i.test(locHeaders) ? 'zh-CN' : locHeaders.split(/[-_]/)[0].toLowerCase());
+    return map[code] || null;
   }
 
   // format: 'generic' | 'moodle' | 'canvas'. Grade = attendance % across the

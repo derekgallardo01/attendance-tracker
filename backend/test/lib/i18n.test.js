@@ -437,6 +437,13 @@ describe('backend i18n', () => {
         for (const rv of ['accepted', 'declined', 'tentative', 'needsAction']) {
           expect(typeof i18n.localizeRsvp(rv, loc)).toBe('string');
         }
+
+        const cert = i18n.getCertLabels(loc);
+        expect(typeof cert.certTitle).toBe('string');
+        expect(cert.onDate('2026-10-01')).toContain('2026-10-01');
+        expect(cert.forDuration('45m')).toContain('45m');
+        expect(cert.creditHours(1)).toContain('1');
+        expect(cert.creditHours(2)).toContain('2');
       }
     });
   });

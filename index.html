@@ -3170,9 +3170,9 @@
   <!-- ── Auth bar ── -->
   <div id="auth-bar">
     <span id="auth-status">
-      <button class="btn-google" id="btn-google-signin" onclick="signInWithGoogle()" data-i18n="btn.signIn">
+      <button class="btn-google" id="btn-google-signin" onclick="signInWithGoogle()">
         <svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#34A853" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#FBBC05" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-        Sign in with Google
+        <span data-i18n="btn.signIn">Sign in with Google</span>
       </button>
     </span>
   </div>
@@ -4380,8 +4380,8 @@ function renderRosterView() {
   if (isRosterGated) {
     html += `
       <div class="roster-large-class-card" style="margin:10px 4px;padding:12px 14px;background:rgba(245,158,11,.08);border:1px dashed rgba(245,158,11,.35);border-radius:8px;text-align:center;font-size:.78rem;color:#e6edf3;line-height:1.5">
-        <span>Showing 25 of ${students.length} roster students · </span>
-        <button type="button" onclick="showUpgradeModal('largeClass')" style="background:none;border:none;color:#fbbf24;font-weight:600;cursor:pointer;text-decoration:underline;padding:0;font-size:.78rem">Unlock all ${students.length} students →</button>
+        <span>${escHtml(t('toast.participantsCapped', 'Showing 25 of {total} roster students.').replace('{n}', 25).replace('{total}', students.length))} · </span>
+        <button type="button" onclick="showUpgradeModal('largeClass')" style="background:none;border:none;color:#fbbf24;font-weight:600;cursor:pointer;text-decoration:underline;padding:0;font-size:.78rem">${escHtml(t('common.upgrade', 'Upgrade'))} →</button>
       </div>`;
   }
 
@@ -5500,6 +5500,7 @@ function applyScopeRestrictions() {
 function showSourceModal(detectedSource) {
   const modal = document.getElementById('source-modal');
   if (!modal) return;
+  state._detectedSource = detectedSource || null;
 
   // Source-aware greeting — if we already have a hint, lead with it.
   // Friendly, not interrogating.
@@ -5768,13 +5769,13 @@ function updateAuthUI() {
     loadBillingStatus().catch(() => {});
     bar.innerHTML = `
       <span class="auth-email">${escHtml(state.userEmail)}</span>
-      <button class="auth-action" id="btn-signout" onclick="signOut()">${escHtml(t('btn.signOut', 'Sign out'))}</button>
+      <button class="auth-action" id="btn-signout" onclick="signOut()" data-i18n="btn.signOut">${escHtml(t('btn.signOut', 'Sign out'))}</button>
     `;
   } else {
     bar.innerHTML = `
       <button class="btn-google" id="btn-google-signin" onclick="signInWithGoogle()">
         <svg viewBox="0 0 48 48" width="14" height="14"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#34A853" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#FBBC05" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-        ${escHtml(t('btn.signIn', 'Sign in with Google'))}
+        <span data-i18n="btn.signIn">${escHtml(t('btn.signIn', 'Sign in with Google'))}</span>
       </button>
     `;
   }
@@ -6786,8 +6787,8 @@ function renderList() {
 
   const largeClassCardHtml = isGated ? `
       <div id="roster-large-class-card" style="margin:10px 4px;padding:12px 14px;background:rgba(245,158,11,.08);border:1px dashed rgba(245,158,11,.35);border-radius:8px;text-align:center;font-size:.78rem;color:#e6edf3;line-height:1.5">
-        <span>Showing 25 of ${state.participants.size} attendees. </span>
-        <button type="button" onclick="showUpgradeModal('largeClass')" style="background:none;border:none;color:#fbbf24;font-weight:600;cursor:pointer;text-decoration:underline;padding:0;font-size:.78rem">Unlock all ${state.participants.size} attendees →</button>
+        <span>${escHtml(t('toast.participantsCapped', 'Showing 25 of {total} attendees.').replace('{n}', 25).replace('{total}', state.participants.size))} </span>
+        <button type="button" onclick="showUpgradeModal('largeClass')" style="background:none;border:none;color:#fbbf24;font-weight:600;cursor:pointer;text-decoration:underline;padding:0;font-size:.78rem">${escHtml(t('common.upgrade', 'Upgrade'))} →</button>
         <div style="margin-top:6px">
           <button type="button" onclick="downloadSchoolQuotePdf(this)" style="background:none;border:none;color:#8ab4f8;font-weight:500;cursor:pointer;text-decoration:underline;padding:0;font-size:.72rem">📄 ${escHtml(t('quote.askSchoolBtn', 'Ask my school to pay (Download Quote PDF)'))}</button>
         </div>
@@ -7415,7 +7416,9 @@ function openSchoolLicenseModal() {
     submitBtn.textContent = t('schoolLicense.submitBtn', 'Submit Request');
   }
 
-  if (typeof applyTranslations === 'function') {
+  if (window.AttStrings && typeof window.AttStrings.applyTranslations === 'function') {
+    window.AttStrings.applyTranslations(modal);
+  } else if (typeof applyTranslations === 'function') {
     applyTranslations(modal);
   }
 
@@ -10337,6 +10340,42 @@ function updateUiLanguage() {
     if (typeof selectWebhookProvider === 'function') selectWebhookProvider(_activeWebhookProvider);
     const tzSel = document.getElementById('settings-timezone-select');
     if (tzSel) populateTimezoneSelect(tzSel.value);
+  }
+
+  const sourceModal = document.getElementById('source-modal');
+  if (sourceModal && sourceModal.classList.contains('open')) {
+    const title = document.getElementById('source-modal-title');
+    const subtitle = document.getElementById('source-modal-subtitle');
+    const greetings = {
+      reddit:        [t('source.redditTitle', 'Hey, saw you came from Reddit'), t('source.redditSub', 'Mind sharing which sub? Helps me know where to hang out.')],
+      youtube:       [t('source.youtubeTitle', 'Hey, saw you came from YouTube'), t('source.youtubeSub', 'Which video? Trying to figure out what content actually works.')],
+      google_search: [t('source.googleTitle', 'Hey, found us via Google'), t('source.googleSub', 'Quick favor — what were you searching for? Helps me reach more folks like you.')],
+      marketplace:   [t('source.marketTitle', 'Hey, thanks for installing!'), t('source.marketSub', "Anything in particular you're hoping to do? Helps me prioritize.")],
+      friend:        [t('source.friendTitle', 'Hey, a teammate sent you?'), t('source.friendSub', "I'd love to know who — drop their name and I'll thank them.")],
+    };
+    const g = greetings[state._detectedSource];
+    if (g && title && subtitle) {
+      title.textContent = g[0];
+      subtitle.textContent = g[1];
+    } else if (title && subtitle) {
+      title.textContent = t('source.qTitle', 'Quick question');
+      subtitle.textContent = t('source.qSub', 'How did you find Attendance Tracker? Helps me figure out where to focus.');
+    }
+    const sel = document.getElementById('source-modal-select');
+    const otherInput = document.getElementById('source-modal-other');
+    if (sel && otherInput) {
+      const placeholders = {
+        google_search: t('source.phSearch', 'What did you search for? (optional)'),
+        friend:        t('source.phFriend', 'Who recommended Attendance Tracker? (optional)'),
+        reddit:        t('source.phReddit', 'Which subreddit? (optional)'),
+        youtube:       t('source.phYoutube', 'Which video or creator? (optional)'),
+        marketplace:   t('source.phMarketplace', 'Any search keyword? (optional)'),
+        other:         t('source.phOther', 'Where did you hear about it? (optional)'),
+      };
+      if (placeholders[sel.value]) {
+        otherInput.placeholder = placeholders[sel.value];
+      }
+    }
   }
 }
 

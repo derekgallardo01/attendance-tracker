@@ -1111,7 +1111,7 @@
         <form id="quote-form" onsubmit="submitQuote(event)">
           <label style="display:block;font-size:.78rem;color:var(--muted);margin-bottom:4px" data-i18n="quote.labelSchool">School or organization</label>
           <input id="quote-school" type="text" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:.9rem;margin-bottom:14px" />
-          <label style="display:block;font-size:.78rem;color:var(--muted);margin-bottom:4px" data-i18n="quote.labelEmail">Work email <span style="color:#f87171">*</span></label>
+          <label style="display:block;font-size:.78rem;color:var(--muted);margin-bottom:4px"><span data-i18n="quote.labelEmail">Work email</span> <span style="color:#f87171">*</span></label>
           <input id="quote-email" type="email" required placeholder="you@yourschool.edu" data-i18n-placeholder="quote.emailPlaceholder" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:.9rem;margin-bottom:14px" />
           <label style="display:block;font-size:.78rem;color:var(--muted);margin-bottom:4px" data-i18n="quote.labelSeats">Approximate number of teachers</label>
           <input id="quote-seats" type="text" inputmode="numeric" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:.9rem;margin-bottom:14px" />
@@ -1384,7 +1384,7 @@
       var label = function (plan) { return (offer.pricing[plan] && offer.pricing[plan].label) || ''; };
       var setText = function (root, sel, text) {
         var el = root && root.querySelector(sel);
-        if (el) { el.removeAttribute('data-i18n'); el.textContent = text; }
+        if (el) { el.textContent = text; }
         return el;
       };
 

@@ -156,7 +156,9 @@
       </div>
     `;
     document.body.appendChild(modal);
-    if (typeof root.applyTranslations === 'function') {
+    if (root.AttStrings && typeof root.AttStrings.applyTranslations === 'function') {
+      root.AttStrings.applyTranslations(modal);
+    } else if (typeof root.applyTranslations === 'function') {
       root.applyTranslations(modal);
     }
     return modal;

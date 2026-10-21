@@ -159,10 +159,14 @@ describe('donut svg and meeting helpers', () => {
 
     global.AttUtils = {
       CSV_HEADER_LOCALIZATIONS: {
-        es: { meeting: ['Nombre', 'Correo', 'Estado'], series: ['Nombre', 'Correo', 'Asistió'] }
+        es: { meeting: ['Nombre', 'Correo', 'Estado'], series: ['Nombre', 'Correo', 'Asistió'] },
+        'zh-CN': { meeting: ['姓名', '电子邮件', '状态'], series: ['姓名', '电子邮件', '已出席'] }
       }
     };
     expect(h.buildMeetingCsv(detail, 'es')).toContain('"Nombre","Correo","Estado"');
+    expect(h.buildMeetingCsv(detail, 'es-MX')).toContain('"Nombre","Correo","Estado"');
+    expect(h.buildMeetingCsv(detail, 'zh-CN')).toContain('"姓名","电子邮件","状态"');
+    expect(h.buildMeetingCsv(detail, 'zh-Hans')).toContain('"姓名","电子邮件","状态"');
     expect(h.buildMeetingCsv(detail, 'unknown')).toContain('"Name","Email"');
     delete global.AttUtils;
   });

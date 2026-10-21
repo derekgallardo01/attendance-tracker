@@ -55,6 +55,17 @@ describe('AttLmsSync', () => {
     expect(titleInput.value).toBe('History 201 Attendance (2026-10-04)');
   });
 
+  test('calls AttStrings.applyTranslations when available on openModal', () => {
+    const applyTranslationsMock = jest.fn();
+    window.AttStrings = { applyTranslations: applyTranslationsMock };
+    try {
+      AttLmsSync.openModal({ records: [] });
+      expect(applyTranslationsMock).toHaveBeenCalledWith(document.getElementById('lms-sync-modal'));
+    } finally {
+      delete window.AttStrings;
+    }
+  });
+
   test('switches tabs between classroom and canvas', () => {
     AttLmsSync.openModal({ records: [] });
 

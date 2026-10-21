@@ -22,6 +22,10 @@ jest.mock('../../src/services/firestore', () => ({
   logEvent: jest.fn(),
 }));
 
+jest.mock('../../src/lib/notifications', () => ({
+  sendAdminEmail: jest.fn().mockResolvedValue({ sent: true }),
+}));
+
 const firestore = require('../../src/services/firestore');
 
 // supertest doesn't buffer binary bodies by default — collect the raw bytes.
