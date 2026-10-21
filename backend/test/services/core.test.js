@@ -99,6 +99,28 @@ describe('memoizeTTL', () => {
     await wrapped('a'); // was evicted → re-invokes
     expect(calls).toBe(4);
   });
+
+  test('shares cache entry across fn(), fn(undefined), fn({}), and fn({ force: false }) and bypasses on fn({ force: true })', async () => {
+    let calls = 0;
+    const wrapped = core.memoizeTTL(async () => { calls++; return { run: calls }; }, 100000);
+    const r1 = await wrapped();
+    const r2 = await wrapped(undefined);
+    const r3 = await wrapped({});
+    const r4 = await wrapped({ force: false });
+    expect(calls).toBe(1);
+    expect(r2).toBe(r1);
+    expect(r3).toBe(r1);
+    expect(r4).toBe(r1);
+
+    const r5 = await wrapped({ force: true });
+    expect(calls).toBe(2);
+    expect(r5).toEqual({ run: 2 });
+
+    // Subsequent default calls read the refreshed canonical cache entry
+    const r6 = await wrapped();
+    expect(calls).toBe(2);
+    expect(r6).toBe(r5);
+  });
 });
 
 describe('weeklyStreak', () => {

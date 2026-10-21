@@ -930,3 +930,60 @@ describe('getCancellationTelemetry', () => {
     spy.mockRestore();
   });
 });
+
+describe('getSuppressedEmailSet, getUserMeetingSeries, evaluateSeriesAlerts & getAggregatedInsights read optimizations', () => {
+  test('getSuppressedEmailSet returns a Set of lowercased suppressed emails', async () => {
+    await firestore.suppressEmail('OptOut@School.edu', { source: 'test' });
+    const set = await firestore.getSuppressedEmailSet({ force: true });
+    expect(set).toBeInstanceOf(Set);
+    expect(set.has('optout@school.edu')).toBe(true);
+  });
+
+  test('getUserMeetingSeries and evaluateSeriesAlerts short-circuit without calling domainMeetings loader when user has no tracked events', async () => {
+    ctx.seed('tenants/acme.edu/meetings/m1', {
+      conferenceId: 'm1',
+      recurringEventId: 'series-1',
+      title: 'Biology',
+    });
+    const domainMeetingsLoader = jest.fn(async () => [{ id: 'm1', data: { conferenceId: 'm1', recurringEventId: 'series-1' } }]);
+
+    const res = await firestore.getUserMeetingSeries('acme.edu', 'never-tracked@acme.edu', {
+      includeParticipants: false,
+      domainMeetings: domainMeetingsLoader,
+    });
+    expect(res).toEqual({ series: [], totalSeries: 0 });
+    expect(domainMeetingsLoader).not.toHaveBeenCalled();
+
+    const alerts = await firestore.evaluateSeriesAlerts('acme.edu', 'never-tracked@acme.edu', {
+      domainMeetings: domainMeetingsLoader,
+    });
+    expect(alerts).toEqual([]);
+    expect(domainMeetingsLoader).not.toHaveBeenCalled();
+
+    // Once user has a tracked event, the lazy loader is invoked
+    seedEvent('acme.edu', 'tracked@acme.edu', 'tracked', Date.now(), { conferenceId: 'm1' });
+    const resTracked = await firestore.getUserMeetingSeries('acme.edu', 'tracked@acme.edu', {
+      includeParticipants: false,
+      domainMeetings: domainMeetingsLoader,
+    });
+    expect(domainMeetingsLoader).toHaveBeenCalledTimes(1);
+    expect(resTracked.totalSeries).toBe(1);
+  });
+
+  test('getAggregatedInsights() and getAggregatedInsights({ force: false }) share the same memoizeTTL cache entry', async () => {
+    seedUser('acme.edu', 't1@acme.edu');
+    const r1 = await firestore.getAggregatedInsights({ force: true });
+    // Seed a second user after caching; cached calls with () and ({ force: false }) must return the cached snapshot
+    seedUser('acme.edu', 't2@acme.edu');
+    const r2 = await firestore.getAggregatedInsights();
+    const r3 = await firestore.getAggregatedInsights({ force: false });
+    expect(r2).toBe(r1);
+    expect(r3).toBe(r1);
+
+    // Passing { force: true } refreshes the canonical cache entry
+    const r4 = await firestore.getAggregatedInsights({ force: true });
+    expect(r4.funnel.signedIn).toBe(r1.funnel.signedIn + 1);
+    const r5 = await firestore.getAggregatedInsights();
+    expect(r5).toBe(r4);
+  });
+});

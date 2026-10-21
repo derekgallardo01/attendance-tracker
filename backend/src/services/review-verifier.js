@@ -160,7 +160,7 @@ async function grantReviewReward(domain, email, review) {
 /**
  * Scan all pending review clickers and match them with unredeemed marketplace reviews
  */
-async function reconcilePendingReviews() {
+async function reconcilePendingReviews(preloadedUsers = null) {
   const db = getDb();
 
   // 1. Sync latest reviews
@@ -177,24 +177,39 @@ async function reconcilePendingReviews() {
   }
 
   // 3. Find candidate users who clicked the review link
-  const usersSnap = await db.collectionGroup('users').get();
-
   const candidateUsers = [];
-  usersSnap.forEach(doc => {
-    if (!doc.ref.parent || !doc.ref.parent.parent) return;
-    const data = doc.data();
-    if (data.reviewStatus === 'clicked' || data.reviewLinkClickedAt) {
-      candidateUsers.push({
-        email: doc.id.toLowerCase(),
-        domain: doc.ref.parent.parent.id,
-        displayName: data.displayName || '',
-        reviewLinkClickedAt: data.reviewLinkClickedAt ? new Date(data.reviewLinkClickedAt) : null,
-        individualPlan: data.individualPlan || null,
-        reviewStatus: data.reviewStatus || null,
-        ref: doc.ref,
-      });
+  if (Array.isArray(preloadedUsers)) {
+    for (const u of preloadedUsers) {
+      if (!u || !u.email || !u.domain) continue;
+      if (u.reviewStatus === 'clicked' || u.reviewLinkClickedAt) {
+        candidateUsers.push({
+          email: u.email.toLowerCase(),
+          domain: u.domain,
+          displayName: u.displayName || '',
+          reviewLinkClickedAt: u.reviewLinkClickedAt ? new Date(u.reviewLinkClickedAt) : null,
+          individualPlan: u.individualPlan || null,
+          reviewStatus: u.reviewStatus || null,
+        });
+      }
     }
-  });
+  } else {
+    const usersSnap = await db.collectionGroup('users').get();
+    usersSnap.forEach(doc => {
+      if (!doc.ref.parent || !doc.ref.parent.parent) return;
+      const data = doc.data();
+      if (data.reviewStatus === 'clicked' || data.reviewLinkClickedAt) {
+        candidateUsers.push({
+          email: doc.id.toLowerCase(),
+          domain: doc.ref.parent.parent.id,
+          displayName: data.displayName || '',
+          reviewLinkClickedAt: data.reviewLinkClickedAt ? new Date(data.reviewLinkClickedAt) : null,
+          individualPlan: data.individualPlan || null,
+          reviewStatus: data.reviewStatus || null,
+          ref: doc.ref,
+        });
+      }
+    });
+  }
 
   log.info('review-verifier: checking candidates', {
     unredeemedReviews: unredeemed.length,

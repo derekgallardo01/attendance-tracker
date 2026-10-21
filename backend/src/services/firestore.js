@@ -6,7 +6,7 @@ const {
 } = require('./firestore/_core');
 const { createShareLink, resolveShareLink, getSharedSeriesView, getSharedMeetingView, revokeShareLink, listUserShareLinks } = require('./firestore/shareLinks');
 const { evaluateSeriesAlerts, evaluateReengagementForUser, claimReengagementSlot, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition } = require('./firestore/reengagement');
-const { suppressEmail, isEmailSuppressed, unsuppressEmail } = require('./firestore/suppression');
+const { suppressEmail, isEmailSuppressed, unsuppressEmail, getSuppressedEmailSet } = require('./firestore/suppression');
 const { deleteUser, isUserDeleted, clearDeletedTombstone } = require('./firestore/deletion');
 const { saveCheckin, getCheckins } = require('./firestore/checkins');
 const {
@@ -477,17 +477,23 @@ async function backfillAdminActivityIfSparse({ force = false } = {}) {
 // this month, real per-user tracked/exported counts) instead of bucketing by
 // domain. Fire-and-forget; never block the caller.
 // Dual-writes key activity events to top-level admin_activity for fast dashboard reads.
-async function logEvent(domain, { email, type, meta }) {
+async function logEvent(domain, { email, type, meta, docId, preserveCreatedAt = false }) {
   if (!domain || !email || !type) return;
   const emailLower = email.toLowerCase();
   try {
+    const eventsCol = tenantRef(domain).collection('events');
+    const payload = {
+      email: emailLower,
+      type,
+      meta: meta || null,
+      ...(docId && preserveCreatedAt
+        ? { updatedAt: FieldValue.serverTimestamp() }
+        : { createdAt: FieldValue.serverTimestamp() }),
+    };
     const writes = [
-      tenantRef(domain).collection('events').add({
-        email: emailLower,
-        type,
-        meta: meta || null,
-        createdAt: FieldValue.serverTimestamp(),
-      }),
+      docId
+        ? eventsCol.doc(docId).set(payload, { merge: true })
+        : eventsCol.add(payload),
     ];
     if (ACTIVITY_EVENT_TYPES.has(type)) {
       writes.push(
@@ -704,6 +710,24 @@ function computeRosterFingerprint(participants) {
   return `${participants.length}:${sigs.join(';')}`;
 }
 
+function computeParticipantWriteFingerprint(participants) {
+  if (!Array.isArray(participants) || participants.length === 0) return '0:empty';
+  const sigs = participants.map(p => {
+    const pid = p.participantId || '';
+    const email = (p.email || '').toLowerCase().trim();
+    const name = (p.displayName || '').trim();
+    const present = p.present ? 1 : 0;
+    const sessions = p.sessions || 1;
+    const join = p.joinTime ? (typeof p.joinTime === 'string' ? p.joinTime : p.joinTime.toISOString?.() || String(p.joinTime)) : '';
+    const leave = p.leaveTime ? (typeof p.leaveTime === 'string' ? p.leaveTime : p.leaveTime.toISOString?.() || String(p.leaveTime)) : '';
+    const durMs = typeof p.durationMs === 'number' ? p.durationMs : '';
+    const durMin = typeof p.durationMin === 'number' ? p.durationMin : '';
+    return `${pid}|${email}|${name}|${present}|${sessions}|${join}|${leave}|${durMs}|${durMin}`;
+  });
+  sigs.sort();
+  return `${participants.length}:${sigs.join(';')}`;
+}
+
 function getDebounceEntry(key) {
   const now = Date.now();
   if (attendanceDebounceCache.size > 500) {
@@ -725,7 +749,15 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
   try {
     const nowMs = Date.now();
     const currentFingerprint = computeRosterFingerprint(participants);
+    const currentWriteFingerprint = computeParticipantWriteFingerprint(participants);
     const cached = getDebounceEntry(sessionKey);
+    const instanceId = recordName ? lastSegment(recordName) : null;
+    const buildTrackedDocId = (emailLower) => {
+      const cleanEmail = emailLower.replace(/[^a-z0-9]/g, '_');
+      const cleanConf = (conferenceId || 'unknown').replace(/[^a-z0-9]/g, '_');
+      const cleanInst = (instanceId || 'default').replace(/[^a-z0-9]/g, '_');
+      return `tracked_${cleanConf}_${cleanInst}_${cleanEmail}`;
+    };
 
     const isFirstPersist = !cached;
     const rosterChanged = cached ? cached.fingerprint !== currentFingerprint : false;
@@ -738,11 +770,19 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
       if (actorEmail) {
         const actorLower = actorEmail.toLowerCase();
         if (cached.trackedActors && !cached.trackedActors.has(actorLower)) {
-          cached.trackedActors.add(actorLower);
+          const pCount = Math.max(participants.length, cached.prevMeetingMeta?.participantCount || 0);
+          const dCount = Math.max(countDistinctAttendees(participants), cached.prevMeetingMeta?.distinctAttendeeCount || 0);
+          cached.trackedActors.set(actorLower, { participantCount: pCount, distinctAttendees: dCount });
           logEvent(domain, {
             email: actorEmail,
             type: 'tracked',
-            meta: { conferenceId, participantCount: participants.length, distinctAttendees: countDistinctAttendees(participants) },
+            docId: buildTrackedDocId(actorLower),
+            meta: {
+              conferenceId,
+              ...(instanceId ? { instanceId } : {}),
+              participantCount: pCount,
+              distinctAttendees: dCount,
+            },
           });
         }
       }
@@ -758,10 +798,13 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
 
     const entry = cached || {
       fingerprint: currentFingerprint,
+      participantWriteFingerprint: null,
       lastPersistedAt: nowMs,
       lastSeenAt: nowMs,
-      trackedActors: new Set(),
+      trackedActors: new Map(),
       inFlightPromise: null,
+      prevMeetingMeta: null,
+      codeMeta: null,
     };
     if (isFirstPersist) {
       attendanceDebounceCache.set(sessionKey, entry);
@@ -781,7 +824,6 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
       // on as the series/link-level doc (title, recurringEventId, excused,
       // calendar data, and any pre-migration merged participants); readers
       // treat `data.meetingCode || doc.id` as the code.
-      const instanceId = recordName ? lastSegment(recordName) : null;
       const codeRef = tenantRef(domain).collection('meetings').doc(conferenceId);
       const meetingRef = instanceId
         ? tenantRef(domain).collection('meetings').doc(`${conferenceId}__${instanceId}`)
@@ -797,17 +839,21 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
       // last-writer-wins — so a later PARTIAL re-fetch (Meet API eventual
       // consistency, a truncated page) would shrink participantCount and narrow
       // start/end, corrupting a fuller earlier snapshot. Read-then-widen.
-      let prev = {};
-      let codeMeta = {};
-      try { prev = (await meetingRef.get()).data() || {}; } catch { /* first write */ }
-      if (instanceId) {
-        try { codeMeta = (await codeRef.get()).data() || {}; } catch { /* fine */ }
+      // On unchanged 5-minute checkpoints, reuse the cached metadata from the
+      // initial/roster-change write so checkpoints don't burn 2 extra reads.
+      let prev = entry.prevMeetingMeta || {};
+      let codeMeta = entry.codeMeta || {};
+      if (isFirstPersist || rosterChanged || forcePersist || !entry.prevMeetingMeta) {
+        try { prev = (await meetingRef.get()).data() || {}; } catch { /* first write */ }
+        if (instanceId) {
+          try { codeMeta = (await codeRef.get()).data() || {}; } catch { /* fine */ }
+        }
       }
       const tsMsOf = (v) => (v?.toDate ? v.toDate().getTime() : (v ? new Date(v).getTime() : null));
       const prevStartMs = tsMsOf(prev.startTime);
       const prevEndMs = tsMsOf(prev.endTime);
 
-      await meetingRef.set({
+      const mergedMeetingMeta = {
         conferenceId,
         meetingCode: conferenceId,
         recordName,
@@ -823,13 +869,21 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
         lastFetchedAt: now,
         updatedAt: now,
         createdAt: prev.createdAt || now,
-      }, { merge: true });
+      };
+      await meetingRef.set(mergedMeetingMeta, { merge: true });
+      entry.prevMeetingMeta = { ...prev, ...mergedMeetingMeta };
+      entry.codeMeta = codeMeta;
+
+      const shouldWriteParticipants = isFirstPersist
+        || rosterChanged
+        || forcePersist
+        || entry.participantWriteFingerprint !== currentWriteFingerprint;
 
       // Keep the code-level doc alive as the series anchor (metadata target for
       // calendar/excused writes), WITHOUT participant scalars — freezing it is
       // what stops the old merge-everything behavior. hasInstances lets readers
       // skip metadata-only code docs in per-meeting listings.
-      if (instanceId) {
+      if (instanceId && shouldWriteParticipants) {
         await codeRef.set({
           conferenceId,
           hasInstances: true,
@@ -839,56 +893,79 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
         }, { merge: true });
       }
 
-      // Chunk into batches under Firestore's 500-op limit — a very large meeting
-      // (200+ participants) would otherwise exceed a single batch.
-      const CHUNK = 450;
-      for (let i = 0; i < participants.length; i += CHUNK) {
-        const batch = getDb().batch();
-        for (const p of participants.slice(i, i + CHUNK)) {
-          const rawDocId = (p.participantId ? lastSegment(p.participantId) : '') || p.email || p.displayName || 'unknown';
-          const docId = String(rawDocId).replace(/\//g, '_').trim() || 'unknown';
-          const pRef = meetingRef.collection('participants').doc(docId);
-          batch.set(pRef, {
-            participantId: p.participantId,
-            displayName: p.displayName,
-            // Normalize to lowercase so account-deletion (which queries
-            // email == emailLower) reliably matches, and so per-person rollups
-            // key consistently. Reads already lowercase before comparing.
-            email: p.email ? p.email.toLowerCase() : null,
-            joinTime: p.joinTime ? new Date(p.joinTime) : null,
-            leaveTime: p.leaveTime ? new Date(p.leaveTime) : null,
-            durationMs: typeof p.durationMs === 'number' ? p.durationMs : 0,
-            durationMin: typeof p.durationMin === 'number' ? p.durationMin : Math.round((p.durationMs || 0) / 60000),
-            present: p.present,
-            sessions: p.sessions,
-            lastSeenAt: now,
-            updatedAt: now,
-            createdAt: now,
-          }, { merge: true });
+      if (shouldWriteParticipants) {
+        // Chunk into batches under Firestore's 500-op limit — a very large meeting
+        // (200+ participants) would otherwise exceed a single batch.
+        const CHUNK = 450;
+        for (let i = 0; i < participants.length; i += CHUNK) {
+          const batch = getDb().batch();
+          for (const p of participants.slice(i, i + CHUNK)) {
+            const rawDocId = (p.participantId ? lastSegment(p.participantId) : '') || p.email || p.displayName || 'unknown';
+            const docId = String(rawDocId).replace(/\//g, '_').trim() || 'unknown';
+            const pRef = meetingRef.collection('participants').doc(docId);
+            batch.set(pRef, {
+              participantId: p.participantId,
+              displayName: p.displayName,
+              // Normalize to lowercase so account-deletion (which queries
+              // email == emailLower) reliably matches, and so per-person rollups
+              // key consistently. Reads already lowercase before comparing.
+              email: p.email ? p.email.toLowerCase() : null,
+              joinTime: p.joinTime ? new Date(p.joinTime) : null,
+              leaveTime: p.leaveTime ? new Date(p.leaveTime) : null,
+              durationMs: typeof p.durationMs === 'number' ? p.durationMs : 0,
+              durationMin: typeof p.durationMin === 'number' ? p.durationMin : Math.round((p.durationMs || 0) / 60000),
+              present: p.present,
+              sessions: p.sessions,
+              lastSeenAt: now,
+              updatedAt: now,
+              createdAt: now,
+            }, { merge: true });
+          }
+          await batch.commit();
         }
-        await batch.commit();
+        entry.participantWriteFingerprint = currentWriteFingerprint;
       }
 
       if (actorEmail) {
         const actorLower = actorEmail.toLowerCase();
-        if (!entry.trackedActors.has(actorLower)) {
-          entry.trackedActors.add(actorLower);
+        const maxParticipantCount = mergedMeetingMeta.participantCount;
+        const maxDistinctAttendees = mergedMeetingMeta.distinctAttendeeCount;
+        const prevActor = entry.trackedActors.get(actorLower);
+        const shouldUpdateActorEvent = !prevActor
+          || maxParticipantCount > prevActor.participantCount
+          || maxDistinctAttendees > prevActor.distinctAttendees;
+        if (shouldUpdateActorEvent) {
+          entry.trackedActors.set(actorLower, {
+            participantCount: Math.max(maxParticipantCount, prevActor?.participantCount || 0),
+            distinctAttendees: Math.max(maxDistinctAttendees, prevActor?.distinctAttendees || 0),
+          });
           logEvent(domain, {
             email: actorEmail,
             type: 'tracked',
-            meta: { conferenceId, participantCount: participants.length, distinctAttendees: distinctAttendeeCount },
+            docId: buildTrackedDocId(actorLower),
+            preserveCreatedAt: Boolean(prevActor),
+            meta: {
+              conferenceId,
+              ...(instanceId ? { instanceId } : {}),
+              participantCount: Math.max(maxParticipantCount, prevActor?.participantCount || 0),
+              distinctAttendees: Math.max(maxDistinctAttendees, prevActor?.distinctAttendees || 0),
+            },
           });
+          // In admin_activity, store one idempotent doc per meeting to prevent poll ticks from exploding
+          const cleanEmail = actorLower.replace(/[^a-z0-9]/g, '_');
+          const cleanConf = (conferenceId || 'unknown').replace(/[^a-z0-9]/g, '_');
+          getDb().collection('admin_activity').doc(`mtg_${cleanConf}_${cleanEmail}`).set({
+            email: actorLower,
+            domain,
+            type: 'meeting',
+            meta: {
+              conferenceId,
+              participantCount: Math.max(maxParticipantCount, prevActor?.participantCount || 0),
+              distinctAttendees: Math.max(maxDistinctAttendees, prevActor?.distinctAttendees || 0),
+            },
+            ...(prevActor ? { updatedAt: FieldValue.serverTimestamp() } : { createdAt: FieldValue.serverTimestamp() }),
+          }, { merge: true }).catch(() => {});
         }
-        // In admin_activity, store one idempotent doc per meeting to prevent poll ticks from exploding
-        const cleanEmail = actorLower.replace(/[^a-z0-9]/g, '_');
-        const cleanConf = (conferenceId || 'unknown').replace(/[^a-z0-9]/g, '_');
-        getDb().collection('admin_activity').doc(`mtg_${cleanConf}_${cleanEmail}`).set({
-          email: actorLower,
-          domain,
-          type: 'meeting',
-          meta: { conferenceId, participantCount: participants.length, distinctAttendees: distinctAttendeeCount },
-          createdAt: FieldValue.serverTimestamp(),
-        }, { merge: true }).catch(() => {});
       }
     })();
 
@@ -2289,6 +2366,7 @@ async function getAllUsersAcrossTenants() {
         createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
         signupIp: data.signupIp || null,
         signupGeo: data.signupGeo || null,
+        language: data.language || null,
         acquisitionSource: data.acquisitionSource || null,
         signupDetectedSource: data.signupDetectedSource || null,
         postExportSurvey: data.postExportSurvey || null,
@@ -2296,8 +2374,11 @@ async function getAllUsersAcrossTenants() {
         individualBillingStatus: data.individualBillingStatus || null,
         individualPlanType: data.individualPlanType || null,
         individualPlanExpiresAt: (data.individualPlanExpiresAt?.toDate ? data.individualPlanExpiresAt.toDate().toISOString() : data.individualPlanExpiresAt) || null,
+        individualStripeSubscriptionId: data.individualStripeSubscriptionId || null,
         reviewStatus: data.reviewStatus || null,
         reviewLinkClickedAt: data.reviewLinkClickedAt || null,
+        signupNotifyPending: Boolean(data.signupNotifyPending),
+        referralNotifyPending: Boolean(data.referralNotifyPending),
       };
     });
   } catch (err) {
@@ -2323,10 +2404,7 @@ async function getUserMeetingHistory(domain, email, { limit } = {}) {
     const tenant = tenantRef(domain);
     const emailLower = email.toLowerCase();
 
-    const [eventsSnap, meetingsSnap] = await Promise.all([
-      tenant.collection('events').where('email', '==', emailLower).where('type', '==', 'tracked').get(),
-      tenant.collection('meetings').get(),
-    ]);
+    const eventsSnap = await tenant.collection('events').where('email', '==', emailLower).where('type', '==', 'tracked').get();
 
     // Conference IDs the user has actually tracked. Always filter by this set —
     // if it's empty the user simply gets no meetings (see comment above).
@@ -2338,6 +2416,10 @@ async function getUserMeetingHistory(domain, email, { limit } = {}) {
         if (cid.includes('__')) trackedConferenceIds.add(cid.split('__')[0]);
       }
     }
+
+    const meetingsSnap = trackedConferenceIds.size > 0
+      ? await tenant.collection('meetings').get()
+      : { docs: [] };
 
     // Per-instance model: instance docs (id `code__recordId`) match the
     // user's tracked CODES via data.meetingCode; legacy code-keyed docs match
@@ -2807,15 +2889,16 @@ async function getTeamOverview(domain) {
 // see "Daily Standup: Alex attended 12/15, avg arrival +4 min late". Only
 // meetings with a recurringEventId roll up — instant meetings stay out of this
 // view (grouping by title alone produces too many false matches).
-async function getUserMeetingSeries(domain, email) {
+async function getUserMeetingSeries(domain, email, options = {}) {
   try {
+    const includeParticipants = options?.includeParticipants !== false;
     const tenant = tenantRef(domain);
     const emailLower = email.toLowerCase();
 
-    const [eventsSnap, meetingsSnap] = await Promise.all([
-      tenant.collection('events').where('email', '==', emailLower).where('type', '==', 'tracked').get(),
-      tenant.collection('meetings').get(),
-    ]);
+    const eventsSnap = await tenant.collection('events')
+      .where('email', '==', emailLower)
+      .where('type', '==', 'tracked')
+      .get();
 
     // Same tracked-by-this-user filter as getUserMeetingHistory: only count
     // meetings the user has actually tracked. No eventless fallback — an
@@ -2829,14 +2912,30 @@ async function getUserMeetingSeries(domain, email) {
       }
     }
 
+    if (trackedIds.size === 0) {
+      return { series: [], totalSeries: 0 };
+    }
+
+    let preloadedMeetings = null;
+    if (Array.isArray(options?.domainMeetings)) {
+      preloadedMeetings = options.domainMeetings;
+    } else if (typeof options?.domainMeetings === 'function') {
+      const loaded = await options.domainMeetings(domain);
+      if (Array.isArray(loaded)) preloadedMeetings = loaded;
+    }
+
+    const rawMeetings = preloadedMeetings
+      ? preloadedMeetings
+      : (await tenant.collection('meetings').get()).docs.map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
+
     // Per-instance model: every session is its own doc (id `code__recordId`,
     // meetingCode = the code) — instanceCount finally counts real sessions,
     // so the Class Summary fires for a normal weekly class. Legacy code-keyed
     // docs still count as ONE (merged) instance when they hold participants;
     // post-migration code docs are metadata-only anchors and are skipped.
-    const seriesMeetings = meetingsSnap.docs
+    const seriesMeetings = rawMeetings
       .filter(d => {
-        const data = d.data();
+        const data = d.data || {};
         if (!data.recurringEventId) return false; // skip non-recurring meetings
         const code = data.meetingCode || d.id;
         const baseCode = code.includes('__') ? code.split('__')[0] : code;
@@ -2845,18 +2944,21 @@ async function getUserMeetingSeries(domain, email) {
         const isInstance = d.id !== code;
         return isInstance || !data.hasInstances; // hasInstances = metadata-only series anchor (post-migration code doc)
       })
-      .map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
+      .map(d => ({
+        id: d.id,
+        ref: d.ref || tenant.collection('meetings').doc(d.id),
+        data: d.data || {},
+      }));
 
     if (seriesMeetings.length === 0) {
       return { series: [], totalSeries: 0 };
     }
 
-    // Pull participants in parallel for every series meeting. Each meeting is
-    // a Firestore subcollection read; the count stays small because we already
-    // filtered to recurring-only.
-    const participantSnaps = await Promise.all(
-      seriesMeetings.map(m => m.ref.collection('participants').get())
-    );
+    // Pull participants in parallel for every series meeting (unless caller
+    // only needs series metadata like check-upcoming).
+    const participantSnaps = includeParticipants
+      ? await Promise.all(seriesMeetings.map(m => m.ref.collection('participants').get()))
+      : seriesMeetings.map(() => ({ docs: [] }));
 
     // Identity canonicalization (Sweep-10 class): Meet sometimes reports a person
     // with an email and sometimes name-only. Build name→email PER SERIES from
@@ -2864,15 +2966,17 @@ async function getUserMeetingSeries(domain, email) {
     // email identity instead of splitting into a phantom second person (which
     // would inflate the roster and skew each person's attendance %).
     const nameToEmailBySeries = new Map(); // recurringEventId -> Map(nameLower -> email)
-    for (let i = 0; i < seriesMeetings.length; i++) {
-      const rid = seriesMeetings[i].data.recurringEventId;
-      let n2e = nameToEmailBySeries.get(rid);
-      if (!n2e) { n2e = new Map(); nameToEmailBySeries.set(rid, n2e); }
-      for (const p of participantSnaps[i].docs) {
-        const pd = p.data();
-        const e = (pd.email || '').toLowerCase();
-        const n = (pd.displayName || '').toLowerCase();
-        if (e && n && !n2e.has(n)) n2e.set(n, e);
+    if (includeParticipants) {
+      for (let i = 0; i < seriesMeetings.length; i++) {
+        const rid = seriesMeetings[i].data.recurringEventId;
+        let n2e = nameToEmailBySeries.get(rid);
+        if (!n2e) { n2e = new Map(); nameToEmailBySeries.set(rid, n2e); }
+        for (const p of participantSnaps[i].docs) {
+          const pd = p.data();
+          const e = (pd.email || '').toLowerCase();
+          const n = (pd.displayName || '').toLowerCase();
+          if (e && n && !n2e.has(n)) n2e.set(n, e);
+        }
       }
     }
 
@@ -2903,6 +3007,11 @@ async function getUserMeetingSeries(domain, email) {
       if (meetingStart) {
         if (!series.firstAt || meetingStart < series.firstAt) series.firstAt = meetingStart;
         if (!series.lastAt || meetingStart > series.lastAt) series.lastAt = meetingStart;
+      }
+
+      if (!includeParticipants) {
+        series.totalParticipants += (data.distinctAttendeeCount ?? data.participantCount ?? 0);
+        continue;
       }
 
       const mEnd = tsMs(data.endTime);
@@ -2995,15 +3104,15 @@ async function getParticipantHistory(domain, userEmail, key) {
     const normalizedKey = isEmail ? key.toLowerCase() : key;
 
     // Scope to meetings the requester has tracked (same filter as /history).
-    const [eventsSnap, meetingsSnap] = await Promise.all([
-      tenant.collection('events').where('email', '==', userEmail.toLowerCase()).where('type', '==', 'tracked').get(),
-      tenant.collection('meetings').get(),
-    ]);
+    const eventsSnap = await tenant.collection('events').where('email', '==', userEmail.toLowerCase()).where('type', '==', 'tracked').get();
     const trackedIds = new Set();
     for (const d of eventsSnap.docs) {
       const cid = d.data().meta?.conferenceId;
       if (cid) trackedIds.add(cid);
     }
+    const meetingsSnap = trackedIds.size > 0
+      ? await tenant.collection('meetings').get()
+      : { docs: [] };
     // Always filter — no eventless fallback (shared tenants would leak data).
     const meetings = meetingsSnap.docs
       .filter(d => trackedIds.has(d.id))
@@ -3130,7 +3239,8 @@ module.exports = {
   getUserSettings, updateUserSettings, isNotificationCategoryEnabled,
   setUserAcquisitionSource, setUserAcquisitionDismissed, setPostExportSurvey, claimSignupNotification, releaseSignupNotification, getTenantAdminEmailStrict,
   getDomainTeacherCount, getDomainClusterStats, setTeamSignpostDismissed,
-  claimReferral, releaseReferral, recordReferralForInviter, recordReferralPromoCode, getUserTrackingStreak,
+  claimReferral, releaseReferral, recordReferralForInviter, recordReferralPromoCode,
+  getUserTrackingStreak: process.env.NODE_ENV === 'test' ? getUserTrackingStreak : memoizeTTL(getUserTrackingStreak, 600000),
   claimWebhookEvent, releaseWebhookEvent,
   paymentFromSession, paymentFromInvoice, recordPayment, updateSubscriptionStatus, markPaymentStatus,
   getRevenueSummary: memoizeTTL(getRevenueSummary, 120000),
@@ -3150,6 +3260,7 @@ module.exports = {
   getUserDetail, computeHealthScore, setAdminNote, searchAdminNotes,
   appendConversation, setOutreachStatus,
   suppressEmail, isEmailSuppressed, unsuppressEmail,
+  getSuppressedEmailSet: memoizeTTL(getSuppressedEmailSet, 120000),
   createReminder, markReminderDone, getDueReminders,
   getEmailTemplates, setEmailTemplates,
   getAllUsersAcrossTenants: memoizeTTL(getAllUsersAcrossTenants, 120000),
@@ -3159,6 +3270,7 @@ module.exports = {
   // ── Heavy full-DB admin reads: TTL-cached so a dashboard reload doesn't
   //    re-scan the whole users+events+meetings tree for each one. ──
   getAggregatedInsights: memoizeTTL(getAggregatedInsights, 900000), // 15 min TTL
+  clearInsightsCache,
   getAdvancedAnalytics: memoizeTTL(getAdvancedAnalytics, 120000),
   getWeeklySelfReport: memoizeTTL(getWeeklySelfReport, 120000),
   getReachOutSuggestions,

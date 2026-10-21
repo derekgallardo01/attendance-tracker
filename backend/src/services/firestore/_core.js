@@ -88,9 +88,27 @@ function getDb() {
 function memoizeTTL(fn, ttlMs, maxEntries = 200) {
   const cache = new Map(); // argsKey -> { at, value, promise }
   return async function (...args) {
-    const key = JSON.stringify(args);
+    let forceRefresh = false;
+    const normalizedArgs = args.slice();
+    if (normalizedArgs.length > 0) {
+      const last = normalizedArgs[normalizedArgs.length - 1];
+      if (last && typeof last === 'object' && !Array.isArray(last) && Object.getPrototypeOf(last) === Object.prototype) {
+        if (last.force === true) forceRefresh = true;
+        const rest = { ...last };
+        delete rest.force;
+        if (Object.keys(rest).length === 0) {
+          normalizedArgs[normalizedArgs.length - 1] = undefined;
+        } else {
+          normalizedArgs[normalizedArgs.length - 1] = rest;
+        }
+      }
+    }
+    while (normalizedArgs.length > 0 && normalizedArgs[normalizedArgs.length - 1] === undefined) {
+      normalizedArgs.pop();
+    }
+    const key = JSON.stringify(normalizedArgs);
     const hit = cache.get(key);
-    if (hit) {
+    if (hit && !forceRefresh) {
       if ((Date.now() - hit.at) < ttlMs && hit.value !== undefined) return hit.value;
       if (hit.promise) return hit.promise;
     }

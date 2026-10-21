@@ -42,5 +42,20 @@ async function unsuppressEmail(email) {
     return false;
   }
 }
+async function getSuppressedEmailSet() {
+  try {
+    const snap = await getDb().collection('suppression').get();
+    const set = new Set();
+    for (const d of snap.docs) {
+      if (d.id) set.add(String(d.id).toLowerCase());
+      const email = d.data()?.email;
+      if (email) set.add(String(email).toLowerCase());
+    }
+    return set;
+  } catch (err) {
+    log.warn('firestore: getSuppressedEmailSet failed', { error: err.message });
+    return null;
+  }
+}
 
-module.exports = { suppressEmail, isEmailSuppressed, unsuppressEmail };
+module.exports = { suppressEmail, isEmailSuppressed, unsuppressEmail, getSuppressedEmailSet };

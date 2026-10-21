@@ -101,7 +101,7 @@ describe('persistAttendance — write debouncing', () => {
     expect(res).toBe(true);
   });
 
-  test('checkpoint interval triggers write even if roster is unchanged', async () => {
+  test('checkpoint interval triggers meeting write, skips unchanged participant batch writes, and writes participants when duration changes', async () => {
     const originalDateNow = Date.now;
     let mockNow = 1000000;
     Date.now = () => mockNow;
@@ -109,16 +109,60 @@ describe('persistAttendance — write debouncing', () => {
     try {
       await firestore.persistAttendance('acme.edu', 'class-101', 'conferenceRecords/r1', baseParticipants, 'teacher@acme.edu');
 
+      // Tag participant p1 with a sentinel to verify unchanged checkpoint does NOT overwrite participant docs
+      ctx.seed('tenants/acme.edu/meetings/class-101__r1/participants/p1', {
+        ...ctx.read('tenants/acme.edu/meetings/class-101__r1/participants/p1'),
+        checkpointSentinel: 'kept',
+      });
+
       // 1 minute later: still debounced
       mockNow += 60 * 1000;
       expect(await firestore.persistAttendance('acme.edu', 'class-101', 'conferenceRecords/r1', baseParticipants, 'teacher@acme.edu')).toBe(false);
 
-      // 5 minutes later (total 6 minutes since first write): checkpoint due
+      // 5 minutes later (total 6 minutes since first write): checkpoint due, durations unchanged
       mockNow += 5 * 60 * 1000;
       expect(await firestore.persistAttendance('acme.edu', 'class-101', 'conferenceRecords/r1', baseParticipants, 'teacher@acme.edu')).toBe(true);
+      expect(ctx.read('tenants/acme.edu/meetings/class-101__r1/participants/p1').checkpointSentinel).toBe('kept');
+
+      // Another 5 minutes later with updated durationMs: participant doc IS written
+      mockNow += 5 * 60 * 1000;
+      const durationUpdated = [
+        { ...baseParticipants[0], durationMs: 600000, durationMin: 10 },
+        baseParticipants[1],
+      ];
+      expect(await firestore.persistAttendance('acme.edu', 'class-101', 'conferenceRecords/r1', durationUpdated, 'teacher@acme.edu')).toBe(true);
+      expect(ctx.read('tenants/acme.edu/meetings/class-101__r1/participants/p1').durationMin).toBe(10);
     } finally {
       Date.now = originalDateNow;
     }
+  });
+
+  test('updates deterministic tracked event doc monotonically when students join after teacher opens panel solo', async () => {
+    const soloTeacher = [
+      { participantId: 'p0', displayName: 'Teacher', email: 'teacher@acme.edu', present: true, sessions: 1, joinTime: '2026-10-07T09:59:00Z', leaveTime: null },
+    ];
+    await firestore.persistAttendance('acme.edu', 'class-101', 'conferenceRecords/r1', soloTeacher, 'teacher@acme.edu');
+    await new Promise(r => setImmediate(r));
+
+    let trackedEvents = ctx.list('tenants/acme.edu/events').filter(e => e.data.type === 'tracked');
+    expect(trackedEvents).toHaveLength(1);
+    expect(trackedEvents[0].data.meta.participantCount).toBe(1);
+    expect(trackedEvents[0].data.meta.distinctAttendees).toBe(1);
+    const initialCreatedAt = trackedEvents[0].data.createdAt;
+
+    // Students join the class
+    const withStudents = [
+      ...soloTeacher,
+      ...baseParticipants,
+    ];
+    await firestore.persistAttendance('acme.edu', 'class-101', 'conferenceRecords/r1', withStudents, 'teacher@acme.edu');
+    await new Promise(r => setImmediate(r));
+
+    trackedEvents = ctx.list('tenants/acme.edu/events').filter(e => e.data.type === 'tracked');
+    expect(trackedEvents).toHaveLength(1); // still strictly 1 doc
+    expect(trackedEvents[0].data.meta.participantCount).toBe(3);
+    expect(trackedEvents[0].data.meta.distinctAttendees).toBe(3);
+    expect(trackedEvents[0].data.createdAt).toEqual(initialCreatedAt);
   });
 
   test('second actor accessing unchanged meeting emits a tracked event for the new actor', async () => {
@@ -143,5 +187,11 @@ describe('persistAttendance — write debouncing', () => {
     // After clearing, same roster writes as a fresh first persist
     const res = await firestore.persistAttendance('acme.edu', 'class-101', 'conferenceRecords/r1', baseParticipants, 'teacher@acme.edu');
     expect(res).toBe(true);
+
+    // Deterministic tracked event doc ID ensures only ONE tracked event doc exists per (conferenceId, instanceId, email)
+    await new Promise(r => setImmediate(r));
+    const trackedEvents = ctx.list('tenants/acme.edu/events').filter(e => e.data.type === 'tracked');
+    expect(trackedEvents).toHaveLength(1);
+    expect(trackedEvents[0].path).toBe('tenants/acme.edu/events/tracked_class_101_r1_teacher_acme_edu');
   });
 });

@@ -3,7 +3,7 @@ const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getRevenueFunnel, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, dismissSuggestion, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance, getTeamOverview, getRecentErrorSpike, getErrorAlertState, setErrorAlertState, getCancellationTelemetry, backfillAdminActivityIfSparse, checkAndRecordMilestones, getMilestoneProgress, getTenantPlan, getRevenueSummary } = require('../services/firestore');
+const { upsertTenantConfig, getTenantConfig, getDb, getAllUsersAcrossTenants, getAggregatedInsights, setUserAcquisitionSource, getOutreachList, getRecentActivity, getActivityPulse, getRevenueFunnel, getReachOutSuggestions, getPowerUserPipeline, markUserContacted, dismissSuggestion, getUserDetail, setAdminNote, searchAdminNotes, appendConversation, setOutreachStatus, createReminder, markReminderDone, getDueReminders, getEmailTemplates, setEmailTemplates, getAdvancedAnalytics, getWeeklySelfReport, getActivationFunnel, evaluateSeriesAlerts, claimDailyAlertSlot, recordAlertsSent, seriesAlertKey, claimSeriesAlertCondition, evaluateReengagementForUser, claimReengagementSlot, logEvent, isEmailSuppressed, getSuppressedEmailSet, getUserSettings, getUser, getExportedConferenceIds, getUserMeetingSeries, persistAttendance, getTeamOverview, getRecentErrorSpike, getErrorAlertState, setErrorAlertState, getCancellationTelemetry, backfillAdminActivityIfSparse, checkAndRecordMilestones, getMilestoneProgress, getTenantPlan, getRevenueSummary } = require('../services/firestore');
 const { sendAdminEmail, sendErrorSpikeAlertEmail, sendWeeklySelfReport, sendSeriesAlertEmail, sendReactivationEmail, sendActivationNudgeEmail, sendSoloNudgeEmail, sendForgottenMeetingEmail, sendComebackEmail, sendExportGapEmail, sendUpcomingMeetingEmail, sendOrgWeeklyDigest, flushDeferredNotifications,
   sendSourceReportedNotification, verifyReviewApprovalToken, sendReviewRewardEmail, sendPassExpiryReminderEmail } = require('../lib/notifications');
 const { escapeHtml } = require('../lib/html');
@@ -18,6 +18,46 @@ const { google } = require('googleapis');
 const { buildAndSaveExport } = require('./sheets');
 const { reconcilePendingReviews } = require('../services/review-verifier');
 const { syncMarketplaceReviews } = require('../services/marketplace-reviews');
+
+async function createSuppressedChecker() {
+  let suppressedSet = null;
+  if (typeof getSuppressedEmailSet === 'function') {
+    try {
+      const loaded = await getSuppressedEmailSet();
+      if (loaded instanceof Set) suppressedSet = loaded;
+    } catch (_) {
+      suppressedSet = null;
+    }
+  }
+  return async (email) => {
+    if (!email) return false;
+    if (suppressedSet instanceof Set) {
+      return suppressedSet.has(String(email).toLowerCase());
+    }
+    return isEmailSuppressed(email);
+  };
+}
+
+function createDomainMeetingsLoader() {
+  const cache = new Map();
+  return async (domain) => {
+    if (!domain) return null;
+    const key = String(domain).toLowerCase();
+    if (cache.has(key)) return cache.get(key);
+    try {
+      const db = typeof getDb === 'function' ? getDb() : null;
+      const snap = await db?.collection?.('tenants')?.doc?.(domain)?.collection?.('meetings')?.get?.();
+      const list = snap && Array.isArray(snap.docs)
+        ? snap.docs.map(d => ({ id: d.id, ref: d.ref, data: typeof d.data === 'function' ? d.data() : (d.data || {}) }))
+        : null;
+      cache.set(key, list);
+      return list;
+    } catch (_) {
+      cache.set(key, null);
+      return null;
+    }
+  };
+}
 
 const SUPER_ADMIN_EMAIL = CONFIG.superAdminEmail;
 function isSuperAdminUser(email) {
@@ -604,6 +644,8 @@ router.post('/admin/check-errors', requireSuperAdminOrScheduler, async (req, res
 router.post('/admin/check-reengagement', requireSuperAdminOrScheduler, async (req, res) => {
   try {
     const users = rotateForFairness(await getAllUsersAcrossTenants());
+    const isSuppressed = await createSuppressedChecker();
+    const getDomainMeetings = createDomainMeetingsLoader();
     let usersChecked = 0;
     let usersWithReminders = 0;
     let totalSent = 0;
@@ -624,17 +666,27 @@ router.post('/admin/check-reengagement', requireSuperAdminOrScheduler, async (re
       if (!user?.email || !user?.domain) continue;
       // Backstop: flush any signup notification that never fired — the user
       // dismissed the "how did you find us?" modal AND the post-signup grace
-      // timer was lost to a Cloud Run instance restart. No-op unless this user
-      // has one pending; claimed transactionally so it sends at most once.
-      flushDeferredNotifications(user.domain, user.email);
+      // timer was lost to a Cloud Run instance restart. Only invoke when the
+      // preloaded user doc shows a pending flag (or when flags are omitted in
+      // unit test fixtures) so we don't perform 2 extra user-doc reads per user.
+      if (
+        user.signupNotifyPending ||
+        user.referralNotifyPending ||
+        (user.signupNotifyPending === undefined && user.referralNotifyPending === undefined)
+      ) {
+        flushDeferredNotifications(user.domain, user.email);
+      }
       // Don't send lifecycle mail to the owner's own account (self/test).
       if (isSuperAdminUser(user.email)) continue;
       usersChecked++;
       try {
         // CAN-SPAM: never send lifecycle mail to a suppressed address.
-        if (await isEmailSuppressed(user.email)) { totalSkipped++; continue; }
+        if (await isSuppressed(user.email)) { totalSkipped++; continue; }
 
-        const reminders = await evaluateReengagementForUser(user.domain, user.email);
+        const reminders = await evaluateReengagementForUser(user.domain, user.email, {
+          userDoc: user,
+          domainMeetings: () => getDomainMeetings(user.domain),
+        });
         if (reminders.length === 0) continue;
         let fired = 0;
 
@@ -763,7 +815,7 @@ router.post('/admin/check-reengagement', requireSuperAdminOrScheduler, async (re
     // Daily review sweep: scrape marketplace reviews across all languages and reconcile with pending users
     let reviewSweep = null;
     try {
-      reviewSweep = await reconcilePendingReviews();
+      reviewSweep = await reconcilePendingReviews(users);
       log.info('admin: check-reengagement review sweep completed', reviewSweep);
     } catch (err) {
       log.error('admin: check-reengagement review sweep failed', { error: err.message });
@@ -785,6 +837,8 @@ router.post('/admin/check-reengagement', requireSuperAdminOrScheduler, async (re
 router.post('/admin/check-alerts', requireSuperAdminOrScheduler, async (req, res) => {
   try {
     const users = rotateForFairness(await getAllUsersAcrossTenants());
+    const isSuppressed = await createSuppressedChecker();
+    const getDomainMeetings = createDomainMeetingsLoader();
     let usersChecked = 0;
     let usersAlerted = 0;
     let usersSkipped = 0;
@@ -807,12 +861,14 @@ router.post('/admin/check-alerts', requireSuperAdminOrScheduler, async (req, res
       usersChecked++;
       try {
         // CAN-SPAM: skip suppressed addresses before doing any work.
-        if (await isEmailSuppressed(user.email)) { usersSkipped++; continue; }
+        if (await isSuppressed(user.email)) { usersSkipped++; continue; }
 
         const claim = await claimDailyAlertSlot(user.domain, user.email);
         if (!claim.claimed) { usersSkipped++; continue; }
 
-        const alerts = await evaluateSeriesAlerts(user.domain, user.email);
+        const alerts = await evaluateSeriesAlerts(user.domain, user.email, {
+          domainMeetings: () => getDomainMeetings(user.domain),
+        });
         if (alerts === null) {
           // Evaluation ERRORED (Firestore blip) — release the day slot so the
           // next run retries instead of silencing the user until tomorrow.
@@ -1052,6 +1108,7 @@ router.get('/admin/insights', requireSuperAdmin, async (req, res) => {
 // from monitoring dashboards (Kinetic Helix) does not query Firestore on every call.
 let _khMetricsCache = null;
 let _khMetricsCachedAt = 0;
+let _khMetricsInFlight = null;
 const KH_METRICS_CACHE_MS = 15 * 60 * 1000; // 15 minutes
 
 // GET /api/kh/metrics — durable metrics pull for the Kinetic Helix command
@@ -1063,29 +1120,43 @@ router.get('/kh/metrics', requireKhMetricsKey, async (req, res) => {
     if (!force && process.env.NODE_ENV !== 'test' && _khMetricsCache && (Date.now() - _khMetricsCachedAt) < KH_METRICS_CACHE_MS) {
       return res.json(_khMetricsCache);
     }
-
-    const insights = await getAggregatedInsights({ force });
-    // MRR from the payments ledger (active recurring subscriptions). The old
-    // pro-tenants × KH_MRR_SEAT_CENTS guess counted one-time domain passes as
-    // monthly revenue.
-    let revenue = { mrrCents: 0, proTenants: 0 };
-    try {
-      const [proSnap, summary] = await Promise.all([
-        getDb().collection('tenants').where('plan', '==', 'pro').get(),
-        getRevenueSummary(),
-      ]);
-      revenue = {
-        mrrCents: summary?.mrrApproxUsd || 0,
-        proTenants: proSnap.size,
-        activeSubscriptions: summary?.activeSubscriptions || 0,
-        cash30dCents: summary?.approxUsd?.last30d || 0,
-      };
-    } catch (e) {
-      log.warn('admin: kh revenue failed', { error: e.message });
+    if (!force && _khMetricsInFlight) {
+      const payload = await _khMetricsInFlight;
+      return res.json(payload);
     }
-    _khMetricsCache = { ...insights, revenue, cachedAt: new Date().toISOString() };
-    _khMetricsCachedAt = Date.now();
-    res.json(_khMetricsCache);
+
+    const run = (async () => {
+      try {
+        const insights = await getAggregatedInsights({ force });
+        // MRR from the payments ledger (active recurring subscriptions). The old
+        // pro-tenants × KH_MRR_SEAT_CENTS guess counted one-time domain passes as
+        // monthly revenue.
+        let revenue = { mrrCents: 0, proTenants: 0 };
+        try {
+          const [proSnap, summary] = await Promise.all([
+            getDb().collection('tenants').where('plan', '==', 'pro').get(),
+            getRevenueSummary(),
+          ]);
+          revenue = {
+            mrrCents: summary?.mrrApproxUsd || 0,
+            proTenants: proSnap.size,
+            activeSubscriptions: summary?.activeSubscriptions || 0,
+            cash30dCents: summary?.approxUsd?.last30d || 0,
+          };
+        } catch (e) {
+          log.warn('admin: kh revenue failed', { error: e.message });
+        }
+        _khMetricsCache = { ...insights, revenue, cachedAt: new Date().toISOString() };
+        _khMetricsCachedAt = Date.now();
+        return _khMetricsCache;
+      } finally {
+        _khMetricsInFlight = null;
+      }
+    })();
+
+    if (!force) _khMetricsInFlight = run;
+    const payload = await run;
+    res.json(payload);
   } catch (err) {
     log.error('admin: kh metrics failed', { error: err.message });
     res.status(500).json({ error: 'Failed to compute insights' });
@@ -1246,7 +1317,7 @@ router.post('/admin/verify-delegation', verifyDelegationLimiter, async (req, res
 router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res) => {
   const startedAt = Date.now();
   const budgetMs = sweepBudgetMs();
-  const RECENT_MS = 2 * 24 * 60 * 60 * 1000; // only conferences that ended in the last 2 days
+  const RECENT_MS = 3 * 60 * 60 * 1000; // only conferences that ended in the last 3 hours (cron runs every 15 min)
   const ACTIVE_USER_CUTOFF_MS = 30 * 24 * 60 * 60 * 1000; // active in the last 30 days
   let scannedUsers = 0, captured = 0, detectedMeetings = 0, skippedUsers = 0, errored = 0;
   const errors = [];
@@ -1264,7 +1335,8 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
       }
       try {
         // Skip users dormant for over 30 days
-        if (u.lastLoginAt && (Date.now() - new Date(u.lastLoginAt).getTime()) > ACTIVE_USER_CUTOFF_MS) {
+        const lastActive = u.lastLoginAt || u.createdAt;
+        if (lastActive && (Date.now() - new Date(lastActive).getTime()) > ACTIVE_USER_CUTOFF_MS) {
           skippedUsers++;
           continue;
         }
@@ -1326,6 +1398,7 @@ router.post('/admin/auto-capture', requireSuperAdminOrScheduler, async (req, res
           } catch (e) { log.warn('auto-capture: space fetch failed', { record: rec.name, error: e.message }); }
           if (!meetingCode) continue;
           const instanceKey = `${meetingCode}__${lastSegment(rec.name)}`;
+          if (alreadyExported.has(instanceKey)) continue;
 
           try {
             if (budgetMs - (Date.now() - startedAt) <= 30000) {
@@ -1502,14 +1575,21 @@ router.post('/admin/check-upcoming', requireSuperAdminOrScheduler, async (req, r
   const errors = [];
   try {
     const users = rotateForFairness(await getAllUsersAcrossTenants());
+    const isSuppressed = await createSuppressedChecker();
+    const getDomainMeetings = createDomainMeetingsLoader();
     for (const u of users) {
       if (Date.now() - startedAt > budgetMs) { log.warn('check-upcoming: budget exhausted', { scanned }); break; }
       try {
-        if (u.lastLoginAt && (now - new Date(u.lastLoginAt).getTime()) > DORMANT_MS) { skipped++; continue; }
-        if (await isEmailSuppressed(u.email)) { skipped++; continue; }
+        const lastActive = u.lastLoginAt || u.createdAt;
+        if (!lastActive || (now - new Date(lastActive).getTime()) > DORMANT_MS) { skipped++; continue; }
+        if (await isSuppressed(u.email)) { skipped++; continue; }
 
         // Which recurring series does this user track — and which are LAPSING?
-        const { series } = await getUserMeetingSeries(u.domain, u.email);
+        // Lazy-load domain meetings once per domain (only when user has tracked events) and skip participant subcollections.
+        const { series } = await getUserMeetingSeries(u.domain, u.email, {
+          includeParticipants: false,
+          domainMeetings: () => getDomainMeetings(u.domain),
+        });
         const lapsing = new Map();
         for (const s of (series || [])) {
           if (!s.recurringEventId) continue;
@@ -1844,127 +1924,168 @@ router.post('/admin/reviews/send-reward-email', requireSuperAdmin, async (req, r
   }
 });
 
+let _schoolClustersCache = null;
+let _schoolClustersCachedAt = 0;
+let _schoolClustersInFlight = null;
+const SCHOOL_CLUSTERS_CACHE_MS = 15 * 60 * 1000; // 15 minutes
+const CLUSTER_SIGNAL_EVENT_TYPES = [
+  'large_class_banner_clicked',
+  'paywall_objection',
+  'school_quote_generated',
+  'school_license_requested',
+];
+
 // GET /api/admin/school-clusters — Groups multi-teacher institutional clusters for B2B department outreach
 router.get('/admin/school-clusters', requireSuperAdmin, async (req, res) => {
   try {
-    const PUBLIC_DOMAINS = new Set([
-      'gmail.com', 'googlemail.com', 'yahoo.com', 'yahoo.co.uk', 'yahoo.co.in',
-      'hotmail.com', 'outlook.com', 'live.com', 'msn.com', 'icloud.com', 'me.com',
-      'aol.com', 'mail.ru', 'protonmail.com', 'proton.me', 'zoho.com', 'yandex.ru'
-    ]);
+    const force = req.query.refresh === '1' || req.query.force === '1';
+    const allowCache = process.env.NODE_ENV !== 'test' || req.query.useCache === '1';
+    if (!force && allowCache && _schoolClustersCache && (Date.now() - _schoolClustersCachedAt) < SCHOOL_CLUSTERS_CACHE_MS) {
+      return res.json(_schoolClustersCache);
+    }
+    if (!force && allowCache && _schoolClustersInFlight) {
+      const payload = await _schoolClustersInFlight;
+      return res.json(payload);
+    }
 
-    const usersSnap = await getDb().collectionGroup('users').get();
-    const domainMap = new Map();
-
-    usersSnap.forEach(doc => {
-      const u = doc.data();
-      if (!u.email) return;
-      const domain = (u.domain || u.email.split('@')[1] || '').toLowerCase().trim();
-      if (!domain || PUBLIC_DOMAINS.has(domain)) return;
-
-      if (!domainMap.has(domain)) {
-        domainMap.set(domain, []);
-      }
-      const createdAt = u.createdAt?.toDate ? u.createdAt.toDate().toISOString() : (u.createdAt || null);
-      const country = u.signupGeo?.country || u.signupCountry || null;
-      domainMap.get(domain).push({
-        email: u.email,
-        displayName: u.displayName || '',
-        createdAt,
-        country,
-        plan: u.individualPlanType || u.plan || 'free',
-        lastLoginAt: u.lastLoginAt ? (u.lastLoginAt.toDate ? u.lastLoginAt.toDate().toISOString() : u.lastLoginAt) : null,
-      });
-    });
-
-    const clusterEntries = Array.from(domainMap.entries())
-      .filter(([, teachers]) => teachers.length >= 2)
-      .sort((a, b) => b[1].length - a[1].length);
-
-    const clusters = await Promise.all(clusterEntries.map(async ([domain, teachers]) => {
-      let totalExports = 0;
-      let totalParticipants = 0;
-      let largeClassHits = 0;
-      let objections = 0;
-      let tenantData = {};
-
+    const run = (async () => {
       try {
-        const tenantDocRef = getDb().collection('tenants').doc(domain);
-        const [tenantDoc, exportsSnap] = await Promise.all([
-          tenantDocRef.get(),
-          tenantDocRef.collection('exports').get(),
+        const PUBLIC_DOMAINS = new Set([
+          'gmail.com', 'googlemail.com', 'yahoo.com', 'yahoo.co.uk', 'yahoo.co.in',
+          'hotmail.com', 'outlook.com', 'live.com', 'msn.com', 'icloud.com', 'me.com',
+          'aol.com', 'mail.ru', 'protonmail.com', 'proton.me', 'zoho.com', 'yandex.ru'
         ]);
-        if (tenantDoc && tenantDoc.exists) {
-          tenantData = tenantDoc.data() || {};
-        }
-        if (exportsSnap && exportsSnap.size) {
-          totalExports = exportsSnap.size;
-          exportsSnap.forEach(expDoc => {
-            const exp = expDoc.data();
-            const pCount = Number(exp.participantCount) || 0;
-            totalParticipants += pCount;
-            if (pCount > 12) largeClassHits++;
+
+        const usersSnap = await getDb().collectionGroup('users').get();
+        const domainMap = new Map();
+
+        usersSnap.forEach(doc => {
+          const u = doc.data();
+          if (!u.email) return;
+          const domain = (u.domain || u.email.split('@')[1] || '').toLowerCase().trim();
+          if (!domain || PUBLIC_DOMAINS.has(domain)) return;
+
+          if (!domainMap.has(domain)) {
+            domainMap.set(domain, []);
+          }
+          const createdAt = u.createdAt?.toDate ? u.createdAt.toDate().toISOString() : (u.createdAt || null);
+          const country = u.signupGeo?.country || u.signupCountry || null;
+          domainMap.get(domain).push({
+            email: u.email,
+            displayName: u.displayName || '',
+            createdAt,
+            country,
+            plan: u.individualPlanType || u.plan || 'free',
+            lastLoginAt: u.lastLoginAt ? (u.lastLoginAt.toDate ? u.lastLoginAt.toDate().toISOString() : u.lastLoginAt) : null,
           });
-        }
-        try {
-          const eventsCol = tenantDocRef.collection('events');
-          if (eventsCol && typeof eventsCol.get === 'function') {
-            const evSnap = await eventsCol.get();
-            if (evSnap && typeof evSnap.forEach === 'function') {
-              evSnap.forEach(evDoc => {
-                const ev = evDoc.data() || {};
-                if (ev.type === 'large_class_banner_clicked') largeClassHits++;
-                if (ev.type === 'paywall_objection' || ev.type === 'school_quote_generated' || ev.type === 'school_license_requested') objections++;
+        });
+
+        const clusterEntries = Array.from(domainMap.entries())
+          .filter(([, teachers]) => teachers.length >= 2)
+          .sort((a, b) => b[1].length - a[1].length);
+
+        const clusters = await Promise.all(clusterEntries.map(async ([domain, teachers]) => {
+          let totalExports = 0;
+          let totalParticipants = 0;
+          let largeClassHits = 0;
+          let objections = 0;
+          let tenantData = {};
+
+          try {
+            const tenantDocRef = getDb().collection('tenants').doc(domain);
+            const [tenantDoc, exportsSnap] = await Promise.all([
+              tenantDocRef.get(),
+              tenantDocRef.collection('exports').get(),
+            ]);
+            if (tenantDoc && tenantDoc.exists) {
+              tenantData = tenantDoc.data() || {};
+            }
+            if (exportsSnap && exportsSnap.size) {
+              totalExports = exportsSnap.size;
+              exportsSnap.forEach(expDoc => {
+                const exp = expDoc.data();
+                const pCount = Number(exp.participantCount) || 0;
+                totalParticipants += pCount;
+                if (pCount > 12) largeClassHits++;
               });
             }
+            try {
+              const eventsCol = tenantDocRef.collection('events');
+              if (eventsCol && typeof eventsCol.get === 'function') {
+                let evQuery = eventsCol;
+                if (typeof evQuery.where === 'function') {
+                  evQuery = evQuery.where('type', 'in', CLUSTER_SIGNAL_EVENT_TYPES) || evQuery;
+                }
+                if (typeof evQuery.select === 'function') {
+                  evQuery = evQuery.select('type', 'email', 'actor') || evQuery;
+                }
+                const evSnap = await evQuery.get();
+                if (evSnap && typeof evSnap.forEach === 'function') {
+                  evSnap.forEach(evDoc => {
+                    const ev = evDoc.data() || {};
+                    if (ev.type === 'large_class_banner_clicked') largeClassHits++;
+                    if (ev.type === 'paywall_objection' || ev.type === 'school_quote_generated' || ev.type === 'school_license_requested') objections++;
+                  });
+                }
+              }
+            } catch (_) {}
+          } catch (err) {
+            log.warn('admin: failed fetching tenant details for cluster', { domain, error: err.message });
           }
-        } catch (_) {}
-      } catch (err) {
-        log.warn('admin: failed fetching tenant details for cluster', { domain, error: err.message });
+
+          const country = teachers.find(t => t.country)?.country || 'Unknown';
+          const primaryContact = tenantData.adminEmail || teachers[0]?.email;
+          const teacherCount = teachers.length;
+          const outreachScore = teacherCount * (1 + largeClassHits) * (1 + objections);
+          const recommendedPlan = teacherCount >= 10 ? 'institution' : 'department';
+          const priceLabel = recommendedPlan === 'institution' ? '$149/year (unlimited educators)' : '$79/year (up to 10 educators)';
+
+          return {
+            domain,
+            teacherCount,
+            teachers,
+            totalExports,
+            totalParticipants,
+            largeClassHits,
+            objections,
+            outreachScore,
+            recommendedPlan,
+            country,
+            primaryContact,
+            planStatus: tenantData.plan || (teachers.some(t => t.plan === 'pro') ? 'pro' : 'free'),
+            installedAt: tenantData.installedAt?.toDate ? tenantData.installedAt.toDate().toISOString() : (tenantData.installedAt || teachers[teachers.length - 1]?.createdAt),
+            draftedEmail: {
+              to: primaryContact,
+              subject: `${teacherCount} educators at ${domain} are using Google Meet Attendance Tracker`,
+              body: `Hi ${teachers[0]?.displayName ? teachers[0].displayName.split(' ')[0] : 'there'},\n\nI noticed ${teacherCount} educators at ${domain} are using Google Meet Attendance Tracker. Rather than having each teacher pay individually ($19/yr), we can cover your whole ${recommendedPlan === 'institution' ? 'school' : 'department'} for ${priceLabel}.\n\nWould you like me to send over a 1-page PDF quote for your department chair or business office?\n\nBest,\nDerek`,
+            },
+          };
+        }));
+
+        const topOutreachClusters = clusters
+          .filter(c => c.planStatus !== 'pro')
+          .slice()
+          .sort((a, b) => b.outreachScore - a.outreachScore || b.teacherCount - a.teacherCount)
+          .slice(0, 10);
+
+        const payload = {
+          success: true,
+          totalClusters: clusters.length,
+          totalClusterTeachers: clusters.reduce((sum, c) => sum + c.teacherCount, 0),
+          clusters,
+          topOutreachClusters,
+        };
+        _schoolClustersCache = payload;
+        _schoolClustersCachedAt = Date.now();
+        return payload;
+      } finally {
+        _schoolClustersInFlight = null;
       }
+    })();
 
-      const country = teachers.find(t => t.country)?.country || 'Unknown';
-      const primaryContact = tenantData.adminEmail || teachers[0]?.email;
-      const teacherCount = teachers.length;
-      const outreachScore = teacherCount * (1 + largeClassHits) * (1 + objections);
-      const recommendedPlan = teacherCount >= 10 ? 'institution' : 'department';
-      const priceLabel = recommendedPlan === 'institution' ? '$149/year (unlimited educators)' : '$79/year (up to 10 educators)';
-
-      return {
-        domain,
-        teacherCount,
-        teachers,
-        totalExports,
-        totalParticipants,
-        largeClassHits,
-        objections,
-        outreachScore,
-        recommendedPlan,
-        country,
-        primaryContact,
-        planStatus: tenantData.plan || (teachers.some(t => t.plan === 'pro') ? 'pro' : 'free'),
-        installedAt: tenantData.installedAt?.toDate ? tenantData.installedAt.toDate().toISOString() : (tenantData.installedAt || teachers[teachers.length - 1]?.createdAt),
-        draftedEmail: {
-          to: primaryContact,
-          subject: `${teacherCount} educators at ${domain} are using Google Meet Attendance Tracker`,
-          body: `Hi ${teachers[0]?.displayName ? teachers[0].displayName.split(' ')[0] : 'there'},\n\nI noticed ${teacherCount} educators at ${domain} are using Google Meet Attendance Tracker. Rather than having each teacher pay individually ($19/yr), we can cover your whole ${recommendedPlan === 'institution' ? 'school' : 'department'} for ${priceLabel}.\n\nWould you like me to send over a 1-page PDF quote for your department chair or business office?\n\nBest,\nDerek`,
-        },
-      };
-    }));
-
-    const topOutreachClusters = clusters
-      .filter(c => c.planStatus !== 'pro')
-      .slice()
-      .sort((a, b) => b.outreachScore - a.outreachScore || b.teacherCount - a.teacherCount)
-      .slice(0, 10);
-
-    res.json({
-      success: true,
-      totalClusters: clusters.length,
-      totalClusterTeachers: clusters.reduce((sum, c) => sum + c.teacherCount, 0),
-      clusters,
-      topOutreachClusters,
-    });
+    if (!force && allowCache) _schoolClustersInFlight = run;
+    const payload = await run;
+    res.json(payload);
   } catch (err) {
     log.error('admin: failed to get school clusters', { error: err.message });
     res.status(500).json({ error: 'Failed to fetch school clusters' });

@@ -2595,8 +2595,75 @@ describe('Admin error paths and logging', () => {
     expect(res.status).toBe(500);
     expect(res.body.error).toBe('Failed');
   });
+
+  test('POST /api/admin/check-reengagement skips flushDeferredNotifications when pending flags are explicitly false', async () => {
+    firestore.getAllUsersAcrossTenants.mockResolvedValueOnce([
+      { email: 'clean@acme.com', domain: 'acme.com', signupNotifyPending: false, referralNotifyPending: false },
+      { email: 'pending@acme.com', domain: 'acme.com', signupNotifyPending: true, referralNotifyPending: false },
+    ]);
+    firestore.evaluateReengagementForUser.mockResolvedValue([]);
+
+    const res = await request(app)
+      .post('/api/admin/check-reengagement')
+      .set('x-scheduler-secret', SCHEDULER_SECRET)
+      .set('Content-Type', 'application/json')
+      .send({});
+
+    expect(res.status).toBe(200);
+    expect(notifications.flushDeferredNotifications).toHaveBeenCalledTimes(1);
+    expect(notifications.flushDeferredNotifications).toHaveBeenCalledWith('acme.com', 'pending@acme.com');
+  });
+
+  test('POST /api/admin/check-upcoming falls back to createdAt when lastLoginAt is null and skips dormant (>45d) or missing-timestamp accounts', async () => {
+    const sixtyDaysAgo = new Date(Date.now() - 60 * 86400000).toISOString();
+    const tenDaysAgo = new Date(Date.now() - 10 * 86400000).toISOString();
+    firestore.getAllUsersAcrossTenants.mockResolvedValueOnce([
+      { email: 'ghost@acme.com', domain: 'acme.com', lastLoginAt: null, createdAt: null },
+      { email: 'old@acme.com', domain: 'acme.com', lastLoginAt: null, createdAt: sixtyDaysAgo },
+      { email: 'recent@acme.com', domain: 'acme.com', lastLoginAt: null, createdAt: tenDaysAgo },
+    ]);
+    firestore.getUserMeetingSeries.mockResolvedValueOnce({ series: [] });
+
+    const res = await request(app)
+      .post('/api/admin/check-upcoming')
+      .set('x-scheduler-secret', SCHEDULER_SECRET)
+      .set('Content-Type', 'application/json')
+      .send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.skipped).toBe(3);
+    expect(firestore.getUserMeetingSeries).toHaveBeenCalledTimes(1);
+    expect(firestore.getUserMeetingSeries).toHaveBeenCalledWith(
+      'acme.com',
+      'recent@acme.com',
+      expect.objectContaining({ includeParticipants: false, domainMeetings: expect.any(Function) })
+    );
+  });
+
+  test('GET /api/admin/school-clusters caches results when useCache=1 and refreshes when refresh=1', async () => {
+    const mockUsersSnap = {
+      forEach: (cb) => {
+        cb({ data: () => ({ email: 't1@cached.edu', domain: 'cached.edu', displayName: 'T1' }) });
+        cb({ data: () => ({ email: 't2@cached.edu', domain: 'cached.edu', displayName: 'T2' }) });
+      },
+    };
+    const collectionGroupGet = jest.fn().mockResolvedValue(mockUsersSnap);
+    firestore.getDb.mockReturnValue({
+      collectionGroup: () => ({ get: collectionGroupGet }),
+      collection: () => ({
+        doc: () => ({
+          get: jest.fn().mockResolvedValue({ exists: true, data: () => ({ plan: 'free' }) }),
+          collection: () => ({ get: jest.fn().mockResolvedValue({ size: 0, forEach: () => {} }) }),
+        }),
+      }),
+    });
+
+    const r1 = await request(app).get('/api/admin/school-clusters?useCache=1&refresh=1').set(admin());
+    expect(r1.status).toBe(200);
+    expect(collectionGroupGet).toHaveBeenCalledTimes(1);
+
+    const r2 = await request(app).get('/api/admin/school-clusters?useCache=1').set(admin());
+    expect(r2.status).toBe(200);
+    expect(collectionGroupGet).toHaveBeenCalledTimes(1);
+  });
 });
-
-
-
-

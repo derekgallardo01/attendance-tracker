@@ -7,20 +7,20 @@ const { getDb, tenantRef, FieldValue, log, tsMs } = require('./_core');
 //     preceding 8 (reliable attendee suddenly went dark)
 //   - threshold: avg of last 8 dropped to <50% from ≥80% in the prior 8 (slow
 //     fade we want to catch before they fully disengage)
-async function evaluateSeriesAlerts(domain, email) {
+async function evaluateSeriesAlerts(domain, email, options = {}) {
   try {
     const tenant = tenantRef(domain);
     const emailLower = email.toLowerCase();
 
-    const [eventsSnap, meetingsSnap] = await Promise.all([
-      tenant.collection('events').where('email', '==', emailLower).where('type', '==', 'tracked').get(),
-      tenant.collection('meetings').get(),
-    ]);
+    const eventsSnap = await tenant.collection('events').where('email', '==', emailLower).where('type', '==', 'tracked').get();
 
     const trackedIds = new Set();
     for (const d of eventsSnap.docs) {
       const cid = d.data().meta?.conferenceId;
-      if (cid) trackedIds.add(cid);
+      if (cid) {
+        trackedIds.add(cid);
+        if (cid.includes('__')) trackedIds.add(cid.split('__')[0]);
+      }
     }
     // A user with ZERO tracked meetings gets no series alerts, period. The old
     // "no filter when nothing tracked" fallback made seriesMeetings = every
@@ -30,19 +30,37 @@ async function evaluateSeriesAlerts(domain, email) {
     // for classes they never taught.
     if (trackedIds.size === 0) return [];
 
+    let preloadedMeetings = null;
+    if (Array.isArray(options?.domainMeetings)) {
+      preloadedMeetings = options.domainMeetings;
+    } else if (typeof options?.domainMeetings === 'function') {
+      const loaded = await options.domainMeetings(domain);
+      if (Array.isArray(loaded)) preloadedMeetings = loaded;
+    }
+
+    const rawMeetings = preloadedMeetings
+      ? preloadedMeetings
+      : (await tenant.collection('meetings').get()).docs.map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
+
     // Per-instance model: instance docs match the user's tracked CODES via
     // data.meetingCode; legacy code docs count only when they hold data
     // (metadata-only series anchors are skipped).
-    const seriesMeetings = meetingsSnap.docs
+    const seriesMeetings = rawMeetings
       .filter(d => {
-        const data = d.data();
+        const data = d.data || {};
         if (!data.recurringEventId) return false;
         const code = data.meetingCode || d.id;
-        if (!trackedIds.has(code)) return false;
+        const baseCode = code.includes('__') ? code.split('__')[0] : code;
+        const baseId = d.id.includes('__') ? d.id.split('__')[0] : d.id;
+        if (!trackedIds.has(code) && !trackedIds.has(baseCode) && !trackedIds.has(d.id) && !trackedIds.has(baseId)) return false;
         const isInstance = d.id !== code;
         return isInstance || !data.hasInstances; // hasInstances = metadata-only series anchor (post-migration code doc)
       })
-      .map(d => ({ id: d.id, ref: d.ref, data: d.data() }));
+      .map(d => ({
+        id: d.id,
+        ref: d.ref || tenant.collection('meetings').doc(d.id),
+        data: d.data || {},
+      }));
 
     if (seriesMeetings.length < 6) return []; // streak rule needs 6+, threshold needs 16+
 
@@ -194,21 +212,34 @@ async function evaluateSeriesAlerts(domain, email) {
 // patterns: "you signed up but stopped using it" / "you tracked this every
 // week and missed one". Each reminder type has its own dedup key so a 7-day
 // reactivation can fire alongside a forgotten-meeting nudge without conflict.
-async function evaluateReengagementForUser(domain, email) {
+async function evaluateReengagementForUser(domain, email, options = {}) {
   try {
     const tenant = tenantRef(domain);
     const emailLower = email.toLowerCase();
 
-    const [userDoc, eventsSnap] = await Promise.all([
-      tenant.collection('users').doc(emailLower).get(),
+    const [userDocOrPreloaded, eventsSnap] = await Promise.all([
+      options?.userDoc
+        ? Promise.resolve({ exists: true, data: () => options.userDoc })
+        : tenant.collection('users').doc(emailLower).get(),
       tenant.collection('events').where('email', '==', emailLower).get(),
     ]);
-    if (!userDoc.exists) return [];
+    if (!userDocOrPreloaded.exists) return [];
 
-    const user = userDoc.data();
+    const user = userDocOrPreloaded.data();
     const lastLogin = tsMs(user.lastLoginAt) || 0;
     const now = Date.now();
     const reminders = [];
+
+    const preloadedMeetings = Array.isArray(options?.domainMeetings) ? options.domainMeetings : null;
+    const findMeetingById = async (cid) => {
+      if (!cid) return null;
+      if (preloadedMeetings) {
+        const hit = preloadedMeetings.find(m => m.id === cid || m.data?.meetingCode === cid);
+        return hit ? hit.data : null;
+      }
+      const lm = await tenant.collection('meetings').doc(cid).get();
+      return lm.exists ? lm.data() : null;
+    };
 
     // ── Engagement quality gate ──
     // Only spend a warm "we miss you" reactivation on users who actually got
@@ -218,7 +249,7 @@ async function evaluateReengagementForUser(domain, email) {
     // inflates it to dozens. Solo-only self-tests (participantCount<=1, no
     // export) are low intent; we don't reactivate them. Never-tracked signups
     // get a different, activation-focused nudge instead.
-    const exportedCount = eventsSnap.docs.filter(d => d.data().type === 'exported').length;
+    const exportedCount = eventsSnap.docs.filter(d => d.data().type === 'tracked' ? false : d.data().type === 'exported').length;
     const trackedDocs = eventsSnap.docs.filter(d => d.data().type === 'tracked');
     // Real-meeting signal = distinct human attendees. Prefer the deduped
     // distinctAttendees stamped on newer events; fall back to raw
@@ -253,8 +284,8 @@ async function evaluateReengagementForUser(domain, email) {
           let meetingTitle = 'your class';
           if (lastTrackedCid) {
             try {
-              const lm = await tenant.collection('meetings').doc(lastTrackedCid).get();
-              if (lm.exists && lm.data().title) meetingTitle = lm.data().title;
+              const lmd = await findMeetingById(lastTrackedCid);
+              if (lmd && lmd.title) meetingTitle = lmd.title;
             } catch (_) { /* keep the generic title */ }
           }
           reminders.push({ type: 'export_gap', daysSinceLogin, meetingTitle });
@@ -267,8 +298,7 @@ async function evaluateReengagementForUser(domain, email) {
           let comeback = null;
           if (lastTrackedCid) {
             try {
-              const lm = await tenant.collection('meetings').doc(lastTrackedCid).get();
-              const lmd = lm.exists ? lm.data() : null;
+              const lmd = await findMeetingById(lastTrackedCid);
               if (lmd && !lmd.recurringEventId) {
                 comeback = { type: 'comeback_7d', daysSinceLogin, meetingTitle: lmd.title || 'your last meeting' };
               }
@@ -332,20 +362,36 @@ async function evaluateReengagementForUser(domain, email) {
 
     // Forgotten recurring meeting: user tracked a series 3+ times in past 30d,
     // but hasn't tracked it in 7+ days. Catches lapsed habits before they die.
-    const trackedEvents = eventsSnap.docs
-      .filter(d => d.data().type === 'tracked')
-      .map(d => ({
-        conferenceId: d.data().meta?.conferenceId || null,
-        at: tsMs(d.data().createdAt) || 0,
-      }))
-      .filter(e => e.conferenceId);
+    // Deduplicate poll ticks that share the same (conferenceId, instanceId/recordName)
+    // or identical (conferenceId, timestamp) so a single 3-poll solo session
+    // doesn't trigger a full tenant meetings scan.
+    const seenTrackedSessionKeys = new Set();
+    const trackedEvents = [];
+    for (const d of trackedDocs) {
+      const meta = d.data().meta || {};
+      const conferenceId = meta.conferenceId || null;
+      if (!conferenceId) continue;
+      const at = tsMs(d.data().createdAt) || 0;
+      const sessionKey = meta.instanceId || meta.recordName
+        ? `${conferenceId}__${meta.instanceId || meta.recordName}`
+        : `${conferenceId}__${at}`;
+      if (seenTrackedSessionKeys.has(sessionKey)) continue;
+      seenTrackedSessionKeys.add(sessionKey);
+      trackedEvents.push({ conferenceId, at });
+    }
 
     if (trackedEvents.length >= 3) {
-      const meetingsSnap = await tenant.collection('meetings').get();
+      let resolvedMeetings = preloadedMeetings;
+      if (!resolvedMeetings && typeof options?.domainMeetings === 'function') {
+        const loaded = await options.domainMeetings(domain);
+        if (Array.isArray(loaded)) resolvedMeetings = loaded;
+      }
+      const meetingEntries = resolvedMeetings
+        || (await tenant.collection('meetings').get()).docs.map(m => ({ id: m.id, data: m.data() }));
       const cidToRid = new Map();
       const ridToTitle = new Map();
-      for (const m of meetingsSnap.docs) {
-        const d = m.data();
+      for (const m of meetingEntries) {
+        const d = m.data || {};
         if (d.recurringEventId) {
           // Tracked events carry the meeting CODE — instance docs map back to
           // it via meetingCode (multiple instances of one code share one rid).

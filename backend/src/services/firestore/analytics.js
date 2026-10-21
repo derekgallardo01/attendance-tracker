@@ -128,15 +128,35 @@ async function getActivationFunnel() {
 // Module-level cache for getAggregatedInsights (scans all tenants, users, meetings, exports, events).
 let _insightsCache = null;
 let _insightsCachedAt = 0;
+let _insightsInFlight = null;
 const INSIGHTS_CACHE_MS = 15 * 60 * 1000; // 15 minutes
+const INSIGHTS_CACHE_DOC = () => getDb().collection('_cache').doc('aggregated_insights');
 
 async function getAggregatedInsights({ force = false } = {}) {
   if (!force && process.env.NODE_ENV !== 'test' && _insightsCache && (Date.now() - _insightsCachedAt) < INSIGHTS_CACHE_MS) {
     return _insightsCache;
   }
+  if (!force && _insightsInFlight) {
+    return _insightsInFlight;
+  }
+  const run = (async () => {
   try {
     const db = getDb();
     const now = Date.now();
+    if (!force && process.env.NODE_ENV !== 'test') {
+      try {
+        const cacheSnap = await INSIGHTS_CACHE_DOC().get();
+        if (cacheSnap && cacheSnap.exists) {
+          const cached = cacheSnap.data() || {};
+          const cachedAtMs = tsMs(cached.cachedAt) || Number(cached.cachedAt) || 0;
+          if (cached.payload && cachedAtMs > 0 && (now - cachedAtMs) < INSIGHTS_CACHE_MS) {
+            _insightsCache = cached.payload;
+            _insightsCachedAt = cachedAtMs;
+            return _insightsCache;
+          }
+        }
+      } catch (_) { /* fall through to live computation */ }
+    }
     const DAY = 24 * 60 * 60 * 1000;
 
     const [tenantsSnap, usersSnap, meetingsSnap, exportsSnap, eventsSnap] = await Promise.all([
@@ -424,7 +444,7 @@ async function getAggregatedInsights({ force = false } = {}) {
       };
     }
 
-    return {
+    _insightsCache = {
       counts: {
         installs: tenants.length,
         // Real customers only — exclude the owner, Marketplace bots, the internal
@@ -465,11 +485,23 @@ async function getAggregatedInsights({ force = false } = {}) {
       totalProSubscribers,
     };
     _insightsCachedAt = Date.now();
+    if (process.env.NODE_ENV !== 'test') {
+      INSIGHTS_CACHE_DOC().set({
+        payload: _insightsCache,
+        cachedAt: _insightsCachedAt,
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true }).catch(() => {});
+    }
     return _insightsCache;
   } catch (err) {
     log.error('firestore: getAggregatedInsights failed', { error: err.message });
     throw err;
+  } finally {
+    _insightsInFlight = null;
   }
+  })();
+  _insightsInFlight = run;
+  return run;
 }
 
 // ── Weekly self-report: what happened in the last 7 days ──
@@ -1868,6 +1900,7 @@ async function setErrorAlertState(data) {
 function clearInsightsCache() {
   _insightsCache = null;
   _insightsCachedAt = 0;
+  _insightsInFlight = null;
   _suggestionsCache = null;
   _suggestionsCachedAt = 0;
   _powerUserCache = null;
