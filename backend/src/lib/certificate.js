@@ -445,7 +445,14 @@ function buildQuoteModel({
   const validUntilDate = new Date(issuedDate.getTime() + 30 * 86400000);
   const emailClean = String(teacherEmail || '').trim();
   const domainClean = String(domain || (emailClean.includes('@') ? emailClean.split('@')[1] : '') || '').trim().toLowerCase();
-  const resolvedSchool = (schoolName && String(schoolName).trim())
+  const domainParts = domainClean ? domainClean.split('.').filter(Boolean) : [];
+  const domainTld = domainParts.length > 1 ? domainParts[domainParts.length - 1] : '';
+  const rawSchool = schoolName ? String(schoolName).trim() : '';
+  // Guard against stale client inference where a ccTLD (e.g. "It" for certform.it) was sent as schoolName
+  const sanitizedSchool = (rawSchool && domainTld && rawSchool.toLowerCase() === domainTld)
+    ? (domainParts[0].charAt(0).toUpperCase() + domainParts[0].slice(1))
+    : rawSchool;
+  const resolvedSchool = sanitizedSchool
     || (domainClean && domainClean !== 'gmail.com' ? domainClean : 'School / Department');
   const domainTeachers = Math.max(1, Number(usage.domainTeachers) || 1);
   const classesTracked = Math.max(0, Number(usage.classesTracked) || 0);
@@ -467,9 +474,9 @@ function buildQuoteModel({
     {
       key: 'department',
       name: 'Department Plan (Up to 10 Teachers)',
-      price: '$79 / year',
-      amountUsd: 79,
-      description: `Covers up to 10 educators on ${domainClean || 'your school domain'} (~$7.90/teacher/year). Includes shared attendance history and LMS gradebook exports.`,
+      price: '$59 / year',
+      amountUsd: 59,
+      description: `Covers up to 10 educators on ${domainClean || 'your school domain'} (~$5.90/teacher/year). Includes shared attendance history and LMS gradebook exports.`,
       recommended: planKey === 'department',
     },
     {

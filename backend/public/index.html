@@ -7358,15 +7358,16 @@ function closeSoloTesterBanner() {
 function inferSchoolName(domain) {
   if (!domain || typeof domain !== 'string') return '';
   const clean = domain.toLowerCase().trim();
-  const parts = clean.split('.');
+  const parts = clean.split('.').filter(Boolean);
+  const bodyParts = parts.length > 1 ? parts.slice(0, -1) : parts;
   const ignore = new Set([
-    'edu', 'ac', 'k12', 'sch', 'school', 'org', 'com', 'net', 'gov',
-    'us', 'uk', 'ph', 'my', 'id', 'in', 'au', 'ca', 'nz', 'education',
+    'edu', 'ac', 'k12', 'sch', 'school', 'org', 'com', 'net', 'gov', 'gob', 'gub', 'go', 'co', 'or', 'ne', 'ed', 'nom', 'mil', 'int',
+    'us', 'uk', 'ph', 'my', 'id', 'in', 'au', 'ca', 'nz', 'it', 'es', 'fr', 'de', 'br', 'mx', 'ar', 'cl', 'pe', 'jp', 'kr', 'za', 'ke', 'vn', 'tr', 'pl', 'nl', 'education',
     'mail', 'webmail', 'email', 'staff', 'faculty', 'student', 'students', 'post', 'alumni', 'www'
   ]);
-  const filtered = parts.filter(p => !ignore.has(p) && p.length > 1);
+  const filtered = bodyParts.filter(p => !ignore.has(p) && p.length > 1);
   if (!filtered.length) {
-    const fallback = parts[0] || '';
+    const fallback = bodyParts[0] || parts[0] || '';
     return fallback ? fallback.charAt(0).toUpperCase() + fallback.slice(1) : '';
   }
   const token = filtered[filtered.length - 1];

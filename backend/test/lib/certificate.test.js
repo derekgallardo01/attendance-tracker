@@ -267,6 +267,15 @@ describe('buildQuoteModel and renderQuotePdf', () => {
       usage: { classesTracked: 100, totalStudents: 2000, domainTeachers: 60 },
     });
     expect(custom.recommendedPlan).toBe('quote');
+
+    const tldSanitized = buildQuoteModel({
+      teacherEmail: 'gabrieleprevitera@certform.it',
+      domain: 'certform.it',
+      schoolName: 'It',
+      usage: { classesTracked: 1, totalStudents: 2, domainTeachers: 1 },
+    });
+    expect(tldSanitized.schoolName).toBe('Certform');
+    expect(tldSanitized.plans.find(p => p.key === 'department').amountUsd).toBe(59);
   });
 
   test('renderQuotePdf produces a valid PDF buffer across tiers', async () => {
