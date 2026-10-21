@@ -89,7 +89,7 @@ describe('getOffer', () => {
     expect(o.prices.pro_monthly.period).toBe('/mo');
     expect(o.prices.pro_monthly.perMonth).toBeUndefined();
     expect(o.prices.lifetime.period).toBe('one-time');
-    expect(o.prices.educator.label).toBe('$19');
+    expect(o.prices.educator.label).toBe('$14.99');
   });
 
   test('missing country defaults to tier 1', () => {
@@ -112,37 +112,37 @@ describe('getOffer', () => {
     expect(tiers.getOffer({ country: 'IN', email: emailInArm('legacy') })).toMatchObject({ tiered: false, tier: 3, arm: 'legacy' });
     const o = tiers.getOffer({ country: 'IN', email: emailInArm('tiered') });
     expect(o).toMatchObject({ tiered: true, tier: 3, arm: 'tiered', currency: 'inr', methods: ['card', 'upi'] });
-    expect(o.prices.educator.label).toBe('₹349');
+    expect(o.prices.educator.label).toBe('₹249');
     expect(o.prices.pro_annual.label).toBe('₹499');
-    expect(o.prices.lifetime.label).toBe('₹799');
-    expect(o.prices.single_meeting.label).toBe('₹99');
+    expect(o.prices.lifetime.label).toBe('₹499');
+    expect(o.prices.single_meeting.label).toBe('₹129');
 
     // PH
     const ph = tiers.getOffer({ country: 'PH', arm: 'tiered' });
-    expect(ph.prices.educator.label).toBe('₱249');
+    expect(ph.prices.educator.label).toBe('₱199');
     expect(ph.prices.pro_annual.label).toBe('₱399');
-    expect(ph.prices.lifetime.label).toBe('₱599');
+    expect(ph.prices.lifetime.label).toBe('₱399');
 
     // ID
     const id = tiers.getOffer({ country: 'ID', arm: 'tiered' });
-    expect(id.prices.educator.label).toBe('Rp 69.000');
+    expect(id.prices.educator.label).toBe('Rp 49.000');
     expect(id.prices.pro_annual.label).toBe('Rp 99.000');
-    expect(id.prices.lifetime.label).toBe('Rp 149.000');
+    expect(id.prices.lifetime.label).toBe('Rp 99.000');
 
     // KE
     const ke = tiers.getOffer({ country: 'KE', arm: 'tiered' });
-    expect(ke.prices.educator.label).toBe('KSh 490');
+    expect(ke.prices.educator.label).toBe('KSh 390');
     expect(ke.prices.pro_annual.label).toBe('KSh 790');
-    expect(ke.prices.lifetime.label).toBe('KSh 1,290');
+    expect(ke.prices.lifetime.label).toBe('KSh 790');
   });
 
   test('tier 3 USD market (no local table) sells subscriptions with recalibrated sweet spot', () => {
     const o = tiers.getOffer({ country: 'VN', email: emailInArm('tiered') });
     expect(o).toMatchObject({ tiered: true, currency: 'usd', prepaid: false, monthlyAvailable: true });
     expect(o.prices.pro_annual.label).toBe('$9');
-    expect(o.prices.educator.label).toBe('$5');
-    expect(o.prices.lifetime.label).toBe('$12');
-    expect(o.prices.single_meeting.label).toBe('$1.49');
+    expect(o.prices.educator.label).toBe('$3.99');
+    expect(o.prices.lifetime.label).toBe('$7.99');
+    expect(o.prices.single_meeting.label).toBe('$1.99');
   });
 });
 
@@ -163,7 +163,7 @@ describe('lineItemFor', () => {
     const o = tiers.getOffer({ country: 'US', email: 'a@b.com' });
     const life = tiers.lineItemFor(o, 'lifetime');
     expect(life).toMatchObject({ mode: 'payment', recurring: false, prepaidYear: false });
-    expect(life.lineItem.price_data).toEqual({ currency: 'usd', unit_amount: 4900, product: 'prod_123' });
+    expect(life.lineItem.price_data).toEqual({ currency: 'usd', unit_amount: 2900, product: 'prod_123' });
   });
 
   test('prepaid annual in local markets; unavailable plan / legacy offer → null', () => {

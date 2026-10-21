@@ -7109,7 +7109,7 @@ async function loadBillingStatus() {
       const domain = data?.domain || email.split('@')[1] || '';
       const isCorporate = domain && data?.individual === false && !isEduDomain(email, domain);
       const isEduUser = !!(data && data.isEdu) || !isCorporate || isEduDomain(email, domain);
-      const annualPrice = isEduUser ? AttPricing.price('educator') : (AttPricing.price('pro_annual') || AttPricing.price('educator'));
+      const annualPrice = AttPricing.price('educator') || AttPricing.price('pro_annual');
       if (annualPrice) proBtnPrice.textContent = annualPrice;
     }
     try {
@@ -7757,11 +7757,8 @@ function countryFlagEmoji(code) {
 function paintTieredUpgradeModal(offer, country) {
   const price = (plan) => (typeof AttPricing !== 'undefined' ? AttPricing.price(plan) : '');
   const perMonth = (plan) => (typeof AttPricing !== 'undefined' && AttPricing.perMonth ? AttPricing.perMonth(plan) : '');
-  const email = (state.userEmail || '').toLowerCase();
-  const domain = (_billing && _billing.domain) || email.split('@')[1] || '';
-  const isCorporate = domain && _billing?.individual === false && !isEduDomain(email, domain);
-  const isEdu = !!(_billing && _billing.isEdu) || !isCorporate || isEduDomain(email, domain);
-  const heroPlan = isEdu ? 'educator' : 'pro_annual';
+  const isEdu = true;
+  const heroPlan = 'educator';
 
   const dealPill = document.getElementById('upgrade-deal-pill');
   if (dealPill) {
@@ -7822,12 +7819,13 @@ function paintTieredUpgradeModal(offer, country) {
   }
 
   const single = price('single_meeting');
+  const edu = price('educator');
   document.querySelectorAll('.price-single-meeting').forEach((el) => { el.textContent = single; });
   const singleLine = `${escHtml(t('upgrade.singleAltPrefix', 'Only need this single meeting? Unlock for'))} <strong class="price-single-meeting" style="font-weight:700;color:#e3e3e3">${escHtml(single)}</strong>`;
   const btnSingleMeeting = document.getElementById('btn-upgrade-single-meeting');
   if (btnSingleMeeting) btnSingleMeeting.innerHTML = `<span>${singleLine}</span> →`;
   const lcText = document.getElementById('large-class-single-meeting-text');
-  if (lcText) lcText.innerHTML = singleLine;
+  if (lcText) lcText.innerHTML = `${singleLine} <span style="opacity:.85">(${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))} <strong style="color:#4ade80">${escHtml(edu)}${escHtml(t('upgrade.perYear', '/yr'))}</strong>)</span>`;
 
   paintUpgradePaymentBadges(country);
 }

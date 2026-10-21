@@ -1391,10 +1391,11 @@
       var pro = document.getElementById('plan-card-educator');
       if (pro) {
         pro.classList.add('featured');
-        setText(pro, '.plan-name', tr('upgrade.proAnnualName', 'Pro Annual'));
-        setText(pro, '.price-num', label('pro_annual'));
+        var heroPlan = label('educator') ? 'educator' : 'pro_annual';
+        setText(pro, '.plan-name', tr('pricing.planEduName', 'Educator Annual Pass'));
+        setText(pro, '.price-num', label(heroPlan));
         setText(pro, '.price-period', tr('upgrade.perYear', '/yr'));
-        var pm = offer.pricing.pro_annual && offer.pricing.pro_annual.perMonth;
+        var pm = offer.pricing[heroPlan] && offer.pricing[heroPlan].perMonth;
         var note = offer.prepaid
           ? tr('upgrade.dealPrepaid', '1 year of Pro · pay with local methods · no auto-renewal')
           : tr('upgrade.dealRenews', 'Renews yearly · cancel anytime');
@@ -1402,8 +1403,8 @@
         var btn = document.getElementById('btn-buy-educator');
         if (btn) {
           btn.className = 'btn-plan btn-plan-primary';
-          btn.onclick = function () { startPricingCheckout('pro_annual', btn); };
-          setText(btn, 'span', tr('upgrade.ctaProAnnual', 'Get Pro Annual —') + ' ' + label('pro_annual'));
+          btn.onclick = function () { startPricingCheckout(heroPlan, btn); };
+          setText(btn, 'span', tr('upgrade.ctaEdu', 'Get Educator Annual Pass —') + ' ' + label(heroPlan) + tr('upgrade.perYear', '/yr'));
         }
         var links = document.getElementById('tiered-alt-links');
         if (!links && btn) {
@@ -1425,7 +1426,6 @@
           if (offer.monthlyAvailable && label('pro_monthly')) {
             addLink(tr('upgrade.orMonthly', 'or {price} / month').replace('{price}', label('pro_monthly')), 'pro_monthly');
           }
-          addLink(tr('upgrade.eduLink', 'Teacher or student? Educator pass {price}/yr').replace('{price}', label('educator')), 'educator');
         }
       }
 

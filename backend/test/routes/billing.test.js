@@ -1908,8 +1908,8 @@ describe('billing/status pricing payload', () => {
         const { sendUpgradeLinkEmail } = require('../../src/lib/notifications');
         expect(sendUpgradeLinkEmail).toHaveBeenCalledWith(expect.objectContaining({
           to: uniqueEmail,
-          educatorPrice: '$19',
-          lifetimePrice: '$49',
+          educatorPrice: '$14.99',
+          lifetimePrice: '$29',
           educatorUrl: expect.stringContaining('/api/billing/checkout-redirect?plan=educator'),
           lifetimeUrl: expect.stringContaining('/api/billing/checkout-redirect?plan=lifetime'),
         }));
@@ -3221,7 +3221,7 @@ describe('billing — tiered regional pricing (TIERED_PRICING=1)', () => {
     const s = lastSession();
     expect(s.mode).toBe('payment');
     expect(s.customer_creation).toBe('always');
-    expect(s.line_items[0].price_data).toMatchObject({ unit_amount: 4900 });
+    expect(s.line_items[0].price_data).toMatchObject({ unit_amount: 2900 });
   });
 
   test('Brazil pro_annual → BRL prepaid year (one-time, flagged isAnnualOneTime); monthly refused', async () => {
@@ -3237,7 +3237,7 @@ describe('billing — tiered regional pricing (TIERED_PRICING=1)', () => {
   test('India tiered arm → INR with card+UPI; Kenya keeps dynamic methods', async () => {
     await checkout(emailInArm('tiered'), { plan: 'educator', country: 'IN' });
     let s = lastSession();
-    expect(s.line_items[0].price_data).toMatchObject({ currency: 'inr', unit_amount: 34900 });
+    expect(s.line_items[0].price_data).toMatchObject({ currency: 'inr', unit_amount: 24900 });
     expect(s.payment_method_types).toEqual(['card', 'upi']);
     process.env.TIER3_TEST = 'all';
     await checkout('m@gmail.com', { plan: 'lifetime', country: 'KE' });
@@ -3317,7 +3317,7 @@ describe('billing — tiered regional pricing (TIERED_PRICING=1)', () => {
     expect(us.headers['cache-control']).toBe('private, no-store');
     expect(us.body).toMatchObject({ tiered: true, tier: 1, prepaid: false, monthlyAvailable: true, country: 'US' });
     expect(us.body.pricing.pro_annual).toEqual({ label: '$29', full: null, period: '/yr', perMonth: '$2.42' });
-    expect(us.body.pricing.lifetime).toEqual({ label: '$49', full: null, period: 'one-time' });
+    expect(us.body.pricing.lifetime).toEqual({ label: '$29', full: null, period: 'one-time' });
     expect(us.body.pricing.department.label).toBe('$59'); // domain plans unchanged
     const inDefault = await request(app).get('/api/billing/offer').set('cf-ipcountry', 'IN');
     expect(inDefault.body).toMatchObject({ tiered: true, tier: 3, arm: 'tiered' });

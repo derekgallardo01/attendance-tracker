@@ -712,9 +712,8 @@
     // (billing/status.offer.tiered), otherwise the Lifetime pass.
     function historyUpgradePlan() {
       const s = window._lastBillingStatus;
-      const isEdu = !!(s && (s.isEdu || s._isEdu)) || isEduDomain(userEmail || (s && s.email), s && s.domain);
       if (s && s.offer && s.offer.tiered) {
-        return isEdu ? 'educator' : 'pro_annual';
+        return 'educator';
       }
       return 'lifetime';
     }
@@ -929,8 +928,13 @@
       const plan = historyUpgradePlan();
       const base = (typeof AttPricing !== 'undefined') ? AttPricing.price(plan) : '';
       const p = base && (plan === 'pro_annual' || plan === 'educator') ? base + t('upgrade.perYear', '/yr') : base;
-      if (!p) return;
-      document.querySelectorAll('.price-lifetime').forEach(el => { el.textContent = p; });
+      if (p) {
+        document.querySelectorAll('.price-lifetime').forEach(el => { el.textContent = p; });
+      }
+      const lifeOnce = (typeof AttPricing !== 'undefined') ? AttPricing.price('lifetime') : '';
+      if (lifeOnce) {
+        document.querySelectorAll('.price-lifetime-once').forEach(el => { el.textContent = lifeOnce; });
+      }
     }
 
     function renderMeetings() {
@@ -1888,9 +1892,10 @@
       </div>
       <div class="modal-body" style="display:flex;flex-direction:column;gap:16px">
         <p id="history-upgrade-desc" class="muted" style="font-size:.88rem;line-height:1.5;color:var(--text)">Unlock unlimited class sizes, unlimited exports, automated Google Sheets sync, and verifiable attendance certificates.</p>
-        <div style="display:flex;gap:10px;justify-content:flex-end">
+        <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
           <button class="btn btn-secondary" onclick="closeUpgradeModal()">Not now</button>
-          <button class="btn btn-primary" onclick="upgradeFromHistory(this, historyUpgradePlan())">Upgrade to Pro — <span class="price-lifetime">$29/yr</span></button>
+          <button class="btn btn-secondary" onclick="upgradeFromHistory(this, 'lifetime')" style="border-color:rgba(74,222,128,.45);color:#4ade80">Lifetime Pass — <span class="price-lifetime-once">$29</span></button>
+          <button class="btn btn-primary" onclick="upgradeFromHistory(this, historyUpgradePlan())">Educator Pro — <span class="price-lifetime">$14.99/yr</span></button>
         </div>
       </div>
     </div>
