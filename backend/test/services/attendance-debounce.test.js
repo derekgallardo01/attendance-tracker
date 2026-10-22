@@ -353,4 +353,46 @@ describe('persistAttendance — write debouncing', () => {
     // Full poll again (both returned, identical state)
     expect(await firestore.persistAttendance('acme.edu', 'class-101', 'conferenceRecords/r1', baseParticipants, 'teacher@acme.edu')).toBe(false);
   });
+
+  test('participant with 0 sessions on poll 1, valid joinTime on poll 2, and fallback joinTime: null on poll 3 is blocked by prevPState.hasJoinTime even without degradedSession flag', async () => {
+    const p1ZeroSessions = { participantId: 'p1', displayName: 'Alice', email: 'alice@acme.edu', present: false, sessions: 1, joinTime: null, leaveTime: null, durationMs: 0, durationMin: 0 };
+    expect(await firestore.persistAttendance('acme.edu', 'class-101', 'conferenceRecords/r1', [p1ZeroSessions], 'teacher@acme.edu')).toBe(true);
+
+    // Poll 2: Alice gets a valid joinTime
+    const p1Hydrated = { participantId: 'p1', displayName: 'Alice', email: 'alice@acme.edu', present: true, sessions: 1, joinTime: '2026-10-22T18:05:00Z', leaveTime: null, durationMs: 180000, durationMin: 3 };
+    expect(await firestore.persistAttendance('acme.edu', 'class-101', 'conferenceRecords/r1', [p1Hydrated], 'teacher@acme.edu')).toBe(true);
+    const p1Path = 'tenants/acme.edu/meetings/class-101__r1/participants/p1';
+    expect(ctx.read(p1Path).joinTime.toDate()).toEqual(new Date('2026-10-22T18:05:00Z'));
+
+    // Poll 3: Untagged fallback with joinTime: null (e.g. cache evicted or non-tagged caller)
+    const p1UntaggedFallback = { participantId: 'p1', displayName: 'Alice', email: 'alice@acme.edu', present: true, sessions: 1, joinTime: null, leaveTime: null };
+    expect(await firestore.persistAttendance('acme.edu', 'class-101', 'conferenceRecords/r1', [p1UntaggedFallback], 'teacher@acme.edu')).toBe(false);
+    expect(ctx.read(p1Path).joinTime.toDate()).toEqual(new Date('2026-10-22T18:05:00Z'));
+    expect(ctx.read(p1Path).durationMin).toBe(3);
+  });
+
+  test('pins docId by unique participant identity across polls so reconnect record ID changes never create duplicate Firestore participant docs', async () => {
+    // Poll 1: Karol is persisted with participantId '.../1629'
+    const poll1 = [
+      { participantId: 'conferenceRecords/r1/participants/1629', displayName: 'Karol Maureira', email: '', present: true, sessions: 1, joinTime: '2026-10-22T17:49:44Z', leaveTime: null, durationMs: 600000, durationMin: 10 },
+    ];
+    expect(await firestore.persistAttendance('sinafe.org', 'mpo-inst-yhk', 'conferenceRecords/r1', poll1, 'sinafe@sinafe.org')).toBe(true);
+    expect(ctx.read('tenants/sinafe.org/meetings/mpo-inst-yhk__r1/participants/1629')).toBeDefined();
+
+    // Poll 2: Karol reconnects with new participantId '.../2072' but identical session state -> debounced (0 writes, no duplicate doc '2072')
+    const poll2SameState = [
+      { participantId: 'conferenceRecords/r1/participants/2072', displayName: 'karol maureira', email: '', present: true, sessions: 1, joinTime: '2026-10-22T17:49:44Z', leaveTime: null, durationMs: 600000, durationMin: 10 },
+    ];
+    expect(await firestore.persistAttendance('sinafe.org', 'mpo-inst-yhk', 'conferenceRecords/r1', poll2SameState, 'sinafe@sinafe.org')).toBe(false);
+    expect(ctx.read('tenants/sinafe.org/meetings/mpo-inst-yhk__r1/participants/2072')).toBeUndefined();
+
+    // Poll 3: Karol's session count increases to 2 under participantId '.../2072' -> updates existing doc '1629' in place
+    const poll3Updated = [
+      { participantId: 'conferenceRecords/r1/participants/2072', displayName: 'karol Maureira', email: '', present: true, sessions: 2, joinTime: '2026-10-22T17:49:44Z', leaveTime: null, durationMs: 1200000, durationMin: 20 },
+    ];
+    expect(await firestore.persistAttendance('sinafe.org', 'mpo-inst-yhk', 'conferenceRecords/r1', poll3Updated, 'sinafe@sinafe.org')).toBe(true);
+    expect(ctx.read('tenants/sinafe.org/meetings/mpo-inst-yhk__r1/participants/2072')).toBeUndefined();
+    expect(ctx.read('tenants/sinafe.org/meetings/mpo-inst-yhk__r1/participants/1629').sessions).toBe(2);
+    expect(ctx.read('tenants/sinafe.org/meetings/mpo-inst-yhk__r1/participants/1629').durationMin).toBe(20);
+  });
 });

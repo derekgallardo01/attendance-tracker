@@ -696,21 +696,53 @@ const attendanceDebounceCache = new Map();
 const ATTENDANCE_CHECKPOINT_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 const ATTENDANCE_CACHE_TTL_MS = 3 * 60 * 60 * 1000; // 3 hours
 
-function computeParticipantSignatures(p) {
+function participantIdentityKeyForDedup(p) {
+  const email = (p?.email || '').toLowerCase().trim();
+  if (email) return `email:${email}`;
+  const name = (p?.displayName || '').toLowerCase().trim();
+  if (name && name !== 'unknown') return `name:${name}`;
+  return null;
+}
+
+function buildUniqueIdentityKeySet(participants) {
+  const counts = new Map();
+  if (Array.isArray(participants)) {
+    for (const p of participants) {
+      const k = participantIdentityKeyForDedup(p);
+      if (k) counts.set(k, (counts.get(k) || 0) + 1);
+    }
+  }
+  const unique = new Set();
+  for (const [k, c] of counts.entries()) {
+    if (c === 1) unique.add(k);
+  }
+  return unique;
+}
+
+function resolveParticipantDocId(p, identityToDocId = null, uniqueIdentityKeys = null) {
+  const k = participantIdentityKeyForDedup(p);
+  if (k && identityToDocId && (!uniqueIdentityKeys || uniqueIdentityKeys.has(k))) {
+    const pinned = identityToDocId.get(k);
+    if (pinned) return { docId: pinned, identityKey: k, wasPinned: true };
+  }
   const rawDocId = (p.participantId ? lastSegment(p.participantId) : '') || p.email || p.displayName || 'unknown';
   const docId = String(rawDocId).replace(/\//g, '_').trim() || 'unknown';
-  const pid = p.participantId || '';
+  return { docId, identityKey: k, wasPinned: false };
+}
+
+function computeParticipantSignatures(p, identityToDocId = null, uniqueIdentityKeys = null) {
+  const { docId, identityKey } = resolveParticipantDocId(p, identityToDocId, uniqueIdentityKeys);
   const email = (p.email || '').toLowerCase().trim();
-  const name = (p.displayName || '').trim();
+  const name = (p.displayName || '').toLowerCase().trim();
   const present = p.present ? 1 : 0;
   const sessions = p.sessions || 1;
   const join = p.joinTime ? (typeof p.joinTime === 'string' ? p.joinTime : p.joinTime.toISOString?.() || String(p.joinTime)) : '';
   const leave = p.leaveTime ? (typeof p.leaveTime === 'string' ? p.leaveTime : p.leaveTime.toISOString?.() || String(p.leaveTime)) : '';
   const durMs = typeof p.durationMs === 'number' ? p.durationMs : '';
   const durMin = typeof p.durationMin === 'number' ? p.durationMin : '';
-  const rosterSig = `${pid}|${email}|${name}|${present}|${sessions}|${join}|${leave}`;
+  const rosterSig = `${docId}|${email}|${name}|${present}|${sessions}|${join}|${leave}`;
   const writeSig = `${rosterSig}|${durMs}|${durMin}`;
-  return { docId, rosterSig, writeSig };
+  return { docId, identityKey, rosterSig, writeSig };
 }
 
 function isDegradedParticipantUpdate(p, prevPState) {
@@ -720,10 +752,10 @@ function isDegradedParticipantUpdate(p, prevPState) {
   return false;
 }
 
-function computeRosterFingerprint(participants, prevParticipantStates = null) {
+function computeRosterFingerprint(participants, prevParticipantStates = null, identityToDocId = null, uniqueIdentityKeys = null) {
   if (!Array.isArray(participants) || participants.length === 0) return '0:empty';
   const sigs = participants.map(p => {
-    const raw = computeParticipantSignatures(p);
+    const raw = computeParticipantSignatures(p, identityToDocId, uniqueIdentityKeys);
     const prev = prevParticipantStates?.get(raw.docId);
     if (isDegradedParticipantUpdate(p, prev)) return prev.rosterSig;
     return raw.rosterSig;
@@ -732,10 +764,10 @@ function computeRosterFingerprint(participants, prevParticipantStates = null) {
   return `${participants.length}:${sigs.join(';')}`;
 }
 
-function computeParticipantWriteFingerprint(participants, prevParticipantStates = null) {
+function computeParticipantWriteFingerprint(participants, prevParticipantStates = null, identityToDocId = null, uniqueIdentityKeys = null) {
   if (!Array.isArray(participants) || participants.length === 0) return '0:empty';
   const sigs = participants.map(p => {
-    const raw = computeParticipantSignatures(p);
+    const raw = computeParticipantSignatures(p, identityToDocId, uniqueIdentityKeys);
     const prev = prevParticipantStates?.get(raw.docId);
     if (isDegradedParticipantUpdate(p, prev)) return prev.writeSig;
     return raw.writeSig;
@@ -766,8 +798,10 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
     const nowMs = Date.now();
     const cached = getDebounceEntry(sessionKey);
     const prevStates = cached?.participantStates || null;
-    const currentFingerprint = computeRosterFingerprint(participants, prevStates);
-    const currentWriteFingerprint = computeParticipantWriteFingerprint(participants, prevStates);
+    const identityToDocId = cached?.identityToDocId || null;
+    const uniqueIdentityKeys = buildUniqueIdentityKeySet(participants);
+    const currentFingerprint = computeRosterFingerprint(participants, prevStates, identityToDocId, uniqueIdentityKeys);
+    const currentWriteFingerprint = computeParticipantWriteFingerprint(participants, prevStates, identityToDocId, uniqueIdentityKeys);
     const instanceId = recordName ? lastSegment(recordName) : null;
     const buildTrackedDocId = (emailLower) => {
       const cleanEmail = emailLower.replace(/[^a-z0-9]/g, '_');
@@ -781,10 +815,11 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
     if (cached) {
       if (prevStates && prevStates.size > 0) {
         for (const p of participants) {
-          const { docId, rosterSig } = computeParticipantSignatures(p);
+          const { docId, rosterSig } = computeParticipantSignatures(p, identityToDocId, uniqueIdentityKeys);
           const prevPState = prevStates.get(docId);
           if (isDegradedParticipantUpdate(p, prevPState)) continue;
-          if (!prevPState || prevPState.rosterSig !== rosterSig) {
+          const upgradedFromDegraded = Boolean(prevPState?.wasDegraded && !p?.degradedSession);
+          if (!prevPState || upgradedFromDegraded || prevPState.rosterSig !== rosterSig) {
             rosterChanged = true;
             break;
           }
@@ -832,6 +867,7 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
       fingerprint: currentFingerprint,
       participantWriteFingerprint: null,
       participantStates: new Map(),
+      identityToDocId: new Map(),
       lastPersistedAt: nowMs,
       lastSeenAt: nowMs,
       trackedActors: new Map(),
@@ -841,6 +877,9 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
     };
     if (!entry.participantStates) {
       entry.participantStates = new Map();
+    }
+    if (!entry.identityToDocId) {
+      entry.identityToDocId = new Map();
     }
     if (isFirstPersist) {
       attendanceDebounceCache.set(sessionKey, entry);
@@ -938,13 +977,14 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
       // Never overwrite an already-persisted participant with a degraded/rate-limited fallback.
       const participantsToWrite = [];
       for (const p of participants) {
-        const { docId, rosterSig, writeSig } = computeParticipantSignatures(p);
+        const { docId, identityKey, rosterSig, writeSig } = computeParticipantSignatures(p, entry.identityToDocId, uniqueIdentityKeys);
         const prevPState = entry.participantStates.get(docId);
         if (!forcePersist && isDegradedParticipantUpdate(p, prevPState)) {
           continue;
         }
+        const upgradedFromDegraded = Boolean(prevPState?.wasDegraded && !p?.degradedSession);
         let shouldWrite = false;
-        if (isFirstPersist || forcePersist) {
+        if (isFirstPersist || forcePersist || upgradedFromDegraded) {
           shouldWrite = true;
         } else if (isCheckpointDue) {
           shouldWrite = !prevPState || prevPState.writeSig !== writeSig;
@@ -952,7 +992,7 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
           shouldWrite = !prevPState || prevPState.rosterSig !== rosterSig;
         }
         if (shouldWrite) {
-          participantsToWrite.push({ p, docId, rosterSig, writeSig, prevPState });
+          participantsToWrite.push({ p, docId, identityKey, rosterSig, writeSig, prevPState });
         }
       }
 
@@ -988,14 +1028,18 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
           }
           await batch.commit();
         }
-        for (const { p, docId, rosterSig, writeSig, prevPState } of participantsToWrite) {
+        for (const { p, docId, identityKey, rosterSig, writeSig, prevPState } of participantsToWrite) {
+          if (identityKey && uniqueIdentityKeys.has(identityKey) && !entry.identityToDocId.has(identityKey)) {
+            entry.identityToDocId.set(identityKey, docId);
+          }
           entry.participantStates.set(docId, {
             rosterSig,
             writeSig,
             hasJoinTime: Boolean(p.joinTime || prevPState?.hasJoinTime),
+            wasDegraded: Boolean(p.degradedSession),
           });
         }
-        entry.participantWriteFingerprint = currentWriteFingerprint;
+        entry.participantWriteFingerprint = computeParticipantWriteFingerprint(participants, entry.participantStates, entry.identityToDocId, uniqueIdentityKeys);
       }
 
       if (actorEmail) {
@@ -1045,7 +1089,7 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
     entry.inFlightPromise = writePromise;
     await writePromise;
 
-    entry.fingerprint = computeRosterFingerprint(participants, entry.participantStates);
+    entry.fingerprint = computeRosterFingerprint(participants, entry.participantStates, entry.identityToDocId, uniqueIdentityKeys);
     if (isFirstPersist || isCheckpointDue || forcePersist) {
       entry.lastPersistedAt = Date.now();
     }

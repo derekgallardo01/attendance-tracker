@@ -769,6 +769,62 @@ describe('GET /api/attendance — final residual branches', () => {
       expect(res2.status).toBe(200);
       expect(res2.body.participants).toHaveLength(2);
       expect(res2.body.participants.find(p => p.email === 'alice@acme.com').sessions).toBe(2);
+      expect(res2.body.participants.find(p => p.email === 'alice@acme.com').participantId).toBe('conferenceRecords/rec-raw-retain/participants/p1');
+
+      // Poll 3: cyclic pagination returns ONLY p1-rejoin (omitting p1 from current poll) -> deterministic sort & pinned primaryName keep participantId as p1!
+      mockMeetGetAll.mockImplementation(async (pathArg) => {
+        if (pathArg.endsWith('/participants')) return [fullRaw[2]];
+        return [{ startTime: '2026-10-22T18:00:00Z', endTime: '2026-10-22T18:10:00Z' }];
+      });
+      const res3 = await request(app).get('/api/attendance?conferenceId=retain-test').set(auth());
+      expect(res3.status).toBe(200);
+      expect(res3.body.participants.find(p => p.email === 'alice@acme.com').participantId).toBe('conferenceRecords/rec-raw-retain/participants/p1');
+    } finally {
+      attendanceRoute.setSessionCacheEnabledForTest(false);
+    }
+  });
+
+  test('reconnected participant with multiple records reuses per-record cached sessions when a new reconnect record hits 429 and tags degradedSession', async () => {
+    const attendanceRoute = require('../../src/routes/attendance');
+    attendanceRoute.setSessionCacheEnabledForTest(true);
+    try {
+      mockMeetGet.mockResolvedValue({
+        conferenceRecords: [{ name: 'conferenceRecords/rec-partial-group-429' }],
+      });
+      const rec1 = {
+        name: 'conferenceRecords/rec-partial-group-429/participants/p1-initial',
+        signedinUser: { displayName: 'Alice', email: 'alice@acme.com' },
+        earliestStartTime: '2026-10-22T18:00:00Z',
+      };
+      const rec2 = {
+        name: 'conferenceRecords/rec-partial-group-429/participants/p1-reconnect',
+        signedinUser: { displayName: 'Alice', email: 'alice@acme.com' },
+        earliestStartTime: '2026-10-22T18:30:00Z',
+      };
+
+      // Poll 1: Alice has rec1 only, session fetch succeeds
+      mockMeetGetAll.mockImplementation(async (pathArg) => {
+        if (pathArg.endsWith('/participants')) return [rec1];
+        return [{ startTime: '2026-10-22T18:00:00Z', endTime: '2026-10-22T18:20:00Z' }];
+      });
+      const res1 = await request(app).get('/api/attendance?conferenceId=partial-group').set(auth());
+      expect(res1.status).toBe(200);
+      expect(res1.body.participants[0].joinTime).toBe('2026-10-22T18:00:00.000Z');
+      expect(res1.body.participants[0].durationMs).toBe(1200000);
+
+      // Poll 2: Alice reconnects (group = [rec2, rec1] out of order), and rec1 + rec2 both fail with 429 on refresh:
+      // rec1 reuses its cached session from confCache.recordSessions, primary stays p1-initial, and persisted object has degradedSession: true
+      mockMeetGetAll.mockImplementation(async (pathArg) => {
+        if (pathArg.endsWith('/participants')) return [rec2, rec1];
+        throw Object.assign(new Error('Meet API 429: RESOURCE_EXHAUSTED'), { status: 429 });
+      });
+      const res2 = await request(app).get('/api/attendance?conferenceId=partial-group').set(auth());
+      expect(res2.status).toBe(200);
+      expect(res2.body.participants[0].participantId).toBe('conferenceRecords/rec-partial-group-429/participants/p1-initial');
+      expect(res2.body.participants[0].joinTime).toBe('2026-10-22T18:00:00.000Z');
+      expect(res2.body.participants[0].durationMs).toBe(1200000);
+      const persistedParticipants = firestore.persistAttendance.mock.calls[1][3];
+      expect(persistedParticipants[0].degradedSession).toBe(true);
     } finally {
       attendanceRoute.setSessionCacheEnabledForTest(false);
     }

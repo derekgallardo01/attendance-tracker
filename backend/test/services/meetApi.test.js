@@ -227,6 +227,29 @@ describe('meetGetAll', () => {
     // 4 pages (up to p3) + 6 consecutive duplicate pages = 10 calls (well below MAX_PAGES=50)
     expect(global.fetch).toHaveBeenCalledTimes(10);
   });
+
+  test('filters out already-seen named items on partially overlapping pages without dropping new items', async () => {
+    global.fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          items: [{ name: 'rec/participants/p1' }, { name: 'rec/participants/p2' }],
+          nextPageToken: 'tok-2',
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          items: [{ name: 'rec/participants/p1' }, { name: 'rec/participants/p3' }],
+        }),
+      });
+    const items = await meetGetAll('records/x/participants', 'tok', 'items');
+    expect(items).toEqual([
+      { name: 'rec/participants/p1' },
+      { name: 'rec/participants/p2' },
+      { name: 'rec/participants/p3' },
+    ]);
+  });
 });
 
 describe('meetGet — request timeout (abort)', () => {
@@ -491,4 +514,46 @@ describe('fetchConferenceParticipants', () => {
     expect(res[0].email).toBe('merged@x.com');
     expect(res[0].displayName).toBe('Merged Person');
   });
+
+  test('stops firing remaining participantSessions batches early on 429 and tags failed participants with non-enumerable degradedSession: true', async () => {
+    const rawParticipants = Array.from({ length: 15 }, (_, i) => ({
+      name: `rec-429/participants/p${String(i).padStart(2, '0')}`,
+      signedinUser: { displayName: `User ${i}`, email: `u${i}@x.com` },
+    }));
+    let sessionFetchCalls = 0;
+    global.fetch.mockImplementation(async (url) => {
+      if (url.includes('/participants') && !url.includes('/participantSessions')) {
+        return {
+          ok: true,
+          json: async () => ({ participants: rawParticipants }),
+        };
+      }
+      sessionFetchCalls++;
+      if (url.includes('p09/participantSessions')) {
+        return {
+          ok: false,
+          status: 429,
+          headers: { get: () => '0' },
+          text: async () => 'RESOURCE_EXHAUSTED',
+        };
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          participantSessions: [{ startTime: '2026-03-01T10:00:00Z', endTime: '2026-03-01T10:30:00Z' }],
+        }),
+      };
+    });
+
+    const res = await fetchConferenceParticipants('rec-429', 'tok', '2026-03-01T11:00:00Z');
+    expect(res).toHaveLength(15);
+    // Batch 0 (p00..p09) ran (9 calls × 1 + p09 × 3 retries = 12 fetch calls); Batch 1 (p10..p14) was skipped!
+    expect(sessionFetchCalls).toBe(12);
+    expect(res[0].joinTime).toBe('2026-03-01T10:00:00.000Z');
+    expect(res[0].degradedSession).toBeUndefined();
+    expect(res[9].joinTime).toBeNull();
+    expect(res[9].degradedSession).toBe(true);
+    expect(res[14].joinTime).toBeNull();
+    expect(res[14].degradedSession).toBe(true);
+  }, 15000);
 });

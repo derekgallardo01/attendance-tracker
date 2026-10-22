@@ -91,6 +91,7 @@ function getConferenceSessionCacheEntry(recordName, conferenceEndTime) {
       lastSeenAt: now,
       conferenceEndTime: conferenceEndTime || null,
       participants: new Map(),
+      recordSessions: new Map(),
       rawRecords: new Map(),
     };
     conferenceSessionCache.set(recordName, entry);
@@ -108,23 +109,56 @@ function getConferenceSessionCacheEntry(recordName, conferenceEndTime) {
   return entry;
 }
 
-function selectPrimaryParticipant(group) {
-  return group.find(p => p.signedinUser?.email && p.signedinUser?.displayName)
-    || group.find(p => p.signedinUser?.email)
-    || group.find(p => p.signedinUser?.displayName || p.anonymousUser?.displayName || p.phoneUser?.displayName)
-    || group[0];
+function sortParticipantGroup(group) {
+  if (!Array.isArray(group) || group.length <= 1) return group;
+  return group.slice().sort((a, b) => {
+    const startA = a?.earliestStartTime ? Date.parse(a.earliestStartTime) : Number.POSITIVE_INFINITY;
+    const startB = b?.earliestStartTime ? Date.parse(b.earliestStartTime) : Number.POSITIVE_INFINITY;
+    const validA = Number.isFinite(startA) ? startA : Number.POSITIVE_INFINITY;
+    const validB = Number.isFinite(startB) ? startB : Number.POSITIVE_INFINITY;
+    if (validA !== validB) return validA - validB;
+    return String(a?.name || '').localeCompare(String(b?.name || ''), undefined, { numeric: true });
+  });
+}
+
+function selectPrimaryParticipant(group, preferredName = null) {
+  const ordered = sortParticipantGroup(group);
+  if (preferredName) {
+    const pinned = ordered.find(p => p?.name === preferredName);
+    if (pinned) return pinned;
+  }
+  return ordered.find(p => p.signedinUser?.email && p.signedinUser?.displayName)
+    || ordered.find(p => p.signedinUser?.email)
+    || ordered.find(p => p.signedinUser?.displayName || p.anonymousUser?.displayName || p.phoneUser?.displayName)
+    || ordered[0];
+}
+
+function resolveGroupIdentity(primary, group) {
+  const base = participantIdentity(primary);
+  if (!Array.isArray(group) || group.length <= 1) return base;
+  let displayName = base.displayName;
+  let email = base.email;
+  if (email && displayName && displayName !== 'Unknown') return base;
+  for (const p of group) {
+    const idy = participantIdentity(p);
+    if (!email && idy.email) email = idy.email;
+    if ((!displayName || displayName === 'Unknown') && idy.displayName && idy.displayName !== 'Unknown') {
+      displayName = idy.displayName;
+    }
+  }
+  return { displayName: displayName || 'Unknown', email: email || '' };
 }
 
 function computeGroupSignature(group) {
   return group.map(p => `${p.name || ''}:${p.earliestStartTime || ''}:${p.latestEndTime || ''}`).sort().join('|');
 }
 
-function buildParticipantFromSessions(primary, group, sessions, effectiveEndMs, hadFetchError = false) {
+function buildParticipantFromSessions(primary, group, sessions, effectiveEndMs, hadFetchError = false, markDegraded = false) {
   const joinTimes  = sessions.map(s => s.startTime).filter(Boolean).map(t => new Date(t));
   const leaveTimes = sessions.map(s => s.endTime).filter(Boolean).map(t => new Date(t));
-  return {
+  const p = {
     participantId: primary.name,
-    ...participantIdentity(primary),
+    ...resolveGroupIdentity(primary, group),
     joinTime:      joinTimes.length  > 0 ? new Date(Math.min(...joinTimes)).toISOString()  : null,
     leaveTime:     leaveTimes.length > 0 ? new Date(Math.max(...leaveTimes)).toISOString() : null,
     // Actual in-meeting time (sum of sessions) — the join/leave span
@@ -133,12 +167,16 @@ function buildParticipantFromSessions(primary, group, sessions, effectiveEndMs, 
     present:       sessions.some(s => !s.endTime) || hadFetchError,
     sessions:      sessions.length || group.length,
   };
+  if (hadFetchError || markDegraded) {
+    Object.defineProperty(p, 'degradedSession', { value: true, enumerable: false });
+  }
+  return p;
 }
 
 function buildDegradedParticipant(primary, group) {
   const p = {
     participantId: primary.name,
-    ...participantIdentity(primary),
+    ...resolveGroupIdentity(primary, group),
     joinTime: null,
     leaveTime: null,
     present: true,
@@ -416,21 +454,23 @@ router.get('/attendance', async (req, res) => {
       // no-name participants — never merge those (a room of anon guests must not
       // collapse to one). Only real emails/names identify a person to dedupe.
       const name = rawName && rawName !== 'unknown' ? rawName : '';
-      const key = email || (name ? `name:${name}` : `__anon_${anonSeq++}`);
+      const key = email || (name ? `name:${name}` : (p?.name ? `anon:${p.name}` : `__anon_${anonSeq++}`));
       if (!seen.has(key)) {
         seen.set(key, [p]);
       } else {
         seen.get(key).push(p);
       }
     }
-    const distinctGroups = [...seen.values()];
-    const distinctCount = distinctGroups.length;
+    const distinctEntries = [...seen.entries()].map(([k, grp]) => [k, sortParticipantGroup(grp)]);
+    const distinctCount = distinctEntries.length;
 
     // Cap the DISTINCT set (bounds memory + the per-poll session-call count). For
     // the 5,000-record/257-person meeting this now processes all 257 rather than
     // an arbitrary first-500 slice of raw records.
     const truncated = distinctCount > MAX_PARTICIPANTS;
-    const toProcess = truncated ? distinctGroups.slice(0, MAX_PARTICIPANTS) : distinctGroups;
+    const toProcessEntries = truncated ? distinctEntries.slice(0, MAX_PARTICIPANTS) : distinctEntries;
+    const toProcess = toProcessEntries.map(([, grp]) => grp);
+    const toProcessKeys = toProcessEntries.map(([k]) => k);
     if (truncated) {
       log.warn('attendance: distinct participant list capped', { conferenceId, raw: totalParticipants, distinct: distinctCount, cap: MAX_PARTICIPANTS });
     }
@@ -449,10 +489,10 @@ router.get('/attendance', async (req, res) => {
         neverFetchedIndices.push(idx);
         continue;
       }
-      const primary = selectPrimaryParticipant(group);
-      const cacheKey = primary.name || `idx_${idx}`;
-      const groupSig = computeGroupSignature(group);
+      const cacheKey = toProcessKeys[idx];
       const cached = confCache.participants.get(cacheKey);
+      const primary = selectPrimaryParticipant(group, cached?.primaryName);
+      const groupSig = computeGroupSignature(group);
       if (!cached) {
         neverFetchedIndices.push(idx);
       } else if (cached.groupSig !== groupSig) {
@@ -471,9 +511,9 @@ router.get('/attendance', async (req, res) => {
       const toRefresh = expiredCandidates.slice(0, refreshBudget).map(c => c.idx);
       for (const { idx } of expiredCandidates.slice(refreshBudget)) {
         const group = toProcess[idx];
-        const primary = selectPrimaryParticipant(group);
-        const cacheKey = primary.name || `idx_${idx}`;
+        const cacheKey = toProcessKeys[idx];
         const cached = confCache.participants.get(cacheKey);
+        const primary = selectPrimaryParticipant(group, cached?.primaryName);
         results[idx] = buildParticipantFromSessions(primary, group, cached.sessions, effectiveEndMs, false);
       }
       indicesToFetch = [...neverFetchedIndices, ...urgentIndices, ...toRefresh];
@@ -483,9 +523,9 @@ router.get('/attendance', async (req, res) => {
 
     const resolveFallbackOrCached = (idx) => {
       const group = toProcess[idx];
-      const primary = selectPrimaryParticipant(group);
-      const cacheKey = primary.name || `idx_${idx}`;
+      const cacheKey = toProcessKeys[idx];
       const cached = confCache?.participants.get(cacheKey);
+      const primary = selectPrimaryParticipant(group, cached?.primaryName);
       if (cached && Array.isArray(cached.sessions) && cached.sessions.length > 0) {
         return buildParticipantFromSessions(primary, group, cached.sessions, effectiveEndMs, false);
       }
@@ -515,22 +555,32 @@ router.get('/attendance', async (req, res) => {
       const batchResults = await Promise.all(
         batchIndices.map(async (idx) => {
           const group = toProcess[idx];
-          const primary = selectPrimaryParticipant(group);
-          const cacheKey = primary.name || `idx_${idx}`;
+          const cacheKey = toProcessKeys[idx];
+          const cached = confCache?.participants.get(cacheKey);
+          const primary = selectPrimaryParticipant(group, cached?.primaryName);
           const groupSig = confCache ? computeGroupSignature(group) : '';
           let hadFetchError = false;
+          let hadUncachedError = false;
           try {
             const sessionArrays = await Promise.all(
               group.map(async (p) => {
                 try {
-                  return await callWithTokenRefresh(tok =>
+                  const sArr = await callWithTokenRefresh(tok =>
                     meetGetAll(`${p.name}/participantSessions`, tok, 'participantSessions')
                   );
+                  if (confCache && p?.name && Array.isArray(sArr)) {
+                    confCache.recordSessions.set(p.name, sArr);
+                  }
+                  return sArr;
                 } catch (err) {
                   if (isAuthError(err)) throw err;
                   if (isRateLimited(err)) rateLimited = true;
                   hadFetchError = true;
                   log.warn('failed to fetch sessions for participant record', { name: p.name, error: err.message });
+                  if (confCache && p?.name && confCache.recordSessions.has(p.name)) {
+                    return confCache.recordSessions.get(p.name);
+                  }
+                  hadUncachedError = true;
                   return [];
                 }
               })
@@ -539,16 +589,20 @@ router.get('/attendance', async (req, res) => {
             if (sessions.length === 0 && hadFetchError) {
               return { idx, participant: resolveFallbackOrCached(idx) };
             }
+            const effectiveSessions = (hadFetchError && cached && Array.isArray(cached.sessions) && cached.sessions.length > sessions.length)
+              ? cached.sessions
+              : sessions;
             if (confCache && !hadFetchError) {
               confCache.participants.set(cacheKey, {
-                sessions,
+                primaryName: primary.name,
+                sessions: effectiveSessions,
                 groupSig,
                 fetchedAt: Date.now(),
               });
             }
             return {
               idx,
-              participant: buildParticipantFromSessions(primary, group, sessions, effectiveEndMs, hadFetchError),
+              participant: buildParticipantFromSessions(primary, group, effectiveSessions, effectiveEndMs, hadFetchError, hadUncachedError),
             };
           } catch (err) {
             if (isAuthError(err)) throw err;

@@ -85,13 +85,17 @@ async function meetGetAll(path, token, responseKey) {
     if (pageItems.length > 0) {
       let namedCount = 0;
       let newNamedCount = 0;
+      const uniquePageItems = [];
       for (const item of pageItems) {
         if (item && typeof item.name === 'string' && item.name) {
           namedCount++;
           if (!seenItemNames.has(item.name)) {
             seenItemNames.add(item.name);
             newNamedCount++;
+            uniquePageItems.push(item);
           }
+        } else {
+          uniquePageItems.push(item);
         }
       }
       if (pages > 0 && namedCount === pageItems.length && newNamedCount === 0) {
@@ -102,7 +106,7 @@ async function meetGetAll(path, token, responseKey) {
         }
       } else {
         consecutiveDuplicatePages = 0;
-        items.push(...pageItems);
+        items.push(...uniquePageItems);
       }
     }
     const nextToken = data.nextPageToken || null;
@@ -117,6 +121,21 @@ async function meetGetAll(path, token, responseKey) {
     }
   } while (pageToken);
   return items;
+}
+
+// Deterministically order a person's raw Meet participant records (earliest
+// join first, tie-broken by resource name) so pagination page order never
+// flips which record is selected as primary.
+function sortParticipantGroup(group) {
+  if (!Array.isArray(group) || group.length <= 1) return group;
+  return group.slice().sort((a, b) => {
+    const startA = a?.earliestStartTime ? Date.parse(a.earliestStartTime) : Number.POSITIVE_INFINITY;
+    const startB = b?.earliestStartTime ? Date.parse(b.earliestStartTime) : Number.POSITIVE_INFINITY;
+    const validA = Number.isFinite(startA) ? startA : Number.POSITIVE_INFINITY;
+    const validB = Number.isFinite(startB) ? startB : Number.POSITIVE_INFINITY;
+    if (validA !== validB) return validA - validB;
+    return String(a?.name || '').localeCompare(String(b?.name || ''), undefined, { numeric: true });
+  });
 }
 
 // Resolve a Meet v2 Participant's identity. The resource is a oneof of
@@ -189,16 +208,31 @@ async function fetchConferenceParticipants(recordName, token, meetingEndTime = n
       seen.get(key).push(p);
     }
   }
-  const distinctGroups = [...seen.values()];
+  const distinctGroups = [...seen.values()].map(sortParticipantGroup);
+
+  const selectPrimary = (ordered) => ordered.find(p => p.signedinUser?.email && p.signedinUser?.displayName)
+    || ordered.find(p => p.signedinUser?.email)
+    || ordered.find(p => p.signedinUser?.displayName || p.anonymousUser?.displayName || p.phoneUser?.displayName)
+    || ordered[0];
 
   const BATCH = 10;
   const participantData = [];
+  let rateLimited = false;
   for (let i = 0; i < distinctGroups.length; i += BATCH) {
+    if (rateLimited) {
+      for (const group of distinctGroups.slice(i)) {
+        participantData.push({
+          p: selectPrimary(group),
+          group,
+          sessions: [],
+          sessionsFetchFailed: true,
+          groupSize: group.length,
+        });
+      }
+      break;
+    }
     const results = await Promise.all(distinctGroups.slice(i, i + BATCH).map(async (group) => {
-      const primary = group.find(p => p.signedinUser?.email && p.signedinUser?.displayName)
-        || group.find(p => p.signedinUser?.email)
-        || group.find(p => p.signedinUser?.displayName || p.anonymousUser?.displayName || p.phoneUser?.displayName)
-        || group[0];
+      const primary = selectPrimary(group);
 
       let sessionsFetchFailed = false;
       const sessionArrays = await Promise.all(group.map(async (p) => {
@@ -206,6 +240,9 @@ async function fetchConferenceParticipants(recordName, token, meetingEndTime = n
           return await meetGetAll(`${p.name}/participantSessions`, token, 'participantSessions');
         } catch (e) {
           sessionsFetchFailed = true;
+          if (e && (e.status === 429 || /Meet API 429|RESOURCE_EXHAUSTED|rate limit/i.test(String(e.message || '')))) {
+            rateLimited = true;
+          }
           log.warn('meetApi: sessions fetch failed', { participant: p.name, error: e.message });
           return [];
         }
@@ -250,7 +287,7 @@ async function fetchConferenceParticipants(recordName, token, meetingEndTime = n
     const joinIso = joins.length ? new Date(Math.min(...joins)).toISOString() : null;
     const hasOpenSession = sessions.some(s => !s.endTime);
     const leaveIso = (!hasOpenSession && leaves.length) ? new Date(Math.max(...leaves)).toISOString() : null;
-    const durationMs = sessionsFetchFailed ? undefined : sessionsDurationMs(sessions, meetingEndMs || Date.now());
+    const durationMs = sessionsFetchFailed && sessions.length === 0 ? undefined : sessionsDurationMs(sessions, meetingEndMs || Date.now());
 
     let present = false;
     if (sessionsFetchFailed) {
@@ -263,7 +300,7 @@ async function fetchConferenceParticipants(recordName, token, meetingEndTime = n
 
     const idy = groupIdentity(group);
 
-    return {
+    const participantObj = {
       participantId: p.name,
       displayName:  idy.displayName,
       email:        idy.email,
@@ -275,8 +312,13 @@ async function fetchConferenceParticipants(recordName, token, meetingEndTime = n
       present,
       sessions:     sessions.length || groupSize || 1,
     };
+    if (sessionsFetchFailed) {
+      Object.defineProperty(participantObj, 'degradedSession', { value: true, enumerable: false });
+    }
+    return participantObj;
   });
 }
 
-module.exports = { meetGet, meetGetAll, participantIdentity, sessionsDurationMs, fetchConferenceParticipants };
+module.exports = { meetGet, meetGetAll, sortParticipantGroup, participantIdentity, sessionsDurationMs, fetchConferenceParticipants };
+
 
