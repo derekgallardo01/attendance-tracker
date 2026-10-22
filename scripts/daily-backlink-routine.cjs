@@ -76,7 +76,7 @@ const DO_NOT_FOLLOW_UP_DOMAINS = new Set([
   'productivityshift.com', 'findmyaitool.io', 'chiarasangels.net',
   'calbizjournal.com', 'nealschaffer.com', 'techbullion.com', 'fast.io',
   'zipdo.co', 'isenacode.com', 'isenacode.net', 'skrapp.io', 'assemblyai.com',
-  'nimdzi.com'
+  'nimdzi.com', 'webcatalog.io'
 ]);
 
 function extractRootDomain(input) {
