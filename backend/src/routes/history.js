@@ -169,7 +169,7 @@ router.post('/event', requireAuth, async (req, res) => {
   let safeMeta = null;
   if (meta && typeof meta === 'object' && !Array.isArray(meta)) {
     safeMeta = {};
-    for (const [k, v] of Object.entries(meta).slice(0, 10)) {
+    for (const [k, v] of Object.entries(meta).slice(0, 15)) {
       const key = String(k).slice(0, 50);
       if (typeof v === 'string') safeMeta[key] = v.slice(0, 500);
       else if (typeof v === 'number' || typeof v === 'boolean') safeMeta[key] = v;

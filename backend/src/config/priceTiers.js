@@ -29,21 +29,42 @@ const TIER_3 = new Set([
 
 // USD cents per tier.
 const USD_PRICES = {
-  1: { pro_annual: 2900, pro_monthly: 499, educator: 1499, lifetime: 2900, single_meeting: 399 },
-  2: { pro_annual: 1500, pro_monthly: 299, educator: 799, lifetime: 1900, single_meeting: 299 },
-  3: { pro_annual: 900, pro_monthly: 199, educator: 399, lifetime: 799, single_meeting: 199 },
+  1: { pro_annual: 2900, pro_monthly: 399, educator: 1499, lifetime: 2900, single_meeting: 399 },
+  2: { pro_annual: 1500, pro_monthly: 199, educator: 799, lifetime: 1900, single_meeting: 299 },
+  3: { pro_annual: 900, pro_monthly: 99, educator: 399, lifetime: 799, single_meeting: 199 },
 };
 
 // Local-currency markets (minor units). Each ≈ its tier's USD price, rounded
-// to a clean local number. All are prepaid-year markets.
+// to a clean local number. India (IN) keeps annual plans as prepaid-year due
+// to RBI e-mandate friction on recurring UPI/cards; pro_monthly is always a
+// true Stripe subscription across all tiers and markets.
 const LOCAL_PRICES = {
-  IN: { currency: 'inr', methods: ['card', 'upi'], prices: { pro_annual: 49900, educator: 24900, lifetime: 49900, single_meeting: 12900 } },
-  PH: { currency: 'php', prices: { pro_annual: 39900, educator: 19900, lifetime: 39900, single_meeting: 9900 } },
-  ID: { currency: 'idr', prices: { pro_annual: 9900000, educator: 4900000, lifetime: 9900000, single_meeting: 2500000 } },
-  KE: { currency: 'kes', prices: { pro_annual: 79000, educator: 39000, lifetime: 79000, single_meeting: 19500 } },
-  MX: { currency: 'mxn', prices: { pro_annual: 27900, educator: 14900, lifetime: 29900, single_meeting: 5900 } },
-  BR: { currency: 'brl', prices: { pro_annual: 7900, educator: 3900, lifetime: 7900, single_meeting: 1900 } },
-  MY: { currency: 'myr', prices: { pro_annual: 6500, educator: 3500, lifetime: 7900, single_meeting: 1500 } },
+  IN: { currency: 'inr', prepaid: true, methods: ['card', 'upi'], prices: { pro_annual: 49900, pro_monthly: 5900, educator: 24900, lifetime: 49900, single_meeting: 12900 } },
+  PH: { currency: 'php', prices: { pro_annual: 39900, pro_monthly: 4900, educator: 19900, lifetime: 39900, single_meeting: 9900 } },
+  ID: { currency: 'idr', prices: { pro_annual: 9900000, pro_monthly: 1490000, educator: 4900000, lifetime: 9900000, single_meeting: 2500000 } },
+  KE: { currency: 'kes', prices: { pro_annual: 79000, pro_monthly: 9900, educator: 39000, lifetime: 79000, single_meeting: 19500 } },
+  MX: { currency: 'mxn', prices: { pro_annual: 27900, pro_monthly: 3900, educator: 14900, lifetime: 29900, single_meeting: 5900 } },
+  BR: { currency: 'brl', prices: { pro_annual: 7900, pro_monthly: 990, educator: 3900, lifetime: 7900, single_meeting: 1900 } },
+  MY: { currency: 'myr', prices: { pro_annual: 6500, pro_monthly: 900, educator: 3500, lifetime: 7900, single_meeting: 1500 } },
+};
+
+// High-anchor Lifetime prices for the `recurring_first` experiment arm (~3.3x
+// Educator Annual), positioning Educator Annual + Monthly Recurring as the
+// primary choices while preserving Lifetime as a premium anchor.
+const LIFETIME_ANCHOR_USD = {
+  1: 4900,
+  2: 2900,
+  3: 1900,
+};
+
+const LIFETIME_ANCHOR_LOCAL = {
+  IN: 99900,
+  PH: 79900,
+  ID: 19900000,
+  KE: 159000,
+  MX: 54900,
+  BR: 14900,
+  MY: 12900,
 };
 
 const CURRENCY_FORMAT = {
@@ -66,6 +87,7 @@ const PRODUCT_NAMES = {
 };
 
 const ANNUAL_PLANS = new Set(['pro_annual', 'educator']);
+const PRICING_EXP_ARMS = new Set(['recurring_first', 'three_option_control']);
 
 function tieredPricingEnabled() {
   return process.env.TIERED_PRICING === '1';
@@ -95,6 +117,18 @@ function tier3Arm(email, armOverride = null) {
   return byte % 2 === 0 ? 'tiered' : 'legacy';
 }
 
+// Deterministic 50/50 pricing experiment arm (`recurring_first` vs
+// `three_option_control`) across all tiers when TIERED_PRICING=1.
+// Controlled by PRICING_EXP ('split' default, or 'recurring_first' / 'three_option_control').
+function pricingExpArm(email, expArmOverride = null) {
+  if (PRICING_EXP_ARMS.has(expArmOverride)) return expArmOverride;
+  if (PRICING_EXP_ARMS.has(process.env.PRICING_EXP)) return process.env.PRICING_EXP;
+  const e = email ? String(email).trim().toLowerCase() : '';
+  if (!e) return 'three_option_control';
+  const byte = crypto.createHash('sha256').update('pricing_exp_v1:' + e).digest()[0];
+  return byte % 2 === 0 ? 'recurring_first' : 'three_option_control';
+}
+
 // "₹749", "Rp 139.000", "$4.99", "$29". Whole amounts drop the decimals.
 function formatMoney(amount, currency) {
   const fmt = CURRENCY_FORMAT[currency] || { symbol: `${String(currency || '').toUpperCase()} `, sep: ',' };
@@ -113,21 +147,23 @@ function monthlyEquivalent(amount, currency) {
 
 // The full individual offer for a buyer. `tiered:false` means the caller must
 // use the legacy pricing path (flag off, or a tier-3 legacy-arm user).
-function getOffer({ country, email, arm: armOverride } = {}) {
+function getOffer({ country, email, arm: armOverride, expArm: expArmOverride } = {}) {
   const c = normalizeCountry(country);
   const tier = tierFor(c);
   const arm = tier === 3 ? tier3Arm(email, armOverride) : 'tiered';
   if (!tieredPricingEnabled() || arm === 'legacy') {
     return { tiered: false, tier, arm: tieredPricingEnabled() ? arm : null, country: c };
   }
+  const expArm = pricingExpArm(email, expArmOverride);
   const local = c ? LOCAL_PRICES[c] : null;
   const currency = local ? local.currency : 'usd';
-  const prepaid = !!local;
+  const prepaid = Boolean(local && local.prepaid);
   const source = local ? local.prices : USD_PRICES[tier];
   const prices = {};
   for (const plan of TIERED_PLANS) {
-    const amount = source[plan];
-    if (amount == null) continue; // e.g. no monthly in prepaid markets
+    const amount = (plan === 'lifetime' && expArm === 'recurring_first')
+      ? (local ? LIFETIME_ANCHOR_LOCAL[c] : LIFETIME_ANCHOR_USD[tier])
+      : source[plan];
     const period = plan === 'pro_monthly' ? '/mo' : (ANNUAL_PLANS.has(plan) ? '/yr' : 'one-time');
     prices[plan] = {
       amount, currency, label: formatMoney(amount, currency), period, full: null,
@@ -140,6 +176,7 @@ function getOffer({ country, email, arm: armOverride } = {}) {
     tiered: true,
     tier,
     arm,
+    expArm,
     country: c,
     currency,
     prepaid,
@@ -154,7 +191,7 @@ function getOffer({ country, email, arm: armOverride } = {}) {
 function lineItemFor(offer, plan) {
   const p = offer?.tiered ? offer.prices[plan] : null;
   if (!p) return null;
-  const recurring = !offer.prepaid && (ANNUAL_PLANS.has(plan) || plan === 'pro_monthly');
+  const recurring = plan === 'pro_monthly' || (!offer.prepaid && ANNUAL_PLANS.has(plan));
   const productId = process.env.STRIPE_PRO_PRODUCT_ID;
   const price_data = {
     currency: p.currency,
@@ -174,9 +211,12 @@ module.exports = {
   TIERED_PLANS,
   USD_PRICES,
   LOCAL_PRICES,
+  LIFETIME_ANCHOR_USD,
+  LIFETIME_ANCHOR_LOCAL,
   tieredPricingEnabled,
   tierFor,
   tier3Arm,
+  pricingExpArm,
   formatMoney,
   getOffer,
   lineItemFor,

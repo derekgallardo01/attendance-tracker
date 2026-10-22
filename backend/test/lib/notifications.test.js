@@ -1643,6 +1643,44 @@ describe('notifications — buildDesignSystemEmail & upgrade link sender', () =>
     expect(call.html).toContain('https://buy.stripe.com/lifetime');
     expect(call.text).toContain('$49/yr');
     expect(call.tags).toEqual([{ name: 'type', value: 'upgrade_link_requested' }, { name: 'lang', value: 'en' }]);
+
+    // With monthlyUrl across en, es, pt, bn
+    for (const [lang, expected] of [['en', 'Monthly Pro'], ['es', 'Pro Mensual'], ['pt', 'Pro Mensal'], ['bn', 'মান্থলি প্রো']]) {
+      mockSend.mockClear();
+      await n.sendUpgradeLinkEmail({
+        to: 'teacher@school.edu',
+        educatorUrl: 'https://buy.stripe.com/educator',
+        lifetimeUrl: 'https://buy.stripe.com/lifetime',
+        monthlyUrl: 'https://buy.stripe.com/monthly',
+        educatorPrice: '$14.99',
+        lifetimePrice: '$49',
+        monthlyPrice: '$3.99/mo',
+        expArm: 'recurring_first',
+        language: lang,
+      });
+      const mCall = mockSend.mock.calls[0][0];
+      expect(mCall.html).toContain(expected);
+      expect(mCall.html).toContain('https://buy.stripe.com/monthly');
+      expect(mCall.html).toContain('$3.99/');
+      expect(mCall.html).not.toContain('20%');
+      expect(mCall.html).not.toContain('50%');
+      expect(mCall.text).toContain('https://buy.stripe.com/monthly');
+    }
+
+    // India with tiered lifetime price in subject
+    mockSend.mockClear();
+    await n.sendUpgradeLinkEmail({
+      to: 'teacher@school.edu.in',
+      educatorUrl: 'https://buy.stripe.com/educator',
+      lifetimeUrl: 'https://buy.stripe.com/lifetime',
+      monthlyUrl: 'https://buy.stripe.com/monthly',
+      educatorPrice: '₹249',
+      lifetimePrice: '₹999',
+      monthlyPrice: '₹59',
+      expArm: 'recurring_first',
+      country: 'IN',
+    });
+    expect(mockSend.mock.calls[0][0].subject).toContain('₹999 Special Offer');
   });
 
   test('sendUpgradeLinkEmail throws if to is missing', async () => {

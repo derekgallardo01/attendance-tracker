@@ -97,6 +97,9 @@ function paymentFromSession(s) {
     domain,
     country: s.customer_details?.address?.country || null,
     regional: meta.isAnnualOneTime === '1' || (!!meta.currency && meta.currency !== 'usd') || (meta.pricing === 'tiered' && meta.tier != null && String(meta.tier) !== '1'),
+    tier: meta.tier != null ? Number(meta.tier) : null,
+    arm: meta.arm || null,
+    expArm: meta.expArm || null,
     status: 'paid',
   };
 }
@@ -129,6 +132,9 @@ function paymentFromInvoice(inv, subMeta = {}) {
     domain: (meta.domain || (email && email.includes('@') ? email.split('@')[1] : null) || '').toLowerCase() || null,
     country: inv.customer_address?.country || null,
     regional: meta.isAnnualOneTime === '1' || (!!meta.currency && meta.currency !== 'usd') || (meta.pricing === 'tiered' && meta.tier != null && String(meta.tier) !== '1') || (String(inv.currency || '').toLowerCase() !== 'usd'),
+    tier: meta.tier != null ? Number(meta.tier) : null,
+    arm: meta.arm || null,
+    expArm: meta.expArm || null,
     status: 'paid',
     billingReason: inv.billing_reason || null,
   };
@@ -157,6 +163,9 @@ async function recordPayment(p) {
         email: p.email,
         domain: p.domain,
         individual: p.individual,
+        tier: p.tier ?? null,
+        arm: p.arm || null,
+        expArm: p.expArm || null,
         status: 'active',
         updatedAt: FieldValue.serverTimestamp(),
       }, { merge: true });
@@ -246,6 +255,27 @@ async function getRevenueSummary({ now = Date.now() } = {}) {
     return usd == null ? 0 : monthlyCents(usd, s.interval);
   });
 
+  const byExpArm = {};
+  const ensureArmBucket = (key) => byExpArm[key] || (byExpArm[key] = {
+    count: 0,
+    approxUsd: 0,
+    recurringCount: 0,
+    oneTimeCount: 0,
+    mrrApproxUsd: 0,
+  });
+  for (const p of paid) {
+    const b = ensureArmBucket(p.expArm || 'legacy');
+    b.count++;
+    b.approxUsd += approxUsdCents(p) || 0;
+    if (p.recurring) b.recurringCount++;
+    else b.oneTimeCount++;
+  }
+  for (const s of activeSubs) {
+    const b = ensureArmBucket(s.expArm || 'legacy');
+    const usd = approxUsdCents(s);
+    if (usd != null) b.mrrApproxUsd += monthlyCents(usd, s.interval);
+  }
+
   return {
     generatedAt: new Date(now).toISOString(),
     payments: paid.length,
@@ -264,6 +294,7 @@ async function getRevenueSummary({ now = Date.now() } = {}) {
     },
     unconverted,
     byPlan,
+    byExpArm,
     activeSubscriptions: activeSubs.length,
     mrrApproxUsd: mrrApprox,
     arrApproxUsd: mrrApprox * 12,

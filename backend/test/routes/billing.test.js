@@ -1909,9 +1909,11 @@ describe('billing/status pricing payload', () => {
         expect(sendUpgradeLinkEmail).toHaveBeenCalledWith(expect.objectContaining({
           to: uniqueEmail,
           educatorPrice: '$14.99',
-          lifetimePrice: '$29',
+          lifetimePrice: expect.stringMatching(/^\$(29|49)$/),
+          monthlyPrice: '$3.99',
           educatorUrl: expect.stringContaining('/api/billing/checkout-redirect?plan=educator'),
           lifetimeUrl: expect.stringContaining('/api/billing/checkout-redirect?plan=lifetime'),
+          monthlyUrl: expect.stringContaining('/api/billing/checkout-redirect?plan=pro_monthly'),
         }));
       } finally {
         delete process.env.TIERED_PRICING;
@@ -3171,6 +3173,14 @@ describe('billing — tiered regional pricing (TIERED_PRICING=1)', () => {
     }
     throw new Error('unreachable');
   };
+  const emailInExpArm = (want, domain = 'gmail.com') => {
+    for (let i = 0; i < 100; i++) {
+      const e = 'exp' + i + '@' + domain;
+      const even = crypto.createHash('sha256').update('pricing_exp_v1:' + e).digest()[0] % 2 === 0;
+      if ((want === 'recurring_first') === even) return e;
+    }
+    throw new Error('unreachable');
+  };
   const checkout = (email, body) => request(app)
     .post('/api/billing/checkout')
     .set(authedHeader(email, email.split('@')[1]))
@@ -3190,55 +3200,84 @@ describe('billing — tiered regional pricing (TIERED_PRICING=1)', () => {
     process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID = 'price_life_legacy';
     process.env.TIERED_PRICING = '1';
     delete process.env.TIER3_TEST;
+    delete process.env.PRICING_EXP;
     firestore.setUserPlan.mockReset();
     app = buildApp();
   });
   afterEach(() => {
     delete process.env.TIERED_PRICING;
     delete process.env.TIER3_TEST;
+    delete process.env.PRICING_EXP;
     delete process.env.STRIPE_INDIVIDUAL_LIFETIME_PRICE_ID;
     delete process.env.STRIPE_EDUCATOR_PRICE_ID;
   });
 
-  test('US pro_annual → $29/yr subscription via price_data, no coupon, checkout_started logged', async () => {
-    const res = await checkout('teacher@gmail.com', { plan: 'pro_annual', country: 'US' });
+  test('US pro_annual → $29/yr subscription via price_data, no coupon, checkout_started logged with expArm', async () => {
+    const email = emailInExpArm('recurring_first');
+    const res = await checkout(email, { plan: 'pro_annual', country: 'US' });
     expect(res.status).toBe(200);
     const s = lastSession();
     expect(s.mode).toBe('subscription');
     expect(s.line_items[0].price_data).toMatchObject({ currency: 'usd', unit_amount: 2900, recurring: { interval: 'year' } });
     expect(s.discounts).toBeUndefined();
-    expect(s.metadata).toMatchObject({ plan: 'pro_annual', individual: '1', tier: '1', pricing: 'tiered', email: 'teacher@gmail.com' });
+    expect(s.metadata).toMatchObject({
+      plan: 'pro_annual', individual: '1', tier: '1', pricing: 'tiered',
+      email, expArm: 'recurring_first',
+    });
     expect(s.subscription_data.metadata.plan).toBe('pro_annual');
+    expect(s.subscription_data.metadata.expArm).toBe('recurring_first');
     expect(firestore.logEvent).toHaveBeenCalledWith('gmail.com', expect.objectContaining({
-      type: 'checkout_started', meta: expect.objectContaining({ plan: 'pro_annual', recurring: true, tier: 1 }),
+      type: 'checkout_started',
+      meta: expect.objectContaining({ plan: 'pro_annual', recurring: true, tier: 1, expArm: 'recurring_first' }),
     }));
   });
 
-  test('US pro_monthly → monthly subscription; lifetime → $49 one-time', async () => {
-    await checkout('teacher@gmail.com', { plan: 'pro_monthly', country: 'US' });
-    expect(lastSession().line_items[0].price_data).toMatchObject({ unit_amount: 499, recurring: { interval: 'month' } });
-    await checkout('teacher@gmail.com', { plan: 'lifetime', country: 'US' });
-    const s = lastSession();
+  test('US pro_monthly → $3.99/mo subscription; lifetime → $29 in three_option_control and $49 in recurring_first', async () => {
+    const ctrlEmail = emailInExpArm('three_option_control');
+    await checkout(ctrlEmail, { plan: 'pro_monthly', country: 'US' });
+    expect(lastSession().line_items[0].price_data).toMatchObject({ unit_amount: 399, recurring: { interval: 'month' } });
+
+    await checkout(ctrlEmail, { plan: 'lifetime', country: 'US' });
+    let s = lastSession();
     expect(s.mode).toBe('payment');
     expect(s.customer_creation).toBe('always');
     expect(s.line_items[0].price_data).toMatchObject({ unit_amount: 2900 });
+    expect(s.metadata.expArm).toBe('three_option_control');
+
+    const rfEmail = emailInExpArm('recurring_first');
+    await checkout(rfEmail, { plan: 'lifetime', country: 'US' });
+    s = lastSession();
+    expect(s.line_items[0].price_data).toMatchObject({ unit_amount: 4900 });
+    expect(s.metadata.expArm).toBe('recurring_first');
   });
 
-  test('Brazil pro_annual → BRL prepaid year (one-time, flagged isAnnualOneTime); monthly refused', async () => {
+  test('Brazil pro_annual & pro_monthly → BRL recurring subscriptions', async () => {
     await checkout('prof@gmail.com', { plan: 'pro_annual', country: 'BR' });
     const s = lastSession();
-    expect(s.mode).toBe('payment');
-    expect(s.line_items[0].price_data).toMatchObject({ currency: 'brl', unit_amount: 7900 });
-    expect(s.metadata).toMatchObject({ isAnnualOneTime: '1', tier: '2', currency: 'brl' });
+    expect(s.mode).toBe('subscription');
+    expect(s.line_items[0].price_data).toMatchObject({ currency: 'brl', unit_amount: 7900, recurring: { interval: 'year' } });
+    expect(s.metadata).toMatchObject({ tier: '2', currency: 'brl' });
+    expect(s.metadata.isAnnualOneTime).toBeUndefined();
+
     const res = await checkout('prof@gmail.com', { plan: 'pro_monthly', country: 'BR' });
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(200);
+    expect(lastSession().mode).toBe('subscription');
+    expect(lastSession().line_items[0].price_data).toMatchObject({ currency: 'brl', unit_amount: 990, recurring: { interval: 'month' } });
   });
 
-  test('India tiered arm → INR with card+UPI; Kenya keeps dynamic methods', async () => {
+  test('India tiered arm → INR prepaid educator with card+UPI, while IN pro_monthly is subscription without UPI method lock; Kenya keeps dynamic methods', async () => {
     await checkout(emailInArm('tiered'), { plan: 'educator', country: 'IN' });
     let s = lastSession();
+    expect(s.mode).toBe('payment');
     expect(s.line_items[0].price_data).toMatchObject({ currency: 'inr', unit_amount: 24900 });
     expect(s.payment_method_types).toEqual(['card', 'upi']);
+
+    await checkout(emailInArm('tiered'), { plan: 'pro_monthly', country: 'IN' });
+    s = lastSession();
+    expect(s.mode).toBe('subscription');
+    expect(s.line_items[0].price_data).toMatchObject({ currency: 'inr', unit_amount: 5900, recurring: { interval: 'month' } });
+    expect(s.payment_method_types).toBeUndefined();
+
     process.env.TIER3_TEST = 'all';
     await checkout('m@gmail.com', { plan: 'lifetime', country: 'KE' });
     s = lastSession();
@@ -3293,34 +3332,46 @@ describe('billing — tiered regional pricing (TIERED_PRICING=1)', () => {
     expect(lastSession().metadata.plan).toBe('educator');
   });
 
-  test('public-checkout: tiered pro_annual for a signed-out US visitor (email optional)', async () => {
+  test('public-checkout: tiered pro_annual for a signed-out US visitor and respects expArm override', async () => {
     const res = await request(app).post('/api/billing/public-checkout').set('cf-ipcountry', 'US').send({ plan: 'pro_annual' });
     expect(res.status).toBe(200);
     const s = lastSession();
-    expect(s.metadata).toMatchObject({ plan: 'pro_annual', source: 'public_pricing' });
+    expect(s.metadata).toMatchObject({ plan: 'pro_annual', source: 'public_pricing', expArm: 'three_option_control' });
     expect(s.client_reference_id).toBeUndefined();
     expect(s.cancel_url).toContain('pricing.html');
-    await request(app).post('/api/billing/public-checkout').set('cf-ipcountry', 'US').send({ plan: 'lifetime', email: 'Buyer@Gmail.com' });
+    await request(app).post('/api/billing/public-checkout').set('cf-ipcountry', 'US').send({ plan: 'lifetime', email: 'Buyer@Gmail.com', expArm: 'recurring_first' });
     expect(lastSession().client_reference_id).toBe('user:buyer@gmail.com');
+    expect(lastSession().line_items[0].price_data.unit_amount).toBe(4900);
+    expect(lastSession().metadata.expArm).toBe('recurring_first');
   });
 
-  test('public-checkout: monthly refused in prepaid markets, Stripe failure → 502, signed-out tier 3 → 400 for pro in split mode', async () => {
-    expect((await request(app).post('/api/billing/public-checkout').set('cf-ipcountry', 'MX').send({ plan: 'pro_monthly' })).status).toBe(400);
+  test('public-checkout: MX pro_monthly succeeds as subscription, Stripe failure → 502, signed-out tier 3 → 400 for pro in split mode', async () => {
+    const mxMonthly = await request(app).post('/api/billing/public-checkout').set('cf-ipcountry', 'MX').send({ plan: 'pro_monthly' });
+    expect(mxMonthly.status).toBe(200);
+    expect(lastSession().mode).toBe('subscription');
+    expect(lastSession().line_items[0].price_data).toMatchObject({ currency: 'mxn', unit_amount: 3900, recurring: { interval: 'month' } });
+
     mockStripeInstance.checkout.sessions.create.mockRejectedValueOnce(Object.assign(new Error('boom'), { code: 'api_error' }));
     expect((await request(app).post('/api/billing/public-checkout').set('cf-ipcountry', 'US').send({ plan: 'pro_annual' })).status).toBe(502);
     process.env.TIER3_TEST = 'split';
     expect((await request(app).post('/api/billing/public-checkout').set('cf-ipcountry', 'IN').send({ plan: 'pro_annual' })).status).toBe(400);
   });
 
-  test('GET /billing/offer: tiered table for US and default tier 3, legacy (null pricing) for signed-out tier 3 in split mode, never cached', async () => {
+  test('GET /billing/offer: tiered table for US and default tier 3, supports expArm, legacy (null pricing) for signed-out tier 3 in split mode, never cached', async () => {
     const us = await request(app).get('/api/billing/offer').set('cf-ipcountry', 'US');
     expect(us.headers['cache-control']).toBe('private, no-store');
-    expect(us.body).toMatchObject({ tiered: true, tier: 1, prepaid: false, monthlyAvailable: true, country: 'US' });
+    expect(us.body).toMatchObject({ tiered: true, tier: 1, expArm: 'three_option_control', prepaid: false, monthlyAvailable: true, country: 'US' });
     expect(us.body.pricing.pro_annual).toEqual({ label: '$29', full: null, period: '/yr', perMonth: '$2.42' });
+    expect(us.body.pricing.pro_monthly).toEqual({ label: '$3.99', full: null, period: '/mo' });
     expect(us.body.pricing.lifetime).toEqual({ label: '$29', full: null, period: 'one-time' });
     expect(us.body.pricing.department.label).toBe('$59'); // domain plans unchanged
+
+    const usRf = await request(app).get('/api/billing/offer?expArm=recurring_first').set('cf-ipcountry', 'US');
+    expect(usRf.body.expArm).toBe('recurring_first');
+    expect(usRf.body.pricing.lifetime).toEqual({ label: '$49', full: null, period: 'one-time' });
+
     const inDefault = await request(app).get('/api/billing/offer').set('cf-ipcountry', 'IN');
-    expect(inDefault.body).toMatchObject({ tiered: true, tier: 3, arm: 'tiered' });
+    expect(inDefault.body).toMatchObject({ tiered: true, tier: 3, arm: 'tiered', prepaid: true, monthlyAvailable: true });
     process.env.TIER3_TEST = 'split';
     const inn = await request(app).get('/api/billing/offer').set('cf-ipcountry', 'IN');
     expect(inn.body).toMatchObject({ tiered: false, tier: 3, arm: 'legacy', pricing: null });
@@ -3330,18 +3381,41 @@ describe('billing — tiered regional pricing (TIERED_PRICING=1)', () => {
     const withArm = await request(app).get('/api/billing/offer?arm=tiered').set('cf-ipcountry', 'IN');
     expect(withArm.body).toMatchObject({ tiered: true, tier: 3, arm: 'tiered' });
     expect(withArm.body.pricing.pro_annual.label).toBe('₹499');
+    expect(withArm.body.pricing.pro_monthly.label).toBe('₹59');
 
     const withBearer = await request(app).get('/api/billing/offer').set('cf-ipcountry', 'IN').set(authedHeader('prof@gmail.com', 'gmail.com'));
     expect(withBearer.body.tier).toBe(3);
     expect(withBearer.body.arm).toBeDefined();
+    expect(withBearer.body.expArm).toBeDefined();
   });
 
-  test('GET /billing/status carries the offer + tiered labels', async () => {
+  test('GET /billing/status carries the offer + tiered labels including monthly and expArm', async () => {
     const res = await request(app).get('/api/billing/status?country=MX').set(authedHeader('prof@gmail.com', 'gmail.com'));
     expect(res.status).toBe(200);
-    expect(res.body.offer).toMatchObject({ tiered: true, tier: 2, prepaid: true, monthlyAvailable: false, currency: 'mxn' });
+    expect(res.body.offer).toMatchObject({ tiered: true, tier: 2, prepaid: false, monthlyAvailable: true, currency: 'mxn' });
+    expect(res.body.offer.expArm).toMatch(/^(recurring_first|three_option_control)$/);
     expect(res.body.pricing.pro_annual.label).toBe('MX$279');
-    expect(res.body.pricing.pro_monthly).toBeUndefined();
+    expect(res.body.pricing.pro_monthly.label).toBe('MX$39');
+  });
+
+  test('POST /billing/send-upgrade-link passes monthlyUrl, monthlyPrice, and expArm to sendUpgradeLinkEmail under tiered pricing', async () => {
+    const { sendUpgradeLinkEmail } = require('../../src/lib/notifications');
+    sendUpgradeLinkEmail.mockClear();
+    const email = emailInExpArm('recurring_first');
+    const res = await request(app)
+      .post('/api/billing/send-upgrade-link')
+      .set(authedHeader(email, 'gmail.com'))
+      .set('cf-ipcountry', 'US')
+      .send({});
+    expect(res.status).toBe(200);
+    expect(sendUpgradeLinkEmail).toHaveBeenCalledWith(expect.objectContaining({
+      to: email,
+      educatorPrice: '$14.99',
+      lifetimePrice: '$49',
+      monthlyPrice: '$3.99',
+      expArm: 'recurring_first',
+      monthlyUrl: expect.stringContaining('plan=pro_monthly'),
+    }));
   });
 
   test('webhook: checkout.session.completed for single_meeting calls sendUpgradeNotification', async () => {
@@ -3373,20 +3447,26 @@ describe('billing — tiered regional pricing (TIERED_PRICING=1)', () => {
     }));
   });
 
-  test('webhook: prepaid pro_annual grants a year, stacking onto an unexpired pass', async () => {
+  test('webhook: prepaid pro_annual grants a year, stacking onto an unexpired pass, and logs expArm on upgraded event', async () => {
     const inSixMonths = new Date(Date.now() + 180 * 86400000).toISOString();
     firestore.getUserPlan.mockResolvedValueOnce({ plan: 'pro', individualPlanExpiresAt: inSixMonths });
     mockStripeInstance.webhooks.constructEvent.mockReturnValue({
       id: 'evt_t1', type: 'checkout.session.completed',
       data: { object: { id: 'cs_t1', client_reference_id: 'user:prof@gmail.com', amount_total: 7900, currency: 'brl',
-        metadata: { plan: 'pro_annual', individual: '1', email: 'prof@gmail.com', domain: 'gmail.com', isAnnualOneTime: '1' } } },
+        metadata: { plan: 'pro_annual', individual: '1', email: 'prof@gmail.com', domain: 'gmail.com', isAnnualOneTime: '1', tier: '2', arm: 'tiered', expArm: 'recurring_first' } } },
     });
     const res = await postWebhook();
     expect(res.status).toBe(200);
     const patch = firestore.setUserPlan.mock.calls[0][2];
     expect(patch.individualPlanType).toBe('pro_annual_prepaid');
     expect(Date.parse(patch.individualPlanExpiresAt) - Date.parse(inSixMonths)).toBeGreaterThan(364 * 86400000);
-    expect(firestore.recordPayment).toHaveBeenCalledWith(expect.objectContaining({ plan: 'pro_annual_prepaid', currency: 'brl' }));
+    expect(firestore.recordPayment).toHaveBeenCalledWith(expect.objectContaining({
+      plan: 'pro_annual_prepaid', currency: 'brl', tier: 2, arm: 'tiered', expArm: 'recurring_first',
+    }));
+    expect(firestore.logEvent).toHaveBeenCalledWith('gmail.com', expect.objectContaining({
+      type: 'upgraded',
+      meta: expect.objectContaining({ plan: 'pro_annual_prepaid', tier: 2, arm: 'tiered', expArm: 'recurring_first' }),
+    }));
   });
 
   test('webhook: prepaid grant counts from today when the plan lookup fails', async () => {
@@ -3402,5 +3482,36 @@ describe('billing — tiered regional pricing (TIERED_PRICING=1)', () => {
     const days = (Date.parse(patch.individualPlanExpiresAt) - Date.now()) / 86400000;
     expect(days).toBeGreaterThan(364);
     expect(days).toBeLessThan(366);
+  });
+
+  test('webhook: signed-out tiered subscription backfills pricing, tier, arm, and expArm onto subscription metadata', async () => {
+    mockStripeInstance.subscriptions.update = jest.fn().mockResolvedValue({});
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({
+      id: 'evt_t3', type: 'checkout.session.completed',
+      data: {
+        object: {
+          id: 'cs_t3',
+          subscription: 'sub_t3',
+          amount_total: 399,
+          currency: 'usd',
+          customer_details: { email: 'signedout@gmail.com' },
+          metadata: { plan: 'pro_monthly', individual: '1', pricing: 'tiered', tier: '1', arm: 'tiered', expArm: 'recurring_first' },
+        },
+      },
+    });
+    const res = await postWebhook();
+    expect(res.status).toBe(200);
+    expect(mockStripeInstance.subscriptions.update).toHaveBeenCalledWith('sub_t3', {
+      metadata: expect.objectContaining({
+        individual: '1',
+        plan: 'pro_monthly',
+        email: 'signedout@gmail.com',
+        domain: 'gmail.com',
+        pricing: 'tiered',
+        tier: '1',
+        arm: 'tiered',
+        expArm: 'recurring_first',
+      }),
+    });
   });
 });

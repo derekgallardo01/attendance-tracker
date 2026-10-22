@@ -1410,16 +1410,19 @@
         if (!links && btn) {
           links = document.createElement('div');
           links.id = 'tiered-alt-links';
-          links.style.cssText = 'display:flex;flex-direction:column;gap:6px;margin-top:10px;text-align:center;font-size:.85rem';
+          links.style.cssText = 'display:flex;flex-direction:column;gap:6px;margin-top:8px;text-align:center;font-size:.85rem';
           btn.insertAdjacentElement('afterend', links);
         }
         if (links) {
           links.innerHTML = '';
           var addLink = function (text, plan) {
-            var a = document.createElement('a');
-            a.href = '#';
-            a.textContent = text;
-            a.style.color = 'var(--text-muted, #9aa0a6)';
+            var a = document.createElement('button');
+            a.type = 'button';
+            a.className = 'btn-plan btn-plan-secondary';
+            a.style.cssText = 'margin-top:0;padding:10px 16px;font-size:.85rem;border-color:rgba(138,180,248,.35);color:#8ab4f8;background:rgba(138,180,248,.08)';
+            var sp = document.createElement('span');
+            sp.textContent = text;
+            a.appendChild(sp);
             a.onclick = function (e) { e.preventDefault(); startPricingCheckout(plan, a); };
             links.appendChild(a);
           };
@@ -1513,10 +1516,15 @@
       if (!offerEmail) {
         try { offerEmail = localStorage.getItem('att_user_email') || localStorage.getItem('last_user_email') || ''; } catch (e) {}
       }
+      if (!_checkoutEmail && offerEmail && offerEmail.indexOf('@') !== -1) {
+        _checkoutEmail = offerEmail.trim().toLowerCase();
+      }
       var offerArm = qpOffer.get('arm') || '';
+      var offerExpArm = qpOffer.get('expArm') || '';
       var offerUrlParams = new URLSearchParams();
       if (offerEmail) offerUrlParams.set('email', offerEmail);
       if (offerArm) offerUrlParams.set('arm', offerArm);
+      if (offerExpArm) offerUrlParams.set('expArm', offerExpArm);
       var offerQueryStr = offerUrlParams.toString();
       var offerFetchUrl = BACKEND_URL + '/billing/offer' + (offerQueryStr ? '?' + offerQueryStr : '');
 
@@ -1726,13 +1734,15 @@
         plan: isInstitution ? 'team' : (plan || 'lifetime'),
         // 'team' + 'annual' resolves to the Institution price server-side,
         // so the $19.99 one-time domain card must NOT send 'annual'.
-        interval: isInstitution ? 'annual' : (plan === 'team' ? 'once' : 'annual'),
+        interval: isInstitution ? 'annual' : (plan === 'team' ? 'once' : (plan === 'pro_monthly' ? 'monthly' : 'annual')),
         // Referral redemption: landing with ?promo=code (from the reward
         // email) sends a truthy non-LAUNCH50 marker, which is what makes
         // the backend open Stripe's promo-code box (billing.js filters
         // LAUNCH50 and empty). LAUNCH50 itself is retired — never sent.
         promo: _promoOverride === 'code' ? 'code' : '',
-        ...(_checkoutEmail ? { email: _checkoutEmail } : {})
+        ...(_checkoutEmail ? { email: _checkoutEmail } : {}),
+        ...(window._tieredOffer && window._tieredOffer.arm ? { arm: window._tieredOffer.arm } : {}),
+        ...(window._tieredOffer && window._tieredOffer.expArm ? { expArm: window._tieredOffer.expArm } : {}),
       });
       const postCheckout = (token) => fetch(
         token ? `${BACKEND_URL}/billing/checkout` : `${BACKEND_URL}/billing/public-checkout`,

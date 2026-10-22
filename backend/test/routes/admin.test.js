@@ -179,6 +179,7 @@ jest.mock('../../src/lib/notifications', () => ({
   sendSourceReportedNotification: jest.fn(),
   verifyReviewApprovalToken: jest.fn(),
   sendReviewRewardEmail: jest.fn(),
+  sendPassExpiryReminderEmail: jest.fn(),
 }));
 jest.mock('../../src/services/billing-telemetry', () => {
   const actual = jest.requireActual('../../src/services/billing-telemetry');
@@ -231,6 +232,7 @@ beforeEach(() => {
   notifications.sendForgottenMeetingEmail.mockResolvedValue({ sent: true });
   notifications.sendComebackEmail.mockResolvedValue({ sent: true });
   notifications.sendExportGapEmail.mockResolvedValue({ sent: true });
+  notifications.sendPassExpiryReminderEmail.mockResolvedValue({ sent: true });
   // Auto-capture sweep defaults (individual tests override as needed).
   googleAuth.refreshAccessToken.mockResolvedValue({ access_token: 'at', expiry_date: Date.now() + 3600000 });
   googleAuth.makeUserClient.mockReturnValue({});
@@ -881,6 +883,33 @@ describe('POST /api/admin/check-reengagement', () => {
     }));
     expect(notifications.sendReactivationEmail).not.toHaveBeenCalled();
     expect(notifications.sendActivationNudgeEmail).not.toHaveBeenCalled();
+  });
+
+  test('routes expiry_t14 reminder checkoutUrl to plan=educator for educator_annual and plan=pro_annual for pro_annual_prepaid', async () => {
+    firestore.getAllUsersAcrossTenants.mockResolvedValue([
+      { email: 'edu@acme.com', domain: 'acme.com', individualPlanType: 'educator_annual', signupGeo: { country: 'IN' } },
+      { email: 'pro@acme.com', domain: 'acme.com', individualPlanType: 'pro_annual_prepaid', signupGeo: { country: 'IN' } },
+    ]);
+    firestore.evaluateReengagementForUser.mockImplementation(async (user) => [
+      { type: 'expiry_t14', planType: user.individualPlanType, daysUntilExpiry: 14 },
+    ]);
+    firestore.claimReengagementSlot.mockResolvedValue({ claimed: true, ref: {} });
+
+    await request(app)
+      .post('/api/admin/check-reengagement')
+      .set('x-scheduler-secret', SCHEDULER_SECRET)
+      .set('Content-Type', 'application/json')
+      .send({});
+
+    expect(notifications.sendPassExpiryReminderEmail).toHaveBeenCalledTimes(2);
+    expect(notifications.sendPassExpiryReminderEmail).toHaveBeenCalledWith(expect.objectContaining({
+      to: 'edu@acme.com',
+      checkoutUrl: expect.stringContaining('&plan=educator'),
+    }));
+    expect(notifications.sendPassExpiryReminderEmail).toHaveBeenCalledWith(expect.objectContaining({
+      to: 'pro@acme.com',
+      checkoutUrl: expect.stringContaining('&plan=pro_annual'),
+    }));
   });
 
   test('never emails the owner/super-admin account', async () => {

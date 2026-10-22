@@ -726,7 +726,14 @@
 
     function openUpgradeModal(feature) {
       window._lastHistoryUpgradeFeature = feature || 'pro';
-      try { logHistoryEvent('upgrade_modal_shown', { feature: feature || 'history_page' }); } catch (e) {}
+      const offer = window._lastBillingStatus?.offer;
+      try {
+        logHistoryEvent('upgrade_modal_shown', {
+          feature: feature || 'history_page',
+          ...(offer?.tier != null ? { tier: offer.tier } : {}),
+          ...(offer?.expArm ? { expArm: offer.expArm } : {}),
+        });
+      } catch (e) {}
       const modal = document.getElementById('history-upgrade-modal');
       const titleEl = document.getElementById('history-upgrade-title');
       const descEl = document.getElementById('history-upgrade-desc');
@@ -762,16 +769,25 @@
 
     async function upgradeFromHistory(btn, plan) {
       plan = plan || historyUpgradePlan();
+      const offer = window._lastBillingStatus?.offer;
       // Conversion telemetry parity with the panel's startUpgradeCheckout —
       // without this, history-page upgrade intent was invisible in the funnel.
-      try { logHistoryEvent('upgrade_checkout_clicked', { plan, reason: 'history_page' }); } catch (e) {}
+      try {
+        logHistoryEvent('upgrade_checkout_clicked', {
+          plan,
+          reason: 'history_page',
+          ...(offer?.tier != null ? { tier: offer.tier } : {}),
+          ...(offer?.expArm ? { expArm: offer.expArm } : {}),
+        });
+      } catch (e) {}
       // Preserve innerHTML (the banner button holds a .price-lifetime span);
       // a failed checkout previously restored a hardcoded English literal,
       // wiping the price and any translation.
       const originalHtml = btn ? btn.innerHTML : '';
       if (btn) { btn.disabled = true; btn.textContent = t('common.loading', 'Loading…'); }
       try {
-        window.location.href = await AttApi.startCheckout(sessionToken, { plan, interval: proInterval }); // shared js/api.js
+        const interval = plan === 'pro_monthly' ? 'monthly' : proInterval;
+        window.location.href = await AttApi.startCheckout(sessionToken, { plan, interval }); // shared js/api.js
         return;
       } catch (e) {
         alert(e.message);
@@ -950,6 +966,16 @@
       const lifeOnce = (typeof AttPricing !== 'undefined') ? AttPricing.price('lifetime') : '';
       if (lifeOnce) {
         document.querySelectorAll('.price-lifetime-once').forEach(el => { el.textContent = lifeOnce; });
+      }
+      const monthlyBtn = document.getElementById('history-upgrade-monthly-btn');
+      if (monthlyBtn) {
+        const offer = window._lastBillingStatus && window._lastBillingStatus.offer;
+        const monthlyPrice = (typeof AttPricing !== 'undefined') ? AttPricing.price('pro_monthly') : '';
+        const showMonthly = !!(offer && offer.tiered && offer.monthlyAvailable && monthlyPrice);
+        monthlyBtn.style.display = showMonthly ? '' : 'none';
+        if (showMonthly) {
+          monthlyBtn.textContent = t('upgrade.orMonthly', 'or {price} / month').replace('{price}', monthlyPrice);
+        }
       }
     }
 
@@ -1933,6 +1959,7 @@
         <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
           <button class="btn btn-secondary" onclick="closeUpgradeModal()" data-i18n="referral.notNow">Not now</button>
           <button class="btn btn-secondary" onclick="upgradeFromHistory(this, 'lifetime')" style="border-color:rgba(74,222,128,.45);color:#4ade80"><span data-i18n="upgrade.ctaLifetime">Get Lifetime Access —</span> <span class="price-lifetime-once">$29</span></button>
+          <button id="history-upgrade-monthly-btn" class="btn btn-secondary" onclick="upgradeFromHistory(this, 'pro_monthly')" style="display:none;border-color:rgba(138,180,248,.4);color:#8ab4f8"></button>
           <button class="btn btn-primary" onclick="upgradeFromHistory(this, historyUpgradePlan())"><span data-i18n="upgrade.ctaEdu">Get Educator Annual Pass —</span> <span class="price-lifetime">$14.99/yr</span></button>
         </div>
       </div>

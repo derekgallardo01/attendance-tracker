@@ -49,7 +49,10 @@ describe('resolvePaymentPlan', () => {
 describe('usdCents / approxUsdCents', () => {
   test('USD charges are exact; Adaptive Pricing uses the conversion block', () => {
     expect(payments.usdCents(999, 'USD', null)).toBe(999);
+    expect(payments.usdCents(999, null, null)).toBeNull();
     expect(payments.usdCents(56000, 'php', { source_currency: 'usd', amount_total: 999 })).toBe(999);
+    expect(payments.usdCents(56000, 'php', { source_currency: 'usd', amount_total: null })).toBeNull();
+    expect(payments.usdCents(56000, 'php', { source_currency: null, amount_total: 999 })).toBeNull();
     expect(payments.usdCents(56000, 'php', { source_currency: 'eur', amount_total: 900 })).toBeNull();
     expect(payments.usdCents(28000, 'php', null)).toBeNull();
     expect(payments.usdCents(null, 'usd', null)).toBeNull();
@@ -58,6 +61,7 @@ describe('usdCents / approxUsdCents', () => {
     expect(payments.approxUsdCents({ amountUsd: 500 })).toBe(500);
     expect(payments.approxUsdCents({ amount: 28000, currency: 'php' })).toBe(482);
     expect(payments.approxUsdCents({ amount: 100, currency: 'xyz' })).toBeNull();
+    expect(payments.approxUsdCents({ amount: 100 })).toBeNull();
     expect(payments.approxUsdCents({ currency: 'php' })).toBeNull();
   });
 });
@@ -66,7 +70,7 @@ describe('paymentFromSession', () => {
   test('individual one-time lifetime keyed by PaymentIntent', () => {
     const p = payments.paymentFromSession({
       id: 'cs_1', payment_intent: 'pi_1', client_reference_id: 'user:T@Gmail.com',
-      amount_total: 999, currency: 'usd', metadata: { plan: 'lifetime' },
+      amount_total: 999, currency: 'usd', metadata: { plan: 'lifetime', currency: 'usd' },
       customer_details: { address: { country: 'US' } },
     });
     expect(p).toMatchObject({
@@ -148,9 +152,21 @@ describe('paymentFromInvoice', () => {
       id: 'pi_t3', regional: true,
     });
   });
-  test('falls back to the plan default interval and the invoice email', () => {
-    const p = payments.paymentFromInvoice({ id: 'in_8', amount_paid: 5900, currency: 'usd', customer_email: 'x@s.edu' }, { plan: 'department' });
-    expect(p).toMatchObject({ id: 'in_8', plan: 'department', interval: 'year', email: 'x@s.edu', domain: 's.edu' });
+  test('falls back to the plan default interval, legacy plan interval, customer_address, and handles missing fields', () => {
+    const p = payments.paymentFromInvoice(
+      { id: 'in_8', amount_paid: 5900, currency: 'usd', customer_email: 'x@s.edu', customer_address: { country: 'US' } },
+      { plan: 'department', domain: 's.edu', currency: 'usd' }
+    );
+    expect(p).toMatchObject({ id: 'in_8', plan: 'department', interval: 'year', email: 'x@s.edu', domain: 's.edu', country: 'US', regional: false });
+
+    const pEmpty = payments.paymentFromInvoice(
+      { id: 'in_empty', lines: { data: [{ plan: { interval: 'month' } }] } }
+    );
+    expect(pEmpty).toMatchObject({ id: 'in_empty', amount: null, currency: null, email: null, domain: null, interval: 'month', regional: true });
+
+    const pNullMeta = payments.paymentFromInvoice({ id: 'in_null', currency: 'brl', amount_paid: 990 }, { individual: '1' });
+    expect(pNullMeta).toMatchObject({ id: 'in_null', plan: 'individual_subscription', interval: 'year', currency: 'brl', regional: true });
+    expect(payments.paymentFromInvoice({ id: 'in_null2' }, null)).toMatchObject({ id: 'in_null2', interval: 'year' });
   });
 });
 
@@ -210,6 +226,7 @@ describe('getRevenueSummary', () => {
     seedPayment('pi_life', { plan: 'lifetime', recurring: false, amount: 999, currency: 'usd', amountUsd: 999, email: 'a@x.com', domain: 'x.com' }, now - DAY);
     seedPayment('pi_old', { plan: 'lifetime', recurring: false, amount: 999, currency: 'usd', amountUsd: 999, email: 'b@x.com', domain: 'x.com' }, now - 40 * DAY);
     seedPayment('pi_php', { plan: 'lifetime', recurring: false, amount: 28000, currency: 'php', amountUsd: null, email: 'c@x.ph', domain: 'x.ph' }, now - 10 * DAY);
+    ctx.seed('payments/pi_php_null', { status: 'paid', plan: 'lifetime', recurring: false, amount: null, currency: 'php', amountUsd: null, email: 'c2@x.ph', domain: 'x.ph', createdAt: null });
     seedPayment('in_dept', { plan: 'department', recurring: true, interval: 'year', amount: 5900, currency: 'usd', amountUsd: 5900, domain: 's.edu' }, now - 2 * DAY);
     seedPayment('pi_ref', { plan: 'lifetime', status: 'refunded', amount: 999, currency: 'usd', amountUsd: 999, email: 'd@x.com' }, now - DAY);
     seedPayment('pi_me', { plan: 'lifetime', amount: 999, currency: 'usd', amountUsd: 999, email: SUPER_ADMIN }, now - DAY);
@@ -220,16 +237,57 @@ describe('getRevenueSummary', () => {
     ctx.seed('subscriptions/sub_xyz', { status: 'active', interval: 'year', amount: 100, currency: 'xyz' });
 
     const s = await payments.getRevenueSummary({ now });
-    expect(s.payments).toBe(4);
+    expect(s.payments).toBe(5);
     expect(s.refundedOrDisputed).toBe(1);
     expect(s.cashUsd).toEqual({ allTime: 999 + 999 + 5900, last30d: 999 + 5900, last7d: 999 + 5900 });
     expect(s.approxUsd.allTime).toBe(999 + 999 + 482 + 5900);
     expect(s.approxUsd.oneTime).toBe(999 + 999 + 482);
     expect(s.approxUsd.recurring).toBe(5900);
     expect(s.unconverted).toEqual({ php: 28000 });
-    expect(s.byPlan.lifetime).toEqual({ count: 3, approxUsd: 999 + 999 + 482 });
+    expect(s.byPlan.lifetime).toEqual({ count: 4, approxUsd: 999 + 999 + 482 });
     expect(s.activeSubscriptions).toBe(3); // active + past_due (dunning) + the unconvertible one
     expect(s.mrrApproxUsd).toBe(Math.round(5900 / 12) + 499);
     expect(s.arrApproxUsd).toBe(s.mrrApproxUsd * 12);
+  });
+
+  test('tracks tier, arm, expArm on payments/subscriptions and aggregates byExpArm in getRevenueSummary', async () => {
+    const p1 = payments.paymentFromSession({
+      id: 'cs_exp1', invoice: 'in_exp1', subscription: 'sub_exp1',
+      amount_total: 1499, currency: 'usd',
+      metadata: { plan: 'educator', individual: '1', email: 'u1@school.edu', pricing: 'tiered', tier: '1', arm: 'tiered', expArm: 'recurring_first' },
+    });
+    expect(p1).toMatchObject({ tier: 1, arm: 'tiered', expArm: 'recurring_first' });
+    await payments.recordPayment(p1);
+    expect(ctx.read('subscriptions/sub_exp1')).toMatchObject({ tier: 1, arm: 'tiered', expArm: 'recurring_first' });
+
+    const p2 = payments.paymentFromInvoice({
+      id: 'in_exp2', payment_intent: 'pi_exp2', subscription: 'sub_exp2', amount_paid: 399, currency: 'usd',
+      billing_reason: 'subscription_cycle', lines: { data: [{ price: { recurring: { interval: 'month' } } }] },
+    }, { individual: '1', plan: 'pro_monthly', email: 'u2@school.edu', pricing: 'tiered', tier: '1', arm: 'tiered', expArm: 'three_option_control' });
+    expect(p2).toMatchObject({ tier: 1, arm: 'tiered', expArm: 'three_option_control' });
+    await payments.recordPayment(p2);
+
+    const p3 = payments.paymentFromSession({
+      id: 'cs_exp3', payment_intent: 'pi_exp3',
+      amount_total: 4900, currency: 'xyz',
+      metadata: { plan: 'lifetime', individual: '1', email: 'u3@school.edu', pricing: 'tiered', tier: '1', arm: 'tiered', expArm: 'recurring_first' },
+    });
+    await payments.recordPayment(p3);
+
+    const s = await payments.getRevenueSummary();
+    expect(s.byExpArm.recurring_first).toEqual({
+      count: 2,
+      approxUsd: 1499,
+      recurringCount: 1,
+      oneTimeCount: 1,
+      mrrApproxUsd: Math.round(1499 / 12),
+    });
+    expect(s.byExpArm.three_option_control).toEqual({
+      count: 1,
+      approxUsd: 399,
+      recurringCount: 1,
+      oneTimeCount: 0,
+      mrrApproxUsd: 399,
+    });
   });
 });

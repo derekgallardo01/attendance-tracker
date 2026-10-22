@@ -331,6 +331,7 @@ async function createTieredCheckout({ stripe, offer, plan, email: rawEmail, doma
     tier: String(offer.tier),
     pricing: 'tiered',
     currency: offer.currency,
+    expArm: offer.expArm,
     ...(source ? { source } : {}),
     ...(userCountry ? { country: userCountry } : {}),
     ...(offer.arm ? { arm: offer.arm } : {}),
@@ -347,7 +348,7 @@ async function createTieredCheckout({ stripe, offer, plan, email: rawEmail, doma
     cancel_url: cancelUrl,
     metadata: meta,
     after_expiration: { recovery: { enabled: true } },
-    ...(offer.methods && !isEastAfrica ? { payment_method_types: offer.methods } : {}),
+    ...(offer.methods && !item.recurring && !isEastAfrica ? { payment_method_types: offer.methods } : {}),
     ...(promoCode && promoCode !== 'LAUNCH50' ? { allow_promotion_codes: true } : {}),
   };
   if (item.recurring) {
@@ -362,7 +363,7 @@ async function createTieredCheckout({ stripe, offer, plan, email: rawEmail, doma
       await logEvent(domain, {
         email,
         type: 'checkout_started',
-        meta: { plan, recurring: item.recurring, regional: offer.tier > 1, country: userCountry || null, tier: offer.tier, arm: offer.arm || null },
+        meta: { plan, recurring: item.recurring, regional: offer.tier > 1, country: userCountry || null, tier: offer.tier, arm: offer.arm, expArm: offer.expArm },
       });
     } catch {}
   }
@@ -384,7 +385,7 @@ async function createCheckoutSessionForUser({ user, plan, interval, conferenceId
   // the new recurring plans exist ONLY there.
   if (normalizedPlan && TIERED_PLANS.includes(normalizedPlan)) {
     const tierCountry = (country && typeof country === 'string' ? country.trim().toUpperCase() : null) || detectCountry(req) || (typeof user?.signupGeo?.country === 'string' ? user.signupGeo.country.trim().toUpperCase() : null);
-    const offer = getOffer({ country: tierCountry, email });
+    const offer = getOffer({ country: tierCountry, email, expArm: req?.body?.expArm || req?.query?.expArm });
     if (offer.tiered) {
       if (!stripe) {
         const err = new Error('Billing is not configured yet.');
@@ -848,22 +849,26 @@ async function sendUpgradeLinkForUser({
         : `${redirectBase}?plan=educator${tokenParam}${promoParam}${countryParam}`));
 
   const lifetimeUrl = `${redirectBase}?plan=lifetime${tokenParam}${promoParam}${countryParam}`;
+  const monthlyUrl = offer.tiered
+    ? `${redirectBase}?plan=pro_monthly${tokenParam}${countryParam}`
+    : null;
 
   const tieredTable = offer.tiered ? tieredPricingTable(offer) : null;
 
   // Tiered pricing uses the user's resolved tier labels; legacy uses the regional or 20% / 50% PPP offer.
   const educatorPrice = offer.tiered
-    ? (tieredTable?.educator?.label || tieredTable?.pro_annual?.label || offer.prices?.educator?.label || offer.prices?.pro_annual?.label || null)
+    ? tieredTable.educator.label
     : (isRegional
       ? (regionalConfig?.eduLabel || null)
       : (isIndia ? null : (isPppEligible ? '$2.49' : '$3.99')));
   const lifetimePrice = offer.tiered
-    ? (tieredTable?.lifetime?.label || offer.prices?.lifetime?.label || null)
+    ? tieredTable.lifetime.label
     : (isIndia
       ? '₹299'
       : (isRegional
         ? regionalConfig.label
         : (isPppEligible ? '$4.99' : '$7.99')));
+  const monthlyPrice = offer.tiered ? tieredTable.pro_monthly.label : null;
 
   const { sendUpgradeLinkEmail } = require('../lib/notifications');
   await sendUpgradeLinkEmail({
@@ -871,17 +876,29 @@ async function sendUpgradeLinkForUser({
     displayName,
     educatorUrl,
     lifetimeUrl,
+    monthlyUrl,
     educatorPrice,
     lifetimePrice,
+    monthlyPrice,
+    expArm: offer.expArm || null,
     flag,
-    isPpp: isPppEligible,
+    isPpp: !offer.tiered && Boolean(isPppEligible),
     country: userCountry,
     domain,
     language,
   });
   upgradeLinkCooldown.set(normalizedEmail, now);
   try {
-    await logEvent(domain, { email: normalizedEmail, type: 'upgrade_link_emailed', meta: { isPpp: isPppEligible, country: userCountry, reason } });
+    await logEvent(domain, {
+      email: normalizedEmail,
+      type: 'upgrade_link_emailed',
+      meta: {
+        isPpp: isPppEligible,
+        country: userCountry,
+        reason,
+        ...(offer.tiered ? { tier: offer.tier, expArm: offer.expArm } : {}),
+      },
+    });
   } catch {}
   return { success: true, email: normalizedEmail };
 }
@@ -929,7 +946,7 @@ router.post('/billing/public-checkout', async (req, res) => {
   if (TIERED_PLANS.includes(plan)) {
     const tierCountry = detectCountry(req);
     const tierEmail = (req.body?.email || '').trim().toLowerCase() || null;
-    const offer = getOffer({ country: tierCountry, email: tierEmail });
+    const offer = getOffer({ country: tierCountry, email: tierEmail, arm: req.body?.arm, expArm: req.body?.expArm });
     if (offer.tiered) {
       try {
         const session = await createTieredCheckout({
@@ -1155,6 +1172,7 @@ router.get('/billing/offer', (req, res) => {
   res.set('Cache-Control', 'private, no-store');
   let email = typeof req.query?.email === 'string' ? req.query.email.trim() : null;
   const arm = typeof req.query?.arm === 'string' ? req.query.arm.trim() : null;
+  const expArm = typeof req.query?.expArm === 'string' ? req.query.expArm.trim() : null;
   if (!email && req.headers?.authorization?.startsWith('Bearer ')) {
     try {
       const token = req.headers.authorization.slice(7);
@@ -1163,7 +1181,7 @@ router.get('/billing/offer', (req, res) => {
     } catch (_) {}
   }
   const country = detectCountry(req);
-  const offer = getOffer({ country, email, arm });
+  const offer = getOffer({ country, email, arm, expArm });
   res.json({
     ...publicOffer(offer),
     country: offer.country || null,
@@ -1709,6 +1727,7 @@ function publicOffer(offer) {
     tiered: !!offer.tiered,
     tier: offer.tier,
     arm: offer.arm || null,
+    expArm: offer.expArm || null,
     prepaid: !!offer.prepaid,
     monthlyAvailable: !!offer.monthlyAvailable,
     currency: offer.currency || 'usd',
@@ -1921,7 +1940,22 @@ async function webhookHandler(req, res) {
               individualStripeCustomerId: s.customer || null,
               individualStripeSubscriptionId: s.subscription || null,
             });
-            try { await logEvent(domain, { email, type: 'upgraded', meta: { plan: payment.plan, interval: payment.interval, regional: payment.regional, amount: s.amount_total, currency: s.currency } }); } catch {}
+            try {
+              await logEvent(domain, {
+                email,
+                type: 'upgraded',
+                meta: {
+                  plan: payment.plan,
+                  interval: payment.interval,
+                  regional: payment.regional,
+                  amount: s.amount_total,
+                  currency: s.currency,
+                  ...(payment.tier != null ? { tier: payment.tier } : {}),
+                  ...(payment.arm ? { arm: payment.arm } : {}),
+                  ...(payment.expArm ? { expArm: payment.expArm } : {}),
+                },
+              });
+            } catch {}
             try {
               const { sendUpgradeNotification } = require('../lib/notifications');
               const { getUser } = require('../services/firestore');
@@ -1950,7 +1984,13 @@ async function webhookHandler(req, res) {
             if (subId && !s.metadata?.email) {
               try {
                 await stripe.subscriptions.update(subId, {
-                  metadata: { individual: '1', plan: s.metadata?.plan || 'individual', email: email.toLowerCase(), domain },
+                  metadata: {
+                    individual: '1',
+                    plan: s.metadata?.plan || 'individual',
+                    email: email.toLowerCase(),
+                    domain,
+                    ...(s.metadata?.pricing ? { pricing: s.metadata.pricing, tier: s.metadata.tier, arm: s.metadata.arm, expArm: s.metadata.expArm } : {}),
+                  },
                 });
               } catch (e) {
                 log.warn('billing: could not backfill subscription metadata (individual)', { subId, error: e.message });

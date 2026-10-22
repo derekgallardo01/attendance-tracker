@@ -3195,7 +3195,7 @@ async function sendOrgWeeklyDigest({ to, domain, totals, weeklyMeetings, languag
 }
 
 // ── Requested Upgrade Link (for teachers finishing class) ─────────────────
-async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl, educatorPrice, lifetimePrice, flag, isPpp, language, country, domain }) {
+async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl, monthlyUrl, educatorPrice, lifetimePrice, monthlyPrice, expArm, flag, isPpp, language, country, domain }) {
   if (!getResend()) return { skipped: 'Resend not configured' };
   if (!to) throw new Error('to is required');
 
@@ -3204,9 +3204,11 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
   const cleanEduPrice = educatorPrice ? String(educatorPrice).replace(/\/(yr|ano|año|year|mês|mes|mo|month|বছর)$/i, '').trim() : '';
   const displayEduPrice = cleanEduPrice || educatorPrice || '$4.99';
   const displayLifetimePrice = lifetimePrice || '$9.99';
+  const cleanMonthlyPrice = monthlyPrice ? String(monthlyPrice).replace(/\/(yr|ano|año|year|mês|mes|mo|month|মাস)$/i, '').trim() : '';
+  const displayMonthlyPrice = cleanMonthlyPrice || '$3.99';
 
   let greeting = displayName ? `Hi ${displayName.split(' ')[0]},` : 'Hi there,';
-  let pppNote = isPpp ? ` (50% Regional Subsidy applied ${flag || ''})` : ' (20% 24-Hour Discount applied ⚡)';
+  let pppNote = expArm ? '' : (isPpp ? ` (50% Regional Subsidy applied ${flag || ''})` : ' (20% 24-Hour Discount applied ⚡)');
   let subject = 'Your Attendance Tracker 24-hour discount & upgrade link';
   let bodyIntro = "Here is your direct 1-click link to unlock unlimited classes and exports with a special 24-hour discount. Whenever your class wraps up and you're back at your desk, you can complete your upgrade below:";
   let bestValueTag = 'Best Value';
@@ -3216,6 +3218,9 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
   let educatorTitle = `Educator Pass — ${escape(displayEduPrice)}/yr${escape(pppNote)}`;
   let educatorDesc = 'Unlimited Google Sheets exports & attendance records for 1 full year.';
   let educatorBtn = `Unlock Educator Pass (${escape(displayEduPrice)}/yr) →`;
+  let monthlyTitle = `Monthly Pro — ${escape(displayMonthlyPrice)}/mo`;
+  let monthlyDesc = 'Flexible month-to-month subscription — cancel anytime. Unlimited Sheets exports & attendance records.';
+  let monthlyBtn = `Start Monthly Pro (${escape(displayMonthlyPrice)}/mo) →`;
   let dashboardNote = 'Or view your previous attendance history anytime in your';
   let dashboardLinkText = 'Web Dashboard';
   let thankYouNote = 'Thank you for teaching with Attendance Tracker!';
@@ -3224,7 +3229,7 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
 
   if (lang === 'es') {
     greeting = displayName ? `Hola ${displayName.split(' ')[0]},` : 'Hola,';
-    pppNote = isPpp ? ` (50% de subsidio regional aplicado ${flag || ''})` : ' (20% de descuento por 24 horas ⚡)';
+    pppNote = expArm ? '' : (isPpp ? ` (50% de subsidio regional aplicado ${flag || ''})` : ' (20% de descuento por 24 horas ⚡)');
     subject = 'Tu enlace para actualizar Attendance Tracker (descuento especial de 24 horas)';
     bodyIntro = 'Aquí tienes tu enlace directo para desbloquear clases y exportaciones ilimitadas con un descuento especial de 24 horas. Cuando tu clase termine y vuelvas a tu escritorio, puedes completar tu actualización aquí:';
     bestValueTag = 'Mejor valor';
@@ -3234,6 +3239,9 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
     educatorTitle = `Pase Educador — ${escape(displayEduPrice)}/año${escape(pppNote)}`;
     educatorDesc = 'Exportaciones ilimitadas a Google Sheets y registros de asistencia por 1 año completo.';
     educatorBtn = `Desbloquear Pase Educador (${escape(displayEduPrice)}/año) →`;
+    monthlyTitle = `Pro Mensual — ${escape(displayMonthlyPrice)}/mes`;
+    monthlyDesc = 'Suscripción mensual flexible — cancela en cualquier momento. Exportaciones y registros ilimitados.';
+    monthlyBtn = `Iniciar Pro Mensual (${escape(displayMonthlyPrice)}/mes) →`;
     dashboardNote = 'O consulta tu historial de asistencia en cualquier momento en tu';
     dashboardLinkText = 'Panel Web';
     thankYouNote = '¡Gracias por enseñar con Attendance Tracker!';
@@ -3241,7 +3249,7 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
     badgeSubtitle = 'Descuento especial en registros y exportaciones ilimitadas';
   } else if (lang === 'pt') {
     greeting = displayName ? `Olá ${displayName.split(' ')[0]},` : 'Olá,';
-    pppNote = isPpp ? ` (50% de subsídio regional aplicado ${flag || ''})` : ' (20% de desconto por 24 horas ⚡)';
+    pppNote = expArm ? '' : (isPpp ? ` (50% de subsídio regional aplicado ${flag || ''})` : ' (20% de desconto por 24 horas ⚡)');
     subject = 'Seu link para atualizar o Attendance Tracker (desconto especial de 24 horas)';
     bodyIntro = 'Aqui está o seu link direto para desbloquear turmas e exportações ilimitadas com um desconto especial de 24 horas. Quando sua aula terminar e você estiver de volta à sua mesa, você pode concluir seu upgrade abaixo:';
     bestValueTag = 'Melhor valor';
@@ -3251,6 +3259,9 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
     educatorTitle = `Passe Educador — ${escape(displayEduPrice)}/ano${escape(pppNote)}`;
     educatorDesc = 'Exportações ilimitadas para o Google Sheets e registros de presença por 1 ano completo.';
     educatorBtn = `Desbloquear Passe Educador (${escape(displayEduPrice)}/ano) →`;
+    monthlyTitle = `Pro Mensal — ${escape(displayMonthlyPrice)}/mês`;
+    monthlyDesc = 'Assinatura mensal flexível — cancele quando quiser. Exportações e registros ilimitados.';
+    monthlyBtn = `Iniciar Pro Mensal (${escape(displayMonthlyPrice)}/mês) →`;
     dashboardNote = 'Ou visualize seu histórico de presença a qualquer momento no seu';
     dashboardLinkText = 'Painel Web';
     thankYouNote = 'Obrigado por ensinar com o Attendance Tracker!';
@@ -3258,7 +3269,7 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
     badgeSubtitle = 'Desconto especial em registros e exportações ilimitadas';
   } else if (lang === 'bn') {
     greeting = displayName ? `হ্যালো ${displayName.split(' ')[0]},` : 'হ্যালো,';
-    pppNote = isPpp ? ` (৫০% আঞ্চলিক ডিসকাউন্ট প্রযোজ্য ${flag || ''})` : ' (২৪ ঘণ্টার জন্য ২০% বিশেষ ছাড় ⚡)';
+    pppNote = expArm ? '' : (isPpp ? ` (৫০% আঞ্চলিক ডিসকাউন্ট প্রযোজ্য ${flag || ''})` : ' (২৪ ঘণ্টার জন্য ২০% বিশেষ ছাড় ⚡)');
     subject = 'আপনার Attendance Tracker আপগ্রেড লিংক (২৪ ঘণ্টার বিশেষ অফার)';
     bodyIntro = '২৪ ঘণ্টার বিশেষ ডিসকাউন্টে আনলিমিটেড ক্লাস ও এক্সপোর্ট আনলক করার জন্য সরাসরি লিংক এখানে দেওয়া হলো। ক্লাস শেষ করে যখনই টেবিলে ফিরবেন, নিচের লিংক থেকে আপগ্রেড সম্পন্ন করতে পারবেন:';
     bestValueTag = 'সেরা অফার';
@@ -3268,6 +3279,9 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
     educatorTitle = `এডুকেটর পাস — ${escape(displayEduPrice)}/বছর${escape(pppNote)}`;
     educatorDesc = 'পুরো ১ বছরের জন্য আনলিমিটেড গুগল শিট এক্সপোর্ট ও উপস্থিতি রেকর্ড।';
     educatorBtn = `এডুকেটর পাস আনলক করুন (${escape(displayEduPrice)}/বছর) →`;
+    monthlyTitle = `মান্থলি প্রো — ${escape(displayMonthlyPrice)}/মাস`;
+    monthlyDesc = 'নমনীয় মাসিক সাবস্ক্রিপশন — যেকোনো সময় বাতিল করুন। আনলিমিটেড শিট এক্সপোর্ট ও উপস্থিতি রেকর্ড।';
+    monthlyBtn = `মান্থলি প্রো শুরু করুন (${escape(displayMonthlyPrice)}/মাস) →`;
     dashboardNote = 'অথবা যেকোনো সময় আপনার পূর্বের হিস্ট্রি দেখতে ভিজিট করুন';
     dashboardLinkText = 'ওয়েব ড্যাশবোর্ড';
     thankYouNote = 'Attendance Tracker ব্যবহার করার জন্য ধন্যবাদ!';
@@ -3276,7 +3290,7 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
 
   const isIndia = (country || '').toUpperCase() === 'IN';
   if (isIndia) {
-    subject = 'Unlock Attendance Tracker Lifetime Pro (₹299 Special Offer 🇮🇳)';
+    subject = `Unlock Attendance Tracker Lifetime Pro (${displayLifetimePrice} Special Offer 🇮🇳)`;
     bodyIntro = "Here is your direct 1-click link to unlock unlimited classes and exports with the India Lifetime Pass. No recurring auto-debit, zero subscription fees — pay once via UPI or Card and own forever:";
     bestValueTag = 'Special Offer (No Subscriptions)';
     lifetimeTitle = `Lifetime Pro — ${escape(displayLifetimePrice)} one-time (Special Offer 🇮🇳)`;
@@ -3302,11 +3316,20 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
 
     ${educatorUrl ? `
     <!-- Plan 2: Annual Educator Pass -->
-    <div class="plan-card" style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px 16px;margin-bottom:16px;box-sizing:border-box;">
+    <div class="plan-card" style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px 16px;margin-bottom:14px;box-sizing:border-box;">
       <div style="font-weight:700;font-size:14px;color:#58a6ff;margin-bottom:6px;line-height:1.4;word-break:break-word;">${educatorTitle}</div>
       <p style="margin:0 0 12px;color:#8b949e;font-size:12.5px;line-height:1.45;">${escape(educatorDesc)}</p>
       <a href="${escape(educatorUrl)}" class="touch-btn-block" style="display:block;width:100%;text-align:center;box-sizing:border-box;background:#21262d;border:1px solid #388bfd;color:#79c0ff;text-decoration:none;font-weight:600;padding:9px 15px;border-radius:6px;font-size:12.5px;line-height:1.35;">${educatorBtn}</a>
       ${upiBadgeHtml}
+    </div>
+    ` : ''}
+
+    ${monthlyUrl ? `
+    <!-- Plan 3: Monthly Recurring Pass -->
+    <div class="plan-card" style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:14px 16px;margin-bottom:16px;box-sizing:border-box;">
+      <div style="font-weight:700;font-size:14px;color:#d2a8ff;margin-bottom:6px;line-height:1.4;word-break:break-word;">${monthlyTitle}</div>
+      <p style="margin:0 0 12px;color:#8b949e;font-size:12.5px;line-height:1.45;">${escape(monthlyDesc)}</p>
+      <a href="${escape(monthlyUrl)}" class="touch-btn-block" style="display:block;width:100%;text-align:center;box-sizing:border-box;background:#21262d;border:1px solid rgba(163,113,247,0.6);color:#d2a8ff;text-decoration:none;font-weight:600;padding:9px 15px;border-radius:6px;font-size:12.5px;line-height:1.35;">${monthlyBtn}</a>
     </div>
     ` : ''}
 
@@ -3335,6 +3358,11 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
       '',
       `* ${educatorTitle.replace(/&amp;/g, '&')}`,
       `  ${educatorUrl}`,
+    ] : []),
+    ...(monthlyUrl ? [
+      '',
+      `* ${monthlyTitle.replace(/&amp;/g, '&')}`,
+      `  ${monthlyUrl}`,
     ] : []),
     '',
     `${dashboardNote} https://attendancetracker.dev/history.html`,

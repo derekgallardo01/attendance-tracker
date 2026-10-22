@@ -8105,6 +8105,8 @@ function upgradeContext() {
     language: navigator.language || '',
     timezone: (typeof Intl !== 'undefined' && Intl.DateTimeFormat) ? Intl.DateTimeFormat().resolvedOptions().timeZone : '',
     participantCount: (state.participants && state.participants.size) || 0,
+    ...(_billing?.offer?.tier != null ? { tier: _billing.offer.tier } : {}),
+    ...(_billing?.offer?.expArm ? { expArm: _billing.offer.expArm } : {}),
   };
 }
 
@@ -8160,19 +8162,18 @@ function paintTieredUpgradeModal(offer, country) {
     heroBtn.onclick = () => startUpgradeCheckout(heroPlan, 'btn-upgrade-individual');
   }
 
-  // "or $4.99 / month" — subscription markets only, never for edu (their
-  // annual price is already the discounted one).
+  // Monthly recurring option alongside Educator Annual across all tiered offers.
   let monthly = document.getElementById('btn-upgrade-monthly');
   if (!monthly && heroBtn) {
     monthly = document.createElement('a');
     monthly.id = 'btn-upgrade-monthly';
     monthly.href = '#';
-    monthly.style.cssText = 'display:block;text-align:center;margin-top:8px;color:#9aa0a6;font-size:.76rem;text-decoration:underline';
+    monthly.style.cssText = 'display:block;width:100%;box-sizing:border-box;text-align:center;margin-top:8px;padding:7px 10px;border-radius:8px;border:1px solid rgba(138,180,248,.35);background:rgba(138,180,248,.08);color:#8ab4f8;font-size:.76rem;font-weight:600;text-decoration:none;cursor:pointer';
     monthly.onclick = (e) => { e.preventDefault(); startUpgradeCheckout('pro_monthly', 'btn-upgrade-monthly'); };
     heroBtn.insertAdjacentElement('afterend', monthly);
   }
   if (monthly) {
-    const showMonthly = offer.monthlyAvailable && !isEdu && !!price('pro_monthly');
+    const showMonthly = offer.monthlyAvailable && !!price('pro_monthly');
     monthly.style.display = showMonthly ? 'block' : 'none';
     monthly.textContent = t('upgrade.orMonthly', 'or {price} / month').replace('{price}', price('pro_monthly'));
   }

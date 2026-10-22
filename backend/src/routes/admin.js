@@ -947,6 +947,8 @@ router.post('/admin/check-reengagement', requireSuperAdminOrScheduler, async (re
               language: user.language,
             });
           } else if (r.type && (r.type.startsWith('expiry_') || r.type.startsWith('grant_expiry_') || r.type.startsWith('trial_expiry_'))) {
+            const resolvedPlanType = r.planType || user.individualPlanType || 'annual';
+            const checkoutPlan = (resolvedPlanType === 'educator' || resolvedPlanType === 'educator_annual') ? 'educator' : 'pro_annual';
             let checkoutUrl = null;
             if (CONFIG.sessionSecret) {
               const token = jwt.sign(
@@ -955,7 +957,7 @@ router.post('/admin/check-reengagement', requireSuperAdminOrScheduler, async (re
                 { expiresIn: '7d' }
               );
               const baseUrl = (CONFIG.appUrl || 'https://attendance-tracker-backend-829771833968.us-central1.run.app').replace(/\/$/, '');
-              checkoutUrl = `${baseUrl}/api/billing/checkout-redirect?token=${encodeURIComponent(token)}&plan=pro_annual`;
+              checkoutUrl = `${baseUrl}/api/billing/checkout-redirect?token=${encodeURIComponent(token)}&plan=${checkoutPlan}`;
             }
             result = await sendPassExpiryReminderEmail({
               to: user.email,
