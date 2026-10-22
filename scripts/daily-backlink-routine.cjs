@@ -76,7 +76,8 @@ const DO_NOT_FOLLOW_UP_DOMAINS = new Set([
   'productivityshift.com', 'findmyaitool.io', 'chiarasangels.net',
   'calbizjournal.com', 'nealschaffer.com', 'techbullion.com', 'fast.io',
   'zipdo.co', 'isenacode.com', 'isenacode.net', 'skrapp.io', 'assemblyai.com',
-  'nimdzi.com', 'webcatalog.io'
+  'nimdzi.com', 'webcatalog.io', 'remotefirstjobs.com', 'freetech4teachers.com',
+  'ericcurts@gmail.com'
 ]);
 
 function extractRootDomain(input) {
@@ -495,23 +496,36 @@ async function runFollowUps({ send = false, limit = 10 }) {
   const now = Date.now();
   const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
   const due = [];
+  const seenTargets = new Set();
 
   for (const item of allDispatched) {
-    const sentAtMs = item.sentAt ? Date.parse(item.sentAt) : NaN;
+    const ts = item.sentAt || item.dispatchedAt || item.timestamp;
+    const sentAtMs = ts ? Date.parse(ts) : NaN;
     if (Number.isNaN(sentAtMs) || now - sentAtMs < sevenDaysMs) continue;
 
     const toEmail = Array.isArray(item.to) ? item.to[0] : item.to;
     if (!toEmail) continue;
-    const dom = extractRootDomain(toEmail);
-    if (DO_NOT_FOLLOW_UP_DOMAINS.has(dom) || followupLog[dom] || followupLog[toEmail]) continue;
+    const cleanTo = String(toEmail).trim().toLowerCase();
+    const dom = extractRootDomain(cleanTo);
+    const key = dom === 'gmail.com' ? cleanTo : dom;
+    if (
+      DO_NOT_FOLLOW_UP_DOMAINS.has(dom) ||
+      DO_NOT_FOLLOW_UP_DOMAINS.has(cleanTo) ||
+      followupLog[key] ||
+      followupLog[cleanTo] ||
+      seenTargets.has(key)
+    ) {
+      continue;
+    }
+    seenTargets.add(key);
 
     due.push({
-      rootDomain: dom,
+      rootDomain: key,
       to: toEmail,
       name: item.name || dom,
       subject: item.subject ? `Re: ${item.subject.replace(/^Re:\s*/i, '')}` : 'Re: Google Meet attendance resource',
       targetUrl: item.targetUrl || '',
-      originalSentAt: item.sentAt
+      originalSentAt: ts
     });
   }
 
@@ -560,10 +574,10 @@ async function runFollowUps({ send = false, limit = 10 }) {
 
 async function main() {
   const args = process.argv.slice(2);
-  const doIngest = args.includes('--ingest') || args.includes('--status') || args.length === 0;
-  const doQueue = args.includes('--queue') || args.includes('--status') || args.length === 0;
-  const doFollowUp = args.includes('--follow-up');
   const doSend = args.includes('--send');
+  const doIngest = args.includes('--ingest') || args.includes('--status') || doSend || args.length === 0;
+  const doQueue = args.includes('--queue') || args.includes('--status') || doSend || args.length === 0;
+  const doFollowUp = args.includes('--follow-up') || doSend;
 
   let limit = 30;
   const limitIdx = args.indexOf('--limit');

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-21T18:12:29.552Z",
-  "totalUncontactedDomainsInPool": 24828,
-  "queueCount": 15,
+  "generatedAt": "2026-10-22T18:06:19.149Z",
+  "totalUncontactedDomainsInPool": 24818,
+  "queueCount": 30,
   "queue": [
     {
       "rootDomain": "chrmbook.com",
@@ -167,6 +167,171 @@
       "isNofollow": false,
       "sourceCsv": "meetlist.io-backlinks-subdomains_2026-10-10_21-24-29-utf8.csv",
       "opportunityScore": 77.2
+    },
+    {
+      "rootDomain": "mit.edu",
+      "dr": 93,
+      "refPageUrl": "https://sloanreview.mit.edu/article/overcoming-remote-work-challenges/",
+      "pageTitle": "Overcoming Remote Work Challenges",
+      "targetUrl": "https://www.hugo.team/",
+      "anchor": "Hugo",
+      "isNofollow": false,
+      "sourceCsv": "hugo.team-backlinks-subdomains_2026-10-19_19-58-02-utf8.csv",
+      "opportunityScore": 76.9
+    },
+    {
+      "rootDomain": "icann.org",
+      "dr": 92,
+      "refPageUrl": "https://www.icann.org/en/blogs/details/automated-transcripts-from-zoom-at-icann65-23-6-2019-en",
+      "pageTitle": "Automated Transcripts from Zoom at ICANN65",
+      "targetUrl": "https://otter.ai/zoom",
+      "anchor": "Otter.ai",
+      "isNofollow": false,
+      "sourceCsv": "otter.ai-backlinks-subdomains_2026-10-19_18-55-15-utf8.csv",
+      "opportunityScore": 76.4
+    },
+    {
+      "rootDomain": "hbr.org",
+      "dr": 92,
+      "refPageUrl": "https://hbr.org/2022/03/dear-manager-youre-holding-too-many-meetings",
+      "pageTitle": "Dear Manager, You’re Holding Too Many Meetings",
+      "targetUrl": "https://otter.ai/blog/meeting-statistics",
+      "anchor": "70% of all meetings",
+      "isNofollow": false,
+      "sourceCsv": "otter.ai-backlinks-subdomains_2026-10-19_18-55-15-utf8.csv",
+      "opportunityScore": 76.4
+    },
+    {
+      "rootDomain": "ilovechrome.com",
+      "dr": 14,
+      "refPageUrl": "https://www.ilovechrome.com/da/extension/appcnhiefcidclcdjeahgklghghihfok/",
+      "pageTitle": "Chrome-udvidelse Google Meet Attendance List | crx download & installation | iLoveChrome",
+      "targetUrl": "https://meetlist.io/",
+      "anchor": "https://meetlist.io",
+      "isNofollow": false,
+      "sourceCsv": "meetlist.io-backlinks-subdomains_2026-10-10_21-24-29-utf8.csv",
+      "opportunityScore": 76.3
+    },
+    {
+      "rootDomain": "paddle.com",
+      "dr": 91,
+      "refPageUrl": "https://showcase.paddle.com/companies/bluedot",
+      "pageTitle": "Bluedot | AI-powered Chrome extension for Google Meet | The Launchpad Alumni Showcase",
+      "targetUrl": "https://www.bluedothq.com/",
+      "anchor": "https://www.bluedothq.com",
+      "isNofollow": false,
+      "sourceCsv": "bluedothq.com-backlinks-subdomains_2026-10-19_18-55-21-utf8.csv",
+      "opportunityScore": 76
+    },
+    {
+      "rootDomain": "asana.com",
+      "dr": 91,
+      "refPageUrl": "https://asana.com/es/apps/fellow",
+      "pageTitle": "Fellow • Asana",
+      "targetUrl": "https://help.fellow.app/en/",
+      "anchor": "página de asistencia",
+      "isNofollow": false,
+      "sourceCsv": "fellow.app-backlinks-subdomains_2026-10-19_18-54-58-utf8.csv",
+      "opportunityScore": 76
+    },
+    {
+      "rootDomain": "oregonstate.edu",
+      "dr": 90,
+      "refPageUrl": "https://blogs.oregonstate.edu/inspire/2025/05/12/improving-the-feedback-cycle-part-2/",
+      "pageTitle": "Improving the Feedback Cycle, Part 2 « Ecampus Course Development and Training",
+      "targetUrl": "https://fellow.app/blog/feedback/the-feedback-sandwich-should-you-use-it-pros-and-cons/",
+      "anchor": "The Feedback Sandwich: Should You Use It? (Pros and Cons)",
+      "isNofollow": false,
+      "sourceCsv": "fellow.app-backlinks-subdomains_2026-10-19_18-54-58-utf8.csv",
+      "opportunityScore": 75.5
+    },
+    {
+      "rootDomain": "americanbar.org",
+      "dr": 90,
+      "refPageUrl": "https://www.americanbar.org/groups/gpsolo/resources/ereport/2025-september/ai-you-confidentiality-risks-meeting-transcription-note-taking-software/",
+      "pageTitle": "AI and You: Confidentiality Risks of Using Transcription and Note-Taking Software During Meetings",
+      "targetUrl": "https://fireflies.ai/",
+      "anchor": "Fireflies.ai",
+      "isNofollow": false,
+      "sourceCsv": "fireflies.ai-backlinks-subdomains_2026-10-19_18-54-45-utf8.csv",
+      "opportunityScore": 75.5
+    },
+    {
+      "rootDomain": "duke.edu",
+      "dr": 90,
+      "refPageUrl": "https://courses.cs.duke.edu/fall25/compsci408/announcements.php",
+      "pageTitle": "CompSci 408 : Fall 2025",
+      "targetUrl": "https://www.parabol.co/resources/daily-standup/",
+      "anchor": "Standup Meetings 101",
+      "isNofollow": false,
+      "sourceCsv": "parabol.co-backlinks-subdomains_2026-10-19_19-58-13-utf8.csv",
+      "opportunityScore": 75.5
+    },
+    {
+      "rootDomain": "shrm.org",
+      "dr": 90,
+      "refPageUrl": "https://www.shrm.org/topics-tools/news/managing-smart/how-to-run-15-minute-meeting",
+      "pageTitle": "How to Run a 15-Minute Meeting",
+      "targetUrl": "https://otter.ai/blog/meeting-statistics",
+      "anchor": "Otter.ai",
+      "isNofollow": false,
+      "sourceCsv": "otter.ai-backlinks-subdomains_2026-10-19_18-55-15-utf8.csv",
+      "opportunityScore": 75.5
+    },
+    {
+      "rootDomain": "extension.vn",
+      "dr": 12,
+      "refPageUrl": "https://extension.vn/c/appcnhiefcidclcdjeahgklghghihfok/new-release-feels-smoother-on-pages-with-many-iframes",
+      "pageTitle": "Community post · Google Meet Attendance List · Extension.vn",
+      "targetUrl": "https://meetlist.io/",
+      "anchor": "https://meetlist.io",
+      "isNofollow": false,
+      "sourceCsv": "meetlist.io-backlinks-subdomains_2026-10-10_21-24-29-utf8.csv",
+      "opportunityScore": 75.4
+    },
+    {
+      "rootDomain": "dc.gov",
+      "dr": 89,
+      "refPageUrl": "https://techplan.dc.gov/page/dcs-ai-values-and-strategic-plan",
+      "pageTitle": "DC's AI Values and Strategic Plan | itstrategicplan",
+      "targetUrl": "https://otter.ai/",
+      "anchor": "Otter Meeting Agent - AI Notetaker, Transcription, Insights",
+      "isNofollow": false,
+      "sourceCsv": "otter.ai-backlinks-subdomains_2026-10-19_18-55-15-utf8.csv",
+      "opportunityScore": 75.1
+    },
+    {
+      "rootDomain": "pitt.edu",
+      "dr": 89,
+      "refPageUrl": "https://services.pitt.edu/TDClient/33/Portal/KB/Article/1861/Remove-Read-AI-Meeting-Summary-App-for-Microsoft-365",
+      "pageTitle": "Article - Remove Read.AI Meeting Summ...",
+      "targetUrl": "https://support.read.ai/hc/en-us/articles/12616698040339-How-do-I-delete-my-account",
+      "anchor": "How do I delete my account? (opens in a new tab)",
+      "isNofollow": false,
+      "sourceCsv": "read.ai-backlinks-subdomains_2026-10-19_18-55-04-utf8.csv",
+      "opportunityScore": 75.1
+    },
+    {
+      "rootDomain": "gwu.edu",
+      "dr": 88,
+      "refPageUrl": "https://it.gwu.edu/ai-gw-meetings",
+      "pageTitle": "Using AI in GW Meetings: Minutes, Notes and Transcripts | GW Information Technology | The George Washington University",
+      "targetUrl": "https://fireflies.ai/",
+      "anchor": "Fireflies.AI",
+      "isNofollow": false,
+      "sourceCsv": "fireflies.ai-backlinks-subdomains_2026-10-19_18-54-45-utf8.csv",
+      "opportunityScore": 74.6
+    },
+    {
+      "rootDomain": "caltech.edu",
+      "dr": 88,
+      "refPageUrl": "https://www.imss.caltech.edu/services/voice-mobile-conference-calls/zoom/remove-read-ai",
+      "pageTitle": "Remove Read.AI From Zoom - Information Management Systems and Services",
+      "targetUrl": "https://app.read.ai/analytics/signin",
+      "anchor": "https://app.read.ai/analytics/signin",
+      "isNofollow": false,
+      "sourceCsv": "read.ai-backlinks-subdomains_2026-10-19_18-55-04-utf8.csv",
+      "opportunityScore": 74.6
     }
   ]
 }
