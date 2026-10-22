@@ -170,6 +170,58 @@ describe('persistAttendance — write debouncing', () => {
     }
   });
 
+  test('mid-checkpoint rosterChanged delta writes do not starve the 5-minute checkpoint timer for existing participants', async () => {
+    const originalDateNow = Date.now;
+    let mockNow = 1000000;
+    Date.now = () => mockNow;
+
+    try {
+      // t = 0: Initial persist with p1 (active, 0m) and p2 (already left at 5m, duration ثابت)
+      const initialRoster = [
+        { ...baseParticipants[0], durationMs: 0, durationMin: 0 },
+        { ...baseParticipants[1], present: false, leaveTime: '2026-10-07T10:05:00Z', durationMs: 240000, durationMin: 4 },
+      ];
+      await firestore.persistAttendance('acme.edu', 'class-101', 'conferenceRecords/r1', initialRoster, 'teacher@acme.edu');
+
+      ctx.seed('tenants/acme.edu/meetings/class-101__r1/participants/p2', {
+        ...ctx.read('tenants/acme.edu/meetings/class-101__r1/participants/p2'),
+        updatedAt: 'sentinel-p2-left',
+      });
+
+      // t = 3 min: p3 joins (rosterChanged = true, isCheckpointDue = false).
+      // p1 now has durationMin: 3, but since this is a mid-checkpoint rosterChanged poll,
+      // only p3 is written and p1's duration update is deferred until the 5-min checkpoint.
+      mockNow += 3 * 60 * 1000;
+      const rosterAt3m = [
+        { ...baseParticipants[0], durationMs: 180000, durationMin: 3 },
+        initialRoster[1],
+        { participantId: 'p3', displayName: 'Charlie', email: 'charlie@acme.edu', present: true, sessions: 1, joinTime: '2026-10-07T10:03:00Z', leaveTime: null, durationMs: 0, durationMin: 0 },
+      ];
+      expect(await firestore.persistAttendance('acme.edu', 'class-101', 'conferenceRecords/r1', rosterAt3m, 'teacher@acme.edu')).toBe(true);
+      expect(ctx.read('tenants/acme.edu/meetings/class-101__r1/participants/p3')).toBeDefined();
+      expect(ctx.read('tenants/acme.edu/meetings/class-101__r1/participants/p1').durationMin).toBe(0); // deferred
+
+      // t = 5 min (5 minutes since t = 0 initial checkpoint, only 2 minutes since t = 3m join):
+      // Even though a rosterChanged happened at t = 3m, the 5-minute checkpoint MUST fire at t = 5m!
+      // Simultaneously, p4 joins at t = 5m (both isCheckpointDue and rosterChanged are true).
+      mockNow += 2 * 60 * 1000;
+      const rosterAt5m = [
+        { ...baseParticipants[0], durationMs: 300000, durationMin: 5 },
+        initialRoster[1], // p2 left earlier, duration unchanged -> must NOT be re-written
+        { ...rosterAt3m[2], durationMs: 120000, durationMin: 2 },
+        { participantId: 'p4', displayName: 'Dana', email: 'dana@acme.edu', present: true, sessions: 1, joinTime: '2026-10-07T10:05:00Z', leaveTime: null, durationMs: 0, durationMin: 0 },
+      ];
+      expect(await firestore.persistAttendance('acme.edu', 'class-101', 'conferenceRecords/r1', rosterAt5m, 'teacher@acme.edu')).toBe(true);
+      // p1 and p3 had duration updates flushed at the 5-min checkpoint, p4 was added, and p2 remained untouched
+      expect(ctx.read('tenants/acme.edu/meetings/class-101__r1/participants/p1').durationMin).toBe(5);
+      expect(ctx.read('tenants/acme.edu/meetings/class-101__r1/participants/p3').durationMin).toBe(2);
+      expect(ctx.read('tenants/acme.edu/meetings/class-101__r1/participants/p4')).toBeDefined();
+      expect(ctx.read('tenants/acme.edu/meetings/class-101__r1/participants/p2').updatedAt).toBe('sentinel-p2-left');
+    } finally {
+      Date.now = originalDateNow;
+    }
+  });
+
   test('updates deterministic tracked event doc monotonically when students join after teacher opens panel solo', async () => {
     const soloTeacher = [
       { participantId: 'p0', displayName: 'Teacher', email: 'teacher@acme.edu', present: true, sessions: 1, joinTime: '2026-10-07T09:59:00Z', leaveTime: null },

@@ -1001,7 +1001,9 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
     await writePromise;
 
     entry.fingerprint = currentFingerprint;
-    entry.lastPersistedAt = Date.now();
+    if (isFirstPersist || isCheckpointDue || forcePersist) {
+      entry.lastPersistedAt = Date.now();
+    }
     entry.lastSeenAt = Date.now();
     entry.inFlightPromise = null;
 
