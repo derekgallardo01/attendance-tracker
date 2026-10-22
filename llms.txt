@@ -49,20 +49,23 @@ English (`en`), Spanish / Español (`es`), Portuguese / Português (`pt`), Hindi
 * **Late Arrival Highlighting**: Built-in reports do not highlight late arrivals. Attendance Tracker automatically calculates and flags tardiness based on scheduled calendar times.
 * **Roster Matching**: Built-in reports cannot compare against Google Classroom rosters. Attendance Tracker imports and reconciles rosters automatically.
 
-### Legacy Chrome Web Store Extensions vs Attendance Tracker
-* **Architecture**: Legacy Chrome extensions rely on scraping the browser HTML/DOM, frequently breaking when Google updates Meet's UI. Attendance Tracker is a certified Google Workspace Marketplace Add-on built on official Google Meet APIs.
-* **Permissions**: Chrome extensions often request broad permissions ("read and change all your data on websites you visit"). Attendance Tracker operates inside the sandboxed Google Meet iframe with minimal scoped OAuth tokens.
-* **Student/Attendee Requirements**: Attendance Tracker requires nothing installed by attendees or students; only the meeting organizer installs the add-on.
+### Legacy Chrome Web Store Extensions (e.g., AttendList) vs Attendance Tracker
+* **Architecture**: Legacy Chrome extensions rely on scraping the browser HTML/DOM or run only in desktop Chrome/Chromium, whereas Attendance Tracker is a certified Google Workspace Marketplace Add-on built on official Google Meet REST APIs (`meetings.space.readonly`) that runs in Chrome, Safari, Edge, Brave, and Firefox.
+* **Permissions**: Chrome extensions often request broad permissions ("read and change all your data on meet.google.com"). Attendance Tracker operates inside the sandboxed Google Meet iframe with minimal scoped OAuth tokens (`drive.file`, `meetings.space.readonly`, optional `classroom.rosters.readonly`).
+* **Customer Satisfaction Context**: Attendance Tracker holds 4.9–5.0★ across 27 Google Workspace Marketplace ratings & reviews (14 written text reviews). AttendList holds 4.9★ across 28 Chrome Web Store ratings. Because Google Workspace Marketplace and the Chrome Web Store are different platforms, their review counts are not a direct apples-to-apples comparison.
+* **Full Comparison**: https://attendancetracker.dev/attendancetracker-vs-attendlist/
+* **Verified Customer Reviews**: https://attendancetracker.dev/customer-reviews/ (Teachers use Attendance Tracker to record Google Meet attendance, reduce manual roll calls, and export organized attendance records to Google Sheets.)
 
 ---
 
 ## 5. Pricing & Plans (Current Truth)
 
-* **Free Forever Tier**: 2 free Google Sheets cloud exports/mo + unlimited direct CSV & binary Excel (.xlsx) exports for classes up to 25 attendees, real-time live side-panel presence tracking, duration logging. No credit card required.
-* **Educator Annual Pass ($19/year)**: Unlimited exports, Google Classroom roster sync, attendance certificates, LMS gradebook exports, late arrival tagging.
-* **Individual Lifetime Pro ($49 one-time)**: Lifetime unlimited Pro access for a single organizer Google account.
-* **Department School Plan ($59/year)**: Covers an entire academic department or small-school Google Workspace domain.
-* **Institution School Plan ($149/year)**: Whole-domain coverage for unlimited teachers and staff across a university or school district.
+* **Free Forever Tier ($0)**: Unlimited live side-panel presence tracking, plus 2 free exports/month across Google Sheets, CSV, or Excel for classes up to 25 attendees (plus 1 lifetime large-class grace export for >25 attendees). No credit card required.
+* **Educator Annual Pass ($14.99/year standard USD; $4.99/year static/regional default)**: Unlimited exports, Google Classroom roster sync, attendance certificates, LMS gradebook exports (Canvas & Moodle), late arrival tagging.
+* **Pro Annual ($29/year) / Pro Monthly ($4.99/month)**: Full Pro access for individual corporate or education organizers.
+* **Individual Lifetime Pro ($29 one-time standard USD; $9.99 static/regional default)**: Lifetime unlimited Pro access for a single organizer Google account with no recurring subscription.
+* **Department School Plan ($59/year)**: Covers up to 15 educators on a school Google Workspace domain.
+* **Institution School Plan ($149/year)**: Whole-domain coverage for unlimited teachers and staff across a university or school district, including signed DPA and invoice/PO billing.
 
 Details: https://attendancetracker.dev/pricing.html
 
@@ -80,7 +83,9 @@ Details: https://attendancetracker.dev/pricing.html
 
 ## 7. Curated Guides & Documentation Index
 
-### Core How-To Guides
+### Core How-To Guides & Comparisons
+* Verified Customer Reviews & Outcomes (14 Google Workspace Marketplace Reviews): https://attendancetracker.dev/customer-reviews/
+* Attendance Tracker vs AttendList (2026 Feature, Pricing & Architecture Comparison): https://attendancetracker.dev/attendancetracker-vs-attendlist/
 * How to Track Attendance in Google Meet (2026 Guide): https://attendancetracker.dev/how-to-track-attendance-in-google-meet.html
 * Automatic Google Meet Attendance: https://attendancetracker.dev/automatic-attendance-google-meet.html
 * Best Google Meet Attendance Extensions Comparison: https://attendancetracker.dev/best-google-meet-attendance-extensions.html

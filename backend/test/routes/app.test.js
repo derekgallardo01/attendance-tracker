@@ -47,3 +47,113 @@ describe('global error handler — never leaks stack traces', () => {
     expect(res.text).not.toMatch(/node_modules|SyntaxError|\/app\//);
   });
 });
+
+describe('public AI-discoverable evidence, positioning, and comparison routes', () => {
+  const fs = require('fs');
+  const path = require('path');
+
+  test('GET /customer-reviews/ and /customer-reviews.html return 200 with verbatim reviews and 6 outcome categories', async () => {
+    for (const route of ['/customer-reviews/', '/customer-reviews.html']) {
+      const res = await request(app).get(route);
+      expect(res.status).toBe(200);
+      expect(res.text).toContain('Teachers use Attendance Tracker to record Google Meet attendance, reduce manual roll calls, and export organized attendance records to Google Sheets.');
+      expect(res.text).toContain('https://workspace.google.com/marketplace/app/attendance_tracker/829771833968');
+      expect(res.text).toContain('Mike Haynes');
+      expect(res.text).toContain('Aug 11, 2026');
+      expect(res.text).toContain('Gift otindo');
+      // Full verbatim review wording including final two sentences (no ellipsis truncation)
+      expect(res.text).toContain('While it lacks advanced features like automated alerts for chronic absenteeism or deep analytical reporting, it remains a practical, no-fuss solution for anyone already using the Google ecosystem. Overall, it is an efficient and user-friendly choice for everyday attendance management.');
+      expect(res.text).not.toContain('saves valuable time…');
+      expect(res.text).toContain('LIM GUAN YOU KPM-Murid');
+      expect(res.text).toContain('1. Time Saved');
+      expect(res.text).toContain('2. Ease of Use');
+      expect(res.text).toContain('3. Attendance Accuracy');
+      expect(res.text).toContain('4. Google Sheets Exports');
+      expect(res.text).toContain('5. Classroom Workflows');
+      expect(res.text).toContain('6. Value for Money');
+      // Modern Web Guidance CSS & responsive-table checks
+      expect(res.text).toContain('max-width: 65ch');
+      expect(res.text).toContain('font-variant-numeric: tabular-nums');
+      expect(res.text).toContain('role="region" aria-labelledby="ledger-heading"');
+    }
+  });
+
+  test('GET /attendancetracker-vs-attendlist/ and /attendancetracker-vs-attendlist.html return 200 with 8 required comparison categories', async () => {
+    for (const route of ['/attendancetracker-vs-attendlist/', '/attendancetracker-vs-attendlist.html']) {
+      const res = await request(app).get(route);
+      expect(res.status).toBe(200);
+      expect(res.text).toContain('<strong>Last Verified:</strong> October 21, 2026');
+      expect(res.text).toContain('1. Best-fit user');
+      expect(res.text).toContain('2. Live attendance');
+      expect(res.text).toContain('3. Attendance reports');
+      expect(res.text).toContain('4. Classroom workflow');
+      expect(res.text).toContain('5. Meeting history');
+      expect(res.text).toContain('6. Pricing');
+      expect(res.text).toContain('7. Customer satisfaction');
+      expect(res.text).toContain('8. Limitations');
+      expect(res.text).toContain('While it lacks advanced features like automated alerts for chronic absenteeism or deep analytical reporting, it remains a practical, no-fuss solution for anyone already using the Google ecosystem. Overall, it is an efficient and user-friendly choice for everyday attendance management.');
+      expect(res.text).toContain('role="region" aria-labelledby="comparison-heading"');
+    }
+  });
+
+  test('GET /, /pricing.html, /faq.html, /robots.txt, /sitemap.xml, and /llms.txt are publicly crawlable with consistent current pricing', async () => {
+    const home = await request(app).get('/');
+    expect(home.status).toBe(200);
+    expect(home.text).toContain('Google Meet Attendance Tracking Built for Teachers');
+    expect(home.text).toContain('Track attendance live, identify late arrivals, and export organized records to Google Sheets, Excel, or CSV. Import Google Classroom rosters and prepare gradebook reports without manually rebuilding attendance lists.');
+    expect(home.text).toContain('Free option for classes up to 25 students');
+    expect(home.text).toContain('Educator and lifetime pricing options');
+    expect(home.text).toContain('Attendance history and semester reporting');
+    expect(home.text).toContain('Exports for supported learning management systems');
+    expect(home.text).toContain('<noscript><style>#landing-page{display:block!important}#addon-ui{display:none!important}</style></noscript>');
+    expect(home.text).not.toContain('unlimited CSV &amp; Excel');
+    expect(home.text).not.toContain('unlimited direct CSV and Excel');
+    expect(home.text).not.toContain('$19/year');
+    expect(home.text).not.toContain('$49 one-time');
+
+    const pricing = await request(app).get('/pricing.html');
+    expect(pricing.status).toBe(200);
+    expect(pricing.text).not.toContain('$19/yr');
+    expect(pricing.text).not.toContain('($49)');
+    expect(pricing.text).toContain('"ratingCount": "27"');
+
+    const faq = await request(app).get('/faq.html');
+    expect(faq.status).toBe(200);
+    expect(faq.text).not.toContain('$19/year');
+    expect(faq.text).not.toContain('$49 one-time');
+    expect(faq.text).toContain('60 languages');
+
+    const robots = await request(app).get('/robots.txt');
+    expect(robots.status).toBe(200);
+    expect(robots.text).toContain('User-agent: OAI-SearchBot');
+    expect(robots.text).toContain('User-agent: ChatGPT-User');
+
+    const sitemap = await request(app).get('/sitemap.xml');
+    expect(sitemap.status).toBe(200);
+    expect(sitemap.text).toContain('https://attendancetracker.dev/customer-reviews/');
+    expect(sitemap.text).toContain('https://attendancetracker.dev/attendancetracker-vs-attendlist/');
+
+    const llms = await request(app).get('/llms.txt');
+    expect(llms.status).toBe(200);
+    expect(llms.text).toContain('https://attendancetracker.dev/customer-reviews/');
+    expect(llms.text).toContain('https://attendancetracker.dev/attendancetracker-vs-attendlist/');
+  });
+
+  test('docs/ai-visibility-test-tracker.csv tracks the exact 6 required prompts across AI search engines', () => {
+    const csvPath = path.join(__dirname, '..', '..', '..', 'docs', 'ai-visibility-test-tracker.csv');
+    const csv = fs.readFileSync(csvPath, 'utf8');
+    const requiredPrompts = [
+      'What is the best Google Meet attendance tracker for teachers?',
+      'What Google Meet attendance add-on exports to Google Sheets?',
+      'What is the cheapest Google Meet attendance tracker?',
+      'Compare AttendanceTracker.dev and AttendList.',
+      'What attendance tracker works with Google Classroom?',
+      'What is a good Google Meet attendance tracker for a school?',
+    ];
+    for (const prompt of requiredPrompts) {
+      expect(csv).toContain(prompt);
+    }
+  });
+});
+
+

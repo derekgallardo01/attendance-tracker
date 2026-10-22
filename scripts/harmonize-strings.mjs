@@ -131,7 +131,7 @@ for (const [loc, newStr] of Object.entries(feature3ExportsMap)) {
     let pfVal = pfMatch[1];
     if (pfVal.includes('5') || pfVal.includes('५')) {
       if (loc === 'en') {
-        pfVal = "Live roster, 2 free Google Sheets exports/mo, unlimited CSV & Excel (up to 25 attendees). No credit card.";
+        pfVal = "Live roster, 2 free exports/mo (Sheets, CSV, or Excel, up to 25 attendees). No credit card.";
       } else {
         pfVal = pfVal.replace(/\b5\b/g, '2').replace(/५/g, '२');
       }

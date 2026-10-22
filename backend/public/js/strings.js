@@ -684,7 +684,7 @@
         "lp2_plan_free_name": "Free",
         "lp2_plan_free_price": "$0",
         "lp2_plan_free_unit": "forever",
-        "lp2_plan_free_body": "Live roster, 2 free Google Sheets exports/mo, unlimited CSV & Excel (up to 25 attendees). No credit card.",
+        "lp2_plan_free_body": "Live roster, 2 free exports/mo (Sheets, CSV, or Excel, up to 25 attendees). No credit card.",
         "lp2_plan_life_name": "Lifetime",
         "lp2_plan_life_price": "$9.99",
         "lp2_plan_life_unit": "one payment",
