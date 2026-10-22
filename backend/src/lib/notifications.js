@@ -4074,6 +4074,7 @@ async function sendDailySummaryEmail({
   const activeUsers24h = Number(pulse?.active24h ?? pulse?.last24h?.activeUsers) || 0;
 
   const reads1h = Number(billing?.currentHour?.reads) || 0;
+  const writes1h = Number(billing?.currentHour?.writes) || 0;
   const reads24h = Number(billing?.last24h?.reads) || 0;
   const writes24h = Number(billing?.last24h?.writes) || 0;
   const deletes24h = Number(billing?.last24h?.deletes) || 0;
@@ -4108,8 +4109,8 @@ async function sendDailySummaryEmail({
           <td colspan="2" style="padding:8px 12px;border-top:1px solid #30363d;font-size:11px;font-weight:700;color:#58a6ff;text-transform:uppercase;letter-spacing:.05em">Cloud Billing &amp; Firestore Usage</td>
         </tr>
         <tr>
-          <td style="padding:8px 12px;border-top:1px solid #21262d;color:#8b949e;font-size:12px">Current 1h Read Rate</td>
-          <td style="padding:8px 12px;border-top:1px solid #21262d;color:#e6edf3;font-size:13px;font-weight:600;text-align:right">${reads1h.toLocaleString()} reads/hr (${escape(statusLabel)})</td>
+          <td style="padding:8px 12px;border-top:1px solid #21262d;color:#8b949e;font-size:12px">Current 1h Rate</td>
+          <td style="padding:8px 12px;border-top:1px solid #21262d;color:#e6edf3;font-size:13px;font-weight:600;text-align:right">${reads1h.toLocaleString()} reads · ${writes1h.toLocaleString()} writes/hr (${escape(statusLabel)})</td>
         </tr>
         <tr>
           <td style="padding:8px 12px;border-top:1px solid #21262d;color:#8b949e;font-size:12px">Last 24h Reads / Writes / Deletes</td>
@@ -4150,7 +4151,7 @@ async function sendDailySummaryEmail({
     `Meetings Tracked (24h): ${tracks24h}`,
     `Exports (24h): ${exports24h}`,
     '',
-    `Current 1h Read Rate: ${reads1h.toLocaleString()} reads/hr (${statusLabel})`,
+    `Current 1h Rate: ${reads1h.toLocaleString()} reads · ${writes1h.toLocaleString()} writes/hr (${statusLabel})`,
     `Last 24h Reads/Writes/Deletes: ${reads24h.toLocaleString()} reads / ${writes24h.toLocaleString()} writes / ${deletes24h.toLocaleString()} deletes`,
     `Estimated 24h Cost: $${cost24h.toFixed(2)}`,
     `Month-to-Date Reads/Writes: ${readsMtd.toLocaleString()} reads / ${writesMtd.toLocaleString()} writes`,

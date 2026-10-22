@@ -696,36 +696,33 @@ const attendanceDebounceCache = new Map();
 const ATTENDANCE_CHECKPOINT_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 const ATTENDANCE_CACHE_TTL_MS = 3 * 60 * 60 * 1000; // 3 hours
 
+function computeParticipantSignatures(p) {
+  const rawDocId = (p.participantId ? lastSegment(p.participantId) : '') || p.email || p.displayName || 'unknown';
+  const docId = String(rawDocId).replace(/\//g, '_').trim() || 'unknown';
+  const pid = p.participantId || '';
+  const email = (p.email || '').toLowerCase().trim();
+  const name = (p.displayName || '').trim();
+  const present = p.present ? 1 : 0;
+  const sessions = p.sessions || 1;
+  const join = p.joinTime ? (typeof p.joinTime === 'string' ? p.joinTime : p.joinTime.toISOString?.() || String(p.joinTime)) : '';
+  const leave = p.leaveTime ? (typeof p.leaveTime === 'string' ? p.leaveTime : p.leaveTime.toISOString?.() || String(p.leaveTime)) : '';
+  const durMs = typeof p.durationMs === 'number' ? p.durationMs : '';
+  const durMin = typeof p.durationMin === 'number' ? p.durationMin : '';
+  const rosterSig = `${pid}|${email}|${name}|${present}|${sessions}|${join}|${leave}`;
+  const writeSig = `${rosterSig}|${durMs}|${durMin}`;
+  return { docId, rosterSig, writeSig };
+}
+
 function computeRosterFingerprint(participants) {
   if (!Array.isArray(participants) || participants.length === 0) return '0:empty';
-  const sigs = participants.map(p => {
-    const pid = p.participantId || '';
-    const email = (p.email || '').toLowerCase().trim();
-    const name = (p.displayName || '').trim();
-    const present = p.present ? 1 : 0;
-    const sessions = p.sessions || 1;
-    const join = p.joinTime ? (typeof p.joinTime === 'string' ? p.joinTime : p.joinTime.toISOString?.() || String(p.joinTime)) : '';
-    const leave = p.leaveTime ? (typeof p.leaveTime === 'string' ? p.leaveTime : p.leaveTime.toISOString?.() || String(p.leaveTime)) : '';
-    return `${pid}|${email}|${name}|${present}|${sessions}|${join}|${leave}`;
-  });
+  const sigs = participants.map(p => computeParticipantSignatures(p).rosterSig);
   sigs.sort();
   return `${participants.length}:${sigs.join(';')}`;
 }
 
 function computeParticipantWriteFingerprint(participants) {
   if (!Array.isArray(participants) || participants.length === 0) return '0:empty';
-  const sigs = participants.map(p => {
-    const pid = p.participantId || '';
-    const email = (p.email || '').toLowerCase().trim();
-    const name = (p.displayName || '').trim();
-    const present = p.present ? 1 : 0;
-    const sessions = p.sessions || 1;
-    const join = p.joinTime ? (typeof p.joinTime === 'string' ? p.joinTime : p.joinTime.toISOString?.() || String(p.joinTime)) : '';
-    const leave = p.leaveTime ? (typeof p.leaveTime === 'string' ? p.leaveTime : p.leaveTime.toISOString?.() || String(p.leaveTime)) : '';
-    const durMs = typeof p.durationMs === 'number' ? p.durationMs : '';
-    const durMin = typeof p.durationMin === 'number' ? p.durationMin : '';
-    return `${pid}|${email}|${name}|${present}|${sessions}|${join}|${leave}|${durMs}|${durMin}`;
-  });
+  const sigs = participants.map(p => computeParticipantSignatures(p).writeSig);
   sigs.sort();
   return `${participants.length}:${sigs.join(';')}`;
 }
@@ -801,6 +798,7 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
     const entry = cached || {
       fingerprint: currentFingerprint,
       participantWriteFingerprint: null,
+      participantStates: new Map(),
       lastPersistedAt: nowMs,
       lastSeenAt: nowMs,
       trackedActors: new Map(),
@@ -808,6 +806,9 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
       prevMeetingMeta: null,
       codeMeta: null,
     };
+    if (!entry.participantStates) {
+      entry.participantStates = new Map();
+    }
     if (isFirstPersist) {
       attendanceDebounceCache.set(sessionKey, entry);
     }
@@ -841,11 +842,12 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
       // last-writer-wins — so a later PARTIAL re-fetch (Meet API eventual
       // consistency, a truncated page) would shrink participantCount and narrow
       // start/end, corrupting a fuller earlier snapshot. Read-then-widen.
-      // On unchanged 5-minute checkpoints, reuse the cached metadata from the
-      // initial/roster-change write so checkpoints don't burn 2 extra reads.
+      // Once prevMeetingMeta is populated on the initial write, reuse cached
+      // metadata on subsequent rosterChanged / checkpoint writes so mid-call
+      // joins/leaves don't burn 2 extra Firestore reads per poll.
       let prev = entry.prevMeetingMeta || {};
       let codeMeta = entry.codeMeta || {};
-      if (isFirstPersist || rosterChanged || forcePersist || !entry.prevMeetingMeta) {
+      if (isFirstPersist || forcePersist || !entry.prevMeetingMeta) {
         try { prev = (await meetingRef.get()).data() || {}; } catch { /* first write */ }
         if (instanceId) {
           try { codeMeta = (await codeRef.get()).data() || {}; } catch { /* fine */ }
@@ -876,16 +878,13 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
       entry.prevMeetingMeta = { ...prev, ...mergedMeetingMeta };
       entry.codeMeta = codeMeta;
 
-      const shouldWriteParticipants = isFirstPersist
-        || rosterChanged
-        || forcePersist
-        || entry.participantWriteFingerprint !== currentWriteFingerprint;
-
       // Keep the code-level doc alive as the series anchor (metadata target for
       // calendar/excused writes), WITHOUT participant scalars — freezing it is
       // what stops the old merge-everything behavior. hasInstances lets readers
       // skip metadata-only code docs in per-meeting listings.
-      if (instanceId && shouldWriteParticipants) {
+      // Only touch codeRef on initial persist, 5-minute checkpoint, or explicit force
+      // rather than on every mid-checkpoint join/leave poll.
+      if (instanceId && (isFirstPersist || isCheckpointDue || forcePersist)) {
         await codeRef.set({
           conferenceId,
           hasInstances: true,
@@ -893,17 +892,40 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
           updatedAt: now,
           ...(codeMeta.createdAt ? {} : { createdAt: now }),
         }, { merge: true });
+        if (!codeMeta.createdAt) {
+          codeMeta = { ...codeMeta, createdAt: now };
+          entry.codeMeta = codeMeta;
+        }
       }
 
-      if (shouldWriteParticipants) {
+      // Select only the participants that actually need to be written:
+      // - Initial persist or explicit force: write all participants
+      // - 5-min checkpoint: write only participants whose writeSig (including durationMs/durationMin) changed
+      // - Mid-checkpoint roster change: write only the delta participants whose rosterSig changed
+      const participantsToWrite = [];
+      for (const p of participants) {
+        const { docId, rosterSig, writeSig } = computeParticipantSignatures(p);
+        const prevPState = entry.participantStates.get(docId);
+        let shouldWrite = false;
+        if (isFirstPersist || forcePersist) {
+          shouldWrite = true;
+        } else if (isCheckpointDue) {
+          shouldWrite = !prevPState || prevPState.writeSig !== writeSig;
+        } else if (rosterChanged) {
+          shouldWrite = !prevPState || prevPState.rosterSig !== rosterSig;
+        }
+        if (shouldWrite) {
+          participantsToWrite.push({ p, docId, rosterSig, writeSig });
+        }
+      }
+
+      if (participantsToWrite.length > 0) {
         // Chunk into batches under Firestore's 500-op limit — a very large meeting
         // (200+ participants) would otherwise exceed a single batch.
         const CHUNK = 450;
-        for (let i = 0; i < participants.length; i += CHUNK) {
+        for (let i = 0; i < participantsToWrite.length; i += CHUNK) {
           const batch = getDb().batch();
-          for (const p of participants.slice(i, i + CHUNK)) {
-            const rawDocId = (p.participantId ? lastSegment(p.participantId) : '') || p.email || p.displayName || 'unknown';
-            const docId = String(rawDocId).replace(/\//g, '_').trim() || 'unknown';
+          for (const { p, docId } of participantsToWrite.slice(i, i + CHUNK)) {
             const pRef = meetingRef.collection('participants').doc(docId);
             batch.set(pRef, {
               participantId: p.participantId,
@@ -924,6 +946,9 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
             }, { merge: true });
           }
           await batch.commit();
+        }
+        for (const { docId, rosterSig, writeSig } of participantsToWrite) {
+          entry.participantStates.set(docId, { rosterSig, writeSig });
         }
         entry.participantWriteFingerprint = currentWriteFingerprint;
       }

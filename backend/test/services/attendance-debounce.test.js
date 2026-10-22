@@ -63,8 +63,23 @@ describe('persistAttendance — write debouncing', () => {
     expect(events.filter(e => e.type === 'tracked')).toHaveLength(1); // still only 1 event
   });
 
-  test('new participant joining triggers immediate write', async () => {
+  test('new participant joining triggers immediate delta write only for added participant, skips unchanged participants and codeRef write, and reuses cached metadata without re-reading', async () => {
     await firestore.persistAttendance('acme.edu', 'class-101', 'conferenceRecords/r1', baseParticipants, 'teacher@acme.edu');
+
+    // Stamp sentinels onto p1, p2, and the code doc to verify they are NOT re-written on p3 join
+    const p1Before = ctx.read('tenants/acme.edu/meetings/class-101__r1/participants/p1');
+    const p2Before = ctx.read('tenants/acme.edu/meetings/class-101__r1/participants/p2');
+    const codeBefore = ctx.read('tenants/acme.edu/meetings/class-101');
+    ctx.seed('tenants/acme.edu/meetings/class-101__r1/participants/p1', { ...p1Before, updatedAt: 'sentinel-p1' });
+    ctx.seed('tenants/acme.edu/meetings/class-101__r1/participants/p2', { ...p2Before, updatedAt: 'sentinel-p2' });
+    ctx.seed('tenants/acme.edu/meetings/class-101', { ...codeBefore, updatedAt: 'sentinel-code' });
+    // Also mutate the stored meeting doc's participantCount to 999 in the backing store:
+    // if persistAttendance re-read meetingRef.get(), it would take Math.max(3, 999) = 999;
+    // because it reuses cached entry.prevMeetingMeta (participantCount: 2), it writes Math.max(3, 2) = 3.
+    ctx.seed('tenants/acme.edu/meetings/class-101__r1', {
+      ...ctx.read('tenants/acme.edu/meetings/class-101__r1'),
+      participantCount: 999,
+    });
 
     const expandedRoster = [
       ...baseParticipants,
@@ -77,10 +92,20 @@ describe('persistAttendance — write debouncing', () => {
     const meeting = ctx.read('tenants/acme.edu/meetings/class-101__r1');
     expect(meeting.participantCount).toBe(3);
     expect(ctx.read('tenants/acme.edu/meetings/class-101__r1/participants/p3')).toBeDefined();
+    // Unchanged participants p1 and p2 were NOT re-written
+    expect(ctx.read('tenants/acme.edu/meetings/class-101__r1/participants/p1').updatedAt).toBe('sentinel-p1');
+    expect(ctx.read('tenants/acme.edu/meetings/class-101__r1/participants/p2').updatedAt).toBe('sentinel-p2');
+    // Code doc was NOT re-written on mid-checkpoint join
+    expect(ctx.read('tenants/acme.edu/meetings/class-101').updatedAt).toBe('sentinel-code');
   });
 
-  test('participant leave status change triggers immediate write', async () => {
+  test('participant leave status change writes only the changed participant doc', async () => {
     await firestore.persistAttendance('acme.edu', 'class-101', 'conferenceRecords/r1', baseParticipants, 'teacher@acme.edu');
+
+    ctx.seed('tenants/acme.edu/meetings/class-101__r1/participants/p1', {
+      ...ctx.read('tenants/acme.edu/meetings/class-101__r1/participants/p1'),
+      updatedAt: 'sentinel-p1-untouched',
+    });
 
     const updatedRoster = [
       baseParticipants[0],
@@ -92,6 +117,7 @@ describe('persistAttendance — write debouncing', () => {
 
     const bob = ctx.read('tenants/acme.edu/meetings/class-101__r1/participants/p2');
     expect(bob.present).toBe(false);
+    expect(ctx.read('tenants/acme.edu/meetings/class-101__r1/participants/p1').updatedAt).toBe('sentinel-p1-untouched');
   });
 
   test('force option bypasses debounce even when roster is identical', async () => {
@@ -101,7 +127,7 @@ describe('persistAttendance — write debouncing', () => {
     expect(res).toBe(true);
   });
 
-  test('checkpoint interval triggers meeting write, skips unchanged participant batch writes, and writes participants when duration changes', async () => {
+  test('checkpoint interval triggers meeting write, skips unchanged participant batch writes, and writes only participants whose duration changed', async () => {
     const originalDateNow = Date.now;
     let mockNow = 1000000;
     Date.now = () => mockNow;
@@ -109,10 +135,14 @@ describe('persistAttendance — write debouncing', () => {
     try {
       await firestore.persistAttendance('acme.edu', 'class-101', 'conferenceRecords/r1', baseParticipants, 'teacher@acme.edu');
 
-      // Tag participant p1 with a sentinel to verify unchanged checkpoint does NOT overwrite participant docs
+      // Tag participants p1 and p2 with sentinels to verify unchanged checkpoint does NOT overwrite participant docs
       ctx.seed('tenants/acme.edu/meetings/class-101__r1/participants/p1', {
         ...ctx.read('tenants/acme.edu/meetings/class-101__r1/participants/p1'),
-        checkpointSentinel: 'kept',
+        updatedAt: 'sentinel-p1',
+      });
+      ctx.seed('tenants/acme.edu/meetings/class-101__r1/participants/p2', {
+        ...ctx.read('tenants/acme.edu/meetings/class-101__r1/participants/p2'),
+        updatedAt: 'sentinel-p2',
       });
 
       // 1 minute later: still debounced
@@ -122,9 +152,10 @@ describe('persistAttendance — write debouncing', () => {
       // 5 minutes later (total 6 minutes since first write): checkpoint due, durations unchanged
       mockNow += 5 * 60 * 1000;
       expect(await firestore.persistAttendance('acme.edu', 'class-101', 'conferenceRecords/r1', baseParticipants, 'teacher@acme.edu')).toBe(true);
-      expect(ctx.read('tenants/acme.edu/meetings/class-101__r1/participants/p1').checkpointSentinel).toBe('kept');
+      expect(ctx.read('tenants/acme.edu/meetings/class-101__r1/participants/p1').updatedAt).toBe('sentinel-p1');
+      expect(ctx.read('tenants/acme.edu/meetings/class-101__r1/participants/p2').updatedAt).toBe('sentinel-p2');
 
-      // Another 5 minutes later with updated durationMs: participant doc IS written
+      // Another 5 minutes later with updated durationMs on p1 only: p1 IS written, p2 is NOT re-written
       mockNow += 5 * 60 * 1000;
       const durationUpdated = [
         { ...baseParticipants[0], durationMs: 600000, durationMin: 10 },
@@ -132,6 +163,8 @@ describe('persistAttendance — write debouncing', () => {
       ];
       expect(await firestore.persistAttendance('acme.edu', 'class-101', 'conferenceRecords/r1', durationUpdated, 'teacher@acme.edu')).toBe(true);
       expect(ctx.read('tenants/acme.edu/meetings/class-101__r1/participants/p1').durationMin).toBe(10);
+      expect(ctx.read('tenants/acme.edu/meetings/class-101__r1/participants/p1').updatedAt).not.toBe('sentinel-p1');
+      expect(ctx.read('tenants/acme.edu/meetings/class-101__r1/participants/p2').updatedAt).toBe('sentinel-p2');
     } finally {
       Date.now = originalDateNow;
     }

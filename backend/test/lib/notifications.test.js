@@ -2491,7 +2491,7 @@ describe('notifications — buildDesignSystemEmail & upgrade link sender', () =>
         active24h: 19,
       },
       billing: {
-        currentHour: { reads: 136938, status: { label: 'Healthy' } },
+        currentHour: { reads: 136938, writes: 420, status: { label: 'Healthy' } },
         last24h: { reads: 3200000, writes: 3100, deletes: 45, cost: { totalCostUsd: 0.95 } },
         monthToDate: { reads: 28500000, writes: 41200, cost: { totalCostUsd: 8.40 } },
         projections: { monthTotalFrom24hRateUsd: 18.85 },
@@ -2502,7 +2502,9 @@ describe('notifications — buildDesignSystemEmail & upgrade link sender', () =>
     const dailyCall = mockSend.mock.calls[0][0];
     expect(dailyCall.subject).toContain('Daily Ops & Billing Digest');
     expect(dailyCall.subject).toContain('$0.95/24h · 6 signups · 22 meetings');
-    expect(dailyCall.html).toContain('136,938 reads/hr');
+    expect(dailyCall.html).toContain('Current 1h Rate');
+    expect(dailyCall.html).toContain('136,938 reads · 420 writes/hr (Healthy)');
+    expect(dailyCall.text).toContain('Current 1h Rate: 136,938 reads · 420 writes/hr (Healthy)');
     expect(dailyCall.html).toContain('6 signups · 19 active');
     expect(dailyCall.html).toContain('22 meetings · 14 exports');
     expect(dailyCall.html).toContain('28,500,000 reads · 41,200 writes');
