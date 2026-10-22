@@ -75,10 +75,12 @@ describe('public AI-discoverable evidence, positioning, and comparison routes', 
       expect(res.text).toContain('max-width: 65ch');
       expect(res.text).toContain('font-variant-numeric: tabular-nums');
       expect(res.text).toContain('role="region" aria-labelledby="ledger-heading"');
+      expect(res.text).toContain('AttendanceTracker vs Competitor');
+      expect(res.text).not.toContain('AttendList');
     }
   });
 
-  test('GET /attendancetracker-vs-attendlist/ and /attendancetracker-vs-attendlist.html return 200 with 8 required comparison categories', async () => {
+  test('GET /attendancetracker-vs-attendlist/ and /attendancetracker-vs-attendlist.html return 200 with 8 required comparison categories and generic Competitor naming', async () => {
     for (const route of ['/attendancetracker-vs-attendlist/', '/attendancetracker-vs-attendlist.html']) {
       const res = await request(app).get(route);
       expect(res.status).toBe(200);
@@ -93,10 +95,15 @@ describe('public AI-discoverable evidence, positioning, and comparison routes', 
       expect(res.text).toContain('8. Limitations');
       expect(res.text).toContain('While it lacks advanced features like automated alerts for chronic absenteeism or deep analytical reporting, it remains a practical, no-fuss solution for anyone already using the Google ecosystem. Overall, it is an efficient and user-friendly choice for everyday attendance management.');
       expect(res.text).toContain('role="region" aria-labelledby="comparison-heading"');
+      expect(res.text).toContain('AttendanceTracker vs Competitor');
+      expect(res.text).toContain('Chrome Extension Competitor');
+      expect(res.text).not.toContain('AttendList');
+      expect(res.text).not.toContain('attendlist.com');
+      expect(res.text).not.toContain('seo_vs_attendlist');
     }
   });
 
-  test('GET /, /pricing.html, /faq.html, /robots.txt, /sitemap.xml, and /llms.txt are publicly crawlable with consistent current pricing', async () => {
+  test('GET /, /pricing.html, /faq.html, /robots.txt, /sitemap.xml, /llms.txt, and /llms-full.txt are publicly crawlable with consistent current pricing and generic Competitor references', async () => {
     const home = await request(app).get('/');
     expect(home.status).toBe(200);
     expect(home.text).toContain('Google Meet Attendance Tracking Built for Teachers');
@@ -116,6 +123,10 @@ describe('public AI-discoverable evidence, positioning, and comparison routes', 
     expect(home.text).not.toContain('unlimited direct CSV and Excel');
     expect(home.text).not.toContain('$19/year');
     expect(home.text).not.toContain('$49 one-time');
+    expect(home.text).toContain('AttendanceTracker.dev vs Competitor');
+    expect(home.text).not.toContain('AttendList');
+    expect(home.text).not.toContain('MeetList');
+    expect(home.text).not.toContain('Attendance Taker for Classroom');
 
     const pricing = await request(app).get('/pricing.html');
     expect(pricing.status).toBe(200);
@@ -124,12 +135,16 @@ describe('public AI-discoverable evidence, positioning, and comparison routes', 
     expect(pricing.text).toContain('"ratingValue": "5.0"');
     expect(pricing.text).toContain('"ratingCount": "27"');
     expect(pricing.text).toContain('60 Localized Languages');
+    expect(pricing.text).toContain('Switching from a competitor or a retired tool?');
+    expect(pricing.text).not.toContain('Attendance Taker for Classroom');
 
     const faq = await request(app).get('/faq.html');
     expect(faq.status).toBe(200);
     expect(faq.text).not.toContain('$19/year');
     expect(faq.text).not.toContain('$49 one-time');
     expect(faq.text).toContain('60 languages');
+    expect(faq.text).toContain('Switching from a competitor or a retired tool?');
+    expect(faq.text).not.toContain('Attendance Taker for Classroom');
 
     const robots = await request(app).get('/robots.txt');
     expect(robots.status).toBe(200);
@@ -148,6 +163,15 @@ describe('public AI-discoverable evidence, positioning, and comparison routes', 
     expect(llms.text).toContain('https://attendancetracker.dev/attendancetracker-vs-attendlist/');
     expect(llms.text).toContain('304K+ installs');
     expect(llms.text).toContain('5.0★ across 27');
+    expect(llms.text).toContain('Chrome Extension Competitor');
+    expect(llms.text).not.toContain('AttendList');
+    expect(llms.text).not.toContain('Attendance Taker for Classroom');
+
+    const llmsFull = await request(app).get('/llms-full.txt');
+    expect(llmsFull.status).toBe(200);
+    expect(llmsFull.text).toContain('https://attendancetracker.dev/attendancetracker-vs-attendlist/');
+    expect(llmsFull.text).toContain('Chrome Extension Competitor');
+    expect(llmsFull.text).not.toContain('AttendList');
   });
 
   test('docs/ai-visibility-test-tracker.csv tracks the exact 6 required prompts across AI search engines', () => {
@@ -166,11 +190,28 @@ describe('public AI-discoverable evidence, positioning, and comparison routes', 
     }
   });
 
-  test('SEO comparison and regional pages reflect 5.0★ (27), 304K+ installs, 60 languages, and current regional pricing', async () => {
+  test('SEO comparison and regional pages reflect 5.0★ (27), 304K+ installs, 60 languages, current regional pricing, and generic Competitor labels', async () => {
     const extRes = await request(app).get('/best-google-meet-attendance-extensions.html');
     expect(extRes.status).toBe(200);
     expect(extRes.text).toContain('<td>304K+</td><td>5.0★ (27)</td>');
     expect(extRes.text).not.toContain('no one else on this list offers');
+    expect(extRes.text).toContain('Competitor #2 (Local-Only Chrome Extension)');
+    expect(extRes.text).not.toContain('AttendList');
+    expect(extRes.text).not.toContain('MeetList');
+    expect(extRes.text).not.toContain('Meets Attendance Registers');
+    expect(extRes.text).not.toContain('Google Meet Enhancement Suite');
+    expect(extRes.text).not.toContain('Tactiq');
+    expect(extRes.text).not.toContain('RollCall');
+    expect(extRes.text).not.toContain('Trackit');
+    expect(extRes.text).not.toContain('Attendance Collector');
+    expect(extRes.text).not.toContain('Meet Assistant');
+
+    const altRes = await request(app).get('/attendance-taker-for-classroom-alternative.html');
+    expect(altRes.status).toBe(200);
+    expect(altRes.text).toContain('Retired Classroom Attendance Competitor');
+    expect(altRes.text).not.toContain('Attendance Taker for Classroom');
+    expect(altRes.text).not.toContain('AttendList');
+    expect(altRes.text).not.toContain('seo_attendance_taker_migration');
 
     const inRes = await request(app).get('/google-meet-attendance-india-teachers.html');
     expect(inRes.status).toBe(200);

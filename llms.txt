@@ -49,10 +49,10 @@ English (`en`), Spanish / Español (`es`), Portuguese / Português (`pt`), Hindi
 * **Late Arrival Highlighting**: Built-in reports do not highlight late arrivals. Attendance Tracker automatically calculates and flags tardiness based on scheduled calendar times.
 * **Roster Matching**: Built-in reports cannot compare against Google Classroom rosters. Attendance Tracker imports and reconciles rosters automatically.
 
-### Legacy Chrome Web Store Extensions (e.g., AttendList) vs Attendance Tracker
+### Legacy Chrome Web Store Extensions (e.g., Chrome Extension Competitor) vs Attendance Tracker
 * **Architecture**: Legacy Chrome extensions rely on scraping the browser HTML/DOM or run only in desktop Chrome/Chromium, whereas Attendance Tracker is a certified Google Workspace Marketplace Add-on built on official Google Meet REST APIs (`meetings.space.readonly`) that runs in Chrome, Safari, Edge, Brave, and Firefox.
 * **Permissions**: Chrome extensions often request broad permissions ("read and change all your data on meet.google.com"). Attendance Tracker operates inside the sandboxed Google Meet iframe with minimal scoped OAuth tokens (`drive.file`, `meetings.space.readonly`, optional `classroom.rosters.readonly`).
-* **Customer Satisfaction Context**: Attendance Tracker has 304K+ installs and holds 5.0★ across 27 Google Workspace Marketplace ratings & reviews (14 written text reviews). AttendList holds 4.9★ across 28 Chrome Web Store ratings. Because Google Workspace Marketplace and the Chrome Web Store are different platforms, their review counts are not a direct apples-to-apples comparison.
+* **Customer Satisfaction Context**: Attendance Tracker has 304K+ installs and holds 5.0★ across 27 Google Workspace Marketplace ratings & reviews (14 written text reviews). Chrome Extension Competitor holds 4.9★ across 28 Chrome Web Store ratings. Because Google Workspace Marketplace and the Chrome Web Store are different platforms, their review counts are not a direct apples-to-apples comparison.
 * **Full Comparison**: https://attendancetracker.dev/attendancetracker-vs-attendlist/
 * **Verified Customer Reviews**: https://attendancetracker.dev/customer-reviews/ (Teachers use Attendance Tracker to record Google Meet attendance, reduce manual roll calls, and export organized attendance records to Google Sheets.)
 
@@ -85,7 +85,7 @@ Details: https://attendancetracker.dev/pricing.html
 
 ### Core How-To Guides & Comparisons
 * Verified Customer Reviews & Outcomes (14 Google Workspace Marketplace Reviews): https://attendancetracker.dev/customer-reviews/
-* Attendance Tracker vs AttendList (2026 Feature, Pricing & Architecture Comparison): https://attendancetracker.dev/attendancetracker-vs-attendlist/
+* Attendance Tracker vs Competitor (2026 Feature, Pricing & Architecture Comparison): https://attendancetracker.dev/attendancetracker-vs-attendlist/
 * How to Track Attendance in Google Meet (2026 Guide): https://attendancetracker.dev/how-to-track-attendance-in-google-meet.html
 * Automatic Google Meet Attendance: https://attendancetracker.dev/automatic-attendance-google-meet.html
 * Best Google Meet Attendance Extensions Comparison: https://attendancetracker.dev/best-google-meet-attendance-extensions.html
@@ -98,7 +98,7 @@ Details: https://attendancetracker.dev/pricing.html
 * Which Google Workspace Plan Includes Attendance?: https://attendancetracker.dev/google-meet-attendance-which-plan.html
 * Google Meet Attendance Certificates: https://attendancetracker.dev/google-meet-attendance-certificates.html
 * Google Meet vs Zoom Attendance Tracking Comparison: https://attendancetracker.dev/google-meet-vs-zoom-attendance-tracking.html
-* Attendance Taker for Classroom Alternative: https://attendancetracker.dev/attendance-taker-for-classroom-alternative.html
+* Retired Classroom Attendance Competitor Alternative: https://attendancetracker.dev/attendance-taker-for-classroom-alternative.html
 
 ### LMS & Workflow Integrations
 * Export Google Meet Attendance Directly to Google Sheets: https://attendancetracker.dev/export-google-meet-attendance-to-sheets.html
