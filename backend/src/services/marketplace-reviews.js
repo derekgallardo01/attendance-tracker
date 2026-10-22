@@ -71,7 +71,9 @@ const REVIEW_LOCALES = [
   'bn', 'ur', 'ta', 'te', 'ms', 'vi', 'nl', 'pl', 'ro', 'ru',
   'uk', 'tr', 'th', 'ar', 'ko', 'zh-CN', 'zh-TW', 'ja', 'he',
   'mr', 'sv', 'cs', 'da', 'fi', 'hu', 'so', 'sw', 'am', 'si',
-  'el', 'no', 'ca', 'ne', 'ml', 'mn'
+  'el', 'no', 'ca', 'ne', 'ml', 'mn', 'kn', 'gu', 'pa', 'kk',
+  'lv', 'lt', 'lo', 'my', 'km', 'ceb', 'bg', 'hr', 'sr', 'sk',
+  'sl', 'af'
 ];
 
 async function fetchLocaleReviews(baseUrl, loc) {

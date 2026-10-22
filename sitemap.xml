@@ -48,6 +48,22 @@
     <xhtml:link rel="alternate" hreflang="ne" href="https://attendancetracker.dev/?lang=ne" />
     <xhtml:link rel="alternate" hreflang="ml" href="https://attendancetracker.dev/?lang=ml" />
     <xhtml:link rel="alternate" hreflang="mn" href="https://attendancetracker.dev/?lang=mn" />
+    <xhtml:link rel="alternate" hreflang="kn" href="https://attendancetracker.dev/?lang=kn" />
+    <xhtml:link rel="alternate" hreflang="gu" href="https://attendancetracker.dev/?lang=gu" />
+    <xhtml:link rel="alternate" hreflang="pa" href="https://attendancetracker.dev/?lang=pa" />
+    <xhtml:link rel="alternate" hreflang="kk" href="https://attendancetracker.dev/?lang=kk" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://attendancetracker.dev/?lang=lv" />
+    <xhtml:link rel="alternate" hreflang="lt" href="https://attendancetracker.dev/?lang=lt" />
+    <xhtml:link rel="alternate" hreflang="lo" href="https://attendancetracker.dev/?lang=lo" />
+    <xhtml:link rel="alternate" hreflang="my" href="https://attendancetracker.dev/?lang=my" />
+    <xhtml:link rel="alternate" hreflang="km" href="https://attendancetracker.dev/?lang=km" />
+    <xhtml:link rel="alternate" hreflang="ceb" href="https://attendancetracker.dev/?lang=ceb" />
+    <xhtml:link rel="alternate" hreflang="bg" href="https://attendancetracker.dev/?lang=bg" />
+    <xhtml:link rel="alternate" hreflang="hr" href="https://attendancetracker.dev/?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://attendancetracker.dev/?lang=sr" />
+    <xhtml:link rel="alternate" hreflang="sk" href="https://attendancetracker.dev/?lang=sk" />
+    <xhtml:link rel="alternate" hreflang="sl" href="https://attendancetracker.dev/?lang=sl" />
+    <xhtml:link rel="alternate" hreflang="af" href="https://attendancetracker.dev/?lang=af" />
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
@@ -341,6 +357,22 @@
     <xhtml:link rel="alternate" hreflang="ne" href="https://attendancetracker.dev/pricing.html?lang=ne" />
     <xhtml:link rel="alternate" hreflang="ml" href="https://attendancetracker.dev/pricing.html?lang=ml" />
     <xhtml:link rel="alternate" hreflang="mn" href="https://attendancetracker.dev/pricing.html?lang=mn" />
+    <xhtml:link rel="alternate" hreflang="kn" href="https://attendancetracker.dev/pricing.html?lang=kn" />
+    <xhtml:link rel="alternate" hreflang="gu" href="https://attendancetracker.dev/pricing.html?lang=gu" />
+    <xhtml:link rel="alternate" hreflang="pa" href="https://attendancetracker.dev/pricing.html?lang=pa" />
+    <xhtml:link rel="alternate" hreflang="kk" href="https://attendancetracker.dev/pricing.html?lang=kk" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://attendancetracker.dev/pricing.html?lang=lv" />
+    <xhtml:link rel="alternate" hreflang="lt" href="https://attendancetracker.dev/pricing.html?lang=lt" />
+    <xhtml:link rel="alternate" hreflang="lo" href="https://attendancetracker.dev/pricing.html?lang=lo" />
+    <xhtml:link rel="alternate" hreflang="my" href="https://attendancetracker.dev/pricing.html?lang=my" />
+    <xhtml:link rel="alternate" hreflang="km" href="https://attendancetracker.dev/pricing.html?lang=km" />
+    <xhtml:link rel="alternate" hreflang="ceb" href="https://attendancetracker.dev/pricing.html?lang=ceb" />
+    <xhtml:link rel="alternate" hreflang="bg" href="https://attendancetracker.dev/pricing.html?lang=bg" />
+    <xhtml:link rel="alternate" hreflang="hr" href="https://attendancetracker.dev/pricing.html?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://attendancetracker.dev/pricing.html?lang=sr" />
+    <xhtml:link rel="alternate" hreflang="sk" href="https://attendancetracker.dev/pricing.html?lang=sk" />
+    <xhtml:link rel="alternate" hreflang="sl" href="https://attendancetracker.dev/pricing.html?lang=sl" />
+    <xhtml:link rel="alternate" hreflang="af" href="https://attendancetracker.dev/pricing.html?lang=af" />
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
@@ -391,6 +423,22 @@
     <xhtml:link rel="alternate" hreflang="ne" href="https://attendancetracker.dev/privacy.html?lang=ne" />
     <xhtml:link rel="alternate" hreflang="ml" href="https://attendancetracker.dev/privacy.html?lang=ml" />
     <xhtml:link rel="alternate" hreflang="mn" href="https://attendancetracker.dev/privacy.html?lang=mn" />
+    <xhtml:link rel="alternate" hreflang="kn" href="https://attendancetracker.dev/privacy.html?lang=kn" />
+    <xhtml:link rel="alternate" hreflang="gu" href="https://attendancetracker.dev/privacy.html?lang=gu" />
+    <xhtml:link rel="alternate" hreflang="pa" href="https://attendancetracker.dev/privacy.html?lang=pa" />
+    <xhtml:link rel="alternate" hreflang="kk" href="https://attendancetracker.dev/privacy.html?lang=kk" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://attendancetracker.dev/privacy.html?lang=lv" />
+    <xhtml:link rel="alternate" hreflang="lt" href="https://attendancetracker.dev/privacy.html?lang=lt" />
+    <xhtml:link rel="alternate" hreflang="lo" href="https://attendancetracker.dev/privacy.html?lang=lo" />
+    <xhtml:link rel="alternate" hreflang="my" href="https://attendancetracker.dev/privacy.html?lang=my" />
+    <xhtml:link rel="alternate" hreflang="km" href="https://attendancetracker.dev/privacy.html?lang=km" />
+    <xhtml:link rel="alternate" hreflang="ceb" href="https://attendancetracker.dev/privacy.html?lang=ceb" />
+    <xhtml:link rel="alternate" hreflang="bg" href="https://attendancetracker.dev/privacy.html?lang=bg" />
+    <xhtml:link rel="alternate" hreflang="hr" href="https://attendancetracker.dev/privacy.html?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://attendancetracker.dev/privacy.html?lang=sr" />
+    <xhtml:link rel="alternate" hreflang="sk" href="https://attendancetracker.dev/privacy.html?lang=sk" />
+    <xhtml:link rel="alternate" hreflang="sl" href="https://attendancetracker.dev/privacy.html?lang=sl" />
+    <xhtml:link rel="alternate" hreflang="af" href="https://attendancetracker.dev/privacy.html?lang=af" />
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
@@ -441,6 +489,22 @@
     <xhtml:link rel="alternate" hreflang="ne" href="https://attendancetracker.dev/student-data-privacy.html?lang=ne" />
     <xhtml:link rel="alternate" hreflang="ml" href="https://attendancetracker.dev/student-data-privacy.html?lang=ml" />
     <xhtml:link rel="alternate" hreflang="mn" href="https://attendancetracker.dev/student-data-privacy.html?lang=mn" />
+    <xhtml:link rel="alternate" hreflang="kn" href="https://attendancetracker.dev/student-data-privacy.html?lang=kn" />
+    <xhtml:link rel="alternate" hreflang="gu" href="https://attendancetracker.dev/student-data-privacy.html?lang=gu" />
+    <xhtml:link rel="alternate" hreflang="pa" href="https://attendancetracker.dev/student-data-privacy.html?lang=pa" />
+    <xhtml:link rel="alternate" hreflang="kk" href="https://attendancetracker.dev/student-data-privacy.html?lang=kk" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://attendancetracker.dev/student-data-privacy.html?lang=lv" />
+    <xhtml:link rel="alternate" hreflang="lt" href="https://attendancetracker.dev/student-data-privacy.html?lang=lt" />
+    <xhtml:link rel="alternate" hreflang="lo" href="https://attendancetracker.dev/student-data-privacy.html?lang=lo" />
+    <xhtml:link rel="alternate" hreflang="my" href="https://attendancetracker.dev/student-data-privacy.html?lang=my" />
+    <xhtml:link rel="alternate" hreflang="km" href="https://attendancetracker.dev/student-data-privacy.html?lang=km" />
+    <xhtml:link rel="alternate" hreflang="ceb" href="https://attendancetracker.dev/student-data-privacy.html?lang=ceb" />
+    <xhtml:link rel="alternate" hreflang="bg" href="https://attendancetracker.dev/student-data-privacy.html?lang=bg" />
+    <xhtml:link rel="alternate" hreflang="hr" href="https://attendancetracker.dev/student-data-privacy.html?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://attendancetracker.dev/student-data-privacy.html?lang=sr" />
+    <xhtml:link rel="alternate" hreflang="sk" href="https://attendancetracker.dev/student-data-privacy.html?lang=sk" />
+    <xhtml:link rel="alternate" hreflang="sl" href="https://attendancetracker.dev/student-data-privacy.html?lang=sl" />
+    <xhtml:link rel="alternate" hreflang="af" href="https://attendancetracker.dev/student-data-privacy.html?lang=af" />
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -496,6 +560,22 @@
     <xhtml:link rel="alternate" hreflang="ne" href="https://attendancetracker.dev/terms.html?lang=ne" />
     <xhtml:link rel="alternate" hreflang="ml" href="https://attendancetracker.dev/terms.html?lang=ml" />
     <xhtml:link rel="alternate" hreflang="mn" href="https://attendancetracker.dev/terms.html?lang=mn" />
+    <xhtml:link rel="alternate" hreflang="kn" href="https://attendancetracker.dev/terms.html?lang=kn" />
+    <xhtml:link rel="alternate" hreflang="gu" href="https://attendancetracker.dev/terms.html?lang=gu" />
+    <xhtml:link rel="alternate" hreflang="pa" href="https://attendancetracker.dev/terms.html?lang=pa" />
+    <xhtml:link rel="alternate" hreflang="kk" href="https://attendancetracker.dev/terms.html?lang=kk" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://attendancetracker.dev/terms.html?lang=lv" />
+    <xhtml:link rel="alternate" hreflang="lt" href="https://attendancetracker.dev/terms.html?lang=lt" />
+    <xhtml:link rel="alternate" hreflang="lo" href="https://attendancetracker.dev/terms.html?lang=lo" />
+    <xhtml:link rel="alternate" hreflang="my" href="https://attendancetracker.dev/terms.html?lang=my" />
+    <xhtml:link rel="alternate" hreflang="km" href="https://attendancetracker.dev/terms.html?lang=km" />
+    <xhtml:link rel="alternate" hreflang="ceb" href="https://attendancetracker.dev/terms.html?lang=ceb" />
+    <xhtml:link rel="alternate" hreflang="bg" href="https://attendancetracker.dev/terms.html?lang=bg" />
+    <xhtml:link rel="alternate" hreflang="hr" href="https://attendancetracker.dev/terms.html?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://attendancetracker.dev/terms.html?lang=sr" />
+    <xhtml:link rel="alternate" hreflang="sk" href="https://attendancetracker.dev/terms.html?lang=sk" />
+    <xhtml:link rel="alternate" hreflang="sl" href="https://attendancetracker.dev/terms.html?lang=sl" />
+    <xhtml:link rel="alternate" hreflang="af" href="https://attendancetracker.dev/terms.html?lang=af" />
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
@@ -546,6 +626,22 @@
     <xhtml:link rel="alternate" hreflang="ne" href="https://attendancetracker.dev/refunds.html?lang=ne" />
     <xhtml:link rel="alternate" hreflang="ml" href="https://attendancetracker.dev/refunds.html?lang=ml" />
     <xhtml:link rel="alternate" hreflang="mn" href="https://attendancetracker.dev/refunds.html?lang=mn" />
+    <xhtml:link rel="alternate" hreflang="kn" href="https://attendancetracker.dev/refunds.html?lang=kn" />
+    <xhtml:link rel="alternate" hreflang="gu" href="https://attendancetracker.dev/refunds.html?lang=gu" />
+    <xhtml:link rel="alternate" hreflang="pa" href="https://attendancetracker.dev/refunds.html?lang=pa" />
+    <xhtml:link rel="alternate" hreflang="kk" href="https://attendancetracker.dev/refunds.html?lang=kk" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://attendancetracker.dev/refunds.html?lang=lv" />
+    <xhtml:link rel="alternate" hreflang="lt" href="https://attendancetracker.dev/refunds.html?lang=lt" />
+    <xhtml:link rel="alternate" hreflang="lo" href="https://attendancetracker.dev/refunds.html?lang=lo" />
+    <xhtml:link rel="alternate" hreflang="my" href="https://attendancetracker.dev/refunds.html?lang=my" />
+    <xhtml:link rel="alternate" hreflang="km" href="https://attendancetracker.dev/refunds.html?lang=km" />
+    <xhtml:link rel="alternate" hreflang="ceb" href="https://attendancetracker.dev/refunds.html?lang=ceb" />
+    <xhtml:link rel="alternate" hreflang="bg" href="https://attendancetracker.dev/refunds.html?lang=bg" />
+    <xhtml:link rel="alternate" hreflang="hr" href="https://attendancetracker.dev/refunds.html?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://attendancetracker.dev/refunds.html?lang=sr" />
+    <xhtml:link rel="alternate" hreflang="sk" href="https://attendancetracker.dev/refunds.html?lang=sk" />
+    <xhtml:link rel="alternate" hreflang="sl" href="https://attendancetracker.dev/refunds.html?lang=sl" />
+    <xhtml:link rel="alternate" hreflang="af" href="https://attendancetracker.dev/refunds.html?lang=af" />
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
@@ -596,6 +692,22 @@
     <xhtml:link rel="alternate" hreflang="ne" href="https://attendancetracker.dev/support.html?lang=ne" />
     <xhtml:link rel="alternate" hreflang="ml" href="https://attendancetracker.dev/support.html?lang=ml" />
     <xhtml:link rel="alternate" hreflang="mn" href="https://attendancetracker.dev/support.html?lang=mn" />
+    <xhtml:link rel="alternate" hreflang="kn" href="https://attendancetracker.dev/support.html?lang=kn" />
+    <xhtml:link rel="alternate" hreflang="gu" href="https://attendancetracker.dev/support.html?lang=gu" />
+    <xhtml:link rel="alternate" hreflang="pa" href="https://attendancetracker.dev/support.html?lang=pa" />
+    <xhtml:link rel="alternate" hreflang="kk" href="https://attendancetracker.dev/support.html?lang=kk" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://attendancetracker.dev/support.html?lang=lv" />
+    <xhtml:link rel="alternate" hreflang="lt" href="https://attendancetracker.dev/support.html?lang=lt" />
+    <xhtml:link rel="alternate" hreflang="lo" href="https://attendancetracker.dev/support.html?lang=lo" />
+    <xhtml:link rel="alternate" hreflang="my" href="https://attendancetracker.dev/support.html?lang=my" />
+    <xhtml:link rel="alternate" hreflang="km" href="https://attendancetracker.dev/support.html?lang=km" />
+    <xhtml:link rel="alternate" hreflang="ceb" href="https://attendancetracker.dev/support.html?lang=ceb" />
+    <xhtml:link rel="alternate" hreflang="bg" href="https://attendancetracker.dev/support.html?lang=bg" />
+    <xhtml:link rel="alternate" hreflang="hr" href="https://attendancetracker.dev/support.html?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://attendancetracker.dev/support.html?lang=sr" />
+    <xhtml:link rel="alternate" hreflang="sk" href="https://attendancetracker.dev/support.html?lang=sk" />
+    <xhtml:link rel="alternate" hreflang="sl" href="https://attendancetracker.dev/support.html?lang=sl" />
+    <xhtml:link rel="alternate" hreflang="af" href="https://attendancetracker.dev/support.html?lang=af" />
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -646,6 +758,22 @@
     <xhtml:link rel="alternate" hreflang="ne" href="https://attendancetracker.dev/unsubscribe.html?lang=ne" />
     <xhtml:link rel="alternate" hreflang="ml" href="https://attendancetracker.dev/unsubscribe.html?lang=ml" />
     <xhtml:link rel="alternate" hreflang="mn" href="https://attendancetracker.dev/unsubscribe.html?lang=mn" />
+    <xhtml:link rel="alternate" hreflang="kn" href="https://attendancetracker.dev/unsubscribe.html?lang=kn" />
+    <xhtml:link rel="alternate" hreflang="gu" href="https://attendancetracker.dev/unsubscribe.html?lang=gu" />
+    <xhtml:link rel="alternate" hreflang="pa" href="https://attendancetracker.dev/unsubscribe.html?lang=pa" />
+    <xhtml:link rel="alternate" hreflang="kk" href="https://attendancetracker.dev/unsubscribe.html?lang=kk" />
+    <xhtml:link rel="alternate" hreflang="lv" href="https://attendancetracker.dev/unsubscribe.html?lang=lv" />
+    <xhtml:link rel="alternate" hreflang="lt" href="https://attendancetracker.dev/unsubscribe.html?lang=lt" />
+    <xhtml:link rel="alternate" hreflang="lo" href="https://attendancetracker.dev/unsubscribe.html?lang=lo" />
+    <xhtml:link rel="alternate" hreflang="my" href="https://attendancetracker.dev/unsubscribe.html?lang=my" />
+    <xhtml:link rel="alternate" hreflang="km" href="https://attendancetracker.dev/unsubscribe.html?lang=km" />
+    <xhtml:link rel="alternate" hreflang="ceb" href="https://attendancetracker.dev/unsubscribe.html?lang=ceb" />
+    <xhtml:link rel="alternate" hreflang="bg" href="https://attendancetracker.dev/unsubscribe.html?lang=bg" />
+    <xhtml:link rel="alternate" hreflang="hr" href="https://attendancetracker.dev/unsubscribe.html?lang=hr" />
+    <xhtml:link rel="alternate" hreflang="sr" href="https://attendancetracker.dev/unsubscribe.html?lang=sr" />
+    <xhtml:link rel="alternate" hreflang="sk" href="https://attendancetracker.dev/unsubscribe.html?lang=sk" />
+    <xhtml:link rel="alternate" hreflang="sl" href="https://attendancetracker.dev/unsubscribe.html?lang=sl" />
+    <xhtml:link rel="alternate" hreflang="af" href="https://attendancetracker.dev/unsubscribe.html?lang=af" />
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>

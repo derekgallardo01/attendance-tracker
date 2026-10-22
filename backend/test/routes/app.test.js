@@ -106,6 +106,12 @@ describe('public AI-discoverable evidence, positioning, and comparison routes', 
     expect(home.text).toContain('Attendance history and semester reporting');
     expect(home.text).toContain('Exports for supported learning management systems');
     expect(home.text).toContain('<noscript><style>#landing-page{display:block!important}#addon-ui{display:none!important}</style></noscript>');
+    expect(home.text).toContain('"ratingValue": "5.0"');
+    expect(home.text).toContain('★ 5.0/5');
+    expect(home.text).toContain('5.0 / 5 Average');
+    expect(home.text).toContain('550+');
+    expect(home.text).toContain('5,000+');
+    expect(home.text).not.toContain('4.9/5');
     expect(home.text).not.toContain('unlimited CSV &amp; Excel');
     expect(home.text).not.toContain('unlimited direct CSV and Excel');
     expect(home.text).not.toContain('$19/year');
@@ -115,7 +121,9 @@ describe('public AI-discoverable evidence, positioning, and comparison routes', 
     expect(pricing.status).toBe(200);
     expect(pricing.text).not.toContain('$19/yr');
     expect(pricing.text).not.toContain('($49)');
+    expect(pricing.text).toContain('"ratingValue": "5.0"');
     expect(pricing.text).toContain('"ratingCount": "27"');
+    expect(pricing.text).toContain('60 Localized Languages');
 
     const faq = await request(app).get('/faq.html');
     expect(faq.status).toBe(200);
@@ -132,11 +140,14 @@ describe('public AI-discoverable evidence, positioning, and comparison routes', 
     expect(sitemap.status).toBe(200);
     expect(sitemap.text).toContain('https://attendancetracker.dev/customer-reviews/');
     expect(sitemap.text).toContain('https://attendancetracker.dev/attendancetracker-vs-attendlist/');
+    expect(sitemap.text).toContain('hreflang="af"');
 
     const llms = await request(app).get('/llms.txt');
     expect(llms.status).toBe(200);
     expect(llms.text).toContain('https://attendancetracker.dev/customer-reviews/');
     expect(llms.text).toContain('https://attendancetracker.dev/attendancetracker-vs-attendlist/');
+    expect(llms.text).toContain('304K+ installs');
+    expect(llms.text).toContain('5.0★ across 27');
   });
 
   test('docs/ai-visibility-test-tracker.csv tracks the exact 6 required prompts across AI search engines', () => {
@@ -153,6 +164,31 @@ describe('public AI-discoverable evidence, positioning, and comparison routes', 
     for (const prompt of requiredPrompts) {
       expect(csv).toContain(prompt);
     }
+  });
+
+  test('SEO comparison and regional pages reflect 5.0★ (27), 304K+ installs, 60 languages, and current regional pricing', async () => {
+    const extRes = await request(app).get('/best-google-meet-attendance-extensions.html');
+    expect(extRes.status).toBe(200);
+    expect(extRes.text).toContain('<td>304K+</td><td>5.0★ (27)</td>');
+    expect(extRes.text).not.toContain('no one else on this list offers');
+
+    const inRes = await request(app).get('/google-meet-attendance-india-teachers.html');
+    expect(inRes.status).toBe(200);
+    expect(inRes.text).toContain('₹249/year');
+    expect(inRes.text).not.toContain('₹1,599');
+
+    const idRes = await request(app).get('/google-meet-attendance-indonesia-teachers.html');
+    expect(idRes.status).toBe(200);
+    expect(idRes.text).toContain('59 other languages');
+    expect(idRes.text).toContain('Rp 49.000/year');
+
+    const phRes = await request(app).get('/google-meet-attendance-philippines-teachers.html');
+    expect(phRes.status).toBe(200);
+    expect(phRes.text).toContain('₱199/year');
+
+    const myRes = await request(app).get('/google-meet-attendance-malaysia-teachers.html');
+    expect(myRes.status).toBe(200);
+    expect(myRes.text).toContain('RM 35/year');
   });
 });
 
