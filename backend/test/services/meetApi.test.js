@@ -192,6 +192,41 @@ describe('meetGetAll', () => {
     const items = await meetGetAll('records', 'tok', 'items');
     expect(items).toEqual([]);
   });
+
+  test('stops pagination if nextPageToken repeats the current pageToken', async () => {
+    global.fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ items: [{ id: 1 }], nextPageToken: 'stuck-token' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ items: [{ id: 2 }], nextPageToken: 'stuck-token' }),
+      });
+    const items = await meetGetAll('records/x/participants', 'tok', 'items');
+    expect(items).toEqual([{ id: 1 }, { id: 2 }]);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  test('skips transient duplicate pages to reach later new pages and stops after 6 consecutive duplicate pages', async () => {
+    let call = 0;
+    global.fetch.mockImplementation(async () => {
+      call++;
+      if (call === 1) return { ok: true, json: async () => ({ items: [{ name: 'rec/participants/p1' }], nextPageToken: 'tok-1' }) };
+      if (call === 2) return { ok: true, json: async () => ({ items: [{ name: 'rec/participants/p2' }], nextPageToken: 'tok-2' }) };
+      if (call === 3) return { ok: true, json: async () => ({ items: [{ name: 'rec/participants/p1' }], nextPageToken: 'tok-3' }) }; // transient duplicate shard
+      if (call === 4) return { ok: true, json: async () => ({ items: [{ name: 'rec/participants/p3' }], nextPageToken: 'tok-4' }) }; // new page after transient duplicate!
+      return { ok: true, json: async () => ({ items: [{ name: 'rec/participants/p1' }], nextPageToken: `tok-${call}` }) }; // infinite duplicate loop
+    });
+    const items = await meetGetAll('records/x/participants', 'tok', 'items');
+    expect(items).toEqual([
+      { name: 'rec/participants/p1' },
+      { name: 'rec/participants/p2' },
+      { name: 'rec/participants/p3' },
+    ]);
+    // 4 pages (up to p3) + 6 consecutive duplicate pages = 10 calls (well below MAX_PAGES=50)
+    expect(global.fetch).toHaveBeenCalledTimes(10);
+  });
 });
 
 describe('meetGet — request timeout (abort)', () => {

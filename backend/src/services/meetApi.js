@@ -66,10 +66,13 @@ async function meetGet(path, token, retries = 2) {
 // unbounded sequential fetches inside the request's 30s window. 50 pages ×
 // Meet's page size is far beyond any real meeting; hitting it is logged.
 const MAX_PAGES = 50;
+const MAX_CONSECUTIVE_DUPLICATE_PAGES = 6;
 async function meetGetAll(path, token, responseKey) {
   const items = [];
   let pageToken = null;
   let pages = 0;
+  let consecutiveDuplicatePages = 0;
+  const seenItemNames = new Set();
   do {
     const separator = path.includes('?') ? '&' : '?';
     // encodeURIComponent: Meet page tokens are base64url-ish and can contain
@@ -78,8 +81,36 @@ async function meetGetAll(path, token, responseKey) {
     // dropping or duplicating participants on multi-page (large) meetings.
     const url = pageToken ? `${path}${separator}pageToken=${encodeURIComponent(pageToken)}` : path;
     const data = await meetGet(url, token);
-    if (data[responseKey]) items.push(...data[responseKey]);
-    pageToken = data.nextPageToken || null;
+    const pageItems = Array.isArray(data[responseKey]) ? data[responseKey] : [];
+    if (pageItems.length > 0) {
+      let namedCount = 0;
+      let newNamedCount = 0;
+      for (const item of pageItems) {
+        if (item && typeof item.name === 'string' && item.name) {
+          namedCount++;
+          if (!seenItemNames.has(item.name)) {
+            seenItemNames.add(item.name);
+            newNamedCount++;
+          }
+        }
+      }
+      if (pages > 0 && namedCount === pageItems.length && newNamedCount === 0) {
+        consecutiveDuplicatePages++;
+        if (consecutiveDuplicatePages >= MAX_CONSECUTIVE_DUPLICATE_PAGES) {
+          require('../lib/logger').warn('meetGetAll detected duplicate page cycle, stopping pagination', { path, pages: pages + 1, items: items.length });
+          break;
+        }
+      } else {
+        consecutiveDuplicatePages = 0;
+        items.push(...pageItems);
+      }
+    }
+    const nextToken = data.nextPageToken || null;
+    if (nextToken && nextToken === pageToken) {
+      require('../lib/logger').warn('meetGetAll detected repeating pageToken, stopping pagination', { path, pages: pages + 1, items: items.length });
+      break;
+    }
+    pageToken = nextToken;
     if (++pages >= MAX_PAGES && pageToken) {
       require('../lib/logger').warn('meetGetAll hit page cap', { path, pages, items: items.length });
       break;
@@ -138,9 +169,15 @@ async function fetchConferenceParticipants(recordName, token, meetingEndTime = n
 
   // Group raw participant objects by email / identity (matching attendance.js logic)
   // so reconnects or multi-device joins don't produce duplicate rows or duplicate documents.
+  // Deduplicate by p.name first so repeated pagination pages never inflate group size.
   const seen = new Map();
+  const seenRecordNames = new Set();
   let anonSeq = 0;
   for (const p of raw) {
+    if (p?.name) {
+      if (seenRecordNames.has(p.name)) continue;
+      seenRecordNames.add(p.name);
+    }
     const idy = participantIdentity(p);
     const email = (idy.email || '').trim().toLowerCase();
     const rawName = (idy.displayName || '').trim().toLowerCase();

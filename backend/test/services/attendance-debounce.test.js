@@ -279,4 +279,78 @@ describe('persistAttendance — write debouncing', () => {
     expect(trackedEvents).toHaveLength(1);
     expect(trackedEvents[0].path).toBe('tenants/acme.edu/events/tracked_class_101_r1_teacher_acme_edu');
   });
+
+  test('rate-limited / degraded fallback poll does NOT trigger rosterChanged, does NOT wipe joinTime/durationMs in Firestore, and prevents 60s write oscillation', async () => {
+    const initialRoster = [
+      { participantId: 'p1', displayName: 'Alice', email: 'alice@acme.edu', present: true, sessions: 1, joinTime: '2026-10-22T18:00:00Z', leaveTime: null, durationMs: 300000, durationMin: 5 },
+      { participantId: 'p2', displayName: 'Bob', email: 'bob@acme.edu', present: false, sessions: 2, joinTime: '2026-10-22T18:01:00Z', leaveTime: '2026-10-22T18:20:00Z', durationMs: 1140000, durationMin: 19 },
+    ];
+    expect(await firestore.persistAttendance('sinafe.org', 'mpo-inst-yhk', 'conferenceRecords/r1', initialRoster, 'sinafe@sinafe.org')).toBe(true);
+
+    // Stamp sentinels onto p1 and p2
+    const p1Path = 'tenants/sinafe.org/meetings/mpo-inst-yhk__r1/participants/p1';
+    const p2Path = 'tenants/sinafe.org/meetings/mpo-inst-yhk__r1/participants/p2';
+    ctx.seed(p1Path, { ...ctx.read(p1Path), updatedAt: 'sentinel-p1' });
+    ctx.seed(p2Path, { ...ctx.read(p2Path), updatedAt: 'sentinel-p2' });
+
+    // Next 10s poll hits Meet API 429: p2 degrades to joinTime: null, leaveTime: null, present: true
+    const degradedP2 = { participantId: 'p2', displayName: 'Bob', email: 'bob@acme.edu', present: true, sessions: 1, joinTime: null, leaveTime: null };
+    Object.defineProperty(degradedP2, 'degradedSession', { value: true, enumerable: false });
+    const degradedPoll = [initialRoster[0], degradedP2];
+
+    expect(await firestore.persistAttendance('sinafe.org', 'mpo-inst-yhk', 'conferenceRecords/r1', degradedPoll, 'sinafe@sinafe.org')).toBe(false);
+    expect(ctx.read(p1Path).updatedAt).toBe('sentinel-p1');
+    expect(ctx.read(p2Path).updatedAt).toBe('sentinel-p2');
+    expect(ctx.read(p2Path).joinTime).not.toBeNull();
+    expect(ctx.read(p2Path).durationMin).toBe(19);
+    expect(ctx.read(p2Path).present).toBe(false);
+
+    // Subsequent poll when Meet API 60s quota refills and returns p2's real joinTime/leaveTime again:
+    // Because prevPState was NOT overwritten by the degraded poll, this poll is ALSO debounced (0 writes)!
+    expect(await firestore.persistAttendance('sinafe.org', 'mpo-inst-yhk', 'conferenceRecords/r1', initialRoster, 'sinafe@sinafe.org')).toBe(false);
+    expect(ctx.read(p2Path).updatedAt).toBe('sentinel-p2');
+  });
+
+  test('participant initially persisted as degraded placeholder upgrades once real session data arrives without oscillating on intermediate degraded polls', async () => {
+    const p1Real = { participantId: 'p1', displayName: 'Alice', email: 'alice@acme.edu', present: true, sessions: 1, joinTime: '2026-10-22T18:00:00Z', leaveTime: null, durationMs: 60000, durationMin: 1 };
+    const p2Degraded1 = { participantId: 'p2', displayName: 'Bob', email: 'bob@acme.edu', present: true, sessions: 1, joinTime: null, leaveTime: null };
+    Object.defineProperty(p2Degraded1, 'degradedSession', { value: true, enumerable: false });
+
+    // Pre-seed p2 in Firestore as if an earlier Cloud Run instance already persisted Bob's real joinTime/durationMs
+    const p2Path = 'tenants/sinafe.org/meetings/mpo-inst-yhk__r1/participants/p2';
+    ctx.seed(p2Path, {
+      participantId: 'p2',
+      displayName: 'Bob',
+      email: 'bob@acme.edu',
+      joinTime: new Date('2026-10-22T18:02:00Z'),
+      leaveTime: null,
+      durationMs: 480000,
+      durationMin: 8,
+      present: true,
+      sessions: 1,
+    });
+
+    // Cold-start first persist on this instance with p2 degraded: merges without wiping p2's existing joinTime/durationMs
+    expect(await firestore.persistAttendance('sinafe.org', 'mpo-inst-yhk', 'conferenceRecords/r1', [p1Real, p2Degraded1], 'sinafe@sinafe.org')).toBe(true);
+    expect(ctx.read(p2Path).joinTime.toDate()).toEqual(new Date('2026-10-22T18:02:00Z'));
+    expect(ctx.read(p2Path).durationMin).toBe(8);
+
+    // Another degraded poll where duplicate pagination inflated sessions on p2Degraded: still skipped!
+    const p2Degraded2 = { participantId: 'p2', displayName: 'Bob', email: 'bob@acme.edu', present: true, sessions: 11, joinTime: null, leaveTime: null };
+    Object.defineProperty(p2Degraded2, 'degradedSession', { value: true, enumerable: false });
+    expect(await firestore.persistAttendance('sinafe.org', 'mpo-inst-yhk', 'conferenceRecords/r1', [p1Real, p2Degraded2], 'sinafe@sinafe.org')).toBe(false);
+
+    // Next poll finally resolves p2's real session timing: immediately upgrades p2 in Firestore!
+    const p2Resolved = { participantId: 'p2', displayName: 'Bob', email: 'bob@acme.edu', present: true, sessions: 1, joinTime: '2026-10-22T18:02:00Z', leaveTime: null, durationMs: 600000, durationMin: 10 };
+    expect(await firestore.persistAttendance('sinafe.org', 'mpo-inst-yhk', 'conferenceRecords/r1', [p1Real, p2Resolved], 'sinafe@sinafe.org')).toBe(true);
+    expect(ctx.read(p2Path).durationMin).toBe(10);
+  });
+
+  test('truncated pagination subset with no new or changed participants does not trigger spurious rosterChanged writes', async () => {
+    expect(await firestore.persistAttendance('acme.edu', 'class-101', 'conferenceRecords/r1', baseParticipants, 'teacher@acme.edu')).toBe(true);
+    // Subset poll (only baseParticipants[0] returned due to page cap, identical state)
+    expect(await firestore.persistAttendance('acme.edu', 'class-101', 'conferenceRecords/r1', [baseParticipants[0]], 'teacher@acme.edu')).toBe(false);
+    // Full poll again (both returned, identical state)
+    expect(await firestore.persistAttendance('acme.edu', 'class-101', 'conferenceRecords/r1', baseParticipants, 'teacher@acme.edu')).toBe(false);
+  });
 });

@@ -641,5 +641,136 @@ describe('GET /api/attendance — final residual branches', () => {
     expect(p.joinTime).toBe('2026-06-01T10:00:00.000Z');
     expect(p.leaveTime).toBe('2026-06-01T10:20:00.000Z');
   });
-});
 
+  test('deduplicates repeated p.name records across pagination pages so group.length and session calls are not inflated', async () => {
+    firestore.getTenantConfig.mockResolvedValue(null);
+    mockMeetGet.mockResolvedValue({ conferenceRecords: [{ name: 'conferenceRecords/rec-dup-pages', startTime: null, endTime: null }] });
+    let sessionCalls = 0;
+    mockMeetGetAll.mockImplementation(async (pathArg) => {
+      if (pathArg.endsWith('/participants')) {
+        // Simulate Meet API pagination repeating the same participant record name 5 times
+        return Array.from({ length: 5 }, () => ({
+          name: 'conferenceRecords/rec-dup-pages/participants/same-id',
+          signedinUser: { displayName: 'Repeated Page User', email: 'repeat@acme.com' },
+        }));
+      }
+      sessionCalls++;
+      return [{ startTime: '2026-06-01T10:00:00.000Z', endTime: '2026-06-01T10:30:00.000Z' }];
+    });
+
+    const res = await request(app).get('/api/attendance?conferenceId=abc').set(auth());
+    expect(res.status).toBe(200);
+    expect(res.body.participants).toHaveLength(1);
+    expect(sessionCalls).toBe(1); // Only 1 session call for the unique p.name, not 5
+    expect(res.body.participants[0].sessions).toBe(1);
+  });
+
+  test('per-conference session cache reuses fresh sessions, prioritizes unfetched tail participants after 429, and preserves cached sessions on subsequent 429s', async () => {
+    const attendanceRoute = require('../../src/routes/attendance');
+    attendanceRoute.setSessionCacheEnabledForTest(true);
+    try {
+      firestore.getTenantConfig.mockResolvedValue(null);
+      mockMeetGet.mockResolvedValue({ conferenceRecords: [{ name: 'conferenceRecords/rec-cache-429', startTime: '2026-10-22T18:00:00Z', endTime: null }] });
+
+      // 15 participants: batch 0 (0..9) + batch 1 (10..14)
+      const rawList = Array.from({ length: 15 }, (_, i) => ({
+        name: `conferenceRecords/rec-cache-429/participants/p${i}`,
+        signedinUser: { displayName: `User ${i}`, email: `u${i}@acme.com` },
+        earliestStartTime: '2026-10-22T18:00:00Z',
+      }));
+
+      // Poll 1: batch 0 (p0..p9) succeeds, p9 throws 429 so batch 1 (p10..p14) is skipped early
+      const fetchedOnPoll1 = [];
+      mockMeetGetAll.mockImplementation(async (pathArg) => {
+        if (pathArg.endsWith('/participants')) return rawList;
+        fetchedOnPoll1.push(pathArg);
+        if (pathArg.includes('/p9/')) {
+          throw Object.assign(new Error('Meet API 429: RESOURCE_EXHAUSTED'), { status: 429 });
+        }
+        return [{ startTime: '2026-10-22T18:00:00Z', endTime: '2026-10-22T18:10:00Z' }];
+      });
+
+      const res1 = await request(app).get('/api/attendance?conferenceId=cache-test').set(auth());
+      expect(res1.status).toBe(200);
+      expect(res1.body.rateLimited).toBe(true);
+      expect(res1.body.participants[0].joinTime).toBe('2026-10-22T18:00:00.000Z');
+      expect(res1.body.participants[10].joinTime).toBeNull(); // unfetched on Poll 1
+
+      // Poll 2: quota recovered. p0..p8 are reused from cache (0 API calls), and unfetched p9..p14 are fetched!
+      const fetchedOnPoll2 = [];
+      mockMeetGetAll.mockImplementation(async (pathArg) => {
+        if (pathArg.endsWith('/participants')) return rawList;
+        fetchedOnPoll2.push(pathArg);
+        return [{ startTime: '2026-10-22T18:01:00Z', endTime: '2026-10-22T18:15:00Z' }];
+      });
+
+      const res2 = await request(app).get('/api/attendance?conferenceId=cache-test').set(auth());
+      expect(res2.status).toBe(200);
+      expect(res2.body.rateLimited).toBe(false);
+      // Only the 6 previously unfetched participants (p9..p14) were queried on Poll 2!
+      expect(fetchedOnPoll2).toHaveLength(6);
+      expect(res2.body.participants[0].joinTime).toBe('2026-10-22T18:00:00.000Z');
+      expect(res2.body.participants[14].joinTime).toBe('2026-10-22T18:01:00.000Z');
+    } finally {
+      attendanceRoute.setSessionCacheEnabledForTest(false);
+    }
+  });
+
+  test('skips Directory API enrichment when resolvedAdmin domain does not match userDomain', async () => {
+    const { google } = require('googleapis');
+    const getSpy = jest.fn().mockResolvedValue({ data: { primaryEmail: 'x@other.com' } });
+    google.admin.mockReturnValue({ users: { get: getSpy } });
+    const CONFIG = require('../../src/config');
+    const savedAdmin = CONFIG.adminEmail;
+    CONFIG.adminEmail = 'admin@theyachtgroup.com'; // different domain from user@acme.com
+    firestore.getTenantConfig.mockResolvedValue(null);
+    mockMeetGet.mockResolvedValue({ conferenceRecords: [{ name: 'conferenceRecords/rec-dir-mismatch' }] });
+    mockMeetGetAll.mockImplementation(async (p) => p.endsWith('/participants')
+      ? [{ name: 'conferenceRecords/rec-dir-mismatch/participants/123456789', signedinUser: { displayName: 'External Org User' } }]
+      : []);
+
+    try {
+      const res = await request(app).get('/api/attendance?conferenceId=abc').set(auth());
+      expect(res.status).toBe(200);
+      expect(getSpy).not.toHaveBeenCalled();
+    } finally {
+      CONFIG.adminEmail = savedAdmin;
+    }
+  });
+
+  test('retains known raw participant records across polls when Meet pagination omits a trailing page', async () => {
+    const attendanceRoute = require('../../src/routes/attendance');
+    attendanceRoute.setSessionCacheEnabledForTest(true);
+    try {
+      mockMeetGet.mockResolvedValue({
+        conferenceRecords: [{ name: 'conferenceRecords/rec-raw-retain' }],
+      });
+      const fullRaw = [
+        { name: 'conferenceRecords/rec-raw-retain/participants/p1', signedinUser: { displayName: 'Alice', email: 'alice@acme.com' } },
+        { name: 'conferenceRecords/rec-raw-retain/participants/p2', signedinUser: { displayName: 'Bob', email: 'bob@acme.com' } },
+        { name: 'conferenceRecords/rec-raw-retain/participants/p1-rejoin', signedinUser: { displayName: 'Alice', email: 'alice@acme.com' } },
+      ];
+      // Poll 1: all 3 records returned (2 distinct people, Alice has 2 sessions)
+      mockMeetGetAll.mockImplementation(async (pathArg) => {
+        if (pathArg.endsWith('/participants')) return fullRaw;
+        return [{ startTime: '2026-10-22T18:00:00Z', endTime: '2026-10-22T18:10:00Z' }];
+      });
+      const res1 = await request(app).get('/api/attendance?conferenceId=retain-test').set(auth());
+      expect(res1.status).toBe(200);
+      expect(res1.body.participants).toHaveLength(2);
+      expect(res1.body.participants.find(p => p.email === 'alice@acme.com').sessions).toBe(2);
+
+      // Poll 2: cyclic pagination omits p2 and p1-rejoin from rawParticipants
+      mockMeetGetAll.mockImplementation(async (pathArg) => {
+        if (pathArg.endsWith('/participants')) return [fullRaw[0]];
+        return [{ startTime: '2026-10-22T18:00:00Z', endTime: '2026-10-22T18:10:00Z' }];
+      });
+      const res2 = await request(app).get('/api/attendance?conferenceId=retain-test').set(auth());
+      expect(res2.status).toBe(200);
+      expect(res2.body.participants).toHaveLength(2);
+      expect(res2.body.participants.find(p => p.email === 'alice@acme.com').sessions).toBe(2);
+    } finally {
+      attendanceRoute.setSessionCacheEnabledForTest(false);
+    }
+  });
+});

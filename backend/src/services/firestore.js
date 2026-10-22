@@ -713,16 +713,33 @@ function computeParticipantSignatures(p) {
   return { docId, rosterSig, writeSig };
 }
 
-function computeRosterFingerprint(participants) {
+function isDegradedParticipantUpdate(p, prevPState) {
+  if (!prevPState) return false;
+  if (p?.degradedSession) return true;
+  if (prevPState.hasJoinTime && !p?.joinTime) return true;
+  return false;
+}
+
+function computeRosterFingerprint(participants, prevParticipantStates = null) {
   if (!Array.isArray(participants) || participants.length === 0) return '0:empty';
-  const sigs = participants.map(p => computeParticipantSignatures(p).rosterSig);
+  const sigs = participants.map(p => {
+    const raw = computeParticipantSignatures(p);
+    const prev = prevParticipantStates?.get(raw.docId);
+    if (isDegradedParticipantUpdate(p, prev)) return prev.rosterSig;
+    return raw.rosterSig;
+  });
   sigs.sort();
   return `${participants.length}:${sigs.join(';')}`;
 }
 
-function computeParticipantWriteFingerprint(participants) {
+function computeParticipantWriteFingerprint(participants, prevParticipantStates = null) {
   if (!Array.isArray(participants) || participants.length === 0) return '0:empty';
-  const sigs = participants.map(p => computeParticipantSignatures(p).writeSig);
+  const sigs = participants.map(p => {
+    const raw = computeParticipantSignatures(p);
+    const prev = prevParticipantStates?.get(raw.docId);
+    if (isDegradedParticipantUpdate(p, prev)) return prev.writeSig;
+    return raw.writeSig;
+  });
   sigs.sort();
   return `${participants.length}:${sigs.join(';')}`;
 }
@@ -747,9 +764,10 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
   const sessionKey = `${domain}:${conferenceId}:${recordName || ''}`;
   try {
     const nowMs = Date.now();
-    const currentFingerprint = computeRosterFingerprint(participants);
-    const currentWriteFingerprint = computeParticipantWriteFingerprint(participants);
     const cached = getDebounceEntry(sessionKey);
+    const prevStates = cached?.participantStates || null;
+    const currentFingerprint = computeRosterFingerprint(participants, prevStates);
+    const currentWriteFingerprint = computeParticipantWriteFingerprint(participants, prevStates);
     const instanceId = recordName ? lastSegment(recordName) : null;
     const buildTrackedDocId = (emailLower) => {
       const cleanEmail = emailLower.replace(/[^a-z0-9]/g, '_');
@@ -759,7 +777,22 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
     };
 
     const isFirstPersist = !cached;
-    const rosterChanged = cached ? cached.fingerprint !== currentFingerprint : false;
+    let rosterChanged = false;
+    if (cached) {
+      if (prevStates && prevStates.size > 0) {
+        for (const p of participants) {
+          const { docId, rosterSig } = computeParticipantSignatures(p);
+          const prevPState = prevStates.get(docId);
+          if (isDegradedParticipantUpdate(p, prevPState)) continue;
+          if (!prevPState || prevPState.rosterSig !== rosterSig) {
+            rosterChanged = true;
+            break;
+          }
+        }
+      } else {
+        rosterChanged = cached.fingerprint !== currentFingerprint;
+      }
+    }
     const isCheckpointDue = cached ? (nowMs - cached.lastPersistedAt >= ATTENDANCE_CHECKPOINT_INTERVAL_MS) : false;
     const forcePersist = Boolean(options?.force);
 
@@ -902,10 +935,14 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
       // - Initial persist or explicit force: write all participants
       // - 5-min checkpoint: write only participants whose writeSig (including durationMs/durationMin) changed
       // - Mid-checkpoint roster change: write only the delta participants whose rosterSig changed
+      // Never overwrite an already-persisted participant with a degraded/rate-limited fallback.
       const participantsToWrite = [];
       for (const p of participants) {
         const { docId, rosterSig, writeSig } = computeParticipantSignatures(p);
         const prevPState = entry.participantStates.get(docId);
+        if (!forcePersist && isDegradedParticipantUpdate(p, prevPState)) {
+          continue;
+        }
         let shouldWrite = false;
         if (isFirstPersist || forcePersist) {
           shouldWrite = true;
@@ -915,7 +952,7 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
           shouldWrite = !prevPState || prevPState.rosterSig !== rosterSig;
         }
         if (shouldWrite) {
-          participantsToWrite.push({ p, docId, rosterSig, writeSig });
+          participantsToWrite.push({ p, docId, rosterSig, writeSig, prevPState });
         }
       }
 
@@ -927,28 +964,36 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
           const batch = getDb().batch();
           for (const { p, docId } of participantsToWrite.slice(i, i + CHUNK)) {
             const pRef = meetingRef.collection('participants').doc(docId);
-            batch.set(pRef, {
+            const isDegraded = Boolean(p.degradedSession);
+            const pDoc = {
               participantId: p.participantId,
               displayName: p.displayName,
               // Normalize to lowercase so account-deletion (which queries
               // email == emailLower) reliably matches, and so per-person rollups
               // key consistently. Reads already lowercase before comparing.
               email: p.email ? p.email.toLowerCase() : null,
-              joinTime: p.joinTime ? new Date(p.joinTime) : null,
-              leaveTime: p.leaveTime ? new Date(p.leaveTime) : null,
-              durationMs: typeof p.durationMs === 'number' ? p.durationMs : 0,
-              durationMin: typeof p.durationMin === 'number' ? p.durationMin : Math.round((p.durationMs || 0) / 60000),
+              ...(isDegraded && !p.joinTime ? {} : { joinTime: p.joinTime ? new Date(p.joinTime) : null }),
+              ...(isDegraded && !p.leaveTime ? {} : { leaveTime: p.leaveTime ? new Date(p.leaveTime) : null }),
+              ...(isDegraded && typeof p.durationMs !== 'number' ? {} : {
+                durationMs: typeof p.durationMs === 'number' ? p.durationMs : 0,
+                durationMin: typeof p.durationMin === 'number' ? p.durationMin : Math.round((p.durationMs || 0) / 60000),
+              }),
               present: p.present,
               sessions: p.sessions,
               lastSeenAt: now,
               updatedAt: now,
-              createdAt: now,
-            }, { merge: true });
+              ...(isDegraded ? {} : { createdAt: now }),
+            };
+            batch.set(pRef, pDoc, { merge: true });
           }
           await batch.commit();
         }
-        for (const { docId, rosterSig, writeSig } of participantsToWrite) {
-          entry.participantStates.set(docId, { rosterSig, writeSig });
+        for (const { p, docId, rosterSig, writeSig, prevPState } of participantsToWrite) {
+          entry.participantStates.set(docId, {
+            rosterSig,
+            writeSig,
+            hasJoinTime: Boolean(p.joinTime || prevPState?.hasJoinTime),
+          });
         }
         entry.participantWriteFingerprint = currentWriteFingerprint;
       }
@@ -1000,7 +1045,7 @@ async function persistAttendance(domain, conferenceId, recordName, participants,
     entry.inFlightPromise = writePromise;
     await writePromise;
 
-    entry.fingerprint = currentFingerprint;
+    entry.fingerprint = computeRosterFingerprint(participants, entry.participantStates);
     if (isFirstPersist || isCheckpointDue || forcePersist) {
       entry.lastPersistedAt = Date.now();
     }

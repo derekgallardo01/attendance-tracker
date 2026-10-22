@@ -46,10 +46,110 @@ function extractUserId(participantPath) {
 // Cache Directory API authorization failures (unauthorized_client, missing delegation)
 // with a 15-minute cooldown to avoid hammering failed token requests on every 10-30s poll.
 const DIR_AUTH_COOLDOWN_MS = 15 * 60 * 1000;
+const DIR_USER_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 const dirAuthFailures = new Map();
+const dirUserEmailCache = new Map();
+
+// Per-conference participant session cache to prevent hammering Google Meet's
+// 600 req/min participantSessions quota on 10s polls of large (100-500 person)
+// meetings and to ensure rate-limited polls never lose previously fetched sessions
+// or starve unfetched tail participants.
+const conferenceSessionCache = new Map();
+const SESSION_CACHE_FRESH_MS = 90 * 1000; // 90 seconds
+const SESSION_CACHE_TTL_MS = 3 * 60 * 60 * 1000; // 3 hours
+const MAX_SESSION_REFRESH_PER_POLL = 80;
+let sessionCacheEnabledForTest = false;
+
+function isSessionCacheActive() {
+  return process.env.NODE_ENV !== 'test' || sessionCacheEnabledForTest;
+}
+
+function clearAttendanceSessionCache() {
+  conferenceSessionCache.clear();
+  dirUserEmailCache.clear();
+  dirAuthFailures.clear();
+}
+
+function setSessionCacheEnabledForTest(enabled) {
+  sessionCacheEnabledForTest = Boolean(enabled);
+  if (!enabled) clearAttendanceSessionCache();
+}
+
+function getConferenceSessionCacheEntry(recordName, conferenceEndTime) {
+  if (!recordName || !isSessionCacheActive()) return null;
+  const now = Date.now();
+  if (conferenceSessionCache.size > 200) {
+    for (const [k, v] of conferenceSessionCache.entries()) {
+      if (now - v.lastSeenAt > SESSION_CACHE_TTL_MS) {
+        conferenceSessionCache.delete(k);
+      }
+    }
+  }
+  let entry = conferenceSessionCache.get(recordName);
+  if (!entry) {
+    entry = {
+      lastSeenAt: now,
+      conferenceEndTime: conferenceEndTime || null,
+      participants: new Map(),
+      rawRecords: new Map(),
+    };
+    conferenceSessionCache.set(recordName, entry);
+  } else {
+    entry.lastSeenAt = now;
+    if ((conferenceEndTime || null) !== entry.conferenceEndTime) {
+      entry.conferenceEndTime = conferenceEndTime || null;
+      // Expire cached timestamps when the meeting transitions to ended so final
+      // session endTimes are refreshed in rolling waves without losing cached fallback data.
+      for (const pEntry of entry.participants.values()) {
+        pEntry.fetchedAt = 0;
+      }
+    }
+  }
+  return entry;
+}
+
+function selectPrimaryParticipant(group) {
+  return group.find(p => p.signedinUser?.email && p.signedinUser?.displayName)
+    || group.find(p => p.signedinUser?.email)
+    || group.find(p => p.signedinUser?.displayName || p.anonymousUser?.displayName || p.phoneUser?.displayName)
+    || group[0];
+}
+
+function computeGroupSignature(group) {
+  return group.map(p => `${p.name || ''}:${p.earliestStartTime || ''}:${p.latestEndTime || ''}`).sort().join('|');
+}
+
+function buildParticipantFromSessions(primary, group, sessions, effectiveEndMs, hadFetchError = false) {
+  const joinTimes  = sessions.map(s => s.startTime).filter(Boolean).map(t => new Date(t));
+  const leaveTimes = sessions.map(s => s.endTime).filter(Boolean).map(t => new Date(t));
+  return {
+    participantId: primary.name,
+    ...participantIdentity(primary),
+    joinTime:      joinTimes.length  > 0 ? new Date(Math.min(...joinTimes)).toISOString()  : null,
+    leaveTime:     leaveTimes.length > 0 ? new Date(Math.max(...leaveTimes)).toISOString() : null,
+    // Actual in-meeting time (sum of sessions) — the join/leave span
+    // above over-credits anyone who left and came back.
+    durationMs:    sessionsDurationMs(sessions, effectiveEndMs),
+    present:       sessions.some(s => !s.endTime) || hadFetchError,
+    sessions:      sessions.length || group.length,
+  };
+}
+
+function buildDegradedParticipant(primary, group) {
+  const p = {
+    participantId: primary.name,
+    ...participantIdentity(primary),
+    joinTime: null,
+    leaveTime: null,
+    present: true,
+    sessions: group.length || 1,
+  };
+  Object.defineProperty(p, 'degradedSession', { value: true, enumerable: false });
+  return p;
+}
 
 // Look up emails from Google Workspace Directory for participants missing emails
-async function enrichEmails(participants, adminEmail) {
+async function enrichEmails(participants, adminEmail, userDomain) {
   const needsLookup = participants.filter(p => !p.email && extractUserId(p.participantId));
   log.info('enrichEmails called', { total: participants.length, needsLookup: needsLookup.length });
   if (needsLookup.length === 0) return;
@@ -58,10 +158,32 @@ async function enrichEmails(participants, adminEmail) {
     log.info('no admin email configured, skipping directory enrichment');
     return;
   }
+  const adminDomain = domainOf(resolvedAdmin);
+  if (userDomain && adminDomain && userDomain.toLowerCase() !== adminDomain.toLowerCase()) {
+    log.info('skipping directory enrichment — domain mismatch', { userDomain, adminDomain });
+    return;
+  }
   const lastFailure = dirAuthFailures.get(resolvedAdmin);
   if (lastFailure && (Date.now() - lastFailure) < DIR_AUTH_COOLDOWN_MS) {
     return;
   }
+
+  const cacheActive = isSessionCacheActive();
+  const now = Date.now();
+  const toQuery = [];
+  for (const p of needsLookup) {
+    const userId = extractUserId(p.participantId);
+    const cacheKey = `${resolvedAdmin}:${userId}`;
+    if (cacheActive && dirUserEmailCache.has(cacheKey)) {
+      const cached = dirUserEmailCache.get(cacheKey);
+      if (now - cached.cachedAt < DIR_USER_CACHE_TTL_MS) {
+        if (cached.email) p.email = cached.email;
+        continue;
+      }
+    }
+    toQuery.push(p);
+  }
+  if (toQuery.length === 0) return;
 
   try {
     // Use admin email for Directory API (requires Workspace admin privileges)
@@ -75,8 +197,9 @@ async function enrichEmails(participants, adminEmail) {
     await dirAuth.authorize();
     const directory = google.admin({ version: 'directory_v1', auth: dirAuth });
 
-    await Promise.all(needsLookup.map(async (p) => {
+    await Promise.all(toQuery.map(async (p) => {
       const userId = extractUserId(p.participantId);
+      const cacheKey = `${resolvedAdmin}:${userId}`;
       log.info('directory lookup', { userId, displayName: p.displayName });
       try {
         // Try direct user ID lookup first
@@ -85,14 +208,20 @@ async function enrichEmails(participants, adminEmail) {
         if (resp.data.primaryEmail) {
           p.email = resp.data.primaryEmail;
         }
+        if (cacheActive) {
+          dirUserEmailCache.set(cacheKey, { email: resp.data.primaryEmail || '', cachedAt: Date.now() });
+        }
       } catch (e) {
         // User not in this Workspace directory (external/personal account) — skip name search
         // to avoid false matches (e.g., "Derek" matching the wrong Workspace user)
+        if (cacheActive) {
+          dirUserEmailCache.set(cacheKey, { email: '', cachedAt: Date.now() });
+        }
         log.info('directory id lookup miss — external user', { userId, displayName: p.displayName, error: e.message });
       }
     }));
 
-    log.info('directory email enrichment', { looked: needsLookup.length, found: needsLookup.filter(p => p.email).length });
+    log.info('directory email enrichment', { looked: toQuery.length, found: needsLookup.filter(p => p.email).length });
   } catch (err) {
     if (err.message && (err.message.includes('unauthorized_client') || err.message.includes('not authorized') || err.message.includes('no directory scope'))) {
       dirAuthFailures.set(resolvedAdmin, Date.now());
@@ -236,6 +365,31 @@ router.get('/attendance', async (req, res) => {
     const totalParticipants = rawParticipants.length;
     log.info('participants found', { count: totalParticipants });
 
+    const confCache = getConferenceSessionCacheEntry(conferenceRecord.name, conferenceEndTime);
+    let effectiveRawParticipants = rawParticipants;
+    if (confCache) {
+      const currentPollNames = new Set();
+      for (const p of rawParticipants) {
+        if (p?.name) {
+          currentPollNames.add(p.name);
+          if (confCache.rawRecords.has(p.name) || confCache.rawRecords.size < MAX_PARTICIPANTS * 4) {
+            confCache.rawRecords.set(p.name, p);
+          }
+        }
+      }
+      if (confCache.rawRecords.size > currentPollNames.size) {
+        const missingFromPoll = [];
+        for (const [recName, cachedP] of confCache.rawRecords.entries()) {
+          if (!currentPollNames.has(recName)) {
+            missingFromPoll.push(cachedP);
+          }
+        }
+        if (missingFromPoll.length > 0) {
+          effectiveRawParticipants = [...rawParticipants, ...missingFromPoll];
+        }
+      }
+    }
+
     // A6: dedupe to DISTINCT people before capping. A churny meeting (people
     // dropping and rejoining) returns many participant records per person — one
     // 257-person webinar came back as 5,000 records, which OOM-killed the
@@ -244,9 +398,17 @@ router.get('/attendance', async (req, res) => {
     // (_core.js) so the cap keeps real people, not reconnection noise. Anonymous
     // participants (no email AND no name) can't be safely merged — each stays
     // its own entry so a room full of anon guests isn't collapsed into one.
+    // Also deduplicate by p.name first so cyclic/repeated pagination pages in
+    // large live meetings never push duplicate copies of the same participant
+    // record into a person's group.
     const seen = new Map();
+    const seenRecordNames = new Set();
     let anonSeq = 0;
-    for (const p of rawParticipants) {
+    for (const p of effectiveRawParticipants) {
+      if (p?.name) {
+        if (seenRecordNames.has(p.name)) continue;
+        seenRecordNames.add(p.name);
+      }
       const idy = participantIdentity(p);
       const email = (idy.email || '').trim().toLowerCase();
       const rawName = (idy.displayName || '').trim().toLowerCase();
@@ -273,36 +435,89 @@ router.get('/attendance', async (req, res) => {
       log.warn('attendance: distinct participant list capped', { conferenceId, raw: totalParticipants, distinct: distinctCount, cap: MAX_PARTICIPANTS });
     }
 
+    const effectiveEndMs = conferenceEndTime && Number.isFinite(new Date(conferenceEndTime).getTime())
+      ? new Date(conferenceEndTime).getTime()
+      : Date.now();
+    const results = new Array(toProcess.length);
+    const neverFetchedIndices = [];
+    const urgentIndices = [];
+    const expiredCandidates = [];
+
+    for (let idx = 0; idx < toProcess.length; idx++) {
+      const group = toProcess[idx];
+      if (!confCache) {
+        neverFetchedIndices.push(idx);
+        continue;
+      }
+      const primary = selectPrimaryParticipant(group);
+      const cacheKey = primary.name || `idx_${idx}`;
+      const groupSig = computeGroupSignature(group);
+      const cached = confCache.participants.get(cacheKey);
+      if (!cached) {
+        neverFetchedIndices.push(idx);
+      } else if (cached.groupSig !== groupSig) {
+        urgentIndices.push(idx);
+      } else if (Date.now() - cached.fetchedAt < SESSION_CACHE_FRESH_MS) {
+        results[idx] = buildParticipantFromSessions(primary, group, cached.sessions, effectiveEndMs, false);
+      } else {
+        expiredCandidates.push({ idx, fetchedAt: cached.fetchedAt });
+      }
+    }
+
+    let indicesToFetch;
+    if (confCache) {
+      expiredCandidates.sort((a, b) => a.fetchedAt - b.fetchedAt);
+      const refreshBudget = Math.max(0, MAX_SESSION_REFRESH_PER_POLL - neverFetchedIndices.length - urgentIndices.length);
+      const toRefresh = expiredCandidates.slice(0, refreshBudget).map(c => c.idx);
+      for (const { idx } of expiredCandidates.slice(refreshBudget)) {
+        const group = toProcess[idx];
+        const primary = selectPrimaryParticipant(group);
+        const cacheKey = primary.name || `idx_${idx}`;
+        const cached = confCache.participants.get(cacheKey);
+        results[idx] = buildParticipantFromSessions(primary, group, cached.sessions, effectiveEndMs, false);
+      }
+      indicesToFetch = [...neverFetchedIndices, ...urgentIndices, ...toRefresh];
+    } else {
+      indicesToFetch = neverFetchedIndices;
+    }
+
+    const resolveFallbackOrCached = (idx) => {
+      const group = toProcess[idx];
+      const primary = selectPrimaryParticipant(group);
+      const cacheKey = primary.name || `idx_${idx}`;
+      const cached = confCache?.participants.get(cacheKey);
+      if (cached && Array.isArray(cached.sessions) && cached.sessions.length > 0) {
+        return buildParticipantFromSessions(primary, group, cached.sessions, effectiveEndMs, false);
+      }
+      return buildDegradedParticipant(primary, group);
+    };
+
     // Fetch participant sessions in batches of 10 to avoid rate limits.
     const BATCH_SIZE = 10;
-    const participants = [];
     let rateLimited = false;
     let degraded = false;
-    for (let i = 0; i < toProcess.length; i += BATCH_SIZE) {
+    let fetchedCount = 0;
+    for (let i = 0; i < indicesToFetch.length; i += BATCH_SIZE) {
       if (Date.now() - requestStartedAt > REQUEST_DEADLINE_MS) {
         degraded = true;
         log.warn('attendance: processing deadline exceeded, returning degraded sessions', {
           conferenceId,
-          processed: participants.length,
+          processed: toProcess.length - (indicesToFetch.length - fetchedCount),
           total: toProcess.length,
           elapsedMs: Date.now() - requestStartedAt,
         });
-        for (const group of toProcess.slice(participants.length)) {
-          const primary = group.find(p => p.signedinUser?.email && p.signedinUser?.displayName)
-            || group.find(p => p.signedinUser?.email)
-            || group.find(p => p.signedinUser?.displayName || p.anonymousUser?.displayName || p.phoneUser?.displayName)
-            || group[0];
-          participants.push({ participantId: primary.name, ...participantIdentity(primary), joinTime: null, leaveTime: null, present: true, sessions: group.length || 1 });
+        for (const remIdx of indicesToFetch.slice(i)) {
+          results[remIdx] = resolveFallbackOrCached(remIdx);
         }
         break;
       }
-      const batch = toProcess.slice(i, i + BATCH_SIZE);
+      const batchIndices = indicesToFetch.slice(i, i + BATCH_SIZE);
       const batchResults = await Promise.all(
-        batch.map(async (group) => {
-          const primary = group.find(p => p.signedinUser?.email && p.signedinUser?.displayName)
-            || group.find(p => p.signedinUser?.email)
-            || group.find(p => p.signedinUser?.displayName || p.anonymousUser?.displayName || p.phoneUser?.displayName)
-            || group[0];
+        batchIndices.map(async (idx) => {
+          const group = toProcess[idx];
+          const primary = selectPrimaryParticipant(group);
+          const cacheKey = primary.name || `idx_${idx}`;
+          const groupSig = confCache ? computeGroupSignature(group) : '';
           let hadFetchError = false;
           try {
             const sessionArrays = await Promise.all(
@@ -322,57 +537,49 @@ router.get('/attendance', async (req, res) => {
             );
             const sessions = sessionArrays.flat();
             if (sessions.length === 0 && hadFetchError) {
-              return {
-                participantId: primary.name,
-                ...participantIdentity(primary),
-                joinTime: null, leaveTime: null, present: true, sessions: group.length || 1,
-              };
+              return { idx, participant: resolveFallbackOrCached(idx) };
             }
-            const joinTimes  = sessions.map(s => s.startTime).filter(Boolean).map(t => new Date(t));
-            const leaveTimes = sessions.map(s => s.endTime).filter(Boolean).map(t => new Date(t));
+            if (confCache && !hadFetchError) {
+              confCache.participants.set(cacheKey, {
+                sessions,
+                groupSig,
+                fetchedAt: Date.now(),
+              });
+            }
             return {
-              participantId: primary.name,
-              ...participantIdentity(primary),
-              joinTime:      joinTimes.length  > 0 ? new Date(Math.min(...joinTimes)).toISOString()  : null,
-              leaveTime:     leaveTimes.length > 0 ? new Date(Math.max(...leaveTimes)).toISOString() : null,
-              // Actual in-meeting time (sum of sessions) — the join/leave span
-              // above over-credits anyone who left and came back.
-              durationMs:    sessionsDurationMs(sessions, conferenceEndTime && Number.isFinite(new Date(conferenceEndTime).getTime()) ? new Date(conferenceEndTime).getTime() : Date.now()),
-              present:       sessions.some(s => !s.endTime) || hadFetchError,
-              sessions:      sessions.length || group.length,
+              idx,
+              participant: buildParticipantFromSessions(primary, group, sessions, effectiveEndMs, hadFetchError),
             };
           } catch (err) {
             if (isAuthError(err)) throw err;
             if (isRateLimited(err)) rateLimited = true;
             log.warn('failed to fetch sessions for participant', { name: primary.name, error: err.message });
-            return {
-              participantId: primary.name,
-              ...participantIdentity(primary),
-              joinTime: null, leaveTime: null, present: true, sessions: group.length || 1,
-            };
+            return { idx, participant: resolveFallbackOrCached(idx) };
           }
         })
       );
-      participants.push(...batchResults);
+      for (const { idx, participant } of batchResults) {
+        results[idx] = participant;
+      }
+      fetchedCount += batchIndices.length;
       // A9: once the quota is hit, stop firing more session calls — hammering it
       // only deepens the rate-limit. Return what we have with a rateLimited flag
-      // (the remaining participants still show, just without precise timings).
+      // (the remaining participants still show, using cached sessions when available).
       if (rateLimited) {
-        log.warn('attendance: stopping session fetch early — rate limited', { conferenceId, done: participants.length, total: toProcess.length });
-        for (const group of toProcess.slice(participants.length)) {
-          const primary = group.find(p => p.signedinUser?.email && p.signedinUser?.displayName)
-            || group.find(p => p.signedinUser?.email)
-            || group.find(p => p.signedinUser?.displayName || p.anonymousUser?.displayName || p.phoneUser?.displayName)
-            || group[0];
-          participants.push({ participantId: primary.name, ...participantIdentity(primary), joinTime: null, leaveTime: null, present: true, sessions: group.length || 1 });
+        const doneCount = toProcess.length - (indicesToFetch.length - fetchedCount);
+        log.warn('attendance: stopping session fetch early — rate limited', { conferenceId, done: doneCount, total: toProcess.length });
+        for (const remIdx of indicesToFetch.slice(i + BATCH_SIZE)) {
+          results[remIdx] = resolveFallbackOrCached(remIdx);
         }
         break;
       }
     }
 
+    const participants = results;
+
     // Enrich missing emails via Workspace Directory API (bounded by the cap above)
     if (!degraded && (Date.now() - requestStartedAt < REQUEST_DEADLINE_MS)) {
-      await enrichEmails(participants, tenantConfig?.adminEmail);
+      await enrichEmails(participants, tenantConfig?.adminEmail, userDomain);
     }
 
     res.json({
@@ -425,5 +632,8 @@ router.get('/attendance', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch attendance data.' });
   }
 });
+
+router.clearAttendanceSessionCache = clearAttendanceSessionCache;
+router.setSessionCacheEnabledForTest = setSessionCacheEnabledForTest;
 
 module.exports = router;
