@@ -566,13 +566,15 @@ describe('detectLocale', () => {
 describe('applyTranslations DOM helper', () => {
   afterEach(() => strings.setLocale('en'));
 
-  test('updates data-i18n, placeholder, title, and aria-label attributes in DOM', () => {
+  test('updates data-i18n, placeholder, title, aria-label, and alt attributes in DOM', () => {
     document.body.innerHTML = `
       <div id="test-container">
         <button id="start-btn" data-i18n="btn.start">Start</button>
         <input id="search-input" data-i18n-placeholder="btn.filter" placeholder="Filter" />
         <span id="help-icon" data-i18n-title="nav.settings" title="Settings">?</span>
         <button id="settings-btn" data-i18n-aria="nav.settings" aria-label="Settings"></button>
+        <img id="demo-img" data-i18n-alt="lp2_video_alt" alt="Demo" />
+        <img id="empty-alt-img" data-i18n-alt="" alt="Unchanged" />
         <span id="html-elem" data-i18n="pricing.matrixTeamOursSub">Unlimited</span>
       </div>
     `;
@@ -584,6 +586,8 @@ describe('applyTranslations DOM helper', () => {
     expect(document.getElementById('search-input').getAttribute('placeholder')).toBe('Filtrar');
     expect(document.getElementById('help-icon').getAttribute('title')).toBe('Configuración');
     expect(document.getElementById('settings-btn').getAttribute('aria-label')).toBe('Configuración');
+    expect(document.getElementById('demo-img').getAttribute('alt')).toBe(strings.t('lp2_video_alt'));
+    expect(document.getElementById('empty-alt-img').getAttribute('alt')).toBe('Unchanged');
     expect(document.getElementById('html-elem').innerHTML).toContain('<strong>');
   });
 });
@@ -704,7 +708,6 @@ describe('no "wired but English-valued" keys (translation-content guard)', () =>
     key === 'badge.pro' ||                   // "Pro" — tier brand label
     key === 'settings.extraEmailsPlaceholder' || // example emails — locale-invariant sample text
     key === 'lp2_cmp_th_us' ||               // "Attendance Tracker" brand name in comparison table header
-    key === 'lp2_roster_class' ||            // "Biology 101 · 14:32" sample meeting title in hero mockup
     key === 'lp2_roster_p1_detail' ||        // "Joined 10:00 · 42m" sample join time in hero mockup
     key === 'lp2_roster_p2_detail' ||        // "Joined 10:01 · 41m" sample join time in hero mockup
     key === 'lp2_roster_p3_detail' ||        // "Joined 10:12 · 30m" sample join time in hero mockup
@@ -712,9 +715,7 @@ describe('no "wired but English-valued" keys (translation-content guard)', () =>
     key === 'lp2_roster_p4_detail' ||        // "Invited · not joined" sample status in hero mockup
     key === 'lp2_plan_free_price' ||         // "$0" price amount
     key === 'lp2_plan_life_price' ||         // "$9.99" price amount
-    key === 'lp2_plan_life_name' ||          // "Lifetime" plan tier brand name
     key === 'lp2_plan_edu_price' ||          // "$4.99" price amount
-    key === 'lp2_plan_edu_name' ||           // "Educator" plan tier brand name
     key === 'lp2_plan_school_price' ||       // "From $59" price amount
     key === 'lp2_nav_faq' ||                 // "FAQ" international acronym
     key === 'lp2_sheet_th_min' ||            // "Min" table column abbreviation for duration in minutes
@@ -780,5 +781,68 @@ describe('no English-identical value in ANY locale unless reviewed (strict guard
     expect(stale).toEqual([]);
   });
 });
+
+describe('60-locale number accuracy, placeholder parity, script purity, and HTML metadata', () => {
+  const fs = require('fs');
+  const rootDir = path.join(__dirname, '..', '..', '..');
+  const locales = strings.getAvailableLocales().map(l => l.code);
+
+  test('all 60 locales reflect accurate numbers (60 languages, 27 ratings, 14 reviews, 2 free exports, 25 attendees, $9.99) and placeholders', () => {
+    const hasTwo = (s) => /(?:\b2\b|२|২|૨|୨|௨|౨|೨|൨|២|໒|၂|ሁለት|दो|দুই|બે|दो|రెండు|ಎರಡು|രണ്ട്|ពីរ|ສອງ|နှစ်|दो|දෙක|ពីរ|два|две|dva|dvě|dve|du|divi|kaksi|két|two|deux|dos|dois|due|zwei|twee|to|två|dwa|iki|două|δύο|שתי|اثنين|دو)/.test(s);
+    const has60 = (s) => /60|६०|৬০|૬૦|୬૦|௬௦|౬౦|೬೦|六十|၆၀/.test(s);
+    for (const loc of locales) {
+      const dict = strings.STRINGS[loc];
+      expect(has60(dict['lp2_proof_4_title'])).toBe(true);
+      expect(dict['lp2_reviews_badge']).toMatch(/27|२७|২৭/);
+      expect(dict['lp2_reviews_badge']).toMatch(/14|१४|১৪/);
+      expect(hasTwo(dict['lp2_plan_free_body'])).toBe(true);
+      expect(dict['lp2_plan_free_body']).toMatch(/25|२५|২৫|૨૫|౨౫|೨೫|២៥|໒໕|၂၅/);
+      expect(hasTwo(dict['pricing.fineprintBody'])).toBe(true);
+      expect(dict['pricing.fineprintBody']).toMatch(/25|२५|২৫|૨૫|౨౫|೨೫|២៥|໒໕|၂၅/);
+      expect(dict['pricing.cmp6Body']).toMatch(/9[.,]99|९\.९९|৯\.৯৯/);
+      expect(dict['referral.bodyDomain']).toContain('{domain}');
+    }
+  });
+
+  test('Portuguese and Gujarati strings have no cross-language/script contamination', () => {
+    expect(strings.STRINGS.pt['history.participantNotes']).toBe('Notas do anfitrião');
+    expect(strings.STRINGS.gu['pricing.matrixBrowsersOther']).not.toMatch(/[\u0C80-\u0CFF]/);
+    expect(strings.STRINGS.gu['pricing.matrixBrowsersExt']).not.toMatch(/[\u0C80-\u0CFF]/);
+  });
+
+  test('HTML pages with JSON-LD inLanguage and Google Translate includedLanguages list all 60 locales', () => {
+    const jsonLdPages = [
+      'index.html',
+      'pricing.html',
+      'privacy.html',
+      'refunds.html',
+      'student-data-privacy.html',
+      'support.html',
+      'terms.html',
+    ];
+    for (const page of jsonLdPages) {
+      const html = fs.readFileSync(path.join(rootDir, page), 'utf8');
+      for (const loc of locales) {
+        if (loc === 'zh') {
+          expect(html).toMatch(/"zh(?:-Hant|-TW)?"/);
+        } else if (loc === 'zh-CN') {
+          expect(html).toMatch(/"zh-(?:CN|Hans)"/);
+        } else {
+          expect(html).toContain(`"${loc}"`);
+        }
+      }
+    }
+
+    const gtPages = ['privacy.html', 'refunds.html', 'student-data-privacy.html', 'terms.html'];
+    for (const page of gtPages) {
+      const html = fs.readFileSync(path.join(rootDir, page), 'utf8');
+      const m = html.match(/includedLanguages:\s*'([^']+)'/);
+      expect(m).not.toBeNull();
+      const codes = m[1].split(',');
+      expect(codes.length).toBe(60);
+    }
+  });
+});
+
 
 

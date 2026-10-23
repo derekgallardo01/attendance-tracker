@@ -1768,7 +1768,7 @@ export const EXTRA_26_MAPS = {
     browsers: "સમર્થિત બ્રાઉઝર્સ અને ઉપકરણો",
     browsersOurs: "દરેક બ્રાઉઝર + મોબાઇલ",
     browsersOursSub: "Chrome, Edge, Safari, Firefox, Mac, Windows, iPads, સંચાલિત Chromebooks",
-    browsersOther: "ડેસ્કટોપ Chrome ಮಾತ್ರ",
+    browsersOther: "ડેસ્કટોપ Chrome માત્ર",
     browsersOtherSub: "Safari, Firefox અથવા iPad સપોર્ટ નથી",
     browsersNat: "કોઈપણ બ્રાઉઝર",
     browsersNatSub: "(માત્ર ઉચ્ચ સ્તરના Workspace પ્લાન)",

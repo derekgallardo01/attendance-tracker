@@ -239,6 +239,72 @@ const TRANSLATIONS = {
     appShortName: "Attendance Tracker",
     appDesc: "Pelancar untuk Attendance Tracker di Google Meet. Kehadiran masa nyata dan eksport satu klik ke Google Sheets.",
     actionTitle: "Attendance Tracker untuk Google Meet"
+  },
+  ta: {
+    appName: "Google Meet-க்கான Attendance Tracker — லாஞ்சர்",
+    appShortName: "Attendance Tracker",
+    appDesc: "Google Meet-ல் Attendance Tracker-க்கான துணை லாஞ்சர். நிகழ்நேர வருகைப்பதிவு மற்றும் ஒரே கிளிக்கில் Google Sheets ஏற்றுமதி.",
+    actionTitle: "Google Meet-க்கான Attendance Tracker"
+  },
+  te: {
+    appName: "Google Meet కోసం Attendance Tracker — లాంచర్",
+    appShortName: "Attendance Tracker",
+    appDesc: "Google Meetలో Attendance Tracker కోసం సహాయక లాంచర్. రియల్-టైమ్ హాజరు మరియు ఒక్క క్లిక్‌తో Google Sheets ఎగుమతి.",
+    actionTitle: "Google Meet కోసం Attendance Tracker"
+  },
+  bn: {
+    appName: "Google Meet-এর জন্য Attendance Tracker — লঞ্চার",
+    appShortName: "Attendance Tracker",
+    appDesc: "Google Meet-এ Attendance Tracker-এর জন্য কম্প্যানিয়ন লঞ্চার। রিয়েল-টাইম রোল কল এবং এক-ক্লিকে Google Sheets এক্সপোর্ট।",
+    actionTitle: "Google Meet-এর জন্য Attendance Tracker"
+  },
+  ml: {
+    appName: "Google Meet-നുള്ള Attendance Tracker — ലോഞ്ചർ",
+    appShortName: "Attendance Tracker",
+    appDesc: "Google Meet-ലെ Attendance Tracker-നുള്ള സഹായി ലോഞ്ചർ. തത്സമയ ഹാജർ രേഖപ്പെടുത്തലും ഒറ്റ ക്ലിക്കിൽ Google Sheets എക്സ്പോർട്ടും.",
+    actionTitle: "Google Meet-നുള്ള Attendance Tracker"
+  },
+  mr: {
+    appName: "Google Meet साठी Attendance Tracker — लाँचर",
+    appShortName: "Attendance Tracker",
+    appDesc: "Google Meet मधील Attendance Tracker साठी साथी लाँचर. रिअल-टाइम हजेरी आणि एका क्लिकवर Google Sheets मध्ये एक्सपोर्ट.",
+    actionTitle: "Google Meet साठी Attendance Tracker"
+  },
+  gu: {
+    appName: "Google Meet માટે Attendance Tracker — લોન્ચર",
+    appShortName: "Attendance Tracker",
+    appDesc: "Google Meet માં Attendance Tracker માટે સહાયક લોન્ચર. રિયલ-ટાઇમ હાજરી અને એક ક્લિકમાં Google Sheets એક્સપોર્ટ.",
+    actionTitle: "Google Meet માટે Attendance Tracker"
+  },
+  kn: {
+    appName: "Google Meet ಗಾಗಿ Attendance Tracker — ಲಾಂಚರ್",
+    appShortName: "Attendance Tracker",
+    appDesc: "Google Meet ನಲ್ಲಿ Attendance Tracker ಗಾಗಿ ಸಹಾಯಕ ಲಾಂಚರ್. ನೈಜ-ಸಮಯದ ಹಾಜರಾತಿ ಮತ್ತು ಒಂದೇ ಕ್ಲಿಕ್‌ನಲ್ಲಿ Google Sheets ರಫ್ತು.",
+    actionTitle: "Google Meet ಗಾಗಿ Attendance Tracker"
+  },
+  sw: {
+    appName: "Attendance Tracker kwa Google Meet — Kizindua",
+    appShortName: "Attendance Tracker",
+    appDesc: "Kizindua cha Attendance Tracker katika Google Meet. Mahudhurio ya wakati halisi na kuhamisha hadi Google Sheets kwa mbofyo mmoja.",
+    actionTitle: "Attendance Tracker kwa Google Meet"
+  },
+  am: {
+    appName: "Attendance Tracker ለGoogle Meet — ማስጀመሪያ",
+    appShortName: "Attendance Tracker",
+    appDesc: "በGoogle Meet ውስጥ ለAttendance Tracker አጋዥ ማስጀመሪያ። የቀጥታ ክትትል እና በአንድ ጠቅታ ወደ Google Sheets መላክ።",
+    actionTitle: "Attendance Tracker ለGoogle Meet"
+  },
+  lv: {
+    appName: "Attendance Tracker pakalpojumam Google Meet — Palaidējs",
+    appShortName: "Attendance Tracker",
+    appDesc: "Attendance Tracker pavadošais palaidējs pakalpojumā Google Meet. Reāllaika apmeklējuma uzskaite un eksports uz Google izklājlapām ar vienu klikšķi.",
+    actionTitle: "Attendance Tracker pakalpojumam Google Meet"
+  },
+  lt: {
+    appName: "Attendance Tracker, skirta Google Meet — Paleidiklis",
+    appShortName: "Attendance Tracker",
+    appDesc: "Attendance Tracker pagalbinis paleidiklis Google Meet sistemoje. Lankomumo žymėjimas realiuoju laiku ir eksportavimas į Google skaičiuokles vienu spustelėjimu.",
+    actionTitle: "Attendance Tracker, skirta Google Meet"
   }
 };
 

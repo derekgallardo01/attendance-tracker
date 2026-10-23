@@ -116,6 +116,8 @@ const SUPPORTED_LOCALES = new Set([
   'fr', 'de', 'it', 'nl', 'pl', 'ro', 'ru', 'uk', 'tr', 'th', 'ar', 'ko',
   'zh', 'zh-CN', 'ja', 'he', 'mr', 'sv', 'cs', 'da', 'fi', 'hu', 'so',
   'sw', 'am', 'si', 'el', 'no', 'ca', 'ne', 'ml', 'mn',
+  'kn', 'gu', 'pa', 'kk', 'lv', 'lt', 'lo', 'my', 'km', 'ceb',
+  'bg', 'hr', 'sr', 'sk', 'sl', 'af',
 ]);
 
 function parseLocale(raw) {
@@ -127,6 +129,7 @@ function parseLocale(raw) {
   if (val.startsWith('he') || val.startsWith('iw')) return 'he';
   if (val.startsWith('id') || val.startsWith('in')) return 'id';
   if (val.startsWith('nb') || val.startsWith('nn')) return 'no';
+  if (val.startsWith('ceb')) return 'ceb';
   const prefix2 = val.slice(0, 2);
   if (SUPPORTED_LOCALES.has(prefix2)) return prefix2;
   return null;

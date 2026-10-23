@@ -1,0 +1,18 @@
+{
+  "appName": {
+    "message": "Attendance Tracker, skirta Google Meet — Paleidiklis",
+    "description": "The title of the extension"
+  },
+  "appShortName": {
+    "message": "Attendance Tracker",
+    "description": "Short name for the extension"
+  },
+  "appDesc": {
+    "message": "Attendance Tracker pagalbinis paleidiklis Google Meet sistemoje. Lankomumo žymėjimas realiuoju laiku ir eksportavimas į Google skaičiuokles vienu spustelėjimu.",
+    "description": "Description of the extension"
+  },
+  "actionTitle": {
+    "message": "Attendance Tracker, skirta Google Meet",
+    "description": "Tooltip for the action icon"
+  }
+}

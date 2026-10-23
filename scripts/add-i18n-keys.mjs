@@ -5,6 +5,13 @@ import { createRequire } from 'node:module';
 import { EXTRA_LOCALE_OVERRIDES } from './build-locale-overrides.mjs';
 import { GROWTH_KEYS_EN, GROWTH_LOCALE_MAPS, getGrowthTranslationsForLocale } from './add-growth-keys.mjs';
 import { TRANSLATION_FIXES } from './translation-fixes.mjs';
+import { NEW_WEBSITE_KEYS_EN, NEW_WEBSITE_KEY_LIST, NEW_WEBSITE_PART1 } from './new-website-keys-part1.mjs';
+import { NEW_WEBSITE_PART2A } from './new-website-keys-part2a.mjs';
+import { NEW_WEBSITE_PART2B } from './new-website-keys-part2b.mjs';
+import { LP2_66_KEYS, LP2_SPANISH_FIXES_PART1 } from './lp2-spanish-fixes-part1.mjs';
+import { LP2_SPANISH_FIXES_PART2, CA_EXTRA_FIXES } from './lp2-spanish-fixes-part2.mjs';
+import { LP2_STRUCTURAL_KEYS, LP2_STRUCTURAL_FIXES, LP2_FREE_BODY_ALL } from './lp2-structural-and-free-fixes.mjs';
+import { REMAINING_LP2_KEYS_EN, getRemainingLp2AndFixes } from './lp2-remaining-keys.mjs';
 const require = createRequire(import.meta.url);
 const i18nBackend = require('../backend/src/lib/i18n.js');
 
@@ -139,7 +146,7 @@ const NEW_KEYS_EN = {
   "lms.permissionRequired": "Permission required"
 };
 
-Object.assign(NEW_KEYS_EN, GROWTH_KEYS_EN);
+Object.assign(NEW_KEYS_EN, GROWTH_KEYS_EN, NEW_WEBSITE_KEYS_EN);
 
 // Specialized translations for non-English locales
 const LOCALE_OVERRIDES = {
@@ -798,6 +805,37 @@ const READY_SUB_TRANSLATIONS = {
   af: "Klik <strong style=\"color:#4ade80\">Begin</strong> hierbo om bywoning te begin volg",
 };
 
+function getWebsiteAndLp2FixesForLocale(loc) {
+  if (loc === 'en') return {};
+  const map = {};
+  const webArr = NEW_WEBSITE_PART1[loc] || NEW_WEBSITE_PART2A[loc] || NEW_WEBSITE_PART2B[loc];
+  if (webArr) {
+    NEW_WEBSITE_KEY_LIST.forEach((k, i) => {
+      if (webArr[i] !== undefined) map[k] = webArr[i];
+    });
+  }
+  const spArr = LP2_SPANISH_FIXES_PART1[loc] || LP2_SPANISH_FIXES_PART2[loc];
+  if (spArr) {
+    LP2_66_KEYS.forEach((k, i) => {
+      if (spArr[i] !== undefined) map[k] = spArr[i];
+    });
+  }
+  const stArr = LP2_STRUCTURAL_FIXES[loc];
+  if (stArr) {
+    LP2_STRUCTURAL_KEYS.forEach((k, i) => {
+      if (stArr[i] !== undefined) map[k] = stArr[i];
+    });
+  }
+  if (LP2_FREE_BODY_ALL[loc]) {
+    map.lp2_plan_free_body = LP2_FREE_BODY_ALL[loc];
+  }
+  if (loc === 'ca') {
+    Object.assign(map, CA_EXTRA_FIXES);
+  }
+  Object.assign(map, getRemainingLp2AndFixes(loc));
+  return map;
+}
+
 export function updateStringsFile() {
   const backendI18n = i18nBackend;
   const LOCALIZED_HEADERS = backendI18n.LOCALIZED_HEADERS || {};
@@ -805,10 +843,21 @@ export function updateStringsFile() {
   let code = fs.readFileSync(stringsPath, 'utf8');
   const locales = backendI18n.getStrings().LOCALES || [];
 
+  const dashExtraLocales = {};
+  const dashKeys = [
+    'history.retrievePastMeetings', 'history.importMeeting', 'history.attendanceRate',
+    'history.scheduledVsActual', 'history.rsvpStatus', 'history.tabLinks',
+    'history.linkViews', 'history.revokeLink', 'history.participantNotes',
+    'history.meetingDetails', 'history.copyLink', 'history.linkRevoked',
+    'history.linkActive', 'history.noShareLinks', 'history.saveNote', 'history.noteSaved'
+  ];
+  const missingDashCodes = new Set(['kn', 'gu', 'pa', 'kk', 'lv', 'lt', 'lo', 'my', 'km', 'ceb', 'bg', 'hr', 'sr', 'sk', 'sl', 'af']);
+
   for (const locObj of locales) {
     const loc = locObj.code;
     const locHeader = LOCALIZED_HEADERS[loc] || LOCALIZED_HEADERS['en'] || {};
     const checkedInWord = locHeader.checkedIn || (loc === 'es' || loc === 'pt' ? 'Registrado' : 'Checked in');
+    const webAndLp2Fixes = getWebsiteAndLp2FixesForLocale(loc);
 
     const overrides = {
       ...(EXTRA_LOCALE_OVERRIDES[loc] || {}),
@@ -818,8 +867,9 @@ export function updateStringsFile() {
       ...(SINGLE_ALT_PREFIX_TRANSLATIONS[loc] ? { "upgrade.singleAltPrefix": SINGLE_ALT_PREFIX_TRANSLATIONS[loc] } : {}),
       ...(GRACE_USED_TRANSLATIONS[loc] ? { "export.graceUsed": GRACE_USED_TRANSLATIONS[loc] } : {}),
       ...(READY_SUB_TRANSLATIONS[loc] ? { "empty.readySub": READY_SUB_TRANSLATIONS[loc] } : {}),
-      // Audited fixes for values that were still English — applied last.
+      // Audited fixes for values that were still English or Spanish — applied last.
       ...(TRANSLATION_FIXES[loc] || {}),
+      ...webAndLp2Fixes,
     };
 
     const locPattern = `"${loc}": {`;
@@ -836,7 +886,7 @@ export function updateStringsFile() {
     const endBlockIdx = nextCloseIdx !== -1 ? nextCloseIdx : code.indexOf('\n    }', locIdx);
     let block = code.slice(locIdx, endBlockIdx);
 
-    const allTargetKeys = { ...NEW_KEYS_EN, ...GROWTH_KEYS_EN };
+    const allTargetKeys = { ...NEW_KEYS_EN, ...GROWTH_KEYS_EN, ...NEW_WEBSITE_KEYS_EN, ...REMAINING_LP2_KEYS_EN };
     for (const [k, enVal] of Object.entries(allTargetKeys)) {
       const desiredVal = (k in overrides)
         ? overrides[k]
@@ -845,7 +895,7 @@ export function updateStringsFile() {
             : enVal);
 
       const keyEscaped = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const reg = new RegExp(`^[ \\t]*"${keyEscaped}":\\s*(?:"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'),?\\r?\\n?`, 'gm');
+      const reg = new RegExp(`^[ \\t]*["']${keyEscaped}["']:\\s*(?:"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'),?\\r?\\n?`, 'gm');
 
       if (reg.test(block)) {
         reg.lastIndex = 0;
@@ -863,11 +913,12 @@ export function updateStringsFile() {
       }
     }
 
-    // Also apply any TRANSLATION_FIXES[loc] keys that exist in strings.js outside NEW_KEYS_EN / GROWTH_KEYS_EN
-    for (const [k, fixedVal] of Object.entries(TRANSLATION_FIXES[loc] || {})) {
+    // Also apply any TRANSLATION_FIXES[loc] or webAndLp2Fixes keys that exist in strings.js outside allTargetKeys
+    const extraFixes = { ...(TRANSLATION_FIXES[loc] || {}), ...webAndLp2Fixes };
+    for (const [k, fixedVal] of Object.entries(extraFixes)) {
       if (k in allTargetKeys) continue;
       const keyEscaped = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const reg = new RegExp(`^[ \\t]*"${keyEscaped}":\\s*(?:"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'),?\\r?\\n?`, 'gm');
+      const reg = new RegExp(`^[ \\t]*["']${keyEscaped}["']:\\s*(?:"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'),?\\r?\\n?`, 'gm');
       if (reg.test(block)) {
         reg.lastIndex = 0;
         let first = true;
@@ -881,7 +932,61 @@ export function updateStringsFile() {
       }
     }
 
+    if (missingDashCodes.has(loc)) {
+      const dashMap = {};
+      for (const dk of dashKeys) {
+        const keyEscaped = dk.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const m = block.match(new RegExp(`^[ \\t]*["']${keyEscaped}["']:\\s*("(?:[^"\\\\]|\\\\.)*"),?`, 'm'));
+        if (m) dashMap[dk] = JSON.parse(m[1]);
+      }
+      dashExtraLocales[loc] = dashMap;
+    }
+
     code = code.slice(0, locIdx) + block + code.slice(endBlockIdx);
+  }
+
+  // Update header comment to list all 60 locales
+  code = code.replace(
+    /\/\/ en, es, pt, hi, ta, te, bn, ur, tl, ms, id, vi, fr, de, it, nl, pl, ro, ru, uk, tr, th, ar, ko, zh, zh-CN, ja, he, mr, sv, cs, da, fi, hu, so, sw, am, si, el, no, ca, ne, ml, mn\./,
+    '// en, es, pt, hi, ta, te, bn, ur, tl, ms, id, vi, fr, de, it, nl, pl, ro, ru, uk, tr, th, ar, ko, zh, zh-CN, ja, he, mr, sv, cs, da, fi, hu, so, sw, am, si, el, no, ca, ne, ml, mn, kn, gu, pa, kk, lv, lt, lo, my, km, ceb, bg, hr, sr, sk, sl, af.'
+  );
+
+  // Ensure DASHBOARD_STRINGS.ca uses Catalan 'Revoca' instead of Spanish 'Revocar'
+  code = code.replace(
+    /(ca:\s*\{[\s\S]*?'history\.revokeLink':\s*)'Revocar'/,
+    "$1'Revoca'"
+  );
+
+  // Ensure DASHBOARD_STRINGS.pt uses Portuguese 'Notas do anfitrião' instead of Spanish 'Notas do anfitrión'
+  code = code.replace(
+    /(pt:\s*\{[\s\S]*?'history\.participantNotes':\s*)'Notas do anfitrión'/,
+    "$1'Notas do anfitrião'"
+  );
+
+  // Populate the 16 missing locales (kn..af) in DASHBOARD_STRINGS if not present
+  const dashStartIdx = code.indexOf('const DASHBOARD_STRINGS = {');
+  const dashEndIdx = code.indexOf('  for (const [lang, map] of Object.entries(DASHBOARD_STRINGS))');
+  if (dashStartIdx !== -1 && dashEndIdx !== -1) {
+    let dashSection = code.slice(dashStartIdx, dashEndIdx);
+    const missingEntries = [];
+    for (const [loc, dashMap] of Object.entries(dashExtraLocales)) {
+      if (!new RegExp(`\\b${loc}:\\s*\\{`).test(dashSection)) {
+        const lines = Object.entries(dashMap).map(([k, v]) => `      ${JSON.stringify(k)}: ${JSON.stringify(v)}`).join(',\n');
+        missingEntries.push(`    ${loc}: {\n${lines}\n    }`);
+      }
+    }
+    if (missingEntries.length > 0) {
+      dashSection = dashSection.replace(/(\n    \}\r?\n  \};)/, `,\n${missingEntries.join(',\n')}$1`);
+      code = code.slice(0, dashStartIdx) + dashSection + code.slice(dashEndIdx);
+    }
+  }
+
+  // Ensure applyTranslations supports [data-i18n-alt]
+  if (!code.includes("doc.querySelectorAll('[data-i18n-alt]')")) {
+    code = code.replace(
+      /(doc\.querySelectorAll\('\[data-i18n-aria\]'\)\.forEach\(el => \{\r?\n\s*const key = el\.getAttribute\('data-i18n-aria'\);\r?\n\s*if \(key\) el\.setAttribute\('aria-label', t\(key, el\.getAttribute\('aria-label'\)\)\);\r?\n\s*\}\);)/,
+      `$1\n\n    doc.querySelectorAll('[data-i18n-alt]').forEach(el => {\n      const key = el.getAttribute('data-i18n-alt');\n      if (key) el.setAttribute('alt', t(key, el.getAttribute('alt')));\n    });`
+    );
   }
 
   fs.writeFileSync(stringsPath, code, 'utf8');

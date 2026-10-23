@@ -1,0 +1,18 @@
+{
+  "appName": {
+    "message": "Google Meet-এর জন্য Attendance Tracker — লঞ্চার",
+    "description": "The title of the extension"
+  },
+  "appShortName": {
+    "message": "Attendance Tracker",
+    "description": "Short name for the extension"
+  },
+  "appDesc": {
+    "message": "Google Meet-এ Attendance Tracker-এর জন্য কম্প্যানিয়ন লঞ্চার। রিয়েল-টাইম রোল কল এবং এক-ক্লিকে Google Sheets এক্সপোর্ট।",
+    "description": "Description of the extension"
+  },
+  "actionTitle": {
+    "message": "Google Meet-এর জন্য Attendance Tracker",
+    "description": "Tooltip for the action icon"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "appName": {
+    "message": "Attendance Tracker ለGoogle Meet — ማስጀመሪያ",
+    "description": "The title of the extension"
+  },
+  "appShortName": {
+    "message": "Attendance Tracker",
+    "description": "Short name for the extension"
+  },
+  "appDesc": {
+    "message": "በGoogle Meet ውስጥ ለAttendance Tracker አጋዥ ማስጀመሪያ። የቀጥታ ክትትል እና በአንድ ጠቅታ ወደ Google Sheets መላክ።",
+    "description": "Description of the extension"
+  },
+  "actionTitle": {
+    "message": "Attendance Tracker ለGoogle Meet",
+    "description": "Tooltip for the action icon"
+  }
+}

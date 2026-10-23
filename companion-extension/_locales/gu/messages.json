@@ -1,0 +1,18 @@
+{
+  "appName": {
+    "message": "Google Meet માટે Attendance Tracker — લોન્ચર",
+    "description": "The title of the extension"
+  },
+  "appShortName": {
+    "message": "Attendance Tracker",
+    "description": "Short name for the extension"
+  },
+  "appDesc": {
+    "message": "Google Meet માં Attendance Tracker માટે સહાયક લોન્ચર. રિયલ-ટાઇમ હાજરી અને એક ક્લિકમાં Google Sheets એક્સપોર્ટ.",
+    "description": "Description of the extension"
+  },
+  "actionTitle": {
+    "message": "Google Meet માટે Attendance Tracker",
+    "description": "Tooltip for the action icon"
+  }
+}

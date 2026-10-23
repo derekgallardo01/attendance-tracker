@@ -143,7 +143,7 @@
     window.AttPricing = window.AttPricing || {
       price: function () { return ''; },
       fromStatus: function () {},
-      quotaLimit: function () { return '10'; },
+      quotaLimit: function () { return 2; },
     };
     window.AttPanel = window.AttPanel || {
       computePollInterval: function () { return 5000; },
@@ -2525,11 +2525,11 @@
         <nav class="lp2-nav-links">
           <a href="#how" class="lp2-nav-link" data-i18n="lp2_nav_how">How it works</a>
           <a href="#compare" class="lp2-nav-link" data-i18n="lp2_nav_compare">Why an add-on</a>
-          <a href="#reviews" class="lp2-nav-link">Reviews</a>
+          <a href="#reviews" class="lp2-nav-link" data-i18n="lp2_nav_reviews">Reviews</a>
           <a href="#pricing" class="lp2-nav-link" data-i18n="lp2_nav_pricing">Pricing</a>
           <a href="#faq" class="lp2-nav-link" data-i18n="lp2_nav_faq">FAQ</a>
           <div id="landing-lang-picker"></div>
-          <button id="lp2-hamburger" class="lp2-hamburger" aria-label="Open navigation menu" aria-expanded="false" onclick="toggleMobileMenu(event)">
+          <button id="lp2-hamburger" class="lp2-hamburger" aria-label="Open navigation menu" data-i18n-aria="lp2_hamburger_aria" aria-expanded="false" onclick="toggleMobileMenu(event)">
             <svg class="lp2-icon-menu" style="pointer-events:none" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
             <svg class="lp2-icon-close" style="pointer-events:none;display:none" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
@@ -2541,8 +2541,8 @@
         <div class="lp2-mobile-menu-inner">
           <a href="#how" class="lp2-mobile-link" onclick="closeMobileMenu()" data-i18n="lp2_nav_how">How it works</a>
           <a href="#compare" class="lp2-mobile-link" onclick="closeMobileMenu()" data-i18n="lp2_nav_compare">Why an add-on</a>
-          <a href="customer-reviews/" class="lp2-mobile-link" onclick="closeMobileMenu()">Customer Reviews (14 Verified)</a>
-          <a href="attendancetracker-vs-attendlist/" class="lp2-mobile-link" onclick="closeMobileMenu()">Attendance Tracker vs Competitor</a>
+          <a href="customer-reviews/" class="lp2-mobile-link" onclick="closeMobileMenu()" data-i18n="lp2_mobile_reviews">Customer Reviews (14 Verified)</a>
+          <a href="attendancetracker-vs-attendlist/" class="lp2-mobile-link" onclick="closeMobileMenu()" data-i18n="lp2_mobile_compare">Attendance Tracker vs Competitor</a>
           <a href="pricing.html" class="lp2-mobile-link" onclick="closeMobileMenu()" data-i18n="lp2_nav_pricing">Pricing</a>
           <a href="faq.html" class="lp2-mobile-link" onclick="closeMobileMenu()" data-i18n="lp2_nav_faq">Help Center &amp; FAQ</a>
           <a href="support.html" class="lp2-mobile-link" onclick="closeMobileMenu()" data-i18n="pricing.navSupport">Support</a>
@@ -2630,9 +2630,9 @@
         <span style="color:var(--border)">•</span>
         <div><strong style="color:var(--text);font-size:16px">60</strong> <span data-i18n="lp2_stat_languages">languages</span></div>
         <span style="color:var(--border)">•</span>
-        <div><a href="customer-reviews/" style="color:var(--accent);font-weight:600;text-decoration:none">★ 5.0/5 (27 ratings · 14 verified reviews →)</a></div>
+        <div><a href="customer-reviews/" style="color:var(--accent);font-weight:600;text-decoration:none" data-i18n="lp2_stat_rating">★ 5.0/5 (27 ratings · 14 verified reviews →)</a></div>
         <span style="color:var(--border)">•</span>
-        <div><a href="attendancetracker-vs-attendlist/" style="color:var(--text-muted);font-weight:500;text-decoration:underline">Compare vs Competitor →</a></div>
+        <div><a href="attendancetracker-vs-attendlist/" style="color:var(--text-muted);font-weight:500;text-decoration:underline" data-i18n="lp2_stat_compare">Compare vs Competitor →</a></div>
       </div>
     </div>
 
@@ -2662,34 +2662,34 @@
     <section id="built-for-teachers" aria-labelledby="lp2-teacher-pos-heading" style="max-width:1160px;margin:0 auto;padding:56px 24px 16px">
       <div style="background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:24px">
         <div style="max-width:820px;display:flex;flex-direction:column;gap:12px">
-          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--accent)">Why Teachers &amp; Schools Choose Attendance Tracker</div>
-          <h2 id="lp2-teacher-pos-heading" class="lp2-h2" style="text-align:left;margin:0">Google Meet Attendance Tracking Built for Teachers</h2>
-          <p style="margin:0;font-size:17px;color:var(--text-muted);line-height:1.65;max-width:65ch">Track attendance live, identify late arrivals, and export organized records to Google Sheets, Excel, or CSV. Import Google Classroom rosters and prepare gradebook reports without manually rebuilding attendance lists.</p>
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--accent)" data-i18n="lp2_teacher_eyebrow">Why Teachers &amp; Schools Choose Attendance Tracker</div>
+          <h2 id="lp2-teacher-pos-heading" class="lp2-h2" style="text-align:left;margin:0" data-i18n="lp2_teacher_title">Google Meet Attendance Tracking Built for Teachers</h2>
+          <p style="margin:0;font-size:17px;color:var(--text-muted);line-height:1.65;max-width:65ch" data-i18n="lp2_teacher_sub">Track attendance live, identify late arrivals, and export organized records to Google Sheets, Excel, or CSV. Import Google Classroom rosters and prepare gradebook reports without manually rebuilding attendance lists.</p>
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px">
           <div style="background:rgba(13,17,23,.65);border:1px solid var(--border-subtle);border-radius:12px;padding:18px">
-            <h3 style="margin:0 0 6px;font-size:15px;font-weight:700;color:var(--text)">Free option for classes up to 25 students</h3>
-            <p style="margin:0;font-size:13.5px;color:var(--text-muted);line-height:1.55">Unlimited live tracking in the Google Meet side panel plus 2 free exports/month across Google Sheets, CSV, or Excel (and 1 lifetime grace export for a class over 25 students).</p>
+            <h3 style="margin:0 0 6px;font-size:15px;font-weight:700;color:var(--text)" data-i18n="lp2_teacher_c1_title">Free option for classes up to 25 students</h3>
+            <p style="margin:0;font-size:13.5px;color:var(--text-muted);line-height:1.55" data-i18n="lp2_teacher_c1_body">Unlimited live tracking in the Google Meet side panel plus 2 free exports/month across Google Sheets, CSV, or Excel (and 1 lifetime grace export for a class over 25 students).</p>
           </div>
           <div style="background:rgba(13,17,23,.65);border:1px solid var(--border-subtle);border-radius:12px;padding:18px">
-            <h3 style="margin:0 0 6px;font-size:15px;font-weight:700;color:var(--text)">Educator and lifetime pricing options</h3>
-            <p style="margin:0;font-size:13.5px;color:var(--text-muted);line-height:1.55">Choose a one-time Lifetime Pro pass ($9.99–$29 regional/USD, no recurring subscription) or annual Educator ($4.99–$14.99/yr), Department ($59/yr), and Institution ($149/yr) plans.</p>
+            <h3 style="margin:0 0 6px;font-size:15px;font-weight:700;color:var(--text)" data-i18n="lp2_teacher_c2_title">Educator and lifetime pricing options</h3>
+            <p style="margin:0;font-size:13.5px;color:var(--text-muted);line-height:1.55" data-i18n="lp2_teacher_c2_body">Choose a one-time Lifetime Pro pass ($9.99–$29 regional/USD, no recurring subscription) or annual Educator ($4.99–$14.99/yr), Department ($59/yr), and Institution ($149/yr) plans.</p>
           </div>
           <div style="background:rgba(13,17,23,.65);border:1px solid var(--border-subtle);border-radius:12px;padding:18px">
-            <h3 style="margin:0 0 6px;font-size:15px;font-weight:700;color:var(--text)">Attendance history and semester reporting</h3>
-            <p style="margin:0;font-size:13.5px;color:var(--text-muted);line-height:1.55">Access a searchable multi-meeting history dashboard at <a href="history.html" style="color:var(--accent)">attendancetracker.dev/history</a> and maintain a rolling Google Sheets Overview tab with per-student attendance percentages.</p>
+            <h3 style="margin:0 0 6px;font-size:15px;font-weight:700;color:var(--text)" data-i18n="lp2_teacher_c3_title">Attendance history and semester reporting</h3>
+            <p style="margin:0;font-size:13.5px;color:var(--text-muted);line-height:1.55" data-i18n="lp2_teacher_c3_body">Access a searchable multi-meeting history dashboard at <a href="history.html" style="color:var(--accent)">attendancetracker.dev/history</a> and maintain a rolling Google Sheets Overview tab with per-student attendance percentages.</p>
           </div>
           <div style="background:rgba(13,17,23,.65);border:1px solid var(--border-subtle);border-radius:12px;padding:18px">
-            <h3 style="margin:0 0 6px;font-size:15px;font-weight:700;color:var(--text)">Exports for supported learning management systems</h3>
-            <p style="margin:0;font-size:13.5px;color:var(--text-muted);line-height:1.55">Sync Google Classroom rosters automatically before class, download pre-formatted Canvas and Moodle gradebook CSVs, and issue verifiable PDF attendance certificates.</p>
+            <h3 style="margin:0 0 6px;font-size:15px;font-weight:700;color:var(--text)" data-i18n="lp2_teacher_c4_title">Exports for supported learning management systems</h3>
+            <p style="margin:0;font-size:13.5px;color:var(--text-muted);line-height:1.55" data-i18n="lp2_teacher_c4_body">Sync Google Classroom rosters automatically before class, download pre-formatted Canvas and Moodle gradebook CSVs, and issue verifiable PDF attendance certificates.</p>
           </div>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;padding-top:4px;font-size:14px">
-          <a href="customer-reviews/" style="color:var(--accent);font-weight:600;text-decoration:none">Read all 14 verified Google Workspace Marketplace reviews →</a>
+          <a href="customer-reviews/" style="color:var(--accent);font-weight:600;text-decoration:none" data-i18n="lp2_teacher_link_reviews">Read all 14 verified Google Workspace Marketplace reviews →</a>
           <span style="color:var(--border)">·</span>
-          <a href="attendancetracker-vs-attendlist/" style="color:var(--accent);font-weight:600;text-decoration:none">See how Attendance Tracker compares to a Competitor →</a>
+          <a href="attendancetracker-vs-attendlist/" style="color:var(--accent);font-weight:600;text-decoration:none" data-i18n="lp2_teacher_link_compare">See how Attendance Tracker compares to a Competitor →</a>
           <span style="color:var(--border)">·</span>
-          <a href="attendance-tracker-for-teachers.html" style="color:var(--text-muted);text-decoration:underline">Complete Teacher Workflow Guide →</a>
+          <a href="attendance-tracker-for-teachers.html" style="color:var(--text-muted);text-decoration:underline" data-i18n="lp2_teacher_link_guide">Complete Teacher Workflow Guide →</a>
         </div>
       </div>
     </section>
@@ -2698,7 +2698,7 @@
     <section id="video" class="lp2-video-section">
       <h2 class="lp2-h2" data-i18n="lp2_video_title">Ninety seconds, start to Sheet</h2>
       <div class="lp2-video-container" id="lp2-video-box">
-        <button type="button" class="lp2-video-btn" onclick="playLandingVideo()" aria-label="Play demo video">
+        <button type="button" class="lp2-video-btn" onclick="playLandingVideo()" aria-label="Play demo video" data-i18n-aria="lp2_video_play_aria">
           <img src="screenshots/video-thumbnail.jpg" alt="How to Automatically Take Attendance in Google Meet" data-i18n-alt="lp2_video_alt" />
           <span class="lp2-video-overlay"></span>
           <span class="lp2-play-circle">
@@ -2949,10 +2949,10 @@
         </div>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;font-size:14px;color:var(--text-muted)">
-        <span>Evaluating specific tools?</span>
-        <a href="attendancetracker-vs-attendlist.html" style="color:var(--accent);font-weight:600;text-decoration:none">AttendanceTracker.dev vs Competitor (Pricing, Retention &amp; API Comparison) →</a>
+        <span data-i18n="lp2_cmp_eval">Evaluating specific tools?</span>
+        <a href="attendancetracker-vs-attendlist.html" style="color:var(--accent);font-weight:600;text-decoration:none" data-i18n="lp2_cmp_link_vs">AttendanceTracker.dev vs Competitor (Pricing, Retention &amp; API Comparison) →</a>
         <span style="color:var(--text-faint)">·</span>
-        <a href="best-google-meet-attendance-extensions.html" style="color:var(--accent);font-weight:600;text-decoration:none">Best Google Meet Attendance Trackers &amp; Extensions (2026) →</a>
+        <a href="best-google-meet-attendance-extensions.html" style="color:var(--accent);font-weight:600;text-decoration:none" data-i18n="lp2_cmp_link_best">Best Google Meet Attendance Trackers &amp; Extensions (2026) →</a>
       </div>
     </section>
 
@@ -2989,16 +2989,16 @@
         <div>
           <div class="lp2-reviews-badge">
             <span>★★★★★</span>
-            <span>5.0 / 5 Average · 27 Marketplace Ratings · 14 Written Reviews</span>
+            <span data-i18n="lp2_reviews_badge">5.0 / 5 Average · 27 Marketplace Ratings · 14 Written Reviews</span>
           </div>
-          <h2 id="lp2-reviews-heading" class="lp2-h2" style="text-align:left">What real educators &amp; hosts say</h2>
-          <p class="lp2-reviews-sub">Every review below is published verbatim from authenticated users on the official Google Workspace Marketplace—highlighting the exact attendance problem solved. Teachers use Attendance Tracker to record Google Meet attendance, reduce manual roll calls, and export organized attendance records to Google Sheets.</p>
+          <h2 id="lp2-reviews-heading" class="lp2-h2" style="text-align:left" data-i18n="lp2_reviews_title">What real educators &amp; hosts say</h2>
+          <p class="lp2-reviews-sub" data-i18n="lp2_reviews_sub">Every review below is published verbatim from authenticated users on the official Google Workspace Marketplace—highlighting the exact attendance problem solved. Teachers use Attendance Tracker to record Google Meet attendance, reduce manual roll calls, and export organized attendance records to Google Sheets.</p>
         </div>
         <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
-          <a href="customer-reviews/" class="lp2-reviews-verify-link">
+          <a href="customer-reviews/" class="lp2-reviews-verify-link" data-i18n="lp2_reviews_read_all">
             Read all 14 verified reviews by outcome →
           </a>
-          <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" style="font-size:13px;color:var(--text-muted);text-decoration:underline">
+          <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" style="font-size:13px;color:var(--text-muted);text-decoration:underline" data-i18n="lp2_reviews_verify_mp">
             Verify on Google Workspace Marketplace ↗
           </a>
         </div>
@@ -3006,112 +3006,109 @@
 
       <div class="lp2-reviews-grid">
         <article class="lp2-review-card">
-          <div class="lp2-review-problem">Outcome: Attendance accuracy &amp; 1-click Google Sheets export</div>
-          <div class="lp2-review-stars" aria-label="5 out of 5 stars">★★★★★</div>
+          <div class="lp2-review-problem" data-i18n="lp2_rev_1_prob">Outcome: Attendance accuracy &amp; 1-click Google Sheets export</div>
+          <div class="lp2-review-stars" aria-label="5 out of 5 stars" data-i18n-aria="lp2_rev_stars_aria">★★★★★</div>
           <blockquote class="lp2-review-quote">“Wow! This app is exactly what I was looking for (and more). It was obviously very well thought out. It works amazingly well by letting me know who actually shows up to our Google Meet sessions, and how long they stay. I no longer need to be distracted by having to monitor who comes and goes. The Attendance Tracker app handles that right out of the box. The one-click save to Google Sheets makes attendance record keeping a breeze. 5 stars for sure.”</blockquote>
           <div class="lp2-review-footer">
             <div>
               <div class="lp2-review-author">Mike Haynes</div>
               <div class="lp2-review-meta">Google Workspace Marketplace Review · Aug 11, 2026</div>
             </div>
-            <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" class="lp2-review-verify">Verified Review ↗</a>
+            <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" class="lp2-review-verify" data-i18n="lp2_rev_verify">Verified Review ↗</a>
           </div>
         </article>
 
         <article class="lp2-review-card">
-          <div class="lp2-review-problem">Outcome: Google Sheets &amp; Google Classroom workflow integration</div>
-          <div class="lp2-review-stars" aria-label="5 out of 5 stars">★★★★★</div>
+          <div class="lp2-review-problem" data-i18n="lp2_rev_2_prob">Outcome: Google Sheets &amp; Google Classroom workflow integration</div>
+          <div class="lp2-review-stars" aria-label="5 out of 5 stars" data-i18n-aria="lp2_rev_stars_aria">★★★★★</div>
           <blockquote class="lp2-review-quote">“Google Attendance Tracker is a reliable and straightforward tool that makes monitoring daily check-ins effortless for educators and team leaders. Because of its seamless integration with Google Workspace, it connects smoothly with tools like Google Sheets and Google Classroom, which significantly cuts down on manual data entry errors and saves valuable time. Its cloud-based setup also allows you to access and check attendance records from anywhere. While it lacks advanced features like automated alerts for chronic absenteeism or deep analytical reporting, it remains a practical, no-fuss solution for anyone already using the Google ecosystem. Overall, it is an efficient and user-friendly choice for everyday attendance management.”</blockquote>
           <div class="lp2-review-footer">
             <div>
               <div class="lp2-review-author">Gift otindo</div>
               <div class="lp2-review-meta">Google Workspace Marketplace Review · Oct 15, 2026</div>
             </div>
-            <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" class="lp2-review-verify">Verified Review ↗</a>
+            <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" class="lp2-review-verify" data-i18n="lp2_rev_verify">Verified Review ↗</a>
           </div>
         </article>
 
         <article class="lp2-review-card">
-          <div class="lp2-review-problem">Outcome: Time saved in online classes &amp; meetings</div>
-          <div class="lp2-review-stars" aria-label="5 out of 5 stars">★★★★★</div>
+          <div class="lp2-review-problem" data-i18n="lp2_rev_3_prob">Outcome: Time saved in online classes &amp; meetings</div>
+          <div class="lp2-review-stars" aria-label="5 out of 5 stars" data-i18n-aria="lp2_rev_stars_aria">★★★★★</div>
           <blockquote class="lp2-review-quote">“Excellent extension! Attendance Tracker makes taking attendance in Google Meet so much easier and more convenient. It saves time, reduces manual work, and helps keep attendance records organized. The automatic attendance tracking is especially useful for online classes and meetings. Highly recommended!”</blockquote>
           <div class="lp2-review-footer">
             <div>
               <div class="lp2-review-author">LIM GUAN YOU KPM-Murid</div>
               <div class="lp2-review-meta">Google Workspace Marketplace Review · Oct 16, 2026</div>
             </div>
-            <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" class="lp2-review-verify">Verified Review ↗</a>
+            <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" class="lp2-review-verify" data-i18n="lp2_rev_verify">Verified Review ↗</a>
           </div>
         </article>
 
         <article class="lp2-review-card">
-          <div class="lp2-review-problem">Outcome: Ease of use &amp; Present, Absent, or Late visibility</div>
-          <div class="lp2-review-stars" aria-label="5 out of 5 stars">★★★★★</div>
+          <div class="lp2-review-problem" data-i18n="lp2_rev_4_prob">Outcome: Ease of use &amp; Present, Absent, or Late visibility</div>
+          <div class="lp2-review-stars" aria-label="5 out of 5 stars" data-i18n-aria="lp2_rev_stars_aria">★★★★★</div>
           <blockquote class="lp2-review-quote">“This attendance tracker for Google Meet makes it much easier to keep attendance records organized in one single place. Adding and updating attendance is straightforward, and the layout makes it easy to quickly see who was present, absent, or late.”</blockquote>
           <div class="lp2-review-footer">
             <div>
               <div class="lp2-review-author">Peace Mind</div>
               <div class="lp2-review-meta">Google Workspace Marketplace Review · Oct 6, 2026</div>
             </div>
-            <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" class="lp2-review-verify">Verified Review ↗</a>
+            <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" class="lp2-review-verify" data-i18n="lp2_rev_verify">Verified Review ↗</a>
           </div>
         </article>
 
         <article class="lp2-review-card">
-          <div class="lp2-review-problem">Outcome: Classroom attendance control &amp; student statistics</div>
-          <div class="lp2-review-stars" aria-label="5 out of 5 stars">★★★★★</div>
+          <div class="lp2-review-problem" data-i18n="lp2_rev_5_prob">Outcome: Classroom attendance control &amp; student statistics</div>
+          <div class="lp2-review-stars" aria-label="5 out of 5 stars" data-i18n-aria="lp2_rev_stars_aria">★★★★★</div>
           <blockquote class="lp2-review-quote">“Me ha encantado, excelente herramienta para control de asistencia y en general la estadistica de mis alumnos en clase!” <span style="color:var(--text-muted);font-style:italic">(English translation: “I loved it, an excellent tool for attendance control and overall statistics for my students in class!”)</span></blockquote>
           <div class="lp2-review-footer">
             <div>
               <div class="lp2-review-author">MIRNA IVETH BUSTOS</div>
               <div class="lp2-review-meta">Google Workspace Marketplace Review · Oct 14, 2026</div>
             </div>
-            <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" class="lp2-review-verify">Verified Review ↗</a>
+            <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" class="lp2-review-verify" data-i18n="lp2_rev_verify">Verified Review ↗</a>
           </div>
         </article>
 
         <article class="lp2-review-card">
-          <div class="lp2-review-problem">Outcome: Reducing manual work &amp; high-value reliability</div>
-          <div class="lp2-review-stars" aria-label="5 out of 5 stars">★★★★★</div>
+          <div class="lp2-review-problem" data-i18n="lp2_rev_6_prob">Outcome: Reducing manual work &amp; high-value reliability</div>
+          <div class="lp2-review-stars" aria-label="5 out of 5 stars" data-i18n-aria="lp2_rev_stars_aria">★★★★★</div>
           <blockquote class="lp2-review-quote">“Super good. I really like this to reduce the manual work of taking attendance.” — <strong>Mario Delgado</strong> (Oct 19, 2026)<br /><br />“This is an excellent software and is a complete game changer for attendence tracking. I'd certainly highly recommend this over any other software for someone looking to use an attendence tracker” — <strong>Rafael martinez</strong> (Oct 16, 2026)</blockquote>
           <div class="lp2-review-footer">
             <div>
               <div class="lp2-review-author">Mario Delgado &amp; Rafael martinez</div>
               <div class="lp2-review-meta">Google Workspace Marketplace Reviews · Oct 2026</div>
             </div>
-            <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" class="lp2-review-verify">Verified Reviews ↗</a>
+            <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" class="lp2-review-verify" data-i18n="lp2_rev_verify_pl">Verified Reviews ↗</a>
           </div>
         </article>
       </div>
 
       <!-- Real Customer Case Studies -->
       <div style="display:flex;flex-direction:column;gap:14px;margin-top:12px">
-        <h3 style="margin:0;font-size:22px;font-weight:700;color:var(--text)">Customer Case Studies: Real Workflows &amp; Outcomes</h3>
-        <p style="margin:0;font-size:15px;color:var(--text-muted)">How verified educators and hosts replaced manual roll-call and brittle browser extensions with official Google Meet API tracking.</p>
+        <h3 style="margin:0;font-size:22px;font-weight:700;color:var(--text)" data-i18n="lp2_cases_title">Customer Case Studies: Real Workflows &amp; Outcomes</h3>
+        <p style="margin:0;font-size:15px;color:var(--text-muted)" data-i18n="lp2_cases_sub">How verified educators and hosts replaced manual roll-call and brittle browser extensions with official Google Meet API tracking.</p>
       </div>
       <div class="lp2-cases-grid">
         <div class="lp2-case-card">
-          <div class="lp2-case-tag">Case Study 01 · Live Session Hosting</div>
-          <h4 class="lp2-case-title">Mike Haynes: Eliminating mid-call roll-call distractions with 1-click Google Sheets sync</h4>
-          <p class="lp2-case-detail"><strong>The Challenge:</strong> Manually watching the Google Meet participant list to catch late arrivals and early drop-offs pulled focus away from leading the session.</p>
-          <p class="lp2-case-detail"><strong>The Workflow:</strong> Installed Attendance Tracker from the Google Workspace Marketplace to record join timestamps and net duration automatically inside the Meet side panel, followed by one-click export to Google Sheets.</p>
-          <div class="lp2-case-outcome"><strong>Outcome:</strong> Zero host distraction during live sessions and permanent attendance records stored in Google Sheets (<a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">Verified 5★ review, Aug 11, 2026</a>).</div>
+          <div class="lp2-case-tag" data-i18n="lp2_case_1_tag">Case Study 01 · Live Session Hosting</div>
+          <h4 class="lp2-case-title" data-i18n="lp2_case_1_title">Mike Haynes: Eliminating mid-call roll-call distractions with 1-click Google Sheets sync</h4>
+          <p class="lp2-case-detail" data-i18n="lp2_case_1_body"><strong>The Challenge:</strong> Manually watching the Google Meet participant list to catch late arrivals and early drop-offs pulled focus away from leading the session.<br><br><strong>The Workflow:</strong> Installed Attendance Tracker from the Google Workspace Marketplace to record join timestamps and net duration automatically inside the Meet side panel, followed by one-click export to Google Sheets.</p>
+          <div class="lp2-case-outcome" data-i18n="lp2_case_1_outcome"><strong>Outcome:</strong> Zero host distraction during live sessions and permanent attendance records stored in Google Sheets (<a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">Verified 5★ review, Aug 11, 2026</a>).</div>
         </div>
 
         <div class="lp2-case-card">
-          <div class="lp2-case-tag">Case Study 02 · Classroom &amp; Team Check-Ins</div>
-          <h4 class="lp2-case-title">Gift otindo: Cutting manual data entry errors across Google Classroom &amp; Google Sheets</h4>
-          <p class="lp2-case-detail"><strong>The Challenge:</strong> Cross-referencing expected class rosters against live Google Meet attendees by hand created transcription errors and hid multi-week tardiness trends.</p>
-          <p class="lp2-case-detail"><strong>The Workflow:</strong> Connected Google Classroom rosters directly to Attendance Tracker so expected students are matched automatically against official Meet API join/leave events and exported to Sheets.</p>
-          <div class="lp2-case-outcome"><strong>Outcome:</strong> Eliminated manual data entry errors and surfaced tardiness/absence trends without complex menus (<a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">Verified 5★ review, Oct 15, 2026</a>).</div>
+          <div class="lp2-case-tag" data-i18n="lp2_case_2_tag">Case Study 02 · Classroom &amp; Team Check-Ins</div>
+          <h4 class="lp2-case-title" data-i18n="lp2_case_2_title">Gift otindo: Cutting manual data entry errors across Google Classroom &amp; Google Sheets</h4>
+          <p class="lp2-case-detail" data-i18n="lp2_case_2_body"><strong>The Challenge:</strong> Cross-referencing expected class rosters against live Google Meet attendees by hand created transcription errors and hid multi-week tardiness trends.<br><br><strong>The Workflow:</strong> Connected Google Classroom rosters directly to Attendance Tracker so expected students are matched automatically against official Meet API join/leave events and exported to Sheets.</p>
+          <div class="lp2-case-outcome" data-i18n="lp2_case_2_outcome"><strong>Outcome:</strong> Eliminated manual data entry errors and surfaced tardiness/absence trends without complex menus (<a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">Verified 5★ review, Oct 15, 2026</a>).</div>
         </div>
 
         <div class="lp2-case-card">
-          <div class="lp2-case-tag">Case Study 03 · Public Education (KPM Malaysia &amp; LATAM)</div>
-          <h4 class="lp2-case-title">LIM GUAN YOU (KPM-Murid) &amp; Mirna Iveth Bustos: Multilingual classroom attendance</h4>
-          <p class="lp2-case-detail"><strong>The Challenge:</strong> Teachers and education institutions across Malaysia (KPM) and Latin America needed an attendance tracker that works on standard school accounts in their native language without per-month subscriptions.</p>
-          <p class="lp2-case-detail"><strong>The Workflow:</strong> Used Attendance Tracker's localized 60-language interface inside Google Meet to capture Present, Late, and Absent statuses and student statistics automatically.</p>
-          <div class="lp2-case-outcome"><strong>Outcome:</strong> Saved 5–10 minutes of instructional time per class with organized, multi-session student statistics (<a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">Verified 5★ reviews, Oct 2026</a>).</div>
+          <div class="lp2-case-tag" data-i18n="lp2_case_3_tag">Case Study 03 · Public Education (KPM Malaysia &amp; LATAM)</div>
+          <h4 class="lp2-case-title" data-i18n="lp2_case_3_title">LIM GUAN YOU (KPM-Murid) &amp; Mirna Iveth Bustos: Multilingual classroom attendance</h4>
+          <p class="lp2-case-detail" data-i18n="lp2_case_3_body"><strong>The Challenge:</strong> Teachers and education institutions across Malaysia (KPM) and Latin America needed an attendance tracker that works on standard school accounts in their native language without per-month subscriptions.<br><br><strong>The Workflow:</strong> Used Attendance Tracker's localized 60-language interface inside Google Meet to capture Present, Late, and Absent statuses and student statistics automatically.</p>
+          <div class="lp2-case-outcome" data-i18n="lp2_case_3_outcome"><strong>Outcome:</strong> Saved 5–10 minutes of instructional time per class with organized, multi-session student statistics (<a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">Verified 5★ reviews, Oct 2026</a>).</div>
         </div>
       </div>
     </section>
@@ -3171,43 +3168,43 @@
     <!-- Buyer's Technical Guide: 6 Questions Answered Directly -->
     <section id="search-intent" class="lp2-intent-section" aria-labelledby="lp2-intent-heading">
       <div style="display:flex;flex-direction:column;gap:12px;max-width:760px">
-        <h2 id="lp2-intent-heading" class="lp2-h2" style="text-align:left">The 6 questions every Google Meet attendance buyer asks</h2>
-        <p style="margin:0;font-size:17px;color:var(--text-muted);line-height:1.6">Whether you searched for a <strong>Google Meet attendance tracker</strong>, a <strong>Google Meet attendance extension</strong>, a <strong>free Google Meet attendance tracker</strong>, or a <strong>Google Meet attendance tracker for teachers</strong>, here are the exact facts before you install.</p>
+        <h2 id="lp2-intent-heading" class="lp2-h2" style="text-align:left" data-i18n="lp2_intent_title">The 6 questions every Google Meet attendance buyer asks</h2>
+        <p style="margin:0;font-size:17px;color:var(--text-muted);line-height:1.6" data-i18n="lp2_intent_sub">Whether you searched for a <strong>Google Meet attendance tracker</strong>, a <strong>Google Meet attendance extension</strong>, a <strong>free Google Meet attendance tracker</strong>, or a <strong>Google Meet attendance tracker for teachers</strong>, here are the exact facts before you install.</p>
       </div>
       <div class="lp2-intent-grid">
         <div class="lp2-intent-card">
-          <h3>1. Pricing &amp; Free Tier</h3>
-          <p><strong>Free forever ($0, no credit card):</strong> Unlimited live participant tracking in the Google Meet side panel and 2 free exports per month across Google Sheets, CSV, or Excel for meetings up to 25 attendees (plus 1 lifetime large-class grace export). <strong>Paid upgrades:</strong> $9.99–$29 one-time Lifetime Pro (no recurring subscription), $4.99–$14.99/yr Educator Pro, $59/yr Department (up to 15 teachers), or $149/yr Institution (unlimited domain teachers + signed DPA). Automatic regional PPP discounts in 90+ countries.</p>
+          <h3 data-i18n="lp2_intent_1_title">1. Pricing &amp; Free Tier</h3>
+          <p data-i18n="lp2_intent_1_body"><strong>Free forever ($0, no credit card):</strong> Unlimited live participant tracking in the Google Meet side panel and 2 free exports per month across Google Sheets, CSV, or Excel for meetings up to 25 attendees (plus 1 lifetime large-class grace export). <strong>Paid upgrades:</strong> $9.99–$29 one-time Lifetime Pro (no recurring subscription), $4.99–$14.99/yr Educator Pro, $59/yr Department (unlimited school/department teachers), or $149/yr Institution (unlimited domain teachers + signed DPA). Automatic regional PPP discounts in 90+ countries.</p>
         </div>
         <div class="lp2-intent-card">
-          <h3>2. Setup (30 Seconds)</h3>
-          <p><strong>No Chrome extension to maintain:</strong> Install once from the <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener">Google Workspace Marketplace</a>. In any Google Meet call, click the <strong>Activities</strong> icon (bottom-right puzzle piece) and open <strong>Attendance Tracker</strong>. Works immediately in Chrome, Safari, Edge, Brave, Firefox, and school-managed Chromebooks where Chrome Web Store extensions are blocked.</p>
+          <h3 data-i18n="lp2_intent_2_title">2. Setup (30 Seconds)</h3>
+          <p data-i18n="lp2_intent_2_body"><strong>No Chrome extension to maintain:</strong> Install once from the <a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968" target="_blank" rel="noopener">Google Workspace Marketplace</a>. In any Google Meet call, click the <strong>Activities</strong> icon (bottom-right puzzle piece) and open <strong>Attendance Tracker</strong>. Works immediately in Chrome, Safari, Edge, Brave, Firefox, and school-managed Chromebooks where Chrome Web Store extensions are blocked.</p>
         </div>
         <div class="lp2-intent-card">
-          <h3>3. Permissions &amp; Privacy</h3>
-          <p><strong>Narrow OAuth 2.0 scopes, zero DOM scraping:</strong> Unlike Chrome extensions that request broad <code>read and change all data on meet.google.com</code> permissions, Attendance Tracker uses scoped Google APIs: <code>meetings.space.readonly</code> (participant join/leave events), <code>drive.file</code> (writes only to Sheets it creates in your Drive), and optional <code>classroom.rosters.readonly</code>. OAuth tokens are encrypted with AES-256-GCM. FERPA, COPPA &amp; GDPR compliant.</p>
+          <h3 data-i18n="lp2_intent_3_title">3. Permissions &amp; Privacy</h3>
+          <p data-i18n="lp2_intent_3_body"><strong>Narrow OAuth 2.0 scopes, zero DOM scraping:</strong> Unlike Chrome extensions that request broad <code>read and change all data on meet.google.com</code> permissions, Attendance Tracker uses scoped Google APIs: <code>meetings.space.readonly</code> (participant join/leave events), <code>drive.file</code> (writes only to Sheets it creates in your Drive), and optional <code>classroom.rosters.readonly</code>. OAuth tokens are encrypted with AES-256-GCM. FERPA, COPPA &amp; GDPR compliant.</p>
         </div>
         <div class="lp2-intent-card">
-          <h3>4. Accuracy &amp; Rejoins</h3>
-          <p><strong>Official Google Meet API precision:</strong> Because data comes from Google's server-side Meet conference APIs rather than reading browser HTML tiles, off-screen participants and layout changes never cause missed attendees. Disconnected participants who rejoin have their intervals automatically merged into a single row with first join time, last leave time, net duration, and re-entry count.</p>
+          <h3 data-i18n="lp2_intent_4_title">4. Accuracy &amp; Rejoins</h3>
+          <p data-i18n="lp2_intent_4_body"><strong>Official Google Meet API precision:</strong> Because data comes from Google's server-side Meet conference APIs rather than reading browser HTML tiles, off-screen participants and layout changes never cause missed attendees. Disconnected participants who rejoin have their intervals automatically merged into a single row with first join time, last leave time, net duration, and re-entry count.</p>
         </div>
         <div class="lp2-intent-card">
-          <h3>5. Exports &amp; LMS Formats</h3>
-          <p><strong>Permanent records you own:</strong> One-click export to formatted <strong>Google Sheets</strong> (saved permanently in your own Google Drive with color-coded Present/Late/Absent tabs and a multi-meeting Overview matrix), <strong>CSV</strong>, and <strong>Excel (.xlsx)</strong>. Pro plans add pre-formatted <strong>Canvas</strong> and <strong>Moodle</strong> gradebook CSVs, verifiable PDF certificates, and Slack/Google Chat/Discord digests.</p>
+          <h3 data-i18n="lp2_intent_5_title">5. Exports &amp; LMS Formats</h3>
+          <p data-i18n="lp2_intent_5_body"><strong>Permanent records you own:</strong> One-click export to formatted <strong>Google Sheets</strong> (saved permanently in your own Google Drive with color-coded Present/Late/Absent tabs and a multi-meeting Overview matrix), <strong>CSV</strong>, and <strong>Excel (.xlsx)</strong>. Pro plans add pre-formatted <strong>Canvas</strong> and <strong>Moodle</strong> gradebook CSVs, verifiable PDF certificates, and Slack/Google Chat/Discord digests.</p>
         </div>
         <div class="lp2-intent-card">
-          <h3>6. Google Account Compatibility</h3>
-          <p><strong>Works on every Google account tier:</strong> Unlike Google's built-in attendance report (which requires paid Workspace Business Standard/Plus or Education Plus), Attendance Tracker works on <strong>free personal <code>@gmail.com</code> accounts</strong>, <strong>Google Workspace for Education Fundamentals (free tier)</strong>, Workspace Starter, Business, and Enterprise. Co-hosts and TAs can also track via 2-minute admin delegation.</p>
+          <h3 data-i18n="lp2_intent_6_title">6. Google Account Compatibility</h3>
+          <p data-i18n="lp2_intent_6_body"><strong>Works on every Google account tier:</strong> Unlike Google's built-in attendance report (which requires paid Workspace Business Standard/Plus or Education Plus), Attendance Tracker works on <strong>free personal <code>@gmail.com</code> accounts</strong>, <strong>Google Workspace for Education Fundamentals (free tier)</strong>, Workspace Starter, Business, and Enterprise. Co-hosts and TAs can also track via 2-minute admin delegation.</p>
         </div>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:14px;font-size:14px;padding-top:4px">
-        <a href="customer-reviews/" style="color:var(--accent);font-weight:600;text-decoration:none">Read 14 Verified Customer Reviews →</a>
+        <a href="customer-reviews/" style="color:var(--accent);font-weight:600;text-decoration:none" data-i18n="lp2_intent_link_reviews">Read 14 Verified Customer Reviews →</a>
         <span style="color:var(--text-faint)">·</span>
-        <a href="attendancetracker-vs-attendlist/" style="color:var(--accent);font-weight:600;text-decoration:none">AttendanceTracker.dev vs Competitor →</a>
+        <a href="attendancetracker-vs-attendlist/" style="color:var(--accent);font-weight:600;text-decoration:none" data-i18n="lp2_intent_link_vs">AttendanceTracker.dev vs Competitor →</a>
         <span style="color:var(--text-faint)">·</span>
-        <a href="attendance-tracker-for-teachers.html" style="color:var(--accent);font-weight:600;text-decoration:none">Guide for K-12 &amp; University Teachers →</a>
+        <a href="attendance-tracker-for-teachers.html" style="color:var(--accent);font-weight:600;text-decoration:none" data-i18n="lp2_intent_link_guide">Guide for K-12 &amp; University Teachers →</a>
         <span style="color:var(--text-faint)">·</span>
-        <a href="best-google-meet-attendance-extensions.html" style="color:var(--accent);font-weight:600;text-decoration:none">2026 Google Meet Attendance Extensions Compared →</a>
+        <a href="best-google-meet-attendance-extensions.html" style="color:var(--accent);font-weight:600;text-decoration:none" data-i18n="lp2_intent_link_ext">2026 Google Meet Attendance Extensions Compared →</a>
       </div>
     </section>
 
@@ -3275,8 +3272,8 @@
           </div>
           <div class="lp2-footer-links">
             <a href="#pricing" data-i18n="pricing.navPricing">Pricing</a>
-            <a href="customer-reviews/">Customer Reviews</a>
-            <a href="attendancetracker-vs-attendlist/">vs Competitor</a>
+            <a href="customer-reviews/" data-i18n="footer.reviews">Customer Reviews</a>
+            <a href="attendancetracker-vs-attendlist/" data-i18n="footer.vsCompetitor">vs Competitor</a>
             <a href="faq.html" data-i18n="pricing.navHelp">Help &amp; FAQ</a>
             <a href="privacy.html" data-i18n="pricing.footerPrivacy">Privacy Policy</a>
             <a href="terms.html" data-i18n="pricing.footerTerms">Terms of Service</a>
@@ -3357,7 +3354,7 @@
           </div>
         </div>
         <div class="lp2-llm-badge">
-          AI &amp; Search Engine Specifications: <a href="llms.txt">llms.txt</a> · <a href="llms-full.txt">llms-full.txt</a> · <a href="sitemap.xml">sitemap.xml</a>
+          <span data-i18n="lp2_llm_specs">AI &amp; Search Engine Specifications:</span> <a href="llms.txt">llms.txt</a> · <a href="llms-full.txt">llms-full.txt</a> · <a href="sitemap.xml">sitemap.xml</a>
         </div>
         <div class="lp2-copy">© 2026 Kinetic Helix. Google Meet™, Google Sheets™, Google Drive™, Google Calendar™, Google Classroom™, Gmail™ and Google Workspace™ are trademarks of Google LLC.</div>
       </div>
@@ -3647,7 +3644,7 @@
   </div>
   <!-- ── Pass / Pro Grant Expired Banner (Dismissible) ── -->
   <div id="renewal-notice-banner" style="display:none;align-items:center;justify-content:space-between;gap:8px;padding:6px 16px;font-size:11px;color:#fdd663;background:rgba(253,214,99,.08);border-top:1px solid rgba(253,214,99,.2)">
-    <span id="renewal-notice-text" style="line-height:1.4">Your Pro ended — renew</span>
+    <span id="renewal-notice-text" data-i18n="renewal.noticeText" style="line-height:1.4">Your Pro ended — renew</span>
     <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
       <button type="button" id="btn-renewal-notice" onclick="onRenewalNoticeClick()" style="background:rgba(253,214,99,.2);border:1px solid rgba(253,214,99,.4);color:#fdd663;border-radius:12px;padding:3px 8px;font-size:10px;font-weight:600;cursor:pointer" data-i18n="common.upgrade">Renew</button>
       <button type="button" onclick="closeRenewalNoticeBanner()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px">×</button>
@@ -12173,7 +12170,7 @@ window.addEventListener('DOMContentLoaded', () => {
           <button type="button" class="webhook-tab-btn" data-provider="googleChat" onclick="selectWebhookProvider('googleChat')">Google Chat<span id="webhook-dot-googleChat" style="display:none;color:#4ade80;margin-left:4px">&#9679;</span></button>
           <button type="button" class="webhook-tab-btn" data-provider="discord" onclick="selectWebhookProvider('discord')">Discord<span id="webhook-dot-discord" style="display:none;color:#4ade80;margin-left:4px">&#9679;</span></button>
         </div>
-        <div id="settings-webhook-desc" class="settings-row-sub" style="margin-bottom:10px">
+        <div id="settings-webhook-desc" class="settings-row-sub" style="margin-bottom:10px" data-i18n="settings.slackDesc">
           Posts an attendance summary card to your Slack channel after every export.
         </div>
         <input id="settings-webhook-url" type="text" placeholder="https://hooks.slack.com/services/T.../B.../..." autocomplete="off"
@@ -12382,7 +12379,7 @@ window.addEventListener('DOMContentLoaded', () => {
         </div>
         <div id="paywall-school-status" style="display:none;font-size:.74rem;color:#81c995"></div>
         <button type="button" id="btn-paywall-school-submit" onclick="submitPaywallSchoolQuote()" style="width:100%;background:#58a6ff;color:#0d1117;border:none;border-radius:8px;padding:8px 12px;font-weight:700;font-size:.8rem;cursor:pointer" data-i18n="paywall.schoolSubmit">Request Official School Quote</button>
-        <button type="button" id="btn-paywall-quote-pdf" onclick="downloadSchoolQuotePdf(this)" style="width:100%;background:rgba(255,255,255,.06);color:#e6edf3;border:1px solid #30363d;border-radius:8px;padding:7px 12px;font-weight:600;font-size:.76rem;cursor:pointer">📄 Download Instant Quote PDF for Principal / IT</button>
+        <button type="button" id="btn-paywall-quote-pdf" onclick="downloadSchoolQuotePdf(this)" style="width:100%;background:rgba(255,255,255,.06);color:#e6edf3;border:1px solid #30363d;border-radius:8px;padding:7px 12px;font-weight:600;font-size:.76rem;cursor:pointer" data-i18n="quote.askSchoolBtn">📄 Download Instant Quote PDF for Principal / IT</button>
         <div style="text-align:center">
           <button type="button" onclick="resetPaywallWhyModal()" style="background:none;border:none;color:#9aa0a6;font-size:.75rem;cursor:pointer;text-decoration:underline" data-i18n="common.back">← Back</button>
         </div>
@@ -12446,7 +12443,7 @@ window.addEventListener('DOMContentLoaded', () => {
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <div style="display:flex;align-items:center;gap:6px">
             <span style="font-weight:600;font-size:.92rem;color:#e3e3e3" data-i18n="pricing.planEduName">Educator Annual Pass</span>
-            <span id="edu-hero-badge" style="background:#34a853;color:#ffffff;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:12px;letter-spacing:.04em;text-transform:uppercase">BEST VALUE · 41¢/mo</span>
+            <span id="edu-hero-badge" style="background:#34a853;color:#ffffff;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:12px;letter-spacing:.04em;text-transform:uppercase" data-i18n="upgrade.perMo">BEST VALUE · 41¢/mo</span>
           </div>
           <div style="text-align:right">
             <span class="price-educator" style="font-weight:700;font-size:1.1rem;color:#81c995">$4.99</span>
@@ -12556,7 +12553,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
       <!-- School Invoicing / Purchase Order Request ("Ask my school to pay") -->
       <div style="text-align:center;margin-bottom:8px;display:flex;flex-direction:column;gap:4px;align-items:center">
-        <button type="button" id="btn-ask-school-quote-pdf" onclick="downloadSchoolQuotePdf(this)" style="background:none;border:none;color:#8ab4f8;font-size:.74rem;font-weight:600;text-decoration:underline;cursor:pointer;padding:2px 6px">📄 Ask my school to pay (Download Quote PDF)</button>
+        <button type="button" id="btn-ask-school-quote-pdf" onclick="downloadSchoolQuotePdf(this)" style="background:none;border:none;color:#8ab4f8;font-size:.74rem;font-weight:600;text-decoration:underline;cursor:pointer;padding:2px 6px" data-i18n="quote.askSchoolBtn">📄 Ask my school to pay (Download Quote PDF)</button>
         <a href="mailto:derekgallardo01@gmail.com?subject=Attendance%20Tracker%20School%20Quote%20%2F%20Purchase%20Order%20Request&amp;body=Hello%20Derek,%0A%0AWe%20would%20like%20to%20request%20an%20official%20school%20invoice%2Fquote%20for%20Attendance%20Tracker.%0A%0ASchool%20Name:%0ACountry%20%2F%20State:%0AContact%20Person:%0ANumber%20of%20Teachers:%0A%0AThank%20you!" style="color:#9aa0a6;font-size:.72rem;text-decoration:underline" data-i18n="upgrade.schoolQuoteLink">Need a School Quote or Purchase Order? Request an invoice</a>
       </div>
 

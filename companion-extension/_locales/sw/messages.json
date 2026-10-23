@@ -1,0 +1,18 @@
+{
+  "appName": {
+    "message": "Attendance Tracker kwa Google Meet — Kizindua",
+    "description": "The title of the extension"
+  },
+  "appShortName": {
+    "message": "Attendance Tracker",
+    "description": "Short name for the extension"
+  },
+  "appDesc": {
+    "message": "Kizindua cha Attendance Tracker katika Google Meet. Mahudhurio ya wakati halisi na kuhamisha hadi Google Sheets kwa mbofyo mmoja.",
+    "description": "Description of the extension"
+  },
+  "actionTitle": {
+    "message": "Attendance Tracker kwa Google Meet",
+    "description": "Tooltip for the action icon"
+  }
+}

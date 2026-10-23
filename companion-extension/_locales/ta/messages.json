@@ -1,0 +1,18 @@
+{
+  "appName": {
+    "message": "Google Meet-க்கான Attendance Tracker — லாஞ்சர்",
+    "description": "The title of the extension"
+  },
+  "appShortName": {
+    "message": "Attendance Tracker",
+    "description": "Short name for the extension"
+  },
+  "appDesc": {
+    "message": "Google Meet-ல் Attendance Tracker-க்கான துணை லாஞ்சர். நிகழ்நேர வருகைப்பதிவு மற்றும் ஒரே கிளிக்கில் Google Sheets ஏற்றுமதி.",
+    "description": "Description of the extension"
+  },
+  "actionTitle": {
+    "message": "Google Meet-க்கான Attendance Tracker",
+    "description": "Tooltip for the action icon"
+  }
+}
