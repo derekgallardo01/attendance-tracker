@@ -12,7 +12,7 @@
     "test:coverage:frontend": "jest --config jest.frontend.config.js --coverage"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22.23.4"
   },
   "dependencies": {
     "@google-cloud/firestore": "^8.3.0",
