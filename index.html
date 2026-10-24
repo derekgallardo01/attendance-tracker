@@ -8786,9 +8786,14 @@ function dismissPaywallWhy() {
 function maybeAskPaywallWhy() {
   if (_isPro || (_billing && _billing.plan === 'pro')) return;
   try {
+    const reason = (state && state._lastUpgradeReason) || 'manual';
+    const isHardGate = reason === 'exportQuota' || reason === 'largeClass';
+    const hasExported = (Number(_billing && _billing.quotaUsed) || 0) > 0 ||
+      (parseInt(localStorage.getItem('att_export_count') || '0', 10) || 0) > 0;
+    if (!hasExported && !isHardGate) return;
     const n = (Number(localStorage.getItem('attPaywallDismissals')) || 0) + 1;
     safeSetItem('attPaywallDismissals', String(n));
-    if (n < 2 || localStorage.getItem('attPaywallWhyAsked')) return;
+    if (n < 3 || localStorage.getItem('attPaywallWhyAsked')) return;
     safeSetItem('attPaywallWhyAsked', '1'); // asked = spent, even if closed
     const m = document.getElementById('paywall-why-modal');
     if (m) {
