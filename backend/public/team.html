@@ -499,6 +499,7 @@
   </div>
 
   <script>
+    window.t = window.t || function (k, f) { return (window.AttStrings && typeof window.AttStrings.t === 'function') ? window.AttStrings.t(k, f) : (f !== undefined ? f : k); };
     const BACKEND_URL = AttApi.BACKEND_URL; // shared js/api.js (loaded in <head>)
     let sessionToken = null;
     let data = { users: [], meetings: [], series: [], people: [], totals: {} };

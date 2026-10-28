@@ -154,7 +154,7 @@
       participantsAt: function () { return []; },
     };
     window.AttStrings = window.AttStrings || {
-      t: function (k, f) { return f || k; },
+      t: function (k, f) { return f !== undefined ? f : k; },
       setLocale: function () {},
       getLocale: function () { return 'en'; },
       detectLocale: function () { return 'en'; },
@@ -164,6 +164,7 @@
       LOCALES: [{ code: 'en', label: 'English', flag: '🇺🇸' }],
       STRINGS: {},
     };
+    window.t = window.t || window.AttStrings.t;
   </script>
 
   <!-- Open Graph + Twitter card — rich preview on Slack, Twitter/X, LinkedIn, iMessage -->

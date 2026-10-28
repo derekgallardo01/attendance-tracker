@@ -140,6 +140,7 @@
   </div>
 
   <script>
+    window.t = window.t || function (k, f) { return (window.AttStrings && typeof window.AttStrings.t === 'function') ? window.AttStrings.t(k, f) : (f !== undefined ? f : k); };
     const BACKEND_URL = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
 
     function copyText(id) {
