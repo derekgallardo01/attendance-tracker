@@ -1293,7 +1293,7 @@ router.get('/admin/insights', requireSuperAdmin, async (req, res) => {
 let _khMetricsCache = null;
 let _khMetricsCachedAt = 0;
 let _khMetricsInFlight = null;
-const KH_METRICS_CACHE_MS = 2 * 60 * 60 * 1000; // 2 hours
+const KH_METRICS_CACHE_MS = 15 * 60 * 1000; // 15 minutes (insights cached 8h in Firestore/memory)
 
 // GET /api/kh/metrics — durable metrics pull for the Kinetic Helix command
 // center. Same aggregate as /admin/insights (plus revenue), gated by a static

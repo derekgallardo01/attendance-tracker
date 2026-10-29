@@ -569,6 +569,30 @@ describe('getMeetingWithParticipants', () => {
       expect(spike).toEqual({ total: 0, byReason: {}, users: [], samples: [] });
     });
 
+    test('getRecentErrorSpike queries collectionGroup(events) without scanning tenants, and falls back if collectionGroup throws', async () => {
+      ctx.seed('tenants/acme.com', { domain: 'acme.com' });
+      ctx.seed('tenants/acme.com/events/e1', { type: 'export_failed', email: 'a@acme.com', meta: { reason: 'error' }, createdAt: recent() });
+      const db = firestore.getDb();
+      const colSpy = jest.spyOn(db, 'collection');
+      const cgSpy = jest.spyOn(db, 'collectionGroup');
+
+      const spike1 = await firestore.getRecentErrorSpike(since());
+      expect(spike1.total).toBe(1);
+      expect(cgSpy).toHaveBeenCalledWith('events');
+      expect(colSpy).not.toHaveBeenCalledWith('tenants');
+
+      // Simulate missing collectionGroup index -> falls back to per-tenant scan seamlessly
+      cgSpy.mockImplementationOnce(() => ({
+        where: () => ({ get: () => Promise.reject(new Error('FAILED_PRECONDITION: index building')) }),
+      }));
+      const spike2 = await firestore.getRecentErrorSpike(since());
+      expect(spike2.total).toBe(1);
+      expect(colSpy).toHaveBeenCalledWith('tenants');
+
+      colSpy.mockRestore();
+      cgSpy.mockRestore();
+    });
+
     test('error-alert cooldown state round-trips', async () => {
       expect(await firestore.getErrorAlertState()).toBeNull();
       await firestore.setErrorAlertState({ lastAlertedAt: '2026-09-10T00:00:00.000Z', lastTotal: 7 });

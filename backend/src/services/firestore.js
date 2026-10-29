@@ -3408,7 +3408,7 @@ function clearAllUsersCache() {
   memoizedGetAllUsersAcrossTenants.clear?.();
 }
 
-const memoizedGetAggregatedInsights = memoizeTTL(getAggregatedInsights, 7200000); // 2 hour TTL
+const memoizedGetAggregatedInsights = memoizeTTL(getAggregatedInsights, 8 * 60 * 60 * 1000); // 8 hour TTL
 function clearAllInsightsCache() {
   memoizedGetAggregatedInsights.clear?.();
   clearInsightsCache();

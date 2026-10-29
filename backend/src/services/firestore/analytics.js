@@ -129,7 +129,7 @@ async function getActivationFunnel() {
 let _insightsCache = null;
 let _insightsCachedAt = 0;
 let _insightsInFlight = null;
-const INSIGHTS_CACHE_MS = 2 * 60 * 60 * 1000; // 2 hours
+const INSIGHTS_CACHE_MS = 8 * 60 * 60 * 1000; // 8 hours
 const INSIGHTS_CACHE_DOC = () => getDb().collection('ops').doc('insightsCache');
 
 async function getAggregatedInsights({ force = false, useFirestoreCache = false } = {}) {
@@ -1855,35 +1855,47 @@ async function getRevenueFunnel({ days = 30 } = {}) {
 }
 
 // Aggregate recent export_failed events across all tenants for the error-spike
-// alert. Iterates tenants and queries each `events` subcollection by createdAt —
-// a single-field filter that uses Firestore's automatic index (no composite
-// index to provision, unlike a collectionGroup query), the same pattern the
-// activity crons use. Cheap enough for an hourly run.
+// alert. Uses a single collectionGroup('events') query on createdAt (backed by a
+// single-field collectionGroup index) so hourly checks read only the ~5–30 events
+// in the window instead of scanning all 652 tenants + 652 subcollections. Falls
+// back to the per-tenant scan if collectionGroup is unavailable or throws.
 async function getRecentErrorSpike(sinceDate) {
   const db = getDb();
+  let total = 0; const byReason = {}; const users = new Set(); const samples = [];
+  const accumulateDoc = (d) => {
+    const x = d.data();
+    if (!x || x.type !== 'export_failed') return;
+    total++;
+    const rawReason = (x.meta && (x.meta.reason || x.meta.code || (typeof x.meta.error === 'string' ? x.meta.error : (x.meta.error?.code || x.meta.error?.message))))
+      || (x.error && (x.error.code || (typeof x.error === 'string' ? x.error : x.error.message)))
+      || 'unknown';
+    const reason = typeof rawReason === 'string' && rawReason.trim() ? rawReason.trim() : 'unknown';
+    byReason[reason] = (byReason[reason] || 0) + 1;
+    if (x.email) users.add(x.email);
+    const sampleMsg = (x.meta && (x.meta.message || (typeof x.meta.error === 'string' ? x.meta.error : x.meta.error?.message)))
+      || (typeof x.message === 'string' ? x.message : null)
+      || (typeof x.error === 'string' ? x.error : x.error?.message);
+    if (samples.length < 5 && sampleMsg) samples.push(String(sampleMsg).slice(0, 120));
+  };
+
+  if (typeof db.collectionGroup === 'function') {
+    try {
+      const cgSnap = await db.collectionGroup('events').where('createdAt', '>=', sinceDate).get();
+      for (const d of (cgSnap?.docs || [])) accumulateDoc(d);
+      return { total, byReason, users: [...users], samples };
+    } catch (_) {
+      // Fall through to per-tenant scan if collectionGroup index is unavailable or throws in a mock
+    }
+  }
+
   let tenants;
   try { tenants = await db.collection('tenants').get(); }
   catch (err) { log.error('firestore: getRecentErrorSpike tenant scan failed', { error: err.message }); return { total: 0, byReason: {}, users: [], samples: [] }; }
-  let total = 0; const byReason = {}; const users = new Set(); const samples = [];
   for (const t of tenants.docs) {
     let snap;
     try { snap = await t.ref.collection('events').where('createdAt', '>=', sinceDate).get(); }
     catch { continue; } // a tenant with no events / transient error — skip
-    for (const d of snap.docs) {
-      const x = d.data();
-      if (x.type !== 'export_failed') continue;
-      total++;
-      const rawReason = (x.meta && (x.meta.reason || x.meta.code || (typeof x.meta.error === 'string' ? x.meta.error : (x.meta.error?.code || x.meta.error?.message))))
-        || (x.error && (x.error.code || (typeof x.error === 'string' ? x.error : x.error.message)))
-        || 'unknown';
-      const reason = typeof rawReason === 'string' && rawReason.trim() ? rawReason.trim() : 'unknown';
-      byReason[reason] = (byReason[reason] || 0) + 1;
-      if (x.email) users.add(x.email);
-      const sampleMsg = (x.meta && (x.meta.message || (typeof x.meta.error === 'string' ? x.meta.error : x.meta.error?.message)))
-        || (typeof x.message === 'string' ? x.message : null)
-        || (typeof x.error === 'string' ? x.error : x.error?.message);
-      if (samples.length < 5 && sampleMsg) samples.push(String(sampleMsg).slice(0, 120));
-    }
+    for (const d of snap.docs) accumulateDoc(d);
   }
   return { total, byReason, users: [...users], samples };
 }
