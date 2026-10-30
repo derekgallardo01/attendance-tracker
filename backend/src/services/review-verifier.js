@@ -11,7 +11,7 @@ const REWARD_DURATION_DAYS = 35; // Generous 1 month (gives buffer for billing c
  */
 function normalize(str) {
   if (!str || typeof str !== 'string') return '';
-  return str.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
+  return str.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, '').replace(/\s+/g, ' ').trim();
 }
 
 /**
