@@ -606,6 +606,7 @@
           } else {
             AttPricing.fromStatus(bStatus);
           }
+          if (window.AttStrings && AttStrings.refreshPrices) AttStrings.refreshPrices();
           // Paint the .price-lifetime span from the single source of truth —
           // robust across locales and re-runnable after a language switch
           // (the old string-replace failed on "9,99 $" in fr/de).

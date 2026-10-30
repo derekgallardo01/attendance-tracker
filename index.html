@@ -7447,6 +7447,7 @@ async function ensureBilling() {
       // Server prices (incl. tiered regional labels) must be live before any
       // upgrade surface paints.
       if (typeof AttPricing !== 'undefined') AttPricing.fromStatus(_billing);
+      if (window.AttStrings && AttStrings.refreshPrices) AttStrings.refreshPrices();
     }
   } catch { /* leave null → upsell just won't show */ }
   return _billing;
@@ -7472,6 +7473,8 @@ function paintPrices() {
     if (!text) continue;
     document.querySelectorAll('.' + cls).forEach(el => { el.textContent = text; });
   }
+  // Translated copy with {price:…} tokens follows the same live table.
+  if (window.AttStrings && AttStrings.refreshPrices) AttStrings.refreshPrices();
 }
 
 async function loadBillingStatus() {

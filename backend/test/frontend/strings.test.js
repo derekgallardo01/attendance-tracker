@@ -44,6 +44,50 @@ describe('tf() named placeholders', () => {
   });
 });
 
+describe('{price:…} tokens', () => {
+  const pricing = require(path.join(__dirname, '..', '..', '..', 'js', 'pricing.js'));
+  afterEach(() => { delete window.AttPricing; strings.setLocale('en'); });
+
+  test('localeHeader carries the active app language', () => {
+    strings.setLocale('ja');
+    expect(strings.localeHeader()).toEqual({ 'X-App-Locale': 'ja' });
+  });
+
+  test('static fallback mirrors js/pricing.js DEFAULTS', () => {
+    for (const [plan, label] of Object.entries(strings.PRICE_FALLBACK)) expect(label).toBe(pricing.DEFAULTS[plan].label);
+  });
+
+  test('resolve from the live pricing table, then the fallback; unknown plans stay visible', () => {
+    expect(strings.withPrices('Get {price:lifetime} · {permonth:educator}/mo · {price:nope}')).toBe('Get $9.99 · $0.41/mo · {price:nope}');
+    window.AttPricing = { price: (p) => (p === 'lifetime' ? 'MX$299' : ''), perMonth: (p) => (p === 'educator' ? 'MX$12' : '') };
+    expect(strings.withPrices('{price:lifetime} / {price:department} / {permonth:educator}')).toBe('MX$299 / $59 / MX$12');
+    window.AttPricing = { price: () => '' }; // older pricing.js without perMonth
+    expect(strings.withPrices('{permonth:educator} {permonth:nope}')).toBe('$0.41 {permonth:nope}');
+    expect(strings.withPrices(42)).toBe(42);
+    expect(strings.withPrices('no tokens')).toBe('no tokens');
+  });
+
+  test('shipped price copy carries tokens in every locale and t() resolves them', () => {
+    for (const loc of Object.keys(strings.STRINGS)) {
+      expect(strings.STRINGS[loc]['pricing.btnGetLifetime']).toContain('{price:lifetime}');
+    }
+    strings.setLocale('de');
+    window.AttPricing = { price: (p) => (p === 'lifetime' ? '29 €' : '') };
+    expect(strings.t('pricing.btnGetLifetime')).toContain('29 €');
+  });
+
+  test('refreshPrices repaints only token-bearing data-i18n elements', () => {
+    document.body.innerHTML = '<a id="a" data-i18n="pricing.btnGetLifetime">x</a><span id="b" data-i18n="btn.start">keep</span>'
+      + '<span id="c" data-i18n="pricing.matrixTeamOursSub">x</span><i data-i18n="no.such.key">z</i>';
+    window.AttPricing = { price: (p) => ({ lifetime: '$29', institution: '$149' }[p] || '') };
+    expect(strings.refreshPrices()).toBe(2);
+    expect(document.getElementById('a').textContent).toContain('$29');
+    expect(document.getElementById('b').textContent).toBe('keep');
+    expect(document.getElementById('c').innerHTML).toContain('<strong>');
+    expect(strings.refreshPrices({})).toBe(0);
+  });
+});
+
 describe('shipped plural.* keys', () => {
   afterEach(() => strings.setLocale('en'));
   const STR = strings.STRINGS;
@@ -1084,7 +1128,7 @@ describe('60-locale number accuracy, placeholder parity, script purity, and HTML
       expect(dict['lp2_plan_free_body']).toMatch(/25|२५|২৫|૨૫|౨౫|೨೫|២៥|໒໕|၂၅/);
       expect(hasTwo(dict['pricing.fineprintBody'])).toBe(true);
       expect(dict['pricing.fineprintBody']).toMatch(/25|२५|২৫|૨૫|౨౫|೨೫|២៥|໒໕|၂၅/);
-      expect(dict['pricing.cmp6Body']).toMatch(/9[.,]99|९\.९९|৯\.৯৯/);
+      expect(dict['pricing.cmp6Body']).toContain('{price:lifetime}'); // live (tiered) price, resolved by t()
       expect(dict['referral.bodyDomain']).toContain('{domain}');
     }
   });

@@ -768,6 +768,7 @@
     }
   </style>
   <script src="js/strings.js"></script>
+  <script src="js/pricing.js"></script>
 </head>
 <body>
 
@@ -1572,6 +1573,9 @@
           }
           if (offer && offer.tiered && offer.pricing) {
             window._tieredOffer = offer;
+            // Translated copy's {price:…} tokens follow the regional offer too.
+            if (window.AttPricing) window.AttPricing.fromStatus({ pricing: offer.pricing });
+            if (window.AttStrings && AttStrings.refreshPrices) AttStrings.refreshPrices();
             paintTieredPricing();
           }
         })

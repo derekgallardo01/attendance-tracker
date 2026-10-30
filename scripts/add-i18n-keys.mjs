@@ -8,6 +8,7 @@ import { TRANSLATION_FIXES } from './translation-fixes.mjs';
 import { ERROR_KEYS_EN, ERROR_KEY_TRANSLATIONS } from './i18n-error-keys.mjs';
 import { PLURAL_KEYS_EN, PLURAL_KEY_TRANSLATIONS } from './i18n-plural-keys.mjs';
 import { UI_KEYS_EN, UI_KEY_TRANSLATIONS } from './i18n-ui-keys.mjs';
+import { PRICE_TOKEN_FIXES } from './i18n-price-tokens.mjs';
 import { NEW_WEBSITE_KEYS_EN, NEW_WEBSITE_KEY_LIST, NEW_WEBSITE_PART1 } from './new-website-keys-part1.mjs';
 import { NEW_WEBSITE_PART2A } from './new-website-keys-part2a.mjs';
 import { NEW_WEBSITE_PART2B } from './new-website-keys-part2b.mjs';
@@ -940,8 +941,11 @@ export function updateStringsFile() {
 
     // Plural categories this locale needs beyond en's one/other (few, many,
     // two, zero): upsert them, since they are not en keys.
-    for (const [k, val] of Object.entries(PLURAL_KEY_TRANSLATIONS[loc] || {})) {
-      if (k in allTargetKeys) continue;
+    //
+    // Then the {price:<plan>} token versions of price-bearing copy — LAST, so
+    // no earlier override can bring back a stale literal price.
+    const pluralExtras = Object.entries(PLURAL_KEY_TRANSLATIONS[loc] || {}).filter(([k]) => !(k in allTargetKeys));
+    for (const [k, val] of [...pluralExtras, ...Object.entries(PRICE_TOKEN_FIXES[loc] || {})]) {
       const keyEscaped = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const reg = new RegExp(`^[ \\t]*["']${keyEscaped}["']:\\s*(?:"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'),?\\r?\\n?`, 'gm');
       const line = `        ${JSON.stringify(k)}: ${JSON.stringify(val)},\n`;
