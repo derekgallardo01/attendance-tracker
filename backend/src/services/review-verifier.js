@@ -25,13 +25,13 @@ function isNameMatch(authorName, userDisplayName, userEmail) {
 
   if (!normAuthor) return false;
 
-  // 1. Exact or normalized full match
-  if (normDisplay && (normAuthor === normDisplay || normAuthor.includes(normDisplay) || normDisplay.includes(normAuthor))) {
+  // 1. Exact or normalized full match (require >=3 chars for substring inclusion)
+  if (normDisplay && (normAuthor === normDisplay || (normDisplay.length >= 3 && normAuthor.length >= 3 && (normAuthor.includes(normDisplay) || normDisplay.includes(normAuthor))))) {
     return true;
   }
 
   // 2. Email username match (e.g. author "jacobswag" matches user "jacobswag93@gmail.com")
-  if (emailUsername && (emailUsername.includes(normAuthor) || normAuthor.includes(emailUsername))) {
+  if (emailUsername && (emailUsername === normAuthor || (emailUsername.length >= 3 && normAuthor.length >= 3 && (emailUsername.includes(normAuthor) || normAuthor.includes(emailUsername))))) {
     return true;
   }
 

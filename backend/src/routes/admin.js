@@ -17,7 +17,7 @@ const { refreshAccessToken, makeUserClient } = require('../services/googleAuth')
 const { meetGet, fetchConferenceParticipants } = require('../services/meetApi');
 const { google } = require('googleapis');
 const { buildAndSaveExport } = require('./sheets');
-const { reconcilePendingReviews } = require('../services/review-verifier');
+const { reconcilePendingReviews, grantReviewReward } = require('../services/review-verifier');
 const { syncMarketplaceReviews } = require('../services/marketplace-reviews');
 
 async function createSuppressedChecker() {
@@ -2211,7 +2211,7 @@ router.all('/admin/reviews/approve-reward', async (req, res) => {
 
 // POST /api/admin/reviews/send-reward-email — Dispatch or re-send review reward email (Super Admin)
 router.post('/admin/reviews/send-reward-email', requireSuperAdmin, async (req, res) => {
-  const { email, customSubject, customText, customHtml } = req.body;
+  const { email, reviewId, customSubject, customText, customHtml } = req.body;
   if (!email || !email.includes('@')) {
     return res.status(400).json({ error: 'Valid email is required' });
   }
@@ -2221,13 +2221,23 @@ router.post('/admin/reviews/send-reward-email', requireSuperAdmin, async (req, r
     const emailLower = String(email).toLowerCase();
     const domainLower = emailLower.split('@')[1] || 'gmail.com';
     const userRef = db.collection('tenants').doc(domainLower).collection('users').doc(emailLower);
-    const userSnap = await userRef.get();
+    let userSnap = await userRef.get();
 
     if (!userSnap.exists) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const userData = userSnap.data();
+    let userData = userSnap.data();
+    if (reviewId && userData.reviewStatus !== 'verified_reviewed') {
+      const reviewSnap = await db.collection('marketplace_reviews').doc(String(reviewId)).get();
+      const reviewData = reviewSnap.exists
+        ? { reviewId: String(reviewId), ...reviewSnap.data() }
+        : { reviewId: String(reviewId), authorName: userData.displayName || emailLower, rating: 5, comment: '' };
+      await grantReviewReward(domainLower, emailLower, reviewData);
+      userSnap = await userRef.get();
+      userData = userSnap.data();
+    }
+
     const sendResult = await sendReviewRewardEmail({
       to: emailLower,
       displayName: userData.displayName,
@@ -2235,7 +2245,7 @@ router.post('/admin/reviews/send-reward-email', requireSuperAdmin, async (req, r
       country: userData.signupGeo?.country,
       language: userData.language,
       expiresAt: userData.individualPlanExpiresAt,
-      reviewId: userData.reviewId,
+      reviewId: userData.reviewId || reviewId,
       rating: userData.reviewRating || 5,
       customSubject,
       customText,
