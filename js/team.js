@@ -9,14 +9,25 @@
 (function (root) {
   'use strict';
 
+  // Locale-aware formatters from js/strings.js (AttStrings.fmt) follow the
+  // language the user chose; null when that runtime isn't loaded (Node/Jest).
+  function intlFmt() {
+    const S = root.AttStrings;
+    return S && S.fmt ? S.fmt : null;
+  }
+
   function fmtDate(iso) {
     if (!iso) return '—';
+    const F = intlFmt();
+    if (F) return F.date(iso);
     return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
   // Duration in ms → "45m" / "1h" / "1h 20m"; em-dash when absent/non-positive.
   function fmtDuration(ms) {
     if (!ms || ms <= 0) return '—';
+    const F = intlFmt();
+    if (F) return F.duration(ms);
     const m = Math.round(ms / 60000);
     if (m < 60) return `${m}m`;
     const h = Math.floor(m / 60);
@@ -27,13 +38,18 @@
   // Whole minutes → "45m" / "1h" / "1h 20m"; em-dash when absent.
   function fmtMinutes(min) {
     if (!min) return '—';
+    const F = intlFmt();
+    if (F) return F.minutes(min);
     if (min < 60) return `${min}m`;
     const h = Math.floor(min / 60);
     const m = min % 60;
     return m ? `${h}h ${m}m` : `${h}h`;
   }
 
-  function pct(v) { return Math.round(v * 100) + '%'; }
+  function pct(v) {
+    const F = intlFmt();
+    return F ? F.percent(v) : Math.round(v * 100) + '%';
+  }
 
   // Series date range: "Mar 3, 2026 – Apr 1, 2026", or a single date.
   function computeRange(firstAt, lastAt) {

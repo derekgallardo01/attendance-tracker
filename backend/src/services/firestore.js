@@ -2305,6 +2305,20 @@ async function updateUserTokens(domain, email, { accessToken, tokenExpiresAt }) 
   }
 }
 
+// The app language the user last used (from the X-App-Locale header). Read by
+// every server-rendered surface — emails from crons, exports, digests — that
+// has no browser request to read a language from.
+async function setUserLanguage(domain, email, language) {
+  try {
+    await tenantRef(domain).collection('users').doc(email.toLowerCase()).set(
+      { language, languageUpdatedAt: FieldValue.serverTimestamp() },
+      { merge: true }
+    );
+  } catch (err) {
+    log.warn('firestore: setUserLanguage failed', { domain, email, error: err.message });
+  }
+}
+
 // ── Per-user activation status (for in-product nudges + celebration moment) ──
 
 async function getUserActivationStatus(domain, email) {
@@ -3429,7 +3443,7 @@ module.exports = {
   persistAttendance, clearAttendanceDebounceCache, persistCalendarData, persistExport,
   getMeetingExcusedEmails, addMeetingExcusedEmails, getMeetingWithParticipants, isMeetingTrackedByActor,
   saveVerifications, getVerification,
-  getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens,
+  getUser, upsertUser, getUserSheetId, setUserSheetId, updateUserTokens, setUserLanguage,
   getUserSettings, updateUserSettings, isNotificationCategoryEnabled,
   setUserAcquisitionSource, setUserAcquisitionDismissed, setPostExportSurvey, claimSignupNotification, releaseSignupNotification, getTenantAdminEmailStrict,
   getDomainTeacherCount, getDomainClusterStats, setTeamSignpostDismissed,

@@ -1800,7 +1800,7 @@
           return;
         }
         sendPricingError(data.error || `Stripe checkout session creation failed (HTTP ${res.status})`, { where: 'pricing_checkout_failed', reason: `status_${res.status}` });
-        alert(data.error || t('pricing.checkoutUnavailable', 'Billing checkout is currently unavailable. Please try again or email support.'));
+        alert((window.AttStrings && AttStrings.errorText) ? AttStrings.errorText(data, 'pricing.checkoutUnavailable', 'Billing checkout is currently unavailable. Please try again or email support.') : (data.error || t('pricing.checkoutUnavailable', 'Billing checkout is currently unavailable. Please try again or email support.')));
       } catch (err) {
         sendPricingError(err.message || 'Stripe checkout network exception', { where: 'pricing_checkout_exception', reason: err.name });
         alert(t('pricing.checkoutNetwork', 'Could not reach billing service. Please check your internet connection.'));

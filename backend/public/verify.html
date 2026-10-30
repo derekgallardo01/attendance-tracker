@@ -100,7 +100,7 @@
         ${detail ? row(t('verify.rowDuration', 'Duration / credit'), detail) : ''}
         ${row(t('verify.rowIssuer', 'Issued by'), d.issuer)}
         <div class="row"><span class="k">${esc(t('verify.rowCode', 'Verification code'))}</span><span class="v code">${esc(d.code)}</span></div>
-        ${d.issuedAt ? `<div class="hint">${esc(t('verify.recorded', 'Recorded {when}. This confirms Attendance Tracker issued this certificate from recorded Google Meet attendance.').replace('{when}', new Date(d.issuedAt).toLocaleString()))}</div>` : ''}
+        ${d.issuedAt ? `<div class="hint">${esc(t('verify.recorded', 'Recorded {when}. This confirms Attendance Tracker issued this certificate from recorded Google Meet attendance.').replace('{when}', (typeof AttStrings !== 'undefined' && AttStrings.fmt) ? AttStrings.fmt.dateTime(d.issuedAt) : new Date(d.issuedAt).toLocaleString()))}</div>` : ''}
       </div>`;
     }
 

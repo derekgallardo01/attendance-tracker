@@ -1713,7 +1713,7 @@ describe('billing/status pricing payload', () => {
       .send({ domain: 'college.edu' });
 
     expect(res.status).toBe(500);
-    expect(res.body).toEqual({ error: 'Failed to record school license request' });
+    expect(res.body).toEqual({ error: 'Failed to record school license request', code: 'SERVER_ERROR' });
   });
 
   test('GET /billing/status skips trialInfo if user is Pro or date is invalid or settings throws', async () => {

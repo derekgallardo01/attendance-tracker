@@ -63,4 +63,19 @@ describe('i18n hook (tr uses global t when present)', () => {
     // A server-provided error still wins over the localized fallback.
     expect(setup.verifyResult({ success: false, error: 'raw' }).message).toBe('raw');
   });
+
+  test('uses AttStrings.errorText (coded, localized) when the i18n runtime is loaded', () => {
+    const calls = [];
+    global.AttStrings = { errorText: (body, key, text) => { calls.push([body, key, text]); return 'localized'; } };
+    try {
+      const data = { success: false, error: 'x', code: 'DELEGATION_NOT_CONFIGURED' };
+      expect(setup.verifyResult(data).message).toBe('localized');
+      expect(calls[0][0]).toBe(data);
+      expect(calls[0][1]).toBe('setup.notConfigured');
+      global.AttStrings = {}; // older runtime without errorText → raw fallback
+      expect(setup.verifyResult({ success: false, error: 'raw' }).message).toBe('raw');
+    } finally {
+      delete global.AttStrings;
+    }
+  });
 });

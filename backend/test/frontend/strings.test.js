@@ -26,6 +26,257 @@ describe('t() lookup', () => {
   });
 });
 
+describe('tf() named placeholders', () => {
+  beforeEach(() => strings.setLocale('en'));
+  afterEach(() => { delete strings.STRINGS.en['test.tfNonString']; });
+
+  test('fills known placeholders and leaves unknown ones visible', () => {
+    expect(strings.tf('missing.key', { a: 1 }, 'A={a} B={b}')).toBe('A=1 B={b}');
+  });
+
+  test('without vars the raw string is returned', () => {
+    expect(strings.tf('missing.key', null, 'A={a}')).toBe('A={a}');
+  });
+
+  test('non-string dictionary values pass through untouched', () => {
+    strings.STRINGS.en['test.tfNonString'] = 42;
+    expect(strings.tf('test.tfNonString', { a: 1 })).toBe(42);
+  });
+});
+
+describe('tn() plural-aware lookup', () => {
+  const KEY = 'test.apples';
+  beforeAll(() => {
+    strings.STRINGS.en[KEY + '.one'] = '{count} apple';
+    strings.STRINGS.en[KEY + '.other'] = '{count} apples in {place}';
+    strings.STRINGS.ru[KEY + '.one'] = '{count} яблоко';
+    strings.STRINGS.ru[KEY + '.few'] = '{count} яблока';
+    strings.STRINGS.ru[KEY + '.many'] = '{count} яблок';
+    strings.STRINGS.de[KEY + '.other'] = '{count} Äpfel';
+  });
+  afterAll(() => {
+    for (const loc of ['en', 'ru', 'de']) {
+      for (const c of ['one', 'few', 'many', 'other']) delete strings.STRINGS[loc][KEY + '.' + c];
+    }
+  });
+  afterEach(() => strings.setLocale('en'));
+
+  test('English one/other with extra vars', () => {
+    expect(strings.tn(KEY, 1)).toBe('1 apple');
+    expect(strings.tn(KEY, 3, { place: 'a box' })).toBe('3 apples in a box');
+  });
+
+  test('Russian uses one/few/many categories and locale number formatting', () => {
+    strings.setLocale('ru');
+    expect(strings.tn(KEY, 1)).toBe('1 яблоко');
+    expect(strings.tn(KEY, 3)).toBe('3 яблока');
+    expect(strings.tn(KEY, 5)).toBe('5 яблок');
+    expect(strings.tn(KEY, 1000)).toBe('1 000 яблок');
+  });
+
+  test('falls back to the locale .other, then English, then fallback, then key', () => {
+    strings.setLocale('de');
+    expect(strings.tn(KEY, 1)).toBe('1 Äpfel'); // no de .one → de .other
+    strings.setLocale('fr');
+    expect(strings.tn(KEY, 2, { place: 'x' })).toBe('2 apples in x'); // English
+    expect(strings.tn('test.none', 2, null, '{count} things')).toBe('2 things');
+    expect(strings.tn('test.none', 2)).toBe('test.none');
+  });
+
+  test('non-numeric counts are treated as 0', () => {
+    expect(strings.tn(KEY, 'abc', { place: 'p' })).toBe('0 apples in p');
+  });
+
+  test('survives Intl failures (number formatting and plural rules)', () => {
+    const realNF = Intl.NumberFormat;
+    Intl.NumberFormat = function () { throw new Error('nope'); };
+    try {
+      expect(strings.tn(KEY, 1)).toBe('1 apple');
+    } finally {
+      Intl.NumberFormat = realNF;
+    }
+    expect(strings.pluralCategory(1, 'not a locale!!')).toBe('one');
+    expect(strings.pluralCategory(2, 'not a locale!!')).toBe('other');
+  });
+});
+
+describe('fmt — locale-aware formatting', () => {
+  const F = strings.fmt;
+  const D = new Date(Date.UTC(2026, 2, 5, 14, 7)); // 5 Mar 2026 14:07 UTC
+  afterEach(() => strings.setLocale('en'));
+
+  test('date/time/dateTime follow the CHOSEN locale and accept options', () => {
+    strings.setLocale('de');
+    expect(F.date(D, { timeZone: 'UTC' })).toBe('5. März 2026');
+    expect(F.date(D)).toMatch(/2026/);
+    expect(F.time(D, { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })).toBe('14:07');
+    expect(F.time(D)).toMatch(/\d/);
+    expect(F.dateTime(D, null, 'en')).toMatch(/Mar 5, 2026/);
+    expect(F.date(D.toISOString(), { timeZone: 'UTC' }, 'ja')).toBe('2026年3月5日');
+  });
+
+  test('empty and invalid dates render as empty strings', () => {
+    for (const bad of [null, undefined, '', 'not a date']) {
+      expect(F.date(bad)).toBe('');
+      expect(F.time(bad)).toBe('');
+      expect(F.relative(bad)).toBe('');
+    }
+  });
+
+  test('numbers and percents use locale digits and symbols', () => {
+    expect(F.number(1234.5, null, 'de')).toBe('1.234,5');
+    expect(F.number('x')).toBe('');
+    expect(F.percent(0.875, 'en')).toBe('88%');
+    expect(F.percent(0.5, 'fr')).toBe('50 %');
+    expect(F.percent('nope')).toBe('');
+  });
+
+  test('minutes/duration render localized units', () => {
+    expect(F.minutes(0, 'en')).toBe('< 1 min');
+    expect(F.minutes(5, 'en')).toBe('5 min');
+    expect(F.minutes(60, 'en')).toBe('1 hr');
+    expect(F.minutes(65, 'en')).toBe('1 hr 5 min');
+    expect(F.minutes('junk', 'en')).toBe('< 1 min');
+    expect(F.duration(65 * 60000, 'de')).toBe('1 Std. 5 Min.');
+    expect(F.duration(null, 'en')).toBe('< 1 min');
+  });
+
+  test('relative times use Intl.RelativeTimeFormat', () => {
+    const now = D.getTime();
+    expect(F.relative(D, now, 'en')).toBe('now');
+    expect(F.relative(now - 5 * 60000, now, 'en')).toBe('5 minutes ago');
+    expect(F.relative(now - 2 * 3600000, now, 'en')).toBe('2 hours ago');
+    expect(F.relative(now - 86400000, now, 'en')).toBe('yesterday');
+    expect(F.relative(now - 3 * 86400000, now, 'es')).toBe('hace 3 días');
+    expect(F.relative(new Date(Date.now() - 1000))).not.toBe('');
+  });
+
+  test('weekStart from Intl week info', () => {
+    expect(F.weekStart('en-US')).toBe(0);
+    expect(F.weekStart('de-DE')).toBe(1);
+    strings.setLocale('de');
+    expect([0, 1]).toContain(F.weekStart());
+  });
+
+  test('fallbacks when Intl throws or lacks week info', () => {
+    const real = { DTF: Intl.DateTimeFormat, NF: Intl.NumberFormat, RTF: Intl.RelativeTimeFormat, L: Intl.Locale };
+    const boom = function () { throw new Error('no intl'); };
+    Intl.DateTimeFormat = boom; Intl.NumberFormat = boom; Intl.RelativeTimeFormat = boom;
+    try {
+      expect(F.date(D)).toBe(D.toDateString());
+      expect(F.time(D)).toBe(D.toTimeString().slice(0, 5));
+      expect(F.number(3)).toBe('3');
+      expect(F.relative(D, D.getTime())).toBe('now');
+      expect(F.relative(D, D.getTime() + 60000)).toBe('1 minute ago');
+      expect(F.relative(D, D.getTime() + 120000)).toBe('2 minutes ago');
+    } finally {
+      Intl.DateTimeFormat = real.DTF; Intl.NumberFormat = real.NF; Intl.RelativeTimeFormat = real.RTF;
+    }
+    // Intl.Locale without week info → region fallback table.
+    Intl.Locale = function () { return { weekInfo: undefined }; };
+    try {
+      expect(F.weekStart('pt')).toBe(0);
+      expect(F.weekStart('fr')).toBe(1);
+    } finally {
+      Intl.Locale = real.L;
+    }
+    // getWeekInfo() path.
+    Intl.Locale = function () { return { getWeekInfo: () => ({ firstDay: 6 }) }; };
+    try {
+      expect(F.weekStart('ar')).toBe(6);
+    } finally {
+      Intl.Locale = real.L;
+    }
+  });
+});
+
+describe('errorText() — API errors in the user language', () => {
+  beforeAll(() => {
+    strings.STRINGS.en['error.ZZ_QUOTA'] = 'Used {limit} exports';
+    strings.STRINGS.es['error.ZZ_QUOTA'] = 'Usaste {limit} exportaciones';
+  });
+  afterAll(() => {
+    delete strings.STRINGS.en['error.ZZ_QUOTA'];
+    delete strings.STRINGS.es['error.ZZ_QUOTA'];
+  });
+  afterEach(() => strings.setLocale('en'));
+
+  test('a known code renders the translated message with params', () => {
+    strings.setLocale('es');
+    expect(strings.errorText({ error: 'English', code: 'ZZ_QUOTA', params: { limit: 2 } })).toBe('Usaste 2 exportaciones');
+  });
+
+  test('English UI shows the server message when the code is unknown or missing', () => {
+    expect(strings.errorText({ error: 'Specific English detail', code: 'ZZ_UNKNOWN' })).toBe('Specific English detail');
+  });
+
+  test('non-English UI never shows raw English: fallback key, then generic', () => {
+    strings.setLocale('es');
+    expect(strings.errorText({ error: 'English only' }, 'btn.cancel')).toBe(strings.t('btn.cancel'));
+    expect(strings.errorText({ error: 'English only' })).toBe(strings.t('error.SERVER_ERROR', 'Something went wrong. Please try again.'));
+    expect(strings.errorText(null)).toBe(strings.t('error.SERVER_ERROR', 'Something went wrong. Please try again.'));
+  });
+
+  test('apiError carries localized text and the code', () => {
+    strings.setLocale('es');
+    const err = strings.apiError({ error: 'x', code: 'ZZ_QUOTA', params: { limit: 3 } });
+    expect(err).toBeInstanceOf(Error);
+    expect(err.message).toBe('Usaste 3 exportaciones');
+    expect(err.localized).toBe(true);
+    expect(err.code).toBe('ZZ_QUOTA');
+    expect(strings.apiError(null).code).toBeNull();
+  });
+
+  test('exceptionText: localized passes through, network → could-not-reach, raw only for English', () => {
+    const generic = strings.t('error.SERVER_ERROR', 'Something went wrong. Please try again.');
+    const reach = strings.t('common.couldNotReach', 'Could not reach server');
+    expect(strings.exceptionText(Object.assign(new Error('ya traducido'), { localized: true }))).toBe('ya traducido');
+    expect(strings.exceptionText(new TypeError('whatever'))).toBe(reach);
+    expect(strings.exceptionText(new Error('Failed to fetch'))).toBe(reach);
+    expect(strings.exceptionText(new Error('Specific detail'))).toBe('Specific detail');
+    expect(strings.exceptionText(null)).toBe(generic);
+    strings.setLocale('es');
+    expect(strings.exceptionText(new Error('English detail'), 'btn.cancel')).toBe(strings.t('btn.cancel'));
+    expect(strings.exceptionText(new Error('English detail'))).toBe(strings.t('error.SERVER_ERROR', 'Something went wrong. Please try again.'));
+    expect(strings.exceptionText({ message: 42 })).toBe(strings.t('error.SERVER_ERROR', 'Something went wrong. Please try again.'));
+  });
+
+  test('English with an empty body and the pseudo-locale fall through to the generic message', () => {
+    expect(strings.errorText('not an object')).toBe(strings.t('error.SERVER_ERROR', 'Something went wrong. Please try again.'));
+    strings.setLocale('qps');
+    expect(strings.errorText({ error: 'raw' })).toMatch(/^\[!! /);
+  });
+});
+
+describe('pseudo-locale (qps)', () => {
+  afterEach(() => {
+    strings.setLocale('en');
+    window.history.replaceState({}, '', '/');
+  });
+
+  test('wraps every lookup and renders English, without persisting', () => {
+    localStorage.removeItem('att_locale');
+    strings.setLocale('qps', true);
+    expect(strings.isPseudo()).toBe(true);
+    expect(strings.getLocale()).toBe('en');
+    expect(strings.t('btn.start')).toBe('[!! Start !!]');
+    expect(strings.tf('missing.key', { a: 1 }, 'A={a}')).toBe('[!! A=1 !!]');
+    expect(strings.tn('missing.key', 2, null, '{count} x')).toBe('[!! 2 x !!]');
+    expect(localStorage.getItem('att_locale')).toBeNull();
+  });
+
+  test('switching to a real locale turns it off', () => {
+    strings.setLocale('qps');
+    strings.setLocale('es');
+    expect(strings.isPseudo()).toBe(false);
+  });
+
+  test('?lang=qps is detected', () => {
+    window.history.replaceState({}, '', '/?lang=qps');
+    expect(strings.detectLocale()).toBe('qps');
+  });
+});
+
 describe('setLocale + fallback chain', () => {
   afterEach(() => strings.setLocale('en'));
 

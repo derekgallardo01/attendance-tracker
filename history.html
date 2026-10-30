@@ -438,6 +438,11 @@
 
   <script>
     window.t = window.t || function (k, f) { return (window.AttStrings && typeof window.AttStrings.t === 'function') ? window.AttStrings.t(k, f) : (f !== undefined ? f : k); };
+    // X-App-Locale: tells the backend the language the user chose (emails, exports).
+    function errText(body, key, text) { return (window.AttStrings && AttStrings.errorText) ? AttStrings.errorText(body, key, text) : ((body && body.error) || text); }
+    function apiErr(body, key, text) { return (window.AttStrings && AttStrings.apiError) ? AttStrings.apiError(body, key, text) : new Error((body && body.error) || text); }
+    function excText(err, key, text) { return (window.AttStrings && AttStrings.exceptionText) ? AttStrings.exceptionText(err, key, text) : ((err && err.message) || text); }
+    function localeHdr() { return (window.AttStrings && typeof window.AttStrings.localeHeader === 'function') ? window.AttStrings.localeHeader() : {}; }
     const BACKEND_URL = AttApi.BACKEND_URL; // shared js/api.js (loaded in <head>)
     let sessionToken = null;
     let userEmail = null;
@@ -458,7 +463,7 @@
           document.getElementById('dashboard').style.display = 'block';
           loadHistory();
         },
-        onError: (err) => { alert(t('history.signInFailed', 'Sign-in failed:') + ' ' + err.message); },
+        onError: (err) => { alert(t('history.signInFailed', 'Sign-in failed:') + ' ' + excText(err)); },
       });
     }
 
@@ -494,7 +499,7 @@
 
       try {
         const res = await fetch(`${BACKEND_URL}/oauth/me`, {
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { 'Authorization': `Bearer ${token}`, ...localeHdr() }
         });
         if (res.ok) {
           const me = await res.json();
@@ -568,7 +573,7 @@
         // /history, /series, and /oauth/me are independent reads — fire in
         // parallel so the page paints in one round-trip. /oauth/me tells us
         // whether to surface the Team admin link.
-        const authH = { 'Authorization': `Bearer ${sessionToken}` };
+        const authH = { 'Authorization': `Bearer ${sessionToken}`, ...localeHdr() };
         const [hRes, sRes, meRes, bRes] = await Promise.all([
           fetch(`${BACKEND_URL}/history`, { headers: authH }),
           fetch(`${BACKEND_URL}/series`, { headers: authH }),
@@ -699,7 +704,7 @@
       try {
         fetch(`${BACKEND_URL}/history/signpost-dismiss`, {
           method: 'POST',
-          headers: { 'Authorization': `Bearer ${sessionToken}` },
+          headers: { 'Authorization': `Bearer ${sessionToken}`, ...localeHdr() },
         }).catch(() => {});
       } catch (e) {}
     }
@@ -791,7 +796,7 @@
         window.location.href = await AttApi.startCheckout(sessionToken, { plan, interval }); // shared js/api.js
         return;
       } catch (e) {
-        alert(e.message);
+        alert(excText(e));
       }
       if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; }
     }
@@ -846,11 +851,11 @@
       if (btn?.dataset.mode === 'portal') {
         btn.disabled = true; const orig = btn.textContent; btn.textContent = t('common.loading', 'Loading…');
         try {
-          const res = await fetch(`${BACKEND_URL}/billing/portal`, { headers: { 'Authorization': `Bearer ${sessionToken}` } });
+          const res = await fetch(`${BACKEND_URL}/billing/portal`, { headers: { 'Authorization': `Bearer ${sessionToken}`, ...localeHdr() } });
           const body = await res.json();
           if (res.ok && body.url) { window.location.href = body.url; return; }
-          alert(body.error || t('history.billingPortalError', 'Could not open the billing portal.'));
-        } catch (e) { alert(e.message); }
+          alert(errText(body, 'history.billingPortalError', 'Could not open the billing portal.'));
+        } catch (e) { alert(excText(e)); }
         btn.disabled = false; btn.textContent = orig;
         return;
       }
@@ -1008,7 +1013,7 @@
       try {
         const res = await fetch(`${BACKEND_URL}/export/pdf`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}` },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}`, ...localeHdr() },
           body: JSON.stringify({
             type,
             conferenceId,
@@ -1137,7 +1142,7 @@
       try {
         fetch(`${BACKEND_URL}/event`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}` },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}`, ...localeHdr() },
           body: JSON.stringify({ type, meta: meta || null }),
         }).catch(() => {});
       } catch (e) { /* ignore */ }
@@ -1201,7 +1206,7 @@
       try {
         const res = await fetch(`${BACKEND_URL}/share`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}` },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}`, ...localeHdr() },
           body: JSON.stringify({ meetingId, type: 'meeting' }),
         });
         if (!res.ok) throw new Error(res.status);
@@ -1233,7 +1238,7 @@
       try {
         const res = await fetch(`${BACKEND_URL}/share`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}` },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}`, ...localeHdr() },
           body: JSON.stringify({ recurringEventId, type: 'series' }),
         });
         if (!res.ok) throw new Error(res.status);
@@ -1428,7 +1433,7 @@
 
       try {
         const res = await fetch(`${BACKEND_URL}/history/meeting/${encodeURIComponent(id)}`, {
-          headers: { 'Authorization': `Bearer ${sessionToken}` }
+          headers: { 'Authorization': `Bearer ${sessionToken}`, ...localeHdr() }
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const detail = await res.json();
@@ -1438,7 +1443,7 @@
         loading.style.display = 'none';
         content.style.display = 'flex';
       } catch (err) {
-        loading.innerHTML = `<div style="color:var(--error)">Failed to load meeting details: ${esc(err.message)}</div>`;
+        loading.innerHTML = `<div style="color:var(--error)">${esc(excText(err, 'history.meetingDetailsFailed', 'Could not load meeting details.'))}</div>`;
       }
     }
 
@@ -1455,7 +1460,7 @@
         try {
           const res = await fetch(`${BACKEND_URL}/billing/record-export`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}` },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}`, ...localeHdr() },
             body: JSON.stringify({
               exportType: 'csv',
               conferenceId: activeMeetingDetail.conferenceId || activeMeetingDetail.id,
@@ -1560,13 +1565,13 @@
 
       try {
         const res = await fetch(`${BACKEND_URL}/history/recent-conferences`, {
-          headers: { 'Authorization': `Bearer ${sessionToken}` }
+          headers: { 'Authorization': `Bearer ${sessionToken}`, ...localeHdr() }
         });
         const body = await res.json();
         loading.style.display = 'none';
 
         if (!res.ok) {
-          errBox.textContent = body.error || 'Failed to fetch conferences';
+          errBox.textContent = errText(body, 'history.conferencesFailed', 'Could not load your past Google Meet calls.');
           errBox.style.display = 'block';
           return;
         }
@@ -1598,7 +1603,7 @@
         }).join('');
       } catch (e) {
         loading.style.display = 'none';
-        errBox.textContent = e.message || 'Failed to fetch conferences';
+        errBox.textContent = excText(e, 'history.conferencesFailed', 'Could not load your past Google Meet calls.');
         errBox.style.display = 'block';
       }
     }
@@ -1618,7 +1623,7 @@
       try {
         const res = await fetch(`${BACKEND_URL}/history/import-conference`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}` },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}`, ...localeHdr() },
           body: JSON.stringify({ conferenceRecordName: recordName }),
         });
         const body = await res.json();
@@ -1628,7 +1633,7 @@
           openUpgradeModal(body.feature || 'exportQuota');
           return;
         }
-        if (!res.ok) throw new Error(body.error || 'Import failed');
+        if (!res.ok) throw apiErr(body);
         btn.textContent = t('history.imported', 'Imported ✓');
         btn.classList.remove('btn-primary');
         btn.classList.add('btn-secondary');
@@ -1637,7 +1642,7 @@
         btn.disabled = false;
         btn.textContent = original;
         if (errBox) {
-          errBox.textContent = `${t('history.importFailed', 'Import failed:')} ${err.message || ''}`;
+          errBox.textContent = `${t('history.importFailed', 'Import failed:')} ${excText(err)}`;
           errBox.style.display = 'block';
         }
       }
@@ -1697,7 +1702,7 @@
 
       try {
         const res = await fetch(`${BACKEND_URL}/participant?key=${encodeURIComponent(key)}`, {
-          headers: { 'Authorization': `Bearer ${sessionToken}` }
+          headers: { 'Authorization': `Bearer ${sessionToken}`, ...localeHdr() }
         });
         if (res.ok) {
           const detail = await res.json();
@@ -1724,7 +1729,7 @@
       try {
         const res = await fetch(`${BACKEND_URL}/participant/note`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}` },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}`, ...localeHdr() },
           body: JSON.stringify({ key: activeParticipantKey, body: note })
         });
         if (res.ok) {
@@ -1741,14 +1746,14 @@
       tbody.innerHTML = `<tr><td colspan="7" class="muted">Loading share links…</td></tr>`;
       try {
         const res = await fetch(`${BACKEND_URL}/share/links`, {
-          headers: { 'Authorization': `Bearer ${sessionToken}` }
+          headers: { 'Authorization': `Bearer ${sessionToken}`, ...localeHdr() }
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const result = await res.json();
         userShareLinks = result.links || [];
         renderShareLinks();
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="7" class="muted" style="color:var(--error)">Failed to load share links: ${esc(err.message)}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="muted" style="color:var(--error)">${esc(excText(err, 'history.shareLinksFailed', 'Could not load your share links.'))}</td></tr>`;
       }
     }
 
@@ -1818,7 +1823,7 @@
       try {
         const res = await fetch(`${BACKEND_URL}/share/revoke`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}` },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}`, ...localeHdr() },
           body: JSON.stringify({ token }),
         });
         if (!res.ok) throw new Error(res.status);

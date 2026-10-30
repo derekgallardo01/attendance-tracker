@@ -67,8 +67,16 @@
   function authedFetch(token, path, opts = {}) {
     return fetch(`${BACKEND_URL}${path}`, {
       ...opts,
-      headers: { ...(opts.headers || {}), Authorization: `Bearer ${token}` },
+      headers: { ...localeHeader(), ...(opts.headers || {}), Authorization: `Bearer ${token}` },
     });
+  }
+
+  // X-App-Locale for the backend (see AttStrings.localeHeader); {} when the
+  // i18n runtime isn't loaded.
+  function localeHeader() {
+    return root.AttStrings && typeof root.AttStrings.localeHeader === 'function'
+      ? root.AttStrings.localeHeader()
+      : {};
   }
 
   // Start a Stripe Checkout session for the caller's domain and return the
@@ -94,6 +102,10 @@
     }
     const body = await res.json().catch(() => ({}));
     if (res.ok && body.url) return body.url;
+    // Server errors carry a translatable code — show it in the user's language.
+    if (root.AttStrings && typeof root.AttStrings.apiError === 'function') {
+      throw root.AttStrings.apiError(body, 'api.billingUnavailable', 'Billing is unavailable right now.');
+    }
     throw new Error(body.error || tr('api.billingUnavailable', 'Billing is unavailable right now.'));
   }
 

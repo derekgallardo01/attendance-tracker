@@ -137,28 +137,52 @@ const COUNTRY_TO_LOCALE = {
   "SI": "sl"
 };
 
-function normalizeLocale(rawLocale, countryHint) {
-  if (!rawLocale || typeof rawLocale !== 'string') {
-    if (countryHint && typeof countryHint === 'string') {
-      const c = countryHint.trim().toUpperCase();
-      if (COUNTRY_TO_LOCALE[c]) return COUNTRY_TO_LOCALE[c];
-    }
-    return 'en';
-  }
-  const raw = rawLocale.trim().toLowerCase();
-  if (raw.startsWith('zh-cn') || raw.startsWith('zh-sg') || raw === 'zh-hans') return 'zh-CN';
+// Legacy / alternate language subtags that browsers and Google still send.
+const LANGUAGE_ALIASES = { fil: 'tl', iw: 'he', in: 'id', ji: 'yi', jw: 'jv', nb: 'no', nn: 'no' };
+
+// A supported app locale code for a raw tag ("pt-BR", "fil", "zh-Hans", "en_US"),
+// or null when the language isn't one we ship. The single normalizer for the
+// backend — emails, exports, request locale, HTML content negotiation.
+function strictLocale(rawLocale) {
+  if (!rawLocale || typeof rawLocale !== 'string') return null;
+  const raw = rawLocale.trim().toLowerCase().replace(/_/g, '-');
+  if (!raw) return null;
+  if (raw.startsWith('zh-cn') || raw.startsWith('zh-sg') || raw.startsWith('zh-hans')) return 'zh-CN';
   if (raw.startsWith('zh')) return 'zh';
-  if (raw.startsWith('nb') || raw.startsWith('nn')) return 'no';
-  const prefix = raw.split(/[-_]/)[0];
-  const parts = raw.split(/[-_]/);
+  const prefix = raw.split('-')[0];
+  const lang = LANGUAGE_ALIASES[prefix] || prefix;
+  if (lang === 'en') return 'en';
+  const { STRINGS } = getStrings();
+  return STRINGS && STRINGS[lang] ? lang : null;
+}
+
+function normalizeLocale(rawLocale, countryHint) {
+  const strict = strictLocale(rawLocale);
+  if (strict && strict !== 'en') return strict;
+  const parts = typeof rawLocale === 'string' ? rawLocale.trim().split(/[-_]/) : [];
   const country = String(countryHint || (parts.length > 1 ? parts[1] : '') || '').trim().toUpperCase();
-  if (prefix !== 'en') {
-    const { STRINGS } = getStrings();
-    if (STRINGS && STRINGS[prefix]) return prefix;
-    if (STRINGS && STRINGS[raw]) return raw;
-  }
   if (country && COUNTRY_TO_LOCALE[country]) return COUNTRY_TO_LOCALE[country];
   return 'en';
+}
+
+// The language to use for a request: the app's explicit X-App-Locale header,
+// then the user's stored language, then the att_locale cookie, then the first
+// Accept-Language entry, then a country hint. Always returns a supported code.
+function localeFromRequest(req, { storedLanguage, country } = {}) {
+  const headers = (req && req.headers) || {};
+  const cookieMatch = typeof headers.cookie === 'string' ? headers.cookie.match(/(?:^|;\s*)att_locale=([^;]+)/) : null;
+  let cookieLang = null;
+  if (cookieMatch) {
+    try { cookieLang = strictLocale(decodeURIComponent(cookieMatch[1])); } catch { cookieLang = null; }
+  }
+  const acceptFirst = typeof headers['accept-language'] === 'string'
+    ? headers['accept-language'].split(',')[0].split(';')[0]
+    : null;
+  return strictLocale(headers['x-app-locale'])
+    || strictLocale(storedLanguage)
+    || cookieLang
+    || strictLocale(acceptFirst)
+    || normalizeLocale(null, country);
 }
 
 function t(key, locale, fallback) {
@@ -171,6 +195,35 @@ function t(key, locale, fallback) {
     return STRINGS.en[key];
   }
   return fallback != null ? fallback : key;
+}
+
+// Named {placeholder} fill; unknown placeholders stay visible.
+function fill(str, vars) {
+  if (!vars || typeof str !== 'string') return str;
+  return str.replace(/\{([a-zA-Z0-9_]+)\}/g, (m, name) => (Object.prototype.hasOwnProperty.call(vars, name) ? String(vars[name]) : m));
+}
+
+function tf(key, locale, vars, fallback) {
+  return fill(t(key, locale, fallback), vars);
+}
+
+// Stateless plural lookup (the server must never share the browser module's
+// mutable locale): `key.<CLDR category>` → `key.other` → English → fallback.
+function tn(key, count, locale, vars, fallback) {
+  const norm = normalizeLocale(locale);
+  const { STRINGS } = getStrings();
+  const n = Number(count) || 0;
+  const pick = (loc) => {
+    const table = STRINGS && STRINGS[loc];
+    if (!table) return null;
+    let cat = 'other';
+    try { cat = new Intl.PluralRules(loc).select(n); } catch { /* keep other */ }
+    return table[`${key}.${cat}`] || table[`${key}.other`] || null;
+  };
+  const text = pick(norm) || pick('en') || (fallback != null ? fallback : key);
+  let numberText = String(n);
+  try { numberText = new Intl.NumberFormat(norm).format(n); } catch { /* raw */ }
+  return fill(text, Object.assign({ count: numberText, n: numberText }, vars || {}));
 }
 
 const LOCALIZED_HEADERS = {
@@ -3447,7 +3500,12 @@ function getCertLabels(locale) {
 module.exports = {
   getStrings,
   normalizeLocale,
+  strictLocale,
+  localeFromRequest,
   t,
+  tf,
+  tn,
+  fill,
   getSheetHeaders,
   getSheetSummaryLabels,
   localizeStatus,

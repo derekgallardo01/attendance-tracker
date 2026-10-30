@@ -22,6 +22,27 @@
     return fallback;
   }
 
+  // API / exception text in the user's language (AttStrings.errorText /
+  // exceptionText), falling back to the raw message when i18n isn't loaded.
+  function errText(body, key, fallback) {
+    const S = root.AttStrings;
+    return S && typeof S.errorText === 'function' ? S.errorText(body, key, fallback) : ((body && body.error) || t(key, fallback));
+  }
+  function apiErr(body, key, fallback) {
+    const S = root.AttStrings;
+    return S && typeof S.apiError === 'function' ? S.apiError(body, key, fallback) : new Error((body && body.error) || t(key, fallback));
+  }
+  function excText(err) {
+    const S = root.AttStrings;
+    return S && typeof S.exceptionText === 'function' ? S.exceptionText(err) : String((err && err.message) || '');
+  }
+  // Server-provided English detail is only shown to English users.
+  function serverMessage(data) {
+    const S = root.AttStrings;
+    const loc = S && typeof S.getLocale === 'function' ? S.getLocale() : 'en';
+    return loc === 'en' && data && data.message ? data.message : null;
+  }
+
   function ensureModalElement() {
     let modal = document.getElementById('lms-sync-modal');
     if (modal) return modal;
@@ -211,7 +232,10 @@
   async function apiFetch(endpoint, opts = {}) {
     const baseUrl = getBackendUrl();
     const token = getAuthToken();
-    const headers = Object.assign({}, opts.headers);
+    const locale = root.AttStrings && typeof root.AttStrings.localeHeader === 'function'
+      ? root.AttStrings.localeHeader()
+      : {};
+    const headers = Object.assign({}, locale, opts.headers);
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
     const url = `${baseUrl.replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;
@@ -325,7 +349,7 @@
         await this.onClassroomCourseChanged();
       } catch (err) {
         sel.innerHTML = `<option value="">(${esc(t('lms.failedToLoadCourses', 'Failed to load courses'))})</option>`;
-        showStatus(t('lms.failedToLoadCoursesErr', 'Failed to load courses: {err}').replace('{err}', err.message), 'error');
+        showStatus(t('lms.failedToLoadCoursesErr', 'Failed to load courses: {err}').replace('{err}', excText(err)), 'error');
       }
     },
 
@@ -360,7 +384,7 @@
         }
 
         if (!res.ok) {
-          showStatus(data.error || t('lms.failedToLoadAssignments', 'Failed to load assignments.'), 'error');
+          showStatus(errText(data, 'lms.failedToLoadAssignments', 'Failed to load assignments.'), 'error');
           assignSel.innerHTML = `<option value="__new__">${esc(t('lms.createNewAssignment', '+ Create new assignment'))}</option>`;
           return;
         }
@@ -372,7 +396,7 @@
         `;
         this.onClassroomAssignmentChanged();
       } catch (err) {
-        showStatus(t('lms.failedToLoadAssignmentsErr', 'Failed to load assignments: {err}').replace('{err}', err.message), 'error');
+        showStatus(t('lms.failedToLoadAssignmentsErr', 'Failed to load assignments: {err}').replace('{err}', excText(err)), 'error');
         assignSel.innerHTML = `<option value="__new__">${esc(t('lms.createNewAssignment', '+ Create new assignment'))}</option>`;
       }
     },
@@ -427,7 +451,7 @@
         const data = await res.json();
 
         if (!res.ok) {
-          showStatus(data.error || t('lms.failedToLoadCanvasCourses', 'Failed to load Canvas courses. Check URL and token.'), 'error');
+          showStatus(errText(data, 'lms.failedToLoadCanvasCourses', 'Failed to load Canvas courses. Check URL and token.'), 'error');
           courseSel.innerHTML = `<option value="">(${esc(t('lms.failedToLoadCourses', 'Failed to load courses'))})</option>`;
           return;
         }
@@ -444,7 +468,7 @@
 
         await this.onCanvasCourseChanged();
       } catch (err) {
-        showStatus(t('lms.canvasConnectionError', 'Canvas connection error: {err}').replace('{err}', err.message), 'error');
+        showStatus(t('lms.canvasConnectionError', 'Canvas connection error: {err}').replace('{err}', excText(err)), 'error');
         courseSel.innerHTML = `<option value="">(${esc(t('lms.connectionFailed', 'Connection failed'))})</option>`;
       }
     },
@@ -471,7 +495,7 @@
         const data = await res.json();
 
         if (!res.ok) {
-          showStatus(data.error || t('lms.failedToLoadCanvasAssignments', 'Failed to load Canvas assignments.'), 'error');
+          showStatus(errText(data, 'lms.failedToLoadCanvasAssignments', 'Failed to load Canvas assignments.'), 'error');
           assignSel.innerHTML = `<option value="__new__">${esc(t('lms.createNewAssignment', '+ Create new assignment'))}</option>`;
           return;
         }
@@ -483,7 +507,7 @@
         `;
         this.onCanvasAssignmentChanged();
       } catch (err) {
-        showStatus(t('lms.failedToLoadCanvasAssignmentsErr', 'Failed to load Canvas assignments: {err}').replace('{err}', err.message), 'error');
+        showStatus(t('lms.failedToLoadCanvasAssignmentsErr', 'Failed to load Canvas assignments: {err}').replace('{err}', excText(err)), 'error');
         assignSel.innerHTML = `<option value="__new__">${esc(t('lms.createNewAssignment', '+ Create new assignment'))}</option>`;
       }
     },
@@ -559,11 +583,11 @@
               this.closeModal();
               return;
             }
-            throw new Error(data.error || t('lms.classroomSyncFailed', 'Classroom sync failed.'));
+            throw apiErr(data, 'lms.classroomSyncFailed', 'Classroom sync failed.');
           }
 
           if (data.syncedCount === 0) {
-            showStatus(t('lms.warningPrefix', 'Warning: {msg}').replace('{msg}', data.message || t('lms.noStudentsMatchedRoster', 'No students matched the course roster.')), 'error');
+            showStatus(t('lms.warningPrefix', 'Warning: {msg}').replace('{msg}', serverMessage(data) || t('lms.noStudentsMatchedRoster', 'No students matched the course roster.')), 'error');
           } else {
             const totalCount = data.totalCount || records.length;
             const unmatchedCount = totalCount - data.syncedCount;
@@ -628,11 +652,11 @@
               this.closeModal();
               return;
             }
-            throw new Error(data.error || t('lms.canvasSyncFailed', 'Canvas sync failed.'));
+            throw apiErr(data, 'lms.canvasSyncFailed', 'Canvas sync failed.');
           }
 
           if (data.syncedCount === 0) {
-            showStatus(t('lms.warningPrefix', 'Warning: {msg}').replace('{msg}', data.message || t('lms.noAttendeesMatchedCanvas', 'No meeting attendees matched students in the Canvas course roster.')), 'error');
+            showStatus(t('lms.warningPrefix', 'Warning: {msg}').replace('{msg}', serverMessage(data) || t('lms.noAttendeesMatchedCanvas', 'No meeting attendees matched students in the Canvas course roster.')), 'error');
           } else {
             const totalCount = data.totalCount || records.length;
             const unmatchedCount = totalCount - data.syncedCount;
@@ -656,13 +680,16 @@
         if (typeof root.captureError === 'function') {
           root.captureError(err, { where: 'lms_sync_pushGrades', tab: _activeTab });
         }
-        showStatus(t('lms.errorPrefix', 'Error: {msg}').replace('{msg}', err.message), 'error');
+        showStatus(t('lms.errorPrefix', 'Error: {msg}').replace('{msg}', excText(err)), 'error');
       } finally {
         pushBtn.disabled = false;
         pushLabel.textContent = t('lms.pushGrades', 'Push Grades');
       }
     },
   };
+
+  // Internal i18n helpers, exposed for unit tests.
+  AttLmsSync._i18n = { errText, apiErr, excText, serverMessage };
 
   root.AttLmsSync = AttLmsSync;
   if (typeof module !== 'undefined' && module.exports) {

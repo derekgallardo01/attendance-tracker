@@ -18,7 +18,7 @@ describe('global error handler — never leaks stack traces', () => {
       .set('Content-Type', 'application/json')
       .send('{"conferenceId": '); // truncated → body-parser SyntaxError
     expect(res.status).toBe(400);
-    expect(res.body).toEqual({ error: 'Invalid JSON body.' });
+    expect(res.body).toEqual({ error: 'Invalid JSON body.', code: 'BAD_REQUEST' });
     // The old default handler dumped an HTML page with /app/node_modules paths.
     expect(res.text).not.toMatch(/node_modules|SyntaxError|at Object|\/app\//);
   });
@@ -30,7 +30,7 @@ describe('global error handler — never leaks stack traces', () => {
       .set('Content-Type', 'application/json')
       .send(huge);
     expect(res.status).toBe(413);
-    expect(res.body).toEqual({ error: 'Request body too large.' });
+    expect(res.body).toEqual({ error: 'Request body too large.', code: 'REQUEST_TOO_LARGE' });
     expect(res.text).not.toMatch(/node_modules|\/app\//);
   });
 
@@ -43,7 +43,7 @@ describe('global error handler — never leaks stack traces', () => {
       .set('Content-Type', 'application/json; charset=foo-bar')
       .send('{"a":1}');
     expect(res.status).toBe(415);
-    expect(res.body).toEqual({ error: 'Internal server error.' });
+    expect(res.body).toEqual({ error: 'Internal server error.', code: 'SERVER_ERROR' });
     expect(res.text).not.toMatch(/node_modules|SyntaxError|\/app\//);
   });
 });

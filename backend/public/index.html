@@ -165,6 +165,31 @@
       STRINGS: {},
     };
     window.t = window.t || window.AttStrings.t;
+    // API/exception text in the user's language (see AttStrings.errorText /
+    // apiError / exceptionText); degrade to the raw message if i18n is missing.
+    window.errText = function (body, key, text) {
+      return window.AttStrings.errorText ? window.AttStrings.errorText(body, key, text) : ((body && body.error) || text);
+    };
+    window.apiErr = function (body, key, text) {
+      return window.AttStrings.apiError ? window.AttStrings.apiError(body, key, text) : new Error((body && body.error) || text);
+    };
+    window.excText = function (err, key, text) {
+      return window.AttStrings.exceptionText ? window.AttStrings.exceptionText(err, key, text) : ((err && err.message) || text);
+    };
+    // Dates/times/numbers in the language the user chose (AttStrings.fmt),
+    // falling back to the browser's own formatting.
+    window.locDate = function (d, opts) {
+      const F = window.AttStrings.fmt;
+      return F ? F.date(d, opts) : new Date(d).toLocaleDateString(undefined, opts);
+    };
+    window.locTime = function (d, opts) {
+      const F = window.AttStrings.fmt;
+      return F ? F.time(d, opts) : new Date(d).toLocaleTimeString(undefined, opts);
+    };
+    window.locNumber = function (n) {
+      const F = window.AttStrings.fmt;
+      return F ? F.number(n) : Number(n).toLocaleString();
+    };
   </script>
 
   <!-- Open Graph + Twitter card — rich preview on Slack, Twitter/X, LinkedIn, iMessage -->
@@ -4257,7 +4282,7 @@ async function importFromClassroom() {
     try { logUserEvent('classroom_courses_listed', { count: courses.length }); } catch {}
   } catch (err) {
     window.captureError(err, { where: 'classroom_courses_load' });
-    showClassroomStatus(`${t('roster.classroomLoadFailed', "Couldn't load Classroom courses. Try again in a moment.")} (${err.message})`, '#f85149');
+    showClassroomStatus(excText(err, 'roster.classroomLoadFailed', "Couldn't load Classroom courses. Try again in a moment."), '#f85149');
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -4290,7 +4315,7 @@ async function importClassroomCourse() {
     try { logUserEvent('classroom_roster_imported', { studentCount: students.length }); } catch {}
   } catch (err) {
     window.captureError(err, { where: 'classroom_roster_import' });
-    showClassroomStatus(`${t('roster.classroomImportFailed', 'Import failed. Try again in a moment.')} (${err.message})`, '#f85149');
+    showClassroomStatus(excText(err, 'roster.classroomImportFailed', 'Import failed. Try again in a moment.'), '#f85149');
   } finally {
     if (importBtn) { importBtn.disabled = false; importBtn.textContent = t('roster.importBtn', 'Import'); }
   }
@@ -5343,6 +5368,7 @@ function restoreState() {
 function authHeaders() {
   const h = { 'Content-Type': 'application/json' };
   if (state.sessionToken) h['Authorization'] = `Bearer ${state.sessionToken}`;
+  if (window.AttStrings && AttStrings.localeHeader) Object.assign(h, AttStrings.localeHeader());
   return h;
 }
 
@@ -5562,7 +5588,7 @@ async function handleAuthCode(response) {
     window.captureError(err, { where: 'handleAuthCode_exchange' });
     state._reconsentMissing = null; // failed attempt — don't judge a later sign-in by it
     _pendingClassroomImport = false; // don't auto-fire an import on the next successful sign-in
-    toast(t('toast.signInFailed','Sign-in failed:') + ' ' + err.message);
+    toast(t('toast.signInFailed','Sign-in failed:') + ' ' + excText(err));
   }
 }
 
@@ -5575,7 +5601,7 @@ async function loadPublicStats() {
   const STATIC_FALLBACK_MEETINGS = 5000;
   const orgsEl = document.getElementById('stat-orgs-public');
   const meetsEl = document.getElementById('stat-meetings-public');
-  const fmt = (n) => Number(n || 0).toLocaleString();
+  const fmt = (n) => locNumber(Number(n || 0));
   // Seed with fallback so a slow/failed fetch never leaves dashes on screen.
   if (orgsEl && (orgsEl.textContent === '—' || !orgsEl.textContent)) orgsEl.textContent = fmt(STATIC_FALLBACK_ORGS) + '+';
   if (meetsEl && (meetsEl.textContent === '—' || !meetsEl.textContent)) meetsEl.textContent = fmt(STATIC_FALLBACK_MEETINGS) + '+';
@@ -6250,7 +6276,7 @@ async function initSDK() {
     const params = new URLSearchParams(window.location.search);
     const checkoutErr = params.get('checkout_error');
     if (checkoutErr) {
-      setTimeout(() => toast(checkoutErr, 6000), 300);
+      setTimeout(() => toast(errText({ error: checkoutErr, code: params.get('checkout_error_code') }, 'error.CHECKOUT_FAILED', "We couldn't start checkout. Please try again."), 6000), 300);
     }
     return;
   }
@@ -6263,7 +6289,7 @@ async function initSDK() {
       const params = new URLSearchParams(window.location.search);
       const checkoutErr = params.get('checkout_error');
       if (checkoutErr) {
-        setTimeout(() => toast(checkoutErr, 6000), 300);
+        setTimeout(() => toast(errText({ error: checkoutErr, code: params.get('checkout_error_code') }, 'error.CHECKOUT_FAILED', "We couldn't start checkout. Please try again."), 6000), 300);
       }
       if (params.get('demo') === '1') {
         document.getElementById('meeting-title').textContent = 'Dev Preview Mode';
@@ -6680,7 +6706,7 @@ async function refreshAttendance() {
   } catch (err) {
     console.error(err);
     if (err.message === 'Session expired') return;
-    setStatus('loading', `Error: ${err.message}`);
+    setStatus('loading', excText(err));
     toast(t('common.couldNotReach','Could not reach backend'));
   } finally {
     _refreshing = false;
@@ -6723,7 +6749,7 @@ async function submitCheckin(token) {
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    const err = new Error(body.error || `HTTP ${res.status}`);
+    const err = apiErr(body);
     err.status = res.status; // callers branch on 401/429 — the message alone was discarded
     throw err;
   }
@@ -6810,7 +6836,7 @@ async function handleAttendeeAuthCode(response) {
     checkInHere();
   } catch (err) {
     console.error('Attendee auth failed:', err);
-    toast(t('toast.signInFailed', 'Sign-in failed:') + ' ' + err.message);
+    toast(t('toast.signInFailed', 'Sign-in failed:') + ' ' + excText(err));
   }
 }
 
@@ -7214,7 +7240,7 @@ function renderList() {
       const initials = (p.displayName || '?').split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
       const joinStr  = p.joinTime ? fmtTime(p.joinTime) : '—';
       const totalMs = AttUtils.participantTotalMs(p);
-      const durStr = totalMs > 0 ? fmtDurMs(totalMs) : (p.joinTime ? '< 1m' : '');
+      const durStr = totalMs > 0 ? fmtDurMs(totalMs) : (p.joinTime ? fmtDurMs(0) : '');
       const leaveStr = (!p.present && p.leaveTime) ? ' · ' + t('attendee.left', 'Left') + ' ' + fmtTime(p.leaveTime) : '';
       const emailStr = p.email ? `<div class="participant-meta">${escHtml(p.email)}</div>` : '';
       const key = escJsArg(participantKey(p));
@@ -7284,7 +7310,7 @@ async function openProfileModal(key) {
       recentEl.innerHTML = `<div style="color:#6e7681;font-size:.8rem">${escHtml(t('profile.noPrior', 'No prior meetings recorded.'))}</div>`;
     } else {
       recentEl.innerHTML = data.recent.map(m => {
-        const date = m.meetingStart ? new Date(m.meetingStart).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '—';
+        const date = m.meetingStart ? locDate(m.meetingStart, { month: 'short', day: 'numeric' }) : '—';
         const dur = m.durationMs ? Math.round(m.durationMs / 60000) + 'm' : '—';
         return `<div style="display:flex;justify-content:space-between;padding:6px 10px;background:#0d1117;border:1px solid #30363d;border-radius:6px;font-size:.78rem"><span>${escHtml(m.meetingTitle)}</span><span style="color:#9ca3af">${date} · ${dur}</span></div>`;
       }).join('');
@@ -7566,7 +7592,7 @@ async function loadBillingStatus() {
 
     if (_isPro && data.cancelAtPeriodEnd) {
       const endStr = data.currentPeriodEnd
-        ? new Date(data.currentPeriodEnd).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+        ? locDate(data.currentPeriodEnd, { year: 'numeric', month: 'short', day: 'numeric' })
         : 'the end of your billing cycle';
       if (cancelNotice) {
         cancelNotice.textContent = t('settings.cancelledNotice', 'Auto-renewal cancelled · Pro active through {date} · Zero future charges').replace('{date}', endStr);
@@ -7595,7 +7621,7 @@ function openCancelSubscriptionModal() {
   const periodEndEl = document.getElementById('cancel-modal-period-end');
   if (periodEndEl) {
     const endStr = _billing?.currentPeriodEnd
-      ? new Date(_billing.currentPeriodEnd).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
+      ? locDate(_billing.currentPeriodEnd, { year: 'numeric', month: 'long', day: 'numeric' })
       : 'the end of your billing cycle';
     periodEndEl.textContent = endStr;
   }
@@ -7623,7 +7649,7 @@ async function confirmCancelSubscription() {
       toast(t('settings.subCancelledToast', 'Auto-renewal cancelled. A confirmation email has been sent to your inbox.'));
       await loadBillingStatus();
     } else {
-      toast(data.error || t('settings.cancelFailed', 'Could not cancel subscription right now. Please try again.'));
+      toast(errText(data, 'settings.cancelFailed', 'Could not cancel subscription right now. Please try again.'));
     }
   } catch {
     toast(t('settings.cancelFailed', 'Could not cancel subscription right now. Please try again.'));
@@ -7646,7 +7672,7 @@ async function resumeSubscription() {
       toast(t('settings.subResumedToast', 'Subscription resumed. Auto-renewal is active.'));
       await loadBillingStatus();
     } else {
-      toast(data.error || t('settings.resumeFailed', 'Could not resume subscription. Please try again.'));
+      toast(errText(data, 'settings.resumeFailed', 'Could not resume subscription. Please try again.'));
     }
   } catch {
     toast(t('settings.resumeFailed', 'Could not resume subscription. Please try again.'));
@@ -7970,7 +7996,7 @@ async function handleBillingClick() {
         return;
       }
       closeBillingTab(tab);
-      toast(data.error || t('toast.billingUnavailable', 'Billing is unavailable right now.'));
+      toast(errText(data, 'toast.billingUnavailable', 'Billing is unavailable right now.'));
     } catch {
       closeBillingTab(tab);
       toast(t('toast.couldNotReachBilling', 'Could not reach billing.'));
@@ -8714,7 +8740,7 @@ async function sendUpgradeLinkToEmail(force = false) {
       status.style.display = 'block';
       try { logUserEvent('upgrade_link_requested', { email }); } catch {}
     } else {
-      throw new Error(data.error || 'Failed');
+      throw apiErr(data, 'error.UPGRADE_EMAIL_FAILED', "We couldn't send the upgrade email right now. Please try again later.");
     }
   } catch (err) {
     btn.disabled = false;
@@ -9141,8 +9167,8 @@ async function saveToSheets() {
       state.meetingTitle = calData.eventTitle || t('meeting.scheduled', 'Scheduled Meeting');
       document.getElementById('meeting-title').textContent = state.meetingTitle;
       // Show scheduled time range
-      const startStr = calData.eventStart ? new Date(calData.eventStart).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
-      const endStr = calData.eventEnd ? new Date(calData.eventEnd).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
+      const startStr = calData.eventStart ? locTime(calData.eventStart, { hour: 'numeric', minute: '2-digit' }) : '';
+      const endStr = calData.eventEnd ? locTime(calData.eventEnd, { hour: 'numeric', minute: '2-digit' }) : '';
       const timeRange = startStr && endStr ? ` · ${startStr} – ${endStr}` : '';
       typeEl.textContent = `${t('meeting.scheduledEvent', 'Scheduled Event')}${timeRange}`;
       typeEl.style.display = '';
@@ -9673,7 +9699,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
         signInWithGoogle(); // one-click re-consent to add drive.file — no manual sign-out
         return;
       }
-      throw new Error(body.error || `${res.status}`);
+      throw apiErr(body, 'toast.exportFailed', 'Failed to export attendance');
     }
     const exportResult = await res.json();
     const { sheetUrl, isFirstExport, quota, graceUsed, participantCount } = exportResult;
@@ -9790,8 +9816,7 @@ async function doExportToSheets(emailMap, calendarAttendees = [], opts = {}) {
     const durationMs = Math.round(((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - exportStartMs);
     logUserEvent('export_failed', { reason: 'error', message: String(err.message || err).slice(0, 200), durationMs });
     captureError(err, { where: 'doExportToSheets', reason: 'error' });
-    const isNetwork = err?.name === 'TypeError' || /failed to fetch|networkerror|load failed/i.test(err?.message || '');
-    const errMsg = isNetwork ? t('common.couldNotReach', 'Could not reach server') : (err?.message || 'Error');
+    const errMsg = excText(err, 'toast.exportFailed', 'Failed to export attendance');
     toast(`${t('toast.sheetsError','Sheets error:')} ${errMsg}`);
   }
 }
@@ -9970,7 +9995,8 @@ async function triggerReviewVerification(e) {
       btn.textContent = t('upgrade.recheckReviewBtn', 'Re-check Review');
       statusEl.style.display = 'block';
       statusEl.style.color = '#fbc02d';
-      statusEl.textContent = data.message || t('upgrade.reviewNotFoundYet', 'Review not found on the listing yet. Google may take a few minutes to publish new reviews. Please click Re-check shortly!');
+      // data.message is English from the server — only English users see it.
+      statusEl.textContent = (AttStrings.getLocale() === 'en' && data.message) || t('upgrade.reviewNotFoundYet', 'Review not found on the listing yet. Google may take a few minutes to publish new reviews. Please click Re-check shortly!');
     }
   } catch (err) {
     btn.disabled = false;
@@ -11096,11 +11122,11 @@ async function saveExtraEmails() {
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      throw new Error(body.error || `HTTP ${res.status}`);
+      throw apiErr(body);
     }
     show(emails.length ? t('settings.webhookSaved', 'Saved') : t('settings.extraEmailsCleared', 'Extra recipients cleared'), '#4ade80');
   } catch (err) {
-    show(err.message, '#f85149');
+    show(excText(err), '#f85149');
   }
 }
 
@@ -11132,7 +11158,7 @@ async function saveWebhookSetting(provider) {
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      throw new Error(body.error || `HTTP ${res.status}`);
+      throw apiErr(body);
     }
     showSettingsStatus(url ? t('settings.webhookSaved', 'Saved') : t('settings.webhookCleared', 'Webhook cleared'), '#4ade80', p.statusId);
     // Reflect the new server state in the tab dots + clear the draft.
@@ -11144,7 +11170,7 @@ async function saveWebhookSetting(provider) {
     // Deliberately does NOT close the settings modal: auto-closing after one
     // provider made configuring Slack AND Discord in one visit impossible.
   } catch (err) {
-    showSettingsStatus(err.message, '#f85149', p.statusId);
+    showSettingsStatus(excText(err), '#f85149', p.statusId);
   } finally {
     saveBtn.disabled = false;
     saveBtn.textContent = t('btn.save', 'Save');
@@ -11171,12 +11197,12 @@ async function testWebhookSetting(provider) {
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      throw new Error(body.error || `HTTP ${res.status}`);
+      throw apiErr(body);
     }
     showSettingsStatus(t('settings.testSent', 'Test message sent — check your channel'), '#4ade80', p.statusId);
     try { logUserEvent('webhook_test_sent', { provider }); } catch {}
   } catch (err) {
-    showSettingsStatus(err.message, '#f85149', p.statusId);
+    showSettingsStatus(excText(err), '#f85149', p.statusId);
   } finally {
     testBtn.disabled = false;
     testBtn.textContent = t('settings.sendTest', 'Send test');
@@ -11275,8 +11301,8 @@ async function fetchCalendarAttendees() {
       document.getElementById('tab-count-invited').textContent = cal.attendees.length;
       // Update meeting type display
       const typeEl = document.getElementById('meeting-type');
-      const startStr = cal.eventStart ? new Date(cal.eventStart).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
-      const endStr = cal.eventEnd ? new Date(cal.eventEnd).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
+      const startStr = cal.eventStart ? locTime(cal.eventStart, { hour: 'numeric', minute: '2-digit' }) : '';
+      const endStr = cal.eventEnd ? locTime(cal.eventEnd, { hour: 'numeric', minute: '2-digit' }) : '';
       const timeRange = startStr && endStr ? ` · ${startStr} – ${endStr}` : '';
       typeEl.textContent = `${t('meeting.scheduledEvent', 'Scheduled Event')}${timeRange}`;
       typeEl.style.display = '';

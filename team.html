@@ -500,6 +500,11 @@
 
   <script>
     window.t = window.t || function (k, f) { return (window.AttStrings && typeof window.AttStrings.t === 'function') ? window.AttStrings.t(k, f) : (f !== undefined ? f : k); };
+    // X-App-Locale: tells the backend the language the user chose (emails, exports).
+    function errText(body, key, text) { return (window.AttStrings && AttStrings.errorText) ? AttStrings.errorText(body, key, text) : ((body && body.error) || text); }
+    function apiErr(body, key, text) { return (window.AttStrings && AttStrings.apiError) ? AttStrings.apiError(body, key, text) : new Error((body && body.error) || text); }
+    function excText(err, key, text) { return (window.AttStrings && AttStrings.exceptionText) ? AttStrings.exceptionText(err, key, text) : ((err && err.message) || text); }
+    function localeHdr() { return (window.AttStrings && typeof window.AttStrings.localeHeader === 'function') ? window.AttStrings.localeHeader() : {}; }
     const BACKEND_URL = AttApi.BACKEND_URL; // shared js/api.js (loaded in <head>)
     let sessionToken = null;
     let data = { users: [], meetings: [], series: [], people: [], totals: {} };
@@ -541,7 +546,7 @@
           document.getElementById('login-screen').style.display = 'none';
           loadOverview();
         },
-        onError: (err) => { alert(t('team.signInFailed', 'Sign-in failed:') + ' ' + err.message); },
+        onError: (err) => { alert(t('team.signInFailed', 'Sign-in failed:') + ' ' + excText(err)); },
       });
     }
 
@@ -571,7 +576,7 @@
 
       try {
         const res = await fetch(`${BACKEND_URL}/oauth/me`, {
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { 'Authorization': `Bearer ${token}`, ...localeHdr() }
         });
         if (res.ok) {
           const me = await res.json();
@@ -615,7 +620,7 @@
       try {
         fetch(`${BACKEND_URL}/event`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}` },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}`, ...localeHdr() },
           body: JSON.stringify({ type: 'upgrade_checkout_clicked', meta: { plan: 'team', reason: 'team_page' } }),
         }).catch(() => {});
       } catch (e) {}
@@ -628,7 +633,7 @@
         window.location.href = await AttApi.startCheckout(sessionToken, { plan: 'team', interval: 'once' }); // shared js/api.js
         return;
       } catch (e) {
-        alert(e.message);
+        alert(excText(e));
       } finally {
         if (btn) { btn.disabled = false; btn.textContent = t('team.upgradeBtn', 'Upgrade to Pro'); }
       }
@@ -638,7 +643,7 @@
       document.getElementById('loading').style.display = 'block';
       try {
         const res = await fetch(`${BACKEND_URL}/team/overview`, {
-          headers: { 'Authorization': `Bearer ${sessionToken}` },
+          headers: { 'Authorization': `Bearer ${sessionToken}`, ...localeHdr() },
         });
         if (res.status === 403) {
           document.getElementById('loading').style.display = 'none';
@@ -652,7 +657,7 @@
           // Teaser: the admin's OWN real numbers, blurred sample rows — a
           // taste of the paid dashboard instead of a bare text banner.
           try {
-            const pRes = await fetch(`${BACKEND_URL}/team/overview/preview`, { headers: { 'Authorization': `Bearer ${sessionToken}` } });
+            const pRes = await fetch(`${BACKEND_URL}/team/overview/preview`, { headers: { 'Authorization': `Bearer ${sessionToken}`, ...localeHdr() } });
             if (pRes.ok) {
               const p = await pRes.json();
               const box = document.getElementById('preview-teaser');
@@ -662,7 +667,7 @@
                 document.getElementById('preview-series').textContent = p.totals.series ?? 0;
                 document.getElementById('preview-people').textContent = p.totals.people ?? 0;
                 document.getElementById('preview-rows').innerHTML = (p.sampleUsers || []).map(u =>
-                  `<tr><td>${esc(u.displayName || '—')}</td><td style="color:#8b949e">${esc(u.email || '')}</td><td style="color:#8b949e">${u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString() : '—'}</td></tr>`
+                  `<tr><td>${esc(u.displayName || '—')}</td><td style="color:#8b949e">${esc(u.email || '')}</td><td style="color:#8b949e">${u.lastLoginAt ? ((window.AttStrings && AttStrings.fmt) ? AttStrings.fmt.date(u.lastLoginAt) : new Date(u.lastLoginAt).toLocaleDateString()) : '—'}</td></tr>`
                 ).join('') + (p.moreUsers ? `<tr><td colspan="3" style="color:#8b949e;font-style:italic">${esc(t('team.moreTeachers', '…and {n} more teachers, visible on Pro').replace('{n}', p.moreUsers))}</td></tr>` : '');
                 box.style.display = 'block';
               }
@@ -706,7 +711,7 @@
     async function showAdminGate() {
       const el = document.getElementById('admin-gate');
       try {
-        const res = await fetch(`${BACKEND_URL}/team/admin-status`, { headers: { 'Authorization': `Bearer ${sessionToken}` } });
+        const res = await fetch(`${BACKEND_URL}/team/admin-status`, { headers: { 'Authorization': `Bearer ${sessionToken}`, ...localeHdr() } });
         const s = await res.json().catch(() => ({}));
         if (s.isPersonalDomain) {
           el.innerHTML = `<strong>${esc(t('team.gateNeedWorkspace', 'Team features need a Google Workspace domain.'))}</strong>
@@ -728,7 +733,7 @@
       if (btn) { btn.disabled = true; btn.textContent = t('team.claimingBtn', 'Claiming…'); }
       try {
         const res = await fetch(`${BACKEND_URL}/team/claim-admin`, {
-          method: 'POST', headers: { 'Authorization': `Bearer ${sessionToken}`, 'Content-Type': 'application/json' }, body: '{}',
+          method: 'POST', headers: { 'Authorization': `Bearer ${sessionToken}`, ...localeHdr(), 'Content-Type': 'application/json' }, body: '{}',
         });
         const body = await res.json().catch(() => ({}));
         if (res.ok) {
@@ -736,7 +741,7 @@
           loadOverview();
           return;
         }
-        alert(body.error || t('team.claimFailed', 'Could not claim the team-admin role.'));
+        alert(errText(body, 'team.claimFailed', 'Could not claim the team-admin role.'));
       } catch {
         alert(t('team.serverError', 'Could not reach the server.'));
       }
@@ -750,12 +755,12 @@
       if (!confirm(t('team.transferConfirm', "Transfer the team-admin role to {email}? You'll lose admin access.").replace('{email}', toEmail))) return;
       try {
         const res = await fetch(`${BACKEND_URL}/team/transfer-admin`, {
-          method: 'POST', headers: { 'Authorization': `Bearer ${sessionToken}`, 'Content-Type': 'application/json' },
+          method: 'POST', headers: { 'Authorization': `Bearer ${sessionToken}`, ...localeHdr(), 'Content-Type': 'application/json' },
           body: JSON.stringify({ toEmail }),
         });
         const body = await res.json().catch(() => ({}));
         if (res.ok) { alert(t('team.transferred', 'Transferred to {email}. Signing you out.').replace('{email}', toEmail)); signOut(); return; }
-        alert(body.error || t('team.transferFailed', 'Could not transfer the role.'));
+        alert(errText(body, 'team.transferFailed', 'Could not transfer the role.'));
       } catch { alert(t('team.serverError', 'Could not reach the server.')); }
     }
 
@@ -768,7 +773,7 @@
     // Pure formatters + filters delegate to js/team.js (AttTeam). fmtTime stays
     // inline (page-specific, not extracted).
     const fmtDate = (typeof AttTeam !== 'undefined' && AttTeam.fmtDate) ? AttTeam.fmtDate : (() => '');
-    function fmtTime(iso) { if (!iso) return ''; return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); }
+    function fmtTime(iso) { if (!iso) return ''; return (window.AttStrings && AttStrings.fmt) ? AttStrings.fmt.time(iso) : new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); }
     const fmtDuration = (typeof AttTeam !== 'undefined' && AttTeam.fmtDuration) ? AttTeam.fmtDuration : (() => '');
     const fmtMinutes = (typeof AttTeam !== 'undefined' && AttTeam.fmtMinutes) ? AttTeam.fmtMinutes : (() => '');
     const pct = (typeof AttTeam !== 'undefined' && AttTeam.pct) ? AttTeam.pct : (() => '0%');
@@ -876,7 +881,7 @@
 
       const dateEl = document.getElementById('quote-date');
       if (dateEl) {
-        dateEl.textContent = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+        dateEl.textContent = (window.AttStrings && AttStrings.fmt) ? AttStrings.fmt.date(new Date(), { year: 'numeric', month: 'long', day: 'numeric' }) : new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
       }
 
       const refEl = document.getElementById('quote-ref-no');
@@ -895,7 +900,7 @@
         if (sessionToken) {
           fetch(`${BACKEND_URL}/event`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}` },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}`, ...localeHdr() },
             body: JSON.stringify({ type: 'school_quote_generated', meta: { domain, isEdu } }),
           }).catch(() => {});
         }

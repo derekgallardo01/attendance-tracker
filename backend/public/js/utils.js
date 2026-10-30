@@ -59,6 +59,13 @@
       .replace(/[<>"&]/g, (c) => HTML_ESCAPES[c]);
   }
 
+  // Locale-aware formatters from js/strings.js (AttStrings.fmt) follow the
+  // language the user chose; null when that runtime isn't loaded (Node/Jest).
+  function intlFmt() {
+    const S = root.AttStrings;
+    return S && S.fmt ? S.fmt : null;
+  }
+
   // ─── relative time formatter ───
   // "3 minutes ago" / "2 hours ago" — used in the "this meeting ended N min
   // ago" empty state. Caps at days; longer than that just shows day count.
@@ -66,6 +73,8 @@
     if (!d) return '';
     const date = d instanceof Date ? d : new Date(d);
     if (Number.isNaN(date.getTime())) return '';
+    const F = intlFmt();
+    if (F) return F.relative(date);
     const diffSec = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
     if (diffSec < 60) return 'just now';
     const min = Math.floor(diffSec / 60);
@@ -81,17 +90,22 @@
     if (!d) return '';
     const date = d instanceof Date ? d : new Date(d);
     if (Number.isNaN(date.getTime())) return '';
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const F = intlFmt();
+    return F ? F.time(date, { hour: '2-digit', minute: '2-digit' }) : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
   function fmtDur(start, end) {
     const m = Math.floor((end - start) / 60000);
+    const F = intlFmt();
+    if (F) return F.minutes(Math.max(1, m));
     if (m < 60) return `${m}m`;
     return `${Math.floor(m / 60)}h ${m % 60}m`;
   }
 
   function fmtDurMs(ms) {
     const m = Math.floor(ms / 60000);
+    const F = intlFmt();
+    if (F) return F.minutes(m);
     if (m < 1) return '< 1m';
     if (m < 60) return `${m}m`;
     return `${Math.floor(m / 60)}h ${m % 60}m`;

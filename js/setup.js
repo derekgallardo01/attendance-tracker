@@ -35,7 +35,11 @@
     }
     return {
       className: 'result error',
-      message: (data && data.error) || tr('setup.notConfigured', 'Delegation not configured correctly. Please check the steps above and try again.'),
+      // With the i18n runtime loaded, a coded server error shows in the user's
+      // language (raw English only reaches English users).
+      message: (root.AttStrings && typeof root.AttStrings.errorText === 'function')
+        ? root.AttStrings.errorText(data, 'setup.notConfigured', 'Delegation not configured correctly. Please check the steps above and try again.')
+        : (data && data.error) || tr('setup.notConfigured', 'Delegation not configured correctly. Please check the steps above and try again.'),
     };
   }
 

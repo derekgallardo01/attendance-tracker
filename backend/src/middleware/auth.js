@@ -3,7 +3,8 @@ const jwt = require('jsonwebtoken');
 const Sentry = require('@sentry/node');
 const CONFIG = require('../config');
 const log = require('../lib/logger');
-const { getUser, updateUserTokens, isUserDeleted } = require('../services/firestore');
+const { getUser, updateUserTokens, isUserDeleted, setUserLanguage } = require('../services/firestore');
+const { localeFromRequest, strictLocale } = require('../lib/i18n');
 const { domainOf } = require('../services/firestore/_core'); // pure util; imported directly so test firestore-mocks needn't stub it
 const { refreshAccessToken } = require('../services/googleAuth');
 
@@ -88,6 +89,15 @@ async function auth(req, res, next) {
       log.info('user not in Firestore or no refreshToken, continuing without accessToken', { email: decoded.email });
     }
 
+    // The app sends the language the user CHOSE as X-App-Locale on every
+    // request. Persist it when it changes so server-rendered surfaces with no
+    // request (cron emails, digests, exports) speak the same language.
+    const headerLanguage = strictLocale(req.headers['x-app-locale']);
+    if (headerLanguage && user && user.language !== headerLanguage
+        && decoded.role !== 'attendee' && typeof setUserLanguage === 'function') {
+      Promise.resolve(setUserLanguage(domain, decoded.email, headerLanguage)).catch(() => {});
+    }
+
     req.user = {
       email: decoded.email,
       domain, // computed above (decoded.domain || domainOf(email)) — must match the getUser lookup
@@ -95,6 +105,7 @@ async function auth(req, res, next) {
       accessToken,
       role: decoded.role || 'user',
       signupGeo: user?.signupGeo || null,
+      language: localeFromRequest(req, { storedLanguage: user?.language, country: user?.signupGeo?.country }),
     };
 
     // Attendee-mode sessions (minted by /oauth/exchange mode:'attendee') are

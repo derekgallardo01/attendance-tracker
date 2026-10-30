@@ -6,6 +6,73 @@ describe('backend i18n', () => {
     i18n._resetCache();
   });
 
+  describe('strictLocale', () => {
+    test('maps supported tags, legacy aliases and Chinese scripts; null otherwise', () => {
+      expect(i18n.strictLocale('pt-BR')).toBe('pt');
+      expect(i18n.strictLocale('es_MX')).toBe('es');
+      expect(i18n.strictLocale('fil')).toBe('tl');
+      expect(i18n.strictLocale('iw-IL')).toBe('he');
+      expect(i18n.strictLocale('in')).toBe('id');
+      expect(i18n.strictLocale('nb-NO')).toBe('no');
+      expect(i18n.strictLocale('zh-Hans')).toBe('zh-CN');
+      expect(i18n.strictLocale('zh-SG')).toBe('zh-CN');
+      expect(i18n.strictLocale('zh-TW')).toBe('zh');
+      expect(i18n.strictLocale('en-GB')).toBe('en');
+      for (const bad of ['klingon', '', '   ', null, 42]) expect(i18n.strictLocale(bad)).toBeNull();
+    });
+  });
+
+  describe('localeFromRequest', () => {
+    const req = (headers) => ({ headers });
+    test('header > stored > cookie > Accept-Language > country > en', () => {
+      expect(i18n.localeFromRequest(req({ 'x-app-locale': 'de', cookie: 'att_locale=fr' }), { storedLanguage: 'es' })).toBe('de');
+      expect(i18n.localeFromRequest(req({ cookie: 'att_locale=fr' }), { storedLanguage: 'es' })).toBe('es');
+      expect(i18n.localeFromRequest(req({ cookie: 'a=1; att_locale=fr', 'accept-language': 'ja' }))).toBe('fr');
+      expect(i18n.localeFromRequest(req({ 'accept-language': 'ja-JP,ja;q=0.9' }))).toBe('ja');
+      expect(i18n.localeFromRequest(req({}), { country: 'BR' })).toBe('pt');
+      expect(i18n.localeFromRequest(req({}))).toBe('en');
+      expect(i18n.localeFromRequest(null)).toBe('en');
+    });
+    test('a malformed cookie value is ignored', () => {
+      expect(i18n.localeFromRequest(req({ cookie: 'att_locale=%E0%A4%A', 'accept-language': 'ko' }))).toBe('ko');
+    });
+  });
+
+  describe('tf / tn', () => {
+    test('tf fills placeholders and leaves unknown ones', () => {
+      expect(i18n.tf('missing.key', 'en', { a: 1 }, 'A={a} B={b}')).toBe('A=1 B={b}');
+      expect(i18n.fill(5, { a: 1 })).toBe(5);
+      expect(i18n.fill('x', null)).toBe('x');
+    });
+    test('tn uses CLDR categories with fallback to other / English / fallback', () => {
+      const { STRINGS } = i18n.getStrings();
+      STRINGS.en['zz.apples.one'] = '{count} apple';
+      STRINGS.en['zz.apples.other'] = '{count} apples';
+      STRINGS.ru['zz.apples.few'] = '{count} яблока';
+      STRINGS.ru['zz.apples.many'] = '{count} яблок';
+      expect(i18n.tn('zz.apples', 1, 'en')).toBe('1 apple');
+      expect(i18n.tn('zz.apples', 3, 'ru')).toBe('3 яблока');
+      expect(i18n.tn('zz.apples', 5, 'ru')).toBe('5 яблок');
+      expect(i18n.tn('zz.apples', 1, 'ru')).toBe('1 apple'); // no ru .one/.other → English
+      expect(i18n.tn('zz.none', 2, 'fr', null, '{count} things')).toBe('2 things');
+      expect(i18n.tn('zz.none', 'x', 'fr')).toBe('zz.none');
+    });
+    test('tn survives Intl failures', () => {
+      const { STRINGS } = i18n.getStrings();
+      STRINGS.en['zz.pears.other'] = '{count} pears';
+      const realPR = Intl.PluralRules;
+      const realNF = Intl.NumberFormat;
+      Intl.PluralRules = function () { throw new Error('x'); };
+      Intl.NumberFormat = function () { throw new Error('x'); };
+      try {
+        expect(i18n.tn('zz.pears', 2, 'en')).toBe('2 pears');
+      } finally {
+        Intl.PluralRules = realPR;
+        Intl.NumberFormat = realNF;
+      }
+    });
+  });
+
   describe('normalizeLocale', () => {
     test('returns "en" for null, undefined, non-string, or unknown locale', () => {
       expect(i18n.normalizeLocale(null)).toBe('en');

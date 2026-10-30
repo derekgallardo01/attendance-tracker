@@ -8,6 +8,7 @@ const { getTenantPlan, setTenantPlan, getUserPlan, setUserPlan, logEvent, record
 const { paymentFromSession, paymentFromInvoice } = require('../services/firestore/payments');
 const { PERSONAL_EMAIL_DOMAINS, domainOf } = require('../services/firestore/_core');
 const PRICING = require('../config/pricing');
+const { errorCodeFor } = require('../lib/errorCodes');
 const { TIERED_PLANS, getOffer, lineItemFor } = require('../config/priceTiers');
 
 // High-volume education & developing markets eligible for Purchasing Power Parity (PPP) subsidy
@@ -267,6 +268,15 @@ async function createSafeCheckoutSession(stripe, sessionParams, context = {}) {
 }
 
 const router = Router();
+
+// Translatable code for a checkout-redirect error (the panel shows it via
+// AttStrings.errorText; the English message stays for English users/logs).
+function checkoutErrorCode(message) {
+  if (message === 'Please sign in to proceed with checkout.') return 'AUTH_REQUIRED';
+  if (message === 'This account has been deleted.') return 'ACCOUNT_DELETED';
+  const found = errorCodeFor(message);
+  return found ? found.code : 'CHECKOUT_FAILED';
+}
 
 // Stripe success/cancel URLs. A caller-supplied absolute returnUrl is honored
 // only on an allowed origin; anything else is resolved against the public site.
@@ -721,14 +731,14 @@ router.get(['/billing/checkout-redirect', '/checkout-redirect'], async (req, res
 
   if (!user || !user.email) {
     const errorMsg = 'Please sign in to proceed with checkout.';
-    return res.redirect(`${CONFIG.publicSiteUrl}/index.html?checkout_error=${encodeURIComponent(errorMsg)}`);
+    return res.redirect(`${CONFIG.publicSiteUrl}/index.html?checkout_error=${encodeURIComponent(errorMsg)}&checkout_error_code=${encodeURIComponent(checkoutErrorCode(errorMsg))}`);
   }
 
   const userDomain = user.domain || domainOf(user.email);
   if (typeof isUserDeleted === 'function' && await isUserDeleted(userDomain, user.email)) {
     log.warn('billing: checkout-redirect account deleted', { email: user.email });
     const errorMsg = 'This account has been deleted.';
-    return res.redirect(`${CONFIG.publicSiteUrl}/index.html?checkout_error=${encodeURIComponent(errorMsg)}`);
+    return res.redirect(`${CONFIG.publicSiteUrl}/index.html?checkout_error=${encodeURIComponent(errorMsg)}&checkout_error_code=${encodeURIComponent(checkoutErrorCode(errorMsg))}`);
   }
 
   try {
@@ -750,7 +760,7 @@ router.get(['/billing/checkout-redirect', '/checkout-redirect'], async (req, res
   } catch (err) {
     log.error('billing: checkout-redirect failed', { email: user.email, plan: req.query?.plan, error: err.message });
     const errorMsg = err.message || 'Could not start checkout.';
-    return res.redirect(`${CONFIG.publicSiteUrl}/index.html?checkout_error=${encodeURIComponent(errorMsg)}`);
+    return res.redirect(`${CONFIG.publicSiteUrl}/index.html?checkout_error=${encodeURIComponent(errorMsg)}&checkout_error_code=${encodeURIComponent(checkoutErrorCode(errorMsg))}`);
   }
 });
 

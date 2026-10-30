@@ -274,9 +274,11 @@ describe('AttLmsSync', () => {
     );
     delete global.state;
 
-    // Test root.BACKEND_URL and root.sessionToken fallback
+    // Test root.BACKEND_URL and root.sessionToken fallback (and that the
+    // chosen app language rides along as X-App-Locale when i18n is loaded)
     global.BACKEND_URL = 'https://global.test';
     global.sessionToken = 'global-tok';
+    global.AttStrings = { localeHeader: () => ({ 'X-App-Locale': 'es' }) };
     AttLmsSync.openModal({
       records: [{ name: 'Test 2', email: 'test2@school.edu', status: 'present' }],
       getAuthToken: null,
@@ -289,11 +291,12 @@ describe('AttLmsSync', () => {
     expect(global.fetch).toHaveBeenCalledWith(
       'https://global.test/classroom/sync-grades',
       expect.objectContaining({
-        headers: expect.objectContaining({ Authorization: 'Bearer global-tok' }),
+        headers: expect.objectContaining({ Authorization: 'Bearer global-tok', 'X-App-Locale': 'es' }),
       })
     );
     delete global.BACKEND_URL;
     delete global.sessionToken;
+    delete global.AttStrings;
   });
 
   test('handles 401 AUTH_EXPIRED when loading classroom courses', async () => {
@@ -963,7 +966,36 @@ describe('AttLmsSync', () => {
     expect(canvasPayload).toBeDefined();
     expect(canvasPayload.conferenceId).toBe('conf-canvas-888');
   });
+
+  describe('localized error helpers', () => {
+    afterEach(() => { delete global.AttStrings; });
+
+    test('fall back to raw server/exception text without the i18n runtime', () => {
+      const { errText, apiErr, excText, serverMessage } = AttLmsSync._i18n;
+      expect(errText({ error: 'raw' }, 'k', 'Fallback')).toBe('raw');
+      expect(errText(null, 'k', 'Fallback')).toBe('Fallback');
+      expect(apiErr({ error: 'raw' }, 'k', 'Fallback').message).toBe('raw');
+      expect(apiErr(undefined, 'k', 'Fallback').message).toBe('Fallback');
+      expect(excText(new Error('boom'))).toBe('boom');
+      expect(excText(null)).toBe('');
+      expect(serverMessage({ message: 'detail' })).toBe('detail');
+      expect(serverMessage(null)).toBeNull();
+    });
+
+    test('delegate to AttStrings when it is loaded', () => {
+      const { errText, apiErr, excText, serverMessage } = AttLmsSync._i18n;
+      const err = new Error('loc');
+      global.AttStrings = {
+        errorText: jest.fn(() => 'translated'),
+        apiError: jest.fn(() => err),
+        exceptionText: jest.fn(() => 'exc'),
+        getLocale: () => 'es',
+      };
+      expect(errText({ error: 'x', code: 'NOT_FOUND' }, 'k', 'F')).toBe('translated');
+      expect(apiErr({ error: 'x' }, 'k', 'F')).toBe(err);
+      expect(excText(new Error('x'))).toBe('exc');
+      // Server English detail is hidden from non-English users.
+      expect(serverMessage({ message: 'detail' })).toBeNull();
+    });
+  });
 });
-
-
-

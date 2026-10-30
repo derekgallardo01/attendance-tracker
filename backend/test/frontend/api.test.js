@@ -41,6 +41,20 @@ describe('authedFetch', () => {
     expect(opts.headers.Authorization).toBe('Bearer tok-123');
   });
 
+  test('sends the chosen app language as X-App-Locale when the i18n runtime is loaded', () => {
+    const calls = [];
+    global.fetch = (url, opts) => { calls.push(opts); return Promise.resolve({ ok: true }); };
+    window.AttStrings = { localeHeader: () => ({ 'X-App-Locale': 'pt' }) };
+    try {
+      api.authedFetch('tok', '/history');
+    } finally {
+      delete window.AttStrings;
+    }
+    expect(calls[0].headers['X-App-Locale']).toBe('pt');
+    api.authedFetch('tok', '/history');
+    expect(calls[1].headers['X-App-Locale']).toBeUndefined();
+  });
+
   test('preserves caller-supplied method and headers', () => {
     const calls = [];
     global.fetch = (url, opts) => { calls.push([url, opts]); return Promise.resolve({ ok: true }); };
@@ -99,6 +113,20 @@ describe('startCheckout', () => {
   test('throws "Could not reach billing." on a network failure', async () => {
     global.fetch = () => Promise.reject(new Error('network'));
     await expect(api.startCheckout('tok')).rejects.toThrow('Could not reach billing.');
+  });
+
+  test('uses AttStrings.apiError (localized, carries the code) when the i18n runtime is loaded', async () => {
+    const calls = [];
+    window.AttStrings = {
+      apiError: (body, key, text) => { calls.push([body, key, text]); return Object.assign(new Error('localized!'), { code: body.code }); },
+    };
+    try {
+      global.fetch = () => Promise.resolve({ ok: false, json: async () => ({ error: 'x', code: 'PLAN_UNKNOWN' }) });
+      await expect(api.startCheckout('tok')).rejects.toMatchObject({ message: 'localized!', code: 'PLAN_UNKNOWN' });
+      expect(calls[0][1]).toBe('api.billingUnavailable');
+    } finally {
+      delete window.AttStrings;
+    }
   });
 
   test('routes error messages through global t() once it is available', async () => {

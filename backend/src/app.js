@@ -9,6 +9,7 @@ const log = require('./lib/logger');
 const auth = require('./middleware/auth');
 const apiLimiter = require('./middleware/rateLimit');
 const requestId = require('./middleware/requestId');
+const { errorCodes } = require('./lib/errorCodes');
 const attendanceRoutes = require('./routes/attendance');
 const sheetsRoutes = require('./routes/sheets');
 const calendarRoutes = require('./routes/calendar');
@@ -67,6 +68,11 @@ app.post('/api/webhooks/resend', express.raw({ type: 'application/json' }), rese
 // restricted to the allowedOrigins whitelist so nothing's been opened up.
 app.use(cors({ origin: CONFIG.allowedOrigins, credentials: true, maxAge: 600 }));
 
+// Attach translatable `code`s to `{ error }` bodies (lib/errorCodes.js) so the
+// app shows errors in the user's language. Mounted before the body parser so
+// even its 400/413 JSON errors get a code.
+app.use(errorCodes);
+
 app.use(express.json({ limit: CONFIG.bodyLimit }));
 app.use(express.urlencoded({ extended: false, limit: CONFIG.bodyLimit }));
 
@@ -111,29 +117,9 @@ app.use('/api', canvasRoutes);
 app.use('/api', checkinRoutes);
 app.use('/api', billingRoutes); // checkout / portal / status (webhook mounted above)
 
-const SUPPORTED_LOCALES = new Set([
-  'en', 'es', 'pt', 'hi', 'ta', 'te', 'bn', 'ur', 'tl', 'ms', 'id', 'vi',
-  'fr', 'de', 'it', 'nl', 'pl', 'ro', 'ru', 'uk', 'tr', 'th', 'ar', 'ko',
-  'zh', 'zh-CN', 'ja', 'he', 'mr', 'sv', 'cs', 'da', 'fi', 'hu', 'so',
-  'sw', 'am', 'si', 'el', 'no', 'ca', 'ne', 'ml', 'mn',
-  'kn', 'gu', 'pa', 'kk', 'lv', 'lt', 'lo', 'my', 'km', 'ceb',
-  'bg', 'hr', 'sr', 'sk', 'sl', 'af',
-]);
-
-function parseLocale(raw) {
-  if (!raw || typeof raw !== 'string') return null;
-  const val = raw.trim().toLowerCase();
-  if (val.startsWith('zh-cn') || val.startsWith('zh-sg') || val === 'zh-hans') return 'zh-CN';
-  if (val.startsWith('zh')) return 'zh';
-  if (val.startsWith('tl') || val.startsWith('fil')) return 'tl';
-  if (val.startsWith('he') || val.startsWith('iw')) return 'he';
-  if (val.startsWith('id') || val.startsWith('in')) return 'id';
-  if (val.startsWith('nb') || val.startsWith('nn')) return 'no';
-  if (val.startsWith('ceb')) return 'ceb';
-  const prefix2 = val.slice(0, 2);
-  if (SUPPORTED_LOCALES.has(prefix2)) return prefix2;
-  return null;
-}
+// One normalizer for the whole backend (lib/i18n.strictLocale) — the old
+// 2-letter-prefix table here missed 3-letter codes and disagreed with emails.
+const { strictLocale: parseLocale } = require('./lib/i18n');
 
 // Server-side language routing & content negotiation for HTML pages:
 // Detects ?lang= or ?hl= query param, att_locale cookie, or Accept-Language header.
