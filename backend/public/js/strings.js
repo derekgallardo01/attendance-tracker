@@ -98732,8 +98732,14 @@ let locale = 'en';
       .replace(/\{price:([a-z_]+)\}/g, (m, plan) => (P && P.price(plan)) || PRICE_FALLBACK[plan] || m)
       .replace(/\{permonth:([a-z_]+)\}/g, (m, plan) => (P && P.perMonth && P.perMonth(plan)) || PERMONTH_FALLBACK[plan] || m);
   }
+  // Arrow glyphs aren't mirrored by the bidi algorithm — "next →" must point
+  // left in right-to-left scripts.
+  const RTL_LOCALES = new Set(['ar', 'he', 'ur']);
+  const mirrorArrows = (s) => (typeof s === 'string' && RTL_LOCALES.has(locale)
+    ? s.replace(/→|&rarr;/g, (m) => (m === '→' ? '←' : '&larr;'))
+    : s);
   const wrap = (s) => {
-    s = withPrices(s);
+    s = mirrorArrows(withPrices(s));
     return pseudo && typeof s === 'string' ? '[!! ' + s + ' !!]' : s;
   };
 

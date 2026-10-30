@@ -68,7 +68,7 @@ body {
 }
 
 .steps {
-  padding-left: 18px;
+  padding-inline-start: 18px;
   color: var(--muted);
   font-size: 11.5px;
 }

@@ -733,6 +733,10 @@
 
     var dict = EXT_STRINGS[raw] || EXT_STRINGS[lang] || EXT_STRINGS['en'] || {};
 
+    // Right-to-left scripts mirror the popup (ar/he/ur).
+    document.documentElement.lang = lang;
+    document.documentElement.dir = (lang === 'ar' || lang === 'he' || lang === 'ur') ? 'rtl' : 'ltr';
+
     function formatStepHtml(key, text) {
       if (!text) return '';
       if (text.indexOf('<strong>') !== -1) return text;

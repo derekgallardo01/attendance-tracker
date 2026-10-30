@@ -48,6 +48,18 @@ describe('{price:…} tokens', () => {
   const pricing = require(path.join(__dirname, '..', '..', '..', 'js', 'pricing.js'));
   afterEach(() => { delete window.AttPricing; strings.setLocale('en'); });
 
+  test('arrows point the reading direction in right-to-left locales', () => {
+    strings.STRINGS.en['test.arrow'] = 'Next → and &rarr; more';
+    try {
+      expect(strings.t('test.arrow')).toBe('Next → and &rarr; more');
+      strings.setLocale('ar');
+      expect(strings.t('test.arrow')).toBe('Next ← and &larr; more');
+      expect(strings.t('history.clusterPromoCta')).not.toContain('→');
+    } finally {
+      delete strings.STRINGS.en['test.arrow'];
+    }
+  });
+
   test('localeHeader carries the active app language', () => {
     strings.setLocale('ja');
     expect(strings.localeHeader()).toEqual({ 'X-App-Locale': 'ja' });
