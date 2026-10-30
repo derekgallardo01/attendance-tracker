@@ -261,7 +261,7 @@
       modal.style.display = 'flex';
 
       // Set default title in new assignment inputs
-      const defaultTitle = `${context.meetingTitle || 'Meeting'} Attendance${context.meetingDate ? ` (${context.meetingDate})` : ''}`;
+      const defaultTitle = t('lms.defaultTitle', '{meeting} Attendance').replace('{meeting}', context.meetingTitle || t('lms.meeting', 'Meeting')) + (context.meetingDate ? ` (${context.meetingDate})` : '');
       const title1 = document.getElementById('lms-classroom-new-title');
       const title2 = document.getElementById('lms-canvas-new-title');
       if (title1) title1.value = defaultTitle;
@@ -329,14 +329,14 @@
         if (res.status === 401 && data.code === 'AUTH_EXPIRED') {
           authBox.style.display = 'block';
           document.getElementById('lms-classroom-auth-msg').textContent = t('roster.classroomSignIn', 'Sign in with Google first, then try again.');
-          sel.innerHTML = '<option value="">(Session expired)</option>';
+          sel.innerHTML = `<option value="">(${esc(t('lms.sessionExpired', 'Session expired'))})</option>`;
           return;
         }
 
         if (res.status === 403 || data.scopeMissing) {
           authBox.style.display = 'block';
           document.getElementById('lms-classroom-auth-msg').textContent = t('lms.reconsent', 'Classroom write permission required. Click here to approve.');
-          sel.innerHTML = '<option value="">(Permission required)</option>';
+          sel.innerHTML = `<option value="">(${esc(t('lms.permissionRequired', 'Permission required'))})</option>`;
           return;
         }
 
@@ -559,7 +559,7 @@
           const courseId = courseSel.value;
           const courseWorkId = assignSel.value;
           const maxPoints = parseInt(maxPtsInput.value, 10) || 100;
-          const title = newTitle.value.trim() || 'Meeting Attendance';
+          const title = newTitle.value.trim() || t('lms.defaultAssignmentTitle', 'Meeting Attendance');
 
           if (!courseId) {
             showStatus(t('lms.selectClassroomCourse', 'Please select a Classroom course.'), 'error');
@@ -625,7 +625,7 @@
           const courseId = courseSel.value;
           const assignmentId = assignSel.value;
           const maxPoints = parseInt(maxPtsInput.value, 10) || 100;
-          const title = newTitle.value.trim() || 'Meeting Attendance';
+          const title = newTitle.value.trim() || t('lms.defaultAssignmentTitle', 'Meeting Attendance');
 
           if (!courseId) {
             showStatus(t('lms.selectCanvasCourse', 'Please select a Canvas course.'), 'error');

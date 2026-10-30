@@ -625,8 +625,8 @@
     body.sim-mode {
       max-width: 360px;
       margin: 0 auto;
-      border-left: 1px solid var(--border);
-      border-right: 1px solid var(--border);
+      border-inline-start: 1px solid var(--border);
+      border-inline-end: 1px solid var(--border);
     }
     /* Public landing page (shown at attendancetracker.dev outside Meet). The
        panel's fixed 100vh + overflow:hidden clips the marketing content and
@@ -943,11 +943,11 @@
     .roster-card:hover {
       background: var(--surface-hover);
     }
-    .roster-card.present { border-left: 3px solid #4ade80; }
-    .roster-card.late { border-left: 3px solid #facc15; }
-    .roster-card.absent { border-left: 3px solid #f87171; }
-    .roster-card.excused { border-left: 3px solid #818cf8; }
-    .roster-card.guest { border-left: 3px solid #58a6ff; }
+    .roster-card.present { border-inline-start: 3px solid #4ade80; }
+    .roster-card.late { border-inline-start: 3px solid #facc15; }
+    .roster-card.absent { border-inline-start: 3px solid #f87171; }
+    .roster-card.excused { border-inline-start: 3px solid #818cf8; }
+    .roster-card.guest { border-inline-start: 3px solid #58a6ff; }
     .tab-btn {
       flex: 1;
       padding: 7px 10px;
@@ -1015,7 +1015,7 @@
     .rsvp-noresponse { background: rgba(156,163,175,.15); color: #9ca3af; }
     .invited-status {
       font-size: .65rem;
-      margin-left: auto;
+      margin-inline-start: auto;
       color: var(--muted);
     }
     .invited-status.joined { color: #4ade80; }
@@ -1208,7 +1208,7 @@
       height: 5px;
       border-radius: 50%;
       background: var(--accent);
-      margin-right: 5px;
+      margin-inline-end: 5px;
       box-shadow: 0 0 4px var(--accent);
     }
     .badge.left {
@@ -1608,7 +1608,7 @@
       align-items: center;
       justify-content: space-between;
       cursor: pointer;
-      text-align: left;
+      text-align: start;
       transition: all .15s ease;
       box-sizing: border-box;
       flex: 0 0 auto;
@@ -1799,7 +1799,7 @@
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
       overflow-x: hidden;
-      text-align: left;
+      text-align: start;
     }
     body.landing-mode,
     html.landing-mode body {
@@ -1908,7 +1908,7 @@
       display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 15px; color: var(--text-muted);
     }
     #landing-page .lp2-check-mark {
-      color: var(--accent); font-weight: 700; margin-right: 6px;
+      color: var(--accent); font-weight: 700; margin-inline-end: 6px;
     }
 
     #landing-page .lp2-mockup-card {
@@ -2011,8 +2011,8 @@
     }
     #landing-page .lp2-play-triangle {
       width: 0; height: 0;
-      border-left: 24px solid #0d1117; border-top: 15px solid transparent; border-bottom: 15px solid transparent;
-      margin-left: 6px;
+      border-inline-start: 24px solid #0d1117; border-top: 15px solid transparent; border-bottom: 15px solid transparent;
+      margin-inline-start: 6px;
     }
     #landing-page .lp2-video-label {
       position: absolute; left: 24px; bottom: 20px;
@@ -2085,18 +2085,18 @@
       display: grid; grid-template-columns: 2.2fr 1fr 1fr .8fr 1fr 1.3fr;
       background: #16a34a; color: #fff; font-weight: 600; font-size: 15px;
     }
-    #landing-page .lp2-sheet-th { padding: 14px 16px; text-align: right; }
-    #landing-page .lp2-sheet-th:first-child { padding: 14px 20px; text-align: left; }
-    #landing-page .lp2-sheet-th:last-child { padding: 14px 20px; text-align: left; }
+    #landing-page .lp2-sheet-th { padding: 14px 16px; text-align: end; }
+    #landing-page .lp2-sheet-th:first-child { padding: 14px 20px; text-align: start; }
+    #landing-page .lp2-sheet-th:last-child { padding: 14px 20px; text-align: start; }
     #landing-page .lp2-sheet-tr {
       display: grid; grid-template-columns: 2.2fr 1fr 1fr .8fr 1fr 1.3fr;
       font-size: 16px; border-bottom: 1px solid #eef0f2; align-items: center;
     }
-    #landing-page .lp2-sheet-td { padding: 15px 16px; text-align: right; font-variant-numeric: tabular-nums; }
+    #landing-page .lp2-sheet-td { padding: 15px 16px; text-align: end; font-variant-numeric: tabular-nums; }
     #landing-page .lp2-sheet-td:first-child {
-      padding: 15px 20px; text-align: left; display: flex; gap: 8px; align-items: baseline;
+      padding: 15px 20px; text-align: start; display: flex; gap: 8px; align-items: baseline;
     }
-    #landing-page .lp2-sheet-td:last-child { padding: 12px 20px; text-align: left; }
+    #landing-page .lp2-sheet-td:last-child { padding: 12px 20px; text-align: start; }
     #landing-page .lp2-sheet-late { color: #b45309; font-weight: 600; font-size: 14px; }
     #landing-page .lp2-sheet-badge {
       font-size: 14px; font-weight: 600; padding: 5px 12px; border-radius: 999px; display: inline-block;
@@ -2117,7 +2117,7 @@
       display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
       gap: 48px; align-items: center;
     }
-    #landing-page .lp2-checkin-left { display: flex; flex-direction: column; gap: 18px; text-align: left; }
+    #landing-page .lp2-checkin-left { display: flex; flex-direction: column; gap: 18px; text-align: start; }
     #landing-page .lp2-checkin-visual {
       display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap;
     }
@@ -2155,7 +2155,7 @@
     }
     #landing-page .lp2-feat-card {
       display: flex; flex-direction: column; gap: 6px; padding-top: 16px; border-top: 1px solid var(--border);
-      text-align: left;
+      text-align: start;
     }
     #landing-page .lp2-feat-title { font-size: 17px; font-weight: 600; color: var(--text); }
     #landing-page .lp2-feat-body { font-size: 15px; color: var(--text-muted); line-height: 1.55; }
@@ -2190,7 +2190,7 @@
       gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
     }
     #landing-page .lp2-who-card {
-      background: #0d1117; padding: 32px; display: flex; flex-direction: column; gap: 10px; text-align: left;
+      background: #0d1117; padding: 32px; display: flex; flex-direction: column; gap: 10px; text-align: start;
     }
     #landing-page .lp2-who-tag {
       font-family: var(--font-mono); font-size: 13px; color: var(--accent);
@@ -2205,7 +2205,7 @@
     #landing-page .lp2-privacy-card {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
       gap: 24px 64px; padding: 40px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface);
-      text-align: left;
+      text-align: start;
     }
     #landing-page .lp2-privacy-title { font-size: 26px; font-weight: 700; letter-spacing: -.01em; }
     #landing-page .lp2-privacy-sub { margin: 10px 0 0; font-size: 16px; color: var(--text-muted); line-height: 1.6; }
@@ -2215,14 +2215,14 @@
     #landing-page .lp2-pricing-section {
       max-width: 1160px; margin: 0 auto; padding: 0 24px 96px; display: flex; flex-direction: column; gap: 32px;
     }
-    #landing-page .lp2-pricing-head { display: flex; flex-direction: column; gap: 12px; text-align: left; }
+    #landing-page .lp2-pricing-head { display: flex; flex-direction: column; gap: 12px; text-align: start; }
     #landing-page .lp2-pricing-sub { margin: 0; font-size: 18px; color: var(--text-muted); }
     #landing-page .lp2-pricing-grid {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 16px;
     }
     #landing-page .lp2-plan-card {
       padding: 26px; border-radius: 16px; display: flex; flex-direction: column; gap: 10px;
-      background: #0d1117; border: 1px solid var(--border); text-align: left;
+      background: #0d1117; border: 1px solid var(--border); text-align: start;
     }
     #landing-page .lp2-plan-card.lp2-plan-highlight {
       background: #11231a; border-color: var(--accent);
@@ -2248,7 +2248,7 @@
     #landing-page .lp2-faq-item { border-bottom: 1px solid var(--border); }
     #landing-page .lp2-faq-btn {
       width: 100%; background: none; border: 0; color: var(--text);
-      font: inherit; font-size: 18px; font-weight: 600; text-align: left;
+      font: inherit; font-size: 18px; font-weight: 600; text-align: start;
       padding: 22px 0; display: flex; justify-content: space-between; gap: 16px; cursor: pointer;
     }
     #landing-page .lp2-faq-icon {
@@ -2480,14 +2480,14 @@
       display: flex; flex-direction: column; gap: 36px;
     }
     #landing-page .lp2-reviews-head {
-      display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 20px; text-align: left;
+      display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 20px; text-align: start;
     }
     #landing-page .lp2-reviews-grid {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr)); gap: 20px;
     }
     #landing-page .lp2-review-card {
       background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
-      padding: 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; text-align: left;
+      padding: 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; text-align: start;
     }
     #landing-page .lp2-review-problem {
       display: inline-block; font-size: 12px; font-weight: 600; color: var(--accent);
@@ -2509,8 +2509,8 @@
       display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 20px;
     }
     #landing-page .lp2-case-card {
-      background: #0d1117; border: 1px solid var(--border); border-left: 3px solid var(--accent);
-      border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: 12px; text-align: left;
+      background: #0d1117; border: 1px solid var(--border); border-inline-start: 3px solid var(--accent);
+      border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: 12px; text-align: start;
     }
     #landing-page .lp2-intent-section {
       max-width: 1160px; margin: 0 auto; padding: 0 24px 96px;
@@ -2521,7 +2521,7 @@
     }
     #landing-page .lp2-intent-card {
       background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
-      padding: 24px; display: flex; flex-direction: column; gap: 10px; text-align: left;
+      padding: 24px; display: flex; flex-direction: column; gap: 10px; text-align: start;
     }
     #landing-page .lp2-intent-card h3 {
       margin: 0; font-size: 18px; font-weight: 600; color: var(--text); text-wrap: balance;
@@ -2690,7 +2690,7 @@
       <div style="background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:24px">
         <div style="max-width:820px;display:flex;flex-direction:column;gap:12px">
           <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--accent)" data-i18n="lp2_teacher_eyebrow">Why Teachers &amp; Schools Choose Attendance Tracker</div>
-          <h2 id="lp2-teacher-pos-heading" class="lp2-h2" style="text-align:left;margin:0" data-i18n="lp2_teacher_title">Google Meet Attendance Tracking Built for Teachers</h2>
+          <h2 id="lp2-teacher-pos-heading" class="lp2-h2" style="text-align:start;margin:0" data-i18n="lp2_teacher_title">Google Meet Attendance Tracking Built for Teachers</h2>
           <p style="margin:0;font-size:17px;color:var(--text-muted);line-height:1.65;max-width:65ch" data-i18n="lp2_teacher_sub">Track attendance live, identify late arrivals, and export organized records to Google Sheets, Excel, or CSV. Import Google Classroom rosters and prepare gradebook reports without manually rebuilding attendance lists.</p>
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px">
@@ -2768,7 +2768,7 @@
     <section class="lp2-sheet-section">
       <div class="lp2-sheet-wrap">
         <div class="lp2-sheet-head">
-          <h2 class="lp2-h2" style="text-align:left" data-i18n="lp2_sheet_title">A spreadsheet you'd actually keep</h2>
+          <h2 class="lp2-h2" style="text-align:start" data-i18n="lp2_sheet_title">A spreadsheet you'd actually keep</h2>
           <p style="margin:0;font-size:18px;color:var(--text-muted);line-height:1.6;text-wrap:pretty" data-i18n="lp2_sheet_sub">Every recurring class or meeting rolls up into one clean Sheet — presence, late arrivals, and no-shows, already matched to your invite.</p>
         </div>
         <div class="lp2-sheet-card">
@@ -2850,7 +2850,7 @@
     <section class="lp2-checkin-section">
       <div class="lp2-checkin-left">
         <div class="lp2-eyebrow" data-i18n="lp2_checkin_eyebrow">ONLY IN AN ADD-ON</div>
-        <h2 class="lp2-h2" style="text-align:left" data-i18n="lp2_checkin_title">Students check themselves in.</h2>
+        <h2 class="lp2-h2" style="text-align:start" data-i18n="lp2_checkin_title">Students check themselves in.</h2>
         <p style="margin:0;font-size:18px;color:var(--text-muted);line-height:1.6;text-wrap:pretty" data-i18n="lp2_checkin_body">Attendees tap "I'm here" in their own Meet panel. You get a verified name, email and time, even for "iPhone (2)" and dial-in callers. Chrome extensions can't run on your students' screens, so they can't do this.</p>
       </div>
       <div class="lp2-checkin-visual">
@@ -2880,7 +2880,7 @@
 
     <!-- Features Section -->
     <section class="lp2-features-section">
-      <h2 class="lp2-h2" style="text-align:left" data-i18n="lp2_feat_title">Everything else you'd want</h2>
+      <h2 class="lp2-h2" style="text-align:start" data-i18n="lp2_feat_title">Everything else you'd want</h2>
       <div class="lp2-features-grid">
         <div class="lp2-feat-card">
           <div class="lp2-feat-title" data-i18n="lp2_feat_1_title">Late arrivals and no-shows</div>
@@ -2919,8 +2919,8 @@
 
     <!-- Comparison Section -->
     <section id="compare" class="lp2-compare-section">
-      <div style="display:flex;flex-direction:column;gap:14px;max-width:680px;text-align:left">
-        <h2 class="lp2-h2" style="text-align:left" data-i18n="lp2_cmp_title">Why an add-on beats an extension</h2>
+      <div style="display:flex;flex-direction:column;gap:14px;max-width:680px;text-align:start">
+        <h2 class="lp2-h2" style="text-align:start" data-i18n="lp2_cmp_title">Why an add-on beats an extension</h2>
         <p style="margin:0;font-size:18px;color:var(--text-muted);line-height:1.6" data-i18n="lp2_cmp_sub">Most attendance tools are Chrome extensions that read the Meet page. When Meet changes, they break. Attendance Tracker runs on Google's own Meet APIs.</p>
       </div>
       <div class="lp2-compare-box">
@@ -2985,7 +2985,7 @@
 
     <!-- Who It's For Section -->
     <section id="who" class="lp2-who-section">
-      <h2 class="lp2-h2" style="text-align:left" data-i18n="lp2_who_title">One tool, four kinds of roll-call</h2>
+      <h2 class="lp2-h2" style="text-align:start" data-i18n="lp2_who_title">One tool, four kinds of roll-call</h2>
       <div class="lp2-who-grid">
         <div class="lp2-who-card">
           <div class="lp2-who-tag" data-i18n="lp2_who_1_tag">Education</div>
@@ -3018,7 +3018,7 @@
             <span>★★★★★</span>
             <span data-i18n="lp2_reviews_badge">5.0 / 5 Average · 27 Marketplace Ratings · 14 Written Reviews</span>
           </div>
-          <h2 id="lp2-reviews-heading" class="lp2-h2" style="text-align:left" data-i18n="lp2_reviews_title">What real educators &amp; hosts say</h2>
+          <h2 id="lp2-reviews-heading" class="lp2-h2" style="text-align:start" data-i18n="lp2_reviews_title">What real educators &amp; hosts say</h2>
           <p class="lp2-reviews-sub" data-i18n="lp2_reviews_sub">Every review below is published verbatim from authenticated users on the official Google Workspace Marketplace—highlighting the exact attendance problem solved. Teachers use Attendance Tracker to record Google Meet attendance, reduce manual roll calls, and export organized attendance records to Google Sheets.</p>
         </div>
         <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
@@ -3158,7 +3158,7 @@
     <!-- Pricing Section -->
     <section id="pricing" class="lp2-pricing-section">
       <div class="lp2-pricing-head">
-        <h2 class="lp2-h2" style="text-align:left" data-i18n="lp2_pricing_title">Pay once. Nothing to cancel.</h2>
+        <h2 class="lp2-h2" style="text-align:start" data-i18n="lp2_pricing_title">Pay once. Nothing to cancel.</h2>
         <p class="lp2-pricing-sub" data-i18n="lp2_pricing_sub">Free to start, no credit card. 50% regional discount applied automatically in eligible markets.</p>
       </div>
       <div class="lp2-pricing-grid">
@@ -3195,7 +3195,7 @@
     <!-- Buyer's Technical Guide: 6 Questions Answered Directly -->
     <section id="search-intent" class="lp2-intent-section" aria-labelledby="lp2-intent-heading">
       <div style="display:flex;flex-direction:column;gap:12px;max-width:760px">
-        <h2 id="lp2-intent-heading" class="lp2-h2" style="text-align:left" data-i18n="lp2_intent_title">The 6 questions every Google Meet attendance buyer asks</h2>
+        <h2 id="lp2-intent-heading" class="lp2-h2" style="text-align:start" data-i18n="lp2_intent_title">The 6 questions every Google Meet attendance buyer asks</h2>
         <p style="margin:0;font-size:17px;color:var(--text-muted);line-height:1.6" data-i18n="lp2_intent_sub">Whether you searched for a <strong>Google Meet attendance tracker</strong>, a <strong>Google Meet attendance extension</strong>, a <strong>free Google Meet attendance tracker</strong>, or a <strong>Google Meet attendance tracker for teachers</strong>, here are the exact facts before you install.</p>
       </div>
       <div class="lp2-intent-grid">
@@ -3237,7 +3237,7 @@
 
     <!-- FAQ Section -->
     <section id="faq" class="lp2-faq-section">
-      <h2 class="lp2-h2" style="text-align:left" data-i18n="lp2_faq_title">Good to know</h2>
+      <h2 class="lp2-h2" style="text-align:start" data-i18n="lp2_faq_title">Good to know</h2>
       <div class="lp2-faq-list">
         <div class="lp2-faq-item lp2-faq-open">
           <button type="button" class="lp2-faq-btn" onclick="toggleLandingFaq(0)">
@@ -3551,7 +3551,7 @@
       <div id="meeting-title" data-i18n="meeting.notIn">Not in a meeting</div>
       <div id="meeting-type" style="font-size:.65rem;color:#9ca3af;margin-top:1px;display:none"></div>
     </div>
-    <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+    <div style="display:flex;align-items:center;gap:6px;margin-inline-start:auto">
       <button id="btn-header-pro" type="button" onclick="showUpgradeModal('header')" data-i18n-title="upgrade.title" title="Upgrade to Pro"
         style="display:none;background:rgba(253,214,99,.12);border:1px solid rgba(253,214,99,.32);color:#fdd663;border-radius:12px;padding:3px 9px;font-size:.72rem;font-weight:600;cursor:pointer;line-height:1.3;white-space:nowrap"
         data-i18n-aria="upgrade.title" aria-label="Upgrade to Pro">
@@ -3653,7 +3653,7 @@
       <span id="export-quota-dot" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#81c995;flex-shrink:0"></span>
       <span id="export-quota-text" title="2 of 2 free exports remaining this month" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">2 of 2 free exports remaining this month</span>
     </div>
-    <span style="white-space:nowrap;margin-left:6px;display:flex;align-items:center;gap:6px;flex-shrink:0">
+    <span style="white-space:nowrap;margin-inline-start:6px;display:flex;align-items:center;gap:6px;flex-shrink:0">
       <!-- Permanent, silent, deliberate path — the only surface that has
            actually converted is self-directed browsing. -->
       <a href="https://attendancetracker.dev/pricing.html?utm_source=panel_quota" target="_blank" rel="noopener" data-i18n="quota.pricingLink" class="quota-pricing-link" style="color:#8b949e;text-decoration:none;font-size:10px">Pricing</a>
@@ -3702,7 +3702,7 @@
       </a>
     </div>
     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-      <span style="font-size:10px;color:#8b949e;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-right:2px" data-i18n="history.downloadsLabel">Downloads:</span>
+      <span style="font-size:10px;color:#8b949e;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-inline-end:2px" data-i18n="history.downloadsLabel">Downloads:</span>
       <a href="#" onclick="downloadAttendanceCsv(); return false;" class="sheet-chip" style="display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#c9d1d9;font-size:10.5px;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap;transition:all .15s ease" data-i18n="bar.downloadCsv">CSV</a>
       <a href="#" onclick="downloadAttendanceExcel(); return false;" class="sheet-chip" style="display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#c9d1d9;font-size:10.5px;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap;transition:all .15s ease" data-i18n="btn.exportExcel">Excel</a>
       <a href="#" onclick="downloadPdfReport(); return false;" class="sheet-chip" style="display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#c9d1d9;font-size:10.5px;padding:3px 8px;border-radius:6px;text-decoration:none;white-space:nowrap;transition:all .15s ease" data-i18n="bar.pdfReport">PDF report</a>
@@ -3719,7 +3719,7 @@
        exported before (a real repeat). Once ever, dismissible. -->
   <div id="recurring-tip" style="display:none; align-items:flex-start; gap:8px; padding:8px 12px; margin:6px 16px; border-radius:8px; font-size:11px; color:#9ca3af; background:rgba(74,222,128,.06); border:1px solid rgba(74,222,128,.2)">
     <span style="line-height:1.45" data-i18n="tip.recurring">Tracking this one regularly? Put it on a recurring Google Calendar invite — then you'll see per-person attendance trends across every session.</span>
-    <button type="button" onclick="closeRecurringTip()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
+    <button type="button" onclick="closeRecurringTip()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-inline-start:auto;flex-shrink:0">×</button>
   </div>
   <!-- Class-Summary upsell at the POINT OF NEED: a free user just exported an
        already-recurring class — exactly the moment Pro's cumulative per-student
@@ -3727,7 +3727,7 @@
        view (their own data + the Pro teaser), not a popup. -->
   <div id="class-summary-tip" style="display:none; align-items:flex-start; gap:8px; padding:8px 12px; margin:6px 16px; border-radius:8px; font-size:11px; color:#9ca3af; background:rgba(253,214,99,.06); border:1px solid rgba(253,214,99,.2)">
     <span style="line-height:1.45"><span data-i18n="tip.classSummary">Recurring class? Pro's cumulative Class Summary tracks each student's attendance % across every session —</span> <a href="https://attendancetracker.dev/history.html" onclick="try{logUserEvent('class_summary_tip_clicked',{})}catch(e){};openHistoryPage(event)" target="_blank" rel="noopener" style="color:#fdd663;text-decoration:none;font-weight:600" data-i18n="tip.classSummaryCta">see your class trends →</a></span>
-    <button type="button" onclick="closeClassSummaryTip()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
+    <button type="button" onclick="closeClassSummaryTip()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-inline-start:auto;flex-shrink:0">×</button>
   </div>
   <!-- Term-end payoff (Phase 4): once a recurring class has met enough times, the
        whole-term cumulative report + certificates are genuinely valuable. Fires
@@ -3737,7 +3737,7 @@
        (retention). {n} set in JS. Once-per-series, dismissible, never stacks. -->
   <div id="term-report-tip" style="display:none; align-items:flex-start; gap:8px; padding:8px 12px; margin:6px 16px; border-radius:8px; font-size:11px; color:#9ca3af; background:rgba(129,201,149,.09); border:1px solid rgba(129,201,149,.2)">
     <span style="line-height:1.45"><span id="term-report-tip-msg"></span> <a href="https://attendancetracker.dev/history.html" onclick="onTermReportTipClick();openHistoryPage(event)" target="_blank" rel="noopener" style="color:#81c995;text-decoration:none;font-weight:600" data-i18n="tip.termReportCta">open the class report →</a></span>
-    <button type="button" onclick="closeTermReportTip()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
+    <button type="button" onclick="closeTermReportTip()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-inline-start:auto;flex-shrink:0">×</button>
   </div>
 
   <!-- Review Experiment Variant A: In-App 1-Click Interactive Star Rating -->
@@ -3795,7 +3795,7 @@
        measurable and we can pull it if it grates. -->
   <div id="auto-export-tip" style="display:none; align-items:flex-start; gap:8px; padding:8px 12px; margin:6px 16px; border-radius:8px; font-size:11px; color:#9ca3af; background:rgba(253,214,99,.06); border:1px solid rgba(253,214,99,.2)">
     <span style="line-height:1.45"><span data-i18n="tip.autoExport">You track a lot of meetings live but rarely export. Pro's auto-export saves each one to Google Sheets the moment the call ends —</span> <a href="#" onclick="onAutoExportTipClick();return false" style="color:#fdd663;text-decoration:none;font-weight:600" data-i18n="tip.autoExportCta">turn on auto-export →</a></span>
-    <button type="button" onclick="closeAutoExportTip()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
+    <button type="button" onclick="closeAutoExportTip()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-inline-start:auto;flex-shrink:0">×</button>
   </div>
 
   <!-- Team admin link — only shown to users where /oauth/me reports
@@ -3811,7 +3811,7 @@
        how the teacher-to-teacher spread inside a school turns into a domain plan. -->
   <div id="team-signpost" style="display:none; align-items:flex-start; gap:8px; padding:8px 12px; margin:6px 16px; border-radius:8px; font-size:11.5px; color:#c9d1d9; background:rgba(74,222,128,.08); border:1px solid rgba(74,222,128,.2)">
     <span style="line-height:1.5"><span id="team-signpost-msg"></span> <a id="team-signpost-link" href="https://attendancetracker.dev/team.html" onclick="onTeamSignpostClick(event)" target="_blank" rel="noopener" style="color:#4ade80;text-decoration:none;font-weight:600;white-space:nowrap"></a></span>
-    <button type="button" onclick="dismissTeamSignpost()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-left:auto;flex-shrink:0">×</button>
+    <button type="button" onclick="dismissTeamSignpost()" data-i18n-aria="common.dismiss" aria-label="Dismiss" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;margin-inline-start:auto;flex-shrink:0">×</button>
   </div>
 
   <!-- ── Summary ── -->
@@ -3932,7 +3932,7 @@
       </div>
 
       <!-- Quick Start card to eliminate empty space -->
-      <div style="margin:16px auto 0;text-align:left;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:.74rem;color:#9ca3af;line-height:1.5;width:100%;max-width:280px;box-sizing:border-box">
+      <div style="margin:16px auto 0;text-align:start;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:.74rem;color:#9ca3af;line-height:1.5;width:100%;max-width:280px;box-sizing:border-box">
         <div style="font-weight:600;color:#e6edf3;margin-bottom:6px" data-i18n="empty.qsTitle">Quick Start:</div>
         <div style="display:flex;flex-direction:column;gap:6px">
           <div><strong style="color:#4ade80" data-i18n="empty.qs1Label">1. Tap Start:</strong> <span data-i18n="empty.qs1">Tracks attendees and timestamps in the background.</span></div>
@@ -4014,7 +4014,7 @@
          active and there's attendance data (same visibility as #roster-chips). -->
     <div id="roster-lms-bar" style="display:none;padding:8px 2px 2px;font-size:11px;color:var(--muted)">
       <span data-i18n="roster.exportGradebook">Export gradebook CSV:</span>
-      <a href="#" onclick="downloadLmsCsv('moodle'); return false;" style="color:var(--green);text-decoration:none;margin-left:6px">Moodle</a>
+      <a href="#" onclick="downloadLmsCsv('moodle'); return false;" style="color:var(--green);text-decoration:none;margin-inline-start:6px">Moodle</a>
       <span style="margin:0 4px">·</span>
       <a href="#" onclick="downloadLmsCsv('canvas'); return false;" style="color:var(--green);text-decoration:none">Canvas</a>
     </div>
@@ -4088,7 +4088,7 @@ const CLASSROOM_SCOPES = 'https://www.googleapis.com/auth/classroom.courses.read
 const state = {
   tracking:      false,
   conferenceId:  null,
-  meetingTitle:  'Unknown Meeting',
+  meetingTitle:  t('app.unknownMeeting', 'Unknown Meeting'),
   startTime:     null,
   participants:  new Map(),   // displayName → { joinTime, leaveTime, present }
   refreshTimer:  null,
@@ -4610,7 +4610,7 @@ function renderRosterView() {
             ${t('roster.createBtn', '+ Create Class Roster')}
           </button>
 
-          <div style="margin-top:20px;text-align:left;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:.73rem;color:#9ca3af;line-height:1.5">
+          <div style="margin-top:20px;text-align:start;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:.73rem;color:#9ca3af;line-height:1.5">
             <div style="font-weight:600;color:#e6edf3;margin-bottom:6px">${t('roster.howTitle', 'How Class Rosters work:')}</div>
             <div style="display:flex;flex-direction:column;gap:5px">
               <div>• ${t('roster.how1', 'Matches students by email or display name')}</div>
@@ -5752,8 +5752,8 @@ function renderTeamSignpost(sp) {
   let baseMsg = t('history.clusterPromoMsg', '{n} teachers from your school are using Attendance Tracker. Upgrade to a Department Pass ($59/yr) to cover all colleagues.')
     .replace('{n}', '<b>' + n + '</b>');
   const proofParts = [];
-  if (sp.payingColleagues > 0) proofParts.push(`${sp.payingColleagues} on Pro`);
-  if (sp.largeClassCount > 0) proofParts.push(`${sp.largeClassCount} with 25+ student classes`);
+  if (sp.payingColleagues > 0) proofParts.push(t('promo.proofOnPro', '{n} on Pro').replace('{n}', sp.payingColleagues));
+  if (sp.largeClassCount > 0) proofParts.push(t('promo.proofLargeClass', '{n} with 25+ student classes').replace('{n}', sp.largeClassCount));
   if (proofParts.length > 0) {
     baseMsg += ` <span style="opacity:.85">(${escHtml(proofParts.join(' · '))})</span>`;
   }
@@ -6068,7 +6068,7 @@ async function signOut() {
   const btn = document.getElementById('btn-signout');
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = `<span style="display:inline-block;width:9px;height:9px;border:2px solid var(--muted);border-top-color:var(--text);border-radius:50%;animation:spin .6s linear infinite;margin-right:4px;vertical-align:middle"></span>${escHtml(t('btn.signOut', 'Sign out'))}…`;
+    btn.innerHTML = `<span style="display:inline-block;width:9px;height:9px;border:2px solid var(--muted);border-top-color:var(--text);border-radius:50%;animation:spin .6s linear infinite;margin-inline-end:4px;vertical-align:middle"></span>${escHtml(t('btn.signOut', 'Sign out'))}…`;
   }
 
   try {
@@ -6432,7 +6432,7 @@ async function initSDK() {
       setStatus('active', 'Ready');
       renderList();
     } else {
-      setStatus('active', `Connected · no conference ID yet`);
+      setStatus('active', t('status.connectedNoConference', 'Connected · no conference ID yet'));
     }
 
   } catch (err) {
@@ -7413,16 +7413,16 @@ async function toggleNotificationPref(category, enabled) {
 // one-click way to hand it off: a prefilled email to their Workspace admin with
 // the setup link. They fill in the admin's address in their mail client.
 function emailAdminForSetup() {
-  const subject = 'Please finish setting up Attendance Tracker for our Google Meet';
+  const subject = t('adminMail.subject', 'Please finish setting up Attendance Tracker for our Google Meet');
   const body = [
-    'Hi,',
+    t('adminMail.greeting', 'Hi,'),
     '',
-    "I'm using Attendance Tracker to take attendance in Google Meet, but some participants don't show up until a Workspace admin completes a one-time setup (domain-wide delegation).",
+    t('adminMail.body', "I'm using Attendance Tracker to take attendance in Google Meet, but some participants don't show up until a Workspace admin completes a one-time setup (domain-wide delegation)."),
     '',
-    'The steps take about 2 minutes and are here:',
+    t('adminMail.steps', 'The steps take about 2 minutes and are here:'),
     'https://attendancetracker.dev/setup.html',
     '',
-    'Thanks!',
+    t('adminMail.thanks', 'Thanks!'),
   ].join('\n');
   window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
@@ -7594,7 +7594,7 @@ async function loadBillingStatus() {
     if (_isPro && data.cancelAtPeriodEnd) {
       const endStr = data.currentPeriodEnd
         ? locDate(data.currentPeriodEnd, { year: 'numeric', month: 'short', day: 'numeric' })
-        : 'the end of your billing cycle';
+        : t('settings.billingCycleEnd', 'the end of your billing cycle');
       if (cancelNotice) {
         cancelNotice.textContent = t('settings.cancelledNotice', 'Auto-renewal cancelled · Pro active through {date} · Zero future charges').replace('{date}', endStr);
         cancelNotice.style.display = 'block';
@@ -7623,7 +7623,7 @@ function openCancelSubscriptionModal() {
   if (periodEndEl) {
     const endStr = _billing?.currentPeriodEnd
       ? locDate(_billing.currentPeriodEnd, { year: 'numeric', month: 'long', day: 'numeric' })
-      : 'the end of your billing cycle';
+      : t('settings.billingCycleEnd', 'the end of your billing cycle');
     periodEndEl.textContent = endStr;
   }
   modal.style.display = 'flex';
@@ -8029,7 +8029,7 @@ function startStripeCheckout(plan) {
 
   // "Checkout was blocked — click here" fallback, shared by both blocked paths.
   const checkoutBlockedBannerHtml = (href) =>
-    `<span>${escHtml(t('upgrade.checkoutBlocked', '⚠️ Checkout window was blocked.'))} <a href="${escHtml(href)}" target="_blank" rel="noopener noreferrer" style="color:#58a6ff;text-decoration:underline;font-weight:700;margin-left:2px">${escHtml(t('upgrade.checkoutClickHere', 'Click here to complete payment'))}</a></span>`;
+    `<span>${escHtml(t('upgrade.checkoutBlocked', '⚠️ Checkout window was blocked.'))} <a href="${escHtml(href)}" target="_blank" rel="noopener noreferrer" style="color:#58a6ff;text-decoration:underline;font-weight:700;margin-inline-start:2px">${escHtml(t('upgrade.checkoutClickHere', 'Click here to complete payment'))}</a></span>`;
   const banner = document.getElementById('checkout-popup-fallback-banner');
   if (banner) {
     banner.style.display = 'block';
@@ -8304,20 +8304,20 @@ function updateUpgradeModalPricing() {
     }
     if (lifetimePriceEl) {
       const localTag = localLifetimeAnchor ? ` <span style="font-size:.73rem;color:#81c995;font-weight:400">(${escHtml(localLifetimeAnchor)})</span>` : '';
-      lifetimePriceEl.innerHTML = `<s style="color:#9aa0a6;font-size:.82rem;font-weight:400;margin-right:4px">$9.99</s><span style="color:#81c995;font-weight:700">$4.99</span>${localTag}`;
+      lifetimePriceEl.innerHTML = `<s style="color:#9aa0a6;font-size:.82rem;font-weight:400;margin-inline-end:4px">$9.99</s><span style="color:#81c995;font-weight:700">$4.99</span>${localTag}`;
     }
     if (educatorPriceEl) {
       const localTag = localEduAnchor ? ` <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(${escHtml(localEduAnchor)})</span>` : '';
-      educatorPriceEl.innerHTML = `<s style="color:#9aa0a6;font-size:.82rem;font-weight:400;margin-right:4px">$4.99</s><span style="color:#8ab4f8;font-weight:700">$2.49</span>${localTag}`;
+      educatorPriceEl.innerHTML = `<s style="color:#9aa0a6;font-size:.82rem;font-weight:400;margin-inline-end:4px">$4.99</s><span style="color:#8ab4f8;font-weight:700">$2.49</span>${localTag}`;
     }
     if (eduPerMoBadge) {
       eduPerMoBadge.textContent = bestValueBadge('~20¢');
     }
     if (btnLifetime) {
-      btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime" style="color:#ffffff;font-weight:700">$4.99</span> <span style="background:rgba(255,255,255,0.22);color:#fff;font-size:0.68rem;padding:2px 7px;border-radius:10px;margin-left:4px;font-weight:600">${escHtml(t('upgrade.off50PayOnce', '50% Off · Pay Once'))}</span>`;
+      btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime" style="color:#ffffff;font-weight:700">$4.99</span> <span style="background:rgba(255,255,255,0.22);color:#fff;font-size:0.68rem;padding:2px 7px;border-radius:10px;margin-inline-start:4px;font-weight:600">${escHtml(t('upgrade.off50PayOnce', '50% Off · Pay Once'))}</span>`;
     }
     if (btnEdu) {
-      btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#79c0ff;font-weight:700">$2.49</span>${escHtml(t('upgrade.perYear', '/yr'))} <span style="background:rgba(88,166,255,0.25);color:#79c0ff;font-size:0.68rem;padding:2px 7px;border-radius:10px;margin-left:4px;font-weight:600">${escHtml(t('upgrade.off50', '50% Off'))}</span>`;
+      btnEdu.innerHTML = `<span data-i18n="upgrade.ctaEdu">${escHtml(t('upgrade.ctaEdu', 'Get Educator Annual Pass —'))}</span> <span class="price-educator" style="color:#79c0ff;font-weight:700">$2.49</span>${escHtml(t('upgrade.perYear', '/yr'))} <span style="background:rgba(88,166,255,0.25);color:#79c0ff;font-size:0.68rem;padding:2px 7px;border-radius:10px;margin-inline-start:4px;font-weight:600">${escHtml(t('upgrade.off50', '50% Off'))}</span>`;
     }
   } else {
     if (dealPill) {
@@ -8364,7 +8364,7 @@ function updateUpgradeModalPricing() {
       btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime" style="color:#ffffff;font-weight:700">₹299</span>`;
     }
     if (educatorPriceEl) {
-      educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">₹199</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-left:4px">₹399</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.40)</span>`;
+      educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">₹199</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-inline-start:4px">₹399</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.40)</span>`;
     }
     if (eduPerMoBadge) {
       eduPerMoBadge.textContent = bestValueBadge('~₹16');
@@ -8387,7 +8387,7 @@ function updateUpgradeModalPricing() {
       btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime" style="color:#ffffff;font-weight:700">₱280</span>`;
     }
     if (educatorPriceEl) {
-      educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">₱140</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-left:4px">₱280</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.49)</span>`;
+      educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">₱140</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-inline-start:4px">₱280</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.49)</span>`;
     }
     if (eduPerMoBadge) {
       eduPerMoBadge.textContent = bestValueBadge('~₱12');
@@ -8410,7 +8410,7 @@ function updateUpgradeModalPricing() {
       btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime" style="color:#ffffff;font-weight:700">RM 22</span>`;
     }
     if (educatorPriceEl) {
-      educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">RM 12</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-left:4px">RM 24</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.49)</span>`;
+      educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">RM 12</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-inline-start:4px">RM 24</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.49)</span>`;
     }
     if (eduPerMoBadge) {
       eduPerMoBadge.textContent = bestValueBadge('~RM 1');
@@ -8433,7 +8433,7 @@ function updateUpgradeModalPricing() {
       btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime" style="color:#ffffff;font-weight:700">Rp 78.000</span>`;
     }
     if (educatorPriceEl) {
-      educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">Rp 39.000</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-left:4px">Rp 78.000</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.49)</span>`;
+      educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">Rp 39.000</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-inline-start:4px">Rp 78.000</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.49)</span>`;
     }
     if (eduPerMoBadge) {
       eduPerMoBadge.textContent = bestValueBadge('~Rp 3.250');
@@ -8456,7 +8456,7 @@ function updateUpgradeModalPricing() {
       btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime" style="color:#ffffff;font-weight:700">$99 MXN</span>`;
     }
     if (educatorPriceEl) {
-      educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">$49 MXN</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-left:4px">$99</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.49)</span>`;
+      educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">$49 MXN</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-inline-start:4px">$99</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.49)</span>`;
     }
     if (eduPerMoBadge) {
       eduPerMoBadge.textContent = bestValueBadge('~$4 MXN');
@@ -8479,7 +8479,7 @@ function updateUpgradeModalPricing() {
       btnLifetime.innerHTML = `<span data-i18n="upgrade.ctaLifetime">${escHtml(t('upgrade.ctaLifetime', 'Get Lifetime Access —'))}</span> <span class="price-lifetime" style="color:#ffffff;font-weight:700">R$ 49</span>`;
     }
     if (educatorPriceEl) {
-      educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">R$ 27</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-left:4px">R$ 54</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.49)</span>`;
+      educatorPriceEl.innerHTML = `<span style="color:#81c995;font-weight:700">R$ 27</span> <span style="font-size:.7rem;color:#8ab4f8;text-decoration:line-through;margin-inline-start:4px">R$ 54</span> <span style="font-size:.72rem;color:#8ab4f8;font-weight:400">(~$2.49)</span>`;
     }
     if (eduPerMoBadge) {
       eduPerMoBadge.textContent = bestValueBadge('~R$ 2.25');
@@ -9837,9 +9837,10 @@ function showCelebrateModal(sheetUrl, milestoneCount = 1) {
   const link = document.getElementById('celebrate-share-link');
   if (!modal || !link) return;
   const landingUrl = buildReferralLink();
-  const subject = encodeURIComponent('You should check out Attendance Tracker for Google Meet');
+  const subject = encodeURIComponent(t('shareMail.subject', 'You should check out Attendance Tracker for Google Meet'));
   const body = encodeURIComponent(
-    `I started using this Google Meet add-on for tracking attendance and exporting to Sheets in one click. Thought you might find it useful too.\n\nMarketplace: https://workspace.google.com/marketplace/app/attendance_tracker/829771833968\nLanding page: ${landingUrl}\n`
+    t('shareMail.body', 'I started using this Google Meet add-on for tracking attendance and exporting to Sheets in one click. Thought you might find it useful too.') +
+    `\n\n${t('shareMail.marketplace', 'Marketplace:')} https://workspace.google.com/marketplace/app/attendance_tracker/829771833968\n${t('shareMail.landing', 'Landing page:')} ${landingUrl}\n`
   );
   link.href = `mailto:?subject=${subject}&body=${body}`;
 
@@ -11044,7 +11045,7 @@ function selectWebhookProvider(provider) {
   const server = _webhookServer[provider] || {};
   if (input) {
     input.value = _webhookDrafts[provider] || '';
-    input.placeholder = server.configured ? (server.masked || 'Webhook saved (paste to replace)') : ui.placeholder;
+    input.placeholder = server.configured ? (server.masked || t('settings.webhookSavedPlaceholder', 'Webhook saved (paste to replace)')) : ui.placeholder;
   }
   const status = document.getElementById('settings-webhook-status');
   if (status) status.style.display = 'none';
@@ -11421,7 +11422,7 @@ function showActivityNote(name, type) {
   note.className = 'activity-note';
 
   const dotClass = type === 'joined' ? 'joined' : type === 'rejoined' ? 'rejoin' : 'left';
-  const actionText = type === 'joined' ? t('activity.joined', 'joined') : type === 'rejoined' ? t('activity.rejoined', 'rejoined') : t('activity.left', 'left');
+  const actionText = type === 'joined' ? t('activity.joined', 'joined') : type === 'rejoined' ? t('activity.rejoined', 'rejoined') : type === 'may have left' ? t('activity.mayHaveLeft', 'may have left') : t('activity.left', 'left');
 
   note.innerHTML = `
     <span class="note-dot ${dotClass}"></span>
@@ -11475,8 +11476,8 @@ function updateLastRefresh() {
   const countdown = state.syncCountdown ?? 30;
   const timeStr = fmtTime(new Date());
   document.getElementById('last-refresh').textContent = tracking
-    ? `updated ${timeStr} · next in ${countdown}s`
-    : `updated ${timeStr}`;
+    ? t('status.updatedNext', 'updated {time} · next in {s}s').replace('{time}', timeStr).replace('{s}', countdown)
+    : t('status.updated', 'updated {time}').replace('{time}', timeStr);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -11611,7 +11612,7 @@ function loadSampleClass() {
   state.startTime = startTime;
   state.conferenceStartTime = startTime;
   state._eventStart = startTime.toISOString();
-  state.meetingTitle = 'Biology 101 · Sample Class (25 students)';
+  state.meetingTitle = t('sample.classTitle', 'Biology 101 · Sample Class (25 students)');
   const titleEl = document.getElementById('meeting-title');
   if (titleEl) titleEl.textContent = state.meetingTitle;
 
@@ -11647,7 +11648,7 @@ function loadSampleClass() {
   if (btnCsv) btnCsv.disabled = false;
   if (btnExcel) btnExcel.disabled = false;
 
-  setStatus('active', 'Sample class loaded · 25 students');
+  setStatus('active', t('sample.loaded', 'Sample class loaded · 25 students'));
   showSearchBar();
   startDurationTimer();
   renderList();
@@ -12087,7 +12088,7 @@ window.addEventListener('DOMContentLoaded', () => {
           <div>
             <div class="settings-row-label">
               <span data-i18n="settings.autoExportLabel">Auto-export when meeting ends</span>
-              <span class="pro-badge" title="Auto-export is an Educator Pro feature" style="background:rgba(74,222,128,.15);color:#4ade80;font-size:.62rem;font-weight:700;padding:2px 6px;border-radius:10px;margin-left:6px;letter-spacing:.03em">PRO</span>
+              <span class="pro-badge" title="Auto-export is an Educator Pro feature" style="background:rgba(74,222,128,.15);color:#4ade80;font-size:.62rem;font-weight:700;padding:2px 6px;border-radius:10px;margin-inline-start:6px;letter-spacing:.03em">PRO</span>
             </div>
             <div class="settings-row-sub" data-i18n="settings.autoExportDesc">Automatically saves attendance to a Google Sheet when the meeting concludes.</div>
           </div>
@@ -12166,7 +12167,7 @@ window.addEventListener('DOMContentLoaded', () => {
           <div>
             <div class="settings-row-label">
               <span data-i18n="settings.referralLabel">Invite a colleague</span>
-              <span id="settings-referral-count" style="color:#4ade80;font-size:.72rem;margin-left:6px"></span>
+              <span id="settings-referral-count" style="color:#4ade80;font-size:.72rem;margin-inline-start:6px"></span>
             </div>
             <div class="settings-row-sub" data-i18n="settings.referralDesc">Share your link — when a colleague signs up through it, you earn a discount on any pass.</div>
           </div>
@@ -12190,7 +12191,7 @@ window.addEventListener('DOMContentLoaded', () => {
             </svg>
             <span data-i18n="settings.webhooksLabel">Chat digest webhooks</span>
           </div>
-          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;margin-left:auto">
+          <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;margin-inline-start:auto">
             <span class="webhook-pro-badge" data-i18n-title="tip.digestsPro" title="Meeting digests are included in Pro" style="display:none;background:rgba(74,222,128,.15);color:#4ade80;padding:2px 8px;border-radius:10px;font-size:.62rem;font-weight:700;letter-spacing:.03em">PRO</span>
             <a id="settings-webhook-guide" href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noopener" style="color:#58a6ff;font-size:.72rem;text-decoration:none;display:inline-flex;align-items:center;gap:4px;white-space:nowrap">
               <span data-i18n="settings.slackSetup">Setup guide</span>
@@ -12199,9 +12200,9 @@ window.addEventListener('DOMContentLoaded', () => {
           </div>
         </div>
         <div id="settings-webhook-tabs" style="display:flex;gap:4px;margin-bottom:12px;background:rgba(0,0,0,.28);padding:3px;border-radius:10px;border:1px solid rgba(255,255,255,.06)">
-          <button type="button" class="webhook-tab-btn" data-provider="slack" onclick="selectWebhookProvider('slack')">Slack<span id="webhook-dot-slack" style="display:none;color:#4ade80;margin-left:4px">&#9679;</span></button>
-          <button type="button" class="webhook-tab-btn" data-provider="googleChat" onclick="selectWebhookProvider('googleChat')">Google Chat<span id="webhook-dot-googleChat" style="display:none;color:#4ade80;margin-left:4px">&#9679;</span></button>
-          <button type="button" class="webhook-tab-btn" data-provider="discord" onclick="selectWebhookProvider('discord')">Discord<span id="webhook-dot-discord" style="display:none;color:#4ade80;margin-left:4px">&#9679;</span></button>
+          <button type="button" class="webhook-tab-btn" data-provider="slack" onclick="selectWebhookProvider('slack')">Slack<span id="webhook-dot-slack" style="display:none;color:#4ade80;margin-inline-start:4px">&#9679;</span></button>
+          <button type="button" class="webhook-tab-btn" data-provider="googleChat" onclick="selectWebhookProvider('googleChat')">Google Chat<span id="webhook-dot-googleChat" style="display:none;color:#4ade80;margin-inline-start:4px">&#9679;</span></button>
+          <button type="button" class="webhook-tab-btn" data-provider="discord" onclick="selectWebhookProvider('discord')">Discord<span id="webhook-dot-discord" style="display:none;color:#4ade80;margin-inline-start:4px">&#9679;</span></button>
         </div>
         <div id="settings-webhook-desc" class="settings-row-sub" style="margin-bottom:10px" data-i18n="settings.slackDesc">
           Posts an attendance summary card to your Slack channel after every export.
@@ -12310,7 +12311,7 @@ window.addEventListener('DOMContentLoaded', () => {
         <a id="celebrate-share-link" href="#" style="background:transparent;border:1px solid #30363d;color:#e6edf3;text-decoration:none;padding:8px 16px;border-radius:8px;font-weight:600;font-size:.8rem;display:inline-block" data-i18n="celebrate.share">Share with a teammate</a>
         <button onclick="closeCelebrateModal()" style="background:transparent;color:#9ca3af;border:none;font-size:.8rem;cursor:pointer;padding:4px" data-i18n="upgrade.maybeLater">Maybe later</button>
       </div>
-      <div id="celebrate-pro" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid #30363d;text-align:left">
+      <div id="celebrate-pro" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid #30363d;text-align:start">
         <div style="color:#e6edf3;font-size:.85rem;font-weight:600;margin-bottom:4px" data-i18n="celebrate.proTitle">Get more with Pro</div>
         <div id="celebrate-pro-desc" style="color:#9ca3af;font-size:.78rem;line-height:1.5;margin-bottom:10px" data-i18n="celebrate.proDesc">Pro adds a cumulative per-student attendance report across every session.</div>
         <button type="button" onclick="handleBillingClick()" style="background:transparent;border:1px solid #4ade80;color:#4ade80;padding:9px 14px;border-radius:8px;cursor:pointer;font-size:.82rem;font-weight:600;width:100%" data-i18n="upgrade.title">Upgrade to Pro</button>
@@ -12364,21 +12365,21 @@ window.addEventListener('DOMContentLoaded', () => {
 
       <!-- View 1: Main Objection Options -->
       <div id="paywall-why-view-options">
-        <div style="font-weight:600;color:#e3e3e3;font-size:1rem;margin-bottom:4px;padding-right:20px" data-i18n="paywall.whyTitle">Quick question — what's holding you back?</div>
+        <div style="font-weight:600;color:#e3e3e3;font-size:1rem;margin-bottom:4px;padding-inline-end:20px" data-i18n="paywall.whyTitle">Quick question — what's holding you back?</div>
         <div style="color:#9aa0a6;font-size:.78rem;margin-bottom:14px" data-i18n="paywall.whySub">One tap. It helps us make Pro worth it for your classes.</div>
         <div style="display:flex;flex-direction:column;gap:8px">
-          <button type="button" onclick="answerPaywallWhy('expensive')" style="flex:0 0 auto;text-align:left;background:#161b22;border:1px solid #30363d;color:#e6edf3;border-radius:10px;padding:10px 14px;font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:space-between">
+          <button type="button" onclick="answerPaywallWhy('expensive')" style="flex:0 0 auto;text-align:start;background:#161b22;border:1px solid #30363d;color:#e6edf3;border-radius:10px;padding:10px 14px;font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:space-between">
             <span data-i18n="paywall.whyPrice">Too expensive / budget</span>
             <span style="color:#81c995;font-size:.75rem;font-weight:600" data-i18n="paywall.passOffer">$2.99 pass</span>
           </button>
-          <button type="button" onclick="answerPaywallWhy('school_approval')" style="flex:0 0 auto;text-align:left;background:#161b22;border:1px solid #30363d;color:#e6edf3;border-radius:10px;padding:10px 14px;font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:space-between">
+          <button type="button" onclick="answerPaywallWhy('school_approval')" style="flex:0 0 auto;text-align:start;background:#161b22;border:1px solid #30363d;color:#e6edf3;border-radius:10px;padding:10px 14px;font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:space-between">
             <span data-i18n="paywall.whySchoolApproval">Need school approval / invoice</span>
             <span style="color:#58a6ff;font-size:.75rem;font-weight:600" data-i18n="paywall.poQuote">PO / Quote</span>
           </button>
-          <button type="button" onclick="answerPaywallWhy('missing_feature')" style="flex:0 0 auto;text-align:left;background:#161b22;border:1px solid #30363d;color:#e6edf3;border-radius:10px;padding:10px 14px;font-size:.85rem;cursor:pointer">
+          <button type="button" onclick="answerPaywallWhy('missing_feature')" style="flex:0 0 auto;text-align:start;background:#161b22;border:1px solid #30363d;color:#e6edf3;border-radius:10px;padding:10px 14px;font-size:.85rem;cursor:pointer">
             <span data-i18n="paywall.whyMissingFeature">Missing a specific feature</span>
           </button>
-          <button type="button" onclick="answerPaywallWhy('other')" style="flex:0 0 auto;text-align:left;background:#161b22;border:1px solid #30363d;color:#e6edf3;border-radius:10px;padding:10px 14px;font-size:.85rem;cursor:pointer">
+          <button type="button" onclick="answerPaywallWhy('other')" style="flex:0 0 auto;text-align:start;background:#161b22;border:1px solid #30363d;color:#e6edf3;border-radius:10px;padding:10px 14px;font-size:.85rem;cursor:pointer">
             <span data-i18n="paywall.whyOther">Something else</span>
           </button>
         </div>
@@ -12478,7 +12479,7 @@ window.addEventListener('DOMContentLoaded', () => {
             <span style="font-weight:600;font-size:.92rem;color:#e3e3e3" data-i18n="pricing.planEduName">Educator Annual Pass</span>
             <span id="edu-hero-badge" style="background:#34a853;color:#ffffff;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:12px;letter-spacing:.04em;text-transform:uppercase" data-i18n="upgrade.perMo">BEST VALUE · 41¢/mo</span>
           </div>
-          <div style="text-align:right">
+          <div style="text-align:end">
             <span class="price-educator" style="font-weight:700;font-size:1.1rem;color:#81c995">$4.99</span>
             <span style="font-size:.7rem;color:#9aa0a6;font-weight:400;display:block" data-i18n="upgrade.eduPeriod">/ yr</span>
           </div>
@@ -12505,7 +12506,7 @@ window.addEventListener('DOMContentLoaded', () => {
             <span style="font-weight:600;font-size:.88rem;color:#e3e3e3" data-i18n="upgrade.lifetimeName">Lifetime Pass</span>
             <span id="lifetime-secondary-badge" style="background:rgba(253,214,99,.15);color:#fdd663;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:12px;letter-spacing:.04em;text-transform:uppercase" data-i18n="upgrade.lifetimeBadge">One-time · own forever</span>
           </div>
-          <div style="text-align:right">
+          <div style="text-align:end">
             <span class="price-lifetime" style="font-weight:700;font-size:1rem;color:#8ab4f8">$9.99</span>
             <span style="font-size:.7rem;color:#9aa0a6;font-weight:400;display:block" data-i18n="upgrade.oneTime">one-time</span>
           </div>
@@ -12541,7 +12542,7 @@ window.addEventListener('DOMContentLoaded', () => {
             <div style="font-weight:600;font-size:.88rem;color:#e3e3e3" data-i18n="upgrade.teamName">Whole-School License</div>
             <div style="font-size:.74rem;color:#9aa0a6;line-height:1.4" data-i18n="upgrade.deptDesc">Covers every teacher on your school's Google Workspace domain, billed yearly.</div>
           </div>
-          <div style="text-align:right;flex-shrink:0">
+          <div style="text-align:end;flex-shrink:0">
             <span class="price-department" style="font-weight:700;font-size:1rem;color:#fdd663">$59</span>
             <span style="font-size:.7rem;color:#9aa0a6;font-weight:400;display:block" data-i18n="upgrade.perYear">/yr</span>
           </div>
@@ -12732,22 +12733,22 @@ window.addEventListener('DOMContentLoaded', () => {
       <div class="modal-title" id="source-modal-title" data-i18n="source.qTitle">Quick question</div>
       <div class="modal-subtitle" id="source-modal-subtitle" data-i18n="source.qSub">How did you find Attendance Tracker? Helps me figure out where to focus.</div>
       <div id="source-modal-quick-btns" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-        <button type="button" class="source-quick-btn" data-source="marketplace" onclick="quickSelectSource('marketplace')" style="display:flex;align-items:center;gap:7px;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:10px 11px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;text-align:left">
+        <button type="button" class="source-quick-btn" data-source="marketplace" onclick="quickSelectSource('marketplace')" style="display:flex;align-items:center;gap:7px;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:10px 11px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;text-align:start">
           <span>🧩</span><span data-i18n="source.marketplace">Workspace Marketplace</span>
         </button>
-        <button type="button" class="source-quick-btn" data-source="google_search" onclick="quickSelectSource('google_search')" style="display:flex;align-items:center;gap:7px;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:10px 11px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;text-align:left">
+        <button type="button" class="source-quick-btn" data-source="google_search" onclick="quickSelectSource('google_search')" style="display:flex;align-items:center;gap:7px;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:10px 11px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;text-align:start">
           <span>🔍</span><span data-i18n="source.google">Google search</span>
         </button>
-        <button type="button" class="source-quick-btn" data-source="friend" onclick="quickSelectSource('friend')" style="display:flex;align-items:center;gap:7px;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:10px 11px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;text-align:left">
+        <button type="button" class="source-quick-btn" data-source="friend" onclick="quickSelectSource('friend')" style="display:flex;align-items:center;gap:7px;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:10px 11px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;text-align:start">
           <span>👥</span><span data-i18n="source.friend">Friend / colleague</span>
         </button>
-        <button type="button" class="source-quick-btn" data-source="youtube" onclick="quickSelectSource('youtube')" style="display:flex;align-items:center;gap:7px;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:10px 11px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;text-align:left">
+        <button type="button" class="source-quick-btn" data-source="youtube" onclick="quickSelectSource('youtube')" style="display:flex;align-items:center;gap:7px;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:10px 11px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;text-align:start">
           <span>▶️</span><span>YouTube</span>
         </button>
-        <button type="button" class="source-quick-btn" data-source="reddit" onclick="quickSelectSource('reddit')" style="display:flex;align-items:center;gap:7px;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:10px 11px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;text-align:left">
+        <button type="button" class="source-quick-btn" data-source="reddit" onclick="quickSelectSource('reddit')" style="display:flex;align-items:center;gap:7px;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:10px 11px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;text-align:start">
           <span>💬</span><span>Reddit</span>
         </button>
-        <button type="button" class="source-quick-btn" data-source="other" onclick="quickSelectSource('other')" style="display:flex;align-items:center;gap:7px;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:10px 11px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;text-align:left">
+        <button type="button" class="source-quick-btn" data-source="other" onclick="quickSelectSource('other')" style="display:flex;align-items:center;gap:7px;background:#0d1117;border:1px solid #30363d;color:#e6edf3;padding:10px 11px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;text-align:start">
           <span>✨</span><span data-i18n="common.other">Other</span>
         </button>
       </div>
@@ -12849,7 +12850,7 @@ window.addEventListener('DOMContentLoaded', () => {
       <div style="color:#8b949e;font-size:.8rem;margin-bottom:14px" data-i18n="cert.subtitle">Printed on every attendee's certificate. Saved for next time.</div>
       <div id="cert-pro-notice" style="display:none;padding:8px 12px;margin-bottom:12px;background:rgba(253,214,99,.1);border:1px solid rgba(253,214,99,.35);border-radius:6px;font-size:.78rem;color:#fde68a;">
         <span data-i18n="upgrade.certsEdu">Student attendance certificates &amp; multi-session reports require an Educator or Lifetime plan.</span>
-        <a href="#" onclick="closeCertModal();showUpgradeModal('certificates');return false;" style="color:#60a5fa;font-weight:600;margin-left:6px;text-decoration:underline" data-i18n="common.upgrade">Upgrade</a>
+        <a href="#" onclick="closeCertModal();showUpgradeModal('certificates');return false;" style="color:#60a5fa;font-weight:600;margin-inline-start:6px;text-decoration:underline" data-i18n="common.upgrade">Upgrade</a>
       </div>
       <label style="display:block;font-size:.75rem;color:#8b949e;margin-bottom:4px" data-i18n="cert.issuer">Issuer / organization name</label>
       <input id="cert-issuer" type="text" maxlength="80" data-i18n-placeholder="cert.issuerPlaceholder" placeholder="e.g. Central Bicol State University" style="width:100%;box-sizing:border-box;background:#0d1117;border:1px solid #30363d;color:var(--text);border-radius:8px;padding:8px 10px;font-size:.85rem;margin-bottom:12px" />
@@ -12875,15 +12876,15 @@ window.addEventListener('DOMContentLoaded', () => {
       <p style="margin:0 0 14px;font-size:.82rem;color:#9aa0a6;line-height:1.45" data-i18n="scopeModal.desc">
         Your export didn't go through because Google Drive access wasn't granted when you signed in. To save your attendance to a spreadsheet, Google requires Drive file permission.
       </p>
-      <div style="background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.25);border-radius:10px;padding:12px 14px;margin-bottom:16px;text-align:left">
+      <div style="background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.25);border-radius:10px;padding:12px 14px;margin-bottom:16px;text-align:start">
         <div style="display:flex;align-items:flex-start;gap:8px;font-size:.82rem;color:#e6edf3;font-weight:600">
           <span style="color:#4ade80;font-size:1.1rem;line-height:1">☑</span>
           <span data-i18n="scopeModal.boxInstruction">In the Google window that opens, make sure to check the box next to Google Drive:</span>
         </div>
-        <div style="font-size:.76rem;color:#81c995;margin-top:6px;padding-left:22px" data-i18n="scopeModal.boxQuote">
+        <div style="font-size:.76rem;color:#81c995;margin-top:6px;padding-inline-start:22px" data-i18n="scopeModal.boxQuote">
           "See, edit, create, and delete only the specific Google Drive files you use with this app"
         </div>
-        <div style="font-size:.72rem;color:#8b949e;margin-top:6px;padding-left:22px" data-i18n="scopeModal.boxNote">
+        <div style="font-size:.72rem;color:#8b949e;margin-top:6px;padding-inline-start:22px" data-i18n="scopeModal.boxNote">
           (Google leaves this unchecked by default on sign-in)
         </div>
       </div>

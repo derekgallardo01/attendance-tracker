@@ -22,7 +22,7 @@
     .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
     .header h1 { font-size: 1.5rem; }
     .header .user { color: var(--muted); font-size: .85rem; }
-    .domain-chip { display: inline-block; background: rgba(74,222,128,.12); color: var(--accent); padding: 2px 10px; border-radius: 10px; font-weight: 600; font-size: .75rem; margin-left: 6px; vertical-align: middle; }
+    .domain-chip { display: inline-block; background: rgba(74,222,128,.12); color: var(--accent); padding: 2px 10px; border-radius: 10px; font-weight: 600; font-size: .75rem; margin-inline-start: 6px; vertical-align: middle; }
     .btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: .85rem; font-weight: 600; text-decoration: none; display: inline-block; }
     .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
     .btn:hover { opacity: .9; }
@@ -47,14 +47,14 @@
     .section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 20px; }
 
     table { width: 100%; border-collapse: collapse; font-size: .85rem; }
-    th { text-align: left; color: var(--muted); font-weight: 600; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: .7rem; text-transform: uppercase; }
+    th { text-align: start; color: var(--muted); font-weight: 600; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: .7rem; text-transform: uppercase; }
     td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
     tr:last-child td { border-bottom: none; }
     tbody tr:hover { background: rgba(255,255,255,.02); }
     .muted { color: var(--muted); }
     .nowrap { white-space: nowrap; }
-    .right { text-align: right; }
-    .admin-chip { background: rgba(245, 158, 11, .15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, .3); border-radius: 10px; padding: 1px 7px; font-size: .62rem; font-weight: 600; margin-left: 6px; }
+    .right { text-align: end; }
+    .admin-chip { background: rgba(245, 158, 11, .15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, .3); border-radius: 10px; padding: 1px 7px; font-size: .62rem; font-weight: 600; margin-inline-start: 6px; }
 
     .login-screen { text-align: center; padding: 80px 20px; }
     .login-screen h2 { margin-bottom: 12px; }
@@ -75,7 +75,7 @@
       .header { flex-direction: column; align-items: stretch; gap: 10px; }
       .header h1 { font-size: 1.25rem; }
       .header > div { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-      .header .user { font-size: .75rem; margin-right: auto; }
+      .header .user { font-size: .75rem; margin-inline-end: auto; }
       .domain-chip { display: block; margin: 4px 0 0; }
       .btn { padding: 7px 12px; font-size: .8rem; }
       .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -136,7 +136,7 @@
       margin-top: 4px;
     }
     .quote-meta {
-      text-align: right;
+      text-align: end;
       font-size: .8rem;
       color: var(--muted);
       line-height: 1.5;
@@ -324,13 +324,13 @@
       <strong data-i18n="team.upgradeTitle">The team dashboard is a Pro feature.</strong>
       <div style="margin-top:6px;font-size:.85rem" data-i18n="team.upgradeSub">Upgrade to unlock the org-wide view of attendance for your whole domain.</div>
       <div id="team-interval" style="display:none;margin-top:10px;white-space:nowrap">
-        <button type="button" id="team-int-annual" onclick="setTeamInterval('annual')" style="border:1px solid #30363d;border-radius:6px 0 0 6px;padding:6px 12px;cursor:pointer;font-size:.8rem" data-i18n="team.intAnnual">Annual · save 20%</button><button type="button" id="team-int-monthly" onclick="setTeamInterval('monthly')" style="border:1px solid #30363d;border-left:none;border-radius:0 6px 6px 0;padding:6px 12px;cursor:pointer;font-size:.8rem" data-i18n="team.intMonthly">Monthly</button>
+        <button type="button" id="team-int-annual" onclick="setTeamInterval('annual')" style="border:1px solid #30363d;border-radius:6px 0 0 6px;padding:6px 12px;cursor:pointer;font-size:.8rem" data-i18n="team.intAnnual">Annual · save 20%</button><button type="button" id="team-int-monthly" onclick="setTeamInterval('monthly')" style="border:1px solid #30363d;border-inline-start:none;border-radius:0 6px 6px 0;padding:6px 12px;cursor:pointer;font-size:.8rem" data-i18n="team.intMonthly">Monthly</button>
       </div>
       <button id="upgrade-btn" onclick="startUpgrade()" style="margin-top:10px;background:#4ade80;color:#0d1117;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:600" data-i18n="team.upgradeBtn">Upgrade to Pro</button>
-      <button id="btn-quote-upgrade" onclick="openSchoolQuoteModal()" class="btn btn-secondary" style="margin-top:10px;margin-left:8px" data-i18n="team.generateQuote">Generate School Quote (PDF)</button>
+      <button id="btn-quote-upgrade" onclick="openSchoolQuoteModal()" class="btn btn-secondary" style="margin-top:10px;margin-inline-start:8px" data-i18n="team.generateQuote">Generate School Quote (PDF)</button>
 
       <!-- Redacted preview of the real dashboard (the admin's own data) -->
-      <div id="preview-teaser" style="display:none;margin-top:18px;text-align:left">
+      <div id="preview-teaser" style="display:none;margin-top:18px;text-align:start">
         <div style="font-size:.78rem;color:#8b949e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px" data-i18n="team.previewTitle">A preview of YOUR domain's dashboard</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:12px">
           <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:12px"><div style="font-size:1.4rem;font-weight:700;color:#4ade80" id="preview-users">—</div><div style="font-size:.72rem;color:#8b949e" data-i18n="team.statTeachers">Teachers</div></div>
@@ -339,7 +339,7 @@
           <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:12px"><div style="font-size:1.4rem;font-weight:700;color:#4ade80" id="preview-people">—</div><div style="font-size:.72rem;color:#8b949e" data-i18n="team.statPeopleTracked">People tracked</div></div>
         </div>
         <table style="width:100%;border-collapse:collapse;font-size:.82rem;filter:blur(0.4px);opacity:.85">
-          <thead><tr><th style="text-align:left;padding:6px 10px;color:#8b949e;font-size:.72rem;text-transform:uppercase;border-bottom:1px solid #30363d" data-i18n="team.thTeacher">Teacher</th><th style="text-align:left;padding:6px 10px;color:#8b949e;font-size:.72rem;text-transform:uppercase;border-bottom:1px solid #30363d" data-i18n="team.thEmail">Email</th><th style="text-align:left;padding:6px 10px;color:#8b949e;font-size:.72rem;text-transform:uppercase;border-bottom:1px solid #30363d" data-i18n="team.thLastActive">Last active</th></tr></thead>
+          <thead><tr><th style="text-align:start;padding:6px 10px;color:#8b949e;font-size:.72rem;text-transform:uppercase;border-bottom:1px solid #30363d" data-i18n="team.thTeacher">Teacher</th><th style="text-align:start;padding:6px 10px;color:#8b949e;font-size:.72rem;text-transform:uppercase;border-bottom:1px solid #30363d" data-i18n="team.thEmail">Email</th><th style="text-align:start;padding:6px 10px;color:#8b949e;font-size:.72rem;text-transform:uppercase;border-bottom:1px solid #30363d" data-i18n="team.thLastActive">Last active</th></tr></thead>
           <tbody id="preview-rows"></tbody>
         </table>
       </div>
@@ -350,10 +350,10 @@
         <h1><span data-i18n="team.title">Team admin</span><span class="domain-chip" id="domain-chip"></span></h1>
         <div>
           <span class="user" id="user-email"></span>
-          <a class="btn btn-secondary" href="/history.html" style="margin-left:8px" data-i18n="team.myHistory">My history</a>
-          <button class="btn btn-secondary" onclick="openSchoolQuoteModal()" style="margin-left:4px" data-i18n="team.generateQuote">Generate School Quote (PDF)</button>
-          <a class="btn btn-secondary" href="/" style="margin-left:4px" data-i18n="team.backToAddon">Back to add-on</a>
-          <button class="btn btn-secondary" onclick="signOut()" style="margin-left:4px" data-i18n="team.signOut">Sign out</button>
+          <a class="btn btn-secondary" href="/history.html" style="margin-inline-start:8px" data-i18n="team.myHistory">My history</a>
+          <button class="btn btn-secondary" onclick="openSchoolQuoteModal()" style="margin-inline-start:4px" data-i18n="team.generateQuote">Generate School Quote (PDF)</button>
+          <a class="btn btn-secondary" href="/" style="margin-inline-start:4px" data-i18n="team.backToAddon">Back to add-on</a>
+          <button class="btn btn-secondary" onclick="signOut()" style="margin-inline-start:4px" data-i18n="team.signOut">Sign out</button>
         </div>
       </div>
 
@@ -613,7 +613,7 @@
       const on = 'background:#4ade80;color:#0d1117;font-weight:600', off = 'background:transparent;color:#8b949e';
       const a = document.getElementById('team-int-annual'), m = document.getElementById('team-int-monthly');
       if (a) a.style.cssText = 'border:1px solid #30363d;border-radius:6px 0 0 6px;padding:6px 12px;cursor:pointer;font-size:.8rem;' + (iv === 'annual' ? on : off);
-      if (m) m.style.cssText = 'border:1px solid #30363d;border-left:none;border-radius:0 6px 6px 0;padding:6px 12px;cursor:pointer;font-size:.8rem;' + (iv === 'monthly' ? on : off);
+      if (m) m.style.cssText = 'border:1px solid #30363d;border-inline-start:none;border-radius:0 6px 6px 0;padding:6px 12px;cursor:pointer;font-size:.8rem;' + (iv === 'monthly' ? on : off);
     }
 
     async function startUpgrade() {
@@ -844,7 +844,7 @@
     function renderPeople() {
       const rows = AttTeam.filterPeople(data.people, document.getElementById('search-people').value);
       const body = document.getElementById('people-rows');
-      if (!rows.length) { body.innerHTML = '<tr><td colspan="5" class="muted">No people match.</td></tr>'; return; }
+      if (!rows.length) { body.innerHTML = '<tr><td colspan="5" class="muted">' + esc(t('team.noPeopleMatch', 'No people match.')) + '</td></tr>'; return; }
       body.innerHTML = rows.map(p => `
         <tr>
           <td>${esc(p.displayName || p.email || '—')}<div class="muted" style="font-size:.72rem">${esc(p.email || '')}</div></td>
