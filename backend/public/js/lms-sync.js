@@ -22,6 +22,14 @@
     return fallback;
   }
 
+  // Count string with the locale's plural form (AttStrings tn); without the
+  // i18n runtime, fill the English fallback.
+  function tn(key, count, vars, fallback) {
+    if (typeof root.tn === 'function') return root.tn(key, count, vars, fallback);
+    const all = Object.assign({ count, n: count }, vars || {});
+    return String(fallback).replace(/\{(\w+)\}/g, (m, k) => (k in all ? String(all[k]) : m));
+  }
+
   // API / exception text in the user's language (AttStrings.errorText /
   // exceptionText), falling back to the raw message when i18n isn't loaded.
   function errText(body, key, fallback) {
@@ -268,12 +276,8 @@
 
       const sumText = document.getElementById('lms-sync-summary-text');
       if (sumText) {
-        const readyTpl = t('lms.readyToSync', '{count} students ready to sync ({present} present, {late} late, {absent} absent)');
-        sumText.textContent = readyTpl
-          .replace('{count}', total)
-          .replace('{present}', present)
-          .replace('{late}', late)
-          .replace('{absent}', absent);
+        sumText.textContent = tn('plural.lmsReadyToSync', total, { present, late, absent },
+          '{count} students ready to sync ({present} present, {late} late, {absent} absent)');
       }
 
       this.setTab(_activeTab);
@@ -598,8 +602,7 @@
                 .replace('{total}', totalCount)
                 .replace('{unmatched}', unmatchedCount);
             } else {
-              successMsg = t('lms.syncSuccess', 'Successfully synced grades for {count} students!')
-                .replace('{count}', data.syncedCount);
+              successMsg = tn('plural.lmsSyncSuccess', data.syncedCount, null, 'Successfully synced grades for {count} students!');
             }
             showStatus(`✓ ${successMsg}`, 'success');
             if (typeof root.toast === 'function') root.toast(successMsg, 4000);
@@ -667,8 +670,7 @@
                 .replace('{total}', totalCount)
                 .replace('{unmatched}', unmatchedCount);
             } else {
-              successMsg = t('lms.syncSuccess', 'Successfully synced grades for {count} students!')
-                .replace('{count}', data.syncedCount);
+              successMsg = tn('plural.lmsSyncSuccess', data.syncedCount, null, 'Successfully synced grades for {count} students!');
             }
             showStatus(`✓ ${successMsg}`, 'success');
             if (typeof root.toast === 'function') root.toast(successMsg, 4000);
@@ -689,7 +691,7 @@
   };
 
   // Internal i18n helpers, exposed for unit tests.
-  AttLmsSync._i18n = { errText, apiErr, excText, serverMessage };
+  AttLmsSync._i18n = { errText, apiErr, excText, serverMessage, tn };
 
   root.AttLmsSync = AttLmsSync;
   if (typeof module !== 'undefined' && module.exports) {

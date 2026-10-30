@@ -44,6 +44,40 @@ describe('tf() named placeholders', () => {
   });
 });
 
+describe('shipped plural.* keys', () => {
+  afterEach(() => strings.setLocale('en'));
+  const STR = strings.STRINGS;
+  const bases = Object.keys(STR.en).filter((k) => k.startsWith('plural.') && k.endsWith('.other')).map((k) => k.slice(0, -6));
+
+  test('every locale carries every CLDR category its grammar uses, with the number', () => {
+    expect(bases.length).toBeGreaterThanOrEqual(12);
+    const gaps = [];
+    for (const loc of Object.keys(STR)) {
+      const cats = new Intl.PluralRules(loc).resolvedOptions().pluralCategories;
+      for (const b of bases) {
+        for (const c of cats) {
+          const v = STR[loc][`${b}.${c}`];
+          if (typeof v !== 'string' || !/\{(n|count)\}/.test(v)) gaps.push(`${loc} ${b}.${c}`);
+        }
+      }
+    }
+    expect(gaps).toEqual([]);
+  });
+
+  test('picks the grammatical form for the count', () => {
+    expect(strings.tn('plural.people', 1)).toBe('1 person');
+    expect(strings.tn('plural.people', 3)).toBe('3 people');
+    strings.setLocale('ru');
+    const ru = STR.ru;
+    expect(strings.tn('plural.meetings', 1)).toBe(ru['plural.meetings.one'].replace('{n}', '1'));
+    expect(strings.tn('plural.meetings', 3)).toBe(ru['plural.meetings.few'].replace('{n}', '3'));
+    expect(strings.tn('plural.meetings', 5)).toBe(ru['plural.meetings.many'].replace('{n}', '5'));
+    expect(ru['plural.meetings.few']).not.toBe(ru['plural.meetings.many']);
+    strings.setLocale('ar');
+    expect(strings.tn('plural.meetings', 2)).toBe(STR.ar['plural.meetings.two'].replace('{n}', new Intl.NumberFormat('ar').format(2)));
+  });
+});
+
 describe('tn() plural-aware lookup', () => {
   const KEY = 'test.apples';
   beforeAll(() => {

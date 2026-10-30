@@ -438,6 +438,7 @@
 
   <script>
     window.t = window.t || function (k, f) { return (window.AttStrings && typeof window.AttStrings.t === 'function') ? window.AttStrings.t(k, f) : (f !== undefined ? f : k); };
+    window.tn = window.tn || (window.AttStrings && window.AttStrings.tn) || function (k, c, v, f) { return String(f).replace(/\{(n|count)\}/g, c); };
     // X-App-Locale: tells the backend the language the user chose (emails, exports).
     function errText(body, key, text) { return (window.AttStrings && AttStrings.errorText) ? AttStrings.errorText(body, key, text) : ((body && body.error) || text); }
     function apiErr(body, key, text) { return (window.AttStrings && AttStrings.apiError) ? AttStrings.apiError(body, key, text) : new Error((body && body.error) || text); }
@@ -1101,9 +1102,9 @@
             <div class="series-summary" onclick="toggleSeries(this)">
               <div class="series-title">
                 <div class="series-title-text">${esc(s.title)}</div>
-                <div class="series-meta">${esc((s.instanceCount === 1 ? t('history.seriesMeetingOne', '{n} meeting') : t('history.seriesMeetingOther', '{n} meetings')).replace('{n}', s.instanceCount))} · ${esc(dateRange)} · ${esc(t('history.topAttendee', 'top attendee {name}').replace('{name}', topLine))}</div>
+                <div class="series-meta">${esc(tn('plural.meetings', s.instanceCount, null, '{n} meetings'))} · ${esc(dateRange)} · ${esc(t('history.topAttendee', 'top attendee {name}').replace('{name}', topLine))}</div>
               </div>
-              <div class="series-chip">${esc((s.uniquePeople === 1 ? t('history.peopleOne', '{n} person') : t('history.peopleOther', '{n} people')).replace('{n}', s.uniquePeople))}</div>
+              <div class="series-chip">${esc(tn('plural.people', s.uniquePeople, null, '{n} people'))}</div>
               <button type="button" class="series-share" onclick="event.stopPropagation();shareSeries('${safeRid}', this)" title="${t('btn.share', 'Share')}" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:5px 10px;border-radius:6px;cursor:pointer;font-size:.7rem;font-weight:600;margin-right:8px">${t('btn.share', 'Share')}</button>
               <div class="series-toggle">▶</div>
             </div>
@@ -1307,9 +1308,7 @@
           const cnt = c ? c.count : 0;
           const lvl = cnt ? level(cnt) : '';
           const titles = c && c.titles && c.titles.length ? '\n' + c.titles.join('\n') : '';
-          const countLabel = (cnt === 1
-            ? t('history.seriesMeetingOne', '{n} meeting')
-            : t('history.seriesMeetingOther', '{n} meetings')).replace('{n}', cnt);
+          const countLabel = tn('plural.meetings', cnt, null, '{n} meetings');
           const title = cnt ? `${ds}: ${countLabel}${titles}` : ds;
           inner += `<div class="cal-day ${lvl}${cnt ? ' has' : ''}${ds === last ? ' today' : ''}" data-date="${ds}" data-count="${cnt}" title="${esc(title)}">${day}</div>`;
         }
@@ -1321,9 +1320,7 @@
           const date = el.dataset.date;
           const count = +el.dataset.count;
           const day = byDate[date];
-          const countLabel = (count === 1
-            ? t('history.seriesMeetingOne', '{n} meeting')
-            : t('history.seriesMeetingOther', '{n} meetings')).replace('{n}', count);
+          const countLabel = tn('plural.meetings', count, null, '{n} meetings');
           detail.innerHTML = `<strong style="color:var(--text)">${esc(date)}</strong> — ${esc(countLabel)}: ${(day.titles || []).map(esc).join(', ')}`;
         });
       });

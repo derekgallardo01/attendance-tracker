@@ -165,6 +165,7 @@
       STRINGS: {},
     };
     window.t = window.t || window.AttStrings.t;
+    window.tn = window.tn || (window.AttStrings && window.AttStrings.tn) || function (k, c, v, f) { return String(f).replace(/\{(n|count)\}/g, c); };
     // API/exception text in the user's language (see AttStrings.errorText /
     // apiError / exceptionText); degrade to the raw message if i18n is missing.
     window.errText = function (body, key, text) {
@@ -4278,7 +4279,7 @@ async function importFromClassroom() {
       `<option value="${escHtml(c.id)}">${escHtml(c.name)}${c.section ? ' — ' + escHtml(c.section) : ''}</option>`
     ).join('');
     document.getElementById('roster-classroom-picker').style.display = 'flex';
-    showClassroomStatus(t('roster.classroomFound', 'Found {count} courses — pick one and hit Import.').replace('{count}', courses.length));
+    showClassroomStatus(tn('plural.classroomFound', courses.length, null, 'Found {count} courses — pick one and hit Import.'));
     try { logUserEvent('classroom_courses_listed', { count: courses.length }); } catch {}
   } catch (err) {
     window.captureError(err, { where: 'classroom_courses_load' });
@@ -4311,7 +4312,7 @@ async function importClassroomCourse() {
     const nameInput = document.getElementById('roster-input-name');
     const courseLabel = sel.options[sel.selectedIndex]?.textContent || '';
     if (nameInput && !nameInput.value.trim() && courseLabel) nameInput.value = courseLabel;
-    showClassroomStatus(t('roster.classroomImported', 'Imported {count} students — review the list, then Save Roster.').replace('{count}', students.length), '#4ade80');
+    showClassroomStatus(tn('plural.classroomImported', students.length, null, 'Imported {count} students — review the list, then Save Roster.'), '#4ade80');
     try { logUserEvent('classroom_roster_imported', { studentCount: students.length }); } catch {}
   } catch (err) {
     window.captureError(err, { where: 'classroom_roster_import' });
@@ -4818,18 +4819,18 @@ function copyAbsenteeModalText() {
   if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
     navigator.clipboard.writeText(textarea.value).then(() => {
       const count = (state._lastAbsentStudents || []).length;
-      toast(t('toast.absenteesCopied', 'Copied {n} absentees to clipboard').replace('{n}', count));
+      toast(tn('plural.absenteesCopied', count, null, 'Copied {n} absentees to clipboard'));
       closeAbsenteeModal();
     }).catch(() => {
       if (done) {
         const count = (state._lastAbsentStudents || []).length;
-        toast(t('toast.absenteesCopied', 'Copied {n} absentees to clipboard').replace('{n}', count));
+        toast(tn('plural.absenteesCopied', count, null, 'Copied {n} absentees to clipboard'));
         closeAbsenteeModal();
       }
     });
   } else if (done) {
     const count = (state._lastAbsentStudents || []).length;
-    toast(t('toast.absenteesCopied', 'Copied {n} absentees to clipboard').replace('{n}', count));
+    toast(tn('plural.absenteesCopied', count, null, 'Copied {n} absentees to clipboard'));
     closeAbsenteeModal();
   }
 }
@@ -4847,7 +4848,7 @@ function copyAbsenteeList() {
   if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
     try {
       navigator.clipboard.writeText(text).then(() => {
-        toast(t('toast.absenteesCopied', 'Copied {n} absentees to clipboard').replace('{n}', absents.length));
+        toast(tn('plural.absenteesCopied', absents.length, null, 'Copied {n} absentees to clipboard'));
       }).catch(() => {
         showAbsenteeModal(text);
       });
@@ -7273,7 +7274,7 @@ function renderList() {
     const totalAvailable = [...groups.values()].reduce((s, l) => s + l.length, 0);
     const hiddenCount = totalAvailable - totalShown;
     if (hiddenCount > 0 && !state._showAll) {
-      html += `<button onclick="state._showAll=true;renderList()" style="width:100%;padding:8px;margin-top:8px;background:var(--surface);border:1px solid var(--border);color:var(--accent);border-radius:6px;cursor:pointer;font-size:.8rem">${t('list.showMore', 'Show {n} more participants').replace('{n}', hiddenCount)}</button>`;
+      html += `<button onclick="state._showAll=true;renderList()" style="width:100%;padding:8px;margin-top:8px;background:var(--surface);border:1px solid var(--border);color:var(--accent);border-radius:6px;cursor:pointer;font-size:.8rem">${tn('plural.showMore', hiddenCount, null, 'Show {n} more participants')}</button>`;
     }
   }
   container.innerHTML = html;
@@ -7690,9 +7691,9 @@ function showTrialEndingBanner(trialInfo) {
   if (!banner || !textEl) return;
   const count = (trialInfo && trialInfo.autoSavedClasses) ? trialInfo.autoSavedClasses : 0;
   if (trialInfo && trialInfo.pppDiscount) {
-    textEl.textContent = t('trial.bannerPpp', "You've auto-saved {count} classes during your trial. Upgrade with your regional discount to keep auto-export active.").replace('{count}', count);
+    textEl.textContent = tn('plural.trialBannerPpp', count, null, "You've auto-saved {count} classes during your trial. Upgrade with your regional discount to keep auto-export active.");
   } else {
-    textEl.textContent = t('trial.bannerStandard', "You've auto-saved {count} classes during your trial. Upgrade to Pro to keep auto-export active.").replace('{count}', count);
+    textEl.textContent = tn('plural.trialBannerStandard', count, null, "You've auto-saved {count} classes during your trial. Upgrade to Pro to keep auto-export active.");
   }
   banner.style.display = 'flex';
 }
@@ -9082,11 +9083,11 @@ function updateExportCta() {
   const csvFallbackEl = document.getElementById('export-cta-csv-fallback');
   const n = distinctAttendeeCount();
   if (scopeBlocked) {
-    textEl.textContent = t('export.ctaScopeText', "You've tracked {n} people — grant Google Drive access to save this to a Sheet.").replace('{n}', n);
+    textEl.textContent = tn('plural.exportCtaScope', n, null, "You've tracked {n} people — grant Google Drive access to save this to a Sheet.");
     btnEl.textContent = t('export.ctaScopeBtn', 'Grant Drive access to export');
     if (csvFallbackEl) csvFallbackEl.style.display = 'block';
   } else {
-    textEl.textContent = t('export.ctaText', 'Attendance ready for {n} people. Save it to Google Sheets before you leave.').replace('{n}', n);
+    textEl.textContent = tn('plural.exportCta', n, null, 'Attendance ready for {n} people. Save it to Google Sheets before you leave.');
     btnEl.textContent = t('export.ctaBtn', 'Save to Google Sheets');
     if (csvFallbackEl) csvFallbackEl.style.display = 'none';
   }

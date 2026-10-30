@@ -500,6 +500,7 @@
 
   <script>
     window.t = window.t || function (k, f) { return (window.AttStrings && typeof window.AttStrings.t === 'function') ? window.AttStrings.t(k, f) : (f !== undefined ? f : k); };
+    window.tn = window.tn || (window.AttStrings && window.AttStrings.tn) || function (k, c, v, f) { return String(f).replace(/\{(n|count)\}/g, c); };
     // X-App-Locale: tells the backend the language the user chose (emails, exports).
     function errText(body, key, text) { return (window.AttStrings && AttStrings.errorText) ? AttStrings.errorText(body, key, text) : ((body && body.error) || text); }
     function apiErr(body, key, text) { return (window.AttStrings && AttStrings.apiError) ? AttStrings.apiError(body, key, text) : new Error((body && body.error) || text); }
@@ -830,7 +831,7 @@
           <div class="section" style="padding:0;margin-bottom:14px">
             <div style="padding:14px 18px;border-bottom:1px solid var(--border)">
               <div style="font-weight:600;font-size:.95rem">${esc(s.title)}</div>
-              <div class="muted" style="font-size:.75rem;margin-top:3px">${esc((s.instanceCount===1 ? t('team.seriesMeetingOne', '{n} meeting') : t('team.seriesMeetingOther', '{n} meetings')).replace('{n}', s.instanceCount))} · ${esc(dateRange)} · ${esc((s.uniquePeople===1 ? t('team.peopleOne', '{n} person') : t('team.peopleOther', '{n} people')).replace('{n}', s.uniquePeople))}</div>
+              <div class="muted" style="font-size:.75rem;margin-top:3px">${esc(tn('plural.meetings', s.instanceCount, null, '{n} meetings'))} · ${esc(dateRange)} · ${esc(tn('plural.people', s.uniquePeople, null, '{n} people'))}</div>
             </div>
             <div style="padding:6px 18px 14px">
               <table style="margin-top:6px"><thead><tr><th>${esc(t('team.thPerson', 'Person'))}</th><th class="right">${esc(t('team.thAttended', 'Attended'))}</th><th>${esc(t('team.thAttendance', 'Attendance'))}</th></tr></thead><tbody>${peopleRows}</tbody></table>

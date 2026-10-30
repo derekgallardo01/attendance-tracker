@@ -982,6 +982,19 @@ describe('AttLmsSync', () => {
       expect(serverMessage(null)).toBeNull();
     });
 
+    test('tn fills the English fallback without the runtime and delegates to global tn when loaded', () => {
+      const { tn } = AttLmsSync._i18n;
+      expect(tn('plural.x', 3, { late: 1 }, '{count} students, {late} late, {missing}')).toBe('3 students, 1 late, {missing}');
+      expect(tn('plural.x', 2, null, '{n} items')).toBe('2 items');
+      global.tn = jest.fn(() => 'plural!');
+      try {
+        expect(tn('plural.x', 1, null, 'f')).toBe('plural!');
+        expect(global.tn).toHaveBeenCalledWith('plural.x', 1, null, 'f');
+      } finally {
+        delete global.tn;
+      }
+    });
+
     test('delegate to AttStrings when it is loaded', () => {
       const { errText, apiErr, excText, serverMessage } = AttLmsSync._i18n;
       const err = new Error('loc');
