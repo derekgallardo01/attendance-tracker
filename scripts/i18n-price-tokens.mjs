@@ -31,7 +31,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Department — {price:department}/yr",
     "quote.planInst": "Institution — {price:institution}/yr (DPA, invoice/PO)",
     "schoolLicense.tierDept": "Department ({price:department}/yr) — covers your department",
-    "schoolLicense.tierInst": "Institution ({price:institution}/yr) — whole school domain"
+    "schoolLicense.tierInst": "Institution ({price:institution}/yr) — whole school domain",
+    "email.clusterSchoolBody": "{count} teachers from your school domain ({domain}) are using Attendance Tracker. Upgrade to a Department Pass ({price:department}/yr) to give every colleague unlimited Google Sheets exports, automatic meeting capture, and gradebook sync.",
+    "email.clusterSchoolCta": "Upgrade to Department Pass ({price:department}/yr) →"
   },
   "es": {
     "history.clusterPromoCtaInst": "Mejorar a Plan Institucional ({price:institution}/año) →",
@@ -62,7 +64,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Departamento — {price:department}/año",
     "quote.planInst": "Institución — {price:institution}/año (DPA, factura u orden de compra)",
     "schoolLicense.tierDept": "Departamento ({price:department}/año) — cubre tu departamento",
-    "schoolLicense.tierInst": "Institución ({price:institution}/año) — todo el dominio escolar"
+    "schoolLicense.tierInst": "Institución ({price:institution}/año) — todo el dominio escolar",
+    "email.clusterSchoolBody": "{count} profesores de tu dominio escolar ({domain}) usan Attendance Tracker. Mejora a un Pase Departamental ({price:department}/año) para dar a todos tus colegas exportaciones ilimitadas a Google Sheets, captura automática y sincronización de calificaciones.",
+    "email.clusterSchoolCta": "Mejorar a Pase Departamental ({price:department}/año) →"
   },
   "pt": {
     "history.clusterPromoCtaInst": "Fazer upgrade para o Plano Institucional ({price:institution}/ano) →",
@@ -93,7 +97,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Departamento — {price:department}/ano",
     "quote.planInst": "Instituição — {price:institution}/ano (DPA, fatura/ordem de compra)",
     "schoolLicense.tierDept": "Departamento ({price:department}/ano) — cobre seu departamento",
-    "schoolLicense.tierInst": "Instituição ({price:institution}/ano) — todo o domínio escolar"
+    "schoolLicense.tierInst": "Instituição ({price:institution}/ano) — todo o domínio escolar",
+    "email.clusterSchoolBody": "{count} professores do domínio da sua escola ({domain}) estão usando o Attendance Tracker. Faça upgrade para o Passe Departamental ({price:department}/ano) para dar a todos os colegas exportações ilimitadas para o Google Sheets, captura automática e sincronização com o boletim.",
+    "email.clusterSchoolCta": "Fazer upgrade para o Passe Departamental ({price:department}/ano) →"
   },
   "hi": {
     "history.clusterPromoCtaInst": "संस्थान योजना में अपग्रेड करें ({price:institution}/वर्ष) →",
@@ -124,7 +130,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "विभाग (Department) — {price:department}/वर्ष",
     "quote.planInst": "संस्थान (Institution) — {price:institution}/वर्ष (DPA, चालान/PO)",
     "schoolLicense.tierDept": "विभाग ({price:department}/वर्ष) — आपके विभाग को कवर करता है",
-    "schoolLicense.tierInst": "संस्थान ({price:institution}/वर्ष) — पूरा स्कूल डोमेन"
+    "schoolLicense.tierInst": "संस्थान ({price:institution}/वर्ष) — पूरा स्कूल डोमेन",
+    "email.clusterSchoolBody": "आपके स्कूल डोमेन ({domain}) के {count} शिक्षक Attendance Tracker का उपयोग कर रहे हैं। सभी शिक्षकों को असीमित Google Sheets निर्यात व ऑटो-कैप्चर देने के लिए डिपार्टमेंट पास ({price:department}/वर्ष) में अपग्रेड करें।",
+    "email.clusterSchoolCta": "डिपार्टमेंट पास में अपग्रेड करें ({price:department}/वर्ष) →"
   },
   "tl": {
     "history.clusterPromoCtaInst": "Mag-upgrade sa Institution Plan ({price:institution}/taon) →",
@@ -155,7 +163,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Department — {price:department}/taon",
     "quote.planInst": "Institution — {price:institution}/taon (DPA, invoice/PO)",
     "schoolLicense.tierDept": "Kagawaran ({price:department}/taon) — sumasaklaw sa iyong departamento",
-    "schoolLicense.tierInst": "Institusyon ({price:institution}/taon) — buong domain ng paaralan"
+    "schoolLicense.tierInst": "Institusyon ({price:institution}/taon) — buong domain ng paaralan",
+    "email.clusterSchoolBody": "{count} guro mula sa domain ng iyong paaralan ({domain}) ang gumagamit ng Attendance Tracker. Mag-upgrade sa Department Pass ({price:department}/taon) para bigyan ang lahat ng kasamahan ng walang limitasyong Google Sheets export at auto-capture.",
+    "email.clusterSchoolCta": "Mag-upgrade sa Department Pass ({price:department}/taon) →"
   },
   "ms": {
     "history.clusterPromoCtaInst": "Naik taraf ke Pelan Institusi ({price:institution}/thn) →",
@@ -186,7 +196,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Jabatan — {price:department}/tahun",
     "quote.planInst": "Institusi — {price:institution}/tahun (DPA, invois/PO)",
     "schoolLicense.tierDept": "Jabatan ({price:department}/tahun) — merangkumi jabatan anda",
-    "schoolLicense.tierInst": "Institusi ({price:institution}/tahun) — seluruh domain sekolah"
+    "schoolLicense.tierInst": "Institusi ({price:institution}/tahun) — seluruh domain sekolah",
+    "email.clusterSchoolBody": "{count} guru dari domain sekolah anda ({domain}) menggunakan Attendance Tracker. Naik taraf ke Pas Jabatan ({price:department}/thn) untuk memberi semua rakan sekerja eksport Google Sheets tanpa had.",
+    "email.clusterSchoolCta": "Naik taraf ke Pas Jabatan ({price:department}/thn) →"
   },
   "id": {
     "history.clusterPromoCtaInst": "Tingkatkan ke Paket Institusi ({price:institution}/thn) →",
@@ -217,7 +229,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Departemen — {price:department}/tahun",
     "quote.planInst": "Institusi — {price:institution}/tahun (DPA, faktur/PO)",
     "schoolLicense.tierDept": "Departemen ({price:department}/tahun) — mencakup departemen Anda",
-    "schoolLicense.tierInst": "Institusi ({price:institution}/tahun) — seluruh domain sekolah"
+    "schoolLicense.tierInst": "Institusi ({price:institution}/tahun) — seluruh domain sekolah",
+    "email.clusterSchoolBody": "{count} guru dari domain sekolah Anda ({domain}) menggunakan Attendance Tracker. Tingkatkan ke Department Pass ({price:department}/thn) untuk memberikan ekspor Google Sheets tanpa batas dan sinkronisasi nilai ke seluruh rekan guru.",
+    "email.clusterSchoolCta": "Tingkatkan ke Department Pass ({price:department}/thn) →"
   },
   "vi": {
     "history.clusterPromoCtaInst": "Nâng cấp lên Gói Học viện ({price:institution}/năm) →",
@@ -248,7 +262,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Gói Khoa/Phòng ban — {price:department}/năm",
     "quote.planInst": "Gói Tổ chức — {price:institution}/năm (DPA, hóa đơn/PO)",
     "schoolLicense.tierDept": "Khoa phòng ({price:department}/năm) — cho toàn khoa của bạn",
-    "schoolLicense.tierInst": "Toàn trường ({price:institution}/năm) — toàn bộ tên miền trường"
+    "schoolLicense.tierInst": "Toàn trường ({price:institution}/năm) — toàn bộ tên miền trường",
+    "email.clusterSchoolBody": "{count} giáo viên từ tên miền trường ({domain}) đang dùng Attendance Tracker. Nâng cấp lên Gói Khoa ({price:department}/năm) để mở khóa xuất Google Sheets không giới hạn cho mọi đồng nghiệp.",
+    "email.clusterSchoolCta": "Nâng cấp lên Gói Khoa ({price:department}/năm) →"
   },
   "fr": {
     "history.clusterPromoCtaInst": "Passer au Plan Établissement ({price:institution}/an) →",
@@ -279,7 +295,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Département — {price:department}/an",
     "quote.planInst": "Établissement — {price:institution}/an (DPA, facture/bon de commande)",
     "schoolLicense.tierDept": "Département ({price:department}/an) — couvre votre département",
-    "schoolLicense.tierInst": "Établissement ({price:institution}/an) — tout le domaine de l'école"
+    "schoolLicense.tierInst": "Établissement ({price:institution}/an) — tout le domaine de l'école",
+    "email.clusterSchoolBody": "{count} enseignants de votre domaine ({domain}) utilisent Attendance Tracker. Passez au Pass Département ({price:department}/an) pour offrir à tous les exports Google Sheets illimités et la synchronisation.",
+    "email.clusterSchoolCta": "Passer au Pass Département ({price:department}/an) →"
   },
   "de": {
     "history.clusterPromoCtaInst": "Auf Institution-Pass upgraden ({price:institution}/Jahr) →",
@@ -310,7 +328,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Abteilungstarif — {price:department}/Jahr",
     "quote.planInst": "Institutionstarif — {price:institution}/Jahr (DPA, Rechnung/PO)",
     "schoolLicense.tierDept": "Abteilung ({price:department}/Jahr) — deckt Ihre Abteilung ab",
-    "schoolLicense.tierInst": "Institution ({price:institution}/Jahr) — gesamte Schul-Domain"
+    "schoolLicense.tierInst": "Institution ({price:institution}/Jahr) — gesamte Schul-Domain",
+    "email.clusterSchoolBody": "{count} Lehrkräfte aus Ihrer Schuldomain ({domain}) nutzen Attendance Tracker. Holen Sie sich den Abteilungspass ({price:department}/Jahr) für unbegrenzte Google Sheets-Exporte und Notenbuch-Sync für das gesamte Kollegium.",
+    "email.clusterSchoolCta": "Auf Abteilungspass upgraden ({price:department}/Jahr) →"
   },
   "it": {
     "history.clusterPromoCtaInst": "Passa al Piano Istituzionale ({price:institution}/anno) →",
@@ -341,7 +361,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Dipartimento — {price:department}/anno",
     "quote.planInst": "Istituzione — {price:institution}/anno (DPA, fattura/ordine)",
     "schoolLicense.tierDept": "Dipartimento ({price:department}/anno) — copre il tuo dipartimento",
-    "schoolLicense.tierInst": "Istituto ({price:institution}/anno) — intero dominio scolastico"
+    "schoolLicense.tierInst": "Istituto ({price:institution}/anno) — intero dominio scolastico",
+    "email.clusterSchoolBody": "{count} docenti del dominio scolastico ({domain}) utilizzano Attendance Tracker. Passa al Pass Dipartimento ({price:department}/anno) per esportazioni illimitate su Google Sheets per tutti i colleghi.",
+    "email.clusterSchoolCta": "Passa al Pass Dipartimento ({price:department}/anno) →"
   },
   "nl": {
     "history.clusterPromoCtaInst": "Upgrade naar Instellingsplan ({price:institution}/jaar) →",
@@ -372,7 +394,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Afdeling — {price:department}/jaar",
     "quote.planInst": "Instelling — {price:institution}/jaar (DPA, factuur/inkooporder)",
     "schoolLicense.tierDept": "Afdeling ({price:department}/jr) — dekt uw afdeling",
-    "schoolLicense.tierInst": "Instelling ({price:institution}/jr) — hele schooldomein"
+    "schoolLicense.tierInst": "Instelling ({price:institution}/jr) — hele schooldomein",
+    "email.clusterSchoolBody": "{count} docenten van ({domain}) gebruiken Attendance Tracker. Upgrade naar een Afdelingspas ({price:department}/jaar) voor onbeperkte Google Sheets-exports voor alle collega's.",
+    "email.clusterSchoolCta": "Upgrade naar Afdelingspas ({price:department}/jaar) →"
   },
   "pl": {
     "history.clusterPromoCtaInst": "Przejdź na Plan Instytucjonalny ({price:institution}/rok) →",
@@ -403,7 +427,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Działowy (Department) — {price:department}/rok",
     "quote.planInst": "Instytucjonalny (Institution) — {price:institution}/rok (DPA, faktura/PO)",
     "schoolLicense.tierDept": "Wydział ({price:department}/rok) — obejmuje Twój wydział",
-    "schoolLicense.tierInst": "Instytucja ({price:institution}/rok) — cała domena szkoły"
+    "schoolLicense.tierInst": "Instytucja ({price:institution}/rok) — cała domena szkoły",
+    "email.clusterSchoolBody": "{count} nauczycieli z domeny Twojej szkoły ({domain}) korzysta z Attendance Tracker. Przejdź na Karnet Katedralny ({price:department}/rok), aby zapewnić wszystkim nieograniczony eksport do Google Sheets.",
+    "email.clusterSchoolCta": "Przejdź na Karnet Katedralny ({price:department}/rok) →"
   },
   "tr": {
     "history.clusterPromoCtaInst": "Kurum Planına Yükselt ({price:institution}/yıl) →",
@@ -434,7 +460,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Departman — {price:department}/yıl",
     "quote.planInst": "Kurum — {price:institution}/yıl (DPA, fatura/PO)",
     "schoolLicense.tierDept": "Bölüm ({price:department}/yıl) — bölümünüzü kapsar",
-    "schoolLicense.tierInst": "Kurum ({price:institution}/yıl) — tüm okul alan adı"
+    "schoolLicense.tierInst": "Kurum ({price:institution}/yıl) — tüm okul alan adı",
+    "email.clusterSchoolBody": "Okul alan adınızdan ({domain}) {count} öğretmen Attendance Tracker kullanıyor. Tüm meslektaşlarınıza sınırsız Google Sheets dışa aktarımı sağlamak için Bölüm Kartına ({price:department}/yıl) yükseltin.",
+    "email.clusterSchoolCta": "Bölüm Kartına Yükselt ({price:department}/yıl) →"
   },
   "th": {
     "history.clusterPromoCtaInst": "อัปเกรดเป็นแพ็กเกจสถาบัน ({price:institution}/ปี) →",
@@ -465,7 +493,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "ระดับแผนก (Department) — {price:department}/ปี",
     "quote.planInst": "ระดับสถาบัน (Institution) — {price:institution}/ปี (DPA, ใบแจ้งหนี้/PO)",
     "schoolLicense.tierDept": "ภาควิชา ({price:department}/ปี) — ครอบคลุมทั้งภาควิชา",
-    "schoolLicense.tierInst": "สถาบัน ({price:institution}/ปี) — ครอบคลุมทั้งโดเมนโรงเรียน"
+    "schoolLicense.tierInst": "สถาบัน ({price:institution}/ปี) — ครอบคลุมทั้งโดเมนโรงเรียน",
+    "email.clusterSchoolBody": "ครู {count} คนจากโดเมนโรงเรียนของคุณ ({domain}) กำลังใช้ Attendance Tracker อัปเกรดเป็นแพ็กเกจภาควิชา ({price:department}/ปี) เพื่อให้เพื่อนร่วมงานทุกคนส่งออก Google Sheets ได้ไม่จำกัด",
+    "email.clusterSchoolCta": "อัปเกรดเป็นแพ็กเกจภาควิชา ({price:department}/ปี) →"
   },
   "ar": {
     "history.clusterPromoCtaInst": "الترقية إلى خطة المؤسسة ({price:institution}/سنة) →",
@@ -496,7 +526,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "خطة القسم — {price:department}/سنوياً",
     "quote.planInst": "خطة المؤسسة — {price:institution}/سنوياً (DPA، فاتورة/أمر شراء)",
     "schoolLicense.tierDept": "القسم ({price:department}/سنة) — يغطي قسمك بالكامل",
-    "schoolLicense.tierInst": "المؤسسة ({price:institution}/سنة) — النطاق المدرسي بالكامل"
+    "schoolLicense.tierInst": "المؤسسة ({price:institution}/سنة) — النطاق المدرسي بالكامل",
+    "email.clusterSchoolBody": "يستخدم {count} معلمين من نطاق مدرستك ({domain}) أداة Attendance Tracker. قم بالترقية إلى تصريح القسم ({price:department}/السنة) لمنح جميع الزملاء تصدير Google Sheets غير محدود.",
+    "email.clusterSchoolCta": "الترقية إلى تصريح القسم ({price:department}/السنة) →"
   },
   "ko": {
     "history.clusterPromoCtaInst": "교육기관 플랜으로 업그레이드 ({price:institution}/년) →",
@@ -527,7 +559,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "학과/부서 플랜 (Department) — {price:department}/년",
     "quote.planInst": "기관 플랜 (Institution) — {price:institution}/년 (DPA, 인보이스/PO)",
     "schoolLicense.tierDept": "학과 플랜 ({price:department}/년) — 학과 전체 적용",
-    "schoolLicense.tierInst": "기관 플랜 ({price:institution}/년) — 학교 도메인 전체"
+    "schoolLicense.tierInst": "기관 플랜 ({price:institution}/년) — 학교 도메인 전체",
+    "email.clusterSchoolBody": "학교 도메인({domain})의 교사 {count}명이 이용하고 있습니다. 학과 패스({price:department}/년)로 업그레이드하여 모든 동료에게 무제한 Google Sheets 내보내기를 제공하세요.",
+    "email.clusterSchoolCta": "학과 패스로 업그레이드 ({price:department}/년) →"
   },
   "zh": {
     "history.clusterPromoCtaInst": "升級至教育機構方案（{price:institution}/年）→",
@@ -558,7 +592,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "系所方案 (Department) — {price:department}/年",
     "quote.planInst": "全校機構方案 (Institution) — {price:institution}/年 (含 DPA、發票/採購單)",
     "schoolLicense.tierDept": "系所方案（{price:department}/年）— 涵蓋整個系所",
-    "schoolLicense.tierInst": "全校機構方案（{price:institution}/年）— 整個學校網域"
+    "schoolLicense.tierInst": "全校機構方案（{price:institution}/年）— 整個學校網域",
+    "email.clusterSchoolBody": "貴校網域（{domain}）已有 {count} 位老師在使用。升級至部門通行證（{price:department}/年），讓所有同仁享有無限次 Google Sheets 匯出與成績冊同步。",
+    "email.clusterSchoolCta": "升級至部門通行證（{price:department}/年）→"
   },
   "ja": {
     "history.clusterPromoCtaInst": "学校・機関プランにアップグレード（{price:institution}/年）→",
@@ -589,7 +625,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "学部・学科プラン — {price:department}/年",
     "quote.planInst": "学校・機関プラン — {price:institution}/年（DPA、請求書/発注書対応）",
     "schoolLicense.tierDept": "学科・部門プラン（{price:department}/年）— 所属部門全員",
-    "schoolLicense.tierInst": "学校・機関プラン（{price:institution}/年）— 学校ドメイン全体"
+    "schoolLicense.tierInst": "学校・機関プラン（{price:institution}/年）— 学校ドメイン全体",
+    "email.clusterSchoolBody": "学校のドメイン ({domain}) から {count} 名の教員が利用しています。部門パス ({price:department}/年) にアップグレードすると、同僚全員が無制限の Google Sheets 出力と自動記録を利用できます。",
+    "email.clusterSchoolCta": "部門パスにアップグレード ({price:department}/年) →"
   },
   "ta": {
     "history.clusterPromoCtaInst": "நிறுவன திட்டத்திற்கு மேம்படுத்து ({price:institution}/ஆண்டு) →",
@@ -620,7 +658,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "துறை திட்டம் — {price:department}/ஆண்டு",
     "quote.planInst": "நிறுவனத் திட்டம் — {price:institution}/ஆண்டு (DPA, இன்வாய்ஸ்/PO)",
     "schoolLicense.tierDept": "துறை ({price:department}/ஆண்டு) — உங்கள் துறையை உள்ளடக்கியது",
-    "schoolLicense.tierInst": "நிறுவனம் ({price:institution}/ஆண்டு) — முழு பள்ளி டொமைன்"
+    "schoolLicense.tierInst": "நிறுவனம் ({price:institution}/ஆண்டு) — முழு பள்ளி டொமைன்",
+    "email.clusterSchoolBody": "உங்கள் பள்ளி டொமைனிலிருந்து ({domain}) {count} ஆசிரியர்கள் Attendance Tracker-ஐப் பயன்படுத்துகின்றனர். வரம்பற்ற Google Sheets ஏற்றுமதியை வழங்க துறை அனுமதிக்கு ({price:department}/ஆண்டு) மேம்படுத்தவும்.",
+    "email.clusterSchoolCta": "துறை அனுமதிக்கு மேம்படுத்து ({price:department}/ஆண்டு) →"
   },
   "te": {
     "history.clusterPromoCtaInst": "ఇన్‌స్టిట్యూషన్ ప్లాన్‌కి అప్‌గ్రేడ్ చేయండి ({price:institution}/సం.) →",
@@ -651,7 +691,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "డిపార్ట్‌మెంట్ — {price:department}/సంవత్సరానికి",
     "quote.planInst": "ఇన్‌స్టిట్యూషన్ — {price:institution}/సంవత్సరానికి (DPA, ఇన్‌వాయిస్/PO)",
     "schoolLicense.tierDept": "విభాగం ({price:department}/సంవత్సరం) — మీ విభాగాన్ని కవర్ చేస్తుంది",
-    "schoolLicense.tierInst": "సంస్థ ({price:institution}/సంవత్సరం) — మొత్తం పాఠశాల డొమైన్"
+    "schoolLicense.tierInst": "సంస్థ ({price:institution}/సంవత్సరం) — మొత్తం పాఠశాల డొమైన్",
+    "email.clusterSchoolBody": "మీ పాఠశాల డొమైన్ ({domain}) నుండి {count} ఉపాధ్యాయులు Attendance Tracker ఉపయోగిస్తున్నారు. అపరిమిత Google Sheets ఎగుమతుల కోసం డిపార్ట్‌మెంట్ పాస్ ({price:department}/సం.)కి అప్‌గ్రేడ్ చేయండి.",
+    "email.clusterSchoolCta": "డిపార్ట్‌మెంట్ పాస్‌కి అప్‌గ్రేడ్ చేయండి ({price:department}/సం.) →"
   },
   "bn": {
     "history.clusterPromoCtaInst": "প্রতিষ্ঠান প্ল্যানে আপগ্রেড করুন ({price:institution}/বছর) →",
@@ -674,7 +716,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "ডিপার্টমেন্ট — {price:department}/বছর",
     "quote.planInst": "প্রতিষ্ঠান — {price:institution}/বছর (DPA, ইনভয়েস/PO)",
     "schoolLicense.tierDept": "বিভাগ ({price:department}/বছর) — আপনার বিভাগকে অন্তর্ভুক্ত করে",
-    "schoolLicense.tierInst": "প্রতিষ্ঠান ({price:institution}/বছর) — সম্পূর্ণ স্কুল ডোমেইন"
+    "schoolLicense.tierInst": "প্রতিষ্ঠান ({price:institution}/বছর) — সম্পূর্ণ স্কুল ডোমেইন",
+    "email.clusterSchoolBody": "আপনার স্কুল ডোমেন ({domain}) থেকে {count} জন শিক্ষক Attendance Tracker ব্যবহার করছেন। সবাইকে আনলিমিটেড Google Sheets এক্সপোর্ট দিতে ডিপার্টমেন্ট পাসে ({price:department}/বছর) আপগ্রেড করুন।",
+    "email.clusterSchoolCta": "ডিপার্টমেন্ট পাসে আপগ্রেড করুন ({price:department}/বছর) →"
   },
   "ur": {
     "history.clusterPromoCtaInst": "انسٹیٹیوشن پلان پر اپ گریڈ کریں ({price:institution}/سال) →",
@@ -705,7 +749,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "ڈپارٹمنٹ — {price:department}/سالانہ",
     "quote.planInst": "ادارہ جاتی — {price:institution}/سالانہ (DPA، انوائس/PO)",
     "schoolLicense.tierDept": "شعبہ ({price:department}/سال) — آپ کے شعبے کا احاطہ کرتا ہے",
-    "schoolLicense.tierInst": "ادارہ ({price:institution}/سال) — پورا اسکول ڈومین"
+    "schoolLicense.tierInst": "ادارہ ({price:institution}/سال) — پورا اسکول ڈومین",
+    "email.clusterSchoolBody": "آپ کے اسکول ڈومین ({domain}) سے {count} اساتذہ Attendance Tracker استعمال کر رہے ہیں۔ لامحدود Google Sheets ایکسپورٹ کے لیے ڈیپارٹمنٹ پاس ({price:department}/سال) پر اپ گریڈ کریں۔",
+    "email.clusterSchoolCta": "ڈیپارٹمنٹ پاس پر اپ گریڈ کریں ({price:department}/سال) →"
   },
   "zh-CN": {
     "history.clusterPromoCtaInst": "升级至机构计划（{price:institution}/年）→",
@@ -736,7 +782,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "院系方案 (Department) — {price:department}/年",
     "quote.planInst": "机构方案 (Institution) — {price:institution}/年 (含 DPA、发票/采购单)",
     "schoolLicense.tierDept": "院系方案（{price:department}/年）— 涵盖整个院系",
-    "schoolLicense.tierInst": "全校机构方案（{price:institution}/年）— 整个学校网域"
+    "schoolLicense.tierInst": "全校机构方案（{price:institution}/年）— 整个学校网域",
+    "email.clusterSchoolBody": "贵校域名（{domain}）已有 {count} 位老师在使用。升级至部门通行证（{price:department}/年），为全体同事解锁无限制 Google Sheets 导出与自动记录。",
+    "email.clusterSchoolCta": "升级至部门通行证（{price:department}/年）→"
   },
   "ru": {
     "history.clusterPromoCtaInst": "Перейти на тариф заведения ({price:institution}/год) →",
@@ -767,7 +815,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Для кафедры/отдела — {price:department}/год",
     "quote.planInst": "Для всего учреждения — {price:institution}/год (DPA, счет)",
     "schoolLicense.tierDept": "Кафедра ({price:department}/год) — для вашего отделения",
-    "schoolLicense.tierInst": "Учебное заведение ({price:institution}/год) — весь домен школы"
+    "schoolLicense.tierInst": "Учебное заведение ({price:institution}/год) — весь домен школы",
+    "email.clusterSchoolBody": "{count} преподавателей с домена ({domain}) используют сервис. Перейдите на тариф для кафедры ({price:department}/год) для неограниченного экспорта в Google Sheets для всех коллег.",
+    "email.clusterSchoolCta": "Перейти на тариф кафедры ({price:department}/год) →"
   },
   "uk": {
     "history.clusterPromoCtaInst": "Оновити до тарифу закладу ({price:institution}/рік) →",
@@ -798,7 +848,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Відділення/Кафедра — {price:department}/рік",
     "quote.planInst": "Заклад (Institution) — {price:institution}/рік (DPA, рахунок)",
     "schoolLicense.tierDept": "Кафедра ({price:department}/рік) — покриває вашу кафедру",
-    "schoolLicense.tierInst": "Заклад ({price:institution}/рік) — весь домен школи"
+    "schoolLicense.tierInst": "Заклад ({price:institution}/рік) — весь домен школи",
+    "email.clusterSchoolBody": "{count} викладачів з вашого домену ({domain}) використовують Attendance Tracker. Оновіть до тарифу для кафедри ({price:department}/рік) для необмеженого експорту в Google Sheets для всіх колег.",
+    "email.clusterSchoolCta": "Оновити до тарифу кафедри ({price:department}/рік) →"
   },
   "ro": {
     "history.clusterPromoCtaInst": "Treci la Planul Instituțional ({price:institution}/an) →",
@@ -829,7 +881,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Departament — {price:department}/an",
     "quote.planInst": "Instituție — {price:institution}/an (DPA, factură/comandă)",
     "schoolLicense.tierDept": "Departament ({price:department}/an) — acoperă departamentul tău",
-    "schoolLicense.tierInst": "Instituție ({price:institution}/an) — întregul domeniu școlar"
+    "schoolLicense.tierInst": "Instituție ({price:institution}/an) — întregul domeniu școlar",
+    "email.clusterSchoolBody": "{count} profesori din domeniul școlii ({domain}) folosesc Attendance Tracker. Treci la Permisul de Departament ({price:department}/an) pentru exporturi Google Sheets nelimitate pentru toți colegii.",
+    "email.clusterSchoolCta": "Treci la Permis de Departament ({price:department}/an) →"
   },
   "he": {
     "history.clusterPromoCtaInst": "שדרג למסלול מוסדי ({price:institution}/שנה) ←",
@@ -860,7 +914,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "מסלول מחלקה — {price:department} לשנה",
     "quote.planInst": "מסלول מוסדי — {price:institution} לשנה (DPA, חשבונית/הזמנה)",
     "schoolLicense.tierDept": "מחלקה ({price:department}/שנה) — מכסה את המחלקה שלך",
-    "schoolLicense.tierInst": "מוסד ({price:institution}/שנה) — כל דומיין בית הספר"
+    "schoolLicense.tierInst": "מוסד ({price:institution}/שנה) — כל דומיין בית הספר",
+    "email.clusterSchoolBody": "{count} מורים מדומיין בית הספר שלך ({domain}) משתמשים ב-Attendance Tracker. שדרג למנוי מחלקתי ({price:department}/שנה) כדי לאפשר לכל העמיתים ייצוא ללא הגבלה ל-Google Sheets.",
+    "email.clusterSchoolCta": "שדרג למנוי מחלקתי ({price:department}/שנה) ←"
   },
   "mr": {
     "history.clusterPromoCtaInst": "इन्स्टिट्यूट प्लॅनवर अपग्रेड करा ({price:institution}/वर्ष) →",
@@ -891,7 +947,8 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "विभाग प्लॅन (Department) — {price:department}/वर्ष",
     "quote.planInst": "संस्था प्लॅन (Institution) — {price:institution}/वर्ष (DPA, बीजक/PO)",
     "schoolLicense.tierDept": "विभाग ({price:department}/वर्ष) — तुमचा संपूर्ण विभाग",
-    "schoolLicense.tierInst": "संस्था ({price:institution}/वर्ष) — संपूर्ण शाळा डोमेन"
+    "schoolLicense.tierInst": "संस्था ({price:institution}/वर्ष) — संपूर्ण शाळा डोमेन",
+    "email.clusterSchoolCta": "डिपार्टमेंट पासवर अपग्रेड करा ({price:department}/वर्ष) →"
   },
   "sv": {
     "history.clusterPromoCtaInst": "Uppgradera till Institutionsplan ({price:institution}/år) →",
@@ -922,7 +979,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Avdelning — {price:department}/år",
     "quote.planInst": "Institution — {price:institution}/år (DPA, faktura/rekvisition)",
     "schoolLicense.tierDept": "Avdelning ({price:department}/år) — täcker din avdelning",
-    "schoolLicense.tierInst": "Institution ({price:institution}/år) — hela skolans domän"
+    "schoolLicense.tierInst": "Institution ({price:institution}/år) — hela skolans domän",
+    "email.clusterSchoolBody": "{count} lärare från din skoldomän ({domain}) använder Attendance Tracker. Uppgradera till ett Avdelningspass ({price:department}/år) för obegränsad Google Sheets-export för alla kollegor.",
+    "email.clusterSchoolCta": "Uppgradera till Avdelningspass ({price:department}/år) →"
   },
   "cs": {
     "history.clusterPromoCtaInst": "Přejít na Institucionální plán ({price:institution}/rok) →",
@@ -953,7 +1012,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Katedra / oddělení — {price:department}/rok",
     "quote.planInst": "Celá instituce — {price:institution}/rok (DPA, faktura/objednávka)",
     "schoolLicense.tierDept": "Katedra ({price:department}/rok) — pokrývá vaši katedru",
-    "schoolLicense.tierInst": "Instituce ({price:institution}/rok) — celá doména školy"
+    "schoolLicense.tierInst": "Instituce ({price:institution}/rok) — celá doména školy",
+    "email.clusterSchoolBody": "{count} učitelů ze školní domény ({domain}) používá Attendance Tracker. Upgradujte na Katederní pas ({price:department}/rok) pro neomezený export do Google Sheets pro všechny kolegy.",
+    "email.clusterSchoolCta": "Upgradovat na Katederní pas ({price:department}/rok) →"
   },
   "da": {
     "history.clusterPromoCtaInst": "Opgrader til Institutionsplan ({price:institution}/år) →",
@@ -984,7 +1045,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Afdeling — {price:department}/år",
     "quote.planInst": "Institution — {price:institution}/år (DPA, faktura/ordre)",
     "schoolLicense.tierDept": "Afdeling ({price:department}/år) — dækker din afdeling",
-    "schoolLicense.tierInst": "Institution ({price:institution}/år) — hele skolens domæne"
+    "schoolLicense.tierInst": "Institution ({price:institution}/år) — hele skolens domæne",
+    "email.clusterSchoolBody": "{count} lærere fra dit skoledomæne ({domain}) bruger Attendance Tracker. Opgrader til et Afdelingspas ({price:department}/år) for ubegrænset Google Sheets-eksport for alle kolleger.",
+    "email.clusterSchoolCta": "Opgrader til Afdelingspas ({price:department}/år) →"
   },
   "fi": {
     "history.clusterPromoCtaInst": "Päivitä Oppilaitossopimukseen ({price:institution}/vuosi) →",
@@ -1015,7 +1078,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Osasto — {price:department}/vuosi",
     "quote.planInst": "Oppilaitos — {price:institution}/vuosi (DPA, lasku/tilaus)",
     "schoolLicense.tierDept": "Osasto ({price:department}/vuosi) — kattaa osastosi",
-    "schoolLicense.tierInst": "Oppilaitos ({price:institution}/vuosi) — koko koulun verkkotunnus"
+    "schoolLicense.tierInst": "Oppilaitos ({price:institution}/vuosi) — koko koulun verkkotunnus",
+    "email.clusterSchoolBody": "{count} opettajaa koulusi verkkotunnuksesta ({domain}) käyttää Attendance Tracker -sovellusta. Päivitä Osastopassiin ({price:department}/vuosi) rajattomia Google Sheets -vientejä varten.",
+    "email.clusterSchoolCta": "Päivitä Osastopassiin ({price:department}/vuosi) →"
   },
   "hu": {
     "history.clusterPromoCtaInst": "Váltás Intézményi Csomagra ({price:institution}/év) →",
@@ -1046,7 +1111,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Tanszéki csomag — {price:department}/év",
     "quote.planInst": "Intézményi csomag — {price:institution}/év (DPA, számla/megrendelő)",
     "schoolLicense.tierDept": "Tanszék ({price:department}/év) — a teljes tanszék számára",
-    "schoolLicense.tierInst": "Intézmény ({price:institution}/év) — a teljes iskolai domain"
+    "schoolLicense.tierInst": "Intézmény ({price:institution}/év) — a teljes iskolai domain",
+    "email.clusterSchoolBody": "{count} tanár használja az iskolai doménedről ({domain}) a rendszert. Válts Tanszéki Bérletre ({price:department}/év) a korlátlan Google Sheets exportért minden kollégának.",
+    "email.clusterSchoolCta": "Váltás Tanszéki Bérletre ({price:department}/év) →"
   },
   "so": {
     "history.clusterPromoCtaInst": "U cusboonaysii Qorshaha Machadka ({price:institution}/sanadkiiba) →",
@@ -1077,7 +1144,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Waaxda - {price:department}/sanadii",
     "quote.planInst": "Machad — {price:institution}/sanadii (DPA, qaansheegad/PO)",
     "schoolLicense.tierDept": "Waaxda ({price:department}/sano) — waxay dabooshaa waaxdaada",
-    "schoolLicense.tierInst": "Machadka ({price:institution}/sano) — dhammaan maamulka dugsiga"
+    "schoolLicense.tierInst": "Machadka ({price:institution}/sano) — dhammaan maamulka dugsiga",
+    "email.clusterSchoolBody": "{count} macallin oo ka socda ({domain}) ayaa isticmaalaya Attendance Tracker. U cusboonaysii Kaarka Waaxda ({price:department}/sano) si aad u hesho dhoofinta Google Sheets aan xadidnayn.",
+    "email.clusterSchoolCta": "U cusboonaysii Kaarka Waaxda ({price:department}/sano) →"
   },
   "sw": {
     "history.clusterPromoCtaInst": "Boresha hadi Mpango wa Taasisi ({price:institution}/mwaka) →",
@@ -1108,7 +1177,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Department — {price:department}/mwaka",
     "quote.planInst": "Institution — {price:institution}/mwaka (DPA, ankara/PO)",
     "schoolLicense.tierDept": "Idara ({price:department}/mwaka) — inajumuisha idara yako",
-    "schoolLicense.tierInst": "Taasisi ({price:institution}/mwaka) — kikoa kizima cha shule"
+    "schoolLicense.tierInst": "Taasisi ({price:institution}/mwaka) — kikoa kizima cha shule",
+    "email.clusterSchoolBody": "Walimu {count} kutoka kikoa cha shule ({domain}) wanatumia Attendance Tracker. Boresha hadi Pasi ya Idara ({price:department}/mwaka) kwa usafirishaji usio na kikomo wa Google Sheets.",
+    "email.clusterSchoolCta": "Boresha hadi Pasi ya Idara ({price:department}/mwaka) →"
   },
   "am": {
     "history.clusterPromoCtaInst": "ወደ ተቋም ዕቅድ ያሻሽሉ ({price:institution}/በዓመት) →",
@@ -1139,7 +1210,8 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "ክፍል (Department) — {price:department}/ዓመት",
     "quote.planInst": "ተቋም (Institution) — {price:institution}/ዓመት (DPA፣ ደረሰኝ/የግዥ ትዕዛዝ)",
     "schoolLicense.tierDept": "ክፍል ({price:department}/ዓመት) — የእርስዎን ክፍል ይሸፍናል",
-    "schoolLicense.tierInst": "ተቋም ({price:institution}/ዓመት) — መላው የትምህርት ቤት ጎራ"
+    "schoolLicense.tierInst": "ተቋም ({price:institution}/ዓመት) — መላው የትምህርት ቤት ጎራ",
+    "email.clusterSchoolCta": "ወደ ዲፓርትመንት ማለፊያ ያሻሽሉ ({price:department}/ዓመት) →"
   },
   "si": {
     "history.clusterPromoCtaInst": "ආයතන සැලසුමට උත්ශ්‍රේණි කරන්න ({price:institution}/වසර) →",
@@ -1170,7 +1242,8 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "දෙපාර්තමේන්තු (Department) — {price:department}/වසරකට",
     "quote.planInst": "ආයතනික (Institution) — {price:institution}/වසරකට (DPA, invoice/PO)",
     "schoolLicense.tierDept": "දෙපාර්තමේන්තුව ({price:department}/වසර) — ඔබේ දෙපාර්තමේන්තුව ආවරණය කරයි",
-    "schoolLicense.tierInst": "ආයතනය ({price:institution}/වසර) — මුළු පාසල් වසමම"
+    "schoolLicense.tierInst": "ආයතනය ({price:institution}/වසර) — මුළු පාසල් වසමම",
+    "email.clusterSchoolCta": "දෙපාර්තමේන්තු පාස් වෙත උත්ශ්‍රේණි කරන්න ({price:department}/වසර) →"
   },
   "el": {
     "history.clusterPromoCtaInst": "Αναβάθμιση σε Πρόγραμμα Ιδρύματος ({price:institution}/έτος) →",
@@ -1201,7 +1274,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Department — {price:department}/έτος",
     "quote.planInst": "Institution — {price:institution}/έτος (DPA, τιμολόγιο/PO)",
     "schoolLicense.tierDept": "Τμήμα ({price:department}/έτος) — καλύπτει το τμήμα σας",
-    "schoolLicense.tierInst": "Ίδρυμα ({price:institution}/έτος) — ολόκληρος ο σχολικός τομέας"
+    "schoolLicense.tierInst": "Ίδρυμα ({price:institution}/έτος) — ολόκληρος ο σχολικός τομέας",
+    "email.clusterSchoolBody": "{count} καθηγητές από τον τομέα ({domain}) χρησιμοποιούν το Attendance Tracker. Αναβαθμίστε σε Πάσο Τμήματος ({price:department}/έτος) για απεριόριστες εξαγωγές στο Google Sheets.",
+    "email.clusterSchoolCta": "Αναβάθμιση σε Πάσο Τμήματος ({price:department}/έτος) →"
   },
   "no": {
     "history.clusterPromoCtaInst": "Oppgrader til Institusjonsplan ({price:institution}/år) →",
@@ -1232,7 +1307,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Avdeling – {price:department}/år",
     "quote.planInst": "Institusjon – {price:institution}/år (DPA, faktura/innkjøpsordre)",
     "schoolLicense.tierDept": "Avdeling ({price:department}/år) — dekker din avdeling",
-    "schoolLicense.tierInst": "Institusjon ({price:institution}/år) — hele skolens domene"
+    "schoolLicense.tierInst": "Institusjon ({price:institution}/år) — hele skolens domene",
+    "email.clusterSchoolBody": "{count} lærere fra skoledomenet ditt ({domain}) bruker Attendance Tracker. Oppgrader til Avdelingspass ({price:department}/år) for ubegrenset Google Sheets-eksport for alle kolleger.",
+    "email.clusterSchoolCta": "Oppgrader til Avdelingspass ({price:department}/år) →"
   },
   "ca": {
     "history.clusterPromoCtaInst": "Millora a Pla Institucional ({price:institution}/any) →",
@@ -1263,7 +1340,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Departament — {price:department}/any",
     "quote.planInst": "Institució — {price:institution}/any (DPA, factura/comanda)",
     "schoolLicense.tierDept": "Departament ({price:department}/any) — cobreix el vostre departament",
-    "schoolLicense.tierInst": "Institució ({price:institution}/any) — tot el domini escolar"
+    "schoolLicense.tierInst": "Institució ({price:institution}/any) — tot el domini escolar",
+    "email.clusterSchoolBody": "{count} professors del domini ({domain}) fan servir Attendance Tracker. Millora a un Passi Departamental ({price:department}/any) per a exportacions il·limitades a Google Sheets.",
+    "email.clusterSchoolCta": "Millora a Passi Departamental ({price:department}/any) →"
   },
   "ne": {
     "history.clusterPromoCtaInst": "संस्था योजनामा स्तरवृद्धि गर्नुहोस् ({price:institution}/वर्ष) →",
@@ -1294,7 +1373,8 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "विभाग — {price:department}/वर्ष",
     "quote.planInst": "संस्था — {price:institution}/वर्ष (DPA, इनभ्वाइस/PO)",
     "schoolLicense.tierDept": "विभाग ({price:department}/वर्ष) — तपाईंको विभाग समेट्छ",
-    "schoolLicense.tierInst": "संस्था ({price:institution}/वर्ष) — सम्पूर्ण विद्यालय डोमेन"
+    "schoolLicense.tierInst": "संस्था ({price:institution}/वर्ष) — सम्पूर्ण विद्यालय डोमेन",
+    "email.clusterSchoolCta": "विभाग पासमा अपग्रेड गर्नुहोस् ({price:department}/वर्ष) →"
   },
   "ml": {
     "history.clusterPromoCtaInst": "ഇൻസ്റ്റിറ്റ്യൂഷൻ പ്ലാനിലേക്ക് അപ്‌ഗ്രേഡ് ചെയ്യുക ({price:institution}/വർഷം) →",
@@ -1325,7 +1405,8 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "ഡിപ്പാർട്ട്‌മെന്റ് — {price:department}/വർഷം",
     "quote.planInst": "സ്ഥാപനം — {price:institution}/വർഷം (DPA, ഇൻവോയ്സ്/PO)",
     "schoolLicense.tierDept": "ഡിപ്പാർട്ട്മെന്റ് ({price:department}/വർഷം) — നിങ്ങളുടെ വകുപ്പിനായി",
-    "schoolLicense.tierInst": "സ്ഥാപനം ({price:institution}/വർഷം) — സ്കൂൾ ഡൊമെയ്ൻ മുഴുവൻ"
+    "schoolLicense.tierInst": "സ്ഥാപനം ({price:institution}/വർഷം) — സ്കൂൾ ഡൊമെയ്ൻ മുഴുവൻ",
+    "email.clusterSchoolCta": "ഡിപ്പാർട്ട്മെന്റ് പാസിലേക്ക് അപ്ഗ്രേഡ് ചെയ്യുക ({price:department}/വർഷം) →"
   },
   "mn": {
     "history.clusterPromoCtaInst": "Байгууллагын багц руу шинэчлэх ({price:institution}/жил) →",
@@ -1356,7 +1437,8 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Тэнхим — {price:department}/жил",
     "quote.planInst": "Байгууллага — {price:institution}/жил (DPA, нэхэмжлэх/PO)",
     "schoolLicense.tierDept": "Тэнхим ({price:department}/жил) — танай тэнхимийг хамарна",
-    "schoolLicense.tierInst": "Байгууллага ({price:institution}/жил) — сургуулийн бүх домэйн"
+    "schoolLicense.tierInst": "Байгууллага ({price:institution}/жил) — сургуулийн бүх домэйн",
+    "email.clusterSchoolCta": "Тэнхимийн багц руу шинэчлэх ({price:department}/жил) →"
   },
   "kn": {
     "history.clusterPromoCtaInst": "ಸಂಸ್ಥೆ ಯೋಜನೆಗೆ ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಿ ({price:institution}/ವರ್ಷ) →",
@@ -1387,7 +1469,8 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Department — {price:department}/ವರ್ಷ",
     "quote.planInst": "Institution — {price:institution}/ವರ್ಷ (DPA, ಇನ್‌ವಾಯ್ಸ್/PO)",
     "schoolLicense.tierDept": "Department ({price:department}/ವರ್ಷ) — ನಿಮ್ಮ ವಿಭಾಗವನ್ನು ಒಳಗೊಳ್ಳುತ್ತದೆ",
-    "schoolLicense.tierInst": "Institution ({price:institution}/ವರ್ಷ) — ಇಡೀ ಶಾಲಾ ಡೊಮೇನ್"
+    "schoolLicense.tierInst": "Institution ({price:institution}/ವರ್ಷ) — ಇಡೀ ಶಾಲಾ ಡೊಮೇನ್",
+    "email.clusterSchoolCta": "ಇಲಾಖಾ ಪಾಸ್‌ಗೆ ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಿ ({price:department}/ವರ್ಷ) →"
   },
   "gu": {
     "history.clusterPromoCtaInst": "સંસ્થા પ્લાનમાં અપગ્રેડ કરો ({price:institution}/વર્ષ) →",
@@ -1418,7 +1501,8 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "ડિપાર્ટમેન્ટ — {price:department}/વર્ષ",
     "quote.planInst": "ઇન્સ્ટિટ્યુશન — {price:institution}/વર્ષ (DPA, ઇનવોઇસ/PO)",
     "schoolLicense.tierDept": "ડિપાર્ટમેન્ટ ({price:department}/વર્ષ) — તમારા વિભાગને આવરી લે છે",
-    "schoolLicense.tierInst": "ઇન્સ્ટિટ્યુશન ({price:institution}/વર્ષ) — સમગ્ર શાળા ડોમેન"
+    "schoolLicense.tierInst": "ઇન્સ્ટિટ્યુશન ({price:institution}/વર્ષ) — સમગ્ર શાળા ડોમેન",
+    "email.clusterSchoolCta": "વિભાગ પાસમાં અપગ્રેડ કરો ({price:department}/વર્ષ) →"
   },
   "pa": {
     "history.clusterPromoCtaInst": "ਸੰਸਥਾ ਯੋਜਨਾ ਵਿੱਚ ਅੱਪਗ੍ਰੇਡ ਕਰੋ ({price:institution}/ਸਾਲ) →",
@@ -1449,7 +1533,8 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "ਵਿਭਾਗ — {price:department}/ਸਾਲ",
     "quote.planInst": "ਸੰਸਥਾ — {price:institution}/ਸਾਲ (DPA, ਇਨਵੌਇਸ/PO)",
     "schoolLicense.tierDept": "Department ({price:department}/ਸਾਲ) — ਤੁਹਾਡੇ ਵਿਭਾਗ ਨੂੰ ਕਵਰ ਕਰਦਾ ਹੈ",
-    "schoolLicense.tierInst": "Institution ({price:institution}/ਸਾਲ) — ਪੂਰਾ ਸਕੂਲ ਡੋਮੇਨ"
+    "schoolLicense.tierInst": "Institution ({price:institution}/ਸਾਲ) — ਪੂਰਾ ਸਕੂਲ ਡੋਮੇਨ",
+    "email.clusterSchoolCta": "ਵਿਭਾਗ ਪਾਸ 'ਤੇ ਅੱਪਗ੍ਰੇਡ ਕਰੋ ({price:department}/ਸਾਲ) →"
   },
   "kk": {
     "history.clusterPromoCtaInst": "Мекеме жоспарына өту ({price:institution}/жыл) →",
@@ -1480,7 +1565,8 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Бөлім — {price:department}/жыл",
     "quote.planInst": "Мекеме — {price:institution}/жыл (DPA, шот/тапсырыс)",
     "schoolLicense.tierDept": "Бөлім ({price:department}/жыл) — бөліміңізді қамтиды",
-    "schoolLicense.tierInst": "Мекеме ({price:institution}/жыл) — бүкіл мектеп домені"
+    "schoolLicense.tierInst": "Мекеме ({price:institution}/жыл) — бүкіл мектеп домені",
+    "email.clusterSchoolCta": "Бөлім тарифіне жаңарту ({price:department}/жыл) →"
   },
   "lv": {
     "history.clusterPromoCtaInst": "Jaunināt uz Iestādes plānu ({price:institution}/gadā) →",
@@ -1511,7 +1597,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Department — {price:department}/gadā",
     "quote.planInst": "Institution — {price:institution}/gadā (DPA, rēķins/PO)",
     "schoolLicense.tierDept": "Department ({price:department}/gadā) — sedz jūsu nodaļu",
-    "schoolLicense.tierInst": "Institution ({price:institution}/gadā) — viss skolas domēns"
+    "schoolLicense.tierInst": "Institution ({price:institution}/gadā) — viss skolas domēns",
+    "email.clusterSchoolBody": "{count} skolotāji no jūsu domēna ({domain}) izmanto Attendance Tracker. Jauniniet uz Nodaļas abonementu ({price:department}/gadā) neierobežotai Google Sheets eksportēšanai.",
+    "email.clusterSchoolCta": "Jaunināt uz Nodaļas abonementu ({price:department}/gadā) →"
   },
   "lt": {
     "history.clusterPromoCtaInst": "Naujovinti į Įstaigos planą ({price:institution}/metams) →",
@@ -1542,7 +1630,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Skyrius – {price:department}/metus",
     "quote.planInst": "Įstaiga – {price:institution}/metus (DPA, sąskaita faktūra / pirkimo užsakymas)",
     "schoolLicense.tierDept": "Skyrius ({price:department}/metus) – apima jūsų skyrių",
-    "schoolLicense.tierInst": "Įstaiga ({price:institution}/metus) – visas mokyklos domenas"
+    "schoolLicense.tierInst": "Įstaiga ({price:institution}/metus) – visas mokyklos domenas",
+    "email.clusterSchoolBody": "{count} mokytojai iš jūsų domeno ({domain}) naudoja Attendance Tracker. Atnaujinkite į Katedros planą ({price:department}/metams) neribotam Google Sheets eksportavimui.",
+    "email.clusterSchoolCta": "Atnaujinti į Katedros planą ({price:department}/metams) →"
   },
   "lo": {
     "history.clusterPromoCtaInst": "ອັບເກຣດເປັນແຜນສະຖາບັນ ({price:institution}/ປີ) →",
@@ -1573,7 +1663,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "ພະແນກ (Department) — {price:department}/ປີ",
     "quote.planInst": "ສະຖາບັນ (Institution) — {price:institution}/ປີ (DPA, ໃບຮຽກເກັບເງິນ/PO)",
     "schoolLicense.tierDept": "Department ({price:department}/ປີ) — ຄອບຄຸມພະແນກຂອງທ່ານ",
-    "schoolLicense.tierInst": "Institution ({price:institution}/ປີ) — ທັງໂດເມນໂຮງຮຽນ"
+    "schoolLicense.tierInst": "Institution ({price:institution}/ປີ) — ທັງໂດເມນໂຮງຮຽນ",
+    "email.clusterSchoolBody": "ຄູ {count} ຄົນຈາກໂດເມນໂຮງຮຽນຂອງທ່ານ ({domain}) ກຳລັງໃຊ້ Attendance Tracker. ອັບເກຣດເປັນບັດຜ່ານພະແນກ ({price:department}/ປີ) ສຳລັບການສົ່ງອອກ Google Sheets ບໍ່ຈຳກັດ.",
+    "email.clusterSchoolCta": "ອັບເກຣດເປັນບັດຜ່ານພະແນກ ({price:department}/ປີ) →"
   },
   "my": {
     "history.clusterPromoCtaInst": "အဖွဲ့အစည်းအစီအစဉ်သို့ အဆင့်မြှင့်ပါ ({price:institution}/နှစ်) →",
@@ -1604,7 +1696,8 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "ဌာန — {price:department}/နှစ်",
     "quote.planInst": "ကျောင်းတစ်ခုလုံး (Institution) — {price:institution}/နှစ် (DPA၊ ငွေတောင်းခံလွှာ/PO)",
     "schoolLicense.tierDept": "Department ({price:department}/နှစ်) — သင့်ဌာနကို အကျုံးဝင်သည်",
-    "schoolLicense.tierInst": "Institution ({price:institution}/နှစ်) — ကျောင်းဒိုမိန်းတစ်ခုလုံး"
+    "schoolLicense.tierInst": "Institution ({price:institution}/နှစ်) — ကျောင်းဒိုမိန်းတစ်ခုလုံး",
+    "email.clusterSchoolCta": "ဌာနခွဲလက်မှတ်သို့ အဆင့်မြှင့်ပါ ({price:department}/နှစ်) →"
   },
   "km": {
     "history.clusterPromoCtaInst": "ធ្វើបច្ចុប្បន្នភាពទៅគម្រោងស្ថាប័ន ({price:institution}/ឆ្នាំ) →",
@@ -1635,7 +1728,8 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "ដេប៉ាតឺម៉ង់ — {price:department}/ឆ្នាំ",
     "quote.planInst": "ស្ថាប័ន — {price:institution}/ឆ្នាំ (DPA, វិក្កយបត្រ/PO)",
     "schoolLicense.tierDept": "Department ({price:department}/ឆ្នាំ) — គ្របដណ្តប់លើដេប៉ាតឺម៉ង់របស់អ្នក",
-    "schoolLicense.tierInst": "Institution ({price:institution}/ឆ្នាំ) — domain សាលាទាំងមូល"
+    "schoolLicense.tierInst": "Institution ({price:institution}/ឆ្នាំ) — domain សាលាទាំងមូល",
+    "email.clusterSchoolCta": "ធ្វើបច្ចុប្បន្នភាពទៅប័ណ្ណដេប៉ាតឺម៉ង់ ({price:department}/ឆ្នាំ) →"
   },
   "ceb": {
     "history.clusterPromoCtaInst": "Pag-upgrade sa Institution Plan ({price:institution}/tuig) →",
@@ -1666,7 +1760,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Departamento — {price:department}/tuig",
     "quote.planInst": "Institusyon — {price:institution}/tuig (DPA, invoice/PO)",
     "schoolLicense.tierDept": "Department ({price:department}/tuig) — naglangkob sa imong departamento",
-    "schoolLicense.tierInst": "Institution ({price:institution}/tuig) — tibuok domain sa eskuylahan"
+    "schoolLicense.tierInst": "Institution ({price:institution}/tuig) — tibuok domain sa eskuylahan",
+    "email.clusterSchoolBody": "{count} ka magtutudlo gikan sa domain ({domain}) ang naggamit sa Attendance Tracker. Pag-upgrade sa Department Pass ({price:department}/tuig) para sa walay kinutuban nga Google Sheets export.",
+    "email.clusterSchoolCta": "Pag-upgrade sa Department Pass ({price:department}/tuig) →"
   },
   "bg": {
     "history.clusterPromoCtaInst": "Надстройка до Институционален план ({price:institution}/год.) →",
@@ -1697,7 +1793,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Department — {price:department}/год.",
     "quote.planInst": "Institution — {price:institution}/год. (DPA, фактура/поръчка за покупка)",
     "schoolLicense.tierDept": "Department ({price:department}/год.) — покрива вашата катедра",
-    "schoolLicense.tierInst": "Institution ({price:institution}/год.) — целия училищен домейн"
+    "schoolLicense.tierInst": "Institution ({price:institution}/год.) — целия училищен домейн",
+    "email.clusterSchoolBody": "{count} учители от домейна ({domain}) използват Attendance Tracker. Надстройте до Катедрен пропуск ({price:department}/год.) за неограничен експорт в Google Sheets.",
+    "email.clusterSchoolCta": "Надстройка до Катедрен пропуск ({price:department}/год.) →"
   },
   "hr": {
     "history.clusterPromoCtaInst": "Nadogradite na Institucionalni plan ({price:institution}/god.) →",
@@ -1728,7 +1826,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Odjel — {price:department}/god.",
     "quote.planInst": "Ustanova — {price:institution}/god. (DPA, račun/narudžbenica)",
     "schoolLicense.tierDept": "Odjel ({price:department}/god.) — pokriva vaš odjel",
-    "schoolLicense.tierInst": "Ustanova ({price:institution}/god.) — cijela školska domena"
+    "schoolLicense.tierInst": "Ustanova ({price:institution}/god.) — cijela školska domena",
+    "email.clusterSchoolBody": "{count} nastavnika s domene ({domain}) koristi Attendance Tracker. Nadogradite na Odjelnu propusnicu ({price:department}/god.) za neograničeni Google Sheets izvoz za sve kolege.",
+    "email.clusterSchoolCta": "Nadogradite na Odjelnu propusnicu ({price:department}/god.) →"
   },
   "sr": {
     "history.clusterPromoCtaInst": "Надоградите на Институционални план ({price:institution}/год.) →",
@@ -1759,7 +1859,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Катедра — {price:department}/год.",
     "quote.planInst": "Институција — {price:institution}/год. (DPA, предрачун/наруџбеница)",
     "schoolLicense.tierDept": "Department ({price:department}/год.) — покрива вашу катедру/актив",
-    "schoolLicense.tierInst": "Institution ({price:institution}/год.) — цео домен школе"
+    "schoolLicense.tierInst": "Institution ({price:institution}/год.) — цео домен школе",
+    "email.clusterSchoolBody": "{count} наставника са домена ({domain}) користи Attendance Tracker. Надоградите на Одељенску пропусницу ({price:department}/год.) за неограничен извоз у Google Sheets.",
+    "email.clusterSchoolCta": "Надоградите на Одељенску пропусницу ({price:department}/год.) →"
   },
   "sk": {
     "history.clusterPromoCtaInst": "Prejsť na Inštitucionálny plán ({price:institution}/rok) →",
@@ -1790,7 +1892,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Katedra / Oddelenie – {price:department}/rok",
     "quote.planInst": "Inštitúcia – {price:institution}/rok (DPA, faktúra/objednávka)",
     "schoolLicense.tierDept": "Katedra / Oddelenie ({price:department}/rok) – pokrýva vaše oddelenie",
-    "schoolLicense.tierInst": "Inštitúcia ({price:institution}/rok) – celá doména školy"
+    "schoolLicense.tierInst": "Inštitúcia ({price:institution}/rok) – celá doména školy",
+    "email.clusterSchoolBody": "{count} učiteľov zo školskej domény ({domain}) používa Attendance Tracker. Inovujte na Katedrový pas ({price:department}/rok) pre neobmedzený export do Google Sheets.",
+    "email.clusterSchoolCta": "Inovovať na Katedrový pas ({price:department}/rok) →"
   },
   "sl": {
     "history.clusterPromoCtaInst": "Nadgradi na Institucionalni načrt ({price:institution}/leto) →",
@@ -1821,7 +1925,9 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Oddelek — {price:department}/leto",
     "quote.planInst": "Ustanova — {price:institution}/leto (DPA, račun/naročilnica)",
     "schoolLicense.tierDept": "Oddelek ({price:department}/leto) — krije vaš oddelek",
-    "schoolLicense.tierInst": "Ustanova ({price:institution}/leto) — domena celotne šole"
+    "schoolLicense.tierInst": "Ustanova ({price:institution}/leto) — domena celotne šole",
+    "email.clusterSchoolBody": "{count} učiteljev z domene ({domain}) uporablja Attendance Tracker. Nadgradite na Oddelek prepustnico ({price:department}/leto) za neomejen izvoz v Google Sheets.",
+    "email.clusterSchoolCta": "Nadgradi na Oddelek prepustnico ({price:department}/leto) →"
   },
   "af": {
     "history.clusterPromoCtaInst": "Gradeer op na Instellingsplan ({price:institution}/jr) →",
@@ -1852,6 +1958,8 @@ export const PRICE_TOKEN_FIXES = {
     "quote.planDept": "Departement — {price:department}/jaar",
     "quote.planInst": "Instelling — {price:institution}/jaar (DPA, faktuur/aankoopbestelling)",
     "schoolLicense.tierDept": "Departement ({price:department}/jaar) — dek jou departement",
-    "schoolLicense.tierInst": "Instelling ({price:institution}/jaar) — hele skooldomein"
+    "schoolLicense.tierInst": "Instelling ({price:institution}/jaar) — hele skooldomein",
+    "email.clusterSchoolBody": "{count} onderwysers vanaf ({domain}) gebruik Attendance Tracker. Gradeer op na 'n Departementspas ({price:department}/jr) vir onbeperkte Google Sheets-uitvoere.",
+    "email.clusterSchoolCta": "Gradeer op na Departementspas ({price:department}/jr) →"
   }
 };

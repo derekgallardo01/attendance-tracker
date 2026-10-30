@@ -7,6 +7,7 @@ const { maskGoogleChatWebhook } = require('./googleChat');
 const { maskDiscordWebhook } = require('./discord');
 const { escapeHtml: escape } = require('./html');
 const { resolveGeo, isGenericUsPlaceholder } = require('./geoip');
+const { tf, strictLocale, normalizeLocale, priceTableFor, withPrices, fmtMinutes, fmtDateTime } = require('./i18n');
 
 // Resend transactional email — better deliverability + open/click tracking
 // than Gmail SMTP, and the API doesn't have Gmail's 500/day cap.
@@ -46,11 +47,13 @@ const PORTUGUESE_COUNTRIES = new Set(['BR', 'PT', 'AO', 'MZ']);
 const BENGALI_COUNTRIES = new Set(['BD']);
 
 // Resolves recipient's native language for localized drip/lifecycle emails.
-// Evaluates explicit language preference -> user's country -> domain extension -> defaults to 'en'.
+// Evaluates explicit language preference (any of the 60 app locales — the
+// language the user chose in the app) -> user's country -> domain extension
+// (guessed only for es/pt/bn) -> defaults to 'en'.
 function resolveLanguage({ language, country, domain, email } = {}) {
   if (language && typeof language === 'string') {
-    const l = language.trim().toLowerCase().split(/[-_]/)[0];
-    if (['es', 'pt', 'bn'].includes(l)) return l;
+    const l = strictLocale(language.trim());
+    if (l) return l;
   }
   const c = country && typeof country === 'string' ? country.trim().toUpperCase() : null;
   if (c) {
@@ -227,19 +230,10 @@ function unsubscribeHeaders(email) {
 // Footer appended to lifecycle emails. Returns matching text + HTML fragments.
 function unsubscribeFooter(email, lang = 'en') {
   const url = unsubscribeUrl(email);
-  let optOutText = "Don't want these emails? Unsubscribe:";
-  let optOutHtml = `Don't want these emails? <a href="${escape(url)}" style="color:#58a6ff;text-decoration:none;">Unsubscribe</a>.`;
-
-  if (lang === 'es') {
-    optOutText = "¿No deseas recibir estos correos? Cancelar suscripción:";
-    optOutHtml = `¿No deseas recibir estos correos? <a href="${escape(url)}" style="color:#58a6ff;text-decoration:none;">Cancelar suscripción</a>.`;
-  } else if (lang === 'pt') {
-    optOutText = "Não deseja receber estes e-mails? Cancelar inscrição:";
-    optOutHtml = `Não deseja receber estes e-mails? <a href="${escape(url)}" style="color:#58a6ff;text-decoration:none;">Cancelar inscrição</a>.`;
-  } else if (lang === 'bn') {
-    optOutText = "এই ইমেল আর পেতে চান না? আনসাবস্ক্রাইব করুন:";
-    optOutHtml = `এই ইমেল আর পেতে চান না? <a href="${escape(url)}" style="color:#58a6ff;text-decoration:none;">আনসাবস্ক্রাইব করুন</a>.`;
-  }
+  const prompt = tf('mail.unsubPrompt', lang, null, "Don't want these emails?");
+  const link = tf('mail.unsubLink', lang, null, 'Unsubscribe');
+  const optOutText = `${prompt} ${link}:`;
+  const optOutHtml = `${escape(prompt)} <a href="${escape(url)}" style="color:#58a6ff;text-decoration:none;">${escape(link)}</a>.`;
 
   return {
     text: `\n\n—\n${optOutText} ${url}`,
@@ -260,6 +254,7 @@ function buildDesignSystemEmail({
   ctaUrl = null,
   ctaColor = 'green', // 'green' | 'blue'
   footerHtml = null,
+  lang = 'en',
 }) {
   const badgeColors = {
     error: 'color:#f85149;background:rgba(248,81,73,0.12);border:1px solid rgba(248,81,73,0.3);',
@@ -272,10 +267,12 @@ function buildDesignSystemEmail({
     ? 'background:#1f6feb;color:#ffffff;padding:10px 18px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;display:inline-block;'
     : 'background:#238636;color:#ffffff;padding:10px 18px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;display:inline-block;';
 
-  const defaultFooter = `Sent by Attendance Tracker &bull; <a href="https://attendancetracker.dev" style="color:#58a6ff;text-decoration:none;">attendancetracker.dev</a>`;
+  const defaultFooter = `${escape(tf('mail.sentBy', lang, null, 'Sent by Attendance Tracker'))} &bull; <a href="https://attendancetracker.dev" style="color:#58a6ff;text-decoration:none;">attendancetracker.dev</a>`;
+  const htmlLang = normalizeLocale(lang);
+  const dir = ['ar', 'he', 'ur'].includes(htmlLang) ? 'rtl' : 'ltr';
 
   return `<!DOCTYPE html>
-<html>
+<html lang="${htmlLang}" dir="${dir}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1509,139 +1506,40 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
   } catch {}
   const lang = resolveLanguage({ language, country, domain: resolvedDomain, email: to });
 
+  const prices = priceTableFor({ country, email: to });
+  const L = (key, vars) => withPrices(tf(key, lang, vars), prices);
+
   const title = meetingTitle || 'Google Meet';
-  let summary = totalInvited
-    ? `${totalAttended} of ${totalInvited} attended`
-    : `${totalAttended} attended`;
-  let subject = `Attendance: ${title} — ${summary}`;
-  let dateLocale = 'en-US';
-  let greeting = displayName ? `Hi ${escape(displayName.split(' ')[0])},` : 'Hi,';
-  let badgeText = '📊 Export Ready';
-  let meetingEndedText = 'Your meeting just ended — attendance has been auto-exported.';
-  let colPerson = 'Person';
-  let colStatus = 'Status';
-  let colTime = 'Time';
-  let colDuration = 'Duration';
-  let colAttendance = 'Attendance';
-  let colTopAttendee = 'Top Attendee';
-  let overflowText = (n) => `…and ${n} more in the sheet`;
-  let openSheetText = 'Open sheet';
-  let viewOnWebText = 'View on web →';
-  let seriesTrendHtml = (link) => `This is part of a recurring series — <a href="${escape(link)}" style="color:#58a6ff;font-weight:500;text-decoration:none">see the full trend →</a>`;
-  let seriesTrendPlain = (link) => `Series trend: ${link}`;
-  let reviewBoxTitle = '⭐ Did this save you time today?';
-  let reviewBoxBody = 'If Attendance Tracker helped your call, could you spare 10 seconds to leave a 5-star review on Google Marketplace? It helps independent creators like me keep building for educators!';
-  let reviewBoxBtn = 'Leave a 5-Star Review (takes 10s) →';
-  let reviewBoxPlainPrompt = 'Did this save you time today? Leave a quick 5-star review (takes 10s):';
-  let footerNotice = `You're getting this because you tracked this meeting with Attendance Tracker. The sheet lives in your Drive folder "Meet Attendance Tracker" — reuse the same spreadsheet next time, each meeting gets its own tab.`;
+  const summary = totalInvited
+    ? L('mail.export.summaryOf', { attended: totalAttended, invited: totalInvited })
+    : L('mail.export.summary', { attended: totalAttended });
+  const subject = L('mail.export.subject', { title, summary });
+  const firstName = displayName ? displayName.split(' ')[0] : '';
+  const greeting = escape(firstName ? L('mail.greetingName', { name: firstName }) : L('mail.greeting'));
+  const badgeText = L('mail.export.badge');
+  const meetingEndedText = L('mail.export.ended');
+  const colPerson = L('mail.export.colPerson');
+  const colStatus = L('mail.export.colStatus');
+  const colTime = L('mail.export.colTime');
+  const colDuration = L('mail.export.colDuration');
+  const colAttendance = L('mail.export.colAttendance');
+  const colTopAttendee = L('mail.export.colTopAttendee');
+  const overflowText = (n) => L('mail.export.overflow', { n });
+  const openSheetText = L('mail.export.openSheet');
+  const viewOnWebText = `${L('mail.export.viewOnWeb')} →`;
+  const seriesTrendHtml = (link) => `${escape(L('mail.export.seriesPart'))} <a href="${escape(link)}" style="color:#58a6ff;font-weight:500;text-decoration:none">${escape(L('mail.export.seriesLink'))} →</a>`;
+  const seriesTrendPlain = (link) => `${L('mail.export.seriesPlain')} ${link}`;
+  const reviewBoxTitle = L('mail.export.reviewTitle');
+  const reviewBoxBody = L('mail.export.reviewBody');
+  const reviewBoxBtn = `${L('mail.export.reviewBtn')} →`;
+  const reviewBoxPlainPrompt = L('mail.export.reviewPlain');
+  const footerNotice = L('mail.export.footer');
 
-  if (lang === 'es') {
-    summary = totalInvited
-      ? `${totalAttended} de ${totalInvited} asistieron`
-      : `${totalAttended} asistieron`;
-    subject = `Asistencia: ${title} — ${summary}`;
-    dateLocale = 'es-ES';
-    greeting = displayName ? `Hola ${escape(displayName.split(' ')[0])},` : 'Hola,';
-    badgeText = '📊 Exportación lista';
-    meetingEndedText = 'Tu reunión acaba de finalizar — la asistencia se exportó automáticamente.';
-    colPerson = 'Persona';
-    colStatus = 'Estado';
-    colTime = 'Tiempo';
-    colDuration = 'Duración';
-    colAttendance = 'Asistencia';
-    colTopAttendee = 'Mayor asistencia';
-    overflowText = (n) => `…y ${n} más en la hoja`;
-    openSheetText = 'Abrir hoja';
-    viewOnWebText = 'Ver en la web →';
-    seriesTrendHtml = (link) => `Esto es parte de una serie recurrente — <a href="${escape(link)}" style="color:#58a6ff;font-weight:500;text-decoration:none">ver la tendencia completa →</a>`;
-    seriesTrendPlain = (link) => `Tendencia de la serie: ${link}`;
-    reviewBoxTitle = '⭐ ¿Te ahorró tiempo hoy?';
-    reviewBoxBody = 'Si Attendance Tracker te ayudó en tu llamada, ¿podrías dedicar 10 segundos a dejar una reseña de 5 estrellas en Google Marketplace? ¡Ayuda a creadores independientes como yo a seguir desarrollando para educadores!';
-    reviewBoxBtn = 'Dejar reseña de 5 estrellas (10s) →';
-    reviewBoxPlainPrompt = '¿Te ahorró tiempo hoy? Deja una breve reseña de 5 estrellas (10s):';
-    footerNotice = `Recibes esto porque registraste esta reunión con Attendance Tracker. La hoja está en tu carpeta de Google Drive "Meet Attendance Tracker" — reutiliza la misma hoja de cálculo la próxima vez, cada reunión tiene su propia pestaña.`;
-  } else if (lang === 'pt') {
-    summary = totalInvited
-      ? `${totalAttended} de ${totalInvited} presentes`
-      : `${totalAttended} presentes`;
-    subject = `Presença: ${title} — ${summary}`;
-    dateLocale = 'pt-BR';
-    greeting = displayName ? `Olá ${escape(displayName.split(' ')[0])},` : 'Olá,';
-    badgeText = '📊 Exportação pronta';
-    meetingEndedText = 'Sua reunião terminou — a presença foi exportada automaticamente.';
-    colPerson = 'Pessoa';
-    colStatus = 'Status';
-    colTime = 'Tempo';
-    colDuration = 'Duração';
-    colAttendance = 'Presença';
-    colTopAttendee = 'Maior presença';
-    overflowText = (n) => `…e mais ${n} na planilha`;
-    openSheetText = 'Abrir planilha';
-    viewOnWebText = 'Ver na web →';
-    seriesTrendHtml = (link) => `Isto faz parte de uma série recorrente — <a href="${escape(link)}" style="color:#58a6ff;font-weight:500;text-decoration:none">ver a tendência completa →</a>`;
-    seriesTrendPlain = (link) => `Tendência da série: ${link}`;
-    reviewBoxTitle = '⭐ Isso economizou seu tempo hoje?';
-    reviewBoxBody = 'Se o Attendance Tracker ajudou na sua chamada, você poderia dedicar 10 segundos para deixar uma avaliação de 5 estrelas no Google Marketplace? Ajuda criadores independentes como eu a continuar construindo para educadores!';
-    reviewBoxBtn = 'Deixar avaliação de 5 estrelas (10s) →';
-    reviewBoxPlainPrompt = 'Isso economizou seu tempo hoje? Deixe uma avaliação rápida de 5 estrelas (10s):';
-    footerNotice = `Você está recebendo este e-mail porque registrou esta reunião com o Attendance Tracker. A planilha fica na sua pasta do Google Drive "Meet Attendance Tracker" — reutilize a mesma planilha na próxima vez, cada reunião terá sua própria aba.`;
-  } else if (lang === 'bn') {
-    summary = totalInvited
-      ? `${totalInvited} জনের মধ্যে ${totalAttended} জন উপস্থিত`
-      : `${totalAttended} জন উপস্থিত`;
-    subject = `উপস্থিতি: ${title} — ${summary}`;
-    dateLocale = 'bn-BD';
-    greeting = displayName ? `হ্যালো ${escape(displayName.split(' ')[0])},` : 'হ্যালো,';
-    badgeText = '📊 এক্সপোর্ট সম্পন্ন';
-    meetingEndedText = 'আপনার মিটিং শেষ হয়েছে — উপস্থিতি স্বয়ংক্রিয়ভাবে এক্সপোর্ট করা হয়েছে।';
-    colPerson = 'ব্যক্তি';
-    colStatus = 'অবস্থা';
-    colTime = 'সময়';
-    colDuration = 'সময়কাল';
-    colAttendance = 'উপস্থিতি';
-    colTopAttendee = 'শীর্ষ উপস্থিতি';
-    overflowText = (n) => `…এবং শিটে আরও ${n} জন`;
-    openSheetText = 'শিট খুলুন';
-    viewOnWebText = 'ওয়েবে দেখুন →';
-    seriesTrendHtml = (link) => `এটি একটি নিয়মিত সিরিজের অংশ — <a href="${escape(link)}" style="color:#58a6ff;font-weight:500;text-decoration:none">সম্পূর্ণ ট্রেন্ড দেখুন →</a>`;
-    seriesTrendPlain = (link) => `সিরিজ ট্রেন্ড: ${link}`;
-    reviewBoxTitle = '⭐ এটি কি আজ আপনার সময় বাঁচিয়েছে?';
-    reviewBoxBody = 'Attendance Tracker যদি আপনার কাজে সাহায্য করে থাকে, তবে গুগল মার্কেটপ্লেসে একটি ৫-স্টার রিভিউ দিতে ১০ সেকেন্ড সময় দিতে পারবেন? এটি আমাদের মতো স্বাধীন নির্মাতাদের শিক্ষকদের জন্য নতুন সুবিধা তৈরি করতে সাহায্য করে!';
-    reviewBoxBtn = '৫-স্টার রিভিউ দিন (১০ সেকেন্ড লাগবে) →';
-    reviewBoxPlainPrompt = 'এটি কি আজ আপনার সময় বাঁচিয়েছে? ৫-স্টার রিভিউ দিন (১০ সেকেন্ড লাগবে):';
-    footerNotice = `আপনি Attendance Tracker দিয়ে মিটিংয়ের উপস্থিতি ট্র্যাক করায় এই ইমেইলটি পাঠানো হয়েছে। শিটটি আপনার গুগল ড্রাইভ ফোল্ডার "Meet Attendance Tracker"-এ সংরক্ষিত আছে — পরের বার একই স্প্রেডশিট ব্যবহার করুন, প্রতি মিটিংয়ের জন্য আলাদা ট্যাব তৈরি হবে।`;
-  }
+  const dateStr = exportedAt ? fmtDateTime(exportedAt, lang) : '';
 
-  const dateStr = exportedAt ? new Date(exportedAt).toLocaleString(dateLocale, { dateStyle: 'medium', timeStyle: 'short' }) : '';
-
-  const statusLabel = (s) => {
-    if (lang === 'es') {
-      if (s === 'Present') return 'Presente';
-      if (s === 'Left') return 'Salió';
-      if (s === 'Excused') return 'Justificado';
-      return 'Ausente';
-    }
-    if (lang === 'pt') {
-      if (s === 'Present') return 'Presente';
-      if (s === 'Left') return 'Saiu';
-      if (s === 'Excused') return 'Justificado';
-      return 'Ausente';
-    }
-    if (lang === 'bn') {
-      if (s === 'Present') return 'উপস্থিত';
-      if (s === 'Left') return 'বের হয়েছেন';
-      if (s === 'Excused') return 'ছুটি';
-      return 'অনুপস্থিত';
-    }
-    return s;
-  };
-
-  const lateLabel = (min) => {
-    if (lang === 'es') return `+${min} min tarde`;
-    if (lang === 'pt') return `+${min} min atrasado`;
-    if (lang === 'bn') return `+${min} মি. দেরিতে`;
-    return `+${min}m late`;
-  };
+  const STATUS_KEYS = { Present: 'mail.export.statusPresent', Left: 'mail.export.statusLeft', Excused: 'mail.export.statusExcused', Absent: 'mail.export.statusAbsent' };
+  const statusLabel = (st) => (STATUS_KEYS[st] ? L(STATUS_KEYS[st]) : st);
+  const lateLabel = (min) => L('mail.export.late', { n: min });
 
   // Inline attendance table. Color-codes status: green=present, amber=left
   // early, red=absent. Keeps the email scannable in 2 seconds.
@@ -1651,7 +1549,7 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
     if (s === 'Excused') return '#8b949e'; // muted gray — excused isn't a problem
     return '#f85149';
   };
-  const fmtDur = (m) => !m ? '—' : hm(m);
+  const fmtDur = (m) => !m ? '—' : fmtMinutes(m, lang);
 
   // Executive summary highlights
   const meetingDur = (durationMin != null && durationMin > 0)
@@ -1739,18 +1637,9 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
             const lastClusterSent = userObj?.lastClusterPromoSentAt ? new Date(userObj.lastClusterPromoSentAt).getTime() : 0;
             // Frequency cap: maximum once every 14 days
             if (!lastClusterSent || (Date.now() - lastClusterSent > 14 * 24 * 3600 * 1000)) {
-              let clusterTitle = `${teacherCount} teachers from your school are using Attendance Tracker`;
-              let clusterBody = `${teacherCount} teachers from your school domain (${resolvedDomain}) are using Attendance Tracker. Upgrade to a Department Pass ($59/yr) to cover all colleagues.`;
-              let clusterCta = 'Upgrade to Department Pass ($59/yr) →';
-              if (lang === 'es') {
-                clusterTitle = `${teacherCount} profesores de tu escuela están usando Attendance Tracker`;
-                clusterBody = `${teacherCount} profesores de tu dominio escolar (${resolvedDomain}) usan Attendance Tracker. Mejora a un Pase Departamental ($59/año) para cubrir a todos tus colegas.`;
-                clusterCta = 'Mejorar a Pase Departamental ($59/año) →';
-              } else if (lang === 'pt') {
-                clusterTitle = `${teacherCount} professores da sua escola estão usando o Attendance Tracker`;
-                clusterBody = `${teacherCount} professores da sua escola (${resolvedDomain}) usam o Attendance Tracker. Faça upgrade para o Passe Departamental ($59/ano) para cobrir todos os colegas.`;
-                clusterCta = 'Fazer upgrade para o Passe Departamental ($59/ano) →';
-              }
+              const clusterTitle = L('email.clusterSchoolTitle', { count: teacherCount });
+              const clusterBody = L('email.clusterSchoolBody', { count: teacherCount, domain: resolvedDomain });
+              const clusterCta = L('email.clusterSchoolCta');
               const clusterUrl = `https://attendancetracker.dev/pricing.html?plan=department&domain=${encodeURIComponent(resolvedDomain)}&utm_source=export_email_cluster`;
               clusterBoxHtml = `
                 <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px 14px;margin:16px 0;text-align:left">
@@ -1790,9 +1679,9 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
     ${seriesLink ? `<p style="margin:4px 0 16px;font-size:13px;color:#8b949e">${seriesTrendHtml(seriesLink)}</p>` : ''}
     ${clusterBoxHtml}
     ${isFree ? `<div style="background:#161b22;border:1px solid rgba(88,166,255,.4);border-radius:8px;padding:14px 16px;margin:16px 0;text-align:left">
-      <div style="font-weight:700;color:#e6edf3;font-size:14px;margin-bottom:6px">Unlock Unlimited Classes for $19/year (~$1.58/month)</div>
-      <div style="font-size:12px;color:#8b949e;margin-bottom:12px;line-height:1.45">Unlimited Google Sheets exports, classes &gt;25 students, attendance certificates &amp; LMS grade sync.</div>
-      <a href="${CONFIG.publicSiteUrl}/pricing.html?ref=export_email&amp;utm_source=export_digest" class="touch-btn-sm" style="display:inline-block;background:#238636;color:#ffffff;font-size:12px;font-weight:700;padding:8px 16px;border-radius:6px;text-decoration:none;line-height:1.35">Upgrade to Educator Pass ($19/yr) →</a>
+      <div style="font-weight:700;color:#e6edf3;font-size:14px;margin-bottom:6px">${escape(L('mail.export.upsellTitle'))}</div>
+      <div style="font-size:12px;color:#8b949e;margin-bottom:12px;line-height:1.45">${escape(L('mail.export.upsellBody'))}</div>
+      <a href="${CONFIG.publicSiteUrl}/pricing.html?ref=export_email&amp;utm_source=export_digest" class="touch-btn-sm" style="display:inline-block;background:#238636;color:#ffffff;font-size:12px;font-weight:700;padding:8px 16px;border-radius:6px;text-decoration:none;line-height:1.35">${escape(L('mail.export.upsellCta'))} →</a>
     </div>` : ''}
     ${isPro ? '' : `<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:12px 14px;margin:16px 0;text-align:left">
       <div style="font-weight:600;color:#e6edf3;font-size:13px;margin-bottom:4px">${escape(reviewBoxTitle)}</div>
@@ -1801,7 +1690,7 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
     </div>`}
   `;
 
-  const foot = unsubscribeFooter(to);
+  const foot = unsubscribeFooter(to, lang);
   const footerHtml = `
     <p style="margin:0 0 10px;color:#8b949e;font-size:12px;line-height:1.5;">
       ${escape(footerNotice)}
@@ -1812,10 +1701,11 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
   const html = buildDesignSystemEmail({
     badge: badgeText,
     badgeType: 'success',
-    title: `${lang === 'es' ? 'Asistencia' : lang === 'pt' ? 'Presença' : lang === 'bn' ? 'উপস্থিতি' : 'Attendance'}: ${escape(title)}`,
+    title: L('mail.export.headerTitle', { title }),
     subtitle: summary,
     contentHtml,
     footerHtml,
+    lang,
   });
 
   const textRows = (participants || []).map(p => {
@@ -1827,22 +1717,22 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
     ``,
     meetingEndedText,
     ``,
-    `${lang === 'es' ? 'Reunión' : lang === 'pt' ? 'Reunião' : lang === 'bn' ? 'মিটিং' : 'Meeting'}: ${title}`,
-    `${lang === 'es' ? 'Asistencia' : lang === 'pt' ? 'Presença' : lang === 'bn' ? 'উপস্থিতি' : 'Attendance'}: ${summary}`,
-    dateStr ? `${lang === 'es' ? 'Cuándo' : lang === 'pt' ? 'Quando' : lang === 'bn' ? 'সময়' : 'When'}: ${dateStr}` : '',
+    `${L('mail.export.labelMeeting')}: ${title}`,
+    `${colAttendance}: ${summary}`,
+    dateStr ? `${L('mail.export.labelWhen')}: ${dateStr}` : '',
     `${colDuration}: ${meetingDur > 0 ? fmtDur(meetingDur) : '—'}`,
     topAttendee ? `${colTopAttendee}: ${topAttendee.displayName || topAttendee.email || '—'} (${fmtDur(topAttendee.durationMin)})` : '',
     ``,
     participants?.length ? `${textRows}${overflow > 0 ? `\n  ${overflowText(overflow)}` : ''}` : '',
     ``,
     `${openSheetText}: ${sheetUrl}`,
-    `${viewOnWebText.replace(' →', '')}: ${meetingLink}`,
+    `${L('mail.export.viewOnWeb')}: ${meetingLink}`,
     seriesLink ? seriesTrendPlain(seriesLink) : '',
     clusterBoxText ? clusterBoxText.trim() : '',
     ``,
     ...(isFree ? [
-      `Unlock Unlimited Classes for $19/year (~$1.58/month)`,
-      `Unlimited Google Sheets exports, classes >25 students, attendance certificates & LMS grade sync.`,
+      L('mail.export.upsellTitle'),
+      L('mail.export.upsellBody'),
       `${CONFIG.publicSiteUrl}/pricing.html?ref=export_email&utm_source=export_digest`,
       ``,
     ] : []),
@@ -1850,7 +1740,7 @@ async function sendExportNotification({ to, displayName, sheetUrl, meetingTitle,
       reviewBoxPlainPrompt,
       reviewUrl,
     ]),
-    unsubscribeFooter(to).text,
+    unsubscribeFooter(to, lang).text,
   ].filter(Boolean).join('\n');
 
   return dispatchEmail({

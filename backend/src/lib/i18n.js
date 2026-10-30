@@ -207,6 +207,67 @@ function tf(key, locale, vars, fallback) {
   return fill(t(key, locale, fallback), vars);
 }
 
+// The display prices a recipient would see in the app: list prices, overlaid
+// with their tiered/regional offer when tiered pricing is on. Feeds the
+// {price:<plan>} / {permonth:<plan>} tokens in email copy.
+function priceTableFor({ country, email } = {}) {
+  const PRICING = require('../config/pricing');
+  const table = {};
+  for (const [plan, p] of Object.entries(PRICING.PRICES)) table[plan] = { label: p.label };
+  try {
+    const offer = require('../config/priceTiers').getOffer({ country, email });
+    if (offer && offer.tiered) {
+      for (const [plan, p] of Object.entries(offer.prices)) table[plan] = { label: p.label, perMonth: p.perMonth };
+    }
+  } catch { /* list prices */ }
+  return table;
+}
+
+// Monthly equivalent of a "$4.99"-style USD label when the table has none.
+function perMonthFromLabel(label) {
+  const m = /^\$(\d+(?:\.\d+)?)$/.exec(String(label || ''));
+  return m ? `$${(Number(m[1]) / 12).toFixed(2)}` : '';
+}
+
+function withPrices(str, prices) {
+  if (typeof str !== 'string' || str.indexOf('{p') === -1) return str;
+  const table = prices || priceTableFor();
+  return str
+    .replace(/\{price:([a-z_]+)\}/g, (m, plan) => (table[plan] && table[plan].label) || m)
+    .replace(/\{permonth:([a-z_]+)\}/g, (m, plan) => {
+      const p = table[plan];
+      return (p && (p.perMonth || perMonthFromLabel(p.label))) || m;
+    });
+}
+
+// Whole minutes → "1h 5m" (en) / "1h 5 Min." (de) — compact, localized units.
+function fmtMinutes(totalMinutes, locale) {
+  const m = Math.max(0, Math.round(Number(totalMinutes) || 0));
+  const loc = normalizeLocale(locale);
+  const unit = (value, u) => {
+    try {
+      return new Intl.NumberFormat(loc, { style: 'unit', unit: u, unitDisplay: 'narrow' }).format(value);
+    } catch {
+      return `${value}${u === 'hour' ? 'h' : 'm'}`;
+    }
+  };
+  if (m < 60) return unit(m, 'minute');
+  const rest = m % 60;
+  return rest ? `${unit(Math.floor(m / 60), 'hour')} ${unit(rest, 'minute')}` : unit(Math.floor(m / 60), 'hour');
+}
+
+// Date + time in the recipient's language (and time zone when known).
+function fmtDateTime(date, locale, timeZone) {
+  const d = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(d.getTime())) return '';
+  const opts = { dateStyle: 'medium', timeStyle: 'short', ...(timeZone ? { timeZone } : {}) };
+  try {
+    return new Intl.DateTimeFormat(normalizeLocale(locale), opts).format(d);
+  } catch {
+    return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(d);
+  }
+}
+
 // Stateless plural lookup (the server must never share the browser module's
 // mutable locale): `key.<CLDR category>` → `key.other` → English → fallback.
 function tn(key, count, locale, vars, fallback) {
@@ -3506,6 +3567,10 @@ module.exports = {
   tf,
   tn,
   fill,
+  priceTableFor,
+  withPrices,
+  fmtMinutes,
+  fmtDateTime,
   getSheetHeaders,
   getSheetSummaryLabels,
   localizeStatus,

@@ -8,6 +8,7 @@ import { TRANSLATION_FIXES } from './translation-fixes.mjs';
 import { ERROR_KEYS_EN, ERROR_KEY_TRANSLATIONS } from './i18n-error-keys.mjs';
 import { PLURAL_KEYS_EN, PLURAL_KEY_TRANSLATIONS } from './i18n-plural-keys.mjs';
 import { UI_KEYS_EN, UI_KEY_TRANSLATIONS } from './i18n-ui-keys.mjs';
+import { MAIL_KEYS_EN, MAIL_KEY_TRANSLATIONS } from './i18n-mail-keys.mjs';
 import { PRICE_TOKEN_FIXES } from './i18n-price-tokens.mjs';
 import { NEW_WEBSITE_KEYS_EN, NEW_WEBSITE_KEY_LIST, NEW_WEBSITE_PART1 } from './new-website-keys-part1.mjs';
 import { NEW_WEBSITE_PART2A } from './new-website-keys-part2a.mjs';
@@ -150,7 +151,7 @@ const NEW_KEYS_EN = {
   "lms.permissionRequired": "Permission required"
 };
 
-Object.assign(NEW_KEYS_EN, GROWTH_KEYS_EN, NEW_WEBSITE_KEYS_EN, ERROR_KEYS_EN, PLURAL_KEYS_EN, UI_KEYS_EN);
+Object.assign(NEW_KEYS_EN, GROWTH_KEYS_EN, NEW_WEBSITE_KEYS_EN, ERROR_KEYS_EN, PLURAL_KEYS_EN, UI_KEYS_EN, MAIL_KEYS_EN);
 
 // Specialized translations for non-English locales
 const LOCALE_OVERRIDES = {
@@ -875,6 +876,7 @@ export function updateStringsFile() {
       ...(ERROR_KEY_TRANSLATIONS[loc] || {}),
       ...(PLURAL_KEY_TRANSLATIONS[loc] || {}),
       ...(UI_KEY_TRANSLATIONS[loc] || {}),
+      ...(MAIL_KEY_TRANSLATIONS[loc] || {}),
       ...(TRANSLATION_FIXES[loc] || {}),
       ...webAndLp2Fixes,
     };
@@ -893,7 +895,7 @@ export function updateStringsFile() {
     const endBlockIdx = nextCloseIdx !== -1 ? nextCloseIdx : code.indexOf('\n    }', locIdx);
     let block = code.slice(locIdx, endBlockIdx);
 
-    const allTargetKeys = { ...NEW_KEYS_EN, ...GROWTH_KEYS_EN, ...NEW_WEBSITE_KEYS_EN, ...ERROR_KEYS_EN, ...PLURAL_KEYS_EN, ...UI_KEYS_EN, ...REMAINING_LP2_KEYS_EN };
+    const allTargetKeys = { ...NEW_KEYS_EN, ...GROWTH_KEYS_EN, ...NEW_WEBSITE_KEYS_EN, ...ERROR_KEYS_EN, ...PLURAL_KEYS_EN, ...UI_KEYS_EN, ...MAIL_KEYS_EN, ...REMAINING_LP2_KEYS_EN };
     for (const [k, enVal] of Object.entries(allTargetKeys)) {
       const desiredVal = (k in overrides)
         ? overrides[k]

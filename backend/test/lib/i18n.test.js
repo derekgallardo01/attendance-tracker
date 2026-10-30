@@ -515,3 +515,52 @@ describe('backend i18n', () => {
     });
   });
 });
+
+describe('email helpers: prices, durations, dates', () => {
+  afterEach(() => { delete process.env.TIERED_PRICING; });
+
+  test('priceTableFor: list prices, overlaid with the tiered offer when enabled', () => {
+    expect(i18n.priceTableFor().educator).toEqual({ label: '$4.99' });
+    process.env.TIERED_PRICING = '1';
+    const inTable = i18n.priceTableFor({ country: 'IN', email: 't@school.in' });
+    expect(inTable.educator.label).toMatch(/₹/);
+    expect(inTable.educator.perMonth).toMatch(/₹/);
+    expect(inTable.department.label).toBe('$59'); // domain plans are never tiered
+  });
+
+  test('withPrices resolves tokens; per-month falls back to label ÷ 12; unknowns stay visible', () => {
+    const table = { educator: { label: '$4.99' }, lifetime: { label: '€29', perMonth: '' }, pro_annual: { label: 'MX$279', perMonth: 'MX$23' } };
+    expect(i18n.withPrices('{price:educator} ~{permonth:educator}', table)).toBe('$4.99 ~$0.42');
+    expect(i18n.withPrices('{permonth:pro_annual} {permonth:lifetime} {price:nope} {permonth:nope}', table))
+      .toBe('MX$23 {permonth:lifetime} {price:nope} {permonth:nope}');
+    expect(i18n.withPrices('{price:department}')).toBe('$59'); // default table
+    expect(i18n.withPrices('plain')).toBe('plain');
+    expect(i18n.withPrices(null)).toBeNull();
+  });
+
+  test('fmtMinutes: compact localized units', () => {
+    expect(i18n.fmtMinutes(45, 'en')).toBe('45m');
+    expect(i18n.fmtMinutes(90, 'en')).toBe('1h 30m');
+    expect(i18n.fmtMinutes(120, 'en')).toBe('2h');
+    expect(i18n.fmtMinutes('x', 'en')).toBe('0m');
+    expect(i18n.fmtMinutes(65, 'de')).toMatch(/1.*5.*Min/);
+  });
+
+  test('fmtMinutes falls back to plain units if Intl unit formatting throws', () => {
+    const orig = Intl.NumberFormat;
+    Intl.NumberFormat = function () { throw new RangeError('no units'); };
+    try {
+      expect(i18n.fmtMinutes(75, 'en')).toBe('1h 15m');
+    } finally {
+      Intl.NumberFormat = orig;
+    }
+  });
+
+  test('fmtDateTime: recipient language + time zone; invalid → empty; bad zone → en-US', () => {
+    const iso = '2026-03-03T15:04:00Z';
+    expect(i18n.fmtDateTime(iso, 'fr', 'Europe/Paris')).toMatch(/mars 2026.*16:04/);
+    expect(i18n.fmtDateTime(new Date(iso), 'en')).toMatch(/2026/);
+    expect(i18n.fmtDateTime('not a date', 'en')).toBe('');
+    expect(i18n.fmtDateTime(iso, 'en', 'Not/AZone')).toMatch(/Mar 3, 2026/);
+  });
+});

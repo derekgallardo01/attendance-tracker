@@ -699,16 +699,18 @@ describe('notifications — email template branches (Resend mocked)', () => {
 
   test('sendExportNotification includes Educator Pass upgrade CTA card for free tier and omits for pro tier', async () => {
     const n = require('../../src/lib/notifications');
+    // The upsell quotes the recipient's live Educator price (list or tiered).
+    const UPSELL = require('../../src/lib/i18n').withPrices('Unlock Unlimited Classes for {price:educator}/year (~{permonth:educator}/month)');
     // Free user via plan: 'free'
     await n.sendExportNotification({
       to: 'free@x.com', sheetUrl: 'https://s', meetingTitle: 'Math 101',
       totalAttended: 10, plan: 'free',
     });
     let sent = mockSend.mock.calls[0][0];
-    expect(sent.html).toContain('Unlock Unlimited Classes for $19/year (~$1.58/month)');
+    expect(sent.html).toContain(UPSELL);
     expect(sent.html).toContain('Unlimited Google Sheets exports, classes &gt;25 students, attendance certificates &amp; LMS grade sync.');
     expect(sent.html).toContain('ref=export_email&amp;utm_source=export_digest');
-    expect(sent.text).toContain('Unlock Unlimited Classes for $19/year (~$1.58/month)');
+    expect(sent.text).toContain(UPSELL);
     expect(sent.text).toContain('Unlimited Google Sheets exports, classes >25 students, attendance certificates & LMS grade sync.');
     expect(sent.text).toContain('ref=export_email&utm_source=export_digest');
 
@@ -718,7 +720,7 @@ describe('notifications — email template branches (Resend mocked)', () => {
       totalAttended: 10, isPro: false,
     });
     sent = mockSend.mock.calls[1][0];
-    expect(sent.html).toContain('Unlock Unlimited Classes for $19/year (~$1.58/month)');
+    expect(sent.html).toContain(UPSELL);
 
     // Pro user via plan: 'pro'
     await n.sendExportNotification({
@@ -726,8 +728,8 @@ describe('notifications — email template branches (Resend mocked)', () => {
       totalAttended: 10, plan: 'pro',
     });
     sent = mockSend.mock.calls[2][0];
-    expect(sent.html).not.toContain('Unlock Unlimited Classes for $19/year (~$1.58/month)');
-    expect(sent.text).not.toContain('Unlock Unlimited Classes for $19/year (~$1.58/month)');
+    expect(sent.html).not.toContain(UPSELL);
+    expect(sent.text).not.toContain(UPSELL);
 
     // Pro user via isPro: true
     await n.sendExportNotification({
@@ -735,7 +737,7 @@ describe('notifications — email template branches (Resend mocked)', () => {
       totalAttended: 10, isPro: true,
     });
     sent = mockSend.mock.calls[3][0];
-    expect(sent.html).not.toContain('Unlock Unlimited Classes for $19/year (~$1.58/month)');
+    expect(sent.html).not.toContain(UPSELL);
   });
 
   test('sendSeriesAlertEmail single alert vs multiple', async () => {
@@ -1172,6 +1174,31 @@ describe('notifications — minimal-field fallbacks (Resend mocked)', () => {
     expect(sent.text).not.toContain('Leave a quick 5-star review');
   });
 
+  test('sendExportNotification follows the stored app language for any of the 60 locales (de, ar RTL)', async () => {
+    const n = require('../../src/lib/notifications');
+    await n.sendExportNotification({
+      to: 'lehrerin@schule.de', displayName: 'Anna Schmidt', sheetUrl: 'https://s', meetingTitle: 'Mathe',
+      totalAttended: 9, totalInvited: 10, exportedAt: Date.now(), language: 'de', plan: 'free',
+      participants: [{ displayName: 'Ben', status: 'Left', durationMin: 65, lateMin: 3 }],
+    });
+    const de = mockSend.mock.calls[mockSend.mock.calls.length - 1][0];
+    const S = require('../../src/lib/i18n');
+    expect(de.subject).toBe(S.tf('mail.export.subject', 'de', { title: 'Mathe', summary: S.tf('mail.export.summaryOf', 'de', { attended: 9, invited: 10 }) }));
+    expect(de.html).toContain('<html lang="de" dir="ltr">');
+    expect(de.html).toContain(S.tf('mail.greetingName', 'de', { name: 'Anna' }));
+    expect(de.html).toContain(S.t('mail.export.statusLeft', 'de'));
+    expect(de.html).toContain(S.t('mail.unsubLink', 'de'));
+    expect(de.html).not.toContain('{price:');
+    expect(de.text).toContain(S.fmtMinutes(65, 'de'));
+
+    await n.sendExportNotification({
+      to: 'muallim@school.sa', sheetUrl: 'https://s', meetingTitle: 'Math', totalAttended: 3, language: 'ar', isPro: true,
+    });
+    const ar = mockSend.mock.calls[mockSend.mock.calls.length - 1][0];
+    expect(ar.html).toContain('<html lang="ar" dir="rtl">');
+    expect(ar.html).toContain(S.t('mail.export.badge', 'ar'));
+  });
+
   test('sendExportNotification localizes to Spanish, Portuguese, and Bengali', async () => {
     const n = require('../../src/lib/notifications');
     // Spanish
@@ -1217,7 +1244,7 @@ describe('notifications — minimal-field fallbacks (Resend mocked)', () => {
     expect(esSent.html).toContain('Mayor asistencia');
     expect(esSent.html).toContain('Juan');
     expect(esSent.text).toContain('Duración: 45m');
-    expect(esSent.text).toContain('Mayor asistencia: Juan (45m)');
+    expect(esSent.text).toContain('Mayor asistencia: Juan (45min)'); // localized unit (es narrow)
     expect(esSent.tags).toEqual(expect.arrayContaining([{ name: 'lang', value: 'es' }]));
 
     mockSend.mockClear();
@@ -1261,8 +1288,8 @@ describe('notifications — minimal-field fallbacks (Resend mocked)', () => {
     expect(ptSent.html).toContain('Duração');
     expect(ptSent.html).toContain('Maior presença');
     expect(ptSent.html).toContain('Lucas');
-    expect(ptSent.text).toContain('Duração: 50m');
-    expect(ptSent.text).toContain('Maior presença: Lucas (50m)');
+    expect(ptSent.text).toContain('Duração: 50 min'); // localized unit (pt narrow)
+    expect(ptSent.text).toContain('Maior presença: Lucas (50 min)');
     expect(ptSent.tags).toEqual(expect.arrayContaining([{ name: 'lang', value: 'pt' }]));
 
     mockSend.mockClear();
@@ -1304,8 +1331,8 @@ describe('notifications — minimal-field fallbacks (Resend mocked)', () => {
     expect(bnSent.html).toContain('সময়কাল');
     expect(bnSent.html).toContain('শীর্ষ উপস্থিতি');
     expect(bnSent.html).toContain('করিম');
-    expect(bnSent.text).toContain('সময়কাল: 40m');
-    expect(bnSent.text).toContain('শীর্ষ উপস্থিতি: করিম (40m)');
+    expect(bnSent.text).toContain('সময়কাল: ৪০ মিঃ'); // localized digits + unit (bn)
+    expect(bnSent.text).toContain('শীর্ষ উপস্থিতি: করিম (৪০ মিঃ)');
     expect(bnSent.tags).toEqual(expect.arrayContaining([{ name: 'lang', value: 'bn' }]));
   });
 
@@ -1698,7 +1725,11 @@ describe('notifications — buildDesignSystemEmail & upgrade link sender', () =>
     expect(resolveLanguage({ language: 'pt-BR' })).toBe('pt');
     expect(resolveLanguage({ language: 'bn' })).toBe('bn');
     expect(resolveLanguage({ language: 'en' })).toBe('en');
-    expect(resolveLanguage({ language: 'fr' })).toBe('en'); // fallback
+    // Any of the 60 app locales the user chose is honored (stored language).
+    expect(resolveLanguage({ language: 'fr' })).toBe('fr');
+    expect(resolveLanguage({ language: 'zh-TW' })).toBe('zh');
+    expect(resolveLanguage({ language: 'zh-CN', country: 'MX' })).toBe('zh-CN');
+    expect(resolveLanguage({ language: 'xx' })).toBe('en'); // unsupported → fallback
     expect(resolveLanguage()).toBe('en'); // empty
 
     // Country resolution

@@ -1188,5 +1188,17 @@
   ],
   "lp2_sheet_present": [
     "ca"
+  ],
+  "mail.export.colStatus": [
+    "af",
+    "da",
+    "de",
+    "nl",
+    "no",
+    "pt",
+    "sv"
+  ],
+  "mail.export.statusAbsent": [
+    "fr"
   ]
 }
