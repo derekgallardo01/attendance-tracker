@@ -1789,6 +1789,70 @@ router.post('/billing/school-license-request', requireAuth, async (req, res) => 
 
     log.info('billing: school license requested', { domain, email, isEdu, teacherName, organizationName, tier, adminEmail });
 
+    // Generate 30-day self-serve checkout links so the teacher/admin gets an instant quote by email (100% hands-off)
+    const orgLabel = organizationName || domain;
+    const selectedTier = (tier === 'institution' || tier === 'team') ? 'team' : 'department';
+    const baseUrl = CONFIG.backendUrl || 'https://attendance-tracker-backend-829771833968.us-central1.run.app';
+    let checkoutToken = '';
+    try {
+      checkoutToken = jwt.sign(
+        { email, domain, displayName: teacherName || req.user.displayName || email, role: 'user' },
+        CONFIG.sessionSecret,
+        { expiresIn: '30d', algorithm: 'HS256' }
+      );
+    } catch (_) {}
+    const deptCheckoutUrl = checkoutToken
+      ? `${baseUrl}/api/billing/checkout-redirect?plan=department&interval=annual&token=${encodeURIComponent(checkoutToken)}`
+      : `${CONFIG.publicSiteUrl || 'https://attendancetracker.dev'}/pricing.html`;
+    const instCheckoutUrl = checkoutToken
+      ? `${baseUrl}/api/billing/checkout-redirect?plan=team&interval=annual&token=${encodeURIComponent(checkoutToken)}`
+      : `${CONFIG.publicSiteUrl || 'https://attendancetracker.dev'}/pricing.html`;
+    const eduCheckoutUrl = checkoutToken
+      ? `${baseUrl}/api/billing/checkout-redirect?plan=educator&interval=annual&token=${encodeURIComponent(checkoutToken)}`
+      : `${CONFIG.publicSiteUrl || 'https://attendancetracker.dev'}/pricing.html`;
+
+    let autoReplied = false;
+    try {
+      const { sendAdminEmail } = require('../lib/notifications');
+      const { isEmailSuppressed } = require('../services/firestore');
+      const quoteSubject = `Official School / Department Quote — ${orgLabel} (${domain})`;
+      const quoteBody = [
+        `Hi ${teacherName || req.user.displayName || 'there'},`,
+        '',
+        `Thank you for requesting a school/department license for ${orgLabel} (${domain}). Here is your official quote and direct activation link you can use or forward to your administrator:`,
+        '',
+        `1. Department License (Up to 10 educators on @${domain}): $59 USD / year`,
+        `   • Unlocks unlimited classes (25–500+ students), unlimited Google Sheets & PDF exports, and automatic end-of-meeting export for up to 10 educators on @${domain}.`,
+        `   • Direct Stripe Checkout / Invoice Link: ${deptCheckoutUrl}`,
+        '',
+        `2. Full Institution License (Unlimited educators on @${domain}): $99 USD / year`,
+        `   • Covers every educator on @${domain} domain-wide.`,
+        `   • Direct Stripe Checkout / Invoice Link: ${instCheckoutUrl}`,
+        '',
+        `3. Individual Educator Pass (1 educator — @${domain}):`,
+        `   • If you only need to unlock your own account immediately while waiting on school approval:`,
+        `   • Activate Individual Educator Pro: ${eduCheckoutUrl}`,
+        '',
+        'Need a custom PDF invoice or vendor form completed? Simply reply to this email and we will take care of it.',
+        '',
+        'Best,',
+        'Derek Gallardo',
+        'Attendance Tracker for Google Meet',
+        'https://attendancetracker.dev',
+      ].join('\n');
+
+      if (email && !(typeof isEmailSuppressed === 'function' && await isEmailSuppressed(email))) {
+        await sendAdminEmail({ to: email, subject: quoteSubject, body: quoteBody });
+        autoReplied = true;
+      }
+      const cleanAdmin = (typeof adminEmail === 'string' ? adminEmail.trim().toLowerCase() : '');
+      if (cleanAdmin && cleanAdmin.includes('@') && cleanAdmin !== email && !(typeof isEmailSuppressed === 'function' && await isEmailSuppressed(cleanAdmin))) {
+        await sendAdminEmail({ to: cleanAdmin, subject: quoteSubject, body: quoteBody });
+      }
+    } catch (e) {
+      log.warn('billing: school license auto-reply failed', { error: e.message });
+    }
+
     const to = process.env.NOTIFY_EMAIL || process.env.GMAIL_USER;
     if (to) {
       try {
@@ -1801,8 +1865,9 @@ router.post('/billing/school-license-request', requireAuth, async (req, res) => 
           `Teacher email: ${email}`,
           `School / org:  ${organizationName || '(not given)'}`,
           `Domain:        ${domain}`,
-          `Plan tier:     ${tier || '(not specified)'}`,
+          `Plan tier:     ${tier || selectedTier}`,
           `Admin email:   ${adminEmail || '(none)'}`,
+          `Auto-reply:    ${autoReplied ? 'Sent quote + checkout links automatically' : 'Not sent'}`,
         ].join('\n');
         await sendAdminEmail({ to, subject, body });
       } catch (e) {
