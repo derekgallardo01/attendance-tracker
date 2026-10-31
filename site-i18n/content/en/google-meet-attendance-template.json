@@ -1,0 +1,1110 @@
+{
+  "page": "google-meet-attendance-template.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "17e0eb2230",
+      "kind": "head",
+      "key": "title",
+      "text": "Google Meet attendance template (that fills itself in) — 2026 — Attendance Tracker"
+    },
+    {
+      "id": "dad073efe6",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Looking for a Google Meet attendance template? Here is the exact column layout a good attendance sheet needs — and a free add-on that generates that sheet automatically for every meeting."
+    },
+    {
+      "id": "851488a33f",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Google Meet attendance template (that fills itself in)"
+    },
+    {
+      "id": "0c075f4b69",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "The exact columns an online class attendance sheet needs — Name, Email, Status, Attendance %, Duration, Join/Leave times — generated automatically per meeting."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "86cf868ebc",
+      "kind": "html",
+      "key": "h1",
+      "text": "Google Meet attendance template (that fills itself in) — 2026"
+    },
+    {
+      "id": "18aebb938b",
+      "kind": "html",
+      "key": "p",
+      "text": "If you searched for an attendance sheet template for your online classes, you have probably already lost a few evenings to copy-pasting names, fixing broken formulas, and filling the same grid in by hand after every session. This page gives you the exact column layout a good Google Meet attendance sheet needs — and then shows you the shortcut: a free add-on that generates that exact sheet automatically, for every meeting, with the data already filled in."
+    },
+    {
+      "id": "6db531907c",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>The best template is one you never have to fill in:</strong> Attendance Tracker is an official Google Meet add-on that watches who joins, when, and for how long — then hands you a finished CSV, PDF, or Google Sheet with all nine columns below completed. No formulas, no retyping, no forgetting to mark someone late."
+    },
+    {
+      "id": "04f0e790c2",
+      "kind": "html",
+      "key": "h2",
+      "text": "The columns every online class attendance template needs"
+    },
+    {
+      "id": "e48b8c49d6",
+      "kind": "html",
+      "key": "p",
+      "text": "Whether you build the sheet yourself or let software do it, a defensible attendance record needs more than a name and a checkbox. Here is the layout that holds up when a student, parent, or administrator asks questions later:"
+    },
+    {
+      "id": "9c58af3193",
+      "kind": "html",
+      "key": "th",
+      "text": "Column"
+    },
+    {
+      "id": "51526ae4fd",
+      "kind": "html",
+      "key": "th",
+      "text": "Why it matters"
+    },
+    {
+      "id": "0d14811c07",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Name</strong>"
+    },
+    {
+      "id": "efa7578cf4",
+      "kind": "html",
+      "key": "td",
+      "text": "The student's display name, matched against your roster."
+    },
+    {
+      "id": "a3b2bbb147",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Email</strong>"
+    },
+    {
+      "id": "029a4996ec",
+      "kind": "html",
+      "key": "td",
+      "text": "The stable identifier — names change, get abbreviated, or repeat; emails don't."
+    },
+    {
+      "id": "5dc06bae12",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Status</strong>"
+    },
+    {
+      "id": "63a1fa522b",
+      "kind": "html",
+      "key": "td",
+      "text": "Present / Late / Left Early / Absent / Excused / Guest — a plain checkmark can't capture the difference between \"showed up on time\" and \"arrived 20 minutes in.\""
+    },
+    {
+      "id": "8ebb7aaac0",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Attendance %</strong>"
+    },
+    {
+      "id": "738ccc57b2",
+      "kind": "html",
+      "key": "td",
+      "text": "Minutes attended ÷ class length. The fairest single number for participation grades."
+    },
+    {
+      "id": "770caefd29",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Duration (min)</strong>"
+    },
+    {
+      "id": "3fb76e6cc3",
+      "kind": "html",
+      "key": "td",
+      "text": "Total active minutes, so a 5-minute drop-in doesn't count like a full session."
+    },
+    {
+      "id": "6c16068b7f",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Join Time</strong>"
+    },
+    {
+      "id": "4c9044a562",
+      "kind": "html",
+      "key": "td",
+      "text": "Proof of when they actually arrived — the basis for late flags."
+    },
+    {
+      "id": "202ed1f683",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Leave Time</strong>"
+    },
+    {
+      "id": "2e9ff7fe0e",
+      "kind": "html",
+      "key": "td",
+      "text": "Catches early leavers, not just late arrivers."
+    },
+    {
+      "id": "0005991f39",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Rejoins</strong>"
+    },
+    {
+      "id": "c2305fd6b8",
+      "kind": "html",
+      "key": "td",
+      "text": "Distinguishes an unstable connection (many rejoins, honest attendance) from someone who left and came back at the end."
+    },
+    {
+      "id": "1d80afb41f",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Notes</strong>"
+    },
+    {
+      "id": "baa6b51705",
+      "kind": "html",
+      "key": "td",
+      "text": "Room for context: excused reasons, tech issues, make-up work."
+    },
+    {
+      "id": "4692cc3436",
+      "kind": "textnode",
+      "key": "div",
+      "text": "Ready-to-Use Google Sheets Template · Free"
+    },
+    {
+      "id": "547d60788c",
+      "kind": "html",
+      "key": "h3",
+      "text": "Google Meet Attendance Spreadsheet Template (With Built-in Formulas)"
+    },
+    {
+      "id": "1ecd0a893c",
+      "kind": "html",
+      "key": "p",
+      "text": "Don't waste time rebuilding this by hand. Make a copy of our pre-formatted Google Sheets attendance template below — complete with active formulas for duration calculation, automated status flags (Present / Late / Absent), and attendance rate percentages."
+    },
+    {
+      "id": "d65202713d",
+      "kind": "attr",
+      "key": "title",
+      "text": "Open Google Sheets with attendance template ready to paste"
+    },
+    {
+      "id": "85b91fea43",
+      "kind": "html",
+      "key": "span",
+      "text": "Opens fresh sheet + copies template (Ctrl+V)"
+    },
+    {
+      "id": "7c31a10db0",
+      "kind": "attr",
+      "key": "title",
+      "text": "Download CSV template file for Excel or Numbers"
+    },
+    {
+      "id": "b1cd7c1bc8",
+      "kind": "html",
+      "key": "span",
+      "text": "With formulas &amp; UTF-8 Excel support"
+    },
+    {
+      "id": "c39ea5b0d2",
+      "kind": "attr",
+      "key": "title",
+      "text": "Copy formatted table cells to clipboard for instant pasting"
+    },
+    {
+      "id": "9fd1d68e69",
+      "kind": "html",
+      "key": "span",
+      "text": "Ctrl+V / Cmd+V directly into any Sheet"
+    },
+    {
+      "id": "53cc0e9be0",
+      "kind": "html",
+      "key": "div",
+      "text": "Need a blank sheet instead? <a href=\"https://docs.google.com/spreadsheets/create\" target=\"_blank\" rel=\"noopener\">docs.google.com/spreadsheets/create</a> · Opening in Microsoft Excel? <a href=\"export-google-meet-participants-to-excel.html\">Excel guide &amp; UTF-8 formatting</a>"
+    },
+    {
+      "id": "e3e6b43cbd",
+      "kind": "html",
+      "key": "span",
+      "text": "Google Meet Attendance — Session 1 (Sample Data)"
+    },
+    {
+      "id": "017c977f0a",
+      "kind": "html",
+      "key": "div",
+      "text": "Tab: <strong>Class 101</strong>"
+    },
+    {
+      "id": "35c40f5ba5",
+      "kind": "html",
+      "key": "label",
+      "text": "<span style=\"color: var(--muted);\">Class Length:</span>\n            <select id=\"sim-duration\" class=\"sheet-select\" aria-label=\"Class Length\">\n              <option value=\"45\">45 minutes</option>\n              <option value=\"60\" selected=\"\">60 minutes (1 hour)</option>\n              <option value=\"90\">90 minutes</option>\n            </select>"
+    },
+    {
+      "id": "5edb3b0bc5",
+      "kind": "attr",
+      "key": "aria-label",
+      "text": "Class Length"
+    },
+    {
+      "id": "ffa6a7c7bc",
+      "kind": "html",
+      "key": "label",
+      "text": "<span style=\"color: var(--muted);\">Late After:</span>\n            <select id=\"sim-threshold\" class=\"sheet-select\" aria-label=\"Late Threshold\">\n              <option value=\"5\">5 min</option>\n              <option value=\"10\">10 min</option>\n              <option value=\"15\" selected=\"\">15 min</option>\n              <option value=\"20\">20 min</option>\n            </select>"
+    },
+    {
+      "id": "24bf6b9570",
+      "kind": "attr",
+      "key": "aria-label",
+      "text": "Late Threshold"
+    },
+    {
+      "id": "76f62f2808",
+      "kind": "html",
+      "key": "span",
+      "text": "💡 Click any cell to inspect its underlying formula"
+    },
+    {
+      "id": "b02be14ab1",
+      "kind": "html",
+      "key": "div",
+      "text": "F2"
+    },
+    {
+      "id": "995da938a3",
+      "kind": "html",
+      "key": "div",
+      "text": "fx"
+    },
+    {
+      "id": "6d652a085d",
+      "kind": "html",
+      "key": "div",
+      "text": "=IF(E2=0, IF(AND(ISNUMBER(SEARCH(\"excused\", I2)), ISERROR(SEARCH(\"unexcused\", I2))), \"Excused\", \"Absent\"), IF(E2&gt;=45, \"Present\", IF(E2&gt;=15, \"Late\", \"Absent\")))"
+    },
+    {
+      "id": "b8bad79d87",
+      "kind": "html",
+      "key": "th",
+      "text": "A"
+    },
+    {
+      "id": "bf50f66440",
+      "kind": "html",
+      "key": "th",
+      "text": "B"
+    },
+    {
+      "id": "874ac3b7f6",
+      "kind": "html",
+      "key": "th",
+      "text": "C"
+    },
+    {
+      "id": "fb0ce95732",
+      "kind": "html",
+      "key": "th",
+      "text": "D"
+    },
+    {
+      "id": "75e0beacee",
+      "kind": "html",
+      "key": "th",
+      "text": "E"
+    },
+    {
+      "id": "b0631e1b64",
+      "kind": "html",
+      "key": "th",
+      "text": "F"
+    },
+    {
+      "id": "01d80002e1",
+      "kind": "html",
+      "key": "th",
+      "text": "G"
+    },
+    {
+      "id": "eb4a2b6193",
+      "kind": "html",
+      "key": "th",
+      "text": "H"
+    },
+    {
+      "id": "5775b971e2",
+      "kind": "html",
+      "key": "th",
+      "text": "I"
+    },
+    {
+      "id": "4027393006",
+      "kind": "html",
+      "key": "th",
+      "text": "1"
+    },
+    {
+      "id": "30cdb7332e",
+      "kind": "html",
+      "key": "th",
+      "text": "Name"
+    },
+    {
+      "id": "4364cd99a9",
+      "kind": "html",
+      "key": "th",
+      "text": "Email"
+    },
+    {
+      "id": "93f4f1cf37",
+      "kind": "html",
+      "key": "th",
+      "text": "Join Time"
+    },
+    {
+      "id": "9f4b9f15f5",
+      "kind": "html",
+      "key": "th",
+      "text": "Leave Time"
+    },
+    {
+      "id": "5a764c5fa9",
+      "kind": "html",
+      "key": "th",
+      "text": "Duration (min)"
+    },
+    {
+      "id": "1ba254666e",
+      "kind": "html",
+      "key": "th",
+      "text": "Status"
+    },
+    {
+      "id": "1cb35f63a5",
+      "kind": "html",
+      "key": "th",
+      "text": "Attendance %"
+    },
+    {
+      "id": "ee70422b80",
+      "kind": "html",
+      "key": "th",
+      "text": "Rejoins"
+    },
+    {
+      "id": "8a1c5d60b7",
+      "kind": "html",
+      "key": "th",
+      "text": "Notes"
+    },
+    {
+      "id": "655e725fe7",
+      "kind": "html",
+      "key": "td",
+      "text": "2"
+    },
+    {
+      "id": "580a4ec293",
+      "kind": "html",
+      "key": "td",
+      "text": "Sarah Jenkins"
+    },
+    {
+      "id": "471dd08894",
+      "kind": "html",
+      "key": "td",
+      "text": "sarah.j@school.edu"
+    },
+    {
+      "id": "a120feb4b8",
+      "kind": "html",
+      "key": "td",
+      "text": "09:00 AM"
+    },
+    {
+      "id": "41be523a58",
+      "kind": "html",
+      "key": "td",
+      "text": "10:00 AM"
+    },
+    {
+      "id": "e9eb8d4aeb",
+      "kind": "html",
+      "key": "td",
+      "text": "60"
+    },
+    {
+      "id": "97d0b6a7e8",
+      "kind": "html",
+      "key": "td",
+      "text": "<span class=\"badge-status badge-present\">Present</span>"
+    },
+    {
+      "id": "997157d4af",
+      "kind": "html",
+      "key": "td",
+      "text": "100%"
+    },
+    {
+      "id": "044d7b501c",
+      "kind": "html",
+      "key": "td",
+      "text": "0"
+    },
+    {
+      "id": "ba71c4cd9c",
+      "kind": "html",
+      "key": "td",
+      "text": "Full session participation"
+    },
+    {
+      "id": "d9cf966eef",
+      "kind": "html",
+      "key": "td",
+      "text": "3"
+    },
+    {
+      "id": "aed580c8d6",
+      "kind": "html",
+      "key": "td",
+      "text": "David Chen"
+    },
+    {
+      "id": "507bfcc3ee",
+      "kind": "html",
+      "key": "td",
+      "text": "d.chen@school.edu"
+    },
+    {
+      "id": "ff706de322",
+      "kind": "html",
+      "key": "td",
+      "text": "09:18 AM"
+    },
+    {
+      "id": "8922749924",
+      "kind": "html",
+      "key": "td",
+      "text": "42"
+    },
+    {
+      "id": "c2aba5d830",
+      "kind": "html",
+      "key": "td",
+      "text": "<span class=\"badge-status badge-late\">Late (+18m)</span>"
+    },
+    {
+      "id": "ce77ea3335",
+      "kind": "html",
+      "key": "td",
+      "text": "70%"
+    },
+    {
+      "id": "3d19e12891",
+      "kind": "html",
+      "key": "td",
+      "text": "Joined 18m past start"
+    },
+    {
+      "id": "3a21b87109",
+      "kind": "html",
+      "key": "td",
+      "text": "4"
+    },
+    {
+      "id": "e74d2a547a",
+      "kind": "html",
+      "key": "td",
+      "text": "Maria Rodriguez"
+    },
+    {
+      "id": "42fd1cec3b",
+      "kind": "html",
+      "key": "td",
+      "text": "m.rodriguez@school.edu"
+    },
+    {
+      "id": "d815b8b3c0",
+      "kind": "html",
+      "key": "td",
+      "text": "09:01 AM"
+    },
+    {
+      "id": "f2c47fd897",
+      "kind": "html",
+      "key": "td",
+      "text": "09:35 AM"
+    },
+    {
+      "id": "864f94a086",
+      "kind": "html",
+      "key": "td",
+      "text": "34"
+    },
+    {
+      "id": "b7ca244f59",
+      "kind": "html",
+      "key": "td",
+      "text": "<span class=\"badge-status badge-late\">Late (34m)</span>"
+    },
+    {
+      "id": "a9e0a99458",
+      "kind": "html",
+      "key": "td",
+      "text": "57%"
+    },
+    {
+      "id": "6a13e72325",
+      "kind": "html",
+      "key": "td",
+      "text": "Left early (Wi-Fi dropped)"
+    },
+    {
+      "id": "c1221e9535",
+      "kind": "html",
+      "key": "td",
+      "text": "5"
+    },
+    {
+      "id": "55e5804cac",
+      "kind": "html",
+      "key": "td",
+      "text": "James Wilson"
+    },
+    {
+      "id": "b99439fb19",
+      "kind": "html",
+      "key": "td",
+      "text": "j.wilson@school.edu"
+    },
+    {
+      "id": "830f827c22",
+      "kind": "html",
+      "key": "td",
+      "text": "<span class=\"badge-status badge-absent\">Absent</span>"
+    },
+    {
+      "id": "a21d25aa8e",
+      "kind": "html",
+      "key": "td",
+      "text": "0%"
+    },
+    {
+      "id": "85d5a15952",
+      "kind": "html",
+      "key": "td",
+      "text": "Unexcused absence"
+    },
+    {
+      "id": "9fcd5e1c23",
+      "kind": "html",
+      "key": "td",
+      "text": "6"
+    },
+    {
+      "id": "dcafaf1176",
+      "kind": "html",
+      "key": "td",
+      "text": "Elena Rostova"
+    },
+    {
+      "id": "fe2ccde0ff",
+      "kind": "html",
+      "key": "td",
+      "text": "elena.r@school.edu"
+    },
+    {
+      "id": "4aaeac0db2",
+      "kind": "html",
+      "key": "td",
+      "text": "<span class=\"badge-status badge-excused\">Excused</span>"
+    },
+    {
+      "id": "e17c5c81f0",
+      "kind": "html",
+      "key": "td",
+      "text": "Doctor appointment (excused)"
+    },
+    {
+      "id": "401a4b5fb5",
+      "kind": "html",
+      "key": "td",
+      "text": "7"
+    },
+    {
+      "id": "92ecd6405a",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Class Summary (5 Enrolled)</strong>"
+    },
+    {
+      "id": "119991f38b",
+      "kind": "html",
+      "key": "td",
+      "text": "Avg: 27m"
+    },
+    {
+      "id": "30953c167a",
+      "kind": "html",
+      "key": "td",
+      "text": "1 Pres · 2 Late · 2 Abs"
+    },
+    {
+      "id": "b34e3dd5c7",
+      "kind": "html",
+      "key": "td",
+      "text": "Rate: 40%"
+    },
+    {
+      "id": "ec575279d9",
+      "kind": "html",
+      "key": "td",
+      "text": "2 rejoins"
+    },
+    {
+      "id": "84a545a67a",
+      "kind": "html",
+      "key": "td",
+      "text": "Auto-calculated summary"
+    },
+    {
+      "id": "5829a65854",
+      "kind": "html",
+      "key": "h4",
+      "text": "How the template formulas work"
+    },
+    {
+      "id": "b526e15a2c",
+      "kind": "html",
+      "key": "p",
+      "text": "If you want to customize your spreadsheet or add these calculations to an existing gradebook, here are the exact formulas running in the template above:"
+    },
+    {
+      "id": "501888a086",
+      "kind": "html",
+      "key": "span",
+      "text": "<code>Column E</code> Duration Calculation Formula"
+    },
+    {
+      "id": "638784ff83",
+      "kind": "html",
+      "key": "button",
+      "text": "Copy Formula"
+    },
+    {
+      "id": "5e803a9a6c",
+      "kind": "html",
+      "key": "div",
+      "text": "=IF(AND(ISNUMBER(C2), ISNUMBER(D2)), ROUND((D2 - C2) * 1440), IF(ISBLANK(C2), 0, \"\"))"
+    },
+    {
+      "id": "eef38c79af",
+      "kind": "html",
+      "key": "div",
+      "text": "In Google Sheets, subtracting two time values (<code>D2 - C2</code>) returns the elapsed time as a fraction of a 24-hour day. Multiplying by <code>1440</code> (24 hours × 60 minutes) yields exact active minutes. If join time is blank, it defaults cleanly to 0."
+    },
+    {
+      "id": "be58bfa003",
+      "kind": "html",
+      "key": "span",
+      "text": "<code>Column F</code> Dynamic Status Formula"
+    },
+    {
+      "id": "4e8aa1d092",
+      "kind": "html",
+      "key": "div",
+      "text": "Automatically categorizes each attendee: attended ≥ 45 minutes flags as <code>Present</code>; between 15–44 minutes flags as <code>Late</code> (partial attendance); 0 minutes flags as <code>Absent</code> (or <code>Excused</code> if marked in column I without being unexcused)."
+    },
+    {
+      "id": "8d4caa74b3",
+      "kind": "html",
+      "key": "span",
+      "text": "<code>Column G</code> Individual Attendance Rate %"
+    },
+    {
+      "id": "6a031a5187",
+      "kind": "html",
+      "key": "div",
+      "text": "=IF(E2&gt;0, MIN(1, ROUND(E2 / 60, 2)), 0)"
+    },
+    {
+      "id": "5dd9d066b2",
+      "kind": "html",
+      "key": "div",
+      "text": "Divides minutes attended (<code>E2</code>) by the scheduled meeting duration (60 minutes). <code>MIN(1, ...)</code> caps the rate at 100% so students who stay after class don't skew grading formulas. Format column G as Percentage."
+    },
+    {
+      "id": "286cc56247",
+      "kind": "html",
+      "key": "span",
+      "text": "<code>Row 7</code> Overall Class Attendance Rate"
+    },
+    {
+      "id": "e162314aac",
+      "kind": "html",
+      "key": "div",
+      "text": "=ROUND((COUNTIF(F2:F6, \"Present\") + 0.5 * COUNTIF(F2:F6, \"Late\")) / COUNTA(A2:A6), 2)"
+    },
+    {
+      "id": "67520b66a2",
+      "kind": "html",
+      "key": "div",
+      "text": "Weights full attendance as 1.0 and late arrivals as 0.5, divided by total enrolled roster count. Perfect for weekly department check-ins and semester rollups."
+    },
+    {
+      "id": "7be68dee25",
+      "kind": "html",
+      "key": "h4",
+      "text": "⚠️ The Manual Template Hassle"
+    },
+    {
+      "id": "2a2bc09026",
+      "kind": "html",
+      "key": "li",
+      "text": "Constantly stare at Google Meet's People panel during class"
+    },
+    {
+      "id": "ab123c26bc",
+      "kind": "html",
+      "key": "li",
+      "text": "Manually jot down join times while trying to lecture"
+    },
+    {
+      "id": "5038c1fac5",
+      "kind": "html",
+      "key": "li",
+      "text": "Miss students who drop out at minute 35 due to connection drops"
+    },
+    {
+      "id": "6568b3831a",
+      "kind": "html",
+      "key": "li",
+      "text": "Accidentally overwrite sheet formulas when pasting student lists"
+    },
+    {
+      "id": "ad2d351882",
+      "kind": "html",
+      "key": "li",
+      "text": "Spend 10–15 minutes after every single call doing data entry"
+    },
+    {
+      "id": "04d59f3125",
+      "kind": "html",
+      "key": "h4",
+      "text": "✨ The Auto-Filled Shortcut"
+    },
+    {
+      "id": "893566159a",
+      "kind": "html",
+      "key": "li",
+      "text": "Official Google Meet add-on tracks participants in background"
+    },
+    {
+      "id": "bc3bc1f1c5",
+      "kind": "html",
+      "key": "li",
+      "text": "Roster matches students to your Google Classroom list in 1 click"
+    },
+    {
+      "id": "ad77a46612",
+      "kind": "html",
+      "key": "li",
+      "text": "Detects exact active duration and multiple rejoins automatically"
+    },
+    {
+      "id": "f0a842bfe1",
+      "kind": "html",
+      "key": "li",
+      "text": "Direct 1-click export to Google Sheets, CSV, or PDF reports"
+    },
+    {
+      "id": "a2fbaa476a",
+      "kind": "html",
+      "key": "li",
+      "text": "Includes semester summary tabs rolled up across all dates"
+    },
+    {
+      "id": "93b5207325",
+      "kind": "html",
+      "key": "div",
+      "text": "<a class=\"btn\" href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_template_hub\" target=\"_blank\" rel=\"noopener\">Install Free Google Meet Add-on</a>"
+    },
+    {
+      "id": "68dd700f5d",
+      "kind": "html",
+      "key": "h2",
+      "text": "The problem with any manual template"
+    },
+    {
+      "id": "b448bb6821",
+      "kind": "html",
+      "key": "p",
+      "text": "A template solves the formatting problem. It does nothing about the real cost of attendance: <strong>collecting the data</strong>. With a manual sheet you still have to call roll (or scan the People panel), notice who arrived late, notice who quietly left at minute 40, and type it all in — every single session. In a class of 30+ students on Google Meet, that's minutes of lost teaching time and a record that's only as accurate as your peripheral vision."
+    },
+    {
+      "id": "473b59edcb",
+      "kind": "html",
+      "key": "p",
+      "text": "And Google Meet itself won't fill the template in for you: unless your school pays for a specific premium Workspace edition, <a href=\"how-long-does-google-meet-keep-attendance.html\">Meet keeps no attendance report you can access at all</a>."
+    },
+    {
+      "id": "8ad30df9c5",
+      "kind": "html",
+      "key": "h2",
+      "text": "Get the same sheet, auto-filled: 3 steps"
+    },
+    {
+      "id": "d21d44b6b1",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Install the add-on (free):</strong> Open the <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_template\" target=\"_blank\" rel=\"noopener\">Attendance Tracker Marketplace page</a> and click Install. It works with personal <code>@gmail.com</code> accounts and school Workspace accounts alike — no Education Plus required — in Chrome, Edge, Firefox, Safari, and on Chromebooks."
+    },
+    {
+      "id": "883d904819",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Open it in your meeting:</strong> In Google Meet, click the <strong>Activities</strong> icon, choose <strong>Attendance Tracker</strong>, and press <strong>Start</strong>. The side panel live-sorts everyone into Present, Late (with a threshold you configure), Absent, and Guests. Optionally create a <strong>Class Roster</strong> first — paste your list or import it from Google Classroom in one click — so absentees show up too."
+    },
+    {
+      "id": "316e525c1b",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Export the finished sheet:</strong> When class ends, download the CSV instantly, save a PDF report, or export to Google Sheets. Every column from the table above is already filled in for every attendee."
+    },
+    {
+      "id": "39422a5dc6",
+      "kind": "html",
+      "key": "h2",
+      "text": "Recurring classes: one spreadsheet, tabbed by session"
+    },
+    {
+      "id": "7d21dbd901",
+      "kind": "html",
+      "key": "p",
+      "text": "For a class that meets on a recurring Google Calendar invite, the Google Sheets export doesn't scatter files across your Drive. Each session lands as its own tab in one spreadsheet, and a cumulative <strong>summary tab</strong> rolls up each student's attendance percentage across the whole semester automatically — sessions attended, sessions missed, running percentage. That summary is exactly the \"term overview\" page template-seekers usually try to build with fragile <code>VLOOKUP</code> formulas."
+    },
+    {
+      "id": "7b9a77c134",
+      "kind": "html",
+      "key": "p",
+      "text": "Need it in your gradebook instead? Per-session <a href=\"export-google-meet-attendance-to-moodle.html\">Moodle</a> and <a href=\"export-google-meet-attendance-to-canvas.html\">Canvas</a> gradebook CSVs are free, too."
+    },
+    {
+      "id": "7e0637f5f8",
+      "kind": "html",
+      "key": "h2",
+      "text": "When a manual template still makes sense"
+    },
+    {
+      "id": "06368403e2",
+      "kind": "html",
+      "key": "p",
+      "text": "Honesty corner: if you teach <strong>in person</strong>, or on a platform other than Google Meet, an add-on that reads Meet's roster can't help you — build the nine-column sheet above in Google Sheets and fill it in by hand or with a form. A manual template is also fine for a one-off meeting with five people, where roll call takes ten seconds. The automation earns its keep when classes are online, recurring, or big enough that watching the participant list becomes a job of its own."
+    },
+    {
+      "id": "7d2dc48836",
+      "kind": "html",
+      "key": "h2",
+      "text": "Frequently asked questions"
+    },
+    {
+      "id": "639e9a55f9",
+      "kind": "html",
+      "key": "h3",
+      "text": "Is the auto-filled sheet free?"
+    },
+    {
+      "id": "d431b72e43",
+      "kind": "html",
+      "key": "p",
+      "text": "Real-time tracking, PDF reports, per-session Moodle/Canvas gradebook CSVs, and 2 exports per month across Google Sheets, CSV, or Excel (for classes up to 25 attendees, plus 1 large-class grace export) are free. Unlimited exports come with Pro (a $14.99/year Educator Pass, $4.99–$7.99/year regional, or a one-time $29 Lifetime Pass, $9.99–$19 regional)."
+    },
+    {
+      "id": "4e8b725c80",
+      "kind": "html",
+      "key": "h3",
+      "text": "Do students need to install anything?"
+    },
+    {
+      "id": "1809eb8227",
+      "kind": "html",
+      "key": "p",
+      "text": "No. Only the person tracking attendance needs the add-on. Students just join the Meet as usual."
+    },
+    {
+      "id": "0fb4eed615",
+      "kind": "html",
+      "key": "h3",
+      "text": "Can it mark students absent, not just record who came?"
+    },
+    {
+      "id": "7d2cce2a19",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes — that's what the Class Roster is for. Add your student list once (or import from Google Classroom), and anyone on the roster who never joins is recorded as Absent, with an Excused status available when you know why."
+    },
+    {
+      "id": "9961e3ccb6",
+      "kind": "html",
+      "key": "h3",
+      "text": "What if I forget to open the panel?"
+    },
+    {
+      "id": "fe71813bf5",
+      "kind": "html",
+      "key": "p",
+      "text": "Pro includes hands-free <strong>Auto-Capture</strong>: meetings you host are exported automatically within a few hours of ending, even if you never opened the side panel."
+    },
+    {
+      "id": "43c0606038",
+      "kind": "html",
+      "key": "h3",
+      "text": "Skip the template. Get the finished sheet."
+    },
+    {
+      "id": "15acfe38f3",
+      "kind": "html",
+      "key": "p",
+      "text": "Free to install, works with any Gmail or Workspace account, auto-fills all nine columns for every meeting."
+    },
+    {
+      "id": "14b133eb0f",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Attendance Tracker from Marketplace"
+    },
+    {
+      "id": "d360e4c6a4",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"import-google-classroom-roster-to-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Import Classroom Rosters</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "5f3cc2f91e",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Integrations</strong>\n          <a href=\"export-google-meet-attendance-to-moodle.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Moodle Gradebook Export</a>\n          <a href=\"export-google-meet-attendance-to-canvas.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Canvas Gradebook Export</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"send-google-meet-attendance-to-google-chat.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Chat &amp; Discord</a>"
+    },
+    {
+      "id": "98cdd4d1f5",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>"
+    },
+    {
+      "id": "e787e741f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "4880a04390",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "How to get an auto-filled Google Meet attendance sheet"
+    },
+    {
+      "id": "103291168f",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "Instead of filling in an attendance template by hand, generate a complete attendance sheet automatically for every Google Meet session."
+    },
+    {
+      "id": "fbfcfce7fd",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Install Attendance Tracker"
+    },
+    {
+      "id": "786b9325d2",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Install the free Attendance Tracker add-on from the Google Workspace Marketplace."
+    },
+    {
+      "id": "25ea18ea8e",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Open it in your meeting"
+    },
+    {
+      "id": "a6a98596c9",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "In Google Meet, open the Activities menu and select Attendance Tracker, then press Start."
+    },
+    {
+      "id": "2b5ccf84e8",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Export your sheet"
+    },
+    {
+      "id": "bca631371a",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "When class ends, download the CSV instantly or export to Google Sheets — every column of the template is already filled in."
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "4df585a04c",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Google Meet attendance template (that fills itself in) — 2026"
+    },
+    {
+      "id": "b0c3276622",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Google Meet Attendance Template for Google Sheets & Excel"
+    },
+    {
+      "id": "12874ddb6f",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "Free, pre-formatted Google Sheets and CSV attendance tracking spreadsheet template with automated formulas for session duration, status flags (Present, Late, Absent), and attendance rate percentages."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "1297e42eec",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker for Google Meet"
+    }
+  ]
+}

@@ -1,0 +1,276 @@
+{
+  "page": "google-meet-attendance-for-volunteer-hours.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "6e12a213c7",
+      "kind": "head",
+      "key": "title",
+      "text": "Track Volunteer & Community Service Hours in Google Meet (2026) — Attendance Tracker"
+    },
+    {
+      "id": "7bf70af9d6",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Log verified student volunteer hours, non-profit committee meetings, and service credits in Google Meet. Export timestamped attendance logs to Google Sheets. Free."
+    },
+    {
+      "id": "c4666aae3b",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Track Volunteer & Community Service Hours in Google Meet"
+    },
+    {
+      "id": "1090fea6ac",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Verified volunteer hours logging, non-profit grant reporting, and Google Sheets exports for community organizations."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "907c2cb162",
+      "kind": "html",
+      "key": "h1",
+      "text": "Track volunteer &amp; community service hours in Google Meet"
+    },
+    {
+      "id": "ca9a8b4172",
+      "kind": "html",
+      "key": "p",
+      "text": "Charities, non-profit organizations, high school service clubs (Key Club, NHS), Scout troops, and youth sports leagues rely on accurate service hour tracking for graduation credits, scholarship requirements, and grant reports. Here is how to automate volunteer attendance in Google Meet."
+    },
+    {
+      "id": "15ca4307cb",
+      "kind": "attr",
+      "key": "title",
+      "text": "Volunteer Hours Attendance Tracking"
+    },
+    {
+      "id": "001626e317",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Volunteer hour logs and attendance records in Google Sheets"
+    },
+    {
+      "id": "9d17b42fc8",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Verified Service Hour Logs:</strong> High school guidance counselors and scholarship committees require proof of active volunteer participation. Attendance Tracker logs exact arrival and departure times into Google Sheets with zero manual tallying."
+    },
+    {
+      "id": "b823409080",
+      "kind": "html",
+      "key": "h2",
+      "text": "Why Volunteer Organizations Need Automated Tracking"
+    },
+    {
+      "id": "d63ea45680",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>School Graduation Requirements:</strong> High schools frequently require 40–100 community service hours for graduation; coordinators need signed, timestamped logs."
+    },
+    {
+      "id": "98bb1c4352",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Grant &amp; 501(c)(3) Funding Audits:</strong> Charitable foundations require documented volunteer participation hours to satisfy grant reporting requirements."
+    },
+    {
+      "id": "f93870cbcf",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Easy for Non-Technical Volunteers:</strong> No extra software to install. Runs right inside the Google Meet side panel."
+    },
+    {
+      "id": "8a0e8a6868",
+      "kind": "html",
+      "key": "h2",
+      "text": "How Volunteer Coordinators Use Attendance Tracker"
+    },
+    {
+      "id": "1ccad8ae6e",
+      "kind": "html",
+      "key": "h3",
+      "text": "1. Live Meeting Verification"
+    },
+    {
+      "id": "3c444cdd79",
+      "kind": "html",
+      "key": "p",
+      "text": "Open the add-on in Google Meet during your virtual volunteer orientation or planning session. The side panel records every volunteer present."
+    },
+    {
+      "id": "69a2490242",
+      "kind": "html",
+      "key": "h3",
+      "text": "2. Automatic Hours Export"
+    },
+    {
+      "id": "5d374a00d3",
+      "kind": "html",
+      "key": "p",
+      "text": "When the session concludes, Attendance Tracker saves a tabbed sheet to your Google Drive named <code>Meet Attendance Tracker</code>. The sheet displays volunteer names, emails, arrival times, and total minutes served."
+    },
+    {
+      "id": "a0e09ca852",
+      "kind": "html",
+      "key": "h3",
+      "text": "3. Multi-Week Service Streaks"
+    },
+    {
+      "id": "684b2f1d27",
+      "kind": "html",
+      "key": "p",
+      "text": "For recurring weekly volunteer committees, Attendance Tracker rolls up all sessions into a cumulative total so coordinators can easily see annual service totals per volunteer."
+    },
+    {
+      "id": "dea9b31806",
+      "kind": "html",
+      "key": "h2",
+      "text": "Popular Community Use Cases"
+    },
+    {
+      "id": "4f6b1627e6",
+      "kind": "html",
+      "key": "th",
+      "text": "Organization Type"
+    },
+    {
+      "id": "2cf8380768",
+      "kind": "html",
+      "key": "th",
+      "text": "How They Use Attendance Tracker"
+    },
+    {
+      "id": "7a985cc993",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>High School Clubs (NHS / Key Club)</strong>"
+    },
+    {
+      "id": "1daccd49a0",
+      "kind": "html",
+      "key": "td",
+      "text": "Logging member meeting hours for graduation honors stoles and awards."
+    },
+    {
+      "id": "baf2621dc8",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Scout Troops &amp; Youth Leagues</strong>"
+    },
+    {
+      "id": "25cf7d6db3",
+      "kind": "html",
+      "key": "td",
+      "text": "Documenting meeting attendance for badge requirements and volunteer ranks."
+    },
+    {
+      "id": "c16773272c",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Rotary, Lions &amp; Kiwanis Clubs</strong>"
+    },
+    {
+      "id": "295ca4a89f",
+      "kind": "html",
+      "key": "td",
+      "text": "Maintaining active member participation records for local chapter awards."
+    },
+    {
+      "id": "2dd5aff20e",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Non-Profit Volunteer Committees</strong>"
+    },
+    {
+      "id": "b1abfb3b27",
+      "kind": "html",
+      "key": "td",
+      "text": "Documenting volunteer labor hours for annual 990 tax reporting."
+    },
+    {
+      "id": "9d421049f0",
+      "kind": "html",
+      "key": "h3",
+      "text": "Start tracking your volunteer hours"
+    },
+    {
+      "id": "89bd06bad1",
+      "kind": "html",
+      "key": "p",
+      "text": "Free, works on all Google accounts, set up in under 30 seconds."
+    },
+    {
+      "id": "14b133eb0f",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Attendance Tracker from Marketplace"
+    },
+    {
+      "id": "9352c1ed98",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "a3ad204977",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-legal-depositions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Legal &amp; Arbitrations</a>\n          <a href=\"google-meet-attendance-for-job-interviews.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Recruiting &amp; Interviews</a>"
+    },
+    {
+      "id": "e7a3b147f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Specialized Verticals</strong>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-clinical-supervision-and-therapy.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Clinical Supervision</a>\n          <a href=\"google-meet-quorum-and-board-meetings.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Board Quorum Tracking</a>\n          <a href=\"google-meet-attendance-for-churches.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Churches &amp; Ministries</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>\n          <a href=\"google-meet-attendance-for-fitness-and-yoga.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Fitness &amp; Yoga</a>"
+    },
+    {
+      "id": "eb9246d86f",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>\n          <a href=\"google-meet-attendance-on-ipad-and-mobile.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">iPad &amp; Mobile Attendance</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "97a3771061",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "How to Track Volunteer and Community Service Hours in Google Meet"
+    },
+    {
+      "id": "edfcdc4c08",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "A guide for non-profit coordinators, student clubs, and charity organizers on tracking volunteer hours in Google Meet."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "085614e9dd",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Track volunteer &amp; community service hours in Google Meet"
+    }
+  ]
+}

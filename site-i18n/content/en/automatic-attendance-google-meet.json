@@ -1,0 +1,318 @@
+{
+  "page": "automatic-attendance-google-meet.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "41b4d71040",
+      "kind": "head",
+      "key": "title",
+      "text": "Automatic Attendance in Google Meet — No Manual Roll Call — Attendance Tracker"
+    },
+    {
+      "id": "ef22a9616d",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Take attendance in Google Meet automatically: every participant logged as they join, late arrivals flagged, and the report auto-exported to Google Sheets when the meeting ends. No Chrome extension, no manual roll call."
+    },
+    {
+      "id": "565e5d192b",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Automatic Attendance in Google Meet — No Manual Roll Call"
+    },
+    {
+      "id": "3c7bee384f",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Every participant logged automatically, late arrivals flagged, and the report auto-exported to Google Sheets when the meeting ends."
+    },
+    {
+      "id": "5f79375412",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"Attendance Tracker\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "c5e60291ed",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "3f06bcf6cb",
+      "kind": "html",
+      "key": "div",
+      "text": "⚡ Hands-Free Tracking"
+    },
+    {
+      "id": "d119b6c374",
+      "kind": "html",
+      "key": "h1",
+      "text": "Automatic Attendance in Google Meet"
+    },
+    {
+      "id": "3f5bcdffa8",
+      "kind": "html",
+      "key": "p",
+      "text": "\"Automatic\" should mean you do nothing: no roll call, no chat check-ins, no copying names after the meeting — and no forgetting to save the report. Here is how to make Google Meet take attendance entirely by itself, from the first join to the finished spreadsheet in your Drive."
+    },
+    {
+      "id": "594edc7841",
+      "kind": "html",
+      "key": "h2",
+      "text": "Why Google Meet Doesn't Do This Out of the Box"
+    },
+    {
+      "id": "4da5e36927",
+      "kind": "html",
+      "key": "p",
+      "text": "Google Meet only produces attendance reports on premium Workspace tiers (Education Plus and certain Enterprise plans), and even then the report is a bare CSV emailed to the host — with no late flags, no roster matching, and no cumulative view across sessions."
+    },
+    {
+      "id": "3f21aafef8",
+      "kind": "html",
+      "key": "p",
+      "text": "<strong>Attendance Tracker</strong> is a certified Google Workspace Marketplace add-on that runs in the Meet side panel and works on every account type, including free school domains and personal Gmail. It's an official Meet Add-ons SDK app — not a Chrome extension scraping participant names off the screen, which breaks whenever Google updates Meet's layout and only works on the one computer it's installed on."
+    },
+    {
+      "id": "b5480574f4",
+      "kind": "html",
+      "key": "h2",
+      "text": "The Fully Automatic Setup"
+    },
+    {
+      "id": "963275e7d2",
+      "kind": "html",
+      "key": "strong",
+      "text": "📋 Auto Roll Call"
+    },
+    {
+      "id": "46ad358e81",
+      "kind": "html",
+      "key": "p",
+      "text": "Every participant is logged the moment they join — name, email, join time — with zero action from you."
+    },
+    {
+      "id": "a1e3744c7a",
+      "kind": "html",
+      "key": "strong",
+      "text": "⚡ Auto-Export on Meeting End"
+    },
+    {
+      "id": "adc08c9489",
+      "kind": "html",
+      "key": "p",
+      "text": "Turn it on once in Settings. When your meeting ends, the attendance sheet saves itself to Google Drive and lands in your inbox."
+    },
+    {
+      "id": "6c0bc9fd83",
+      "kind": "html",
+      "key": "strong",
+      "text": "⏰ Automatic Late Flags"
+    },
+    {
+      "id": "c22a523672",
+      "kind": "html",
+      "key": "p",
+      "text": "Joins 5+ minutes after the start are flagged automatically (e.g. <code>+12m late</code>) — no clock-watching required."
+    },
+    {
+      "id": "5124fdd2f7",
+      "kind": "html",
+      "key": "strong",
+      "text": "🙋 Automatic Absent Detection"
+    },
+    {
+      "id": "1770fd0421",
+      "kind": "html",
+      "key": "p",
+      "text": "Save your roster once, and every report lists who missed the session — not just who attended."
+    },
+    {
+      "id": "faf6316835",
+      "kind": "html",
+      "key": "strong",
+      "text": "🔁 Automatic Series Roll-Up"
+    },
+    {
+      "id": "21fcfcf01d",
+      "kind": "html",
+      "key": "p",
+      "text": "Recurring meetings accumulate into a per-person attendance percentage across the whole series, updated on every session."
+    },
+    {
+      "id": "13135ab30c",
+      "kind": "html",
+      "key": "strong",
+      "text": "📱 Works From Any Device Afterwards"
+    },
+    {
+      "id": "604bc26b4f",
+      "kind": "html",
+      "key": "p",
+      "text": "Your meeting history and reports are available on the web dashboard and installable mobile app — not locked to one browser."
+    },
+    {
+      "id": "71c58284e7",
+      "kind": "html",
+      "key": "h2",
+      "text": "Turn On Automatic Attendance (One-Time Setup)"
+    },
+    {
+      "id": "7b7cdef08f",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Install:</strong> Open the <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_auto_attendance\" target=\"_blank\" rel=\"noopener\">Attendance Tracker Marketplace page</a> and click <strong>Install</strong>."
+    },
+    {
+      "id": "50df7b5479",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>In your next meeting</strong>, open the side panel via the <em>Activities / Add-ons</em> icon and choose <strong>Attendance Tracker</strong>."
+    },
+    {
+      "id": "046d2c01cc",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Open Settings</strong> in the panel and switch on <strong>Auto-export</strong>."
+    },
+    {
+      "id": "3b8840d3e3",
+      "kind": "html",
+      "key": "li",
+      "text": "That's it. From now on, joining your meeting and opening the panel is all it takes — the report generates and saves itself when the call ends."
+    },
+    {
+      "id": "180c6c9991",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Why not a Chrome extension?</strong> Extensions guess attendance by reading the on-screen participant list, so they miss people in large meetings, break on Meet UI updates, and can't run if you join from another device. A native add-on logs attendance through Google's own APIs — reliable at any meeting size."
+    },
+    {
+      "id": "c08cf5f1ad",
+      "kind": "html",
+      "key": "h2",
+      "text": "Frequently Asked Questions"
+    },
+    {
+      "id": "00c445b427",
+      "kind": "html",
+      "key": "h3",
+      "text": "Do I need to keep the side panel open the whole meeting?"
+    },
+    {
+      "id": "71670322f3",
+      "kind": "html",
+      "key": "p",
+      "text": "Open the panel once near the start so tracking begins, then use Meet normally. With auto-export enabled, the report is captured and saved even if you forget about it entirely."
+    },
+    {
+      "id": "658ac4cd27",
+      "kind": "html",
+      "key": "h3",
+      "text": "Does automatic tracking work for participants on phones?"
+    },
+    {
+      "id": "a3030a0a4d",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. Participants joining from the Meet mobile app or dialing in are logged the same way — the tracking happens through Meet's APIs, not their device."
+    },
+    {
+      "id": "bb7adb2813",
+      "kind": "html",
+      "key": "h3",
+      "text": "Can attendance really be exported without clicking anything?"
+    },
+    {
+      "id": "dd78dde476",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes — that's the auto-export feature: when the meeting ends, the spreadsheet is created in your Google Drive and emailed to you automatically. Manual one-click export is always available too."
+    },
+    {
+      "id": "8c72631618",
+      "kind": "html",
+      "key": "h3",
+      "text": "What does it cost?"
+    },
+    {
+      "id": "a65c58b882",
+      "kind": "html",
+      "key": "p",
+      "text": "Real-time tracking is free with 2 exports per month across Google Sheets, CSV, or binary Excel (for classes up to 25 attendees, plus 1 large-class grace export). Hands-free auto-export is part of Pro: the <strong>Educator Pass</strong> at $14.99/year ($4.99–$7.99/year regional), or a one-time <strong>Lifetime Pass</strong> for $29 ($9.99–$19 regional)."
+    },
+    {
+      "id": "585bd07295",
+      "kind": "html",
+      "key": "h3",
+      "text": "Set it up once, never take attendance again"
+    },
+    {
+      "id": "740bdbd108",
+      "kind": "html",
+      "key": "p",
+      "text": "Free install on Google Workspace Marketplace — automatic from your very next meeting."
+    },
+    {
+      "id": "0283cf06ed",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Free from Google Marketplace →"
+    },
+    {
+      "id": "98e04f98a2",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-for-online-classes.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Online Classes</a>\n          <a href=\"automatic-attendance-google-meet.html\" style=\"color: var(--accent); text-decoration: none; display: block; font-weight:600;\">Automatic Attendance</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>"
+    },
+    {
+      "id": "f83797ca5b",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">By Country</strong>\n          <a href=\"google-meet-attendance-philippines-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Philippines (DepEd)</a>\n          <a href=\"google-meet-attendance-malaysia-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Malaysia (MOE &amp; DELIMa)</a>\n          <a href=\"google-meet-attendance-indonesia-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Indonesia (belajar.id)</a>\n          <a href=\"google-meet-attendance-india-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">India (Schools &amp; Colleges)</a>"
+    },
+    {
+      "id": "47819d3b71",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">More Guides</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Best Attendance Extensions</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>"
+    },
+    {
+      "id": "23f8ad156d",
+      "kind": "html",
+      "key": "div",
+      "text": "© 2026 Kinetic Helix LLC. Attendance Tracker for Google Meet™. All rights reserved."
+    },
+    {
+      "id": "a61f1d8547",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "Automatic Attendance in Google Meet — No Manual Roll Call"
+    },
+    {
+      "id": "24d723c874",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "How to make Google Meet take attendance automatically: real-time participant logging, late flags, and hands-free auto-export to Google Sheets when the meeting ends."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "ef6b27a046",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Automatic Attendance in Google Meet"
+    }
+  ]
+}

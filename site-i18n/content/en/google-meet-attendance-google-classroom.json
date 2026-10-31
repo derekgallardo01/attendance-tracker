@@ -1,0 +1,426 @@
+{
+  "page": "google-meet-attendance-google-classroom.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "8510b43a27",
+      "kind": "head",
+      "key": "title",
+      "text": "How to track Google Meet attendance for Google Classroom (2026 Guide) — Attendance Tracker"
+    },
+    {
+      "id": "e56bbe5484",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Step-by-step guide for teachers on capturing Google Meet attendance and exporting directly to Google Sheets for Google Classroom grading. Free, no Education Plus required."
+    },
+    {
+      "id": "179feb6051",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "How to track Google Meet attendance for Google Classroom"
+    },
+    {
+      "id": "e1091c9c44",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Auto roll-call, late-arrival highlighting, semester trends, and Google Sheets export for Google Classroom teachers. Free."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "84c3524f3e",
+      "kind": "html",
+      "key": "h1",
+      "text": "How to track Google Meet attendance for Google Classroom"
+    },
+    {
+      "id": "eff688afe9",
+      "kind": "html",
+      "key": "p",
+      "text": "Google Classroom creates convenient Meet video links for your classes, but it does not automatically record who attended or how long students stayed. Here is the easiest way to take automated attendance and keep gradebook-ready records in Google Sheets."
+    },
+    {
+      "id": "9e4f6cb11b",
+      "kind": "attr",
+      "key": "title",
+      "text": "Attendance Tracker for Google Classroom"
+    },
+    {
+      "id": "b75a6597e5",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Cumulative Google Classroom attendance percentage across all class sessions"
+    },
+    {
+      "id": "78ab3cb217",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Works on any Google account:</strong> You do not need the expensive Google Workspace for Education Plus license. The <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_classroom\">Attendance Tracker add-on</a> works seamlessly with Google Classroom on Education Fundamentals, Standard, Teaching &amp; Learning Upgrade, and personal accounts."
+    },
+    {
+      "id": "4014736db8",
+      "kind": "html",
+      "key": "h2",
+      "text": "The Google Classroom Attendance Dilemma"
+    },
+    {
+      "id": "67c43dfd85",
+      "kind": "html",
+      "key": "p",
+      "text": "When you generate a Google Meet link in Google Classroom, Google Meet handles the live video, but student participation data vanishes as soon as you hang up:"
+    },
+    {
+      "id": "9f150f208f",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Manual Roll Call Wastes Teaching Time:</strong> Calling 30 names takes 5–10 minutes of every period."
+    },
+    {
+      "id": "eda77f97d9",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Students Leave Early or Join Late:</strong> Manual roll call doesn't tell you if a student joined for 2 minutes and left."
+    },
+    {
+      "id": "1d67026de2",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Built-in Google Meet Reports are Paywalled:</strong> Google only provides native CSV reports to schools paying for the top-tier <em>Education Plus</em> plan."
+    },
+    {
+      "id": "9cbb1bac15",
+      "kind": "html",
+      "key": "h2",
+      "text": "Step-by-Step: Taking Attendance in Google Classroom Calls"
+    },
+    {
+      "id": "9b46773a26",
+      "kind": "html",
+      "key": "h3",
+      "text": "Step 1: Install the Free Add-on Once"
+    },
+    {
+      "id": "ca38cda4f5",
+      "kind": "html",
+      "key": "p",
+      "text": "Install <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_classroom\">Attendance Tracker from the Google Workspace Marketplace</a>. It attaches natively to your Google Meet account."
+    },
+    {
+      "id": "e22692e8f2",
+      "kind": "html",
+      "key": "h3",
+      "text": "Step 2: Start Your Class Meet"
+    },
+    {
+      "id": "74f2c73837",
+      "kind": "html",
+      "key": "p",
+      "text": "Click your Google Classroom Meet link as usual. During class, open the <strong>Activities</strong> panel (the icon with triangle, square, circle in the bottom-right corner) and select <strong>Attendance Tracker</strong>."
+    },
+    {
+      "id": "b0270ba377",
+      "kind": "html",
+      "key": "h3",
+      "text": "Step 3: Live Roster &amp; Late-Arrival Flags"
+    },
+    {
+      "id": "ac36af0e52",
+      "kind": "html",
+      "key": "p",
+      "text": "The side panel immediately displays every student present in class, exact join times, and flags students who arrived late (e.g. <code>+8m late</code>) against your scheduled class time."
+    },
+    {
+      "id": "a17615b42c",
+      "kind": "html",
+      "key": "h3",
+      "text": "Step 4: Automatic Export to Google Sheets"
+    },
+    {
+      "id": "14baf41f3e",
+      "kind": "html",
+      "key": "p",
+      "text": "When you click end call, Attendance Tracker automatically creates a tabbed Google Spreadsheet in your Google Drive named <code>Meet Attendance Tracker</code> and emails you a clean summary. Each class session gets its own tab with:"
+    },
+    {
+      "id": "d0ba690236",
+      "kind": "html",
+      "key": "li",
+      "text": "Student Name and Email"
+    },
+    {
+      "id": "e070973296",
+      "kind": "html",
+      "key": "li",
+      "text": "Status (Present, Left Early, Absent, Excused)"
+    },
+    {
+      "id": "00fdc54520",
+      "kind": "html",
+      "key": "li",
+      "text": "Join Time and Leave Time"
+    },
+    {
+      "id": "79a26f5822",
+      "kind": "html",
+      "key": "li",
+      "text": "Total Minutes Attended in Class"
+    },
+    {
+      "id": "8471b3b03a",
+      "kind": "html",
+      "key": "h2",
+      "text": "Cumulative Attendance Across the Semester"
+    },
+    {
+      "id": "a8aa20e1f8",
+      "kind": "html",
+      "key": "p",
+      "text": "One single day's attendance doesn't show the full picture. If your class meets every Tuesday and Thursday, Attendance Tracker groups all sessions by your recurring class ID and provides a <strong>Class Summary</strong> report showing:"
+    },
+    {
+      "id": "4ef3874764",
+      "kind": "html",
+      "key": "li",
+      "text": "Overall attendance percentage per student (e.g. <em>\"Maria attended 14 of 15 classes (93%)\"</em>)"
+    },
+    {
+      "id": "102861d071",
+      "kind": "html",
+      "key": "li",
+      "text": "Total learning hours logged per student"
+    },
+    {
+      "id": "793faf1b76",
+      "kind": "html",
+      "key": "li",
+      "text": "Students trending downward before grading periods"
+    },
+    {
+      "id": "df6700c0a1",
+      "kind": "html",
+      "key": "h2",
+      "text": "Comparison for Teachers"
+    },
+    {
+      "id": "e3925975bd",
+      "kind": "html",
+      "key": "th",
+      "text": "Feature"
+    },
+    {
+      "id": "4a5c596441",
+      "kind": "html",
+      "key": "th",
+      "text": "Manual Call"
+    },
+    {
+      "id": "1bbbd50db6",
+      "kind": "html",
+      "key": "th",
+      "text": "Built-in (Ed Plus)"
+    },
+    {
+      "id": "b3509260bc",
+      "kind": "html",
+      "key": "th",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "0336820572",
+      "kind": "html",
+      "key": "td",
+      "text": "Requires Education Plus"
+    },
+    {
+      "id": "522734c8e3",
+      "kind": "html",
+      "key": "td",
+      "text": "No"
+    },
+    {
+      "id": "9b6d587b80",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Yes ($$)</strong>"
+    },
+    {
+      "id": "cd9c3fc497",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>No (Free)</strong>"
+    },
+    {
+      "id": "fc969541bb",
+      "kind": "html",
+      "key": "td",
+      "text": "Live In-Class Roster"
+    },
+    {
+      "id": "809e31e6e6",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Yes</strong>"
+    },
+    {
+      "id": "2fd690b145",
+      "kind": "html",
+      "key": "td",
+      "text": "Late Arrival Highlighting"
+    },
+    {
+      "id": "1ca32c089b",
+      "kind": "html",
+      "key": "td",
+      "text": "Manual"
+    },
+    {
+      "id": "c7bf9fcdc4",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Automatic (+Nm)</strong>"
+    },
+    {
+      "id": "b8bf586bc0",
+      "kind": "html",
+      "key": "td",
+      "text": "Export Format"
+    },
+    {
+      "id": "3f3bff5cd6",
+      "kind": "html",
+      "key": "td",
+      "text": "Manual Sheet"
+    },
+    {
+      "id": "d96bd694c2",
+      "kind": "html",
+      "key": "td",
+      "text": "Email CSV"
+    },
+    {
+      "id": "4215cb1b79",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Tabbed Google Sheet</strong>"
+    },
+    {
+      "id": "17a0ce7ca3",
+      "kind": "html",
+      "key": "td",
+      "text": "Recurring Semester Trends"
+    },
+    {
+      "id": "c5b0a36d10",
+      "kind": "html",
+      "key": "td",
+      "text": "Excused Absences Tagging"
+    },
+    {
+      "id": "fa097c5871",
+      "kind": "html",
+      "key": "h3",
+      "text": "Ready to automate your classroom attendance?"
+    },
+    {
+      "id": "2a2c23833a",
+      "kind": "html",
+      "key": "p",
+      "text": "Free, installs in 30 seconds, approved for Google Workspace &amp; Google Classroom."
+    },
+    {
+      "id": "837da96c4a",
+      "kind": "html",
+      "key": "a",
+      "text": "Install from Google Workspace Marketplace"
+    },
+    {
+      "id": "9352c1ed98",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "a3ad204977",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-legal-depositions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Legal &amp; Arbitrations</a>\n          <a href=\"google-meet-attendance-for-job-interviews.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Recruiting &amp; Interviews</a>"
+    },
+    {
+      "id": "e7a3b147f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Specialized Verticals</strong>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-clinical-supervision-and-therapy.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Clinical Supervision</a>\n          <a href=\"google-meet-quorum-and-board-meetings.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Board Quorum Tracking</a>\n          <a href=\"google-meet-attendance-for-churches.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Churches &amp; Ministries</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>\n          <a href=\"google-meet-attendance-for-fitness-and-yoga.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Fitness &amp; Yoga</a>"
+    },
+    {
+      "id": "eb9246d86f",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>\n          <a href=\"google-meet-attendance-on-ipad-and-mobile.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">iPad &amp; Mobile Attendance</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "a6e4b500d0",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "How to track Google Meet attendance for Google Classroom"
+    },
+    {
+      "id": "ac0db0ea10",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "Step-by-step instructions for teachers to track Google Meet live class attendance and sync with Google Classroom records."
+    },
+    {
+      "id": "709d87ef97",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Start class from Google Classroom"
+    },
+    {
+      "id": "c52c2e6f63",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Launch your Google Meet call directly from your Google Classroom banner link or Google Calendar class event."
+    },
+    {
+      "id": "5f27f727a3",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Open Attendance Tracker add-on"
+    },
+    {
+      "id": "eabb5fb2aa",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Click the Activities icon in Google Meet and open Attendance Tracker in the side panel. Tracking starts automatically."
+    },
+    {
+      "id": "6d131f1b48",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Auto-export to Google Sheets"
+    },
+    {
+      "id": "40013ca8c0",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "When class ends, your attendance report automatically exports to a tabbed Google Sheet in your Drive, with join times, leave times, and late flags."
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    }
+  ]
+}

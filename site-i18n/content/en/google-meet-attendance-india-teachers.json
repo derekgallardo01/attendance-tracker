@@ -1,0 +1,324 @@
+{
+  "page": "google-meet-attendance-india-teachers.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "8b21f89174",
+      "kind": "head",
+      "key": "title",
+      "text": "Google Meet Attendance Tracker for Teachers in India (Schools, Colleges & Coaching) — Attendance Tracker"
+    },
+    {
+      "id": "433ccda23f",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Free Google Meet attendance tracker for Indian teachers, college professors, and coaching institutes. Automatic roll call for large batches, late flags, and Google Sheets export — no Education Plus needed. Hindi, Tamil, Telugu, Bengali & Marathi supported."
+    },
+    {
+      "id": "e1400639f2",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Google Meet Attendance Tracker for Teachers in India (Schools, Colleges & Coaching)"
+    },
+    {
+      "id": "44e31006e7",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Automatic roll call, late student flags, and one-click Google Sheets export for Indian schools, colleges, and coaching institutes."
+    },
+    {
+      "id": "5f79375412",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"Attendance Tracker\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "c5e60291ed",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "8e94d9608d",
+      "kind": "html",
+      "key": "div",
+      "text": "🇮🇳 Indian Schools, Colleges &amp; Coaching"
+    },
+    {
+      "id": "b78dff72c4",
+      "kind": "html",
+      "key": "h1",
+      "text": "Google Meet Attendance Tracker for Teachers in India"
+    },
+    {
+      "id": "8ac3345357",
+      "kind": "html",
+      "key": "p",
+      "text": "Taking roll call for a batch of 60–120 students in Google Meet can eat 10 minutes of every lecture. Here is how Indian school teachers, college professors, and coaching institute faculty take automatic attendance and export it straight to Google Sheets — with no Education Plus licence required."
+    },
+    {
+      "id": "cc4bc8fc96",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Works with every account type:</strong> University and college Workspace domains (<code>.ac.in</code>, <code>.edu.in</code>), CBSE/ICSE school accounts, coaching institute domains, and personal <code>@gmail.com</code> accounts. The side panel is available in <strong>Hindi, Tamil, Telugu, Bengali, Marathi, and Urdu</strong> alongside English."
+    },
+    {
+      "id": "f708096a2b",
+      "kind": "html",
+      "key": "h2",
+      "text": "Why Google Meet Doesn't Give You an Attendance Report"
+    },
+    {
+      "id": "538eb9637b",
+      "kind": "html",
+      "key": "p",
+      "text": "Most Indian colleges and schools on Google Workspace for Education use the free <strong>Education Fundamentals</strong> tier. Google's native Meet attendance report is restricted to the paid <strong>Education Plus</strong> licence — so when your lecture ends, no attendance email or CSV ever arrives, and UPI-priced budgets rarely stretch to a campus-wide licence upgrade."
+    },
+    {
+      "id": "93ebc7d1d7",
+      "kind": "html",
+      "key": "p",
+      "text": "<strong>Attendance Tracker</strong> works around this at the meeting level. It is a certified Google Workspace Marketplace add-on that runs in the Google Meet side panel, on <em>every</em> Workspace edition — Fundamentals and personal Gmail included."
+    },
+    {
+      "id": "60d6dfb609",
+      "kind": "html",
+      "key": "h2",
+      "text": "Built for Large Indian Batches"
+    },
+    {
+      "id": "b78152a5a9",
+      "kind": "html",
+      "key": "strong",
+      "text": "📋 Automatic Roll Call"
+    },
+    {
+      "id": "777700837f",
+      "kind": "html",
+      "key": "p",
+      "text": "No more calling out roll numbers or \"type P in chat\". Every student is logged automatically the moment they join."
+    },
+    {
+      "id": "47cd686b05",
+      "kind": "html",
+      "key": "strong",
+      "text": "👥 Handles 100+ Student Batches"
+    },
+    {
+      "id": "cd3fb864e7",
+      "kind": "html",
+      "key": "p",
+      "text": "Engineered for large lecture halls, tuition batches, and test-series sessions — no browser slowdown even past 100 attendees."
+    },
+    {
+      "id": "af875a858d",
+      "kind": "html",
+      "key": "strong",
+      "text": "⏰ Late Arrival Flags"
+    },
+    {
+      "id": "6ddf48ee48",
+      "kind": "html",
+      "key": "p",
+      "text": "Students who join after the first 5 minutes are marked with a late chip (e.g. <code>+12m late</code>) for accurate discipline records."
+    },
+    {
+      "id": "c94134a51b",
+      "kind": "html",
+      "key": "strong",
+      "text": "⏱️ Merged Reconnections"
+    },
+    {
+      "id": "813e5137f7",
+      "kind": "html",
+      "key": "p",
+      "text": "Power cut or network drop? When a student rejoins, their minutes merge into one clean record — fair attendance on any connection."
+    },
+    {
+      "id": "a7c863ede0",
+      "kind": "html",
+      "key": "strong",
+      "text": "📊 1-Click Google Sheets Export"
+    },
+    {
+      "id": "88420b10e0",
+      "kind": "html",
+      "key": "p",
+      "text": "Clean spreadsheets in your Drive with names, emails, and durations — ready for your attendance register or NAAC/NBA documentation."
+    },
+    {
+      "id": "ff0029e00f",
+      "kind": "html",
+      "key": "strong",
+      "text": "🎓 Attendance Certificates"
+    },
+    {
+      "id": "53b8fa2eab",
+      "kind": "html",
+      "key": "p",
+      "text": "Generate PDF attendance certificates for workshops, FDPs, webinars, and value-added courses in one click."
+    },
+    {
+      "id": "9d425d9f60",
+      "kind": "html",
+      "key": "h2",
+      "text": "How to Take Attendance in Your Next Lecture"
+    },
+    {
+      "id": "1d693fda97",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Install the add-on:</strong> Open the <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_in_teachers\" target=\"_blank\" rel=\"noopener\">Attendance Tracker Marketplace page</a> with your college or Gmail account and click <strong>Install</strong>."
+    },
+    {
+      "id": "58cbcafeb6",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Start your Google Meet class</strong> from Google Classroom, Calendar, or your batch link."
+    },
+    {
+      "id": "3dc638c8e0",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Open the side panel:</strong> Click the <em>Activities / Add-ons</em> icon next to the chat icon and choose <strong>Attendance Tracker</strong>."
+    },
+    {
+      "id": "4e670d2939",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Teach:</strong> The roster updates itself as students join, leave, or reconnect."
+    },
+    {
+      "id": "cd0321f396",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Save:</strong> Click <strong>Save to Sheets</strong>, or enable auto-export so the sheet saves itself when the lecture ends."
+    },
+    {
+      "id": "f4598a3d47",
+      "kind": "html",
+      "key": "h2",
+      "text": "Frequently Asked Questions from Indian Educators"
+    },
+    {
+      "id": "bdfe441be3",
+      "kind": "html",
+      "key": "h3",
+      "text": "Does it work for coaching institutes and tuition classes?"
+    },
+    {
+      "id": "1f286b9b40",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. Coaching centres running JEE/NEET batches, spoken-English classes, and tuition groups on Google Meet use it the same way schools do — and students can join from any Gmail account."
+    },
+    {
+      "id": "f5a27fdbc7",
+      "kind": "html",
+      "key": "h3",
+      "text": "Can professors use the reports for AICTE/NAAC attendance records?"
+    },
+    {
+      "id": "989f1a5cbc",
+      "kind": "html",
+      "key": "p",
+      "text": "The export includes student name, email, join time, leave time, and total duration in a timestamped Google Sheet — a clean, auditable record you can attach to your departmental attendance register or accreditation documentation."
+    },
+    {
+      "id": "69618e8e0e",
+      "kind": "html",
+      "key": "h3",
+      "text": "Is student data kept private?"
+    },
+    {
+      "id": "993ee9d9b0",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. Attendance Tracker never accesses your camera, microphone, or meeting content, shows no ads, and sells no data. Spreadsheets are stored only in your own Google Drive."
+    },
+    {
+      "id": "a01f24881d",
+      "kind": "html",
+      "key": "h3",
+      "text": "Is there a discount for teachers? Can I pay with UPI?"
+    },
+    {
+      "id": "fb30c4ab99",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes! With regional pricing for India, the <strong>Educator Pass</strong> is ₹249/year (Pro Annual ₹499/year), or a one-time <strong>Lifetime Pass</strong> is ₹499–₹999 — checkout supports UPI and cards. Both include unlimited exports, auto-capture, and certificates. Basic tracking and 2 exports per month across Google Sheets, CSV, or binary Excel (for classes up to 25 attendees, plus 1 large-class grace export) are free forever."
+    },
+    {
+      "id": "67f06a3232",
+      "kind": "html",
+      "key": "h3",
+      "text": "Ready to stop taking roll call manually?"
+    },
+    {
+      "id": "2328e70db8",
+      "kind": "html",
+      "key": "p",
+      "text": "Save 10–15 minutes every lecture. Free install on Google Workspace Marketplace."
+    },
+    {
+      "id": "0283cf06ed",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Free from Google Marketplace →"
+    },
+    {
+      "id": "f27e335337",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-for-online-classes.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Online Classes</a>\n          <a href=\"automatic-attendance-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Automatic Attendance</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>"
+    },
+    {
+      "id": "73ead4b86e",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">By Country</strong>\n          <a href=\"google-meet-attendance-india-teachers.html\" style=\"color: var(--accent); text-decoration: none; display: block; font-weight:600;\">India (Schools &amp; Colleges)</a>\n          <a href=\"google-meet-attendance-philippines-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Philippines (DepEd)</a>\n          <a href=\"google-meet-attendance-malaysia-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Malaysia (MOE &amp; DELIMa)</a>\n          <a href=\"google-meet-attendance-indonesia-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Indonesia (belajar.id)</a>"
+    },
+    {
+      "id": "9f413bf209",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">More Guides</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "23f8ad156d",
+      "kind": "html",
+      "key": "div",
+      "text": "© 2026 Kinetic Helix LLC. Attendance Tracker for Google Meet™. All rights reserved."
+    },
+    {
+      "id": "6de35245ef",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "Google Meet Attendance Tracker for Indian Teachers, Colleges & Coaching Institutes"
+    },
+    {
+      "id": "5ec5937e4a",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "How Indian teachers, professors, and coaching institutes take automatic attendance in Google Meet for large batches and export reports to Google Sheets without an Education Plus license."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "759d76c751",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Google Meet Attendance Tracker for Teachers in India"
+    }
+  ]
+}

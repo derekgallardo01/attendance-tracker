@@ -1,0 +1,612 @@
+{
+  "page": "privacy.html",
+  "legal": true,
+  "segments": [
+    {
+      "id": "0af0df510b",
+      "kind": "head",
+      "key": "title",
+      "text": "Privacy Policy — Attendance Tracker for Google Meet™"
+    },
+    {
+      "id": "a18fe20d1d",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Privacy Policy for Attendance Tracker for Google Meet. Learn how we handle your data, Google Workspace scopes, and token encryption."
+    },
+    {
+      "id": "2da93c8080",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Privacy Policy for Attendance Tracker for Google Meet. Learn how your data and OAuth tokens are secured."
+    },
+    {
+      "id": "9ae72b4020",
+      "kind": "html",
+      "key": "a",
+      "text": "<img src=\"icons/icon-32.png\" alt=\"Attendance Tracker Logo\">\n        <span>Attendance Tracker</span>"
+    },
+    {
+      "id": "38deccf17d",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Attendance Tracker Logo"
+    },
+    {
+      "id": "7fedfcbaca",
+      "kind": "html",
+      "key": "a",
+      "text": "Home"
+    },
+    {
+      "id": "7d4f187b91",
+      "kind": "html",
+      "key": "a",
+      "text": "Pricing"
+    },
+    {
+      "id": "ec3b3e8bd4",
+      "kind": "html",
+      "key": "a",
+      "text": "Help Center &amp; FAQ"
+    },
+    {
+      "id": "2782febc18",
+      "kind": "html",
+      "key": "a",
+      "text": "Support"
+    },
+    {
+      "id": "f58ea57552",
+      "kind": "attr",
+      "key": "aria-label",
+      "text": "Open navigation menu"
+    },
+    {
+      "id": "98bf5c73ee",
+      "kind": "html",
+      "key": "a",
+      "text": "Meeting History"
+    },
+    {
+      "id": "db9fb2fab4",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Free"
+    },
+    {
+      "id": "2209f15949",
+      "kind": "html",
+      "key": "div",
+      "text": "🌐 <strong>Multilingual Legal Terms:</strong> Read this policy in any of our 44 supported languages using the navigation dropdown or translation tool. For questions, binding interpretation, or a signed DPA, reach out directly to <strong>Kinetic Helix LLC Legal Department</strong> at <a href=\"mailto:legal@kinetichelix.io\" style=\"color:#58a6ff;text-decoration:underline;\">legal@kinetichelix.io</a> or <a href=\"mailto:support@attendancetracker.dev\" style=\"color:#58a6ff;text-decoration:underline;\">support@attendancetracker.dev</a>."
+    },
+    {
+      "id": "bdc121cec8",
+      "kind": "html",
+      "key": "h1",
+      "text": "Privacy Policy"
+    },
+    {
+      "id": "ed3be4eb82",
+      "kind": "html",
+      "key": "div",
+      "text": "Last updated: September 7, 2026"
+    },
+    {
+      "id": "c90601061f",
+      "kind": "html",
+      "key": "h2",
+      "text": "Overview"
+    },
+    {
+      "id": "952ed01c71",
+      "kind": "html",
+      "key": "p",
+      "text": "Attendance Tracker (\"the App\") is a Google Meet add-on that helps meeting organizers track participant attendance, export reports to Google Sheets and PDF, issue per-attendee attendance certificates, and optionally receive post-meeting summaries via email and Slack. Optional paid plans are available. This policy describes how we collect, use, and protect your data. Schools and districts reviewing the App may also want our plain-English <a href=\"student-data-privacy.html\">Student Data Privacy</a> pledge."
+    },
+    {
+      "id": "75264f71dc",
+      "kind": "html",
+      "key": "h2",
+      "text": "Data We Collect"
+    },
+    {
+      "id": "160381d922",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Google account information:</strong> Your name, email address, and Google account/Workspace domain (obtained via Google Sign-In)."
+    },
+    {
+      "id": "0c49621e4a",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Meeting data:</strong> Conference IDs, participant names, join/leave times, and session counts (obtained via the Google Meet REST API)."
+    },
+    {
+      "id": "3ab4706cf6",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Calendar data:</strong> Event titles, start/end times, and attendee lists for meetings you match to Meet calls (obtained via the Google Calendar API)."
+    },
+    {
+      "id": "1218bf40a3",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Authentication tokens:</strong> OAuth refresh tokens (encrypted at rest with AES-256-GCM) to maintain your session."
+    },
+    {
+      "id": "ed3466d579",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>User settings:</strong> If you configure a Slack, Google Chat, or Discord incoming webhook URL for post-meeting digests, that URL is stored on your user settings document."
+    },
+    {
+      "id": "8978d8bc7e",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Product analytics:</strong> Anonymous pageview beacons on the marketing site (page path, referrer, UTM parameters, viewport width, user agent, IP). Not used for cross-site tracking."
+    },
+    {
+      "id": "f67b0e3bd1",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Feedback submissions:</strong> If you use the in-product feedback widget, we store the message body, any email you provided, and context about where you were in the app."
+    },
+    {
+      "id": "368739296e",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Acquisition attribution:</strong> First-touch UTM parameters and referrer URL captured when you first visit the site or install the add-on, so we can understand how users find us."
+    },
+    {
+      "id": "c993401c12",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Public share links:</strong> If you generate a share link for a recurring meeting series, the token, associated series identifier, and view count are stored. Share links expire after 30 days."
+    },
+    {
+      "id": "2b6579e433",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Billing data:</strong> If you subscribe to or purchase a paid plan, we store your billing email, plan and subscription status, and the Stripe customer and subscription identifiers. Card and payment details are entered directly with Stripe and never touch our servers."
+    },
+    {
+      "id": "f122b21bab",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Certificate verification records:</strong> When you issue attendance certificates, we store a verification record for each one — the attendee name, meeting/session title, date, duration or credit hours, and issuer — keyed by the certificate's verification code. These records are <strong>publicly retrievable by anyone who has the code</strong> printed on the certificate, so a recipient or a third party (for example a registrar) can confirm the certificate is genuine."
+    },
+    {
+      "id": "c311d92686",
+      "kind": "html",
+      "key": "h2",
+      "text": "How We Use Your Data"
+    },
+    {
+      "id": "7e4f8e8a4b",
+      "kind": "html",
+      "key": "li",
+      "text": "Display real-time attendance in the Meet side panel."
+    },
+    {
+      "id": "cdb43f5524",
+      "kind": "html",
+      "key": "li",
+      "text": "Auto-export attendance reports to Google Sheets in your Google Drive when a meeting ends."
+    },
+    {
+      "id": "b751340157",
+      "kind": "html",
+      "key": "li",
+      "text": "Send you a post-meeting digest email with the sheet link and attendance summary."
+    },
+    {
+      "id": "215ed7b625",
+      "kind": "html",
+      "key": "li",
+      "text": "Post a post-meeting summary to your Slack channel, Google Chat space, or Discord channel (only if you've configured the matching webhook)."
+    },
+    {
+      "id": "541c10a035",
+      "kind": "html",
+      "key": "li",
+      "text": "Copy student names and email addresses from a Google Classroom course you teach into a Class Roster, only when you click \"Import from Google Classroom\". The imported roster is stored in your browser, not on our servers."
+    },
+    {
+      "id": "9cc621de2c",
+      "kind": "html",
+      "key": "li",
+      "text": "Match meeting participants to calendar invitees for RSVP status and no-show tracking."
+    },
+    {
+      "id": "2ce2a0b28f",
+      "kind": "html",
+      "key": "li",
+      "text": "Roll up attendance across recurring meeting series and email you daily alerts when someone's attendance pattern changes significantly."
+    },
+    {
+      "id": "61ed263ca9",
+      "kind": "html",
+      "key": "li",
+      "text": "Send occasional re-engagement emails if you signed up and stopped using the product. Every alert and re-engagement email includes a one-click unsubscribe link; unsubscribing stops these emails without affecting your ability to use the App."
+    },
+    {
+      "id": "a3c204faca",
+      "kind": "html",
+      "key": "li",
+      "text": "Send optional pre-meeting reminder emails for your upcoming recurring meetings."
+    },
+    {
+      "id": "1be32311d9",
+      "kind": "html",
+      "key": "li",
+      "text": "Generate downloadable PDF attendance reports and per-attendee certificates from your recorded attendance."
+    },
+    {
+      "id": "e66faa1bf9",
+      "kind": "html",
+      "key": "li",
+      "text": "Provide a public verification page so a certificate holder or a third party can confirm an issued certificate using its verification code."
+    },
+    {
+      "id": "fd14578392",
+      "kind": "html",
+      "key": "li",
+      "text": "Process payments and provision paid features when you subscribe to or purchase a plan."
+    },
+    {
+      "id": "6fc8d426ea",
+      "kind": "html",
+      "key": "p",
+      "text": "We do <strong>not</strong> sell, share, or transfer your data to third parties beyond the sub-processors listed below. We do <strong>not</strong> use your data for advertising or profiling."
+    },
+    {
+      "id": "5dd3bb7fff",
+      "kind": "html",
+      "key": "h2",
+      "text": "Sub-processors"
+    },
+    {
+      "id": "50705a8f9e",
+      "kind": "html",
+      "key": "p",
+      "text": "We use the following third-party services to operate the App:"
+    },
+    {
+      "id": "169a5303ed",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Google Cloud Platform</strong> (Firestore, Cloud Run, Cloud Scheduler, Secret Manager) — primary data storage and application hosting, US <code>us-central1</code> region."
+    },
+    {
+      "id": "1049cf9e4f",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Stripe</strong> (<a href=\"https://stripe.com/privacy\" target=\"_blank\" rel=\"noopener\">privacy policy</a>) — payment processing for paid plans. When you subscribe or make a purchase, your billing email and payment details are collected and processed by Stripe; card details are handled entirely by Stripe and are never stored on our servers."
+    },
+    {
+      "id": "636add302a",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Resend</strong> (<a href=\"https://resend.com/legal/privacy-policy\" target=\"_blank\" rel=\"noopener\">privacy policy</a>) — transactional email delivery. Recipient email addresses and message content pass through Resend to be delivered. Delivery metadata (opens, bounces) is retained per Resend's policy."
+    },
+    {
+      "id": "3adc83cc32",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Cloudflare</strong> (<a href=\"https://www.cloudflare.com/privacypolicy/\" target=\"_blank\" rel=\"noopener\">privacy policy</a>) — CDN and DNS proxy for the marketing site. HTTP request metadata (IP address, user agent, requested URL) passes through Cloudflare's edge network."
+    },
+    {
+      "id": "49a06fdf20",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Slack Technologies</strong> — only if you configure a Slack webhook. Post-meeting summaries are POSTed to the webhook URL you provide, which is under your control."
+    },
+    {
+      "id": "941e3e6044",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Discord Inc.</strong> — only if you configure a Discord webhook. Post-meeting summaries are POSTed to the webhook URL you provide, which is under your control. (Google Chat webhooks go to Google, already listed above.)"
+    },
+    {
+      "id": "9d2e7daf40",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Sentry</strong> — application error tracking. Stack traces and error metadata may include limited request context; personal data is not intentionally captured."
+    },
+    {
+      "id": "19d5c073bb",
+      "kind": "html",
+      "key": "h2",
+      "text": "Data Storage"
+    },
+    {
+      "id": "c9ea166790",
+      "kind": "html",
+      "key": "li",
+      "text": "Meeting and user data is stored in Google Cloud Firestore, isolated by your account's domain (personal Gmail users share the <code>gmail.com</code> tenant scope)."
+    },
+    {
+      "id": "4935ac7839",
+      "kind": "html",
+      "key": "li",
+      "text": "Refresh tokens are encrypted using AES-256-GCM before storage."
+    },
+    {
+      "id": "f1f346fa16",
+      "kind": "html",
+      "key": "li",
+      "text": "All primary data is hosted on Google Cloud Platform in the US (us-central1 region)."
+    },
+    {
+      "id": "5c324c508e",
+      "kind": "html",
+      "key": "h2",
+      "text": "Data Retention"
+    },
+    {
+      "id": "b48d951d36",
+      "kind": "html",
+      "key": "li",
+      "text": "Meeting attendance data is retained for as long as your account is active."
+    },
+    {
+      "id": "162500ede9",
+      "kind": "html",
+      "key": "li",
+      "text": "Pageview beacon data is retained for up to 90 days for product analytics."
+    },
+    {
+      "id": "3b2d6aa9af",
+      "kind": "html",
+      "key": "li",
+      "text": "Public share links auto-expire after 30 days."
+    },
+    {
+      "id": "4bab3fda80",
+      "kind": "html",
+      "key": "li",
+      "text": "Certificate verification records are retained while your account is active so issued certificates remain verifiable, and are removed when you delete your account."
+    },
+    {
+      "id": "e59a5deb61",
+      "kind": "html",
+      "key": "li",
+      "text": "Billing records are retained (by us and by Stripe) as required for financial and tax record-keeping."
+    },
+    {
+      "id": "7e645cc6aa",
+      "kind": "html",
+      "key": "li",
+      "text": "When you uninstall the App or request deletion, we remove your account and the data that identifies you: your user profile and settings, your activity events, private notes, reminders, and your participant records in tracked meetings. Aggregate meeting records that also belong to other attendees in your organization are retained, with your personal participant entries removed."
+    },
+    {
+      "id": "166911433b",
+      "kind": "html",
+      "key": "li",
+      "text": "You can delete your account and all associated data yourself at any time from the add-on's Settings (\"Delete account &amp; data\"), or by contacting us."
+    },
+    {
+      "id": "0a8fd79593",
+      "kind": "html",
+      "key": "h2",
+      "text": "Cookies &amp; Local Storage"
+    },
+    {
+      "id": "095376b11b",
+      "kind": "html",
+      "key": "p",
+      "text": "We use a small number of first-party cookies and browser <code>localStorage</code> entries. We do <strong>not</strong> use third-party advertising or cross-site tracking cookies."
+    },
+    {
+      "id": "efdd5f3d72",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Attribution:</strong> a first-party <code>att_first_touch</code> cookie and a matching <code>localStorage</code> entry record how you first reached the site (UTM parameters and referrer) so we can understand where users come from. The cookie expires after 90 days."
+    },
+    {
+      "id": "a4305a3d3f",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Preferences &amp; UI state:</strong> the App stores lightweight interface state in your browser's <code>localStorage</code> — such as which one-time tips you've dismissed and how many exports you've run — so you aren't shown the same prompt twice. This stays in your browser and isn't used to identify you."
+    },
+    {
+      "id": "2f64ee40fc",
+      "kind": "html",
+      "key": "h2",
+      "text": "Google API Scopes"
+    },
+    {
+      "id": "80299adf47",
+      "kind": "html",
+      "key": "p",
+      "text": "The App requests the following Google API scopes:"
+    },
+    {
+      "id": "64f99c926c",
+      "kind": "html",
+      "key": "li",
+      "text": "<code>openid email profile</code> — Sign you in and identify your account."
+    },
+    {
+      "id": "6dc8bb7048",
+      "kind": "html",
+      "key": "li",
+      "text": "<code>meetings.space.readonly</code> — View participant information for meetings you have access to."
+    },
+    {
+      "id": "e8671c0043",
+      "kind": "html",
+      "key": "li",
+      "text": "<code>calendar.events.readonly</code> — View calendar events to match attendees and RSVP status."
+    },
+    {
+      "id": "24efafbd0b",
+      "kind": "html",
+      "key": "li",
+      "text": "<code>drive.file</code> — Create a \"Meet Attendance Tracker\" folder and spreadsheet in your Drive. This scope only grants access to files the App creates; it does not access other files in your Drive."
+    },
+    {
+      "id": "2463f00186",
+      "kind": "html",
+      "key": "li",
+      "text": "<code>classroom.courses.readonly</code>, <code>classroom.rosters.readonly</code>, <code>classroom.profile.emails</code> — <em>Optional.</em> Requested only if you click \"Import from Google Classroom\", to list the courses you teach and copy a course's student names and email addresses into a Class Roster. Imported rosters are stored only in your browser; we do not store your Classroom data on our servers."
+    },
+    {
+      "id": "a8dcb97a28",
+      "kind": "html",
+      "key": "h2",
+      "text": "Google API Services User Data Policy — Limited Use"
+    },
+    {
+      "id": "3508f3f1b5",
+      "kind": "html",
+      "key": "p",
+      "text": "Attendance Tracker's use and transfer to any other app of information received from Google APIs will adhere to the <a href=\"https://developers.google.com/terms/api-services-user-data-policy\" target=\"_blank\" rel=\"noopener\">Google API Services User Data Policy</a>, including the Limited Use requirements. Specifically:"
+    },
+    {
+      "id": "de52bfd6a5",
+      "kind": "html",
+      "key": "li",
+      "text": "We only use Google user data (meeting participant information, calendar events, Classroom rosters, and Drive files the App creates) to provide and improve the user-facing attendance features described on this page."
+    },
+    {
+      "id": "7b937ad662",
+      "kind": "html",
+      "key": "li",
+      "text": "We do not transfer Google user data to third parties except as necessary to provide these features (see Sub-processors above), to comply with applicable law, or as part of a merger or acquisition with prior notice to users."
+    },
+    {
+      "id": "047136441e",
+      "kind": "html",
+      "key": "li",
+      "text": "We do not use Google user data for advertising, and we never sell it."
+    },
+    {
+      "id": "6b970c9936",
+      "kind": "html",
+      "key": "li",
+      "text": "We do not allow humans to read Google user data unless (a) we have your affirmative agreement, (b) it is necessary for security purposes such as investigating abuse, (c) it is necessary to comply with applicable law, or (d) the data has been aggregated and anonymized for internal operations."
+    },
+    {
+      "id": "896fcad04f",
+      "kind": "html",
+      "key": "li",
+      "text": "We do not use data obtained through Google Workspace APIs to develop, improve, or train generalized artificial intelligence or machine-learning models."
+    },
+    {
+      "id": "4196dcb22e",
+      "kind": "html",
+      "key": "h2",
+      "text": "Your Rights"
+    },
+    {
+      "id": "e598926efa",
+      "kind": "html",
+      "key": "li",
+      "text": "You can revoke the App's access at any time via <a href=\"https://myaccount.google.com/permissions\" target=\"_blank\" rel=\"noopener\">Google Account Permissions</a>."
+    },
+    {
+      "id": "aadd4b700d",
+      "kind": "html",
+      "key": "li",
+      "text": "You can clear your Slack, Google Chat, or Discord webhook at any time from the in-app Settings modal."
+    },
+    {
+      "id": "81642bfcbb",
+      "kind": "html",
+      "key": "li",
+      "text": "You can request export or deletion of your data by contacting us."
+    },
+    {
+      "id": "15599756f5",
+      "kind": "html",
+      "key": "h2",
+      "text": "Security"
+    },
+    {
+      "id": "474dd92e20",
+      "kind": "html",
+      "key": "p",
+      "text": "We use industry-standard security practices including HTTPS encryption in transit, encrypted tokens at rest, and Google Cloud's built-in security infrastructure."
+    },
+    {
+      "id": "ee846fe348",
+      "kind": "html",
+      "key": "h2",
+      "text": "Changes to this Policy"
+    },
+    {
+      "id": "713a4debfa",
+      "kind": "html",
+      "key": "p",
+      "text": "We may update this policy from time to time. When we do, we'll bump the \"Last updated\" date at the top. Material changes will be highlighted on the site."
+    },
+    {
+      "id": "11b564c38a",
+      "kind": "html",
+      "key": "h2",
+      "text": "Contact"
+    },
+    {
+      "id": "b5b5320274",
+      "kind": "html",
+      "key": "p",
+      "text": "For questions about this privacy policy, data deletion, or custom school agreements, reach out directly to <strong>Kinetic Helix LLC Legal Department</strong> at <a href=\"mailto:legal@kinetichelix.io\">legal@kinetichelix.io</a> or <a href=\"mailto:support@attendancetracker.dev\">support@attendancetracker.dev</a>."
+    },
+    {
+      "id": "b35bf57a1f",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\">Home</a>\n      <a href=\"pricing.html\">Pricing</a>\n      <a href=\"faq.html\">Help Center &amp; FAQ</a>\n      <a href=\"privacy.html\">Privacy Policy</a>\n      <a href=\"terms.html\">Terms of Service</a>\n      <a href=\"student-data-privacy.html\">Student Privacy</a>\n      <a href=\"refunds.html\">Refund Policy</a>\n      <a href=\"support.html\">Contact Support</a>\n      <a href=\"unsubscribe.html\">Unsubscribe</a>"
+    },
+    {
+      "id": "c9b7900b06",
+      "kind": "html",
+      "key": "div",
+      "text": "© 2026 Kinetic Helix LLC. Attendance Tracker for Google Meet™. Support: Kinetic Helix LLC (<a href=\"mailto:legal@kinetichelix.io\" style=\"color:inherit;text-decoration:underline;\">legal@kinetichelix.io</a> / <a href=\"mailto:support@attendancetracker.dev\" style=\"color:inherit;text-decoration:underline;\">support@attendancetracker.dev</a>). All rights reserved."
+    },
+    {
+      "id": "1da5670c73",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Privacy Policy — Attendance Tracker for Google Meet"
+    },
+    {
+      "id": "0661966534",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "Privacy Policy for Attendance Tracker for Google Meet. Learn how we handle your data, Google Workspace scopes, and token encryption."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "346845e5ca",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Privacy Policy"
+    },
+    {
+      "id": "717ee1d108",
+      "kind": "jsonld",
+      "key": "1:description",
+      "text": "How Attendance Tracker collects, handles, and protects user data. Minimal scopes, token encryption at rest, FERPA-ready, zero third-party data sales."
+    },
+    {
+      "id": "1297e42eec",
+      "kind": "jsonld",
+      "key": "1:name",
+      "text": "Attendance Tracker for Google Meet"
+    }
+  ]
+}

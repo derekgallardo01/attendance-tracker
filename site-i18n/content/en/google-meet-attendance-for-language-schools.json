@@ -1,0 +1,426 @@
+{
+  "page": "google-meet-attendance-for-language-schools.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "cb67e0d11e",
+      "kind": "head",
+      "key": "title",
+      "text": "Google Meet attendance for language schools & ESL tutors (2026 Guide) — Attendance Tracker"
+    },
+    {
+      "id": "74d9f301b2",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Minute-accurate Google Meet attendance for language schools and ESL tutors: protect prepaid lesson packages, enforce no-show policies, settle billing disputes, and issue course certificates."
+    },
+    {
+      "id": "df17f5b79b",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Google Meet attendance for language schools & ESL tutors"
+    },
+    {
+      "id": "23ade51376",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Join/leave logs that protect billable lesson hours, a configurable late threshold for your grace policy, per-level class rosters, and completion certificates — all inside Google Meet."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "d5f8299566",
+      "kind": "html",
+      "key": "h1",
+      "text": "Google Meet attendance for language schools &amp; ESL tutors"
+    },
+    {
+      "id": "c3aae752eb",
+      "kind": "html",
+      "key": "p",
+      "text": "Online language teaching runs on lesson credits, no-show policies, and students scattered across timezones. When a student claims \"I was there\" and your records say otherwise, the tutor with minute-accurate join/leave logs wins the conversation. Here is how language schools and independent ESL tutors track Google Meet attendance automatically."
+    },
+    {
+      "id": "6b728b6d16",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Built for billable lessons:</strong> Attendance Tracker records exact join time, leave time, rejoins, and total minutes for every participant in every Google Meet lesson — the paper trail that protects prepaid lesson packages and settles billing disputes in seconds."
+    },
+    {
+      "id": "4d59244077",
+      "kind": "html",
+      "key": "h2",
+      "text": "The reality of running language classes online"
+    },
+    {
+      "id": "16f0a333d6",
+      "kind": "html",
+      "key": "p",
+      "text": "Language schools and tutoring businesses have attendance problems most classrooms never face:"
+    },
+    {
+      "id": "ef3052063f",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Prepaid lesson packages.</strong> Students buy 10- or 20-lesson bundles. Every session you can't prove happened is a lesson credit you may have to give back."
+    },
+    {
+      "id": "181848b5dd",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>No-show and lateness policies.</strong> \"If you're more than 15 minutes late, the lesson is forfeited\" only works if you can show exactly when the student joined — or didn't."
+    },
+    {
+      "id": "a17bdf27b3",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Billing disputes.</strong> A parent disputes a charge for a lesson their child \"never attended.\" Without timestamps, it's your word against theirs."
+    },
+    {
+      "id": "64298b5f70",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Students across timezones.</strong> A student in another country who confused the time joins 40 minutes late. Was that a partial lesson or a no-show? Your policy needs data to apply fairly."
+    },
+    {
+      "id": "648a55554c",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Trial lessons.</strong> Free trials only convert if you can follow up with facts: they attended, they stayed the full 30 minutes, they came back for a second look."
+    },
+    {
+      "id": "06a0595a15",
+      "kind": "html",
+      "key": "h2",
+      "text": "Minute-accurate logs protect your billable hours"
+    },
+    {
+      "id": "290c7df080",
+      "kind": "html",
+      "key": "p",
+      "text": "Attendance Tracker is an official Google Meet add-on (it opens in the side panel from the Activities menu, using the official Meet REST API — not a Chrome extension). Once you press Start, it records for every participant:"
+    },
+    {
+      "id": "9c58af3193",
+      "kind": "html",
+      "key": "th",
+      "text": "Column"
+    },
+    {
+      "id": "54b11066c9",
+      "kind": "html",
+      "key": "th",
+      "text": "Why it matters for lessons"
+    },
+    {
+      "id": "b3dc26f0ef",
+      "kind": "html",
+      "key": "td",
+      "text": "Join Time / Leave Time"
+    },
+    {
+      "id": "23a53a69f4",
+      "kind": "html",
+      "key": "td",
+      "text": "Proves exactly when the student was in the lesson — the evidence in any dispute."
+    },
+    {
+      "id": "5a764c5fa9",
+      "kind": "html",
+      "key": "td",
+      "text": "Duration (min)"
+    },
+    {
+      "id": "8fa051f527",
+      "kind": "html",
+      "key": "td",
+      "text": "Minutes actually attended, so partial lessons are billed on facts."
+    },
+    {
+      "id": "ee70422b80",
+      "kind": "html",
+      "key": "td",
+      "text": "Rejoins"
+    },
+    {
+      "id": "63addf3132",
+      "kind": "html",
+      "key": "td",
+      "text": "Connection dropped and the student came back? Logged, not lost."
+    },
+    {
+      "id": "1ba254666e",
+      "kind": "html",
+      "key": "td",
+      "text": "Status"
+    },
+    {
+      "id": "adb01df055",
+      "kind": "html",
+      "key": "td",
+      "text": "Present, Late, Left Early, Absent, Excused, or Guest."
+    },
+    {
+      "id": "1cb35f63a5",
+      "kind": "html",
+      "key": "td",
+      "text": "Attendance %"
+    },
+    {
+      "id": "f5e8673083",
+      "kind": "html",
+      "key": "td",
+      "text": "Share of the lesson attended — rolls up across sessions for recurring classes."
+    },
+    {
+      "id": "cd535583c6",
+      "kind": "html",
+      "key": "p",
+      "text": "Every session downloads instantly as a CSV, exports to Google Sheets, or generates a PDF report you can attach to an invoice or forward to a parent."
+    },
+    {
+      "id": "6aa5ceac03",
+      "kind": "html",
+      "key": "h2",
+      "text": "A late threshold that matches your grace policy"
+    },
+    {
+      "id": "1f0dd50d92",
+      "kind": "html",
+      "key": "p",
+      "text": "Most schools give a 5-minute grace window before a student counts as late. The late threshold in Attendance Tracker is configurable, so the panel applies <em>your</em> policy automatically: join within the window and you're Present; join after it and you're marked Late with the exact timestamp attached. No judgment calls, no arguments — the same rule for every student, every lesson."
+    },
+    {
+      "id": "983e119104",
+      "kind": "html",
+      "key": "h2",
+      "text": "One roster per class level"
+    },
+    {
+      "id": "ce2662bd4b",
+      "kind": "html",
+      "key": "p",
+      "text": "Create a Class Roster for each group — Beginner A1, Intermediate B1, Business English, IELTS prep — and the panel checks live attendance against the enrolled list. Students who are enrolled but absent show up as Absent instead of silently missing from the report. For group classes that recur on the same Google Calendar invite, each student's attendance percentage accumulates across sessions automatically, so you always know who has attended 9 of 10 lessons in their package."
+    },
+    {
+      "id": "dc10b6a3ee",
+      "kind": "html",
+      "key": "p",
+      "text": "If your school also uses Google Classroom, you can import a roster from it in one click."
+    },
+    {
+      "id": "3cdda23179",
+      "kind": "html",
+      "key": "h2",
+      "text": "Certificates when the course ends"
+    },
+    {
+      "id": "4dc8c94ff1",
+      "kind": "html",
+      "key": "p",
+      "text": "Course completion certificates matter in language education — students use them for visa applications, university admissions, and employers. With Pro, Attendance Tracker generates per-attendee PDF certificates backed by a public verification page at attendancetracker.dev/verify, so anyone the student shows the certificate to can confirm it's genuine. That's a professional finishing touch most small schools can't otherwise offer."
+    },
+    {
+      "id": "f464f257df",
+      "kind": "html",
+      "key": "h2",
+      "text": "An interface your international staff can actually use"
+    },
+    {
+      "id": "867e2e6618",
+      "kind": "html",
+      "key": "p",
+      "text": "Language schools are multilingual by definition — your teachers and student-facing staff may work in Spanish, Portuguese, Japanese, or Polish. The Attendance Tracker panel is localized in 60 languages, so every teacher sees the buttons and statuses in their own language. No training document required."
+    },
+    {
+      "id": "2cbb9e05bd",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Teachers who don't host the Meet?</strong> If your school's admin account owns the meeting links, co-teachers and staff can still track attendance after a Workspace admin enables one-time delegation at attendancetracker.dev/setup."
+    },
+    {
+      "id": "8745438ea1",
+      "kind": "html",
+      "key": "h2",
+      "text": "Getting set up (5 minutes)"
+    },
+    {
+      "id": "20d8e05141",
+      "kind": "html",
+      "key": "li",
+      "text": "Install <strong>Attendance Tracker</strong> from the Google Workspace Marketplace (button below). It works on personal @gmail.com accounts and every Workspace tier."
+    },
+    {
+      "id": "49dc36737b",
+      "kind": "html",
+      "key": "li",
+      "text": "Join your Google Meet lesson and open the add-on from the <strong>Activities</strong> menu."
+    },
+    {
+      "id": "f3d90e534f",
+      "kind": "html",
+      "key": "li",
+      "text": "Create a <strong>Class Roster</strong> for each class level and set your late threshold to match your grace policy."
+    },
+    {
+      "id": "ccf9c9c51f",
+      "kind": "html",
+      "key": "li",
+      "text": "Press <strong>Start</strong> at lesson time. The panel sorts students into Present, Late, and Absent live."
+    },
+    {
+      "id": "12d49057e1",
+      "kind": "html",
+      "key": "li",
+      "text": "After the lesson, download the CSV or PDF, or export to Google Sheets — your permanent record for billing and lesson credits."
+    },
+    {
+      "id": "7d2dc48836",
+      "kind": "html",
+      "key": "h2",
+      "text": "Frequently asked questions"
+    },
+    {
+      "id": "a717f1fc74",
+      "kind": "html",
+      "key": "h3",
+      "text": "Does this work for 1-on-1 tutoring?"
+    },
+    {
+      "id": "905f1f43c7",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. There's no minimum group size — solo tutors use it to log every private lesson with exact timestamps, which is precisely what protects your no-show fees."
+    },
+    {
+      "id": "88477f4227",
+      "kind": "html",
+      "key": "h3",
+      "text": "Do my students need to install anything?"
+    },
+    {
+      "id": "11a9497956",
+      "kind": "html",
+      "key": "p",
+      "text": "No. Only the teacher uses the panel. Students join the Meet as usual, from any device."
+    },
+    {
+      "id": "8c72631618",
+      "kind": "html",
+      "key": "h3",
+      "text": "What does it cost?"
+    },
+    {
+      "id": "f0affe5f56",
+      "kind": "html",
+      "key": "p",
+      "text": "The core is free: real-time tracking, rosters, PDF reports, and 2 free exports per month across Google Sheets, CSV, or binary Excel (for classes up to 25 attendees, plus 1 large-class grace export). Pro adds unlimited exports, hands-free Auto-Capture (finished meetings you host auto-export within hours, even with the panel closed), cumulative class summaries, certificates, and chat digests — $14.99/year for the Educator Annual Pass ($4.99–$7.99/year regional), $29 one-time for an Individual Lifetime Pass ($9.99–$19 regional), or $59/year for a Department plan covering every teacher on your school's Workspace domain (Institution $149/year for districts)."
+    },
+    {
+      "id": "3752b2e35a",
+      "kind": "html",
+      "key": "h3",
+      "text": "Can I see attendance across a whole course, not just one lesson?"
+    },
+    {
+      "id": "813419aece",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. Recurring lessons on the same Calendar invite roll up automatically, and the Meeting History dashboard at attendancetracker.dev shows every past session. Pro adds a cumulative Class Summary across the whole course."
+    },
+    {
+      "id": "7f392e2ea6",
+      "kind": "html",
+      "key": "h3",
+      "text": "What if a student's connection drops mid-lesson?"
+    },
+    {
+      "id": "17d6c7f114",
+      "kind": "html",
+      "key": "p",
+      "text": "Rejoins are tracked separately, and the duration reflects total minutes actually in the lesson — so a flaky connection doesn't turn a real attendee into a no-show."
+    },
+    {
+      "id": "7cd07cd521",
+      "kind": "html",
+      "key": "h3",
+      "text": "Protect every lesson hour you teach"
+    },
+    {
+      "id": "5724df69f4",
+      "kind": "html",
+      "key": "p",
+      "text": "Free to start, minute-accurate logs, works on personal Gmail and any Workspace tier."
+    },
+    {
+      "id": "14b133eb0f",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Attendance Tracker from Marketplace"
+    },
+    {
+      "id": "d360e4c6a4",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"import-google-classroom-roster-to-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Import Classroom Rosters</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "5f3cc2f91e",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Integrations</strong>\n          <a href=\"export-google-meet-attendance-to-moodle.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Moodle Gradebook Export</a>\n          <a href=\"export-google-meet-attendance-to-canvas.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Canvas Gradebook Export</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"send-google-meet-attendance-to-google-chat.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Chat &amp; Discord</a>"
+    },
+    {
+      "id": "98cdd4d1f5",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>"
+    },
+    {
+      "id": "e787e741f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "2f9752f24f",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "Google Meet attendance for language schools & ESL tutors (2026 Guide)"
+    },
+    {
+      "id": "338086408d",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "How language schools and online ESL tutors track Google Meet attendance with minute-accurate join/leave logs, late thresholds, per-level rosters, and course completion certificates."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "c9968b6a38",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Google Meet attendance for language schools &amp; ESL tutors"
+    }
+  ]
+}

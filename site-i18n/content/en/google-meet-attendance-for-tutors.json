@@ -1,0 +1,282 @@
+{
+  "page": "google-meet-attendance-for-tutors.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "6a39530030",
+      "kind": "head",
+      "key": "title",
+      "text": "Google Meet Attendance Tracker for Online Tutors & Bootcamps (2026) — Attendance Tracker"
+    },
+    {
+      "id": "0afe9788cc",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Automatically track student hours, timestamps, and attendance duration in Google Meet. Export proof-of-attendance sheets for parents, billing, and test prep academies. Free."
+    },
+    {
+      "id": "6b177e83cd",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Google Meet Attendance Tracker for Online Tutors & Bootcamps"
+    },
+    {
+      "id": "2e88ea9c2c",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Eliminate billing disputes with parent-ready attendance reports, student hours logging, and Google Sheets exports."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "c922635205",
+      "kind": "html",
+      "key": "h1",
+      "text": "Google Meet attendance tracker for online tutors &amp; bootcamps"
+    },
+    {
+      "id": "a7c5e51c4f",
+      "kind": "html",
+      "key": "p",
+      "text": "Private tutoring, test-prep academies (SAT/IELTS/GRE), coding bootcamps, and language schools rely on accurate student hour logs for billing, parent communication, and course completion certificates. Here is how to automate attendance tracking in Google Meet."
+    },
+    {
+      "id": "6ad5b4a721",
+      "kind": "attr",
+      "key": "title",
+      "text": "Attendance Tracker for Tutors"
+    },
+    {
+      "id": "d99c1b2f09",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Student hours and duration report exported to Google Sheets"
+    },
+    {
+      "id": "12e95b17cf",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Eliminate Billing Disputes:</strong> When parents ask why they are being billed for a missed lesson or late arrival, you have an uneditable, timestamped Google Sheet record showing exact join and leave times down to the minute."
+    },
+    {
+      "id": "f02f35df74",
+      "kind": "html",
+      "key": "h2",
+      "text": "Why Tutors &amp; Bootcamps Need Dedicated Tracking"
+    },
+    {
+      "id": "017a3b6f44",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Proof of Billable Hours:</strong> If you bill $60/hour, every 15 minutes of unrecorded student time or disputed attendance costs you real money."
+    },
+    {
+      "id": "b64e16e614",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Late Arrival Tracking:</strong> Know immediately if a student joined 10 minutes late (<code>+10m late</code>) so you can adjust the lesson pacing."
+    },
+    {
+      "id": "39a0c8c77d",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Disconnections &amp; Reconnects:</strong> When a student has spotty Wi-Fi and rejoins three times, Attendance Tracker calculates their total cumulative time in call."
+    },
+    {
+      "id": "787216cdb0",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Multi-Session Course Tracking:</strong> For 8-week bootcamps or semester packages, view total hours logged across all sessions with automated streak tracking."
+    },
+    {
+      "id": "280ac587e3",
+      "kind": "html",
+      "key": "h2",
+      "text": "How It Works for Online Tutors"
+    },
+    {
+      "id": "34105a0edf",
+      "kind": "html",
+      "key": "h3",
+      "text": "Step 1: Start Your Google Meet Lesson"
+    },
+    {
+      "id": "69aa1ab779",
+      "kind": "html",
+      "key": "p",
+      "text": "Launch your 1-on-1 or small group tutoring session from Google Calendar or Google Classroom. Open <strong>Attendance Tracker</strong> from the Activities panel in Google Meet."
+    },
+    {
+      "id": "c1eb572d0b",
+      "kind": "html",
+      "key": "h3",
+      "text": "Step 2: Real-Time Roster &amp; Punctuality Flags"
+    },
+    {
+      "id": "62441a5c2b",
+      "kind": "html",
+      "key": "p",
+      "text": "The side panel tracks student arrival timestamps. If your scheduled lesson starts at 4:00 PM and the student connects at 4:12 PM, the panel automatically flags them as <code>+12m late</code>."
+    },
+    {
+      "id": "1b8c07d390",
+      "kind": "html",
+      "key": "h3",
+      "text": "Step 3: One-Click Google Drive Sync"
+    },
+    {
+      "id": "68f7d4e746",
+      "kind": "html",
+      "key": "p",
+      "text": "When the session concludes, Attendance Tracker creates a tabbed spreadsheet in your Google Drive named <code>Meet Attendance Tracker</code>. You can share read-only links with parents or paste the hours directly into QuickBooks, Wave, or your invoicing software."
+    },
+    {
+      "id": "4ef88a821f",
+      "kind": "html",
+      "key": "h2",
+      "text": "Popular Tutoring Use Cases"
+    },
+    {
+      "id": "8fb7cbc1a3",
+      "kind": "html",
+      "key": "th",
+      "text": "Academy / Tutor Type"
+    },
+    {
+      "id": "2cf8380768",
+      "kind": "html",
+      "key": "th",
+      "text": "How They Use Attendance Tracker"
+    },
+    {
+      "id": "e79306f53d",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>K-12 Private Tutors</strong>"
+    },
+    {
+      "id": "75c473f192",
+      "kind": "html",
+      "key": "td",
+      "text": "Monthly attendance logs emailed directly to parents with invoice summaries."
+    },
+    {
+      "id": "b9726f3e49",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Coding &amp; UX Bootcamps</strong>"
+    },
+    {
+      "id": "9e3346a126",
+      "kind": "html",
+      "key": "td",
+      "text": "Tracking mandatory live lecture hours required for graduation certificates."
+    },
+    {
+      "id": "1d7c648ad3",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>ESL &amp; Language Schools</strong>"
+    },
+    {
+      "id": "380bc9a447",
+      "kind": "html",
+      "key": "td",
+      "text": "Documenting student visa or corporate language training attendance minimums."
+    },
+    {
+      "id": "0045971aa1",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Test Prep (SAT/GRE/MCAT)</strong>"
+    },
+    {
+      "id": "78d2add20a",
+      "kind": "html",
+      "key": "td",
+      "text": "Monitoring student engagement and attendance across 10-week cohort bootcamps."
+    },
+    {
+      "id": "f2b9d227f1",
+      "kind": "html",
+      "key": "h3",
+      "text": "Automate your tutoring attendance and billing logs"
+    },
+    {
+      "id": "faefbd3688",
+      "kind": "html",
+      "key": "p",
+      "text": "Free, works on personal Gmail and Google Workspace accounts, installs in 30 seconds."
+    },
+    {
+      "id": "14b133eb0f",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Attendance Tracker from Marketplace"
+    },
+    {
+      "id": "9352c1ed98",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "a3ad204977",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-legal-depositions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Legal &amp; Arbitrations</a>\n          <a href=\"google-meet-attendance-for-job-interviews.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Recruiting &amp; Interviews</a>"
+    },
+    {
+      "id": "e7a3b147f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Specialized Verticals</strong>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-clinical-supervision-and-therapy.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Clinical Supervision</a>\n          <a href=\"google-meet-quorum-and-board-meetings.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Board Quorum Tracking</a>\n          <a href=\"google-meet-attendance-for-churches.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Churches &amp; Ministries</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>\n          <a href=\"google-meet-attendance-for-fitness-and-yoga.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Fitness &amp; Yoga</a>"
+    },
+    {
+      "id": "eb9246d86f",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>\n          <a href=\"google-meet-attendance-on-ipad-and-mobile.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">iPad &amp; Mobile Attendance</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "1fd73c2669",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "Google Meet Attendance Tracking for Online Tutors, Test Prep & Bootcamps"
+    },
+    {
+      "id": "30654f184b",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "How private tutors and online academies track student hours and generate invoice-ready attendance sheets in Google Meet."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "4dfbeebc48",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Google Meet attendance tracker for online tutors &amp; bootcamps"
+    }
+  ]
+}

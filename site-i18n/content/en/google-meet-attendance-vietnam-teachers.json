@@ -1,0 +1,366 @@
+{
+  "page": "google-meet-attendance-vietnam-teachers.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "4d7229d833",
+      "kind": "head",
+      "key": "title",
+      "text": "Google Meet attendance for teachers in Vietnam (2026 Guide) — Điểm danh Google Meet — Attendance Tracker"
+    },
+    {
+      "id": "7a7fc5c7fd",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Điểm danh tự động trên Google Meet: automatic attendance for Vietnamese teachers and tutoring classes, with a side panel available in Tiếng Việt, free CSV exports, and one-time Pro pricing."
+    },
+    {
+      "id": "25a021f16a",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Google Meet attendance for teachers in Vietnam — Điểm danh Google Meet"
+    },
+    {
+      "id": "6529ff7606",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Automatic roll call (điểm danh) for Google Meet classes in Vietnam — panel UI in Tiếng Việt, works on any Gmail account, free CSV exports, one-time Pro pricing."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "272f549b20",
+      "kind": "html",
+      "key": "h1",
+      "text": "Google Meet attendance for teachers in Vietnam (2026 Guide) — Điểm danh Google Meet"
+    },
+    {
+      "id": "9596ed07a2",
+      "kind": "html",
+      "key": "p",
+      "text": "Whether you teach a public-school class in Hà Nội, run evening học thêm sessions from Đà Nẵng, or tutor IELTS students online from Hồ Chí Minh City, taking roll call (điểm danh) by reading names into a Google Meet call wastes lesson time — and Meet itself keeps no attendance record you can check later. Here is how Vietnamese teachers automate điểm danh, with a side panel that speaks Tiếng Việt."
+    },
+    {
+      "id": "3c7dbd6d29",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Giao diện tiếng Việt — the panel speaks Vietnamese:</strong> Attendance Tracker's side panel is localized in 60 languages, and <strong>Tiếng Việt is one of them</strong>. Statuses, buttons, and settings appear in Vietnamese automatically based on your Google language — a real difference from attendance extensions that are English-only."
+    },
+    {
+      "id": "a35b23c304",
+      "kind": "html",
+      "key": "h2",
+      "text": "Why Meet gives Vietnamese teachers no attendance report"
+    },
+    {
+      "id": "46de796997",
+      "kind": "html",
+      "key": "p",
+      "text": "Google's built-in attendance emails exist only on premium Education editions (Education Plus or the Teaching &amp; Learning upgrade) — and even then, only the host receives them. Most schools and tutoring centres in Vietnam run on free Workspace tiers or plain <code>@gmail.com</code> accounts, where Meet sends nothing and stores nothing. If nobody captures attendance during class, the record simply never exists."
+    },
+    {
+      "id": "17da17cad7",
+      "kind": "html",
+      "key": "p",
+      "text": "<strong>Attendance Tracker</strong> is an official Google Meet add-on (in the side panel, via the Activities menu — not a Chrome extension), so it works on personal Gmail and any Workspace edition, in Chrome, Edge, Firefox, and Safari, and on Chromebooks. Open the panel, press Start, and every student is sorted live into Present, Late, or Absent (Có mặt / Đi muộn / Vắng mặt), with join times, total minutes, and an attendance percentage."
+    },
+    {
+      "id": "3dda77a8b1",
+      "kind": "html",
+      "key": "h2",
+      "text": "Made for how teaching actually works in Vietnam"
+    },
+    {
+      "id": "77cb3ab077",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>K-12 classes:</strong> Import your student list from Google Classroom in one click, set your own late threshold (5 minutes, 10 minutes — your rule), and get a per-session record with absentees included, ready for the homeroom teacher's sổ điểm danh."
+    },
+    {
+      "id": "a15ce95d5c",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Học thêm and tutoring centres:</strong> Extra classes bill by session. A dated CSV or PDF per lesson — who attended, who joined late, how many minutes — is your receipt for parents and your record for the centre. Rejoins from dropped 4G connections are merged into one clean row, so an unstable connection never looks like an absence."
+    },
+    {
+      "id": "9fbb978784",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Recurring classes roll up automatically:</strong> For a class on a repeating Calendar invite, each student's attendance percentage accumulates across the whole term — no manual tallying at semester's end."
+    },
+    {
+      "id": "ad2d6c9239",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Nothing extra for students:</strong> Students join the Meet link as usual, from any device. Only the teacher needs the add-on."
+    },
+    {
+      "id": "5f27936d31",
+      "kind": "html",
+      "key": "h2",
+      "text": "Free where it matters, one-time when you upgrade"
+    },
+    {
+      "id": "2864b6e20b",
+      "kind": "html",
+      "key": "p",
+      "text": "The free tier covers a working teacher's routine: real-time roster, Class Roster with Google Classroom import, PDF reports, per-session Moodle/Canvas gradebook CSVs, 2 free exports per month across Google Sheets, CSV, or binary Excel (for classes up to 25 attendees, plus 1 large-class grace export), and a permanent Meeting History at attendancetracker.dev."
+    },
+    {
+      "id": "c409799e78",
+      "kind": "html",
+      "key": "p",
+      "text": "When you outgrow it, Pro avoids the subscription treadmill:"
+    },
+    {
+      "id": "cfdbc13a39",
+      "kind": "html",
+      "key": "th",
+      "text": "Plan"
+    },
+    {
+      "id": "34145df562",
+      "kind": "html",
+      "key": "th",
+      "text": "Price"
+    },
+    {
+      "id": "52175b415a",
+      "kind": "html",
+      "key": "th",
+      "text": "Billing"
+    },
+    {
+      "id": "ee48fc1c34",
+      "kind": "html",
+      "key": "td",
+      "text": "Individual Lifetime Pass"
+    },
+    {
+      "id": "65680c663e",
+      "kind": "html",
+      "key": "td",
+      "text": "$9.99–$19 (regional)"
+    },
+    {
+      "id": "da485ccdd3",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>One-time</strong> — pay once, yours forever ($29 standard)"
+    },
+    {
+      "id": "dd6c15de6b",
+      "kind": "html",
+      "key": "td",
+      "text": "Educator Annual Pass"
+    },
+    {
+      "id": "28150fca6e",
+      "kind": "html",
+      "key": "td",
+      "text": "$4.99–$7.99/year (regional)"
+    },
+    {
+      "id": "63da91f379",
+      "kind": "html",
+      "key": "td",
+      "text": "Yearly, lowest entry price for teachers ($14.99/year standard)"
+    },
+    {
+      "id": "9e149dd7ce",
+      "kind": "html",
+      "key": "td",
+      "text": "Department (whole domain)"
+    },
+    {
+      "id": "2d28a84082",
+      "kind": "html",
+      "key": "td",
+      "text": "$59/yr"
+    },
+    {
+      "id": "ace24b294f",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Annual</strong> — every teacher on a school's Workspace domain"
+    },
+    {
+      "id": "0f38209b07",
+      "kind": "html",
+      "key": "p",
+      "text": "Pro adds unlimited Sheets exports, hands-free <strong>Auto-Capture</strong> (classes you host are exported automatically within hours of ending, even with the panel closed), cumulative semester summaries, per-student PDF attendance certificates with public verification, and digests to Google Chat, Slack, or Discord."
+    },
+    {
+      "id": "37de0218bb",
+      "kind": "html",
+      "key": "h2",
+      "text": "Cách sử dụng — how to start (4 steps)"
+    },
+    {
+      "id": "8a8807e51c",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Install:</strong> Open the <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_vietnam\" target=\"_blank\" rel=\"noopener\">Attendance Tracker page on the Google Workspace Marketplace</a> and click Install — free, on any Gmail or Workspace account."
+    },
+    {
+      "id": "b79af5e8ee",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Open the panel:</strong> In your Google Meet class, click the <strong>Activities</strong> icon and choose <strong>Attendance Tracker</strong>. If your Google language is Vietnamese, the panel appears in Tiếng Việt."
+    },
+    {
+      "id": "961cedc4ac",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Add your roster and press Start:</strong> Paste your student list or import from Google Classroom, then teach — điểm danh happens by itself."
+    },
+    {
+      "id": "92fb948ded",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Export:</strong> Download the CSV or PDF after class, or find any past session in Meeting History."
+    },
+    {
+      "id": "7d2dc48836",
+      "kind": "html",
+      "key": "h2",
+      "text": "Frequently asked questions"
+    },
+    {
+      "id": "c251d872ea",
+      "kind": "html",
+      "key": "h3",
+      "text": "Is the interface really available in Vietnamese?"
+    },
+    {
+      "id": "75d4d5c1c9",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes — the side panel UI is localized in 60 languages including Tiếng Việt. It detects your browser language automatically, and you can switch languages any time from the panel's Settings."
+    },
+    {
+      "id": "ce029d8af0",
+      "kind": "html",
+      "key": "h3",
+      "text": "Does it work on a personal Gmail account?"
+    },
+    {
+      "id": "b4e00a0b0c",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. No school Workspace domain or Education Plus license is required — a personal <code>@gmail.com</code> account is enough, which is exactly how most independent tutors and học thêm teachers in Vietnam operate."
+    },
+    {
+      "id": "c4e8f1559e",
+      "kind": "html",
+      "key": "h3",
+      "text": "What exactly is recorded for each student?"
+    },
+    {
+      "id": "c748ea44fe",
+      "kind": "html",
+      "key": "p",
+      "text": "Name, email, status (Present / Late / Left Early / Absent / Excused / Guest), attendance percentage, duration in minutes, join and leave times, number of rejoins, and a notes field — enough detail to answer any parent's question about a session."
+    },
+    {
+      "id": "983d9a2e26",
+      "kind": "html",
+      "key": "h3",
+      "text": "Can a teaching assistant run điểm danh when the centre's account hosts the class?"
+    },
+    {
+      "id": "440325005a",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. Non-hosts can track after the Workspace admin completes a one-time delegation at <a href=\"https://attendancetracker.dev/setup\">attendancetracker.dev/setup</a>."
+    },
+    {
+      "id": "b16cf9c126",
+      "kind": "html",
+      "key": "h3",
+      "text": "How long are my records kept?"
+    },
+    {
+      "id": "cd86c25877",
+      "kind": "html",
+      "key": "p",
+      "text": "For as long as your account is active — and you can delete your account and all its data yourself from Settings at any time. See <a href=\"how-long-does-google-meet-keep-attendance.html\">how long Google Meet itself keeps attendance</a> (spoiler: it doesn't)."
+    },
+    {
+      "id": "b24449e223",
+      "kind": "html",
+      "key": "h3",
+      "text": "Điểm danh tự động cho lớp học của bạn"
+    },
+    {
+      "id": "96b4627c4c",
+      "kind": "html",
+      "key": "p",
+      "text": "Automatic attendance for your Google Meet classes — free to start, panel in Tiếng Việt, one-time Pro pricing."
+    },
+    {
+      "id": "14b133eb0f",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Attendance Tracker from Marketplace"
+    },
+    {
+      "id": "d360e4c6a4",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"import-google-classroom-roster-to-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Import Classroom Rosters</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "5f3cc2f91e",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Integrations</strong>\n          <a href=\"export-google-meet-attendance-to-moodle.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Moodle Gradebook Export</a>\n          <a href=\"export-google-meet-attendance-to-canvas.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Canvas Gradebook Export</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"send-google-meet-attendance-to-google-chat.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Chat &amp; Discord</a>"
+    },
+    {
+      "id": "98cdd4d1f5",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>"
+    },
+    {
+      "id": "e787e741f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "9deff2fe49",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "Google Meet attendance for teachers in Vietnam (2026 Guide) — Điểm danh Google Meet"
+    },
+    {
+      "id": "71d9dc3845",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "How Vietnamese teachers and tutors take automatic attendance (điểm danh) in Google Meet with a Vietnamese-language side panel, free exports, and one-time Pro pricing."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    }
+  ]
+}

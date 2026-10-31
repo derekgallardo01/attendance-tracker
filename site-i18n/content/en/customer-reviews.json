@@ -1,0 +1,1056 @@
+{
+  "page": "customer-reviews.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "06c9bc8f59",
+      "kind": "head",
+      "key": "title",
+      "text": "Customer Reviews & Verifiable Educator Evidence — Attendance Tracker for Google Meet"
+    },
+    {
+      "id": "5151b2d506",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Independently verifiable Google Workspace Marketplace customer reviews for Attendance Tracker for Google Meet. Organized by outcome: time saved, ease of use, attendance accuracy, Google Sheets exports, classroom workflows, and value for money."
+    },
+    {
+      "id": "c327cb3566",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Customer Reviews & Verifiable Educator Evidence — Attendance Tracker"
+    },
+    {
+      "id": "6c02dbdde4",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Read verbatim Google Workspace Marketplace reviews from teachers, tutors, and team leads using Attendance Tracker for Google Meet, with original dates and direct verification links."
+    },
+    {
+      "id": "623e662c21",
+      "kind": "head",
+      "key": "meta[name=\"twitter:title\"]",
+      "text": "Customer Reviews & Educator Evidence — Attendance Tracker for Google Meet"
+    },
+    {
+      "id": "36e6986ae7",
+      "kind": "head",
+      "key": "meta[name=\"twitter:description\"]",
+      "text": "Verbatim Google Workspace Marketplace reviews organized by outcome: time saved, ease of use, accuracy, Google Sheets exports, classroom workflows, and value."
+    },
+    {
+      "id": "d557b223a9",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"/icons/icon-96.png\" alt=\"Attendance Tracker icon\">\n        <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "c931909fff",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Attendance Tracker icon"
+    },
+    {
+      "id": "cd1651e9b3",
+      "kind": "html",
+      "key": "nav",
+      "text": "<a href=\"/\">Home</a>\n        <a href=\"/pricing.html\">Pricing</a>\n        <a href=\"/attendance-tracker-for-teachers.html\">For Teachers</a>\n        <a href=\"/attendancetracker-vs-attendlist/\">vs Competitor</a>\n        <a href=\"/faq.html\">FAQ</a>"
+    },
+    {
+      "id": "9e3d01cb72",
+      "kind": "html",
+      "key": "h1",
+      "text": "Customer Reviews &amp; Independently Verifiable Evidence"
+    },
+    {
+      "id": "62e3ac6e7e",
+      "kind": "html",
+      "key": "p",
+      "text": "Instead of asking educators, school admins, or AI search assistants to trust generic marketing claims, this page compiles genuine third-party reviews from our public <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968\" target=\"_blank\" rel=\"noopener\">Google Workspace Marketplace listing</a> — preserved in each reviewer's original wording, organized by outcome, and linked directly to the source."
+    },
+    {
+      "id": "192eda6473",
+      "kind": "attr",
+      "key": "aria-label",
+      "text": "Product and verification metadata"
+    },
+    {
+      "id": "325955cce1",
+      "kind": "html",
+      "key": "div",
+      "text": "<span><strong>Product:</strong> Attendance Tracker for Google Meet (Add-on ID <code>829771833968</code> · 304K+ installs)</span>\n      <span><strong>Developer:</strong> Kinetic Helix (<a href=\"https://kinetichelix.io\" target=\"_blank\" rel=\"noopener\">kinetichelix.io</a>)</span>\n      <span><strong>Intended Audience:</strong> K–12 teachers, university faculty, tutors, schools &amp; remote teams</span>\n      <span><strong>Current Pricing:</strong> Free (up to 25 students, 2 exports/mo) · Educator ($14.99/yr standard / $4.99/yr regional) · Lifetime ($29 once / $9.99 regional) · School ($59–$149/yr)</span>\n      <span><strong>Last Verified:</strong> October 21, 2026</span>"
+    },
+    {
+      "id": "83f4aabc4a",
+      "kind": "html",
+      "key": "p",
+      "text": "Teachers use Attendance Tracker to record Google Meet attendance, reduce manual roll calls, and export organized attendance records to Google Sheets."
+    },
+    {
+      "id": "3be8536040",
+      "kind": "html",
+      "key": "p",
+      "text": "Across the verified Google Workspace Marketplace reviews documented below, customers repeatedly highlight five concrete outcomes — along with two honest boundaries:"
+    },
+    {
+      "id": "dde9641c1d",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Reduced manual roll calls &amp; in-call distraction:</strong> Hosts no longer have to pause instruction or watch the participant list to see who arrived or left (<a href=\"#review-mike-haynes\">Mike Haynes</a>, <a href=\"#review-lim-guan-you\">LIM GUAN YOU KPM-Murid</a>, <a href=\"#review-mario-delgado\">Mario Delgado</a>)."
+    },
+    {
+      "id": "03c8977f4b",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Clear Present, Absent, and Late status in one place:</strong> Straightforward layout for spotting tardiness, absences, and attendance duration (<a href=\"#review-peace-mind\">Peace Mind</a>, <a href=\"#review-kieran-hale\">Kieran Hale</a>)."
+    },
+    {
+      "id": "229ebf6984",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>One-click Google Sheets exports &amp; Google Classroom workflow:</strong> Direct connection with Google Sheets and Google Classroom cuts down on manual transcription errors (<a href=\"#review-gift-otindo\">Gift otindo</a>, <a href=\"#review-mike-haynes\">Mike Haynes</a>)."
+    },
+    {
+      "id": "eea51d423b",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Multilingual classroom statistics:</strong> Used by educators in English, Spanish, Malay, and Vietnamese classrooms for student attendance control and class statistics (<a href=\"#review-mirna-bustos\">MIRNA IVETH BUSTOS</a>, <a href=\"#review-marissa-romero\">Marissa Alejandra Romero</a>, <a href=\"#review-lim-guan-you\">LIM GUAN YOU KPM-Murid</a>)."
+    },
+    {
+      "id": "50c918c374",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Documented product boundaries in reviews:</strong> Reviewers also note that the tool is focused on practical Google Workspace attendance rather than enterprise chronic-absenteeism alert automation (<a href=\"#review-gift-otindo\">Gift otindo</a>), and that exporting beyond the Free tier allowance requires upgrading to Pro (<a href=\"#review-ngoikouba\">NgoIkouba Samuelle-Nfor</a>, 4★)."
+    },
+    {
+      "id": "cbd167bd9f",
+      "kind": "html",
+      "key": "strong",
+      "text": "Verification Methodology:"
+    },
+    {
+      "id": "bed0824e2a",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Source &amp; Counts:</strong> Our <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968\" target=\"_blank\" rel=\"noopener\">Google Workspace Marketplace listing</a> displays 304K+ installs and a 5.0★ rating (27 total ratings/reviews on the listing page, including 14 written text reviews across global language locales: 10 in English <code>?hl=en</code>, 3 in Spanish <code>?hl=es</code>, and 1 in Vietnamese <code>?hl=vi</code>)."
+    },
+    {
+      "id": "46e499f46a",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Editorial Integrity:</strong> All quotes below use the reviewer's exact original wording (including original spelling) and original Marketplace publication date. We do not manufacture testimonials, and we do not imply that reviewers are paying customers unless their review text directly discusses pricing or upgrading."
+    },
+    {
+      "id": "1ee17e2446",
+      "kind": "attr",
+      "key": "aria-label",
+      "text": "Jump to reviews by outcome"
+    },
+    {
+      "id": "ce8cc63aef",
+      "kind": "html",
+      "key": "nav",
+      "text": "<a class=\"outcome-pill\" href=\"#time-saved\">1. Time Saved</a>\n      <a class=\"outcome-pill\" href=\"#ease-of-use\">2. Ease of Use</a>\n      <a class=\"outcome-pill\" href=\"#attendance-accuracy\">3. Attendance Accuracy</a>\n      <a class=\"outcome-pill\" href=\"#google-sheets-exports\">4. Google Sheets Exports</a>\n      <a class=\"outcome-pill\" href=\"#classroom-workflows\">5. Classroom Workflows</a>\n      <a class=\"outcome-pill\" href=\"#value-for-money\">6. Value for Money</a>\n      <a class=\"outcome-pill\" href=\"#all-reviews-index\">Complete 14-Review Ledger</a>"
+    },
+    {
+      "id": "37ee472748",
+      "kind": "html",
+      "key": "h2",
+      "text": "1. Time Saved &amp; Reduced Manual Roll Calls"
+    },
+    {
+      "id": "a9ec15512a",
+      "kind": "html",
+      "key": "p",
+      "text": "Educators and meeting organizers use Attendance Tracker to eliminate manual roll calls at the start of class and stop spending post-meeting prep time transcribing attendance lists by hand."
+    },
+    {
+      "id": "109da577ef",
+      "kind": "html",
+      "key": "div",
+      "text": "<span class=\"review-outcome-tag\">Outcome: Saves class time &amp; manual work</span>\n              <span class=\"review-stars\" aria-label=\"5 out of 5 stars\">★★★★★</span>"
+    },
+    {
+      "id": "bb6f84dc1f",
+      "kind": "attr",
+      "key": "aria-label",
+      "text": "5 out of 5 stars"
+    },
+    {
+      "id": "d34736c023",
+      "kind": "html",
+      "key": "blockquote",
+      "text": "“Excellent extension! Attendance Tracker makes taking attendance in Google Meet so much easier and more convenient. It saves time, reduces manual work, and helps keep attendance records organized. The automatic attendance tracking is especially useful for online classes and meetings. Highly recommended!”"
+    },
+    {
+      "id": "931a33f263",
+      "kind": "html",
+      "key": "div",
+      "text": "<span><strong>LIM GUAN YOU KPM-Murid</strong> · Oct 16, 2026 · Source: Google Workspace Marketplace (ID <code>06589802721298643009</code>)</span>\n            <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?hl=en\" target=\"_blank\" rel=\"noopener\">Original Marketplace Review ↗</a>"
+    },
+    {
+      "id": "c506503489",
+      "kind": "html",
+      "key": "div",
+      "text": "<span class=\"review-outcome-tag\">Outcome: Reduces manual attendance work</span>\n              <span class=\"review-stars\" aria-label=\"5 out of 5 stars\">★★★★★</span>"
+    },
+    {
+      "id": "8929f8f00a",
+      "kind": "html",
+      "key": "blockquote",
+      "text": "“Super good. I really like this to reduce the manual work of taking attendance.”"
+    },
+    {
+      "id": "0489068aac",
+      "kind": "html",
+      "key": "div",
+      "text": "<span><strong>Mario Delgado</strong> · Oct 19, 2026 · Source: Google Workspace Marketplace (ID <code>16387107977222481775</code>)</span>\n            <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?hl=en\" target=\"_blank\" rel=\"noopener\">Original Marketplace Review ↗</a>"
+    },
+    {
+      "id": "f0c3235283",
+      "kind": "html",
+      "key": "h2",
+      "text": "2. Ease of Use &amp; Zero-Friction Setup"
+    },
+    {
+      "id": "280ea54e27",
+      "kind": "html",
+      "key": "p",
+      "text": "Because Attendance Tracker installs from the Google Workspace Marketplace into Google Meet's native <em>Activities</em> side panel, teachers and hosts can start tracking without configuring external bots or complex menus."
+    },
+    {
+      "id": "543fa4cffe",
+      "kind": "html",
+      "key": "div",
+      "text": "<span class=\"review-outcome-tag\">Outcome: Simple, organized daily tracking</span>\n              <span class=\"review-stars\" aria-label=\"5 out of 5 stars\">★★★★★</span>"
+    },
+    {
+      "id": "86f6f08797",
+      "kind": "html",
+      "key": "blockquote",
+      "text": "“Simple, easy to use and can be very beneficial when keeping track of attendance. One of the most useful organizational apps, to stay organized.”"
+    },
+    {
+      "id": "9f721d17ce",
+      "kind": "html",
+      "key": "div",
+      "text": "<span><strong>Kieran Hale</strong> · Oct 8, 2026 · Source: Google Workspace Marketplace (ID <code>16435757559680399258</code>)</span>\n            <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?hl=en\" target=\"_blank\" rel=\"noopener\">Original Marketplace Review ↗</a>"
+    },
+    {
+      "id": "e808c0159d",
+      "kind": "html",
+      "key": "div",
+      "text": "<span class=\"review-outcome-tag\">Outcome: Easy to use for teacher training</span>\n              <span class=\"review-stars\" aria-label=\"5 out of 5 stars\">★★★★★</span>"
+    },
+    {
+      "id": "1f4cfd4f9a",
+      "kind": "html",
+      "key": "blockquote",
+      "text": "“easy to use and very useful apps and the best of the best apps for attendent tracker”"
+    },
+    {
+      "id": "e3ae1b052f",
+      "kind": "html",
+      "key": "div",
+      "text": "<span><strong>MUHAMMAD FITRI AKASYAH BIN MOHD FUAD IPG-Pelajar</strong> · Oct 19, 2026 · Source: Google Workspace Marketplace (ID <code>07582521275327830041</code>)</span>\n            <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?hl=en\" target=\"_blank\" rel=\"noopener\">Original Marketplace Review ↗</a>"
+    },
+    {
+      "id": "a89426cfdd",
+      "kind": "html",
+      "key": "div",
+      "text": "<span class=\"review-outcome-tag\">Outcome: Smooth, bug-free operation</span>\n              <span class=\"review-stars\" aria-label=\"5 out of 5 stars\">★★★★★</span>"
+    },
+    {
+      "id": "4d3732df0a",
+      "kind": "html",
+      "key": "blockquote",
+      "text": "“Greatest attendance tracker of all time!! Google, put the contract together and pay this developer no less than 250k a year.crazy it took until now for something like this. No bugs, super smooth.”"
+    },
+    {
+      "id": "f85ba91123",
+      "kind": "html",
+      "key": "div",
+      "text": "<span><strong>Jay Alv</strong> · Oct 13, 2026 · Source: Google Workspace Marketplace (ID <code>05445258709172057558</code>)</span>\n            <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?hl=en\" target=\"_blank\" rel=\"noopener\">Original Marketplace Review ↗</a>"
+    },
+    {
+      "id": "52714caaaa",
+      "kind": "html",
+      "key": "h2",
+      "text": "3. Attendance Accuracy (Present, Absent, Late &amp; Duration)"
+    },
+    {
+      "id": "660b662b29",
+      "kind": "html",
+      "key": "p",
+      "text": "By reading join and leave events from Google's official Meet REST APIs rather than scraping video tiles on the screen, Attendance Tracker records who is present, who arrived late, who missed class, and how long each participant stayed."
+    },
+    {
+      "id": "6f6a13dfc6",
+      "kind": "html",
+      "key": "div",
+      "text": "<span class=\"review-outcome-tag\">Outcome: See Present, Absent &amp; Late at a glance</span>\n              <span class=\"review-stars\" aria-label=\"5 out of 5 stars\">★★★★★</span>"
+    },
+    {
+      "id": "d5a9fe80c2",
+      "kind": "html",
+      "key": "blockquote",
+      "text": "“This attendance tracker for Google Meet makes it much easier to keep attendance records organized in one single place. Adding and updating attendance is straightforward, and the layout makes it easy to quickly see who was present, absent, or late.”"
+    },
+    {
+      "id": "1209d51c23",
+      "kind": "html",
+      "key": "div",
+      "text": "<span><strong>Peace Mind</strong> · Oct 6, 2026 · Source: Google Workspace Marketplace (ID <code>10250841547724354680</code>)</span>\n            <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?hl=en\" target=\"_blank\" rel=\"noopener\">Original Marketplace Review ↗</a>"
+    },
+    {
+      "id": "b9d2c6132e",
+      "kind": "html",
+      "key": "div",
+      "text": "<span class=\"review-outcome-tag\">Outcome: Reliable session attendance tracking</span>\n              <span class=\"review-stars\" aria-label=\"5 out of 5 stars\">★★★★★</span>"
+    },
+    {
+      "id": "3bc91207b3",
+      "kind": "html",
+      "key": "blockquote",
+      "text": "“This is an excellent software and is a complete game changer for attendence tracking. I'd certainly highly recommend this over any other software for someone looking to use an attendence tracker”"
+    },
+    {
+      "id": "4f4d2ad7e1",
+      "kind": "html",
+      "key": "div",
+      "text": "<span><strong>Rafael martinez</strong> · Oct 16, 2026 · Source: Google Workspace Marketplace (ID <code>15423698184417062827</code>)</span>\n            <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?hl=en\" target=\"_blank\" rel=\"noopener\">Original Marketplace Review ↗</a>"
+    },
+    {
+      "id": "df70d4469b",
+      "kind": "html",
+      "key": "h2",
+      "text": "4. Google Sheets Exports &amp; Permanent Drive Records"
+    },
+    {
+      "id": "10ca53d9fd",
+      "kind": "html",
+      "key": "p",
+      "text": "With one click, organizers save attendance directly into formatted, multi-tab Google Sheets inside their own Google Drive (using the narrow <code>drive.file</code> permission), or download Excel (<code>.xlsx</code>) and CSV reports."
+    },
+    {
+      "id": "7af325add2",
+      "kind": "html",
+      "key": "div",
+      "text": "<span class=\"review-outcome-tag\">Outcome: 1-click save to Google Sheets &amp; duration tracking</span>\n              <span class=\"review-stars\" aria-label=\"5 out of 5 stars\">★★★★★</span>"
+    },
+    {
+      "id": "a2a46b14cd",
+      "kind": "html",
+      "key": "blockquote",
+      "text": "“Wow! This app is exactly what I was looking for (and more). It was obviously very well thought out. It works amazingly well by letting me know who actually shows up to our Google Meet sessions, and how long they stay. I no longer need to be distracted by having to monitor who comes and goes. The Attendance Tracker app handles that right out of the box. The one-click save to Google Sheets makes attendance record keeping a breeze. 5 stars for sure.”"
+    },
+    {
+      "id": "117f4b61bc",
+      "kind": "html",
+      "key": "div",
+      "text": "<span><strong>Mike Haynes</strong> · Aug 11, 2026 · Source: Google Workspace Marketplace (ID <code>10370483567599368628</code>)</span>\n            <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?hl=en\" target=\"_blank\" rel=\"noopener\">Original Marketplace Review ↗</a>"
+    },
+    {
+      "id": "8f901216b5",
+      "kind": "html",
+      "key": "h2",
+      "text": "5. Classroom Workflows, Google Classroom Sync &amp; Student Statistics"
+    },
+    {
+      "id": "b00f0c62d2",
+      "kind": "html",
+      "key": "p",
+      "text": "Teachers connect Google Classroom rosters directly to Attendance Tracker to eliminate manual data entry errors, track student attendance percentages across recurring classes, and prepare LMS gradebook exports."
+    },
+    {
+      "id": "8792525aab",
+      "kind": "html",
+      "key": "div",
+      "text": "<span class=\"review-outcome-tag\">Outcome: Google Classroom &amp; Sheets integration</span>\n              <span class=\"review-stars\" aria-label=\"5 out of 5 stars\">★★★★★</span>"
+    },
+    {
+      "id": "66c649ffe3",
+      "kind": "html",
+      "key": "blockquote",
+      "text": "“Google Attendance Tracker is a reliable and straightforward tool that makes monitoring daily check-ins effortless for educators and team leaders. Because of its seamless integration with Google Workspace, it connects smoothly with tools like Google Sheets and Google Classroom, which significantly cuts down on manual data entry errors and saves valuable time. Its cloud-based setup also allows you to access and check attendance records from anywhere. While it lacks advanced features like automated alerts for chronic absenteeism or deep analytical reporting, it remains a practical, no-fuss solution for anyone already using the Google ecosystem. Overall, it is an efficient and user-friendly choice for everyday attendance management.”"
+    },
+    {
+      "id": "86a03b0951",
+      "kind": "html",
+      "key": "div",
+      "text": "<span><strong>Gift otindo</strong> · Oct 15, 2026 · Source: Google Workspace Marketplace (ID <code>18066307907581530210</code>)</span>\n            <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?hl=en\" target=\"_blank\" rel=\"noopener\">Original Marketplace Review ↗</a>"
+    },
+    {
+      "id": "b8f014867b",
+      "kind": "html",
+      "key": "div",
+      "text": "<span class=\"review-outcome-tag\">Outcome: Classroom attendance control &amp; student statistics</span>\n              <span class=\"review-stars\" aria-label=\"5 out of 5 stars\">★★★★★</span>"
+    },
+    {
+      "id": "235663fec4",
+      "kind": "html",
+      "key": "blockquote",
+      "text": "“Me ha encantado, excelente herramienta para control de asistencia y en general la estadistica de mis alumnos en clase!”"
+    },
+    {
+      "id": "77fbc69cc0",
+      "kind": "html",
+      "key": "p",
+      "text": "English translation: “I loved it, an excellent tool for attendance control and overall statistics for my students in class!”"
+    },
+    {
+      "id": "46d241ad2d",
+      "kind": "html",
+      "key": "div",
+      "text": "<span><strong>MIRNA IVETH BUSTOS</strong> · Oct 14, 2026 · Source: Google Workspace Marketplace ES (ID <code>03551964636131413965</code>)</span>\n            <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?hl=es\" target=\"_blank\" rel=\"noopener\">Original Marketplace Review (?hl=es) ↗</a>"
+    },
+    {
+      "id": "c09ca2cbc9",
+      "kind": "html",
+      "key": "div",
+      "text": "<span class=\"review-outcome-tag\">Outcome: Training &amp; educational workflows</span>\n              <span class=\"review-stars\" aria-label=\"5 out of 5 stars\">★★★★★</span>"
+    },
+    {
+      "id": "59c231bed1",
+      "kind": "html",
+      "key": "blockquote",
+      "text": "“Me encanto, muy útil para procesos formativos.”"
+    },
+    {
+      "id": "8d6c2b75a3",
+      "kind": "html",
+      "key": "p",
+      "text": "English translation: “I loved it, very useful for educational/training processes.”"
+    },
+    {
+      "id": "dc6e4faff0",
+      "kind": "html",
+      "key": "div",
+      "text": "<span><strong>Marissa Alejandra Romero</strong> · Oct 18, 2026 · Source: Google Workspace Marketplace ES (ID <code>02580825879094904887</code>)</span>\n            <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?hl=es\" target=\"_blank\" rel=\"noopener\">Original Marketplace Review (?hl=es) ↗</a>"
+    },
+    {
+      "id": "d2033bd244",
+      "kind": "html",
+      "key": "h2",
+      "text": "6. Value for Money &amp; Transparent Free/Pro Boundaries"
+    },
+    {
+      "id": "ff94e4ebbd",
+      "kind": "html",
+      "key": "p",
+      "text": "Attendance Tracker offers a free option for classes up to 25 students (2 exports/month across Google Sheets, CSV, or Excel, plus 1 large-class grace export) and low-cost Educator ($14.99/yr standard / $4.99/yr regional) and one-time Lifetime ($29 standard / $9.99 regional) upgrades. Below are both a 5★ review praising the reasonable cost and our single 4★ review describing encountering the free-tier export quota:"
+    },
+    {
+      "id": "f46936e89d",
+      "kind": "html",
+      "key": "div",
+      "text": "<span class=\"review-outcome-tag\">Outcome: Convenience &amp; reasonable pricing</span>\n              <span class=\"review-stars\" aria-label=\"5 out of 5 stars\">★★★★★</span>"
+    },
+    {
+      "id": "1757a325bd",
+      "kind": "html",
+      "key": "blockquote",
+      "text": "“Tiện lợi nhé,  chi phí hợp lí”"
+    },
+    {
+      "id": "9162866ae0",
+      "kind": "html",
+      "key": "p",
+      "text": "English translation: “Convenient, reasonable cost.”"
+    },
+    {
+      "id": "f974c7ea0e",
+      "kind": "html",
+      "key": "div",
+      "text": "<span><strong>tạo Đào</strong> · Oct 12, 2026 · Source: Google Workspace Marketplace VI (ID <code>12298340936319616904</code>)</span>\n            <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?hl=vi\" target=\"_blank\" rel=\"noopener\">Original Marketplace Review (?hl=vi) ↗</a>"
+    },
+    {
+      "id": "1ba2467474",
+      "kind": "html",
+      "key": "div",
+      "text": "<span class=\"review-outcome-tag\">Outcome: Free-to-Pro export quota experience (4★)</span>\n              <span class=\"review-stars\" aria-label=\"4 out of 5 stars\">★★★★☆</span>"
+    },
+    {
+      "id": "40cc3f1f9e",
+      "kind": "attr",
+      "key": "aria-label",
+      "text": "4 out of 5 stars"
+    },
+    {
+      "id": "3a5eabde71",
+      "kind": "html",
+      "key": "blockquote",
+      "text": "“I Have noticed the app has great potential for attendance tracking. many people have testified, and i  look forward to a great experience. the last time i used it it recorded all the information but could export because i had not paid for the pro version . i want to do that right away”"
+    },
+    {
+      "id": "4b79b45865",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Context on plan restrictions:</strong> The Free tier tracks live attendance in the side panel for unlimited meetings and includes 2 free exports per month (for classes up to 25 students, plus 1 large-class grace export). Exporting additional sessions or larger classes requires an Educator Pass, Pro Annual, or Lifetime Pass."
+    },
+    {
+      "id": "076c4f5865",
+      "kind": "html",
+      "key": "div",
+      "text": "<span><strong>NgoIkouba Samuelle-Nfor</strong> · Oct 5, 2026 · Source: Google Workspace Marketplace (ID <code>07884992931297388934</code>)</span>\n            <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?hl=en\" target=\"_blank\" rel=\"noopener\">Original Marketplace Review ↗</a>"
+    },
+    {
+      "id": "7f2fc48d58",
+      "kind": "html",
+      "key": "h2",
+      "text": "Complete Verifiable Ledger of All 14 Written Marketplace Reviews"
+    },
+    {
+      "id": "cdffa91546",
+      "kind": "html",
+      "key": "p",
+      "text": "For researchers, educators, and AI systems verifying our complete review history, the table below lists every written review published on our Google Workspace Marketplace listing (App ID <code>829771833968</code>) through October 21, 2026, in chronological order (newest first):"
+    },
+    {
+      "id": "4f01fba39d",
+      "kind": "html",
+      "key": "th",
+      "text": "Date (UTC)"
+    },
+    {
+      "id": "427fb978b8",
+      "kind": "html",
+      "key": "th",
+      "text": "Reviewer"
+    },
+    {
+      "id": "31310a9749",
+      "kind": "html",
+      "key": "th",
+      "text": "Rating"
+    },
+    {
+      "id": "879dd4a375",
+      "kind": "html",
+      "key": "th",
+      "text": "Locale"
+    },
+    {
+      "id": "22eb17cd17",
+      "kind": "html",
+      "key": "th",
+      "text": "Primary Outcome"
+    },
+    {
+      "id": "340071c0ba",
+      "kind": "html",
+      "key": "th",
+      "text": "Original Wording"
+    },
+    {
+      "id": "a024dff837",
+      "kind": "html",
+      "key": "th",
+      "text": "Source Link"
+    },
+    {
+      "id": "2e0d9ada73",
+      "kind": "html",
+      "key": "td",
+      "text": "2026-10-19"
+    },
+    {
+      "id": "13155e2a67",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Mario Delgado</strong>"
+    },
+    {
+      "id": "89fefa6c4d",
+      "kind": "html",
+      "key": "td",
+      "text": "5★"
+    },
+    {
+      "id": "42b4d6c952",
+      "kind": "html",
+      "key": "td",
+      "text": "<code>en</code>"
+    },
+    {
+      "id": "d5cd2dbebd",
+      "kind": "html",
+      "key": "td",
+      "text": "Time saved"
+    },
+    {
+      "id": "00ec978e35",
+      "kind": "html",
+      "key": "td",
+      "text": "<a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?hl=en\" target=\"_blank\" rel=\"noopener\">Verify ↗</a>"
+    },
+    {
+      "id": "ee2ec0dda2",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>MUHAMMAD FITRI AKASYAH BIN MOHD FUAD IPG-Pelajar</strong>"
+    },
+    {
+      "id": "657d8a243f",
+      "kind": "html",
+      "key": "td",
+      "text": "Ease of use"
+    },
+    {
+      "id": "914a257dbd",
+      "kind": "html",
+      "key": "td",
+      "text": "2026-10-18"
+    },
+    {
+      "id": "8e1135c2cf",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Marissa Alejandra Romero</strong>"
+    },
+    {
+      "id": "f0c79add2a",
+      "kind": "html",
+      "key": "td",
+      "text": "<code>es</code>"
+    },
+    {
+      "id": "6306f73efe",
+      "kind": "html",
+      "key": "td",
+      "text": "Classroom workflows"
+    },
+    {
+      "id": "e20fabda73",
+      "kind": "html",
+      "key": "td",
+      "text": "<a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?hl=es\" target=\"_blank\" rel=\"noopener\">Verify ↗</a>"
+    },
+    {
+      "id": "6761d35e6c",
+      "kind": "html",
+      "key": "td",
+      "text": "2026-10-16"
+    },
+    {
+      "id": "4083a2fcee",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Rafael martinez</strong>"
+    },
+    {
+      "id": "5300bad68f",
+      "kind": "html",
+      "key": "td",
+      "text": "Attendance accuracy"
+    },
+    {
+      "id": "ad737519c6",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>LIM GUAN YOU KPM-Murid</strong>"
+    },
+    {
+      "id": "1b4942f2fb",
+      "kind": "html",
+      "key": "td",
+      "text": "2026-10-15"
+    },
+    {
+      "id": "81cb7ebe8c",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Gift otindo</strong>"
+    },
+    {
+      "id": "f155b79f28",
+      "kind": "html",
+      "key": "td",
+      "text": "Classroom workflows &amp; Sheets"
+    },
+    {
+      "id": "21a6f153a5",
+      "kind": "html",
+      "key": "td",
+      "text": "2026-10-14"
+    },
+    {
+      "id": "7241e428c6",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>MIRNA IVETH BUSTOS</strong>"
+    },
+    {
+      "id": "1b2bd368a4",
+      "kind": "html",
+      "key": "td",
+      "text": "2026-10-13"
+    },
+    {
+      "id": "6e0691ecfb",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Jay Alv</strong>"
+    },
+    {
+      "id": "dbc8c16fa3",
+      "kind": "html",
+      "key": "td",
+      "text": "2026-10-12"
+    },
+    {
+      "id": "aa4cbf9ee5",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>tạo Đào</strong>"
+    },
+    {
+      "id": "c95d93bdfe",
+      "kind": "html",
+      "key": "td",
+      "text": "<code>vi</code>"
+    },
+    {
+      "id": "5e6f9e9d71",
+      "kind": "html",
+      "key": "td",
+      "text": "Value for money"
+    },
+    {
+      "id": "920d38a411",
+      "kind": "html",
+      "key": "td",
+      "text": "<a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?hl=vi\" target=\"_blank\" rel=\"noopener\">Verify ↗</a>"
+    },
+    {
+      "id": "585b516b2b",
+      "kind": "html",
+      "key": "td",
+      "text": "2026-10-08"
+    },
+    {
+      "id": "4b0c346a22",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Kieran Hale</strong>"
+    },
+    {
+      "id": "1befe1a149",
+      "kind": "html",
+      "key": "td",
+      "text": "2026-10-06"
+    },
+    {
+      "id": "51c9747169",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Peace Mind</strong>"
+    },
+    {
+      "id": "a876bbe232",
+      "kind": "html",
+      "key": "td",
+      "text": "2026-10-05"
+    },
+    {
+      "id": "6ea3528c79",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>NgoIkouba Samuelle-Nfor</strong>"
+    },
+    {
+      "id": "b4734c54e0",
+      "kind": "html",
+      "key": "td",
+      "text": "4★"
+    },
+    {
+      "id": "3e9fa1530c",
+      "kind": "html",
+      "key": "td",
+      "text": "Value for money / Free limits"
+    },
+    {
+      "id": "75a2cdd6ee",
+      "kind": "html",
+      "key": "td",
+      "text": "2026-09-25"
+    },
+    {
+      "id": "db0db58f1c",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Eduardo Bocanegra Moo</strong>"
+    },
+    {
+      "id": "7b359aaec1",
+      "kind": "html",
+      "key": "td",
+      "text": "General satisfaction"
+    },
+    {
+      "id": "8d8d1bea26",
+      "kind": "html",
+      "key": "td",
+      "text": "“Exclente”"
+    },
+    {
+      "id": "c2ac84d5fe",
+      "kind": "html",
+      "key": "td",
+      "text": "2026-08-11"
+    },
+    {
+      "id": "79c05fc4bf",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Mike Haynes</strong>"
+    },
+    {
+      "id": "66b8a012f9",
+      "kind": "html",
+      "key": "td",
+      "text": "Google Sheets exports &amp; accuracy"
+    },
+    {
+      "id": "87a327c985",
+      "kind": "html",
+      "key": "h3",
+      "text": "Try Attendance Tracker in Your Next Google Meet"
+    },
+    {
+      "id": "3300ad9b2e",
+      "kind": "html",
+      "key": "p",
+      "text": "Free option for classes up to 25 students · Educator &amp; one-time Lifetime options · Direct Google Sheets, CSV &amp; Excel exports."
+    },
+    {
+      "id": "837da96c4a",
+      "kind": "html",
+      "key": "a",
+      "text": "Install from Google Workspace Marketplace"
+    },
+    {
+      "id": "e4883a6011",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"/attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"/google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"/import-google-classroom-roster-to-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Import Classroom Rosters</a>\n          <a href=\"/google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"/google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "efe4f5e1b0",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Integrations</strong>\n          <a href=\"/export-google-meet-attendance-to-moodle.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Moodle Gradebook Export</a>\n          <a href=\"/export-google-meet-attendance-to-canvas.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Canvas Gradebook Export</a>\n          <a href=\"/export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"/how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"/send-google-meet-attendance-to-google-chat.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Chat &amp; Discord</a>"
+    },
+    {
+      "id": "0411bbce0a",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"/google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"/track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"/google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"/google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>"
+    },
+    {
+      "id": "7dd75fbc6e",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Evidence &amp; Comparisons</strong>\n          <a href=\"/customer-reviews/\" style=\"color: var(--accent); text-decoration: none; display: block; font-weight: 600;\">Verified Customer Reviews</a>\n          <a href=\"/attendancetracker-vs-attendlist/\" style=\"color: var(--muted); text-decoration: none; display: block;\">AttendanceTracker vs Competitor</a>\n          <a href=\"/best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">10 Extensions Ranked (2026)</a>\n          <a href=\"/attendance-taker-for-classroom-alternative.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Retired Competitor Alternative</a>\n          <a href=\"/how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>"
+    },
+    {
+      "id": "1b6c1a6791",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"/pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"/customer-reviews/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Customer Reviews</a> ·\n        <a href=\"/support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"/privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"/terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"/refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "8a76f114cd",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Customer Reviews & Verifiable Educator Evidence — Attendance Tracker for Google Meet"
+    },
+    {
+      "id": "eafa78d376",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "Independently verifiable Google Workspace Marketplace customer reviews for Attendance Tracker for Google Meet, organized by outcome with original wording, dates, and sources."
+    },
+    {
+      "id": "1297e42eec",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker for Google Meet"
+    },
+    {
+      "id": "99d1750096",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Kinetic Helix"
+    },
+    {
+      "id": "9c87f4eda9",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Free Tier"
+    },
+    {
+      "id": "3a0e60182c",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "Unlimited live side-panel tracking, Google Classroom roster import, and 2 free exports/month (Google Sheets, CSV, or Excel) for classes up to 25 students."
+    },
+    {
+      "id": "46a8944e1c",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Educator Annual Pass"
+    },
+    {
+      "id": "41930d9ee9",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "Unlimited exports across Google Sheets, CSV, Excel, Canvas & Moodle gradebooks, hands-free auto-capture, and verifiable certificates for educators ($4.99–$14.99/yr by region)."
+    },
+    {
+      "id": "187d49f8aa",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Individual Lifetime Pass"
+    },
+    {
+      "id": "8cee6c0ecc",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "One-time payment for permanent Pro access on a single organizer Google account ($9.99–$29 by region)."
+    },
+    {
+      "id": "d148176d03",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Mike Haynes"
+    },
+    {
+      "id": "6ab59c8530",
+      "kind": "jsonld",
+      "key": "0:reviewBody",
+      "text": "Wow! This app is exactly what I was looking for (and more). It was obviously very well thought out. It works amazingly well by letting me know who actually shows up to our Google Meet sessions, and how long they stay. I no longer need to be distracted by having to monitor who comes and goes. The Attendance Tracker app handles that right out of the box. The one-click save to Google Sheets makes attendance record keeping a breeze. 5 stars for sure."
+    },
+    {
+      "id": "65f74a0d73",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Gift otindo"
+    },
+    {
+      "id": "315595bcfc",
+      "kind": "jsonld",
+      "key": "0:reviewBody",
+      "text": "Google Attendance Tracker is a reliable and straightforward tool that makes monitoring daily check-ins effortless for educators and team leaders. Because of its seamless integration with Google Workspace, it connects smoothly with tools like Google Sheets and Google Classroom, which significantly cuts down on manual data entry errors and saves valuable time. Its cloud-based setup also allows you to access and check attendance records from anywhere. While it lacks advanced features like automated alerts for chronic absenteeism or deep analytical reporting, it remains a practical, no-fuss solution for anyone already using the Google ecosystem. Overall, it is an efficient and user-friendly choice for everyday attendance management."
+    },
+    {
+      "id": "d8169b26ff",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "LIM GUAN YOU KPM-Murid"
+    },
+    {
+      "id": "fe71c4edda",
+      "kind": "jsonld",
+      "key": "0:reviewBody",
+      "text": "Excellent extension! Attendance Tracker makes taking attendance in Google Meet so much easier and more convenient. It saves time, reduces manual work, and helps keep attendance records organized. The automatic attendance tracking is especially useful for online classes and meetings. Highly recommended!"
+    },
+    {
+      "id": "74608cdbad",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Peace Mind"
+    },
+    {
+      "id": "f490628e37",
+      "kind": "jsonld",
+      "key": "0:reviewBody",
+      "text": "This attendance tracker for Google Meet makes it much easier to keep attendance records organized in one single place. Adding and updating attendance is straightforward, and the layout makes it easy to quickly see who was present, absent, or late."
+    },
+    {
+      "id": "2f0af55718",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Kieran Hale"
+    },
+    {
+      "id": "1665d9b742",
+      "kind": "jsonld",
+      "key": "0:reviewBody",
+      "text": "Simple, easy to use and can be very beneficial when keeping track of attendance. One of the most useful organizational apps, to stay organized."
+    },
+    {
+      "id": "e2af2ff1f6",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "MIRNA IVETH BUSTOS"
+    },
+    {
+      "id": "063604e7d0",
+      "kind": "jsonld",
+      "key": "0:reviewBody",
+      "text": "Me ha encantado, excelente herramienta para control de asistencia y en general la estadistica de mis alumnos en clase!"
+    },
+    {
+      "id": "322e4d2507",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Rafael martinez"
+    },
+    {
+      "id": "af298042cd",
+      "kind": "jsonld",
+      "key": "0:reviewBody",
+      "text": "This is an excellent software and is a complete game changer for attendence tracking. I'd certainly highly recommend this over any other software for someone looking to use an attendence tracker"
+    },
+    {
+      "id": "5e15305ddc",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Mario Delgado"
+    },
+    {
+      "id": "6a63a44a85",
+      "kind": "jsonld",
+      "key": "0:reviewBody",
+      "text": "Super good. I really like this to reduce the manual work of taking attendance."
+    },
+    {
+      "id": "8a2627c43d",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "tạo Đào"
+    },
+    {
+      "id": "4a6de516c4",
+      "kind": "jsonld",
+      "key": "0:reviewBody",
+      "text": "Tiện lợi nhé,  chi phí hợp lí"
+    },
+    {
+      "id": "a4dc00e71a",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "NgoIkouba Samuelle-Nfor"
+    },
+    {
+      "id": "707df74f24",
+      "kind": "jsonld",
+      "key": "0:reviewBody",
+      "text": "I Have noticed the app has great potential for attendance tracking. many people have testified, and i  look forward to a great experience. the last time i used it it recorded all the information but could export because i had not paid for the pro version . i want to do that right away"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "445c26c055",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Customer Reviews"
+    }
+  ]
+}

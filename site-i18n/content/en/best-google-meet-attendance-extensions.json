@@ -1,0 +1,792 @@
+{
+  "page": "best-google-meet-attendance-extensions.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "7266172cbb",
+      "kind": "head",
+      "key": "title",
+      "text": "The 10 best Google Meet attendance trackers, honestly ranked (2026) — Attendance Tracker"
+    },
+    {
+      "id": "146399ab79",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "We compared 10 Google Meet attendance extensions and add-ons on reliability, capture model, exports, price honesty, and maintenance — with real install counts, ratings, and the tools to avoid in 2026."
+    },
+    {
+      "id": "e6a195d40b",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "The 10 best Google Meet attendance trackers, honestly ranked (2026)"
+    },
+    {
+      "id": "ec4f65b5e6",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "A scored comparison of 10 Google Meet attendance tools — installs, ratings, pricing, and maintenance status — plus the dead and dying tools to avoid."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "382f6e927e",
+      "kind": "html",
+      "key": "h1",
+      "text": "The 10 best Google Meet attendance trackers, honestly ranked (2026)"
+    },
+    {
+      "id": "e97f3892a4",
+      "kind": "html",
+      "key": "p",
+      "text": "Search \"Google Meet attendance\" and you'll find a graveyard: half the results are abandoned extensions, one charges people who can't figure out how to cancel, and one popular tool shut down in March 2026. We build one of these tools, so read our ranking with that in mind — but every number below comes from public Chrome Web Store and Workspace Marketplace listings as of October 2026, and we tell you plainly where a competitor is the better pick."
+    },
+    {
+      "id": "1f59ca596a",
+      "kind": "html",
+      "key": "h2",
+      "text": "What we tested for"
+    },
+    {
+      "id": "cd12eadd8a",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Reliability across Meet updates.</strong> Extensions that scrape Meet's HTML break every time Google redesigns the UI. Official add-ons that read the Meet REST API don't."
+    },
+    {
+      "id": "c618d0942a",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Capture model.</strong> Does it only record while the host's tab is open? Does it merge rejoins, or count a flaky connection as three different people?"
+    },
+    {
+      "id": "a6e1b1be71",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Exports.</strong> CSV is table stakes; Sheets, gradebook formats (Moodle/Canvas), and PDF matter for real classrooms."
+    },
+    {
+      "id": "17c8f61db5",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Price honesty.</strong> Is the price stated up front, and can you actually cancel? One tool on this list has dozens of one-star reviews about exactly this."
+    },
+    {
+      "id": "cc91a9ad21",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Maintenance.</strong> Three attendance tools have died or been delisted since 2023, and another retired in March 2026. Update cadence is a survival signal, not a nicety."
+    },
+    {
+      "id": "0c3db5b32d",
+      "kind": "attr",
+      "key": "title",
+      "text": "Official Google Workspace Add-on for Google Meet"
+    },
+    {
+      "id": "a6798e846d",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Official Google Meet Add-on side panel roster"
+    },
+    {
+      "id": "0015b2381b",
+      "kind": "html",
+      "key": "h2",
+      "text": "The comparison at a glance"
+    },
+    {
+      "id": "121c6f0f84",
+      "kind": "html",
+      "key": "th",
+      "text": "Tool"
+    },
+    {
+      "id": "ccbb52d571",
+      "kind": "html",
+      "key": "th",
+      "text": "Type"
+    },
+    {
+      "id": "14c5913b72",
+      "kind": "html",
+      "key": "th",
+      "text": "Installs"
+    },
+    {
+      "id": "31310a9749",
+      "kind": "html",
+      "key": "th",
+      "text": "Rating"
+    },
+    {
+      "id": "34145df562",
+      "kind": "html",
+      "key": "th",
+      "text": "Price"
+    },
+    {
+      "id": "a870cea73e",
+      "kind": "html",
+      "key": "th",
+      "text": "Last updated"
+    },
+    {
+      "id": "90c7a8d384",
+      "kind": "html",
+      "key": "th",
+      "text": "Standout"
+    },
+    {
+      "id": "25a2f10e92",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Attendance Tracker</strong> (this site)"
+    },
+    {
+      "id": "e0c2122892",
+      "kind": "html",
+      "key": "td",
+      "text": "Official add-on"
+    },
+    {
+      "id": "258601f646",
+      "kind": "html",
+      "key": "td",
+      "text": "304K+"
+    },
+    {
+      "id": "4c88fa3a8a",
+      "kind": "html",
+      "key": "td",
+      "text": "5.0★ (27)"
+    },
+    {
+      "id": "16fcc7b86b",
+      "kind": "html",
+      "key": "td",
+      "text": "Free; Educator $14.99/yr ($4.99 regional); Lifetime $29 ($9.99 regional)"
+    },
+    {
+      "id": "a045ebe40e",
+      "kind": "html",
+      "key": "td",
+      "text": "Weekly updates (2026)"
+    },
+    {
+      "id": "226bd2e720",
+      "kind": "html",
+      "key": "td",
+      "text": "Real-time roster + Classroom import + gradebook CSVs"
+    },
+    {
+      "id": "da6ac00562",
+      "kind": "html",
+      "key": "td",
+      "text": "Competitor #2 (Local Chrome Extension)"
+    },
+    {
+      "id": "b64f1c0d95",
+      "kind": "html",
+      "key": "td",
+      "text": "Extension"
+    },
+    {
+      "id": "47022d05f3",
+      "kind": "html",
+      "key": "td",
+      "text": "400K"
+    },
+    {
+      "id": "78f2c58d2e",
+      "kind": "html",
+      "key": "td",
+      "text": "4.7★ (2.4K)"
+    },
+    {
+      "id": "4263d005a2",
+      "kind": "html",
+      "key": "td",
+      "text": "Free"
+    },
+    {
+      "id": "5efa3d0339",
+      "kind": "html",
+      "key": "td",
+      "text": "Active"
+    },
+    {
+      "id": "8b62e4678e",
+      "kind": "html",
+      "key": "td",
+      "text": "Local-only storage (privacy)"
+    },
+    {
+      "id": "98aa3d86be",
+      "kind": "html",
+      "key": "td",
+      "text": "Competitor #3 (Forms/Apps Script Add-on)"
+    },
+    {
+      "id": "ad6770af61",
+      "kind": "html",
+      "key": "td",
+      "text": "Add-on (Forms/Apps Script)"
+    },
+    {
+      "id": "807c4feb35",
+      "kind": "html",
+      "key": "td",
+      "text": "464K+"
+    },
+    {
+      "id": "d272492aea",
+      "kind": "html",
+      "key": "td",
+      "text": "Emails you the register"
+    },
+    {
+      "id": "1037946381",
+      "kind": "html",
+      "key": "td",
+      "text": "Competitor #4 (Legacy Add-on + Extension)"
+    },
+    {
+      "id": "7b7a15adf4",
+      "kind": "html",
+      "key": "td",
+      "text": "Add-on + extension"
+    },
+    {
+      "id": "095d3e5d08",
+      "kind": "html",
+      "key": "td",
+      "text": "726K+ / 100K"
+    },
+    {
+      "id": "e9a8f2604f",
+      "kind": "html",
+      "key": "td",
+      "text": "4.2★ (CWS)"
+    },
+    {
+      "id": "c91e570e92",
+      "kind": "html",
+      "key": "td",
+      "text": "Biggest install base"
+    },
+    {
+      "id": "5c23bc04b4",
+      "kind": "html",
+      "key": "td",
+      "text": "Competitor #5 (Cloud Subscription Extension)"
+    },
+    {
+      "id": "c38aa8dd13",
+      "kind": "html",
+      "key": "td",
+      "text": "Extension + cloud"
+    },
+    {
+      "id": "ed8e438af3",
+      "kind": "html",
+      "key": "td",
+      "text": "4.9★ (28)"
+    },
+    {
+      "id": "86712581e0",
+      "kind": "html",
+      "key": "td",
+      "text": "$9.90/mo Pro, $29/mo Team"
+    },
+    {
+      "id": "b603abee65",
+      "kind": "html",
+      "key": "td",
+      "text": "Polished SaaS; team seats + API"
+    },
+    {
+      "id": "45cde32c8e",
+      "kind": "html",
+      "key": "td",
+      "text": "Competitor #6 (Notes + Check-in Add-on)"
+    },
+    {
+      "id": "8fb3866b24",
+      "kind": "html",
+      "key": "td",
+      "text": "Add-on"
+    },
+    {
+      "id": "6d22562495",
+      "kind": "html",
+      "key": "td",
+      "text": "296K+"
+    },
+    {
+      "id": "e7f208da65",
+      "kind": "html",
+      "key": "td",
+      "text": "41 reviews"
+    },
+    {
+      "id": "39ca4aa397",
+      "kind": "html",
+      "key": "td",
+      "text": "Attendee self-check-in"
+    },
+    {
+      "id": "6fca0b0d1c",
+      "kind": "html",
+      "key": "td",
+      "text": "Competitor #7 (Free Chrome Extension)"
+    },
+    {
+      "id": "5f66e4633e",
+      "kind": "html",
+      "key": "td",
+      "text": "40K"
+    },
+    {
+      "id": "4cf7ed4b04",
+      "kind": "html",
+      "key": "td",
+      "text": "4.0★ (467)"
+    },
+    {
+      "id": "6e673bb1b6",
+      "kind": "html",
+      "key": "td",
+      "text": "Jul 2026"
+    },
+    {
+      "id": "776d26b748",
+      "kind": "html",
+      "key": "td",
+      "text": "Simple and current"
+    },
+    {
+      "id": "52856e9a9e",
+      "kind": "html",
+      "key": "td",
+      "text": "Competitor #8 (Meet Multi-Tool Extension)"
+    },
+    {
+      "id": "1ca0a2cf56",
+      "kind": "html",
+      "key": "td",
+      "text": "Free tier; Pro from $7/mo"
+    },
+    {
+      "id": "bf27f35f70",
+      "kind": "html",
+      "key": "td",
+      "text": "40+ Meet features in one"
+    },
+    {
+      "id": "a6f4d45faa",
+      "kind": "html",
+      "key": "td",
+      "text": "Competitor #9 (Transcription Extension)"
+    },
+    {
+      "id": "6bc1de82a4",
+      "kind": "html",
+      "key": "td",
+      "text": "Extension (transcription)"
+    },
+    {
+      "id": "7550efee8c",
+      "kind": "html",
+      "key": "td",
+      "text": "Per-seat subscription"
+    },
+    {
+      "id": "7316307f23",
+      "kind": "html",
+      "key": "td",
+      "text": "Transcripts + talk-time"
+    },
+    {
+      "id": "e326e1f303",
+      "kind": "html",
+      "key": "td",
+      "text": "Competitor #10 (Minimalist Local Extension)"
+    },
+    {
+      "id": "adeb019cde",
+      "kind": "html",
+      "key": "td",
+      "text": "Small/new"
+    },
+    {
+      "id": "0165382953",
+      "kind": "html",
+      "key": "td",
+      "text": "Local-only privacy pitch"
+    },
+    {
+      "id": "0ed4fb49f2",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>The one structural fact that decides most of this list:</strong> browser extensions read the Meet participant list by scraping the page's HTML. That means they break when Google updates Meet's UI, they only capture while the host's tab is open, and they can't run at all on Firefox, Safari, or managed school Chromebooks. Official Workspace Marketplace add-ons run in Meet's Activities panel and read the official Meet REST API instead. Neither model is automatically \"best\" for you — but you should know which one you're buying."
+    },
+    {
+      "id": "bbf3814e81",
+      "kind": "html",
+      "key": "h2",
+      "text": "1. Attendance Tracker — best overall"
+    },
+    {
+      "id": "4e8d6a2b96",
+      "kind": "html",
+      "key": "p",
+      "text": "Ours, so here are the claims as verifiable facts rather than adjectives: it's an official Meet add-on (304K+ Google Workspace Marketplace installs, 5.0★ across 27 ratings — Activities panel, official Meet REST API, no DOM scraping), so it works in Chrome, Edge, Firefox, Safari, and on managed Chromebooks. The roster is <strong>real-time</strong> — Present, Late, Absent, and guests live during the meeting, plus optional in-Meet student self-check-in (<em>\"I'm here\"</em>), not a post-meeting email. It merges rejoins instead of double-counting, shows full external email addresses, and has no 2-participant minimum. The free tier includes Class Rosters with <a href=\"import-google-classroom-roster-to-google-meet.html\">one-click Google Classroom import</a>, per-session <a href=\"export-google-meet-attendance-to-moodle.html\">Moodle</a> and <a href=\"export-google-meet-attendance-to-canvas.html\">Canvas</a> gradebook CSVs, PDF reports, 2 free exports a month across Google Sheets, CSV, or binary Excel (for classes up to 25 attendees, plus 1 large-class grace export), and a permanent Meeting History dashboard. Paid plans include an <strong>Educator Annual Pass at $14.99/year</strong> ($4.99–$7.99/year in regional tiers), <strong>Pro Annual at $29/year</strong>, a one-time <strong>Individual Lifetime Pass at $29</strong> ($9.99–$19 regional), or a $59/year Department / $149/year Institution plan for a whole school domain — adding unlimited exports, hands-free auto-capture of hosted meetings even when the panel wasn't open, semester roll-ups, per-attendee certificates with public verification, and Slack/Google Chat/Discord digests. It's translated into 60 languages, ships multiple updates weekly through 2026, and documents all 14 written Marketplace reviews on our <a href=\"/customer-reviews/\">Customer Reviews Evidence Page</a>."
+    },
+    {
+      "id": "61d16a4255",
+      "kind": "html",
+      "key": "p",
+      "text": "<em>Caveats:</em> it's organizer-focused (built for the person running the meeting), and the deepest features — auto-capture, semester roll-ups — are Pro."
+    },
+    {
+      "id": "0ea2052c2f",
+      "kind": "html",
+      "key": "h2",
+      "text": "2. Competitor #2 (Local-Only Chrome Extension) — best if you require local-only storage"
+    },
+    {
+      "id": "055cf070d1",
+      "kind": "html",
+      "key": "p",
+      "text": "This Chrome extension competitor has earned its 4.7★ across 2,400 reviews and 400K users. It's free, clean, and stores everything on your device — nothing leaves your browser, which is a genuine privacy win and the reason some schools prefer it. The flip side of that design: no sync between devices, no team roll-ups, and it only records while the host's tab is open, so a crashed tab means a lost register. As an extension it's also Chrome-only and exposed to Meet UI changes. If local-only storage is a hard requirement, this is the category of tool to consider."
+    },
+    {
+      "id": "3e89472152",
+      "kind": "html",
+      "key": "h2",
+      "text": "3. Competitor #3 (Forms &amp; Apps Script Add-on) — best if you just want the register emailed to you"
+    },
+    {
+      "id": "4219ddcada",
+      "kind": "html",
+      "key": "p",
+      "text": "This legacy add-on competitor (464K+ installs) takes a deliberately different approach: it's built on Google Forms and Apps Script, and rather than an in-meeting panel it emails you the attendance register. If you want zero UI during class and a record in your inbox afterwards, that model is honest, free, and has served a lot of teachers for years. You give up real-time visibility — you can't see who's missing while the class is still running — and there's no live roster or gradebook formatting."
+    },
+    {
+      "id": "aeaf4424d2",
+      "kind": "html",
+      "key": "h2",
+      "text": "4. Competitor #4 (Legacy Add-on + Extension) — biggest install base"
+    },
+    {
+      "id": "9e8847b0f2",
+      "kind": "html",
+      "key": "p",
+      "text": "The most-installed competitor in the category: 726K+ Marketplace installs plus a 100K-user Chrome extension at 4.2★. It's free and it covers the basics competently. The recurring complaint in reviews is cross-device sync — records captured on one machine not showing up on another. With only 21 Marketplace reviews against 726K installs, the rating signal is thinner than the install number suggests, but the install base itself says plenty."
+    },
+    {
+      "id": "9e4411a10d",
+      "kind": "html",
+      "key": "h2",
+      "text": "5. Competitor #5 (Cloud Subscription Chrome Extension) — most polished subscription option"
+    },
+    {
+      "id": "f7842998c8",
+      "kind": "html",
+      "key": "p",
+      "text": "This Chrome extension competitor pairs an extension with a proper cloud backend, and its 4.9★ rating across 28 Chrome Web Store ratings reflects real polish. Its pricing model is unusual and worth understanding: features are largely open, but <em>history retention</em> is gated — 14 days free, 60 on Pro ($9.90/month), 120 on Team ($29/month for 5 seats, which also unlocks the API). If you need an API and multi-seat cloud workflows and don't mind a subscription, it's a strong product. Over a school year, though, $9.90/month is ~$119 against a $14.99/year Educator Pass or $29 one-time Lifetime Pass, and your older history is always aging out of reach. For a detailed 8-category breakdown, see our <a href=\"/attendancetracker-vs-attendlist/\">AttendanceTracker.dev vs Competitor comparison</a>."
+    },
+    {
+      "id": "ecff41d890",
+      "kind": "html",
+      "key": "h2",
+      "text": "6. Competitor #6 (Notes &amp; Self-Check-In Add-on) — best free notes + self-check-in bundle"
+    },
+    {
+      "id": "3616bb4f83",
+      "kind": "html",
+      "key": "p",
+      "text": "This add-on competitor (296K+ installs, 41 reviews) combines meeting notes with attendee self-check-in at no cost. For webinars, trainings, or compliance settings where you want participants to actively confirm presence rather than only be passively logged — and want shared meeting notes in the same panel — it's a sensible free bundle for meeting-heavy teams (Attendance Tracker also includes in-Meet student self-check-in alongside automatic REST API tracking)."
+    },
+    {
+      "id": "86394b3a4c",
+      "kind": "html",
+      "key": "h2",
+      "text": "7. Competitor #7 (Basic Free Chrome Extension) — solid free extension"
+    },
+    {
+      "id": "6539967a99",
+      "kind": "html",
+      "key": "p",
+      "text": "40K users, 4.0★ across 467 reviews, free, and — importantly — updated as recently as July 2026. In a category where the most famous extensions were abandoned in 2023, \"still being maintained\" is a meaningful credential. It carries the usual extension limitations (Chrome-only, host-tab capture, exposed to Meet UI changes), but among pure extensions it's a trustworthy free pick."
+    },
+    {
+      "id": "9bab6ed11e",
+      "kind": "html",
+      "key": "h2",
+      "text": "8. Competitor #8 (Multi-Feature Meet Extension Suite) — best if attendance is a side dish"
+    },
+    {
+      "id": "b27b1a3f2f",
+      "kind": "html",
+      "key": "p",
+      "text": "This competitor is a bundle of 40+ Meet quality-of-life features — push-to-talk, auto-join, and attendance timestamps among them. If you were going to buy a Meet Swiss-army knife anyway, the attendance feature comes along for the ride (free tier available; Pro from $7/month). If attendance is the job, a dedicated tool will do it better: there's no roster matching, gradebook export, or history dashboard here."
+    },
+    {
+      "id": "01b31c09ea",
+      "kind": "html",
+      "key": "h2",
+      "text": "9. Competitor #9 (AI Transcription Extension) — attendance as a by-product of transcription"
+    },
+    {
+      "id": "883db86fcc",
+      "kind": "html",
+      "key": "p",
+      "text": "This competitor is a transcription tool first: it captures the conversation and derives who attended and how long each person talked. If you want transcripts and talk-time analytics, attendance is a nice bonus. As a pure attendance tool it's the expensive route — per-seat subscription pricing for data a free tracker gives you directly — and there's no roster or gradebook concept."
+    },
+    {
+      "id": "c88d9faee1",
+      "kind": "html",
+      "key": "h2",
+      "text": "10. Competitor #10 (Minimalist Local Extension) — the minimalist newcomer"
+    },
+    {
+      "id": "dc0d04a186",
+      "kind": "html",
+      "key": "p",
+      "text": "This newcomer competitor is small and new, free, and pitches local-only privacy. There's not yet enough track record or review volume to rank it higher, but it's a reasonable lightweight option if you want the simplest possible local capture. Honorable mention in the same spirit: a tiny open-source competitor (525 users, 4.0★) that is free and even handles in-person sessions."
+    },
+    {
+      "id": "a2ab200a61",
+      "kind": "html",
+      "key": "h2",
+      "text": "Dead or dying tools to avoid"
+    },
+    {
+      "id": "0ed5e419ed",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Abandoned 2023 Chrome Extension Competitor A</strong> — 500K users but 2.8★, not updated since February 2023, and a $2.50/month premium with a trail of one-star reviews about surprise charges and no way to cancel or remove a card (\"I thought its free?\"). Whatever it once was, don't put a payment method into an abandoned tool."
+    },
+    {
+      "id": "b7e247f712",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Abandoned 2023 Chrome Extension Competitor B</strong> — 30K users, open source, but abandoned since April 2023; the classic symptom is the \"first join a meeting\" error shown while you are, in fact, in a meeting."
+    },
+    {
+      "id": "8568d49a8d",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Delisted 2025 Chrome Extension Competitor</strong> — delisted from the Chrome Web Store in September 2025."
+    },
+    {
+      "id": "cc6ff9b1e4",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Abandoned 2021 Chrome Extension Competitor</strong> — unmaintained since 2021 and incompatible with modern Chrome."
+    },
+    {
+      "id": "d75f4fa285",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Retired 2026 Classroom Add-on Competitor</strong> — its Marketplace listing announced its retirement on <strong>March 1, 2026</strong> and it no longer functions. If you used it, <a href=\"attendance-taker-for-classroom-alternative.html\">here's a migration guide</a>."
+    },
+    {
+      "id": "7d2dc48836",
+      "kind": "html",
+      "key": "h2",
+      "text": "Frequently asked questions"
+    },
+    {
+      "id": "c9d71c9ebc",
+      "kind": "html",
+      "key": "h3",
+      "text": "What's the difference between an extension and an add-on?"
+    },
+    {
+      "id": "c725d3651e",
+      "kind": "html",
+      "key": "p",
+      "text": "A Chrome extension installs into your browser and reads the Meet page's HTML to see who's present; it breaks when Google changes Meet's layout and can't run on Firefox, Safari, or managed Chromebooks. A Workspace Marketplace add-on installs into your Google account, runs inside Meet's Activities panel, and reads attendance from Google's official Meet REST API."
+    },
+    {
+      "id": "763e9777c1",
+      "kind": "html",
+      "key": "h3",
+      "text": "Which tracker is best for teachers using Google Classroom?"
+    },
+    {
+      "id": "0ace2cee93",
+      "kind": "html",
+      "key": "p",
+      "text": "Attendance Tracker is the only tool on this list with one-click Google Classroom roster import plus Moodle/Canvas gradebook CSV exports, so students are matched to your real class list automatically and grades land in your LMS without retyping."
+    },
+    {
+      "id": "81e148f4c1",
+      "kind": "html",
+      "key": "h3",
+      "text": "Are free Google Meet attendance trackers safe?"
+    },
+    {
+      "id": "83a3bc9654",
+      "kind": "html",
+      "key": "p",
+      "text": "Mostly, but check two things: when it was last updated (abandoned tools break silently and, in one case above, kept charging users), and what permissions it asks for. Prefer tools that state their storage model plainly — local-only browser storage, or an audited Marketplace add-on."
+    },
+    {
+      "id": "ded02de9bd",
+      "kind": "html",
+      "key": "h3",
+      "text": "Do any of these work without keeping a tab open?"
+    },
+    {
+      "id": "47182e4fd1",
+      "kind": "html",
+      "key": "p",
+      "text": "Extensions can't — they only see what's in the host's open tab. Attendance Tracker's Pro auto-capture records meetings you host server-side, even if you never opened the panel."
+    },
+    {
+      "id": "fd72e1063f",
+      "kind": "html",
+      "key": "h3",
+      "text": "Try the #1 pick free"
+    },
+    {
+      "id": "0143ccb4d8",
+      "kind": "html",
+      "key": "p",
+      "text": "Official Meet add-on. Real-time roster, Classroom import, gradebook exports — with Educator plans from $4.99/yr and one-time Lifetime passes from $9.99."
+    },
+    {
+      "id": "ed811da338",
+      "kind": "html",
+      "key": "a",
+      "text": "Get Attendance Tracker on Workspace Marketplace"
+    },
+    {
+      "id": "d360e4c6a4",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"import-google-classroom-roster-to-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Import Classroom Rosters</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "5f3cc2f91e",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Integrations</strong>\n          <a href=\"export-google-meet-attendance-to-moodle.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Moodle Gradebook Export</a>\n          <a href=\"export-google-meet-attendance-to-canvas.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Canvas Gradebook Export</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"send-google-meet-attendance-to-google-chat.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Chat &amp; Discord</a>"
+    },
+    {
+      "id": "98cdd4d1f5",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>"
+    },
+    {
+      "id": "9ed22a2d2b",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"/customer-reviews/\" style=\"color: var(--muted); text-decoration: none; display: block;\">Verified Customer Reviews</a>\n          <a href=\"/attendancetracker-vs-attendlist/\" style=\"color: var(--muted); text-decoration: none; display: block;\">AttendanceTracker vs Competitor</a>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>"
+    },
+    {
+      "id": "f3cbe7fc5d",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"/customer-reviews/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Customer Reviews</a> ·\n        <a href=\"/attendancetracker-vs-attendlist/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">vs Competitor</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "f4247b3e8b",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "The 10 best Google Meet attendance trackers, honestly ranked (2026)"
+    },
+    {
+      "id": "c007fe9bcb",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "A scored comparison of 10 Google Meet attendance extensions and add-ons: reliability across Meet updates, capture model, exports, price honesty, and maintenance."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "2930f90f39",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "The 10 best Google Meet attendance trackers (2026)"
+    },
+    {
+      "id": "c2afdeaaf3",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker (official Meet add-on)"
+    },
+    {
+      "id": "468ddd7a3d",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Competitor #2 (Local-Only Chrome Extension)"
+    },
+    {
+      "id": "81b20b0f31",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Competitor #3 (Forms & Apps Script Add-on)"
+    },
+    {
+      "id": "640444052d",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Competitor #4 (Legacy Add-on + Extension)"
+    },
+    {
+      "id": "abd5ba6136",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Competitor #5 (Cloud Subscription Chrome Extension)"
+    },
+    {
+      "id": "5fb7bcb6db",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Competitor #6 (Notes & Self-Check-In Add-on)"
+    },
+    {
+      "id": "34f1d2b457",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Competitor #7 (Basic Free Chrome Extension)"
+    },
+    {
+      "id": "7197d6b0c4",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Competitor #8 (Multi-Feature Meet Extension Suite)"
+    },
+    {
+      "id": "900361fcfb",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Competitor #9 (AI Transcription Extension)"
+    },
+    {
+      "id": "2e08d0dd8e",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Competitor #10 (Minimalist Local Extension)"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    }
+  ]
+}

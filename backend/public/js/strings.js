@@ -115024,7 +115024,24 @@ let locale = 'en';
   };
 
   // Detect appropriate locale from URL query (?lang= or ?hl=), stored preference, or browser language.
+  // Statically translated site pages (/<loc>/page.html) declare their language;
+  // it wins over every runtime signal so the page's lang/dir stay correct.
+  function siteLocale() {
+    const el = typeof document !== 'undefined' && document.documentElement;
+    const l = el && el.getAttribute('data-site-locale');
+    return l && STRINGS[l] ? l : null;
+  }
+
+  // The real translated URL for a locale, from the page's hreflang cluster.
+  const HREFLANG_OF = { zh: 'zh-Hant', 'zh-CN': 'zh-Hans', no: 'nb', tl: 'fil' };
+  function alternateUrl(code) { // picker-only, so a DOM is always present
+    const link = document.querySelector(`link[rel="alternate"][hreflang="${HREFLANG_OF[code] || code}"]`);
+    return link ? link.getAttribute('href') : null;
+  }
+
   function detectLocale(navLang, countryHint) {
+    const pinned = siteLocale();
+    if (pinned) return pinned;
     if (typeof window !== 'undefined' && window.location && window.location.search) {
       try {
         const params = new URLSearchParams(window.location.search);
@@ -115257,6 +115274,13 @@ let locale = 'en';
 
     select.addEventListener('change', e => {
       const chosen = e.target.value;
+      // Pages with real translations: go to that language's page.
+      const alt = alternateUrl(chosen);
+      if (alt && typeof window !== 'undefined' && window.location && alt !== window.location.href) {
+        setLocale(chosen, true);
+        window.location.href = alt;
+        return;
+      }
       setLocale(chosen, true);
       applyTranslations();
       if (typeof window !== 'undefined' && typeof window.updateUiLanguage === 'function') {

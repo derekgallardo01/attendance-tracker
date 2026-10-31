@@ -1,0 +1,300 @@
+{
+  "page": "how-to-send-google-meet-attendance-to-slack.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "24f3b4d620",
+      "kind": "head",
+      "key": "title",
+      "text": "How to automatically post Google Meet attendance to Slack (2026 Guide) — Attendance Tracker"
+    },
+    {
+      "id": "dab154a794",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Step-by-step guide to sending automated Google Meet attendance summaries and participant rosters directly to your Slack channels using incoming webhooks."
+    },
+    {
+      "id": "a410292e9d",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "How to automatically post Google Meet attendance to Slack"
+    },
+    {
+      "id": "9eff5aea53",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Post instant Block Kit attendance cards with present/absent rosters and Google Sheets links to Slack after every meeting."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "ce4e65b499",
+      "kind": "html",
+      "key": "h1",
+      "text": "How to automatically post Google Meet attendance to Slack"
+    },
+    {
+      "id": "b9c5f98680",
+      "kind": "html",
+      "key": "p",
+      "text": "Keep your team informed without sending manual messages. Here is how to automatically deliver formatted post-meeting attendance summaries and participant rosters to any Slack channel as soon as your Google Meet call ends."
+    },
+    {
+      "id": "4e8e8fd8cc",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Instant Team Visibility:</strong> When you connect your Slack webhook, Attendance Tracker sends a native Slack Block Kit card to your team channel with who attended, duration stayed, no-shows, and a one-click link to the exported Google Sheet."
+    },
+    {
+      "id": "17c9c46c65",
+      "kind": "html",
+      "key": "h2",
+      "text": "Why Post Attendance to Slack?"
+    },
+    {
+      "id": "cb9c91e93f",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Standup Accountability:</strong> Automatically post the roster for your daily standups to <code>#engineering-standup</code> or <code>#product-sync</code>."
+    },
+    {
+      "id": "d2ed1f203b",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Client Call Logs:</strong> Keep account executives updated in client channels when quarterly business reviews (QBRs) or demos finish."
+    },
+    {
+      "id": "5c9d8ac761",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Asynchronous Catch-Up:</strong> Teammates who couldn't attend can see at a glance who was on the call and access the attendance sheet without asking."
+    },
+    {
+      "id": "e26740364d",
+      "kind": "html",
+      "key": "h2",
+      "text": "Step-by-Step Setup (Takes 2 Minutes)"
+    },
+    {
+      "id": "01e7529ee3",
+      "kind": "html",
+      "key": "h3",
+      "text": "Step 1: Create a Slack Incoming Webhook"
+    },
+    {
+      "id": "c3e2995830",
+      "kind": "html",
+      "key": "li",
+      "text": "Go to <a href=\"https://api.slack.com/messaging/webhooks\" target=\"_blank\">api.slack.com/messaging/webhooks</a> and click <strong>Create your Slack app</strong> (or choose an existing app)."
+    },
+    {
+      "id": "a77502b35d",
+      "kind": "html",
+      "key": "li",
+      "text": "Under <strong>Features</strong>, select <strong>Incoming Webhooks</strong> and toggle it to <strong>On</strong>."
+    },
+    {
+      "id": "c39185d74a",
+      "kind": "html",
+      "key": "li",
+      "text": "Click <strong>Add New Webhook to Workspace</strong>, pick your destination channel (e.g. <code>#team-standup</code>), and click <strong>Allow</strong>."
+    },
+    {
+      "id": "5bcf12f347",
+      "kind": "html",
+      "key": "li",
+      "text": "Copy the generated Webhook URL (it looks like <code>https://hooks.slack.com/services/T00/B00/XXXX</code>)."
+    },
+    {
+      "id": "109714af16",
+      "kind": "html",
+      "key": "h3",
+      "text": "Step 2: Paste Webhook in Attendance Tracker"
+    },
+    {
+      "id": "3e560473bd",
+      "kind": "html",
+      "key": "li",
+      "text": "Join any Google Meet call and open <strong>Attendance Tracker</strong> from the Activities panel."
+    },
+    {
+      "id": "b29c81cdac",
+      "kind": "html",
+      "key": "li",
+      "text": "Click the <strong>Settings (gear icon)</strong> in the top right of the side panel."
+    },
+    {
+      "id": "5672891edb",
+      "kind": "html",
+      "key": "li",
+      "text": "Paste your Slack Webhook URL into the <strong>Slack Webhook URL</strong> field."
+    },
+    {
+      "id": "124a022851",
+      "kind": "html",
+      "key": "li",
+      "text": "Click <strong>Send Test Ping</strong> to verify that a test notification lands in your Slack channel."
+    },
+    {
+      "id": "c923f8365e",
+      "kind": "html",
+      "key": "li",
+      "text": "Click <strong>Save Settings</strong>."
+    },
+    {
+      "id": "ffb3a33627",
+      "kind": "html",
+      "key": "h3",
+      "text": "Step 3: Automated Post-Meeting Digests"
+    },
+    {
+      "id": "52e40857bc",
+      "kind": "html",
+      "key": "p",
+      "text": "That's it! Every time a meeting ends and attendance is saved, Attendance Tracker automatically constructs a clean Slack Block Kit card containing:"
+    },
+    {
+      "id": "a7d1377bb4",
+      "kind": "html",
+      "key": "li",
+      "text": "Meeting Title &amp; Date/Time"
+    },
+    {
+      "id": "2fa3be6c72",
+      "kind": "html",
+      "key": "li",
+      "text": "List of Present Participants + exact minutes attended"
+    },
+    {
+      "id": "c5aa301b54",
+      "kind": "html",
+      "key": "li",
+      "text": "Flagged Late Arrivals &amp; Absent Invitees"
+    },
+    {
+      "id": "0ddf6e04ba",
+      "kind": "html",
+      "key": "li",
+      "text": "Direct button link to open the full attendance sheet in Google Drive"
+    },
+    {
+      "id": "d8b3491bd3",
+      "kind": "html",
+      "key": "h2",
+      "text": "Slack Security &amp; Webhook Masking"
+    },
+    {
+      "id": "aa1eac4aeb",
+      "kind": "html",
+      "key": "p",
+      "text": "Your Slack webhook is encrypted and stored safely within your tenant account. In the settings interface, webhooks are automatically masked (e.g. <code>https://hooks.slack.com/...aBcD</code>) so secrets are never displayed in plain text during screen shares or presentations."
+    },
+    {
+      "id": "602c145088",
+      "kind": "html",
+      "key": "h3",
+      "text": "Connect Google Meet attendance to Slack"
+    },
+    {
+      "id": "365005f1b8",
+      "kind": "html",
+      "key": "p",
+      "text": "Free, works on all Slack workspaces, set up in under 2 minutes."
+    },
+    {
+      "id": "14b133eb0f",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Attendance Tracker from Marketplace"
+    },
+    {
+      "id": "9352c1ed98",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "a3ad204977",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-legal-depositions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Legal &amp; Arbitrations</a>\n          <a href=\"google-meet-attendance-for-job-interviews.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Recruiting &amp; Interviews</a>"
+    },
+    {
+      "id": "e7a3b147f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Specialized Verticals</strong>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-clinical-supervision-and-therapy.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Clinical Supervision</a>\n          <a href=\"google-meet-quorum-and-board-meetings.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Board Quorum Tracking</a>\n          <a href=\"google-meet-attendance-for-churches.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Churches &amp; Ministries</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>\n          <a href=\"google-meet-attendance-for-fitness-and-yoga.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Fitness &amp; Yoga</a>"
+    },
+    {
+      "id": "eb9246d86f",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>\n          <a href=\"google-meet-attendance-on-ipad-and-mobile.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">iPad &amp; Mobile Attendance</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "ec18f68966",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "How to automatically post Google Meet attendance to Slack"
+    },
+    {
+      "id": "b6b5a4a485",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "Step-by-step instructions for connecting Google Meet attendance reports to Slack channels via incoming webhooks."
+    },
+    {
+      "id": "ea63f7bff4",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Create a Slack Webhook"
+    },
+    {
+      "id": "d3c3e80b54",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Create an Incoming Webhook in your Slack workspace for your target channel."
+    },
+    {
+      "id": "b8168a48a3",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Paste webhook into Attendance Tracker"
+    },
+    {
+      "id": "2d5dcb5592",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Open Settings in the Attendance Tracker add-on and paste your Slack Webhook URL."
+    },
+    {
+      "id": "980454f4f8",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Receive automatic post-meeting digests"
+    },
+    {
+      "id": "c6bafa4a00",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Whenever a meeting finishes and exports, a formatted Block Kit summary card posts to your Slack channel automatically."
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    }
+  ]
+}

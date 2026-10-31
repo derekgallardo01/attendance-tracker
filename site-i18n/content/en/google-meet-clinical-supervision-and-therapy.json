@@ -1,0 +1,276 @@
+{
+  "page": "google-meet-clinical-supervision-and-therapy.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "3eb04e0f84",
+      "kind": "head",
+      "key": "title",
+      "text": "Google Meet Attendance for Clinical Supervision & Group Therapy (2026) — Attendance Tracker"
+    },
+    {
+      "id": "c7e65eb7a3",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Log verified clinical supervision hours, group therapy attendance, and didactic training minutes in Google Meet for psychology, counseling, and medical residency accreditation."
+    },
+    {
+      "id": "8ab8273b52",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Google Meet Attendance for Clinical Supervision & Group Therapy"
+    },
+    {
+      "id": "acaf154d5f",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Audit-ready supervision logs, medical residency didactic tracking, and Google Sheets exports for healthcare and mental health professionals."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "f46180b63e",
+      "kind": "html",
+      "key": "h1",
+      "text": "Google Meet attendance for clinical supervision &amp; group therapy"
+    },
+    {
+      "id": "f13f3e6f32",
+      "kind": "html",
+      "key": "p",
+      "text": "Clinical supervisors, behavioral health therapists, licensed counselors, and medical residency programs require meticulous, timestamped attendance logs to satisfy state licensing board audits and medical billing requirements. Here is how to automate supervision hours and group session attendance in Google Meet."
+    },
+    {
+      "id": "e85eaa58c5",
+      "kind": "attr",
+      "key": "title",
+      "text": "Clinical Supervision Hours Tracking"
+    },
+    {
+      "id": "8815f0e0ad",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Supervision hour logs and attendance exported to Google Sheets"
+    },
+    {
+      "id": "621da28bff",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Accreditation-Ready Logs:</strong> State behavioral health boards (LCSW, LMFT, LPC, PsyD) and residency review committees (ACGME) require precise documentation of supervision hours. Attendance Tracker automatically logs exact timestamps, duration in minutes, and attendees into a secure Google Spreadsheet."
+    },
+    {
+      "id": "9ae37d362f",
+      "kind": "html",
+      "key": "h2",
+      "text": "Key Clinical &amp; Telehealth Requirements"
+    },
+    {
+      "id": "d1a4a1d8bd",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Supervisee Hour Verification:</strong> Documenting the exact number of hours an associate or intern spent in group supervision vs. individual case consultation."
+    },
+    {
+      "id": "9ae5748955",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Didactic Lecture Compliance:</strong> Tracking medical residents and psychology trainees in required didactic lectures."
+    },
+    {
+      "id": "2123cb9bf1",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Multi-Week Supervision Series:</strong> Calculating cumulative supervision hours across a 6-month or 12-month practicum placement."
+    },
+    {
+      "id": "08ce08dc0b",
+      "kind": "html",
+      "key": "h2",
+      "text": "How Attendance Tracker Delivers Compliance"
+    },
+    {
+      "id": "6f9e4f8b3d",
+      "kind": "html",
+      "key": "h3",
+      "text": "1. Direct Google Meet REST API Integration"
+    },
+    {
+      "id": "9b0d0aa118",
+      "kind": "html",
+      "key": "p",
+      "text": "Because Attendance Tracker integrates directly with the Google Meet REST API rather than scraping screen elements, it records precise server-side connection and disconnection timestamps for each supervisee or patient."
+    },
+    {
+      "id": "5f3a5b909d",
+      "kind": "html",
+      "key": "h3",
+      "text": "2. Tabbed Spreadsheet Generation"
+    },
+    {
+      "id": "9c6af9e021",
+      "kind": "html",
+      "key": "p",
+      "text": "Each supervision session or didactic lecture automatically generates a distinct tab in your <code>Meet Attendance Tracker</code> spreadsheet in Google Drive. Supervisors can review or export records for licensing board sign-offs in seconds."
+    },
+    {
+      "id": "3b258d3975",
+      "kind": "html",
+      "key": "h3",
+      "text": "3. Series Hour Roll-Ups"
+    },
+    {
+      "id": "c30bf9fd63",
+      "kind": "html",
+      "key": "p",
+      "text": "For recurring weekly supervision calls, the add-on automatically tallies cumulative hours completed by each intern across the full academic year."
+    },
+    {
+      "id": "39f3801f18",
+      "kind": "html",
+      "key": "h2",
+      "text": "Common Healthcare &amp; Wellness Use Cases"
+    },
+    {
+      "id": "9a052da74a",
+      "kind": "html",
+      "key": "th",
+      "text": "Role / Department"
+    },
+    {
+      "id": "2cf8380768",
+      "kind": "html",
+      "key": "th",
+      "text": "How They Use Attendance Tracker"
+    },
+    {
+      "id": "20b5a70e15",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Clinical Supervisors (LMFT/LCSW/LPC)</strong>"
+    },
+    {
+      "id": "2e2ed54010",
+      "kind": "html",
+      "key": "td",
+      "text": "Logging weekly required supervision hours for licensure candidate portfolios."
+    },
+    {
+      "id": "a9c4464ffd",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Medical Residency Coordinators</strong>"
+    },
+    {
+      "id": "16f1d6ec41",
+      "kind": "html",
+      "key": "td",
+      "text": "Tracking resident physician attendance during morning report and didactic lectures."
+    },
+    {
+      "id": "cd89ecbf3a",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Substance Recovery &amp; Support Groups</strong>"
+    },
+    {
+      "id": "52a763a7bc",
+      "kind": "html",
+      "key": "td",
+      "text": "Verifying attendance for court-ordered or employer-mandated recovery group meetings."
+    },
+    {
+      "id": "8fe4c64f0c",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Continuing Medical Education (CME/CEU)</strong>"
+    },
+    {
+      "id": "c4aed0e2bf",
+      "kind": "html",
+      "key": "td",
+      "text": "Providing proof of webinar attendance for medical professional license renewals."
+    },
+    {
+      "id": "43c6f5bdef",
+      "kind": "html",
+      "key": "h3",
+      "text": "Streamline your clinical supervision logs"
+    },
+    {
+      "id": "50180f0df3",
+      "kind": "html",
+      "key": "p",
+      "text": "Free, verified on Google Workspace Marketplace, export audit-ready logs to Google Sheets."
+    },
+    {
+      "id": "14b133eb0f",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Attendance Tracker from Marketplace"
+    },
+    {
+      "id": "9352c1ed98",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "a3ad204977",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-legal-depositions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Legal &amp; Arbitrations</a>\n          <a href=\"google-meet-attendance-for-job-interviews.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Recruiting &amp; Interviews</a>"
+    },
+    {
+      "id": "e7a3b147f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Specialized Verticals</strong>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-clinical-supervision-and-therapy.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Clinical Supervision</a>\n          <a href=\"google-meet-quorum-and-board-meetings.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Board Quorum Tracking</a>\n          <a href=\"google-meet-attendance-for-churches.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Churches &amp; Ministries</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>\n          <a href=\"google-meet-attendance-for-fitness-and-yoga.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Fitness &amp; Yoga</a>"
+    },
+    {
+      "id": "eb9246d86f",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>\n          <a href=\"google-meet-attendance-on-ipad-and-mobile.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">iPad &amp; Mobile Attendance</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "da262e2f92",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "How to Track Clinical Supervision & Group Therapy Attendance in Google Meet"
+    },
+    {
+      "id": "0b9c411472",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "A guide for psychologists, LCSWs, and clinical supervisors on tracking supervision hours and group therapy attendance in Google Meet."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "ee982a6c52",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Google Meet attendance for clinical supervision &amp; group therapy"
+    }
+  ]
+}

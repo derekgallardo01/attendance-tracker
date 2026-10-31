@@ -1,0 +1,237 @@
+<!DOCTYPE html><html lang="ja" dir="ltr" data-site-locale="ja"><head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" sizes="32x32" href="../icons/icon-32.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="../icons/icon-96.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>iPad やスマートフォンで Google Meet の出席を記録できる？（2026 年版ガイド） — Attendance Tracker</title>
+  <meta name="description" content="プログレッシブ ウェブアプリと Google Sheets への自動同期を使い、iPad・タブレット・スマートフォンで Google Meet の出席を記録・確認する方法を解説します。">
+  <link rel="canonical" href="https://attendancetracker.dev/ja/google-meet-attendance-on-ipad-and-mobile.html">
+  
+  
+  
+  
+  
+  <meta property="og:title" content="iPad やスマートフォンで Google Meet の出席を記録できる？">
+  <meta property="og:description" content="iPad、タブレット、Chromebook、スマートフォンで Google Meet の出席を記録・確認する方法。">
+  <meta property="og:image" content="https://attendancetracker.dev/screenshots/01-live-roster.jpg">
+  <meta property="og:image:width" content="1920">
+  <meta property="og:image:height" content="1200">
+  <meta property="og:url" content="https://attendancetracker.dev/ja/google-meet-attendance-on-ipad-and-mobile.html">
+  <meta property="og:type" content="article">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="iPad やスマートフォンで Google Meet の出席を記録できる？">
+  <meta name="twitter:description" content="iPad、タブレット、Chromebook、スマートフォンで Google Meet の出席を記録・確認する方法。">
+  <meta name="twitter:image" content="https://attendancetracker.dev/screenshots/01-live-roster.jpg">
+
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "iPad・タブレット・モバイル端末で Google Meet の出席を記録する方法",
+      "description": "モバイル端末やタブレットで Google Meet の出席管理ツールを使うための完全ガイド。",
+      "author": {
+        "@type": "Organization",
+        "name": "Attendance Tracker",
+        "sameAs": [
+          "https://workspace.google.com/marketplace/app/attendance_tracker/829771833968"
+        ]
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Attendance Tracker",
+        "url": "https://attendancetracker.dev/",
+        "sameAs": [
+          "https://workspace.google.com/marketplace/app/attendance_tracker/829771833968"
+        ]
+      },
+      "image": "https://attendancetracker.dev/screenshots/01-live-roster.jpg",
+      "inLanguage": "ja"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "ホーム",
+          "item": "https://attendancetracker.dev/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "iPad やスマートフォンで Google Meet の出席を記録できる？",
+          "item": "https://attendancetracker.dev/google-meet-attendance-on-ipad-and-mobile.html"
+        }
+      ],
+      "inLanguage": "ja"
+    }
+  ]
+}
+</script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&amp;display=swap" rel="stylesheet">
+
+  <style>
+    :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #4ade80; --blue: #58a6ff; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 40px 20px; }
+    .container { max-width: 720px; margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+    .brand img { width: 28px; height: 28px; border-radius: 6px; }
+    .brand a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    h1 { font-size: 2rem; line-height: 1.2; margin-bottom: 14px; }
+    .lead { color: var(--muted); font-size: 1.05rem; margin-bottom: 32px; }
+    h2 { font-size: 1.35rem; margin-top: 36px; margin-bottom: 14px; color: var(--text); }
+    h3 { font-size: 1.05rem; margin-top: 22px; margin-bottom: 8px; color: var(--text); }
+    p { margin-bottom: 14px; color: #c9d1d9; }
+    ul, ol { padding-left: 22px; margin-bottom: 14px; color: #c9d1d9; }
+    li { margin-bottom: 6px; }
+    a { color: var(--blue); }
+    .callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 16px 18px; margin: 22px 0; }
+    .callout strong { color: var(--accent); }
+    .cta { background: linear-gradient(135deg, rgba(74,222,128,.08), rgba(88,166,255,.08)); border: 1px solid rgba(74,222,128,.25); border-radius: 14px; padding: 26px; text-align: center; margin: 36px 0; }
+    .cta h3 { font-size: 1.1rem; margin-top: 0; margin-bottom: 6px; }
+    .cta p { color: var(--muted); font-size: .9rem; margin-bottom: 16px; }
+    .btn { display: inline-block; background: #34A853; color: #fff; text-decoration: none; padding: 11px 24px; border-radius: 8px; font-weight: 600; font-size: .92rem; }
+    .footer { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border); }
+    .footer a { color: var(--muted); text-decoration: none; margin: 0 6px; }
+  </style>
+<meta property="og:locale" content="ja_JP"><link rel="alternate" hreflang="x-default" href="https://attendancetracker.dev/google-meet-attendance-on-ipad-and-mobile.html"><link rel="alternate" hreflang="en" href="https://attendancetracker.dev/google-meet-attendance-on-ipad-and-mobile.html"><link rel="alternate" hreflang="es" href="https://attendancetracker.dev/es/google-meet-attendance-on-ipad-and-mobile.html"><link rel="alternate" hreflang="ar" href="https://attendancetracker.dev/ar/google-meet-attendance-on-ipad-and-mobile.html"><link rel="alternate" hreflang="ja" href="https://attendancetracker.dev/ja/google-meet-attendance-on-ipad-and-mobile.html"></head>
+<body>
+  <div class="container">
+    <div class="brand"><img src="../icons/icon-96.png" alt="">
+      <a href="/?lang=ja">Attendance Tracker</a></div>
+
+    <h1>iPad やスマートフォンで Google Meet の出席を記録できる？</h1>
+    <p class="lead">オンライン会議に iPad や Chromebook、モバイル端末を使う教師や管理者が増えるにつれ、「モバイル端末から Google Meet の出欠を取れるのか？」という質問をよくいただくようになりました。その仕組みと、端末をまたいで出席を記録するための設定方法をご紹介します。</p>
+
+    <div class="callout"><strong>モバイルでの記録の仕組み：</strong>Google Meet のモバイル向けネイティブアプリはサイドパネルのアドオンに対応していませんが、<a href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_mobile">Attendance Tracker のバックエンド</a>が参加者全員（モバイル端末や電話で参加した人を含む）を自動的に記録し、モバイルブラウザや PWA から履歴を確認できます。</div>
+
+    <h2>1. モバイルからの参加者も Google Meet で記録される？</h2>
+    <p><strong>はい。</strong>会議で Attendance Tracker を実行すると、Google Meet の公式 REST API が使われます。そのため、次の参加者も正確に記録されます：</p>
+    <ul>
+      <li>iPad、iPhone、Android 端末から参加する生徒や同僚</li>
+      <li>Google Meet モバイルアプリ、またはモバイル版 Safari / Chrome から参加するユーザー</li>
+      <li>電話で参加した人（発信者番号はマスク表示）</li>
+      <li>Chromebook やノートパソコンのユーザー</li>
+    </ul>
+
+    <h2>2. iPad やスマートフォンで出席履歴を確認する（PWA）</h2>
+    <p>Attendance Tracker には、あらゆる画面サイズに対応した<strong>プログレッシブ ウェブアプリ（PWA）</strong>のダッシュボードが用意されています：</p>
+    <ul>
+      <li><strong>ホーム画面に追加：</strong>iOS の Safari または Android の Chrome で <a href="https://attendancetracker.dev/history.html">attendancetracker.dev/history.html</a> を開き、<em>ホーム画面に追加</em>をタップします。</li>
+      <li><strong>タッチ操作に最適化された画面：</strong>過去の会議の出席者リスト、生徒ごとの出席率、シリーズ会議の連続出席記録を、タブレットから直接確認できます。</li>
+      <li><strong>ワンタップで Google Sheets へ：</strong>自動生成されたスプレッドシートを、iPad や iPhone の Google Sheets アプリで直接開けます。</li>
+    </ul>
+
+    <h2>3. 外出先でも出席データをエクスポート</h2>
+    <p>Attendance Tracker はクラウド上の Google Drive と直接同期するため、データにアクセスするのにノートパソコンは必要ありません：</p>
+    <ol>
+      <li>会議が終わると、出席データが Google Drive の <code>Meet Attendance Tracker</code> フォルダに自動保存されます。</li>
+      <li>スマートフォンの Gmail 受信トレイに、サマリーメールがすぐに届きます。</li>
+      <li>Slack を連携している場合は、整形されたサマリーカードがチームの Slack モバイルアプリにすぐ投稿されます。</li>
+    </ol>
+
+    <div class="cta">
+      <h3>すべての端末で出席の記録を始めましょう</h3>
+      <p>無料。Google Drive、Gmail、モバイルのスプレッドシートとスムーズに連携します。</p>
+      <a class="btn" href="https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_mobile" target="_blank">Marketplace から Attendance Tracker をインストール</a>
+    </div>
+
+    
+    <div class="footer-hub" style="margin-top: 50px; padding-top: 30px; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--muted); line-height: 1.8;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; text-align: left; margin-bottom: 24px;">
+        <div><strong style="color: var(--text); display: block; margin-bottom: 6px;">教育</strong>
+          <a href="../attendance-tracker-for-teachers.html" style="color: var(--muted); text-decoration: none; display: block;">小中高の先生向け</a>
+          <a href="../google-meet-attendance-google-classroom.html" style="color: var(--muted); text-decoration: none; display: block;">Google Classroom</a>
+          <a href="../google-meet-attendance-for-universities.html" style="color: var(--muted); text-decoration: none; display: block;">大学・短大</a>
+          <a href="../google-meet-attendance-for-tutors.html" style="color: var(--muted); text-decoration: none; display: block;">家庭教師・ブートキャンプ</a></div>
+        <div><strong style="color: var(--text); display: block; margin-bottom: 6px;">チーム・ビジネス</strong>
+          <a href="../google-meet-attendance-for-remote-teams.html" style="color: var(--muted); text-decoration: none; display: block;">リモートチーム・朝会</a>
+          <a href="../how-to-send-google-meet-attendance-to-slack.html" style="color: var(--muted); text-decoration: none; display: block;">Slack 連携</a>
+          <a href="../track-attendance-for-webinars-and-training-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">ウェビナー・研修</a>
+          <a href="../google-meet-attendance-for-legal-depositions.html" style="color: var(--muted); text-decoration: none; display: block;">法務・仲裁</a>
+          <a href="../google-meet-attendance-for-job-interviews.html" style="color: var(--muted); text-decoration: none; display: block;">採用・面接</a></div>
+        <div><strong style="color: var(--text); display: block; margin-bottom: 6px;">専門分野</strong>
+          <a href="../google-meet-attendance-for-cpe-and-cle-credits.html" style="color: var(--muted); text-decoration: none; display: block;">CPE・CLE 単位</a>
+          <a href="../google-meet-clinical-supervision-and-therapy.html" style="color: var(--muted); text-decoration: none; display: block;">臨床スーパービジョン</a>
+          <a href="../google-meet-quorum-and-board-meetings.html" style="color: var(--muted); text-decoration: none; display: block;">取締役会の定足数確認</a>
+          <a href="../google-meet-attendance-for-churches.html" style="color: var(--muted); text-decoration: none; display: block;">教会・宣教活動</a>
+          <a href="../google-meet-attendance-for-volunteer-hours.html" style="color: var(--muted); text-decoration: none; display: block;">ボランティア時間</a>
+          <a href="../google-meet-attendance-for-fitness-and-yoga.html" style="color: var(--muted); text-decoration: none; display: block;">フィットネス・ヨガ</a></div>
+        <div><strong style="color: var(--text); display: block; margin-bottom: 6px;">ガイド・比較</strong>
+          <a href="../how-to-track-attendance-in-google-meet.html" style="color: var(--muted); text-decoration: none; display: block;">出席の記録方法</a>
+          <a href="../export-google-meet-attendance-to-sheets.html" style="color: var(--muted); text-decoration: none; display: block;">Google Sheets へのエクスポート</a>
+          <a href="../track-google-meet-attendance-without-host.html" style="color: var(--muted); text-decoration: none; display: block;">主催者以外での記録</a>
+          <a href="../google-meet-attendance-report-not-showing-up.html" style="color: var(--muted); text-decoration: none; display: block;">レポートが表示されない？</a>
+          <a href="../best-google-meet-attendance-extensions.html" style="color: var(--muted); text-decoration: none; display: block;">拡張機能の比較</a>
+          <a href="../google-meet-vs-zoom-attendance-tracking.html" style="color: var(--muted); text-decoration: none; display: block;">Google Meet と Zoom の比較</a>
+          <a href="google-meet-attendance-on-ipad-and-mobile.html" style="color: var(--muted); text-decoration: none; display: block;">iPad・モバイルでの出席管理</a></div>
+      </div>
+      <div style="text-align: center; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06);"><a href="/?lang=ja" style="color: var(--muted); text-decoration: none; margin: 0 8px;">ホーム</a> ·
+        <a href="../pricing.html?lang=ja" style="color: var(--muted); text-decoration: none; margin: 0 8px;">料金</a> ·
+        <a href="../support.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">サポート</a> ·
+        <a href="../privacy.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">プライバシーポリシー</a> ·
+        <a href="../terms.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">利用規約</a> ·
+        <a href="refunds.html" style="color: var(--muted); text-decoration: none; margin: 0 8px;">返金ポリシー</a></div>
+    </div>
+
+  </div>
+
+  <script>
+  (function () {
+    try {
+      var params = new URLSearchParams(location.search);
+      var utmSource = params.get('utm_source');
+      var utmMedium = params.get('utm_medium');
+      var utmCampaign = params.get('utm_campaign');
+      var ref = params.get('ref');
+      var referrer = document.referrer || null;
+      var ACQ_KEY = 'attendanceTrackerAcq';
+      if (!localStorage.getItem(ACQ_KEY)) {
+        var payload = {
+          utmSource: utmSource,
+          utmMedium: utmMedium,
+          utmCampaign: utmCampaign,
+          ref: ref,
+          referrer: referrer,
+          landingUrl: location.href,
+          capturedAt: Date.now(),
+        };
+        localStorage.setItem(ACQ_KEY, JSON.stringify(payload));
+        var computedSource = utmSource || (ref ? 'referral' : null) || (referrer ? new URL(referrer).hostname : null) || 'direct';
+        document.cookie = 'att_first_touch=' + encodeURIComponent(JSON.stringify(Object.assign({}, payload, { computedSource: computedSource }))) + ';path=/;max-age=7776000;SameSite=Lax';
+      }
+    } catch (e) {}
+
+    var API = 'https://attendance-tracker-backend-829771833968.us-central1.run.app/api';
+    function beacon(payload) {
+      try {
+        var blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        if (navigator.sendBeacon) navigator.sendBeacon(API + '/public/pageview', blob);
+        else fetch(API + '/public/pageview', { method: 'POST', body: blob, keepalive: true });
+      } catch (e) {}
+    }
+    var p = new URLSearchParams(location.search);
+    beacon({
+      path: location.pathname,
+      referrer: document.referrer || null,
+      viewportWidth: window.innerWidth || null,
+      utmSource: p.get('utm_source'),
+      utmMedium: p.get('utm_medium'),
+      utmCampaign: p.get('utm_campaign'),
+    });
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a[href*="marketplace/app/attendance_tracker"]');
+      if (a) beacon({ path: location.pathname, event: 'cta_click', eventLabel: 'marketplace_install_seo', referrer: document.referrer || null });
+    });
+  })();
+  </script>
+
+
+</body></html>

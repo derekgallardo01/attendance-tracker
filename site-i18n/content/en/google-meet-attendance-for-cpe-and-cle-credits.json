@@ -1,0 +1,306 @@
+{
+  "page": "google-meet-attendance-for-cpe-and-cle-credits.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "5609de316b",
+      "kind": "head",
+      "key": "title",
+      "text": "Google Meet Attendance for CPE & CLE Credit Webinars (2026) — Attendance Tracker"
+    },
+    {
+      "id": "fa37e2fd8f",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Generate NASBA and State Bar compliant attendance duration reports in Google Meet to verify continuing education credits for CPAs, attorneys, and engineers."
+    },
+    {
+      "id": "52389dffb8",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Google Meet Attendance for CPE & CLE Credit Webinars"
+    },
+    {
+      "id": "67f4e2596b",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Compliance-ready attendance duration logs, exact timestamps, and Google Sheets exports for professional continuing education webinars."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "6653e37e9f",
+      "kind": "html",
+      "key": "h1",
+      "text": "Google Meet attendance for CPE, CLE &amp; CEU credit webinars"
+    },
+    {
+      "id": "10d08b7015",
+      "kind": "html",
+      "key": "p",
+      "text": "Organizations delivering live Continuing Professional Education (CPE for CPAs), Continuing Legal Education (CLE for attorneys), and Continuing Education Units (CEUs for engineers and realtors) over Google Meet must prove that attendees met minimum duration requirements before issuing certificates. Here is how to automate compliance logs."
+    },
+    {
+      "id": "bc2b921759",
+      "kind": "attr",
+      "key": "title",
+      "text": "Continuing Education Attendance Tracking"
+    },
+    {
+      "id": "5c993f343a",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Audit-ready continuing education attendance export with exact minutes attended"
+    },
+    {
+      "id": "e56bc9d5a7",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Protect Your Provider Accreditation:</strong> Regulatory standards (such as NASBA for CPAs and State Bar associations) require documented verification of attendee connection duration (e.g. 50 minutes of active attendance per 1.0 CPE credit hour). Attendance Tracker delivers audit-ready spreadsheet records."
+    },
+    {
+      "id": "43b99c3b73",
+      "kind": "html",
+      "key": "h2",
+      "text": "Continuing Education Compliance Requirements"
+    },
+    {
+      "id": "e33e947fa6",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>50-Minute Hour Standard:</strong> NASBA rules calculate 1 CPE credit per 50 minutes of active learning. Providers need exact minutes logged for every participant."
+    },
+    {
+      "id": "04d37e1dd2",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Handling Drop-Offs &amp; Disconnections:</strong> When an attendee's internet blips, their multiple session segments must be summed into a verified total."
+    },
+    {
+      "id": "137a5412b2",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Certificate Generation Roster:</strong> Program administrators need a clean spreadsheet with participant full names, emails, and verified completion flags."
+    },
+    {
+      "id": "9abb3c1edc",
+      "kind": "html",
+      "key": "h2",
+      "text": "How Attendance Tracker Automates CE Certification"
+    },
+    {
+      "id": "6251502fbf",
+      "kind": "html",
+      "key": "h3",
+      "text": "1. Server-Side Duration Calculation"
+    },
+    {
+      "id": "a7f00ae1b6",
+      "kind": "html",
+      "key": "p",
+      "text": "Using the official Google Meet REST API, Attendance Tracker calculates exact server-verified join times, leave times, and total minutes present for each registrant."
+    },
+    {
+      "id": "4480985b5d",
+      "kind": "html",
+      "key": "h3",
+      "text": "2. Formatted Google Sheets Export"
+    },
+    {
+      "id": "636a6f20a9",
+      "kind": "html",
+      "key": "p",
+      "text": "When the webinar closes, a tabbed spreadsheet is instantly generated in your Google Drive. Each row contains the registrant's email, arrival timestamp, departure timestamp, and total minutes attended (e.g. <code>52 mins</code>), making certificate issuance straightforward."
+    },
+    {
+      "id": "b7d099752e",
+      "kind": "html",
+      "key": "h3",
+      "text": "3. Multi-Session Conference Tracking"
+    },
+    {
+      "id": "8a2f282a76",
+      "kind": "html",
+      "key": "p",
+      "text": "For multi-day professional conferences or 4-part webinar series, Attendance Tracker groups all sessions by Google Calendar recurring IDs to calculate overall conference credits per attendee."
+    },
+    {
+      "id": "22e01a7ea3",
+      "kind": "html",
+      "key": "h2",
+      "text": "Common Professional Accreditation Use Cases"
+    },
+    {
+      "id": "8ece32a832",
+      "kind": "html",
+      "key": "th",
+      "text": "Accreditation Type"
+    },
+    {
+      "id": "bf03fb5601",
+      "kind": "html",
+      "key": "th",
+      "text": "Required Standard"
+    },
+    {
+      "id": "77c565cc17",
+      "kind": "html",
+      "key": "th",
+      "text": "How Attendance Tracker Helps"
+    },
+    {
+      "id": "6859a9d8e1",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>CPA / NASBA (CPE)</strong>"
+    },
+    {
+      "id": "f0d8a04a68",
+      "kind": "html",
+      "key": "td",
+      "text": "50 mins per credit hour"
+    },
+    {
+      "id": "8441f25f89",
+      "kind": "html",
+      "key": "td",
+      "text": "Calculates exact cumulative minutes per attendee."
+    },
+    {
+      "id": "a08713c266",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>State Bar (CLE)</strong>"
+    },
+    {
+      "id": "101735243a",
+      "kind": "html",
+      "key": "td",
+      "text": "Verifiable attorney presence"
+    },
+    {
+      "id": "1a312548e2",
+      "kind": "html",
+      "key": "td",
+      "text": "Timestamped join and departure logs."
+    },
+    {
+      "id": "78a6fffb0c",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Professional Engineers (PE / PDH)</strong>"
+    },
+    {
+      "id": "7216419a27",
+      "kind": "html",
+      "key": "td",
+      "text": "Active seminar participation"
+    },
+    {
+      "id": "10a50be7c6",
+      "kind": "html",
+      "key": "td",
+      "text": "Auto-saved Google Drive compliance spreadsheets."
+    },
+    {
+      "id": "b03877b20a",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Real Estate (CE)</strong>"
+    },
+    {
+      "id": "617e2bf8ce",
+      "kind": "html",
+      "key": "td",
+      "text": "Mandated state licensing hours"
+    },
+    {
+      "id": "bebbf8ebbe",
+      "kind": "html",
+      "key": "td",
+      "text": "Instant post-webinar attendance summary emails."
+    },
+    {
+      "id": "8339c14b48",
+      "kind": "html",
+      "key": "h3",
+      "text": "Streamline your continuing education certification"
+    },
+    {
+      "id": "50180f0df3",
+      "kind": "html",
+      "key": "p",
+      "text": "Free, verified on Google Workspace Marketplace, export audit-ready logs to Google Sheets."
+    },
+    {
+      "id": "14b133eb0f",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Attendance Tracker from Marketplace"
+    },
+    {
+      "id": "9352c1ed98",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "a3ad204977",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-legal-depositions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Legal &amp; Arbitrations</a>\n          <a href=\"google-meet-attendance-for-job-interviews.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Recruiting &amp; Interviews</a>"
+    },
+    {
+      "id": "e7a3b147f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Specialized Verticals</strong>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-clinical-supervision-and-therapy.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Clinical Supervision</a>\n          <a href=\"google-meet-quorum-and-board-meetings.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Board Quorum Tracking</a>\n          <a href=\"google-meet-attendance-for-churches.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Churches &amp; Ministries</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>\n          <a href=\"google-meet-attendance-for-fitness-and-yoga.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Fitness &amp; Yoga</a>"
+    },
+    {
+      "id": "eb9246d86f",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>\n          <a href=\"google-meet-attendance-on-ipad-and-mobile.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">iPad &amp; Mobile Attendance</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "e3953e6fd2",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "How to Track Continuing Education (CPE/CLE) Attendance in Google Meet"
+    },
+    {
+      "id": "0314456c31",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "A guide for professional associations, CPA training providers, and law institutes on verifying continuing education webinar attendance in Google Meet."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "273c978173",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Google Meet attendance for CPE, CLE &amp; CEU credit webinars"
+    }
+  ]
+}

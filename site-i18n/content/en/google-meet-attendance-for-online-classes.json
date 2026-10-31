@@ -1,0 +1,324 @@
+{
+  "page": "google-meet-attendance-for-online-classes.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "d07aa61116",
+      "kind": "head",
+      "key": "title",
+      "text": "How to Take Attendance in Online Classes on Google Meet (Free) — Attendance Tracker"
+    },
+    {
+      "id": "38d77107a2",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "The fastest way to take attendance in an online class on Google Meet: automatic student roll call, late flags, absent detection with class rosters, and one-click export to Google Sheets. Free for teachers."
+    },
+    {
+      "id": "0bbf08af65",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "How to Take Attendance in Online Classes on Google Meet (Free)"
+    },
+    {
+      "id": "6b219f072a",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Automatic student roll call, absent detection with class rosters, and one-click Google Sheets export for online classes."
+    },
+    {
+      "id": "5f79375412",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"Attendance Tracker\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "c5e60291ed",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "38769363e4",
+      "kind": "html",
+      "key": "div",
+      "text": "🎓 Online Classes"
+    },
+    {
+      "id": "dac5723ce3",
+      "kind": "html",
+      "key": "h1",
+      "text": "How to Take Attendance in Online Classes on Google Meet"
+    },
+    {
+      "id": "3284f0da9a",
+      "kind": "html",
+      "key": "p",
+      "text": "Every teacher running online classes hits the same three problems: roll call wastes lesson time, \"type present in the chat\" is easy to fake, and Google Meet never emails you an attendance report. Here is the workflow that fixes all three — automatically, from inside the Meet window."
+    },
+    {
+      "id": "46421da6fc",
+      "kind": "html",
+      "key": "h2",
+      "text": "The Three Ways Teachers Take Online Class Attendance (and What Each Costs You)"
+    },
+    {
+      "id": "4f45830d0d",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Verbal roll call</strong> — accurate but burns 5–15 minutes per class, every class, and says nothing about who left early."
+    },
+    {
+      "id": "8e92ecbc92",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>\"Type present in chat\"</strong> — fast, but students can reply and walk away, and you still have to copy the chat into a register afterwards."
+    },
+    {
+      "id": "cd3226a276",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Automatic tracking</strong> — a side-panel add-on records who joined, when, for how long, and who never showed, then exports the register for you. This is the one that gives you your lesson time back."
+    },
+    {
+      "id": "802b70382a",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>No Education Plus needed:</strong> Google's built-in attendance reports require the paid Education Plus licence. Attendance Tracker is a certified Google Workspace Marketplace add-on that works on <em>every</em> account — school Fundamentals domains and personal Gmail alike."
+    },
+    {
+      "id": "c950900d03",
+      "kind": "html",
+      "key": "h2",
+      "text": "What Automatic Attendance Looks Like in an Online Class"
+    },
+    {
+      "id": "e17ce6e345",
+      "kind": "html",
+      "key": "strong",
+      "text": "📋 Live Roster"
+    },
+    {
+      "id": "61001c6b5c",
+      "kind": "html",
+      "key": "p",
+      "text": "Students appear in the side panel the moment they join, with join time and running duration — no roll call, no chat spam."
+    },
+    {
+      "id": "e58b672e55",
+      "kind": "html",
+      "key": "strong",
+      "text": "🙋 Absent Detection with Class Rosters"
+    },
+    {
+      "id": "ef2fcbfff6",
+      "kind": "html",
+      "key": "p",
+      "text": "Upload your class list once, and every export shows exactly who was absent — not just who attended."
+    },
+    {
+      "id": "7d9ac986d5",
+      "kind": "html",
+      "key": "strong",
+      "text": "⏰ Late Flags"
+    },
+    {
+      "id": "79177eb149",
+      "kind": "html",
+      "key": "p",
+      "text": "Anyone joining 5+ minutes after start gets a late chip (e.g. <code>+12m late</code>) in the roster and the export."
+    },
+    {
+      "id": "4626693893",
+      "kind": "html",
+      "key": "strong",
+      "text": "⏱️ Early-Leaver Visibility"
+    },
+    {
+      "id": "f6f5f523d1",
+      "kind": "html",
+      "key": "p",
+      "text": "Total active minutes per student, with reconnections merged — you can see who stayed for 8 minutes of a 60-minute lesson."
+    },
+    {
+      "id": "132c351b75",
+      "kind": "html",
+      "key": "strong",
+      "text": "📊 One-Click Sheets Export"
+    },
+    {
+      "id": "d724a5e827",
+      "kind": "html",
+      "key": "p",
+      "text": "The register lands in Google Drive as a clean spreadsheet: name, email, join, leave, duration, late flag, absent list."
+    },
+    {
+      "id": "ce22a328fd",
+      "kind": "html",
+      "key": "strong",
+      "text": "📚 Series Roll-Up"
+    },
+    {
+      "id": "dbc2390d3d",
+      "kind": "html",
+      "key": "p",
+      "text": "For recurring classes, a cumulative per-student report shows attendance percentage across every session of the term."
+    },
+    {
+      "id": "91594f4e89",
+      "kind": "html",
+      "key": "h2",
+      "text": "Set It Up Once (About 2 Minutes)"
+    },
+    {
+      "id": "7a188b0635",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Install:</strong> Open the <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_online_classes\" target=\"_blank\" rel=\"noopener\">Attendance Tracker Marketplace page</a> and click <strong>Install</strong>."
+    },
+    {
+      "id": "1244877887",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Start your online class</strong> in Google Meet as usual."
+    },
+    {
+      "id": "2bcc7b43fc",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Open the side panel:</strong> Click the <em>Activities / Add-ons</em> icon (next to chat) and choose <strong>Attendance Tracker</strong>."
+    },
+    {
+      "id": "c040352313",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Optional — add your roster:</strong> Paste your class list once so absences are detected automatically from then on."
+    },
+    {
+      "id": "1e2a194702",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Teach.</strong> At the end, click <strong>Save to Sheets</strong> — or enable auto-export in Settings so every future class saves itself."
+    },
+    {
+      "id": "c08cf5f1ad",
+      "kind": "html",
+      "key": "h2",
+      "text": "Frequently Asked Questions"
+    },
+    {
+      "id": "88477f4227",
+      "kind": "html",
+      "key": "h3",
+      "text": "Do my students need to install anything?"
+    },
+    {
+      "id": "1d57594bd9",
+      "kind": "html",
+      "key": "p",
+      "text": "No. Only the teacher (or whoever runs the panel) needs the add-on. Students just join the Meet normally from any device, including phones."
+    },
+    {
+      "id": "66245e06d5",
+      "kind": "html",
+      "key": "h3",
+      "text": "Does it work for daily classes without redoing setup?"
+    },
+    {
+      "id": "3d5f891bf4",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. Install once, and the panel is available in every meeting. With auto-export on and a saved roster, your attendance workflow becomes fully hands-free."
+    },
+    {
+      "id": "87e609b5df",
+      "kind": "html",
+      "key": "h3",
+      "text": "What if a student's internet drops mid-class?"
+    },
+    {
+      "id": "207dcc0494",
+      "kind": "html",
+      "key": "p",
+      "text": "When they rejoin, their time is merged into a single record showing total active minutes — no duplicate rows and no unfair absences for connection problems."
+    },
+    {
+      "id": "cffeef976c",
+      "kind": "html",
+      "key": "h3",
+      "text": "How much does it cost?"
+    },
+    {
+      "id": "7e868cebfc",
+      "kind": "html",
+      "key": "p",
+      "text": "Tracking is free, with 2 spreadsheet exports per month across Google Sheets, CSV, or Excel (for classes up to 25 students, plus 1 large-class grace export). Teachers who need unlimited exports can get the <strong>Educator Pass</strong> for $14.99/year ($4.99–$7.99/year regional) or a one-time <strong>Lifetime Pass</strong> for $29 ($9.99–$19 regional) — both add auto-capture and student certificates."
+    },
+    {
+      "id": "ae0fbaf649",
+      "kind": "html",
+      "key": "h3",
+      "text": "Take your last manual roll call today"
+    },
+    {
+      "id": "91ab07fccf",
+      "kind": "html",
+      "key": "p",
+      "text": "Save 10–15 minutes every online class. Free install on Google Workspace Marketplace."
+    },
+    {
+      "id": "0283cf06ed",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Free from Google Marketplace →"
+    },
+    {
+      "id": "7e908b161b",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-for-online-classes.html\" style=\"color: var(--accent); text-decoration: none; display: block; font-weight:600;\">Online Classes</a>\n          <a href=\"automatic-attendance-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Automatic Attendance</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>"
+    },
+    {
+      "id": "f83797ca5b",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">By Country</strong>\n          <a href=\"google-meet-attendance-philippines-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Philippines (DepEd)</a>\n          <a href=\"google-meet-attendance-malaysia-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Malaysia (MOE &amp; DELIMa)</a>\n          <a href=\"google-meet-attendance-indonesia-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Indonesia (belajar.id)</a>\n          <a href=\"google-meet-attendance-india-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">India (Schools &amp; Colleges)</a>"
+    },
+    {
+      "id": "9f413bf209",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">More Guides</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "23f8ad156d",
+      "kind": "html",
+      "key": "div",
+      "text": "© 2026 Kinetic Helix LLC. Attendance Tracker for Google Meet™. All rights reserved."
+    },
+    {
+      "id": "8a3067693b",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "How to Take Attendance in Online Classes on Google Meet"
+    },
+    {
+      "id": "ebfa15595b",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "Step-by-step guide for teachers: automatic roll call, absent detection with class rosters, late flags, and Google Sheets export for online classes on Google Meet."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    }
+  ]
+}

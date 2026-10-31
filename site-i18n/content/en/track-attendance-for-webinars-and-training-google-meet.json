@@ -1,0 +1,264 @@
+{
+  "page": "track-attendance-for-webinars-and-training-google-meet.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "c4fdbd455f",
+      "kind": "head",
+      "key": "title",
+      "text": "How to track Google Meet attendance for webinars, workshops & training (2026) — Attendance Tracker"
+    },
+    {
+      "id": "79ca5746d7",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Track verified attendee participation, exact minutes stayed, and export certificate-ready attendance sheets from Google Meet for webinars, workshops, and HR training."
+    },
+    {
+      "id": "6810dfc59e",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Track Google Meet Attendance for Webinars, Workshops & Training"
+    },
+    {
+      "id": "1001e74398",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Generate certificate-ready attendance records with exact join/leave timestamps and duration in Google Sheets. Free."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "11dd824b9d",
+      "kind": "html",
+      "key": "h1",
+      "text": "Google Meet attendance tracking for webinars, workshops &amp; training"
+    },
+    {
+      "id": "30154964b3",
+      "kind": "html",
+      "key": "p",
+      "text": "Whether you are running corporate compliance training, paid workshops, CME/CLE continuing education courses, or live customer onboarding webinars, you need verifiable proof of attendance. Here is how to generate audit-ready attendance sheets with exact duration timestamps."
+    },
+    {
+      "id": "2b58d094d3",
+      "kind": "attr",
+      "key": "title",
+      "text": "Webinar & Training Attendance Tracking"
+    },
+    {
+      "id": "cb5d80b7f9",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Google Sheets export for training and webinar attendance"
+    },
+    {
+      "id": "7734e0bc16",
+      "kind": "html",
+      "key": "h2",
+      "text": "Why Standard Video Attendance Isn't Enough for Training"
+    },
+    {
+      "id": "7687960770",
+      "kind": "html",
+      "key": "p",
+      "text": "For accredited or corporate sessions, a simple head count does not satisfy compliance requirements:"
+    },
+    {
+      "id": "610863e019",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Minimum Duration Thresholds:</strong> Continuing education credits often require attendees to be present for at least 80% or 90% of the scheduled session."
+    },
+    {
+      "id": "2be89d4622",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Disconnection &amp; Rejoin Tracking:</strong> If an attendee loses internet connection and reconnects, you need an aggregate calculation of their total active time."
+    },
+    {
+      "id": "e5d622f81a",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Certificate Issuance:</strong> To grant completion certificates, training administrators need a clean spreadsheet showing student names, verified emails, and exact minutes spent in the room."
+    },
+    {
+      "id": "19f3e9118a",
+      "kind": "html",
+      "key": "h2",
+      "text": "How Attendance Tracker Delivers Audit-Ready Records"
+    },
+    {
+      "id": "19fcf98c2f",
+      "kind": "html",
+      "key": "h3",
+      "text": "1. Real-Time Duration Calculation"
+    },
+    {
+      "id": "af90cb8a82",
+      "kind": "html",
+      "key": "p",
+      "text": "Attendance Tracker continuously records every participant's join time and leave time using the Google Meet REST API. If a user drops off and rejoins, multiple participant sessions are combined into a single accurate duration total."
+    },
+    {
+      "id": "4480985b5d",
+      "kind": "html",
+      "key": "h3",
+      "text": "2. Formatted Google Sheets Export"
+    },
+    {
+      "id": "571211ff69",
+      "kind": "html",
+      "key": "p",
+      "text": "Immediately after your webinar or workshop concludes, the report is saved directly to your Google Drive. The exported sheet contains:"
+    },
+    {
+      "id": "ba6f234c32",
+      "kind": "html",
+      "key": "li",
+      "text": "Attendee Full Name &amp; Email"
+    },
+    {
+      "id": "5032aeaa95",
+      "kind": "html",
+      "key": "li",
+      "text": "First Join Timestamp &amp; Final Leave Timestamp"
+    },
+    {
+      "id": "e335ffb59d",
+      "kind": "html",
+      "key": "li",
+      "text": "Total Minutes in Call"
+    },
+    {
+      "id": "5220270ab4",
+      "kind": "html",
+      "key": "li",
+      "text": "Attendance Status (Present, Left Early, Absent, Excused)"
+    },
+    {
+      "id": "0466b0b82a",
+      "kind": "html",
+      "key": "h3",
+      "text": "3. Multi-Session Workshop Series Roll-up"
+    },
+    {
+      "id": "babbb82bcb",
+      "kind": "html",
+      "key": "p",
+      "text": "If your training course spans multiple modules or weeks, Attendance Tracker groups all sessions by your Google Calendar recurring event ID to show overall course completion percentages per person."
+    },
+    {
+      "id": "53017ac9c7",
+      "kind": "html",
+      "key": "h2",
+      "text": "Ideal for:"
+    },
+    {
+      "id": "d1846d2084",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Corporate HR &amp; Compliance Officers:</strong> Document mandatory security, safety, and DEI training completion."
+    },
+    {
+      "id": "d7ae7a5b56",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Professional Certification Providers:</strong> Issue CME, CLE, CPA, or PMI continuing education credits based on verified minutes attended."
+    },
+    {
+      "id": "77acb992b2",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Customer Success &amp; Onboarding Teams:</strong> Track customer participation during live software onboarding bootcamps."
+    },
+    {
+      "id": "cf28d6678d",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Paid Webinar Hosts:</strong> Validate ticketed attendees against event registration lists."
+    },
+    {
+      "id": "a11b63ad8d",
+      "kind": "html",
+      "key": "h3",
+      "text": "Automate your training attendance records"
+    },
+    {
+      "id": "af64e3ac8d",
+      "kind": "html",
+      "key": "p",
+      "text": "Free, verified on Google Workspace Marketplace, export to Google Sheets in one click."
+    },
+    {
+      "id": "14b133eb0f",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Attendance Tracker from Marketplace"
+    },
+    {
+      "id": "9352c1ed98",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "a3ad204977",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-legal-depositions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Legal &amp; Arbitrations</a>\n          <a href=\"google-meet-attendance-for-job-interviews.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Recruiting &amp; Interviews</a>"
+    },
+    {
+      "id": "e7a3b147f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Specialized Verticals</strong>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-clinical-supervision-and-therapy.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Clinical Supervision</a>\n          <a href=\"google-meet-quorum-and-board-meetings.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Board Quorum Tracking</a>\n          <a href=\"google-meet-attendance-for-churches.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Churches &amp; Ministries</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>\n          <a href=\"google-meet-attendance-for-fitness-and-yoga.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Fitness &amp; Yoga</a>"
+    },
+    {
+      "id": "eb9246d86f",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>\n          <a href=\"google-meet-attendance-on-ipad-and-mobile.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">iPad &amp; Mobile Attendance</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "361def66f0",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "How to Track Google Meet Attendance for Webinars, Workshops & Training"
+    },
+    {
+      "id": "ce5c000983",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "A comprehensive guide on taking verified attendance in Google Meet for training compliance, continuing education, and webinars."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "d3bb972875",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Google Meet attendance tracking for webinars, workshops &amp; training"
+    }
+  ]
+}

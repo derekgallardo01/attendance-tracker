@@ -11,6 +11,10 @@
     "check:public": "node scripts/sync-public.mjs --check",
     "audit:i18n": "node scripts/audit-website-strings.cjs",
     "audit:signups": "node scripts/analyze-users.cjs",
-    "build:extension": "node scripts/package-extension.mjs"
+    "build:extension": "node scripts/package-extension.mjs",
+    "site:i18n:extract": "node scripts/site-i18n/extract.mjs",
+    "site:i18n:validate": "node scripts/site-i18n/validate.mjs",
+    "site:i18n:build": "node scripts/site-i18n/build.mjs",
+    "site:i18n:status": "node scripts/site-i18n/status.mjs"
   }
 }

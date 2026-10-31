@@ -124,4 +124,5 @@ Disallow: /api/
 
 # Sitemap & Machine-Readable Knowledge
 Sitemap: https://attendancetracker.dev/sitemap.xml
+Sitemap: https://attendancetracker.dev/sitemap-i18n.xml
 LLMs-Txt: https://attendancetracker.dev/llms.txt

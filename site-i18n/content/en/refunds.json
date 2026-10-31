@@ -1,0 +1,264 @@
+{
+  "page": "refunds.html",
+  "legal": true,
+  "segments": [
+    {
+      "id": "a4032a2ae0",
+      "kind": "head",
+      "key": "title",
+      "text": "Refund & Cancellation Policy — Attendance Tracker for Google Meet™"
+    },
+    {
+      "id": "fcb50511c1",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Refund and cancellation policy for Attendance Tracker subscriptions."
+    },
+    {
+      "id": "13b303e442",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Refund & Cancellation Policy — Attendance Tracker for Google Meet"
+    },
+    {
+      "id": "7a9d7b01bf",
+      "kind": "html",
+      "key": "a",
+      "text": "<img src=\"icons/icon-32.png\" alt=\"Logo\"><span>Attendance Tracker</span>"
+    },
+    {
+      "id": "56cd23c117",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Logo"
+    },
+    {
+      "id": "7fedfcbaca",
+      "kind": "html",
+      "key": "a",
+      "text": "Home"
+    },
+    {
+      "id": "7d4f187b91",
+      "kind": "html",
+      "key": "a",
+      "text": "Pricing"
+    },
+    {
+      "id": "72b3ad9498",
+      "kind": "html",
+      "key": "a",
+      "text": "Help Center"
+    },
+    {
+      "id": "2782febc18",
+      "kind": "html",
+      "key": "a",
+      "text": "Support"
+    },
+    {
+      "id": "f58ea57552",
+      "kind": "attr",
+      "key": "aria-label",
+      "text": "Open navigation menu"
+    },
+    {
+      "id": "db9fb2fab4",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Free"
+    },
+    {
+      "id": "98bf5c73ee",
+      "kind": "html",
+      "key": "a",
+      "text": "Meeting History"
+    },
+    {
+      "id": "2209f15949",
+      "kind": "html",
+      "key": "div",
+      "text": "🌐 <strong>Multilingual Legal Terms:</strong> Read this policy in any of our 44 supported languages using the navigation dropdown or translation tool. For questions, binding interpretation, or a signed DPA, reach out directly to <strong>Kinetic Helix LLC Legal Department</strong> at <a href=\"mailto:legal@kinetichelix.io\" style=\"color:#58a6ff;text-decoration:underline;\">legal@kinetichelix.io</a> or <a href=\"mailto:support@attendancetracker.dev\" style=\"color:#58a6ff;text-decoration:underline;\">support@attendancetracker.dev</a>."
+    },
+    {
+      "id": "49422ab949",
+      "kind": "html",
+      "key": "div",
+      "text": "Legal"
+    },
+    {
+      "id": "7095ecaa86",
+      "kind": "html",
+      "key": "h1",
+      "text": "Refund &amp; Cancellation Policy"
+    },
+    {
+      "id": "ed3be4eb82",
+      "kind": "html",
+      "key": "p",
+      "text": "Last updated: September 7, 2026"
+    },
+    {
+      "id": "af0e5a7fad",
+      "kind": "html",
+      "key": "p",
+      "text": "Attendance Tracker is operated by Kinetic Helix LLC, which is the provider and merchant of record for Attendance Tracker paid plans. This policy explains how cancellations and refunds work for our paid plans — both recurring subscriptions and one-time (Lifetime) purchases."
+    },
+    {
+      "id": "659ca4f654",
+      "kind": "html",
+      "key": "h2",
+      "text": "Cancel anytime"
+    },
+    {
+      "id": "b68bea7fbb",
+      "kind": "html",
+      "key": "p",
+      "text": "You can cancel your subscription at any time from your billing settings or by emailing us. When you cancel:"
+    },
+    {
+      "id": "64a3b6d211",
+      "kind": "html",
+      "key": "li",
+      "text": "your organization’s plan stays active through the end of the billing period you have already paid for;"
+    },
+    {
+      "id": "e3ccc555e8",
+      "kind": "html",
+      "key": "li",
+      "text": "you keep Pro features until that period ends;"
+    },
+    {
+      "id": "23aac5f4c7",
+      "kind": "html",
+      "key": "li",
+      "text": "your subscription does not renew, so you are not charged again."
+    },
+    {
+      "id": "72b36ab88a",
+      "kind": "html",
+      "key": "h2",
+      "text": "Refunds"
+    },
+    {
+      "id": "4265e236a8",
+      "kind": "html",
+      "key": "p",
+      "text": "Subscription fees are billed in advance and are non-refundable, including for partial billing periods after you cancel. We do not provide prorated refunds for the unused portion of a billing period."
+    },
+    {
+      "id": "921a271e33",
+      "kind": "html",
+      "key": "p",
+      "text": "We may, at our discretion, issue a refund for a duplicate charge, a billing error on our side, or where required by applicable law. If you believe you were charged in error, contact us within 30 days and we will make it right."
+    },
+    {
+      "id": "8b1c576591",
+      "kind": "html",
+      "key": "h2",
+      "text": "Lifetime &amp; one-time purchases"
+    },
+    {
+      "id": "51eb2b424b",
+      "kind": "html",
+      "key": "p",
+      "text": "A Lifetime Pass is a single one-time charge, not a subscription — there is nothing to cancel and it never renews. If a Lifetime Pass isn’t the right fit, email us within <strong>30 days</strong> of purchase and we’ll refund it in full."
+    },
+    {
+      "id": "490c3e5dd7",
+      "kind": "html",
+      "key": "h2",
+      "text": "Free plan &amp; trials"
+    },
+    {
+      "id": "b819a45cd7",
+      "kind": "html",
+      "key": "p",
+      "text": "Attendance Tracker offers a free plan; you are only charged if you subscribe to a paid plan. Where a free trial is offered, you will not be charged until the trial ends — cancel before it ends to avoid billing."
+    },
+    {
+      "id": "3b5c5992e5",
+      "kind": "html",
+      "key": "h2",
+      "text": "How to cancel"
+    },
+    {
+      "id": "44c629c36a",
+      "kind": "html",
+      "key": "p",
+      "text": "Open your billing settings in the app, or email <a href=\"mailto:derek@attendancetracker.dev\">derek@attendancetracker.dev</a> from your account address and we will cancel it for you."
+    },
+    {
+      "id": "11b564c38a",
+      "kind": "html",
+      "key": "h2",
+      "text": "Contact"
+    },
+    {
+      "id": "b291c7cad4",
+      "kind": "html",
+      "key": "p",
+      "text": "Questions about billing, cancellations, or instant refunds? Reach out directly to <strong>Kinetic Helix LLC</strong> at <a href=\"mailto:legal@kinetichelix.io\">legal@kinetichelix.io</a> or <a href=\"mailto:support@attendancetracker.dev\">support@attendancetracker.dev</a>."
+    },
+    {
+      "id": "b35bf57a1f",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\">Home</a>\n      <a href=\"pricing.html\">Pricing</a>\n      <a href=\"faq.html\">Help Center &amp; FAQ</a>\n      <a href=\"privacy.html\">Privacy Policy</a>\n      <a href=\"terms.html\">Terms of Service</a>\n      <a href=\"student-data-privacy.html\">Student Privacy</a>\n      <a href=\"refunds.html\">Refund Policy</a>\n      <a href=\"support.html\">Contact Support</a>\n      <a href=\"unsubscribe.html\">Unsubscribe</a>"
+    },
+    {
+      "id": "c9b7900b06",
+      "kind": "html",
+      "key": "div",
+      "text": "© 2026 Kinetic Helix LLC. Attendance Tracker for Google Meet™. Support: Kinetic Helix LLC (<a href=\"mailto:legal@kinetichelix.io\" style=\"color:inherit;text-decoration:underline;\">legal@kinetichelix.io</a> / <a href=\"mailto:support@attendancetracker.dev\" style=\"color:inherit;text-decoration:underline;\">support@attendancetracker.dev</a>). All rights reserved."
+    },
+    {
+      "id": "ab1673bfc6",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Refund & Cancellation Policy — Attendance Tracker for Google Meet"
+    },
+    {
+      "id": "16f2205609",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "Refund and cancellation policy for Attendance Tracker subscriptions and lifetime passes."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "47889d9168",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Refund Policy"
+    },
+    {
+      "id": "9b78e0c3eb",
+      "kind": "jsonld",
+      "key": "1:name",
+      "text": "Refund Policy — Attendance Tracker for Google Meet"
+    },
+    {
+      "id": "e0bccbf73f",
+      "kind": "jsonld",
+      "key": "1:description",
+      "text": "Refund policy for Attendance Tracker plans. 30-day money-back guarantee on individual and educator plans."
+    },
+    {
+      "id": "1297e42eec",
+      "kind": "jsonld",
+      "key": "1:name",
+      "text": "Attendance Tracker for Google Meet"
+    }
+  ]
+}

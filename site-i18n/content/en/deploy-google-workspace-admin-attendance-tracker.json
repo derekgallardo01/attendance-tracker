@@ -1,0 +1,390 @@
+{
+  "page": "deploy-google-workspace-admin-attendance-tracker.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "16cacd1fe4",
+      "kind": "head",
+      "key": "title",
+      "text": "Deploy Attendance Tracker Across Your School or District — Google Workspace Admin Guide"
+    },
+    {
+      "id": "364bc3c6b8",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Step-by-step guide for Google Workspace administrators to force-install Attendance Tracker for specific Organizational Units (OUs) or entire school domains."
+    },
+    {
+      "id": "edeb6913d8",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Admin guide for installing Attendance Tracker via Google Workspace Admin Console across specific OUs or entire school districts."
+    },
+    {
+      "id": "12026f76a3",
+      "kind": "head",
+      "key": "meta[name=\"twitter:title\"]",
+      "text": "Deploy Attendance Tracker Across Your School or District — Admin Guide"
+    },
+    {
+      "id": "a00c9c9295",
+      "kind": "head",
+      "key": "meta[name=\"twitter:description\"]",
+      "text": "Step-by-step OU force-install guide for Google Workspace Super Admins."
+    },
+    {
+      "id": "8e5e7afb7f",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"Attendance Tracker logo\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "b244f8a411",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Attendance Tracker logo"
+    },
+    {
+      "id": "3e604b7bab",
+      "kind": "html",
+      "key": "h1",
+      "text": "Deploy Attendance Tracker Across Your School or District"
+    },
+    {
+      "id": "3cac54aa59",
+      "kind": "html",
+      "key": "p",
+      "text": "A complete guide for Google Workspace administrators: how to force-install Attendance Tracker for specific Organizational Units (OUs), configure OAuth permissions safely, and provision domain-wide licensing."
+    },
+    {
+      "id": "d259aa8fcf",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Zero Client-Side Maintenance:</strong> Unlike browser extensions that require Chrome policy sideloading and break after Chrome or Meet updates, Attendance Tracker is an official Google Workspace Marketplace Add-on. Deploying it via Admin Console instantly provisions it for your teachers inside Google Meet on Chromebooks, Macs, Windows, and Linux."
+    },
+    {
+      "id": "58abcb0eff",
+      "kind": "html",
+      "key": "h2",
+      "text": "Step-by-Step: Admin Console Installation"
+    },
+    {
+      "id": "2a17c0119d",
+      "kind": "html",
+      "key": "span",
+      "text": "Step 1"
+    },
+    {
+      "id": "f044049d73",
+      "kind": "html",
+      "key": "h3",
+      "text": "Access Google Workspace Admin Console"
+    },
+    {
+      "id": "ecbd31d794",
+      "kind": "html",
+      "key": "p",
+      "text": "Sign in to <a href=\"https://admin.google.com\" target=\"_blank\" rel=\"noopener\">admin.google.com</a> using a Google Workspace Super Admin or Services Admin account."
+    },
+    {
+      "id": "e2480d87f1",
+      "kind": "html",
+      "key": "span",
+      "text": "Step 2"
+    },
+    {
+      "id": "7314d856da",
+      "kind": "html",
+      "key": "h3",
+      "text": "Navigate to Marketplace Apps"
+    },
+    {
+      "id": "a4ced05914",
+      "kind": "html",
+      "key": "p",
+      "text": "From the main admin navigation menu, go to:"
+    },
+    {
+      "id": "342203f57b",
+      "kind": "html",
+      "key": "p",
+      "text": "<code>Apps</code> → <code>Google Workspace Marketplace apps</code> → <code>Apps list</code>"
+    },
+    {
+      "id": "4e28d4a06b",
+      "kind": "html",
+      "key": "p",
+      "text": "Click <strong>Add app to Admin Install list</strong> (or <strong>Domain Install</strong>)."
+    },
+    {
+      "id": "404d78c3fc",
+      "kind": "html",
+      "key": "span",
+      "text": "Step 3"
+    },
+    {
+      "id": "8326f13f43",
+      "kind": "html",
+      "key": "h3",
+      "text": "Search for Attendance Tracker"
+    },
+    {
+      "id": "3a1c7df157",
+      "kind": "html",
+      "key": "p",
+      "text": "In the Marketplace search bar, type: <strong>Attendance Tracker for Google Meet</strong>"
+    },
+    {
+      "id": "3d1efd513e",
+      "kind": "html",
+      "key": "p",
+      "text": "Select the verified app published by <em>Attendance Tracker</em> (App ID: <code>829771833968</code>), and click <strong>Admin install</strong> → <strong>Continue</strong>."
+    },
+    {
+      "id": "879a549af6",
+      "kind": "html",
+      "key": "span",
+      "text": "Step 4"
+    },
+    {
+      "id": "20d942eb75",
+      "kind": "html",
+      "key": "h3",
+      "text": "Target Specific Organizational Units (OUs)"
+    },
+    {
+      "id": "2888bdba99",
+      "kind": "html",
+      "key": "p",
+      "text": "You can choose who has access to the add-on:"
+    },
+    {
+      "id": "29e21ef969",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Specific organizational units:</strong> Highly recommended. Select your <code>Staff</code>, <code>Teachers</code>, or <code>Faculty</code> OU so students are not granted unnecessary add-on tiles."
+    },
+    {
+      "id": "75d961c378",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Everyone at your organization:</strong> Installs the add-on domain-wide for all accounts."
+    },
+    {
+      "id": "e7b47b654c",
+      "kind": "html",
+      "key": "p",
+      "text": "Check the box agreeing to terms and click <strong>Finish</strong>."
+    },
+    {
+      "id": "e0adc220b9",
+      "kind": "html",
+      "key": "h2",
+      "text": "Security &amp; Data Privacy Architecture (FERPA &amp; COPPA)"
+    },
+    {
+      "id": "09b0c841b7",
+      "kind": "html",
+      "key": "p",
+      "text": "School district IT leaders choose Attendance Tracker because of its privacy-by-design architecture:"
+    },
+    {
+      "id": "fe48d9dcfe",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Direct-to-Drive Storage:</strong> Attendance records and spreadsheets are generated and saved directly into the teacher's own Google Drive. We do not store, copy, or index your students' names or email addresses on external database servers."
+    },
+    {
+      "id": "23dc3544c8",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>No Screen Scraping:</strong> Attendance is read directly from Google's official Meet Add-ons SDK and REST APIs via sandboxed iframe. The app cannot read browser history, open tabs, or microphone/camera feeds."
+    },
+    {
+      "id": "415eb60b2a",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Scoped OAuth Grants:</strong> Permissions are restricted strictly to Google Meet space metadata, read-only Calendar attendee matching, and write-only access to sheets created by the app (<code>drive.file</code> scope — we cannot access or read any pre-existing files in Google Drive)."
+    },
+    {
+      "id": "97ccba9281",
+      "kind": "html",
+      "key": "h2",
+      "text": "Institutional Licensing &amp; PO Options"
+    },
+    {
+      "id": "707e490962",
+      "kind": "html",
+      "key": "p",
+      "text": "Individual teachers can use Attendance Tracker free or upgrade on their own. For schools and districts requiring centralized billing, purchase orders, or bulk licensing:"
+    },
+    {
+      "id": "e41d703dae",
+      "kind": "html",
+      "key": "h4",
+      "text": "Department"
+    },
+    {
+      "id": "1d6da3d24a",
+      "kind": "html",
+      "key": "div",
+      "text": "$59"
+    },
+    {
+      "id": "6467c3243a",
+      "kind": "html",
+      "key": "div",
+      "text": "One-time payment · Lifetime access"
+    },
+    {
+      "id": "58c1a0525d",
+      "kind": "html",
+      "key": "li",
+      "text": "Up to 15 teachers"
+    },
+    {
+      "id": "9c2e7add45",
+      "kind": "html",
+      "key": "li",
+      "text": "Auto-export to Google Sheets"
+    },
+    {
+      "id": "b289e6f177",
+      "kind": "html",
+      "key": "li",
+      "text": "Attendance certificates"
+    },
+    {
+      "id": "dbc64c32fa",
+      "kind": "html",
+      "key": "li",
+      "text": "PO &amp; credit card billing"
+    },
+    {
+      "id": "8bfea9f16d",
+      "kind": "html",
+      "key": "div",
+      "text": "Best Value for Schools"
+    },
+    {
+      "id": "098b7c2353",
+      "kind": "html",
+      "key": "h4",
+      "text": "School / Institution"
+    },
+    {
+      "id": "3092909190",
+      "kind": "html",
+      "key": "div",
+      "text": "$149"
+    },
+    {
+      "id": "40f306ee73",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Unlimited teachers</strong> on domain"
+    },
+    {
+      "id": "9734a02eef",
+      "kind": "html",
+      "key": "li",
+      "text": "Centralized domain admin dashboard"
+    },
+    {
+      "id": "302eb7c090",
+      "kind": "html",
+      "key": "li",
+      "text": "Automated Google Classroom sync"
+    },
+    {
+      "id": "0ff147a682",
+      "kind": "html",
+      "key": "li",
+      "text": "Priority admin support"
+    },
+    {
+      "id": "fe1da49f65",
+      "kind": "html",
+      "key": "li",
+      "text": "Invoice &amp; Purchase Order support"
+    },
+    {
+      "id": "816010a2d9",
+      "kind": "html",
+      "key": "h3",
+      "text": "Set Up Your School's Domain License"
+    },
+    {
+      "id": "b406e8e0dc",
+      "kind": "html",
+      "key": "p",
+      "text": "Activate centralized domain access or request a formal vendor quote/W-9 for your business office."
+    },
+    {
+      "id": "1af3ed4b10",
+      "kind": "html",
+      "key": "div",
+      "text": "<a class=\"btn\" href=\"https://attendancetracker.dev/team.html\" target=\"_blank\" rel=\"noopener\">Open Team &amp; Domain Admin</a>\n        <a class=\"btn btn-outline\" href=\"mailto:support@attendancetracker.dev?subject=School%20District%20Quote%20Request\">Request Invoice / Quote</a>"
+    },
+    {
+      "id": "de8e813afa",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">School &amp; District</strong>\n          <a href=\"student-data-privacy.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Student Data Privacy &amp; FERPA</a>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom Sync</a>\n          <a href=\"import-google-classroom-roster-to-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Import Classroom Rosters</a>"
+    },
+    {
+      "id": "6b275f5314",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Admin &amp; IT</strong>\n          <a href=\"team.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Team &amp; Domain Admin</a>\n          <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Pricing &amp; District Plans</a>\n          <a href=\"student-data-privacy.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Student Data Privacy &amp; Security</a>\n          <a href=\"faq.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Enterprise FAQ</a>"
+    },
+    {
+      "id": "24ad792bc1",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Integrations</strong>\n          <a href=\"export-google-meet-attendance-to-moodle.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Moodle Gradebook</a>\n          <a href=\"export-google-meet-attendance-to-canvas.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Canvas Gradebook</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Sheets Sync</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack &amp; Google Chat</a>"
+    },
+    {
+      "id": "88d02cc6a4",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Troubleshooting</strong>\n          <a href=\"google-meet-attendance-extension-broken.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Broken Extension Recovery</a>\n          <a href=\"attendance-taker-for-classroom-alternative.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Retired Competitor Migration</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"changelog.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Changelog</a>"
+    },
+    {
+      "id": "77b93aa43a",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a>"
+    },
+    {
+      "id": "c323f2e904",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "Deploy Attendance Tracker Across Your School or District: Google Workspace Admin Guide"
+    },
+    {
+      "id": "7d2ea740e7",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "Comprehensive guide for Google Workspace administrators to configure, domain-install, and license Attendance Tracker across specific Organizational Units."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "3db8a7ffd6",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Google Workspace Admin Deployment Guide"
+    }
+  ]
+}

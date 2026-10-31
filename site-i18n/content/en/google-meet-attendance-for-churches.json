@@ -1,0 +1,240 @@
+{
+  "page": "google-meet-attendance-for-churches.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "32844066d0",
+      "kind": "head",
+      "key": "title",
+      "text": "Google Meet Attendance Tracker for Churches & Ministries (2026) — Attendance Tracker"
+    },
+    {
+      "id": "d3bcadc0ff",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Track virtual Bible studies, small group attendance, and Sunday school participation in Google Meet. Automated streak alerts and Google Sheets export for ministry leaders."
+    },
+    {
+      "id": "5caef466ac",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Google Meet Attendance Tracker for Churches & Ministries"
+    },
+    {
+      "id": "c63c19810f",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Small group streak tracking, pastoral care alerts, and Google Sheets exports for virtual church meetings."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "341e03c27b",
+      "kind": "html",
+      "key": "h1",
+      "text": "Google Meet attendance tracker for churches &amp; ministries"
+    },
+    {
+      "id": "dda7685db9",
+      "kind": "html",
+      "key": "p",
+      "text": "Pastors, small group facilitators, youth ministers, and Sunday school teachers use Google Meet to connect congregations remotely. Here is how ministry leaders track virtual attendance, monitor member engagement, and spot when community members need pastoral care."
+    },
+    {
+      "id": "a996520e28",
+      "kind": "attr",
+      "key": "title",
+      "text": "Church & Ministry Attendance Tracking"
+    },
+    {
+      "id": "5aec821fa6",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Small group attendance streak and pastoral care tracking"
+    },
+    {
+      "id": "564dcec257",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Proactive Pastoral Care:</strong> If a member of your virtual Bible study has attended consistently for months but suddenly misses two weeks in a row, Attendance Tracker highlights the drop-off so ministry leaders can send an encouraging message."
+    },
+    {
+      "id": "354b886d27",
+      "kind": "html",
+      "key": "h2",
+      "text": "Why Virtual Ministry Attendance Matters"
+    },
+    {
+      "id": "f8d8edb379",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Caring for the Flock:</strong> Attendance isn't about numbers — it's about making sure nobody slips through the cracks or feels forgotten when they can't attend in person."
+    },
+    {
+      "id": "c1de727f0d",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Volunteer &amp; Committee Governance:</strong> Documenting attendance for church council meetings, elder boards, and deacon committees."
+    },
+    {
+      "id": "4b8138f09e",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Zero-Cost &amp; Easy for Volunteers:</strong> Church volunteers are often non-technical. Attendance Tracker works right inside Google Meet with zero software installation."
+    },
+    {
+      "id": "2a4b135041",
+      "kind": "html",
+      "key": "h2",
+      "text": "Key Ministry Features"
+    },
+    {
+      "id": "db384de014",
+      "kind": "html",
+      "key": "h3",
+      "text": "1. Automated Small Group Streaks"
+    },
+    {
+      "id": "235cbf8726",
+      "kind": "html",
+      "key": "p",
+      "text": "For weekly small groups or Bible studies, Attendance Tracker automatically rolls up attendance across every meeting in the series. You can see at a glance who attended 8 of the last 8 studies and who has been missing."
+    },
+    {
+      "id": "52b7d632ab",
+      "kind": "html",
+      "key": "h3",
+      "text": "2. Instant Post-Study Summary Email"
+    },
+    {
+      "id": "7c3428e16d",
+      "kind": "html",
+      "key": "p",
+      "text": "As soon as your online prayer meeting or Bible study ends, a clean summary email lands in your inbox showing who was on the call and when they joined, with a link to your church's Google Sheet archive."
+    },
+    {
+      "id": "03e5a48f57",
+      "kind": "html",
+      "key": "h3",
+      "text": "3. Safe Sharing with Ministry Teams"
+    },
+    {
+      "id": "a22c2ddbd4",
+      "kind": "html",
+      "key": "p",
+      "text": "Generate a 30-day read-only share link to paste into your church staff email or volunteer group, allowing co-leaders to view attendance trends without giving edit permissions to your Google Drive."
+    },
+    {
+      "id": "53017ac9c7",
+      "kind": "html",
+      "key": "h2",
+      "text": "Ideal for:"
+    },
+    {
+      "id": "121e3ce57a",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Virtual Bible Study Small Groups:</strong> Track member attendance and follow up on missed weeks."
+    },
+    {
+      "id": "37529c71ec",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Online Sunday School &amp; Youth Ministry:</strong> Keep parents informed on student participation."
+    },
+    {
+      "id": "74827338a6",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Church Council &amp; Elder Boards:</strong> Establish official meeting quorum for ministry votes."
+    },
+    {
+      "id": "19ea314b7f",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Prayer Circles &amp; Support Groups:</strong> Document attendance for recurring community support calls."
+    },
+    {
+      "id": "aa7922ab1e",
+      "kind": "html",
+      "key": "h3",
+      "text": "Start tracking your church small groups"
+    },
+    {
+      "id": "89bd06bad1",
+      "kind": "html",
+      "key": "p",
+      "text": "Free, works on all Google accounts, set up in under 30 seconds."
+    },
+    {
+      "id": "14b133eb0f",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Attendance Tracker from Marketplace"
+    },
+    {
+      "id": "9352c1ed98",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "a3ad204977",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-legal-depositions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Legal &amp; Arbitrations</a>\n          <a href=\"google-meet-attendance-for-job-interviews.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Recruiting &amp; Interviews</a>"
+    },
+    {
+      "id": "e7a3b147f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Specialized Verticals</strong>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-clinical-supervision-and-therapy.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Clinical Supervision</a>\n          <a href=\"google-meet-quorum-and-board-meetings.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Board Quorum Tracking</a>\n          <a href=\"google-meet-attendance-for-churches.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Churches &amp; Ministries</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>\n          <a href=\"google-meet-attendance-for-fitness-and-yoga.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Fitness &amp; Yoga</a>"
+    },
+    {
+      "id": "eb9246d86f",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>\n          <a href=\"google-meet-attendance-on-ipad-and-mobile.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">iPad &amp; Mobile Attendance</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "5c1fae13ba",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "How to Track Church Small Group & Bible Study Attendance in Google Meet"
+    },
+    {
+      "id": "d1f04a38d1",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "A guide for pastors, ministry leaders, and small group facilitators on managing virtual attendance and pastoral care follow-ups."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "50213e127c",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Google Meet attendance tracker for churches &amp; ministries"
+    }
+  ]
+}

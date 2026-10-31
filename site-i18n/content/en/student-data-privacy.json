@@ -1,0 +1,360 @@
+{
+  "page": "student-data-privacy.html",
+  "legal": true,
+  "segments": [
+    {
+      "id": "622456c9dd",
+      "kind": "head",
+      "key": "title",
+      "text": "Student Data Privacy — Attendance Tracker for Google Meet™"
+    },
+    {
+      "id": "1ab895d485",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "How Attendance Tracker for Google Meet handles student data: no selling, no ads, no AI training, no student accounts. FERPA, COPPA, and GDPR positioning plus DPA on request."
+    },
+    {
+      "id": "3f5261717a",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Our student data privacy pledge: no selling, no ads, no AI training, no student accounts. DPA available on request."
+    },
+    {
+      "id": "6142f12173",
+      "kind": "head",
+      "key": "meta[name=\"twitter:title\"]",
+      "text": "Student Data Privacy Statement (FERPA & COPPA) — Attendance Tracker"
+    },
+    {
+      "id": "7fbee56a5a",
+      "kind": "head",
+      "key": "meta[name=\"twitter:description\"]",
+      "text": "How Attendance Tracker protects student records and attendee PII in Google Meet. Complies with FERPA, COPPA, and GDPR principles."
+    },
+    {
+      "id": "9ae72b4020",
+      "kind": "html",
+      "key": "a",
+      "text": "<img src=\"icons/icon-32.png\" alt=\"Attendance Tracker Logo\">\n        <span>Attendance Tracker</span>"
+    },
+    {
+      "id": "38deccf17d",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Attendance Tracker Logo"
+    },
+    {
+      "id": "7fedfcbaca",
+      "kind": "html",
+      "key": "a",
+      "text": "Home"
+    },
+    {
+      "id": "7d4f187b91",
+      "kind": "html",
+      "key": "a",
+      "text": "Pricing"
+    },
+    {
+      "id": "ec3b3e8bd4",
+      "kind": "html",
+      "key": "a",
+      "text": "Help Center &amp; FAQ"
+    },
+    {
+      "id": "2782febc18",
+      "kind": "html",
+      "key": "a",
+      "text": "Support"
+    },
+    {
+      "id": "f58ea57552",
+      "kind": "attr",
+      "key": "aria-label",
+      "text": "Open navigation menu"
+    },
+    {
+      "id": "98bf5c73ee",
+      "kind": "html",
+      "key": "a",
+      "text": "Meeting History"
+    },
+    {
+      "id": "db9fb2fab4",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Free"
+    },
+    {
+      "id": "2209f15949",
+      "kind": "html",
+      "key": "div",
+      "text": "🌐 <strong>Multilingual Legal Terms:</strong> Read this policy in any of our 44 supported languages using the navigation dropdown or translation tool. For questions, binding interpretation, or a signed DPA, reach out directly to <strong>Kinetic Helix LLC Legal Department</strong> at <a href=\"mailto:legal@kinetichelix.io\" style=\"color:#58a6ff;text-decoration:underline;\">legal@kinetichelix.io</a> or <a href=\"mailto:support@attendancetracker.dev\" style=\"color:#58a6ff;text-decoration:underline;\">support@attendancetracker.dev</a>."
+    },
+    {
+      "id": "bfaf6a43b2",
+      "kind": "html",
+      "key": "h1",
+      "text": "Student Data Privacy"
+    },
+    {
+      "id": "85af8f188c",
+      "kind": "html",
+      "key": "div",
+      "text": "Last updated: September 8, 2026"
+    },
+    {
+      "id": "139f717570",
+      "kind": "html",
+      "key": "p",
+      "text": "Attendance Tracker is used by teachers, professors, and trainers to record who attended a Google Meet class. That means it handles information about students — so schools and IT reviewers deserve a plain-English page about exactly what we do with it. This page supplements our full <a href=\"privacy.html\">Privacy Policy</a>; if anything here seems to conflict with it, the Privacy Policy governs."
+    },
+    {
+      "id": "2d5a1fae87",
+      "kind": "html",
+      "key": "h2",
+      "text": "Our pledge"
+    },
+    {
+      "id": "e9a72faa1f",
+      "kind": "html",
+      "key": "li",
+      "text": "We <strong>never sell student data</strong>, and we never share it with third parties for advertising or marketing."
+    },
+    {
+      "id": "fd2916ce4c",
+      "kind": "html",
+      "key": "li",
+      "text": "We show <strong>no ads</strong> — not to teachers, and never to students."
+    },
+    {
+      "id": "f64a59f918",
+      "kind": "html",
+      "key": "li",
+      "text": "We do <strong>not build profiles</strong> of students, and we do not use student data to train AI or machine-learning models."
+    },
+    {
+      "id": "76df321849",
+      "kind": "html",
+      "key": "li",
+      "text": "We collect the <strong>minimum needed</strong> to produce an attendance record: names, email addresses, and join/leave times for meetings an organizer chooses to track."
+    },
+    {
+      "id": "ab701c1b0b",
+      "kind": "html",
+      "key": "li",
+      "text": "Teachers and schools can <strong>delete their data at any time</strong>, self-serve, from the add-on's Settings."
+    },
+    {
+      "id": "acb3fecd69",
+      "kind": "html",
+      "key": "h2",
+      "text": "What student data the App touches"
+    },
+    {
+      "id": "2239981adb",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Attendance records:</strong> participant names, email addresses, and join/leave times for meetings the organizer tracks, obtained from the Google Meet REST API. This is the core product data."
+    },
+    {
+      "id": "fa811377f4",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Class rosters:</strong> if a teacher imports a roster from Google Classroom, the student names and emails are stored <strong>only in the teacher's browser</strong> — never on our servers."
+    },
+    {
+      "id": "3b619954dc",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>No student accounts:</strong> students never sign in to Attendance Tracker and no account is created for them. All data about students enters the system through their teacher's or organizer's account."
+    },
+    {
+      "id": "30fab8d3d3",
+      "kind": "html",
+      "key": "h2",
+      "text": "FERPA"
+    },
+    {
+      "id": "4553cd6cff",
+      "kind": "html",
+      "key": "p",
+      "text": "For U.S. schools, attendance records derived from class meetings may be education records under FERPA. Attendance Tracker is designed to operate as a service provider under the school's direction — the \"school official\" model: the school (through its teachers) controls what is collected, the data is used only to provide the attendance features the teacher requested, we do not redisclose it, and the school can direct deletion at any time. We never use education records for any purpose other than providing the service."
+    },
+    {
+      "id": "b9ed4a834c",
+      "kind": "html",
+      "key": "h2",
+      "text": "COPPA"
+    },
+    {
+      "id": "7e37633e90",
+      "kind": "html",
+      "key": "p",
+      "text": "Attendance Tracker does not offer accounts to children and does not collect information directly from students of any age — students never interact with the App. Information about students (name, email, join/leave times) is collected from Google's APIs solely at the direction of the educator or organization running the meeting, consistent with the school-consent model the FTC recognizes for educational tools."
+    },
+    {
+      "id": "3a4a614eee",
+      "kind": "html",
+      "key": "h2",
+      "text": "GDPR"
+    },
+    {
+      "id": "1e71572782",
+      "kind": "html",
+      "key": "p",
+      "text": "For schools and organizations in the EU/UK, Attendance Tracker acts as a <strong>processor</strong> of student personal data on behalf of the organizer or institution (the controller). We process attendance data only to provide the features the organizer uses, support deletion and export requests, and store data with the safeguards described below. Data subject requests can be fulfilled by the organizer directly (self-serve deletion) or by contacting us."
+    },
+    {
+      "id": "cc2568d782",
+      "kind": "html",
+      "key": "h2",
+      "text": "Where data lives &amp; how it's protected"
+    },
+    {
+      "id": "7a6f004e3d",
+      "kind": "html",
+      "key": "li",
+      "text": "All primary data is stored in Google Cloud Firestore in the US (<code>us-central1</code>), isolated per organization domain."
+    },
+    {
+      "id": "b02bc9fdb6",
+      "kind": "html",
+      "key": "li",
+      "text": "All traffic is encrypted in transit (HTTPS); OAuth tokens are encrypted at rest with AES-256-GCM."
+    },
+    {
+      "id": "d24040294e",
+      "kind": "html",
+      "key": "li",
+      "text": "Card and payment details never touch our servers (handled entirely by Stripe — and billing only ever involves the teacher or school, never a student)."
+    },
+    {
+      "id": "2f55e3a1ca",
+      "kind": "html",
+      "key": "li",
+      "text": "The full list of sub-processors is published in our <a href=\"privacy.html\">Privacy Policy</a>."
+    },
+    {
+      "id": "0f0b042278",
+      "kind": "html",
+      "key": "h2",
+      "text": "Retention &amp; deletion"
+    },
+    {
+      "id": "73e483f42f",
+      "kind": "html",
+      "key": "li",
+      "text": "Attendance data is retained while the organizer's account is active, so historical reports keep working."
+    },
+    {
+      "id": "84c7cb6bfc",
+      "kind": "html",
+      "key": "li",
+      "text": "Organizers can delete their account and all associated data self-serve from Settings (\"Delete account &amp; data\"), or by emailing us."
+    },
+    {
+      "id": "0ada41b5bb",
+      "kind": "html",
+      "key": "li",
+      "text": "When an account is deleted, the personal data that identifies its participants is removed as described in the <a href=\"privacy.html\">Privacy Policy</a>."
+    },
+    {
+      "id": "f90a9667a4",
+      "kind": "html",
+      "key": "h2",
+      "text": "Data Processing Agreement (DPA)"
+    },
+    {
+      "id": "a897abe67f",
+      "kind": "html",
+      "key": "p",
+      "text": "Schools and districts that require a signed Data Processing Agreement as part of their vendor review can request one at <a href=\"mailto:derek@attendancetracker.dev\">derek@attendancetracker.dev</a>. We're happy to work through your district's standard privacy agreement or your state's student data privacy consortium terms."
+    },
+    {
+      "id": "e7539bd0de",
+      "kind": "html",
+      "key": "h2",
+      "text": "Google API data &amp; Limited Use"
+    },
+    {
+      "id": "192d29dd7e",
+      "kind": "html",
+      "key": "p",
+      "text": "All Google user data (Meet participant information, Calendar events, Classroom rosters, Drive files the App creates) is used strictly in line with the <a href=\"https://developers.google.com/terms/api-services-user-data-policy\" target=\"_blank\" rel=\"noopener\">Google API Services User Data Policy</a>, including its Limited Use requirements — no advertising use, no sale, no AI training, and no human access except with consent, for security, or as required by law. The full commitments are in our <a href=\"privacy.html\">Privacy Policy</a>."
+    },
+    {
+      "id": "f1d2e3131a",
+      "kind": "html",
+      "key": "h2",
+      "text": "Questions"
+    },
+    {
+      "id": "d35d49de6b",
+      "kind": "html",
+      "key": "p",
+      "text": "If your school's privacy or IT review needs anything else — security questionnaires, architecture details, or a call — contact <a href=\"mailto:derek@attendancetracker.dev\">derek@attendancetracker.dev</a>."
+    },
+    {
+      "id": "b35bf57a1f",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\">Home</a>\n      <a href=\"pricing.html\">Pricing</a>\n      <a href=\"faq.html\">Help Center &amp; FAQ</a>\n      <a href=\"privacy.html\">Privacy Policy</a>\n      <a href=\"terms.html\">Terms of Service</a>\n      <a href=\"student-data-privacy.html\">Student Privacy</a>\n      <a href=\"refunds.html\">Refund Policy</a>\n      <a href=\"support.html\">Contact Support</a>\n      <a href=\"unsubscribe.html\">Unsubscribe</a>"
+    },
+    {
+      "id": "c9b7900b06",
+      "kind": "html",
+      "key": "div",
+      "text": "© 2026 Kinetic Helix LLC. Attendance Tracker for Google Meet™. Support: Kinetic Helix LLC (<a href=\"mailto:legal@kinetichelix.io\" style=\"color:inherit;text-decoration:underline;\">legal@kinetichelix.io</a> / <a href=\"mailto:support@attendancetracker.dev\" style=\"color:inherit;text-decoration:underline;\">support@attendancetracker.dev</a>). All rights reserved."
+    },
+    {
+      "id": "6a05292f0c",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Student Data Privacy Statement (FERPA & COPPA) — Attendance Tracker"
+    },
+    {
+      "id": "504789c5c8",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "How Attendance Tracker for Google Meet handles student data: no selling, no ads, no AI training, no student accounts. FERPA, COPPA, and GDPR positioning plus DPA on request."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "ecdbfbdf26",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Student Data Privacy"
+    },
+    {
+      "id": "3bb9e18853",
+      "kind": "jsonld",
+      "key": "1:description",
+      "text": "How Attendance Tracker protects student records and attendee PII in Google Meet. Complies with FERPA, COPPA, and GDPR principles."
+    },
+    {
+      "id": "1297e42eec",
+      "kind": "jsonld",
+      "key": "1:name",
+      "text": "Attendance Tracker for Google Meet"
+    },
+    {
+      "id": "8fe652f662",
+      "kind": "jsonld",
+      "key": "1:name",
+      "text": "Student Data Privacy Statement (FERPA & COPPA)"
+    }
+  ]
+}

@@ -1,0 +1,348 @@
+{
+  "page": "google-meet-attendance-certificates.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "890e9b7671",
+      "kind": "head",
+      "key": "title",
+      "text": "Google Meet attendance certificates with public verification (2026 Guide) — Attendance Tracker"
+    },
+    {
+      "id": "98d25076c0",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Generate per-attendee PDF attendance certificates from any Google Meet — with name, session, date, credit hours, and a verification code anyone can check on a public page."
+    },
+    {
+      "id": "4c8f2c0f58",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Google Meet attendance certificates with public verification"
+    },
+    {
+      "id": "b16f11d0ba",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Per-attendee PDF certificates generated from real tracked attendance — each with a unique code that registrars and employers can verify at attendancetracker.dev/verify."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "8aa1bf8214",
+      "kind": "html",
+      "key": "h1",
+      "text": "Google Meet attendance certificates with public verification"
+    },
+    {
+      "id": "6668ca6346",
+      "kind": "html",
+      "key": "p",
+      "text": "Run a webinar, CPE course, or training on Google Meet and every attendee wants proof they were there. Here is how to generate a personalized PDF certificate for each of them — backed by real tracked attendance and a verification code anyone can check."
+    },
+    {
+      "id": "0c5e18d33a",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Not just a pretty PDF:</strong> every certificate carries a unique verification code, and anyone — a registrar, a state bar, an employer — can confirm it's genuine at <a href=\"https://attendancetracker.dev/verify\">attendancetracker.dev/verify</a>. Public, no account needed. Very few attendance tools offer independent verification at all; it's the difference between a certificate and a claim."
+    },
+    {
+      "id": "e4bc409304",
+      "kind": "html",
+      "key": "h2",
+      "text": "What gets generated"
+    },
+    {
+      "id": "5ca111b0e3",
+      "kind": "html",
+      "key": "p",
+      "text": "Attendance Tracker produces one PDF certificate per attendee, built from the attendance actually recorded during the meeting — not from a sign-up list. Each certificate includes:"
+    },
+    {
+      "id": "aa0ca77f54",
+      "kind": "html",
+      "key": "th",
+      "text": "Field"
+    },
+    {
+      "id": "46bde03466",
+      "kind": "html",
+      "key": "th",
+      "text": "Where it comes from"
+    },
+    {
+      "id": "d4472e4d9a",
+      "kind": "html",
+      "key": "td",
+      "text": "Attendee name"
+    },
+    {
+      "id": "2705e754a1",
+      "kind": "html",
+      "key": "td",
+      "text": "The tracked participant's name from the meeting"
+    },
+    {
+      "id": "ab8229bfdf",
+      "kind": "html",
+      "key": "td",
+      "text": "Session title"
+    },
+    {
+      "id": "7c69f531f0",
+      "kind": "html",
+      "key": "td",
+      "text": "Your meeting's title"
+    },
+    {
+      "id": "2b85e8fce3",
+      "kind": "html",
+      "key": "td",
+      "text": "Date"
+    },
+    {
+      "id": "76a4a415e4",
+      "kind": "html",
+      "key": "td",
+      "text": "The session date"
+    },
+    {
+      "id": "e589654f16",
+      "kind": "html",
+      "key": "td",
+      "text": "Duration / credit hours"
+    },
+    {
+      "id": "9f686686ab",
+      "kind": "html",
+      "key": "td",
+      "text": "Actual minutes attended, or the credit hours you assign"
+    },
+    {
+      "id": "8e0040fd4d",
+      "kind": "html",
+      "key": "td",
+      "text": "Verification code"
+    },
+    {
+      "id": "5505d6d4a9",
+      "kind": "html",
+      "key": "td",
+      "text": "A unique code tied to that attendee and session"
+    },
+    {
+      "id": "bd804248ba",
+      "kind": "html",
+      "key": "p",
+      "text": "Because certificates are generated from join/leave data, someone who dipped in for five minutes of a two-hour course doesn't get the same paper as someone who sat the whole session — the duration on the certificate reflects what happened."
+    },
+    {
+      "id": "d98714c950",
+      "kind": "html",
+      "key": "h2",
+      "text": "The verification story"
+    },
+    {
+      "id": "a8d051fafe",
+      "kind": "html",
+      "key": "p",
+      "text": "Certificates are easy to forge; verifiable certificates aren't. Every certificate's code can be entered at <a href=\"https://attendancetracker.dev/verify\">attendancetracker.dev/verify</a> — a public page, open to anyone, no login. It confirms the certificate is authentic and matches the recorded session. That matters wherever a certificate is actually inspected:"
+    },
+    {
+      "id": "5753ba33d6",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>CPE/CLE audits:</strong> licensing bodies can spot-check credits themselves instead of taking a PDF at face value."
+    },
+    {
+      "id": "d0870cbd6b",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Employers and HR:</strong> confirm a candidate's training claim in ten seconds."
+    },
+    {
+      "id": "7d90313f80",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Schools and registrars:</strong> validate volunteer hours or make-up sessions without emailing the organizer."
+    },
+    {
+      "id": "6c46b53b49",
+      "kind": "html",
+      "key": "h2",
+      "text": "How to generate certificates"
+    },
+    {
+      "id": "63d270d912",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Track the meeting.</strong> Open Attendance Tracker from Google Meet's <strong>Activities</strong> panel during your session (it's an official add-on using the Google Meet REST API — works in Chrome, Edge, Firefox, Safari, and on Chromebooks). Attendance records automatically: who joined, when, and for how long."
+    },
+    {
+      "id": "a2fcc766b1",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Export the session.</strong> When the meeting ends, the attendance report exports; the session appears in your Meeting History."
+    },
+    {
+      "id": "b9ec11b079",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Click Certificates.</strong> In the panel's link bar, choose <strong>Certificates</strong> — one PDF per attendee is generated, each with its own verification code, ready to distribute."
+    },
+    {
+      "id": "c4d6be51b3",
+      "kind": "html",
+      "key": "p",
+      "text": "It works the same for 8 attendees or 300 — bulk generation is one click either way."
+    },
+    {
+      "id": "2d0343dbd8",
+      "kind": "html",
+      "key": "h2",
+      "text": "Who uses attendance certificates?"
+    },
+    {
+      "id": "f6c8fb7031",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>CPE &amp; CLE providers:</strong> accountants, lawyers, and other licensed professionals need documented, auditable credit hours — <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\">see the CPE/CLE guide</a>."
+    },
+    {
+      "id": "14e7ee6081",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Webinar hosts and trainers:</strong> a certificate is the deliverable attendees actually keep and share — <a href=\"track-attendance-for-webinars-and-training-google-meet.html\">webinars &amp; training guide</a>."
+    },
+    {
+      "id": "a05710b596",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Corporate L&amp;D and compliance:</strong> proof of completion for mandatory training, with durations HR can defend."
+    },
+    {
+      "id": "fb7c1c10a7",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Volunteer coordinators:</strong> verified hour counts that schools and scholarship programs accept — <a href=\"google-meet-attendance-for-volunteer-hours.html\">volunteer hours guide</a>."
+    },
+    {
+      "id": "332a7cc890",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Full detail behind every certificate:</strong> the underlying session report keeps Name, Email, Status, Attendance %, Duration, Join/Leave times, and Rejoins for every participant — so if anyone questions a certificate, you have the <a href=\"export-google-meet-participants-to-excel.html\">timestamped record in Excel</a> to back it up."
+    },
+    {
+      "id": "7d2dc48836",
+      "kind": "html",
+      "key": "h2",
+      "text": "Frequently asked questions"
+    },
+    {
+      "id": "0b5edacc64",
+      "kind": "html",
+      "key": "h3",
+      "text": "Are certificates free?"
+    },
+    {
+      "id": "60323a4e38",
+      "kind": "html",
+      "key": "p",
+      "text": "Certificates are a Pro feature. Educators can choose a <strong>$14.99/year Educator Annual Pass</strong> ($4.99–$7.99/year regional), individuals can get a one-time <strong>$29 Individual Lifetime Pass</strong> ($9.99–$19 regional — pay once, keep it forever), and a <strong>$59/year Department plan</strong> covers every teacher in a Workspace domain (or <strong>$149/year Institution</strong> for districts). Live tracking, PDF attendance reports, and 2 exports/month (Sheets, CSV, or Excel) stay free."
+    },
+    {
+      "id": "1ebb79de8d",
+      "kind": "html",
+      "key": "h3",
+      "text": "Can I generate certificates for 100+ attendees?"
+    },
+    {
+      "id": "4065fe3344",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. Certificates are generated per-attendee in bulk from the tracked session — a 300-person webinar produces 300 individual PDFs, each with its own code, in one click."
+    },
+    {
+      "id": "353052168c",
+      "kind": "html",
+      "key": "h3",
+      "text": "Can someone verify a certificate without an account?"
+    },
+    {
+      "id": "04aa43e0ba",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes — that's the point. The <a href=\"https://attendancetracker.dev/verify\">verification page</a> is public: paste the code, see the confirmation. No sign-in, no install, nothing to explain to a registrar."
+    },
+    {
+      "id": "1c2df6b229",
+      "kind": "html",
+      "key": "h3",
+      "text": "Give every attendee proof that holds up"
+    },
+    {
+      "id": "0501b8162a",
+      "kind": "html",
+      "key": "p",
+      "text": "Per-attendee PDF certificates, generated from real attendance, verifiable by anyone. Educator plans from $4.99/yr and one-time Lifetime passes from $9.99."
+    },
+    {
+      "id": "14b133eb0f",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Attendance Tracker from Marketplace"
+    },
+    {
+      "id": "d360e4c6a4",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"import-google-classroom-roster-to-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Import Classroom Rosters</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "5f3cc2f91e",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Integrations</strong>\n          <a href=\"export-google-meet-attendance-to-moodle.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Moodle Gradebook Export</a>\n          <a href=\"export-google-meet-attendance-to-canvas.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Canvas Gradebook Export</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"send-google-meet-attendance-to-google-chat.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Chat &amp; Discord</a>"
+    },
+    {
+      "id": "98cdd4d1f5",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>"
+    },
+    {
+      "id": "e787e741f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "a2f9eeb90c",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "Google Meet attendance certificates with public verification"
+    },
+    {
+      "id": "54a774b381",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "How to generate per-attendee PDF attendance certificates from Google Meet sessions — including attendee name, session title, date, duration or credit hours, and a unique verification code that anyone can confirm on a public verification page."
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    }
+  ]
+}

@@ -1,0 +1,432 @@
+{
+  "page": "track-attendance-google-meet-without-extension.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "bb300247d5",
+      "kind": "head",
+      "key": "title",
+      "text": "Track Google Meet attendance without a Chrome extension (2026 Guide) — Attendance Tracker"
+    },
+    {
+      "id": "af5e53f2b7",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Chrome extensions for Meet attendance break, scrape the screen, and only work in Chrome. Here's how to track attendance with an official Meet add-on instead — any browser, no scraping."
+    },
+    {
+      "id": "aff12763cb",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Track Google Meet attendance without a Chrome extension"
+    },
+    {
+      "id": "5ce5ba95f0",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "An official Google Meet add-on tracks attendance through the Meet REST API — no DOM scraping, no breakage when Meet updates, and it works in Firefox, Safari, Edge, and on Chromebooks."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "099d76e4a4",
+      "kind": "html",
+      "key": "h1",
+      "text": "Track Google Meet attendance without a Chrome extension"
+    },
+    {
+      "id": "5c98b19262",
+      "kind": "html",
+      "key": "p",
+      "text": "Your attendance extension stopped working again — or your school blocks extensions entirely, or you're on Firefox, Safari, or a managed Chromebook. Here's how to track Meet attendance the way Google actually intends: with an official add-on, no extension required."
+    },
+    {
+      "id": "ec3bad9bba",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>The key difference:</strong> Attendance Tracker is an official Google Meet add-on that lives in Meet's <em>Activities</em> side panel and reads attendance through the official <strong>Google Meet REST API</strong>. It never scrapes the Meet screen — so a Meet redesign can't break it, and it works in Chrome, Edge, Firefox, Safari, and on Chromebooks."
+    },
+    {
+      "id": "9a0e93c757",
+      "kind": "html",
+      "key": "h2",
+      "text": "Why attendance extensions keep breaking"
+    },
+    {
+      "id": "3239eeef02",
+      "kind": "html",
+      "key": "p",
+      "text": "Almost every \"Meet attendance\" Chrome extension works the same way: it scrapes Google Meet's web page, reading participant names out of whatever HTML the People panel happens to render today. That design carries three structural problems:"
+    },
+    {
+      "id": "92229b8c4d",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Meet's UI changes; the scraper doesn't know.</strong> Google updates the Meet interface constantly. Each unannounced change to a class name or panel layout can silently blank an extension's roster mid-semester — usually discovered when the report you needed comes out empty."
+    },
+    {
+      "id": "4052ed1fdb",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Chrome-only, one machine only.</strong> An extension lives in one browser profile. Switch to Firefox or Safari, borrow a laptop, or open Meet on a device where you can't install extensions, and your tracking is gone."
+    },
+    {
+      "id": "c267fae9e9",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Broad permissions, thin review.</strong> A scraping extension typically needs permission to read and modify the pages you visit — a wide grant for an attendance list, and precisely the category of access many school and company IT policies (reasonably) refuse to approve."
+    },
+    {
+      "id": "2eaed7dca3",
+      "kind": "html",
+      "key": "h2",
+      "text": "What an official Meet add-on is instead"
+    },
+    {
+      "id": "dc7bd3979e",
+      "kind": "html",
+      "key": "p",
+      "text": "Google Meet has a first-party add-on framework: apps published on the Google Workspace Marketplace that open inside Meet's own <strong>Activities</strong> panel. Attendance Tracker is one of them. Because it's part of Meet rather than bolted onto the browser:"
+    },
+    {
+      "id": "ca8966ee4d",
+      "kind": "html",
+      "key": "li",
+      "text": "Attendance comes from the <strong>Meet REST API</strong> — the same participant data Google records — not from reading pixels or DOM nodes."
+    },
+    {
+      "id": "093fbdd738",
+      "kind": "html",
+      "key": "li",
+      "text": "It follows your <strong>Google account</strong>, not a browser install. Any machine, any supported browser: Chrome, Edge, Firefox, Safari — and Chromebooks, including school-managed ones where admins block extensions."
+    },
+    {
+      "id": "12a839ae43",
+      "kind": "html",
+      "key": "li",
+      "text": "It went through <strong>Marketplace review</strong> with narrow, Meet-specific OAuth scopes an admin can read and approve, and it's installable (or domain-deployed) from the Marketplace like any other Workspace app."
+    },
+    {
+      "id": "c58f4a872c",
+      "kind": "html",
+      "key": "li",
+      "text": "Data survives the meeting: reports auto-export at meeting end, and with Pro, server-side <strong>Auto-Capture</strong> records meetings you hosted even when the panel was never opened — something a browser extension, which only exists while its tab does, cannot do."
+    },
+    {
+      "id": "832da94cf1",
+      "kind": "html",
+      "key": "h2",
+      "text": "Extension vs. official add-on, side by side"
+    },
+    {
+      "id": "66df7aa245",
+      "kind": "html",
+      "key": "th",
+      "text": "Chrome extension (DOM scraping)"
+    },
+    {
+      "id": "16ad9c189e",
+      "kind": "html",
+      "key": "th",
+      "text": "Official Meet add-on"
+    },
+    {
+      "id": "42d04f0d16",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Breaks when Meet updates</strong>"
+    },
+    {
+      "id": "a1c4c744cf",
+      "kind": "html",
+      "key": "td",
+      "text": "Yes — scraper tracks Meet's HTML"
+    },
+    {
+      "id": "203ae2e8d8",
+      "kind": "html",
+      "key": "td",
+      "text": "No — official REST API"
+    },
+    {
+      "id": "bd22e1d3a2",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Browsers</strong>"
+    },
+    {
+      "id": "286bccba49",
+      "kind": "html",
+      "key": "td",
+      "text": "Chrome (sometimes Edge) only"
+    },
+    {
+      "id": "259b465e79",
+      "kind": "html",
+      "key": "td",
+      "text": "Chrome, Edge, Firefox, Safari, Chromebooks"
+    },
+    {
+      "id": "dc15433064",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Permissions</strong>"
+    },
+    {
+      "id": "64729acab1",
+      "kind": "html",
+      "key": "td",
+      "text": "Read/modify pages you visit"
+    },
+    {
+      "id": "4b31f1d446",
+      "kind": "html",
+      "key": "td",
+      "text": "Narrow Meet-specific OAuth scopes"
+    },
+    {
+      "id": "83e6963392",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Data after the meeting</strong>"
+    },
+    {
+      "id": "e11260625a",
+      "kind": "html",
+      "key": "td",
+      "text": "Only if the tab stayed open"
+    },
+    {
+      "id": "b94f7d6e1c",
+      "kind": "html",
+      "key": "td",
+      "text": "Auto-export at meeting end + Meeting History; Pro Auto-Capture even with the panel closed"
+    },
+    {
+      "id": "0479e4111e",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>School-managed Chromebooks</strong>"
+    },
+    {
+      "id": "f37c24d20d",
+      "kind": "html",
+      "key": "td",
+      "text": "Usually blocked by admin policy"
+    },
+    {
+      "id": "47ad78bc15",
+      "kind": "html",
+      "key": "td",
+      "text": "Works — admins can deploy it domain-wide"
+    },
+    {
+      "id": "9c55019338",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Follows you across devices</strong>"
+    },
+    {
+      "id": "d3279c7d0e",
+      "kind": "html",
+      "key": "td",
+      "text": "No — per-browser install"
+    },
+    {
+      "id": "c58abaf637",
+      "kind": "html",
+      "key": "td",
+      "text": "Yes — tied to your Google account"
+    },
+    {
+      "id": "181cfab7f7",
+      "kind": "html",
+      "key": "h2",
+      "text": "Setup: tracking attendance in three steps"
+    },
+    {
+      "id": "712ba16532",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Install once</strong> from the <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_no_extension\" target=\"_blank\">Google Workspace Marketplace</a>. No browser restart, nothing added to Chrome."
+    },
+    {
+      "id": "5b55e5a980",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Open it in Meet.</strong> In any meeting, click the <strong>Activities</strong> icon and choose <strong>Attendance Tracker</strong>. The side panel shows a live roster — Present, Late, Absent, and Guests — and can match participants against a <a href=\"import-google-classroom-roster-to-google-meet.html\">Class Roster imported from Google Classroom</a>. The panel is localized in 60 languages."
+    },
+    {
+      "id": "a50b5d625e",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Export.</strong> Download an instant CSV (<a href=\"export-google-meet-participants-to-excel.html\">opens in Excel</a>) or PDF report, send it to Google Sheets, or grab <a href=\"export-google-meet-attendance-to-moodle.html\">Moodle</a>/<a href=\"export-google-meet-attendance-to-canvas.html\">Canvas</a> gradebook CSVs. If the panel was open, the report also exports automatically when the meeting ends."
+    },
+    {
+      "id": "7d2dc48836",
+      "kind": "html",
+      "key": "h2",
+      "text": "Frequently asked questions"
+    },
+    {
+      "id": "c221f8d2b8",
+      "kind": "html",
+      "key": "h3",
+      "text": "My attendance extension stopped working — can this recover its data?"
+    },
+    {
+      "id": "b4e8d8da98",
+      "kind": "html",
+      "key": "p",
+      "text": "No. When a scraping extension misses a meeting, that data was never captured, and no tool can reconstruct it afterward. What switching gets you is that it doesn't happen again: the add-on's API-based tracking doesn't depend on Meet's UI staying still."
+    },
+    {
+      "id": "7feb903193",
+      "kind": "html",
+      "key": "h3",
+      "text": "Does it work on a free Gmail account?"
+    },
+    {
+      "id": "8845ec1505",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes — on personal Gmail meetings, the host tracks. In Workspace organizations, non-hosts like TAs and co-hosts can also track after a Workspace admin enables a one-time delegation at <a href=\"https://attendancetracker.dev/setup\">attendancetracker.dev/setup</a>."
+    },
+    {
+      "id": "e2c07e790b",
+      "kind": "html",
+      "key": "h3",
+      "text": "Is it free?"
+    },
+    {
+      "id": "7b11f950de",
+      "kind": "html",
+      "key": "p",
+      "text": "The core is free: live roster, Class Roster with Classroom import, PDF reports, per-session Moodle/Canvas exports, 2 exports a month across Google Sheets, CSV, or binary Excel (for classes up to 25 attendees, plus 1 large-class grace export), and Meeting History. Pro ($14.99/year Educator Pass, $4.99–$7.99/year regional, or a one-time $29 Lifetime Pass, $9.99–$19 regional) adds unlimited exports, hands-free Auto-Capture, semester gradebook exports, <a href=\"google-meet-attendance-certificates.html\">verifiable PDF certificates</a>, and Slack/Google Chat/Discord digests."
+    },
+    {
+      "id": "501cf63665",
+      "kind": "html",
+      "key": "h3",
+      "text": "How does it compare with the extensions people actually use?"
+    },
+    {
+      "id": "0ca75f3780",
+      "kind": "html",
+      "key": "p",
+      "text": "We keep an honest feature-by-feature rundown in our <a href=\"best-google-meet-attendance-extensions.html\">extension comparison guide</a> — including where a simple extension is genuinely enough."
+    },
+    {
+      "id": "b3b0582d53",
+      "kind": "html",
+      "key": "h3",
+      "text": "Stop babysitting a scraper"
+    },
+    {
+      "id": "c7f7bfc9dc",
+      "kind": "html",
+      "key": "p",
+      "text": "Official Meet add-on, any browser, blocked-extension-proof. Free to start; installs in under a minute."
+    },
+    {
+      "id": "14b133eb0f",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Attendance Tracker from Marketplace"
+    },
+    {
+      "id": "d360e4c6a4",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"import-google-classroom-roster-to-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Import Classroom Rosters</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "5f3cc2f91e",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Integrations</strong>\n          <a href=\"export-google-meet-attendance-to-moodle.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Moodle Gradebook Export</a>\n          <a href=\"export-google-meet-attendance-to-canvas.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Canvas Gradebook Export</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"send-google-meet-attendance-to-google-chat.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Chat &amp; Discord</a>"
+    },
+    {
+      "id": "98cdd4d1f5",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>"
+    },
+    {
+      "id": "e787e741f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "00e7bf9b12",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "How to track Google Meet attendance without a Chrome extension"
+    },
+    {
+      "id": "ea905838ac",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "Step-by-step instructions for tracking Google Meet attendance with an official Meet add-on instead of a browser extension."
+    },
+    {
+      "id": "ee62dafd08",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Install the add-on from the Workspace Marketplace"
+    },
+    {
+      "id": "cd642e389d",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Install Attendance Tracker from the Google Workspace Marketplace — a one-time install tied to your Google account, not your browser."
+    },
+    {
+      "id": "45fa8a31a8",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Open it from Meet's Activities panel"
+    },
+    {
+      "id": "f52847e608",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "In any Google Meet, open the Activities menu and choose Attendance Tracker. The side panel shows a live Present/Late/Absent roster."
+    },
+    {
+      "id": "5789fc40fd",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Export the attendance report"
+    },
+    {
+      "id": "c89e15d753",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Download a CSV or PDF anytime, or let the report export automatically when the meeting ends."
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "4fd2acab55",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Track Google Meet attendance without a Chrome extension"
+    }
+  ]
+}

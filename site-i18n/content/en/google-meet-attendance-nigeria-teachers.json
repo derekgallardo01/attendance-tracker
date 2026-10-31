@@ -1,0 +1,408 @@
+{
+  "page": "google-meet-attendance-nigeria-teachers.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "ef42034e24",
+      "kind": "head",
+      "key": "title",
+      "text": "Google Meet attendance for Nigerian teachers & schools (2026 Guide) — Attendance Tracker"
+    },
+    {
+      "id": "5726920c6d",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Free automatic Google Meet attendance for Nigerian teachers, tutors, and school proprietors. Works on any Gmail or Workspace account, free CSV exports, one-time pricing — no subscription."
+    },
+    {
+      "id": "8ff881cdb3",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Google Meet attendance for Nigerian teachers & schools (2026 Guide)"
+    },
+    {
+      "id": "042fb4f722",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Automatic roll call, late flags, and free CSV attendance records for online classes in Nigeria — on any Gmail account, with one-time (not subscription) Pro pricing."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "deee114441",
+      "kind": "html",
+      "key": "h1",
+      "text": "Google Meet attendance for Nigerian teachers &amp; schools (2026 Guide)"
+    },
+    {
+      "id": "3e6d306005",
+      "kind": "html",
+      "key": "p",
+      "text": "From Lagos tutorial centres to university lectures in Ibadan and Nsukka, Nigerian educators run a huge share of their teaching through Google Meet — often with large classes, expensive mobile data, and a proprietor or head of school who expects proper attendance records at the end of the week. This guide shows how to take automatic attendance in Meet, keep records your school can actually file, and do it on a free Gmail account."
+    },
+    {
+      "id": "ccdd2f4c8b",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Works on the accounts Nigerian teachers actually have:</strong> personal <code>@gmail.com</code> accounts, school Workspace domains, and university <code>.edu.ng</code> addresses. No Google Workspace for Education Plus upgrade, no admin approval, no Chrome-only extension — it's an official Google Meet add-on that also runs in Edge, Firefox, Safari, and on low-cost laptops and Chromebooks."
+    },
+    {
+      "id": "b29ea546fa",
+      "kind": "html",
+      "key": "h2",
+      "text": "Why Google Meet won't give you an attendance report"
+    },
+    {
+      "id": "df3674935b",
+      "kind": "html",
+      "key": "p",
+      "text": "Google restricts its built-in attendance emails to premium Education editions (Education Plus, or the Teaching &amp; Learning upgrade) — licenses very few Nigerian schools pay for. On the free Workspace tiers and on personal Gmail, Meet sends no attendance report at all, and there is no history page to check afterwards. Whatever record you need, you have to capture it yourself, live."
+    },
+    {
+      "id": "6a24b14ab3",
+      "kind": "html",
+      "key": "p",
+      "text": "<strong>Attendance Tracker</strong> fixes that from the side panel: open it from the Activities menu in Meet, press Start, and every student is logged automatically — Present, Late (with a late threshold you set yourself), Absent, or Guest — with join time, leave time, total minutes, and an attendance percentage."
+    },
+    {
+      "id": "3aba050237",
+      "kind": "html",
+      "key": "h2",
+      "text": "Built for the realities of Nigerian online teaching"
+    },
+    {
+      "id": "3aee2d16f5",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Large classes:</strong> Calling roll for 60–100 students eats a quarter of the lesson, and students answering \"present sir\" in the chat is easy to game. Automatic capture logs everyone the moment they join — including students who drop off when the network fails and rejoin minutes later, whose time is merged into one clean record with a rejoin count."
+    },
+    {
+      "id": "111f4845fa",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Data costs are real:</strong> The record is captured during the meeting you're already in — no separate recording to upload, no video to re-watch. The instant CSV download is a tiny file you can save, print, or forward on any connection."
+    },
+    {
+      "id": "0d1a780b93",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Proprietors and heads of school want records:</strong> Whether it's a private school owner reviewing teacher logs, a tutorial centre billing parents per session, or a department keeping continuous-assessment attendance in the WAEC/NECO run-up, you can hand over a dated CSV or PDF report per class — with per-student percentages, not just names."
+    },
+    {
+      "id": "028535df95",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Records that survive:</strong> Every tracked class is saved to your Meeting History at attendancetracker.dev for as long as your account is active, so end-of-term compilation is a lookup, not an archaeology project."
+    },
+    {
+      "id": "3261da5ab6",
+      "kind": "html",
+      "key": "h2",
+      "text": "The free tier goes a long way"
+    },
+    {
+      "id": "0b877def71",
+      "kind": "html",
+      "key": "p",
+      "text": "Everything a single teacher needs for day-to-day attendance is free:"
+    },
+    {
+      "id": "97a0356773",
+      "kind": "html",
+      "key": "li",
+      "text": "Real-time roster with Present / Late / Absent / Guests and a configurable late threshold"
+    },
+    {
+      "id": "5b3d766255",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>PDF attendance reports</strong> and Meeting History"
+    },
+    {
+      "id": "ab36dfe76f",
+      "kind": "html",
+      "key": "li",
+      "text": "Class Roster with <strong>one-click Google Classroom import</strong>, so absentees are recorded too"
+    },
+    {
+      "id": "8a4f35be9b",
+      "kind": "html",
+      "key": "li",
+      "text": "Per-session <strong>Moodle and Canvas gradebook CSVs</strong> — useful for the growing number of Nigerian universities and private schools running Moodle"
+    },
+    {
+      "id": "91d0f36a8e",
+      "kind": "html",
+      "key": "li",
+      "text": "2 free exports per month across Google Sheets, CSV, or binary Excel (for classes up to 25 attendees, plus 1 large-class grace export), plus permanent Meeting History"
+    },
+    {
+      "id": "84c31bd0fa",
+      "kind": "html",
+      "key": "h2",
+      "text": "Pricing that respects a naira budget: pay once, own it"
+    },
+    {
+      "id": "efcdeb2c6a",
+      "kind": "html",
+      "key": "p",
+      "text": "Dollar subscriptions are a hard sell when the exchange rate moves and every renewal is a new card charge. That's why Pro is built around affordable regional and <strong>one-time</strong> options, not monthly billing:"
+    },
+    {
+      "id": "cfdbc13a39",
+      "kind": "html",
+      "key": "th",
+      "text": "Plan"
+    },
+    {
+      "id": "34145df562",
+      "kind": "html",
+      "key": "th",
+      "text": "Price"
+    },
+    {
+      "id": "52175b415a",
+      "kind": "html",
+      "key": "th",
+      "text": "Billing"
+    },
+    {
+      "id": "ee48fc1c34",
+      "kind": "html",
+      "key": "td",
+      "text": "Individual Lifetime Pass"
+    },
+    {
+      "id": "65680c663e",
+      "kind": "html",
+      "key": "td",
+      "text": "$9.99–$19 (regional)"
+    },
+    {
+      "id": "6b9fdc81cc",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>One-time</strong> — pay once, keep it forever ($29 standard)"
+    },
+    {
+      "id": "dd6c15de6b",
+      "kind": "html",
+      "key": "td",
+      "text": "Educator Annual Pass"
+    },
+    {
+      "id": "28150fca6e",
+      "kind": "html",
+      "key": "td",
+      "text": "$4.99–$7.99/year (regional)"
+    },
+    {
+      "id": "9947566c24",
+      "kind": "html",
+      "key": "td",
+      "text": "Yearly, regional educator rate ($14.99/year standard)"
+    },
+    {
+      "id": "9e149dd7ce",
+      "kind": "html",
+      "key": "td",
+      "text": "Department (whole domain)"
+    },
+    {
+      "id": "2d28a84082",
+      "kind": "html",
+      "key": "td",
+      "text": "$59/yr"
+    },
+    {
+      "id": "6ab09cfff4",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Annual</strong> — covers every teacher on your school's Workspace domain"
+    },
+    {
+      "id": "60dfbb5fcc",
+      "kind": "html",
+      "key": "p",
+      "text": "For a proprietor, the domain plan is the notable one: the $59/year Department plan gives the whole school unlimited Google Sheets exports, hands-free Auto-Capture (classes you host are exported automatically within hours, even if the teacher forgot to open the panel), cumulative term summaries with per-student attendance percentages, verifiable PDF attendance certificates, and digests to Slack, Google Chat, or Discord — billed annually, cancel anytime."
+    },
+    {
+      "id": "710f0ad45c",
+      "kind": "html",
+      "key": "h2",
+      "text": "How to set it up (5 minutes)"
+    },
+    {
+      "id": "baa756852a",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Install:</strong> Open the <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_nigeria\" target=\"_blank\" rel=\"noopener\">Attendance Tracker page on the Google Workspace Marketplace</a> and click Install — free, on any Gmail or Workspace account."
+    },
+    {
+      "id": "64c0dc595f",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Add your class list:</strong> In your Meet, open <strong>Activities → Attendance Tracker</strong>, create a Class Roster (paste names and emails, or import from Google Classroom in one click)."
+    },
+    {
+      "id": "8c940179cc",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Press Start:</strong> Teach as normal; the roster fills itself in as students join and leave."
+    },
+    {
+      "id": "4d18f23adc",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Export:</strong> Download the CSV or PDF at the end of class, or find the session later in Meeting History."
+    },
+    {
+      "id": "7d2dc48836",
+      "kind": "html",
+      "key": "h2",
+      "text": "Frequently asked questions"
+    },
+    {
+      "id": "05c2fd9629",
+      "kind": "html",
+      "key": "h3",
+      "text": "Do my students need to install anything or pay anything?"
+    },
+    {
+      "id": "95ebd70491",
+      "kind": "html",
+      "key": "p",
+      "text": "No. Only the teacher installs the add-on. Students join the Meet link exactly as they already do, from any device or account."
+    },
+    {
+      "id": "215f0b862d",
+      "kind": "html",
+      "key": "h3",
+      "text": "Does it work if students join with personal Gmail addresses?"
+    },
+    {
+      "id": "304b7bf822",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. Students are matched to your roster by email first, then by display name — so a student who joins from a personal account under their own name is still counted correctly."
+    },
+    {
+      "id": "0902c6cf2c",
+      "kind": "html",
+      "key": "h3",
+      "text": "Can our school use one payment for all teachers?"
+    },
+    {
+      "id": "8b69137918",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes — the $59/year Department plan covers every account on your school's Google Workspace domain. Individual teachers on personal Gmail can use the free tier or the $4.99–$7.99/year regional Educator Pass or $9.99–$19 regional individual lifetime pass."
+    },
+    {
+      "id": "58afc6db56",
+      "kind": "html",
+      "key": "h3",
+      "text": "Can a class teacher track when the proprietor's account hosts the meeting?"
+    },
+    {
+      "id": "d233a37d22",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. Non-hosts (co-teachers, assistants) can track after the school's Workspace admin completes a one-time delegation at <a href=\"https://attendancetracker.dev/setup\">attendancetracker.dev/setup</a>."
+    },
+    {
+      "id": "80a09d6390",
+      "kind": "html",
+      "key": "h3",
+      "text": "Is student data safe?"
+    },
+    {
+      "id": "ca94b1b82b",
+      "kind": "html",
+      "key": "p",
+      "text": "The add-on uses Google's official Meet REST API and records only attendance facts — names, emails, join/leave times. It never accesses your camera, microphone, or meeting content, and you can delete your account and all data yourself from Settings."
+    },
+    {
+      "id": "78543d7399",
+      "kind": "html",
+      "key": "h3",
+      "text": "Take attendance automatically in your next class"
+    },
+    {
+      "id": "ead0da0d5d",
+      "kind": "html",
+      "key": "p",
+      "text": "Free CSV records for every class, on any Gmail account. Pro is a one-time payment — never a subscription trap."
+    },
+    {
+      "id": "14b133eb0f",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Attendance Tracker from Marketplace"
+    },
+    {
+      "id": "d360e4c6a4",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"import-google-classroom-roster-to-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Import Classroom Rosters</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "5f3cc2f91e",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Integrations</strong>\n          <a href=\"export-google-meet-attendance-to-moodle.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Moodle Gradebook Export</a>\n          <a href=\"export-google-meet-attendance-to-canvas.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Canvas Gradebook Export</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"send-google-meet-attendance-to-google-chat.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Chat &amp; Discord</a>"
+    },
+    {
+      "id": "98cdd4d1f5",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>"
+    },
+    {
+      "id": "e787e741f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "69f702bf43",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "Google Meet attendance for Nigerian teachers and schools (2026 Guide)"
+    },
+    {
+      "id": "e35fb9d249",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "How Nigerian teachers, tutors, and school owners take automatic attendance in Google Meet, keep exportable records for their schools, and avoid subscription costs with one-time pricing."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "86ecd14bfd",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Google Meet attendance for Nigerian teachers &amp; schools (2026 Guide)"
+    }
+  ]
+}

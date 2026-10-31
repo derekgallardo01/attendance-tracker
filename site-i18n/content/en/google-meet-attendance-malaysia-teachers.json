@@ -1,0 +1,324 @@
+{
+  "page": "google-meet-attendance-malaysia-teachers.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "278943b113",
+      "kind": "head",
+      "key": "title",
+      "text": "Google Meet Attendance Tracker for Teachers in Malaysia (MOE & DELIMa) — Attendance Tracker"
+    },
+    {
+      "id": "2b9a8a3760",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Free Google Meet attendance tracker for Malaysian teachers on MOE DELIMa accounts (moe-dl.edu.my), private schools, and universities. Automatic roll call, late flags, and Google Sheets export — no Education Plus needed. Bahasa Melayu supported."
+    },
+    {
+      "id": "c86c827871",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Google Meet Attendance Tracker for Teachers in Malaysia (MOE & DELIMa)"
+    },
+    {
+      "id": "24a0ecea07",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Automatic roll call, late student flags, and one-click Google Sheets export for Malaysian MOE and university teachers. Works on DELIMa accounts."
+    },
+    {
+      "id": "5f79375412",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"Attendance Tracker\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "c5e60291ed",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "682eb60f9b",
+      "kind": "html",
+      "key": "div",
+      "text": "🇲🇾 Malaysian Teachers &amp; MOE Schools"
+    },
+    {
+      "id": "d87206d2f4",
+      "kind": "html",
+      "key": "h1",
+      "text": "Google Meet Attendance Tracker for Teachers in Malaysia"
+    },
+    {
+      "id": "e00ef26e9c",
+      "kind": "html",
+      "key": "p",
+      "text": "Calling the class register one name at a time in Google Meet wastes precious PdP time. Here is how Malaysian teachers on MOE DELIMa accounts, private school educators, and university lecturers take automated attendance and export it straight to Google Sheets — without paying for Google Workspace for Education Plus."
+    },
+    {
+      "id": "6a87ab2293",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Works with DELIMa accounts:</strong> Compatible with official Ministry of Education accounts under <code>moe-dl.edu.my</code> (Digital Educational Learning Initiative Malaysia), teacher-training institute accounts, university domains (<code>.edu.my</code>), and personal <code>@gmail.com</code> accounts. The side panel is also available in <strong>Bahasa Melayu</strong>."
+    },
+    {
+      "id": "77b7a686de",
+      "kind": "html",
+      "key": "h2",
+      "text": "Why Google Meet Doesn't Send You an Attendance Report"
+    },
+    {
+      "id": "402a56a2ba",
+      "kind": "html",
+      "key": "p",
+      "text": "DELIMa gives every Malaysian government school teacher a Google Workspace for Education account — but on the free <strong>Education Fundamentals</strong> tier. Google reserves its built-in Meet attendance reports for the paid <strong>Education Plus</strong> licence, so after your online class ends, no attendance email or spreadsheet ever arrives."
+    },
+    {
+      "id": "98b4d265fc",
+      "kind": "html",
+      "key": "p",
+      "text": "<strong>Attendance Tracker</strong> fixes this from inside the meeting itself. It is a certified Google Workspace Marketplace add-on that runs in the Google Meet side panel, so it works on <em>every</em> Workspace edition — DELIMa Fundamentals accounts and personal Gmail included."
+    },
+    {
+      "id": "4aaad6e253",
+      "kind": "html",
+      "key": "h2",
+      "text": "Built for Malaysian Online Classrooms"
+    },
+    {
+      "id": "5120e67878",
+      "kind": "html",
+      "key": "strong",
+      "text": "📋 Automatic Class Register"
+    },
+    {
+      "id": "3e34266a70",
+      "kind": "html",
+      "key": "p",
+      "text": "No more \"sila taip 'hadir' dalam chat\". Every student is logged the moment they join, with their name and email captured automatically."
+    },
+    {
+      "id": "af875a858d",
+      "kind": "html",
+      "key": "strong",
+      "text": "⏰ Late Arrival Flags"
+    },
+    {
+      "id": "4841a802fc",
+      "kind": "html",
+      "key": "p",
+      "text": "Students who join after the first 5 minutes are flagged with a late chip (e.g. <code>+12m late</code>) so your record shows who was punctual."
+    },
+    {
+      "id": "c0a98a8bbf",
+      "kind": "html",
+      "key": "strong",
+      "text": "⏱️ Real Attendance Minutes"
+    },
+    {
+      "id": "99fc24963d",
+      "kind": "html",
+      "key": "p",
+      "text": "Unstable connection? If a student drops and rejoins, their active minutes are merged into one clean record — no duplicate rows."
+    },
+    {
+      "id": "a7c863ede0",
+      "kind": "html",
+      "key": "strong",
+      "text": "📊 1-Click Google Sheets Export"
+    },
+    {
+      "id": "31d52fbb98",
+      "kind": "html",
+      "key": "p",
+      "text": "Attendance lands in a tidy spreadsheet in your Google Drive, ready to attach to your weekly reporting or share with your Guru Besar."
+    },
+    {
+      "id": "0f81e4e447",
+      "kind": "html",
+      "key": "strong",
+      "text": "⚡ Hands-Free Auto-Export"
+    },
+    {
+      "id": "b8fd4e2f7f",
+      "kind": "html",
+      "key": "p",
+      "text": "Enable auto-export once and every class is saved and emailed to you automatically when the meeting ends."
+    },
+    {
+      "id": "9ae6d1e309",
+      "kind": "html",
+      "key": "strong",
+      "text": "🌏 Bahasa Melayu Interface"
+    },
+    {
+      "id": "f9963f87e1",
+      "kind": "html",
+      "key": "p",
+      "text": "The side panel follows your Google language setting — Bahasa Melayu, English, Mandarin, and Tamil are all supported."
+    },
+    {
+      "id": "c224948fef",
+      "kind": "html",
+      "key": "h2",
+      "text": "How to Take Attendance in Your Next Online Class"
+    },
+    {
+      "id": "1440d71de1",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Install the add-on:</strong> Open the <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_my_teachers\" target=\"_blank\" rel=\"noopener\">Attendance Tracker Marketplace page</a> with your DELIMa or Gmail account and click <strong>Install</strong>."
+    },
+    {
+      "id": "e546486369",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Start your Google Meet class</strong> as usual from Google Classroom or your calendar link."
+    },
+    {
+      "id": "3dc638c8e0",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Open the side panel:</strong> Click the <em>Activities / Add-ons</em> icon next to the chat icon and choose <strong>Attendance Tracker</strong>."
+    },
+    {
+      "id": "e281073a53",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Teach:</strong> The register fills itself in as students join and leave."
+    },
+    {
+      "id": "e84e656e1c",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Save:</strong> Click <strong>Save to Sheets</strong>, or switch on auto-export so it saves itself when class ends."
+    },
+    {
+      "id": "5203409ef7",
+      "kind": "html",
+      "key": "h2",
+      "text": "Frequently Asked Questions from Malaysian Teachers"
+    },
+    {
+      "id": "db71f35e53",
+      "kind": "html",
+      "key": "h3",
+      "text": "Does it work on MOE DELIMa (moe-dl.edu.my) accounts?"
+    },
+    {
+      "id": "de98e13786",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. DELIMa accounts run on Google Workspace for Education Fundamentals, and Attendance Tracker works on every Workspace edition. If your school administrator has restricted Marketplace installs, you can also sign in with a personal Gmail account as the meeting host."
+    },
+    {
+      "id": "06b0f82615",
+      "kind": "html",
+      "key": "h3",
+      "text": "Can I use it for tuition classes and university lectures too?"
+    },
+    {
+      "id": "40a4cc4c39",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. It handles small tuition groups and large university lectures with 100+ students equally well, and works with any mix of institutional and personal student accounts."
+    },
+    {
+      "id": "69618e8e0e",
+      "kind": "html",
+      "key": "h3",
+      "text": "Is student data kept private?"
+    },
+    {
+      "id": "4d5bc92d4a",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. Attendance Tracker never reads your camera, microphone, or meeting content, shows no ads, and sells no data. Spreadsheets are stored only in your own Google Drive."
+    },
+    {
+      "id": "213e61f7c0",
+      "kind": "html",
+      "key": "h3",
+      "text": "Is there a discount for teachers?"
+    },
+    {
+      "id": "52062bc167",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes! With regional pricing for Malaysia, the <strong>Educator Pass</strong> is RM 35/year (Pro Annual RM 65/year), or a one-time <strong>Lifetime Pass</strong> is RM 79–RM 129 — both include unlimited exports, hands-free auto-capture, and student attendance certificates. Basic tracking and 2 exports per month across Google Sheets, CSV, or binary Excel (for classes up to 25 attendees, plus 1 large-class grace export) are free forever."
+    },
+    {
+      "id": "8eecf8328b",
+      "kind": "html",
+      "key": "h3",
+      "text": "Ready to stop calling the register manually?"
+    },
+    {
+      "id": "706358f3fe",
+      "kind": "html",
+      "key": "p",
+      "text": "Save 10–15 minutes every class. Free install on Google Workspace Marketplace."
+    },
+    {
+      "id": "0283cf06ed",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Free from Google Marketplace →"
+    },
+    {
+      "id": "f27e335337",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-for-online-classes.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Online Classes</a>\n          <a href=\"automatic-attendance-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Automatic Attendance</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>"
+    },
+    {
+      "id": "fa47d1bb4c",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">By Country</strong>\n          <a href=\"google-meet-attendance-malaysia-teachers.html\" style=\"color: var(--accent); text-decoration: none; display: block; font-weight:600;\">Malaysia (MOE &amp; DELIMa)</a>\n          <a href=\"google-meet-attendance-philippines-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Philippines (DepEd)</a>\n          <a href=\"google-meet-attendance-indonesia-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Indonesia (belajar.id)</a>\n          <a href=\"google-meet-attendance-india-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">India (Schools &amp; Colleges)</a>"
+    },
+    {
+      "id": "9f413bf209",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">More Guides</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "23f8ad156d",
+      "kind": "html",
+      "key": "div",
+      "text": "© 2026 Kinetic Helix LLC. Attendance Tracker for Google Meet™. All rights reserved."
+    },
+    {
+      "id": "23801d5833",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "Google Meet Attendance Tracker for Malaysian Teachers (MOE DELIMa & Universities)"
+    },
+    {
+      "id": "18057d101e",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "How Malaysian teachers on DELIMa (moe-dl.edu.my) accounts track attendance, late arrivals, and generate Google Sheets reports without an Education Plus license."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "7bf71db4f1",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Google Meet Attendance Tracker for Teachers in Malaysia"
+    }
+  ]
+}

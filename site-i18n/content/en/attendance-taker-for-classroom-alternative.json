@@ -1,0 +1,510 @@
+{
+  "page": "attendance-taker-for-classroom-alternative.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "aafadd4640",
+      "kind": "head",
+      "key": "title",
+      "text": "Retired Classroom Attendance Competitor has shut down — migration guide & alternative — Attendance Tracker"
+    },
+    {
+      "id": "7f871d21d1",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "A legacy Classroom attendance competitor was retired in 2026 and stopped functioning. What to do with your past records, and a 3-step guide to switching your Google Classroom attendance to Attendance Tracker."
+    },
+    {
+      "id": "1ed5e710e4",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Retired Classroom Attendance Competitor has shut down — your migration path"
+    },
+    {
+      "id": "430f6236e0",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "The add-on was retired in 2026 and stopped functioning. Here's how to convert past exports and move your Classroom attendance workflow in three steps."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "92aa75a4cc",
+      "kind": "html",
+      "key": "h1",
+      "text": "Retired Classroom Attendance Competitor has shut down — here's your migration path"
+    },
+    {
+      "id": "ea0c1f060f",
+      "kind": "html",
+      "key": "p",
+      "text": "If you relied on a legacy Classroom attendance competitor add-on, its Google Workspace Marketplace listing confirmed that the add-on was retired on <strong>March 1, 2026</strong> and has stopped functioning. If you need a reliable, actively maintained replacement for your classes, here is what to do, in order."
+    },
+    {
+      "id": "0ff28af898",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>The short version:</strong> convert any past attendance CSV files you saved, pick Attendance Tracker as your actively maintained replacement built on official Google APIs, and re-import your Google Classroom rosters in one click. The whole switch takes about five minutes."
+    },
+    {
+      "id": "0f5043902c",
+      "kind": "html",
+      "key": "h2",
+      "text": "What happened"
+    },
+    {
+      "id": "ca85142b3c",
+      "kind": "html",
+      "key": "p",
+      "text": "The retired competitor's Marketplace listing announced that the add-on was retired and ceased functioning on March 1, 2026. This wasn't a rumor — it was the developer's published notice. The tool no longer records attendance for Google Meet sessions."
+    },
+    {
+      "id": "042122aa3a",
+      "kind": "html",
+      "key": "p",
+      "text": "Retirements like this are common in this category. Two other attendance competitor tools have died recently: one Chrome extension competitor was delisted from the Chrome Web Store in September 2025, and another legacy extension competitor has been unmaintained since 2021 and no longer works with modern Chrome. When a free tool's developer moves on, the tool goes with them — which is why maintenance cadence should be near the top of your checklist when you pick a replacement."
+    },
+    {
+      "id": "41a6d5ee01",
+      "kind": "html",
+      "key": "h2",
+      "text": "Migrating your data and rosters"
+    },
+    {
+      "id": "dc1e82c8c2",
+      "kind": "html",
+      "key": "p",
+      "text": "There is no automatic direct transfer between attendance tools — each stores records in its own format. Here is how to handle your records and classes:"
+    },
+    {
+      "id": "8515fd806c",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Check past exports or Google Drive.</strong> If you downloaded past CSVs or if the tool ever wrote attendance to Sheets in your Drive, those files are yours. You can use our interactive roster converter below to bring those student lists into Attendance Tracker."
+    },
+    {
+      "id": "ad25ee3946",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Google Classroom rosters are safe.</strong> Your Google Classroom rosters live in Classroom itself, not in the old attendance tool — they are completely safe and will re-import into Attendance Tracker in one click."
+    },
+    {
+      "id": "070db2e247",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Start your next class seamlessly.</strong> Once your rosters are connected, Attendance Tracker handles live tracking, auto-sorting, and Sheets exports without any disruption to your semester."
+    },
+    {
+      "id": "64535d5ba0",
+      "kind": "html",
+      "key": "span",
+      "text": "Free Utility"
+    },
+    {
+      "id": "862d316e98",
+      "kind": "html",
+      "key": "h3",
+      "text": "Convert Competitor Exports to Attendance Tracker Roster"
+    },
+    {
+      "id": "322e58069d",
+      "kind": "html",
+      "key": "p",
+      "text": "Drag &amp; drop past attendance CSV files from a previous attendance competitor (or paste student rows). We automatically extract student names and emails into an Attendance Tracker roster. <strong>100% private:</strong> runs entirely in your browser; no student records ever touch a server."
+    },
+    {
+      "id": "03bba90652",
+      "kind": "html",
+      "key": "div",
+      "text": "Drag &amp; drop Competitor CSV here"
+    },
+    {
+      "id": "c28db2bab0",
+      "kind": "html",
+      "key": "div",
+      "text": "or <span style=\"color:var(--blue);text-decoration:underline\">click to browse</span> from your computer"
+    },
+    {
+      "id": "13055b3418",
+      "kind": "html",
+      "key": "div",
+      "text": "— OR paste CSV / spreadsheet rows below —"
+    },
+    {
+      "id": "c7df67bc63",
+      "kind": "attr",
+      "key": "placeholder",
+      "text": "Paste CSV text here (e.g. John Doe, jdoe@school.edu, Present...)"
+    },
+    {
+      "id": "5db0f2ba32",
+      "kind": "html",
+      "key": "button",
+      "text": "Extract Roster"
+    },
+    {
+      "id": "57f3f90ce3",
+      "kind": "html",
+      "key": "button",
+      "text": "Clear"
+    },
+    {
+      "id": "703f620bd6",
+      "kind": "html",
+      "key": "div",
+      "text": "<span style=\"color:var(--accent);font-weight:700;font-size:.92rem\">✓ Extracted <span id=\"student-count\">0</span> students</span>"
+    },
+    {
+      "id": "84a9cdbeb5",
+      "kind": "html",
+      "key": "button",
+      "text": "Copy for Add-on"
+    },
+    {
+      "id": "a380ef2384",
+      "kind": "html",
+      "key": "button",
+      "text": "Download CSV"
+    },
+    {
+      "id": "6c545d055a",
+      "kind": "html",
+      "key": "div",
+      "text": "Preview (first 5 students):"
+    },
+    {
+      "id": "30cdb7332e",
+      "kind": "html",
+      "key": "th",
+      "text": "Name"
+    },
+    {
+      "id": "4364cd99a9",
+      "kind": "html",
+      "key": "th",
+      "text": "Email"
+    },
+    {
+      "id": "a532f6be35",
+      "kind": "html",
+      "key": "div",
+      "text": "Formatted roster (ready to paste into Attendance Tracker):"
+    },
+    {
+      "id": "01d89cef08",
+      "kind": "html",
+      "key": "strong",
+      "text": "How to import into Attendance Tracker:"
+    },
+    {
+      "id": "dc4cfdec7d",
+      "kind": "html",
+      "key": "li",
+      "text": "Click <strong>Copy for Add-on</strong> above."
+    },
+    {
+      "id": "fc793b01de",
+      "kind": "html",
+      "key": "li",
+      "text": "In Google Meet, open Attendance Tracker from the <strong>Activities</strong> panel."
+    },
+    {
+      "id": "75179f410c",
+      "kind": "html",
+      "key": "li",
+      "text": "Go to <strong>Class Roster → + New Class</strong>, paste into the students box, name your class, and hit <strong>Save Roster</strong>."
+    },
+    {
+      "id": "1608c22ccc",
+      "kind": "html",
+      "key": "h2",
+      "text": "What to look for in a replacement"
+    },
+    {
+      "id": "d0d481d6c8",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Actively maintained.</strong> The single biggest lesson from this shutdown. Look for a tool with recent, frequent updates — not one last touched years ago."
+    },
+    {
+      "id": "285723e67e",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>An official add-on, not a screen scraper.</strong> Chrome extensions that scrape the Meet participant list break whenever Google updates Meet's UI, and they can't run on Firefox, Safari, or managed school Chromebooks. An official Meet add-on runs in the Activities panel and reads attendance from the official Google Meet REST API."
+    },
+    {
+      "id": "f2a92ce36a",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Google Classroom roster support.</strong> If your class lists live in Classroom, the replacement should import them directly instead of making you retype names."
+    },
+    {
+      "id": "0a9544a6a0",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Exports you can keep.</strong> CSV, Sheets, or gradebook-format exports mean your records are never trapped in one tool again."
+    },
+    {
+      "id": "a43c0b5d93",
+      "kind": "html",
+      "key": "h2",
+      "text": "How Attendance Tracker maps, feature by feature"
+    },
+    {
+      "id": "62e942aedf",
+      "kind": "html",
+      "key": "p",
+      "text": "<a href=\"/\">Attendance Tracker</a> is an official Google Meet add-on (Activities panel, official Meet REST API — no scraping), and it covers the Classroom-attendance workflow directly:"
+    },
+    {
+      "id": "13f4a3da0f",
+      "kind": "html",
+      "key": "th",
+      "text": "What you used the previous competitor for"
+    },
+    {
+      "id": "37b69e30a6",
+      "kind": "html",
+      "key": "th",
+      "text": "Where it lives in Attendance Tracker"
+    },
+    {
+      "id": "6d35142a6a",
+      "kind": "html",
+      "key": "td",
+      "text": "Classroom class lists"
+    },
+    {
+      "id": "330b624c84",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Class Roster</strong> tab with one-click <a href=\"import-google-classroom-roster-to-google-meet.html\">Google Classroom import</a>"
+    },
+    {
+      "id": "4748575f3b",
+      "kind": "html",
+      "key": "td",
+      "text": "Marking attendance per class"
+    },
+    {
+      "id": "3d38cda6d9",
+      "kind": "html",
+      "key": "td",
+      "text": "Real-time roster during the Meet: Present / Late / Absent, plus guests, with join and leave times"
+    },
+    {
+      "id": "16bc101a48",
+      "kind": "html",
+      "key": "td",
+      "text": "Attendance records over time"
+    },
+    {
+      "id": "f8b32e819b",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Meeting History</strong> dashboard, per class and per session"
+    },
+    {
+      "id": "00693e3544",
+      "kind": "html",
+      "key": "td",
+      "text": "Getting data out"
+    },
+    {
+      "id": "2c4b227a5d",
+      "kind": "html",
+      "key": "td",
+      "text": "CSV/Excel download, PDF report, Google Sheets export, and per-session <a href=\"export-google-meet-attendance-to-moodle.html\">Moodle</a>/<a href=\"export-google-meet-attendance-to-canvas.html\">Canvas</a> gradebook CSVs"
+    },
+    {
+      "id": "b2183ac4b7",
+      "kind": "html",
+      "key": "td",
+      "text": "Works on school devices"
+    },
+    {
+      "id": "57fd3ffb10",
+      "kind": "html",
+      "key": "td",
+      "text": "Runs in any browser that runs Meet — Chrome, Edge, Firefox, Safari, and managed Chromebooks"
+    },
+    {
+      "id": "b9ca0a07c9",
+      "kind": "html",
+      "key": "p",
+      "text": "All of the above is on the free tier. Because it's an add-on rather than a browser extension, there's nothing to install per-device, and a Meet UI redesign can't break it."
+    },
+    {
+      "id": "89be154ae9",
+      "kind": "html",
+      "key": "h2",
+      "text": "The 3-step switch"
+    },
+    {
+      "id": "baad79b7c9",
+      "kind": "html",
+      "key": "h3",
+      "text": "Step 1: Install"
+    },
+    {
+      "id": "07396830e3",
+      "kind": "html",
+      "key": "p",
+      "text": "Install Attendance Tracker from the Google Workspace Marketplace (button below). It appears in Google Meet under the Activities panel — no extension, no per-student setup."
+    },
+    {
+      "id": "a15493d8d1",
+      "kind": "html",
+      "key": "h3",
+      "text": "Step 2: Import your Classroom roster"
+    },
+    {
+      "id": "53ff3041ca",
+      "kind": "html",
+      "key": "p",
+      "text": "In the side panel, open <strong>Class Roster → + New Class → Import from Google Classroom</strong>. Pick your class and the full student list imports in one click. Repeat for each class you teach."
+    },
+    {
+      "id": "9ff336aa92",
+      "kind": "html",
+      "key": "h3",
+      "text": "Step 3: Track your next class"
+    },
+    {
+      "id": "d95603c9de",
+      "kind": "html",
+      "key": "p",
+      "text": "Join your next Meet, open Attendance Tracker, and press <strong>Start</strong>. Students are matched to the roster automatically and sorted into Present, Late, and Absent in real time. Export or review history whenever you need it."
+    },
+    {
+      "id": "990feeeab7",
+      "kind": "html",
+      "key": "h2",
+      "text": "Why maintenance cadence matters here"
+    },
+    {
+      "id": "2582c7ad3b",
+      "kind": "html",
+      "key": "p",
+      "text": "A major Classroom attendance add-on retiring in 2026, another extension competitor delisted in 2025, and another abandoned since 2021 — three competitor tools in one small category, all gone or going. A tool that isn't shipping updates isn't just missing features; it's on borrowed time. Attendance Tracker is actively maintained, with multiple updates shipping weekly through 2026, and it's available in 60 languages."
+    },
+    {
+      "id": "7d2dc48836",
+      "kind": "html",
+      "key": "h2",
+      "text": "Frequently asked questions"
+    },
+    {
+      "id": "b40924200e",
+      "kind": "html",
+      "key": "h3",
+      "text": "Will my old attendance data transfer automatically?"
+    },
+    {
+      "id": "e5309b2b9a",
+      "kind": "html",
+      "key": "p",
+      "text": "No — there's no automatic direct transfer between attendance tools. If you saved past CSV exports from a previous attendance competitor, you can use our free browser-based roster migration tool above to convert them into an Attendance Tracker roster. Your Google Classroom rosters themselves are unaffected and re-import into Attendance Tracker in one click."
+    },
+    {
+      "id": "fed2c5dffb",
+      "kind": "html",
+      "key": "h3",
+      "text": "Is Attendance Tracker free?"
+    },
+    {
+      "id": "ecd32a9299",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. The free tier includes the real-time roster, Class Rosters with Classroom import, CSV/Excel downloads, gradebook CSVs, PDF reports, and the Meeting History dashboard. Pro adds extras like hands-free auto-capture and unlimited Sheets exports."
+    },
+    {
+      "id": "2ba4d78e26",
+      "kind": "html",
+      "key": "h3",
+      "text": "When did the retired Classroom attendance competitor stop working?"
+    },
+    {
+      "id": "2b565154f7",
+      "kind": "html",
+      "key": "p",
+      "text": "The developer's Marketplace notice announced that the tool was retired and stopped functioning on March 1, 2026."
+    },
+    {
+      "id": "39ab142938",
+      "kind": "html",
+      "key": "h3",
+      "text": "Switch to Attendance Tracker — in about five minutes"
+    },
+    {
+      "id": "20ad769e80",
+      "kind": "html",
+      "key": "p",
+      "text": "Free to start. Import your Google Classroom rosters in one click and track your next class in real time."
+    },
+    {
+      "id": "14b133eb0f",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Attendance Tracker from Marketplace"
+    },
+    {
+      "id": "d360e4c6a4",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"import-google-classroom-roster-to-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Import Classroom Rosters</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "5f3cc2f91e",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Integrations</strong>\n          <a href=\"export-google-meet-attendance-to-moodle.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Moodle Gradebook Export</a>\n          <a href=\"export-google-meet-attendance-to-canvas.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Canvas Gradebook Export</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"send-google-meet-attendance-to-google-chat.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Chat &amp; Discord</a>"
+    },
+    {
+      "id": "98cdd4d1f5",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>"
+    },
+    {
+      "id": "e787e741f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "c1334ea1a2",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "Retired Classroom Attendance Competitor has shut down — migration guide & alternative"
+    },
+    {
+      "id": "095c25b12a",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "A legacy Classroom attendance competitor was retired in 2026. What to do with your past records, and a three-step guide to switching."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    }
+  ]
+}

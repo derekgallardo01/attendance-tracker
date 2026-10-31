@@ -1,0 +1,390 @@
+{
+  "page": "google-meet-attendance-report-not-showing-up.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "4d96ffafa2",
+      "kind": "head",
+      "key": "title",
+      "text": "Google Meet attendance report not showing up? (5 Reasons & Fixes) — Attendance Tracker"
+    },
+    {
+      "id": "c317a833fb",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Didn't receive your Google Meet attendance report? Learn the 5 reasons why Google didn't send it, who is eligible, and how to get guaranteed attendance tracking for free."
+    },
+    {
+      "id": "cd8b389090",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Google Meet attendance report not showing up? Why it happened & how to fix it"
+    },
+    {
+      "id": "7b682dd241",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "5 reasons why Google Meet didn't send your attendance report email and how to get reliable attendance tracking on any Google account."
+    },
+    {
+      "id": "566e312341",
+      "kind": "head",
+      "key": "meta[name=\"twitter:description\"]",
+      "text": "5 reasons why Google Meet didn"
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "761aa71ad6",
+      "kind": "html",
+      "key": "h1",
+      "text": "Google Meet attendance report not showing up? Here is why."
+    },
+    {
+      "id": "783812fb23",
+      "kind": "html",
+      "key": "p",
+      "text": "You finished an important Google Meet call or lecture expecting an attendance email, but your inbox is empty. Here are the 5 most common reasons Google failed to send your attendance report, and how to fix it permanently."
+    },
+    {
+      "id": "e6679d2e51",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Important:</strong> Google Meet does <em>not</em> retroactively generate attendance reports for past meetings that didn't have tracking enabled. To ensure you never lose attendance again, install a dedicated attendance add-on before your next meeting."
+    },
+    {
+      "id": "e6114779d3",
+      "kind": "html",
+      "key": "h2",
+      "text": "Top 5 Reasons You Didn't Receive Your Attendance Report"
+    },
+    {
+      "id": "6b631942c1",
+      "kind": "html",
+      "key": "h3",
+      "text": "1. Your Google Workspace Tier Doesn't Include It"
+    },
+    {
+      "id": "969d36cbc1",
+      "kind": "html",
+      "key": "p",
+      "text": "This is the #1 reason. Google's native attendance tracking is <strong>only included with top-tier Workspace plans</strong>:"
+    },
+    {
+      "id": "bf63310eb1",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Supported:</strong> Google Workspace for Education Plus, Teaching &amp; Learning Upgrade, and Workspace Enterprise."
+    },
+    {
+      "id": "8cb627aadd",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>NOT Supported:</strong> Google Workspace Education Fundamentals, Education Standard, Business Starter, Business Standard, Nonprofits, and personal <code>@gmail.com</code> accounts."
+    },
+    {
+      "id": "609fbc3602",
+      "kind": "html",
+      "key": "p",
+      "text": "If you are on Business Standard or Education Fundamentals, Google will never send an attendance email."
+    },
+    {
+      "id": "b3b250d835",
+      "kind": "html",
+      "key": "h3",
+      "text": "2. You Were Not the Meeting Organizer / Host"
+    },
+    {
+      "id": "d72c8d8380",
+      "kind": "html",
+      "key": "p",
+      "text": "Google only sends the attendance CSV to the <strong>person who originally scheduled the Calendar event</strong>. If you were a co-host, teaching assistant, moderator, or participant, Google will not email you a copy — it only goes to the primary organizer."
+    },
+    {
+      "id": "f69d8c29d8",
+      "kind": "html",
+      "key": "h3",
+      "text": "3. Fewer Than 5 Attendees Joined the Call"
+    },
+    {
+      "id": "9860532d18",
+      "kind": "html",
+      "key": "p",
+      "text": "Google's built-in attendance feature has a minimum threshold: it requires at least <strong>5 participants</strong> to trigger an automated email report. If 4 people attended your meeting, Google silently discards the report."
+    },
+    {
+      "id": "23b4fbac84",
+      "kind": "html",
+      "key": "h3",
+      "text": "4. Attendance Tracking Was Not Toggled On"
+    },
+    {
+      "id": "3eb19b3dbf",
+      "kind": "html",
+      "key": "p",
+      "text": "In Google Workspace, attendance tracking is often disabled by default. The host must click the Host Controls icon (the lock symbol in the bottom right) and manually toggle <strong>\"Attendance tracking\"</strong> ON during or before the call."
+    },
+    {
+      "id": "51ab1eaf9b",
+      "kind": "html",
+      "key": "h3",
+      "text": "5. Delayed Delivery or Spam Filter"
+    },
+    {
+      "id": "428d3f96e1",
+      "kind": "html",
+      "key": "p",
+      "text": "Google's automated attendance emails can take anywhere from 15 minutes to several hours during peak school hours. Check your Spam/Junk folder for emails from <code>meet-reports@google.com</code>."
+    },
+    {
+      "id": "28636ab848",
+      "kind": "html",
+      "key": "h2",
+      "text": "The Permanent Fix: Use Attendance Tracker"
+    },
+    {
+      "id": "4f14c73440",
+      "kind": "html",
+      "key": "p",
+      "text": "To avoid missing attendance reports, teachers and businesses use the official <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_troubleshooting\">Attendance Tracker Add-on</a>. It eliminates all of Google's restrictions:"
+    },
+    {
+      "id": "6efb29ed8a",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Works on ALL Google Accounts:</strong> Free on personal Gmail, Business Starter, Education Fundamentals, and Enterprise."
+    },
+    {
+      "id": "ae70f84c4c",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>No Attendee Minimums:</strong> Tracks meetings with 2 participants just as accurately as meetings with 200+."
+    },
+    {
+      "id": "e44935f5f6",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Live In-Call View:</strong> See who is present, who left, and who arrived late in real-time during the meeting."
+    },
+    {
+      "id": "4e3e30716e",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Available to Anyone:</strong> Non-hosts, co-hosts, and TAs can track and export their own personal Google Sheet report."
+    },
+    {
+      "id": "8f58452793",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Direct Google Drive Export:</strong> Saves automatically to a dedicated Google Sheet in your Drive as soon as the meeting ends."
+    },
+    {
+      "id": "18014090ab",
+      "kind": "html",
+      "key": "h2",
+      "text": "Comparison: Built-in vs. Attendance Tracker"
+    },
+    {
+      "id": "e3925975bd",
+      "kind": "html",
+      "key": "th",
+      "text": "Feature"
+    },
+    {
+      "id": "1005cc7499",
+      "kind": "html",
+      "key": "th",
+      "text": "Google Native Report"
+    },
+    {
+      "id": "b3509260bc",
+      "kind": "html",
+      "key": "th",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "d65302ccee",
+      "kind": "html",
+      "key": "td",
+      "text": "Required Plan"
+    },
+    {
+      "id": "4c3000adc1",
+      "kind": "html",
+      "key": "td",
+      "text": "Education Plus ($$$)"
+    },
+    {
+      "id": "edbce70c61",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Any Plan (Free)</strong>"
+    },
+    {
+      "id": "5522692078",
+      "kind": "html",
+      "key": "td",
+      "text": "Minimum Attendees"
+    },
+    {
+      "id": "6a51b5a820",
+      "kind": "html",
+      "key": "td",
+      "text": "5 people"
+    },
+    {
+      "id": "a350f22d25",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>No Minimum (1+)</strong>"
+    },
+    {
+      "id": "0eed18b043",
+      "kind": "html",
+      "key": "td",
+      "text": "Live In-Meeting View"
+    },
+    {
+      "id": "522734c8e3",
+      "kind": "html",
+      "key": "td",
+      "text": "No"
+    },
+    {
+      "id": "a97fec0d24",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Yes (Real-Time)</strong>"
+    },
+    {
+      "id": "bfee992a97",
+      "kind": "html",
+      "key": "td",
+      "text": "Works for Non-Hosts"
+    },
+    {
+      "id": "129baba9e6",
+      "kind": "html",
+      "key": "td",
+      "text": "No (Host only)"
+    },
+    {
+      "id": "809e31e6e6",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Yes</strong>"
+    },
+    {
+      "id": "b8bf586bc0",
+      "kind": "html",
+      "key": "td",
+      "text": "Export Format"
+    },
+    {
+      "id": "461c8d91df",
+      "kind": "html",
+      "key": "td",
+      "text": "Email CSV attachment"
+    },
+    {
+      "id": "7d71b7ac34",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Auto-Saved Google Sheet</strong>"
+    },
+    {
+      "id": "365fbd0562",
+      "kind": "html",
+      "key": "td",
+      "text": "Multi-Meeting Trends"
+    },
+    {
+      "id": "98d576f460",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Yes (Series Roll-ups)</strong>"
+    },
+    {
+      "id": "d53ad00de9",
+      "kind": "html",
+      "key": "h3",
+      "text": "Never lose attendance data again"
+    },
+    {
+      "id": "893f1ee834",
+      "kind": "html",
+      "key": "p",
+      "text": "Free, approved on Google Workspace Marketplace, works on every Meet call."
+    },
+    {
+      "id": "604313e657",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Attendance Tracker for Free"
+    },
+    {
+      "id": "9352c1ed98",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "a3ad204977",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-legal-depositions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Legal &amp; Arbitrations</a>\n          <a href=\"google-meet-attendance-for-job-interviews.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Recruiting &amp; Interviews</a>"
+    },
+    {
+      "id": "e7a3b147f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Specialized Verticals</strong>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-clinical-supervision-and-therapy.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Clinical Supervision</a>\n          <a href=\"google-meet-quorum-and-board-meetings.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Board Quorum Tracking</a>\n          <a href=\"google-meet-attendance-for-churches.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Churches &amp; Ministries</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>\n          <a href=\"google-meet-attendance-for-fitness-and-yoga.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Fitness &amp; Yoga</a>"
+    },
+    {
+      "id": "eb9246d86f",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>\n          <a href=\"google-meet-attendance-on-ipad-and-mobile.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">iPad &amp; Mobile Attendance</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "239ba5f8fd",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "Google Meet Attendance Report Not Showing Up? 5 Common Reasons & The Fix"
+    },
+    {
+      "id": "c0c31562f2",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "Troubleshooting guide explaining why Google Meet attendance reports fail to arrive and how to get guaranteed attendance reports."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "53088ec085",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Google Meet attendance report not showing up? Here is why."
+    }
+  ]
+}

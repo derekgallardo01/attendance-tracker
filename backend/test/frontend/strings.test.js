@@ -770,6 +770,44 @@ describe('detectLocale', () => {
     expect(strings.detectLocale('es-ES')).toBe('ja');
   });
 
+  test('statically translated site pages pin their locale and the picker navigates to real translations', () => {
+    const html = document.documentElement;
+    html.setAttribute('data-site-locale', 'ar');
+    try {
+      expect(strings.detectLocale('en-US')).toBe('ar');
+      html.setAttribute('data-site-locale', 'xx'); // unknown → ignored
+      expect(strings.detectLocale('de-DE')).toBe('de');
+    } finally {
+      html.removeAttribute('data-site-locale');
+    }
+
+    delete window.location;
+    window.location = { href: 'https://attendancetracker.dev/refunds.html', search: '' };
+    document.head.innerHTML = '<link rel="alternate" hreflang="ja" href="https://attendancetracker.dev/ja/refunds.html">'
+      + '<link rel="alternate" hreflang="zh-Hans" href="https://attendancetracker.dev/zh-CN/refunds.html">'
+      + '<link rel="alternate" hreflang="en" href="https://attendancetracker.dev/refunds.html">';
+    window.history.replaceState = jest.fn();
+    document.body.innerHTML = '<div id="pick"></div>';
+    strings.renderLanguagePicker('pick');
+    const select = document.querySelector('.att-lang-picker');
+    select.value = 'ja';
+    select.dispatchEvent(new Event('change'));
+    expect(window.location.href).toBe('https://attendancetracker.dev/ja/refunds.html');
+    expect(window.history.replaceState).not.toHaveBeenCalled();
+    select.value = 'zh-CN'; // our code → hreflang zh-Hans
+    select.dispatchEvent(new Event('change'));
+    expect(window.location.href).toBe('https://attendancetracker.dev/zh-CN/refunds.html');
+    // Already on that page / no translation → in-place switch as before.
+    window.location.href = 'https://attendancetracker.dev/refunds.html';
+    select.value = 'en';
+    select.dispatchEvent(new Event('change'));
+    select.value = 'fr';
+    select.dispatchEvent(new Event('change'));
+    expect(window.history.replaceState).toHaveBeenCalledTimes(2);
+    document.head.innerHTML = '';
+    strings.setLocale('en');
+  });
+
   test('renderLanguagePicker renders select with all 60 locales and handles selection', () => {
     delete window.location;
     window.location = {

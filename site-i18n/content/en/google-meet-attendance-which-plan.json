@@ -1,0 +1,432 @@
+{
+  "page": "google-meet-attendance-which-plan.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "d3f2d2d9d8",
+      "kind": "head",
+      "key": "title",
+      "text": "Which Google Workspace plans have Meet attendance tracking? (2026 table) — Attendance Tracker"
+    },
+    {
+      "id": "81d62048d3",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Google Meet's built-in attendance reports only come with certain Workspace editions. See the full 2026 eligibility table — and how to track attendance on any plan, including free Gmail."
+    },
+    {
+      "id": "27aac4b85f",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Which Google Workspace plans have Meet attendance tracking?"
+    },
+    {
+      "id": "f69a9df981",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "The full 2026 eligibility table for Google Meet's built-in attendance reports — plus how to track attendance in real time on any plan, including free Gmail."
+    },
+    {
+      "id": "3b666e3b30",
+      "kind": "head",
+      "key": "meta[name=\"twitter:description\"]",
+      "text": "The full 2026 eligibility table for Google Meet"
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "92eb67bcf8",
+      "kind": "html",
+      "key": "h1",
+      "text": "Which Google Workspace plans have Meet attendance tracking?"
+    },
+    {
+      "id": "62521cf784",
+      "kind": "html",
+      "key": "p",
+      "text": "Short answer: Google Meet <em>does</em> have built-in attendance reports — but only on a handful of paid Workspace editions. If the option is missing from your host controls, you are almost certainly on a plan that doesn't include it. Here is the full 2026 eligibility table, and what to do if your plan isn't on it."
+    },
+    {
+      "id": "e663c5adcd",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>The direct answer:</strong> Built-in attendance reports are included with <strong>Business Plus</strong>, <strong>Enterprise</strong> editions, <strong>Education Plus</strong>, and the <strong>Teaching &amp; Learning Upgrade</strong>. They are <strong>not</strong> included with free Google accounts, Business Starter, Business Standard, or Education Fundamentals/Standard — no matter what you toggle in settings."
+    },
+    {
+      "id": "5f1441b879",
+      "kind": "html",
+      "key": "h2",
+      "text": "The 2026 eligibility table"
+    },
+    {
+      "id": "0ee409ca59",
+      "kind": "html",
+      "key": "p",
+      "text": "Per <a href=\"https://support.google.com/meet/answer/10090454\" target=\"_blank\" rel=\"noopener\">Google's own help documentation</a>, here is which plans include Meet's built-in attendance reports:"
+    },
+    {
+      "id": "3bc34ccdbb",
+      "kind": "html",
+      "key": "th",
+      "text": "Plan / edition"
+    },
+    {
+      "id": "e6f9a6eaf1",
+      "kind": "html",
+      "key": "th",
+      "text": "Built-in attendance reports?"
+    },
+    {
+      "id": "41f305c855",
+      "kind": "html",
+      "key": "td",
+      "text": "Personal / free Google account (Gmail)"
+    },
+    {
+      "id": "522734c8e3",
+      "kind": "html",
+      "key": "td",
+      "text": "No"
+    },
+    {
+      "id": "6988bd36af",
+      "kind": "html",
+      "key": "td",
+      "text": "Google Workspace Individual"
+    },
+    {
+      "id": "0eb84c31a6",
+      "kind": "html",
+      "key": "td",
+      "text": "Business Starter"
+    },
+    {
+      "id": "8b777a0095",
+      "kind": "html",
+      "key": "td",
+      "text": "Business Standard"
+    },
+    {
+      "id": "0d6e883d2e",
+      "kind": "html",
+      "key": "td",
+      "text": "Business Plus"
+    },
+    {
+      "id": "809e31e6e6",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Yes</strong>"
+    },
+    {
+      "id": "3efc97eaff",
+      "kind": "html",
+      "key": "td",
+      "text": "Google Workspace Essentials"
+    },
+    {
+      "id": "b1b121bfc1",
+      "kind": "html",
+      "key": "td",
+      "text": "Enterprise Starter"
+    },
+    {
+      "id": "cee321e1a7",
+      "kind": "html",
+      "key": "td",
+      "text": "Enterprise Essentials"
+    },
+    {
+      "id": "f2333b4155",
+      "kind": "html",
+      "key": "td",
+      "text": "Enterprise Standard"
+    },
+    {
+      "id": "973a8d413a",
+      "kind": "html",
+      "key": "td",
+      "text": "Enterprise Plus"
+    },
+    {
+      "id": "bb1a42588f",
+      "kind": "html",
+      "key": "td",
+      "text": "Education Fundamentals"
+    },
+    {
+      "id": "7d62b12f20",
+      "kind": "html",
+      "key": "td",
+      "text": "Education Standard"
+    },
+    {
+      "id": "a06c5be83b",
+      "kind": "html",
+      "key": "td",
+      "text": "Teaching &amp; Learning Upgrade"
+    },
+    {
+      "id": "dfcea007ca",
+      "kind": "html",
+      "key": "td",
+      "text": "Education Plus"
+    },
+    {
+      "id": "d37f9341b9",
+      "kind": "html",
+      "key": "td",
+      "text": "Google Workspace for Nonprofits (basic)"
+    },
+    {
+      "id": "0ed4905015",
+      "kind": "html",
+      "key": "p",
+      "text": "This is why \"attendance tracking\" simply doesn't appear in host controls for most teachers, tutors, small businesses, and nonprofits: Business Standard — one of the most common paid plans — and both entry-level Education editions are excluded."
+    },
+    {
+      "id": "145fb91563",
+      "kind": "html",
+      "key": "h2",
+      "text": "Even on eligible plans, the built-in report has limits"
+    },
+    {
+      "id": "51e63feca1",
+      "kind": "html",
+      "key": "p",
+      "text": "If you <em>are</em> on Business Plus, Enterprise, or Education Plus, it's worth knowing what the built-in report actually delivers:"
+    },
+    {
+      "id": "e486a81034",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Post-meeting email only.</strong> The report is emailed to the host after the meeting ends. There's no live view during the call — you can't see who's missing while you can still do something about it."
+    },
+    {
+      "id": "ca90d565f8",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Needs 2+ participants.</strong> Meetings with fewer than two participants don't generate a report at all — a problem for 1-on-1 tutoring, coaching, and office hours."
+    },
+    {
+      "id": "0114104f6c",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>External emails are masked.</strong> Participants from outside your organization show up with their email addresses partially hidden behind asterisks."
+    },
+    {
+      "id": "32d51ecd77",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Rejoins aren't itemized.</strong> The report doesn't list multiple join/leave timestamps for someone who dropped and reconnected, so you can't see how long they were actually present."
+    },
+    {
+      "id": "3bf2817833",
+      "kind": "html",
+      "key": "h2",
+      "text": "The fix: track attendance on any plan — including free Gmail"
+    },
+    {
+      "id": "cb7df25d27",
+      "kind": "html",
+      "key": "p",
+      "text": "An official Meet add-on runs inside the meeting itself, so it doesn't depend on your Workspace edition at all. <strong>Attendance Tracker</strong> works on every plan — personal Gmail, Business Starter, Business Standard, Education Fundamentals, all of them — because it's built on Google's official Meet Add-ons platform and REST API, not on an edition-gated report. You get:"
+    },
+    {
+      "id": "760f190b60",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>A real-time roster</strong> that live-sorts everyone into Present, Late, Absent, and Guests while the meeting is running — not an email that arrives afterwards."
+    },
+    {
+      "id": "d603e34c11",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>No participant minimum.</strong> A 1-on-1 session is tracked just like a 40-person class."
+    },
+    {
+      "id": "adb6844e53",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Full external emails.</strong> Outside participants' addresses are shown in full, not masked with asterisks."
+    },
+    {
+      "id": "5ac27c624e",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Rejoin merging.</strong> When someone drops and reconnects, their sessions are merged into one accurate record with real total time in the meeting."
+    },
+    {
+      "id": "279ed4535e",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Free exports:</strong> CSV/Excel download, per-session Moodle and Canvas gradebook CSVs, a PDF report, and Meeting History — plus a Class Roster with one-click Google Classroom import."
+    },
+    {
+      "id": "fe82696bb2",
+      "kind": "html",
+      "key": "h3",
+      "text": "How to set it up"
+    },
+    {
+      "id": "bb453e76e5",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Install</strong> Attendance Tracker from the Google Workspace Marketplace (button below) — it works with whatever account you already have."
+    },
+    {
+      "id": "4c7796570a",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Open the panel:</strong> in your next Google Meet call, click the Activities icon and choose <strong>Attendance Tracker</strong>."
+    },
+    {
+      "id": "193dfd981a",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Track:</strong> press Start and watch the roster update live. Download your report whenever you like — no waiting for an email."
+    },
+    {
+      "id": "8726a753f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Already tried the built-in report and it never arrived?</strong> See <a href=\"google-meet-attendance-report-not-showing-up.html\">why the Google Meet attendance report doesn't show up</a> — plan eligibility is the most common cause, but not the only one."
+    },
+    {
+      "id": "7d2dc48836",
+      "kind": "html",
+      "key": "h2",
+      "text": "Frequently asked questions"
+    },
+    {
+      "id": "daed39e81c",
+      "kind": "html",
+      "key": "h3",
+      "text": "Why is attendance tracking greyed out or missing from my host controls?"
+    },
+    {
+      "id": "2e845885bf",
+      "kind": "html",
+      "key": "p",
+      "text": "Because your Workspace edition doesn't include it. The attendance-report toggle only appears in host controls on the eligible editions in the table above. It's not a setting your admin forgot to flip — on Business Standard, Education Fundamentals, and free accounts, the feature simply isn't part of the plan."
+    },
+    {
+      "id": "1f0bd87318",
+      "kind": "html",
+      "key": "h3",
+      "text": "Can I get attendance tracking without upgrading my Workspace plan?"
+    },
+    {
+      "id": "2c0269fc31",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. That's exactly what an add-on solves: Attendance Tracker's core features are free and work on every plan, including personal Gmail accounts. You don't need to move your whole organization to Business Plus just to know who came to class."
+    },
+    {
+      "id": "be257c5bc2",
+      "kind": "html",
+      "key": "h3",
+      "text": "Does my Workspace admin need to enable anything?"
+    },
+    {
+      "id": "1c0f2c439b",
+      "kind": "html",
+      "key": "p",
+      "text": "Not for normal use — install it yourself and it works. The one optional extra is capturing attendance for participants from outside your domain via the official API, which uses domain-wide delegation; the admin steps for that are at <a href=\"https://attendancetracker.dev/setup\" target=\"_blank\" rel=\"noopener\">attendancetracker.dev/setup</a>."
+    },
+    {
+      "id": "1f44940806",
+      "kind": "html",
+      "key": "h3",
+      "text": "Is Google Meet attendance tracking free?"
+    },
+    {
+      "id": "5e46030526",
+      "kind": "html",
+      "key": "p",
+      "text": "Google's built-in version is never free — it requires one of the paid editions above. Attendance Tracker's real-time roster, gradebook CSVs, PDF reports, Meeting History, and 2 exports per month across Google Sheets, CSV, or Excel (for classes up to 25 attendees) are free on any account; Pro ($14.99/year for educators, $4.99–$7.99/year regional, or a one-time $29 Lifetime Pass, $9.99–$19 regional) adds unlimited exports, auto-capture, semester roll-ups, certificates, and Slack/Chat/Discord digests."
+    },
+    {
+      "id": "7b8186ee33",
+      "kind": "html",
+      "key": "h3",
+      "text": "Track Google Meet attendance on any plan"
+    },
+    {
+      "id": "835cad0776",
+      "kind": "html",
+      "key": "p",
+      "text": "Free to start, works on personal Gmail and every Workspace edition, live roster with no participant minimum."
+    },
+    {
+      "id": "14b133eb0f",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Attendance Tracker from Marketplace"
+    },
+    {
+      "id": "d360e4c6a4",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"import-google-classroom-roster-to-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Import Classroom Rosters</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "5f3cc2f91e",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Integrations</strong>\n          <a href=\"export-google-meet-attendance-to-moodle.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Moodle Gradebook Export</a>\n          <a href=\"export-google-meet-attendance-to-canvas.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Canvas Gradebook Export</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"send-google-meet-attendance-to-google-chat.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Chat &amp; Discord</a>"
+    },
+    {
+      "id": "98cdd4d1f5",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>"
+    },
+    {
+      "id": "e787e741f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "75fedada1c",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "Which Google Workspace plans have Meet attendance tracking? (2026 table)"
+    },
+    {
+      "id": "aca8e49110",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "A plan-by-plan eligibility table for Google Meet's built-in attendance reports, the limits that apply even on eligible editions, and how to track attendance on any plan."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "e3c828bdb0",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Which Google Workspace plans have Meet attendance tracking?"
+    }
+  ]
+}

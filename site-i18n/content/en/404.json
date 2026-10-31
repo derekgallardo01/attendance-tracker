@@ -1,0 +1,138 @@
+{
+  "page": "404.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "3bc2433d85",
+      "kind": "head",
+      "key": "title",
+      "text": "Page Not Found — Attendance Tracker for Google Meet™"
+    },
+    {
+      "id": "172f3c306b",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "The requested page could not be found. Return to Attendance Tracker home, check pricing, or visit the help center."
+    },
+    {
+      "id": "9ae72b4020",
+      "kind": "html",
+      "key": "a",
+      "text": "<img src=\"icons/icon-32.png\" alt=\"Attendance Tracker Logo\">\n        <span>Attendance Tracker</span>"
+    },
+    {
+      "id": "38deccf17d",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Attendance Tracker Logo"
+    },
+    {
+      "id": "7fedfcbaca",
+      "kind": "html",
+      "key": "a",
+      "text": "Home"
+    },
+    {
+      "id": "7d4f187b91",
+      "kind": "html",
+      "key": "a",
+      "text": "Pricing"
+    },
+    {
+      "id": "72b3ad9498",
+      "kind": "html",
+      "key": "a",
+      "text": "Help Center"
+    },
+    {
+      "id": "2782febc18",
+      "kind": "html",
+      "key": "a",
+      "text": "Support"
+    },
+    {
+      "id": "c187292d62",
+      "kind": "html",
+      "key": "div",
+      "text": "404 · Page Not Found"
+    },
+    {
+      "id": "0cf4b46b40",
+      "kind": "html",
+      "key": "h1",
+      "text": "Page Not Found"
+    },
+    {
+      "id": "9d4d12a8ab",
+      "kind": "html",
+      "key": "p",
+      "text": "The page you were looking for could not be found or has been moved. Explore these direct links to get where you want to go."
+    },
+    {
+      "id": "1b10dda085",
+      "kind": "html",
+      "key": "div",
+      "text": "Home Page <span>→</span>"
+    },
+    {
+      "id": "754281074d",
+      "kind": "html",
+      "key": "div",
+      "text": "Overview, live demo, and how attendance tracking works in Google Meet."
+    },
+    {
+      "id": "b9b1e7729d",
+      "kind": "html",
+      "key": "div",
+      "text": "Pricing &amp; Plans <span>→</span>"
+    },
+    {
+      "id": "ea504f58a8",
+      "kind": "html",
+      "key": "div",
+      "text": "Free tier, individual lifetime passes, and school domain licenses."
+    },
+    {
+      "id": "01cf2d5d9c",
+      "kind": "html",
+      "key": "div",
+      "text": "Help Center &amp; FAQ <span>→</span>"
+    },
+    {
+      "id": "38db8cda18",
+      "kind": "html",
+      "key": "div",
+      "text": "Guides, tutorials, troubleshooting, and answers to common questions."
+    },
+    {
+      "id": "e5b952ad65",
+      "kind": "html",
+      "key": "div",
+      "text": "Contact Support <span>→</span>"
+    },
+    {
+      "id": "9fd2c71713",
+      "kind": "html",
+      "key": "div",
+      "text": "Get in touch directly with our support team for quick assistance."
+    },
+    {
+      "id": "9af3a48f46",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" class=\"btn-secondary\">Go to Homepage</a>\n        <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968\" target=\"_blank\" rel=\"noopener\" class=\"btn-main\">Install Free Add-on</a>"
+    },
+    {
+      "id": "bedbc51494",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\">Home</a>\n      <a href=\"pricing.html\">Pricing</a>\n      <a href=\"faq.html\">Help Center</a>\n      <a href=\"privacy.html\">Privacy Policy</a>\n      <a href=\"terms.html\">Terms of Service</a>\n      <a href=\"refunds.html\">Refund Policy</a>\n      <a href=\"support.html\">Contact Support</a>"
+    },
+    {
+      "id": "23f8ad156d",
+      "kind": "html",
+      "key": "div",
+      "text": "© 2026 Kinetic Helix LLC. Attendance Tracker for Google Meet™. All rights reserved."
+    }
+  ]
+}

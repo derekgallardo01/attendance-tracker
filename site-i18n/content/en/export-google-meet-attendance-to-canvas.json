@@ -1,0 +1,426 @@
+{
+  "page": "export-google-meet-attendance-to-canvas.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "b8061429a2",
+      "kind": "head",
+      "key": "title",
+      "text": "How to export Google Meet attendance to Canvas (gradebook CSV, 2026 Guide) — Attendance Tracker"
+    },
+    {
+      "id": "2d93558765",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Step-by-step guide to exporting Google Meet attendance as a Canvas-ready gradebook CSV with the Student / SIS Login ID column layout — per session or across a whole semester."
+    },
+    {
+      "id": "6f2f9c66a8",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "How to export Google Meet attendance to Canvas"
+    },
+    {
+      "id": "a4b94373e8",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Download attendance as a Canvas gradebook import CSV — Student, SIS Login ID, Points Possible, attendance % — for one session or the whole semester."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "7552439184",
+      "kind": "html",
+      "key": "h1",
+      "text": "How to export Google Meet attendance to Canvas"
+    },
+    {
+      "id": "dd0586727d",
+      "kind": "html",
+      "key": "p",
+      "text": "Run class on Google Meet, grade in Canvas LMS? Here is how to download your live Meet attendance as a Canvas-formatted gradebook CSV and import participation marks in a couple of clicks."
+    },
+    {
+      "id": "9923a9b6dd",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Canvas's exact column layout:</strong> The export uses Canvas's gradebook format — <code>Student</code>, <code>ID</code>, <code>SIS User ID</code>, <code>SIS Login ID</code>, <code>Section</code>, plus the required <code>Points Possible</code> row — with each student's school email in the SIS Login ID column, which is how most Canvas installs identify students."
+    },
+    {
+      "id": "d7dd0c7715",
+      "kind": "html",
+      "key": "h2",
+      "text": "Why put attendance in the Canvas gradebook?"
+    },
+    {
+      "id": "eba3361be3",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Participation grades:</strong> Attendance-weighted participation is standard in hybrid and online courses — the Canvas gradebook is where it counts."
+    },
+    {
+      "id": "f9fa4bbd55",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Student visibility:</strong> Students see their attendance mark alongside every other grade instead of asking you."
+    },
+    {
+      "id": "51d7142be5",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Documentation:</strong> Per-session percentages with join/leave times behind them make attendance disputes short conversations."
+    },
+    {
+      "id": "70259cc06e",
+      "kind": "html",
+      "key": "h2",
+      "text": "Step-by-step setup"
+    },
+    {
+      "id": "95887b9cdd",
+      "kind": "html",
+      "key": "h3",
+      "text": "Step 1: Create your Class Roster"
+    },
+    {
+      "id": "cc6fbfb61b",
+      "kind": "html",
+      "key": "li",
+      "text": "Join your Google Meet class and open <strong>Attendance Tracker</strong> from the Activities panel."
+    },
+    {
+      "id": "486a498bea",
+      "kind": "html",
+      "key": "li",
+      "text": "Open the <strong>Class Roster</strong> tab and click <strong>+ New Class</strong>."
+    },
+    {
+      "id": "e1d5e34efd",
+      "kind": "html",
+      "key": "li",
+      "text": "Paste your student list — one per line as <code>Name &lt;email&gt;</code> — or click <strong>Import from Google Classroom</strong> (<a href=\"import-google-classroom-roster-to-google-meet.html\">guide</a>)."
+    },
+    {
+      "id": "4ea211db0c",
+      "kind": "html",
+      "key": "p",
+      "text": "<strong>Use each student's school email</strong> — the same address that is their Canvas login. That address goes into the CSV's <code>SIS Login ID</code> column, which Canvas uses to match rows to enrollments."
+    },
+    {
+      "id": "0bf2503f2a",
+      "kind": "html",
+      "key": "h3",
+      "text": "Step 2: Track the class"
+    },
+    {
+      "id": "aeda4ec5ce",
+      "kind": "html",
+      "key": "p",
+      "text": "Press <strong>Start</strong> when class begins. Students are matched to your roster by email (or display name as a fallback), sorted live into Present / Late / Absent, with join times and attendance percentages computed for you."
+    },
+    {
+      "id": "d5940983e8",
+      "kind": "html",
+      "key": "h3",
+      "text": "Step 3: Download the Canvas gradebook CSV"
+    },
+    {
+      "id": "00f4b713e1",
+      "kind": "html",
+      "key": "p",
+      "text": "In the <strong>Class Roster</strong> tab, click <strong>Canvas</strong> next to <strong>Export gradebook CSV:</strong>. The file looks like this:"
+    },
+    {
+      "id": "454a9462cf",
+      "kind": "html",
+      "key": "th",
+      "text": "Student"
+    },
+    {
+      "id": "5e617f4d87",
+      "kind": "html",
+      "key": "th",
+      "text": "ID"
+    },
+    {
+      "id": "00868c1904",
+      "kind": "html",
+      "key": "th",
+      "text": "SIS User ID"
+    },
+    {
+      "id": "15e2d8ff7f",
+      "kind": "html",
+      "key": "th",
+      "text": "SIS Login ID"
+    },
+    {
+      "id": "e9e08cdbd0",
+      "kind": "html",
+      "key": "th",
+      "text": "Section"
+    },
+    {
+      "id": "5692cbb6d0",
+      "kind": "html",
+      "key": "th",
+      "text": "Biology 101 attendance"
+    },
+    {
+      "id": "24d13c4f2e",
+      "kind": "html",
+      "key": "td",
+      "text": "Points Possible"
+    },
+    {
+      "id": "c5901dc63a",
+      "kind": "html",
+      "key": "td",
+      "text": "100"
+    },
+    {
+      "id": "9f431a28bc",
+      "kind": "html",
+      "key": "td",
+      "text": "Alice Walker"
+    },
+    {
+      "id": "1cf61afcb3",
+      "kind": "html",
+      "key": "td",
+      "text": "alice@school.edu"
+    },
+    {
+      "id": "ac4a2eb4d1",
+      "kind": "html",
+      "key": "td",
+      "text": "Bob Jones"
+    },
+    {
+      "id": "fa7da6caf1",
+      "kind": "html",
+      "key": "td",
+      "text": "bob@school.edu"
+    },
+    {
+      "id": "96b2d6c9d8",
+      "kind": "html",
+      "key": "td",
+      "text": "45"
+    },
+    {
+      "id": "911cdbd80e",
+      "kind": "html",
+      "key": "td",
+      "text": "Carol Reyes"
+    },
+    {
+      "id": "3d65993fe7",
+      "kind": "html",
+      "key": "td",
+      "text": "carol@school.edu"
+    },
+    {
+      "id": "044d7b501c",
+      "kind": "html",
+      "key": "td",
+      "text": "0"
+    },
+    {
+      "id": "38fb870a15",
+      "kind": "html",
+      "key": "li",
+      "text": "Attendees get their <strong>attendance percentage</strong> as a score out of 100."
+    },
+    {
+      "id": "65d7838519",
+      "kind": "html",
+      "key": "li",
+      "text": "Unexcused absences get <strong>0</strong>; students you marked <strong>Excused</strong> get a <strong>blank</strong> cell so nothing imports as a zero without your say-so."
+    },
+    {
+      "id": "ee98b418f8",
+      "kind": "html",
+      "key": "h3",
+      "text": "Step 4: Import into Canvas"
+    },
+    {
+      "id": "5fc24290d7",
+      "kind": "html",
+      "key": "li",
+      "text": "In your Canvas course, open <strong>Grades</strong> and click <strong>Import</strong>."
+    },
+    {
+      "id": "7d8a9e6ebb",
+      "kind": "html",
+      "key": "li",
+      "text": "Choose the downloaded CSV and upload. Canvas will detect the new column and ask what to do with it — pick <strong>\"A new assignment\"</strong> (or map it onto an existing attendance assignment)."
+    },
+    {
+      "id": "dbc37fab51",
+      "kind": "html",
+      "key": "li",
+      "text": "Review the preview and click <strong>Save Changes</strong>."
+    },
+    {
+      "id": "6a469884c3",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>If your Canvas uses ID numbers instead of email logins:</strong> some institutions key SIS Login ID to a student number rather than email. In that case import once, let Canvas show the unmatched rows, and use its built-in matching screen — or paste the attendance column into your regular gradebook export and re-import. The student names are always in column one for manual matching."
+    },
+    {
+      "id": "7c38257038",
+      "kind": "html",
+      "key": "h2",
+      "text": "Whole-semester attendance in one file"
+    },
+    {
+      "id": "d6691c7188",
+      "kind": "html",
+      "key": "p",
+      "text": "For recurring classes, open <strong>Meeting History → Series</strong>, expand your class, and click <strong>Canvas</strong> under Download gradebook CSV. You get one cumulative row per student — attendance percentage across every tracked session of the semester — ready to import as a single participation assignment at end of term."
+    },
+    {
+      "id": "1088a9ee02",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Moodle instead of Canvas?</strong> The same export menu produces a <a href=\"export-google-meet-attendance-to-moodle.html\">Moodle-formatted gradebook CSV</a> keyed by email address."
+    },
+    {
+      "id": "7d2dc48836",
+      "kind": "html",
+      "key": "h2",
+      "text": "Frequently asked questions"
+    },
+    {
+      "id": "0c22c26d93",
+      "kind": "html",
+      "key": "h3",
+      "text": "Does this need Canvas admin access or an LTI integration?"
+    },
+    {
+      "id": "474acc13f3",
+      "kind": "html",
+      "key": "p",
+      "text": "No. It is a plain CSV through Canvas's standard Grades → Import flow — any instructor can do it, no admin or IT ticket required."
+    },
+    {
+      "id": "c9c62dac65",
+      "kind": "html",
+      "key": "h3",
+      "text": "Free vs Pro?"
+    },
+    {
+      "id": "6415f71b51",
+      "kind": "html",
+      "key": "p",
+      "text": "Per-session gradebook exports are free. The whole-semester cumulative export is part of Pro — a $14.99/year Educator Pass ($4.99–$7.99/year regional) or a one-time $29 Lifetime Pass ($9.99–$19 regional)."
+    },
+    {
+      "id": "5a1eee1ecb",
+      "kind": "html",
+      "key": "h3",
+      "text": "Export Google Meet attendance straight into Canvas"
+    },
+    {
+      "id": "a641a0f64d",
+      "kind": "html",
+      "key": "p",
+      "text": "Free to start, Canvas-formatted columns, no LTI setup."
+    },
+    {
+      "id": "14b133eb0f",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Attendance Tracker from Marketplace"
+    },
+    {
+      "id": "d360e4c6a4",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"import-google-classroom-roster-to-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Import Classroom Rosters</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "5f3cc2f91e",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Integrations</strong>\n          <a href=\"export-google-meet-attendance-to-moodle.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Moodle Gradebook Export</a>\n          <a href=\"export-google-meet-attendance-to-canvas.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Canvas Gradebook Export</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"send-google-meet-attendance-to-google-chat.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Chat &amp; Discord</a>"
+    },
+    {
+      "id": "98cdd4d1f5",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>"
+    },
+    {
+      "id": "e787e741f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "61207f06ad",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "How to export Google Meet attendance to Canvas"
+    },
+    {
+      "id": "e26e2f22a6",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "Step-by-step instructions for exporting Google Meet attendance as a Canvas gradebook import CSV."
+    },
+    {
+      "id": "41f75635bb",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Create your Class Roster"
+    },
+    {
+      "id": "7c5797723f",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Add your student list to the Class Roster tab in the Attendance Tracker side panel, or import it from Google Classroom."
+    },
+    {
+      "id": "f9b8738db5",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Track the class in Google Meet"
+    },
+    {
+      "id": "2856abe440",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Start tracking during your Google Meet class; students are matched to the roster automatically."
+    },
+    {
+      "id": "cef1b6fd3a",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Download the Canvas CSV"
+    },
+    {
+      "id": "6ee1a425d5",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Click Canvas under Export gradebook CSV to download a gradebook-ready file, then import it via Canvas Grades → Import."
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    }
+  ]
+}

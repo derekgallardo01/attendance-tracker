@@ -1,0 +1,300 @@
+{
+  "page": "support.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "5cfc9976f7",
+      "kind": "head",
+      "key": "title",
+      "text": "Customer Support & Help — Attendance Tracker"
+    },
+    {
+      "id": "b8d2fafee0",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Get fast support for Attendance Tracker for Google Meet. Visit our comprehensive Help Center, browse FAQs, open a GitHub ticket, or email our support team."
+    },
+    {
+      "id": "88558afd2e",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "FAQs, troubleshooting, and customer support for Attendance Tracker for Google Meet."
+    },
+    {
+      "id": "b133eefb1f",
+      "kind": "head",
+      "key": "meta[name=\"twitter:description\"]",
+      "text": "Get fast support for Attendance Tracker for Google Meet. Help Center, FAQs, and support team contact."
+    },
+    {
+      "id": "80c99a52c3",
+      "kind": "html",
+      "key": "a",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n        <span>Attendance Tracker</span>"
+    },
+    {
+      "id": "7fedfcbaca",
+      "kind": "html",
+      "key": "a",
+      "text": "Home"
+    },
+    {
+      "id": "7d4f187b91",
+      "kind": "html",
+      "key": "a",
+      "text": "Pricing"
+    },
+    {
+      "id": "ec3b3e8bd4",
+      "kind": "html",
+      "key": "a",
+      "text": "Help Center &amp; FAQ"
+    },
+    {
+      "id": "2782febc18",
+      "kind": "html",
+      "key": "a",
+      "text": "Support"
+    },
+    {
+      "id": "f58ea57552",
+      "kind": "attr",
+      "key": "aria-label",
+      "text": "Open navigation menu"
+    },
+    {
+      "id": "db9fb2fab4",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Free"
+    },
+    {
+      "id": "98bf5c73ee",
+      "kind": "html",
+      "key": "a",
+      "text": "Meeting History"
+    },
+    {
+      "id": "b533c8d832",
+      "kind": "html",
+      "key": "p",
+      "text": "Need help with Attendance Tracker? Browse our resources or reach out directly."
+    },
+    {
+      "id": "8ec767b49f",
+      "kind": "html",
+      "key": "h2",
+      "text": "Dedicated Help Center &amp; FAQ"
+    },
+    {
+      "id": "e328693a97",
+      "kind": "html",
+      "key": "p",
+      "text": "Have questions about tracking attendance as a TA, auto-exporting to Google Sheets, configuring Slack webhooks, or setting up Google Workspace domain delegation?"
+    },
+    {
+      "id": "682054e1e8",
+      "kind": "html",
+      "key": "a",
+      "text": "Explore Help Center &amp; FAQs →"
+    },
+    {
+      "id": "b2af534a71",
+      "kind": "html",
+      "key": "h3",
+      "text": "Email &amp; Subscription Management"
+    },
+    {
+      "id": "719cde4746",
+      "kind": "html",
+      "key": "p",
+      "text": "Want to opt out of promotional emails, manage notification preferences, or cancel auto-renewal?"
+    },
+    {
+      "id": "8a5fc07ef6",
+      "kind": "html",
+      "key": "p",
+      "text": "<a href=\"/unsubscribe.html\">Manage Email &amp; Subscription →</a>"
+    },
+    {
+      "id": "4a6fb05a1b",
+      "kind": "html",
+      "key": "p",
+      "text": "Instant self-serve opt-out and cancellation steps ($0 fees)."
+    },
+    {
+      "id": "5bf8f7eca2",
+      "kind": "html",
+      "key": "h3",
+      "text": "Email Support"
+    },
+    {
+      "id": "29834a2aa4",
+      "kind": "html",
+      "key": "p",
+      "text": "For questions, bug reports, custom rollout help, or billing assistance:"
+    },
+    {
+      "id": "22d01ca450",
+      "kind": "html",
+      "key": "p",
+      "text": "<a href=\"mailto:support@attendancetracker.dev\">support@attendancetracker.dev</a>"
+    },
+    {
+      "id": "c39ef5544b",
+      "kind": "html",
+      "key": "p",
+      "text": "Typical response time: within 24 hours."
+    },
+    {
+      "id": "a9478647fe",
+      "kind": "html",
+      "key": "h3",
+      "text": "GitHub Issues"
+    },
+    {
+      "id": "42093be433",
+      "kind": "html",
+      "key": "p",
+      "text": "Found a bug or want to request an enhancement? Open an issue on our public repo:"
+    },
+    {
+      "id": "4cf1821057",
+      "kind": "html",
+      "key": "p",
+      "text": "<a href=\"https://github.com/derekgallardo01/attendance-tracker/issues\" target=\"_blank\" rel=\"noopener\">Open GitHub Issue →</a>"
+    },
+    {
+      "id": "ff2a02808b",
+      "kind": "html",
+      "key": "p",
+      "text": "Track bugs and platform feature updates."
+    },
+    {
+      "id": "f661f9f97a",
+      "kind": "html",
+      "key": "h2",
+      "text": "Common Quick Answers"
+    },
+    {
+      "id": "bb19f3bd03",
+      "kind": "html",
+      "key": "h3",
+      "text": "How do I install the add-on?"
+    },
+    {
+      "id": "0e03d9cc5d",
+      "kind": "html",
+      "key": "p",
+      "text": "Open Google Meet, click the Activities icon (shapes/puzzle piece in the bottom right corner), select Add-ons, search for \"Attendance Tracker\", and click Install."
+    },
+    {
+      "id": "761ac38063",
+      "kind": "html",
+      "key": "h3",
+      "text": "How can a TA or Co-Host track attendance?"
+    },
+    {
+      "id": "a1ea1428ca",
+      "kind": "html",
+      "key": "p",
+      "text": "You don't need to organize the calendar invite! Simply join the Google Meet call, open Attendance Tracker in the Activities panel, and let it log attendance directly to your Google Drive. See our detailed <a href=\"/faq.html\">TA Attendance Guide in the Help Center</a>."
+    },
+    {
+      "id": "e14411ee5e",
+      "kind": "html",
+      "key": "h3",
+      "text": "Why don't external participants appear in my roster?"
+    },
+    {
+      "id": "99d63391be",
+      "kind": "html",
+      "key": "p",
+      "text": "If you see a notice saying \"Some participants may not appear\", your Google Workspace administrator can configure a one-time domain delegation. Follow the 2-minute instructions at <a href=\"/setup.html\">attendancetracker.dev/setup</a>."
+    },
+    {
+      "id": "1ecc118396",
+      "kind": "html",
+      "key": "h3",
+      "text": "How do I export Google Meet attendance to Google Sheets?"
+    },
+    {
+      "id": "0a07d591fe",
+      "kind": "html",
+      "key": "p",
+      "text": "Attendance Tracker auto-exports clean spreadsheets into a \"Meet Attendance Tracker\" folder in your Google Drive when your call ends. You can also click the \"Sheet\" button in the side panel for an instant export mid-meeting. Read the <a href=\"/export-google-meet-attendance-to-sheets.html\">Sheets Export Guide</a>."
+    },
+    {
+      "id": "3e298dfc46",
+      "kind": "html",
+      "key": "h3",
+      "text": "How do I request account or data deletion?"
+    },
+    {
+      "id": "873aefda6d",
+      "kind": "html",
+      "key": "p",
+      "text": "Send an email to <a href=\"mailto:legal@kinetichelix.io?subject=Data%20Deletion%20Request\">legal@kinetichelix.io</a> with the subject line \"Data Deletion Request\" and all records will be deleted within 30 days."
+    },
+    {
+      "id": "b35bf57a1f",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\">Home</a>\n      <a href=\"pricing.html\">Pricing</a>\n      <a href=\"faq.html\">Help Center &amp; FAQ</a>\n      <a href=\"privacy.html\">Privacy Policy</a>\n      <a href=\"terms.html\">Terms of Service</a>\n      <a href=\"student-data-privacy.html\">Student Privacy</a>\n      <a href=\"refunds.html\">Refund Policy</a>\n      <a href=\"support.html\">Contact Support</a>\n      <a href=\"unsubscribe.html\">Unsubscribe</a>"
+    },
+    {
+      "id": "c9b7900b06",
+      "kind": "html",
+      "key": "div",
+      "text": "© 2026 Kinetic Helix LLC. Attendance Tracker for Google Meet™. Support: Kinetic Helix LLC (<a href=\"mailto:legal@kinetichelix.io\" style=\"color:inherit;text-decoration:underline;\">legal@kinetichelix.io</a> / <a href=\"mailto:support@attendancetracker.dev\" style=\"color:inherit;text-decoration:underline;\">support@attendancetracker.dev</a>). All rights reserved."
+    },
+    {
+      "id": "db8548a56c",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Customer Support & Help — Attendance Tracker"
+    },
+    {
+      "id": "112942def9",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "Get fast support for Attendance Tracker for Google Meet. Visit our comprehensive Help Center, browse FAQs, open a GitHub ticket, or email our support team."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "5ef04edff5",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Support"
+    },
+    {
+      "id": "7ae11b2b09",
+      "kind": "jsonld",
+      "key": "1:description",
+      "text": "Get fast support for Attendance Tracker for Google Meet. Help Center, FAQs, and support team contact."
+    },
+    {
+      "id": "1297e42eec",
+      "kind": "jsonld",
+      "key": "1:name",
+      "text": "Attendance Tracker for Google Meet"
+    },
+    {
+      "id": "4547d8ba36",
+      "kind": "jsonld",
+      "key": "1:name",
+      "text": "Customer Support & Help"
+    }
+  ]
+}

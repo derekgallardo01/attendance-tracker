@@ -1,0 +1,330 @@
+{
+  "page": "google-meet-attendance-philippines-teachers.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "f048ed15ed",
+      "kind": "head",
+      "key": "title",
+      "text": "Google Meet Attendance Tracker for Teachers in the Philippines (DepEd & Universities) — Attendance Tracker"
+    },
+    {
+      "id": "387dc70ed8",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Free Google Meet attendance tracker for Philippine public and private school teachers, DepEd accounts, and university professors (.edu.ph). Automatic roll call, late flags, and Google Sheets export without Education Plus."
+    },
+    {
+      "id": "d62f4bd1f5",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Google Meet Attendance Tracker for Teachers in the Philippines (DepEd & Universities)"
+    },
+    {
+      "id": "8f6e5d97b6",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Automatic roll call, late student flags, and one-click Google Sheets export for DepEd and Philippine college teachers. No Education Plus needed."
+    },
+    {
+      "id": "5f79375412",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"Attendance Tracker\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "c5e60291ed",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "9587615454",
+      "kind": "html",
+      "key": "div",
+      "text": "🇵🇭 Philippine Educators &amp; Universities"
+    },
+    {
+      "id": "fa2859f435",
+      "kind": "html",
+      "key": "h1",
+      "text": "Google Meet Attendance Tracker for Teachers in the Philippines"
+    },
+    {
+      "id": "52b8445c71",
+      "kind": "html",
+      "key": "p",
+      "text": "Taking manual roll call for 40 to 90 students in Google Meet eats up valuable lecture time. Here is how Filipino teachers, DepEd faculty, and university professors take automated attendance and export directly to Google Sheets — without an expensive Google Workspace for Education Plus upgrade."
+    },
+    {
+      "id": "c23e020004",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Built for Philippine School Workspaces:</strong> Works with personal <code>@gmail.com</code> accounts, official DepEd accounts (<code>@deped.gov.ph</code> or regional divisions), and state/private university domains (<code>@*.edu.ph</code> including CEU, NEU, EVSU, UMak, BatStateU, UP, UST, DLSU, and more)."
+    },
+    {
+      "id": "a8ca1dd054",
+      "kind": "html",
+      "key": "h2",
+      "text": "Why Google's Built-In Attendance Report Doesn't Show Up"
+    },
+    {
+      "id": "4b35be056e",
+      "kind": "html",
+      "key": "p",
+      "text": "In the Philippines, most public schools under the Department of Education (DepEd) and state universities operate on <strong>Google Workspace for Education Fundamentals</strong> (the free tier provided to educational institutions)."
+    },
+    {
+      "id": "33a7e90711",
+      "kind": "html",
+      "key": "p",
+      "text": "Google restricts its native attendance tracking reports exclusively to the high-tier <strong>Education Plus</strong> license. For teachers with Fundamentals accounts, Google Meet does not send any attendance email or spreadsheet after your call ends."
+    },
+    {
+      "id": "ab090489a0",
+      "kind": "html",
+      "key": "p",
+      "text": "<strong>Attendance Tracker</strong> operates directly as a certified Google Workspace Marketplace side-panel add-on. Because it uses Google Meet's public add-on API, it functions on <em>any</em> Workspace edition — including free Fundamentals accounts and personal Gmail accounts."
+    },
+    {
+      "id": "97230f0a7c",
+      "kind": "html",
+      "key": "h2",
+      "text": "Key Features for Online Classes &amp; Synchronous Lectures"
+    },
+    {
+      "id": "d0bee5e9af",
+      "kind": "html",
+      "key": "strong",
+      "text": "📋 Instant Auto Roll-Call"
+    },
+    {
+      "id": "0b45289660",
+      "kind": "html",
+      "key": "p",
+      "text": "No need to shout names or ask students to type \"Present\" in the chat box. Every joining student is logged automatically in real time."
+    },
+    {
+      "id": "af875a858d",
+      "kind": "html",
+      "key": "strong",
+      "text": "⏰ Late Arrival Flags"
+    },
+    {
+      "id": "6cdc1a4cce",
+      "kind": "html",
+      "key": "p",
+      "text": "Students who join 5+ minutes after class starts automatically get flagged with a clear late chip (e.g. <code>+12m late</code>) next to their name."
+    },
+    {
+      "id": "e8475ec45a",
+      "kind": "html",
+      "key": "strong",
+      "text": "⏱️ Total Duration &amp; Disconnections"
+    },
+    {
+      "id": "549bb9dfaa",
+      "kind": "html",
+      "key": "p",
+      "text": "Tracks actual time spent in class. If student Wi-Fi cuts out and they reconnect, their total active minutes are merged into one clean record."
+    },
+    {
+      "id": "a7c863ede0",
+      "kind": "html",
+      "key": "strong",
+      "text": "📊 1-Click Google Sheets Export"
+    },
+    {
+      "id": "2772308edb",
+      "kind": "html",
+      "key": "p",
+      "text": "Exports clean spreadsheets directly into your Google Drive folder (\"Meet Attendance Tracker\"), formatted with student names, emails, and durations."
+    },
+    {
+      "id": "0f81e4e447",
+      "kind": "html",
+      "key": "strong",
+      "text": "⚡ Hands-Free Auto-Export"
+    },
+    {
+      "id": "1d1eb93d55",
+      "kind": "html",
+      "key": "p",
+      "text": "Never forget to save attendance. Turn on auto-export in Settings, and the spreadsheet is saved and emailed to you the moment your class ends."
+    },
+    {
+      "id": "4660062383",
+      "kind": "html",
+      "key": "strong",
+      "text": "🎓 Class Attendance Certificates"
+    },
+    {
+      "id": "a03c9b5401",
+      "kind": "html",
+      "key": "p",
+      "text": "Generate professional attendance verification certificates in PDF for webinars, seminars, workshops, and required training modules."
+    },
+    {
+      "id": "00e4cbd6e0",
+      "kind": "html",
+      "key": "h2",
+      "text": "How to Use It for Your Next Class"
+    },
+    {
+      "id": "f943dc97cd",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Install the Add-on:</strong> Open the <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_ph_teachers\" target=\"_blank\" rel=\"noopener\">Attendance Tracker Google Marketplace page</a> and click <strong>Install</strong>."
+    },
+    {
+      "id": "adfff23afb",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Open Google Meet:</strong> Start your scheduled class or meeting link."
+    },
+    {
+      "id": "9427f9cd58",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Open the Side Panel:</strong> Click the <em>Activities / Add-ons</em> icon (next to the chat icon in Google Meet) and select <strong>Attendance Tracker</strong>."
+    },
+    {
+      "id": "781425add0",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Conduct Your Class:</strong> The roster updates automatically as students join, leave, or speak."
+    },
+    {
+      "id": "bc6e326063",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Save Your Sheet:</strong> Click <strong>Save to Sheets</strong> or enable auto-export so it automatically saves to your Google Drive when you hang up."
+    },
+    {
+      "id": "93b42e1a84",
+      "kind": "html",
+      "key": "h2",
+      "text": "Frequently Asked Questions for Philippine Teachers"
+    },
+    {
+      "id": "68d6b7d355",
+      "kind": "html",
+      "key": "h3",
+      "text": "Does this work if students join using personal Gmail addresses?"
+    },
+    {
+      "id": "3093aa7140",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. Regardless of whether students join from their official school domain or their personal Gmail account, Attendance Tracker captures their Google display name and email address accurately in the attendance roster."
+    },
+    {
+      "id": "15c2e045d3",
+      "kind": "html",
+      "key": "h3",
+      "text": "Can I track large lecture classes of 50 to 100+ students?"
+    },
+    {
+      "id": "4bb77bdd00",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. Attendance Tracker is engineered to handle large college lecture halls and webinar sessions with 100+ attendees smoothly with zero browser slowdown."
+    },
+    {
+      "id": "ef112c86f2",
+      "kind": "html",
+      "key": "h3",
+      "text": "Is student data kept private and secure?"
+    },
+    {
+      "id": "dc7a534f7f",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. Attendance Tracker does not sell data, does not show third-party ads, and never reads the contents of your meeting, camera feed, or microphone. Spreadsheets are saved directly inside your personal Google Drive account."
+    },
+    {
+      "id": "622b913e08",
+      "kind": "html",
+      "key": "h3",
+      "text": "Is there an educator discount for unlimited exports?"
+    },
+    {
+      "id": "6703cddc23",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes! With regional pricing for the Philippines, teachers can get the <strong>Educator Pass</strong> for ₱199/year (Pro Annual ₱399/year) or a one-time <strong>Lifetime Pass</strong> for ₱399–₱799 with no recurring fees (GCash, Maya, and cards supported). Both options provide unlimited class exports, automated background capture, and student certificates."
+    },
+    {
+      "id": "656bbb2a1e",
+      "kind": "html",
+      "key": "h3",
+      "text": "Ready to automate your class attendance?"
+    },
+    {
+      "id": "7de7070a71",
+      "kind": "html",
+      "key": "p",
+      "text": "Save 10–15 minutes every single class. Free install on Google Workspace Marketplace."
+    },
+    {
+      "id": "0283cf06ed",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Free from Google Marketplace →"
+    },
+    {
+      "id": "a7da62dab0",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-philippines-teachers.html\" style=\"color: var(--accent); text-decoration: none; display: block; font-weight:600;\">Philippine Teachers &amp; DepEd</a>\n          <a href=\"google-meet-attendance-malaysia-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Malaysia (MOE &amp; DELIMa)</a>\n          <a href=\"google-meet-attendance-indonesia-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Indonesia (belajar.id)</a>\n          <a href=\"google-meet-attendance-india-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">India (Schools &amp; Colleges)</a>\n          <a href=\"google-meet-attendance-for-online-classes.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Online Classes</a>\n          <a href=\"automatic-attendance-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Automatic Attendance</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "a3ad204977",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-legal-depositions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Legal &amp; Arbitrations</a>\n          <a href=\"google-meet-attendance-for-job-interviews.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Recruiting &amp; Interviews</a>"
+    },
+    {
+      "id": "e7a3b147f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Specialized Verticals</strong>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-clinical-supervision-and-therapy.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Clinical Supervision</a>\n          <a href=\"google-meet-quorum-and-board-meetings.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Board Quorum Tracking</a>\n          <a href=\"google-meet-attendance-for-churches.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Churches &amp; Ministries</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>\n          <a href=\"google-meet-attendance-for-fitness-and-yoga.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Fitness &amp; Yoga</a>"
+    },
+    {
+      "id": "23f8ad156d",
+      "kind": "html",
+      "key": "div",
+      "text": "© 2026 Kinetic Helix LLC. Attendance Tracker for Google Meet™. All rights reserved."
+    },
+    {
+      "id": "32ed28ebb5",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "Google Meet Attendance Tracker for Philippine Teachers and Universities (DepEd & CHED)"
+    },
+    {
+      "id": "67d7ebeb8d",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "How public and private school teachers in the Philippines track attendance, late arrivals, and generate Google Sheets reports without an Education Plus license."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "b2f9ea8827",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Google Meet Attendance Tracker for Teachers in the Philippines"
+    }
+  ]
+}

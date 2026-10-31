@@ -1,0 +1,396 @@
+{
+  "page": "google-meet-attendance-for-job-interviews.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "cb4f4066a1",
+      "kind": "head",
+      "key": "title",
+      "text": "Google Meet Attendance for Job Interviews & Recruiting Panels (2026) — Attendance Tracker"
+    },
+    {
+      "id": "cd7ac0ecfa",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Track interviewer attendance, candidate arrival times, and virtual career fair hiring panels in Google Meet with automated Slack summaries and Google Sheets export."
+    },
+    {
+      "id": "45f8797f67",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Google Meet Attendance for Job Interviews & Recruiting Panels"
+    },
+    {
+      "id": "9458b2acaa",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Hiring panel attendance tracking, candidate interview duration logs, and Slack digests for talent acquisition teams."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "fca0f7062d",
+      "kind": "html",
+      "key": "h1",
+      "text": "Google Meet attendance for job interviews &amp; recruiting panels"
+    },
+    {
+      "id": "e602449205",
+      "kind": "html",
+      "key": "p",
+      "text": "Recruiting teams coordinating multi-stage interview loops, hiring committee reviews, and virtual career fairs need visibility into panel attendance and candidate interview duration. Here is how talent acquisition leaders automate interview tracking in Google Meet."
+    },
+    {
+      "id": "b5e6d037c7",
+      "kind": "attr",
+      "key": "title",
+      "text": "Recruiting & Interview Attendance Tracking"
+    },
+    {
+      "id": "c50ef64a7b",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Interview panel attendance summary with Slack digest notifications"
+    },
+    {
+      "id": "72b7945c3a",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Real-Time Recruiting Visibility:</strong> Know immediately if a hiring manager was late or if a candidate didn't show up. Automated Slack summaries post directly to your <code>#recruiting-interviews</code> channel when calls wrap."
+    },
+    {
+      "id": "ec685a92e0",
+      "kind": "html",
+      "key": "h2",
+      "text": "Why Talent Acquisition Teams Track Interviews"
+    },
+    {
+      "id": "3d9959179f",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Hiring Manager Punctuality:</strong> Late interviewers reflect poorly on your employer brand. Attendance Tracker flags interviewers who join late against the calendar invite."
+    },
+    {
+      "id": "b277a6c925",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Interview Duration Compliance:</strong> Verify whether a 45-minute technical screen actually ran for 45 minutes or was cut short after 15 minutes."
+    },
+    {
+      "id": "9238239b21",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Virtual Career Fair Breakout Tracking:</strong> Track candidate attendance across dozens of concurrent recruiter breakout rooms."
+    },
+    {
+      "id": "2c34542e4b",
+      "kind": "html",
+      "key": "h2",
+      "text": "Key Recruiting Workflows"
+    },
+    {
+      "id": "243980c297",
+      "kind": "html",
+      "key": "h3",
+      "text": "1. Automated Slack Post-Interview Cards"
+    },
+    {
+      "id": "9e8ff51e95",
+      "kind": "html",
+      "key": "p",
+      "text": "Connect your Slack recruiting channel. As soon as an interview closes, Attendance Tracker posts a Block Kit card with participant names, connection duration, and a link to the session spreadsheet."
+    },
+    {
+      "id": "52f2d3183b",
+      "kind": "html",
+      "key": "h3",
+      "text": "2. Centralized Recruiting Team Dashboard"
+    },
+    {
+      "id": "06b0fce8a6",
+      "kind": "html",
+      "key": "p",
+      "text": "Talent coordinators can visit <code>team.html</code> to review all interviews conducted across the company, active interviewers, and export summaries."
+    },
+    {
+      "id": "366feec26a",
+      "kind": "html",
+      "key": "h3",
+      "text": "3. Direct Google Drive Audit Trail"
+    },
+    {
+      "id": "0837a8d3ef",
+      "kind": "html",
+      "key": "p",
+      "text": "Every interview generates a dedicated tab in your company's <code>Meet Attendance Tracker</code> spreadsheet in Google Drive, making it simple to cross-reference against Greenhouse, Lever, or Ashby."
+    },
+    {
+      "id": "d1c6304fc9",
+      "kind": "html",
+      "key": "h3",
+      "text": "4. Cross-Tool Hiring &amp; Onboarding Automation"
+    },
+    {
+      "id": "bcfe6b1203",
+      "kind": "html",
+      "key": "p",
+      "text": "Pair your Google Drive attendance logs and Slack interview digests with enterprise AI workflow platforms like <a href=\"https://coworker.ai/\">Coworker</a> to connect candidate interview activity across Slack, Google Workspace, Notion, and your ATS—automating panel debriefs, recruiter follow-ups, and new-hire onboarding checklists."
+    },
+    {
+      "id": "cd61744728",
+      "kind": "html",
+      "key": "h2",
+      "text": "Interview Tracking Methods Compared"
+    },
+    {
+      "id": "e3925975bd",
+      "kind": "html",
+      "key": "th",
+      "text": "Feature"
+    },
+    {
+      "id": "0601aa48eb",
+      "kind": "html",
+      "key": "th",
+      "text": "Manual Notes / Calendar"
+    },
+    {
+      "id": "b3509260bc",
+      "kind": "html",
+      "key": "th",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "efe7efcf6a",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Timestamp Accuracy</strong>"
+    },
+    {
+      "id": "6cef0e98a3",
+      "kind": "html",
+      "key": "td",
+      "text": "Guesstimated by recruiter"
+    },
+    {
+      "id": "a3d01f3c95",
+      "kind": "html",
+      "key": "td",
+      "text": "Exact join/leave seconds via Google Meet API"
+    },
+    {
+      "id": "1b826ed8b6",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Interviewer Late Flags</strong>"
+    },
+    {
+      "id": "8fdd14139f",
+      "kind": "html",
+      "key": "td",
+      "text": "Manual complaints"
+    },
+    {
+      "id": "39b061416a",
+      "kind": "html",
+      "key": "td",
+      "text": "Automated (+5m, +10m) flags vs Calendar event"
+    },
+    {
+      "id": "5f9a4362fc",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Post-Interview Notification</strong>"
+    },
+    {
+      "id": "f418e5af57",
+      "kind": "html",
+      "key": "td",
+      "text": "Manual Slack messages"
+    },
+    {
+      "id": "5402840845",
+      "kind": "html",
+      "key": "td",
+      "text": "Instant Block Kit cards in <code>#recruiting</code> Slack"
+    },
+    {
+      "id": "f02f1d8b58",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>ATS Cross-Referencing</strong>"
+    },
+    {
+      "id": "30bb06d43e",
+      "kind": "html",
+      "key": "td",
+      "text": "Scattered across notes"
+    },
+    {
+      "id": "8996a1e53b",
+      "kind": "html",
+      "key": "td",
+      "text": "Formatted spreadsheet in Google Drive"
+    },
+    {
+      "id": "c08cf5f1ad",
+      "kind": "html",
+      "key": "h2",
+      "text": "Frequently Asked Questions"
+    },
+    {
+      "id": "a13eb95c79",
+      "kind": "html",
+      "key": "h3",
+      "text": "Does Attendance Tracker work if the candidate joins from a personal Gmail?"
+    },
+    {
+      "id": "d1997cc841",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. Regardless of whether a candidate joins from a corporate email, a personal <code>@gmail.com</code> address, or a temporary link, Attendance Tracker logs their display name, connection time, and total minutes."
+    },
+    {
+      "id": "6da94347b1",
+      "kind": "html",
+      "key": "h3",
+      "text": "Can recruiting coordinators view attendance without joining the call?"
+    },
+    {
+      "id": "f3ff5d60d1",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. If your company uses our Team Pro plan, all interview session records sync to your company's central Google Sheets audit log in Drive and your designated Slack channel, allowing coordinators to monitor interview completion asynchronously."
+    },
+    {
+      "id": "f2da692ca7",
+      "kind": "html",
+      "key": "h3",
+      "text": "Is candidate PII safe and compliant?"
+    },
+    {
+      "id": "9811b38677",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. Attendance Tracker is an official Google Workspace Marketplace add-on with token encryption at rest (AES-256-GCM). We never sell or share candidate data with third parties."
+    },
+    {
+      "id": "c8773c3e4a",
+      "kind": "html",
+      "key": "h3",
+      "text": "Streamline your interview coordination"
+    },
+    {
+      "id": "fd111c330a",
+      "kind": "html",
+      "key": "p",
+      "text": "Free for individuals, $19/mo for company-wide recruiting teams."
+    },
+    {
+      "id": "14b133eb0f",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Attendance Tracker from Marketplace"
+    },
+    {
+      "id": "9352c1ed98",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "a3ad204977",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-legal-depositions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Legal &amp; Arbitrations</a>\n          <a href=\"google-meet-attendance-for-job-interviews.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Recruiting &amp; Interviews</a>"
+    },
+    {
+      "id": "e7a3b147f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Specialized Verticals</strong>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-clinical-supervision-and-therapy.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Clinical Supervision</a>\n          <a href=\"google-meet-quorum-and-board-meetings.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Board Quorum Tracking</a>\n          <a href=\"google-meet-attendance-for-churches.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Churches &amp; Ministries</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>\n          <a href=\"google-meet-attendance-for-fitness-and-yoga.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Fitness &amp; Yoga</a>"
+    },
+    {
+      "id": "eb9246d86f",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>\n          <a href=\"google-meet-attendance-on-ipad-and-mobile.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">iPad &amp; Mobile Attendance</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "fd5314cdc9",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "How to Track Interviewer & Candidate Attendance in Google Meet"
+    },
+    {
+      "id": "6c1d5c3719",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "A guide for corporate recruiters and talent acquisition leads on tracking panel interviews and virtual career fairs in Google Meet."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "203cd09bc1",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Does Attendance Tracker work if the candidate joins from a personal Gmail?"
+    },
+    {
+      "id": "754217215c",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Yes. Regardless of whether a candidate joins from a corporate email, a personal @gmail.com address, or a temporary link, Attendance Tracker logs their display name, connection time, and total minutes."
+    },
+    {
+      "id": "0b31efa350",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Can recruiting coordinators view attendance without joining the call?"
+    },
+    {
+      "id": "4c61306e27",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Yes. If your company uses our Team Pro plan, all interview session records sync to your company's central Google Sheets audit log in Drive and your designated Slack channel, allowing coordinators to monitor interview completion asynchronously."
+    },
+    {
+      "id": "f45d1d88c2",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Is candidate PII safe and compliant?"
+    },
+    {
+      "id": "e8d9d88038",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Yes. Attendance Tracker is an official Google Workspace Marketplace add-on with token encryption at rest (AES-256-GCM). We never sell or share candidate data with third parties."
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "930245485a",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Google Meet attendance for job interviews &amp; recruiting panels"
+    }
+  ]
+}

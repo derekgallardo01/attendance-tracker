@@ -1,0 +1,228 @@
+{
+  "page": "google-meet-attendance-on-ipad-and-mobile.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "59f1e3798c",
+      "kind": "head",
+      "key": "title",
+      "text": "Can you track Google Meet attendance on iPad & mobile? (2026 Guide) — Attendance Tracker"
+    },
+    {
+      "id": "62322cb142",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Learn how to track and review Google Meet attendance on iPads, tablets, and mobile devices using progressive web apps and automated Google Sheets sync."
+    },
+    {
+      "id": "8f015e7200",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Can you track Google Meet attendance on iPad & mobile?"
+    },
+    {
+      "id": "0429bf8d0f",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "How to track and view Google Meet attendance on iPads, tablets, Chromebooks, and smartphones."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "c25ca064d1",
+      "kind": "html",
+      "key": "h1",
+      "text": "Can you track Google Meet attendance on iPad &amp; mobile?"
+    },
+    {
+      "id": "b1c566fabb",
+      "kind": "html",
+      "key": "p",
+      "text": "As more teachers and managers use iPads, Chromebooks, and mobile devices for remote meetings, a common question arises: can you take attendance in Google Meet on mobile devices? Here is how it works and how to set up cross-device tracking."
+    },
+    {
+      "id": "37a4fcb824",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>How Mobile Tracking Works:</strong> While mobile Google Meet native apps don't support side-panel add-ons, the <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_mobile\">Attendance Tracker backend</a> automatically records all attendees (including mobile and phone dial-in participants) and lets you review history from your mobile browser or PWA."
+    },
+    {
+      "id": "8edf7b2b6c",
+      "kind": "html",
+      "key": "h2",
+      "text": "1. Are Mobile Attendees Captured in Google Meet?"
+    },
+    {
+      "id": "8dfa17ab6f",
+      "kind": "html",
+      "key": "p",
+      "text": "<strong>Yes.</strong> When you run Attendance Tracker in your meeting, it uses the official Google Meet REST API. This means it accurately records:"
+    },
+    {
+      "id": "b40f4a5e97",
+      "kind": "html",
+      "key": "li",
+      "text": "Students and colleagues joining from iPads, iPhones, and Android devices"
+    },
+    {
+      "id": "2dd0aa29b0",
+      "kind": "html",
+      "key": "li",
+      "text": "Users joining from the Google Meet mobile app or Safari/Chrome mobile browser"
+    },
+    {
+      "id": "95d9f0e48a",
+      "kind": "html",
+      "key": "li",
+      "text": "Phone dial-in participants (with masked caller numbers)"
+    },
+    {
+      "id": "e3981eff96",
+      "kind": "html",
+      "key": "li",
+      "text": "Chromebook and laptop users"
+    },
+    {
+      "id": "834dfc9271",
+      "kind": "html",
+      "key": "h2",
+      "text": "2. Viewing Attendance History on iPad &amp; Mobile (PWA)"
+    },
+    {
+      "id": "afafd1cf15",
+      "kind": "html",
+      "key": "p",
+      "text": "Attendance Tracker includes a fully responsive <strong>Progressive Web App (PWA)</strong> dashboard:"
+    },
+    {
+      "id": "1b7b5f298b",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Install to Home Screen:</strong> Open <a href=\"https://attendancetracker.dev/history.html\">attendancetracker.dev/history.html</a> in Safari on iOS or Chrome on Android and tap <em>Add to Home Screen</em>."
+    },
+    {
+      "id": "dbdfb57c02",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Touch-Optimized Interface:</strong> Review past meeting attendance rosters, student attendance percentages, and series streaks directly from your tablet."
+    },
+    {
+      "id": "c11eedc0f2",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>One-Tap Google Sheets Access:</strong> Open auto-generated spreadsheets directly in the Google Sheets mobile app on iPad or iPhone."
+    },
+    {
+      "id": "bcaf09a42a",
+      "kind": "html",
+      "key": "h2",
+      "text": "3. Exporting Attendance While on the Go"
+    },
+    {
+      "id": "ec80031542",
+      "kind": "html",
+      "key": "p",
+      "text": "Because Attendance Tracker synchronizes directly with your Google Drive in the cloud, you don't need a laptop to access your data:"
+    },
+    {
+      "id": "3e130707f2",
+      "kind": "html",
+      "key": "li",
+      "text": "Meeting ends and attendance is auto-saved to your Google Drive folder <code>Meet Attendance Tracker</code>."
+    },
+    {
+      "id": "349a691608",
+      "kind": "html",
+      "key": "li",
+      "text": "An instant summary email lands in your Gmail inbox on mobile."
+    },
+    {
+      "id": "16110511e1",
+      "kind": "html",
+      "key": "li",
+      "text": "If Slack is connected, a formatted digest card posts immediately to your team's Slack mobile app."
+    },
+    {
+      "id": "cb27e1867a",
+      "kind": "html",
+      "key": "h3",
+      "text": "Start tracking attendance across all devices"
+    },
+    {
+      "id": "cd8d509aff",
+      "kind": "html",
+      "key": "p",
+      "text": "Free, works seamlessly with Google Drive, Gmail, and mobile sheets."
+    },
+    {
+      "id": "14b133eb0f",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Attendance Tracker from Marketplace"
+    },
+    {
+      "id": "9352c1ed98",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "a3ad204977",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-legal-depositions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Legal &amp; Arbitrations</a>\n          <a href=\"google-meet-attendance-for-job-interviews.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Recruiting &amp; Interviews</a>"
+    },
+    {
+      "id": "e7a3b147f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Specialized Verticals</strong>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-clinical-supervision-and-therapy.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Clinical Supervision</a>\n          <a href=\"google-meet-quorum-and-board-meetings.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Board Quorum Tracking</a>\n          <a href=\"google-meet-attendance-for-churches.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Churches &amp; Ministries</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>\n          <a href=\"google-meet-attendance-for-fitness-and-yoga.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Fitness &amp; Yoga</a>"
+    },
+    {
+      "id": "eb9246d86f",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>\n          <a href=\"google-meet-attendance-on-ipad-and-mobile.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">iPad &amp; Mobile Attendance</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "c62eab3444",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "How to Track Google Meet Attendance on iPad, Tablets, and Mobile Devices"
+    },
+    {
+      "id": "3bdc5ee46e",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "A complete guide on using Google Meet attendance tracking tools across mobile devices and tablets."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "0b03c2d855",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Can you track Google Meet attendance on iPad &amp; mobile?"
+    }
+  ]
+}

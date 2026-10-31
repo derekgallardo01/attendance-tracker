@@ -1,0 +1,312 @@
+{
+  "page": "attendance-tracker-for-teachers.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "2fc3552738",
+      "kind": "head",
+      "key": "title",
+      "text": "Google Meet attendance tracker for teachers — Attendance Tracker"
+    },
+    {
+      "id": "8e1124549c",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Track class attendance in Google Meet without the Education Plus tier. Auto-roll-call, late-arrival flags, recurring class attendance roll-ups, and one-click Google Sheets export. Free."
+    },
+    {
+      "id": "df08e65769",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Google Meet attendance tracker for teachers"
+    },
+    {
+      "id": "bc9eaa0d86",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Auto roll-call, late-arrival flags, per-class attendance trends, Sheets export. Free, no Education Plus needed."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "232440e1c0",
+      "kind": "html",
+      "key": "h1",
+      "text": "Google Meet attendance tracker for teachers"
+    },
+    {
+      "id": "024574e331",
+      "kind": "html",
+      "key": "p",
+      "text": "Most teachers don't have Google Workspace for Education Plus — which means the built-in attendance report isn't available. Here's how to get auto roll-call, late-arrival flags, and class attendance trends without the upgrade."
+    },
+    {
+      "id": "935c1180f3",
+      "kind": "attr",
+      "key": "title",
+      "text": "Attendance Tracker — see it in action"
+    },
+    {
+      "id": "d5bb488a9a",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Per-student attendance percentage across every session of a recurring class"
+    },
+    {
+      "id": "8b112b2096",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>What you get:</strong> the Attendance Tracker add-on installs in 30 seconds, works on every Google Workspace edition (and personal Gmail), and stays free."
+    },
+    {
+      "id": "668865a76a",
+      "kind": "html",
+      "key": "h2",
+      "text": "Why the built-in feature doesn't work for most teachers"
+    },
+    {
+      "id": "bd37f57753",
+      "kind": "html",
+      "key": "p",
+      "text": "Google restricts in-Meet attendance reports to the Education <strong>Plus</strong> SKU. Schools on Education Fundamentals, Education Standard, the Teaching and Learning Upgrade, or no Workspace at all are stuck doing it by hand — or paying per-seat for an upgrade most districts can't justify just for an attendance feature."
+    },
+    {
+      "id": "0b52f1e1d0",
+      "kind": "html",
+      "key": "p",
+      "text": "The Marketplace add-on uses the Meet REST API, which Google exposes to any Workspace tier. That's the loophole — it's not blocked behind a license check."
+    },
+    {
+      "id": "d559218312",
+      "kind": "html",
+      "key": "h2",
+      "text": "What it does during a class"
+    },
+    {
+      "id": "5b971dcc9f",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Auto roll-call.</strong> Open the side panel at the start of class. Every student who joins shows up in real time with their join timestamp."
+    },
+    {
+      "id": "fec2203426",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Late arrival flags.</strong> Anyone who joins more than 5 minutes after class starts gets a <code style=\"background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3);padding:1px 6px;border-radius:8px;font-size:.7rem;font-weight:600\">+Nm late</code> chip next to their name."
+    },
+    {
+      "id": "43aadb1d6f",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Departure tracking.</strong> Students who leave before the end of class show as \"Left\" with the exact time they dropped."
+    },
+    {
+      "id": "67b6121413",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Excused absences.</strong> Mark a no-show student as Excused before exporting; the sheet shows \"Absent (excused)\" instead of \"Absent\". Persists across re-exports."
+    },
+    {
+      "id": "87871e224d",
+      "kind": "html",
+      "key": "h2",
+      "text": "What you get after class"
+    },
+    {
+      "id": "0bc9c2b768",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Auto-export to Google Sheets.</strong> When the meeting ends, the attendance sheet is created in your Drive and emailed to you. One tab per class session."
+    },
+    {
+      "id": "c9f1995d79",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Per-class attendance trends.</strong> If you put your class on a recurring Calendar event (which most teachers do), the add-on rolls up attendance over time — \"Alex 12/15 classes (80%), Sarah 14/15 (93%).\""
+    },
+    {
+      "id": "354a99d5d1",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Daily alert emails.</strong> When a student misses 3 classes in a row after a streak of regular attendance, or drops from ≥80% to &lt;50% over the last 8 sessions, you get an email. Lets you reach out before they fully disengage."
+    },
+    {
+      "id": "c11638b6ca",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Shareable dashboard.</strong> Generate a public link to the class attendance roll-up to share with parents or administrators. Read-only, expires in 30 days."
+    },
+    {
+      "id": "4526ac5c8c",
+      "kind": "html",
+      "key": "h2",
+      "text": "Setup, start to finish"
+    },
+    {
+      "id": "a8db1ae79c",
+      "kind": "html",
+      "key": "li",
+      "text": "Open the <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968\">Marketplace listing</a>."
+    },
+    {
+      "id": "f39a15b444",
+      "kind": "html",
+      "key": "li",
+      "text": "Click <strong>Install</strong>. Grant the requested permissions (read-only Meet participants, read-only calendar, write to Sheets files we create)."
+    },
+    {
+      "id": "c6e51a5931",
+      "kind": "html",
+      "key": "li",
+      "text": "Open your next class meeting in Google Meet."
+    },
+    {
+      "id": "77b4fcd831",
+      "kind": "html",
+      "key": "li",
+      "text": "Open the Attendance Tracker side panel (sidebar icon, same place as chat)."
+    },
+    {
+      "id": "496c37e287",
+      "kind": "html",
+      "key": "li",
+      "text": "Tracking starts automatically. Auto-export happens when the meeting ends."
+    },
+    {
+      "id": "43aec68593",
+      "kind": "html",
+      "key": "h2",
+      "text": "FAQ"
+    },
+    {
+      "id": "fb29301806",
+      "kind": "html",
+      "key": "h3",
+      "text": "Will my students see they're being tracked?"
+    },
+    {
+      "id": "3d6cbe4ef9",
+      "kind": "html",
+      "key": "p",
+      "text": "The add-on only appears in your side panel, not your students'. They don't see anything different about the meeting. The data you collect is the same data they could see in the participants panel — names, join times, durations — but compiled for you."
+    },
+    {
+      "id": "f97c1fd9c6",
+      "kind": "html",
+      "key": "h3",
+      "text": "Does it work with under-13 student accounts?"
+    },
+    {
+      "id": "86f0dd33f8",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. Student accounts appear in the participant list like any Google account. The add-on doesn't process anything beyond what Google already exposes in the Meet participant view."
+    },
+    {
+      "id": "9beb13edaa",
+      "kind": "html",
+      "key": "h3",
+      "text": "What if my students join from personal Gmail accounts (not school accounts)?"
+    },
+    {
+      "id": "2108a493b3",
+      "kind": "html",
+      "key": "p",
+      "text": "They'll appear in the attendance list with their personal Gmail name. If you want to map them to your roster, the calendar-matching step in the export flow lets you reassign names to email addresses you control."
+    },
+    {
+      "id": "3d57d67c31",
+      "kind": "html",
+      "key": "h3",
+      "text": "Is there a paid tier?"
+    },
+    {
+      "id": "5811f6d13c",
+      "kind": "html",
+      "key": "p",
+      "text": "Attendance Tracker offers a free forever tier with 2 free exports per month across Google Sheets, CSV, or binary Excel (for classes up to 25 attendees, plus 1 large-class grace export) and live side-panel monitoring. An Educator Annual Pass is $14.99/year standard ($4.99–$7.99/year in regional tiers), or $29 one-time ($9.99–$19 regional) for Individual Lifetime access with unlimited exports and Google Classroom roster sync."
+    },
+    {
+      "id": "25e2ef5aea",
+      "kind": "html",
+      "key": "h3",
+      "text": "Track every class in 30 seconds"
+    },
+    {
+      "id": "70249ba33c",
+      "kind": "html",
+      "key": "p",
+      "text": "Free Marketplace add-on. No Education Plus required."
+    },
+    {
+      "id": "cac999cf60",
+      "kind": "html",
+      "key": "a",
+      "text": "Install from Marketplace"
+    },
+    {
+      "id": "fa424dbf8c",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-for-online-classes.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Online Classes</a>\n          <a href=\"automatic-attendance-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Automatic Attendance</a>\n          <a href=\"google-meet-attendance-philippines-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Philippine Teachers &amp; DepEd</a>\n          <a href=\"google-meet-attendance-malaysia-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Malaysia (MOE &amp; DELIMa)</a>\n          <a href=\"google-meet-attendance-indonesia-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Indonesia (belajar.id)</a>\n          <a href=\"google-meet-attendance-india-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">India (Schools &amp; Colleges)</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "a3ad204977",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-legal-depositions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Legal &amp; Arbitrations</a>\n          <a href=\"google-meet-attendance-for-job-interviews.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Recruiting &amp; Interviews</a>"
+    },
+    {
+      "id": "e7a3b147f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Specialized Verticals</strong>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-clinical-supervision-and-therapy.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Clinical Supervision</a>\n          <a href=\"google-meet-quorum-and-board-meetings.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Board Quorum Tracking</a>\n          <a href=\"google-meet-attendance-for-churches.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Churches &amp; Ministries</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>\n          <a href=\"google-meet-attendance-for-fitness-and-yoga.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Fitness &amp; Yoga</a>"
+    },
+    {
+      "id": "90c0b992f9",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"/customer-reviews/\" style=\"color: var(--muted); text-decoration: none; display: block;\">Verified Customer Reviews</a>\n          <a href=\"/attendancetracker-vs-attendlist/\" style=\"color: var(--muted); text-decoration: none; display: block;\">AttendanceTracker vs Competitor</a>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>\n          <a href=\"google-meet-attendance-on-ipad-and-mobile.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">iPad &amp; Mobile Attendance</a>"
+    },
+    {
+      "id": "f3cbe7fc5d",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"/customer-reviews/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Customer Reviews</a> ·\n        <a href=\"/attendancetracker-vs-attendlist/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">vs Competitor</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "5bca361d36",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "Google Meet Attendance Tracker for Teachers (No Education Plus Required)"
+    },
+    {
+      "id": "75a36b7640",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "How teachers track class attendance, late arrivals, and semester trends in Google Meet for free."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "1e8fe480f5",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Google Meet attendance tracker for teachers"
+    }
+  ]
+}

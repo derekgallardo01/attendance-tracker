@@ -1,0 +1,1404 @@
+{
+  "page": "faq.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "a58e3a8b00",
+      "kind": "head",
+      "key": "title",
+      "text": "Help Center & FAQ — Attendance Tracker for Google Meet™"
+    },
+    {
+      "id": "4525f78f4a",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Help Center & FAQ for Attendance Tracker. Real answers on how to track attendance as a TA, auto-export to Google Sheets, set up Slack summaries, and track calls without host rights."
+    },
+    {
+      "id": "83d12a12c3",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Straightforward answers on taking Google Meet attendance as a TA, auto-exporting to Google Sheets, domain delegation, and troubleshooting."
+    },
+    {
+      "id": "d746ea6944",
+      "kind": "html",
+      "key": "a",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"Attendance Tracker Logo\">\n        <span>Attendance Tracker</span>"
+    },
+    {
+      "id": "38deccf17d",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Attendance Tracker Logo"
+    },
+    {
+      "id": "7fedfcbaca",
+      "kind": "html",
+      "key": "a",
+      "text": "Home"
+    },
+    {
+      "id": "7d4f187b91",
+      "kind": "html",
+      "key": "a",
+      "text": "Pricing"
+    },
+    {
+      "id": "ec3b3e8bd4",
+      "kind": "html",
+      "key": "a",
+      "text": "Help Center &amp; FAQ"
+    },
+    {
+      "id": "a4e170921c",
+      "kind": "html",
+      "key": "a",
+      "text": "Contact Support"
+    },
+    {
+      "id": "f58ea57552",
+      "kind": "attr",
+      "key": "aria-label",
+      "text": "Open navigation menu"
+    },
+    {
+      "id": "db9fb2fab4",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Free"
+    },
+    {
+      "id": "98bf5c73ee",
+      "kind": "html",
+      "key": "a",
+      "text": "Meeting History"
+    },
+    {
+      "id": "e2a449ebbe",
+      "kind": "html",
+      "key": "div",
+      "text": "Help Center &amp; Support"
+    },
+    {
+      "id": "c08cf5f1ad",
+      "kind": "html",
+      "key": "h1",
+      "text": "Frequently Asked Questions"
+    },
+    {
+      "id": "16304e746d",
+      "kind": "html",
+      "key": "p",
+      "text": "Straightforward answers on tracking Google Meet attendance, exporting clean Google Sheets, TA workflows, and getting everything running smoothly."
+    },
+    {
+      "id": "fa1b19a7ac",
+      "kind": "html",
+      "key": "div",
+      "text": "<span style=\"font-size:1.2rem\">🔄</span>\n        <span><strong>Switching from a competitor or a retired tool?</strong> <a href=\"attendance-taker-for-classroom-alternative.html\" style=\"color:var(--blue);font-weight:600;text-decoration:underline;margin-left:4px\">Use our free 5-second roster migration tool →</a></span>"
+    },
+    {
+      "id": "466b4b07b3",
+      "kind": "attr",
+      "key": "placeholder",
+      "text": "Search questions (e.g. TA, Sheets, delay, excused, Slack)..."
+    },
+    {
+      "id": "e559d5528a",
+      "kind": "html",
+      "key": "button",
+      "text": "All Questions"
+    },
+    {
+      "id": "19def6fcf8",
+      "kind": "html",
+      "key": "button",
+      "text": "TA &amp; Host Roles"
+    },
+    {
+      "id": "2639092694",
+      "kind": "html",
+      "key": "button",
+      "text": "Google Sheets Export"
+    },
+    {
+      "id": "61025010fd",
+      "kind": "html",
+      "key": "button",
+      "text": "Classroom &amp; Trends"
+    },
+    {
+      "id": "1e3a236384",
+      "kind": "html",
+      "key": "button",
+      "text": "Slack &amp; Email"
+    },
+    {
+      "id": "73ef573e51",
+      "kind": "html",
+      "key": "button",
+      "text": "Troubleshooting"
+    },
+    {
+      "id": "fb2925e887",
+      "kind": "html",
+      "key": "button",
+      "text": "Security &amp; Privacy"
+    },
+    {
+      "id": "a29e98f695",
+      "kind": "html",
+      "key": "p",
+      "text": "No matching questions found."
+    },
+    {
+      "id": "e7fdfb32d9",
+      "kind": "html",
+      "key": "p",
+      "text": "Have a specific question? Email our team at <a href=\"mailto:support@attendancetracker.dev\" style=\"color:var(--blue)\">support@attendancetracker.dev</a>."
+    },
+    {
+      "id": "fc6a373896",
+      "kind": "html",
+      "key": "h2",
+      "text": "TA &amp; Host Attendance Tracking"
+    },
+    {
+      "id": "5950a5c13c",
+      "kind": "html",
+      "key": "h3",
+      "text": "How to track attendance in Google Meet as a TA (Teaching Assistant) or Co-Host"
+    },
+    {
+      "id": "1070612468",
+      "kind": "html",
+      "key": "p",
+      "text": "If you're a TA or co-host, you know the frustration: the professor or meeting organizer scheduled the Google Calendar invite, so you don't have host rights. Google's default attendance report only goes to the meeting creator, leaving you with zero data."
+    },
+    {
+      "id": "64bbd9fb04",
+      "kind": "html",
+      "key": "p",
+      "text": "Attendance Tracker solves this completely. You don't need host permissions:"
+    },
+    {
+      "id": "a8fd96257c",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Install the Add-on:</strong> Add <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968\">Attendance Tracker</a> from the Google Workspace Marketplace to your school or university Google account."
+    },
+    {
+      "id": "2e9e189d4d",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Join the Call:</strong> Enter the Google Meet call as you normally do from the link your professor shared."
+    },
+    {
+      "id": "6a9952d5ce",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Open the Side Panel:</strong> Click the <em>Activities</em> icon (the shapes/puzzle piece in the bottom right corner) and launch <strong>Attendance Tracker</strong>."
+    },
+    {
+      "id": "ea0d373c2e",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Leave it open during class:</strong> The add-on logs who arrives, who drops early, and calculates total active minutes under your own authenticated session."
+    },
+    {
+      "id": "ff93d22809",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Clean Sheet in Your Drive:</strong> When the class finishes, the attendance spreadsheet automatically saves directly into <em>your own</em> Google Drive in a folder named <code>Meet Attendance Tracker</code>. No need to ask the professor for a CSV."
+    },
+    {
+      "id": "ea76094482",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Helpful Guides:</strong> Read our complete walkthrough for educators in <a href=\"/attendance-tracker-for-teachers.html\">Attendance Tracker for Teachers</a> and <a href=\"/track-google-meet-attendance-without-host.html\">Tracking Google Meet Attendance Without Being the Host</a>."
+    },
+    {
+      "id": "4365e91e47",
+      "kind": "html",
+      "key": "h3",
+      "text": "Can I track attendance if I'm not the host or meeting organizer?"
+    },
+    {
+      "id": "407dd3c027",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. That was one of the biggest reasons we built this tool. Google's built-in attendance feature strictly emails the meeting creator—which is useless if a project manager, attendee, or co-host is the one responsible for attendance."
+    },
+    {
+      "id": "ea27866a56",
+      "kind": "html",
+      "key": "p",
+      "text": "With Attendance Tracker, anyone physically present in the call who has the add-on open can generate a clean attendance report for their own records."
+    },
+    {
+      "id": "2d05731b2c",
+      "kind": "html",
+      "key": "p",
+      "text": "<em>Note for Google Workspace domains:</em> If your school or company enables domain-wide delegation (a quick 2-minute admin setup at <a href=\"/setup.html\">attendancetracker.dev/setup</a>), you will also see external and cross-domain attendees. On personal Gmail, you can track anyone sharing the call."
+    },
+    {
+      "id": "452abd731f",
+      "kind": "html",
+      "key": "h3",
+      "text": "Do I need Google Workspace for Education Plus to take attendance?"
+    },
+    {
+      "id": "4fd1456187",
+      "kind": "html",
+      "key": "p",
+      "text": "<strong>No, absolutely not.</strong> Google locks its native attendance tracking behind their most expensive plans: <strong>Education Plus</strong> and the <strong>Teaching and Learning Upgrade</strong>. Most schools and districts can't justify paying hundreds or thousands of dollars in license fees just to see who showed up to class."
+    },
+    {
+      "id": "dfac08a3e9",
+      "kind": "html",
+      "key": "p",
+      "text": "Attendance Tracker works across <strong>all</strong> Google tiers without extra upgrades:"
+    },
+    {
+      "id": "71fffcc2c9",
+      "kind": "html",
+      "key": "li",
+      "text": "Google Workspace Education Fundamentals (the free tier most schools use)"
+    },
+    {
+      "id": "83b62409ec",
+      "kind": "html",
+      "key": "li",
+      "text": "Google Workspace Education Standard"
+    },
+    {
+      "id": "8ecb15f894",
+      "kind": "html",
+      "key": "li",
+      "text": "Google Workspace Business Starter, Standard, Plus &amp; Enterprise"
+    },
+    {
+      "id": "ec642e0643",
+      "kind": "html",
+      "key": "li",
+      "text": "Personal free <code>@gmail.com</code> accounts"
+    },
+    {
+      "id": "ece522815f",
+      "kind": "html",
+      "key": "p",
+      "text": "The Google Meet API itself isn't locked behind an expensive tier, so we pass that direct access on to you without the upgrade tax."
+    },
+    {
+      "id": "83c7a197ae",
+      "kind": "html",
+      "key": "h3",
+      "text": "Does it work with a personal free @gmail.com account?"
+    },
+    {
+      "id": "16af2284cb",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes! Just sign in with your regular <code>@gmail.com</code> address. If you're an independent tutor, fitness coach, freelancer, or running community meetups, you can track attendee join times, duration, and auto-export straight to Google Sheets for free. No Workspace organization account required."
+    },
+    {
+      "id": "385f567b04",
+      "kind": "html",
+      "key": "h3",
+      "text": "Can students or attendees check themselves in?"
+    },
+    {
+      "id": "b2619a3d38",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes — this is unique to Attendance Tracker. Any participant can open the Attendance Tracker side panel during the call and tap <strong>\"I'm here — check in\"</strong>. They sign in with just their Google identity (name and email only — no account is created and no other permissions are requested), and the host instantly sees a verified green <strong>✓ checked-in</strong> badge next to that person on the attendance list."
+    },
+    {
+      "id": "d549653b7a",
+      "kind": "html",
+      "key": "p",
+      "text": "Why this matters:"
+    },
+    {
+      "id": "040894c30a",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Anonymous display names get identified:</strong> a participant who joins as \"Sam's iPad\" checks in with their real school email."
+    },
+    {
+      "id": "f482a1a1fb",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Dial-in callers get counted:</strong> phone participants that Google's roster can't attribute appear on your list via their check-in."
+    },
+    {
+      "id": "2377959b81",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Verified timestamps:</strong> the check-in time flows into your Google Sheets export (\"Checked In\" column) and the CSV report's Notes column — useful when your attendance policy needs students to actively confirm presence, not just have the tab open."
+    },
+    {
+      "id": "d3a8b49aa8",
+      "kind": "html",
+      "key": "p",
+      "text": "Check-ins are ephemeral: they expire automatically after 24 hours and are never used for anything except that meeting's attendance record."
+    },
+    {
+      "id": "8beb2daea9",
+      "kind": "html",
+      "key": "h2",
+      "text": "Google Sheets Exports &amp; Reports"
+    },
+    {
+      "id": "75e5e7227f",
+      "kind": "html",
+      "key": "h3",
+      "text": "How to export Google Meet logs to Google Sheets"
+    },
+    {
+      "id": "339c803130",
+      "kind": "html",
+      "key": "p",
+      "text": "You have two ways to export your attendance, both simple and fast:"
+    },
+    {
+      "id": "4cb767b541",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Auto-Export (Hands-free):</strong> Just leave the side panel open while you teach or meet. When the meeting ends, the add-on automatically generates the spreadsheet in your Google Drive and emails you a summary with the direct link. You don't have to remember to click anything."
+    },
+    {
+      "id": "0d4aac0f80",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Manual Export (Mid-meeting):</strong> If you want an immediate snapshot right now (say, 15 minutes into a quiz or presentation), click the <strong>Sheet</strong> icon at the top of the side panel. It creates or updates the sheet on the spot."
+    },
+    {
+      "id": "e925e857dd",
+      "kind": "html",
+      "key": "p",
+      "text": "Step-by-step breakdown: <a href=\"/export-google-meet-attendance-to-sheets.html\">Export Google Meet Attendance to Google Sheets</a>."
+    },
+    {
+      "id": "d07c30aa20",
+      "kind": "html",
+      "key": "h3",
+      "text": "What data fields and columns are included in the Google Sheets export?"
+    },
+    {
+      "id": "aa93642928",
+      "kind": "html",
+      "key": "p",
+      "text": "Each exported sheet tab is pre-formatted with clean fonts, frozen header rows, and formula-ready columns:"
+    },
+    {
+      "id": "ea41e9fa2b",
+      "kind": "html",
+      "key": "th",
+      "text": "Column Header"
+    },
+    {
+      "id": "ad984cb9ff",
+      "kind": "html",
+      "key": "th",
+      "text": "What It Tells You"
+    },
+    {
+      "id": "0d14811c07",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Name</strong>"
+    },
+    {
+      "id": "177bdf9aab",
+      "kind": "html",
+      "key": "td",
+      "text": "Display name from the participant's Google Meet account"
+    },
+    {
+      "id": "a3b2bbb147",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Email</strong>"
+    },
+    {
+      "id": "3b7135aad4",
+      "kind": "html",
+      "key": "td",
+      "text": "Email from the calendar invite or your Workspace directory"
+    },
+    {
+      "id": "8362118669",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>RSVP Status</strong>"
+    },
+    {
+      "id": "e6d5252ad3",
+      "kind": "html",
+      "key": "td",
+      "text": "Accepted, Declined, Tentative, or No Response from Google Calendar"
+    },
+    {
+      "id": "e594bfbf9b",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Late?</strong>"
+    },
+    {
+      "id": "db04eeda46",
+      "kind": "html",
+      "key": "td",
+      "text": "Flags tardiness (e.g. <code>+7m late</code>) based on the scheduled start time"
+    },
+    {
+      "id": "5b6eda7a20",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Join / Leave Time</strong>"
+    },
+    {
+      "id": "823fac65c4",
+      "kind": "html",
+      "key": "td",
+      "text": "Exact timestamps of when they joined and when they departed"
+    },
+    {
+      "id": "770caefd29",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Duration (min)</strong>"
+    },
+    {
+      "id": "3471307c38",
+      "kind": "html",
+      "key": "td",
+      "text": "Total active minutes (accurately sums reconnections if WiFi dropped)"
+    },
+    {
+      "id": "8ebb7aaac0",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Attendance %</strong>"
+    },
+    {
+      "id": "d0512d019f",
+      "kind": "html",
+      "key": "td",
+      "text": "Active duration divided by scheduled call length (capped at 100%)"
+    },
+    {
+      "id": "5dc06bae12",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Status</strong>"
+    },
+    {
+      "id": "0f0a36627d",
+      "kind": "html",
+      "key": "td",
+      "text": "Present, Left early, Absent, or Absent (excused)"
+    },
+    {
+      "id": "1319985ac6",
+      "kind": "html",
+      "key": "h3",
+      "text": "Where are exported sheets saved, and who can access them?"
+    },
+    {
+      "id": "476db0ece3",
+      "kind": "html",
+      "key": "p",
+      "text": "Your sheets live directly inside <strong>your own Google Drive</strong> in a dedicated folder called <code>Meet Attendance Tracker</code>. Each recurring meeting becomes its own dated tab in a single workbook, keeping your Drive clean."
+    },
+    {
+      "id": "916af98eb6",
+      "kind": "html",
+      "key": "p",
+      "text": "<strong>Privacy:</strong> Only <em>you</em> have access by default. We don't host your spreadsheets on our servers. You maintain full ownership and can use standard Google Drive sharing controls whenever you want to share a sheet with a professor, department head, or manager."
+    },
+    {
+      "id": "9cc5381d87",
+      "kind": "html",
+      "key": "h3",
+      "text": "How to mark absent attendees as \"Excused\" before exporting"
+    },
+    {
+      "id": "1a607bb9ba",
+      "kind": "html",
+      "key": "p",
+      "text": "When you export a meeting synced with a Google Calendar event, Attendance Tracker compares joined participants against your invited guest list. For any invitee who didn't show up:"
+    },
+    {
+      "id": "df34e553e3",
+      "kind": "html",
+      "key": "li",
+      "text": "Before finalizing the export, the calendar matching window shows all absent invitees."
+    },
+    {
+      "id": "cc52dcfc7c",
+      "kind": "html",
+      "key": "li",
+      "text": "Check the <strong>Excused</strong> checkbox next to anyone who gave advance notice or had an excused absence."
+    },
+    {
+      "id": "9bd161366e",
+      "kind": "html",
+      "key": "li",
+      "text": "The spreadsheet logs them as <code>Absent (excused)</code> instead of an unexcused absence."
+    },
+    {
+      "id": "95e50923e1",
+      "kind": "html",
+      "key": "li",
+      "text": "This tag persists in the series database so multi-week calculations reflect the excused status."
+    },
+    {
+      "id": "4d02b13b3a",
+      "kind": "html",
+      "key": "h3",
+      "text": "How many exports are free, and what does Pro cost?"
+    },
+    {
+      "id": "29c6c07e96",
+      "kind": "html",
+      "key": "p",
+      "text": "The free tier includes real-time tracking, Class Rosters, and <strong>2 free exports per calendar month</strong> across Google Sheets, CSV, or binary Excel (.xlsx) for classes up to 25 attendees (plus 1 large-class grace export) — no credit card required."
+    },
+    {
+      "id": "5c0b424472",
+      "kind": "html",
+      "key": "p",
+      "text": "Pro is available as a low annual pass or a one-time lifetime pass, with automatic regional pricing in eligible countries:"
+    },
+    {
+      "id": "29e6d4f59e",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Educator Annual Pass — $4.99–$14.99/year:</strong> unlimited exports, hands-free Auto-Capture, cumulative Class Summary reports, certificates, LMS gradebook sync, and chat digests, priced for teachers."
+    },
+    {
+      "id": "c283511e7a",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Pro Annual — $29/year:</strong> full Pro access for individual organizers, trainers, and team leads."
+    },
+    {
+      "id": "4a7d525f32",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Individual Lifetime Pass — $9.99–$29 one-time:</strong> pay once and keep Pro forever with no recurring renewals."
+    },
+    {
+      "id": "d12fb6fd97",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Department — $59/year:</strong> covers every teacher on a single school's Google Workspace domain, plus the org-wide team dashboard."
+    },
+    {
+      "id": "2aab1596e9",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Institution — $149/year:</strong> adds a signed DPA, priority support, and invoice/PO billing for districts."
+    },
+    {
+      "id": "11db08250b",
+      "kind": "html",
+      "key": "p",
+      "text": "Full details on the <a href=\"/pricing.html\">pricing page</a>."
+    },
+    {
+      "id": "07901487fb",
+      "kind": "html",
+      "key": "h3",
+      "text": "Can I generate attendance certificates for participants?"
+    },
+    {
+      "id": "500cd59deb",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes (Pro). After exporting a meeting, click <strong>Certificates</strong> in the side panel's link bar to generate a per-attendee PDF certificate carrying the attendee's name, session title, date, duration or credit hours, and a unique verification code."
+    },
+    {
+      "id": "c3c17e02f2",
+      "kind": "html",
+      "key": "p",
+      "text": "Anyone — a registrar, employer, or licensing board — can confirm a certificate is genuine by entering its code at <a href=\"/verify.html\">attendancetracker.dev/verify</a>, no account needed. Popular for CPE/CLE credits, webinars, and corporate training. Full guide: <a href=\"/google-meet-attendance-certificates.html\">attendance certificates</a>."
+    },
+    {
+      "id": "f0cd84f4b4",
+      "kind": "html",
+      "key": "h2",
+      "text": "Classroom, Recurring Series &amp; Trends"
+    },
+    {
+      "id": "efe3100c07",
+      "kind": "html",
+      "key": "h3",
+      "text": "How to track recurring classes and multi-week semester attendance trends"
+    },
+    {
+      "id": "6933a5f72d",
+      "kind": "html",
+      "key": "p",
+      "text": "If your lecture, seminar, or sprint standup is scheduled as a repeating event on Google Calendar, Attendance Tracker groups all sessions under that series."
+    },
+    {
+      "id": "9ca4bba5a3",
+      "kind": "html",
+      "key": "p",
+      "text": "Visit your dashboard at <a href=\"/history.html\">attendancetracker.dev/history.html</a> and click the <strong>Series</strong> tab to see:"
+    },
+    {
+      "id": "18a937cfb0",
+      "kind": "html",
+      "key": "li",
+      "text": "Cumulative attendance across the entire semester (e.g. <em>\"Alex attended 26 of 28 classes (93%)\"</em>)"
+    },
+    {
+      "id": "cd4062c374",
+      "kind": "html",
+      "key": "li",
+      "text": "Visual attendance percentages and attendance streaks"
+    },
+    {
+      "id": "0d9dc399b0",
+      "kind": "html",
+      "key": "li",
+      "text": "Automated drop alerts if someone who regularly attends suddenly misses 3 classes in a row"
+    },
+    {
+      "id": "46482c0eeb",
+      "kind": "html",
+      "key": "h3",
+      "text": "How to share attendance dashboards with administrators or parents"
+    },
+    {
+      "id": "6106729e20",
+      "kind": "html",
+      "key": "p",
+      "text": "On the Series tab in <a href=\"/history.html\">history.html</a>, click the <strong>Share</strong> button next to any series. This creates a secure, read-only link with a customizable 30-day expiration date."
+    },
+    {
+      "id": "599d5252cf",
+      "kind": "html",
+      "key": "p",
+      "text": "Recipients can view student attendance records, trends, and dates without needing an account or installing the add-on."
+    },
+    {
+      "id": "3c08230557",
+      "kind": "html",
+      "key": "h3",
+      "text": "How to import your class list from Google Classroom"
+    },
+    {
+      "id": "96d9b96f25",
+      "kind": "html",
+      "key": "p",
+      "text": "No more pasting student names by hand:"
+    },
+    {
+      "id": "ad76b5c012",
+      "kind": "html",
+      "key": "li",
+      "text": "Open the <strong>Class Roster</strong> tab in the side panel and click <strong>+ New Class</strong>."
+    },
+    {
+      "id": "3077b45c97",
+      "kind": "html",
+      "key": "li",
+      "text": "Click <strong>Import from Google Classroom</strong>. The first time, Google asks for a one-time read-only permission covering courses you teach — approving it resumes the import automatically."
+    },
+    {
+      "id": "d2fbeeb8c5",
+      "kind": "html",
+      "key": "li",
+      "text": "Pick your course, click <strong>Import</strong>, review the list, and <strong>Save Roster</strong>."
+    },
+    {
+      "id": "0285eff797",
+      "kind": "html",
+      "key": "p",
+      "text": "Every enrolled student's name and school email fills in, and the imported roster is stored only in your browser. Full guide: <a href=\"/import-google-classroom-roster-to-google-meet.html\">Import a Google Classroom roster</a>."
+    },
+    {
+      "id": "1d7ffb83ca",
+      "kind": "html",
+      "key": "h3",
+      "text": "How to export attendance to Moodle or Canvas gradebooks"
+    },
+    {
+      "id": "9ada84c416",
+      "kind": "html",
+      "key": "p",
+      "text": "With a Class Roster active, the roster tab shows <strong>Export gradebook CSV: Moodle · Canvas</strong>. One click downloads an import-ready gradebook file — Moodle's <code>First name / Last name / Email address</code> layout or Canvas's <code>Student / SIS Login ID</code> layout — with each student's attendance percentage as the grade (unexcused absences import as 0; excused absences stay blank)."
+    },
+    {
+      "id": "c9ec979915",
+      "kind": "html",
+      "key": "p",
+      "text": "For recurring classes, the <strong>Series</strong> tab in <a href=\"/history.html\">Meeting History</a> exports one cumulative gradebook row per student across the whole semester (Pro)."
+    },
+    {
+      "id": "0af33e401b",
+      "kind": "html",
+      "key": "p",
+      "text": "Guides: <a href=\"/export-google-meet-attendance-to-moodle.html\">Moodle</a> · <a href=\"/export-google-meet-attendance-to-canvas.html\">Canvas</a>."
+    },
+    {
+      "id": "be1cc9cb9f",
+      "kind": "html",
+      "key": "h2",
+      "text": "Slack, Google Chat &amp; Discord Summaries"
+    },
+    {
+      "id": "fdf8d16927",
+      "kind": "html",
+      "key": "h3",
+      "text": "How to send Google Meet attendance summaries directly to a Slack channel"
+    },
+    {
+      "id": "7ef3a020e7",
+      "kind": "html",
+      "key": "p",
+      "text": "You can post automatic attendance summaries directly into team Slack channels (like <code>#eng-standup</code> or <code>#ta-room</code>) in under a minute:"
+    },
+    {
+      "id": "3dad841519",
+      "kind": "html",
+      "key": "li",
+      "text": "Create an Incoming Webhook in your Slack workspace (<a href=\"https://api.slack.com/messaging/webhooks\" target=\"_blank\" rel=\"noopener\">api.slack.com/messaging/webhooks</a>)."
+    },
+    {
+      "id": "b410f5b31b",
+      "kind": "html",
+      "key": "li",
+      "text": "In the Attendance Tracker side panel, click the <strong>Settings (gear)</strong> icon and pick the <strong>Slack</strong> tab in the webhooks card."
+    },
+    {
+      "id": "12d5de9f46",
+      "kind": "html",
+      "key": "li",
+      "text": "Paste your Slack Incoming Webhook URL, click <strong>Send test</strong>, and save."
+    },
+    {
+      "id": "e2b37860af",
+      "kind": "html",
+      "key": "li",
+      "text": "Whenever a meeting ends or you export, a clean Block Kit summary card posts to your channel with present, late, and absent counts, plus a direct button to open the Google Sheet."
+    },
+    {
+      "id": "68fcebcb09",
+      "kind": "html",
+      "key": "p",
+      "text": "Step-by-step setup: <a href=\"/how-to-send-google-meet-attendance-to-slack.html\">How to Send Google Meet Attendance to Slack</a>."
+    },
+    {
+      "id": "a7e4d55d82",
+      "kind": "html",
+      "key": "h3",
+      "text": "Can summaries go to Google Chat or Discord instead?"
+    },
+    {
+      "id": "ff94d66c4e",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. The same webhooks card in Settings has <strong>Slack</strong>, <strong>Google Chat</strong>, and <strong>Discord</strong> tabs — each takes that provider's incoming-webhook URL, and each configured provider gets its own native attendance card after every export (a cardsV2 card in Chat spaces, an embed in Discord channels). You can connect all three at once."
+    },
+    {
+      "id": "19c1bdc1da",
+      "kind": "html",
+      "key": "p",
+      "text": "Full guide: <a href=\"/send-google-meet-attendance-to-google-chat.html\">Send attendance to Google Chat or Discord</a>."
+    },
+    {
+      "id": "ff80be2400",
+      "kind": "html",
+      "key": "h3",
+      "text": "How do automated post-meeting email summaries work?"
+    },
+    {
+      "id": "d40c615da3",
+      "kind": "html",
+      "key": "p",
+      "text": "Whenever an attendance sheet is generated upon meeting conclusion, a clean digest email lands in your inbox. It gives you a quick snapshot of attendance percentages, who was late, who missed class, and a one-click button to open the spreadsheet directly in Google Sheets."
+    },
+    {
+      "id": "329b93e572",
+      "kind": "html",
+      "key": "h2",
+      "text": "Troubleshooting &amp; Setup"
+    },
+    {
+      "id": "4869f58d23",
+      "kind": "html",
+      "key": "h3",
+      "text": "Why don't external participants show up? (Domain-Wide Delegation Setup)"
+    },
+    {
+      "id": "b27026ba49",
+      "kind": "html",
+      "key": "p",
+      "text": "Google Workspace security policy restricts participant queries to users within the organizer's domain unless domain delegation is enabled."
+    },
+    {
+      "id": "85534e163a",
+      "kind": "html",
+      "key": "p",
+      "text": "If you see a notice saying <em>\"Some participants may not appear\"</em>, your Workspace administrator can enable service account delegation in under two minutes:"
+    },
+    {
+      "id": "8738571974",
+      "kind": "html",
+      "key": "li",
+      "text": "Send your Google Workspace IT admin this link: <a href=\"/setup.html\">attendancetracker.dev/setup</a>."
+    },
+    {
+      "id": "b15e1dce99",
+      "kind": "html",
+      "key": "li",
+      "text": "In the Google Admin Console (<code>admin.google.com</code>), they navigate to <em>Security &gt; Access and data control &gt; API controls</em>."
+    },
+    {
+      "id": "c0578d0b1f",
+      "kind": "html",
+      "key": "li",
+      "text": "They add our Client ID and the read-only Meet scope."
+    },
+    {
+      "id": "77a0ab86ce",
+      "kind": "html",
+      "key": "p",
+      "text": "Once approved, external guests, parents, and cross-domain attendees will appear in your live roster."
+    },
+    {
+      "id": "c8f4171b2b",
+      "kind": "html",
+      "key": "h3",
+      "text": "Why does someone show as \"Left\" when they're still sitting in the meeting?"
+    },
+    {
+      "id": "211c4af740",
+      "kind": "html",
+      "key": "p",
+      "text": "This is an honest quirk of Google's official Meet REST API: it has a 2 to 5 minute propagation delay when updating attendee states."
+    },
+    {
+      "id": "4236d3bfbd",
+      "kind": "html",
+      "key": "p",
+      "text": "If an attendee's WiFi briefly drops or they refresh their browser tab, Google's API might briefly report their previous session as ended before broadcasting the new session ID. Don't worry—Attendance Tracker connects multiple sessions under the same participant and merges them upon export, so their total active duration and final attendance percentage stay accurate."
+    },
+    {
+      "id": "e3d1b8424e",
+      "kind": "html",
+      "key": "h3",
+      "text": "Does Attendance Tracker work on iPad or mobile devices?"
+    },
+    {
+      "id": "ddde40344c",
+      "kind": "html",
+      "key": "p",
+      "text": "<strong>To record attendance:</strong> You need to be on a desktop or laptop browser (Chrome, Edge, Safari, Firefox). Google Meet's native iOS and Android apps do not support side-panel add-ons yet (that is a Google platform limitation, not ours)."
+    },
+    {
+      "id": "7b6e241545",
+      "kind": "html",
+      "key": "p",
+      "text": "<strong>To view and manage reports:</strong> Everything works great on mobile! You can open your exported Google Sheets, view the <a href=\"/history.html\">history.html</a> dashboard, and receive Slack/email alerts right from your phone or tablet. For tips, read <a href=\"/google-meet-attendance-on-ipad-and-mobile.html\">Google Meet Attendance on iPad &amp; Mobile</a>."
+    },
+    {
+      "id": "2538f24d13",
+      "kind": "html",
+      "key": "h3",
+      "text": "Why does a small tab open when I download a CSV or PDF in Meet?"
+    },
+    {
+      "id": "dd0c260c8d",
+      "kind": "html",
+      "key": "p",
+      "text": "That's expected. Google Meet runs add-ons in a locked-down frame that silently blocks direct file downloads, so Attendance Tracker hands your file to a small helper tab on attendancetracker.dev that performs the download and tells you when it's done — then you can close it."
+    },
+    {
+      "id": "13f6c04158",
+      "kind": "html",
+      "key": "p",
+      "text": "If nothing opens at all, your browser's pop-up blocker caught the tab: allow pop-ups for <code>meet.google.com</code> and click download again."
+    },
+    {
+      "id": "d83fc11400",
+      "kind": "html",
+      "key": "h3",
+      "text": "Is the add-on available in my language?"
+    },
+    {
+      "id": "a2b6ea0e76",
+      "kind": "html",
+      "key": "p",
+      "text": "The side panel is localized in <strong>60 languages</strong> — including Spanish, Portuguese, Hindi, Tagalog, Indonesian, Vietnamese, Arabic, Chinese, Japanese, Korean, Russian, and more. It detects your browser language automatically, and you can switch any time from the <strong>Settings</strong> modal's language selector."
+    },
+    {
+      "id": "01e0f10ace",
+      "kind": "html",
+      "key": "h2",
+      "text": "Security, Privacy &amp; Compliance"
+    },
+    {
+      "id": "3b99306621",
+      "kind": "html",
+      "key": "h3",
+      "text": "What permissions does Attendance Tracker request, and why?"
+    },
+    {
+      "id": "03847d6193",
+      "kind": "html",
+      "key": "p",
+      "text": "We ask for the absolute bare minimum permissions needed to take attendance:"
+    },
+    {
+      "id": "cf05d666dd",
+      "kind": "html",
+      "key": "li",
+      "text": "<code>meetings.space.readonly</code> — Reads who is currently in your Meet call and when they join or leave."
+    },
+    {
+      "id": "23cf15db08",
+      "kind": "html",
+      "key": "li",
+      "text": "<code>calendar.events.readonly</code> — Reads matching calendar invitees to identify no-shows and calculate late arrivals."
+    },
+    {
+      "id": "456a02aacc",
+      "kind": "html",
+      "key": "li",
+      "text": "<code>drive.file</code> — Creates and updates attendance spreadsheets in your Drive. Notice this is <code>drive.file</code>, <strong>not</strong> full Google Drive access—we can only view and edit spreadsheets created by Attendance Tracker, never your personal files, docs, or photos."
+    },
+    {
+      "id": "22a084085b",
+      "kind": "html",
+      "key": "li",
+      "text": "<em>Optional:</em> <code>classroom.courses.readonly</code>, <code>classroom.rosters.readonly</code>, and <code>classroom.profile.emails</code> — requested <strong>only if</strong> you click \"Import from Google Classroom\", to list the courses you teach and copy a course's student names and emails into a Class Roster. Read-only, and the imported roster stays in your browser — never on our servers."
+    },
+    {
+      "id": "cdd238ca32",
+      "kind": "html",
+      "key": "h3",
+      "text": "Does Attendance Tracker record meeting audio, video, or private chats?"
+    },
+    {
+      "id": "d7f61de9fa",
+      "kind": "html",
+      "key": "p",
+      "text": "<strong>Never. We literally cannot.</strong> The add-on does not have access to your camera, microphone, screen shares, or chat text. It purely collects roster metadata: names, arrival times, and departure times."
+    },
+    {
+      "id": "499a984b75",
+      "kind": "html",
+      "key": "h3",
+      "text": "Is student and meeting data secure, private, and FERPA-compliant?"
+    },
+    {
+      "id": "345b94eea3",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. Data is encrypted in transit using TLS 1.3 and at rest using AES-256-GCM. We do not sell student or user data, and we never use your meeting records to train artificial intelligence models. Our architecture adheres to standard FERPA and COPPA privacy principles for educational institutions."
+    },
+    {
+      "id": "e77d22348b",
+      "kind": "html",
+      "key": "p",
+      "text": "Review our <a href=\"/privacy.html\">Privacy Policy</a> and <a href=\"/terms.html\">Terms of Service</a> for full details."
+    },
+    {
+      "id": "89e37cb9d8",
+      "kind": "html",
+      "key": "h3",
+      "text": "How do I request complete account or data deletion?"
+    },
+    {
+      "id": "a48f7009a2",
+      "kind": "html",
+      "key": "p",
+      "text": "Just send an email to <a href=\"mailto:legal@kinetichelix.io?subject=Data%20Deletion%20Request\">legal@kinetichelix.io</a> with the subject line <em>\"Data Deletion Request\"</em>. We will permanently wipe your account and stored session data within 30 days. The Google Sheets in your own Google Drive remain entirely yours to keep or delete as you wish."
+    },
+    {
+      "id": "5bf8f7eca2",
+      "kind": "html",
+      "key": "h4",
+      "text": "Email Support"
+    },
+    {
+      "id": "5cb3fb703d",
+      "kind": "html",
+      "key": "p",
+      "text": "Have a question not covered here or need help with a custom rollout? Email our team directly."
+    },
+    {
+      "id": "7ed1b0b6e4",
+      "kind": "html",
+      "key": "a",
+      "text": "support@attendancetracker.dev →"
+    },
+    {
+      "id": "9ba808b9a4",
+      "kind": "html",
+      "key": "h4",
+      "text": "Developer Issues &amp; Setup"
+    },
+    {
+      "id": "8e9298a183",
+      "kind": "html",
+      "key": "p",
+      "text": "Found a bug or need domain-wide delegation guidance? Open an issue or review our setup wizard."
+    },
+    {
+      "id": "cf9709aa0a",
+      "kind": "html",
+      "key": "a",
+      "text": "GitHub Issue Tracker →"
+    },
+    {
+      "id": "52bd858eb7",
+      "kind": "html",
+      "key": "h2",
+      "text": "Start Tracking Attendance in 30 Seconds"
+    },
+    {
+      "id": "2caeff608f",
+      "kind": "html",
+      "key": "p",
+      "text": "Install the official Google Meet™ add-on. No credit card required. Free to get started."
+    },
+    {
+      "id": "557fecba9a",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\">Home</a>\n      <a href=\"/pricing.html\">Pricing</a>\n      <a href=\"/faq.html\">Help Center &amp; FAQ</a>\n      <a href=\"/support.html\">Contact Support</a>\n      <a href=\"/privacy.html\">Privacy Policy</a>\n      <a href=\"/terms.html\">Terms of Service</a>\n      <a href=\"/refunds.html\">Refund Policy</a>\n      <a href=\"/setup.html\">Admin Setup</a>\n      <a href=\"https://kinetichelix.io\" target=\"_blank\" rel=\"noopener\">Built by Kinetic Helix</a>"
+    },
+    {
+      "id": "b55e10d9d4",
+      "kind": "html",
+      "key": "p",
+      "text": "Attendance Tracker is an official Google Meet™ add-on. Google Meet™, Google Sheets™, Google Drive™, Google Calendar™, and Google Workspace™ are trademarks of Google LLC."
+    },
+    {
+      "id": "78e9f725b7",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "How to track attendance in Google Meet as a TA (Teaching Assistant) or Co-Host?"
+    },
+    {
+      "id": "377a9c65be",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "If you are a TA, the professor usually created the calendar invite, meaning you do not have host rights. With Attendance Tracker, you do not need to be the host. Simply join the call from your laptop, open the Attendance Tracker side panel from the Activities icon (shapes/puzzle piece), and leave it open during class. It records who arrives, who leaves early, and exact minutes. When the meeting wraps up, the spreadsheet saves straight into your own Google Drive in a folder named 'Meet Attendance Tracker'."
+    },
+    {
+      "id": "c42226bf7a",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "How to track attendance in Google Meet without being the host or meeting organizer?"
+    },
+    {
+      "id": "6e68a21ab8",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Google's default tool only emails attendance to the person who created the calendar event. Attendance Tracker solves this: anyone present in the call with the add-on open can generate an attendance report for their own records. If your school or company uses Google Workspace, having an admin do a quick 2-minute delegation setup at attendancetracker.dev/setup lets you see external and cross-domain attendees too."
+    },
+    {
+      "id": "8920929893",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Do I need Google Workspace for Education Plus to take attendance?"
+    },
+    {
+      "id": "7d2b4e5231",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "No, not at all. Google reserves its built-in attendance reports for their most expensive Education Plus or Teaching and Learning Upgrade tiers. Attendance Tracker works on free Education Fundamentals, Education Standard, Business Starter, Standard, Enterprise, and personal @gmail.com accounts with no upgrade required."
+    },
+    {
+      "id": "a46febdfee",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Can I track attendance using a personal @gmail.com account?"
+    },
+    {
+      "id": "09716690d7",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Yes! Just sign in with your standard personal @gmail.com account. If you are a tutor, coach, freelancer, or running community meetups, you can track attendee join times, duration, and auto-export straight to Google Sheets for free."
+    },
+    {
+      "id": "b7e86ca036",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "How to export Google Meet logs to Google Sheets?"
+    },
+    {
+      "id": "8a8e5f9989",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "You can export automatically or manually. For auto-export: leave the side panel open during your call; when the meeting ends, the spreadsheet is generated in your Google Drive and emailed to you. For manual export: click the 'Sheet' icon button at the top of the side panel at any point during the call to generate or update the sheet instantly."
+    },
+    {
+      "id": "c6f0e1d556",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "What data fields and columns are included in the Google Sheets export?"
+    },
+    {
+      "id": "6991b72d37",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "The exported sheet includes: Participant Name, Email Address, RSVP Status (from the calendar invite), Late Arrival Indicator (like +7m late based on scheduled start), Join Time, Leave Time, Total Duration (in active minutes, properly summed across reconnections), Attendance Percentage, and Status (Present, Left early, Absent, or Absent excused)."
+    },
+    {
+      "id": "a20c396e57",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Where are exported sheets saved, and who can access them?"
+    },
+    {
+      "id": "447016b9f7",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "They are saved directly into your personal Google Drive in a folder named 'Meet Attendance Tracker'. Only you have access by default. You can share them using normal Google Sheets sharing controls whenever you need to send reports to professors, managers, or colleagues."
+    },
+    {
+      "id": "06dd9e2c94",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "How to mark absent attendees as 'Excused' before exporting?"
+    },
+    {
+      "id": "46bc9bfca7",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "When exporting a meeting tied to a Google Calendar event, the add-on compares joined attendees against the invite list. Absent invitees appear in an invitee window with an 'Excused' checkbox. Check that box, and the sheet logs them as 'Absent (excused)' rather than absent. That tag persists across future re-exports."
+    },
+    {
+      "id": "8787f3cd46",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "How to track recurring classes and multi-week semester attendance trends?"
+    },
+    {
+      "id": "1b6e4d49fc",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "If your class or standup is a repeating Google Calendar event, Attendance Tracker groups all sessions under that series. Visit attendancetracker.dev/history.html and click the 'Series' tab to see running semester-long percentages (e.g., 'Student attended 26 of 28 classes - 93%'), streaks, and alerts if someone regularly misses consecutive sessions."
+    },
+    {
+      "id": "c5a5357fb2",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "How to send Google Meet attendance summaries directly to Slack?"
+    },
+    {
+      "id": "325e8e07ae",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Create an Incoming Webhook in Slack for your channel (like #team-standup), open the Attendance Tracker side panel settings gear, and paste the webhook URL. When the meeting ends or you export, an automated summary card posts to your channel with present, late, and absent counts, plus a direct button to the Google Sheet."
+    },
+    {
+      "id": "7efed4783b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Why don't external participants show up? (Domain-Wide Delegation Setup)"
+    },
+    {
+      "id": "6e1ace83f8",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Google Workspace security restricts roster queries to people inside your own organization unless an admin enables delegation. If you see a note saying 'Some participants may not appear', your Google Workspace administrator can do a one-time 2-minute setup at attendancetracker.dev/setup to grant read access for external attendees."
+    },
+    {
+      "id": "eb576cde3e",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Why does a participant show as 'Left' when they are still in the meeting?"
+    },
+    {
+      "id": "9acbabe56e",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Google's official Meet API has a 2 to 5 minute delay when updating attendee states. If someone's connection flickers or they refresh their browser, the API briefly reports them as left before catching up. Attendance Tracker merges reconnections under the same person so their final exported minutes and percentage remain accurate."
+    },
+    {
+      "id": "eaf9b9cc2f",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "What permissions does Attendance Tracker request, and why?"
+    },
+    {
+      "id": "fda31faf12",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "We only request what is strictly needed: read-only access to the active Meet participant roster, read-only access to calendar events to match invitees, and restricted write access only to Google Sheets files created by Attendance Tracker (drive.file scope). We cannot see or edit any of your other Google Drive files."
+    },
+    {
+      "id": "38fb43ada0",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Does Attendance Tracker record meeting audio, video, or private chats?"
+    },
+    {
+      "id": "32edb286ba",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Never. We cannot access your webcam, microphone, screen shares, or chat text. The add-on only reads roster metadata: participant names, join timestamps, and departure timestamps."
+    },
+    {
+      "id": "c8dce4ee95",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Can I import my class list from Google Classroom?"
+    },
+    {
+      "id": "3e82f7b0f5",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Yes. In the Class Roster tab, click + New Class and then Import from Google Classroom. Approve the one-time read-only permission, pick your course, and every enrolled student's name and school email fills in automatically. The roster is stored only in your browser."
+    },
+    {
+      "id": "55e414d7ed",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Can I export attendance to Moodle or Canvas?"
+    },
+    {
+      "id": "0705bf68a1",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Yes. With a Class Roster active, click Moodle or Canvas under Export gradebook CSV to download an import-ready gradebook file matched to students by email. Recurring classes also get a cumulative whole-semester gradebook export from the Meeting History Series tab."
+    },
+    {
+      "id": "4c6ae63384",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Can attendance summaries go to Google Chat or Discord instead of Slack?"
+    },
+    {
+      "id": "d56ca596dd",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Yes. The Settings modal has one webhook card with Slack, Google Chat, and Discord tabs — paste the matching incoming-webhook URL, send a test, and save. Each configured provider gets its own formatted attendance card after every export."
+    },
+    {
+      "id": "1285bf9a19",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Can I generate attendance certificates for participants?"
+    },
+    {
+      "id": "62b73b34bd",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Yes (Pro). After exporting, click Certificates in the side panel to generate a per-attendee PDF certificate with name, session, date, duration or credit hours, and a unique verification code anyone can confirm at attendancetracker.dev/verify."
+    },
+    {
+      "id": "7befcab49a",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "How much does Attendance Tracker cost?"
+    },
+    {
+      "id": "1ac4afc650",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Free to start: 2 free exports/mo across Google Sheets, CSV, or binary Excel (.xlsx) for classes up to 25 attendees (plus 1 large-class grace export). Paid plans include Educator Annual Pass ($4.99–$14.99/year), Pro Annual ($29/year), Individual Lifetime Pass ($9.99–$29 one-time), or a domain plan covering every teacher on your Workspace — Department ($59/year) or Institution ($149/year), with automatic regional pricing in eligible countries."
+    },
+    {
+      "id": "1c6911bc52",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Is the add-on available in my language?"
+    },
+    {
+      "id": "beb90028ea",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "The side panel is localized in 60 languages, including Spanish, Portuguese, Hindi, Tagalog, Indonesian, Vietnamese, Arabic, Chinese, and more. It follows your browser language automatically and can be switched any time from Settings."
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "5d22c9c73b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Frequently Asked Questions"
+    },
+    {
+      "id": "0e21393517",
+      "kind": "jsonld",
+      "key": "1:name",
+      "text": "How to Track Attendance in Google Meet as a Teaching Assistant (TA)"
+    },
+    {
+      "id": "b464738123",
+      "kind": "jsonld",
+      "key": "1:description",
+      "text": "Step-by-step guide for TAs and co-hosts to track student attendance in Google Meet without needing to organize or own the meeting invite."
+    },
+    {
+      "id": "cba4178086",
+      "kind": "jsonld",
+      "key": "1:name",
+      "text": "Install the Add-on"
+    },
+    {
+      "id": "5a183abf73",
+      "kind": "jsonld",
+      "key": "1:text",
+      "text": "Install Attendance Tracker from the Google Workspace Marketplace into your school or university Google account."
+    },
+    {
+      "id": "63a0dff473",
+      "kind": "jsonld",
+      "key": "1:name",
+      "text": "Join the Google Meet Session"
+    },
+    {
+      "id": "59c3f671a4",
+      "kind": "jsonld",
+      "key": "1:text",
+      "text": "Join the lecture or recitation via the standard Google Meet link provided by your professor."
+    },
+    {
+      "id": "b32c64913d",
+      "kind": "jsonld",
+      "key": "1:name",
+      "text": "Open Attendance Tracker"
+    },
+    {
+      "id": "0292908e65",
+      "kind": "jsonld",
+      "key": "1:text",
+      "text": "Click the Activities icon (shapes/puzzle piece in the bottom right corner) and launch Attendance Tracker in the side panel."
+    },
+    {
+      "id": "f82e3b52bc",
+      "kind": "jsonld",
+      "key": "1:name",
+      "text": "Auto-Export on End"
+    },
+    {
+      "id": "cdf7675154",
+      "kind": "jsonld",
+      "key": "1:text",
+      "text": "Leave the panel open during class. When the call wraps up, your attendance sheet auto-exports directly into your own Google Drive."
+    },
+    {
+      "id": "7e93195afd",
+      "kind": "jsonld",
+      "key": "2:name",
+      "text": "Help Center & FAQ"
+    }
+  ]
+}

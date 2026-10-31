@@ -1,0 +1,756 @@
+{
+  "page": "attendancetracker-vs-attendlist.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "193d987fce",
+      "kind": "head",
+      "key": "title",
+      "text": "AttendanceTracker.dev vs Competitor (2026 Comparison): Features, Pricing, Data Retention & Reviews"
+    },
+    {
+      "id": "27511196a1",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Factual, evidence-backed comparison of AttendanceTracker.dev vs Chrome Extension Competitor for Google Meet attendance. Compare best-fit users, live attendance, reports, classroom workflows, meeting history retention, pricing, customer reviews, and limitations."
+    },
+    {
+      "id": "806c8791f1",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "AttendanceTracker.dev vs Competitor: Factual 2026 Comparison"
+    },
+    {
+      "id": "ad4e652c0d",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Side-by-side comparison of AttendanceTracker.dev and Chrome Extension Competitor across 8 dimensions: best-fit user, live attendance, reports, classroom workflow, meeting history, pricing, customer satisfaction, and limitations."
+    },
+    {
+      "id": "d16555f41f",
+      "kind": "head",
+      "key": "meta[name=\"twitter:title\"]",
+      "text": "AttendanceTracker.dev vs Competitor (2026 Comparison)"
+    },
+    {
+      "id": "dabeb0848c",
+      "kind": "head",
+      "key": "meta[name=\"twitter:description\"]",
+      "text": "Compare real features, pricing, data retention, classroom workflows, verified customer reviews, and limitations between AttendanceTracker.dev and Chrome Extension Competitor."
+    },
+    {
+      "id": "d557b223a9",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"/icons/icon-96.png\" alt=\"Attendance Tracker icon\">\n        <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "c931909fff",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Attendance Tracker icon"
+    },
+    {
+      "id": "8ec260c052",
+      "kind": "html",
+      "key": "nav",
+      "text": "<a href=\"/\">Home</a>\n        <a href=\"/pricing.html\">Pricing</a>\n        <a href=\"/customer-reviews/\">Customer Reviews</a>\n        <a href=\"/attendance-tracker-for-teachers.html\">For Teachers</a>\n        <a href=\"/best-google-meet-attendance-extensions.html\">All 10 Tools Compared</a>\n        <a href=\"/faq.html\">FAQ</a>"
+    },
+    {
+      "id": "99bf337770",
+      "kind": "html",
+      "key": "h1",
+      "text": "AttendanceTracker.dev vs Competitor: Factual Side-by-Side Comparison (2026)"
+    },
+    {
+      "id": "7cf5275483",
+      "kind": "html",
+      "key": "p",
+      "text": "Both <strong>AttendanceTracker.dev</strong> and a leading <strong>Chrome Extension Competitor</strong> are actively maintained Google Meet attendance tools that replace manual roll calls. Rather than simply declaring a winner, this guide compares the exact facts across both tools — including best-fit users, live tracking, attendance reports, classroom workflows, meeting history retention, pricing, customer reviews, and limitations."
+    },
+    {
+      "id": "430d725d49",
+      "kind": "attr",
+      "key": "aria-label",
+      "text": "Comparison verification metadata"
+    },
+    {
+      "id": "1c5675a2b8",
+      "kind": "html",
+      "key": "div",
+      "text": "<span><strong>Last Verified:</strong> October 21, 2026</span>\n      <span><strong>Product:</strong> Attendance Tracker for Google Meet (by <a href=\"https://kinetichelix.io\" target=\"_blank\" rel=\"noopener\">Kinetic Helix</a> · 304K+ installs)</span>\n      <span><strong>Compared With:</strong> Chrome Extension Competitor</span>\n      <span><strong>Intended Audience:</strong> Teachers, tutors, K–12 schools, universities &amp; business teams</span>"
+    },
+    {
+      "id": "f7427e6973",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Disclosure &amp; Verification Policy:</strong> We build AttendanceTracker.dev. Every feature, plan limit, retention cap, price, and review count below is sourced from public listings on the <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968\" target=\"_blank\" rel=\"noopener\">Google Workspace Marketplace</a>, the Chrome Web Store, and both products' published pricing pages as of <strong>October 21, 2026</strong>. When either product changes, we update the facts and the Last Verified date above."
+    },
+    {
+      "id": "57a3fddd4b",
+      "kind": "html",
+      "key": "h2",
+      "text": "Quick Summary: Which Tool Fits Your Workflow?"
+    },
+    {
+      "id": "e54a100a75",
+      "kind": "html",
+      "key": "span",
+      "text": "Best fit for AttendanceTracker.dev"
+    },
+    {
+      "id": "39ec0aecf2",
+      "kind": "html",
+      "key": "h3",
+      "text": "Teachers, tutors, schools &amp; teams wanting a native Meet Add-on, Classroom/LMS sync &amp; permanent Google Sheets records"
+    },
+    {
+      "id": "6711c2a299",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Official Google Meet Add-on:</strong> Runs inside Meet's native <em>Activities</em> side panel via official Google Meet REST APIs — works on Chrome, Safari, Firefox, Edge, and extension-restricted school Chromebooks."
+    },
+    {
+      "id": "6644a5527a",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Classroom &amp; LMS workflows:</strong> 1-click <a href=\"/import-google-classroom-roster-to-google-meet.html\">Google Classroom roster import</a>, in-Meet student self-check-in (<em>\"I'm here\"</em>), and <a href=\"/export-google-meet-attendance-to-canvas.html\">Canvas</a> / <a href=\"/export-google-meet-attendance-to-moodle.html\">Moodle</a> gradebook exports."
+    },
+    {
+      "id": "781a3bc6ba",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Permanent meeting history:</strong> Exports directly to multi-tab Google Sheets in your own Google Drive (<code>drive.file</code> scope) and keeps semester history without a 14-day or 60-day cutoff."
+    },
+    {
+      "id": "f57b1f1a97",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Educator &amp; one-time pricing:</strong> Free option for classes up to 25 students (2 exports/mo), Educator Annual Pass ($14.99/yr standard / $4.99/yr regional), or one-time Individual Lifetime Pass ($29 standard / $9.99 regional)."
+    },
+    {
+      "id": "ca4777dff6",
+      "kind": "html",
+      "key": "span",
+      "text": "Best fit for Competitor"
+    },
+    {
+      "id": "0cca0ac536",
+      "kind": "html",
+      "key": "h3",
+      "text": "Chrome-only hosts &amp; engineering teams needing a developer REST API or high-frequency short-term exports"
+    },
+    {
+      "id": "166c773fbe",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Developer REST API:</strong> The Competitor's $29/month Team plan includes a REST API for software teams building custom attendance pipelines into internal tools."
+    },
+    {
+      "id": "46b98aab5d",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Unlimited free-tier exports within a 14-day window:</strong> The Competitor's Free tier does not cap monthly CSV export count, provided you download records before its 14-day history expiration window closes."
+    },
+    {
+      "id": "121b221ce6",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Browser extension workflow:</strong> If every meeting organizer exclusively uses desktop Google Chrome and does not need Google Classroom imports, LMS gradebook formatting, or Chromebook add-on support."
+    },
+    {
+      "id": "07eeeb4c77",
+      "kind": "html",
+      "key": "h2",
+      "text": "Comparable Facts: 8-Category Side-by-Side Comparison"
+    },
+    {
+      "id": "69be1ba22d",
+      "kind": "html",
+      "key": "p",
+      "text": "Below are the exact comparable facts across the eight categories buyers and AI assistants evaluate when comparing AttendanceTracker.dev and the Competitor:"
+    },
+    {
+      "id": "a9e340b502",
+      "kind": "html",
+      "key": "th",
+      "text": "Comparison Category"
+    },
+    {
+      "id": "e1bfbd4731",
+      "kind": "html",
+      "key": "th",
+      "text": "AttendanceTracker.dev"
+    },
+    {
+      "id": "88d7459d6e",
+      "kind": "html",
+      "key": "th",
+      "text": "Competitor (Chrome Extension)"
+    },
+    {
+      "id": "7b3ee0ddf9",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>1. Best-fit user</strong><br><span style=\"font-size:.78rem;color:var(--muted)\">Teacher, tutor, school, or business team</span>"
+    },
+    {
+      "id": "3801ed677d",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>K–12 &amp; university teachers, tutors, schools, and Google Workspace teams</strong> that want permanent Google Sheets records, Google Classroom / Canvas / Moodle workflows, Chromebook compatibility, or low annual/lifetime pricing."
+    },
+    {
+      "id": "968857f4bf",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Business teams and Chrome-based organizers</strong> that want passive browser-extension capture in desktop Chrome, only need 14–120 days of cloud history, or need a developer REST API ($29/mo Team tier)."
+    },
+    {
+      "id": "db55191878",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>2. Live attendance</strong><br><span style=\"font-size:.78rem;color:var(--muted)\">What updates during the meeting</span>"
+    },
+    {
+      "id": "17c616e670",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Real-time in-Meet side panel (Activities):</strong> Live Present, Late, Left Early, and Absent/No-show status matched against your class roster or Calendar invite; live elapsed minutes; plus optional in-Meet student self-check-in (<em>\"I'm here\"</em>)."
+    },
+    {
+      "id": "13a178cbc1",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Chrome extension capture:</strong> Tracks active participants from the host's open Chrome browser tab during the call and syncs session attendance to the Competitor's web dashboard."
+    },
+    {
+      "id": "e255813ca2",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>3. Attendance reports</strong><br><span style=\"font-size:.78rem;color:var(--muted)\">Join/leave times, duration, late arrivals</span>"
+    },
+    {
+      "id": "e570a0cf5b",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>First join time, last leave time, net duration (with rejoined intervals merged), re-entry count, attendance %, and automatic Late flags</strong> (+5m/+10m/+15m vs scheduled start). Exports to multi-tab Google Sheets, Excel (<code>.xlsx</code>), CSV, and verifiable PDF certificates."
+    },
+    {
+      "id": "0e00b934cb",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Join/leave timestamps, total duration in call, and participant status</strong> viewable in the web dashboard and downloadable as CSV or Excel files."
+    },
+    {
+      "id": "9369b2bc5a",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>4. Classroom workflow</strong><br><span style=\"font-size:.78rem;color:var(--muted)\">Roster imports and gradebook exports</span>"
+    },
+    {
+      "id": "7a3293b6cf",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>1-click Google Classroom roster import</strong> (flags missing students as Absent), custom CSV roster lists, in-Meet student self-check-in to resolve mobile names like <code>iPhone (2)</code>, and import-ready <strong>Canvas &amp; Moodle gradebook CSVs</strong> + direct Classroom/Canvas score sync."
+    },
+    {
+      "id": "af98f0f18b",
+      "kind": "html",
+      "key": "td",
+      "text": "Supports custom participant grouping and tags in the web dashboard; <strong>no native Google Classroom API roster import, no in-Meet student check-in, and no Canvas/Moodle gradebook formatting</strong>."
+    },
+    {
+      "id": "0c1f464b03",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>5. Meeting history</strong><br><span style=\"font-size:.78rem;color:var(--muted)\">What users can review across sessions</span>"
+    },
+    {
+      "id": "43f3aad9e0",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Permanent Meeting History (no expiration cutoff)</strong> across all plans, plus cumulative multi-meeting <em>Summary</em> matrix tabs in Google Sheets showing per-student attendance % and streaks across an entire semester."
+    },
+    {
+      "id": "a97f9a4c2f",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Rolling cloud retention window gated by plan:</strong> history older than <strong>14 days</strong> is locked/expired on Free; <strong>60 days</strong> on Pro ($9.90/mo); <strong>120 days</strong> on Team ($29/mo)."
+    },
+    {
+      "id": "a9fceba417",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>6. Pricing</strong><br><span style=\"font-size:.78rem;color:var(--muted)\">Current free limits, annual cost &amp; lifetime cost</span>"
+    },
+    {
+      "id": "2d9df312d8",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Free ($0):</strong> Unlimited live tracking, 2 exports/mo (Sheets, CSV, or Excel) for classes up to 25 students + 1 large-class grace export.<br>\n              <strong>Annual cost:</strong> <strong>$14.99/yr Educator Pass</strong> ($4.99–$7.99/yr in regional tiers) or <strong>$29/yr Pro Annual</strong> ($4.99/mo monthly).<br>\n              <strong>Lifetime cost:</strong> <strong>$29 one-time Individual Lifetime Pass</strong> ($9.99–$19 in regional tiers; no recurring bill).<br>\n              <strong>School / Domain:</strong> <strong>$59/yr Department</strong> or <strong>$149/yr Institution</strong> (whole Google Workspace domain)."
+    },
+    {
+      "id": "ec3f95c66f",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Free ($0):</strong> Unlimited meetings captured, <strong>14-day history retention limit</strong>.<br>\n              <strong>Annual cost (Pro):</strong> $9.90/month = <strong>$118.80/year</strong> (60-day history retention).<br>\n              <strong>Lifetime cost:</strong> Not offered (recurring monthly subscription only).<br>\n              <strong>Team cost:</strong> $29/month = <strong>$348/year for 5 seats</strong> (120-day history retention + REST API)."
+    },
+    {
+      "id": "543639fe2a",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>7. Customer satisfaction</strong><br><span style=\"font-size:.78rem;color:var(--muted)\">Actual review counts, dates &amp; original sources</span>"
+    },
+    {
+      "id": "94396d9aa8",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Google Workspace Marketplace:</strong> <strong>5.0★ average</strong> across <strong>27 total Marketplace ratings/reviews</strong> (including 14 written text reviews published between Aug 11, 2026 and Oct 19, 2026) and <strong>304K+ installs</strong>.<br>\n              Source: <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968\" target=\"_blank\" rel=\"noopener\">Official Marketplace Listing ↗</a> · <a href=\"/customer-reviews/\">Verifiable Review Archive →</a>"
+    },
+    {
+      "id": "f7701159b9",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Chrome Web Store:</strong> <strong>4.9★ average</strong> across <strong>28 ratings</strong> on the Chrome Web Store listing (as retrieved October 2026).<br>\n              <em>Note: Google Workspace Marketplace and the Chrome Web Store are different platforms, so these counts are not a direct head-to-head comparison.</em>"
+    },
+    {
+      "id": "53fa8a2bcf",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>8. Limitations</strong><br><span style=\"font-size:.78rem;color:var(--muted)\">Browser support, setup, account requirements &amp; plan restrictions</span>"
+    },
+    {
+      "id": "9f8d1fff28",
+      "kind": "html",
+      "key": "td",
+      "text": "• <strong>Free export cap:</strong> Free tier includes 2 exports/month (Sheets, CSV, or Excel) for classes up to 25 students (+1 grace export for &gt;25) before requiring Educator/Pro.<br>\n              • <strong>No public developer REST API:</strong> Supports Slack, Google Chat &amp; Discord webhooks, but no general REST API for custom internal apps.<br>\n              • <strong>Host side panel is desktop web:</strong> Works on Chrome, Safari, Firefox, Edge &amp; Chromebooks, and on personal <code>@gmail.com</code> + all Workspace tiers; hosts on phones use the mobile web history dashboard."
+    },
+    {
+      "id": "10c49f0ed1",
+      "kind": "html",
+      "key": "td",
+      "text": "• <strong>History expiration:</strong> Records expire from dashboard view after 14 days (Free), 60 days ($9.90/mo Pro — shorter than a 16-week semester), or 120 days ($29/mo Team).<br>\n              • <strong>Chrome desktop extension only:</strong> Does not run on Safari, Firefox, or school-managed Chromebooks where Chrome Web Store extensions are blocked.<br>\n              • <strong>English-only UI</strong> (vs 60 languages on AttendanceTracker.dev)."
+    },
+    {
+      "id": "d5dcd7abda",
+      "kind": "html",
+      "key": "h2",
+      "text": "1. Meeting History &amp; Semester Reporting: Permanent Drive Sheets vs 14/60/120-Day Windows"
+    },
+    {
+      "id": "45dee6e403",
+      "kind": "html",
+      "key": "p",
+      "text": "For teachers and academic departments, the most practical difference between the two tools is <strong>how long you can access your attendance records across a semester</strong>."
+    },
+    {
+      "id": "877d4b1885",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Competitor's rolling retention model:</strong> The Competitor's Free tier retains history for <strong>14 days</strong>, its $9.90/month ($118.80/year) Pro plan retains history for <strong>60 days</strong>, and its $29/month ($348/year) Team plan retains history for <strong>120 days</strong>. Because a standard K–12 semester or 16-week university term spans 112 to 125 days, educators on the Competitor's Free or Pro tiers must remember to export and back up CSVs manually before earlier weeks age out of the dashboard."
+    },
+    {
+      "id": "f8288a9b43",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>AttendanceTracker.dev's permanent model:</strong> AttendanceTracker.dev never expires your Meeting History and exports directly to multi-tab Google Sheets inside your own Google Drive (using the narrow <code>drive.file</code> scope). Each recurring class or meeting appends a dated session tab and updates a cumulative <em>Summary</em> matrix tab automatically."
+    },
+    {
+      "id": "ec79fbec70",
+      "kind": "html",
+      "key": "h2",
+      "text": "2. Setup, Permissions &amp; Browser Compatibility"
+    },
+    {
+      "id": "b4fb139f9a",
+      "kind": "html",
+      "key": "p",
+      "text": "The two products take different technical approaches to capturing Google Meet participants:"
+    },
+    {
+      "id": "902b87b64a",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>AttendanceTracker.dev (Google Workspace Marketplace Add-on):</strong> Installs to your Google account from the <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968\" target=\"_blank\" rel=\"noopener\">Google Workspace Marketplace</a> and opens inside Google Meet's built-in <strong>Activities</strong> panel. It reads join/leave events from Google's official Meet REST APIs (<code>meetings.space.readonly</code>) and writes only to spreadsheets it creates (<code>drive.file</code>). Because it is an account-level add-on rather than a browser extension, it works in Chrome, Safari, Firefox, Edge, and on school-managed Chromebooks, as well as on both free personal <code>@gmail.com</code> and Google Workspace accounts."
+    },
+    {
+      "id": "0cedda0727",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Competitor (Chrome Web Store Extension):</strong> Installs as a browser extension in desktop Google Chrome and monitors the Google Meet tab in your browser. This works smoothly for hosts who exclusively use desktop Chrome and want extension-based capture, but it cannot run on Safari, Firefox, or Chromebooks where district IT policies block Chrome Web Store extensions."
+    },
+    {
+      "id": "fb6c82ee8d",
+      "kind": "html",
+      "key": "h2",
+      "text": "3. Customer Satisfaction: Comparing Marketplace &amp; Chrome Web Store Evidence"
+    },
+    {
+      "id": "d530526632",
+      "kind": "html",
+      "key": "p",
+      "text": "Both products have strong third-party user ratings, published on their respective distribution platforms:"
+    },
+    {
+      "id": "acb55b3f9f",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>AttendanceTracker.dev on Google Workspace Marketplace:</strong> Displays <strong>304K+ installs</strong> and a <strong>5.0★ rating across 27 total ratings/reviews</strong> on the <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968\" target=\"_blank\" rel=\"noopener\">Google Workspace Marketplace listing</a>, with 14 written text reviews published between August 2026 and October 2026. You can read and verify every review organized by outcome on our <a href=\"/customer-reviews/\">Customer Reviews Evidence Page</a>."
+    },
+    {
+      "id": "100be5745f",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Competitor on the Chrome Web Store:</strong> Displays a <strong>4.9★ rating across 28 ratings</strong> on the Chrome Web Store (retrieved October 2026). Users praise its clean web dashboard and reliability compared to older, unmaintained Chrome extensions."
+    },
+    {
+      "id": "384185dd32",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Why review counts aren't compared head-to-head:</strong> Google Workspace Marketplace and the Chrome Web Store are separate platforms with different review submission interfaces and counting rules, so we present the exact source and date for each rather than claiming one platform's count beats the other."
+    },
+    {
+      "id": "de71ae83ac",
+      "kind": "html",
+      "key": "span",
+      "text": "Outcome: Google Sheets exports &amp; zero in-call distraction"
+    },
+    {
+      "id": "fcf899fe6d",
+      "kind": "html",
+      "key": "blockquote",
+      "text": "\"Wow! This app is exactly what I was looking for (and more). It was obviously very well thought out. It works amazingly well by letting me know who actually shows up to our Google Meet sessions, and how long they stay. I no longer need to be distracted by having to monitor who comes and goes. The Attendance Tracker app handles that right out of the box. The one-click save to Google Sheets makes attendance record keeping a breeze. 5 stars for sure.\""
+    },
+    {
+      "id": "8024db6838",
+      "kind": "html",
+      "key": "div",
+      "text": "<span><strong>Mike Haynes</strong> · ★★★★★ · Aug 11, 2026</span>\n          <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?hl=en\" target=\"_blank\" rel=\"noopener\">Verify on Marketplace ↗</a>"
+    },
+    {
+      "id": "6bb56df4ea",
+      "kind": "html",
+      "key": "span",
+      "text": "Outcome: Google Classroom &amp; Sheets workflow"
+    },
+    {
+      "id": "afbd36f146",
+      "kind": "html",
+      "key": "blockquote",
+      "text": "\"Google Attendance Tracker is a reliable and straightforward tool that makes monitoring daily check-ins effortless for educators and team leaders. Because of its seamless integration with Google Workspace, it connects smoothly with tools like Google Sheets and Google Classroom, which significantly cuts down on manual data entry errors and saves valuable time. Its cloud-based setup also allows you to access and check attendance records from anywhere. While it lacks advanced features like automated alerts for chronic absenteeism or deep analytical reporting, it remains a practical, no-fuss solution for anyone already using the Google ecosystem. Overall, it is an efficient and user-friendly choice for everyday attendance management.\""
+    },
+    {
+      "id": "8e013328cf",
+      "kind": "html",
+      "key": "div",
+      "text": "<span><strong>Gift otindo</strong> · ★★★★★ · Oct 15, 2026</span>\n          <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?hl=en\" target=\"_blank\" rel=\"noopener\">Verify on Marketplace ↗</a>"
+    },
+    {
+      "id": "8acbbca370",
+      "kind": "html",
+      "key": "span",
+      "text": "Outcome: Time saved in online classes"
+    },
+    {
+      "id": "c0d0489440",
+      "kind": "html",
+      "key": "blockquote",
+      "text": "\"Excellent extension! Attendance Tracker makes taking attendance in Google Meet so much easier and more convenient. It saves time, reduces manual work, and helps keep attendance records organized. The automatic attendance tracking is especially useful for online classes and meetings. Highly recommended!\""
+    },
+    {
+      "id": "abb965455d",
+      "kind": "html",
+      "key": "div",
+      "text": "<span><strong>LIM GUAN YOU KPM-Murid</strong> · ★★★★★ · Oct 16, 2026</span>\n          <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?hl=en\" target=\"_blank\" rel=\"noopener\">Verify on Marketplace ↗</a>"
+    },
+    {
+      "id": "f4eda09684",
+      "kind": "html",
+      "key": "p",
+      "text": "<a href=\"/customer-reviews/\">Browse all 14 verified Google Workspace Marketplace reviews organized by outcome →</a>"
+    },
+    {
+      "id": "295636a24f",
+      "kind": "html",
+      "key": "h2",
+      "text": "4. Limitations of Each Tool"
+    },
+    {
+      "id": "265312e589",
+      "kind": "html",
+      "key": "p",
+      "text": "To make sure you choose the right tool for your exact environment, here are the real limitations of both products:"
+    },
+    {
+      "id": "30d4dd50b8",
+      "kind": "html",
+      "key": "h3",
+      "text": "Limitations of AttendanceTracker.dev"
+    },
+    {
+      "id": "a1e76f842a",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Free-tier monthly export cap (2 exports/month, up to 25 students):</strong> While live real-time tracking in the Meet side panel, Google Classroom roster imports, and permanent Meeting History are unlimited on the Free tier, exporting to Google Sheets, CSV, or Excel includes 2 free exports per month for classes up to 25 students (plus 1 lifetime grace export for a larger class) before requiring the Educator Annual Pass ($14.99/yr standard / $4.99/yr regional), Pro Annual ($29/yr), or Lifetime Pass ($29 standard / $9.99 regional)."
+    },
+    {
+      "id": "b2179a5eab",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>No general-purpose developer REST API:</strong> We support automated webhooks for Slack, Google Chat, and Discord plus direct LMS gradebook sync (Google Classroom and Canvas), but we do not offer a custom developer REST API (the Competitor's $29/mo Team tier does)."
+    },
+    {
+      "id": "6ec73d7cb3",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>In-Meet side panel requires desktop web:</strong> Google Meet's Add-on side panel runs on desktop browsers (Chrome, Safari, Firefox, Edge, Chromebooks). Mobile attendees are tracked accurately, while hosts joining from a phone access their records via the mobile web dashboard (<a href=\"/history.html\">attendancetracker.dev/history.html</a>)."
+    },
+    {
+      "id": "6d96e52ded",
+      "kind": "html",
+      "key": "h3",
+      "text": "Limitations of Competitor"
+    },
+    {
+      "id": "faf9d7e4f0",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>History expires after 14, 60, or 120 days:</strong> Attendance records age out of dashboard view after 14 days on Free, 60 days on Pro ($9.90/month), and 120 days on Team ($29/month)."
+    },
+    {
+      "id": "778bd7bc37",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Desktop Chrome extension dependency:</strong> Requires Google Chrome with the extension active in the meeting tab; cannot run on Safari, Firefox, or school Chromebooks that block Chrome Web Store extensions."
+    },
+    {
+      "id": "281f7685ad",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>No classroom or LMS integrations:</strong> No Google Classroom roster import, no in-Meet student self-check-in panel, no Canvas or Moodle gradebook exports, and no verifiable attendance certificates."
+    },
+    {
+      "id": "73c43f9811",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Recurring monthly subscription cost:</strong> At $9.90/month ($118.80/year) for Pro or $29/month ($348/year for 5 seats) for Team, there is no discounted educator annual tier or one-time lifetime purchase option."
+    },
+    {
+      "id": "c08cf5f1ad",
+      "kind": "html",
+      "key": "h2",
+      "text": "Frequently Asked Questions"
+    },
+    {
+      "id": "43ebe7ef85",
+      "kind": "html",
+      "key": "h3",
+      "text": "Can I import my existing rosters if I switch from a Competitor to AttendanceTracker.dev?"
+    },
+    {
+      "id": "f4c7b6a17a",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. You can import student rosters directly from Google Classroom in one click, or paste any CSV exported from a Competitor into AttendanceTracker.dev's Class Roster manager."
+    },
+    {
+      "id": "dcab2c63fa",
+      "kind": "html",
+      "key": "h3",
+      "text": "Does AttendanceTracker.dev work with personal @gmail.com accounts like Chrome extension competitors do?"
+    },
+    {
+      "id": "45e74b8f8e",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. AttendanceTracker.dev works on free personal <code>@gmail.com</code> accounts as well as Google Workspace Education Fundamentals, Standard, Plus, Business Starter/Standard/Plus, and Enterprise."
+    },
+    {
+      "id": "26b958151c",
+      "kind": "html",
+      "key": "h3",
+      "text": "Do students or attendees need to install anything?"
+    },
+    {
+      "id": "7029bd6ed3",
+      "kind": "html",
+      "key": "p",
+      "text": "No. Only the meeting organizer installs AttendanceTracker.dev from the Google Workspace Marketplace. Attendees join from any browser, mobile app, or dial-in phone line and are tracked automatically."
+    },
+    {
+      "id": "a6961778cf",
+      "kind": "html",
+      "key": "h3",
+      "text": "Try AttendanceTracker.dev Free in Your Next Google Meet"
+    },
+    {
+      "id": "1c8abbc391",
+      "kind": "html",
+      "key": "p",
+      "text": "Official Google Workspace Add-on · Free option for classes up to 25 students · Educator &amp; one-time Lifetime options."
+    },
+    {
+      "id": "750725c68a",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Free from Google Workspace Marketplace"
+    },
+    {
+      "id": "e4883a6011",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"/attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"/google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"/import-google-classroom-roster-to-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Import Classroom Rosters</a>\n          <a href=\"/google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"/google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "efe4f5e1b0",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Integrations</strong>\n          <a href=\"/export-google-meet-attendance-to-moodle.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Moodle Gradebook Export</a>\n          <a href=\"/export-google-meet-attendance-to-canvas.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Canvas Gradebook Export</a>\n          <a href=\"/export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"/how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"/send-google-meet-attendance-to-google-chat.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Chat &amp; Discord</a>"
+    },
+    {
+      "id": "0411bbce0a",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"/google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"/track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"/google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"/google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>"
+    },
+    {
+      "id": "d7c905dc31",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Evidence &amp; Comparisons</strong>\n          <a href=\"/customer-reviews/\" style=\"color: var(--muted); text-decoration: none; display: block;\">Verified Customer Reviews</a>\n          <a href=\"/attendancetracker-vs-attendlist/\" style=\"color: var(--accent); text-decoration: none; display: block; font-weight: 600;\">AttendanceTracker vs Competitor</a>\n          <a href=\"/best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">10 Extensions Ranked (2026)</a>\n          <a href=\"/attendance-taker-for-classroom-alternative.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Retired Competitor Alternative</a>\n          <a href=\"/how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>"
+    },
+    {
+      "id": "1b6c1a6791",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"/pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"/customer-reviews/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Customer Reviews</a> ·\n        <a href=\"/support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"/privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"/terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"/refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "b3477c3ab6",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "AttendanceTracker.dev vs Competitor (2026 Comparison): Features, Pricing, Data Retention & Reviews"
+    },
+    {
+      "id": "d10bff403b",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "A factual, evidence-based comparison of AttendanceTracker.dev and a Chrome Extension Competitor for Google Meet attendance tracking across best-fit users, live attendance, attendance reports, classroom workflows, meeting history, pricing, customer satisfaction, and limitations."
+    },
+    {
+      "id": "99d1750096",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Kinetic Helix"
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "1297e42eec",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker for Google Meet"
+    },
+    {
+      "id": "d148176d03",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Mike Haynes"
+    },
+    {
+      "id": "6ab59c8530",
+      "kind": "jsonld",
+      "key": "0:reviewBody",
+      "text": "Wow! This app is exactly what I was looking for (and more). It was obviously very well thought out. It works amazingly well by letting me know who actually shows up to our Google Meet sessions, and how long they stay. I no longer need to be distracted by having to monitor who comes and goes. The Attendance Tracker app handles that right out of the box. The one-click save to Google Sheets makes attendance record keeping a breeze. 5 stars for sure."
+    },
+    {
+      "id": "65f74a0d73",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Gift otindo"
+    },
+    {
+      "id": "315595bcfc",
+      "kind": "jsonld",
+      "key": "0:reviewBody",
+      "text": "Google Attendance Tracker is a reliable and straightforward tool that makes monitoring daily check-ins effortless for educators and team leaders. Because of its seamless integration with Google Workspace, it connects smoothly with tools like Google Sheets and Google Classroom, which significantly cuts down on manual data entry errors and saves valuable time. Its cloud-based setup also allows you to access and check attendance records from anywhere. While it lacks advanced features like automated alerts for chronic absenteeism or deep analytical reporting, it remains a practical, no-fuss solution for anyone already using the Google ecosystem. Overall, it is an efficient and user-friendly choice for everyday attendance management."
+    },
+    {
+      "id": "d8169b26ff",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "LIM GUAN YOU KPM-Murid"
+    },
+    {
+      "id": "fe71c4edda",
+      "kind": "jsonld",
+      "key": "0:reviewBody",
+      "text": "Excellent extension! Attendance Tracker makes taking attendance in Google Meet so much easier and more convenient. It saves time, reduces manual work, and helps keep attendance records organized. The automatic attendance tracking is especially useful for online classes and meetings. Highly recommended!"
+    },
+    {
+      "id": "45cdd944c1",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "What is the main architectural difference between AttendanceTracker.dev and a Chrome Extension Competitor?"
+    },
+    {
+      "id": "4c6015fa14",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "AttendanceTracker.dev is an official Google Workspace Marketplace Add-on that runs inside Google Meet's native Activities side panel and reads participant data from Google's official Meet REST API. A Chrome Extension Competitor is a Chrome Web Store browser extension paired with a cloud dashboard that captures attendance from the host's open Chrome browser tab."
+    },
+    {
+      "id": "b6064e4333",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "How does pricing compare between AttendanceTracker.dev and the Competitor?"
+    },
+    {
+      "id": "57b2f6cd9d",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "AttendanceTracker.dev offers a Free tier (up to 25 students, 2 exports/month across Sheets, CSV, or Excel + 1 large-class grace export), an Educator Annual Pass ($14.99/year standard, $4.99–$7.99/year regional), a Pro Annual plan ($29/year or $4.99/month), and a one-time Individual Lifetime Pass ($29 standard, $9.99–$19 regional), plus $59/year Department and $149/year whole-domain Institution plans. The Competitor offers a Free tier with 14-day history retention, a $9.90/month ($118.80/year) Pro subscription with 60-day history retention, and a $29/month ($348/year for 5 seats) Team subscription with 120-day history retention."
+    },
+    {
+      "id": "c8ea1b7d02",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "How long do AttendanceTracker.dev and the Competitor keep attendance history?"
+    },
+    {
+      "id": "d5bccbc5cb",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "AttendanceTracker.dev keeps your meeting history permanently and exports attendance directly into Google Sheets inside your own Google Drive, so your records never expire. The Competitor gates history retention by tier: 14 days on the Free tier, 60 days on Pro ($9.90/month), and 120 days on Team ($29/month)."
+    },
+    {
+      "id": "9c0aa978c3",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "When is the Competitor a better choice than AttendanceTracker.dev?"
+    },
+    {
+      "id": "653047e190",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "The Competitor is a strong choice if your team specifically needs a developer REST API to pull attendance records into a custom internal application (available on the Competitor's $29/month Team tier), or if you want more than 2 free CSV exports per month and only need to access records within a rolling 14-day window on desktop Google Chrome."
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "2777be8ab9",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "AttendanceTracker.dev vs Competitor"
+    }
+  ]
+}

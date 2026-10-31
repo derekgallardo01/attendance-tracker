@@ -1,0 +1,384 @@
+{
+  "page": "google-meet-attendance-for-fitness-and-yoga.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "95558c27e3",
+      "kind": "head",
+      "key": "title",
+      "text": "Google Meet Attendance Tracker for Fitness & Yoga Instructors (2026) — Attendance Tracker"
+    },
+    {
+      "id": "961ad06d49",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Track client attendance, member streaks, and live workout participation in Google Meet for virtual fitness coaches, yoga studios, and martial arts academies."
+    },
+    {
+      "id": "61e54f2bb4",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Google Meet Attendance Tracker for Fitness & Yoga Instructors"
+    },
+    {
+      "id": "be5ad8bdca",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Track virtual fitness member attendance, class streaks, and client engagement in Google Meet with automated Google Sheets exports."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "a2f00e1c67",
+      "kind": "html",
+      "key": "h1",
+      "text": "Google Meet attendance tracker for fitness &amp; yoga instructors"
+    },
+    {
+      "id": "f32978cb49",
+      "kind": "html",
+      "key": "p",
+      "text": "Personal trainers, online yoga studios, pilates instructors, and martial arts senseis running live virtual workout classes over Google Meet need an effortless way to check who attended, monitor client streaks, and prevent membership churn. Here is how to automate fitness class attendance."
+    },
+    {
+      "id": "5c60d5f0fe",
+      "kind": "attr",
+      "key": "title",
+      "text": "Fitness Class Attendance Tracking"
+    },
+    {
+      "id": "a166f69f27",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Client attendance streaks and workout history in Google Sheets"
+    },
+    {
+      "id": "3168cebf24",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Spot Client Churn Before They Cancel:</strong> When a client who usually attends 3 workouts a week suddenly stops showing up, Attendance Tracker highlights the drop-off so you can send a friendly check-in message."
+    },
+    {
+      "id": "5730ab06e8",
+      "kind": "html",
+      "key": "h2",
+      "text": "Why Online Fitness Coaches Need Attendance Tracking"
+    },
+    {
+      "id": "6d343be8f9",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Member Accountability &amp; Streaks:</strong> Celebrate clients who hit 30-day or 60-day workout streaks to boost retention and community morale."
+    },
+    {
+      "id": "58136720eb",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Subscription Validation:</strong> Cross-reference live attendees against your paying Stripe or Patreon member roster."
+    },
+    {
+      "id": "bf946d4cab",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Zero Interruption During Workouts:</strong> Don't waste coaching time taking roll call. The add-on runs silently in the Google Meet side panel."
+    },
+    {
+      "id": "24a3dc2ac9",
+      "kind": "html",
+      "key": "h2",
+      "text": "Key Fitness Studio Features"
+    },
+    {
+      "id": "0465fcfada",
+      "kind": "html",
+      "key": "h3",
+      "text": "1. Automated Class Series Roll-ups"
+    },
+    {
+      "id": "2ea1d62901",
+      "kind": "html",
+      "key": "p",
+      "text": "For recurring morning yoga or HIIT bootcamp series, Attendance Tracker groups all sessions by your calendar event ID and calculates attendance percentages per client."
+    },
+    {
+      "id": "4480985b5d",
+      "kind": "html",
+      "key": "h3",
+      "text": "2. Formatted Google Sheets Export"
+    },
+    {
+      "id": "fcd154b707",
+      "kind": "html",
+      "key": "p",
+      "text": "Every class saves an uneditable tab in your Google Drive spreadsheet named <code>Meet Attendance Tracker</code> showing client names, emails, and exact minutes spent sweating in the workout."
+    },
+    {
+      "id": "a1b83a6542",
+      "kind": "html",
+      "key": "h3",
+      "text": "3. Instant Summary Emails"
+    },
+    {
+      "id": "f312e2676b",
+      "kind": "html",
+      "key": "p",
+      "text": "Receive an automatic post-workout summary email in your inbox with who was in class and a direct link to your member attendance spreadsheet."
+    },
+    {
+      "id": "bd3384d91e",
+      "kind": "html",
+      "key": "h2",
+      "text": "Virtual Class Tracking Options Compared"
+    },
+    {
+      "id": "e3925975bd",
+      "kind": "html",
+      "key": "th",
+      "text": "Feature"
+    },
+    {
+      "id": "52afa52746",
+      "kind": "html",
+      "key": "th",
+      "text": "Manual Roll Call"
+    },
+    {
+      "id": "b3509260bc",
+      "kind": "html",
+      "key": "th",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "f207c88739",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Workout Interruption</strong>"
+    },
+    {
+      "id": "69f33effb8",
+      "kind": "html",
+      "key": "td",
+      "text": "Takes 5–10 minutes of coaching time"
+    },
+    {
+      "id": "57b799a395",
+      "kind": "html",
+      "key": "td",
+      "text": "Zero interruption (runs in background)"
+    },
+    {
+      "id": "950f5e09b7",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Drop-off &amp; Early Departure</strong>"
+    },
+    {
+      "id": "f5062822ac",
+      "kind": "html",
+      "key": "td",
+      "text": "Missed by instructor"
+    },
+    {
+      "id": "7beafd08eb",
+      "kind": "html",
+      "key": "td",
+      "text": "Exact minutes logged per client"
+    },
+    {
+      "id": "829d8e0d9c",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Monthly Streak Calculations</strong>"
+    },
+    {
+      "id": "cd7519697b",
+      "kind": "html",
+      "key": "td",
+      "text": "Manual spreadsheet math"
+    },
+    {
+      "id": "856412b8bb",
+      "kind": "html",
+      "key": "td",
+      "text": "Automated recurring series percentages"
+    },
+    {
+      "id": "84b8b5c054",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Member Retention Alerts</strong>"
+    },
+    {
+      "id": "33f1400531",
+      "kind": "html",
+      "key": "td",
+      "text": "Only notice after cancellation"
+    },
+    {
+      "id": "7be8ebc8a9",
+      "kind": "html",
+      "key": "td",
+      "text": "Identify sudden drop-offs before churn"
+    },
+    {
+      "id": "c08cf5f1ad",
+      "kind": "html",
+      "key": "h2",
+      "text": "Frequently Asked Questions"
+    },
+    {
+      "id": "edf80c57ee",
+      "kind": "html",
+      "key": "h3",
+      "text": "Can I track attendance for recurring weekly morning yoga sessions?"
+    },
+    {
+      "id": "568d001e52",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. When you schedule a recurring workout series on Google Calendar, Attendance Tracker automatically links all sessions together so you can see each client's total classes attended over 30, 60, or 90 days."
+    },
+    {
+      "id": "4b30ab2a50",
+      "kind": "html",
+      "key": "h3",
+      "text": "Do my clients need to install anything?"
+    },
+    {
+      "id": "ef3ed06e2d",
+      "kind": "html",
+      "key": "p",
+      "text": "No. Only the instructor needs to install the add-on from the Google Workspace Marketplace. Clients join normally from laptops, iPhones, iPads, or Android devices without installing any software."
+    },
+    {
+      "id": "03315a61c3",
+      "kind": "html",
+      "key": "h3",
+      "text": "Can I export attendance into my existing studio spreadsheet?"
+    },
+    {
+      "id": "9ca3fff65e",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes. Attendance Tracker automatically creates formatted tabs in your Google Drive spreadsheet named <code>Meet Attendance Tracker</code>, which you can easily copy or link into your studio's master member roster."
+    },
+    {
+      "id": "14e035b696",
+      "kind": "html",
+      "key": "h3",
+      "text": "Automate your virtual fitness attendance"
+    },
+    {
+      "id": "89bd06bad1",
+      "kind": "html",
+      "key": "p",
+      "text": "Free, works on all Google accounts, set up in under 30 seconds."
+    },
+    {
+      "id": "14b133eb0f",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Attendance Tracker from Marketplace"
+    },
+    {
+      "id": "9352c1ed98",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "a3ad204977",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-legal-depositions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Legal &amp; Arbitrations</a>\n          <a href=\"google-meet-attendance-for-job-interviews.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Recruiting &amp; Interviews</a>"
+    },
+    {
+      "id": "e7a3b147f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Specialized Verticals</strong>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-clinical-supervision-and-therapy.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Clinical Supervision</a>\n          <a href=\"google-meet-quorum-and-board-meetings.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Board Quorum Tracking</a>\n          <a href=\"google-meet-attendance-for-churches.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Churches &amp; Ministries</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>\n          <a href=\"google-meet-attendance-for-fitness-and-yoga.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Fitness &amp; Yoga</a>"
+    },
+    {
+      "id": "eb9246d86f",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>\n          <a href=\"google-meet-attendance-on-ipad-and-mobile.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">iPad &amp; Mobile Attendance</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "bbc51b6352",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "How to Track Client Attendance in Virtual Fitness and Yoga Classes on Google Meet"
+    },
+    {
+      "id": "40dc826374",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "A guide for independent fitness trainers, yoga teachers, and dojo senseis on tracking member attendance in Google Meet."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "43d851b0e7",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Can I track attendance for recurring weekly morning yoga sessions?"
+    },
+    {
+      "id": "85169c00de",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Yes. When you schedule a recurring workout series on Google Calendar, Attendance Tracker automatically links all sessions together so you can see each client's total classes attended over 30, 60, or 90 days."
+    },
+    {
+      "id": "f29b561808",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Do my clients need to install anything?"
+    },
+    {
+      "id": "7e7dda923b",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "No. Only the instructor needs to install the add-on from the Google Workspace Marketplace. Clients join normally from laptops, iPhones, iPads, or Android devices without installing any software."
+    },
+    {
+      "id": "7977adc586",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Can I export attendance into my existing studio spreadsheet?"
+    },
+    {
+      "id": "9e8fd1b075",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Yes. Attendance Tracker automatically creates formatted tabs in your Google Drive spreadsheet named Meet Attendance Tracker, which you can easily copy or link into your studio's master member roster."
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "305eab1cf6",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Google Meet attendance tracker for fitness &amp; yoga instructors"
+    }
+  ]
+}

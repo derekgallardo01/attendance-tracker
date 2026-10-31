@@ -1,0 +1,282 @@
+{
+  "page": "google-meet-attendance-for-remote-teams.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "489d5680fa",
+      "kind": "head",
+      "key": "title",
+      "text": "Google Meet Attendance Tracking for Remote & Hybrid Teams (2026) — Attendance Tracker"
+    },
+    {
+      "id": "3d69e5c664",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Keep remote and hybrid teams accountable in Google Meet. Track daily standups, sprint reviews, and all-hands with Slack digests, attendance trends, and Google Sheets export."
+    },
+    {
+      "id": "11f916a072",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Google Meet Attendance Tracking for Remote Teams"
+    },
+    {
+      "id": "f9ddd94842",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Automated Slack digests, standup attendance streaks, punctuality tracking, and Sheets export for distributed teams."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "7500df1a91",
+      "kind": "html",
+      "key": "h1",
+      "text": "Google Meet attendance tracking for remote &amp; hybrid teams"
+    },
+    {
+      "id": "05b7f7e339",
+      "kind": "html",
+      "key": "p",
+      "text": "Managing remote engineering teams, marketing agencies, or distributed organizations requires visibility without micromanagement. Here is how leading remote teams track attendance, standup streaks, and punctuality in Google Meet."
+    },
+    {
+      "id": "9edd2a7099",
+      "kind": "attr",
+      "key": "title",
+      "text": "Attendance Tracker for Remote Teams"
+    },
+    {
+      "id": "62cec84372",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Post-meeting export and Slack digest summary for remote teams"
+    },
+    {
+      "id": "fff8df2c1c",
+      "kind": "html",
+      "key": "h2",
+      "text": "Why Remote Teams Track Google Meet Attendance"
+    },
+    {
+      "id": "5482729a49",
+      "kind": "html",
+      "key": "p",
+      "text": "In a distributed workplace, attendance tracking isn't about surveillance — it's about team health, accountability, and meeting hygiene:"
+    },
+    {
+      "id": "a2ba9a98ef",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Catching Team Disengagement Early:</strong> When a remote team member repeatedly skips standups or joins 15 minutes late, it's often an early signal of burnout, timezone misalignment, or blockers."
+    },
+    {
+      "id": "4a85e045a1",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Audit Trails for Client &amp; Training Calls:</strong> Agencies, consulting firms, and HR trainers need timestamped proof of client attendance and training completion."
+    },
+    {
+      "id": "e09b325dc5",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Eliminating Meeting Waste:</strong> Seeing who routinely leaves after 5 minutes helps teams determine which meetings should be asynchronous updates instead."
+    },
+    {
+      "id": "53201d0ff6",
+      "kind": "html",
+      "key": "h2",
+      "text": "Key Workflows for Remote Leaders"
+    },
+    {
+      "id": "5894f4fa76",
+      "kind": "html",
+      "key": "h3",
+      "text": "1. Daily Standups &amp; Recurring Sprint Meetings"
+    },
+    {
+      "id": "56bb7ef264",
+      "kind": "html",
+      "key": "p",
+      "text": "Because Google Calendar links recurring meetings with a unique <code>recurringEventId</code>, Attendance Tracker automatically rolls up team attendance across all sprint standups. You can see at a glance:"
+    },
+    {
+      "id": "2d975b9ff6",
+      "kind": "html",
+      "key": "li",
+      "text": "Who maintained a 100% standup streak this sprint"
+    },
+    {
+      "id": "a94db4282e",
+      "kind": "html",
+      "key": "li",
+      "text": "Average arrival punctuality across the engineering team"
+    },
+    {
+      "id": "0e1bd3a835",
+      "kind": "html",
+      "key": "li",
+      "text": "Cumulative hours spent in meetings per teammate"
+    },
+    {
+      "id": "6bed5ab5b4",
+      "kind": "html",
+      "key": "h3",
+      "text": "2. Automated Slack Post-Meeting Summaries"
+    },
+    {
+      "id": "7ea375b975",
+      "kind": "html",
+      "key": "p",
+      "text": "Connect your Slack incoming webhook in seconds. As soon as your daily standup or client review ends, a formatted <strong>Slack Block Kit card</strong> posts directly to your designated channel (e.g. <code>#team-standup</code>) containing:"
+    },
+    {
+      "id": "c8c5b47bc2",
+      "kind": "html",
+      "key": "li",
+      "text": "Meeting title and duration"
+    },
+    {
+      "id": "7f80c1af66",
+      "kind": "html",
+      "key": "li",
+      "text": "Roster of who attended and how long each person stayed"
+    },
+    {
+      "id": "1f4ef8b7af",
+      "kind": "html",
+      "key": "li",
+      "text": "Flagged late arrivals and absent teammates"
+    },
+    {
+      "id": "960e20f7bf",
+      "kind": "html",
+      "key": "li",
+      "text": "One-click link to the auto-generated Google Sheet report"
+    },
+    {
+      "id": "823387d9c2",
+      "kind": "html",
+      "key": "h3",
+      "text": "3. Org-Wide Team Admin Dashboard"
+    },
+    {
+      "id": "0ab0e86756",
+      "kind": "html",
+      "key": "p",
+      "text": "For company leaders and HR admins, the <strong>Team Dashboard</strong> (at <code>team.html</code>) aggregates meeting attendance across your entire Workspace domain. You can see organization-wide metrics, active hosts, and exported meeting histories in one centralized view."
+    },
+    {
+      "id": "4a696f3b49",
+      "kind": "html",
+      "key": "h2",
+      "text": "Enterprise Security &amp; Compliance"
+    },
+    {
+      "id": "754d94440e",
+      "kind": "html",
+      "key": "p",
+      "text": "Attendance Tracker adheres to enterprise-grade security standards:"
+    },
+    {
+      "id": "b5bb9a1235",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Native Google Workspace Add-on:</strong> Fully verified by Google and deployable across entire domains with one click from the Google Workspace Admin Console."
+    },
+    {
+      "id": "5896d2700c",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Zero HTML Scraping:</strong> Direct integration with the Google Meet REST API."
+    },
+    {
+      "id": "03722bed66",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Encrypted Tokens &amp; Scoped Storage:</strong> All OAuth tokens are encrypted at rest with AES-256-GCM."
+    },
+    {
+      "id": "e5873ec861",
+      "kind": "html",
+      "key": "h3",
+      "text": "Streamline your remote team's meetings"
+    },
+    {
+      "id": "7596438629",
+      "kind": "html",
+      "key": "p",
+      "text": "Free for individuals, $19/mo for entire organization domains with unlimited users."
+    },
+    {
+      "id": "837da96c4a",
+      "kind": "html",
+      "key": "a",
+      "text": "Install from Google Workspace Marketplace"
+    },
+    {
+      "id": "9352c1ed98",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "a3ad204977",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-legal-depositions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Legal &amp; Arbitrations</a>\n          <a href=\"google-meet-attendance-for-job-interviews.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Recruiting &amp; Interviews</a>"
+    },
+    {
+      "id": "e7a3b147f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Specialized Verticals</strong>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-clinical-supervision-and-therapy.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Clinical Supervision</a>\n          <a href=\"google-meet-quorum-and-board-meetings.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Board Quorum Tracking</a>\n          <a href=\"google-meet-attendance-for-churches.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Churches &amp; Ministries</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>\n          <a href=\"google-meet-attendance-for-fitness-and-yoga.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Fitness &amp; Yoga</a>"
+    },
+    {
+      "id": "eb9246d86f",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>\n          <a href=\"google-meet-attendance-on-ipad-and-mobile.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">iPad &amp; Mobile Attendance</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "6e6db5cbb8",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "Google Meet Attendance Tracking for Remote & Hybrid Teams"
+    },
+    {
+      "id": "0b5beaf291",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "How engineering managers, Agile scrum teams, and remote companies track attendance and participation in Google Meet."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "07edf9f307",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Google Meet attendance tracking for remote &amp; hybrid teams"
+    }
+  ]
+}

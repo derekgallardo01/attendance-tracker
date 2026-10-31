@@ -1,0 +1,366 @@
+{
+  "page": "google-meet-vs-zoom-attendance-tracking.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "c36e6bc8c5",
+      "kind": "head",
+      "key": "title",
+      "text": "Google Meet vs. Zoom Attendance Reports (2026 Comparison) — Attendance Tracker"
+    },
+    {
+      "id": "1d1f6d3749",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Compare Google Meet and Zoom attendance reporting features. Learn how to get Zoom-style automatic attendance reports and spreadsheets in Google Meet for free."
+    },
+    {
+      "id": "d80cd4225e",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Google Meet vs. Zoom Attendance Reports (2026 Comparison)"
+    },
+    {
+      "id": "f9058c5c82",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Migrating from Zoom to Google Meet? Here is how to get Zoom-style attendance reports in Google Meet without paying for Education Plus."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "d05e3a36b5",
+      "kind": "html",
+      "key": "h1",
+      "text": "Google Meet vs. Zoom attendance reports (2026 comparison)"
+    },
+    {
+      "id": "7433c97d71",
+      "kind": "html",
+      "key": "p",
+      "text": "Organizations switching from Zoom to Google Meet often hit an unexpected roadblock: while Zoom provides usage and attendance reports across all paid tiers, Google Meet gates native attendance tracking behind its most expensive enterprise and education tiers."
+    },
+    {
+      "id": "5b8189149a",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>The Good News:</strong> You do not need to pay for Google's most expensive license. With the free <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_zoom\">Attendance Tracker add-on</a>, you get full Zoom-style attendance reporting directly within Google Meet and Google Drive."
+    },
+    {
+      "id": "9b79bed604",
+      "kind": "html",
+      "key": "h2",
+      "text": "How Attendance Tracking Differs: Google Meet vs. Zoom"
+    },
+    {
+      "id": "c8e55f25ef",
+      "kind": "html",
+      "key": "h3",
+      "text": "1. Zoom Attendance Reports"
+    },
+    {
+      "id": "1d2054bcf7",
+      "kind": "html",
+      "key": "p",
+      "text": "Zoom generates post-meeting reports under <em>Account Management &gt; Reports &gt; Usage Reports</em>. It provides participant names, join/leave times, and durations. However:"
+    },
+    {
+      "id": "bbb6726b5b",
+      "kind": "html",
+      "key": "li",
+      "text": "Reports require navigating deep into the Zoom web dashboard after the meeting."
+    },
+    {
+      "id": "1fc2fe363d",
+      "kind": "html",
+      "key": "li",
+      "text": "Data must be manually downloaded as raw CSV files."
+    },
+    {
+      "id": "bd510db398",
+      "kind": "html",
+      "key": "li",
+      "text": "Live in-meeting participant rosters with duration tracking are not visible during the call."
+    },
+    {
+      "id": "65e8a2657d",
+      "kind": "html",
+      "key": "h3",
+      "text": "2. Native Google Meet (Built-In)"
+    },
+    {
+      "id": "1266b0b74b",
+      "kind": "html",
+      "key": "p",
+      "text": "Google Meet has a built-in attendance feature, but it is heavily restricted:"
+    },
+    {
+      "id": "3c50ec487a",
+      "kind": "html",
+      "key": "li",
+      "text": "Only available on <em>Google Workspace for Education Plus</em>, <em>Teaching &amp; Learning Upgrade</em>, and <em>Enterprise</em>."
+    },
+    {
+      "id": "e3b67e7487",
+      "kind": "html",
+      "key": "li",
+      "text": "Requires a minimum of 5 attendees to trigger a report."
+    },
+    {
+      "id": "5b547df924",
+      "kind": "html",
+      "key": "li",
+      "text": "Only emails the CSV report to the original meeting creator."
+    },
+    {
+      "id": "4d57bd75b6",
+      "kind": "html",
+      "key": "h3",
+      "text": "3. Google Meet + Attendance Tracker Add-On (Best of Both Worlds)"
+    },
+    {
+      "id": "6604f97cf0",
+      "kind": "html",
+      "key": "p",
+      "text": "Installing Attendance Tracker gives you the best features of both platforms:"
+    },
+    {
+      "id": "5bbd7e628b",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Works on All Google Accounts:</strong> Free on personal Gmail, Google Workspace Starter, Standard, and Education Fundamentals."
+    },
+    {
+      "id": "8cd6fef18b",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Real-Time In-Call Side Panel:</strong> View active participants, join times, and late-arrival flags live while the meeting is ongoing."
+    },
+    {
+      "id": "c57af49449",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Direct Google Drive Sync:</strong> Automatically creates tabbed, formatted Google Sheets without having to download or import CSVs."
+    },
+    {
+      "id": "5900985638",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Multi-Meeting Trends:</strong> Automatically rolls up attendance streaks across recurring standups, sprint reviews, or class lectures."
+    },
+    {
+      "id": "986d98899c",
+      "kind": "html",
+      "key": "h2",
+      "text": "Feature Comparison Matrix"
+    },
+    {
+      "id": "1a5327ed24",
+      "kind": "html",
+      "key": "th",
+      "text": "Capability"
+    },
+    {
+      "id": "7005fbafee",
+      "kind": "html",
+      "key": "th",
+      "text": "Zoom (Paid Plans)"
+    },
+    {
+      "id": "770f4fe1f1",
+      "kind": "html",
+      "key": "th",
+      "text": "Google Meet (Native)"
+    },
+    {
+      "id": "0be3f77826",
+      "kind": "html",
+      "key": "th",
+      "text": "Meet + Attendance Tracker"
+    },
+    {
+      "id": "981c1ee054",
+      "kind": "html",
+      "key": "td",
+      "text": "Included in Standard/Free Plans"
+    },
+    {
+      "id": "90716c841a",
+      "kind": "html",
+      "key": "td",
+      "text": "Yes (Pro+)"
+    },
+    {
+      "id": "7338d410fb",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>No (Enterprise only)</strong>"
+    },
+    {
+      "id": "fd4cd23b4c",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Yes (Free)</strong>"
+    },
+    {
+      "id": "68d7f1129b",
+      "kind": "html",
+      "key": "td",
+      "text": "Live In-Call Attendance Panel"
+    },
+    {
+      "id": "522734c8e3",
+      "kind": "html",
+      "key": "td",
+      "text": "No"
+    },
+    {
+      "id": "4ad39241cc",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Yes (Real-time)</strong>"
+    },
+    {
+      "id": "420cc27831",
+      "kind": "html",
+      "key": "td",
+      "text": "Auto-Export to Google Sheets"
+    },
+    {
+      "id": "65826ed939",
+      "kind": "html",
+      "key": "td",
+      "text": "No (CSV only)"
+    },
+    {
+      "id": "a31ee1c3aa",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Yes (Direct Drive Sync)</strong>"
+    },
+    {
+      "id": "009e77f880",
+      "kind": "html",
+      "key": "td",
+      "text": "Late-Arrival Highlighting"
+    },
+    {
+      "id": "e1d70dc9a0",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Yes (+Nm late)</strong>"
+    },
+    {
+      "id": "7d2a17c94e",
+      "kind": "html",
+      "key": "td",
+      "text": "Slack Post-Meeting Digests"
+    },
+    {
+      "id": "626bd1e4b3",
+      "kind": "html",
+      "key": "td",
+      "text": "Requires Zapier"
+    },
+    {
+      "id": "b4a4f717ff",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Built-in Webhooks</strong>"
+    },
+    {
+      "id": "119ca33412",
+      "kind": "html",
+      "key": "td",
+      "text": "Non-Host Attendance Capture"
+    },
+    {
+      "id": "809e31e6e6",
+      "kind": "html",
+      "key": "td",
+      "text": "<strong>Yes</strong>"
+    },
+    {
+      "id": "9c2492a6c2",
+      "kind": "html",
+      "key": "h3",
+      "text": "Get Zoom-quality attendance tracking in Google Meet"
+    },
+    {
+      "id": "ca12256a38",
+      "kind": "html",
+      "key": "p",
+      "text": "Free, verified on Google Workspace Marketplace, installs in 30 seconds."
+    },
+    {
+      "id": "58bc5a96a3",
+      "kind": "html",
+      "key": "a",
+      "text": "Add to Google Meet for Free"
+    },
+    {
+      "id": "9352c1ed98",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "a3ad204977",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-legal-depositions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Legal &amp; Arbitrations</a>\n          <a href=\"google-meet-attendance-for-job-interviews.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Recruiting &amp; Interviews</a>"
+    },
+    {
+      "id": "e7a3b147f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Specialized Verticals</strong>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-clinical-supervision-and-therapy.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Clinical Supervision</a>\n          <a href=\"google-meet-quorum-and-board-meetings.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Board Quorum Tracking</a>\n          <a href=\"google-meet-attendance-for-churches.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Churches &amp; Ministries</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>\n          <a href=\"google-meet-attendance-for-fitness-and-yoga.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Fitness &amp; Yoga</a>"
+    },
+    {
+      "id": "eb9246d86f",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>\n          <a href=\"google-meet-attendance-on-ipad-and-mobile.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">iPad &amp; Mobile Attendance</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "e3068a0098",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "Google Meet vs. Zoom Attendance Tracking & Reports Comparison"
+    },
+    {
+      "id": "a8416f17c1",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "A comprehensive side-by-side comparison of attendance reporting in Google Meet versus Zoom."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "134265220c",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Google Meet vs. Zoom attendance reports (2026 comparison)"
+    }
+  ]
+}

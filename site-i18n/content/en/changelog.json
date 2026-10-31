@@ -1,0 +1,288 @@
+{
+  "page": "changelog.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "5be56013a7",
+      "kind": "head",
+      "key": "title",
+      "text": "Changelog — Attendance Tracker for Google Meet™"
+    },
+    {
+      "id": "45ac74da1e",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Every update we ship for Attendance Tracker for Google Meet — actively maintained, with 230+ improvements in 2026. See what's new before you rely on it."
+    },
+    {
+      "id": "841467df3f",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Actively maintained: 230+ improvements shipped in 2026. The public record of what we ship."
+    },
+    {
+      "id": "9ae72b4020",
+      "kind": "html",
+      "key": "a",
+      "text": "<img src=\"icons/icon-32.png\" alt=\"Attendance Tracker Logo\">\n        <span>Attendance Tracker</span>"
+    },
+    {
+      "id": "38deccf17d",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Attendance Tracker Logo"
+    },
+    {
+      "id": "7fedfcbaca",
+      "kind": "html",
+      "key": "a",
+      "text": "Home"
+    },
+    {
+      "id": "7d4f187b91",
+      "kind": "html",
+      "key": "a",
+      "text": "Pricing"
+    },
+    {
+      "id": "ec3b3e8bd4",
+      "kind": "html",
+      "key": "a",
+      "text": "Help Center &amp; FAQ"
+    },
+    {
+      "id": "2782febc18",
+      "kind": "html",
+      "key": "a",
+      "text": "Support"
+    },
+    {
+      "id": "efb60c16ba",
+      "kind": "html",
+      "key": "h1",
+      "text": "Changelog"
+    },
+    {
+      "id": "27f253c24c",
+      "kind": "html",
+      "key": "div",
+      "text": "Actively maintained · 230+ improvements shipped in 2026"
+    },
+    {
+      "id": "9f608096f6",
+      "kind": "html",
+      "key": "p",
+      "text": "Attendance tools for Google Meet have a reputation problem: several popular extensions haven't been updated in years, and some have been delisted outright. This page is our public record of what we ship, so you can see the product is alive before you build a class routine — or a purchase — around it. The highlights below are curated from our full development history."
+    },
+    {
+      "id": "1dc29f9f52",
+      "kind": "html",
+      "key": "h2",
+      "text": "September 2026"
+    },
+    {
+      "id": "31f7def7ad",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Attendee self-check-in</strong> — participants can tap \"I'm here\" in the side panel, giving the host a verified check-in (name, email, time) merged right into the attendance list — even for dial-in callers the Meet roster can't see."
+    },
+    {
+      "id": "ef48ddb954",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Google Classroom roster import</strong> — copy a course's student names and emails into a Class Roster in two clicks (rosters stay in your browser, not on our servers)."
+    },
+    {
+      "id": "1fe81cf114",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Google Chat and Discord post-meeting digests</strong>, joining the existing Slack integration."
+    },
+    {
+      "id": "4e0d3640c3",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Moodle and Canvas gradebook CSV exports</strong>, plus a whole-series gradebook export for recurring classes."
+    },
+    {
+      "id": "934bf6102d",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Minimum-stay attendance rules</strong> — flag anyone below an attendance-percentage floor or an absolute minutes floor (for CEU/compliance policies stated in minutes)."
+    },
+    {
+      "id": "ceaf829c21",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Extra report recipients</strong> — send the post-export report email to up to 5 co-teachers, coordinators, or an admin inbox."
+    },
+    {
+      "id": "925e755bba",
+      "kind": "html",
+      "key": "li",
+      "text": "Material&nbsp;3 visual refresh of the side panel and a real month-grid calendar view."
+    },
+    {
+      "id": "da6fd8155c",
+      "kind": "html",
+      "key": "li",
+      "text": "Reliability fixes for CSV/PDF downloads and confirmations inside the Meet iframe sandbox."
+    },
+    {
+      "id": "53a60f25ea",
+      "kind": "html",
+      "key": "li",
+      "text": "Interface now available in <strong>60 languages</strong>."
+    },
+    {
+      "id": "21bbffd4b9",
+      "kind": "html",
+      "key": "h2",
+      "text": "August 2026"
+    },
+    {
+      "id": "b761eaf8da",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Per-attendee attendance certificates</strong> with instant <a href=\"verify.html\">public verification</a>."
+    },
+    {
+      "id": "884c4ec7c4",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>PDF attendance reports</strong> — a free, shareable artifact for every meeting."
+    },
+    {
+      "id": "64bf1e2ba5",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Server-side auto-capture</strong> — attendance recorded even when the side panel isn't open (Pro)."
+    },
+    {
+      "id": "f8dd222cb5",
+      "kind": "html",
+      "key": "li",
+      "text": "Installable <strong>mobile PWA companion</strong> for reviewing attendance on your phone."
+    },
+    {
+      "id": "43959680cd",
+      "kind": "html",
+      "key": "li",
+      "text": "Individual Pro plan, annual billing, and a cumulative class-summary export for recurring series."
+    },
+    {
+      "id": "d82f2a48e0",
+      "kind": "html",
+      "key": "h2",
+      "text": "July 2026"
+    },
+    {
+      "id": "81da184700",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Team plans</strong> with per-domain billing, plus self-serve team-admin claim and transfer."
+    },
+    {
+      "id": "140888668e",
+      "kind": "html",
+      "key": "li",
+      "text": "Settings synced across your devices."
+    },
+    {
+      "id": "b24e1b0e87",
+      "kind": "html",
+      "key": "li",
+      "text": "Referral rewards for inviting colleagues."
+    },
+    {
+      "id": "711e0e08c6",
+      "kind": "html",
+      "key": "li",
+      "text": "Two dedicated security &amp; correctness review passes with hardening fixes (token encryption, webhook auth, email deliverability)."
+    },
+    {
+      "id": "c35902206f",
+      "kind": "html",
+      "key": "h2",
+      "text": "June 2026 — launch"
+    },
+    {
+      "id": "facd64ce39",
+      "kind": "html",
+      "key": "li",
+      "text": "Real-time attendance panel inside Google Meet, auto-export to Google Sheets, and post-meeting email digests."
+    },
+    {
+      "id": "564546334d",
+      "kind": "html",
+      "key": "li",
+      "text": "Recurring-series roll-ups with daily alerts, late-arrival highlighting, and excused-absence tagging."
+    },
+    {
+      "id": "f8cd41cffa",
+      "kind": "html",
+      "key": "li",
+      "text": "Slack digests, an org-wide team dashboard for Workspace domains, and public share links for series."
+    },
+    {
+      "id": "c91aa9b45f",
+      "kind": "html",
+      "key": "li",
+      "text": "Automated test suite and CI — hundreds of tests and visual-regression baselines run on every change."
+    },
+    {
+      "id": "0d3a91853e",
+      "kind": "html",
+      "key": "h2",
+      "text": "What's next"
+    },
+    {
+      "id": "db6dbcfc4a",
+      "kind": "html",
+      "key": "p",
+      "text": "We ship weekly. If there's a feature that would make attendance easier for your class or team, tell us — a lot of what's above started as a user email: <a href=\"mailto:derek@attendancetracker.dev\">derek@attendancetracker.dev</a>."
+    },
+    {
+      "id": "647d84f083",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\">Home</a>\n      <a href=\"pricing.html\">Pricing</a>\n      <a href=\"faq.html\">Help Center &amp; FAQ</a>\n      <a href=\"privacy.html\">Privacy Policy</a>\n      <a href=\"terms.html\">Terms of Service</a>\n      <a href=\"refunds.html\">Refund Policy</a>\n      <a href=\"student-data-privacy.html\">Student Data Privacy</a>\n      <a href=\"changelog.html\">Changelog</a>\n      <a href=\"support.html\">Contact Support</a>"
+    },
+    {
+      "id": "23f8ad156d",
+      "kind": "html",
+      "key": "div",
+      "text": "© 2026 Kinetic Helix LLC. Attendance Tracker for Google Meet™. All rights reserved."
+    },
+    {
+      "id": "c64d9fda4c",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Changelog — Attendance Tracker for Google Meet"
+    },
+    {
+      "id": "59e8fa799a",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "Public changelog and release history for Attendance Tracker for Google Meet."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "43e845e902",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Changelog"
+    }
+  ]
+}

@@ -1,0 +1,246 @@
+{
+  "page": "google-meet-quorum-and-board-meetings.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "05b3f19990",
+      "kind": "head",
+      "key": "title",
+      "text": "Google Meet Quorum & Board Meeting Attendance Tracker (2026) — Attendance Tracker"
+    },
+    {
+      "id": "974b43f68a",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Track board member quorum, voting attendance, and timestamped arrival logs in Google Meet for HOA boards, non-profit directors, and committee meetings."
+    },
+    {
+      "id": "71ea768ac9",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Google Meet Quorum & Board Meeting Attendance Tracker"
+    },
+    {
+      "id": "66fe6283e9",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Legally defensible quorum logs, timestamped member arrival times, and Google Sheets exports for HOA and non-profit board meetings."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "14b30c414c",
+      "kind": "html",
+      "key": "h1",
+      "text": "Google Meet quorum &amp; board meeting attendance tracker"
+    },
+    {
+      "id": "459da9b5b1",
+      "kind": "html",
+      "key": "p",
+      "text": "Homeowners Associations (HOAs), nonprofit boards of directors, condominium associations, and municipal committees must legally verify a <strong>quorum</strong> before passing resolutions or holding binding votes. Here is how board secretaries track attendance and establish proof of quorum in Google Meet."
+    },
+    {
+      "id": "b86c6298f2",
+      "kind": "attr",
+      "key": "title",
+      "text": "Quorum & Board Attendance Tracking"
+    },
+    {
+      "id": "f8eff04173",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Official board meeting attendance export with excused absence tags"
+    },
+    {
+      "id": "84a3d038f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Defensible Proof of Quorum:</strong> Save board secretaries hours of manual recordkeeping. Attendance Tracker generates timestamped records of every director's arrival time, departure time, and total active minutes for your official meeting minutes."
+    },
+    {
+      "id": "64b6eed0c0",
+      "kind": "html",
+      "key": "h2",
+      "text": "The Legal Importance of Quorum in Virtual Meetings"
+    },
+    {
+      "id": "6381cf7205",
+      "kind": "html",
+      "key": "p",
+      "text": "Under most state non-profit corporation acts and HOA bylaws (such as Robert's Rules of Order), if a board votes on a budget, vendor contract, or assessment without a verified quorum present, the vote is legally voidable. Virtual meetings introduce unique challenges:"
+    },
+    {
+      "id": "59fd45d44b",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Directors Arriving Late or Dropping Early:</strong> A director who disconnects before a vote may cause the board to lose quorum without the chair noticing."
+    },
+    {
+      "id": "f66249f699",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Documenting Excused Absences:</strong> Board minutes must distinguish between unexcused absences and directors who submitted formal notices of absence."
+    },
+    {
+      "id": "7857ec5069",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Official Record Archiving:</strong> Board secretaries need clean, audit-ready spreadsheet records stored permanently in the organization's Google Drive."
+    },
+    {
+      "id": "5ee1bfe125",
+      "kind": "html",
+      "key": "h2",
+      "text": "How Attendance Tracker Streamlines Board Governance"
+    },
+    {
+      "id": "1ad3711d3a",
+      "kind": "html",
+      "key": "h3",
+      "text": "1. Live In-Meeting Quorum Count"
+    },
+    {
+      "id": "54d1fbebf7",
+      "kind": "html",
+      "key": "p",
+      "text": "Open the Attendance Tracker panel in Google Meet. See the exact count and list of active voting members in real-time, complete with arrival timestamps."
+    },
+    {
+      "id": "416c7ae9d1",
+      "kind": "html",
+      "key": "h3",
+      "text": "2. One-Click \"Excused Absence\" Tagging"
+    },
+    {
+      "id": "7a61b10ccf",
+      "kind": "html",
+      "key": "p",
+      "text": "When board members RSVP'd with regrets ahead of the meeting, the export modal allows the secretary to check <strong>\"Excused\"</strong> next to unmatched invitees. The generated report labels them as <code>Absent (excused)</code> rather than unexcused."
+    },
+    {
+      "id": "d0cc80178e",
+      "kind": "html",
+      "key": "h3",
+      "text": "3. Annual Board Meeting Series Tracking"
+    },
+    {
+      "id": "26b2761f13",
+      "kind": "html",
+      "key": "p",
+      "text": "For monthly board meetings across the fiscal year, Attendance Tracker links all sessions by the Google Calendar recurring event ID. You can see cumulative annual attendance percentages per trustee or board director."
+    },
+    {
+      "id": "53017ac9c7",
+      "kind": "html",
+      "key": "h2",
+      "text": "Ideal for:"
+    },
+    {
+      "id": "aaa3b801c7",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>HOA &amp; Condo Association Boards:</strong> Verify member quorum for annual general meetings (AGMs) and monthly trustee votes."
+    },
+    {
+      "id": "0f6e020c70",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>501(c)(3) Non-Profit Boards:</strong> Document trustee attendance for annual IRS Form 990 governance reporting."
+    },
+    {
+      "id": "f7087578cb",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>School Boards &amp; Parent-Teacher Organizations (PTO/PTA):</strong> Track parent committee attendance and quorum requirements."
+    },
+    {
+      "id": "1dc1e4b9ce",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Academic Senates &amp; Faculty Councils:</strong> Maintain official attendance logs for university senate legislative votes."
+    },
+    {
+      "id": "16c4a01e97",
+      "kind": "html",
+      "key": "h3",
+      "text": "Streamline your board meeting governance"
+    },
+    {
+      "id": "77945e7fce",
+      "kind": "html",
+      "key": "p",
+      "text": "Free, verified on Google Workspace Marketplace, export official minutes to Google Sheets in seconds."
+    },
+    {
+      "id": "14b133eb0f",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Attendance Tracker from Marketplace"
+    },
+    {
+      "id": "9352c1ed98",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "a3ad204977",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-legal-depositions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Legal &amp; Arbitrations</a>\n          <a href=\"google-meet-attendance-for-job-interviews.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Recruiting &amp; Interviews</a>"
+    },
+    {
+      "id": "e7a3b147f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Specialized Verticals</strong>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-clinical-supervision-and-therapy.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Clinical Supervision</a>\n          <a href=\"google-meet-quorum-and-board-meetings.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Board Quorum Tracking</a>\n          <a href=\"google-meet-attendance-for-churches.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Churches &amp; Ministries</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>\n          <a href=\"google-meet-attendance-for-fitness-and-yoga.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Fitness &amp; Yoga</a>"
+    },
+    {
+      "id": "eb9246d86f",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>\n          <a href=\"google-meet-attendance-on-ipad-and-mobile.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">iPad &amp; Mobile Attendance</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "ad606072f5",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "How to Track Quorum and Board Meeting Attendance in Google Meet"
+    },
+    {
+      "id": "ec45dd66de",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "A complete guide for HOA board secretaries, non-profit directors, and committee chairs on tracking quorum in Google Meet."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "e86cbb7b80",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Google Meet quorum &amp; board meeting attendance tracker"
+    }
+  ]
+}

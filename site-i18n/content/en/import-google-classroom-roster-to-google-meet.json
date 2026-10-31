@@ -1,0 +1,348 @@
+{
+  "page": "import-google-classroom-roster-to-google-meet.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "f7586c21f5",
+      "kind": "head",
+      "key": "title",
+      "text": "How to import your Google Classroom roster into Google Meet attendance (2026 Guide) — Attendance Tracker"
+    },
+    {
+      "id": "50a3a0374a",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Pull your Google Classroom class list into Google Meet attendance tracking in one click — automatic Present/Late/Absent roll call with no copy-pasting student names."
+    },
+    {
+      "id": "5a24ac57ab",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Import your Google Classroom roster into Google Meet attendance"
+    },
+    {
+      "id": "eca08b5e79",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "One-click Classroom roster import: automatic roll call, late flags, no-show detection, and gradebook exports for your real class list."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "8365c49c04",
+      "kind": "html",
+      "key": "h1",
+      "text": "Import your Google Classroom roster into Google Meet attendance"
+    },
+    {
+      "id": "af3a158d78",
+      "kind": "html",
+      "key": "p",
+      "text": "Your class list already lives in Google Classroom. Here is how to pull it into your Google Meet side panel in one click — so roll call, late flags, and no-show detection run against your real roster from the first minute of class."
+    },
+    {
+      "id": "88aafe7c67",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Why this matters:</strong> Attendance tracking is only as good as the roster behind it. With your Classroom list imported, every student is matched by their school email — you instantly see who is <em>Present</em>, who arrived <em>Late</em>, and crucially, who is <em>Absent</em> — including students who never joined at all."
+    },
+    {
+      "id": "70259cc06e",
+      "kind": "html",
+      "key": "h2",
+      "text": "Step-by-step setup"
+    },
+    {
+      "id": "57b97e4fd1",
+      "kind": "html",
+      "key": "h3",
+      "text": "Step 1: Open the Class Roster tab"
+    },
+    {
+      "id": "cc6fbfb61b",
+      "kind": "html",
+      "key": "li",
+      "text": "Join your Google Meet class and open <strong>Attendance Tracker</strong> from the Activities panel."
+    },
+    {
+      "id": "f587cdfe46",
+      "kind": "html",
+      "key": "li",
+      "text": "Sign in with the same Google account you use for Classroom."
+    },
+    {
+      "id": "486a498bea",
+      "kind": "html",
+      "key": "li",
+      "text": "Open the <strong>Class Roster</strong> tab and click <strong>+ New Class</strong>."
+    },
+    {
+      "id": "7b49185688",
+      "kind": "html",
+      "key": "h3",
+      "text": "Step 2: Import from Google Classroom"
+    },
+    {
+      "id": "fb9bc00cb5",
+      "kind": "html",
+      "key": "li",
+      "text": "Click <strong>Import from Google Classroom</strong>."
+    },
+    {
+      "id": "5e83a107d7",
+      "kind": "html",
+      "key": "li",
+      "text": "The first time, Google asks for permission to read your Classroom class lists — approve it and the import resumes automatically. This is a one-time, read-only permission covering only courses you teach."
+    },
+    {
+      "id": "6bf6830575",
+      "kind": "html",
+      "key": "li",
+      "text": "Pick your course from the dropdown and click <strong>Import</strong>."
+    },
+    {
+      "id": "7c2774ed4a",
+      "kind": "html",
+      "key": "li",
+      "text": "Every enrolled student appears in the list — names and school emails — with the class name pre-filled. Edit anything you like, then click <strong>Save Roster</strong>."
+    },
+    {
+      "id": "a5fe14ccf4",
+      "kind": "html",
+      "key": "h3",
+      "text": "Step 3: Track the class"
+    },
+    {
+      "id": "c975292281",
+      "kind": "html",
+      "key": "p",
+      "text": "Press <strong>Start</strong>. As students join the Meet, they are matched to your roster by email (with a smart name-based fallback for students who join under a display name). The roster view live-updates:"
+    },
+    {
+      "id": "3e27c88eaf",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Present</strong> — joined and staying, with join time and minutes attended."
+    },
+    {
+      "id": "405a04fdf3",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Late</strong> — joined after your grace period (you choose: 5, 10, 15 minutes…)."
+    },
+    {
+      "id": "082481b568",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Absent</strong> — on the roster but never joined. Tag genuine excuses as <em>Excused</em> with a private note."
+    },
+    {
+      "id": "3dd2e62a3c",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Guests</strong> — anyone in the call who is <em>not</em> on your roster, flagged separately."
+    },
+    {
+      "id": "69c68e8432",
+      "kind": "html",
+      "key": "h2",
+      "text": "What an imported roster unlocks"
+    },
+    {
+      "id": "f9936906ea",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>One-click gradebook exports:</strong> download attendance as a <a href=\"export-google-meet-attendance-to-moodle.html\">Moodle</a> or <a href=\"export-google-meet-attendance-to-canvas.html\">Canvas</a> gradebook CSV, matched by the same emails Classroom gave you."
+    },
+    {
+      "id": "9770dfbe6b",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Google Sheets reports:</strong> roster statuses (Present / Late / Absent / Excused) flow into the exported spreadsheet automatically."
+    },
+    {
+      "id": "29c98b4eef",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Semester roll-ups:</strong> recurring classes accumulate per-student attendance percentages across every session."
+    },
+    {
+      "id": "19e7b9aa85",
+      "kind": "html",
+      "key": "h2",
+      "text": "Privacy: where does the roster live?"
+    },
+    {
+      "id": "cff2c72135",
+      "kind": "html",
+      "key": "p",
+      "text": "Your imported roster is stored <strong>only in your browser</strong> — Classroom data is never persisted on Attendance Tracker's servers. The Classroom permissions are optional, read-only, requested only when you click the import button, and revocable any time from your <a href=\"https://myaccount.google.com/permissions\" target=\"_blank\" rel=\"noopener\">Google Account permissions</a>. Full details in our <a href=\"privacy.html\">Privacy Policy</a>."
+    },
+    {
+      "id": "7d2dc48836",
+      "kind": "html",
+      "key": "h2",
+      "text": "Frequently asked questions"
+    },
+    {
+      "id": "b74707c3c3",
+      "kind": "html",
+      "key": "h3",
+      "text": "Do I need to be the Classroom teacher?"
+    },
+    {
+      "id": "c608f7f70d",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes — the import lists courses where your signed-in account is a teacher (co-teachers count). Personal @gmail.com Classroom courses work too."
+    },
+    {
+      "id": "8584dbaa86",
+      "kind": "html",
+      "key": "h3",
+      "text": "What if my students' Meet names don't match their roster names?"
+    },
+    {
+      "id": "7e3640575a",
+      "kind": "html",
+      "key": "p",
+      "text": "Matching tries the school email first, which is exact. For name-only joins it normalizes and compares display names, so \"Alice W.\" still matches \"Alice Walker\"."
+    },
+    {
+      "id": "bed57df1fc",
+      "kind": "html",
+      "key": "h3",
+      "text": "Does the roster update when my Classroom enrollment changes?"
+    },
+    {
+      "id": "e3aab977e5",
+      "kind": "html",
+      "key": "p",
+      "text": "Re-run the import any time — open the roster's <strong>Edit</strong> dialog and click <strong>Import from Google Classroom</strong> again to refresh the list."
+    },
+    {
+      "id": "99899b1fc1",
+      "kind": "html",
+      "key": "h3",
+      "text": "Is this free?"
+    },
+    {
+      "id": "afaecc7a9d",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes — Classroom roster import and live roll call are free for every account."
+    },
+    {
+      "id": "0a65c36db3",
+      "kind": "html",
+      "key": "h3",
+      "text": "Your Classroom roster, taking attendance for you"
+    },
+    {
+      "id": "d3c7b010e9",
+      "kind": "html",
+      "key": "p",
+      "text": "Free, one-click import, works with K-12 and higher-ed Classroom accounts."
+    },
+    {
+      "id": "14b133eb0f",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Attendance Tracker from Marketplace"
+    },
+    {
+      "id": "d360e4c6a4",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"import-google-classroom-roster-to-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Import Classroom Rosters</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "5f3cc2f91e",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Integrations</strong>\n          <a href=\"export-google-meet-attendance-to-moodle.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Moodle Gradebook Export</a>\n          <a href=\"export-google-meet-attendance-to-canvas.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Canvas Gradebook Export</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"send-google-meet-attendance-to-google-chat.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Chat &amp; Discord</a>"
+    },
+    {
+      "id": "98cdd4d1f5",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>"
+    },
+    {
+      "id": "e787e741f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "81da0fba1f",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "How to import a Google Classroom roster into Google Meet attendance"
+    },
+    {
+      "id": "b30f9ae852",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "Step-by-step instructions for importing a Google Classroom class list into the Attendance Tracker Meet add-on."
+    },
+    {
+      "id": "2858fe91de",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Open the Class Roster tab"
+    },
+    {
+      "id": "5dc25f523d",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "In the Attendance Tracker side panel during a Google Meet call, open Class Roster and click + New Class."
+    },
+    {
+      "id": "a4e208b256",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Import from Google Classroom"
+    },
+    {
+      "id": "4b5b69a416",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Click Import from Google Classroom, approve the one-time permission, and pick your course."
+    },
+    {
+      "id": "10bc4966bd",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Save and track"
+    },
+    {
+      "id": "6a85d3be9f",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Review the imported student list, save the roster, and start tracking — students sort into Present, Late, and Absent automatically."
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "4289b2a25e",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Import your Google Classroom roster into Google Meet attendance"
+    }
+  ]
+}

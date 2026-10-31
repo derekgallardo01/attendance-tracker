@@ -1,0 +1,390 @@
+{
+  "page": "export-google-meet-attendance-to-sheets.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "8b4ce5f523",
+      "kind": "head",
+      "key": "title",
+      "text": "Export Google Meet attendance to Google Sheets (one click) — Attendance Tracker"
+    },
+    {
+      "id": "de679dd730",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Skip the copy-paste. Auto-export Google Meet attendance to a Google Sheet when the meeting ends — with join times, durations, late flags, no-shows, and per-tab session history."
+    },
+    {
+      "id": "98e576fb24",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Export Google Meet attendance to Google Sheets"
+    },
+    {
+      "id": "a2f5e7c6ae",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Auto-export attendance when the meeting ends. Join times, durations, no-shows, late flags."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "36cb936549",
+      "kind": "html",
+      "key": "h1",
+      "text": "Export Google Meet attendance to Google Sheets"
+    },
+    {
+      "id": "3a47c5a232",
+      "kind": "html",
+      "key": "p",
+      "text": "No copy-paste, no manual roll-call, no waiting for Google's email report (which only the Education Plus tier gets anyway). Auto-export the full attendance sheet when the meeting ends."
+    },
+    {
+      "id": "935c1180f3",
+      "kind": "attr",
+      "key": "title",
+      "text": "Attendance Tracker — see it in action"
+    },
+    {
+      "id": "2ed8b1ebed",
+      "kind": "attr",
+      "key": "alt",
+      "text": "One-click export of Google Meet attendance to a clean Google Sheet with attendance percentages"
+    },
+    {
+      "id": "e60482f1b2",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>The short version:</strong> install the <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968\">Attendance Tracker</a> Marketplace add-on. Open the side panel during your meeting. When the meeting ends, the sheet lands in your Drive automatically — no clicks required."
+    },
+    {
+      "id": "a0738c95c0",
+      "kind": "html",
+      "key": "h2",
+      "text": "Why this isn't built into Google Meet"
+    },
+    {
+      "id": "459ed28e71",
+      "kind": "html",
+      "key": "p",
+      "text": "Google's built-in attendance feature only exists on the Workspace Education Plus tier. Even on that tier, the output is a CSV emailed to the organizer — not a live Google Sheet you can sort, filter, share, or aggregate over time. For everyone else (Business Starter, Standard, Plus, Enterprise, personal Gmail), there's no built-in path."
+    },
+    {
+      "id": "db3d60f79a",
+      "kind": "html",
+      "key": "p",
+      "text": "The Meet REST API exposes participant data to any authenticated participant. A Marketplace add-on can read that data, turn it into a Sheet, and skip the upgrade-to-Education-Plus dance."
+    },
+    {
+      "id": "701d7c8d48",
+      "kind": "html",
+      "key": "h2",
+      "text": "What ends up in the Sheet"
+    },
+    {
+      "id": "9c58af3193",
+      "kind": "html",
+      "key": "th",
+      "text": "Column"
+    },
+    {
+      "id": "0bcdebd23a",
+      "kind": "html",
+      "key": "th",
+      "text": "What it means"
+    },
+    {
+      "id": "30cdb7332e",
+      "kind": "html",
+      "key": "td",
+      "text": "Name"
+    },
+    {
+      "id": "8b5180f4c4",
+      "kind": "html",
+      "key": "td",
+      "text": "Display name from the Meet participant record"
+    },
+    {
+      "id": "4364cd99a9",
+      "kind": "html",
+      "key": "td",
+      "text": "Email"
+    },
+    {
+      "id": "c842c03db9",
+      "kind": "html",
+      "key": "td",
+      "text": "Email if the participant is in your Workspace directory or on the calendar invite"
+    },
+    {
+      "id": "3706a4cd79",
+      "kind": "html",
+      "key": "td",
+      "text": "RSVP Status"
+    },
+    {
+      "id": "7f7d02f469",
+      "kind": "html",
+      "key": "td",
+      "text": "Accepted / Declined / Tentative / No Response — pulled from the matching calendar event"
+    },
+    {
+      "id": "33c804d00e",
+      "kind": "html",
+      "key": "td",
+      "text": "Late?"
+    },
+    {
+      "id": "a829bff883",
+      "kind": "html",
+      "key": "td",
+      "text": "<code>+5m</code> if joined more than 5 minutes after the scheduled start; empty if on time"
+    },
+    {
+      "id": "135840cd98",
+      "kind": "html",
+      "key": "td",
+      "text": "Join / Leave Time"
+    },
+    {
+      "id": "2def11c1ec",
+      "kind": "html",
+      "key": "td",
+      "text": "Exact timestamps from the Meet API"
+    },
+    {
+      "id": "5a764c5fa9",
+      "kind": "html",
+      "key": "td",
+      "text": "Duration (min)"
+    },
+    {
+      "id": "1f10655868",
+      "kind": "html",
+      "key": "td",
+      "text": "Total time in the meeting; sums across multiple sessions if they rejoined"
+    },
+    {
+      "id": "1cb35f63a5",
+      "kind": "html",
+      "key": "td",
+      "text": "Attendance %"
+    },
+    {
+      "id": "59b51a21c4",
+      "kind": "html",
+      "key": "td",
+      "text": "Duration / meeting length, capped at 100%"
+    },
+    {
+      "id": "1ba254666e",
+      "kind": "html",
+      "key": "td",
+      "text": "Status"
+    },
+    {
+      "id": "c0a19a89b3",
+      "kind": "html",
+      "key": "td",
+      "text": "Present, Left, Absent, or Absent (excused)"
+    },
+    {
+      "id": "3468b7281a",
+      "kind": "html",
+      "key": "h2",
+      "text": "How the auto-export works"
+    },
+    {
+      "id": "1a25d33da3",
+      "kind": "html",
+      "key": "li",
+      "text": "The add-on polls the Meet API every 30 seconds while you're in the meeting."
+    },
+    {
+      "id": "010d9fb2d7",
+      "kind": "html",
+      "key": "li",
+      "text": "When the Meet API reports the conference has ended, the export fires automatically — no click required."
+    },
+    {
+      "id": "4f0e003d45",
+      "kind": "html",
+      "key": "li",
+      "text": "If the meeting is part of a recurring Calendar series, the participants are auto-matched against the invite list. No-shows get tagged Absent."
+    },
+    {
+      "id": "c1d3d900a4",
+      "kind": "html",
+      "key": "li",
+      "text": "The sheet is created in a \"Meet Attendance Tracker\" folder in your Drive (created if it doesn't exist). Each meeting gets its own tab in a single spreadsheet — so you can sort/filter across sessions later."
+    },
+    {
+      "id": "b576b940bf",
+      "kind": "html",
+      "key": "li",
+      "text": "You get an email with the sheet link and an inline summary of who attended."
+    },
+    {
+      "id": "a00ae49544",
+      "kind": "html",
+      "key": "h2",
+      "text": "Manual export still works"
+    },
+    {
+      "id": "c94e1b814e",
+      "kind": "html",
+      "key": "p",
+      "text": "If you want to export mid-meeting, the side panel has a <strong>Sheet</strong> button that triggers the same flow on demand. Useful for running a quick roll-call without waiting for the meeting to end."
+    },
+    {
+      "id": "e4e3fb4506",
+      "kind": "html",
+      "key": "h2",
+      "text": "Sharing the resulting sheet"
+    },
+    {
+      "id": "946953d3bc",
+      "kind": "html",
+      "key": "p",
+      "text": "The sheet is in your Drive, owned by you, with normal Google Sheets sharing controls. Right-click → Share, or copy the URL from the email. The add-on never touches sheets you didn't create with it — the requested permission scope is <code>drive.file</code>, which restricts the add-on to files it created."
+    },
+    {
+      "id": "7bbc7499e2",
+      "kind": "html",
+      "key": "h2",
+      "text": "Privacy"
+    },
+    {
+      "id": "eb15cf13f5",
+      "kind": "html",
+      "key": "li",
+      "text": "The attendance data flows through your own Google account's OAuth token, not a shared service."
+    },
+    {
+      "id": "db01d803ef",
+      "kind": "html",
+      "key": "li",
+      "text": "The add-on stores the join/leave timestamps in its own backend for the recurring-series roll-up feature, but the source-of-truth Sheet is yours."
+    },
+    {
+      "id": "b75446e428",
+      "kind": "html",
+      "key": "li",
+      "text": "The add-on never reads transcripts, video, audio, or chat. Just the participant list and timestamps that you can already see in the Meet participants panel."
+    },
+    {
+      "id": "1f8c85192b",
+      "kind": "html",
+      "key": "h3",
+      "text": "Stop copying names into spreadsheets"
+    },
+    {
+      "id": "08d7f8d4b7",
+      "kind": "html",
+      "key": "p",
+      "text": "Install in 30 seconds. Auto-export fires when the meeting ends. Free."
+    },
+    {
+      "id": "cac999cf60",
+      "kind": "html",
+      "key": "a",
+      "text": "Install from Marketplace"
+    },
+    {
+      "id": "9352c1ed98",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "a3ad204977",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-legal-depositions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Legal &amp; Arbitrations</a>\n          <a href=\"google-meet-attendance-for-job-interviews.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Recruiting &amp; Interviews</a>"
+    },
+    {
+      "id": "e7a3b147f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Specialized Verticals</strong>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-clinical-supervision-and-therapy.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Clinical Supervision</a>\n          <a href=\"google-meet-quorum-and-board-meetings.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Board Quorum Tracking</a>\n          <a href=\"google-meet-attendance-for-churches.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Churches &amp; Ministries</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>\n          <a href=\"google-meet-attendance-for-fitness-and-yoga.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Fitness &amp; Yoga</a>"
+    },
+    {
+      "id": "eb9246d86f",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>\n          <a href=\"google-meet-attendance-on-ipad-and-mobile.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">iPad &amp; Mobile Attendance</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "9ab0f06901",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "How to Export Google Meet Attendance to Google Sheets"
+    },
+    {
+      "id": "a5ed3f9cd7",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "Step-by-step instructions on automatically saving Google Meet attendance reports directly into tabbed Google Sheets."
+    },
+    {
+      "id": "b32c64913d",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Open Attendance Tracker"
+    },
+    {
+      "id": "cbf6fde7ef",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Open the Attendance Tracker side panel during your Google Meet call."
+    },
+    {
+      "id": "6c536a4c3d",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Review participant attendance"
+    },
+    {
+      "id": "161ddf3a82",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Review live participant connection times, durations, and late arrival flags."
+    },
+    {
+      "id": "7ddc1ee335",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Auto-export to Google Drive"
+    },
+    {
+      "id": "a5b2491df3",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "When the meeting ends, attendance automatically exports to a tabbed Google Sheet in your Drive."
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "0f2de69d2a",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Export Google Meet attendance to Google Sheets"
+    }
+  ]
+}

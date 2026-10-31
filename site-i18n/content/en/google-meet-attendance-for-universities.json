@@ -1,0 +1,240 @@
+{
+  "page": "google-meet-attendance-for-universities.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "0ae6ae837f",
+      "kind": "head",
+      "key": "title",
+      "text": "Google Meet Attendance Tracker for Universities & Colleges (2026) — Attendance Tracker"
+    },
+    {
+      "id": "53d0a1b267",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Manage large lecture attendance (100+ students), multi-section semester courses, and automated Google Sheets export for higher education faculty and university departments."
+    },
+    {
+      "id": "b27056d91d",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Google Meet Attendance Tracker for Universities & Colleges"
+    },
+    {
+      "id": "0417dce854",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Automated attendance for university professors, large lectures, and college departments. No Education Plus required."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "f7814a1b6f",
+      "kind": "html",
+      "key": "h1",
+      "text": "Google Meet attendance tracker for universities &amp; colleges"
+    },
+    {
+      "id": "563e9f4dd4",
+      "kind": "html",
+      "key": "p",
+      "text": "Managing lecture attendance for 100+ university students across multiple course sections and semesters is a massive administrative headache. Here is how higher education professors and academic departments automate class attendance in Google Meet."
+    },
+    {
+      "id": "383c2b38cf",
+      "kind": "attr",
+      "key": "title",
+      "text": "Higher Education Attendance Tracking"
+    },
+    {
+      "id": "5003af8c25",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Semester-wide university course attendance summary"
+    },
+    {
+      "id": "cbb7a50759",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Trusted by Academic Faculty Globally:</strong> Used across state universities and colleges in the Philippines, India, Nigeria, Argentina, Malaysia, and the United States without requiring IT department intervention."
+    },
+    {
+      "id": "f49f2f4484",
+      "kind": "html",
+      "key": "h2",
+      "text": "Challenges of Taking Attendance in Higher Education"
+    },
+    {
+      "id": "92c4877601",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Massive Lecture Sizes:</strong> When 150 students join an online lecture, taking manual roll call is physically impossible."
+    },
+    {
+      "id": "669ca09b13",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Proxy Sign-Ins &amp; Drop-offs:</strong> Students frequently sign in, turn off their camera, and leave after 5 minutes. Professors need to see exact minutes stayed."
+    },
+    {
+      "id": "ab5bfe31c3",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Academic Accreditation &amp; Financial Aid Audits:</strong> Universities must maintain verified student attendance records to comply with accreditation boards and federal student aid requirements."
+    },
+    {
+      "id": "56167e8875",
+      "kind": "html",
+      "key": "h2",
+      "text": "How University Faculty Use Attendance Tracker"
+    },
+    {
+      "id": "ae56bf824b",
+      "kind": "html",
+      "key": "h3",
+      "text": "1. Zero-Friction in Large Lectures"
+    },
+    {
+      "id": "021cc718a9",
+      "kind": "html",
+      "key": "p",
+      "text": "The add-on operates directly within the Google Meet side panel. It effortlessly processes high-concurrency lectures with 50 to 250+ students, recording exact join timestamps, leave timestamps, and total minutes present."
+    },
+    {
+      "id": "49f1c43c87",
+      "kind": "html",
+      "key": "h3",
+      "text": "2. Teaching Assistant (TA) Delegation"
+    },
+    {
+      "id": "0c54f12c72",
+      "kind": "html",
+      "key": "p",
+      "text": "Unlike Google's built-in tool (which only sends reports to the original meeting creator), Attendance Tracker works for any attendee. TAs and co-instructors can run the add-on from their own accounts and export reports to their personal Google Drive while the lead professor conducts the lecture."
+    },
+    {
+      "id": "e188b8660e",
+      "kind": "html",
+      "key": "h3",
+      "text": "3. Multi-Session Semester Course Roll-Ups"
+    },
+    {
+      "id": "bc76863a41",
+      "kind": "html",
+      "key": "p",
+      "text": "University courses meet 2–3 times per week for 16 weeks. Attendance Tracker groups all lectures by course ID and generates a cumulative <strong>Class Summary</strong> tab showing:"
+    },
+    {
+      "id": "c7376227e6",
+      "kind": "html",
+      "key": "li",
+      "text": "Each student's cumulative attendance percentage across the entire semester"
+    },
+    {
+      "id": "882f13b3da",
+      "kind": "html",
+      "key": "li",
+      "text": "Total lecture hours logged per student"
+    },
+    {
+      "id": "cbd7f24da8",
+      "kind": "html",
+      "key": "li",
+      "text": "Early warning flags for students at risk of failing attendance minimums"
+    },
+    {
+      "id": "c3da950cf2",
+      "kind": "html",
+      "key": "h3",
+      "text": "4. Department &amp; Campus Deployment"
+    },
+    {
+      "id": "88cce3ff9d",
+      "kind": "html",
+      "key": "p",
+      "text": "University IT administrators can deploy Attendance Tracker domain-wide across all faculty accounts in 30 seconds via the Google Workspace Admin Console, or professors can install it individually with zero administrative approvals required."
+    },
+    {
+      "id": "ba160b57b9",
+      "kind": "html",
+      "key": "h3",
+      "text": "Automate your university lecture attendance"
+    },
+    {
+      "id": "60add6bb96",
+      "kind": "html",
+      "key": "p",
+      "text": "Free for professors, works on all institutional Google Workspace domains."
+    },
+    {
+      "id": "14b133eb0f",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Attendance Tracker from Marketplace"
+    },
+    {
+      "id": "5a2e11b007",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-philippines-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Philippine Teachers &amp; DepEd</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "a3ad204977",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-legal-depositions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Legal &amp; Arbitrations</a>\n          <a href=\"google-meet-attendance-for-job-interviews.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Recruiting &amp; Interviews</a>"
+    },
+    {
+      "id": "e7a3b147f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Specialized Verticals</strong>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-clinical-supervision-and-therapy.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Clinical Supervision</a>\n          <a href=\"google-meet-quorum-and-board-meetings.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Board Quorum Tracking</a>\n          <a href=\"google-meet-attendance-for-churches.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Churches &amp; Ministries</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>\n          <a href=\"google-meet-attendance-for-fitness-and-yoga.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Fitness &amp; Yoga</a>"
+    },
+    {
+      "id": "eb9246d86f",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>\n          <a href=\"google-meet-attendance-on-ipad-and-mobile.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">iPad &amp; Mobile Attendance</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "69cd23e49e",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "Google Meet Attendance Tracking for Universities and Colleges"
+    },
+    {
+      "id": "589f152635",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "How higher education professors and university departments track attendance in large Google Meet lectures and lab courses."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "d1a8fc70f3",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Google Meet attendance tracker for universities &amp; colleges"
+    }
+  ]
+}

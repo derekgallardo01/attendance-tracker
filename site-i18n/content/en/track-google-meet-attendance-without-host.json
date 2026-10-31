@@ -1,0 +1,300 @@
+{
+  "page": "track-google-meet-attendance-without-host.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "9c0c410ac8",
+      "kind": "head",
+      "key": "title",
+      "text": "How to track Google Meet attendance if you are not the host (2026) — Attendance Tracker"
+    },
+    {
+      "id": "5677cc1651",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Can you take attendance in Google Meet without being the meeting host or organizer? Yes. Here is how TAs, co-hosts, project managers, and attendees can track calls."
+    },
+    {
+      "id": "ee7e4c2956",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "How to track Google Meet attendance if you are not the host"
+    },
+    {
+      "id": "4ae6111d69",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Step-by-step guide for teaching assistants, co-hosts, and team members to track attendance and export Google Sheets when someone else created the meeting."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "13f9a15c42",
+      "kind": "html",
+      "key": "h1",
+      "text": "How to track Google Meet attendance if you are not the host"
+    },
+    {
+      "id": "b18dc5d689",
+      "kind": "html",
+      "key": "p",
+      "text": "In many classrooms, workshops, and business meetings, the person responsible for tracking attendance (like a Teaching Assistant, Project Manager, or Co-Host) is NOT the person who scheduled the Google Calendar invite. Here is how you can track attendance without host privileges."
+    },
+    {
+      "id": "175ed7416c",
+      "kind": "attr",
+      "key": "title",
+      "text": "Track Google Meet attendance without host permissions"
+    },
+    {
+      "id": "9dd1484852",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Non-host participant tracking attendance in Google Meet side panel"
+    },
+    {
+      "id": "c8739ee104",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>The Problem with Google's Built-in Reports:</strong> Even if your school or company pays for Google Workspace Education Plus, Google automatically emails the attendance CSV <em>only to the original meeting creator</em>. Co-hosts, assistants, and participants receive nothing."
+    },
+    {
+      "id": "8ce2401613",
+      "kind": "html",
+      "key": "h2",
+      "text": "How Attendance Tracker Solves This"
+    },
+    {
+      "id": "3e423326df",
+      "kind": "html",
+      "key": "p",
+      "text": "The <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_nonhost\">Attendance Tracker add-on</a> connects to the active Google Meet conference session using your own authenticated account. As long as you are physically present in the meeting, you can:"
+    },
+    {
+      "id": "b4441688a7",
+      "kind": "html",
+      "key": "li",
+      "text": "View the live roster of everyone who joins or leaves during the call"
+    },
+    {
+      "id": "157c4dfbcc",
+      "kind": "html",
+      "key": "li",
+      "text": "Capture exact join timestamps, leave timestamps, and durations"
+    },
+    {
+      "id": "eab87a3889",
+      "kind": "html",
+      "key": "li",
+      "text": "Export the completed attendance report directly into <strong>your own Google Drive</strong>"
+    },
+    {
+      "id": "9c48315ff2",
+      "kind": "html",
+      "key": "li",
+      "text": "Receive the post-meeting summary email directly in <strong>your own inbox</strong>"
+    },
+    {
+      "id": "e446e70a2e",
+      "kind": "html",
+      "key": "h2",
+      "text": "Step-by-Step Instructions for Non-Hosts"
+    },
+    {
+      "id": "976b1d9796",
+      "kind": "html",
+      "key": "h3",
+      "text": "Step 1: Install the Add-on to Your Google Account"
+    },
+    {
+      "id": "ddaab30310",
+      "kind": "html",
+      "key": "p",
+      "text": "Install <a href=\"https://workspace.google.com/marketplace/app/attendance_tracker/829771833968?utm_source=seo_nonhost\">Attendance Tracker from the Workspace Marketplace</a>. You only need to install it once."
+    },
+    {
+      "id": "abf2c71216",
+      "kind": "html",
+      "key": "h3",
+      "text": "Step 2: Join the Google Meet Call"
+    },
+    {
+      "id": "01ec9bda76",
+      "kind": "html",
+      "key": "p",
+      "text": "Click the meeting link provided by the professor, host, or organizer."
+    },
+    {
+      "id": "1bea053298",
+      "kind": "html",
+      "key": "h3",
+      "text": "Step 3: Open Attendance Tracker in the Side Panel"
+    },
+    {
+      "id": "f5e552f63f",
+      "kind": "html",
+      "key": "p",
+      "text": "Click the <strong>Activities icon</strong> (triangle, square, circle in the lower-right corner) and select <strong>Attendance Tracker</strong>."
+    },
+    {
+      "id": "29c4f4e8e1",
+      "kind": "html",
+      "key": "p",
+      "text": "<em>Tip: Open the panel at the start of the meeting so it captures participants from the very beginning.</em>"
+    },
+    {
+      "id": "4be263a03b",
+      "kind": "html",
+      "key": "h3",
+      "text": "Step 4: Export to Your Own Google Sheets"
+    },
+    {
+      "id": "c1b4e2a635",
+      "kind": "html",
+      "key": "p",
+      "text": "When the meeting concludes, click <strong>Save to Sheets</strong> (or let Auto-Export trigger when the call closes). The spreadsheet is created in your personal Google Drive under <code>Meet Attendance Tracker</code>."
+    },
+    {
+      "id": "d70fcc9ea8",
+      "kind": "html",
+      "key": "h2",
+      "text": "Who Uses This?"
+    },
+    {
+      "id": "f455ddda4b",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Teaching Assistants (TAs):</strong> Record student attendance for lab sections and lectures while the lead professor focuses on teaching."
+    },
+    {
+      "id": "8dc29ef2e9",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Project Coordinators &amp; Scrum Masters:</strong> Track meeting attendance across client calls and standups organized by executives."
+    },
+    {
+      "id": "a6ec8e4166",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Event Moderators &amp; Workshop Hosts:</strong> Generate attendee lists for webinars hosted on external accounts."
+    },
+    {
+      "id": "56d60ad832",
+      "kind": "html",
+      "key": "h3",
+      "text": "Start tracking any meeting you attend"
+    },
+    {
+      "id": "6ddc60127f",
+      "kind": "html",
+      "key": "p",
+      "text": "Free, no host permissions required, works on all Google Meet calls."
+    },
+    {
+      "id": "604313e657",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Attendance Tracker for Free"
+    },
+    {
+      "id": "9352c1ed98",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "a3ad204977",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-legal-depositions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Legal &amp; Arbitrations</a>\n          <a href=\"google-meet-attendance-for-job-interviews.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Recruiting &amp; Interviews</a>"
+    },
+    {
+      "id": "e7a3b147f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Specialized Verticals</strong>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-clinical-supervision-and-therapy.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Clinical Supervision</a>\n          <a href=\"google-meet-quorum-and-board-meetings.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Board Quorum Tracking</a>\n          <a href=\"google-meet-attendance-for-churches.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Churches &amp; Ministries</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>\n          <a href=\"google-meet-attendance-for-fitness-and-yoga.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Fitness &amp; Yoga</a>"
+    },
+    {
+      "id": "eb9246d86f",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>\n          <a href=\"google-meet-attendance-on-ipad-and-mobile.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">iPad &amp; Mobile Attendance</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "b09bdef058",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "How to track Google Meet attendance if you are not the host"
+    },
+    {
+      "id": "6224f8f620",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "Step-by-step guide on taking Google Meet attendance as a participant, co-host, or TA without meeting organizer privileges."
+    },
+    {
+      "id": "fbfcfce7fd",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Install Attendance Tracker"
+    },
+    {
+      "id": "ddebd7e2f4",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Install Attendance Tracker from the Google Workspace Marketplace."
+    },
+    {
+      "id": "4915e68e9e",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Join any Google Meet call"
+    },
+    {
+      "id": "9b4344bca2",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Join the meeting via the link. You do not need to be the creator or host."
+    },
+    {
+      "id": "825234834d",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Open the side panel"
+    },
+    {
+      "id": "5c04f9d9bd",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "Open Attendance Tracker from the Activities menu during the call."
+    },
+    {
+      "id": "5bc8744fa2",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Export your own report"
+    },
+    {
+      "id": "03a469dcd2",
+      "kind": "jsonld",
+      "key": "0:text",
+      "text": "When the meeting finishes, your personal attendance sheet is saved directly to your Google Drive."
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    }
+  ]
+}

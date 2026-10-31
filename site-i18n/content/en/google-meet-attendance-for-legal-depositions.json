@@ -1,0 +1,246 @@
+{
+  "page": "google-meet-attendance-for-legal-depositions.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "1f8b29f1cd",
+      "kind": "head",
+      "key": "title",
+      "text": "Google Meet Attendance Tracker for Legal Depositions & Arbitrations (2026) — Attendance Tracker"
+    },
+    {
+      "id": "6f5368eae4",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "Generate timestamped entry/exit logs for remote legal depositions, virtual mediations, court hearings, and arbitration proceedings in Google Meet."
+    },
+    {
+      "id": "11799d922a",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Google Meet Attendance Tracker for Legal Depositions & Arbitrations"
+    },
+    {
+      "id": "15d4eb5425",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "Audit-ready witness arrival timestamps, counsel appearance logs, and Google Sheets exports for virtual legal proceedings."
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "c763df6cf9",
+      "kind": "html",
+      "key": "h1",
+      "text": "Google Meet attendance tracker for legal depositions &amp; arbitrations"
+    },
+    {
+      "id": "c52499f599",
+      "kind": "html",
+      "key": "p",
+      "text": "In virtual litigation, remote depositions, dispute arbitrations, and sworn witness examinations over Google Meet, documenting the exact entry and exit timestamps of attorneys, witnesses, court reporters, and translators is critical for the official court record. Here is how legal teams automate attendance logs."
+    },
+    {
+      "id": "66283c290e",
+      "kind": "attr",
+      "key": "title",
+      "text": "Legal Depositions Attendance Tracking"
+    },
+    {
+      "id": "d762bcaae0",
+      "kind": "attr",
+      "key": "alt",
+      "text": "Timestamped attendance sheet for legal depositions and arbitrations"
+    },
+    {
+      "id": "ab551637f8",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>Audit-Ready Billing &amp; Court Records:</strong> Defend billing entries and prove witness presence. Attendance Tracker logs every participant's exact join time, leave time, and active duration in minutes directly into a clean, immutable Google Sheet."
+    },
+    {
+      "id": "ed9f84e5a4",
+      "kind": "html",
+      "key": "h2",
+      "text": "Why Remote Legal Proceedings Require Precise Logs"
+    },
+    {
+      "id": "b7c0f309e6",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Witness Appearance Verification:</strong> Establish verifiable proof of when a deponent or expert witness entered the virtual deposition room."
+    },
+    {
+      "id": "2723cf4ce9",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Billing Defense &amp; 0.1h Increments:</strong> Law firms billing clients by the tenth of an hour (6-minute intervals) can instantly export accurate session durations."
+    },
+    {
+      "id": "bb57cb4ac7",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Court Reporter &amp; Translator Tracking:</strong> Document the presence of certified language interpreters and stenographers during sworn testimony."
+    },
+    {
+      "id": "3b4d5e370f",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Zero Screen-Scraping Flaws:</strong> Connects directly to the Google Meet REST API for verified server-side connection records."
+    },
+    {
+      "id": "08006168a9",
+      "kind": "html",
+      "key": "h2",
+      "text": "Key Workflows for Law Firms &amp; Mediators"
+    },
+    {
+      "id": "52ba89b062",
+      "kind": "html",
+      "key": "h3",
+      "text": "1. Real-Time In-Call Appearance Monitoring"
+    },
+    {
+      "id": "3fe7cf10b4",
+      "kind": "html",
+      "key": "p",
+      "text": "Paralegals or managing attorneys can keep the Attendance Tracker panel open in the Google Meet side panel to monitor arriving counsel and witnesses without disrupting ongoing examination."
+    },
+    {
+      "id": "359fb34119",
+      "kind": "html",
+      "key": "h3",
+      "text": "2. Automatic Google Drive Case Archival"
+    },
+    {
+      "id": "6d4b445143",
+      "kind": "html",
+      "key": "p",
+      "text": "As soon as the proceeding concludes, Attendance Tracker generates a dedicated, timestamped tab in your firm's <code>Meet Attendance Tracker</code> spreadsheet. Records can be downloaded as PDF or CSV to attach to court exhibits or case files."
+    },
+    {
+      "id": "6e87972cda",
+      "kind": "html",
+      "key": "h3",
+      "text": "3. Multi-Day Trial &amp; Arbitration Series Tracking"
+    },
+    {
+      "id": "d584537b4f",
+      "kind": "html",
+      "key": "p",
+      "text": "For arbitrations or depositions spanning multiple consecutive days, Attendance Tracker groups all sessions by Google Calendar recurring event IDs to summarize total appearance hours per counsel or party."
+    },
+    {
+      "id": "53017ac9c7",
+      "kind": "html",
+      "key": "h2",
+      "text": "Ideal for:"
+    },
+    {
+      "id": "0dc9728161",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Litigation Law Firms:</strong> Document appearance times for remote depositions and pre-trial conferences."
+    },
+    {
+      "id": "3a86c2372e",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Alternative Dispute Resolution (ADR) Centers:</strong> Maintain official attendee logs for virtual mediation and binding arbitration sessions."
+    },
+    {
+      "id": "7a45434778",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Court Reporting Agencies:</strong> Track deponent and attorney attendance for transcript preparation."
+    },
+    {
+      "id": "69cd371253",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Corporate Legal Departments:</strong> Log external counsel participation during internal investigations and shareholder hearings."
+    },
+    {
+      "id": "2beb426772",
+      "kind": "html",
+      "key": "h3",
+      "text": "Automate your legal proceeding attendance logs"
+    },
+    {
+      "id": "45e9d3bf9a",
+      "kind": "html",
+      "key": "p",
+      "text": "Free for individual attorneys, enterprise domain deployment available via Workspace Marketplace."
+    },
+    {
+      "id": "14b133eb0f",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Attendance Tracker from Marketplace"
+    },
+    {
+      "id": "9352c1ed98",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "a3ad204977",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-legal-depositions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Legal &amp; Arbitrations</a>\n          <a href=\"google-meet-attendance-for-job-interviews.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Recruiting &amp; Interviews</a>"
+    },
+    {
+      "id": "e7a3b147f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Specialized Verticals</strong>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-clinical-supervision-and-therapy.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Clinical Supervision</a>\n          <a href=\"google-meet-quorum-and-board-meetings.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Board Quorum Tracking</a>\n          <a href=\"google-meet-attendance-for-churches.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Churches &amp; Ministries</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>\n          <a href=\"google-meet-attendance-for-fitness-and-yoga.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Fitness &amp; Yoga</a>"
+    },
+    {
+      "id": "eb9246d86f",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>\n          <a href=\"google-meet-attendance-on-ipad-and-mobile.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">iPad &amp; Mobile Attendance</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "396b87cbfd",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "How to Track Attendance for Legal Depositions & Mediations in Google Meet"
+    },
+    {
+      "id": "8ea76f882f",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "A guide for attorneys, paralegals, court reporters, and mediators on logging verified attendance and appearance times in Google Meet."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    },
+    {
+      "id": "8cded2f2cd",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Google Meet attendance tracker for legal depositions &amp; arbitrations"
+    }
+  ]
+}

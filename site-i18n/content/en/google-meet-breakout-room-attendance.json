@@ -1,0 +1,294 @@
+{
+  "page": "google-meet-breakout-room-attendance.html",
+  "legal": false,
+  "segments": [
+    {
+      "id": "526a8c8295",
+      "kind": "head",
+      "key": "title",
+      "text": "Google Meet breakout room attendance: what's possible in 2026 — Attendance Tracker"
+    },
+    {
+      "id": "acff10bd22",
+      "kind": "head",
+      "key": "meta[name=\"description\"]",
+      "text": "An honest guide to tracking breakout room attendance in Google Meet: what Google's built-in report covers, why no third-party tool can track per-room membership, and what actually works."
+    },
+    {
+      "id": "a796a0784d",
+      "kind": "head",
+      "key": "meta[property=\"og:title\"]",
+      "text": "Google Meet breakout room attendance: what's possible in 2026"
+    },
+    {
+      "id": "0f6da80519",
+      "kind": "head",
+      "key": "meta[property=\"og:description\"]",
+      "text": "What Google's built-in report covers for breakout rooms, why no add-on or extension can track per-room attendance, and the practical patterns teachers actually use."
+    },
+    {
+      "id": "216c70baf6",
+      "kind": "head",
+      "key": "meta[name=\"twitter:title\"]",
+      "text": "Google Meet breakout room attendance: what"
+    },
+    {
+      "id": "bc4b5ab3c4",
+      "kind": "head",
+      "key": "meta[name=\"twitter:description\"]",
+      "text": "What Google"
+    },
+    {
+      "id": "d9334f5067",
+      "kind": "html",
+      "key": "div",
+      "text": "<img src=\"icons/icon-96.png\" alt=\"\">\n      <a href=\"/\">Attendance Tracker</a>"
+    },
+    {
+      "id": "d9772fb2e8",
+      "kind": "html",
+      "key": "h1",
+      "text": "Google Meet breakout room attendance: what's possible in 2026"
+    },
+    {
+      "id": "a7adfdeb89",
+      "kind": "html",
+      "key": "p",
+      "text": "If you run small-group work in Google Meet, you've probably wondered whether anything can tell you who was in which breakout room, and for how long. This page gives you the honest answer — including one thing most tool vendors won't tell you."
+    },
+    {
+      "id": "5d653bcc45",
+      "kind": "html",
+      "key": "h2",
+      "text": "What Google's built-in report offers"
+    },
+    {
+      "id": "45d1a12390",
+      "kind": "html",
+      "key": "p",
+      "text": "Since May 2024, Google's built-in attendance report includes breakout rooms: alongside the main-meeting tab, the report contains a separate tab for each breakout room, listing who was in that room and their in-room join and leave times."
+    },
+    {
+      "id": "61a3f82445",
+      "kind": "html",
+      "key": "p",
+      "text": "The catches are the same ones that apply to the built-in report generally:"
+    },
+    {
+      "id": "fd9da25fca",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Eligible editions only.</strong> Attendance reports — breakout tabs included — are limited to editions like Education Plus, the Teaching &amp; Learning Upgrade, Business Plus, and Enterprise. Most teachers on Education Fundamentals or Standard, and most hosts on Business Standard or free accounts, don't get them at all. Check <a href=\"google-meet-attendance-which-plan.html\">which Workspace plans include attendance tracking</a> to see where you stand."
+    },
+    {
+      "id": "b0d535b0e7",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Post-meeting email only.</strong> The report arrives in the host's inbox after the meeting ends. There is no way to see room membership live, and nothing to act on while class is still running."
+    },
+    {
+      "id": "aad5c07bb1",
+      "kind": "html",
+      "key": "h2",
+      "text": "The part nobody else will tell you"
+    },
+    {
+      "id": "0d06a70399",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong>No third-party tool can track breakout-room attendance. Including ours.</strong> Google does not expose breakout-room membership through any public API — not the Meet REST API, not the Add-ons SDK. That means no extension and no add-on can legitimately report who was in which room. Any tool that claims per-room tracking is scraping pixels off the participant list in your browser — an approach that breaks every time Google changes the Meet interface, and one that was never accurate for rooms the tool couldn't see into anyway."
+    },
+    {
+      "id": "23b36da935",
+      "kind": "html",
+      "key": "p",
+      "text": "We'd love to check that box on a feature list. We don't, because Attendance Tracker is built entirely on Google's official Meet Add-ons platform and official REST API, and the API simply doesn't carry breakout-room data. Accuracy matters more to us than a checkbox — an attendance record you might have to defend to a student, a parent, or an accreditor can't be built on screen-scraping."
+    },
+    {
+      "id": "e4a98d179e",
+      "kind": "html",
+      "key": "p",
+      "text": "If Google ever opens breakout-room data to the API, we'll support it. Until then, treat any per-room tracking claim from any vendor with suspicion."
+    },
+    {
+      "id": "82661191d4",
+      "kind": "html",
+      "key": "h2",
+      "text": "What you <em>can</em> do with Attendance Tracker"
+    },
+    {
+      "id": "5eee7ed7d0",
+      "kind": "html",
+      "key": "p",
+      "text": "While per-room membership is off the table for everyone, the surrounding problem — accurate attendance for a session that <em>uses</em> breakout rooms — is very solvable:"
+    },
+    {
+      "id": "77a0c98fac",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Main-room attendance stays accurate through breakout shuffles.</strong> When students bounce between the main room and breakouts, Meet registers leaves and rejoins. Attendance Tracker merges those into one clean record per person, so a student who was present the whole class — main room and breakouts alike — shows one accurate total, not a confusing pile of fragments. (Google's own report doesn't itemize rejoins at all.)"
+    },
+    {
+      "id": "975cdeadda",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Live roster, no minimum, full emails.</strong> You see Present/Late/Absent in real time during class, sessions with even one participant are tracked, and external participants' emails are shown in full rather than masked."
+    },
+    {
+      "id": "e89efb3308",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Works on every plan.</strong> Free Gmail, Education Fundamentals, Business Standard — the editions Google's report skips are exactly where an add-on earns its keep."
+    },
+    {
+      "id": "aa42b13d58",
+      "kind": "html",
+      "key": "h3",
+      "text": "Practical patterns teachers actually use"
+    },
+    {
+      "id": "c238bfa23e",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>When room-level accountability matters, give each group its own Meet link.</strong> Instead of built-in breakout rooms, post three or four ordinary Meet links and assign groups to them. Each \"room\" is now a real meeting with its own full attendance record — join/leave times, durations, exports — and you (or a co-teacher) can hop between them. This is the only approach that produces per-room records you can rely on."
+    },
+    {
+      "id": "5ea529517e",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Bracket the breakout window with the live roster.</strong> Take attendance in the main room before sending groups out, then watch the roster as everyone returns. Students who quietly left during breakouts show up immediately in the Late/left tracking — which catches the most common failure mode of small-group time without needing per-room data at all."
+    },
+    {
+      "id": "0b40bab237",
+      "kind": "html",
+      "key": "li",
+      "text": "<strong>Pair the roster with a group deliverable.</strong> For graded small-group work, let the attendance record establish who was present for the session, and let each room's shared doc or exit ticket establish who participated in the group. Together they're stronger evidence than a room log alone."
+    },
+    {
+      "id": "48ef81e905",
+      "kind": "html",
+      "key": "h2",
+      "text": "Quick check: is your edition even eligible?"
+    },
+    {
+      "id": "a64de6da66",
+      "kind": "html",
+      "key": "p",
+      "text": "Before building a workflow around Google's built-in breakout tabs, confirm your edition actually generates attendance reports — most don't. Our <a href=\"google-meet-attendance-which-plan.html\">2026 plan-by-plan eligibility table</a> lists exactly which Workspace editions include them, and what to do if yours doesn't."
+    },
+    {
+      "id": "7d2dc48836",
+      "kind": "html",
+      "key": "h2",
+      "text": "Frequently asked questions"
+    },
+    {
+      "id": "b84fb685ff",
+      "kind": "html",
+      "key": "h3",
+      "text": "Does any extension or add-on track breakout room attendance?"
+    },
+    {
+      "id": "f5c8b78cd4",
+      "kind": "html",
+      "key": "p",
+      "text": "No. Google doesn't expose breakout-room membership through any public API, so no third-party tool can track it legitimately. Tools claiming to are scraping the Meet interface, which is fragile and can't see into rooms the host isn't in."
+    },
+    {
+      "id": "71ca4f1350",
+      "kind": "html",
+      "key": "h3",
+      "text": "Does Google's built-in report show breakout rooms?"
+    },
+    {
+      "id": "cf30e23879",
+      "kind": "html",
+      "key": "p",
+      "text": "Yes — since May 2024 it includes a separate tab per breakout room. But only on eligible editions (Education Plus, Teaching &amp; Learning Upgrade, Business Plus, Enterprise), and only as an email to the host after the meeting ends."
+    },
+    {
+      "id": "9eaa79ba8e",
+      "kind": "html",
+      "key": "h3",
+      "text": "What should I do for graded small-group work?"
+    },
+    {
+      "id": "4430b9a3c1",
+      "kind": "html",
+      "key": "p",
+      "text": "If per-room records must hold up to scrutiny, run each group as its own short Meet link so each room gets a real, complete attendance record. Otherwise, take live attendance in the main room before and after the breakout window and pair it with a per-group deliverable — that combination documents both presence and participation."
+    },
+    {
+      "id": "b3f71ba7b0",
+      "kind": "html",
+      "key": "h3",
+      "text": "Accurate Meet attendance, breakouts and all"
+    },
+    {
+      "id": "4ca41b2289",
+      "kind": "html",
+      "key": "p",
+      "text": "Free to start, live roster on any plan, rejoins merged into one clean record per student."
+    },
+    {
+      "id": "14b133eb0f",
+      "kind": "html",
+      "key": "a",
+      "text": "Install Attendance Tracker from Marketplace"
+    },
+    {
+      "id": "d360e4c6a4",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Education</strong>\n          <a href=\"attendance-tracker-for-teachers.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">For K-12 Teachers</a>\n          <a href=\"google-meet-attendance-google-classroom.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Classroom</a>\n          <a href=\"import-google-classroom-roster-to-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Import Classroom Rosters</a>\n          <a href=\"google-meet-attendance-for-universities.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Universities &amp; Colleges</a>\n          <a href=\"google-meet-attendance-for-tutors.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Tutors &amp; Bootcamps</a>"
+    },
+    {
+      "id": "5f3cc2f91e",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Integrations</strong>\n          <a href=\"export-google-meet-attendance-to-moodle.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Moodle Gradebook Export</a>\n          <a href=\"export-google-meet-attendance-to-canvas.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Canvas Gradebook Export</a>\n          <a href=\"export-google-meet-attendance-to-sheets.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Export to Google Sheets</a>\n          <a href=\"how-to-send-google-meet-attendance-to-slack.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Slack Integration</a>\n          <a href=\"send-google-meet-attendance-to-google-chat.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Chat &amp; Discord</a>"
+    },
+    {
+      "id": "98cdd4d1f5",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Teams &amp; Business</strong>\n          <a href=\"google-meet-attendance-for-remote-teams.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Remote Teams &amp; Standups</a>\n          <a href=\"track-attendance-for-webinars-and-training-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Webinars &amp; Training</a>\n          <a href=\"google-meet-attendance-for-cpe-and-cle-credits.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">CPE &amp; CLE Credits</a>\n          <a href=\"google-meet-attendance-for-volunteer-hours.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Volunteer Hours</a>"
+    },
+    {
+      "id": "e787e741f6",
+      "kind": "html",
+      "key": "div",
+      "text": "<strong style=\"color: var(--text); display: block; margin-bottom: 6px;\">Guides &amp; Comparisons</strong>\n          <a href=\"how-to-track-attendance-in-google-meet.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">How to Track Attendance</a>\n          <a href=\"track-google-meet-attendance-without-host.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Track Without Host</a>\n          <a href=\"google-meet-attendance-report-not-showing-up.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Report Not Showing Up?</a>\n          <a href=\"best-google-meet-attendance-extensions.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Extension Comparison</a>\n          <a href=\"google-meet-vs-zoom-attendance-tracking.html\" style=\"color: var(--muted); text-decoration: none; display: block;\">Google Meet vs Zoom</a>"
+    },
+    {
+      "id": "ee502b2b1b",
+      "kind": "html",
+      "key": "div",
+      "text": "<a href=\"/\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Home</a> ·\n        <a href=\"pricing.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Pricing</a> ·\n        <a href=\"support.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Support</a> ·\n        <a href=\"privacy.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Privacy Policy</a> ·\n        <a href=\"terms.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Terms of Service</a> ·\n        <a href=\"refunds.html\" style=\"color: var(--muted); text-decoration: none; margin: 0 8px;\">Refund Policy</a>"
+    },
+    {
+      "id": "124d46d687",
+      "kind": "jsonld",
+      "key": "0:headline",
+      "text": "Google Meet breakout room attendance: what's possible in 2026"
+    },
+    {
+      "id": "ffa19f265e",
+      "kind": "jsonld",
+      "key": "0:description",
+      "text": "What Google's built-in attendance report covers for breakout rooms, why no third-party tool can track per-room membership, and the practical patterns that actually work."
+    },
+    {
+      "id": "8df961173b",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Attendance Tracker"
+    },
+    {
+      "id": "c7ee1c4998",
+      "kind": "jsonld",
+      "key": "0:name",
+      "text": "Home"
+    }
+  ]
+}
