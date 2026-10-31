@@ -1252,6 +1252,39 @@ describe('notifications — minimal-field fallbacks (Resend mocked)', () => {
     expect(last().html).toContain(S.t('mail.greetingThere', 'es'));
   });
 
+  test('cancellation, upgrade-link (incl. India), org digest, review reward and upcoming emails localize', async () => {
+    const n = require('../../src/lib/notifications');
+    const S = require('../../src/lib/i18n');
+    const last = () => mockSend.mock.calls[mockSend.mock.calls.length - 1][0];
+
+    await n.sendSubscriptionCancelledEmail({ to: 'c@x.de', displayName: 'Anna B', currentPeriodEnd: '2026-12-01T00:00:00Z', language: 'de' });
+    expect(last().subject).toBe(S.t('mail.cancelled.subject', 'de'));
+    expect(last().html).toContain('Dezember'); // date in the recipient's language
+    await n.sendSubscriptionCancelledEmail({ to: 'c2@x.de', currentPeriodEnd: 'not a date', language: 'de' });
+    expect(last().html).toContain('not a date'); // unparseable value passes through
+
+    await n.sendUpgradeLinkEmail({ to: 'u@x.in', displayName: 'Ravi K', lifetimeUrl: 'https://l', lifetimePrice: '₹499', country: 'IN', language: 'hi', isPpp: true, flag: '🇮🇳' });
+    expect(last().subject).toBe(S.tf('mail.upgrade.indiaSubject', 'hi', { lifetime: '₹499' }));
+    expect(last().html).toContain(S.t('mail.upgrade.upiBadge', 'hi'));
+    await n.sendUpgradeLinkEmail({ to: 'u2@x.fr', lifetimeUrl: 'https://l', educatorUrl: 'https://e', monthlyUrl: 'https://m', lifetimePrice: '29 €', language: 'fr', expArm: 'a' });
+    expect(last().subject).toBe(S.t('mail.upgrade.subject', 'fr'));
+    expect(last().html).toContain('<html lang="fr"');
+
+    await n.sendOrgWeeklyDigest({ to: 'o@school.ja', domain: 'school.jp', totals: { users: 3 }, weeklyMeetings: 5, language: 'ja' });
+    expect(last().subject).toBe(S.tf('mail.orgDigest.subject', 'ja', { domain: 'school.jp', n: 5 }));
+    await n.sendOrgWeeklyDigest({ to: 'o2@school.ja', domain: 'school.jp', weeklyMeetings: 0, language: 'ja' });
+    expect(last().subject).toBe(S.tf('mail.orgDigest.subjectQuiet', 'ja', { domain: 'school.jp' }));
+
+    await n.sendReviewRewardEmail({ to: 'r@x.it', displayName: 'Lia', expiresAt: '2026-12-01', language: 'it' });
+    expect(last().subject).toBe(S.t('mail.review.subject', 'it'));
+    expect(last().html).toContain('dicembre');
+
+    await n.sendUpcomingMeetingEmail({ to: 'm@x.ko', meetingTitle: 'Math', minutesUntil: 10, language: 'ko' });
+    expect(last().subject).toBe(S.tf('mail.upcoming.soon.subject', 'ko', { title: 'Math', minutes: 10 }));
+    await n.sendUpcomingMeetingEmail({ to: 'm2@x.ko', meetingTitle: 'Math', minutesUntil: 1, language: 'ko' });
+    expect(last().subject).toBe(S.tf('mail.upcoming.now.subject', 'ko', { title: 'Math', minutes: 1 }));
+  });
+
   test('sendExportNotification localizes to Spanish, Portuguese, and Bengali', async () => {
     const n = require('../../src/lib/notifications');
     // Spanish

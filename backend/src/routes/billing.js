@@ -9,6 +9,7 @@ const { paymentFromSession, paymentFromInvoice } = require('../services/firestor
 const { PERSONAL_EMAIL_DOMAINS, domainOf } = require('../services/firestore/_core');
 const PRICING = require('../config/pricing');
 const { errorCodeFor } = require('../lib/errorCodes');
+const { stripeLocale, localeFromRequest } = require('../lib/i18n');
 const { TIERED_PLANS, getOffer, lineItemFor } = require('../config/priceTiers');
 
 // High-volume education & developing markets eligible for Purchasing Power Parity (PPP) subsidy
@@ -154,6 +155,9 @@ async function createSafeCheckoutSession(stripe, sessionParams, context = {}) {
 
   // Never pass automatic_payment_methods to stripe.checkout.sessions.create
   delete params.automatic_payment_methods;
+
+  // Checkout UI + Stripe receipts in the buyer's app language.
+  if (context.locale && !params.locale) params.locale = context.locale;
 
   // Sanitize payment_method_types against allowed Stripe types
   if (Array.isArray(params.payment_method_types)) {
@@ -317,7 +321,7 @@ function checkoutReturnUrls({ returnUrl, isSingleMeeting, confId, individual }) 
 // objects, and never a coupon (coupons disable Adaptive Pricing).
 // `email` may be absent for a signed-out pricing-page buyer — Stripe collects
 // it and the webhook falls back to customer_details.email.
-async function createTieredCheckout({ stripe, offer, plan, email: rawEmail, domain: rawDomain, conferenceId, promoCode, returnUrl, urls, userCountry, source }) {
+async function createTieredCheckout({ stripe, offer, plan, email: rawEmail, domain: rawDomain, conferenceId, promoCode, returnUrl, urls, userCountry, source, locale }) {
   const email = rawEmail ? String(rawEmail).trim().toLowerCase() : null;
   const domain = rawDomain || (email && email.includes('@') ? email.split('@')[1] : null);
   const item = lineItemFor(offer, plan);
@@ -367,7 +371,7 @@ async function createTieredCheckout({ stripe, offer, plan, email: rawEmail, doma
     sessionParams.payment_intent_data = { metadata: meta };
     sessionParams.customer_creation = 'always';
   }
-  const session = await createSafeCheckoutSession(stripe, sessionParams, { domain, email, plan, country: userCountry, isEastAfrica, ...(source ? { source } : {}) });
+  const session = await createSafeCheckoutSession(stripe, sessionParams, { domain, email, plan, country: userCountry, isEastAfrica, locale, ...(source ? { source } : {}) });
   if (email && domain) {
     try {
       await logEvent(domain, {
@@ -381,6 +385,7 @@ async function createTieredCheckout({ stripe, offer, plan, email: rawEmail, doma
 }
 
 async function createCheckoutSessionForUser({ user, plan, interval, conferenceId, country, promo, req, returnUrl }) {
+  const checkoutLocale = stripeLocale(user?.language || (req ? localeFromRequest(req) : null));
   const stripe = getStripe();
   const domain = user.domain;
   const email = user.email;
@@ -404,7 +409,7 @@ async function createCheckoutSessionForUser({ user, plan, interval, conferenceId
       }
       return createTieredCheckout({
         stripe, offer, plan: normalizedPlan, email, domain, conferenceId,
-        promoCode: (promo ?? '').trim().toUpperCase(), returnUrl, userCountry: tierCountry,
+        promoCode: (promo ?? '').trim().toUpperCase(), returnUrl, userCountry: tierCountry, locale: checkoutLocale,
       });
     }
     if (normalizedPlan === 'pro_annual') {
@@ -667,7 +672,7 @@ async function createCheckoutSessionForUser({ user, plan, interval, conferenceId
     throw err;
   }
 
-  const session = await createSafeCheckoutSession(stripe, sessionParams, { domain, email, plan: normalizedPlan, country: userCountry, isEastAfrica });
+  const session = await createSafeCheckoutSession(stripe, sessionParams, { domain, email, plan: normalizedPlan, country: userCountry, isEastAfrica, locale: checkoutLocale });
   // Server-side funnel stage between "clicked a checkout button" and "paid":
   // a Stripe session actually opened. Allowlisted for the frontend too, but
   // only this call is authoritative.
@@ -960,7 +965,7 @@ router.post('/billing/public-checkout', async (req, res) => {
     if (offer.tiered) {
       try {
         const session = await createTieredCheckout({
-          stripe, offer, plan, email: tierEmail, userCountry: tierCountry,
+          stripe, offer, plan, email: tierEmail, userCountry: tierCountry, locale: stripeLocale(localeFromRequest(req, { storedLanguage: req.user?.language })),
           promoCode: (req.body?.promo ?? '').trim().toUpperCase(),
           source: 'public_pricing',
           urls: { successUrl: `${CONFIG.publicSiteUrl}/history.html?upgraded=1`, cancelUrl: `${CONFIG.publicSiteUrl}/pricing.html` },
@@ -1166,7 +1171,7 @@ router.post('/billing/public-checkout', async (req, res) => {
       return res.status(503).json({ error: 'The educator plan is temporarily unavailable.' });
     }
 
-    const session = await createSafeCheckoutSession(stripe, sessionParams, { email, plan, source: 'public_checkout', country: userCountry, isEastAfrica });
+    const session = await createSafeCheckoutSession(stripe, sessionParams, { email, plan, source: 'public_checkout', country: userCountry, isEastAfrica, locale: stripeLocale(localeFromRequest(req)) });
     res.json({ url: session.url });
   } catch (err) {
     log.error('billing: public checkout failed', { plan, email, error: err.message, code: err.code });
@@ -1245,6 +1250,7 @@ router.get('/billing/portal', requireAuth, async (req, res) => {
     if (!stripeCustomerId) return res.status(404).json({ error: 'No active subscription.' });
     const session = await stripe.billingPortal.sessions.create({
       customer: stripeCustomerId,
+      locale: stripeLocale(req.user.language),
       return_url: `${CONFIG.publicSiteUrl}/${individual ? 'history.html' : 'team.html'}`,
     });
     res.json({ url: session.url });

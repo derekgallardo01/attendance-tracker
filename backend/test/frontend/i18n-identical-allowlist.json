@@ -1200,5 +1200,8 @@
   ],
   "mail.export.statusAbsent": [
     "fr"
+  ],
+  "mail.review.dashboard": [
+    "nl"
   ]
 }

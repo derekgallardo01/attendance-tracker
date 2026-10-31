@@ -140,6 +140,17 @@ describe('billing — configured (Stripe env set)', () => {
     );
   });
 
+  test('checkout opens in the buyer\'s app language (X-App-Locale → Stripe locale)', async () => {
+    mockStripeInstance.checkout.sessions.create.mockResolvedValue({ url: 'https://checkout.stripe.com/de' });
+    const res = await request(app)
+      .post('/api/billing/checkout')
+      .set(authedHeader('admin@acme.com', 'acme.com'))
+      .set('X-App-Locale', 'de')
+      .send({});
+    expect(res.status).toBe(200);
+    expect(mockStripeInstance.checkout.sessions.create).toHaveBeenCalledWith(expect.objectContaining({ locale: 'de' }));
+  });
+
   test('400 on an unknown plan value — no fallthrough to a different product', async () => {
     // The plan cascade once let a misspelled/off-catalog value resolve to a
     // DIFFERENT product's price (the "$9.99 button charged team price" class).
@@ -393,6 +404,11 @@ describe('billing — individual (per-user) tier for personal-email users', () =
     const res = await request(app).get('/api/billing/portal').set(authedHeader(GMAIL, 'gmail.com'));
     expect(res.status).toBe(200);
     expect(mockStripeInstance.billingPortal.sessions.create).toHaveBeenCalledWith(expect.objectContaining({ customer: 'cus_i' }));
+    // Portal follows the app language too; languages Stripe lacks fall back to auto.
+    await request(app).get('/api/billing/portal').set(authedHeader(GMAIL, 'gmail.com')).set('X-App-Locale', 'pt');
+    expect(mockStripeInstance.billingPortal.sessions.create).toHaveBeenLastCalledWith(expect.objectContaining({ locale: 'pt-BR' }));
+    await request(app).get('/api/billing/portal').set(authedHeader(GMAIL, 'gmail.com')).set('X-App-Locale', 'sw');
+    expect(mockStripeInstance.billingPortal.sessions.create).toHaveBeenLastCalledWith(expect.objectContaining({ locale: 'auto' }));
   });
 });
 

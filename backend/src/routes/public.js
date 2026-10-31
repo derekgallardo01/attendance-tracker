@@ -8,6 +8,7 @@ const { sendFeedbackEmail, verifyUnsubscribeToken, sendAdminEmail, sendAdminEmai
 const jwt = require('jsonwebtoken');
 const CONFIG = require('../config');
 const { escapeHtml } = require('../lib/html');
+const { tf, normalizeLocale, localeFromRequest } = require('../lib/i18n');
 const { verifyUserReview } = require('../services/review-verifier');
 
 const router = Router();
@@ -463,15 +464,17 @@ router.get('/public/verify/:code', async (req, res) => {
 // signed HMAC token in the URL proves the request came from a link we sent.
 // Records suppression so no further lifecycle emails go to this address, and
 // returns a tiny confirmation page.
-function unsubscribePage(title, message) {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8">`
-    + `<meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title>`
+// title/message are plain text (escaped here); lang drives lang/dir + chrome.
+function unsubscribePage(title, message, lang = 'en') {
+  const U = (key, vars) => escapeHtml(tf(`mail.unsub.${key}`, lang, vars));
+  return `<!doctype html><html lang="${normalizeLocale(lang)}" dir="${['ar', 'he', 'ur'].includes(normalizeLocale(lang)) ? 'rtl' : 'ltr'}"><head><meta charset="utf-8">`
+    + `<meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title>`
     + `<style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;background:#0d1117;color:#e6edf3;display:flex;`
     + `min-height:100vh;margin:0;align-items:center;justify-content:center;text-align:center;padding:24px}`
     + `.card{max-width:460px;background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;box-shadow:0 8px 24px rgba(0,0,0,0.4)}`
     + `h1{font-size:20px;margin:0 0 12px;font-weight:600}p{color:#8b949e;line-height:1.5;font-size:14px}`
-    + `a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}</style></head><body><div class="card"><h1>${title}</h1>`
-    + `<p>${message}</p><p style="margin-top:20px"><a href="https://attendancetracker.dev/">Back to Attendance Tracker</a></p>`
+    + `a{color:#58a6ff;text-decoration:none}a:hover{text-decoration:underline}</style></head><body><div class="card"><h1>${escapeHtml(title)}</h1>`
+    + `<p>${escapeHtml(message)}</p><p style="margin-top:20px"><a href="https://attendancetracker.dev/">${U('back')}</a></p>`
     + `</div></body></html>`;
 }
 
@@ -481,11 +484,13 @@ function unsubscribePage(title, message) {
 // stopped getting alerts with no signal. The button POSTs; scanners don't.
 router.get('/public/unsubscribe', async (req, res) => {
   res.set('Cache-Control', 'no-store');
+  const lang = localeFromRequest(req);
+  const U = (key, vars) => escapeHtml(tf(`mail.unsub.${key}`, lang, vars));
   const email = typeof req.query.e === 'string' ? req.query.e : '';
   const token = typeof req.query.t === 'string' ? req.query.t : '';
   if (!email || !verifyUnsubscribeToken(email, token)) {
     return res.status(400).type('html').send(
-      unsubscribePage('Invalid link', 'This unsubscribe link is invalid or has expired. If you keep getting emails, reply to any of them and I\'ll remove you.')
+      unsubscribePage(tf('mail.unsub.invalidTitle', lang), tf('mail.unsub.invalidMsg', lang), lang)
     );
   }
 
@@ -510,8 +515,8 @@ router.get('/public/unsubscribe', async (req, res) => {
   const tipsAndUpdates = !suppressed && prefs.tipsAndUpdates !== false;
 
   res.type('html').send(
-    `<!doctype html><html lang="en"><head><meta charset="utf-8">`
-    + `<meta name="viewport" content="width=device-width,initial-scale=1"><title>Unsubscribe &amp; Email Preferences</title>`
+    `<!doctype html><html lang="${normalizeLocale(lang)}" dir="${['ar', 'he', 'ur'].includes(normalizeLocale(lang)) ? 'rtl' : 'ltr'}"><head><meta charset="utf-8">`
+    + `<meta name="viewport" content="width=device-width,initial-scale=1"><title>${U('pageTitle')}</title>`
     + `<style>`
     + `body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;background:#0d1117;color:#e6edf3;display:flex;min-height:100vh;margin:0;align-items:center;justify-content:center;padding:24px;box-sizing:border-box}`
     + `.card{max-width:480px;width:100%;background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;box-shadow:0 8px 24px rgba(0,0,0,0.4);text-align:center}`
@@ -530,21 +535,21 @@ router.get('/public/unsubscribe', async (req, res) => {
     + `.notice{background:#21262d;border-radius:6px;padding:10px 12px;margin-bottom:16px;font-size:13px;color:#f0883e;text-align:left}`
     + `a{color:#58a6ff;text-decoration:none;font-size:13px}a:hover{text-decoration:underline}`
     + `.footer-link{text-align:center;margin-top:18px}`
-    + `</style></head><body><div class="card"><h1>Unsubscribe from emails?</h1>`
-    + `<p class="sub">Choose which notifications <strong>${escapeHtml(email)}</strong> should receive, or opt out of all messages.</p>`
-    + (suppressed ? `<div class="notice">⚠️ You are currently opted out of all emails. Checking any box below will reactivate that specific notification.</div>` : '')
+    + `</style></head><body><div class="card"><h1>${U('heading')}</h1>`
+    + `<p class="sub">${U('sub', { email: '\u0000' }).replace('\u0000', `<strong>${escapeHtml(email)}</strong>`)}</p>`
+    + (suppressed ? `<div class="notice">${U('suppressed')}</div>` : '')
     + `<form method="POST" action="unsubscribe?e=${encodeURIComponent(email)}&amp;t=${encodeURIComponent(token)}" id="pref-form">`
     + `<input type="hidden" name="action" id="action-input" value="save">`
     + `<div class="pref-group">`
-    + `<label class="pref-item"><input type="checkbox" name="exportSummary" ${exportSummary ? 'checked' : ''}><div><div class="pref-title">Export &amp; Attendance Summaries</div><div class="pref-desc">Reports generated after taking attendance or exporting to Google Sheets.</div></div></label>`
-    + `<label class="pref-item"><input type="checkbox" name="seriesAlerts" ${seriesAlerts ? 'checked' : ''}><div><div class="pref-title">Absence &amp; Streak Alerts</div><div class="pref-desc">Notifications when students or cohort members miss multiple classes or hit streaks (for groups with 4+ attendees).</div></div></label>`
-    + `<label class="pref-item"><input type="checkbox" name="weeklyDigest" ${weeklyDigest ? 'checked' : ''}><div><div class="pref-title">Weekly Digest</div><div class="pref-desc">Weekly summary of meetings held, attendance rates, and team trends.</div></div></label>`
-    + `<label class="pref-item"><input type="checkbox" name="tipsAndUpdates" ${tipsAndUpdates ? 'checked' : ''}><div><div class="pref-title">Tips &amp; Feature Updates</div><div class="pref-desc">Helpful tips and major feature announcements.</div></div></label>`
+    + `<label class="pref-item"><input type="checkbox" name="exportSummary" ${exportSummary ? 'checked' : ''}><div><div class="pref-title">${U('prefExportTitle')}</div><div class="pref-desc">${U('prefExportDesc')}</div></div></label>`
+    + `<label class="pref-item"><input type="checkbox" name="seriesAlerts" ${seriesAlerts ? 'checked' : ''}><div><div class="pref-title">${U('prefSeriesTitle')}</div><div class="pref-desc">${U('prefSeriesDesc')}</div></div></label>`
+    + `<label class="pref-item"><input type="checkbox" name="weeklyDigest" ${weeklyDigest ? 'checked' : ''}><div><div class="pref-title">${U('prefWeeklyTitle')}</div><div class="pref-desc">${U('prefWeeklyDesc')}</div></div></label>`
+    + `<label class="pref-item"><input type="checkbox" name="tipsAndUpdates" ${tipsAndUpdates ? 'checked' : ''}><div><div class="pref-title">${U('prefTipsTitle')}</div><div class="pref-desc">${U('prefTipsDesc')}</div></div></label>`
     + `</div>`
-    + `<button type="submit" class="btn-save">Save Preferences</button>`
-    + `<button type="button" class="btn-unsub" onclick="document.getElementById('action-input').value='all';document.getElementById('pref-form').submit();">Unsubscribe from All Emails</button>`
+    + `<button type="submit" class="btn-save">${U('save')}</button>`
+    + `<button type="button" class="btn-unsub" onclick="document.getElementById('action-input').value='all';document.getElementById('pref-form').submit();">${U('unsubAll')}</button>`
     + `</form>`
-    + `<div class="footer-link"><a href="https://attendancetracker.dev/">Never mind — back to Attendance Tracker</a></div>`
+    + `<div class="footer-link"><a href="https://attendancetracker.dev/">${U('neverMind')}</a></div>`
     + `</div></body></html>`
   );
 });
@@ -554,11 +559,12 @@ router.get('/public/unsubscribe', async (req, res) => {
 // one-click unsubscribe (the RFC 8058 List-Unsubscribe-Post header points here).
 router.post('/public/unsubscribe', async (req, res) => {
   res.set('Cache-Control', 'no-store');
+  const lang = localeFromRequest(req);
   const email = typeof (req.body?.e ?? req.query.e) === 'string' ? (req.body?.e ?? req.query.e) : '';
   const token = typeof (req.body?.t ?? req.query.t) === 'string' ? (req.body?.t ?? req.query.t) : '';
   if (!email || !verifyUnsubscribeToken(email, token)) {
     return res.status(400).type('html').send(
-      unsubscribePage('Invalid link', 'This unsubscribe link is invalid or has expired. If you keep getting emails, reply to any of them and I\'ll remove you.')
+      unsubscribePage(tf('mail.unsub.invalidTitle', lang), tf('mail.unsub.invalidMsg', lang), lang)
     );
   }
 
@@ -590,7 +596,7 @@ router.post('/public/unsubscribe', async (req, res) => {
       } catch {}
       log.info('public: unsubscribe all', { email: email.toLowerCase() });
       return res.type('html').send(
-        unsubscribePage('You\'re unsubscribed', `${escapeHtml(email)} won't receive any more re-engagement or alert emails. You can still use Attendance Tracker normally.`)
+        unsubscribePage(tf('mail.unsub.doneTitle', lang), tf('mail.unsub.doneMsg', lang, { email }), lang)
       );
     }
 
@@ -640,7 +646,7 @@ router.post('/public/unsubscribe', async (req, res) => {
       } catch {}
       log.info('public: unsubscribe all via preferences', { email: email.toLowerCase() });
       return res.type('html').send(
-        unsubscribePage('You\'re unsubscribed', `${escapeHtml(email)} won't receive any more re-engagement or alert emails. You can still use Attendance Tracker normally.`)
+        unsubscribePage(tf('mail.unsub.doneTitle', lang), tf('mail.unsub.doneMsg', lang, { email }), lang)
       );
     }
 
@@ -681,12 +687,12 @@ router.post('/public/unsubscribe', async (req, res) => {
     }
     log.info('public: preferences updated', { email: email.toLowerCase(), exportSummary, seriesAlerts, weeklyDigest, tipsAndUpdates });
     return res.type('html').send(
-      unsubscribePage('Preferences updated', `Your email notification preferences for ${escapeHtml(email)} have been updated.`)
+      unsubscribePage(tf('mail.unsub.savedTitle', lang), tf('mail.unsub.savedMsg', lang, { email }), lang)
     );
   } catch (err) {
     log.error('public: unsubscribe failed', { email, error: err.message });
     return res.status(500).type('html').send(
-      unsubscribePage('Error', 'An error occurred while updating your unsubscribe preferences. Please try again or contact support.')
+      unsubscribePage(tf('mail.unsub.errorTitle', lang), tf('mail.unsub.errorMsg', lang), lang)
     );
   }
 });

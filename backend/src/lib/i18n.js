@@ -286,6 +286,17 @@ function fmtDate(date, locale) {
   return new Intl.DateTimeFormat(normalizeLocale(locale), { dateStyle: 'medium', timeZone: 'UTC' }).format(d);
 }
 
+// App language → a locale Stripe Checkout / the billing portal supports
+// (its UI, emails and receipts), else 'auto' (Stripe uses the browser's).
+const STRIPE_LOCALES = new Set(['bg', 'cs', 'da', 'de', 'el', 'en', 'es', 'fi', 'fr', 'hr', 'hu', 'id', 'it', 'ja', 'ko', 'lt', 'lv', 'ms', 'nl', 'pl', 'ro', 'ru', 'sk', 'sl', 'sv', 'th', 'tr', 'vi']);
+const STRIPE_LOCALE_MAP = { tl: 'fil', no: 'nb', pt: 'pt-BR', zh: 'zh-TW', 'zh-CN': 'zh' };
+function stripeLocale(language) {
+  const l = strictLocale(language);
+  if (!l) return 'auto';
+  if (STRIPE_LOCALE_MAP[l]) return STRIPE_LOCALE_MAP[l];
+  return STRIPE_LOCALES.has(l) ? l : 'auto';
+}
+
 // Date + time in the recipient's language (and time zone when known).
 function fmtDateTime(date, locale, timeZone) {
   const d = date instanceof Date ? date : new Date(date);
@@ -3601,6 +3612,7 @@ module.exports = {
   withPrices,
   fmtMinutes,
   fmtDateTime,
+  stripeLocale,
   fmtRelativeDays,
   fmtMoney,
   fmtDate,

@@ -384,6 +384,12 @@ function buildDesignSystemEmail({
 </html>`;
 }
 
+// "March 3, 2026" in the recipient's language.
+function fmtLongDate(date, lang) {
+  // UTC: these are calendar dates (period ends, expiries), not instants.
+  return new Date(date).toLocaleDateString(normalizeLocale(lang), { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+}
+
 // Fire-and-forget signup notification email. Sends to NOTIFY_EMAIL (or the
 // owner's inbox if NOTIFY_EMAIL isn't set). Silent no-op if Resend isn't
 // configured.
@@ -2145,59 +2151,16 @@ async function sendExportGapEmail({ to, displayName, meetingTitle, daysSinceLogi
 // calendar instance; honors the standard unsubscribe footer.
 async function sendUpcomingMeetingEmail({ to, displayName, meetingTitle, minutesUntil, language, country, domain }) {
   const lang = resolveLanguage({ language, country, domain: domain || (to && to.includes('@') ? to.split('@')[1] : null), email: to });
-
-  let subject;
-  let lines;
-
-  if (lang === 'es') {
-    subject = minutesUntil <= 1 ? `Recordatorio: "${meetingTitle}" está comenzando` : `Recordatorio: "${meetingTitle}" comienza pronto`;
-    const when = minutesUntil <= 1 ? 'está comenzando ahora' : `comienza en aproximadamente ${minutesUntil} minutos`;
-    lines = [
-      `Tu sesión programada "${meetingTitle}" ${when}. Al unirte, abre el panel lateral de Attendance Tracker y registrará a los asistentes automáticamente.`,
-      '',
-      'Recibes esto porque has registrado esta reunión antes — es solo un recordatorio para que no se pase.',
-      '',
-      '— Derek',
-    ];
-  } else if (lang === 'pt') {
-    subject = minutesUntil <= 1 ? `Lembrete: "${meetingTitle}" está começando` : `Lembrete: "${meetingTitle}" começa em breve`;
-    const when = minutesUntil <= 1 ? 'está começando agora' : `começa em cerca de ${minutesUntil} minutos`;
-    lines = [
-      `Sua reunião "${meetingTitle}" ${when}. Ao entrar na chamada, abra o painel do Attendance Tracker para acompanhar quem está presente.`,
-      '',
-      'Você está recebendo este aviso porque já registrou esta reunião anteriormente — apenas um lembrete para ajudar.',
-      '',
-      '— Derek',
-    ];
-  } else if (lang === 'bn') {
-    subject = minutesUntil <= 1 ? `অনুস্মারক: "${meetingTitle}" এখনই শুরু হচ্ছে` : `অনুস্মারক: "${meetingTitle}" শীঘ্রই শুরু হবে`;
-    const when = minutesUntil <= 1 ? 'এখনই শুরু হচ্ছে' : `প্রায় ${minutesUntil} মিনিটের মধ্যে শুরু হবে`;
-    lines = [
-      `আপনার শিডিউল করা মিটিং "${meetingTitle}" ${when}। জয়েন করে Attendance Tracker প্যানেলটি খুলুন।`,
-      '',
-      '— Derek',
-    ];
-  } else {
-    const when = minutesUntil <= 1 ? 'is starting now' : `starts in about ${minutesUntil} minutes`;
-    subject = `Reminder: "${meetingTitle}" ${minutesUntil <= 1 ? 'is starting' : 'starts soon'}`;
-    lines = [
-      `Your recurring meeting "${meetingTitle}" ${when}. When you join, open the Attendance Tracker side panel and it'll capture who's there — then export the report in one click (or let it auto-export when the meeting ends).`,
-      '',
-      "You're getting this because you've tracked this meeting before but not in the last few days — just a nudge so it doesn't slip.",
-      '',
-      '— Derek',
-    ];
-  }
+  const variant = minutesUntil <= 1 ? 'now' : 'soon';
+  const vars = { title: meetingTitle, minutes: minutesUntil };
 
   return sendPersonalEmail({
     to, displayName,
-    subject,
-    lines,
-    badge: minutesUntil <= 1
-      ? (lang === 'es' ? '⏰ Comenzando ahora' : (lang === 'pt' ? '⏰ Começando agora' : (lang === 'bn' ? '⏰ এখনই শুরু হচ্ছে' : '⏰ Starting Now')))
-      : (lang === 'es' ? '⏰ Comienza pronto' : (lang === 'pt' ? '⏰ Começa em breve' : (lang === 'bn' ? '⏰ শীঘ্রই শুরু হবে' : '⏰ Starting Soon'))),
+    subject: tf(`mail.upcoming.${variant}.subject`, lang, vars),
+    lines: tf(`mail.upcoming.${variant}.body`, lang, vars).split('\n'),
+    badge: tf(`mail.upcoming.${variant}.badge`, lang),
     badgeType: 'info',
-    ctaText: lang === 'es' ? 'Unirse a Google Meet →' : (lang === 'pt' ? 'Entrar no Google Meet →' : (lang === 'bn' ? 'Google Meet-এ যোগ দিন →' : 'Join Google Meet →')),
+    ctaText: `${tf('mail.cta.joinMeet', lang)} →`,
     ctaUrl: 'https://meet.google.com',
     ctaColor: 'green',
     tags: [{ name: 'type', value: 'upcoming_reminder' }],
@@ -2425,63 +2388,19 @@ async function sendOrgWeeklyDigest({ to, domain, totals, weeklyMeetings, languag
   const lang = resolveLanguage({ language, country, domain: domain || (to && to.includes('@') ? to.split('@')[1] : null), email: to });
 
   const t = totals || {};
-  let subject = weeklyMeetings > 0
-    ? `${domain}: ${weeklyMeetings} meetings tracked this week`
-    : `${domain}: your weekly attendance digest`;
-  let badgeText = '🏛️ Org Digest';
-  let title = `Weekly Attendance: ${escape(domain)}`;
-  let greeting = 'Hi,';
-  let introHtml = `Your weekly attendance summary for <strong style="color:#e6edf3;">${escape(domain)}</strong>:`;
-  let lblMeetingsWeek = 'Meetings this week';
-  let lblTeachers = 'Teachers using it';
-  let lblMeetingsAllTime = 'Meetings all-time';
-  let lblPeople = 'People tracked';
-  let ctaText = 'Open the org dashboard →';
-  let footerNotice = `You're getting this weekly summary because you're the team admin for ${escape(domain)} on Attendance Tracker Pro.`;
-
-  if (lang === 'es') {
-    subject = weeklyMeetings > 0
-      ? `${domain}: ${weeklyMeetings} reuniones registradas esta semana`
-      : `${domain}: tu resumen semanal de asistencia`;
-    badgeText = '🏛️ Resumen institucional';
-    title = `Asistencia semanal: ${escape(domain)}`;
-    greeting = 'Hola,';
-    introHtml = `Tu resumen semanal de asistencia para <strong style="color:#e6edf3;">${escape(domain)}</strong>:`;
-    lblMeetingsWeek = 'Reuniones esta semana';
-    lblTeachers = 'Docentes activos';
-    lblMeetingsAllTime = 'Total histórico de reuniones';
-    lblPeople = 'Personas registradas';
-    ctaText = 'Abrir panel institucional →';
-    footerNotice = `Recibes este resumen semanal porque eres administrador de equipo de ${escape(domain)} en Attendance Tracker Pro.`;
-  } else if (lang === 'pt') {
-    subject = weeklyMeetings > 0
-      ? `${domain}: ${weeklyMeetings} reuniões registradas esta semana`
-      : `${domain}: seu resumo semanal de presença`;
-    badgeText = '🏛️ Resumo institucional';
-    title = `Presença semanal: ${escape(domain)}`;
-    greeting = 'Olá,';
-    introHtml = `Seu resumo semanal de presença para <strong style="color:#e6edf3;">${escape(domain)}</strong>:`;
-    lblMeetingsWeek = 'Reuniões esta semana';
-    lblTeachers = 'Professores ativos';
-    lblMeetingsAllTime = 'Total histórico de reuniões';
-    lblPeople = 'Pessoas registradas';
-    ctaText = 'Abrir painel institucional →';
-    footerNotice = `Você está recebendo este resumo semanal porque é administrador de equipe de ${escape(domain)} no Attendance Tracker Pro.`;
-  } else if (lang === 'bn') {
-    subject = weeklyMeetings > 0
-      ? `${domain}: এই সপ্তাহে ${weeklyMeetings}টি মিটিং ট্র্যাক করা হয়েছে`
-      : `${domain}: আপনার সাপ্তাহিক উপস্থিতির সারাংশ`;
-    badgeText = '🏛️ প্রাতিষ্ঠানিক সারাংশ';
-    title = `সাপ্তাহিক উপস্থিতি: ${escape(domain)}`;
-    greeting = 'হ্যালো,';
-    introHtml = `<strong style="color:#e6edf3;">${escape(domain)}</strong>-এর জন্য আপনার সাপ্তাহিক উপস্থিতির সারাংশ:`;
-    lblMeetingsWeek = 'এই সপ্তাহের মিটিং';
-    lblTeachers = 'ব্যবহারকারী শিক্ষক';
-    lblMeetingsAllTime = 'সর্বমোট মিটিং';
-    lblPeople = 'উপস্থিত ব্যক্তি';
-    ctaText = 'প্রাতিষ্ঠানিক ড্যাশবোর্ড খুলুন →';
-    footerNotice = `আপনি Attendance Tracker Pro-তে ${escape(domain)}-এর টিম অ্যাডমিন হওয়ায় এই সাপ্তাহিক সারাংশ পাঠানো হয়েছে।`;
-  }
+  const O = (key, vars) => tf(`mail.orgDigest.${key}`, lang, vars);
+  const subject = weeklyMeetings > 0 ? O('subject', { domain, n: weeklyMeetings }) : O('subjectQuiet', { domain });
+  const badgeText = O('badge');
+  const title = O('title', { domain });
+  const greeting = escape(tf('mail.greeting', lang));
+  const introPlain = O('intro', { domain });
+  const introHtml = escape(O('intro', { domain: '\u0000' })).replace('\u0000', `<strong style="color:#e6edf3;">${escape(domain)}</strong>`);
+  const lblMeetingsWeek = O('lblMeetingsWeek');
+  const lblTeachers = O('lblTeachers');
+  const lblMeetingsAllTime = O('lblMeetingsAllTime');
+  const lblPeople = O('lblPeople');
+  const ctaText = `${O('cta')} →`;
+  const footerNotice = O('footer', { domain });
 
   const contentHtml = `
     <p style="margin:0 0 12px;font-size:15px;color:#e6edf3;">${greeting}</p>
@@ -2504,17 +2423,18 @@ async function sendOrgWeeklyDigest({ to, domain, totals, weeklyMeetings, languag
     ctaUrl: 'https://attendancetracker.dev/team.html',
     ctaColor: 'blue',
     footerHtml: `<p style="margin:0 0 8px;font-size:12px;color:#8b949e;">${escape(footerNotice)}</p>${foot.html}`,
+    lang,
   });
   const text = [
     greeting,
     '',
-    introHtml.replace(/<[^>]+>/g, ''),
+    introPlain,
     `  ${lblMeetingsWeek}: ${weeklyMeetings || 0}`,
     `  ${lblTeachers}:  ${t.users || 0}`,
     `  ${lblMeetingsAllTime}:  ${t.meetings || 0}`,
     `  ${lblPeople}:     ${t.people || 0}`,
     '',
-    `${ctaText.replace(' →', '')}: https://attendancetracker.dev/team.html`,
+    `${O('cta')}: https://attendancetracker.dev/team.html`,
     foot.text,
   ].join('\n');
   return dispatchEmail({
@@ -2541,97 +2461,39 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
   const cleanMonthlyPrice = monthlyPrice ? String(monthlyPrice).replace(/\/(yr|ano|año|year|mês|mes|mo|month|মাস)$/i, '').trim() : '';
   const displayMonthlyPrice = cleanMonthlyPrice || '$3.99';
 
-  let greeting = displayName ? `Hi ${displayName.split(' ')[0]},` : 'Hi there,';
-  let pppNote = expArm ? '' : (isPpp ? ` (50% Regional Subsidy applied ${flag || ''})` : ' (20% 24-Hour Discount applied ⚡)');
-  let subject = 'Your Attendance Tracker 24-hour discount & upgrade link';
-  let bodyIntro = "Here is your direct 1-click link to unlock unlimited classes and exports with a special 24-hour discount. Whenever your class wraps up and you're back at your desk, you can complete your upgrade below:";
-  let bestValueTag = 'Best Value';
-  let lifetimeTitle = `Lifetime Pro — ${escape(displayLifetimePrice)} one-time${escape(pppNote)}`;
-  let lifetimeDesc = 'Pay once, own forever — no recurring subscription. Unlimited Sheets exports & auto-capture.';
-  let lifetimeBtn = `Get Lifetime Pro (${escape(displayLifetimePrice)}) →`;
-  let educatorTitle = `Educator Pass — ${escape(displayEduPrice)}/yr${escape(pppNote)}`;
-  let educatorDesc = 'Unlimited Google Sheets exports & attendance records for 1 full year.';
-  let educatorBtn = `Unlock Educator Pass (${escape(displayEduPrice)}/yr) →`;
-  let monthlyTitle = `Monthly Pro — ${escape(displayMonthlyPrice)}/mo`;
-  let monthlyDesc = 'Flexible month-to-month subscription — cancel anytime. Unlimited Sheets exports & attendance records.';
-  let monthlyBtn = `Start Monthly Pro (${escape(displayMonthlyPrice)}/mo) →`;
-  let dashboardNote = 'Or view your previous attendance history anytime in your';
-  let dashboardLinkText = 'Web Dashboard';
-  let thankYouNote = 'Thank you for teaching with Attendance Tracker!';
-  let badgeText = '⚡ 24-Hour Special Offer';
-  let badgeSubtitle = 'Special discount on unlimited attendance tracking and exports';
-
-  if (lang === 'es') {
-    greeting = displayName ? `Hola ${displayName.split(' ')[0]},` : 'Hola,';
-    pppNote = expArm ? '' : (isPpp ? ` (50% de subsidio regional aplicado ${flag || ''})` : ' (20% de descuento por 24 horas ⚡)');
-    subject = 'Tu enlace para actualizar Attendance Tracker (descuento especial de 24 horas)';
-    bodyIntro = 'Aquí tienes tu enlace directo para desbloquear clases y exportaciones ilimitadas con un descuento especial de 24 horas. Cuando tu clase termine y vuelvas a tu escritorio, puedes completar tu actualización aquí:';
-    bestValueTag = 'Mejor valor';
-    lifetimeTitle = `Pro de por vida — ${escape(displayLifetimePrice)} pago único${escape(pppNote)}`;
-    lifetimeDesc = 'Pago único · Para siempre · Sin renovaciones ni sorpresas. Exportaciones automáticas y registros ilimitados.';
-    lifetimeBtn = `Obtener Pro de por vida (${escape(displayLifetimePrice)}) →`;
-    educatorTitle = `Pase Educador — ${escape(displayEduPrice)}/año${escape(pppNote)}`;
-    educatorDesc = 'Exportaciones ilimitadas a Google Sheets y registros de asistencia por 1 año completo.';
-    educatorBtn = `Desbloquear Pase Educador (${escape(displayEduPrice)}/año) →`;
-    monthlyTitle = `Pro Mensual — ${escape(displayMonthlyPrice)}/mes`;
-    monthlyDesc = 'Suscripción mensual flexible — cancela en cualquier momento. Exportaciones y registros ilimitados.';
-    monthlyBtn = `Iniciar Pro Mensual (${escape(displayMonthlyPrice)}/mes) →`;
-    dashboardNote = 'O consulta tu historial de asistencia en cualquier momento en tu';
-    dashboardLinkText = 'Panel Web';
-    thankYouNote = '¡Gracias por enseñar con Attendance Tracker!';
-    badgeText = '⚡ Oferta especial de 24 horas';
-    badgeSubtitle = 'Descuento especial en registros y exportaciones ilimitadas';
-  } else if (lang === 'pt') {
-    greeting = displayName ? `Olá ${displayName.split(' ')[0]},` : 'Olá,';
-    pppNote = expArm ? '' : (isPpp ? ` (50% de subsídio regional aplicado ${flag || ''})` : ' (20% de desconto por 24 horas ⚡)');
-    subject = 'Seu link para atualizar o Attendance Tracker (desconto especial de 24 horas)';
-    bodyIntro = 'Aqui está o seu link direto para desbloquear turmas e exportações ilimitadas com um desconto especial de 24 horas. Quando sua aula terminar e você estiver de volta à sua mesa, você pode concluir seu upgrade abaixo:';
-    bestValueTag = 'Melhor valor';
-    lifetimeTitle = `Pro Vitalício — ${escape(displayLifetimePrice)} pagamento único${escape(pppNote)}`;
-    lifetimeDesc = 'Pagamento único · Para sempre · Sem renovações nem surpresas. Exportações automáticas e registros ilimitados.';
-    lifetimeBtn = `Obter Pro Vitalício (${escape(displayLifetimePrice)}) →`;
-    educatorTitle = `Passe Educador — ${escape(displayEduPrice)}/ano${escape(pppNote)}`;
-    educatorDesc = 'Exportações ilimitadas para o Google Sheets e registros de presença por 1 ano completo.';
-    educatorBtn = `Desbloquear Passe Educador (${escape(displayEduPrice)}/ano) →`;
-    monthlyTitle = `Pro Mensal — ${escape(displayMonthlyPrice)}/mês`;
-    monthlyDesc = 'Assinatura mensal flexível — cancele quando quiser. Exportações e registros ilimitados.';
-    monthlyBtn = `Iniciar Pro Mensal (${escape(displayMonthlyPrice)}/mês) →`;
-    dashboardNote = 'Ou visualize seu histórico de presença a qualquer momento no seu';
-    dashboardLinkText = 'Painel Web';
-    thankYouNote = 'Obrigado por ensinar com o Attendance Tracker!';
-    badgeText = '⚡ Oferta especial de 24 horas';
-    badgeSubtitle = 'Desconto especial em registros e exportações ilimitadas';
-  } else if (lang === 'bn') {
-    greeting = displayName ? `হ্যালো ${displayName.split(' ')[0]},` : 'হ্যালো,';
-    pppNote = expArm ? '' : (isPpp ? ` (৫০% আঞ্চলিক ডিসকাউন্ট প্রযোজ্য ${flag || ''})` : ' (২৪ ঘণ্টার জন্য ২০% বিশেষ ছাড় ⚡)');
-    subject = 'আপনার Attendance Tracker আপগ্রেড লিংক (২৪ ঘণ্টার বিশেষ অফার)';
-    bodyIntro = '২৪ ঘণ্টার বিশেষ ডিসকাউন্টে আনলিমিটেড ক্লাস ও এক্সপোর্ট আনলক করার জন্য সরাসরি লিংক এখানে দেওয়া হলো। ক্লাস শেষ করে যখনই টেবিলে ফিরবেন, নিচের লিংক থেকে আপগ্রেড সম্পন্ন করতে পারবেন:';
-    bestValueTag = 'সেরা অফার';
-    lifetimeTitle = `লাইফটাইম প্রো — ${escape(displayLifetimePrice)} এককালীন${escape(pppNote)}`;
-    lifetimeDesc = 'একবার পেমেন্ট করুন, আজীবন আনলিমিটেড ব্যবহার করুন। কোনো মাসিক বা বাৎসরিক ফি নেই।';
-    lifetimeBtn = `লাইফটাইম প্রো নিন (${escape(displayLifetimePrice)}) →`;
-    educatorTitle = `এডুকেটর পাস — ${escape(displayEduPrice)}/বছর${escape(pppNote)}`;
-    educatorDesc = 'পুরো ১ বছরের জন্য আনলিমিটেড গুগল শিট এক্সপোর্ট ও উপস্থিতি রেকর্ড।';
-    educatorBtn = `এডুকেটর পাস আনলক করুন (${escape(displayEduPrice)}/বছর) →`;
-    monthlyTitle = `মান্থলি প্রো — ${escape(displayMonthlyPrice)}/মাস`;
-    monthlyDesc = 'নমনীয় মাসিক সাবস্ক্রিপশন — যেকোনো সময় বাতিল করুন। আনলিমিটেড শিট এক্সপোর্ট ও উপস্থিতি রেকর্ড।';
-    monthlyBtn = `মান্থলি প্রো শুরু করুন (${escape(displayMonthlyPrice)}/মাস) →`;
-    dashboardNote = 'অথবা যেকোনো সময় আপনার পূর্বের হিস্ট্রি দেখতে ভিজিট করুন';
-    dashboardLinkText = 'ওয়েব ড্যাশবোর্ড';
-    thankYouNote = 'Attendance Tracker ব্যবহার করার জন্য ধন্যবাদ!';
-    badgeText = '⚡ ২৪ ঘণ্টার বিশেষ অফার';
-  }
+  const U = (key, vars) => tf(`mail.upgrade.${key}`, lang, vars);
+  const firstName = displayName ? displayName.split(' ')[0] : '';
+  const greeting = firstName ? tf('mail.greetingName', lang, { name: firstName }) : tf('mail.greetingThere', lang);
+  const pppNote = expArm ? '' : ` ${U(isPpp ? 'noteRegional' : 'noteDiscount', { flag: flag || '' })}`;
+  let subject = U('subject');
+  let bodyIntro = U('bodyIntro');
+  let bestValueTag = U('bestValue');
+  // Titles/buttons are rendered as pre-escaped HTML below.
+  let lifetimeTitle = escape(U('lifetimeTitle', { lifetime: displayLifetimePrice }) + pppNote);
+  let lifetimeDesc = U('lifetimeDesc');
+  let lifetimeBtn = `${escape(U('lifetimeBtn', { lifetime: displayLifetimePrice }))} →`;
+  const educatorTitle = escape(U('educatorTitle', { educator: displayEduPrice }) + pppNote);
+  const educatorDesc = U('educatorDesc');
+  const educatorBtn = `${escape(U('educatorBtn', { educator: displayEduPrice }))} →`;
+  const monthlyTitle = escape(U('monthlyTitle', { monthly: displayMonthlyPrice }));
+  const monthlyDesc = U('monthlyDesc');
+  const monthlyBtn = `${escape(U('monthlyBtn', { monthly: displayMonthlyPrice }))} →`;
+  const dashboardNote = U('dashboardNote');
+  const dashboardLinkText = U('dashboardLink');
+  const thankYouNote = U('thanks');
+  const badgeText = U('badge');
+  const badgeSubtitle = U('badgeSubtitle');
 
   const isIndia = (country || '').toUpperCase() === 'IN';
   if (isIndia) {
-    subject = `Unlock Attendance Tracker Lifetime Pro (${displayLifetimePrice} Special Offer 🇮🇳)`;
-    bodyIntro = "Here is your direct 1-click link to unlock unlimited classes and exports with the India Lifetime Pass. No recurring auto-debit, zero subscription fees — pay once via UPI or Card and own forever:";
-    bestValueTag = 'Special Offer (No Subscriptions)';
-    lifetimeTitle = `Lifetime Pro — ${escape(displayLifetimePrice)} one-time (Special Offer 🇮🇳)`;
-    lifetimeDesc = 'Pay once, own forever — zero recurring subscriptions or bank auto-debits. Unlimited Sheets exports & auto-capture.';
-    lifetimeBtn = `Unlock Lifetime Pro with UPI or Card (${escape(displayLifetimePrice)}) →`;
+    subject = U('indiaSubject', { lifetime: displayLifetimePrice });
+    bodyIntro = U('bodyIntroIndia');
+    bestValueTag = U('indiaBestValue');
+    lifetimeTitle = escape(U('indiaLifetimeTitle', { lifetime: displayLifetimePrice }));
+    lifetimeDesc = U('indiaLifetimeDesc');
+    lifetimeBtn = `${escape(U('indiaLifetimeBtn', { lifetime: displayLifetimePrice }))} →`;
   }
-  const upiBadgeHtml = isIndia ? '<p style="margin:8px 0 0;font-size:11.5px;color:#7ee787;text-align:center;line-height:1.4;">⚡ Supports UPI (Google Pay, PhonePe, Paytm, BHIM) & Cards</p>' : '';
+  const upiBadgeHtml = isIndia ? `<p style="margin:8px 0 0;font-size:11.5px;color:#7ee787;text-align:center;line-height:1.4;">${escape(U('upiBadge'))}</p>` : '';
 
   const contentHtml = `
     <p style="margin:0 0 12px;font-size:15px;color:#e6edf3;">${escape(greeting)}</p>
@@ -2679,6 +2541,7 @@ async function sendUpgradeLinkEmail({ to, displayName, educatorUrl, lifetimeUrl,
     subtitle: badgeSubtitle,
     contentHtml,
     footerHtml: foot.html,
+    lang,
   });
 
   const text = [
@@ -2724,55 +2587,21 @@ async function sendSubscriptionCancelledEmail({ to, displayName, planName, curre
 
   const lang = resolveLanguage({ language, country, domain: domain || (to && to.includes('@') ? to.split('@')[1] : null), email: to });
 
-  let greeting = displayName ? `Hi ${displayName.split(' ')[0]},` : 'Hi there,';
-  let subject = 'Your Attendance Tracker subscription has been cancelled';
-  let badgeText = 'ℹ️ Subscription Update';
-  let title = 'Auto-Renewal Cancelled';
-  let reassurance1 = "We've confirmed the cancellation of your Attendance Tracker auto-renewal. Your credit card will NOT be charged again.";
-  let reassurance2 = currentPeriodEnd
-    ? `You will keep full access to all Pro features through the end of your billing period on ${escape(currentPeriodEnd)}.`
-    : 'You will keep full access to all Pro features through the end of your current billing period.';
-  let dataReassurance = 'All your saved Google Sheets, export history, and attendance records remain permanently yours in your Google Drive and dashboard.';
-  let resumeNote = 'If you ever change your mind or want to resume your subscription before it expires, you can re-enable auto-renewal anytime in your dashboard settings.';
-  let ctaText = 'Open Dashboard →';
-
-  if (lang === 'es') {
-    greeting = displayName ? `Hola ${displayName.split(' ')[0]},` : 'Hola,';
-    subject = 'Tu suscripción a Attendance Tracker ha sido cancelada';
-    badgeText = 'ℹ️ Estado de suscripción';
-    title = 'Renovación automática cancelada';
-    reassurance1 = 'Hemos confirmado la cancelación de tu renovación automática en Attendance Tracker. Tu tarjeta de crédito NO volverá a recibir ningún cargo.';
-    reassurance2 = currentPeriodEnd
-      ? `Seguirás teniendo acceso completo a todas las funciones Pro hasta que finalice tu período de facturación el ${escape(currentPeriodEnd)}.`
-      : 'Seguirás teniendo acceso completo a todas las funciones Pro hasta que finalice tu período de facturación actual.';
-    dataReassurance = 'Todas tus hojas de Google Sheets, historial de exportaciones y registros de asistencia permanecerán permanentemente accesibles en tu Google Drive y panel.';
-    resumeNote = 'Si en algún momento deseas reanudar tu suscripción antes de que expire, puedes reactivar la renovación automática cuando quieras desde los ajustes del panel.';
-    ctaText = 'Abrir panel →';
-  } else if (lang === 'pt') {
-    greeting = displayName ? `Olá ${displayName.split(' ')[0]},` : 'Olá,';
-    subject = 'Sua assinatura do Attendance Tracker foi cancelada';
-    badgeText = 'ℹ️ Atualização da assinatura';
-    title = 'Renovação automática cancelada';
-    reassurance1 = 'Confirmamos o cancelamento da renovação automática da sua assinatura do Attendance Tracker. Seu cartão de crédito NÃO receberá novas cobranças.';
-    reassurance2 = currentPeriodEnd
-      ? `Você continuará com acesso total a todos os recursos Pro até o fim do seu período de faturamento em ${escape(currentPeriodEnd)}.`
-      : 'Você continuará com acesso total a todos os recursos Pro até o fim do seu período de faturamento atual.';
-    dataReassurance = 'Todas as suas planilhas do Google Sheets, histórico de exportações e registros de presença permanecerão salvos com segurança no seu Google Drive e painel.';
-    resumeNote = 'Se quiser retomar sua assinatura antes do término do período, você pode reativar a renovação automática a qualquer momento nas configurações do seu painel.';
-    ctaText = 'Abrir painel →';
-  } else if (lang === 'bn') {
-    greeting = displayName ? `হ্যালো ${displayName.split(' ')[0]},` : 'হ্যালো,';
-    subject = 'আপনার Attendance Tracker সাবস্ক্রিপশন বাতিল করা হয়েছে';
-    badgeText = 'ℹ️ সাবস্ক্রিপশন আপডেট';
-    title = 'স্বয়ংক্রিয় পুনর্নবীকরণ বাতিল';
-    reassurance1 = 'আপনার Attendance Tracker-এর স্বয়ংক্রিয় পুনর্নবীকরণ সফলভাবে বাতিল করা হয়েছে। আপনার কার্ডে আর কোনো চার্জ কাটা হবে না।';
-    reassurance2 = currentPeriodEnd
-      ? `আপনার বর্তমান বিলিং চক্র শেষ হওয়া পর্যন্ত (${escape(currentPeriodEnd)}) আপনি প্রো-এর সকল সুবিধা পুরোপুরি উপভোগ করতে পারবেন।`
-      : 'আপনার বর্তমান বিলিং চক্র শেষ হওয়া পর্যন্ত আপনি প্রো-এর সকল সুবিধা পুরোপুরি উপভোগ করতে পারবেন।';
-    dataReassurance = 'আপনার সমস্ত গুগল শিট, উপস্থিতির ইতিহাস ও ডেটা আপনার গুগল ড্রাইভ ও ড্যাশবোর্ডে সম্পূর্ণ নিরাপদে থাকবে।';
-    resumeNote = 'আপনি চাইলে মেয়াদ শেষ হওয়ার আগে যেকোনো সময় ড্যাশবোর্ড সেটিংস থেকে পুনরায় সাবস্ক্রিপশন চালু করতে পারবেন।';
-    ctaText = 'ড্যাশবোর্ড খুলুন →';
-  }
+  const C = (key, vars) => tf(`mail.cancelled.${key}`, lang, vars);
+  // Accepts a date or an already-formatted string; shown in the recipient's language.
+  const endDate = currentPeriodEnd && !Number.isNaN(new Date(currentPeriodEnd).getTime())
+    ? fmtLongDate(currentPeriodEnd, lang)
+    : currentPeriodEnd;
+  const firstName = displayName ? displayName.split(' ')[0] : '';
+  const greeting = firstName ? C('greeting', { name: firstName }) : C('greetingAnon');
+  const subject = C('subject');
+  const badgeText = C('badge');
+  const title = C('title');
+  const reassurance1 = C('reassurance1');
+  const reassurance2 = endDate ? C('reassurance2Date', { date: endDate }) : C('reassurance2');
+  const dataReassurance = C('data');
+  const resumeNote = C('resume');
+  const ctaText = `${C('cta')} →`;
 
   const contentHtml = `
     <p style="margin:0 0 12px;font-size:15px;color:#e6edf3;">${escape(greeting)}</p>
@@ -2794,6 +2623,7 @@ async function sendSubscriptionCancelledEmail({ to, displayName, planName, curre
     ctaUrl: 'https://attendancetracker.dev/history.html',
     ctaColor: 'blue',
     footerHtml: foot.html,
+    lang,
   });
 
   const text = [
@@ -2806,7 +2636,7 @@ async function sendSubscriptionCancelledEmail({ to, displayName, planName, curre
     '',
     resumeNote,
     '',
-    `Dashboard: https://attendancetracker.dev/history.html`,
+    `${tf('mail.review.dashboard', lang)} https://attendancetracker.dev/history.html`,
     foot.text,
   ].join('\n');
 
@@ -2828,86 +2658,20 @@ async function sendSubscriptionCancelledEmail({ to, displayName, planName, curre
 function buildReviewRewardEmailContent({ to, displayName, domain, country, language, expiresAt, reviewId, rating = 5 }) {
   const lang = resolveLanguage({ language, country, domain, email: to });
   const name = displayName ? displayName.trim().split(' ')[0] : '';
-  const dateStr = expiresAt
-    ? (new Date(expiresAt).toLocaleDateString(
-        lang === 'es' ? 'es-MX' : lang === 'pt' ? 'pt-BR' : lang === 'bn' ? 'bn-BD' : 'en-US',
-        { year: 'numeric', month: 'long', day: 'numeric' }
-      ))
-    : null;
+  const dateStr = expiresAt ? fmtLongDate(expiresAt, lang) : null;
+  const R = (key, vars) => tf(`mail.review.${key}`, lang, vars);
 
-  let greeting = name ? `Hi ${name},` : 'Hello,';
-  let subject = '⭐ Your Free Month of Pro is Active in Attendance Tracker';
-  let badgeText = '⭐ Review Reward';
-  let title = 'Pro Access Unlocked!';
-  let p1 = 'Thank you so much for rating Attendance Tracker on the Google Workspace Marketplace! As an independent tool built for educators, your feedback and support make all the difference.';
-  let cardTitle = '🎉 1 Month of Educator Pro Activated';
-  let cardSubtitle = dateStr
-    ? `Your account (${to}) now has full access to all Pro features through ${dateStr}.`
-    : `Your account (${to}) now has full access to all Pro features.`;
-  let bullets = [
-    'Unlimited automatic tracking & exact join/leave times in Google Meet.',
-    'Direct export to Google Sheets in your Drive.',
-    'No credit card required & $0 cost — zero surprise charges.',
-  ];
-  let pClosing = 'We hope this saves you time with your classes. If you ever have questions or suggestions, feel free to reply directly to this email!';
-  let signoff = 'Warm regards,';
-  let ctaText = 'Open Attendance Tracker →';
-
-  if (lang === 'es') {
-    greeting = name ? `Estimado/a ${name},` : 'Hola,';
-    subject = '⭐ Tu mes de Pro gratuito ya está activo en Attendance Tracker';
-    badgeText = '⭐ Recompensa de Reseña';
-    title = '¡Acceso Pro Activado!';
-    p1 = 'Muchísimas gracias por calificar Attendance Tracker en Google Workspace Marketplace. Para un proyecto enfocado en la educación, el apoyo y la confianza de los profesores significa todo.';
-    cardTitle = '🎉 1 mes de Educator Pro activado';
-    cardSubtitle = dateStr
-      ? `Tu cuenta (${to}) ya tiene acceso completo a todas las funciones avanzadas hasta el ${dateStr}.`
-      : `Tu cuenta (${to}) ya tiene acceso completo a todas las funciones avanzadas.`;
-    bullets = [
-      'Registro automático ilimitado de asistencia y tiempos exactos de permanencia en Google Meet.',
-      'Guardado y exportación directa a Google Sheets en tu Drive.',
-      'Sin requerir tarjeta de crédito ni renovación automática (costo $0).',
-    ];
-    pClosing = 'Esperamos que te sea de gran utilidad en tus clases. Si en algún momento tienes comentarios o alguna sugerencia para mejorar la herramienta, puedes responder directamente a este correo.';
-    signoff = 'Un cordial saludo,';
-    ctaText = 'Abrir Attendance Tracker →';
-  } else if (lang === 'pt') {
-    greeting = name ? `Olá ${name},` : 'Olá,';
-    subject = '⭐ Seu mês de Pro gratuito já está ativo no Attendance Tracker';
-    badgeText = '⭐ Recompensa de Avaliação';
-    title = 'Acesso Pro Ativado!';
-    p1 = 'Muito obrigado por avaliar o Attendance Tracker no Google Workspace Marketplace! Como uma ferramenta independente criada para educadores, o seu apoio faz toda a diferença.';
-    cardTitle = '🎉 1 mês de Educator Pro ativado';
-    cardSubtitle = dateStr
-      ? `Sua conta (${to}) agora tem acesso total a todos os recursos Pro até ${dateStr}.`
-      : `Sua conta (${to}) agora tem acesso total a todos os recursos Pro.`;
-    bullets = [
-      'Registro automático ilimitado de presença e horários de entrada/saída no Google Meet.',
-      'Exportação direta para o Google Sheets no seu Google Drive.',
-      'Sem necessidade de cartão de crédito e sem cobranças automáticas (custo $0).',
-    ];
-    pClosing = 'Esperamos que seja muito útil nas suas aulas. Se tiver dúvidas ou sugestões, sinta-se à vontade para responder diretamente a este e-mail!';
-    signoff = 'Um abraço cordial,';
-    ctaText = 'Abrir o Attendance Tracker →';
-  } else if (lang === 'bn') {
-    greeting = name ? `হ্যালো ${name},` : 'হ্যালো,';
-    subject = '⭐ Attendance Tracker-এ আপনার ১ মাসের ফ্রি প্রো সক্রিয় হয়েছে';
-    badgeText = '⭐ রিভিউ রিওয়ার্ড';
-    title = 'প্রো সুবিধা সক্রিয় করা হয়েছে!';
-    p1 = 'Google Workspace Marketplace-এ Attendance Tracker রেট করার জন্য আপনাকে অনেক ধন্যবাদ! শিক্ষকদের জন্য তৈরি একটি স্বাধীন টুল হিসেবে আপনার সমর্থন আমাদের জন্য অত্যন্ত মূল্যবান।';
-    cardTitle = '🎉 ১ মাসের এডুকেটর প্রো আনলক হয়েছে';
-    cardSubtitle = dateStr
-      ? `আপনার অ্যাকাউন্ট (${to})-এ ${dateStr} পর্যন্ত সমস্ত প্রো সুবিধার সম্পূর্ণ অ্যাক্সেস রয়েছে।`
-      : `আপনার অ্যাকাউন্ট (${to})-এ সমস্ত প্রো সুবিধার সম্পূর্ণ অ্যাক্সেস রয়েছে।`;
-    bullets = [
-      'গুগল মিটে স্বয়ংক্রিয় উপস্থিতি ও সুনির্দিষ্ট প্রবেশ/প্রস্থান সময়ের আনলিমিটেড ট্র্যাকিং।',
-      'আপনার গুগল ড্রাইভে গুগল শিট-এ সরাসরি এক্সপোর্ট।',
-      'কোনো ক্রেডিট কার্ড বা অটো-রিনিউয়াল চার্জের প্রয়োজন নেই (সম্পূর্ণ $0)।',
-    ];
-    pClosing = 'আশা করি এটি আপনার ক্লাসের সময় বাঁচাতে সাহায্য করবে। আপনার কোনো প্রশ্ন বা পরামর্শ থাকলে সরাসরি এই ইমেলের উত্তর দিতে পারেন!';
-    signoff = 'আন্তরিক শুভেচ্ছা,';
-    ctaText = 'Attendance Tracker খুলুন →';
-  }
+  const greeting = name ? R('greeting', { name }) : R('greetingAnon');
+  const subject = R('subject');
+  const badgeText = R('badge');
+  const title = R('title');
+  const p1 = R('p1');
+  const cardTitle = R('cardTitle');
+  const cardSubtitle = dateStr ? R('cardSubtitleDate', { email: to, date: dateStr }) : R('cardSubtitle', { email: to });
+  const bullets = R('bullets').split('\n');
+  const pClosing = R('closing');
+  const signoff = R('signoff');
+  const ctaText = `${R('cta')} →`;
 
   const contentHtml = `
     <p style="margin:0 0 14px;font-size:15px;color:#e6edf3;line-height:1.6;">${escape(greeting)}</p>
@@ -2937,6 +2701,7 @@ function buildReviewRewardEmailContent({ to, displayName, domain, country, langu
     ctaUrl: 'https://attendancetracker.dev/history.html',
     ctaColor: 'green',
     footerHtml: foot.html,
+    lang,
   });
 
   const text = [
@@ -2954,7 +2719,7 @@ function buildReviewRewardEmailContent({ to, displayName, domain, country, langu
     'Derek Gallardo',
     'Attendance Tracker',
     '',
-    `Dashboard: https://attendancetracker.dev/history.html`,
+    `${R('dashboard')} https://attendancetracker.dev/history.html`,
     foot.text,
   ].join('\n');
 

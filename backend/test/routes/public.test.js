@@ -424,6 +424,23 @@ describe('GET /api/public/unsubscribe', () => {
     expect(res.headers['cache-control']).toContain('no-store');
   });
 
+  test('preference and result pages follow the visitor\'s browser language (lang/dir set)', async () => {
+    const S = require('../../src/lib/i18n');
+    notifications.verifyUnsubscribeToken.mockReturnValue(true);
+    const page = await request(app).get('/api/public/unsubscribe').set('Accept-Language', 'de-DE,de;q=0.9')
+      .query({ e: 'user@acme.com', t: 'goodtoken' });
+    expect(page.text).toContain('<html lang="de" dir="ltr">');
+    expect(page.text).toContain(S.t('mail.unsub.heading', 'de'));
+    expect(page.text).toContain('<strong>user@acme.com</strong>');
+    const ar = await request(app).post('/api/public/unsubscribe').set('Accept-Language', 'ar')
+      .query({ e: 'user@acme.com', t: 'goodtoken' });
+    expect(ar.text).toContain('dir="rtl"');
+    notifications.verifyUnsubscribeToken.mockReturnValue(false);
+    const bad = await request(app).get('/api/public/unsubscribe').set('Accept-Language', 'ja').query({ e: 'x@y.z', t: 'bad' });
+    expect(bad.status).toBe(400);
+    expect(bad.text).toContain(S.t('mail.unsub.invalidTitle', 'ja'));
+  });
+
   test('POST with a valid token suppresses (the confirmation button + RFC 8058 one-click)', async () => {
     notifications.verifyUnsubscribeToken.mockReturnValue(true);
     firestore.suppressEmail.mockResolvedValue(true);
@@ -885,7 +902,7 @@ describe('POST /api/public/unsubscribe granular preferences & unsubscribe-direct
       .type('form')
       .send({ action: 'preferences' });
     expect(res.status).toBe(200);
-    expect(res.text).toContain("You're unsubscribed");
+    expect(res.text).toContain("You&#39;re unsubscribed");
     expect(firestore.suppressEmail).toHaveBeenCalledWith('u@school.edu', { source: 'granular_unsubscribe_all' });
   });
 

@@ -594,3 +594,17 @@ describe('email helpers: relative days, money, dates', () => {
     expect(i18n.fmtDate('nope', 'en')).toBe('');
   });
 });
+
+describe('stripeLocale', () => {
+  test('maps app languages to Stripe locales, else auto', () => {
+    expect(i18n.stripeLocale('de')).toBe('de');
+    expect(i18n.stripeLocale('tl')).toBe('fil');
+    expect(i18n.stripeLocale('no')).toBe('nb');
+    expect(i18n.stripeLocale('pt')).toBe('pt-BR');
+    expect(i18n.stripeLocale('zh')).toBe('zh-TW');
+    expect(i18n.stripeLocale('zh-CN')).toBe('zh');
+    expect(i18n.stripeLocale('hi')).toBe('auto');
+    expect(i18n.stripeLocale('xx')).toBe('auto');
+    expect(i18n.stripeLocale(null)).toBe('auto');
+  });
+});
