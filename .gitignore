@@ -12,3 +12,8 @@ docs/*-dispatch-log.json
 docs/ahrefs-exports/
 dist/
 screenshots/
+
+# Per-script PDF fonts are fetched at build time (backend/scripts/fetch-fonts.js);
+# only the base Noto Sans is committed.
+backend/assets/fonts/*
+!backend/assets/fonts/NotoSans-Regular.ttf

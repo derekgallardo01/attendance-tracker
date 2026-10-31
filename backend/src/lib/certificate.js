@@ -14,6 +14,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const PDFDocument = require('pdfkit');
 const { getPdfLabels, getCertLabels, localizeStatus } = require('./i18n');
+const pdfFonts = require('./pdfFonts');
 
 const FONT_PATH = path.join(__dirname, '..', '..', 'assets', 'fonts', 'NotoSans-Regular.ttf');
 // Resolve once at load; if the font is somehow missing we fall back to pdfkit's
@@ -184,6 +185,7 @@ function buildReportModel({ meeting = {}, attendees = [], options = {} } = {}) {
   };
 
   return {
+    locale,
     title: (meeting.title || 'Google Meet').toString(),
     reportTitle: labels.reportTitle,
     date: fmtDate(meeting.startTime || meeting.date, tz, locale) + (tzAbbr ? ` (${tzAbbr})` : ''),
@@ -221,6 +223,7 @@ function renderReportPdf(model) {
       const doc = new PDFDocument({ size: 'A4', margin: 50, info: { Title: `Attendance — ${model.title}` } });
       if (UNICODE_FONT) doc.registerFont('body', UNICODE_FONT);
       const font = UNICODE_FONT ? 'body' : 'Helvetica';
+      pdfFonts.install(doc, font, model.locale);
       const chunks = [];
       doc.on('data', (c) => chunks.push(c));
       doc.on('end', () => resolve(Buffer.concat(chunks)));
@@ -326,6 +329,7 @@ function buildCertificateModels({ meeting = {}, attendees = [], options = {} } =
       const leave = p.leaveTime ?? p.leaveTimeISO ?? null;
       const mins = calcActiveMins(p, join, leave, fallbackEnd, options.now || meeting.exportedAt);
       return {
+        locale,
         name: (p.displayName || p.name || 'Attendee').toString(),
         session,
         dateLabel,
@@ -418,6 +422,7 @@ function renderCertificatesPdf(models) {
       const doc = new PDFDocument({ size: 'A4', layout: 'landscape', margin: 0 });
       if (UNICODE_FONT) doc.registerFont('body', UNICODE_FONT);
       const font = UNICODE_FONT ? 'body' : 'Helvetica';
+      pdfFonts.install(doc, font, (models[0] && models[0].locale) || 'en');
       const chunks = [];
       doc.on('data', (c) => chunks.push(c));
       doc.on('end', () => resolve(Buffer.concat(chunks)));
@@ -525,6 +530,7 @@ function renderQuotePdf(model) {
       const doc = new PDFDocument({ size: 'A4', margin: 50, info: { Title: `Quote ${model.quoteNumber} — Google Meet Attendance Tracker` } });
       if (UNICODE_FONT) doc.registerFont('body', UNICODE_FONT);
       const font = UNICODE_FONT ? 'body' : 'Helvetica';
+      pdfFonts.install(doc, font, model.locale);
       const chunks = [];
       doc.on('data', (c) => chunks.push(c));
       doc.on('end', () => resolve(Buffer.concat(chunks)));

@@ -11,6 +11,12 @@ RUN npm ci --omit=dev
 COPY server.js .
 COPY src/ ./src/
 COPY public/ ./public/
+# PDF fonts: the committed base Noto Sans (Latin/Cyrillic/Greek) plus the
+# per-script faces (Arabic, Devanagari, Thai, CJK, ...) fetched at build time
+# so certificates/reports never print non-Latin names as empty boxes.
+COPY assets/ ./assets/
+COPY scripts/fetch-fonts.js ./scripts/
+RUN node scripts/fetch-fonts.js
 
 ENV PORT=8080
 EXPOSE 8080
