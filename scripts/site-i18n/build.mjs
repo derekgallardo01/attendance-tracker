@@ -8,16 +8,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-  JSDOM, ROOT, CONTENT, ORIGIN, LOCALES, RTL, HREFLANG, OG_LOCALE, LEGAL,
+  JSDOM, ROOT, CONTENT, ORIGIN, LOCALES, RTL, HREFLANG, OG_LOCALE, LEGAL, ALIASES,
   sitePages, segmentsOf, hash, readJson,
 } from './common.mjs';
 
 const pages = sitePages();
 const trPath = (loc, page) => path.join(CONTENT, loc, page.replace(/\.html$/, '.json'));
-const hasTr = (loc, page) => fs.existsSync(trPath(loc, page));
-// Locales a page exists in (English always).
-const localesOf = (page) => LOCALES.filter((loc) => hasTr(loc, page));
-const urlOf = (loc, page) => (loc === 'en' ? `${ORIGIN}/${page}` : `${ORIGIN}/${loc}/${page}`);
+const aliasOf = (loc, page) => (ALIASES[page] || {})[loc];
+const hasTr = (loc, page) => !aliasOf(loc, page) && fs.existsSync(trPath(loc, page));
+// Locales a page exists in (English always), generated or aliased.
+const localesOf = (page) => LOCALES.filter((loc) => hasTr(loc, page) || aliasOf(loc, page));
+const urlOf = (loc, page) => (loc === 'en' ? `${ORIGIN}/${page}`
+  : aliasOf(loc, page) ? `${ORIGIN}/${aliasOf(loc, page)}` : `${ORIGIN}/${loc}/${page}`);
 
 // Legal notice, per locale (site-i18n/legal-notice.json: { loc: text }).
 const NOTICE_FILE = path.join(ROOT, 'site-i18n', 'legal-notice.json');
@@ -48,6 +50,7 @@ function fixLinks(doc, loc) {
     }
     const [file, rest = ''] = v.split(/(?=[?#])/);
     if (pages.includes(file) && hasTr(loc, file)) return; // sibling translated page
+    if (aliasOf(loc, file)) { el.setAttribute(attr, `../${aliasOf(loc, file)}${rest}`); return; }
     el.setAttribute(attr, `../${file}${file === 'pricing.html' && !rest ? `?lang=${loc}` : ''}${rest}`);
   };
   doc.querySelectorAll('[href]').forEach((el) => { if (el.tagName !== 'LINK' || el.getAttribute('rel') !== 'alternate') fix(el, 'href'); });
@@ -115,9 +118,8 @@ export function renderPage(page, loc) {
 }
 
 // English sources carry the same hreflang cluster (no other changes).
-function updateEnglishCluster(page) {
+function updateEnglishCluster(page, file = path.join(ROOT, page)) {
   if (!localesOf(page).length) return false;
-  const file = path.join(ROOT, page);
   const src = fs.readFileSync(file, 'utf8');
   const links = [`<link rel="alternate" hreflang="x-default" href="${urlOf('en', page)}" />`, `<link rel="alternate" hreflang="en" href="${urlOf('en', page)}" />`,
     ...localesOf(page).map((loc) => `<link rel="alternate" hreflang="${HREFLANG[loc] || loc}" href="${urlOf(loc, page)}" />`)];
@@ -143,6 +145,9 @@ if (process.argv[1].endsWith('build.mjs')) {
   }
   let english = 0;
   for (const page of pages) if (updateEnglishCluster(page)) english++;
+  for (const [page, map] of Object.entries(ALIASES)) {
+    for (const alias of Object.values(map)) if (updateEnglishCluster(page, path.join(ROOT, alias))) english++;
+  }
   const urls = writeSitemap();
   console.log(`built ${built} pages (${missing} untranslated segments fell back to English); hreflang updated on ${english} English pages; sitemap-i18n.xml: ${urls} URLs`);
 }
@@ -156,7 +161,7 @@ function writeSitemap() {
     const locs = localesOf(page);
     if (!locs.length) continue;
     const alts = [['x-default', urlOf('en', page)], ['en', urlOf('en', page)], ...locs.map((l) => [HREFLANG[l] || l, urlOf(l, page)])];
-    for (const loc of locs) {
+    for (const loc of locs.filter((l) => !aliasOf(l, page))) {
       lines.push('  <url>', `    <loc>${urlOf(loc, page)}</loc>`);
       for (const [hl, href] of alts) lines.push(`    <xhtml:link rel="alternate" hreflang="${hl}" href="${href}" />`);
       lines.push('  </url>');

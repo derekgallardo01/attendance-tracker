@@ -30,6 +30,11 @@ export const EXCLUDE = new Set([
   'download.html', 'admin.html', 'help.html', 'unsubscribe.html', 'google114b85a1b49d499d.html',
   'asistencia-google-meet.html', 'lista-de-presenca-google-meet.html', 'diem-danh-google-meet.html',
 ]);
+// Hand-written localized pages that already serve as a page's translation:
+// they join its hreflang cluster instead of being generated.
+export const ALIASES = {
+  'how-to-track-attendance-in-google-meet.html': { es: 'asistencia-google-meet.html', pt: 'lista-de-presenca-google-meet.html', vi: 'diem-danh-google-meet.html' },
+};
 // Legal pages: translated, but the English version governs.
 export const LEGAL = new Set(['privacy.html', 'terms.html', 'refunds.html', 'student-data-privacy.html']);
 
