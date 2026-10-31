@@ -1,7 +1,9 @@
 const { Router } = require('express');
+const jwt = require('jsonwebtoken');
+const CONFIG = require('../config');
 const { requireAuth } = require('../middleware/auth');
 const { planIsPro } = require('./billing');
-const { getMeetingWithParticipants, saveVerifications, getUserSettings, getUser, isMeetingUnlocked, countUserMonthlyExports, persistExport, markUserLargeClassGraceUsed, getExportReexportCount, getUserMeetingHistory, getDomainTeacherCount, logEvent, getDb } = require('../services/firestore');
+const { getMeetingWithParticipants, saveVerifications, getUserSettings, getUser, isMeetingUnlocked, countUserMonthlyExports, persistExport, markUserLargeClassGraceUsed, getExportReexportCount, getUserMeetingHistory, getDomainTeacherCount, logEvent, getDb, isEmailSuppressed } = require('../services/firestore');
 const PRICING = require('../config/pricing');
 const { buildReportModel, renderReportPdf, buildCertificateModels, renderCertificatesPdf, buildQuoteModel, renderQuotePdf } = require('../lib/certificate');
 const { sendAdminEmail } = require('../lib/notifications');
@@ -273,6 +275,54 @@ router.post('/export/quote-pdf', requireAuth, async (req, res) => {
     } catch (_) {}
 
     if (typeof sendAdminEmail === 'function') {
+      const baseUrl = CONFIG.backendUrl || 'https://attendance-tracker-backend-829771833968.us-central1.run.app';
+      let checkoutToken = '';
+      try {
+        checkoutToken = jwt.sign(
+          { email, domain, displayName: req.user.displayName || email, role: 'user' },
+          CONFIG.sessionSecret,
+          { expiresIn: '30d', algorithm: 'HS256' }
+        );
+      } catch (_) {}
+      const deptCheckoutUrl = checkoutToken
+        ? `${baseUrl}/api/billing/checkout-redirect?plan=department&interval=annual&token=${encodeURIComponent(checkoutToken)}`
+        : `${CONFIG.publicSiteUrl || 'https://attendancetracker.dev'}/pricing.html`;
+      const instCheckoutUrl = checkoutToken
+        ? `${baseUrl}/api/billing/checkout-redirect?plan=team&interval=annual&token=${encodeURIComponent(checkoutToken)}`
+        : `${CONFIG.publicSiteUrl || 'https://attendancetracker.dev'}/pricing.html`;
+      const eduCheckoutUrl = checkoutToken
+        ? `${baseUrl}/api/billing/checkout-redirect?plan=educator&interval=annual&token=${encodeURIComponent(checkoutToken)}`
+        : `${CONFIG.publicSiteUrl || 'https://attendancetracker.dev'}/pricing.html`;
+
+      Promise.resolve().then(async () => {
+        if (email && !(typeof isEmailSuppressed === 'function' && await isEmailSuppressed(email))) {
+          await sendAdminEmail({
+            to: email,
+            subject: `Official School Quote (${model.quoteNumber}) — ${model.schoolName || domain}`,
+            body: [
+              `Hi ${req.user.displayName || 'there'},`,
+              '',
+              `Here is a copy of the activation links for your official quote (${model.quoteNumber}) for ${model.schoolName || domain} so you can easily forward this email to your department chair or administrator:`,
+              '',
+              `1. Department License (Up to 10 educators on @${domain}): $59 USD / year`,
+              `   • Direct Stripe Checkout / Invoice Link: ${deptCheckoutUrl}`,
+              '',
+              `2. Full Institution License (Unlimited educators on @${domain}): $99 USD / year`,
+              `   • Direct Stripe Checkout / Invoice Link: ${instCheckoutUrl}`,
+              '',
+              `3. Individual Educator Pass (1 educator — @${domain}):`,
+              `   • If you prefer to unlock your own account immediately without waiting on school approval:`,
+              `   • Activate Individual Educator Pro: ${eduCheckoutUrl}`,
+              '',
+              'Best,',
+              'Derek Gallardo',
+              'Attendance Tracker for Google Meet',
+              'https://attendancetracker.dev',
+            ].join('\n'),
+          });
+        }
+      }).catch(() => {});
+
       Promise.resolve(sendAdminEmail({
         to: 'derek@attendancetracker.dev',
         subject: `📄 School Quote Generated (${model.quoteNumber}): ${email} (${domain})`,
@@ -283,6 +333,7 @@ router.post('/export/quote-pdf', requireAuth, async (req, res) => {
           `Quote #: ${model.quoteNumber}`,
           `Recommended Plan: ${model.recommendedPlan}`,
           `Usage: ${model.usage.classesTracked} classes tracked, ${model.usage.totalStudents} students`,
+          `Auto-email: Sent activation links directly to ${email}`,
           notes ? `Notes: ${notes}` : '',
         ].filter(Boolean).join('\n'),
       })).catch(() => {});
