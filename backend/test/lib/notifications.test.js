@@ -1199,6 +1199,59 @@ describe('notifications — minimal-field fallbacks (Resend mocked)', () => {
     expect(ar.html).toContain(S.t('mail.export.badge', 'ar'));
   });
 
+  test('lifecycle, referral, series, invoice and expiry emails follow any stored language', async () => {
+    const n = require('../../src/lib/notifications');
+    const S = require('../../src/lib/i18n');
+    const last = () => mockSend.mock.calls[mockSend.mock.calls.length - 1][0];
+
+    await n.sendWelcomeEmail({ to: 'w@x.de', displayName: 'Anna B', language: 'de' });
+    expect(last().subject).toBe(S.t('mail.welcome.subject', 'de'));
+    expect(last().html).toContain(S.tf('mail.heyName', 'de', { name: 'Anna' }));
+    expect(last().html).toContain(S.t('mail.badge.welcome', 'de'));
+    expect(last().html).toContain('<html lang="de"');
+
+    await n.sendForgottenMeetingEmail({ to: 'f@x.fr', seriesTitle: 'Maths', recurringEventId: 'r1', trackedInWindow: 4, daysSinceLast: 9, language: 'fr' });
+    expect(last().subject).toBe(S.tf('mail.forgotten.subject', 'fr', { title: 'Maths' }));
+    expect(last().text).toContain(S.tf('mail.forgotten.countTimes', 'fr', { n: 4 }));
+    expect(last().html).toContain('history.html#series=r1');
+
+    await n.sendForgottenMeetingEmail({ to: 'f2@x.fr', seriesTitle: 'Maths', language: 'fr' });
+    expect(last().text).toContain(S.t('mail.forgotten.countRegular', 'fr'));
+    expect(last().text).toContain(S.t('mail.forgotten.fewDays', 'fr'));
+
+    await n.sendExportGapEmail({ to: 'g@x.it', daysSinceLogin: 5, language: 'it' });
+    expect(last().text).toContain(S.t('mail.exportGap.defaultTitle', 'it'));
+
+    await n.sendReferralNotification({ to: 'r@x.ja', newUserName: 'Ken', rewardMonths: 2, totalReferrals: 3, promoCode: 'ABC', language: 'ja' });
+    expect(last().subject).toBe(S.tf('mail.referral.subjectRewarded', 'ja', { name: 'Ken' }));
+    expect(last().text).toContain(S.tf('mail.referral.monthMany', 'ja', { n: 2 }));
+    expect(last().html).toContain(S.t('mail.referral.promoLabel', 'ja'));
+
+    await n.sendSeriesAlertEmail({
+      to: 's@x.ru', language: 'ru',
+      alerts: [{ type: 'threshold', seriesTitle: 'Physics', fromPct: 90, toPct: 40, personName: 'Ivan', attended: 5, instanceCount: 16, detail: 'english detail' }],
+    });
+    expect(last().subject).toContain(S.tf('mail.series.detailDrop', 'ru', { title: 'Physics', from: 90, to: 40 }));
+    expect(last().subject).not.toContain('english detail');
+
+    await n.sendSeriesAlertEmail({ to: 's2@x.ru', language: 'ru', alerts: [{ type: 'custom', detail: 'legacy detail', attended: 1, instanceCount: 2 }, { type: 'streak', seriesTitle: 'Chem', personEmail: 'p@x', attended: 3, instanceCount: 9 }] });
+    expect(last().text).toContain('legacy detail'); // unknown type → stored detail
+    expect(last().subject).toBe(S.tf('mail.series.subjectMany', 'ru', { n: 2 }));
+
+    await n.sendInvoiceActionRequiredEmail({ to: 'i@x.in', hostedInvoiceUrl: 'https://pay', amountDue: 49900, currency: 'inr', language: 'hi' });
+    expect(last().subject).toContain('₹');
+    expect(last().subject).not.toContain('$');
+    expect(last().html).toContain('<strong>');
+
+    await n.sendPassExpiryReminderEmail({ to: 'e@x.es', displayName: 'Lu Ma', planType: 'educator', daysUntilExpiry: 3, expiresAt: '2026-11-03', stats: { exportsCount: 4, certificatesCount: 1 }, language: 'es' });
+    expect(last().subject).toBe(S.tf('mail.expiry.subjectEnding', 'es', { pass: S.t('mail.expiry.passEducator', 'es'), when: S.fmtRelativeDays(3, 'es') }));
+    expect(last().html).toContain(`${S.t('mail.expiry.statExports', 'es')}: <strong>4</strong>`);
+
+    await n.sendPassExpiryReminderEmail({ to: 'e2@x.es', planType: 'review_reward', reminderType: 'grant_t_plus_1', language: 'es' });
+    expect(last().subject).toBe(S.tf('mail.expiry.subjectEnded', 'es', { pass: S.t('mail.expiry.passGrant', 'es') }));
+    expect(last().html).toContain(S.t('mail.greetingThere', 'es'));
+  });
+
   test('sendExportNotification localizes to Spanish, Portuguese, and Bengali', async () => {
     const n = require('../../src/lib/notifications');
     // Spanish
@@ -1984,7 +2037,7 @@ describe('notifications — buildDesignSystemEmail & upgrade link sender', () =>
     });
     expect(mockSend).toHaveBeenCalledTimes(1);
     call = mockSend.mock.calls[0][0];
-    expect(call.subject).toBe('আপনার নিয়মিত মিটিংগুলো থেকে 2টি উপস্থিতির সতর্কতা');
+    expect(call.subject).toBe('আপনার নিয়মিত মিটিংগুলো থেকে 2টি উপস্থিতির সতর্কতা');
     expect(call.html).toContain('হ্যালো Farhana');
     expect(call.html).toContain('সর্বমোট 5টি সেশনের মধ্যে 1টিতে উপস্থিত');
     expect(call.html).toContain('সিরিজ দেখুন →');
@@ -2035,7 +2088,7 @@ describe('notifications — buildDesignSystemEmail & upgrade link sender', () =>
     });
     expect(mockSend).toHaveBeenCalledTimes(1);
     call = mockSend.mock.calls[0][0];
-    expect(call.subject).toBe('🎉 তানভীর Attendance Tracker-এ যোগ দিয়েছেন — আপনি ১ মাস ফ্রি পেয়েছেন');
+    expect(call.subject).toBe('🎉 তানভীর Attendance Tracker-এ যোগ দিয়েছেন — আপনি ১ মাস ফ্রি পেয়েছেন');
     expect(call.html).toContain('তানভীর এইমাত্র');
     expect(call.html).toContain('BENGALI10');
     expect(call.tags).toEqual([{ name: 'type', value: 'referral' }, { name: 'lang', value: 'bn' }]);

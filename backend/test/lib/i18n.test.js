@@ -564,3 +564,33 @@ describe('email helpers: prices, durations, dates', () => {
     expect(i18n.fmtDateTime(iso, 'en', 'Not/AZone')).toMatch(/Mar 3, 2026/);
   });
 });
+
+describe('email helpers: relative days, money, dates', () => {
+  test('fmtRelativeDays reads naturally in each language', () => {
+    expect(i18n.fmtRelativeDays(3, 'en')).toBe('in 3 days');
+    expect(i18n.fmtRelativeDays(1, 'en')).toBe('tomorrow');
+    expect(i18n.fmtRelativeDays('x', 'en')).toBe('today');
+    const orig = Intl.RelativeTimeFormat;
+    Intl.RelativeTimeFormat = function () { throw new RangeError('none'); };
+    try {
+      expect(i18n.fmtRelativeDays(1, 'en')).toBe('in 1 day');
+      expect(i18n.fmtRelativeDays(4, 'en')).toBe('in 4 days');
+    } finally {
+      Intl.RelativeTimeFormat = orig;
+    }
+  });
+
+  test('fmtMoney uses the charge currency in the recipient locale; bad currency falls back', () => {
+    expect(i18n.fmtMoney(499, 'usd', 'en')).toBe('$4.99');
+    expect(i18n.fmtMoney(1999, 'eur', 'fr')).toMatch(/19,99\s€/);
+    expect(i18n.fmtMoney(49900, 'INR', 'hi')).toMatch(/₹/);
+    expect(i18n.fmtMoney(1000, null, 'en')).toBe('$10.00');
+    expect(i18n.fmtMoney(1000, 'NOT-A-CODE', 'en')).toBe('10.00 NOT-A-CODE');
+  });
+
+  test('fmtDate: localized calendar date; invalid → empty', () => {
+    expect(i18n.fmtDate('2026-03-03', 'en')).toBe('Mar 3, 2026');
+    expect(i18n.fmtDate(new Date('2026-03-03T00:00:00Z'), 'de')).toMatch(/3\.\s?03\.\s?2026|03\.03\.2026/);
+    expect(i18n.fmtDate('nope', 'en')).toBe('');
+  });
+});

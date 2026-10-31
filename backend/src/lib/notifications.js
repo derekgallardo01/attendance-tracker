@@ -7,7 +7,7 @@ const { maskGoogleChatWebhook } = require('./googleChat');
 const { maskDiscordWebhook } = require('./discord');
 const { escapeHtml: escape } = require('./html');
 const { resolveGeo, isGenericUsPlaceholder } = require('./geoip');
-const { tf, strictLocale, normalizeLocale, priceTableFor, withPrices, fmtMinutes, fmtDateTime } = require('./i18n');
+const { tf, strictLocale, normalizeLocale, priceTableFor, withPrices, fmtMinutes, fmtDateTime, fmtRelativeDays, fmtMoney, fmtDate } = require('./i18n');
 
 // Resend transactional email — better deliverability + open/click tracking
 // than Gmail SMTP, and the API doesn't have Gmail's 500/day cap.
@@ -910,60 +910,21 @@ async function maybeSendSignupNotification(domain, email) {
 // the reply-to + CAN-SPAM unsubscribe footer like other lifecycle mail.
 async function sendReferralNotification({ to, inviterName, newUserName, rewardMonths = 1, totalReferrals = 1, promoCode = null, rewarded = true, language, country, domain }) {
   const lang = resolveLanguage({ language, country, domain: domain || (to && to.includes('@') ? to.split('@')[1] : null), email: to });
+  const R = (key, vars) => tf(`mail.referral.${key}`, lang, vars);
 
-  let monthWord = rewardMonths === 1 ? 'a free month' : `${rewardMonths} free months`;
-  let rewardLine = !rewarded
-    ? `Thanks for spreading the word — that's a big help.`
+  const months = rewardMonths === 1 ? R('monthOne') : R('monthMany', { n: rewardMonths });
+  const rewardLine = !rewarded
+    ? R('rewardThanks')
     : promoCode
-      ? `As a thank-you, here's ${monthWord} of Pro on us — apply code ${promoCode} at checkout.`
-      : `As a thank-you, you've earned ${monthWord} of Pro — it'll be applied to your account (or your next upgrade).`;
-  let subject = rewarded
-    ? `🎉 ${newUserName} joined Attendance Tracker — you earned a free month`
-    : `🎉 ${newUserName} joined Attendance Tracker via your invite`;
-  let introLine = `Good news — ${newUserName} just signed up for Attendance Tracker using your invite.`;
-  let totalLine = totalReferrals > 1 ? `That's ${totalReferrals} people you've brought in so far. Seriously, thank you.` : `Thanks again.`;
-
-  if (lang === 'es') {
-    monthWord = rewardMonths === 1 ? 'un mes gratis' : `${rewardMonths} meses gratis`;
-    rewardLine = !rewarded
-      ? `Gracias por correr la voz — nos ayuda muchísimo.`
-      : promoCode
-        ? `Como agradecimiento, tienes ${monthWord} de Pro por nuestra cuenta — aplica el código ${promoCode} al pagar.`
-        : `Como agradecimiento, ganaste ${monthWord} de Pro — se aplicará a tu cuenta (o en tu próxima actualización).`;
-    subject = rewarded
-      ? `🎉 ${newUserName} se unió a Attendance Tracker — ganaste un mes gratis`
-      : `🎉 ${newUserName} se unió a Attendance Tracker con tu invitación`;
-    introLine = `Buenas noticias — ${newUserName} acaba de registrarse en Attendance Tracker con tu invitación.`;
-    totalLine = totalReferrals > 1 ? `Ya son ${totalReferrals} personas que has invitado hasta ahora. En verdad, ¡muchas gracias!` : `¡Gracias de nuevo!`;
-  } else if (lang === 'pt') {
-    monthWord = rewardMonths === 1 ? 'um mês grátis' : `${rewardMonths} meses grátis`;
-    rewardLine = !rewarded
-      ? `Obrigado por compartilhar — isso nos ajuda muito.`
-      : promoCode
-        ? `Como agradecimento, você ganhou ${monthWord} de Pro por nossa conta — use o código ${promoCode} no checkout.`
-        : `Como agradecimento, você ganhou ${monthWord} de Pro — será aplicado à sua conta (ou na sua próxima atualização).`;
-    subject = rewarded
-      ? `🎉 ${newUserName} entrou no Attendance Tracker — você ganhou um mês grátis`
-      : `🎉 ${newUserName} entrou no Attendance Tracker através do seu convite`;
-    introLine = `Boas notícias — ${newUserName} acabou de se cadastrar no Attendance Tracker através do seu convite.`;
-    totalLine = totalReferrals > 1 ? `Já são ${totalReferrals} pessoas que você trouxe até agora. De verdade, muito obrigado!` : `Obrigado novamente.`;
-  } else if (lang === 'bn') {
-    monthWord = rewardMonths === 1 ? '১ মাস ফ্রি' : `${rewardMonths} মাস ফ্রি`;
-    rewardLine = !rewarded
-      ? `সবার সাথে শেয়ার করার জন্য ধন্যবাদ — এটি আমাদের জন্য অনেক বড় সাহায্য।`
-      : promoCode
-        ? `ধন্যবাদস্বরূপ, আমাদের পক্ষ থেকে পাচ্ছেন প্রো-এর ${monthWord} — চেকআউটের সময় কোড ${promoCode} ব্যবহার করুন।`
-        : `ধন্যবাদস্বরূপ, আপনি প্রো-এর ${monthWord} অর্জন করেছেন — এটি আপনার অ্যাকাউন্টে (অথবা পরবর্তী আপগ্রেডে) যুক্ত করা হবে।`;
-    subject = rewarded
-      ? `🎉 ${newUserName} Attendance Tracker-এ যোগ দিয়েছেন — আপনি ১ মাস ফ্রি পেয়েছেন`
-      : `🎉 ${newUserName} আপনার আমন্ত্রণে Attendance Tracker-এ যোগ দিয়েছেন`;
-    introLine = `সুসংবাদ — ${newUserName} এইমাত্র আপনার আমন্ত্রণে Attendance Tracker-এ সাইন আপ করেছেন।`;
-    totalLine = totalReferrals > 1 ? `আপনি এ পর্যন্ত মোট ${totalReferrals} জনকে এনেছেন। আন্তরিক ধন্যবাদ!` : `আবারও ধন্যবাদ।`;
-  }
+      ? R('rewardCode', { months, code: promoCode })
+      : R('rewardEarned', { months });
+  const subject = R(rewarded ? 'subjectRewarded' : 'subjectInvite', { name: newUserName });
+  const introLine = R('intro', { name: newUserName });
+  const totalLine = totalReferrals > 1 ? R('totalMany', { n: totalReferrals }) : R('totalOne');
 
   const promoBox = promoCode ? `
     <div style="margin:16px 0;padding:14px 16px;background:#0d1117;border:1px dashed #4ade80;border-radius:8px;text-align:center;box-sizing:border-box;">
-      <div style="font-size:11px;text-transform:uppercase;color:#8b949e;letter-spacing:0.05em;margin-bottom:6px;font-weight:600;">${lang === 'es' ? 'Tu código promocional' : (lang === 'pt' ? 'Seu código promocional' : (lang === 'bn' ? 'আপনার প্রোমো কোড' : 'Your Promo Code'))}</div>
+      <div style="font-size:11px;text-transform:uppercase;color:#8b949e;letter-spacing:0.05em;margin-bottom:6px;font-weight:600;">${escape(R('promoLabel'))}</div>
       <div style="font-family:monospace;font-size:22px;font-weight:700;color:#4ade80;letter-spacing:0.12em;">${escape(promoCode)}</div>
     </div>
   ` : '';
@@ -980,11 +941,9 @@ async function sendReferralNotification({ to, inviterName, newUserName, rewardMo
       '— Derek',
       'attendancetracker.dev',
     ],
-    badge: lang === 'es' ? '🎁 Recompensa' : (lang === 'pt' ? '🎁 Recompensa' : (lang === 'bn' ? '🎁 রেফারেল পুরস্কার' : '🎁 Referral Reward')),
+    badge: tf('mail.badge.referral', lang),
     badgeType: 'success',
-    ctaText: promoCode
-      ? (lang === 'es' ? 'Canjear código de descuento →' : (lang === 'pt' ? 'Resgatar código de desconto →' : (lang === 'bn' ? 'ডিসকাউন্ট কোড ব্যবহার করুন →' : 'Redeem Discount Code →')))
-      : (lang === 'es' ? 'Abrir Attendance Tracker →' : (lang === 'pt' ? 'Abrir o Attendance Tracker →' : (lang === 'bn' ? 'Attendance Tracker খুলুন →' : 'Open Attendance Tracker →'))),
+    ctaText: `${tf(promoCode ? 'mail.cta.redeemCode' : 'mail.cta.openTracker', lang)} →`,
     ctaUrl: promoCode ? `https://attendancetracker.dev/pricing.html?promo=${encodeURIComponent(promoCode)}` : 'https://attendancetracker.dev/pricing.html',
     ctaColor: 'green',
     extraHtml: promoBox,
@@ -1773,64 +1732,30 @@ async function sendSeriesAlertEmail({ to, displayName, alerts, language, country
 
   const lang = resolveLanguage({ language, country, domain: resolvedDomain, email: to });
 
-  let fallbackSomeone = 'Someone';
-  let subject = alerts.length === 1
-    ? `Attendance alert: ${alerts[0].personName || alerts[0].personEmail || fallbackSomeone} ${alerts[0].detail}`
-    : `${alerts.length} attendance alerts from your recurring meetings`;
+  const S = (key, vars) => tf(`mail.series.${key}`, lang, vars);
+  const fallbackSomeone = S('someone');
+  // Rule alerts carry their type + numbers, so the sentence is rendered in the
+  // recipient's language; unknown types fall back to the stored English detail.
+  const detailOf = (a) => {
+    if (a.type === 'streak' && a.seriesTitle) return S('detailStreak', { title: a.seriesTitle });
+    if (a.type === 'threshold' && a.seriesTitle && a.fromPct != null) return S('detailDrop', { title: a.seriesTitle, from: a.fromPct, to: a.toPct });
+    return a.detail;
+  };
+  const subject = alerts.length === 1
+    ? S('subjectOne', { name: alerts[0].personName || alerts[0].personEmail || fallbackSomeone, detail: detailOf(alerts[0]) })
+    : S('subjectMany', { n: alerts.length });
 
-  let greeting = displayName ? `Hi ${escape(displayName.split(' ')[0])},` : 'Hi,';
-  let leadHtml = alerts.length === 1
-    ? `There's an attendance change in one of your recurring meetings:`
-    : `There are ${alerts.length} attendance changes across your recurring meetings:`;
-  let itemAttendedSummary = (attended, instanceCount) => `${attended} of ${instanceCount} instances attended overall`;
-  let badgeText = '📊 Series Alert';
-  let ctaText = 'View series →';
-  let footerNotice = `You're getting this because you tracked recurring meetings with Attendance Tracker. Alerts run once per day if there's something worth flagging — no email if there's nothing new.`;
-
-  if (lang === 'es') {
-    fallbackSomeone = 'Alguien';
-    subject = alerts.length === 1
-      ? `Alerta de asistencia: ${alerts[0].personName || alerts[0].personEmail || fallbackSomeone} ${alerts[0].detail}`
-      : `${alerts.length} alertas de asistencia de tus reuniones recurrentes`;
-    greeting = displayName ? `Hola ${escape(displayName.split(' ')[0])},` : 'Hola,';
-    leadHtml = alerts.length === 1
-      ? `Hay un cambio en la asistencia de una de tus reuniones recurrentes:`
-      : `Hay ${alerts.length} cambios de asistencia en tus reuniones recurrentes:`;
-    itemAttendedSummary = (attended, instanceCount) => `${attended} de ${instanceCount} sesiones asistidas en total`;
-    badgeText = '📊 Alerta de serie';
-    ctaText = 'Ver series →';
-    footerNotice = `Recibes esto porque registraste reuniones recurrentes con Attendance Tracker. Las alertas se envían una vez al día si hay algo destacable — no recibirás correos si no hay novedades.`;
-  } else if (lang === 'pt') {
-    fallbackSomeone = 'Alguém';
-    subject = alerts.length === 1
-      ? `Alerta de presença: ${alerts[0].personName || alerts[0].personEmail || fallbackSomeone} ${alerts[0].detail}`
-      : `${alerts.length} alertas de presença das suas reuniões recorrentes`;
-    greeting = displayName ? `Olá ${escape(displayName.split(' ')[0])},` : 'Olá,';
-    leadHtml = alerts.length === 1
-      ? `Há uma mudança de presença em uma de suas reuniões recorrentes:`
-      : `Há ${alerts.length} mudanças de presença em suas reuniões recorrentes:`;
-    itemAttendedSummary = (attended, instanceCount) => `${attended} de ${instanceCount} sessões comparecidas no total`;
-    badgeText = '📊 Alerta de série';
-    ctaText = 'Ver séries →';
-    footerNotice = `Você está recebendo este e-mail porque registrou reuniões recorrentes com o Attendance Tracker. Os alertas são enviados uma vez por dia quando há algo importante — nenhum e-mail é enviado se não houver novidades.`;
-  } else if (lang === 'bn') {
-    fallbackSomeone = 'কেউ একজন';
-    subject = alerts.length === 1
-      ? `উপস্থিতির সতর্কতা: ${alerts[0].personName || alerts[0].personEmail || fallbackSomeone} ${alerts[0].detail}`
-      : `আপনার নিয়মিত মিটিংগুলো থেকে ${alerts.length}টি উপস্থিতির সতর্কতা`;
-    greeting = displayName ? `হ্যালো ${escape(displayName.split(' ')[0])},` : 'হ্যালো,';
-    leadHtml = alerts.length === 1
-      ? `আপনার একটি নিয়মিত মিটিংয়ে উপস্থিতিতে পরিবর্তন হয়েছে:`
-      : `আপনার নিয়মিত মিটিংগুলোতে ${alerts.length}টি উপস্থিতিতে পরিবর্তন হয়েছে:`;
-    itemAttendedSummary = (attended, instanceCount) => `সর্বমোট ${instanceCount}টি সেশনের মধ্যে ${attended}টিতে উপস্থিত`;
-    badgeText = '📊 সিরিজের সতর্কতা';
-    ctaText = 'সিরিজ দেখুন →';
-    footerNotice = `আপনি Attendance Tracker দিয়ে নিয়মিত মিটিং ট্র্যাক করায় এই ইমেইলটি পাঠানো হয়েছে। কোনো পরিবর্তন থাকলে দিনে একবার সতর্কতা পাঠানো হয় — নতুন কিছু না থাকলে কোনো ইমেইল পাঠানো হয় না।`;
-  }
+  const firstName = displayName ? displayName.split(' ')[0] : '';
+  const greeting = firstName ? tf('mail.greetingName', lang, { name: firstName }) : tf('mail.greeting', lang);
+  const leadHtml = alerts.length === 1 ? S('leadOne') : S('leadMany', { n: alerts.length });
+  const itemAttendedSummary = (attended, instanceCount) => S('attendedSummary', { attended, total: instanceCount });
+  const badgeText = S('badge');
+  const ctaText = `${S('cta')} →`;
+  const footerNotice = S('footer');
 
   const itemHtml = alerts.map(a => `
     <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:12px 14px;margin-bottom:10px;">
-      <div style="font-size:14px;color:#e6edf3;"><strong style="color:#58a6ff;">${escape(a.personName || a.personEmail || fallbackSomeone)}</strong> ${escape(a.detail)}.</div>
+      <div style="font-size:14px;color:#e6edf3;"><strong style="color:#58a6ff;">${escape(a.personName || a.personEmail || fallbackSomeone)}</strong> ${escape(detailOf(a))}.</div>
       <div style="color:#8b949e;font-size:12px;margin-top:4px;">${escape(itemAttendedSummary(a.attended, a.instanceCount))}</div>
     </div>
   `).join('');
@@ -1851,15 +1776,16 @@ async function sendSeriesAlertEmail({ to, displayName, alerts, language, country
     ctaUrl: 'https://attendancetracker.dev/history.html',
     ctaColor: 'blue',
     footerHtml: `<p style="margin:0 0 8px;font-size:12px;color:#8b949e;">${escape(footerNotice)}</p>${foot.html}`,
+    lang,
   });
   const text = [
     greeting,
     '',
     leadHtml,
     '',
-    ...alerts.map(a => `  - ${a.personName || a.personEmail || fallbackSomeone} ${a.detail}. (${a.attended}/${a.instanceCount})`),
+    ...alerts.map(a => `  - ${a.personName || a.personEmail || fallbackSomeone} ${detailOf(a)}. (${a.attended}/${a.instanceCount})`),
     '',
-    `${ctaText.replace(' →', '')}: https://attendancetracker.dev/history.html`,
+    `${S('cta')}: https://attendancetracker.dev/history.html`,
     foot.text,
   ].join('\n');
 
@@ -1974,6 +1900,27 @@ function renderPersonalEmailLine(l) {
   return `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#e6edf3;">${formatEmailText(l)}</p>`;
 }
 
+// Default badge + CTA per lifecycle email type (dictionary keys, 60 locales).
+const PERSONAL_EMAIL_PRESETS = {
+  welcome: { badge: 'mail.badge.welcome', badgeType: 'success', cta: 'mail.cta.openMeet', ctaUrl: 'https://meet.google.com', ctaColor: 'green' },
+  reactivation: { badge: 'mail.badge.checkIn', badgeType: 'info', cta: 'mail.cta.openTracker', ctaUrl: 'https://attendancetracker.dev/history.html', ctaColor: 'blue' },
+  activation_nudge: { badge: 'mail.badge.gettingStarted', badgeType: 'info', cta: 'mail.cta.startMeet', ctaUrl: 'https://meet.google.com', ctaColor: 'green' },
+  solo_nudge: { badge: 'mail.badge.nextStep', badgeType: 'info', cta: 'mail.cta.tryRealMeeting', ctaUrl: 'https://meet.google.com', ctaColor: 'green' },
+  upcoming_reminder: { badge: 'mail.badge.startingSoon', badgeType: 'info', cta: 'mail.cta.joinMeet', ctaUrl: 'https://meet.google.com', ctaColor: 'green' },
+  forgotten_meeting: { badge: 'mail.badge.streak', badgeType: 'warning' },
+  comeback_7d: { badge: 'mail.badge.nextMeeting', badgeType: 'info', cta: 'mail.cta.openDashboard', ctaUrl: 'https://attendancetracker.dev/history.html', ctaColor: 'blue' },
+  export_gap: { badge: 'mail.badge.missingReport', badgeType: 'warning', cta: 'mail.cta.dashboardExport', ctaUrl: 'https://attendancetracker.dev/history.html', ctaColor: 'green' },
+  referral: { badge: 'mail.badge.referral', badgeType: 'success', cta: 'mail.cta.openTracker', ctaUrl: 'https://attendancetracker.dev/history.html', ctaColor: 'green' },
+};
+
+// Subject + body lines of a dictionary-driven lifecycle email.
+function mailCopy(id, lang, vars) {
+  return {
+    subject: tf(`mail.${id}.subject`, lang, vars),
+    lines: tf(`mail.${id}.body`, lang, vars).split('\n'),
+  };
+}
+
 async function sendPersonalEmail({
   to, displayName, subject, lines, tags, htmlLineTransform, logLabel, logMeta,
   language, country, domain, badge, badgeType = 'info', title, subtitle,
@@ -1982,11 +1929,7 @@ async function sendPersonalEmail({
   if (!getResend()) return { skipped: 'Resend not configured' };
   const lang = resolveLanguage({ language, country, domain: domain || (to && to.includes('@') ? to.split('@')[1] : null), email: to });
   const firstName = displayName ? displayName.split(' ')[0] : null;
-  let hi;
-  if (lang === 'es') hi = firstName ? `Hola ${firstName},` : 'Hola,';
-  else if (lang === 'pt') hi = firstName ? `Olá ${firstName},` : 'Olá,';
-  else if (lang === 'bn') hi = firstName ? `হ্যালো ${firstName},` : 'হ্যালো,';
-  else hi = firstName ? `Hey ${firstName},` : 'Hey,';
+  const hi = firstName ? tf('mail.heyName', lang, { name: firstName }) : tf('mail.hey', lang);
 
   const body = [hi, '', ...lines].join('\n');
   const foot = unsubscribeFooter(to, lang);
@@ -1999,77 +1942,22 @@ async function sendPersonalEmail({
 
   // Resolve badge if not passed explicitly
   const typeTag = tags?.find(t => t.name === 'type')?.value || logLabel;
+  const preset = PERSONAL_EMAIL_PRESETS[typeTag] || {};
   let resolvedBadge = badge;
   let resolvedBadgeType = badgeType;
-  if (!resolvedBadge) {
-    if (typeTag === 'welcome') {
-      resolvedBadge = lang === 'es' ? '👋 Bienvenido' : (lang === 'pt' ? '👋 Bem-vindo' : (lang === 'bn' ? '👋 স্বাগতম' : '👋 Welcome'));
-      resolvedBadgeType = 'success';
-    } else if (typeTag === 'reactivation') {
-      resolvedBadge = lang === 'es' ? '👋 Seguimiento' : (lang === 'pt' ? '👋 Olá' : (lang === 'bn' ? '👋 অনুসন্ধান' : '👋 Quick Check-in'));
-      resolvedBadgeType = 'info';
-    } else if (typeTag === 'activation_nudge') {
-      resolvedBadge = lang === 'es' ? '🚀 Primeros pasos' : (lang === 'pt' ? '🚀 Primeiros passos' : (lang === 'bn' ? '🚀 শুরু করা যাক' : '🚀 Getting Started'));
-      resolvedBadgeType = 'info';
-    } else if (typeTag === 'solo_nudge') {
-      resolvedBadge = lang === 'es' ? '💡 Siguiente paso' : (lang === 'pt' ? '💡 Próximo passo' : (lang === 'bn' ? '💡 পরবর্তী ধাপ' : '💡 Next Step'));
-      resolvedBadgeType = 'info';
-    } else if (typeTag === 'upcoming_reminder') {
-      resolvedBadge = lang === 'es' ? '⏰ Recordatorio' : (lang === 'pt' ? '⏰ Lembrete' : (lang === 'bn' ? '⏰ অনুস্মারক' : '⏰ Starting Soon'));
-      resolvedBadgeType = 'info';
-    } else if (typeTag === 'forgotten_meeting') {
-      resolvedBadge = lang === 'es' ? '📅 Recordatorio de racha' : (lang === 'pt' ? '📅 Lembrete de frequência' : (lang === 'bn' ? '📅 ধারাবাহিকতার অনুস্মারক' : '📅 Streak Reminder'));
-      resolvedBadgeType = 'warning';
-    } else if (typeTag === 'comeback_7d') {
-      resolvedBadge = lang === 'es' ? '📊 Panel web' : (lang === 'pt' ? '📊 Painel web' : (lang === 'bn' ? '📊 ড্যাশবোর্ড' : '📊 Next Meeting'));
-      resolvedBadgeType = 'info';
-    } else if (typeTag === 'export_gap') {
-      resolvedBadge = lang === 'es' ? '📄 Reporte pendiente' : (lang === 'pt' ? '📄 Relatório pendente' : (lang === 'bn' ? '📄 রিপোর্ট সংগ্রহ করুন' : '📄 Missing Report'));
-      resolvedBadgeType = 'warning';
-    } else if (typeTag === 'referral') {
-      resolvedBadge = lang === 'es' ? '🎁 Recompensa' : (lang === 'pt' ? '🎁 Recompensa' : (lang === 'bn' ? '🎁 রেফারেল পুরস্কার' : '🎁 Referral Reward'));
-      resolvedBadgeType = 'success';
-    }
+  if (!resolvedBadge && preset.badge) {
+    resolvedBadge = tf(preset.badge, lang);
+    resolvedBadgeType = preset.badgeType;
   }
 
   // Resolve CTA if not passed explicitly
   let resolvedCtaText = ctaText;
   let resolvedCtaUrl = ctaUrl;
   let resolvedCtaColor = ctaColor;
-  if (!resolvedCtaText && !resolvedCtaUrl) {
-    if (typeTag === 'welcome') {
-      resolvedCtaText = lang === 'es' ? 'Abrir Google Meet →' : (lang === 'pt' ? 'Abrir o Google Meet →' : (lang === 'bn' ? 'Google Meet খুলুন →' : 'Open Google Meet →'));
-      resolvedCtaUrl = 'https://meet.google.com';
-      resolvedCtaColor = 'green';
-    } else if (typeTag === 'activation_nudge') {
-      resolvedCtaText = lang === 'es' ? 'Iniciar una llamada en Meet →' : (lang === 'pt' ? 'Iniciar chamada no Meet →' : (lang === 'bn' ? 'Google Meet চালু করুন →' : 'Start a Google Meet →'));
-      resolvedCtaUrl = 'https://meet.google.com';
-      resolvedCtaColor = 'green';
-    } else if (typeTag === 'solo_nudge') {
-      resolvedCtaText = lang === 'es' ? 'Probar en una reunión real →' : (lang === 'pt' ? 'Testar em uma reunião real →' : (lang === 'bn' ? 'আসল মিটিংয়ে চেষ্টা করুন →' : 'Try with a Real Meeting →'));
-      resolvedCtaUrl = 'https://meet.google.com';
-      resolvedCtaColor = 'green';
-    } else if (typeTag === 'upcoming_reminder') {
-      resolvedCtaText = lang === 'es' ? 'Unirse a Google Meet →' : (lang === 'pt' ? 'Entrar no Google Meet →' : (lang === 'bn' ? 'Google Meet-এ যোগ দিন →' : 'Join Google Meet →'));
-      resolvedCtaUrl = 'https://meet.google.com';
-      resolvedCtaColor = 'green';
-    } else if (typeTag === 'reactivation') {
-      resolvedCtaText = lang === 'es' ? 'Abrir Attendance Tracker →' : (lang === 'pt' ? 'Abrir o Attendance Tracker →' : (lang === 'bn' ? 'Attendance Tracker খুলুন →' : 'Open Attendance Tracker →'));
-      resolvedCtaUrl = 'https://attendancetracker.dev/history.html';
-      resolvedCtaColor = 'blue';
-    } else if (typeTag === 'comeback_7d') {
-      resolvedCtaText = lang === 'es' ? 'Abrir panel web →' : (lang === 'pt' ? 'Abrir painel web →' : (lang === 'bn' ? 'ড্যাশবোর্ড খুলুন →' : 'Open Web Dashboard →'));
-      resolvedCtaUrl = 'https://attendancetracker.dev/history.html';
-      resolvedCtaColor = 'blue';
-    } else if (typeTag === 'export_gap') {
-      resolvedCtaText = lang === 'es' ? 'Ver panel y exportar →' : (lang === 'pt' ? 'Ver painel e exportar →' : (lang === 'bn' ? 'ড্যাশবোর্ড ও এক্সপোর্ট →' : 'View Dashboard & Export →'));
-      resolvedCtaUrl = 'https://attendancetracker.dev/history.html';
-      resolvedCtaColor = 'green';
-    } else if (typeTag === 'referral') {
-      resolvedCtaText = lang === 'es' ? 'Abrir Attendance Tracker →' : (lang === 'pt' ? 'Abrir o Attendance Tracker →' : (lang === 'bn' ? 'Attendance Tracker খুলুন →' : 'Open Attendance Tracker →'));
-      resolvedCtaUrl = 'https://attendancetracker.dev/history.html';
-      resolvedCtaColor = 'green';
-    }
+  if (!resolvedCtaText && !resolvedCtaUrl && preset.cta) {
+    resolvedCtaText = `${tf(preset.cta, lang)} →`;
+    resolvedCtaUrl = preset.ctaUrl;
+    resolvedCtaColor = preset.ctaColor;
   }
 
   const html = buildDesignSystemEmail({
@@ -2082,6 +1970,7 @@ async function sendPersonalEmail({
     ctaUrl: resolvedCtaUrl,
     ctaColor: resolvedCtaColor,
     footerHtml: foot.html.replace('margin:24px 0 0;', 'margin:0;'),
+    lang,
   });
 
   return dispatchEmail({
@@ -2097,99 +1986,7 @@ async function sendPersonalEmail({
 
 async function sendWelcomeEmail({ to, displayName, language, country, domain }) {
   const lang = resolveLanguage({ language, country, domain: domain || (to && to.includes('@') ? to.split('@')[1] : null), email: to });
-
-  let subject = 'Welcome to Attendance Tracker for Google Meet';
-  let lines;
-
-  if (lang === 'es') {
-    subject = '¡Bienvenido a Attendance Tracker para Google Meet!';
-    lines = [
-      '¡Gracias por instalar Attendance Tracker para Google Meet!',
-      '',
-      'Aquí te muestro cómo registrar tu primera reunión o clase en 3 sencillos pasos:',
-      '',
-      '1. Abre Google Meet e inicia o únete a cualquier llamada.',
-      '2. Haz clic en el icono de Actividades (figuras geométricas abajo a la derecha) y abre Attendance Tracker.',
-      '3. Haz clic en "Iniciar" — los horarios de entrada, salida y permanencia se registran en vivo. Cuando termines, haz clic en "Hoja" para exportar a Google Sheets en un solo clic.',
-      '',
-      'Consejo: Si estás probando en una llamada vacía, haz clic en "¿Probando en solitario? Carga 10 estudiantes de prueba" dentro del panel lateral para ver cómo funciona antes de tu próxima clase.',
-      '',
-      'Mira una demo rápida en video: https://youtu.be/bQAd1Rdivpw',
-      '',
-      'Si tienes cualquier pregunta o sugerencia, solo responde directamente a este correo — leo cada respuesta.',
-      '',
-      'Un saludo,',
-      'Derek',
-      'Creador de Attendance Tracker',
-      'https://attendancetracker.dev',
-    ];
-  } else if (lang === 'pt') {
-    subject = 'Bem-vindo ao Attendance Tracker para o Google Meet!';
-    lines = [
-      'Obrigado por instalar o Attendance Tracker para o Google Meet!',
-      '',
-      'Veja como registrar a frequência da sua primeira reunião ou aula em 3 passos rápidos:',
-      '',
-      '1. Abra o Google Meet e inicie ou entre em uma chamada.',
-      '2. Clique no ícone de Atividades (formas geométricas no canto inferior direito) e abra o Attendance Tracker.',
-      '3. Clique em "Iniciar" — horários de entrada, saída e permanência são acompanhados ao vivo. Quando terminar, clique em "Planilha" para exportar para o Google Sheets em um só clique.',
-      '',
-      'Dica: Se você estiver testando sozinho em uma chamada vazia, clique em "Testando sozinho? Carregar 10 alunos de teste" no painel lateral para ver como funciona.',
-      '',
-      'Veja uma demonstração rápida em vídeo: https://youtu.be/bQAd1Rdivpw',
-      '',
-      'Se tiver qualquer dúvida ou sugestão, basta responder diretamente a este e-mail — eu leio todas as respostas.',
-      '',
-      'Abraços,',
-      'Derek',
-      'Criador do Attendance Tracker',
-      'https://attendancetracker.dev',
-    ];
-  } else if (lang === 'bn') {
-    subject = 'Google Meet-এর জন্য Attendance Tracker-এ স্বাগতম!';
-    lines = [
-      'Google Meet-এর জন্য Attendance Tracker ইনস্টল করার জন্য ধন্যবাদ!',
-      '',
-      '৩টি সহজ ধাপে আপনার প্রথম মিটিং বা ক্লাসের উপস্থিতি রেকর্ড করুন:',
-      '',
-      '১. Google Meet খুলুন এবং যেকোনো কলে যোগ দিন।',
-      '২. নিচের ডানদিকের Activities আইকনে ক্লিক করে Attendance Tracker খুলুন।',
-      '৩. "Start" এ ক্লিক করুন — যোগদানের সময় এবং থাকার সময় লাইভ ট্র্যাক হবে। শেষে "Sheet" এ ক্লিক করে এক কলিকে Google Sheets-এ এক্সপোর্ট করুন।',
-      '',
-      'টিপস: আপনি যদি একা পরীক্ষা করতে চান, তবে প্যানেলে "Testing solo? Load 10 demo students"-এ ক্লিক করে দেখতে পারেন।',
-      '',
-      'ভিডিও ডেমো দেখুন: https://youtu.be/bQAd1Rdivpw',
-      '',
-      'কোনো প্রশ্ন থাকলে সরাসরি এই ইমেলের উত্তর দিন — আমি প্রতিটি বার্তা নিজে পড়ি।',
-      '',
-      'শুভেচ্ছান্তে,',
-      'Derek',
-      'Creator, Attendance Tracker',
-      'https://attendancetracker.dev',
-    ];
-  } else {
-    lines = [
-      `Thanks for installing Attendance Tracker for Google Meet!`,
-      '',
-      `Here is how to track your first meeting in 3 quick steps:`,
-      '',
-      `1. Open Google Meet and start or join any call.`,
-      `2. Click the Activities icon (shapes in the bottom-right corner) and open Attendance Tracker.`,
-      `3. Click "Start" — join times, leave times, and stay durations update live. When you're ready, click "Sheet" to export to Google Sheets in one click.`,
-      '',
-      `Tip: If you're testing right now in an empty call, click "Testing solo? Load 10 demo students" inside the side panel to see how it works before your next real meeting.`,
-      '',
-      `Watch the video demo: https://youtu.be/bQAd1Rdivpw`,
-      '',
-      `If you have any questions or run into anything, just reply directly to this email — I read every response.`,
-      '',
-      'Best,',
-      'Derek',
-      'Creator of Attendance Tracker',
-      'https://attendancetracker.dev',
-    ];
-  }
-
+  const { subject, lines } = mailCopy('welcome', lang);
   return sendPersonalEmail({
     to, displayName,
     subject,
@@ -2202,115 +1999,13 @@ async function sendWelcomeEmail({ to, displayName, language, country, domain }) 
 
 async function sendReactivationEmail({ to, displayName, daysSinceLogin, variant, language, country, domain }) {
   const lang = resolveLanguage({ language, country, domain: domain || (to && to.includes('@') ? to.split('@')[1] : null), email: to });
-
-  let subject;
-  let lines;
-
-  if (lang === 'es') {
-    if (variant === '7d') {
-      subject = '¿Cómo van tus clases con Attendance Tracker?';
-      lines = [
-        'Ha pasado aproximadamente una semana desde que usaste Attendance Tracker por última vez. Una pregunta rápida: ¿hubo algo confuso o alguna función que te haya hecho falta para tus clases o reuniones?',
-        '',
-        'Si tienes un par de minutos, responde a este correo y cuéntame qué te gustaría ver. Estoy construyendo esto basándome directamente en la experiencia de educadores como tú.',
-        '',
-        '— Derek',
-        'attendancetracker.dev',
-      ];
-    } else {
-      subject = '¿Prefieres que elimine tu cuenta de Attendance Tracker?';
-      lines = [
-        'Creaste tu cuenta de Attendance Tracker hace un mes y no has vuelto a usarla. Dos preguntas rápidas:',
-        '',
-        '1) ¿Le faltó algo a la aplicación para adaptarse a tus clases o reuniones? Agradecería mucho tus comentarios para poder mejorarla.',
-        '',
-        '2) Si prefieres que elimine tu cuenta y datos guardados, dímelo con total confianza y lo haré de inmediato.',
-        '',
-        'En cualquier caso está perfecto, solo quería saber cómo ayudarte.',
-        '',
-        '— Derek',
-      ];
-    }
-  } else if (lang === 'pt') {
-    if (variant === '7d') {
-      subject = 'Como estão suas reuniões no Attendance Tracker?';
-      lines = [
-        'Faz cerca de uma semana desde a última vez que você abriu o Attendance Tracker. Uma pergunta rápida: faltou alguma funcionalidade ou houve algo confuso no uso para suas aulas ou reuniões?',
-        '',
-        'Se tiver dois minutinhos, responda a este e-mail e me conte o que você gostaria de ver. Estou desenvolvendo esta ferramenta para atender às reais necessidades de quem a utiliza no dia a dia.',
-        '',
-        '— Derek',
-        'attendancetracker.dev',
-      ];
-    } else {
-      subject = 'Você prefere que eu exclua sua conta do Attendance Tracker?';
-      lines = [
-        'Você criou sua conta no Attendance Tracker há cerca de um mês e não retornou. Duas perguntas rápidas:',
-        '',
-        '1) Faltou algo no aplicativo para o seu dia a dia? Adoraria receber seu feedback para continuar melhorando.',
-        '',
-        '2) Se preferir que eu exclua sua conta e todos os dados armazenados, basta me avisar — sem nenhum problema.',
-        '',
-        'De qualquer forma, agradeço pelo seu tempo.',
-        '',
-        '— Derek',
-      ];
-    }
-  } else if (lang === 'bn') {
-    if (variant === '7d') {
-      subject = 'Attendance Tracker কেমন কাজ করছে আপনার জন্য?';
-      lines = [
-        'আপনি প্রায় এক সপ্তাহ আগে Attendance Tracker ব্যবহার করেছিলেন। একটি দ্রুত প্রশ্ন — আপনার ক্লাসে ব্যবহারের জন্য কি কোনো ফিচারের অভাব ছিল বা কোনো কিছু বুঝতে সমস্যা হয়েছে?',
-        '',
-        'দুই মিনিট সময় থাকলে এই ইমেইলে উত্তর দিয়ে জানান আপনি কী দেখতে চান।',
-        '',
-        '— Derek',
-        'attendancetracker.dev',
-      ];
-    } else {
-      subject = 'আমি কি আপনার Attendance Tracker অ্যাকাউন্ট মুছে দেব?';
-      lines = [
-        'আপনি প্রায় এক মাস আগে অ্যাকাউন্ট তৈরি করেছিলেন। দুটি দ্রুত প্রশ্ন:',
-        '',
-        '১) অ্যাপটিতে কি আপনার প্রয়োজনীয় কোনো ফিচারের ঘাটতি ছিল? আপনার মতামত পেলে খুব উপকৃত হব।',
-        '',
-        '২) আপনি যদি চান আমি আপনার অ্যাকাউন্ট এবং সংরক্ষিত ডেটা মুছে দিই, নিঃসংকোচে জানাতে পারেন।',
-        '',
-        'যেকোনো প্রতিক্রিয়াই সাদরে গ্রহণযোগ্য।',
-        '',
-        '— Derek',
-      ];
-    }
-  } else {
-    subject = variant === '7d' ? 'Quick check-in on Attendance Tracker' : 'Should I delete your Attendance Tracker account?';
-    lines = variant === '7d' ? [
-      `It's been about a week since you last opened Attendance Tracker. Quick question — was there something missing or confusing that kept you from using it for your meetings?`,
-      '',
-      `If you've got two minutes, hit reply and tell me what you'd want to see. I'm building this for actual users, not in a vacuum.`,
-      '',
-      '— Derek',
-      'attendancetracker.dev',
-    ] : [
-      `You signed up for Attendance Tracker about a month ago and haven't been back. Two questions:`,
-      '',
-      `1) Was the product missing something? If you'd reply with what would've made it useful for your workflow, I'd genuinely appreciate the signal.`,
-      '',
-      `2) If you'd rather I delete your account and any stored data, just say the word — no hard feelings.`,
-      '',
-      'Either way is fine. I just want to know.',
-      '',
-      '— Derek',
-    ];
-  }
-
   const isDeleteVariant = variant !== '7d';
+  const { subject, lines } = mailCopy(isDeleteVariant ? 'reactivation30d' : 'reactivation7d', lang);
   return sendPersonalEmail({
     to, displayName,
     subject,
     lines,
-    badge: isDeleteVariant
-      ? (lang === 'es' ? '❓ Estado de cuenta' : (lang === 'pt' ? '❓ Status da conta' : (lang === 'bn' ? '❓ অ্যাকাউন্টের অবস্থা' : '❓ Account Status')))
-      : (lang === 'es' ? '👋 Seguimiento' : (lang === 'pt' ? '👋 Olá' : (lang === 'bn' ? '👋 অনুসন্ধান' : '👋 Quick Check-in'))),
+    badge: tf(isDeleteVariant ? 'mail.badge.accountStatus' : 'mail.badge.checkIn', lang),
     badgeType: 'info',
     tags: [{ name: 'type', value: 'reactivation' }, { name: 'variant', value: variant }],
     logLabel: 'reactivation', logMeta: { variant, daysSinceLogin },
@@ -2323,65 +2018,7 @@ async function sendReactivationEmail({ to, displayName, daysSinceLogin, variant,
 async function sendActivationNudgeEmail({ to, displayName, daysSinceLogin, language, country, domain }) {
   const lang = resolveLanguage({ language, country, domain: domain || (to && to.includes('@') ? to.split('@')[1] : null), email: to });
 
-  let subject = 'Getting started with Attendance Tracker';
-  let lines;
-
-  if (lang === 'es') {
-    subject = 'Cómo empezar con Attendance Tracker';
-    lines = [
-      'Te registraste en Attendance Tracker pero aún no has tomado asistencia en una reunión o clase. Solo toma 30 segundos:',
-      '',
-      '1. Inicia o únete a una llamada en Google Meet.',
-      '2. Abre Attendance Tracker desde el panel de Actividades (abajo a la derecha en Meet).',
-      '3. Presiona Iniciar — registrará quién entra, quién sale y cuánto tiempo permanecieron, y luego podrás exportarlo a Google Sheets al terminar.',
-      '',
-      'Si algo te detuvo (configuración, permisos o dudas), responde directamente a este correo. Leo cada mensaje.',
-      '',
-      '— Derek',
-      'attendancetracker.dev',
-    ];
-  } else if (lang === 'pt') {
-    subject = 'Como começar com o Attendance Tracker';
-    lines = [
-      'Você se cadastrou no Attendance Tracker mas ainda não registrou presença em nenhuma reunião ou aula. Leva apenas 30 segundos:',
-      '',
-      '1. Inicie ou entre em uma chamada no Google Meet.',
-      '2. Abra o Attendance Tracker no painel de Atividades (canto inferior direito no Meet).',
-      '3. Clique em Iniciar — ele registra quem entra, quem sai e o tempo de permanência, exportando para o Google Sheets ao final.',
-      '',
-      'Se algo impediu seu uso (permissões, dúvidas ou configuração), basta responder a este e-mail. Eu leio todas as mensagens.',
-      '',
-      '— Derek',
-      'attendancetracker.dev',
-    ];
-  } else if (lang === 'bn') {
-    subject = 'Attendance Tracker দিয়ে কীভাবে শুরু করবেন';
-    lines = [
-      'আপনি Attendance Tracker-এ সাইন আপ করেছেন কিন্তু এখনো উপস্থিতি নেননি। এটি শুরু করতে মাত্র ৩০ সেকেন্ড সময় লাগে:',
-      '',
-      '১. Google Meet চালু করুন বা যোগ দিন।',
-      '২. নিচের ডানদিকের Activities প্যানেল থেকে Attendance Tracker খুলুন।',
-      '৩. Start চাপুন — কে কখন যোগ দিল বা বের হলো তা রেকর্ড হবে এবং শেষে Google Sheets-এ এক্সপোর্ট করতে পারবেন।',
-      '',
-      'কোনো সমস্যা থাকলে সরাসরি এই ইমেলের উত্তর দিন।',
-      '',
-      '— Derek',
-      'attendancetracker.dev',
-    ];
-  } else {
-    lines = [
-      "You signed up for Attendance Tracker but haven't taken attendance in a meeting yet. It takes about 30 seconds:",
-      '',
-      '1. Start or join a Google Meet.',
-      '2. Open Attendance Tracker from the Activities panel (bottom-right in Meet).',
-      '3. Press Start — it tracks who joins, who leaves, and how long they stayed, then exports to a Google Sheet when the meeting ends.',
-      '',
-      "If something got in the way — setup, permissions, or it just didn't fit — hit reply and tell me. I read every one.",
-      '',
-      '— Derek',
-      'attendancetracker.dev',
-    ];
-  }
+  const { subject, lines } = mailCopy('activation', lang);
 
   return sendPersonalEmail({
     to, displayName,
@@ -2398,57 +2035,7 @@ async function sendActivationNudgeEmail({ to, displayName, daysSinceLogin, langu
 async function sendSoloNudgeEmail({ to, displayName, daysSinceLogin, language, country, domain }) {
   const lang = resolveLanguage({ language, country, domain: domain || (to && to.includes('@') ? to.split('@')[1] : null), email: to });
 
-  let subject = 'You tried Attendance Tracker solo — try it with a real meeting';
-  let lines;
-
-  if (lang === 'es') {
-    subject = 'Probaste Attendance Tracker en solitario — pruébalo en una clase o reunión real';
-    lines = [
-      'Noté que probaste Attendance Tracker, pero parece que estabas solo en la llamada. Es la manera perfecta de explorar la herramienta, pero donde realmente brilla es cuando hay más personas en la llamada.',
-      '',
-      'La próxima vez que tengas una clase, reunión o sesión con alumnos o clientes, abre el panel y presiona Iniciar. Te mostrará exactamente quién llegó, quién salió, quién llegó tarde y guardará toda la lista en Google Sheets al terminar.',
-      '',
-      'Si algo te impide usarlo en tus reuniones reales, responde a este correo y cuéntame — tus comentarios valen oro.',
-      '',
-      '— Derek',
-      'attendancetracker.dev',
-    ];
-  } else if (lang === 'pt') {
-    subject = 'Você testou o Attendance Tracker sozinho — experimente em uma reunião ou aula real';
-    lines = [
-      'Notei que você testou o Attendance Tracker, mas parece que estava sozinho na chamada. É a forma perfeita de conhecer a ferramenta, mas ela realmente se destaca quando há outras pessoas na sala.',
-      '',
-      'Na próxima vez que tiver uma aula, reunião ou chamada com alunos ou clientes, abra o painel e clique em Iniciar. Ele mostrará exatamente quem entrou, quem saiu, quem atrasou e salvará a lista completa no Google Sheets ao final.',
-      '',
-      'Se algo estiver impedindo o seu uso no dia a dia, responda a este e-mail — seu feedback é fundamental.',
-      '',
-      '— Derek',
-      'attendancetracker.dev',
-    ];
-  } else if (lang === 'bn') {
-    subject = 'একটি বাস্তব মিটিং বা ক্লাসে Attendance Tracker ব্যবহার করে দেখুন';
-    lines = [
-      'আমি দেখেছি আপনি Attendance Tracker একা পরীক্ষা করেছেন। টুলটি বোঝার জন্য এটি চমৎকার, তবে অন্য মানুষ যখন কলে থাকে তখন এটি সবচেয়ে বেশি কার্যকর।',
-      '',
-      'পরের বার যখন আপনার আসল ক্লাস বা মিটিং থাকবে, প্যানেল খুলে Start চাপুন। কে যোগ দিল, কে বের হলো বা দেরি করল তা নির্ভুলভাবে রেকর্ড হয়ে Google Sheets-এ চলে যাবে।',
-      '',
-      'কোনো প্রশ্ন বা পরামর্শ থাকলে এই ইমেইলে উত্তর দিন।',
-      '',
-      '— Derek',
-      'attendancetracker.dev',
-    ];
-  } else {
-    lines = [
-      "I noticed you gave Attendance Tracker a spin, but it looks like the meeting was just you. That's the perfect way to kick the tires — but it really earns its keep when other people are in the call.",
-      '',
-      "Next time you're in a real one — a class, a standup, a client call — open the panel and hit Start. It'll show you exactly who joined, who left, who was late, and drop the whole roll-call into a Google Sheet when the meeting ends.",
-      '',
-      "If something's getting in the way of using it for real, hit reply and tell me — that feedback is gold.",
-      '',
-      '— Derek',
-      'attendancetracker.dev',
-    ];
-  }
+  const { subject, lines } = mailCopy('solo', lang);
 
   return sendPersonalEmail({
     to, displayName,
@@ -2465,69 +2052,24 @@ async function sendForgottenMeetingEmail({ to, displayName, seriesTitle, recurri
   const seriesLink = recurringEventId
     ? `https://attendancetracker.dev/history.html#series=${encodeURIComponent(recurringEventId)}`
     : 'https://attendancetracker.dev/history.html';
-
-  let subject = `Forgot to track "${seriesTitle}"?`;
-  let lines;
-  let linkPrefix = 'Your series so far:';
-  let linkLabel = 'view the trend →';
-  const countTimes = trackedInWindow ? `${trackedInWindow} times` : 'regularly';
-  const countVeces = trackedInWindow ? `${trackedInWindow} veces` : 'con frecuencia';
-  const countVezes = trackedInWindow ? `${trackedInWindow} vezes` : 'com frequência';
-  const countBar = trackedInWindow ? `${trackedInWindow} বার` : 'নিয়মিত';
-
-  if (lang === 'es') {
-    subject = `¿Olvidaste registrar la asistencia de "${seriesTitle}"?`;
-    linkPrefix = 'Tu historial de la serie:';
-    linkLabel = 'ver la tendencia →';
-    lines = [
-      `Registraste "${seriesTitle}" ${countVeces} en el último mes, pero han pasado ${daysSinceLast || 'varios'} días desde la última sesión. Si quieres mantener el registro al día, solo abre el panel de Attendance Tracker en tu próxima sesión.`,
-      '',
-      `Tu historial de la serie: ${seriesLink}`,
-      '',
-      '— Derek',
-    ];
-  } else if (lang === 'pt') {
-    subject = `Esqueceu de registrar a presença em "${seriesTitle}"?`;
-    linkPrefix = 'Seu histórico da série:';
-    linkLabel = 'ver tendência →';
-    lines = [
-      `Você registrou "${seriesTitle}" ${countVezes} no último mês, mas faz ${daysSinceLast || 'vários'} dias desde a última sessão. Para manter seu histórico em dia, basta abrir o painel do Attendance Tracker na próxima reunião.`,
-      '',
-      `Seu histórico da série: ${seriesLink}`,
-      '',
-      '— Derek',
-    ];
-  } else if (lang === 'bn') {
-    subject = `"${seriesTitle}"-এর উপস্থিতি নিতে কি ভুলে গেছেন?`;
-    linkPrefix = 'আপনার সিরিজের হিস্ট্রি:';
-    linkLabel = 'ট্রেন্ড দেখুন →';
-    lines = [
-      `আপনি গত মাসে "${seriesTitle}"-এ ${countBar} উপস্থিতি নিয়েছিলেন, কিন্তু শেষ সেশনের পর ${daysSinceLast || 'কয়েক'} দিন পার হয়ে গেছে। ধারাবাহিকতা বজায় রাখতে পরবর্তী মিটিংয়ে প্যানেলটি খুলুন।`,
-      '',
-      `আপনার সিরিজের হিস্ট্রি: ${seriesLink}`,
-      '',
-      '— Derek',
-    ];
-  } else {
-    lines = [
-      `You tracked "${seriesTitle}" ${countTimes} in the past month, but it's been ${daysSinceLast || 'a few'} days since the last one. If you want to keep the streak going, just open the Attendance Tracker side panel next time you're in that meeting — it picks up from where you left off.`,
-      '',
-      `Your series so far: ${seriesLink}`,
-      '',
-      '— Derek',
-    ];
-  }
+  const count = trackedInWindow
+    ? tf('mail.forgotten.countTimes', lang, { n: trackedInWindow })
+    : tf('mail.forgotten.countRegular', lang);
+  const days = daysSinceLast || tf('mail.forgotten.fewDays', lang);
+  const { subject, lines } = mailCopy('forgotten', lang, { title: seriesTitle, count, days, link: seriesLink });
+  const linkPrefix = tf('mail.forgotten.linkPrefix', lang);
+  const linkLabel = `${escape(tf('mail.forgotten.linkLabel', lang))} →`;
 
   return sendPersonalEmail({
     to, displayName,
     subject,
     lines,
-    badge: lang === 'es' ? '📅 Recordatorio de racha' : (lang === 'pt' ? '📅 Lembrete de frequência' : (lang === 'bn' ? '📅 ধারাবাহিকতার অনুস্মারক' : '📅 Streak Reminder')),
+    badge: tf('mail.badge.streak', lang),
     badgeType: 'warning',
-    ctaText: lang === 'es' ? 'Ver tendencia de la serie →' : (lang === 'pt' ? 'Ver tendência da série →' : (lang === 'bn' ? 'সিরিজের ট্রেন্ড দেখুন →' : 'View Series Trend →')),
+    ctaText: `${tf('mail.cta.seriesTrend', lang)} →`,
     ctaUrl: seriesLink,
     ctaColor: 'blue',
-    htmlLineTransform: (l) => l.startsWith(linkPrefix) || l.startsWith('Your series so far:')
+    htmlLineTransform: (l) => l.startsWith(linkPrefix)
       ? `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#e6edf3;">${escape(l.split('http')[0])}<a href="${escape(seriesLink)}" style="color:#58a6ff;text-decoration:none;font-weight:600;">${linkLabel}</a></p>`
       : null,
     tags: [{ name: 'type', value: 'forgotten_meeting' }],
@@ -2543,74 +2085,21 @@ async function sendForgottenMeetingEmail({ to, displayName, seriesTitle, recurri
 async function sendComebackEmail({ to, displayName, meetingTitle, daysSinceLogin, language, country, domain }) {
   const lang = resolveLanguage({ language, country, domain: domain || (to && to.includes('@') ? to.split('@')[1] : null), email: to });
   const historyLink = 'https://attendancetracker.dev/history.html';
-  const title = meetingTitle || (lang === 'es' ? 'tu última reunión' : (lang === 'pt' ? 'sua última reunião' : 'your last meeting'));
-
-  let subject = 'Track your next meeting?';
-  let lines;
-  let linkPrefix = 'Your history:';
-  let linkLabel = 'open your dashboard →';
-
-  if (lang === 'es') {
-    subject = '¿Registrar tu próxima reunión o clase?';
-    linkPrefix = 'Tu historial:';
-    linkLabel = 'abrir tu panel →';
-    lines = [
-      `Han pasado unos ${daysSinceLogin} días desde que registraste "${title}". La próxima vez que estés en una reunión o clase, solo abre el panel lateral de Attendance Tracker — registra quién entra, quién sale y cuánto tiempo permanecieron, y expórtalo a Google Sheets en un clic.`,
-      '',
-      'Un consejo: si es una clase que se repite, ponla en una invitación periódica de Google Calendar — así obtendrás tendencias de asistencia por alumno a lo largo del curso.',
-      '',
-      `Tu historial: ${historyLink}`,
-      '',
-      '— Derek',
-    ];
-  } else if (lang === 'pt') {
-    subject = 'Registrar sua próxima reunião ou aula?';
-    linkPrefix = 'Seu histórico:';
-    linkLabel = 'abrir seu painel →';
-    lines = [
-      `Faz cerca de ${daysSinceLogin} dias desde que você registrou "${title}". Na próxima vez que estiver em uma chamada, abra o painel do Attendance Tracker — ele registra quem entrou, quem saiu e o tempo de permanência, exportando para o Sheets em um clique.`,
-      '',
-      'Uma dica: se for uma aula ou reunião recorrente, adicione-a no Google Calendar — assim você acompanha a frequência de cada participante ao longo de todas as sessões.',
-      '',
-      `Seu histórico: ${historyLink}`,
-      '',
-      '— Derek',
-    ];
-  } else if (lang === 'bn') {
-    subject = 'পরবর্তী মিটিং বা ক্লাসের উপস্থিতি নেবেন?';
-    linkPrefix = 'আপনার হিস্ট্রি:';
-    linkLabel = 'ড্যাশবোর্ড খুলুন →';
-    lines = [
-      `আপনি প্রায় ${daysSinceLogin} দিন আগে "${title}" ট্র্যাক করেছিলেন। পরবর্তী মিটিংয়ে Attendance Tracker প্যানেল খুলে সহজেই উপস্থিতি সংরক্ষণ করুন।`,
-      '',
-      'টিপস: মিটিংটি নিয়মিত হলে Google Calendar-এ যোগ করুন, এতে পুরো কোর্সের ট্রেন্ড একসঙ্গে দেখতে পারবেন।',
-      '',
-      `আপনার হিস্ট্রি: ${historyLink}`,
-      '',
-      '— Derek',
-    ];
-  } else {
-    lines = [
-      `It's been about ${daysSinceLogin} days since you tracked "${title}". Next time you're in a meeting, just open the Attendance Tracker side panel — it captures who joined, who left, and how long they stayed, then exports to Sheets in one click.`,
-      '',
-      'One tip: if it\'s a class or meeting that repeats, put it on a recurring Google Calendar invite — then you get per-person attendance trends across every session, not just a single day.',
-      '',
-      `Your history: ${historyLink}`,
-      '',
-      '— Derek',
-    ];
-  }
+  const title = meetingTitle || tf('mail.comeback.defaultTitle', lang);
+  const { subject, lines } = mailCopy('comeback', lang, { title, days: daysSinceLogin, link: historyLink });
+  const linkPrefix = tf('mail.history.linkPrefix', lang);
+  const linkLabel = `${escape(tf('mail.history.linkLabel', lang))} →`;
 
   return sendPersonalEmail({
     to, displayName,
     subject,
     lines,
-    badge: lang === 'es' ? '📊 Panel web' : (lang === 'pt' ? '📊 Painel web' : (lang === 'bn' ? '📊 ড্যাশবোর্ড' : '📊 Next Meeting')),
+    badge: tf('mail.badge.nextMeeting', lang),
     badgeType: 'info',
-    ctaText: lang === 'es' ? 'Abrir panel web →' : (lang === 'pt' ? 'Abrir painel web →' : (lang === 'bn' ? 'ড্যাশবোর্ড খুলুন →' : 'Open Web Dashboard →')),
+    ctaText: `${tf('mail.cta.openDashboard', lang)} →`,
     ctaUrl: historyLink,
     ctaColor: 'blue',
-    htmlLineTransform: (l) => l.startsWith(linkPrefix) || l.startsWith('Your history:')
+    htmlLineTransform: (l) => l.startsWith(linkPrefix)
       ? `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#e6edf3;">${escape(l.split('http')[0])}<a href="${escape(historyLink)}" style="color:#58a6ff;text-decoration:none;font-weight:600;">${linkLabel}</a></p>`
       : null,
     tags: [{ name: 'type', value: 'comeback_7d' }],
@@ -2626,66 +2115,21 @@ async function sendComebackEmail({ to, displayName, meetingTitle, daysSinceLogin
 async function sendExportGapEmail({ to, displayName, meetingTitle, daysSinceLogin, language, country, domain }) {
   const lang = resolveLanguage({ language, country, domain: domain || (to && to.includes('@') ? to.split('@')[1] : null), email: to });
   const historyLink = 'https://attendancetracker.dev/history.html';
-  const title = meetingTitle || (lang === 'es' ? 'tu clase' : (lang === 'pt' ? 'sua aula' : 'your class'));
-
-  let subject = 'Your attendance report is one click away';
-  let lines;
-  let linkPrefix = 'Your history:';
-  let linkLabel = 'open your dashboard →';
-
-  if (lang === 'es') {
-    subject = 'Tu reporte de asistencia está a un clic';
-    linkPrefix = 'Tu historial:';
-    linkLabel = 'abrir tu panel →';
-    lines = [
-      `Registraste "${title}" hace aproximadamente ${daysSinceLogin} días, pero no se guardó el reporte en Google Sheets. La próxima vez, abre el panel de Attendance Tracker y presiona Exportar — obtendrás una hoja limpia con horarios y duraciones. (Activa la exportación automática en Configuración y se guardará solo al terminar).`,
-      '',
-      `Tu historial: ${historyLink}`,
-      '',
-      '— Derek',
-    ];
-  } else if (lang === 'pt') {
-    subject = 'Seu relatório de presença está a um clique';
-    linkPrefix = 'Seu histórico:';
-    linkLabel = 'abrir seu painel →';
-    lines = [
-      `Você registrou "${title}" há cerca de ${daysSinceLogin} dias, mas o relatório não foi salvo no Google Sheets. Na próxima vez, abra o painel do Attendance Tracker e clique em Exportar — você terá uma planilha organizada com todas as presenças. (Ative a exportação automática nas Configurações para salvar sozinho ao final da chamada).`,
-      '',
-      `Seu histórico: ${historyLink}`,
-      '',
-      '— Derek',
-    ];
-  } else if (lang === 'bn') {
-    subject = 'আপনার উপস্থিতির রিপোর্ট এক ক্লিকেই তৈরি';
-    linkPrefix = 'আপনার হিস্ট্রি:';
-    linkLabel = 'ড্যাশবোর্ড খুলুন →';
-    lines = [
-      `আপনি প্রায় ${daysSinceLogin} দিন আগে "${title}" ট্র্যাক করেছিলেন, কিন্তু রিপোর্টটি Google Sheets-এ এক্সপোর্ট করেননি। পরবর্তী সময়ে প্যানেল থেকে Export চাপলেই সম্পূর্ণ রিপোর্ট পেয়ে যাবেন। (সেটিংস থেকে অটো-এক্সপোর্ট চালু রাখলে মিটিং শেষে নিজ থেকেই সেভ হয়ে যাবে)।`,
-      '',
-      `আপনার হিস্ট্রি: ${historyLink}`,
-      '',
-      '— Derek',
-    ];
-  } else {
-    lines = [
-      `You tracked "${title}" about ${daysSinceLogin} days ago, but never saved the report. Next time you're in that meeting, open the Attendance Tracker side panel and hit Export — you'll get a clean Google Sheet with who joined, who left, and how long they stayed. (Turn on auto-export in Settings and it happens automatically when the meeting ends.)`,
-      '',
-      `Your history: ${historyLink}`,
-      '',
-      '— Derek',
-    ];
-  }
+  const title = meetingTitle || tf('mail.exportGap.defaultTitle', lang);
+  const { subject, lines } = mailCopy('exportGap', lang, { title, days: daysSinceLogin, link: historyLink });
+  const linkPrefix = tf('mail.history.linkPrefix', lang);
+  const linkLabel = `${escape(tf('mail.history.linkLabel', lang))} →`;
 
   return sendPersonalEmail({
     to, displayName,
     subject,
     lines,
-    badge: lang === 'es' ? '📄 Reporte pendiente' : (lang === 'pt' ? '📄 Relatório pendente' : (lang === 'bn' ? '📄 রিপোর্ট সংগ্রহ করুন' : '📄 Missing Report')),
+    badge: tf('mail.badge.missingReport', lang),
     badgeType: 'warning',
-    ctaText: lang === 'es' ? 'Ver panel y exportar →' : (lang === 'pt' ? 'Ver painel e exportar →' : (lang === 'bn' ? 'ড্যাশবোর্ড ও এক্সপোর্ট →' : 'View Dashboard & Export →')),
+    ctaText: `${tf('mail.cta.dashboardExport', lang)} →`,
     ctaUrl: historyLink,
     ctaColor: 'green',
-    htmlLineTransform: (l) => l.startsWith(linkPrefix) || l.startsWith('Your history:')
+    htmlLineTransform: (l) => l.startsWith(linkPrefix)
       ? `<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#e6edf3;">${escape(l.split('http')[0])}<a href="${escape(historyLink)}" style="color:#58a6ff;text-decoration:none;font-weight:600;">${linkLabel}</a></p>`
       : null,
     tags: [{ name: 'type', value: 'export_gap' }],
@@ -3681,47 +3125,55 @@ async function sendInvoiceActionRequiredEmail({
   hostedInvoiceUrl,
   amountDue,
   currency = 'usd',
+  language,
+  country,
 } = {}) {
   if (!getResend()) return { skipped: 'no resend' };
   if (!to || !to.includes('@')) return { skipped: 'invalid email' };
   if (!hostedInvoiceUrl) return { skipped: 'no invoice url' };
 
+  const lang = resolveLanguage({ language, country, email: to });
+  const I = (key, vars) => tf(`mail.invoice.${key}`, lang, vars);
+  // The charge's own currency, formatted for the recipient ("₹499.00", "19,99 €").
   const formattedAmount = (amountDue != null && amountDue > 0)
-    ? `$${(amountDue / 100).toFixed(2)} ${currency ? currency.toUpperCase() : 'USD'}`
+    ? fmtMoney(amountDue, currency, lang)
     : null;
 
-  const subject = formattedAmount
-    ? `Action Required: Authorize your Attendance Tracker payment (${formattedAmount})`
-    : 'Action Required: Authorize your Attendance Tracker payment';
+  const subject = formattedAmount ? I('subjectAmount', { amount: formattedAmount }) : I('subject');
+  const strongAmount = formattedAmount ? `<strong>${escape(formattedAmount)}</strong>` : '';
+  const bodyHtml = formattedAmount
+    ? escape(I('bodyAmount', { amount: '\u0000' })).replace('\u0000', strongAmount)
+    : escape(I('body'));
 
   const contentHtml = `
     <p style="margin:0 0 16px;color:#e6edf3;font-size:14px;line-height:1.6;">
-      Your bank requires additional authentication (3D Secure / SCA) to complete your Attendance Tracker payment${formattedAmount ? ` of <strong>${escape(formattedAmount)}</strong>` : ''}.
+      ${bodyHtml}
     </p>
     <p style="margin:0 0 20px;color:#e6edf3;font-size:14px;line-height:1.6;">
-      Please confirm the payment with your bank within 24 hours to prevent your Pro subscription from lapsing.
+      ${escape(I('deadline'))}
     </p>
   `;
 
   const html = buildDesignSystemEmail({
-    badge: '⚠️ Action Required',
+    badge: I('badge'),
     badgeType: 'warning',
-    title: 'Payment Authorization Needed',
-    subtitle: 'Your card issuer requires 3D Secure verification.',
+    title: I('title'),
+    subtitle: I('subtitle'),
     contentHtml,
-    ctaText: 'Authorize Payment Now →',
+    ctaText: `${I('cta')} →`,
     ctaUrl: hostedInvoiceUrl,
     ctaColor: 'blue',
+    lang,
   });
 
   const text = [
-    'Action Required: Authorize your Attendance Tracker payment',
+    I('subject'),
     '',
-    `Your bank requires additional authentication to complete your payment${formattedAmount ? ` of ${formattedAmount}` : ''}.`,
-    'Please complete the verification here:',
+    formattedAmount ? I('bodyAmount', { amount: formattedAmount }) : I('body'),
+    I('textLink'),
     hostedInvoiceUrl,
     '',
-    'Confirm within 24 hours to keep your Pro access uninterrupted.',
+    I('textDeadline'),
   ].join('\n');
 
   return dispatchEmail({
@@ -3730,8 +3182,8 @@ async function sendInvoiceActionRequiredEmail({
     subject,
     text,
     html,
-    tags: [{ name: 'type', value: 'payment_action_required' }],
-  }, 'payment action required notification', { to });
+    tags: [{ name: 'type', value: 'payment_action_required' }, { name: 'lang', value: lang }],
+  }, 'payment action required notification', { to, lang });
 }
 
 /**
@@ -3755,80 +3207,87 @@ async function sendPassExpiryReminderEmail({
   if (!to || !to.includes('@')) return { skipped: 'invalid email' };
 
   const lang = resolveLanguage({ language, email: to, domain, country });
+  const E = (key, vars) => tf(`mail.expiry.${key}`, lang, vars);
+  // Fill a translated sentence for HTML: escape the copy, then drop in
+  // pre-built markup for the {placeholders}.
+  const htmlFill = (key, parts) => {
+    const marks = Object.fromEntries(Object.keys(parts).map((k, i) => [k, `\u0000${i}\u0000`]));
+    let out = escape(E(key, marks));
+    Object.keys(parts).forEach((k, i) => { out = out.split(`\u0000${i}\u0000`).join(parts[k]); });
+    return out;
+  };
   const firstName = displayName ? String(displayName).trim().split(/\s+/)[0] : '';
-  const greeting = firstName ? `Hi ${firstName},` : 'Hi there,';
+  const greeting = firstName ? tf('mail.greetingName', lang, { name: firstName }) : tf('mail.greetingThere', lang);
   const isGrant = planType === 'review_reward' || planType === 'referral_reward' || String(reminderType || '').startsWith('grant_');
   const isTrial = planType === 'auto_export_trial' || String(reminderType || '').startsWith('trial_');
   const isExpired = reminderType?.endsWith('t_plus_1') || (typeof daysUntilExpiry === 'number' && daysUntilExpiry <= 0);
   const daysLeft = Math.max(1, Math.ceil(Number(daysUntilExpiry) || 3));
+  const when = fmtRelativeDays(daysLeft, lang); // "in 3 days" / "tomorrow"
+  const dateNote = expiresAt ? ` (${fmtDate(expiresAt, lang) || String(expiresAt).slice(0, 10)})` : '';
 
-  const passLabel = isGrant
-    ? 'complimentary Pro month'
-    : (isTrial ? 'Auto-Export Pro trial' : (planType === 'educator' ? 'Educator Annual Pass' : 'Pro Annual Pass'));
+  const passLabel = E(isGrant ? 'passGrant' : (isTrial ? 'passTrial' : (planType === 'educator' ? 'passEducator' : 'passPro')));
 
   const subject = isExpired
-    ? `Your Attendance Tracker ${passLabel} has ended — renew to keep Pro`
-    : `Your Attendance Tracker ${passLabel} ends in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`;
+    ? E('subjectEnded', { pass: passLabel })
+    : E('subjectEnding', { pass: passLabel, when });
 
   const exportsCount = Number(stats?.exportsCount) || 0;
   const certificatesCount = Number(stats?.certificatesCount) || 0;
   const largeClassesCount = Number(stats?.largeClassesCount) || 0;
-  const valueBullets = [];
-  if (exportsCount > 0) valueBullets.push(`<strong>${exportsCount}</strong> attendance sheet${exportsCount === 1 ? '' : 's'} exported to Google Drive`);
-  if (largeClassesCount > 0) valueBullets.push(`<strong>${largeClassesCount}</strong> large class${largeClassesCount === 1 ? '' : 'es'} (&gt;25 students) tracked in full`);
-  if (certificatesCount > 0) valueBullets.push(`<strong>${certificatesCount}</strong> attendance certificate batch${certificatesCount === 1 ? '' : 'es'} generated`);
+  // "Label: N" sidesteps per-language plural rules.
+  const stats3 = [['statExports', exportsCount], ['statLarge', largeClassesCount], ['statCerts', certificatesCount]].filter(([, n]) => n > 0);
+  const valueBullets = stats3.map(([key, n]) => `${escape(E(key))}: <strong>${n}</strong>`);
 
   const targetUrl = checkoutUrl || `${CONFIG.publicSiteUrl}/pricing.html?utm_source=expiry_reminder&utm_campaign=${encodeURIComponent(reminderType || 'expiry')}`;
 
   const valueBoxHtml = valueBullets.length > 0 ? `
     <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:12px 16px;margin:16px 0">
-      <div style="font-size:12px;font-weight:700;color:#8b949e;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">What you've unlocked with Pro</div>
+      <div style="font-size:12px;font-weight:700;color:#8b949e;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">${escape(E('valueTitle'))}</div>
       <ul style="margin:0;padding-left:18px;color:#e6edf3;font-size:13px;line-height:1.6">
         ${valueBullets.map(b => `<li>${b}</li>`).join('')}
       </ul>
     </div>
   ` : '';
 
+  const strongPass = `<strong>${escape(passLabel)}</strong>`;
   const contentHtml = `
     <p style="margin:0 0 14px;color:#e6edf3;font-size:14px;line-height:1.6">${escape(greeting)}</p>
     <p style="margin:0 0 14px;color:#e6edf3;font-size:14px;line-height:1.6">
       ${isExpired
-        ? `Your <strong>${escape(passLabel)}</strong> has ended and your account is back on the Free plan (2 Google Sheets exports/month, up to 25 students per class).`
-        : `Just a heads-up — your <strong>${escape(passLabel)}</strong> ends in <strong>${daysLeft} day${daysLeft === 1 ? '' : 's'}</strong>${expiresAt ? ` (${escape(String(expiresAt).slice(0, 10))})` : ''}.`}
+        ? htmlFill('bodyEnded', { pass: strongPass })
+        : htmlFill('bodyEnding', { pass: strongPass, when: `<strong>${escape(when)}</strong>`, date: escape(dateNote) })}
     </p>
     ${valueBoxHtml}
     <p style="margin:0 0 18px;color:#c9d1d9;font-size:13.5px;line-height:1.6">
-      Renew in one click below to keep unlimited Google Sheets exports, classes over 25 students, attendance certificates, and cumulative semester gradebooks active without interruption. All your existing attendance sheets in Google Drive stay yours either way.
+      ${escape(E('renewBody'))}
     </p>
   `;
 
-  const foot = unsubscribeFooter(to);
+  const foot = unsubscribeFooter(to, lang);
   const html = buildDesignSystemEmail({
-    badge: isExpired ? 'Pro Pass Ended' : 'Renewal Reminder',
+    badge: E(isExpired ? 'badgeEnded' : 'badgeReminder'),
     badgeType: isExpired ? 'warning' : 'info',
-    title: isExpired ? 'Your Pro Pass Has Ended' : `Your Pro Pass Ends in ${daysLeft} Day${daysLeft === 1 ? '' : 's'}`,
-    subtitle: 'Keep unlimited classes, auto-exports, and certificates active.',
+    title: isExpired ? E('titleEnded') : E('titleEnding', { when }),
+    subtitle: E('subtitle'),
     contentHtml,
-    ctaText: isExpired ? 'Renew Pro Access →' : 'Renew Now →',
+    ctaText: `${E(isExpired ? 'ctaRenewAccess' : 'ctaRenewNow')} →`,
     ctaUrl: targetUrl,
     ctaColor: 'green',
     footerHtml: foot.html,
+    lang,
   });
 
-  const textValueLines = [];
-  if (exportsCount > 0) textValueLines.push(`- ${exportsCount} attendance sheet(s) exported`);
-  if (largeClassesCount > 0) textValueLines.push(`- ${largeClassesCount} large class(es) (>25 students) tracked`);
-  if (certificatesCount > 0) textValueLines.push(`- ${certificatesCount} certificate batch(es) generated`);
+  const textValueLines = stats3.map(([key, n]) => `- ${E(key)}: ${n}`);
 
   const text = [
     greeting,
     '',
     isExpired
-      ? `Your Attendance Tracker ${passLabel} has ended and your account has moved back to the Free plan.`
-      : `Your Attendance Tracker ${passLabel} ends in ${daysLeft} day${daysLeft === 1 ? '' : 's'}${expiresAt ? ` (${String(expiresAt).slice(0, 10)})` : ''}.`,
-    ...(textValueLines.length ? ['', 'What you unlocked with Pro:', ...textValueLines] : []),
+      ? E('textEnded', { pass: passLabel })
+      : E('bodyEnding', { pass: passLabel, when, date: dateNote }),
+    ...(textValueLines.length ? ['', E('textValueTitle'), ...textValueLines] : []),
     '',
-    'Renew in one click to keep unlimited exports, classes >25 students, and certificates active:',
+    E('textRenew'),
     targetUrl,
     '',
     foot.text,

@@ -2362,11 +2362,16 @@ async function webhookHandler(req, res) {
         if (customerEmail && hostedInvoiceUrl) {
           try {
             const { sendInvoiceActionRequiredEmail } = require('../lib/notifications');
+            // Email in the payer's app language when we know them.
+            let payer = null;
+            try { payer = await getUser(customerEmail.split('@')[1], customerEmail); } catch { /* unknown payer */ }
             await sendInvoiceActionRequiredEmail({
               to: customerEmail,
               hostedInvoiceUrl,
               amountDue: inv?.amount_due,
               currency: inv?.currency,
+              language: payer?.language,
+              country: payer?.signupGeo?.country,
             });
           } catch (notifErr) {
             log.error('billing: failed to send invoice action required notification', { error: notifErr.message });

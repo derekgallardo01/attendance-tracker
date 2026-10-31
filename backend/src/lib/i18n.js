@@ -256,6 +256,36 @@ function fmtMinutes(totalMinutes, locale) {
   return rest ? `${unit(Math.floor(m / 60), 'hour')} ${unit(rest, 'minute')}` : unit(Math.floor(m / 60), 'hour');
 }
 
+// "in 3 days" / "tomorrow" / "dans 3 jours" — sentence-ready, so copy can say
+// "ends {when}" without per-language plural rules.
+function fmtRelativeDays(days, locale) {
+  const n = Math.round(Number(days) || 0);
+  try {
+    return new Intl.RelativeTimeFormat(normalizeLocale(locale), { numeric: 'auto' }).format(n, 'day');
+  } catch {
+    return `in ${n} day${n === 1 ? '' : 's'}`;
+  }
+}
+
+// Minor units (Stripe amounts) → "$4.99", "₹499.00", "4,99 €" in the
+// recipient's locale and the charge's own currency.
+function fmtMoney(amountMinor, currency, locale) {
+  const code = String(currency || 'usd').toUpperCase();
+  const major = (Number(amountMinor) || 0) / 100;
+  try {
+    return new Intl.NumberFormat(normalizeLocale(locale), { style: 'currency', currency: code }).format(major);
+  } catch {
+    return `${major.toFixed(2)} ${code}`;
+  }
+}
+
+// Calendar date in the recipient's language ("Mar 3, 2026", "3 mars 2026").
+function fmtDate(date, locale) {
+  const d = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(d.getTime())) return '';
+  return new Intl.DateTimeFormat(normalizeLocale(locale), { dateStyle: 'medium', timeZone: 'UTC' }).format(d);
+}
+
 // Date + time in the recipient's language (and time zone when known).
 function fmtDateTime(date, locale, timeZone) {
   const d = date instanceof Date ? date : new Date(date);
@@ -3571,6 +3601,9 @@ module.exports = {
   withPrices,
   fmtMinutes,
   fmtDateTime,
+  fmtRelativeDays,
+  fmtMoney,
+  fmtDate,
   getSheetHeaders,
   getSheetSummaryLabels,
   localizeStatus,

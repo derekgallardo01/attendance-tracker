@@ -189,6 +189,8 @@ async function evaluateSeriesAlerts(domain, email, options = {}) {
               personName: p.displayName,
               personEmail: p.email,
               detail: `attendance dropped from ${Math.round(prevRate * 100)}% to ${Math.round(lastRate * 100)}% in "${seriesTitle}"`,
+              fromPct: Math.round(prevRate * 100),
+              toPct: Math.round(lastRate * 100),
               attended: totalAttended,
               instanceCount: n,
             });
