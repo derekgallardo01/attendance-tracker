@@ -14,6 +14,8 @@ import { MAIL3_KEYS_EN, MAIL3_KEY_TRANSLATIONS } from './i18n-mail3-keys.mjs';
 import { MAIL4_KEYS_EN, MAIL4_KEY_TRANSLATIONS } from './i18n-mail4-keys.mjs';
 import { MAIL5_KEYS_EN, MAIL5_KEY_TRANSLATIONS } from './i18n-mail5-keys.mjs';
 import { MAIL6_KEYS_EN, MAIL6_KEY_TRANSLATIONS } from './i18n-mail6-keys.mjs';
+import { SHEET_KEYS_EN, SHEET_KEY_TRANSLATIONS } from './i18n-sheet-keys.mjs';
+import { DIGEST_KEYS_EN, DIGEST_KEY_TRANSLATIONS } from './i18n-digest-keys.mjs';
 import { PRICE_TOKEN_FIXES } from './i18n-price-tokens.mjs';
 import { NEW_WEBSITE_KEYS_EN, NEW_WEBSITE_KEY_LIST, NEW_WEBSITE_PART1 } from './new-website-keys-part1.mjs';
 import { NEW_WEBSITE_PART2A } from './new-website-keys-part2a.mjs';
@@ -156,7 +158,7 @@ const NEW_KEYS_EN = {
   "lms.permissionRequired": "Permission required"
 };
 
-Object.assign(NEW_KEYS_EN, GROWTH_KEYS_EN, NEW_WEBSITE_KEYS_EN, ERROR_KEYS_EN, PLURAL_KEYS_EN, UI_KEYS_EN, MAIL_KEYS_EN, MAIL2_KEYS_EN, MAIL3_KEYS_EN, MAIL4_KEYS_EN, MAIL5_KEYS_EN, MAIL6_KEYS_EN);
+Object.assign(NEW_KEYS_EN, GROWTH_KEYS_EN, NEW_WEBSITE_KEYS_EN, ERROR_KEYS_EN, PLURAL_KEYS_EN, UI_KEYS_EN, MAIL_KEYS_EN, MAIL2_KEYS_EN, MAIL3_KEYS_EN, MAIL4_KEYS_EN, MAIL5_KEYS_EN, MAIL6_KEYS_EN, SHEET_KEYS_EN, DIGEST_KEYS_EN);
 
 // Specialized translations for non-English locales
 const LOCALE_OVERRIDES = {
@@ -887,6 +889,8 @@ export function updateStringsFile() {
       ...(MAIL4_KEY_TRANSLATIONS[loc] || {}),
       ...(MAIL5_KEY_TRANSLATIONS[loc] || {}),
       ...(MAIL6_KEY_TRANSLATIONS[loc] || {}),
+      ...(SHEET_KEY_TRANSLATIONS[loc] || {}),
+      ...(DIGEST_KEY_TRANSLATIONS[loc] || {}),
       ...(TRANSLATION_FIXES[loc] || {}),
       ...webAndLp2Fixes,
     };
@@ -905,7 +909,7 @@ export function updateStringsFile() {
     const endBlockIdx = nextCloseIdx !== -1 ? nextCloseIdx : code.indexOf('\n    }', locIdx);
     let block = code.slice(locIdx, endBlockIdx);
 
-    const allTargetKeys = { ...NEW_KEYS_EN, ...GROWTH_KEYS_EN, ...NEW_WEBSITE_KEYS_EN, ...ERROR_KEYS_EN, ...PLURAL_KEYS_EN, ...UI_KEYS_EN, ...MAIL_KEYS_EN, ...MAIL2_KEYS_EN, ...MAIL3_KEYS_EN, ...MAIL4_KEYS_EN, ...MAIL5_KEYS_EN, ...MAIL6_KEYS_EN, ...REMAINING_LP2_KEYS_EN };
+    const allTargetKeys = { ...NEW_KEYS_EN, ...GROWTH_KEYS_EN, ...NEW_WEBSITE_KEYS_EN, ...ERROR_KEYS_EN, ...PLURAL_KEYS_EN, ...UI_KEYS_EN, ...MAIL_KEYS_EN, ...MAIL2_KEYS_EN, ...MAIL3_KEYS_EN, ...MAIL4_KEYS_EN, ...MAIL5_KEYS_EN, ...MAIL6_KEYS_EN, ...SHEET_KEYS_EN, ...DIGEST_KEYS_EN, ...REMAINING_LP2_KEYS_EN };
     for (const [k, enVal] of Object.entries(allTargetKeys)) {
       const desiredVal = (k in overrides)
         ? overrides[k]

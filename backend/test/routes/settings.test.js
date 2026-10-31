@@ -334,9 +334,9 @@ describe('POST /api/settings/test-slack', () => {
       .set('Content-Type', 'application/json')
       .send({});
     expect(res.status).toBe(200);
-    expect(notifications.sendSlackTestPing).toHaveBeenCalledWith({
+    expect(notifications.sendSlackTestPing).toHaveBeenCalledWith(expect.objectContaining({
       webhookUrl: 'https://hooks.slack.com/services/Tsaved/Bsaved/secret',
-    });
+    }));
   });
 });
 
@@ -440,7 +440,7 @@ describe('multi-provider webhooks (Google Chat + Discord)', () => {
         .set(authedHeader('u@a.com', 'a.com'))
         .send({ provider: 'googleChat', googleChatWebhookUrl: CHAT_URL });
       expect(res.status).toBe(200);
-      expect(notifications.sendChatTestPing).toHaveBeenCalledWith({ webhookUrl: CHAT_URL });
+      expect(notifications.sendChatTestPing).toHaveBeenCalledWith(expect.objectContaining({ webhookUrl: CHAT_URL }));
     });
 
     test('falls back to the saved Discord webhook and surfaces a rejection as 502', async () => {
@@ -449,7 +449,7 @@ describe('multi-provider webhooks (Google Chat + Discord)', () => {
       const res = await request(app).post('/api/settings/test-webhook')
         .set(authedHeader('u@a.com', 'a.com')).send({ provider: 'discord' });
       expect(res.status).toBe(502);
-      expect(notifications.sendDiscordTestPing).toHaveBeenCalledWith({ webhookUrl: DISCORD_URL });
+      expect(notifications.sendDiscordTestPing).toHaveBeenCalledWith(expect.objectContaining({ webhookUrl: DISCORD_URL }));
     });
 
     test('400 when nothing supplied or saved / invalid URL supplied', async () => {

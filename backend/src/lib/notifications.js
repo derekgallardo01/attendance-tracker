@@ -2180,28 +2180,45 @@ async function sendUpcomingMeetingEmail({ to, displayName, meetingTitle, minutes
 // overflow. Each provider builder renders these in its own markup.
 const DIGEST_BUCKET_CAP = 8;
 
-function digestMetaParts({ totalAttended, totalInvited, durationMin, startTime }) {
+// Digests post to a shared channel in the exporting user's app language.
+function digestLang(language) {
+  return strictLocale(language) || 'en';
+}
+
+function digestSummary({ totalAttended, totalInvited }, lang) {
+  return totalInvited
+    ? tf('mail.export.summaryOf', lang, { attended: totalAttended, invited: totalInvited })
+    : tf('mail.export.summary', lang, { attended: totalAttended });
+}
+
+function digestMetaParts({ totalAttended, totalInvited, durationMin, startTime }, lang = 'en') {
   return {
-    summary: totalInvited ? `${totalAttended} of ${totalInvited} attended` : `${totalAttended} attended`,
-    durStr: durationMin ? hm(durationMin) : '',
-    timeStr: startTime ? new Date(startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '',
+    summary: digestSummary({ totalAttended, totalInvited }, lang),
+    durStr: durationMin ? (lang === 'en' ? hm(durationMin) : fmtMinutes(durationMin, lang)) : '',
+    timeStr: startTime ? new Date(startTime).toLocaleTimeString(lang === 'en' ? 'en-US' : normalizeLocale(lang), { hour: 'numeric', minute: '2-digit' }) : '',
   };
 }
 
-function digestBuckets(participants) {
+// Localized bucket heading: "✅ Present (3)".
+function digestBucketLabel(kind, n, lang) {
+  return tf(`digest.${kind}`, lang, { n });
+}
+
+function digestBuckets(participants, lang = 'en') {
   const nameOf = p => p.displayName || p.email || '?';
+  const excused = ` (${tf('digest.excused', lang)})`;
   const all = participants || [];
   return {
     present: all.filter(p => p.status === 'Present').map(nameOf),
     left: all.filter(p => p.status === 'Left').map(nameOf),
     absent: all.filter(p => p.status === 'Absent' || p.status === 'Excused')
-      .map(p => `${nameOf(p)}${p.status === 'Excused' ? ' (excused)' : ''}`),
+      .map(p => `${nameOf(p)}${p.status === 'Excused' ? excused : ''}`),
   };
 }
 
-function capBucket(names) {
+function capBucket(names, lang = 'en') {
   const shown = names.slice(0, DIGEST_BUCKET_CAP).join(', ');
-  const text = names.length > DIGEST_BUCKET_CAP ? `${shown}, +${names.length - DIGEST_BUCKET_CAP} more` : shown;
+  const text = names.length > DIGEST_BUCKET_CAP ? `${shown}, ${tf('digest.more', lang, { n: names.length - DIGEST_BUCKET_CAP })}` : shown;
   // Hard length guard: Slack rejects the ENTIRE payload (invalid_blocks) when
   // a field exceeds its limit — the count cap alone doesn't bound very long
   // display names, and a rejected digest just silently disappears.
@@ -2222,16 +2239,17 @@ function discordEscape(s) {
 }
 
 // Build the Slack Block Kit payload. Pulled out for testability.
-function buildSlackDigestBlocks({ meetingTitle, totalAttended, totalInvited, participants, sheetUrl, durationMin, startTime }) {
+function buildSlackDigestBlocks({ meetingTitle, totalAttended, totalInvited, participants, sheetUrl, durationMin, startTime, language }) {
+  const lang = digestLang(language);
   const title = meetingTitle || 'Google Meet';
-  const { summary, durStr, timeStr } = digestMetaParts({ totalAttended, totalInvited, durationMin, startTime });
-  const metaLine = [`*${summary}*`, durStr, timeStr ? `started ${timeStr}` : ''].filter(Boolean).join(' · ');
-  const { present, left, absent } = digestBuckets(participants);
+  const { summary, durStr, timeStr } = digestMetaParts({ totalAttended, totalInvited, durationMin, startTime }, lang);
+  const metaLine = [`*${summary}*`, durStr, timeStr ? tf('digest.started', lang, { time: timeStr }) : ''].filter(Boolean).join(' · ');
+  const { present, left, absent } = digestBuckets(participants, lang);
 
   const fields = [];
-  if (present.length) fields.push({ type: 'mrkdwn', text: `*✅ Present (${present.length})*\n${slackEscape(capBucket(present))}` });
-  if (left.length) fields.push({ type: 'mrkdwn', text: `*🟡 Left early (${left.length})*\n${slackEscape(capBucket(left))}` });
-  if (absent.length) fields.push({ type: 'mrkdwn', text: `*❌ Absent (${absent.length})*\n${slackEscape(capBucket(absent))}` });
+  if (present.length) fields.push({ type: 'mrkdwn', text: `*${digestBucketLabel('present', present.length, lang)}*\n${slackEscape(capBucket(present, lang))}` });
+  if (left.length) fields.push({ type: 'mrkdwn', text: `*${digestBucketLabel('leftEarly', left.length, lang)}*\n${slackEscape(capBucket(left, lang))}` });
+  if (absent.length) fields.push({ type: 'mrkdwn', text: `*${digestBucketLabel('absent', absent.length, lang)}*\n${slackEscape(capBucket(absent, lang))}` });
 
   const blocks = [
     { type: 'header', text: { type: 'plain_text', text: `📊 ${title}`.slice(0, 150) } },
@@ -2241,7 +2259,7 @@ function buildSlackDigestBlocks({ meetingTitle, totalAttended, totalInvited, par
   if (sheetUrl) {
     blocks.push({
       type: 'actions',
-      elements: [{ type: 'button', text: { type: 'plain_text', text: 'Open sheet' }, url: sheetUrl }],
+      elements: [{ type: 'button', text: { type: 'plain_text', text: tf('mail.export.openSheet', lang) }, url: sheetUrl }],
     });
   }
   return blocks;
@@ -2249,37 +2267,40 @@ function buildSlackDigestBlocks({ meetingTitle, totalAttended, totalInvited, par
 
 // Fallback plain-text body, used by Slack clients that don't render blocks
 // and as the Google Chat notification-preview text.
-function buildSlackFallbackText({ meetingTitle, totalAttended, totalInvited, sheetUrl }) {
+function buildSlackFallbackText({ meetingTitle, totalAttended, totalInvited, sheetUrl, language }) {
+  const lang = digestLang(language);
   // The fallback `text` IS rendered as mrkdwn by Slack — escape the
   // user-controlled title (it also feeds the Chat notification preview,
   // where the entities are harmless).
   const title = slackEscape(meetingTitle || 'Google Meet');
-  const summary = totalInvited ? `${totalAttended} of ${totalInvited} attended` : `${totalAttended} attended`;
-  return `📊 ${title} — ${summary}${sheetUrl ? '\nOpen sheet: ' + sheetUrl : ''}`;
+  const summary = digestSummary({ totalAttended, totalInvited }, lang);
+  return `📊 ${title} — ${summary}${sheetUrl ? `\n${tf('mail.export.openSheet', lang)}: ${sheetUrl}` : ''}`;
 }
 
 // Build the Google Chat cardsV2 payload. Chat cards use HTML-ish markup in
 // textParagraph widgets, so names are escaped.
-function buildChatDigestCard({ meetingTitle, totalAttended, totalInvited, participants, sheetUrl, durationMin, startTime }) {
+function buildChatDigestCard({ meetingTitle, totalAttended, totalInvited, participants, sheetUrl, durationMin, startTime, language }) {
+  const lang = digestLang(language);
   const title = meetingTitle || 'Google Meet';
-  const { summary, durStr, timeStr } = digestMetaParts({ totalAttended, totalInvited, durationMin, startTime });
-  const subtitle = [summary, durStr, timeStr ? `started ${timeStr}` : ''].filter(Boolean).join(' · ');
-  const { present, left, absent } = digestBuckets(participants);
+  const { summary, durStr, timeStr } = digestMetaParts({ totalAttended, totalInvited, durationMin, startTime }, lang);
+  const subtitle = [summary, durStr, timeStr ? tf('digest.started', lang, { time: timeStr }) : ''].filter(Boolean).join(' · ');
+  const { present, left, absent } = digestBuckets(participants, lang);
+  const openSheet = tf('mail.export.openSheet', lang);
 
   const widgets = [];
-  if (present.length) widgets.push({ textParagraph: { text: `<b>✅ Present (${present.length})</b><br>${escape(capBucket(present))}` } });
-  if (left.length) widgets.push({ textParagraph: { text: `<b>🟡 Left early (${left.length})</b><br>${escape(capBucket(left))}` } });
-  if (absent.length) widgets.push({ textParagraph: { text: `<b>❌ Absent (${absent.length})</b><br>${escape(capBucket(absent))}` } });
+  if (present.length) widgets.push({ textParagraph: { text: `<b>${escape(digestBucketLabel('present', present.length, lang))}</b><br>${escape(capBucket(present, lang))}` } });
+  if (left.length) widgets.push({ textParagraph: { text: `<b>${escape(digestBucketLabel('leftEarly', left.length, lang))}</b><br>${escape(capBucket(left, lang))}` } });
+  if (absent.length) widgets.push({ textParagraph: { text: `<b>${escape(digestBucketLabel('absent', absent.length, lang))}</b><br>${escape(capBucket(absent, lang))}` } });
   if (sheetUrl) {
-    widgets.push({ buttonList: { buttons: [{ text: 'Open sheet', onClick: { openLink: { url: sheetUrl } } }] } });
+    widgets.push({ buttonList: { buttons: [{ text: openSheet, onClick: { openLink: { url: sheetUrl } } }] } });
   }
 
   // Chat's top-level `text` renders VERBATIM (no mrkdwn, no HTML) — reusing
   // the Slack fallback (which slackEscapes the title) showed literal &amp;
   // entities in channel/notification previews for titles containing & < >.
-  const plainSummary = totalInvited ? `${totalAttended} of ${totalInvited} attended` : `${totalAttended} attended`;
+  const plainSummary = digestSummary({ totalAttended, totalInvited }, lang);
   return {
-    text: `📊 ${title} — ${plainSummary}${sheetUrl ? '\nOpen sheet: ' + sheetUrl : ''}`,
+    text: `📊 ${title} — ${plainSummary}${sheetUrl ? `\n${openSheet}: ${sheetUrl}` : ''}`,
     cardsV2: [{
       cardId: 'attendance-digest',
       card: {
@@ -2291,16 +2312,17 @@ function buildChatDigestCard({ meetingTitle, totalAttended, totalInvited, partic
 }
 
 // Build the Discord embed payload. Embed limits: title 256, field value 1024.
-function buildDiscordDigestEmbed({ meetingTitle, totalAttended, totalInvited, participants, sheetUrl, durationMin, startTime }) {
+function buildDiscordDigestEmbed({ meetingTitle, totalAttended, totalInvited, participants, sheetUrl, durationMin, startTime, language }) {
+  const lang = digestLang(language);
   const title = meetingTitle || 'Google Meet';
-  const { summary, durStr, timeStr } = digestMetaParts({ totalAttended, totalInvited, durationMin, startTime });
-  const description = [`**${summary}**`, durStr, timeStr ? `started ${timeStr}` : ''].filter(Boolean).join(' · ');
-  const { present, left, absent } = digestBuckets(participants);
+  const { summary, durStr, timeStr } = digestMetaParts({ totalAttended, totalInvited, durationMin, startTime }, lang);
+  const description = [`**${summary}**`, durStr, timeStr ? tf('digest.started', lang, { time: timeStr }) : ''].filter(Boolean).join(' · ');
+  const { present, left, absent } = digestBuckets(participants, lang);
 
   const fields = [];
-  if (present.length) fields.push({ name: `✅ Present (${present.length})`, value: discordEscape(capBucket(present)).slice(0, 1024), inline: false });
-  if (left.length) fields.push({ name: `🟡 Left early (${left.length})`, value: discordEscape(capBucket(left)).slice(0, 1024), inline: false });
-  if (absent.length) fields.push({ name: `❌ Absent (${absent.length})`, value: discordEscape(capBucket(absent)).slice(0, 1024), inline: false });
+  if (present.length) fields.push({ name: digestBucketLabel('present', present.length, lang), value: discordEscape(capBucket(present, lang)).slice(0, 1024), inline: false });
+  if (left.length) fields.push({ name: digestBucketLabel('leftEarly', left.length, lang), value: discordEscape(capBucket(left, lang)).slice(0, 1024), inline: false });
+  if (absent.length) fields.push({ name: digestBucketLabel('absent', absent.length, lang), value: discordEscape(capBucket(absent, lang)).slice(0, 1024), inline: false });
 
   const embed = { title: `📊 ${title}`.slice(0, 256), description, color: 0x4ade80 };
   if (sheetUrl) embed.url = sheetUrl; // makes the title an "Open sheet" link
@@ -2345,7 +2367,7 @@ async function sendDiscordDigest(args) {
 // Test-only pings used by the settings modal's "Send test" buttons to verify
 // a webhook is reachable + posts correctly. Minimal payloads; the route
 // surfaces the result, so no logging here.
-const TEST_PING_TEXT = '✅ Attendance Tracker is connected. Future meeting digests will land in this channel.';
+const testPingText = (language) => tf('digest.testPing', digestLang(language));
 
 async function postTestPing(webhookUrl, payload) {
   if (!webhookUrl) return { sent: false, reason: 'no_webhook' };
@@ -2361,16 +2383,16 @@ async function postTestPing(webhookUrl, payload) {
   }
 }
 
-async function sendSlackTestPing({ webhookUrl }) {
-  return postTestPing(webhookUrl, { text: TEST_PING_TEXT });
+async function sendSlackTestPing({ webhookUrl, language }) {
+  return postTestPing(webhookUrl, { text: testPingText(language) });
 }
 
-async function sendChatTestPing({ webhookUrl }) {
-  return postTestPing(webhookUrl, { text: TEST_PING_TEXT });
+async function sendChatTestPing({ webhookUrl, language }) {
+  return postTestPing(webhookUrl, { text: testPingText(language) });
 }
 
-async function sendDiscordTestPing({ webhookUrl }) {
-  return postTestPing(webhookUrl, { content: TEST_PING_TEXT });
+async function sendDiscordTestPing({ webhookUrl, language }) {
+  return postTestPing(webhookUrl, { content: testPingText(language) });
 }
 
 // Weekly org digest for the team admin of a Pro domain — the retention spine

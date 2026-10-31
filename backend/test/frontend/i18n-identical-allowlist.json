@@ -1203,5 +1203,18 @@
   ],
   "mail.review.dashboard": [
     "nl"
+  ],
+  "sheet.colEmail": [
+    "ceb",
+    "id",
+    "tl",
+    "vi"
+  ],
+  "sheet.colName": [
+    "de"
+  ],
+  "sheet.na": [
+    "ro",
+    "tl"
   ]
 }

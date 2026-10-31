@@ -6,7 +6,7 @@ const log = require('../lib/logger');
 const { persistExport, getUser, grantReferralReward, getUserSheetId, setUserSheetId, countUserExports, countUserMonthlyExports, getExportReexportCount, getMeetingExcusedEmails, addMeetingExcusedEmails, getUserSettings, updateUserSettings, getUserMeetingSeries, logEvent, isEmailSuppressed, isMeetingUnlocked, markUserLargeClassGraceUsed } = require('../services/firestore');
 const { sendExportNotification, sendSlackDigest, sendChatDigest, sendDiscordDigest } = require('../lib/notifications');
 const { planIsPro } = require('./billing');
-const { getSheetHeaders, getSheetSummaryLabels, localizeStatus, localizeRsvp } = require('../lib/i18n');
+const { getSheetHeaders, getSheetSummaryLabels, localizeStatus, localizeRsvp, tf, tn, fmtDateTime } = require('../lib/i18n');
 
 const router = Router();
 
@@ -108,19 +108,20 @@ function digestAbsentRows(calendarAttendees, { attendedEmails, attendedNames, ex
 // attendance across ALL sessions (the education/teacher view a single-meeting
 // export can't give). Pure: takes a series object from getUserMeetingSeries plus
 // an ISO "generated" timestamp, returns the 2D values for the summary tab.
-function buildClassSummaryValues(series, generatedAtIso) {
+function buildClassSummaryValues(series, generatedAtIso, locale = 'en') {
+  const L = (key, vars) => tf(key, locale, vars);
   const range = (series.firstAt && series.lastAt)
     ? `${series.firstAt.slice(0, 10)} – ${series.lastAt.slice(0, 10)}`
     : '';
   const summary = [
-    ['Class', series.title || 'Recurring meeting'],
-    ['Sessions', series.instanceCount],
-    ['Unique people', series.uniquePeople],
-    ...(range ? [['Date range', range]] : []),
-    ['Generated', generatedAtIso],
+    [L('sheet.classLabel'), series.title || L('sheet.recurringMeeting')],
+    [L('sheet.sessions'), series.instanceCount],
+    [L('sheet.uniquePeople'), series.uniquePeople],
+    ...(range ? [[L('sheet.dateRange'), range]] : []),
+    [L('sheet.generated'), locale === 'en' ? generatedAtIso : fmtDateTime(generatedAtIso, locale)],
     [],
   ];
-  const header = ['Name', 'Email', 'Sessions Attended', 'Total Sessions', 'Attendance %', 'Total Time (min)'];
+  const header = ['colName', 'colEmail', 'colSessionsAttended', 'colTotalSessions', 'colAttendancePct', 'colTotalTime'].map((k) => L(`sheet.${k}`));
   const rows = (series.people || []).map(p => [
     sanitizeCell(p.displayName),
     sanitizeCell(p.email || ''),
@@ -136,21 +137,22 @@ function buildClassSummaryValues(series, generatedAtIso) {
 // the Pro "Class Summary" tab for a free user, we add this compact teaser to the
 // exported sheet so the value — and the upgrade path — is visible right where the
 // teacher already looks, at the moment they feel the need for it.
-function buildClassSummaryTeaserValues(series) {
+function buildClassSummaryTeaserValues(series, locale = 'en') {
+  const L = (key, vars) => tf(key, locale, vars);
   // Caller guarantees instanceCount >= 2; uniquePeople comes straight from the
   // series aggregation — no defensive fallbacks needed (keeps branches tight).
   const people = series.uniquePeople;
   return [
-    [`Class Summary — ${series.title || 'Recurring class'}`],
-    [`This class has met ${series.instanceCount} times with ${people} ${people === 1 ? 'person' : 'people'} so far.`],
+    [L('sheet.teaserTitle', { title: series.title || L('sheet.recurringClass') })],
+    [L('sheet.teaserMet', { n: series.instanceCount, people: tn('plural.people', people, locale) })],
     [],
-    ['⭐ Attendance Tracker Pro adds a cumulative per-student summary right here:'],
-    ['    • Attendance % for each student across every session'],
-    ['    • Sessions attended vs. total held, per person'],
-    ['    • Who is trending down — before they disappear'],
+    [L('sheet.teaserPro')],
+    [L('sheet.teaserBullet1')],
+    [L('sheet.teaserBullet2')],
+    [L('sheet.teaserBullet3')],
     [],
-    ['You are on the free plan, so this tab shows just this preview.'],
-    ['Unlock the full class report for all your classes:'],
+    [L('sheet.teaserFree')],
+    [L('sheet.teaserUnlock')],
     ['https://attendancetracker.dev/pricing'],
   ];
 }
@@ -364,7 +366,7 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
     /* istanbul ignore next */
     // Cap at 100%: with forwarded invites there can be more attendees than
     // invitees, which otherwise prints a nonsensical ">100%" summary rate.
-    const attendanceRate = totalInvited > 0 ? Math.min(100, Math.round((totalAttended / totalInvited) * 100)) + '%' : 'N/A';
+    const attendanceRate = totalInvited > 0 ? Math.min(100, Math.round((totalAttended / totalInvited) * 100)) + '%' : tf('sheet.na', locale);
 
     // Format scheduled time range
     const fmtTimeOnly = (iso) => {
@@ -379,11 +381,11 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
     const sumLabels = getSheetSummaryLabels(locale);
     const summary = [
       [sumLabels.meeting, meetingTitle || 'Google Meet'],
-      [sumLabels.meetingId, conferenceId || 'N/A'],
+      [sumLabels.meetingId, conferenceId || tf('sheet.na', locale)],
       [sumLabels.type, meetingType === 'scheduled' ? sumLabels.scheduledEvent : sumLabels.instantMeeting],
       ...(scheduledRange ? [[sumLabels.scheduledRange, scheduledRange]] : []),
       [sumLabels.date, fmtDate(meetingStartTime || exportedAt)],
-      [sumLabels.duration, meetStart ? (meetDurationMin || '< 1') : 'N/A'],
+      [sumLabels.duration, meetStart ? (meetDurationMin || '< 1') : tf('sheet.na', locale)],
       [sumLabels.totalInvited, totalInvited],
       [sumLabels.totalAttended, totalAttended],
       [sumLabels.attendanceRate, attendanceRate],
@@ -461,10 +463,10 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
 
     const footer = [
       [],
-      ['Tracked automatically with Attendance Tracker for Google Meet · https://attendancetracker.dev'],
+      [tf('sheet.footer', locale)],
       // Free users see their plan in the artifact where the value is felt —
       // the Class Summary teaser pattern. Pro users keep a clean footer.
-      ...(proAllowed ? [] : [[`Free plan: ${require('../config/pricing').FREE_MONTHLY_EXPORT_LIMIT} Sheets exports/month · Unlimited with Pro → https://attendancetracker.dev/pricing.html?utm_source=sheet_footer`]]),
+      ...(proAllowed ? [] : [[tf('sheet.footerFree', locale, { n: require('../config/pricing').FREE_MONTHLY_EXPORT_LIMIT, url: 'https://attendancetracker.dev/pricing.html?utm_source=sheet_footer' })]]),
     ];
 
     const allValues = [...summary, header, ...allRows, ...footer];
@@ -526,12 +528,12 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
           const isPro = await planIsPro(req.user.domain, req.user.email);
           const summaryTab = sanitizeTabName(
             isPro
-              ? `Class Summary — ${match.title || 'Recurring'}`
-              : `Class Summary (Pro) — ${match.title || 'Recurring'}`
+              ? tf('sheet.tabSummary', locale, { title: match.title || tf('sheet.recurring', locale) })
+              : tf('sheet.tabSummaryPro', locale, { title: match.title || tf('sheet.recurring', locale) })
           );
           const summaryValues = isPro
-            ? buildClassSummaryValues(match, new Date(exportedAt).toISOString())
-            : buildClassSummaryTeaserValues(match);
+            ? buildClassSummaryValues(match, new Date(exportedAt).toISOString(), locale)
+            : buildClassSummaryTeaserValues(match, locale);
           let summaryTabExisted = false;
           try {
             await sheets.spreadsheets.batchUpdate({
@@ -676,6 +678,7 @@ async function buildAndSaveExport({ user, sheetsAuth, data, options }) {
             sheetUrl,
             durationMin: meetDurationMin,
             startTime: meetingStartTime || exportedAt,
+            language: req.user.language,
           };
           // Senders never throw; sequential awaits keep this simple. Each
           // attempt is recorded as a webhook_digest_sent event so delivery
@@ -990,3 +993,5 @@ router.post('/save-to-sheets', async (req, res) => {
 
 module.exports = router;
 module.exports.buildAndSaveExport = buildAndSaveExport;
+module.exports.buildClassSummaryValues = buildClassSummaryValues;
+module.exports.buildClassSummaryTeaserValues = buildClassSummaryTeaserValues;

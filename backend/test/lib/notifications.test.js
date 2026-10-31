@@ -2658,3 +2658,62 @@ describe('buildDesignSystemEmail — HTML escaping', () => {
 
 
 
+
+describe('chat digests follow the exporting user\'s language', () => {
+  const n = require('../../src/lib/notifications');
+  const S = require('../../src/lib/i18n');
+  const args = {
+    meetingTitle: 'Física', totalAttended: 2, totalInvited: 3, durationMin: 75, startTime: '2026-03-03T15:04:00Z', sheetUrl: 'https://s',
+    participants: [
+      { displayName: 'Ana', status: 'Present' }, { displayName: 'Bo', status: 'Left' },
+      { displayName: 'Cy', status: 'Excused' }, ...Array.from({ length: 9 }, (_, i) => ({ displayName: `P${i}`, status: 'Absent' })),
+    ],
+    language: 'es',
+  };
+
+  test('slack, chat and discord payloads render in Spanish; English is unchanged', () => {
+    const slack = JSON.stringify(n.buildSlackDigestBlocks(args));
+    expect(slack).toContain(S.tf('digest.present', 'es', { n: 1 }));
+    expect(slack).toContain(S.tf('digest.more', 'es', { n: 2 }));
+    expect(slack).toContain(S.t('digest.excused', 'es'));
+    expect(slack).toContain(S.t('mail.export.openSheet', 'es'));
+    expect(n.buildSlackFallbackText(args)).toContain(S.tf('mail.export.summaryOf', 'es', { attended: 2, invited: 3 }));
+    const chat = n.buildChatDigestCard(args);
+    expect(chat.cardsV2[0].card.header.subtitle).toContain(S.fmtMinutes(75, 'es'));
+    expect(chat.text).toContain(`${S.t('mail.export.openSheet', 'es')}: https://s`);
+    const discord = n.buildDiscordDigestEmbed(args);
+    expect(discord.embeds[0].fields[0].name).toBe(S.tf('digest.present', 'es', { n: 1 }));
+    expect(discord.embeds[0].description).toContain(S.tf('digest.started', 'es', { time: '' }).trim().split(' ')[0]);
+
+    const en = n.buildSlackDigestBlocks({ ...args, language: undefined });
+    expect(JSON.stringify(en)).toContain('✅ Present (1)');
+    expect(JSON.stringify(en)).toContain('1h 15m');
+    expect(n.buildSlackFallbackText({ ...args, language: 'xx' })).toContain('2 of 3 attended');
+  });
+
+  test('webhook test ping uses the configuring user\'s language', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: true });
+    try {
+      await n.sendDiscordTestPing({ webhookUrl: 'https://discord.com/api/webhooks/1/x', language: 'ja' });
+      expect(JSON.parse(global.fetch.mock.calls[0][1].body).content).toBe(S.t('digest.testPing', 'ja'));
+    } finally {
+      delete global.fetch;
+    }
+  });
+});
+
+describe('sheet export extras follow the export locale', () => {
+  const { buildClassSummaryValues, buildClassSummaryTeaserValues } = require('../../src/routes/sheets');
+  const S = require('../../src/lib/i18n');
+  const series = { title: 'Bio', instanceCount: 4, uniquePeople: 1, firstAt: '2026-01-01T00:00:00Z', lastAt: '2026-02-01T00:00:00Z', people: [{ displayName: 'A', email: 'a@x', attended: 3, attendanceRate: 0.75, totalMinutes: 90 }] };
+
+  test('class summary + teaser in German; English unchanged', () => {
+    const de = buildClassSummaryValues(series, '2026-03-03T15:04:00Z', 'de');
+    expect(de[0][0]).toBe(S.t('sheet.classLabel', 'de'));
+    expect(de.find(r => r[0] === S.t('sheet.generated', 'de'))[1]).not.toContain('T15:04');
+    expect(buildClassSummaryValues({ ...series, title: '' }, 'iso', 'en')[0]).toEqual(['Class', 'Recurring meeting']);
+    const teaser = buildClassSummaryTeaserValues(series, 'de');
+    expect(teaser[1][0]).toContain(S.tn('plural.people', 1, 'de'));
+    expect(buildClassSummaryTeaserValues({ ...series, title: '' })[0][0]).toBe('Class Summary — Recurring class');
+  });
+});

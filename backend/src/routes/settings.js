@@ -300,7 +300,7 @@ async function handleTestPing(req, res, p) {
   if (!p.isValid(webhookUrl)) {
     return res.status(400).json({ error: `Invalid ${p.label} webhook URL.` });
   }
-  const result = await p.testPing({ webhookUrl });
+  const result = await p.testPing({ webhookUrl, language: req.user.language });
   if (!result.sent) {
     return res.status(502).json({ error: `${p.label} rejected the test ping.`, details: result });
   }
