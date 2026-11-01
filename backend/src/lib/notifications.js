@@ -477,6 +477,7 @@ async function sendSignupWebhook({ email, displayName, domain, reportedSource, r
 // Follow-up notification when a user answers the "How did you find us?" modal
 // after the initial signup notification was already sent at sign-in.
 async function sendSourceReportedNotification({ email, displayName, domain, reportedSource, reportedDetail, detectedSource }) {
+  if (process.env.SEND_SIGNUP_EMAILS !== '1') return { skipped: "signup_emails_disabled" };
   if (!getResend()) return { skipped: "no resend" };
   const to = process.env.NOTIFY_EMAIL || ownerEmail();
   if (!to || !reportedSource) return { skipped: "missing target or source" };
@@ -850,24 +851,27 @@ async function maybeSendSignupNotification(domain, email) {
   const payload = await claimSignupNotification(domain, email);
   if (!payload) return { sent: false };
   const totalUsers = await countAllUsers();
-  const ownerResult = await sendSignupWebhook({
-    email: payload.email,
-    displayName: payload.displayName,
-    domain: payload.domain,
-    reportedSource: payload.reportedSource,
-    reportedDetail: payload.reportedDetail,
-    detectedSource: payload.detectedSource,
-    totalUsers,
-    signupIp: payload.signupIp,
-    signupGeo: payload.signupGeo,
-  });
-  // Definite send failure (dispatchEmail returned {sent:false, error}) →
-  // release the claim so the next trigger / daily sweep retries. A timeout
-  // reports sent:true (see dispatchEmail) so this can't double-send, and an
-  // unconfigured Resend returns undefined — no release, no retry loop.
-  if (ownerResult && ownerResult.sent === false && ownerResult.error) {
-    await releaseSignupNotification(domain, email);
-    return { sent: false, released: true };
+  let ownerResult = { sent: true, skipped: 'signup_emails_disabled' };
+  if (process.env.SEND_SIGNUP_EMAILS === '1') {
+    ownerResult = await sendSignupWebhook({
+      email: payload.email,
+      displayName: payload.displayName,
+      domain: payload.domain,
+      reportedSource: payload.reportedSource,
+      reportedDetail: payload.reportedDetail,
+      detectedSource: payload.detectedSource,
+      totalUsers,
+      signupIp: payload.signupIp,
+      signupGeo: payload.signupGeo,
+    });
+    // Definite send failure (dispatchEmail returned {sent:false, error}) →
+    // release the claim so the next trigger / daily sweep retries. A timeout
+    // reports sent:true (see dispatchEmail) so this can't double-send, and an
+    // unconfigured Resend returns undefined — no release, no retry loop.
+    if (ownerResult && ownerResult.sent === false && ownerResult.error) {
+      await releaseSignupNotification(domain, email);
+      return { sent: false, released: true };
+    }
   }
 
   // Automatic founder milestone check: when a new signup crosses a growth threshold
