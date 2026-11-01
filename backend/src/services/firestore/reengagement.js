@@ -219,17 +219,25 @@ async function evaluateReengagementForUser(domain, email, options = {}) {
     const tenant = tenantRef(domain);
     const emailLower = email.toLowerCase();
 
-    const [userDocOrPreloaded, eventsSnap] = await Promise.all([
-      options?.userDoc
-        ? Promise.resolve({ exists: true, data: () => options.userDoc })
-        : tenant.collection('users').doc(emailLower).get(),
-      tenant.collection('events').where('email', '==', emailLower).get(),
-    ]);
+    const userDocOrPreloaded = options?.userDoc
+      ? { exists: true, data: () => options.userDoc }
+      : await tenant.collection('users').doc(emailLower).get();
     if (!userDocOrPreloaded.exists) return [];
 
     const user = userDocOrPreloaded.data();
     const lastLogin = tsMs(user.lastLoginAt) || 0;
+    const lastActivityMs = lastLogin || tsMs(user.createdAt) || 0;
     const now = Date.now();
+    const DAY = 86400000;
+    const hasExpiringNonSubPro = user.individualPlan === 'pro'
+      && Boolean(user.individualPlanExpiresAt)
+      && !user.individualStripeSubscriptionId
+      && user.individualPlanType !== 'lifetime';
+    if (lastActivityMs && (now - lastActivityMs) / DAY >= 45 && !hasExpiringNonSubPro) {
+      return [];
+    }
+
+    const eventsSnap = await tenant.collection('events').where('email', '==', emailLower).get();
     const reminders = [];
 
     const preloadedMeetings = Array.isArray(options?.domainMeetings) ? options.domainMeetings : null;

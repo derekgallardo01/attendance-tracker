@@ -2947,7 +2947,7 @@ describe('Cloud Billing & Firestore Usage Monitor routes', () => {
     expect(firestore.getUser).not.toHaveBeenCalled();
     expect(opsDocSet).toHaveBeenCalledTimes(1);
 
-    // Second sweep within 6h (useCache=1): reuses cached series without calling getUserMeetingSeries again!
+    // Second sweep within 12h (useCache=1): reuses cached series without calling getUserMeetingSeries again!
     firestore.getUserMeetingSeries.mockClear();
     const r2 = await request(app)
       .post('/api/admin/check-upcoming?useCache=1')
@@ -2956,6 +2956,59 @@ describe('Cloud Billing & Firestore Usage Monitor routes', () => {
     expect(r2.status).toBe(200);
     expect(firestore.getUserMeetingSeries).not.toHaveBeenCalled();
     expect(firestore.getUser).not.toHaveBeenCalled();
+  });
+
+  test('POST /api/admin/check-upcoming hydrates 9h-old ops/upcomingSeriesCache snapshot under 12h TTL', async () => {
+    const nowMs = Date.now();
+    const nineHoursAgo = nowMs - 9 * 60 * 60 * 1000;
+    const nowIso = new Date(nowMs).toISOString();
+    const soonIso = new Date(nowMs + 30 * 60000).toISOString();
+    firestore.getAllUsersAcrossTenants.mockResolvedValue([
+      { email: 'hydrated@acme.com', domain: 'acme.com', hasRefreshToken: true, refreshToken: 'rt-hyd', lastLoginAt: nowIso },
+    ]);
+    firestore.claimReengagementSlot.mockResolvedValue({ claimed: true, ref: { delete: jest.fn() } });
+    mockCalEventsList.mockResolvedValue({
+      data: {
+        items: [{ id: 'ev-h1', recurringEventId: 'series-h1', summary: 'Chem', hangoutLink: 'https://meet.google.com/chem', start: { dateTime: soonIso } }],
+      },
+    });
+    const opsDocGet = jest.fn().mockResolvedValue({
+      exists: true,
+      data: () => ({
+        cachedAtMs: nineHoursAgo,
+        users: {
+          'hydrated@acme.com': {
+            at: nineHoursAgo,
+            series: [{ recurringEventId: 'series-h1', title: 'Chem', lastAt: nowMs - 8 * 86400000 }],
+          },
+        },
+      }),
+    });
+    firestore.getDb.mockReturnValue({
+      collection: jest.fn((name) => {
+        if (name === 'ops') {
+          return { doc: jest.fn(() => ({ get: opsDocGet, set: jest.fn().mockResolvedValue(undefined) })) };
+        }
+        return { doc: jest.fn(() => ({ collection: jest.fn(() => ({ get: jest.fn().mockResolvedValue({ docs: [] }) })) })) };
+      }),
+    });
+
+    // Clear in-memory cache first with an empty user list, then run cold-start hydration
+    firestore.getAllUsersAcrossTenants.mockResolvedValueOnce([]);
+    await request(app)
+      .post('/api/admin/check-upcoming?useCache=1&refresh=1')
+      .set('x-scheduler-secret', SCHEDULER_SECRET)
+      .send({});
+
+    firestore.getUserMeetingSeries.mockClear();
+    const res = await request(app)
+      .post('/api/admin/check-upcoming?useCache=1')
+      .set('x-scheduler-secret', SCHEDULER_SECRET)
+      .send({});
+    expect(res.status).toBe(200);
+    expect(res.body.reminded).toBe(1);
+    expect(opsDocGet).toHaveBeenCalled();
+    expect(firestore.getUserMeetingSeries).not.toHaveBeenCalled();
   });
 
   test('GET /api/admin/all-users strips refreshToken from returned user objects', async () => {

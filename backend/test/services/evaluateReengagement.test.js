@@ -451,4 +451,53 @@ describe('evaluateReengagementForUser — pass and Pro-grant expiry reminders', 
       largeClassesCount: 1,
     });
   });
+
+  test('pre-skips dormant users (>= 45d) without expiring non-sub Pro BEFORE querying events', async () => {
+    const email = 'dormant60@gmail.com';
+    const now = Date.now();
+    const userDoc = {
+      email,
+      domain: D,
+      displayName: 'Dormant Teacher',
+      lastLoginAt: new Date(now - 60 * DAY).toISOString(),
+    };
+    const db = firestore.getDb();
+    const tenantDoc = db.collection('tenants').doc(D);
+    const colSpy = jest.spyOn(tenantDoc, 'collection');
+
+    const reminders = await firestore.evaluateReengagementForUser(D, email, { userDoc });
+    expect(reminders).toEqual([]);
+    expect(colSpy).not.toHaveBeenCalledWith('events');
+    colSpy.mockRestore();
+  });
+
+  test('does NOT pre-skip dormant users (>= 45d) when they have an expiring non-subscription Pro pass', async () => {
+    const email = 'dormant_pro_exp@gmail.com';
+    const now = Date.now();
+    const expDate = new Date(now + 13 * DAY);
+    const userDoc = {
+      email,
+      domain: D,
+      displayName: 'Dormant Pass Holder',
+      lastLoginAt: new Date(now - 60 * DAY).toISOString(),
+      individualPlan: 'pro',
+      individualPlanType: 'one_time_annual',
+      individualPlanExpiresAt: expDate.toISOString(),
+    };
+    seedExport(D, email, now - 65 * DAY);
+
+    const reminders = await firestore.evaluateReengagementForUser(D, email, { userDoc });
+    expect(reminders.some(r => r.type === 'expiry_t14')).toBe(true);
+  });
+
+  test('tolerates a tracked event with no meta object for an active (< 45d) user', async () => {
+    const domain = 'acme.com';
+    const email = 'nometa20@acme.com';
+    const now = Date.now();
+    seedUser(domain, email, 20); // < 45d so events query runs, outside 7d/30d windows
+    ctx.seed(`tenants/${domain}/events/ev_nometa20`, { email, type: 'tracked', createdAt: wrapTimestamp(new Date(now)) });
+    const reminders = await firestore.evaluateReengagementForUser(domain, email);
+    expect(reminders).toEqual([]);
+  });
 });
+

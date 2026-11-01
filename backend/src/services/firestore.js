@@ -2487,7 +2487,7 @@ async function countAllUsers() {
 
 let _allUsersCache = null;
 let _allUsersCachedAt = 0;
-const ALL_USERS_CACHE_MS = 10 * 60 * 1000; // 10 minutes
+const ALL_USERS_CACHE_MS = 2 * 60 * 60 * 1000; // 2 hours
 
 async function getAllUsersAcrossTenants({ force = false } = {}) {
   if (!force && process.env.NODE_ENV !== 'test' && _allUsersCache && (Date.now() - _allUsersCachedAt) < ALL_USERS_CACHE_MS) {
@@ -3040,7 +3040,7 @@ async function getTeamOverview(domain) {
 // view (grouping by title alone produces too many false matches).
 const _lightweightSeriesCache = new Map(); // `${domain}:${email}` -> { at, value }
 const _userSeriesInvalidatedAt = new Map(); // emailLower -> tsMs
-const SERIES_LIGHT_CACHE_MS = 6 * 60 * 60 * 1000; // 6 hours
+const SERIES_LIGHT_CACHE_MS = 12 * 60 * 60 * 1000; // 12 hours
 
 function clearUserSeriesCache(domain, email) {
   if (!email) {
@@ -3415,14 +3415,14 @@ function encodeNoteKey(key) {
 
 // ── Delete user data (Marketplace compliance) ──
 
-const memoizedGetAllUsersAcrossTenants = memoizeTTL(getAllUsersAcrossTenants, 600000); // 10 min TTL
+const memoizedGetAllUsersAcrossTenants = memoizeTTL(getAllUsersAcrossTenants, 2 * 60 * 60 * 1000); // 2 hour TTL
 function clearAllUsersCache() {
   _allUsersCache = null;
   _allUsersCachedAt = 0;
   memoizedGetAllUsersAcrossTenants.clear?.();
 }
 
-const memoizedGetAggregatedInsights = memoizeTTL(getAggregatedInsights, 8 * 60 * 60 * 1000); // 8 hour TTL
+const memoizedGetAggregatedInsights = memoizeTTL(getAggregatedInsights, 24 * 60 * 60 * 1000); // 24 hour TTL
 function clearAllInsightsCache() {
   memoizedGetAggregatedInsights.clear?.();
   clearInsightsCache();

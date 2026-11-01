@@ -129,7 +129,7 @@ async function getActivationFunnel() {
 let _insightsCache = null;
 let _insightsCachedAt = 0;
 let _insightsInFlight = null;
-const INSIGHTS_CACHE_MS = 8 * 60 * 60 * 1000; // 8 hours
+const INSIGHTS_CACHE_MS = 24 * 60 * 60 * 1000; // 24 hours
 const INSIGHTS_CACHE_DOC = () => getDb().collection('ops').doc('insightsCache');
 
 async function getAggregatedInsights({ force = false, useFirestoreCache = false } = {}) {

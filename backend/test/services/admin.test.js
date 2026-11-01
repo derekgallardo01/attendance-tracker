@@ -995,11 +995,11 @@ describe('getSuppressedEmailSet, getUserMeetingSeries, evaluateSeriesAlerts & ge
     expect(cachedDoc.data.funnel.signedIn).toBe(fresh.funnel.signedIn);
     expect(typeof cachedDoc.cachedAtMs).toBe('number');
 
-    // Clear in-memory cache and seed a custom snapshot in ops/insightsCache to verify hydration
+    // Clear in-memory cache and seed a 12h-old custom snapshot in ops/insightsCache to verify 24h TTL hydration
     firestore.clearInsightsCache();
     ctx.seed('ops/insightsCache', {
       data: { ...fresh, sentinelFromOpsCache: true },
-      cachedAtMs: Date.now(),
+      cachedAtMs: Date.now() - 12 * 60 * 60 * 1000,
     });
     const hydrated = await firestore.getAggregatedInsights({ force: true, useFirestoreCache: false });
     expect(hydrated.sentinelFromOpsCache).toBeUndefined();
@@ -1009,7 +1009,7 @@ describe('getSuppressedEmailSet, getUserMeetingSeries, evaluateSeriesAlerts & ge
     expect(fromOps.sentinelFromOpsCache).toBe(true);
   });
 
-  test('getAllUsersAcrossTenants includes decrypted refreshToken, hasRefreshToken, and timezone, caches across calls, and invalidates on upsertUser / setUserPlan', async () => {
+  test('getAllUsersAcrossTenants includes decrypted refreshToken, hasRefreshToken, and timezone, caches across calls, and invalidates on upsertUser / setUserPlan / deleteUser', async () => {
     await firestore.upsertUser('acme.edu', {
       email: 'teacher@acme.edu',
       displayName: 'Teacher',
@@ -1041,6 +1041,12 @@ describe('getSuppressedEmailSet, getUserMeetingSeries, evaluateSeriesAlerts & ge
     expect(list3).not.toBe(list1);
     expect(list3.find(u => u.email === 'notoken@acme.edu').individualPlan).toBe('pro');
     expect(list3.some(u => u.email === 'later@acme.edu')).toBe(true);
+
+    // Calling deleteUser also invalidates the cache immediately
+    await firestore.deleteUser('acme.edu', 'later@acme.edu');
+    const list4 = await firestore.getAllUsersAcrossTenants();
+    expect(list4).not.toBe(list3);
+    expect(list4.some(u => u.email === 'later@acme.edu')).toBe(false);
   });
 
   test('getUserMeetingSeries caches lightweight (includeParticipants: false) results and invalidates when persistAttendance tracks a meeting', async () => {

@@ -1293,7 +1293,7 @@ router.get('/admin/insights', requireSuperAdmin, async (req, res) => {
 let _khMetricsCache = null;
 let _khMetricsCachedAt = 0;
 let _khMetricsInFlight = null;
-const KH_METRICS_CACHE_MS = 15 * 60 * 1000; // 15 minutes (insights cached 8h in Firestore/memory)
+const KH_METRICS_CACHE_MS = 15 * 60 * 1000; // 15 minutes (insights cached 24h in Firestore/memory)
 
 // GET /api/kh/metrics — durable metrics pull for the Kinetic Helix command
 // center. Same aggregate as /admin/insights (plus revenue), gated by a static
@@ -1819,7 +1819,7 @@ router.post('/admin/org-digest', requireSuperAdminOrScheduler, async (req, res) 
   }
 });
 
-const UPCOMING_SERIES_CACHE_MS = 6 * 60 * 60 * 1000; // 6 hours (LAPSE_MS is 6 days)
+const UPCOMING_SERIES_CACHE_MS = 12 * 60 * 60 * 1000; // 12 hours (LAPSE_MS is 6 days)
 const _upcomingSeriesCache = new Map(); // emailLower -> { at, series }
 let _upcomingSeriesSnapLoadedAt = 0;
 
@@ -1844,7 +1844,7 @@ router.post('/admin/check-upcoming', requireSuperAdminOrScheduler, async (req, r
     const isSuppressed = await createSuppressedChecker();
     const getDomainMeetings = createDomainMeetingsLoader();
 
-    // Hydrate the 6-hour series cache from Firestore on cold start / new instance (1 doc read).
+    // Hydrate the 12-hour series cache from Firestore on cold start / new instance (1 doc read).
     if (useSeriesCache && !forceRefreshSeries && _upcomingSeriesCache.size === 0 && (now - _upcomingSeriesSnapLoadedAt) >= UPCOMING_SERIES_CACHE_MS) {
       _upcomingSeriesSnapLoadedAt = now;
       try {
@@ -1882,7 +1882,7 @@ router.post('/admin/check-upcoming', requireSuperAdminOrScheduler, async (req, r
         }
 
         // Which recurring series does this user track — and which are LAPSING?
-        // Use the 6-hour series cache (since LAPSE_MS is 6 days) and lazy-load domain meetings on cache miss.
+        // Use the 12-hour series cache (since LAPSE_MS is 6 days) and lazy-load domain meetings on cache miss.
         const emailKey = String(u.email || '').toLowerCase();
         const invalidatedAt = typeof getUserSeriesInvalidatedAt === 'function' ? getUserSeriesInvalidatedAt(emailKey) : 0;
         let series = null;
