@@ -40,12 +40,12 @@ const USD_PRICES = {
 // true Stripe subscription across all tiers and markets.
 const LOCAL_PRICES = {
   IN: { currency: 'inr', prepaid: true, methods: ['card', 'upi'], prices: { pro_annual: 49900, pro_monthly: 5900, educator: 24900, lifetime: 49900, single_meeting: 12900 } },
-  PH: { currency: 'php', prices: { pro_annual: 39900, pro_monthly: 4900, educator: 19900, lifetime: 39900, single_meeting: 9900 } },
-  ID: { currency: 'idr', prices: { pro_annual: 9900000, pro_monthly: 1490000, educator: 4900000, lifetime: 9900000, single_meeting: 2500000 } },
-  KE: { currency: 'kes', prices: { pro_annual: 79000, pro_monthly: 9900, educator: 39000, lifetime: 79000, single_meeting: 19500 } },
-  MX: { currency: 'mxn', prices: { pro_annual: 27900, pro_monthly: 3900, educator: 14900, lifetime: 29900, single_meeting: 5900 } },
-  BR: { currency: 'brl', prices: { pro_annual: 7900, pro_monthly: 990, educator: 3900, lifetime: 7900, single_meeting: 1900 } },
-  MY: { currency: 'myr', prices: { pro_annual: 6500, pro_monthly: 900, educator: 3500, lifetime: 7900, single_meeting: 1500 } },
+  PH: { currency: 'php', prepaid: true, prices: { pro_annual: 39900, pro_monthly: 4900, educator: 19900, lifetime: 39900, single_meeting: 9900 } },
+  ID: { currency: 'idr', prepaid: true, prices: { pro_annual: 9900000, pro_monthly: 1490000, educator: 4900000, lifetime: 9900000, single_meeting: 2500000 } },
+  KE: { currency: 'kes', prepaid: true, prices: { pro_annual: 79000, pro_monthly: 9900, educator: 39000, lifetime: 79000, single_meeting: 19500 } },
+  MX: { currency: 'mxn', prepaid: true, prices: { pro_annual: 27900, pro_monthly: 3900, educator: 14900, lifetime: 29900, single_meeting: 5900 } },
+  BR: { currency: 'brl', prepaid: true, prices: { pro_annual: 7900, pro_monthly: 990, educator: 3900, lifetime: 7900, single_meeting: 1900 } },
+  MY: { currency: 'myr', prepaid: true, prices: { pro_annual: 6500, pro_monthly: 900, educator: 3500, lifetime: 7900, single_meeting: 1500 } },
 };
 
 // High-anchor Lifetime prices for the `recurring_first` experiment arm (~3.3x
@@ -117,16 +117,20 @@ function tier3Arm(email, armOverride = null) {
   return byte % 2 === 0 ? 'tiered' : 'legacy';
 }
 
-// Deterministic 50/50 pricing experiment arm (`recurring_first` vs
-// `three_option_control`) across all tiers when TIERED_PRICING=1.
-// Controlled by PRICING_EXP ('split' default, or 'recurring_first' / 'three_option_control').
+// `recurring_first` won the pricing A/B experiment and is now shipped to 100%
+// of traffic (including signed-out visitors) by default.
+// Explicit `expArmOverride` or `PRICING_EXP` ('recurring_first',
+// 'three_option_control', or 'split' for legacy 50/50 hash split) are honored.
 function pricingExpArm(email, expArmOverride = null) {
   if (PRICING_EXP_ARMS.has(expArmOverride)) return expArmOverride;
   if (PRICING_EXP_ARMS.has(process.env.PRICING_EXP)) return process.env.PRICING_EXP;
-  const e = email ? String(email).trim().toLowerCase() : '';
-  if (!e) return 'three_option_control';
-  const byte = crypto.createHash('sha256').update('pricing_exp_v1:' + e).digest()[0];
-  return byte % 2 === 0 ? 'recurring_first' : 'three_option_control';
+  if (process.env.PRICING_EXP === 'split') {
+    const e = email ? String(email).trim().toLowerCase() : '';
+    if (!e) return 'three_option_control';
+    const byte = crypto.createHash('sha256').update('pricing_exp_v1:' + e).digest()[0];
+    return byte % 2 === 0 ? 'recurring_first' : 'three_option_control';
+  }
+  return 'recurring_first';
 }
 
 // "₹749", "Rp 139.000", "$4.99", "$29". Whole amounts drop the decimals.

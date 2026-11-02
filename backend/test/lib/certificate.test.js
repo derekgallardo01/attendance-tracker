@@ -306,4 +306,11 @@ describe('buildQuoteModel and renderQuotePdf', () => {
       expect(buf.length).toBeGreaterThan(1000);
     }
   });
+
+  test('buildReportModel and buildCertificateModels include Free Edition upgrade footer when options.isPro === false', () => {
+    const rep = buildReportModel({ ...BASE, options: { isPro: false } });
+    expect(rep.footer).toContain('Free Edition — Upgrade to Pro to remove branding');
+    const certs = buildCertificateModels({ ...BASE, options: { isPro: false } });
+    expect(certs[0].footer).toContain('Free Edition — Upgrade to Pro to remove branding');
+  });
 });

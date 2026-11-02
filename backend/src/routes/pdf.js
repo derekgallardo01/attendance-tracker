@@ -307,7 +307,7 @@ router.post('/export/quote-pdf', requireAuth, async (req, res) => {
               `1. Department License (Up to 10 educators on @${domain}): $59 USD / year`,
               `   • Direct Stripe Checkout / Invoice Link: ${deptCheckoutUrl}`,
               '',
-              `2. Full Institution License (Unlimited educators on @${domain}): $99 USD / year`,
+              `2. Full Institution License (Unlimited educators on @${domain}): $149 USD / year`,
               `   • Direct Stripe Checkout / Invoice Link: ${instCheckoutUrl}`,
               '',
               `3. Individual Educator Pass (1 educator — @${domain}):`,

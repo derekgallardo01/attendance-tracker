@@ -481,17 +481,25 @@ describe('getPowerUserPipeline', () => {
     expect(users.find(u => u.email === 'legacy@a.com')).toBeDefined();
   });
 
-  test('excludes already-contacted users, the owner, and test domains', async () => {
+  test('excludes already-contacted users, paid Pro users, the owner, and test domains while keeping review_reward users', async () => {
     const now = Date.now();
     seedUser('a.com', 'contacted@a.com');
+    seedUser('a.com', 'paid@a.com', { individualPlan: 'pro', individualPlanType: 'educator' });
+    seedUser('a.com', 'reward@a.com', { individualPlan: 'pro', individualPlanType: 'review_reward' });
     for (let i = 0; i < 5; i++) {
       seedEvent('a.com', 'contacted@a.com', 'tracked', now - i * 60000, { conferenceId: 'mtg-' + i });
+      seedEvent('a.com', 'paid@a.com', 'tracked', now - i * 60000, { conferenceId: 'mtg-' + i });
+      seedEvent('a.com', 'reward@a.com', 'tracked', now - i * 60000, { conferenceId: 'mtg-' + i });
       seedEvent('theyachtgroup.com', 'legacy@theyachtgroup.com', 'tracked', now - i * 60000, { conferenceId: 'mtg-' + i });
     }
     ctx.seed('tenants/a.com/outreach/contacted@a.com', { contactedAt: wrapTimestamp(new Date()) });
     const users = await firestore.getPowerUserPipeline({ days: 7, minMeetings: 3 });
     expect(users.find(u => u.email === 'contacted@a.com')).toBeUndefined();
+    expect(users.find(u => u.email === 'paid@a.com')).toBeUndefined();
     expect(users.find(u => u.email === 'legacy@theyachtgroup.com')).toBeUndefined();
+    const rewardUser = users.find(u => u.email === 'reward@a.com');
+    expect(rewardUser).toBeDefined();
+    expect(rewardUser.plan).toBe('review_reward');
   });
 });
 

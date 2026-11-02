@@ -258,17 +258,29 @@ describe('POST /api/public/quote-request (institutional buying path)', () => {
     expect(notifications.sendAdminEmail).not.toHaveBeenCalled();
   });
 
-  test('200 with a work email — emails the owner with the lead details', async () => {
+  test('200 with a work email — emails the owner with lead details, auto-replies to requester with 1-click checkout links, and logs school_quote_generated', async () => {
     notifications.sendAdminEmail.mockResolvedValue({ sent: true });
+    firestore.isEmailSuppressed.mockResolvedValue(false);
     const res = await request(app)
       .post('/api/public/quote-request')
       .set('Content-Type', 'application/json')
       .send({ workEmail: 'admin@school.edu', schoolName: 'Acme High', seats: '12', plan: 'department', notes: 'PO please' });
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
+    expect(res.body.quoteNumber).toMatch(/^QT-/);
     expect(notifications.sendAdminEmail).toHaveBeenCalledWith(expect.objectContaining({
       subject: expect.stringContaining('school.edu'),
       body: expect.stringContaining('admin@school.edu'),
+    }));
+    expect(notifications.sendAdminEmail).toHaveBeenCalledWith(expect.objectContaining({
+      to: 'admin@school.edu',
+      subject: expect.stringContaining('Official Quote'),
+      body: expect.stringContaining('/api/billing/checkout-redirect?plan=department'),
+      html: expect.stringContaining('/api/billing/checkout-redirect?plan=team'),
+    }));
+    expect(firestore.logEvent).toHaveBeenCalledWith('school.edu', expect.objectContaining({
+      email: 'admin@school.edu',
+      type: 'school_quote_generated',
     }));
   });
 

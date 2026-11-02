@@ -425,6 +425,7 @@ describe('evaluateReengagementForUser — pass and Pro-grant expiry reminders', 
     [-1, 'one_time_annual', 'expiry_t_plus_1'],
     [3, 'review_reward', 'grant_expiry_t3'],
     [-1, 'referral_reward', 'grant_expiry_t_plus_1'],
+    [-10, 'review_reward', 'grant_expiry_t_plus_1'],
   ])('daysLeft=%i with planType=%s emits %s with realized-value stats', async (daysLeft, planType, expectedType) => {
     const email = `exp_${daysLeft}_${planType}@gmail.com`;
     const now = Date.now();

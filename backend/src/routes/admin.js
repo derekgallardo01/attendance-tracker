@@ -949,7 +949,7 @@ router.post('/admin/check-reengagement', requireSuperAdminOrScheduler, async (re
             });
           } else if (r.type && (r.type.startsWith('expiry_') || r.type.startsWith('grant_expiry_') || r.type.startsWith('trial_expiry_'))) {
             const resolvedPlanType = r.planType || user.individualPlanType || 'annual';
-            const checkoutPlan = (resolvedPlanType === 'educator' || resolvedPlanType === 'educator_annual') ? 'educator' : 'pro_annual';
+            const checkoutPlan = (resolvedPlanType === 'pro_annual' || resolvedPlanType === 'pro_annual_prepaid') ? 'pro_annual' : 'educator';
             let checkoutUrl = null;
             if (CONFIG.sessionSecret) {
               const token = jwt.sign(
@@ -957,7 +957,7 @@ router.post('/admin/check-reengagement', requireSuperAdminOrScheduler, async (re
                 CONFIG.sessionSecret,
                 { expiresIn: '7d' }
               );
-              const baseUrl = (CONFIG.appUrl || 'https://attendance-tracker-backend-829771833968.us-central1.run.app').replace(/\/$/, '');
+              const baseUrl = (CONFIG.backendUrl || CONFIG.appUrl || 'https://attendance-tracker-backend-829771833968.us-central1.run.app').replace(/\/$/, '');
               checkoutUrl = `${baseUrl}/api/billing/checkout-redirect?token=${encodeURIComponent(token)}&plan=${checkoutPlan}`;
             }
             result = await sendPassExpiryReminderEmail({
@@ -2317,12 +2317,16 @@ router.get('/admin/school-clusters', requireSuperAdmin, async (req, res) => {
           }
           const createdAt = u.createdAt?.toDate ? u.createdAt.toDate().toISOString() : (u.createdAt || null);
           const country = u.signupGeo?.country || u.signupCountry || null;
+          const isPaidPro = (u.individualPlan === 'pro' || u.plan === 'pro')
+            && u.individualPlanType !== 'review_reward'
+            && u.individualPlanType !== 'referral_reward';
           domainMap.get(domain).push({
             email: u.email,
             displayName: u.displayName || '',
             createdAt,
             country,
-            plan: u.individualPlanType || u.plan || 'free',
+            plan: u.individualPlanType || u.individualPlan || u.plan || 'free',
+            isPaidPro,
             lastLoginAt: u.lastLoginAt ? (u.lastLoginAt.toDate ? u.lastLoginAt.toDate().toISOString() : u.lastLoginAt) : null,
           });
         });
@@ -2386,6 +2390,9 @@ router.get('/admin/school-clusters', requireSuperAdmin, async (req, res) => {
           const outreachScore = teacherCount * (1 + largeClassHits) * (1 + objections);
           const recommendedPlan = teacherCount >= 10 ? 'institution' : 'department';
           const priceLabel = recommendedPlan === 'institution' ? '$149/year (unlimited educators)' : '$59/year (up to 10 educators)';
+          const planStatus = (tenantData.plan && tenantData.plan !== 'free')
+            ? tenantData.plan
+            : (teachers.some(t => t.isPaidPro) ? 'pro' : (tenantData.plan || 'free'));
 
           return {
             domain,
@@ -2399,12 +2406,12 @@ router.get('/admin/school-clusters', requireSuperAdmin, async (req, res) => {
             recommendedPlan,
             country,
             primaryContact,
-            planStatus: tenantData.plan || (teachers.some(t => t.plan === 'pro') ? 'pro' : 'free'),
+            planStatus,
             installedAt: tenantData.installedAt?.toDate ? tenantData.installedAt.toDate().toISOString() : (tenantData.installedAt || teachers[teachers.length - 1]?.createdAt),
             draftedEmail: {
               to: primaryContact,
               subject: `${teacherCount} educators at ${domain} are using Google Meet Attendance Tracker`,
-              body: `Hi ${teachers[0]?.displayName ? teachers[0].displayName.split(' ')[0] : 'there'},\n\nI noticed ${teacherCount} educators at ${domain} are using Google Meet Attendance Tracker. Rather than having each teacher pay individually ($19/yr), we can cover your whole ${recommendedPlan === 'institution' ? 'school' : 'department'} for ${priceLabel}.\n\nWould you like me to send over a 1-page PDF quote for your department chair or business office?\n\nBest,\nDerek`,
+              body: `Hi ${teachers[0]?.displayName ? teachers[0].displayName.split(' ')[0] : 'there'},\n\nI noticed ${teacherCount} educators at ${domain} are using Google Meet Attendance Tracker. Rather than having each teacher pay individually ($14.99/yr), we can cover your whole ${recommendedPlan === 'institution' ? 'school' : 'department'} for ${priceLabel}.\n\nWould you like me to send over a 1-page PDF quote for your department chair or business office?\n\nBest,\nDerek`,
             },
           };
         }));

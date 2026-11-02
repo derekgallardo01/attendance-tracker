@@ -1937,7 +1937,7 @@ async function getDomainClusterStats(domain) {
     let payingColleagues = 0;
     for (const d of (usersSnap.docs || [])) {
       const u = d.data() || {};
-      if (u.individualPlan === 'pro') {
+      if (u.individualPlan === 'pro' && u.individualPlanType !== 'review_reward' && u.individualPlanType !== 'referral_reward') {
         const expMs = u.individualPlanExpiresAt ? Date.parse(u.individualPlanExpiresAt) : null;
         if (!expMs || isNaN(expMs) || expMs > now || u.individualStripeSubscriptionId) {
           payingColleagues++;

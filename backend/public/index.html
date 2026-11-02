@@ -8795,6 +8795,28 @@ function closeUpgradeModal() {
 // paywall dismissal ever (localStorage-counted). One lifetime ask — honors
 // the gentle-upsell rule — and the answer is the only direct WHY signal in
 // the monetization funnel (event: paywall_objection).
+function _resolvePaywallPlanPrice(planKey, fallback) {
+  const fromState = state && state.priceTable && state.priceTable.plans && state.priceTable.plans[planKey];
+  if (fromState) return typeof fromState === 'string' ? fromState : (fromState.label || fallback);
+  const fromBilling = _billing && _billing.pricing && _billing.pricing[planKey] && _billing.pricing[planKey].label;
+  if (fromBilling) return fromBilling;
+  if (typeof AttPricing !== 'undefined' && typeof AttPricing.price === 'function') {
+    const p = AttPricing.price(planKey);
+    if (p && !(planKey === 'single_meeting' && p === '$2.99') && !(planKey === 'educator' && p === '$4.99')) return p;
+  }
+  return fallback;
+}
+
+function buySingleMeeting() {
+  startUpgradeCheckout('single_meeting', 'btn-paywall-why-single');
+  dismissPaywallWhy();
+}
+
+function buyMonthlyPass() {
+  startUpgradeCheckout('pro_monthly', 'btn-paywall-why-monthly');
+  dismissPaywallWhy();
+}
+
 function resetPaywallWhyModal() {
   const vOpt = document.getElementById('paywall-why-view-options');
   const vExp = document.getElementById('paywall-why-view-expensive');
@@ -8806,6 +8828,11 @@ function resetPaywallWhyModal() {
   if (vFbk) vFbk.style.display = 'none';
   const schStatus = document.getElementById('paywall-school-status');
   if (schStatus) schStatus.style.display = 'none';
+  const passBadge = document.getElementById('paywall-why-pass-badge');
+  if (passBadge) {
+    const singleDisplay = _resolvePaywallPlanPrice('single_meeting', '$3.99');
+    passBadge.textContent = `${singleDisplay} pass`;
+  }
 }
 
 function dismissPaywallWhy() {
@@ -8847,71 +8874,44 @@ function answerPaywallWhy(reason) {
   if (reason === 'expensive' || reason === 'price') {
     if (vExp) {
       vExp.style.display = 'flex';
-      const country = _billing?.country || _billing?.pppDiscount?.country || state.signupCountry || '';
+      const singleDisplay = _resolvePaywallPlanPrice('single_meeting', '$3.99');
+      const monthlyDisplay = _resolvePaywallPlanPrice('pro_monthly', '$3.99');
+      const eduDisplay = _resolvePaywallPlanPrice('educator', '$14.99');
+      const expDescEl = document.getElementById('paywall-why-expensive-desc');
+      if (expDescEl) {
+        expDescEl.textContent = `Need to export right now without an annual commitment? Unlock just this meeting for ${singleDisplay}, or start a Monthly Pass for ${monthlyDisplay}/mo (cancel anytime).`;
+      }
       const singlePriceEl = document.getElementById('paywall-why-single-price');
+      if (singlePriceEl) {
+        singlePriceEl.innerHTML = `${escHtml(singleDisplay)} <span style="font-size:.7rem;font-weight:400;color:#9aa0a6">${t('upgrade.oneTime', 'one-time')}</span>`;
+      }
+      const singleBtnEl = document.getElementById('btn-paywall-why-single');
+      if (singleBtnEl) {
+        singleBtnEl.textContent = `Unlock Just This Meeting — ${singleDisplay}`;
+      }
+      const monthlyPriceEl = document.getElementById('paywall-why-monthly-price');
+      if (monthlyPriceEl) {
+        monthlyPriceEl.innerHTML = `${escHtml(monthlyDisplay)} <span style="font-size:.7rem;font-weight:400;color:#9aa0a6">/mo</span>`;
+      }
+      const monthlyBtnEl = document.getElementById('btn-paywall-why-monthly');
+      if (monthlyBtnEl) {
+        monthlyBtnEl.textContent = `Start Monthly Pass — ${monthlyDisplay}/mo (cancel anytime)`;
+      }
       const regionalOffer = document.getElementById('paywall-why-regional-offer');
-      if (country === 'IN') {
-        if (singlePriceEl) singlePriceEl.innerHTML = `$2.99 <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(~₹249)</span> <span style="font-size:.7rem;font-weight:400;color:#9aa0a6">${t('upgrade.oneTime', 'one-time')}</span>`;
-        if (regionalOffer) {
-          regionalOffer.innerHTML = `<div style="background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.25);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
-            <div>
-              <div style="font-size:.82rem;font-weight:600;color:#e3e3e3">🇮🇳 India Special — ₹299 INR UPI</div>
-              <div style="font-size:.73rem;color:#9aa0a6">Google Pay, PhonePe, Paytm (Lifetime Pass)</div>
-            </div>
-            <button type="button" onclick="dismissPaywallWhy();showUpgradeModal();" style="background:#58a6ff;color:#0d1117;border:none;border-radius:6px;padding:6px 10px;font-size:.76rem;font-weight:700;cursor:pointer">View UPI Plan</button>
-          </div>`;
-          regionalOffer.style.display = 'block';
-        }
-      } else if (country === 'PH') {
-        if (singlePriceEl) singlePriceEl.innerHTML = `$2.99 <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(~₱170)</span> <span style="font-size:.7rem;font-weight:400;color:#9aa0a6">${t('upgrade.oneTime', 'one-time')}</span>`;
-        if (regionalOffer) {
+      const tier = (_billing && _billing.offer && _billing.offer.tier) || (state && state.priceTable && state.priceTable.tier) || 1;
+      if (regionalOffer) {
+        if (tier >= 2) {
           regionalOffer.innerHTML = `<div style="background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
             <div>
-              <div style="font-size:.82rem;font-weight:600;color:#e3e3e3">🇵🇭 Philippines Special — ₱280 PHP</div>
-              <div style="font-size:.73rem;color:#9aa0a6">GCash &amp; Maya (Lifetime Pass)</div>
-            </div>
-            <button type="button" onclick="dismissPaywallWhy();showUpgradeModal();" style="background:#34a853;color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:.76rem;font-weight:700;cursor:pointer">View ₱280 Pass</button>
-          </div>`;
-          regionalOffer.style.display = 'block';
-        }
-      } else if (country === 'MY') {
-        if (singlePriceEl) singlePriceEl.innerHTML = `$2.99 <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(~RM 14)</span> <span style="font-size:.7rem;font-weight:400;color:#9aa0a6">${t('upgrade.oneTime', 'one-time')}</span>`;
-        if (regionalOffer) {
-          regionalOffer.innerHTML = `<div style="background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
-            <div>
-              <div style="font-size:.82rem;font-weight:600;color:#e3e3e3">🇲🇾 Malaysia Special — RM 22 MYR</div>
-              <div style="font-size:.73rem;color:#9aa0a6">FPX &amp; GrabPay (Lifetime Pass)</div>
-            </div>
-            <button type="button" onclick="dismissPaywallWhy();showUpgradeModal();" style="background:#34a853;color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:.76rem;font-weight:700;cursor:pointer">View RM 22 Pass</button>
-          </div>`;
-          regionalOffer.style.display = 'block';
-        }
-      } else if (country === 'ID') {
-        if (singlePriceEl) singlePriceEl.innerHTML = `$2.99 <span style="font-size:.73rem;color:#8ab4f8;font-weight:400">(~Rp 49.000)</span> <span style="font-size:.7rem;font-weight:400;color:#9aa0a6">${t('upgrade.oneTime', 'one-time')}</span>`;
-        if (regionalOffer) {
-          regionalOffer.innerHTML = `<div style="background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
-            <div>
-              <div style="font-size:.82rem;font-weight:600;color:#e3e3e3">🇮🇩 Indonesia Special — Rp 78.000 IDR</div>
-              <div style="font-size:.73rem;color:#9aa0a6">QRIS &amp; DANA (Lifetime Pass)</div>
-            </div>
-            <button type="button" onclick="dismissPaywallWhy();showUpgradeModal();" style="background:#34a853;color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:.76rem;font-weight:700;cursor:pointer">View Rp 78.000 Pass</button>
-          </div>`;
-          regionalOffer.style.display = 'block';
-        }
-      } else if (_billing && _billing.pppDiscount && _billing.pppDiscount.eligible) {
-        if (regionalOffer) {
-          regionalOffer.innerHTML = `<div style="background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
-            <div>
-              <div style="font-size:.82rem;font-weight:600;color:#e3e3e3">🏷️ 50% Regional Subsidy Active</div>
-              <div style="font-size:.73rem;color:#9aa0a6">$2.49/yr Educator or $4.99 Lifetime</div>
+              <div style="font-size:.82rem;font-weight:600;color:#e3e3e3">Regional Educator Pricing Active</div>
+              <div style="font-size:.73rem;color:#9aa0a6">${escHtml(eduDisplay)}/yr Educator Annual · ${escHtml(monthlyDisplay)}/mo Monthly</div>
             </div>
             <button type="button" onclick="dismissPaywallWhy();showUpgradeModal();" style="background:#34a853;color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:.76rem;font-weight:700;cursor:pointer">View Plans</button>
           </div>`;
           regionalOffer.style.display = 'block';
+        } else {
+          regionalOffer.style.display = 'none';
         }
-      } else {
-        if (singlePriceEl) singlePriceEl.innerHTML = `$2.99 <span style="font-size:.7rem;font-weight:400;color:#9aa0a6">${t('upgrade.oneTime', 'one-time')}</span>`;
-        if (regionalOffer) regionalOffer.style.display = 'none';
       }
     }
   } else if (reason === 'school_approval' || reason === 'school') {
@@ -10558,12 +10558,39 @@ function saveCertOptions(opts) {
 
 // Free, shareable attendance report. The saved org name rides along as the
 // Pro brand (server-gated: free callers just keep the default footer).
-function downloadPdfReport() {
+async function downloadPdfReport() {
   const saved = loadCertOptions();
-  return _downloadPdf({
+  const ok = await _downloadPdf({
     type: 'report', filenameBase: 'attendance', event: 'pdf_report_downloaded',
     options: { brandName: saved.issuer || '' },
   });
+  if (ok && !_isPro) {
+    setTimeout(() => {
+      toast('Report downloaded! Upgrade to Pro to add custom school branding & unlock bulk student certificates.');
+    }, 1200);
+  }
+  return ok;
+}
+
+async function downloadParticipantCert(attendee) {
+  const saved = loadCertOptions();
+  const ok = await _downloadPdf({
+    type: 'certificates',
+    filenameBase: 'certificate',
+    event: 'certificates_downloaded',
+    options: {
+      issuer: saved.issuer || '',
+      courseCode: saved.courseCode || '',
+      brandName: saved.issuer || '',
+      ...(attendee?.email ? { attendeeEmail: attendee.email } : {}),
+    },
+  });
+  if (ok && !_isPro) {
+    setTimeout(() => {
+      toast('Certificate downloaded with Free Edition branding. Upgrade to Pro to remove branding & unlock bulk export.');
+    }, 1200);
+  }
+  return ok;
 }
 
 // Forwardable 1-page school quote PDF ("Ask my school to pay") generated by
@@ -10683,10 +10710,15 @@ async function submitCertModal(btn) {
   saveCertOptions({ issuer, courseCode, creditHours: creditRaw === '' ? '' : creditHours });
   if (btn) btn.disabled = true;
   closeCertModal();
-  await _downloadPdf({
+  const ok = await _downloadPdf({
     type: 'certificates', filenameBase: 'certificates', event: 'certificates_downloaded',
     options: { issuer, courseCode, ...(creditHours ? { creditHours } : {}), brandName: issuer },
   });
+  if (ok && !_isPro) {
+    setTimeout(() => {
+      toast('Certificate downloaded with Free Edition branding. Upgrade to Pro to remove branding & unlock bulk export.');
+    }, 1200);
+  }
   if (btn) btn.disabled = false;
 }
 
@@ -12373,7 +12405,7 @@ window.addEventListener('DOMContentLoaded', () => {
         <div style="display:flex;flex-direction:column;gap:8px">
           <button type="button" onclick="answerPaywallWhy('expensive')" style="flex:0 0 auto;text-align:start;background:#161b22;border:1px solid #30363d;color:#e6edf3;border-radius:10px;padding:10px 14px;font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:space-between">
             <span data-i18n="paywall.whyPrice">Too expensive / budget</span>
-            <span style="color:#81c995;font-size:.75rem;font-weight:600" data-i18n="paywall.passOffer">$2.99 pass</span>
+            <span id="paywall-why-pass-badge" style="color:#81c995;font-size:.75rem;font-weight:600" data-i18n="paywall.passOffer">$3.99 pass</span>
           </button>
           <button type="button" onclick="answerPaywallWhy('school_approval')" style="flex:0 0 auto;text-align:start;background:#161b22;border:1px solid #30363d;color:#e6edf3;border-radius:10px;padding:10px 14px;font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:space-between">
             <span data-i18n="paywall.whySchoolApproval">Need school approval / invoice</span>
@@ -12388,16 +12420,21 @@ window.addEventListener('DOMContentLoaded', () => {
         </div>
       </div>
 
-      <!-- View 2: "Too expensive" resolution ($2.99 Single Pass / Regional Discount) -->
+      <!-- View 2: "Too expensive" resolution (Single-Meeting Pass + Monthly Pass 1-click rescue CTAs) -->
       <div id="paywall-why-view-expensive" style="display:none;flex-direction:column;gap:10px">
         <div style="font-weight:600;color:#e3e3e3;font-size:1rem;margin-bottom:2px" data-i18n="paywall.expensiveTitle">We want roll-call to be accessible!</div>
-        <div style="color:#9aa0a6;font-size:.78rem;line-height:1.4" data-i18n="paywall.expensiveDesc">Need to export right now without a recurring subscription? Unlock this meeting for just $2.99, or get Educator Annual for ~$0.41/mo.</div>
-        <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px;margin:2px 0">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div id="paywall-why-expensive-desc" style="color:#9aa0a6;font-size:.78rem;line-height:1.4" data-i18n="paywall.expensiveDesc">Need to export right now without an annual commitment? Unlock just this meeting for $3.99, or start a Monthly Pass for $3.99/mo (cancel anytime).</div>
+        <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px;margin:2px 0;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
             <span style="font-weight:600;font-size:.86rem;color:#e3e3e3" data-i18n="upgrade.singleMeetingName">Single-Meeting Pass</span>
-            <span style="font-weight:700;color:#81c995" id="paywall-why-single-price">$2.99 <span style="font-size:.7rem;font-weight:400;color:#9aa0a6" data-i18n="pricing.oneTime">one-time</span></span>
+            <span style="font-weight:700;color:#81c995" id="paywall-why-single-price">$3.99 <span style="font-size:.7rem;font-weight:400;color:#9aa0a6" data-i18n="pricing.oneTime">one-time</span></span>
           </div>
-          <button type="button" onclick="startUpgradeCheckout('single_meeting', 'btn-paywall-why-single');dismissPaywallWhy();" id="btn-paywall-why-single" style="width:100%;background:#34a853;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-weight:600;font-size:.8rem;cursor:pointer" data-i18n="upgrade.ctaSingleMeeting">Unlock This Meeting — $2.99</button>
+          <button type="button" onclick="buySingleMeeting()" id="btn-paywall-why-single" style="width:100%;background:#34a853;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-weight:600;font-size:.8rem;cursor:pointer" data-i18n="upgrade.ctaSingleMeeting">Unlock Just This Meeting — $3.99</button>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding-top:4px;border-top:1px solid rgba(255,255,255,.08)">
+            <span style="font-weight:600;font-size:.82rem;color:#e3e3e3">Monthly Pass</span>
+            <span style="font-weight:700;color:#58a6ff" id="paywall-why-monthly-price">$3.99 <span style="font-size:.7rem;font-weight:400;color:#9aa0a6">/mo</span></span>
+          </div>
+          <button type="button" onclick="buyMonthlyPass()" id="btn-paywall-why-monthly" style="width:100%;background:rgba(88,166,255,.14);color:#58a6ff;border:1px solid rgba(88,166,255,.4);border-radius:8px;padding:8px 12px;font-weight:600;font-size:.8rem;cursor:pointer">Start Monthly Pass — $3.99/mo (cancel anytime)</button>
         </div>
         <div id="paywall-why-regional-offer" style="display:none"></div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding-top:4px">

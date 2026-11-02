@@ -973,11 +973,12 @@ router.post('/billing/public-checkout', async (req, res) => {
   if (TIERED_PLANS.includes(plan)) {
     const tierCountry = detectCountry(req);
     const tierEmail = (req.body?.email || '').trim().toLowerCase() || null;
+    const tierDomain = tierEmail && tierEmail.includes('@') ? tierEmail.split('@')[1] : null;
     const offer = getOffer({ country: tierCountry, email: tierEmail, arm: req.body?.arm, expArm: req.body?.expArm });
     if (offer.tiered) {
       try {
         const session = await createTieredCheckout({
-          stripe, offer, plan, email: tierEmail, userCountry: tierCountry, locale: stripeLocale(localeFromRequest(req, { storedLanguage: req.user?.language })),
+          stripe, offer, plan, email: tierEmail, domain: tierDomain, userCountry: tierCountry, locale: stripeLocale(localeFromRequest(req, { storedLanguage: req.user?.language })),
           promoCode: (req.body?.promo ?? '').trim().toUpperCase(),
           source: 'public_pricing',
           urls: { successUrl: `${CONFIG.publicSiteUrl}/history.html?upgraded=1`, cancelUrl: `${CONFIG.publicSiteUrl}/pricing.html` },
@@ -1843,7 +1844,7 @@ router.post('/billing/school-license-request', requireAuth, async (req, res) => 
         `   • Unlocks unlimited classes (25–500+ students), unlimited Google Sheets & PDF exports, and automatic end-of-meeting export for up to 10 educators on @${domain}.`,
         `   • Direct Stripe Checkout / Invoice Link: ${deptCheckoutUrl}`,
         '',
-        `2. Full Institution License (Unlimited educators on @${domain}): $99 USD / year`,
+        `2. Full Institution License (Unlimited educators on @${domain}): $149 USD / year`,
         `   • Covers every educator on @${domain} domain-wide.`,
         `   • Direct Stripe Checkout / Invoice Link: ${instCheckoutUrl}`,
         '',

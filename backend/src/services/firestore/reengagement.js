@@ -342,7 +342,7 @@ async function evaluateReengagementForUser(domain, email, options = {}) {
           expiryType = 'expiry_t14';
         } else if (daysUntilExpiry > 0 && daysUntilExpiry <= 3.5) {
           expiryType = isGrant ? 'grant_expiry_t3' : 'expiry_t3';
-        } else if (daysUntilExpiry <= 0 && daysUntilExpiry >= -4) {
+        } else if (daysUntilExpiry <= 0 && daysUntilExpiry >= -14) {
           expiryType = isGrant ? 'grant_expiry_t_plus_1' : 'expiry_t_plus_1';
         }
         if (expiryType) {

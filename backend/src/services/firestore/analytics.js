@@ -1506,7 +1506,7 @@ async function getPowerUserPipeline({ days = 7, minMeetings = 3, force = false }
         const snap = await getDb().collectionGroup('events').get();
         return snap.docs;
       })(),
-      getDb().collectionGroup('users').select('displayName', 'acquisitionSource').get(),
+      getDb().collectionGroup('users').select('displayName', 'acquisitionSource', 'individualPlan', 'individualPlanType', 'plan').get(),
       getDb().collectionGroup('outreach').get(),
     ]);
 
@@ -1519,11 +1519,16 @@ async function getPowerUserPipeline({ days = 7, minMeetings = 3, force = false }
     const usersByEmail = {};
     for (const d of usersSnap.docs) {
       const data = d.data();
+      const isPaidPro = (data.individualPlan === 'pro' || data.plan === 'pro')
+        && !FREE_GRANT_PLAN_TYPES.has(data.individualPlanType);
+      const isFreeGrant = data.individualPlan === 'pro' && FREE_GRANT_PLAN_TYPES.has(data.individualPlanType);
       usersByEmail[d.id] = {
         email: d.id,
         domain: (d.ref.parent.parent?.id ?? null),
         displayName: data.displayName || '',
         acquisitionSource: data.acquisitionSource || null,
+        plan: isPaidPro ? 'pro' : (isFreeGrant ? data.individualPlanType : 'free'),
+        isPaidPro,
         createdAt: tsMs(data.createdAt) || 0,
       };
     }
@@ -1558,6 +1563,8 @@ async function getPowerUserPipeline({ days = 7, minMeetings = 3, force = false }
           domain: u.domain || domainOf(row.email),
           displayName: u.displayName || '',
           acquisitionSource: u.acquisitionSource || null,
+          plan: u.plan || 'free',
+          isPaidPro: Boolean(u.isPaidPro),
           tracked: row.meetings.size, // distinct meetings, not poll events
           exported: row.exported,
           totalActions: row.meetings.size + row.exported,
@@ -1565,7 +1572,7 @@ async function getPowerUserPipeline({ days = 7, minMeetings = 3, force = false }
           lastContactedAt: lastContacted ? new Date(lastContacted).toISOString() : null,
         };
       })
-      .filter(row => !row.lastContactedAt)
+      .filter(row => !row.lastContactedAt && !row.isPaidPro)
       .sort((a, b) => b.totalActions - a.totalActions);
 
     _powerUserCache = result;

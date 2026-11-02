@@ -76,26 +76,31 @@ describe('tier3Arm', () => {
 });
 
 describe('pricingExpArm', () => {
-  test('defaults to 50/50 split by sha256(pricing_exp_v1:email), falls back to three_option_control when signed out', () => {
+  test('defaults to recurring_first for 100% of traffic including signed-out visitors', () => {
     const rf = emailInExpArm('recurring_first');
     const ctrl = emailInExpArm('three_option_control');
+    expect(tiers.pricingExpArm(rf)).toBe('recurring_first');
+    expect(tiers.pricingExpArm(ctrl)).toBe('recurring_first');
+    expect(tiers.pricingExpArm(null)).toBe('recurring_first');
+    expect(tiers.pricingExpArm('   ')).toBe('recurring_first');
+  });
+  test('respects expArmOverride, PRICING_EXP env var, and PRICING_EXP=split', () => {
+    const rf = emailInExpArm('recurring_first');
+    const ctrl = emailInExpArm('three_option_control');
+    expect(tiers.pricingExpArm(rf, 'three_option_control')).toBe('three_option_control');
+    expect(tiers.pricingExpArm(ctrl, 'recurring_first')).toBe('recurring_first');
+    expect(tiers.pricingExpArm(ctrl, 'invalid_arm')).toBe('recurring_first');
+    process.env.PRICING_EXP = 'three_option_control';
+    expect(tiers.pricingExpArm(rf)).toBe('three_option_control');
+    expect(tiers.pricingExpArm(null)).toBe('three_option_control');
+    process.env.PRICING_EXP = 'recurring_first';
+    expect(tiers.pricingExpArm(ctrl)).toBe('recurring_first');
+    process.env.PRICING_EXP = 'split';
     expect(tiers.pricingExpArm(rf)).toBe('recurring_first');
     expect(tiers.pricingExpArm(` ${rf.toUpperCase()} `)).toBe('recurring_first');
     expect(tiers.pricingExpArm(ctrl)).toBe('three_option_control');
     expect(tiers.pricingExpArm(null)).toBe('three_option_control');
     expect(tiers.pricingExpArm('   ')).toBe('three_option_control');
-  });
-  test('respects expArmOverride and PRICING_EXP env var', () => {
-    const rf = emailInExpArm('recurring_first');
-    const ctrl = emailInExpArm('three_option_control');
-    expect(tiers.pricingExpArm(rf, 'three_option_control')).toBe('three_option_control');
-    expect(tiers.pricingExpArm(ctrl, 'recurring_first')).toBe('recurring_first');
-    expect(tiers.pricingExpArm(ctrl, 'invalid_arm')).toBe('three_option_control');
-    process.env.PRICING_EXP = 'recurring_first';
-    expect(tiers.pricingExpArm(ctrl)).toBe('recurring_first');
-    expect(tiers.pricingExpArm(null)).toBe('recurring_first');
-    process.env.PRICING_EXP = 'three_option_control';
-    expect(tiers.pricingExpArm(rf)).toBe('three_option_control');
   });
 });
 
@@ -118,7 +123,7 @@ describe('getOffer', () => {
   });
 
   test('tier 1 USD subscription market with monthly in both experiment arms', () => {
-    const ctrl = tiers.getOffer({ country: 'US', email: emailInExpArm('three_option_control') });
+    const ctrl = tiers.getOffer({ country: 'US', email: emailInExpArm('three_option_control'), expArm: 'three_option_control' });
     expect(ctrl).toMatchObject({
       tiered: true, tier: 1, arm: 'tiered', expArm: 'three_option_control',
       currency: 'usd', prepaid: false, monthlyAvailable: true, methods: null,
@@ -135,13 +140,13 @@ describe('getOffer', () => {
     expect(rf.prices.pro_monthly.label).toBe('$3.99');
   });
 
-  test('missing country defaults to tier 1', () => {
-    expect(tiers.getOffer()).toMatchObject({ tiered: true, tier: 1, country: null, expArm: 'three_option_control' });
+  test('missing country defaults to tier 1 and recurring_first', () => {
+    expect(tiers.getOffer()).toMatchObject({ tiered: true, tier: 1, country: null, expArm: 'recurring_first' });
   });
 
-  test('local-currency markets (MX, BR, MY): recurring subscriptions + monthly available', () => {
+  test('local-currency markets (MX, BR, MY): prepaid annual + monthly available', () => {
     const mx = tiers.getOffer({ country: 'MX', expArm: 'three_option_control' });
-    expect(mx).toMatchObject({ tiered: true, tier: 2, currency: 'mxn', prepaid: false, monthlyAvailable: true });
+    expect(mx).toMatchObject({ tiered: true, tier: 2, currency: 'mxn', prepaid: true, monthlyAvailable: true });
     expect(mx.prices.pro_monthly.label).toBe('MX$39');
     expect(mx.prices.pro_annual.label).toBe('MX$279');
     expect(mx.prices.pro_annual.perMonth).toBe('MX$23'); // whole units outside USD
@@ -149,12 +154,13 @@ describe('getOffer', () => {
     expect(tiers.getOffer({ country: 'MX', expArm: 'recurring_first' }).prices.lifetime.label).toBe('MX$549');
 
     const br = tiers.getOffer({ country: 'BR', expArm: 'recurring_first' });
-    expect(br).toMatchObject({ tiered: true, tier: 2, currency: 'brl', prepaid: false, monthlyAvailable: true });
+    expect(br).toMatchObject({ tiered: true, tier: 2, currency: 'brl', prepaid: true, monthlyAvailable: true });
     expect(br.prices.pro_monthly.label).toBe('R$ 9,90');
     expect(br.prices.educator.label).toBe('R$ 39');
     expect(br.prices.lifetime.label).toBe('R$ 149');
 
     const my = tiers.getOffer({ country: 'MY', expArm: 'recurring_first' });
+    expect(my).toMatchObject({ tiered: true, tier: 2, currency: 'myr', prepaid: true, monthlyAvailable: true });
     expect(my.prices.pro_monthly.label).toBe('RM 9');
     expect(my.prices.lifetime.label).toBe('RM 129');
 
@@ -162,7 +168,7 @@ describe('getOffer', () => {
     expect(tiers.getOffer({ country: 'ID', email: 'a@b.com' }).prices.pro_annual.perMonth).toBe('Rp 8.250');
   });
 
-  test('tier 3: legacy arm falls back in split mode; IN stays prepaid for annual while offering monthly subscription; PH/ID/KE are recurring', () => {
+  test('tier 3: legacy arm falls back in split mode; IN/PH/ID/KE use prepaid annual while offering monthly subscription', () => {
     expect(tiers.getOffer({ country: 'IN', email: emailInArm('legacy') })).toMatchObject({ tiered: true, tier: 3, arm: 'tiered' });
     process.env.TIER3_TEST = 'split';
     expect(tiers.getOffer({ country: 'IN', email: emailInArm('legacy') })).toMatchObject({ tiered: false, tier: 3, arm: 'legacy' });
@@ -177,7 +183,7 @@ describe('getOffer', () => {
 
     // PH
     const ph = tiers.getOffer({ country: 'PH', arm: 'tiered', expArm: 'three_option_control' });
-    expect(ph).toMatchObject({ prepaid: false, monthlyAvailable: true });
+    expect(ph).toMatchObject({ prepaid: true, monthlyAvailable: true });
     expect(ph.prices.educator.label).toBe('₱199');
     expect(ph.prices.pro_annual.label).toBe('₱399');
     expect(ph.prices.pro_monthly.label).toBe('₱49');
@@ -186,7 +192,7 @@ describe('getOffer', () => {
 
     // ID
     const id = tiers.getOffer({ country: 'ID', arm: 'tiered', expArm: 'three_option_control' });
-    expect(id).toMatchObject({ prepaid: false, monthlyAvailable: true });
+    expect(id).toMatchObject({ prepaid: true, monthlyAvailable: true });
     expect(id.prices.educator.label).toBe('Rp 49.000');
     expect(id.prices.pro_annual.label).toBe('Rp 99.000');
     expect(id.prices.pro_monthly.label).toBe('Rp 14.900');
@@ -195,7 +201,7 @@ describe('getOffer', () => {
 
     // KE
     const ke = tiers.getOffer({ country: 'KE', arm: 'tiered', expArm: 'three_option_control' });
-    expect(ke).toMatchObject({ prepaid: false, monthlyAvailable: true });
+    expect(ke).toMatchObject({ prepaid: true, monthlyAvailable: true });
     expect(ke.prices.educator.label).toBe('KSh 390');
     expect(ke.prices.pro_annual.label).toBe('KSh 790');
     expect(ke.prices.pro_monthly.label).toBe('KSh 99');
@@ -221,7 +227,7 @@ describe('getOffer', () => {
 });
 
 describe('lineItemFor', () => {
-  test('subscription annual / monthly in USD and card-capable local markets', () => {
+  test('subscription annual / monthly in USD markets; prepaid annual + subscription monthly in local-currency markets', () => {
     const o = tiers.getOffer({ country: 'US', expArm: 'three_option_control' });
     const annual = tiers.lineItemFor(o, 'pro_annual');
     expect(annual).toEqual({
@@ -232,7 +238,8 @@ describe('lineItemFor', () => {
     expect(tiers.lineItemFor(o, 'educator').recurring).toBe(true);
 
     const br = tiers.getOffer({ country: 'BR', expArm: 'recurring_first' });
-    expect(tiers.lineItemFor(br, 'educator')).toMatchObject({ mode: 'subscription', recurring: true, prepaidYear: false });
+    expect(tiers.lineItemFor(br, 'educator')).toMatchObject({ mode: 'payment', recurring: false, prepaidYear: true });
+    expect(tiers.lineItemFor(br, 'pro_annual')).toMatchObject({ mode: 'payment', recurring: false, prepaidYear: true });
     expect(tiers.lineItemFor(br, 'pro_monthly')).toMatchObject({ mode: 'subscription', recurring: true, prepaidYear: false });
     expect(tiers.lineItemFor(br, 'lifetime').lineItem.price_data.unit_amount).toBe(14900);
   });
@@ -245,12 +252,15 @@ describe('lineItemFor', () => {
     expect(life.lineItem.price_data).toEqual({ currency: 'usd', unit_amount: 2900, product: 'prod_123' });
   });
 
-  test('prepaid annual in IN while IN pro_monthly is a recurring subscription; unknown plan / legacy offer → null', () => {
+  test('prepaid annual in IN/PH/ID/KE/MX/BR/MY while pro_monthly is a recurring subscription; unknown plan / legacy offer → null', () => {
+    for (const country of ['IN', 'PH', 'ID', 'KE', 'MX', 'BR', 'MY']) {
+      const localOffer = tiers.getOffer({ country, arm: 'tiered', expArm: 'three_option_control' });
+      expect(tiers.lineItemFor(localOffer, 'pro_annual')).toMatchObject({ mode: 'payment', recurring: false, prepaidYear: true });
+      expect(tiers.lineItemFor(localOffer, 'educator')).toMatchObject({ mode: 'payment', recurring: false, prepaidYear: true });
+      expect(tiers.lineItemFor(localOffer, 'pro_monthly')).toMatchObject({ mode: 'subscription', recurring: true, prepaidYear: false });
+      expect(tiers.lineItemFor(localOffer, 'lifetime').prepaidYear).toBe(false);
+    }
     const ind = tiers.getOffer({ country: 'IN', arm: 'tiered', expArm: 'three_option_control' });
-    expect(tiers.lineItemFor(ind, 'pro_annual')).toMatchObject({ mode: 'payment', recurring: false, prepaidYear: true });
-    expect(tiers.lineItemFor(ind, 'educator')).toMatchObject({ mode: 'payment', recurring: false, prepaidYear: true });
-    expect(tiers.lineItemFor(ind, 'pro_monthly')).toMatchObject({ mode: 'subscription', recurring: true, prepaidYear: false });
-    expect(tiers.lineItemFor(ind, 'lifetime').prepaidYear).toBe(false);
     expect(tiers.lineItemFor(ind, 'unknown_plan')).toBeNull();
     expect(tiers.lineItemFor({ tiered: false }, 'pro_annual')).toBeNull();
     expect(tiers.lineItemFor(null, 'pro_annual')).toBeNull();

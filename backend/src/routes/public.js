@@ -10,6 +10,7 @@ const CONFIG = require('../config');
 const { escapeHtml } = require('../lib/html');
 const { tf, normalizeLocale, localeFromRequest } = require('../lib/i18n');
 const { verifyUserReview } = require('../services/review-verifier');
+const { buildQuoteModel } = require('../lib/certificate');
 
 const router = Router();
 
@@ -87,9 +88,8 @@ router.post('/public/feedback', feedbackLimiter, async (req, res) => {
 // POST /api/public/quote-request — a school/org asks for a quote or invoice.
 // Institutions rarely buy via a self-serve credit-card button — they need a PO,
 // an invoice, and often a signed DPA before money moves. This captures that lead
-// (persist + email Derek) so the institutional pivot has a buying path that
-// matches how schools actually procure. Unauth (school admins land on /pricing
-// before signing in), rate-limited per IP.
+// (persist + email Derek) AND immediately auto-replies to the teacher/admin with
+// an official self-serve quote + 30-day tokenized 1-click checkout links.
 const quoteLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 5,
@@ -118,8 +118,14 @@ router.post('/public/quote-request', quoteLimiter, async (req, res) => {
       createdAt: FieldValue.serverTimestamp(),
     };
     const isSmokeTest = email === 'ci-smoke@attendancetracker.dev';
+    const quoteModel = buildQuoteModel({
+      schoolName: rec.schoolName || domain || 'Your School / Organization',
+      contactEmail: email,
+      domain,
+    });
+    const quoteNumber = quoteModel.quoteNumber;
     try {
-      if (!isSmokeTest) await getDb().collection('quoteRequests').add(rec);
+      if (!isSmokeTest) await getDb().collection('quoteRequests').add({ ...rec, quoteNumber });
     } catch (e) {
       log.warn('quote-request: firestore persist failed', { error: e.message });
     }
@@ -129,6 +135,7 @@ router.post('/public/quote-request', quoteLimiter, async (req, res) => {
       const body = [
         'A school or organization requested a quote / invoice from the pricing page.',
         '',
+        `Quote #:       ${quoteNumber}`,
         `School / org:  ${rec.schoolName || '(not given)'}`,
         `Work email:    ${email}`,
         `Domain:        ${domain}`,
@@ -139,8 +146,100 @@ router.post('/public/quote-request', quoteLimiter, async (req, res) => {
         `IP: ${rec.ip}`,
       ].join('\n');
       await sendAdminEmail({ to, subject, body });
+
+      // Best-effort: log school_quote_generated and auto-reply to the requester
+      // with an official self-serve quote + 30-day tokenized 1-click checkout links.
+      try {
+        if (domain && typeof logEvent === 'function') {
+          await logEvent(domain, {
+            email,
+            type: 'school_quote_generated',
+            meta: {
+              quoteNumber,
+              schoolName: rec.schoolName || domain,
+              plan: rec.plan || 'department',
+              seats: rec.seats || null,
+              source: 'public_quote_request',
+            },
+          });
+        }
+      } catch (logErr) {
+        log.warn('quote-request: logEvent failed', { error: logErr.message });
+      }
+
+      try {
+        const suppressed = typeof isEmailSuppressed === 'function' ? await isEmailSuppressed(email) : false;
+        if (!suppressed) {
+          const displayName = email.split('@')[0];
+          const quoteToken = jwt.sign(
+            { email, domain, displayName },
+            CONFIG.sessionSecret,
+            { expiresIn: '30d' }
+          );
+          const baseUrl = CONFIG.backendUrl || `${req.protocol}://${req.get('host')}`;
+          const checkoutDeptUrl = `${baseUrl}/api/billing/checkout-redirect?plan=department&interval=annual&token=${encodeURIComponent(quoteToken)}`;
+          const checkoutInstUrl = `${baseUrl}/api/billing/checkout-redirect?plan=team&interval=annual&token=${encodeURIComponent(quoteToken)}`;
+          const checkoutEduUrl = `${baseUrl}/api/billing/checkout-redirect?plan=educator&interval=annual&token=${encodeURIComponent(quoteToken)}`;
+          const orgLabel = rec.schoolName || domain || 'your school';
+
+          await sendAdminEmail({
+            to: email,
+            subject: `Official Quote (${quoteNumber}): Attendance Tracker for ${orgLabel}`,
+            body: [
+              `Hi ${displayName},`,
+              '',
+              `Thank you for requesting an official quote for Attendance Tracker for Google Meet (${orgLabel}).`,
+              'You can forward this email directly to your department head, principal, or IT/finance administrator.',
+              '',
+              `Quote Number: ${quoteNumber}`,
+              `Organization: ${orgLabel} (${domain})`,
+              `Valid Until:  ${quoteModel.validUntil}`,
+              '',
+              '1-Click Self-Serve Activation Links (Card / Invoice / P-Card):',
+              `• Department License ($59 USD / year — up to 10 educators on @${domain}):`,
+              `  ${checkoutDeptUrl}`,
+              '',
+              `• School / Institution License ($149 USD / year — unlimited educators on @${domain}):`,
+              `  ${checkoutInstUrl}`,
+              '',
+              `• Single Educator Annual Pass ($14.99 USD / year — for ${email}):`,
+              `  ${checkoutEduUrl}`,
+              '',
+              'Need a formal PDF invoice, W-9, or Purchase Order (PO) processing? Just reply directly to this email and we will send it right over.',
+              '',
+              'Best regards,',
+              'Derek Gallardo',
+              'Founder, Attendance Tracker for Google Meet',
+              'https://attendancetracker.dev',
+            ].join('\n'),
+            html: `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; color: #1f2937; line-height: 1.6;">
+              <h2 style="color: #111827; margin-bottom: 8px;">Official Quote (${escapeHtml(quoteNumber)}) — Attendance Tracker for Google Meet</h2>
+              <p style="color: #4b5563; font-size: 14px; margin-top: 0;">Prepared for <strong>${escapeHtml(orgLabel)}</strong> (${escapeHtml(email)}) · Valid until ${escapeHtml(quoteModel.validUntil)} · Forwardable to Principal / IT / Procurement</p>
+              <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin: 16px 0;">
+                <p style="margin: 0 0 12px; font-weight: 600; color: #111827;"> Option A: Department License — $59 USD / year</p>
+                <p style="margin: 0 0 12px; font-size: 13px; color: #4b5563;">Covers up to 10 educators on <strong>@${escapeHtml(domain)}</strong>. Unlimited meetings, CSV/PDF exports,LMS gradebook sync, and verifiable certificates.</p>
+                <a href="${checkoutDeptUrl}" style="display: inline-block; background: #2563eb; color: #ffffff; text-decoration: none; padding: 10px 16px; border-radius: 6px; font-weight: 600; font-size: 13px;">Activate Department License ($59/yr) →</a>
+              </div>
+              <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin: 16px 0;">
+                <p style="margin: 0 0 12px; font-weight: 600; color: #111827;">Option B: School / Institution License — $149 USD / year</p>
+                <p style="margin: 0 0 12px; font-size: 13px; color: #4b5563;">Unlimited seats for every educator on <strong>@${escapeHtml(domain)}</strong>. Zero per-user setup.</p>
+                <a href="${checkoutInstUrl}" style="display: inline-block; background: #059669; color: #ffffff; text-decoration: none; padding: 10px 16px; border-radius: 6px; font-weight: 600; font-size: 13px;">Activate School License ($149/yr) →</a>
+              </div>
+              <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin: 16px 0;">
+                <p style="margin: 0 0 12px; font-weight: 600; color: #111827;">Option C: Single Educator Annual Pass — $14.99 USD / year</p>
+                <p style="margin: 0 0 12px; font-size: 13px; color: #4b5563;">Covers 1 educator account (${escapeHtml(email)}) for a full year (reimbursable receipt).</p>
+                <a href="${checkoutEduUrl}" style="display: inline-block; background: #4b5563; color: #ffffff; text-decoration: none; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 12px;">Activate Single Educator Pass ($14.99/yr) →</a>
+              </div>
+              <p style="font-size: 13px; color: #4b5563;"><strong>Need a Purchase Order (PO), W-9, or Signed DPA?</strong> Simply reply to this email with your school's billing details and we will issue a formal Net-30 invoice.</p>
+              <p style="font-size: 12px; color: #9ca3af; margin-top: 24px;">Derek Gallardo · Founder, Attendance Tracker · derekgallardo01@gmail.com</p>
+            </div>`,
+          });
+        }
+      } catch (quoteErr) {
+        log.warn('quote-request: failed to send self-serve quote email to requester', { email, error: quoteErr.message });
+      }
     }
-    res.json({ success: true });
+    res.json({ success: true, quoteNumber });
   } catch (err) {
     log.error('quote-request: failed', { error: err.message });
     res.status(500).json({ error: 'Failed to submit request' });

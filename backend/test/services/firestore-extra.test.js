@@ -1104,6 +1104,8 @@ describe('getDomainClusterStats', () => {
     ctx.seed('tenants/school.edu/users/u3@school.edu', { individualPlan: 'pro', individualPlanExpiresAt: pastIso, individualStripeSubscriptionId: 'sub_123' });
     ctx.seed('tenants/school.edu/users/u4@school.edu', { individualPlan: 'pro' });
     ctx.seed('tenants/school.edu/users/u5@school.edu', { individualPlan: 'free' });
+    ctx.seed('tenants/school.edu/users/u6@school.edu', { individualPlan: 'pro', individualPlanType: 'review_reward', individualPlanExpiresAt: futureIso });
+    ctx.seed('tenants/school.edu/users/u7@school.edu', { individualPlan: 'pro', individualPlanType: 'referral_reward', individualPlanExpiresAt: futureIso });
 
     ctx.seed('tenants/school.edu/meetings/m1', { distinctAttendees: 32 });
     ctx.seed('tenants/school.edu/meetings/m2', { participantCount: 28 });

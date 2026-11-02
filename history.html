@@ -733,10 +733,11 @@
     }
 
     function openUpgradeModal(feature) {
-      window._lastHistoryUpgradeFeature = feature || 'pro';
+      window._lastHistoryUpgradeFeature = feature || 'history_page';
       const offer = window._lastBillingStatus?.offer;
       try {
         logHistoryEvent('upgrade_modal_shown', {
+          reason: feature || 'history_page',
           feature: feature || 'history_page',
           ...(offer?.tier != null ? { tier: offer.tier } : {}),
           ...(offer?.expArm ? { expArm: offer.expArm } : {}),
@@ -783,7 +784,8 @@
       try {
         logHistoryEvent('upgrade_checkout_clicked', {
           plan,
-          reason: 'history_page',
+          reason: window._lastHistoryUpgradeFeature || 'history_page',
+          feature: window._lastHistoryUpgradeFeature || 'history_page',
           ...(offer?.tier != null ? { tier: offer.tier } : {}),
           ...(offer?.expArm ? { expArm: offer.expArm } : {}),
         });
@@ -835,7 +837,7 @@
       } else {
         btn.style.display = '';
         let ctaDesc = t('history.seriesProText', 'Pro adds a cumulative "Class Summary" tab to your export — per-student attendance % across every session of a recurring class.');
-        if (status.pppDiscount && status.pppDiscount.eligible) {
+        if (status.pppDiscount && status.pppDiscount.eligible && !status.offer?.tiered && !status.priceTable) {
           ctaDesc += ' · ' + t('history.regionalSubsidyApplied', '🏷️ 50% Regional Subsidy automatically applied at checkout.');
         }
         text.textContent = ctaDesc;

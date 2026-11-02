@@ -885,9 +885,11 @@ describe('POST /api/admin/check-reengagement', () => {
     expect(notifications.sendActivationNudgeEmail).not.toHaveBeenCalled();
   });
 
-  test('routes expiry_t14 reminder checkoutUrl to plan=educator for educator_annual and plan=pro_annual for pro_annual_prepaid', async () => {
+  test('routes expiry reminder checkoutUrl to plan=educator for educator_annual, review_reward, and referral_reward, and plan=pro_annual for pro_annual_prepaid', async () => {
     firestore.getAllUsersAcrossTenants.mockResolvedValue([
       { email: 'edu@acme.com', domain: 'acme.com', individualPlanType: 'educator_annual', signupGeo: { country: 'IN' } },
+      { email: 'rev@acme.com', domain: 'acme.com', individualPlanType: 'review_reward', signupGeo: { country: 'US' } },
+      { email: 'ref@acme.com', domain: 'acme.com', individualPlanType: 'referral_reward', signupGeo: { country: 'US' } },
       { email: 'pro@acme.com', domain: 'acme.com', individualPlanType: 'pro_annual_prepaid', signupGeo: { country: 'IN' } },
     ]);
     firestore.evaluateReengagementForUser.mockImplementation(async (user) => [
@@ -901,9 +903,17 @@ describe('POST /api/admin/check-reengagement', () => {
       .set('Content-Type', 'application/json')
       .send({});
 
-    expect(notifications.sendPassExpiryReminderEmail).toHaveBeenCalledTimes(2);
+    expect(notifications.sendPassExpiryReminderEmail).toHaveBeenCalledTimes(4);
     expect(notifications.sendPassExpiryReminderEmail).toHaveBeenCalledWith(expect.objectContaining({
       to: 'edu@acme.com',
+      checkoutUrl: expect.stringContaining('&plan=educator'),
+    }));
+    expect(notifications.sendPassExpiryReminderEmail).toHaveBeenCalledWith(expect.objectContaining({
+      to: 'rev@acme.com',
+      checkoutUrl: expect.stringContaining('&plan=educator'),
+    }));
+    expect(notifications.sendPassExpiryReminderEmail).toHaveBeenCalledWith(expect.objectContaining({
+      to: 'ref@acme.com',
       checkoutUrl: expect.stringContaining('&plan=educator'),
     }));
     expect(notifications.sendPassExpiryReminderEmail).toHaveBeenCalledWith(expect.objectContaining({
