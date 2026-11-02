@@ -451,6 +451,7 @@ function renderCertificatesPdf(models) {
 function buildQuoteModel({
   teacherName = null,
   teacherEmail = '',
+  contactEmail = '',
   domain = '',
   schoolName = null,
   department = null,
@@ -460,7 +461,7 @@ function buildQuoteModel({
 } = {}) {
   const issuedDate = toDate(issuedAt) || new Date();
   const validUntilDate = new Date(issuedDate.getTime() + 30 * 86400000);
-  const emailClean = String(teacherEmail || '').trim();
+  const emailClean = String(teacherEmail || contactEmail || '').trim();
   const domainClean = String(domain || (emailClean.includes('@') ? emailClean.split('@')[1] : '') || '').trim().toLowerCase();
   const domainParts = domainClean ? domainClean.split('.').filter(Boolean) : [];
   const domainTld = domainParts.length > 1 ? domainParts[domainParts.length - 1] : '';
@@ -506,10 +507,12 @@ function buildQuoteModel({
     },
   ];
 
+  const validUntilFormatted = fmtDate(validUntilDate, 'UTC', 'en-US');
   return {
     quoteNumber,
     issuedDate: fmtDate(issuedDate, 'UTC', 'en-US'),
-    validUntilDate: fmtDate(validUntilDate, 'UTC', 'en-US'),
+    validUntilDate: validUntilFormatted,
+    validUntil: validUntilFormatted,
     teacherName: teacherName ? String(teacherName).trim() : null,
     teacherEmail: emailClean,
     domain: domainClean,

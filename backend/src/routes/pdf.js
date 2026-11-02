@@ -105,7 +105,7 @@ router.post('/export/pdf', requireAuth, async (req, res) => {
       }
       const models = buildCertificateModels({
         meeting, attendees,
-        options: { brand, creditHours: b.creditHours, courseCode, issuer, locale, timezone: tz },
+        options: { brand, creditHours: b.creditHours, courseCode, issuer, locale, timezone: tz, isPro: allowed },
       });
       if (!models.length) return res.status(400).json({ error: 'No present attendees to certify.' });
       pdf = await renderCertificatesPdf(models);
@@ -178,7 +178,7 @@ router.post('/export/pdf', requireAuth, async (req, res) => {
       }
 
       // Base report: branding is the only Pro lever (default footer otherwise).
-      const model = buildReportModel({ meeting, attendees, options: { brand, locale, timezone: tz } });
+      const model = buildReportModel({ meeting, attendees, options: { brand, locale, timezone: tz, isPro: allowed } });
       pdf = await renderReportPdf(model);
       filename = `attendance-${slugify(meeting.title)}.pdf`;
     }

@@ -7465,7 +7465,7 @@ function paintPrices() {
   const map = {
     'price-lifetime': AttPricing.price('lifetime'),
     'price-educator': AttPricing.price('educator'),
-    'price-single-meeting': AttPricing.price('single_meeting') || '$2.99',
+    'price-single-meeting': _resolvePaywallPlanPrice('single_meeting', '$3.99'),
     'price-team': AttPricing.price('team'),
     'price-department': AttPricing.price('department'),
   };
@@ -7475,6 +7475,10 @@ function paintPrices() {
   }
   // Translated copy with {price:…} tokens follows the same live table.
   if (window.AttStrings && AttStrings.refreshPrices) AttStrings.refreshPrices();
+  const passBadge = document.getElementById('paywall-why-pass-badge');
+  if (passBadge) {
+    passBadge.textContent = `${_resolvePaywallPlanPrice('single_meeting', '$3.99')} pass`;
+  }
 }
 
 async function loadBillingStatus() {
@@ -10573,6 +10577,13 @@ async function downloadPdfReport() {
 }
 
 async function downloadParticipantCert(attendee) {
+  const confKey = (state && (state.conferenceId || state.meetingCode)) || 'current';
+  if (!state._freeCertsByConf) state._freeCertsByConf = {};
+  const used = state._freeCertsByConf[confKey] || 0;
+  if (!_isPro && used >= 3) {
+    showUpgradeModal('certificates');
+    return false;
+  }
   const saved = loadCertOptions();
   const ok = await _downloadPdf({
     type: 'certificates',
@@ -10586,8 +10597,11 @@ async function downloadParticipantCert(attendee) {
     },
   });
   if (ok && !_isPro) {
+    const nextUsed = used + 1;
+    state._freeCertsByConf[confKey] = nextUsed;
+    const remaining = Math.max(0, 3 - nextUsed);
     setTimeout(() => {
-      toast('Certificate downloaded with Free Edition branding. Upgrade to Pro to remove branding & unlock bulk export.');
+      toast(`${remaining} of 3 free certificates remaining for this meeting — Upgrade to download all in 1 ZIP`);
     }, 1200);
   }
   return ok;
@@ -12405,7 +12419,7 @@ window.addEventListener('DOMContentLoaded', () => {
         <div style="display:flex;flex-direction:column;gap:8px">
           <button type="button" onclick="answerPaywallWhy('expensive')" style="flex:0 0 auto;text-align:start;background:#161b22;border:1px solid #30363d;color:#e6edf3;border-radius:10px;padding:10px 14px;font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:space-between">
             <span data-i18n="paywall.whyPrice">Too expensive / budget</span>
-            <span id="paywall-why-pass-badge" style="color:#81c995;font-size:.75rem;font-weight:600" data-i18n="paywall.passOffer">$3.99 pass</span>
+            <span id="paywall-why-pass-badge" style="color:#81c995;font-size:.75rem;font-weight:600">$3.99 pass</span>
           </button>
           <button type="button" onclick="answerPaywallWhy('school_approval')" style="flex:0 0 auto;text-align:start;background:#161b22;border:1px solid #30363d;color:#e6edf3;border-radius:10px;padding:10px 14px;font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:space-between">
             <span data-i18n="paywall.whySchoolApproval">Need school approval / invoice</span>
@@ -12423,13 +12437,13 @@ window.addEventListener('DOMContentLoaded', () => {
       <!-- View 2: "Too expensive" resolution (Single-Meeting Pass + Monthly Pass 1-click rescue CTAs) -->
       <div id="paywall-why-view-expensive" style="display:none;flex-direction:column;gap:10px">
         <div style="font-weight:600;color:#e3e3e3;font-size:1rem;margin-bottom:2px" data-i18n="paywall.expensiveTitle">We want roll-call to be accessible!</div>
-        <div id="paywall-why-expensive-desc" style="color:#9aa0a6;font-size:.78rem;line-height:1.4" data-i18n="paywall.expensiveDesc">Need to export right now without an annual commitment? Unlock just this meeting for $3.99, or start a Monthly Pass for $3.99/mo (cancel anytime).</div>
+        <div id="paywall-why-expensive-desc" style="color:#9aa0a6;font-size:.78rem;line-height:1.4">Need to export right now without an annual commitment? Unlock just this meeting for $3.99, or start a Monthly Pass for $3.99/mo (cancel anytime).</div>
         <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px;margin:2px 0;display:flex;flex-direction:column;gap:8px">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <span style="font-weight:600;font-size:.86rem;color:#e3e3e3" data-i18n="upgrade.singleMeetingName">Single-Meeting Pass</span>
             <span style="font-weight:700;color:#81c995" id="paywall-why-single-price">$3.99 <span style="font-size:.7rem;font-weight:400;color:#9aa0a6" data-i18n="pricing.oneTime">one-time</span></span>
           </div>
-          <button type="button" onclick="buySingleMeeting()" id="btn-paywall-why-single" style="width:100%;background:#34a853;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-weight:600;font-size:.8rem;cursor:pointer" data-i18n="upgrade.ctaSingleMeeting">Unlock Just This Meeting — $3.99</button>
+          <button type="button" onclick="buySingleMeeting()" id="btn-paywall-why-single" style="width:100%;background:#34a853;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-weight:600;font-size:.8rem;cursor:pointer">Unlock Just This Meeting — $3.99</button>
           <div style="display:flex;justify-content:space-between;align-items:center;padding-top:4px;border-top:1px solid rgba(255,255,255,.08)">
             <span style="font-weight:600;font-size:.82rem;color:#e3e3e3">Monthly Pass</span>
             <span style="font-weight:700;color:#58a6ff" id="paywall-why-monthly-price">$3.99 <span style="font-size:.7rem;font-weight:400;color:#9aa0a6">/mo</span></span>

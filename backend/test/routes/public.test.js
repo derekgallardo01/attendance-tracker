@@ -275,9 +275,13 @@ describe('POST /api/public/quote-request (institutional buying path)', () => {
     expect(notifications.sendAdminEmail).toHaveBeenCalledWith(expect.objectContaining({
       to: 'admin@school.edu',
       subject: expect.stringContaining('Official Quote'),
-      body: expect.stringContaining('/api/billing/checkout-redirect?plan=department'),
+      body: expect.stringMatching(/Valid Until:\s+[A-Za-z]+, [A-Za-z]+ \d+, \d{4}/),
       html: expect.stringContaining('/api/billing/checkout-redirect?plan=team'),
     }));
+    const quoteReplyCall = notifications.sendAdminEmail.mock.calls.find((c) => c[0]?.to === 'admin@school.edu');
+    expect(quoteReplyCall).toBeDefined();
+    expect(quoteReplyCall[0].body).not.toContain('undefined');
+    expect(quoteReplyCall[0].html).not.toContain('undefined');
     expect(firestore.logEvent).toHaveBeenCalledWith('school.edu', expect.objectContaining({
       email: 'admin@school.edu',
       type: 'school_quote_generated',

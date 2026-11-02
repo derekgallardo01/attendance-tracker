@@ -120,10 +120,12 @@ router.post('/public/quote-request', quoteLimiter, async (req, res) => {
     const isSmokeTest = email === 'ci-smoke@attendancetracker.dev';
     const quoteModel = buildQuoteModel({
       schoolName: rec.schoolName || domain || 'Your School / Organization',
+      teacherEmail: email,
       contactEmail: email,
       domain,
     });
     const quoteNumber = quoteModel.quoteNumber;
+    const validUntil = quoteModel.validUntilDate || quoteModel.validUntil;
     try {
       if (!isSmokeTest) await getDb().collection('quoteRequests').add({ ...rec, quoteNumber });
     } catch (e) {
@@ -171,15 +173,27 @@ router.post('/public/quote-request', quoteLimiter, async (req, res) => {
         const suppressed = typeof isEmailSuppressed === 'function' ? await isEmailSuppressed(email) : false;
         if (!suppressed) {
           const displayName = email.split('@')[0];
-          const quoteToken = jwt.sign(
-            { email, domain, displayName },
-            CONFIG.sessionSecret,
-            { expiresIn: '30d' }
-          );
+          let quoteToken = '';
+          if (CONFIG.sessionSecret) {
+            try {
+              quoteToken = jwt.sign(
+                { email, domain, displayName, role: 'user' },
+                CONFIG.sessionSecret,
+                { expiresIn: '30d' }
+              );
+            } catch (_) {}
+          }
           const baseUrl = CONFIG.backendUrl || `${req.protocol}://${req.get('host')}`;
-          const checkoutDeptUrl = `${baseUrl}/api/billing/checkout-redirect?plan=department&interval=annual&token=${encodeURIComponent(quoteToken)}`;
-          const checkoutInstUrl = `${baseUrl}/api/billing/checkout-redirect?plan=team&interval=annual&token=${encodeURIComponent(quoteToken)}`;
-          const checkoutEduUrl = `${baseUrl}/api/billing/checkout-redirect?plan=educator&interval=annual&token=${encodeURIComponent(quoteToken)}`;
+          const fallbackPricingUrl = `${CONFIG.publicSiteUrl || 'https://attendancetracker.dev'}/pricing.html`;
+          const checkoutDeptUrl = quoteToken
+            ? `${baseUrl}/api/billing/checkout-redirect?plan=department&interval=annual&token=${encodeURIComponent(quoteToken)}`
+            : fallbackPricingUrl;
+          const checkoutInstUrl = quoteToken
+            ? `${baseUrl}/api/billing/checkout-redirect?plan=team&interval=annual&token=${encodeURIComponent(quoteToken)}`
+            : fallbackPricingUrl;
+          const checkoutEduUrl = quoteToken
+            ? `${baseUrl}/api/billing/checkout-redirect?plan=educator&interval=annual&token=${encodeURIComponent(quoteToken)}`
+            : fallbackPricingUrl;
           const orgLabel = rec.schoolName || domain || 'your school';
 
           await sendAdminEmail({
@@ -193,7 +207,7 @@ router.post('/public/quote-request', quoteLimiter, async (req, res) => {
               '',
               `Quote Number: ${quoteNumber}`,
               `Organization: ${orgLabel} (${domain})`,
-              `Valid Until:  ${quoteModel.validUntil}`,
+              `Valid Until:  ${validUntil}`,
               '',
               '1-Click Self-Serve Activation Links (Card / Invoice / P-Card):',
               `• Department License ($59 USD / year — up to 10 educators on @${domain}):`,
@@ -214,7 +228,7 @@ router.post('/public/quote-request', quoteLimiter, async (req, res) => {
             ].join('\n'),
             html: `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; color: #1f2937; line-height: 1.6;">
               <h2 style="color: #111827; margin-bottom: 8px;">Official Quote (${escapeHtml(quoteNumber)}) — Attendance Tracker for Google Meet</h2>
-              <p style="color: #4b5563; font-size: 14px; margin-top: 0;">Prepared for <strong>${escapeHtml(orgLabel)}</strong> (${escapeHtml(email)}) · Valid until ${escapeHtml(quoteModel.validUntil)} · Forwardable to Principal / IT / Procurement</p>
+              <p style="color: #4b5563; font-size: 14px; margin-top: 0;">Prepared for <strong>${escapeHtml(orgLabel)}</strong> (${escapeHtml(email)}) · Valid until ${escapeHtml(validUntil)} · Forwardable to Principal / IT / Procurement</p>
               <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin: 16px 0;">
                 <p style="margin: 0 0 12px; font-weight: 600; color: #111827;"> Option A: Department License — $59 USD / year</p>
                 <p style="margin: 0 0 12px; font-size: 13px; color: #4b5563;">Covers up to 10 educators on <strong>@${escapeHtml(domain)}</strong>. Unlimited meetings, CSV/PDF exports,LMS gradebook sync, and verifiable certificates.</p>
