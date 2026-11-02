@@ -961,7 +961,12 @@ router.post('/billing/public-checkout', async (req, res) => {
   if (publicPlanInvalid) {
     return res.status(400).json({ error: 'Unknown plan.' });
   }
-  const plan = normalizedPublicPlan || 'lifetime';
+  let plan = normalizedPublicPlan || 'lifetime';
+  let requestedInterval = req.body?.interval;
+  if (plan === 'team' && requestedInterval === 'once' && process.env.STRIPE_DEPARTMENT_PRICE_ID) {
+    plan = 'department';
+    requestedInterval = 'annual';
+  }
   if (plan === 'single_meeting') {
     return res.status(400).json({ error: 'Single-meeting pass must be purchased from within an active meeting session.' });
   }
@@ -992,7 +997,7 @@ router.post('/billing/public-checkout', async (req, res) => {
   // 'annual' was a trap: a bare {plan:'team'} would resolve to the $149/yr
   // Institution price AND auto-apply LAUNCH50 — wrong tier + a discount
   // Institution must never get.
-  const annual = req.body?.interval === 'annual';
+  const annual = requestedInterval === 'annual';
   const email = (req.body?.email || '').trim().toLowerCase() || undefined;
   const isTeam = plan === 'team';
   const isDepartment = plan === 'department';
@@ -1985,7 +1990,8 @@ async function webhookHandler(req, res) {
               currency: s.currency,
               customerId: s.customer || null,
               subscriptionId: s.subscription || null,
-              country: s.customer_details?.address?.country || userDoc?.signupGeo?.country || null,
+              paymentIntentId: payment.paymentIntentId || null,
+              country: s.customer_details?.address?.country || s.metadata?.country || userDoc?.signupGeo?.country || null,
               isTeam: false,
             }).catch(err => log.warn('billing: sendUpgradeNotification failed (single_meeting)', { email, error: err.message }));
           } catch (e) {
@@ -2057,7 +2063,8 @@ async function webhookHandler(req, res) {
                 currency: s.currency,
                 customerId: s.customer || null,
                 subscriptionId: s.subscription || null,
-                country: s.customer_details?.address?.country || userDoc?.signupGeo?.country || null,
+                paymentIntentId: payment.paymentIntentId || null,
+                country: s.customer_details?.address?.country || s.metadata?.country || userDoc?.signupGeo?.country || null,
                 isTeam: false,
               }).catch(err => log.warn('billing: sendUpgradeNotification failed (individual)', { email, error: err.message }));
             } catch (e) {
@@ -2124,7 +2131,8 @@ async function webhookHandler(req, res) {
                 currency: s.currency,
                 customerId: s.customer || null,
                 subscriptionId: s.subscription || null,
-                country: s.customer_details?.address?.country || null,
+                paymentIntentId: payment.paymentIntentId || null,
+                country: s.customer_details?.address?.country || s.metadata?.country || null,
                 isTeam: true,
               }).catch(err => log.warn('billing: sendUpgradeNotification failed (team)', { domain, error: err.message }));
             } catch (e) {

@@ -811,12 +811,13 @@ describe('getRevenueFunnel', () => {
     seedEvent('a.com', 'buyer@a.com', 'upgrade_modal_shown', now - 4 * HOUR, { reason: 'auto_export' });
     seedEvent('a.com', 'buyer@a.com', 'upgrade_checkout_clicked', now - 4 * HOUR, { plan: 'lifetime' });
     seedEvent('a.com', 'buyer@a.com', 'upgraded', now - 3 * HOUR, { plan: 'individual' });
-    // Stuck: 3 quota warnings, never clicked, leaked to CSV, answered the ask.
+    // Stuck: 3 quota warnings, clicked #export-quota-upgrade-link (opens modal, not checkout), never clicked checkout, leaked to CSV, answered the ask.
     seedUser('b.com', 'stuck@b.com', { signupGeo: { country: 'PH' } });
     seedEvent('b.com', 'stuck@b.com', 'tracked', now - 9 * HOUR);
     seedEvent('b.com', 'stuck@b.com', 'quota_warning_shown', now - 8 * HOUR);
     seedEvent('b.com', 'stuck@b.com', 'quota_warning_shown', now - 7 * HOUR);
     seedEvent('b.com', 'stuck@b.com', 'quota_warning_shown', now - 6 * HOUR);
+    seedEvent('b.com', 'stuck@b.com', 'quota_upgrade_clicked', now - 6 * HOUR + 1000);
     seedEvent('b.com', 'stuck@b.com', 'export_csv_downloaded', now - 6 * HOUR + 5 * 60000);
     seedEvent('b.com', 'stuck@b.com', 'paywall_objection', now - 6 * HOUR + 10 * 60000, { reason: 'price' });
     // Casual: activated, never saw a gate.

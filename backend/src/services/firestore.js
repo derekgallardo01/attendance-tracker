@@ -511,6 +511,12 @@ async function logEvent(domain, { email, type, meta, docId, preserveCreatedAt = 
       );
     }
     await Promise.all(writes);
+    if (ACTIVITY_EVENT_TYPES.has(type)) {
+      memoizedGetRecentActivity.clear?.();
+    }
+    if (type === 'upgraded') {
+      clearAllInsightsCache({ clearFirestore: true });
+    }
   } catch (err) {
     log.warn('firestore: logEvent failed', { domain, email, type, error: err.message });
   }

@@ -843,7 +843,15 @@ describe('notifications — remaining sender branches (Resend mocked)', () => {
       amountTotal: 149,
       currency: 'usd',
     });
-    expect(mockSend).toHaveBeenCalledTimes(3);
+    await n.sendUpgradeNotification({
+      email: 'jeevasurya4u@gmail.com',
+      plan: 'lifetime',
+      amount: 49900,
+      currency: 'inr',
+      country: 'IN',
+      paymentIntentId: 'pi_3UXq1LRPP93YBXrO0sC0c35Q',
+    });
+    expect(mockSend).toHaveBeenCalledTimes(4);
     const call1 = mockSend.mock.calls[0][0];
     expect(call1.subject).toContain('Lifetime Pass');
     expect(call1.html).toContain('Active');
@@ -853,6 +861,12 @@ describe('notifications — remaining sender branches (Resend mocked)', () => {
     const call3 = mockSend.mock.calls[2][0];
     expect(call3.subject).toContain('Single Meeting Pass');
     expect(call3.html).toContain('$1.49 USD');
+    const call4 = mockSend.mock.calls[3][0];
+    expect(call4.subject).toContain('💰 New Upgrade: jeevasurya4u@gmail.com (₹499.00 INR - Lifetime Pass)');
+    expect(call4.html).toContain('₹499.00 INR');
+    expect(call4.html).toContain('gmail.com');
+    expect(call4.html).toContain('https://dashboard.stripe.com/payments/pi_3UXq1LRPP93YBXrO0sC0c35Q');
+    expect(call4.html).toContain('View Payment in Stripe →');
   });
 
   test('sendAdminSubscriptionCancelledNotification formats plan, dates, Stripe links, and source', async () => {

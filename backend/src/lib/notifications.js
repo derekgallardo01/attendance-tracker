@@ -527,15 +527,30 @@ async function sendSourceReportedNotification({ email, displayName, domain, repo
 // Fire-and-forget upgrade / payment notification email. Sends to NOTIFY_EMAIL
 // (or the owner's inbox). Surfaces instant monetization events with direct
 // links to the customer/subscription in the Stripe dashboard.
+const UPGRADE_CURRENCY_SYMBOLS = {
+  usd: '$',
+  inr: '₹',
+  php: '₱',
+  brl: 'R$ ',
+  mxn: 'MX$',
+  myr: 'RM ',
+  kes: 'KSh ',
+  idr: 'Rp ',
+  eur: '€',
+  gbp: '£',
+};
+
 async function sendUpgradeNotification({
   email,
   displayName,
   domain,
   plan,
   amountTotal,
+  amount,
   currency = 'usd',
   customerId,
   subscriptionId,
+  paymentIntentId,
   country,
   isTeam = false,
 }) {
@@ -543,17 +558,24 @@ async function sendUpgradeNotification({
   const to = process.env.NOTIFY_EMAIL || ownerEmail();
   if (!to) return { skipped: 'no NOTIFY_EMAIL/owner' };
 
-  const formattedAmount = (amountTotal != null && amountTotal > 0)
-    ? `$${(amountTotal / 100).toFixed(2)} ${currency ? currency.toUpperCase() : 'USD'}`
+  const rawAmount = amountTotal != null ? amountTotal : amount;
+  const numericAmount = rawAmount != null && rawAmount !== '' ? Number(rawAmount) : NaN;
+  const currCode = (currency ? String(currency).trim().toLowerCase() : 'usd') || 'usd';
+  const currUpper = currCode.toUpperCase();
+  const currSymbol = UPGRADE_CURRENCY_SYMBOLS[currCode] || '$';
+  const formattedAmount = (Number.isFinite(numericAmount) && numericAmount > 0)
+    ? `${currSymbol}${(numericAmount / 100).toFixed(2)} ${currUpper}`
     : 'Active';
 
+  const resolvedDomain = domain || (email && String(email).includes('@') ? String(email).split('@')[1].toLowerCase() : null);
+
   let planLabel = 'Pro Plan';
-  if (plan === 'educator') planLabel = 'Educator Pro';
+  if (plan === 'educator' || plan === 'educator_annual') planLabel = 'Educator Pro';
   else if (plan === 'lifetime') planLabel = 'Lifetime Pass';
   else if (plan === 'single_meeting') planLabel = 'Single Meeting Pass';
-  else if (isTeam || plan === 'team') planLabel = 'Team Pro';
+  else if (isTeam || plan === 'team' || plan === 'institution') planLabel = 'Team Pro';
   else if (plan === 'department') planLabel = 'Department Pro';
-  else if (plan === 'individual') planLabel = 'Individual Pro';
+  else if (plan === 'individual' || plan === 'pro_annual' || plan === 'pro_annual_prepaid' || plan === 'pro_monthly') planLabel = 'Individual Pro';
 
   const flag = country && country.length === 2
     ? String.fromCodePoint(0x1F1E6 + country.toUpperCase().charCodeAt(0) - 65, 0x1F1E6 + country.toUpperCase().charCodeAt(1) - 65) + ' '
@@ -564,6 +586,7 @@ async function sendUpgradeNotification({
 
   const stripeCustomerLink = customerId ? `https://dashboard.stripe.com/customers/${customerId}` : null;
   const stripeSubLink = subscriptionId ? `https://dashboard.stripe.com/subscriptions/${subscriptionId}` : null;
+  const stripePaymentLink = paymentIntentId ? `https://dashboard.stripe.com/payments/${paymentIntentId}` : null;
 
   const contentHtml = `
     <table class="responsive-table" style="table-layout:fixed;border-collapse:collapse;width:100%;font-size:13px;background:#0d1117;border:1px solid #30363d;border-radius:8px;overflow:hidden;margin-bottom:8px;box-sizing:border-box;">
@@ -571,9 +594,10 @@ async function sendUpgradeNotification({
       <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;width:34%;max-width:120px;vertical-align:top;word-break:break-word;">Email</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;word-break:break-word;overflow-wrap:anywhere;"><a href="mailto:${escape(email)}" style="color:#58a6ff;text-decoration:none;word-break:break-word;overflow-wrap:anywhere;">${escape(email)}</a></td></tr>
       <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;vertical-align:top;word-break:break-word;">Plan</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;color:#4ade80;font-weight:700;word-break:break-word;overflow-wrap:anywhere;">${escape(planLabel)}</td></tr>
       <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;vertical-align:top;word-break:break-word;">Amount</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;color:#e6edf3;font-weight:600;word-break:break-word;overflow-wrap:anywhere;">${escape(formattedAmount)}</td></tr>
-      <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;vertical-align:top;word-break:break-word;">Domain</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;color:#e6edf3;word-break:break-word;overflow-wrap:anywhere;">${escape(domain || '—')}</td></tr>
+      <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;vertical-align:top;word-break:break-word;">Domain</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;color:#e6edf3;word-break:break-word;overflow-wrap:anywhere;">${escape(resolvedDomain || '—')}</td></tr>
       <tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;vertical-align:top;word-break:break-word;">Country / Location</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;color:#e6edf3;word-break:break-word;overflow-wrap:anywhere;">${escape(locationText)}</td></tr>
       ${stripeSubLink ? `<tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;vertical-align:top;word-break:break-word;">Subscription</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;word-break:break-word;overflow-wrap:anywhere;"><a href="${escape(stripeSubLink)}" style="color:#58a6ff;text-decoration:none;word-break:break-word;overflow-wrap:anywhere;">${escape(subscriptionId)}</a></td></tr>` : ''}
+      ${stripePaymentLink ? `<tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;vertical-align:top;word-break:break-word;">Payment Intent</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;word-break:break-word;overflow-wrap:anywhere;"><a href="${escape(stripePaymentLink)}" style="color:#58a6ff;text-decoration:none;word-break:break-word;overflow-wrap:anywhere;">${escape(paymentIntentId)}</a></td></tr>` : ''}
       ${stripeCustomerLink ? `<tr><td style="padding:8px 10px;color:#8b949e;font-weight:600;border-bottom:1px solid #21262d;vertical-align:top;word-break:break-word;">Stripe Customer</td><td style="padding:8px 10px;border-bottom:1px solid #21262d;word-break:break-word;overflow-wrap:anywhere;"><a href="${escape(stripeCustomerLink)}" style="color:#58a6ff;text-decoration:none;word-break:break-word;overflow-wrap:anywhere;">${escape(customerId)}</a></td></tr>` : ''}
     </table>
   `;
@@ -584,8 +608,12 @@ async function sendUpgradeNotification({
     title: `💰 ${displayName || email} upgraded to ${planLabel}!`,
     subtitle: `Payment of ${formattedAmount} received.`,
     contentHtml,
-    ctaText: stripeSubLink ? 'View Subscription in Stripe →' : (stripeCustomerLink ? 'View Customer in Stripe →' : 'Open Admin Dashboard →'),
-    ctaUrl: stripeSubLink || stripeCustomerLink || 'https://attendancetracker.dev/admin.html',
+    ctaText: stripeSubLink
+      ? 'View Subscription in Stripe →'
+      : (stripeCustomerLink
+        ? 'View Customer in Stripe →'
+        : (stripePaymentLink ? 'View Payment in Stripe →' : 'Open Admin Dashboard →')),
+    ctaUrl: stripeSubLink || stripeCustomerLink || stripePaymentLink || 'https://attendancetracker.dev/admin.html',
     ctaColor: 'green',
   });
 
@@ -594,9 +622,10 @@ async function sendUpgradeNotification({
     `Plan: ${planLabel}`,
     `Amount: ${formattedAmount}`,
     `Email: ${email}`,
-    `Domain: ${domain || '—'}`,
+    `Domain: ${resolvedDomain || '—'}`,
     `Location: ${locationText}`,
     subscriptionId ? `Subscription: ${subscriptionId} (${stripeSubLink})` : '',
+    paymentIntentId ? `Payment: ${paymentIntentId} (${stripePaymentLink})` : '',
     customerId ? `Customer: ${customerId} (${stripeCustomerLink})` : '',
     '',
     'Open admin dashboard: https://attendancetracker.dev/admin.html',
@@ -606,7 +635,7 @@ async function sendUpgradeNotification({
     from: makeFrom('Attendance Tracker'),
     to, subject, text, html,
     tags: [{ name: 'type', value: 'upgrade' }],
-  }, 'upgrade notification', { email, domain, plan });
+  }, 'upgrade notification', { email, domain: resolvedDomain, plan });
 }
 
 // Fire-and-forget admin notification email for subscription cancellations.

@@ -2800,13 +2800,21 @@
 
       let filtered = cachedActivityEvents;
       if (currentActivityFilter === 'meetings') {
-        filtered = cachedActivityEvents.filter(e => e.type === 'tracked' || e.type === 'meeting' || e.type === 'first_tracked');
+        filtered = cachedActivityEvents.filter(e => e.type === 'tracked' || e.type === 'meeting' || e.type === 'first_tracked').slice(0, 30);
       } else if (currentActivityFilter === 'exports') {
-        filtered = cachedActivityEvents.filter(e => e.type === 'exported' || e.type === 'export_success');
+        filtered = cachedActivityEvents.filter(e => e.type === 'exported' || e.type === 'export_success').slice(0, 30);
       } else if (currentActivityFilter === 'upgrades') {
-        filtered = cachedActivityEvents.filter(e => e.type === 'upgraded');
+        filtered = cachedActivityEvents.filter(e => e.type === 'upgraded').slice(0, 30);
       } else if (currentActivityFilter === 'signins') {
-        filtered = cachedActivityEvents.filter(e => e.type === 'signin');
+        filtered = cachedActivityEvents.filter(e => e.type === 'signin').slice(0, 30);
+      } else {
+        filtered = cachedActivityEvents.slice(0, 30);
+        if (!filtered.some(e => e.type === 'upgraded')) {
+          const recentUpg = cachedActivityEvents.filter(e => e.type === 'upgraded').slice(0, 5);
+          if (recentUpg.length) {
+            filtered = filtered.slice(0, Math.max(0, 30 - recentUpg.length)).concat(recentUpg);
+          }
+        }
       }
 
       if (!filtered.length) {
