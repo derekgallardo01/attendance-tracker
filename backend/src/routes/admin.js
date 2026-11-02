@@ -444,7 +444,8 @@ router.get('/admin/all-users', requireSuperAdmin, async (req, res) => {
 router.get('/admin/activity', requireSuperAdmin, async (req, res) => {
   try {
     const limit = Math.max(1, Math.min(200, Number(req.query.limit) || 50));
-    const events = await getRecentActivity({ limit });
+    const type = typeof req.query.type === 'string' && req.query.type.trim() ? req.query.type.trim() : undefined;
+    const events = await getRecentActivity(type ? { limit, type } : { limit });
     res.json({ events });
   } catch (err) {
     log.error('admin: activity failed', { error: err.message });
@@ -1280,7 +1281,8 @@ router.get('/admin/reminders/due', requireSuperAdmin, async (req, res) => {
 
 router.get('/admin/insights', requireSuperAdmin, async (req, res) => {
   try {
-    const insights = await getAggregatedInsights();
+    const force = req.query.force === '1' || req.query.refresh === '1' || req.query.nocache === '1';
+    const insights = await (force ? getAggregatedInsights({ force: true }) : getAggregatedInsights());
     res.json(insights);
   } catch (err) {
     log.error('admin: insights failed', { error: err.message });

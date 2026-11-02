@@ -322,6 +322,32 @@ describe('getRecentActivity', () => {
     const events = await firestore.getRecentActivity({ limit: 3 });
     expect(events).toHaveLength(3);
   });
+
+  test('supports filtering by event type / category and preserves upgraded events in admin_activity', async () => {
+    const now = Date.now();
+    ctx.seed('admin_activity/upg1', {
+      email: 'jeevasurya4u@gmail.com',
+      domain: 'gmail.com',
+      type: 'upgraded',
+      meta: { plan: 'lifetime', amount: 49900, currency: 'inr' },
+      createdAt: wrapTimestamp(new Date(now - 3600 * 1000)),
+    });
+    for (let i = 0; i < 12; i++) {
+      ctx.seed(`admin_activity/sig_${i}`, {
+        email: `u${i}@a.com`,
+        domain: 'a.com',
+        type: 'signin',
+        createdAt: wrapTimestamp(new Date(now - i * 1000)),
+      });
+    }
+    const defaultFeed = await firestore.getRecentActivity({ limit: 10 });
+    expect(defaultFeed).toHaveLength(10);
+    expect(defaultFeed.some(e => e.type === 'upgraded' && e.email === 'jeevasurya4u@gmail.com')).toBe(true);
+
+    const upgradesOnly = await firestore.getRecentActivity({ limit: 10, type: 'upgrades' });
+    expect(upgradesOnly).toHaveLength(1);
+    expect(upgradesOnly[0]).toMatchObject({ email: 'jeevasurya4u@gmail.com', type: 'upgraded' });
+  });
 });
 
 // ═══════════════════════════ getUserDetail (drill-down + health score) ═══════════════════════════
@@ -1007,6 +1033,13 @@ describe('getSuppressedEmailSet, getUserMeetingSeries, evaluateSeriesAlerts & ge
     firestore.clearInsightsCache();
     const fromOps = await firestore.getAggregatedInsights({ force: false, useFirestoreCache: true });
     expect(fromOps.sentinelFromOpsCache).toBe(true);
+
+    // Plan upgrades and payments invalidate both in-memory and persistent ops/insightsCache
+    await firestore.setUserPlan('acme.edu', 'u1@acme.edu', { individualPlan: 'pro', individualBillingStatus: 'active' });
+    expect(ctx.read('ops/insightsCache').cachedAtMs).toBe(0);
+    const afterUpgrade = await firestore.getAggregatedInsights({ force: false, useFirestoreCache: true });
+    expect(afterUpgrade.sentinelFromOpsCache).toBeUndefined();
+    expect(afterUpgrade.proIndividuals).toBe(1);
   });
 
   test('getAllUsersAcrossTenants includes decrypted refreshToken, hasRefreshToken, and timezone, caches across calls, and invalidates on upsertUser / setUserPlan / deleteUser', async () => {

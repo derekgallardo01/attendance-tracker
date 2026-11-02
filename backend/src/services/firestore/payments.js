@@ -170,6 +170,10 @@ async function recordPayment(p) {
         updatedAt: FieldValue.serverTimestamp(),
       }, { merge: true });
     }
+    try {
+      const { clearInsightsCache } = require('./analytics');
+      if (typeof clearInsightsCache === 'function') clearInsightsCache({ clearFirestore: true });
+    } catch (_) {}
     return true;
   } catch (err) {
     log.warn('payments: recordPayment failed', { id: p.id, error: err.message });

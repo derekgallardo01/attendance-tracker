@@ -622,16 +622,16 @@
         fetch(`${BACKEND_URL}/event`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionToken}`, ...localeHdr() },
-          body: JSON.stringify({ type: 'upgrade_checkout_clicked', meta: { plan: 'team', reason: 'team_page' } }),
+          body: JSON.stringify({ type: 'upgrade_checkout_clicked', meta: { plan: 'department', reason: 'team_page' } }),
         }).catch(() => {});
       } catch (e) {}
       const btn = document.getElementById('upgrade-btn');
       if (btn) { btn.disabled = true; btn.textContent = t('common.loading', 'Loading…'); }
       try {
-        // Explicit plan AND explicit 'once': team+annual is the $149
-        // Institution price server-side — this page sells the one-time
-        // domain license only (Institution lives on pricing.html).
-        window.location.href = await AttApi.startCheckout(sessionToken, { plan: 'team', interval: 'once' }); // shared js/api.js
+        // Explicit plan 'department' ($59/yr): matches the School Quote modal on
+        // this page and the panel's Department CTA (Institution $149/yr lives on
+        // pricing.html; the legacy $19.99 one-time domain license is retired).
+        window.location.href = await AttApi.startCheckout(sessionToken, { plan: 'department', interval: 'annual' }); // shared js/api.js
         return;
       } catch (e) {
         alert(excText(e));

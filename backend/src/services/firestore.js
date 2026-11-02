@@ -64,6 +64,7 @@ async function setTenantPlan(domain, patch) {
       ...patch, // e.g. { plan:'pro', billingStatus:'active', stripeCustomerId, stripeSubscriptionId }
       planUpdatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
+    clearAllInsightsCache({ clearFirestore: true });
     log.info('firestore: set tenant plan', { domain, plan: patch.plan, status: patch.billingStatus });
   } catch (err) {
     // Rethrow: the Stripe webhook is the only caller and it MUST see this fail so
@@ -117,6 +118,7 @@ async function setUserPlan(domain, email, patch) {
       individualPlanUpdatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
     clearAllUsersCache();
+    clearAllInsightsCache({ clearFirestore: true });
     log.info('firestore: set user plan', { domain, email: email.toLowerCase(), plan: patch.individualPlan, status: patch.individualBillingStatus });
   } catch (err) {
     // Rethrow like setTenantPlan — the Stripe webhook must see failures and 500
@@ -3423,9 +3425,24 @@ function clearAllUsersCache() {
 }
 
 const memoizedGetAggregatedInsights = memoizeTTL(getAggregatedInsights, 24 * 60 * 60 * 1000); // 24 hour TTL
-function clearAllInsightsCache() {
+const memoizedGetRevenueSummary = memoizeTTL(getRevenueSummary, 120000);
+const memoizedGetRecentActivity = memoizeTTL(getRecentActivity, 60000);
+const memoizedGetActivationFunnel = memoizeTTL(getActivationFunnel, 120000);
+const memoizedGetRevenueFunnel = memoizeTTL(getRevenueFunnel, 120000);
+
+function clearAllInsightsCache(opts) {
   memoizedGetAggregatedInsights.clear?.();
-  clearInsightsCache();
+  memoizedGetRevenueSummary.clear?.();
+  memoizedGetRecentActivity.clear?.();
+  memoizedGetActivationFunnel.clear?.();
+  memoizedGetRevenueFunnel.clear?.();
+  clearInsightsCache(opts);
+}
+
+async function recordPaymentAndClearCache(...args) {
+  const res = await recordPayment(...args);
+  if (res) clearAllInsightsCache({ clearFirestore: true });
+  return res;
 }
 
 async function deleteUserAndClearCache(...args) {
@@ -3450,8 +3467,8 @@ module.exports = {
   claimReferral, releaseReferral, recordReferralForInviter, recordReferralPromoCode,
   getUserTrackingStreak: process.env.NODE_ENV === 'test' ? getUserTrackingStreak : memoizeTTL(getUserTrackingStreak, 600000),
   claimWebhookEvent, releaseWebhookEvent,
-  paymentFromSession, paymentFromInvoice, recordPayment, updateSubscriptionStatus, markPaymentStatus,
-  getRevenueSummary: memoizeTTL(getRevenueSummary, 120000),
+  paymentFromSession, paymentFromInvoice, recordPayment: recordPaymentAndClearCache, updateSubscriptionStatus, markPaymentStatus,
+  getRevenueSummary: memoizedGetRevenueSummary,
   logEvent, recordCancellationTelemetry, getCancellationTelemetry,
   recordPublicPageview, recordNotificationLog, updateNotificationWebhook,
   getUserActivationStatus, countUserExports, countUserMonthlyExports, countUserAutoExports, getExportReexportCount, countAllUsers, getExportedConferenceIds, getTrackedConferenceIds, updateMeetingTimes,
@@ -3485,12 +3502,12 @@ module.exports = {
   getReachOutSuggestions,
   getPowerUserPipeline: memoizeTTL(getPowerUserPipeline, 120000),
   getOutreachList: memoizeTTL(getOutreachList, 120000),
-  getRecentActivity: memoizeTTL(getRecentActivity, 60000),
-  getAdminActivity: memoizeTTL(getRecentActivity, 60000),
+  getRecentActivity: memoizedGetRecentActivity,
+  getAdminActivity: memoizedGetRecentActivity,
   getActivityPulse: memoizeTTL(getActivityPulse, 60000),
   // Full events+users scan, measured 13-18s in prod — cache it like the rest.
-  getActivationFunnel: memoizeTTL(getActivationFunnel, 120000),
-  getRevenueFunnel: memoizeTTL(getRevenueFunnel, 120000),
+  getActivationFunnel: memoizedGetActivationFunnel,
+  getRevenueFunnel: memoizedGetRevenueFunnel,
   // Error-spike & billing alert reads — NOT cached (the hourly cron needs fresh counts).
   getRecentErrorSpike, getErrorAlertState, setErrorAlertState,
   getBillingAlertState, setBillingAlertState,

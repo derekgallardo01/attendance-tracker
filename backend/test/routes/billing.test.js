@@ -491,6 +491,16 @@ describe('billing — Department tier (mid-tier recurring DOMAIN plan, $59/yr)',
     expect(p.metadata.plan).toBe('department');
   });
 
+  test('legacy { plan: "team", interval: "once" } on team.html resolves to the $59/yr Department price when configured', async () => {
+    const res = await request(app).post('/api/billing/checkout')
+      .set(authedHeader('admin@acme.com', 'acme.com')).send({ plan: 'team', interval: 'once' });
+    expect(res.status).toBe(200);
+    const p = params();
+    expect(p.line_items[0].price).toBe('price_dept_59');
+    expect(p.mode).toBe('subscription');
+    expect(p.metadata.plan).toBe('department');
+  });
+
   test('a personal-email buyer cannot buy the Department (domain) plan → 400, no session', async () => {
     const res = await request(app).post('/api/billing/checkout')
       .set(authedHeader('teacher@gmail.com', 'gmail.com')).send({ plan: 'department' });

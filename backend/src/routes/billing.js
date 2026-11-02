@@ -421,6 +421,13 @@ async function createCheckoutSessionForUser({ user, plan, interval, conferenceId
       throw err;
     }
   }
+  // Legacy team.html clients passed { plan: 'team', interval: 'once' } which
+  // resolved to the retired $19.99 one-time price (STRIPE_PRICE_ID). When the
+  // $59/yr Department tier is configured, upgrade that legacy call to Department.
+  if (normalizedPlan === 'team' && interval === 'once' && process.env.STRIPE_DEPARTMENT_PRICE_ID) {
+    normalizedPlan = 'department';
+    interval = 'annual';
+  }
   const isSingleMeeting = normalizedPlan === 'single_meeting';
   const isEducator = normalizedPlan === 'educator';
   const isLifetime = normalizedPlan === 'lifetime';

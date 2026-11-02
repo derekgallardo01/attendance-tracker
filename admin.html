@@ -2757,12 +2757,37 @@
       }
     });
 
-    function filterActivity(type) {
+    function mergeActivityEvents(existing, incoming) {
+      const seen = new Set();
+      const merged = [];
+      for (const e of [...(existing || []), ...(incoming || [])]) {
+        if (!e) continue;
+        const key = `${e.email || ''}|${e.type || ''}|${e.createdAt || ''}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        merged.push(e);
+      }
+      return merged.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    }
+
+    async function filterActivity(type) {
       currentActivityFilter = type;
       document.querySelectorAll('.activity-filter-pills .pill-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.filter === type);
       });
       renderActivityFeed();
+      if (type && type !== 'all') {
+        try {
+          const res = await fetch(`${BACKEND_URL}/admin/activity?limit=30&type=${encodeURIComponent(type)}`, { headers: { Authorization: `Bearer ${sessionToken}` } });
+          if (res.ok) {
+            const { events } = await res.json();
+            if (Array.isArray(events) && events.length) {
+              cachedActivityEvents = mergeActivityEvents(cachedActivityEvents, events);
+              if (currentActivityFilter === type) renderActivityFeed();
+            }
+          }
+        } catch (_) { /* best-effort filter fetch */ }
+      }
     }
 
     function renderActivityFeed() {
@@ -2816,15 +2841,19 @@
       const feed = document.getElementById('activity-feed');
       const stamp = document.getElementById('activity-stamp');
       try {
-        const res = await fetch(`${BACKEND_URL}/admin/activity?limit=30`, { headers: { Authorization: `Bearer ${sessionToken}` } });
+        const [res, upgRes] = await Promise.all([
+          fetch(`${BACKEND_URL}/admin/activity?limit=30`, { headers: { Authorization: `Bearer ${sessionToken}` } }),
+          fetch(`${BACKEND_URL}/admin/activity?limit=20&type=upgraded`, { headers: { Authorization: `Bearer ${sessionToken}` } }).catch(() => null),
+        ]);
         if (!res.ok) {
           if (feed) feed.innerHTML = `<div style="color:var(--error,#f85149);padding:8px 0">Failed to load activity (HTTP ${res.status}). <button class="btn btn-secondary" style="font-size:.7rem;padding:2px 6px;margin-left:6px" onclick="loadActivity()">Retry</button></div>`;
           if (stamp) stamp.textContent = 'Error';
           return;
         }
         const { events } = await res.json();
+        const upgData = upgRes && upgRes.ok ? await upgRes.json().catch(() => ({})) : {};
         if (stamp) stamp.textContent = `Updated ${new Date().toLocaleTimeString()}`;
-        cachedActivityEvents = events || [];
+        cachedActivityEvents = mergeActivityEvents(events || [], upgData.events || []);
         registerSearchEntities('users', cachedActivityEvents.filter(e => e.email).map(e => ({ email: e.email, domain: e.domain })));
         renderActivityFeed();
       } catch (err) {

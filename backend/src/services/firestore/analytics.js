@@ -1215,32 +1215,82 @@ async function setEmailTemplates(items) {
 // Returns the most recent events across every tenant for the live feed.
 // Queries the optimized root collection admin_activity, with graceful fallback
 // to collectionGroup('events') if admin_activity is empty or unindexed.
-async function getRecentActivity({ limit = 30 } = {}) {
+const ACTIVITY_TYPE_MAP = {
+  upgrades: ['upgraded'],
+  upgraded: ['upgraded'],
+  meetings: ['tracked', 'meeting', 'first_tracked'],
+  exports: ['exported', 'export_success'],
+  signins: ['signin'],
+  signin: ['signin'],
+};
+
+async function getRecentActivity({ limit = 30, type } = {}) {
   try {
+    const rawType = typeof type === 'string' && type.trim() && type.trim().toLowerCase() !== 'all'
+      ? type.trim().toLowerCase()
+      : null;
+    const targetTypes = rawType ? (ACTIVITY_TYPE_MAP[rawType] || [rawType]) : null;
+    const typeSet = targetTypes ? new Set(targetTypes) : null;
+
+    const formatDoc = (d) => {
+      const data = d.data();
+      const ms = tsMs(data.createdAt) || (data.createdAt instanceof Date ? data.createdAt.getTime() : (typeof data.createdAt === 'string' ? Date.parse(data.createdAt) : 0));
+      return {
+        email: data.email || null,
+        type: data.type,
+        domain: data.domain || null,
+        createdAt: ms > 0 ? new Date(ms).toISOString() : (typeof data.createdAt === 'string' ? data.createdAt : null),
+        meta: data.meta || null,
+      };
+    };
+
     let snap = null;
     try {
-      snap = await getDb().collection('admin_activity').orderBy('createdAt', 'desc').limit(limit).get();
+      const col = getDb().collection('admin_activity');
+      if (targetTypes && targetTypes.length === 1 && typeof col.where === 'function') {
+        snap = await col.where('type', '==', targetTypes[0]).get();
+      } else {
+        const fetchLimit = typeSet ? Math.max(limit * 5, 150) : limit;
+        snap = await col.orderBy('createdAt', 'desc').limit(fetchLimit).get();
+      }
     } catch (e) {
       log.warn('firestore: admin_activity query failed, falling back to events', { error: e.message });
       snap = null;
     }
 
     if (snap && !snap.empty) {
-      return snap.docs
-        .map(d => {
-          const data = d.data();
-          const ms = tsMs(data.createdAt) || (data.createdAt instanceof Date ? data.createdAt.getTime() : (typeof data.createdAt === 'string' ? Date.parse(data.createdAt) : 0));
-          return {
-            email: data.email || null,
-            type: data.type,
-            domain: data.domain || null,
-            createdAt: ms > 0 ? new Date(ms).toISOString() : (typeof data.createdAt === 'string' ? data.createdAt : null),
-            meta: data.meta || null,
-          };
-        })
-        .filter(e => Boolean(e.createdAt))
+      let items = snap.docs
+        .map(formatDoc)
+        .filter(e => Boolean(e.createdAt) && (!typeSet || typeSet.has(e.type)))
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
         .slice(0, limit);
+
+      // Ensure rare, high-signal upgrade events aren't pushed out of the default
+      // feed by bursts of high-frequency signin/meeting/export events.
+      if (!typeSet && limit >= 10 && !items.some(e => e.type === 'upgraded')) {
+        try {
+          const col = getDb().collection('admin_activity');
+          if (typeof col.where === 'function') {
+            const upgSnap = await col.where('type', '==', 'upgraded').get();
+            if (upgSnap && !upgSnap.empty) {
+              const recentUpgrades = upgSnap.docs
+                .map(formatDoc)
+                .filter(e => Boolean(e.createdAt) && e.type === 'upgraded')
+                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                .slice(0, Math.min(5, Math.floor(limit / 5)));
+              if (recentUpgrades.length > 0) {
+                items = items.slice(0, Math.max(0, limit - recentUpgrades.length))
+                  .concat(recentUpgrades)
+                  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+              }
+            }
+          }
+        } catch (_) { /* best-effort upgrade preservation */ }
+      }
+
+      if (items.length > 0 || !typeSet) {
+        return items;
+      }
     }
 
     // Graceful fallback if admin_activity is empty (e.g. before backfill or in tests)
@@ -1256,7 +1306,7 @@ async function getRecentActivity({ limit = 30 } = {}) {
           meta: data.meta || null,
         };
       })
-      .filter(e => e.createdAt > 0)
+      .filter(e => e.createdAt > 0 && (!typeSet || typeSet.has(e.type)))
       .sort((a, b) => b.createdAt - a.createdAt)
       .slice(0, limit)
       .map(e => ({ ...e, createdAt: new Date(e.createdAt).toISOString() }));
@@ -1691,7 +1741,7 @@ async function getActivityPulse() {
 // conversion by country, the CSV quota-leak, and the warm-but-stuck list
 // (3+ paywall views, zero checkouts). Full scan, memoized at the export.
 const GATE_VIEW_TYPES = new Set(['upgrade_modal_shown', 'quota_warning_shown', 'series_csv_gate_shown']);
-const CHECKOUT_CLICK_TYPES = new Set(['upgrade_checkout_clicked', 'quota_upgrade_clicked']);
+const CHECKOUT_CLICK_TYPES = new Set(['upgrade_checkout_clicked']);
 
 async function getRevenueFunnel({ days = 30 } = {}) {
   try {
@@ -1922,7 +1972,7 @@ async function setBillingAlertState(data) {
   catch (err) { log.error('firestore: setBillingAlertState failed', { error: err.message }); }
 }
 
-function clearInsightsCache() {
+function clearInsightsCache(opts = {}) {
   _insightsCache = null;
   _insightsCachedAt = 0;
   _insightsInFlight = null;
@@ -1930,6 +1980,13 @@ function clearInsightsCache() {
   _suggestionsCachedAt = 0;
   _powerUserCache = null;
   _powerUserCachedAt = 0;
+  _funnelCache = null;
+  _funnelCachedAt = 0;
+  if (process.env.NODE_ENV !== 'test' || opts?.useFirestoreCache || opts?.clearFirestore) {
+    try {
+      INSIGHTS_CACHE_DOC().set({ cachedAtMs: 0, updatedAt: FieldValue.serverTimestamp() }, { merge: true }).catch(() => {});
+    } catch (_) {}
+  }
 }
 
 module.exports = {

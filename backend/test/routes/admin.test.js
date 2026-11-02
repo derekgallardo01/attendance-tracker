@@ -1239,12 +1239,25 @@ describe('Super-admin endpoint happy paths', () => {
     expect(res.body.users[0].email).toBe('b@x.com'); // most recent first
   });
 
-  test('GET /admin/activity returns events with the limit clamped to 200', async () => {
+  test('GET /admin/activity returns events with the limit clamped to 200 and optional type filter', async () => {
     firestore.getRecentActivity.mockResolvedValue([{ type: 'signin' }]);
     const res = await request(app).get('/api/admin/activity?limit=999').set(admin());
     expect(res.status).toBe(200);
     expect(res.body.events).toHaveLength(1);
     expect(firestore.getRecentActivity).toHaveBeenCalledWith({ limit: 200 });
+
+    firestore.getRecentActivity.mockResolvedValueOnce([{ type: 'upgraded', email: 'jeevasurya4u@gmail.com' }]);
+    const upgRes = await request(app).get('/api/admin/activity?limit=30&type=upgrades').set(admin());
+    expect(upgRes.status).toBe(200);
+    expect(firestore.getRecentActivity).toHaveBeenCalledWith({ limit: 30, type: 'upgrades' });
+  });
+
+  test('GET /admin/insights honors force=1 / refresh=1 to bypass cache', async () => {
+    firestore.getAggregatedInsights.mockResolvedValue({ totalProSubscribers: 4 });
+    const res = await request(app).get('/api/admin/insights?force=1').set(admin());
+    expect(res.status).toBe(200);
+    expect(res.body.totalProSubscribers).toBe(4);
+    expect(firestore.getAggregatedInsights).toHaveBeenCalledWith({ force: true });
   });
 
   test('GET /admin/telemetry/cancellations returns cancellations with limit and category filters', async () => {
